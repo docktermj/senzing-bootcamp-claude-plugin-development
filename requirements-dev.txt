@@ -1,0 +1,26 @@
+# Development-only dependencies for running the test suite in full.
+#
+# NOT a runtime requirement of the plugin. The shipped PDF generators
+# (plugins/senzing-bootcamp/scripts/generate_recap_pdf.py and
+# generate_discoveries_pdf.py) tier their renderers: fpdf2 when it is importable,
+# a stdlib fallback otherwise. A bootcamper without fpdf2 still gets a PDF, and
+# that fallback path ships and is tested. Nothing here is installed on their machine.
+#
+# What this file is for: without fpdf2, the tests that measure the fpdf2-rendered
+# output cannot exercise it and are skipped (tests/_fpdf2_support.py). The suite
+# stays green, but the fpdf2 renderer goes unmeasured -- so install this before
+# trusting a run, and always before a release.
+#
+# The tests themselves remain standard-library only, per INV-108: availability is
+# probed with importlib.util.find_spec, never by importing fpdf2 in a test.
+#
+#   python3 -m pip install -r requirements-dev.txt
+#
+# Source issue: #30
+
+fpdf2
+
+# Optional. The suite's documented runner is stdlib unittest:
+#     python3 -m unittest discover -s tests
+# pytest also works and gives a shorter summary; it is not required.
+# pytest

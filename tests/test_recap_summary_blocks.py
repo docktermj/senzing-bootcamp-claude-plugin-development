@@ -31,6 +31,7 @@ import sys
 import tempfile
 import unittest
 import zlib
+from _fpdf2_support import requires_fpdf2
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT = os.path.join(
@@ -471,6 +472,7 @@ class ListShapedBlocksAreAuthoredAsLists(unittest.TestCase):
             f"line(s) {bare} put it on its own line.",
         )
 
+    @requires_fpdf2
     def test_a_bullet_authored_block_renders_as_distinct_bulleted_items(self):
         code, out, err, pdf = run(BULLETED_SUMMARY)
         self.assertEqual(0, code, err)

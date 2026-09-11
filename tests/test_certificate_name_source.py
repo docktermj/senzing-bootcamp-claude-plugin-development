@@ -25,6 +25,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from _fpdf2_support import requires_fpdf2
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGIN = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp")
@@ -137,6 +138,7 @@ class PreferencesOutrankTheRecapHeader(unittest.TestCase):
         subprocess.run(["which", "pdftotext"], capture_output=True).returncode == 0,
         "pdftotext unavailable; cannot probe the rendered certificate",
     )
+    @requires_fpdf2
     def test_rendered_certificate_prints_the_preferences_name(self):
         """The probe that originally caught the defect (INV-129)."""
         root = project(header_name="docktermj", prefs="name: Dana Reyes\nlanguage: python\n")

@@ -53,6 +53,7 @@ import sys
 import tempfile
 import unittest
 import zlib
+from _fpdf2_support import requires_fpdf2
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXAMPLES = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp", "docs", "examples")
@@ -301,6 +302,7 @@ class TestPdfRegeneratesFromItsSource(unittest.TestCase):
         )
         return proc, out
 
+    @requires_fpdf2
     def test_a_fresh_render_embeds_every_referenced_image(self):
         with tempfile.TemporaryDirectory() as tmp:
             proc, out = self._render(tmp)
@@ -315,6 +317,7 @@ class TestPdfRegeneratesFromItsSource(unittest.TestCase):
             )
             self.assertNotIn("skipped image", combined)
 
+    @requires_fpdf2
     def test_a_fresh_render_matches_the_committed_pdf_image_count(self):
         """A committed PDF richer than a fresh render means the pair has drifted."""
         with tempfile.TemporaryDirectory() as tmp:

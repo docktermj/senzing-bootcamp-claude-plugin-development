@@ -30,6 +30,7 @@ import tempfile
 import unittest
 import zlib
 from pathlib import Path
+from _fpdf2_support import requires_fpdf2
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "plugins" / "senzing-bootcamp" / "scripts" / "generate_recap_pdf.py"
@@ -302,6 +303,7 @@ class TheRetentionFigureCountsTheNotes(unittest.TestCase):
 class TheNotesPageIsRenderedInBothRenderers(unittest.TestCase):
     """INV-066 — the stdlib fallback keeps parity with fpdf2."""
 
+    @requires_fpdf2
     def test_fpdf2_places_the_notes_after_the_modules_and_before_the_certificate(self):
         pages = pages_of_text(render_to(WITH_NOTES))
         last_module = page_index_containing(pages, "Query, Visualize and Discover")
@@ -343,6 +345,7 @@ class TheNotesPageIsRenderedInBothRenderers(unittest.TestCase):
                              "the notes title is listed among the modules completed")
 
 
+@requires_fpdf2
 class TheTableOfContentsListsTheNotes(unittest.TestCase):
 
     def _toc_page(self, markdown):

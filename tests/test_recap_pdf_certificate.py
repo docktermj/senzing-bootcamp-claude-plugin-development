@@ -32,6 +32,7 @@ import sys
 import tempfile
 import unittest
 import zlib
+from _fpdf2_support import requires_fpdf2
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT = os.path.join(
@@ -273,6 +274,7 @@ class TheFixedPageCannotBeOverrun(unittest.TestCase):
         below = [(y_mm(y), text) for _x, y, text in self.runs if y_mm(y) > floor]
         self.assertEqual([], below, f"drawn below the card: {below[:3]}")
 
+    @requires_fpdf2
     def test_a_pathological_name_is_clipped_at_the_shrink_floor(self):
         """Shrinking stops at 12 pt, so it alone does not bound the line: a ~78-character
         name drew from x = -18 mm, off the card and off the page (INV-121)."""
@@ -285,6 +287,7 @@ class TheFixedPageCannotBeOverrun(unittest.TestCase):
         )
         self.assertTrue(text.endswith("..."), "an unfittable name must be clipped, not run off")
 
+    @requires_fpdf2
     def test_a_long_name_shrinks_instead_of_running_off_the_card(self):
         runs = certificate_runs(
             render(recap_source(["Concepts"], name="Bartholomew Featherstonehaugh-Wentworth"))

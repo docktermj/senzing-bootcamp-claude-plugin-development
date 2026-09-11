@@ -22,6 +22,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from _fpdf2_support import requires_fpdf2
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGIN = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp")
@@ -625,6 +626,7 @@ class ListItemsAreSpacedWhereItHelps(unittest.TestCase):
             self.module._normalize_heading("Actions Taken"),
         )
 
+    @requires_fpdf2
     def test_consecutive_actions_taken_items_are_more_than_one_line_apart(self):
         first = self._y_of("Created the SQLite database")
         second = self._y_of("Created the engine configuration")
@@ -686,6 +688,7 @@ class ListItemsAreSpacedWhereItHelps(unittest.TestCase):
             "item's own wrapped lines, or the entries still run together.",
         )
 
+    @requires_fpdf2
     def test_question_and_response_pairs_are_separated_from_each_other(self):
         """Spacing Q&R top-level bullets was the other half of the reversal.
 
@@ -702,6 +705,7 @@ class ListItemsAreSpacedWhereItHelps(unittest.TestCase):
             "one Q/R pair must be visibly separated from the next",
         )
 
+    @requires_fpdf2
     def test_accomplishments_list_is_spaced(self):
         first = self._y_of("Verified the SDK works end to end")
         second = self._y_of("Configured the database and engine")
@@ -926,6 +930,7 @@ class TablesInTheRecapRenderAsTables(unittest.TestCase):
     def test_the_alignment_row_is_dropped(self):
         self.assertNotIn("---", self.texts)
 
+    @requires_fpdf2
     def test_cells_are_drawn_as_separate_runs(self):
         """A grid means one run per cell, not one run per source line."""
         for cell in ("Match key", "Count", "+NAME+ADDRESS", "412", "+NAME+PHONE", "88"):

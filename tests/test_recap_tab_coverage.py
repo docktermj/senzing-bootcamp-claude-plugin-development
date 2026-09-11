@@ -41,6 +41,7 @@ import tempfile
 import unittest
 import zlib
 from pathlib import Path
+from _fpdf2_support import requires_fpdf2
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp", "scripts")
@@ -290,6 +291,7 @@ class TheTwoCountsAreNeverConflated(unittest.TestCase):
     """INV-193: a completeness figure's denominator must come from outside the
     artifact it measures, and a self-derived one must say what it cannot detect."""
 
+    @requires_fpdf2
     def test_the_success_line_states_coverage_separately(self):
         with RecapProject(captured=6, embedded=6) as project:
             stdout = project.render().stdout
