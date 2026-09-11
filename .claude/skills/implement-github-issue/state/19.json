@@ -1,0 +1,10 @@
+{
+  "issue": 19,
+  "branch": "19-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct implementation (5a): .claude/commands/retrofit-from-public.md following the implement-spec.md / propagate-to-public.md thin-command pattern; $ARGUMENTS wired to retrofit.sh's optional SOURCE path; plus tests/test_maintainer_tooling_stays_out_of_public.py pinning that propagate.sh never mirrors .claude/.",
+  "gate1_approved": true,
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/31",
+  "comments_posted": ["started", "clarifications", "result"],
+  "spinoff_issues": [30]
+}
