@@ -1,0 +1,13 @@
+{
+  "issue": 20,
+  "branch": "20-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct implementation (5a): .claude/commands/dry-run.md following the implement-spec.md / propagate-to-public.md / retrofit-from-public.md thin-command pattern; $ARGUMENTS wired to the skill's phase selection plus optional phase-3 start module. No new test (tests/test_dev_commands_name_a_real_skill.py covers it), no docs change (docs/development.md already lists /dry-run).",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/35"
+}
