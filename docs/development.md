@@ -38,6 +38,12 @@ assertions do not describe it. The fallback's own tests still run.
 renderer goes unmeasured. Install it before trusting a run, and always before a release.
 Set `SBCP_QUIET_FPDF2_NOTICE=1` to suppress the notice for tooling that parses test output.
 
+CI runs the suite **both ways** on every pull request
+(`.github/workflows/test-suite.yaml`, a matrix over `fpdf2: [present, absent]`), so neither
+path can rot unnoticed. The `absent` job is the one that catches a new fpdf2-dependent test
+landing without a `@requires_fpdf2` guard — an omission that is invisible locally to anyone
+who has `fpdf2` installed.
+
 Before this was wired up (#30), those tests did not skip — they ran against the fallback and
 failed as 41 assertions about certificate names, grid alignment and label wrapping, only 6 of
 which named the missing package anywhere in their traceback. The suite read as 41 product
