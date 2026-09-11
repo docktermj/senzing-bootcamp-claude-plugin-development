@@ -1,0 +1,107 @@
+name: Test suite
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  test-suite:
+    name: tests (fpdf2 ${{ matrix.fpdf2 }})
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # fpdf2 is OPTIONAL BY DESIGN and both renderer paths ship, so one job cannot
+        # cover this suite. The shipped PDF generators tier their renderers -- fpdf2 when
+        # importable, a stdlib fallback otherwise -- and the fallback is the path most
+        # bootcampers hit.
+        #
+        #   present -> exercises the fpdf2 renderer: the tests that skip without it.
+        #   absent  -> exercises the stdlib fallback, AND fails on any new fpdf2-dependent
+        #              test that landed without a @requires_fpdf2 guard. That second job is
+        #              the only thing that catches it, because the omission is invisible to
+        #              anyone whose machine has fpdf2 installed (#30, #33).
+        fpdf2: [present, absent]
+    timeout-minutes: 15
+
+    steps:
+      # fetch-depth: 0 is load-bearing, not caution. actions/checkout defaults to a depth-1
+      # clone, and tests/test_all_runs_every_argument_free_view.py resolves the commit hashes
+      # recorded in specs/IMPLEMENTED.md -- none of which exist in a shallow checkout. That
+      # test deliberately does NOT self-skip when the ledger carries hashes, so a shallow clone
+      # fails it. Full history is the only configuration in which the suite means here what it
+      # means on a maintainer's machine.
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install fpdf2
+        if: matrix.fpdf2 == 'present'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --requirement requirements-dev.txt
+
+      # Negative control. Without this, a transitively-installed fpdf2 would silently turn
+      # the 'absent' job into a second copy of the 'present' one -- still green, and no
+      # longer testing anything. The job that guards the fallback must prove it is guarding.
+      - name: Confirm fpdf2 really is absent
+        if: matrix.fpdf2 == 'absent'
+        run: |
+          if python -c "import fpdf" 2>/dev/null; then
+            echo "::error::fpdf2 is importable in the 'absent' job, so this job is no longer" \
+              "testing the stdlib fallback. Something installed it transitively."
+            exit 1
+          fi
+
+      # `shell: bash` is deliberate: GitHub's default `run:` shell on Linux is `bash -e {0}`
+      # WITHOUT pipefail, so a piped `... | tee` reports tee's exit status and a failing
+      # suite would report green. Naming the shell turns on `-eo pipefail`.
+      - name: Run the test suite
+        shell: bash
+        run: |
+          python -m unittest discover -s tests 2>&1 | tee suite.log
+
+      - name: The absent job must skip, and say why
+        if: matrix.fpdf2 == 'absent'
+        shell: bash
+        run: |
+          if ! grep -q "fpdf2 is not installed" suite.log; then
+            echo "::error::The suite ran without fpdf2 but printed no notice naming it." \
+              "That notice is the user-facing half of #30: without it, a contributor sees" \
+              "skips with no stated cause."
+            exit 1
+          fi
+          # A run reporting zero skips here means the guards have stopped being applied,
+          # which is the #30 regression arriving quietly rather than as a failure.
+          if ! grep -Eq "OK \(skipped=[1-9][0-9]*\)" suite.log; then
+            echo "::error::Expected the run to be OK with a non-zero skip count." \
+              "Without fpdf2 the fpdf2-dependent tests must SKIP, not vanish and not fail."
+            exit 1
+          fi
+
+      - name: The present job must not print the absence notice
+        if: matrix.fpdf2 == 'present'
+        shell: bash
+        run: |
+          if grep -q "fpdf2 is not installed" suite.log; then
+            echo "::error::fpdf2 was installed, but the suite reported it missing." \
+              "The detection in tests/_fpdf2_support.py disagrees with the environment."
+            exit 1
+          fi
