@@ -17,7 +17,7 @@ here exist because a bundled default is wrong for this repository.
 ## .jscpd.json
 
 An empty object, which drops super-linter's bundled `threshold: 0` — a threshold
-that fails the build on *any* duplication at all. This repo ships a skill library
+that fails the build on _any_ duplication at all. This repo ships a skill library
 under `.claude/skills/`, and those skills repeat short passages by design: the
 same worked example, the same reminder, the same eight-line snippet, restated
 where a reader of that one skill will encounter it. Deduplicating across skills
