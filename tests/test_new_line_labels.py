@@ -49,6 +49,7 @@ import sys
 import tempfile
 import unittest
 import zlib
+from _fpdf2_support import requires_fpdf2
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp", "scripts")
@@ -301,6 +302,7 @@ class LabelLayoutAssertions(unittest.TestCase):
         self.assertGreater(value_x, 0)
 
 
+@requires_fpdf2
 class RecapWhyItMattersBreaksToItsOwnLine(LabelLayoutAssertions):
     """The recap generator's `Why it matters:` layout, as reported and fixed."""
 
@@ -315,6 +317,7 @@ class RecapWhyItMattersBreaksToItsOwnLine(LabelLayoutAssertions):
         self.assert_stays_inline(self.pages, "What we did: ", INLINE_LABEL_VALUE)
 
 
+@requires_fpdf2
 class DiscoveriesLongLabelsBreakToTheirOwnLine(LabelLayoutAssertions):
     """The discoveries generator's two allowlisted callouts, and one that must not break."""
 

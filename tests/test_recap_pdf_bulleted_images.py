@@ -41,6 +41,7 @@ import tempfile
 import unittest
 import zlib
 from pathlib import Path
+from _fpdf2_support import requires_fpdf2
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GENERATOR = REPO_ROOT / "plugins" / "senzing-bootcamp" / "scripts" / "generate_recap_pdf.py"
@@ -217,6 +218,7 @@ def bulleted_and_plain(index):
 class AMixedRecapEmbedsEveryImage(unittest.TestCase):
     """The acceptance criterion, end to end through the real generator."""
 
+    @requires_fpdf2
     def test_bulleted_and_unbulleted_images_all_reach_the_pdf(self):
         with Project(style=bulleted_and_plain) as project:
             result = project.render()
@@ -227,6 +229,7 @@ class AMixedRecapEmbedsEveryImage(unittest.TestCase):
                 "not every image reached the PDF:\n%s" % result.stdout,
             )
 
+    @requires_fpdf2
     def test_the_success_line_reports_every_image_embedded(self):
         """`embedded N of M` is the counter a bootcamper's evidence rests on (INV-162)."""
         with Project(style=bulleted_and_plain) as project:
@@ -244,6 +247,7 @@ class AMixedRecapEmbedsEveryImage(unittest.TestCase):
             )
 
 
+@requires_fpdf2
 class EveryBulletShapeIsRescued(unittest.TestCase):
     """The regression as reported: a recap whose images are *all* bullets."""
 
@@ -274,6 +278,7 @@ class EveryBulletShapeIsRescued(unittest.TestCase):
 class OrdinaryBulletsAreUntouched(unittest.TestCase):
     """The limit of the fix — without this, swallowing every bullet would pass above."""
 
+    @requires_fpdf2
     def test_a_plain_text_bullet_is_not_treated_as_an_image(self):
         with Project(
             style=bulleted_and_plain,

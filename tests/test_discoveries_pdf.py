@@ -30,6 +30,7 @@ import tempfile
 import unittest
 import zlib
 from pathlib import Path
+from _fpdf2_support import requires_fpdf2
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGIN = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp")
@@ -312,6 +313,7 @@ class TestTablesRenderAsAGrid(unittest.TestCase):
             [], offenders, f"raw Markdown table source drawn into the PDF: {offenders[:5]}"
         )
 
+    @requires_fpdf2
     def test_cells_are_drawn_as_separate_runs(self):
         """A grid means one run per cell — not one run per source line."""
         texts = [t.strip() for _x, _y, t in self.runs]
@@ -322,6 +324,7 @@ class TestTablesRenderAsAGrid(unittest.TestCase):
     def test_the_alignment_row_is_dropped(self):
         self.assertNotIn("---", [t.strip() for _x, _y, t in self.runs])
 
+    @requires_fpdf2
     def test_a_ragged_row_does_not_desynchronize_the_grid(self):
         """Short and over-long rows are padded/truncated to the header width."""
         texts = [t.strip() for _x, _y, t in self.runs]
@@ -335,6 +338,7 @@ class TestTablesRenderAsAGrid(unittest.TestCase):
             msg="a ragged row shifted the column origin",
         )
 
+    @requires_fpdf2
     def test_two_adjacent_tables_are_visibly_separated(self):
         """Sharing an edge, two grids read as one table with a bold middle row."""
         y = {t.strip(): yy for _x, yy, t in self.runs}
@@ -348,6 +352,7 @@ class TestTablesRenderAsAGrid(unittest.TestCase):
             "they will read as a single grid",
         )
 
+    @requires_fpdf2
     def test_a_repeated_header_leaves_the_body_row_unbolded(self):
         """The page-break regression: the row after a repeated header went bold."""
         headers = [r for r in self.typed if r[3].strip() == "Match key pattern"]
@@ -362,6 +367,7 @@ class TestTablesRenderAsAGrid(unittest.TestCase):
         )
 
 
+@requires_fpdf2
 class TestParagraphsAreSeparated(unittest.TestCase):
     """Paragraph breaks are structure: the author used them to separate points."""
 
@@ -546,6 +552,7 @@ class TestEverythingRendersInsideThePage(unittest.TestCase):
         self.assertTrue(block, "the code block did not render at all")
         self.assertLess(block[0][0], A4_W_PT / 2)
 
+    @requires_fpdf2
     def test_cover_subtitle_renders_in_full_at_the_left_margin(self):
         subtitle = [r for r in self.runs if "What Senzing found" in r[2]]
         self.assertTrue(subtitle, "cover subtitle missing")
@@ -553,6 +560,7 @@ class TestEverythingRendersInsideThePage(unittest.TestCase):
         self.assertEqual("What Senzing found in your data", text, "subtitle was truncated")
         self.assertLess(x, 40.0, "subtitle drawn away from the left margin")
 
+    @requires_fpdf2
     def test_every_metadata_line_renders_in_the_text_column(self):
         """Only the first meta line was safe: `ln()` reset x, the loop never did."""
         for key in ("Bootcamper", "Sources", "Records"):
@@ -577,6 +585,7 @@ class TestLabeledBulletsStayReadable(unittest.TestCase):
         self.assertTrue(hits, f"{needle!r} not drawn")
         return hits[0]
 
+    @requires_fpdf2
     def test_long_bold_label_breaks_to_its_own_line(self):
         label = self._run_with("ABC AUTOMOTIVE INVESTMENTS")
         body = self._run_with("these two agree on name")
@@ -597,6 +606,7 @@ class TestListItemsAreSeparated(unittest.TestCase):
         markers = [r for r in runs if r[2].strip() == "-"]
         return sorted({round(r[1], 2) for r in markers}, reverse=True)
 
+    @requires_fpdf2
     def test_consecutive_bullets_are_further_apart_than_one_line(self):
         with tempfile.TemporaryDirectory() as tmp:
             write_doc(tmp, LAYOUT_DOC)
@@ -929,6 +939,7 @@ class TestAnyDocumentCanRenderWithItsOwnSections(unittest.TestCase):
             self.assertEqual(0, run(["--output", out], tmp).returncode)
             self.assertIn("What Senzing found in your data", pdf_text(os.path.join(tmp, out)))
 
+    @requires_fpdf2
     def test_both_renderers_honor_the_subtitle(self):
         """INV-066: the fallback writer must not keep the discoveries cover line."""
         module = load_generator_module()

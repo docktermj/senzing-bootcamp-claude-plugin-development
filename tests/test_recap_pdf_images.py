@@ -33,6 +33,7 @@ import sys
 import tempfile
 import unittest
 import zlib
+from _fpdf2_support import requires_fpdf2
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGIN = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp")
@@ -194,6 +195,7 @@ class DocumentRelativePathsEmbed(unittest.TestCase):
 class LostImagesAreAudible(unittest.TestCase):
     """A dropped screenshot must never be silent — but must never break the PDF."""
 
+    @requires_fpdf2
     def test_missing_image_reported_on_stderr_with_paths_searched(self):
         root = make_project(missing={"search"})
         code, _, stderr, _ = render(root)
@@ -210,12 +212,14 @@ class LostImagesAreAudible(unittest.TestCase):
         self.assertTrue(os.path.exists(pdf))
         self.assertGreater(os.path.getsize(pdf), 0)
 
+    @requires_fpdf2
     def test_missing_image_reported_once_despite_two_render_passes(self):
         """fpdf2 builds the document twice; one lost image is one message."""
         root = make_project(missing={"search"})
         _, _, stderr, _ = render(root)
         self.assertEqual(stderr.count("skipped image (not found)"), 1, stderr)
 
+    @requires_fpdf2
     def test_shortfall_visible_in_the_success_line(self):
         root = make_project(missing={"search"})
         _, stdout, _, _ = render(root)
@@ -225,6 +229,7 @@ class LostImagesAreAudible(unittest.TestCase):
 class RemoteImagesAreNeverFetched(unittest.TestCase):
     """INV-081: the render stays offline."""
 
+    @requires_fpdf2
     def test_remote_url_is_skipped_and_reported(self):
         root = make_project(extra_images=["![Remote](https://example.invalid/x.png)"])
         code, _, stderr, _ = render(root)
@@ -314,6 +319,7 @@ class TheSkillsInstructAResolvablePath(unittest.TestCase):
                 self.assertRegex(text, r"never `docs/visualizations/")
                 self.assertRegex(text, r"docs/docs/")
 
+    @requires_fpdf2
     def test_the_generator_agrees_with_the_instructed_path(self):
         """Render a recap written exactly as the skills instruct, and require it embeds."""
         root = make_project()
