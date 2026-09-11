@@ -1,0 +1,14 @@
+# Consumed by the reusable `lint-workflows.yaml` job, which runs zizmor under super-linter.
+#
+# unpinned-uses: zizmor's default is a blanket hash policy -- every `uses:` must name a commit
+# SHA. This repo's third-party actions DO carry SHA pins, and a test enforces that. The one
+# reference that cannot follow suit is `senzing-factory/build-resources`, which the whole org
+# consumes by tag (`@v4`) so that a fix to the shared workflow reaches every repo at once.
+# `ref-pin` is the policy the org's own template repositories set, for that reason.
+rules:
+  secrets-outside-env:
+    disable: true
+  unpinned-uses:
+    config:
+      policies:
+        "*": ref-pin

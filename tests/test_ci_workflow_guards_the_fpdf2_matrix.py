@@ -150,6 +150,29 @@ class ActionsAreSupplyChainPinned(unittest.TestCase):
             "version the SHA is without looking it up" % naked)
 
 
+class TheCheckoutCarriesFullHistory(unittest.TestCase):
+    """Caught by the first real run of this workflow, not by reading it.
+
+    `actions/checkout` clones at depth 1 unless told otherwise. The suite reads real git
+    history: tests/test_all_runs_every_argument_free_view.py resolves the commit hashes
+    recorded in specs/IMPLEMENTED.md, and deliberately does NOT self-skip when the ledger
+    carries hashes -- a refusal there is the defect it exists to catch. Under a shallow clone
+    every one of those hashes is "not a commit here", so the test fails for a reason that has
+    nothing to do with the change under review.
+    """
+
+    def test_the_checkout_step_sets_fetch_depth_zero(self):
+        checkout = [s for s in steps() if "actions/checkout@" in s]
+        self.assertTrue(checkout, "no actions/checkout step in %s" % TEST_WORKFLOW)
+        shallow = [s.splitlines()[0].strip() for s in checkout
+                   if not re.search(r"^\s*fetch-depth:\s*0\s*$", s, re.M)]
+        self.assertEqual(
+            [], shallow,
+            "checkout step(s) %s do not set `fetch-depth: 0`, so CI clones at depth 1. The "
+            "suite resolves commit hashes from specs/IMPLEMENTED.md against real history; "
+            "under a shallow clone those tests fail on the checkout, not on the code" % shallow)
+
+
 class TheDocumentedRunnerIsUsed(unittest.TestCase):
     def test_ci_runs_unittest_discover(self):
         """INV-108 names the runner; CI should enforce the contract, not a convenience."""

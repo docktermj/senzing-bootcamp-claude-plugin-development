@@ -35,9 +35,16 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      # fetch-depth: 0 is load-bearing, not caution. actions/checkout defaults to a depth-1
+      # clone, and tests/test_all_runs_every_argument_free_view.py resolves the commit hashes
+      # recorded in specs/IMPLEMENTED.md -- none of which exist in a shallow checkout. That
+      # test deliberately does NOT self-skip when the ledger carries hashes, so a shallow clone
+      # fails it. Full history is the only configuration in which the suite means here what it
+      # means on a maintainer's machine.
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Python
