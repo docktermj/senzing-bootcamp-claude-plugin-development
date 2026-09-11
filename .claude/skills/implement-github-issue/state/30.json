@@ -1,0 +1,10 @@
+{
+  "issue": 30,
+  "branch": "30-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): stdlib-only tests/_fpdf2_support.py helper emitting a one-time notice and exposing requires_fpdf2; guards applied to the measured 41 fpdf2-dependent test ids (29 methods + 5 classes) across 11 files; requirements-dev.txt declaring fpdf2 only; docs. conftest.py rejected -- INV-108 mandates unittest discover, so a pytest-only hook would not fire.",
+  "gate1_approved": true,
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/32",
+  "comments_posted": ["started", "clarifications", "result"],
+  "issue_corrections": ["reportlab is not a dependency", "fpdf2_preflight.py does not exist", "the convention already existed in 4 files"]
+}
