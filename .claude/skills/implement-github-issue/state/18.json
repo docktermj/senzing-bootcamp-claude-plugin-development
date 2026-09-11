@@ -1,0 +1,9 @@
+{
+  "issue": 18,
+  "branch": "18-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct implementation: .claude/commands/propagate-to-public.md following the implement-spec.md thin-command pattern, argument-hint wired to propagate.sh's optional destination path; guard tests/test_dev_commands_name_a_real_skill.py.",
+  "gate1_approved": true,
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/29",
+  "comments_posted": ["started", "clarifications", "result"]
+}
