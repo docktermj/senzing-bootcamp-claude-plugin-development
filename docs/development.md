@@ -108,6 +108,12 @@ future British spelling gets waved through.
 
 ## Claude development skills
 
+⛔ **(INV-302) This list and `.claude/commands/` must agree in both directions, and every
+skill must be fronted by a command.** A documented command that does not ship tells you to
+run something that does not exist; one that ships undocumented is undiscoverable. Every
+entry carries a description. Do not state how many there are — the set is derived and
+compared, and a count in prose goes stale silently while reading authoritative.
+
 ### Create specifications
 
 1. `/feedback-to-specs` - Extract spec/ files from SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md files.

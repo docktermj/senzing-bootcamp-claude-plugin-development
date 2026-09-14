@@ -48,6 +48,13 @@ No count is asserted anywhere here. A test pinning "two version sites" fails the
 legitimate third one is added and teaches its reader to bump a number, which is the defect
 living inside the guard.
 
+⚠️ **Enforces INV-301's "every record that asserts the version" clause**, and only that
+clause. It compares the declared version sites against the repository in both directions. It
+does **NOT** establish that a release actually moved them — that is the sibling module — nor
+that every site is *reachable* by the tooling: a version asserted inside a binary artifact
+cannot be rewritten by a text substitution, and `bootcamp_recap.example.pdf` is one such site,
+already reading a version behind the manifest at the time this was written.
+
 Stdlib only; the tracked-file list comes from git and every file is read as text (INV-108).
 
 Source issue: #27 (`/release`).

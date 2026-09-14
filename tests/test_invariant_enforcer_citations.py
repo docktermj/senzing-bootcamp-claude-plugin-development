@@ -274,7 +274,31 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # `test_a_single_statement_claim_names_its_authority.py`, which cites it back. Re-derived by
 # running `pairs()` and reading its length — 114, with the new pair confirmed present by
 # name — not by incrementing 113.
-EXPECTED_PAIRS = 114
+# 116 on 2026-09-14: INV-301 (a release moves every version record or none) names TWO
+# enforcers — `test_release_bumps_version_changelog_and_tag_together.py` and
+# `test_release_covers_every_version_site.py` — and both cite it back, so one invariant
+# contributes two pairs. Re-derived by running the extractor and reading its length,
+# which reported 116 with both new pairs present by name; 114 + 2 only confirms it.
+# 118 on 2026-09-14: INV-302 (the maintainer command surface agrees with its docs in both
+# directions) names TWO enforcers -- test_documented_dev_commands_match_the_shipped_set.py
+# and test_dev_commands_name_a_real_skill.py -- and both cite it back. Re-derived by running
+# the extractor, which reported 118 with both new pairs present by name.
+# 119 on 2026-09-14: INV-303 (every command names a skill that resolves) names ONE enforcer,
+# test_dev_commands_name_a_real_skill.py, which already cited INV-302 for the mirror
+# direction and now cites both. Re-derived by running the extractor -- 119, with the new
+# pair present by name.
+# 120 on 2026-09-14: INV-304 (the propagate mirror never publishes .claude/) names
+# test_maintainer_tooling_stays_out_of_public.py, which cites it back. Re-derived by
+# running the extractor -- 120, with the new pair present by name.
+# 121 on 2026-09-14: INV-305 (the fpdf2 CI matrix runs both cells and proves the absence)
+# names test_ci_workflow_guards_the_fpdf2_matrix.py, which cites it back. Re-derived by
+# running the extractor -- 121, with the new pair present by name.
+# 122 on 2026-09-14: INV-306 (an optional dependency is declared and its absence skips)
+# names test_fpdf2_dependency_is_declared.py, which cites it back. Re-derived by running
+# the extractor -- 122, with the new pair present by name. This closes the 2026-09-14
+# review: six deferrals decided, EXPECTED_PAIRS 114 -> 122 across it, every step
+# re-derived rather than incremented.
+EXPECTED_PAIRS = 122
 
 
 def pairs():

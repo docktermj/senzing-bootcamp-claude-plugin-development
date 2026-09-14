@@ -16,7 +16,17 @@ whole workflow becomes decorative. Declaring `shell: bash` switches to
 `bash --noprofile --norc -eo pipefail {0}`. Nothing in GitHub's UI flags the difference, and a
 workflow that is wrong this way looks exactly like one that is right.
 
-⛔ **Stdlib only (INV-108), so the workflow is read as TEXT, not parsed as YAML.** PyYAML is a
+⛔ **⚠️ **Enforces INV-305 — and asserts six things beyond it.** INV-305 covers the two-cell matrix,
+the absent cell's negative control, its notice and its non-zero skip count. The remaining
+assertions here — `shell: bash` on piping steps, SHA-pinned third-party actions, each pin naming
+its version, `fetch-depth: 0`, `unittest discover`, and no propagate source reaching `.github/`
+— are **real guarantees that no invariant currently records**. INV-305 names them explicitly so
+they are visible; they are a different subject and were deliberately not folded in.
+
+⚠️ It does **NOT** establish that CI ever ran, that it passed, or that the runner behaved as the
+workflow describes. It reads the YAML as text.
+
+Stdlib only (INV-108), so the workflow is read as TEXT, not parsed as YAML.** PyYAML is a
 third-party package and may not import in a dev environment. The assertions below are therefore
 substring and regex checks over the file. That is weaker than a parse -- it cannot prove the
 YAML is well-formed -- and the `lint-workflows` job added alongside covers that direction on

@@ -40,6 +40,14 @@ that anything was ever published. `/release` deliberately stops before publishin
 No count of refusals or of version sites is asserted. The behaviors are named
 individually so that adding a refusal is adding a test, not editing a number.
 
+⚠️ **Enforces INV-301**, and not all of it. This module asserts the mechanical half: the
+records move together, the tag is annotated, it points at the release commit, and the three
+refusals fire. It does **NOT** establish that a maintainer invoking `/release` follows the
+skill's procedure, that the tag was ever **pushed** (`/release` deliberately stops before
+pushing, so the release it produces is not yet targetable), or that the tag is signed —
+`tag.gpgsign` comes from the maintainer's git config and is not asserted here. An `Enforced by`
+clause naming this file is therefore not a compliance claim about a real release.
+
 Stdlib only (INV-108); git builds the fixture, as in
 `tests/test_since_last_audit_widens_past_a_work_commit.py`.
 
@@ -239,6 +247,35 @@ class AReleaseMovesAllThreeTogether(unittest.TestCase):
         self.assertIn("**Plugin version:** 0.5.0",
                       git(self.repo, "show", "0.5.0:%s" % EXAMPLE_REL))
         self.assertIn("## [0.5.0]", git(self.repo, "show", "0.5.0:%s" % CHANGELOG_REL))
+
+    def test_the_tag_is_annotated(self):
+        """⛔ A lightweight tag is silently skipped by ``git push --follow-tags``.
+
+        Git has two kinds of tag. A lightweight one is a name pointing straight at a
+        commit, so ``cat-file -t`` reports ``commit``; an annotated one is an object of
+        its own carrying an author, a date and a message, and reports ``tag``.
+
+        ``git push --follow-tags`` pushes annotated tags and **silently skips lightweight
+        ones** -- no warning, no error, exit 0. Measured in a throwaway repo carrying one
+        of each: the annotated tag reached the remote and the lightweight one did not,
+        with nothing in the output naming the omission. A release tag that stays on the
+        maintainer's machine is invisible to the downstream repositories that port from a
+        tagged release rather than from HEAD, which is the whole failure this tooling
+        exists to prevent -- and it presents as a successful push.
+
+        ⚠️ All seven tags this repository carried before ``release.py`` are lightweight,
+        so this assertion pins a NEW convention rather than an existing one. It is
+        deliberate, and it is why the rule says MUST.
+
+        ⚠️ What a green run does NOT mean: that the tag was pushed, or that it is signed.
+        ``tag.gpgsign`` is read from the maintainer's git config and is not asserted here.
+        """
+        self.assertEqual(
+            "tag", git(self.repo, "cat-file", "-t", "0.5.0"),
+            "the release tag is lightweight, not annotated. `git push --follow-tags` "
+            "skips lightweight tags silently, so this release would never reach the "
+            "remote and no downstream port could target it -- while the push reports "
+            "success")
 
     def test_the_tag_points_at_head(self):
         self.assertEqual(git(self.repo, "rev-parse", "HEAD"),

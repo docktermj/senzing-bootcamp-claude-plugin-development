@@ -31,10 +31,10 @@ Let the script's own refusals do the enforcing, and relay them rather than worki
 them. It refuses a dirty working tree, a version that does not advance past both the
 manifest and the newest tag, a tag that already exists, a manifest and newest tag that
 have already diverged, a version site that has stopped matching, and a branch other than
-`main`. ⛔ If it refuses, fix what it refused on — never do its job by hand. Hand-editing
+`main`. ⛔ (INV-301) If it refuses, fix what it refused on — never do its job by hand. Hand-editing
 one of the three is how the two repos drifted apart in the first place.
 
-⛔ **Stop short of publishing.** `/release` does not push and does **not** invoke
+⛔ **(INV-301) Stop short of publishing.** `/release` does not push and does **not** invoke
 `/propagate-to-public`. Finish by reporting the new version, the release commit and the
 tag, then name the next steps and stop:
 

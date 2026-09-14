@@ -33,6 +33,17 @@ The command's filename stem is **not** required to equal the skill it invokes. A
 current commands happen to match, but pinning that would forbid a future alias -- two commands
 onto one skill with different defaults -- for no defect ever observed.
 
+⚠️ **Enforces INV-303 and INV-302's skill-fronting half — two invariants, opposite directions.**
+**INV-303** is the command→skill direction asserted by `test_no_command_names_a_missing_skill` and
+`test_every_command_names_at_least_one_skill`: a command must name a skill that resolves.
+**INV-302's** half is skill→command, asserted by `test_every_skill_is_fronted_by_a_command`.
+⚠️ **Enforces INV-302's skill-fronting half.** It asserts that every command names a skill that
+exists, that none is silent about the skill it fronts, and that every skill with a `SKILL.md` is
+fronted by a command. It does **NOT** establish that a command actually invokes its skill when
+typed, that the skill does what the command claims, or that `$ARGUMENTS` matches the skill's
+interface — those need reading, or a live session. The documentation half is asserted by
+`test_documented_dev_commands_match_the_shipped_set.py`.
+
 Stdlib only; both directories are listed and the command files read as text (INV-108).
 
 Source issue: #18 (`/propagate-to-public`).
