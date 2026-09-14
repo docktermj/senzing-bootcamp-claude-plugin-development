@@ -108,7 +108,10 @@ class SinceCanComputeItsOwnRef(unittest.TestCase):
             self.assertIn("resolvable commit", out.stderr,
                           "a refusal must say what it read:\n%s" % out.stderr)
             return
-        m = re.search(r"added to shipped markdown since ([0-9a-f]{7,40})", out.stdout)
+        # The corpus named in the header widened in 2026-09-14 (`.claude/` joined the shipped
+        # markdown for THIS view only), so the prose between "added" and "since" is not pinned.
+        # What is pinned is unchanged: a resolvable hash is reported rather than a silent zero.
+        m = re.search(r"added .*?since ([0-9a-f]{7,40})", out.stdout)
         self.assertIsNotNone(m, "the resolved ref is not reported:\n%s" % out.stdout)
         self.assertRegex(out.stdout, r"\(ref [0-9a-f]{7,40} from ledger entry \S+\)",
                          "the flag must name the entry it took the ref from:\n%s" % out.stdout)

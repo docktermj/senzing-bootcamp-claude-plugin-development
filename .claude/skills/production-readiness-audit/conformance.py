@@ -380,9 +380,19 @@ def cmd_since(args):
     if not ref:
         sys.stderr.write("since needs --ref <git-ref> or --since-last-audit\n")
         return 2
-    print("== hard-rule lines added to shipped markdown since %s\n" % ref)
+    # ⛔ The maintainer surface is included HERE and in no other view, deliberately.
+    # `.claude/` carries ~165 hard-rule lines against the shipped corpus's ~672, nearly
+    # all deliberate restatements of rules that already live in the skills -- so widening
+    # `rules`/`per-rule` would add that many permanent false leads to a worklist whose own
+    # skill warns these are leads, not verdicts. This view asks a different question --
+    # "what appeared SINCE the last audit?" -- where a restatement that has been there all
+    # along does not show up at all, and a NEW guarantee does. Four such guarantees shipped
+    # under `.claude/` between 2026-09-03 and 2026-09-14 and this view reported 0.
+    # (Source: `the-github-issue-path-ships-guarantees-with-no-invariant`, 2026-09-14.)
+    print("== hard-rule lines added since %s (shipped markdown + the .claude/ maintainer surface)\n" % ref)
     proc = subprocess.run(
-        ["git", "diff", "--unified=0", "--no-color", ref, "--", "plugins/senzing-bootcamp"],
+        ["git", "diff", "--unified=0", "--no-color", ref, "--",
+         "plugins/senzing-bootcamp", ".claude/commands", ".claude/skills"],
         cwd=str(repo), capture_output=True, text=True)
     if proc.returncode != 0:
         sys.stderr.write("git diff against %r failed: %s\n" % (ref, proc.stderr.strip()))
