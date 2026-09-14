@@ -290,7 +290,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 120 on 2026-09-14: INV-304 (the propagate mirror never publishes .claude/) names
 # test_maintainer_tooling_stays_out_of_public.py, which cites it back. Re-derived by
 # running the extractor -- 120, with the new pair present by name.
-EXPECTED_PAIRS = 120
+# 121 on 2026-09-14: INV-305 (the fpdf2 CI matrix runs both cells and proves the absence)
+# names test_ci_workflow_guards_the_fpdf2_matrix.py, which cites it back. Re-derived by
+# running the extractor -- 121, with the new pair present by name.
+EXPECTED_PAIRS = 121
 
 
 def pairs():
