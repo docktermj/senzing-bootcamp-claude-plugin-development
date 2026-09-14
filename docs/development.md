@@ -116,7 +116,7 @@ future British spelling gets waved through.
 
 1. `/implement-spec` - Implement specifications in the `spec/` directory.
 1. `/delegate-to-mcp-server` - Determine if there are instructions that are in the MCP server
-1. `/compact-dev-development` - Try to compact the plugin.
+1. `/compact-dev-environment` - Try to compact the plugin.
 1. `/production-readiness-audit` - Do a thorough static review.
 1. `/dry-run` - Do a thorough runtime review.
 
