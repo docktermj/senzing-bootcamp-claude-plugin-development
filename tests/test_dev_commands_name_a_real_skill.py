@@ -13,11 +13,16 @@ demonstrates the class already, in prose rather than in a command file: it lists
 `compact-dev-environment` and `production-readiness-audit`. Two names pointing at nothing,
 documented as if they worked.
 
-⛔ **The reverse direction -- every skill has a command -- is deliberately NOT asserted here.**
-Most maintainer skills currently have no command file, and each is being added under its own
-issue. A guard demanding the full set would fail on every one of those until the last landed,
-which trains its reader to expect red and to push past it. When the set is complete, that
-assertion belongs here; asserting it early would make this file a nuisance rather than a check.
+✅ **The reverse direction -- every skill has a command -- IS now asserted**, in
+`EverySkillHasACommand` below. It was deliberately deferred while the commands were being added
+one issue at a time (#18-#26): a guard demanding the full set would have failed on every one of
+those until the last landed, which trains its reader to expect red and to push past it. #26
+landed the last one, so the condition this file recorded for adding it -- "when the set is
+complete" -- is met, and the deferral is discharged rather than left as a promise in prose.
+
+⚠️ **A directory under `.claude/skills/` with no `SKILL.md` is not a skill** and is excluded
+from that assertion. `implement-github-issue/` is one: the skill itself is user-level and global,
+and what lives here is only its per-issue run state.
 
 ⚠️ **What a green run means.** Every skill *named* in a command file resolves to a directory
 with a `SKILL.md`. It does not mean the command invokes the right skill, that the skill does
@@ -110,6 +115,36 @@ class EverySkillNamedExists(unittest.TestCase):
             "command file(s) name no skill to invoke: %s. Either the file states its skill "
             "in a shape this guard cannot see, or it does not front one at all"
             % ", ".join(silent))
+
+
+class EverySkillHasACommand(unittest.TestCase):
+    """The reverse direction, deferred until the set was complete and now asserted.
+
+    A skill with no command is reachable only by the model choosing it -- which is the exact
+    condition every one of #18-#26 was filed to remove. Without this, the set can silently
+    regress: a new skill lands, no command is written, and nothing says so.
+    """
+
+    def test_every_skill_is_fronted_by_a_command(self):
+        fronted = set()
+        for path in command_files():
+            fronted |= skills_named_by(path)
+        orphaned = sorted(installed_skills() - fronted)
+        self.assertEqual(
+            [], orphaned,
+            "skill(s) under %s are fronted by no command file: %s. Each is reachable only by "
+            "the model choosing it, which is the condition #18-#26 were filed to remove"
+            % (SKILLS_DIR, ", ".join(orphaned)))
+
+    def test_a_directory_without_a_skill_md_is_not_counted(self):
+        """⛔ Anti-vacuity in the other direction: the exclusion must be real, not assumed."""
+        stubs = [d.name for d in SKILLS_DIR.iterdir()
+                 if d.is_dir() and not (d / "SKILL.md").is_file()]
+        for name in stubs:
+            self.assertNotIn(
+                name, installed_skills(),
+                "%r has no SKILL.md yet is counted as a skill, so the assertion above would "
+                "demand a command for a directory that is not one" % name)
 
 
 if __name__ == "__main__":
