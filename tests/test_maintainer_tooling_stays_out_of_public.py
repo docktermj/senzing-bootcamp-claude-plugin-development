@@ -28,6 +28,12 @@ those are separate concerns with their own reviews.
 The propagated set is compared as a set and its size is never asserted, so adding a
 legitimate fifth root is a one-line change here rather than a number to bump.
 
+⚠️ **Enforces INV-304.** It asserts that no rsync source reaches into `.claude/` by path
+component, that `.claude-plugin/` is not caught by that check, that the repo is not mirrored
+wholesale, and that every source is one of the reviewed roots. It does **NOT** establish that
+`propagate.sh` was ever run, that the public repo's contents are correct, or that the reverse
+path (`retrofit.sh`) declines to pull governance back — those are separate concerns.
+
 Stdlib only; the script is read as text (INV-108).
 
 Source issue: #19 (`/retrofit-from-public`).
@@ -129,6 +135,30 @@ class MaintainerToolingIsNeverPropagated(unittest.TestCase):
             "propagate.sh names %s as a mirror source, publishing maintainer tooling into the "
             "public repo. The public repo ships a participant runtime; release-path commands "
             "and skills act on checkouts a bootcamper does not have" % leaked)
+
+    def test_every_source_is_one_of_the_known_roots(self):
+        """⛔ The allowlist CEILING, not just the floor.
+
+        The assertions above are a floor (the four known roots are present) and a denylist
+        (nothing reaches `.claude/`, the root is not mirrored wholesale). Between them sits a
+        gap: a NEW source that is neither a known root nor under `.claude/` -- say a
+        `secrets/` or a `.env.d/` -- publishes silently and passes every one of them.
+
+        This closes it by comparing the parsed sources against the known set as a ceiling.
+
+        ⚠️ **A legitimate fifth root fails this deliberately.** Publishing a new path to the
+        public repo is exactly the change that should be looked at rather than inferred, so
+        the fix is to add it here in the same edit -- a one-line change, and the reason this
+        file's header says the set is compared rather than counted.
+        """
+        known = {"plugins", ".claude-plugin", "docs", "README.md"}
+        unexpected = sorted(p for p in propagated_paths() if p and p not in known)
+        self.assertEqual(
+            [], unexpected,
+            "propagate.sh mirrors source(s) outside the reviewed allowlist: %s. Each one "
+            "publishes to the public participant repo. If a new root is intended, add it to "
+            "`known` here in the same edit so the publication is a reviewed decision rather "
+            "than a side effect" % ", ".join(unexpected))
 
     def test_the_whole_repo_is_not_propagated_wholesale(self):
         """`rsync "$here/" "$dest/"` reaches .claude/ without ever naming it."""

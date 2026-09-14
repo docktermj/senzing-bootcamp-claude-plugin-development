@@ -287,7 +287,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_dev_commands_name_a_real_skill.py, which already cited INV-302 for the mirror
 # direction and now cites both. Re-derived by running the extractor -- 119, with the new
 # pair present by name.
-EXPECTED_PAIRS = 119
+# 120 on 2026-09-14: INV-304 (the propagate mirror never publishes .claude/) names
+# test_maintainer_tooling_stays_out_of_public.py, which cites it back. Re-derived by
+# running the extractor -- 120, with the new pair present by name.
+EXPECTED_PAIRS = 120
 
 
 def pairs():
