@@ -54,6 +54,20 @@ def shipped_hard_rule_pattern():
 
 HARD_RULE_SHAPE = shipped_hard_rule_pattern()   # a callable: line -> kind or None
 
+#: The roots the `since` view diffs, read from `conformance.py`'s own `git diff` pathspec
+#: rather than restated here. Restating them is what let this file's parser go stale when
+#: #38 widened the view to the `.claude/` maintainer surface.
+_DIFF_CALL = re.compile(
+    r'"git",\s*"diff",\s*"--unified=0",\s*"--no-color",\s*ref,\s*"--",\s*(.*?)\]', re.S)
+
+
+def since_roots():
+    match = _DIFF_CALL.search(CONFORMANCE.read_text(encoding="utf-8"))
+    return tuple(re.findall(r'"([^"]+)"', match.group(1))) if match else ()
+
+
+SINCE_ROOTS = since_roots()
+
 # A section that cites an invariant for a reason unrelated to the rule added below it. This is
 # the shape that hides a new rule: the citation is correct, present, and about something else.
 SECTION = """# A module step
@@ -185,6 +199,13 @@ class TheSinceViewFiltersByRef(unittest.TestCase):
     synthetic repo where the tree is controlled.
     """
 
+    def test_the_since_roots_were_parsed(self):
+        """INV-265 -- with no roots parsed, every heading below is unrecognized."""
+        self.assertGreaterEqual(
+            len(SINCE_ROOTS), 1,
+            "no pathspec was parsed out of conformance.py's `since` diff call; the heading "
+            "parser below would treat every reported rule as headingless")
+
     def test_it_reports_only_hard_rules_and_only_from_shipped_markdown(self):
         proc = run_conformance(REPO_ROOT, "since", "--ref", "HEAD")
         self.assertEqual(0, proc.returncode, proc.stderr)
@@ -194,7 +215,14 @@ class TheSinceViewFiltersByRef(unittest.TestCase):
         reported, current = [], None
         for line in proc.stdout.splitlines():
             stripped = line.strip()
-            if stripped.startswith("plugins/"):
+            # ⛔ The `since` view's pathspec was widened to `.claude/commands` and
+            # `.claude/skills` by #38, and this parser was not. It kept passing only while
+            # nobody had an uncommitted hard-rule line under `.claude/` -- the first such
+            # working tree reported a rule under a heading this loop never recognized, and
+            # the failure blamed "a reported rule has no file heading above it" rather than
+            # the parser. Both roots are read from the script's own pathspec below so the
+            # next widening cannot desynchronize them again.
+            if any(stripped.startswith(root) for root in SINCE_ROOTS):
                 current = stripped
             elif stripped.startswith("+ "):
                 reported.append((current, stripped[2:]))

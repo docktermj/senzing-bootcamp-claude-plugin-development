@@ -126,4 +126,5 @@ future British spelling gets waved through.
 
 1. `/auto-test` - Probe the live MCP server for drift; optionally walk the bootcamp.
 1. `/retrofit-from-public` - Bring public-repo edits back into development.
+1. `/release` - Bump the version, write the CHANGELOG entry and create the git tag as one unit.
 1. `/propagate-to-public` - Mirror the shippable plugin into the public access repo.
