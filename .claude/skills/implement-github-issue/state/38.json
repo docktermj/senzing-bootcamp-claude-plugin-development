@@ -1,0 +1,9 @@
+{
+  "issue": 38,
+  "branch": "38-docktermj-2",
+  "phase": "readiness",
+  "approach": "Write four DEFERRED INVARIANT blocks in the sanctioned pending format so /review-invariants surfaces them; plus a maintainer-chosen option for the detector gap. Cannot register invariants (append-only, needs sign-off).",
+  "gate1_approved": false,
+  "comments_posted": ["started"],
+  "note": "38-docktermj-1 left untouched; its specs commit cherry-picked to 38-docktermj-2."
+}
