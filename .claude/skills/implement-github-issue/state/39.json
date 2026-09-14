@@ -1,0 +1,11 @@
+{
+  "issue": 39,
+  "branch": "39-docktermj-1",
+  "phase": "gate2",
+  "approach": "Two missing descriptions, plus a both-directions set guard that also discharges the reverse-direction assertion #26 made due, plus a DEFERRED INVARIANT block for the durable rule it ships.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications"
+  ]
+}
