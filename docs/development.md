@@ -125,5 +125,5 @@ future British spelling gets waved through.
 ### Publish
 
 1. `/auto-test` - Probe the live MCP server for drift; optionally walk the bootcamp.
-1. `/retrofit-from-public`
-1. `/propagate-to-public`
+1. `/retrofit-from-public` - Bring public-repo edits back into development.
+1. `/propagate-to-public` - Mirror the shippable plugin into the public access repo.
