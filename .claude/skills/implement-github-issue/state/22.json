@@ -1,0 +1,8 @@
+{
+  "issue": 22,
+  "branch": "22-docktermj-1",
+  "phase": "gate2",
+  "approach": "Direct (Phase 5a): thin command front at .claude/commands/production-readiness-audit.md invoking the production-readiness-audit skill, plus fixing the stale /production-ready-review name at docs/development.md:120. No new test; test_dev_commands_name_a_real_skill.py covers it, negative-controlled.",
+  "gate1_approved": true,
+  "comments_posted": ["started", "clarifications"]
+}
