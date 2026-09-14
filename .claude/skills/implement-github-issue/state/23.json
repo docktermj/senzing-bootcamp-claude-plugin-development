@@ -1,0 +1,10 @@
+{
+  "issue": 23,
+  "branch": "23-docktermj-1",
+  "phase": "pr-open",
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/40",
+  "approach": "Direct (Phase 5a): thin command front at .claude/commands/delegate-to-mcp-server.md invoking the delegate-to-mcp-server skill. docs/development.md deliberately left to #39. No new test; test_dev_commands_name_a_real_skill.py covers it, negative-controlled.",
+  "gate1_approved": true,
+  "gate2_approved": true,
+  "comments_posted": ["started", "clarifications", "result"]
+}
