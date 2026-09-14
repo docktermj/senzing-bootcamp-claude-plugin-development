@@ -29,6 +29,12 @@ documented nowhere is simply undiscoverable.
 parser keys on the ``1. `/name` `` line shape. Restructuring that list breaks this guard
 loudly rather than letting it pass silently, which is the right failure direction.
 
+⚠️ **Enforces INV-302**, and not all of it. This module asserts the documentation half: both set
+directions, that no entry is bare, and that the docs state no count. It does **NOT** assert
+INV-302's clause that *the guard itself* must not pin a count — that clause governs this file's
+own source and is marked unassertable in the invariant rather than pretended to. The
+skill-fronting half is asserted by `test_dev_commands_name_a_real_skill.py`.
+
 Stdlib only; both directories are listed and the docs read as text (INV-108).
 
 Source issue: #39 (`the-dev-command-list-has-drifted-from-the-shipped-set`).

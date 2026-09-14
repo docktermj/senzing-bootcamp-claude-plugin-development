@@ -279,7 +279,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # `test_release_covers_every_version_site.py` — and both cite it back, so one invariant
 # contributes two pairs. Re-derived by running the extractor and reading its length,
 # which reported 116 with both new pairs present by name; 114 + 2 only confirms it.
-EXPECTED_PAIRS = 116
+# 118 on 2026-09-14: INV-302 (the maintainer command surface agrees with its docs in both
+# directions) names TWO enforcers -- test_documented_dev_commands_match_the_shipped_set.py
+# and test_dev_commands_name_a_real_skill.py -- and both cite it back. Re-derived by running
+# the extractor, which reported 118 with both new pairs present by name.
+EXPECTED_PAIRS = 118
 
 
 def pairs():
