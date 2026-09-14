@@ -293,7 +293,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 121 on 2026-09-14: INV-305 (the fpdf2 CI matrix runs both cells and proves the absence)
 # names test_ci_workflow_guards_the_fpdf2_matrix.py, which cites it back. Re-derived by
 # running the extractor -- 121, with the new pair present by name.
-EXPECTED_PAIRS = 121
+# 122 on 2026-09-14: INV-306 (an optional dependency is declared and its absence skips)
+# names test_fpdf2_dependency_is_declared.py, which cites it back. Re-derived by running
+# the extractor -- 122, with the new pair present by name. This closes the 2026-09-14
+# review: six deferrals decided, EXPECTED_PAIRS 114 -> 122 across it, every step
+# re-derived rather than incremented.
+EXPECTED_PAIRS = 122
 
 
 def pairs():

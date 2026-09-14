@@ -22,6 +22,16 @@ and the guard is in use. It does not mean every test that needs `fpdf2` carries 
 direction cannot be asserted without running the suite in both environments, which is the CI
 matrix's job, not a unit test's.
 
+⚠️ **Enforces INV-306.** It asserts the declaration in `requirements-dev.txt`, that the guard is
+a skip rather than a failure, that the notice names cause and remedy and states no test count,
+that at least one file actually applies the guard, and that both contributor-facing documents
+name the manifest.
+
+⚠️ It does **NOT** establish that the RIGHT tests are guarded. INV-306 requires that only
+genuinely-needing tests carry the guard, because several files deliberately exercise the stdlib
+fallback and guarding those would delete the coverage that matters most — judging which is which
+is reading, not a regex. The two-cell CI run that exercises both paths is INV-305's.
+
 Stdlib only (INV-108); the manifest and docs are read as text.
 
 Source issue: #30.
