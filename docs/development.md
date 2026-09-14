@@ -120,6 +120,7 @@ future British spelling gets waved through.
 1. `/compact-dev-environment` - Try to compact the plugin.
 1. `/production-readiness-audit` - Do a thorough static review.
 1. `/dry-run` - Do a thorough runtime review.
+1. `/unattended-spec-loop` - Work the specs/ backlog unattended, alternating implement and audit.
 
 ### Publish
 
