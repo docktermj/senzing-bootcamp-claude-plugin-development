@@ -283,7 +283,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # directions) names TWO enforcers -- test_documented_dev_commands_match_the_shipped_set.py
 # and test_dev_commands_name_a_real_skill.py -- and both cite it back. Re-derived by running
 # the extractor, which reported 118 with both new pairs present by name.
-EXPECTED_PAIRS = 118
+# 119 on 2026-09-14: INV-303 (every command names a skill that resolves) names ONE enforcer,
+# test_dev_commands_name_a_real_skill.py, which already cited INV-302 for the mirror
+# direction and now cites both. Re-derived by running the extractor -- 119, with the new
+# pair present by name.
+EXPECTED_PAIRS = 119
 
 
 def pairs():
