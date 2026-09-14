@@ -45,15 +45,15 @@ is the kiro-power shape, and it is what `release.py` and
 2. Creates `CHANGELOG.md` if absent — **seeded from the tags that already exist**,
    one entry each, newest first — and prepends the new entry thereafter.
 3. Commits those files, and **only** those files.
-4. Tags **that commit**, annotated.
+4. Tags **that commit**, annotated — annotated because `git push --follow-tags` silently skips lightweight tags (INV-301).
 
-⛔ **The commit comes before the tag, and that ordering is load-bearing.** Edit the
+⛔ **(INV-301) The commit comes before the tag, and that ordering is load-bearing.** Edit the
 files and then run `git tag` and you tag **HEAD** — the commit *before* the bump. The
 tag exists, the name is right, and checking it out gives you the previous release
 under the new name. The test reads the three files *out of the tag* for exactly this
 reason; asserting only that a tag exists passes against the broken version.
 
-⛔ **There is no flag that performs part of a release.** No `--no-tag`, no
+⛔ **(INV-301) There is no flag that performs part of a release.** No `--no-tag`, no
 `--changelog-only`. Any such flag reintroduces the defect, and a test asserts the
 interface offers none.
 
@@ -116,7 +116,7 @@ annotated, so both shapes keep working.
 
 ## After it runs
 
-⛔ **`/release` does not publish, and must not.** It does not push and it does not
+⛔ **(INV-301) `/release` does not publish, and must not.** It does not push and it does not
 invoke `/propagate-to-public`. Report the new version, the commit and the tag, then
 name the next steps and stop:
 

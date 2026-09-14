@@ -274,7 +274,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # `test_a_single_statement_claim_names_its_authority.py`, which cites it back. Re-derived by
 # running `pairs()` and reading its length — 114, with the new pair confirmed present by
 # name — not by incrementing 113.
-EXPECTED_PAIRS = 114
+# 116 on 2026-09-14: INV-301 (a release moves every version record or none) names TWO
+# enforcers — `test_release_bumps_version_changelog_and_tag_together.py` and
+# `test_release_covers_every_version_site.py` — and both cite it back, so one invariant
+# contributes two pairs. Re-derived by running the extractor and reading its length,
+# which reported 116 with both new pairs present by name; 114 + 2 only confirms it.
+EXPECTED_PAIRS = 116
 
 
 def pairs():
