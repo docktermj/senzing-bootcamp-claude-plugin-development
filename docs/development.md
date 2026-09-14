@@ -122,6 +122,6 @@ future British spelling gets waved through.
 
 ### Publish
 
-1. `/auto-test` -
+1. `/auto-test` - Probe the live MCP server for drift; optionally walk the bootcamp.
 1. `/retrofit-from-public`
 1. `/propagate-to-public`

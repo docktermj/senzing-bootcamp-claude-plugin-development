@@ -1,0 +1,8 @@
+{
+  "issue": 21,
+  "branch": "21-docktermj-1",
+  "phase": "gate2",
+  "approach": "Direct (5a): .claude/commands/auto-test.md following the implement-spec.md / dry-run.md thin-command pattern; bare invocation ASKS which halves to run (MCP probe vs + walk) rather than inferring the token-costing walk from silence, argument-hint exposes walk/persona/turns only; plus one-line docs/development.md:125 fill. No new test -- tests/test_dev_commands_name_a_real_skill.py globs .claude/commands/*.md.",
+  "gate1_approved": true,
+  "comments_posted": ["started", "clarifications"]
+}
