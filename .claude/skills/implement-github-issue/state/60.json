@@ -1,11 +1,22 @@
 {
   "issue": 60,
   "branch": "60-docktermj-1",
-  "phase": "implement",
+  "phase": "pr-open",
   "approach": "Direct (5a), ordered transfer-then-retire: /implement-github-issue gains the MCP re-check + absence-claim blocker + decline section; 7 guards re-pointed; then implement-spec command + SKILL.md deleted, list_specs.py KEPT so INV-216 needs no amendment; one DEFERRED INVARIANT block for the INV-207/213/217 actor change.",
   "gate1_approved": true,
   "comments_posted": [
     "started",
-    "clarifications"
+    "clarifications",
+    "result"
+  ],
+  "gate2_approved": true,
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/66",
+  "issue_stays_open": true,
+  "blocked_on": "INV-216 amendment (its 2nd/3rd clauses bind implement-spec's own prose) and INV-207's Step 4 pins; needs /review-invariants sign-off",
+  "remaining_work": "delete implement-spec command + SKILL.md, keep list_specs.py, re-point the 7 anchors",
+  "issue_corrections": [
+    "4 invariants name implement-spec, not 8 (the original grep over-captured)",
+    "7 test files read its paths, not 5 (test_list_specs.py and test_spec_ledger_invariants.py missed)",
+    "keeping list_specs.py does NOT leave INV-216 true; it binds the prose as well as the path"
   ]
 }
