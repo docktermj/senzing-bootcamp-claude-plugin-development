@@ -21,7 +21,7 @@ verdict, the clarifications and the chosen approach before any code is written; 
 presents the diff, the tests and the local CI mirror before anything is pushed. Everything
 between them runs unattended.
 
-## ⛔ Invariant capture is a gate on closing, not a step to remember
+## ⛔ (INV-309) Invariant capture is a gate on closing, not a step to remember
 
 **An issue MUST NOT be closed until the work either registers an invariant or writes an
 explicit `DEFERRED INVARIANT` block in `specs/IMPLEMENTED.md`.** Stating "establishes no

@@ -121,6 +121,19 @@ class TheQueueCountsBlocksNotMentions(unittest.TestCase):
     def test_check_resolves_every_path_a_rule_names(self):
         """A named path that does not resolve leaves its quote unverified (#59).
 
+        ⚠️ **Enforces INV-308.** It asserts that `check` still emits an unresolved count and
+        that the count is zero — the half that can be observed from outside the helper.
+
+        ⛔ It does **NOT** establish that the count is *correct*. A resolver that silently
+        widened to match everything would report zero unresolved and pass this, exactly as a
+        correct one does; `tests/test_deferral_quotes_match_their_source.py` imports the same
+        `resolve`, so it cannot catch that either. What closes it is the mismatch assertion
+        above — a wrongly-resolved path yields a quote that is not in the file — plus reading
+        the diff. ⚠️ It also does not establish the wider rule INV-308 states about **other**
+        verification tools in this repo (`conformance.py`, `citations.py`,
+        `coverage_reports.py`): nothing asserts that those report what they could not check.
+        That gap is real and is named here rather than left to look covered.
+
         ⛔ **This is the assertion that makes the new counter load-bearing.** Before #59
         `check` skipped an unresolvable location without counting it, so a run that verified
         nothing printed `0 rule quotes checked, 0 mismatched` — indistinguishable from a

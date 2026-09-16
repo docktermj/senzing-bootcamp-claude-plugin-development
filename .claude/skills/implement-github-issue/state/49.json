@@ -11,7 +11,7 @@
   ],
   "gate2_approved": true,
   "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/65",
-  "merge_order_note": "branch predates PR #64; merge #64 first (INV-309 not defined on this branch)",
+  "merge_order_note": "branch predates PR #64; merge #64 first. Its invariant ids are deliberately not written here: a note saying an id is undefined on this branch cites that id, which citations.py verify reports as dangling (INV-207's class).",
   "issue_corrections": [
     "no skill in this repo creates GitHub issues; no pattern to copy (a race trigger)",
     "INV-213 binds 'a spec' and is enforced via this skill's template; the obligation would have lapsed silently",
