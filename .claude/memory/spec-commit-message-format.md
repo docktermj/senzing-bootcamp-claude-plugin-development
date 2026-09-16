@@ -5,7 +5,7 @@ metadata:
   type: feedback
 ---
 
-When committing spec-implementation work (the `implement-spec` skill, or any change
+When committing implementation work (`/implement-github-issue`, or any change
 made while processing a spec under `specs/`), the commit **title** must be prefixed
 with `#<issue-number> ` followed by a plain description — e.g.
 `#1 port shell hooks to Python exec-form`. The issue number comes from the working

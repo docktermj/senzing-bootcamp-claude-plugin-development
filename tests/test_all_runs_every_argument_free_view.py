@@ -166,7 +166,7 @@ class SinceCanComputeItsOwnRef(unittest.TestCase):
 
     def test_the_call_sites_pass_the_flag_not_a_placeholder(self):
         for rel in (".claude/skills/production-readiness-audit/SKILL.md",
-                    ".claude/skills/implement-spec/SKILL.md"):
+                    ".claude/commands/implement-github-issue.md"):
             with self.subTest(file=rel):
                 text = (REPO_ROOT / rel).read_text(encoding="utf-8")
                 if "conformance.py since" not in text:

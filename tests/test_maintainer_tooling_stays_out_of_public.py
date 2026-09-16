@@ -1,7 +1,7 @@
 """Maintainer tooling under `.claude/` is unreachable by the propagate mirror.
 
 The public access repo ships a participant runtime. `.claude/` is the maintainer half of
-this repo -- the development commands (`/implement-spec`, `/propagate-to-public`,
+this repo -- the development commands (`/implement-github-issue`, `/propagate-to-public`,
 `/retrofit-from-public`), the skills behind them, and `settings.local.json`. Publishing any
 of it hands a bootcamper release-path tooling that acts on repos they do not have, and in
 the case of `retrofit-from-public` and `propagate-to-public`, tooling that would write

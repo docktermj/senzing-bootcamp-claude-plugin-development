@@ -301,7 +301,7 @@ Report before/after numbers per asset class, then the plan as a table:
 Then:
 
 - **Semantic changes go through a spec** — merging invariants, demoting one,
-  deleting a test, deleting a spec. Write it, let `implement-spec` execute it. The
+  deleting a test, deleting a spec. File it, let `/implement-github-issue` execute it. The
   spec is where the reasoning survives.
 - **Mechanical changes may be executed here**, one class at a time, each with the
   maintainer's explicit yes: archiving specs, merging test traversals, pruning

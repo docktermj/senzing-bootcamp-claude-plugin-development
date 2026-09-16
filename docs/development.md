@@ -116,9 +116,9 @@ compared, and a count in prose goes stale silently while reading authoritative.
 
 ⛔ **(INV-307) `specs/` is frozen as of the 2026-09-15 cutover; new work is tracked as
 GitHub issues.** See [`specs/README.md`](../specs/README.md). The commands below that write spec
-files — `/implement-spec`, `/unattended-spec-loop` and
+files — `/unattended-spec-loop` and
 `/delegate-to-mcp-server` — produce output the freeze guard rejects, so do not run them
-until their rework lands (`/implement-spec` → #60, `/unattended-spec-loop` → #51; `/delegate-to-mcp-server` has no issue yet). `IMPLEMENTED.md`, `DECLINED.md` and
+until their rework lands (`/unattended-spec-loop` → #51; `/delegate-to-mcp-server` has no issue yet). `/implement-spec` was retired under #60. `IMPLEMENTED.md`, `DECLINED.md` and
 `INVARIANTS.md` are **not** frozen and are still written to.
 
 ### Triage feedback
@@ -128,7 +128,6 @@ until their rework lands (`/implement-spec` → #60, `/unattended-spec-loop` →
 ### Development loop
 
 1. `/implement-github-issue` - Take a GitHub issue to pull-request-open on its own branch.
-1. `/implement-spec` - Implement specifications in the `spec/` directory. **Superseded** by the line above; retirement is tracked separately.
 1. `/review-invariants` - Decide the deferred invariants awaiting sign-off.
 1. `/delegate-to-mcp-server` - Determine if there are instructions that are in the MCP server
 1. `/compact-dev-environment` - Try to compact the plugin.

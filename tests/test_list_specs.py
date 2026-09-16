@@ -26,7 +26,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / ".claude" / "skills" / "implement-spec" / "list_specs.py"
-SKILL = REPO_ROOT / ".claude" / "skills" / "implement-spec" / "SKILL.md"
 
 
 def load():
@@ -159,25 +158,18 @@ class TheLiveRepoAgreesAndTheOutputIsUsable(unittest.TestCase):
         )
 
 
-class TheSkillNamesTheScript(unittest.TestCase):
-    def test_step_3_tells_the_reader_to_run_it(self):
-        text = SKILL.read_text(encoding="utf-8")
-        self.assertIn("list_specs.py", text,
-                      "implement-spec must name the script, or the by-hand path stays the default")
-        self.assertRegex(
-            text, r"(?i)not by hand|Compute the set with the script",
-            "and must say to use it rather than counting by hand",
-        )
-
-    def test_the_prose_steps_survive_as_the_explanation(self):
-        """The script gives the answer; the steps explain what it computes and why."""
-        text = SKILL.read_text(encoding="utf-8")
-        self.assertIn("Unimplemented = candidates − implemented − declined", text)
-        self.assertRegex(
-            text, r"(?i)re-offers a spec the maintainer has already ruled out",
-            "the reason the declined set is subtracted must stay in the prose — a script with no "
-            "stated rationale gets 'simplified' by the next reader",
-        )
+# ⛔ REMOVED 2026-09-16 (#60): `TheSkillNamesTheScript` asserted INV-216's SECOND and THIRD
+# clauses -- that `implement-spec` names this script, and that its prose steps explain what the
+# script computes and why. Both were **scoped to the archive** by a dated correction to INV-216
+# on 2026-09-16, because `specs/` froze under INV-307 and the candidate set is permanently
+# `open: 0`, so the prose they pinned documented a retired workflow. `/implement-spec` retired
+# under the same issue and there is no command left that is required to name the script.
+#
+# ⚠️ **INV-216's FIRST clause is untouched and still binding**, which is why everything above
+# stays: the candidate set MUST be computed rather than hand-counted, and MUST subtract BOTH
+# terminal states. That is a property of `list_specs.py` itself, and this file still tests it
+# against synthetic fixtures -- the live repo has zero open specs, so "it agrees with the repo"
+# would pass on a script that returned nothing at all.
 
 
 if __name__ == "__main__":
