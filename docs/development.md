@@ -116,14 +116,14 @@ compared, and a count in prose goes stale silently while reading authoritative.
 
 ⛔ **(INV-307) `specs/` is frozen as of the 2026-09-15 cutover; new work is tracked as
 GitHub issues.** See [`specs/README.md`](../specs/README.md). The commands below that write spec
-files — `/feedback-to-specs`, `/implement-spec`, `/unattended-spec-loop` and
+files — `/implement-spec`, `/unattended-spec-loop` and
 `/delegate-to-mcp-server` — produce output the freeze guard rejects, so do not run them
-until their rework lands (issues #49/#50/#51). `IMPLEMENTED.md`, `DECLINED.md` and
+until their rework lands (`/implement-spec` → #60, `/unattended-spec-loop` → #51; `/delegate-to-mcp-server` has no issue yet). `IMPLEMENTED.md`, `DECLINED.md` and
 `INVARIANTS.md` are **not** frozen and are still written to.
 
-### Create specifications
+### Triage feedback
 
-1. `/feedback-to-specs` - Extract spec/ files from SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md files.
+1. `/feedback-to-issues` - File GitHub issues from SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md files.
 
 ### Development loop
 

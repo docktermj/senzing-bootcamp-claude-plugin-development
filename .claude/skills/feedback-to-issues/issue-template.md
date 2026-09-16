@@ -1,15 +1,13 @@
-# Spec template
+# Issue template
 
-Copy this structure into each generated `specs/<kebab-case-title>.md`. Keep it
-terse and developer-facing, matching the existing specs. Delete guidance in
-angle brackets. Use "fix the following issue" for bugs and "implement the
-following improvement" for enhancements.
+Write this structure into a file and pass it to `gh issue create --body-file`. Keep it
+terse and developer-facing, matching the issues already in the tracker. Delete guidance in
+angle brackets.
+
+⛔ **The title is not part of the body.** GitHub takes it from `--title`, so the body starts
+at `## Problem` — a leading `# <Title>` renders as a duplicate heading inside the issue.
 
 ```markdown
-# <Title>
-
-Maintain the invariant conditions in @INVARIANTS.md and <fix the following issue | implement the following improvement>:
-
 ## Problem
 
 <What the bootcamper experienced. Include the verbatim error/output when the
@@ -48,7 +46,8 @@ cause. For a feature: what to add and where it fits the module/flow.>
 - Priority: <High | Medium | Low | pending>
 - MCP re-check: <server version + date, and the outcome — still reproduces | fixed upstream | server now contradicts the plugin | server does not cover it | n/a (no Senzing fact) | unverified (MCP unreachable). Name the tools called. For `server does not cover it` — or any wording asserting the server lacks something — ALSO add `owner-checked: <the route that would CARRY this fact> — <what it returned>`.>
 - Upstream: <not applicable | already sent <date> (per the entry) | sent <date> via `submit_feedback` (`<category>`, anonymous) | declined by the maintainer | submission blocked: <reason> — consented but not sendable (e.g. a `/dry-run`, which forbids `submit_feedback`); the report is STILL OWED>
-- Related specs: <specs/<file>.md, or "none">
+- Related issues: <#<n>, or "none"> <a closed one counts: it records a decision this may be reopening>
+- Invariants: <the INV-NNN conditions this must maintain — `specs/INVARIANTS.md` is live and still governs, whatever the archive's status>
 ```
 
 Carry the entry's `Source:` value through into the `## Source` block. It records
@@ -59,7 +58,7 @@ the feedback entry itself carries no `Source:` line.
 
 ## ⛔ Asserting the server LACKS something requires `owner-checked:`
 
-Any spec whose diagnosis rests on the server not having a fact — "returns no X", "does not
+Any issue whose diagnosis rests on the server not having a fact — "returns no X", "does not
 cover", "no MCP tool answers this", "nothing surfaced for these" — MUST name, on the
 `MCP re-check` line, the route that would **carry** that fact and what it returned:
 
@@ -71,10 +70,15 @@ owner-checked: sdk_guide(topic='load', language=…, record_count=<above the lim
 statements about those tools. "`sdk_guide(topic='configure')` returns no license variable" is
 correct and worthless as support for "no license variable exists" — the variable lives in
 `sdk_guide(topic='load', record_count=<above the limit>)`. This is **INV-194** applied to the
-spec format, and it is required because a spec is the *input* to implementation: an absence
+issue format, and it is required because an issue is the *input* to implementation: an absence
 concluded from the wrong route has already, once, become an invariant plus a guard enforcing
 it, with the offline suite certifying both (see
-`specs/no-license-path-environment-variable.md`).
+`specs/no-license-path-environment-variable.md`, in the frozen archive).
+
+⚠️ **INV-213 was written when this skill produced specs, and its wording says "a spec".**
+The obligation is the same whatever the output format is called — an absence claim is the
+input to implementation either way — so it is carried here deliberately rather than allowed
+to lapse with the format change. A `DEFERRED INVARIANT` block records that for sign-off.
 
 Exempt: a line declaring `n/a (no Senzing fact)`. With no Senzing fact there is no absence
 claim about the server to substantiate.

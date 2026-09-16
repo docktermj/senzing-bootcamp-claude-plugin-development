@@ -50,7 +50,7 @@ QUALITY = os.path.join(
     SKILLS, "module-05-data-quality-mapping", "phase1-quality-assessment.md"
 )
 LEDGER = os.path.join(
-    REPO_ROOT, ".claude", "skills", "feedback-to-specs", "feedback_ledger.py"
+    REPO_ROOT, ".claude", "skills", "feedback-to-issues", "feedback_ledger.py"
 )
 
 SOURCE_VALUE = "self-observed (assistant retrospective)"
@@ -278,7 +278,7 @@ class TheScoreCannotDetectSemanticsGuidanceStays(unittest.TestCase):
 class AnInRunEntryIsStillMachineReadable(unittest.TestCase):
     """Criterion 5, run rather than asserted: the shared template must keep parsing.
 
-    If the in-run path drifted into its own entry format, `feedback-to-specs` would stop
+    If the in-run path drifted into its own entry format, `feedback-to-issues` would stop
     seeing these entries — the worst failure mode, because the file would look full while
     the triage tool reported nothing to do.
     """
@@ -337,9 +337,9 @@ meaning, not just for shared type.
             self.assertTrue(payload["new"][0]["entry_id"], "content-addressed id required")
 
     def test_the_source_value_matches_what_the_triage_skill_expects(self):
-        """`feedback-to-specs` Step 2 keys weighting off this exact string."""
+        """`feedback-to-issues` Step 2 keys weighting off this exact string."""
         triage = read(
-            os.path.join(REPO_ROOT, ".claude", "skills", "feedback-to-specs", "SKILL.md")
+            os.path.join(REPO_ROOT, ".claude", "skills", "feedback-to-issues", "SKILL.md")
         )
         self.assertIn(SOURCE_VALUE, triage)
 

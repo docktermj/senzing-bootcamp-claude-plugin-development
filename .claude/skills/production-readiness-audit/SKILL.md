@@ -389,7 +389,7 @@ Follow `dry-run`'s discipline, which exists because findings held in conversatio
 session end:
 
 1. ⛔ **Write it into `specs/` as you find it, before fixing anything** — one spec per
-   root cause, using `../feedback-to-specs/spec-template.md`. Cite `file:line`.
+   root cause, using `../feedback-to-issues/issue-template.md`. Cite `file:line`.
 2. **Fix the class, not the instance,** where the class is cheap to remove.
 3. **Write a repo-level test** (`tests/`, stdlib only, no `plugins/` import — INV-108).
 4. ⛔ **Negative-control it.** Reintroduce the defect, confirm the test fails, revert. A

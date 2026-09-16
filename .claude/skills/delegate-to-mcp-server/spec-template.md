@@ -1,7 +1,7 @@
 # Spec template — delegation specs
 
 Copy this structure into each generated `specs/<kebab-case-title>.md`. It is the
-`feedback-to-specs` template adapted to this skill's subject: the problem is never
+`feedback-to-issues` template adapted to this skill's subject: the problem is never
 "a Bootcamper hit something", it is "the plugin owns a fact it no longer needs to".
 Keep it terse and developer-facing, matching the existing specs. Delete guidance in
 angle brackets.

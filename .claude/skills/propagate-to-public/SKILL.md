@@ -41,7 +41,7 @@ than being hand-run each time.
   `settings.local.json`. (The plugin's own `plugins/senzing-bootcamp/skills/`
   *is* the bootcamp payload and **is** propagated — do not confuse the two.)
 - `specs/**` — spec-driven development artifacts.
-- `docs/development.md` — the development-loop index (`/feedback-to-specs`,
+- `docs/development.md` — the development-loop index (`/feedback-to-issues`,
   `/implement-spec`, `/dry-run`, `/propagate-to-public`, …). ⚠️ **The one exception
   inside an otherwise user-facing directory.** Every skill it names is excluded from
   this mirror, so publishing it hands users a list of commands their install does not

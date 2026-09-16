@@ -172,7 +172,7 @@ def feedback_state(repo: Path) -> tuple:
 
     `PROCESSED.jsonl` is append-only and read **last-wins** — a disposition is
     corrected by appending a superseding line for the same `entry_id`, never by
-    editing (see `feedback-to-specs/feedback_ledger.py`, which documents this and
+    editing (see `feedback-to-issues/feedback_ledger.py`, which documents this and
     provides `annotate` to do it). So a reader that treats every line as a distinct
     entry reports the *superseded* value alongside the current one.
 

@@ -1,12 +1,12 @@
 """Feedback must not be triaged twice, and the overlap case must not be mishandled.
 
 Feedback files arrive from multiple bootcampers at multiple times, and the working copy
-at the repo root is gitignored, so the same content reaches `feedback-to-specs` more than
+at the repo root is gitignored, so the same content reaches `feedback-to-issues` more than
 once — which has produced duplicate specs. The realistic collision is not the identical
 file twice but a file that *overlaps* a previous one: a bootcamper's project accumulates
 entries during a run, so a later copy carries the earlier entries plus new ones.
 
-`.claude/skills/feedback-to-specs/feedback_ledger.py` therefore makes identity per
+`.claude/skills/feedback-to-issues/feedback_ledger.py` therefore makes identity per
 **entry**, content-addressed on normalized text, and records each processed entry in
 `feedback/PROCESSED.jsonl`. These tests pin the three verdicts, the normalization that
 makes a Windows re-save recognizable, and the two bugs found while exercising it:
@@ -27,7 +27,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = REPO_ROOT / ".claude" / "skills" / "feedback-to-specs" / "feedback_ledger.py"
+SCRIPT = REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "feedback_ledger.py"
 
 HEADER = "# Senzing Bootcamp Plugin Feedback\n\n**Started:** 2026-07-28\n\n## Your Feedback\n\n"
 ALPHA = "## Improvement: Alpha defect\n\n**Source:** bootcamper-reported\n\nAlpha happened.\n\n"
@@ -263,7 +263,7 @@ class TheArchiveIsNeverPropagated(unittest.TestCase):
         """The archive must not be an rsync source — which is a claim about CODE.
 
         This asserted the bare substring against the whole file until 2026-08-16, when
-        `cc0a7b0` added a comment naming `/feedback-to-specs` among the maintainer-only
+        `cc0a7b0` added a comment naming `/feedback-to-issues` among the maintainer-only
         skills `docs/development.md` indexes. That comment copies nothing, and the guard
         failed on it — a proxy firing on prose. Comment lines are stripped first so the
         assertion tests what it means; any operative mention still fails it.

@@ -12,7 +12,7 @@ nearest legal value — `offered, declined` — is **false about the one thing t
 the bootcamper agreed. `submission failed:` is wrong too; nothing failed and no retry will
 succeed. So `submission blocked: <reason>` was added.
 
-⚠️ **What the harm is, stated accurately.** `feedback-to-specs` Step 1 skips a finding only when
+⚠️ **What the harm is, stated accurately.** `feedback-to-issues` Step 1 skips a finding only when
 the field says it was already *sent*, so a `declined` entry is not silently dropped from spec
 filing — the spec that prompted this fix reasoned it would be, and that part is overstated. The
 real cost is narrower and still worth fixing: the field is the record of what happened, and
@@ -56,7 +56,7 @@ def vocabulary_corpus():
     """Shipped prose **and** the maintainer-side skills, because this vocabulary spans both.
 
     ⚠️ Scanning `plugins/` alone is the right default for a rule about shipped prose, and
-    it is wrong here: `feedback-to-specs` states the same closed set from the spec side,
+    it is wrong here: `feedback-to-issues` states the same closed set from the spec side,
     and a guard that cannot see it cannot notice the two halves disagreeing. This is the
     site-set-is-larger-than-the-shipped-tree case of INV-246.
     """
@@ -111,7 +111,7 @@ class TheVocabularyCarriesABlockedValue(unittest.TestCase):
         """⛔ The finding this widening exists for: present in one tree, absent in the other.
 
         On 2026-08-28 the value reached `plugins/`'s two enumerations and not
-        `feedback-to-specs`'s, and the guard could not see it because its corpus stopped at
+        `feedback-to-issues`'s, and the guard could not see it because its corpus stopped at
         the shipped tree. A count per tree is what makes that visible.
         """
         trees = {"plugins": 0, ".claude": 0}
@@ -129,10 +129,10 @@ class TheVocabularyCarriesABlockedValue(unittest.TestCase):
 
     def test_the_spec_side_says_the_report_is_still_owed(self):
         """`submission blocked` is the one outcome that does NOT end the obligation."""
-        skill = REPO_ROOT / ".claude" / "skills" / "feedback-to-specs" / "SKILL.md"
+        skill = REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "SKILL.md"
         flat = flatten(skill.read_text(encoding="utf-8"))
         self.assertIn(VALUE, flat,
-                      "feedback-to-specs Step 1 never mentions the blocked value, so it "
+                      "feedback-to-issues Step 1 never mentions the blocked value, so it "
                       "triages a consented-but-unsent finding as though it were declined")
         self.assertIn("still owed", flat,
                       "Step 1 does not say a blocked entry still owes a report — the whole "
