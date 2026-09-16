@@ -127,7 +127,8 @@ until their rework lands (issues #49/#50/#51). `IMPLEMENTED.md`, `DECLINED.md` a
 
 ### Development loop
 
-1. `/implement-spec` - Implement specifications in the `spec/` directory.
+1. `/implement-github-issue` - Take a GitHub issue to pull-request-open on its own branch.
+1. `/implement-spec` - Implement specifications in the `spec/` directory. **Superseded** by the line above; retirement is tracked separately.
 1. `/review-invariants` - Decide the deferred invariants awaiting sign-off.
 1. `/delegate-to-mcp-server` - Determine if there are instructions that are in the MCP server
 1. `/compact-dev-environment` - Try to compact the plugin.
