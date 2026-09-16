@@ -1,7 +1,7 @@
 # `specs/` is frozen
 
-**Cutover: 2026-09-15.** This directory is a **read-only archive**. New work for the
-Senzing Bootcamp Claude Plugin is tracked as **GitHub issues**, not as spec files.
+**Cutover: 2026-09-15.** This directory is a **read-only archive (INV-307)**. New work for
+the Senzing Bootcamp Claude Plugin is tracked as **GitHub issues**, not as spec files.
 
 The freeze itself landed 2026-09-16 (issue #52), recording the 2026-09-15 cutover date
 of the move it belongs to. Those are two different dates and neither stands in for the

@@ -114,8 +114,8 @@ run something that does not exist; one that ships undocumented is undiscoverable
 entry carries a description. Do not state how many there are — the set is derived and
 compared, and a count in prose goes stale silently while reading authoritative.
 
-⛔ **`specs/` is frozen as of the 2026-09-15 cutover; new work is tracked as GitHub
-issues.** See [`specs/README.md`](../specs/README.md). The commands below that write spec
+⛔ **(INV-307) `specs/` is frozen as of the 2026-09-15 cutover; new work is tracked as
+GitHub issues.** See [`specs/README.md`](../specs/README.md). The commands below that write spec
 files — `/feedback-to-specs`, `/implement-spec`, `/unattended-spec-loop` and
 `/delegate-to-mcp-server` — produce output the freeze guard rejects, so do not run them
 until their rework lands (issues #49/#50/#51). `IMPLEMENTED.md`, `DECLINED.md` and

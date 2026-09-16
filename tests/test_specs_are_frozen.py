@@ -37,6 +37,17 @@ and `INVARIANTS.md` are historical record and live rules, not transient work ite
 ledger in particular is what six invariant citations resolve through. Freezing them would
 break `/review-invariants`, which appends to `INVARIANTS.md` by design.
 
+⚠️ **Enforces INV-307.** It asserts the set in both directions, that the live records exist
+and stay out of the frozen set, and that the cutover date is stated in `specs/README.md` rather
+than only here.
+
+⛔ It does **NOT** establish that the archive's *contents* are unchanged. The manifest pins
+**filenames**, so a frozen spec whose text is rewritten in place passes every assertion below --
+the reasoning an invariant cites could be silently replaced and nothing here would notice. Only
+review of the diff catches that. It likewise does not establish that a maintainer command
+*refrains* from writing a spec: it detects the file after it lands, which is a report rather
+than a prevention, and nothing offline can observe a command declining to run.
+
 Stdlib only; the directory is globbed and the manifest read as text (INV-108).
 
 Source issue: #52 (freeze `specs/`, set the cutover date).

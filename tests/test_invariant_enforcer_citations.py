@@ -298,7 +298,13 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # the extractor -- 122, with the new pair present by name. This closes the 2026-09-14
 # review: six deferrals decided, EXPECTED_PAIRS 114 -> 122 across it, every step
 # re-derived rather than incremented.
-EXPECTED_PAIRS = 122
+# 124 on 2026-09-16: INV-307 (specs/ is a read-only archive) adds TWO pairs, not one. It names
+# test_specs_are_frozen.py as its enforcer AND test_spec_ledger_invariants.py descriptively --
+# the extractor matches any tests/ path in the body, which is why the jump is +2. Both cite it
+# back, and the second one legitimately: that file's either/or acceptance of a Source citation
+# is exactly what makes INV-307's deletion direction necessary, so a reader arriving at either
+# guard needs the other. Re-derived by running the extractor -- 124, both pairs present by name.
+EXPECTED_PAIRS = 124
 
 
 def pairs():
