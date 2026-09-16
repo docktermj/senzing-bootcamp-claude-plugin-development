@@ -31,7 +31,7 @@ Three neighbors overlap; keeping them distinct keeps all four useful.
 |---|---|
 | `dry-run` phase 1 | Do the plugin's MCP **calls** work? (right tool, required params, enum values) |
 | `auto-test` | Has the server **drifted** under the calls the plugin already makes? |
-| `feedback-to-specs` | What did a **bootcamper** hit, and is it still true? |
+| `feedback-to-issues` | What did a **bootcamper** hit, and is it still true? |
 | **this skill** | What does the plugin still **own** that the server now owns? |
 
 `dry-run` spot-checks two adjacent patterns ("a figure hardcoded that the server says
@@ -290,7 +290,7 @@ could serve and does not. Reporting them is how the server gets smarter, which i
 only thing that shrinks this plugin's maintenance surface for good — so this step is
 part of the job, not an afterthought.
 
-Follow `feedback-to-specs` Step 8's rules exactly, with one difference: these are
+Follow `feedback-to-issues` Step 8's rules exactly, with one difference: these are
 coverage gaps, so the category is usually `feature` rather than `bug`.
 
 - Draft it as something Senzing can act on without context from this repo: what was

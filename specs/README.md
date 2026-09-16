@@ -44,7 +44,7 @@ has anywhere to land, and running them before their rework lands will turn the s
 
 | Command | Status |
 | --- | --- |
-| `/feedback-to-specs` | Rename to `/feedback-to-issues` — issue #49 |
+| `/feedback-to-issues` | ✅ Renamed and reworked — it files GitHub issues now (#49) |
 | `/implement-spec` | Retire in favor of `/implement-github-issue` — issue #50 |
 | `/unattended-spec-loop` | Rename to `/unattended-issue-loop`, label-gated — issue #51 |
 | `/delegate-to-mcp-server` | Still writes specs; needs the same rework, no issue yet |

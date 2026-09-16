@@ -161,7 +161,7 @@ A spec is a record of a decision; the ledger heading is what makes it findable.
   and rejected**; an earlier draft of this skill recommended it, wrongly. Three
   findings, all of which a future run should re-check rather than re-derive: (a) the
   benefit is **3.5 ms** — spec discovery over 215 files is a glob, and no maintainer
-  reads 212 spec files, they read the computed list; (b) `feedback-to-specs` Step 4
+  reads 212 spec files, they read the computed list; (b) `feedback-to-issues` Step 4
   lists **every** `specs/*.md` to deduplicate against, so archiving would hide solved
   problems and it would start writing duplicate specs, silently; (c)
   `tests/test_spec_ledger_invariants.py` resolves an invariant's `Source:` via
@@ -278,7 +278,7 @@ When it does grow:
 
 - **`feedback/PROCESSED.jsonl` is never pruned.** It is content-addressed dedup;
   dropping a line makes an old feedback file re-processable, and the next
-  `feedback-to-specs` run re-specs work already done.
+  `feedback-to-issues` run re-files work already done.
 - **Archived `.md` files may be pruned** once every entry they carry is in the
   ledger with a disposition, and every spec they produced exists. `census` checks
   exactly that.

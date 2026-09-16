@@ -1,6 +1,6 @@
 # Processed bootcamp feedback (archive)
 
-Every `SENZING_BOOTCAMP_PLUGIN_FEEDBACK*.md` that `feedback-to-specs` has triaged is moved
+Every `SENZING_BOOTCAMP_PLUGIN_FEEDBACK*.md` that `feedback-to-issues` has triaged is moved
 here as `SENZING_BOOTCAMP_PLUGIN_FEEDBACK_<unixtime>.md`, and every entry it processed is
 recorded in `PROCESSED.jsonl`.
 
@@ -37,10 +37,10 @@ re-triaged forever.
 
 - **Never edit an archived file or a ledger line.** Both are the record of what was
   processed. A correction is a new spec, not rewritten history.
-- **Never treat a file in this directory as input.** `feedback-to-specs` resolves candidates
+- **Never treat a file in this directory as input.** `feedback-to-issues` resolves candidates
   from the repo root or a bootcamper project, never from here.
 - **This directory is committed but never propagated.** It carries bootcamper text —
   usernames, workstation details, dataset names — so `feedback/**` is on
   `propagate-to-public`'s excluded list. Do not relax either half of that.
 
-Tooling: `.claude/skills/feedback-to-specs/feedback_ledger.py` (`check` and `commit`).
+Tooling: `.claude/skills/feedback-to-issues/feedback_ledger.py` (`check` and `commit`).

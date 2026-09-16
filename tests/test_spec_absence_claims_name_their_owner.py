@@ -43,8 +43,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SPECS = REPO_ROOT / "specs"
-TEMPLATE = REPO_ROOT / ".claude" / "skills" / "feedback-to-specs" / "spec-template.md"
-FEEDBACK_SKILL = REPO_ROOT / ".claude" / "skills" / "feedback-to-specs" / "SKILL.md"
+TEMPLATE = REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "issue-template.md"
+FEEDBACK_SKILL = REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "SKILL.md"
 IMPLEMENT_SKILL = REPO_ROOT / ".claude" / "skills" / "implement-spec" / "SKILL.md"
 
 META = {"IMPLEMENTED.md", "INVARIANTS.md", "DECLINED.md", "todo.md"}

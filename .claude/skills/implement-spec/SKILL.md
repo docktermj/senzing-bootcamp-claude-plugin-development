@@ -1,6 +1,6 @@
 ---
 name: implement-spec
-description: 'Implement one or more specs from the specs/ directory, re-verifying every Senzing fact the spec asserts against the live Senzing MCP server before changing any code. With no argument, list every spec not yet implemented and ask the maintainer which one(s) to implement; with an argument, implement specs/<argument>.md (name without the .md suffix). Records completed specs in specs/IMPLEMENTED.md, and records any new invariant an implementation establishes in specs/INVARIANTS.md. Maintainer tool for developing the Senzing Bootcamp Claude Plugin (SBCP) — the counterpart to feedback-to-specs, which produces the specs this skill consumes.'
+description: 'Implement one or more specs from the specs/ directory, re-verifying every Senzing fact the spec asserts against the live Senzing MCP server before changing any code. With no argument, list every spec not yet implemented and ask the maintainer which one(s) to implement; with an argument, implement specs/<argument>.md (name without the .md suffix). Records completed specs in specs/IMPLEMENTED.md, and records any new invariant an implementation establishes in specs/INVARIANTS.md. Maintainer tool for developing the Senzing Bootcamp Claude Plugin (SBCP) — the counterpart to feedback-to-issues, which no longer produces specs (#49) — this skill consumes the frozen archive only.'
 ---
 
 # Implement Spec

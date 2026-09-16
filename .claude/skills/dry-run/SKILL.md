@@ -160,7 +160,7 @@ A dry-run finding is only half done when the plugin is fixed. Follow this for ea
    difference between a durable improvement and a good afternoon.
 
    - **File:** `specs/<kebab-case-title>.md`, using the shape in
-     `../feedback-to-specs/spec-template.md` — Problem, Root cause, Proposed change,
+     `../feedback-to-issues/issue-template.md` — Problem, Root cause, Proposed change,
      Acceptance criteria, Affected files, Source. Cite `file:line`, and date every MCP
      claim with the server version that produced it.
    - **When:** immediately for phase 3, because a walk stops on whatever turn the

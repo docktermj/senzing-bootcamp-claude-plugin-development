@@ -13,7 +13,7 @@ an issue". Follow `ground-rules.md`: one 👉 question per turn (INV-251), end t
 ## Step 0: Capture context silently
 
 Before asking anything, silently capture as much relevant context as possible, so
-the bootcamper never has to re-explain it and so `feedback-to-specs` can later
+the bootcamper never has to re-explain it and so the maintainer triage can later
 reconstruct the exact situation. Gather only from available sources — never ask an
 extra question for this — and record "Unknown"/"Unavailable" (never a guess) when a
 source is missing:

@@ -4,9 +4,10 @@ GitHub issues replaced `specs/` as the tracking mechanism at the **2026-09-15 cu
 (issue #52). The directory stays as the historical record of why the plugin reads as it
 does -- 519 files that `INVARIANTS.md` cites by slug -- but it is closed to new work.
 
-⛔ **A freeze stated only in prose is a convention, not a guarantee.** Four maintainer
-commands still write spec files (`/feedback-to-specs`, `/implement-spec`,
-`/unattended-spec-loop`, `/delegate-to-mcp-server`); their rework is issues #49/#50/#51.
+⛔ **A freeze stated only in prose is a convention, not a guarantee.** Maintainer commands
+still write spec files -- `/implement-spec` (#60), `/unattended-spec-loop` (#51) and
+`/delegate-to-mcp-server` (no issue yet). `/feedback-to-issues` was the fourth and files
+GitHub issues as of #49.
 Until those land, running one of them produces a file this guard rejects. That failure is
 the intended signal, which is why every message below names the freeze and points at
 `specs/README.md` rather than reporting a bare set difference.

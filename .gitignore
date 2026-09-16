@@ -9,7 +9,7 @@ __pycache__/
 # file for that, and so `propagate.sh`/`retrofit.sh` have a matching named exclude.
 .pytest_cache/
 
-# Maintainer feedback-to-specs input (local triage only; the specs it produces are committed).
+# Maintainer feedback-to-issues input (local triage only; it files GitHub issues, #49).
 # The glob covers the numbered variants a multi-bootcamp triage round produces
 # (…_01.md, …_13.md), not just the bare filename.
 # Root-anchored on purpose: the transient working copy is ignored, while the processed
