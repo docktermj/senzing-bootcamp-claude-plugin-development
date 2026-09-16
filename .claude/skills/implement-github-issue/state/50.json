@@ -1,0 +1,22 @@
+{
+  "issue": 50,
+  "branch": "50-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): copy the global implement-github-issue SKILL.md into .claude/skills/, add .claude/commands/implement-github-issue.md carrying the invariant-capture gate and a PARENT_VERSION scope note, guard both with a new test, docs/development.md entry. Retirement of /implement-spec split to its own issue (needs an INV-216 correction under /review-invariants).",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications",
+    "result"
+  ],
+  "gate2_approved": true,
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/61",
+  "spinoff_issues": [
+    60
+  ],
+  "issue_corrections": [
+    "the skill existed globally (~/.claude/skills), not in-project; no guard here could see it",
+    "retiring /implement-spec needs an append-only INV-216 correction under /review-invariants; split to #60",
+    "PARENT_VERSION has no referent in this repo (parent), so the clause is scoped not implemented"
+  ]
+}
