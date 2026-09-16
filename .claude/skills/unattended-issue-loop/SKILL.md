@@ -214,8 +214,8 @@ files.** Its `SKILL.md` still says *"Write it into `specs/` as you find it"*, an
 is a read-only archive (INV-307) — so an unattended audit would produce output the freeze
 guard **rejects**, and this loop's stop condition would be measured against files that
 cannot land. ⚠️ **Until that is fixed, run the implement half only and stop after one
-cycle**, recording in the handoff that the audit was skipped and why. Filed separately;
-see the issue named in this repository's tracker for `/production-readiness-audit`.
+cycle**, recording in the handoff that the audit was skipped and why. Tracked as **#69**;
+this note is removed in the same change that fixes it.
 
 ⚠️ **The audit reports; it does not fix in place.** That is its own rule
 ("present findings and let the maintainer choose what to fix"), and here it is also what
