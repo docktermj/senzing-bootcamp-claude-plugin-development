@@ -118,6 +118,33 @@ class TheQueueCountsBlocksNotMentions(unittest.TestCase):
                 "checked none — the scan is broken, not the queue empty.",
             )
 
+    def test_check_resolves_every_path_a_rule_names(self):
+        """A named path that does not resolve leaves its quote unverified (#59).
+
+        ⛔ **This is the assertion that makes the new counter load-bearing.** Before #59
+        `check` skipped an unresolvable location without counting it, so a run that verified
+        nothing printed `0 rule quotes checked, 0 mismatched` — indistinguishable from a
+        clean run, and presented as one to the maintainer in three consecutive reviews.
+
+        ⚠️ `check` deliberately still exits 0 in this condition, so that callers expecting a
+        zero status keep working and `helper()` above keeps its `returncode == 0` assertion.
+        The warning is the human-facing signal; **this test is the enforcing one**, and
+        without it the improved output would be advice nobody is held to.
+
+        ⚠️ Counted apart from `no-prose-site`, which is legitimate: a rule encoded in code or
+        tests rather than stated in prose names no path, owes nothing, and must not make this
+        fail — INV-301 and INV-304..307 all take that form.
+        """
+        out = helper("check")
+        m = re.search(r"(\d+) unresolved", out)
+        self.assertIsNotNone(
+            m, f"`check` no longer reports an unresolved count; the #59 counter is gone "
+               f"and an unverifiable quote is silent again:\n{out[:300]}")
+        self.assertEqual(
+            "0", m.group(1),
+            f"a deferral names a path that does not resolve under any resolution root, so "
+            f"its quote is UNVERIFIED while the queue reads as checked:\n{out}")
+
     def test_next_id_is_one_past_the_highest(self):
         inv = (REPO / "specs" / "INVARIANTS.md").read_text(encoding="utf-8")
         highest = max(int(x) for x in re.findall(r"\*\*INV-(\d{3})\*\*", inv))

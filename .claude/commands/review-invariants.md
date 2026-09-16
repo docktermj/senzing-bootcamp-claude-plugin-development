@@ -18,6 +18,12 @@ the pending blocks, the count and the next free ID, then `pending_invariants.py 
 rule quote that is not verbatim in the file it names is not a wording to approve from** —
 truncated, paraphrased or since reworded — so fix the quote against its source first.
 
+⛔ **`check` reports four counts and the mismatch count is not the only one that matters.** A
+non-zero **unresolved** means a bullet names a path that does not exist, so its quote is
+**unverified** — not clean. **checked = 0** means nothing was verified: an *empty* check, not a
+clean one. **no-prose-site** is legitimate and owes nothing. ⚠️ Report the counts to the
+maintainer as they are; do not paraphrase an empty check as a passing one.
+
 ⛔ **This skill NEVER signs off an invariant.** It presents, it asks, it waits, and it executes
 what the maintainer decided. **A verdict the maintainer did not give is not a default to
 choose** — that is the entire reason the deferral exists.

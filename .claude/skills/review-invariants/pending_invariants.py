@@ -130,9 +130,23 @@ def next_id():
     return max(ids) + 1
 
 
+#: Where a rule location may live, in order. ⛔ THE ONE DEFINITION -- `cmd_check` calls
+#: `resolve` rather than repeating the lookup, and `tests/test_deferral_quotes_match_their_source.py`
+#: imports this module rather than keeping a copy. Three implementations existed until #59;
+#: `conformance.py`'s 2026-09-14 widening is the cautionary case, where a second copy of the
+#: roots stayed at the old scope and its guard passed only because nothing had yet used the new.
+#:
+#: ⚠️ `REPO` is last and is what makes a repo-relative path resolve -- `tests/test_x.py`,
+#: `.claude/commands/y.md`, `specs/INVARIANTS.md`. Before #59 the roots were the three PLUGIN
+#: bases alone, so every rule outside `plugins/` failed to resolve and was **skipped without
+#: being counted**. It is a root rather than an allowlist of directories deliberately: a list
+#: goes stale as the repo grows, and going stale here is silent.
+RESOLUTION_ROOTS = (PLUGIN / "skills", PLUGIN / "scripts", PLUGIN, REPO)
+
+
 def resolve(loc):
-    """Resolve a ledger location to a real shipped file, by PATH not basename."""
-    for base in (PLUGIN / "skills", PLUGIN / "scripts", PLUGIN):
+    """Resolve a ledger location to a real file, by PATH not basename. None if nowhere."""
+    for base in RESOLUTION_ROOTS:
         if (base / loc).is_file():
             return base / loc
     return None
@@ -214,9 +228,15 @@ def cmd_sites(n):
     p = _pick(n)
     print(f"== sites for {n}. {p['spec']} ==\n")
     print("-- NAMED by the deferral (definite) --")
+    # ⚠️ An empty NAMED set printed as a bare heading reads as absence of OUTPUT rather than
+    # as a measured result, and the candidate note below then told the maintainer the named
+    # sites were "likely the whole set" -- over a set with nothing in it (#59).
     for s in sorted(set(p["sites"])):
         n = p["sites"].count(s)
         print(f"  {s}" + (f"   ({n} rules)" if n > 1 else ""))
+    if not p["sites"]:
+        print("  (none — this block names no site; its rule is stated in the "
+              "no-prose-site form)")
 
     # Terms weighted by RARITY. An unweighted overlap matches on "module", "whether",
     # "already" -- words in almost every shipped file -- and buries the real candidate in
@@ -234,8 +254,20 @@ def cmd_sites(n):
     # Only paths that RESOLVE under plugins/ are candidate sites. A block also names its
     # enforcer test, `specs/INVARIANTS.md` and generated artifacts; none of those is a
     # place a citation goes, and listing them buries the one that is.
+    # ⛔ The exclusion below was IMPLICIT until #59 and broke the moment resolution widened.
+    # This comment already said the enforcer test, `specs/INVARIANTS.md` and generated
+    # artifacts are not citation sites -- but nothing enforced it: `resolve()` searched
+    # `plugins/` only, so those paths simply failed to resolve and fell out for the wrong
+    # reason. Widening the roots made all three appear, burying the one candidate that
+    # matters. That is the same shape as the stale second copy of roots this widening was
+    # filed to remove, one level further in: a behavior resting on a narrow root rather
+    # than on a stated rule. It is now stated.
+    NOT_A_SITE = {"specs/IMPLEMENTED.md", "specs/INVARIANTS.md", "specs/DECLINED.md"}
     prose = {m for m in re.findall(r"`([a-z0-9][\w./-]*\.(?:md|py))`", p["text"])
-             if m not in named and "/" in m and resolve(m) is not None}
+             if m not in named and "/" in m and resolve(m) is not None
+             and m not in NOT_A_SITE
+             and m != (f"tests/{p['enforcer']}" if p["enforcer"] else None)
+             and m != p["enforcer"]}
     if prose:
         print("\n-- NAMED in the block's PROSE but not as a bullet (check these first) --")
         for s in sorted(prose):
@@ -255,30 +287,71 @@ def cmd_sites(n):
                 hits += 1
                 print(f"  {rel}:{i}   shares: {', '.join(sorted(overlap)[:5])}")
     if not hits:
-        print("  (none — the named sites are likely the whole set, but read them to confirm)")
+        # ⛔ This line used to read "the named sites are likely the whole set". That is a
+        # reassurance the scan cannot support and is FLATLY WRONG when nothing was named
+        # either -- the one case where it was certain to mislead (#59). The scan reads
+        # `plugins/` only, so finding nothing is evidence about `plugins/`, not about the set.
+        print("  (none found)")
+        if not p["sites"]:
+            print("\n  ⛔ NOTHING was named and NOTHING was found. That is not evidence the "
+                  "site set is\n     complete: this scan covers `plugins/` only, so a rule "
+                  "living in `tests/`,\n     `.claude/` or `specs/` is invisible to it (#59). "
+                  "Derive the sites by reading.")
+        else:
+            print("     (the scan covers `plugins/` only — a site elsewhere is invisible "
+                  "to it)")
 
 
 def cmd_check():
-    """Every rule quote must appear verbatim in the file it names."""
-    bad = checked = 0
+    """Every rule quote must appear verbatim in the file it names.
+
+    ⛔ **A count of what was checked is not a result** unless what was NOT checked is
+    reported beside it. Until #59 this printed `checked` and `mismatched` only, and both
+    skip paths below incremented neither -- so a run that verified nothing printed
+    `0 rule quotes checked, 0 mismatched`, which is typographically identical to a clean
+    run over a full queue. That reached the maintainer as a clean check three reviews
+    running (2026-09-02, 2026-09-14, 2026-09-16), each time over a queue it had not read.
+
+    ⚠️ **The two skip causes mean opposite things and are counted apart.**
+
+    * `no_site` -- the bullet names no path (`(no prose site: ...)`). Legitimate: the rule
+      is encoded in code or tests rather than stated in prose, which is the form INV-301
+      and INV-304..307 all use. Nothing is owed and nothing is wrong.
+    * `unresolved` -- a path WAS named and does not resolve under any of RESOLUTION_ROOTS.
+      ⛔ This is the alarming one: the block asserts its rule lives somewhere, and the
+      quote behind that assertion is unverified. Reported as a warning, by name.
+
+    Collapsing the two would either cry wolf on every no-prose-site block or keep hiding
+    the real failure, which is how the defect survived this long.
+    """
+    bad = checked = unresolved = no_site = 0
     for p in [parse(b) for b in blocks()]:
         for r in p["rules"]:
             quote, _, loc = r.rpartition(" — in ")
-            if loc.startswith("("):          # no path named; nothing to check against
+            if loc.startswith("("):
+                no_site += 1
                 continue
-            f = None
-            for base in (PLUGIN / "skills", PLUGIN / "scripts", PLUGIN):
-                if (base / loc).is_file():
-                    f = base / loc
-                    break
+            f = resolve(loc)
             if f is None:
+                unresolved += 1
+                print(f"  UNRESOLVED {p['spec']}\n    names `{loc}` — no such file under "
+                      f"any resolution root")
                 continue
             checked += 1
             src = CITED.sub("", flat(f.read_text(encoding="utf-8")))
             if CITED.sub("", quote).strip() not in src:
                 bad += 1
                 print(f"  MISMATCH {p['spec']}\n    {quote[:110]}")
-    print(f"{checked} rule quotes checked, {bad} mismatched")
+    print(f"{checked} rule quotes checked, {bad} mismatched, "
+          f"{unresolved} unresolved, {no_site} no-prose-site")
+    if unresolved:
+        print(f"\n  ⛔ WARNING: {unresolved} rule(s) name a path that did not resolve, so "
+              f"their quotes are UNVERIFIED.\n     This is not a clean check. Fix the path, "
+              f"or state the rule in the no-prose-site form.")
+    elif not checked:
+        print(f"\n  ⚠️  NOTE: no quote was verified — {no_site} rule(s) name no prose site "
+              f"and nothing else was\n     available to check. This is an empty check, not "
+              f"a clean one.")
 
 
 def main(argv):

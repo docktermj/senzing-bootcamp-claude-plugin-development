@@ -109,6 +109,19 @@ Every rule quote must appear verbatim in the file it names. A mismatch means the
 quotes something the plugin does not say — truncated, paraphrased, or since reworded — and
 **that is not a wording to approve from**. Fix the quote against its source first.
 
+⛔ **Read all four counts, not the mismatch count alone.** `check` reports
+`<n> checked, <n> mismatched, <n> unresolved, <n> no-prose-site`:
+
+- **unresolved** — a bullet names a path that does not exist. ⛔ Its quote is **unverified**,
+  and this is not a clean check. Fix the path before quoting the block.
+- **no-prose-site** — the bullet names no path because the rule is encoded in code or tests
+  rather than stated in prose. Legitimate; nothing is owed.
+- **checked = 0** — nothing was verified. ⚠️ An **empty** check, not a clean one.
+
+⚠️ Until #59 this printed only the first two counts and skipped the rest without counting
+them, so a run that verified nothing read exactly like a run that verified everything — and
+was presented to the maintainer as clean in three consecutive reviews.
+
 ## Step 2: Present one invariant
 
 One at a time. Do not batch — the maintainer is deciding, not skimming.

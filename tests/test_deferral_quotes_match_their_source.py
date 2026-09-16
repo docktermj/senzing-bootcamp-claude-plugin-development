@@ -22,6 +22,7 @@ anything. The drafted wording is new text and has nothing to be verbatim against
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 
+import importlib.util
 import re
 import unittest
 from pathlib import Path
@@ -29,6 +30,37 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 PLUGIN = REPO / "plugins" / "senzing-bootcamp"
 LEDGER = REPO / "specs" / "IMPLEMENTED.md"
+HELPER = REPO / ".claude" / "skills" / "review-invariants" / "pending_invariants.py"
+
+
+def _helper():
+    """Import `pending_invariants.py` so its resolution roots are used, not copied.
+
+    ⛔ **This file kept a THIRD copy of `resolve()` until #59** -- the skill's helper had
+    one, `cmd_check` inlined a second, and this guard reimplemented a third. A widening
+    that reached two of the three would leave this guard disagreeing with the tool it
+    guards, which is exactly how `conformance.py`'s 2026-09-14 widening shipped a stale
+    second copy that passed only because nothing had yet used the new scope.
+
+    ⚠️ **The trade is real and is accepted deliberately:** importing the module under test
+    means this guard can no longer catch the resolver itself being wrong -- if `resolve`
+    goes blind, both sides go blind together. That is the right trade here because this
+    guard's subject is the **ledger's quotes**, not the resolver; `tests/test_review_invariants_queue.py`
+    exercises the helper's reported counts from the outside, which is where a broken
+    resolver now surfaces (as `unresolved`, which it asserts is zero).
+
+    Stdlib only (INV-108): `importlib` loads a file in this repository, not a package.
+    """
+    spec = importlib.util.spec_from_file_location("pending_invariants", HELPER)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_HELPER_MOD = _helper()
+#: The one definition, imported rather than restated.
+resolve = _HELPER_MOD.resolve
+RESOLUTION_ROOTS = _HELPER_MOD.RESOLUTION_ROOTS
 
 # `⛔ **<quote>** ... — in `<path>`` -- the shape every deferral rule bullet uses.
 #
@@ -52,21 +84,6 @@ def flat(s):
     carries a citation the deferral's quote predates. Neither difference is a misquote.
     """
     return CITATION.sub("", re.sub(r"\s+", " ", s)).strip()
-
-
-def resolve(loc):
-    """Resolve a ledger location to a real file, by PATH not basename.
-
-    ⚠️ The first version of this check keyed a corpus on `path.name`, so every
-    `module-NN.../SKILL.md` collapsed onto one entry and each quote was compared against
-    whichever module happened to be read last. It reported six false mismatches on
-    already-correct lines. The location is a path; resolve it as one.
-    """
-    for base in (PLUGIN / "skills", PLUGIN / "scripts", PLUGIN):
-        candidate = base / loc
-        if candidate.is_file():
-            return candidate
-    return None
 
 
 def quoted_rules():
