@@ -5,9 +5,10 @@ GitHub issues replaced `specs/` as the tracking mechanism at the **2026-09-15 cu
 does -- 519 files that `INVARIANTS.md` cites by slug -- but it is closed to new work.
 
 ⛔ **A freeze stated only in prose is a convention, not a guarantee.** Maintainer commands
-still write spec files -- `/unattended-spec-loop` (#51) and `/delegate-to-mcp-server` (no
-issue yet). `/feedback-to-issues` files GitHub issues as of #49, and `/implement-spec` was
-retired under #60.
+still write spec files -- `/production-readiness-audit` (its own issue) and
+`/delegate-to-mcp-server` (no issue yet). `/feedback-to-issues` files GitHub issues as of #49,
+`/implement-spec` was retired under #60, and `/unattended-issue-loop` became label-gated under
+#51 with its audit half blocked for exactly this reason.
 Until those land, running one of them produces a file this guard rejects. That failure is
 the intended signal, which is why every message below names the freeze and points at
 `specs/README.md` rather than reporting a bare set difference.
