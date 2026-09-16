@@ -1,0 +1,11 @@
+{
+  "issue": 49,
+  "branch": "49-docktermj-1",
+  "phase": "implement",
+  "approach": "Direct (5a): git mv skill+command to feedback-to-issues, spec-template.md -> issue-template.md carrying the MCP re-check/owner-checked line, Step 7 rewritten to file GitHub issues in this repo only, dedup adds a gh issue search, 5 test paths re-pointed, DEFERRED INVARIANT for INV-213 covering issues.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications"
+  ]
+}
