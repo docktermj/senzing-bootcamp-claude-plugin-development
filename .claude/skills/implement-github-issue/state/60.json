@@ -1,0 +1,11 @@
+{
+  "issue": 60,
+  "branch": "60-docktermj-1",
+  "phase": "implement",
+  "approach": "Direct (5a), ordered transfer-then-retire: /implement-github-issue gains the MCP re-check + absence-claim blocker + decline section; 7 guards re-pointed; then implement-spec command + SKILL.md deleted, list_specs.py KEPT so INV-216 needs no amendment; one DEFERRED INVARIANT block for the INV-207/213/217 actor change.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications"
+  ]
+}
