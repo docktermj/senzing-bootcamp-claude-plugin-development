@@ -109,7 +109,7 @@ Every rule quote must appear verbatim in the file it names. A mismatch means the
 quotes something the plugin does not say — truncated, paraphrased, or since reworded — and
 **that is not a wording to approve from**. Fix the quote against its source first.
 
-⛔ **Read all four counts, not the mismatch count alone.** `check` reports
+⛔ **(INV-308) Read all four counts, not the mismatch count alone.** `check` reports
 `<n> checked, <n> mismatched, <n> unresolved, <n> no-prose-site`:
 
 - **unresolved** — a bullet names a path that does not exist. ⛔ Its quote is **unverified**,

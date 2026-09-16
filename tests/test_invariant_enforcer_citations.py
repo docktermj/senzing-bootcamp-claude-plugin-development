@@ -304,7 +304,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # back, and the second one legitimately: that file's either/or acceptance of a Source citation
 # is exactly what makes INV-307's deletion direction necessary, so a reader arriving at either
 # guard needs the other. Re-derived by running the extractor -- 124, both pairs present by name.
-EXPECTED_PAIRS = 124
+# 125 on 2026-09-16: INV-308 (a verification tool reports what it could not verify) names
+# test_review_invariants_queue.py, which cites it back. Re-derived by running the
+# extractor -- 125, with the new pair present by name. Only +1, unlike INV-307's +2:
+# this invariant names no second test file in its body.
+EXPECTED_PAIRS = 125
 
 
 def pairs():
