@@ -1,0 +1,19 @@
+{
+  "issue": 59,
+  "branch": "59-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): RESOLUTION_ROOTS exported + repo root added; cmd_check calls resolve() and counts unresolved vs no-prose-site separately with a warning; sites stops implying completeness; guard imports the roots instead of a third copy; new assertion that unresolved==0.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications",
+    "result"
+  ],
+  "gate2_approved": true,
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/62",
+  "issue_corrections": [
+    "three copies of the resolver, not two (the guard had a third)",
+    "test_review_invariants_queue.py:42 asserts returncode==0, ruling out the issue's non-zero-exit suggestion",
+    "the issue collapsed two skip causes (no-prose-site vs unresolved) that mean opposite things"
+  ]
+}
