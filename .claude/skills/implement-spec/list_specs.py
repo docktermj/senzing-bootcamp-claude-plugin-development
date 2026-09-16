@@ -45,8 +45,10 @@ import os
 import re
 import sys
 
-#: Meta files under `specs/` that are not specs.
-META = {"IMPLEMENTED", "INVARIANTS", "DECLINED", "todo"}
+#: Meta files under `specs/` that are not specs. `README` joined them when `specs/` was
+#: frozen (#52): it is the freeze notice, and without it here the notice reports itself as
+#: the one open spec candidate in an archive that is closed to new work.
+META = {"IMPLEMENTED", "INVARIANTS", "DECLINED", "todo", "README"}
 #: A ledger entry heading: `## <spec-name>`, one token, no spaces.
 LEDGER_HEAD = re.compile(r"^## (\S+)\s*$", re.M)
 

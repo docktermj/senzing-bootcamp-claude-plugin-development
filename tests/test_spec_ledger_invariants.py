@@ -32,6 +32,15 @@ written, *why* (the ledger is inside the corpus the scan reads), and that a test
 a verdict. The detection itself belongs to `citations.py verify`, which caught all three
 instances; what this file guards is that the ordering instruction cannot be quietly dropped.
 
+⚠️ **Named by INV-307, and the reason its deletion direction exists.** The backward check
+below accepts a `Source:` citation that resolves to **either** a file under `specs/` **or** an
+entry in `IMPLEMENTED.md`. That tolerance is deliberate and correct -- 92 ledger entries have no
+spec file -- but it means deleting a spec that happens to be ledgered passes this guard while
+destroying the reasoning the invariant points at. `tests/test_specs_are_frozen.py` is what
+closes that, by pinning the archive's filenames; six citations already resolve through the
+ledger alone. ⛔ Do not "tighten" the either/or above to require a file: that would fail the
+92 legitimately file-less entries. The two guards are complementary, not redundant.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
