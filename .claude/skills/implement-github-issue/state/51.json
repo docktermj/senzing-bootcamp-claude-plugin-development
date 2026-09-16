@@ -1,0 +1,11 @@
+{
+  "issue": 51,
+  "branch": "51-docktermj-1",
+  "phase": "implement",
+  "approach": "Direct (5a): git mv skill dir + command to unattended-issue-loop; read open issues labeled unattended-ok (label created by the maintainer); blocked path comments on the issue and removes the label; audit half marked blocked pending a new issue for /production-readiness-audit; re-point 2 tests, conformance.py, docs.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications"
+  ]
+}
