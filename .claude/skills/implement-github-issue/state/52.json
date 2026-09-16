@@ -1,0 +1,12 @@
+{
+  "issue": 52,
+  "branch": "52-docktermj-1",
+  "phase": "gate2",
+  "approach": "Direct (5a): specs/README.md freeze notice + cutover date, specs/FROZEN-MANIFEST.txt pinning the spec set, tests/test_specs_are_frozen.py guarding both directions, IMPLEMENTED.md run entry + DEFERRED INVARIANT block. Three ledgers stay live and exempt; spec-writing skills untouched (#49/#50/#51).",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications"
+  ],
+  "ci_mirror": "both fpdf2 cells green: present 4251 OK (skipped=4), absent 4251 OK (skipped=66); citations.py verify clean"
+}
