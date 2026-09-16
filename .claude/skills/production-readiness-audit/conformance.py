@@ -313,7 +313,7 @@ def _widen_past_a_work_commit(repo, ref, entry):
     ship with no invariant and no deferral, which is the 2026-08-17 defect.
 
     ⚠️ **Everything downstream inherits it**: `tests/test_new_hard_rules_are_cited_or_deferred`
-    SKIPS on "nothing added", so it goes green by not running, and the `unattended-spec-loop`
+    SKIPS on "nothing added", so it goes green by not running, and the `unattended-issue-loop`
     set-difference script iterates an empty list.
 
     ⚠️ **What the probe sees is itself a measured question, not an obvious one** -- see the

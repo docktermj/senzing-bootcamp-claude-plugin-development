@@ -116,9 +116,9 @@ compared, and a count in prose goes stale silently while reading authoritative.
 
 ⛔ **(INV-307) `specs/` is frozen as of the 2026-09-15 cutover; new work is tracked as
 GitHub issues.** See [`specs/README.md`](../specs/README.md). The commands below that write spec
-files — `/unattended-spec-loop` and
+files — `/unattended-issue-loop` and
 `/delegate-to-mcp-server` — produce output the freeze guard rejects, so do not run them
-until their rework lands (`/unattended-spec-loop` → #51; `/delegate-to-mcp-server` has no issue yet). `/implement-spec` was retired under #60. `IMPLEMENTED.md`, `DECLINED.md` and
+until their rework lands (`/delegate-to-mcp-server` has no issue yet). `/implement-spec` was retired under #60, and `/unattended-issue-loop` is label-gated as of #51 — its audit half stays blocked while `/production-readiness-audit` writes specs. `IMPLEMENTED.md`, `DECLINED.md` and
 `INVARIANTS.md` are **not** frozen and are still written to.
 
 ### Triage feedback
@@ -133,7 +133,7 @@ until their rework lands (`/unattended-spec-loop` → #51; `/delegate-to-mcp-ser
 1. `/compact-dev-environment` - Try to compact the plugin.
 1. `/production-readiness-audit` - Do a thorough static review.
 1. `/dry-run` - Do a thorough runtime review.
-1. `/unattended-spec-loop` - Work the specs/ backlog unattended, alternating implement and audit.
+1. `/unattended-issue-loop` - Work the `unattended-ok` issues unattended, alternating implement and audit.
 
 ### Publish
 
