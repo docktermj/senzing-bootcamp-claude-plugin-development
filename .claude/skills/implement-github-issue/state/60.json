@@ -1,7 +1,7 @@
 {
   "issue": 60,
   "branch": "60-docktermj-3",
-  "phase": "gate2-approved-pending-push",
+  "phase": "pr-open",
   "approach": "Direct (5a): delete implement-spec command + SKILL.md, KEEP list_specs.py; re-point 7 anchors; re-point /unattended-spec-loop to /implement-github-issue; drop the two INV-216-naming assertions; remove the now-false duplication note.",
   "gate1_approved": true,
   "comments_posted": [
@@ -9,11 +9,12 @@
     "clarifications",
     "result",
     "started-2",
-    "clarifications-2"
+    "clarifications-2",
+    "result-2"
   ],
   "gate2_approved": true,
   "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/66",
-  "issue_stays_open": true,
+  "issue_stays_open": false,
   "blocked_on": "INV-216 amendment (its 2nd/3rd clauses bind implement-spec's own prose) and INV-207's Step 4 pins; needs /review-invariants sign-off",
   "remaining_work": "delete implement-spec command + SKILL.md, keep list_specs.py, re-point the 7 anchors",
   "issue_corrections": [
@@ -28,5 +29,6 @@
     "scope": "transfer half; merged"
   },
   "unblocked_by": "PR #67 amended INV-216/INV-207/INV-213/INV-217",
-  "increment_2_summary": "retirement complete; two unplanned gaps closed (INV-207 amendment content never written; five spec-era assertions split by subject)"
+  "increment_2_summary": "retirement complete; two unplanned gaps closed (INV-207 amendment content never written; five spec-era assertions split by subject)",
+  "pr_increment_2": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/68"
 }
