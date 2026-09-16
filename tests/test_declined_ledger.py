@@ -41,7 +41,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SPECS = REPO_ROOT / "specs"
 DECLINED = SPECS / "DECLINED.md"
 IMPLEMENTED = SPECS / "IMPLEMENTED.md"
-SKILL = REPO_ROOT / ".claude" / "skills" / "implement-spec" / "SKILL.md"
+SKILL = REPO_ROOT / ".claude" / "commands" / "implement-github-issue.md"
+SCRIPT = REPO_ROOT / ".claude" / "skills" / "implement-spec" / "list_specs.py"
 REPORTS = REPO_ROOT / ".claude" / "skills" / "dry-run" / "coverage_reports.py"
 
 HEADING = re.compile(r"^## (.+)$", re.M)
@@ -251,39 +252,66 @@ class TheTwoLedgersAgree(unittest.TestCase):
                                  "%s was archived; a declined spec stays in specs/" % name)
 
 
-class TheSkillKnowsAboutIt(unittest.TestCase):
-    """A ledger nothing reads is a file, not a mechanism."""
+class TheComputationStillSubtractsTheDeclinedSet(unittest.TestCase):
+    """INV-216's FIRST clause, which is untouched and still binding.
+
+    ⚠️ **Re-pointed 2026-09-16 (#60).** These two assertions read `implement-spec/SKILL.md`
+    until that skill retired. What they actually test is the **candidate-set computation** --
+    that a declined item is subtracted rather than re-offered -- and that computation lives in
+    `list_specs.py`, which is **kept**: INV-216's first clause still binds it. The script, not
+    the prose, is the thing that must not regress.
+
+    ⛔ INV-216's second and third clauses -- that a command NAMES the script, and that its prose
+    steps explain it -- were scoped to the archive by a dated correction on 2026-09-16, so no
+    assertion here reads a command file any more.
+    """
+
+    def setUp(self):
+        self.text = SCRIPT.read_text(encoding="utf-8")
+
+    def test_the_declined_set_is_subtracted(self):
+        flat = " ".join(self.text.split())
+        self.assertIn("candidates - implemented - declined", flat.replace("−", "-"),
+                      "the computation no longer subtracts the declined set, so a declined "
+                      "item is re-offered every run")
+
+    def test_declined_md_is_treated_as_a_meta_file(self):
+        self.assertIn(
+            '"DECLINED"', self.text,
+            "DECLINED.md is no longer in the script's META set, so it would be counted as a "
+            "candidate spec rather than as a terminal-state ledger")
+
+
+class TheIssuePathKnowsAboutIt(unittest.TestCase):
+    """The live decline rule, which moved to the issue command in #66.
+
+    ⛔ **Two assertions were DROPPED here on 2026-09-16 (#60), not re-pointed**, because their
+    subject retired rather than moved:
+
+    * *"Leave the spec file where it is"* -- `specs/` is a read-only archive (INV-307); nothing
+      writes there, so an instruction not to move a spec file governs nothing.
+    * *dedup visibility for a declined spec* -- deduplication moved to `/feedback-to-issues`,
+      which searches the **issue tracker** (#49), and is asserted by that command's own guard.
+
+    Keeping either by pointing it at the issue command would have written spec-workflow prose
+    into a command about issues -- an assertion passing on text that describes nothing.
+    """
 
     def setUp(self):
         self.text = SKILL.read_text(encoding="utf-8")
 
-    def test_step_1_subtracts_the_declined_set(self):
-        flat = " ".join(self.text.split())
-        self.assertIn("candidates − implemented − declined", flat,
-                      "Step 1 still computes only candidates − implemented, so a declined "
-                      "spec is re-offered every run")
-
-    def test_declined_md_is_listed_as_a_meta_file(self):
-        self.assertRegex(self.text, r"`DECLINED\.md`\s*—")
-
     def test_it_forbids_declining_unilaterally(self):
         flat = " ".join(self.text.split())
-        self.assertRegex(flat, r"(?i)Never decline a spec on your own initiative")
+        self.assertRegex(
+            flat, r"(?i)Never decline on your own initiative",
+            "the decline rule no longer reserves the decision to the maintainer. Deciding NOT "
+            "to build something is theirs (INV-217); a run that may decline can retire work "
+            "nobody ruled on")
 
     def test_it_requires_a_reason_and_a_revisit_condition(self):
         flat = " ".join(self.text.split())
         self.assertIn("**Reason:**", flat)
         self.assertIn("**Revisit if:**", flat)
-
-    def test_it_says_the_spec_file_stays_put(self):
-        flat = " ".join(self.text.split())
-        self.assertRegex(flat, r"(?i)Leave the spec file where it is")
-
-    def test_it_preserves_dedup_visibility(self):
-        """A declined spec must still be found by feedback triage, or the next entry on the
-        same subject produces a duplicate spec."""
-        flat = " ".join(self.text.split())
-        self.assertRegex(flat, r"(?i)deduplication|deduplicat")
 
 
 class TheCensusSeparatesTheTwoStates(unittest.TestCase):
@@ -443,11 +471,11 @@ class AnAbsenceClaimNamesItsOwningRoute(unittest.TestCase):
         Scoped to the decline section, not the whole file: `MCP-NEGATIVE` appears in Step 3.4
         already, and a whole-file check would therefore have passed before this shipped.
         """
-        section = skill_section(SKILL.read_text(encoding="utf-8"), "Declining a spec")
-        self.assertTrue(section, "the decline section is gone from implement-spec/SKILL.md")
+        section = skill_section(SKILL.read_text(encoding="utf-8"), "Declining an issue")
+        self.assertTrue(section, "the decline section is gone from implement-github-issue.md")
         self.assertIn(
             "MCP-NEGATIVE", section,
-            "implement-spec's decline section must show the marker form for an absence-shaped "
+            "the decline section must show the marker form for an absence-shaped "
             "`Revisit if:`, or the next entry is written without one — and nothing re-verifies "
             "DECLINED.md afterwards",
         )

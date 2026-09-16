@@ -179,7 +179,7 @@ A dry-run finding is only half done when the plugin is fixed. Follow this for ea
      `write-location-gate.py` blocks system-temp paths, so a `/tmp/...` note fails outright.
      Not repo `tmp/` either — it is not gitignored, so it becomes untracked clutter that
      "leave the repo with only intended changes" then tells you to delete. `specs/` is the
-     home, and it has the additional property that `/implement-spec` lists it as
+     home, and it has the additional property that `list_specs.py` lists it as
      outstanding work.
 
    Phase 3's collapsed test-notes blocks are *working notes* — the running observation

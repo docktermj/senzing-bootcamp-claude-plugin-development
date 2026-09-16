@@ -464,16 +464,16 @@ class TestTheLedgerIsVerifiedAfterItIsWritten(unittest.TestCase):
     as clean. Ordering is the fix, so the ordering instruction is what gets pinned.
     """
 
-    SKILL = REPO_ROOT / ".claude" / "skills" / "implement-spec" / "SKILL.md"
+    SKILL = REPO_ROOT / ".claude" / "commands" / "implement-github-issue.md"
 
     def setUp(self):
-        self.assertTrue(self.SKILL.is_file(), "implement-spec/SKILL.md moved — re-point this guard")
+        self.assertTrue(self.SKILL.is_file(), "implement-github-issue.md moved — re-point this guard")
         self.body = self.SKILL.read_text(encoding="utf-8")
 
     def step_four(self):
         """Step 4 only: the instruction has to live in the step that writes the entry."""
         start = self.body.index("## Step 4: Record the implementation")
-        end = self.body.index("## Declining a spec instead of implementing it", start)
+        end = self.body.index("## Declining an issue instead of implementing it", start)
         return re.sub(r"\s+", " ", self.body[start:end]).replace("**", "")
 
     def test_step_four_requires_the_scan_after_the_entry(self):

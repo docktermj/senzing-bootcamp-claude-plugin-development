@@ -9,7 +9,7 @@ This is a **maintainer** tool for developing the Senzing Bootcamp Claude Plugin
 (SBCP). It is never invoked during a bootcamp.
 
 A deferred invariant is a **rule that is already shipping** in the plugin, guarded by a
-test, and recorded in no invariant. `implement-spec` and `unattended-spec-loop` produce
+test, and recorded in no invariant. `/implement-github-issue` and `unattended-spec-loop` produce
 them by design: minting an invariant is the maintainer's alone, so an implementation that
 ships a hard rule writes a `DEFERRED INVARIANT` block instead of registering one. This
 skill is where those blocks get decided.

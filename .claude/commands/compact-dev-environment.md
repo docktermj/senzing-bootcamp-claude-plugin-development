@@ -50,7 +50,7 @@ history for a rule they do not know exists.
 which, and the delete is the one that needed the attention.
 
 **Semantic changes go through a spec** — merging invariants, demoting one, deleting a test or a
-spec. Write the spec and let `implement-spec` execute it; the spec is where the reasoning
+spec. File the issue and let `/implement-github-issue` execute it; the issue is where the reasoning
 survives. **Mechanical changes may be executed here**, one class at a time, each with an
 explicit yes, each followed by `citations.py verify` and the full suite, reporting both.
 

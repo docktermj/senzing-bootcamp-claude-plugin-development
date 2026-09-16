@@ -77,7 +77,7 @@ class NeitherSetIsEmpty(unittest.TestCase):
             len(shipped), 3,
             "fewer than three command files were found in %s; the glob has drifted and the "
             "comparison below proves nothing" % COMMANDS_DIR)
-        self.assertIn("/implement-spec", shipped,
+        self.assertIn("/implement-github-issue", shipped,
                       "the command glob is missing one certainly present; the pattern is wrong")
 
     def test_the_docs_list_parsed(self):
@@ -86,7 +86,7 @@ class NeitherSetIsEmpty(unittest.TestCase):
             len(documented), 3,
             "the command list in docs/development.md parsed to fewer than three entries; the "
             "line pattern has drifted from the list's shape")
-        self.assertIn("/implement-spec", documented)
+        self.assertIn("/implement-github-issue", documented)
 
 
 class TheTwoSetsAgree(unittest.TestCase):

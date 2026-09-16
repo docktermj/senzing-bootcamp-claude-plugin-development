@@ -59,7 +59,7 @@ rsync -a --delete "$here/.claude-plugin/" "$dest/.claude-plugin/"
 
 # `docs/` is mirrored as a USER-FACING directory, but the dev repo keeps one
 # maintainer-only file in it: `docs/development.md`, the development-loop index
-# (`/feedback-to-issues`, `/implement-spec`, `/dry-run`, `/propagate-to-public`, …).
+# (`/feedback-to-issues`, `/implement-github-issue`, `/dry-run`, `/propagate-to-public`, …).
 # Every skill it names is excluded from this mirror, so publishing it hands users a
 # list of commands their install does not have. It reached the public working tree
 # once (2026-08-16) precisely because "docs/ is user-facing" was a convention stated

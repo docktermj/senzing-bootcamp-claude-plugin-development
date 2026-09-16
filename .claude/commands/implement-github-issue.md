@@ -72,9 +72,26 @@ suite certifying both.
 implementing the corrected version. The next reader needs to know the issue and the change
 differ, and why.
 
-## Declining an issue instead of implementing it
+## Step 4: Record the implementation
 
-⚠️ **`/implement-spec` carries a near-identical section and is being retired (#60).** Until it goes, **this section governs issue-driven work and its copy governs the frozen spec archive** — they are two paths to one record, not two rules. ⛔ The duplication is deliberate and temporary: retirement is blocked on an INV-216 amendment that only the maintainer can make, and deleting the other copy early would strand the invariant that names it. **Edit both or neither** while both exist.
+Write the `specs/IMPLEMENTED.md` entry — what changed, the `MCP re-check` outcome, and the
+invariant answer the gate above requires.
+
+⛔ **Run `citations.py verify` AFTER the entry is written, never before.** Naming the command
+without the ordering is what already failed: a run took the scan during its criterion walk,
+wrote the entry afterwards, and the entry was what broke it — while the run had already
+recorded the scan as clean.
+
+⚠️ **The reason, because without it the ordering reads as ceremony and gets optimized away:**
+the **ledger is inside the corpus** the scan reads. A clean result obtained before the entry
+exists measured a different repository than the one that ships.
+
+⛔ **A count is not a result.** One run recorded "1792 passed, 3 skipped" from a
+`Ran 1792 tests` line while `FAILED (failures=1, skipped=3)` sat directly beneath it — a red
+suite ledgered as green, and the figure became a baseline later work was checked against.
+**Read the runner's verdict line, not its count.**
+
+## Declining an issue instead of implementing it
 
 Some issues are correct and still should not be built — most often because the change they
 propose is an architectural decision rather than a defect repair. That outcome needs

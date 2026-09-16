@@ -30,9 +30,10 @@ observe a run calling the MCP server, so nothing here establishes that re-verifi
 happened — only that the obligation is stated, in terms a later editor cannot quietly drop.
 `tests/test_spec_absence_claims_name_their_owner.py` checks the artifacts that result.
 
-⚠️ **A near-identical decline section still exists in `implement-spec/SKILL.md`** while #60 is
-blocked on an INV-216 amendment. That duplication is temporary and deliberate; this guard
-reads the issue-path copy, and `tests/test_declined_ledger.py` still reads the other.
+✅ **The duplication this once carried is gone.** `implement-spec/SKILL.md` held a
+near-identical decline section while #60 was blocked on an INV-216 amendment; that amendment
+landed and the command retired, so this is now the only copy and
+`tests/test_declined_ledger.py` reads the same file.
 
 Stdlib only; the command is read as text (INV-108).
 

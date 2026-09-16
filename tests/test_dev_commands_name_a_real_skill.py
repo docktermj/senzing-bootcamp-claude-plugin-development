@@ -91,16 +91,16 @@ class NeitherSideIsEmpty(unittest.TestCase):
             "fewer than three skills were found in %s; the directory scan has drifted, and "
             "every command would report as phantom" % SKILLS_DIR)
         self.assertIn(
-            "implement-spec", skills,
+            "implement-github-issue", skills,
             "the skill scan is missing one certainly present; it is looking in the wrong "
             "place or expecting the wrong layout")
 
     def test_the_invocation_pattern_parses(self):
         """Anchored on a command that predates this guard, so it cannot pass tautologically."""
-        anchor = COMMANDS_DIR / "implement-spec.md"
+        anchor = COMMANDS_DIR / "implement-github-issue.md"
         self.assertTrue(anchor.is_file(), "%s is gone; re-anchor this test" % anchor)
         self.assertIn(
-            "implement-spec", skills_named_by(anchor),
+            "implement-github-issue", skills_named_by(anchor),
             "the invocation pattern did not find the skill named in %s; command files state "
             "their skill in a shape this regex no longer matches" % anchor.name)
 

@@ -43,7 +43,7 @@ systematic version of both, and it is the only one of the four that reads the pl
 
 - **Write only under `specs/` and this skill's ledger.** Never modify plugin code,
   hooks, scripts or skills. Producing specs is the deliverable; implementing them is
-  `implement-spec`'s job. The one outward action is the optional upstream feature
+  the issue path's job. The one outward action is the optional upstream feature
   request in Step 8, which is gated on the maintainer's explicit yes.
 - **"The server can answer it" is not by itself a reason to delete anything.** It is
   the entry ticket to Step 6, where delegation has to earn its place. A large fraction
@@ -280,7 +280,7 @@ Group sites that share one fix; keep unrelated ones apart. Rules beyond the temp
   a spec that removes text without saying which assertion goes with it will be reverted
   by a red suite.
 - **Give the acceptance criteria a re-verification clause** — the implementer re-asks
-  the server before changing code (`implement-spec` Step 3.3), and the criterion should
+  the server before changing code (`/implement-github-issue`, INV-080), and the criterion should
   say what answer they must get for the change to remain correct.
 
 ## Step 8: Send the gaps upstream
@@ -354,4 +354,4 @@ Then, in this order:
 5. **Coverage of the sweep itself**: how much of the inventory was examined and what was
    left, so a partial run is never mistaken for a clean bill of health.
 
-Do not implement the specs. Offer `implement-spec` as the next step.
+Do not implement the specs. Offer `/implement-github-issue` as the next step.

@@ -44,7 +44,7 @@ is load-bearing in a way ordinary stale prose never is.
 
 ⛔ **Write only under `specs/` and this skill's ledger.** Never modify plugin code, hooks,
 scripts or skills — producing specs is the deliverable, and implementing them is
-`implement-spec`'s job. ⛔ **Never propose deleting or renumbering an invariant**;
+the issue path's job. ⛔ **Never propose deleting or renumbering an invariant**;
 `specs/INVARIANTS.md` is append-only, and a superseded one is *marked* superseded.
 
 **Step 8 is part of the job, not an afterthought** — the `keep-server-lacks-it` rows are

@@ -45,7 +45,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SPECS = REPO_ROOT / "specs"
 TEMPLATE = REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "issue-template.md"
 FEEDBACK_SKILL = REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "SKILL.md"
-IMPLEMENT_SKILL = REPO_ROOT / ".claude" / "skills" / "implement-spec" / "SKILL.md"
+IMPLEMENT_SKILL = REPO_ROOT / ".claude" / "commands" / "implement-github-issue.md"
 
 META = {"IMPLEMENTED.md", "INVARIANTS.md", "DECLINED.md", "todo.md"}
 

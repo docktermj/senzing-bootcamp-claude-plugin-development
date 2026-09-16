@@ -1,6 +1,6 @@
 ---
 name: unattended-spec-loop
-description: 'Work the specs/ backlog to empty while the maintainer is away, then audit, then work whatever the audit files — alternating /implement-spec and /production-readiness-audit until an audit produces no new specs, up to a maximum of five cycles. Encodes what an unattended run may decide for itself and what it must never decide, and leaves a handoff the maintainer can read cold. Maintainer tool for developing the Senzing Bootcamp Claude Plugin (SBCP) — never invoked during a bootcamp.'
+description: 'Work the specs/ backlog to empty while the maintainer is away, then audit, then work whatever the audit files — alternating /implement-github-issue and /production-readiness-audit until an audit produces no new specs, up to a maximum of five cycles. Encodes what an unattended run may decide for itself and what it must never decide, and leaves a handoff the maintainer can read cold. Maintainer tool for developing the Senzing Bootcamp Claude Plugin (SBCP) — never invoked during a bootcamp.'
 ---
 
 # Unattended spec loop
@@ -11,7 +11,7 @@ This is a **maintainer** tool for developing the Senzing Bootcamp Claude Plugin
 It runs two existing skills in a loop with nobody watching:
 
 ```
-cycle N:  /implement-spec   — implement and commit every open spec, one at a time
+cycle N:  /implement-github-issue — implement and commit one issue at a time
           /production-readiness-audit  — audit the result; it files specs, it does not fix
           no new specs?  -> stop, report
           new specs?     -> cycle N+1
@@ -21,7 +21,7 @@ stop at 5 cycles regardless
 ⛔ **This skill adds no new authority. It only decides what to do when the two skills it
 drives say "ask the maintainer" and there is no maintainer.** Everything else — how to
 implement a spec, how to re-verify a Senzing fact, how to audit — stays with
-`../implement-spec/SKILL.md` and `../production-readiness-audit/SKILL.md`, which are the
+`../implement-github-issue/SKILL.md` and `../production-readiness-audit/SKILL.md`, which are the
 authority and must be read, not summarized from here.
 
 ## Why this needs writing down
@@ -30,7 +30,7 @@ An unattended run is not a normal run with the questions removed. The questions 
 where the judgment was, and deleting them silently converts judgment into a default
 nobody chose. This repo has the scar: on **2026-08-17** an unattended implement run
 produced a reverse-contract defect — hard rules shipped into the plugin with no invariant
-registered — and the audit that caught it added the `implement-spec` guardrail that now
+registered — and the audit that caught it added the `implement-spec` guardrail (that command retired under #60; the guardrail moved with the obligation) that now
 governs this situation. The failure was not carelessness. It was the *safe-looking* move:
 "do not record an invariant the maintainer has not agreed to", which quietly shipped the
 rule and registered nothing.
@@ -48,7 +48,7 @@ Ask these while they are still here. They are short, and each changes what the r
 1. ⛔ **Push policy.** Commit locally only, push each cycle, or push once at the end?
    Committing is not publishing; pushing unreviewed unattended work is. Default to
    **local only** if they are already gone.
-2. **Any spec needing a judgment call.** Run `python3 ../implement-spec/list_specs.py`,
+2. **Any spec needing a judgment call.** Run `python3 ../implement-spec/list_specs.py` (the script is kept: INV-216's first clause still binds it, though `specs/` is frozen and it now reports `open: 0`),
    read each open spec's `## Acceptance criteria`, and flag any whose criteria are
    conditional on the maintainer's choice ("if the maintainer chooses…", an unset
    priority, two viable designs). Ask about those specifically — they are the ones an
@@ -72,12 +72,12 @@ re-asking wastes the one turn they are still present for.
 
 ### Never decide these
 
-- ⛔ **Never sign off an invariant.** `implement-spec` requires the maintainer's approval
+- ⛔ **Never sign off an invariant.** `/implement-github-issue` requires the maintainer's approval
   of the wording, and it is permanent and binds every future spec. **But declining to
   mint it does not decline to ship the rule** — that is the 2026-08-17 defect exactly. So
   when an implementation ships a hard rule (a ⛔, a bolded MUST/NEVER, anything
   `conformance.py rules` would count), take the sanctioned path in
-  `implement-spec/SKILL.md`: ship the rule, and write an **explicit deferral in the ledger
+  `.claude/commands/implement-github-issue.md` (INV-309): ship the rule, and write an **explicit deferral in the ledger
   entry** naming the rule, the site, and why it was not registered. Draft the exact
   `INV-NNN — <statement>` wording in the entry so the maintainer's return costs one yes.
   Never `_None yet._`, never silence.
@@ -114,7 +114,7 @@ re-asking wastes the one turn they are still present for.
 - ⛔ **Never call `submit_feedback`.** Any `mcp-server`-routed finding gets a spec whose
   `Upstream:` line reads **"not yet sent — needs maintainer approval"**, with the exact
   message drafted in the spec ready to send. Nothing leaves the machine unattended.
-- ⛔ **Never decline a spec.** `implement-spec` reserves that for the maintainer alone. A
+- ⛔ **Never decline.** `/implement-github-issue` reserves that for the maintainer alone. A
   spec you cannot implement is **blocked**, not declined, and blocked is a state you
   record — never a file you edit into `DECLINED.md`.
 - ⛔ **Never relax an assertion, delete a test, or narrow a guard to reach green.** If a
@@ -144,7 +144,7 @@ not diagnose is how unrelated changes get buried in a batch nobody reviewed.
 
 ## Per spec
 
-1. **Invoke `/implement-spec <spec-name>`** and follow it. It is the authority — including
+1. **Invoke `/implement-github-issue <issue>`** and follow it. It is the authority — including
    Step 3.3's re-verification of every Senzing fact against the live MCP server, which an
    unattended run does **not** get to skip for speed. A fact laundered out of a spec is
    the defect class that skill exists to prevent.
@@ -178,7 +178,7 @@ After the open set is empty or every remainder is blocked, invoke
 
 ⚠️ **The audit reports and files specs; it does not fix in place.** That is its own rule
 ("present findings and let the maintainer choose what to fix"), and here it is also what
-makes the loop work — the next `/implement-spec` pass is the fixing half. Do not collapse
+makes the loop work — the next `/implement-github-issue` pass is the fixing half. Do not collapse
 the two.
 
 ⛔ **Read the newest `## production-readiness-audit-*` ledger entries before auditing**
