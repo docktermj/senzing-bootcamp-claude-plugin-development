@@ -42,6 +42,93 @@ here, and that zero is not a clean check** — it resolves a rule's location onl
 `plugins/`, while issue-driven rules usually live in `tests/`, `.claude/` or `specs/`. Verify
 the wording by reading the enforcer's assertions instead (#59).
 
+## ⛔ Re-verify every Senzing fact against the live MCP server before changing code
+
+⛔ **(INV-080) A Senzing fact carried from the issue into the code without re-asking the
+server is a guess with a citation on it.** The Senzing MCP server ships **independently of
+this plugin**, so an issue's facts may be stale, already fixed, or now contradicted — and an
+issue filed weeks ago is exactly the case. Re-ask before changing anything, and record the
+outcome on the ledger entry's `MCP re-check` line: the server version, the date, the tools
+called, and one of — still reproduces | fixed upstream | server now contradicts the plugin |
+server does not cover it | n/a (no Senzing fact) | unverified (MCP unreachable).
+
+⚠️ **`n/a (no Senzing fact)` is a real answer and must be re-confirmed, not assumed.** Most
+repo-apparatus work genuinely asserts nothing about Senzing; say so explicitly rather than
+omitting the line.
+
+⛔ **(INV-213) An absence claim is a blocker until it names the route that owns the fact.**
+Where the diagnosis rests on the server *lacking* something — "returns no X", "does not
+cover", "no MCP tool answers this" — the `MCP re-check` line MUST also carry
+`owner-checked: <the route that would CARRY this fact> — <what it returned>`. **The tools you
+asked and found empty are evidence about those tools, never about the negative:**
+"`sdk_guide(topic='configure')` returns no license variable" is true and worthless as support
+for "no license variable exists", because the variable lives in
+`sdk_guide(topic='load', record_count=<above the limit>)`. Treat a missing clause as a
+**blocker** and re-diagnose rather than implement — an absence concluded from the wrong route
+has already, once, become a registered invariant plus a guard enforcing it, with the offline
+suite certifying both.
+
+⚠️ **Where re-verification changes what the issue asked for, say so** rather than silently
+implementing the corrected version. The next reader needs to know the issue and the change
+differ, and why.
+
+## Declining an issue instead of implementing it
+
+⚠️ **`/implement-spec` carries a near-identical section and is being retired (#60).** Until it goes, **this section governs issue-driven work and its copy governs the frozen spec archive** — they are two paths to one record, not two rules. ⛔ The duplication is deliberate and temporary: retirement is blocked on an INV-216 amendment that only the maintainer can make, and deleting the other copy early would strand the invariant that names it. **Edit both or neither** while both exist.
+
+Some issues are correct and still should not be built — most often because the change they
+propose is an architectural decision rather than a defect repair. That outcome needs
+recording in `specs/DECLINED.md`, or the subject returns and the reasoning against it is lost.
+
+⛔ **Never decline on your own initiative.** This command implements what the maintainer
+chooses; deciding *not* to build something is theirs alone. If an issue looks like a poor
+idea, say so and let them rule — do not write to `DECLINED.md` without their explicit
+decision. ⚠️ This is distinct from the escape hatch above: *invalid, duplicate, or already
+fixed* is a finding about the world and is reported; *declined* is a decision about what to
+build and is the maintainer's.
+
+When they do decline one, append an entry using the same `## <name>` heading idiom as
+`IMPLEMENTED.md`:
+
+```markdown
+## <issue-slug>
+
+- **Declined:** YYYY-MM-DD
+- **Decided by:** <who made the call>
+- **Reason:** <why not — required; never leave this empty>
+- **Revisit if:** <the condition that would reopen it, or "nothing foreseeable">
+```
+
+Two fields carry the weight. **Reason** is required because an unreasoned decline is
+indistinguishable from nobody having looked, and the next run looks again. **Revisit if**
+keeps the file from becoming a graveyard — most declines are made against current
+architecture or a current upstream gap, and naming the trigger lets a later run check
+cheaply instead of re-arguing.
+
+⛔ **(INV-217) An absence claim in a `Revisit if:` clause or a dated revisit note carries the
+same `MCP-NEGATIVE` marker — this file needs it most, not least.** A declined item is never
+implemented, so the re-verification above never re-asks its facts: a negative written here is
+**the only Senzing claim in the repo with no re-verification path**, while the record tells
+the next reader to trust it *over* the original citations. Write the marker on the same
+bullet as the claim:
+
+```markdown
+- **Revisit if:** Senzing documents a self-service route for <X>.
+  MCP-NEGATIVE: search_docs(query='<terms>') — no indexed document names <X> — owner: search_docs IS the corpus route the condition is written against, so the empty result is the answer rather than a miss (absence negative) — server <version>, <YYYY-MM-DD>
+```
+
+`coverage_reports.py negatives` scans `specs/DECLINED.md` and no other file under `specs/`
+for exactly this reason, so a marker here reaches the worklist a dry run re-asks;
+`tests/test_declined_ledger.py` fails on an absence-shaped bullet that has none. Prose that
+**quotes a retracted claim** is exempt and must say so on the bullet with
+`MCP-NEGATIVE-SCAN: quoted-history`, so a correction can restate what it corrects.
+
+⚠️ **`specs/DECLINED.md` stays live and writable** even though the rest of `specs/` is a
+read-only archive (INV-307). It is a record of decisions, not a backlog.
+
+**Declined is not superseded.** An issue whose facts are wrong, or that a later issue
+overtakes, is closed with that reason — not given a `DECLINED.md` entry.
+
 ## Scope note: `PARENT_VERSION`
 
 In **child** repositories this command also updates `PARENT_VERSION` when a parity issue
