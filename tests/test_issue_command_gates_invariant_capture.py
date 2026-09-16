@@ -29,6 +29,18 @@ this pins the same contract at the command end, where the obligation is created.
 `INVARIANTS.md`, so the gate belongs to this repo's front where it is true. See the provenance
 note in `.claude/skills/implement-github-issue/SKILL.md`.
 
+⚠️ **Enforces INV-309.** It asserts the command STATES the gate: that closing and the
+deferral mechanism appear in one requirement, that all three answers survive, that the command
+disclaims registering, and that the placeholder id is required.
+
+⛔ It does **NOT** establish that any run OBEYS the gate. Nothing offline can observe an issue
+being closed, so a run could satisfy every assertion here and still close an issue having
+recorded nothing — the text is pinned, the behavior is not. What closes that is the review
+queue itself: an unaccounted-for entry surfaces in `test_spec_ledger_invariants.py`, which
+asserts the same three answers at the LEDGER end. ⚠️ INV-309 binds the path rather than the
+command name (amended before minting, since #51 renames a sibling); this guard reads the file
+at its current path, so a rename must bring this guard with it.
+
 Stdlib only; the command is read as text (INV-108).
 
 Source issue: #50 (add `/implement-github-issue`; retire `/implement-spec`).
