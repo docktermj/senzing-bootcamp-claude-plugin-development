@@ -1,11 +1,20 @@
 {
   "issue": 49,
   "branch": "49-docktermj-1",
-  "phase": "implement",
+  "phase": "pr-open",
   "approach": "Direct (5a): git mv skill+command to feedback-to-issues, spec-template.md -> issue-template.md carrying the MCP re-check/owner-checked line, Step 7 rewritten to file GitHub issues in this repo only, dedup adds a gh issue search, 5 test paths re-pointed, DEFERRED INVARIANT for INV-213 covering issues.",
   "gate1_approved": true,
   "comments_posted": [
     "started",
-    "clarifications"
+    "clarifications",
+    "result"
+  ],
+  "gate2_approved": true,
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/65",
+  "merge_order_note": "branch predates PR #64; merge #64 first (INV-309 not defined on this branch)",
+  "issue_corrections": [
+    "no skill in this repo creates GitHub issues; no pattern to copy (a race trigger)",
+    "INV-213 binds 'a spec' and is enforced via this skill's template; the obligation would have lapsed silently",
+    "5 guards pin this skill's paths and 4 references would have broken outright"
   ]
 }
