@@ -1,0 +1,11 @@
+{
+  "issue": 69,
+  "branch": "69-docktermj-1",
+  "phase": "implement",
+  "approach": "Direct (5a): audit Step 8 files GitHub issues (attended, approval-gated) or records findings in the dated ledger entry (unattended, files nothing); never applies unattended-ok; ledger entry survives; unblock the loop half and its guard; new test.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications"
+  ]
+}
