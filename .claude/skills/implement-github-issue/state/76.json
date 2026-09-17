@@ -1,0 +1,14 @@
+{
+  "issue": 76,
+  "branch": "76-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): last_audit_ref also resolves the PREVIOUS audit record, counts the hard-rule lines the retired range carried, and prints a boundary line naming that count and stating that whether they were examined is recorded nowhere. Always printed including zero; worded so neither stdout consumer can misparse it; fixture-based negative control on a throwaway repo.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications",
+    "result"
+  ],
+  "filed_separately": 80,
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/81"
+}
