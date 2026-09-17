@@ -89,7 +89,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   or the maintainer surface. Every ⛔ written here is in a `.py` file, which no view scans. The
   rules this work rests on — one definition every consumer reads, and a verification tool
   reporting what it could not verify — are **already INV-308**, cited at the line.
-- **Commit:** uncommitted
+- **Commit:** 064f3ca
 
 ## the-reverse-contract-gate-discards-every-rule-outside-plugins
 
