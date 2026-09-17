@@ -1,0 +1,13 @@
+{
+  "issue": 80,
+  "branch": "80-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): add a conformance.py view that runs the INV-282 set difference, partitioning added lines into the corpus per-rule covers (tested) and the roots it does not (counted, never reported clean); print both including zero; the loop SKILL.md, the loop command and the audit SKILL.md call the view instead of carrying the script; fixture-based negative control.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/82"
+}
