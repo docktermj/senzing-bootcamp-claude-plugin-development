@@ -110,7 +110,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   does state — that a verification tool reports what it could not verify, and that resolution
   roots have one definition every consumer reads — is **already registered as INV-308** and is
   cited at its line in `conformance.py`.
-- **Commit:** uncommitted
+- **Commit:** 469afe9
 
 ## production-readiness-audit-2026-09-17
 
