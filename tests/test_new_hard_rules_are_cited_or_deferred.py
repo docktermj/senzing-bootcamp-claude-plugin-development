@@ -31,6 +31,24 @@ being reported. Verified by negative control: the guard is unmoved by that edit 
 correctly on a genuinely new uncited rule, which is what it claims to cover. The standing
 backlog is `per-rule --uncited`'s job, and it is far larger.
 
+⛔ **The parser reads `conformance.py`'s own `SCAN_ROOTS`, and a line it cannot place is a
+FAILURE, never a drop.** This guard consumes a report it does not produce, and for its whole
+life it carried a private idea of which roots that report mentions: it keyed file headings on
+`plugins/`, so when the `since` view was widened to the maintainer surface (#38) all 112 lines
+it reported under `.claude/` were dropped between the two halves of this file. `added` came out
+empty, and empty took the "nothing added" skip — the guard reported the *absence of new rules*
+while looking at 112 of them. ⚠️ The plugins-keyed read was not an oversight in the dark: a
+2026-09-03 ledger entry states it outright, reasoning about which lines could confuse the
+parser, and nobody asked what the key would do to a root added later.
+
+⚠️ **The maintainer surface is COUNTED, not checked, and the count is printed even when it is
+zero.** Command files restate their skill's rules by design and cite nothing, so checking
+`.claude/` here turns roughly 49 restatements into failures; `test_since_view_sees_the_maintainer_surface.py`
+measured that and scoped this consumer out deliberately. What was wrong was doing it by
+*silence*. The number is now reported on every run, so 93 unchecked lines are a visible
+decision rather than an invisible one — and a genuinely new `.claude/` guarantee is still not
+caught by this guard. That is the remaining gap, stated rather than closed.
+
 ⚠️ **Skips rather than fails when the range cannot be resolved** — no git, a shallow clone, an
 audit entry whose `Commit:` is `uncommitted`. A guard that hard-failed there would fail on
 checkouts that have nothing wrong with them.
@@ -38,16 +56,50 @@ checkouts that have nothing wrong with them.
 Source spec:
 `specs/three-hard-rules-from-the-2026-08-28-loop-carry-no-citation-at-the-line.md`.
 
+Source issue: #74 (the reverse-contract gate silently discards every rule outside `plugins/`).
+
 Run:  python3 -m unittest discover -s tests
 """
+import collections
+import importlib.util
 import re
 import subprocess
+import sys
 import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFORMANCE = REPO_ROOT / ".claude" / "skills" / "production-readiness-audit" / "conformance.py"
 IMPLEMENTED = REPO_ROOT / "specs" / "IMPLEMENTED.md"
+
+
+def _scan_roots():
+    """The producer's own root list (INV-308), imported rather than restated.
+
+    ⛔ Returns `()` when it cannot be read, and the callers say so. **There is deliberately no
+    fallback literal**: a private copy that silently disagrees with the producer is the entire
+    defect this module was rebuilt around, and a fallback is just that copy with a nicer name.
+    """
+    if not CONFORMANCE.is_file():
+        return ()
+    try:
+        spec = importlib.util.spec_from_file_location("conformance_for_the_gate", CONFORMANCE)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["conformance_for_the_gate"] = module
+        spec.loader.exec_module(module)
+        roots = getattr(module, "SCAN_ROOTS", ())
+    except Exception:
+        return ()
+    return tuple(str(r) for r in roots)
+
+
+SCAN_ROOTS = _scan_roots()
+
+#: Which scanned roots this guard CHECKS and which it only counts, derived from `SCAN_ROOTS` by
+#: one rule -- the maintainer surface is not shipped -- so a fourth root joins the right half
+#: without being named here a second time.
+CHECKED_ROOTS = tuple(r for r in SCAN_ROOTS if not r.startswith(".claude/"))
+OUT_OF_SCOPE_ROOTS = tuple(r for r in SCAN_ROOTS if r.startswith(".claude/"))
 
 
 def conformance(*args):
@@ -120,28 +172,87 @@ def _comparable(text):
     return re.sub(r"\s+", " ", re.sub(r"[`*⛔]", "", text)).lower().strip()
 
 
-def source_lines(since_output):
-    """[(relpath, full source line)] for every rule `since` reported.
+#: What `since` prints, split into the three populations a consumer must tell apart. Every
+#: reported line lands in exactly one of them, and `reported` is the producer's own total -- so
+#: `checked + out_of_scope + unresolved != reported` is arithmetic that cannot be argued with.
+Parsed = collections.namedtuple(
+    "Parsed", "checked out_of_scope unresolved unknown_headings reported")
 
-    `since` prints a file heading followed by `     + <text>` lines truncated at 110
-    characters. Resolve each back to the file so the citation check sees the whole line.
+
+def _is_heading(stripped):
+    """A file heading in `since`'s output: a path, alone on its line."""
+    return stripped.endswith(".md") and " " not in stripped and not stripped.startswith("+")
+
+
+def _root_of(heading):
+    """The `SCAN_ROOTS` entry a heading sits under, or None if it sits under none."""
+    if heading is None:
+        return None
+    for root in SCAN_ROOTS:
+        if heading == root or heading.startswith(root + "/"):
+            return root
+    return None
+
+
+def _full_source_line(relpath, body):
+    """`since` truncates its display at 110 characters; resolve back to the whole line.
+
+    A citation past the cut is invisible, which once flagged four cited rules as uncited --
+    including a 638-character bullet carrying two ids.
     """
-    out, current = [], None
+    path = REPO_ROOT / relpath
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").split("\n"):
+            if line.startswith(body):
+                return line
+    return body
+
+
+def parse_since(since_output):
+    """Every rule `since` reported, placed under the root it came from.
+
+    ⛔ **Nothing is discarded.** A line whose heading matches no known root is `unresolved` and
+    fails the guard; it is never skipped past, because a silently skipped line is indis-
+    tinguishable from a line that was never reported.
+    """
+    heading = None
+    checked, out_of_scope, unresolved = [], [], []
+    unknown_headings, reported = [], 0
     for raw in since_output.splitlines():
         stripped = raw.strip()
-        if stripped.startswith("plugins/") and stripped.endswith(".md"):
-            current = stripped
-        elif stripped.startswith("+ ") and current:
-            body = stripped[2:]
-            path = REPO_ROOT / current
-            full = body
-            if path.exists():
-                for line in path.read_text(encoding="utf-8").split("\n"):
-                    if line.startswith(body):
-                        full = line
-                        break
-            out.append((current, full))
-    return out
+        if _is_heading(stripped):
+            heading = stripped
+            if _root_of(heading) is None and heading not in unknown_headings:
+                unknown_headings.append(heading)
+            continue
+        if not stripped.startswith("+ "):
+            continue
+        reported += 1
+        body = stripped[2:]
+        root = _root_of(heading)
+        if root is None:
+            unresolved.append((heading, body))
+        elif root in OUT_OF_SCOPE_ROOTS:
+            out_of_scope.append((heading, body))
+        else:
+            checked.append((heading, _full_source_line(heading, body)))
+    return Parsed(checked, out_of_scope, unresolved, unknown_headings, reported)
+
+
+def announce(parsed):
+    """⛔ Report the breakdown on every run, **including the zeroes**.
+
+    An out-of-scope count that appears only when it is non-zero makes its absence ambiguous:
+    the reader cannot tell "no maintainer-surface rules were added" from "the line was dropped
+    again". One line, always, is what makes the 93 unchecked lines a decision on the record.
+    Written to stderr like the fpdf2 notice, for the same reason -- it is a notice, not output.
+    """
+    sys.stderr.write(
+        "[new-hard-rules] %d line(s) reported since the last audit: %d checked, %d out of "
+        "scope (%s), %d unresolved\n"
+        % (parsed.reported, len(parsed.checked), len(parsed.out_of_scope),
+           ", ".join(OUT_OF_SCOPE_ROOTS) or "no out-of-scope root", len(parsed.unresolved)))
+    sys.stderr.flush()
 
 
 class EveryNewHardRuleIsAccountedFor(unittest.TestCase):
@@ -156,9 +267,29 @@ class EveryNewHardRuleIsAccountedFor(unittest.TestCase):
         uncited = conformance("per-rule", "--uncited")
         if since is None or uncited is None:
             self.skipTest("conformance.py could not resolve the since-last-audit range")
+        if not SCAN_ROOTS:
+            self.skipTest(
+                "conformance.py's scanned-root list could not be imported, so this guard "
+                "cannot know which headings the report contains. It refuses to guess -- see "
+                "TheParserAgreesWithTheProducer, which FAILS on this rather than skipping")
 
-        added = source_lines(since)
-        if not added:
+        parsed = parse_since(since)
+        announce(parsed)
+
+        # ⛔ A line the parser cannot place is reported, never dropped. This is the defect
+        # itself: 112 placeable lines were dropped here and the emptiness read as "none".
+        self.assertEqual(
+            [], parsed.unknown_headings,
+            "`since` reported rules under %d heading(s) matching no scanned root: %s. The "
+            "producer and this consumer disagree about which roots exist, and every rule "
+            "under those headings goes unchecked"
+            % (len(parsed.unknown_headings), ", ".join(parsed.unknown_headings)))
+        self.assertEqual(
+            [], [line for _h, line in parsed.unresolved],
+            "%d reported rule line(s) could not be attributed to any file, so nothing can be "
+            "checked at their source line" % len(parsed.unresolved))
+
+        if not parsed.reported:
             # ⛔ **Say WHICH kind of nothing this is.** An empty range and a range that never
             # covered the work both arrive here as "no hard rules added", and until 2026-09-03
             # the skip message asserted the first. It was the second: the newest audit entry
@@ -170,16 +301,25 @@ class EveryNewHardRuleIsAccountedFor(unittest.TestCase):
             if "SUSPECT-REF" in since:
                 self.skipTest(
                     "the range's recorded ref carried shipped work, so it was widened past it "
-                    "and STILL reports nothing added — read the widened range in the "
+                    "and STILL reports nothing added -- read the widened range in the "
                     "conformance output before believing this skip")
             self.skipTest(
-                "no hard rules added since the newest audit entry — nothing to check. The ref "
-                "was accepted as recorded (no SUSPECT-REF), so this is an empty range rather "
-                "than a range that missed the work")
+                "the report lists no hard-rule lines at all since the newest audit entry. The "
+                "ref was accepted as recorded (no SUSPECT-REF), so this is an empty range "
+                "rather than a range that missed the work")
+
+        if not parsed.checked:
+            # ⚠️ A THIRD kind of nothing, and the one this guard used to disguise as the
+            # first: rules were added, all of them outside the corpus this check covers.
+            self.skipTest(
+                "%d hard-rule line(s) were added since the newest audit entry and none is in "
+                "the checked corpus (%s): %d sit under the maintainer surface, which this "
+                "guard counts and does not check. Rules WERE added -- this is not an empty "
+                "range" % (parsed.reported, ", ".join(CHECKED_ROOTS), len(parsed.out_of_scope)))
 
         deferred = deferred_rule_text()
         unaccounted = []
-        for _path, line in added:
+        for _path, line in parsed.checked:
             key = normalize(line)
             if not key:
                 continue

@@ -43,6 +43,75 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-reverse-contract-gate-discards-every-rule-outside-plugins
+
+- **Implemented:** 2026-09-17
+- **Files changed:** `.claude/skills/production-readiness-audit/conformance.py`,
+  `tests/test_new_hard_rules_are_cited_or_deferred.py`,
+  `tests/test_since_view_sees_the_maintainer_surface.py`,
+  `tests/test_conformance_sees_a_rule_beside_a_citation.py`,
+  `tests/test_the_gate_sees_every_scanned_root.py`
+- **MCP re-check:** n/a (no Senzing fact; the change is entirely maintainer-surface tooling)
+- **Summary:** `conformance.py since` diffs three roots, and `test_new_hard_rules_are_cited_or_deferred`
+  parses its output back into files to check each rule at its source line. The consumer's parser
+  opened a file heading only when it started with `plugins/`, so every line the view reported under
+  `.claude/` was dropped between the two halves — and an empty result took the "no hard rules added"
+  skip. The guard that exists to catch unregistered guarantees reported the *absence* of new rules
+  while looking at 112 of them. Fixed by exporting `SCAN_ROOTS` from `conformance.py` (INV-308: one
+  definition every consumer reads) and having the gate import it; a heading matching no root is now
+  a failure rather than a drop; the maintainer surface is counted as explicitly out of scope and the
+  count is printed on every run **including when it is zero**; and the skip messages distinguish
+  three states that used to read alike — an empty range, a range that missed the work
+  (`SUSPECT-REF`), and rules added of which none is in the checked corpus.
+- **Measured, at ref `7b43eee`** (the audit range in force before today's record landed; against
+  today's `5a9cfbe` the range is genuinely empty and every figure below is 0):
+  **112 lines reported, of which the old parser saw 0.** After the fix: **0 checked, 112 out of
+  scope, 0 unresolved, 0 unknown headings.** Of those 112, **19 cite an invariant at their line, 0
+  are named in a deferral, and 93 would be unaccounted for if they were checked.** Top files:
+  `.claude/commands/unattended-issue-loop.md` (17), `.claude/skills/unattended-issue-loop/SKILL.md`
+  (12), `.claude/commands/implement-github-issue.md` (10), `.claude/skills/feedback-to-issues/SKILL.md`
+  (10), `.claude/commands/delegate-to-mcp-server.md` (9).
+- ⚠️ **The 93 are not fixed by this change, and that is the decision, not an oversight.** Checking
+  the maintainer surface here turns roughly 49 deliberate restatements into failures — measured in
+  #38 and the reason the consumer was scoped to the shipped corpus. What was wrong was achieving
+  that scope by *silence*. A genuinely new `.claude/` guarantee is still not caught by this gate;
+  the number is now on the record instead of the lines being invisible.
+- ⚠️ **A THIRD consumer surfaced during the run, and only because the suite went red.**
+  `test_conformance_sees_a_rule_beside_a_citation.py` also needed the root list and had already
+  learned this lesson once — its comment says restating the roots is what let its parser go stale
+  when #38 widened the view — so it *scraped* them out of the `git diff` call's source text. That
+  looks like reading the producer and is not: lifting the pathspecs into a constant returned it
+  nothing, and its own anti-vacuity assertion failed. It now imports the constant, and
+  `test_the_gate_sees_every_scanned_root.py` holds the list of consumers and asserts all three
+  agree with the producer, so a fourth copy fails rather than drifts.
+- ⚠️ **The plugins-keyed read was documented, not accidental.** The 2026-09-03 entry
+  `since-last-audit-reports-zero-when-the-audit-record-shares-the-work-commit` states it outright
+  while reasoning about which lines could confuse the parser. Nobody asked what that key would do
+  to a root added later, and `since` was widened to `.claude/` eleven days after.
+- ⚠️ **The filed diagnosis was wrong twice and is withdrawn on the issue.** #74 was filed as a
+  corpus mismatch between the gate and the view; the view asymmetry is deliberate, documented and
+  measured. The second reading — that the gate's check was corpus-independent — was half right:
+  its *citation logic* is, its *parser* is not. Both were settled by measurement, not by reading.
+- **Negative controls, six, each verified to reach zero before the run.** (1) The
+  plugins-only heading key restored — maintainer-surface lines placed went to 0, 4 assertions
+  failed. (2) A private root list in the gate — 2 failed. (3) Unplaceable lines discarded
+  instead of counted — 1 failed. (4) An **uncited rule appended to a `.claude/` command file**:
+  reported 1, counted 1 out of scope, and the skip said *rules WERE added* where the old gate
+  said "no hard rules added — nothing to check". (5) The same rule appended to a shipped
+  `SKILL.md`: the gate failed and named the line. (6) A root removed from the producer — the
+  agreement guard correctly stayed green (all consumers follow one definition) while
+  `test_since_view_sees_the_maintainer_surface.py` failed on the missing root, which is the
+  division of labor intended. Every file restored and verified byte-identical by md5, with
+  `__pycache__` cleared between runs.
+- **Establishes no invariant.** ⛔ Checked against `since --since-last-audit` and
+  `per-rule --uncited` as a set difference (INV-282), not a grep: 0 hard-rule lines were added to
+  the shipped corpus or the maintainer surface by this change. Every ⛔ written here landed in
+  `tests/` and in a `.py` file, neither of which any view scans. The one durable rule this work
+  does state — that a verification tool reports what it could not verify, and that resolution
+  roots have one definition every consumer reads — is **already registered as INV-308** and is
+  cited at its line in `conformance.py`.
+- **Commit:** uncommitted
+
 ## production-readiness-audit-2026-09-17
 
 - **Implemented:** 2026-09-17 (**Not a spec** — a dated audit record, from `/unattended-issue-loop` cycle 1)
