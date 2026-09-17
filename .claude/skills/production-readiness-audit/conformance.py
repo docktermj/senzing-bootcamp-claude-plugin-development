@@ -517,6 +517,116 @@ def _normalize(line):
     return re.sub(r"\s+", " ", s).strip()
 
 
+def cmd_reverse_check(args):
+    """The INV-282 reverse check, with the half it cannot test counted rather than assumed clean.
+
+    ⛔ **The two halves of this check read different corpora, and for three days nothing said
+    so.** `since` diffs `SCAN_ROOTS`; `per-rule` reads `shipped_markdown()`, which is the plugin
+    alone. The procedure in `unattended-issue-loop/SKILL.md` took every line from the first and
+    tested membership against the second, so a rule added under the maintainer surface could
+    **never** appear in the result: measured 2026-09-17 against `7b43eee`, 112 lines in, 0
+    reported, 0 occurrences of the maintainer surface in a 43 KB `--uncited` corpus. 93 of those
+    112 cite nothing. The check reported clean over rules it could not reach.
+
+    ⚠️ **The fix is not to widen `per-rule`.** Its corpus carries ~165 restatement lines under
+    the maintainer surface -- command files restate the rules of the skills they front, by
+    design -- and adding them to a worklist whose own skill warns these are leads would bury the
+    real ones. What was wrong is a check spanning two corpora **silently**, so this view reports
+    the span instead of hiding it.
+
+    ⛔ **A run with untested lines is NOT CLEAN**, and the verdict says so in those words. Zero
+    uncited among the tested half is a true statement about the tested half and nothing more
+    (INV-308).
+
+    ⚠️ **Citations are computed with `own_citations`, not matched against `per-rule`'s rendered
+    text.** Substring-matching one report against another was the fragile half of the old
+    procedure: it depends on both outputs' formatting and on a 60-character key. Asking the same
+    question the script already answers, with the script's own function, derives the matcher
+    from the claim rather than from an observed phrasing -- which is INV-282 itself.
+
+    ⚠️ **A line reported here is a candidate, not a verdict.** The other legitimate state is a
+    `DEFERRED INVARIANT` block naming the rule, which lives in the ledger and is not read here;
+    `tests/test_new_hard_rules_are_cited_or_deferred.py` is the guard that checks both states.
+    """
+    repo, plugin, _ = paths(args)
+    ref = args.ref
+    if getattr(args, "since_last_audit", False):
+        ref = last_audit_ref(repo)
+        if ref is None:
+            return 2
+    if not ref:
+        sys.stderr.write("reverse-check needs --ref <git-ref> or --since-last-audit\n")
+        return 2
+
+    added = added_rule_lines(repo, ref)
+    if added is None:
+        sys.stderr.write("git diff against %r failed\n" % ref)
+        return 2
+
+    # ⛔ Both derived from `paths()`/`shipped_markdown()` -- the same call `per-rule` makes --
+    # rather than restated as a path literal. A second spelling of "the corpus per-rule reads"
+    # is the defect this view exists to report, one level up (INV-308).
+    corpus_root = rel(plugin, repo)
+    corpus = {rel(f, repo) for f in shipped_markdown(plugin)}
+
+    cited, uncited, untested, unresolved = 0, [], [], []
+    for path, bodies in added.items():
+        if path not in corpus:
+            bucket = unresolved if path.startswith(corpus_root + "/") else untested
+            bucket.extend((path, body) for body in bodies)
+            continue
+        lines = (repo / path).read_text(encoding="utf-8").splitlines()
+        for body in bodies:
+            hit = next((i for i, l in enumerate(lines) if l.strip() == body), None)
+            if hit is None:
+                unresolved.append((path, body))
+            elif own_citations(lines, hit):
+                cited += 1
+            else:
+                uncited.append((path, hit + 1, body))
+
+    tested = cited + len(uncited)
+    print("== INV-282 reverse check: hard rules added since %s, tested at their own line\n" % ref)
+    print("   TESTED   %d line(s) in %s -- %d cited at the line, %d NOT cited"
+          % (tested, corpus_root, cited, len(uncited)))
+    for path, line_no, body in uncited:
+        print("     UNCITED %s:%d  %s" % (path, line_no, body[:90]))
+    # ⚠️ Printed even at zero: a figure that appears only when non-zero makes its absence
+    # ambiguous, and this is the number the old procedure omitted by construction.
+    print("   UNTESTED %d line(s) outside that corpus%s"
+          % (len(untested),
+             " (%s)" % ", ".join(sorted({r for r in SCAN_ROOTS if r != corpus_root}))))
+    by_file = collections.Counter(path for path, _body in untested)
+    for path, n in by_file.most_common(6):
+        print("     - %s   (%d)" % (path, n))
+    if len(by_file) > 6:
+        print("     ... and %d more file(s)" % (len(by_file) - 6))
+    print("   UNRESOLVED %d line(s) reported in %s but not found there now"
+          % (len(unresolved), corpus_root))
+    for path, body in unresolved[:6]:
+        print("     ? %s  %s" % (path, body[:70]))
+
+    print()
+    if uncited or untested or unresolved:
+        print("   VERDICT: NOT CLEAN.")
+        if uncited:
+            print("     %d tested line(s) cite no invariant at the line. Each is either cited"
+                  % len(uncited))
+            print("     there or named in a DEFERRED INVARIANT block -- silence is neither.")
+        if untested:
+            print("     %d line(s) were never tested: `per-rule` does not read their corpus, so"
+                  % len(untested))
+            print("     nothing here is evidence about them either way. Read them by hand.")
+        if unresolved:
+            print("     %d line(s) could not be located in the file that reported them; the"
+                  % len(unresolved))
+            print("     claim behind each is unverified (INV-308).")
+    else:
+        print("   VERDICT: clean -- every added line was tested and cites an invariant at its")
+        print("     line. This is the only state in which that word applies.")
+    return 0
+
+
 def cmd_duplication(args):
     """Passages repeated across shipped files.
 
@@ -650,6 +760,12 @@ def main(argv=None):
     since.add_argument("--since-last-audit", action="store_true",
                        help="resolve the ref from the newest audit entry's Commit: field")
 
+    rev = sub.add_parser("reverse-check",
+                         help="added rules tested for a citation, and the ones it cannot test")
+    rev.add_argument("--ref", default=None, help="git ref to diff against")
+    rev.add_argument("--since-last-audit", action="store_true",
+                       help="resolve the ref from the newest audit entry's Commit: field")
+
     dup = sub.add_parser("duplication", help="passages repeated across shipped files")
     dup.add_argument("--words", type=int, default=14, help="shingle length (default 14)")
     dup.add_argument("--top", type=int, default=12, help="file pairs to show (default 12)")
@@ -685,16 +801,18 @@ def main(argv=None):
         args.words, args.top = 14, 12
         cmd_duplication(args)
         print()
-        print("== not run by `all`: since")
-        print("   `since` needs a range, and guessing one would report the wrong answer silently.")
-        print("   Run it separately — the ref is computable from the ledger:")
+        print("== not run by `all`: since, reverse-check")
+        print("   Both need a range, and guessing one would report the wrong answer silently.")
+        print("   Run them separately — the ref is computable from the ledger:")
         print("     conformance.py since --since-last-audit")
+        print("     conformance.py reverse-check --since-last-audit")
         return 0
 
     return {
         "rules": cmd_rules,
         "per-rule": cmd_per_rule,
         "since": cmd_since,
+        "reverse-check": cmd_reverse_check,
         "duplication": cmd_duplication,
         "enumerations": cmd_enumerations,
         "size": cmd_size,

@@ -141,16 +141,18 @@ notices when a later change contradicts it. Both of these are real:
 - **INV-155** — two specs removed visualization tabs and registered no invariant, so the
   shipped app contradicted INV-104's still-standing enumeration.
 
-Run the mechanical half — **all three views** — then read every hit:
+Run the mechanical half — **every view below** — then read every hit:
 
 ```bash
 python3 .claude/skills/production-readiness-audit/conformance.py rules      # section-scoped
 python3 .claude/skills/production-readiness-audit/conformance.py per-rule --uncited
 python3 .claude/skills/production-readiness-audit/conformance.py since --since-last-audit
+python3 .claude/skills/production-readiness-audit/conformance.py reverse-check --since-last-audit
 ```
 
-All three list hard rules — the repo's own `⛔` / bolded MUST/NEVER convention. They differ in
-the **unit**, and the unit is the whole story. Each prints its own current counts; read them off
+The first three list hard rules — the repo's own `⛔` / bolded MUST/NEVER convention — and
+differ in the **unit**, which is the whole story. The fourth does not list rules; it *decides*
+about the ones `since` reports. Each prints its own current counts; read them off
 the run rather than from a figure written here, which is how the previous baseline went stale.
 
 - **`rules`** asks whether the *enclosing section* cites any invariant. It prints two
@@ -164,6 +166,14 @@ the run rather than from a figure written here, which is how the previous baseli
 - **`since --since-last-audit`** lists the hard rules added since the newest audit entry's
   recorded commit, resolved from the ledger rather than guessed. For a run following an
   unattended implement session, this is the set that session is answerable for.
+- **`reverse-check --since-last-audit`** takes that set and asks, of each line, whether an
+  invariant is cited **at it** — then prints a `VERDICT`. ⛔ **(INV-308) It says `clean` only when every
+  added line was both tested and cited.** Lines it cannot test are counted and named as
+  `UNTESTED`, because `per-rule`'s corpus is the plugin alone while `since` reaches the
+  maintainer surface: the procedure this replaced compared those two spans silently and reported
+  clean over 93 lines citing nothing (#80). ⚠️ A line it reports is a candidate — the other
+  legitimate state is a `DEFERRED INVARIANT` block naming the rule, which lives in the ledger
+  and is not read here.
 
 ⛔ **Commit an audit record on its own, BEFORE the implementations that answer it.** The
 `--since-last-audit` resolver takes the newest audit entry's `Commit:` field as its range

@@ -40,12 +40,17 @@ rule, ship it **and** write an explicit `DEFERRED INVARIANT` block in the ledger
 the rule, the site, and the drafted `INV-NNN — <statement>` wording, so the maintainer's return
 costs one yes. ⛔ **Never `_None yet._`, never silence.**
 
-⛔ **(INV-282) Check for uncited hard rules with a SET DIFFERENCE between
-`since --since-last-audit` and `per-rule --uncited` — never a grep for phrases you expect.** A
+⛔ **(INV-282) Check for uncited hard rules with
+`conformance.py reverse-check --since-last-audit` — never a grep for phrases you expect.** A
 grep can only confirm lines you already thought of, and the uncited ones are by construction
 the ones you did not — that is what the check is *for*. This has produced a wrong ledger claim
 **twice**. Run it **before** writing the entry, not after. Every line it reports is then either
 cited at the line or named in a deferral; silence is neither.
+
+⛔ **(INV-308) Read its VERDICT line rather than the absence of output.** It says `clean` only when every
+added line was tested **and** cited. The procedure this replaced compared two views that read
+different corpora, so rules under `.claude/` could never appear in its result and it reported
+clean over 93 that cite nothing (#80).
 
 ⛔ **Never call `submit_feedback`.** An `mcp-server`-routed finding gets an issue whose
 `Upstream:` line reads *"not yet sent — needs maintainer approval"*, with the message drafted

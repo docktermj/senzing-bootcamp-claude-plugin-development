@@ -21,11 +21,13 @@ measure and says where the other half is not recorded.
 interpreted. A test that only checked the non-zero case would pass on a build that printed
 nothing when the count was 0, which is the one reading a maintainer would take as reassurance.
 
-⚠️ **The output is parsed by two consumers**, so its shape is asserted, not assumed:
-`tests/test_new_hard_rules_are_cited_or_deferred.py` keys on file headings and `+ ` lines, and
-the set-difference script in `.claude/skills/unattended-issue-loop/SKILL.md` keys on a five-space
-`+` prefix. A boundary line either of them mistook for a rule would corrupt the very check this
-view feeds.
+⚠️ **The output's shape is asserted, not assumed.** `tests/test_new_hard_rules_are_cited_or_deferred.py`
+parses it, keying on file headings and `+ ` lines, and a boundary line it mistook for a rule
+would corrupt the very check this view feeds. A second consumer — an embedded script in the
+unattended loop keying on a five-space `+` — was replaced by `conformance.py reverse-check` in
+#80; the assertion covering its shape is **kept**, because that is the shape anything parsing a
+diff-like report reaches for, and a guard against the loop reintroducing a parser is kept beside
+it.
 
 Built on throwaway git repositories rather than on this one, so each case is exercised directly
 instead of waiting for it to recur here — and because this repo's own boundary is a single fixed
@@ -255,13 +257,20 @@ class TheBoundaryLinesCannotBeMisreadAsRules(unittest.TestCase):
             self.boundary,
             "no boundary output was produced, so the two shape assertions below check nothing")
 
-    def test_no_boundary_line_looks_like_a_rule_to_the_loop_script(self):
-        """The set-difference script takes every line starting with five spaces and a `+`."""
+    def test_no_boundary_line_looks_like_an_added_rule(self):
+        """⚠️ The loop's own parser is gone; the shape it read is still guarded.
+
+        Until #80 the unattended loop parsed this stdout with an embedded script keying on a
+        five-space `+`, and a boundary line in that shape would have been tested for a citation
+        as though it were a rule. That script was replaced by `conformance.py reverse-check`, so
+        no consumer reads this output that way today — and the assertion is kept rather than
+        deleted, because the shape is the one anything parsing a diff-like report would reach
+        for, and the next consumer would inherit the hazard silently.
+        """
         offenders = [l for l in self.boundary if l.startswith("     +")]
         self.assertEqual(
             [], offenders,
-            "a boundary line would be read as an added hard rule by the INV-282 set-difference "
-            "script in the unattended loop, which would then test it for a citation: %r"
+            "a boundary line is shaped like an added hard rule in this view's own output: %r"
             % offenders)
 
     def test_no_boundary_line_looks_like_a_heading_or_a_rule_to_the_gate(self):
@@ -293,11 +302,15 @@ class TheBoundaryLinesCannotBeMisreadAsRules(unittest.TestCase):
         self.assertIn(
             '.endswith(".md")', gate,
             "the gate no longer keys file headings on a `.md` suffix")
+        # ⛔ The loop must not go back to parsing this stdout itself. #80 replaced its embedded
+        # script with a view that does the comparison in code; a reintroduced parser here would
+        # be a second consumer of a format this view is free to change.
         self.assertTrue(LOOP_SKILL.is_file(), "%s is gone" % LOOP_SKILL)
-        self.assertIn(
+        self.assertNotIn(
             'l.startswith("     +")', LOOP_SKILL.read_text(encoding="utf-8"),
-            "the unattended loop's set-difference script no longer keys on a five-space `+` "
-            "prefix, so the assertion above guards a shape nothing parses")
+            "the unattended loop parses this view's stdout again. #80 moved that comparison "
+            "into `conformance.py reverse-check` precisely so a prose-embedded parser could not "
+            "drift from the format it reads")
 
 
 if __name__ == "__main__":
