@@ -209,13 +209,12 @@ fact. Then:
 After the open set is empty or every remainder is blocked, invoke
 `/production-readiness-audit` and follow it.
 
-⛔ **The audit half is BLOCKED until `/production-readiness-audit` stops writing spec
-files.** Its `SKILL.md` still says *"Write it into `specs/` as you find it"*, and `specs/`
-is a read-only archive (INV-307) — so an unattended audit would produce output the freeze
-guard **rejects**, and this loop's stop condition would be measured against files that
-cannot land. ⚠️ **Until that is fixed, run the implement half only and stop after one
-cycle**, recording in the handoff that the audit was skipped and why. Tracked as **#69**;
-this note is removed in the same change that fixes it.
+⛔ **An unattended audit FILES NOTHING.** Fixed in #69: the audit records each finding in
+its dated `specs/IMPLEMENTED.md` entry and lists it in the handoff marked **not filed**,
+rather than calling `gh issue create`. ⚠️ **That is this contract, not an exception to
+it** — filing leaves the machine, and nothing leaves the machine unattended. The
+maintainer files what survives their read. ⛔ **Never file the audit's findings yourself
+at the end of a run**, and never label anything `unattended-ok`.
 
 ⚠️ **The audit reports; it does not fix in place.** That is its own rule
 ("present findings and let the maintainer choose what to fix"), and here it is also what
@@ -243,7 +242,7 @@ relying on it. (Source: `since-last-audit-reports-zero-when-the-audit-record-sha
 
 Stop and write the handoff when any of these is true:
 
-- an audit files **nothing new** — the success condition;
+- an audit **records no new findings** — the success condition;
 - **five cycles** have run;
 - the suite cannot be brought green and reverting to the last green commit is the only
   way forward — stop there, do not keep going on a broken base;
