@@ -61,16 +61,17 @@ success.** ⛔ Never rewrite history, force-push, or amend a previous cycle's co
 write into `specs/` at all — it is a read-only archive (INV-307).
 
 **Per cycle:** when the open set is empty or every remainder is blocked, run the audit and
-follow it. ⛔ **The audit half is BLOCKED** while `/production-readiness-audit` still writes
-spec files into the frozen archive (**#69**): run the implement half only and stop after
-one cycle, recording that in the handoff. ⚠️ **The audit reports; it does not fix in place** — the next
+follow it. ⛔ **An unattended audit files nothing** (#69): it records each finding in its dated
+ledger entry and the handoff, marked **not filed**, because filing leaves the machine.
+⛔ **Never file those findings yourself at the end of a run, and never label anything
+`unattended-ok`.** ⚠️ **The audit reports; it does not fix in place** — the next
 implement pass is the fixing half, so do not collapse the two. ⛔ **Commit the audit record on
 its own, BEFORE the next cycle's implementations.** Its hash becomes the next
 `--since-last-audit` range start, and a record sharing a commit with the work makes that range
 begin at the work, report `0 hard-rule lines added`, and the consumer guard **skip** — going
 green by not running, with nobody watching in a loop.
 
-**Stop** when an audit files nothing new (the success condition), at the cycle cap, when
+**Stop** when an audit records no new findings (the success condition), at the cycle cap, when
 every remaining labeled issue is blocked, when the suite cannot be brought green on a revert,
 or when the MCP server is unreachable and every remaining labeled issue asserts a Senzing fact.
 ⛔ **Stop immediately when no issue carries the label** — that is a no-op, not a failure.

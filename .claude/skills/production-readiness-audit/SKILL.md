@@ -388,15 +388,51 @@ what made them worth hunting.)
 Follow `dry-run`'s discipline, which exists because findings held in conversation die at
 session end:
 
-1. ⛔ **Write it into `specs/` as you find it, before fixing anything** — one spec per
-   root cause, using `../feedback-to-issues/issue-template.md`. Cite `file:line`.
+1. ⛔ **Record it as you find it, before fixing anything** — one record per root cause,
+   using `../feedback-to-issues/issue-template.md`. Cite `file:line`.
+
+   ⛔ **Never write into `specs/`.** It is a read-only archive as of the 2026-09-15 cutover
+   (INV-307) and `tests/test_specs_are_frozen.py` rejects any new file there. Read it freely
+   — a spec often records why the plugin reads as it does — but nothing new lands there.
+
+   ⚠️ **Where the record goes depends on whether anyone is watching, and the two paths are
+   NOT the same.** This asymmetry is deliberate and must not be "simplified" into one branch:
+
+   - **Attended** → file a GitHub issue in this repository:
+     ```bash
+     gh issue create --title "<the defect, not the symptom>" --body-file <file>
+     ```
+     ⛔ **Show the maintainer the title and body and get a yes first.** Filing is
+     outward-facing and immediate: the issue is visible to anyone watching the repository the
+     moment it exists, and its notifications have already gone out. An issue can be edited or
+     closed afterwards but never un-filed — the same gate, for the same reason,
+     `/feedback-to-issues` applies.
+
+   - **Unattended** (running under `/unattended-issue-loop`) → ⛔ **file nothing.** Write the
+     finding into the dated ledger entry from step 5 and list it in the handoff marked **not
+     filed — needs the maintainer to file it**. ⚠️ **`gh issue create` leaves the machine**,
+     and the loop's autonomy contract is that *nothing leaves the machine unattended*. A
+     finding recorded in the ledger is durable and costs the maintainer one read; an issue
+     filed by a run nobody watched cannot be un-filed.
+
+   ⛔ **Never apply the `unattended-ok` label to an issue you file.** An audit that labels its
+   own findings lets `/unattended-issue-loop` work issues **it generated itself**, with no
+   maintainer between generation and execution. Selecting what runs unattended is the
+   maintainer's decision alone.
+
+   ⛔ **Carry the `owner-checked:` clause on any absence claim** (INV-213): where a finding
+   rests on the MCP server *lacking* something, name the route that would carry the fact and
+   what it returned. The tools you asked and found empty are evidence about those tools.
 2. **Fix the class, not the instance,** where the class is cheap to remove.
 3. **Write a repo-level test** (`tests/`, stdlib only, no `plugins/` import — INV-108).
 4. ⛔ **Negative-control it.** Reintroduce the defect, confirm the test fails, revert. A
    guard whose docstring claims more than its assertion checks certifies what it never
    tested. Verify the mutation actually landed — a "target missing" line and an escaped
    mutation look identical in a loop's output.
-5. **Record the outcome in `specs/IMPLEMENTED.md`**, and either register the invariant it
+5. **Record the outcome in `specs/IMPLEMENTED.md`** — ⚠️ still live and exempt from the
+   freeze, and the audit's own record that it **ran** and what it concluded, including
+   "found nothing", which is a result. Reference each filed finding by issue number; an
+   unattended run writes the findings themselves here. Then either register the invariant it
    establishes or state that it establishes none (`tests/test_spec_ledger_invariants.py`
    enforces this). An audit that changes shipped code and leaves no ledger entry is the
    failure adjacent to the one INV-182 prevents — follow the `deep-dive-audit-*`
@@ -405,9 +441,10 @@ session end:
 6. **Correct an invariant in place when the invariant is what is wrong** — a dated note
    saying what was verified and when. Never delete or renumber it.
 
-⛔ **Do not end a run with unwritten findings.** Before reporting, list what you found
-and confirm each is in a spec or the ledger. "I described it in the report" is not
-recorded; a report is a message, and messages are not durable.
+⛔ **Do not end a run with unrecorded findings.** Before reporting, list what you found
+and confirm each is **either a filed issue or a line in the dated ledger entry**. "I
+described it in the report" is not recorded; a report is a message, and messages are not
+durable.
 
 ## Step 9: Report
 

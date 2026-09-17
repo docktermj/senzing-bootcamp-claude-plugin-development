@@ -146,17 +146,39 @@ class ABlockedIssueIsRecordedOnTheIssue(unittest.TestCase):
             "and the loop can spin on one issue it cannot finish")
 
 
-class TheAuditHalfIsMarkedBlocked(unittest.TestCase):
-    """Cycling on a half that cannot land measures the stop condition against nothing."""
+class TheUnattendedAuditFilesNothing(unittest.TestCase):
+    """⚠️ INVERTED, not deleted, on 2026-09-16 (#69).
 
-    def test_both_files_say_the_audit_half_is_blocked(self):
+    This class previously asserted the audit half was **blocked**, because
+    `/production-readiness-audit` wrote findings into the frozen archive. #69 fixed that —
+    but not by making the unattended audit file issues. ⛔ **`gh issue create` leaves the
+    machine, and this loop's contract is that nothing leaves the machine unattended.** So an
+    unattended audit records findings in its dated ledger entry and files none of them.
+
+    ⛔ The assertion was **re-pointed at the new rule rather than removed**: deleting it would
+    have left the loop free to file issues unattended with nothing failing, which is the
+    hazard the block note was standing in for all along.
+    """
+
+    def test_both_files_say_an_unattended_audit_files_nothing(self):
         for name, text in texts().items():
             with self.subTest(file=name):
                 self.assertRegex(
-                    flat(text), r"audit half is blocked",
-                    "%s does not say the audit half is blocked. `/production-readiness-audit` "
-                    "still writes spec files into a frozen archive, so an unattended cycle "
-                    "would measure 'no new findings' against output that cannot land" % name)
+                    flat(text), r"files nothing",
+                    "%s does not say an unattended audit files nothing. `gh issue create` "
+                    "leaves the machine, and this loop's contract is that nothing leaves the "
+                    "machine unattended -- so an unattended audit that files issues breaks "
+                    "the contract as surely as one calling submit_feedback would" % name)
+
+    def test_neither_file_lets_a_run_file_the_findings_afterwards(self):
+        """The loophole the first version left: record now, file at the end of the run."""
+        for name, text in texts().items():
+            with self.subTest(file=name):
+                self.assertRegex(
+                    flat(text), r"never file (?:the audit's findings|those findings) yourself",
+                    "%s does not forbid a run filing the recorded findings itself before it "
+                    "ends. Deferring the outward-facing act to the last step of an unattended "
+                    "run does not make it attended" % name)
 
 
 class TheInvariantGateSurvives(unittest.TestCase):

@@ -56,7 +56,7 @@ where it is used, never deleting why it exists.
 Finish by reporting the findings in severity order, leading with anything that breaks a
 documented path rather than with the longest list. **State the verdict on each of the four
 properties separately** — "consistent and complete; two coherence defects; concision
-unchanged" is information, a single pass/fail is not. Name the spec file each finding was
+unchanged" is information, a single pass/fail is not. ⛔ **Record every finding before fixing anything, and never into `specs/`** — it is a read-only archive (INV-307). **Attended**, file a GitHub issue after showing the maintainer the title and body and getting a yes; **unattended**, file nothing and write the finding into the dated ledger entry, marked not filed. ⛔ **Never apply the `unattended-ok` label to an issue you file** — an audit that labels its own findings lets the loop work its own output. Name the issue number each finding was
 written into and say which are fixed and which are recorded-but-open. Say briefly what you
 verified as correct, so the next audit does not re-check it. ⛔ State the coverage limits
 explicitly, including the untested conversational invariants and any path this environment
