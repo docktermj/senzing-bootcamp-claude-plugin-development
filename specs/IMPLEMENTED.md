@@ -102,7 +102,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   every consumer reads — are **already INV-308**. ⚠️ INV-282's own text governs how a guard
   derives its **matcher**, and this change moves the check *toward* it: the old procedure matched
   rendered phrasings, the view asks the question directly.
-- **Commit:** uncommitted
+- **Commit:** 4e4a251
 
 ## the-range-boundary-retires-unexamined-rules-silently
 
