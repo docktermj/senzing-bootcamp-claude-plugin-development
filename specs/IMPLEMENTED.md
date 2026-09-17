@@ -43,6 +43,67 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-inv282-set-difference-spans-two-corpora-and-reports-clean
+
+- **Implemented:** 2026-09-17
+- **Files changed:** `.claude/skills/production-readiness-audit/conformance.py`,
+  `.claude/skills/production-readiness-audit/SKILL.md`,
+  `.claude/skills/unattended-issue-loop/SKILL.md`,
+  `.claude/commands/unattended-issue-loop.md`,
+  `tests/test_reverse_check_counts_what_it_cannot_test.py`,
+  `tests/test_all_runs_every_argument_free_view.py`
+- **MCP re-check:** n/a (no Senzing fact; maintainer-surface tooling only)
+- **Summary:** the INV-282 check was a script written out in the unattended loop's `SKILL.md`: it
+  took every `+` line `since` reports and tested membership against `per-rule --uncited`. Those
+  two read **different corpora** — `since` diffs all three `SCAN_ROOTS`, `per-rule` reads
+  `shipped_markdown()`, the plugin alone — so a rule added under the maintainer surface could
+  never appear in the result. Measured against `7b43eee`: **112 lines in, 0 reported**, 0
+  occurrences of the maintainer surface in a 43 KB `--uncited` corpus, and **93 of the 112 cite
+  nothing**. Replaced by `conformance.py reverse-check`, a view that asks each line's own file
+  whether an invariant is cited at it (`own_citations`, the function `per-rule` itself uses),
+  partitions the result into TESTED / UNTESTED / UNRESOLVED, and prints a **VERDICT** that reads
+  `clean` only when every added line was both tested and cited. The three documents describing
+  the check now call the view instead of carrying a copy of the procedure.
+- ⛔ **A SECOND defect in the same script, found while fixing the first.** Its comparison key
+  stripped the stop sign from the whole line, while `per-rule` prints the line with the sign
+  intact — so a rule whose ⛔ sits mid-line stopped matching. Measured over the range `HEAD~40`:
+  **44 of 333** uncited lines were missed *inside the corpus the script did cover*, every one of
+  them a mid-line rule. ⚠️ **The gate in `tests/test_new_hard_rules_are_cited_or_deferred.py` had
+  already hit this class and strips the sign from BOTH sides** — there is a comment in
+  `_comparable()` explaining exactly why. The loop's copy never got that fix, which is the same
+  copy-drift this issue is about, one level in. Both defects are gone because the view does no
+  string matching between reports at all.
+- **The view reported this change honestly, unprompted:** run against `5a9cfbe` it found 5 added
+  hard-rule lines, all under the maintainer surface, `UNTESTED`, `VERDICT: NOT CLEAN` — and named
+  the three files to read by hand. Three of the five cited nothing; each states the rule that a
+  verdict is clean only when nothing went untested, which is **INV-308**, now cited at each line.
+  The remaining two already cited INV-282.
+- ⚠️ **`UNTESTED` is not a failure and must not be read as one.** Widening `per-rule` was
+  considered and rejected — its corpus would gain ~165 restatement lines, since command files
+  restate the rules of the skills they front by design (#38). ⛔ The defect was a check spanning
+  two corpora *silently*, not the narrow corpus. **A deliberate non-goal:** the view could also
+  report how many untested lines happen to cite something, as information rather than verdict.
+  It does not, because a number beside `UNTESTED` invites exactly the reading the word is there
+  to prevent.
+- **Negative controls, four, each verified present before the run.** (1) Untested lines dropped
+  as the old script dropped them — 2 failed. (2) Untested lines no longer blocking a `clean`
+  verdict — 1 failed. (3) The one-sided stop-sign strip reintroduced — 3 failed. (4) The old
+  membership script put back into the loop's `SKILL.md` — 1 failed. Both mutated files restored
+  byte-identical by md5, `__pycache__` cleared between runs.
+- ⚠️ **One neighboring guard failed and was right to.**
+  `tests/test_all_runs_every_argument_free_view.py` requires every argument-free view to appear
+  in `all`. `reverse-check` takes a range exactly as `since` does, so it joined that test's
+  exemption map with its reason — and the test was **strengthened** in the same change: `all`
+  must now name *both* skipped views and how to run each, since naming one of two is how an
+  aggregate comes to read as complete while covering part of the work.
+- **Establishes no invariant.** ⛔ Checked with the new view itself, not a grep: the five added
+  hard-rule lines are cited at their lines (INV-282 twice, INV-308 three times). The rules this
+  work rests on — a tool reporting what it could not verify, and one definition of a scope that
+  every consumer reads — are **already INV-308**. ⚠️ INV-282's own text governs how a guard
+  derives its **matcher**, and this change moves the check *toward* it: the old procedure matched
+  rendered phrasings, the view asks the question directly.
+- **Commit:** uncommitted
+
 ## the-range-boundary-retires-unexamined-rules-silently
 
 - **Implemented:** 2026-09-17

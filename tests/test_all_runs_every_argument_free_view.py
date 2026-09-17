@@ -32,6 +32,7 @@ CONFORMANCE = REPO_ROOT / ".claude/skills/production-readiness-audit/conformance
 # Views that legitimately need an argument, and why. Anything else must be in `all`.
 NEEDS_AN_ARGUMENT = {
     "since": "takes a range; guessing one would report the wrong answer silently",
+    "reverse-check": "takes the same range as `since`, whose set it decides about (#80)",
     "all": "is the aggregate itself",
 }
 
@@ -85,8 +86,13 @@ class AllRunsEveryArgumentFreeView(unittest.TestCase):
         self.assertIn("not run by `all`: since", out,
                       "`all` silently omits `since`. An aggregate that quietly covers some views "
                       "is the same shape as a count that quietly covered one population of two.")
+        self.assertIn("not run by `all`: since, reverse-check", out,
+                      "`all` names only some of the views it skips. Naming one of two is how an "
+                      "aggregate comes to read as complete while covering part of the work.")
         self.assertIn("--since-last-audit", out,
-                      "`all` should name how to run the view it skipped")
+                      "`all` should name how to run the views it skipped")
+        self.assertIn("conformance.py reverse-check --since-last-audit", out,
+                      "`all` skips reverse-check without saying how to run it")
 
 
 class SinceCanComputeItsOwnRef(unittest.TestCase):
