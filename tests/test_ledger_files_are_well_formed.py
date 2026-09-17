@@ -233,6 +233,53 @@ class NoEntryIsSwallowedByTheFormatComment(unittest.TestCase):
                     "an empty set" % p.name)
 
 
+class EveryEntryHeadingIsUnique(unittest.TestCase):
+    """Two entries under one heading make the ledger's own done-test ambiguous.
+
+    `IMPLEMENTED.md` states that a spec is done **iff** it has a `## <name>` heading matching
+    the spec's filename. Two identical headings break that: `entries()` in
+    `test_spec_ledger_invariants.py` yields both, `citations.py` resolves a `Source:` against
+    whichever it reaches first, and nothing distinguishes them.
+
+    ⚠️ **The realistic cause is a same-day collision, not corruption.** Three invariant
+    reviews ran on 2026-09-16; the third was suffixed at the time and the first two were both
+    written as the bare date, hours apart, by the same author. The repo already had the
+    remedy — `deep-dive-audit-2026-07-30` and `-30b` — but nothing required it.
+
+    ⛔ **No existing guard caught this.** The class above pins that headings start a line and
+    that no spec sits in both ledgers; neither notices the same heading twice in one file.
+
+    ⚠️ **The placeholder is excluded deliberately.** Both ledgers carry `## <spec-name>` once
+    in their format comment, which is legitimate and must not be counted as a collision.
+    """
+
+    def test_the_scan_finds_headings_at_all(self):
+        """INV-265 -- a uniqueness check over zero headings passes trivially."""
+        for p in LEDGERS:
+            with self.subTest(file=p.name):
+                found = [l for l in p.read_text(encoding="utf-8").splitlines()
+                         if l.startswith("## ") and PLACEHOLDER not in l]
+                self.assertGreaterEqual(
+                    len(found), 3,
+                    "fewer than three entry headings parsed from %s; the scan has drifted "
+                    "and the uniqueness check below proves nothing" % p.name)
+
+    def test_no_entry_heading_appears_twice(self):
+        for p in LEDGERS:
+            with self.subTest(file=p.name):
+                names = [l[3:].strip() for l in p.read_text(encoding="utf-8").splitlines()
+                         if l.startswith("## ") and PLACEHOLDER not in l]
+                dupes = sorted({n for n in names if names.count(n) > 1})
+                self.assertEqual(
+                    [], dupes,
+                    "%s carries the same entry heading more than once: %s. The file's own "
+                    "rule is that an entry is identified BY its heading, so a repeated one "
+                    "is ambiguous to every reader and every tool. Suffix the later entry -- "
+                    "`<name>b`, `<name>c` -- following the deep-dive-audit-2026-07-30 / -30b "
+                    "precedent; never merge or renumber the entries, since each records a "
+                    "different piece of work." % (p.name, ", ".join(dupes)))
+
+
 class TheInventoryArithmeticHolds(unittest.TestCase):
     """`list_specs.py` is what caught the corruption. Make it a test, not a human comparison."""
 
