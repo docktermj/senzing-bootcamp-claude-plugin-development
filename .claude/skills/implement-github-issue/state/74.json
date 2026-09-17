@@ -1,0 +1,17 @@
+{
+  "issue": 74,
+  "branch": "74-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): export SCAN_ROOTS from conformance.py; the gate imports it so the parser recognizes every root; unresolvable headings counted not dropped; .claude/ lines reported as an explicit out-of-scope count; skip messages distinguish parsed-nothing from nothing-added; ledger records the 112/19/93 breakdown; range-resolver defect filed separately.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications",
+    "result"
+  ],
+  "issue_corrections": [
+    "original corpus-mismatch diagnosis disproved and withdrawn; real defect is source_lines() keyed to plugins/"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/75",
+  "filed_separately": 76
+}

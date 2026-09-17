@@ -35,6 +35,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFORMANCE = REPO_ROOT / ".claude/skills/production-readiness-audit/conformance.py"
 
 
+def _load_conformance():
+    """`conformance.py` as a module — the single source both helpers below read."""
+    spec = importlib.util.spec_from_file_location("_conformance", CONFORMANCE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def shipped_hard_rule_pattern():
     """The script's OWN classifier, loaded rather than copied.
 
@@ -44,9 +52,7 @@ def shipped_hard_rule_pattern():
     test reported a line starting with a stop sign as "not a hard rule". Loading the module is
     stdlib-only and reaches nothing under `plugins/` (INV-108).
     """
-    spec = importlib.util.spec_from_file_location("_conformance", CONFORMANCE)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    mod = _load_conformance()
     # classify(), not the anchored pattern: `since` reports mid-line rules too, and pinning
     # ANCHORED_RULE here made this test reject the very lines the detector fix made visible.
     return mod.classify
@@ -54,16 +60,20 @@ def shipped_hard_rule_pattern():
 
 HARD_RULE_SHAPE = shipped_hard_rule_pattern()   # a callable: line -> kind or None
 
-#: The roots the `since` view diffs, read from `conformance.py`'s own `git diff` pathspec
-#: rather than restated here. Restating them is what let this file's parser go stale when
-#: #38 widened the view to the `.claude/` maintainer surface.
-_DIFF_CALL = re.compile(
-    r'"git",\s*"diff",\s*"--unified=0",\s*"--no-color",\s*ref,\s*"--",\s*(.*?)\]', re.S)
+#: The roots the `since` view diffs, read from `conformance.py` rather than restated here.
+#: Restating them is what let this file's parser go stale when #38 widened the view to the
+#: `.claude/` maintainer surface.
+#:
+#: ⚠️ This used to scrape the roots out of the `git diff` call's source text, which is not the
+#: same as reading them: when #74 lifted the pathspecs into `SCAN_ROOTS` -- so the reverse-
+#: contract gate could stop keeping a private copy of them -- the scrape returned nothing and
+#: this file's own anti-vacuity assertion caught it. Reading the constant is the version that
+#: survives the call being rewritten.
 
 
 def since_roots():
-    match = _DIFF_CALL.search(CONFORMANCE.read_text(encoding="utf-8"))
-    return tuple(re.findall(r'"([^"]+)"', match.group(1))) if match else ()
+    mod = _load_conformance()
+    return tuple(str(r) for r in getattr(mod, "SCAN_ROOTS", ()))
 
 
 SINCE_ROOTS = since_roots()

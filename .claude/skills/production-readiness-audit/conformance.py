@@ -27,6 +27,18 @@ DEFAULT_REPO = pathlib.Path(__file__).resolve().parents[3]
 
 INV_ID = re.compile(r"INV-\d{3}")
 
+#: ⛔ **(INV-308) The roots the `since` view diffs, defined ONCE and read by every consumer.**
+#: `tests/test_new_hard_rules_are_cited_or_deferred.py` parses this view's output back into
+#: file paths so it can check each reported rule at its source line. While that parser carried
+#: its own idea of which roots exist it recognized the shipped corpus alone, silently dropped
+#: the 112 lines this view reported under the maintainer surface, and then reported "nothing
+#: added" -- green by not running. A second copy of a root list is how one end of a pipe stops
+#: meaning what the other end says.
+#:
+#: ⚠️ Scanning a root is not the same as checking it: the consumer counts the maintainer
+#: surface as explicitly out of scope. See that module's docstring for why.
+SCAN_ROOTS = ("plugins/senzing-bootcamp", ".claude/commands", ".claude/skills")
+
 # The repo's own convention for a deliberate hard rule: a ⛔ lead-in, or a bolded
 # MUST/NEVER/ALWAYS. Bare prose "must" is excluded — it is ordinary instruction, and
 # including it took the candidate list from 16 to 202, which no one reads.
@@ -391,8 +403,7 @@ def cmd_since(args):
     # (Source: `the-github-issue-path-ships-guarantees-with-no-invariant`, 2026-09-14.)
     print("== hard-rule lines added since %s (shipped markdown + the .claude/ maintainer surface)\n" % ref)
     proc = subprocess.run(
-        ["git", "diff", "--unified=0", "--no-color", ref, "--",
-         "plugins/senzing-bootcamp", ".claude/commands", ".claude/skills"],
+        ["git", "diff", "--unified=0", "--no-color", ref, "--", *SCAN_ROOTS],
         cwd=str(repo), capture_output=True, text=True)
     if proc.returncode != 0:
         sys.stderr.write("git diff against %r failed: %s\n" % (ref, proc.stderr.strip()))
