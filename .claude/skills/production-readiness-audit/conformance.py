@@ -263,6 +263,38 @@ def cmd_per_rule(args):
     return 0
 
 
+def added_rule_lines(repo, ref, upto=None):
+    """Hard-rule lines added between `ref` and `upto` (the working tree when None).
+
+    ⛔ **One definition, read by the `since` view and by the boundary report below.** Counting
+    a range with a second copy of this parse is how the three hard-rule views came to disagree
+    about their corpus in the first place; a fourth copy measuring what a boundary retired would
+    be the same mistake in the tool built to report it.
+
+    Returns an ordered {path: [lines]}, or None when git could not answer.
+    """
+    rng = ref if upto is None else "%s..%s" % (ref, upto)
+    proc = subprocess.run(
+        ["git", "diff", "--unified=0", "--no-color", rng, "--", *SCAN_ROOTS],
+        cwd=str(repo), capture_output=True, text=True)
+    if proc.returncode != 0:
+        return None
+    current = None
+    added = collections.OrderedDict()
+    for raw in proc.stdout.splitlines():
+        if raw.startswith("+++ b/"):
+            current = raw[6:]
+            continue
+        if raw.startswith("+++") or raw.startswith("---") or raw.startswith("+++ /dev/null"):
+            continue
+        if not raw.startswith("+") or raw.startswith("+++"):
+            continue
+        body = raw[1:]
+        if current and current.endswith(".md") and classify(body) is not None:
+            added.setdefault(current, []).append(body.strip())
+    return added
+
+
 def last_audit_ref(repo):
     """The newest audit entry with a resolvable commit, or None.
 
@@ -287,24 +319,79 @@ def last_audit_ref(repo):
         sys.stderr.write("no audit entry found in the ledger\n")
         return None
     skipped = []
+    chosen = previous = None
     for name, body in entries:
         c = re.search(r"(?m)^\s*-\s+\*\*Commit:\*\*\s*`?([0-9a-f]{7,40})`?\s*$", body)
         if not c:
             raw = re.search(r"(?m)^\s*-\s+\*\*Commit:\*\*\s*(.+)$", body)
-            skipped.append("%s (%s)" % (name, raw.group(1).strip() if raw else "no Commit: field"))
+            if chosen is None:
+                skipped.append("%s (%s)"
+                               % (name, raw.group(1).strip() if raw else "no Commit: field"))
             continue
         ref = c.group(1)
         ok = subprocess.run(["git", "rev-parse", "--verify", "%s^{commit}" % ref],
                             cwd=str(repo), capture_output=True, text=True)
         if ok.returncode != 0:
-            skipped.append("%s (%s — not a commit here)" % (name, ref))
+            if chosen is None:
+                skipped.append("%s (%s — not a commit here)" % (name, ref))
             continue
-        print("   (ref %s from ledger entry %s)" % (ref, name))
-        for s in skipped:
-            print("   (skipped %s)" % s)
-        return _widen_past_a_work_commit(repo, ref, name)
-    sys.stderr.write("no audit entry has a resolvable commit; skipped: %s\n" % "; ".join(skipped))
-    return None
+        if chosen is None:
+            chosen = (name, ref)
+            continue
+        # ⚠️ The previous resolvable record, kept only so the boundary below can measure what
+        # this one retired. The scan stops here: older boundaries are older ranges' business.
+        previous = (name, ref)
+        break
+    if chosen is None:
+        sys.stderr.write("no audit entry has a resolvable commit; skipped: %s\n"
+                         % "; ".join(skipped))
+        return None
+    name, ref = chosen
+    print("   (ref %s from ledger entry %s)" % (ref, name))
+    for entry in skipped:
+        print("   (skipped %s)" % entry)
+    start = _widen_past_a_work_commit(repo, ref, name)
+    _report_retired_boundary(repo, previous, start)
+    return start
+
+
+def _report_retired_boundary(repo, previous, start):
+    """What this range boundary RETIRED, and a refusal to say it was examined.
+
+    ⛔ **An audit record advances the range whether or not the rules inside the previous one
+    were ever looked at.** `SUSPECT-REF` above catches a *different* hazard -- a record whose
+    own commit carries shipped work -- and correctly stays silent here, because a clean
+    ledger-only record is exactly what it is supposed to accept. So the boundary itself went
+    unreported: on 2026-09-17 a record retired 112 hard-rule lines that the gate consuming this
+    view had never seen (#74), and the range moved past all of them with no line of output.
+
+    ⛔ **The count is what was RETIRED, never what was unexamined.** Nothing in this repository
+    records that any rule was read, so a tool claiming "93 unexamined" would be asserting
+    something it cannot know -- the failure INV-308 is about. It reports the measurable half and
+    names the unmeasurable one, which is why the wording below says where the answer is not.
+
+    ⚠️ **Printed on every resolution, zero included.** A figure that appears only when non-zero
+    makes its absence ambiguous: the reader cannot tell an empty boundary from a boundary the
+    tool stopped measuring.
+    """
+    if previous is None:
+        print("   \u26a0 BOUNDARY: no earlier audit record resolves here, so what preceded %s is"
+              % start)
+        print("     outside this ledger. That is a first range, not a measured zero.")
+        return
+    prev_name, prev_ref = previous
+    retired = added_rule_lines(repo, prev_ref, start)
+    if retired is None:
+        print("   \u26a0 BOUNDARY: the range %s..%s could not be diffed, so what this record"
+              % (prev_ref, start))
+        print("     retired is UNKNOWN -- which is not the same as nothing.")
+        return
+    count = sum(len(rows) for rows in retired.values())
+    print("   \u26a0 BOUNDARY: this record retired %s..%s, carrying %d hard-rule line(s) across"
+          % (prev_ref, start, count))
+    print("     %d file(s); the record before it is %s." % (len(retired), prev_name))
+    print("     Whether any of them was examined is recorded NOWHERE, so this view cannot say.")
+    print("     0 here means the retired range was EMPTY, never that it was checked.")
 
 
 
@@ -402,27 +489,11 @@ def cmd_since(args):
     # under `.claude/` between 2026-09-03 and 2026-09-14 and this view reported 0.
     # (Source: `the-github-issue-path-ships-guarantees-with-no-invariant`, 2026-09-14.)
     print("== hard-rule lines added since %s (shipped markdown + the .claude/ maintainer surface)\n" % ref)
-    proc = subprocess.run(
-        ["git", "diff", "--unified=0", "--no-color", ref, "--", *SCAN_ROOTS],
-        cwd=str(repo), capture_output=True, text=True)
-    if proc.returncode != 0:
-        sys.stderr.write("git diff against %r failed: %s\n" % (ref, proc.stderr.strip()))
+    added = added_rule_lines(repo, ref)
+    if added is None:
+        sys.stderr.write("git diff against %r failed\n" % ref)
         return 2
-    current = None
-    added = collections.OrderedDict()
-    count = 0
-    for raw in proc.stdout.splitlines():
-        if raw.startswith("+++ b/"):
-            current = raw[6:]
-            continue
-        if raw.startswith("+++") or raw.startswith("---") or raw.startswith("+++ /dev/null"):
-            continue
-        if not raw.startswith("+") or raw.startswith("+++"):
-            continue
-        body = raw[1:]
-        if current and current.endswith(".md") and classify(body) is not None:
-            added.setdefault(current, []).append(body.strip())
-            count += 1
+    count = sum(len(rows) for rows in added.values())
     for name, rows in added.items():
         print("   %s" % name)
         for text in rows:

@@ -43,6 +43,54 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-range-boundary-retires-unexamined-rules-silently
+
+- **Implemented:** 2026-09-17
+- **Files changed:** `.claude/skills/production-readiness-audit/conformance.py`,
+  `tests/test_the_range_boundary_reports_what_it_retires.py`,
+  `tests/test_since_view_sees_the_maintainer_surface.py`
+- **MCP re-check:** n/a (no Senzing fact; maintainer-surface tooling only)
+- **Summary:** `--since-last-audit` starts at the newest audit record, so a record advances the
+  boundary whether or not the rules inside the previous range were ever looked at — and nothing
+  said so. ⛔ `SUSPECT-REF` does not cover it and correctly stays silent: that guard fires on a
+  record whose commit carries shipped work, and a clean ledger-only record is what it is built
+  to accept. `last_audit_ref` now also resolves the **previous** audit record, measures what the
+  retired range carried, and prints a boundary line naming the range, the count and the file
+  count — **on every resolution, zero included**. The diff-and-classify parse moved into a
+  shared `added_rule_lines()` that both the `since` view and the boundary read, rather than the
+  boundary counting with a second copy (INV-308; a fourth copy of a corpus definition inside the
+  tool built to report corpus drift would have been the same defect again).
+- **Measured on this repository:** the current boundary reports `7b43eee..5a9cfbe, carrying 112
+  hard-rule line(s) across 18 file(s)` — the lines #74 established had never reached the gate.
+  ⚠️ **They remain retired.** This change makes the boundary visible; it does not bring anything
+  back into scope, and the maintainer chose that over widening the range (which would put 93
+  uncited lines back in view and turn the suite red until they were resolved).
+- ⛔ **"Retired" is measured; "unexamined" is never claimed.** Nothing in this repository records
+  that a rule was read, so a count of unexamined rules would assert what the tool cannot know —
+  the failure INV-308 is about. The output reports the measurable half and names where the other
+  half is not recorded, and a test pins that refusal so a later edit cannot quietly upgrade the
+  count into an audit result.
+- **Negative controls, six, each verified present before the run.** (1) Zero suppressed — the
+  empty-boundary assertion failed. (2) The retired range measured under `plugins/` only — the
+  real repository's boundary dropped **112 → 0** and the fixture failed, which is why the fixture
+  carries a maintainer-surface rule. (3) The output claiming the rules were examined — failed.
+  (4) A boundary continuation line starting with five spaces and a `+`, the shape the unattended
+  loop's set-difference script reads as an added rule — 2 failed. (5) A first range reported as a
+  measured zero — failed. (6) After the call moved into the shared helper, the #74 guard's
+  regex was re-pointed; mutating the call back to a private literal still fails it. Every file
+  restored byte-identical by md5, `__pycache__` cleared between runs.
+- ⚠️ **One neighboring guard failed during this run and was right to.**
+  `test_since_view_sees_the_maintainer_surface.py` pinned the diff call by the literal name of
+  its revision argument; moving the call into the shared helper renamed it. The regex now matches
+  a name rather than that spelling, because what it exists to assert is that git receives the
+  shared root list.
+- **Establishes no invariant.** ⛔ Checked as a set difference against `since --since-last-audit`
+  and `per-rule --uncited` (INV-282), not a grep: 0 hard-rule lines added to the shipped corpus
+  or the maintainer surface. Every ⛔ written here is in a `.py` file, which no view scans. The
+  rules this work rests on — one definition every consumer reads, and a verification tool
+  reporting what it could not verify — are **already INV-308**, cited at the line.
+- **Commit:** 064f3ca
+
 ## the-reverse-contract-gate-discards-every-rule-outside-plugins
 
 - **Implemented:** 2026-09-17

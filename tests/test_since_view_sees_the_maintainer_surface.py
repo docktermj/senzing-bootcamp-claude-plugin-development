@@ -58,8 +58,13 @@ CONFORMANCE = REPO_ROOT / ".claude" / "skills" / "production-readiness-audit" / 
 #: private copy of it. This reads the constant and separately checks that the call still
 #: expands it -- a constant nothing passes to git would satisfy the assertions below while the
 #: view scanned whatever the call named instead.
+#: ⚠️ The revision argument is matched as a NAME rather than as the literal `ref`: #76 moved
+#: this call into a shared helper that takes either a single revision or a range, and the
+#: parameter is spelled differently there. Pinning the old spelling made this assertion fail on
+#: a call that was still correct -- which is the right failure direction, but the thing being
+#: asserted is that git receives the shared root list, not what the variable beside it is called.
 DIFF_CALL = re.compile(
-    r'"git",\s*"diff",\s*"--unified=0",\s*"--no-color",\s*ref,\s*"--",\s*(.*?)\]', re.S)
+    r'"git",\s*"diff",\s*"--unified=0",\s*"--no-color",\s*[a-z_]+,\s*"--",\s*(.*?)\]', re.S)
 
 
 def conformance_module():
