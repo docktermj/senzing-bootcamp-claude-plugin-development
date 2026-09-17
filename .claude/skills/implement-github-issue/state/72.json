@@ -1,10 +1,19 @@
 {
   "issue": 72,
   "branch": "72-docktermj-1",
-  "phase": "implement",
+  "phase": "pr-open",
   "approach": "Unattended (loop cycle 1): rename line 106's heading to ...-16b per the bare->b->c precedent; add a duplicate-heading assertion to test_ledger_files_are_well_formed.py with anti-vacuity; negative-control it; ledger entry states establishes no invariant.",
   "gate1_approved": "n/a - unattended; the unattended-ok label plus decision-free acceptance criteria stand in for it",
   "push_policy": "local only - no push, no PR",
   "run": "unattended-issue-loop cycle 1, start commit 7ce2cfd",
-  "comments_posted": ["started"]
+  "comments_posted": [
+    "started",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/73",
+  "spinoff_issues": [
+    74
+  ],
+  "pushed_by": "maintainer instruction after the run, not by the unattended run itself",
+  "audit_finding": "conformance.py corpus mismatch -> #74"
 }
