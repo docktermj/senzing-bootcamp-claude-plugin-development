@@ -21,6 +21,16 @@ maintainer surface — command files restate the rules of the skills they front,
 adding them to a worklist whose own skill warns these are leads would bury the real ones. What
 was wrong is a check spanning two corpora *silently*.
 
+⚠️ **The untested count carries a citation rate (#83), and the rate is not a verdict.** With the
+span untested by construction, `NOT CLEAN` became the ordinary result for maintainer-surface work
+— negative even when every line in that span is correctly cited, which is a verdict people stop
+reading. So the view reports how many untested lines carry an invariant at their own line, using
+the **same** `own_citations` the tested half uses. ⛔ **That an invariant is cited is not evidence
+it governs the rule** — `per-rule`'s own docstring says no regex can decide that, and the
+2026-09-01 audit found a rule counted as accounted-for because the sentence beside it cited two
+invariants about something else. The output carries that limit beside every number, and the
+assertions below pin it there.
+
 ⚠️ **So `UNTESTED` is not a failure state and must not be read as one.** It is the honest name
 for a span the check does not cover, and the reason the word `clean` is reserved for a run that
 tested everything it reported.
@@ -132,6 +142,82 @@ class LinesOutsideTheTestedCorpusAreCounted(unittest.TestCase):
 
 
 @unittest.skipUnless(shutil.which("git"), "git is required to build the fixture repository")
+class TheUntestedSpanCarriesItsCitationRate(unittest.TestCase):
+    """#83 — the verdict was negative for maintainer-surface work whatever the span's state."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="reverse-check-")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_a_cited_untested_line_is_counted_as_cited(self):
+        repo, base = build(self.tmp, surface_lines=CITED)
+        out = check(repo, base)
+        self.assertRegex(
+            out, r"UNTESTED 1 line\(s\)[^\n]*1 cite an invariant at the line, 0 do not",
+            "an untested line carrying an invariant at its own line is not reported as cited, "
+            "so the verdict stays negative with nothing a reader can act on:\n%s" % out)
+
+    def test_an_uncited_untested_line_is_counted_as_uncited(self):
+        repo, base = build(self.tmp, surface_lines=UNCITED)
+        out = check(repo, base)
+        self.assertRegex(
+            out, r"UNTESTED 1 line\(s\)[^\n]*0 cite an invariant at the line, 1 do not",
+            "an untested line citing nothing is counted as cited, which is the one direction "
+            "this number must never be wrong in:\n%s" % out)
+
+    def test_the_rate_prints_when_the_span_is_empty(self):
+        """⚠️ Same precedent as the untested count itself: zero is a measurement."""
+        repo, base = build(self.tmp, plugin_lines=CITED)
+        out = check(repo, base)
+        self.assertRegex(
+            out, r"UNTESTED 0 line\(s\)[^\n]*0 cite an invariant at the line, 0 do not",
+            "the citation rate vanishes on an empty span, so its absence has to be "
+            "interpreted:\n%s" % out)
+
+    def test_the_output_says_a_citation_is_not_a_governing_invariant(self):
+        """⛔ Without this the number reads as 'accounted for', which it cannot establish."""
+        repo, base = build(self.tmp, surface_lines=CITED)
+        out = check(repo, base)
+        self.assertRegex(
+            out, r"CITED there is not evidence it GOVERNS",
+            "the citation rate is printed with no statement that a cited invariant may not be "
+            "the governing one. That is exactly the reassurance #80 refused to give, and the "
+            "2026-09-01 audit found a real instance of it:\n%s" % out)
+
+    def test_a_fully_cited_untested_span_is_still_not_clean(self):
+        """⛔ The verdict was made legible, not weaker. This is the case that proves it."""
+        repo, base = build(self.tmp, surface_lines=CITED)
+        out = check(repo, base)
+        self.assertIn(
+            "VERDICT: NOT CLEAN", out,
+            "a span this view cannot test was called clean because every line in it happened "
+            "to cite something. The rate is evidence about the span, never a test of it:\n%s"
+            % out)
+
+    def test_the_rate_uses_the_same_citation_question_as_the_tested_half(self):
+        """⛔ Two notions of 'cited' in one report is the drift this view reports (INV-308)."""
+        src = CONFORMANCE.read_text(encoding="utf-8")
+        body = src[src.index("def _citation_rate"):src.index("def cmd_reverse_check")]
+        self.assertIn(
+            "own_citations(", body,
+            "the citation rate no longer asks `own_citations`. A second definition of cited "
+            "would make the two halves of one report disagree about the word")
+
+
+class TheHandoffQuotesTheCountsNotTheWord(unittest.TestCase):
+    """⚠️ Asserts what the loop INSTRUCTS; no offline test can watch a handoff be written."""
+
+    def test_the_loop_is_told_to_quote_the_counts(self):
+        text = re.sub(r"\s+", " ", LOOP_SKILL.read_text(encoding="utf-8"))
+        self.assertRegex(
+            text, r"quote its COUNTS, never the verdict word alone",
+            "the unattended loop's handoff may report the reverse check as a single verdict "
+            "word. `NOT CLEAN` is the ordinary result for maintainer-surface work, so a "
+            "handoff carrying only that word tells the maintainer nothing actionable (#83)")
+
+
 class TheTestedHalfStillDecides(unittest.TestCase):
     """Counting the untested half is worthless if the tested half stopped working."""
 
