@@ -80,7 +80,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Establishes no invariant.** ⛔ Checked with `reverse-check`: this change adds one file under
   `tests/`, which no scanned root covers, so it adds no hard-rule line. The rule it rests on is
   **INV-308**, already registered.
-- **Commit:** uncommitted
+- **Commit:** e1978f1
 
 ## the-inv308-disclosure-understated-its-own-coverage
 
