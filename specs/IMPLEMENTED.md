@@ -75,7 +75,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   **4361 OK (skipped=4)**.
 - ⛔ **A review record mints ids and adds citations; it establishes no invariant of its own.**
   INV-310 was established by #78's implementation, not by this record.
-- **Commit:** uncommitted
+- **Commit:** 62fe799
 
 ## review-invariants-stops-at-the-working-tree
 
