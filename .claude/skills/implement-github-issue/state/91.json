@@ -1,0 +1,12 @@
+{
+  "issue": 91,
+  "branch": "91-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): rewrite the INV-308 disclosure to the measured view-level state (four guards named, coverage_reports partial, citations.py wholly uncovered and its own reminder unpinned); add a guard that every test file the disclosure names exists.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/95"
+}
