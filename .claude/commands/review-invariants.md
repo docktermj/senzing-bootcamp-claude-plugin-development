@@ -79,7 +79,7 @@ root, never about the site set.
 turned down; that reasoning is the expensive part and it is already written, so show it rather
 than making the maintainer re-derive it.
 
-⛔ **This skill does not commit and does not push.** Perform the registration, verify it, then
+⛔ **(INV-310) This skill does not commit and does not push.** Perform the registration, verify it, then
 **stop with the changes in the working tree** and report every file touched — the way
 `/propagate-to-public` does. Registering is the most permanent act here (`INVARIANTS.md` is
 append-only, so a wrong id gets a dated correction and never a removal), and approving a
