@@ -43,6 +43,89 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## retrofit-files-issues-instead-of-applying-changes
+
+- **Implemented:** 2026-09-21
+- **Files changed:** `.claude/skills/retrofit-from-public/retrofit.sh`,
+  `.claude/skills/retrofit-from-public/SKILL.md`,
+  `.claude/skills/propagate-to-public/SKILL.md`,
+  `tests/test_one_commit_convention.py`, `tests/test_retrofit_files_issues.py`
+- **MCP re-check:** n/a (no Senzing fact; a maintainer command's output)
+- **Summary:** `/retrofit-from-public` copied the public repo's propagated paths into the dev
+  working tree and applied the inverse slug rewrite in place. Under the issue-driven workflow its
+  output is now **GitHub issues describing what diverged**, and ⛔ **the script writes nothing at
+  all** — the rsync copies, the in-place slug rewrite and even the `rsync` dependency check are
+  gone. Duplicates are avoided by **searching the tracker**, not by a second ledger.
+- ⛔ **Removing the copy removes a hazard the old procedure could only warn about.** `tests/` is
+  not in the public mirror and cannot come back, so a copied prose edit landed in a shipped file
+  while the dev-only test quoting that sentence kept asserting the old wording. Measured
+  2026-08-16 on `2223961` — the British→US spelling corrections, a **correct** edit, faithfully
+  retrofitted — which left **12 failed / 2730 passed**. Nothing is copied now, so nothing
+  desyncs. ⚠️ **The narrative is kept and a test pins it**: without the number, a later editor
+  reads "do not copy" as caution rather than as a measured result.
+- ⚠️ **The inverse slug transform is still required and is now manual**, applied by whoever
+  implements a filed issue. A guard cannot check that it happened; the skill says so instead, and
+  `propagate.sh` still holds the forward direction the two must agree on.
+- ⛔ **THE FINDING: a guard written hours earlier missed a live instance of its own claim.**
+  `retrofit-from-public/SKILL.md` said *"commit subjects in these repos start with
+  `#<issue-number>`"* — the convention #56 retired the same day. `tests/test_one_commit_convention`
+  passed over it: its matcher required an instruction verb (`prefix`, `use`, `must be`), and this
+  wording has none. Found by **reading**, which is the failure mode that guard exists to prevent.
+  The matcher now carries a third arrangement — subject + *starts with* + the issue token — and
+  the missed wording is pinned as a fixture.
+- ⛔ **Widening it immediately found a SEVENTH site by itself**: `propagate-to-public/SKILL.md`
+  carried the identical sentence. Both are corrected. ⚠️ Worth stating plainly — the audit's manual
+  sweep found five, the first guard found a sixth, reading found a seventh, and the widened
+  matcher found an eighth. **No single method found them all.**
+- **Negative controls, four, each verified present before the run.** (1) An `rsync` copy
+  reintroduced — caught. (2) The same copy written as `cp -r`, a name the matcher never saw —
+  caught, because it targets the act rather than one command's name. (3) The 2026-08-16 desync
+  narrative cut — caught. (4) The tracker search dropped — caught. ⚠️ **Restores were done from
+  file backups rather than `git checkout`**, after that command destroyed work twice earlier in
+  the session; both files verified byte-identical by md5.
+- ⚠️ **Coverage limit, stated rather than implied.** The public repository is **not present on
+  this machine** (`~/senzing.git/senzing-bootcamp-claude-plugin` does not exist), so the reporter
+  was never run against real divergence and the guard asserts what the skill and script
+  **instruct**, never what a run does. This is weaker evidence than the day's other work.
+- ⛔ **Six hard-rule lines added, each accounted for (INV-309).** Checked with `reverse-check`
+  against the audit record, not by reading: 6 added under the maintainer surface, **0 cited**.
+  Classified rather than waved through:
+    - `SKILL.md:93` and `:153` — *the script writes nothing; compare, report, file, stop.* ⛔ **A
+      new durable guarantee**, deferred below.
+    - `SKILL.md:118` — *files in this repository only; cross-repo filing belongs to
+      `/escalate-to-parent`.* Same deferral: it bounds the same act.
+    - `SKILL.md:100` — *search the tracker before filing.* A procedural step that makes the
+      acceptance criterion reachable, not a guarantee the command makes. **Establishes no
+      invariant.**
+    - `SKILL.md:115` — *filing is outward-facing and immediate, so get a yes first.* ⚠️ **An
+      existing convention restated**, already shipping in `/feedback-to-issues` and
+      `/production-readiness-audit` — and registered in **neither**. Not introduced here, so not
+      deferred here; that it is unregistered across three commands is worth its own issue.
+    - `SKILL.md:128` — the heading explaining why copying stopped. Narrative, not a rule.
+      **Establishes no invariant.**
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+  shipping:
+    - ⛔ **(#54) The script writes nothing.** — in `.claude/skills/retrofit-from-public/SKILL.md`
+    - ⛔ **Files in this repository only.** — in `.claude/skills/retrofit-from-public/SKILL.md`
+
+  The drafted wording:
+
+  **INV-NNN** — A maintainer command that brings another repository's changes into this one MUST
+  NOT write them into the working tree: it compares, reports what diverged, and files GitHub
+  issues describing it, **in its own repository only**. ⛔ Cross-repo filing is a different act
+  with a different owner and MUST NOT be reachable from a sync command. ⚠️ The reason is
+  measurable rather than stylistic: `tests/` is not in the public mirror and cannot come back, so
+  a copied prose edit lands in a shipped file while the dev-only test quoting that sentence keeps
+  asserting the old wording — measured 2026-08-16 on `2223961`, a **correct** edit that left 12
+  failed / 2730 passed. An issue makes the same change arrive where the suite is run.
+  ⚠️ **A guard on this rule can only assert what the command instructs**; no offline test can
+  watch a run refrain from copying, and the source repository is absent on some machines. Enforced
+  by `tests/test_retrofit_files_issues.py`. *(written as NNN deliberately: a literal id here would
+  cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer
+  registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a
+  number written here.)*
+- **Commit:** 8a48ff2
+
 ## the-unscanned-count-separates-ineligible-from-unread
 
 - **Implemented:** 2026-09-21

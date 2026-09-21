@@ -90,57 +90,66 @@ directory, or `rsync` is missing.
 
 ## After it runs
 
-The script **only updates the dev working tree** — no commit, no push.
+⛔ **(#54) The script writes nothing. It compares and reports; the output of this command is
+GitHub issues, not a modified working tree.**
 
-1. Report the script's summary, including its "In dev but not in public" list and
-   the `git status --short` block.
-2. Review the diff before committing:
-   `git -C . diff -- plugins .claude-plugin docs README.md`.
-3. For anything in the "In dev but not in public" list, decide per file whether
-   it's a dev-only addition to keep or content removed in public to delete — the
-   script never deletes it for you.
-4. Sanity-check the reverse transform in the diff: dev self-references should read
-   `docktermj/senzing-bootcamp-claude-plugin-development` and `plugin.json`
-   `author` should still be `Senzing`.
-5. ⛔ **Run the full suite, and reconcile every test the retrofit desynced.**
+1. Report the script's summary: which propagated paths differ, which are absent in public, the
+   "In dev but not in public" list, and the public commits since the newest tag.
+2. **Group the divergence into coherent changes**, one per thing a maintainer would decide about
+   — a Dependabot bump, a workflow added downstream, a prose correction — not one per file.
+3. ⛔ **Search the tracker before filing each one.**
 
    ```bash
-   python3 -m pytest -q
+   gh issue list --state all --search "<the public commit subject or SHA>"
    ```
 
-   **This is not a formality, and no guard can replace it — the suite going red
-   *is* the signal.** A retrofit copies `plugins/`, `.claude-plugin/`, `docs/` and
-   `README.md`; it never copies `tests/`, because they are not in the public mirror
-   and cannot come back. So a prose edit made downstream lands in a shipped file
-   while the dev-only test that pins that sentence **verbatim** keeps asserting the
-   old wording, and nothing reconciles the two.
+   A change already absorbed, or already filed, must not get a second issue. The tracker is the
+   record; this command keeps no ledger of its own, because a second list of the same fact is how
+   two records come to disagree.
+4. **Show the maintainer each title and body and get a yes**, then file:
 
-   The worked example is `2223961` (2026-08-16), the British→US spelling
-   corrections: a *correct* edit, faithfully retrofitted, which left **12 failed /
-   2730 passed** — ten of them this desync, each pinning a sentence the retrofit had
-   already changed, plus an INV-065 pair where the example `.md` was retrofitted and
-   the committed PDF was not. Nobody noticed until the next full run, because this
-   step did not exist.
+   ```bash
+   gh issue create --title "<what diverged, not the symptom>" --body-file <file>
+   ```
 
-   Reconcile by **updating the assertion to the retrofitted wording**, not by
-   reverting the prose — the public edit is the correction. Where a shipped file and
-   a generated artifact are pinned to each other (INV-065), regenerate the artifact.
+   ⛔ **Filing is outward-facing and immediate** — the same gate `/feedback-to-issues` and
+   `/production-readiness-audit` apply, for the same reason: an issue can be edited or closed
+   afterwards but never un-filed.
+5. ⛔ **Files in this repository only.** Cross-repo filing belongs exclusively to
+   `/escalate-to-parent`; this command never files anywhere but its own tracker, in the parent and
+   in every child that inherits it.
+6. Each issue body carries the **public commit** (subject and SHA), the paths affected, and
+   ⚠️ **the inverse slug rewrite as work still to do** — see below.
 
-6. Do **not** commit unless asked. If you do, commit subjects in these repos start
-   with `#<issue-number>`.
+⚠️ **The inverse transform is still required; it just is not automatic.** Whoever implements a
+filed issue applies it by hand to any text they bring across, or the dev repo ends up carrying
+public self-references. `propagate.sh` holds the forward direction and the two must still agree.
+
+⛔ **Why this stopped copying, which is worth keeping rather than cutting.** `tests/` is not in
+the public mirror and cannot come back, so a copied prose edit landed in a shipped file while the
+dev-only test quoting that sentence kept asserting the old wording — and nothing reconciled the
+two. Measured 2026-08-16 on `2223961`, the British→US spelling corrections: a **correct** edit,
+faithfully retrofitted, left **12 failed / 2730 passed**, ten of them that desync, plus an INV-065
+pair where the example `.md` was retrofitted and the committed PDF was not. Nobody noticed until
+the next full run.
+
+That is now impossible rather than guarded against: nothing is copied, so nothing desyncs, and the
+reconciliation happens deliberately inside the issue's implementation where the suite is run
+anyway.
 
 ## Guardrails
 
 - **Apply the inverse transform, scoped.** Only the repo slug and the marketplace
   owner name. Never touch `plugin.json`'s `author`, product mentions of "Senzing",
   or `LICENSE`.
-- **Never delete** dev files; report and let the maintainer decide.
+- **Never delete, and never add.** Report what differs and let the maintainer decide; the
+  script has written nothing since #54.
 - **Never report a retrofit as done on an unrun suite.** `tests/` cannot come back
   from public, so the copy routinely moves prose out from under the assertions that
   quote it. Step 5 is the only thing that catches it.
 - **Never pull governance** into dev.
 - **Don't guess the source.** If the public repo isn't at the default path and
   none was given, ask rather than retrofitting from somewhere uncertain.
-- **Don't commit or push.** Sync files, report, stop.
+- ⛔ **Don't write into the dev tree at all.** Compare, report, file issues, stop (#54).
 - Keep this manifest and `retrofit.sh` in step with `propagate-to-public` — the
   two must always agree on which paths are propagated and on the transform.
