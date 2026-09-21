@@ -43,6 +43,47 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## one-pointer-guard-over-every-root
+
+- **Implemented:** 2026-09-21
+- **Files changed:** `tests/test_comment_test_pointers_resolve.py`,
+  `tests/test_disclosure_pointers_resolve.py` (**deleted**, subsumed)
+- **MCP re-check:** n/a (no Senzing fact; a guard's corpus)
+- **Summary:** the comment-pointer guard checked that a comment naming `tests/<file>.py` points at
+  a file that exists — over `plugins/` alone. ⛔ **Pointers are densest everywhere else**: measured
+  at widening time, **22** under `plugins/`, **83** under `tests/`, **39** under `.claude/`, 2
+  under `docs/`. A docstring under `tests/` or a skill under `.claude/` could name a guard that
+  does not exist and nothing noticed. The scan now covers all four roots, and the second pointer
+  guard added the day before is **deleted** rather than left beside it.
+- ⛔ **Two guards with two narrow corpora was the state this issue names as worse than one.**
+  `tests/test_disclosure_pointers_resolve.py` (#91) covered exactly one docstring. Its one unique
+  assertion — that #91's INV-308 disclosure names **at least four** guard files, so a version
+  naming none is unverifiable again — was **folded into** the consolidated guard rather than
+  dropped with the file.
+- ⛔ **The widening surfaced three broken pointers, and all three are legitimate.**
+  `compact-dev-environment/SKILL.md:298` (`tests/test_a.py` + `test_b.py` in a table row
+  illustrating a duplicate walk), `pending_invariants.py:156` (`tests/test_x.py` in a comment
+  listing what resolves repo-relative), and `review-invariants/SKILL.md:216` (`tests/test_x.py`
+  inside an example report). ⚠️ **None names a guarding test; each is a metasyntactic
+  placeholder.** So the widening turns entirely on telling a placeholder from a pointer.
+- **The exclusion is derived from a naming convention, not a path list.** A single-letter stem —
+  `test_<letter>.py` — is a placeholder; every real test file here is a descriptive sentence and
+  **0 of 299** has a single-letter name. ⛔ Pinned in both directions (INV-282): four placeholders
+  that must be excluded, three real guard names that must not. Get it strict and the guard fires
+  on correct prose; get it loose and a real stale pointer named `test_q.py` escapes.
+- ⚠️ **No real stale pointer existed to find.** The widening's value is prospective: 122 pointers
+  outside `plugins/` are now checked where none was. The guard carries a floor asserting more than
+  20 are found outside the plugin, so a silent narrowing fails rather than shrinking the corpus.
+- **Negative controls, five, each verified present before the run.** A nonexistent pointer added
+  to `tests/`, to `.claude/` and to `docs/` — **caught in each newly covered root**, which is the
+  issue's own criterion 4. (4) The scan narrowed back to `plugins/` — 3 failed, including the
+  outside-the-plugin floor. (5) The placeholder rule loosened to match every test name — 8 failed.
+  The guard restored byte-identical by md5.
+- **Establishes no invariant.** ⛔ Checked with `reverse-check`: the change touches `tests/` only,
+  which no scanned root of that view covers. The rule it rests on — a guard's corpus has one
+  definition its consumers can see — is **INV-308**, already registered.
+- **Commit:** 20c1735
+
 ## one-commit-convention-repo-wide
 
 - **Implemented:** 2026-09-21

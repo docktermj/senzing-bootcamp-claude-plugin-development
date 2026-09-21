@@ -45,20 +45,55 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 TESTS = REPO_ROOT / "tests"
 
-#: A reference to a repo test file from shipped source.
+#: A reference to a repo test file.
 TEST_REFERENCE = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
+
+#: ⛔ A metasyntactic placeholder, not a pointer. `tests/test_x.py` inside an illustration of
+#: what a path looks like is not naming a guarding test; it is a variable. Every real test file
+#: here is a descriptive sentence and **none** is a single letter (measured: 0 of 299 when this
+#: was widened), so the shape distinguishes them without a path allowlist that would go stale.
+#:
+#: ⚠️ Pinned in both directions below. Widening this scan to the whole repository surfaced
+#: exactly three such placeholders and no real breakage, so the exclusion is what the widening
+#: turns on — get it wrong in the strict direction and the guard fires on correct prose; wrong
+#: in the loose direction and a real stale pointer named `test_q.py` escapes.
+PLACEHOLDER = re.compile(r"^test_[a-z]\.py$")
 
 #: Symbols a mirror comment is about. If the comment names one AND names a test file, that
 #: test file must mention the symbol — otherwise the pointer sends the reader nowhere useful.
 MIRROR_SYMBOLS = ("_APPLICABILITY", "tabApplicable", "_FALLBACK", "brand_tokens")
 
-#: Non-vacuity floor: shipped source known to reference a test when this guard was written.
-KNOWN_REFERRERS = ("capture_screenshots.py",)
+#: Non-vacuity floor: source known to reference a test when this guard was written. ⚠️ One per
+#: root, so a root silently dropping out of the scan fails rather than shrinking the corpus.
+KNOWN_REFERRERS = ("capture_screenshots.py", "test_review_invariants_queue.py",
+                   "pending_invariants.py")
+
+#: The placeholders the widening surfaced, and real pointers beside them. ⛔ INV-282: a matcher
+#: pinned in one direction only gets relaxed until it stops firing.
+NOT_POINTERS = ("test_x.py", "test_a.py", "test_b.py", "test_y.py")
+ARE_POINTERS = ("test_capture_tabs.py", "test_review_invariants_queue.py",
+                "test_one_commit_convention.py")
+
+#: Folded in from `test_disclosure_pointers_resolve.py`, which this guard now subsumes (#96).
+#: That file existed because #91 rewrote one docstring to name the guards covering each half of
+#: INV-308; a version naming none would be unverifiable again, so the floor moves here rather
+#: than being dropped with the file.
+DISCLOSURE = REPO_ROOT / "tests" / "test_review_invariants_queue.py"
+
+
+#: ⛔ Every root a maintainer reads, not just the one that ships (#96). The scan covered
+#: `plugins/` alone until 2026-09-21, so a docstring under `tests/` or a skill under `.claude/`
+#: could name a guard that does not exist and nothing noticed — and those are where pointers are
+#: densest: 39 under `.claude/` and 83 under `tests/` against 22 under `plugins/`.
+SCANNED_ROOTS = (PLUGIN, REPO_ROOT / "tests", REPO_ROOT / ".claude", REPO_ROOT / "docs")
 
 
 def shipped_source():
-    """Every shipped script and Markdown file, discovered rather than listed (INV-246)."""
-    return sorted(list(PLUGIN.rglob("*.py")) + list(PLUGIN.rglob("*.md")))
+    """Every script and Markdown file a maintainer reads, discovered rather than listed (INV-246)."""
+    out = []
+    for root in SCANNED_ROOTS:
+        out += list(root.rglob("*.py")) + list(root.rglob("*.md"))
+    return sorted(out)
 
 
 def read(path):
@@ -73,6 +108,8 @@ def references():
             continue
         for n, line in enumerate(read(path).splitlines(), 1):
             for name in TEST_REFERENCE.findall(line):
+                if PLACEHOLDER.match(name):
+                    continue
                 out.append((path, name, line, n))
     return out
 
@@ -92,6 +129,57 @@ class TheScanIsNotVacuous(unittest.TestCase):
                     known, referrers,
                     "%s no longer references a repo test, so this guard is inspecting a "
                     "smaller set than it believes" % known)
+
+
+class ThePlaceholderRuleIsCalibrated(unittest.TestCase):
+    """⛔ The widening turns on this: three placeholders, no real breakage (#96)."""
+
+    def test_placeholders_are_not_treated_as_pointers(self):
+        for name in NOT_POINTERS:
+            with self.subTest(name=name):
+                self.assertTrue(
+                    PLACEHOLDER.match(name),
+                    "%r is a metasyntactic placeholder used in illustrations here; treating it "
+                    "as a pointer makes this guard fire on correct prose" % name)
+
+    def test_real_test_names_are_not_treated_as_placeholders(self):
+        for name in ARE_POINTERS:
+            with self.subTest(name=name):
+                self.assertFalse(
+                    PLACEHOLDER.match(name),
+                    "%r is a real guard file; excluding it would let a stale pointer to it "
+                    "escape, which is the whole property" % name)
+
+
+class EveryRootIsActuallyScanned(unittest.TestCase):
+    """⚠️ #96 exists because a scan covered one root while its consumers assumed four."""
+
+    def test_each_root_contributes_files(self):
+        for root in SCANNED_ROOTS:
+            with self.subTest(root=root.name):
+                found = [f for f in shipped_source() if root in f.parents or f.parent == root]
+                self.assertTrue(
+                    found,
+                    "no files found under %s, so pointers there are unchecked while this guard "
+                    "reports clean" % root)
+
+    def test_pointers_are_found_outside_the_shipped_plugin(self):
+        """⛔ The floor that would have failed before #96: 0 pointers outside `plugins/`."""
+        outside = [r for r in references() if PLUGIN not in r[0].parents]
+        self.assertGreater(
+            len(outside), 20,
+            "fewer than 20 test pointers found outside the shipped plugin. Before #96 this scan "
+            "read `plugins/` alone and would have reported 0 here while 122 pointers sat under "
+            "`tests/` and `.claude/`")
+
+    def test_the_inv308_disclosure_still_names_its_guards(self):
+        """Folded in from the guard this one subsumes; a disclosure naming none is unverifiable."""
+        named = {n for n in TEST_REFERENCE.findall(read(DISCLOSURE)) if not PLACEHOLDER.match(n)}
+        self.assertGreaterEqual(
+            len(named), 4,
+            "%s names fewer than four guard files. #91 rewrote its INV-308 disclosure to name "
+            "the guards covering each half; a version naming none has lost what makes it "
+            "checkable rather than merely believable" % DISCLOSURE.name)
 
 
 class EveryNamedTestResolves(unittest.TestCase):
