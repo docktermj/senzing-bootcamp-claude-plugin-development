@@ -43,6 +43,57 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## sites-states-the-corpus-it-scanned-on-every-run
+
+- **Implemented:** 2026-09-21
+- **Files changed:** `.claude/skills/review-invariants/pending_invariants.py`,
+  `.claude/skills/review-invariants/SKILL.md`, `.claude/commands/review-invariants.md`,
+  `tests/test_sites_states_the_corpus_it_scanned.py`
+- **MCP re-check:** n/a (no Senzing fact; maintainer-surface tooling only)
+- **Summary:** `pending_invariants.py sites` scans `shipped_files()` — the plugin alone — while
+  `resolve()`, the other half of the same command, reads `RESOLUTION_ROOTS`, widened to the
+  repository root by #59. ⛔ **The scope was stated only on the two branches where the scan found
+  nothing.** A non-empty candidate list is the output that reads as *the* set, and it carried no
+  statement that whole roots were never opened. `cmd_sites` now prints, on **every** branch, the
+  corpus it scanned with its file count and the unscanned remainder grouped by top-level
+  directory, plus the sentence that a **named** site still resolves anywhere — without which the
+  scope line reads as "a site outside the plugin does not count".
+- **Measured on this repository when #77 was filed:** the scan covers **63 of 950** `.md`/`.py`
+  files — **6.6%**. The 887 it does not open are `specs/` 523, `tests/` 292, `.claude/` 47,
+  `feedback/` 20, other 5.
+- ⛔ **The scope is counted, never listed.** The obvious implementation names `tests/`,
+  `.claude/` and `specs/` in prose — the shape the comment above `RESOLUTION_ROOTS` rejects in
+  its own words: a list goes stale as the repo grows and going stale here is silent. A directory
+  that appears tomorrow enters the count on its own, and a test asserts the three names are
+  absent from the code as literals.
+- ⚠️ **The scan is NOT widened, by decision.** Widening to `.claude/` — where INV-307, INV-308
+  and INV-309 all ship — would recompute the rarity weighting over a larger corpus, and with
+  **`pending: 0`** there is no real block to measure the effect against. Widening a lead
+  generator blind is how a worklist fills with noise. ⛔ So the consequence is stated rather than
+  removed: for an invariant shipping outside the plugin the candidate list stays empty, and the
+  run now says so in a number instead of implying a measured absence.
+- ⛔ **The documents were the load-bearing half.** `SKILL.md` told the maintainer to *derive the
+  site set from `sites` and from scanning* — an instruction that, for a rule shipping under
+  `.claude/` or `tests/`, points at a scan opening none of it. Both that step and the
+  three-groups description in the command now carry the caveat, cited to INV-308.
+- **Negative controls, four, each verified present before the run.** (1) The scope printed only
+  on the empty branch, as before — 5 failed. (2) The unscanned count restricted to a hardcoded
+  directory list — 3 failed. (3) The sentence about a named site still resolving removed — 1
+  failed. (4) Both caveats stripped from `SKILL.md` — 1 failed. All three files restored
+  byte-identical by md5, `__pycache__` cleared between runs.
+- ⚠️ **The fixtures are fabricated and the guard says so.** The queue is empty, so nothing
+  exercises this against a block a maintainer actually wrote; the assertions establish what the
+  command prints for a block of the right *shape*. ⛔ **The first draft of the fixture passed for
+  the wrong reason** — its drafted wording did not match what `parse()` reads, so `wording` came
+  back empty, no search terms were derived, and the candidate list was empty regardless of the
+  code under test. Caught by asserting the candidate fixture *produces* a candidate before
+  asserting anything about the branch it exercises (INV-265).
+- **Establishes no invariant.** ⛔ Checked with `reverse-check --since-last-audit` rather than a
+  grep: this change adds two hard-rule lines, both under the maintainer surface, and both cite
+  **INV-308** at their own line — which is already the rule that a tool reporting a verification
+  count must report what it could not verify.
+- **Commit:** 6d29be6
+
 ## the-inv282-set-difference-spans-two-corpora-and-reports-clean
 
 - **Implemented:** 2026-09-17

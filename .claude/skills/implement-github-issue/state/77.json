@@ -1,0 +1,13 @@
+{
+  "issue": 77,
+  "branch": "77-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): cmd_sites prints the scanned corpus, its size and the unscanned remainder on every branch, all counted at run time and grouped by top-level directory rather than listed as literals; the two documents that tell a maintainer to derive the site set from `sites` carry the caveat; guard builds its own ledger because the live queue is empty.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/84"
+}

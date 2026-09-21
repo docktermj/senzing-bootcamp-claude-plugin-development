@@ -70,6 +70,11 @@ definite; the **prose-named** ones — sites whose bullet nobody wrote — are *
 have been**; the **candidates** are leads to read and ⛔ never sites to cite blind. A rule has
 already been cited at the two sites its deferral listed when it shipped in three.
 
+⛔ **(INV-308) The candidate scan reads one root — the plugin — and prints what it scanned and
+what it did not on every run (#77).** A named path resolves anywhere under the repository, so
+the two halves of that command differ by design. An empty candidate list is evidence about one
+root, never about the site set.
+
 **Surface what the block already rejected.** Several record a near-miss citation considered and
 turned down; that reasoning is the expensive part and it is already written, so show it rather
 than making the maintainer re-derive it.

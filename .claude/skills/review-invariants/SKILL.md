@@ -140,6 +140,10 @@ Present, in this order:
 4. **Where a citation would land** — `sites` prints three groups. The **named** ones are
    definite; the **prose-named** ones are sites whose bullet nobody wrote and are where
    the misses have been; the **candidates** are leads to read, never sites to cite blind.
+   ⛔ **(INV-308) Read the scope line under them.** The candidate scan reads one root, the
+   plugin, while a **named** path resolves anywhere under the repository — so an empty
+   candidate list is evidence about that one root and nothing else. `sites` prints what it
+   scanned and what it did not on every run (#77); the numbers are the point.
 5. **Anything the block already rejected.** Several blocks record a near-miss citation
    that was considered and turned down — INV-097 for the multi-select rule, INV-080 and
    INV-149 for the provenance rule. That reasoning is the expensive part and it is already
@@ -172,7 +176,11 @@ Then, per `INVARIANTS.md`'s own maintenance rules:
 3. **Cite the new ID at every site the rule ships** — `(INV-NNN)` first inside the rule's
    own bold, so it is on the rule's line. ⛔ **Derive the site set from `sites` and from
    scanning, never from the deferral's bullet list** (INV-246): the list is where the
-   author noticed the rule, which is exactly what is unreliable.
+   author noticed the rule, which is exactly what is unreliable. ⚠️ **And `sites` is not the
+   whole derivation**, because its candidate scan reads one root: for a rule shipping under
+   `.claude/` or `tests/` — which INV-307, INV-308 and INV-309 all do — the scan opens none
+   of it and says so. Grep the rule's own distinctive words across the repository before
+   concluding the set is complete.
 4. **Back-cite from the enforcer.** If the invariant says *"Enforced by `tests/x.py`"*,
    that test must name the invariant back (`tests/test_invariant_enforcer_citations.py`).
    Say in the back-citation what the test does **not** establish — usually that a live turn
