@@ -43,6 +43,46 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-unscanned-count-separates-ineligible-from-unread
+
+- **Implemented:** 2026-09-21
+- **Files changed:** `.claude/skills/review-invariants/pending_invariants.py`,
+  `tests/test_sites_states_the_corpus_it_scanned.py`
+- **MCP re-check:** n/a (no Senzing fact; one report's arithmetic)
+- **Summary:** `sites` reported *"NOT SCANNED 889 file(s)"* — of which **523 (59%) were the frozen
+  archive**, read-only under INV-307 and therefore ineligible as a citation site. ⚠️ The figure
+  was accurate and misleading together: *"not scanned"* and *"could hold a site"* were reported as
+  one set, presenting a gap more than twice the size of the one a reader can act on. Now split:
+  **374 files that could hold a site, 519 excluded as frozen**, each counted and named.
+- ⛔ **The ineligible set is read from `specs/FROZEN-MANIFEST.txt`, not from a path prefix**, and
+  the difference is load-bearing rather than stylistic. The manifest is the repository's own
+  authority on what the freeze covers, and it **excludes the live records** — `IMPLEMENTED.md`,
+  `INVARIANTS.md`, `DECLINED.md`, `README.md`. A `specs/` prefix test would sweep those four in as
+  ineligible when they are not; the live output shows them correctly as `specs/ 4` in the eligible
+  column. A prefix would have been a second definition of the freeze, which is the shape #77's own
+  comment rejects.
+- ⚠️ **An unreadable manifest returns the empty set**, so every unscanned file is reported as
+  eligible — an over-count. That is the safe direction: it can only make the gap look larger than
+  it is, never smaller, and a figure that errs toward "more to check" is the one a reader can
+  trust to be conservative.
+- **The excluded count prints even at zero**, matching the count beside it (#77, #83): a figure
+  that appears only when non-zero makes its absence something to interpret.
+- **Negative controls, three, each verified present before the run.** (1) Frozen files folded
+  back into the unscanned count, the original defect — 3 failed. (2) Ineligibility decided by
+  path prefix rather than the manifest — 6 failed, including the assertion that a live record
+  under `specs/` stays eligible. (3) The excluded count suppressed at zero — 1 failed. The helper
+  restored byte-identical by md5.
+- ⛔ **One restore failed silently mid-run.** The next control's pre-write assertion caught it. Deleting the ineligible branch for control (1) left a blank line, so the restore
+  string no longer matched and the replacement did nothing — the file stayed mutated, and the
+  `FAILED` reported for control (2) was control (1)'s mutation, not control (2)'s. ⚠️ **The
+  mutation script's `assert` before writing is what surfaced it**, as it did on 2026-09-21
+  earlier in the day; the md5 check then confirmed the repair. This is the third handling error
+  of the session and the second caught by that assertion rather than by reading.
+- **Establishes no invariant.** ⛔ Checked with `reverse-check`: the change adds no hard-rule line
+  to any scanned root. The rules it rests on — a scope has one definition every consumer reads,
+  and a tool reports what it could not check — are **INV-307** and **INV-308**, both registered.
+- **Commit:** uncommitted
+
 ## one-pointer-guard-over-every-root
 
 - **Implemented:** 2026-09-21
