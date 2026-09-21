@@ -95,7 +95,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Establishes no invariant.** ⛔ Checked with `reverse-check` itself: this change adds one
   hard-rule line, under the maintainer surface, citing **INV-308** at its own line — already the
   rule that a tool reporting a verification count must report what it could not verify.
-- **Commit:** uncommitted
+- **Commit:** 209c6bb
 
 ## sites-states-the-corpus-it-scanned-on-every-run
 
