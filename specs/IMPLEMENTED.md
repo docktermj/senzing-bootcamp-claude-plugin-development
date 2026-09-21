@@ -43,6 +43,57 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## one-commit-convention-repo-wide
+
+- **Implemented:** 2026-09-21
+- **Files changed:** `.claude/memory/spec-commit-message-format.md` →
+  `.claude/memory/commit-message-format.md` (renamed and rewritten),
+  `.claude/memory/MEMORY.md`, `tests/test_one_commit_convention.py`
+- **MCP re-check:** n/a (no Senzing fact; a commit convention and its guard)
+- **Summary:** the repository ran **two** commit conventions on purpose. A memory file required
+  an issue-number prefix on the commit title for *"the `implement-spec` skill, or any change made
+  while processing a spec under `specs/`"* — deliberately **not** Conventional Commits, with the
+  reminder hook bypassed. ⛔ **That scope stopped describing anything**: `specs/` froze at the
+  2026-09-15 cutover (INV-307) and `/implement-spec` was retired under #60, so issue work fell in
+  the gap. The memory now states one convention — Conventional Commits with an `issue: #<n>`
+  trailer — and a guard holds it.
+- ⛔ **Two of the three acceptance criteria were already satisfied before this run started**, and
+  the honest outcome is mostly a record. Measured: `SKIP_GIT_CONVENTIONS` appears in exactly two
+  places in the repository — the stale memory, and a ledger entry *describing a bypass that was
+  declined* — so no skill or command required it; and every recent commit already carried
+  `issue: #<n>`.
+- ⚠️ **#56 proposed `Refs: #n`; `issue: #n` is what shipped and what stays.** The `commit` skill
+  mandates `issue:` with its own rationale, and every commit in recent history uses it. Both link
+  identically — GitHub scans the whole message for `#<number>` — so adopting `Refs:` would have
+  split the history for nothing and required editing a **global** skill shared with other
+  projects. The guard pins the **property** (an issue reference in a trailer, not the subject)
+  rather than one spelling.
+- ⛔ **The stale rule went unnoticed because behavior had already moved.** Commits were written as
+  Conventional Commits with the trailer — correctly, per the `commit` skill — while the memory
+  said to do otherwise and bypass the hook. **Guidance and behavior diverged silently**, in the
+  one file that exists to say how the maintainer wants the work done. That is the same class as
+  everything else found today, at the instruction layer rather than the tooling layer.
+- ⚠️ **Nothing global was touched.** `~/.claude/skills/commit/SKILL.md` and
+  `~/.claude/hooks/git-conventions.sh` are shared with every project on this machine; the hook
+  already accepts Conventional Commits with no bypass, and the skill already mandates the
+  trailer. Editing either to satisfy one repository's issue would reach work not visible from
+  here.
+- **Negative controls, three, each verified present before the run.** (1) The retired convention
+  reintroduced into a command file — caught. (2) The memory deleted rather than rewritten — caught
+  by the assertion that the rule must still be stated somewhere a run reads. (3) The index pointed
+  at the pre-rename filename — caught. Files restored and verified byte-identical by md5.
+- ⛔ **A mistake in the run itself, recorded because the run is trusted on its self-report.**
+  Restoring after control (2) was done with `git checkout <path>`, which restores from the
+  **index** — and since `git mv` had staged the rename while the rewritten content was never
+  staged, the file silently reverted to the **old rule under the new filename**. Caught by
+  reading the file rather than by the suite. ⚠️ **This is the second time in one session** that
+  `git checkout` on a path destroyed work during a negative control; the discipline already says
+  restore the mutation, not the file, and it was not followed either time.
+- **Establishes no invariant.** ⛔ Checked with `reverse-check`: the changed files are under
+  `.claude/memory/` and `tests/`, neither of which any scanned root covers. The rule this states
+  is a working convention, not a guarantee the plugin makes to a Bootcamper.
+- **Commit:** uncommitted
+
 ## citations-py-states-its-limit-and-nothing-held-it-there
 
 - **Implemented:** 2026-09-21
