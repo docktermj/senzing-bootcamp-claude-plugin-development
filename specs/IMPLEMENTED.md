@@ -82,7 +82,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Establishes no invariant.** ⛔ Checked with `reverse-check`: the change touches `tests/` only,
   which no scanned root of that view covers. The rule it rests on — a guard's corpus has one
   definition its consumers can see — is **INV-308**, already registered.
-- **Commit:** uncommitted
+- **Commit:** 20c1735
 
 ## one-commit-convention-repo-wide
 
