@@ -1,0 +1,13 @@
+{
+  "issue": 78,
+  "branch": "78-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): /review-invariants stops at the working tree -- writes the registration, reports every file touched, neither commits nor pushes, mirroring /propagate-to-public; one-invariant-per-commit becomes stated guidance to the maintainer; branch-name conflict recorded, not resolved.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/86"
+}
