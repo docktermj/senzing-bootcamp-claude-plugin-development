@@ -43,6 +43,79 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## production-readiness-audit-2026-09-21
+
+**Not a spec** — a dated record of an audit run, attended, following eight merged pull requests
+in one day across the `review-invariants` and `conformance.py` apparatus.
+
+- **Implemented:** 2026-09-21 (**4 findings; 3 filed; no shipped file modified by this audit**)
+- **Files changed:** this record only.
+- **MCP re-check:** **n/a (no Senzing fact)** — re-confirmed, not assumed. Every finding is
+  internal consistency between this repository's own documents and guards; no Senzing claim is
+  asserted or re-asserted (INV-080).
+- **Baseline.** `main` at `13a77d3`, tree clean, suite **4,372 OK (4 skipped)**.
+  `citations.py verify` clean at **309** invariants. `coverage_reports.py both` clean on both
+  halves — every invariant naming a shipped artifact is cited in shipped text, and every dated
+  tool-absence claim carries a marker. `rules`: **632** hard-rule lines (438 line-anchored + 194
+  mid-line), **0** in a section citing no invariant. `per-rule --uncited`: **334**.
+  `enumerations`: **49 of 309**. `size`: 45 shipped files, **191,109** words. `duplication`: 165
+  repeated passages across 100 file pairs. `since --since-last-audit` resolved to **`5a9cfbe`**
+  with no `SUSPECT-REF` and reported **15** lines across 5 files; `reverse-check` reported
+  **0 tested, 15 untested (13 cited, 2 not), VERDICT: NOT CLEAN** — correct, since every added
+  line is on the maintainer surface.
+- **Scope, stated rather than implied.** The forward sweep was scoped to what the diff since
+  `5a9cfbe` touches — today's eight merged PRs. ⛔ **INV-028–INV-049 were not read**; the
+  2026-09-03h entry recorded ten consecutive audits at that point and neither the 2026-09-17 run
+  nor this one read them.
+- **Finding 1 — Medium. Filed as #90.** `docs/development.md:121` tells the maintainer **not to
+  run `/unattended-issue-loop`** because its rework has not landed and its audit half is blocked.
+  Both claims were fixed on 2026-09-16 by #51 and #69: the skill's only remaining mention of the
+  archive is the prohibition ⛔ *"Never write into `specs/`"*, and two passing guards assert it.
+  ⛔ **Five sites carry the superseded world** — `docs/development.md:121`, `specs/README.md:43`
+  and `:48-49`, `tests/test_specs_are_frozen.py:7-11`, and
+  `tests/test_unattended_loop_is_label_gated.py:21`, whose **module docstring contradicts its own
+  class at line 149**, where the assertion is recorded as inverted because #69 fixed it.
+  `/delegate-to-mcp-server` is the only command still described accurately.
+- **Finding 2 — Low. Filed as #91.** `tests/test_review_invariants_queue.py:132-135` discloses
+  that nothing asserts `conformance.py` reports what it could not check. Three guards merged
+  today assert exactly that (#76, #77, #80/#83). ⚠️ **The disclosure understates coverage**,
+  which is the direction that costs work — it tells the next reader that work is owed. Still true
+  for `citations.py` and `coverage_reports.py`, so it needs narrowing rather than deleting.
+- **Finding 3 — Low. NOT filed, deliberately.** One hard-rule line sits inside a fenced example
+  block (`review-invariants/SKILL.md:218`), so `reverse-check` reports it as uncited forever.
+  **Measured: 1 of 838** hard-rule lines across all three scanned roots — not a class, and it was
+  introduced by #78 earlier the same day. ⛔ **Recommended against special-casing the detector**,
+  on the precedent `INVARIANTS.md`'s own index note records: filter phrasing was deliberately not
+  special-cased, since that only makes the next genuine hit worded that way invisible.
+- **Finding 4 — Low. Filed as #92.** `sites` reports *"NOT SCANNED 889 file(s)"*, of which
+  **523 (59%) are the frozen `specs/` archive** — read-only under INV-307 and therefore ineligible
+  as a citation site. The figure is accurate and misleading together: "not scanned" and "could be
+  a site" are reported as one set. Shipped by #77 earlier the same day.
+- **The four properties, separately.** **Consistent** — ⛔ one defect (Finding 1, five sites, one
+  self-contradicting). **Coherent** — ⚠️ two defects (Findings 2 and 4: claims true when written
+  and false now). **Complete** — ✅ no gap found in scope; both halves of `coverage_reports` clean.
+  **Concise** — ✅ unchanged and not measurably worse; the duplication figure was not worked.
+- **Verified as correct, so the next audit need not re-derive it.** `/unattended-issue-loop` and
+  `/production-readiness-audit` genuinely no longer write into `specs/` — checked against both
+  guards **and** the skills' own text, not inferred from the issues being closed. `sites`' "three
+  groups" claim is still accurate: the scope line is a footer, not a fourth group.
+  `specs/README.md` is **not** in `FROZEN-MANIFEST.txt`, so Finding 1's fix does not breach
+  INV-307.
+- ⛔ **Coverage limits.** **(1)** The **conversational invariants remain untested** — INV-251,
+  INV-006, INV-014, INV-005/008/009 and every gate-ordering rule govern live turns; `/dry-run`
+  phase 3 only. **(2)** INV-028–INV-049 unread again. **(3)** `per-rule --uncited`'s **334** lines
+  were not worked. **(4)** The plugin was **not executed**; this is a static pass. ⚠️ Nothing was
+  blocked by the environment — `fpdf2`, `pdftoppm`, `docker`, Chrome and `libSz.so` are all
+  present here (only `chromium` absent), so the limit is the method, not the machine.
+- ⛔ **My own mistakes.** **Two of the four findings are this session's own work**: Finding 3's
+  fenced-block line (#78) and Finding 4's misleading count (#77), both shipped hours before this
+  audit. Finding 2 exists because guards were added across five PRs without re-reading a
+  neighboring docstring that disclaimed them.
+- **Establishes no invariant.** ⛔ Checked with `reverse-check`, not a grep: this audit modifies
+  no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. The
+  rules its findings rest on — INV-282, INV-307, INV-308, INV-310 — are all registered.
+- **Commit:** e670474
+
 ## the-hold-verdict-records-its-reason-in-the-ledger
 
 - **Implemented:** 2026-09-21
