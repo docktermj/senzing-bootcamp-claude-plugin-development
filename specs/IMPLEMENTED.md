@@ -82,7 +82,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Establishes no invariant.** ⛔ Checked with `reverse-check`: this change touches only
   `tests/`, which no scanned root covers, so it adds no hard-rule line to the corpus. The rule it
   rests on is **INV-308**, already registered and cited in the disclosure it corrects.
-- **Commit:** uncommitted
+- **Commit:** 66cebdf
 
 ## the-audit-half-blocked-claim-outlived-its-fix
 
