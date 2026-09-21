@@ -114,7 +114,7 @@ in one day across the `review-invariants` and `conformance.py` apparatus.
 - **Establishes no invariant.** ⛔ Checked with `reverse-check`, not a grep: this audit modifies
   no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. The
   rules its findings rest on — INV-282, INV-307, INV-308, INV-310 — are all registered.
-- **Commit:** uncommitted
+- **Commit:** e670474
 
 ## the-hold-verdict-records-its-reason-in-the-ledger
 
