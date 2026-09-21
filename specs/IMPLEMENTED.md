@@ -92,7 +92,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   grep: this change adds two hard-rule lines, both under the maintainer surface, and both cite
   **INV-308** at their own line — which is already the rule that a tool reporting a verification
   count must report what it could not verify.
-- **Commit:** uncommitted
+- **Commit:** 6d29be6
 
 ## the-inv282-set-difference-spans-two-corpora-and-reports-clean
 
