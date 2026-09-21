@@ -81,7 +81,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Establishes no invariant.** ⛔ Checked with `reverse-check`: the change adds no hard-rule line
   to any scanned root. The rules it rests on — a scope has one definition every consumer reads,
   and a tool reports what it could not check — are **INV-307** and **INV-308**, both registered.
-- **Commit:** uncommitted
+- **Commit:** ccefe96
 
 ## one-pointer-guard-over-every-root
 
