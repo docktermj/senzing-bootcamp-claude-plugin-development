@@ -43,6 +43,56 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-audit-half-blocked-claim-outlived-its-fix
+
+- **Implemented:** 2026-09-21
+- **Files changed:** `docs/development.md`, `specs/README.md`, `tests/test_specs_are_frozen.py`,
+  `tests/test_unattended_loop_is_label_gated.py`, `tests/test_audit_files_issues_not_specs.py`,
+  `tests/test_no_stale_blocked_claim.py`
+- **MCP re-check:** n/a (no Senzing fact; maintainer-surface documentation and guards only)
+- **Summary:** `/production-readiness-audit` wrote spec files into the frozen archive, so
+  `/unattended-issue-loop` carried a blocked audit half. **#69 fixed both on 2026-09-16** and the
+  prose describing the old world was not swept. ⛔ **`docs/development.md` therefore told the
+  maintainer not to run a command that works**, on the grounds that a rework had not landed —
+  five days after it landed, guarded by two passing tests. Corrected at every site, with the one
+  command the claim is **still** true of — `/delegate-to-mcp-server`, no issue yet — left named
+  and accurate at both.
+- ⛔ **One file contradicted itself.** `tests/test_unattended_loop_is_label_gated.py`'s module
+  docstring stated the audit half was blocked while its own class forty lines down recorded the
+  assertion as **inverted because #69 fixed it**. A reader got opposite answers from one file.
+- ⛔ **The guard found a SIXTH site the audit's manual sweep missed.**
+  `tests/test_audit_files_issues_not_specs.py` carried `Source issue: #69` followed by that
+  issue's **verbatim GitHub title** — *"`/production-readiness-audit` writes spec files into a
+  frozen archive"* — which reads as a present-tense claim in isolation. ⚠️ **Not fixed by carving
+  an exception into the matcher for `Source issue:` lines**, which would have narrowed the guard
+  until it missed a real one; the citation now names the number and says the old title is not
+  repeated, matching the `Source issue: #30.` form already used elsewhere.
+- ⛔ **The matcher is derived from the claim, not from the phrasings that shipped** (INV-282), and
+  the negative control proves it: a wording **nobody has ever written** — *"the audit half remains
+  blocked"* — is caught. Both directions are pinned as fixtures: four shipped phrasings that must
+  be caught, and six legitimate constructions that must not, including past-tense history, the
+  one command the claim is still true of, and the audit's current behavior.
+- ⛔ **(INV-207) The guard scans itself out, narrowly and by path.** It must hold the shipped
+  phrasings as fixtures — that is what calibrates the matcher — so a scan including it reports
+  its own fixtures as violations. Its failure message is worded **around** the claim rather than
+  quoting it, so the message is not itself a violation of the rule it reports.
+- ⚠️ **`specs/README.md` was edited despite living under the frozen archive.** It is in
+  `LIVE_RECORDS` in `tests/test_specs_are_frozen.py`, alongside `IMPLEMENTED.md`, `DECLINED.md`
+  and `INVARIANTS.md` — explicitly exempt. Recorded because the diff looks like an INV-307
+  violation to anyone who does not check that list.
+- **Negative controls, three, each verified present before the run.** (1) A **novel** wording of
+  the claim added to the docs — caught, which is the INV-282 property and the control that
+  matters most here. (2) Over-correction: the one command that does still write specs removed
+  from the docs — caught. (3) The matcher relaxed so it stops distinguishing history from a live
+  claim — 3 failed, including the legitimate-construction fixtures. All three files restored
+  byte-identical by md5.
+- **Establishes no invariant.** ⛔ Checked with `reverse-check` against the audit record
+  `e670474`, which merged **before** this work precisely so the range would start at the record:
+  the hard-rule lines this change adds are in documents, and each is a correction of an existing
+  rule's description rather than a new guarantee. The rules it rests on — INV-282, INV-207,
+  INV-307 — are all registered.
+- **Commit:** uncommitted
+
 ## production-readiness-audit-2026-09-21
 
 **Not a spec** — a dated record of an audit run, attended, following eight merged pull requests

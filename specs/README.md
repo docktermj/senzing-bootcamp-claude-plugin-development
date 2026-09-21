@@ -39,15 +39,17 @@ Retiring the ledger would break those citations. That is why it stays.
 
 ## Commands that wrote here
 
-These wrote new spec files into this directory. Under the freeze their output no longer
-has anywhere to land, and running them before their rework lands will turn the suite red:
+These wrote new spec files into this directory. Under the freeze their output no longer has
+anywhere to land, so running one that has not been reworked turns the suite red. ⛔ **One is
+left**, and it is the last row:
 
 | Command | Status |
 | --- | --- |
 | `/feedback-to-issues` | ✅ Renamed and reworked — it files GitHub issues now (#49) |
-| `/implement-spec` | Retire in favor of `/implement-github-issue` — issue #50 |
-| `/unattended-spec-loop` | Rename to `/unattended-issue-loop`, label-gated — issue #51 |
-| `/delegate-to-mcp-server` | Still writes specs; needs the same rework, no issue yet |
+| `/implement-spec` | ✅ Retired in favor of `/implement-github-issue` (#50, #60) |
+| `/unattended-issue-loop` | ✅ Renamed from `/unattended-spec-loop` and label-gated (#51); its blocked path now comments on the issue, and it forbids writing here outright (#69) |
+| `/production-readiness-audit` | ✅ Files a GitHub issue when attended, records findings in the ledger when not (#69) |
+| `/delegate-to-mcp-server` | ⛔ **Still writes specs**; needs the same rework, no issue yet |
 
 Triage of what remains here is issue #53.
 

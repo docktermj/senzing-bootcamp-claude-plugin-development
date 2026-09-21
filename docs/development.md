@@ -115,11 +115,14 @@ entry carries a description. Do not state how many there are — the set is deri
 compared, and a count in prose goes stale silently while reading authoritative.
 
 ⛔ **(INV-307) `specs/` is frozen as of the 2026-09-15 cutover; new work is tracked as
-GitHub issues.** See [`specs/README.md`](../specs/README.md). The commands below that write spec
-files — `/unattended-issue-loop` and
-`/delegate-to-mcp-server` — produce output the freeze guard rejects, so do not run them
-until their rework lands (`/delegate-to-mcp-server` has no issue yet). `/implement-spec` was retired under #60, and `/unattended-issue-loop` is label-gated as of #51 — its audit half stays blocked while `/production-readiness-audit` writes specs. `IMPLEMENTED.md`, `DECLINED.md` and
-`INVARIANTS.md` are **not** frozen and are still written to.
+GitHub issues.** See [`specs/README.md`](../specs/README.md). ⛔ **One command below still writes
+spec files — `/delegate-to-mcp-server`** — so its output is rejected by the freeze guard and it
+should not be run until its rework lands; it has no issue yet. Every other command that used to
+write there has been reworked: `/feedback-to-issues` files GitHub issues (#49), `/implement-spec`
+was retired (#50, #60), `/unattended-issue-loop` is renamed and label-gated and now forbids
+writing into the archive outright (#51, #69), and `/production-readiness-audit` files issues when
+attended and records findings in the ledger when not (#69). `IMPLEMENTED.md`, `DECLINED.md`,
+`INVARIANTS.md` and `README.md` are **not** frozen and are still written to.
 
 ### Triage feedback
 
