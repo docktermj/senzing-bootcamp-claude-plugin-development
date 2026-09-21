@@ -18,11 +18,13 @@ outward-facing change to repository metadata and is the maintainer's to make —
 why no assertion here requires the label to exist. The loop must be correct *before* it is
 armed.
 
-⛔ **The audit half is BLOCKED and the loop must say so.** `/production-readiness-audit` still
-writes spec files into the frozen archive, so an unattended audit would produce output the
-freeze guard rejects and the loop's stop condition would be measured against files that cannot
-land. Asserting that the loop states this is what stops a run from cycling on a half that
-cannot work.
+⚠️ **The audit half WAS blocked, and this docstring said so five days after it stopped being
+true.** `/production-readiness-audit` wrote spec files into the frozen archive, so an unattended
+audit produced output the freeze guard rejects. **#69 fixed that on 2026-09-16** -- the audit now
+files a GitHub issue when attended and records findings in the ledger when not -- and the class
+below was **inverted rather than deleted** to match. ⛔ **The two halves of this file disagreed
+until 2026-09-21** (#90): a reader got "blocked" from the docstring and "fixed, and here is what
+replaced the assertion" from the class forty lines down.
 
 ⛔ **This asserts what the loop INSTRUCTS, never what a run does.** No offline test can watch
 an unattended run query GitHub, so nothing here establishes that the label filter is applied —

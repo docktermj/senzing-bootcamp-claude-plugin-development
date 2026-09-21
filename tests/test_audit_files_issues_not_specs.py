@@ -37,7 +37,9 @@ later editor cannot quietly drop.
 
 Stdlib only; both files are read as text (INV-108).
 
-Source issue: #69 (`/production-readiness-audit` writes spec files into a frozen archive).
+Source issue: #69 — titled for the defect it fixed, which has not described this command
+since 2026-09-16. The number is the citation; the old title is not repeated here, because
+a line quoting it reads as a present-tense claim about current behavior (#90).
 
 Run:  python3 -m unittest discover -s tests
 """

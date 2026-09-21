@@ -4,14 +4,18 @@ GitHub issues replaced `specs/` as the tracking mechanism at the **2026-09-15 cu
 (issue #52). The directory stays as the historical record of why the plugin reads as it
 does -- 519 files that `INVARIANTS.md` cites by slug -- but it is closed to new work.
 
-⛔ **A freeze stated only in prose is a convention, not a guarantee.** Maintainer commands
-still write spec files -- `/production-readiness-audit` (its own issue) and
-`/delegate-to-mcp-server` (no issue yet). `/feedback-to-issues` files GitHub issues as of #49,
-`/implement-spec` was retired under #60, and `/unattended-issue-loop` became label-gated under
-#51 with its audit half blocked for exactly this reason.
-Until those land, running one of them produces a file this guard rejects. That failure is
-the intended signal, which is why every message below names the freeze and points at
-`specs/README.md` rather than reporting a bare set difference.
+⛔ **A freeze stated only in prose is a convention, not a guarantee.** One maintainer command
+still writes spec files -- `/delegate-to-mcp-server`, which has no issue yet -- so running it
+produces a file this guard rejects. That failure is the intended signal, which is why every
+message below names the freeze and points at `specs/README.md` rather than reporting a bare set
+difference.
+
+⚠️ Every other command that wrote here has been reworked: `/feedback-to-issues` files GitHub
+issues (#49), `/implement-spec` was retired (#50, #60), `/unattended-issue-loop` is label-gated
+and forbids writing here outright (#51, #69), and `/production-readiness-audit` files issues when
+attended and records findings in the ledger when not (#69). ⛔ **This paragraph said the audit
+half was blocked until 2026-09-21** -- five days after #69 cleared it -- which is the class #90
+records: a fix that lands without sweeping the prose describing the old world.
 
 ⚠️ **Both directions matter, and they fail differently.**
 
