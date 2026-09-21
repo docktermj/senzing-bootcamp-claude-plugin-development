@@ -204,7 +204,7 @@ python3 -m unittest discover -s tests
 
 ### ⛔ Then stop at the working tree
 
-⛔ **This skill does not commit and does not push.** It performs the registration and
+⛔ **(INV-310) This skill does not commit and does not push.** It performs the registration and
 stops with the changes in the working tree, the way `/propagate-to-public` does. Report every
 file it touched and what changed in each:
 

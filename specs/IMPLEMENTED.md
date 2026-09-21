@@ -43,6 +43,40 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-09-21
+
+- **Implemented:** 2026-09-21 (**Not a spec** — a dated record of one review session)
+- **Files changed:** `specs/INVARIANTS.md`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/review-invariants/SKILL.md`, `.claude/commands/review-invariants.md`,
+  `tests/test_review_invariants_stops_at_the_working_tree.py`,
+  `tests/test_invariant_enforcer_citations.py`
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** one block pending, one decided. **INV-310 registered** — a maintainer command
+  performing a permanent or append-only act on this repository's own records MUST stop at the
+  working tree, reporting every file it touched and never committing or pushing. Source:
+  `review-invariants-stops-at-the-working-tree` (#78). The queue is now `pending: 0`, `held: 1`
+  (`the-bootcamp-cannot-leave-the-machine-it-was-built-on`, whose revisit condition — `dry-run`
+  phases 2 and 3 — is unmet and which was **not** re-offered).
+- ⚠️ **The site set was derived by grepping, not by the scan, and that changed the answer.**
+  `sites` named the two files the deferral listed, found no candidates, and reported its scope:
+  **63 files scanned, 889 not**. The grep that Step 3 now requires (#77) turned up
+  `/propagate-to-public` and `/retrofit-from-public`, which also stop at the working tree. ⛔ They
+  were **considered and judged outside the registered subject** — outward-facing rather than
+  permanent or append-only on this repository's own records — and INV-310 records that decision
+  so it is not re-derived. This is the 2026-09-01 defect class (*a rule cited at the two sites
+  its deferral listed when it shipped in three*) reaching the point of decision rather than
+  slipping past it.
+- ⛔ **INV-301 was considered and not cited**, at the rule's line or anywhere else: its subject
+  is a *release*. Citing it would have been the mis-citation the 2026-09-01 audit found.
+- **`EXPECTED_PAIRS` re-derived by running the extractor: 127 → 128**, with the new pair present
+  by name. ⛔ Not incremented to make the assertion pass.
+- **Verification:** `citations.py verify` clean at **309** invariants (was 308), every citation
+  and `Source:` resolving; `coverage_reports.py shipped` does not list INV-310; suite
+  **4361 OK (skipped=4)**.
+- ⛔ **A review record mints ids and adds citations; it establishes no invariant of its own.**
+  INV-310 was established by #78's implementation, not by this record.
+- **Commit:** 62fe799
+
 ## review-invariants-stops-at-the-working-tree
 
 - **Implemented:** 2026-09-21
@@ -93,7 +127,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - ⚠️ **That false control is the fifth in this repository's history and the second this week.**
   It is also the exact shape #77 recorded four days ago — an assertion satisfied by a mention
   somewhere other than where it matters — found again in the fix for a different issue.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+- **DEFERRED INVARIANT (resolved INV-310, registered by the maintainer 2026-09-21).** The rules already
   shipping:
     - ⛔ **This skill does not commit and does not push.** — in `.claude/skills/review-invariants/SKILL.md`
     - ⛔ **This skill does not commit and does not push.** — in `.claude/commands/review-invariants.md`
@@ -108,6 +142,13 @@ entries at once. Two things a reader should know about the hashes now recorded:
   *"coupling an irreversible local act to an outward-facing one removes the gate between them"* —
   to the other acts of that kind, of which registering an invariant is the one that had no gate.
   Enforced by `tests/test_review_invariants_stops_at_the_working_tree.py`.
+
+  ⚠️ **Registered at the two named sites only.** `sites` found no candidates and said so with its
+  scope (63 files scanned, 889 not), and the grep the procedure now requires turned up
+  `/propagate-to-public` and `/retrofit-from-public`, which also stop at the working tree. They
+  were **considered and judged outside the registered subject** — their act is outward-facing
+  rather than permanent or append-only on this repository's own records — and INV-310 records
+  that so the question is not re-derived. Widening to cover them is a separate decision.
 
   ⚠️ Deliberately **not** cited as INV-301 at the rule's line: that invariant's subject is a
   release, and citing it would be the mis-citation the 2026-09-01 audit found — a rule counted as

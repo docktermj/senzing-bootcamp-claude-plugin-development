@@ -318,7 +318,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # which still guards the artifact end. Both cite it back. Re-derived by running the extractor
 # -- 127. No id was minted in that review; the pair count moved because an existing
 # invariant's body gained a test path, which is the first time that has happened.
-EXPECTED_PAIRS = 127
+# 128 on 2026-09-21: INV-310 (a permanent or append-only act on this repository's own records
+# stops at the working tree) names test_review_invariants_stops_at_the_working_tree.py, which
+# cites it back and states what it does NOT establish -- that no offline test can watch a run
+# refrain from committing. Re-derived by running the extractor -- 128, with the new pair present
+# by name. This closes the 2026-09-21 review: one deferral decided, EXPECTED_PAIRS 127 -> 128.
+EXPECTED_PAIRS = 128
 
 
 def pairs():

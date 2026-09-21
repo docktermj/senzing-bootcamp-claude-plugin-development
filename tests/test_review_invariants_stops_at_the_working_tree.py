@@ -23,6 +23,15 @@ happen because the skill did it; now it happens if the maintainer does. The reve
 protects is weaker and no test can hold anyone to it — so the skill states it at the moment it
 hands the diff over, and this file asserts that it still does.
 
+**Enforces INV-310** — a maintainer command performing a permanent or append-only act on this
+repository's own records stops at the working tree and never commits or pushes. ⛔ **What this
+test does NOT establish:** that any run actually refrains from committing. No offline test can
+observe a `git commit` that does not happen. It establishes that both files *instruct* the stop,
+in terms a later editor cannot quietly drop — so an `Enforced by` clause pointing here must not
+be read as a compliance claim. ⚠️ It also says nothing about `/propagate-to-public` or
+`/retrofit-from-public`, which stop at the working tree for a different reason and are recorded
+in INV-310 as outside its subject.
+
 ⛔ **This asserts what the skill INSTRUCTS, never what a run does.** No offline test can watch a
 run refrain from `git commit`, and nothing here establishes that one does. The same limit the MCP
 re-check and label-gate guards carry, named here rather than left for the file name to imply
