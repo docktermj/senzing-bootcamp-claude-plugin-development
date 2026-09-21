@@ -43,6 +43,53 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-hold-verdict-records-its-reason-in-the-ledger
+
+- **Implemented:** 2026-09-21
+- **Files changed:** `.claude/skills/review-invariants/pending_invariants.py`,
+  `.claude/skills/review-invariants/SKILL.md`, `.claude/commands/review-invariants.md`,
+  `specs/IMPLEMENTED.md`, `tests/test_hold_reason_lives_in_the_ledger.py`
+- **MCP re-check:** n/a (no Senzing fact; maintainer-surface tooling only)
+- **Summary:** `/review-invariants` offers three verdicts and insists two of them are not "no",
+  but for a deferral that came from a **GitHub issue rather than a spec file** one of the three
+  could not be carried out: `hold_reason()` opened `specs/<spec>.md` and returned `None` when
+  there was no file, and `specs/` is frozen under INV-307 so one cannot be created. ⛔ The only
+  reachable held state for such a block was the generic `"spec requires approval before
+  implementation"` — a property of the work, not a decision, carrying no revisit condition. The
+  hold now lives in the deferral block as a `**HELD <date>:**` paragraph, which is where
+  `hold_reason()` reads it.
+- ⛔ **Both failure outcomes were silent.** Either the reason went into the ledger where nothing
+  read it and the block reported as **pending** next run — re-offering a decision already made,
+  the 2026-09-01 defect the skill exists to stop — or it went nowhere durable and died with the
+  conversation.
+- **One route, not two, and the one block using the old one was migrated.** The spec-file route
+  was used by exactly **1** of the 519 archived files:
+  `the-bootcamp-cannot-leave-the-machine-it-was-built-on`, the only currently held block. Its
+  reason and revisit condition were moved into its ledger block **verbatim** — moved rather than
+  summarized, because a summary of a recorded decision is a new decision nobody took. ⚠️ **The
+  frozen spec file still carries the same paragraph and is no longer read by anything**; INV-307
+  forbids editing it to say so, so the ledger copy records the move and its date. A later reader
+  finding two copies can tell which is live.
+- ⛔ **The `HELD` paragraph must sit INSIDE the deferral bullet, and the first placement did not.**
+  `blocks()` reads a block bullet-by-bullet and ends at the next top-level `- **`, so a `HELD`
+  paragraph written as its own bullet terminates the block and is invisible. ⚠️ **It did not look
+  wrong**: the listing still said `held: 1`, because the generic `HELD_IN_BLOCK` fallback caught
+  it — reporting the block as held for a reason the maintainer never gave. Found by reading the
+  reason in the output rather than the count beside it, and now pinned by a test that feeds the
+  same paragraph in both placements.
+- **The generic `HELD_IN_BLOCK` state is kept deliberately.** *"Spec requires approval before
+  implementation"* is a property of the work; a maintainer's hold is a decision. Collapsing them
+  is what made the old fallback misleading in the first place.
+- **Negative controls, three, each verified present before the run.** (1) The ledger route
+  removed from `hold_reason` — 3 failed. (2) The migrated hold's `HELD` marker renamed, keeping
+  the code — 1 failed. (3) The placement warning dropped from the skill — 1 failed. All three
+  files restored byte-identical by md5, `__pycache__` cleared between runs.
+- **Establishes no invariant.** ⛔ Checked with `reverse-check`, not a grep: the hard-rule lines
+  this change adds cite **INV-308** at their own line — already the rule that a tool reporting a
+  verification count must report what it could not verify, and that a scope has one definition
+  every consumer reads.
+- **Commit:** cf59bb7
+
 ## invariant-review-2026-09-21
 
 - **Implemented:** 2026-09-21 (**Not a spec** — a dated record of one review session)
@@ -2554,6 +2601,19 @@ entries at once. Two things a reader should know about the hashes now recorded:
     - `skills/graduation/database-backup.md:21` — ⛔ when `database_type` is indeterminate, do not guess a branch *(**relocated**, not new — INV-094 governs it and the file cites INV-094)*.
     - `skills/graduation/SKILL.md` Step 6a — ⛔ follow `database-backup.md` *(covered by the reuse clause)*.
     - `skills/graduation/SKILL.md` closing — ⛔ the discoverability line is a statement naming no output path *(cites INV-251 at the rule)*.
+
+  **HELD 2026-08-27:** ⛔ **Held, not merely unapproved.** The maintainer's stated reason: every
+  other invariant registered on 2026-08-27 describes behavior that shipped and was exercised,
+  whereas **this feature has never run in a live bootcamp** — and its most serious defect, a
+  `.pem` private key packaged into an archive meant for someone else, was found only by executing
+  it against a hostile fixture after static reading had passed it twice. Registering it now would
+  mean amending a fresh invariant rather than approving a settled one. Revisit after `dry-run`
+  phases 2 and 3 have exercised the flow.
+
+  ⚠️ **Moved here from `specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md` on
+  2026-09-21 (#58), verbatim.** That file still carries the same paragraph and is no longer read
+  by anything: `specs/` is frozen under INV-307, so it cannot be edited to say so. The ledger is
+  the live copy; the spec is the 2026-08-27 record.
 - **Commit:** e744eac
 
 ## business-problem-keeps-only-the-refined-wording-so-the-gate-cannot-catch-drift
