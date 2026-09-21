@@ -152,9 +152,69 @@ def resolve(loc):
     return None
 
 
+#: The suffixes a candidate site can have. Named once so the scanned and unscanned counts
+#: below are measuring the same population -- two spellings would make the pair meaningless.
+SITE_SUFFIXES = (".md", ".py")
+
+
 def shipped_files():
     return sorted(p for p in PLUGIN.rglob("*")
-                  if p.suffix in (".md", ".py") and p.is_file())
+                  if p.suffix in SITE_SUFFIXES and p.is_file())
+
+
+def scan_scope():
+    """(scanned, unscanned_by_directory) -- what the candidate scan read, and what it did not.
+
+    ⛔ **Counted, never listed.** The obvious version of this names `tests/`, `.claude/` and
+    `specs/` in prose, which is the shape the comment above RESOLUTION_ROOTS rejects: a list
+    goes stale as the repo grows and going stale here is silent. A directory that appears
+    tomorrow shows up in this count on its own.
+
+    ⚠️ Measures the same suffixes `shipped_files()` does, over the whole repository minus the
+    scanned root, so the two numbers are halves of one population rather than two unrelated
+    figures. `.git` is skipped: it is not source and would dominate the count.
+    """
+    scanned = shipped_files()
+    seen = set(scanned)
+    unscanned = {}
+    for f in REPO.rglob("*"):
+        if f.suffix not in SITE_SUFFIXES or not f.is_file() or f in seen:
+            continue
+        try:
+            parts = f.relative_to(REPO).parts
+        except ValueError:
+            continue
+        if parts and parts[0] == ".git":
+            continue
+        top = parts[0] if len(parts) > 1 else "(repo root)"
+        unscanned[top] = unscanned.get(top, 0) + 1
+    return scanned, unscanned
+
+
+def print_scan_scope(scanned, unscanned):
+    """⛔ (INV-308) Say what the scan read and what it did not, on EVERY run.
+
+    Until #77 this was said only when the scan found nothing. A non-empty candidate list is
+    exactly the output that reads as *the* set, and it carried no statement that 887 of the
+    repository's 950 candidate files were never opened. ⚠️ The two halves of this command
+    disagree by design and now say so: a path named in the block's prose resolves anywhere
+    under RESOLUTION_ROOTS, while this scan reads one root.
+    """
+    total = sum(unscanned.values())
+    print(f"\n  SCANNED {rel_to_repo(PLUGIN)}: {len(scanned)} file(s)")
+    listed = ", ".join(f"{d}/ {n}" for d, n in
+                       sorted(unscanned.items(), key=lambda kv: -kv[1])[:5])
+    print(f"  NOT SCANNED {total} file(s) elsewhere under the repository root"
+          + (f" -- {listed}" if listed else ""))
+    print("  A rule shipping there is invisible to this scan. A site NAMED in the block still")
+    print("  resolves, because resolution reads the repository root and this scan does not.")
+
+
+def rel_to_repo(path):
+    try:
+        return str(path.relative_to(REPO))
+    except ValueError:
+        return str(path)
 
 
 def cmd_list():
@@ -289,17 +349,16 @@ def cmd_sites(n):
     if not hits:
         # ⛔ This line used to read "the named sites are likely the whole set". That is a
         # reassurance the scan cannot support and is FLATLY WRONG when nothing was named
-        # either -- the one case where it was certain to mislead (#59). The scan reads
-        # `plugins/` only, so finding nothing is evidence about `plugins/`, not about the set.
+        # either -- the one case where it was certain to mislead (#59). The scan reads one
+        # root, so finding nothing is evidence about that root, not about the set.
         print("  (none found)")
         if not p["sites"]:
             print("\n  ⛔ NOTHING was named and NOTHING was found. That is not evidence the "
-                  "site set is\n     complete: this scan covers `plugins/` only, so a rule "
-                  "living in `tests/`,\n     `.claude/` or `specs/` is invisible to it (#59). "
-                  "Derive the sites by reading.")
-        else:
-            print("     (the scan covers `plugins/` only — a site elsewhere is invisible "
-                  "to it)")
+                  "site set is\n     complete -- see the scope below, and derive the sites "
+                  "by reading.")
+    # ⛔ (#77) Printed on EVERY branch, including the one that found candidates. That branch
+    # is the one this was missing from, and it is the one whose output reads as an answer.
+    print_scan_scope(*scan_scope())
 
 
 def cmd_check():
