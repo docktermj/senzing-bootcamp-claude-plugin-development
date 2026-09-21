@@ -1,0 +1,13 @@
+{
+  "issue": 58,
+  "branch": "58-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): a HELD <date>: line inside the ledger block becomes the single home for a hold reason; hold_reason() reads the block instead of the spec file; the one block using the old route is migrated in the same change; SKILL.md's Hold section names the new location; guard covers held-with-reason, pending, and the migrated block.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/89"
+}
