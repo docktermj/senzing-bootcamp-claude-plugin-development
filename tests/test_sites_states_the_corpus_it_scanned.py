@@ -90,6 +90,12 @@ def build(tmp, with_candidate):
                                                  encoding="utf-8")
     (root / ".claude" / "note.md").write_text("# another one\n", encoding="utf-8")
     (root / "specs" / "IMPLEMENTED.md").write_text(LEDGER, encoding="utf-8")
+    # ⛔ Two files under `specs/`, and the split between them is the whole of #92: one is pinned
+    # by the manifest and therefore ineligible; the other is a live record that a `specs/` prefix
+    # test would wrongly sweep in with it.
+    (root / "specs" / "an-archived-spec.md").write_text("# frozen\n", encoding="utf-8")
+    (root / "specs" / "FROZEN-MANIFEST.txt").write_text(
+        "# the pinned set\nan-archived-spec.md\n", encoding="utf-8")
     return root
 
 
@@ -102,6 +108,7 @@ def sites_output(root):
     module.PLUGIN = root / "plugins" / "senzing-bootcamp"
     module.RESOLUTION_ROOTS = (module.PLUGIN / "skills", module.PLUGIN / "scripts",
                                module.PLUGIN, root)
+    module.FROZEN_MANIFEST = root / "specs" / "FROZEN-MANIFEST.txt"
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
         module.cmd_sites(1)
@@ -206,6 +213,62 @@ class TheScopeIsStatedOnEveryBranch(unittest.TestCase):
             "the scope statement does not say that a NAMED site still resolves outside the "
             "scanned root. The two halves differ deliberately, and a reader told only about "
             "the narrow half will think a site elsewhere cannot be cited:\n%s" % out)
+
+
+class IneligibleFilesAreCountedApart(unittest.TestCase):
+    """⚠️ "Not scanned" and "could be a site" are different sets (#92).
+
+    Reporting them as one overstated the gap by more than half on the real repository: of 889
+    unscanned files, 523 were the frozen archive, which INV-307 makes read-only so a citation can
+    never land there. ⛔ A figure a reader checks once and finds mostly irrelevant is a figure
+    they learn to discount — and the eligible remainder is inside it.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="sites-scope-")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_a_frozen_file_is_excluded_not_counted_as_unscanned(self):
+        out = sites_output(build(self.tmp, with_candidate=True))
+        self.assertRegex(
+            out, r"EXCLUDED 1 frozen file\(s\)",
+            "the file pinned by the archive manifest is not reported as excluded, so it is "
+            "inflating the count of files that could hold a site:\n%s" % out)
+
+    def test_a_live_record_under_specs_is_still_eligible(self):
+        """⛔ The trap a `specs/` prefix test falls into, and why the manifest is read instead."""
+        out = sites_output(build(self.tmp, with_candidate=True))
+        m = re.search(r"NOT SCANNED (\d+) file", out)
+        self.assertIsNotNone(m, out)
+        self.assertEqual(
+            3, int(m.group(1)),
+            "the eligible count is not 3. The fixture holds a test file, a `.claude/` note and "
+            "a LIVE record under `specs/` that the manifest does NOT pin -- excluding it by "
+            "path prefix would sweep in the very records the freeze exempts:\n%s" % out)
+
+    def test_the_excluded_count_prints_when_it_is_zero(self):
+        """⚠️ Same precedent as the count beside it: zero is a measurement, not silence."""
+        root = build(self.tmp, with_candidate=True)
+        (root / "specs" / "FROZEN-MANIFEST.txt").write_text("# nothing pinned\n", encoding="utf-8")
+        out = sites_output(root)
+        self.assertRegex(
+            out, r"EXCLUDED 0 frozen file\(s\)",
+            "the excluded count vanishes at zero, so its absence has to be interpreted:\n%s" % out)
+
+    def test_the_exclusion_is_read_from_the_manifest_not_a_path_literal(self):
+        """⛔ A prefix is a second definition of the freeze; the manifest is the first."""
+        body = HELPER.read_text(encoding="utf-8")
+        scope = body[body.index("def frozen_names"):body.index("def print_scan_scope")]
+        self.assertIn(
+            "FROZEN_MANIFEST", scope,
+            "the ineligible set is no longer derived from the archive manifest; if it now tests "
+            "for a path prefix, it disagrees with the freeze about the live records")
+        self.assertNotIn(
+            '"specs"', scope,
+            "the scope computation names `specs` as a literal. The manifest already says what "
+            "the freeze covers, and a second spelling of it goes stale silently")
 
 
 class TheDocumentsCarryTheCaveat(unittest.TestCase):

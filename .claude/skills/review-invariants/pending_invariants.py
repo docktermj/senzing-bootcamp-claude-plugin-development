@@ -179,8 +179,36 @@ def shipped_files():
                   if p.suffix in SITE_SUFFIXES and p.is_file())
 
 
+#: The frozen archive's own manifest. A file pinned here is read-only under INV-307, so a
+#: citation can never land in it -- it is unscanned AND ineligible, which are different facts.
+#:
+#: ⛔ Read from the manifest rather than by testing for a `specs/` prefix. The manifest is the
+#: repository's own authority on what the freeze covers, and it already excludes the live
+#: records (`IMPLEMENTED.md`, `INVARIANTS.md`, `DECLINED.md`, `README.md`) that a prefix test
+#: would wrongly sweep in. A prefix is a second definition of the freeze; this is the first one.
+FROZEN_MANIFEST = SPECS / "FROZEN-MANIFEST.txt"
+
+
+def frozen_names():
+    """Filenames the freeze pins, or an empty set when the manifest is unreadable.
+
+    ⚠️ An empty set means every unscanned file is reported as eligible -- an over-count, which
+    is the safe direction: it can only make the gap look larger than it is, never smaller.
+    """
+    if not FROZEN_MANIFEST.is_file():
+        return set()
+    return {ln.strip() for ln in FROZEN_MANIFEST.read_text(encoding="utf-8").splitlines()
+            if ln.strip() and not ln.startswith("#")}
+
+
 def scan_scope():
-    """(scanned, unscanned_by_directory) -- what the candidate scan read, and what it did not.
+    """(scanned, unscanned_by_directory, ineligible) -- read, not read, and not eligible.
+
+    ⚠️ **"Not scanned" and "could be a site" are different sets, and reporting them as one
+    overstated the gap by more than half** (#92): of 889 unscanned files, 523 were the frozen
+    archive, which INV-307 makes read-only so a citation can never land there. A figure a reader
+    checks once and finds mostly irrelevant is a figure they learn to discount -- and the
+    eligible remainder is inside it.
 
     ⛔ **Counted, never listed.** The obvious version of this names `tests/`, `.claude/` and
     `specs/` in prose, which is the shape the comment above RESOLUTION_ROOTS rejects: a list
@@ -193,7 +221,8 @@ def scan_scope():
     """
     scanned = shipped_files()
     seen = set(scanned)
-    unscanned = {}
+    frozen = frozen_names()
+    unscanned, ineligible = {}, 0
     for f in REPO.rglob("*"):
         if f.suffix not in SITE_SUFFIXES or not f.is_file() or f in seen:
             continue
@@ -203,12 +232,15 @@ def scan_scope():
             continue
         if parts and parts[0] == ".git":
             continue
+        if f.name in frozen and f.parent == SPECS:
+            ineligible += 1
+            continue
         top = parts[0] if len(parts) > 1 else "(repo root)"
         unscanned[top] = unscanned.get(top, 0) + 1
-    return scanned, unscanned
+    return scanned, unscanned, ineligible
 
 
-def print_scan_scope(scanned, unscanned):
+def print_scan_scope(scanned, unscanned, ineligible):
     """⛔ (INV-308) Say what the scan read and what it did not, on EVERY run.
 
     Until #77 this was said only when the scan found nothing. A non-empty candidate list is
@@ -221,8 +253,13 @@ def print_scan_scope(scanned, unscanned):
     print(f"\n  SCANNED {rel_to_repo(PLUGIN)}: {len(scanned)} file(s)")
     listed = ", ".join(f"{d}/ {n}" for d, n in
                        sorted(unscanned.items(), key=lambda kv: -kv[1])[:5])
-    print(f"  NOT SCANNED {total} file(s) elsewhere under the repository root"
+    print(f"  NOT SCANNED {total} file(s) that COULD hold a site"
           + (f" -- {listed}" if listed else ""))
+    # ⚠️ Printed even at zero, like the count above it: a figure that appears only when it is
+    # non-zero makes its absence something to interpret (#77, #83).
+    print(f"  EXCLUDED {ineligible} frozen file(s): pinned in the archive manifest, read-only")
+    print("  under INV-307, so a citation cannot land in one. Counted apart from the figure")
+    print("  above because unscanned and ineligible are different facts (#92).")
     print("  A rule shipping there is invisible to this scan. A site NAMED in the block still")
     print("  resolves, because resolution reads the repository root and this scan does not.")
 
