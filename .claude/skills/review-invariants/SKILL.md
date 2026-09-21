@@ -192,7 +192,7 @@ Then, per `INVARIANTS.md`'s own maintenance rules:
    registered by the maintainer YYYY-MM-DD).**`, keeping the rules and wording in place —
    the block becomes the record of what was approved.
 
-Verify, then commit:
+Verify:
 
 ```bash
 python3 .claude/skills/compact-dev-environment/citations.py verify        # resolves, count +1
@@ -202,8 +202,43 @@ python3 -m unittest discover -s tests
 
 `shipped` listing the new ID means the plugin does not cite it — step 3 was incomplete.
 
-⛔ **One invariant per commit.** A batch commit makes a later revert take rules with it
-that nobody questioned.
+### ⛔ Then stop at the working tree
+
+⛔ **This skill does not commit and does not push.** It performs the registration and
+stops with the changes in the working tree, the way `/propagate-to-public` does. Report every
+file it touched and what changed in each:
+
+```text
+Registered INV-NNN across 4 file(s):
+  specs/INVARIANTS.md        index entry + invariant
+  specs/IMPLEMENTED.md       block resolved
+  plugins/.../SKILL.md:41    citation added at the rule
+  tests/test_x.py:12         back-citation
+
+⛔ Nothing is committed. Review the diff, then commit it yourself.
+```
+
+⚠️ **Why the strictest stop rather than a pre-push pause.** Registering is the most permanent
+act in this repository — `INVARIANTS.md` is append-only, so a wrong id is corrected by a dated
+note beneath it and never removed, and every future change is bound by the wording. Everything
+else here that is permanent or outward-facing is gated: `/implement-github-issue` waits twice,
+`/release` never pushes, `/propagate-to-public` never commits. ⚠️ Those two are governed by
+INV-301, which binds **releasing** specifically and does not reach this skill — the general rule
+is drafted as a deferral in `IMPLEMENTED.md` rather than borrowed from an invariant about
+something else. ⛔ **This skill was the one permanent act with no gate at all**, and the maintainer approving a *wording* is not the same as
+approving a *commit* — which is what made the gap easy to miss, since they are standing right
+there (#78).
+
+⚠️ **One invariant per commit is now the maintainer's to keep.** A batch commit makes a later
+revert take rules with it that nobody questioned, and the skill can no longer enforce that by
+committing each one itself. Say so when handing the diff over, per registration.
+
+⚠️ **A branch was considered and is not required.** The `git-conventions` hook names branches
+`<issue-number>-<github-username>-<n>`, and a review session has no single issue — the
+2026-09-14 session registered seven ids drawn from different sources. Rather than instruct a
+bypass of the maintainer's own convention, this skill leaves the tree where they can commit it
+wherever they judge right. Whether that convention needs a non-issue form is a separate
+question and is not answered here.
 
 ### Hold
 
