@@ -1,0 +1,13 @@
+{
+  "issue": 83,
+  "branch": "83-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): the UNTESTED line reports how many of its lines cite an invariant at the line, using the same own_citations the tested half uses, with the governs-vs-cited limit stated in the output every time; NOT CLEAN still fires; the loop's handoff quotes counts rather than the verdict word alone.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/85"
+}

@@ -43,6 +43,60 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-untested-span-carries-its-citation-rate
+
+- **Implemented:** 2026-09-21
+- **Files changed:** `.claude/skills/production-readiness-audit/conformance.py`,
+  `.claude/skills/unattended-issue-loop/SKILL.md`,
+  `tests/test_reverse_check_counts_what_it_cannot_test.py`
+- **MCP re-check:** n/a (no Senzing fact; maintainer-surface tooling only)
+- **Summary:** #80 reserved `clean` for a run where every reported line was tested **and** cited,
+  which made `NOT CLEAN` the ordinary verdict for maintainer-surface work — the span outside
+  `per-rule`'s corpus is untested by construction, whatever its state. Measured on `main` before
+  this change: **7 untested lines, all 7 citing an invariant at their own line.** A verdict that
+  reads negative when nothing is wrong is one people stop reading, and it is read by an
+  unattended loop with no judgment to apply to it. The `UNTESTED` line now carries the span's
+  citation rate, computed with the **same** `own_citations` the tested half uses, and the loop's
+  handoff is told to quote the counts rather than the verdict word alone.
+- ⛔ **This reverses a decision recorded four days ago as deliberate.** The `#80` entry states
+  that a number beside `UNTESTED` "invites exactly the reading the word is there to prevent".
+  ⚠️ **That reasoning was not wrong and is not withdrawn** — it is why the output now carries,
+  beside every number, that a cited invariant is not necessarily a governing one. What changed
+  is that the trade was made before anyone had lived with a permanently negative verdict. The
+  earlier note stands as the reason for the caveat rather than being quietly dropped.
+- ⛔ **The verdict is unchanged.** `NOT CLEAN` still fires whenever anything went untested,
+  whatever the rate. A test pins the case that proves it: a span where **every** untested line
+  is cited is still not clean, because the rate is evidence *about* the span and never a test
+  *of* it.
+- ⚠️ **The rate can be wrong in the direction of reassurance, and says so on every run.**
+  `own_citations` establishes that an `INV-nnn` sits at a line, never that it governs the rule;
+  `per-rule`'s own docstring says no regex can decide that, and the 2026-09-01 audit found a
+  rule counted as accounted-for because the sentence beside it cited two invariants about
+  something else. ⛔ Today's rate is **8 of 8**, which is the most dangerous case for this
+  change: a reader seeing all-cited stops looking, and the caveat is prose — the weakest kind of
+  guard, as #77 had just demonstrated.
+- **Negative controls, four, each verified present before the run.** (1) A fully-cited untested
+  span allowed to report clean — 1 failed. (2) The governs-vs-cited caveat removed — 1 failed.
+  (3) Every locatable untested line counted as cited without checking — 2 failed. (4) The
+  handoff instruction weakened to "report the verdict" — 1 failed. Both mutated files restored
+  and verified byte-identical by md5.
+- ⛔ **One control was reported as passing when it had not run.** It was caught by its own
+  pre-write assertion. The phrase being mutated wraps across two lines in the source; the guard matches
+  it after flattening whitespace, so the raw-text replacement found nothing. The mutation script
+  asserts the target occurs exactly once **before** writing, so it aborted and the suite's `OK`
+  was over an unmutated tree. ⚠️ This is the fourth false negative control in this repository's
+  history and the first caught by the pre-write assertion rather than by noticing afterwards.
+- ⛔ **A larger mistake, recorded because the run is trusted on its self-report.** Restoring
+  after the second control was done with `git checkout <file>`, which reverted the file to
+  `HEAD` — and since this branch was cut fresh from `main`, that discarded **every** change this
+  issue had made to `conformance.py`, not just the mutation. Caught immediately by grepping for
+  the new helper, and re-applied from the same script. The lesson is the one the negative-control
+  discipline already states and this run did not follow: restore the *mutation*, never the file.
+- **Establishes no invariant.** ⛔ Checked with `reverse-check` itself: this change adds one
+  hard-rule line, under the maintainer surface, citing **INV-308** at its own line — already the
+  rule that a tool reporting a verification count must report what it could not verify.
+- **Commit:** 209c6bb
+
 ## sites-states-the-corpus-it-scanned-on-every-run
 
 - **Implemented:** 2026-09-21

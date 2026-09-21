@@ -264,7 +264,13 @@ The closing message says, in this order:
    and it goes near the top.
 3. **What is blocked**, and the question that unblocks each.
 4. **The audit verdict per cycle** — the four properties separately, not a single
-   pass/fail.
+   pass/fail. ⛔ **(INV-308) For the reverse check, quote its COUNTS, never the verdict word
+   alone.** `NOT CLEAN` is the ordinary result for maintainer-surface work — the span outside
+   `per-rule`'s corpus is untested by construction, whatever its state — so a handoff carrying
+   only that word tells the maintainer nothing they can act on, and a reader who sees it every
+   time stops reading it. Give the tested count, the uncited count, the untested count and its
+   citation rate, and carry the view's own caveat that a cited invariant is not a governing
+   one (#83).
 5. **Suite and tree state** — final counts, and whether the tree is clean and unpushed.
 6. ⛔ **What you got wrong.** Reverted work, a probe that misread, an issue re-derived that
    was already recorded. An unattended run is trusted on its self-report or not at all.

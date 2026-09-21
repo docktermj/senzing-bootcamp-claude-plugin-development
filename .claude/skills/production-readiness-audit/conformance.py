@@ -517,6 +517,34 @@ def _normalize(line):
     return re.sub(r"\s+", " ", s).strip()
 
 
+def _citation_rate(repo, lines):
+    """(cited, bare) over reported lines, asking the SAME question the tested half asks.
+
+    ⛔ **`own_citations`, not a second notion of "cited".** Two definitions of the same word in
+    one report is the drift this view exists to report, and it would be a fourth copy of a
+    resolution rule inside the tool built to catch them (INV-308).
+
+    ⚠️ **This is evidence about a span, never a verdict on it.** It establishes that an
+    `INV-nnn` sits at a line -- never that the invariant governs the rule, which `per-rule`'s
+    own docstring says no regex can decide. A line whose neighbor cites something unrelated
+    counts as cited here and is not accounted for; that exact case was found by the 2026-09-01
+    audit. The caller prints that limit beside every number this returns.
+    """
+    cited = bare = 0
+    for path, body in lines:
+        f = repo / path
+        if not f.is_file():
+            bare += 1
+            continue
+        text = f.read_text(encoding="utf-8").splitlines()
+        hit = next((i for i, l in enumerate(text) if l.strip() == body), None)
+        if hit is not None and own_citations(text, hit):
+            cited += 1
+        else:
+            bare += 1
+    return cited, bare
+
+
 def cmd_reverse_check(args):
     """The INV-282 reverse check, with the half it cannot test counted rather than assumed clean.
 
@@ -586,6 +614,7 @@ def cmd_reverse_check(args):
                 uncited.append((path, hit + 1, body))
 
     tested = cited + len(uncited)
+    untested_cited, untested_bare = _citation_rate(repo, untested)
     print("== INV-282 reverse check: hard rules added since %s, tested at their own line\n" % ref)
     print("   TESTED   %d line(s) in %s -- %d cited at the line, %d NOT cited"
           % (tested, corpus_root, cited, len(uncited)))
@@ -593,9 +622,17 @@ def cmd_reverse_check(args):
         print("     UNCITED %s:%d  %s" % (path, line_no, body[:90]))
     # ⚠️ Printed even at zero: a figure that appears only when non-zero makes its absence
     # ambiguous, and this is the number the old procedure omitted by construction.
-    print("   UNTESTED %d line(s) outside that corpus%s"
+    print("   UNTESTED %d line(s) outside that corpus%s; %d cite an invariant at the line, "
+          "%d do not"
           % (len(untested),
-             " (%s)" % ", ".join(sorted({r for r in SCAN_ROOTS if r != corpus_root}))))
+             " (%s)" % ", ".join(sorted({r for r in SCAN_ROOTS if r != corpus_root})),
+             untested_cited, untested_bare))
+    # ⛔ The rate is evidence ABOUT the untested span, never a finding on it. Printed with the
+    # count rather than in the verdict block so the two can never drift apart (#83).
+    print("     \u26a0 That an invariant is CITED there is not evidence it GOVERNS the rule:")
+    print("       no regex can match a rule's subject against 300-odd invariants, and the")
+    print("       2026-09-01 audit found a rule counted as accounted-for because the sentence")
+    print("       beside it cited two invariants about something else. Read them.")
     by_file = collections.Counter(path for path, _body in untested)
     for path, n in by_file.most_common(6):
         print("     - %s   (%d)" % (path, n))
@@ -614,9 +651,14 @@ def cmd_reverse_check(args):
                   % len(uncited))
             print("     there or named in a DEFERRED INVARIANT block -- silence is neither.")
         if untested:
-            print("     %d line(s) were never tested: `per-rule` does not read their corpus, so"
+            print("     %d line(s) were never tested: `per-rule` does not read their corpus."
                   % len(untested))
-            print("     nothing here is evidence about them either way. Read them by hand.")
+            print("     %d of them cite an invariant at the line and %d do not -- read the"
+                  % (untested_cited, untested_bare))
+            print("     caveat above before treating either number as a result.")
+            # ⛔ NOT CLEAN still fires on an untested span, whatever its citation rate. #83
+            # made the verdict legible, not weaker: a span this view cannot test is not a
+            # span it may call clean, and a high rate is the case where that matters most.
         if unresolved:
             print("     %d line(s) could not be located in the file that reported them; the"
                   % len(unresolved))
