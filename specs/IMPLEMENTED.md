@@ -91,7 +91,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   the hard-rule lines this change adds are in documents, and each is a correction of an existing
   rule's description rather than a new guarantee. The rules it rests on — INV-282, INV-207,
   INV-307 — are all registered.
-- **Commit:** uncommitted
+- **Commit:** 6e8b8fd
 
 ## production-readiness-audit-2026-09-21
 
