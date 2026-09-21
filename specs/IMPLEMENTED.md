@@ -92,7 +92,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Establishes no invariant.** ⛔ Checked with `reverse-check`: the changed files are under
   `.claude/memory/` and `tests/`, neither of which any scanned root covers. The rule this states
   is a working convention, not a guarantee the plugin makes to a Bootcamper.
-- **Commit:** uncommitted
+- **Commit:** 99169fc
 
 ## citations-py-states-its-limit-and-nothing-held-it-there
 
