@@ -88,7 +88,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   this change adds cite **INV-308** at their own line — already the rule that a tool reporting a
   verification count must report what it could not verify, and that a scope has one definition
   every consumer reads.
-- **Commit:** uncommitted
+- **Commit:** cf59bb7
 
 ## invariant-review-2026-09-21
 
