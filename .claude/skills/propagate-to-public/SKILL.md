@@ -124,7 +124,8 @@ commit or push (this matches how releases are reviewed here).
    `git -C ~/senzing.git/senzing-bootcamp-claude-plugin diff`.
 3. Do **not** commit, push, or open a PR unless the maintainer explicitly asks —
    committing/publishing the public repo is a separate, deliberate step. If they
-   do ask, remember commit subjects in these repos start with `#<issue-number>`.
+   do ask, remember commit subjects follow Conventional Commits with an
+   `issue: #<n>` trailer (#56).
 
 ## Guardrails
 

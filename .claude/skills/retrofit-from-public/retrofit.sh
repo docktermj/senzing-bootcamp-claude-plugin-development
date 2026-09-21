@@ -34,7 +34,6 @@ if [ "$(cd "$here" && pwd)" = "$(cd "$src" && pwd)" ]; then
   echo "Refusing: source and destination are the same directory." >&2; exit 1
 fi
 
-command -v rsync >/dev/null 2>&1 || { echo "rsync is required but not found." >&2; exit 1; }
 
 # Warn on a dirty dev tree so the retrofit diff can be reviewed in isolation.
 if ! git -C "$here" diff --quiet -- plugins .claude-plugin docs README.md \
@@ -49,70 +48,67 @@ echo "Public branch:   $(git -C "$src" branch --show-current 2>/dev/null || echo
 echo "Dest (dev):      $here"
 echo
 
-# --- Retrofit the allowlisted paths (add/update ONLY; never delete) --------- #
-# NO --delete on purpose: a dev file missing from public must never be deleted
-# here (it may be a dev addition not yet propagated). Files removed in public are
-# reported below for manual handling instead. Governance files (.github/, LICENSE,
-# .vscode/, .gitignore, public .claude/settings.json) are out of scope by
-# construction — they are never read from the source.
-excludes=(--exclude='__pycache__/' --exclude='*.pyc' --exclude='.pytest_cache/')
+# --- REPORT the allowlisted paths; never write into the dev tree ------------ #
+# ⛔ This script COPIED until #54. It now compares and reports, and writes nothing:
+# under the issue-driven workflow a public-repo change becomes a GitHub issue the
+# maintainer reads, not an edit that arrives in the working tree.
+#
+# ⚠️ That also removes the hazard the old step 5 existed for. `tests/` is not in the
+# public mirror and cannot come back, so a retrofitted prose edit landed in a shipped
+# file while the dev-only test quoting that sentence kept asserting the old wording.
+# Measured 2026-08-16 on `2223961`, the British->US spelling corrections: a CORRECT
+# edit, faithfully copied, left 12 failed / 2730 passed -- ten of them that desync.
+# Nothing is copied now, so nothing desyncs; the reconciliation is done deliberately
+# by whoever implements the filed issue.
+#
+# NO --delete and no writes at all. A dev file missing from public is reported, never
+# removed: it may be a dev addition not yet propagated. Governance files (.github/,
+# LICENSE, .vscode/, .gitignore, public .claude/settings.json) stay out of scope by
+# construction -- they are never read from the source.
+differs=0
+report_path() {
+  # $1 = relative path under both repos. Prints a per-file diff summary; writes nothing.
+  local rel="$1"
+  if [ ! -e "$src/$rel" ]; then
+    echo "  (absent in public)      $rel"
+    return
+  fi
+  if diff -rq "$src/$rel" "$here/$rel" >/dev/null 2>&1; then
+    echo "  same                    $rel"
+  else
+    echo "  DIFFERS                 $rel"
+    differs=$((differs + 1))
+    diff -rq "$src/$rel" "$here/$rel" 2>/dev/null | sed 's/^/      /' | head -40
+  fi
+}
 
-echo "=== Updating plugins/ (add/update, minus __pycache__ / *.pyc / .pytest_cache) ==="
-rsync -a "${excludes[@]}" "$src/plugins/" "$here/plugins/"
-
-echo "=== Updating .claude-plugin/ (marketplace.json) ==="
-rsync -a "$src/.claude-plugin/" "$here/.claude-plugin/"
-
-echo "=== Updating docs/ ==="
-rsync -a "$src/docs/" "$here/docs/"
-
-echo "=== Updating README.md ==="
-rsync -a "$src/README.md" "$here/README.md"
-
-# --- Reverse the propagate rewrite (public slug -> dev slug) --------------- #
-# Narrowly scoped: only this plugin repo's own slug, and the marketplace owner
-# name. plugin.json's author "Senzing" (the company), the many product mentions
-# of "Senzing" in skill content, and LICENSE text are NEVER touched. The rewrite
-# restores BOTH halves of the dev identity -- the docktermj owner and the
-# `-development` name suffix the public repo does not carry -- which is what keeps
-# it a clean inverse of propagate.sh.
+echo "=== Comparing the propagated paths (read-only) ==="
+for rel in plugins .claude-plugin docs README.md; do
+  report_path "$rel"
+done
 echo
-echo "=== Reversing self-references (Senzing -> docktermj/...-development) ==="
-python3 - "$here" <<'PY'
-import os, sys
-dev = sys.argv[1]
-SLUG_OLD = "Senzing/senzing-bootcamp-claude-plugin"
-SLUG_NEW = "docktermj/senzing-bootcamp-claude-plugin-development"
+echo "=== Public commits since the newest tag, which is what a filed issue describes ==="
+git -C "$src" log --oneline "$(git -C "$src" describe --tags --abbrev=0 2>/dev/null || echo HEAD)"..HEAD 2>/dev/null | sed 's/^/  /' || true
 
-targets = [os.path.join(dev, "README.md")]
-for sub in ("plugins", ".claude-plugin", "docs"):
-    root = os.path.join(dev, sub)
-    for dp, _, fns in os.walk(root):
-        for fn in fns:
-            if fn.endswith((".md", ".json")):
-                targets.append(os.path.join(dp, fn))
-
-changed = 0
-for f in targets:
-    if not os.path.isfile(f):
-        continue
-    with open(f, encoding="utf-8") as fh:
-        s = fh.read()
-    t = s.replace(SLUG_OLD, SLUG_NEW)
-    if os.path.basename(f) == "marketplace.json":
-        t = t.replace('"name": "Senzing"', '"name": "docktermj"')
-    if t != s:
-        with open(f, "w", encoding="utf-8") as fh:
-            fh.write(t)
-        changed += 1
-        print("  reversed", os.path.relpath(f, dev))
-print(f"  ({changed} file(s) rewritten)")
-PY
-
-# --- Report tracked dev files that are absent from public (NOT deleted) ----- #
-# These are either dev-only additions not yet propagated, or content removed in
-# public that you may want to remove here by hand. Nothing is deleted for you.
 echo
+echo "$differs propagated path(s) differ. \u26d4 NOTHING WAS WRITTEN."
+echo "File one issue per coherent change (see SKILL.md); search the tracker first so a"
+echo "change already absorbed or already filed does not get a second issue."
+
+# --- The inverse slug rewrite is NOT applied here any more ------------------ #
+# ⛔ Until #54 this rewrote `Senzing/senzing-bootcamp-claude-plugin` back to
+# `docktermj/senzing-bootcamp-claude-plugin-development` across the copied files --
+# a write into the dev tree, and the last one this script performed.
+#
+# ⚠️ The transform itself is unchanged and still REQUIRED: whoever implements a filed
+# issue must apply it by hand to any text they bring across, or the dev repo ends up
+# carrying public self-references. `propagate.sh` holds the forward direction and the
+# two must still agree. What changed is only WHO applies it and WHEN -- deliberately,
+# in the issue's implementation, rather than automatically in a sync.
+#
+# The comparison above therefore reports files as DIFFERING when the only difference is
+# the slug. That is correct and not noise: it is the change a filed issue must describe.
+
 echo "=== In dev but not in public (NOT deleted — review manually) ==="
 missing=0
 while IFS= read -r rel; do

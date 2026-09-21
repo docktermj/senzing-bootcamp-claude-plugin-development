@@ -49,7 +49,13 @@ DOCS = sorted((REPO_ROOT / ".claude").rglob("*.md")) + sorted((REPO_ROOT / "docs
 SUBJECT_PREFIX_RULE = re.compile(
     r"(?:title|subject)[^.]{0,80}?prefix[^.]{0,40}?`?#<?(?:issue[- ]?number|n)>?"
     r"|\b(?:prefix|prefixed|use|must be)\b[^.]{0,80}?#<?(?:issue[- ]?number|n)>?"
-    r"[^.]{0,80}?(?:subject|title)",
+    r"[^.]{0,80}?(?:subject|title)"
+    # ⛔ A third arrangement, found in `retrofit-from-public/SKILL.md` the same day this guard
+    # shipped: "commit subjects in these repos start with `#<issue-number>`". It states the rule
+    # with no instruction verb at all, so both alternatives above missed it and the guard passed
+    # over a live instance of the claim it polices (#54).
+    r"|(?:title|subject)s?[^.]{0,60}?\b(?:start|starts|begin|begins)\s+with[^.]{0,40}?"
+    r"`?#<?(?:issue[- ]?number|n)>?",
     re.I)
 
 #: An instruction to bypass the reminder hook. Prose ABOUT the bypass existing is legitimate;
@@ -62,6 +68,8 @@ RETIRED_WORDINGS = (
     "the commit **title** must be prefixed with `#<issue-number> ` followed by a plain description",
     "use `#n <description>` as the subject",
     "prefix the commit command with `SKIP_GIT_CONVENTIONS=1` to bypass that reminder",
+    # ⛔ The wording this guard missed on the day it shipped.
+    "commit subjects in these repos start with `#<issue-number>`",
 )
 
 #: Constructions that must stay legal. A guard that flags these is relaxed rather than fixed.
