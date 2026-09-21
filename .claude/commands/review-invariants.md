@@ -38,7 +38,10 @@ wording **in full, never summarized** — it is the text being approved.
 - **Register** — the wording is right. Mint the next free ID, cite it everywhere the rule
   ships, resolve the block. Permanent.
 - **Hold** — not yet, *and here is what would change that*. The block stays, with the reason
-  and revisit condition recorded. **Not a rejection.**
+  and revisit condition recorded ⛔ **(INV-308) as a `**HELD <date>:**` paragraph inside the
+  deferral block itself** — that is where the queue reads it, and a paragraph written beside the
+  block instead of inside it ends the block and is never seen, so the run re-offers a decision
+  already made. **Not a rejection.**
 - **Amend** — the rule is right, the wording is not. Change the wording, then register it.
   ⛔ **Amend includes splitting: two subjects is two invariants.**
 

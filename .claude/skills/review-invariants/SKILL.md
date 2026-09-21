@@ -242,9 +242,28 @@ question and is not answered here.
 
 ### Hold
 
-Record the reason and the revisit condition **in the spec file**, where the next reader
-looks — a note only in the conversation dies with it. Leave the block pending. Nothing
-else changes.
+⛔ **(INV-308) Record the reason and the revisit condition inside the deferral block itself**, as
+a `**HELD <date>:**` paragraph — that is where `hold_reason()` reads it, and a note only in the
+conversation dies with it. Leave the block pending in every other respect. Nothing else changes.
+
+```markdown
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.**
+  …rules and drafted wording…
+
+  **HELD 2026-09-21:** <the maintainer's reason, in their words>.
+  Revisit after <a condition someone can check>.
+```
+
+⚠️ **Inside the block, not beside it.** The queue reads a block bullet-by-bullet, so a `HELD`
+paragraph written as its own top-level bullet ends the block and is not seen — the run then
+reports the block as **pending** and re-offers a decision the maintainer already made.
+
+⚠️ **The spec file is no longer the place, and for issue-driven deferrals never could be.** Until
+#58 this said *"in the spec file"*; a deferral that came from a GitHub issue has none, and
+`specs/` is frozen under INV-307 so one cannot be created. The only reachable held state for such
+a block was a generic string recording a property of the work rather than the maintainer's
+decision. One block used the spec route and was migrated to the ledger on 2026-09-21; that spec
+file still carries the same paragraph and is no longer read by anything.
 
 ### Amend
 

@@ -35,7 +35,21 @@ PLUGIN = REPO / "plugins" / "senzing-bootcamp"
 
 AWAITING = "awaiting the maintainer's sign-off; NOT minted"
 HELD_IN_BLOCK = "must be approved before implementation"
-HELD_IN_SPEC = "Held, not merely unapproved"
+
+#: ⛔ The maintainer's hold, recorded in the ledger block itself. `HELD <date>:` then the reason,
+#: and a `Revisit ...` sentence if one was set.
+#:
+#: Until #58 this was read out of `specs/<spec>.md`, which an issue-driven deferral does not have
+#: and — `specs/` being frozen under INV-307 — cannot be given. So the only reachable held state
+#: for such a block was the generic HELD_IN_BLOCK string, which records a property of the work
+#: rather than a decision: a maintainer who held one either got their reason written where
+#: nothing reads it, and the block reported as **pending** on the next run, or wrote it nowhere
+#: durable. Both outcomes are silent.
+#:
+#: ⚠️ One route, not two. The spec-file route was used by exactly one file of 519 and that block
+#: is migrated here; two mechanisms for one fact is how the old fallback came to report something
+#: other than a reason.
+HELD_IN_LEDGER = re.compile(r"\*\*HELD\s+(\d{4}-\d{2}-\d{2}):\*\*\s*(.+?)(?=\n\s*\n|\Z)", re.S)
 BOILER = re.compile(r"\*\(written as NNN deliberately.*?\)\*\s*", re.S)
 # A rule bullet is an indented list item carrying a stop sign. Three shapes occur, and a
 # pattern fitted to one silently drops the others -- `⛔ **rule**`, `**⛔ rule**`, and a
@@ -81,16 +95,19 @@ def blocks():
     return out
 
 
-def hold_reason(spec):
-    """The maintainer's recorded reason for holding, from the spec file. None if not held."""
-    f = SPECS / f"{spec}.md"
-    if not f.is_file():
+def hold_reason(block_text):
+    """The maintainer's recorded reason for holding, from the block. None if not held.
+
+    ⚠️ Returns the **revisit condition** when one was recorded, because that is the part a later
+    run can act on — the skill's own rule is that a hold is worth as much as its revisit
+    condition. A hold without one is still a hold and is reported as such, never rejected.
+    """
+    m = HELD_IN_LEDGER.search(block_text)
+    if not m:
         return None
-    text = f.read_text(encoding="utf-8")
-    if HELD_IN_SPEC not in text:
-        return None
-    m = re.search(r"Revisit (?:after|when|if)[^.]*\.", text)
-    return m.group(0) if m else "revisit condition recorded in the spec"
+    reason = flat(m.group(2))
+    revisit = re.search(r"Revisit (?:after|when|if)[^.]*\.", reason)
+    return revisit.group(0) if revisit else reason[:160]
 
 
 def parse(b):
@@ -114,7 +131,7 @@ def parse(b):
     enf = re.search(r"Enforced by `([^`]+)`", text)
     return {**b, "rules": rules, "sites": sites, "wording": wording,
             "enforcer": enf.group(1) if enf else None,
-            "held": hold_reason(b["spec"]) or (
+            "held": hold_reason(b["text"]) or (
                 "spec requires approval before implementation"
                 if HELD_IN_BLOCK in b["text"] else None)}
 
