@@ -43,6 +43,47 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-inv308-disclosure-understated-its-own-coverage
+
+- **Implemented:** 2026-09-21
+- **Files changed:** `tests/test_review_invariants_queue.py`,
+  `tests/test_disclosure_pointers_resolve.py`
+- **MCP re-check:** n/a (no Senzing fact; a docstring and one guard)
+- **Summary:** `tests/test_review_invariants_queue.py` disclosed that **nothing** asserts INV-308
+  of this repository's other verification tools. Five guards landed across #74, #76, #77, #80 and
+  #83 and the sentence was never swept. ⚠️ **A disclosure that outlives its fix understates
+  coverage**, which is the direction that costs work: it sends the next reader to build what
+  already exists. Rewritten to the measured state, **per view rather than per file**.
+- **Measured before writing, and it corrected the issue twice.** #91 named three guards; there
+  are **four** — `all` reporting what it did not run is the same property. And it treated
+  `coverage_reports.py` as wholly uncovered when one INV-308-shaped case is asserted there: an
+  invariant in no index group is surfaced rather than silently exempted. The rewritten text
+  follows the measurement, not the issue.
+- ⛔ **`citations.py` is the one tool with nothing at all, and it was found while measuring.** It
+  prints its own statement of what it could not verify — that commit-message citations are
+  outside the check — and **no test pins that line**, so deleting it would break nothing. Named
+  in the disclosure as the cheapest remaining gap so it is not rediscovered.
+- ⛔ **The fix creates the risk it then guards.** Naming four guard files in prose is the audit
+  skill's defect class 6 — *a comment claiming a test exists that does not* — which has a
+  recorded instance where `capture_screenshots.py` named a file whose assertions lived elsewhere.
+  `tests/test_disclosure_pointers_resolve.py` asserts every named file exists. ⛔ **It asserts
+  existence and nothing more**: that a file exists does not establish that it asserts what the
+  disclosure says, and only reading does — stated in its docstring rather than implied by its
+  name.
+- ⚠️ **`tests/test_comment_test_pointers_resolve.py` already guards this class for `plugins/`
+  only** — it globs `PLUGIN.rglob`, so a docstring under `tests/` naming a missing file is
+  unguarded. Widening it is the general fix and was deliberately **not** done here: it is the
+  same narrow-scan class as #77 and #92, and doing it inside a docstring correction would half-do
+  it without the measurement that class needs.
+- **Negative controls, two, each verified present before the run.** (1) One named guard repointed
+  to a file that does not exist — caught, with the missing name printed. (2) All guard names
+  stripped from the disclosure, returning it to an unverifiable claim — caught by the
+  anti-vacuity assertion. The disclosure file restored byte-identical by md5.
+- **Establishes no invariant.** ⛔ Checked with `reverse-check`: this change touches only
+  `tests/`, which no scanned root covers, so it adds no hard-rule line to the corpus. The rule it
+  rests on is **INV-308**, already registered and cited in the disclosure it corrects.
+- **Commit:** uncommitted
+
 ## the-audit-half-blocked-claim-outlived-its-fix
 
 - **Implemented:** 2026-09-21

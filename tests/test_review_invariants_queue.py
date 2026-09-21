@@ -129,10 +129,35 @@ class TheQueueCountsBlocksNotMentions(unittest.TestCase):
         correct one does; `tests/test_deferral_quotes_match_their_source.py` imports the same
         `resolve`, so it cannot catch that either. What closes it is the mismatch assertion
         above — a wrongly-resolved path yields a quote that is not in the file — plus reading
-        the diff. ⚠️ It also does not establish the wider rule INV-308 states about **other**
-        verification tools in this repo (`conformance.py`, `citations.py`,
-        `coverage_reports.py`): nothing asserts that those report what they could not check.
-        That gap is real and is named here rather than left to look covered.
+        the diff. ⚠️ It also does not establish the wider rule INV-308 states about the
+        **other** verification tools in this repo. That gap was total when this was written and
+        is now partial, so it is stated per view rather than per file (#91):
+
+        * `conformance.py reverse-check` — covered by
+          `tests/test_reverse_check_counts_what_it_cannot_test.py`: the untested span is counted
+          and named, and a run with untested lines is never called clean.
+        * `conformance.py since`, at the range boundary — covered by
+          `tests/test_the_range_boundary_reports_what_it_retires.py`: what a record retired is
+          reported, and the tool refuses to claim it was examined.
+        * `conformance.py all` — covered by
+          `tests/test_all_runs_every_argument_free_view.py`: the aggregate must name **both**
+          views it skips and how to run each.
+        * `pending_invariants.py sites` — covered by
+          `tests/test_sites_states_the_corpus_it_scanned.py`: what was scanned and what was not
+          is printed on every run.
+        * ⛔ `conformance.py rules`, `per-rule`, `duplication`, `enumerations` and `size` —
+          **nothing asserts this of them.**
+        * ⚠️ `coverage_reports.py` — **partial**: an invariant in no index group is asserted to be
+          surfaced rather than silently exempted (`tests/test_coverage_reports.py`). Its other
+          reports are unasserted in this respect.
+        * ⛔ `citations.py` — **nothing.** It prints its own statement of what it could not
+          verify — that commit-message citations are outside the check — and **no test pins that
+          line**, so deleting it would break nothing. That is the cheapest remaining gap to close
+          and is named here so it is not rediscovered.
+
+        ⚠️ **This paragraph claimed the gap was total until 2026-09-21**, five guards after the
+        first of them landed. A disclosure that outlives its fix **understates** coverage, which
+        sends the next reader to build what already exists.
 
         ⛔ **This is the assertion that makes the new counter load-bearing.** Before #59
         `check` skipped an unresolvable location without counting it, so a run that verified
