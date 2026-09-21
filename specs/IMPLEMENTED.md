@@ -43,6 +43,45 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## citations-py-states-its-limit-and-nothing-held-it-there
+
+- **Implemented:** 2026-09-21
+- **Files changed:** `tests/test_citations_verify_states_its_limit.py`
+- **MCP re-check:** n/a (no Senzing fact; one guard over a maintainer tool's output)
+- **Summary:** `citations.py verify` ends a clean run by stating the span it never read —
+  commit-message citations — and ⛔ **no test pinned that line.** Deleting it left the suite green
+  and the tool reporting `clean:` with a count and no qualifier. That reminder is the tool's
+  entire INV-308 compliance, and a clean run with a number is the output a maintainer trusts
+  most, so the moment the qualifier goes it reads as total coverage. Now guarded.
+- **Measured before writing** (while implementing #91): two matches for the phrase across
+  `tests/*.py`, neither an assertion on this output — one an unrelated class name about email
+  reminders, one #91's own disclosure describing this gap.
+- ⛔ **Matched from the claim, not the sentence** (INV-282). Four wordings are pinned as
+  equivalent — the shipped one plus three rewrites — and four outputs without the limit are
+  pinned as non-matching. ⚠️ **The negative control that matters is the one that PASSES:**
+  rewording the tool's line to *"Note: citations in commit messages are not checked here."* leaves
+  the guard green, which is what separates a matcher from a copy of today's sentence. A guard
+  fitted to the wording would have reported a correct rewrite as a regression.
+- ⚠️ **What it does not establish, stated in its own docstring.** That the disclosure is
+  **complete** — whether other limits go unstated is a reading of the tool, not something a test
+  decides. And it observes only the **clean** path: the tool prints its problems and returns
+  non-zero without the line, which is defensible because that run claims nothing, so the check
+  **skips rather than fails** when the repository is not clean and says which of the two it is
+  (INV-308's own distinction).
+- **Negative controls, two, each verified present before the run.** (1) The disclosure line
+  deleted — 1 failed, with `commit-message` occurrences in the output measured at 0 first. (2) The
+  line reworded to an equivalent — **passed, as required**. The tool restored byte-identical by
+  md5.
+- ⚠️ **This closes the family #91 mapped.** `reverse-check`, the range boundary, `all` and `sites`
+  each got a guard across #74, #76, #77, #80 and #83; `citations.py` was the one tool with
+  nothing. ⛔ **`conformance.py`'s `rules`, `per-rule`, `duplication`, `enumerations` and `size`
+  remain unasserted in this respect**, and `coverage_reports.py` stays partial — recorded in
+  #91's disclosure, unchanged by this.
+- **Establishes no invariant.** ⛔ Checked with `reverse-check`: this change adds one file under
+  `tests/`, which no scanned root covers, so it adds no hard-rule line. The rule it rests on is
+  **INV-308**, already registered.
+- **Commit:** e1978f1
+
 ## the-inv308-disclosure-understated-its-own-coverage
 
 - **Implemented:** 2026-09-21
