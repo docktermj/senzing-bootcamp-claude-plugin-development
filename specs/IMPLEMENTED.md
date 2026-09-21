@@ -43,6 +43,80 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## review-invariants-stops-at-the-working-tree
+
+- **Implemented:** 2026-09-21
+- **Files changed:** `.claude/skills/review-invariants/SKILL.md`,
+  `.claude/commands/review-invariants.md`,
+  `tests/test_review_invariants_stops_at_the_working_tree.py`
+- **MCP re-check:** n/a (no Senzing fact; maintainer-surface tooling only)
+- **Summary:** registering an invariant is the most permanent act in this repository —
+  `INVARIANTS.md` is append-only, so a wrong id is corrected by a dated note beneath it and never
+  removed, and the wording binds every future change — and `/review-invariants` performed it with
+  **no gate at all**. The skill said *"Verify, then commit"* and named no destination, so it
+  committed onto whatever branch was checked out; for a maintainer who has just merged and
+  pulled, that is `main`. Neither file contained the word *branch*. It now performs the
+  registration, verifies it, and ⛔ **stops with the changes in the working tree**, reporting
+  every file it touched — the pattern `/propagate-to-public` already uses.
+- ⚠️ **The gap was easy to miss because the maintainer is standing there.** They approved the
+  wording a moment earlier, so the commit feels approved too. It is a different approval, and
+  every other permanent or outward-facing act here is gated: `/implement-github-issue` waits
+  twice, `/release` never pushes, `/propagate-to-public` never commits.
+- ⛔ **A branch was considered and rejected, for a reason the issue did not anticipate.** The
+  `git-conventions` hook names branches `<issue-number>-<github-username>-<n>`, and a review
+  session has no single issue — `invariant-review-2026-09-14` registered **seven** ids drawn from
+  different sources. The alternative was to instruct a `SKIP_GIT_CONVENTIONS=1` bypass of the
+  maintainer's own convention. Stopping at the working tree needs no branch at all and satisfies
+  the issue's pre-push criterion more strongly than a pause does: nothing is committed, so
+  nothing can be pushed by accident. ⚠️ **The issue asked that the commit go somewhere that is
+  not `main`; there is now no commit.** That is a stronger answer than the one requested, not the
+  one requested, and it is recorded as such.
+- ⚠️ **A guarantee became guidance.** *One invariant per commit* used to happen because the skill
+  did it; it now happens if the maintainer does. The revert property it protects is weaker and no
+  test can hold anyone to it, so both files state it at the moment the diff is handed over and a
+  guard asserts they still do.
+- ⛔ **Whether the branch convention needs a non-issue form is NOT answered here.** The hook lives
+  in the maintainer's global `~/.claude/hooks` and reaches every project they work in.
+- ⚠️ **This deferral is the first real block the queue has held since the cutover, and it
+  exercised #77's scope reporting on live data for the first time.** `sites 1` names both
+  sites — both under `.claude/` — finds no candidates, and now says why: *63 file(s) scanned,
+  889 not, and a site NAMED in the block still resolves*. Before #77 that run printed
+  `(none found)` and a note; the fixtures could not show whether it worked on a real block, and
+  now one has.
+- **Negative controls, three, each verified present before the run.** (1) *"Verify, then commit"*
+  restored — 1 failed. (2) The one-invariant-per-commit handover note dropped from both files — 2
+  failed. (3) The citation-verification step deleted from the verify block — ⛔ **PASSED, a false
+  control.** The assertion searched the whole document, and `citations.py verify` is also named
+  130 lines earlier in the prose explaining what registering buys you. The guard now locates the
+  verify block first and asserts only inside it; re-run against the same mutation, it fails. Both
+  files restored byte-identical by md5.
+- ⚠️ **That false control is the fifth in this repository's history and the second this week.**
+  It is also the exact shape #77 recorded four days ago — an assertion satisfied by a mention
+  somewhere other than where it matters — found again in the fix for a different issue.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+  shipping:
+    - ⛔ **This skill does not commit and does not push.** — in `.claude/skills/review-invariants/SKILL.md`
+    - ⛔ **This skill does not commit and does not push.** — in `.claude/commands/review-invariants.md`
+
+  The drafted wording:
+
+  **INV-NNN** — a maintainer command that performs a **permanent or append-only** act on this
+  repository's own records MUST stop at the working tree: it performs the change, verifies it,
+  reports every file it touched, and MUST NOT commit or push. ⛔ Approving the *content* of such
+  an act is not approving its *commit*, and the two are separated by the tool rather than by the
+  maintainer remembering. ⚠️ This generalizes what INV-301 states for **releasing** only —
+  *"coupling an irreversible local act to an outward-facing one removes the gate between them"* —
+  to the other acts of that kind, of which registering an invariant is the one that had no gate.
+  Enforced by `tests/test_review_invariants_stops_at_the_working_tree.py`.
+
+  ⚠️ Deliberately **not** cited as INV-301 at the rule's line: that invariant's subject is a
+  release, and citing it would be the mis-citation the 2026-09-01 audit found — a rule counted as
+  covered by a neighboring invariant about something else. *(written as NNN deliberately: a
+  literal id here would cite an invariant that does not exist and turn `citations.py verify`
+  red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md`
+  rather than trusting a number written here.)*
+- **Commit:** 3e61beb
+
 ## the-untested-span-carries-its-citation-rate
 
 - **Implemented:** 2026-09-21

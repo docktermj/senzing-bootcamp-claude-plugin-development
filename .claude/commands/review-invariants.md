@@ -79,6 +79,13 @@ root, never about the site set.
 turned down; that reasoning is the expensive part and it is already written, so show it rather
 than making the maintainer re-derive it.
 
+⛔ **This skill does not commit and does not push.** Perform the registration, verify it, then
+**stop with the changes in the working tree** and report every file touched — the way
+`/propagate-to-public` does. Registering is the most permanent act here (`INVARIANTS.md` is
+append-only, so a wrong id gets a dated correction and never a removal), and approving a
+*wording* is not approving a *commit*. ⚠️ **One invariant per commit is then the maintainer's to
+keep**, since the skill no longer commits each one itself; say so when handing the diff over.
+
 Close by writing the dated `## invariant-review-YYYY-MM-DD` entry in `specs/IMPLEMENTED.md`,
 marked **Not a spec**, recording what was registered, what was held and with which revisit
 condition, what was amended, and what remains — whether or not the queue was emptied. ⛔ **A
