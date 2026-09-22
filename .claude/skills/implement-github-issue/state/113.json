@@ -1,0 +1,11 @@
+{
+  "issue": 113,
+  "branch": "113-docktermj-2",
+  "phase": "implement",
+  "approach": "Direct (5a): move list_specs.py to tests/ beside its three consumers; append a dated correction under INV-216 re-scoping the path clause it currently pins; re-point the three tests and dry-run SKILL.md; add a guard that the path INV-216 names resolves; regenerate the manifest.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started"
+  ],
+  "prior_run": "113-docktermj-1 stopped at Phase 2 via the escape hatch; premise (orphan) disproved, branch deleted, nothing pushed"
+}

@@ -36,9 +36,9 @@ guard that cries wolf on correct data trains its reader to skim past the one lin
 Read-only, stdlib-only, platform-independent (INV-052/INV-108). Exit status is 0 whatever it
 finds when listing; ``--check`` exits 2 if a spec is in both ledgers, for use in a pipeline.
 
-    python3 .claude/skills/implement-spec/list_specs.py
-    python3 .claude/skills/implement-spec/list_specs.py --repo /path/to/repo
-    python3 .claude/skills/implement-spec/list_specs.py --check
+    python3 tests/list_specs.py
+    python3 tests/list_specs.py --repo /path/to/repo
+    python3 tests/list_specs.py --check
 """
 import argparse
 import os

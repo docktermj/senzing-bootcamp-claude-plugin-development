@@ -43,6 +43,69 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-spec-enumerator-moves-beside-its-consumers
+
+- **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #113)
+- **Files changed:** `tests/list_specs.py` (moved from `.claude/skills/implement-spec/`),
+  `specs/INVARIANTS.md` (dated correction under INV-216),
+  `tests/test_invariant_paths_resolve.py` (new), `tests/test_list_specs.py`,
+  `tests/test_ledger_files_are_well_formed.py`, `tests/test_declined_ledger.py`,
+  `tests/test_invariant_enforcer_citations.py`, `invariant-manifest.json`,
+  `specs/IMPLEMENTED.md`, `.claude/skills/implement-github-issue/state/113.json`
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** ⛔ **The issue asked for a deletion and the deletion would have been wrong.** #113
+  described `list_specs.py` as *"one orphaned script in a skill directory whose `SKILL.md` no
+  longer exists"*. **A first run stopped at Phase 2 via the escape hatch and pushed nothing**,
+  because the file is not orphaned: hiding it and running the suite showed
+  `tests/test_list_specs.py` **cannot even import** (`FileNotFoundError`, zero tests run),
+  `test_ledger_files_are_well_formed.py` **FAILED** (1) and `test_declined_ledger.py` **FAILED**
+  (2) — the middle one executes it as a subprocess and cross-checks its arithmetic against an
+  independent source. **INV-216 names its full path**, and **#60 kept it deliberately**, its own
+  state record reading *"delete implement-spec command + SKILL.md, **KEEP list_specs.py**"*.
+  ⚠️ **The hazard #113 describes is nonetheless real** — a working enumerator for a frozen
+  archive sitting in the maintainer command surface, which a child reads because it ports from a
+  tagged release of this repository rather than from the public mirror. So the maintainer chose
+  **relocation** over deletion, and the script now lives at `tests/list_specs.py` beside all
+  three consumers, byte-identical (md5 verified across the move). ⛔ **Reading INV-216 in full
+  before moving anything found the move was forbidden by its own text.** Its 2026-09-16
+  correction says the script *"MUST remain"* at that path — #60 scoped away two of three clauses
+  and **pinned the third on purpose**. So this is an **amendment to a registered invariant**, not
+  a file move: a second dated correction re-scopes the path clause, the maintainer approved that
+  specifically at Gate 1, and ⛔ **the 2026-09-16 text is untouched** — the register never
+  rewrites history. **What is unchanged and restated in the correction:** the script MUST remain,
+  and MUST remain the computation should the candidate set ever be recomputed. ⛔ **Nothing
+  verified that a path an invariant names resolves**, which is why the pin could have gone stale
+  silently: `tests/test_invariant_paths_resolve.py` now checks every path under `.claude/`,
+  `tests/`, `plugins/` or `specs/` — **124** of them — while excluding the **36** that name files
+  in the **bootcamper's** project (`config/bootcamp_progress.json`, `docs/bootcamp_recap.md`),
+  because a rule nobody can keep gets waived rather than fixed. ⚠️ **My own error, caught by
+  measurement:** the first draft of that pattern began `[A-Za-z0-9_]`, which **silently skipped
+  every `.claude/` path** — three of them, including the one the guard exists for — and reported
+  a clean scan over a corpus with its subject removed. Pinned by `DotPathsAreNotSkipped`, which
+  also asserts the register really contains such a path, so the fixture cannot test a case the
+  corpus lacks. ⚠️ **Append-only forced exactly one exemption, built so it cannot outlive its
+  reason:** the 2026-09-16 correction quotes the old location and is uneditable, so `SUPERSEDED`
+  lists it — and `TheExemptionIsStillEarned` re-justifies it every run, failing if the path stops
+  being named (stale) or starts resolving (unneeded). ⚠️ **A new correction must DESCRIBE a
+  superseded path rather than quote it**, which the 2026-09-22 text says in its own words; that
+  keeps the list at one entry instead of growing one per move. **`EXPECTED_PAIRS` re-derived
+  130 → 131 by running the extractor**, the new pair being exactly
+  `('INV-216', 'test_invariant_paths_resolve.py')`. **Negative controls, four**, each failing via
+  the named test and every file restored byte-identical (md5): an invariant naming a file that is
+  not there; the pattern dropped back to skipping dot paths; a superseded path exempted although
+  it resolves; and the script moved back out of `tests/`, which breaks its consumers.
+  **Verification:** suite **4,492 passed, 4 skipped** (up 9); `citations.py verify` clean at
+  **311**; `invariant_manifest.py --check` exit 0 after regeneration, since the manifest carries
+  INV-216's statement verbatim.
+- **This run establishes no invariant.** It **amends** one — INV-216, by the dated-correction
+  mechanism the register already defines and the maintainer approved at Gate 1 — and adds a guard
+  enforcing a property that invariant already asserted: that the path it names is real. ⚠️ **The
+  general rule the guard embodies** — *a path a registered invariant names MUST resolve* — is
+  **not** drafted as a deferral here, because it is INV-216's own clause mechanized rather than a
+  new guarantee, and stating it as a fresh invariant would bind every future register entry on the
+  strength of one run's convenience.
+- **Commit:** uncommitted
+
 ## implement-github-issue-reports-dependencies-before-the-choice
 
 - **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #119)
