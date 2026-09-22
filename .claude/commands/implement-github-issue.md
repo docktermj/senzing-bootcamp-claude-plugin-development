@@ -9,12 +9,23 @@ Invoke the `implement-github-issue` skill and follow it end to end.
 
 Issue to implement: $ARGUMENTS
 
-- If `$ARGUMENTS` is **empty**, ask which issue and stop until answered. Do not choose one,
-  and ⛔ **(R8) do not recommend one either** — listing the open issues is help; ranking them,
-  or marking one *(Recommended)*, is choosing with extra steps. This command pushes branches
-  and opens pull requests; selecting its own work is the one autonomy it is designed not to
-  have. See [`docs/FAMILY_WORKFLOW.md`](../../docs/FAMILY_WORKFLOW.md) R8, which is the
-  family-wide statement of this rule and the reason four child ports inherit it.
+- If `$ARGUMENTS` is **empty**, ⛔ **(R8) review the open issues for dependencies first, report
+  what you found, then ask which one and stop until answered.** Do not pick, and never begin
+  work on an issue you selected. The report names the dependencies, a suggested order where one
+  follows, and which issues are independent.
+  - ⛔ **Every ordering claim carries its evidence** — the sentence, file or acceptance
+    criterion the maintainer can check. An ordering with no citable evidence is a **preference**
+    and says so; presenting one as a dependency is the failure this rule guards.
+  - ⛔ **Never read a reference that asserts NON-dependence as a dependency.** An
+    `owner-checked:` line naming other issues — *"none of which touch …"* — says they are
+    **unrelated**. Measured 2026-09-22 over seven open issues, reading those lines as edges
+    inverted the clearest signal in the corpus.
+  - ⛔ **Shared-file coupling is merge risk, not order.** Five of those seven named
+    `specs/INVARIANTS.md`; it is a hub. Report it separately or not at all.
+  - Where the issues are independent, **say so and imply no order.**
+
+  See [`docs/FAMILY_WORKFLOW.md`](../../docs/FAMILY_WORKFLOW.md) R8 — the family-wide statement
+  of this rule, the reason four child ports inherit it, and §10 for what it used to say.
 - If `$ARGUMENTS` **names an issue** — a full URL, `owner/repo#n`, or a bare number against
   this repo — resolve it and begin.
 

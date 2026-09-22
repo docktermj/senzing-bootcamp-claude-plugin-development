@@ -204,10 +204,28 @@ cross-reference in both directions. The child's local tracking issue closes when
 `parity-check` against a parent tag **containing** the fix confirms it arrived. A parent issue
 closed but not yet released has not reached any bootcamper.
 
-**R8 — `implement-github-issue` never chooses its own target.** Invoked with no argument, it
-asks which issue and stops until answered. It does not recommend and it does not pick. The
-command pushes branches and opens pull requests; selecting its own work is the one autonomy it
-is designed not to have.
+**R8 — `implement-github-issue` never chooses its own target, and reports what it found before
+the user chooses.** Invoked with no argument it asks which issue and **stops until answered**;
+it does not pick, and it never begins work on an issue it selected. The command pushes branches
+and opens pull requests, and *acting on its own selection* is the autonomy it is designed not to
+have.
+
+⛔ **It MUST first review the open set for dependencies and report them** — a suggested order
+where one follows, and which issues are independent — so the choice is made informed rather
+than blind. ⛔ **Every ordering claim carries the evidence that establishes it**: the sentence,
+file or acceptance criterion a reader can check. An ordering offered without citable evidence is
+a **preference**, which is permitted and MUST be labeled as one rather than presented as a
+dependency.
+
+⛔ **A reference asserting NON-dependence is never read as a dependency.** An `owner-checked:`
+line naming other issues to support an absence claim — *"none of which touch …"* — says they are
+**unrelated**; reading it as an edge inverts the clearest signal in the corpus. **Shared-file
+coupling is reported separately, as merge risk**, and never folded into the order. Where issues
+are independent the report says so and **implies no order**.
+
+⚠️ **This rule was narrowed on 2026-09-22 and the narrowing is deliberate** — see
+[§10](#10-amendments). Until then R8 also forbade *recommending*. It no longer does; what
+survives is that the command may advise and still may not act on its own advice.
 
 ---
 
@@ -341,6 +359,39 @@ repository cites.
 ⚠️ **An amendment does not renumber.** R8 stays R8. A rule that is withdrawn keeps its number
 and says so, for the same reason `INVARIANTS.md` never reuses an id: a citation that silently
 resolves to a different rule is worse than one that fails.
+
+### 2026-09-22 — R8 narrowed: the recommendation ban removed, a dependency report required
+
+**Was:** *"Invoked with no argument, it asks which issue and stops until answered. **It does not
+recommend and it does not pick.** The command pushes branches and opens pull requests; selecting
+its own work is the one autonomy it is designed not to have."*
+
+**Now:** the command **must** review the open set for dependencies and report them, with a
+suggested order and the evidence for each claim, before the user chooses. *Does not pick* and
+*stops until answered* survive unchanged; **"does not recommend" is removed.**
+
+⚠️ **What was given up, stated rather than buried.** R8's rationale is that *acting on its own
+selection* is the autonomy this command must not have, and a ranked list is the mechanism by
+which a user rubber-stamps. That risk is real and was accepted on the maintainer's decision: the
+countervailing cost — a maintainer choosing blind among issues that genuinely depend on one
+another — was judged the larger one. **The surviving guarantee is narrower and should be read
+as narrower**: the command may advise; it still may not act on its own advice.
+
+⛔ **The reading rules in R8 are not decoration, and a child implementing this must not skip
+them.** They were derived by running the analysis over the parent's seven open issues on
+2026-09-22, where **both** mechanical methods failed:
+
+- **Counting cross-references inverted the strongest signal.** Two issues named two others
+  inside their `owner-checked:` lines — *"none of which touch `conformance.py`'s corpus"* — which
+  is an absence claim asserting the issues are **unrelated**. Read as edges, those lines produce
+  the exact opposite of what they say.
+- **Shared-file coupling made five of seven look ordered**, because all five name
+  `specs/INVARIANTS.md`. It is a hub; it establishes merge risk, not sequence.
+- **The one real relation was visible to neither method** and only by reading content: an issue
+  quoting a figure that a later change had already altered.
+
+**For a child:** an implementation that derives order from reference counts or shared paths is
+**not** conforming, however plausible its output looks.
 
 ### 2026-09-22 — R8 widened, and the parent brought into line
 

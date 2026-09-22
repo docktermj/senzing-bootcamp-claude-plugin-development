@@ -231,19 +231,34 @@ class EverySlashCommandResolvesOrDisclaims(unittest.TestCase):
 class R8HasOneHome(unittest.TestCase):
     """INV-300 -- the command restates a family rule, so it must name where the rule lives.
 
-    ⚠️ R8 and this command file said DIFFERENT things until #111: the command forbade choosing
-    an issue, R8 forbade choosing *and recommending*, and the issue text called R8 a restatement
-    of it. The command was brought up to R8 and now cites it, so the next editor changing one
-    can see the other exists.
+    ⚠️ **This class has changed subject twice, which is the point of keeping it.** At #111 R8 and
+    the command disagreed about whether *recommending* was allowed, and the command was brought
+    up to R8's ban. At #119 the maintainer **removed that ban** and required a dependency report
+    instead, so the assertions moved with the rule rather than being deleted. What survives in
+    both directions is that the two texts cannot drift apart silently.
+
+    ⛔ **The user-global skill is deliberately NOT asserted here.**
+    `~/.claude/skills/implement-github-issue/SKILL.md` carries the same procedure and lives
+    outside this repository, so CI -- which checks out only the repo -- would fail on its
+    absence. It is therefore unguarded, and that gap is recorded in the ledger rather than
+    papered over with a test that passes only on one machine.
     """
 
-    def test_the_command_forbids_recommending(self):
+    def test_the_command_requires_a_dependency_report(self):
         text = IMPLEMENT_CMD.read_text(encoding="utf-8")
         self.assertRegex(
-            text, r"(?i)do not recommend",
-            "%s does not forbid recommending an issue, but FAMILY_WORKFLOW.md R8 says the "
-            "operation 'does not recommend and it does not pick'. Four child ports implement "
-            "this command from R8's wording" % IMPLEMENT_CMD)
+            text, r"(?i)review the open issues for dependencies",
+            "%s does not require reviewing the open issues for dependencies before asking, "
+            "which amended R8 (#119) makes mandatory" % IMPLEMENT_CMD)
+
+    def test_the_command_still_forbids_picking(self):
+        """The clause R8 KEPT when it dropped the recommendation ban."""
+        text = IMPLEMENT_CMD.read_text(encoding="utf-8")
+        self.assertRegex(
+            text, r"(?i)do not pick",
+            "%s no longer forbids picking an issue. R8 gave up 'does not recommend' at #119 and "
+            "kept 'does not pick' -- the command may advise and may not act on its own advice"
+            % IMPLEMENT_CMD)
 
     def test_the_command_names_the_family_rule(self):
         text = IMPLEMENT_CMD.read_text(encoding="utf-8")

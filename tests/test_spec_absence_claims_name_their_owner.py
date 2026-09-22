@@ -212,12 +212,27 @@ class TheRuleIsDocumentedWhereSpecsAreWrittenAndRead(unittest.TestCase):
         """
         text = IMPLEMENT_SKILL.read_text(encoding="utf-8")
         self.assertIn("owner-checked:", text)
-        start = text.index("owner-checked:")
-        # The paragraph that introduces the rule: from the first mention to the next blank line
-        # followed by a non-indented line, or 900 chars, whichever comes first.
+        # ⛔ Anchor on INV-213's own section, NOT on the first `owner-checked:` in the file.
+        # #119 added a second mention -- R8's rule that an owner-checked line asserts NON-
+        # dependence and must never be read as a dependency edge -- and it sits EARLIER in the
+        # command, so `index()` began reading a paragraph about a different subject entirely.
+        # The docstring above records this assertion being scoped once already for the same
+        # class of reason; a first-match anchor is the same defect one level down.
+        anchor = text.find("(INV-213)")
+        self.assertNotEqual(
+            -1, anchor,
+            "INV-213's section is no longer identifiable in %s, so this assertion cannot tell "
+            "which `owner-checked:` paragraph it is reading" % IMPLEMENT_SKILL)
+        start = text.index("owner-checked:", anchor)
         para = text[max(0, start - 400):start + 900]
+        # ⛔ The DISPOSITION, not the word. `blocker` occurs TWICE in this window -- once in
+        # INV-213's heading and once in the sentence that dispositions a missing clause -- so a
+        # bare `blocker` regex stays green while the disposition is demoted to "worth noting",
+        # which is precisely the demotion this assertion exists to catch. Found by force-checking
+        # the guard after #119 re-anchored it; the weakness predates that change. Matched on the
+        # claim rather than the phrasing (INV-282), so a reworded disposition still passes.
         self.assertRegex(
-            para, r"(?i)blocker",
+            para, r"(?is)missing\s+clause.{0,120}blocker",
             "implement-spec must treat a missing owner clause on an absence claim as a blocker "
             "rather than a note — a note gets read past, and this is the step where the second "
             f"instance was actually caught.\nParagraph read:\n{para[:400]}",
