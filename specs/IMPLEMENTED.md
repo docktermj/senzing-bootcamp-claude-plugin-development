@@ -123,7 +123,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   invariant that does not exist and turn `citations.py verify` red. If the maintainer
   registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a
   number written here.)*
-- **Commit:** uncommitted
+- **Commit:** 8955a3e
 
 ## invariant-review-2026-09-22
 
