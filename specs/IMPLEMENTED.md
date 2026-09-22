@@ -43,6 +43,59 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-enforcer-clause-survives-a-line-break
+
+- **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #105)
+- **Files changed:** `.claude/skills/review-invariants/pending_invariants.py`,
+  `tests/test_enforcer_clause_survives_a_line_break.py`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/105.json`
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** `parse()` extracted the enforcing test with a pattern requiring single spaces,
+  so a clause Markdown had wrapped was invisible and `show` reported `(none named)` for a
+  block that named one. Widened to `Enforced\s+by\s+` and given a third state. **Measured:**
+  across `IMPLEMENTED.md` the old pattern matched **26** clauses and the new one **28**,
+  recovering exactly `tests/test_invariant_manifest_matches_the_prose.py` and
+  `tests/test_retrofit_files_issues.py` — the enforcers of the two blocks reviewed on
+  2026-09-22, a miss rate of **2 of 2** on that session's queue. ⚠️ **The issue's criterion 2
+  said 25 → 27 and the measurement is 26 → 28**; the file gained one clause when #55's entry
+  landed between filing and implementing. The delta and the two recovered files are identical,
+  and the criterion is recorded here as *imprecisely worded rather than met as written* —
+  pinning an absolute count in an acceptance criterion over an append-only file is the same
+  staleness this repository refuses in prose. ⛔ **(INV-308) Three states now, not two.** An
+  unclosed backtick matched nothing under the old pattern and reported as `(none named)`,
+  which states something false: there IS a clause and reading it is what failed. `parse()`
+  returns `enforcer_unreadable` alongside `enforcer`, and `enforcer_label()` is the one place
+  the three print. ⚠️ **Backticks closing across a line break are classified unreadable rather
+  than resolved**, because `[^`]+` matches newlines: such a clause otherwise "succeeds" and
+  yields a path containing a newline, which resolves nowhere and would surface as a missing
+  file rather than as a clause nobody can read. ⚠️ **A sweep of the sibling patterns was asked
+  for by the issue's scope section and found a second, larger defect, which is filed separately
+  rather than folded in.** `QUOTE` matches the first `**…**` on a bullet line, and the held
+  block `the-bootcamp-cannot-leave-the-machine-it-was-built-on` carries its rules as plain
+  prose with its editorial annotations in bold: of its **9** rule bullets, `parse()` presents
+  **4**, and all four are annotation fragments — *"was uncovered"*, *"was uncovered"*,
+  *"This line was missing from this list for one iteration"*, *"relocated"* — each located as
+  `(same section as the rule above)` because `LOC` expects a trailing path and that block
+  leads with one. So `show` presents **zero of the nine rules that block ships**, and `check`
+  reports `1 checked, 0 mismatched, 0 unresolved, 4 no-prose-site`, which reads clean. ⚠️ **A
+  second instance of #108's shape, on a different axis.** `conformance.py since --ref main`
+  reports **0 hard-rule lines added** for this run, which added 5 ⛔-bearing lines — because
+  `source_lines()` globs `*.md` and this run changed a `.py` file. #108 records the *root*
+  axis (`docs/` unscanned); this is the *file-type* axis, and the two are the same omission.
+  **Negative controls, four**, each failing via the named test and each restored byte-identical
+  (md5 verified): reverting the pattern to single spaces; removing the unreadable detection;
+  collapsing the unreadable label into `(none named)`; and accepting a newline-bearing path as
+  a path. **Verification:** suite **4,438 passed, 4 skipped** (up 9); `citations.py verify`
+  clean at **311**; `invariant_manifest.py --check` exit 0; queue unchanged at `pending: 1`,
+  `held: 1`.
+- **This run establishes no invariant.** The only guarantee it changes is **INV-308's** — that
+  a verification tool distinguishes what it could not check from what there was nothing to
+  check — and INV-308 is cited at both lines that implement it. The remaining new rule-shaped
+  line is an implementation note about one regex's whitespace class, marked ⚠️ rather than ⛔
+  for that reason: binding every future parser to a spelling nobody asked about would be a
+  guarantee invented by this run rather than one it found.
+- **Commit:** uncommitted
+
 ## add-a-workflow-flow-chart-to-docs-development-md
 
 - **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #55)
