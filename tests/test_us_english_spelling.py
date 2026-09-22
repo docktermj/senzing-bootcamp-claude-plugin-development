@@ -266,6 +266,14 @@ PER_FILE_WAIVERS = {
         "INV-253's own statement names the British form it forbids, so the rule can be "
         "read without a second lookup.",
     ),
+    "invariant-manifest.json": (
+        {"licence": 1},
+        "Derived verbatim from specs/INVARIANTS.md (#88), so it inherits INV-253's own "
+        "statement of the British form that rule forbids. ⛔ The waiver is here rather than "
+        "the generator normalizing the text: a manifest that silently corrected the prose "
+        "would no longer be the prose, and a downstream port checking its register against "
+        "INVARIANTS.md would find a discrepancy with no way to tell which copy moved.",
+    ),
     "specs/license-cap-branch-offers-no-way-to-apply-the-license-that-may-have-arrived.md": (
         {"licence": 2},
         "Quotes a bootcamper's feedback title verbatim in its `Source:` line. That exact "
