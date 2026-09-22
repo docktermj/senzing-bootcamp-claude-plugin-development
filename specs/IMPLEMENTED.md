@@ -116,7 +116,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   question of whether the R-series should be mirrored into `INVARIANTS.md` is still open and is
   recorded on #111**; this run does not settle it, for the same reason #117 did not — answering it
   while amending a rule in that series would decide a cross-repository question as a side effect.
-- **Commit:** uncommitted
+- **Commit:** 9c069d7
 
 ## family-workflow-records-its-amendments
 
