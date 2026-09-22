@@ -9,7 +9,12 @@ Invoke the `implement-github-issue` skill and follow it end to end.
 
 Issue to implement: $ARGUMENTS
 
-- If `$ARGUMENTS` is **empty**, ask which issue and stop until answered. Do not choose one.
+- If `$ARGUMENTS` is **empty**, ask which issue and stop until answered. Do not choose one,
+  and ⛔ **(R8) do not recommend one either** — listing the open issues is help; ranking them,
+  or marking one *(Recommended)*, is choosing with extra steps. This command pushes branches
+  and opens pull requests; selecting its own work is the one autonomy it is designed not to
+  have. See [`docs/FAMILY_WORKFLOW.md`](../../docs/FAMILY_WORKFLOW.md) R8, which is the
+  family-wide statement of this rule and the reason four child ports inherit it.
 - If `$ARGUMENTS` **names an issue** — a full URL, `owner/repo#n`, or a bare number against
   this repo — resolve it and begin.
 
