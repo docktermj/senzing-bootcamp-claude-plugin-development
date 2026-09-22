@@ -25,6 +25,13 @@ than invents them.** Measured across 309 entries:
 whole-Bootcamp invariants — appear in no *Index by subject* group at all; they are grouped by
 heading. One key meaning two things would be a defect in a schema other repositories pin to.
 
+**Enforces INV-311** — a derived artifact published for downstream ports names its source, is
+regenerable by a script here, is checked against that source so it cannot drift, and carries an
+explicit undetermined value whose meaning is stated **in the artifact**. ⛔ **What this test does
+NOT establish:** that a consumer reads it correctly. Nothing here reaches another repository, so
+a child treating a null `summary` as *no rule* — the one misreading the invariant names — would
+fail in that child's register and pass every assertion below.
+
 ⛔ **This asserts the manifest matches the prose, never that the prose is right.** Whether an
 invariant's text is correct is what `/review-invariants` decides; this only holds the derived copy
 to it.

@@ -7,7 +7,7 @@ needs an authoritative list of the ids and their statements. ⛔ **Without one, 
 its own parser of a 398 KB prose file designed for human authority** — and each parses it
 differently, which defeats the uniformity the register exists for (#88).
 
-⚠️ **The prose stays the source of truth.** This file is derived, regenerated, and checked in CI
+⚠️ **(INV-311) The prose stays the source of truth.** This file is derived, regenerated, and checked in CI
 to match; it is never edited by hand and never authoritative.
 
 ⛔ **Two fields #88 asked for cannot be derived from the prose as it stands, and are reported

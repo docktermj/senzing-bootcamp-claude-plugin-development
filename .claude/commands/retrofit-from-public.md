@@ -1,5 +1,5 @@
 ---
-description: Retrofit changes made in the public access repo back into this development repo, stopping at its working tree (maintainer tool).
+description: Report what changed in the public access repo and file GitHub issues describing it; writes nothing into this development repo (maintainer tool).
 argument-hint: "[path to the public repo] (omit for ~/senzing.git/senzing-bootcamp-claude-plugin)"
 ---
 
@@ -48,7 +48,16 @@ by **updating the assertion to the retrofitted wording** — the public edit is 
 correction — and regenerate any artifact pinned to a retrofitted file. **Never report a
 retrofit as done on an unrun suite.**
 
-Finish by reporting the script's summary, including its "In dev but not in public" list
-and the `git status --short` block, then the suite result and anything reconciled.
-**Stop at the working tree** — do not commit or push unless the maintainer explicitly
-asks.
+Finish by reporting the script's summary — which propagated paths differ, which are absent
+in public, the "In dev but not in public" list, and the public commits since the newest tag.
+
+⛔ **(INV-312) The script writes nothing into this repository.** It compares and reports; the
+output of this command is **GitHub issues** describing what diverged, filed after the maintainer
+sees each title and body — ⛔ **in this repository only**, since cross-repo filing belongs to
+`/escalate-to-parent`. Search the tracker before filing so a change already absorbed does not get
+a second issue.
+
+⚠️ **This description was stale until 2026-09-22.** It said the command retrofits changes "back
+into this development repo" and told the reader to "stop at the working tree" — wording from
+before #54, when the changes were already *in* that tree. #54 changed the skill and the script and
+left this file describing the opposite; found while registering the invariant.

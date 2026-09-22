@@ -43,6 +43,58 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-09-22
+
+- **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one review session)
+- **Files changed:** `specs/INVARIANTS.md`, `specs/IMPLEMENTED.md`, `invariant-manifest.json`,
+  `.claude/skills/review-invariants/invariant_manifest.py`,
+  `.claude/skills/retrofit-from-public/SKILL.md`,
+  `.claude/skills/retrofit-from-public/retrofit.sh`,
+  `.claude/commands/retrofit-from-public.md`, `docs/development.md`,
+  `tests/test_invariant_manifest_matches_the_prose.py`, `tests/test_retrofit_files_issues.py`,
+  `tests/test_invariant_enforcer_citations.py`
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** two blocks pending, both **registered**. **INV-311** — a derived artifact published
+  for downstream ports names its source, is regenerable, cannot drift from it, and states in the
+  artifact itself that an undetermined value means *not derivable* rather than *absent* (Source:
+  `a-machine-readable-invariant-manifest-for-downstream-ports`, #88). **INV-312** — a command
+  bringing another repository's changes into this one writes nothing into the working tree and
+  files issues in its own repository only (Source:
+  `retrofit-files-issues-instead-of-applying-changes`, #54). The queue is now `pending: 0`,
+  `held: 1` — `the-bootcamp-cannot-leave-the-machine-it-was-built-on`, whose revisit condition
+  (`dry-run` phases 2 and 3) is unmet and which was **not** re-offered.
+- ⛔ **Both site sets were wrong, in opposite directions, and the grep is what found it.**
+  INV-311's block named one site; the rule was also stated in `docs/development.md`'s parity
+  contract. INV-312's block named two; the rule was also in `retrofit.sh` **and** the command
+  file. `sites`' candidate scan found nothing in either case and said so honestly — 63 files
+  scanned against 377 that could hold a site — which is exactly the reading its scope line exists
+  to enable.
+- ⛔ **INV-312's registration found TWO sites asserting the OPPOSITE of the rule**, both left by
+  #54 itself the day before: `.claude/commands/retrofit-from-public.md`'s `description` said the
+  command retrofits changes *"back into this development repo"* and told the reader to *"stop at
+  the working tree"*, and the skill's own frontmatter still described copying. ⚠️ **Both were
+  corrected before the citation was added** — citing an invariant at a line asserting its negation
+  is worse than not citing it at all. The invariant records the incompleteness in its own text so
+  the question is not re-derived.
+- ⚠️ **A defect in the queue tool, found and NOT fixed here.** Both blocks reported
+  `enforcer: (none named)` although each names one: `parse()` matches ``Enforced by `path` `` on a
+  single line, and in both blocks the phrase and the backticked filename wrapped across lines.
+  The enforcer field is advisory in this procedure, so nothing was registered wrongly — but it is
+  the same formatting-accident class as the bold-across-lines trap and it will recur. Worth an
+  issue; not filed by this session, which registers invariants rather than files findings.
+- **`EXPECTED_PAIRS` re-derived by running the extractor: 128 → 130**, both new pairs present by
+  name. ⛔ Not incremented to make the assertion pass.
+- **The manifest was regenerated after each registration** (the step #88 added), and its counts
+  moved 309 → 311 with the summary and unclear figures unchanged — the first exercise of that
+  step.
+- ⚠️ **Two British spellings were introduced by this session's own back-citations** and caught by
+  INV-253's guard. Corrected. That is the third and fourth of the day.
+- **Verification:** `citations.py verify` clean at **311** invariants; `coverage_reports.py
+  shipped` lists neither new id; suite **4,418 OK (skipped=4)**.
+- ⛔ **A review record mints ids and adds citations; it establishes no invariant of its own.**
+  INV-311 and INV-312 were established by #88's and #54's implementations, not by this record.
+- **Commit:** uncommitted
+
 ## a-machine-readable-invariant-manifest-for-downstream-ports
 
 - **Implemented:** 2026-09-21
@@ -100,7 +152,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   `INVARIANTS.md` and checked in CI, so a registration that does not regenerate it leaves the
   file stale"* is an instruction that makes an existing guard reachable, not a new guarantee.
   **Establishes no invariant.**
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rule already
+- **DEFERRED INVARIANT (resolved INV-311, registered by the maintainer 2026-09-22).** The rule already
   shipping:
     - ⛔ **The prose stays the source of truth.** — in `.claude/skills/review-invariants/invariant_manifest.py`
 
@@ -108,6 +160,11 @@ entries at once. Two things a reader should know about the hashes now recorded:
   decision this run does not take".** That is not one of INV-309's three answers — registered,
   deferred with drafted wording, or establishes none — and punting is exactly the silence the
   gate exists to prevent. Deferred properly instead.
+
+  ⚠️ **Registered at TWO sites, one of which the block did not name.** `sites` named
+  `invariant_manifest.py` and found no candidates — its scan reads 63 files against 377 that
+  could hold one — and the grep the procedure now requires found the rule stated again in
+  `docs/development.md`'s parity contract. That is the 2026-09-01 class caught **before** minting.
 
   The drafted wording:
 
@@ -185,10 +242,18 @@ entries at once. Two things a reader should know about the hashes now recorded:
       deferred here; that it is unregistered across three commands is worth its own issue.
     - `SKILL.md:128` — the heading explaining why copying stopped. Narrative, not a rule.
       **Establishes no invariant.**
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+- **DEFERRED INVARIANT (resolved INV-312, registered by the maintainer 2026-09-22).** The rules already
   shipping:
     - ⛔ **(#54) The script writes nothing.** — in `.claude/skills/retrofit-from-public/SKILL.md`
     - ⛔ **Files in this repository only.** — in `.claude/skills/retrofit-from-public/SKILL.md`
+
+  ⛔ **Registering this found TWO sites stating the opposite**, both left by #54 itself: the
+  command's `description` still said it retrofits changes *"back into this development repo"* and
+  told the reader to *"stop at the working tree"*, and the skill's own frontmatter still described
+  copying. Both corrected before the citation was added, because citing an invariant at a line
+  asserting its negation is worse than not citing it. ⚠️ The rule was cited at **four** sites in
+  the end — the skill's two rule lines, the script, and the command — against the **two** the
+  block named.
 
   The drafted wording:
 
