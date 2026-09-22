@@ -100,7 +100,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   `INVARIANTS.md` and checked in CI, so a registration that does not regenerate it leaves the
   file stale"* is an instruction that makes an existing guard reachable, not a new guarantee.
   **Establishes no invariant.**
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rule already
+- **DEFERRED INVARIANT (resolved INV-311, registered by the maintainer 2026-09-22).** The rule already
   shipping:
     - ⛔ **The prose stays the source of truth.** — in `.claude/skills/review-invariants/invariant_manifest.py`
 
@@ -108,6 +108,11 @@ entries at once. Two things a reader should know about the hashes now recorded:
   decision this run does not take".** That is not one of INV-309's three answers — registered,
   deferred with drafted wording, or establishes none — and punting is exactly the silence the
   gate exists to prevent. Deferred properly instead.
+
+  ⚠️ **Registered at TWO sites, one of which the block did not name.** `sites` named
+  `invariant_manifest.py` and found no candidates — its scan reads 63 files against 377 that
+  could hold one — and the grep the procedure now requires found the rule stated again in
+  `docs/development.md`'s parity contract. That is the 2026-09-01 class caught **before** minting.
 
   The drafted wording:
 

@@ -116,8 +116,8 @@ What the parent undertakes to provide:
 
 - **`invariant-manifest.json` at the repository root** — every invariant with its `id`,
   `index_group`, `section`, `status`, `statement`, and a `summary` where one could be derived.
-  Generated from `specs/INVARIANTS.md`, which stays the source of truth, and checked in CI so it
-  cannot drift (`tests/test_invariant_manifest_matches_the_prose.py`). Regenerate with
+  ⛔ **(INV-311)** Generated from `specs/INVARIANTS.md`, which stays the source of truth, and
+  checked in CI so it cannot drift (`tests/test_invariant_manifest_matches_the_prose.py`). Regenerate with
   `python3 .claude/skills/review-invariants/invariant_manifest.py`; `--check` exits 1 when stale.
 - **A diffable shape.** Sorted keys, one entry per id, so two releases' manifests can be compared
   to see what was added, edited or superseded — which is what a child's dual-evaluation needs.

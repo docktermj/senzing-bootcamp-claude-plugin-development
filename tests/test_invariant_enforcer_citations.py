@@ -323,7 +323,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # cites it back and states what it does NOT establish -- that no offline test can watch a run
 # refrain from committing. Re-derived by running the extractor -- 128, with the new pair present
 # by name. This closes the 2026-09-21 review: one deferral decided, EXPECTED_PAIRS 127 -> 128.
-EXPECTED_PAIRS = 128
+# 129 on 2026-09-22: INV-311 (a derived artifact published for downstream ports names its source
+# and cannot drift from it) names test_invariant_manifest_matches_the_prose.py, which cites it
+# back and states what it does NOT establish -- that a consumer reads the artifact correctly,
+# which nothing in this repository can observe. Re-derived by running the extractor -- 129, with
+# the new pair present by name.
+EXPECTED_PAIRS = 129
 
 
 def pairs():
