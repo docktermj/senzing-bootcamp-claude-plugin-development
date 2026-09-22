@@ -43,6 +43,88 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## add-a-workflow-flow-chart-to-docs-development-md
+
+- **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #55)
+- **Files changed:** `docs/development.md`,
+  `tests/test_the_flow_diagram_names_real_commands.py`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/55.json`
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** three Mermaid diagrams added under a new `## How the pieces fit together`
+  section, placed before the command index so the reader meets the map before the list:
+  repository topology, the four-phase per-change flow, and the maintenance track. ⚠️ **The
+  issue asked for one diagram and this ships three**, on the maintainer's answer at Gate 1:
+  four repositories by four phases by thirteen commands in one graph is a hairball, and the
+  three views have no edges between them to lose. **Every diagram was rendered and looked at,
+  not read** — `@mermaid-js/mermaid-cli` renders locally, and the render is what caught the
+  two layouts below. **Measurements:** 3 fenced blocks, 21 command occurrences, 13 distinct
+  names, 2 marked *(children only)*, **0** naming a command that neither ships nor disclaims.
+  Every command that ships in `.claude/commands/` now appears in a diagram — true at time of
+  writing and **deliberately not asserted**, since a future command may legitimately not
+  belong in the flow and a guard demanding otherwise would turn the drawing back into a list.
+  **Four facts the issue did not state were taken from the code rather than assumed:** the
+  pull edge starts at a **tagged release**, not at `HEAD` (`release/SKILL.md:25` —
+  *a port cannot target a release that was never tagged*); `/propagate-to-public` runs from
+  the working tree, so the two edges out of `development` are siblings and not a chain;
+  `docs/development.md` is the one file in `docs/` that does **not** propagate
+  (`propagate.sh` excludes exactly `/development.md`); and the children are leaves, since
+  nothing ports from a child's tag. **One scope decision made rather than asked:**
+  `/unattended-issue-loop` is drawn although the issue's phase table omits it — it drives
+  phases 2 and 3, and a reader looking for every command would otherwise conclude it sits
+  outside the flow. ⚠️ **My own errors, reported.** (1) The first topology drew all three
+  children separately; the render showed the three identical pull edges crossing the parent
+  box, and the children stacked bottom-up. Collapsed to one child template, which is both
+  legible and truer — the three are structurally identical. (2) The first flow diagram used
+  one subgraph per phase; Mermaid **ignores `direction` inside a subgraph once subgraphs have
+  edges between them**, so the four phases rendered as a zig-zag. Replaced with a spine of
+  four phase nodes. (3) ⛔ **A defect in my own guard, caught by a fixture I wrote to catch
+  something else.** Stripping HTML tags by deleting them splices `/a<br/>/b` into `/a/b`,
+  and the pattern's lookbehind then rejects the second name — the guard would have skipped a
+  command **silently**, reporting a clean scan, and Phase 1's label is exactly that shape.
+  Tags are now replaced by a space, and the case is pinned by
+  `test_two_commands_separated_only_by_a_break_are_both_seen`. ⚠️ **A blind spot this run
+  measured and did not fix:** `conformance.py since --ref main` reports **0 hard-rule lines
+  added** for a run that ships a ⛔ rule, because `SCAN_ROOTS` covers `plugins/`,
+  `.claude/commands` and `.claude/skills` and **not `docs/`**. The zero is *nothing to check*,
+  not *nothing added*, and INV-308 is the reason that distinction is worth writing down. The
+  rule below was therefore deferred by reading, not by the tool's say-so. **Negative controls,
+  four, each failing via the named test and each restored byte-identical (md5 verified):**
+  renaming a drawn command to one that does not exist; removing the *(children only)* marker
+  from a non-shipping command; marking a **shipping** command child-only; and retitling the
+  fences so no diagram parses. **Verification:** suite **4,429 passed, 4 skipped** (up 11, the
+  new guard); `citations.py verify` clean at **311**; `invariant_manifest.py --check` exit 0,
+  no drift.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+  shipping:
+    - ⛔ **Every command drawn below either ships here or is marked as a child's.** — in `docs/development.md`
+
+  ⚠️ **This may want an amendment rather than an id.** INV-302 already binds the documented
+  command set in both directions, and its guard is `tests/test_documented_dev_commands_match_the_shipped_set.py`;
+  what it does not reach is a command named anywhere in that file other than the numbered
+  list, because its parser keys on the ``1. `/name` `` shape. So the maintainer's three
+  verdicts here are genuinely different acts: **register** a new id for diagrams, **amend**
+  INV-302 so its subject is *the file* rather than *the list*, or **hold**. The wording below
+  is drafted for the first; the second needs no new id and is the smaller change.
+
+  The drafted wording:
+
+  **INV-NNN** — Where a maintainer-facing document names a slash command, that name MUST
+  either resolve to a shipped command file or carry, at the point of use, a marker saying
+  where it does ship. ⛔ This binds **every** naming construction in the document, not the
+  one a guard happens to parse: a command named in a diagram, a table or running prose is as
+  runnable-looking to the reader as one named in the list. ⚠️ **A marker is a disclaimer and
+  not a silencer** — it MUST NOT be accepted on a command that does ship, or it becomes the
+  way a stale name is kept quiet. ⚠️ **The marker is matched per name, not per line**: one
+  document line may name several commands, and a line-scoped check lets one marker vouch for
+  every name beside it. Enforced by `tests/test_the_flow_diagram_names_real_commands.py`,
+  which asserts the resolution and the marker rules over the diagrams and **cannot** assert
+  that a diagram renders, that it renders identically on GitHub, or that what it draws is a
+  true account of the system. *(written as NNN deliberately: a literal id here would cite an
+  invariant that does not exist and turn `citations.py verify` red. If the maintainer
+  registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a
+  number written here.)*
+- **Commit:** 8955a3e
+
 ## invariant-review-2026-09-22
 
 - **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one review session)

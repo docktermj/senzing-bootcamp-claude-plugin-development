@@ -1,0 +1,13 @@
+{
+  "issue": 55,
+  "branch": "55-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): three Mermaid diagrams in a new 'How the pieces fit together' section before the command index -- topology (pull from the TAGGED release), the four-phase flow with the test->development loop-back, and maintenance as a detached track; child-only commands marked and guarded; every diagram rendered and viewed.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/107"
+}
