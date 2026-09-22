@@ -119,7 +119,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   — the document is normative for five repositories and `INV-NNN` is a namespace this one owns,
   so binding them together is a maintainer decision with cross-repository consequences. It is
   named here so the next reader finds it stated rather than absent.
-- **Commit:** uncommitted
+- **Commit:** 2e9a1ce
 
 ## rule-bullets-are-read-or-reported
 
