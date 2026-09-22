@@ -1,0 +1,11 @@
+{
+  "issue": 110,
+  "branch": "110-docktermj-1",
+  "phase": "implement",
+  "approach": "Direct (5a): parse() recognizes the older path-leading bullet and tags each rule quoted|described; verbatim check runs on quoted only; described and unparsed get their own counts (INV-308); show labels the kind; the existing quote guard is narrowed in scope but negative-controlled to prove it is no weaker.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications"
+  ]
+}

@@ -43,6 +43,88 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## rule-bullets-are-read-or-reported
+
+- **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #110)
+- **Files changed:** `.claude/skills/review-invariants/pending_invariants.py`,
+  `tests/test_rule_bullets_are_read_or_reported.py`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/110.json`
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** `parse()` read a rule bullet by taking the first `**…**` on the line, which is
+  right for the shape it was written against and wrong for the older one, where the path leads,
+  the rule is prose, and the only bold is an editorial parenthetical. **Before:** the held block
+  `the-bootcamp-cannot-leave-the-machine-it-was-built-on` shipped **9** rule bullets, `parse()`
+  presented **4** — all annotation fragments, *"was uncovered"*, *"relocated"* — offered **0**
+  sites, and `check` printed `1 checked, 0 mismatched, 0 unresolved, 4 no-prose-site`, which
+  reads clean because a parse failure had been filed under the category meaning *nothing is
+  owed*. **After:** 9 rules, **3** distinct files, 0 unparsed, and
+  `1 checked, 0 mismatched, 0 unresolved, 0 no-prose-site, 9 described-not-quoted, 0 unparsed`.
+  ⛔ **The decision the issue demanded in writing was taken against a measurement, and neither
+  branch it offered was right.** The shapes differ **semantically**: a modern bullet's bold is a
+  verbatim quote `check` compares against the source, while the older bullet's prose is a
+  **description** of the rule at a location — 9 of 9 resolve their path and **0 of 9** appear
+  verbatim in the file they name. Teaching it as quotes would have printed nine mismatches,
+  every one a false accusation; declaring it unsupported would have left the block with an
+  empty site list, repairable only by editing an append-only archive. So a rule now carries a
+  `kind`, `check` verifies `quoted` only, and `described` is counted apart. ⚠️ **`DESCRIBED` is
+  tried before `QUOTE` and the ordering is the whole defect** — an older bullet whose annotation
+  holds the only bold matches `QUOTE` perfectly well, which is precisely how the four fragments
+  were made. My first implementation had the order the other way round and reproduced the bug
+  exactly: 5 described, **4 still fragments**. Caught by reading the classification counts, not
+  by a failing test. ⚠️ **A prediction I made at Gate 1 was wrong, and the measurement is what
+  corrected it.** I expected to modify `tests/test_deferral_quotes_match_their_source.py` and
+  said I would negative-control it for weakening. It turned out to carry its **own** scanner,
+  requiring `⛔ **…**` **and** `— in \`path\``, so it was already scoped to quoted rules and
+  needed no edit — `git status` shows no existing test file modified. Its force was checked
+  anyway: a control that breaks a **quoted** rule's verbatim match still turns it red. ⚠️ **Two
+  of my own tests were satisfied by something adjacent to what they meant to verify, and the
+  negative controls are what found it.** `test_described_rules_have_their_own_count` asserted the
+  *label* `\d+ described-not-quoted` appeared — which still matches when the counter is wired to
+  the wrong variable and prints `0`. It now parses the number and compares it against the
+  parser's own count, with a non-zero assertion so it cannot pass vacuously (INV-265). A second
+  control was **mis-aimed by me** rather than under-covered: I pointed it at the quote guard,
+  which has its own parser and cannot observe a change to this module; re-aimed at
+  `test_check_reports_no_mismatch`, it fails as required. ⚠️ **Same blind spot as #108, again:**
+  `conformance.py since --ref main` reports **0 hard-rule lines added** for a run adding several
+  ⛔ lines, because this run changed a `.py` file and `source_lines()` globs `*.md`. Recorded on
+  #108 as its file-type axis. **Negative controls, five**, each failing via the named test and
+  each restored byte-identical (md5 verified on both files touched): reversing the shape order;
+  dropping unparsed bullets; counting described rules as no-prose-site; verbatim-checking
+  described rules; and breaking a quoted rule's match to prove the existing guard is no weaker.
+  **Verification:** suite **4,454 passed, 4 skipped** (up 16); `citations.py verify` clean at
+  **311**; `invariant_manifest.py --check` exit 0; queue unchanged at `pending: 1`, `held: 1`.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+  shipping:
+    - ⛔ **DESCRIBED is tried FIRST because it is the more specific shape.** — in `.claude/skills/review-invariants/pending_invariants.py`
+
+  ⚠️ **Why this is not simply INV-308.** INV-308 requires a verification tool to report what it
+  could not verify and to keep *nothing to check* apart from *could not check*; the unparsed
+  count added here is that rule applied, and cites it at the line. What INV-308 does not reach
+  is the other half: a text that **was never a quote** must not be compared as one, and must be
+  labeled unverified wherever it is presented. That is a rule about not *manufacturing*
+  verification rather than about disclosing its absence, and the two failed differently here —
+  the first lost five bullets silently, the second would have produced nine confident and false
+  mismatches.
+
+  The drafted wording:
+
+  **INV-NNN** — Where a record in this repository states a rule it did not author, the
+  statement's **kind** MUST be carried with it: a **verbatim quotation** of the shipped rule, or
+  a **description** of it. ⛔ A verification tool MUST compare only quotations against their
+  source, MUST NOT report a description as mismatched, and MUST label a description as
+  unverified wherever it presents one. ⛔ A statement matching no known shape MUST be reported
+  and counted as unparsed — never dropped, and never absorbed into a category meaning *nothing
+  is owed*, which is indistinguishable from success. ⚠️ **The more specific shape is matched
+  first**, or a general pattern claims the specific one's statements and reads the wrong span
+  out of them. Enforced by `tests/test_rule_bullets_are_read_or_reported.py`, which pins the
+  classification, the counts and the ordering, and which **cannot** establish that a
+  description is a faithful summary of the rule it describes — nothing can, by construction, and
+  the presentation says so rather than implying otherwise. *(written as NNN deliberately: a
+  literal id here would cite an invariant that does not exist and turn `citations.py verify`
+  red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md`
+  rather than trusting a number written here.)*
+- **Commit:** uncommitted
+
 ## the-enforcer-clause-survives-a-line-break
 
 - **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #105)

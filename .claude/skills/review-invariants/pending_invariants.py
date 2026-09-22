@@ -72,6 +72,18 @@ ENFORCER_OPENS = re.compile(r"Enforced\s+by\s+`")
 BULLET = re.compile(r"^\s+- .*⛔")
 QUOTE = re.compile(r"\*\*(?:⛔\s*)?(.+?)\*\*", re.S)
 LOC = re.compile(r"—\s*in `([^`]+)`")
+
+#: The OLDER rule-bullet shape: the path leads, the rule follows as prose, and the only bold on
+#: the line is an editorial parenthetical.
+#:
+#:     - `skills/bootcamp-onboarding/packaging.md:8` — ⛔ the plugin writes the archive and stops *(covered: …)*.
+#:
+#: ⛔ (#110) Its text is a DESCRIPTION of the rule at that location, never a quote of it. Measured
+#: 2026-09-22 over the one block still using it: 9 of 9 bullets resolve their path and **0 of 9**
+#: texts appear verbatim in the file they name. Checking it like a quote would print nine
+#: mismatches, every one a false accusation -- which is why `kind` exists rather than a second
+#: pattern feeding the same verifier.
+DESCRIBED = re.compile(r"^\s+- `([^`]+)`[^—]*—\s*⛔\s*(.+?)(?:\s*\*\(.*)?$")
 CITED = re.compile(r"\(INV-\d{3}\)")
 
 
@@ -127,18 +139,36 @@ def hold_reason(block_text):
 def parse(b):
     """Split a block into its rules, its drafted wording, and its trailing notes."""
     text = BOILER.sub("", b["text"])
-    rules, sites = [], []
+    rules, sites, unparsed = [], [], []
     for line in text.split("\n"):
         if not BULLET.match(line):
             continue
-        q = QUOTE.search(line)
-        if not q:
+        # ⛔ DESCRIBED is tried FIRST because it is the more specific shape. An older bullet
+        # whose only bold is its editorial annotation otherwise matches QUOTE -- which is
+        # exactly how four annotation fragments came to be presented as a block's rules.
+        d = DESCRIBED.match(line)
+        if d:
+            # ⛔ The path may carry a `:line` suffix, which names a location and is not part of
+            # the filename. `site` is what resolves; `where` is what the maintainer reads.
+            where = d.group(1)
+            site = where.split(":")[0]
+            rules.append({"text": flat(d.group(2)), "where": where,
+                          "site": site, "kind": "described"})
+            sites.append(site)
             continue
-        loc = LOC.search(line)
-        where = loc.group(1) if loc else "(same section as the rule above)"
-        rules.append(f"{flat(q.group(1))} — in {where}")
-        if loc:
-            sites.append(loc.group(1))
+        q = QUOTE.search(line)
+        if q:
+            loc = LOC.search(line)
+            where = loc.group(1) if loc else "(same section as the rule above)"
+            rules.append({"text": flat(q.group(1)), "where": where,
+                          "site": loc.group(1) if loc else None, "kind": "quoted"})
+            if loc:
+                sites.append(loc.group(1))
+            continue
+        # ⛔ (INV-308) Neither shape matched. Recorded, never dropped: a bullet silently skipped
+        # is indistinguishable from a block that had none, and that is the defect #110 reported
+        # -- five bullets vanished while `check` printed a line that read clean.
+        unparsed.append(line.strip())
     m = re.search(r"\*\*INV-NNN\*\*\s*—?\s*(.+?)(?=\n\s*⛔ \*\*Nothing was written|\Z)",
                   text, re.S)
     wording = flat(m.group(1)) if m else ""
@@ -149,7 +179,7 @@ def parse(b):
         # Treated as unreadable rather than returned: a newline-bearing path resolves nowhere
         # and would be reported as a missing file rather than as a clause nobody can read.
         enforcer = None
-    return {**b, "rules": rules, "sites": sites, "wording": wording,
+    return {**b, "rules": rules, "sites": sites, "unparsed": unparsed, "wording": wording,
             "enforcer": enforcer,
             "enforcer_unreadable": enforcer is None and bool(ENFORCER_OPENS.search(text)),
             "held": hold_reason(b["text"]) or (
@@ -348,7 +378,16 @@ def cmd_show(n):
           f"one minted gets it\n")
     print("-- RULES ALREADY SHIPPING, bound by nothing --")
     for r in p["rules"]:
-        print(f"  ⛔ {r}")
+        # ⚠️ The kind is shown, not inferred: only a `quoted` rule has been checked against
+        # the file it names. A `described` rule is one author's summary of the rule at that
+        # location, and nothing has verified that the summary is faithful.
+        mark = "quoted" if r["kind"] == "quoted" else "described, NOT quoted — unverified"
+        print(f"  ⛔ {r['text']} — in {r['where']}  [{mark}]")
+    if p["unparsed"]:
+        print(f"\n  ⛔ {len(p['unparsed'])} rule bullet(s) matched NEITHER shape and are shown "
+              f"raw. They are not\n     in the list above, and nothing has read them:")
+        for line in p["unparsed"]:
+            print(f"       {line[:100]}")
     print("\n-- DRAFTED WORDING --")
     body = p["wording"] or "(not in the ledger — read the spec's `## Invariants introduced`)"
     for line in _wrap(body, 92):
@@ -476,11 +515,21 @@ def cmd_check():
     Collapsing the two would either cry wolf on every no-prose-site block or keep hiding
     the real failure, which is how the defect survived this long.
     """
-    bad = checked = unresolved = no_site = 0
+    bad = checked = unresolved = no_site = described = unparsed = 0
     for p in [parse(b) for b in blocks()]:
+        unparsed += len(p["unparsed"])
+        for line in p["unparsed"]:
+            print(f"  UNPARSED {p['spec']}\n    {line[:110]}")
         for r in p["rules"]:
-            quote, _, loc = r.rpartition(" — in ")
-            if loc.startswith("("):
+            quote, loc = r["text"], r["site"]
+            if r["kind"] == "described":
+                # ⛔ (#110) NOT checked, and counted apart rather than folded into any
+                # category above. Its text is a summary of the rule at that location and was
+                # never a quote of it, so a verbatim comparison would report a mismatch that
+                # says nothing about the ledger's honesty.
+                described += 1
+                continue
+            if loc is None:
                 no_site += 1
                 continue
             f = resolve(loc)
@@ -495,15 +544,27 @@ def cmd_check():
                 bad += 1
                 print(f"  MISMATCH {p['spec']}\n    {quote[:110]}")
     print(f"{checked} rule quotes checked, {bad} mismatched, "
-          f"{unresolved} unresolved, {no_site} no-prose-site")
+          f"{unresolved} unresolved, {no_site} no-prose-site, "
+          f"{described} described-not-quoted, {unparsed} unparsed")
+    if unparsed:
+        print(f"\n  ⛔ WARNING: {unparsed} rule bullet(s) matched NO known shape, so nothing "
+              f"read them.\n     They are absent from every count above except this one — "
+              f"which is the whole\n     point of the count (#110). Fix the bullet, or teach "
+              f"the parser its shape.")
     if unresolved:
         print(f"\n  ⛔ WARNING: {unresolved} rule(s) name a path that did not resolve, so "
               f"their quotes are UNVERIFIED.\n     This is not a clean check. Fix the path, "
               f"or state the rule in the no-prose-site form.")
     elif not checked:
-        print(f"\n  ⚠️  NOTE: no quote was verified — {no_site} rule(s) name no prose site "
-              f"and nothing else was\n     available to check. This is an empty check, not "
-              f"a clean one.")
+        # ⚠️ (#110) The reason is named, not assumed. Until this ran, the note said "no prose
+        # site" whatever the cause -- so a run whose rules were all DESCRIBED, and therefore
+        # deliberately unverifiable, read as a run whose rules named no file at all.
+        why = ", ".join(w for w in (
+            f"{no_site} name no prose site" if no_site else "",
+            f"{described} are described rather than quoted, so none is verifiable" if described else "",
+            f"{unparsed} matched no known shape" if unparsed else "") if w) or "there were none"
+        print(f"\n  ⚠️  NOTE: no quote was verified — {why}. This is an empty check, not a "
+              f"clean one.")
 
 
 def main(argv):
