@@ -16,6 +16,12 @@ the dev-only test quoting that sentence kept asserting the old wording. Measured
 ⚠️ **The inverse slug transform is still required and is now manual**, applied by whoever
 implements a filed issue. A guard cannot check that it happened; the skill says so instead.
 
+**Enforces INV-312** — a command bringing another repository's changes into this one writes
+nothing into the working tree, reports what diverged, and files issues in its own repository only.
+⛔ **What this test does NOT establish:** that a run refrains from copying. The public repository
+is absent on some machines — it was absent when this was written — so the behavior cannot be
+observed offline, and an `Enforced by` clause pointing here is not a compliance claim.
+
 ⛔ **This asserts what the skill and script INSTRUCT, never what a run does.** The public
 repository is not present on every machine — it was absent when this was written — so no offline
 test can watch a run refrain from copying. The script is read as text and its shell is never

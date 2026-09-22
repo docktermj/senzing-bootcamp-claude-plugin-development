@@ -49,7 +49,7 @@ echo "Dest (dev):      $here"
 echo
 
 # --- REPORT the allowlisted paths; never write into the dev tree ------------ #
-# ⛔ This script COPIED until #54. It now compares and reports, and writes nothing:
+# ⛔ (INV-312) This script COPIED until #54. It now compares and reports, writing nothing:
 # under the issue-driven workflow a public-repo change becomes a GitHub issue the
 # maintainer reads, not an edit that arrives in the working tree.
 #

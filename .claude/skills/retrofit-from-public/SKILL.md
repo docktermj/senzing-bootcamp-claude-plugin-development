@@ -1,6 +1,6 @@
 ---
 name: retrofit-from-public
-description: 'Retrofit changes made in the public access repo (Senzing/senzing-bootcamp-claude-plugin) back into this development repo. Use when the maintainer wants to bring public-repo edits (PR fixes, typo/spelling corrections, direct changes) back into development. The inverse of propagate-to-public: copies the propagated content back, applies the inverse slug rewrite (Senzing to docktermj), never deletes, and stops at the working tree (no commit, no push). Maintainer tool — not part of the bootcamper experience.'
+description: 'Retrofit changes made in the public access repo (Senzing/senzing-bootcamp-claude-plugin) back into this development repo. Use when the maintainer wants to bring public-repo edits (PR fixes, typo/spelling corrections, direct changes) back into development. The inverse direction of propagate-to-public: it compares the two repos, reports what diverged, and files GitHub issues describing it -- it writes nothing into this repo, and the inverse slug rewrite is applied by whoever implements a filed issue. Maintainer tool — not part of the bootcamper experience.'
 ---
 
 # Retrofit ← Public access repo
@@ -90,7 +90,7 @@ directory, or `rsync` is missing.
 
 ## After it runs
 
-⛔ **(#54) The script writes nothing. It compares and reports; the output of this command is
+⛔ **(INV-312) (#54) The script writes nothing. It compares and reports; the output of this command is
 GitHub issues, not a modified working tree.**
 
 1. Report the script's summary: which propagated paths differ, which are absent in public, the
@@ -115,7 +115,7 @@ GitHub issues, not a modified working tree.**
    ⛔ **Filing is outward-facing and immediate** — the same gate `/feedback-to-issues` and
    `/production-readiness-audit` apply, for the same reason: an issue can be edited or closed
    afterwards but never un-filed.
-5. ⛔ **Files in this repository only.** Cross-repo filing belongs exclusively to
+5. ⛔ **(INV-312) Files in this repository only.** Cross-repo filing belongs exclusively to
    `/escalate-to-parent`; this command never files anywhere but its own tracker, in the parent and
    in every child that inherits it.
 6. Each issue body carries the **public commit** (subject and SHA), the paths affected, and

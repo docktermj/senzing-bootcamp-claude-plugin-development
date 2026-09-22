@@ -328,7 +328,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # back and states what it does NOT establish -- that a consumer reads the artifact correctly,
 # which nothing in this repository can observe. Re-derived by running the extractor -- 129, with
 # the new pair present by name.
-EXPECTED_PAIRS = 129
+# 130 on 2026-09-22: INV-312 (a command bringing another repository's changes into this one
+# writes nothing and files issues instead) names test_retrofit_files_issues.py, which cites it
+# back and states that the behavior cannot be observed offline -- the source repository is
+# absent on some machines. Re-derived by running the extractor -- 130. This closes the
+# 2026-09-22 review: two deferrals decided, EXPECTED_PAIRS 128 -> 130 across it.
+EXPECTED_PAIRS = 130
 
 
 def pairs():
