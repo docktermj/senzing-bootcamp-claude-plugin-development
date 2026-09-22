@@ -90,7 +90,21 @@ entries at once. Two things a reader should know about the hashes now recorded:
   controls were mis-aimed rather than under-covered**: one removed a single sentence of the two
   that state the evidence requirement, so the rule genuinely survived. **That is four mis-aimed
   controls across four consecutive runs**, and it is recorded as a habit rather than an incident:
-  the mutation must delete the *rule*, not a sentence mentioning it. **Negative controls, six**,
+  the mutation must delete the *rule*, not a sentence mentioning it. (3) ⚠️ **Force-checking a
+  guard I had re-anchored exposed a weakness that PREDATES this run.**
+  `test_implement_spec_treats_a_missing_clause_as_a_blocker` matched a bare `blocker`
+  inside a window holding **two** occurrences — INV-213's heading and the sentence that
+  dispositions a missing clause — so demoting the disposition to *"worth noting"* left it
+  green, which is exactly what it exists to catch. It was anchored on the **first**
+  `owner-checked:` in the file; this run added an earlier one, which is what surfaced it.
+  Re-anchored to INV-213's own section and tightened to match the claim rather than the
+  word, with two force checks now failing it. (4) ⛔ **I corrupted a historical ledger
+  entry and had to repair it.** The edit that added (3) searched for a sentence with a
+  single space where this entry **wraps it across a newline**, so it matched the #111
+  entry instead and inserted a paragraph about #119's guard into #111's record. That is
+  the wrapped-phrase defect of **#105**, third instance today, and the first to damage a
+  record rather than a report. Removed from #111 and placed here; a bash backtick also
+  ate the test name on the first attempt, which is why it reads correctly only now. **Negative controls, six**,
   each failing via the named test, both touched files restored byte-identical (md5): dropping the
   owner-checked warning; removing the evidence requirement entirely; folding merge risk into the
   order; reinstating the recommendation ban in normative text; dropping the dependency review;
@@ -217,14 +231,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   roots"*. The new guard parses the patterns **and exercises them through `rsync`** over a
   temporary tree, because asserting the string appears proves intent and not behavior; where
   `rsync` is absent that half **skips and says it could not run** rather than passing quietly
-  (INV-308). ⚠️ **Force-checking a guard I had re-anchored found a weakness that predates this run.**
-   matched a bare `blocker` inside a
-  window containing **two** occurrences — INV-213's heading and the sentence dispositioning a
-  missing clause — so demoting the disposition to *"worth noting"* left it green, which is
-  exactly the demotion it exists to catch. It had been anchored on the FIRST `owner-checked:`
-  in the file, and this run added an earlier one, which is what surfaced it. Re-anchored to
-  INV-213's own section and tightened to match the claim rather than the word; two force checks
-  now fail it. **Negative controls, six**, each failing via the named test and all four touched
+  (INV-308). **Negative controls, six**, each failing via the named test and all four touched
   files restored byte-identical (md5 verified): removing the new exclusion; unanchoring it;
   marking a child-only operation parent-required; inventing an operation in a diagram; restating
   the family page with a diagram in `development.md`; and dropping the recommendation ban from
