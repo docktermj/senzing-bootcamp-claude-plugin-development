@@ -43,6 +43,88 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## a-machine-readable-invariant-manifest-for-downstream-ports
+
+- **Implemented:** 2026-09-21
+- **Files changed:** `.claude/skills/review-invariants/invariant_manifest.py` (**new**),
+  `invariant-manifest.json` (**new**), `tests/test_invariant_manifest_matches_the_prose.py`
+  (**new**), `.claude/skills/review-invariants/SKILL.md`, `docs/development.md`,
+  `tests/test_us_english_spelling.py`
+- **MCP re-check:** n/a (no Senzing fact; a derived artifact for downstream ports)
+- **Summary:** the Kiro and Codex ports each owe an invariant-disposition register — every
+  `INV-NNN` resolving to one disposition — and had no authoritative machine-readable list to build
+  it from. ⛔ **Each child was left to write its own parser of a 398 KB prose file designed for
+  human authority, and each would parse it differently**, defeating the uniformity the register
+  exists for. `invariant-manifest.json` is now generated from `specs/INVARIANTS.md`, which stays
+  the source of truth, and a guard fails if the checked-in file drifts from a fresh generation.
+- ⛔ **Two fields the issue asked for are NOT derivable from the prose.** They are reported
+  rather than invented. Measured across 309 entries before any code was written:
+    - **`summary`** — the median first sentence is **249 characters** and **113 of 309 exceed
+      300**, the longest 3,013. So there is no one-line statement to extract. A summary is emitted
+      only under the threshold; otherwise `null`, with the null count printed. ⚠️ **Null means
+      *not derivable*, never *no rule*** — `statement` always carries the full text, and the
+      manifest says so in its own `note` field, because the file travels without this entry.
+    - **`status`** — supersession is written six ways (`superseded` 28, `Superseded` 16,
+      `supersedes` 4, `Corrected` 6, `Amended` 2, `withdrawn` 2), and the same word marks an entry
+      that supersedes another as well as one that was superseded. Only an explicit *superseded by
+      INV-nnn* is read as `superseded`; **33 entries are `unclear`** and counted, never guessed.
+- ⛔ **The manifest is at the repository ROOT, not in `specs/`, and the reason is the point.** The
+  freeze guard globs `specs/*.md`, so a `.json` there would be legal only because the glob does
+  not reach it — a scope-narrowing that happens to produce correct behavior, which **INV-308
+  explicitly says must not be relied on**. The Gate 1 plan named `specs/`; verifying before
+  writing changed the answer.
+- ⛔ **A defect found by reading the emitted JSON, not by any assertion.** `section` initially
+  reported *"Index by subject"* for **259 of 309** entries: that heading is a `###` sub-heading of
+  `## Invariants added from implemented specs`, so taking the nearest heading of any level gave
+  the wrong parent. Fixed by reading only `#`/`##`, and pinned by a test.
+- ⚠️ **`index_group` and `section` are separate keys deliberately.** 33 entries — the foundational
+  and whole-Bootcamp invariants — appear in no *Index by subject* group at all and are grouped by
+  heading instead. One key meaning two things would be a defect in a schema other repositories
+  pin to, and a null-and-silent group would lose a grouping the file genuinely has.
+- **A parity contract is documented** in `docs/development.md`: what the parent undertakes to
+  provide, and ⚠️ **what it does not** — that a summary exists for every id, or that status is
+  decidable for every id. Both are properties of the prose; the manifest reports them rather than
+  repairing them.
+- ⚠️ **The spelling guard needed a waiver, and the reason is recorded with it.** The manifest
+  inherits, verbatim, the British spelling of *license* that INV-253's own statement quotes as
+  the form that rule forbids. ⛔ The
+  waiver sits in the guard rather than the generator normalizing the text: a manifest that
+  silently corrected the prose would no longer **be** the prose, and a port checking its register
+  against `INVARIANTS.md` would find a discrepancy with no way to tell which copy moved.
+- **Negative controls, three, each verified present before the run.** (1) An invariant dropped
+  from the checked-in manifest — 3 failed. (2) An ambiguous supersession guessed as `active`
+  instead of `unclear` — 1 failed. (3) The wrong-parent-heading defect reintroduced — 1 failed.
+  Generator and manifest restored byte-identical by md5, and `--check` re-run clean afterwards.
+- ⛔ **One hard-rule line added by this change, and it is procedure.** Checked with
+  `reverse-check` against this branch's base, not the audit range: *"It is derived from
+  `INVARIANTS.md` and checked in CI, so a registration that does not regenerate it leaves the
+  file stale"* is an instruction that makes an existing guard reachable, not a new guarantee.
+  **Establishes no invariant.**
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rule already
+  shipping:
+    - ⛔ **The prose stays the source of truth.** — in `.claude/skills/review-invariants/invariant_manifest.py`
+
+  ⚠️ **An earlier draft of this entry said the parity contract's registration was "a maintainer
+  decision this run does not take".** That is not one of INV-309's three answers — registered,
+  deferred with drafted wording, or establishes none — and punting is exactly the silence the
+  gate exists to prevent. Deferred properly instead.
+
+  The drafted wording:
+
+  **INV-NNN** — Where this repository publishes a **derived** artifact for downstream ports to
+  consume, the artifact MUST name its source, MUST be regenerable by a script in this repository,
+  and MUST be checked against that source so it cannot drift. ⛔ It is never authoritative: the
+  prose it derives from is. ⚠️ Where a field cannot be derived, the artifact MUST carry an
+  explicit undetermined value **and say in the artifact itself that undetermined means *not
+  derivable*, never *absent*** — a consumer reading a null as absence under-counts, and the file
+  travels without this repository's documentation. ⚠️ **A guard on this rule can assert that the
+  artifact matches its source; it cannot assert that a consumer reads it correctly.** Enforced by
+  `tests/test_invariant_manifest_matches_the_prose.py`. *(written as NNN deliberately: a literal
+  id here would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than
+  trusting a number written here.)*
+- **Commit:** uncommitted
+
 ## retrofit-files-issues-instead-of-applying-changes
 
 - **Implemented:** 2026-09-21

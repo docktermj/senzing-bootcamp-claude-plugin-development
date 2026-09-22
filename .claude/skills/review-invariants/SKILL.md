@@ -202,6 +202,16 @@ python3 -m unittest discover -s tests
 
 `shipped` listing the new ID means the plugin does not cite it — step 3 was incomplete.
 
+7. **Regenerate the invariant manifest**, which downstream ports read:
+
+   ```bash
+   python3 .claude/skills/review-invariants/invariant_manifest.py
+   ```
+
+   ⛔ It is derived from `INVARIANTS.md` and checked in CI, so a registration that does not
+   regenerate it leaves the file stale and the suite red (#88). Include it in the diff handed
+   over below.
+
 ### ⛔ Then stop at the working tree
 
 ⛔ **(INV-310) This skill does not commit and does not push.** It performs the registration and

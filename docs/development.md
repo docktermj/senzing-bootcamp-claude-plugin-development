@@ -106,6 +106,33 @@ a waiver whose word has gone fails as stale. There is no marker you can add to a
 line to silence the guard — that is deliberate, or it becomes the way every
 future British spelling gets waved through.
 
+## What downstream ports may rely on
+
+The Kiro and Codex ports (and those that follow) read this repository as their parent. ⛔ **They
+must never copy or renumber an `INV-NNN`** — the ids are authoritative here and a child that
+renumbers cannot be checked against anything.
+
+What the parent undertakes to provide:
+
+- **`invariant-manifest.json` at the repository root** — every invariant with its `id`,
+  `index_group`, `section`, `status`, `statement`, and a `summary` where one could be derived.
+  Generated from `specs/INVARIANTS.md`, which stays the source of truth, and checked in CI so it
+  cannot drift (`tests/test_invariant_manifest_matches_the_prose.py`). Regenerate with
+  `python3 .claude/skills/review-invariants/invariant_manifest.py`; `--check` exits 1 when stale.
+- **A diffable shape.** Sorted keys, one entry per id, so two releases' manifests can be compared
+  to see what was added, edited or superseded — which is what a child's dual-evaluation needs.
+- ⚠️ **Honest nulls.** `summary` is `null` where no one-line statement could be extracted — 113 of
+  309 at time of writing — and ⛔ **that means *not derivable*, never *no rule***. `statement`
+  always carries the full text. A child treating null as absence will under-count its register.
+- ⚠️ **`status` is `unclear` where the prose is ambiguous** (33 at time of writing), never guessed.
+  The prose writes supersession six different ways, and the same word marks an entry that
+  supersedes another as well as one that was superseded.
+- **`/review-invariants` keeps it current**: registering an invariant regenerates the manifest.
+
+⚠️ **Not undertaken:** that a `summary` exists for every id, or that `status` is decidable for
+every id. Both are properties of the prose, and the manifest reports them rather than repairing
+them (#88).
+
 ## Claude development skills
 
 ⛔ **(INV-302) This list and `.claude/commands/` must agree in both directions, and every
