@@ -1,6 +1,7 @@
 # The Senzing Bootcamp family — development workflow
 
-**Status:** normative. **Adopted:** 2026-09-22. **Home:** `docs/FAMILY_WORKFLOW.md` in
+**Status:** normative. **Adopted:** 2026-09-22. **Amendments:** see [§10](#10-amendments).
+**Home:** `docs/FAMILY_WORKFLOW.md` in
 `docktermj/senzing-bootcamp-claude-plugin-development` (the parent). Every child development
 repository links to this page rather than restating it — a rule with two homes is a rule that
 will disagree with itself.
@@ -321,3 +322,58 @@ The nine components every child provides:
 Where a host lacks a mechanism the parent relies on, **preserve the guarantee with a
 host-native construction where possible; otherwise document the advisory degradation** in the
 disposition register and the release evidence. Never drop it silently.
+
+
+---
+
+## 10. Amendments
+
+⛔ **A numbered rule that changes meaning is recorded here, with the wording it replaced.**
+Four repositories cite these rules by number, and their conformance issues are written against
+whatever the page said on the day they were opened. A reader holding an earlier copy has no
+other way to discover that a rule moved: the parent never files into a child (R2), so this
+section **is** the notification channel, and it travels by parity like everything else.
+
+⚠️ **Not every edit is an amendment.** A typo, a link, a clearer example: not recorded. The
+unit here is a change to what a numbered rule *requires*, because that is the unit another
+repository cites.
+
+⚠️ **An amendment does not renumber.** R8 stays R8. A rule that is withdrawn keeps its number
+and says so, for the same reason `INVARIANTS.md` never reuses an id: a citation that silently
+resolves to a different rule is worse than one that fails.
+
+### 2026-09-22 — R8 widened, and the parent brought into line
+
+**Recorded as a restatement; it was not one.** #111's notes described R8 as restating the
+existing guardrail in the parent's `implement-github-issue` command. That command said:
+
+> If `$ARGUMENTS` is **empty**, ask which issue and stop until answered. Do not choose one.
+
+R8 adds **"It does not recommend and it does not pick."** *Do not choose* and *do not
+recommend* are different rules — ranking the open issues, or marking one *(Recommended)*, is
+choosing with extra steps, and the guardrail as written permitted it.
+
+**Resolution:** R8 stands as written and the **parent command was brought up to it**, so the
+rule has one home (INV-300). R8's text is unchanged from adoption; what changed is that it is
+now an accurate statement of what the parent does.
+
+⚠️ **A child implementing `implement-github-issue` from the adopted text was already correct.**
+The divergence was in the parent, and in the note claiming the two agreed.
+
+### 2026-09-22 — R12's count removed
+
+**Was:** *"…the parent's generated manifest currently reports `status: unclear` for 33 of 309
+invariants, the prose having written supersession six different ways."*
+
+**Now:** the same evidence with **no denominator**.
+
+`33` was correct; `309` was already stale on the day of adoption — the manifest held **311**,
+INV-311 and INV-312 having been registered that morning. ⛔ **The figure was removed rather than
+corrected**, because correcting it only resets the clock: the parent's own suite fails a count
+of commands stated in prose in `docs/development.md`, on the ground that *a number goes stale
+silently while reading authoritative*. A normative page four repositories cite is the worst
+place for one.
+
+**For a child:** a conformance issue citing R12's count is not wrong about the rule. R12's
+requirement — one syntax for succession, both lines, zero-padded — is unchanged. Only the
+supporting figure was dropped.

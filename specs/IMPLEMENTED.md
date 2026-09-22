@@ -43,6 +43,58 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## family-workflow-records-its-amendments
+
+- **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #117)
+- **Files changed:** `docs/FAMILY_WORKFLOW.md`,
+  `tests/test_family_amendments_cite_real_rules.py` (new), `specs/IMPLEMENTED.md`
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** the maintainer asked for the R8 and R12 amendments to be **relayed to the four
+  child repositories**. ⛔ **That could not be done as asked, and saying so was the work.** R2 —
+  adopted in the pull request merged minutes earlier — says *"The parent never pushes into a
+  child and never files an issue into one"*; `feedback-to-issues` says the same twice, and
+  INV-312 makes it an invariant. ⚠️ **Access was not the obstacle**: all four child repositories
+  resolve under this account, so filing was available and was declined on the rule. **A second
+  measurement made the point sharper than the rule did:** `docs/FAMILY_WORKFLOW.md` is **186
+  commits past tag `0.5.3`**, and a child ports from a tag rather than `HEAD` — so the entire
+  page, not merely its amendments, is presently **unreachable by every child**, and no relay of
+  any kind changes that until a release exists. R2's own words: *a port cannot target a release
+  that was never tagged.* **What shipped instead** is the channel the rules do sanction. The
+  page carried `Adopted: 2026-09-22` and **no record of what had changed since**, so a child
+  holding an earlier copy had no way to learn that R8 and R12 moved, and a child reading it
+  fresh could not tell which version its own conformance issue was written against. §10
+  **Amendments** now records both, each quoting the wording it replaced: **R8** was described in
+  #111's notes as restating the parent's guardrail when it **widened** it — *do not choose* and
+  *do not recommend* are different rules, and the parent was brought up to R8 rather than R8
+  softened; **R12's** `33 of 309` had its denominator **removed rather than corrected**, since
+  correcting it only resets the clock. ⚠️ **The entry for R8 records that a child implementing
+  from the adopted text was already correct** — the divergence was in the parent and in the note
+  claiming the two agreed — because an amendment log that reads as an accusation is one a child
+  will argue with rather than act on. **The guard exists because the log is not documentation
+  about the notification channel — it IS the channel** (R2 forbids any other), so a citation to
+  a rule the document does not define is a broken notification, not a typo. It asserts every
+  `R<n>` cited in the log is defined, that no number is defined twice — *an amendment never
+  renumbers*, for the reason `INVARIANTS.md` never reuses an id — and, per INV-265, that the log
+  is non-empty before either comparison runs. ⚠️ **My own error, reported:** the fourth negative
+  control passed while it should have failed, because I demoted **one** of the two dated entries
+  and the set stayed non-empty. The mutation was wrong, not the assertion; re-specified to demote
+  both, it fails as required. That is twice in two runs that a control of mine was mis-aimed
+  rather than under-covered, which is worth noticing as a habit. **The four notices were drafted
+  and not sent**, for the maintainer to post by hand — the maintainer acting is not the parent
+  tooling acting — and they proved **byte-identical**, so it is one notice posted four times
+  rather than four drafts. **Negative controls, four**, each failing via the named test and each
+  restored byte-identical (md5): citing an undefined rule; defining a number twice; removing the
+  section; demoting every dated entry. **Verification:** suite **4,475 passed, 4 skipped** (up 9); `citations.py verify`
+  clean at **311**; `invariant_manifest.py --check` exit 0; queue unchanged at `pending: 2`.
+- **This run establishes no invariant.** The rule it ships — that a numbered rule changing
+  meaning is recorded with the wording it replaced — is stated as **part of the adopted document
+  itself**, in the R-series' own register, and R1–R12 are numbered for citation across five
+  repositories rather than minted into a namespace this repository owns. ⚠️ **Whether the
+  R-series should be mirrored into `INVARIANTS.md` remains open and is recorded on #111**; this
+  run deliberately does not settle it, because doing so while adding a rule to that series would
+  answer a cross-repository question as a side effect of a documentation fix.
+- **Commit:** 658267c
+
 ## adopt-family-workflow-as-the-normative-cross-repository-workflow
 
 - **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #111)
