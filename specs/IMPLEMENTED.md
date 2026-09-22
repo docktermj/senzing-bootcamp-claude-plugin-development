@@ -43,6 +43,81 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## implement-github-issue-reports-dependencies-before-the-choice
+
+- **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #119)
+- **Files changed:** `docs/FAMILY_WORKFLOW.md`,
+  `.claude/commands/implement-github-issue.md`, `tests/test_dependency_reading_rules.py` (new),
+  `tests/test_canonical_operations_resolve.py`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/119.json`
+  — **and `~/.claude/skills/implement-github-issue/SKILL.md`, which is OUTSIDE this
+  repository** (see below)
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** **R8 amended** so the operation reviews the open issues for dependencies and
+  reports them — with a suggested order and which issues are independent — before the maintainer
+  chooses. *Never chooses its own target* and *stops until answered* survive; ⛔ **"it does not
+  recommend" is removed**, on the maintainer's decision. ⚠️ **The cost was named at the option and
+  the decision was reaffirmed**: R8's rationale is that acting on its own selection is the
+  autonomy this command must not have, and a ranked list is the mechanism by which a maintainer
+  rubber-stamps. That risk was accepted against the larger one of choosing blind among coupled
+  issues; §10 records it in those terms rather than presenting the change as free. ⛔ **The
+  reading rules exist because the obvious implementation is worse than not doing it, and this
+  was measured rather than supposed.** Run over the seven issues open on 2026-09-22: counting
+  cross-references **inverted the strongest signal**, because two issues named two others inside
+  `owner-checked:` lines — *"none of which touch `conformance.py`'s corpus"* — which are INV-213
+  absence claims asserting the issues are **unrelated**; shared-file coupling made **five of
+  seven** look ordered, all naming `specs/INVARIANTS.md`, a hub establishing merge risk rather
+  than sequence; and the one real relation (an issue quoting a figure a later change had already
+  altered) was visible to **neither** method. R8 therefore carries the rules, not just the
+  feature: evidence is cited, a non-dependence reference is never an edge, shared files are merge
+  risk reported separately, and independence implies no order. ⚠️ **One change lands outside
+  version control and outside any pull request.** `~/.claude/skills/implement-github-issue/SKILL.md`
+  is user-global — the maintainer's own convention marks `~/.claude/` global and never
+  project-local — so this edit changes the operation in **every** project the skill is invoked in,
+  not only this family, and **no diff in this repository shows it**. It is also **deliberately
+  unguarded**: a test reading it would fail in CI, which checks out only the repository, and would
+  pass solely on one machine. The gap is recorded here instead of hidden behind a test that cannot
+  run (INV-308). ⚠️ **`R8HasOneHome` changed subject for the second time in a day** — at #111 it
+  asserted the command forbade recommending; here that clause was removed, so its assertions moved
+  with the rule rather than being deleted, and it now pins the dependency report and the surviving
+  *do not pick*. ⛔ **My own errors, reported, and one is now a pattern.** (1) The first version of
+  the new guard looked for each rule's **keyword anywhere in the file**, and three negative
+  controls walked straight through it: deleting *merge risk* from R8 left the phrase in §10's log
+  quoting R8, and deleting *owner-checked* from the command left it in the command's INV-213
+  section. Scoped to the region that states the rule, with a bound asserting the region is not
+  almost the whole file. ⚠️ **That is the same defect this run exists to prevent — a check
+  satisfied by something adjacent — inside the test written to prevent it.** (2) **Two further
+  controls were mis-aimed rather than under-covered**: one removed a single sentence of the two
+  that state the evidence requirement, so the rule genuinely survived. **That is four mis-aimed
+  controls across four consecutive runs**, and it is recorded as a habit rather than an incident:
+  the mutation must delete the *rule*, not a sentence mentioning it. (3) ⚠️ **Force-checking a
+  guard I had re-anchored exposed a weakness that PREDATES this run.**
+  `test_implement_spec_treats_a_missing_clause_as_a_blocker` matched a bare `blocker`
+  inside a window holding **two** occurrences — INV-213's heading and the sentence that
+  dispositions a missing clause — so demoting the disposition to *"worth noting"* left it
+  green, which is exactly what it exists to catch. It was anchored on the **first**
+  `owner-checked:` in the file; this run added an earlier one, which is what surfaced it.
+  Re-anchored to INV-213's own section and tightened to match the claim rather than the
+  word, with two force checks now failing it. (4) ⛔ **I corrupted a historical ledger
+  entry and had to repair it.** The edit that added (3) searched for a sentence with a
+  single space where this entry **wraps it across a newline**, so it matched the #111
+  entry instead and inserted a paragraph about #119's guard into #111's record. That is
+  the wrapped-phrase defect of **#105**, third instance today, and the first to damage a
+  record rather than a report. Removed from #111 and placed here; a bash backtick also
+  ate the test name on the first attempt, which is why it reads correctly only now. **Negative controls, six**,
+  each failing via the named test, both touched files restored byte-identical (md5): dropping the
+  owner-checked warning; removing the evidence requirement entirely; folding merge risk into the
+  order; reinstating the recommendation ban in normative text; dropping the dependency review;
+  and permitting the command to pick. **Verification:** suite **4,483 passed, 4 skipped** (up 8); `citations.py verify`
+  clean at **311**; `invariant_manifest.py --check` exit 0; queue unchanged at `pending: 2`.
+- **This run establishes no invariant.** The rule it ships is **R8 itself**, amended in the
+  R-series where it already lived, and the R-series is numbered for citation across five
+  repositories rather than minted into the `INV-NNN` namespace this repository owns. ⚠️ **The
+  question of whether the R-series should be mirrored into `INVARIANTS.md` is still open and is
+  recorded on #111**; this run does not settle it, for the same reason #117 did not — answering it
+  while amending a rule in that series would decide a cross-repository question as a side effect.
+- **Commit:** 9c069d7
+
 ## family-workflow-records-its-amendments
 
 - **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #117)

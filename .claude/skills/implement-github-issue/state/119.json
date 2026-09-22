@@ -1,0 +1,12 @@
+{
+  "issue": 119,
+  "branch": "119-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): R8 amended to require a dependency report with cited evidence while keeping never-chooses and stops-until-answered; the recommend ban dropped; \u00a710 records it; the parent command and the user-global skill brought to the amended rule; a guard pins the reading rules with the measured false positives as fixtures.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/120"
+}
