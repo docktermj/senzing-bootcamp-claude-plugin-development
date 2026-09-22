@@ -43,6 +43,84 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## adopt-family-workflow-as-the-normative-cross-repository-workflow
+
+- **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #111)
+- **Files changed:** `docs/FAMILY_WORKFLOW.md` (new), `docs/development.md`,
+  `.claude/commands/implement-github-issue.md`,
+  `.claude/skills/propagate-to-public/propagate.sh`,
+  `tests/test_canonical_operations_resolve.py` (renamed from
+  `tests/test_the_flow_diagram_names_real_commands.py`),
+  `tests/test_maintainer_docs_stay_out_of_public.py` (new), `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/111.json`
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** `docs/FAMILY_WORKFLOW.md` adopted as the family-wide normative workflow, R1–R12,
+  extracted from the issue **programmatically rather than retyped** — 321 lines, 4 mermaid
+  blocks, all twelve rules present — because four other repositories cite these rule numbers and
+  a transcription slip would propagate. ⛔ **The deliverable's "verbatim except where
+  implementation reveals an error" clause was taken literally, and a fact-check of every claim
+  this repository can settle found four discrepancies.** (1) **R12 cited `status: unclear` for
+  *"33 of 309"***; `33` is right and the manifest holds **311**. On the maintainer's decision the
+  denominator was **removed rather than corrected** — this repository already fails its own suite
+  on that construction in `docs/development.md` (`NoCountIsStated`), and a normative page four
+  repositories cite is the worst place for a number that rots. **This is the one edit to the
+  document's text.** (2) ⛔ **R8 did not restate the shipped guardrail; it widened it.**
+  `.claude/commands/implement-github-issue.md:12` said *"ask which issue and stop until answered.
+  Do not choose one"*, while R8 adds *"It does not recommend and it does not pick"*. On the
+  maintainer's decision R8 stands and **the command was brought up to it**, so the rule has one
+  home (INV-300). ⚠️ **Disclosed against myself:** invoked with no argument twice this session I
+  asked *and* presented a ranked list marking one **(Recommended)** — which R8 forbids and the
+  old guardrail did not. (3) `docs/development.md` contradicted the family page on a fact: its
+  topology said *"one of three"* children while the family had grown to **four** (Gemini). (4) A
+  note said the page carried *"two of these diagrams"*; it carried three. **Verified correct and
+  shipped unaltered:** R8's quotation itself, R10's boundary (`propagate.sh` prints *"Nothing
+  committed or pushed"*), §8's four live exceptions, §2's twelve parent-required operations
+  against `.claude/commands/`, and the INV-300 citation. ⛔ **The test the issue asked me to
+  extend could not be extended as asked, and saying so was the point.** The family page names
+  operations **without a leading slash** — deliberately, per R4 — so the #55 guard's `/name`
+  pattern aimed at it would have matched **zero** names and reported success: coverage that is
+  really a no-op. It was renamed to `test_canonical_operations_resolve.py` and re-aimed at §2's
+  canonical-operation table, which it checks against the shipped set **in both directions** —
+  every parent-`required` operation ships, and every operation recorded as having no parent
+  counterpart does not. ⚠️ **My first diagram check was too loose and flagged four adjectives**
+  (`cross-repo`, `host-behavior`, `parent-owned`, `unattended-ok`) because it scanned every
+  hyphenated token; narrowed to `<br/>`-separated items that *are* a single hyphenated token,
+  with the residual limit stated in the docstring rather than papered over. ⚠️ **The rule gained
+  a third disposition, and that is the #110 lesson applied within a day.** Scanning
+  `docs/development.md` for slash commands surfaced `/usr` (from a fenced `/usr/bin/python3`),
+  `/name` (a meta-reference to the list shape) and `/implement-spec` (**retired**, discussed
+  historically). Forcing a retired command into *ships* or *child's* is the two-bucket mistake;
+  fenced blocks are stripped, `/name` is excluded as a placeholder with the precedent cited, and
+  **retired** is now a disposition of its own. ⚠️ **The pending deferral from #55 was requoted,
+  not worked around.** Its rule quoted `docs/development.md`'s *"Every command drawn below…"* —
+  a wording naming a place that stopped existing when the diagrams moved — so `check` would have
+  gone red on a block awaiting the maintainer's signature. The quote was fixed against its
+  source as the skill requires, the move recorded in the block, its `Enforced by` followed the
+  renamed guard, and its drafted wording widened to the three dispositions. ⚠️ **I also wrote
+  the rule's bold across two lines and caught it before committing** — the trap that has tripped
+  this session repeatedly. **`docs/FAMILY_WORKFLOW.md` is excluded from `propagate.sh`**, which
+  until now carried the `development.md` exclusion with **nothing asserting it**: the sibling
+  guard says in its own docstring that it does not cover *"the exclusions inside the propagated
+  roots"*. The new guard parses the patterns **and exercises them through `rsync`** over a
+  temporary tree, because asserting the string appears proves intent and not behavior; where
+  `rsync` is absent that half **skips and says it could not run** rather than passing quietly
+  (INV-308). **Negative controls, six**, each failing via the named test and all four touched
+  files restored byte-identical (md5 verified): removing the new exclusion; unanchoring it;
+  marking a child-only operation parent-required; inventing an operation in a diagram; restating
+  the family page with a diagram in `development.md`; and dropping the recommendation ban from
+  the command. **Verification:** suite **4,466 passed, 4 skipped** (up 12); `citations.py verify` clean at **311**;
+  `invariant_manifest.py --check` exit 0; queue `pending: 2`, `held: 1`, both enforcers named.
+- **This run establishes no invariant.** Every rule it ships is either **R1–R12**, which are the
+  adopted document's own and are numbered for citation rather than minted as `INV-NNN`, or an
+  application of an invariant already registered: INV-300 for the one-home rule (cited at the
+  command and asserted by `R8HasOneHome`), INV-307 for the frozen archive restated in §8, and
+  INV-308 for the skip that says why it skipped. ⚠️ **The open question of whether the R-series
+  should be mirrored into `INVARIANTS.md` is not answered here and is not this run's to answer**
+  — the document is normative for five repositories and `INV-NNN` is a namespace this one owns,
+  so binding them together is a maintainer decision with cross-repository consequences. It is
+  named here so the next reader finds it stated rather than absent.
+- **Commit:** uncommitted
+
 ## rule-bullets-are-read-or-reported
 
 - **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #110)
@@ -231,7 +309,15 @@ entries at once. Two things a reader should know about the hashes now recorded:
   no drift.
 - **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
   shipping:
-    - ⛔ **Every command drawn below either ships here or is marked as a child's.** — in `docs/development.md`
+    - ⛔ **A command named on a maintainer page either ships here or is marked as not shipping.** — in `docs/development.md`
+
+  ⚠️ **Requoted 2026-09-22 (#111), not reworded away.** The rule was stated as *"every command
+  drawn below"* when `docs/development.md` carried the diagrams; #111 moved those to
+  `docs/FAMILY_WORKFLOW.md` and the old wording named a place that no longer exists. The quote
+  is fixed against its source, as the skill requires, rather than left to fail `check`. ⚠️ **The
+  rule also grew a third disposition** — *retired* — because the page discusses a command it
+  used to ship, and the drafted wording below is updated to match rather than pretending two
+  categories covered it.
 
   ⚠️ **This may want an amendment rather than an id.** INV-302 already binds the documented
   command set in both directions, and its guard is `tests/test_documented_dev_commands_match_the_shipped_set.py`;
@@ -245,16 +331,17 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
   **INV-NNN** — Where a maintainer-facing document names a slash command, that name MUST
   either resolve to a shipped command file or carry, at the point of use, a marker saying
-  where it does ship. ⛔ This binds **every** naming construction in the document, not the
+  that it does not — and where it ships instead, or that it no longer ships at all. ⛔ This binds **every** naming construction in the document, not the
   one a guard happens to parse: a command named in a diagram, a table or running prose is as
   runnable-looking to the reader as one named in the list. ⚠️ **A marker is a disclaimer and
   not a silencer** — it MUST NOT be accepted on a command that does ship, or it becomes the
   way a stale name is kept quiet. ⚠️ **The marker is matched per name, not per line**: one
   document line may name several commands, and a line-scoped check lets one marker vouch for
-  every name beside it. Enforced by `tests/test_the_flow_diagram_names_real_commands.py`,
-  which asserts the resolution and the marker rules over the diagrams and **cannot** assert
-  that a diagram renders, that it renders identically on GitHub, or that what it draws is a
-  true account of the system. *(written as NNN deliberately: a literal id here would cite an
+  every name beside it. Enforced by `tests/test_canonical_operations_resolve.py`
+  (renamed from `test_the_flow_diagram_names_real_commands.py` in #111, when its subject moved
+  from one page's diagrams to the family's canonical operation table), which asserts the
+  resolution and the marker rules and **cannot** assert that a diagram renders, that it renders
+  identically on GitHub, or that what it draws is a true account of the system. *(written as NNN deliberately: a literal id here would cite an
   invariant that does not exist and turn `citations.py verify` red. If the maintainer
   registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a
   number written here.)*

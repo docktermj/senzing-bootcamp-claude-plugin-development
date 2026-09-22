@@ -135,136 +135,33 @@ them (#88).
 
 ## How the pieces fit together
 
-Three views of one system: which repositories exist and how change moves between them, what
-happens to a single change, and what runs on nobody's schedule but its own. The command index
-below this section says what each command *is*; these say **when** you reach for it.
+⛔ **The normative description lives in [`FAMILY_WORKFLOW.md`](FAMILY_WORKFLOW.md), not here.**
+That page is the family-wide reference the Kiro, ChatGPT, Copilot and Gemini ports all cite by
+rule number, and it carries the repository topology, the four-phase per-change flow, the
+maintenance track and the issue-ownership decision. ⚠️ **This page must not restate any of
+it** — a rule with two homes is a rule that will disagree with itself (INV-300), and the two
+already did: until #111 the topology drawn here said *"one of three"* children while the family
+had grown to four.
 
-⛔ **Every command drawn below either ships here or is marked as a child's.**
-A command that ships has a file in `.claude/commands/`; one that does not is marked
-*(children only)* at the node naming it. Two are marked: `/parity-check` and
-`/escalate-to-parent` belong to the child ports, and a drawing of the four-repository system
-that left them out would be wrong. `tests/test_the_flow_diagram_names_real_commands.py` holds
-this both ways round — a node naming a command that neither ships here nor carries the marker
-fails the suite, and so does a marker placed on a command that *does* ship here.
+What stays here is repository-local: the command index below, and the rule governing how this
+repository's own maintainer pages name commands.
 
-⚠️ **INV-302's guard cannot see these diagrams.** It parses the numbered ``1. `/name` `` list
-shape only, so a phantom command inside a fenced block was invisible to it until this guard
-landed.
+⛔ **A command named on a maintainer page either ships here or is marked as not shipping.**
+A command that ships has a file in `.claude/commands/`. One that does not carries its reason at
+the point of use: *(children only)* for `/parity-check` *(children only)* and
+`/escalate-to-parent` *(children only)*, or a statement of retirement, as
+`/implement-spec` *(retired)* is below. ⚠️ **Three dispositions, not two** — the page legitimately discusses
+a command it used to ship, and forcing that into *ships* or *child's* is how a guard starts
+reporting a false phantom.
+`tests/test_canonical_operations_resolve.py` holds this both ways round — a name that neither
+ships nor carries the marker fails the suite, and so does a marker placed on a command that
+*does* ship.
 
-### Repository topology
-
-```mermaid
-flowchart LR
-    subgraph parent["Parent — Claude (this repository)"]
-        direction LR
-        PD["development"] -->|"/release"| TAG(["tagged release"])
-        PD -->|"/propagate-to-public"| PP["public"]
-        PP -.->|"/retrofit-from-public<br/>(files issues — copies nothing)"| PD
-    end
-
-    subgraph child["Each child port — Kiro · ChatGPT · Copilot (one of three, all identical)"]
-        direction LR
-        CD["development"] -->|"/release"| CTAG(["tagged release"])
-        CD -->|"/propagate-to-public"| CP["public"]
-        CP -.->|"/retrofit-from-public"| CD
-    end
-
-    TAG ==>|"PULL — /parity-check<br/>(children only)<br/>the parent never pushes"| CD
-    CD -.->|"/escalate-to-parent<br/>(children only — files issues)"| PD
-
-    classDef repo fill:#eaf2fb,stroke:#3a6ea5,color:#1b3a57
-    classDef tag fill:#fdf3e0,stroke:#b8860b,color:#5c4208
-    class PD,PP,CD,CP repo
-    class TAG,CTAG tag
-```
-
-**Propagation is a pull, and it starts at a tag.** The parent never pushes into a child and
-never files into one; a child takes what it takes, when it takes it. What it takes is a
-**tagged release** — the downstream ports port from a tag rather than from `HEAD`, which is
-why `/release` exists as its own operation and why an untagged version is invisible to the
-whole mechanism: *a port cannot target a release that was never tagged.*
-
-Three further things the drawing is being careful about:
-
-- **`/propagate-to-public` runs from the working tree, not from the tag.** The two edges out
-  of `development` are siblings, not a chain. The tag is what children read; the mirror is
-  what bootcampers install.
-- ⛔ **(INV-312) The dotted edges carry issues, not content.** `/retrofit-from-public` and
-  `/escalate-to-parent` file in their own tracker and write nothing into any working tree.
-  A solid arrow moves files; a dotted one moves only a report that something moved.
-- **The children are leaves.** A child's tagged release is drawn because a child does release,
-  but nothing ports *from* it — the topology is one level deep, and a change reaching two
-  children reached them from here twice, never from each other.
-
-⚠️ **`docs/development.md` is the one file in `docs/` that does not propagate**
-(`propagate.sh` excludes exactly `/development.md`, after a 2026-08-16 incident in which
-"`docs/` is user-facing" was stated as a convention and acted on as a rule). So this page
-reaches the children the way everything else does — by parity — and reaches the public
-repositories not at all.
-
-### The per-change flow
-
-```mermaid
-flowchart TB
-    P1["<b>Phase 1 · Generate issues</b><br/>/feedback-to-issues<br/>/retrofit-from-public<br/>/parity-check <i>(children only)</i><br/>escalated from children <i>(parent only)</i><br/>manual"]
-    P2["<b>Phase 2 · Development</b><br/>/implement-github-issue<br/>/escalate-to-parent <i>(children only)</i>"]
-    P3["<b>Phase 3 · Test</b><br/>/production-readiness-audit<br/>/dry-run<br/>/auto-test"]
-    P4["<b>Phase 4 · Publish</b><br/>/release<br/>then /propagate-to-public"]
-
-    P1 ==> P2 ==> P3 ==> P4
-    P3 -->|"test failures needing code changes<br/>loop back here, <b>never into maintenance</b>"| P2
-
-    LOOP["<b>/unattended-issue-loop</b><br/>drives phases 2 and 3 in turn,<br/>on <i>unattended-ok</i> issues only"]
-    LOOP -.-> P2
-    LOOP -.-> P3
-
-    classDef phase fill:#eaf2fb,stroke:#3a6ea5,color:#1b3a57,text-align:left
-    classDef driver fill:#f3f0fa,stroke:#6a5a9a,color:#2e2350
-    class P1,P2,P3,P4 phase
-    class LOOP driver
-    linkStyle 3 stroke:#b8860b,stroke-width:2px
-```
-
-The four phases run in order, and only one edge goes backwards. ⚠️ **A test failure that
-needs a code change returns to development, never to maintenance** — that is the loop the
-gold arrow draws, and the distinction is the point of drawing it: maintenance is where you
-go when nothing is failing.
-
-`/unattended-issue-loop` is drawn beside the flow rather than inside it because it is not a
-phase — it **drives** phases 2 and 3 in turn, on `unattended-ok` issues only, and an issue
-carrying no label is not work it may take. ⚠️ **The issue text for this diagram did not list
-it**; it is drawn because a reader looking for every command would otherwise conclude it sits
-outside the flow, which is the opposite of true.
-
-Phases 2, 3 and 4 are identical in the parent and in the children. Phase 1 is where they
-differ, because it is where work *originates*: a child additionally reaches for
-`/parity-check` to pick up what the parent released, and the parent additionally receives
-what children escalate. Children run `/escalate-to-parent` after development, which is why it
-sits inside phase 2 rather than beside it.
-
-### Maintenance
-
-```mermaid
-flowchart LR
-    subgraph M["Maintenance · its own cadence · parent only"]
-        direction LR
-        M1["/delegate-to-mcp-server<br/><i>(do not run yet — rework pending)</i>"] ~~~ M2["/compact-dev-environment"] ~~~ M3["/review-invariants"]
-    end
-
-    classDef cmd fill:#eaf2fb,stroke:#3a6ea5,color:#1b3a57
-    classDef paused fill:#fbeaea,stroke:#a53a3a,color:#571b1b,stroke-dasharray: 5 4
-    class M2,M3 cmd
-    class M1 paused
-```
-
-**A separate track, on its own cadence, in the parent only.** Nothing in the four phases
-waits on these commands and they wait on nothing — which is deliberate rather than an
-oversight in the drawing. An "optional" per-change step gets skipped every time, and a step
-that is skipped every time never runs at all; giving these their own cadence is what stops
-them becoming ceremony attached to a flow that would rather skip them.
-
-⚠️ **`/delegate-to-mcp-server` is drawn in red because it should not be run yet** — it still
-writes spec files, which the freeze guard rejects, as the note below this section records.
+⚠️ **INV-302's guard cannot see either page's diagrams.** It parses the numbered ``1. `/name` ``
+list shape only, so a phantom command inside a fenced block was invisible to it until this
+guard landed (#55), and `FAMILY_WORKFLOW.md` names its operations without a leading slash at
+all — deliberately, since the canonical name is the invariant and the invocation mechanism is
+the host's business (R4).
 
 ## Claude development skills
 

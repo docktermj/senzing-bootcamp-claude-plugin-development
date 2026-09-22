@@ -57,17 +57,26 @@ rsync -a --delete "${excludes[@]}" "$here/plugins/" "$dest/plugins/"
 echo "=== Mirroring .claude-plugin/ (marketplace.json) ==="
 rsync -a --delete "$here/.claude-plugin/" "$dest/.claude-plugin/"
 
-# `docs/` is mirrored as a USER-FACING directory, but the dev repo keeps one
-# maintainer-only file in it: `docs/development.md`, the development-loop index
+# `docs/` is mirrored as a USER-FACING directory, but the dev repo keeps TWO
+# maintainer-only files in it: `docs/FAMILY_WORKFLOW.md`, the family-wide normative
+# workflow (#111) — which names private development repositories a bootcamper has no
+# access to — and `docs/development.md`, the development-loop index
 # (`/feedback-to-issues`, `/implement-github-issue`, `/dry-run`, `/propagate-to-public`, …).
 # Every skill it names is excluded from this mirror, so publishing it hands users a
 # list of commands their install does not have. It reached the public working tree
 # once (2026-08-16) precisely because "docs/ is user-facing" was a convention stated
 # in the manifest rather than a rule enforced here.
-echo "=== Mirroring docs/ (user-facing install docs, minus development.md) ==="
-# The leading slash anchors the pattern to the transfer root, so this excludes
-# exactly `docs/development.md` and not some future `docs/*/development.md`.
-rsync -a --delete --exclude='/development.md' "$here/docs/" "$dest/docs/"
+echo "=== Mirroring docs/ (user-facing install docs, minus the maintainer pages) ==="
+# The leading slash anchors each pattern to the transfer root, so these exclude exactly
+# `docs/development.md` and `docs/FAMILY_WORKFLOW.md`, not some future `docs/*/development.md`.
+# ⛔ Both exclusions are pinned by `tests/test_maintainer_docs_stay_out_of_public.py`: until
+# #111 nothing asserted either of them, and the sibling guard says in its own docstring that
+# it does not cover "the exclusions inside the propagated roots".
+# ⛔ Keep this invocation on ONE line. `tests/test_maintainer_tooling_stays_out_of_public.py`
+# parses the mirror's sources with `[^\n]*?`, which refuses to cross a newline, so wrapping it
+# for readability makes that guard stop seeing this root -- it fails loudly, which is the right
+# direction, but the fix is to keep the line rather than to widen the parser.
+rsync -a --delete --exclude='/development.md' --exclude='/FAMILY_WORKFLOW.md' "$here/docs/" "$dest/docs/"
 
 echo "=== Copying README.md ==="
 rsync -a "$here/README.md" "$dest/README.md"

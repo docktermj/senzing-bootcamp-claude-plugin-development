@@ -1,0 +1,11 @@
+{
+  "issue": 111,
+  "branch": "111-docktermj-1",
+  "phase": "implement",
+  "approach": "Direct (5a): FAMILY_WORKFLOW.md verbatim with R12's stale denominator removed; the command file raised to R8; development.md loses its three diagrams and links here; propagate excludes the new page, guarded behaviorally; the #55 guard renamed and re-aimed at the canonical operation table; #55's pending deferral requoted at the rule's new home.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "clarifications"
+  ]
+}
