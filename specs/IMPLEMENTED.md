@@ -94,7 +94,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   line is an implementation note about one regex's whitespace class, marked ⚠️ rather than ⛔
   for that reason: binding every future parser to a spelling nobody asked about would be a
   guarantee invented by this run rather than one it found.
-- **Commit:** uncommitted
+- **Commit:** 0f14af2
 
 ## add-a-workflow-flow-chart-to-docs-development-md
 
