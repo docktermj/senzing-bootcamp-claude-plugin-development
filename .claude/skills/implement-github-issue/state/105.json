@@ -1,0 +1,12 @@
+{
+  "issue": 105,
+  "branch": "105-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): whitespace-tolerant enforcer clause + a distinct UNREADABLE state so a present-but-unparseable clause never reports as (none named) (INV-308); second sweep finding filed separately.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/109"
+}

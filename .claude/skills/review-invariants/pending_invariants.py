@@ -51,6 +51,20 @@ HELD_IN_BLOCK = "must be approved before implementation"
 #: other than a reason.
 HELD_IN_LEDGER = re.compile(r"\*\*HELD\s+(\d{4}-\d{2}-\d{2}):\*\*\s*(.+?)(?=\n\s*\n|\Z)", re.S)
 BOILER = re.compile(r"\*\(written as NNN deliberately.*?\)\*\s*", re.S)
+
+#: An `Enforced by` clause. ⚠️ `\s+`, never a literal space: Markdown wraps prose wherever the
+#: column runs out, and a clause broken between `Enforced` and `by`, or before its path, is the
+#: same clause. Until #105 this required single spaces, and the ledger held 27 clauses of which
+#: it matched 25 -- the two it could not see were BOTH blocks reviewed on 2026-09-22, each of
+#: which named an enforcer and each of which was presented as naming none.
+ENFORCER = re.compile(r"Enforced\s+by\s+`([^`]+)`")
+
+#: The same clause's opening, with no requirement that it close. ⛔ (INV-308) This is what
+#: separates a block that names NO enforcer from one whose clause is present and unreadable --
+#: an unclosed backtick matches nothing above, and reporting that as `(none named)` states a
+#: fact about the block that is false. *Nothing to read* and *could not read* are different
+#: answers and the output owes the maintainer the difference.
+ENFORCER_OPENS = re.compile(r"Enforced\s+by\s+`")
 # A rule bullet is an indented list item carrying a stop sign. Three shapes occur, and a
 # pattern fitted to one silently drops the others -- `⛔ **rule**`, `**⛔ rule**`, and a
 # rule whose location reads "same section" instead of naming a path. Fitting only the
@@ -128,12 +142,34 @@ def parse(b):
     m = re.search(r"\*\*INV-NNN\*\*\s*—?\s*(.+?)(?=\n\s*⛔ \*\*Nothing was written|\Z)",
                   text, re.S)
     wording = flat(m.group(1)) if m else ""
-    enf = re.search(r"Enforced by `([^`]+)`", text)
+    enf = ENFORCER.search(text)
+    enforcer = enf.group(1) if enf else None
+    if enforcer is not None and "\n" in enforcer:
+        # The backticks closed, but across a line break, so what they enclose is not a path.
+        # Treated as unreadable rather than returned: a newline-bearing path resolves nowhere
+        # and would be reported as a missing file rather than as a clause nobody can read.
+        enforcer = None
     return {**b, "rules": rules, "sites": sites, "wording": wording,
-            "enforcer": enf.group(1) if enf else None,
+            "enforcer": enforcer,
+            "enforcer_unreadable": enforcer is None and bool(ENFORCER_OPENS.search(text)),
             "held": hold_reason(b["text"]) or (
                 "spec requires approval before implementation"
                 if HELD_IN_BLOCK in b["text"] else None)}
+
+
+def enforcer_label(p):
+    """How a parsed block's enforcer reads on screen. ⛔ (INV-308) THREE states, never two.
+
+    A named path, `(none named)` when the block names none, and an explicit unreadable marker
+    when a clause is present and its path could not be parsed. Collapsing the third into the
+    second is exactly what #105 was: two blocks that named an enforcer were shown to the
+    maintainer as naming none, which argues for holding a rule that is in fact guarded.
+    """
+    if p["enforcer"]:
+        return p["enforcer"]
+    if p.get("enforcer_unreadable"):
+        return "⛔ UNREADABLE (a clause is present; its path could not be read)"
+    return "(none named)"
 
 
 def queue():
@@ -282,7 +318,7 @@ def cmd_list():
         n = len(p["rules"])
         print(f"  {i:2}. {p['spec']}")
         print(f"      {n} rule{'s' if n != 1 else ''} · "
-              f"IMPLEMENTED.md:{p['line']} · enforcer: {p['enforcer'] or '(none named)'}")
+              f"IMPLEMENTED.md:{p['line']} · enforcer: {enforcer_label(p)}")
     if held:
         print("\n-- HELD: already decided, NOT for review --")
         for p in held:
@@ -304,7 +340,10 @@ def cmd_show(n):
     print(f"== {n}. {p['spec']} ==\n")
     print(f"ledger    : specs/IMPLEMENTED.md:{p['line']}")
     print(f"spec      : specs/{p['spec']}.md")
-    print(f"enforcer  : {p['enforcer'] or '(none named)'}")
+    print(f"enforcer  : {enforcer_label(p)}")
+    if p.get("enforcer_unreadable"):
+        print("            ⛔ the clause is there and cannot be read -- fix the wording in "
+              "IMPLEMENTED.md before judging whether this rule ships guarded")
     print(f"would be  : INV-{next_id():03d}   <- read again at mint time; only the first "
           f"one minted gets it\n")
     print("-- RULES ALREADY SHIPPING, bound by nothing --")
