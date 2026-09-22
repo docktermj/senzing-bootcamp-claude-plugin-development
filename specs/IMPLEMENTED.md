@@ -93,7 +93,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   R-series should be mirrored into `INVARIANTS.md` remains open and is recorded on #111**; this
   run deliberately does not settle it, because doing so while adding a rule to that series would
   answer a cross-repository question as a side effect of a documentation fix.
-- **Commit:** uncommitted
+- **Commit:** 658267c
 
 ## adopt-family-workflow-as-the-normative-cross-repository-workflow
 
