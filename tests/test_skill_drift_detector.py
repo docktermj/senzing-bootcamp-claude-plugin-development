@@ -126,6 +126,30 @@ class ItSaysWhatItCouldNotCompare(unittest.TestCase):
     def test_it_does_not_claim_to_close_the_window(self):
         self.assertIn("does not close it", self.report())
 
+    def test_the_blind_spots_are_stated_even_when_NOTHING_was_compared(self):
+        """⛔ The case CI caught, and the one that matters most.
+
+        The first version returned early when `~/.claude/skills` was absent and printed the
+        blind spots nowhere -- omitting the disclosure precisely on the machine that compared
+        nothing, which is the INV-308 failure this script exists to avoid. It passed locally
+        because that directory exists here, and failed on both CI legs where it does not.
+        Simulated rather than skipped, so the case is exercised on every machine.
+        """
+        mod = detector()
+        mod.USER_SKILLS = Path("/nonexistent-user-skills-tree/.claude/skills")
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = mod.main([])
+        out = buf.getvalue()
+        self.assertEqual(0, rc, "absence of the other copy is not drift and must not exit 1")
+        self.assertIn("NOTHING was compared", out)
+        for phrase in ("outside a Claude Code session", "no repository event", "does not close it"):
+            with self.subTest(phrase=phrase):
+                self.assertIn(
+                    phrase, out,
+                    "the run compared nothing and did not state %r. That is the exact case "
+                    "where the reader most needs the limits, and the case CI failed on" % phrase)
+
 
 class TheLiveComparison(unittest.TestCase):
     def test_the_two_copies_agree_on_this_machine(self):

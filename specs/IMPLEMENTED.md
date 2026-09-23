@@ -99,7 +99,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   named test and all three touched files restored byte-identical (md5): a word changed inside the
   user-level copy's shared block, which the detector reports and the guard fails on; a citation
   smuggled **into** the shared block; the detector dropping a blind-spot statement; and the block
-  pattern made greedy so two blocks merge. **Verification:** suite **4,507 passed, 4 skipped**
+  pattern made greedy so two blocks merge. ⛔ **CI failed on both legs and caught a defect the local run could not.** `main()` returned early when `~/.claude/skills` was absent and printed the blind spots **nowhere** — omitting the disclosure precisely on the machine that compared nothing, which is the **INV-308 failure this script exists to avoid**. It passed here because that directory exists on this machine, and failed on both CI legs where it does not. ⚠️ **The local suite being green was not evidence**, and the three failing assertions were the ones written to enforce the disclosure — they worked; the environment that would exercise them was the one I never ran. Fixed by extracting `blind_spots()` and calling it on **every** non-quiet path, pinned by `test_the_blind_spots_are_stated_even_when_NOTHING_was_compared`, which **simulates the absent tree** rather than skipping so the case runs on every machine, and negative-controlled by restoring the early return. **Verification:** suite **4,508 passed, 4 skipped**
   (up 8); `citations.py verify` clean at **311**.
 - **This run establishes no invariant.** The duplication defect is **INV-300's** subject and the
   report-what-you-could-not-check rule is **INV-308's**, both registered; this run applies them

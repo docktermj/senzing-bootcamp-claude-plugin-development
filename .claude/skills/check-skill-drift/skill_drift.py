@@ -79,6 +79,21 @@ def compare():
     return drifted, checked, unpaired
 
 
+def blind_spots():
+    """Print what the run could not see.
+
+    ⛔ Called on EVERY non-quiet path, including the one where nothing was compared at all.
+    The first version returned early when `~/.claude/skills` was absent and printed this
+    nowhere -- omitting the disclosure exactly on the machine that checked nothing, which is
+    the INV-308 failure this script exists to avoid. CI caught it; the local run could not,
+    because that directory exists there (#128).
+    """
+    print("\n⚠️  What this run could NOT see, stated rather than implied:")
+    print("   · a commit made outside a Claude Code session triggers no hook here;")
+    print("   · an edit to a user-level copy produces no repository event at all.")
+    print("   This narrows the window. It does not close it.")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--quiet", action="store_true", help="print only when drift is found")
@@ -88,6 +103,7 @@ def main(argv=None):
         if not args.quiet:
             print("⚠️  %s does not exist on this machine, so NOTHING was compared." % USER_SKILLS)
             print("   That is 'could not check', not 'nothing to check' — a CI runner sees this.")
+            blind_spots()
         return 0
 
     drifted, checked, unpaired = compare()
@@ -109,10 +125,7 @@ def main(argv=None):
             print("   %-28s %s" % (name, why))
 
     if not args.quiet:
-        print("\n⚠️  What this run could NOT see, stated rather than implied:")
-        print("   · a commit made outside a Claude Code session triggers no hook here;")
-        print("   · an edit to a user-level copy produces no repository event at all.")
-        print("   This narrows the window. It does not close it.")
+        blind_spots()
 
     return 1 if drifted else 0
 
