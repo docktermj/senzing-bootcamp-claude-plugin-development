@@ -100,7 +100,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   recorded beside the constant rather than minted**: which roots a count covers is a property of
   this repository's tooling, not a guarantee about the plugin, and binding it as an invariant
   would make every future corpus change an amendment.
-- **Commit:** uncommitted
+- **Commit:** 7d1fa5a
 
 ## filing-is-gated-and-the-rule-is-drafted
 
