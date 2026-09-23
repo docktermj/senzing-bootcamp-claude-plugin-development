@@ -285,7 +285,7 @@ class TheInventoryArithmeticHolds(unittest.TestCase):
 
     def run_list_specs(self):
         proc = subprocess.run(
-            [sys.executable, str(REPO_ROOT / ".claude/skills/implement-spec/list_specs.py")],
+            [sys.executable, str(REPO_ROOT / "tests/list_specs.py")],
             capture_output=True, text=True, cwd=str(REPO_ROOT))
         self.assertEqual(0, proc.returncode, proc.stderr)
         return proc.stdout

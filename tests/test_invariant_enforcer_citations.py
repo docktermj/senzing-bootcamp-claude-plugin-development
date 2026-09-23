@@ -333,7 +333,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # back and states that the behavior cannot be observed offline -- the source repository is
 # absent on some machines. Re-derived by running the extractor -- 130. This closes the
 # 2026-09-22 review: two deferrals decided, EXPECTED_PAIRS 128 -> 130 across it.
-EXPECTED_PAIRS = 130
+# 131 on 2026-09-22 (#113): INV-216 gained a SECOND enforcer,
+# tests/test_invariant_paths_resolve.py, when its 2026-09-22 correction moved
+# list_specs.py to tests/ and added the guard that the path it names resolves —
+# nothing had checked that before, so the invariant could have pointed at nothing
+# with every other guard green. Re-derived by running the extractor, not incremented.
+EXPECTED_PAIRS = 131
 
 
 def pairs():

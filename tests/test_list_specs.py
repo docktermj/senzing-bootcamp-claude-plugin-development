@@ -25,7 +25,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = REPO_ROOT / ".claude" / "skills" / "implement-spec" / "list_specs.py"
+SCRIPT = REPO_ROOT / "tests" / "list_specs.py"
 
 
 def load():
