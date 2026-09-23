@@ -104,7 +104,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   **not** drafted as a deferral here, because it is INV-216's own clause mechanized rather than a
   new guarantee, and stating it as a fresh invariant would bind every future register entry on the
   strength of one run's convenience.
-- **Commit:** uncommitted
+- **Commit:** a4fbda2
 
 ## implement-github-issue-reports-dependencies-before-the-choice
 
