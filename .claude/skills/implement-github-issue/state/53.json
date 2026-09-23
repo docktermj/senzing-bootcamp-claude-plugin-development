@@ -1,0 +1,10 @@
+{
+  "issue": 53,
+  "branch": "53-docktermj-1",
+  "phase": "implement",
+  "approach": "Triage todo.md's 3 live items: let go item 1, file issues for items 2 and 3, record the outcome in specs/README.md (a live record, not frozen), pin the record with a scanning guard. todo.md untouched.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started"
+  ]
+}
