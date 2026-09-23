@@ -116,7 +116,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer
   registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a
   number written here.)*
-- **Commit:** uncommitted
+- **Commit:** 85dc3be
 
 ## both-skill-copies-share-a-block-and-drift-is-detectable
 
