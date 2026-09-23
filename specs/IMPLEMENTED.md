@@ -94,7 +94,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   copy of a skill, and the copy outside this repository remains unguardable from inside it. That
   is worth an issue of its own and is not drafted here, because a rule binding skill duplication
   across five repositories is a maintainer decision rather than this run's to invent.
-- **Commit:** uncommitted
+- **Commit:** ef197c1
 
 ## r8-names-the-issue-it-suggests
 
