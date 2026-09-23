@@ -36,6 +36,25 @@ PLUGIN = REPO / "plugins" / "senzing-bootcamp"
 AWAITING = "awaiting the maintainer's sign-off; NOT minted"
 HELD_IN_BLOCK = "must be approved before implementation"
 
+#: ⛔ **A fourth thing the queue must hold (#79): a change to an invariant ALREADY REGISTERED.**
+#: Both markers above describe an invariant that does not exist yet. `INVARIANTS.md` is
+#: append-only, so a wrong or outgrown invariant is corrected by a dated note appended beneath
+#: it -- and **11 of 311** invariants carry one, 13 markers in all. None was ever queued: the
+#: proposed wording reached the maintainer through a pull-request body and the conversation, and
+#: `list` reported `pending: 0` throughout, which is true to its own definition and misleading
+#: as a worklist.
+#:
+#: ⚠️ **The precedent that decided the shape.** INV-207's correction claimed its pinned site had
+#: **moved** to another file, and the content it pins was never written there. A test caught it
+#: days later; review did not, because nothing scanned the claim. So an amendment carries the
+#: same three things a deferral does -- the exact proposed text, the sites it affects, and why --
+#: and `sites` scans it like any other block.
+AMENDMENT = "PROPOSED AMENDMENT"
+AMENDMENT_AWAITING = "awaiting the maintainer's sign-off; NOT applied"
+
+#: The registered invariant an amendment proposes to change.
+AMENDMENT_TARGET = re.compile(r"PROPOSED AMENDMENT to (INV-\d{3})")
+
 #: ⛔ The maintainer's hold, recorded in the ledger block itself. `HELD <date>:` then the reason,
 #: and a `Revisit ...` sentence if one was set.
 #:
@@ -99,8 +118,14 @@ def blocks():
         line = lines[i]
         if line.startswith("## "):
             spec = line[3:].strip()
-        if ("DEFERRED INVARIANT" in line and "resolved INV-" not in line
-                and line.lstrip().startswith("- ")):
+        is_deferral = ("DEFERRED INVARIANT" in line and "resolved INV-" not in line)
+        # ⚠️ No `applied` test here, deliberately: the MARKER filter below is the sole arbiter,
+        # and an applied amendment loses `AMENDMENT_AWAITING` exactly as a registered deferral
+        # loses `AWAITING`. A second exclusion at this line looked prudent and was **dead** --
+        # a negative control deleted it with nothing failing (#79, the same finding #108 made
+        # about a redundant clause). One arbiter, or the next reader trusts the wrong one.
+        is_amendment = AMENDMENT in line
+        if (is_deferral or is_amendment) and line.lstrip().startswith("- "):
             buf, j = [line], i + 1
             while j < len(lines) and not (
                     lines[j].startswith("## ") or re.match(r"^- \*\*", lines[j])):
@@ -113,7 +138,10 @@ def blocks():
             # ledger prose ABOUT deferrals -- audit summaries, "INVARIANT REGISTERED"
             # entries quoting the term -- matched too. That is the same overcount this
             # module's docstring was written to prevent, reproduced inside the fix for it.
-            if AWAITING in body or HELD_IN_BLOCK in body:
+            # ⛔ Membership is still decided by the MARKER, never by the phrase appearing
+            # in prose -- the overcount this function's comment above records applies to
+            # `PROPOSED AMENDMENT` exactly as it did to `DEFERRED INVARIANT`.
+            if AWAITING in body or HELD_IN_BLOCK in body or AMENDMENT_AWAITING in body:
                 out.append({"spec": spec, "line": i + 1, "text": body})
             i = j
             continue
@@ -169,9 +197,12 @@ def parse(b):
         # is indistinguishable from a block that had none, and that is the defect #110 reported
         # -- five bullets vanished while `check` printed a line that read clean.
         unparsed.append(line.strip())
-    m = re.search(r"\*\*INV-NNN\*\*\s*—?\s*(.+?)(?=\n\s*⛔ \*\*Nothing was written|\Z)",
+    # ⚠️ An amendment's proposed text names the id it changes, not `INV-NNN`: the invariant
+    # already exists, so writing NNN there would be false rather than deliberate (#79).
+    m = re.search(r"\*\*INV-(?:NNN|\d{3})\*\*\s*—?\s*(.+?)(?=\n\s*⛔ \*\*Nothing was written|\Z)",
                   text, re.S)
     wording = flat(m.group(1)) if m else ""
+    target = AMENDMENT_TARGET.search(b["text"])
     enf = ENFORCER.search(text)
     enforcer = enf.group(1) if enf else None
     if enforcer is not None and "\n" in enforcer:
@@ -180,6 +211,7 @@ def parse(b):
         # and would be reported as a missing file rather than as a clause nobody can read.
         enforcer = None
     return {**b, "rules": rules, "sites": sites, "unparsed": unparsed, "wording": wording,
+            "amends": target.group(1) if target else None,
             "enforcer": enforcer,
             "enforcer_unreadable": enforcer is None and bool(ENFORCER_OPENS.search(text)),
             "held": hold_reason(b["text"]) or (
@@ -347,7 +379,8 @@ def cmd_list():
     for i, p in enumerate(pending, 1):
         n = len(p["rules"])
         print(f"  {i:2}. {p['spec']}")
-        print(f"      {n} rule{'s' if n != 1 else ''} · "
+        kind = ("AMENDS %s — already registered" % p["amends"]) if p["amends"] else "new invariant"
+        print(f"      {n} rule{'s' if n != 1 else ''} · {kind} · "
               f"IMPLEMENTED.md:{p['line']} · enforcer: {enforcer_label(p)}")
     if held:
         print("\n-- HELD: already decided, NOT for review --")
@@ -369,13 +402,25 @@ def cmd_show(n):
     p = _pick(n)
     print(f"== {n}. {p['spec']} ==\n")
     print(f"ledger    : specs/IMPLEMENTED.md:{p['line']}")
+    if p["amends"]:
+        # ⛔ (#79) Say plainly that this is NOT a new invariant. The two decisions differ:
+        # minting adds an id that binds future work, while amending changes a rule already in
+        # force -- and `INVARIANTS.md` is append-only, so the change lands as a dated note
+        # beneath the original rather than replacing it.
+        print(f"amends    : {p['amends']}  ⛔ ALREADY REGISTERED — this proposes a dated")
+        print(f"            correction beneath it, not a new id. Nothing is renumbered,")
+        print(f"            nothing is deleted, and the original text stays.")
     print(f"spec      : specs/{p['spec']}.md")
     print(f"enforcer  : {enforcer_label(p)}")
     if p.get("enforcer_unreadable"):
         print("            ⛔ the clause is there and cannot be read -- fix the wording in "
               "IMPLEMENTED.md before judging whether this rule ships guarded")
-    print(f"would be  : INV-{next_id():03d}   <- read again at mint time; only the first "
-          f"one minted gets it\n")
+    if p["amends"]:
+        print("would be  : no new id — the correction is appended beneath "
+              f"{p['amends']}\n")
+    else:
+        print(f"would be  : INV-{next_id():03d}   <- read again at mint time; only the first "
+              f"one minted gets it\n")
     print("-- RULES ALREADY SHIPPING, bound by nothing --")
     for r in p["rules"]:
         # ⚠️ The kind is shown, not inferred: only a `quoted` rule has been checked against
@@ -516,7 +561,14 @@ def cmd_check():
     the real failure, which is how the defect survived this long.
     """
     bad = checked = unresolved = no_site = described = unparsed = 0
+    amendment_rules = 0
     for p in [parse(b) for b in blocks()]:
+        # ⚠️ (#79) Counted separately, not because they are checked differently -- they are
+        # checked identically -- but because a reader must be able to tell whether any of the
+        # verified quotes belonged to a change to an invariant ALREADY IN FORCE. Folding them
+        # into one total hides the distinction that makes the decision different.
+        if p["amends"]:
+            amendment_rules += len(p["rules"])
         unparsed += len(p["unparsed"])
         for line in p["unparsed"]:
             print(f"  UNPARSED {p['spec']}\n    {line[:110]}")
@@ -546,6 +598,8 @@ def cmd_check():
     print(f"{checked} rule quotes checked, {bad} mismatched, "
           f"{unresolved} unresolved, {no_site} no-prose-site, "
           f"{described} described-not-quoted, {unparsed} unparsed")
+    print(f"   of those, {amendment_rules} belong to a PROPOSED AMENDMENT — a change to an "
+          f"invariant already in force")
     if unparsed:
         print(f"\n  ⛔ WARNING: {unparsed} rule bullet(s) matched NO known shape, so nothing "
               f"read them.\n     They are absent from every count above except this one — "

@@ -1,0 +1,11 @@
+{
+  "issue": 79,
+  "branch": "79-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a), FULL shape: a PROPOSED AMENDMENT block naming its target id, the sites it affects and the proposed text, surfaced by list/show/sites and verified by check -- reusing the deferral machinery so the site claim is scanned, which is what INV-207's defect needed.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/132"
+}

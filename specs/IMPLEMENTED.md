@@ -43,6 +43,62 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-queue-holds-amendments-too
+
+- **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #79)
+- **Files changed:** `.claude/skills/review-invariants/pending_invariants.py`,
+  `.claude/skills/review-invariants/SKILL.md`, `tests/test_amendments_are_queued.py` (new),
+  `specs/IMPLEMENTED.md`, `.claude/skills/implement-github-issue/state/79.json`
+- **MCP re-check:** n/a (no Senzing fact). ⚠️ The Senzing MCP server is unauthorized in this
+  session; nothing here asserts a Senzing fact.
+- **Summary:** the review queue was built from two markers — `AWAITING` and `HELD_IN_BLOCK` —
+  and ⛔ **both describe an invariant that does not exist yet**. A change to an invariant
+  **already in force** had no marker, no shape and no queue; `grep -ci amend` over the module
+  returned **0**. **Verified rather than assumed:** **11 of 311** invariants carry a dated
+  correction, **13** markers in all, and not one was ever queued — the wording reached the
+  maintainer through a pull-request body and the conversation while `list` reported `pending: 0`,
+  true to its own definition and misleading as a worklist. ⚠️ **Two more happened during this
+  session, after #79 was filed:** INV-216 was amended at #113 and again at #122, each by a
+  hand-written dated correction approved in conversation — the exact route the issue names.
+  ⛔ **The FULL shape was chosen over the lighter one the issue allowed, on one precedent.**
+  INV-207's correction claimed its pinned site had **moved**, and the content it pins was never
+  written there; a test caught it days later, review did not, because nothing scanned the claim.
+  A lighter block would not have caught it either. So a `PROPOSED AMENDMENT` carries the same
+  three things a deferral does — proposed text, affected sites, and why — and `sites` scans it
+  like any other block. **What ships:** `blocks()` queues amendments, `parse()` carries the
+  target id, `list` prints `AMENDS INV-nnn — already registered` against `new invariant`, `show`
+  states plainly that no id is minted and the original text stays, and `check` verifies an
+  amendment's quotes identically **while counting them separately**, so a reader can tell
+  whether any verified quote belonged to a rule already in force. ⚠️ **The proposed wording names
+  the REAL id, not `INV-NNN`** — the invariant exists, so writing NNN would be false rather than
+  deliberate, and the pattern was widened to accept both. ⛔ **My own error, found by a negative
+  control:** a second exclusion in `blocks()` — *"applied" not in line* — looked prudent and was
+  **dead**, because the marker filter below already rejects an applied amendment exactly as it
+  rejects a registered deferral. The control deleted it with nothing failing. Removed, with the
+  reason recorded: **one arbiter, or the next reader trusts the wrong one.** ⚠️ **That is the
+  second dead clause a control has exposed in two runs** (#108 found the first), which is worth
+  noting as a habit rather than an incident: belt-and-braces logic added "for safety" reads as
+  load-bearing and is not. ⚠️ **A second control did not apply** — it targeted a ⛔ where the
+  skill writes ⚠️ — and the pre-write assertion added at #126 caught it before the guard was
+  consulted. ⚠️ **Fixtures, not the live ledger, per the issue's own criterion 4:** no amendment
+  is pending, so a test over `IMPLEMENTED.md` would assert across an empty set and pass without
+  exercising anything (INV-265). Every behavior is driven by a constructed block; the live ledger
+  is used only to assert the three pending deferrals still parse unchanged. **Negative controls,
+  six**, each failing via the named test and both files restored byte-identical (md5): the
+  marker dropped from the queue filter; the filter widened so an applied amendment returns;
+  the target id no longer carried; `list` no longer distinguishing the kinds; the wording pattern
+  rejecting a real id; and the skill no longer documenting the shape. **Verification:** suite
+  **4,542 passed, 4 skipped** (up 12); absent leg **OK (skipped=66)**; `citations.py verify`
+  clean at **311**; queue unchanged at `pending: 3`, `held: 1`.
+- **This run establishes no invariant.** It adds a **shape and a queue**, not a guarantee: the
+  rule that a permanent change reaches the maintainer before it lands is **INV-310's** subject
+  for this repository's own records, and this makes an act that was already gated *visible*
+  rather than newly gating it. ⚠️ **What it deliberately does not do is require an amendment to
+  be queued.** Nothing fails when one is written straight into a pull request, which is how all
+  thirteen happened; a rule binding that is a maintainer decision about their own workflow, and
+  is the natural subject of a future deferral rather than something this run should mint.
+- **Commit:** 1d2aa33
+
 ## since-states-the-corpus-it-counted-over
 
 - **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #108)
