@@ -1,0 +1,8 @@
+{
+  "issue": 124,
+  "branch": "124-docktermj-1",
+  "phase": "gate2",
+  "approach": "Direct (5a): R8 names the issue it suggests and stops; approval-before-action stated first as the whole guarantee; command and user-global skill brought to it; guards moved with the rule.",
+  "gate1_approved": true,
+  "comments_posted": []
+}
