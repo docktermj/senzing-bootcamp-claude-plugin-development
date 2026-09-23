@@ -92,7 +92,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   `INVARIANTS.md` is still open and recorded on #111**, and is now more pressing than when it was
   filed: R8 has been amended three times in two days with no invariant binding any of it, and the
   only thing that catches a regression is the guards this run happens to have moved by hand.
-- **Commit:** uncommitted
+- **Commit:** 39ea253
 
 ## the-manifest-status-regression-and-its-guard
 
