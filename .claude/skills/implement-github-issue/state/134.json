@@ -1,0 +1,8 @@
+{
+  "issue": 134,
+  "branch": "134-docktermj-1",
+  "phase": "implement",
+  "approach": "Add an INV-152 pointer at the TOP of Module 7 Step 2 (where the helper gets written), not beside the INV-115 block at line 289. Pointer names the symptom, cites INV-152 + ground-rules.md, restates no prescription (INV-300). Guard pins presence + single-owner.",
+  "gate1_approved": true,
+  "comments_posted": []
+}
