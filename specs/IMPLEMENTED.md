@@ -92,7 +92,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   must not drift — rather than a new guarantee about the plugin. ⚠️ **What it does not do is
   decide the 33 remaining entries**; #112 is chartered for that, and this run deliberately holds
   the line rather than widening into it.
-- **Commit:** uncommitted
+- **Commit:** d57f05c
 
 ## the-spec-enumerator-moves-beside-its-consumers
 
