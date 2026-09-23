@@ -38,6 +38,56 @@ procedure around them.
 executes what the maintainer decided. A verdict the maintainer did not give is not a
 default this skill gets to choose — that is the whole reason the deferral exists.
 
+## Two kinds of block, and they decide different things
+
+The queue holds **two** shapes, and `list` says which each one is.
+
+| | **DEFERRED INVARIANT** | **PROPOSED AMENDMENT** |
+|---|---|---|
+| Subject | a rule shipping with **no id** | a change to an invariant **already in force** |
+| The decision | mint an id, or hold | append a dated correction, or hold |
+| Cost of yes | an id, permanent | a note beneath the original, permanent |
+| `list` shows | `new invariant` | `AMENDS INV-nnn — already registered` |
+
+⛔ **An amendment is not a smaller registration; it is a different act.** Registering adds a rule
+that binds future work. Amending changes a rule that is **already binding** — every citation to
+it, every guard enforcing it, and every future reader is affected the moment the note lands.
+
+⚠️ **`INVARIANTS.md` is append-only and stays that way.** An amendment **appends a dated
+correction beneath the original**; it never rewrites, renumbers or deletes. The old text remains
+readable, which is how a child port holding an earlier copy can tell what changed.
+
+### Why amendments are queued at all (#79)
+
+**11 of 311 invariants carry a dated correction**, 13 markers in all — the act is routine. Until
+#79 **not one of them was ever queued**: the proposed wording reached the maintainer through a
+pull-request body and the conversation, while `list` reported `pending: 0` throughout. That was
+true to its own definition and misleading as a worklist.
+
+⛔ **The precedent that decided the shape.** INV-207's correction claimed its pinned site had
+**moved** to another file, and the content it pins was never written there. A **test** caught it
+days later; review did not, because nothing scanned the claim. So an amendment carries the same
+three things a deferral does — the proposed text, the sites it affects, and why — and `sites`
+scans it like any other block.
+
+### Writing one
+
+```markdown
+- **PROPOSED AMENDMENT to INV-nnn — awaiting the maintainer's sign-off; NOT applied.**
+    - ⛔ **<the rule as it ships today, quoted verbatim>** — in `<path>`
+
+  <why the wording needs to change, and what breaks if it does not>
+
+  **INV-nnn** — <the exact text of the dated correction to append>
+```
+
+⚠️ **Write the real id, not `INV-NNN`.** The invariant exists; writing NNN would be false rather
+than deliberate, and `check` resolves the quote against the file the bullet names either way.
+
+⛔ **Applying one resolves it** — mark the bullet `applied YYYY-MM-DD` so it leaves the queue,
+exactly as `resolved INV-nnn` does for a deferral. Re-offering a decision already made asks the
+maintainer to re-derive it.
+
 ## The three verdicts
 
 Present all three every time. **Two of them are not "no".**
