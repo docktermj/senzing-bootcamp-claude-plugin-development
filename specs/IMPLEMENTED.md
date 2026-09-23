@@ -107,7 +107,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   an arbitrary skill* appearing, and the user-level tree remains unobservable from inside this
   repository between runs of the detector. A rule binding skill duplication across five
   repositories is a maintainer decision and is deliberately not invented here.
-- **Commit:** uncommitted
+- **Commit:** 02860d4
 
 ## the-in-repo-skill-catches-up-with-r8
 
