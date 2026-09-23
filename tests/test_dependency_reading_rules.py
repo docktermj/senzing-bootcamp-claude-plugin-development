@@ -78,6 +78,13 @@ REQUIRED_RULES = {
     "owner-checked lines are named as the trap": r"owner-checked",
     "shared files are merge risk, not order": r"(?i)merge risk",
     "independence implies no order": r"(?i)impl(?:y|ies) no order",
+    # ⛔ Whitespace-tolerant for the same reason as the sibling guard: both surfaces wrap these
+    # clauses mid-sentence, and literal spaces matched neither (#105, fifth instance).
+    "approval is required before acting":
+        r"(?is)never\s+begins?\s+work|has\s+not\s+approved|may\s+not\s+start",
+    "the report names a suggestion":
+        r"(?is)names?\s+the\s+issue\s+it\s+suggests|name\s+the\s+issue\s+you\s+suggest"
+        r"|naming\s+one\s+issue",
 }
 
 #: A reference that ASSERTS NON-DEPENDENCE. Must never be read as a dependency edge.

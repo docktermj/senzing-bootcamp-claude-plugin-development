@@ -204,11 +204,16 @@ cross-reference in both directions. The child's local tracking issue closes when
 `parity-check` against a parent tag **containing** the fix confirms it arrived. A parent issue
 closed but not yet released has not reached any bootcamper.
 
-**R8 — `implement-github-issue` never chooses its own target, and reports what it found before
-the user chooses.** Invoked with no argument it asks which issue and **stops until answered**;
-it does not pick, and it never begins work on an issue it selected. The command pushes branches
-and opens pull requests, and *acting on its own selection* is the autonomy it is designed not to
-have.
+**R8 — `implement-github-issue` never begins work on an issue the maintainer has not
+approved.** Invoked with no argument it reviews the open set, reports what it found, **names the
+issue it suggests**, and **stops**. It may analyze, it may rank, it may name one; it may not
+start. The command pushes branches and opens pull requests, and *acting without approval* is the
+autonomy it is designed not to have.
+
+⛔ **The report ends by naming one issue**, so the maintainer's next act is approval rather than
+selection — the command has just read the whole backlog and is the thing best placed to propose
+a target. ⚠️ **Where the open set is empty, or where no issue is a defensible suggestion, the
+report says so** rather than naming one to satisfy the form.
 
 ⛔ **It MUST first review the open set for dependencies and report them** — a suggested order
 where one follows, and which issues are independent — so the choice is made informed rather
@@ -223,9 +228,13 @@ line naming other issues to support an absence claim — *"none of which touch �
 coupling is reported separately, as merge risk**, and never folded into the order. Where issues
 are independent the report says so and **implies no order**.
 
-⚠️ **This rule was narrowed on 2026-09-22 and the narrowing is deliberate** — see
-[§10](#10-amendments). Until then R8 also forbade *recommending*. It no longer does; what
-survives is that the command may advise and still may not act on its own advice.
+⛔ **This rule has been narrowed three times in two days, and ONE clause now carries it** —
+see [§10](#10-amendments). As adopted it forbade recommending **and** picking; 2026-09-22
+removed the ban on recommending; 2026-09-23 removed *asks which issue*. What remains is
+**approval before action**, and it is stated first above rather than last because it is no
+longer one restraint among several — it is the whole of the guarantee. ⚠️ **A child port
+reading only the current text will not see that**, which is why the trajectory is recorded and
+not just the endpoint.
 
 ---
 
@@ -359,6 +368,36 @@ repository cites.
 ⚠️ **An amendment does not renumber.** R8 stays R8. A rule that is withdrawn keeps its number
 and says so, for the same reason `INVARIANTS.md` never reuses an id: a citation that silently
 resolves to a different rule is worse than one that fails.
+
+### 2026-09-23 — R8 narrowed again: it names the issue it suggests
+
+**Was:** *"Invoked with no argument it **asks which issue** and stops until answered; it does not
+pick, and it never begins work on an issue it selected."*
+
+**Now:** it reviews the open set, reports what it found, **names the issue it suggests**, and
+stops. *Stops until approved* survives; **"asks which issue" is removed.**
+
+The reasoning: the command has just read the whole backlog and analyzed it for dependencies, so
+it is the thing best placed to propose a target — ending with *"tell me which issue"* hands the
+selection back at the moment its analysis is most useful.
+
+⛔ **Three narrowings in two days, and what is left is one clause.** The trajectory belongs here
+because a child port reading only R8's current text cannot see it:
+
+| Date | Removed | Remaining restraints |
+|---|---|---|
+| adopted 2026-09-22 | — | does not recommend · does not pick · stops until answered |
+| 2026-09-22 (#119) | *does not recommend* | does not pick · stops until answered |
+| 2026-09-23 (#124) | *asks which issue* | **approval before action** |
+
+⚠️ **Each step was defensible on its own and the direction has been consistent.** R8's remaining
+guarantee is no longer one restraint among several — it carries the rule by itself, which is why
+it is now stated first in R8 rather than last. **A child implementing this must treat approval
+before action as the rule, not as a qualifier on it.**
+
+⚠️ **What did NOT change:** the dependency report, the evidence requirement for every ordering
+claim, the prohibition on reading a non-dependence reference as an edge, and the separation of
+merge risk from order. This amendment touches the closing act only.
 
 ### 2026-09-22 — R8 narrowed: the recommendation ban removed, a dependency report required
 

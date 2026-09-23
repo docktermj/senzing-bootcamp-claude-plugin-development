@@ -43,6 +43,57 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## r8-names-the-issue-it-suggests
+
+- **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #124)
+- **Files changed:** `docs/FAMILY_WORKFLOW.md`, `.claude/commands/implement-github-issue.md`,
+  `tests/test_canonical_operations_resolve.py`, `tests/test_dependency_reading_rules.py`,
+  `specs/IMPLEMENTED.md`, `.claude/skills/implement-github-issue/state/124.json`
+  — **and `~/.claude/skills/implement-github-issue/SKILL.md`, OUTSIDE this repository**
+- **MCP re-check:** n/a (no Senzing fact). ⚠️ The Senzing MCP server is **unauthorized in this
+  session** and the OAuth flow needs an interactive one; no Senzing fact was asserted, so nothing
+  was laundered past that gap, but it is recorded because a run that *did* assert one could not
+  have re-verified it.
+- **Summary:** R8's closing act changed: invoked with no argument the operation now **names the
+  issue it suggests** and stops, rather than asking which. The reasoning is the maintainer's and
+  is sound — the command has just read the whole backlog and analyzed it for dependencies, so
+  ending with *"tell me which issue"* hands the selection back exactly when its analysis is most
+  useful. ⛔ **What this leaves is one clause, and that is the substance of the entry.** R8 was
+  adopted forbidding recommending **and** picking; #119 removed the recommendation ban; #124
+  removes *asks which issue*. **Approval before action is now the whole guarantee**, so it is
+  stated **first** in R8 rather than last, and §10 records the trajectory in a table because a
+  child port reading only the current text cannot see it. ⚠️ **Three narrowings in two days, each
+  defensible, all in one direction** — written down as such rather than left for someone to
+  notice. **Unchanged, deliberately:** the dependency report, the evidence requirement, the
+  prohibition on reading a non-dependence reference as an edge, and the merge-risk separation.
+  ⚠️ **The guards moved with the rule rather than being deleted** —
+  `test_the_command_still_forbids_picking` became
+  `test_the_command_requires_approval_before_acting`, its **third** subject in two days, and its
+  docstring now says outright that a failure there is not wording drift but the command losing
+  the only limit it has. A companion asserts the retired *"ask which one"* does not linger beside
+  the clause that replaced it. ⛔ **My own errors, two, and both are repeats.** (1) **The
+  wrapped-phrase defect of #105, fifth instance** — both new assertions used literal spaces where
+  Markdown wraps the clause mid-sentence, so each matched **neither** surface. Fixed with `\s+`
+  tolerance, which is the same fix #105 shipped for the enforcer clause; ⚠️ it happened while
+  writing the guard whose entire job is catching this class of drift. (2) **A negative control
+  mis-aimed, the sixth in six consecutive runs.** R8 states the approval rule **three** ways; my
+  mutation removed one, the other two still matched, and I read the pass as a guard defect when
+  the rule had genuinely survived. Re-specified to delete all three. ⚠️ **The signature is now
+  precise enough to name:** my mutations delete a *sentence that mentions* the rule rather than
+  the rule, and a rule stated more than once survives them. **Negative controls, four**, each
+  failing via the named test and both files restored byte-identical (md5): the approval
+  requirement removed from the command; the naming instruction removed; the retired
+  *"ask which one"* left beside its replacement; and all three statements of the approval rule
+  removed from R8. **Verification:** suite **4,499 passed, 4 skipped** (up 2); `citations.py
+  verify` clean at **311**.
+- **This run establishes no invariant.** It amends **R8**, in the R-series where that rule lives,
+  and the R-series is numbered for citation across five repositories rather than minted into the
+  `INV-NNN` namespace this repository owns. ⚠️ **Whether the R-series should be mirrored into
+  `INVARIANTS.md` is still open and recorded on #111**, and is now more pressing than when it was
+  filed: R8 has been amended three times in two days with no invariant binding any of it, and the
+  only thing that catches a regression is the guards this run happens to have moved by hand.
+- **Commit:** 39ea253
+
 ## the-manifest-status-regression-and-its-guard
 
 - **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #122)

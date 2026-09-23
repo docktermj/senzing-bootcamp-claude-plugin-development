@@ -10,9 +10,13 @@ Invoke the `implement-github-issue` skill and follow it end to end.
 Issue to implement: $ARGUMENTS
 
 - If `$ARGUMENTS` is **empty**, ⛔ **(R8) review the open issues for dependencies first, report
-  what you found, then ask which one and stop until answered.** Do not pick, and never begin
-  work on an issue you selected. The report names the dependencies, a suggested order where one
-  follows, and which issues are independent.
+  what you found, name the issue you suggest, and stop.** ⛔ **Never begin work on an issue the
+  maintainer has not approved** — that is the whole of this rule now, not a qualifier on it. You
+  may analyze, you may rank, you may name one; you may not start. The report names the
+  dependencies, a suggested order where one follows, and which issues are independent.
+  - ⛔ **End by naming one issue**, so the maintainer's next act is approval rather than
+    selection. ⚠️ Where the open set is empty, or no issue is a defensible suggestion, **say so**
+    rather than naming one to satisfy the form.
   - ⛔ **Every ordering claim carries its evidence** — the sentence, file or acceptance
     criterion the maintainer can check. An ordering with no citable evidence is a **preference**
     and says so; presenting one as a dependency is the failure this rule guards.

@@ -251,14 +251,41 @@ class R8HasOneHome(unittest.TestCase):
             "%s does not require reviewing the open issues for dependencies before asking, "
             "which amended R8 (#119) makes mandatory" % IMPLEMENT_CMD)
 
-    def test_the_command_still_forbids_picking(self):
-        """The clause R8 KEPT when it dropped the recommendation ban."""
+    def test_the_command_requires_approval_before_acting(self):
+        """⛔ The ONE clause R8 still turns on, after three narrowings in two days.
+
+        As adopted R8 forbade recommending and picking; #119 dropped the recommendation ban;
+        #124 dropped *asks which issue*. This assertion has moved with each, and what it now
+        pins is the last restraint standing -- so a failure here is not a wording drift, it is
+        the command losing the only limit it has.
+        """
         text = IMPLEMENT_CMD.read_text(encoding="utf-8")
         self.assertRegex(
-            text, r"(?i)do not pick",
-            "%s no longer forbids picking an issue. R8 gave up 'does not recommend' at #119 and "
-            "kept 'does not pick' -- the command may advise and may not act on its own advice"
-            % IMPLEMENT_CMD)
+            # ⛔ `\s+`, never literal spaces: Markdown wraps this clause across lines in both
+            # surfaces, and a single-space pattern matched neither -- the #105 defect, hit while
+            # writing the guard meant to catch exactly this kind of drift.
+            text, r"(?is)never begins?\s+work\s+on\s+an\s+issue\s+the\s+maintainer\s+has\s+not\s+approved",
+            "%s no longer requires approval before acting. That is the whole of R8 now -- the "
+            "bans on recommending (#119) and on naming a suggestion (#124) were both removed "
+            "deliberately, and this clause is what is left" % IMPLEMENT_CMD)
+
+    def test_the_command_names_a_suggestion(self):
+        """#124: the report ends by naming one issue rather than asking which."""
+        text = IMPLEMENT_CMD.read_text(encoding="utf-8")
+        self.assertRegex(
+            text, r"(?is)name\s+the\s+issue\s+you\s+suggest|End\s+by\s+naming\s+one\s+issue",
+            "%s does not tell the run to name a suggested issue, which amended R8 (#124) "
+            "requires of the closing report" % IMPLEMENT_CMD)
+
+    def test_the_command_no_longer_tells_the_run_to_ask_which(self):
+        """The retired clause must not linger beside the one that replaced it."""
+        text = IMPLEMENT_CMD.read_text(encoding="utf-8")
+        stale = [l for l in text.splitlines() if "ask which one" in l.lower()]
+        self.assertEqual(
+            [], stale,
+            "%s still tells the run to ask which issue. #124 replaced that with naming a "
+            "suggestion; a surface carrying both instructs two different closings: %s"
+            % (IMPLEMENT_CMD, stale[:1]))
 
     def test_the_command_names_the_family_rule(self):
         text = IMPLEMENT_CMD.read_text(encoding="utf-8")
