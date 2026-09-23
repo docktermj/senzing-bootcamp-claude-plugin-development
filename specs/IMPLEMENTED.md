@@ -43,6 +43,57 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-manifest-status-regression-and-its-guard
+
+- **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #122)
+- **Files changed:** `specs/INVARIANTS.md` (one word in INV-216's 2026-09-22 correction),
+  `invariant-manifest.json` (regenerated),
+  `tests/test_manifest_status_does_not_regress.py` (new), `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/122.json`
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** ⛔ **A regression I introduced the previous day, in a published artifact, found
+  only because the next run's dependency review measured a number instead of quoting one.**
+  #113's dated correction under INV-216 wrote *"a **superseded** location quoted as a path"*,
+  where *superseded location* meant the script's old file path and said nothing about the
+  invariant's status. `SUPERSESSION_WORDS` matches `supersede` inside it; no
+  `superseded by INV-nnn` was present; `status_of()` therefore returned **`unclear`**.
+  ⚠️ **The function is right to refuse to guess** — its docstring says the same word marks an
+  entry that supersedes another, one that was superseded, and prose about supersession in
+  general. The defect was in the prose it read. **Measured:** before #113, 33 `unclear` and
+  INV-216 `active`; after, **34** and INV-216 **`unclear`**. `invariant-manifest.json` is what
+  downstream ports read for dual-evaluation, and `docs/development.md` states what that field
+  means to them — *a child cannot tell whether an invariant it inherited is still in force* — so
+  a binding, freshly amended invariant read to four child ports as undecidable. It also
+  inflated the count **#112** exists to reduce, making that issue's stated scope wrong before it
+  began. ⛔ **Nothing caught it, and `--check` passing is the reason it looked fine:** that check
+  verifies the manifest **matches the prose**, which it faithfully did, and it has no notion of
+  a status getting *worse*. **Fixed by one word** — `superseded` → `replaced` — which changes no
+  rule and no meaning; INV-216 is `active` again and the count is back to **33**. ⚠️ **The edit
+  touches a correction already merged into an append-only register**, and is recorded here
+  rather than made quietly: append-only protects rules and ids from silent revision, and this
+  revised neither. **The guard pins a SET, not a count** (`KNOWN_UNCLEAR`, 33 ids), because this
+  repository refuses counts in prose — a set names *which* invariants are undecidable, so a diff
+  means something. ⚠️ **My own error inside this run, caught by a negative control:** the
+  guard's docstring first claimed an id *"may leave the set freely — that is #112's whole job"*.
+  That is false. Removing an id while the manifest still reports it `unclear` withdraws the
+  permission without fixing anything, and **correctly fails**; the permit and the condition
+  retire together, in that order. The docstring was corrected and the distinction pinned,
+  because the looser reading is the one a later editor reaches for. ⚠️ **A second control of
+  mine was mis-aimed before that** — it removed an id from the pin and called the failure a
+  defect, when the failure was right. **That is the fifth mis-aimed control in five consecutive
+  runs**, now a reliable signature: *my mutations keep testing a property adjacent to the one I
+  meant.* **Negative controls, four**, each restored byte-identical (md5): reintroducing #113's
+  wording; pinning an id the register does not define; unpinning an id that is still unclear;
+  and a stale permit, which must **not** fail. **Verification:** suite **4,497 passed, 4
+  skipped** (up 5); `citations.py verify` clean at **311**; `invariant_manifest.py --check`
+  exit 0.
+- **This run establishes no invariant.** It repairs prose and adds a guard over a **derived
+  artifact's** field, which is INV-311's subject — the manifest is generated, checked in CI and
+  must not drift — rather than a new guarantee about the plugin. ⚠️ **What it does not do is
+  decide the 33 remaining entries**; #112 is chartered for that, and this run deliberately holds
+  the line rather than widening into it.
+- **Commit:** uncommitted
+
 ## the-spec-enumerator-moves-beside-its-consumers
 
 - **Implemented:** 2026-09-22 (**Not a spec** — a dated record of one issue-driven run, #113)
