@@ -120,6 +120,28 @@ def normalize(line):
     return re.sub(r"\s+", " ", s)[:60]
 
 
+#: The producer's OUTSIDE count (#108). ⛔ A zero from `since` means "nothing in THIS corpus";
+#: this line is how the consumer learns whether the range shipped a rule somewhere the corpus
+#: never looks -- `docs/`, or a non-`.md` file inside the scanned roots.
+OUTSIDE_LINE = re.compile(r"OUTSIDE the corpus, and therefore NOT counted above: (\d+) line")
+
+
+def outside_count(report):
+    """How many hard-rule lines the range added where the corpus does not look, or 0."""
+    m = OUTSIDE_LINE.search(report)
+    return int(m.group(1)) if m else 0
+
+
+def is_an_empty_range(reported, outside):
+    """⛔ Whether 'no hard rules added' really means the range added none (#108).
+
+    Extracted so it can be exercised directly: the branch that consumes it runs only when the
+    live range happens to be empty, and an assertion that never runs is a guard in name only.
+    `tests/test_since_states_its_corpus.py` tests this function against both answers.
+    """
+    return not reported and not outside
+
+
 def deferred_rule_text():
     """All prose inside `DEFERRED INVARIANT` bullets, flattened.
 
@@ -303,10 +325,24 @@ class EveryNewHardRuleIsAccountedFor(unittest.TestCase):
                     "the range's recorded ref carried shipped work, so it was widened past it "
                     "and STILL reports nothing added -- read the widened range in the "
                     "conformance output before believing this skip")
+            # ⛔ **A FOURTH kind of nothing (#108): the range shipped rules where the
+            # corpus does not look.** `added_rule_lines` filters to SCAN_ROOTS and to `.md`, so
+            # a run that put a ⛔ rule in `docs/` or in a `.py` file under those roots is told
+            # it added none -- and this skip then called that an empty range. Four runs in one
+            # session did exactly that. The producer now reports the outside count; an empty
+            # range is only empty when that count is zero too.
+            outside = outside_count(since)
+            self.assertTrue(
+                is_an_empty_range(parsed.reported, outside),
+                "`since` reports no hard-rule lines in the checked corpus, but %d line(s) were "
+                "added where that corpus does not look (`docs/`, or a non-`.md` file under the "
+                "scanned roots). That is NOT an empty range -- rules shipped, and this guard "
+                "cannot see them. Read the OUTSIDE list in the conformance output and account "
+                "for each one in the ledger entry" % outside)
             self.skipTest(
                 "the report lists no hard-rule lines at all since the newest audit entry. The "
-                "ref was accepted as recorded (no SUSPECT-REF), so this is an empty range "
-                "rather than a range that missed the work")
+                "ref was accepted as recorded (no SUSPECT-REF), and the outside count is zero "
+                "too, so this is an empty range rather than a range that missed the work")
 
         if not parsed.checked:
             # ⚠️ A THIRD kind of nothing, and the one this guard used to disguise as the

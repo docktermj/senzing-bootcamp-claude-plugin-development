@@ -314,8 +314,18 @@ class TheSinceViewFiltersByRef(unittest.TestCase):
                 1, int(m.group(1)),
                 "expected exactly the one added markdown hard rule -- not the REMOVED rule, "
                 "not the .txt file:\n%s" % proc.stdout)
-            self.assertNotIn("notes.txt", proc.stdout,
-                             "a non-markdown file was reported:\n%s" % proc.stdout)
+            # ⛔ Scoped to the COUNTED section (#108). This assertion read the whole report,
+            # and `since` now carries an OUTSIDE section that deliberately names non-markdown
+            # files as *not counted* -- so a whole-output search turned a correct disclosure
+            # into a failure. Its subject was always "the counted set is markdown-only"; that
+            # is what it checks now, and it still fails if notes.txt joins the counted lines.
+            counted_section = proc.stdout.split("\n   CORPUS:")[0]
+            self.assertNotIn("notes.txt", counted_section,
+                             "a non-markdown file was COUNTED:\n%s" % proc.stdout)
+            self.assertIn("notes.txt", proc.stdout,
+                          "the non-markdown file vanished from the report entirely. It must be "
+                          "named in the OUTSIDE section -- a rule shipped where the corpus does "
+                          "not look is the thing #108 exists to surface:\n%s" % proc.stdout)
             self.assertNotIn("old rule", proc.stdout,
                              "a REMOVED hard rule was reported as added:\n%s" % proc.stdout)
 

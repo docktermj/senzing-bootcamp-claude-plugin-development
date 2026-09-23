@@ -1,0 +1,10 @@
+{
+  "issue": 108,
+  "branch": "108-docktermj-1",
+  "phase": "implement",
+  "approach": "Direct (5a): the corpus stays narrow and is stated on every report; hard-rule lines added in the range that land in unscanned rule homes (docs/, non-.md in the scanned roots) are counted and reported; the consumer stops taking the empty-range skip when that count is non-zero.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started"
+  ]
+}

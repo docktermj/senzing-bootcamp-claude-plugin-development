@@ -43,6 +43,65 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## since-states-the-corpus-it-counted-over
+
+- **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #108)
+- **Files changed:** `.claude/skills/production-readiness-audit/conformance.py`,
+  `tests/test_new_hard_rules_are_cited_or_deferred.py`,
+  `tests/test_conformance_sees_a_rule_beside_a_citation.py`,
+  `tests/test_since_states_its_corpus.py` (new), `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/108.json`
+- **MCP re-check:** n/a (no Senzing fact). ⚠️ The Senzing MCP server is unauthorized in this
+  session; nothing here asserts a Senzing fact.
+- **Summary:** `since` reported `0 hard-rule line(s) added` for runs that shipped a ⛔ rule,
+  because `added_rule_lines` filters **twice** — `git diff -- *SCAN_ROOTS`, then
+  `current.endswith(".md")` — and both exclusions are invisible in the output. ⛔ **The defect
+  was SILENCE, not under-counting**, and the corpus now stays narrow **by decision** rather than
+  by omission. **Measured over the whole repository:** **862** hard-rule lines inside the
+  corpus, against **1,360** in `specs/`, **615** in `tests/`, **141** in non-`.md` files inside
+  the scanned roots, and **18** under `docs/`. ⚠️ **Widening would make the figure meaningless
+  rather than complete**: `specs/` is the invariant register and the ledger every run writes
+  into, `tests/` docstrings state rules *about* rules, and a count dominated by the records that
+  describe the rules answers nothing. That reasoning now sits beside `SCAN_ROOTS`. **What ships
+  instead:** the report names its roots and its `.md` filter on **every** run including a zero,
+  and `added_rules_outside_the_corpus()` counts hard-rule lines the range added in
+  `UNCOUNTED_RULE_HOMES` — `docs/`, and non-`.md` files under the scanned roots — so a reader
+  sees `0 counted, N outside`. ⚠️ **It caught this very run:** 6 lines in `conformance.py`,
+  invisible to the counted corpus. ⛔ **The consumer gains a FOURTH kind of nothing.** It
+  already distinguished three — a widened `SUSPECT-REF` range, an empty range, and *rules added
+  outside the checked roots* — and the issue undersold it by saying it simply skips. The missing
+  case was a range that shipped rules where the corpus never looks; `is_an_empty_range(reported,
+  outside)` now requires **both** to be zero, and was **extracted so it can be exercised
+  directly**, because the branch calling it runs only when the live range happens to be empty
+  and an assertion that never runs is a guard in name only. ⛔ **My own errors, three, each
+  caught by a different mechanism.** (1) The first measurement used `lstrip("./")`, which strips
+  the leading dot from `.claude` — every `.claude/` file fell out of `SCAN_ROOTS` into an
+  "other" bucket, reporting **632 counted / 374 other** against the true **862 / 141**. Caught
+  by reading the output and noticing `claude/skills/…` without its dot; **nothing was written
+  from the wrong numbers**. (2) A negative control found **dead logic in my own code**: a
+  `counted` clause that could be deleted with nothing failing, because the exclusion below it
+  already covered the case. Restructured so the exclusion is load-bearing and the control bites.
+  (3) A control was **mis-aimed at the wrong module** — the ninth such across nine runs, same
+  signature. ⚠️ **An existing guard had to be narrowed, and was force-checked rather than
+  trusted.** `test_it_counts_only_ADDED_lines_in_a_repo_it_controls` asserted `notes.txt` never
+  appears **anywhere** in the report; its subject was always *the counted set is markdown-only*,
+  and the new OUTSIDE section names non-markdown files deliberately. Scoped to the counted
+  section **and strengthened** — it now also requires the file to appear in the OUTSIDE section,
+  since a rule shipped where the corpus does not look is the thing this run exists to surface —
+  then force-checked by making the counted set accept non-markdown, which fails it. **Negative
+  controls, five**, each failing via the named test and every file restored byte-identical
+  (md5): the corpus line removed; `docs/` dropped from the rule homes; `specs/` wrongly added to
+  them; the `.md` exclusion removed so scanned markdown double-counts; and the empty-range rule
+  relaxed to ignore the outside count. **Verification:** suite **4,530 passed, 4 skipped** (up
+  14); absent leg **OK (skipped=66)**; `citations.py verify` clean at **311**.
+- **This run establishes no invariant.** The rule it enforces is **INV-308's** — a verification
+  tool reports what it could not verify, and distinguishes *nothing to check* from *could not
+  check* — applied to a corpus boundary rather than to a skip. ⚠️ **The corpus decision itself is
+  recorded beside the constant rather than minted**: which roots a count covers is a property of
+  this repository's tooling, not a guarantee about the plugin, and binding it as an invariant
+  would make every future corpus change an amendment.
+- **Commit:** uncommitted
+
 ## filing-is-gated-and-the-rule-is-drafted
 
 - **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #106)
