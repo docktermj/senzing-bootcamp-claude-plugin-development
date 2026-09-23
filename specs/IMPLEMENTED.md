@@ -97,7 +97,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   be queued.** Nothing fails when one is written straight into a pull request, which is how all
   thirteen happened; a rule binding that is a maintainer decision about their own workflow, and
   is the natural subject of a future deferral rather than something this run should mint.
-- **Commit:** uncommitted
+- **Commit:** 1d2aa33
 
 ## since-states-the-corpus-it-counted-over
 
