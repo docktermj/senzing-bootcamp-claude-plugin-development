@@ -131,15 +131,37 @@ class WhatCouldNotBeDerivedIsReported(unittest.TestCase):
             "to; adding a value silently changes what their registers must handle"
             % sorted(seen - allowed))
 
-    def test_unclear_is_used_rather_than_guessing(self):
-        """⚠️ The prose writes supersession six ways; guessing would be worse than admitting."""
+    def test_the_vocabulary_was_normalized_so_unclear_is_gone(self):
+        """⛔ Saying so here, which is what this assertion's predecessor demanded (#112).
+
+        It required `unclear` to be PRESENT, on the ground that the prose wrote supersession six
+        ways and guessing would be worse than admitting. That was right while status was read
+        from prose. #112 normalized the syntax: status now comes from a
+        `- **Superseded by:** INV-nnn` bullet and from nothing else, so an entry without one is
+        `active` by **derivation** rather than by guess -- and the 33 `unclear` entries turned
+        out to be mostly not supersessions at all (a file, a figure, and ten explicit negatives).
+
+        ⚠️ **The anti-guessing property survives and is asserted below**: the generator must
+        still never emit a status it cannot evidence, which now means a `superseded` entry must
+        name its successor and that successor must exist.
+        """
         data = json.loads(MANIFEST.read_text(encoding="utf-8"))
         unclear = [e["id"] for e in data["invariants"] if e["status"] == "unclear"]
-        self.assertTrue(
-            unclear,
-            "no entry is marked `unclear`, although the prose carries several supersession "
-            "spellings. Either the vocabulary was normalized -- in which case say so here -- or "
-            "the generator has started guessing a status it cannot determine")
+        self.assertEqual(
+            [], unclear,
+            "`unclear` is emitted for %s. It left the vocabulary at #112 -- if the generator has "
+            "started reading prose again, that is the defect, not the report" % ", ".join(unclear))
+
+    def test_no_status_is_asserted_without_evidence(self):
+        """The surviving half of the anti-guessing rule: `superseded` must name a real id."""
+        data = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        ids = {e["id"] for e in data["invariants"]}
+        bad = [e["id"] for e in data["invariants"]
+               if e["status"] == "superseded" and e["superseded_by"] not in ids]
+        self.assertEqual(
+            [], bad,
+            "entr(ies) are reported superseded by an id the register does not define: %s. That "
+            "is a guess wearing a status" % ", ".join(bad))
 
     def test_a_superseded_entry_names_what_superseded_it(self):
         data = json.loads(MANIFEST.read_text(encoding="utf-8"))

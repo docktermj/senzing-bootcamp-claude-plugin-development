@@ -121,12 +121,18 @@ What the parent undertakes to provide:
   `python3 .claude/skills/review-invariants/invariant_manifest.py`; `--check` exits 1 when stale.
 - **A diffable shape.** Sorted keys, one entry per id, so two releases' manifests can be compared
   to see what was added, edited or superseded — which is what a child's dual-evaluation needs.
-- ⚠️ **Honest nulls.** `summary` is `null` where no one-line statement could be extracted — 113 of
-  309 at time of writing — and ⛔ **that means *not derivable*, never *no rule***. `statement`
-  always carries the full text. A child treating null as absence will under-count its register.
-- ⚠️ **`status` is `unclear` where the prose is ambiguous** (33 at time of writing), never guessed.
-  The prose writes supersession six different ways, and the same word marks an entry that
-  supersedes another as well as one that was superseded.
+- ⚠️ **Honest nulls.** `summary` is `null` where no one-line statement could be extracted, and
+  ⛔ **that means *not derivable*, never *no rule***. `statement` always carries the full text.
+  A child treating null as absence will under-count its register. ⚠️ **No count is stated here
+  deliberately** — a figure in prose goes stale silently while reading authoritative; read the
+  live number off `invariant-manifest.json`.
+- ⛔ **`status` is `active` or `superseded`. There is no third value (#112).** It is decided by
+  a bullet — `- **Superseded by:** INV-nnn — <what changed>` — and by **nothing else**: prose
+  mentioning supersession is not evidence. The earlier `unclear` value is gone, and so is the
+  caveat that went with it.
+- ⚠️ **A `Partly superseded by:` bullet leaves the entry `active`.** Six invariants had only a
+  *clause* replaced and still bind in full; reporting them `superseded` would tell a child the
+  whole rule is obsolete. Read the bullet when one is present.
 - **`/review-invariants` keeps it current**: registering an invariant regenerates the manifest.
 
 ⚠️ **Not undertaken:** that a `summary` exists for every id, or that `status` is decidable for

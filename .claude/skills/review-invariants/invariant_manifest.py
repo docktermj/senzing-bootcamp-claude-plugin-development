@@ -56,7 +56,27 @@ GROUP = re.compile(r"(?m)^- \*\*(.+?)\*\*\s*—.*?\n((?:.*\n)*?)(?=^- \*\*|\Z)")
 #: than from taste: at 200 the median entry (249) is excluded, so this is deliberately generous.
 SUMMARY_MAX = 300
 
-SUPERSEDED_BY = re.compile(r"[Ss]uperseded by (INV-\d{3})")
+#: ⛔ **(#112) Status comes from THESE BULLETS ALONE — prose is never evidence.** The old
+#: reading matched the word anywhere and produced `unclear` for **33** entries, of which most
+#: were not supersessions at all: the word used about a *file* in a tree diagram (INV-050), a
+#: *figure* (INV-278, INV-295), or an explicit negative — *"supersedes nothing"* (INV-300),
+#: *"INV-089 is **not** superseded"* (INV-263). #122 was the same defect at one entry.
+SUPERSEDED_BULLET = re.compile(r"^\s*- \*\*Superseded by:\*\* (INV-\d{3})", re.M)
+
+#: ⚠️ **A third relation the two-state model has no room for, and the data does.** Five entries
+#: say only a *clause* of themselves is superseded — INV-040's parenthetical, INV-079's recap
+#: heading, INV-086's framing, INV-101's Docker-only scope, INV-137's trigger. **They still
+#: bind.** Calling them `superseded` would tell four child ports the whole rule is obsolete,
+#: which is false and is the dangerous direction; so they remain `active` and say why in a
+#: bullet of their own.
+PARTLY_SUPERSEDED_BULLET = re.compile(r"^\s*- \*\*Partly superseded by:\*\* (INV-\d{3})", re.M)
+
+#: The back-link. A successor names what it replaced, because a successor that does not read
+#: as a new rule -- which is how six variants of this came to exist.
+SUPERSEDES_BULLET = re.compile(r"^\s*- \*\*Supersedes:\*\* (INV-\d{3})", re.M)
+
+#: Kept ONLY to find prose that still talks about supersession, so a guard can require each
+#: such entry to be dispositioned. ⛔ It no longer decides status.
 SUPERSESSION_WORDS = re.compile(r"supersede|Supersede|withdrawn|Corrected \d{4}|Amended \d{4}")
 
 
@@ -104,17 +124,21 @@ def sections_by_id(text):
 
 
 def status_of(body):
-    """`superseded`, `active`, or `unclear` -- never a guess.
+    """`superseded` or `active` -- two states, decided by a bullet rather than by prose.
 
-    ⚠️ Only an explicit *superseded by INV-nnn* is read as superseded. An entry carrying any other
-    supersession vocabulary is `unclear`: the same word marks an entry that supersedes another,
-    one that was superseded, and prose about supersession in general.
+    ⛔ **(#112) There is no third state.** An entry carrying `- **Superseded by:** INV-nnn` is
+    superseded; every other entry is active. Prose mentioning supersession decides nothing,
+    which is what removed 33 `unclear` entries that were mostly not supersessions at all.
+
+    ⚠️ A `Partly superseded by:` bullet leaves the entry **active** deliberately: only a clause
+    of it was replaced and the rest still binds. Reporting it as superseded would tell a child
+    port the whole rule is obsolete.
     """
-    m = SUPERSEDED_BY.search(body)
+    m = SUPERSEDED_BULLET.search(body)
     if m:
         return "superseded", m.group(1)
-    if SUPERSESSION_WORDS.search(body):
-        return "unclear", None
+    # ⛔ Everything else is `active`. `unclear` has left the vocabulary (#112): it existed
+    # because prose was being read as evidence, and prose is no longer read at all.
     return "active", None
 
 

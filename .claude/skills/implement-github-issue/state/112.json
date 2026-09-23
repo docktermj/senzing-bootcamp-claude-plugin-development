@@ -1,0 +1,12 @@
+{
+  "issue": 112,
+  "branch": "112-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): status from the two bullets alone; every vocabulary-bearing entry without them must be dispositioned in REVIEWED_NOT_A_SUPERSESSION or the guard fails; genuine supersessions converted bidirectionally; syntax drafted as a deferral.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/133"
+}
