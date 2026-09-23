@@ -43,6 +43,81 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## filing-is-gated-and-the-rule-is-drafted
+
+- **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #106)
+- **Files changed:** `tests/test_filing_is_gated.py` (new),
+  `.claude/skills/unattended-issue-loop/SKILL.md`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/106.json`
+- **MCP re-check:** n/a (no Senzing fact). ⚠️ The Senzing MCP server is unauthorized in this
+  session and its OAuth flow needs an interactive one; nothing here asserts a Senzing fact.
+- **Summary:** the filing gate ships in **three** skills and is registered in **no** invariant.
+  Verified rather than taken from the issue: `feedback-to-issues`, `production-readiness-audit`
+  and `retrofit-from-public` each instruct filing and each state the gate, and
+  `specs/INVARIANTS.md` carries **0** invariants on the subject. ⛔ **A first scan over-counted
+  and the correction is the guard's whole design.** Searching for `gh issue create` returns
+  **six** files, three of which name it only to forbid the act — the command file forbidding
+  `--repo`, a body template, and `unattended-issue-loop`'s ⛔ *"An unattended audit FILES
+  NOTHING"*. **A mention inside a prohibition is not an instruction**, and a guard that cannot
+  tell them apart would demand a gate on the rule that forbids filing. ⛔ **The discriminator is
+  the fence:** `gh issue create` inside a fenced block is a command the reader is told to run;
+  in inline backticks it is prose about one. Measured, it splits the six **3 and 3**, exactly
+  along the instruction/prohibition line, and all three negatives are pinned. ⚠️ **My own error,
+  caught by measuring twice:** the first fence pattern anchored at column 0 and missed both
+  indented fences, reporting two surfaces that *do* instruct filing as though they did not —
+  `[ \t]*` is load-bearing and is commented as such. ⚠️ **The gate is required NEAR the
+  instruction**, within 25 lines; measured distances are 7, 3 and 2, on both sides. A file-wide
+  search would let a gate in one section vouch for an instruction in another, which is the
+  defect class this repository keeps finding. **The unattended complement is dispositioned
+  rather than restated (criterion 3):** unattended there is nobody to ask, so the answer is *do
+  not file*, and both halves reduce to one statement — an issue is created only on an explicit
+  yes. ⛔ **A fourth restatement was deliberately NOT added there**, since a fourth copy of a
+  rule that already disagrees with itself in three places is what the deferral exists to stop.
+  ⛔ **A finding that strengthens the issue rather than following it:** `implement-github-issue`
+  **files issues in practice and states nothing** — neither `gh issue create` nor any gate
+  appears in its skill or command, yet ten issues were filed from within its flow during this
+  session, including #106 itself. A yes was asked for every time, but that was discipline
+  carried in the conversation rather than a rule the command states. ⚠️ **That is the argument
+  for an invariant over a fourth restatement:** the rule must bind **the act of filing wherever
+  it happens**, not be copied into each command that happens to file — and adding a gate
+  sentence to `implement-github-issue` would make the register look complete while leaving the
+  next command that files uncovered. **Negative controls, three**, each failing via the named
+  test, every file restored byte-identical (md5), and each asserting its mutation actually
+  destroyed the property before the guard was consulted: a skill dropping its gate; the audit's
+  gate moved out of the window; and the unattended prohibition turned into an instruction.
+  **Verification:** suite **4,516 passed, 4 skipped** (up 8); `citations.py verify` clean at **311**.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+  shipping:
+    - ⛔ **Show the maintainer the title and body, and get a yes, before filing.** — in `.claude/skills/feedback-to-issues/SKILL.md`
+    - ⛔ **An unattended audit FILES NOTHING.** — in `.claude/skills/unattended-issue-loop/SKILL.md`
+
+  ⚠️ **Why this is not INV-310 or INV-312.** INV-310 binds a **permanent or append-only act on
+  this repository's own records** and its remedy is *stop at the working tree*; filing has no
+  working-tree stage to stop at, so the gate is the only available control. INV-312 governs
+  where `/retrofit-from-public` files and therefore **assumes** a gate without stating one.
+  Citing either would repeat the INV-134 defect — a guarantee shipped with no invariant, after
+  which two files cited an invariant about something else as its authority.
+
+  The drafted wording:
+
+  **INV-NNN** — A maintainer command that creates a record in a system **outside this
+  repository** — a tracker issue, a comment, an upstream message — MUST present the exact text
+  it would create and obtain the maintainer's assent **before** creating it, each record
+  separately where there is more than one. ⛔ **Assent to one record is not assent to the
+  batch.** Where no maintainer is present the command MUST create nothing and MUST record the
+  drafted text where the maintainer will find it. ⛔ **The rule binds the ACT, not the command**:
+  a command that files without being instructed to — because the maintainer asked in the moment
+  — is filing, and is bound. ⚠️ **Unlike INV-310, which stops a permanent act at the working
+  tree, an outward-facing act has no working-tree stage to stop at**: the gate is the only
+  control, so it cannot be inferred from a related rule and must be stated. Enforced by
+  `tests/test_filing_is_gated.py`, which asserts the instruction and the gate sit together and
+  **cannot** establish that a run actually asks, or that a maintainer actually answered — only
+  `dry-run` phase 3 can observe that. *(written as NNN deliberately: a literal id here would
+  cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer
+  registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a
+  number written here.)*
+- **Commit:** uncommitted
+
 ## both-skill-copies-share-a-block-and-drift-is-detectable
 
 - **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #128)

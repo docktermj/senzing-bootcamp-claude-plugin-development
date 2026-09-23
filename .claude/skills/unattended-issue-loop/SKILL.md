@@ -211,7 +211,14 @@ After the open set is empty or every remainder is blocked, invoke
 
 ⛔ **An unattended audit FILES NOTHING.** Fixed in #69: the audit records each finding in
 its dated `specs/IMPLEMENTED.md` entry and lists it in the handoff marked **not filed**,
-rather than calling `gh issue create`. ⚠️ **That is this contract, not an exception to
+rather than calling `gh issue create`.
+
+⚠️ **This is the same rule as the attended gate, not a second one (#106).** Three skills
+require a yes before filing; unattended there is nobody to ask, so the answer is *do not file*.
+Both reduce to one statement — **an issue is created only on an explicit yes** — and the
+drafted invariant in `specs/IMPLEMENTED.md` covers both halves rather than leaving this one to
+be read as an exception. ⛔ **Do not restate the attended gate here**: a fourth copy of a rule
+that already disagrees with itself in three places is what the deferral exists to stop. ⚠️ **That is this contract, not an exception to
 it** — filing leaves the machine, and nothing leaves the machine unattended. The
 maintainer files what survives their read. ⛔ **Never file the audit's findings yourself
 at the end of a run**, and never label anything `unattended-ok`.
