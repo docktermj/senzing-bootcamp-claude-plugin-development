@@ -1,0 +1,11 @@
+{
+  "issue": 126,
+  "branch": "126-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): port #119 and #124 into the in-repo SKILL.md, add it as a third guarded surface, and leave ~/.claude/skills/ byte-identical by instruction.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/127"
+}
