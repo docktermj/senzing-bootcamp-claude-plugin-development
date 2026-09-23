@@ -43,6 +43,83 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## supersession-has-one-syntax
+
+- **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #112)
+- **Files changed:** `specs/INVARIANTS.md` (44 supersession bullets added),
+  `.claude/skills/review-invariants/invariant_manifest.py`, `invariant-manifest.json`,
+  `docs/development.md`, `tests/test_supersession_has_one_syntax.py` (new),
+  `tests/test_invariant_manifest_matches_the_prose.py`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/112.json`
+- **MCP re-check:** n/a (no Senzing fact). ⚠️ The Senzing MCP server is unauthorized in this
+  session; nothing here asserts a Senzing fact.
+- **Summary:** ⛔ **`status: unclear` is gone — 33 → 0 — and the issue's premise needed
+  correcting first.** It reads as *"convert all 33 ambiguous entries"*; reading them, **most had
+  no supersession to convert**: the word used about a **file** in a tree diagram (INV-050), a
+  **figure** (INV-278, INV-295), an annotation vocabulary (INV-202), the MCP server's own
+  behavior (INV-181), and **ten explicit negatives** — *"supersedes nothing"* (INV-300),
+  *"INV-089 is **not** superseded"* (INV-263), six *"Forward pointer — nothing here is
+  superseded"* notes. ⛔ **This is #122 at scale**, where one word about a file path flipped
+  INV-216. So the center of gravity moved to the issue's own step 2: status now comes from a
+  **bullet** and prose decides nothing, which removed the false positives by construction.
+  **Converted:** 19 full supersessions gained `- **Superseded by:** INV-nnn — <what changed>`,
+  19 back-links gained `- **Supersedes:** INV-nnn`, and **6** gained
+  `- **Partly superseded by:**`. ⚠️ **Append-only was checked, not assumed:** maintenance rule 2
+  permits editing an entry *"only to clarify wording without changing its meaning"*, which is
+  exactly what a form change is. **Nothing was renumbered or deleted.** ⛔ **A third relation
+  the issue's two-state model has no room for, and the data does.** Six entries say only a
+  *clause* of themselves was replaced — INV-040's parenthetical, INV-079's recap heading,
+  INV-086's framing, INV-101's Docker-only scope, INV-104's tab enumeration, INV-137's trigger —
+  **and the rest still binds**. They stay `active`, because reporting them `superseded` would
+  tell four child ports the whole rule is obsolete. ⚠️ **That is the dangerous direction and it
+  was named at Gate 1 before it was engineered:** `unclear` at least said *I do not know*, while
+  a wrong `active` is confident. ⛔ **My own error, and it is the exact failure I had warned
+  about.** The conversion pattern required `superseded by INV-nnn` contiguously, and **INV-104
+  writes it as `superseded by **INV-155**`** — markup between the words — so it was **missed**
+  and would have flipped from `unclear` to `active` silently. Found by a markup-tolerant rescan
+  run *because* the risk had been named; one entry, and it was the one the pattern could not
+  see. ⚠️ **That is the wrapped-or-marked-up-phrase defect of #105, now its sixth instance.**
+  **The safety net shipped rather than being promised:** every entry whose prose still mentions
+  supersession and carries no bullet must appear in `REVIEWED_NOT_A_SUPERSESSION` with a written
+  reason — **24 entries, each read and dispositioned individually** — so nothing is reclassified
+  by omission, a new entry acquiring the vocabulary fails until someone looks at it, and the
+  permit may only shrink. ⚠️ **An existing guard was repointed and force-checked**, not deleted:
+  `test_unclear_is_used_rather_than_guessing` **required** `unclear` to be present, and its own
+  failure message named the sanctioned response — *"Either the vocabulary was normalized, in
+  which case say so here"*. Said so, and the **anti-guessing property was kept** as a new
+  assertion that a `superseded` entry must name an id the register defines; force-checked by
+  pointing one at an id the register does not define, which fails it. ⚠️ **That id is described rather than written here**: a literal non-existent `INV-nnn` in this file is read by `citations.py verify` as a citation and turns it red — which it did, on this entry's first draft, for the third time this session. **Negative controls, five**, each failing via the named test and both files restored byte-identical (md5), and each asserting its mutation destroyed the property first: a back-link removed; a bullet naming an invariant that does not exist; an entry gaining the vocabulary with no bullet and no disposition; status read from prose again; and a partial supersession reported as superseded. ⚠️ **One control was mis-aimed** — it inserted the vocabulary between the id and the em dash, which breaks the entry pattern so the entry **vanishes** rather than becoming undisposed, and it passed for that reason rather than because the guard was weak. Tenth mis-aimed control across ten runs.
+  **Verification:** suite **4,554 passed, 4 skipped** (up 12); `citations.py verify` clean at **311**;
+  `invariant_manifest.py --check` exit 0.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+  shipping:
+    - ⛔ **`status` is `active` or `superseded`. There is no third value (#112).** — in `docs/development.md`
+
+  ⚠️ **Why this wants an id rather than living as R12 alone.** R12 states the syntax for the
+  **family**, and four child ports cite it; but the parent's own manifest is a **derived artifact
+  published for those ports** (INV-311), and what its `status` field may contain is a guarantee
+  *this* repository makes about *its own* output. R12 binds the prose; this binds the emission.
+
+  The drafted wording:
+
+  **INV-NNN** — Where this repository publishes a derived register for downstream ports, a
+  record's **supersession status MUST be derived from an explicit marker and never from prose**.
+  ⛔ The marker is bidirectional: the superseded record names its successor **and what changed**,
+  and the successor names what it replaced. ⛔ **Two states only** — a record carrying the marker
+  is superseded, every other record is active — and ⚠️ **a partial supersession is NOT a third
+  state**: where only a clause is replaced the record remains **active** and says which clause,
+  because reporting it superseded tells a consumer the whole rule is obsolete. ⚠️ **Prose that
+  merely mentions supersession decides nothing**, and any record whose prose does so while
+  carrying no marker MUST be dispositioned explicitly rather than silently reclassified — a
+  wrong `active` is confident where an honest *unknown* was not. Enforced by
+  `tests/test_supersession_has_one_syntax.py`, which asserts the syntax, the back-links and the
+  disposition list, and **cannot** establish that a supersession recorded is correct, or that a
+  clause marked partial really is partial. *(written as NNN deliberately: a literal id here would
+  cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer
+  registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a
+  number written here.)*
+- **Commit:** uncommitted
+
 ## the-queue-holds-amendments-too
 
 - **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #79)
