@@ -1,0 +1,11 @@
+{
+  "issue": 122,
+  "branch": "122-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): reword one word in INV-216's 2026-09-22 correction so it carries no supersession vocabulary; regenerate the manifest; guard the unclear SET against growth.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/123"
+}
