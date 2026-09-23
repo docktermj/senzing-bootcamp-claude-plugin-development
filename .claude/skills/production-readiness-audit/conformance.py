@@ -39,6 +39,29 @@ INV_ID = re.compile(r"INV-\d{3}")
 #: surface as explicitly out of scope. See that module's docstring for why.
 SCAN_ROOTS = ("plugins/senzing-bootcamp", ".claude/commands", ".claude/skills")
 
+#: ⛔ **The corpus is these roots AND `.md` only, and it stays narrow deliberately (#108).**
+#: Measured 2026-09-23 over the whole repository: **862** hard-rule lines sit inside it, against
+#: **1,360** in `specs/`, **615** in `tests/`, **141** in non-`.md` files inside these very
+#: roots, and **18** under `docs/`.
+#:
+#: ⚠️ **Widening would make the figure meaningless rather than complete.** `specs/` is the
+#: invariant register and the implementation ledger, so counting ⛔ lines there counts the
+#: invariants themselves and the entries every run writes; `tests/` docstrings state rules
+#: *about* rules. A "hard-rule lines added" number dominated by the records that describe the
+#: rules answers nothing.
+#:
+#: ⛔ **The defect #108 reported was never under-counting — it was SILENCE.** A run could not
+#: tell whether `0` meant *nothing was added* or *nothing was looked at*. So the corpus is
+#: stated on every report, and rules added in the range that land in `UNCOUNTED_RULE_HOMES`
+#: are counted and named rather than passed over.
+
+#: Where hard rules also ship and this corpus does not look. ⛔ Deliberately NOT `specs/` or
+#: `tests/`, for the reason above: those are records about rules, and folding them in would turn
+#: a signal into permanent noise. A non-`.md` file inside `SCAN_ROOTS` qualifies too -- the
+#: `.py` and `.sh` tooling states rules in `#:` comments and docstrings as a matter of house
+#: style, and 141 of them do.
+UNCOUNTED_RULE_HOMES = ("docs/",)
+
 # The repo's own convention for a deliberate hard rule: a ⛔ lead-in, or a bolded
 # MUST/NEVER/ALWAYS. Bare prose "must" is excluded — it is ordinary instruction, and
 # including it took the candidate list from 16 to 202, which no one reads.
@@ -295,6 +318,53 @@ def added_rule_lines(repo, ref, upto=None):
     return added
 
 
+def added_rules_outside_the_corpus(repo, ref, upto=None):
+    """Hard-rule lines added in the same range that `added_rule_lines` cannot see.
+
+    ⛔ **This is the fourth kind of nothing.** `added_rule_lines` filters twice -- to
+    `SCAN_ROOTS` and to `.md` -- so a run that shipped a rule in `docs/` or in a `.py` file
+    under those roots is reported as having added none. The consumer then took that zero as an
+    empty range and skipped, which is *going green by not running* (#108).
+
+    ⚠️ **Scoped to `UNCOUNTED_RULE_HOMES`, not to everything outside the corpus.** Counting
+    `specs/` would count the ledger entry the run is about to write, and `tests/` would count
+    docstrings describing rules; both would make this number large on every run and therefore
+    worth ignoring.
+
+    Returns an ordered {path: [lines]}, or None when git could not answer.
+    """
+    rng = ref if upto is None else "%s..%s" % (ref, upto)
+    proc = subprocess.run(
+        ["git", "diff", "--unified=0", "--no-color", rng],
+        cwd=str(repo), capture_output=True, text=True)
+    if proc.returncode != 0:
+        return None
+    current = None
+    added = collections.OrderedDict()
+    for raw in proc.stdout.splitlines():
+        if raw.startswith("+++ b/"):
+            current = raw[6:]
+            continue
+        if not raw.startswith("+") or raw.startswith("+++"):
+            continue
+        if not current:
+            continue
+        # ⛔ Already counted by `added_rule_lines`; repeating it here would double-count the
+        # very lines this function exists to contrast with. A negative control found the
+        # original form of this test redundant -- the exclusion below already covered it, so
+        # the clause could be deleted with nothing failing.
+        if current.startswith(SCAN_ROOTS) and current.endswith(".md"):
+            continue
+        # A rule home is `docs/`, or any non-`.md` file inside the scanned roots. Everything
+        # else -- `specs/`, `tests/` -- is a record ABOUT rules and is deliberately not counted.
+        if not (current.startswith(UNCOUNTED_RULE_HOMES) or current.startswith(SCAN_ROOTS)):
+            continue
+        body = raw[1:]
+        if classify(body) is not None:
+            added.setdefault(current, []).append(body.strip())
+    return added
+
+
 def last_audit_ref(repo):
     """The newest audit entry with a resolvable commit, or None.
 
@@ -502,6 +572,25 @@ def cmd_since(args):
           % (count, ref, len(added)))
     print("   ^ read every one. This is the set a run is answerable for; the corpus-wide")
     print("     `rules` count cannot see them (it did not move for the 26 added 2026-08-21).")
+
+    # ⛔ (#108) The corpus, stated on EVERY report including a zero. Until this landed, `0`
+    # read as "nothing was added" when it could equally mean "nothing was looked at" -- and
+    # four runs in one session shipped a ⛔ rule outside it and were told they had added none.
+    print("\n   CORPUS: %s — and `.md` only." % ", ".join(SCAN_ROOTS))
+    outside = added_rules_outside_the_corpus(repo, ref, getattr(args, "upto", None))
+    if outside is None:
+        print("   ⚠ OUTSIDE the corpus: could not be determined (git declined the range).")
+    elif outside:
+        n = sum(len(rows) for rows in outside.values())
+        print("   ⛔ OUTSIDE the corpus, and therefore NOT counted above: %d line(s) in %d "
+              "file(s)." % (n, len(outside)))
+        for name, rows in outside.items():
+            print("      %s  (%d)" % (name, len(rows)))
+        print("      These shipped a hard rule where this corpus does not look. A zero above")
+        print("      is 'nothing to check HERE', never 'nothing was added'.")
+    else:
+        print("   OUTSIDE the corpus: 0 — no rule shipped in %s or in a non-`.md` file under "
+              "the roots." % ", ".join(UNCOUNTED_RULE_HOMES))
     print("   \u26a0 Line-level: a rule MOVED between files shows as added here. That is the")
     print("     right default for review -- a relocated rule still needs its citation to")
     print("     travel with it -- but it is not the same as a NEW guarantee.")
