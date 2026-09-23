@@ -43,6 +43,59 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-in-repo-skill-catches-up-with-r8
+
+- **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #126)
+- **Files changed:** `.claude/skills/implement-github-issue/SKILL.md`,
+  `tests/test_dependency_reading_rules.py`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/126.json`
+- ⛔ **`~/.claude/skills/implement-github-issue/SKILL.md` was NOT changed**, by the maintainer's
+  instruction. Verified byte-identical before and after, and again after every negative control:
+  md5 `38cc793235bc801a960ec82ff984ce51`.
+- **MCP re-check:** n/a (no Senzing fact). ⚠️ The Senzing MCP server is unauthorized in this
+  session and its OAuth flow needs an interactive one; nothing here asserts a Senzing fact.
+- **Summary:** ⛔ **There were two `SKILL.md` files for `implement-github-issue` with identical
+  `name:` and `description:`, and they had diverged.** The in-repo copy sat at its **original**
+  state (`8e18ae2`), carrying neither #119's dependency review nor #124's name-a-suggestion
+  clause, while the user-level copy received both. ⚠️ **The stale one is the one that ships**: it
+  is version-controlled, named by `.claude/commands/implement-github-issue.md`, checked by
+  `test_dev_commands_name_a_real_skill.py`, and read by a child port from a tagged release. The
+  user-level copy ships nowhere and cannot appear in a pull request. ⛔ **This is INV-300 — *a
+  rule with two homes is a rule that will disagree with itself* — happening to R8**, the very
+  rule `docs/FAMILY_WORKFLOW.md` cites INV-300 to justify children linking to rather than
+  restating. ⛔ **My error, and its shape matters:** at #119 I asked the maintainer where the
+  behavior should live, offered *"the command file"* or *"the global skill too"*, and **never
+  mentioned this file because I did not know it existed** — asserting at Gate 1 that the
+  user-level copy was the only skill copy and that no pull request could show the diff. Both
+  false. The same omission repeated at #124. **Neither guard could have caught it:**
+  `test_dev_commands_name_a_real_skill.py` asserts a skill file *exists*, and nothing compared
+  the two copies — nothing in this repository *can*, since one is outside it, which was the
+  stated reason for leaving that one unguarded. **Fixed by porting** both features into the
+  in-repo copy and adding it as a **third guarded surface** beside the command and R8, so it is
+  now held to the same rules. ⚠️ **The maintainer's decision is recorded on #126:** the in-repo
+  copy is the one to use when working here, and the user-level copy is left alone. ⚠️ **Which
+  copy a session actually loads is NOT settled** — this session loaded the user-level one
+  (`userSettings:implement-github-issue`), that is host behavior rather than this repository's
+  rule, and porting the features removes the *consequence* of the question without answering it.
+  ⛔ **My own errors inside this run, and the eighth instance produced a fix rather than another
+  apology.** Two negative controls came back green; both were **mis-aimed**, not guard defects —
+  the approval rule is stated **three** ways in that region and the naming rule **twice**, and
+  each mutation removed one. **That is the seventh and eighth mis-aimed control across eight
+  consecutive runs**, always the same signature: *the mutation deletes a sentence that mentions
+  the rule rather than the rule.* ⚠️ **So the control script now declares which rule each
+  mutation must destroy and asserts the rule has ZERO matches in the region afterwards** — a
+  mis-aimed mutation now fails the script loudly before the guard is consulted, rather than
+  passing and being misread. **Negative controls, four**, each failing via the named surface,
+  the in-repo copy restored byte-identical and the user-level copy untouched throughout.
+  **Verification:** suite **4,499 passed, 4 skipped**; `citations.py verify` clean at **311**.
+- **This run establishes no invariant.** The rule it enforces is **R8's**, already stated in the
+  R-series and now carried by one more surface; the duplication defect is **INV-300's** subject,
+  already registered. ⚠️ **What this does NOT fix is the general case:** nothing detects a second
+  copy of a skill, and the copy outside this repository remains unguardable from inside it. That
+  is worth an issue of its own and is not drafted here, because a rule binding skill duplication
+  across five repositories is a maintainer decision rather than this run's to invent.
+- **Commit:** uncommitted
+
 ## r8-names-the-issue-it-suggests
 
 - **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #124)

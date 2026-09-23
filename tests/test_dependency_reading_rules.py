@@ -44,9 +44,16 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COMMAND = REPO_ROOT / ".claude" / "commands" / "implement-github-issue.md"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
+#: ⛔ The in-repo skill, added at #126. It existed throughout #119 and #124 and was never
+#: checked, so it sat two amendments behind while a same-named copy under `~/.claude/skills/`
+#: received them -- the INV-300 defect ("a rule with two homes will disagree with itself")
+#: happening to R8, which the family document cites INV-300 to justify. This is the copy that
+#: is version-controlled, that the command names, and that a child port reads from a tagged
+#: release; the user-level copy is outside this repository and cannot be guarded from here.
+SKILL = REPO_ROOT / ".claude" / "skills" / "implement-github-issue" / "SKILL.md"
 
 #: The surfaces that must carry the rules. Both are in-repo; the global skill is not (see above).
-SURFACES = {"the command": COMMAND, "family rule R8": FAMILY}
+SURFACES = {"the command": COMMAND, "family rule R8": FAMILY, "the in-repo skill": SKILL}
 
 #: ⛔ The rules are looked for in the REGION THAT STATES THEM, never in the whole file. Scanning
 #: the file was the first version of this module and three negative controls walked straight
@@ -57,6 +64,7 @@ SURFACES = {"the command": COMMAND, "family rule R8": FAMILY}
 REGION = {
     COMMAND: ("- If `$ARGUMENTS` is **empty**", "- If `$ARGUMENTS` **names an issue**"),
     FAMILY: ("**R8 —", "\n---\n"),
+    SKILL: ("If `$ARGUMENTS` is empty,", "Preflight —"),
 }
 
 

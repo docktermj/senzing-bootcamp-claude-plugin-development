@@ -49,8 +49,36 @@ Accept any of these in `$ARGUMENTS`:
 - Shorthand: `<owner>/<repo>#<n>`
 - Bare number: `<n>` — resolves against the current repo
 
-If `$ARGUMENTS` is empty, ask: "Which GitHub issue should I implement? Paste the URL or
-issue number." Stop until answered.
+If `$ARGUMENTS` is empty, **review the open issues for dependencies first.** Report, in this
+order: the dependencies you found, a suggested implementation order where one follows, and which
+issues are independent. Then **name the issue you suggest** and stop.
+
+⛔ **Never begin work on an issue the maintainer has not approved.** You may analyze, you may
+rank, you may name one; you may not start. That is the whole of this rule — not a qualifier on
+it. See [`docs/FAMILY_WORKFLOW.md`](../../../docs/FAMILY_WORKFLOW.md) **R8**, which is the
+family-wide statement of it, and §10 for what it used to say: R8 has been narrowed three times
+and this is the clause that is left.
+
+- **End by naming one issue**, so the maintainer's next act is approval rather than selection.
+  You have just read the entire backlog and are the thing best placed to propose a target.
+  ⚠️ Where the open set is empty, or where no issue is a defensible suggestion, **say so** rather
+  than naming one to satisfy the form.
+- **Every ordering claim carries its evidence** — the sentence, file or acceptance criterion the
+  maintainer can check. An ordering with no citable evidence is a **preference**; label it as one
+  rather than presenting it as a dependency.
+- ⛔ **Never read a reference that asserts NON-dependence as a dependency.** An issue naming
+  others to support an absence claim — *"none of which touch …"*, an `owner-checked:` line — is
+  saying they are **unrelated**. Measured 2026-09-22 over seven open issues, reading those lines
+  as edges inverted the clearest signal in the corpus.
+- ⛔ **Shared-file coupling is merge risk, not order.** Five of those seven named
+  `specs/INVARIANTS.md`; it is a hub and establishes no sequence. Report it separately or not at
+  all.
+- Where the issues are independent, **say so and imply no order.** An invented sequence over an
+  independent set is worse than no report.
+
+⚠️ **The real relations are found by reading the issues**, not by counting references or
+intersecting paths — both mechanical methods produced wrong answers on that seven-issue backlog,
+and the only true relation was visible to neither.
 
 Preflight — abort with a clear message if any fails:
 
