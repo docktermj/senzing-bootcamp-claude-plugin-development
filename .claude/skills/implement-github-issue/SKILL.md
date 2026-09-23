@@ -9,13 +9,17 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Agent, Skill
 
 Take a GitHub issue from "reported" to "pull request open for review".
 
-> ⚠️ **This project copy governs in this repository.** A copy of this skill also exists at
-> `~/.claude/skills/implement-github-issue/SKILL.md`, used in repos that have no project copy.
-> `tests/test_dev_commands_name_a_real_skill.py` resolves skills **only** under this project's
-> `.claude/skills/`, so the global copy is invisible to every guard here — and ⛔ **nothing
-> detects drift between the two.** Changes meant for this repo belong here; changes meant for
-> every repo belong in the global copy and must be brought across by hand. Copied 2026-09-16
-> (#50), which is also when the two were last known equal.
+> ⚠️ **Two copies of this skill exist, and the USER-LEVEL one resolves.** The other is at
+> ``~/.claude/skills/implement-github-issue/SKILL.md``. Measured 2026-09-23 by reading the skill body Claude Code
+> injected on invocation against marker strings unique to each file: with a project copy present
+> and `main` up to date, **the copy under `~/.claude/skills/` is the one that loads**. ⛔ The
+> earlier claim here — that the project copy governs — was false from the day it was written
+> (2026-09-16), and is why #119 and #124 amended only one copy.
+>
+> The block marked `SHARED-RULES` below is **byte-identical in both** and is compared by
+> `/check-skill-drift`. Everything outside it may legitimately differ: this repository's copy
+> cites `docs/FAMILY_WORKFLOW.md` and `specs/INVARIANTS.md`, which do not exist in the repos the
+> global copy serves.
 
 This skill never auto-triggers: it posts publicly to GitHub, pushes branches, and opens PRs.
 Run it only when the user explicitly invokes `/implement-github-issue`.
@@ -49,36 +53,42 @@ Accept any of these in `$ARGUMENTS`:
 - Shorthand: `<owner>/<repo>#<n>`
 - Bare number: `<n>` — resolves against the current repo
 
+<!-- SHARED-RULES:BEGIN — byte-identical in both copies of this skill. Verified by
+     `.claude/skills/check-skill-drift/skill_drift.py` (#128). Edit here and carry across. -->
 If `$ARGUMENTS` is empty, **review the open issues for dependencies first.** Report, in this
 order: the dependencies you found, a suggested implementation order where one follows, and which
 issues are independent. Then **name the issue you suggest** and stop.
 
 ⛔ **Never begin work on an issue the maintainer has not approved.** You may analyze, you may
 rank, you may name one; you may not start. That is the whole of this rule — not a qualifier on
-it. See [`docs/FAMILY_WORKFLOW.md`](../../../docs/FAMILY_WORKFLOW.md) **R8**, which is the
-family-wide statement of it, and §10 for what it used to say: R8 has been narrowed three times
-and this is the clause that is left.
+it.
 
 - **End by naming one issue**, so the maintainer's next act is approval rather than selection.
   You have just read the entire backlog and are the thing best placed to propose a target.
-  ⚠️ Where the open set is empty, or where no issue is a defensible suggestion, **say so** rather
+- ⚠️ Where the open set is empty, or where no issue is a defensible suggestion, **say so** rather
   than naming one to satisfy the form.
 - **Every ordering claim carries its evidence** — the sentence, file or acceptance criterion the
   maintainer can check. An ordering with no citable evidence is a **preference**; label it as one
   rather than presenting it as a dependency.
 - ⛔ **Never read a reference that asserts NON-dependence as a dependency.** An issue naming
   others to support an absence claim — *"none of which touch …"*, an `owner-checked:` line — is
-  saying they are **unrelated**. Measured 2026-09-22 over seven open issues, reading those lines
-  as edges inverted the clearest signal in the corpus.
-- ⛔ **Shared-file coupling is merge risk, not order.** Five of those seven named
-  `specs/INVARIANTS.md`; it is a hub and establishes no sequence. Report it separately or not at
-  all.
+  saying they are **unrelated**. Reading those as edges inverts the clearest signal available.
+- ⛔ **Shared-file coupling is merge risk, not order.** A file touched by most of the backlog is
+  a hub and establishes no sequence. Report it separately or not at all.
 - Where the issues are independent, **say so and imply no order.** An invented sequence over an
   independent set is worse than no report.
 
-⚠️ **The real relations are found by reading the issues**, not by counting references or
-intersecting paths — both mechanical methods produced wrong answers on that seven-issue backlog,
-and the only true relation was visible to neither.
+The real relations are found by **reading the issues**, not by counting references or
+intersecting paths — both mechanical methods have produced wrong answers on a real backlog, and
+the only true relation was visible to neither.
+<!-- SHARED-RULES:END -->
+
+⚠️ **In this repository specifically**, the family-wide statement of the rules above is
+[`docs/FAMILY_WORKFLOW.md`](../../../docs/FAMILY_WORKFLOW.md) **R8**, and §10 records that R8 has
+been narrowed three times — approval before action is the clause that is left. The measurements
+behind the two reading rules were taken 2026-09-22 over seven open issues, where
+`specs/INVARIANTS.md` was the hub that made five of seven look ordered. ⛔ **None of that belongs
+in the shared block**: the global copy serves repositories that have neither file.
 
 Preflight — abort with a clear message if any fails:
 

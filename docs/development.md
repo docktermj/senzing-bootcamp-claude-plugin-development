@@ -194,6 +194,7 @@ attended and records findings in the ledger when not (#69). `IMPLEMENTED.md`, `D
 1. `/production-readiness-audit` - Do a thorough static review.
 1. `/dry-run` - Do a thorough runtime review.
 1. `/unattended-issue-loop` - Work the `unattended-ok` issues unattended, alternating implement and audit.
+1. `/check-skill-drift` - Compare this repo's skills against their user-level twins and report drift.
 
 ### Publish
 

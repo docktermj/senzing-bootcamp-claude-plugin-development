@@ -1,0 +1,12 @@
+{
+  "issue": 128,
+  "branch": "128-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a): delimit a byte-identical SHARED-RULES block in both SKILL.md copies on the term maintainer, correct the governs claim in both, and add a detector fronted by a command plus a repo-local settings hook; the detector states both blind spots.",
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "result"
+  ],
+  "pr": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/pull/129"
+}

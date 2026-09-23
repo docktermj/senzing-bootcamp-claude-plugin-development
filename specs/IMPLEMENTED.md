@@ -43,6 +43,72 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## both-skill-copies-share-a-block-and-drift-is-detectable
+
+- **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #128)
+- **Files changed:** `.claude/skills/implement-github-issue/SKILL.md`,
+  `.claude/skills/check-skill-drift/SKILL.md` (new),
+  `.claude/skills/check-skill-drift/skill_drift.py` (new),
+  `.claude/commands/check-skill-drift.md` (new), `.claude/settings.json` (**new — the
+  repository's first**), `.claude/hooks/skill-drift-precommit.sh` (new),
+  `docs/development.md`, `tests/test_skill_drift_detector.py` (new), `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/128.json`
+  — **and `~/.claude/skills/implement-github-issue/SKILL.md`, OUTSIDE this repository**, which
+  the maintainer approved changing this time (unlike #126, where it was to be left alone)
+- **MCP re-check:** n/a (no Senzing fact). ⚠️ The Senzing MCP server is unauthorized in this
+  session; nothing here asserts a Senzing fact.
+- **Summary:** the two `SKILL.md` copies of `implement-github-issue` now share a delimited
+  **`SHARED-RULES`** block, **byte-identical at 2,041 bytes**, and a detector compares them.
+  ⛔ **The repository's copy asserted since 2026-09-16 that "this project copy governs in this
+  repository", and that is false** — measured 2026-09-23 by reading the skill body Claude Code
+  injected on invocation against marker strings unique to each file, the **user-level** copy
+  loads even with a project copy present and `main` current. That sentence is why #119 and #124
+  amended one copy and not the other; it is replaced in **both** files with what was measured.
+  **Vocabulary unified on `maintainer`**, chosen because R8 is the normative statement and uses
+  it — a shared block disagreeing with R8 at the word level would reintroduce the two-homes
+  problem one layer down — and because it stays accurate elsewhere: anyone invoking a command
+  that pushes branches and opens pull requests is acting as that repository's maintainer.
+  ⛔ **Only the delimited block is compared, and that is the design rather than a shortcut.**
+  Everything outside it may legitimately differ: this repository's copy cites
+  `docs/FAMILY_WORKFLOW.md` and `specs/INVARIANTS.md`, which do not exist in the repositories
+  the user-level copy serves. Requiring the files to be identical would either break that copy
+  elsewhere or strip the citations that make R8 enforceable here — **behaving the same is the
+  goal; being identical is not**, and `OnlyTheBlockIsCompared` pins it because "make them the
+  same" is the fix a later reader reaches for. **Both shapes shipped, per the maintainer:** a
+  `/check-skill-drift` command for a deliberate check, and a **repo-local `.claude/settings.json`
+  hook** — the repository's first — firing before `git commit`. ⚠️ **The hook warns and does not
+  block:** the drift it finds is a documentation defect, not a correctness one, and a hook that
+  refuses commits over prose teaches people to bypass it. ⛔ **Neither shape closes the window,
+  and the detector prints both blind spots on every run rather than letting a clean result imply
+  coverage it lacks (INV-308):** a commit made outside a Claude Code session triggers no hook
+  here, and an edit to a user-level copy produces no repository event at all. ⚠️ **On a machine
+  with no `~/.claude/skills/` — every CI runner — the script compares nothing and says so**,
+  distinguishing *could not check* from *nothing to check*, and exits 0 because absence of the
+  other copy is not drift; the live assertion in the guard **skips with that reason** rather than
+  reading a path outside the repository, which would fail in CI and pass on one machine only.
+  **Adding the command cost three files, by this repository's own conventions:** INV-302 requires
+  `.claude/commands/` and the `docs/development.md` list to agree in both directions, and
+  `test_dev_commands_name_a_real_skill.py` requires every command to name a real skill.
+  ⛔ **It was deliberately NOT added to `docs/FAMILY_WORKFLOW.md`'s canonical-operation table** —
+  R4 reserves those names for operations the four child ports are expected to expose, and this is
+  repository-local tooling; the canonical-operations guard checks table→shipped and
+  child-only→absent, neither of which this touches. ⚠️ **One control did not apply and the
+  pre-write assertion caught it** — the mutation targeted *"never begins"* where the block says
+  *"Never begin work"* — which is the check added at #126 doing its job at the applicability
+  level before the guard was ever consulted. **Negative controls, four**, each failing via the
+  named test and all three touched files restored byte-identical (md5): a word changed inside the
+  user-level copy's shared block, which the detector reports and the guard fails on; a citation
+  smuggled **into** the shared block; the detector dropping a blind-spot statement; and the block
+  pattern made greedy so two blocks merge. ⛔ **CI failed on both legs and caught a defect the local run could not.** `main()` returned early when `~/.claude/skills` was absent and printed the blind spots **nowhere** — omitting the disclosure precisely on the machine that compared nothing, which is the **INV-308 failure this script exists to avoid**. It passed here because that directory exists on this machine, and failed on both CI legs where it does not. ⚠️ **The local suite being green was not evidence**, and the three failing assertions were the ones written to enforce the disclosure — they worked; the environment that would exercise them was the one I never ran. Fixed by extracting `blind_spots()` and calling it on **every** non-quiet path, pinned by `test_the_blind_spots_are_stated_even_when_NOTHING_was_compared`, which **simulates the absent tree** rather than skipping so the case runs on every machine, and negative-controlled by restoring the early return. **Verification:** suite **4,508 passed, 4 skipped**
+  (up 8); `citations.py verify` clean at **311**.
+- **This run establishes no invariant.** The duplication defect is **INV-300's** subject and the
+  report-what-you-could-not-check rule is **INV-308's**, both registered; this run applies them
+  to a new surface. ⚠️ **What it does NOT do is generalize** — nothing detects a *second copy of
+  an arbitrary skill* appearing, and the user-level tree remains unobservable from inside this
+  repository between runs of the detector. A rule binding skill duplication across five
+  repositories is a maintainer decision and is deliberately not invented here.
+- **Commit:** 02860d4
+
 ## the-in-repo-skill-catches-up-with-r8
 
 - **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #126)
