@@ -105,7 +105,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   verdict on that wording is still owed; `/review-invariants` asks for it.
 - **Verification:** `citations.py verify` clean at **311**; the guard file at **22 tests**
   (was 21); full suite green.
-- **Commit:** uncommitted
+- **Commit:** 29f50fa
 
 ## production-readiness-audit-2026-09-24
 
