@@ -126,7 +126,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   exception list omitted — the rule is unchanged, and `INVARIANTS.md` rule 2 is not engaged.
 - **Verification:** `citations.py verify` clean at **311**; `invariant_manifest.py --check` no
   drift; suite **4,613 passed, 4 skipped**.
-- **Commit:** uncommitted
+- **Commit:** 6b7dc04
 
 ## the-partial-supersession-marker-is-named-and-published
 
