@@ -68,6 +68,7 @@ mechanisms, not maintainer-facing phases; they keep their names.
 | `delegate-to-mcp-server` | maintenance | required | — | Parent only |
 | `compact-dev-environment` | maintenance | required | — | Parent only |
 | `review-invariants` | maintenance | required | *open question* | See §8 |
+| `check-skill-drift` | maintenance | required | — | Parent only. Compares a duplicated rule block against its out-of-repo twin |
 
 ⚠️ **Renaming is not free.** Where a child's engine, contract, tests or docs reference an
 operation by its old name, the rename is the whole change — a new file beside the old one
@@ -111,10 +112,10 @@ up what the parent released; the parent additionally receives what children esca
 flowchart LR
     subgraph M["Maintenance · parent only"]
         direction LR
-        M1["delegate-to-mcp-server"] ~~~ M2["compact-dev-environment"] ~~~ M3["review-invariants"]
+        M1["delegate-to-mcp-server"] ~~~ M2["compact-dev-environment"] ~~~ M3["review-invariants"] ~~~ M4["check-skill-drift"]
     end
     classDef cmd fill:#eaf2fb,stroke:#3a6ea5,color:#1b3a57
-    class M1,M2,M3 cmd
+    class M1,M2,M3,M4 cmd
 ```
 
 Nothing in the four phases waits on these and they wait on nothing. An "optional" per-change
@@ -368,6 +369,26 @@ repository cites.
 ⚠️ **An amendment does not renumber.** R8 stays R8. A rule that is withdrawn keeps its number
 and says so, for the same reason `INVARIANTS.md` never reuses an id: a citation that silently
 resolves to a different rule is worse than one that fails.
+
+### 2026-09-24 — R4's reserved register gains `check-skill-drift`
+
+**Was:** the §2 table reserved fourteen operation names.
+
+**Now:** fifteen. `check-skill-drift` is added as **maintenance · parent required · children —**.
+
+It shipped in the parent on 2026-09-23 (#128) and was absent from this page for a day. **No
+rule text changed**, and the row itself records that no child is required to have it. This is
+recorded here anyway because R4 reserves names *family-wide*: a child holding an earlier copy
+reads `check-skill-drift` as unclaimed and could give the name to something else, and §10 is
+the only channel that would tell it otherwise.
+
+⚠️ **Its mechanism is Claude-specific and that does not make it host-specific.** It compares a
+rule block against a twin outside the repository — under `~/.claude/skills/` in this host. R4
+already settles the case: *the name is the invariant; the invocation mechanism is the host's
+business.* A child that duplicates a rule block anywhere has the same problem and may claim the
+name; one that does not, needs nothing.
+
+**For a child:** no conformance action. The name is now taken.
 
 ### 2026-09-23 — R8 narrowed again: it names the issue it suggests
 

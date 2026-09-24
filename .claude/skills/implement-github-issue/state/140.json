@@ -1,0 +1,8 @@
+{
+  "issue": 140,
+  "branch": "140-docktermj-1",
+  "phase": "implement",
+  "approach": "Direct (5a). Add check-skill-drift row to FAMILY_WORKFLOW.md §2 (maintenance/required/—/parent-only) + M4 diagram node + §10 amendment entry; add shipped→table assertion to test_canonical_operations_resolve.py and correct the over-claiming docstring (INV-308); widen deferral 4's drafted wording to bind both directions. No exemption set.",
+  "gate1_approved": true,
+  "comments_posted": ["started", "clarifications"]
+}

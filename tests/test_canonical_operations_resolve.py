@@ -14,11 +14,26 @@ surrounding work keeps finding. It was renamed and re-aimed instead.
 
 What it holds now:
 
-* **The table against the shipped set, both directions.** Every operation the table marks
-  `required` for the parent has a file in `.claude/commands/`; every operation the table marks
-  as having no parent counterpart (`—`) does **not**. The second direction matters as much as
-  the first: `parity-check` and `escalate-to-parent` are child-only, and a parent that quietly
-  grew one would contradict the table four repositories read.
+* **The table against the shipped set, three assertions covering both directions.** Every
+  operation the table marks `required` for the parent has a file in `.claude/commands/`; every
+  operation the table marks as having no parent counterpart (`—`) does **not**; and every file
+  under `.claude/commands/` appears in the table. `parity-check` and `escalate-to-parent` are
+  child-only, and a parent that quietly grew one would contradict the table four repositories
+  read.
+
+  ⛔ **The third assertion is the one this file spent its first three days without, while
+  claiming to have it.** This paragraph read *"The table half is exact in both directions"* and
+  named only the first two — and both of those iterate `table().items()`, so a command absent
+  from the table satisfied each of them vacuously. `check-skill-drift` shipped 2026-09-23 (#128),
+  one day after the page was adopted (#111), and was invisible here until a production-readiness
+  audit read the assertions rather than the sentence describing them (#140). ⚠️ **The claim is
+  true now; it is recorded as having been false** so the next reader does not take "both
+  directions" on trust the way this docstring asked them to.
+
+  ⛔ **There is deliberately no exemption set.** A command that should not be listed is a
+  decision needing a reason, and this guard failing is the right place to force it. An empty,
+  never-exercised exemption branch is the failure shape `test_the_child_only_branch_is_exercised`
+  exists to prevent one file over.
 * **The diagrams against the table.** A hyphenated single-token operation named in a mermaid
   block must appear in the table, so a drawing cannot invent an operation.
 * **`docs/development.md` against the one-home rule.** It must link to the family page and must
@@ -32,10 +47,15 @@ item that IS a single hyphenated token. So it does not see an operation embedded
 (*"via escalate-to-parent"*), nor a one-word operation (`release`) -- and it deliberately does
 not see a hyphenated adjective that merely appears in prose, which is what the first attempt
 got wrong, flagging `cross-repo`, `host-behavior`, `parent-owned` and `unattended-ok`. **The
-table half is exact in both directions**; the diagram half catches an invented operation
-written the way the diagrams write them.
+table half is exact in both directions** -- as of #140; see above for what that sentence
+covered before -- and the diagram half catches an invented operation written the way the
+diagrams write them.
 
-Source issues: #55 (original), #111 (re-aimed).
+⚠️ **What the table half still cannot establish:** that a row's *cell values* are right. It
+compares name sets. A command listed with the wrong phase, or marked `required` for children
+that do not have it, passes every assertion here.
+
+Source issues: #55 (original), #111 (re-aimed), #140 (the missing direction).
 
 Stdlib only; both directories are listed and the docs read as text (INV-108).
 
@@ -174,6 +194,24 @@ class TheTableAgreesWithTheShippedSet(unittest.TestCase):
             [], wrong,
             "%s records operation(s) as having no parent counterpart, but they ship under %s: "
             "%s. The table and the repository disagree" % (FAMILY, COMMANDS_DIR, ", ".join(wrong)))
+
+    def test_every_shipped_command_is_in_the_table(self):
+        """The direction neither assertion above can reach, because both iterate the TABLE.
+
+        A command absent from the table satisfies both of them vacuously, so the parent could
+        grow an operation the four child repositories never learn is reserved. That is not
+        hypothetical: `check-skill-drift` shipped 2026-09-23 (#128) and was missing from the
+        table until #140 -- found by an audit reading the assertions, not by anything here.
+        """
+        missing = sorted(shipped() - set(table()))
+        self.assertEqual(
+            [], missing,
+            "command file(s) under %s with no row in the §2 canonical-operation table of %s: "
+            "%s. R4 reserves operation names family-wide, so an operation absent from the table "
+            "is one a child could claim for something else. Add a row -- or, if it genuinely "
+            "should not be listed, that is a decision needing a stated reason, which is why "
+            "there is no exemption set to drop it into"
+            % (COMMANDS_DIR, FAMILY, ", ".join(missing)))
 
 
 class TheDiagramsAgreeWithTheTable(unittest.TestCase):
