@@ -1,8 +1,13 @@
 {
   "issue": 142,
   "branch": "142-docktermj-1",
-  "phase": "implement",
-  "approach": "pending Gate 1",
+  "phase": "pr-open",
+  "approach": "Direct (5a). Renumbering map to the repository root (docs/ mirrors publicly); 813 replaced by the measuring command; specs/mcp-coverage.jsonl recorded as a fifth named live exception in \u00a78 and INV-307, retiring the 'by construction' glob justification at both sites and inverting the guard that pinned it; new guard that no instruction directs creating a file under specs/.",
   "gate1_approved": true,
-  "comments_posted": ["started", "clarifications"]
+  "comments_posted": [
+    "started",
+    "clarifications",
+    "result"
+  ],
+  "pr": 147
 }
