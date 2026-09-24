@@ -102,7 +102,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   halves restate obligations INV-311 and #122 already carry.
 - **Verification:** `citations.py verify` clean at **311**; `invariant_manifest.py --check`
   no drift; full suite green.
-- **Commit:** uncommitted
+- **Commit:** 488e514
 
 ## the-canonical-operation-table-binds-both-directions
 
