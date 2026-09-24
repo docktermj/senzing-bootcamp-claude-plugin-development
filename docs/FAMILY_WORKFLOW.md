@@ -43,7 +43,10 @@ bootcamper installs. This is deliberate and is not an oversight to be corrected.
 ## 2. Canonical operations
 
 **R4 — The canonical operation names are reserved family-wide, and every development
-repository exposes each applicable operation under its canonical name.** The *name* is the
+repository exposes each applicable operation under its canonical name.** ⛔ **(INV-316) The
+register binds both ways**: a name in this table must resolve to a shipped operation, and every
+operation the repository ships must appear in the table. A register that only validates the
+names it already lists cannot notice the one it omits. The *name* is the
 invariant; the *invocation mechanism* is the host's business. A Claude slash command, a Kiro
 power skill triggered by natural language, and a Codex `commands/` entry are all conforming
 implementations of `parity-check` — an operation named `publish-bootcamp-power` is not.

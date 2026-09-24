@@ -152,7 +152,7 @@ had grown to four.
 What stays here is repository-local: the command index below, and the rule governing how this
 repository's own maintainer pages name commands.
 
-⛔ **A command named on a maintainer page either ships here or is marked as not shipping.**
+⛔ **(INV-316) A command named on a maintainer page either ships here or is marked as not shipping.**
 A command that ships has a file in `.claude/commands/`. One that does not carries its reason at
 the point of use: *(children only)* for `/parity-check` *(children only)* and
 `/escalate-to-parent` *(children only)*, or a statement of retirement, as

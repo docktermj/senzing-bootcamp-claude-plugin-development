@@ -1401,7 +1401,7 @@ new `/check-skill-drift`.
   fences so no diagram parses. **Verification:** suite **4,429 passed, 4 skipped** (up 11, the
   new guard); `citations.py verify` clean at **311**; `invariant_manifest.py --check` exit 0,
   no drift.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+- **DEFERRED INVARIANT (resolved INV-316, registered by the maintainer 2026-09-24).** The rules already
   shipping:
     - ⛔ **A command named on a maintainer page either ships here or is marked as not shipping.** — in `docs/development.md`
 

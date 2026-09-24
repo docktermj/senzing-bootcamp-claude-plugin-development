@@ -358,7 +358,14 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # what it does NOT establish -- that a described rule is a faithful summary, which nothing
 # can establish by construction. Re-derived by running the extractor -- 134, with the new
 # pair present by name. EXPECTED_PAIRS 133 -> 134.
-EXPECTED_PAIRS = 134
+# 135 on 2026-09-24: INV-316 (a command named in a maintainer-facing document resolves or is
+# marked at the point of use, and a document that is the REGISTER of an operation set lists
+# every shipped command) names test_canonical_operations_resolve.py, which cites it back and
+# states what it does NOT establish -- that a diagram renders, that a row's cell values are
+# right, or that the drawing is a true account of the system. Re-derived by running the
+# extractor -- 135, with the new pair present by name. This closes the 2026-09-24 review:
+# four deferrals decided, EXPECTED_PAIRS 131 -> 135 across it.
+EXPECTED_PAIRS = 135
 
 
 def pairs():
