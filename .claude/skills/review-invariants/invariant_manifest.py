@@ -18,11 +18,20 @@ rather than invented.**
   longest being 3,013. So a summary is emitted only when the first sentence is at or under
   `SUMMARY_MAX`; otherwise it is `null`, and the null count is printed. ⚠️ **A null summary means
   "not derivable", never "no rule"** — `statement` always carries the full text.
-* **`status`** — supersession is written six different ways in the prose (`superseded`,
+* **`status`** — **two values, and there is no third (#112).** An entry carrying a
+  `- **Superseded by:** INV-nnn` bullet is `superseded`; every other entry is `active`. ⛔ **(INV-311)** Prose
+  is **not** read as evidence: supersession was written six different ways (`superseded`,
   `Superseded`, `supersedes`, `Corrected`, `Amended`, `withdrawn`), and the same word marks an
-  entry that supersedes another as well as one that was superseded. Only an explicit
-  *superseded by INV-nnn* is read as `superseded`; an entry with no supersession vocabulary at
-  all is `active`; anything else is **`unclear`** and counted, never guessed.
+  entry that supersedes another as well as one that was superseded. Reading it produced
+  `unclear` for **33** entries, most of which were not supersessions at all.
+  ⚠️ **`unclear` left the vocabulary with that change** — it is not a value this generator can
+  emit, and a consumer need not handle it. (This paragraph described the retired three-state
+  model until #143, nine days after the model was retired, and the published `note` said the
+  same thing to four child repositories.)
+* **`partly_superseded_by`** — the successor where only a **clause** was replaced, from a
+  `- **Partly superseded by:** INV-nnn` bullet. ⛔ **(INV-311)** Such an entry stays `active` and **still
+  binds in full**; a partial supersession is not a third state. Null means no partial
+  supersession, never that the entry is obsolete.
 
 Stdlib only. Read-only with respect to `specs/`; writes one file at the repository root.
 
@@ -63,12 +72,19 @@ SUMMARY_MAX = 300
 #: *"INV-089 is **not** superseded"* (INV-263). #122 was the same defect at one entry.
 SUPERSEDED_BULLET = re.compile(r"^\s*- \*\*Superseded by:\*\* (INV-\d{3})", re.M)
 
-#: ⚠️ **A third relation the two-state model has no room for, and the data does.** Five entries
+#: ⚠️ **A third relation the two-state model has no room for, and the data does.** Six entries
 #: say only a *clause* of themselves is superseded — INV-040's parenthetical, INV-079's recap
-#: heading, INV-086's framing, INV-101's Docker-only scope, INV-137's trigger. **They still
-#: bind.** Calling them `superseded` would tell four child ports the whole rule is obsolete,
-#: which is false and is the dangerous direction; so they remain `active` and say why in a
-#: bullet of their own.
+#: heading, INV-086's framing, INV-101's Docker-only scope, INV-104's tab enumeration, and
+#: INV-137's trigger. **They still bind.** Calling them `superseded` would tell four child
+#: ports the whole rule is obsolete, which is false and is the dangerous direction; so they
+#: remain `active` and say why in a bullet of their own.
+#:
+#: ⚠️ **The count here said "Five" and listed five until #143, omitting INV-104** — the entry
+#: whose partial supersession (INV-155, the tab enumeration) is the one a production-readiness
+#: audit had already cited as the canonical example of a stale enumeration. A prose count
+#: beside a list is two things to keep in step, and this is what it looks like when they part.
+#: ⚠️ **Do not re-derive this list by reading**: `grep -c 'Partly superseded by:'` is the count,
+#: and `test_supersession_has_one_syntax.py` now holds the set against the register.
 PARTLY_SUPERSEDED_BULLET = re.compile(r"^\s*- \*\*Partly superseded by:\*\* (INV-\d{3})", re.M)
 
 #: The back-link. A successor names what it replaced, because a successor that does not read
@@ -152,12 +168,20 @@ def build():
         first = re.match(r"(.+?[.!?])(?:\s|$)", statement)
         summary = first.group(1) if first and len(first.group(1)) <= SUMMARY_MAX else None
         status, by = status_of(body)
+        partly = PARTLY_SUPERSEDED_BULLET.search(body)
         entries.append({
             "id": inv,
             "index_group": groups.get(inv),
             "section": sections.get(inv),
             "status": status,
             "superseded_by": by,
+            # ⛔ **(INV-311) (#143) Separate from `superseded_by`, never folded into it.** A partly
+            # superseded entry is `active` and still binds; putting its successor in
+            # `superseded_by` would change what that field means for every consumer already
+            # reading it. The regex existed from #112 and was referenced only by a test, so
+            # the relation was visible in the prose and in no structured field -- six entries
+            # published `superseded_by: null` with the pointer buried in `statement`.
+            "partly_superseded_by": partly.group(1) if partly else None,
             "summary": summary,
             "statement": statement,
         })
@@ -167,8 +191,12 @@ def build():
         "generator": ".claude/skills/review-invariants/invariant_manifest.py",
         "note": ("Derived, never authoritative. `summary` is null where no one-line statement "
                  "could be extracted -- that means NOT DERIVABLE, never absence of a rule; "
-                 "`statement` always carries the full text. `status` is `unclear` where the "
-                 "prose's supersession wording is ambiguous, never guessed."),
+                 "`statement` always carries the full text. `status` has exactly two values: "
+                 "`superseded` for an entry carrying a `Superseded by:` bullet, `active` for "
+                 "every other entry. There is no `unclear` status -- prose is not read as "
+                 "evidence. `partly_superseded_by` names the successor where only a CLAUSE was "
+                 "replaced; such an entry stays `active` and still binds in full, so a null "
+                 "there means no partial supersession, never that the entry is obsolete."),
         "count": len(entries),
         "invariants": entries,
     }

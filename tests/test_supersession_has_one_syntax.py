@@ -48,6 +48,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_TOOL = REPO_ROOT / ".claude" / "skills" / "review-invariants" / "invariant_manifest.py"
 INVARIANTS = REPO_ROOT / "specs" / "INVARIANTS.md"
+FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
+MANIFEST = REPO_ROOT / "invariant-manifest.json"
 
 #: Every entry whose prose mentions supersession while asserting none of itself. ⛔ Each was
 #: READ, not pattern-matched -- the issue warned that a mechanical rewrite would invert some,
@@ -209,6 +211,109 @@ class NothingIsReclassifiedByOmission(unittest.TestCase):
     def test_every_reason_is_written(self):
         blank = sorted(k for k, v in REVIEWED_NOT_A_SUPERSESSION.items() if not v.strip())
         self.assertEqual([], blank, "reviewed without a reason: %s" % ", ".join(blank))
+
+
+class EveryMarkerFormIsAccountedFor(unittest.TestCase):
+    """⛔ (#143) A marker the register USES and the family page does not NAME.
+
+    `Partly superseded by:` was in use **six** times while `docs/FAMILY_WORKFLOW.md` R12 named
+    two markers and said *"Nothing else establishes supersession"*. A child implementing R12 as
+    written had no form for the case, and the parent's manifest had no field for it -- all six
+    published `superseded_by: null` with the successor buried in `statement`.
+
+    ⚠️ **The set is derived from the register, never listed here.** A hardcoded list of forms is
+    the same defect one level up: it would agree with the page on the day it was written and
+    say nothing thereafter. INV-282 -- match the claim, not the phrasings already seen.
+    """
+
+    #: Every `- **<something> superseded...:**` bullet form the register may carry, each mapped
+    #: to the R12 text that must name it. ⛔ A form appearing in `INVARIANTS.md` and absent here
+    #: fails `test_no_unknown_marker_form_ships`, which is the point: adding a fourth form is a
+    #: family-wide act and R12 is where a child reads it.
+    KNOWN_FORMS = {
+        "Superseded by": "Superseded by:",
+        "Supersedes": "Supersedes:",
+        "Partly superseded by": "Partly superseded by:",
+    }
+
+    #: A marker bullet, matched INSIDE an invariant's body. ⛔ Two things this had wrong on the
+    #: first attempt, both worth keeping written down. (1) It required a word before
+    #: `superseded`, so it matched `Fully`/`Partly` and **missed `Superseded by` and
+    #: `Supersedes` entirely** -- a matcher blind to the two commonest forms, which would have
+    #: read as passing. (2) Scanned whole-file, it caught `- **Fully superseded:**` from the
+    #: index's *explanatory prose* about the two conceptual forms, which is not a marker at all.
+    #: ⚠️ Adding that to the known set would have "fixed" the failure while leaving (1) in
+    #: place -- INV-282's exact trap: a matcher repaired from the instance in front of you.
+    FORM = r"^\s*- \*\*((?:[A-Za-z]+ )*[Ss]upersed[a-z]*(?: by)?):\*\*"
+
+    def forms_in_register(self):
+        import re
+        _mod, bodies = entries()
+        found = set()
+        for body in bodies.values():
+            found.update(re.findall(self.FORM, body, re.M))
+        return found
+
+    def test_the_scan_found_forms(self):
+        """INV-265 -- an empty form set satisfies both comparisons below."""
+        self.assertGreaterEqual(
+            len(self.forms_in_register()), 2,
+            "fewer than two marker forms parsed from %s; the pattern has drifted and the "
+            "checks below prove nothing" % INVARIANTS)
+
+    def test_no_unknown_marker_form_ships(self):
+        unknown = sorted(self.forms_in_register() - set(self.KNOWN_FORMS))
+        self.assertEqual(
+            [], unknown,
+            "supersession marker form(s) used in %s that this guard does not know: %s. Adding a "
+            "form is a family-wide act: name it in R12 of docs/FAMILY_WORKFLOW.md with a §10 "
+            "amendment, decide whether it affects `status`, and add it here"
+            % (INVARIANTS, ", ".join(unknown)))
+
+    def test_r12_names_every_form_in_use(self):
+        r12 = FAMILY.read_text(encoding="utf-8")
+        missing = sorted(self.KNOWN_FORMS[f] for f in self.forms_in_register()
+                         if self.KNOWN_FORMS[f] not in r12)
+        self.assertEqual(
+            [], missing,
+            "marker form(s) the register uses that R12 in %s never names: %s. Four child "
+            "repositories read that page to learn the syntax; a form named nowhere is one they "
+            "cannot implement" % (FAMILY, ", ".join(missing)))
+
+
+class ThePartialPointerIsPublished(unittest.TestCase):
+    """The relation reaches the artifact downstream ports actually parse (INV-311)."""
+
+    def published(self):
+        import json
+        return {e["id"]: e for e in json.loads(MANIFEST.read_text(encoding="utf-8"))["invariants"]}
+
+    def test_every_partial_publishes_its_successor(self):
+        mod, bodies = entries()
+        expected = {inv: m.group(1) for inv, body in bodies.items()
+                    if (m := mod.PARTLY_SUPERSEDED_BULLET.search(body))}
+        self.assertTrue(expected, "no partly-superseded entry parsed; the check is vacuous")
+        published = self.published()
+        wrong = ["%s: register says %s, manifest says %r"
+                 % (inv, want, published.get(inv, {}).get("partly_superseded_by"))
+                 for inv, want in sorted(expected.items())
+                 if published.get(inv, {}).get("partly_superseded_by") != want]
+        self.assertEqual(
+            [], wrong,
+            "the manifest does not carry the partial-supersession pointer the register "
+            "records: %s. A consumer reading the field structurally sees null and concludes "
+            "there is no partial supersession" % "; ".join(wrong))
+
+    def test_a_partial_stays_active(self):
+        """⛔ The direction that would be dangerous: never report a partial as superseded."""
+        published = self.published()
+        wrong = sorted(i for i, e in published.items()
+                       if e.get("partly_superseded_by") and e["status"] != "active")
+        self.assertEqual(
+            [], wrong,
+            "partly-superseded invariant(s) published with a non-active status: %s. Only a "
+            "clause was replaced; the rule still binds, and reporting it superseded tells a "
+            "child the whole thing is obsolete" % ", ".join(wrong))
 
 
 if __name__ == "__main__":

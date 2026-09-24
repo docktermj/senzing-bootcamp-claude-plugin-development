@@ -1,0 +1,9 @@
+{
+  "issue": 143,
+  "branch": "143-docktermj-1",
+  "phase": "pr-open",
+  "approach": "Direct (5a). R12 names three markers vs two statuses + §10 amendment; partly_superseded_by added to the manifest schema and populated on six; the published note and module docstring corrected; 'Five entries' -> six; INV-086 comma repaired; deferral 1 widened. Plus an approved in-run fix to test_new_hard_rules_are_cited_or_deferred, whose outside-corpus assertion prescribed a remedy it could not observe.",
+  "gate1_approved": true,
+  "comments_posted": ["started", "clarifications", "result"],
+  "pr": 146
+}

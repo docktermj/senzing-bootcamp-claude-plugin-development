@@ -132,6 +132,34 @@ def outside_count(report):
     return int(m.group(1)) if m else 0
 
 
+def outside_lines(report):
+    """The outside-corpus rule lines themselves (#143).
+
+    ⛔ **Until `since` printed these, this guard could only compare the COUNT against zero.**
+    That made any hard rule shipped in `docs/` or a non-`.md` file an unconditional failure
+    whose own message prescribed a remedy the assertion could not observe -- *"account for each
+    one in the ledger entry"* -- so accounting for it changed nothing and the suite stayed red.
+    A guard that cannot be satisfied teaches people to disable it.
+
+    ⚠️ **The fix is not to stop failing; it is to apply the SAME test.** These lines get the
+    cited-or-deferred predicate the in-corpus ones get. What is lost relative to the in-corpus
+    path is only the file attribution -- the report groups them under a filename header this
+    parser does not need, because the predicate is per line.
+    """
+    out, inside = [], False
+    for raw in report.splitlines():
+        if OUTSIDE_LINE.search(raw):
+            inside = True
+            continue
+        if inside:
+            stripped = raw.strip()
+            if stripped.startswith("! "):
+                out.append(stripped[2:])
+            elif stripped.startswith("These shipped a hard rule"):
+                break
+    return out
+
+
 def is_an_empty_range(reported, outside):
     """⛔ Whether 'no hard rules added' really means the range added none (#108).
 
@@ -242,6 +270,15 @@ def parse_since(since_output):
     unknown_headings, reported = [], 0
     for raw in since_output.splitlines():
         stripped = raw.strip()
+        # ⛔ (#143) The in-corpus block ENDS at the corpus footer, and this parser stops there.
+        # `since` now prints the outside-corpus rules as `+ ` lines too, under filename
+        # headers that are not scanned roots -- so without this bound every one of them
+        # arrived here as `unresolved` and failed the guard. ⚠️ Bounding is right rather than
+        # widening `_root_of`: those lines are a different population with a different check
+        # (`outside_lines` reads them), and letting one parser claim both is what would make
+        # the two counts disagree later.
+        if stripped.startswith("CORPUS:") or OUTSIDE_LINE.search(stripped):
+            break
         if _is_heading(stripped):
             heading = stripped
             if _root_of(heading) is None and heading not in unknown_headings:
@@ -278,6 +315,30 @@ def announce(parsed):
 
 
 class EveryNewHardRuleIsAccountedFor(unittest.TestCase):
+    @staticmethod
+    def _unaccounted(lines):
+        """The rules among `lines` that are neither cited at the line nor named in a deferral.
+
+        ⚠️ **One predicate, two call sites (#143).** The in-corpus and outside-corpus paths used
+        to differ in kind -- one checked each line, the other compared a count against zero --
+        and the difference was not a decision anybody took. Sharing the body is what stops them
+        drifting apart again; the reverse contract has the same two legitimate states wherever
+        the rule happens to live.
+        """
+        deferred = _comparable(deferred_rule_text())
+        out = []
+        for line in lines:
+            key = normalize(line)
+            if not key:
+                continue
+            if INV_ON_THE_LINE.search(line):
+                continue                                   # cited ON its own line
+            probe = _comparable(key)[:44]
+            if probe and probe in deferred:
+                continue                                   # named in a deferral
+            out.append(line[:110])
+        return out
+
     def test_the_check_can_run(self):
         """⛔ INV-265 — say so when the scan cannot run, rather than passing silently."""
         if conformance("rules") is None:
@@ -332,13 +393,23 @@ class EveryNewHardRuleIsAccountedFor(unittest.TestCase):
             # session did exactly that. The producer now reports the outside count; an empty
             # range is only empty when that count is zero too.
             outside = outside_count(since)
-            self.assertTrue(
-                is_an_empty_range(parsed.reported, outside),
-                "`since` reports no hard-rule lines in the checked corpus, but %d line(s) were "
-                "added where that corpus does not look (`docs/`, or a non-`.md` file under the "
-                "scanned roots). That is NOT an empty range -- rules shipped, and this guard "
-                "cannot see them. Read the OUTSIDE list in the conformance output and account "
-                "for each one in the ledger entry" % outside)
+            if not is_an_empty_range(parsed.reported, outside):
+                # ⛔ (#143) Rules shipped where the corpus does not look. This used to fail
+                # outright and tell the reader to account for them in the ledger -- which the
+                # assertion could not observe, so the instruction cleared nothing. They now
+                # get the SAME cited-or-deferred predicate as the in-corpus lines.
+                stray = self._unaccounted(outside_lines(since))
+                self.assertEqual(
+                    [], stray,
+                    "%d hard-rule line(s) shipped where the checked corpus does not look "
+                    "(`docs/`, or a non-`.md` file under the scanned roots), and %d of them "
+                    "cite no invariant at the line AND appear in no DEFERRED INVARIANT block:"
+                    "\n  %s" % (outside, len(stray), "\n  ".join(stray)))
+                self.skipTest(
+                    "%d hard-rule line(s) shipped outside the checked corpus; each cites an "
+                    "invariant at its line or is named in a deferral. ⚠️ Accounted for, NOT "
+                    "verified: no regex establishes that a cited invariant governs the rule "
+                    "beside it, and the in-corpus path carries the same caveat" % outside)
             self.skipTest(
                 "the report lists no hard-rule lines at all since the newest audit entry. The "
                 "ref was accepted as recorded (no SUSPECT-REF), and the outside count is zero "
@@ -353,18 +424,7 @@ class EveryNewHardRuleIsAccountedFor(unittest.TestCase):
                 "guard counts and does not check. Rules WERE added -- this is not an empty "
                 "range" % (parsed.reported, ", ".join(CHECKED_ROOTS), len(parsed.out_of_scope)))
 
-        deferred = deferred_rule_text()
-        unaccounted = []
-        for _path, line in parsed.checked:
-            key = normalize(line)
-            if not key:
-                continue
-            if INV_ON_THE_LINE.search(line):
-                continue                                   # cited ON its own line
-            probe = _comparable(key)[:44]
-            if probe and probe in _comparable(deferred):
-                continue                                   # named in a deferral
-            unaccounted.append(line[:110])
+        unaccounted = self._unaccounted(line for _path, line in parsed.checked)
 
         self.assertEqual(
             [], unaccounted,
