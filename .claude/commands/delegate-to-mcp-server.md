@@ -43,8 +43,15 @@ cited by specs and shapes future work, so when the server gains the ability the 
 is load-bearing in a way ordinary stale prose never is.
 
 ⛔ **Write nothing under `specs/`** — the archive is frozen (INV-307). This command's only
-writes are **GitHub issues** and its own ledger, `specs/mcp-coverage.jsonl`, which is `.jsonl`
-rather than `*.md` and so sits outside the freeze by construction. Never modify plugin code,
+writes are **GitHub issues** and its own ledger, `specs/mcp-coverage.jsonl`, which is a
+**named live exception** to the freeze, recorded as such in INV-307 and in
+`docs/FAMILY_WORKFLOW.md` §8. ⚠️ **It is NOT exempt because it is `.jsonl`.** That was the
+reason given here until #142, and it is the reasoning `invariant_manifest.py` rejects by name
+for its own artifact — the freeze guard globs `specs/*.md`, so a non-Markdown file there is
+legal only because the glob does not reach it, *a scope-narrowing that happens to produce
+correct behavior, which INV-308 says must not be relied on*. A permission that rests on a
+guard's blind spot disappears the moment the guard is widened, and nobody widening it would
+know they were revoking one. Never modify plugin code,
 hooks, scripts or skills — filing the issues is the deliverable, and implementing them is
 `/implement-github-issue`'s job. ⛔ **Never propose deleting or renumbering an invariant**;
 `specs/INVARIANTS.md` is append-only, and a superseded one is *marked* superseded.

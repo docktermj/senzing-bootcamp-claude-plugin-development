@@ -319,16 +319,26 @@ place.
 
 ---
 
-## 8. `specs/` is frozen, with four live exceptions
+## 8. `specs/` is frozen, with five live exceptions
 
 The parent froze `specs/` on 2026-09-15 (INV-307). ⛔ **The archive is read-only; no new spec
-files are written by any command.** Four files in it are **not** frozen and are still written
+files are written by any command.** Five files in it are **not** frozen and are still written
 to:
 
 - `specs/INVARIANTS.md` — the invariant register
 - `specs/IMPLEMENTED.md` — the implementation ledger, including `DEFERRED INVARIANT` blocks
 - `specs/DECLINED.md` — decisions *not* to build, with a required reason and revisit condition
 - `specs/README.md` — the freeze notice itself
+- `specs/mcp-coverage.jsonl` — `/delegate-to-mcp-server`'s coverage ledger
+
+⚠️ **This list said "four" and named four until 2026-09-24 (#142)**, while the fifth had been
+written to throughout. It was justified where it is used on the grounds that it is `.jsonl`
+rather than `*.md` and so *"sits outside the freeze by construction"* — which is a permission
+resting on a **guard's blind spot**, not on a decision: the freeze guard globs `specs/*.md`,
+and widening it would silently revoke an exception nobody recorded. ⛔ **(INV-307) An exception to the freeze is a DECISION and MUST be
+named in this list**, never left resting on what a guard happens not to reach. The same
+repository rejects exactly this reasoning for `invariant-manifest.json`, which sits at the root
+rather than relying on the glob missing it.
 
 ⚠️ **"`specs/` is no longer used except for `INVARIANTS.md`" is the wrong reading** and would
 delete the implementation ledger and the record of declined decisions. The archive is retained
