@@ -35,6 +35,18 @@ guard until a human looks at it. **The permit may only shrink.**
 marked partial really is partial. It establishes that no entry's status was decided by prose,
 and that none was reclassified without being read.
 
+⛔ **Enforces INV-313** — supersession status is derived from an explicit marker and never
+from prose; two states only; a partial supersession stays `active` and carries its successor
+in a field of its own; and every marker form the register uses is named where downstream
+ports read the syntax.
+
+⚠️ **What an `Enforced by` clause here does NOT claim.** This module establishes that the
+syntax, the back-links, the marker-form set and the disposition list hold **in the register
+and the published manifest as they stand**. It cannot establish that a supersession recorded
+is *correct*, that a clause marked partial really is partial, or that any downstream consumer
+reads `partly_superseded_by` the way this rule intends — the first two are human judgments
+and the third lives in another repository.
+
 Source issue: #112.
 
 Stdlib only.
@@ -81,6 +93,9 @@ REVIEWED_NOT_A_SUPERSESSION = {
     "INV-202": "'reserved/superseded/legacy/future' is an annotation vocabulary for tree entries",
     "INV-278": "a recorded FIGURE is withdrawn",
     "INV-295": "a superseded FIGURE must be named aloud when replaced",
+    # -- the entry GOVERNS how supersession is recorded; it is not itself one --
+    "INV-313": "states the marker-and-status rule for the published register; it is the "
+               "rule ABOUT supersession, supersedes nothing and is superseded by nothing",
     # -- prose about another pair's supersession, already recorded on that pair --
     "INV-250": "notes that INV-077 superseded INV-038; INV-038 carries the bullet",
     "INV-270": "carries a dated Correction, which is not a supersession",

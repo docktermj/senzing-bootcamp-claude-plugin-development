@@ -126,7 +126,7 @@ What the parent undertakes to provide:
   A child treating null as absence will under-count its register. ⚠️ **No count is stated here
   deliberately** — a figure in prose goes stale silently while reading authoritative; read the
   live number off `invariant-manifest.json`.
-- ⛔ **`status` is `active` or `superseded`. There is no third value (#112).** It is decided by
+- ⛔ **(INV-313) `status` is `active` or `superseded`. There is no third value (#112).** It is decided by
   a bullet — `- **Superseded by:** INV-nnn — <what changed>` — and by **nothing else**: prose
   mentioning supersession is not evidence. The earlier `unclear` value is gone, and so is the
   caveat that went with it.

@@ -495,7 +495,7 @@ new `/check-skill-drift`.
   pointing one at an id the register does not define, which fails it. ⚠️ **That id is described rather than written here**: a literal non-existent `INV-nnn` in this file is read by `citations.py verify` as a citation and turns it red — which it did, on this entry's first draft, for the third time this session. **Negative controls, five**, each failing via the named test and both files restored byte-identical (md5), and each asserting its mutation destroyed the property first: a back-link removed; a bullet naming an invariant that does not exist; an entry gaining the vocabulary with no bullet and no disposition; status read from prose again; and a partial supersession reported as superseded. ⚠️ **One control was mis-aimed** — it inserted the vocabulary between the id and the em dash, which breaks the entry pattern so the entry **vanishes** rather than becoming undisposed, and it passed for that reason rather than because the guard was weak. Tenth mis-aimed control across ten runs.
   **Verification:** suite **4,554 passed, 4 skipped** (up 12); `citations.py verify` clean at **311**;
   `invariant_manifest.py --check` exit 0.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+- **DEFERRED INVARIANT (resolved INV-313, registered by the maintainer 2026-09-24).** The rules already
   shipping:
     - ⛔ **`status` is `active` or `superseded`. There is no third value (#112).** — in `docs/development.md`
     - ⛔ **Three markers, two statuses — and conflating those two counts is what left the third** — in `docs/FAMILY_WORKFLOW.md` (#143)

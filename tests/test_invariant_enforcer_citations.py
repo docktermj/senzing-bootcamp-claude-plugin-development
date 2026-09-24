@@ -338,7 +338,15 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # list_specs.py to tests/ and added the guard that the path it names resolves —
 # nothing had checked that before, so the invariant could have pointed at nothing
 # with every other guard green. Re-derived by running the extractor, not incremented.
-EXPECTED_PAIRS = 131
+# 132 on 2026-09-24: INV-313 (a published derived register takes supersession status from
+# an explicit marker, two states only, a partial supersession staying active with its
+# successor in a field of its own) names test_supersession_has_one_syntax.py, which cites
+# it back and states what it does NOT establish -- that a supersession recorded is correct,
+# that a clause marked partial really is partial, or that a downstream consumer reads the
+# field as intended; the first two are human judgments and the third lives in another
+# repository. Re-derived by running the extractor -- 132, with the new pair present by
+# name. This closes the 2026-09-24 review's first deferral: EXPECTED_PAIRS 131 -> 132.
+EXPECTED_PAIRS = 132
 
 
 def pairs():
