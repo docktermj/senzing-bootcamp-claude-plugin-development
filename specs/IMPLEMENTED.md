@@ -138,7 +138,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Verification:** `citations.py verify` clean at **311**; `invariant_manifest.py --check` no
   drift; `pending_invariants.py check` 5 quotes, 0 mismatched; the guard file at **16 tests**
   (was 12); full suite green.
-- **Commit:** uncommitted
+- **Commit:** d0e3718
 
 ## r12-stops-describing-the-world-its-own-fix-removed
 
