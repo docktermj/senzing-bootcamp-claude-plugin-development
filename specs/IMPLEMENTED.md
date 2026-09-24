@@ -43,6 +43,91 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## a-documented-procedure-that-turned-the-suite-red
+
+- **Implemented:** 2026-09-24 (**Not a spec** — a dated record of one issue-driven run, #142)
+- **Files changed:** `.claude/skills/compact-dev-environment/SKILL.md`,
+  `.claude/commands/delegate-to-mcp-server.md`,
+  `.claude/skills/delegate-to-mcp-server/SKILL.md`, `docs/FAMILY_WORKFLOW.md`,
+  `specs/INVARIANTS.md`, `invariant-manifest.json`,
+  `tests/test_no_instruction_writes_into_specs.py`,
+  `tests/test_delegate_files_issues_not_specs.py`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/142.json`
+- **MCP re-check:** n/a (no Senzing fact; the freeze, its exception list and the maintainer
+  procedures that write near it)
+- **Summary:** `/compact-dev-environment`'s renumbering procedure required shipping a
+  `specs/RENUMBERING.md` map. ⛔ **`specs/` froze on 2026-09-15 (INV-307) and
+  `tests/test_specs_are_frozen.py` rejects a new file there**, so the documented procedure could
+  not be carried out: following it turns the suite red. It survived the cutover by **nine days**,
+  unnoticed because nobody had renumbered — a contingency path reads as authoritative right up
+  until someone needs it. The map now belongs at the **repository root**, beside
+  `invariant-manifest.json`, which sits there for the same reasons.
+- ⛔ **`docs/` was the obvious home and it is wrong.** The issue proposed it on the grounds that
+  *"`docs/` is live, ships, and is where `FAMILY_WORKFLOW.md` already lives."* `propagate.sh`
+  mirrors `docs/` to the **public access repo** minus two hardcoded exclusions, so a
+  maintainer-only renumbering map placed there would be published to bootcampers and would need
+  a third exclusion plus a guard amendment. ⚠️ **That exclusion list has already leaked once**
+  (2026-08-16). Root reaches no public repo, needs no exclusion, and is still inside a tagged
+  release — which is what a child needs, since children key their inherited-invariant registers
+  on the parent's `INV-NNN`.
+- **The `813` figure, at the two sites where it was load-bearing.** Measured 2026-07-31; the real
+  count was **2,321** on the day of this run and rose by **14 during the session that filed the
+  issue**. Item 4 *instructed* quoting it in a report to the maintainer, which makes it a claim
+  rather than the dated illustration the file's blanket caveat covers. It is replaced by the
+  measuring command. ⚠️ **The dated table at line 27 is left alone** — it is marked
+  *"Measured in this repo on 2026-07-31"* and carries its own *"re-measure; do not cite"*.
+- ⛔ **A second instance of the class, live rather than hypothetical, and pinned by a test.**
+  `specs/mcp-coverage.jsonl` — 60 KB, actively appended — was justified as *"`.jsonl` rather
+  than `*.md` and so sits outside the freeze **by construction**."* That is a permission resting
+  on the freeze guard's `specs/*.md` glob. ⚠️ **This repository rejects the identical reasoning
+  elsewhere:** `invariant_manifest.py` places its artifact at the root precisely so its legality
+  does not depend on *"a scope-narrowing that happens to produce correct behavior, which INV-308
+  says must not be relied on."* Two positions on one question, and the one relying on the blind
+  spot shipped the same day this issue was filed (#114).
+- **The gap it sat in, stated plainly.** INV-307's **stated** subject is the directory; its
+  **enforced** subject is `*.md` in the directory. `docs/FAMILY_WORKFLOW.md` §8 was headed
+  *"four live exceptions"* and named four; the fifth had been written to throughout and appeared
+  in neither §8, nor INV-307's list, nor `FROZEN-MANIFEST.txt`. It is now a **named live
+  exception** in both, and widening the guard would no longer silently revoke it.
+- ⛔ **The retired reasoning was asserted by a guard, at two sites, and I had fixed one.**
+  `test_the_ledger_is_explained_as_outside_the_freeze_by_construction` **required** the phrase
+  *"by construction"* / *"not `*.md`"* in both the command and the skill. The full suite caught
+  that the skill copy was untouched — the incomplete-application class, found by the guard rather
+  than by me. The assertion is renamed, inverted to require the named-exception wording, and
+  joined by one that rejects the old justification outright so it cannot return quietly.
+- **A guard on instructions, which is what was missing.** `test_specs_are_frozen.py` catches a
+  file **landing**; nothing caught prose telling a maintainer to create one, and the two failures
+  are far apart — the instruction is written once and read much later, and whoever finally
+  follows it gets the red suite. ⛔ **The matcher is derived from the claim** — *an instruction to
+  bring a file into existence at a path under `specs/`* — with the verbs as a set and the path
+  matched generically, **not** from the two constructions visible today. It reads the live
+  exception list out of §8 rather than restating it (INV-308).
+- **Negative controls, four, each verified to have landed before the run.** (1) The pre-#142
+  `specs/RENUMBERING.md` instruction restored — 1 failed. (2) ⛔ **A phrasing absent from the
+  corpus** — *"must emit `specs/release-audit.yaml`"*, a verb and an extension the matcher was
+  never built from, in a file it was never aimed at — 1 failed, which is the INV-282 property
+  demonstrated rather than asserted. (3) §8's heading changed so the exception list cannot
+  parse — **3** failed including `test_the_live_exceptions_were_read`, so an unreadable list
+  fails loudly instead of silently emptying the allowlist and passing. (4) The retired *"by
+  construction"* justification restored at one site — 1 failed. All files restored from copies
+  taken **before** the first mutation; `__pycache__` cleared.
+- ⚠️ **One marker was misused and corrected, the third instance today.** The §8 note first read
+  `⛔ **This list said "four"...**` — a stop sign on a statement of history — while the actual
+  rule beside it carried only `⚠️`. The note is now `⚠️` and the rule is `⛔ **(INV-307) An
+  exception to the freeze is a DECISION and MUST be named in this list**`. ⛔ **The convention
+  marks rules; using it for emphasis makes the detector noisy and buries the real one.**
+- **Seven hard-rule lines outside the scanned corpus, each accounted for individually.** Six
+  carry over from #143 and #141 and were already cited; the seventh is this run's new §8 rule,
+  citing INV-307 at its own line.
+- ⚠️ **Not a §10 amendment, stated rather than left implicit.** §8 carries no `R` number and
+  states no requirement of a child; correcting its count from four to five is a factual repair,
+  not a change to what a numbered rule requires.
+- **Establishes no invariant of its own.** INV-307 gains a dated note recording a live file its
+  exception list omitted — the rule is unchanged, and `INVARIANTS.md` rule 2 is not engaged.
+- **Verification:** `citations.py verify` clean at **311**; `invariant_manifest.py --check` no
+  drift; suite **4,613 passed, 4 skipped**.
+- **Commit:** 6b7dc04
+
 ## the-partial-supersession-marker-is-named-and-published
 
 - **Implemented:** 2026-09-24 (**Not a spec** — a dated record of one issue-driven run, #143)

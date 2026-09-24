@@ -43,8 +43,13 @@ systematic version of both, and it is the only one of the four that reads the pl
 
 - ⛔ **Write nothing under `specs/`.** The archive is frozen (INV-307) and a spec file
   written there is rejected by `tests/test_specs_are_frozen.py`. This skill's only writes
-  are **GitHub issues** and its own ledger, `specs/mcp-coverage.jsonl` — which is `.jsonl`,
-  not `*.md`, and so is outside the freeze by construction rather than by exemption.
+  are **GitHub issues** and its own ledger, `specs/mcp-coverage.jsonl` — a **named live
+  exception** to the freeze, recorded in INV-307 and in `docs/FAMILY_WORKFLOW.md` §8.
+  ⚠️ **It is NOT exempt for being `.jsonl`.** That was the reason given here until #142, and
+  it is a permission resting on the freeze guard's `specs/*.md` glob — *a scope-narrowing that
+  happens to produce correct behavior, which INV-308 says must not be relied on*, as
+  `invariant_manifest.py` says of its own artifact. Widening the guard would silently revoke
+  an exception nobody had recorded.
 - **Never modify plugin code, hooks, scripts or skills.** Filing the issues is the
   deliverable; implementing them is `/implement-github-issue`'s job.
 - ⛔ **Filing is outward-facing and immediate. Show the maintainer every title and body and

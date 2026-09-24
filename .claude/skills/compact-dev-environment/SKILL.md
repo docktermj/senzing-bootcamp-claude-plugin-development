@@ -53,7 +53,11 @@ cost/benefit in this repo. `specs/INVARIANTS.md` forbids it in its own rules
 ("IDs are permanent references"), and the reason is measurable rather than
 stylistic:
 
-- **813 `INV-NNN` citations live in commit messages.** Git history is immutable.
+- **Thousands of `INV-NNN` citations live in commit messages** — 2,321 when last
+  measured, 2026-09-24, and one more with every commit that cites one. Git history is
+  immutable, so none of them can be corrected. ⚠️ **Re-measure rather than quoting that
+  figure**; it is here to show the order of magnitude, and the argument does not depend
+  on the exact value.
 - After a renumber, those citations do not dangle — they **silently resolve to a
   different real invariant**. A 2026-07-30 commit explaining a fix to "INV-132"
   would, post-renumber, point at whatever now holds 132. Dangling references get
@@ -71,12 +75,26 @@ authorized operation and it MUST:
 
 1. Be **all at once** — never a partial renumber; two numbering schemes in flight
    is unrecoverable.
-2. Ship a permanent, machine-readable `specs/RENUMBERING.md` map (`old → new`,
-   with the date), kept forever, so a historical citation can be resolved by hand.
+2. Ship a permanent, machine-readable `RENUMBERING.md` map (`old → new`, with the
+   date) **at the repository root**, kept forever, so a historical citation can be
+   resolved by hand. ⛔ **Not under `specs/`** — the archive is frozen (INV-307) and
+   `tests/test_specs_are_frozen.py` rejects a new file there, so the instruction this
+   replaced could not be carried out at all: following it turned the suite red. ⚠️ Not
+   under `docs/` either, which `propagate.sh` mirrors to the public access repo. The
+   root is where `invariant-manifest.json` already sits for the same reasons, and it is
+   inside a tagged release — which is what a child needs, since children key their
+   inherited-invariant registers on the parent's `INV-NNN`.
 3. Rewrite every live citation mechanically (never by eye) and then pass
    `citations.py verify` with zero unresolved and zero unexpected IDs.
-4. State in the report, plainly, that the 813 commit-message citations are now
-   wrong and that `RENUMBERING.md` is the only way to read them.
+4. State in the report, plainly, that every `INV-NNN` citation in a commit message is
+   now wrong and that `RENUMBERING.md` is the only way to read them. ⛔ **Measure the
+   figure at renumber time and give it with its date** — do not quote one from this
+   file. `git log --format=%B | grep -oE 'INV-[0-9]{3}' | wc -l` is the count.
+   ⚠️ This step used to name a literal **813**, measured 2026-07-31 and never
+   re-measured; by 2026-09-24 the real figure was **2,321** and rising with every
+   commit. A number a document tells you to quote stops being a dated illustration
+   whatever the caveat above says — which is the failure the section two above this
+   one exists to describe, reproduced here.
 
 Item 4 is not a formality. A maintainer who has not been told this will later
 read old commits and be misled by them.

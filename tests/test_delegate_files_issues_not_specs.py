@@ -132,26 +132,68 @@ class NothingIsWrittenIntoTheFrozenArchive(unittest.TestCase):
             "SKILL.md no longer forbids writing under `specs/`. That prohibition is the "
             "point of this rework, not a side effect of it")
 
-    def test_the_ledger_is_explained_as_outside_the_freeze_by_construction(self):
-        """⚠️ It lives under `specs/` and is still written. That needs stating, not assuming."""
+    def test_the_ledger_is_explained_as_a_named_live_exception(self):
+        """⚠️ It lives under `specs/` and is still written. That needs stating, not assuming.
+
+        ⛔ **This assertion used to require the OPPOSITE explanation and was renamed (#142).**
+        It demanded the phrase *"by construction"* / *"not `*.md`"* — pinning the claim that the
+        ledger escapes the freeze because the guard globs `specs/*.md` and a `.jsonl` slips
+        past. ⚠️ **That is a permission resting on a guard's blind spot**, and this repository
+        rejects the identical reasoning elsewhere: `invariant_manifest.py` puts its artifact at
+        the repository root rather than in `specs/` precisely so its legality does not depend on
+        *"a scope-narrowing that happens to produce correct behavior, which INV-308 says must
+        not be relied on."* Widening the freeze guard would have silently revoked an exception
+        nobody had written down — and `docs/FAMILY_WORKFLOW.md` §8 said *"four live exceptions"*
+        while this was the fifth.
+
+        The ledger is now a **recorded decision** in INV-307 and §8, and both sites must say so.
+        """
         for name, path in (("SKILL.md", SKILL), ("command", COMMAND)):
             with self.subTest(what=name):
                 body = re.sub(r"\s+", " ", text(path))
                 self.assertRegex(
-                    body, r"mcp-coverage\.jsonl.{0,200}?(?:by construction|not `\*\.md`|"
-                          r"rather than `\*\.md`)",
-                    "%s writes `specs/mcp-coverage.jsonl` without explaining why that is not "
-                    "a breach of the freeze. It is outside the guard because the guard globs "
-                    "`*.md` -- a reader who reads it as an exemption will grant a real one"
-                    % name)
+                    body, r"mcp-coverage\.jsonl.{0,200}?(?:named live exception|live exception)",
+                    "%s writes `specs/mcp-coverage.jsonl` without saying it is a NAMED live "
+                    "exception to the freeze. An exception is a decision and belongs in "
+                    "INV-307 and FAMILY_WORKFLOW.md §8; a reader told only that the guard does "
+                    "not reach it has been given a blind spot, not a permission" % name)
 
-    def test_the_freeze_guard_would_still_catch_a_markdown_file(self):
-        """The construction the claim above rests on, asserted rather than trusted."""
+    def test_neither_site_still_rests_on_the_glob(self):
+        """⛔ The retired justification must not survive anywhere, in either copy."""
+        for name, path in (("SKILL.md", SKILL), ("command", COMMAND)):
+            with self.subTest(what=name):
+                body = re.sub(r"\s+", " ", text(path))
+                stale = re.search(
+                    r"mcp-coverage\.jsonl[^.]{0,120}?(?:is|sits)[^.]{0,80}?outside the freeze "
+                    r"by construction", body)
+                self.assertIsNone(
+                    stale,
+                    "%s still justifies the ledger as outside the freeze *by construction*. "
+                    "That reasoning was retired by #142: it rests on the guard globbing "
+                    "`specs/*.md`, so it evaporates the moment anyone widens the guard" % name)
+
+    def test_the_ledger_is_in_the_documented_exception_list(self):
+        """The decision is recorded where a reader looks for it, not only where it is used."""
+        section = text(REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md")
+        self.assertIn(
+            "specs/mcp-coverage.jsonl", section,
+            "docs/FAMILY_WORKFLOW.md does not list `specs/mcp-coverage.jsonl` among the live "
+            "exceptions to the freeze, so a live file under a read-only archive is recorded "
+            "nowhere a reader would look")
+
+    def test_the_freeze_guard_still_globs_markdown(self):
+        """⚠️ Kept, with its reason corrected.
+
+        This asserted the `*.md` glob *because* the ledger's exemption depended on it. That
+        dependency is gone (#142). The glob is still worth pinning — the freeze's enforced
+        subject is `specs/*.md` and a reader of INV-307 should be able to rely on that — but
+        a change to it is now a scope question, no longer a silent revocation.
+        """
         guard = text(REPO_ROOT / "tests" / "test_specs_are_frozen.py")
         self.assertIn(
             'glob("*.md")', guard,
-            "the freeze guard no longer globs `*.md`, so the reasoning that puts "
-            "`mcp-coverage.jsonl` outside it by construction no longer holds")
+            "the freeze guard no longer globs `*.md`; INV-307's enforced subject has moved and "
+            "the exception list should be re-read against it")
 
 
 class TheClaimIsBoundToTheCommand(unittest.TestCase):
