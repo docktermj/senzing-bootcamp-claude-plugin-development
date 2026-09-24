@@ -23,22 +23,32 @@ while reading authoritative (`NoCountIsStated`, and INV-302's guards). A pinned 
 invariants are undecidable, so a diff means something:
 
 * no id may **join** it without a deliberate, named edit to this file;
-* an id may **leave** once #112 has resolved its prose so it is no longer `unclear`.
+* an id may **leave** once its prose is resolved so it is no longer `unclear`.
 
 ⚠️ **The permit and the condition retire together, and the order matters.** Removing an id from
 this set while the manifest still reports it `unclear` fails -- correctly: that withdraws the
 permission without fixing anything. A negative control pins that distinction, because the
 looser reading ("shrinkage is always safe") is the one a later editor will reach for.
 
-⚠️ **A stale permit -- an id pinned here that is no longer `unclear` -- only ever permits and
-never forbids, so it does not fail.** But a pin naming an id the register no longer **defines**
-does fail, because that means the set was never re-read.
+⛔ **The set is now EMPTY, and clearing it is what re-armed this guard (#141).** #112 resolved
+all 33 entries and did not clear the pin, so every one became a **stale permit** -- and a stale
+permit, as this docstring already said, *only ever permits and never forbids, so it does not
+fail*. The arithmetic: `unclear_ids()` returned the empty set while `KNOWN_UNCLEAR` still held
+33 ids, so `unclear_ids() - KNOWN_UNCLEAR` was empty **whatever happened to those 33**. Any of
+them could have regressed to `unclear` with the suite green. ⚠️ **This is the shape a successful
+fix leaves behind:** nothing failed, nothing looked wrong, and the guard protecting a published
+field had been disarmed by the very work it was holding the line for.
 
-⚠️ **What this does NOT establish:** that the 33 pinned entries are correctly classified, that
-their prose is ambiguous for good reason, or that `status_of()` reads any of them the way a human
-would. #112 is chartered to decide those. This holds the line while that work is pending.
+⚠️ **A pin naming an id the register no longer defines still fails**, because that means the set
+was never re-read. With the set empty that check is vacuous, and it is kept for the moment an id
+is added back rather than deleted as dead.
 
-Source issue: #122.
+⚠️ **What this does NOT establish:** that `status_of()` reads any invariant the way a human
+would, nor that an `active` classification is *correct* -- only that no invariant has become
+undecidable since the pin was cleared. The manifest agreeing with the prose is
+`invariant_manifest.py --check`'s job, and it has no notion of a status getting worse.
+
+Source issues: #122 (original), #141 (the pin cleared and the guard re-armed).
 
 Stdlib only; the manifest is read as JSON (INV-108).
 
@@ -51,17 +61,16 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = REPO_ROOT / "invariant-manifest.json"
 
-#: The invariants whose supersession status the prose genuinely leaves undecidable, as of
-#: 2026-09-23. ⛔ Entries may be REMOVED as #112 resolves them; adding one is a deliberate act
-#: and must be justified in the commit that does it.
-KNOWN_UNCLEAR = frozenset({
-    "INV-050", "INV-073", "INV-075", "INV-076", "INV-077", "INV-078",
-    "INV-082", "INV-083", "INV-087", "INV-091", "INV-097", "INV-103",
-    "INV-104", "INV-107", "INV-114", "INV-138", "INV-155", "INV-161",
-    "INV-164", "INV-181", "INV-198", "INV-202", "INV-228", "INV-234",
-    "INV-235", "INV-243", "INV-244", "INV-250", "INV-263", "INV-270",
-    "INV-278", "INV-295", "INV-300",
-})
+#: The invariants whose supersession status the prose genuinely leaves undecidable.
+#:
+#: ⛔ **EMPTY, and that is the enforced state (#141).** #112 resolved all 33 entries this set
+#: was created to permit, so every one of them is now `active` or `superseded` in the manifest.
+#: An empty pin makes the check below forbid `unclear` outright, which is the strongest form it
+#: has ever had -- NOT a vacuous one. Adding an id back re-permits an invariant a child cannot
+#: evaluate; it is a deliberate act, must be justified in the commit that does it, and must
+#: also update `test_an_empty_pin_is_the_intended_state`, which exists so the addition cannot
+#: be quiet.
+KNOWN_UNCLEAR = frozenset()
 
 
 def entries():
@@ -85,12 +94,28 @@ class TheManifestWasRead(unittest.TestCase):
         bad = sorted({e["status"] for e in entries()} - {"active", "superseded", "unclear"})
         self.assertEqual([], bad, "unexpected status value(s) in the manifest: %s" % bad)
 
-    def test_the_pin_is_not_empty(self):
-        self.assertTrue(
-            KNOWN_UNCLEAR,
-            "KNOWN_UNCLEAR is empty. If #112 cleared every entry that is worth celebrating, but "
-            "an empty pin also means this guard now forbids ALL unclear entries -- confirm that "
-            "is intended rather than leaving it implied")
+    def test_an_empty_pin_is_the_intended_state(self):
+        """The confirmation the previous assertion asked for, recorded rather than implied.
+
+        ⛔ **This replaced `test_the_pin_is_not_empty`, which pointed the wrong way.** That
+        assertion required the set to be NON-empty, on the INV-265 reasoning that an empty
+        corpus satisfies comparisons trivially. For a permit list the logic inverts: empty is
+        the STRICTEST state, because `unclear_ids() - KNOWN_UNCLEAR` then forbids every
+        undecidable invariant. Emptiness here is the goal, not the hazard -- the INV-265 risk
+        lives in the manifest, and `test_the_manifest_carries_entries` holds it.
+
+        ⚠️ Its message had already anticipated this moment -- *"If #112 cleared every entry
+        that is worth celebrating, but an empty pin also means this guard now forbids ALL
+        unclear entries -- confirm that is intended rather than leaving it implied."* This is
+        that confirmation, as an assertion instead of a sentence.
+        """
+        self.assertEqual(
+            frozenset(), KNOWN_UNCLEAR,
+            "KNOWN_UNCLEAR is non-empty: %s. Every id here is an invariant a child reading the "
+            "published manifest cannot evaluate. If the addition is deliberate, say why in the "
+            "commit and amend this assertion -- it is written to make re-permitting an "
+            "undecidable invariant a visible act rather than a quiet one"
+            % ", ".join(sorted(KNOWN_UNCLEAR)))
 
 
 class NoInvariantNewlyBecomesUnclear(unittest.TestCase):
