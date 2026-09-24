@@ -112,6 +112,29 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    clause is re-read as authority and never re-verified. Give those markers the same weight as
    a shipped claim: a wrong one sends the next revisit check to the wrong answer, which is
    exactly what a phase 1 sweep found there.
+5. **Exclude the walk's own docs from any Markdown-lint hook you run**, if your
+   `~/.claude/settings.json` has one. A `PostToolUse` hook matching `Write|Edit` that
+   enforces CommonMark will reject the guide's writes to `docs/bootcamp_recap.md` at
+   **every module close**, for MD022/MD032 — rules the bootcamp defers on purpose.
+   `bootcamp-onboarding/ground-rules.md` tells the guide to write these files plain and
+   leave prettification to graduation, which runs one normalization pass before the recap
+   PDF renders.
+
+   ⛔ **Neither side is wrong, and the plugin is not what needs changing.** It ships **no
+   `PostToolUse` hook at all** — `plugins/senzing-bootcamp/hooks/hooks.json` registers
+   SessionStart, UserPromptSubmit, PreToolUse, Stop, PreCompact and SessionEnd — so this
+   is host configuration, no Bootcamper can encounter it, and it is friction in *your*
+   walk rather than a defect in the product. ⛔ **Do not "fix" it by relaxing the
+   defer-to-graduation rule or by adding a hook to the plugin**: both push a maintainer's
+   environment into behavior every Bootcamper carries, to solve a problem none of them has.
+
+   **What to exclude: top-level `docs/*.md`.** ⚠️ Take that set from what
+   `plugins/senzing-bootcamp/scripts/normalize_docs_markdown.py` globs rather than
+   maintaining a file list — it globs `docs/*.md` **non-recursively**, so
+   `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` is out of scope structurally
+   (INV-015) instead of by an exclusion someone has to remember, and
+   `docs/REVISIT_BOOTCAMP.md` is **in** scope because it is a top-level `docs/*.md`.
+   A hand-kept list drifts the moment the normalizer's scope changes; this one cannot.
 
 ## Absolute rules
 
