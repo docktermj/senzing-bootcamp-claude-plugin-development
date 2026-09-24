@@ -14,7 +14,7 @@ a wholly duplicate file rename it `…_DUPLICATE.md`, write nothing and say so),
 independently of this plugin, so a report may be stale, already fixed, or now contradicted),
 triage each item against `specs/INVARIANTS.md`, confirm root causes in the codebase, and
 **file one GitHub issue per item that warrants one**. Where the current server is itself the
-defect, draft an upstream report and ask before sending it via `submit_feedback`. Finish by
+defect, draft an upstream report and **(INV-314) ask before sending it** via `submit_feedback`. Finish by
 archiving the processed file to `feedback/` with its ledger entries, then report the triage
 table — including what the MCP re-check found, the server version it ran against, any entries
 skipped as already-processed or already-filed, and the archive path — and the list of issues

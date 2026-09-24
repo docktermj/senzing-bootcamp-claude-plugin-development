@@ -126,7 +126,7 @@ What the parent undertakes to provide:
   A child treating null as absence will under-count its register. ⚠️ **No count is stated here
   deliberately** — a figure in prose goes stale silently while reading authoritative; read the
   live number off `invariant-manifest.json`.
-- ⛔ **`status` is `active` or `superseded`. There is no third value (#112).** It is decided by
+- ⛔ **(INV-313) `status` is `active` or `superseded`. There is no third value (#112).** It is decided by
   a bullet — `- **Superseded by:** INV-nnn — <what changed>` — and by **nothing else**: prose
   mentioning supersession is not evidence. The earlier `unclear` value is gone, and so is the
   caveat that went with it.
@@ -152,7 +152,7 @@ had grown to four.
 What stays here is repository-local: the command index below, and the rule governing how this
 repository's own maintainer pages name commands.
 
-⛔ **A command named on a maintainer page either ships here or is marked as not shipping.**
+⛔ **(INV-316) A command named on a maintainer page either ships here or is marked as not shipping.**
 A command that ships has a file in `.claude/commands/`. One that does not carries its reason at
 the point of use: *(children only)* for `/parity-check` *(children only)* and
 `/escalate-to-parent` *(children only)*, or a statement of retirement, as

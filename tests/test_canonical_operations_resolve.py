@@ -55,6 +55,16 @@ diagrams write them.
 compares name sets. A command listed with the wrong phase, or marked `required` for children
 that do not have it, passes every assertion here.
 
+⛔ **Enforces INV-316** — a slash command named in a maintainer-facing document resolves to a
+shipped command or carries a marker at the point of use; and where the document is the
+REGISTER of an operation set, every shipped command appears in it.
+
+⚠️ **What an `Enforced by` clause here does NOT claim.** This module compares **name sets**.
+It cannot assert that a diagram renders, that it renders identically on GitHub, that a
+table row's *cell values* are right -- a command listed with the wrong phase, or marked
+`required` for children that do not have it, passes every assertion here -- or that what the
+drawing depicts is a true account of the system.
+
 Source issues: #55 (original), #111 (re-aimed), #140 (the missing direction).
 
 Stdlib only; both directories are listed and the docs read as text (INV-108).

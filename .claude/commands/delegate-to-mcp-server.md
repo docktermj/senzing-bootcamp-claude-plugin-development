@@ -56,7 +56,7 @@ hooks, scripts or skills — filing the issues is the deliverable, and implement
 `/implement-github-issue`'s job. ⛔ **Never propose deleting or renumbering an invariant**;
 `specs/INVARIANTS.md` is append-only, and a superseded one is *marked* superseded.
 
-⛔ **Show the maintainer every issue title and body and get an explicit yes before filing**,
+⛔ **(INV-314) Show the maintainer every issue title and body and get an explicit yes before filing**,
 and ⛔ **never pass `--repo`.** Filing is outward-facing and immediate: an issue cannot be
 un-filed and its notifications have already gone out. This is the parent repository, where
 parent-to-child change travels by parity from a tagged release — so the parent never files
@@ -65,7 +65,7 @@ into a child at all.
 **Step 8 is part of the job, not an afterthought** — the `keep-server-lacks-it` rows are
 collectively a list of things the server could serve and does not, and reporting them is the
 only thing that shrinks this plugin's maintenance surface for good. ⛔ **Show the maintainer
-the exact message and get an explicit yes before sending**, strip everything identifying
+the exact message and get an explicit yes before sending (INV-314)**, strip everything identifying
 (data shape, never data; no paths, hostnames, employer or dataset contents), and ⛔ never send
 under `category='license_request'` (INV-135).
 

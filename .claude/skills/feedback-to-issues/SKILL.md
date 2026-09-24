@@ -208,7 +208,7 @@ For every parsed item:
 For each item that warrants one, file **one GitHub issue in this repository**, using
 `issue-template.md` (in this skill's directory) as the body.
 
-⛔ **Show the maintainer the title and body, and get a yes, before filing.** Filing is
+⛔ **(INV-314) Show the maintainer the title and body, and get a yes, before filing.** Filing is
 **outward-facing and immediate** — the issue is visible to anyone watching the repository
 the moment it is created, and it carries the Bootcamper's report into a public record.
 An issue can be edited or closed afterwards, but it cannot be un-filed, and its
@@ -272,7 +272,7 @@ record the confirmed behavior.
    their machine, host names, dataset contents, or record values — the MCP server's own
    notice forbids sending PII, and submissions are anonymous, so nothing in the message
    can be followed up with you. Describe data shape, never data.
-4. **Show the maintainer the exact message and get an explicit yes before sending.** This
+4. **(INV-314) Show the maintainer the exact message and get an explicit yes before sending.** This
    is required by `submit_feedback` itself and is the only outward-facing action this
    skill takes; a decline costs nothing and the issue still stands. Then call
    `submit_feedback(category='bug', message='<the approved text>')` — `category='feature'`

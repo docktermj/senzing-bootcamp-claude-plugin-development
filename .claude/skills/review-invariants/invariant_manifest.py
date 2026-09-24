@@ -142,7 +142,7 @@ def sections_by_id(text):
 def status_of(body):
     """`superseded` or `active` -- two states, decided by a bullet rather than by prose.
 
-    ⛔ **(#112) There is no third state.** An entry carrying `- **Superseded by:** INV-nnn` is
+    ⛔ **(INV-313) (#112) There is no third state.** An entry carrying `- **Superseded by:** INV-nnn` is
     superseded; every other entry is active. Prose mentioning supersession decides nothing,
     which is what removed 33 `unclear` entries that were mostly not supersessions at all.
 

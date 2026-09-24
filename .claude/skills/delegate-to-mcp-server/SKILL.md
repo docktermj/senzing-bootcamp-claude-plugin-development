@@ -52,7 +52,7 @@ systematic version of both, and it is the only one of the four that reads the pl
   an exception nobody had recorded.
 - **Never modify plugin code, hooks, scripts or skills.** Filing the issues is the
   deliverable; implementing them is `/implement-github-issue`'s job.
-- ⛔ **Filing is outward-facing and immediate. Show the maintainer every title and body and
+- ⛔ **(INV-314) Filing is outward-facing and immediate. Show the maintainer every title and body and
   get an explicit yes first** (Step 7). An issue is visible to anyone watching the
   repository the moment it is created; it can be edited or closed, never un-filed, and its
   notifications have already gone out. This is the same gate Step 8 applies to
@@ -284,7 +284,7 @@ convert it *into* when full delegation fails Step 6.
 One issue per coherent change, using `issue-template.md` in this skill's directory.
 Group sites that share one fix; keep unrelated ones apart.
 
-⛔ **Show the maintainer every title and body, and get a yes, before filing.**
+⛔ **(INV-314) Show the maintainer every title and body, and get a yes, before filing.**
 Then, for each approved item:
 
 ```bash
@@ -337,7 +337,7 @@ coverage gaps, so the category is usually `feature` rather than `bug`.
   asked, which tool and parameters, what came back, and what was needed instead.
 - Strip everything identifying. Describe data shape, never data. No paths, hostnames,
   employer, or dataset contents.
-- **Show the maintainer the exact message and get an explicit yes before sending.**
+- **(INV-314) Show the maintainer the exact message and get an explicit yes before sending.**
   Then `submit_feedback(category='feature', message='<approved text>')`.
 - ⛔ Never send under `category='license_request'` (INV-135).
 - Record the outcome on the ledger row so the next run does not re-file it.

@@ -338,7 +338,34 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # list_specs.py to tests/ and added the guard that the path it names resolves —
 # nothing had checked that before, so the invariant could have pointed at nothing
 # with every other guard green. Re-derived by running the extractor, not incremented.
-EXPECTED_PAIRS = 131
+# 132 on 2026-09-24: INV-313 (a published derived register takes supersession status from
+# an explicit marker, two states only, a partial supersession staying active with its
+# successor in a field of its own) names test_supersession_has_one_syntax.py, which cites
+# it back and states what it does NOT establish -- that a supersession recorded is correct,
+# that a clause marked partial really is partial, or that a downstream consumer reads the
+# field as intended; the first two are human judgments and the third lives in another
+# repository. Re-derived by running the extractor -- 132, with the new pair present by
+# name. This closes the 2026-09-24 review's first deferral: EXPECTED_PAIRS 131 -> 132.
+# 133 on 2026-09-24: INV-314 (a maintainer command creating a record outside this repository
+# shows the exact text and gets assent first; unattended it creates nothing) names
+# test_filing_is_gated.py, which cites it back and states what it does NOT establish -- that
+# a run actually asks, that a maintainer answered, or that an unattended run refrained; those
+# are live-turn properties only dry-run phase 3 observes. Re-derived by running the
+# extractor -- 133, with the new pair present by name. EXPECTED_PAIRS 132 -> 133.
+# 134 on 2026-09-24: INV-315 (a rule statement carries its kind; only quotations are checked;
+# a description is labeled unverified where it is SHOWN; an unmatched statement is reported
+# unparsed) names test_rule_bullets_are_read_or_reported.py, which cites it back and states
+# what it does NOT establish -- that a described rule is a faithful summary, which nothing
+# can establish by construction. Re-derived by running the extractor -- 134, with the new
+# pair present by name. EXPECTED_PAIRS 133 -> 134.
+# 135 on 2026-09-24: INV-316 (a command named in a maintainer-facing document resolves or is
+# marked at the point of use, and a document that is the REGISTER of an operation set lists
+# every shipped command) names test_canonical_operations_resolve.py, which cites it back and
+# states what it does NOT establish -- that a diagram renders, that a row's cell values are
+# right, or that the drawing is a true account of the system. Re-derived by running the
+# extractor -- 135, with the new pair present by name. This closes the 2026-09-24 review:
+# four deferrals decided, EXPECTED_PAIRS 131 -> 135 across it.
+EXPECTED_PAIRS = 135
 
 
 def pairs():

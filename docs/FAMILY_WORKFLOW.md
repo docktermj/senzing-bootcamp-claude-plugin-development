@@ -43,7 +43,10 @@ bootcamper installs. This is deliberate and is not an oversight to be corrected.
 ## 2. Canonical operations
 
 **R4 — The canonical operation names are reserved family-wide, and every development
-repository exposes each applicable operation under its canonical name.** The *name* is the
+repository exposes each applicable operation under its canonical name.** ⛔ **(INV-316) The
+register binds both ways**: a name in this table must resolve to a shipped operation, and every
+operation the repository ships must appear in the table. A register that only validates the
+names it already lists cannot notice the one it omits. The *name* is the
 invariant; the *invocation mechanism* is the host's business. A Claude slash command, a Kiro
 power skill triggered by natural language, and a Codex `commands/` entry are all conforming
 implementations of `parity-check` — an operation named `publish-bootcamp-power` is not.
@@ -293,7 +296,7 @@ Nothing else establishes supersession — not prose, not a status word, not a st
 invariant carrying `Superseded by:` has status `superseded`; one that does not has status
 `active`; and **there is no third status.**
 
-⛔ **Three markers, two statuses — and conflating those two counts is what left the third
+⛔ **(INV-313) Three markers, two statuses — and conflating those two counts is what left the third
 marker unwritten here for two days.** `Partly superseded by:` does **not** establish
 supersession: the entry stays `active` and **still binds in full**, which is precisely why it
 needs a marker of its own rather than the `Superseded by:` one. Reporting it superseded would
@@ -412,7 +415,7 @@ for the case, and the parent's own published manifest had no field for it either
 shipped `superseded_by: null` with the successor buried in free text. Both are fixed together
 (#143).
 
-⛔ **What a child must do:** record the replaced clause and its successor, and **do not** let a
+⛔ **(INV-313) What a child must do:** record the replaced clause and its successor, and **do not** let a
 partial supersession change an entry's status. The parent publishes this as a separate
 `partly_superseded_by` field rather than overloading `superseded_by`, so a consumer already
 reading that field is unaffected.

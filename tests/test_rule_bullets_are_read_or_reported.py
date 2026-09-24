@@ -30,6 +30,17 @@ whole defect and a later edit could reverse it without any other test noticing.
 describes. Nothing checks that, by construction -- it is prose about prose. `show` labels such
 rules unverified rather than implying otherwise.
 
+⛔ **Enforces INV-315** — a rule statement carries its kind (quoted or described); only
+quotations are compared against source; a description is labeled unverified where it is
+shown, not merely counted; an unmatched statement is reported as unparsed, never dropped;
+and the more specific shape is matched first.
+
+⚠️ **What an `Enforced by` clause here does NOT claim.** This module pins the
+classification, the counts and the matching order. It **cannot** establish that a described
+rule is a *faithful* summary of the rule at the location it names — nothing can, by
+construction, since that is a judgment about meaning. That is exactly why the rule requires
+the label rather than a check: the honest output is *unverified*, not *verified*.
+
 Source issue: #110.
 
 Stdlib only; the helper is loaded by path, since it takes no `--repo` argument (INV-108).
