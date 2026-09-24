@@ -284,11 +284,12 @@ are required; each is a bullet of its own, and the identifier is zero-padded to 
 
 Nothing else establishes supersession — not prose, not a status word, not a strikethrough. An
 invariant carrying `Superseded by:` has status `superseded`; one that does not has status
-`active`; and **there is no third state.** This exists because the parent's generated manifest
-reports `status: unclear` for a substantial minority of its invariants, the prose having
-written supersession six different ways. ⚠️ **No count is stated here deliberately**: a
-figure in normative prose goes stale silently while reading authoritative, and four
-repositories cite this rule. Read the live number off `invariant-manifest.json`.
+`active`; and **there is no third state.** This exists because the parent's prose had written
+supersession six different ways, leaving a substantial minority of its invariants reporting
+`status: unclear` in the generated manifest. Adopting the single syntax (#112) took that to
+zero. ⚠️ **No count is stated here deliberately**: a figure in normative prose goes stale
+silently while reading authoritative, and four repositories cite this rule. Read the live
+number off `invariant-manifest.json`.
 
 ### Provenance: one name
 

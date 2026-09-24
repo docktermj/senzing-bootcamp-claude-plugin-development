@@ -43,6 +43,67 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## r12-stops-describing-the-world-its-own-fix-removed
+
+- **Implemented:** 2026-09-24 (**Not a spec** — a dated record of one issue-driven run, #141)
+- **Files changed:** `docs/FAMILY_WORKFLOW.md`,
+  `tests/test_manifest_status_does_not_regress.py`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/141.json`
+- **MCP re-check:** n/a (no Senzing fact; normative maintainer documentation and its guard only)
+- **Summary:** R12 justified itself with *"the parent's generated manifest **reports**
+  `status: unclear` for a substantial minority of its invariants"* — present tense, in a page
+  four child repositories read as normative. Measured at both ends: **33 of 311** at `658267c`,
+  the day R12 was written, and **0 of 311** today. #112 — the fix R12 mandates — falsified it
+  the next day. The clause is now past tense and records the outcome.
+- ⛔ **The fix this issue proposed was wrong, and was not implemented as filed.** It asked for
+  *"33 of 311"* to be restored as a dated figure. §10's `2026-09-22 — R12's count removed`
+  entry records that a count was **deliberately removed** from this exact sentence, reasoning
+  that *"correcting it only resets the clock"*, and R12 still carries ⚠️ *"No count is stated
+  here deliberately."* Implementing the issue literally would have reversed a decision taken two
+  days earlier. ⚠️ **A dated figure genuinely cannot go stale, so the proposal was defensible** —
+  it was rejected because it reopens a settled question and would have required amending R12's
+  own no-count caveat to do it. The clause is past tense **without** a figure; the caveat is
+  untouched and still true.
+- ⛔ **A second instance of the same root cause was found while reading, and is fixed here.**
+  `tests/test_manifest_status_does_not_regress.py` pinned **33** ids in `KNOWN_UNCLEAR` while
+  the manifest reported **0**. Its own docstring states that a stale permit *"only ever permits
+  and never forbids, so it does not fail"* — so `unclear_ids() - KNOWN_UNCLEAR` was empty
+  **whatever happened to those 33**, and any of them could have regressed to `unclear` with the
+  suite green. ⚠️ **#112 resolved every entry and did not clear the pin its resolution retired**,
+  which disarmed the guard #122 created to protect a published field. The set is now empty,
+  which is the **strictest** state it has ever had.
+- ⛔ **`test_the_pin_is_not_empty` pointed the wrong way and was replaced.** It required the set
+  to be NON-empty on INV-265 reasoning (*an empty corpus satisfies comparisons trivially*). For
+  a **permit list** that logic inverts: empty forbids everything. ⚠️ **Its message had already
+  anticipated this moment** — *"confirm that is intended rather than leaving it implied"* — so
+  `test_an_empty_pin_is_the_intended_state` records the confirmation as an assertion, making a
+  future re-permit a visible act rather than a quiet one.
+- **The prose fix is now transitively enforceable, which it was not before.** No guard reads
+  R12's text, and one keyed to *"substantial minority"* would be the INV-282 violation — a
+  matcher built from the phrasing already seen. ⚠️ **What is guarded is the condition the new
+  sentence asserts:** with the pin empty, any invariant becoming `unclear` fails
+  `test_nothing_joined_the_undecidable_set` at the same moment *"took that to zero"* would
+  become false. Clearing the pin is what made that true; the two halves of this change are one
+  fix, not two.
+- **Negative controls, three, each verified to have landed before the run.** (1) INV-050 forced
+  to `unclear` against the **fixed** guard — 1 failed, correctly. (2) The **same** mutation with
+  `KNOWN_UNCLEAR` restored to its pre-#141 33 ids — `test_nothing_joined_the_undecidable_set`
+  **PASSED**, which is the defect demonstrated rather than asserted. (3) That same restored pin
+  failed the new emptiness assertion, so controls 2 and 3 ran as one. All files restored from
+  copies taken **before** the first mutation and verified byte-identical by md5
+  (`997df45f…`, `f38cb08b…`, `b0c7af8f…`); `__pycache__` cleared.
+- ⚠️ **Not a §10 amendment, stated rather than left implicit.** §10's unit is *"a change to what
+  a numbered rule requires"*. R12's requirement — one syntax, both lines, zero-padded — is
+  untouched; only its supporting reason moved to past tense. Recording it in §10 would train a
+  reader that the section carries copy edits.
+- **Establishes no invariant.** ⛔ Checked with `since --since-last-audit`, not a grep: 0 lines
+  in the scanned corpus and 0 outside it. `tests/` is not scanned and `docs/` is not either, so
+  that zero is *nothing to check here* — the change adds no durable rule in any case, since both
+  halves restate obligations INV-311 and #122 already carry.
+- **Verification:** `citations.py verify` clean at **311**; `invariant_manifest.py --check`
+  no drift; full suite green.
+- **Commit:** uncommitted
+
 ## the-canonical-operation-table-binds-both-directions
 
 - **Implemented:** 2026-09-24 (**Not a spec** — a dated record of one issue-driven run, #140)
