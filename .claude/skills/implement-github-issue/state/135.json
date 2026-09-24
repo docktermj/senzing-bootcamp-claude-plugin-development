@@ -1,8 +1,12 @@
 {
   "issue": 135,
   "branch": "135-docktermj-1",
-  "phase": "implement",
+  "phase": "pr-open",
   "approach": "Document the host PostToolUse conflict in .claude/skills/dry-run/SKILL.md 'Before you start' as item 5 (appended, not inserted -- two files cross-reference step 3 by number). One home only (INV-300). Guard derives the exclusion set from the normalizer and pins the no-PostToolUse premise.",
-  "gate1_approved": false,
-  "comments_posted": []
+  "gate1_approved": true,
+  "comments_posted": [
+    "started",
+    "result"
+  ],
+  "pr": 139
 }

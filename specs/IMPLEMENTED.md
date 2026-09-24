@@ -43,6 +43,167 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-canonical-operation-table-binds-both-directions
+
+- **Implemented:** 2026-09-24 (**Not a spec** — a dated record of one issue-driven run, #140)
+- **Files changed:** `docs/FAMILY_WORKFLOW.md`,
+  `tests/test_canonical_operations_resolve.py`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/140.json`
+- **MCP re-check:** n/a (no Senzing fact; maintainer-surface documentation and its guard only)
+- **Summary:** `docs/FAMILY_WORKFLOW.md`'s §2 table reserves the family's canonical operation
+  names and is read as normative by four child repositories. ⛔ **Its guard could not see a
+  shipped command the table omits**, because both table assertions iterate `table().items()`:
+  `required` ⇒ ships, and `—` ⇒ does not. A command absent from the table satisfies each
+  vacuously. ⚠️ **And the docstring claimed otherwise** — *"The table half is exact in both
+  directions"* — which is why three days of green said nothing. `check-skill-drift` shipped
+  2026-09-23 (#128), one day after the page was adopted (#111), and was missing until a
+  production-readiness audit read the assertions instead of the sentence describing them.
+  A third assertion now closes the direction, the row is added, and the docstring states the
+  reach it has (INV-308).
+- **Measured, not assumed.** `shipped() - set(table())` returned exactly `['check-skill-drift']`
+  before the fix and `[]` after; `table() - shipped()` returned `['escalate-to-parent',
+  'parity-check']` throughout, which is correct — both are child-only.
+- ⛔ **No exemption set was added, deliberately.** The issue's acceptance criteria allowed
+  *"or is in a named, reasoned exemption set"*, and with the disposition decided there is no
+  command to put in one. An empty, never-exercised branch is the failure shape this same file
+  already guards against in `test_the_child_only_branch_is_exercised` — *"the branch permitting
+  a non-shipping command is never taken and the rule is unverified"*. A future command that
+  should not be listed will fail the guard, which is the right place to force a stated reason.
+- **The disposition was the maintainer's call, and is recorded so it is not re-derived.**
+  `check-skill-drift` reads `~/.claude/skills/`, a Claude Code construct, so *host-specific* was
+  a live reading. R4 settles it — *"the name is the invariant; the invocation mechanism is the
+  host's business"* — and the row is `maintenance · required · —`, the shape
+  `delegate-to-mcp-server` and `compact-dev-environment` already use. A §10 amendment entry
+  records the reserved name, because §10 is the only channel that reaches a child holding an
+  earlier copy.
+- ⚠️ **One hard-rule line was written by accident and removed rather than accounted for.** The
+  §10 entry first read `⛔ **No rule text changed**` — a stop sign on a statement of fact, not a
+  prohibition, and a second home for what the table's `—` column already says (INV-300).
+  `tests/test_new_hard_rules_are_cited_or_deferred.py` caught it as 1 line shipped outside
+  `SCAN_ROOTS` (`docs/` is not scanned) and demanded it be accounted for. Rephrasing was the
+  right answer, not a ledger paragraph: the convention marks rules, and diluting it is what
+  makes the detector noisy. **Outside count is now 0.**
+- **Negative controls, two, each verified to have landed before the run.** (1) The table row
+  removed — 1 failed, naming `check-skill-drift`. (2) A dummy `zz-dummy-op.md` command added
+  with no row — 1 failed, naming `zz-dummy-op`, which proves the guard catches the **next**
+  instance and not only this one. Both used a pre-write assertion on the target's occurrence
+  count. `docs/FAMILY_WORKFLOW.md` restored and verified byte-identical by md5
+  (`3b6af79865623f957487031706ed6257`).
+- ⛔ **My own mistake, recorded because the run is trusted on its self-report.** Control 1 was
+  restored with `git checkout docs/FAMILY_WORKFLOW.md`, which reverted the file to `HEAD` and
+  discarded **all three** of this run's edits to it, not just the mutation — the branch was cut
+  fresh from `main`. ⚠️ **This is the identical mistake `the-untested-span-carries-its-citation-rate`
+  recorded three days ago**, in the same repository, for the same reason. It was caught
+  immediately by comparing md5 against the saved pre-mutation digest, the three edits were
+  reapplied, and the result hashes byte-identical to the pre-control state — so nothing was
+  lost. The restore copy is now taken **before** the first mutation, not reconstructed after.
+- **Establishes no invariant of its own.** ⛔ Checked with `since --since-last-audit`, not a
+  grep: **0** hard-rule lines added in the scanned corpus and **0** outside it. The rule this
+  work enforces is the **reverse clause added to the pending deferral**
+  `add-a-workflow-flow-chart-to-docs-development-md`, widened here before sign-off precisely so
+  the invariant is not registered with the blind spot it was drafted around. The maintainer's
+  verdict on that wording is still owed; `/review-invariants` asks for it.
+- **Verification:** `citations.py verify` clean at **311**; the guard file at **22 tests**
+  (was 21); full suite green.
+- **Commit:** 29f50fa
+
+## production-readiness-audit-2026-09-24
+
+**Not a spec** — a dated record of an audit run, **attended**, following 44 merged pull
+requests since the previous audit: the `FAMILY_WORKFLOW.md` adoption, the issue-driven rework of
+`/delegate-to-mcp-server` and `/retrofit-from-public`, the published invariant manifest, and the
+new `/check-skill-drift`.
+
+- **Implemented:** 2026-09-24 (**4 findings; 4 filed; no shipped file modified by this audit**)
+- **Files changed:** this record only.
+- **MCP re-check:** **n/a (no Senzing fact)** — re-confirmed, not assumed. Every finding is
+  internal consistency between this repository's own documents, guards and derived artifacts; no
+  Senzing claim is asserted or re-asserted, so no route was called and none is owed (INV-080).
+- **Baseline.** `main` at `7d12e36`, tree clean but for one `state/135.json`. Suite **4,601 OK
+  (3 skipped, 3,872 subtests)**. `citations.py verify` clean at **311** invariants.
+  `coverage_reports.py both` clean on both halves. `rules`: **633** hard-rule lines (439
+  line-anchored + 194 mid-line), **0** in a section citing no invariant. `per-rule --uncited`:
+  **334**. `enumerations`: **49 of 311**. `size`: 45 shipped files, **191,214** words.
+  `duplication`: 165 repeated passages across 100 file pairs. `since --since-last-audit`
+  resolved to **`e670474`** with no `SUSPECT-REF`, reporting **47** lines across 13 files plus
+  **50** outside-corpus lines in 9 files; `reverse-check` reported **1 tested (1 cited), 46
+  untested (8 cited, 38 not), VERDICT: NOT CLEAN** — correct, since all but one added line is on
+  the maintainer surface, which `per-rule`'s corpus cannot reach. **Zero open issues** at the
+  start of the run, so no finding is a duplicate.
+- **Scope, stated rather than implied.** The forward sweep covered what the diff since
+  `e670474` touches (91 files, ~11k insertions), the enumerating subset, and ⚠️ **INV-028–INV-049,
+  which this run DID read** — the 2026-09-03h, 2026-09-17 and 2026-09-21 entries each recorded
+  them unread, making twelve consecutive audits. They are clean; see the verified list below.
+- **Finding 1 — Medium. Filed as #140.** `check-skill-drift` ships at
+  `.claude/commands/check-skill-drift.md` and appears **nowhere** in `docs/FAMILY_WORKFLOW.md`,
+  the page four child repositories read as normative. ⛔ **The guard cannot see the direction:**
+  both table assertions in `tests/test_canonical_operations_resolve.py` iterate
+  `table().items()`, so a command absent from the table satisfies both — while the docstring at
+  line 35 claims *"The table half is exact in both directions"*. ⚠️ **The asymmetry is the sharp
+  part:** `docs/development.md:205` lists it and INV-302 binds that page to the command set both
+  ways, and `development.md:144` explicitly defers to the family page — so the non-normative page
+  is complete and the normative one is not. Page adopted 2026-09-22 (#111); command shipped
+  2026-09-23 (#128), the next day. ⛔ **Filed now rather than after the invariant review**,
+  because deferral 4 drafts its invariant as names→resolution only and would register the same
+  blind spot at invariant level. ⚠️ **Its id is deliberately not written here as a literal** —
+  it is unminted, and `citations.py verify` rejects an undefined id, which is how this entry's
+  first draft turned the suite red.
+- **Finding 2 — Medium. Filed as #141.** `docs/FAMILY_WORKFLOW.md:286` states in the present
+  tense that the parent's manifest *"reports `status: unclear` for a substantial minority of its
+  invariants"*. Measured both ends: **33 of 311** at `658267c` (2026-09-22, the day R12 was
+  written) and **0 of 311** today, falsified the next day by `40de13e` (#112) — the very fix R12
+  mandates. ⚠️ **The caveat guarded the wrong thing:** R12 carries *"No count is stated here
+  deliberately"*, the count was duly avoided, and the qualitative claim went stale anyway.
+- **Finding 3 — Low. Filed as #142.** `.claude/skills/compact-dev-environment/SKILL.md:74`
+  requires a renumber to ship `specs/RENUMBERING.md`; INV-307 froze `specs/` and
+  `tests/test_specs_are_frozen.py` rejects it, so the documented procedure cannot be executed.
+  The same section states **"813 commit-message citations"** as fact (measured 2026-07-31,
+  `fb80689`); today `git log` yields **2,307** raw occurrences / **1,807** unique (commit, INV)
+  pairs. ⚠️ The file's blanket *"treat every number here as a dated illustration"* caveat is
+  undercut by item 4, which **instructs** quoting the figure in a report to the maintainer.
+- **Finding 4 — Low. Filed as #143.** `- **Partly superseded by:**` is used **6** times in
+  `INVARIANTS.md` (INV-040, 079, 086, 101, 104, 137) and is named by neither R12 — which shows
+  two forms and says *"nothing else establishes supersession"* — nor the manifest schema, which
+  publishes `superseded_by: null` for all six and carries the pointer only inside the free-text
+  `statement`. ⛔ **The two-state status model is correct and must not change**; deferral 1's
+  drafted wording already gets it right. What is missing is the marker vocabulary and the
+  structured field.
+- **The four properties, separately.** **Consistent** — ⛔ two defects (Findings 1 and 2), both
+  the unswept-prose-after-a-fix class the 2026-09-21 entry recorded, now found twice more in the
+  three days since. **Coherent** — ⚠️ two defects (Findings 3 and 4). **Complete** — ⚠️ one gap
+  (Finding 1); `coverage_reports both` clean on both halves. **Concise** — ✅ unchanged; the top
+  duplication pairs are the INV-183 per-module apparatus, which is required repetition.
+- **Verified as correct, so the next audit need not re-derive it.** ⛔ **INV-028–INV-049 read in
+  full**: INV-048's four-subsection enumeration carries its own INV-103 supersession note and
+  matches `generate_recap_pdf.py`, which accepts legacy `Journal` as an alias; the
+  apparatus-exempt carve-outs (INV-075, INV-078) are consistent across INV-029–032; INV-038's
+  and INV-028's supersession notes resolve. ⛔ **The five `superseded → active` reclassifications
+  from #112 (INV-040, 079, 086, 101, 137) are CORRECT, not a parsing regression** — each carries
+  `Partly superseded by:` and still binds; classifying them `superseded` had been telling child
+  ports to ignore invariants that govern. INV-311 is honored: `invariant-manifest.json` names its
+  source and says **in the artifact** that null means not derivable. The one shipped-plugin change
+  this window, `module-07/phase1-query-visualize.md:61`, cites INV-152 correctly and applies
+  INV-300 by pointing rather than restating. INV-302 holds both ways across all 13 commands.
+- ⛔ **Coverage limits.** **(1)** The **conversational invariants remain untested** — INV-251,
+  INV-006, INV-014, INV-005/008/009 and every gate-ordering rule govern live turns; reading
+  cannot establish them and an assistant grading its own 👉 discipline proves nothing.
+  `/dry-run` phase 3 only. **(2)** `per-rule --uncited`'s **334** standing lines were not worked.
+  **(3)** The plugin was **not executed**; this is a static pass. ⚠️ Nothing was blocked by the
+  environment — `fpdf2` 2.8.5, `pdftoppm`, `docker`, Chrome, `libSz.so` and the `senzing` Python
+  binding are all present. The limit is the method, not the machine.
+- ⛔ **My own mistakes.** The path-resolution scan I wrote over-collected badly: of ~60 hits,
+  all but one were Bootcamper-project paths or a hypothetical future file, and the single real
+  finding had to be hand-filtered out. A lead generator with that signal-to-noise nearly buried
+  its own result. I also spent a probe suspecting the five status reclassifications were a
+  regression before establishing they were correct — recorded because the negative result is
+  what makes the "verified correct" line above worth anything.
+- **Establishes no invariant.** ⛔ Checked with `reverse-check`, not a grep: this audit modifies
+  no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. The
+  rules its findings rest on — INV-282, INV-300, INV-302, INV-307, INV-308, INV-311 — are all
+  registered, and the invariant drafted by deferral 4 is pending the maintainer's sign-off with
+  Finding 1 bearing on its wording (read the free id off `INVARIANTS.md` at mint time).
+- **Commit:** 0d7bbe1
+
 ## supersession-has-one-syntax
 
 - **Implemented:** 2026-09-23 (**Not a spec** — a dated record of one issue-driven run, #112)
@@ -997,6 +1158,16 @@ entries at once. Two things a reader should know about the hashes now recorded:
   used to ship, and the drafted wording below is updated to match rather than pretending two
   categories covered it.
 
+  ⚠️ **Widened 2026-09-24 (#140), before sign-off, and this is why.** The drafted wording above
+  said names→resolution only. ⛔ **Both table assertions in the named enforcer iterated
+  `table().items()`**, so a shipped command absent from the table satisfied each of them
+  vacuously — and one was: `check-skill-drift` shipped 2026-09-23 (#128), one day after
+  `docs/FAMILY_WORKFLOW.md` was adopted, and was invisible to the guard, whose docstring
+  meanwhile claimed *"The table half is exact in both directions."* Registering the draft as
+  written would have locked that blind spot in at invariant level. The reverse clause and a
+  third assertion were added together; the precedent is INV-302, which has bound
+  `docs/development.md` in both directions since it was written.
+
   ⚠️ **This may want an amendment rather than an id.** INV-302 already binds the documented
   command set in both directions, and its guard is `tests/test_documented_dev_commands_match_the_shipped_set.py`;
   what it does not reach is a command named anywhere in that file other than the numbered
@@ -1015,7 +1186,11 @@ entries at once. Two things a reader should know about the hashes now recorded:
   not a silencer** — it MUST NOT be accepted on a command that does ship, or it becomes the
   way a stale name is kept quiet. ⚠️ **The marker is matched per name, not per line**: one
   document line may name several commands, and a line-scoped check lets one marker vouch for
-  every name beside it. Enforced by `tests/test_canonical_operations_resolve.py`
+  every name beside it. ⛔ **And the reverse direction binds equally: where such a document is
+  the register of an operation set — a page other repositories read to learn which names are
+  reserved — every shipped command MUST appear in it.** A rule stated only as
+  names→resolution is satisfied vacuously by a command the document never mentions, which is
+  the failure mode, not an edge case. Enforced by `tests/test_canonical_operations_resolve.py`
   (renamed from `test_the_flow_diagram_names_real_commands.py` in #111, when its subject moved
   from one page's diagrams to the family's canonical operation table), which asserts the
   resolution and the marker rules and **cannot** assert that a diagram renders, that it renders
