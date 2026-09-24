@@ -1,0 +1,8 @@
+{
+  "issue": 143,
+  "branch": "143-docktermj-1",
+  "phase": "implement",
+  "approach": "Direct (5a). Name `Partly superseded by:` in R12 + §10 amendment; add nullable partly_superseded_by to the manifest schema and regenerate; fix the published note and module docstring (both still describe the retired three-state model); correct the 'Five entries' miscount to six; fix INV-086's stray-comma bullet; amend deferral 1's drafted wording to require the marker.",
+  "gate1_approved": true,
+  "comments_posted": ["started", "clarifications"]
+}

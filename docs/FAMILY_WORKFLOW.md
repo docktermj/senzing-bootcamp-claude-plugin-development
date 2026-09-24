@@ -274,17 +274,31 @@ Where it names an upstream invariant it does so only to locate the parity gap it
 A host-native prefix is registered in this table so two children cannot collide. A failed
 invariant on either side is a **release blocker**, not advisory documentation.
 
-**R12 — Succession has exactly one syntax, in every invariant file in the family.** Both lines
-are required; each is a bullet of its own, and the identifier is zero-padded to three digits:
+**R12 — Succession has exactly one syntax, in every invariant file in the family.** A full
+supersession is recorded in **both** directions; each marker is a bullet of its own, and the
+identifier is zero-padded to three digits:
 
 ```markdown
 - **Superseded by:** INV-312 — the guard moved from the hook to the contract
 - **Supersedes:** INV-208
 ```
 
+Where only a **clause** of a rule is replaced, the marker is:
+
+```markdown
+- **Partly superseded by:** INV-198 — what was replaced, and what still stands
+```
+
 Nothing else establishes supersession — not prose, not a status word, not a strikethrough. An
 invariant carrying `Superseded by:` has status `superseded`; one that does not has status
-`active`; and **there is no third state.** This exists because the parent's prose had written
+`active`; and **there is no third status.**
+
+⛔ **Three markers, two statuses — and conflating those two counts is what left the third
+marker unwritten here for two days.** `Partly superseded by:` does **not** establish
+supersession: the entry stays `active` and **still binds in full**, which is precisely why it
+needs a marker of its own rather than the `Superseded by:` one. Reporting it superseded would
+tell a child the whole rule is obsolete. A child MUST record the replaced clause and its
+successor, and MUST NOT let a partial supersession change an entry's status. This exists because the parent's prose had written
 supersession six different ways, leaving a substantial minority of its invariants reporting
 `status: unclear` in the generated manifest. Adopting the single syntax (#112) took that to
 zero. ⚠️ **No count is stated here deliberately**: a figure in normative prose goes stale
@@ -370,6 +384,32 @@ repository cites.
 ⚠️ **An amendment does not renumber.** R8 stays R8. A rule that is withdrawn keeps its number
 and says so, for the same reason `INVARIANTS.md` never reuses an id: a citation that silently
 resolves to a different rule is worse than one that fails.
+
+### 2026-09-24 — R12 names its third marker: `Partly superseded by:`
+
+**Was:** two markers — `Superseded by:` and `Supersedes:` — introduced as *"Both lines are
+required"*, followed by *"Nothing else establishes supersession"* and *"there is no third
+state."*
+
+**Now:** three markers and two statuses, stated as separate counts. `Partly superseded by:
+INV-nnn` records that only a **clause** was replaced; the entry stays `active` and still binds
+in full. *"There is no third **status**"* is unchanged in substance and now says `status`
+rather than `state`.
+
+The parent had been using the third marker **six** times — INV-040, INV-079, INV-086, INV-101,
+INV-104, INV-137 — while this page named two. A child implementing R12 as written had no form
+for the case, and the parent's own published manifest had no field for it either: all six
+shipped `superseded_by: null` with the successor buried in free text. Both are fixed together
+(#143).
+
+⛔ **What a child must do:** record the replaced clause and its successor, and **do not** let a
+partial supersession change an entry's status. The parent publishes this as a separate
+`partly_superseded_by` field rather than overloading `superseded_by`, so a consumer already
+reading that field is unaffected.
+
+**For a child:** a conformance issue citing R12's two-marker text is not wrong about the rule.
+The requirement — one syntax, a bullet per marker, zero-padded ids, both directions for a full
+supersession — is unchanged. A third marker was added for a case the rule always had.
 
 ### 2026-09-24 — R4's reserved register gains `check-skill-drift`
 

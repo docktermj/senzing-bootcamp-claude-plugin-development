@@ -584,8 +584,24 @@ def cmd_since(args):
         n = sum(len(rows) for rows in outside.values())
         print("   ⛔ OUTSIDE the corpus, and therefore NOT counted above: %d line(s) in %d "
               "file(s)." % (n, len(outside)))
+        # ⛔ (#143) The LINES, not just a per-file tally. Printing a count here made this set
+        # the one thing the report counted and never showed -- INV-308's own subject -- and it
+        # had a consequence: `test_new_hard_rules_are_cited_or_deferred` could compare the
+        # count against zero and nothing else, so a rule shipped in `docs/` failed that guard
+        # with NO action that cleared it. Its message said to account for the line in the
+        # ledger entry; the assertion could not observe a ledger. Same `+ ` shape as the
+        # in-corpus block above, so one parser reads both.
         for name, rows in outside.items():
             print("      %s  (%d)" % (name, len(rows)))
+            for text in rows:
+                # ⛔ **(INV-308)** `!` and not `+`. Two consumers parse this report for `+ `
+                # lines, and both broke the moment these were printed with the same marker:
+                # one attributed every outside line to an unknown root, the other compared the
+                # in-corpus total against a count that now included them. ⚠️ **The marker
+                # difference is the point, not a workaround** — these lines are the population
+                # the corpus did NOT check, the header says so, and giving them the same glyph
+                # as the checked ones is what let two parsers conflate the two.
+                print("        ! %s" % text[:110])
         print("      These shipped a hard rule where this corpus does not look. A zero above")
         print("      is 'nothing to check HERE', never 'nothing was added'.")
     else:

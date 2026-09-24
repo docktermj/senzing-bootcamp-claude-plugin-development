@@ -43,6 +43,103 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-partial-supersession-marker-is-named-and-published
+
+- **Implemented:** 2026-09-24 (**Not a spec** — a dated record of one issue-driven run, #143)
+- **Files changed:** `docs/FAMILY_WORKFLOW.md`,
+  `.claude/skills/review-invariants/invariant_manifest.py`, `invariant-manifest.json`,
+  `specs/INVARIANTS.md`, `tests/test_supersession_has_one_syntax.py`,
+  `.claude/skills/production-readiness-audit/conformance.py`,
+  `tests/test_new_hard_rules_are_cited_or_deferred.py`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/143.json`
+- **MCP re-check:** n/a (no Senzing fact; the invariant register, its published manifest and
+  the family page)
+- **Summary:** `- **Partly superseded by:**` was in use **six** times — INV-040, INV-079,
+  INV-086, INV-101, INV-104, INV-137 — while R12 named **two** markers and said *"Nothing else
+  establishes supersession"*, and the published manifest had **no field** for it: all six
+  shipped `superseded_by: null` with the successor buried in `statement`. R12 now names three
+  markers against two statuses, and the manifest carries `partly_superseded_by`.
+- ⛔ **The regex existed; the field was never plumbed through.** `PARTLY_SUPERSEDED_BULLET` has
+  been in `invariant_manifest.py` since #112, with a full explanatory comment, referenced only
+  by a **test** and never by the entry builder. The relation was understood, written down, and
+  absent from the artifact — which is why reading the prose suggested it was handled.
+- ⛔ **Three further stale sites found while reading, one of them shipping.** All are #112's
+  wake, nine days on. (1) The manifest's published `note` told four child repositories
+  *"`status` is `unclear` where the prose's supersession wording is ambiguous"* — a status
+  `status_of()` **cannot emit**, as the line 140 comment says outright. That one travels inside
+  `invariant-manifest.json`. (2) The module docstring described the retired three-state model.
+  (3) The comment above the regex said *"Five entries"* and listed five, omitting **INV-104** —
+  whose partial supersession (INV-155, the tab enumeration) is the canonical stale-enumeration
+  example this repository's own audits cite.
+- ⚠️ **A correction to `production-readiness-audit-2026-09-24` and to #141's record.** Both
+  describe clearing `KNOWN_UNCLEAR` as having **re-armed** `test_manifest_status_does_not_regress.py`.
+  That over-claims. `status_of()` has no `unclear` branch, so the generator cannot emit one and
+  the guard cannot fire against generated data; the #141 negative control passed only because it
+  mutated the JSON directly. ⛔ **The change remains correct** — if `unclear` ever returns to the
+  vocabulary, no id gets a free pass — but it did not make a dead guard live, and "re-armed"
+  said it did.
+- ⛔ **My matcher was wrong twice, and the second way was the dangerous one.** It required a
+  word before `superseded`, so it matched `Fully`/`Partly` and **missed
+  `Superseded by` and `Supersedes` entirely**; and scanned whole-file it caught
+  `- **Fully superseded:**` from the index's *explanatory prose*, which is not a marker.
+  ⚠️ **Adding `Fully superseded` to the known set would have turned the failure green while
+  leaving the blindness in place** — INV-282's exact trap, a matcher repaired from the instance
+  in front of you. The form set is now derived from inside invariant bodies.
+- **Negative controls, four, each verified to have landed before the run.** (1) INV-040's
+  published pointer set to null — 1 failed. (2) INV-104 published `superseded`
+  while carrying a partial pointer, the dangerous direction — 1 failed. (3) R12 stops naming the
+  form (4 mentions renamed) — 1 failed. (4) A fourth form, `Provisionally superseded by:`,
+  introduced on INV-040 — 3 failed, including the pre-existing disposition guard. All files
+  restored from copies taken **before** the first mutation and verified byte-identical by md5;
+  `__pycache__` cleared.
+- ⛔ **`--check` caught a staleness the run created.** INV-086's comma repair landed **after**
+  the regeneration, so the checked-in manifest no longer matched the prose. Regenerated; the
+  second delta is exactly **one entry, one field** (`INV-086.statement`). ⚠️ The first
+  regeneration was verified the same way — across all 311 entries the only key that differed
+  was `partly_superseded_by`, plus `note`. A passing `--check` alone would not have established
+  that, since it would also pass on a generator changed in a way nobody intended.
+- ⛔ **The run hit a guard that could not be satisfied.** Fixing it was approved as part of
+  this change. This PR ships hard rules in `docs/` and in a `.py` — outside `SCAN_ROOTS`, which
+  is `.md` under three roots. `test_new_hard_rules_are_cited_or_deferred` then asserted
+  `outside == 0` and told the reader to *"account for each one in the ledger entry"* — a remedy
+  **the assertion cannot observe**. Accounting for them changed nothing; the suite stayed red
+  with no action that cleared it. ⚠️ **A guard that cannot be satisfied is one people learn to
+  disable**, and its in-corpus path already had the right answer: cited at the line, or named in
+  a deferral.
+- **The fix, in three parts.** (1) `since` now prints the outside lines, not just a per-file
+  tally — they were the one population the report counted and never showed, which is INV-308's
+  own subject. (2) The guard applies the **same** cited-or-deferred predicate to them, factored
+  into one helper both paths call, so the two cannot drift apart again. (3) It skips with the
+  counts rather than failing, carrying the caveat the in-corpus path carries: **accounted for is
+  not verified**, since no regex establishes that a cited invariant governs the rule beside it.
+- ⛔ **The same `+ ` marker on those lines broke two consumers; they now use `!`.**
+  `parse_since` attributed every one to an unknown root; the total-versus-lines
+  check in `test_conformance_sees_a_rule_beside_a_citation` compared the in-corpus total against
+  a count that now included them. ⚠️ **Two parsers conflating the two populations is the
+  argument for a distinct glyph, not against printing the lines** — they are precisely the set
+  the corpus did *not* check, and INV-308 requires *nothing to check* be distinguishable from
+  *could not check it*. `parse_since` is additionally bounded at the corpus footer, belt and
+  braces.
+- **Six outside lines, each accounted for individually rather than as a count.** Three cite
+  **INV-311** at the line — its subject is this repository's derived artifact for downstream
+  ports, which is exactly what they constrain. One cites **INV-308**. Two are R12's normative
+  sentences, now quoted verbatim as shipping rules in the
+  `supersession-has-one-syntax` deferral block, which is the mechanism for a rule whose id is
+  not yet minted. ⛔ **No line was demoted to make the guard pass**; one was demoted because it
+  was a historical note wearing a stop sign, and that is recorded above.
+- **Deferral 1 widened before sign-off, the same way #140 handled deferral 4.** Its wording was
+  right about the *status* question and silent on the *marker*. ⛔ Registering it as drafted
+  would have left a rule correct about two states and saying nothing about how the third
+  relation is written down — while the gap was live in both places at once.
+- ⚠️ **This IS a §10 amendment**, unlike #141's: naming a third marker changes what R12 requires
+  of a child. An entry records the wording it replaced.
+- **Establishes no invariant of its own.** The rule it enforces is deferral 1's, pending the
+  maintainer's sign-off.
+- **Verification:** `citations.py verify` clean at **311**; `invariant_manifest.py --check` no
+  drift; `pending_invariants.py check` 5 quotes, 0 mismatched; the guard file at **16 tests**
+  (was 12); full suite green.
+- **Commit:** uncommitted
+
 ## r12-stops-describing-the-world-its-own-fix-removed
 
 - **Implemented:** 2026-09-24 (**Not a spec** — a dated record of one issue-driven run, #141)
@@ -316,6 +413,8 @@ new `/check-skill-drift`.
 - **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
   shipping:
     - ⛔ **`status` is `active` or `superseded`. There is no third value (#112).** — in `docs/development.md`
+    - ⛔ **Three markers, two statuses — and conflating those two counts is what left the third** — in `docs/FAMILY_WORKFLOW.md` (#143)
+    - ⛔ **What a child must do:** record the replaced clause and its successor, and **do not** let a — in `docs/FAMILY_WORKFLOW.md` (#143)
 
   ⚠️ **Why this wants an id rather than living as R12 alone.** R12 states the syntax for the
   **family**, and four child ports cite it; but the parent's own manifest is a **derived artifact
@@ -330,7 +429,17 @@ new `/check-skill-drift`.
   and the successor names what it replaced. ⛔ **Two states only** — a record carrying the marker
   is superseded, every other record is active — and ⚠️ **a partial supersession is NOT a third
   state**: where only a clause is replaced the record remains **active** and says which clause,
-  because reporting it superseded tells a consumer the whole rule is obsolete. ⚠️ **Prose that
+  because reporting it superseded tells a consumer the whole rule is obsolete. ⛔ **That case has
+  a marker of its own, and the marker set is part of this rule** — every form the register uses
+  MUST be named wherever downstream ports read the syntax, and the published record MUST carry
+  the partial successor in a field of its own rather than folding it into the superseded-by
+  field, which would change that field's meaning for every existing consumer. (⚠️ **Widened
+  2026-09-24 (#143), before sign-off.** The wording stated the *status* question correctly and
+  was silent on the *marker*, and the gap was live in both places at once: `Partly superseded
+  by:` was in use six times while R12 named two forms, and all six published
+  `superseded_by: null` with the successor buried in free text. Registering the draft as written
+  would have left a rule that is right about two states and says nothing about how the third
+  relation is written down.) ⚠️ **Prose that
   merely mentions supersession decides nothing**, and any record whose prose does so while
   carrying no marker MUST be dispositioned explicitly rather than silently reclassified — a
   wrong `active` is confident where an honest *unknown* was not. Enforced by
