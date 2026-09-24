@@ -1,0 +1,8 @@
+{
+  "issue": 114,
+  "branch": "114-docktermj-1",
+  "phase": "implement",
+  "approach": "Rework delegate-to-mcp-server to file GitHub issues: SKILL.md steps 7/9/10 + guardrails, spec-template.md -> issue-template.md, coverage_ledger --spec -> --issue (read path still honors historical spec rows), command front, and the 4 stale 'no issue yet' homes. No MCP run.",
+  "gate1_approved": true,
+  "comments_posted": []
+}

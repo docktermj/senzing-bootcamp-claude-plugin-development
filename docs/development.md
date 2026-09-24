@@ -178,14 +178,16 @@ entry carries a description. Do not state how many there are — the set is deri
 compared, and a count in prose goes stale silently while reading authoritative.
 
 ⛔ **(INV-307) `specs/` is frozen as of the 2026-09-15 cutover; new work is tracked as
-GitHub issues.** See [`specs/README.md`](../specs/README.md). ⛔ **One command below still writes
-spec files — `/delegate-to-mcp-server`** — so its output is rejected by the freeze guard and it
-should not be run until its rework lands; it has no issue yet. Every other command that used to
-write there has been reworked: `/feedback-to-issues` files GitHub issues (#49), `/implement-spec`
-was retired (#50, #60), `/unattended-issue-loop` is renamed and label-gated and now forbids
-writing into the archive outright (#51, #69), and `/production-readiness-audit` files issues when
-attended and records findings in the ledger when not (#69). `IMPLEMENTED.md`, `DECLINED.md`,
-`INVARIANTS.md` and `README.md` are **not** frozen and are still written to.
+GitHub issues.** See [`specs/README.md`](../specs/README.md). ✅ **Every command that used to
+write there has now been reworked**, and none is blocked: `/feedback-to-issues` files GitHub
+issues (#49), `/implement-spec` was retired (#50, #60), `/unattended-issue-loop` is renamed and
+label-gated and now forbids writing into the archive outright (#51, #69),
+`/production-readiness-audit` files issues when attended and records findings in the ledger when
+not (#69), and `/delegate-to-mcp-server` files issues and writes nothing under `specs/` (#114).
+⚠️ **Its ledger, `specs/mcp-coverage.jsonl`, is not an exception to the freeze** — the guard
+globs `*.md`, so a `.jsonl` file is outside it by construction rather than by exemption.
+`IMPLEMENTED.md`, `DECLINED.md`, `INVARIANTS.md` and `README.md` are **not** frozen and are
+still written to.
 
 ### Triage feedback
 

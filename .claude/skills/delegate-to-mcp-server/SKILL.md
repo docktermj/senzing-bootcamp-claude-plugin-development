@@ -1,14 +1,14 @@
 ---
 name: delegate-to-mcp-server
-description: 'Sync the Senzing Bootcamp plugin with the live Senzing MCP server by finding Senzing facts the SBCP still holds that the server now serves itself, and writing specs to delegate them to a runtime call. Use when the maintainer wants to sync with the MCP server, retire redundant or stale Senzing content, check what the server now covers, or reduce the plugin''s Senzing-fact maintenance surface. Produces specs under specs/ — never edits the plugin. Maintainer tool — not part of the bootcamper experience.'
+description: 'Sync the Senzing Bootcamp plugin with the live Senzing MCP server by finding Senzing facts the SBCP still holds that the server now serves itself, and filing GitHub issues to delegate them to a runtime call. Use when the maintainer wants to sync with the MCP server, retire redundant or stale Senzing content, check what the server now covers, or reduce the plugin''s Senzing-fact maintenance surface. Files GitHub issues in this repository — never edits the plugin, never writes under specs/. Maintainer tool — not part of the bootcamper experience.'
 ---
 
 # Delegate to the Senzing MCP server
 
 This is a **maintainer** tool for developing the Senzing Bootcamp Claude Plugin
 (SBCP). It compares the Senzing facts the SBCP **holds** against what the live
-Senzing MCP server **now serves**, and writes **specs** proposing that the plugin
-stop holding what the server can answer at runtime.
+Senzing MCP server **now serves**, and files **GitHub issues** proposing that the
+plugin stop holding what the server can answer at runtime.
 
 The premise: the SBCP guides a Bootcamper through Senzing; the MCP server is the
 authority on Senzing (INV-080). When a fact was written into the plugin the server
@@ -41,10 +41,17 @@ systematic version of both, and it is the only one of the four that reads the pl
 
 ## Scope and guardrails
 
-- **Write only under `specs/` and this skill's ledger.** Never modify plugin code,
-  hooks, scripts or skills. Producing specs is the deliverable; implementing them is
-  the issue path's job. The one outward action is the optional upstream feature
-  request in Step 8, which is gated on the maintainer's explicit yes.
+- ⛔ **Write nothing under `specs/`.** The archive is frozen (INV-307) and a spec file
+  written there is rejected by `tests/test_specs_are_frozen.py`. This skill's only writes
+  are **GitHub issues** and its own ledger, `specs/mcp-coverage.jsonl` — which is `.jsonl`,
+  not `*.md`, and so is outside the freeze by construction rather than by exemption.
+- **Never modify plugin code, hooks, scripts or skills.** Filing the issues is the
+  deliverable; implementing them is `/implement-github-issue`'s job.
+- ⛔ **Filing is outward-facing and immediate. Show the maintainer every title and body and
+  get an explicit yes first** (Step 7). An issue is visible to anyone watching the
+  repository the moment it is created; it can be edited or closed, never un-filed, and its
+  notifications have already gone out. This is the same gate Step 8 applies to
+  `submit_feedback`, for the same reason.
 - **"The server can answer it" is not by itself a reason to delete anything.** It is
   the entry ticket to Step 6, where delegation has to earn its place. A large fraction
   of legitimate findings end in *keep* — record those too, or the next run re-litigates
@@ -54,12 +61,15 @@ systematic version of both, and it is the only one of the four that reads the pl
   (INV-080). The ledger records what was true at a version; it is not a source.
 - **Delegation done badly is worse than duplication.** A paragraph replaced by "ask the
   MCP server" — with no tool, no parameters, and no statement of what to extract — is a
-  regression, not a cleanup. Every `delegate` spec names the call.
+  regression, not a cleanup. Every `delegate` issue names the call.
 - **Never propose deleting or renumbering an invariant.** `specs/INVARIANTS.md` is
   append-only; a superseded invariant is *marked* superseded (see Step 5, verdict
   `retire-workaround`).
-- **Deduplicate** against existing specs and against the ledger before writing.
-- **Respect the invariants.** Every generated spec references `@INVARIANTS.md`. A
+- **Deduplicate against the tracker and the ledger before filing.** ⛔ **Search closed
+  issues too** — re-filing something decided against wastes the decision, and a closed
+  issue often records *why*. Where an item is already filed, reference or update that
+  issue rather than opening a second one.
+- **Respect the invariants.** Every generated issue references `@INVARIANTS.md`. A
   delegation that would break cross-platform behavior, language-agnosticism, or an
   offline guarantee is not a valid recommendation.
 
@@ -193,9 +203,9 @@ Exactly one verdict per site. The ledger accepts these six and nothing else.
 
 | Verdict | Means | Produces |
 |---|---|---|
-| `delegate` | Server answers it, and Step 6 says a runtime call is an improvement | A spec |
-| `contradicted` | Server's current answer differs from the plugin's | A spec — **urgent** |
-| `retire-workaround` | Plugin mitigates a server defect that no longer reproduces | A spec |
+| `delegate` | Server answers it, and Step 6 says a runtime call is an improvement | An issue |
+| `contradicted` | Server's current answer differs from the plugin's | An issue — **urgent** |
+| `retire-workaround` | Plugin mitigates a server defect that no longer reproduces | An issue |
 | `keep-server-lacks-it` | Asked; the server has no answer | Ledger row (+ optional Step 8) |
 | `keep-by-design` | Server answers it, but Step 6 says delegating would regress | Ledger row, with the named reason |
 | `not-a-senzing-fact` | Bootcamp pedagogy, ordering, wording, plugin mechanics | Nothing — out of scope |
@@ -203,7 +213,7 @@ Exactly one verdict per site. The ledger accepts these six and nothing else.
 Three of these need care:
 
 **`contradicted` is a defect, not a cleanup.** The plugin is shipping a wrong Senzing
-fact today. Spec it at high priority and do not batch it with tidy-ups. Before writing,
+fact today. File it at high priority and do not batch it with tidy-ups. Before filing,
 apply INV-169: most apparent contradictions are two different conditions, not a
 disagreement. If the plugin's claim holds under a flag set, binding, SDK version or
 platform the server's generic answer does not cover, that is `keep-by-design` with the
@@ -220,7 +230,7 @@ fixed:
   appending a superseding note — "(superseded by INV-NNN)" or a dated "no longer
   reproduces as of server X" clause — and a *new* invariant if the rule genuinely
   changed meaning.
-- **Name the tests that pin it.** They will fail, and the spec must say which and what
+- **Name the tests that pin it.** They will fail, and the issue must say which and what
   they should assert instead.
 - **Prove the fix, don't infer it.** One passing call is not proof a defect is gone —
   reproduce the original failing conditions as closely as the environment allows, and
@@ -247,7 +257,7 @@ Only for sites the server covers. **All six must pass** before the verdict is
    generates an artifact to name every governing rule *at that step*, not one file away.
    Where an invariant mandates local presence, the duplication is the requirement.
 5. **What happens when the call fails?** Delegation makes the step depend on the call.
-   INV-125 requires the fallback to preserve the primary path's quality gates — the spec
+   INV-125 requires the fallback to preserve the primary path's quality gates — the issue
    must say what the fallback is, or there is no delegation.
 6. **Does it cost the Bootcamper a visible turn for nothing?** Agent-side apparatus is
    free; a round-trip the Bootcamper waits through to be told something the flow could
@@ -264,24 +274,49 @@ teaching and keep nothing. The correct handling is `keep-by-design` plus re-veri
 of the dated claim — and where a site holds a cached authority, this is the shape to
 convert it *into* when full delegation fails Step 6.
 
-## Step 7: Write the specs
+## Step 7: File the issues
 
-One spec per coherent change, using `spec-template.md` in this skill's directory.
-Group sites that share one fix; keep unrelated ones apart. Rules beyond the template:
+One issue per coherent change, using `issue-template.md` in this skill's directory.
+Group sites that share one fix; keep unrelated ones apart.
+
+⛔ **Show the maintainer every title and body, and get a yes, before filing.**
+Then, for each approved item:
+
+```bash
+gh issue create --title "<title>" --body-file <file>
+```
+
+⛔ **Never pass `--repo`, and never file anywhere but here.** This is the parent repository;
+parent-to-child change travels by **parity**, from a tagged release, so the parent never
+files into a child at all. A flag naming another repository is a violation of that rule,
+not a convenience.
+
+**Record each issue number as you go** — Step 9's ledger rows and Step 10's report both
+need it.
+
+Rules beyond the template:
 
 - **Name the call that replaces the text** — tool, parameters, and what to extract from
-  the response. This is the whole deliverable of a `delegate` spec.
+  the response. This is the whole deliverable of a `delegate` issue.
 - **Quote both sides.** What the plugin says now, and what the server returned, with the
   tool, parameters, version and date.
 - **Say what stays.** Delegation rarely removes a whole section: the step still needs
-  its orientation sentence and its "what to do with the answer". A spec that reads as
+  its orientation sentence and its "what to do with the answer". An issue that reads as
   "delete lines 40-60" will be implemented that way.
 - **Name the tests that will fail.** Plugin content is pinned by tests across `tests/`;
-  a spec that removes text without saying which assertion goes with it will be reverted
+  an issue that removes text without saying which assertion goes with it will be reverted
   by a red suite.
 - **Give the acceptance criteria a re-verification clause** — the implementer re-asks
   the server before changing code (`/implement-github-issue`, INV-080), and the criterion should
   say what answer they must get for the change to remain correct.
+- ⛔ **Any absence claim carries `owner-checked:` (INV-213).** Where a finding rests on the
+  server *lacking* something — a `keep-server-lacks-it` verdict, "returns no X", "does not
+  cover" — the `MCP evidence` line MUST also name the route that would **carry** that fact
+  and what it returned. ⚠️ **This binds harder here than anywhere else in the repository**,
+  because this skill's entire subject is what the server does and does not cover: an absence
+  concluded from the wrong route becomes an instruction deleted from the plugin and from four
+  child ports. The tools you asked and found empty are true statements about *those tools*
+  and no evidence for the negative. Enforced by `tests/test_spec_absence_claims_name_their_owner.py`.
 
 ## Step 8: Send the gaps upstream
 
@@ -304,8 +339,8 @@ coverage gaps, so the category is usually `feature` rather than `bug`.
 
 ## Step 9: Record every verdict in the ledger
 
-**Every site examined gets a row — including the keeps.** A run that records only its
-specs throws away most of its work, and the next run pays for it again.
+**Every site examined gets a row — including the keeps.** A run that records only the
+sites it filed throws away most of its work, and the next run pays for it again.
 
 ```bash
 python3 .claude/skills/delegate-to-mcp-server/coverage_ledger.py record \
@@ -317,11 +352,15 @@ python3 .claude/skills/delegate-to-mcp-server/coverage_ledger.py record \
   --server <version> \
   --index "<index_built>" \
   --tool "<the call that established it>" \
-  --spec specs/<file>.md
+  --issue <the number filed in Step 7, e.g. 142>
 ```
 
 The ledger is `specs/mcp-coverage.jsonl`, append-only and read last-wins, so a verdict
-is revised by appending a new row with the same key — never by editing history. The key
+is revised by appending a new row with the same key — never by editing history.
+
+⚠️ **29 historical rows carry a `spec` field instead of `issue`**, from the runs before this
+skill filed issues (#114). They are read and displayed unchanged: rewriting them would edit
+history, which this ledger's whole shape forbids. A row carries one or the other, never both. The key
 is a **stable slug describing the claim**, not a path: files move and line numbers
 churn, and a decision keyed to a location is lost the moment the file is reorganized.
 
@@ -338,8 +377,8 @@ a table:
 
 | Site | Category | Server says | Verdict | Action |
 |---|---|---|---|---|
-| `<key>` | flags | `applies_to: [...]` — same as the plugin | `delegate` | New spec → `specs/<file>.md` |
-| `<key>` | error codes | now documents SENZ#### | `retire-workaround` | New spec → `specs/<file>.md` (INV-### superseded) |
+| `<key>` | flags | `applies_to: [...]` — same as the plugin | `delegate` | Filed → #<n> |
+| `<key>` | error codes | now documents SENZ#### | `retire-workaround` | Filed → #<n> (INV-### superseded) |
 | `<key>` | response shapes | no coverage below the top-level shape | `keep-server-lacks-it` | Ledger only; upstream `feature` sent |
 | `<key>` | mapping | answers it, but needed offline at that step | `keep-by-design` | Ledger only |
 
@@ -347,11 +386,11 @@ Then, in this order:
 
 1. **Anything `contradicted`, first and separately.** The plugin is shipping a wrong
    Senzing fact right now; it should not arrive at the bottom of a cleanup report.
-2. The spec files created, as clickable `specs/<file>.md` paths.
+2. The issues filed, as `#<n>` with their titles.
 3. **What the server started covering since the last run** — the headline result of a
    periodic run, and invisible unless stated.
 4. **What is still uncovered**, and which of those went upstream.
 5. **Coverage of the sweep itself**: how much of the inventory was examined and what was
    left, so a partial run is never mistaken for a clean bill of health.
 
-Do not implement the specs. Offer `/implement-github-issue` as the next step.
+Do not implement the issues. Offer `/implement-github-issue` as the next step.

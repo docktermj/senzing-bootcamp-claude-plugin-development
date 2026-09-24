@@ -1,4 +1,4 @@
-"""No live document says the audit half is blocked, or that the audit writes spec files.
+"""No live document says a reworked command still writes spec files, or is blocked.
 
 `/production-readiness-audit` wrote spec files into the frozen archive, and `/unattended-issue-loop`
 therefore carried a blocked audit half. **#69 fixed both on 2026-09-16.** The prose describing the
@@ -8,10 +8,20 @@ One of them, `tests/test_unattended_loop_is_label_gated.py`, contradicted **itse
 docstring said the audit half was blocked while its own class forty lines down recorded the
 assertion as inverted because #69 fixed it. (#90, found by the 2026-09-21 audit.)
 
-⛔ **The matcher is derived from the CLAIM, not from the five phrasings that shipped** (INV-282).
-The claim has two halves — *the audit half is blocked* and *`/production-readiness-audit` writes
-specs* — and each is matched by its subject plus a present-tense predicate, so a sixth wording
-nobody has written yet is caught too.
+⛔ **The matcher is derived from the CLAIM, not from the phrasings that shipped** (INV-282).
+Each claim is matched by its subject plus a present-tense predicate, so a wording nobody has
+written yet is caught too. There are now three:
+
+1. *the audit half is blocked*
+2. *`/production-readiness-audit` writes specs*
+3. *`/delegate-to-mcp-server` writes specs* — added by #114, which reworked it to file issues
+
+⚠️ **The third was this guard's own stated exemption until #114.** The docstring you are reading
+used to call `/delegate-to-mcp-server` "the one command the claim is still true of" and pinned
+two phrasings as prose that must stay legal. Reworking it turned both into exactly the stale
+claim this file exists to catch, so they moved from the negatives to the positives. ⛔ **An
+exemption justified by a fact is only as durable as that fact** — which is the same lesson as
+the rest of this docstring, arrived at from the other direction.
 
 ⚠️ **The hard half is what this must NOT flag, and it is pinned beside the positives.** Three
 constructions are legitimate and must stay legal:
@@ -19,8 +29,9 @@ constructions are legitimate and must stay legal:
 * **History**, in the past tense — "the audit half **was** blocked", "this paragraph **said** the
   audit half was blocked until 2026-09-21". Recording why a rule exists is this repository's
   house style, and a guard that forbade it would delete the reason along with the error.
-* **The one command the claim is still true of** — `/delegate-to-mcp-server` **does** still write
-  specs and has no issue. "One maintainer command still writes spec files" is correct prose.
+* **The current behavior of either command** — "`/delegate-to-mcp-server` files issues and
+  writes nothing here". Saying what a command does now must not trip a guard about what it
+  used to do.
 * **The current behavior** — "`/production-readiness-audit` files a GitHub issue when attended".
 
 ⚠️ **`specs/IMPLEMENTED.md` and the frozen archive are out of scope deliberately.** The ledger's
@@ -58,10 +69,21 @@ SCANNED = [f for f in SCANNED if f.resolve() != Path(__file__).resolve()]
 #: Past tense is deliberately unmatched: "was blocked" is history, which must stay sayable.
 AUDIT_HALF_BLOCKED = re.compile(r"audit half\s+(?:is|stays|remains|still\s+)?\s*blocked", re.I)
 
-#: "`/production-readiness-audit` (still) writes spec(s)" — bound to that actor, because the same
-#: predicate is TRUE of `/delegate-to-mcp-server` and must stay sayable about it.
+#: "`/production-readiness-audit` (still) writes spec(s)" — bound to that actor.
 AUDIT_WRITES_SPECS = re.compile(
     r"production-readiness-audit`?\s*(?:still\s+)?writes?\s+spec", re.I)
+
+#: "`/delegate-to-mcp-server` (still) writes spec(s)" — true until #114, stale after it.
+#: ⚠️ Bound to `writes spec` specifically, never to `writes` alone: the correct replacement
+#: prose says this command "writes nothing under `specs/`", and a looser pattern would flag
+#: the very sentence that fixed the defect.
+DELEGATE_WRITES_SPECS = re.compile(
+    r"delegate-to-mcp-server`?[^.\n]{0,60}?(?:still\s+)?writes?\s+spec", re.I)
+
+#: The same claim written from the other end: "One command ... still writes spec files —
+#: `/delegate-to-mcp-server`", where the subject trails the predicate.
+DELEGATE_WRITES_SPECS_TRAILING = re.compile(
+    r"(?:still\s+)?writes?\s+spec[^.\n]{0,60}?delegate-to-mcp-server", re.I)
 
 #: Every phrasing that actually shipped, pinned so the matcher cannot be narrowed until it
 #: stops catching them (INV-282).
@@ -70,6 +92,16 @@ SHIPPED_PHRASINGS = (
     "⛔ **The audit half is BLOCKED and the loop must say so.**",
     "`/production-readiness-audit` still writes spec files into the frozen archive",
     "with its audit half blocked for exactly this reason",
+    # Both shipped and were correct until #114 reworked the command. Moved here from
+    # LEGITIMATE, where this file had pinned them as prose that must stay legal.
+    "One maintainer command still writes spec files -- `/delegate-to-mcp-server`",
+    # ⚠️ Pinned as the WHOLE TABLE ROW, which is how it shipped in `specs/README.md`.
+    # The status cell alone -- "⛔ **Still writes specs**; needs the same rework, no issue
+    # yet" -- names no command, so no subject-bound matcher can catch it, and pinning the
+    # cell would have forced a subject-free pattern that fires on any sentence about any
+    # command writing specs, including the history this file must keep sayable.
+    "| `/delegate-to-mcp-server` | ⛔ **Still writes specs**; needs the same rework, "
+    "no issue yet |",
 )
 
 #: Constructions that MUST NOT be flagged. A guard that flags correct prose is relaxed rather
@@ -77,16 +109,25 @@ SHIPPED_PHRASINGS = (
 LEGITIMATE = (
     "The audit half WAS blocked, and this docstring said so five days after it stopped",
     "This paragraph said the audit half was blocked until 2026-09-21",
-    "One maintainer command still writes spec files -- `/delegate-to-mcp-server`",
-    "⛔ **Still writes specs**; needs the same rework, no issue yet",
     "`/production-readiness-audit` files a GitHub issue when attended",
     "`/production-readiness-audit` wrote spec files into the frozen archive, so an unattended",
+    # #114's replacement prose. ⛔ These are the sentences that FIXED the defect; a matcher
+    # that flags them is one that punishes the correction.
+    "`/delegate-to-mcp-server` files issues and writes nothing under `specs/` (#114)",
+    "✅ Reworked -- it files GitHub issues now, and writes nothing here (#114)",
+    "`/delegate-to-mcp-server` wrote spec files until #114 reworked it",
 )
 
 
+#: Every matcher the scan applies. ⛔ Adding a claim means adding it here as well as
+#: above -- a pattern defined and never consulted is a guard that reads as present and
+#: checks nothing.
+MATCHERS = (AUDIT_HALF_BLOCKED, AUDIT_WRITES_SPECS,
+            DELEGATE_WRITES_SPECS, DELEGATE_WRITES_SPECS_TRAILING)
+
+
 def hits(text):
-    return [m.group(0) for p in (AUDIT_HALF_BLOCKED, AUDIT_WRITES_SPECS)
-            for m in p.finditer(text)]
+    return [m.group(0) for p in MATCHERS for m in p.finditer(text)]
 
 
 class TheMatcherIsCalibrated(unittest.TestCase):
@@ -136,23 +177,68 @@ class NoLiveDocumentCarriesTheStaleClaim(unittest.TestCase):
             + "\n  ".join(offenders))
 
 
-class TheOneCommandStillWritingSpecsIsStillNamed(unittest.TestCase):
-    """⛔ Over-correcting into "everything is fixed" would hide the one real remaining case."""
+class TheReworkIsRecordedRatherThanSilent(unittest.TestCase):
+    """⛔ **Inverted by #114, not deleted.** What it guards is unchanged; the fact flipped.
 
-    def test_delegate_to_mcp_server_is_still_described_as_writing_specs(self):
+    This class used to assert the opposite — that both documents **must** say
+    `/delegate-to-mcp-server` still writes specs — on the ground that sweeping the claims #69
+    fixed must not take the one real remaining case with them. That was right while the case
+    was real. #114 reworked the command to file GitHub issues, so the assertion it made is now
+    the stale claim the rest of this file exists to catch, and the scan above would flag the
+    very prose this class demanded.
+
+    ⚠️ **The precedent is `tests/test_unattended_loop_is_label_gated.py`**, whose assertion #69
+    inverted for the same reason and which this module's docstring cites for contradicting
+    itself when the inversion was not carried into its prose. Inverting in place, with the
+    reason kept, is how that is avoided — a deleted class takes its reasoning with it and the
+    next reader cannot tell a retired guard from a forgotten one.
+
+    ⛔ **The surviving obligation: a sweep must not make the command VANISH.** Erasing the row
+    would leave no record that the rework happened and no way to tell a reworked command from
+    one nobody ever documented.
+    """
+
+    #: What each document must now say: the command is named, and described as reworked
+    #: rather than merely dropped. ⚠️ Matched on `files ... issues` + `#114`, never on the
+    #: absence of the old wording -- an assertion satisfied by deletion is satisfied by a
+    #: sweep that erased the row.
+    REWORKED = re.compile(r"delegate-to-mcp-server", re.I)
+    FILES_ISSUES = re.compile(r"files?\s+(?:github\s+)?issues", re.I)
+
+    def test_both_documents_still_name_the_command(self):
         for name, path in (("docs/development.md", REPO_ROOT / "docs" / "development.md"),
                            ("specs/README.md", REPO_ROOT / "specs" / "README.md")):
             text = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
             with self.subTest(file=name):
                 self.assertRegex(
-                    text, r"delegate-to-mcp-server",
-                    "%s no longer names `/delegate-to-mcp-server`, the one command that DOES "
-                    "still write spec files. Sweeping the fixed claims must not take the "
-                    "unfixed one with them" % name)
+                    text, self.REWORKED,
+                    "%s no longer names `/delegate-to-mcp-server` at all. The rework (#114) is "
+                    "recorded by naming the command and saying what it does now -- dropping the "
+                    "row instead leaves no way to tell a reworked command from one nobody "
+                    "documented" % name)
+
+    def test_both_documents_describe_it_as_filing_issues(self):
+        for name, path in (("docs/development.md", REPO_ROOT / "docs" / "development.md"),
+                           ("specs/README.md", REPO_ROOT / "specs" / "README.md")):
+            text = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
+            with self.subTest(file=name):
                 self.assertRegex(
-                    text.lower(), r"(still writes specs|still\s+writes\s+spec files)",
-                    "%s no longer says any command still writes specs. One does, it has no "
-                    "issue, and running it turns the suite red" % name)
+                    text, self.FILES_ISSUES,
+                    "%s names the command but does not say it files issues now (#114). A "
+                    "reader is left with a command whose output format is unstated, which is "
+                    "how the previous claim survived eight days after it stopped being true"
+                    % name)
+
+    def test_the_scan_no_longer_exempts_it(self):
+        """⛔ The exemption and the inversion must go together, or one re-opens the other."""
+        source = Path(__file__).read_text(encoding="utf-8")
+        marker = "One maintainer command still writes spec files -- `/delegate-to-mcp-server`"
+        before, _, after = source.partition("LEGITIMATE = (")
+        self.assertNotIn(
+            marker, after.split(")\n")[0],
+            "the delegate phrasing is still pinned as LEGITIMATE while this class asserts the "
+            "command was reworked. Those two cannot both be right: a wording held up as "
+            "correct prose is one the scan will never report")
 
 
 if __name__ == "__main__":

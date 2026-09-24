@@ -18,6 +18,7 @@ Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -81,7 +82,7 @@ class LedgerRoundTrip(unittest.TestCase):
 
         args = argparse.Namespace(
             repo=str(self.repo), key="k", verdict="delete-it", server="1.32.2",
-            reason=None, where=None, claim=None, tool=None, spec=None,
+            reason=None, where=None, claim=None, tool=None, issue=None,
             upstream=None, checked=None,
         )
         self.assertEqual(1, LEDGER.cmd_record(args))
@@ -337,6 +338,51 @@ class TheSkillDocumentsWhatTheScriptEnforces(unittest.TestCase):
     def test_it_is_a_maintainer_tool_that_writes_no_plugin_code(self):
         self.assertIn("Maintainer tool", self.text)
         self.assertRegex(self.text, r"[Nn]ever modify plugin code")
+
+
+class ProvenanceIsReadFromEitherEra(unittest.TestCase):
+    """⛔ #114 replaced `--spec` with `--issue`; the 29 rows already written keep `spec`.
+
+    The ledger is append-only and read last-wins, so migrating those rows is the one thing
+    its shape forbids. `produced_by()` therefore reads both field names, and this pins that
+    a pre-#114 row does not silently lose its provenance.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.repo = Path(self.tmp.name)
+        (self.repo / "specs").mkdir()
+        self.addCleanup(self.tmp.cleanup)
+
+    def test_a_historical_spec_row_still_reports_what_it_produced(self):
+        row = {"key": "k", "verdict": "delegate", "server_version": "1.32.2",
+               "checked": "2026-08-01", "spec": "specs/some-delegation.md"}
+        produced = LEDGER.produced_by(row)
+        self.assertIsNotNone(
+            produced,
+            "a pre-#114 row carrying `spec` reports no provenance. 29 real rows are in this "
+            "shape; reading only `issue` silently drops what they produced")
+        self.assertIn("specs/some-delegation.md", produced)
+
+    def test_a_new_issue_row_reports_the_issue_number(self):
+        produced = LEDGER.produced_by({"key": "k", "issue": 142})
+        self.assertEqual("#142", produced)
+
+    def test_a_keep_row_produced_nothing_and_says_so(self):
+        """⚠️ Not every row produced something -- a keep is the normal case (INV-265)."""
+        self.assertIsNone(
+            LEDGER.produced_by({"key": "k", "verdict": "keep-by-design"}),
+            "a row that produced nothing reports something anyway, so the caller cannot "
+            "distinguish 'nothing was filed' from 'a filing was recorded'")
+
+    def test_the_record_cli_no_longer_accepts_spec(self):
+        """⛔ The flag is gone, not merely unused: writing new `spec` rows would re-fork it."""
+        parser_src = (Path(LEDGER.__file__).read_text(encoding="utf-8")
+                      if hasattr(LEDGER, "__file__") else "")
+        self.assertNotIn(
+            'add_argument("--spec"', parser_src,
+            "`--spec` is still a CLI flag. This skill files issues now (#114); leaving the "
+            "flag lets a run write a row pointing into the frozen archive")
 
 
 if __name__ == "__main__":

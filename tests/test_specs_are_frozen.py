@@ -4,18 +4,24 @@ GitHub issues replaced `specs/` as the tracking mechanism at the **2026-09-15 cu
 (issue #52). The directory stays as the historical record of why the plugin reads as it
 does -- 519 files that `INVARIANTS.md` cites by slug -- but it is closed to new work.
 
-⛔ **A freeze stated only in prose is a convention, not a guarantee.** One maintainer command
-still writes spec files -- `/delegate-to-mcp-server`, which has no issue yet -- so running it
-produces a file this guard rejects. That failure is the intended signal, which is why every
-message below names the freeze and points at `specs/README.md` rather than reporting a bare set
-difference.
+⛔ **A freeze stated only in prose is a convention, not a guarantee.** Every message below
+names the freeze and points at `specs/README.md` rather than reporting a bare set difference,
+because the failure is meant to be read as "the freeze caught something", not as a puzzle.
 
-⚠️ Every other command that wrote here has been reworked: `/feedback-to-issues` files GitHub
+⚠️ Every command that wrote here has now been reworked: `/feedback-to-issues` files GitHub
 issues (#49), `/implement-spec` was retired (#50, #60), `/unattended-issue-loop` is label-gated
-and forbids writing here outright (#51, #69), and `/production-readiness-audit` files issues when
-attended and records findings in the ledger when not (#69). ⛔ **This paragraph said the audit
-half was blocked until 2026-09-21** -- five days after #69 cleared it -- which is the class #90
-records: a fix that lands without sweeping the prose describing the old world.
+and forbids writing here outright (#51, #69), `/production-readiness-audit` files issues when
+attended and records findings in the ledger when not (#69), and `/delegate-to-mcp-server` files
+issues and writes nothing here (#114). ⛔ **This paragraph twice outlived the fact it
+described** -- it said the audit half was blocked until 2026-09-21, five days after #69 cleared
+it, and it named `/delegate-to-mcp-server` as having "no issue yet" for the eight days after
+#114 was filed. That is the class #90 records: a fix that lands without sweeping the prose
+describing the old world, and this docstring is now its own second instance.
+
+⚠️ **No command being blocked does not retire this guard.** It never depended on one existing:
+the freeze is a property of the directory, and a spec file can arrive from a hand-written
+file, a reverted branch or a command reworked wrongly. A guard justified by one offender is a
+guard that gets deleted when that offender is fixed.
 
 ⚠️ **Both directions matter, and they fail differently.**
 
