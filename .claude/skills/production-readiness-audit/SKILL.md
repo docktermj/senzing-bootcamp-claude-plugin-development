@@ -412,13 +412,13 @@ session end:
      ```bash
      gh issue create --title "<the defect, not the symptom>" --body-file <file>
      ```
-     ⛔ **Show the maintainer the title and body and get a yes first.** Filing is
+     ⛔ **(INV-314) Show the maintainer the title and body and get a yes first.** Filing is
      outward-facing and immediate: the issue is visible to anyone watching the repository the
      moment it exists, and its notifications have already gone out. An issue can be edited or
      closed afterwards but never un-filed — the same gate, for the same reason,
      `/feedback-to-issues` applies.
 
-   - **Unattended** (running under `/unattended-issue-loop`) → ⛔ **file nothing.** Write the
+   - **Unattended** (running under `/unattended-issue-loop`) → ⛔ **(INV-314) file nothing.** Write the
      finding into the dated ledger entry from step 5 and list it in the handoff marked **not
      filed — needs the maintainer to file it**. ⚠️ **`gh issue create` leaves the machine**,
      and the loop's autonomy contract is that *nothing leaves the machine unattended*. A

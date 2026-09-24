@@ -209,7 +209,7 @@ fact. Then:
 After the open set is empty or every remainder is blocked, invoke
 `/production-readiness-audit` and follow it.
 
-⛔ **An unattended audit FILES NOTHING.** Fixed in #69: the audit records each finding in
+⛔ **(INV-314) An unattended audit FILES NOTHING.** Fixed in #69: the audit records each finding in
 its dated `specs/IMPLEMENTED.md` entry and lists it in the handoff marked **not filed**,
 rather than calling `gh issue create`.
 

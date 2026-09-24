@@ -694,7 +694,7 @@ new `/check-skill-drift`.
   destroyed the property before the guard was consulted: a skill dropping its gate; the audit's
   gate moved out of the window; and the unattended prohibition turned into an instruction.
   **Verification:** suite **4,516 passed, 4 skipped** (up 8); `citations.py verify` clean at **311**.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+- **DEFERRED INVARIANT (resolved INV-314, registered by the maintainer 2026-09-24).** The rules already
   shipping:
     - ⛔ **Show the maintainer the title and body, and get a yes, before filing.** — in `.claude/skills/feedback-to-issues/SKILL.md`
     - ⛔ **An unattended audit FILES NOTHING.** — in `.claude/skills/unattended-issue-loop/SKILL.md`

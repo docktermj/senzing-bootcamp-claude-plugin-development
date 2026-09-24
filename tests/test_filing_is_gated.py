@@ -35,6 +35,16 @@ both sides of the instruction.
 answered. No offline check reaches conversational behavior; only `dry-run` phase 3 can observe
 it. This pins that the instruction is present where a reader will meet it.
 
+⛔ **Enforces INV-314** — a maintainer command creating a record outside this repository
+presents the exact text and gets the maintainer's assent first, each record separately;
+unattended, it creates nothing and writes the drafted text where the maintainer will find it.
+
+⚠️ **What an `Enforced by` clause here does NOT claim.** This module asserts that the
+instruction and its gate **sit together in the shipped text**. It cannot establish that a run
+actually asks, that a maintainer actually answered, or that an unattended run refrained from
+filing — those are properties of a live turn, and only `dry-run` phase 3 observes one. A
+green run here means the rule is *written* everywhere it should be, not that it was *obeyed*.
+
 Source issue: #106.
 
 Stdlib only; the surfaces are discovered rather than listed (INV-246).

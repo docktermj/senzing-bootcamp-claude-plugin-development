@@ -346,7 +346,13 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # field as intended; the first two are human judgments and the third lives in another
 # repository. Re-derived by running the extractor -- 132, with the new pair present by
 # name. This closes the 2026-09-24 review's first deferral: EXPECTED_PAIRS 131 -> 132.
-EXPECTED_PAIRS = 132
+# 133 on 2026-09-24: INV-314 (a maintainer command creating a record outside this repository
+# shows the exact text and gets assent first; unattended it creates nothing) names
+# test_filing_is_gated.py, which cites it back and states what it does NOT establish -- that
+# a run actually asks, that a maintainer answered, or that an unattended run refrained; those
+# are live-turn properties only dry-run phase 3 observes. Re-derived by running the
+# extractor -- 133, with the new pair present by name. EXPECTED_PAIRS 132 -> 133.
+EXPECTED_PAIRS = 133
 
 
 def pairs():
