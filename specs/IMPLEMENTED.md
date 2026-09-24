@@ -43,6 +43,97 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-09-24
+
+- **Implemented:** 2026-09-24 (**Not a spec** — a dated record of one review session)
+- **Files changed:** `specs/INVARIANTS.md`, `specs/IMPLEMENTED.md`, `invariant-manifest.json`,
+  `docs/FAMILY_WORKFLOW.md`, `docs/development.md`,
+  `.claude/skills/review-invariants/pending_invariants.py`,
+  `.claude/skills/review-invariants/invariant_manifest.py`,
+  `.claude/skills/feedback-to-issues/SKILL.md`,
+  `.claude/skills/unattended-issue-loop/SKILL.md`,
+  `.claude/skills/production-readiness-audit/SKILL.md`,
+  `.claude/skills/delegate-to-mcp-server/SKILL.md`,
+  `.claude/skills/retrofit-from-public/SKILL.md`,
+  `.claude/commands/delegate-to-mcp-server.md`, `.claude/commands/feedback-to-issues.md`,
+  `tests/test_supersession_has_one_syntax.py`, `tests/test_filing_is_gated.py`,
+  `tests/test_rule_bullets_are_read_or_reported.py`,
+  `tests/test_canonical_operations_resolve.py`, `tests/test_invariant_enforcer_citations.py`
+- **MCP re-check:** n/a (no Senzing fact; the invariant register and the maintainer surface)
+- **Summary:** the queue went **4 pending → 0**. Four registered, none held, none amended.
+  **INV-313** (a published derived register takes supersession status from an explicit marker;
+  two states; a partial supersession stays active with its successor in a field of its own),
+  **INV-314** (a maintainer command creating a record outside this repository shows the exact
+  text and gets assent first; unattended it creates nothing), **INV-315** (a rule statement
+  carries its kind; only quotations are checked; a description is labeled unverified where it is
+  shown; an unmatched statement is reported unparsed), **INV-316** (a command named in a
+  maintainer-facing document resolves or is marked at the point of use, and a document that is
+  the register of an operation set lists every shipped command). The one **held** block
+  (`the-bootcamp-cannot-leave-the-machine-it-was-built-on`) was **not** re-offered: its revisit
+  condition — `dry-run` phases 2 and 3 — is unmet.
+- ⛔ **`sites` found the full set for ONE of the four, and the gap was not small.** Its candidate
+  scan reads `plugins/` alone and reported **400 files unscanned** on every block, while all four
+  rules ship under `.claude/`, `docs/` or `tests/`. Derived by grep instead:
+    - **INV-313** — block named 2 files, rule shipped in **3**. The third,
+      `invariant_manifest.py:145`, states the same two-state rule. ⚠️ **That is the 2026-09-01
+      defect this skill's own preamble records** — *"a rule was cited at the two sites the
+      deferral listed when it shipped in three"* — reproduced exactly, and caught only because
+      the procedure requires scanning.
+    - **INV-314** — block named **2** sites; the rule ships at **12** across **7** files. A
+      factor of six. This is INV-246's subject: derive the site set by scanning, never from the
+      author's list, because the list is where the author *noticed* the rule.
+    - **INV-315** — block named 1; 1 was right. The only block whose list was complete.
+    - **INV-316** — `sites` surfaced the **prose-named** group, which is the group the skill
+      flags as where misses happen, and it was correct: R4 in `docs/FAMILY_WORKFLOW.md`.
+- **Two invariants were widened before registration and would otherwise have bound a blind
+  spot.** INV-313's draft stated the *status* question and was silent on the *marker* (#143);
+  INV-316's bound names→resolution only, which is satisfied **vacuously** by a command the
+  document never names — and one was, `check-skill-drift`, one day after the page was adopted
+  (#140). ⛔ **Both widenings happened because the issues were filed to reach this review before
+  sign-off**, which is the only reason they are not now permanent.
+- **Decisions recorded IN the invariant text so they are not re-derived.** INV-313: INV-311 is
+  adjacent, not governing — *R12 binds the prose; INV-311 binds the artifact's honesty; this
+  binds the emission*. INV-314: INV-310 cannot supply the gate, because a permanent act has a
+  working tree to stop at and an outward-facing one has nothing. INV-316: **deliberately not an
+  amendment to INV-302** — that invariant's subject is the command surface agreeing with its
+  documentation in one named file; this one's is how a name is presented to a reader, anywhere.
+- ⚠️ **An open question is written into INV-314 rather than silently absorbed.** The
+  Bootcamper-facing `submit_feedback` consent gate at
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md:226` is the same shape and is
+  bound by **no invariant**: INV-135 governs only `license_request` and the transmission of
+  personal details; INV-211 governs where a consent disclosure is *placed*, not that the gate
+  exists. Widening INV-314 to reach it would bolt a second subject onto the rule. **It is the
+  one Bootcamper-facing gap this session found and did not close.**
+- ⛔ **The guard caught its own invariant.** INV-313's text is dense with supersession vocabulary
+  while being a rule *about* supersession rather than one, so
+  `NothingIsReclassifiedByOmission` failed until it was dispositioned explicitly with a reason.
+  The safety net working on the very rule that mandates it.
+- ⛔ **A mistake of mine, recorded because the session is trusted on its self-report.** At
+  deferral 3 I told the maintainer the labeling-at-presentation half of INV-315 might not ship,
+  and recommended considering **amend** on that basis. It does ship —
+  `pending_invariants.py:429` renders a described rule as *"described, NOT quoted —
+  unverified"*, with a comment saying why. ⚠️ **I had inferred its absence from never having
+  seen a described rule in that session's `show` output**, which is not evidence of absence —
+  the error INV-194 names. One grep settled it. The invariant was registered with the full
+  wording and **no narrowing caveat**, because none was warranted. ⚠️ Had the maintainer
+  followed that recommendation, a correct rule would have been weakened to match an
+  implementation gap that did not exist.
+- ⚠️ **INV-253 caught three British double-`l` spellings of *labeled*** written into this
+  session's own citations and back-citations. Corrected. ⛔ **Quoting the misspelling here
+  would itself trip the guard**, and widening `IMPLEMENTED.md`'s waiver to admit it would
+  waive a real occurrence rather than record one — so the word is described, not written.
+- **`EXPECTED_PAIRS` 131 → 135**, re-derived by running the extractor at each of the four
+  registrations, with the new pair confirmed present by name each time. ⛔ Never incremented to
+  make the assertion pass.
+- **Verification:** `citations.py verify` clean at **315** invariants, every citation and
+  `Source:` resolving; `coverage_reports.py shipped` lists none of the four new ids;
+  `invariant_manifest.py --check` no drift, manifest 311 → 315; suite **`Ran 4617 — OK
+  (skipped=4)`**.
+- ⛔ **A review record mints ids and adds citations; it establishes no invariant of its own.**
+  Each of the four was established by an earlier implementation — #112/#143, #106/#69, #110,
+  #55/#111/#140 — and this record only decided them.
+- **Commit:** uncommitted
+
 ## a-documented-procedure-that-turned-the-suite-red
 
 - **Implemented:** 2026-09-24 (**Not a spec** — a dated record of one issue-driven run, #142)
