@@ -58,6 +58,14 @@ entities.
 
 For each query type, create a program in `src/query/` using the bootcamper's chosen language.
 
+⛔ **(INV-152) Before factoring engine setup into a shared helper, read the factory-lifetime
+rule.** Writing several query programs is exactly when that helper gets written, and getting
+what it returns wrong yields an engine that is already dead: it fails at the **first** engine
+call, far from the helper that caused it, with `SzSdkError - engine object has been destroyed
+and can no longer be used, create a new one`. The message names a symptom, not the cause, so
+it is easy to debug in the wrong place. [`ground-rules.md`](../bootcamp-onboarding/ground-rules.md)
+states the rule and its fix in full; follow it rather than restating it here (INV-300).
+
 Use `generate_scaffold` with `workflow='query'` and the chosen language. For entity-view
 patterns (get/why/how), consult `reporting_guide(topic='entity_views', language='<lang>',
 version='current')`. For network/path patterns, consult `reporting_guide(topic='graph',
