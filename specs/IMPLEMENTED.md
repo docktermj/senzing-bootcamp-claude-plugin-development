@@ -138,7 +138,7 @@ new `/check-skill-drift`.
   rules its findings rest on — INV-282, INV-300, INV-302, INV-307, INV-308, INV-311 — are all
   registered, and the invariant drafted by deferral 4 is pending the maintainer's sign-off with
   Finding 1 bearing on its wording (read the free id off `INVARIANTS.md` at mint time).
-- **Commit:** uncommitted
+- **Commit:** 0d7bbe1
 
 ## supersession-has-one-syntax
 
