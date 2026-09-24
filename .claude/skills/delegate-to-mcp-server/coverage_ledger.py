@@ -255,6 +255,22 @@ def expiry_reason(row: dict, server: str, index: str = None) -> str:
     return ""
 
 
+def produced_by(row):
+    """What this verdict produced, whichever era recorded it.
+
+    ⚠️ Two field names, one meaning. Rows written before #114 carry `spec` (a path under
+    the now-frozen archive); rows written since carry `issue` (a number). ⛔ **A row is
+    never migrated** — the ledger is append-only and read last-wins, so rewriting history
+    is the one thing its shape forbids. Returns None where the verdict produced neither,
+    which is the normal case for a `keep-*` row.
+    """
+    if row.get("issue"):
+        return "#%s" % row["issue"]
+    if row.get("spec"):
+        return "%s (pre-#114 spec)" % row["spec"]
+    return None
+
+
 def cmd_stale(args) -> int:
     repo = Path(args.repo).resolve()
     rows = read_ledger(repo)
@@ -295,6 +311,9 @@ def cmd_stale(args) -> int:
         print("      expired: %s" % reason)
         if row.get("claim"):
             print("      claim:   %s" % row["claim"])
+        produced = produced_by(row)
+        if produced:
+            print("      produced: %s" % produced)
     print(caveat.lstrip("\n") if caveat else "", end="\n" if caveat else "")
     return 0
 
@@ -319,10 +338,15 @@ def cmd_record(args) -> int:
     index = (getattr(args, "index", None) or "").strip()
     if index:
         row["index_built"] = index
-    for name in ("where", "claim", "reason", "tool", "spec", "upstream"):
+    for name in ("where", "claim", "reason", "tool", "upstream"):
         value = getattr(args, name, None)
         if value:
             row[name] = value
+    # ⛔ `spec` is READ but never written (#114). This skill files GitHub issues now, and
+    # 29 historical rows carry `spec` from the runs before that. Rewriting them would edit
+    # an append-only ledger, so they keep their provenance and `produced_by()` reads both.
+    if getattr(args, "issue", None):
+        row["issue"] = args.issue
     path = repo / LEDGER
     path.parent.mkdir(parents=True, exist_ok=True)
     existing = read_ledger(repo).get(args.key)
@@ -406,7 +430,8 @@ def main(argv=None) -> int:
     rec.add_argument("--claim", help="one line: what the SBCP asserts or holds")
     rec.add_argument("--reason", help="required for keep-by-design: the Step 6 test that failed")
     rec.add_argument("--tool", help="the MCP call that established the verdict")
-    rec.add_argument("--spec", help="specs/<file>.md this produced")
+    rec.add_argument("--issue", type=int,
+                     help="GitHub issue number this produced, e.g. 142")
     rec.add_argument("--upstream", help="e.g. 'feature sent 2026-07-30'")
     rec.add_argument("--checked", help="ISO date (default: today)")
     rec.set_defaults(func=cmd_record)

@@ -1,5 +1,5 @@
 ---
-description: Find Senzing facts the plugin still holds that the MCP server now serves itself, and write specs to delegate them (maintainer tool).
+description: Find Senzing facts the plugin still holds that the MCP server now serves itself, and file issues to delegate them (maintainer tool).
 argument-hint: "[area or category to bound this run to] (omit to take the full re-check list)"
 ---
 
@@ -34,7 +34,7 @@ findings end in `keep` — record those too**, or the next run re-litigates them
 
 ⛔ **Delegation done badly is worse than duplication.** A paragraph replaced by "ask the MCP
 server", with no tool, no parameters and no statement of what to extract, is a regression
-dressed as a cleanup. Every `delegate` spec names the call.
+dressed as a cleanup. Every `delegate` issue names the call.
 
 **Sweep `specs/INVARIANTS.md` for invariants asserting a server limitation** — every run.
 It is the highest-risk category in the repo and the easiest to skip, precisely because it is
@@ -42,10 +42,18 @@ not under `plugins/`. An invariant saying the server *cannot* do something is pi
 cited by specs and shapes future work, so when the server gains the ability the false premise
 is load-bearing in a way ordinary stale prose never is.
 
-⛔ **Write only under `specs/` and this skill's ledger.** Never modify plugin code, hooks,
-scripts or skills — producing specs is the deliverable, and implementing them is
-the issue path's job. ⛔ **Never propose deleting or renumbering an invariant**;
+⛔ **Write nothing under `specs/`** — the archive is frozen (INV-307). This command's only
+writes are **GitHub issues** and its own ledger, `specs/mcp-coverage.jsonl`, which is `.jsonl`
+rather than `*.md` and so sits outside the freeze by construction. Never modify plugin code,
+hooks, scripts or skills — filing the issues is the deliverable, and implementing them is
+`/implement-github-issue`'s job. ⛔ **Never propose deleting or renumbering an invariant**;
 `specs/INVARIANTS.md` is append-only, and a superseded one is *marked* superseded.
+
+⛔ **Show the maintainer every issue title and body and get an explicit yes before filing**,
+and ⛔ **never pass `--repo`.** Filing is outward-facing and immediate: an issue cannot be
+un-filed and its notifications have already gone out. This is the parent repository, where
+parent-to-child change travels by parity from a tagged release — so the parent never files
+into a child at all.
 
 **Step 8 is part of the job, not an afterthought** — the `keep-server-lacks-it` rows are
 collectively a list of things the server could serve and does not, and reporting them is the
