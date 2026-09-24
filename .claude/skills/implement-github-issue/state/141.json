@@ -1,8 +1,9 @@
 {
   "issue": 141,
   "branch": "141-docktermj-1",
-  "phase": "clarify",
-  "approach": "pending Gate 1",
-  "gate1_approved": false,
-  "comments_posted": ["started"]
+  "phase": "pr-open",
+  "approach": "Direct (5a). R12 reason clause to past tense with NO figure (the issue's proposed figure would reverse §10's 2026-09-22 count-removal decision); plus clear the disarmed KNOWN_UNCLEAR pin and replace test_the_pin_is_not_empty, which pointed the wrong way for a permit list.",
+  "gate1_approved": true,
+  "comments_posted": ["started", "clarifications", "result"],
+  "pr": 145
 }
