@@ -171,7 +171,7 @@ def parse(b):
     for line in text.split("\n"):
         if not BULLET.match(line):
             continue
-        # ⛔ DESCRIBED is tried FIRST because it is the more specific shape. An older bullet
+        # ⛔ **(INV-315)** DESCRIBED is tried FIRST because it is the more specific shape. An older bullet
         # whose only bold is its editorial annotation otherwise matches QUOTE -- which is
         # exactly how four annotation fragments came to be presented as a block's rules.
         d = DESCRIBED.match(line)
@@ -426,6 +426,8 @@ def cmd_show(n):
         # ⚠️ The kind is shown, not inferred: only a `quoted` rule has been checked against
         # the file it names. A `described` rule is one author's summary of the rule at that
         # location, and nothing has verified that the summary is faithful.
+        # ⛔ **(INV-315)** The kind is labeled AT the point of presentation, not only counted
+        # in a summary: a reader deciding from this screen must see that nothing verified it.
         mark = "quoted" if r["kind"] == "quoted" else "described, NOT quoted — unverified"
         print(f"  ⛔ {r['text']} — in {r['where']}  [{mark}]")
     if p["unparsed"]:

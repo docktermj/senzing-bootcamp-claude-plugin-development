@@ -352,7 +352,13 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # a run actually asks, that a maintainer answered, or that an unattended run refrained; those
 # are live-turn properties only dry-run phase 3 observes. Re-derived by running the
 # extractor -- 133, with the new pair present by name. EXPECTED_PAIRS 132 -> 133.
-EXPECTED_PAIRS = 133
+# 134 on 2026-09-24: INV-315 (a rule statement carries its kind; only quotations are checked;
+# a description is labeled unverified where it is SHOWN; an unmatched statement is reported
+# unparsed) names test_rule_bullets_are_read_or_reported.py, which cites it back and states
+# what it does NOT establish -- that a described rule is a faithful summary, which nothing
+# can establish by construction. Re-derived by running the extractor -- 134, with the new
+# pair present by name. EXPECTED_PAIRS 133 -> 134.
+EXPECTED_PAIRS = 134
 
 
 def pairs():

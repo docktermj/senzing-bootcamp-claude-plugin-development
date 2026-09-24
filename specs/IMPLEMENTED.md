@@ -1265,7 +1265,7 @@ new `/check-skill-drift`.
   described rules; and breaking a quoted rule's match to prove the existing guard is no weaker.
   **Verification:** suite **4,454 passed, 4 skipped** (up 16); `citations.py verify` clean at
   **311**; `invariant_manifest.py --check` exit 0; queue unchanged at `pending: 1`, `held: 1`.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+- **DEFERRED INVARIANT (resolved INV-315, registered by the maintainer 2026-09-24).** The rules already
   shipping:
     - ⛔ **DESCRIBED is tried FIRST because it is the more specific shape.** — in `.claude/skills/review-invariants/pending_invariants.py`
 
