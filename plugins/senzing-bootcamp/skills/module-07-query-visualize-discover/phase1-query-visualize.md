@@ -640,9 +640,15 @@ of the Truth Set. It MUST:
   it. Nothing looked broken. This step's own warning applies to itself here: *the bootcamper cannot
   tell a bad default from bad data*, so check what the colors encode rather than assuming the
   reference got it right.
-  - ⛔ **Run the encoding self-check here too, and here it is not vacuous (INV-270, INV-259, INV-265).** Compare the legend's
-    distinct color-key count against `encoding_check.distinct_source_set_keys` from the graph
-    endpoint (the contract's "The encoding self-check"). ⚠️ The Truth Set build **also** exercises
+  - ⛔ **Run the encoding self-check here too, and here it is not vacuous (INV-270, INV-259, INV-265).** Compare the number of
+    **combination rows** the source legend names against `len(encoding_check.combination_keys)`
+    from the graph endpoint (the contract's "The encoding self-check"; `distinct_source_set_keys`
+    is the total those combinations are drawn from). ⛔ Count combination rows only (INV-270): the per-source
+    rows are not source-set keys, and on this data the node cap routinely leaves a source in view
+    only inside combinations, so counting every row raises a false mismatch on a correct encoding.
+    ⛔ Uncheck "Show only entities with relationships" before reading it (INV-270) — above 400 nodes the graph
+    opens in relationship mode, whose legend has no source colors; captures are taken as before.
+    Report `not exercised`, never passed, when no combination key is in view. ⚠️ The Truth Set build **also** exercises
     this check — it registers three data sources, so a `not_exercised` result back in Module 3b was a
     signal rather than the norm — and the bootcamper's data exercises it again at larger scale. Do
     not treat a clean Module 3b verdict as covering this run: different data, different encoding

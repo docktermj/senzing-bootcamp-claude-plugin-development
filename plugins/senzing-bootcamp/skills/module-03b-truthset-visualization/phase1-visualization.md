@@ -318,24 +318,30 @@ re-run SDK initialization from Module 2 / System Verification; check `config/eng
 and retry until the snapshot is written — the module does not complete without it.
 
 ⛔ **Run the encoding self-check against the running server BEFORE capturing — and stop on a
-mismatch (INV-270, INV-259, INV-265).** Fetch the graph endpoint and compare the number of distinct color keys the legend names
-against `encoding_check.distinct_source_set_keys` (the contract's "The encoding self-check" defines
-both). They MUST be equal; fewer legend keys means nodes are colored by one member of their source
-set rather than the whole set (INV-259), which renders every cross-source entity as single-source
-under a legend saying otherwise. **On a mismatch, fix the encoding and re-render before capture** —
-the screenshots persist into the recap and the production project, so capturing first ships the wrong
+mismatch (INV-270, INV-259, INV-265).** Fetch the graph endpoint and compare the number of
+**combination rows** the source legend names against `len(encoding_check.combination_keys)` (the
+contract's "The encoding self-check" defines both; `encoding_check.distinct_source_set_keys` is the
+total those combinations are drawn from). They MUST be equal; fewer combination rows means nodes are
+colored by one member of their source set rather than the whole set (INV-259), which renders every
+cross-source entity as single-source under a legend saying otherwise. ⛔ Count the combination rows (INV-270)
+only — the per-source rows are not source-set keys, and counting them raises a false mismatch
+whenever a source appears in view only inside combinations. ⛔ Read the **source** legend (INV-270): uncheck
+"Show only entities with relationships" first, because above 400 nodes the graph opens in
+relationship mode, whose legend has no source colors. That changes only where the check is read;
+captures are taken as before. **On a mismatch, fix the encoding and re-render before capture** — the
+screenshots persist into the recap and the production project, so capturing first ships the wrong
 picture.
 
-⚠️ **Report `not exercised`, not `passed`, when `encoding_check.status` is `not_exercised`** — fewer
-than two distinct source-set keys means the comparison could not have failed (INV-265). Say which of
-the two happened; do not report silence as agreement.
+⚠️ **Report `not exercised`, not `passed`, when `encoding_check.status` is `not_exercised`** — no
+combination key in view means the comparison could not have failed (INV-265). Say which of the two
+happened; do not report silence as agreement.
 
 ⛔ **On the Truth Set, expect a real verdict — `not_exercised` here is a signal, not the norm (INV-270).** The
 Truth Set registers **three** data sources (CUSTOMERS, REFERENCE, WATCHLIST — 159 records;
 `get_sample_data(dataset='truthset', source='list')`, server 1.33.0, 2026-08-28) and resolves
 entities across them, so the check has teeth in **this** module, not only in Module 7 step 3c
 against the bootcamper's data. If it reports `not_exercised` here, fewer sources loaded than the
-Truth Set carries — investigate that before moving on.
+Truth Set carries, or they resolved no shared entity — investigate that before moving on.
 
 **Capture screenshots for the recap (optional, non-blocking).** Defer this until the live server is
 running (2.3) and capture from **`--url http://localhost:<port>`** — substituting the port the
