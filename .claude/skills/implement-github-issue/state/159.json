@@ -1,11 +1,13 @@
 {
   "issue": 159,
   "branch": "159-docktermj-1",
-  "phase": "ci-mirror",
+  "phase": "pr-open",
   "approach": "direct: combination rows vs len(combination_keys); INV-270 amended in place",
   "gate1_approved": true,
   "comments_posted": [
     "started",
-    "clarifications"
-  ]
+    "clarifications",
+    "result"
+  ],
+  "pr": 170
 }
