@@ -715,15 +715,21 @@ class Model:
         """Self-check for the source-set encoding required by INV-259.
 
         Counts the distinct **sorted source-set keys** over the nodes being emitted --
-        the same keys ``srcKeyOf()`` computes client-side to color them. The build step
-        compares this against the number of color keys the legend names; first-source
-        coloring collapses every combination onto a single-source key, so the legend key
-        count drops below this number exactly when the misencoding is present.
+        the same keys ``srcKeyOf()`` computes client-side to color them -- and lists the
+        **combination keys** among them. The build step compares the number of
+        **combination rows the legend names** against ``len(combination_keys)`` (INV-270);
+        first-source coloring collapses every combination onto a single-source key, so
+        the legend shows 0 combination rows against N exactly when the misencoding is
+        present.
 
-        ⚠️ Reports ``not_exercised`` -- never ``ok`` -- when fewer than two distinct keys
-        are present (INV-265: an empty or trivial match is an unrun check, not agreement).
-        With a single registered data source every key is that source and the comparison
-        cannot fail, which is precisely why the Truth Set could not catch this defect.
+        ⛔ Not the legend's total row count (#159). The legend also names one per-source
+        *participation* row per source, which is not a source-set key, so its total
+        exceeds ``distinct_source_set_keys`` whenever a source appears in view only inside
+        combinations -- routine once the node cap cuts a source's unrelated singletons.
+
+        ⚠️ Reports ``not_exercised`` -- never ``ok`` -- when no combination key is present
+        (INV-265: an empty or trivial match is an unrun check, not agreement). With no
+        combination in view the comparison cannot fail, whatever the source count.
         """
         keys = set()
         for entity in nodes or []:
@@ -731,19 +737,20 @@ class Model:
             if sources:
                 keys.add(SOURCE_KEY_SEP.join(sources))
         combos = sorted(k for k in keys if SOURCE_KEY_SEP in k)
-        status = "ok" if len(keys) >= 2 else "not_exercised"
+        status = "ok" if combos else "not_exercised"
         return {
             "distinct_source_set_keys": len(keys),
             "source_set_keys": sorted(keys),
             "combination_keys": combos,
             "status": status,
             "detail": (
-                "Compare distinct_source_set_keys against the number of color keys the "
-                "legend names; they MUST be equal (INV-259). Fewer legend keys means nodes "
-                "are colored by one member of their source set."
+                "Compare the number of combination rows the source legend names against "
+                "len(combination_keys); they MUST be equal (INV-270, INV-259). Fewer "
+                "combination rows means nodes are colored by one member of their source "
+                "set. Per-source rows are not source-set keys and are not counted."
                 if status == "ok" else
-                "Fewer than two distinct source-set keys are present, so this check cannot "
-                "fail and has NOT been exercised (INV-265). It is not a pass."
+                "No combination key is present, so this check cannot fail and has NOT "
+                "been exercised (INV-265). It is not a pass."
             ),
         }
 

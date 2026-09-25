@@ -1172,16 +1172,26 @@ encoding_check: {
 }
 ```
 
-**What to verify.** The number of distinct color keys the **legend names** MUST equal
-`distinct_source_set_keys`. That equality is false exactly when a node is colored by one member of
-its set: first-source coloring collapses every combination onto a single-source key, so the legend
-key count drops below the source-set count. Both numbers are already computed in order to draw the
-graph, so the check costs nothing.
+**What to verify.** The number of **combination rows the legend names** — one per multi-source
+color — MUST equal `len(combination_keys)`. That equality is false exactly when a node is colored by
+one member of its set: first-source coloring collapses every combination onto a single-source key,
+so the legend names **0** combination rows against **N** combination keys. Both numbers are already
+computed in order to draw the graph, so the check costs nothing. Read it off the **source** legend —
+the relationship legend has no source-color rows, so counting it compares the wrong thing.
 
-⚠️ **Fewer than two distinct keys means the check was NOT exercised — report that, never "passed"
-(INV-265).** With one registered data source every key is that source, the comparison cannot fail,
-and reporting a pass would be reporting agreement from a match that could not disagree. Say
-"not exercised — one data source" and move on.
+⛔ **Count combination rows only, never every legend row (INV-270, corrected 2026-09-25).** The
+legend also names one per-source row per source, counting every entity that source participates
+in. Those rows are not source-set keys, so the legend's total exceeds `distinct_source_set_keys`
+whenever a source appears in view only inside combinations — routine once the node cap cuts a
+source's unrelated single-source entities. Observed on a Bootcamper's data: 9,820 entities capped to
+1,500, `OFAC`'s 4 single-source entities cut, 8 source-set keys against 9 legend rows, every node
+correctly colored. Comparing totals there stops a correct capture.
+
+⚠️ **No combination key in view means the check was NOT exercised — report that, never "passed"
+(INV-265).** With no cross-source entity among the emitted nodes — one registered data source, or
+several that share no entity — the comparison cannot fail, and reporting a pass would be reporting
+agreement from a match that could not disagree. Say "not exercised — no cross-source entity in view"
+and move on.
 
 ⛔ **That is NOT the Truth Set's case — this module is a genuine test site for INV-259.** The Truth
 Set registers **three** data sources and resolves entities spanning them, so the comparison is live
@@ -1192,8 +1202,8 @@ fewer sources loaded than expected — not a routine outcome to move past. The s
 belongs to System verification's synthetic `VERIFY` data, and to a bootcamper who loads exactly one
 source. ⚠️ Observation, not a server fact: one full 159-record load on 2026-08-27 emitted **7**
 distinct source-set keys, **4** of them combinations, over 84 entities — first-source coloring would
-have collapsed those four and dropped the legend count to 3, which is the mismatch this check
-exists to catch.
+have collapsed those four and left the legend naming 0 combination rows against 4, which is the
+mismatch this check exists to catch.
 
 ⛔ **On a mismatch, stop and fix the encoding before capturing screenshots (INV-259).** The screenshots become
 a permanent keepsake in the recap and the production project; capturing first means shipping the

@@ -43,6 +43,47 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-encoding-self-check-counts-combination-rows
+
+- **Implemented:** 2026-09-25 (**Not a spec** — a dated record of one issue-driven run, #159)
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`,
+  `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`,
+  `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`,
+  `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`,
+  `specs/INVARIANTS.md`, `invariant-manifest.json`,
+  `tests/test_encoding_self_check_is_stated_as_behavior.py`, `specs/IMPLEMENTED.md`,
+  `.claude/skills/implement-github-issue/state/159.json`
+- **MCP re-check:** n/a (plugin code; no Senzing fact)
+- **Summary:** INV-270's encoding self-check compared every row the source legend names against
+  `distinct_source_set_keys`. The legend names two kinds of row — one per combination key, one
+  per-source *participation* row per source — and a participation row is not a source-set key,
+  so on a correctly encoded graph whose view shows some source only inside combinations the
+  legend count exceeds the key count and the build step stops a correct capture. Observed at
+  Module 7 step 3c on a Bootcamper's data (9,820 entities capped to 1,500; `OFAC`'s 4 unrelated
+  singletons cut; 8 keys against 9 rows). The comparison is now **combination rows against
+  `len(combination_keys)`**, which first-source coloring still fails (0 rows against N), and
+  `_encoding_check` reports `ok` only when a combination key is in view (INV-265). The payload
+  shape is unchanged. Both build sites also say to uncheck "Show only entities with
+  relationships" before counting, since above 400 nodes the default view shows the relationship
+  legend, which has no source colors.
+- **This run establishes no invariant.** It amends **INV-270** in place with a dated correction,
+  wording approved by the maintainer at Gate 1 (issue comment 2). Only the comparison and the not-exercised condition changed; the
+  expose, stop-before-capture and any-language requirements are as registered.
+- **Tests:** the contract assertion is repointed, with a second asserting the withdrawn wording is
+  absent; build sites must name `len(encoding_check.combination_keys)`, the toggle and the new
+  not-exercised condition. A legend model runs over the reference's own `Model.graph(cap=…)` on a
+  capped fixture shaped like the observation and an uncapped one where a source has no
+  single-source entity; a wiring class pins `drawLegend` to the derivation the model mirrors.
+  Negative controls, each run and reverted: first-source keying in the model fails 4 assertions;
+  restoring the old contract sentence fails 2; restoring `len(keys) >= 2` in `_encoding_check`
+  fails 2.
+- **Verification:** `citations.py verify` clean at **315**; `invariant_manifest.py --check` no
+  drift; suite **`Ran 4630 — OK (skipped=4)`** with fpdf2 and **`OK (skipped=66)`** without,
+  both under an empty `HOME` as on a CI runner (on the maintainer's machine
+  `test_skill_drift_detector` fails on `main` as well: the user-level `implement-github-issue`
+  copy carries no `SHARED-RULES` block — outside this repository and this change).
+- **Commit:** 036278c
+
 ## invariant-review-2026-09-24
 
 - **Implemented:** 2026-09-24 (**Not a spec** — a dated record of one review session)
