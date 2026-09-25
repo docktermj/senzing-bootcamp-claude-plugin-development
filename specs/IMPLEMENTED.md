@@ -78,8 +78,11 @@ entries at once. Two things a reader should know about the hashes now recorded:
   restoring the old contract sentence fails 2; restoring `len(keys) >= 2` in `_encoding_check`
   fails 2.
 - **Verification:** `citations.py verify` clean at **315**; `invariant_manifest.py --check` no
-  drift; suite as reported in the PR.
-- **Commit:** uncommitted
+  drift; suite **`Ran 4630 — OK (skipped=4)`** with fpdf2 and **`OK (skipped=66)`** without,
+  both under an empty `HOME` as on a CI runner (on the maintainer's machine
+  `test_skill_drift_detector` fails on `main` as well: the user-level `implement-github-issue`
+  copy carries no `SHARED-RULES` block — outside this repository and this change).
+- **Commit:** 036278c
 
 ## invariant-review-2026-09-24
 
