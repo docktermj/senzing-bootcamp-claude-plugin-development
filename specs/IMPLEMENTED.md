@@ -43,6 +43,88 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## how-tab-names-an-unsettled-final-state
+
+- **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #169)
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`,
+  `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`,
+  `tests/test_how_tab_names_an_unsettled_final_state.py`, `tests/test_prescribed_search_queries.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13** (docs index 2026-09-24 18:45 UTC), 2026-09-26 — **still
+  reproduces**. Called `get_capabilities`, `get_sdk_reference(topic='response_schemas',
+  filter='how_entity_by_entity_id', language='python')` and `search_docs(query='NEED_REEVALUATION
+  how entity final state', max_results=5)`. The schema gives `HOW_RESULTS.FINAL_STATE.NEED_REEVALUATION`
+  as an `integer` and `FINAL_STATE.VIRTUAL_ENTITIES[]` as an array whose elements carry
+  `VIRTUAL_ENTITY_ID` (string) and `MEMBER_RECORDS[].RECORDS[]`, so both signs are parsed at the
+  paths and types the issue states. No route defines the flag. owner-checked:
+  `get_sdk_reference(topic='response_schemas', filter='how_entity_by_entity_id')` IS the route that
+  owns the how response's fields — it lists the field with a type and no description;
+  `search_docs` (the corpus route) returns the how flags page's `SZ_HOW_ENTITY_DEFAULT_FLAGS` and
+  `SZ_INCLUDE_MATCH_KEY_DETAILS` examples showing `"NEED_REEVALUATION": 0`, that page's intro, an
+  Entity ID FAQ and an unrelated libpostal file, none of which defines it. The contract's
+  `/api/how` entry carries this as a dated `MCP-NEGATIVE` marker. Nothing sent upstream.
+- **Summary:** `renderHow` drew an entity's history from `HOW_RESULTS.RESOLUTION_STEPS[]` and
+  never read `HOW_RESULTS.FINAL_STATE`, so it said "Senzing built this entity in N step(s)" or
+  "resolved **directly** into one entity" for entities whose final state held two virtual
+  entities and `NEED_REEVALUATION: 1` (307153, 307169, 307249, observed by #154 on 2026-09-25). It
+  now reads both signs: `NEED_REEVALUATION` a non-zero number, or more than one virtual entity.
+  Either sign shows an unsettled-state notice (`.verdict.how-unsettled`) that names only the sign
+  or signs present, with the values the response carries, and gives the flag no meaning. With
+  steps, the steps still render and the notice replaces the step-count verdict. With no steps,
+  each virtual entity renders as its own group (ID, record count, chips), never pooled. With
+  neither sign, or no `FINAL_STATE`, the output is byte-identical to the old function's. The
+  contract's `/api/how` entry now says `VIRTUAL_ENTITIES[]` describes the final state, which may
+  hold more than one virtual entity, and states the two signs. A new ⛔ "How? when the final state
+  is unsettled" block in the How-action text requires the notice and the per-group rendering for
+  every build (INV-090), and the `How?` bullet points at it. The endpoint, the tab set and the
+  offline guarantee are unchanged. The Phase D audit and the Module 7 step 4c note stay with #154.
+- **Approach:** raced (Phase 5b) by the run's lead. Approach A, a branch inside `renderHow`, won
+  over B, which factored out a `howSettlement()` page-global helper. The comparison is on the
+  issue (comment 3). **Adapted from the raced patch:** the contract's new MUST block now leads
+  with ⛔, as the file's other hard rules do, so the reverse-contract guard sees it; the deferral
+  below accounts for it.
+- **Assumption (recorded, not asked):** `NEED_REEVALUATION` counts only when it is a JSON number,
+  the schema's `integer`; a string `"1"` does not trigger the notice. That follows the issue's
+  "parse the path as the schema gives it".
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rule already
+  shipping:
+    - ⛔ **How? when the final state is unsettled.** When either sign in the `/api/how` entry above is present, the How explanation MUST show a visible unsettled-state notice — in `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`
+
+  ⚠️ **Why this is not simply INV-080/INV-149.** Those govern where a Senzing fact comes from,
+  and the notice's refusal to interpret the flag rests on them. They do not say that a How
+  rendering must read the final state, or that it must not claim one entity when the final state
+  shows two.
+
+  The drafted wording:
+
+  **INV-NNN** — Where a visualization renders an entity's construction history from a how
+  response, it MUST read `HOW_RESULTS.FINAL_STATE` and, when `NEED_REEVALUATION` is non-zero or
+  `VIRTUAL_ENTITIES[]` has more than one element, show a visible notice naming the sign(s)
+  present with the values the response carries, and MUST NOT present the entity as built into,
+  or resolved directly into, one entity; with no resolution steps, each virtual entity MUST
+  render as its own group. The notice MUST state only what the response shows and give
+  `NEED_REEVALUATION` no meaning (INV-080/INV-149). Applies to the Python reference and to every
+  build generated from `visualization-api-reference.md` (INV-090). Enforced by
+  `tests/test_how_tab_names_an_unsettled_final_state.py`. (Source: GitHub issue #169.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** new `tests/test_how_tab_names_an_unsettled_final_state.py`, 21 tests: 5 always-run
+  checks on `renderHow`'s JavaScript text, 5 always-run contract checks, and 11 headless render
+  tests (both branches × both signs, each alone, neither, no `FINAL_STATE`, plus the
+  `explain('how')` modal path). "Unchanged with neither sign" is asserted by rendering the
+  pre-#169 `renderHow` beside the current one. With `PATH=/nonexistent` the 11 render tests skip
+  cleanly (`OK (skipped=11)`). `tests/test_prescribed_search_queries.py` gains a
+  `VERIFIED_QUERIES` entry for the query the new marker quotes; it is additive. Negative
+  controls, each run and reverted, `__pycache__` cleared between runs: the old `renderHow` fails
+  24 (with Chrome) and 5 text checks (without); the old contract fails 4; dropping the
+  `NEED_REEVALUATION` sign fails 8; pooling the unsettled groups fails 5; unescaping
+  `VIRTUAL_ENTITY_ID` fails 3; an interpretation added to the notice fails 2; one character of the
+  settled verdict changed fails 2; the contract's marker deleted fails 1; and before this entry
+  existed, `test_new_hard_rules_are_cited_or_deferred` failed on the new ⛔ line.
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** uncommitted
+
 ## sqlite-preload-heads-up-fires-on-the-production-tier
 
 - **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #163)
