@@ -258,8 +258,8 @@ record the confirmed behavior.
 
    ⛔ **`submission blocked: <reason>` is the one outcome where the report is STILL OWED,
    and it must not be triaged like a decline.** It means the answer was **yes** and the
-   session was forbidden to send — a `/dry-run`, which forbids `submit_feedback` under any
-   category. Nobody declined anything, so the finding still needs forwarding: draft the
+   session could not send on it — a `/dry-run`, which never sends on an in-character
+   answer. Nobody declined anything, so the finding still needs forwarding: draft the
    message and put it to the maintainer. ⚠️ `offered, declined` and `declined by the
    maintainer` are the values that end the obligation; `submission blocked:` is the value
    that keeps it. Reading the first where the second was meant is how a consented report

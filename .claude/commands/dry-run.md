@@ -44,17 +44,44 @@ Before any phase runs:
 - **Run `coverage_reports.py`** to choose where to look. `negatives` and `unmarked`
   are phase 1's worklist, not merely reports.
 
-⛔ **Send nothing outside the machine.** Verify `submit_feedback`'s schema; never
-invoke it. ⛔ **Never fabricate a Bootcamper answer** — if the maintainer is
-unavailable, phase 3 is untested, not approximated. ⛔ **Commit or `cp` aside before
-mutating the tree**; `git restore` cannot tell a fix from an injected defect.
+⛔ **Nothing leaves the machine except two outward acts, each under INV-314's gate: show
+the maintainer the exact text and get a yes, given out of character, one record at a time.**
 
-⛔ **Write each finding into `specs/` as you find it, before fixing anything.** The
-specs are the run's output; the scratch project is disposable. A run that produced no
-spec produced nothing durable, however good the conversation was.
+1. **A GitHub issue, or a comment on an existing one, in this repository.**
+2. **`submit_feedback`, only for a finding whose verdict is `mcp-server`**: certain that the
+   defect is the server's and that nothing in the Senzing Bootcamp needs to change.
+   *Certain* means re-verified live against the server, with any absence claim carrying
+   `owner-checked:` naming the route that owns the fact (INV-194, INV-213). ⛔ A `both`
+   finding does not qualify: it gets a GitHub issue with the drafted upstream message
+   inside it, for the maintainer to send. The send follows `/feedback-to-issues` Step 8: a
+   self-contained technical report, everything identifying stripped (INV-065),
+   `category='bug'` or `'feature'`, and ⛔ never `category='license_request'`.
 
-Finish by reporting findings in severity order, naming the spec file each was written
-into and saying which are fixed and which are recorded-but-open, what was verified as
+A yes given in character, while answering as the Bootcamper, never authorizes either act.
+A dry run must not file junk upstream or transmit a name and email. Verifying a tool's
+schema sends nothing; `download_resource` on anything large stays forbidden.
+
+⛔ **Never fabricate a Bootcamper answer** — if the maintainer is unavailable, phase 3
+is untested, not approximated. ⛔ **Commit or `cp` aside before mutating the tree**;
+`git restore` cannot tell a fix from an injected defect.
+
+⛔ **Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you find it,
+marked not yet filed, before fixing anything** — never into a new file under `specs/`,
+which is a read-only archive (INV-307). A finding that exists only in the conversation is
+not recorded. **Search open and closed issues before filing**; a finding already tracked
+points at that issue instead of opening a duplicate. **File at the end of phase 1 or 2,
+and when a phase 3 walk pauses or ends**, never mid-walk. ⛔ **(INV-314) Show the
+maintainer each title and body and get a yes, one issue at a time**, then replace the
+draft's marker with the issue number. **No maintainer present: file nothing** — the draft
+stays marked **not filed — needs the maintainer to file it**. **Declined:** recorded as
+declined. ⛔ **Never apply `unattended-ok` to an issue the run files.**
+
+⛔ **The scratch project is disposable; the issues and the ledger entry are the run's actual
+output.** If a run produced no issue and no ledger entry, it produced nothing durable,
+however good the conversation was.
+
+Finish by reporting findings in severity order, naming the issue (or ledger draft)
+each became and saying which are fixed and which are recorded-but-open, what was verified as
 correct, the coverage limits this environment imposed, and — if phase 3 ran — which
 module the analysis started at and that everything before it was walked rather than
 tested. Then clean up the scratch project and `__pycache__`, leaving `git status`

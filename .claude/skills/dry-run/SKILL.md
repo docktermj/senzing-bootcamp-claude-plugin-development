@@ -138,10 +138,22 @@ and its entire factual foundation. Start there unless the maintainer says otherw
 
 ## Absolute rules
 
-⛔ **Never send anything outside the machine.** Do not call `submit_feedback` under
-any category. Verify its *schema* — never invoke it. A dry run must not file junk
-upstream or transmit a name and email. The same goes for `download_resource` on
-anything large.
+⛔ **Nothing leaves the machine except two outward acts, each under INV-314's gate: show
+the maintainer the exact text and get a yes, given out of character, one record at a time.**
+
+1. **A GitHub issue, or a comment on an existing one, in this repository.**
+2. **`submit_feedback`, only for a finding whose verdict is `mcp-server`**: certain that the
+   defect is the server's and that nothing in the Senzing Bootcamp needs to change.
+   *Certain* means re-verified live against the server, with any absence claim carrying
+   `owner-checked:` naming the route that owns the fact (INV-194, INV-213). ⛔ A `both`
+   finding does not qualify: it gets a GitHub issue with the drafted upstream message
+   inside it, for the maintainer to send. The send follows `/feedback-to-issues` Step 8: a
+   self-contained technical report, everything identifying stripped (INV-065),
+   `category='bug'` or `'feature'`, and ⛔ never `category='license_request'`.
+
+A yes given in character, while answering as the Bootcamper, never authorizes either act.
+A dry run must not file junk upstream or transmit a name and email. Verifying a tool's
+schema sends nothing; `download_resource` on anything large stays forbidden.
 
 ⛔ **Never fabricate a Bootcamper answer.** This is what makes phase 3 impossible to
 self-play: the plugin forbids simulating the Bootcamper's response, and an assistant
@@ -177,33 +189,33 @@ using.
 
 A dry-run finding is only half done when the plugin is fixed. Follow this for each:
 
-1. ⛔ **Write it into `specs/` as you find it — before fixing anything.** A finding that
-   exists only in the conversation is not recorded, it is *remembered*, and it dies at
-   session end or the next compaction. This is not a filing preference; it is the
-   difference between a durable improvement and a good afternoon.
+1. ⛔ **Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you find it,
+   marked not yet filed, before fixing anything** — never into a new file under `specs/`,
+   which is a read-only archive (INV-307). A finding that exists only in the conversation is
+   not recorded, it is *remembered*, and it dies at session end or the next compaction. This
+   is not a filing preference; it is the difference between a durable improvement and a good
+   afternoon. How the draft becomes a GitHub issue is [the finding
+   lifecycle](#the-finding-lifecycle) below.
 
-   - **File:** `specs/<kebab-case-title>.md`, using the shape in
-     `../feedback-to-issues/issue-template.md` — Problem, Root cause, Proposed change,
-     Acceptance criteria, Affected files, Source. Cite `file:line`, and date every MCP
-     claim with the server version that produced it.
+   - **Shape:** `../feedback-to-issues/issue-template.md` — the same body the issue will
+     carry. Cite `file:line`, and date every MCP claim with the server version that
+     produced it.
    - **When:** immediately for phase 3, because a walk stops on whatever turn the
      maintainer stops it; by the end of the phase at the latest for phases 1 and 2.
      Do **not** defer to the final report — the report is the last thing that happens
      and the first thing lost.
-   - **Even when you fix it the same session.** The spec is what the `IMPLEMENTED.md`
-     entry points at, what makes the finding legible to whoever reads it next, and what
-     survives if the fix has to be reverted. Writing the spec is not made redundant by
-     also fixing it.
-   - **Grouping:** one spec per root cause. Several small prose corrections from one walk
-     may share a spec when each is a few lines in the same file or two — give each its own
+   - **Even when you fix it the same session.** The issue is what the `IMPLEMENTED.md`
+     entry names, what makes the finding legible to whoever reads it next, and what
+     survives if the fix has to be reverted; the fix can close it. Filing the issue is not
+     made redundant by also fixing it.
+   - **Grouping:** one issue per root cause. Several small prose corrections from one walk
+     may share an issue when each is a few lines in the same file or two — give each its own
      acceptance criteria so they stay independently implementable — but two unrelated
      defects never share one.
    - **Where not to put it.** Not the session scratchpad: the maintainer's global
      `write-location-gate.py` blocks system-temp paths, so a `/tmp/...` note fails outright.
      Not repo `tmp/` either — it is not gitignored, so it becomes untracked clutter that
-     "leave the repo with only intended changes" then tells you to delete. `specs/` is the
-     home, and it has the additional property that `list_specs.py` lists it as
-     outstanding work.
+     "leave the repo with only intended changes" then tells you to delete.
 
    Phase 3's collapsed test-notes blocks are *working notes* — the running observation
    channel for a walk in progress. They are never the record.
@@ -218,32 +230,81 @@ A dry-run finding is only half done when the plugin is fixed. Follow this for ea
    than no guard, because it certifies what it never tested. This is not optional:
    in the originating session, one existing test had **pinned the wrong premise**,
    which is how the defect it covered survived three audits.
-5. **Record the outcome** in `specs/IMPLEMENTED.md`, naming the spec from step 1, and
-   either register the invariant it establishes in `specs/INVARIANTS.md` or state that it
-   establishes none — `tests/test_spec_ledger_invariants.py` enforces this for entries
-   dated on or after its cutoff. Two homes, two purposes: the **spec** is the finding as
-   pending work, the **ledger** is what was done about it. A finding you did not fix has a
-   spec and no ledger entry, which is exactly right — it stays visible as outstanding
-   rather than looking handled.
+5. **Record the outcome** in the same `specs/IMPLEMENTED.md` entry step 1 drafted into,
+   naming the issue each finding became, and either register the invariant it establishes
+   in `specs/INVARIANTS.md` or state that it establishes none —
+   `tests/test_spec_ledger_invariants.py` enforces this for entries dated on or after its
+   cutoff. Two homes, two purposes: the **issue** is the finding as pending work, the
+   **ledger** is what was done about it and where each finding went. A finding you did not
+   fix has an open issue (or a draft marked not filed) and a ledger line saying it is open,
+   which is exactly right — it stays visible as outstanding rather than looking handled.
 6. **Correct an invariant in place when the invariant itself is wrong.** INV-132
    asserted the MCP reference could not answer parameter shapes; the server answers
    them. Add a dated correction note explaining what was verified and when. An
    invariant that encodes a false premise is worse than a missing one.
 
 ⛔ **Do not end a run with unwritten findings.** Before reporting, list what you found and
-confirm each one is either in a spec or in the ledger. "I described it in the report" is not
-recorded — the report is a message, and messages are not durable. This rule exists because a
-phase-3 walk reached eight turns with four findings held only in conversation, and it took
-the maintainer asking *"are you keeping notes that might lead to improvements / specs?"* to
-surface it.
+confirm each one is drafted in the run's ledger entry and has reached the end of the
+lifecycle below. "I described it in the report" is not recorded — the report is a message,
+and messages are not durable. This rule exists because a phase-3 walk reached eight turns
+with four findings held only in conversation, and it took the maintainer asking *"are you
+keeping notes that might lead to improvements / specs?"* to surface it.
+
+## The finding lifecycle
+
+Where a drafted finding goes, from step 1's ledger draft to its GitHub issue:
+
+1. **Draft — on sight.** The run's dated entry is a `## dry-run-<YYYY-MM-DD>` heading in
+   `specs/IMPLEMENTED.md`, marked **Not a spec** as the `production-readiness-audit-<date>`
+   entries are, and opened at the first finding. The ledger is a live record (INV-182), so the
+   draft is durable at once and the walk never stops for it. `tests/test_specs_are_frozen.py`
+   rejects any new file under `specs/`: the 2026-09-24 run that followed the pre-freeze
+   instruction turned the suite red with four.
+2. **Search open and closed issues before filing**, as `/feedback-to-issues` Step 4 does
+   (`gh issue list --state all --search "<terms>"`). A finding already tracked points at that
+   issue instead of opening a duplicate; a comment adding what the issue lacks goes under the
+   same gate as an issue. A duplicate of a **closed** issue references it and says what is
+   new, and re-filing it needs a reason that answers the earlier decision.
+3. **File at the end of phase 1 or 2, and when a phase 3 walk pauses or ends** — ⛔ never
+   mid-walk: a filing question inside a bootcamp turn adds a second 👉 and changes what is
+   being tested. Then, one issue at a time:
+
+   ⛔ **(INV-314) Show the maintainer each title and body and get a yes, one issue at a
+   time.** "Yes to all" is not assent to each. Filing is outward-facing and immediate: the
+   issue is visible the moment it exists and its notifications have gone out; it can be
+   edited or closed but never un-filed.
+
+   ```bash
+   gh issue create --title "<the defect, not the symptom>" --body-file <file>
+   ```
+
+   ⛔ **Never pass `--repo`** — this repository only, as `/feedback-to-issues` Step 7 says.
+   Then replace the draft's marker with the issue number.
+
+   ⛔ **Never apply `unattended-ok` to an issue the run files.** Choosing what runs unattended
+   is the maintainer's decision alone, and a run that labels its own findings lets
+   `/unattended-issue-loop` execute work it generated with nobody in between.
+4. **The two outcomes that file nothing.**
+   - **No maintainer present: file nothing** (INV-314). The draft stays marked **not filed —
+     needs the maintainer to file it**.
+   - **Declined:** recorded as declined, with the maintainer's reason if one was given. A
+     declined finding is a decision, not a gap.
+5. **Upstream — only under the outbound rule in [Absolute rules](#absolute-rules).** Put each
+   qualifying `mcp-server` message to the maintainer out of character, after the phase or the
+   walk, on its own. ⛔ **A yes given in character never authorizes it** — graduation Step 0's
+   upstream offer included (`phase3-conversational.md`). When the server is unreachable and
+   certainty cannot be re-established, nothing is sent upstream: the finding is filed as a
+   GitHub issue with the upstream draft inside it. Record the outcome on the finding's ledger
+   line: sent (date and category), declined, or carried in an issue.
 
 ## Reporting
 
 Report to the maintainer with the severity ordering the findings deserve, and:
 
-- ⛔ **Name the spec file each finding was written into**, and say plainly which findings are
-  fixed and which are recorded-but-open. A report that lists findings without naming where
-  they live reads as though the work is captured when it is only described.
+- ⛔ **Name the issue each finding became, or its ledger draft and the lifecycle marker it
+  carries**, and say plainly which findings are fixed and which are recorded-but-open. A
+  report that lists findings without naming where they live reads as though the work is
+  captured when it is only described.
 - **Lead with anything that breaks a documented path**, not with the longest list.
 - **Say what you verified as correct**, briefly. "The routing table is right, the
   opaque-state contract is handled, no `add_data_source` confabulation" is
@@ -259,12 +320,13 @@ Report to the maintainer with the severity ordering the findings deserve, and:
 
 Remove the scratch project when the run is done (`rm -rf $HOME/senzing-bootcamp-dryrun`)
 and clear `__pycache__`. Leave the repo with only intended changes: `git status`
-should show the fixes, the new tests, **and the specs the findings were written into** —
-nothing else.
+should show the fixes, the new tests, **and the run's `specs/IMPLEMENTED.md` entry** — no
+new file under `specs/`, and nothing else.
 
-⛔ **The scratch project is disposable; the specs are the run's actual output.** Deleting the
-project is cleanup. Deleting or never writing the specs loses the run. If a run produced no
-spec and no ledger entry, it produced nothing durable, however good the conversation was.
+⛔ **The scratch project is disposable; the issues and the ledger entry are the run's actual
+output.** Deleting the project is cleanup. Deleting or never writing the ledger drafts loses
+the run. If a run produced no issue and no ledger entry, it produced nothing durable, however
+good the conversation was.
 
 ## Scope note
 
