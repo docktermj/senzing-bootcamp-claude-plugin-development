@@ -109,7 +109,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   the mis-query sentence to it fails 1; merging the two paragraphs fails 4; adding "among its
   top hits" fails 1.
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** d7c1394
 
 ## census-detector-flags-positive-universals-over-results
 
