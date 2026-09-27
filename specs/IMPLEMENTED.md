@@ -43,6 +43,67 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## volume-question-framing-sits-after-its-pointer
+
+- **Implemented:** 2026-09-27 (**Not a spec** — a dated record of one issue-driven run, #162)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`,
+  `tests/test_reassurance_precedes_question.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13**, 2026-09-27 — **n/a (no Senzing fact)**, re-confirmed.
+  Called `get_capabilities` (reachable). The change moves existing pinned prose above the 👉,
+  rewords one answer hint and one "not sure" line, and adds a guard. It adds, changes or relies on
+  no Senzing fact: the tier boundaries, the 500-record demo cutover and the classifier are
+  untouched. No absence claim is made, so no `owner-checked:` clause is owed.
+- **Summary:** Data processing Step 1 pinned its production-volume question (INV-056) with the
+  explanation between the 👉 and its options and a "Not sure yet? Give your best estimate" line
+  after them, so a guide could not present it verbatim and also meet INV-211 (framing before the
+  👉) and INV-224 (options directly beneath). The pinned block now reads: the explanation, then
+  "If you're not sure, pick the range your best estimate falls in — it can be revisited.", then
+  the 👉 question, then the four options, with nothing after them. The hint reads "Reply with the
+  option number:" at this question only, so a bare 1–4 has one meaning. No line invites a bare
+  estimate. The lead-in says the explanation precedes the 👉. The classification paragraph is
+  unchanged: its free-text branch for counts, and #155's `raw_value: null` for an option reply.
+  The other 38 "Reply with a number:" sites are untouched.
+- **Approach:** direct (Phase 5a). **Assumptions taken, no maintainer present:** (1) The
+  explanation's first words change from "This is about the system" to "The question below is
+  about the system", because "This" pointed back at a question that now comes after it. The
+  rest of the paragraph is unchanged. (2) How the guard delimits a question block. A block is
+  **blockquoted** when the 👉 line is inside a `>` quote: the rest of the quote, up to the next
+  👉 question. A block is **not blockquoted** otherwise: the numbered list that starts at the
+  first non-blank line after the 👉, up to a blank line followed by a line that is not part of
+  the list. Outside a blockquote, Markdown gives no other end marker. Prose directly after an
+  unquoted 👉 therefore means the question has no pinned options, as with the
+  programming-language gate whose list is generated at runtime. Prose after the list is answer
+  handling, as in SQLite pre-load item 4's "*(Internal: …)* Then act on the choice:". Both fall
+  outside the block. On the pre-fix tree this rule flags only Step 1 (both placements), the same
+  result as the issue's 2026-09-25 scan. A question counts as a line with `👉 **`. `*(Internal:
+  …)*` lines, including ones that wrap onto more lines, are exempt inside a block.
+- **This run establishes no invariant.** The rule the guard enforces is the conjunction of two
+  registered invariants: INV-211 (framing before the 👉) and INV-224 (options directly beneath
+  it). The Step 1 lead-in adds no ⛔ or MUST line. INV-246 is why the guard's site set is
+  derived by scanning. ⚠️ For the maintainer, not applied: INV-211's enforcer sentence describes
+  only the "before they answer" cue guard ("rather than a blanket 'no prose after a 👉'"). The
+  same test file now also bounds a prose check to the question block. INV-211 and INV-224 could
+  both name that guard at the next `/review-invariants` or `/compact-dev-environment`.
+  `specs/INVARIANTS.md` is not edited by this run.
+- **Tests:** `tests/test_reassurance_precedes_question.py` gains
+  `NothingButOptionsFollowsAQuestionInsideItsBlock` (5 tests: the corpus scan, a population
+  floor of 30 option-bearing questions with both blockquoted and unquoted forms and Step 1 seen,
+  both historical placements detected in-process, the unquoted form detected, and three
+  compliant shapes left alone). It also gains `TheVolumeQuestionIsCompliantAsWritten` (4 tests:
+  the hint, framing before the 👉, no bare-estimate invitation, and the lead-in). Stdlib only.
+  The scan sees 100 👉 questions under `plugins/`, of which 40 have options (11 blockquoted, 29
+  not). The file's existing tests are unchanged and green. Negative controls, each run on the
+  real file from a copy and reverted, `__pycache__` cleared:
+    - The old Step 1 block with only the explanation between the 👉 and the options: fails
+      `test_no_shipped_question_has_prose_between_or_after_its_options`, 5 lines `[before its
+      first option]`.
+    - The fixed block with the old "Not sure yet?" line restored after the options: fails the same
+      test, 1 line `[after an option]`.
+    - The whole old block: fails the same test with both placements.
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** uncommitted
+
 ## match-key-suppressor-audit-gives-no-parsing-rule
 
 - **Implemented:** 2026-09-27 (**Not a spec** — a dated record of one issue-driven run, #160)

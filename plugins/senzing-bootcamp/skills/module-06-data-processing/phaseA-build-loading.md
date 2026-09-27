@@ -43,23 +43,25 @@ bulk-loading issues, threading problems, redo processing, load-order dependencie
 
 ## 1. Assess production record volume
 
-Present this pinned question verbatim (INV-056), including the explanation — the explanation is
-what stops the bootcamper answering with the bootcamp's record count instead of their real target:
+Present this pinned question verbatim (INV-056), including the explanation, which **precedes** the
+👉 as its framing (INV-211) — the explanation is what stops the bootcamper answering with the
+bootcamp's record count instead of their real target. The options sit directly beneath the 👉, and
+nothing follows them:
 
-> 👉 **In production — not in this bootcamp — how many records do you expect to load? Reply with a number:**
+> The question below is about the system you're ultimately building, **not** the dataset we're
+> working with here. It changes the loading program's *architecture*: a demo loader and a
+> fifty-million-record loader are genuinely different programs (single-threaded vs. thread-pooled,
+> batching, checkpoint/resume, throughput instrumentation, queue-based distribution). Answer for
+> your real target volume even if it dwarfs the bootcamp dataset. This program is yours to take home.
 >
-> This is about the system you're ultimately building, **not** the dataset we're working with here.
-> It changes the loading program's *architecture*: a demo loader and a fifty-million-record loader
-> are genuinely different programs (single-threaded vs. thread-pooled, batching, checkpoint/resume,
-> throughput instrumentation, queue-based distribution). Answer for your real target volume even if
-> it dwarfs the bootcamp dataset. This program is yours to take home.
+> If you're not sure, pick the range your best estimate falls in — it can be revisited.
+>
+> 👉 **In production — not in this bootcamp — how many records do you expect to load? Reply with the option number:**
 >
 > 1. 500 or fewer — demo/evaluation
 > 2. More than 500, up to 500,000 — small production
 > 3. More than 500,000, up to 10,000,000 — medium production
 > 4. More than 10,000,000 — large production
->
-> Not sure yet? Give your best estimate — we'll build for that, and it can be revisited.
 
 ⛔ Never substitute the bootcamp's own record count into this question — reference it dynamically or
 not at all, or the pinned wording goes stale the moment the dataset changes.
