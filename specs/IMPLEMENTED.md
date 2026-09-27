@@ -117,7 +117,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   on `tier`/`raw_value` fails 1; a 👉 in the production line fails 1; the production-line
   paragraph removed fails 4; Phase B's old marker-only gate fails 2.
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** fc912b4
 
 ## search-docs-now-answers-the-evaluation-record-limit
 
