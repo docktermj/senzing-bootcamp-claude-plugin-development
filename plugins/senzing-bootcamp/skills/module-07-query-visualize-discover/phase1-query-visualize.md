@@ -802,19 +802,10 @@ Let them explore at their own pace, then continue through the Discover phase and
 Completeness Gate **with the server still running** — the Discover demonstrations pair naturally
 with a live app to look at.
 
-⛔ **Before stopping it, ask the teardown gate**, pinned verbatim (INV-056), and end the turn on it:
-
-> 👉 **Ready for me to stop the visualization server?**
-
-The gate names the server and **only** the server: unlike the Truth Set module, nothing here is
-purged — the bootcamper's loaded data stays exactly where it is, and later modules and the recap
-depend on it. Say so when asking, and mention that the saved snapshot keeps every tab except the
-live `why`/`how`/`search`.
-
-*(Internal: end the turn on this question and wait.)* On "no" or "not yet", leave it running, say so,
-and wait for their go-ahead; do not re-ask on a loop. Never leave the bootcamper having to request a
-restart for a server they never agreed to stop. If the module ends with the server still up, say
-plainly that it is still running and how to stop it, rather than stopping it unasked.
+⛔ **Do not ask about stopping the server here (INV-251).** Step 3c ends without a teardown
+question: the next question is the Discover opt-in, and one turn carries one 👉 question. The stop
+question has exactly one place — "Visualization server teardown", after the Query Completeness Gate
+below, in a turn of its own.
 
 ⛔ **(INV-001, INV-002) On macOS, start it as a DIRECT CHILD of the shell that sourced the env script — never
 through `nohup`, `env`, or a nested `bash -c`.** SIP strips `DYLD_*` when a protected binary execs a child,
@@ -975,10 +966,45 @@ Before wrapping up the module, confirm:
    bootcamper was told why. Never silently absent.
 5. **Ready to proceed?**
 
+## Visualization server teardown (its own turn)
+
+**Skip this step silently if no server was started** — the Bootcamper declined the step-3c
+visualization (`m7_visualizations` records `"accepted": false`), so there is nothing to stop and
+nothing to say about it. Go straight to module completion below.
+
+Otherwise, this is the one place the stop question is asked: after the Query Completeness Gate and
+before the Module Completion process, whether the Discover phase was completed, declined, or exited
+early.
+
+⛔ **This question is its own turn (INV-251).** Ask it, end the turn on it, and do not combine it
+with the graduation offer or any other 👉 question. The graduation offer comes in a later turn,
+after this answer.
+
+The gate names the server and **only** the server: unlike the Truth Set module, nothing here is
+purged — the bootcamper's loaded data stays exactly where it is, and later modules and the recap
+depend on it. Say so before asking (INV-211), and mention that the saved snapshot keeps every tab
+except the live `why`/`how`/`search`. Then ask the teardown gate, pinned verbatim (INV-056):
+
+> 👉 **Ready for me to stop the visualization server?**
+
+*(Internal: end the turn on this question and wait.)*
+
+- **Yes:** stop it by the pid recorded in the `m7_visualizations` checkpoint and confirm the port is
+  free, as step 3c's "Stop it by the pid captured when it was started" requires, then continue to
+  module completion below.
+- **No or not yet:** leave it running, say so, and wait for their go-ahead; do not re-ask on a loop
+  (INV-006). Never leave the bootcamper having to request a restart for a server they never agreed
+  to stop. Continue to module completion below with the server up. No second teardown question is
+  asked, including when the bootcamper keeps exploring after the graduation offer. If the module ends
+  with the server still up, say plainly that it is still running and how to stop it, rather than
+  stopping it unasked.
+
+## Module completion
+
 Module 7 is the **last content module before graduation** (required in every path). Once the gate
-is satisfied, run the standard **Module Completion** process in
-`../bootcamp-onboarding/module-completion.md` (update progress, append the Module 7 recap section
-to `docs/bootcamp_recap.md`, and present the end-of-module summary). Because this is the last
+is satisfied and the teardown step above is done or skipped, run the standard **Module Completion**
+process in `../bootcamp-onboarding/module-completion.md` (update progress, append the Module 7 recap
+section to `docs/bootcamp_recap.md`, and present the end-of-module summary). Because this is the last
 content module, the completion process ends with the graduation offer rather than a next-module
 transition:
 
