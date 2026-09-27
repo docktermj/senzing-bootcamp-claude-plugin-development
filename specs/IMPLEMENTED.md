@@ -123,7 +123,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   settled verdict changed fails 2; the contract's marker deleted fails 1; and before this entry
   existed, `test_new_hard_rules_are_cited_or_deferred` failed on the new ⛔ line.
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** 02e9770
 
 ## sqlite-preload-heads-up-fires-on-the-production-tier
 
