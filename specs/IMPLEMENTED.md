@@ -43,6 +43,109 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## census-detector-flags-positive-universals-over-results
+
+- **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #151)
+- **Files changed:** `.claude/skills/dry-run/coverage_reports.py`,
+  `.claude/skills/dry-run/phase1-mcp-contracts.md`,
+  `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`,
+  `tests/test_mcp_negative_rationale_shape.py`, `tests/test_prescribed_search_queries.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13** (docs index 2026-09-24 18:45 UTC), 2026-09-26 — **still
+  reproduces** (both claims) / **server now contradicts the plugin** (both rationales). Called
+  `get_capabilities`, `search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure')`,
+  `search_docs(query='szBuildVersion.json build version file location')` and
+  `sdk_guide(topic='install', platform='windows')`. The upgrade query returns 10 hits: hits 1–7
+  and 9 are V3-to-V4 migration or schema-upgrade material (top hit the FAQ "What are the exact
+  steps to migrate from V3 to V4?", naming `sz_dbupgrade`, `sz_configupgrade`, `sz_configtool`),
+  hit 8 is the Python SDK `szengine` reference and hit 10 an sz-napi tRPC client, so "every hit
+  is V3-to-V4" is false. None gives a 4.x-to-4.y procedure. The `sdk_guide` topic enum in the
+  tool's declared schema has 40 values and no `upgrade`. The szBuildVersion query returns 10
+  hits: `get_version()` examples (Python, Rust, TypeScript), build/packaging documents, and
+  config/snapshot version helpers. So "every hit is a version-READING example or a
+  build/packaging document" is false too, and none gives the file's path. The Windows install
+  `gotchas[]` still places `szBuildVersion.json` under `<scoop-app-dir>\data`, as `:127`'s owner
+  NOTE says. owner-checked: `search_docs` IS the corpus route for a documented procedure and
+  for a documented file location — no 4.x-to-4.y procedure, no path for the file; `sdk_guide`'s
+  own topic enum is the authority on its topics — no `upgrade` entry. The issue's stop clause
+  did not fire: neither claim moved, and both rationales restate as properties the re-ask
+  supports.
+- **Summary:** `find_census_rationales` exempted `every`/`all` as property words. Its worked
+  example of a durable property, `module-02-sdk-setup/SKILL.md:387`'s "every hit is V3-to-V4
+  migration material", was falsified on 2026-09-24 by two new hits while its claim held. The
+  fixtures that certified the detector were paraphrases ("all six hits") of markers that read
+  "every hit". `CENSUS_SHAPED` gains a third branch: a positive universal (`every`, `each`,
+  `all`, `all the`, `all of the`, `every one of the`) followed by a result noun. The numeral
+  and `both` branches are byte-identical. Number agreement keeps verbs out: `all …` takes a
+  plural noun, `every` a singular one, and `each` drops `document`/`match`, since `each` can
+  float before a verb. The three comment sites that taught the exemption (`:581-585`,
+  `:636-639`, `:712-713` as the issue numbered them) now state the rule that holds, record
+  the 2026-09-24 falsification and mark `:387`'s old text as historical (commit bc4be70).
+  The report still frames the census block as a report ("A hit needs judgment"). Both
+  `module-02` markers are re-described as non-exhaustive properties ("the corpus serves X for
+  it") and restamped to `server 1.37.13, 2026-09-26` in the same edit. Each stays on one
+  line, with claim and owner text byte-unchanged. The `VERIFIED_QUERIES` entry for the
+  upgrade query drops "all six hits" and carries the re-ask's version and date.
+- **Beyond the issue, recorded:** (1) the `"szBuildVersion.json build version file location"`
+  `VERIFIED_QUERIES` entry is rewritten the same way. Its "All four hits are SDK version-call
+  examples" is the same census, and it is `:127`'s evidence. (2) A three-line note in
+  `.claude/skills/dry-run/phase1-mcp-contracts.md` ("Prefer a discriminating property over a
+  census") names the universal shape where phase-1 authors write rationales.
+- **Adapted from the raced patch, recorded:** the draft rationales read "what the corpus serves
+  for the query is …", which as an exhaustive list is false today (hits 8 and 10). They now read
+  "the corpus serves X for it". The draft pinned seven must-not-flag and legitimate-list
+  fixtures as LIVE quotes checked against the working tree. That would fail whoever next
+  corrects those markers' claims, which INV-219 forbids. They are pinned historical at `d3d5e5e`
+  instead: git still resolves each one to its line, and a marker correction now fails nothing
+  (positive control: editing `SKILL.md:252`'s brew list left the file green).
+- **Out of scope, found, not fixed:** `module-02-sdk-setup/SKILL.md` ~:381 (bootcamper-visible
+  prose) says `search_docs` "returns only V3→V4 migration material … (re-checked 2026-08-13)".
+  The same re-ask shows that is false (hits 8 and 10), while the claim it supports (no
+  4.x-to-4.y procedure) holds. Not filed as an issue by this unattended run; left for the
+  maintainer.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+  shipping:
+    - ⛔ **Every fixture this module presents as a QUOTE goes through `quoted()`, and nowhere else.** — in `tests/test_mcp_negative_rationale_shape.py`
+
+  ⚠️ **Why this is not simply INV-315.** INV-315 binds a tool that reads rule statements out of
+  a record (`pending_invariants.py`) and says a description must not be compared as a
+  quotation. This binds the other direction, in a test: a fixture presented as a quotation must
+  be one, or a detector is certified against text that never shipped, which is how #151's
+  defect went unseen. ⚠️ **Precedent points the other way, and the maintainer may hold it:** the
+  census and enumeration detectors registered no invariant, as reports that gate nothing
+  (`census-detector-misses-enumerated-name-lists`). This guard does gate the suite, which is why
+  it is deferred rather than answered "establishes none". The widened tree check
+  (`NoShippedMarkerPinsACount`, unmodified) extends a guard whose rule was deliberately left
+  unregistered, and is not re-proposed here.
+
+  The drafted wording:
+
+  **INV-NNN** — A test that presents a fixture as **verbatim** or **shipped** text MUST take it
+  from a registry that resolves it: either a substring of a current marker's parsed claim or
+  owner, or **historical** text naming the commit and `path:line` it was copied from, checked
+  against that line at that commit. ⛔ A paraphrase MUST NOT be described as a quote. ⛔ A fixture
+  quoting a claim about an MCP tool's content SHOULD be pinned historical, so correcting that
+  claim when the server moves fails no guard (INV-219). Enforced by
+  `tests/test_mcp_negative_rationale_shape.py` (`FixtureProvenanceIsChecked`), whose resolution
+  checks each run against a planted paraphrase. *(written as NNN deliberately: a literal id here
+  would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than
+  trusting a number written here.)*
+- **Tests:** `tests/test_mcp_negative_rationale_shape.py`: exact pre-fix `:127`/`:387` text as
+  must-flag fixtures (bc4be70), #151's must-flag list, the `:97` fixture moved to must-flag, the
+  `:252-266` fixture labeled historical and asserted census-flagged, must-not-flag fixtures for
+  the three shipped quantifiers over non-results plus negative universals, ranking scope and
+  floating `all`/`each` before a verb, and the `FixtureProvenanceIsChecked` guard. Building
+  the guard found two earlier "verbatim" fixtures that were not verbatim, the truncated
+  `phase2-data-mapping.md:719` owner and the never-shipped "both document installing only the
+  runtime, never the SDK". Both are now exact quotes. Negative controls, each run and reverted:
+  restoring the old `CENSUS_SHAPED` gives `FAILED (failures=13)`; paraphrasing the historical
+  `:127` quote fails the git-resolution check; paraphrasing a must-not-flag quote fails the same;
+  an unquoted paraphrase in a "verbatim" test fails the registry check; restoring `:387`'s old
+  rationale fails `NoShippedMarkerPinsACount`.
+- **Verification:** suite as reported in the PR.
+- **Commit:** uncommitted
+
 ## phase-c-no-hand-written-rule-covers-sdk-calls-only
 
 - **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #156)

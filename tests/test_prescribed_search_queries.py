@@ -191,12 +191,16 @@ VERIFIED_QUERIES = {
     # guard cannot tell the two apart (both are `search_docs(query='…')` literals in shipped
     # markdown), and that is the right default: an unexecuted phrasing is indistinguishable from an
     # executed one, so both must be accountable. All three executed against server 1.32.9, docs
-    # indexed 2026-08-11 20:52 UTC, on 2026-08-13.
+    # indexed 2026-08-11 20:52 UTC, on 2026-08-13; the first was re-executed for #151 (below).
+    # ⚠️ Record what the corpus SERVES, not how many hits or that "all" of them are one thing:
+    # "all six hits are V3-to-V4" stood here while the index grew to ten hits, two of them not
+    # migration material (server 1.37.13, 2026-09-24). Nothing scans this file for that shape.
     "upgrade Senzing SDK 4.3 to 4.4 procedure":
-        "OFF TARGET BY DESIGN — the negative's evidence: all six hits are V3-to-V4, top hit the "
-        "FAQ 'What are the exact steps to migrate from V3 to V4?' (relevance 191) naming "
-        "sz_dbupgrade/sz_configupgrade. No 4.x-to-4.y procedure exists in the corpus, which is "
-        "what module-02 Step 1b records",
+        "OFF TARGET BY DESIGN — the negative's evidence: the corpus serves V3-to-V4 migration "
+        "material for it, top hit the FAQ 'What are the exact steps to migrate from V3 to "
+        "V4?' naming sz_dbupgrade/sz_configupgrade/sz_configtool, and no 4.x-to-4.y procedure, "
+        "which is what module-02 Step 1b records (server 1.37.13, docs index 2026-09-24 18:45 "
+        "UTC, re-executed 2026-09-26)",
     "evaluation license record limit how many records without a license":
         "OFF TARGET BY DESIGN — the negative's evidence: top hit the EULA's 'Senzing "
         "Non-Production License' (relevance 174), which says 'up to the number of DSRs "
@@ -231,10 +235,11 @@ VERIFIED_QUERIES = {
         "all — the phrase 'best practices' is the whole defect",
     "szBuildVersion.json build version file location":
         "OFF TARGET BY DESIGN — this is the negative's evidence: no indexed document gives the "
-        "file's path on any platform. All four hits are SDK version-call examples, top hit "
-        "brianmacy/sz-rust-sdk -> code-snippets/information/get_version.rs (relevance 39.5). "
-        "The corpus serves SzProduct.get_version(), not a file location, which is why Step 1 "
-        "routes the reader to the SDK call and marks the file paths as environment observations",
+        "file's path on any platform. It serves SDK version-call examples for it, top hit "
+        "senzing/code-snippets-v4 -> python/information/get_version.py, and build/packaging "
+        "documents. The corpus serves SzProduct.get_version(), not a file location, which is why "
+        "Step 1 routes the reader to the SDK call and marks the file paths as environment "
+        "observations (server 1.37.13, docs index 2026-09-24 18:45 UTC, re-executed 2026-09-26)",
     # "entity resolution quality evaluation" was listed here as OFF TARGET on 2026-08-12 and is
     # gone: Module 7 Step 3b no longer prescribes it. It returned the Buyer's Guide's
     # vendor-selection steps rather than precision/recall material, and

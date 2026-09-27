@@ -578,11 +578,34 @@ def find_negatives(repo):
 #: *Mapping identifiers* section the route no longer returns). Read the two as one report in
 #: two halves. A count is never the discriminating fact:
 #: "no field names a binding type" says what the census was standing in for and does not expire.
-#: ⚠️ `both` counts on its own; `all`/`every` do not. "all six hits" pins six, and breaks
-#: when the index returns ten; "every hit is V3-to-V4 material" is a property over whatever
-#: came back and survives a rebuild. That distinction is the whole point of the report, so
-#: the two forms are pinned as fixtures on either side in
-#: `tests/test_mcp_negative_rationale_shape.py`.
+#: ⛔ A POSITIVE UNIVERSAL over the result set is a census too, and is flagged the same way.
+#: "every hit is X", "each result is X", "all the hits are X" and "every one of the hits …"
+#: carry no numeral, but they are falsified by the same event a count is: the index returning
+#: one new thing that is not X. This comment used to exempt them — "`all`/`every` do not
+#: [count]; 'every hit is V3-to-V4 material' is a property over whatever came back and survives
+#: a rebuild" — and that exact marker (`module-02-sdk-setup/SKILL.md:387`) then drifted: on
+#: server 1.37.13, 2026-09-24 `search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure')`
+#: returned ten hits, and hit 8 (the Python SDK's `szengine` API reference) and hit 10 (a tRPC
+#: client source file) are not V3-to-V4 material, while the CLAIM beside it still held (#151).
+#: A property survives new hits only when it is not quantified over them: "the corpus serves
+#: V3-to-V4 migration material and no 4.x-to-4.y procedure" does; "every hit is …" does not.
+#: The branch is scoped to what #151 decided, and no wider:
+#:   - POSITIVE only. A negative universal ("none of the hits names …", "no hit …") is the shape
+#:     of an absence CLAIM, which phase 1 re-asks, so flagging it would flag claims rather than
+#:     rationales. Pinned as must-not-flag, so a later widening cannot absorb it silently.
+#:   - Over a RESULT noun only. "every binding that differs" and "each tool's declared schema"
+#:     quantify over something else and ship legitimately.
+#:   - Ranking scope ("its top hits", "the highest-ranked hit") is a different shape, not here.
+#: ⚠️ The quantifier's own number agreement picks the noun form, and that is what keeps a verb
+#: out. `all …` takes the PLURAL ("all hits", "all of the documents"), so a floating
+#: quantifier before a verb ("the routes all document installing only …", "all match") does
+#: not read as a noun; `every` takes the singular and cannot float, so "every document is" is
+#: safe; `each` CAN float ("they each document …", "each match the query"), so `document` and
+#: `match` are left out after it. The fixtures on either side of each line are pinned in
+#: `tests/test_mcp_negative_rationale_shape.py`, and the must-flag ones are the pre-fix text
+#: that shipped, quoted with the commit it was copied from — the paraphrase that stood in for
+#: it ("all six hits") is how the exemption above went unnoticed.
+#: ⚠️ `both` counts on its own, as a numeral does.
 #: ⚠️ `document` is dropped from the BOTH branch because it is also a verb: a shipped marker
 #: reads "both document installing only …", where the subject is two routes and `document` is
 #: what they do. A numeral cannot precede a verb ("four documents"), so the numbered branch
@@ -590,11 +613,17 @@ def find_negatives(repo):
 #: verb/noun collision that had to be corrected in two other guards this session.
 _RESULT_NOUN = r"(?:hits?|results?|rows?|matches|entries|documents?|chunks?)"
 _COUNTABLE_NOUN = r"(?:hits?|results?|rows?|matches|entries|chunks?)"
+_ONE_RESULT = r"(?:hit|result|row|match|entry|document|chunk)"        # after `every`
+_EACH_RESULT = r"(?:hit|result|row|entry|chunk)"                      # `each` floats: no verbs
+_ALL_RESULTS = r"(?:hits|results|rows|matches|entries|documents|chunks)"  # after `all …`
 CENSUS_SHAPED = re.compile(
     r"\b(?:(?:all|only|just)\s+)?"
     r"(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+"
     + _RESULT_NOUN + r"\b"
-    r"|\bboth\s+" + _COUNTABLE_NOUN + r"\b",
+    r"|\bboth\s+" + _COUNTABLE_NOUN + r"\b"
+    r"|\b(?:every\s+" + _ONE_RESULT
+    + r"|each\s+" + _EACH_RESULT
+    + r"|(?:every\s+one\s+of\s+the|all(?:\s+of)?(?:\s+the)?)\s+" + _ALL_RESULTS + r")\b",
     re.IGNORECASE,
 )
 
@@ -602,9 +631,11 @@ CENSUS_SHAPED = re.compile(
 def find_census_rationales(found):
     """[(relpath, lineno, phrase)] for markers whose rationale pins a count.
 
-    Reads the CLAIM and OWNER halves of an already-parsed marker — the two places a
-    rationale lives. Reports rather than gates: a count is occasionally the fact itself
-    ("the corpus has one entry for this code"), so the call is the reader's.
+    A count is a numeral, `both`, or a positive universal over the result set ("every hit
+    is …") — all three expire when the index returns one more thing. Reads the CLAIM and
+    OWNER halves of an already-parsed marker — the two places a rationale lives. Reports
+    rather than gates: a count is occasionally the fact itself ("the corpus has one entry
+    for this code"), so the call is the reader's.
     """
     flagged = []
     for _key, _version, _date, claim, owner, relpath, lineno in found:
@@ -634,9 +665,12 @@ def find_census_rationales(found):
 #:     nearly every `owner:` clause, so "2+ names anywhere" would flag almost every marker via
 #:     its own owning route's name. A joined run (`A, B` / `A and B`) is what an enumeration is.
 #:   - The element noun is the whole reason "every hit is V3-to-V4 material (sz_dbupgrade,
-#:     sz_configupgrade, …)" is NOT flagged: it has the verb and the coordinated snake_case run,
-#:     and it is a PROPERTY over whatever came back, with examples. `hit`/`material` name no
-#:     response element, so it falls out — the same property/census line `CENSUS_SHAPED` draws.
+#:     sz_configupgrade, …)" — the pre-fix text of `module-02-sdk-setup/SKILL.md:387` — is NOT
+#:     flagged HERE: it has the verb and the coordinated snake_case run, but the run is
+#:     examples under `material`, and `hit`/`material` name no response element. It is not an
+#:     enumeration. It IS a census, and `CENSUS_SHAPED` above now claims it: "every hit is X"
+#:     was falsified on 2026-09-24 by one new hit that was not X, exactly as a count would be
+#:     (#151). So the two reporters divide that shape explicitly — census yes, enumeration no.
 #: ⚠️ The parsed `claim` half INCLUDES the tool invocation, so `search_docs(query='…',
 #: category='data_mapping')` hands every marker two snake_case tokens and a `section` noun for
 #: free. `_strip_tool_calls` removes them first: a call's own parameters are not an enumeration
@@ -709,12 +743,13 @@ def _named_run(clause):
 
 #: The gap between the enumeration and its element noun may not cross a coordinator. This is
 #: the condition that separates a GOVERNING noun from one that merely shares the clause, and it
-#: is what keeps the criterion-2 case out: in `module-02-sdk-setup/SKILL.md:387` the noun sits
+#: is what keeps the criterion-2 case out: in the pre-fix text of `module-02-sdk-setup/SKILL.md:387`
+#: (historical — the text as of commit bc4be70, before #151 rewrote it) the noun sits
 #: in a different conjunct — "every hit is V3-to-V4 migration material (sz_dbupgrade,
 #: sz_configupgrade, …) **and the topic list carries no upgrade entry**" — where `entry` governs
 #: `upgrade`, not the parenthesised run, and the run itself is examples under the property word
 #: `material`. Presence-in-clause alone flagged it, which is a false positive on the exact
-#: fixture the spec names as must-not-flag.
+#: fixture the spec names as must-not-flag for THIS detector (the census detector does flag it).
 _COORDINATOR = re.compile(r"\b(?:and|or|but)\b|[;,]", re.IGNORECASE)
 _GOVERNING_GAP = 40
 
@@ -973,7 +1008,9 @@ def report_negatives(repo, current_server=None):
     census = find_census_rationales(found)
     if census:
         print("⚠️ CENSUS-SHAPED rationales: %d — re-describe rather than re-date." % len(census))
-        print("   These pin a COUNT. Phase 1 re-asks the CLAIM, never the rationale beside it,")
+        print("   These pin a COUNT — a numeral, `both`, or a claim about EVERY result (\"every")
+        print("   hit is …\"), which one new hit falsifies just as it falsifies a numeral.")
+        print("   Phase 1 re-asks the CLAIM, never the rationale beside it,")
         print("   so a census stops describing the response while the claim stays true and the")
         print("   date certifies the whole comment. Replace it with the discriminating property")
         print("   the count was standing in for — that is the half a later reader acts on.")
