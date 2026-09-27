@@ -73,11 +73,20 @@ deliberate: `sdk_guide` returns the single-threaded demo template at or below 50
 is 500 records" below), so classifying exactly 500 as `small` would route the bootcamper to the
 threaded-pattern instructions and then hand them a loader the tool itself labels "demo-only".
 If the reply is a bare option number (1–4),
-select that tier directly. If it is free text, parse the number and classify. If it is
-unparseable, ask ONE clarifying follow-up presenting the four numbered tiers, then classify; if
-still unparseable, default to `demo` and tell the bootcamper demo/evaluation was selected as
-the default. Persist `production_volume` (`tier` and `raw_value`) to
-`config/bootcamp_preferences.yaml` and checkpoint step 1 to `config/bootcamp_progress.json`.
+select that tier directly and persist `raw_value: null`.
+⛔ **An option picks a range, not a count, so the option number is never stored in `raw_value`.**
+Steps 3 and 4 pass `raw_value` to
+`sdk_guide` as `record_count`, and an option number there reads as a count below the demo cutover:
+picking **3 — medium production** returned the single-threaded demo loader
+(`sdk_guide(topic='load', language='java', record_count=3)` → `LoadRecords.java`, server 1.37.13,
+2026-09-26). If it is free text, parse the number, classify, and store the parsed number as
+`raw_value`. If it is unparseable, ask ONE clarifying follow-up presenting the four numbered
+tiers, then classify; if still unparseable, default to `demo`, persist `raw_value: null`, and tell
+the bootcamper demo/evaluation was selected as the default. Persist `production_volume` (`tier`
+and `raw_value`) to `config/bootcamp_preferences.yaml` and checkpoint step 1 to
+`config/bootcamp_progress.json`. ⚠️ **`raw_value: null` beside a set `tier` is a recorded answer —
+"no count was given" — not a missing or unreadable value.** The tier still decides, and every step
+that reads `raw_value` has a branch for `null`.
 
 (The Kiro helpers `answer_binding.py` / `volume_utils.py` encode this parsing and persistence;
 the script port is a later phase, apply the logic inline for now.)
@@ -88,7 +97,9 @@ discover once the loader is written. For example: "Medium production, so I'll bu
 loader with batching, checkpoint/resume, and throughput reporting — say the word if that volume
 isn't right." For `demo`, name what they are getting and why: "Demo/evaluation, so a single-threaded
 loader — simplest to read, and appropriate below the license limit. If your real target is larger,
-tell me now and I'll build the threaded version instead."
+tell me now and I'll build the threaded version instead." When `raw_value` is null, also say that
+no count was given, so the Bootcamper knows the build follows the range: "Medium production — you
+picked a range rather than a count, so I'll build for the range: a thread-pooled loader…"
 
 **License framing (default + expansion paths).** After the tier is classified, present
 licensing as a default the bootcamper already has, never as a hard cap:
@@ -233,9 +244,14 @@ So only the `demo` tier — which is below the default license limit anyway — 
 loader. Every tier that represents a real production system gets the threaded pattern:
 
 - **`small`, `medium`, or `large`:** call `sdk_guide(topic='load', language='<chosen_language>',
-  record_count=<raw_value>)` for the threaded production pattern. Add a code comment stating the
+  record_count=<raw_value>)` for the threaded production pattern. **When `raw_value` is null**
+  (the tier came from an option, so no count was given), call `sdk_guide(topic='load',
+  language='<chosen_language>')` **without** `record_count`: omitting it returns the threaded
+  pattern, the same safe default the "Missing or unreadable" branch below relies on. Never pass
+  the null, or an option number, as `record_count`. Add a code comment stating the
   tier and the architecture recommendation (thread pool for small and medium; distributed /
-  queue-based for large).
+  queue-based for large). When `raw_value` is null, the comment also says the tier came from a
+  range and no count was given.
 
   ⛔ **(INV-296) The tier picks the PATTERN; `database_type` picks the WORKER COUNT — read both.** Read
   `database_type` from `config/bootcamp_preferences.yaml` (the key SDK setup's Step 7 writes when the
@@ -277,6 +293,14 @@ loader. Every tier that represents a real production system gets the threaded pa
   template. Add a code comment stating the tier and that single-threaded loading is appropriate at
   demo scale **and is a documented anti-pattern above it**, so the bootcamper knows what to change
   if their volume grows.
+  **When `raw_value` is null** (an option reply, or the unparseable default), pass the **demo
+  cutover** as `record_count`: the top of the single-threaded range, as `sdk_guide`'s own
+  `record_count` contract states it **at call time**. Read it from that parameter's description,
+  never from this file (INV-080). That returns the single-threaded demo template Step 1's echo
+  promised. The code comment says the count is the tier's upper bound, not the Bootcamper's
+  figure. If the contract can't be read (the MCP server is unavailable), take the "Missing or
+  unreadable" branch below, and say in the code comment that the demo loader couldn't be
+  selected.
 - **Missing or unreadable:** call `sdk_guide(topic='load', language='<chosen_language>')` with no
   `record_count`. Omitting it yields the threaded pattern, which is the safe default — a loader that
   is threaded when it need not be merely does extra setup, while one that is single-threaded when it
@@ -326,7 +350,10 @@ Call `generate_scaffold` with workflow `add_records` and the chosen language for
 SDK code. Call `sdk_guide(topic='load', language='<chosen_language>', record_count=<raw_value>)`
 for platform-specific loading
 patterns — as in step 3, `record_count` belongs to `sdk_guide` and is what selects the threaded
-versus single-threaded template.
+versus single-threaded template. **When `raw_value` is null**, use step 3's null branch for the
+tier: for `small`, `medium` or `large`, omit `record_count`; for `demo`, pass the demo cutover
+read from `sdk_guide`'s `record_count` contract at call time. Never pass the null, or an option
+number, as `record_count`.
 
 **Checkpoint:** write step 4.
 

@@ -43,6 +43,94 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## volume-option-reply-selects-the-demo-loader
+
+- **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #155)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`,
+  `tests/test_volume_option_reply_has_no_count.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13**, 2026-09-26. The issue **still reproduces**. Calls:
+  `get_capabilities`, then `sdk_guide(topic='load', language='java', record_count=3)` and
+  `record_count=500`, which both return primary `java/snippets/loading/LoadRecords.java` (the
+  single-threaded demo, headed "do not use for production volumes (>500)"). With `record_count`
+  omitted, the call returns `java/snippets/loading/LoadViaFutures.java` (threaded) and labels
+  `LoadRecords` "demo-only". The tool's own `record_count` parameter description says the same:
+  "When null or > 500, the primary code returned is the threaded/production pattern; when ≤ 500
+  it is the single-threaded demo." So omitting `record_count` gives the threaded loader, and the
+  top of the demo range gives the demo loader. That is the basis for both null branches. The
+  change makes no absence claim, so no `owner-checked:` clause is owed.
+- **Summary:** Step 1 accepts a bare option number (1–4) for the production volume, and then
+  persisted `production_volume.raw_value`. Steps 3 and 4 passed that value to `sdk_guide` as
+  `record_count`, so picking **3 — medium production** sent `record_count=3` and returned the
+  demo loader, the opposite of what Step 1's echo had promised. Now an option reply, and the
+  unparseable-twice `demo` default, persist `raw_value: null`, and the option number is never
+  stored. A free-text reply still stores the parsed number. Step 1 says a null beside a set tier
+  is a recorded answer ("no count was given"), not a missing or unreadable value, and the echo
+  tells the Bootcamper that no count was given. In Step 3, the `small`/`medium`/`large` bullet
+  gains a null branch that calls `sdk_guide` without `record_count` (threaded), copying the
+  "Missing or unreadable" pattern, and its code comment says the tier came from a range. The
+  `demo` bullet gains a null branch that passes the demo cutover, read from `sdk_guide`'s
+  `record_count` contract at call time and never from the file (INV-080). Its code comment says
+  the count is the tier's upper bound. If the contract can't be read, it falls back to "Missing
+  or unreadable" and says so. Step 4 gives the same two null branches and forbids passing a null
+  or an option number as `record_count`. The anchor ``- **`small`, `medium`, or `large`:**`` is
+  unchanged, because `tests/test_loader_concurrency_reads_database_type.py` uses it.
+- **Where the change differs from the issue, and why.** The issue's Scope item 4 asked for a
+  SQLite pre-load item-1 clause: "a null `raw_value` counts as missing for the small-tier count
+  comparison only". One acceptance criterion also asked that "item 3's tier-alone trigger for
+  `medium`/`large` is unchanged". Both are **dropped as moot**. #163 merged first and rewrote the
+  check: item 3 now triggers on the **loadable total**, and item 2 says "`tier`/`raw_value` do not
+  decide the match". So there is no small-tier comparison left for a clause to qualify, and no
+  tier-alone trigger to keep. Both points were checked against the current file. #163's own text
+  says "#155's proposed change 3 becomes moot once this lands". The SQLite check is otherwise
+  untouched. Item 1 still lists `raw_value` among its inputs and still says "If any value is
+  missing/unreadable … treat it as indeterminate". Step 1's new sentence, that null is a recorded
+  answer and not a missing value, keeps an option reply from making the check indeterminate
+  without editing the check itself.
+- **Approach:** direct (Phase 5a). The pattern is the existing "Missing or unreadable" branch.
+  **Assumptions taken, no maintainer present:** (1) the SQLite item-1 clause is dropped, as
+  above; (2) the "null is not missing" sentence goes in Step 1, where `raw_value` is defined,
+  rather than in the SQLite check, which the run's plan said not to touch; (3) Step 4 states both
+  null branches in one sentence and points at Step 3, rather than repeating Step 3's code-comment
+  wording (INV-300).
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The change ships one ⛔
+  line and a second hard rule in plain prose, both test-enforced, which is the gap INV-309
+  exists to close (#38). The rules already shipping, at their site:
+    - ⛔ **An option picks a range, not a count, so the option number is never stored in `raw_value`.** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`
+    - **Never pass the null, or an option number, as `record_count`.** (Step 3's production-tier bullet and Step 4) — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`
+
+  ⚠️ **INV-244 is a neighbor, not the same rule.** INV-244 says an absent field means "never
+  measured". This rule says a null beside a set tier means "no count was given", which is a
+  recorded answer, and it governs what a numbered option may be written as. Whether that needs
+  its own id is the maintainer's call.
+
+  The drafted wording:
+
+  **INV-NNN** — A value persisted for a later step to read as a quantity (such as a record count)
+  MUST be persisted only when the Bootcamper gave that quantity. A reply that selects a category
+  (a numbered option, or a default taken after an unparseable reply) persists the category and a
+  null value, never the option's number. Every step that passes the value to an MCP tool MUST
+  branch on null, choosing the tool input that gives the category's behavior (for Data
+  processing's `sdk_guide` load call: no `record_count` for a production tier, and the demo
+  cutover read from the tool's contract at call time for `demo`). Enforced by
+  `tests/test_volume_option_reply_has_no_count.py`. (Source: GitHub issue #155.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** new `tests/test_volume_option_reply_has_no_count.py`, 14 tests in 3 classes, stdlib
+  only, importing nothing under `plugins/` (INV-108). The classes cover Step 1, Steps 3 and 4,
+  and "no count is invented". The last includes a scan of every `record_count=<raw_value>)` call
+  in the shipped plugin: each must carry a bold null branch before the next bullet or heading
+  (INV-246), with a liveness floor of three sites. Negative controls, each run and reverted,
+  `__pycache__` cleared:
+    - Step 3's production null branch removed: 3 tests fail, the scan among them.
+    - Step 3's demo null branch removed: 4 tests fail.
+    - Step 4's null branch removed: 3 tests fail.
+    - Step 1's option-null clause removed: 1 test fails.
+    - The pre-change file: 14 failures and 1 error.
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** 6d781e1
+
 ## phase-c-sqlite-note-reopens-the-settled-load-size-decision
 
 - **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #164)
