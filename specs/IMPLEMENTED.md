@@ -108,7 +108,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     - `_clip`'s docstring says "Truncate to ``n`` characters", but it returns `n + 2` (48 at
       width 46): `s[: n - 1] + "..."`. A comment near `generate_recap_pdf.py:2605` already
       relies on the `n + 2` length.
-- **Commit:** uncommitted
+- **Commit:** 6934bd2
 
 ## recap-sdk-version-is-the-installed-one
 
