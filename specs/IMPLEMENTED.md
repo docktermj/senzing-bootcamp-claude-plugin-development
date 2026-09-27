@@ -128,7 +128,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     - The reason restated inside the Module 7 pointer: fails
       `test_the_pointers_do_not_restate_the_rule`.
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** 3342e21
 
 ## phase-d-how-state-audit-checks-every-multi-record-entity
 
