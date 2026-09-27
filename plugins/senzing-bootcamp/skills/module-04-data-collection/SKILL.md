@@ -650,6 +650,18 @@ Module 5 can evaluate.
 > `validation_status` (`pending` | `passed` | `failed`) and `validation_checks` (one key per check
 > with its outcome) are written by the Data File Validation step below and read back by Step 7 —
 > Step 7 cannot confirm what this entry never recorded, so both fields belong in the schema here.
+>
+> `sample` (optional) is written only when this module creates a working sample of the collected
+> file — Step 6's smaller-slice path or Step 8b's sample choice:
+> `sample: {file_path, record_count, strategy, reason}` — the sample file under `data/samples/`, the
+> record count **measured** from that written file (never the target that was asked for), the
+> sampling strategy, and why it was chosen. It is the record Module 6 Phase B Step 7 cites for the
+> collected → sample step of its load reconciliation (INV-243); a sample recorded nowhere leaves that
+> step nothing to cite, so Module 6 reports the gap as unexplained. ⛔ (INV-243) **Writing it never
+> touches the source's top-level `record_count` or `expected_record_count`**, which keep describing
+> the collected file: overwriting them with the sample's figures would destroy the baseline the load
+> is reconciled against. A smaller **substitute dataset** is a new collection, not a sample: record
+> it as its own collected file with its own measured `record_count`, and write no `sample:` block.
 
 > **Data File Validation:** After each file is saved to `data/raw/`, sanity-check it (readable,
 > non-empty, expected format/encoding, and — wherever an independent expected count exists — a record
@@ -808,8 +820,14 @@ gate (INV-093) and the Senzing MCP server.
   [sampling rule](#overlap-preserving-sampling) earlier in this step. Do not choose a random slice
   by default.
 - **Document the sampling method AND why it was chosen** in the data-source registry, not just the
-  method name. "Random sample" alone is exactly what leaves Module 6 unable to tell a
-  no-overlap-in-the-data finding from a no-overlap-in-the-sample artifact.
+  method name: write the source's `sample:` block in `config/data_sources.yaml` (Step 2's registry
+  schema) — the sample's `file_path`, its `record_count` **measured** from the written file,
+  `strategy`, and `reason`. "Random sample" alone is exactly what leaves Module 6 unable to tell a
+  no-overlap-in-the-data finding from a no-overlap-in-the-sample artifact, and a sample recorded
+  nowhere leaves Module 6's load reconciliation nothing to cite (INV-243). Leave the top-level
+  `record_count` and `expected_record_count` untouched: they describe the collected file.
+- **A smaller substitute dataset is a new collection, not a sample.** Record it as its own collected
+  file with its own measured `record_count` (Step 2's registry), and write no `sample:` block.
 - Ensure the sample exercises what the **business problem** needs: for a cross-source problem that
   means shared entities, which is not the same as being statistically representative of each source.
   ⛔ A sample that is representative of every source individually can contain no cross-source matches
@@ -1115,9 +1133,12 @@ about a roughly half-hour load, for a load of about two minutes.
      cross-source matches — see the [sampling rule](#overlap-preserving-sampling) in Step 6, which
      is the canonical statement; do not restate it here (INV-300).** Validate the target record
      count (a positive integer strictly less than the collected total) and re-ask until valid.
-     Create the sample with the chosen strategy, write it under `data/samples/`, and document
-     the strategy **and the reason for it** in a sample manifest. Then record the decision
-     (sub-step 4).
+     Create the sample with the chosen strategy and write it under `data/samples/`. Then write
+     each sampled source's `sample:` block in `config/data_sources.yaml` (Step 2's registry
+     schema): the sample's `file_path`, its `record_count` **measured** from the written file, the
+     `strategy` **and the `reason` for it** — the record Module 6 cites when it reconciles the load
+     (INV-243). Leave the top-level `record_count` and `expected_record_count` untouched. Then
+     record the decision (sub-step 4).
    - **Switch to an alternative database (e.g. PostgreSQL):** route the bootcamper to the
      database-migration guide (the Kiro `docs/guides/DATABASE_MIGRATION.md` guide is a later
      porting phase). Do not inline or restate the migration steps here. Then record the decision

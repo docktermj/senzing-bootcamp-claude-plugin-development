@@ -145,8 +145,17 @@ class TheFiguresMustBeReconciled(unittest.TestCase):
     """Criterion 2 — and the only part that catches the defect at runtime."""
 
     def test_per_source_counts_are_checked_against_the_input(self):
+        """#157: "input record count" became the load input, deliberately.
+
+        The old phrase read naturally as the collected `record_count`, which a sampled or
+        mapped source never matches. The input is now what the loader was given, reconciled
+        by Phase B Step 7's two stages, which this step points at rather than restating.
+        """
         body = step_17()
-        self.assertIn("input record count", body)
+        self.assertIn("that source's load input", body)
+        self.assertIn("the records the loader was given", body)
+        self.assertIn("`phaseB-load-first-source.md` Step 7", body)
+        self.assertNotIn("own input record count", body)
 
     def test_the_per_source_counts_must_sum_to_the_aggregate(self):
         self.assertIn("sum to the aggregate", step_17())

@@ -43,6 +43,136 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## load-count-reconciliation-ignores-the-working-sample
+
+- **Implemented:** 2026-09-27 (**Not a spec** — a dated record of one issue-driven run, #157)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`,
+  `tests/test_load_reconciliation_has_two_stages.py` (new),
+  `tests/test_load_count_reconciliation_has_three_outcomes.py`,
+  `tests/test_per_source_figures_are_reconciled.py`,
+  `tests/test_module06_orchestrator_guidance.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.13, 2026-09-27 — `get_capabilities` (server `sz-mcp-coworker`
+  1.37.13, Senzing `current`) and `sdk_guide(topic='load', language='python', record_count=7386)`
+  confirmed that the served loader (`senzing/code-snippets-v4` `python/loading/add_futures.py`)
+  keeps `success_recs` / `error_recs` and prints "Successfully loaded N records, with M errors".
+  Those are the success count and error count stage 1 reads, so this still reproduces. Everything
+  else the change states (the `sample:` block, the chain, the four outcomes) is bootcamp registry
+  state, not a Senzing fact. The change makes no absence claim. Still, owner-checked: `sdk_guide`
+  IS the route that carries loader code, and it returned the two counters. Nothing sent upstream.
+- **Summary:** Phase B Step 7 reconciled the loaded count against the collected `record_count`
+  only. Data collection samples whenever the scenario is sized below the collected volume, so
+  every sampled source (GLEIF 7,386 loaded of 7,386 against 63,863 collected) read as a delta no
+  branch named. A strict reading filed a clean load as `failed`. Step 7 now holds **the canonical
+  statement** (INV-300, anchor `#two-stage-load-reconciliation`) of a two-stage reconciliation.
+  **Stage 1** compares the loaded count against the **load input**: the file the loader read, or
+  its first N under a recorded subset limit (`sqlite_volume_prompt` or Module 4 Step 8b's `sample`
+  decision). It is the only stage that can record `failed`, and it has no explained branch.
+  **Stage 2** relates the load input to `record_count` through a cited chain (collected → sample →
+  mapped → subset). It records `pass`, `expected_delta` (with a `load_reconciliation` note naming
+  each step and the record it cites) or the new `unexplained_delta` (`load_status: loaded` plus an
+  `issues` entry). The four-row table, the citation rule, and the edge cases (no `sample:` block,
+  substitute dataset, fast-pathed source) sit in one place. So do the GLEIF case and the
+  `embedded_master` example, re-expressed as stage-2 explained deltas. Phase C Step 12, Step 17 and
+  Phase D Step 27 point at Step 7 and add only their own part. Step 12 shows the chain for
+  `expected_delta` ("7,386 loaded from a 7,386-record overlap-preserving sample of 63,863
+  collected") and shows `unexplained_delta` as unverified, never as `failed`. Step 17 reconciles
+  against the source's load input. Phase D writes `unexplained_delta` labeled unverified. Module
+  4's registry schema defines `sample: {file_path, record_count, strategy, reason}` with a measured
+  `record_count`. Step 6 and Step 8b sub-step 3 write it, which replaces "document it in the
+  registry" and the unlocated "sample manifest". Neither ever touches the top-level
+  `record_count` / `expected_record_count` (INV-243). A substitute dataset is a new collection
+  and gets no block. `specs/INVARIANTS.md` is not edited, and INV-243 / INV-245 are not amended
+  (out of scope per the issue).
+- **Approach:** raced (Phase 5b) by the run's lead. Approach B (one canonical statement at Step 7,
+  with pointers) won over A (both stages written out at every site). The comparison is on the
+  issue (comment 3). Applied from the raced patch (`git apply` was clean on a47ff93) with three
+  adaptations. (1) **The new guard's reader derivation is keyed on INV-243 alone**, not
+  INV-243/INV-245. #154's Phase D How-state audit, merged after the race, cites INV-245 for an
+  entity's record count against its construction history, which is not a load count. The patch
+  flagged it as a load-count reader with no pointer to Step 7. INV-245 "generalizes beyond
+  per-source counts to any verified value" (its own text), while INV-243 is the per-source
+  reconciliation requirement itself, and every load-count reader (C12, C17, D27) cites it. The
+  reason is written at the regex. Two negative controls pin both sides (see Tests). (2) Two
+  paragraphs are rewrapped at the surrounding width (the Module 4 schema tail, and Phase D's
+  "What this document adds"). (3) The docstring and failure message are updated to match
+  (1). The Phase D pointer sits in Step 27's outcomes paragraph, as intended. #154's How-state
+  audit, #160's step-2 parsing rule, #162's Phase A Step 1 order and #166's Module 7 change are
+  untouched.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The two-stage routing
+  applies registered invariants, and each new ⛔ line cites them at the line. Stage 1 is INV-245's
+  "own verification check". Stage 2's `unexplained_delta` is INV-245's reported discrepancy,
+  shown in place of the value. Reconciling against the load input is INV-243's "that source's own
+  input count", read as the issue directs. The owner/pointer shape is INV-300. One durable rule
+  goes beyond them, and a new test enforces it plugin-wide: **every step that writes a working
+  sample records it in the registry**. INV-243 requires reconciliation, but nothing registered
+  requires the provenance record that makes stage 2 citable. The rule already shipping, plain
+  prose at its site:
+    - `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md` — ⛔ Step 2's registry
+      schema defines the optional `sample:` block, and Step 6 and Step 8b sub-step 3 each write it
+      with a record count measured from the written sample file, leaving the top-level
+      `record_count` and `expected_record_count` untouched
+
+  The drafted wording:
+
+  **INV-NNN** — Where the bootcamp creates a working sample of a collected file, the step that
+  writes it MUST record it in that source's `config/data_sources.yaml` entry as
+  `sample: {file_path, record_count, strategy, reason}`, with `record_count` measured from the
+  written sample file and never the target asked for. It MUST NOT overwrite the source's
+  top-level `record_count` or `expected_record_count`, which keep describing the collected file.
+  A load reconciliation may cite a sample only through that block: a gap only a sample could
+  explain, with no block, is unexplained, and nothing is inferred from a file's name or
+  location. A smaller substitute dataset is a new collection, not a sample, and gets no block.
+  The writer set is derived by scanning every skill for a step that writes under
+  `data/samples/` (INV-246). Enforced by `tests/test_load_reconciliation_has_two_stages.py`.
+  (Source: GitHub issue #157.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Findings, not changed here (recorded, no issue filed):**
+    - Module 5's improved-file step (`module-05-data-quality-mapping/phase1-quality-assessment.md`,
+      the `record_count` bullet) still says Module 6 reconciles "its loaded count against the
+      `record_count` written here". Under the two-stage rule, Module 6 reconciles against the
+      load input first. The issue put this step out of scope.
+    - Phase D Step 23 (`phaseD-validation.md`) reads "the sampling method and the reason for it"
+      from the registry without naming the `sample:` block. It can now be answered from
+      `sample.strategy` / `sample.reason`, but it is not re-pointed.
+    - Module 4 Step 6 lists "sampling, a CORD subset, or a smaller substitute dataset". It is not
+      settled whether a CORD subset is a sample (gets a `sample:` block) or a substitute (a new
+      collection, no block). The new guidance names only the two ends.
+- **Tests:** new `tests/test_load_reconciliation_has_two_stages.py`, 25 tests in 5 classes,
+  stdlib only. Step 7 names the load input as the stage-1 baseline, and its single-baseline
+  sentence is gone. The table is parsed and only a stage-1 row records `failed`. The `sample:`
+  block is a citable stage-2 cause, and an uncited gap routes to `unexplained_delta`. Step 7
+  declares itself the owner. Module 6's reader sites are derived by scanning for INV-243 (INV-246)
+  and must point at Step 7, carry no replaced baseline, and show `unexplained_delta` as
+  unverified. Module 4's schema defines the block, and every sample writer across all skills
+  (derived) writes it with a measured count. Updated to the new rule, as the issue directs:
+  `test_load_count_reconciliation_has_three_outcomes.py` (four outcomes, uncited →
+  `unexplained_delta`, a stage-1 mismatch still → `failed`),
+  `test_per_source_figures_are_reconciled.py` (the `:172` assertion), and, deliberately,
+  `test_module06_orchestrator_guidance.py` ("input record count" → "that source's load input",
+  with the reason in its docstring). Negative controls, 14, each mutating the real file from a
+  copy and restoring it, `__pycache__` cleared:
+    - Step 7's single-baseline sentence restored (the issue's control): FAILED (failures=3), in
+      the new guard (2) and the updated per-source test.
+    - The stage-2 unexplained row set to `failed`: FAILED (1).
+    - "No citation → `unexplained_delta`" reverted to "→ **unexplained** → `failed`": FAILED (2).
+    - The `sample:` block removed as a stage-2 cause: FAILED (1).
+    - Phase D's pointer replaced with "Phase B's three-way reconciliation": FAILED (2).
+    - `unexplained_delta` removed from Step 12, and separately from Phase D: FAILED (1) each.
+    - Step 17 restored to "own input record count": FAILED (3).
+    - Module 4's schema reduced to `sample: {file_path, strategy}`: FAILED (1).
+    - Step 8b restored to "sample manifest": FAILED (2).
+    - A planted Module 6 step citing INV-243 with no pointer, and a planted Module 5 step writing
+      under `data/samples/` with no block: FAILED (1) each.
+    - The How-state audit given INV-243 (so it becomes a load-count reader with no pointer):
+      FAILED (1). A planted Module 6 step citing INV-245 only: OK, as intended (adaptation 1).
+- **Commit:** uncommitted
+
 ## java-shared-class-breaks-the-package-private-filename-rule
 
 - **Implemented:** 2026-09-27 (**Not a spec** — a dated record of one issue-driven run, #161)

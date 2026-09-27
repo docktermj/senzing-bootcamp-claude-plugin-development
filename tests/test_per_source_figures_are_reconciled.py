@@ -169,7 +169,14 @@ class TheLoadBearingSiteStatesTheWholeRule(unittest.TestCase):
         registry already holds that number, and reusing it keeps one source of truth.
         """
         self.assertIn("the value you are about to overwrite is the baseline", self.text)
-        self.assertIn("against that existing `record_count` first", self.text)
+        # #157: the single-baseline sentence ("Compare the loader's success count against
+        # that existing `record_count` first") filed every sampled source as a delta. The
+        # load is now checked first against what the loader was GIVEN, and `record_count`
+        # is the second, collected baseline — still read, never overwritten.
+        self.assertNotIn("against that existing `record_count` first", self.text)
+        self.assertIn("Compare the loader's success count against the **load input** first",
+                      self.text)
+        self.assertIn("the load input against the collected `record_count`", self.text)
 
     def test_the_outcome_is_recorded_in_the_registrys_own_idiom(self):
         """Consistency: Data collection already records `record_count_matches_expected`."""

@@ -19,20 +19,23 @@ count, quality score, mapping status, loaded status. Present a summary table so 
 can review and confirm the list is complete.
 
 ⛔ **A source whose `validation_checks.load_count_matches_source` is `expected_delta` is a
-RECONCILED result, not a failure and not a plain pass.** Show both figures and the reason — "3,727
-loaded from 3,488 input records; 239 embedded masters, per the source's mapping specification" — and
-never render it as `failed`. It is the visible consequence of a mapping decision the bootcamper made
-in the previous module, so it is worth showing rather than flattening: a record-multiplying
-disposition like `embedded_master` makes the loaded count exceed the input count **by design** (see
-`phaseB-load-first-source.md`'s three-way reconciliation rule).
+RECONCILED result, not a failure and not a plain pass.** Show the figures and the chain its
+`load_reconciliation` note cites — "7,386 loaded from a 7,386-record overlap-preserving sample of
+63,863 collected", or "3,727 loaded from 3,488 collected records; 239 embedded masters, per the
+source's mapping specification" — and never render it as `failed`. It is the visible consequence of
+a sampling or mapping decision the bootcamper made in an earlier module, so it is worth showing
+rather than flattening. The outcomes and what each cites are `phaseB-load-first-source.md` Step 7's
+two-stage reconciliation, the canonical statement; do not restate it here (INV-300).
 
 ⛔ **The `record_count` shown here is a figure presented to the bootcamper, so it carries the
-reconciliation requirement with it.** (INV-243) Phase B reconciles each count against that
-source's own input before writing it; a source whose count was never reconciled — one loaded
-outside this bootcamp, or carried in from an earlier session — MUST be shown as unverified rather
-than as a plain number (INV-245). A table is where an unchecked figure acquires the look of a
-result, which is exactly the shape this rule exists for: the numbers are plausible, they sum, and
-nothing about them invites a second look.
+reconciliation requirement with it.** (INV-243) Phase B reconciles each count in two stages before
+writing it; a source whose count was never reconciled — one loaded outside this bootcamp, or
+carried in from an earlier session — **or whose stage 2 recorded `unexplained_delta`** MUST be shown
+as unverified rather than as a plain number (INV-245), with the figures from its `issues` entry. An
+`unexplained_delta` source loaded every record it was given, so it is never shown as `failed`
+either: what is unverified is its gap to the collected file. A table is where an unchecked figure
+acquires the look of a result, which is exactly the shape this rule exists for: the numbers are
+plausible, they sum, and nothing about them invites a second look.
 
 **Checkpoint:** write step 12.
 
@@ -201,10 +204,12 @@ Resolve it one of two ways, whichever suits the bootcamper's language (INV-002):
   construction. This also isolates a crash in one source's load, which the error-isolation
   requirement above already asks for.
 
-⛔ **Reconcile the per-source figures before showing them.** (INV-243) Each source's reported count MUST
-match that source's own input record count, and the per-source counts MUST sum to the aggregate.
-Report the comparison, not just the totals; if they disagree, say so and stop rather than
-printing a number that cannot be traced to an input file (INV-245) — a figure the run has
+⛔ **Reconcile the per-source figures before showing them.** (INV-243) Each source's reported count
+MUST match that source's load input — the records the loader was given — reconciled by the same two
+stages as `phaseB-load-first-source.md` Step 7, the canonical statement; do not restate it here
+(INV-300) — and the per-source counts MUST sum to the aggregate. Report the comparison, not just the
+totals; if they disagree — a stage-1 mismatch, or counts that do not sum — say so and stop rather
+than printing a number that cannot be traced to an input file (INV-245) — a figure the run has
 itself disproved must not appear as a result. A summary that cannot be reconciled against the
 inputs is not a summary — and the accumulating-counter defect above passes every check that looks
 only at the total.
