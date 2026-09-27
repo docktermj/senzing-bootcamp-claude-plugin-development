@@ -94,8 +94,24 @@ Save the resulting dependency map (or the "no dependencies" record) to `docs/loa
 Use `quality_score` from `config/data_sources.yaml` to rank sources; update `load_status` as
 loading progresses. Apply ordering heuristics (priority order): (1) reference before
 transactional, (2) quality-first for a strong entity baseline, (3) attribute-density-first,
-(4) volume-first when quality is similar. Present the recommended load order with reasons for
-the bootcamper to review.
+(4) volume-first when quality is similar. This is the one statement of these heuristics: Phase B's
+opening (`phaseB-load-first-source.md`) applies them to choose the first source and cites this
+step rather than restating them (INV-300).
+
+**The first source is already decided and loaded.** Read the first-source choice Phase B's opening
+recorded in `docs/loading_strategy.md`, which survives a resumed session. Present that source as
+**already loaded, chosen by `<heuristic>`**, naming the heuristic it records. Then rank only the
+remaining sources and present their recommended load order with reasons for the bootcamper to
+review. If no choice is recorded, the first source is the one whose `load_status` is `loaded`:
+present it as already loaded and name no heuristic, because none was recorded.
+
+If step 13 recorded a dependency the first choice broke (a source that should have loaded before
+it), say so plainly, record it in `docs/loading_strategy.md` beside the first-source choice, and
+order the remaining sources to honor it.
+⛔ **Do not reload the first source.**
+
+This step asks nothing and is not a turn ending: present the order and continue to step 15 in
+the same turn.
 
 **Checkpoint:** write step 14.
 

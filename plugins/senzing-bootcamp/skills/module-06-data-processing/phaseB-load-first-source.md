@@ -6,6 +6,27 @@ hand-written. Back up `database/G2C.db` before loading. The `DATA_SOURCE` codes 
 were registered in Phase A (step 4a), so the load runs against a config that already knows them
 (the loader's generic `SENZ2207` handling remains a fallback).
 
+**Choosing the first source (2 or more sources only).** Phase B loads one source, and with 2 or
+more sources with `mapping_status: complete` in `config/data_sources.yaml` (the count Phase C's
+conditional gate uses) that choice decides the entity baseline the rest load against. Choose it
+by the ordering heuristics in Phase C step 14 (`phaseC-multi-source.md`, "Determine load order"),
+applied in that step's priority order. Step 14 owns the list; cite it rather than restating it
+here, so the two cannot drift (INV-300). If a heuristic's input is missing for a source (for
+example no `quality_score` on a `fast_pathed` source that skipped Module 5's assessment), skip
+that heuristic and apply the next one. When Module 5's optional test load ran
+(`test_load_status: complete`), its quality results feed the same heuristics, as Phase A's
+"Phase 3 results integration" already says.
+
+Before step 5, tell the bootcamper in one line which source loads first and the heuristic that
+actually decided it, for example *"Loading `<source>` first: `<the heuristic that decided it>`."*
+⛔ **This is a statement, not a 👉 question (INV-012).** It asks nothing and does not end the
+turn; continue to step 5. The order of the remaining sources is still reviewed at step 14.
+
+Record the choice and its reason in `docs/loading_strategy.md` as the **first-source choice**
+(the source and the deciding heuristic), in the file Phase C step 13 and Phase D also write. Note
+it in step 5's checkpoint too. Step 14 reads it from the file, so a resumed session does not lose
+it. With a single source there is no choice: say nothing and record nothing.
+
 ## 5. Test with sample data (if Phase 3 was skipped)
 
 If the bootcamper did not complete Phase 3 in Module 5, run the loading program on a small
@@ -30,7 +51,7 @@ exists to prevent. Do not move it earlier, and do not add a second copy upstream
 If Phase 3 was completed, skip this step, the test load already verified basic loading. Proceed
 directly to production loading.
 
-**Checkpoint:** write step 5.
+**Checkpoint:** write step 5 (with 2 or more sources, note the first-source choice).
 
 ## 6. Observe entity resolution in real time
 
