@@ -28,6 +28,14 @@ the sweep found a second that quoted the changed heading verbatim. A test pinnin
 author already knew about is blind to exactly the site that matters, so every cross-reference to
 the audit's step-4 rule is discovered by scanning the shipped tree.
 
+**#160 — how a key is split.** Counting `-` features needs a grammar, and disclosed-relationship
+keys break the obvious one: a parenthesized role (`(ACTING FOR OR ON BEHALF OF:)`) and an escaped
+hyphen in a domain (`OPEN\\-SANCTIONS`). Step 2 now states the four-part rule (roles removed
+first, backslash escape, split on unescaped signs, names reported unescaped) with a worked
+example, and Module 5 tells the guide to choose domain codes without dashes. The rule is cited
+to the MCP server's direction-notation article and the Entity Specification's *Feature:
+REL_ANCHOR* (`search_docs`, server 1.37.13, docs index 2026-09-24 18:45 UTC).
+
 Run:  python3 -m unittest discover -s tests
 """
 import os
@@ -203,6 +211,180 @@ class TheGateRoutesOnThePerRecordBucket(unittest.TestCase):
             self.text,
             r"name the suppressing feature, its share, and \*\*which bucket\*\*",
             "a share without its bucket cannot be acted on",
+        )
+
+
+MODULE_5_MAPPING = os.path.join(
+    PLUGIN, "skills", "module-05-data-quality-mapping", "phase2-data-mapping.md"
+)
+
+# The observed key from #160: a parenthesized role after the relationship domain, and an escaped
+# hyphen inside the data-source-derived domain name.
+EXAMPLE_KEY = r"+ADDRESS+OPEN\-SANCTIONS(ACTING FOR OR ON BEHALF OF:)-DOB-TAX_ID"
+EXAMPLE_FEATURES = ["+ADDRESS", "+OPEN-SANCTIONS", "-DOB", "-TAX_ID"]
+
+
+def prose(text):
+    """Comment-stripped, whitespace-collapsed prose — what the guide actually reads."""
+    return re.sub(r"\s+", " ", re.sub(r"<!--.*?-->", " ", text, flags=re.S))
+
+
+def step_2(text):
+    """Phase D step 2 only, so a rule stated elsewhere in the file cannot satisfy these guards."""
+    start = text.index("2. **Tabulate the suppressors")
+    end = text.index("\n3. ⛔ **An empty cross-source", start)
+    return prose(text[start:end])
+
+
+def tokenize(key):
+    """The four-part rule as the step states it, so the worked example is checked, not trusted."""
+    key = re.sub(r"\([^)]*\)", "", key)  # 1. roles first
+    features, sign, name, i = [], None, "", 0
+    while i < len(key):
+        ch = key[i]
+        if ch == "\\" and i + 1 < len(key):  # 2. backslash escapes the next character
+            name += key[i + 1]  # 4. ...and is dropped from the reported name
+            i += 2
+            continue
+        if ch in "+-":  # 3. split on the unescaped signs
+            if sign is not None:
+                features.append(sign + name)
+            sign, name = ch, ""
+        else:
+            name += ch
+        i += 1
+    if sign is not None:
+        features.append(sign + name)
+    return features
+
+
+class Step2StatesHowToSplitAKey(unittest.TestCase):
+    """#160: the tabulation said "count the features with a leading `-`" and gave no grammar.
+
+    Observed 2026-09-25 on a four-source load (GLEIF, ICIJ, OFAC, OPEN-SANCTIONS; 455 disclosed
+    relationships): splitting on `-` counted role text as suppressed features, and after roles
+    were stripped a `SANCTIONS: 12` entry survived because `OPEN\\-SANCTIONS` split in two.
+    """
+
+    RULE = (
+        # (label, pattern) in the order the step must state them.
+        ("roles removed first",
+         r"Remove each parenthesized role, `\(\.\.\.\)` including its contents, \*\*first\*\*, "
+         r"so role text such as `CO-OWNER` or `OWNS 60%` cannot yield features"),
+        ("backslash escape",
+         r"A backslash makes the next character part of the name"),
+        ("split on unescaped signs",
+         r"Split on the unescaped `\+` and `-`\.\*\* Each feature takes the sign that precedes "
+         r"it, and only `-` features are counted as suppressors"),
+        ("names reported unescaped",
+         r"Report feature names with the escape removed\*\* \(`OPEN-SANCTIONS`, not "
+         r"`OPEN\\-SANCTIONS`\)"),
+    )
+
+    def setUp(self):
+        self.step = step_2(read(PHASE_D))
+
+    def test_it_states_the_four_part_rule_in_order(self):
+        """Roles must go first: role text such as `CO-OWNER` carries the signs being split on."""
+        positions = []
+        for label, pattern in self.RULE:
+            match = re.search(pattern, self.step)
+            self.assertIsNotNone(
+                match,
+                "Phase D step 2 must state the tokenizing rule's %r part; without it the "
+                "relationship bucket counts phantom features" % label,
+            )
+            positions.append(match.start())
+        self.assertEqual(
+            sorted(positions),
+            positions,
+            "the four parts must appear in order — roles removed first, then the backslash "
+            "escape, then the split, then unescaped names — because removing roles after the "
+            "split is the defect",
+        )
+
+    def test_the_rule_precedes_the_count_it_governs(self):
+        rule = self.step.find("Split each key into signed features")
+        count = self.step.find("Count the features appearing with a leading `-`")
+        self.assertNotEqual(-1, rule, "step 2 must introduce the tokenizing rule")
+        self.assertNotEqual(-1, count, "step 2 must keep its count-the-suppressors instruction")
+        self.assertLess(rule, count, "the rule must be read before the count it tokenizes")
+
+    def test_it_carries_the_worked_example(self):
+        example = re.search(
+            r"Worked example: `(?P<key>[^`]+)` → (?P<out>(?:`[^`]+`,? ?)+) — \*\*two\*\* "
+            r"suppressors",
+            self.step,
+        )
+        self.assertIsNotNone(
+            example,
+            "step 2 must carry the observed key, its four resulting features and the suppressor "
+            "count beside the rule",
+        )
+        self.assertEqual(EXAMPLE_KEY, example.group("key"))
+        self.assertEqual(EXAMPLE_FEATURES, re.findall(r"`([^`]+)`", example.group("out")))
+
+    def test_the_worked_example_follows_from_the_rule(self):
+        """The example is the rule applied, not a second, independent claim."""
+        self.assertEqual(EXAMPLE_FEATURES, tokenize(EXAMPLE_KEY))
+        self.assertEqual(
+            2, sum(1 for f in tokenize(EXAMPLE_KEY) if f.startswith("-")),
+            "only `-` features are suppressors",
+        )
+        self.assertIn(
+            "-SANCTIONS(ACTING FOR OR ON BEHALF OF:)",
+            re.split(r"(?=[+-])", EXAMPLE_KEY),
+            "the naive split on every sign must reproduce the observed phantom, or this example "
+            "no longer demonstrates the defect",
+        )
+
+    def test_it_cites_the_direction_notation_article_by_title(self):
+        """The article's source is `local://`, not citable as a URL, so it is cited by title."""
+        self.assertIn(
+            "MATCH_KEY / WHY_KEY Direction Notation for Disclosed Relationships",
+            self.step,
+            "the parentheses rule rests on the MCP server's direction-notation article (INV-080)",
+        )
+
+    def test_it_cites_the_entity_specification_no_dashes_rule(self):
+        self.assertRegex(
+            self.step,
+            r"Feature: REL_ANCHOR\*.{0,40}Use a domain code without dashes to avoid confusion in "
+            r"downstream match key parsing",
+            "why a dashed domain breaks parsing is documented; cite the Entity Specification",
+        )
+        self.assertRegex(
+            self.step,
+            r"server \*\*1\.37\.13\*\*, docs index 2026-09-24 18:45 UTC",
+            "a Senzing fact written into the plugin carries its server version (INV-080)",
+        )
+
+    def test_the_escape_form_is_labeled_an_observation_with_its_conditions(self):
+        """INV-169: the `\\-` form is engine-side, so it carries date, dataset and SDK status."""
+        self.assertRegex(
+            self.step,
+            r"The `\\-` form itself is an \*\*engine-side observation\*\*: 2026-09-25, a "
+            r"four-source load \(GLEIF, ICIJ, OFAC, OPEN-SANCTIONS; 455 disclosed "
+            r"relationships\), SDK version not recorded",
+            "the escaped hyphen is observed, not documented; label it with its conditions",
+        )
+
+
+class Module5ChoosesDomainCodesWithoutDashes(unittest.TestCase):
+    """#160: a domain the Bootcamper chooses should never need the escape rule."""
+
+    def test_the_rel_guidance_says_domain_codes_carry_no_dashes(self):
+        text = prose(read(MODULE_5_MAPPING))
+        self.assertRegex(
+            text,
+            r"`REL_ANCHOR_DOMAIN` and `REL_POINTER_DOMAIN` values, use codes without dashes",
+            "Module 5's REL_* guidance must pass on the Entity Specification's no-dashes rule",
+        )
+        self.assertRegex(
+            text,
+            r"(?s)use codes without dashes.{0,200}Use a domain code without dashes to avoid "
+            r"confusion in downstream match key parsing",
+            "the no-dashes line must cite the Entity Specification's rule and its reason",
         )
 
 

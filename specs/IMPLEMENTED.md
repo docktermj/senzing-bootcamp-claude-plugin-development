@@ -43,6 +43,88 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## match-key-suppressor-audit-gives-no-parsing-rule
+
+- **Implemented:** 2026-09-27 (**Not a spec** — a dated record of one issue-driven run, #160)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`,
+  `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`,
+  `tests/test_match_key_suppressor_buckets.py`, `tests/test_prescribed_search_queries.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13**, docs index 2026-09-24 18:45 UTC, 2026-09-26 — **still
+  reproduces**. Called `get_capabilities`, `search_docs(query='MATCH_KEY disclosed relationship
+  REL_POINTER role in match key')`, `search_docs(query='match key backslash escaped hyphen dash
+  domain REL_ANCHOR_DOMAIN', max_results=5)` and `get_sdk_reference(topic='response_schemas',
+  filter='get_entity_by_entity_id', language='python')`. The first query's #1 hit is the Senzing
+  MCP server article *"MATCH_KEY / WHY_KEY Direction Notation for Disclosed Relationships"*, which
+  defines the `(ROLE:)`, `(:ROLE)` and `(ROLE:ROLE)` forms; its `local://` source carries a notice
+  that it is not citable as a URL, so it is cited by title. The Entity Specification's *Feature:
+  REL_ANCHOR* defines `REL_ANCHOR_DOMAIN` as *"a code (without dashes)"* with the rule *"Use a
+  domain code without dashes to avoid confusion in downstream match key parsing."*, and *Feature:
+  REL_POINTER* gives `REL_POINTER_DOMAIN` as *"See `REL_ANCHOR_DOMAIN` above."*. The response
+  schema still describes `RESOLVED_ENTITY.RECORDS[].MATCH_KEY` as *"Features that matched: +
+  means contributed, - means detracted"* and `RELATED_ENTITIES[].MATCH_KEY` as *"Features that
+  matched/did not match"*. The `\-` escape form is not documented. owner-checked: the Entity
+  Specification's *Feature: REL_ANCHOR* / *Feature: REL_POINTER* (the route that defines the
+  domain-code format) and the direction-notation article (the route that defines the match-key
+  role grammar) — both returned by both queries, and neither describes an escape form. The
+  plugin therefore labels the `\-` form an engine-side observation with its conditions (INV-169)
+  and makes no absence claim in shipped prose. Nothing sent upstream.
+- **Summary:** Phase D step 2 said "count the features appearing with a leading `-`" and gave no
+  way to split a key. Disclosed-relationship keys carry a parenthesized role and, for a dashed
+  domain, an escaped hyphen, so splitting on every sign counted role text and domain fragments as
+  suppressed features (observed 2026-09-25: a `SANCTIONS: 12` entry from `OPEN\-SANCTIONS`).
+  Step 2 now states, before the count it governs, a four-part rule in order: remove parenthesized
+  roles first, a backslash makes the next character part of the name, split on the unescaped
+  `+` and `-`, and report names unescaped. It carries the worked example
+  `+ADDRESS+OPEN\-SANCTIONS(ACTING FOR OR ON BEHALF OF:)-DOB-TAX_ID` → `+ADDRESS`,
+  `+OPEN-SANCTIONS`, `-DOB`, `-TAX_ID` (two suppressors), and the phantom the naive split
+  produces. It cites the direction-notation article by title and the Entity Specification's
+  no-dashes rule, and labels the `\-` form as an engine-side observation (2026-09-25, four-source
+  load of GLEIF, ICIJ, OFAC and OPEN-SANCTIONS with 455 disclosed relationships, SDK version not
+  recorded). The rule is prose only (INV-002). Module 5's REL_* limitation entry gains one
+  paragraph: choose `REL_ANCHOR_DOMAIN` and `REL_POINTER_DOMAIN` values without dashes, citing
+  the specification's definition and rule. The three buckets, denominators and deduplication in
+  step 2 are unchanged. Direction parsing, `senzing_viz_server.py` and provider-mapped domains are
+  out of scope and untouched.
+- **Approach:** raced (Phase 5b) by the run's lead. Approach A (the issue's wording, inserted in
+  place in step 2) won over B (a separate labeled parsing block). The comparison is on the issue
+  (comment 3). Applied from the raced patch without change. One file beyond the issue's named
+  three: `tests/test_prescribed_search_queries.py` registers the cited query in
+  `VERIFIED_QUERIES` with its observed hits, because that guard fails on any unregistered
+  `search_docs(query=...)` in shipped prose. The query was re-run for this entry and its ranks
+  match.
+- **This run establishes no invariant.** The tokenizing rule is a procedure inside one step,
+  stated with no ⛔ or MUST line. The durable rules it rests on are already registered: INV-264
+  (per-record and relationship buckets are counted apart), INV-080 (every Senzing fact cited to
+  the server with its version), INV-169 (an engine-side observation carries its conditions) and
+  INV-002 (the rule is language-agnostic). The Module 5 line passes on a Senzing rule under
+  INV-080; it adds no plugin rule of its own. The guard is
+  `tests/test_match_key_suppressor_buckets.py`.
+- **Tests:** `tests/test_match_key_suppressor_buckets.py` gains `Step2StatesHowToSplitAKey` (7
+  tests) and `Module5ChoosesDomainCodesWithoutDashes` (1 test), stdlib only. The step-2 tests read
+  comment-stripped, whitespace-collapsed prose sliced to step 2, so a rule stated elsewhere
+  cannot satisfy them. A test-only reference tokenizer checks that the worked example follows from
+  the stated rule and that the naive split reproduces the phantom. The file's existing tests are
+  unchanged. Negative controls, each run and reverted from a copy, `__pycache__` cleared:
+    - The roles-first sentence deleted (the issue's control): fails
+      `test_it_states_the_four_part_rule_in_order`.
+    - The roles-first part moved after the split: fails the same test.
+    - Wrong example output (`+OPEN`, `-SANCTIONS`): fails `test_it_carries_the_worked_example`.
+    - "/ WHY_KEY" dropped from the article title: fails
+      `test_it_cites_the_direction_notation_article_by_title`.
+    - The specification's no-dashes rule paraphrased: fails
+      `test_it_cites_the_entity_specification_no_dashes_rule`.
+    - "SDK version not recorded" dropped: fails
+      `test_the_escape_form_is_labeled_an_observation_with_its_conditions`.
+    - The Module 5 paragraph deleted: fails
+      `test_the_rel_guidance_says_domain_codes_carry_no_dashes`.
+    - The whole rule block moved into step 3: 6 tests fail.
+    - The `VERIFIED_QUERIES` entry removed: fails
+      `test_each_query_is_verified_or_carries_a_requery_rule`.
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** uncommitted
+
 ## phase-b-first-source-is-chosen-by-no-rule
 
 - **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #165)

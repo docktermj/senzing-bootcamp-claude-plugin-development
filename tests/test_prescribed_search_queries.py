@@ -53,6 +53,19 @@ VERIFIED_ON = "server 1.32.9, docs index 2026-08-11 20:52 UTC, checked 2026-08-1
 #: to stop.
 VERIFIED_QUERIES = {
     # ---------------------------------------------------------------------------------
+    # Executed 2026-09-26 on server 1.37.13 (docs index 2026-09-24 18:45 UTC) for #160, the
+    # match-key tokenizing rule in Phase D step 2 and Module 5's no-dashes domain line. The
+    # same phrasing is the one the issue's refinement recorded.
+    "MATCH_KEY disclosed relationship REL_POINTER role in match key":
+        "ON TARGET. #1 is the Senzing MCP server article 'MATCH_KEY / WHY_KEY Direction "
+        "Notation for Disclosed Relationships' (278.1), defining the (ROLE:), (:ROLE) and "
+        "(ROLE:ROLE) forms; its source is local:// and it is cited by title. #2 is Senzing "
+        "Entity Specification 'Feature: REL_POINTER' (259.3), whose REL_POINTER_DOMAIN row "
+        "reads 'See REL_ANCHOR_DOMAIN above'. #4 is 'Feature: REL_ANCHOR' (179.5), carrying "
+        "'a code (without dashes)' and 'Use a domain code without dashes to avoid confusion in "
+        "downstream match key parsing.' Used at two call sites",
+
+    # ---------------------------------------------------------------------------------
     # Executed 2026-09-02 on server 1.36.0 (twice: during the dry run that produced
     # `specs/proceed-on-sqlite-keeps-the-tier-s-thread-count.md`, and again at
     # implementation). The claim it supports is a NEGATIVE, which is why the query is

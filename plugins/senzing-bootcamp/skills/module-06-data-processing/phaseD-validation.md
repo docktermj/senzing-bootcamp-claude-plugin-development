@@ -329,8 +329,36 @@ which is exactly the gap the UAT percentages below leave open.
    `+` means the feature **contributed** to the match and `-` means it **detracted** (MCP-confirmed
    via `response_schemas` on `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`, whose description reads
    *"Features that matched: + means contributed, - means detracted"* — server **1.36.0**,
-   2026-09-02). Count the features appearing with a leading `-`, ranked by frequency, and split them
-   **both** ways step 1 already reads them:
+   2026-09-02).
+
+   **Split each key into signed features by this rule, in this order.** The obvious split on `+`/`-`
+   misreads disclosed-relationship keys, and the relationship bucket is exactly where they appear.
+   One rule serves all three buckets:
+
+   1. Remove each parenthesized role, `(...)` including its contents, **first**, so role text such
+      as `CO-OWNER` or `OWNS 60%` cannot yield features.
+   2. **A backslash makes the next character part of the name.** This covers `\-` inside a domain
+      name, and would cover any other escaped character the same way.
+   3. **Split on the unescaped `+` and `-`.** Each feature takes the sign that precedes it, and only
+      `-` features are counted as suppressors.
+   4. **Report feature names with the escape removed** (`OPEN-SANCTIONS`, not `OPEN\-SANCTIONS`).
+
+   Worked example: `+ADDRESS+OPEN\-SANCTIONS(ACTING FOR OR ON BEHALF OF:)-DOB-TAX_ID` →
+   `+ADDRESS`, `+OPEN-SANCTIONS`, `-DOB`, `-TAX_ID` — **two** suppressors. Split on every `-`
+   instead, and `SANCTIONS(ACTING FOR OR ON BEHALF OF:)` is counted as a suppressed feature.
+
+   The role notation is documented in the Senzing MCP server article *"MATCH_KEY / WHY_KEY
+   Direction Notation for Disclosed Relationships"*, which defines the `(ROLE:)`, `(:ROLE)` and
+   `(ROLE:ROLE)` forms; counting suppressors needs only their removal, not their direction. A
+   dashed domain breaks the naive split for the reason the Entity Specification's *Feature:
+   REL_ANCHOR* gives: *"Use a domain code without dashes to avoid confusion in downstream match key
+   parsing."* (both from `search_docs(query='MATCH_KEY disclosed relationship REL_POINTER role in
+   match key')`, server **1.37.13**, docs index 2026-09-24 18:45 UTC). The `\-` form itself is an
+   **engine-side observation**: 2026-09-25, a four-source load (GLEIF, ICIJ, OFAC, OPEN-SANCTIONS;
+   455 disclosed relationships), SDK version not recorded.
+
+   Count the features appearing with a leading `-`, ranked by frequency, and split them **both**
+   ways step 1 already reads them:
 
    | Bucket | Read from | What a `-FEATURE` there means |
    |---|---|---|

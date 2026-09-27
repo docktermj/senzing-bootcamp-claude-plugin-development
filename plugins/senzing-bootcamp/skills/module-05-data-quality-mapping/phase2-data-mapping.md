@@ -1001,6 +1001,13 @@ against the resource list `download_resource` advertises. Mechanism, not a re-ru
    REL_POINTER* sections give `REL_ANCHOR_DOMAIN`/`KEY` and `REL_POINTER_DOMAIN`/`KEY`/`ROLE` with
    rules and worked examples (`search_docs`, server 1.32.3, docs index 2026-07-31 20:21 UTC) — so the
    gate rejects scaffolding the specification prescribes.
+
+   When you choose the `REL_ANCHOR_DOMAIN` and `REL_POINTER_DOMAIN` values, use codes without dashes.
+   The Entity Specification's *Feature: REL_ANCHOR* defines the domain as *"a code (without dashes)"*
+   and gives the rule *"Use a domain code without dashes to avoid confusion in downstream match key
+   parsing."* — its *Feature: REL_POINTER* refers `REL_POINTER_DOMAIN` back to that definition
+   (`search_docs(query='MATCH_KEY disclosed relationship REL_POINTER role in match key')`, server
+   1.37.13, docs index 2026-09-24 18:45 UTC).
 3. **Neither script runs on a CSV source. CONFIRMED CURRENT — server 1.32.9, 2026-08-14.**
    `sz_verbatim_check.py` and `sz_routing_report.py` both
    define `load_jsonl(path)` as `json.loads(ln)` over the file's non-blank lines, with **no** CSV
