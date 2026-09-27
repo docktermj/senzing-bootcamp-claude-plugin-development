@@ -143,8 +143,10 @@ entries at once. Two things a reader should know about the hashes now recorded:
   `:127` quote fails the git-resolution check; paraphrasing a must-not-flag quote fails the same;
   an unquoted paraphrase in a "verbatim" test fails the registry check; restoring `:387`'s old
   rationale fails `NoShippedMarkerPinsACount`.
-- **Verification:** suite as reported in the PR.
-- **Commit:** uncommitted
+- **Verification:** `citations.py verify` clean at **315**; `pending_invariants.py check` 1 rule
+  quote checked, 0 mismatched; suite **`Ran 4647 — OK (skipped=4)`** with fpdf2 and
+  **`OK (skipped=66)`** without, both under an empty `HOME` as on a CI runner.
+- **Commit:** e10b34d
 
 ## phase-c-no-hand-written-rule-covers-sdk-calls-only
 
