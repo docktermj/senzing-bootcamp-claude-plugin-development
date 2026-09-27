@@ -129,7 +129,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     - Step 1's option-null clause removed: 1 test fails.
     - The pre-change file: 14 failures and 1 error.
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** 6d781e1
 
 ## phase-c-sqlite-note-reopens-the-settled-load-size-decision
 
