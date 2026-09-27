@@ -123,7 +123,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     - The `VERIFIED_QUERIES` entry removed: fails
       `test_each_query_is_verified_or_carries_a_requery_rule`.
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** 4b49182
 
 ## phase-b-first-source-is-chosen-by-no-rule
 
