@@ -178,7 +178,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     - The outbound rule's "everything identifying stripped (INV-065)" follows the issue's own
       wording and the shipped `feedback.md:214` precedent. INV-065's registered text is about
       the sanitized example recap, not stripping defect reports.
-- **Commit:** uncommitted
+- **Commit:** 6da7052
 
 ## scaffold-banner-claims-an-unreachable-chip-clip
 
