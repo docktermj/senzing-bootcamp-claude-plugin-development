@@ -94,8 +94,10 @@ entries at once. Two things a reader should know about the hashes now recorded:
   (`MCP-NEGATIVE-SCAN: ignore-file`), since it quotes the token as a locator. Negative controls,
   each run and reverted: restoring the old header fails 2; restoring the `multi-source` query
   fails 1; deleting the marker fails 1; restoring the old `SKILL.md` rule fails 1.
-- **Verification:** suite as reported in the PR.
-- **Commit:** uncommitted
+- **Verification:** `citations.py verify` clean at **315**; `coverage_reports.py negatives` lists
+  the new marker with no malformed marker; suite **`Ran 4637 — OK (skipped=4)`** with fpdf2 and
+  **`OK (skipped=66)`** without, both under an empty `HOME` as on a CI runner.
+- **Commit:** 8959c53
 
 ## the-encoding-self-check-counts-combination-rows
 
