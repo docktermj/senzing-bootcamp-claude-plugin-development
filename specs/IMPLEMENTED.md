@@ -108,7 +108,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   2; an active-license clause fails 1; a figure in the prose fails 1; the old `1.36.0` stamp
   fails 1; a result count in the marker fails 1.
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** 8ea04f4
 
 ## module-5-bare-globalization-anti-pattern-inverted-into-a-false-alarm
 
