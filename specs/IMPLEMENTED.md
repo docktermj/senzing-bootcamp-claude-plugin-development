@@ -122,7 +122,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
       (`search_docs`, server 1.32.9); the current schema lists no such field.
     - The dry-run scaffold's sample progress file (`.claude/skills/dry-run/scaffold_project.py`)
       has no `sdk_version`, so a dry-run recap reads "Unknown" until the key is added.
-- **Commit:** uncommitted
+- **Commit:** c75302e
 
 ## how-tab-names-an-unsettled-final-state
 
