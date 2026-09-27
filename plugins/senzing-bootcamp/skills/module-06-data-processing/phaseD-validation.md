@@ -156,11 +156,16 @@ read as the record of what was loaded, so an unchecked count written into it is 
 these sites to correct later: nothing downstream re-derives it, and by the time anyone doubts it
 the load is long finished.
 
-⛔ **There are three reconciliation outcomes to write here, not two.** A source recorded
-`expected_delta` (Phase B's three-way rule) is written as a **reconciled** result carrying **both**
-figures and the artifact that predicts the delta — never as a failure, and never as a bare matching
-count. A load that legitimately changed the record count is the visible consequence of a mapping
-decision, and this document is the place a Bootcamper will look for it a month later; recording it as
+⛔ (INV-245) **There are four reconciliation outcomes to write here, not two** —
+`phaseB-load-first-source.md` Step 7's two-stage reconciliation, the canonical statement; do not
+restate it here (INV-300). What this document adds is how each is written. A source recorded
+`expected_delta` is written as a **reconciled** result carrying its figures and every chain step
+with the record it cites (the `sample:` block, a subset record, the mapping specification) — never
+as a failure, and never as a bare matching count. A source recorded `unexplained_delta` is written with every figure from its
+`issues` entry and labeled **unverified** — not as a failure, since every record it was given
+loaded, and not as a pass, since its gap to the collected file has no cited cause. A load that
+legitimately changed the record count is the visible consequence of a sampling or mapping decision,
+and this document is the place a Bootcamper will look for it a month later; recording it as
 `failed` tells them a clean load broke, and recording it as a plain pass hides that anything happened
 at all.
 

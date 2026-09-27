@@ -23,7 +23,18 @@ invariant needed amending.
 ⛔ **The explained branch must be unreachable without a citation.** "The mapping probably
 explains it" is exactly the failure INV-245 exists to prevent, and an uncited escape hatch
 would let it through wearing the new rule as a disguise — so the negative control here is
-that the unexplained case still records `failed`.
+that the uncited case never reaches `expected_delta`.
+
+⚠️ **#157 split the rule into two stages, and the three outcomes became four.** The rule
+compared the loaded count against the collected `record_count` only, so every source loaded from
+a Module 4 working sample — GLEIF: 7,386 of a 7,386-record load file against 63,863 collected —
+read as a delta no branch named, and a strict reading filed a clean load as `failed`. Stage 1
+now compares the loaded count against the **load input** and alone can record `failed`; stage 2
+relates the load input to `record_count` through a cited chain (the `sample:` block, a subset
+limit, mapping dispositions) and routes to `pass` / `expected_delta` / `unexplained_delta`. So
+the uncited case falls through to `unexplained_delta` — loaded, shown as unverified — rather
+than to `failed`. The file keeps its name: stage 2 is the three-way rule, and the new guard for
+the two-stage shape is `test_load_reconciliation_has_two_stages.py`.
 
 Everything is asserted as **behavior in shipped guidance**, never as a Python helper, so any
 implementation language satisfies it (INV-002).
@@ -52,24 +63,33 @@ class PhaseBRoutesThreeWays(unittest.TestCase):
     def setUp(self):
         self.text = flat(PHASE_B)
 
-    def test_it_says_there_are_three_outcomes(self):
-        self.assertIn("A disagreement has THREE outcomes, not two", self.text)
+    def test_it_says_there_are_four_outcomes_across_two_stages(self):
+        """#157: the count changed from three to four, deliberately."""
+        self.assertIn("Four outcomes across two stages, not two", self.text)
+        self.assertNotIn("A disagreement has THREE outcomes, not two", self.text)
 
     def test_the_explained_delta_records_loaded(self):
         self.assertIn("**Explained delta**", self.text)
         self.assertIn("load_count_matches_source: expected_delta", self.text)
 
-    def test_the_unexplained_delta_still_records_failed(self):
-        """The original rule, intact — this adds a branch rather than relaxing one."""
+    def test_the_unexplained_delta_records_loaded_and_unverified(self):
+        """#157: an uncited stage-2 gap is loaded, with every figure in an `issues` entry."""
         self.assertIn("**Unexplained delta**", self.text)
+        self.assertIn("load_count_matches_source: unexplained_delta", self.text)
+        self.assertIn("an `issues` entry with every figure", self.text)
+
+    def test_a_stage_one_mismatch_still_records_failed(self):
+        """The original `failed` branch, intact — moved to the stage that can verify a load."""
+        self.assertIn("**Loaded ≠ load input** | `failed`", self.text)
         self.assertIn("both figures in the `issues` entry", self.text)
 
     def test_the_equal_case_is_unchanged(self):
         self.assertIn("load_count_matches_source: pass", self.text)
 
-    def test_it_records_a_reconciliation_note_naming_the_predicting_document(self):
-        self.assertIn("`load_reconciliation` note naming the disposition **and the "
-                      "document that predicts it**", self.text)
+    def test_it_records_a_reconciliation_note_naming_the_predicting_record(self):
+        """#157: the note names every chain step, not only a mapping disposition."""
+        self.assertIn("`load_reconciliation` note naming **each chain step and the record "
+                      "it cites**", self.text)
 
 
 class TheExplainedBranchNeedsACitation(unittest.TestCase):
@@ -85,8 +105,10 @@ class TheExplainedBranchNeedsACitation(unittest.TestCase):
         self.assertIn("the source's own mapping specification", self.text)
         self.assertIn("recorded disposition in `config/data_sources.yaml`", self.text)
 
-    def test_the_uncited_case_falls_through_to_failed(self):
-        self.assertIn("No citation → **unexplained** → `failed`", self.text)
+    def test_the_uncited_case_falls_through_to_unexplained_delta(self):
+        """#157: at stage 2 an uncited gap is unverified, not failed."""
+        self.assertIn("No citation → `unexplained_delta`", self.text)
+        self.assertNotIn("No citation → **unexplained** → `failed`", self.text)
 
     def test_the_disguise_is_named(self):
         self.assertIn("wearing the rule as a disguise", self.text)
@@ -98,8 +120,10 @@ class TheBaselineStaysImmutable(unittest.TestCase):
     def setUp(self):
         self.text = flat(PHASE_B)
 
-    def test_all_three_branches_keep_the_input_baseline(self):
-        self.assertIn("The baseline stays immutable in all three branches", self.text)
+    def test_every_branch_keeps_the_input_baseline(self):
+        self.assertIn("The baseline stays immutable in every branch", self.text)
+        self.assertIn("`record_count` and `expected_record_count` are never overwritten",
+                      self.text)
         self.assertIn("never overwritten and the loaded figure is recorded beside it",
                       self.text)
 
@@ -142,12 +166,16 @@ class TheThirdStateIsCarriedDownstream(unittest.TestCase):
         self.assertIn("is a RECONCILED result, not a failure and not a plain pass", text)
         self.assertIn("never render it as `failed`", text)
 
-    def test_phase_c_shows_both_figures_and_the_reason(self):
-        self.assertIn("3,727 loaded from 3,488 input records", flat(PHASE_C))
+    def test_phase_c_shows_the_figures_and_the_chain(self):
+        """#157: the display names the chain, collected figure included."""
+        text = flat(PHASE_C)
+        self.assertIn("3,727 loaded from 3,488 collected records", text)
+        self.assertIn("7,386 loaded from a 7,386-record overlap-preserving sample of 63,863 "
+                      "collected", text)
 
     def test_phase_d_writes_it_as_reconciled(self):
         text = flat(PHASE_D)
-        self.assertIn("three reconciliation outcomes to write here, not two", text)
+        self.assertIn("four reconciliation outcomes to write here, not two", text)
         self.assertIn("never as a failure, and never as a bare matching count", text)
 
     def test_phase_d_says_why_both_wrong_renderings_are_wrong(self):
@@ -159,9 +187,9 @@ class TheThirdStateIsCarriedDownstream(unittest.TestCase):
 class TheGuidanceIsBehaviorNotAHelper(unittest.TestCase):
     """INV-002 — a comparison between two recorded figures, in any language."""
 
-    def test_the_three_way_rule_names_no_language_specific_helper(self):
+    def test_the_reconciliation_rule_names_no_language_specific_helper(self):
         body = PHASE_B.read_text(encoding="utf-8")
-        start = body.index("A disagreement has THREE outcomes")
+        start = body.index("Reconcile the loaded count in two stages")
         end = body.index("The baseline stays immutable", start)
         block = body[start:end]
         for token in ("def ", "import ", "python3 ", ".py`"):

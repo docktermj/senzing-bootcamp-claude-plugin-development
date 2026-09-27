@@ -177,55 +177,101 @@ describing the error. Update `updated_at` either way. ⛔ **Do not write the loa
 `record_count` — reconcile first, per the rule below, which decides both what `load_status` becomes
 and where the loaded figure is recorded.**
 
-⛔ **Reconcile the loaded count against this source's own input *before* writing it — the value you
-are about to overwrite is the baseline.** (INV-243) `record_count` already holds the count Data
-collection **measured in the collected file**, alongside `expected_record_count` (what the provider
-stated), recorded there precisely "so the two can be compared here and re-checked later". Compare
-the loader's success count against that existing `record_count` first, and record the outcome under
-`validation_checks` as `load_count_matches_source` — the same auditable idiom Data collection
-already uses for `record_count_matches_expected`, so the comparison lives in the registry rather
-than only in the turn that ran it.
+<a id="two-stage-load-reconciliation"></a>
 
-⛔ **If the two disagree, write the discrepancy rather than the count** (INV-245): leave the
-existing `record_count` in place, record **both** figures, and do not present the loaded count as a
-bare result. Overwriting on a mismatch is the worst outcome available — it destroys the input
-baseline and files a partial load as a complete one, after which nothing downstream can tell the
-difference. This is the point where the figure enters durable state: `phaseC` step 12 reads it
-straight back out and presents it to the bootcamper, and Phase D writes it into
+⛔ (INV-243) **Reconcile the loaded count in two stages *before* writing it — the value you are
+about to overwrite is the baseline.** This is the canonical statement of the two-stage load
+reconciliation and its outcomes; Phase C Steps 12 and 17 and Phase D Step 27 point here and add
+only what their own site needs (INV-300). `record_count` already holds the count Data collection
+**measured in the collected file**, alongside `expected_record_count` (what the provider stated),
+recorded there precisely "so the two can be compared here and re-checked later". But the collected
+file is often **not** what the loader read: Data collection directs a working sample whenever the
+scenario is sized below the collected volume (Module 4 → "Sampling rule"), and Module 5 maps it and
+repoints `file_path` at its own output. So there are two comparisons, made in order, and the outcome
+is recorded under `validation_checks` as `load_count_matches_source` — the same auditable idiom Data
+collection already uses for `record_count_matches_expected`, so the comparison lives in the registry
+rather than only in the turn that ran it.
+
+1. **Stage 1 — the loaded count against the load input.** Compare the loader's success count
+   against the **load input** first: the records the loader was actually given, counted from the
+   file it read — the registry `file_path` (for a `fast_pathed: true` source, the raw or sample file
+   it loaded) — or its first N records when a **recorded subset limit** applies: this step's SQLite
+   "first 1,000 records" choice in `sqlite_volume_prompt` (below), or Module 4 Step 8b's `sample`
+   load decision. This is the only comparison that can verify the load itself, so **stage 1 is the
+   only stage that can record `failed`**. It has no explained branch: the loader's error count and
+   error log explain a shortfall, but they do not excuse it.
+2. **Stage 2 — the load input against the collected `record_count`, through the recorded chain.**
+   Reached only when stage 1 is equal. Every step between the collected file and the load input is
+   cited from a record, in order — collected → sample → mapped → subset:
+   - **the `sample:` block** Module 4 wrote into this source's registry entry (collected → sample),
+     whose `record_count` was measured from the written sample file, with its `strategy` and
+     `reason`;
+   - **a mapping disposition** (→ mapped file), cited as the source's own mapping specification, or
+     the recorded disposition in `config/data_sources.yaml`;
+   - **a recorded subset limit** (→ first N), cited from the `sqlite_volume_prompt` marker or the
+     Step 8b load decision that set it.
+
+⛔ **Four outcomes across two stages, not two. Do not collapse them.** INV-245 forbids presenting a
+value that **failed its own verification check**, and stage 1 is that check. A stage-2 delta the
+chain predicts has not failed verification — it is verified and reconciled, which is a different
+state from unverified. An uncited stage-2 gap has not failed either — every record the loader was
+given loaded — but its relation to the collected file is **unverified**, so it is loaded and shown
+as unverified, never as a plain number and never as `failed`. Route on which of these it is:
+
+| Stage | Outcome | `load_status` | What else to record |
+|---|---|---|---|
+| 1 | **Loaded ≠ load input** | `failed` | `load_count_matches_source` not written; both figures in the `issues` entry |
+| 2 | **Equal** — load input = `record_count` | `loaded` | `validation_checks.load_count_matches_source: pass` |
+| 2 | **Explained delta** — every chain step cited | `loaded` | every figure; `validation_checks.load_count_matches_source: expected_delta`; a `load_reconciliation` note naming **each chain step and the record it cites** |
+| 2 | **Unexplained delta** — any step uncited | `loaded` | `validation_checks.load_count_matches_source: unexplained_delta`; an `issues` entry with every figure |
+
+⛔ **If either stage disagrees, write the discrepancy rather than the count** (INV-245): leave the
+existing `record_count` in place, record the figures as the table says, and do not present the
+loaded count as a bare result. Overwriting on a mismatch is the worst outcome available — it destroys
+the input baseline and files a partial load as a complete one, after which nothing downstream can
+tell the difference. This is the point where the figure enters durable state: `phaseC` step 12 reads
+it straight back out and presents it to the bootcamper, and Phase D writes it into
 `docs/loading_strategy.md`, so a number that was never checked here is never checked at all — it
 simply acquires the authority of having been written down. Reporting the aggregate alone does not
 discharge this: the failure mode this exists for produces figures that are plausible and sum
 correctly.
 
-⛔ **A disagreement has THREE outcomes, not two. Do not collapse them.** INV-245 forbids presenting
-a value that **failed its own verification check**; a delta the mapping specification *predicts* has
-not failed verification — it is verified and reconciled, which is a different state from unverified.
-Route on which of these it is:
-
-| Outcome | `load_status` | What else to record |
-|---|---|---|
-| **Equal** | `loaded` | `validation_checks.load_count_matches_source: pass` |
-| **Explained delta** — a named mapping artifact predicts it | `loaded` | both figures; `validation_checks.load_count_matches_source: expected_delta`; a `load_reconciliation` note naming the disposition **and the document that predicts it** |
-| **Unexplained delta** | `failed` | both figures in the `issues` entry, exactly as above |
-
 ⛔ **The explained branch is reachable ONLY with a citation, never with an assertion.** The note must
-name the mapping artifact that predicts the delta — the source's own mapping specification, or the
-recorded disposition in `config/data_sources.yaml`. *"The mapping probably explains it"* is precisely
-the failure INV-245 exists to prevent, and without the citation requirement this branch becomes a
-universal escape hatch wearing the rule as a disguise. No citation → **unexplained** → `failed`.
+name, for every step, the record that predicts it: the `sample:` block, the subset record, or the
+mapping artifact — the source's own mapping specification, or the recorded disposition in
+`config/data_sources.yaml`. *"The mapping probably explains it"* and *"it was probably sampled"* are
+precisely the failure INV-245 exists to prevent, and without the citation requirement this branch
+becomes a universal escape hatch wearing the rule as a disguise. No citation → `unexplained_delta`.
 
-⚠️ **This is not a hypothetical branch: the bootcamp teaches the mapping that reaches it.**
+- **No `sample:` block** — a registry written before Module 4 recorded samples: a gap only a sample
+  could explain is **unexplained**. Nothing is inferred from a file's name or location; a path under
+  `data/samples/` is not a citation.
+- **A substitute dataset** (Module 4 Step 6's smaller substitute) is a new collection, not a sample:
+  it carries its own measured `record_count` and no `sample:` block, so it adds no chain step.
+- **A source that skips mapping** (`fast_pathed: true`): the chain is the sample alone, or empty.
+
+⚠️ **The sampled case is the common one, not the edge.** A source collected at **63,863** records was
+sampled overlap-preserving to **7,386** and loaded **7,386** of 7,386 with zero errors. Stage 1 is
+equal; stage 2 cites the `sample:` block (`record_count: 7386`, its `strategy` and `reason`) for the
+whole gap → `expected_delta`. Compared against `record_count` alone, that clean load had no compliant
+outcome but `failed`.
+
+⚠️ **The mapping branch is not hypothetical either: the bootcamp teaches the mapping that reaches it.**
 `embedded_master` is a disposition Module 5 teaches under its own heading, defined as *"the value
 becomes its own Senzing record, and the parent points at it"* — a disposition whose definition is
-"emit an additional record" **necessarily** makes the loaded count exceed the input count. One source
-loaded **3,727** records against a measured `record_count` of **3,488**: 239 distinct lenders emitted
-as embedded masters, exactly as that source's mapping specification prescribes, every input record
-loaded, zero errors. Under a two-way rule the only compliant action was to file a completely
-successful load as `failed`, and to write that into the Bootcamper's own loading strategy.
+"emit an additional record" **necessarily** makes the loaded count exceed the input count Data
+collection measured. One source loaded **3,727** records against a measured `record_count` of
+**3,488**: 239 distinct lenders emitted as embedded masters, exactly as that source's mapping
+specification prescribes, every input record loaded, zero errors. Stage 1 compares the 3,727 loaded
+against the 3,727 records in the mapped file and is equal; stage 2 cites the mapping specification
+for the 239 → `expected_delta`. Under a two-way rule the only compliant action was to file a
+completely successful load as `failed`, and to write that into the Bootcamper's own loading
+strategy. **A sampled source whose mapping also multiplies records cites both steps, in order:
+collected → sample → mapped.**
 
-**The baseline stays immutable in all three branches** (INV-243) — the existing `record_count` is
-never overwritten and the loaded figure is recorded beside it. That half of the rule is correct and
-is not what changed.
+**The baseline stays immutable in every branch** (INV-243) — `record_count` and
+`expected_record_count` are never overwritten and the loaded figure is recorded beside it. That half
+of the rule is correct and is not what changed.
 
 **⚠️ SQLite performance note — only when the volume question is still open.** On SQLite with
 single-threaded loading, entity resolution gets progressively slower as the database grows.
