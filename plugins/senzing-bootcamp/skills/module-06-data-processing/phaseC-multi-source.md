@@ -1,7 +1,10 @@
 # Module 6, Phase C: Multi-Source Orchestration (conditional, 2+ sources, steps 12–20)
 
 Continues from Phase B. Follow the ground rules; `🛑`/`⛔` are internal control directives.
-Orchestrator and redo code comes from the MCP tools, never hand-written.
+Senzing SDK calls (the loader, redo and engine setup) come from the MCP tools, never
+hand-written. The orchestration around them (ordering, retries, per-source isolation, health
+summaries, reconciliation) is ordinary code in the bootcamper's language, because no MCP route
+serves it.
 
 **Conditional gate.** Read `config/data_sources.yaml` and count sources with `mapping_status:
 complete`. If there is only ONE data source, skip Phase C entirely and proceed to Phase D
@@ -144,9 +147,13 @@ Module 6 loading program works as a template. Fix failures before proceeding.
 
 ## 17. Create orchestrator program
 
-Use `generate_scaffold(language='<chosen_language>', workflow='add_records', version='current')`
-and `find_examples(query="multi-source")` for patterns. Override any `/tmp/` or
-`ExampleEnvironment` paths to `database/G2C.db`. Save to `src/load/orchestrator.[ext]`.
+The orchestrator's Senzing calls come from the Step 3 loader (Phase A, "Create the production
+loading program"), run once per source; its SDK code is
+`generate_scaffold(language='<chosen_language>', workflow='add_records', version='current')`.
+Override any `/tmp/` or `ExampleEnvironment` paths to `database/G2C.db`. Save to
+`src/load/orchestrator.[ext]`.
+
+<!-- MCP-NEGATIVE: find_examples(query='multi-source') with and without language='java', and find_examples(query='orchestrator load multiple data sources') — no indexed example is a multi-source load orchestrator (ordered per-source loading, per-source error isolation, reconciliation); the first returns examples: [] plus a hint, the second only single-source loaders, data-source registration snippets and CHANGELOGs — owner: find_examples IS the route for indexed example code and returned none; generate_scaffold IS the route for SDK templates and has no orchestration workflow (workflow='orchestration' is rejected with the list initialize, configure, add_records, delete, query, redo, stewardship, information, error_handling, full_pipeline, and full_pipeline returns single-source initialize/configure/load/search snippets) (absence negative) — server 1.37.13, 2026-09-26 -->
 
 Must handle: ordered loading with dependency enforcement, parallel execution if selected,
 per-source progress/error tracking with error isolation, statistics aggregation, and a
@@ -190,6 +197,8 @@ only at the total.
 
 - **Retry with exponential backoff:** when a source fails to load, retry with increasing delays
   (1s, 2s, 4s, 8s) up to a configurable maximum. Log each retry attempt.
+  The backoff loop is ordinary code, but *which* exceptions are retryable comes from
+  `sdk_guide(topic='error_handling', language='<chosen_language>')`.
 - **Partial success handling:** if some sources succeed and others fail, mark successful sources
   as loaded and report failed sources with error details. Do not roll back successful loads when
   one source fails.
