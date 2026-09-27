@@ -43,6 +43,71 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## phase-c-sqlite-note-reopens-the-settled-load-size-decision
+
+- **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #164)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`,
+  `tests/test_sqlite_subset_notes_read_the_recorded_decision.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13** (docs index 2026-09-24 18:45 UTC), 2026-09-26 — **still
+  reproduces**. Called `get_capabilities` and `search_docs(query="loading",
+  category="anti_patterns")`. "Senzing Anti-Patterns: Architecture and Performance" → "Do Not Use
+  SQLite in Production" still says "Use SQLite only for quick local testing with small datasets
+  (under 100K records)". Phase C Step 19's hardcoded 1,000 matched nothing the server serves; the
+  threshold stays MCP-sourced in Phase A's pre-load check, and Phase C now states none. No absence
+  claim is made, so no `owner-checked:` clause is owed.
+- **Summary:** Phase C Step 19 carried an unguarded copy of the SQLite start-smaller advice that
+  Phase B Step 7 guards: "if total records exceed 1,000, recommend loading a subset first". It read
+  no marker, so it re-asked a question Phase A had already recorded in `sqlite_volume_prompt`
+  (INV-006), with a threshold the server does not serve. Following the issue's revision 1
+  ("Remove it"), the note is gone. Since #163, Phase A prompts on the loadable total of every
+  mapped source, so by Step 19 a decision is either recorded or was never needed, and a guarded
+  copy could never fire. In its place, one paragraph says to add nothing about SQLite volume here
+  and to load what `sqlite_volume_prompt` or the Module 4 Step 8b load decision records. It points
+  at Phase B step 7 without restating it (INV-300), and treats no decision as the complete dataset
+  with no SQLite remark (INV-244). Step 19's first line, "Run on the complete dataset", now runs
+  the dataset the recorded load decision names (the complete dataset unless a subset was chosen)
+  and tells the bootcamper which one is loading. For a subset, it also says the full dataset can be
+  loaded afterwards. Phase B Step 7, Phase A's trigger and the marker's fields are unchanged.
+- **Approach:** direct (Phase 5a), following Phase B Step 7's pattern. **Assumption taken, no
+  maintainer present:** the issue says the question was "settled in Phase A". The replacement
+  line says "settled before the first load", because the Module 4 Step 8b decision it also names
+  is taken before Phase A. Both readings give the same instruction.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The change adds no ⛔
+  line, but it ships a durable, test-enforced guarantee in plain prose, which is the gap INV-309
+  exists to close (#38). The rules already shipping, plain prose at their site:
+    - ⛔ **The SQLite volume question was settled before the first load, so add nothing about it here: load what `sqlite_volume_prompt` or the Module 4 Step 8b load decision records** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`
+    - ⛔ **Run on the dataset the recorded load decision names — the complete dataset unless a subset was chosen — and tell the bootcamper which one is being loaded.** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`
+
+  ⚠️ **INV-006 may already govern this.** The module-wide scan applies INV-006 ("each question is
+  asked only once") to one question, the SQLite load size. Whether that needs its own id, or
+  whether citing INV-006 at the sites and holding this block is enough, is the maintainer's call.
+  The Phase C no-threshold half applies the sourcing rule Phase A's item 3 already states
+  (INV-080).
+
+  The drafted wording:
+
+  **INV-NNN** — In Module 6, a guidance paragraph that mentions SQLite and recommends loading a
+  subset or starting smaller MUST read the recorded SQLite volume decision
+  (`sqlite_volume_prompt`, or the Module 4 Step 8b load decision) first, and say nothing when one
+  is recorded. Phase C MUST NOT carry a SQLite record threshold of its own; the threshold is
+  sourced from MCP at runtime by Phase A's pre-load check. The multi-source load MUST run the
+  dataset the recorded decision names, and say which. Enforced by
+  `tests/test_sqlite_subset_notes_read_the_recorded_decision.py`. (Source: GitHub issue #164.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** new `tests/test_sqlite_subset_notes_read_the_recorded_decision.py`, 8 tests in 3
+  classes, one per issue assertion, stdlib only. A liveness test keeps assertion 1's scan from
+  passing vacuously: it must find Phase B Step 7's note. The scan is anchored on *loading* a
+  subset, so Phase D's "the usable subset is its `Validation:` patterns" is not read as load-size
+  advice. Negative controls, each run and reverted, `__pycache__` cleared: the old Step 19 note
+  restored fails assertions 1 and 2 (2 tests); the old "Run on the complete dataset." first line
+  restored fails assertion 3 (1 test); `sqlite_volume_prompt` removed from Phase B Step 7's note
+  fails assertion 1 (1 test).
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** uncommitted
+
 ## dry-run-drafts-findings-into-the-ledger-and-files-issues
 
 - **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #153)
