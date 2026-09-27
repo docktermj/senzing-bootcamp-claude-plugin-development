@@ -479,8 +479,19 @@ this flag on a how response, and never render an empty section.
 ```
 
 `result` is the SDK response JSON verbatim: `HOW_RESULTS.RESOLUTION_STEPS[]` are the construction
-steps, and `FINAL_STATE.VIRTUAL_ENTITIES[]` describes the resolved entity when there are no
-incremental steps. On failure, return `{"entity_id": <id>, "error": "..."}`.
+steps, and `FINAL_STATE.VIRTUAL_ENTITIES[]` describes the **final state**, which may hold **more than
+one** virtual entity. It is not a description of one resolved entity, with or without steps. On
+failure, return `{"entity_id": <id>, "error": "..."}`.
+
+⚠️ **The final state is unsettled when either of two signs is present:**
+`HOW_RESULTS.FINAL_STATE.NEED_REEVALUATION` is non-zero (an integer), or
+`HOW_RESULTS.FINAL_STATE.VIRTUAL_ENTITIES[]` has more than one element. Either one alone is enough,
+and nothing documents whether the two always go together. Observed 2026-09-25 on Senzing SDK 4.4.1
+(SQLite): both signs on entities that the entity lookup and the export reported as one entity,
+with the redo queue empty. The How rendering below says so rather than presenting such an entity as
+built into one. Attach no meaning to `NEED_REEVALUATION` and offer no fix for it: the server gives the
+field a type and no definition (INV-080/INV-149).
+<!-- MCP-NEGATIVE: search_docs(query='NEED_REEVALUATION how entity final state') — no indexed document defines NEED_REEVALUATION or says what sets or clears it; the only hits are the how flags page's example payload, which shows "NEED_REEVALUATION": 0 — owner: get_sdk_reference(topic='response_schemas', filter='how_entity_by_entity_id') IS the route that owns the how response's fields, and it lists HOW_RESULTS.FINAL_STATE.NEED_REEVALUATION as an integer with no description (absence negative) — server 1.37.13, 2026-09-26 -->
 
 **`GET /api/dashboard`: REMOVED.** Its content is served by `/api/stats`, which carries the same
 `histogram` and headline counts plus the `sample_entities` list that was this endpoint's only
@@ -802,6 +813,21 @@ and **How?** actions that call
 `/api/why` and `/api/how` and render the explanation (match keys, feature scores, construction
 steps) in a modal.
 
+⛔ **How? when the final state is unsettled.** When either sign in the `/api/how` entry above is
+present, the How explanation MUST show a visible **unsettled-state notice** that names the sign or
+signs present with the values the response carries (only the one that fired, when only one did), and
+MUST NOT claim one entity: no "built this entity in N step(s)" verdict and no "resolved directly into
+one entity" sentence.
+
+- **With steps:** the steps still render; the notice replaces the step-count verdict.
+- **With no steps:** each element of `FINAL_STATE.VIRTUAL_ENTITIES[]` renders as **its own group** of
+  records, never pooled into one list.
+- **What the notice says:** only what the response shows. It gives `NEED_REEVALUATION` no meaning
+  and offers no fix. Data-sourced text in the notice and the groups is escaped per "Escaping
+  data-sourced strings" below.
+- **With neither sign, or no `FINAL_STATE` in the response:** render as for any other entity, and
+  assume nothing.
+
 ## Rendering contract
 
 These are requirements, not suggestions. This module is the bootcamp's "wow moment" — the surface
@@ -861,7 +887,8 @@ and defeats the entire purpose of the feature, which exists to make Senzing's re
 - **Why?** renders match level, match key, and resolution rule, then a per-feature table:
   feature · this record · compared-to record · score · bucket.
 - **How?** renders a numbered, step-by-step merge narrative ("Step 1: record A from CUSTOMERS
-  established the entity. Step 2: record B was added because …").
+  established the entity. Step 2: record B was added because …"), and an unsettled final state gets
+  the notice described under "How? when the final state is unsettled" above.
 - **Score buckets render as color-coded badges**, mapped from the buckets this contract already
   enumerates for `/api/features`: `SAME`/`CLOSE` → positive, `PLUS`/`LIKELY`/`PLAUSIBLE` → caution,
   `UNLIKELY`/`NO_CHANCE` → negative. Use `brand_tokens`' `SIGNAL_GREEN` for the positive bucket —

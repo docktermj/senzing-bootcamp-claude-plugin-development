@@ -1596,18 +1596,40 @@ function _recordChips(members){var out=[];(members||[]).forEach(function(mb){(mb
   out.push("<span class='chip'>"+esc((r.DATA_SOURCE||"?")+":"+(r.RECORD_ID||"?"))+"</span>");});});
   return out.join("")||"<span class='muted'>—</span>";}
 function renderHow(data){const hr=(data.result||{}).HOW_RESULTS||{};const steps=hr.RESOLUTION_STEPS||[];
+  // An UNSETTLED final state (#169) is either of the two signs Phase D's how-state audit
+  // uses (#154): FINAL_STATE.NEED_REEVALUATION non-zero (an integer per the response
+  // schema), or more than one FINAL_STATE.VIRTUAL_ENTITIES[]. Either one makes both
+  // one-entity sentences below false, so the notice replaces them. The notice reports the
+  // values the response carries and nothing more; it gives NEED_REEVALUATION no meaning
+  // (INV-080/INV-149; the contract's /api/how entry carries the dated MCP-NEGATIVE marker).
+  // No FINAL_STATE, or neither sign: no notice and today's rendering, byte for byte.
+  const ve=((hr.FINAL_STATE||{}).VIRTUAL_ENTITIES)||[];const nr=(hr.FINAL_STATE||{}).NEED_REEVALUATION;
+  const signs=[];
+  if(typeof nr==="number"&&nr!==0)signs.push("<code>FINAL_STATE.NEED_REEVALUATION</code> is <b>"+esc(String(nr))+"</b>");
+  if(Array.isArray(ve)&&ve.length>1)signs.push("<code>FINAL_STATE.VIRTUAL_ENTITIES</code> lists <b>"+ve.length+"</b> virtual entities");
+  const unsettled=signs.length>0;
+  const notice="<div class='verdict how-unsettled'><b>Unsettled final state.</b> Senzing's How response for this entity shows "+
+    signs.join(", and ")+". This page therefore does not describe these records as one entity; what the response holds is shown below as returned.</div>";
   if(steps.length){
-    let h="<div class='verdict'>Senzing built this entity in <b>"+steps.length+"</b> step(s), each merging two groups of records.</div>";
+    let h=unsettled?notice:"<div class='verdict'>Senzing built this entity in <b>"+steps.length+"</b> step(s), each merging two groups of records.</div>";
     steps.forEach(function(st,i){const mi=st.MATCH_INFO||{};const mk=mi.MATCH_KEY||"";const rule=mi.ERRULE_CODE||"";
       const v1=st.VIRTUAL_ENTITY_1||{};const v2=st.VIRTUAL_ENTITY_2||{};
       h+="<div class='step'><div><span class='num'>"+(st.STEP||(i+1))+"</span><b>Merged on</b> "+mkChips(mk)+(rule?" · <code>"+esc(rule)+"</code>":"")+"</div>"+
         "<div class='recs' style='margin-top:8px'><div class='rec'><b>Group A</b><br>"+_recordChips(v1.MEMBER_RECORDS)+"</div>"+
         "<div class='rec'><b>Group B</b><br>"+_recordChips(v2.MEMBER_RECORDS)+"</div></div></div>";});
     return h;}
-  const ve=((hr.FINAL_STATE||{}).VIRTUAL_ENTITIES)||[];
+  // Unsettled with no steps: each virtual entity is its own group. Pooling them is what
+  // made two groups read as one entity.
+  var grouped="";
+  if(unsettled){grouped="<h4>"+ve.length+" virtual entit"+(ve.length===1?"y":"ies")+" in the final state</h4><div class='recs'>";
+    ve.forEach(function(v,i){var k=0;(v.MEMBER_RECORDS||[]).forEach(function(m){k+=((m.RECORDS||[]).length);});
+      grouped+="<div class='rec how-group' style='min-width:auto'><b>Group "+(i+1)+"</b>"+
+        (v.VIRTUAL_ENTITY_ID?" · <code>"+esc(String(v.VIRTUAL_ENTITY_ID))+"</code>":"")+
+        " · "+k+" record"+(k===1?"":"s")+"<br>"+_recordChips(v.MEMBER_RECORDS)+"</div>";});
+    grouped+="</div>";}
   var members=[];ve.forEach(function(v){(v.MEMBER_RECORDS||[]).forEach(function(m){members.push(m);});});
   var n=0;members.forEach(function(m){n+=((m.RECORDS||[]).length);});
-  return "<div class='verdict'>These records resolved <b>directly</b> into one entity — Senzing found them consistent enough to merge with no intermediate steps.</div>"+
+  return unsettled?notice+grouped:"<div class='verdict'>These records resolved <b>directly</b> into one entity — Senzing found them consistent enough to merge with no intermediate steps.</div>"+
     "<h4>"+n+" record"+(n===1?"":"s")+" in this entity</h4>"+
     "<div class='recs'><div class='rec' style='min-width:auto'>"+_recordChips(members)+"</div></div>";}
 async function drawHist(){const s=await getJSON("/api/stats");const box=d3.select("#hist");box.html("");

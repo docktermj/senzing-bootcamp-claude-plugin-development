@@ -259,6 +259,15 @@ VERIFIED_QUERIES = {
         "documents. The corpus serves SzProduct.get_version(), not a file location, which is why "
         "Step 1 routes the reader to the SDK call and marks the file paths as environment "
         "observations (server 1.37.13, docs index 2026-09-24 18:45 UTC, re-executed 2026-09-26)",
+    # Executed for #169 on server 1.37.13, docs index 2026-09-24 18:45 UTC, 2026-09-26, at
+    # max_results=5. The visualization contract's /api/how entry quotes it in its MCP-NEGATIVE
+    # marker as the corpus route asked for a meaning of the flag.
+    "NEED_REEVALUATION how entity final state":
+        "OFF TARGET BY DESIGN — the negative's evidence: the top hit is the "
+        "how_entity_by_entity_id Flags page's SZ_HOW_ENTITY_DEFAULT_FLAGS section, whose example "
+        "payload shows \"NEED_REEVALUATION\": 0; the others are that page's intro, its "
+        "SZ_INCLUDE_MATCH_KEY_DETAILS example, an Entity ID FAQ and an unrelated libpostal file. "
+        "No hit defines the field or says what sets or clears it",
     # "entity resolution quality evaluation" was listed here as OFF TARGET on 2026-08-12 and is
     # gone: Module 7 Step 3b no longer prescribes it. It returned the Buyer's Guide's
     # vendor-selection steps rather than precision/recall material, and
