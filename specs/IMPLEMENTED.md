@@ -118,7 +118,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     - The "Do not reload the first source" line removed: 1 test fails.
     - The pre-change Phase B: 9 failures. The pre-change Step 14: 7 failures.
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** 2733e5e
 
 ## volume-option-reply-selects-the-demo-loader
 
