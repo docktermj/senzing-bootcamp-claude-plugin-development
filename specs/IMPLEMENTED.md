@@ -168,7 +168,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     - The success line moved away from the redo line: 1 failure.
     - "including zero" dropped from the record instruction: 1 failure.
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** b57810d
 
 ## module-7-teardown-placement-relationship-count-and-two-degree-path
 
