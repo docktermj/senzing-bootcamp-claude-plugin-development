@@ -126,7 +126,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     - All three skill files at `main` (f09dd1d): 14 failures and 6 errors, subtests counted,
       across every class.
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** e1c8a45
 
 ## volume-question-framing-sits-after-its-pointer
 
