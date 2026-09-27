@@ -66,6 +66,10 @@ and can no longer be used, create a new one`. The message names a symptom, not t
 it is easy to debug in the wrong place. [`ground-rules.md`](../bootcamp-onboarding/ground-rules.md)
 states the rule and its fix in full; follow it rather than restating it here (INV-300).
 
+On Java, a shared helper is a shared class, whose filename rule is in
+[`ground-rules.md`](../bootcamp-onboarding/ground-rules.md) → "File placement" (INV-237); do not
+restate it here (INV-300).
+
 Use `generate_scaffold` with `workflow='query'` and the chosen language. For entity-view
 patterns (get/why/how), consult `reporting_guide(topic='entity_views', language='<lang>',
 version='current')`. For network/path patterns, consult `reporting_guide(topic='graph',

@@ -1284,6 +1284,10 @@ modules** rather than re-deriving one per module: Data processing's loading prog
 rationale, and the rule that replacing the JSON library is safe while altering SDK calls is not, are
 in `../module-02-sdk-setup/SKILL.md` → "The launch environment" (INV-300).
 
+On Java, a reused reader is a shared class, whose filename rule is in
+`../bootcamp-onboarding/ground-rules.md` → "File placement" (INV-237, INV-300); do not restate it
+here.
+
 **Checkpoint:** write step 13.
 
 ### 14. Test

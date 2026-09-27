@@ -494,14 +494,28 @@ steering files.)
   *"class MeridianCrmMapper is public, should be declared in a file named MeridianCrmMapper.java"*.
   **Drop `public` from the top-level class.** A package-private top-level class may live in any
   filename, so the prescribed path and the idiomatic class name both survive, and
-  `java -cp <dir> <ClassName>` still launches it unchanged — `main` stays `public static`. Verified
-  on **javac/java 21.0.11, 2026-08-14**: the public form reproduces the error above, the
-  package-private form compiles clean under `javac -Xlint:all`, and the launcher runs.
+  `java -cp <dir> <ClassName>` still launches it unchanged — `main` stays `public static`. This
+  form is for **prescribed standalone program files** (mappers, loaders, verification programs).
+  Verified for a single mapper class on **javac/java 21.0.11, 2026-08-14**: the public form
+  reproduces the error above, the package-private form compiles clean under `javac -Xlint:all`,
+  and the launcher runs.
   - **Do not rename the file, and do not rename the class.** The prescribed filenames are read by
     other machinery (graduation maps artifacts by base name; Module 5 source-qualifies exactly three
     Markdown names; Module 3's build table is pinned by its own tests), and renaming the class to
     `class meridian_crm_mapper` satisfies the compiler while violating the same instruction's
     "idiomatic style for the chosen language".
+  - **A shared class — one that other files reference — goes in a file named after the class**,
+    such as `CounterpartyApi.java`, `public` or not. This covers a shared helper and the JSON
+    reader reused across modules. `javac` resolves a class from the sourcepath **by filename**, so
+    a package-private class in a differently named file draws *"auxiliary class CounterpartyApi …
+    should not be accessed from outside its own source file"* when all files compile together,
+    and *"error: cannot find symbol"* when one program is rebuilt alone with `-sourcepath` — an
+    error that names a missing symbol, not the filename that causes it. Such a helper has no
+    prescribed filename, so "do not rename the file" above, which protects prescribed names, does
+    not apply to it. A class used only inside its own file stays in that file. Verified on
+    **javac 21.0.12.1, 2026-09-25**, with `CounterpartyApi` in `counterparty_api.java`: both
+    failures reproduce, and the same class in `CounterpartyApi.java` compiles clean under
+    `-Xlint:all -sourcepath` and the program runs.
   - **C# is the quiet version of the same thing, and needs the opposite advice.** There the
     file/type correspondence is **conventional, not enforced**: `public class MeridianCrmMapper` in
     `meridian_crm_mapper.cs` builds with **0 warnings, 0 errors** (verified on .NET 8, 2026-08-14).
