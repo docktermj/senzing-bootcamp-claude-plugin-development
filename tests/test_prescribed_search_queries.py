@@ -274,13 +274,26 @@ VERIFIED_QUERIES = {
         "observations (server 1.37.13, docs index 2026-09-24 18:45 UTC, re-executed 2026-09-26)",
     # Executed for #169 on server 1.37.13, docs index 2026-09-24 18:45 UTC, 2026-09-26, at
     # max_results=5. The visualization contract's /api/how entry quotes it in its MCP-NEGATIVE
-    # marker as the corpus route asked for a meaning of the flag.
+    # marker as the corpus route asked for a meaning of the flag. Re-executed for #154 on the
+    # same server and index, 2026-09-27, with the same result: Phase D's How-state audit quotes
+    # it in its own MCP-NEGATIVE marker.
     "NEED_REEVALUATION how entity final state":
         "OFF TARGET BY DESIGN — the negative's evidence: the top hit is the "
         "how_entity_by_entity_id Flags page's SZ_HOW_ENTITY_DEFAULT_FLAGS section, whose example "
         "payload shows \"NEED_REEVALUATION\": 0; the others are that page's intro, its "
         "SZ_INCLUDE_MATCH_KEY_DETAILS example, an Entity ID FAQ and an unrelated libpostal file. "
         "No hit defines the field or says what sets or clears it",
+    # Executed for #154 on server 1.37.13, docs index 2026-09-24 18:45 UTC, 2026-09-27, at the
+    # default max_results. The second corpus query in Phase D's How-state audit MCP-NEGATIVE
+    # marker: asked whether any document ties a re-evaluation call to the flag.
+    # ⚠️ Record the PROPERTY, not ranks or scores: they move on a rebuild.
+    "reevaluate entity when to call reevaluation needed":
+        "ADJACENT, NOT ON TARGET — the negative's evidence: re-evaluation code snippets (Rust, "
+        "Python), the SzFlag/SzFlags reevaluate-entity flag constants, a TypeScript "
+        "'reevaluate an entity after rule changes' example, and the engine-config FAQ 'After "
+        "config changes, reevaluate splits entities but redo merges them back. Is this a bug?', "
+        "which is about config changes. No hit names NEED_REEVALUATION or ties a re-evaluation "
+        "call to it",
     # "entity resolution quality evaluation" was listed here as OFF TARGET on 2026-08-12 and is
     # gone: Module 7 Step 3b no longer prescribes it. It returned the Buyer's Guide's
     # vendor-selection steps rather than precision/recall material, and

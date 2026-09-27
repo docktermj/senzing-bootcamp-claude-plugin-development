@@ -378,6 +378,12 @@ Demonstrate How Analysis using a concrete multi-record entity (3+ records) ident
    with scores]. Step 3: Record C from [Source] was added because [features matched with
    scores]." Walk through each step so the bootcamper can follow the entity's growth from a
    single record to its current multi-record state.
+
+   ⚠️ **Read `HOW_RESULTS.FINAL_STATE` in the same response before narrating (INV-115):** if
+   `NEED_REEVALUATION` is non-zero or `VIRTUAL_ENTITIES[]` has more than one element, say so,
+   name the sign, and point to Data processing's How-state audit
+   (`../module-06-data-processing/phaseD-validation.md` → "How-state audit") rather than
+   presenting the history as one settled construction.
 4. **Why-vs-How comparison:** explain the difference:
    - **Why Analysis:** compares two specific records or entities and explains the current
      resolution decision, "why are these together right now?"

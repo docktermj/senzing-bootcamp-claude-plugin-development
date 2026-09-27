@@ -43,6 +43,133 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## phase-d-how-state-audit-checks-every-multi-record-entity
+
+- **Implemented:** 2026-09-27 (**Not a spec** — a dated record of one issue-driven run, #154)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`,
+  `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2-discover.md`,
+  `tests/test_phase_d_how_state_audit.py`, `tests/test_prescribed_search_queries.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13** (docs index 2026-09-24 18:45 UTC), 2026-09-27 — **still
+  reproduces**. Called `get_capabilities`, `search_docs(query='NEED_REEVALUATION how entity final
+  state', max_results=5)`, `search_docs(query='reevaluate entity when to call reevaluation
+  needed')`, `get_sdk_reference(topic='response_schemas', filter='how_entity_by_entity_id')` and
+  `get_sdk_reference(topic='flags', filter='SZ_HOW_ENTITY_DEFAULT_FLAGS')`. Both corpus queries
+  still define nothing for the flag: the first reaches it only in the how flags page's example
+  payloads (`"NEED_REEVALUATION": 0`), and the second returns re-evaluation code snippets, the
+  reevaluate flag constants, a TypeScript "reevaluate after rule changes" example and the
+  config-change FAQ, none naming the field. The flags route's `SZ_HOW_ENTITY_DEFAULT_FLAGS` lists
+  only `HOW_RESULTS.RESOLUTION_STEPS[]` as a response path, which is why step 3 dumps one response
+  first. The method name per binding (`HowEntity`, `howEntity`, `how_entity_by_entity_id`,
+  `how_entity`) comes back in the response's own `warnings`. owner-checked:
+  `get_sdk_reference(topic='response_schemas', filter='how_entity_by_entity_id')` IS the route
+  that would carry a field description — it lists `HOW_RESULTS.FINAL_STATE.NEED_REEVALUATION` as
+  an `integer` and `VIRTUAL_ENTITIES[]` as an array, neither with a description or
+  `requires_flags`; `search_docs` is the prose owner and returns what is quoted above. The
+  absence negative stands, and the section's `MCP-NEGATIVE` marker is stamped server 1.37.13,
+  2026-09-27. `submit_feedback` was not called; the issue records the upstream report as sent
+  on 2026-09-25 by the maintainer.
+- **Summary:** Phase D took "redo queue drained" as the resolution-complete signal and validated
+  from the export alone, so three entities whose `how_entity` final state held two virtual
+  entities and `NEED_REEVALUATION: 1` passed as clean 5- and 3-record entities (307153, 307169,
+  307249, 2026-09-25). A new `## How-state audit` section in `phaseD-validation.md` sits between
+  the match-key audit and the iterate-vs-proceed gate, on both paths. It takes every entity with
+  2 or more records from the export already read (no sampling), makes one `how_entity` call each
+  with the method name, argument type and flag spelling taken from `get_sdk_reference` for the
+  Bootcamper's binding, dumps one response before parsing the rest (INV-115), and flags an entity
+  when `NEED_REEVALUATION` is non-zero or `VIRTUAL_ENTITIES[]` has more than one element, naming
+  the sign or signs. A response with no `FINAL_STATE` counts as not measured. It reports finding,
+  no finding or could not measure with "checked N of M", and "no finding" requires N to equal M
+  (INV-115). The outcome goes to the gate as its own line, beside the match-key audit's, and
+  never blocks or changes the gate's branch (INV-117, INV-264). No remedy is suggested, and the
+  flag's meaning is observation-only (INV-080/INV-149) with a dated `MCP-NEGATIVE` marker naming
+  both owner routes (INV-194). `docs/results_validation.md` gains an appended `## How-state
+  audit` section with the outcome, the coverage and the count, including zero, plus each flagged
+  entity and its signs; a flagged entity's record count elsewhere in that document is marked
+  unconfirmed by the engine's construction history (INV-245). A success-criterion line sits
+  directly after the unchanged "Redo queue drained" line. Module 7 step 4c (How Analysis, sub-step
+  3) gains a ⚠️ note: read `FINAL_STATE` in the same response, and if either sign shows, say so and
+  point to the Phase D audit.
+- **Approach:** raced (Phase 5b) by the run's lead. Approach A, which finished the 2026-09-25
+  run's uncommitted attempt, won over B, a fresh implementation; the comparison is on the issue
+  (comment 3). **Adapted on the branch:** the patch applied cleanly on af1d0ce, after #166 changed
+  `phase2-discover.md` step 4a; the step 4c note still sits in step 4c's sub-step 3, as the issue
+  asks, and nothing needed to move. A's own fixes to the earlier attempt are kept: INV-308, which
+  binds the repository's verification tooling, is replaced with INV-115 in the Bootcamper prose
+  (a test forbids INV-308 in the section); the duplicate `VERIFIED_QUERIES` key for
+  `"NEED_REEVALUATION how entity final state"` (already registered by #169, and a Python dict
+  drops a duplicate key without error) is removed and #169's entry annotated instead, verified
+  by an AST check that the dict has no duplicate keys; and "which steps 26–28 already wrote" now
+  reads "which step 28 already wrote (steps 26–27 as well, on the multi-source path)", because
+  the single-source path skips steps 23–27. Nothing touches #169's How tab, #160's step 2
+  parsing rule or `reevaluate_entity`.
+- **Finding (recorded, not resolved): "checked 0 of 0" sits uneasily with INV-265.** The issue
+  requires that a run with no multi-record entities report "checked 0 of 0" with outcome "no
+  finding". INV-265 says a check whose input is empty MUST be reported as a failed or unrun
+  check, never as a pass. The prose keeps the issue's rule and words it as "nothing was there to
+  check, which is a different statement from a check that failed", so the empty case is stated
+  rather than read as agreement. INV-265's examples are all repository tooling, so it is not
+  cited. Whether a Bootcamper-facing audit over an empty set should say "no finding" or a fourth
+  outcome is the maintainer's call.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Each ⛔ line the change
+  ships cites a registered invariant at the line, but the audit as a whole is a new durable
+  guarantee that none of them states: INV-117 covers match keys only, and INV-115 governs how a
+  missing value is rendered, not that every multi-record entity's history is checked. The rules
+  already shipping, at their site:
+    - ⛔ **Never report "no finding" unless N equals M** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`
+    - ⛔ **The outcome never blocks** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`
+    - ⛔ **including zero: write "0 unsettled" rather than omitting the section** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`
+
+  ⚠️ **The "including zero" citation is INV-115 by analogy.** INV-115 forbids rendering a missing
+  value as a real empty result; this is the converse, a real zero not rendered as absence. No
+  registered invariant states the converse; the wording below would.
+
+  The drafted wording:
+
+  **INV-NNN** — Before the iterate-vs-proceed gate in Data processing validation, on both the
+  single-source and multi-source paths, the guide MUST audit the construction history of every
+  resolved entity with 2 or more records (no sampling) through generated SDK code whose method,
+  argument and flag names come from `get_sdk_reference` for the Bootcamper's binding. It MUST
+  flag an entity when `HOW_RESULTS.FINAL_STATE.NEED_REEVALUATION` is non-zero or
+  `FINAL_STATE.VIRTUAL_ENTITIES[]` has more than one element, naming which sign fired, and MUST
+  count a response without `FINAL_STATE` as not measured. It MUST report one of three outcomes
+  (finding / no finding / could not measure) with "checked N of M", and MUST NOT report "no
+  finding" unless N equals M. It MUST record the count, including zero, in
+  `docs/results_validation.md`, with flagged entities' record counts marked unconfirmed. The
+  outcome feeds the gate as a finding and never blocks, and no remedy may be suggested while no
+  Senzing route documents the flag (INV-080/INV-149). Where Module 7's How Analysis narrates a
+  how response showing either sign, it MUST say so and point to this audit. Sites:
+  `module-06-data-processing/phaseD-validation.md` → "How-state audit";
+  `module-07-query-visualize-discover/phase2-discover.md` step 4c. Enforced by
+  `tests/test_phase_d_how_state_audit.py`. (Source: GitHub issue #154.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** new `tests/test_phase_d_how_state_audit.py`, 23 tests in 7 classes, stdlib only,
+  importing nothing under `plugins/` (INV-108); it loads `.claude/skills/dry-run/coverage_reports.py`
+  to parse the marker with the real `MCP_NEGATIVE` pattern. It checks the section exists and sits
+  between the match-key audit and the gate, on both paths; names `how_entity`,
+  `NEED_REEVALUATION`, `VIRTUAL_ENTITIES` and `FINAL_STATE`; covers every 2+ record entity with no
+  sampling and "checked N of M" / "checked 0 of 0"; flags either sign and names it; takes the
+  method name from the binding; dumps one response first; has the three outcomes with "no
+  finding" requiring N = M; cites no INV-308; never blocks and reaches the gate; suggests no
+  re-evaluation call; carries one well-formed marker naming both owner routes with a version and
+  date; records to `docs/results_validation.md` including zero with flagged counts unconfirmed;
+  puts the success line directly after the unchanged redo line; and has the step 4c note.
+  `tests/test_prescribed_search_queries.py` gains one `VERIFIED_QUERIES` entry for the second
+  corpus query the marker quotes. Negative controls, each run on the real file from a copy and
+  restored, `__pycache__` cleared after each:
+    - The whole `## How-state audit` section removed (the issue's control): 20 failures.
+    - INV-308 back on the "no finding" line: 2 failures.
+    - "Call reevaluate_entity." added to step 6: 1 failure.
+    - The step 4c note removed: 1 failure.
+    - The new `VERIFIED_QUERIES` entry removed: 1 failure.
+    - The success line moved away from the redo line: 1 failure.
+    - "including zero" dropped from the record instruction: 1 failure.
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** uncommitted
+
 ## module-7-teardown-placement-relationship-count-and-two-degree-path
 
 - **Implemented:** 2026-09-27 (**Not a spec** — a dated record of one issue-driven run, #166)
