@@ -102,7 +102,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
       test, 1 line `[after an option]`.
     - The whole old block: fails the same test with both placements.
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** dba1181
 
 ## match-key-suppressor-audit-gives-no-parsing-rule
 
