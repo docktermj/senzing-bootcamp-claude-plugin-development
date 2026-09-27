@@ -171,7 +171,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
       under `data/samples/` with no block: FAILED (1) each.
     - The How-state audit given INV-243 (so it becomes a load-count reader with no pointer):
       FAILED (1). A planted Module 6 step citing INV-245 only: OK, as intended (adaptation 1).
-- **Commit:** uncommitted
+- **Commit:** 7421007
 
 ## java-shared-class-breaks-the-package-private-filename-rule
 
