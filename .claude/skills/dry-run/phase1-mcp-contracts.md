@@ -71,6 +71,9 @@ invented enum value breaks a module rather than degrading it.
    applies_to, composite_members, …") — the shapes that cannot survive an index rebuild or a
    schema addition. Where the negative does not depend on the enumeration, write what
    distinguishes it ("no field names a binding type") instead of what it happened to contain.
+   A positive universal over the results ("every hit is V3-to-V4 material") is a census too:
+   on 2026-09-24 one such rationale was falsified by two new hits while its claim held (#151).
+   Say what the corpus serves ("V3-to-V4 migration material and no 4.x-to-4.y procedure").
 
    ⛔ **When a negative no longer holds, the prose is only half the fix.** The second
    instance had the stale claim written into the **guards** as well: two assertions
