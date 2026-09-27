@@ -65,20 +65,25 @@ the Module 5 loading results, or from the data sources in `config/data_sources.y
    entities whose constituent records originate from two or more distinct data sources. These
    are candidates for the Why Analysis demonstration (step 4b). An entity qualifies if its
    records array contains entries with different `DATA_SOURCE` values.
-3. **Identify relationship clusters:** check the entity responses for disclosed relationship
-   data. Entities with one or more disclosed relationships are candidates for the Relationship
-   Network demonstration (step 4d). Use relationship flags when calling
-   `get_entity_by_record_id` so the response includes relationship information (look up the
-   flag names via `get_sdk_reference(topic='flags', filter='get_entity_by_record_id')`, and the
-   response structure via `get_sdk_reference(topic='response_schemas',
-   filter='get_entity_by_record_id')` before parsing it — INV-115).
+3. **Identify entities with relationships:** check the entity responses for relationship data.
+   Count every entity with **one or more relationships of any kind, disclosed or discovered**:
+   disclosed relationships are stated in the source data (like 'employer'), discovered ones are
+   inferred by Senzing from shared attributes (like a common address). Both kinds count, because
+   step 4d demonstrates both, and data that has only discovered links would otherwise skip it.
+   These entities are candidates for the relationship network demonstration in step 4d; keep
+   each one's relationship count, since step 4d starts from the entity with the most. Use relationship
+   flags that return both kinds when calling `get_entity_by_record_id` (look up the flag names via
+   `get_sdk_reference(topic='flags', filter='get_entity_by_record_id')`), and read where the
+   relationships sit in the response, and how a disclosed one is marked, via
+   `get_sdk_reference(topic='response_schemas', filter='get_entity_by_record_id')` before counting
+   them (INV-115).
 4. **SDK flag usage:** explain your flag choices as you go. For example: "I'm using
    `get_entity_by_record_id` with relationship flags so we can see which entities connect to
    others. This helps me find good candidates for the relationship network demonstration."
 5. **Present a summary:** "I found N large entities (3+ records), M cross-source matches
-   (records from multiple data sources), and K relationship clusters in your data." List the
-   most interesting candidates by entity ID with a brief reason (e.g. "Entity 1234 has 5
-   records from 2 sources" or "Entity 5678 has 3 disclosed relationships").
+   (records from multiple data sources), and K entities with relationships in your data." List
+   the most interesting candidates by entity ID with a brief reason (e.g. "Entity 1234 has 5
+   records from 2 sources" or "Entity 5678 has 3 relationships, 1 disclosed and 2 discovered").
 6. **Graceful fallback for limited data:** if fewer than 2 multi-record entities exist,
    explain: "Your data has limited resolution results, most records resolved as singletons
    (one record per entity). This is common with small or homogeneous datasets." Adapt the
@@ -91,7 +96,9 @@ the Module 5 loading results, or from the data sources in `config/data_sources.y
 `module_7_query.steps.4a`, using this structure:
 `{"status": "completed", "patterns_found": {"multi_record": N, "cross_source": M, "relationships": K}}`
 where N, M, and K are the actual counts of multi-record entities, cross-source entities, and
-relationship clusters found. Also set top-level `current_step` to `"4a"`.
+entities with relationships (disclosed or discovered) found. The `relationships` key keeps its name,
+but K is a count of **entities**, not of clusters or of relationships. Also set top-level
+`current_step` to `"4a"`.
 
 ### Step 4b: Why Analysis introduction
 

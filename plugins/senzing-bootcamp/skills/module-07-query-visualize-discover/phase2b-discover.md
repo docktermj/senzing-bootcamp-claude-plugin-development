@@ -138,7 +138,7 @@ connections between entities using `find_network` and `find_path`.
    see the full attribute information for each entity in the network. This helps us understand
    what connects them."
 3. **find_network demonstration:** call `find_network` with a set of related entity IDs (at
-   least 2–3 entities from the relationship clusters in step 4a). Present the resulting network
+   least 2–3 of the entities with relationships from step 4a). Present the resulting network
    structure:
    - **Which entities are connected:** list each entity and its connections, with entity IDs
      and brief identifying information (name, data source).
@@ -151,7 +151,27 @@ connections between entities using `find_network` and `find_path`.
    Present this as a clear textual network diagram or structured list so the bootcamper can
    follow the connections.
 4. **find_path demonstration:** demonstrate `find_path` between two indirectly connected
-   entities (2+ degrees of separation if available). Show the shortest path of relationships:
+   entities (2+ degrees of separation if available). On address-dense data almost every candidate
+   pair is directly linked, so do not pick pairs at random. **Find a 2+ degree pair with the hub
+   method:**
+   1. Take the entity with the most relationships from step 4a — the **hub**.
+   2. Pick two of its neighbors that are **not related to each other**: neither appears among the
+      other's related entities.
+   3. Confirm with `find_path`: a shortest path of **2 or more degrees** means the pair is good. Set
+      the degree limit high enough to return a 2-degree path, taking the parameter's name and type
+      for the bootcamper's binding from `get_sdk_reference` (the signature above), never from
+      another language.
+   4. If the pair turns out to be directly linked, try another pair of the hub's neighbors, then
+      the next hub (the entity with the next-most relationships). A hub with fewer than two
+      neighbors is skipped. **Stop after three hubs.**
+
+   **If no 2+ degree pair is found after three hubs,** demonstrate `find_path` on a directly
+   linked (1-degree) pair instead, and say plainly that this data has no path of 2+ degrees to
+   show: "In your data, every pair I checked is directly connected, so there's no path of 2 or
+   more degrees to show. Here is `find_path` on a direct connection instead." In that case, leave
+   out the "these aren't directly connected" line below.
+
+   Show the shortest path of relationships:
    - State which two entities and why: "Let's find the shortest path between Entity [ID1] and
      Entity [ID2]. These aren't directly connected, so we'll see the intermediate entities
      that link them."

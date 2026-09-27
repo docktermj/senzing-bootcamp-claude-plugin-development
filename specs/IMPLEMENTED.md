@@ -43,6 +43,91 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## module-7-teardown-placement-relationship-count-and-two-degree-path
+
+- **Implemented:** 2026-09-27 (**Not a spec** — a dated record of one issue-driven run, #166)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`,
+  `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2-discover.md`,
+  `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`,
+  `tests/test_module7_discover_instructions.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13**, 2026-09-27 — **still reproduces** (the issue itself said
+  n/a; the change touches two Senzing facts, so both were re-asked). Called `get_capabilities`,
+  `get_sdk_reference(topic='parameters', filter='find_path_by_entity_id')`,
+  `get_sdk_reference(topic='response_schemas', filter='get_entity_by_record_id',
+  language='python')` and `get_sdk_reference(topic='flags', filter='get_entity_by_record_id',
+  language='python')`. (1) `find_path` takes a degree limit in every binding (`max_degrees` in
+  Python and Rust, `maxDegrees` in Java, C# and TypeScript, typed `int`/`i64`/`number`), which is
+  why step 4d says to read its name and type from `get_sdk_reference` rather than naming one. (2)
+  The get_entity schema returns both kinds of relationship in `RELATED_ENTITIES[]`, with
+  `IS_DISCLOSED` (*"1 if disclosed relationship, 0 otherwise"*) and `MATCH_LEVEL_CODE`
+  (*"POSSIBLY_SAME, POSSIBLY_RELATED"*), and the flags list separate
+  `SZ_ENTITY_INCLUDE_DISCLOSED_RELATIONS`, `SZ_ENTITY_INCLUDE_POSSIBLY_SAME_RELATIONS` and
+  `SZ_ENTITY_INCLUDE_POSSIBLY_RELATED_RELATIONS` flags, with `SZ_ENTITY_INCLUDE_ALL_RELATIONS`
+  combining them. So a disclosed-only count is a real choice the old step made, and counting
+  both kinds needs flags that return both, which step 4a now says. The skill text names no flag
+  or field: it keeps delegating both to `get_sdk_reference` (INV-115). No absence claim is made,
+  so no `owner-checked:` clause is owed.
+- **Summary:** Three Module 7 instructions left the guide to guess on the 2026-09-25 walk.
+  (1) **Teardown placement.** The pinned question *"👉 **Ready for me to stop the visualization
+  server?**"* (INV-056) sat inside step 3c, so it read as step 3c's closing question and could
+  share a turn with the Discover opt-in (INV-251). It now has one labeled step, `## Visualization
+  server teardown (its own turn)`, after the Query Completeness Gate and before a new `## Module
+  completion` heading that holds the existing completion text. The step says the question is its
+  own turn and is never combined with the graduation offer or another 👉 question, and it is
+  skipped silently when `m7_visualizations` records `"accepted": false`. The no-purge disclosure
+  and the "not yet" handling moved with it. Step 3c keeps the leave-it-running hand-off and points
+  forward to the new step. The pid-based stop rule stays in step 3c next to the launch, and the new
+  step's "Yes" branch points at it. (2) **Step 4a.** "Relationship clusters" becomes "entities with
+  relationships" at the heading, the summary line and the checkpoint text in `phase2-discover.md`
+  and at step 4d item 3 in `phase2b-discover.md`. Step 4a counts entities with one or more
+  relationships of any kind, disclosed or discovered, keeps each one's count for step 4d, and says
+  `patterns_found.relationships` (name kept) is a count of entities, not of clusters or of
+  relationships. (3) **Step 4d.** Item 4 gives the hub method (the entity with the most
+  relationships, two of its neighbors not related to each other, confirmed by `find_path` with a
+  degree limit high enough for a 2-degree path, another pair and then the next hub, stop after
+  three hubs, a hub with fewer than two neighbors skipped) and the fallback: demonstrate a
+  directly linked (1-degree) pair and say plainly that the data has no path of 2+ degrees to show.
+- **Approach:** direct (Phase 5a). **Assumptions taken, no maintainer present:** (1) The no-purge
+  disclosure now comes **before** the question ("Say so before asking (INV-211)"), where it used to
+  follow it with "Say so when asking". INV-211 binds skill files and puts a consent disclosure
+  before its 👉, so moving the block was the moment to fix its order; the words are otherwise
+  kept. (2) The pid-based stop instructions (INV-223, INV-001/INV-002 launch rules) stay in step
+  3c, where the server is launched and where `tests/test_viz_server_process_handle.py` reads them;
+  the issue moves the question, its disclosure and its "not yet" handling, not the stop mechanics.
+  (3) The new step gets explicit "Yes" and "No or not yet" branches (INV-284). The "No" branch
+  continues to module completion with the server up and says no second teardown question is asked,
+  including after the graduation offer (the issue's edge case, INV-006). (4) The step 4a example
+  "Entity 5678 has 3 disclosed relationships" becomes "3 relationships, 1 disclosed and 2
+  discovered" to match the new count. (5) Step 4d item 7's "no relationships" fallback is left as
+  it is: with step 4a now counting both kinds, its K = 0 condition already means no relationships
+  of any kind.
+- **This run establishes no invariant.** Each ⛔ line it adds applies a registered one: the
+  teardown question's own turn is INV-251, its pinned wording INV-056, the disclosure's order
+  INV-211, the no-re-ask rule INV-006, the answer branches INV-284, and reading the relationship
+  shape before counting INV-115. Where one Module 7 question sits, and how step 4a counts and 4d
+  finds a pair, are module instructions rather than plugin-wide rules. `specs/INVARIANTS.md` is not
+  edited by this run.
+- **Tests:** new `tests/test_module7_discover_instructions.py`, 17 tests in 5 classes: the anchors
+  exist; the teardown question appears exactly once, after the Completeness Gate heading, before
+  the Module Completion text, inside its own step and not in step 3c, and step 3c points forward to
+  it; the step says it is its own turn (INV-251), is skipped with no server, keeps the verbatim
+  wording, keeps the no-purge disclosure before the question and keeps the "not yet" handling;
+  "relationship clusters" is absent from every Module 7 skill file, step 4a names disclosed and
+  discovered relationships and says `relationships` is an entity count; step 4d names the hub
+  method, the degree limit and the 1-degree fallback. `tests/test_viz_server_process_handle.py`,
+  `tests/test_screenshot_embed_timing_is_satisfiable.py` and
+  `tests/test_reassurance_precedes_question.py` stay green. Negative controls, each run on the real
+  file from a copy and reverted, `__pycache__` cleared:
+    - The teardown question moved back into step 3c (the issue's control): 5 tests fail
+      (placement, own step, step 3c, verbatim wording, disclosure order).
+    - A second copy of the question in step 3c, new step intact: 3 tests fail (exactly once,
+      placement, step 3c).
+    - All three skill files at `main` (f09dd1d): 14 failures and 6 errors, subtests counted,
+      across every class.
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** uncommitted
+
 ## volume-question-framing-sits-after-its-pointer
 
 - **Implemented:** 2026-09-27 (**Not a spec** — a dated record of one issue-driven run, #162)
