@@ -9,8 +9,16 @@ Every `.[ext]` filename in this bootcamp is written in the Python idiom, so on t
 Reproduced on javac 21.0.11, 2026-08-14. The reconciliation is to drop `public` from the
 top-level class: a package-private top-level class may live in any filename, so the prescribed
 path and the idiomatic class name both survive, and `java -cp <dir> <ClassName>` still launches
-it. Verified the same day — the package-private form compiles clean under `javac -Xlint:all`
-and runs.
+it. Verified the same day for a single mapper class — the package-private form compiles clean
+under `javac -Xlint:all` and runs.
+
+⚠️ **That holds for a prescribed standalone program file, not for a class other files use.**
+`javac` resolves a class from the sourcepath by filename, so a package-private shared class in a
+differently named file draws the auxiliary-class warning when every file compiles together, and
+`cannot find symbol` when one program is rebuilt alone with `-sourcepath` (javac 21.0.12.1,
+2026-09-25, #161). A shared class — the JSON reader Module 5 step 13 reuses, or the helper Module
+7 step 2 anticipates — goes in a file named after the class. Such a helper has no prescribed
+filename, so the no-rename rule below does not reach it.
 
 Renaming is not available as a fix in either direction. The filenames are read by other
 machinery (graduation's artifact mapping, Module 5's source-qualified names, Module 3's build
@@ -35,6 +43,7 @@ PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 GROUND_RULES = PLUGIN / "skills" / "bootcamp-onboarding" / "ground-rules.md"
 VERIFICATION = PLUGIN / "skills" / "module-03-system-verification" / "phase1-verification.md"
 MAPPING = PLUGIN / "skills" / "module-05-data-quality-mapping" / "phase2-data-mapping.md"
+QUERY = PLUGIN / "skills" / "module-07-query-visualize-discover" / "phase1-query-visualize.md"
 
 #: The central statement, identified by the reconciliation it prescribes rather than by a
 #: heading, so moving the section does not silently un-cover the sites.
@@ -210,6 +219,115 @@ class TheOtherLanguagesAreUntouched(unittest.TestCase):
                                   sentence=sentence[:80]):
                     for lang in ("Python", "Rust", "TypeScript"):
                         self.assertNotIn(lang, sentence)
+
+
+def between(path, start, end):
+    """The squashed text of `path` from heading `start` to heading `end` (or the file's end).
+
+    Empty when `start` is missing, which the callers assert against so a renamed heading fails
+    loudly instead of passing vacuously (INV-265).
+    """
+    text = read(path)
+    i = text.find(start)
+    if i < 0:
+        return ""
+    rest = text[i + len(start):]
+    j = rest.find(end)
+    return re.sub(r"\s+", " ", rest if j < 0 else rest[:j])
+
+
+def plain(path):
+    """Squashed text with `**` emphasis removed, so a bolding change does not break a match."""
+    return squashed(path).replace("**", "")
+
+
+#: The pointer the two shared-code sites carry: it names the shared-class case and the owner.
+POINTS_AT_SHARED_CLASS_RULE = re.compile(
+    r"(?i)shared class.{0,80}ground-rules\.md.{0,40}File placement.{0,20}INV-237"
+)
+
+
+class TheSharedClassCaseIsDistinguished(unittest.TestCase):
+    """#161 — the package-private form covers standalone programs; a shared class needs its own
+    file. Removing the shared-class sentence, the scoping, either stamp, or a pointer fails here.
+    """
+
+    def test_the_package_private_form_is_scoped_to_standalone_programs(self):
+        self.assertRegex(
+            plain(GROUND_RULES),
+            r"(?i)This form is for prescribed standalone program files \(mappers, loaders, "
+            r"verification programs\)",
+            "the package-private form reads as universal again; it breaks for a shared class",
+        )
+
+    def test_a_shared_class_goes_in_a_file_named_after_the_class(self):
+        text = plain(GROUND_RULES)
+        self.assertRegex(
+            text,
+            r"(?i)A shared class — one that other files reference — goes in a file named after "
+            r"the class",
+        )
+        # A bare filename, so the PascalCase-path guard above stays as it is.
+        self.assertRegex(text, r"such as `CounterpartyApi\.java`, `public` or not")
+
+    def test_it_gives_the_sourcepath_reason_and_both_symptoms(self):
+        text = plain(GROUND_RULES)
+        self.assertRegex(text, r"(?i)resolves a class from the sourcepath by filename")
+        self.assertRegex(text, r"(?i)auxiliary class CounterpartyApi")
+        self.assertRegex(text, r"(?i)error: cannot find symbol")
+
+    def test_the_no_rename_rule_does_not_reach_a_shared_helper(self):
+        self.assertRegex(
+            plain(GROUND_RULES),
+            r"(?i)Such a helper has no prescribed filename, so \"do not rename the file\"",
+            "without this, INV-237's no-rename rule reads as forbidding the fix",
+        )
+
+    def test_the_xlint_claim_is_scoped_to_the_single_class_case(self):
+        self.assertRegex(
+            plain(GROUND_RULES),
+            r"(?i)Verified for a single mapper class on javac/java 21\.0\.11, 2026-08-14: "
+            r".{0,120}package-private form compiles clean under `javac -Xlint:all`",
+            "the -Xlint:all claim lost its scope; it was verified on one standalone class only",
+        )
+
+    def test_the_shared_class_case_carries_its_own_stamp(self):
+        self.assertRegex(
+            plain(GROUND_RULES),
+            r"(?i)Verified on javac 21\.0\.12\.1, 2026-09-25, with `CounterpartyApi` in "
+            r"`counterparty_api\.java`: both failures reproduce, and the same class in "
+            r"`CounterpartyApi\.java` compiles clean under `-Xlint:all -sourcepath`",
+        )
+
+    def test_module_5_step_13_points_at_the_clause(self):
+        step = between(MAPPING, "### 13. Build the transformation program", "\n### 14.")
+        self.assertIn("reuse this same reader", step, "step 13 was not located")
+        self.assertRegex(
+            step, POINTS_AT_SHARED_CLASS_RULE,
+            "step 13 asks for a reader reused across modules with no route to the shared-class "
+            "filename rule",
+        )
+
+    def test_module_7_step_2_points_at_the_clause(self):
+        step = between(QUERY, "## 2. Create query programs", "\n## ")
+        self.assertIn("INV-152", step, "step 2 was not located")
+        self.assertRegex(
+            step, POINTS_AT_SHARED_CLASS_RULE,
+            "step 2 invites a shared helper with no route to the shared-class filename rule",
+        )
+
+    def test_the_pointers_do_not_restate_the_rule(self):
+        """INV-300: the reason and the symptoms have one home, ground-rules.md."""
+        for name, step in (
+            ("module 5 step 13",
+             between(MAPPING, "### 13. Build the transformation program", "\n### 14.")),
+            ("module 7 step 2", between(QUERY, "## 2. Create query programs", "\n## ")),
+        ):
+            with self.subTest(site=name):
+                self.assertTrue(step, "%s was not located" % name)
+                for phrase in ("by filename", "auxiliary class", "cannot find symbol",
+                               "CounterpartyApi"):
+                    self.assertNotIn(phrase, step.replace("**", ""))
 
 
 if __name__ == "__main__":

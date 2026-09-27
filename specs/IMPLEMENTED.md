@@ -43,6 +43,93 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## java-shared-class-breaks-the-package-private-filename-rule
+
+- **Implemented:** 2026-09-27 (**Not a spec** — a dated record of one issue-driven run, #161)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`,
+  `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`,
+  `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`,
+  `tests/test_java_filename_class_reconciliation.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed 2026-09-27 by reading every sentence the
+  change adds. It states `javac`'s class-resolution behavior and the plugin's own filename
+  guidance, and asserts nothing about the Senzing SDK, engine, configuration or data, and makes
+  no absence claim. The `javac` behavior was re-observed locally instead (INV-080/INV-149
+  observation-only), on **javac 21.0.12.1** (OpenJDK 21.0.12.1), 2026-09-27, in a scratch `tmp/`
+  deleted afterwards. All four of the issue's cases reproduce: package-private `CounterpartyApi`
+  in `counterparty_api.java`, compiled with its caller under `-Xlint:all`, exits 0 with *"auxiliary
+  class CounterpartyApi in … should not be accessed from outside its own source file"*. The caller
+  rebuilt alone with `-Xlint:all -sourcepath` exits 1 with `error: cannot find symbol`. A
+  standalone package-private `MeridianCrmMapper` in `meridian_crm_mapper.java` compiles clean
+  under `-Xlint:all` and `java -cp` runs it. The same shared class in `CounterpartyApi.java`
+  compiles clean under `-Xlint:all -sourcepath` and the program runs, both package-private and
+  `public`. The 21.0.11 single-mapper stamp is carried over from the existing text and was not
+  re-run on 21.0.11. Nothing sent upstream.
+- **Summary:** `ground-rules.md` → "File placement" told every Java file to drop `public` from its
+  top-level class, and said that form "compiles clean under `javac -Xlint:all`". That holds for a
+  prescribed standalone program file. It breaks for a class other files reference, because `javac`
+  resolves a sourcepath class by filename. The Java bullet now scopes the package-private form to
+  **prescribed standalone program files** (mappers, loaders, verification programs), and stamps
+  its `-Xlint:all` claim as verified for a single mapper class on javac/java 21.0.11, 2026-08-14.
+  A new sub-bullet covers the shared case: a shared class goes in a file named after the class,
+  such as `CounterpartyApi.java`, `public` or not. It gives the reason and both symptoms. It says
+  that a helper with no prescribed filename is outside "do not rename the file", and that a class
+  used only inside its own file stays there. It carries the 2026-09-25 javac 21.0.12.1 stamp.
+  Module 5 step 13 ("reuse this same reader") and Module 7 step 2 (the INV-152 shared-helper
+  paragraph) each gain a one-sentence pointer to the clause that does not restate it (INV-300).
+  `specs/INVARIANTS.md` and INV-237 are unchanged. The example is written as a bare filename, so
+  the PascalCase-path guard is unaffected.
+- **Approach:** raced (Phase 5b) by the run's lead. Approach A (scope the rule in place, with plain
+  pointers) won over B (a two-row decision table with ⛔ pointers). The comparison is on the issue
+  (comment 3). Applied from the raced patch with two adaptations: the two pointers are wrapped at
+  the surrounding prose's width rather than left as single ~170-character lines, and a stray third
+  blank line before the new test helpers is removed. Both pointers were re-checked against the
+  branch after #166 (which moved Module 7's teardown and added `## Module completion`) and #160
+  (Module 5's REL_* guidance). They still sit inside Module 5 step 13 and Module 7 step 2.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The change adds no ⛔
+  line, but it ships a durable rule in plain prose with a test enforcing it, which is the gap
+  INV-309 exists to close (#38). The rule already shipping, plain prose at its site:
+    - ⛔ **A shared class — one that other files reference — goes in a file named after the class** — in `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`
+
+  ⚠️ **INV-237 may already govern this.** The issue's refinement left INV-237 untouched because
+  its scope ("where the plugin prescribes a `snake_case` filename") already excludes a shared
+  helper, which has no prescribed name. The new sentence therefore reads as a scoping clarification
+  under INV-237. INV-237's own verification clause still carries the unscoped "the
+  package-private form compiles clean under `-Xlint:all` and runs". Whether that needs a
+  **PROPOSED AMENDMENT** to INV-237, a new id, or neither is the maintainer's call.
+
+  The drafted wording:
+
+  **INV-NNN** — Where a Java class is referenced from another source file (a shared helper, or
+  the JSON reader reused across modules), its file MUST be named after the class, `public` or
+  not. INV-237's package-private reconciliation covers only prescribed standalone program files.
+  `javac` resolves a sourcepath class by filename, so a package-private shared class in a
+  differently named file draws the auxiliary-class warning when every file compiles together,
+  and fails with `cannot find symbol` when one program is rebuilt alone with `-sourcepath`. Such
+  a file has no prescribed name, so INV-237's no-rename clause does not reach it. Every step that
+  invites shared Java code MUST point at the rule without restating it (INV-300). Verified on
+  javac 21.0.12.1, 2026-09-25. Enforced by `tests/test_java_filename_class_reconciliation.py`.
+  (Source: GitHub issue #161.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** `tests/test_java_filename_class_reconciliation.py` gains the class
+  `TheSharedClassCaseIsDistinguished` (9 tests), the `QUERY` path, and the `between()` and
+  `plain()` helpers, stdlib only. The module docstring's unscoped "compiles clean" claim is
+  corrected (its two old lines are the only lines removed). Every existing assertion is
+  unmodified and passes, including the PascalCase-path guard. Each pointer test first asserts
+  that its step was located, so a renamed heading fails loudly (INV-265). Negative controls,
+  each run from a `cp` backup and restored, `__pycache__` cleared:
+    - The shared-class sub-bullet deleted (the issue's control): 4 tests fail.
+    - The scoping sentence and "for a single mapper class" reverted: 2 tests fail.
+    - The 2026-09-25 stamp deleted: fails `test_the_shared_class_case_carries_its_own_stamp`.
+    - The Module 5 pointer deleted: fails `test_module_5_step_13_points_at_the_clause`.
+    - The Module 7 pointer deleted: fails `test_module_7_step_2_points_at_the_clause`.
+    - The reason restated inside the Module 7 pointer: fails
+      `test_the_pointers_do_not_restate_the_rule`.
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** uncommitted
+
 ## phase-d-how-state-audit-checks-every-multi-record-entity
 
 - **Implemented:** 2026-09-27 (**Not a spec** — a dated record of one issue-driven run, #154)
