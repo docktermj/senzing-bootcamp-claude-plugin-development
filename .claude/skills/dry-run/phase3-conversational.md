@@ -28,8 +28,8 @@ scaffold, do not begin the walk, and do not assume the top of the bootcamp.
 
 **Why.** The bootcamp is cheap to walk; the *analysis* is what fills the context
 window — the test-notes blocks, the pinned-wording comparisons, the invariant lookups,
-the specs written mid-walk. A run that analyzes from the onboarding preface exhausts
-its context somewhere around Discover the Business Problem and stops there. That is
+the ledger drafts written mid-walk. A run that analyzes from the onboarding preface
+exhausts its context somewhere around Discover the Business Problem and stops there. That is
 why every walk to date has re-covered the same opening stretch, and why Data
 processing, Query/Visualize/Discover and graduation have never been walked at all.
 Choosing where the analysis begins is the only way the later modules get exercised.
@@ -73,11 +73,12 @@ Run the bootcamp exactly as a Bootcamper would see it, and nothing else.
 - **The maintainer still answers.** ⛔ The no-fabrication rule above is not relaxed here.
   Fast-forward is the same walk with the *notes* turned off, not a simulation.
 - **No analysis.** No test-notes blocks, no invariant lookups, no character-for-character
-  gate comparisons, no specs. If something looks off, let it go — those modules are what
+  gate comparisons, no ledger drafts. If something looks off, let it go — those modules are what
   earlier runs covered and what a later run can start at.
 - **One exception: a blocker.** If the guide cannot proceed — an unsatisfiable
   instruction, a missing file, a failed tool call — that is the walk failing, not an
-  observation. Write the spec, then continue if you can. It costs context and is worth it.
+  observation. Draft it into the run's ledger entry, then continue if you can. It costs
+  context and is worth it.
 - **Do not narrate the fast-forward.** No inter-module summaries, no progress
   announcements, no "still fast-forwarding". Module-completion output the Bootcamper
   would see is bootcamp output and stays.
@@ -92,7 +93,7 @@ which is a real share of the window. What it removes is the analysis on top of t
 ### The analysis stretch — from the chosen module on
 
 Everything else in this file switches on the moment the chosen module starts: the
-two-channel discipline, the watch list, spec-on-sight. Tell the maintainer in one line
+two-channel discipline, the watch list, draft-on-sight. Tell the maintainer in one line
 that the analysis starts here, so they know which channel they are reading.
 
 Before its first turn, read that module's own `SKILL.md` and the invariants it cites.
@@ -158,11 +159,13 @@ the first of them:
   being tested.
 
 ⛔ **The test-notes blocks are working notes, not the record.** They live in the conversation
-and die with it. The moment an observation firms up into a finding, write it into a
-`specs/` file — see the SKILL's "What to do with a finding", rule 1. Do this *during* the
-walk, not at the end: this phase stops on whatever turn the maintainer stops it, so "I'll
-write it up when we finish" is a bet that there is a finish. A walk that reached eight turns
-holding four findings in conversation alone is why this paragraph exists.
+and die with it. The moment an observation firms up into a finding, draft it into the run's
+ledger entry — the SKILL's "The finding lifecycle", step 1. Do this *during* the walk, not at
+the end: this phase stops on whatever turn the maintainer stops it, so "I'll write it up when
+we finish" is a bet that there is a finish. A walk that reached eight turns holding four
+findings in conversation alone is why this paragraph exists. ⛔ **Drafting is mid-walk; filing
+is not.** The lifecycle asks its filing question only when the walk pauses or ends, so no
+bootcamp turn ever carries it.
 
 ## What to watch for
 
@@ -232,13 +235,13 @@ reads as broader coverage than it had.
   one without a maintainer watching, would land the same way. Findings are trustworthy;
   clean stretches are weaker evidence than they feel.
 
-## Graduation's upstream offer — present it, refuse the send
+## Graduation's upstream offer — present it, never send on the in-character yes
 
-⛔ **Graduation Step 0 will offer to forward `mcp-server`-routed findings and send on a yes, and
-`/dry-run` forbids calling `submit_feedback` under any category. Present the offer anyway; do not
-send.** Skipping the gate silently is worse: its wording, its batching and its INV-065 stripping
-are module behavior under test, and a walk that quietly omits a step corrupts the thing phase 3
-exists to observe.
+⛔ **Graduation Step 0 will offer to forward `mcp-server`-routed findings and send on a yes, and the
+yes it gets is given in character — the Bootcamper's, never the maintainer's (INV-314's scope
+note). Present the offer anyway; do not send.** Skipping the gate silently is worse: its wording,
+its batching and its INV-065 stripping are module behavior under test, and a walk that quietly
+omits a step corrupts the thing phase 3 exists to observe.
 
 ⚠️ **This fires on every phase-3 walk that reaches graduation with at least one `mcp-server`
 finding, which is close to guaranteed** — Step 0 says so itself: retrospective findings skew toward
@@ -248,21 +251,22 @@ graduation.
 
 **Break character to say so, in roughly these words**, rather than improvising it mid-walk:
 
-> This is a dry run, so I can present this gate but I can't actually send: the skill forbids
-> calling `submit_feedback` under any category, so a dry run never files into Senzing's real
-> queue. I'm recording your answer and the drafted message; sending is yours to do afterwards.
+> This is a dry run, so I can present this gate but I can't send on your answer here: a dry run
+> never sends on the Bootcamper's answer, so nothing reaches Senzing's real queue from inside the
+> walk. I'm recording your answer and the drafted message; whether it goes is the maintainer's
+> decision afterwards.
 
 Then:
 
-- **Record `submission blocked: dry run — sending is forbidden by the dry-run skill`** in the
-  entry's `Upstream:` field (`../../plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md`
-  Step 3). ⛔ **Never `offered, declined`** — the maintainer answering in character said *yes*, and
-  writing down a refusal is false about the one thing the field exists to record.
-- **Draft the exact message into the spec** so the send costs one approval later. A blocked send
-  with no drafted text is a finding nobody can forward without redoing the work.
-- The send itself is a **separate, maintainer-authorized action taken after the run closes**, with
-  the maintainer approving the text verbatim — which is outside this skill's ⛔, because the run is
-  over.
+- **Record `submission blocked: dry run — a dry run never sends on an in-character yes; the
+  maintainer decides after the walk`** in the entry's `Upstream:` field
+  (`../../plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md` Step 3). ⛔ **Never
+  `offered, declined`** — the maintainer answering in character said *yes*, and writing down a
+  refusal is false about the one thing the field exists to record.
+- **Draft the exact message into the run's ledger entry** so the send costs one approval later. A
+  blocked send with no drafted text is a finding nobody can forward without redoing the work.
+- **After the walk**, an `mcp-server` finding may be offered to the maintainer, out of character,
+  under the SKILL's outbound rule ("Absolute rules"; "The finding lifecycle", step 5).
 
 ## Stopping
 
@@ -272,7 +276,10 @@ naming **both ends of the analysis** — the module it started at and how far it
 the untested remainder on either side is visible, and so the next run knows which module
 to start later than.
 
-⛔ **Before stopping, confirm every finding is in a spec.** The stop is not yours to schedule,
-so treat each turn as potentially the last: an observation that has firmed up and is still only
-in a test-notes block is one message away from being lost. A partial walk whose findings are
-written down is a contribution; a partial walk whose findings are not is a conversation.
+⛔ **Before stopping, confirm every finding is drafted in the run's ledger entry.** The stop is
+not yours to schedule, so treat each turn as potentially the last: an observation that has
+firmed up and is still only in a test-notes block is one message away from being lost. A
+partial walk whose findings are written down is a contribution; a partial walk whose findings
+are not is a conversation. The pause is where the lifecycle's filing step happens (the SKILL's
+"The finding lifecycle", step 3), so a stop is also the moment to put each draft to the
+maintainer.

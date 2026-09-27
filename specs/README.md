@@ -40,8 +40,12 @@ Retiring the ledger would break those citations. That is why it stays.
 ## Commands that wrote here
 
 These wrote new spec files into this directory. Under the freeze their output no longer has
-anywhere to land, so running one that has not been reworked turns the suite red. ✅ **None is
-left** — the last one was reworked in #114:
+anywhere to land, so running one that has not been reworked turns the suite red.
+
+⚠️ **Corrected 2026-09-26 (#153).** This line used to claim that #114 reworked the last of them.
+It had not: `/dry-run` still told its runner to write each finding as a new spec file here, and
+the 2026-09-24 run that did so turned `tests/test_specs_are_frozen.py` red with four. With
+`/dry-run` reworked, every command below writes its output elsewhere:
 
 | Command | Status |
 | --- | --- |
@@ -50,6 +54,13 @@ left** — the last one was reworked in #114:
 | `/unattended-issue-loop` | ✅ Renamed from `/unattended-spec-loop` and label-gated (#51); its blocked path now comments on the issue, and it forbids writing here outright (#69) |
 | `/production-readiness-audit` | ✅ Files a GitHub issue when attended, records findings in the ledger when not (#69) |
 | `/delegate-to-mcp-server` | ✅ Reworked — it files GitHub issues now, and writes nothing here (#114) |
+| `/dry-run` | ✅ Reworked — it drafts each finding into its run's `IMPLEMENTED.md` entry and files GitHub issues from there, and writes no new file here (#153) |
+
+**`tests/list_specs.py` is kept (INV-216)**, and its role is narrower than it once was. It
+computes the frozen archive's open set — spec files in neither `IMPLEMENTED.md` nor
+`DECLINED.md` — and that is all it can see. New findings are GitHub issues, which it never
+lists, so it is not a worklist for new work and no command should cite it as a reason to write
+here.
 
 ## Triage of what remained here
 

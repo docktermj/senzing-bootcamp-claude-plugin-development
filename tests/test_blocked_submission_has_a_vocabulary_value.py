@@ -6,6 +6,12 @@ under any category, so a dry run never files into Senzing's real queue. On the f
 walk ever to reach graduation, the maintainer answered "yes" in character and the walk had to
 break character to explain the send could not happen.
 
+⚠️ **Reworded 2026-09-26 (#153).** `/dry-run` no longer bans `submit_feedback` outright: its
+outbound rule lets the maintainer, out of character, approve sending a certain `mcp-server`
+finding. What still blocks the send at graduation is that the *yes* was given in character, so the
+disclosure the walk reads out now says a dry run never sends on the Bootcamper's answer, and the
+pinned regex below follows it. The collision, and the value it needs, are unchanged.
+
 ⛔ **The vocabulary had no value for that outcome.** `feedback.md` Step 3 offered
 `not applicable | offered, declined | submitted YYYY-MM-DD | submission failed: reason`, and the
 nearest legal value — `offered, declined` — is **false about the one thing the field records**:
@@ -172,8 +178,10 @@ class TheVocabularyCarriesABlockedValue(unittest.TestCase):
         self.assertIn("present the offer", flat,
                       "the doc must say the offer is PRESENTED — skipping the gate silently "
                       "corrupts the thing phase 3 exists to observe")
+        # `(?:> )?` -- the disclosure is a blockquote, and its line break leaves a `>` behind.
         self.assertRegex(
-            flat, r"this is a dry run, so i can present this gate but i can't actually send",
+            flat, r"this is a dry run, so i can present this gate but i can't send on your "
+                  r"answer here: a dry run (?:> )?never sends on the bootcamper's answer",
             "the disclosure wording is gone, so a runner has to improvise it mid-walk — which "
             "is the situation this instruction exists to remove")
 

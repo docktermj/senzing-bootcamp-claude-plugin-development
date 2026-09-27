@@ -43,6 +43,143 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## dry-run-drafts-findings-into-the-ledger-and-files-issues
+
+- **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #153)
+- **Files changed:** `.claude/skills/dry-run/SKILL.md`, `.claude/commands/dry-run.md`,
+  `.claude/skills/dry-run/phase3-conversational.md`, `.claude/skills/feedback-to-issues/SKILL.md`,
+  `specs/README.md`, `tests/test_dry_run_files_issues.py` (new),
+  `tests/test_blocked_submission_has_a_vocabulary_value.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed 2026-09-26 by reading every claim the
+  change makes. It edits maintainer-side `.claude/` prose, `specs/README.md` and two tests, and
+  asserts nothing about the Senzing SDK, engine, configuration or data, and no absence claim.
+  The `submit_feedback` send limits (`bug` or `feature`, never `license_request`, identifying
+  details stripped) are carried by reference from `/feedback-to-issues` Step 8 and INV-135, not
+  newly asserted. For corroboration only, the tool's declared schema was read on 2026-09-26
+  without invoking it: categories `bug, feature, question, general, license_request`, with
+  `license_request` taking a first name and work email. That is consistent with the carried
+  rule. The raced patch's earlier dated claim about the tool's description was removed rather
+  than re-verified. `submit_feedback` was not called.
+- **Summary:** `/dry-run` was the last maintainer command still told to write findings as new
+  files under `specs/`, which has been a read-only archive since 2026-09-15 (INV-307). The
+  2026-09-24 run that followed it turned `tests/test_specs_are_frozen.py` red with four files. A
+  finding is now drafted on sight into the run's dated `specs/IMPLEMENTED.md` entry (a
+  `## dry-run-<YYYY-MM-DD>` heading, **Not a spec**), marked not yet filed. It is filed as a
+  GitHub issue at the end of phase 1 or 2, or when a phase 3 walk pauses or ends, never
+  mid-walk. Before filing, the run searches open and closed issues, and a tracked finding points
+  at its issue. Each issue is shown and gets its own yes (INV-314), with the fenced
+  `gh issue create` beside its gate. No maintainer present: the draft stays marked "not filed —
+  needs the maintainer to file it". Declined: recorded as declined. The run never applies
+  `unattended-ok`. "Never send anything outside the machine" is replaced by exactly two gated
+  outward acts, one identical block in `SKILL.md` "Absolute rules" and in the command:
+    1. an issue or comment in this repository;
+    2. `submit_feedback`, only for a certain `mcp-server` finding. A `both` finding gets an issue
+       carrying the drafted upstream message, and `license_request` stays forbidden.
+
+  An in-character yes authorizes neither act. Phase 3's graduation offer is still presented and
+  still not sent on the Bootcamper's yes. Its disclosure says a dry run never sends on the
+  Bootcamper's answer, and it records `submission blocked: dry run — a dry run never sends on an
+  in-character yes; the maintainer decides after the walk`. The durability rule, "do not end a
+  run with unwritten findings", the four-findings history and "produced nothing durable" all
+  survive, with the destination swapped. `feedback-to-issues/SKILL.md` now reads "a `/dry-run`,
+  which never sends on an in-character answer". `specs/README.md` drops "None is left" for a
+  dated correction, adds a `/dry-run` row with #153, and states that `tests/list_specs.py` is
+  kept (INV-216) and sees only the frozen archive's open set, not GitHub issues. The archive
+  citations at `phase1-mcp-contracts.md:67` and `phase2-hooks-and-scripts.md:120`, and
+  `compact-dev-environment`, are untouched, as the issue scopes. All acceptance criteria are met,
+  with INV-281 on its unattended path (below).
+- **Approach:** raced (Phase 5b) by the run's lead. Approach A won: finish an earlier run's
+  near-complete attempt, trimmed to the issue's sites, with the rule repeated in the same words
+  in the skill and the command, and a clause-by-clause equality test. Approach B was built fresh
+  from the issue. The comparison is on the issue (comment 3). The patch applied cleanly to
+  `main` at `a479ee1`. One adaptation: a negative control showed check 3's `mcp-server` clause
+  was a bare prefix, so "`mcp-server` or `both`" still passed it. The assertion now pins the
+  whole clause through "nothing in the senzing bootcamp needs to change".
+- **Tests:** new `tests/test_dry_run_files_issues.py`, stdlib only, 15 tests:
+    - input checks;
+    - check 1, no new `specs/*.md` destination: a negation-aware pattern scan, every cited
+      `specs/*.md` must exist, and an INV-282 rule-versus-ban pin;
+    - check 2, the durability rule, in the skill, the command and phase 3;
+    - check 3, the outbound rule: its limits in both files, and no surface, plus
+      `feedback-to-issues`, still states a blanket ban;
+    - check 4, the README;
+    - `TheCommandSaysItInTheSameWords`: 14 lifecycle clauses in both files, and the outbound
+      block word for word.
+
+  `test_blocked_submission_has_a_vocabulary_value.py`'s disclosure regex was repointed to the
+  new wording, and its "present the offer" and recorded-value assertions stay.
+  `tests/test_filing_is_gated.py` passes on the new fence. Negative controls, re-run on this
+  branch: 20 mutations, each confirmed to land, run against its target class with
+  `__pycache__` cleared, then restored. All 20 fail. They cover the old destination restored in
+  the skill, the command and phase 3 (5), each durability clause dropped (3), the outbound
+  limits broken (6, including the `both` widening above, which passed before the fix), each
+  README claim reverted (3), a paraphrased lifecycle clause and a changed outbound word in the
+  command (2), and the old disclosure (1).
+- **Establishes no new invariant for the outbound rule itself.** It applies INV-314 (each
+  outward record shown and approved on its own), INV-307 (nothing new lands in `specs/`) and
+  INV-135 (`license_request` carries personal details) at the `/dry-run` surfaces, which those
+  invariants already govern. The new guard enforces them there.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-281 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+    - ⛔ **Nothing leaves the machine except two outward acts, each under INV-314's gate: show the maintainer the exact text and get a yes, given out of character, one record at a time.** — in `.claude/skills/dry-run/SKILL.md`
+    - ⛔ **Graduation Step 0 will offer to forward `mcp-server`-routed findings and send on a yes, and the yes it gets is given in character — the Bootcamper's, never the maintainer's (INV-314's scope note). Present the offer anyway; do not send.** — in `.claude/skills/dry-run/phase3-conversational.md`
+
+  ⚠️ **Why this is an amendment and not a new invariant.** INV-281's rule is unchanged: the
+  closed `Upstream:` vocabulary, with a consented-but-blocked send distinct from a declined one.
+  Only one sentence of its rationale went stale: "A `/dry-run` forbids calling
+  `submit_feedback`, so a Bootcamper's *yes* cannot be acted on". #153 replaced the blanket ban
+  with a gated, `mcp-server`-only send, so what blocks the send at graduation is now *who* said
+  yes, not a ban on the tool. Amending a registered invariant is the maintainer's sign-off alone,
+  and the issue's unattended path says to leave `specs/INVARIANTS.md` untouched, so it was.
+  ⚠️ **The block carries both markers on purpose.** The issue asks for a `DEFERRED INVARIANT`
+  block. `pending_invariants.py` queues a change to a registered invariant by its
+  `PROPOSED AMENDMENT to INV-nnn` marker (#79), and lists it as `AMENDS INV-281`.
+  `tests/test_review_invariants_queue.py`'s flat scan counts only the "NOT minted" marker, so
+  that marker is here too, and it is true: no id is minted. Applying the amendment resolves the
+  block. Mark the bullet `applied YYYY-MM-DD` and drop both "awaiting" markers, since the helper
+  keeps a block queued while either one remains. Enforced by
+  `tests/test_blocked_submission_has_a_vocabulary_value.py`.
+
+  The drafted wording, a dated correction note appended to INV-281, with its rule and every other
+  sentence unchanged:
+
+  **INV-281** — (⛔ **Dated correction, <YYYY-MM-DD> (#153) — the rule is unchanged; one sentence
+  of its rationale is corrected.** The sentence "A `/dry-run` forbids calling `submit_feedback`,
+  so a Bootcamper's *yes* cannot be acted on" is superseded by: "A `/dry-run` never sends on a
+  Bootcamper's in-character yes, so that *yes* cannot be acted on." `/dry-run` now permits
+  `submit_feedback` only for a certain `mcp-server` finding, on the maintainer's
+  out-of-character yes for each message (INV-314). The Bootcamper's yes at graduation Step 0 is
+  still not the maintainer's assent, so the send is still blocked, and `submission blocked:
+  <reason>` is still the value to record.)
+
+  *(the date is a placeholder deliberately: it is the day the maintainer approves the wording at
+  `/review-invariants`, not the day of this run.)* *(written as NNN deliberately: no new id is
+  drafted, because this amends INV-281 in place and a literal new id would cite an invariant
+  that does not exist and turn `citations.py verify` red. If the maintainer prefers a superseding
+  invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
+  rather than trusting a number written here.)*
+- **Findings, recorded and not changed here (no issue filed):**
+    - Three places still say `/dry-run` forbids `submit_feedback`, which now contradicts the
+      outbound rule:
+        - `.claude/skills/feedback-to-issues/issue-template.md:48` ("e.g. a `/dry-run`, which
+          forbids `submit_feedback`");
+        - the shipped `plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md:250-251`
+          ("a maintainer `/dry-run`, which forbids calling `submit_feedback` under any category");
+        - the historical module docstring of
+          `tests/test_blocked_submission_has_a_vocabulary_value.py:3-6`. This run added a dated
+          "Reworded 2026-09-26 (#153)" note below it and left the history as written.
+    - `.claude/skills/dry-run/phase1-mcp-contracts.md:118` ("⛔ Call `submit_feedback`. Verify
+      its schema; never invoke it") is stricter than the new rule, but does not contradict it:
+      phase 1 probes and never sends.
+    - `tests/test_review_invariants_queue.py` `counted_by_scanning()` counts pending blocks by
+      the "NOT minted" marker alone. A pending `PROPOSED AMENDMENT` carrying only its own
+      "NOT applied" marker is queued by the helper and missed by the scan, and the count test
+      fails. This is the first live amendment block; #79 tested amendments with fixtures only.
+      This block carries both markers instead of changing the test.
+    - The outbound rule's "everything identifying stripped (INV-065)" follows the issue's own
+      wording and the shipped `feedback.md:214` precedent. INV-065's registered text is about
+      the sanitized example recap, not stripping defect reports.
+- **Commit:** uncommitted
+
 ## scaffold-banner-claims-an-unreachable-chip-clip
 
 - **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #152)
