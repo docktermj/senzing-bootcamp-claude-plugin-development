@@ -220,11 +220,15 @@ dataset.
 
 ## 19. Run full orchestration
 
-Run on the complete dataset. Monitor per-source progress, error rates, overall completion, and
-elapsed/estimated time. If slow, suggest reducing parallelism.
+Run on the dataset the recorded load decision names — the complete dataset unless a subset was
+chosen — and tell the bootcamper which one is being loaded. When it is a subset, say so and that
+the full dataset can be loaded afterwards. Monitor per-source progress, error rates, overall
+completion, and elapsed/estimated time. If slow, suggest reducing parallelism.
 
-**⚠️ SQLite note:** if total records exceed 1,000, recommend loading a subset first to validate
-cross-source matching, then load more or switch to PostgreSQL (a production follow-up; see the graduation migration checklist).
+The SQLite volume question was settled before the first load, so add nothing about it here: load
+what `sqlite_volume_prompt` or the Module 4 Step 8b load decision records, as Phase B step 7
+(`phaseB-load-first-source.md`) says, rather than restating it (INV-300). No decision recorded
+means none was needed — the complete dataset, with no SQLite remark (INV-244).
 
 **Checkpoint:** write step 19.
 
