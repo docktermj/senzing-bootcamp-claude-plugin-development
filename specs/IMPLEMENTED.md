@@ -106,7 +106,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   restored fails assertion 3 (1 test); `sqlite_volume_prompt` removed from Phase B Step 7's note
   fails assertion 1 (1 test).
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** a3c1f58
 
 ## dry-run-drafts-findings-into-the-ledger-and-files-issues
 
