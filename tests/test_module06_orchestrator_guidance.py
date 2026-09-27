@@ -1,5 +1,9 @@
 """The orchestrator must be told that per-source statistics are not free.
 
+MCP-NEGATIVE-SCAN: ignore-file — this file quotes the `MCP-NEGATIVE:` token as a LOCATOR, to
+find Step 17's real marker and assert its `owner:` clause (#156). Those string literals are
+matchers, not dated claims, so the scanner would otherwise report them as malformed markers.
+
 Phase C step 17 requires "per-source progress/error tracking with error isolation, statistics
 aggregation, and a completion summary", and step 16 frames the Module 6 loading program as the
 template to build from. Both halves come from MCP scaffolds — and the loading scaffold keeps
@@ -32,6 +36,14 @@ Enforces **INV-245** — a value that failed its own verification check is not p
 
 Source spec: `specs/orchestrator-per-source-stats-vs-static-scaffold-counters.md`.
 
+`TheNoHandWrittenRuleIsScopedToSdkCalls` (#156) pins where the no-hand-written rule stops. As
+worded before, "Orchestrator and redo code comes from the MCP tools, never hand-written" forbade
+the orchestrator itself, while no MCP route serves one: `find_examples(query='multi-source')`
+returned `examples: []` and `generate_scaffold` has no orchestration workflow (server 1.37.13,
+2026-09-26, recorded as the step's `MCP-NEGATIVE` marker). The SDK calls stay MCP-derived, through
+the Step 3 loader; the orchestration around them is ordinary code (INV-240: a prohibition states
+its general rule).
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -51,6 +63,23 @@ def step_17():
     start = text.index("## 17. Create orchestrator program")
     end = text.index("## 18. Test orchestrator", start)
     return re.sub(r"\s+", " ", text[start:end])
+
+
+def _prose(text):
+    """Comment-stripped, whitespace-collapsed prose, so a marker cannot satisfy a prose check."""
+    return re.sub(r"\s+", " ", re.sub(r"<!--.*?-->", " ", text, flags=re.S))
+
+
+def header():
+    """Phase C's preamble: everything before the conditional gate."""
+    text = PHASE_C.read_text(encoding="utf-8")
+    return _prose(text[: text.index("**Conditional gate.**")])
+
+
+def step_17_raw():
+    text = PHASE_C.read_text(encoding="utf-8")
+    start = text.index("## 17. Create orchestrator program")
+    return text[start:text.index("## 18. Test orchestrator", start)]
 
 
 class TheHazardIsNamed(unittest.TestCase):
@@ -134,6 +163,52 @@ class TheFiguresMustBeReconciled(unittest.TestCase):
     def test_it_says_why_aggregate_only_checking_is_insufficient(self):
         """The accumulating counters sum correctly; that is the trap."""
         self.assertIn("passes every check that looks", step_17())
+
+
+class TheNoHandWrittenRuleIsScopedToSdkCalls(unittest.TestCase):
+    """#156: the rule covers what the MCP tools serve, and names orchestration as ordinary code."""
+
+    def test_the_header_scopes_the_rule_to_senzing_sdk_calls(self):
+        body = header()
+        self.assertIn("Senzing SDK calls", body)
+        self.assertIn("never hand-written", body)
+        self.assertNotIn("Orchestrator and redo code comes from the MCP tools", body)
+
+    def test_the_header_names_orchestration_as_ordinary_code_and_says_why(self):
+        body = header()
+        self.assertIn("orchestration around them", body)
+        self.assertIn("ordinary code", body)
+        self.assertIn("no MCP route serves it", body)
+
+    def test_the_module_rule_points_orchestration_at_the_phase_c_header(self):
+        skill = _prose((PHASE_C.parent / "SKILL.md").read_text(encoding="utf-8"))
+        start = skill.index("Loading, redo, and query code come from the MCP tools")
+        rule = skill[start:skill.index("Override MCP-suggested paths", start)]
+        self.assertIn("orchestrates", rule)
+        self.assertIn("ordinary code", rule)
+        self.assertIn("phaseC-multi-source.md", rule)
+
+    def test_step_17_prescribes_no_query_that_returns_nothing(self):
+        self.assertNotIn("multi-source", _prose(step_17_raw()))
+
+    def test_step_17_names_the_step_3_loader_as_its_sdk_source(self):
+        body = _prose(step_17_raw())
+        self.assertIn("Senzing calls come from the Step 3 loader", body)
+        self.assertIn("workflow='add_records'", body)
+
+    def test_retryable_exceptions_are_routed_to_error_handling(self):
+        body = _prose(step_17_raw())
+        self.assertIn("sdk_guide(topic='error_handling'", body)
+        self.assertIn("backoff loop is ordinary code", body)
+
+    def test_the_absence_is_a_dated_negative_naming_both_owner_routes(self):
+        marker = [ln for ln in step_17_raw().splitlines() if "MCP-NEGATIVE:" in ln]
+        self.assertEqual(len(marker), 1, marker)
+        line = marker[0]
+        self.assertRegex(line, r"MCP-NEGATIVE: find_examples\(query='multi-source'")
+        self.assertRegex(line, r"owner: find_examples IS the route")
+        self.assertIn("generate_scaffold IS the route", line)
+        self.assertRegex(line, r"server [0-9][0-9.]*, \d{4}-\d{2}-\d{2}")
 
 
 if __name__ == "__main__":

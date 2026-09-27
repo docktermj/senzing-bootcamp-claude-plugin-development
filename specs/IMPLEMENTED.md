@@ -43,6 +43,60 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## phase-c-no-hand-written-rule-covers-sdk-calls-only
+
+- **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #156)
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/SKILL.md`,
+  `tests/test_module06_orchestrator_guidance.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.13, 2026-09-26 — still reproduces.
+  `find_examples(query='multi-source')` with and without `language='java'` → `examples: []` plus
+  the method-name hint; `find_examples(query='orchestrator load multiple data sources')` → single-source
+  loaders, data-source registration snippets, CHANGELOGs, no orchestrator;
+  `generate_scaffold(language='python', workflow='orchestration')` → rejected, workflow list
+  `initialize, configure, add_records, delete, query, redo, stewardship, information,
+  error_handling, full_pipeline`; `generate_scaffold(workflow='full_pipeline')` →
+  initialize/configure/load/search snippets only; `search_docs(query='orchestrate loading multiple
+  data sources ordered per-source error isolation retry')` → redo FAQ and redo snippets only. The
+  two calls Step 17 still prescribes were executed: `generate_scaffold(language='python',
+  workflow='add_records')` → six `code-snippets-v4` `python/loading/` snippets;
+  `sdk_guide(topic='error_handling', language='python')` → `search_records.py` classifying
+  `SzBadInputError` / `SzRetryableError` / `SzUnrecoverableError`, with no backoff.
+  owner-checked: `find_examples` IS the route for indexed example code — it returned no
+  orchestrator; `generate_scaffold` IS the route for SDK templates — it has no orchestration
+  workflow. The issue's stop clause (a route now serves an orchestrator) did not fire.
+- **Summary:** Phase C's header said "Orchestrator and redo code comes from the MCP tools, never
+  hand-written", and Module 6's load-step rule said the same of loading code, so both forbade the
+  orchestrator Step 17 asks for while no MCP route serves one; Step 17 also prescribed
+  `find_examples(query="multi-source")`, which returns nothing. The header now scopes the rule to
+  Senzing SDK calls (loader, redo, engine setup) and names the orchestration around them as
+  ordinary code in the bootcamper's language, with the reason (INV-240). `SKILL.md`'s rule gains
+  a clause pointing orchestration code at that header. Step 17 drops the empty query, names the
+  Step 3 loader as the source of its Senzing calls (keeping `generate_scaffold(workflow='add_records')`
+  and the path override), and routes the retryable-exception decision to
+  `sdk_guide(topic='error_handling', language=…)` while the backoff loop stays ordinary code. A
+  one-line `MCP-NEGATIVE` marker at Step 17 records the absence with both owner routes and the
+  date; `coverage_reports.py negatives` lists it and reports no malformed marker. Phase A/B headers
+  and Step 20's redo guidance are unchanged, as scoped.
+- **Deviation from the issue, recorded:** the issue calls the marker a `routing negative`; it is
+  tagged `(absence negative)`, the repo's term for an owner route asked and found empty (every
+  `routing negative` in the plugin points to where the material IS served). The `search_docs`
+  ask (INV-194) is recorded on the re-check line above, not in the marker, because a
+  `search_docs(query=…)` literal in shipped prose must be allowlisted by
+  `tests/test_prescribed_search_queries.py`, a file this issue does not scope.
+- **This run establishes no invariant.** It rescopes an existing guidance rule under INV-240 and
+  records a negative under INV-194/INV-213; it ships no new durable guarantee.
+- **Tests:** `tests/test_module06_orchestrator_guidance.py` gains
+  `TheNoHandWrittenRuleIsScopedToSdkCalls` (7 tests, reading comment-stripped prose): the rescoped
+  header and its reason, the old header absent, `SKILL.md`'s pointer, no `multi-source` query in
+  Step 17, the Step 3 loader and `add_records` as the SDK source, the `error_handling` route, and
+  one dated marker naming both owner routes. The file opts out of the negatives scan
+  (`MCP-NEGATIVE-SCAN: ignore-file`), since it quotes the token as a locator. Negative controls,
+  each run and reverted: restoring the old header fails 2; restoring the `multi-source` query
+  fails 1; deleting the marker fails 1; restoring the old `SKILL.md` rule fails 1.
+- **Verification:** suite as reported in the PR.
+- **Commit:** uncommitted
+
 ## the-encoding-self-check-counts-combination-rows
 
 - **Implemented:** 2026-09-25 (**Not a spec** — a dated record of one issue-driven run, #159)

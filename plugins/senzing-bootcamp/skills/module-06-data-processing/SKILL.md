@@ -52,7 +52,9 @@ When the bootcamper hits an error during this module:
 
 - **Loading, redo, and query code come from the MCP tools, never hand-written.** Use
   `generate_scaffold` (workflows `add_records`, `redo`, `query`) and `sdk_guide` for
-  version-correct SDK code. Inline examples may use outdated SDK patterns.
+  version-correct SDK code. Inline examples may use outdated SDK patterns. The rule covers
+  the Senzing SDK calls; code that only orchestrates them is ordinary code (see the
+  Phase C header, `phaseC-multi-source.md`).
 - **Override MCP-suggested paths.** If a generated scaffold uses `/tmp/`, `ExampleEnvironment`,
   or any path outside the working directory, override the database path to `database/G2C.db`
   and keep all output files project-relative.
