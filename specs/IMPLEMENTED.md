@@ -43,6 +43,82 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## sqlite-preload-heads-up-fires-on-the-production-tier
+
+- **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #163)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`,
+  `tests/test_sqlite_preload_check_reads_the_loadable_total.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13** (docs index 2026-09-24 18:45 UTC), 2026-09-26 — **still
+  reproduces**. Called `get_capabilities` and `search_docs(query="loading",
+  category="anti_patterns")`. "Senzing Anti-Patterns: Architecture and Performance" → "Do Not Use
+  SQLite in Production" still says "Use SQLite only for quick local testing with small datasets
+  (under 100K records)" and that SQLite "does not support concurrent writes". That is the
+  threshold the issue and Phase A item 3 cite, served by the same route, an order of magnitude
+  above the 9,996-record load the issue observed. The threshold stays MCP-sourced in item 3, with
+  the existing "roughly 100,000" gloss. No absence claim is made, so no `owner-checked:` clause
+  is owed.
+- **Summary:** Phase A's "SQLite volume pre-load check" decided whether to stop the Bootcamper
+  before **this** load from `production_volume.tier`, which Step 1 collects about the take-home
+  system and forbids filling with the bootcamp's own count. Item 1 now also reads the **loadable
+  total**, every mapped source's file in `data/senzing-ready/` together (Phases B and C share one
+  SQLite database), and treats it as indeterminate when it cannot be computed. Item 3 prompts only
+  when the database is SQLite, it was not already decided, and the loadable total exceeds the
+  MCP-sourced threshold. The tier no longer triggers it, `raw_value` is no longer read, and an
+  unavailable threshold is indeterminate (INV-080). Item 2 matches "already decided" on the
+  marker's new `loadable` field, and a marker without it does not match. Both item 4 branches
+  record `{decided: true, choice, loadable, tier, raw_value}`; `tier` and `raw_value` are kept for
+  the record only. A new **production line** says, once and with no 👉, that a `medium`/`large`
+  tier on SQLite should plan on PostgreSQL and points at the graduation migration checklist. It
+  is said before the question when the question fires, so the turn still ends on the question.
+  Phase B Step 7's "start with the first 1,000 records" suggestion is gated on the same trigger,
+  and an absent marker is "not asked", never "answered" (INV-244). The pinned question (INV-056),
+  the INV-296 proceed-branch line and the anchors other tests read are unchanged.
+- **Approach:** raced (Phase 5b) by the run's lead. Approach A, the minimal in-place edit, won
+  over B, which restated the check around one defined `loadable` and also counted fast-pathed
+  sources. The comparison is on the issue (comment 3). **Adapted from the raced patch:** one
+  overlong line in the proceed branch's marker sentence was reflowed; the INV-296 block is
+  unchanged.
+- **Finding, not implemented (for the maintainer):** read literally, `loadable` counts only files
+  in `data/senzing-ready/`. A large fast-pathed source, such as CORD, whose file stays in
+  `data/raw/`, therefore never triggers the heads-up. The issue's scope names only
+  `data/senzing-ready/`, and an unattended run does not widen it; approach B did.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+  shipping:
+    - ⛔ **The production tier does not trigger this prompt: it describes the take-home system, not the load about to run** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`
+    - ⛔ **`tier`/`raw_value` do not decide the match** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`
+    - ⛔ **It changes nothing about today's load** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`
+    - ⛔ **An absent marker is "not asked", never "answered" (INV-244).** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`
+
+  ⚠️ **Why this is not simply INV-244.** INV-244 covers the Phase B half, reading an absent
+  marker as an answer. It does not say which figure a pre-load gate compares, and the defect was
+  a gate keyed on the production-scale answer.
+
+  The drafted wording:
+
+  **INV-NNN** — A stop-and-confirm heads-up placed immediately before a load and worded about
+  that load MUST trigger on the records about to be loaded (the loadable total across every
+  mapped source in `data/senzing-ready/`), compared against an MCP-sourced threshold. The
+  production-volume answer, which Step 1 collects about the take-home system and forbids filling
+  with the bootcamp count, MUST NOT trigger it, and is surfaced instead as a statement with no 👉.
+  A marker recording such a decision MUST record the figure the trigger compared, and "already
+  decided" MUST match on that figure. Enforced by
+  `tests/test_sqlite_preload_check_reads_the_loadable_total.py`. (Source: GitHub issue #163.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here. If the fast-pathed finding above is taken up, the parenthetical's
+  `data/senzing-ready/` scope changes with it.)*
+- **Tests:** new `tests/test_sqlite_preload_check_reads_the_loadable_total.py` (16 tests in 4
+  classes, one per issue assertion; stdlib only, imports nothing under `plugins/`).
+  `tests/test_loader_concurrency_reads_database_type.py` passes unchanged. Negative controls,
+  each run and reverted: both files at the pre-change text fail 15; the tier/`raw_value` trigger
+  put back in item 3 fails 2; `loadable` dropped from the proceed record fails 1; item 2 matching
+  on `tier`/`raw_value` fails 1; a 👉 in the production line fails 1; the production-line
+  paragraph removed fails 4; Phase B's old marker-only gate fails 2.
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** uncommitted
+
 ## search-docs-now-answers-the-evaluation-record-limit
 
 - **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #150)

@@ -217,11 +217,16 @@ this to the bootcamper; re-opening it here would be a third ask on a settled que
 would push a dataset smaller than the one they chose, which is exactly what leaves Modules 6 and 7
 under-demonstrating cross-source resolution (INV-150).
 
-Only when **no** decision is recorded and the database is SQLite may you suggest starting smaller:
+Only when the database is SQLite AND the loadable total exceeds the MCP-sourced threshold — the
+same trigger as Phase A's pre-load check, item 3 — AND **no** decision is recorded may you suggest
+starting smaller:
 "Let's start with the first 1,000 records so we can see results quickly. Once we validate the
 results here, we can load the full dataset, or switch to PostgreSQL for better performance with
 larger volumes (a production follow-up; see the graduation migration checklist)." Record the
-resulting choice in `sqlite_volume_prompt` so the question stays asked once.
+resulting choice in `sqlite_volume_prompt`, with `loadable`, so the question stays asked once.
+⛔ **An absent marker is "not asked", never "answered" (INV-244).** A load at or below the
+threshold, or one whose total or threshold is indeterminate, never needed the question and leaves
+no marker; say nothing here and write none.
 
 **Checkpoint:** write step 7.
 

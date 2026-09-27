@@ -456,28 +456,32 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
 1. **Read inputs** from `config/bootcamp_preferences.yaml`: `production_volume.tier`,
    `production_volume.raw_value`, and `database_type` — the last is the key
    `../module-02-sdk-setup/SKILL.md` Step 7 writes when the engine is chosen, valued `sqlite` or
-   `postgresql`. If any value is missing/unreadable, treat it as indeterminate, do not fail; fall
-   back to the existing advisory behavior and continue to the load.
+   `postgresql`. Also read the **loadable total:** the record count across **every** mapped
+   source's file in `data/senzing-ready/` together, since they all land in the same SQLite
+   database across Phases B and C. If any value is missing/unreadable, or the loadable total
+   cannot be computed, treat it as indeterminate, do not fail; fall back to the existing advisory
+   behavior and continue to the load.
    - ⛔ **An absent `database_type` is a recording failure, not a non-SQLite answer.** Because
      step 3 prompts only when the database *is* SQLite, a missing key silently disables this
      heads-up entirely. Before treating it as indeterminate, fall back to the engine Module 2
      recorded in `config/bootcamp_progress.json`, and note the gap internally so it reaches the
      recap rather than vanishing.
 2. **Decide whether it was already decided.** If a `sqlite_volume_prompt` marker in preferences
-   is `decided: true` and its `tier`/`raw_value` match the current selection (or an applicable
-   Module 4 SQLite load-time decision covers this same load), skip the prompt and proceed.
+   is `decided: true` and its `loadable` matches the current loadable total for this same load (or
+   an applicable Module 4 SQLite load-time decision covers this same load), skip the prompt and
+   proceed. `tier`/`raw_value` do not decide the match; a marker with no `loadable` (written before
+   the field existed) does not match, so re-evaluate on the loadable total.
 3. **Prompt only when it matters.** Present the prompt only when the database is SQLite AND it was
-   not already decided AND the volume is production-scale for SQLite — that is, the tier is
-   `medium` or `large`, **or** the tier is `small` with a `raw_value` above the SQLite guidance
-   threshold. Source that threshold from MCP rather than from this file (a sourcing
-   floor); `search_docs(query="loading",
+   not already decided AND the **loadable total** exceeds the SQLite guidance threshold. The
+   production tier does not trigger this prompt: it describes the take-home system, not the load
+   about to run (the production line below covers it). Source that threshold from MCP rather than
+   from this file (a sourcing floor); `search_docs(query="loading",
    category="anti_patterns")` → "Do Not Use SQLite in Production" gives it as roughly 100,000
-   records ("use SQLite only for quick local testing with small datasets"), well inside the
-   `small` tier's span (above 500, up to 500,000), which is why the tier alone is not a sufficient
-   trigger. For
-   `demo`, a small-tier volume below that threshold, any non-SQLite engine, indeterminate inputs,
-   or an already-recorded choice: say nothing new about volume/SQLite and proceed to the Phase B
-   load.
+   records ("use SQLite only for quick local testing with small datasets"). If MCP does not return
+   it, the threshold is indeterminate — never substitute a remembered figure (INV-080). For a
+   loadable total at or below that threshold, any non-SQLite engine, indeterminate inputs, or an
+   already-recorded choice: say nothing new about volume/SQLite beyond the production line and
+   proceed to the Phase B load.
 4. **When prompting**, explain that SQLite entity resolution slows as the database grows, then end
    the turn on this pinned question (INV-056), verbatim — a neutral lead + numbered list (INV-051) —
    and wait (internal stop); do not start the load yet:
@@ -490,8 +494,8 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
    *(Internal: end the turn on this question and wait.)* Then act on the choice:
 
    - **Proceed on SQLite:** record `sqlite_volume_prompt` = `{decided: true, choice: "proceed",
-     tier, raw_value}` in preferences, then continue to the Phase B load. Do not re-present this
-     prompt for the same load.
+     loadable, tier, raw_value}` in preferences, then continue to the Phase B load. Do not
+     re-present this prompt for the same load.
      ⛔ **(INV-296) Proceeding keeps SQLite *and* the serialized writer count step 3 selected for it — say
      so in one line.** Both options in this question are about **where** the data lands; neither
      mentions **how** it is written, so "proceed" reads as accepting a known slowdown rather than
@@ -501,8 +505,18 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
      `database_type` was absent then and is known now — apply it before the load rather than
      carrying a thread-pooled loader into a datastore this question just confirmed is SQLite.
    - **Migrate to PostgreSQL:** record `sqlite_volume_prompt` = `{decided: true, choice:
-     "migrate", tier, raw_value}` in preferences, then hand off to the database-migration
+     "migrate", loadable, tier, raw_value}` in preferences, then hand off to the database-migration
      guidance (PostgreSQL migration is a production follow-up; see the graduation migration checklist). Do not restate migration steps here (INV-300).
+
+   In both branches `loadable` is the total item 3 compared; `tier` and `raw_value` are kept for
+   the record only and decide nothing.
+
+**Production line (a statement about the take-home system, no 👉).** Once, at this same point,
+when the database is SQLite and `production_volume.tier` is `medium` or `large`, say one line and
+ask nothing: "At your production scale, plan on PostgreSQL rather than SQLite; the graduation
+migration checklist covers the move." Say it whether or not item 4's question fires — before that
+question when it does, so the turn still ends on the question. It changes nothing about today's
+load. On PostgreSQL, or on a `demo`/`small` tier, say nothing.
 
 *(Internal: when this heads-up fires, end the turn on the pinned question in item 4 and wait.)* Use
 only synthetic/persisted values, never echo credentials or connection strings. (The Kiro
