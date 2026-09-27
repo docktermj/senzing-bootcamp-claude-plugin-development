@@ -3,12 +3,21 @@
 Module 5 told the guide to answer four questions — UTF-8 encoding, non-Latin support,
 cross-script name matching, multi-language data quality practices — from a single
 `search_docs(query="globalization")`, then said "Never answer from training data". Asked live
-on server 1.32.9 (2026-08-13), that query ranks the Rust SDK's `static GLOBAL_ENVIRONMENT`,
+on server 1.32.9 (2026-08-13), that query ranked the Rust SDK's `static GLOBAL_ENVIRONMENT`,
 `postgresql-performance-v4`'s "Global — more workers" and an MDM-Lite FAQ on "globally unique
-ID" among its top hits, and its best Globalization Guide hit is a title-only stub. The UTF-8
-answer is not there at all. That is INV-212's originating shape: an output shape wider than
+ID" among its top hits, its best Globalization Guide hit was a title-only stub, and the UTF-8
+answer was not there at all. That is INV-212's originating shape: an output shape wider than
 one obvious query returns, with no strategy for closing the difference, so the step forces a
 choice between fabricating and under-delivering.
+
+⚠️ **That census went stale, and the instruction built on it inverted (#149).** After the docs
+index was rebuilt (server 1.37.13, docs index 2026-09-24 18:45 UTC), the same query returns
+Globalization Guide sections with real prose, ahead of the three unrelated matches. Module 5
+still called the Guide hit a stub and said that seeing these results proved a mis-query, so a
+guide following it would discard correct content. What lasts is the property, not the ranks:
+the bare term admits unrelated `Global*` substring matches, and it did not return the "What
+languages does Senzing support?" section on either index, so `category='globalization'` stays
+the route. `TheBareQueryParagraphStatesAPropertyNotACensus` keeps the stale reading out.
 
 Three sites asked for this material and they disagreed — `phase3-test-load.md` already passed
 `category='globalization'`; `SKILL.md` and `phase2-data-mapping.md` did not. INV-212 had been
@@ -81,9 +90,10 @@ class EveryGlobalizationRetrievalFilters(unittest.TestCase):
                     self.assertIn(
                         "category=", call,
                         "%s calls search_docs for globalization without category="
-                        "'globalization'. Unfiltered, the query ranks the Rust SDK's "
-                        "GLOBAL_ENVIRONMENT and PostgreSQL autovacuum tuning above the "
-                        "material, and never reaches the UTF-8 answer (INV-212)" % path.name,
+                        "'globalization'. Unfiltered, the query also admits unrelated "
+                        "Global* matches (the Rust SDK's GLOBAL_ENVIRONMENT, PostgreSQL "
+                        "autovacuum tuning), and it is not the route that returns the "
+                        "'What languages does Senzing support?' section (INV-212)" % path.name,
                     )
 
     def test_the_strategy_prescribes_a_filtered_call(self):
@@ -134,9 +144,11 @@ class ExactlyOneSiteOwnsTheStrategy(unittest.TestCase):
         """Scoped to the prescribing paragraph, not the file.
 
         ⚠️ The first version asserted the name appeared *anywhere*, and its mutation escaped:
-        the trap warning also quotes `# Senzing Globalization Guide` (as the title-only stub),
-        so deleting the name from the instruction left the assertion green. Sixth recorded
-        instance in this repo of asserting a token exists rather than where the claim is made.
+        the trap warning also quoted `# Senzing Globalization Guide` (at the time, as a
+        title-only stub; #149 removed that description once the index stopped returning a
+        stub), so deleting the name from the instruction left the assertion green. Sixth
+        recorded instance in this repo of asserting a token exists rather than where the claim
+        is made. The trap warning still names the Guide, so the scoping is still what matters.
         """
         blocks = prose(STRATEGY_SITE).split("\n\n")
         #: The call may sit in a fenced block of its own, which makes the lead-in naming the
@@ -191,6 +203,97 @@ class ExactlyOneSiteOwnsTheStrategy(unittest.TestCase):
                     "%s restates the strategy instead of pointing at it, forking a second "
                     "copy that can drift (INV-183)" % path.name,
                 )
+
+
+#: A paragraph that quotes the unfiltered call. It is found by the call literal (either quote
+#: style), or by the "bare `globalization`" phrasing the pre-#149 text used, so restoring the old
+#: paragraph is still caught rather than slipping past a finder that no longer recognizes it.
+#: Two paragraphs match today: the "Multi-language data" lead-in, which points at the filtered
+#: call, and the trap warning, which is the one naming the unrelated `Global*` matches.
+BARE_QUERY_CUE = re.compile(
+    r"search_docs\(query=['\"]globalization['\"]\)|\bbare\s+`globalization`", re.IGNORECASE)
+#: Describing a Guide hit as having no content. True on the 2026-08-13 index, false since the
+#: 2026-09-24 rebuild, and the reason Module 5 told the guide to discard correct results.
+STUB_DESCRIPTION = re.compile(
+    r"(?i)\bstubs?\b|title-only|\bno prose\b|without prose|\bbare title\b")
+#: Telling the guide that seeing these results means it asked wrongly.
+MIS_QUERY = re.compile(r"(?i)mis-?quer(?:y|ied|ies|ying)|evidence you\b")
+#: A ranking census. A rank order is what went stale; the property does not rank anything.
+RANK_CENSUS = re.compile(r"(?i)\btop hits?\b|\branks?\b|\branked\b|highest-ranked|best guide hit")
+
+
+class TheBareQueryParagraphStatesAPropertyNotACensus(unittest.TestCase):
+    """#149: the bare-query warning must not tell the guide to discard correct Guide content.
+
+    On the 2026-09-24 index the bare query returns Globalization Guide sections with prose.
+    The shipped paragraph still called the best Guide hit a title-only stub and said seeing
+    these results was evidence of a mis-query, so the instruction inverted. The durable part
+    is a property: the bare term also admits unrelated `Global*` matches, and the category
+    filter stays the route.
+
+    ⚠️ Scoped to ONE paragraph on purpose. The "best practices" paragraph legitimately says
+    "title-only stubs" and "evidence you mis-queried", because both still hold for that query,
+    and the HTML-comment markers are stripped because they quote what they record. A file-wide
+    ban would fail on the correct trap, which is the self-defeating guard shape INV-219 names.
+    """
+
+    def setUp(self):
+        blocks = prose(STRATEGY_SITE).split("\n\n")
+        #: Every paragraph quoting the bare call: none may call a Guide hit a stub or a mis-query.
+        self.bare = [b for b in blocks if BARE_QUERY_CUE.search(b)]
+        #: The trap warning itself: the one that names an unrelated `Global*` match.
+        self.trap = [b for b in self.bare if "GLOBAL_ENVIRONMENT" in b]
+        self.best_practices = [b for b in blocks if "best-practices.md" in b]
+
+    def test_the_bare_query_paragraph_exists_and_stands_alone(self):
+        self.assertEqual(
+            1, len(self.trap),
+            "expected exactly one paragraph warning about the bare globalization call and "
+            "naming GLOBAL_ENVIRONMENT; found %d. The guard below reads that paragraph, so a "
+            "missing one leaves it vacuous" % len(self.trap))
+        self.assertNotIn(
+            "best-practices.md", self.trap[0],
+            "the two query traps must sit in separate paragraphs, so the 'best practices' "
+            "trap's mis-query sentence cannot read as covering the bare query (#149)")
+
+    def test_it_does_not_call_a_guide_hit_a_stub(self):
+        self.assertTrue(self.bare, "no paragraph quotes the bare call; the guard is vacuous")
+        for para in self.bare:
+            m = STUB_DESCRIPTION.search(para)
+            self.assertIsNone(
+                m,
+                "the bare-query paragraph describes a Guide hit as having no content (%r). "
+                "Since the 2026-09-24 index rebuild the bare query returns Guide sections "
+                "with prose, so this tells the guide to discard correct results (#149)"
+                % (m.group(0) if m else None))
+
+    def test_it_does_not_call_its_results_evidence_of_a_mis_query(self):
+        for para in self.bare:
+            m = MIS_QUERY.search(para)
+            self.assertIsNone(
+                m,
+                "the bare-query paragraph says seeing its results means the guide mis-queried "
+                "(%r). Its Guide hits are on-topic and usable; only the unrelated Global* "
+                "matches are dropped (#149)" % (m.group(0) if m else None))
+
+    def test_it_states_a_property_rather_than_a_ranking(self):
+        self.assertTrue(self.trap, "the bare-query trap paragraph is gone")
+        for para in self.trap:
+            m = RANK_CENSUS.search(para)
+            self.assertIsNone(
+                m,
+                "the bare-query paragraph describes where results rank (%r). Ranks are what "
+                "went stale on the 2026-09-24 rebuild; state the property (unrelated Global* "
+                "matches are admitted) instead (#149)" % (m.group(0) if m else None))
+            self.assertIn("category='globalization'", para,
+                          "the paragraph must keep the filtered call as the route (INV-212)")
+
+    def test_the_best_practices_paragraph_keeps_its_mis_query_sentence(self):
+        self.assertTrue(self.best_practices, "the 'best practices' trap paragraph is gone")
+        self.assertTrue(
+            any(MIS_QUERY.search(b) for b in self.best_practices),
+            "the 'best practices' trap still returns no globalization content, so its "
+            "'evidence you mis-queried' sentence still holds and must stay (#149)")
 
 
 class TheGalleryStepNamesTheRuleItIsAnInstanceOf(unittest.TestCase):
