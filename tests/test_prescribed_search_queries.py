@@ -209,7 +209,8 @@ VERIFIED_QUERIES = {
     # Module 5's multi-language retrieval strategy (INV-212), added 2026-08-13. The first two are
     # queries the step tells the guide to RUN; the last two are the evidence slots of its two
     # `MCP-NEGATIVE` markers — quoted in order to be forbidden. All four executed against server
-    # 1.32.9, docs indexed 2026-08-11 20:52 UTC, on 2026-08-13.
+    # 1.32.9, docs indexed 2026-08-11 20:52 UTC, on 2026-08-13; "globalization" was re-executed
+    # for #149 (below).
     "UTF-8 encoding non-Latin character support multi-language data quality":
         "ON TARGET with category='globalization': Senzing Globalization Guide -> 'What languages "
         "does Senzing support?', which states the UTF-8 and cross-script answer outright. ⚠️ Three "
@@ -221,12 +222,20 @@ VERIFIED_QUERIES = {
         "> CJK+English cross-script matching (new in v4)' (relevance 12.8), whose prose carries the "
         "practice — native-to-native beats native-to-Romanized, and for non-CJK cross-script, "
         "Romanize via an address-hygiene product and supply both forms. All three hits are the Guide",
+    # Re-executed for #149 on server 1.37.13, docs index 2026-09-24 18:45 UTC, 2026-09-26, at
+    # max_results=6 and at the default. The 2026-08-13 record above this entry said its best
+    # Guide hit was a bare title with no prose; the rebuilt index returns Guide sections with
+    # prose, so that record was replaced rather than re-dated. ⚠️ Record the PROPERTY, not the
+    # ranks: a rank order is what went stale here, and the next rebuild can move it again.
     "globalization":
         "OFF TARGET BY DESIGN — the negative's evidence, and the anti-pattern Module 5 quotes: "
-        "ranks the Rust SDK's static GLOBAL_ENVIRONMENT (39.8), postgresql-performance-v4's "
-        "'Global — more workers' autovacuum tuning (19.3) and, at max_results=6, an MDM-Lite FAQ "
-        "on 'globally unique ID'. Its best Guide hit is the bare title '# Senzing Globalization "
-        "Guide' with no prose, and the UTF-8 answer is absent entirely",
+        "the corpus serves Senzing Globalization Guide sections with real prose for it, and the "
+        "bare term also admits unrelated Global* substring matches — the Rust SDK's static "
+        "GLOBAL_ENVIRONMENT, postgresql-performance-v4's 'Global — more workers' autovacuum "
+        "tuning and an MDM-Lite FAQ on 'globally unique ID'. It did not return the 'What "
+        "languages does Senzing support?' section, which the category='globalization' query "
+        "above ranks first (server 1.37.13, docs index 2026-09-24 18:45 UTC, re-executed "
+        "2026-09-26)",
     "multi-language data quality best practices":
         "OFF TARGET BY DESIGN — the negative's evidence: FIVE OF FIVE hits are repo "
         "docs/best-practices.md template files (senzingsdk-tools, scoop-senzingsdk, "

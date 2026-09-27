@@ -43,6 +43,74 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## module-5-bare-globalization-anti-pattern-inverted-into-a-false-alarm
+
+- **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #149)
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/SKILL.md`,
+  `tests/test_globalization_retrieval_strategy.py`, `tests/test_prescribed_search_queries.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13** (docs index 2026-09-24 18:45 UTC), 2026-09-26 — **server
+  now contradicts the plugin**. Called `get_capabilities`, `search_docs(query='globalization')`
+  at `max_results=6` and at the default, `search_docs(query='UTF-8 encoding non-Latin character
+  support multi-language data quality', category='globalization')` and
+  `search_docs(query='multi-language data quality best practices')`. The bare query returned the
+  same result as the issue's table (same order, same scores): Globalization Guide sections with
+  real prose, then the MDM-Lite "globally unique ID" FAQ, `postgresql-performance-v4`'s "Global —
+  more workers" and the Rust SDK's `static GLOBAL_ENVIRONMENT`. It did not return the "What
+  languages does Senzing support?" section at either size. The filtered owner query ranks that
+  section first. The "best practices" query still returns repo `docs/best-practices.md` template
+  files about Markdown lint and Dockerfiles, with no globalization content, so its marker stands.
+  owner-checked: `search_docs(query='globalization')` IS the route the claim is written against,
+  so it is its own owner. It returned Guide sections with prose, so the stub claim is false.
+  `search_docs(query='UTF-8 encoding non-Latin character support multi-language data quality',
+  category='globalization')` is the route that carries the UTF-8 answer, and it returned it.
+- **Summary:** Module 5's ⛔ paragraph said the bare query's best Guide hit was a title-only stub
+  and that seeing its results proved a mis-query. Since the 2026-09-24 index rebuild, a guide
+  following it would discard correct Guide content. The paragraph is split in two, one per trap,
+  each with its own verification stamp. The bare-query paragraph now says its Guide sections
+  can be used, that the bare term also admits unrelated `Global*` substring matches (it names
+  `GLOBAL_ENVIRONMENT`, "Global — more workers" and "globally unique ID") which the guide drops,
+  and that `category='globalization'` stays the route (INV-212 unweakened). It states this as a
+  property, with no ranks and no "top hits". The "best practices" paragraph keeps its substance
+  and its mis-query sentence. Its ⛔ line is reworded, so it now cites INV-212 at the line,
+  since `test_new_hard_rules_are_cited_or_deferred` counts it as a hard rule added since the
+  last audit. The bare-query `MCP-NEGATIVE` marker is rescoped, not deleted: it
+  stays a `routing negative`, its claim is what the re-ask supports, and it is restamped
+  `server 1.37.13, 2026-09-26` on one line. The `'multi-language data quality best practices'`
+  marker is byte-for-byte unchanged. The `"globalization"` `VERIFIED_QUERIES` entry is kept and
+  rewritten to the re-measured property, with its server version and docs-index date (INV-291).
+  `coverage_reports.py negatives` flags neither marker as census- or enumeration-shaped, and
+  `unmarked` reports nothing.
+- **Deviation from the issue, recorded:** the issue says `UTF-8` appears in the bare query's
+  response and asks that the "UTF-8 answer is absent" claim be dropped. At `max_results=6` no
+  excerpt contains `UTF-8`. At the default size one does, in an unrelated C++ FFI document. At
+  neither size does the bare query return the "What languages does Senzing support?" section
+  that holds the answer. So the marker and the `VERIFIED_QUERIES` entry keep that one measured
+  routing fact, worded as the section not being returned rather than as "the UTF-8 answer is
+  absent entirely". The pointer-site failure message is corrected the same way.
+- **Out of scope, found, not fixed:** the "Multi-language data" bullet lead-in in the same
+  `SKILL.md` says a bare `search_docs(query="globalization")` "does not reach this material".
+  The bare query now reaches some Guide sections, though not the UTF-8 answer. The issue scopes
+  only the ⛔ paragraph. The lead-in points the guide to the filtered call and does not tell it
+  to discard anything, so it was left unchanged. `COUNTER_EXAMPLE` also depends on its "does not
+  reach" framing. Not filed as an issue (an unattended run files none).
+- **This run establishes no invariant.** It corrects stale guidance under INV-212 and INV-080,
+  restamps a routing negative (INV-194/INV-213) and a measured query record (INV-291), and adds
+  a regression guard for one paragraph. It ships no new durable guarantee.
+- **Tests:** `tests/test_globalization_retrieval_strategy.py` gains
+  `TheBareQueryParagraphStatesAPropertyNotACensus` (5 tests, reading comment-stripped prose).
+  No paragraph quoting the bare call may describe a Guide hit as a stub or as having no prose,
+  or call its results evidence of a mis-query. The trap paragraph must stand apart from the
+  "best practices" trap, must carry no ranking census, and must keep `category='globalization'`.
+  The "best practices" paragraph must keep its mis-query sentence. The module docstring, a
+  pointer-site failure message and a test docstring no longer state the stale census, and they
+  record the 2026-09-24 change. Negative controls, each run and reverted: restoring the old
+  `SKILL.md` wording fails 4; adding the stub sentence to the bare paragraph fails 2; adding
+  the mis-query sentence to it fails 1; merging the two paragraphs fails 4; adding "among its
+  top hits" fails 1.
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** d7c1394
+
 ## census-detector-flags-positive-universals-over-results
 
 - **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #151)

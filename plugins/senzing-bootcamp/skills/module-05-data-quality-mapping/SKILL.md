@@ -64,22 +64,29 @@ transformation programs tested + output validated with quality >70%.
   | Which scripts are actually covered | "Advanced personal name comparisons > Additional Cultural Support" — a transliteration table (Indian, Indonesian, Japanese, Polish, Portuguese, East Slavic, Turkish, Yoruban, Generic). It also states Japanese **Kanji is treated as Chinese Hanzi** — a limitation worth telling the Bootcamper. |
   | Cross-script addresses, and the data-quality practice | "Enhanced address comparisons" and "Address matching examples > CJK+English cross-script matching" — native-to-native beats native-to-Romanized, and for non-CJK cross-script, Romanize via an address-hygiene product and supply **both** the native and Romanized forms. |
 
-  ⛔ **Two phrasings return confidently wrong content, which is worse than returning
-  nothing.** Bare `globalization` ranks the Rust SDK's `static GLOBAL_ENVIRONMENT`,
-  `postgresql-performance-v4`'s "Global — more workers" (autovacuum tuning) and an MDM-Lite
-  FAQ on "globally unique ID" among its top hits, and its best Guide hit is the bare title
-  `# Senzing Globalization Guide` with no prose — a stub is not coverage. And the words "best
-  practices" are their own trap: unfiltered, `query='multi-language data quality best
-  practices'` returned **five of five** results as repo `docs/best-practices.md` template
-  files (`senzingsdk-tools`, `scoop-senzingsdk`, `homebrew-senzingsdk`, `senzingapi-tools`,
-  `senzingsdk-runtime`) about Markdown lint and Dockerfiles — **no globalization content at
-  all**, two of them title-only stubs. With `category='globalization'` the on-topic rows come
-  back first, but those same files remain in the set carrying the **highest**
-  `relevance_score` (~89–92 against ~12–16), so never rank by score here. Seeing any of this
-  is evidence you mis-queried, never that the documentation is thin. (Sections and all three
-  traps verified live via `search_docs`, server 1.32.9, docs indexed 2026-08-11 20:52 UTC,
+  ⚠️ **The bare call is not the route, even though its Guide hits are usable.** Unfiltered,
+  `search_docs(query='globalization')` does return Senzing Globalization Guide sections with
+  real prose, and a Guide section it returns can be used like any other. But the bare term
+  also admits unrelated `Global*` substring matches: the Rust SDK's `static GLOBAL_ENVIRONMENT`,
+  `postgresql-performance-v4`'s "Global — more workers" (autovacuum tuning) and an MDM-Lite FAQ
+  on "globally unique ID". Drop those, since they are not about globalization. The bare call
+  also did not return the "What languages does Senzing support?" section, which holds the
+  UTF-8 answer. So keep `category='globalization'` as the route. (Verified live via
+  `search_docs`, server 1.37.13, docs indexed 2026-09-24 18:45 UTC, 2026-09-26.)
+  <!-- MCP-NEGATIVE: search_docs(query='globalization') — returns Globalization Guide sections but not the "What languages does Senzing support?" answer, and also admits unrelated Global* substring matches beside them — owner: search_docs(query='UTF-8 encoding non-Latin character support multi-language data quality', category='globalization') returns it, as the "What languages does Senzing support?" section (routing negative — the category boost ranks the answer first; the bare query also admits unrelated Global* matches) — server 1.37.13, 2026-09-26 -->
+
+  ⛔ **The words "best practices" are their own trap (INV-212): they return confidently wrong
+  content, which is worse than returning nothing.** Unfiltered,
+  `query='multi-language data quality best practices'` returned **five of five** results as
+  repo `docs/best-practices.md` template files (`senzingsdk-tools`, `scoop-senzingsdk`,
+  `homebrew-senzingsdk`, `senzingapi-tools`, `senzingsdk-runtime`) about Markdown lint and
+  Dockerfiles — **no globalization content at all**, two of them title-only stubs. With
+  `category='globalization'` the on-topic rows come back first, but those same files remain in
+  the set carrying the **highest** `relevance_score` (~89–92 against ~12–16), so never rank by
+  score here. Seeing any of this
+  is evidence you mis-queried, never that the documentation is thin. (The sections above and
+  this trap verified live via `search_docs`, server 1.32.9, docs indexed 2026-08-11 20:52 UTC,
   2026-08-13.)
-  <!-- MCP-NEGATIVE: search_docs(query='globalization') — returns no UTF-8 / supported-languages answer in its top hits, and its highest-ranked Guide hit is a title-only stub — owner: search_docs(query='UTF-8 encoding non-Latin character support multi-language data quality', category='globalization') returns it, as the "What languages does Senzing support?" section (routing negative — the material is served; the bare query misses it) — server 1.36.0, 2026-09-02 -->
   <!-- MCP-NEGATIVE: search_docs(query='multi-language data quality best practices') — returns no globalization content at all — the hits are repo template docs/best-practices.md files about Markdown lint and Dockerfiles, none carrying non-Latin or cross-script guidance — owner: search_docs(query='data quality practices multi-language non-Latin', category='globalization') returns it, as "Address matching examples > CJK+English cross-script matching" (routing negative — the category filter is what recovers it) — server 1.36.0, 2026-09-02 -->
 
 ## Error handling
