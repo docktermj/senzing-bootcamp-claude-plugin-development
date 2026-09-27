@@ -53,9 +53,12 @@ writing anything. Each fixture is there because a naive one hid a defect:
 - **Deliberately messy Markdown** — the normalizer needs something to normalize.
 - **A `docker_containers` list** naming a container that does not exist — the
   warn-and-continue path (INV-101).
-- **A long module name** — the recap generator's cover chips clip at 46 characters and
-  "Data Quality, Mapping, and Transformation" is 41, so the shipped example fixture
-  sits *under* the threshold and hid a renderer crash.
+- **Not the cover-chip clip.** The recap generator's cover chips clip at 46 characters,
+  and the realistic scaffold sits *under* that threshold: its longest module title,
+  "Data Quality, Mapping, and Transformation", is 41, and the parser strips the
+  `— in progress` suffix before the chip is built. That under-threshold fixture is how a
+  renderer crash hid, so the clip path is covered by unit test
+  (`tests/test_recap_pdf_font_safety.py`), not by this walk.
 
 ## Order of operations
 

@@ -43,12 +43,16 @@ DIRS = (
 # numbered legacy heading ("10. …") only reaches 45. That is precisely why a renderer
 # crash hid behind the shipped example fixture for so long.
 #
-# The realistic trigger is an UNFINALIZED section heading, because the durability
-# hooks fold the checkpoint in with its "— in progress" suffix attached: 41 + 14 = 55,
-# comfortably over. So the clip path is reached only *after* the fold runs, which is
-# also the state a real interrupted bootcamp is in.
+# ⚠️ The UNFINALIZED heading below does NOT reach the clip either, by any documented
+# sequence (measured 2026-09-24). Folded, it sits inside the RECAP-CHECKPOINT fence,
+# which generate_recap_pdf.py strips before module parsing. Unfenced, as
+# module-completion step 2d leaves it, parse_recap splits the "— in progress" suffix
+# off into the date slot, so the chip is built from the bare 41-character title. The
+# heading is 55 characters; the chip label is 41. The chip-clip path is covered by unit
+# test in tests/test_recap_pdf_font_safety.py, not by this fixture, and
+# tests/test_dry_run_scaffold.py fails if this title is ever lengthened past the clip.
 LONG_MODULE_NAME = "Data Quality, Mapping, and Transformation"
-IN_PROGRESS_HEADING = f"{LONG_MODULE_NAME} — in progress"  # 55 chars -> clips at 46
+IN_PROGRESS_HEADING = f"{LONG_MODULE_NAME} — in progress"  # parses to the 41-char title
 
 PROGRESS = {
     "current_module": "data_quality_mapping",
@@ -154,9 +158,9 @@ RECAP = f"""# Senzing Bootcamp Recap
 """
 
 # An UNFINALIZED checkpoint block: what the durability hooks leave behind and
-# module-completion step 2d is supposed to clear (INV-059). Its heading is also the
-# recap's only chip long enough to reach the PDF cover's 46-character clip, so folding
-# this block is what exercises that path (see LONG_MODULE_NAME above).
+# module-completion step 2d is supposed to clear (INV-059). Its heading does NOT reach
+# the PDF cover's 46-character chip clip, folded or unfenced: the parser strips the
+# "— in progress" suffix, leaving the 41-character title (see LONG_MODULE_NAME above).
 CHECKPOINT = f"""<!-- RECAP-CHECKPOINT:START -->
 ## {IN_PROGRESS_HEADING}
 
@@ -322,14 +326,16 @@ FIXTURE_MAP = [
     ("docs/bootcamp_recap.md", "docs/bootcamp_recap.md", frozenset({"mid"}),
      "a completed section carrying all four subsections (INV-103)"),
     ("docs/progress/recap_checkpoint.md", "docs/progress/recap_checkpoint.md", frozenset({"mid"}),
-     "an UNFINALIZED block -> fold idempotency, run it 3x (INV-059). Its '— in progress' "
-     "heading is the only chip long enough to reach the PDF cover's 46-char clip, but "
-     "FOLDING ALONE CANNOT REACH IT: the fold puts that heading inside the "
+     "an UNFINALIZED block -> fold idempotency, run it 3x (INV-059). This fixture does "
+     "NOT reach the PDF cover's 46-char chip clip by any documented sequence, so do not "
+     "report that path as exercised. Folded, its heading sits inside the "
      "RECAP-CHECKPOINT fence, which generate_recap_pdf.py strips before module parsing, "
      "so the section is absent from the cover, the contents and the body (audit_recap "
-     "warns, correctly, that a module was folded but never finalized). To exercise the "
-     "clip: fold 3x for INV-059, THEN remove the two fence markers -- what "
-     "module-completion step 2d does -- then render (INV-048). Measured 2026-09-02"),
+     "warns, correctly, that a module was folded but never finalized). Unfenced, as "
+     "module-completion step 2d leaves it, parse_recap strips the '— in progress' "
+     "suffix, so the chip is the bare 41-character title, and no real module title is "
+     "long enough to clip. The chip-clip path is covered by unit test in "
+     "tests/test_recap_pdf_font_safety.py. Measured 2026-09-24"),
     ("docs/feedback/...FEEDBACK.md", "docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md", ALL_MODES,
      "a precious entry the normalizer must leave byte-identical (INV-067)"),
     ("docs/loading_strategy.md", "docs/loading_strategy.md", frozenset({"mid"}),
