@@ -43,6 +43,83 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## phase-b-first-source-is-chosen-by-no-rule
+
+- **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #165)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`,
+  `tests/test_first_source_is_chosen_by_step_fourteens_heuristics.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13**, 2026-09-26 — **n/a (no Senzing fact)**, re-confirmed.
+  Called `get_capabilities` (reachable). The change is guidance about which bootcamper source
+  loads first and what the guide says about it. It makes no claim about Senzing behavior, and in
+  particular none about whether load order changes the final resolution, which the issue puts out
+  of scope. The ordering heuristics are the plugin's own teaching in Step 14 and are cited, not
+  changed. No absence claim is made, so no `owner-checked:` clause is owed.
+- **Summary:** Phase B loads one source, but nothing said which. Phase C Step 14 teaches the
+  ordering heuristics only after that load, so they could not apply to the source they matter most
+  for, and the guide picked silently. Following the issue's revision 1, Steps 12–14 stay where they
+  are. Phase B's opening gains a **Choosing the first source (2 or more sources only)** paragraph:
+  with 2 or more sources with `mapping_status: complete` (the count Phase C's gate uses), choose
+  the first source by Step 14's heuristics in its priority order. It cites Step 14 rather than
+  restating the list (INV-300). A heuristic whose input is missing (for example no `quality_score`
+  on a `fast_pathed` source) is skipped for the next one, and Module 5's test-load results feed the
+  same heuristics. Before Step 5 the guide tells the bootcamper in one line which source loads
+  first and the heuristic that decided it. This is a statement, not a 👉 question (INV-012), and
+  the turn continues to Step 5. The choice and its reason are recorded in
+  `docs/loading_strategy.md` as the first-source choice and noted in step 5's checkpoint. With a
+  single source nothing is said or recorded. Step 14 now declares itself the one statement of the
+  heuristics (INV-300). It reads the recorded choice, which survives a resumed session, presents
+  the first source as already loaded and chosen by its heuristic, and ranks only the remaining
+  sources. With no record, the loaded source is shown as already loaded, with no heuristic named.
+  A Step 13 dependency the first choice broke is stated, recorded beside the choice, and honored
+  for the remaining sources, and the first source is not reloaded. Step 14 still asks nothing and
+  now says so, and it continues to Step 15 in the same turn.
+- **Approach:** direct (Phase 5a). Phase B Step 7 and Phase C Steps 12, 13, 15 and 17 are
+  untouched. **Assumptions taken, no maintainer present:** (1) "noted in the checkpoint" is
+  written as step 5's checkpoint, the first one Phase B writes, because the opening has no step
+  number of its own; (2) Step 14 gains a fallback for a missing record (a session begun before
+  this change): show the loaded source as already loaded and name no heuristic, rather than
+  invent one. Neither changes what the issue asked for.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The change ships two
+  ⛔ lines, both test-enforced, which is the gap INV-309 exists to close (#38). The rules already
+  shipping, at their site:
+    - ⛔ **This is a statement, not a 👉 question (INV-012).** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`
+    - ⛔ **Do not reload the first source.** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`
+
+  ⚠️ **INV-012 and INV-300 may already govern most of this.** The statement-not-gate half applies
+  INV-012, and the citation half applies INV-300. What is new is the rule that the first source is
+  chosen by the same heuristics as the rest, and that a broken dependency is honored going forward
+  rather than repaired by a reload. Whether that needs its own id is the maintainer's call.
+
+  The drafted wording:
+
+  **INV-NNN** — When Data processing loads 2 or more sources, the first source loaded MUST be
+  chosen by the same ordering heuristics that order the rest (stated once, in Phase C Step 14),
+  and the Bootcamper MUST be told which source and the deciding heuristic before that load, as a
+  statement rather than a 👉 question. The choice MUST be recorded so the later ordering step
+  presents it as already decided and ranks only the remaining sources. A load-order dependency
+  the first choice broke MUST be recorded and honored for the remaining sources, never repaired
+  by reloading the first. Enforced by
+  `tests/test_first_source_is_chosen_by_step_fourteens_heuristics.py`. (Source: GitHub issue
+  #165.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** new `tests/test_first_source_is_chosen_by_step_fourteens_heuristics.py`, 18 tests
+  in 5 classes, stdlib only, importing nothing under `plugins/` (INV-108), reading
+  comment-stripped prose. One class per acceptance point, plus Step 14 still carrying the full
+  heuristic list (the citation's target) and still posing no 👉 question. Negative controls, each
+  run and reverted, `__pycache__` cleared:
+    - The whole first-source paragraph removed from Phase B's opening (the issue's control): 9
+      tests fail.
+    - A 👉 question added to the opening: 1 test fails.
+    - A Step 14 heuristic restated in the opening: 1 test fails.
+    - The "Do not reload the first source" line removed: 1 test fails.
+    - The pre-change Phase B: 9 failures. The pre-change Step 14: 7 failures.
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** uncommitted
+
 ## volume-option-reply-selects-the-demo-loader
 
 - **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #155)
