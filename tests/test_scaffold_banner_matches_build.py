@@ -39,6 +39,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCAFFOLD = REPO_ROOT / ".claude" / "skills" / "dry-run" / "scaffold_project.py"
+GENERATOR = (
+    REPO_ROOT / "plugins" / "senzing-bootcamp" / "scripts" / "generate_recap_pdf.py"
+)
 
 
 def load(path, name):
@@ -232,22 +235,31 @@ if __name__ == "__main__":
 
 
 class TheCheckpointFixtureSaysWhatFoldingCannotReach(unittest.TestCase):
-    """The banner's recipe for the PDF cover-chip clip must be one that works.
+    """The banner must say truthfully what this fixture does and does not reach.
 
     It told a phase-2 run the long '— in progress' heading reaches the cover's 46-character
     clip if you "FOLD FIRST, then render". Measured on 2026-09-02: it does not. Folding puts
     that heading inside the RECAP-CHECKPOINT fence, which `generate_recap_pdf.py` strips
     before module parsing, so the section is absent from cover, contents and body — and
-    `audit_recap` correctly warns a module was folded but never finalized. Removing the two
-    fence markers first, which is what module-completion step 2d does, renders it whole.
+    `audit_recap` correctly warns a module was folded but never finalized.
 
-    ⚠️ **The fixture is right; the recipe was wrong.** An unfinalized block is exactly what
-    the INV-059 idempotency check needs, and that check passes. So this guards the
+    The 2026-09-02 correction then prescribed "fold 3x, THEN remove the two fence markers,
+    then render". Carried out on 2026-09-24, **that does not reach the clip either**: the PDF
+    rendered cleanly and its chips read `Data collection` and `Data Quality, Mapping, and
+    Transformation`, no ellipsis. `parse_recap` strips the `— in progress` suffix, so the chip
+    is the bare 41-character title, and no real module title is long enough to clip. The
+    fixture cannot reach the path by any documented sequence; the chip clip is covered by
+    unit test in `tests/test_recap_pdf_font_safety.py`.
+
+    ⚠️ **The fixture is right; the recipe was wrong, twice.** An unfinalized block is exactly
+    what the INV-059 idempotency check needs, and that check passes. So this guards the
     instruction, not the fixture — and specifically guards that the REASON survives, because
-    a later editor who reads "FOLD FIRST" as a needless two-step is one edit from restoring
-    a recipe that silently tests nothing.
+    a later editor who reads the banner's caveat as noise is one edit from restoring a
+    recipe that silently tests nothing. The numbers the banner states are checked against
+    the shipped parser and the generator's own chip width, so they cannot drift quietly.
 
-    Stdlib only; nothing under ``plugins/`` is imported (INV-108).
+    Stdlib only; nothing under ``plugins/`` is imported (INV-108) — the generator is loaded
+    by path.
     """
 
     def banner(self):
@@ -262,19 +274,73 @@ class TheCheckpointFixtureSaysWhatFoldingCannotReach(unittest.TestCase):
             "so the run sees one 15-character chip and believes it tested the clip.",
         )
 
-    def test_the_banner_names_finalizing_as_the_step_that_reaches_it(self):
+    def checkpoint_row(self):
+        """The recap_checkpoint.md banner text exactly as the mid-bootcamp build prints it."""
+        rows = [
+            row[3] for row in scaffold.fixtures_for("mid")
+            if row[1] == "docs/progress/recap_checkpoint.md"
+        ]
+        self.assertEqual(1, len(rows), "exactly one recap_checkpoint.md row must apply")
+        return re.sub(r"\s+", " ", rows[0])
+
+    def test_the_banner_names_the_unit_test_that_covers_the_clip(self):
+        """Was `..._names_finalizing_as_the_step_that_reaches_it`; repointed 2026-09-24.
+
+        Nothing in the fixture reaches the clip, so the banner must name where the path IS
+        covered, and why the fixture cannot reach it.
+        """
+        row = self.checkpoint_row()
+        self.assertIn(
+            "test_recap_pdf_font_safety", row,
+            "saying the fixture does not reach the clip, without saying what does cover it, "
+            "leaves the operator knowing the path is untested here and not where it is.",
+        )
         self.assertRegex(
-            self.banner(), r"(?i)remove the two fence markers",
-            "saying folding is not enough, without saying what is, leaves the operator "
-            "knowing the recipe is wrong and not knowing the right one.",
+            row, r"(?i)strips the '— in progress' suffix",
+            "the banner must give the reason the unfenced heading still cannot clip: the "
+            "parser strips the '— in progress' suffix, leaving the bare title.",
         )
 
+    def test_the_banner_gives_no_recipe_for_the_clip(self):
+        """The fold-then-remove-markers recipe was measured not to clip on 2026-09-24."""
+        row = self.checkpoint_row()
+        for recipe in (r"(?i)to exercise the clip", r"(?i)remove the two fence markers"):
+            with self.subTest(recipe=recipe):
+                self.assertNotRegex(row, recipe)
+        self.assertRegex(row, r"(?i)does NOT reach the PDF cover's \d+-char chip clip")
+
+    def test_the_banner_numbers_are_the_measured_ones(self):
+        """The widths the banner states are derived here from the shipped sources."""
+        generator = load(GENERATOR, "_banner_recap_gen")
+        source = GENERATOR.read_text(encoding="utf-8")
+        chip = re.findall(
+            r'_clip\(\s*_safe\(\s*f"\{mod\.number\}\. \{mod\.title\}"[^)]*\)\s*,\s*(\d+)',
+            source,
+        )
+        self.assertEqual(1, len(chip), "the cover-chip _clip call site no longer parses")
+        checkpoint = scaffold.CHECKPOINT
+        for marker in (generator.RECAP_CHECKPOINT_START, generator.RECAP_CHECKPOINT_END):
+            checkpoint = checkpoint.replace(marker, "")
+        titles = [m.title for m in generator.parse_recap(checkpoint).modules]
+        self.assertEqual(1, len(titles), f"the checkpoint parsed to {titles}")
+
+        row = self.checkpoint_row()
+        stated_width = re.search(r"(\d+)-char chip clip", row)
+        stated_title = re.search(r"bare (\d+)-character title", row)
+        self.assertIsNotNone(stated_width, "the banner no longer states the chip width")
+        self.assertIsNotNone(stated_title, "the banner no longer states the title length")
+        self.assertEqual(int(chip[0]), int(stated_width.group(1)))
+        self.assertEqual(len(titles[0]), int(stated_title.group(1)))
+
     def test_the_banner_keeps_the_reason_folding_cannot_reach_it(self):
-        """⚠️ The reason is what stops the two-step being 'simplified' back to one."""
+        """⚠️ The reason is what stops the caveat being 'simplified' back into a recipe."""
         self.assertRegex(
-            self.banner(), r"(?i)strips before module parsing|RECAP-CHECKPOINT fence, which",
-            "the banner must say WHY folding cannot reach the clip — the fence is stripped "
-            "before module parsing. Without it the extra step reads as ceremony.",
+            self.banner(),
+            r"(?i)strips before module parsing|RECAP-CHECKPOINT fence, which"
+            r"|strips the '— in progress' suffix",
+            "the banner must say WHY the fixture cannot reach the clip — the fence is "
+            "stripped before module parsing, and unfenced the parser strips the "
+            "'— in progress' suffix. Without it the caveat reads as ceremony.",
         )
 
     def test_the_idempotency_fixture_is_still_described(self):

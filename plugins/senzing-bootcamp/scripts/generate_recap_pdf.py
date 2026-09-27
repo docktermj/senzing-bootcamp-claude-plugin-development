@@ -3256,11 +3256,14 @@ def _clip(s: str, n: int) -> str:
     ``render_with_fpdf2`` catches — so the only symptom was every affected bootcamper
     silently getting the plainer stdlib PDF instead of the designed one (INV-048).
 
-    Found by the 2026-07-26 dry run on the cover's module chips (``_clip(..., 46)``):
-    "Data Quality, Mapping, and Transformation" is 41 characters and survives bare, but
-    clips the moment a number prefix or a timestamp is appended. ``_UNICODE_MAP`` maps
-    "…" to "..." already; the defect was purely the order of operations, which is why the
-    fix is here rather than at the three call sites — an ASCII suffix cannot be got wrong.
+    Found by the 2026-07-26 dry run on the cover's module chips (``_clip(..., 46)``).
+    Today no real module title reaches that width: "Data Quality, Mapping, and
+    Transformation" is the longest at 41 characters, ``_split_title_date`` splits a
+    timestamp or the ``in progress`` marker off the title before the chip is built, and
+    even a two-digit number prefix makes only 45 — so a realistic recap cannot exercise
+    the path, and a unit test does. ``_UNICODE_MAP`` maps "…" to "..." already; the
+    defect was purely the order of operations, which is why the fix is here rather than
+    at the three call sites — an ASCII suffix cannot be got wrong.
     ``tests/test_recap_pdf_font_safety.py`` pins this.
     """
     return s if len(s) <= n else s[: n - 1] + "..."

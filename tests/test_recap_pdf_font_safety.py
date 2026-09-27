@@ -12,16 +12,21 @@ raised `Character "…" … outside the range of characters supported by the fon
 bootcamper quietly receiving the plainer PDF. `_UNICODE_MAP` already mapped "…" to "..." —
 the defect was purely order of operations.
 
-It fired on the cover's module chips, `_clip(..., 46)`: "Data Quality, Mapping, and
-Transformation" is 41 characters and survives bare, so the shipped example recap renders
-fine, but it clips the moment a number prefix or timestamp is appended. That is why no
-existing test caught it — the fixture was just under the threshold.
+It fired on the cover's module chips, `_clip(..., 46)`. "Data Quality, Mapping, and
+Transformation", the longest real module title, is 41 characters, and nothing a real recap
+appends pushes it over: `parse_recap` splits a timestamp or the `— in progress` marker off
+the title before the chip is built, and even a two-digit number prefix makes only 45. That
+is why no realistic fixture caught it — every one sits under the threshold — and why the
+chip clip is pinned here by unit test, with the width read from the generator's own call
+site rather than restated.
 
 What this pins:
 
 * `_clip` introduces nothing outside Latin-1, at every width the source actually uses.
 * The shipped composition order `_clip(_safe(x))` survives adversarial input.
 * `_UNICODE_MAP` covers the non-ASCII characters the plugin's own recap templates use.
+* The cover chip: `parse_recap` strips `— in progress`, the 41-character title is not
+  clipped at the chip width, and a title over it is.
 * End-to-end (skipped without fpdf2, which is not stdlib — INV-108): a recap whose title
   is long enough to clip still renders with **fpdf2**, not the fallback.
 
@@ -118,10 +123,44 @@ def latin1_ok(s):
 
 
 def clip_widths():
-    """Every width `_clip` is called with in the generator."""
+    """Every width `_clip` is called with in the generator.
+
+    The one-line pattern cannot see a call whose first argument has its own parentheses,
+    so on its own it found 46 only in the `_clip` docstring's prose (checked 2026-09-26).
+    The chip width is added from its own call site, so the loops below keep testing it
+    even if that prose is reworded.
+    """
     src = GENERATOR.read_text(encoding="utf-8")
     widths = {int(n) for n in re.findall(r"_clip\([^)]*?,\s*(\d+)\s*\)", src, re.S)}
-    return widths
+    return widths | {chip_width()}
+
+
+# The cover chip's call site, matched on the label expression it clips so the width below
+# is the chip's and no other call site's. If the label expression changes, this stops
+# matching and `chip_width()` fails loudly rather than measuring the wrong thing.
+CHIP_CALL_RE = re.compile(
+    r'_clip\(\s*_safe\(\s*f"\{mod\.number\}\. \{mod\.title\}"\s*'
+    r"if mod\.number is not None\s*else mod\.title\s*\)\s*,\s*(\d+)\s*,?\s*\)",
+    re.S,
+)
+
+# The longest real module title (the Bootcamp preparation module table).
+LONGEST_REAL_TITLE = "Data Quality, Mapping, and Transformation"
+
+
+def chip_width():
+    """The width the cover's module chips are clipped at, read from the generator."""
+    found = CHIP_CALL_RE.findall(GENERATOR.read_text(encoding="utf-8"))
+    if len(found) != 1:
+        raise AssertionError(
+            f"expected exactly one cover-chip _clip call site, parsed {len(found)}"
+        )
+    return int(found[0])
+
+
+def chip_label(mod):
+    """The label the cover builds for a module — the expression CHIP_CALL_RE matches."""
+    return f"{mod.number}. {mod.title}" if mod.number is not None else mod.title
 
 
 class TestClipStaysLatin1(unittest.TestCase):
@@ -171,6 +210,45 @@ class TestClipStaysLatin1(unittest.TestCase):
                     f"_safe replaced {ch!r} with '?' — encodable, but the reader sees "
                     "a corrupted glyph. Map it to an ASCII equivalent instead.",
                 )
+
+
+class TestTheCoverChipClip(unittest.TestCase):
+    """The chip clip no realistic recap reaches, pinned where a fixture cannot pin it.
+
+    The dry-run scaffold's banner once gave a recipe for reaching this clip with its
+    `— in progress` heading. Measured 2026-09-24, it did not: the parser strips the suffix,
+    so the chip was the bare 41-character title. These assertions state what holds.
+    Pure stdlib; they never skip.
+    """
+
+    def setUp(self):
+        self.width = chip_width()
+
+    def test_parse_recap_strips_the_in_progress_suffix(self):
+        recap = GEN.parse_recap(
+            f"# R\n\n## {LONGEST_REAL_TITLE} — in progress\n\n### Information Shared\n- x\n"
+        )
+        self.assertEqual([LONGEST_REAL_TITLE], [m.title for m in recap.modules])
+        self.assertEqual("in progress", recap.modules[0].date)
+        self.assertEqual(LONGEST_REAL_TITLE, chip_label(recap.modules[0]))
+
+    def test_the_longest_real_title_is_not_clipped_at_the_chip_width(self):
+        for label in (LONGEST_REAL_TITLE, f"10. {LONGEST_REAL_TITLE}"):
+            with self.subTest(label=label):
+                self.assertLessEqual(len(label), self.width)
+                self.assertEqual(label, GEN._clip(GEN._safe(label), self.width))
+
+    def test_a_title_over_the_chip_width_is_clipped(self):
+        recap = GEN.parse_recap(
+            f"# R\n\n## {LONG_TITLE} — in progress\n\n### Actions Taken\n- x\n"
+        )
+        label = chip_label(recap.modules[0])
+        self.assertEqual(LONG_TITLE, label)
+        self.assertGreater(len(label), self.width, "the probe must exceed the chip width")
+        clipped = GEN._clip(GEN._safe(label), self.width)
+        self.assertNotEqual(label, clipped)
+        self.assertTrue(clipped.endswith("..."), clipped)
+        self.assertTrue(label.startswith(clipped[:-3]), clipped)
 
 
 class TestNamesAreNeverCorrupted(unittest.TestCase):

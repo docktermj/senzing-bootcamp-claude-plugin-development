@@ -43,6 +43,73 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## scaffold-banner-claims-an-unreachable-chip-clip
+
+- **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #152)
+- **Files changed:** `.claude/skills/dry-run/scaffold_project.py`,
+  `.claude/skills/dry-run/phase2-hooks-and-scripts.md`,
+  `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py` (the `_clip` docstring only),
+  `tests/test_dry_run_scaffold.py`, `tests/test_recap_pdf_font_safety.py`,
+  `tests/test_scaffold_banner_matches_build.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed 2026-09-26 by reading every claim the
+  change makes: the recap PDF generator's cover-chip width, `parse_recap`'s `— in progress`
+  split (`_split_title_date`), `_clip`'s ellipsis, the dry-run scaffold's fixture and the
+  plugin's own module-name table. All are the plugin's own code and data; none is a Senzing SDK,
+  engine, configuration or data fact, and no absence claim is made. No MCP tools called.
+- **Summary:** The dry-run scaffold's `recap_checkpoint.md` banner told a phase-2 run to "fold
+  3x for INV-059, THEN remove the two fence markers ... then render" to exercise the PDF cover's
+  46-character chip clip. Carried out on 2026-09-24, that does not clip: `parse_recap` splits the
+  `— in progress` suffix off into the date slot, so the chip is the bare 41-character title, and
+  no real module title is long enough (a two-digit number prefix gives 45). The banner now says
+  the fixture does NOT reach the clip by any documented sequence, gives both reasons (the fence,
+  and the suffix strip), keeps "fold idempotency, run it 3x (INV-059)", names
+  `tests/test_recap_pdf_font_safety.py` as where the path is covered, and says not to report the
+  path as exercised. The scaffold comments (`LONG_MODULE_NAME`, the `# 55 chars -> clips at 46`
+  note, `CHECKPOINT`) and the phase-2 "long module name" bullet say the same. The `_clip` and
+  font-safety module docstrings no longer say the 41-character title "clips the moment a number
+  prefix or a timestamp is appended"; the 2026-07-26 history is kept. The fixture's heading and
+  module title are unchanged. `generate_recap_pdf.py` changes only inside the `_clip` docstring
+  (its AST, docstrings blanked, is identical to `origin/main`'s). All 12 acceptance criteria met.
+- **Approach:** raced (Phase 5b) by the run's lead. Approach B, where the guards derive the chip
+  width from the generator's cover-chip call site (matched on its label expression) and the chip
+  label from the shipped `parse_recap`, `_clip` and `_safe`, won over A, the prescribed edits
+  with the literal 46. The comparison is on the issue (comment 3). The raced patch applied
+  cleanly to `main` at `fa58cce` and was kept, with one adaptation: the `_clip` docstring's last
+  two lines were re-wrapped (docstring only).
+- **Establishes no invariant.** The change corrects false prose in a maintainer-tool banner
+  (`.claude/`, which does not ship) and in two docstrings, and repoints the guards that keep that
+  prose true. `conformance.py since --ref origin/main`: 0 hard-rule lines added. The behavior the
+  corrected text describes already ships: the fence strip falls under INV-288, the suffix split is
+  `_split_title_date`'s existing behavior, and the ASCII ellipsis belongs to the INV-048 render
+  path. This follows the 2026-09-02 correction of the same banner, which also established none.
+- **Tests:** `TestScaffoldReachesTheClipPath` (name kept, since the criterion names it) runs the
+  unfenced fixture checkpoint through `parse_recap`, and asserts every chip label fits the chip
+  width, unchanged by `_clip`. The two raw-heading tests are gone. It also asserts that the
+  fixture uses the longest real module name and that no `11. `-prefixed name reaches the clip.
+  New `TestTheCoverChipClip` in `tests/test_recap_pdf_font_safety.py`: `parse_recap` strips
+  `— in progress`, the 41-character title (bare and `10. `-prefixed) is not clipped, and a
+  65-character title is clipped with an ASCII `...`. The banner test requires the unit-test
+  pointer and the suffix reason, forbids the old recipe, and checks that the banner's stated 46
+  and 41 match the measured values. All pure stdlib; none skips. Negative controls, each
+  run and reverted, `__pycache__` cleared: a Unicode `…` in `_clip` fails
+  `test_clip_introduces_nothing_outside_latin1` (`FAILED (failures=1)`) and
+  `test_a_title_over_the_chip_width_is_clipped`, and reverting restores OK. `LONG_MODULE_NAME`
+  lengthened to 52 characters fails `TestScaffoldReachesTheClipPath` (`FAILED (failures=3)`).
+  Narrowing the generator's chip width from 46 to 40 fails 6 tests across the three files.
+  The raced run's further controls are in `approach-152-b.md`.
+- **Findings, recorded and not changed here (no issue filed):**
+    - `clip_widths()` in `tests/test_recap_pdf_font_safety.py` and
+      `tests/test_dry_run_scaffold.py` matches `_clip\([^)]*?,\s*(\d+)\s*\)`, which cannot match
+      a real `_clip(_safe(x), n)` call: the inner `)` stops it. Its only match on `origin/main`
+      is the prose ``_clip(..., 46)`` inside `_clip`'s docstring, so the 62- and 66-wide call
+      sites were never tested. This run only adds the chip width from its own call site, so
+      rewording that docstring cannot empty the set. Fixing the pattern would make `LONG_TITLE`
+      (65 characters) fail "input must actually clip" at width 66.
+    - `_clip`'s docstring says "Truncate to ``n`` characters", but it returns `n + 2` (48 at
+      width 46): `s[: n - 1] + "..."`. A comment near `generate_recap_pdf.py:2605` already
+      relies on the `n + 2` length.
+- **Commit:** uncommitted
+
 ## recap-sdk-version-is-the-installed-one
 
 - **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #168)
