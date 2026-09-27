@@ -43,6 +43,73 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## search-docs-now-answers-the-evaluation-record-limit
+
+- **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #150)
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`,
+  `tests/test_prescribed_search_queries.py`, `tests/test_record_limit_negative_is_rescoped.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13** (docs index 2026-09-24 18:45 UTC), 2026-09-26 — **server
+  now contradicts the plugin**, exactly as the issue found on 2026-09-24. Called
+  `get_capabilities`, `search_docs(query='evaluation license record limit how many records
+  without a license')`, `sdk_guide(topic='load', language='python', platform='linux_apt',
+  record_count=1000)` and `explain_error_code('SENZ9000')`. The `search_docs` result matched the
+  issue's: the EULA's grant-of-license sections ranked first, then the FAQ "What is the 500
+  record limit and how do I work around SENZ9000", which states the figure, then DSR and
+  subscription-pricing prose. `sdk_guide`'s `compatibility_notes` still carry "exceeds the
+  default Senzing license limit of 500", and `explain_error_code('SENZ9000')` still names the
+  default 500-DSR free tier. `SENZING_LICENSE_FILE` does not appear in the `search_docs` response
+  and still appears in `sdk_guide(topic='load')`'s `compatibility_notes`; the FAQ's
+  `LICENSESTRINGBASE64` and `LICENSEFILE` are `PIPELINE` keys, not environment variables. The
+  `SKILL.md:1085` marker and INV-208 are out of scope and untouched.
+  owner-checked: `search_docs` with that exact query IS the route the old negative was written
+  against, so it is its own owner, and it now returns the figure in a lower-ranked FAQ. The
+  rescoped marker's owner, `sdk_guide(topic='load', record_count=<above the limit>)`, was
+  re-asked and returned the figure in `compatibility_notes`.
+- **Summary:** Module 2 Step 5 named `sdk_guide` as the route for `{record limit}` and justified
+  the choice with an absence claim, that `search_docs` "does **not** answer this" and returns EULA
+  and pricing prose "with no figure (re-checked 2026-08-13)". The 2026-09-24 index rebuild added
+  an FAQ that states the figure, so the claim was false. The prose now gives the true reason:
+  `sdk_guide` states the figure in a fixed field, `compatibility_notes`, while `search_docs` ranks
+  EULA grant-of-license prose that states no figure above the FAQ that has it. It carries no
+  figure and no dated re-check (INV-080), and it does not claim that `sdk_guide` reports the
+  active license, which the issue's refinement found false. The `MCP-NEGATIVE` marker is
+  rescoped, not deleted: its claim is limited to the ranking ("the top-ranked hits … state no
+  figure; the figure appears only in a lower-ranked FAQ"), its owner clause still points at
+  `sdk_guide(topic='load', record_count=<above the limit>)` and keeps the `(routing negative — the
+  figure exists, go there)` label, and it is restamped `server 1.37.13, 2026-09-24` as the issue
+  pins. Its claim and owner clause carry no result count and no universal over the results:
+  `coverage_reports.py negatives` flags no census-shaped, enumeration-shaped or malformed
+  marker, and `unmarked` reports nothing. The `VERIFIED_QUERIES` entry is kept and rewritten to
+  the ranking property, with its server version and docs-index date (INV-291), and no longer
+  says the query "gives no figure". Step 5's fill route and its ban on a hardcoded figure are
+  unchanged.
+- **Assumptions recorded:** the marker keeps the issue's pinned date, 2026-09-24, rather than
+  the 2026-09-26 re-ask date. Both re-asks read the same docs index (built 2026-09-24 18:45 UTC)
+  and returned the same result, so the stamp dates the observation the claim rests on. The new
+  guard asserts the stamp is **at least** `1.37.13` rather than exactly `1.37.13`, so a later
+  re-ask that restamps the marker to a newer server does not fail it; the stale `1.36.0` stamp
+  does.
+- **This run establishes no invariant.** It corrects a stale routing negative under INV-080,
+  INV-194 and INV-213, restamps a measured query record (INV-291), and adds a regression guard
+  for one step. It ships no new durable guarantee.
+- **Tests:** new `tests/test_record_limit_negative_is_rescoped.py` (15 tests, stdlib only,
+  imports nothing under `plugins/`, INV-108). Step 5's comment-stripped prose must name
+  `compatibility_notes` and scope its `search_docs` half to the ranking; no `search_docs`
+  sentence may say the tool does not answer or returns no figure, and any "no figure" must say
+  "top-ranked" or "lower-ranked"; the prose must not claim an active-license reading and must
+  carry no number and no date. The marker must exist once, parse, be stamped at least `1.37.13`,
+  make a ranking claim, stay a routing negative to `sdk_guide`, and pass
+  `find_census_rationales` and `find_enumeration_rationales`. The `VERIFIED_QUERIES` entry must
+  exist, must not say "gives no figure" or "returns no figure", and must record the lower-ranked
+  FAQ. Negative controls, each run and reverted: the pre-change `SKILL.md` fails 6; the old
+  "`search_docs` does **not** answer this … with no figure" sentence put back in Step 5 fails 2;
+  "gives no figure" put back in the allowlist entry fails 1; removing the allowlist entry fails
+  2; an active-license clause fails 1; a figure in the prose fails 1; the old `1.36.0` stamp
+  fails 1; a result count in the marker fails 1.
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** 8ea04f4
+
 ## module-5-bare-globalization-anti-pattern-inverted-into-a-false-alarm
 
 - **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #149)

@@ -191,7 +191,8 @@ VERIFIED_QUERIES = {
     # guard cannot tell the two apart (both are `search_docs(query='…')` literals in shipped
     # markdown), and that is the right default: an unexecuted phrasing is indistinguishable from an
     # executed one, so both must be accountable. All three executed against server 1.32.9, docs
-    # indexed 2026-08-11 20:52 UTC, on 2026-08-13; the first was re-executed for #151 (below).
+    # indexed 2026-08-11 20:52 UTC, on 2026-08-13; the first was re-executed for #151 and the
+    # second for #150 (below).
     # ⚠️ Record what the corpus SERVES, not how many hits or that "all" of them are one thing:
     # "all six hits are V3-to-V4" stood here while the index grew to ten hits, two of them not
     # migration material (server 1.37.13, 2026-09-24). Nothing scans this file for that shape.
@@ -201,11 +202,20 @@ VERIFIED_QUERIES = {
         "V4?' naming sz_dbupgrade/sz_configupgrade/sz_configtool, and no 4.x-to-4.y procedure, "
         "which is what module-02 Step 1b records (server 1.37.13, docs index 2026-09-24 18:45 "
         "UTC, re-executed 2026-09-26)",
+    # Re-executed for #150 on server 1.37.13, docs index 2026-09-24 18:45 UTC (2026-09-24, and
+    # again 2026-09-26 with the same result). The 2026-08-13 record said the query "gives no
+    # figure"; the rebuilt index added an FAQ that states the figure outright, so the set now
+    # answers it and only the ranking keeps it off target. That record was replaced, not
+    # re-dated. ⚠️ Record the ranking property, not ranks or scores: they move on a rebuild.
     "evaluation license record limit how many records without a license":
-        "OFF TARGET BY DESIGN — the negative's evidence: top hit the EULA's 'Senzing "
-        "Non-Production License' (relevance 174), which says 'up to the number of DSRs "
-        "designated therein' and gives no figure. The number lives in sdk_guide(topic='load', "
-        "record_count=<above the limit>) instead — 'the default Senzing license limit of 500'",
+        "OFF TARGET BY DESIGN — the negative's evidence, now a ranking one: the top-ranked hits "
+        "are the EULA's grant-of-license sections ('Senzing Non-Production License' first, "
+        "'solely for up to the number of DSRs designated therein'), which state no figure. The "
+        "result set does carry the figure, in a lower-ranked FAQ, 'What is the 500 record limit "
+        "and how do I work around SENZ9000'. sdk_guide(topic='load', record_count=<above the "
+        "limit>) states it in a fixed field instead, compatibility_notes — 'the default Senzing "
+        "license limit of 500' (server 1.37.13, docs index 2026-09-24 18:45 UTC, re-executed "
+        "2026-09-26)",
     # Module 5's multi-language retrieval strategy (INV-212), added 2026-08-13. The first two are
     # queries the step tells the guide to RUN; the last two are the evidence slots of its two
     # `MCP-NEGATIVE` markers — quoted in order to be forbidden. All four executed against server

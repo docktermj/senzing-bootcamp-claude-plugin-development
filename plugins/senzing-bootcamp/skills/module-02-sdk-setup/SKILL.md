@@ -1211,12 +1211,14 @@ written into this skill on purpose.** The route that answers it is `sdk_guide` w
 sdk_guide(topic='load', language='<chosen_language>', platform='<user_platform>', record_count=1000)
 ```
 
-<!-- MCP-NEGATIVE: search_docs(query='evaluation license record limit how many records without a license') — returns no figure, only EULA grant-of-license and DSR-pricing prose ("solely for up to the number of DSRs designated therein") — owner: sdk_guide(topic='load', record_count=<above the limit>) compatibility_notes give the number, "exceeds the default Senzing license limit of 500", and explain_error_code('SENZ9000') calls it the default 500-DSR free tier; both re-asked today (routing negative — the figure exists, go there) — server 1.36.0, 2026-09-02 -->
-`search_docs` does **not** answer this — asked for the evaluation license's record limit it returns
-EULA and pricing prose with no figure (re-checked 2026-08-13), which is why the tool is named here
-rather than left as "a Senzing MCP tool". Present exactly what the server returns (waiting up to 30
-seconds). If it returns no figure, drop the parenthetical entirely and say the current limit is
-unavailable from the MCP server. Never substitute a hardcoded or remembered figure — the published
+<!-- MCP-NEGATIVE: search_docs(query='evaluation license record limit how many records without a license') — the top-ranked hits are EULA grant-of-license prose ("solely for up to the number of DSRs designated therein") that states no figure; the figure appears only in a lower-ranked FAQ ("limited to 500 Distinct Source Records (DSRs)"), so a guide reading the top hit comes away without it — owner: sdk_guide(topic='load', record_count=<above the limit>) states the figure in a fixed field, compatibility_notes, "exceeds the default Senzing license limit of 500", and explain_error_code('SENZ9000') calls it the default 500-DSR free tier; both re-asked (routing negative — the figure exists, go there) — server 1.37.13, 2026-09-24 -->
+The tool is named here, rather than left as "a Senzing MCP tool", because `sdk_guide` states the
+figure in a fixed field, `compatibility_notes`. `search_docs` ranks its results instead: asked for
+the evaluation license's record limit, its top-ranked hits are EULA grant-of-license prose that
+states no figure, and the figure sits in a lower-ranked FAQ, so a guide reading the top hit comes
+away without it. Present exactly what the server returns (waiting up to 30 seconds). If it
+returns no figure, drop the parenthetical entirely and say the current limit is unavailable from
+the MCP server. Never substitute a hardcoded or remembered figure — the published
 capacity has changed before, and a stale number here is a Senzing fact asserted from memory
 (INV-080), in the one place the bootcamper is most likely to plan against it.
 
