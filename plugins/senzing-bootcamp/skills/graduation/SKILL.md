@@ -432,8 +432,12 @@ and the hardware/software it ran on. Add these header meta lines (in the preambl
 - `**Python version:**` — the `python3 --version` of the environment.
 - `**Language runtime:**` — the bootcamper's chosen-language runtime and version (for a Python
   bootcamp, the same Python).
-- `**Senzing SDK:**` — the Senzing SDK/engine version, obtained from the Senzing MCP tools (INV-080),
-  never guessed; "Unknown" if unavailable.
+- `**Senzing SDK:**` — the `sdk_version` recorded in `config/bootcamp_progress.json` by SDK setup
+  (Module 2 Step 4, marked by `sdk_version_measured_at`): the installed SDK's own report from
+  `SzProduct.get_version()`, `VERSION` only (e.g. `4.4.1`). The Senzing MCP server is remote and
+  cannot know what is installed here, so it is not the source for this line. If `sdk_version` is
+  absent (an older progress file, or Step 4 skipped), record "Unknown" and continue: do not re-run
+  the version call, and do not fill it from the package manager or the MCP server.
 - `**Database:**` — the database backend (e.g. SQLite, or PostgreSQL when chosen).
 
 The renderer renders `Plugin version` on the cover and the `Operating system` / `Python version` /

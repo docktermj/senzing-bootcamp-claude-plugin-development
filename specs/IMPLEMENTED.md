@@ -43,6 +43,87 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## recap-sdk-version-is-the-installed-one
+
+- **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #168)
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/graduation/SKILL.md`,
+  `tests/test_recap_sdk_version_is_the_installed_one.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server **1.37.13**, 2026-09-26 — **still reproduces**. Called
+  `get_capabilities` and `get_sdk_reference(topic='response_schemas', filter='getVersion')` (and
+  the same with `filter='get_version'`, identical). The `get_version` schema carries a top-level
+  string `VERSION` beside `BUILD_VERSION`, `BUILD_DATE`, `BUILD_NUMBER`, `PRODUCT_NAME` and the
+  `COMPATIBILITY_VERSION` and `SCHEMA_VERSION` objects; the method is on `SzProduct`, named
+  `get_version()` (Python, Rust), `getVersion()` (Java, TypeScript) and `GetVersion()` (C#).
+  owner-checked: `get_capabilities` (the server's own self-description, the route that owns what
+  the server can observe) — "Works from pre-fetched documentation — never connects to live
+  Senzing instances", so no MCP route can report the version installed on the Bootcamper's
+  machine and the recap must read the locally recorded `sdk_version`. Nothing sent upstream.
+- **Summary:** Graduation Step 1a's `**Senzing SDK:**` line said the version was "obtained from
+  the Senzing MCP tools (INV-080)". The server is remote and cannot know what is installed, so
+  the instruction forbade the one source that can, and no step recorded that source anyway
+  (`sdk_setup_install`, which the 2026-09-25 walk used, is not a field the plugin defines).
+  Module 2 Step 4, where `SzProduct.get_version()` first answers, now writes the returned
+  `VERSION` into `config/bootcamp_progress.json` as `sdk_version`, with
+  `sdk_version_measured_at: "module-02 step 4 (SzProduct.get_version)"`, following Step 5a's
+  `license_record_limit` pattern. It names the per-binding method, says to replace a differing
+  earlier value aloud naming both, and forbids filling the key from the package manager,
+  `szBuildVersion.json` or the MCP server. The Step 4 checkpoint names both keys. Graduation
+  Step 1a reads `sdk_version` (`VERSION` only), records "Unknown" when it is absent without
+  re-running the call, and no longer names the MCP tools. The recap key `Senzing SDK` is
+  unchanged, so the renderer's Run environment grouping is unaffected. INV-080 is unchanged: an
+  installed version is an environment reading, not a Senzing fact. Additive: two new progress
+  keys, none removed or renamed.
+- **Approach:** raced (Phase 5b) by the run's lead. Approach A (capture at the existing version
+  call, the `license_record_limit` precedent) won over B (a progress-key contract plus two
+  "never" lines cited to INV-278). The comparison is on the issue (comment 3). The raced patch
+  applied cleanly to `main` at `5d04e9f` and was kept as written after reading it against the
+  branch.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The change adds no ⛔
+  line (`conformance.py since` and `reverse-check` against `origin/main`: 0 hard-rule lines), but
+  it ships a durable, test-enforced guarantee in plain prose, which is the gap INV-309 exists to
+  close (#38). The rules already shipping, both plain prose at their sites:
+    - ⛔ **If `sdk_version` is absent (an older progress file, or Step 4 skipped), record "Unknown" and continue: do not re-run the version call, and do not fill it from the package manager or the MCP server.** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+    - ⛔ **So do not fill the field from the package manager, `szBuildVersion.json` or the MCP server.** — in `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`
+
+  ⚠️ **INV-278 may already govern this.** Its wording is general ("A bootcamp state field whose
+  authority rests on being measured MUST be written only from that measurement"), but it was
+  written for, and is enforced only over, `license_record_limit`. Whether `sdk_version` falls
+  under it (cite INV-278 at both sites and hold this block) or needs its own id is an
+  invariant-scope call left to the maintainer; comment 3 on #168 records why the run did not
+  make it. INV-295 does not apply: the version does not move when later steps write
+  configuration, so the marker records provenance, not a provisional reading.
+
+  The drafted wording:
+
+  **INV-NNN** — The recap's `**Senzing SDK:**` line MUST report the version the installed SDK
+  returned about itself, read from `sdk_version` in `config/bootcamp_progress.json` as SDK setup
+  Step 4 recorded it from the product version call (with `sdk_version_measured_at`), and MUST
+  record "Unknown" when that key is absent. The key MUST NOT be filled from the Senzing MCP
+  server, the package manager or `szBuildVersion.json`, and graduation MUST NOT re-run the
+  version call to fill it. An installed version is an environment reading, not a Senzing fact,
+  so INV-080 does not govern it. Enforced by `tests/test_recap_sdk_version_is_the_installed_one.py`.
+  (Source: GitHub issue #168.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** new `tests/test_recap_sdk_version_is_the_installed_one.py`, 7 tests in 2 classes,
+  stdlib only. Negative controls, each run and reverted, `__pycache__` cleared: the pre-#168
+  graduation bullet fails 3; the pre-#168 module-02 file fails 4; the Step 4 paragraph deleted
+  with the new checkpoint kept fails 3 (the lookup skips the checkpoint, so it cannot stand in
+  for the instruction); the checkpoint alone reverted fails 1; the "Unknown" fallback dropped
+  fails 1. The raced run's 11 finer mutations are in `approach-168-a.md`.
+- **Findings, recorded and not changed here (no issue filed):**
+    - `get_version` now has a `response_schemas` entry (server 1.37.13, above), yet INV-149's
+      dated text, `module-03b-truthset-visualization/visualization-api-reference.md:434` and
+      `bootcamp-onboarding/ground-rules.md:393` still say it returns an empty `data` array / has
+      no entry.
+    - `module-02-sdk-setup/SKILL.md:102` says `get_version()` returns `NATIVE_API_VERSION`
+      (`search_docs`, server 1.32.9); the current schema lists no such field.
+    - The dry-run scaffold's sample progress file (`.claude/skills/dry-run/scaffold_project.py`)
+      has no `sdk_version`, so a dry-run recap reads "Unknown" until the key is added.
+- **Commit:** c75302e
+
 ## how-tab-names-an-unsettled-final-state
 
 - **Implemented:** 2026-09-26 (**Not a spec** — a dated record of one issue-driven run, #169)

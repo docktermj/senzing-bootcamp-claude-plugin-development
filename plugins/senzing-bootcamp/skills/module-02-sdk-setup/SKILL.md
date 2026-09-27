@@ -951,6 +951,24 @@ This module already says so at its own success indicator: *"an engine-class call
 (`SzEngine`/`SzDiagnostic`) succeeds — a version query alone does not qualify (**Step 9**)"*. That is
 **Step 9**'s bar, after the database and the seeded config exist. Step 4 must not duplicate it early.
 
+**Record the version the SDK reported, because graduation reads it from here.** When
+`SzProduct.get_version()` returns, write the `VERSION` value from its JSON into
+`config/bootcamp_progress.json` as `sdk_version` (the value only, e.g. `4.4.1`, not
+`BUILD_VERSION`, `BUILD_DATE` or the whole document), and record where it came from as
+`sdk_version_measured_at: "module-02 step 4 (SzProduct.get_version)"`, following Step 5a's
+`license_record_limit` pattern. The call is the chosen binding's product version method:
+`get_version()` in Python and Rust, `getVersion()` in Java and TypeScript, `GetVersion()` in C#.
+Its response documents `VERSION` as a top-level string beside `BUILD_VERSION`
+(`get_sdk_reference(topic='response_schemas', filter='getVersion')`, server **1.37.13**,
+2026-09-26). If a value was already recorded and this reading differs, replace it and say so,
+naming both versions. This is the one place the installed version is recorded: graduation's recap
+reads `sdk_version` and records "Unknown" when it is absent, because the Senzing MCP server is
+remote and cannot report what is installed on this machine. So do not fill the field from the
+package manager, `szBuildVersion.json` or the MCP server. A Step 1b update runs before this step,
+so the reading here is already the post-update version. The version does not move when later
+steps write configuration, so unlike `license_record_limit` its marker records provenance, not a
+provisional reading.
+
 ⛔ **(INV-269) Report WHERE the binding resolved from, not only that it loaded — and print it beside the
 version.** A version query answers through the **native library**, so it reports the *engine's*
 version and says nothing about which language package was imported. Those are two different places:
@@ -1070,7 +1088,8 @@ instead — that path is confirmed working.
 If verification fails, use `explain_error_code` for any SENZ error codes and `search_docs` for
 troubleshooting.
 
-**Checkpoint:** write step 4 to `config/bootcamp_progress.json`.
+**Checkpoint:** write step 4 to `config/bootcamp_progress.json`, together with `sdk_version` and
+`sdk_version_measured_at` from the version reading above.
 
 ## Step 5: License (record capacity)
 
