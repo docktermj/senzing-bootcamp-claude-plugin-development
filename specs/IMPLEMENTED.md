@@ -43,6 +43,64 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## inv160-quotes-the-current-step-3-note-and-its-terminal-step
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #197)
+- **Files changed:**
+  `specs/INVARIANTS.md`, `invariant-manifest.json`,
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`,
+  `tests/test_access_steps_terminal_step.py`, `tests/test_invariant_enforcer_citations.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.14, 2026-09-28. The spec's re-verification criterion holds.
+  - `find_examples(repo='senzing/code-snippets-v4',
+    file_path='python/configuration/register_data_sources.py')` returns `content: ""`,
+    `content_length: 1031`, `truncated: false`, `content_elided: true` and three
+    `access_steps` (fetch `raw_url`, `git clone`, `inline`). Step 3's note ends "report the
+    content as unreachable rather than retrying".
+  - `generate_scaffold(language='python', workflow='information')` returns the same three
+    `access_steps`, and its step-3 sentence from "Clients that validate arguments" to the end
+    is identical word for word.
+  - `inline` is still not in either tool's declared schema.
+- **Summary:** INV-160's 2026-08-11 note and `ground-rules.md` quoted a step-3 note the server
+  has since reworded, and the plugin never said what to do once both routes had failed.
+  - **INV-160** gains the spec's 2026-09-28 dated note, pasted verbatim before the entry's
+    closing `(Source: …)`. It quotes the current step-3 sentence and records the terminal
+    step for both tools. No earlier text of the entry changed, and nothing was deleted or
+    renumbered. `invariant-manifest.json` is regenerated, and `--check` exits 0.
+  - **`ground-rules.md`, Working examples:** the old quote is replaced by today's sentence,
+    dated (server 1.37.14, 2026-09-28) and attributed to both tools.
+  - **`ground-rules.md`, the `find_examples` / `generate_scaffold` sub-bullet:** one new ⛔
+    line, citing INV-160, states the terminal step. Once `raw_url` and `git clone` have both
+    failed, report the example as unreachable, naming the file, its repo and what was tried.
+    Do not retry, do not pass `inline` (INV-136), and never reconstruct the content from
+    memory (INV-080). The calling step then continues on its own fallback.
+  - **Unchanged:** INV-160's lead and 2026-08-11 note, the per-call-site copies in the module
+    skills, `download_resource`'s `inline` route, `specs/mcp-coverage.jsonl`, the frozen
+    `find-examples-elision-is-by-design-not-a-failed-retrieval.md`, and
+    `REVIEWED_NOT_A_SUPERSESSION`.
+- **Approach:** implemented directly (Phase 5a). It is one invariant note, one skill passage
+  and one new guard.
+- **Amends INV-160 with a dated note and registers no new invariant.** The new ⛔ line cites
+  INV-160 at the line. The note avoids the supersession vocabulary, so INV-160 stays active
+  and is not added to `REVIEWED_NOT_A_SUPERSESSION`.
+- **Tests:**
+  - New `tests/test_access_steps_terminal_step.py` (8 tests). `ground-rules.md` states the
+    terminal step exactly once, as a ⛔ lead citing INV-160, naming both tools, the file and
+    what was tried, "do not retry", no `inline`, no reconstruction from memory, and the
+    calling step's own fallback. No file under `plugins/senzing-bootcamp/` carries "cannot use
+    this step" (whitespace-collapsed). INV-160 carries a 2026-09-28 dated note with the
+    unreachable MUST and the no-retry MUST NOT. It pins the behavior, not the server's
+    sentence (INV-219).
+  - `tests/test_invariant_enforcer_citations.py`: `EXPECTED_PAIRS` 135 -> 136, re-derived by
+    running the extractor. The new pair is INV-160 -> `test_access_steps_terminal_step.py`,
+    INV-160's first named enforcer.
+  - Negative controls, each run and reverted with the files verified byte-identical: deleting
+    the ⛔ paragraph fails 6 tests; dropping "do not retry", "reconstruct … from memory",
+    "(INV-160)" or "which example could not be reached" each fails exactly its own test;
+    restoring the old quote fails the retired-wording test; deleting INV-160's note fails the
+    invariant test.
+- **Commit:** 9f3dc15
+
 ## the-update-path-names-its-search-docs-routes
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #194)
