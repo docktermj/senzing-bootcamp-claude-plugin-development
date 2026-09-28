@@ -321,11 +321,14 @@ For each finding, append a `## Improvement:` entry to
   one-line reason. Retrospective findings skew toward MCP-server issues — a tool behaving differently
   than documented is exactly the defect class a bootcamper cannot report — so triage each one rather
   than defaulting it to `plugin`.
-- **`Upstream:`** for an `mcp-server`/`both` verdict, offer the forward **once** per
+- **`Upstream:`** for an `mcp-server`/`both` verdict, append the entry as `offer pending`: it is
+  saved before the question is asked, so no outcome exists yet. Then offer the forward **once** per
   `../bootcamp-onboarding/feedback.md` Step 3c: show the exact message, strip anything identifying
   (INV-065), and send only on a yes. Batch the offer — one question covering all such findings, not
-  one per finding, so the retrospective stays a single non-blocking step. On decline or failure,
-  record it and continue; every entry is saved locally regardless (INV-015). ⚠️ **(INV-281) A session forbidden to
+  one per finding, so the retrospective stays a single non-blocking step. The batch also covers
+  entries already reading `offer pending` from the silent in-run append. The one answer replaces
+  every `offer pending` value in the same turn, with the outcome Step 3c step 5 names (INV-281).
+  On decline or failure, record it and continue; every entry is saved locally regardless (INV-015). ⚠️ **(INV-281) A session forbidden to
   send** — a maintainer `/dry-run` — still presents the offer, then records
   `submission blocked: <reason>`, **never** `offered, declined` (Step 3): a yes that could not be
   acted on is not a refusal.

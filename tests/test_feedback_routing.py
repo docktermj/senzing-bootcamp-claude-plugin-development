@@ -416,7 +416,8 @@ class LocalCaptureIsUnconditional(unittest.TestCase):
 
     def test_upstream_field_can_record_every_outcome(self):
         t = read(FEEDBACK)
-        for outcome in ("not applicable", "offered, declined", "submitted", "submission failed"):
+        for outcome in ("not applicable", "offer pending", "offered, declined", "submitted",
+                        "submission failed"):
             with self.subTest(outcome=outcome):
                 self.assertIn(outcome, t)
 
