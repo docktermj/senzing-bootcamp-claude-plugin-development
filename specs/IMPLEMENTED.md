@@ -89,7 +89,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - The #225 item 2 claim and most #229 items are sweep leads the lead did not re-verify; they are labeled so in the issues.
   - One sweep agent could not re-run `retrofit.sh` against the public clone (the permission classifier denied it). The #202 worker's smoke run of the same script is the evidence.
 - **Establishes no invariant.** This audit modifies no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. The three invariants it drafts (D1–D3, in #228) go through `/review-invariants`. No id is written here, because an unminted id fails `citations.py verify`.
-- **Commit:** uncommitted
+- **Commit:** 2451f1a
 
 ## three-mcp-citations-are-restamped
 
