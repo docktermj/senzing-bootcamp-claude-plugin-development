@@ -35,11 +35,11 @@ if [ "$(cd "$here" && pwd)" = "$(cd "$src" && pwd)" ]; then
 fi
 
 
-# Warn on a dirty dev tree so the retrofit diff can be reviewed in isolation.
+# Warn on a dirty dev tree: its uncommitted edits show up in the comparison below.
 if ! git -C "$here" diff --quiet -- plugins .claude-plugin docs README.md \
    || ! git -C "$here" diff --cached --quiet -- plugins .claude-plugin docs README.md; then
-  echo "WARNING: dev working tree already has uncommitted changes in retrofit paths;" >&2
-  echo "         the retrofit will overlay onto them (harder to review)." >&2
+  echo "WARNING: dev working tree has uncommitted changes in the compared paths;" >&2
+  echo "         they are compared as they stand, so the report includes them." >&2
 fi
 
 echo "Source (public): $src"
@@ -66,20 +66,31 @@ echo
 # LICENSE, .vscode/, .gitignore, public .claude/settings.json) stay out of scope by
 # construction -- they are never read from the source.
 differs=0
+errors=0
 report_path() {
   # $1 = relative path under both repos. Prints a per-file diff summary; writes nothing.
-  local rel="$1"
+  #
+  # ⚠️ (#191) `diff` exits 0 when the trees match, 1 when they differ, and 2 or more when it
+  # could not compare them. Under `set -euo pipefail` a bare non-zero `diff`, or a listing
+  # pipeline that carries its status, ENDS THE SCRIPT: until #191 the first differing path was
+  # the last one reported, so the report only finished when there was nothing to report.
+  # Capture the status with `|| status=$?`, and end the listing with `|| true`, which also
+  # covers `head` closing the pipe on a long listing. Neither may be dropped.
+  local rel="$1" status=0
   if [ ! -e "$src/$rel" ]; then
     echo "  (absent in public)      $rel"
-    return
+    return 0
   fi
-  if diff -rq "$src/$rel" "$here/$rel" >/dev/null 2>&1; then
-    echo "  same                    $rel"
-  else
-    echo "  DIFFERS                 $rel"
-    differs=$((differs + 1))
-    diff -rq "$src/$rel" "$here/$rel" 2>/dev/null | sed 's/^/      /' | head -40
-  fi
+  diff -rq "$src/$rel" "$here/$rel" >/dev/null 2>&1 || status=$?
+  case "$status" in
+    0) echo "  same                    $rel"
+       return 0 ;;
+    1) echo "  DIFFERS                 $rel"
+       differs=$((differs + 1)) ;;
+    *) echo "  ERROR                   $rel   (diff could not compare it: exit $status)"
+       errors=$((errors + 1)) ;;
+  esac
+  diff -rq "$src/$rel" "$here/$rel" 2>&1 | sed 's/^/      /' | head -40 || true
 }
 
 echo "=== Comparing the propagated paths (read-only) ==="
@@ -91,7 +102,14 @@ echo "=== Public commits since the newest tag, which is what a filed issue descr
 git -C "$src" log --oneline "$(git -C "$src" describe --tags --abbrev=0 2>/dev/null || echo HEAD)"..HEAD 2>/dev/null | sed 's/^/  /' || true
 
 echo
-echo "$differs propagated path(s) differ. \u26d4 NOTHING WAS WRITTEN."
+# The stop sign is written as its UTF-8 bytes: plain `echo` expands no escapes, so the
+# old `\u` form printed literally (#191), and octal `printf` works in bash 3.2 too.
+stop_sign=$(printf '\342\233\224')
+if [ "$errors" -gt 0 ]; then
+  echo "$differs propagated path(s) differ; $errors could not be compared (ERROR above). $stop_sign NOTHING WAS WRITTEN."
+else
+  echo "$differs propagated path(s) differ. $stop_sign NOTHING WAS WRITTEN."
+fi
 echo "File one issue per coherent change (see SKILL.md); search the tracker first so a"
 echo "change already absorbed or already filed does not get a second issue."
 
@@ -120,11 +138,13 @@ while IFS= read -r rel; do
 done < <(cd "$here" && git ls-files plugins .claude-plugin docs README.md)
 [ "$missing" -eq 0 ] && echo "  (none)"
 
-# --- Report (no commit, no push) ------------------------------------------- #
+# --- Report only (#54): nothing was copied, applied, committed or pushed --- #
 echo
-echo "=== Dev repo status in retrofit paths (review before committing) ==="
-git -C "$here" status --short -- plugins .claude-plugin docs README.md
-echo
-echo "Retrofit applied to the working tree. Nothing committed or pushed — review:"
-echo "  git -C \"$here\" diff -- plugins .claude-plugin docs README.md"
-echo "then commit manually."
+echo "This was a report. The dev working tree was compared, not changed, and nothing was"
+echo "committed or pushed; a filed issue carries any change into this repo."
+
+if [ "$errors" -gt 0 ]; then
+  echo "$errors propagated path(s) could not be compared; the report above is incomplete." >&2
+  exit 1
+fi
+exit 0
