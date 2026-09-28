@@ -141,7 +141,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   guards); R8 loses the choosing operation; row back to *drives 2–3*; diagram edge to phase 3
   returns; the new filing negative becomes a fenced instruction; stub carries the retired
   reverse-check script; drift fixture puts a citation inside its block. Each failed its guard.
-- **Commit:** uncommitted
+- **Commit:** 341c520
 
 ## three-mcp-citations-are-restamped
 
