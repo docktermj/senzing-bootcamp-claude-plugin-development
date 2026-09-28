@@ -93,13 +93,12 @@ connections between entities using `find_network` and `find_path`.
    is the wrong conclusion to hand an analyst in the capability the fraud-detection pattern leans on
    hardest.
 
-   ⛔ **Per-record source values do not come from `JSON_DATA` on an entity call.** The get_entity
-   schema lists `RECORDS[].JSON_DATA.*` paths, but the flag that produces them
-   (`SZ_ENTITY_INCLUDE_RECORD_JSON_DATA`) is `get_record`-only, so those paths render blank for every
-   record. Use `RECORDS[].FEATURES.<TYPE>[].ATTRIBUTES.*` with
-   `SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS` on the entity call, or a per-record `get_record` when
-   you need the raw loaded document (one extra call per record). Full detail in the same reference
-   section.
+   ⛔ (INV-080) **Per-record source values come from the entity call itself, with the right flag
+   OR-ed in.** `RECORDS[].JSON_DATA` needs `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA`, which
+   `SZ_ENTITY_DEFAULT_FLAGS` omits. Without it those paths render blank for every record, and the fix
+   is the flag, not a switch to `get_record`. For the mapped attributes instead, use
+   `RECORDS[].FEATURES.<TYPE>[].ATTRIBUTES.*` with `SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS`. The
+   two routes, their paths and the flags' `applies_to` are in the same reference section.
 
    ⛔ **If some fields of a row populate and others come back blank, suspect the blank ones' names
    — not the data.** A half-populated row reads as a real result precisely because part of it

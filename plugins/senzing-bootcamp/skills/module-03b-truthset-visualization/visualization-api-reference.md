@@ -188,9 +188,12 @@ SDK's own flag constants, Senzing 4.3.4, 2026-08-14). So a record's name, addres
 server that reports per-record names without adding those flags is inventing them.
 
 **To enrich the Records panel (optional, and not required by this contract):** add
-`SZ_ENTITY_INCLUDE_RECORD_FEATURES` — then each record carries `FEATURES.NAME[].FEAT_DESC`,
+`SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS` — then each record carries `FEATURES.NAME[].FEAT_DESC`,
 `FEATURES.ADDRESS[].FEAT_DESC` and `FEATURES.PHONE[].FEAT_DESC` — and/or
-`SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` for the record as it was mapped. Confirm the paths against
+`SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` for the record as it was loaded. `SZ_ENTITY_INCLUDE_RECORD_FEATURES`
+is **not** that flag: it returns only `RECORDS[].FEATURE_IDS[]`, feature ids with no descriptions
+(`get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_FEATURES')`, MCP server 1.37.14,
+2026-09-28). Confirm the paths against
 `get_sdk_reference(topic='response_schemas', filter='get_entity_by_record_id')` rather than from
 here (INV-080). ⚠️ Weigh it at scale first: this payload is **embedded in the standalone snapshot**
 (INV-070), and Query, Visualize and Discover points the same app at the Bootcamper's full dataset,
@@ -326,30 +329,35 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > | `find_path_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, **`ENTITY_PATH_LINKS[]`** — *not* `ENTITY_NETWORK_LINKS[]`; each link element carries the **same seven fields** as the network row below (re-verified on MCP server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-31). The element fields are identical and only the array name differs, so a parser carried over from `find_network` returns every edge blank |
 > | `ENTITY_PATHS[]` (in **both** `find_path_*` and `find_network_*`) | `START_ENTITY_ID`, `END_ENTITY_ID`, `ENTITIES[]` — three fields, and the endpoints are **directed**. ⛔ **A `find_network` response therefore carries TWO endpoint conventions at once:** paths are `START_`/`END_`, links are `MIN_`/`MAX_` (undirected, normalized low-to-high). A link is an unordered pair and a path is not, which is the reason — and `START_`/`END_` is the natural wrong guess for a link precisely because the sibling array in the same response uses it. Reading path endpoint names off a link element printed **38 edges as `null -> null` with no error** (re-verified on MCP server 1.32.9, 2026-08-17, `get_sdk_reference(topic='response_schemas', filter='find_network', language='java')`) |
 > | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`; each link element (**now documented by `response_schemas` — re-verified on MCP server 1.32.2, 2026-07-30 — and corroborated by a dump on SDK 4.3.3, 2026-07-28**) carries `MIN_ENTITY_ID` / `MAX_ENTITY_ID` (endpoints, normalized low-to-high), `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS` |
-> | `get_record` | `DATA_SOURCE`, `RECORD_ID`, `JSON_DATA.*` — **the only place `JSON_DATA` is obtainable**; see the get_entity trap below |
+> | `get_record` | `DATA_SOURCE`, `RECORD_ID`, `JSON_DATA.*` under `SZ_RECORD_DEFAULT_FLAGS` — one record by key; entity-family calls return `JSON_DATA` too when its flag is added (see below) |
 >
-> ⛔ **`JSON_DATA` is `get_record`-only, whatever the `get_entity` schema says.**
-> `get_sdk_reference(topic='response_schemas', filter='getEntity')` lists per-record source-value
-> paths under the get_entity response — `RESOLVED_ENTITY.RECORDS[].JSON_DATA.ADDR_CITY`,
-> `.PRIMARY_NAME_FIRST`, `.DATE_OF_BIRTH` and siblings — but **no entity-family flag produces them**.
-> The flag that does, `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA`, reports
-> `applies_to: ["get_record"]` and is a member of `SZ_RECORD_DEFAULT_FLAGS` (both re-verified
-> 2026-07-28). A viewer written against the documented get_entity paths therefore prints
-> "(no JSON_DATA returned for this record)" for **every** record — the silent-blank failure mode,
-> against a database with records loaded — because a wrong path yields null rather than an error.
-> This is the one place where the authoritative reference is the thing that misleads you, so it is
-> called out rather than left to be re-derived.
+> ⛔ (INV-080) **`JSON_DATA` needs `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` OR-ed in, and
+> `SZ_ENTITY_DEFAULT_FLAGS` omits it.** `get_sdk_reference(topic='flags',
+> filter='SZ_ENTITY_INCLUDE_RECORD_JSON_DATA')` lists the entity family in that flag's `applies_to`
+> (`get_entity_by_entity_id`, `get_entity_by_record_id`, `search_by_attributes`, `why_*`,
+> `find_path_*`, `find_network_*`, as well as `get_record`), with
+> `response_paths: ["RESOLVED_ENTITY.RECORDS[].JSON_DATA"]`. Read `applies_to` there rather than from
+> this list. So on an entity call, a blank `JSON_DATA` means the flag is missing, not that the route is
+> wrong: add the flag, don't switch to `get_record`. (Through server 1.32.2 the flag's `applies_to`
+> was `["get_record"]` alone, and this section said so; the server has since widened it.)
 >
-> **For per-record source values, prefer the entity family — it needs no second call.** The same
-> get_entity schema documents `RESOLVED_ENTITY.RECORDS[].FEATURES.<TYPE>[].ATTRIBUTES.*` (e.g.
-> `ATTRIBUTES.ADDR_CITY`, `ATTRIBUTES.PRIMARY_NAME_FIRST`, `ATTRIBUTES.DATE_OF_BIRTH`) plus
-> `RECORDS[].UNMAPPED_DATA.*`, and `SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS` — *"include full
-> feature details at the record level of an entity response"* — lists `get_entity_by_entity_id`,
-> `get_entity_by_record_id`, `search_by_attributes`, `why_*`, `find_path_*` and `find_network_*` in
-> its `applies_to` (verified 2026-07-28). These are the **mapped** attributes per feature, not the raw
-> record as loaded, so reach for `get_record` + `SZ_RECORD_DEFAULT_FLAGS` only when you genuinely need
-> the raw `JSON_DATA` document — and know that costs one extra SDK call **per record**, which is worth
-> knowing before designing a viewer over a large entity set.
+> **For per-record source values, one entity-family call is enough — pick the flag for the shape you
+> need.** Both are documented under `get_sdk_reference(topic='response_schemas',
+> filter='get_entity_by_entity_id')`, each gated on its flag:
+>
+> - **The raw record as loaded:** `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` →
+>   `RESOLVED_ENTITY.RECORDS[].JSON_DATA`, with source values under `JSON_DATA.FEATURES[]` (e.g.
+>   `JSON_DATA.FEATURES[].ADDR_CITY`, `.NAME_FIRST`, `.DATE_OF_BIRTH`).
+> - **The mapped attributes per feature:** `SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS` →
+>   `RESOLVED_ENTITY.RECORDS[].FEATURES.<TYPE>[].ATTRIBUTES.*` (e.g.
+>   `FEATURES.ADDRESS[].ATTRIBUTES.ADDR_CITY`, `FEATURES.NAME[].ATTRIBUTES.NAME_FIRST`,
+>   `FEATURES.DOB[].ATTRIBUTES.DATE_OF_BIRTH`), plus `RECORDS[].UNMAPPED_DATA.*` under
+>   `SZ_ENTITY_INCLUDE_RECORD_UNMAPPED_DATA`.
+>
+> These are the **mapped** attributes per feature, not the raw record as loaded, so choose by what the
+> viewer shows. The example paths were checked against MCP server 1.37.14 on 2026-09-28; they are
+> illustrations, and a dump of one element still decides (INV-115). `get_record` stays the call for
+> one record fetched by its key.
 >
 > **Watch this asymmetry — it is a silent-blank trap.** With `SZ_INCLUDE_MATCH_KEY_DETAILS`, the
 > match-key breakdown sits under a **differently named key** depending on the call: `why_*` puts a
