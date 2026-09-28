@@ -191,9 +191,9 @@ server that reports per-record names without adding those flags is inventing the
 `SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS` — then each record carries `FEATURES.NAME[].FEAT_DESC`,
 `FEATURES.ADDRESS[].FEAT_DESC` and `FEATURES.PHONE[].FEAT_DESC` — and/or
 `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` for the record as it was loaded. `SZ_ENTITY_INCLUDE_RECORD_FEATURES`
-is **not** that flag: it returns only `RECORDS[].FEATURE_IDS[]`, feature ids with no descriptions
-(`get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_FEATURES')`, MCP server 1.37.14,
-2026-09-28). Confirm the paths against
+is **not** that flag: its `response_paths` is `RECORDS[].FEATURE_IDS[]`, feature ids without their
+descriptions (`get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_FEATURES')`, MCP
+server 1.37.14, 2026-09-28). Confirm the paths against
 `get_sdk_reference(topic='response_schemas', filter='get_entity_by_record_id')` rather than from
 here (INV-080). ⚠️ Weigh it at scale first: this payload is **embedded in the standalone snapshot**
 (INV-070), and Query, Visualize and Discover points the same app at the Bootcamper's full dataset,

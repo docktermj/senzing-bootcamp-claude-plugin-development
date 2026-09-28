@@ -97,7 +97,10 @@ entries at once. Two things a reader should know about the hashes now recorded:
   the `applies_to: ["get_record"]` assertion. `tests/test_visualization_api_contract.py` passes
   unchanged, including the `:254` flag-name pin and the enrichment test. Negative controls on the
   real files: the old trap line restored in the reference fails 1 test (the stale-claim guard), and
-  Module 7's old sentence restored fails 2. Restored, `__pycache__` cleared, OK.
+  Module 7's old sentence restored fails 2. Restored, `__pycache__` cleared, OK. The first
+  clean-clone run caught `test_coverage_reports`' unmarked-negatives report: the enrichment
+  sentence's dated "returns only `FEATURE_IDS[]`" read as a tool-absence claim with no marker.
+  It is restated positively, as the flag's `response_paths`, in a follow-up commit.
 - **Commit:** 435216c
 
 ## upstream-field-has-no-value-for-an-offer-still-pending
