@@ -43,6 +43,96 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## module-3-senz7426-relay-points-at-step-8
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #219)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md`,
+  `tests/test_engine_verification_and_senz2027.py`,
+  `tests/test_mcp_output_is_never_suppressed.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.14, 2026-09-28, `get_capabilities()`,
+  `explain_error_code('7426')` and `sdk_guide(topic='install', platform='macos_arm',
+  language='java')`. Outcome: still reproduces.
+  - `explain_error_code('7426')` still ranks "SUPPORTPATH points at a directory with no
+    transliteration modules … This is a configuration error, NOT a broken install" as
+    `common_causes[0]` and "Check SUPPORTPATH FIRST" as `resolution_steps[0]`. Its macOS cause
+    still says the shipped `etc/sz_engine_config.ini` sets
+    `SUPPORTPATH=${INSTALLPATH}/senzing/er/data`, with no version condition. Its input-encoding
+    cause is still last and "only when the error occurs on a record operation after the engine
+    has initialized successfully".
+  - `sdk_guide` still says "Do not pin the literal: it has already drifted once — 4.4.x shipped
+    SUPPORTPATH=${INSTALLPATH}/senzing/er/data, and 4.5.0.26245 ships the Linux absolute path
+    SUPPORTPATH=/opt/senzing/data".
+
+  So the two tools still disagree on the macOS literal, as #199 recorded, and the issue's
+  conditional stop does not apply. No absence claim is made. Nothing was sent upstream; the
+  report of the disagreement was sent separately and is out of scope.
+- **Summary:** Module 3 step 3b (`SENZ7426`) carried its own copy of Module 2 Step 8's two-tool
+  analysis, stamped server 1.32.9. It said the tool "now agrees with Step 8" and that Step 8 "is
+  corroboration rather than a correction". #199 narrowed Module 2 to "agree on the diagnosis and
+  the fix — not on the macOS literal" and missed this copy, so Module 3 relayed the tool's 4.4.x
+  literal with no condition. Step 3b is now an INV-300 pointer.
+  - **Kept:** "relay what `explain_error_code` returned (step 2 already says to)", the routing to
+    the same Step 8 check, and the ⛔ INV-169 line. That line now says "the record-level
+    exception that block names", because the sentence it pointed back at is gone. The rewrap
+    made it a changed ⛔ line, and `test_new_hard_rules_are_cited_or_deferred` requires an
+    added hard rule to cite its invariant on its own line, so INV-169 moved onto the ⛔ line
+    (it had sat on the continuation line).
+  - **Added:** it names Module 2 Step 8's *"Both tools agree on the diagnosis and the fix — not on
+    the macOS literal"* block (`../module-02-sdk-setup/SKILL.md`) as the owner of the comparison
+    with `sdk_guide(topic='install', …)`, citing INV-300. One clause travels with the relay: on
+    macOS the tool's cask cause quotes a `SUPPORTPATH` literal that holds for cask 4.4.x and
+    earlier only, so the guide never tells the Bootcamper that literal is what their ini says.
+    Step 8's `*TransRules.sz` content test applies whatever the literal. Module 3 quotes no
+    literal.
+  - **Removed:** the 1.32.9 stamp, the `common_causes[0]` / `resolution_steps[0]` ranking, "now
+    agrees with Step 8", "corroboration rather than a correction", the input-encoding ranking and
+    the engine-construction sentence. Module 2 Step 8 states each of them.
+  - **Placement:** the pointer sentence comes before the macOS clause. With the clause first,
+    `sdk_guide` fell outside the 400-character window of
+    `test_senz7426_is_never_tied_to_supportpath_unconditionally`, which requires both a platform
+    and the tool that states the conditioned claim. That guard was not changed.
+  - **Unchanged (out of scope):** Module 2's text, step 3 (`SENZ2027`) and its 1.32.2 stamp, and
+    the Windows/Scoop wording.
+- **Approach:** implemented directly (Phase 5a). It is one skill file plus its tests.
+- **Establishes no invariant, and defers none.** No ⛔ line is added. The pointer applies INV-300
+  (a rule is stated once, and other sites point at it), and the one kept ⛔ line cites INV-169
+  at the line. The new guard enforces INV-300 at one site and adds no new rule.
+- **Tests:**
+  - `tests/test_engine_verification_and_senz2027.py`:
+    `test_module_03_relays_the_explanation_and_conditions_it` keeps its name and the relay
+    assertion. It now also asserts the 4.4.x clause in the `SENZ7426` branch. The "ranks that
+    cause last" and "`SENZ7426` still fires at `getEngine()`, **before any record is submitted**"
+    assertions moved to Module 2, which states both. The docstring says why.
+    `test_module_03_routes_senz7426_to_the_check` is unchanged and green.
+  - New class `TheModule03Senz7426BranchIsAPointer`, 5 tests. The owner title exists in Module 2.
+    Step 3b names that title, the owning file, "Module 2 Step 8" and INV-300. With the owner title
+    removed, step 3b contains no "agree" at all, and Module 3 has no "corroboration rather than a
+    correction" or "agrees with Step 8". Step 3b carries no `common_causes`, `resolution_steps`,
+    "rank"/"ranked" or `MCP server <version>` stamp. No Module 3 file contains `er/data`. The
+    checks come from the claim (a pointer carries no copy), not only from the removed sentences.
+  - `tests/test_mcp_output_is_never_suppressed.py`: `test_module_03_now_relays_the_tools_output`
+    asserted `"1.32.9" in` Module 3. With step 3b's stamp gone, it passed only on an unrelated
+    1.32.9 in Step 4's scaffold-count note, so it checked nothing. It guarded that the relay rests
+    on a dated re-verification, and that stamp now lives in the owning block. So it is
+    retargeted, not dropped. Module 3's `SENZ7426` branch must name the owner title, and Module
+    2's block must read "… (INV-169) — re-verified on **MCP server X.Y.Z, YYYY-MM-DD**.
+    `explain_error_code('7426')`". The relay assertion is unchanged.
+  - Negative controls, each restored:
+    - Step 3b at `main`'s text fails 8 tests.
+    - Planting "The two tools fully agree here.", "So the tool agrees with Step 8." or "Step 8 is
+      corroboration rather than a correction." fails `test_step_3b_does_not_say_the_tools_agree`
+      each time.
+    - Dropping the 4.4.x clause fails 1 test. Dropping INV-300 fails 2, including
+      `test_a_single_statement_claim_names_its_authority`. Planting the `er/data` literal fails 2.
+    - Removing the version and date from Module 2's block fails the retargeted test.
+  - CI mirror, empty `HOME`: present leg `OK (skipped=4)`, absent leg `OK (skipped=66)`, against
+    `OK (skipped=5)` and `OK (skipped=67)` at `main`. The one fewer skip is
+    `test_each_rule_added_since_the_last_audit_is_cited_or_deferred`: at `main` no plugin ⛔ line
+    had changed since the last audit, so it skipped. The rewrapped INV-169 line gives it one to
+    check, and it passes.
+- **Commit:** 60c1169
+
 ## every-license-reading-is-an-owner-or-a-pointer
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #218)

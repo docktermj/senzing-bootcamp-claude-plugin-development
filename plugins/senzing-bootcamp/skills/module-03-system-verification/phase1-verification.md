@@ -155,17 +155,15 @@ INV-080), create an engine, and release it.
    configuration points. Send the bootcamper to Module 2's Step 8 SUPPORTPATH check (on Windows/Scoop,
    the sibling-directory case). Verified against the Senzing FAQ on MCP server 1.32.2, 2026-07-30.
 3b. **If the code is `SENZ7426`**, relay what `explain_error_code` returned (step 2 already says to)
-   and send them to the *same* Step 8 check. Re-verified on **MCP server 1.32.9, 2026-08-12**: it
-   now names the **macOS**-cask and **Windows**-Scoop `SUPPORTPATH` cases and points at
-   `sdk_guide(topic='install', …)` for the per-platform detail, ranking *"SUPPORTPATH points at a
-   directory with no transliteration modules … a configuration error, NOT a broken install"* as
-   `common_causes[0]` and *"Check SUPPORTPATH FIRST"* as `resolution_steps[0]`. So the tool now
-   agrees with Step 8 instead of contradicting it, and Step 8 is corroboration rather than a
-   correction. Its input-encoding cause is ranked **last** and conditioned on the error appearing
-   *"on a record operation after the engine has initialized successfully"* — not this failure, which
-   fires at engine construction, before any record is submitted.
-   ⛔ Never restate this as an unconditioned rule: stripped of the platform condition and that
-   record-level exception it becomes the over-generalization INV-169 forbids.
+   and send them to the *same* Step 8 check. How the tool compares with
+   `sdk_guide(topic='install', …)` on this code is stated once, in Module 2 Step 8's *"Both tools
+   agree on the diagnosis and the fix — not on the macOS literal"* block
+   (`../module-02-sdk-setup/SKILL.md`); follow it there rather than a copy here (INV-300). One
+   clause travels with the relay: on **macOS**, the tool's cask cause quotes a `SUPPORTPATH` literal
+   that holds for cask 4.4.x and earlier only, so never tell the Bootcamper that literal is what
+   their ini says. Step 8's `*TransRules.sz` content test applies whatever the literal.
+   ⛔ Never restate this as an unconditioned rule (INV-169): stripped of the platform condition and
+   of the record-level exception that block names, it becomes the over-generalization it forbids.
 4. Do not diagnose from the code alone beyond that: any other code goes through `explain_error_code`
    and `search_docs` per this module's Error handling section.
 

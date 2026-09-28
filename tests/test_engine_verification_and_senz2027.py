@@ -319,32 +319,114 @@ class TheSupportpathCheckIsNotGatedToOnePlatform(unittest.TestCase):
                          "the SENZ7426 branch does not route to Module 2's Step 8 check")
 
     def test_module_03_relays_the_explanation_and_conditions_it(self):
-        """Inverted 2026-08-12: the tool now owns this diagnosis, so relaying is required.
+        """Module 3 relays; Module 2 Step 8 owns the analysis of what it relays (#219).
 
-        This asserted the opposite until today — that Module 3 MUST say "do not relay" —
-        which pinned the suppression instruction in place. `explain_error_code('7426')` on
-        server 1.32.9 ranks SUPPORTPATH as `common_causes[0]` and "Check SUPPORTPATH FIRST"
-        as `resolution_steps[0]`, so the passage that was protective became the defect.
+        Inverted 2026-08-12: `explain_error_code('7426')` ranks SUPPORTPATH first, so
+        relaying is required, and this asserted the opposite until then — that Module 3 MUST
+        say "do not relay" — which pinned the suppression instruction in place.
 
-        What survives is the reason the original worried: the encoding cause must not be
-        presented as applying to a pre-record failure. The tool now ranks it last and
-        conditions it itself, and Module 3 must say so — that is what is asserted here.
+        Until #219 Module 3 also carried its own copy of the tool's ranking: the encoding
+        cause ranked last, and the failure firing at engine construction. That copy drifted
+        from Module 2 Step 8 (it still said the tools agree, while Step 8 recorded that they
+        differ on the macOS literal), which is the failure INV-300 describes. So the copy is
+        gone. Module 3 still conditions what it relays, in one clause about the macOS
+        literal, and the two ranking facts are asserted where they now live: Module 2's
+        "`SENZ7426` still fires at `getEngine()`" paragraph.
         """
         text = flat(PHASE1)
         self.assertRegex(
             text, r"(?i)relay what `explain_error_code` returned",
-            "Module 3 must relay what the tool returns for SENZ7426 — it now names "
-            "SUPPORTPATH first (server 1.32.9, 2026-08-12)",
+            "Module 3 must relay what the tool returns for SENZ7426 — it names SUPPORTPATH "
+            "first (INV-080)",
         )
         self.assertRegex(
-            text, r"(?i)input-encoding cause is ranked \*\*last\*\*",
+            text, r"(?i)If the code is `SENZ7426`.{0,700}literal that holds for cask 4\.4\.x",
+            "Module 3 relays the tool's macOS cause without the 4.4.x condition on its literal",
+        )
+        module_02 = flat(MODULE_02)
+        self.assertRegex(
+            module_02, r"(?i)`explain_error_code` now ranks that cause last",
             "relaying is only safe alongside the tool's own ranking: the encoding cause is "
             "last and conditioned on the engine having initialized",
         )
         self.assertRegex(
-            text, r"(?i)fires at engine construction",
+            module_02,
+            r"(?i)`SENZ7426` still fires at `getEngine\(\)`, \*\*before any record is submitted",
             "the pre-record nature of this failure is why the encoding cause does not apply",
         )
+
+
+class TheModule03Senz7426BranchIsAPointer(unittest.TestCase):
+    """Module 3 step 3b points at Module 2 Step 8's two-tool block and carries no copy (#219).
+
+    Step 3b held its own analysis of `explain_error_code('7426')`, stamped server 1.32.9. It
+    said the tool "now agrees with Step 8" and that Step 8 "is corroboration rather than a
+    correction". #199 re-verified on server 1.37.14 (2026-09-28) that the tools agree on the
+    diagnosis and the fix but not on the macOS literal, and fixed Module 2 only. The copy in
+    Module 3 kept telling the guide the tools agree. Re-checked for #219 on server 1.37.14,
+    2026-09-28: `explain_error_code('7426')` still quotes the 4.4.x `er/data` literal, and
+    `sdk_guide(topic='install', platform='macos_arm', language='java')` still says "Do not
+    pin the literal".
+
+    The claim guarded is "the pointer carries no second copy of the comparison" (INV-300),
+    so the checks come from that claim, not from the sentences removed: no agreement verb at
+    all outside the quoted owner title, no ranking vocabulary, and no version stamp.
+    """
+
+    OWNER_TITLE = "Both tools agree on the diagnosis and the fix — not on the macOS literal"
+
+    def step_3b(self):
+        match = re.search(
+            r"3b\. \*\*If the code is `SENZ7426`\*\*.*?(?= 4\. )", flat(PHASE1)
+        )
+        self.assertIsNotNone(match, "Module 3 step 3b (SENZ7426) was not found")
+        return match.group(0)
+
+    def test_the_owner_block_exists_in_module_02(self):
+        """A pointer to a title that no longer exists points nowhere."""
+        self.assertIn(self.OWNER_TITLE, flat(MODULE_02))
+
+    def test_step_3b_names_the_owner_and_cites_inv_300(self):
+        block = self.step_3b()
+        self.assertIn(self.OWNER_TITLE, block,
+                      "step 3b no longer names Module 2 Step 8's two-tool block")
+        self.assertRegex(block, r"module-02-sdk-setup/SKILL\.md",
+                         "step 3b no longer names the owning file")
+        self.assertRegex(block, r"Module 2 Step 8", "step 3b no longer names the owning step")
+        self.assertRegex(block, r"INV-300\b", "step 3b no longer cites INV-300")
+
+    def test_step_3b_does_not_say_the_tools_agree(self):
+        remainder = self.step_3b().replace(self.OWNER_TITLE, "")
+        self.assertNotRegex(
+            remainder, r"(?i)\bagree",
+            "step 3b says the tools agree. They agree on the diagnosis and the fix, not on "
+            "the macOS literal (server 1.37.14, 2026-09-28); Module 2 Step 8 owns that "
+            "comparison, so name it rather than summarize it",
+        )
+        self.assertNotRegex(
+            flat(PHASE1), r"(?i)corroboration rather than a correction|agrees with Step 8",
+            "the retired 'agree' wording is back in Module 3",
+        )
+
+    def test_step_3b_carries_no_copy_of_the_tool_analysis(self):
+        block = self.step_3b()
+        for pattern in (r"common_causes", r"resolution_steps", r"(?i)\branked?\b",
+                        r"(?i)MCP server \d+\.\d+"):
+            with self.subTest(pattern=pattern):
+                self.assertNotRegex(
+                    block, pattern,
+                    "step 3b carries part of Module 2 Step 8's tool-content analysis again; "
+                    "a second copy is how it drifted (INV-300)",
+                )
+
+    def test_module_03_quotes_no_er_data_literal(self):
+        folder = PHASE1.parent
+        for path in sorted(folder.rglob("*.md")):
+            with self.subTest(path=path.name):
+                self.assertNotIn(
+                    "er/data", path.read_text(encoding="utf-8"),
+                    "Module 3 quotes the macOS er/data literal; it holds for cask 4.4.x only",
+                )
 
 
 class TheMacosSupportpathLiteralIsVersionScoped(unittest.TestCase):

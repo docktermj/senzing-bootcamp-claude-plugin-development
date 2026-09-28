@@ -151,10 +151,34 @@ class TheRetiredSenz7426ClaimIsGone(unittest.TestCase):
         )
 
     def test_module_03_now_relays_the_tools_output(self):
+        """The relay instruction rests on a dated re-verification, now held by its owner.
+
+        This asserted `"1.32.9" in` Module 3, because step 3b carried its own stamp for the
+        re-verification that made relaying safe. #219 removed that copy: step 3b is an
+        INV-300 pointer to Module 2 Step 8's two-tool block, and the stamp lives there. Left
+        as it was, the assertion passed on an unrelated 1.32.9 elsewhere in the file (the
+        Step 4 scaffold count), which is no check at all. So it follows the stamp: Module 3
+        must route to the owning block, and that block must carry a server version and date
+        for its `explain_error_code('7426')` reading.
+        """
         phase1 = PLUGIN / "skills" / "module-03-system-verification" / "phase1-verification.md"
+        module_02 = PLUGIN / "skills" / "module-02-sdk-setup" / "SKILL.md"
         flat = re.sub(r"\s+", " ", phase1.read_text(encoding="utf-8"))
         self.assertRegex(flat, r"(?i)relay what `explain_error_code` returned")
-        self.assertIn("1.32.9", flat)
+        owner = "Both tools agree on the diagnosis and the fix — not on the macOS literal"
+        self.assertRegex(
+            flat, r"If the code is `SENZ7426`.{0,400}" + re.escape(owner),
+            "Module 3's SENZ7426 relay no longer names the Module 2 block that dates it",
+        )
+        owner_text = re.sub(
+            r"\s+", " ", re.sub(r"(?m)^\s*>\s?", "", module_02.read_text(encoding="utf-8"))
+        )
+        self.assertRegex(
+            owner_text,
+            re.escape(owner) + r"\*\* \(INV-169\) — re-verified on \*\*MCP server "
+            r"\d+\.\d+\.\d+, \d{4}-\d{2}-\d{2}\*\*\. `explain_error_code\('7426'\)`",
+            "the owning block no longer dates its explain_error_code('7426') reading",
+        )
 
 
 if __name__ == "__main__":
