@@ -131,7 +131,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     `test_each_rule_added_since_the_last_audit_is_cited_or_deferred`: at `main` no plugin ⛔ line
     had changed since the last audit, so it skipped. The rewrapped INV-169 line gives it one to
     check, and it passes.
-- **Commit:** uncommitted
+- **Commit:** 60c1169
 
 ## every-license-reading-is-an-owner-or-a-pointer
 
