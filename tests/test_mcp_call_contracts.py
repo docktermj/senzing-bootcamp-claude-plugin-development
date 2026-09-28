@@ -386,7 +386,7 @@ class TestEveryReportingGuideCallPassesLanguage(unittest.TestCase):
             [],
             offenders,
             "reporting_guide called without `language` — most topics answer that with a "
-            "needs_input decision tree and an empty payload, not content. Pass it "
+            "needs_input decision tree and no content. Pass it "
             "unconditionally; do not add a per-topic exception here (INV-192):\n  "
             + "\n  ".join(offenders),
         )

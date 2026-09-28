@@ -3,8 +3,10 @@
 Continues from Phase B (single source) or Phase C (multi-source). Follow the ground rules;
 `🛑`/`⛔` are internal control directives. Entity queries use SDK code generated via
 `generate_scaffold` / `get_sdk_reference`, never direct SQL against `database/G2C.db`. Counts
-and stats come from `reporting_guide` — **name the topic**: `topic='evaluation'` for the
-single-pass export statistics this phase needs, `topic='export'` for extraction patterns.
+and stats come from `reporting_guide` — **name the topic**:
+`reporting_guide(topic='evaluation', language='<chosen_language>')` for the single-pass export
+statistics this phase needs, `reporting_guide(topic='export', language='<chosen_language>')` for
+extraction patterns.
 
 ⚠️ **`topic='reports'` is not this bootcamp's route.** Its SQL targets an analytical data mart
 (`sz_dm_entity`, `sz_dm_record`, `sz_dm_relation`, `sz_dm_report`) that the bootcamp never builds —
