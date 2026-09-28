@@ -137,7 +137,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   Each reports a problem. The issue's control was also run on the real file: sub-step 3a deleted
   → `test_step_5a_gates_the_offer` FAILED ("step 5a does not run the type/name check"). Restored,
   `__pycache__` cleared, 15/15 OK.
-- **Commit:** uncommitted
+- **Commit:** d5f069a
 
 ## load-count-reconciliation-ignores-the-working-sample
 
