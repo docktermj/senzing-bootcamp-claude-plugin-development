@@ -90,7 +90,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - Negative controls run by hand and then reverted: `origin/main`'s script fails 6 of the 9;
     putting the escape back fails the stop-sign test; making the `ERROR` exit 0 fails the
     `ERROR` test; putting "Retrofit applied to the working tree." back fails the no-write test.
-- **Commit:** uncommitted
+- **Commit:** 6b85ac4
 
 ## gated-reporting-guide-reply-carries-no-content
 
