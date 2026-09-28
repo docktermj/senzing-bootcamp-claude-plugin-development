@@ -49,7 +49,8 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Files changed:**
   `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`,
   `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`,
-  `tests/test_quality_assessment_type_name_check.py` (new), `specs/IMPLEMENTED.md`
+  `tests/test_quality_assessment_type_name_check.py` (new), `tests/test_prescribed_search_queries.py`,
+  `specs/IMPLEMENTED.md`
 - **MCP re-check:** server 1.37.14, docs index 2026-09-28.
   `search_docs(query='RECORD_TYPE PERSON ORGANIZATION prevent records of different types from resolving', category='data_mapping')`
   returns the Entity Specification's *Feature: RECORD_TYPE*: `RECORD_TYPE` *"Prevents records of
@@ -136,7 +137,10 @@ entries at once. Two things a reader should know about the hashes now recorded:
   label removed, the keep option removed, the zero clause dropped, the Phase 2 handoff dropped.
   Each reports a problem. The issue's control was also run on the real file: sub-step 3a deleted
   → `test_step_5a_gates_the_offer` FAILED ("step 5a does not run the type/name check"). Restored,
-  `__pycache__` cleared, 15/15 OK.
+  `__pycache__` cleared, 15/15 OK. `tests/test_prescribed_search_queries.py` failed on both CI
+  legs in a clean clone: the two `search_docs` queries the check prescribes were not on its
+  allowlist. Both are added to `VERIFIED_QUERIES` with their observed top hits (server 1.37.14,
+  docs index 2026-09-28), in a follow-up commit.
 - **Commit:** d5f069a
 
 ## load-count-reconciliation-ignores-the-working-sample
