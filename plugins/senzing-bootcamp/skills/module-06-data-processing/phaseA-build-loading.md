@@ -220,13 +220,9 @@ persists it from `SzProduct.get_license()`) and apply the same effective-limit r
   often. It also contradicts a higher-precedence rule: a value you measured on this machine governs
   over generic guidance about that same value, and `ground-rules.md` names the license record limit
   explicitly (INV-012). It is one SDK call away.
-  - **Measure it** by the procedure Module 4 Step 8a already defines — generate a scaffold calling
-    `SzProduct.get_license()`, save the returned JSON, read it to confirm the shape before parsing
-    (INV-115), and parse `recordLimit`. Follow that step rather than re-deriving it (INV-300); the module
-    already builds and runs SDK programs in the bootcamper's language, so this needs no new
-    machinery. (`get_sdk_reference(topic='response_schemas', filter='getLicense')`, server 1.32.9,
-    2026-08-14, confirms the method in every binding — `SzProduct.getLicense() -> String`,
-    `get_license() -> str`.)
+  - **Measure it** by Module 4 Step 8a sub-step 7, which calls `SzProduct.get_license()` and parses
+    `recordLimit`. Follow that step rather than re-deriving it (INV-300); the module already builds
+    and runs SDK programs in the bootcamper's language, so this needs no new machinery.
   - **Persist it** as `license_record_limit` in `config/bootcamp_progress.json`, together with
     `license_record_limit_measured_at: "module-06 phase A (engine configuration in force)"`, so later
     steps, Phase B and graduation see a detected value instead of the same absence — and can tell it

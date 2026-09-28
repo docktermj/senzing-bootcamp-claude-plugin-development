@@ -118,12 +118,8 @@ limit: never from a remembered or hardcoded figure:
   nothing about the installed license** — it is a measurement that did not happen.
   Treating that silence as "no custom license" is what steers a bootcamper whose license has **no
   cap** toward a smaller dataset, here, in the module where the sampling decision is actually made.
-  - **Measure it** by Step 8a's own procedure (sub-step 7 below): generate a scaffold calling
-    `SzProduct.get_license()`, save the returned JSON, read it to confirm the shape before parsing
-    (INV-115), and parse `recordLimit`. Follow that step rather than restating it (INV-300).
-    (`get_sdk_reference(topic='response_schemas', filter='get_license')`, server 1.32.9,
-    2026-08-14, confirms the method in every binding — `SzProduct.getLicense() -> String`,
-    `get_license() -> str`.)
+  - **Measure it** by Step 8a sub-step 7 below, which calls `SzProduct.get_license()` and parses
+    `recordLimit`. Follow that step rather than restating it (INV-300).
   - **Persist it** as `license_record_limit` in `config/bootcamp_progress.json`, so this module's
     later steps, Module 6 and graduation all see a detected value instead of the same absence.
   - **Then re-enter the two branches above** with the measured value. `recordLimit: 0` lands on the
