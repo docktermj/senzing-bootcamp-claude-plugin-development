@@ -43,6 +43,44 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## step-8b-sample-has-one-chain-role
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #221)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`,
+  `tests/test_load_reconciliation_has_two_stages.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed 2026-09-28. The change moves one Module 4
+  decision between two chain roles in the plugin's own load reconciliation; it states nothing
+  about Senzing, and no Senzing fact is added, removed or reworded.
+- **Summary:** Phase B Step 7's two-stage load reconciliation named Module 4 Step 8b's `sample`
+  load decision in two chain roles, as the sample step and as a recorded subset limit, so one
+  decision could be cited twice and stage 1 compared against "first N" of a file that was already
+  the sample. Step 8b is now the sample step only.
+  - **Stage 1:** the recorded-subset-limit sentence names only this step's SQLite "first 1,000
+    records" choice in `sqlite_volume_prompt`. The paragraph is rewrapped.
+  - **Stage 2 subset bullet:** cited from the `sqlite_volume_prompt` marker only.
+  - **Stage 2 sample bullet:** says Module 4 writes the `sample:` block from Step 6's sample
+    files or from Step 8b's `sample` load decision, and either is cited once, as the sample step.
+    The pinned phrase "**the `sample:` block** Module 4 wrote into this source's registry entry
+    (collected → sample)" is unchanged.
+  - **Unchanged (out of scope):** `phaseB` Step 7's SQLite heads-up and `phaseC-multi-source.md`
+    Step 19, which name Step 8b as a decision to load what it records, not as a chain role. The
+    subset choices that record nothing Module 6 can cite (the license-cap options 1 and 3, and the
+    SQLite first-1,000 choice with no N) are for a separate issue, as the spec says.
+- **Approach:** implemented directly (Phase 5a). One guidance file and its test, with the three
+  edits named in the spec.
+- **Establishes no invariant, and defers none.** No ⛔ line is added. The edits sit inside the
+  existing INV-243 reconciliation rule and correct which record its chain cites for Step 8b.
+- **Tests:** new class `StepEightBHasOneChainRole` in
+  `tests/test_load_reconciliation_has_two_stages.py`, 4 tests: the stage-1 sentence and the
+  stage-2 subset bullet do not name `8b`; the sample bullet names both Step 6's sample files and
+  Step 8b's `sample` load decision; and every `8b` in the chain (stage 1 through the subset
+  bullet) is in the sample bullet. The module docstring gains item 4. Negative controls: restoring
+  "or Module 4 Step 8b's `sample` load decision" in stage 1 fails 2 tests; restoring "or the Step
+  8b load decision that set it" in the subset bullet fails 2; reverting the file to `main` fails
+  all 4. Restored, OK.
+- **Commit:** uncommitted
+
 ## the-user-level-copies-govern-both-skills
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #215)

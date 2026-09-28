@@ -196,20 +196,20 @@ rather than only in the turn that ran it.
    against the **load input** first: the records the loader was actually given, counted from the
    file it read — the registry `file_path` (for a `fast_pathed: true` source, the raw or sample file
    it loaded) — or its first N records when a **recorded subset limit** applies: this step's SQLite
-   "first 1,000 records" choice in `sqlite_volume_prompt` (below), or Module 4 Step 8b's `sample`
-   load decision. This is the only comparison that can verify the load itself, so **stage 1 is the
-   only stage that can record `failed`**. It has no explained branch: the loader's error count and
-   error log explain a shortfall, but they do not excuse it.
+   "first 1,000 records" choice in `sqlite_volume_prompt` (below). This is the only comparison that
+   can verify the load itself, so **stage 1 is the only stage that can record `failed`**. It has no
+   explained branch: the loader's error count and error log explain a shortfall, but they do not
+   excuse it.
 2. **Stage 2 — the load input against the collected `record_count`, through the recorded chain.**
    Reached only when stage 1 is equal. Every step between the collected file and the load input is
    cited from a record, in order — collected → sample → mapped → subset:
    - **the `sample:` block** Module 4 wrote into this source's registry entry (collected → sample),
      whose `record_count` was measured from the written sample file, with its `strategy` and
-     `reason`;
+     `reason`. Module 4 writes it from Step 6's sample files or from Step 8b's `sample` load
+     decision, so either one is cited here, once, as the sample step;
    - **a mapping disposition** (→ mapped file), cited as the source's own mapping specification, or
      the recorded disposition in `config/data_sources.yaml`;
-   - **a recorded subset limit** (→ first N), cited from the `sqlite_volume_prompt` marker or the
-     Step 8b load decision that set it.
+   - **a recorded subset limit** (→ first N), cited from the `sqlite_volume_prompt` marker.
 
 ⛔ **Four outcomes across two stages, not two. Do not collapse them.** INV-245 forbids presenting a
 value that **failed its own verification check**, and stage 1 is that check. A stage-2 delta the

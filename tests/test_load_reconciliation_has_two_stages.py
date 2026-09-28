@@ -32,6 +32,11 @@ What is asserted:
 3. **Module 4's schema defines `sample: {file_path, record_count, strategy, reason}`**, and every
    step that writes a sample file (derived by scanning, again INV-246) writes that block with a
    measured count and leaves `record_count` / `expected_record_count` untouched (INV-243).
+4. **Module 4 Step 8b's `sample` decision holds exactly one chain role in Step 7: the sample
+   step** (#221). #157 also listed it as a recorded subset limit, in the stage-1 sentence and the
+   stage-2 subset bullet, so one decision could be cited as two chain steps, and stage 1 compared
+   against "first N" of a file that was already the sample. Neither subset site names Step 8b;
+   the stage-2 sample bullet does.
 
 Everything is asserted as behavior in shipped guidance, never as a helper, so any implementation
 language satisfies it (INV-002). Stdlib only; shipped files are read as text (INV-108).
@@ -123,6 +128,31 @@ def sample_writers():
     return sites
 
 
+def chain_part(text, start, end):
+    """The squashed Step 7 text from `start` up to (not including) `end`."""
+    match = re.search(re.escape(start) + r"(.*?)" + re.escape(end), text)
+    if match is None:
+        raise AssertionError("Step 7 has no text between %r and %r" % (start, end))
+    return start + match.group(1)
+
+
+def stage_one(text):
+    return chain_part(text, "1. **Stage 1 —", "2. **Stage 2 —")
+
+
+def sample_bullet(text):
+    return chain_part(text, "- **the `sample:` block**", "- **a mapping disposition**")
+
+
+def subset_bullet(text):
+    return chain_part(text, "- **a recorded subset limit** (→ first N)",
+                      "⛔ **Four outcomes across two stages")
+
+
+#: Module 4 Step 8b, named in any form ("Step 8b", "Module 4 Step 8b", "the Step 8b load ...").
+STEP_8B = re.compile(r"\b8b\b")
+
+
 def stage_rows(text):
     """The reconciliation table's rows as (stage, outcome, load_status, record)."""
     rows = []
@@ -205,6 +235,36 @@ class StageTwoCitesTheSample(unittest.TestCase):
         self.assertIn("This is the canonical statement of the two-stage load reconciliation",
                       self.text)
         self.assertIn("(INV-300)", self.text)
+
+
+class StepEightBHasOneChainRole(unittest.TestCase):
+    """#221: Step 8b's `sample` decision is the sample step, never also a subset limit."""
+
+    def setUp(self):
+        self.text = step_7()
+
+    def test_the_stage_one_subset_limit_does_not_name_step_8b(self):
+        """⛔ Negative control: restoring "or Module 4 Step 8b's `sample` load decision" fails."""
+        part = stage_one(self.text)
+        self.assertIn("**recorded subset limit**", part)
+        self.assertIn("`sqlite_volume_prompt`", part)
+        self.assertIsNone(STEP_8B.search(part), part)
+
+    def test_the_stage_two_subset_bullet_does_not_name_step_8b(self):
+        """⛔ Negative control: restoring "or the Step 8b load decision that set it" fails."""
+        part = subset_bullet(self.text)
+        self.assertIn("cited from the `sqlite_volume_prompt` marker", part)
+        self.assertIsNone(STEP_8B.search(part), part)
+
+    def test_the_sample_bullet_names_step_8b_as_a_writer_of_the_block(self):
+        part = sample_bullet(self.text)
+        self.assertIn("Step 8b's `sample` load decision", part)
+        self.assertIn("Step 6's sample files", part)
+
+    def test_step_8b_appears_in_the_chain_only_in_the_sample_bullet(self):
+        chain = chain_part(self.text, "1. **Stage 1 —", "⛔ **Four outcomes across two stages")
+        self.assertEqual(len(STEP_8B.findall(sample_bullet(self.text))),
+                         len(STEP_8B.findall(chain)), chain)
 
 
 class EveryReaderPointsAtStepSeven(unittest.TestCase):
