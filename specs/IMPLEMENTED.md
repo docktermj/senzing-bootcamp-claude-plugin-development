@@ -43,6 +43,60 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## why-default-composites-list-their-members-now
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #196)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`,
+  `tests/test_sdk_parameter_shapes.py`, `tests/test_prescribed_search_queries.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28.
+  - `get_sdk_reference(topic='flags', filter=…, language='python')` for the `why_*` default
+    composites returns `composite_members: ["SZ_INCLUDE_FEATURE_SCORES"]`, `response_paths` and
+    `source_file: docs-flags-4-flags_why.md`, so the 1.32.2 defect does not reproduce.
+  - `SZ_SEARCH_BY_ATTRIBUTES_DEFAULT_FLAGS` returns no `composite_members` and the description "…is
+    defined as SZ_SEARCH_BY_ATTRIBUTES_ALL". `SZ_SEARCH_BY_ATTRIBUTES_ALL` lists its members, and
+    Python's `search_by_attributes` signature defaults to it.
+  - The four membership-table rows (`SZ_SEARCH_BY_ATTRIBUTES_ALL`, `SZ_FIND_NETWORK_DEFAULT_FLAGS`,
+    `SZ_WHY_ENTITIES_DEFAULT_FLAGS`, `SZ_ENTITY_DEFAULT_FLAGS`) all match.
+
+  So the spec's re-verification criterion holds. Nothing was sent upstream; the 2026-07-31 bug
+  report is fixed.
+- **Summary:** Module 7's "empty `composite_members`" rule used as its worked example a server
+  defect that is fixed: the three `why_*` default composites once returned no `composite_members`,
+  a glob `applies_to` and a breaking-changes `source_file`.
+  - **The narrative is removed**, with its `flags_why` `search_docs` quote. A dated note in its
+    place records that the defect was seen at 1.32.2 on 2026-07-31 and does not reproduce at
+    1.37.14.
+  - **The new worked example** is `SZ_SEARCH_BY_ATTRIBUTES_DEFAULT_FLAGS`, whose description names
+    `SZ_SEARCH_BY_ATTRIBUTES_ALL`. It carries an `MCP-NEGATIVE` routing-negative marker, so the
+    negatives worklist re-asks it: if the server adds members, the example goes stale.
+  - **Step 2** reads the description first, then asks `search_docs`. Step 3 adds the
+    `search_by_attributes` signature default as corroboration.
+  - **Unchanged:** the ⛔ heading, steps 1, 3 and 4, the "tool I asked" lesson, and the `why_*`
+    membership and `ENTITY_NAME` material.
+  - **The membership table** is re-stamped to 1.37.14.
+  - **The ledger criterion** is already met on `main` by PR #201's `retire-workaround` row
+    (`issue: 196`). No duplicate is added (issue comment 2).
+- **Approach:** implemented directly (Phase 5a). It is one skill file plus its test.
+- **Establishes no invariant, and defers none.** No new ⛔ line is added. The change retires a
+  stale example and adds a marked, dated one.
+- **Tests:**
+  - `AnEmptyCompositeMembersFieldIsNotAnAbsentFact`'s docstring now describes the rule and the
+    new example, and its failure message no longer cites the breaking-changes note.
+  - Two tests are added: the worked example and step 2's new wording, and a guard that
+    `["why_entities*"]`, "For all three `why_*` default composites" and the breaking-changes
+    `source_file` claim stay gone, with the dated note present.
+  - `:254`'s regex and the other rule assertions are unchanged.
+  - `tests/test_prescribed_search_queries.py` drops the now-dead
+    `SZ_WHY_ENTITIES_DEFAULT_FLAGS default recommended flags` allowlist entry, whose only call
+    site was the removed narrative (`test_the_allowlist_has_no_dead_entries`).
+  - The server's description has a space before a comma, so it is quoted as two fragments to
+    satisfy `test_no_space_before_a_comma`.
+  - Negative control: re-inserting the narrative fails the guard on 2 subtests. Restored,
+    `__pycache__` cleared, OK.
+- **Commit:** uncommitted
+
 ## json-data-is-no-longer-get-record-only
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #193)

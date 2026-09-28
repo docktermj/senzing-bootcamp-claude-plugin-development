@@ -141,7 +141,7 @@ sub-flags that one carries.** Before parsing an entity field out of a response, 
 composite's `composite_members` and confirm the flag that populates *that* field is in it.
 Three confirmed cases, all of which apply when you pass **no** `flags` argument at all, because
 these are the signature defaults (`get_sdk_reference(topic='flags', filter=…, language='python')`,
-server 1.32.2, verified 2026-07-29; the `why_*` row re-verified 2026-07-31):
+all four rows re-verified on MCP server 1.37.14, 2026-09-28):
 
 | Composite | Carries | Does **not** carry |
 |---|---|---|
@@ -189,20 +189,27 @@ as equivalent to `SZ_INCLUDE_FEATURE_SCORES` (each **checked individually**, not
 its sibling — INV-169).
 
 ⛔ **When `topic='flags'` returns a composite with NO `composite_members`, the check is not
-unrunnable — you asked the wrong tool.** For all three `why_*` default composites
-`get_sdk_reference(topic='flags', …)` returns only a one-line description, no
-`composite_members` and no `response_paths`, with `applies_to` as the literal glob
-`["why_entities*"]` and a `source_file` of the V3→V4 breaking-changes document rather than the
-flags reference. The membership **is** documented — in the flags documentation, reachable with
-`search_docs(query='SZ_WHY_ENTITIES_DEFAULT_FLAGS default recommended flags')`, which returns
-the "Equivalent to:" line quoted above (source: `senzing.com/docs/flags/4/flags_why`). So:
+unrunnable — you asked the wrong tool.** (This section's earlier example, the three `why_*`
+default composites returning no `composite_members`, was seen at server 1.32.2 on 2026-07-31 and
+does not reproduce at 1.37.14 on 2026-09-28: they now list `SZ_INCLUDE_FEATURE_SCORES`.) A
+composite can come back with a description and no structured membership.
+`SZ_SEARCH_BY_ATTRIBUTES_DEFAULT_FLAGS` does: `get_sdk_reference(topic='flags',
+filter='SZ_SEARCH_BY_ATTRIBUTES_DEFAULT_FLAGS', language='python')` returns no `composite_members`,
+only a description: *"It is defined as SZ_SEARCH_BY_ATTRIBUTES_ALL"*, and *"the two produce
+identical responses"*. Meanwhile `SZ_SEARCH_BY_ATTRIBUTES_ALL`'s own row does list its members
+(MCP server 1.37.14, 2026-09-28).
+The membership was there all along, one lookup away. So:
+
+<!-- MCP-NEGATIVE: get_sdk_reference(topic='flags', filter='SZ_SEARCH_BY_ATTRIBUTES_DEFAULT_FLAGS', language='python') — the SZ_SEARCH_BY_ATTRIBUTES_DEFAULT_FLAGS row carries no composite_members field, while its description names the composite it is defined as — owner: get_sdk_reference(topic='flags') IS the route that owns composite membership, and the same response's SZ_SEARCH_BY_ATTRIBUTES_ALL row lists its members and the method_signatures default for search_by_attributes is SZ_SEARCH_BY_ATTRIBUTES_ALL, so the membership is reachable from this one response rather than absent (routing negative) — server 1.37.14, 2026-09-28 -->
 
 1. Ask `topic='flags'` first — it is authoritative and structured.
-2. If `composite_members` is absent, ask `search_docs` before concluding anything.
+2. If `composite_members` is absent, read the description first — it may name the composite it
+   equals — then ask `search_docs` before concluding anything.
 3. Corroborate with the method signature: the same response's `method_signatures` shows the
-   binding's default, and for `why_entities` Python reads
-   `flags: int = <SzEngineFlags.SZ_INCLUDE_FEATURE_SCORES: 67108864>` — independent
-   confirmation that the composite is that one flag.
+   binding's default. For `why_entities` Python reads
+   `flags: int = <SzEngineFlags.SZ_INCLUDE_FEATURE_SCORES: 67108864>`, and for
+   `search_by_attributes` it reads `<SzEngineFlags.SZ_SEARCH_BY_ATTRIBUTES_ALL: 201340943>`, independent
+   confirmation of what the composite is.
 4. Only if **both** tools come back empty do you OR the needed sub-flags in explicitly and
    record what you could not confirm (INV-080/INV-149).
 
