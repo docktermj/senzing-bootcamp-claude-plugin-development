@@ -107,7 +107,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     "no** `response_schemas` entry".
   - Negative controls: restoring the four plugin files to `origin/main` fails 9 tests;
     removing Module 2's INV-149 clause fails the license-step test.
-- **Commit:** uncommitted
+- **Commit:** c5c3f45
 
 ## retrofit-compares-against-the-last-propagation
 
