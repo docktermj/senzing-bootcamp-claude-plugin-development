@@ -356,7 +356,7 @@ it ends the turn:
   rather than inventing a pin.
 
 ⛔ **Ask the EULA question before any package installs** — reuse the existing wording in Step 3
-Phase 2 rather than writing a second copy. An update is an install.
+Phase 1 rather than writing a second copy. An update is an install.
 
 ⛔ **The EULA variable differs per platform, and a wrong one is silently ignored:**
 
@@ -460,12 +460,40 @@ always has the latest instructions.
 
 ## Step 3: Install Senzing SDK
 
-Follow the platform-specific instructions from `sdk_guide`. Installation has three phases.
+Follow the platform-specific instructions from `sdk_guide`. Installation has three phases, and
+the EULA question comes first: nothing is installed until the bootcamper accepts it.
 
 **Before recommending any approach**, call `search_docs` with `category='anti_patterns'` to
 check for known pitfalls on the user's platform.
 
-**Phase 1: Install the SDK package (execute without stopping):**
+**Phase 1: EULA acceptance (requires bootcamper input, before anything is installed):**
+
+The Senzing SDK requires EULA acceptance before it is installed, so this question comes before
+**every** install command on **every** path: adding the Senzing package repository (the apt or
+yum `senzingrepo` package, the Homebrew tap, the Scoop bucket), installing the SDK package, and
+the `docker` path's in-container `linux_apt` install. Tell the bootcamper they can review it at
+<https://senzing.com/end-user-license-agreement/>, then present the EULA question:
+
+👉 **Do you accept the Senzing End User License Agreement (EULA)?** (respond yes or no)
+
+*(Internal: end the turn on this question and wait. Do not proceed until the bootcamper
+answers.)*
+
+Once the bootcamper responds, act on their answer:
+
+- **If they accept the EULA:** proceed to Phase 2 to install the SDK package, then Phase 3 to
+  install the language-specific SDK bindings. Both run without stopping for another question.
+- **If they decline the EULA:** install nothing — no package repository, no SDK package and
+  no language bindings. Explain: "The Senzing SDK cannot be used without EULA acceptance. The
+  remaining installation steps and subsequent bootcamp modules require the SDK." Do not write
+  the checkpoint. Stop here.
+
+**Phase 2: Install the SDK package (only after EULA acceptance; execute without stopping):**
+
+Before the package install, set the EULA variable for the bootcamper's platform, taking its name
+and value from the table in Step 1b ("The EULA variable differs per platform"). The install then
+runs without prompting; a wrong name or value makes it do nothing and report success. On the
+`docker` path, set the `linux_apt` variable inside the container.
 
 For native installs (`linux_apt`, `linux_yum`, `macos_arm`, `windows`):
 
@@ -504,23 +532,6 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
   recorded containers on exit (`<runtime> stop`, not remove) and `SessionStart` surfaces them on
   resume so they can be restarted or regenerated. (The list key stays `docker_containers` for
   compatibility with in-flight bootcamps, whatever runtime its entries name.)
-
-**Phase 2: EULA acceptance (requires bootcamper input):**
-
-The Senzing SDK requires EULA acceptance before use. Tell the bootcamper they can review it at
-<https://senzing.com/end-user-license-agreement/>, then present the EULA question:
-
-👉 **Do you accept the Senzing End User License Agreement (EULA)?** (respond yes or no)
-
-*(Internal: end the turn on this question and wait. Do not proceed until the bootcamper
-answers.)*
-
-Once the bootcamper responds, act on their answer:
-
-- **If they accept the EULA:** proceed to Phase 3 to install language-specific SDK bindings.
-- **If they decline the EULA:** stop the installation. Explain: "The Senzing SDK cannot be used
-  without EULA acceptance. The remaining installation steps and subsequent bootcamp modules
-  require the SDK." Do not install language bindings and do not write the checkpoint. Stop here.
 
 **Phase 3: Install language bindings (only after EULA acceptance):**
 
@@ -650,7 +661,7 @@ the inline pointers here.
 
 | Cause | Failure signal | Fix reference ("Common Environment Issues") |
 |---|---|---|
-| `NODE_VERSION` | `SyntaxError` on modern syntax, `ERR_UNSUPPORTED_ESM_URL_SCHEME`, Node.js older than 18 | "Node.js Version Conflicts" — ⚠️ **on the `docker` path, rule out bind-mount propagation lag first**: retry once (see the Phase 1 `docker` bullets), because a version conflict reproduces and lag does not |
+| `NODE_VERSION` | `SyntaxError` on modern syntax, `ERR_UNSUPPORTED_ESM_URL_SCHEME`, Node.js older than 18 | "Node.js Version Conflicts" — ⚠️ **on the `docker` path, rule out bind-mount propagation lag first**: retry once (see the Phase 2 `docker` bullets), because a version conflict reproduces and lag does not |
 | `NATIVE_ADDON` | `gyp ERR! build error`, `Cannot find module '.../*.node'` | "Native Addon Build Failures (node-gyp)" |
 | `TOOLCHAIN` | missing C++ compiler, missing Rust toolchain, or missing Visual Studio Build Tools | "Native Addon Build Failures (node-gyp)" plus the Windows note above in this Phase 3 |
 | `MODULE_SYSTEM` | `ERR_REQUIRE_ESM`, `Cannot use import statement outside a module` | "ESM vs CommonJS Module Resolution" |

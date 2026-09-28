@@ -43,6 +43,61 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-eula-question-precedes-every-install
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #192)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`,
+  `tests/test_eula_question_precedes_every_install.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.14, 2026-09-28.
+  - `sdk_guide(topic='install', platform=<p>, language='java')` for `linux_apt`, `linux_yum`,
+    `macos_arm` and `windows` each carries "EULA acceptance — BEFORE running this command, ASK
+    the user … Only proceed if they confirm." (on `macos_arm` and `windows`, "BEFORE running
+    install") ahead of its SDK package install command.
+  - The server adds the repository first on every native platform (the `senzingrepo` package,
+    the Homebrew tap, the Scoop bucket) and asks after. Asking before the repository add, as the
+    spec requires, is stricter than the server and does not contradict it.
+  - The per-platform EULA variables in Step 1b's table still match: `SENZING_ACCEPT_EULA` /
+    `I_ACCEPT_THE_SENZING_EULA` on `linux_apt`, `linux_yum` and `windows`, and
+    `HOMEBREW_SENZING_ACCEPT_EULA` / lowercase `i_accept_the_senzing_eula` on `macos_arm`.
+
+  So the spec's re-verification criterion holds. Nothing was sent upstream.
+- **Summary:** Module 2's Step 3 installed the SDK package in Phase 1 and asked the pinned EULA
+  question only in Phase 2, so a Bootcamper had the SDK installed before consenting, and the
+  install ran without the per-platform EULA variable. The `docker` path's in-container
+  `linux_apt` install had the same order. Step 1b's update path already asked first and pointed
+  at the Step 3 wording.
+  - **Phase 1 is now EULA acceptance:** the EULA link, the pinned question (wording unchanged,
+    INV-056), the end-the-turn directive and both branches. It states that the question
+    precedes the repository add, the package install and the `docker` path's install.
+  - **Phase 2 installs the SDK package**, for the native and the `docker` paths. It first sets
+    the platform's EULA variable from Step 1b's table (inside the container on `docker`).
+  - **Phase 3** (language bindings) is unchanged.
+  - **The accept branch** routes to Phase 2, then Phase 3. **The decline branch** installs
+    nothing (no package repository, no SDK package, no language bindings) and writes no
+    checkpoint.
+  - **Pointers:** Step 1b's "reuse the existing wording in Step 3 Phase 2" now names Phase 1,
+    and the TypeScript recovery table's "see the Phase 1 `docker` bullets" now names Phase 2.
+  - **Unchanged:** the anti-pattern lookup at the head of Step 3, Step 1b's variable table, the
+    Step 3 checkpoint (still written only after Phase 3, so a session that ends after a yes but
+    before the install asks again on resume), and Step 1's existing-install path.
+- **Approach:** implemented directly (Phase 5a). It is one skill file plus its test.
+- **Establishes no invariant, and defers none.** No new ⛔ line is added. The ask-before-install
+  rule is guarded by the new test; registering it as an invariant is out of scope per the spec
+  and left to `/production-readiness-audit` or `/review-invariants`.
+- **Tests:**
+  - `tests/test_eula_question_precedes_every_install.py` (12 tests): within Step 3, the pinned
+    question precedes the repository add, the package install and the `docker` path's
+    in-container install; the phase labels are in the new order; the anti-pattern lookup still
+    heads the step; the accept and decline branches; the EULA variable is set in Phase 2
+    before the package install; Step 1b's pointer names "Step 3 Phase 1"; the question exists
+    once in the file.
+  - Negative control, in the file: swapping Phases 1 and 2 back to the pre-fix order makes the
+    order check report all three install instructions.
+  - `tests/test_sdk_update_offer.py` passes unchanged, including `reuse the existing wording in
+    Step 3`.
+- **Commit:** uncommitted
+
 ## why-default-composites-list-their-members-now
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #196)
