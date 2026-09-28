@@ -146,7 +146,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   old INV-115 wording fails 1, naming the site; an unregistered reading appended to Module 5's
   `phase3-test-load.md` fails 2. The sweep before the change found 6 readings, missing `8a.1`, as
   the issue predicted.
-- **Commit:** uncommitted
+- **Commit:** aae2f60
 
 ## step-8b-sample-has-one-chain-role
 
