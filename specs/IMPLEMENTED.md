@@ -43,6 +43,54 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## production-readiness-audit-2026-09-28
+
+**Not a spec** — a dated record of an audit run, **attended**, following 30 merged pull requests since the previous audit (#157, #158, #167, #193, #196, the #201 delegation-sweep ledger, and the nine-issue `/unattended-issue-loop` run: #192, #199, #194, #197, #195, #191, #202, #198, #200).
+
+- **Implemented:** 2026-09-28 (**16 findings; 16 filed as #214–#229; no shipped file modified by this audit**)
+- **Files changed:** this record only.
+- **MCP re-check:** server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28. Only one finding asserts a Senzing fact, #214. `get_sample_data(dataset='las-vegas', source='ICIJ', limit=1, offset=0)` returns `citation.download_url_max_records: 250000` ("download_url serves up to 250000 records per request"). `get_sample_data(dataset='las-vegas', source='list')` returns `EQUIFAX` and `OPENDATA` each as `"record_count":250000,"truncated":true`. Both were re-asked by the lead this session. The plugin states 10,000 and 72,799, so the server now contradicts it. Every other finding is internal consistency. #219 and #222 carry their own re-verification clauses, and #225 item 2 is marked unverified by the lead.
+- **Baseline.** `main` at `f81e890`, tree clean.
+  - Suite **4,946 OK (4 skipped)**, run as the CI mirror runs it: a fresh worktree, an empty `HOME` outside `/tmp`, and `PYTHONUSERBASE=/home/senzing/.local` so fpdf2 stays visible.
+  - `citations.py verify` clean at **315** invariants. `coverage_reports.py both` clean.
+  - `rules`: **654** hard-rule lines (456 line-anchored + 198 mid-line), **0** in a section citing no invariant.
+  - `per-rule`: **330** citing no invariant at the rule. `enumerations`: **50 of 315**.
+  - `size`: 45 shipped files, **200,388** words. `duplication`: 170 repeated passages across 101 file pairs.
+  - `since --since-last-audit` resolved to **`0d7bbe1`** (this ledger's 2026-09-24 entry), with no `SUSPECT-REF`.
+  - `reverse-check`: **TESTED 34 (31 cited, 3 not)**, **UNTESTED 34 (18 cited, 16 not)**, **VERDICT: NOT CLEAN**. The 3 uncited tested lines (`visualization-api-reference.md:827`, `phaseA-build-loading.md:79`, `phaseC-multi-source.md:114`) are each named in a `DEFERRED INVARIANT` block, checked by matching their text, so the shipped reverse contract holds. The 16 untested uncited maintainer-surface lines were read one by one: see #228.
+  - **Zero open issues** at the start of the run, so no finding is a duplicate. Every tracker hit was a closed origin issue, cited as related.
+- **Scope, stated rather than implied.** Three read-only sweeps, each reported and read in full.
+  - **Consistency** of the 22 shipped files the diff since `0d7bbe1` touches, the Module 2 / ground-rules / feedback files edited by several PRs today most of all.
+  - **The forward invariant contract:** all 50 enumerating invariants, plus every invariant the changed text cites.
+  - **The maintainer surface's reverse contract and consistency.**
+  - ⚠️ **INV-028–INV-049 were NOT re-read** this run; the 2026-09-24 entry read them in full.
+- **Findings, filed.**
+  - **High:** #214 (CORD cap and `truncated`, INV-203); #215 (two copies of `unattended-issue-loop` and `implement-github-issue` describe different procedures, and the one that runs is not the one documented or tested); #216 (INV-314 "create nothing" versus unattended comments).
+  - **Medium:** #217 (`check-skill-drift` reports ✅ over zero comparisons); #218 (#198's rule at 2 of 6 sites); #219 (Module 3's SENZ7426 relay); #220 (#158's retype placed after the mapping is declared); #221 (Step 8b's sample cited twice); #222 (Module 2 update-offer order); #223 (INV-281's two vocabularies); #224 (retrofit docs still describe copying); #225 (INV-155 tabs, INV-234 `download_resource`).
+  - **Low:** #226 (INV-307 and INV-050 counts and lists); #227 (wrong citations); #228 (16 uncited maintainer-surface rules, with 3 drafted invariants); #229 (grouped low-severity leads).
+  - The `unattended-ok` label was applied to none of them.
+- **The four properties, separately.**
+  - **Consistent:** ❌ defects. A wrong Senzing fact is shipping (#214); two rules changed today reached only some of their sites (#218, #219); two skill copies disagree (#215).
+  - **Coherent:** ⚠️ defects (#220, #221, #222, #223, #216, #227).
+  - **Complete:** ⚠️ gaps. Three unregistered durable rules on the maintainer surface, and no guard checks it (#228).
+  - **Concise:** ✅ unchanged. The top duplication pairs are the INV-183 per-module apparatus, which is required repetition.
+- **Verified as correct, so the next audit need not re-derive it.**
+  - Every rule changed on 2026-09-28 holds at all its sites except those filed: no "Step 3 Phase 2" EULA reference remains; there is no `get_record`-only `JSON_DATA` claim; `why_*` "no members" survives only as the dated note; every `reporting_guide` call passes `language`; `get_stats` is the only empty-schema example; `offer pending` is consistent across its seven sites; there is no "the server documents no brew/scoop update" claim; and `er/data` appears only under a 4.4.x condition.
+  - Module 6's two-stage reconciliation pointers resolve. The command set (13) matches `docs/development.md` and `FAMILY_WORKFLOW.md`.
+  - The retrofit leftovers from #191 are fixed by #202: the header comment, and the `rsync` guard wording.
+  - Enumerating invariants accurate today: INV-001, 017, 059, 094, 103, 106, 128, 136, 140, 141, 145, 153, 174, 177, 199, 200, 206, 225, 229, 230, 242, 246, 248, 249, 253, 294, 309.
+- ⛔ **Coverage limits.**
+  - **(1)** The **conversational invariants remain untested**: INV-251, INV-006, INV-014, INV-005/008/009 and every gate-ordering rule govern live turns, and reading cannot establish them. That is `/dry-run` phase 3 only.
+  - **(2)** The **330** standing lines from `per-rule --uncited` were not worked.
+  - **(3)** The plugin was **not executed**; this is a static pass.
+  - **(4)** `lint-workflows` cannot run locally (no `actionlint`/`yamllint`). Everything else was present: fpdf2 2.8.5, `pdftoppm`, docker, Chrome, `rsync`, `libSz.so`, and the `senzing` binding.
+- ⛔ **My own mistakes.**
+  - **#220 is the lead's own defect**, shipped in #158 (PR #189). The retype rule was placed where the transform is written, not where the mapping is declared.
+  - The #225 item 2 claim and most #229 items are sweep leads the lead did not re-verify; they are labeled so in the issues.
+  - One sweep agent could not re-run `retrofit.sh` against the public clone (the permission classifier denied it). The #202 worker's smoke run of the same script is the evidence.
+- **Establishes no invariant.** This audit modifies no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. The three invariants it drafts (D1–D3, in #228) go through `/review-invariants`. No id is written here, because an unminted id fails `citations.py verify`.
+- **Commit:** uncommitted
+
 ## three-mcp-citations-are-restamped
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #200)
