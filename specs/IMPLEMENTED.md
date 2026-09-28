@@ -43,6 +43,73 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## retrofit-compares-against-the-last-propagation
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #202)
+- **Files changed:**
+  `.claude/skills/retrofit-from-public/retrofit.sh`,
+  `.claude/skills/retrofit-from-public/SKILL.md`, `.claude/commands/retrofit-from-public.md`,
+  `tests/test_retrofit_files_issues.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** n/a (no Senzing fact). The issue is about a maintainer shell script's
+  baseline and output.
+- **Summary:** `retrofit.sh` compared public against dev's current tree, so every dev change
+  since the last propagation, and every file carrying the dev slug, read as a public edit. It
+  now compares public against a baseline.
+  - **The baseline:** by default the dev tag named like public's newest tag, or the tag a new
+    `--base <dev-tag>` names. The tag comes out through `git archive` into a `mktemp -d`
+    directory. That tag's own `propagate.sh` then runs into a throwaway `git init` destination
+    whose `origin` names the public slug. The paths, the `docs/` exclusions and the forward
+    rewrite are therefore the ones that release published, and `retrofit.sh` copies none of
+    them (INV-300). A trap removes the directory on every exit, an abort included (INV-312).
+  - **Aborts before any output:** public has no tag, no dev tag has that name, `--base` names a
+    missing tag, the tag carries no `propagate.sh` (dev tags `0.3.5` and `0.3.6`), or that
+    `propagate.sh` fails (its stderr is relayed, its normal output suppressed). Each message
+    names the tag and suggests `--base`. A missing `rsync` or `python3` fails the tag's
+    `propagate.sh`, so it aborts the same way.
+  - **Report:** the header names the baseline tag and how it was chosen. `report_path` diffs
+    public against the baseline. The deletion section is retitled "In the last propagation but
+    not in public" and lists baseline files public lacks. The dirty-dev-tree warning is removed,
+    because the comparison no longer reads dev's working tree. The "Public commits since the
+    newest tag" section is unchanged.
+  - **Prose:** the script's comments, `SKILL.md` asymmetries 1 and 2, "How to run" (a baseline
+    paragraph, `--base` for the committed-but-untagged window, the aborts) and "After it runs"
+    step 1, and the two statements in `.claude/commands/retrofit-from-public.md` the change made
+    false.
+  - **Smoke run** against the real public clone (tag `0.5.3`, read-only): every path `same`,
+    "(none)" missing, exit 0, matching the issue's hand check. `--base 0.3.5` and
+    `--base 9.9.9` exit 1 with empty stdout. Dev's `git status --porcelain` was unchanged and
+    no temp directory was left.
+- **Approach:** raced (Phase 5b) by the run's lead. Approach A (the baseline build inline in
+  `retrofit.sh`) won over B (a separate `build-baseline.sh` helper). Both met every criterion.
+  B put the machinery that runs `propagate.sh`, and so `rsync`, in a file the `WRITES_INTO_DEV`
+  guard for INV-312 does not scan, while A keeps it where the guard looks and is the smaller
+  change. The comparison is on the issue (comment 3). Applied from the raced patch (`git apply`
+  was clean on `03b6fa0`), with the one rewrapped comment reflowed and the tool-check wording in
+  `SKILL.md` made exact.
+- **Establishes no invariant, and defers none.** The two new ⛔ comment lines in `retrofit.sh`
+  cite INV-300 and INV-312 at the line. The change applies those invariants and adds no new
+  rule.
+- **Tests:** `tests/test_retrofit_files_issues.py`.
+  - The `Fixture` commits the shipped `propagate.sh` into the dev repo and tags it, so the
+    rewrite and exclusions under test are the real ones. It gains dev commits after the tag,
+    uncommitted dev edits, several tags, an untagged public, a missing or replaced
+    `propagate.sh`, extra script arguments, and a TMPDIR of its own to check for leftovers.
+    `TheScriptReportsEveryPath` (#191) follows the renamed operand and the retitled section,
+    and its class and the new one skip where `tar`, `rsync` or `python3` is missing too.
+  - New class `TheReportIsTakenAgainstTheLastPropagation` (15 tests). The public fixture is
+    written by hand in rewritten form, so the expectation does not come from the code under
+    test. Covered: only the public edit is listed; slug-only and `marketplace.json`-owner-only
+    files are not reported; dev edits, additions and uncommitted edits after the tag are absent;
+    the header names the baseline; dev's status is unchanged and the temp directory removed; a
+    public deletion is listed while a dev addition and the excluded `docs/development.md` are
+    not; `--base` overrides; five aborts, each with empty stdout, the tag and `--base` in stderr,
+    no leftovers and dev unchanged; and no copy of propagate's logic in `retrofit.sh`.
+  - Two built-in negative controls point the comparison and the deletion section back at dev's
+    tree and show the report then lists dev work. By hand, the same mutation of the real script
+    (then restored) gave 12 failures, subtests counted: all five comparison tests fail, and the
+    header, cleanup, abort and no-copy tests pass, as they should.
+- **Commit:** dc5b934
+
 ## retrofit-report-runs-past-the-first-differing-path
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #191)

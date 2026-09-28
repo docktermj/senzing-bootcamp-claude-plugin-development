@@ -37,8 +37,9 @@ risk surface:
 - **Apply the inverse transform, scoped.** Only the repo slug and `marketplace.json`'s
   owner name. `plugin.json`'s `author` is the *company* and stays `Senzing`; product
   mentions of "Senzing" and the `docktermj/senzing-bootcamp-free-data` links are not
-  touched. Because the rewrite is a clean inverse, an in-sync pair retrofits to an
-  empty diff — that is success, not a failure to find anything.
+  touched. The script compares public against the last propagation as that tag's
+  `propagate.sh` published it, so a public repo nobody edited reports every path
+  `same` — that is success, not a failure to find anything.
 
 ⛔ **Run `python3 -m pytest -q` and reconcile every test the retrofit desynced.** This
 is not a formality and no guard replaces it. `tests/` is not in the public mirror and
@@ -48,8 +49,9 @@ by **updating the assertion to the retrofitted wording** — the public edit is 
 correction — and regenerate any artifact pinned to a retrofitted file. **Never report a
 retrofit as done on an unrun suite.**
 
-Finish by reporting the script's summary — which propagated paths differ, which are absent
-in public, the "In dev but not in public" list, and the public commits since the newest tag.
+Finish by reporting the script's summary — the baseline tag it compared against, which
+propagated paths differ, which are absent in public, the "In the last propagation but not in
+public" list, and the public commits since the newest tag.
 
 ⛔ **(INV-312) The script writes nothing into this repository.** It compares and reports; the
 output of this command is **GitHub issues** describing what diverged, filed after the maintainer

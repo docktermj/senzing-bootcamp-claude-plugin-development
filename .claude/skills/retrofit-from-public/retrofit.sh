@@ -1,19 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Retrofit changes made in the PUBLIC access repo (Senzing/senzing-bootcamp-claude-plugin)
-# back into this DEVELOPMENT repo. Files only — this never commits or pushes.
+# Report what changed in the PUBLIC access repo (Senzing/senzing-bootcamp-claude-plugin)
+# since it last received a propagation from this DEVELOPMENT repo. Report only -- this
+# writes nothing into the dev tree and never commits or pushes. See SKILL.md.
 #
-# It is the inverse of propagate-to-public: it copies the propagated content back
-# and applies the INVERSE owner rewrite (Senzing -> docktermj). Because the
-# rewrite is a clean inverse, running this when the repos are already in sync
-# produces NO change in the dev tree. See SKILL.md for the manifest and rationale.
+# It compares public against a BASELINE: the last-propagated dev tag, rebuilt by running
+# that tag's own propagate.sh into a throwaway destination (#202). Comparing against dev's
+# current tree instead made every unpropagated dev change, and every file carrying the dev
+# slug, read as a public edit.
 #
-# Usage: retrofit.sh [path-to-public-repo]
+# Usage: retrofit.sh [--base <dev-tag>] [path-to-public-repo]
 #   Default public repo: ~/senzing.git/senzing-bootcamp-claude-plugin
+#   Default baseline:    the dev tag named like public's newest tag. --base names it
+#                        instead, for the window after a propagation is committed in
+#                        public but before public is tagged.
 
-here="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"   # dev repo root (destination)
+usage="Usage: retrofit.sh [--base <dev-tag>] [path-to-public-repo]"
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"   # dev repo root
 default_src="$HOME/senzing.git/senzing-bootcamp-claude-plugin"
-src="${1:-$default_src}"
+base_tag=""
+src=""
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --base)
+      [ "$#" -ge 2 ] && [ -n "$2" ] || { echo "--base needs a dev tag. $usage" >&2; exit 2; }
+      base_tag="$2"; shift 2 ;;
+    --base=*)
+      base_tag="${1#--base=}"
+      [ -n "$base_tag" ] || { echo "--base needs a dev tag. $usage" >&2; exit 2; }
+      shift ;;
+    -h|--help) echo "$usage"; exit 0 ;;
+    --) shift; [ "$#" -eq 0 ] || { src="$1"; shift; }
+        [ "$#" -eq 0 ] || { echo "Too many arguments. $usage" >&2; exit 2; }
+        break ;;
+    -*) echo "Unknown option '$1'. $usage" >&2; exit 2 ;;
+    *) [ -z "$src" ] || { echo "Too many arguments. $usage" >&2; exit 2; }
+       src="$1"; shift ;;
+  esac
+done
+src="${src:-$default_src}"
 
 # --- Safety guards --------------------------------------------------------- #
 [ -d "$here/plugins/senzing-bootcamp" ] || {
@@ -34,18 +59,69 @@ if [ "$(cd "$here" && pwd)" = "$(cd "$src" && pwd)" ]; then
   echo "Refusing: source and destination are the same directory." >&2; exit 1
 fi
 
+# --- Choose the baseline tag (#202) ---------------------------------------- #
+# ⚠️ Every way of having no baseline aborts HERE, before anything is printed, so a run
+# never shows half a report taken against nothing. Each message names the tag and --base.
+public_tag="$(git -C "$src" describe --tags --abbrev=0 2>/dev/null || true)"
+if [ -n "$base_tag" ]; then
+  tag="$base_tag"; chosen="named by --base"
+else
+  [ -n "$public_tag" ] || {
+    echo "No baseline: public repo '$src' has no tag, so there is no last-propagated dev tag" >&2
+    echo "to compare it against. Name that dev tag with --base <dev-tag>." >&2; exit 1; }
+  tag="$public_tag"; chosen="public's newest tag"
+fi
+if ! git -C "$here" rev-parse -q --verify "refs/tags/$tag^{commit}" >/dev/null 2>&1; then
+  if [ -n "$base_tag" ]; then
+    echo "No baseline: --base names '$tag', which is not a tag in the dev repo ($here)." >&2
+    echo "Pass an existing dev tag (see git tag -l) with --base <dev-tag>." >&2
+  else
+    echo "No baseline: public's newest tag is '$tag', but the dev repo has no tag of that name." >&2
+    echo "Name the last-propagated dev tag with --base <dev-tag>." >&2
+  fi
+  exit 1
+fi
+propagate_rel=".claude/skills/propagate-to-public/propagate.sh"
+git -C "$here" cat-file -e "refs/tags/$tag:$propagate_rel" 2>/dev/null || {
+  echo "No baseline: dev tag '$tag' carries no $propagate_rel, so what it propagated" >&2
+  echo "cannot be rebuilt. Name a later dev tag with --base <dev-tag>." >&2; exit 1; }
 
-# Warn on a dirty dev tree: its uncommitted edits show up in the comparison below.
-if ! git -C "$here" diff --quiet -- plugins .claude-plugin docs README.md \
-   || ! git -C "$here" diff --cached --quiet -- plugins .claude-plugin docs README.md; then
-  echo "WARNING: dev working tree has uncommitted changes in the compared paths;" >&2
-  echo "         they are compared as they stand, so the report includes them." >&2
+# --- Build the baseline: the tag as ITS OWN propagate.sh publishes it ------- #
+# ⛔ (INV-300) Neither script copies the other's rewrite or `docs/` exclusions: the tag's own
+# propagate.sh applies them, so the paths, exclusions and slug rewrite are exactly what that
+# release published -- including any an older release lacked. Its tool check stands in for
+# one here, so a missing mirror tool or python3 aborts through it, before any comparison.
+# ⛔ (INV-312) Everything is built under a `mktemp -d` directory outside the dev tree: the tag
+# comes out through `git archive`, never a checkout, and the trap removes the directory on
+# every exit, an abort included.
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/retrofit-baseline.XXXXXX")"
+trap 'rm -rf "$tmp"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+mkdir "$tmp/tag" "$tmp/baseline"
+if ! { git -C "$here" archive --format=tar "refs/tags/$tag" | tar -x -f - -C "$tmp/tag"; } 2>"$tmp/err"; then
+  echo "No baseline: dev tag '$tag' could not be extracted:" >&2
+  sed 's/^/  /' "$tmp/err" >&2
+  echo "Name another dev tag with --base <dev-tag>." >&2; exit 1
+fi
+# The destination passes propagate.sh's guards: a git repo whose origin names the public slug.
+base="$tmp/baseline"
+git -c init.defaultBranch=baseline init -q "$base" 2>"$tmp/err" \
+  && git -C "$base" remote add origin "https://github.com/Senzing/senzing-bootcamp-claude-plugin.git" 2>>"$tmp/err" || {
+  echo "No baseline: the throwaway destination for dev tag '$tag' could not be created:" >&2
+  sed 's/^/  /' "$tmp/err" >&2; exit 1; }
+# Its normal output is suppressed; only a failure, with its stderr, reaches the maintainer.
+if ! bash "$tmp/tag/$propagate_rel" "$base" >/dev/null 2>"$tmp/err"; then
+  echo "No baseline: the propagate.sh in dev tag '$tag' failed, so its propagation could not be rebuilt:" >&2
+  sed 's/^/  /' "$tmp/err" >&2
+  echo "Fix what it reports, or name another dev tag with --base <dev-tag>." >&2; exit 1
 fi
 
 echo "Source (public): $src"
 echo "Public origin:   $origin"
 echo "Public branch:   $(git -C "$src" branch --show-current 2>/dev/null || echo '(detached)')"
 echo "Dest (dev):      $here"
+echo "Baseline:        dev tag $tag ($chosen), as that tag's propagate.sh publishes it"
 echo
 
 # --- REPORT the allowlisted paths; never write into the dev tree ------------ #
@@ -61,14 +137,16 @@ echo
 # Nothing is copied now, so nothing desyncs; the reconciliation is done deliberately
 # by whoever implements the filed issue.
 #
-# NO --delete and no writes at all. A dev file missing from public is reported, never
-# removed: it may be a dev addition not yet propagated. Governance files (.github/,
-# LICENSE, .vscode/, .gitignore, public .claude/settings.json) stay out of scope by
-# construction -- they are never read from the source.
+# No deletions and no writes at all. A baseline file missing from public is reported, never
+# removed from dev. Governance files (.github/, LICENSE, .vscode/, .gitignore, public
+# .claude/settings.json) stay out of scope by construction -- they are never read from the
+# source.
 differs=0
 errors=0
 report_path() {
-  # $1 = relative path under both repos. Prints a per-file diff summary; writes nothing.
+  # $1 = relative path under public and the baseline. Prints a per-file diff summary; writes
+  # nothing. ⚠️ The comparison is against "$base", never "$here": dev's current tree holds
+  # every change made since the tag, and that is /propagate-to-public's report, not this one.
   #
   # ⚠️ (#191) `diff` exits 0 when the trees match, 1 when they differ, and 2 or more when it
   # could not compare them. Under `set -euo pipefail` a bare non-zero `diff`, or a listing
@@ -81,7 +159,7 @@ report_path() {
     echo "  (absent in public)      $rel"
     return 0
   fi
-  diff -rq "$src/$rel" "$here/$rel" >/dev/null 2>&1 || status=$?
+  diff -rq "$src/$rel" "$base/$rel" >/dev/null 2>&1 || status=$?
   case "$status" in
     0) echo "  same                    $rel"
        return 0 ;;
@@ -90,7 +168,7 @@ report_path() {
     *) echo "  ERROR                   $rel   (diff could not compare it: exit $status)"
        errors=$((errors + 1)) ;;
   esac
-  diff -rq "$src/$rel" "$here/$rel" 2>&1 | sed 's/^/      /' | head -40 || true
+  diff -rq "$src/$rel" "$base/$rel" 2>&1 | sed 's/^/      /' | head -40 || true
 }
 
 echo "=== Comparing the propagated paths (read-only) ==="
@@ -124,24 +202,26 @@ echo "change already absorbed or already filed does not get a second issue."
 # two must still agree. What changed is only WHO applies it and WHEN -- deliberately,
 # in the issue's implementation, rather than automatically in a sync.
 #
-# The comparison above therefore reports files as DIFFERING when the only difference is
-# the slug. That is correct and not noise: it is the change a filed issue must describe.
+# The comparison above does not show slug-only differences. The baseline has already been
+# through propagate.sh's forward rewrite, so a file differs only where public changed it.
 
-echo "=== In dev but not in public (NOT deleted — review manually) ==="
+echo "=== In the last propagation but not in public (NOT deleted — review manually) ==="
+# Every file the baseline holds under the propagated paths. The baseline repo has no commits,
+# so `--others` lists them all; without `--exclude-standard` no ignore rule hides one.
 missing=0
-while IFS= read -r rel; do
-  case "$rel" in */__pycache__/*|*.pyc) continue ;; esac
-  if [ ! -e "$src/$rel" ]; then
+while IFS= read -r -d '' rel; do
+  if [ ! -e "$src/$rel" ] && [ ! -L "$src/$rel" ]; then
     echo "  $rel"
     missing=$((missing + 1))
   fi
-done < <(cd "$here" && git ls-files plugins .claude-plugin docs README.md)
+done < <(git -C "$base" ls-files -z --others -- plugins .claude-plugin docs README.md)
 [ "$missing" -eq 0 ] && echo "  (none)"
 
 # --- Report only (#54): nothing was copied, applied, committed or pushed --- #
 echo
-echo "This was a report. The dev working tree was compared, not changed, and nothing was"
-echo "committed or pushed; a filed issue carries any change into this repo."
+echo "This was a report. Public was compared against dev tag $tag as propagated; the dev"
+echo "working tree was not changed, and nothing was committed or pushed. A filed issue"
+echo "carries any change into this repo."
 
 if [ "$errors" -gt 0 ]; then
   echo "$errors propagated path(s) could not be compared; the report above is incomplete." >&2
