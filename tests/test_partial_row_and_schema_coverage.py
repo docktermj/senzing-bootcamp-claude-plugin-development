@@ -4,9 +4,11 @@ INV-115 sends the guide to `get_sdk_reference(topic='response_schemas')` before
 parsing. For the graph methods that lookup **succeeds and is still not enough**:
 verified 2026-07-26, `filter='find_network'` returns an entry documenting
 `ENTITY_PATHS[]`, `ENTITIES[]` and `ENTITY_NETWORK_LINKS[]` — and nothing about
-the fields inside a link element. `get_version` and `get_license` return an empty
-`data` array outright. Neither case is a failed call, and a reader who treats it
-as one retries instead of dumping the response.
+the fields inside a link element. `get_stats` returns an empty `data` array
+outright (re-verified on MCP server 1.37.14, 2026-09-28; `get_version` and
+`get_license`, the earlier examples, are now documented — INV-149's dated note,
+#198). Neither case is a failed call, and a reader who treats it as one retries
+instead of dumping the response.
 
 The failure that follows is the nastier half. A reported session parsed link
 endpoints under the `ENTITY_ID` / `RELATED_ENTITY_ID` names used elsewhere and
@@ -60,6 +62,8 @@ DISCOVER = os.path.join(
     PLUGIN, "skills", "module-07-query-visualize-discover", "phase2b-discover.md"
 )
 COLLECTION = os.path.join(PLUGIN, "skills", "module-04-data-collection", "SKILL.md")
+SDK_SETUP = os.path.join(PLUGIN, "skills", "module-02-sdk-setup", "SKILL.md")
+GROUND_RULES = os.path.join(PLUGIN, "skills", "bootcamp-onboarding", "ground-rules.md")
 
 
 def flat(path):
@@ -101,7 +105,14 @@ class AnEmptyOrShallowLookupIsExpectedNotAFailure(unittest.TestCase):
                 )
 
     def test_an_empty_result_is_not_treated_as_a_failed_call(self):
-        for path in (CONTRACT, DISCOVER, COLLECTION):
+        """`COLLECTION` left this sweep in #198 (maintainer decision recorded on the issue).
+
+        Its only match was Module 4's claim that `get_license` has no `response_schemas`
+        entry, which the server now contradicts; that step now cites the documented
+        `recordLimit` instead, which `test_the_license_step_cites_the_documented_field`
+        pins.
+        """
+        for path in (CONTRACT, DISCOVER):
             with self.subTest(file=os.path.basename(path)):
                 self.assertRegex(
                     flat(path),
@@ -111,8 +122,50 @@ class AnEmptyOrShallowLookupIsExpectedNotAFailure(unittest.TestCase):
                     "retries a call that will never return more",
                 )
 
-    def test_get_version_and_get_license_are_named(self):
-        self.assertRegex(flat(CONTRACT), r"`get_version` and `get_license`")
+    def test_get_stats_is_the_empty_schema_example(self):
+        """The example must be a method the server still serves no schema for (INV-149).
+
+        Until #198 this pinned "`get_version` and `get_license`", which the server now
+        documents (MCP server 1.37.14, 2026-09-28) — the test was holding a stale example
+        in place.
+        """
+        text = flat(CONTRACT)
+        self.assertRegex(text, r"filter='get_stats'\)` returns an empty `data` array")
+        self.assertRegex(text, r"`get_stats\(\) -> str`; MCP server 1\.37\.14, 2026-09-28")
+
+    def test_no_documented_method_is_named_as_empty_schema(self):
+        """Neither retired example may survive as a current claim at any site that gave one."""
+        stale = re.compile(
+            r"`get_version` and `get_license` return an\s*empty"
+            r"|`get_license` has \*\*no\*\* `response_schemas` entry"
+            r"|filter='get_version'`? returned it alongside an \*empty\*")
+        for path in (CONTRACT, COLLECTION, SDK_SETUP, GROUND_RULES):
+            with self.subTest(file=os.path.relpath(path, REPO_ROOT)):
+                self.assertIsNone(stale.search(flat(path)))
+
+    def test_the_license_step_cites_the_documented_field(self):
+        """Both license-measurement steps look the shape up, and keep the dump as fallback."""
+        for path in (COLLECTION, SDK_SETUP):
+            with self.subTest(file=os.path.relpath(path, REPO_ROOT)):
+                text = flat(path)
+                self.assertRegex(
+                    text,
+                    r"get_sdk_reference\(topic='response_schemas', filter='get_license'\)`"
+                    r"[^.]*?documents `recordLimit` \(integer\)")
+                self.assertRegex(
+                    text, r"Only if `recordLimit` is absent from the saved[^.]*?\(INV-115\)")
+                self.assertRegex(
+                    text,
+                    r"empty or shallow result from that lookup is coverage, not a failed call"
+                    r"[^.]*?do not retry it[^.]*?\(INV-149\)",
+                    "a step that requires the lookup states what an empty result means (INV-149)",
+                )
+
+    def test_the_ground_rules_signature_example_uses_get_stats(self):
+        self.assertRegex(
+            flat(GROUND_RULES),
+            r"`topic='response_schemas', filter='get_stats'` returned it alongside an \*empty\*",
+        )
 
 
 class ThePartialRowRuleIsStated(unittest.TestCase):

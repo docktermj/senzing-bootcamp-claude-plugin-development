@@ -1245,9 +1245,12 @@ still applies — but record it as provisional, per sub-step 3.
      support data, which is exactly why Step 4's version call succeeds here while engine calls still
      raise `SENZ7426` with Steps 7–8a still ahead. If the license call itself raises `SENZ7426` or
      `SENZ7220`, treat it as the "cannot measure yet" branch below, not as a broken install.
-   - Save the returned JSON to `config/license.json` and **read the saved file to confirm its shape
-     before parsing it** (INV-115) — `get_license` has **no** `response_schemas` entry, so an empty
-     `data` array there is the expected result, not a failed lookup.
+   - Save the returned JSON to `config/license.json`, because later steps read it.
+     `get_sdk_reference(topic='response_schemas', filter='get_license')` documents `recordLimit`
+     (integer) (MCP server 1.37.14, 2026-09-28), so that is the field to parse. An empty or shallow
+     result from that lookup is coverage, not a failed call: do not retry it (INV-149). **Only if
+     `recordLimit` is absent from the saved file, read the file to find the name the field actually
+     carries before parsing it** (INV-115).
    - Parse `recordLimit`: `0` means **no record cap (unlimited)**; a positive value is the cap.
 
 2. **State what was measured** — as a statement, **not a question:** "Your Senzing license allows up

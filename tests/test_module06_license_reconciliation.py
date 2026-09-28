@@ -218,7 +218,9 @@ class TheProcedureIsCitedNotRestated(unittest.TestCase):
              / "module-04-data-collection" / "SKILL.md").read_text(encoding="utf-8")
         )
         self.assertIn("parse `recordLimit`, and write `license_record_limit`", m4)
-        self.assertIn("no** `response_schemas` entry", m4)
+        self.assertIn(
+            "filter='get_license')`, which documents `recordLimit` (integer)", m4)
+        self.assertNotIn("no** `response_schemas` entry", m4)
 
     def test_phase_a_carries_the_signature_provenance(self):
         """The method is server-confirmed even though its payload is not (INV-080)."""
