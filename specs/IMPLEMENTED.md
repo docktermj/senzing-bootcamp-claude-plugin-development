@@ -43,6 +43,55 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## retrofit-report-runs-past-the-first-differing-path
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #191)
+- **Files changed:**
+  `.claude/skills/retrofit-from-public/retrofit.sh`, `tests/test_retrofit_files_issues.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** n/a (no Senzing fact). The issue is about a maintainer shell script's exit
+  statuses and output.
+- **Summary:** `retrofit.sh` ran under `set -euo pipefail`, and `report_path`'s listing
+  pipeline carried `diff`'s exit 1 whenever a path differed. So the first differing path ended
+  the run, and the report only finished when there was nothing to report.
+  - **`report_path`:** captures `diff`'s status with `|| status=$?` and branches on it. 0 is
+    `same`, 1 is `DIFFERS` with its listing, and 2 or more is `ERROR`, which is counted. The
+    listing pipeline ends in `|| true`, which also covers `head -40` closing the pipe. A path
+    absent in public is still reported without running `diff`.
+  - **Summary and exit:** the stop sign is printed from its UTF-8 bytes with octal `printf`,
+    which works in bash 3.2 too. Plain `echo` had printed the escape sequence literally. When a
+    path was `ERROR`, the summary says how many could not be compared, and the script exits 1
+    after every section has printed. Otherwise it exits 0, whether or not anything differs.
+  - **Footer:** the "Dev repo status … (review before committing)" section and "Retrofit
+    applied to the working tree … then commit manually" are replaced with report-only wording.
+    The dirty-tree warning no longer says the retrofit "will overlay onto" the dev changes.
+  - **Unchanged:** the safety guards and their messages, what is compared, the manifest, the
+    inverse transform, and the "NOTHING WAS WRITTEN" line.
+  - **Smoke run** against the real public clone: all four paths reported `DIFFERS`, every
+    section printed, and the script exited 0.
+- **Approach:** implemented directly (Phase 5a). The change is inside one script, plus its test.
+- **Establishes no invariant, and defers none.** No ⛔ line is added to the checked corpus. The
+  change applies INV-312 (the script writes nothing) and adds no new rule.
+- **Tests:** `tests/test_retrofit_files_issues.py` gains `TheScriptReportsEveryPath` (9 tests),
+  which runs the script with `bash` against temporary git repos. The fixture dev repo carries a
+  copy of the script at the real depth, because the script finds the dev root from its own path.
+  The fixture public repo's `origin` names `Senzing/senzing-bootcamp-claude-plugin`. Git's
+  global and system configuration is shut out, so a maintainer's signing settings cannot break
+  the fixture. The class skips where `bash`, `git` or `diff` is missing.
+  - Covered: a tree differing in three paths reports all of them, the commit list, the
+    in-dev-not-in-public list and the summary, and exits 0. The summary shows the stop sign and
+    not the escape. A 61-entry listing stops at 40 lines, and the next path is still compared.
+    No output line claims a write or a commit. The dev fixture's `git status` is clean
+    afterwards. A path `diff` cannot compare (a file in public, a directory in dev, so exit 2)
+    is `ERROR`, the later path and every section still print, and the exit is non-zero.
+    Identical trees report `same` and exit 0. A wrong `origin` still aborts before comparing.
+  - A built-in negative control removes each guard (`|| true` on the listing, `|| status=$?` on
+    the status), and asserts the run then stops before its summary.
+  - Negative controls run by hand and then reverted: `origin/main`'s script fails 6 of the 9;
+    putting the escape back fails the stop-sign test; making the `ERROR` exit 0 fails the
+    `ERROR` test; putting "Retrofit applied to the working tree." back fails the no-write test.
+- **Commit:** 6b85ac4
+
 ## gated-reporting-guide-reply-carries-no-content
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #195)
