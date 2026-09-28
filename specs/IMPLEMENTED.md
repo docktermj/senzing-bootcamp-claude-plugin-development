@@ -100,7 +100,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     reverting Phase D's call form to a bare `topic='evaluation'` fails
     `test_evaluation_is_named_for_this_phase`; dropping `language` from `SKILL.md`'s export call
     fails `test_no_reporting_guide_call_omits_language`.
-- **Commit:** uncommitted
+- **Commit:** 1de37d2
 
 ## inv160-quotes-the-current-step-3-note-and-its-terminal-step
 
