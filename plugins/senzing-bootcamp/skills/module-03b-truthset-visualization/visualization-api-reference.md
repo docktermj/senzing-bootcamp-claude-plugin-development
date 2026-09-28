@@ -439,10 +439,13 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > of a parsed record populate and others do not, suspect the blank ones' names first (INV-115) and
 > confirm against a dumped response before rendering.
 >
-> **Methods with no `response_schemas` entry at all.** `get_version` and `get_license` return an
-> empty `data` array (verified 2026-07-26) — the lookup is not failing, the coverage is simply
-> absent. An empty result is the expected outcome for those, not an error to retry: dump the response
-> and read the shape from it.
+> **Methods with no `response_schemas` entry at all.** `get_sdk_reference(topic='response_schemas',
+> filter='get_stats')` returns an empty `data` array beside a populated `method_signatures`
+> (`get_stats() -> str`; MCP server 1.37.14, 2026-09-28) — the lookup is not failing, the coverage is
+> simply absent for a method that still returns a JSON document. An empty result is the expected
+> outcome for those, not an error to retry: dump the response and read the shape from it. This
+> server's coverage grows — `get_version` and `get_license`, once this paragraph's examples, are now
+> documented — so re-run the lookup rather than quoting which methods lack an entry.
 
 **`GET /api/why?entity_id=<id>`:** Explain WHY the records in an entity resolved together
 

@@ -407,9 +407,10 @@ steering files.)
   `flags` or `response_schemas` response you already hold therefore carries the signature too,
   in a `method_signatures` block, so it needs no second call. (Verified on MCP server 1.32.2,
   2026-07-30: `topic='flags', filter='find_network_by_entity_id'` returned it alongside the flag
-  data, and `topic='response_schemas', filter='get_version'` returned it alongside an *empty*
-  `data` array — a topic with no data of its own still carries the signature.) When you hold no
-  such response, ask for it directly before **calling** an SDK method:
+  data. Verified on MCP server 1.37.14, 2026-09-28: `topic='response_schemas', filter='get_stats'`
+  returned it alongside an *empty* `data` array — a topic with no data of its own still carries the
+  signature.) When you hold no such response, ask for it directly before **calling** an SDK
+  method:
 
   ```text
   get_sdk_reference(topic='methods', filter='find_network_by_entity_id')

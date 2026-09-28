@@ -1031,11 +1031,14 @@ training data.
 7. **Detect the active license's record limit (after a custom key is applied in sub-step 5).**
    Confirm the SDK facts via `sdk_guide(topic='configure', platform='<user_platform>',
 language='<chosen_language>', version='current')` (`recordLimit`: `0` = unlimited, positive = the
-   cap). Generate a scaffold that calls `SzProduct.get_license()`, save the returned JSON to
-   `config/license.json` — `get_license` has **no** `response_schemas` entry (an empty `data` array
-   is the expected result there, not a failed lookup), so read the saved JSON to confirm the shape
-   before parsing it (INV-115) — parse `recordLimit`, and write `license_record_limit` into
-   `config/bootcamp_progress.json`. Report the detected limit to the bootcamper (e.g. "Your license
+   cap). Confirm the response shape via `get_sdk_reference(topic='response_schemas',
+   filter='get_license')`, which documents `recordLimit` (integer) (MCP server 1.37.14, 2026-09-28);
+   an empty or shallow result from that lookup is coverage, not a failed call, so do not retry it
+   (INV-149). Generate a scaffold that calls `SzProduct.get_license()`, save the returned JSON to
+   `config/license.json` — later steps read that file — parse `recordLimit`, and write
+   `license_record_limit` into `config/bootcamp_progress.json`. Only if `recordLimit` is absent from
+   the saved JSON, read that file to find the name the field actually carries before parsing it
+   (INV-115). Report the detected limit to the bootcamper (e.g. "Your license
    allows up to N records," or "no record cap (unlimited)" when `0`).
 
 This gate is non-blocking on the obtain paths (the bootcamp proceeds on the evaluation license while

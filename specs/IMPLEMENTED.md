@@ -43,6 +43,72 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-empty-schema-example-is-get-stats
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #198)
+- **Files changed:**
+  `specs/INVARIANTS.md`, `invariant-manifest.json`,
+  `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`,
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`,
+  `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`,
+  `tests/test_partial_row_and_schema_coverage.py`,
+  `tests/test_module06_license_reconciliation.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.14, 2026-09-28. The spec's re-verification criterion holds.
+  - `get_sdk_reference(topic='response_schemas', filter='get_license')` returns a `get_license`
+    entry whose fields include `recordLimit` (integer), beside `advSearch`, `billing`,
+    `contract`, `customer`, `expireDate`, `issueDate`, `licenseLevel` and `licenseType`.
+  - `filter='get_stats'` returns `"data": []` beside `method_signatures` `get_stats() -> str`.
+  - `filter='get_version'` returns a documented entry (`BUILD_DATE`, `BUILD_VERSION`,
+    `COMPATIBILITY_VERSION.CONFIG_VERSION`, `SCHEMA_VERSION.*`, `VERSION` and more).
+- **Summary:** INV-149's example of an empty `response_schemas` result, and four plugin sites
+  that used it, named `get_version` and `get_license`, which the server now documents.
+  - **INV-149** gains a dated 2026-09-28 note: the example moves to `get_stats` and the rule is
+    unchanged. No earlier text of the entry changed. `invariant-manifest.json` is regenerated,
+    and `--check` exits 0. INV-132's dated `get_version` note stays as history.
+  - **`visualization-api-reference.md`:** the "Methods with no `response_schemas` entry at
+    all" paragraph uses `get_stats` (dated 1.37.14), keeps "not an error to retry", and says
+    the lookup must be re-run rather than quoted, because coverage grows.
+  - **`ground-rules.md`:** the signature example's provenance is split per fact. The 1.32.2
+    `find_network_by_entity_id` flags stamp stays; a new 1.37.14 stamp covers
+    `filter='get_stats'` returning the signature beside an empty `data` array (INV-191).
+  - **Module 4 Step 8a sub-step 7 and Module 2 Step 5a:** both cite
+    `get_sdk_reference(topic='response_schemas', filter='get_license')` and its `recordLimit`
+    (integer), keep saving `config/license.json` because later steps read it, and read the
+    saved file only when `recordLimit` is absent (INV-115). The "empty `data` array is the
+    expected result" clause is gone. Because each step now requires the lookup, each also
+    states at that point that an empty or shallow result is coverage, not a failed call, and
+    is not retried (INV-149).
+  - **Unchanged (out of scope):** the `1.32.9` signature citations at Module 4's Step 1
+    license bullet and `module-06-data-processing/phaseA-build-loading.md`. That Module 4
+    bullet still says to read the saved JSON to confirm the shape before parsing, which is
+    stricter than sub-step 7's fallback-only read but not wrong; it defers to sub-step 7
+    (INV-300).
+- **Approach:** raced (Phase 5b). Two implementations were built against a rubric written
+  first. The winner is A, "replace in place": each site stays self-contained, where B's
+  Module 2 step pointed forward into Module 4, a module not loaded at that step. A also split
+  the `ground-rules.md` provenance rather than re-dating an older fact. The comparison is
+  issue comment 3. Adapted on the branch: both license steps gained the INV-149 empty-result
+  clause and a test pins it.
+- **Amends INV-149 with a dated note and registers no new invariant.** No ⛔ line is added or
+  rewrapped. The note avoids the supersession vocabulary, so INV-149 stays active.
+- **Tests:**
+  - `tests/test_partial_row_and_schema_coverage.py`: the docstring re-points to `get_stats`.
+    `COLLECTION` leaves `test_an_empty_result_is_not_treated_as_a_failed_call`, a maintainer
+    decision recorded on #198, since its only Module 4 match was the rewritten line.
+    `test_get_version_and_get_license_are_named` becomes
+    `test_get_stats_is_the_empty_schema_example`. New:
+    `test_no_documented_method_is_named_as_empty_schema` (the four sites),
+    `test_the_license_step_cites_the_documented_field` (Modules 2 and 4: the `recordLimit`
+    citation, the fallback-only read, and the INV-149 empty-result clause), and
+    `test_the_ground_rules_signature_example_uses_get_stats`.
+  - `tests/test_module06_license_reconciliation.py`: asserts Module 4 cites
+    "filter='get_license')`, which documents `recordLimit` (integer)" and no longer carries
+    "no** `response_schemas` entry".
+  - Negative controls: restoring the four plugin files to `origin/main` fails 9 tests;
+    removing Module 2's INV-149 clause fails the license-step test.
+- **Commit:** c5c3f45
+
 ## retrofit-compares-against-the-last-propagation
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #202)
