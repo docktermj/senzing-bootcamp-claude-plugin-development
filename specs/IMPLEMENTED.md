@@ -99,7 +99,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     "(INV-160)" or "which example could not be reached" each fails exactly its own test;
     restoring the old quote fails the retired-wording test; deleting INV-160's note fails the
     invariant test.
-- **Commit:** uncommitted
+- **Commit:** 9f3dc15
 
 ## the-update-path-names-its-search-docs-routes
 
