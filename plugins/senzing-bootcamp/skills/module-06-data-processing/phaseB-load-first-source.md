@@ -109,6 +109,12 @@ Step 8 writes `CONFIGPATH`, so it cannot see a license installed at the system c
 provisional figure is a genuine measurement of an incomplete view, which is the one shape the
 absent-versus-present split above cannot see on its own.
 
+**"The dataset size" in these branches is the whole load, not this source.** It is the loadable
+total across **every** mapped source, the record count of their files in `data/senzing-ready/`
+together, which is the same whole-load total Phase A's SQLite volume pre-load check reads
+(`phaseA-build-loading.md`, item 1). It is not the first source alone: the license cap covers
+every record Phases B and C load into the same repository.
+
 - **`0` (no cap), or ≥ the dataset size**, the active license permits the full load: omit the
   evaluation-capacity warning and proceed.
 - **Positive and below the dataset size**, the dataset genuinely exceeds the cap: the single
@@ -155,6 +161,29 @@ absent-versus-present split above cannot see on its own.
   `license_key_requested` is absent** — a Bootcamper may hold a license the bootcamp never asked about,
   and it is the option this branch previously omitted entirely; what the `license_key_requested`
   marker gates is only the *"check your email, it may have arrived"* line above.
+
+  Options **1** and **3** load a subset. For either, measure the **remaining cap** first, as
+  [the subset record](#load-subset-record) below defines it; when it is indeterminate or not
+  positive, stop where that definition says. Otherwise:
+
+  - On **1**, write `license_cap_prompt` and each selected source's `load_subset:` block as
+    [the subset record](#load-subset-record) defines, with `choice: overlap_preserving`. Select
+    **once, across every mapped source** in `data/senzing-ready/`, within the remaining cap: the
+    same whole-load scope as the dataset size above. The selection method is Module 4's
+    [sampling rule](../module-04-data-collection/SKILL.md#overlap-preserving-sampling); follow it
+    and do not restate it here (INV-300). For each selected source, write its subset file under
+    `data/subsets/` and its block with `strategy: overlap_preserving`, `file_path`, the measured
+    `record_count`, and `reason: license_cap`. Phase B loads the first source's subset; Phase C
+    loads the rest. With a **single source** there is no cross-source overlap to preserve, so the
+    sampling rule's first-N case applies: write `strategy: first_n` with `limit` = the remaining
+    cap and `reason: license_cap`, and say which case applies.
+  - On **3**, write `license_cap_prompt` and the first source's `load_subset:` block as
+    [the subset record](#load-subset-record) defines, with `choice: first_n` and
+    `load_subset: {strategy: first_n, limit: N, reason: license_cap}`, where N = the remaining
+    cap. Write the block **before** the load, and have the loader load exactly the first N
+    records, stopping there on purpose, not at the license error. Tell the bootcamper that later
+    sources get only what is left of the cap, possibly nothing: the cost this option's own warning
+    names ("cross-source overlap may be lost").
 - **Absent or null** — ⛔ **"never measured", not "no custom license": measure before warning.** (INV-244) This
   is the same branch, and the same trap, as Phase A's — **every step that writes
   `license_record_limit` writes only a MEASURED value**, so its absence says nothing about the
@@ -171,6 +200,55 @@ absent-versus-present split above cannot see on its own.
     assumption, and confirm the current capacity figure and the exact over-limit error code and
     behavior from the Senzing MCP server at request time. If no figure is returned, say it is
     currently unavailable rather than restating a remembered one.
+
+<a id="load-subset-record"></a>
+
+**The subset record.** This is the one definition of what a subset choice in this step records.
+License-cap options 1 and 3 above and the SQLite first-1,000 choice below each write it as this
+definition says, adding only their own values, and the two-stage reconciliation below cites it
+(INV-300).
+
+- **`load_subset:`**, a block in the source's own entry in `config/data_sources.yaml`, written
+  **before** that source's load, whenever the source loads fewer records than its load input:
+  `load_subset: {strategy, limit, file_path, record_count, reason}`.
+  - `strategy`: `first_n` or `overlap_preserving`.
+  - `limit` (for `first_n`): N. The loader loads exactly the first N records of the registry
+    `file_path` and stops there on purpose.
+  - `file_path` and `record_count` (for `overlap_preserving`): the subset file under
+    `data/subsets/`, and the record count **measured from the written file**, never the target
+    that was asked for. A source the selection took nothing from still gets the block, with a
+    measured `record_count: 0`, so nothing loads for it and its reconciliation cites a record
+    rather than finding none.
+  - `reason`: `license_cap` or `sqlite_volume`.
+
+  Like Module 4's `sample:` block, writing it never touches the source's top-level
+  `record_count` or `expected_record_count` (INV-243), and it leaves `sample:` as it is.
+- **Subset files live under `data/subsets/`, never in `data/senzing-ready/`.** Phase A's loadable
+  total counts every file there, so a subset file inside it would count its source twice. The
+  directory is created when option 1 first writes to it.
+- **`license_cap_prompt`**, the whole-load marker in `config/bootcamp_preferences.yaml`, modeled on
+  `sqlite_volume_prompt`: `{decided: true, choice, license_record_limit}`. `choice` is
+  `overlap_preserving` (option 1) or `first_n` (option 3), and `license_record_limit` is the limit
+  the choice was made under. It records the license-cap question as asked once (INV-006), so
+  Phase C applies the choice without asking again, even when the first source fit under the cap.
+  A marker recorded under a different `license_record_limit` does not match.
+- **`sqlite_volume_prompt` with `choice: "subset"`**, the SQLite first-1,000 choice's asked-once
+  marker: `{decided: true, choice: "subset", loadable}`, beside Phase A's `proceed` and `migrate`.
+- **Neither marker records N or a subset file.** They record that the question was answered.
+  What each source loads is its `load_subset:` block, and that block is the only subset record
+  the reconciliation cites.
+- **The remaining cap** is `license_record_limit` minus the number of records already in the
+  repository.
+  - ⛔ **That count is measured through the SDK at this step, never summed from the registry.**
+    Route the code through the Senzing MCP server, exactly as Module 5 Step 24a counts
+    `record_count` (`module-05-data-quality-mapping/phase3-test-load.md`), and never count with
+    direct SQL against `database/G2C.db`. Records a test load left in the repository count
+    against the cap whatever `config/data_sources.yaml` says.
+  - **The count cannot be measured:** the remaining cap is indeterminate. Offer no subset size,
+    say the figure is currently unavailable, and never substitute a remembered or estimated one,
+    the same rule as an unmeasured `license_record_limit` (INV-244).
+  - **Zero or less:** the repository already holds `license_record_limit` records. Load nothing
+    and say so; do not start a load that can only hit the license error.
 
 **Data source registry.** On success, update `load_status` to `loaded` in
 `config/data_sources.yaml`. On failure, set `load_status` to `failed` and add an `issues` entry
@@ -196,11 +274,12 @@ rather than only in the turn that ran it.
 1. **Stage 1 — the loaded count against the load input.** Compare the loader's success count
    against the **load input** first: the records the loader was actually given, counted from the
    file it read — the registry `file_path` (for a `fast_pathed: true` source, the raw or sample file
-   it loaded) — or its first N records when a **recorded subset limit** applies: this step's SQLite
-   "first 1,000 records" choice in `sqlite_volume_prompt` (below). This is the only comparison that
+   it loaded) — or, when a **recorded subset limit** applies, the subset the source's
+   `load_subset:` block records ([the subset record](#load-subset-record) above): the first `limit`
+   records of that file, or the subset file at its `file_path`. This is the only comparison that
    can verify the load itself, so **stage 1 is the only stage that can record `failed`**. It has no
    explained branch: the loader's error count and error log explain a shortfall, but they do not
-   excuse it.
+   excuse it, and a license error before the subset is loaded is still a mismatch.
 2. **Stage 2 — the load input against the collected `record_count`, through the recorded chain.**
    Reached only when stage 1 is equal. Every step between the collected file and the load input is
    cited from a record, in order — collected → sample → mapped → subset:
@@ -210,7 +289,9 @@ rather than only in the turn that ran it.
      decision, so either one is cited here, once, as the sample step;
    - **a mapping disposition** (→ mapped file), cited as the source's own mapping specification, or
      the recorded disposition in `config/data_sources.yaml`;
-   - **a recorded subset limit** (→ first N), cited from the `sqlite_volume_prompt` marker.
+   - **the `load_subset:` block** this step wrote into the source's registry entry (mapped →
+     subset), with its `strategy`, its `limit` or measured `record_count`, and its `reason`: the
+     only subset record, as [the subset record](#load-subset-record) above defines it.
 
 ⛔ **Four outcomes across two stages, not two. Do not collapse them.** INV-245 forbids presenting a
 value that **failed its own verification check**, and stage 1 is that check. A stage-2 delta the
@@ -238,8 +319,8 @@ discharge this: the failure mode this exists for produces figures that are plaus
 correctly.
 
 ⛔ **The explained branch is reachable ONLY with a citation, never with an assertion.** The note must
-name, for every step, the record that predicts it: the `sample:` block, the subset record, or the
-mapping artifact — the source's own mapping specification, or the recorded disposition in
+name, for every step, the record that predicts it: the `sample:` block, the `load_subset:` block,
+or the mapping artifact — the source's own mapping specification, or the recorded disposition in
 `config/data_sources.yaml`. *"The mapping probably explains it"* and *"it was probably sampled"* are
 precisely the failure INV-245 exists to prevent, and without the citation requirement this branch
 becomes a universal escape hatch wearing the rule as a disguise. No citation → `unexplained_delta`.
@@ -247,6 +328,9 @@ becomes a universal escape hatch wearing the rule as a disguise. No citation →
 - **No `sample:` block** — a registry written before Module 4 recorded samples: a gap only a sample
   could explain is **unexplained**. Nothing is inferred from a file's name or location; a path under
   `data/samples/` is not a citation.
+- **No `load_subset:` block** — a registry written before this step recorded subsets, or a subset
+  recorded nowhere: a gap only a subset could explain is **unexplained**. A path under
+  `data/subsets/` is not a citation either.
 - **A substitute dataset** (Module 4 Step 6's smaller substitute) is a new collection, not a sample:
   it carries its own measured `record_count` and no `sample:` block, so it adds no chain step.
 - **A source that skips mapping** (`fast_pathed: true`): the chain is the sample alone, or empty.
@@ -280,7 +364,9 @@ single-threaded loading, entity resolution gets progressively slower as the data
 ⛔ **Check first whether this was already decided, and say nothing if it was.** Read the
 `sqlite_volume_prompt` marker in `config/bootcamp_preferences.yaml` (Phase A's pre-load check) and
 the Module 4 Step 8b load decision. If either records a choice for this same load — `proceed`,
-`sample`, or a database switch — **honor it silently and load what it says**. Two gates already put
+`subset`, `sample`, or a database switch — **honor it silently and load what it says**. For
+`subset`, take N from the source's `load_subset:` block (its `limit`), because
+`sqlite_volume_prompt` does not record N. Two gates already put
 this to the bootcamper; re-opening it here would be a third ask on a settled question (INV-006) and
 would push a dataset smaller than the one they chose, which is exactly what leaves Modules 6 and 7
 under-demonstrating cross-source resolution (INV-150).
@@ -292,6 +378,9 @@ starting smaller:
 results here, we can load the full dataset, or switch to PostgreSQL for better performance with
 larger volumes (a production follow-up; see the graduation migration checklist)." Record the
 resulting choice in `sqlite_volume_prompt`, with `loadable`, so the question stays asked once.
+On the first 1,000 records, write it as [the subset record](#load-subset-record) defines, with
+only this choice's values: `sqlite_volume_prompt` with `choice: "subset"`, and on the source
+`load_subset: {strategy: first_n, limit: 1000, reason: sqlite_volume}`.
 ⛔ **An absent marker is "not asked", never "answered" (INV-244).** A load at or below the
 threshold, or one whose total or threshold is indeterminate, never needed the question and leaves
 no marker; say nothing here and write none.

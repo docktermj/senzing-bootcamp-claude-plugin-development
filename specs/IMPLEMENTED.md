@@ -43,6 +43,134 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## every-phase-b-subset-choice-writes-load-subset
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #237)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`,
+  `tests/test_load_reconciliation_has_two_stages.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.14, 2026-09-28, `get_capabilities()` and
+  `search_docs(query='Data Source Records DSRs explained deletes reduce the count replace
+  existing record')`. Outcome: still reproduces. The issue recorded n/a (no Senzing fact), but
+  the remaining cap rests on one: that the license counts the records already in the repository.
+  "Data Source Records (DSRs) Explained" says a DSR is "a single record processed for loading
+  into Senzing", that "The DSR count is the total across all these source systems", and "Deletes of records generally
+  reduce the count". So `license_record_limit` minus the repository's record count is the right
+  cap, and test-load leftovers count. The same article says a record re-sent with an existing
+  data source code and record ID "replaces the current one in Senzing and doesn't contribute to
+  the DSR count", so the remaining cap can err low, never high. The plugin states neither
+  nuance and names no new SDK method; the count is routed as Module 5 Step 24a routes it. No
+  absence claim is made. Nothing was sent upstream.
+- **Summary:** license-cap options 1 and 3 and the SQLite first-1,000 choice loaded fewer
+  records than the load input and recorded nothing Step 7's reconciliation could cite, so a
+  clean capped load read as `failed` or `unexplained_delta`. Phase B Step 7 now defines the
+  subset record once, and every subset choice writes it.
+  - **The definition** (anchor `load-subset-record`, a bold lead, not a heading, so the
+    `sections()`-based guards still see one Step 7): the `load_subset:` block
+    `{strategy, limit, file_path, record_count, reason}` in the source's registry entry,
+    written before the load, with `record_count` measured from the written file and
+    `record_count: 0` for a source the selection took nothing from; it never touches the
+    top-level `record_count` or `expected_record_count` (INV-243) or `sample:`. Subset files live
+    under `data/subsets/`, never in `data/senzing-ready/`. The `license_cap_prompt` marker
+    `{decided: true, choice, license_record_limit}` (INV-006), and `sqlite_volume_prompt` with
+    `choice: "subset"`; neither records N. **The remaining cap**, `license_record_limit` minus
+    the repository's record count measured through the SDK, never summed from the registry;
+    indeterminate when the count cannot be measured (INV-244); zero or less loads nothing.
+  - **The license branches:** "the dataset size" is the loadable total across every mapped
+    source, Phase A's whole-load total, not the first source.
+  - **Option 1** selects once across every mapped source within the remaining cap by Module 4's
+    `#overlap-preserving-sampling` rule (pointed at, not restated, INV-300), writes each
+    selected source's subset file and `load_subset:` block, and falls back to `first_n` for a
+    single source. **Option 3** writes `load_subset: {strategy: first_n, limit: N, reason:
+    license_cap}` with N = the remaining cap before the load, stops at N on purpose, and tells
+    the bootcamper later sources get only what is left. Both write `license_cap_prompt`.
+  - **The SQLite first-1,000 choice** writes `sqlite_volume_prompt` with `choice: "subset"` and
+    `load_subset: {strategy: first_n, limit: 1000, reason: sqlite_volume}`. The SQLite heads-up
+    honors `subset` and takes N from `load_subset:`.
+  - **Step 7:** stage 1 and the stage-2 subset bullet cite the `load_subset:` block and no
+    longer name `sqlite_volume_prompt`; #221's Step 8b separation is unchanged. The citation
+    rule names the block, and a new "No `load_subset:` block" edge case is unexplained.
+  - **Unchanged (out of scope):** Phase C (#238), Module 4's `sample:` block, and Phase A.
+    ⚠️ Phase A item 2's "already decided" check matches `sqlite_volume_prompt` on `decided` and
+    `loadable` without reading `choice`, so a `subset` marker already skips its prompt, but it
+    does not name `subset` or read `license_cap_prompt`. No criterion of #237 needs it, so it
+    is left for #238 or a new issue.
+- **Approach:** raced (Phase 5b), two approaches, judged against a rubric written first (issue
+  comment 3). **Winner B, define once and point from each option**, over A (write the full field
+  list at each point of choice): both met the criteria; B is the INV-300 shape, and its guard
+  pins the option count, so a renamed option cannot drop out of the sweep. The patch applied
+  cleanly with `git apply --3way` over `c266918`. **One adaptation:** the race shipped the
+  remaining-cap rule as bold text without its ⛔ to keep
+  `test_new_hard_rules_are_cited_or_deferred` green. That demoted a hard rule to pass a guard,
+  so the ⛔ is restored on its own sub-bullet and deferred below. INV-244 was checked as a
+  citation and rejected: it forbids reading a conditionally written field's **absence** as a
+  finding, which covers the indeterminate-count sub-bullet (cited there) but not substituting a
+  registry sum for a repository count. No other new line is a ⛔ or bolded MUST/NEVER line.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The change ships a ⛔
+  rule no registered invariant owns. The rule already shipping, verbatim, at its site (Step 7,
+  the subset record's remaining-cap bullet):
+    - ⛔ **That count is measured through the SDK at this step, never summed from the registry.** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`
+
+  ⚠️ **INV-244 and INV-278 were considered.** INV-244 governs an absent field read as a
+  finding; INV-278 governs a stated value read as a measurement. The registry's `record_count`
+  is a real measurement of a different thing (the collected file), and neither invariant
+  forbids using it as the repository count.
+
+  The drafted wording:
+
+  **INV-NNN** — Where a step computes how many records a license still permits, the records
+  already in the repository MUST be counted through the SDK at that step, never summed from
+  `config/data_sources.yaml`; records a test load left behind count against the cap, and where
+  the count cannot be measured the remaining capacity is indeterminate and no subset size is
+  offered. Enforced by `tests/test_load_reconciliation_has_two_stages.py`
+  (`TheSubsetRecordIsDefinedOnce`). (Source: GitHub issue #237.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The change also ships
+  a test-enforced rule with no ⛔ line: every Phase B choice that loads fewer records than the
+  load input writes the source's `load_subset:` block, and that block is the only subset record
+  Step 7 cites. The rule shipping is the pointer "as [the subset record](#load-subset-record)
+  defines" at options 1 and 3 and at the SQLite first-1,000 choice, and the definition's
+  "**Neither marker records N or a subset file.**" ⚠️ **INV-245 and INV-300 may already govern
+  part of this**: the explained branch needs a citation (INV-245), and the record is defined
+  once (INV-300). What is new is that every subset-choosing site must write the record. Whether
+  that needs its own id is the maintainer's call.
+
+  The drafted wording:
+
+  **INV-NNN** — Every Module 6 choice that loads fewer records than a source's load input MUST
+  write that source's `load_subset:` block (`strategy`; `limit`, or `file_path` plus a
+  `record_count` measured from the written file; and `reason`) before the load starts, at the
+  site where the choice is made, by pointing at Phase B Step 7's one definition. That block MUST
+  be the only record the two-stage load reconciliation cites for the → subset step; an
+  asked-once marker (`sqlite_volume_prompt`, `license_cap_prompt`) records that a question was
+  answered and MUST NOT be cited for N. Enforced by
+  `tests/test_load_reconciliation_has_two_stages.py` (`EverySubsetChoicePointsAtTheDefinition`,
+  `StepSevenCitesTheSubsetRecord`). (Source: GitHub issue #237.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** `tests/test_load_reconciliation_has_two_stages.py`. Four existing assertions are
+  retargeted from `sqlite_volume_prompt` to `load_subset:`, because #237's criteria reverse
+  them; #221's no-Step-8b controls are kept. Five new classes: `TheSubsetRecordIsDefinedOnce`
+  (every field, the measured count, `record_count: 0`, `data/subsets/`, both markers, the ⛔
+  remaining-cap rule, the indeterminate and non-positive cases, each schema written once across
+  Module 6), `TheDatasetSizeIsTheWholeLoad`, `EverySubsetChoicePointsAtTheDefinition` (options
+  **derived from the text**: the pinned question's numbered options whose label loads fewer
+  records, with the count pinned at 3, and every "start with the first N records" suggestion,
+  whose N must match its block), `StepSevenCitesTheSubsetRecord` and
+  `TheSqliteHeadsUpHonorsASubset`. Negative controls, each restored: 13 mutations (option 3
+  loses its record, option 1 loses its pointer, the SQLite choice loses its record, the
+  suggestion's N changes alone, a new unrecorded subset option 4, stage 1 or the stage-2 bullet
+  restored to the pre-#237 text, the definition drops `reason`, the ⛔ registry rule or the
+  marker shape, the heads-up drops `subset`, the dataset size reverts to the first source, and
+  the ⛔ alone removed from the registry rule) each fail the guard, and `main`'s Phase B fails
+  it with 14 failures and 13 errors. The deferral above is load-bearing: with its verbatim quote
+  removed, `test_new_hard_rules_are_cited_or_deferred` fails on the ⛔ line (it checks 2 lines
+  here, this one and #219's INV-169 line).
+- **Commit:** uncommitted
+
 ## module-3-senz7426-relay-points-at-step-8
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #219)

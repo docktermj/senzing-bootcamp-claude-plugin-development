@@ -37,11 +37,23 @@ What is asserted:
    stage-2 subset bullet, so one decision could be cited as two chain steps, and stage 1 compared
    against "first N" of a file that was already the sample. Neither subset site names Step 8b;
    the stage-2 sample bullet does.
+5. **Every subset Phase B chooses is recorded once, in `load_subset:`, and cited from it** (#237).
+   License-cap options 1 and 3 and the SQLite first-1,000 choice loaded fewer records than the
+   load input and recorded nothing Step 7 could cite, so a clean capped load read as `failed` or
+   `unexplained_delta`. Step 7 now defines the record once (the `load-subset-record` anchor):
+   the `load_subset:` fields, `data/subsets/`, the `license_cap_prompt` marker, the
+   `sqlite_volume_prompt` `choice: "subset"` value, and the remaining cap. The subset-choosing
+   options are **derived from the text**, never listed: every numbered option of Step 7's pinned
+   license question whose label loads fewer records, and every "start with the first N records"
+   suggestion. Each must write `load_subset:` by pointing at the definition, with values that
+   match its own label or N. Stage 1 and the stage-2 subset bullet cite `load_subset:` and not
+   `sqlite_volume_prompt`.
 
 Everything is asserted as behavior in shipped guidance, never as a helper, so any implementation
 language satisfies it (INV-002). Stdlib only; shipped files are read as text (INV-108).
 
-Enforces: **INV-243**, **INV-245**, **INV-246**, **INV-300** at the sites this issue touched.
+Enforces: **INV-243**, **INV-245**, **INV-246**, **INV-300** at the sites this issue touched, and
+(#237) the **INV-006** and **INV-244** citations the subset record carries.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -145,7 +157,7 @@ def sample_bullet(text):
 
 
 def subset_bullet(text):
-    return chain_part(text, "- **a recorded subset limit** (→ first N)",
+    return chain_part(text, "- **the `load_subset:` block**",
                       "⛔ **Four outcomes across two stages")
 
 
@@ -177,8 +189,9 @@ class StageOneIsTheLoadInput(unittest.TestCase):
         self.assertIn("the records the loader was actually given", self.text)
 
     def test_a_recorded_subset_limit_is_part_of_the_load_input(self):
-        self.assertIn("**recorded subset limit**", self.text)
-        self.assertIn("`sqlite_volume_prompt`", self.text)
+        part = stage_one(self.text)
+        self.assertIn("**recorded subset limit**", part)
+        self.assertIn("`load_subset:` block", part)
 
     def test_only_stage_one_can_record_failed(self):
         self.assertIn("stage 1 is the only stage that can record `failed`", self.text)
@@ -247,13 +260,13 @@ class StepEightBHasOneChainRole(unittest.TestCase):
         """⛔ Negative control: restoring "or Module 4 Step 8b's `sample` load decision" fails."""
         part = stage_one(self.text)
         self.assertIn("**recorded subset limit**", part)
-        self.assertIn("`sqlite_volume_prompt`", part)
+        self.assertIn("`load_subset:`", part)
         self.assertIsNone(STEP_8B.search(part), part)
 
     def test_the_stage_two_subset_bullet_does_not_name_step_8b(self):
         """⛔ Negative control: restoring "or the Step 8b load decision that set it" fails."""
         part = subset_bullet(self.text)
-        self.assertIn("cited from the `sqlite_volume_prompt` marker", part)
+        self.assertIn("`load_subset:` block", part)
         self.assertIsNone(STEP_8B.search(part), part)
 
     def test_the_sample_bullet_names_step_8b_as_a_writer_of_the_block(self):
@@ -342,6 +355,239 @@ class EverySampleWriterWritesTheBlock(unittest.TestCase):
                 self.assertIn("`sample:` block", body)
                 self.assertRegex(body, r"`record_count` \*\*measured\*\* from the written file")
                 self.assertIn("`record_count` and `expected_record_count` untouched", body)
+
+
+#: The one definition (#237), and the pointer every subset-choosing site carries to it.
+SUBSET_ANCHOR = '<a id="load-subset-record"></a>'
+POINTER = "as [the subset record](#load-subset-record) defines"
+SUBSET_SCHEMA = "`load_subset: {strategy, limit, file_path, record_count, reason}`"
+LICENSE_MARKER_SCHEMA = "`{decided: true, choice, license_record_limit}`"
+
+#: A numbered option in a pinned question: `> 1. **Label** — gloss`.
+OPTION = re.compile(r"^\s*>\s*(\d+)\.\s+\*\*(.+?)\*\*", re.MULTILINE)
+#: An option label that loads fewer records than the load input.
+LOADS_LESS = re.compile(r"(?i)\bsubset\b|\bfirst\b[^.]*\brecords\b")
+#: A start-smaller suggestion that names its N.
+FIRST_N_SUGGESTION = re.compile(r"start with the first ([\d,]+) records")
+
+
+def step_7_raw():
+    text = PHASE_B.read_text(encoding="utf-8")
+    start = text.index("## 7. ")
+    return text[start:text.index("\n## 8. ", start)]
+
+
+def subset_definition():
+    """The squashed definition: from its anchor to the next paragraph Step 7 opens in bold."""
+    text = step_7_raw()
+    start = text.index(SUBSET_ANCHOR)
+    return squash(text[start:text.index("**Data source registry.**", start)])
+
+
+def license_cap_options():
+    """[(number, label)] of Step 7's pinned license-cap question, read from the text."""
+    text = step_7_raw()
+    start = text.index("**Positive and below the dataset size**")
+    branch = text[start:text.index("- **Absent or null**", start)]
+    return OPTION.findall(branch), squash(branch)
+
+
+def follow_up(branch, number):
+    """The squashed `On **n**,` instruction for option `number`, up to the next `On **`."""
+    match = re.search(r"On \*\*%s\*\*,(.*?)(?=On \*\*\d+\*\*,|$)" % number, branch)
+    if match is None:
+        raise AssertionError("option %s has no `On **%s**,` follow-up" % (number, number))
+    return match.group(1)
+
+
+def paragraphs_of_step_7():
+    return [squash(block) for block in re.split(r"\n\s*\n", step_7_raw()) if block.strip()]
+
+
+class TheSubsetRecordIsDefinedOnce(unittest.TestCase):
+    """#237: one definition, in Step 7, that every subset-choosing site points at (INV-300)."""
+
+    def setUp(self):
+        self.text = subset_definition()
+
+    def test_the_anchor_is_unique(self):
+        self.assertEqual(1, PHASE_B.read_text(encoding="utf-8").count(SUBSET_ANCHOR))
+
+    def test_it_declares_itself_the_one_definition(self):
+        self.assertIn("This is the one definition of what a subset choice in this step records",
+                      self.text)
+        self.assertIn("(INV-300)", self.text)
+
+    def test_it_defines_every_load_subset_field(self):
+        self.assertIn(SUBSET_SCHEMA, self.text)
+        for field in ("`strategy`: `first_n` or `overlap_preserving`",
+                      "`limit` (for `first_n`)",
+                      "`file_path` and `record_count` (for `overlap_preserving`)",
+                      "`reason`: `license_cap` or `sqlite_volume`",
+                      "`config/data_sources.yaml`"):
+            with self.subTest(field=field):
+                self.assertIn(field, self.text)
+
+    def test_the_subset_file_count_is_measured_from_the_written_file(self):
+        self.assertIn("the record count **measured from the written file**", self.text)
+
+    def test_a_source_selected_to_nothing_still_gets_a_block(self):
+        self.assertIn("measured `record_count: 0`", self.text)
+
+    def test_subset_files_stay_out_of_the_loadable_total(self):
+        self.assertIn("**Subset files live under `data/subsets/`, never in "
+                      "`data/senzing-ready/`.**", self.text)
+
+    def test_it_defines_the_license_cap_marker(self):
+        self.assertIn("**`license_cap_prompt`**", self.text)
+        self.assertIn("`config/bootcamp_preferences.yaml`", self.text)
+        self.assertIn(LICENSE_MARKER_SCHEMA, self.text)
+        self.assertIn("`overlap_preserving` (option 1) or `first_n` (option 3)", self.text)
+        self.assertIn("(INV-006)", self.text)
+
+    def test_it_defines_the_sqlite_subset_choice(self):
+        self.assertIn('`{decided: true, choice: "subset", loadable}`', self.text)
+
+    def test_neither_marker_is_the_subset_citation(self):
+        self.assertIn("**Neither marker records N or a subset file.**", self.text)
+        self.assertIn("the only subset record the reconciliation cites", self.text)
+
+    def test_it_defines_the_remaining_cap_from_an_sdk_count(self):
+        self.assertIn("**The remaining cap** is `license_record_limit` minus the number of "
+                      "records already in the repository", self.text)
+        self.assertIn("⛔ **That count is measured through the SDK at this step, never summed "
+                      "from the registry.**", self.text)
+        self.assertIn("Module 5 Step 24a", self.text)
+        self.assertIn("Records a test load left in the repository count against the cap",
+                      self.text)
+
+    def test_an_unmeasurable_count_leaves_the_cap_indeterminate(self):
+        self.assertIn("the remaining cap is indeterminate. Offer no subset size", self.text)
+        self.assertIn("never substitute a remembered or estimated one", self.text)
+        self.assertIn("(INV-244)", self.text)
+
+    def test_a_non_positive_cap_loads_nothing(self):
+        self.assertIn("**Zero or less:**", self.text)
+        self.assertIn("Load nothing and say so", self.text)
+
+    def test_each_schema_is_written_once_in_module_6(self):
+        """Defined once: no Module 6 file restates the field list or the marker shape."""
+        for schema in (SUBSET_SCHEMA, LICENSE_MARKER_SCHEMA):
+            count = sum(path.read_text(encoding="utf-8").count(schema)
+                        for path in MODULE6.glob("*.md"))
+            with self.subTest(schema=schema):
+                self.assertEqual(1, count)
+
+
+class TheDatasetSizeIsTheWholeLoad(unittest.TestCase):
+
+    def test_the_license_branches_compare_against_the_loadable_total(self):
+        text = squash(step_7_raw())
+        self.assertIn('**"The dataset size" in these branches is the whole load, not this '
+                      'source.**', text)
+        self.assertIn("the loadable total across **every** mapped source", text)
+        self.assertIn("It is not the first source alone", text)
+
+
+class EverySubsetChoicePointsAtTheDefinition(unittest.TestCase):
+    """Derived from the text (INV-246): adding a subset option without its record fails here."""
+
+    def test_the_license_option_sweep_is_not_vacuous(self):
+        options, _ = license_cap_options()
+        chosen = [number for number, label in options if LOADS_LESS.search(label)]
+        self.assertEqual(3, len(options), options)
+        self.assertGreaterEqual(len(chosen), 2, options)
+        self.assertNotIn("2", chosen, "the apply-a-license option loads everything")
+
+    def test_each_license_subset_option_writes_its_record(self):
+        options, branch = license_cap_options()
+        for number, label in options:
+            if not LOADS_LESS.search(label):
+                continue
+            strategy = ("overlap_preserving" if "overlap-preserving" in label.lower()
+                        else "first_n")
+            body = follow_up(branch, number)
+            with self.subTest(option=number, label=label):
+                self.assertIn("`load_subset:`", body)
+                self.assertIn("`license_cap_prompt`", body)
+                self.assertIn(POINTER, body)
+                self.assertIn("`choice: %s`" % strategy, body)
+                self.assertIn("strategy: %s" % strategy, body)
+                self.assertIn("reason: license_cap", body)
+
+    def test_option_1_selects_across_every_mapped_source_into_data_subsets(self):
+        _, branch = license_cap_options()
+        body = follow_up(branch, 1)
+        self.assertIn("**once, across every mapped source** in `data/senzing-ready/`, within "
+                      "the remaining cap", body)
+        self.assertIn("`data/subsets/`", body)
+        self.assertIn("the measured `record_count`", body)
+        self.assertIn("module-04-data-collection/SKILL.md#overlap-preserving-sampling", body)
+        self.assertIn("With a **single source**", body)
+
+    def test_option_3_loads_exactly_the_remaining_cap_on_purpose(self):
+        _, branch = license_cap_options()
+        body = follow_up(branch, 3)
+        self.assertIn("`load_subset: {strategy: first_n, limit: N, reason: license_cap}`", body)
+        self.assertIn("N = the remaining cap", body)
+        self.assertIn("**before** the load", body)
+        self.assertIn("stopping there on purpose, not at the license error", body)
+        self.assertIn("later sources get only what is left of the cap, possibly nothing", body)
+
+    def test_both_options_start_from_the_remaining_cap(self):
+        _, branch = license_cap_options()
+        self.assertIn("Options **1** and **3** load a subset. For either, measure the "
+                      "**remaining cap** first", branch)
+
+    def test_every_first_n_suggestion_writes_its_record(self):
+        found = []
+        for para in paragraphs_of_step_7():
+            for match in FIRST_N_SUGGESTION.finditer(para):
+                limit = match.group(1).replace(",", "")
+                found.append(limit)
+                with self.subTest(limit=limit):
+                    self.assertIn(POINTER, para)
+                    self.assertIn("`sqlite_volume_prompt` with `choice: \"subset\"`", para)
+                    self.assertIn("`load_subset: {strategy: first_n, limit: %s, reason: "
+                                  "sqlite_volume}`" % limit, para)
+        self.assertTrue(found, "the scan finds no first-N suggestion; widen FIRST_N_SUGGESTION")
+
+
+class StepSevenCitesTheSubsetRecord(unittest.TestCase):
+
+    def setUp(self):
+        self.text = step_7()
+
+    def test_neither_subset_site_cites_the_sqlite_marker(self):
+        """⛔ Negative control: restoring "cited from the `sqlite_volume_prompt` marker" fails."""
+        for name, part in (("stage 1", stage_one(self.text)),
+                           ("stage-2 subset bullet", subset_bullet(self.text))):
+            with self.subTest(site=name):
+                self.assertIn("`load_subset:`", part)
+                self.assertIn("#load-subset-record", part)
+                self.assertNotIn("sqlite_volume_prompt", part)
+
+    def test_the_subset_is_the_last_chain_step(self):
+        self.assertIn("collected → sample → mapped → subset", self.text)
+        self.assertIn("(mapped → subset)", subset_bullet(self.text))
+
+    def test_an_explained_delta_names_the_block(self):
+        self.assertIn("the `sample:` block, the `load_subset:` block, or the mapping artifact",
+                      self.text)
+
+    def test_no_block_means_unexplained(self):
+        self.assertIn("**No `load_subset:` block**", self.text)
+        self.assertIn("a gap only a subset could explain is **unexplained**", self.text)
+
+
+class TheSqliteHeadsUpHonorsASubset(unittest.TestCase):
+
+    def test_it_honors_subset_and_reads_n_from_the_block(self):
+        text = squash(step_7_raw())
+        note = chain_part(text, "Check first whether this was already decided",
+                          "Only when the database is SQLite")
+        self.assertIn("`proceed`, `subset`, `sample`, or a database switch", note)
+        self.assertIn("For `subset`, take N from the source's `load_subset:` block", note)
 
 
 if __name__ == "__main__":
