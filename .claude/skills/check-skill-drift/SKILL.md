@@ -18,13 +18,12 @@ python3 .claude/skills/check-skill-drift/skill_drift.py
 
 ## Why this exists
 
-`implement-github-issue` has **two** `SKILL.md` files — one in this repository, one under
-`~/.claude/skills/` that the maintainer uses across other repositories. On **2026-09-23** they
-were found **two amendments apart**: #119 and #124 edited only the user-level copy, while this
-repository's copy — ⛔ **the one that ships to the four child ports** — still carried its
-original text.
+A skill can have **two** `SKILL.md` files — one in this repository, one under
+`~/.claude/skills/` that the maintainer uses across other repositories. On **2026-09-23**
+`implement-github-issue`'s two copies were found **two amendments apart**: #119 and #124 edited
+only the user-level copy, while this repository's copy still carried its original text.
 
-⛔ **The repository's copy asserted that it governed.** It does not: measured 2026-09-23 by
+⛔ **The repository's copy asserted that it governed.** It did not: measured 2026-09-23 by
 reading the skill body Claude Code injected on invocation against marker strings unique to each
 file, **the user-level copy is what loads**, even with a project copy present. That false
 sentence is why the divergence survived two runs.
@@ -33,12 +32,17 @@ sentence is why the divergence survived two runs.
 happening to R8, the rule `docs/FAMILY_WORKFLOW.md` cites INV-300 to justify children linking to
 rather than restating.
 
+✅ **Since #215 neither `implement-github-issue` nor `unattended-issue-loop` keeps a second
+copy here.** Each project `SKILL.md` is a pointer stub naming the user-level copy as governing,
+and neither carries a shared block. This check still applies to any skill that keeps a delimited
+block in both places.
+
 ## What is compared, and what is not
 
 Only the span delimited by `<!-- SHARED-RULES:BEGIN -->` … `<!-- SHARED-RULES:END -->`, which is
 meant to be **byte-identical** in both copies.
 
-⛔ **Everything outside it may legitimately differ, and must.** This repository's copy cites
+⛔ **Everything outside it may legitimately differ, and must.** A repository copy may cite
 `docs/FAMILY_WORKFLOW.md` and `specs/INVARIANTS.md`; the repositories the user-level copy serves
 have neither. Requiring the files to be identical would either break that copy elsewhere or
 strip the citations that make the rule enforceable here. **Behaving the same is the goal;

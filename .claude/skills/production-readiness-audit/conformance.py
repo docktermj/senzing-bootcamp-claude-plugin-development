@@ -482,8 +482,9 @@ def _widen_past_a_work_commit(repo, ref, entry):
     ship with no invariant and no deferral, which is the 2026-08-17 defect.
 
     ⚠️ **Everything downstream inherits it**: `tests/test_new_hard_rules_are_cited_or_deferred`
-    SKIPS on "nothing added", so it goes green by not running, and the `unattended-issue-loop`
-    set-difference script iterates an empty list.
+    SKIPS on "nothing added", so it goes green by not running, and the set-difference script
+    the unattended loop then carried (retired in #80; the loop runs no audit since #215)
+    iterated an empty list.
 
     ⚠️ **What the probe sees is itself a measured question, not an obvious one** -- see the
     table at the call below. A merge and a root commit each come back EMPTY from one of the two
@@ -655,9 +656,9 @@ def cmd_reverse_check(args):
 
     ⛔ **The two halves of this check read different corpora, and for three days nothing said
     so.** `since` diffs `SCAN_ROOTS`; `per-rule` reads `shipped_markdown()`, which is the plugin
-    alone. The procedure in `unattended-issue-loop/SKILL.md` took every line from the first and
-    tested membership against the second, so a rule added under the maintainer surface could
-    **never** appear in the result: measured 2026-09-17 against `7b43eee`, 112 lines in, 0
+    alone. The procedure the unattended loop then carried (retired in #80) took every line
+    from the first and tested membership against the second, so a rule added under the
+    maintainer surface could **never** appear in the result: measured 2026-09-17 against `7b43eee`, 112 lines in, 0
     reported, 0 occurrences of the maintainer surface in a 43 KB `--uncited` corpus. 93 of those
     112 cite nothing. The check reported clean over rules it could not reach.
 

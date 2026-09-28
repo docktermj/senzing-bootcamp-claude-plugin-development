@@ -1,6 +1,6 @@
 ---
 description: Take a GitHub issue from reported to pull-request-open on a dedicated branch, documenting every decision on the issue (maintainer tool).
-argument-hint: "[GitHub issue URL, owner/repo#n, or bare number] (omit to be asked which issue)"
+argument-hint: "<GitHub issue URL or number>"
 ---
 
 Maintainer request: implement a GitHub issue end to end.
@@ -9,37 +9,34 @@ Invoke the `implement-github-issue` skill and follow it end to end.
 
 Issue to implement: $ARGUMENTS
 
-- If `$ARGUMENTS` is **empty**, ⛔ **(R8) review the open issues for dependencies first, report
-  what you found, name the issue you suggest, and stop.** ⛔ **Never begin work on an issue the
-  maintainer has not approved** — that is the whole of this rule now, not a qualifier on it. You
-  may analyze, you may rank, you may name one; you may not start. The report names the
-  dependencies, a suggested order where one follows, and which issues are independent.
-  - ⛔ **End by naming one issue**, so the maintainer's next act is approval rather than
-    selection. ⚠️ Where the open set is empty, or no issue is a defensible suggestion, **say so**
-    rather than naming one to satisfy the form.
-  - ⛔ **Every ordering claim carries its evidence** — the sentence, file or acceptance
-    criterion the maintainer can check. An ordering with no citable evidence is a **preference**
-    and says so; presenting one as a dependency is the failure this rule guards.
-  - ⛔ **Never read a reference that asserts NON-dependence as a dependency.** An
-    `owner-checked:` line naming other issues — *"none of which touch …"* — says they are
-    **unrelated**. Measured 2026-09-22 over seven open issues, reading those lines as edges
-    inverted the clearest signal in the corpus.
-  - ⛔ **Shared-file coupling is merge risk, not order.** Five of those seven named
-    `specs/INVARIANTS.md`; it is a hub. Report it separately or not at all.
-  - Where the issues are independent, **say so and imply no order.**
+**The governing copy is `~/.claude/skills/implement-github-issue/SKILL.md`**, the user-level
+skill; `.claude/skills/implement-github-issue/SKILL.md` here is a pointer stub. This file is the
+**repo overlay**: only the obligations this repository adds on top of the governing copy, which
+reads this file and must meet everything below.
 
-  See [`docs/FAMILY_WORKFLOW.md`](../../docs/FAMILY_WORKFLOW.md) R8 — the family-wide statement
-  of this rule, the reason four child ports inherit it, and §10 for what it used to say.
-- If `$ARGUMENTS` **names an issue** — a full URL, `owner/repo#n`, or a bare number against
-  this repo — resolve it and begin.
+Choosing the issue is not this command's job. [`docs/FAMILY_WORKFLOW.md`](../../docs/FAMILY_WORKFLOW.md)
+R8 gives it to the operation that chooses the issue, `/order-github-issues` in this host. With
+no argument this command names no issue.
 
-⛔ **This command never merges.** No `gh pr merge`, no commit to `main`, no force-push, and
-nothing leaves the machine before Gate 2. It stops at "pull request open for review".
+## The local CI mirror in this repository
 
-**Two approval gates, and silence is not approval at either.** Gate 1 presents the readiness
-verdict, the clarifications and the chosen approach before any code is written; Gate 2
-presents the diff, the tests and the local CI mirror before anything is pushed. Everything
-between them runs unattended.
+The governing copy's Phase 7 mirrors `.github/workflows/`. ⚠️ **This repository's workflow
+files end in `.yaml`, not `.yml`**, so read `.github/workflows/*.yaml`.
+
+- **`test-suite.yaml` runs `python -m unittest discover -s tests` in two legs, fpdf2 present
+  and absent.** A CI runner has no `~/.claude/`, so run both legs with `HOME` set to an empty
+  directory **outside `/tmp`** (under `.claude/worktrees/`, for instance). Under the real `HOME`
+  the suite reads user-level skills CI never sees; under a `HOME` in `/tmp` the location tests
+  fail spuriously.
+  - ⚠️ **Present leg:** where fpdf2 is installed in the user site, an empty `HOME` hides it and
+    silently turns this leg into a second absent leg. Set `PYTHONUSERBASE` to the real user
+    base (`python3 -m site --user-base` under the real `HOME`), and confirm `import fpdf` works.
+  - **Absent leg:** run it from a `python3 -m venv --without-pip` venv, and check that it prints
+    `fpdf2 is not installed` and ends `OK (skipped=N)` with N above zero, as the workflow does.
+- **`lint-workflows.yaml` calls a remote reusable workflow and cannot run locally.** Carry it
+  to Gate 2 as a known gap. It skips itself when no workflow file changes.
+- **`python3 .claude/skills/compact-dev-environment/citations.py verify`** is not in CI but is
+  required here; see Step 4 for when to run it.
 
 ## ⛔ (INV-309) Invariant capture is a gate on closing, not a step to remember
 
@@ -120,9 +117,9 @@ recording in `specs/DECLINED.md`, or the subject returns and the reasoning again
 ⛔ **Never decline on your own initiative.** This command implements what the maintainer
 chooses; deciding *not* to build something is theirs alone. If an issue looks like a poor
 idea, say so and let them rule — do not write to `DECLINED.md` without their explicit
-decision. ⚠️ This is distinct from the escape hatch above: *invalid, duplicate, or already
-fixed* is a finding about the world and is reported; *declined* is a decision about what to
-build and is the maintainer's.
+decision. ⚠️ This is distinct from the governing copy's escape hatch: *invalid, duplicate, or
+already fixed* is a finding about the world and is reported; *declined* is a decision about
+what to build and is the maintainer's.
 
 When they do decline one, append an entry using the same `## <name>` heading idiom as
 `IMPLEMENTED.md`:
@@ -173,20 +170,3 @@ closes. ⛔ **That clause is deliberately unimplemented here**: this is the pare
 and `PARENT_VERSION` exists nowhere in it, so there is no referent to act on and nothing to
 test it against. Recorded so a future reader sees a scoped decision rather than an omission,
 and so whoever ports this command to a child knows the clause is owed there.
-
-## What the issue log must contain
-
-Exactly four comments across a full run, so the issue reads as a log rather than a chat
-stream: **started** (branch and what will be implemented), **clarifications** (the consolidated
-Q&A plus every assumption taken without asking), **approach** (only when implementations were
-raced — otherwise fold a one-line note into the result), and **result** (the PR link, the
-summary, the test and CI results).
-
-**Never attribute an answer to the issue's author when it came from the maintainer in session**,
-and never fabricate one.
-
-## The escape hatch is a real outcome
-
-If the work reveals the issue is invalid, a duplicate, or already fixed: **stop, post what was
-found with the evidence, and say so.** Do not manufacture a change to justify the run — an
-unnecessary pull request is worse than no pull request.

@@ -37,7 +37,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DETECTOR = REPO_ROOT / ".claude" / "skills" / "check-skill-drift" / "skill_drift.py"
-SKILL = REPO_ROOT / ".claude" / "skills" / "implement-github-issue" / "SKILL.md"
 USER_SKILLS = Path.home() / ".claude" / "skills"
 
 BEGIN = "<!-- SHARED-RULES:BEGIN"
@@ -89,12 +88,23 @@ class TheBlockPatternReadsWhatItShould(unittest.TestCase):
 
 
 class OnlyTheBlockIsCompared(unittest.TestCase):
-    """⛔ The repo copy MUST be free to cite files the other copy's repositories lack."""
+    """⛔ The repo copy MUST be free to cite files the other copy's repositories lack.
+
+    ⚠️ **Re-pointed at a fixture 2026-09-28 (#215).** This read the project
+    `implement-github-issue/SKILL.md`, which is now a pointer stub with no shared block: the
+    user-level copy governs and has none either. The rule still binds any skill that keeps a
+    block in both places, so it is exercised on a fixture shaped like such a copy. ⛔ The
+    user-level copies under `~/.claude/skills/` are **not checked in CI** (INV-308). The rest of
+    this module is #217's.
+    """
 
     def test_the_repo_copy_cites_files_outside_the_shared_block(self):
-        text = SKILL.read_text(encoding="utf-8")
-        block = detector().shared_block(SKILL)
-        self.assertIsNotNone(block, "the repo skill has no SHARED-RULES block")
+        fixture = Path(self.enterContext(__import__("tempfile").TemporaryDirectory())) / "S.md"
+        write(fixture, "See docs/FAMILY_WORKFLOW.md and specs/INVARIANTS.md.\n"
+                       "%s -->\nthe shared rules\n%s\n" % (BEGIN, END))
+        text = fixture.read_text(encoding="utf-8")
+        block = detector().shared_block(fixture)
+        self.assertIsNotNone(block, "the fixture's SHARED-RULES block was not found")
         for citation in ("docs/FAMILY_WORKFLOW.md", "specs/INVARIANTS.md"):
             with self.subTest(citation=citation):
                 self.assertIn(citation, text,

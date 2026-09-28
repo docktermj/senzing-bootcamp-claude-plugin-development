@@ -43,6 +43,106 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-user-level-copies-govern-both-skills
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #215)
+- **Files changed:**
+  `.claude/skills/implement-github-issue/SKILL.md`, `.claude/skills/unattended-issue-loop/SKILL.md`,
+  `.claude/commands/implement-github-issue.md`, `.claude/commands/unattended-issue-loop.md`,
+  `.claude/skills/check-skill-drift/SKILL.md`, `.claude/skills/production-readiness-audit/conformance.py`,
+  `docs/FAMILY_WORKFLOW.md`, `docs/development.md`,
+  `tests/test_user_level_copies_govern.py` (new), `tests/test_unattended_loop_is_label_gated.py`,
+  `tests/test_filing_is_gated.py`, `tests/test_issue_command_gates_invariant_capture.py`,
+  `tests/test_dependency_reading_rules.py`, `tests/test_canonical_operations_resolve.py`,
+  `tests/test_reverse_check_counts_what_it_cannot_test.py`, `tests/test_skill_drift_detector.py`,
+  `tests/test_dev_commands_name_a_real_skill.py`, `specs/IMPLEMENTED.md`; `git rm` of the 54
+  files under `.claude/skills/implement-github-issue/state/`
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed 2026-09-28. Every changed line is
+  repository apparatus (skills, commands, docs, tests); none states anything about Senzing.
+- **Summary:** for `implement-github-issue` and `unattended-issue-loop`, the user-level copy
+  under `~/.claude/skills/` governs, and the repository now says so everywhere.
+  - **Pointer stubs.** Both project `SKILL.md` files keep `name` and `description`, set
+    `disable-model-invocation: true`, name the governing copy and the overlay, say the governing
+    text is not checked in CI, and carry no procedure and no shared block.
+  - **Repo overlays.** `.claude/commands/implement-github-issue.md` keeps INV-309, the MCP
+    re-check, the ledger entry, `citations.py verify`, declining and the `PARENT_VERSION` scope
+    note. It drops the no-argument dependency review and the issue-log and escape-hatch sections
+    (the governing copy carries them). It gains the local CI mirror (`*.yaml` workflows, the
+    empty-`HOME` legs, `PYTHONUSERBASE` for the fpdf2-present leg, `lint-workflows` as a known
+    gap), and its `argument-hint` matches the governing copy. `.claude/commands/unattended-issue-loop.md`
+    no longer asks a push policy, defaults to local-only or describes an audit cycle. It binds
+    every worker to the implement overlay, keeps the never-decide rules, and says the one file
+    under `specs/` a run may write (INV-307). Its `argument-hint` is `[--dry-run] [--no-merge]`.
+  - **`docs/FAMILY_WORKFLOW.md`.** R8 gives the dependency report to the operation that chooses
+    the issue (`/order-github-issues` in this host), and `implement-github-issue` with no argument
+    names no issue. Approval before action and every reading rule are unchanged, and no §2 row is
+    added. The `unattended-issue-loop` row is now *drives 2* and states the merge policy, its one
+    statement in the repository (INV-300). The §3 node and its phase-3 edge are updated, and a
+    dated §10 amendment carries a "For a child:" line.
+  - **Stale claims removed.** `check-skill-drift/SKILL.md` no longer says the repo copy ships to
+    the child ports or that `implement-github-issue` carries a shared block. `conformance.py` and
+    `docs/development.md` no longer describe the loop's audit cycle.
+  - **Resolved INV-314 block, above.** Its second site (`unattended-issue-loop/SKILL.md`, "An
+    unattended audit FILES NOTHING.") is annotated as retired by this change instead of being
+    deleted. The rule has no site left here; what an unattended run may post is #216.
+- **Approach:** implemented directly (Phase 5a). The issue fixed the design file by file, so
+  competing implementations would have produced near-identical patches.
+- **Assertions removed, each because the text it pinned no longer exists in the repository and
+  the rule is the governing copy's:**
+  - `test_unattended_loop_is_label_gated.py`: `--label unattended-ok` in both files (the
+    governing copy filters labels itself, avoiding the lagging search index); "comment on the
+    issue" and "remove the label" for a blocked issue; the whole `TheUnattendedAuditFilesNothing`
+    class (no audit cycle).
+  - `test_filing_is_gated.py`: `test_the_unattended_loop_still_forbids_filing`. The negative
+    site moves to `delegate-to-mcp-server/issue-template.md`, so three negatives remain (INV-265).
+  - `test_reverse_check_counts_what_it_cannot_test.py`: `TheHandoffQuotesTheCountsNotTheWord`,
+    `test_the_loop_skill_calls_the_view`, and the loop command's subtest.
+  - **Moved rather than removed:** the label no-op and "never adds the label itself" now assert
+    the FAMILY_WORKFLOW row. INV-309, never sign off, the mint trap, `submit_feedback` and
+    declining now assert the loop overlay. R8's approval, report and suggestion clauses now
+    assert R8 instead of the command.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The change ships a
+  test-enforced rule about where a governed skill's text lives, which is the gap INV-309 exists
+  to close. The rules already shipping, at their site:
+    - ⛔ **Do not put procedure back in this file.** — in `.claude/skills/implement-github-issue/SKILL.md`
+    - ⛔ **Do not put procedure back in this file.** — in `.claude/skills/unattended-issue-loop/SKILL.md`
+    - ⛔ **Put that file in every worker's brief.** — in `.claude/commands/unattended-issue-loop.md`
+
+  ⚠️ **INV-300 and INV-303 may already govern part of this.** The merge policy stated once is
+  INV-300, and a stub existing so the command resolves is INV-303. What is new is the shape: a
+  skill whose user-level copy governs keeps only a pointer stub here, and its repository-only
+  obligations live in the command overlay. Whether that needs its own id is the maintainer's
+  call.
+
+  The drafted wording:
+
+  **INV-NNN** — A maintainer skill whose governing text is the user-level copy under
+  `~/.claude/skills/` MUST keep, under `.claude/skills/`, only a pointer stub. The stub keeps
+  `name` and `description`, sets `disable-model-invocation: true`, names the governing copy and
+  the command overlay, states that the governing text is not checked in CI, and carries no
+  procedure and no shared-rules block. The repository's own obligations for that skill MUST live
+  in its command file, the overlay, which names the governing copy. A rule the overlay only
+  points at MUST NOT be restated there. Enforced by `tests/test_user_level_copies_govern.py`.
+  (Source: GitHub issue #215.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+  ⚠️ **Also for `/review-invariants`:** INV-302's text says `implement-github-issue/` is "run
+  state, not a skill". Since this change it holds a pointer stub and no run state. Invariant
+  wording is the maintainer's, so it is left as written.
+- **Tests:** new `tests/test_user_level_copies_govern.py`, 15 tests, stdlib only: the stubs, the
+  overlays and their `argument-hint`, the merge policy stated once, the state directory gone,
+  and no stale shared-copy claim. `OnlyTheBlockIsCompared` in `test_skill_drift_detector.py` is
+  re-pointed at a fixture (the rest of that file is #217). Negative controls, 17, each run and
+  reverted with `__pycache__` cleared and the file's md5 restored: stub grows a heading; stub
+  model-invocable; stub carries a shared block; merge policy restated in the overlay; loop
+  overlay asks a push policy; implement hint drifts; row loses "no label, no work"; overlay
+  loses the INV-307 write rule; overlay loses the mint trap; command restates the review (two
+  guards); R8 loses the choosing operation; row back to *drives 2–3*; diagram edge to phase 3
+  returns; the new filing negative becomes a fenced instruction; stub carries the retired
+  reverse-check script; drift fixture puts a citation inside its block. Each failed its guard.
+- **Commit:** uncommitted
+
 ## three-mcp-citations-are-restamped
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #200)
@@ -3191,7 +3291,10 @@ new `/check-skill-drift`.
 - **DEFERRED INVARIANT (resolved INV-314, registered by the maintainer 2026-09-24).** The rules already
   shipping:
     - ⛔ **Show the maintainer the title and body, and get a yes, before filing.** — in `.claude/skills/feedback-to-issues/SKILL.md`
-    - ⛔ **An unattended audit FILES NOTHING.** — in `.claude/skills/unattended-issue-loop/SKILL.md`
+    - ⛔ **An unattended audit FILES NOTHING.** — was in `.claude/skills/unattended-issue-loop/SKILL.md`
+      until 2026-09-28. ⚠️ **Site retired by #215**: that file is now a pointer stub, and the
+      loop that runs (the user-level copy) has no audit cycle, so this rule has no site left in
+      this repository. What an unattended run may post is #216's question.
 
   ⚠️ **Why this is not INV-310 or INV-312.** INV-310 binds a **permanent or append-only act on
   this repository's own records** and its remedy is *stop at the working tree*; filing has no

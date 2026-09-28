@@ -181,7 +181,7 @@ compared, and a count in prose goes stale silently while reading authoritative.
 GitHub issues.** See [`specs/README.md`](../specs/README.md). ✅ **Every command that used to
 write there has now been reworked**, and none is blocked: `/feedback-to-issues` files GitHub
 issues (#49), `/implement-spec` was retired (#50, #60), `/unattended-issue-loop` is renamed and
-label-gated and now forbids writing into the archive outright (#51, #69),
+label-gated and writes only its issues' `IMPLEMENTED.md` entries (#51, #69, #215),
 `/production-readiness-audit` files issues when attended and records findings in the ledger when
 not (#69), and `/delegate-to-mcp-server` files issues and writes nothing under `specs/` (#114).
 ⚠️ **Its ledger, `specs/mcp-coverage.jsonl`, is not an exception to the freeze** — the guard
@@ -195,13 +195,13 @@ still written to.
 
 ### Development loop
 
-1. `/implement-github-issue` - Take a GitHub issue to pull-request-open on its own branch.
+1. `/implement-github-issue` - Take the GitHub issue you name to pull-request-open on its own branch; FAMILY_WORKFLOW R8 says who chooses it.
 1. `/review-invariants` - Decide the deferred invariants awaiting sign-off.
 1. `/delegate-to-mcp-server` - Determine if there are instructions that are in the MCP server
 1. `/compact-dev-environment` - Try to compact the plugin.
 1. `/production-readiness-audit` - Do a thorough static review.
 1. `/dry-run` - Do a thorough runtime review.
-1. `/unattended-issue-loop` - Work the `unattended-ok` issues unattended, alternating implement and audit.
+1. `/unattended-issue-loop` - Take the `unattended-ok` issues to pull requests unattended; see FAMILY_WORKFLOW §2 for its merge policy.
 1. `/check-skill-drift` - Compare this repo's skills against their user-level twins and report drift.
 
 ### Publish
