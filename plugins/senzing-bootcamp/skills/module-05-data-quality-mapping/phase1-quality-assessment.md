@@ -326,6 +326,15 @@ obtained via the `get_sample_data` MCP tool in Module 4):
      `truthset` class the fast-path was built for — has zero unrecognized keys and still fast-paths
      with no extra question. Nothing changed for it.
 
+3a. **Perform the type/name check: are any PERSON-typed records named like organizations?** Run
+   Step 6's type/name check over every record of this source now (the canonical statement is Step
+   6's "Type/name check" — INV-300), and keep its count and candidate names for Step 6 to report.
+   ⛔ (INV-198) **One or more candidates means no fast-path offer, even for a source that is
+   structurally loadable and fully mapped.** The offer skips the mapping phase, which is where a
+   retype is applied, so it would send the source to loading with its record types undecided.
+   Route it through sub-step 6 instead. Zero candidates, or zero PERSON-typed records, changes
+   nothing: the offer proceeds on sub-steps 2 and 3 alone.
+
 4. **Record the result:** In `config/data_sources.yaml`, set the source's `senzing_loadable` and
    `fully_mapped` fields to `true` or `false`, record `unmapped_fields` as the sorted list of
    unrecognized keys (an empty list when `fully_mapped` is `true`), and update `updated_at`.
@@ -335,8 +344,10 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    `senzing_ready`, read it as `senzing_loadable` and treat `fully_mapped` as unknown — re-run
    step 3 rather than inferring it, since the old field never measured coverage.)*
 
-5. **If structurally loadable AND fully mapped: present the fast-path offer.** State the coverage
-   figure, so skipping is an informed choice rather than a silent default:
+5. **If structurally loadable AND fully mapped: present the fast-path offer.** It is offered only
+   when sub-step 3a also found **zero** type/name candidates; a source with one or more goes to
+   sub-step 6. State the coverage figure, so skipping is an informed choice rather than a silent
+   default:
 
    👉 **Your CORD source [SOURCE_NAME] is already in Senzing-loadable form, and all [N] of its fields resolve to the Senzing Entity Specification — there is nothing left to map. Would you like to skip the mapping phase and proceed directly to loading in the Data processing module?**
 
@@ -363,6 +374,14 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    telling them what it is about. For `PPP_LOANS` those columns are `Business_Type`, `CD`,
    `DateApproved`, `JobsReported`, `Lender`, `Loan_Range`, `NAICS_Code`, `NonProfit`, `OwnedBy`,
    `OwnedByRaceEthnicity`, `OwnedByVeteran` — eleven real decisions the fast-path used to skip.
+
+   **This branch also takes a source that sub-step 3a held back**: one with type/name candidates,
+   even when it is fully mapped. Its statement names the candidate count, after any unrecognized
+   fields when it has those too:
+
+   > "[SOURCE_NAME] will load as-is, but [N] of its [M] PERSON-typed records have names that end
+   > like an organization's, so their record type needs a decision. We'll look at them in the
+   > quality assessment next, and map this one."
 
 7. **If NOT structurally loadable or MCP unavailable:** Continue through the normal quality
    assessment and mapping workflow. Do NOT present the fast-path offer.
@@ -665,12 +684,14 @@ Source: CUSTOMERS_CRM
   Format consistency:  90%
   Duplicate rate:       3%
   Overall quality:     78%  ⚠ Acceptable — some gaps (see below)
+  Type/name check:     0 of 4,210 PERSON-typed records are candidates
 
 Source: VENDORS_LEGACY
   Field completeness:  45%  (name: 90%, phone: 20%, email: 15%)
   Format consistency:  55%
   Duplicate rate:      12%
   Overall quality:     42%  ⚠ Recommend fixing before mapping
+  Type/name check:     3 of 12 PERSON-typed records are candidates (see below)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -682,6 +703,101 @@ rather than copying one from this example; a `✅` beside a 78% tells the bootca
 > **Data source registry:** After computing the quality score, update the source's
 > `quality_score` field in `config/data_sources.yaml` and set `updated_at`. If the score is
 > below 70, add an `issues` list entry describing the quality concern.
+
+<a id="type-name-check"></a>
+
+### Type/name check: PERSON-typed records with organization names
+
+⛔ (INV-300) **This is the canonical statement of the type/name check.** Step 5a sub-step 3a, Step
+7's report and Phase 2 steps 13 and 18 point here and add only what their own site needs.
+
+**Why it exists.** The Entity Specification says `RECORD_TYPE` *"prevents records of different
+types from resolving"* (*Feature: RECORD_TYPE*, via `search_docs(query='RECORD_TYPE PERSON
+ORGANIZATION prevent records of different types from resolving', category='data_mapping')`, MCP
+server 1.37.14, docs index 2026-09-28). So a record typed PERSON that is really an organization
+cannot merge with that organization's records in another source, however exactly the name and
+address agree. Nothing above sees it, because every per-type guard trusts the type. On 2026-09-25,
+26 of one CORD source's 31 PERSON-typed records had names ending `LLP`, `LP`, `PLC` or `LIMITED`.
+That one conflict held apart 17 of the 50 cross-source possible-match pairs, and it was found only
+after loading, when a near-miss was explained.
+
+Run it over **every record** of each source, not a sample: the count is the source's own figure.
+
+1. **Which records are tested.** Those whose `RECORD_TYPE` is `PERSON`: the record's own attribute
+   on a Senzing-ready source, and on a raw source the field Step 4 matched to `RECORD_TYPE`. A
+   source with no such field has zero PERSON-typed records.
+2. **Which name is read.** Whichever name attribute the record carries: `NAME_FULL`, `NAME_ORG`, or
+   the parsed person fields joined in order. That includes a name attribute carrying a leading
+   label (the sense Step 5a's coverage check allows for) and the `NAME` objects inside a `FEATURES`
+   array. On a raw source, read the field Step 4 matched to a name.
+3. **The test.** A record is a **candidate** when its name's **final whole token** is on the list
+   below: split on whitespace, trailing punctuation removed, compared case-insensitively. Only a
+   whole final token counts, so `LIMITED EDITIONS SMITH` and `PHILIP` are not candidates.
+
+   `LLP`, `LP`, `PLC`, `LIMITED`, `LTD`, `LLC`, `INC`, `CORP`, `CORPORATION`, `GMBH`
+
+   ⚠️ **This suffix list is the plugin's own heuristic, not a Senzing fact (INV-080).** No MCP route
+   serves one: `search_docs(query='organization name suffix tokens LLC LTD INC person or
+   organization name classification')` returns the Entity Specification's NAME rules and libpostal
+   scripts, none of them a suffix list (MCP server 1.37.14, docs index 2026-09-28). If a route
+   serves one later, switch to it. The list is short on purpose. It leaves out tokens that are also
+   surnames or name particles, because a false candidate costs the Bootcamper a question and a
+   wrong retype costs a real person their matches.
+4. **Report it for every source, as candidates.** Put the count in the assessment above, zero
+   included (`Type/name check: 0 of 4,210 PERSON-typed records are candidates`). For a source with
+   one or more, give the count out of the PERSON-typed total and up to ten candidate names, and say
+   where they came from:
+
+   > "[SOURCE_NAME]: [N] of [M] PERSON-typed records have a name that ends like an organization's,
+   > for example [names]. These are candidates from a suffix test, not confirmed errors."
+
+   With zero candidates, or zero PERSON-typed records, report the zero and ask nothing.
+5. **Ask about each source with one or more candidates**, one source per turn:
+
+   👉 **How should the mapping type the [N] candidate records in [SOURCE_NAME]? Reply with a number:**
+
+   1. Retype them to ORGANIZATION, except any you name as a real person.
+   2. Keep them as PERSON.
+
+   *(Internal: end the turn on this question and wait.)*
+
+   - **Option 1:** ask which candidates, if any, are real people, and take "none" as an answer.
+     Every other candidate is retyped. Write the section below with the rule and those exceptions.
+   - **Option 2:** write the section below with the cost stated, and change nothing else.
+6. **Write the decision to `docs/mapping/{source_name}_mapper.md`**, under a `## Record Type
+   Check` section. If the file does not exist yet, create it with its `# Mapping Specification:
+   {SOURCE_NAME}` title and this section only. Phase 2 step 18 writes the rest of it and keeps this
+   section as written.
+
+   ```markdown
+   ## Record Type Check
+
+   - **Candidates:** [N] of [M] PERSON-typed records (suffix heuristic, Module 5 Phase 1 step 6)
+   - **Decision:** Retype / Keep as-is
+   - **Rule (retype):** a record whose `RECORD_TYPE` is `PERSON` and whose name's final whole
+     token (trailing punctuation removed, case-insensitive) is one of [the list above] is emitted
+     with `RECORD_TYPE` `ORGANIZATION`, and its name is mapped as `NAME_ORG` or `NAME_FULL`, never
+     as parsed person fields. Exceptions, kept `PERSON`: [the names or RECORD_IDs given, or none]
+   - **Cost (keep):** these [N] records stay `PERSON`, so they cannot merge with organization
+     records in other sources. Such pairs stay possible matches, held apart by the record type.
+   ```
+
+   Write only the rule line for a retype and only the cost line for a keep. The name rule follows
+   the Entity Specification's *Feature: NAME*: *"use `NAME_ORG` for organizations"*, and *"do not
+   mix `NAME_ORG` with parsed person fields in the same object"* (the same suffix query above
+   returns that section, MCP server 1.37.14, docs index 2026-09-28).
+
+A source already checked in Step 5a sub-step 3a reuses that count and those names here. Do not run
+the check again. Its report and question belong here, because Step 5a routes such a source on to
+this step.
+
+⛔ (INV-048) **The check reports and asks; it never blocks the module.** If it cannot run, for
+example because no name attribute can be identified, say so in Step 7's report and continue.
+
+⛔ (INV-173) **Never undo the Bootcamper's retype to turn a validation gate green.** If Phase 2's
+verbatim check flags a retyped `RECORD_TYPE` value, follow that step's exemption procedure
+(`phase2-data-mapping.md`, "What to do — in this order"): record the derivation and its reason in
+the mapper notes, then proceed.
 
 **Checkpoint:** write step 6.
 
@@ -748,6 +864,9 @@ Create `docs/data_source_evaluation.md`:
 
 **Reason:** [Why it needs mapping or is compliant]
 
+**Record type check:** [N] of [M] PERSON-typed records are type/name candidates. Decision:
+[Retype / Keep as-is / none needed]
+
 **Next step:** [Phase 2 (mapping) / Data processing (loading)]
 
 ### Data Source 2: [Name]
@@ -762,6 +881,11 @@ Create `docs/data_source_evaluation.md`:
   - Shared attribute: [the named attribute, e.g. `LEI_NUMBER`]
   - Distinct values shared: [count] (of [A count] in A, [B count] in B)
 ```
+
+Write the **Record type check** line for every source, zero included: `0 of [M]`, or `0 of 0` for a
+source with no PERSON-typed records, with the decision `none needed`. A fast-pathed source gets the
+line too, from Step 5a sub-step 3a. The count and the decision come from Step 6's type/name check,
+the canonical statement (INV-300), and the decision is the one written to the source's mapper notes.
 
 ⛔ **Every named cross-source pair in this report carries one of two labels, and neither is
 optional (INV-261).** `measured` requires a **distinct-value overlap count on the named attribute**; anything

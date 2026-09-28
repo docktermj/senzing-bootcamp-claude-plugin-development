@@ -53,6 +53,23 @@ VERIFIED_ON = "server 1.32.9, docs index 2026-08-11 20:52 UTC, checked 2026-08-1
 #: to stop.
 VERIFIED_QUERIES = {
     # ---------------------------------------------------------------------------------
+    # Executed 2026-09-28 on server 1.37.14 (docs index 2026-09-28 03:23 UTC) for #158, the
+    # type/name check in Module 5 Phase 1 Step 6. The first backs the "keep" option's cost;
+    # the second backs the absence the suffix list's heuristic label rests on, and its
+    # emptiness of a suffix list is the evidence.
+    "RECORD_TYPE PERSON ORGANIZATION prevent records of different types from resolving":
+        "ON TARGET. #1 is Senzing Entity Specification 'Feature: RECORD_TYPE' (74.7), whose "
+        "guidance column reads 'Prevents records of different types from resolving' and "
+        "'Use standardized kinds (PERSON, ORGANIZATION)'. #2 is 'What features to map' (31.6), "
+        "whose RECORD_TYPE row reads 'Include when known to prevent cross-type resolution'",
+    "organization name suffix tokens LLC LTD INC person or organization name classification":
+        "EMPTY OF A SUFFIX LIST, WHICH IS THE POINT. #1 is an FAQ on non-person entities "
+        "(89.1). #2 is Senzing Entity Specification 'Feature: NAME' (56.0), whose rules read "
+        "'use NAME_ORG for organizations' and 'do not mix NAME_ORG with parsed person fields in "
+        "the same object' -- the name rule the retype applies. #3-#5 are senzing/libpostal "
+        "tokenize and name-normalization scripts. No hit is a list of organization suffixes",
+
+    # ---------------------------------------------------------------------------------
     # Executed 2026-09-26 on server 1.37.13 (docs index 2026-09-24 18:45 UTC) for #160, the
     # match-key tokenizing rule in Phase D step 2 and Module 5's no-dashes domain line. The
     # same phrasing is the one the issue's refinement recorded.

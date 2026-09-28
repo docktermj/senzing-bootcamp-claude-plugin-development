@@ -43,6 +43,106 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## person-typed-records-with-organization-names-block-matches
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #158)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`,
+  `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`,
+  `tests/test_quality_assessment_type_name_check.py` (new), `tests/test_prescribed_search_queries.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.14, docs index 2026-09-28.
+  `search_docs(query='RECORD_TYPE PERSON ORGANIZATION prevent records of different types from resolving', category='data_mapping')`
+  returns the Entity Specification's *Feature: RECORD_TYPE*: `RECORD_TYPE` *"Prevents records of
+  different types from resolving"*. That is the cost the "keep" option states, and it still
+  reproduces. `search_docs(query='organization name suffix tokens LLC LTD INC person or
+  organization name classification')` returns *Feature: NAME* (*"use `NAME_ORG` for
+  organizations"*, *"do not mix `NAME_ORG` with parsed person fields in the same object"*) and
+  libpostal scripts, and no suffix list. So the absence the heuristic label rests on still holds.
+  Owner-checked: `search_docs` over the Entity Specification is the route that would carry a name
+  classification list. The upstream report on the ICIJ typing was already sent on 2026-09-25 (see
+  the issue). Nothing new was sent.
+- **Summary:** The CORD ICIJ download types `NODE_TYPE: OFFICER` records `PERSON` regardless of
+  name. 26 of 31 PERSON-typed records in one sample ended `LLP` / `LP` / `PLC` / `LIMITED`, and
+  the record-type conflict held apart 17 of 50 cross-source possible-match pairs. Nothing before
+  Query, Visualize and Discover saw it. Phase 1 Step 6 now holds **the canonical statement**
+  (INV-300, anchor `#type-name-check`) of a type/name check. It runs over every record. A
+  candidate is a `RECORD_TYPE` `PERSON` record whose name's final whole token (whitespace split,
+  trailing punctuation removed, case-insensitive) is on a ten-token suffix list, which is labeled
+  at its site as the plugin's own heuristic, not a Senzing fact (INV-080). The report gives
+  "N of M PERSON-typed records", up to ten names, and the word candidates. A pinned 👉 question
+  asks, one source per turn: retype to ORGANIZATION (except named real people), or keep as PERSON.
+  The decision, with its rule or its cost, is written to a `## Record Type Check` section of
+  `docs/mapping/{source_name}_mapper.md`, which Phase 1 creates if needed. **Step 5a** gains
+  sub-step 3a, after the coverage check. One or more candidates withholds the fast-path offer
+  (sub-step 5 now requires zero), and sub-step 6's routing statement takes the held-back source
+  and names its count. **Step 7**'s report has a per-source "Record type check" line, written for
+  every source, zero included (`0 of 0` when nothing is PERSON-typed). **Phase 2**: step 13
+  applies a Retype section's rule in the transform and points at Step 6 and at the step-10 INV-136
+  rejection. Step 18's mapper template gains the section, and step 18 keeps Phase 1's version. The
+  two clarifications (the handoff through the mapper notes; "confirmed" means every candidate
+  except those named) are on the issue, comment 2. `specs/INVARIANTS.md` is not edited.
+- **Approach:** implemented directly (Phase 5a). The change stays inside one skill directory, adds
+  no registry field, and copies existing shapes (Step 5a's routing statement, Phase 1's existing
+  write into `docs/mapping/`, the pinned numbered question of sub-step 9). The issue named only
+  `phase1-quality-assessment.md`. `phase2-data-mapping.md` is added because the decision is applied
+  in the transform, the Locus gap the 2026-09-25 unattended run stopped on.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Each new ⛔ line cites
+  a registered invariant at the line: the canonical claim cites INV-300, the Step 5a gate cites
+  INV-198, non-blocking cites INV-048, and the no-undo rule cites INV-173. The suffix list's
+  provenance label cites INV-080. One durable rule goes beyond them. INV-198 gates the fast path on
+  structure and coverage, and says nothing about a record type that contradicts its name: **a
+  PERSON-typed record named like an organization is surfaced before mapping, withholds the
+  fast path, and is retyped or kept only by the Bootcamper's recorded decision.** The rule already
+  shipping, plain prose at its sites:
+    - `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`
+      — ⛔ Step 5a sub-step 3a: one or more candidates means no fast-path offer, even for a source
+      that is structurally loadable and fully mapped
+    - the same file, Step 6 "Type/name check": the test, the heuristic label, the report, the
+      pinned question and the `## Record Type Check` section; Step 7's line for every source
+
+  The drafted wording:
+
+  **INV-NNN** — Module 5 MUST check every source, before mapping, for `RECORD_TYPE` `PERSON`
+  records whose name's final whole token is on a plugin-written organization-suffix list, which
+  MUST be labeled at its site as the plugin's own heuristic and not a Senzing fact (INV-080). It
+  MUST report the candidates per source as a count out of the PERSON-typed total, with sample
+  names, and call them candidates rather than errors. A CORD source with one or more candidates
+  MUST NOT be offered the fast path (extends INV-198). Records MUST be retyped only by the
+  Bootcamper's per-source decision (retype, with named exceptions, or keep, with the cost stated),
+  and that decision MUST be written to the source's mapping specification, where Phase 2 applies
+  and keeps it. The evaluation report MUST record the count for every source, zero included. The
+  check reports and asks, and never blocks (INV-048). Enforced by
+  `tests/test_quality_assessment_type_name_check.py`. (Source: GitHub issue #158.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Findings, not changed here (recorded, no issue filed):**
+    - The verbatim checker's key waiver covers every attribute ending in `_TYPE`
+      (`phase2-data-mapping.md`, the verbatim-check block), so it should not flag a retyped
+      `RECORD_TYPE`. The issue's edge case stays in as a conditional pointer to the exemption
+      procedure, not as a claim that it fires.
+    - The reverse direction (ORGANIZATION-typed records with person names) is out of scope per
+      the issue: a person's name has no reliable suffix marker.
+- **Tests:** new `tests/test_quality_assessment_type_name_check.py`, 15 tests in 5 classes,
+  stdlib only, importing nothing under `plugins/` (INV-108). It pins the check in Step 6 (PERSON,
+  final whole token, trailing punctuation, case-insensitive, every record, the three name forms,
+  the four observed suffixes in the parsed list), and the INV-080 label at the list's own site.
+  It applies the parsed list, as documented, to candidate and non-candidate names, including the
+  file's own `LIMITED EDITIONS SMITH` and `PHILIP`. It pins the Step 5a gate's order
+  (coverage → 3a → offer), the no-offer rule citing INV-198, sub-step 5's zero requirement,
+  sub-step 6's held-back branch and count, the report, the two options, the mapper section, the
+  keep cost, Step 7's zero-included line, and Phase 2 steps 13 and 18. Seven negative controls run
+  inside the suite on mutated copies: the 5a gate removed, the offer ungated, `LP` dropped, the
+  label removed, the keep option removed, the zero clause dropped, the Phase 2 handoff dropped.
+  Each reports a problem. The issue's control was also run on the real file: sub-step 3a deleted
+  → `test_step_5a_gates_the_offer` FAILED ("step 5a does not run the type/name check"). Restored,
+  `__pycache__` cleared, 15/15 OK. `tests/test_prescribed_search_queries.py` failed on both CI
+  legs in a clean clone: the two `search_docs` queries the check prescribes were not on its
+  allowlist. Both are added to `VERIFIED_QUERIES` with their observed top hits (server 1.37.14,
+  docs index 2026-09-28), in a follow-up commit.
+- **Commit:** d5f069a
+
 ## load-count-reconciliation-ignores-the-working-sample
 
 - **Implemented:** 2026-09-27 (**Not a spec** — a dated record of one issue-driven run, #157)
