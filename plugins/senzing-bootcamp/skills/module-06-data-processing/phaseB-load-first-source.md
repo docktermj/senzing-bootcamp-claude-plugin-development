@@ -131,12 +131,13 @@ absent-versus-present split above cannot see on its own.
   (`SENZING_LICENSE_FILE`, or a license file in `etc/`) which is real but is **not** the one wired
   into this bootcamp's file layout — using it here would leave the engine config pointing at nothing.
 
-  **Then re-measure and re-enter these branches.** After applying, re-read the license via
-  `SzProduct.get_license()`, parse `recordLimit`, confirm it actually moved, and route again on the
-  new value — a license reporting `0` lands on the first branch and the whole cap discussion
-  dissolves. ⚠️ Do **not** state the evaluation license's size or duration from this file: those
-  figures change between releases, so take them from a runtime lookup at the moment of use or say
-  they are unavailable.
+  **Then re-measure and re-enter these branches.** After applying, re-read the license by Module 4
+  Step 8a sub-step 7, which calls `SzProduct.get_license()`, refreshes `config/license.json` and
+  lets you parse `recordLimit`; follow that step rather than restating it (INV-300). Then confirm it
+  actually moved, and route again on the new value — a license reporting `0` lands on the first
+  branch and the whole cap discussion dissolves. ⚠️ Do **not** state the evaluation license's size
+  or duration from this file: those figures change between releases, so take them from a runtime
+  lookup at the moment of use or say they are unavailable.
 
   End the turn on this single pinned question (INV-056), which replaces the improvised one — it is
   **one** 👉 (INV-251) and it is **not** a second License Key gate (INV-093: that decision was asked
@@ -161,11 +162,11 @@ absent-versus-present split above cannot see on its own.
   writes nothing when it cannot, and Module 4's **volume-gated** Step 8a fires only when the
   collected volume approaches the limit.
   ⚠️ **Do not reason from a count of writers**; that number has been stated wrongly twice. Measure
-  it exactly as Phase A's absent branch instructs (Module 4 Step 8a's procedure:
-  `SzProduct.get_license()`, confirm the shape, parse `recordLimit`), persist it, and re-enter
-  these three branches with the measured value — a license reporting `recordLimit: 0` then lands on
-  the first branch and the warning is correctly omitted. If Phase A already measured and persisted
-  it, this branch is not reached.
+  it by Module 4 Step 8a sub-step 7, which calls `SzProduct.get_license()` and parses
+  `recordLimit`, rather than restating it (INV-300); persist it as Phase A's absent branch
+  instructs, and re-enter these three branches with the measured value — a license reporting
+  `recordLimit: 0` then lands on the first branch and the warning is correctly omitted. If Phase A
+  already measured and persisted it, this branch is not reached.
   - **Only if the measurement fails** does the evaluation-capacity warning apply. Say it is an
     assumption, and confirm the current capacity figure and the exact over-limit error code and
     behavior from the Senzing MCP server at request time. If no figure is returned, say it is

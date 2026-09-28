@@ -222,12 +222,6 @@ class TheProcedureIsCitedNotRestated(unittest.TestCase):
             "filter='get_license')`, which documents `recordLimit` (integer)", m4)
         self.assertNotIn("no** `response_schemas` entry", m4)
 
-    def test_phase_a_carries_the_signature_provenance(self):
-        """The method is server-confirmed even though its payload is not (INV-080)."""
-        branch = absent_branch(PHASE_A)
-        self.assertIn("1.32.9", branch)
-        self.assertIn("get_sdk_reference(topic='response_schemas'", branch)
-
     def test_the_unchanged_module_6_branches_are_intact(self):
         """The two correct branches must survive the rewrite of the third.
 

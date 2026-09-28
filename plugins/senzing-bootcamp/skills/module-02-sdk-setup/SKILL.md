@@ -1819,8 +1819,9 @@ settings it is handed, and until Step 8 wrote `CONFIGPATH` those settings could 
 installed at the system config path. That tier is the third of the four in Step 5's check order, so
 the earlier reading could only ever return one of the first two or the built-in default.
 
-Take the reading exactly as Step 5a's sub-step 1 describes — same method, same
-save-then-read-before-parsing discipline (INV-115) — using the settings that now carry `CONFIGPATH`.
+Take the reading by Step 5a's sub-step 1, which calls `SzProduct.get_license()` and parses
+`recordLimit`; follow it rather than restating it (INV-300), using the settings that now carry
+`CONFIGPATH`.
 Then apply Step 5a's sub-step 3 rules to the result:
 
 - **Write it** to `config/bootcamp_progress.json` as `license_record_limit`, with

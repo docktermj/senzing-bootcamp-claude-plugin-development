@@ -80,6 +80,128 @@ def flat(path):
     return re.sub(r"\s+", " ", text)
 
 
+#: A block that instructs a license reading: it calls the license method and parses the field.
+#: A descriptive mention names the call without the parse, so it is not a reading (#218).
+LICENSE_CALL = re.compile(r"[Gg]et_?[Ll]icense\(\)")
+LICENSE_PARSE = re.compile(r"(?i)\bpars\w*\s+`recordLimit`")
+LIST_ITEM = re.compile(r"^(\s*)(?:[-*+]|\d+\.)\s")
+HEADING = re.compile(r"^#{1,6} ")
+
+#: The seven license-reading sites (#218): two owners that carry #198's procedure, and five
+#: pointers that send the reader to one. Each is located by its section heading and a phrase
+#: quoted from the block, never by a line number. A pointer's last field is the owner step
+#: it must name; an owner's is None. The scan decides what is checked (INV-246); this list
+#: is the non-vacuity floor and the expected classification, so a site the scan stops seeing
+#: fails, and so does a new reading nobody registered.
+LICENSE_SITES = (
+    ("module-04-data-collection/SKILL.md", "### 8a. Senzing License Key gate",
+     "Detect the active license's record limit", None),
+    ("module-02-sdk-setup/SKILL.md", "### 5a. Measure the active license's record limit",
+     "**Take the reading.**", None),
+    ("module-04-data-collection/SKILL.md", "## License limit and dataset size",
+     "**Measure it**", "Step 8a sub-step 7"),
+    ("module-06-data-processing/phaseA-build-loading.md",
+     "## 3. Create the production loading program", "**Measure it**",
+     "Module 4 Step 8a sub-step 7"),
+    ("module-06-data-processing/phaseB-load-first-source.md", "## 7. Load the full dataset",
+     "**Then re-measure and re-enter these branches.**", "Module 4 Step 8a sub-step 7"),
+    ("module-06-data-processing/phaseB-load-first-source.md", "## 7. Load the full dataset",
+     "**Absent or null**", "Module 4 Step 8a sub-step 7"),
+    ("module-02-sdk-setup/SKILL.md", "### 8a.1 Re-measure the license",
+     "Take the reading", "Step 5a's sub-step 1"),
+)
+
+#: What a pointer must not carry: any element of the owner's procedure (INV-300). Taken from
+#: the claim, a pointer holds no copy, rather than from the phrasings seen so far (INV-282).
+PROCEDURE_ELEMENTS = ("INV-115", "response_schemas", "before parsing", "confirm the shape")
+
+
+def blocks(lines):
+    """(start, end) line spans: every paragraph, every list item's own lines, and every list
+    item with its nested content. The last is what holds Module 2's owner, whose call and
+    parse sit in different sub-bullets; the others hold a one-paragraph site."""
+    spans = set()
+    start = None
+    for i, line in enumerate(lines + [""]):
+        if not line.strip() or HEADING.match(line) or LIST_ITEM.match(line):
+            if start is not None:
+                spans.add((start, i))
+            start = i if LIST_ITEM.match(line) else None
+        elif start is None:
+            start = i
+    for i, line in enumerate(lines):
+        item = LIST_ITEM.match(line)
+        if not item:
+            continue
+        end = i + 1
+        while end < len(lines) and not (
+                lines[end].strip()
+                and len(lines[end]) - len(lines[end].lstrip()) <= len(item.group(1))):
+            end += 1
+        while end > i + 1 and not lines[end - 1].strip():
+            end -= 1
+        spans.add((i, end))
+    return spans
+
+
+def license_readings(name, text):
+    """[(file, heading, flattened block)] for each innermost block that instructs a reading.
+
+    Innermost, so a branch bullet holding a pointer sub-bullet is not counted a second time.
+    """
+    lines = text.split("\n")
+    heading, headings, fenced = "", [], False
+    for line in lines:
+        fenced ^= line.lstrip().startswith("```")
+        if not fenced and HEADING.match(line):
+            heading = line.strip()
+        headings.append(heading)
+    hits = [(a, b) for a, b in blocks(lines)
+            if LICENSE_CALL.search(" ".join(lines[a:b]))
+            and LICENSE_PARSE.search(" ".join(lines[a:b]))]
+    inner = [h for h in hits
+             if not any(o != h and h[0] <= o[0] and o[1] <= h[1] for o in hits)]
+    return [(name, headings[a], re.sub(r"\s+", " ", " ".join(lines[a:b])).strip())
+            for a, b in sorted(inner)]
+
+
+def discover_license_readings():
+    skills = os.path.join(PLUGIN, "skills")
+    found = []
+    for root, _dirs, files in os.walk(PLUGIN):
+        for filename in sorted(files):
+            if filename.endswith(".md"):
+                path = os.path.join(root, filename)
+                with open(path, encoding="utf-8") as handle:
+                    name = os.path.relpath(path, skills).replace(os.sep, "/")
+                    found += license_readings(name, handle.read())
+    return found
+
+
+def registered_site(reading):
+    """The LICENSE_SITES entry that anchors this reading, or None."""
+    name, heading, text = reading
+    for site in LICENSE_SITES:
+        if site[0] == name and heading.startswith(site[1]) and site[2] in text:
+            return site
+    return None
+
+
+def pointer_problems(text, owner):
+    """What stops a block from being a pointer to `owner`: an empty list means it is one."""
+    problems = []
+    if "INV-300" not in text:
+        problems.append("does not cite INV-300")
+    if owner not in text:
+        problems.append("does not name its owner step %r" % owner)
+    problems += ["restates the procedure: %r" % element for element in PROCEDURE_ELEMENTS
+                 if element.lower() in text.lower()]
+    return problems
+
+
+READINGS = discover_license_readings()
+
+
 class AnEmptyOrShallowLookupIsExpectedNotAFailure(unittest.TestCase):
 
     def test_the_contract_still_requires_the_lookup_and_the_dump(self):
@@ -110,7 +232,7 @@ class AnEmptyOrShallowLookupIsExpectedNotAFailure(unittest.TestCase):
         Its only match was Module 4's claim that `get_license` has no `response_schemas`
         entry, which the server now contradicts; that step now cites the documented
         `recordLimit` instead, which `test_the_license_step_cites_the_documented_field`
-        pins.
+        pins at every owner of the reading.
         """
         for path in (CONTRACT, DISCOVER):
             with self.subTest(file=os.path.basename(path)):
@@ -144,10 +266,16 @@ class AnEmptyOrShallowLookupIsExpectedNotAFailure(unittest.TestCase):
                 self.assertIsNone(stale.search(flat(path)))
 
     def test_the_license_step_cites_the_documented_field(self):
-        """Both license-measurement steps look the shape up, and keep the dump as fallback."""
-        for path in (COLLECTION, SDK_SETUP):
-            with self.subTest(file=os.path.relpath(path, REPO_ROOT)):
-                text = flat(path)
+        """Every owner of the license reading looks the shape up, and keeps the dump as fallback.
+
+        Scoped to the block, not the file (#218): a file-level check passed while the pointer
+        steps in the same files restated the procedure #198 replaced. A discovered reading
+        that does not cite INV-300 is an owner, so a new one is held to this too.
+        """
+        owners = [r for r in READINGS if "INV-300" not in r[2]]
+        self.assertEqual(2, len(owners), [r[:2] for r in owners])
+        for name, heading, text in owners:
+            with self.subTest(site="%s %s" % (name, heading)):
                 self.assertRegex(
                     text,
                     r"get_sdk_reference\(topic='response_schemas', filter='get_license'\)`"
@@ -166,6 +294,82 @@ class AnEmptyOrShallowLookupIsExpectedNotAFailure(unittest.TestCase):
             flat(GROUND_RULES),
             r"`topic='response_schemas', filter='get_stats'` returned it alongside an \*empty\*",
         )
+
+
+class EveryLicenseReadingIsAnOwnerOrAPointer(unittest.TestCase):
+    """#198 changed the reading at 2 of 7 sites; the other five kept restating the old one.
+
+    A discovered reading that cites INV-300 is a pointer: it names its owner step and carries
+    no part of the procedure, so the owner's current text is the only copy (INV-300).
+    """
+
+    def test_all_seven_registered_sites_are_found(self):
+        """Not vacuous: two owners and five pointers, each found exactly once by the scan."""
+        self.assertEqual((2, 5), (
+            sum(1 for s in LICENSE_SITES if s[3] is None),
+            sum(1 for s in LICENSE_SITES if s[3] is not None)))
+        for site in LICENSE_SITES:
+            with self.subTest(site="%s %s %r" % site[:3]):
+                matches = [r for r in READINGS if registered_site(r) == site]
+                self.assertEqual(
+                    1, len(matches),
+                    "the scan found %d license readings at %s under %r quoting %r; a reword "
+                    "that drops the call or the parse makes a site invisible"
+                    % ((len(matches),) + site[:3]))
+
+    def test_no_license_reading_is_unregistered(self):
+        """The backstop: a new reading anywhere in the plugin must be classified here first."""
+        strays = ["%s %s: %s" % (reading[0], reading[1], reading[2][:80])
+                  for reading in READINGS if registered_site(reading) is None]
+        self.assertFalse(strays, "license readings outside LICENSE_SITES: %s" % " | ".join(strays))
+        self.assertEqual(7, len(READINGS))
+
+    def test_each_site_is_classified_as_registered(self):
+        """Classification: citing INV-300 is what makes a reading a pointer."""
+        for reading in READINGS:
+            site = registered_site(reading)
+            if site is None:
+                continue
+            with self.subTest(site="%s %s" % reading[:2]):
+                self.assertEqual(
+                    site[3] is not None, "INV-300" in reading[2],
+                    "%s under %r is registered as %s" % (
+                        reading[0], reading[1], "a pointer" if site[3] else "an owner"))
+
+    def test_every_pointer_names_its_owner_and_carries_no_procedure(self):
+        for reading in READINGS:
+            site = registered_site(reading)
+            if site is None or site[3] is None:
+                continue
+            with self.subTest(site="%s %s" % reading[:2]):
+                problems = pointer_problems(reading[2], site[3])
+                self.assertFalse(problems, "pointer at %s under %r: %s" % (
+                    reading[0], reading[1], "; ".join(problems)))
+
+    def test_the_old_pointer_wording_fails_the_pointer_check(self):
+        """Negative control: Module 4's absent-branch pointer as it read before #218."""
+        old = (
+            "- **Measure it** by Step 8a's own procedure (sub-step 7 below): generate a scaffold "
+            "calling `SzProduct.get_license()`, save the returned JSON, read it to confirm the "
+            "shape before parsing (INV-115), and parse `recordLimit`. Follow that step rather "
+            "than restating it (INV-300).")
+        readings = license_readings("fixture.md", "## License limit and dataset size\n\n" + old)
+        self.assertEqual(1, len(readings), "the scan must see the old pointer")
+        self.assertNotEqual([], pointer_problems(readings[0][2], "Step 8a sub-step 7"))
+        self.assertIsNone(registered_site(readings[0]),
+                          "an unregistered reading must fall to the backstop")
+
+    def test_descriptive_mentions_are_not_readings(self):
+        """Pinned per INV-282: naming the call is not instructing a reading."""
+        for name, phrase in (
+                ("module-01-business-problem/phase1-discovery.md",
+                 "parses the record limit out of"),
+                ("module-02-sdk-setup/SKILL.md", "This reading is PROVISIONAL"),
+                ("module-06-data-processing/phaseA-build-loading.md",
+                 "persists it from `SzProduct.get_license()`")):
+            with self.subTest(file=name):
+                self.assertIn(phrase, flat(os.path.join(PLUGIN, "skills", name)))
+                self.assertEqual([], [r[1] for r in READINGS if phrase in r[2]])
 
 
 class ThePartialRowRuleIsStated(unittest.TestCase):

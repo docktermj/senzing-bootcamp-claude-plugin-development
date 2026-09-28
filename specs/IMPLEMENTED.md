@@ -43,6 +43,111 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## every-license-reading-is-an-owner-or-a-pointer
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #218)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`,
+  `tests/test_partial_row_and_schema_coverage.py`,
+  `tests/test_module06_license_reconciliation.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.14, 2026-09-28, `get_capabilities()` and
+  `get_sdk_reference(topic='response_schemas', filter='get_license')`: the `get_license` schema
+  lists `recordLimit` as `integer` among 9 fields, and the signatures are python
+  `get_license() -> str`, java `getLicense() -> String`, csharp `GetLicense() -> string`, rust
+  `get_license() -> SzResult<JsonString>`, typescript `getLicense() -> string`. Outcome: still
+  reproduces. The owners' documented-field citation stays true. No absence claim is made.
+- **Summary:** #198 changed the license reading (look `recordLimit` up in `response_schemas`, and
+  read the saved `config/license.json` only when the field is absent) at its two owners, Module 4
+  Step 8a sub-step 7 and Module 2 Step 5a sub-step 1. Five other sites still restated the old
+  "read it to confirm the shape before parsing" form or pointed at wording the owner no longer
+  has. Each is now an INV-300 pointer: it names its owner step, says the owner "calls
+  `SzProduct.get_license()` and parses `recordLimit`", cites INV-300, and carries no procedure
+  element (`INV-115`, `response_schemas`, "before parsing", "confirm the shape").
+  - **Module 4, `## License limit and dataset size`, absent branch:** "**Measure it**" points to
+    Step 8a sub-step 7. The 1.32.9 signature citation is dropped.
+  - **Module 6 Phase A, Step 3, absent branch:** "**Measure it**" points to Module 4 Step 8a
+    sub-step 7. The `filter='getLicense'` 1.32.9 citation is dropped; "needs no new machinery"
+    is kept.
+  - **Module 6 Phase B, Step 7, re-measure after a key is applied:** points to Module 4 Step 8a
+    sub-step 7, which refreshes `config/license.json`, so the file later steps read no longer
+    goes stale. It keeps its own "confirm it actually moved" and "route again on the new value".
+  - **Module 6 Phase B, Step 7, absent branch:** points to Module 4 Step 8a sub-step 7 directly,
+    and persists "as Phase A's absent branch instructs".
+  - **Module 2, `### 8a.1`:** takes the reading "by Step 5a's sub-step 1, which calls
+    `SzProduct.get_license()` and parses `recordLimit`". The "same save-then-read-before-parsing
+    discipline (INV-115)" wording, which Step 5a no longer carries, is gone.
+  - **Unchanged (out of scope):** both owners keep the full procedure;
+    `test_module_4_still_owns_the_measurement_procedure` stays. The procedure itself,
+    `recordLimit: 0` semantics and INV-149's empty-result rule are unchanged.
+- **Approach:** raced (Phase 5b), two approaches, judged against a rubric written first (issue
+  comment 3). **Winner A, explicit site registry**, over B (discovery first, classify by
+  content): both met the criteria, and A keeps the test name the #198 entry cites, has the
+  smaller diff, and states the "all seven known sites" floor one row per site. B's advantage, an
+  owner set derived rather than listed, is noted on the issue. The patch applied cleanly with
+  `git apply --3way` over #221's merge (`1451e7b`), whose Phase B Step 7 edits are in the
+  reconciliation paragraphs, not the license branches. No adaptation was needed; the applied
+  text was read against both owners.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The change ships a
+  test-enforced rule over shipped guidance: the license reading has exactly two owners, and every
+  other step that instructs one is a pointer. No ⛔ line is added to the plugin; the rule already
+  shipping is the pointer wording at five sites, each citing INV-300, and the guard in
+  `tests/test_partial_row_and_schema_coverage.py` (`LICENSE_SITES`,
+  `EveryLicenseReadingIsAnOwnerOrAPointer`). The sites:
+    - `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md` — "**Measure it** by
+      Step 8a sub-step 7 below, which calls `SzProduct.get_license()` and parses `recordLimit`."
+    - `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md` —
+      "**Measure it** by Module 4 Step 8a sub-step 7, which calls `SzProduct.get_license()` and
+      parses `recordLimit`."
+    - `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`
+      (two sites) — "re-read the license by Module 4 Step 8a sub-step 7" and "Measure it by
+      Module 4 Step 8a sub-step 7"
+    - `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md` — "Take the reading by Step
+      5a's sub-step 1"
+
+  ⚠️ **INV-300 may already govern this.** A procedure stated once, with every other site
+  pointing at it, is INV-300's rule; what is new is that it is enforced by a derived,
+  block-level scan for one named procedure, with a fixed owner set. Whether that needs its own id
+  is the maintainer's call.
+
+  The drafted wording:
+
+  **INV-NNN** — Every shipped step that instructs a license reading (calls the license method
+  and parses `recordLimit`) MUST be either one of its two owners, Module 4 Step 8a sub-step 7 or
+  Module 2 Step 5a sub-step 1, carrying the full measurement procedure, or a pointer that names
+  its owner step, cites INV-300 and carries none of the owner's procedure elements (`INV-115`,
+  `response_schemas`, "before parsing", "confirm the shape"). A new reading MUST be classified in
+  the guard's registry before it ships. Enforced by
+  `tests/test_partial_row_and_schema_coverage.py` (`EveryLicenseReadingIsAnOwnerOrAPointer`,
+  `test_the_license_step_cites_the_documented_field`). (Source: GitHub issue #218.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** `tests/test_partial_row_and_schema_coverage.py` gains a block-level discovery scan
+  over every shipped `.md` under `plugins/senzing-bootcamp/`. A block (a paragraph, a list item's
+  own lines, or a list item with its nested content) is a reading when it contains
+  `get_license()` in any binding's spelling and "pars\* \`recordLimit\`"; only the innermost
+  block counts. `LICENSE_SITES` registers the seven sites by section heading plus a quoted phrase,
+  never a line number. `test_the_license_step_cites_the_documented_field` keeps its name and its
+  three regexes, and now iterates the discovered owners (asserting 2) instead of the hardcoded
+  `(COLLECTION, SDK_SETUP)`. New class `EveryLicenseReadingIsAnOwnerOrAPointer`, 6 tests: all
+  seven registered sites found exactly once (2 owners, 5 pointers); no unregistered reading
+  (backstop, 7 total); classification matches the registry; every pointer names its owner and
+  carries no procedure element; a negative-control fixture (the old Module 4 pointer text fails
+  the pointer check and falls to the backstop); and the must-not-flag pins (Module 1
+  `phase1-discovery.md` "parses the record limit out of", Module 2's INV-295 "This reading is
+  PROVISIONAL" note, Phase A's "persists it from `SzProduct.get_license()`").
+  `test_phase_a_carries_the_signature_provenance` is removed from
+  `tests/test_module06_license_reconciliation.py`: its premise, that the payload is not
+  server-confirmed, has been false since #198. Negative controls from the race, each restored:
+  all four plugin files at the old text fails 9 tests; only Module 4's pointer given back the
+  old INV-115 wording fails 1, naming the site; an unregistered reading appended to Module 5's
+  `phase3-test-load.md` fails 2. The sweep before the change found 6 readings, missing `8a.1`, as
+  the issue predicted.
+- **Commit:** aae2f60
+
 ## step-8b-sample-has-one-chain-role
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #221)
