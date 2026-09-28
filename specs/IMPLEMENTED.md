@@ -114,7 +114,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     script's `rsync` excludes. Both lists must parse (INV-265). Its negative control removes
     `docs/FAMILY_WORKFLOW.md` from each list and shows the check reports it.
   - In the race, each old file was restored from `main` and failed its new guard.
-- **Commit:** uncommitted
+- **Commit:** 60cebbc
 
 ## upstream-vocabulary-is-two-closed-sets-with-a-mapping
 
