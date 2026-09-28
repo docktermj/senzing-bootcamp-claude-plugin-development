@@ -79,7 +79,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   "or Module 4 Step 8b's `sample` load decision" in stage 1 fails 2 tests; restoring "or the Step
   8b load decision that set it" in the subset bullet fails 2; reverting the file to `main` fails
   all 4. Restored, OK.
-- **Commit:** uncommitted
+- **Commit:** 99a23ed
 
 ## the-user-level-copies-govern-both-skills
 
