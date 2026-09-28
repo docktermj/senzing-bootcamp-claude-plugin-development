@@ -240,17 +240,22 @@ steering files.)
   tool discovery -> `get_capabilities`.
 - ⛔ **Always pass `language` to `reporting_guide` — every call, whatever the topic** (INV-192).
   Most topics withhold their content until it is supplied, answering instead with a **`needs_input`**
-  object naming the parameter they want, while the content arrays in that same reply come back
-  **empty**. ⚠️ **Recognize the gate by `needs_input.parameter` — never by a particular field being
-  empty.** Which arrays a topic carries is the server's to rename, so a list of them here is the
-  same liability as the list of gating topics this rule already refuses to keep. Observed on MCP
+  object naming the parameter they want, and that same reply carries **no content**: the content
+  keys are absent. ⚠️ **Recognize the gate by `needs_input.parameter` — never by a particular field
+  being empty or absent.** Which arrays a topic carries is the server's to rename, so a list of them
+  here is the same liability as the list of gating topics this rule already refuses to keep.
+  Earlier servers returned the content arrays present but empty. Observed on MCP
   server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-13: `topic='evaluation'` and
   `topic='graph'` each returned `needs_input.parameter` of `language` with empty `sdk_patterns`,
-  `sql_patterns` and `visualization`, while `topic='dashboard'` returned its content ungated. The
+  `sql_patterns` and `visualization`, while `topic='dashboard'` returned its content ungated.
+  Observed on MCP server 1.37.14, docs indexed 2026-09-28 03:23 UTC, 2026-09-28:
+  `topic='evaluation'` and `topic='export'` each return only `topic` and `needs_input`, while
+  `topic='dashboard'` still returns its content without `language`. The
   parameter is *optional in the schema*, so a call without it looks correct and returns 200 — which
   is the whole trap. Passing it where a topic does not gate costs nothing and only adds content, so
   pass it unconditionally rather than tracking which topics gate: that list is a per-topic fact
   about the server, and the last attempt to keep one went stale within a day.
+  <!-- MCP-NEGATIVE: reporting_guide(topic='evaluation', language=None) and reporting_guide(topic='export', language=None) — each reply carries only the keys topic and needs_input, with no content keys — owner: reporting_guide IS the route that owns its topic's content, and the gated reply's own needs_input.instruction says it contains no Senzing content and asks for a re-call with language, so the absence is the gate itself rather than a gap in the topic (absence negative) — server 1.37.14, 2026-09-28 -->
 - ⛔ **A `needs_input` response is a gate, not an answer.** Satisfy every gate the response asks
   for — some topics gate twice (`topic='data_mart'` asks for `language`, then `scale`) — and
   re-call rather than proceeding on what came back. Never report a topic as having no guidance on

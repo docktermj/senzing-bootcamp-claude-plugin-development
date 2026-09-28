@@ -159,7 +159,11 @@ class ValidationRoutingNamesItsTopic(unittest.TestCase):
                 )
 
     def test_evaluation_is_named_for_this_phase(self):
-        self.assertRegex(flat(PHASE_D), r"topic='evaluation'\` for the single-pass export statistics")
+        self.assertRegex(
+            flat(PHASE_D),
+            r"reporting_guide\(topic='evaluation', language='<chosen_language>'\)\` "
+            r"for the single-pass export statistics",
+        )
 
     def test_the_count_bullet_names_the_topic(self):
         self.assertRegex(

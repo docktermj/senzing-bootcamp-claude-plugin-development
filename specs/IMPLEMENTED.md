@@ -43,6 +43,65 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## gated-reporting-guide-reply-carries-no-content
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #195)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`,
+  `tests/test_mcp_call_contracts.py`, `tests/test_sampling_and_validation_routing.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28. The spec's
+  re-verification criterion holds.
+  - `reporting_guide(topic='evaluation')`, with no `language`, returns exactly the keys `topic`
+    and `needs_input`. `needs_input.parameter` is `language`, and its instruction says "This
+    response contains NO Senzing content — it is a request for input, not an answer."
+  - `reporting_guide(topic='export')`, with no `language`, returns the same shape.
+  - `reporting_guide(topic='dashboard')`, with no `language`, is still not gated. It returns
+    `data_mart_framing`, `sql_patterns`, `visualization`, `anti_patterns` and `next_steps`.
+- **Summary:** the ground rules described a gated `reporting_guide` reply as content arrays that
+  come back empty. The current server omits the content keys entirely.
+  - **`ground-rules.md`, the INV-192 bullet:** a gated reply now "carries **no content**: the
+    content keys are absent", and the gate is recognized "never by a particular field being
+    empty or absent". The 1.32.9 observation stays word for word, introduced as what earlier
+    servers returned. The dated 1.37.14 observation follows it: `evaluation` and `export` return
+    only `topic` and `needs_input`, and `dashboard` still returns its content without
+    `language`. A well-formed `MCP-NEGATIVE` marker (absence negative, server 1.37.14,
+    2026-09-28) records the dated absence claim, so dry-run phase 1 re-asks it.
+  - **Module 6, `SKILL.md` and `phaseD-validation.md`:** both routing sentences now name
+    `evaluation` and `export` as `reporting_guide(topic=…, language='<chosen_language>')` call
+    forms, which puts them within `test_no_reporting_guide_call_omits_language`'s reach. The
+    "Not `topic='reports'`" warning is unchanged.
+  - **Unchanged, as the spec's Out of scope says:** `ground-rules.md`'s "the payload of a gate
+    is empty by design", the dated 1.32.2 docstring of `TestEveryReportingGuideCallPassesLanguage`,
+    and Module 7's `` topic `x` `` routing lists. Pass `language` unconditionally, recognize the
+    gate by `needs_input.parameter`, and keep no per-topic gating list: all three still hold.
+- **Approach:** raced (Phase 5b) by the run's lead. Approach A (minimal in-place rewording) won
+  over B (the rule stated first, then a dated then/now history block). Both met every
+  criterion. B's marker used a `(gate negative)` category that nothing else in the plugin uses,
+  while A's one misfit was line wrapping, and A changed about a third as much text. The
+  comparison is on the issue (comment 3). Applied from the raced patch (`git apply` was clean
+  on 1b6589c) with one adaptation: the over-width added lines are rewrapped to the file's
+  100-column width with no word changes (`ground-rules.md`'s 1.37.14 observation, and the two
+  Module 6 sentences, which had run to about 140 columns). Each call form stays on one physical
+  line, because the guard matches per line.
+- **Establishes no invariant, and defers none.** No ⛔ line is added or rewrapped. The change
+  applies INV-192 and INV-080 and adds no new rule.
+- **Tests:**
+  - `tests/test_mcp_call_contracts.py`: the `test_no_reporting_guide_call_omits_language`
+    failure message says "a needs_input decision tree and no content" instead of "an empty
+    payload".
+  - `tests/test_sampling_and_validation_routing.py`: `test_evaluation_is_named_for_this_phase`
+    quoted the old Phase D wording. It now asserts the new call form, `language` included,
+    which is stricter than before.
+  - Negative controls, each run on the rewrapped tree and then reverted: removing the
+    `MCP-NEGATIVE` marker fails `TestUnmarkedReport.test_the_live_corpus_is_clean`;
+    reverting Phase D's call form to a bare `topic='evaluation'` fails
+    `test_evaluation_is_named_for_this_phase`; dropping `language` from `SKILL.md`'s export call
+    fails `test_no_reporting_guide_call_omits_language`.
+- **Commit:** 1de37d2
+
 ## inv160-quotes-the-current-step-3-note-and-its-terminal-step
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #197)
