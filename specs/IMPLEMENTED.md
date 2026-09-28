@@ -145,7 +145,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
   The race also restored each file from `main` in turn. Each old file failed the guard,
   including the delegate line the old guard never saw.
-- **Commit:** uncommitted
+- **Commit:** 4e421ae
 
 ## every-phase-b-subset-choice-writes-load-subset
 
