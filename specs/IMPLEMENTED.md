@@ -98,7 +98,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   unchanged, including the `:254` flag-name pin and the enrichment test. Negative controls on the
   real files: the old trap line restored in the reference fails 1 test (the stale-claim guard), and
   Module 7's old sentence restored fails 2. Restored, `__pycache__` cleared, OK.
-- **Commit:** uncommitted
+- **Commit:** 435216c
 
 ## upstream-field-has-no-value-for-an-offer-still-pending
 
