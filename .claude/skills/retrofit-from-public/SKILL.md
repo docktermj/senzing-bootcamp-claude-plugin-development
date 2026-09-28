@@ -30,14 +30,18 @@ The work is done by [`retrofit.sh`](retrofit.sh) in this skill's directory.
    `"author": { "name": "Senzing" }` is the *company* (stays Senzing in both
    repos), the skill content mentions "Senzing" constantly, and the
    `docktermj/senzing-bootcamp-free-data` links are already `docktermj` — none of
-   those are touched. Because the rewrite is a clean inverse, **retrofit is a
-   no-op when the repos are already in sync** (the dev diff comes back empty).
+   those are touched. The script applies neither direction itself: it compares
+   public against a **baseline** that the last-propagated tag's own `propagate.sh`
+   has already forward-rewritten (see "How to run"), so **a public repo that
+   nobody edited reports every path `same`**, and a file carrying the dev slug does
+   not differ for that reason alone. The inverse is applied by whoever implements a
+   filed issue.
 
 2. **It never deletes.** Propagate can mirror-with-delete because dev is the
    source of truth. Retrofit can't: a new dev file under `plugins/` not yet
    propagated would be wrongly deleted. So retrofit is **add/update only** and
-   *reports* tracked dev files that are absent from public for you to remove by
-   hand — it never deletes them for you.
+   *reports* files the last propagation published that are absent from public, for
+   you to remove by hand — it never deletes them for you.
 
 3. **Governance is one-directional.** The public repo owns a governance layer
    (`.github/`, `LICENSE`, `.vscode/cspell.json`, `.gitignore`,
@@ -69,9 +73,7 @@ retrofit paths and nothing is ever deleted):
 
 1. Make sure the public repo is at `~/senzing.git/senzing-bootcamp-claude-plugin`
    (or note its path), checked out at the branch/commit whose changes you want.
-2. Ideally start from a **clean dev working tree** so the retrofit diff is easy
-   to review (the script warns if the retrofit paths are already dirty).
-3. Run from the dev repo:
+2. Run from the dev repo:
 
    ```console
    .claude/skills/retrofit-from-public/retrofit.sh
@@ -83,18 +85,44 @@ retrofit paths and nothing is ever deleted):
    .claude/skills/retrofit-from-public/retrofit.sh /path/to/public-repo
    ```
 
+**The baseline (#202).** Public is compared against what dev last propagated, not against
+dev's current tree, so work done in dev since then never reads as a public edit. By default
+the baseline is the **dev tag with the same name as public's newest tag**. The script
+extracts that tag with `git archive` into a temporary directory and runs **that tag's own**
+`propagate.sh` into a throwaway destination. The paths, the `docs/` exclusions and the slug
+rewrite are therefore the ones that release actually published. The report header names the
+tag and how it was chosen. The temporary directory is removed on every exit, and dev's
+working tree is never read for the comparison, so uncommitted dev edits do not change it.
+
+⚠️ **After a propagation is committed in public but before public is tagged**, public's
+newest tag is still the previous release, and the new release would read as public edits.
+Name the propagated dev tag instead:
+
+```console
+.claude/skills/retrofit-from-public/retrofit.sh --base <dev-tag> [/path/to/public-repo]
+```
+
 The script enforces safety guards and **aborts** if any fail: the destination
 isn't this dev repo, the source isn't a git repo, the source's `origin` isn't
 `Senzing/senzing-bootcamp-claude-plugin`, source and destination are the same
-directory, or `rsync` is missing.
+directory, or `rsync` or `python3` is missing (the tag's `propagate.sh` needs both, and
+its failure aborts the run).
+It also aborts, before printing any comparison, when there is **no usable baseline**:
+public has no tag, no dev tag has that name, `--base` names a tag that does not exist,
+the tag carries no `propagate.sh` (dev tags `0.3.5` and `0.3.6`), or that `propagate.sh`
+fails. Each message names the tag and suggests `--base`.
 
 ## After it runs
 
 ⛔ **(INV-312) (#54) The script writes nothing. It compares and reports; the output of this command is
 GitHub issues, not a modified working tree.**
 
-1. Report the script's summary: which propagated paths differ, which are absent in public, the
-   "In dev but not in public" list, and the public commits since the newest tag.
+1. Report the script's summary: the baseline tag it compared against and how it was chosen,
+   which propagated paths differ from that baseline, which are absent in public, the
+   "In the last propagation but not in public" list (files the baseline holds that public
+   lacks), and the public commits since the newest tag. A path differs only where public
+   changed after that propagation; dev work not yet propagated is `/propagate-to-public`'s
+   concern and does not appear.
 2. **Group the divergence into coherent changes**, one per thing a maintainer would decide about
    — a Dependabot bump, a workflow added downstream, a prose correction — not one per file.
 3. ⛔ **Search the tracker before filing each one.**

@@ -32,12 +32,21 @@ script ran under `set -euo pipefail`, and its listing pipeline carried `diff`'s 
 path differed, so the first differing path ended the run: the report only finished when there was
 nothing to report. No text assertion could see that, because every line of the report was present
 in the source; only running it shows where it stops. The fixtures are temporary git repos built
-here, never the real public clone, and the class skips where `bash`, `git` or `diff` is missing.
+here, never the real public clone, and the class skips where `bash`, `git`, `diff`, `tar`,
+`rsync` or `python3` is missing (the last three because every run now builds a baseline).
+
+⚠️ **`TheReportIsTakenAgainstTheLastPropagation` runs it too (#202).** The script compared public
+against dev's CURRENT tree, so every dev change since the last propagation, and every file carrying
+the dev slug, read as a public edit. It now compares against a baseline: the dev tag named like
+public's newest tag (or `--base`), run through that tag's own `propagate.sh`. The fixture's dev
+repo carries the real `propagate.sh`, so the forward rewrite and the `docs/` exclusions under test
+are the shipped ones, not a copy. Its negative controls point the comparison back at dev's tree
+and show the tests fail.
 
 Stdlib only; every file is read as text (INV-108), and the fixtures use `subprocess` and
 `tempfile`.
 
-Source issues: #54, #191.
+Source issues: #54, #191, #202.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -52,6 +61,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL = REPO_ROOT / ".claude" / "skills" / "retrofit-from-public" / "SKILL.md"
 SCRIPT = REPO_ROOT / ".claude" / "skills" / "retrofit-from-public" / "retrofit.sh"
+PROPAGATE_REL = ".claude/skills/propagate-to-public/propagate.sh"
+PROPAGATE = REPO_ROOT / PROPAGATE_REL
 
 #: Shell that writes into the destination tree. ⛔ Targets the ACT, not one command's name: the
 #: script used `rsync -a` and a Python block opening files for writing, and a later editor
@@ -157,8 +168,8 @@ class TheReasonForNotCopyingSurvives(unittest.TestCase):
 PROPAGATED = ("plugins", ".claude-plugin", "docs", "README.md")
 #: The listing line and the status capture the fix added. Each is a guard the negative
 #: controls below remove, so each must appear exactly once for the mutation to be meaningful.
-GUARDED_LISTING = """diff -rq "$src/$rel" "$here/$rel" 2>&1 | sed 's/^/      /' | head -40 || true"""
-GUARDED_STATUS = """diff -rq "$src/$rel" "$here/$rel" >/dev/null 2>&1 || status=$?"""
+GUARDED_LISTING = """diff -rq "$src/$rel" "$base/$rel" 2>&1 | sed 's/^/      /' | head -40 || true"""
+GUARDED_STATUS = """diff -rq "$src/$rel" "$base/$rel" >/dev/null 2>&1 || status=$?"""
 #: The escape the old summary printed literally, built from parts so no tool turns it into the
 #: character it names on the way into this file.
 LITERAL_ESCAPE = chr(92) + "u26d4"
@@ -167,7 +178,11 @@ STOP_SIGN = "⛔"
 CLAIMS_A_WRITE = re.compile(
     r"applied to the working tree|commit manually|before committing|will overlay|"
     r"retrofit applied", re.I)
-HAVE_TOOLS = all(shutil.which(tool) for tool in ("bash", "git", "diff"))
+HAVE_TOOLS = all(shutil.which(tool) for tool in ("bash", "git", "diff", "tar", "rsync", "python3"))
+#: The section #202 retitled: files the baseline holds that public lacks.
+MISSING_HEADING = "=== In the last propagation but not in public"
+DEV_SLUG = "docktermj/senzing-bootcamp-claude-plugin-development"
+PUBLIC_SLUG = "Senzing/senzing-bootcamp-claude-plugin"
 
 
 def _env(home):
@@ -198,25 +213,51 @@ def _script_text():
     return SCRIPT.read_bytes().replace(b"\r\n", b"\n").decode("utf-8")
 
 
+def _propagate_text():
+    """The shipped propagate.sh, LF-only, so the fixture's baseline is built by the real one."""
+    return PROPAGATE.read_bytes().replace(b"\r\n", b"\n").decode("utf-8")
+
+
 class Fixture:
     """A dev repo carrying a copy of the script, and a public repo whose origin passes the guard.
 
     The script finds the dev root from its own path (`$(dirname "${BASH_SOURCE[0]}")/../../..`),
-    so the copy sits at the same depth as the real one.
+    so the copy sits at the same depth as the real one. The dev repo also carries the shipped
+    `propagate.sh` and is tagged `public_tag`, so by default the baseline (#202) is exactly
+    `dev_files` as propagate publishes them.
+
+    * `dev_after` -- files committed in dev AFTER the tag (a None value deletes the file).
+    * `dev_dirty` -- files left uncommitted in the dev working tree.
+    * `dev_tags` -- ordered (tag, {files}) pairs: each commits its files, then tags. Replaces the
+      single `public_tag` tag on dev when given.
+    * `public_tag` -- the tag public carries; None leaves public untagged.
+    * `propagate` -- the propagate.sh text the tag carries; None leaves it out of the tag.
     """
 
-    def __init__(self, tmp, dev_files, public_files, public_origin=None, script=None):
+    def __init__(self, tmp, dev_files, public_files, public_origin=None, script=None,
+                 dev_after=None, dev_dirty=None, dev_tags=None, public_tag="v1.0.0",
+                 propagate=True):
         self.dev = Path(tmp) / "dev"
         self.public = Path(tmp) / "public"
+        self.tmpdir = Path(tmp) / "tmpdir"
+        self.tmpdir.mkdir(parents=True)
         self.script = self.dev / ".claude" / "skills" / "retrofit-from-public" / "retrofit.sh"
         _write(self.dev, "plugins/senzing-bootcamp/.keep", "")
         for rel, text in dev_files.items():
             _write(self.dev, rel, text)
+        if propagate is not None:
+            _write(self.dev, PROPAGATE_REL, _propagate_text() if propagate is True else propagate)
         _write(self.dev, self.script.relative_to(self.dev).as_posix(),
                script if script is not None else _script_text())
         _git(self.dev, "init", "-q")
         _git(self.dev, "add", "-A")
         _git(self.dev, "commit", "-q", "-m", "dev")
+        for tag, files in (dev_tags if dev_tags is not None else [(public_tag or "v1.0.0", {})]):
+            self._commit(files, "dev for " + tag)
+            _git(self.dev, "tag", tag)
+        self._commit(dev_after or {}, "dev work after the tag")
+        for rel, text in (dev_dirty or {}).items():
+            _write(self.dev, rel, text)
         self.public.mkdir(parents=True)
         _write(self.public, "plugins/senzing-bootcamp/.keep", "")
         for rel, text in public_files.items():
@@ -226,17 +267,37 @@ class Fixture:
              or "https://github.com/Senzing/senzing-bootcamp-claude-plugin.git")
         _git(self.public, "add", "-A")
         _git(self.public, "commit", "-q", "-m", "release")
-        _git(self.public, "tag", "v1.0.0")
+        if public_tag is not None:
+            _git(self.public, "tag", public_tag)
         # A commit after the tag, in a governance path the script never reads, so it shows in
         # the commit list without changing what the comparison sees.
         _write(self.public, ".github/workflows/ci.yml", "on: push\n")
         _git(self.public, "add", "-A")
         _git(self.public, "commit", "-q", "-m", "fix: a public-side edit after the tag")
 
-    def run(self):
+    def _commit(self, files, message):
+        if not files:
+            return
+        for rel, text in files.items():
+            if text is None:
+                (self.dev / rel).unlink()
+            else:
+                _write(self.dev, rel, text)
+        _git(self.dev, "add", "-A")
+        _git(self.dev, "commit", "-q", "-m", message)
+
+    def run(self, *args):
+        """Run the script; `args` go before the public path (e.g. `"--base", "v1.0.0"`).
+
+        TMPDIR points at a directory of the fixture's own, so a test can see whether the run's
+        temporary baseline was removed.
+        """
+        self.status_before = self.dev_status()
+        env = _env(self.dev.parent)
+        env["TMPDIR"] = str(self.tmpdir)
         done = subprocess.run(
-            ["bash", self.script.as_posix(), self.public.as_posix()],
-            capture_output=True, cwd=str(self.dev), env=_env(self.dev.parent))
+            ["bash", self.script.as_posix(), *args, self.public.as_posix()],
+            capture_output=True, cwd=str(self.dev), env=env)
         self.stdout = done.stdout.decode("utf-8", "replace")
         self.stderr = done.stderr.decode("utf-8", "replace")
         self.returncode = done.returncode
@@ -247,12 +308,16 @@ class Fixture:
                               check=True, capture_output=True,
                               env=_env(self.dev.parent)).stdout.decode("utf-8", "replace")
 
+    def leftovers(self):
+        """Whatever the run left in its temporary directory; a clean run leaves nothing."""
+        return sorted(os.listdir(str(self.tmpdir)))
+
 
 def _differing_pair():
     """Dev and public trees that differ in plugins/ (60 files, past the 40-line cut) and docs/.
 
-    README.md differs too; .claude-plugin/ is absent in public; one dev file under plugins/ has
-    no public counterpart.
+    README.md differs too; .claude-plugin/ is absent in public; one file the dev tag propagated
+    under plugins/ has no public counterpart.
     """
     dev, public = {}, {}
     for i in range(60):
@@ -316,14 +381,13 @@ class TheScriptReportsEveryPath(unittest.TestCase):
             [line.split()[-1] for line in _differs_only(fx)], ["plugins", "docs", "README.md"],
             "every differing propagated path must be reported, not only the first:\n" + fx.stdout)
         self.assertIn("(absent in public)      .claude-plugin", fx.stdout)
-        for heading in ("=== Public commits since the newest tag",
-                        "=== In dev but not in public"):
+        for heading in ("=== Public commits since the newest tag", MISSING_HEADING):
             with self.subTest(section=heading):
                 self.assertIn(heading, fx.stdout, "a section never printed:\n" + fx.stdout)
         self.assertIn("fix: a public-side edit after the tag", fx.stdout,
                       "the commit list is missing the public commit after the tag")
         self.assertIn("  plugins/senzing-bootcamp/dev-only.md", fx.stdout,
-                      "the in-dev-not-in-public list is missing the unpropagated dev file")
+                      "the last-propagation-not-in-public list is missing the file public lacks")
         self.assertRegex(fx.stdout, r"3 propagated path\(s\) differ\. .* NOTHING WAS WRITTEN\.")
 
     def test_the_summary_shows_the_stop_sign(self):
@@ -359,7 +423,7 @@ class TheScriptReportsEveryPath(unittest.TestCase):
                          "the uncomparable path is not reported as ERROR:\n" + fx.stdout)
         self.assertIn("  DIFFERS                 README.md", fx.stdout,
                       "the path after the ERROR was never compared")
-        for text in ("=== Public commits since the newest tag", "=== In dev but not in public",
+        for text in ("=== Public commits since the newest tag", MISSING_HEADING,
                      "NOTHING WAS WRITTEN", "could not be compared"):
             with self.subTest(text=text):
                 self.assertIn(text, fx.stdout, "the run stopped at the ERROR:\n" + fx.stdout)
@@ -391,6 +455,216 @@ class TheScriptReportsEveryPath(unittest.TestCase):
                 self.assertNotEqual(fx.returncode, 0)
                 self.assertNotIn("NOTHING WAS WRITTEN", fx.stdout,
                                  "the fixture no longer exercises the early exit #191 fixed")
+
+
+# --- #202: the report is taken against the last propagation ------------------------------------ #
+
+#: The report_path comparison lines, and the deletion section's file source. Each is what a
+#: negative control below points back at dev's tree, so each must appear as counted.
+BASE_OPERAND = '"$base/$rel"'
+BASELINE_FILES = 'git -C "$base" ls-files -z --others'
+#: What pointing the deletion section back at dev looks like: dev's tracked files.
+DEV_FILES = 'git -C "$here" ls-files -z'
+#: A copy of propagate's logic inside retrofit.sh, which INV-300 and the spec rule out.
+COPIED_PROPAGATE_LOGIC = re.compile(
+    r"\.replace\(|\"name\": \"docktermj\"|development\.md|FAMILY_WORKFLOW\.md|"
+    r"\bsed\b[^\n]*docktermj", re.I)
+
+
+def _propagation_scenario():
+    """The #202 acceptance fixture: (dev at the tag, public, dev after the tag, dev uncommitted).
+
+    Public is what the tag's propagate.sh publishes -- written out BY HAND here, so the
+    expectation does not come from the code under test -- plus one edit under plugins/. Dev
+    then edits one file and adds one after the tag, and leaves one uncommitted edit.
+    """
+    dev = {
+        "plugins/senzing-bootcamp/a.md": "a\n",
+        "plugins/senzing-bootcamp/b.md": "b\n",
+        "plugins/senzing-bootcamp/slug.md": "See https://github.com/%s\n" % DEV_SLUG,
+        ".claude-plugin/marketplace.json":
+            '{\n  "owner": { "name": "docktermj" },\n  "source": "%s"\n}\n' % DEV_SLUG,
+        "docs/guide.md": "guide\n",
+        "docs/development.md": "maintainer only -- propagate.sh excludes this\n",
+        "README.md": "Install from %s\n" % DEV_SLUG,
+    }
+    public = {
+        "plugins/senzing-bootcamp/a.md": "a, edited in public\n",
+        "plugins/senzing-bootcamp/b.md": "b\n",
+        "plugins/senzing-bootcamp/slug.md": "See https://github.com/%s\n" % PUBLIC_SLUG,
+        ".claude-plugin/marketplace.json":
+            '{\n  "owner": { "name": "Senzing" },\n  "source": "%s"\n}\n' % PUBLIC_SLUG,
+        "docs/guide.md": "guide\n",
+        "README.md": "Install from %s\n" % PUBLIC_SLUG,
+    }
+    after = {"plugins/senzing-bootcamp/b.md": "b, changed in dev after the tag\n",
+             "plugins/senzing-bootcamp/new.md": "added in dev after the tag\n"}
+    dirty = {"docs/guide.md": "an uncommitted dev edit\n"}
+    return dev, public, after, dirty
+
+
+def _missing_section(fx):
+    """The lines listed under "In the last propagation but not in public"."""
+    lines = fx.stdout.splitlines()
+    start = next(i for i, line in enumerate(lines) if line.startswith(MISSING_HEADING))
+    listed = []
+    for line in lines[start + 1:]:
+        if not line.strip():
+            break
+        listed.append(line.strip())
+    return listed
+
+
+def _script_with(old, new, count):
+    text = _script_text()
+    if text.count(old) != count:
+        raise AssertionError("retrofit.sh carries %r %d time(s), not %d; the negative control "
+                             "no longer mutates what it names" % (old, text.count(old), count))
+    return text.replace(old, new)
+
+
+@unittest.skipUnless(HAVE_TOOLS, "bash, git, diff, tar, rsync and python3 are needed")
+class TheReportIsTakenAgainstTheLastPropagation(unittest.TestCase):
+    """#202: public is compared against the baseline tag as its own propagate.sh publishes it."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        dev, public, after, dirty = _propagation_scenario()
+        cls.fx = Fixture(os.path.join(cls._tmp.name, "scenario"), dev, public,
+                         dev_after=after, dev_dirty=dirty).run()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
+    def _tmpdir(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        return tmp.name
+
+    def _report(self, fx):
+        return "\nstdout:\n%s\nstderr:\n%s" % (fx.stdout, fx.stderr)
+
+    def test_only_the_public_edit_is_reported(self):
+        fx = self.fx
+        self.assertEqual(fx.returncode, 0, self._report(fx))
+        self.assertEqual([line.split()[-1] for line in _differs_only(fx)], ["plugins"],
+                         "only plugins/ changed in public since the tag" + self._report(fx))
+        listing = _listing_after(fx, "plugins")
+        self.assertEqual(len(listing), 1, "plugins/ must list only the public edit" + self._report(fx))
+        self.assertIn("plugins/senzing-bootcamp/a.md", listing[0])
+        for rel in (".claude-plugin", "docs", "README.md"):
+            with self.subTest(path=rel):
+                self.assertIn("  same                    " + rel, fx.stdout, self._report(fx))
+
+    def test_dev_work_after_the_tag_is_not_reported(self):
+        for name in ("b.md", "new.md", "an uncommitted dev edit"):
+            with self.subTest(file=name):
+                self.assertNotIn(name, self.fx.stdout,
+                                 "dev work since the tag reads as a public edit" + self._report(self.fx))
+
+    def test_a_slug_only_difference_is_not_reported(self):
+        """slug.md and marketplace.json differ from dev only by the forward rewrite.
+
+        README.md does too; it has a path line of its own, which the first test asserts `same`.
+        """
+        for name in ("slug.md", "marketplace.json"):
+            with self.subTest(file=name):
+                self.assertNotIn(name, self.fx.stdout, self._report(self.fx))
+
+    def test_the_header_names_the_baseline_and_how_it_was_chosen(self):
+        self.assertRegex(self.fx.stdout, r"(?m)^Baseline: +dev tag v1\.0\.0 \(public's newest tag\)",
+                         self._report(self.fx))
+
+    def test_the_run_leaves_dev_unchanged_and_removes_its_temp_directory(self):
+        """INV-312: the fixture's dev tree is dirty on purpose, so "unchanged" is not "clean"."""
+        self.assertNotEqual(self.fx.status_before, "", "the fixture lost its uncommitted edit")
+        self.assertEqual(self.fx.dev_status(), self.fx.status_before,
+                         "the run changed dev's working tree (INV-312)")
+        self.assertEqual(self.fx.leftovers(), [], "the run left its temporary baseline behind")
+
+    def test_a_file_public_deleted_is_listed_and_a_dev_addition_is_not(self):
+        dev, public, after, dirty = _propagation_scenario()
+        del public["plugins/senzing-bootcamp/b.md"]
+        fx = Fixture(self._tmpdir(), dev, public, dev_after=after, dev_dirty=dirty).run()
+        listed = _missing_section(fx)
+        self.assertIn("plugins/senzing-bootcamp/b.md", listed, self._report(fx))
+        for rel in ("plugins/senzing-bootcamp/new.md", "docs/development.md"):
+            with self.subTest(path=rel):
+                self.assertNotIn(rel, listed, "the baseline never published it" + self._report(fx))
+
+    def test_base_overrides_public_s_newest_tag(self):
+        """Committed in public, not yet tagged: public still carries v0.9.0 but holds v1.0.0."""
+        dev, public, _, _ = _propagation_scenario()
+        public["plugins/senzing-bootcamp/a.md"] = "a, released in v1.0.0\n"
+        tags = [("v0.9.0", {}), ("v1.0.0", {"plugins/senzing-bootcamp/a.md": "a, released in v1.0.0\n"})]
+        fx = Fixture(self._tmpdir(), dev, public, dev_tags=tags, public_tag="v0.9.0").run()
+        self.assertRegex(fx.stdout, r"(?m)^Baseline: +dev tag v0\.9\.0 \(public's newest tag\)")
+        self.assertEqual([line.split()[-1] for line in _differs_only(fx)], ["plugins"],
+                         "by default the new release reads as a public edit" + self._report(fx))
+        fx = fx.run("--base", "v1.0.0")
+        self.assertEqual(fx.returncode, 0, self._report(fx))
+        self.assertRegex(fx.stdout, r"(?m)^Baseline: +dev tag v1\.0\.0 \(named by --base\)")
+        self.assertEqual(_differs_only(fx), [], "--base v1.0.0 was not the baseline" + self._report(fx))
+        self.assertIn("0 propagated path(s) differ.", fx.stdout)
+
+    def _assert_aborts_before_printing(self, fx, *named):
+        self.assertNotEqual(fx.returncode, 0, "a run with no baseline must fail" + self._report(fx))
+        self.assertEqual(fx.stdout, "", "a no-baseline abort printed a report" + self._report(fx))
+        for text in named + ("--base",):
+            with self.subTest(names=text):
+                self.assertIn(text, fx.stderr)
+        self.assertEqual(fx.leftovers(), [], "the abort left its temporary directory behind")
+        self.assertEqual(fx.dev_status(), fx.status_before, "the abort changed dev (INV-312)")
+
+    def test_public_with_no_tag_aborts(self):
+        fx = Fixture(self._tmpdir(), *_identical_pair(), public_tag=None).run()
+        self._assert_aborts_before_printing(fx, "has no tag")
+
+    def test_no_dev_tag_of_that_name_aborts(self):
+        fx = Fixture(self._tmpdir(), *_identical_pair(), dev_tags=[("v0.1.0", {})]).run()
+        self._assert_aborts_before_printing(fx, "'v1.0.0'")
+
+    def test_a_tag_without_propagate_aborts(self):
+        """Dev tags 0.3.5 and 0.3.6 predate propagate.sh."""
+        fx = Fixture(self._tmpdir(), *_identical_pair(), propagate=None).run()
+        self._assert_aborts_before_printing(fx, "'v1.0.0'", "propagate.sh")
+
+    def test_base_naming_no_tag_aborts(self):
+        fx = Fixture(self._tmpdir(), *_identical_pair()).run("--base", "v9.9.9")
+        self._assert_aborts_before_printing(fx, "'v9.9.9'")
+
+    def test_a_failing_propagate_aborts_with_its_stderr(self):
+        """The trap's case: the temp directory exists when this abort happens."""
+        broken = "#!/usr/bin/env bash\necho 'normal output'\necho 'propagate broke' >&2\nexit 3\n"
+        fx = Fixture(self._tmpdir(), *_identical_pair(), propagate=broken).run()
+        self._assert_aborts_before_printing(fx, "'v1.0.0'", "propagate broke")
+        self.assertNotIn("normal output", fx.stderr)
+
+    def test_retrofit_carries_no_copy_of_propagate_s_logic(self):
+        """INV-300: the rewrite and the docs/ exclusions come from the tag's propagate.sh."""
+        hit = COPIED_PROPAGATE_LOGIC.search(_script_text())
+        self.assertIsNone(hit, "retrofit.sh carries a copy of propagate.sh's logic (%r)"
+                               % (hit.group(0) if hit else ""))
+
+    def test_negative_control_comparing_against_dev_reports_dev_work(self):
+        dev, public, after, dirty = _propagation_scenario()
+        fx = Fixture(self._tmpdir(), dev, public, dev_after=after, dev_dirty=dirty,
+                     script=_script_with(BASE_OPERAND, '"$here/$rel"', 2)).run()
+        self.assertNotEqual([line.split()[-1] for line in _differs_only(fx)], ["plugins"],
+                            "pointed at dev, the report still showed only the public edit; the "
+                            "tests above would not catch the regression #202 fixed" + self._report(fx))
+        self.assertIn("new.md", fx.stdout, self._report(fx))
+
+    def test_negative_control_listing_dev_files_reports_a_dev_addition(self):
+        dev, public, after, dirty = _propagation_scenario()
+        del public["plugins/senzing-bootcamp/b.md"]
+        fx = Fixture(self._tmpdir(), dev, public, dev_after=after, dev_dirty=dirty,
+                     script=_script_with(BASELINE_FILES, DEV_FILES, 1)).run()
+        self.assertIn("plugins/senzing-bootcamp/new.md", _missing_section(fx),
+                      "pointed at dev, the deletion section did not list the dev addition" +
+                      self._report(fx))
 
 
 if __name__ == "__main__":
