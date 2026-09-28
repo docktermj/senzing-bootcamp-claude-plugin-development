@@ -108,7 +108,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     tree and show the report then lists dev work. By hand, the same mutation of the real script
     (then restored) gave 12 failures, subtests counted: all five comparison tests fail, and the
     header, cleanup, abort and no-copy tests pass, as they should.
-- **Commit:** uncommitted
+- **Commit:** dc5b934
 
 ## retrofit-report-runs-past-the-first-differing-path
 
