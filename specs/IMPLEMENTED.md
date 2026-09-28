@@ -111,7 +111,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     design, per the spec).
   - Negative controls: stripping the stamp from each of the four sites, or dropping the
     docs-index timestamp from the Module 5 stamp, fails the matching test. Restored, OK.
-- **Commit:** uncommitted
+- **Commit:** d84f5d5
 
 ## the-empty-schema-example-is-get-stats
 
