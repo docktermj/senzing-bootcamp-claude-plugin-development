@@ -43,6 +43,76 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## three-mcp-citations-are-restamped
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #200)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`,
+  `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`,
+  `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`,
+  `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/SKILL.md`,
+  `tests/test_sampling_and_validation_routing.py`, `tests/test_truthset_acquisition_call.py`,
+  `tests/test_quality_score_and_preview_prereq.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28. Every claim
+  the three stamps cover was re-read on this day.
+  - `reporting_guide(topic='reports')` returns `data_mart_framing.warnings[0]`: "This is NOT a
+    Senzing product and NOT part of the Senzing SDK. It does not exist out of the box. The sz_dm_
+    prefix makes it LOOK like an official Senzing product; it is not — the prefix is only used in
+    this example." The bare response has no `schema` key. With `language='python', scale='poc'`
+    it does carry a `schema.description` holding the old quote, so the spec's premise holds only
+    for the bare call; `warnings[0]` is present in both forms, so the chosen fix stands.
+  - `search_docs(query='what features to map', category='data_mapping')` and three narrower
+    `data_mapping` queries return every row of the Module 5 table: "NAME (person) | Personal
+    names" with `NAME_FIRST` / `NAME_LAST`, "NAME (organization) | Organization legal or trade
+    name" with `NAME_ORG`, "DOB | Person date of birth", "NATIONALITY | Person nationality",
+    "CITIZENSHIP | Person citizenship", "PLACE_OF_BIRTH | Person place of birth", the section
+    headings "Feature: REGISTRATION_DATE (organizations)" and "Feature: REGISTRATION_COUNTRY
+    (organizations)", ADDRESS with both a (person) and an (organization) row, untyped "PHONE |
+    Telephone number" and "EMAIL | Email address", and identifiers split across both types.
+  - `get_sample_data(dataset='list')` returns four `available_datasets` (`las-vegas`, `london`,
+    `moscow`, `truthset`), all `"available":true`.
+  - `get_sample_data(dataset='truthset', source='list')` returns `available_sources` CUSTOMERS
+    (`record_count` 120), REFERENCE (22) and WATCHLIST (17), `total_available` 159. The record-count
+    sentence is therefore kept.
+- **Summary:** three accurate citations carried a 1.32.2 stamp although later sweeps had re-read
+  them. Only their provenance moves; no guidance changes.
+  - **Module 6 Phase D:** the steer-away paragraph now quotes
+    `data_mart_framing.warnings[0]` of the `topic='reports'` response, whole and word for word,
+    names that field, and no longer calls it "schema notes". Stamped 1.37.14, 2026-09-28. The
+    `Validation:` patterns sentence is unchanged.
+  - **Module 5 type-applicability table:** re-stamped "MCP server 1.37.14, docs indexed
+    2026-09-28 03:23 UTC, 2026-09-28" and the paragraph rewrapped.
+  - **Module 3b:** the 1.1 note in `phase1-visualization.md` and its copy in `SKILL.md` are
+    re-stamped 1.37.14, 2026-09-28. `get_sample_data` carries no docs-index timestamp, so the stamp
+    is version plus date only. The other stamps in those files (the 1.32.9 note and the 1.32.2
+    line further down `phase1-visualization.md`) were not re-read and stay as written (INV-191).
+  - **Unchanged (out of scope):** every other 1.32.2 stamp in the repo.
+- **Approach:** raced (Phase 5b). Two implementations were built against a rubric written first.
+  The winner is A, "restamp in place": both met every criterion, and A did only what the spec
+  asks, where B added a shared stamp-matcher module, so fit and blast radius favored A at about a
+  quarter of the size. The comparison is issue comment 3. Applied as is: the re-read on the
+  branch matched every stamp the patch wrote.
+- **Establishes no invariant, and defers none.** No ⛔ line is added or rewrapped. The change
+  moves three provenance stamps and one quote to the field that carries it.
+- **Tests:**
+  - `tests/test_sampling_and_validation_routing.py`
+    `test_the_disclosure_is_quoted_from_the_tool_with_provenance` and
+    `tests/test_truthset_acquisition_call.py`
+    `test_the_verification_is_dated_and_names_the_server_version` accept any dated server stamp
+    ("verified on MCP server X.Y.Z, YYYY-MM-DD") in place of the literal `1.32.2, 2026-07-30`,
+    as the spec decided. The truthset regex is anchored on "verified on", so the bold 1.32.9 stamp
+    elsewhere in `phase1-visualization.md` cannot satisfy it.
+  - **Beyond the spec:** `tests/test_quality_score_and_preview_prereq.py`
+    `test_the_provenance_is_recorded` also pinned `1.32.2, 2026-07-30` on the Module 5 table, and
+    the spec's required re-stamp breaks it. It is relaxed under the same maintainer decision, and
+    it requires the docs-index timestamp ("docs indexed YYYY-MM-DD HH:MM UTC"), the spec's own
+    form for a `search_docs` stamp.
+  - The relaxed regexes prove a stamp is present and well formed, not that it is fresh (by
+    design, per the spec).
+  - Negative controls: stripping the stamp from each of the four sites, or dropping the
+    docs-index timestamp from the Module 5 stamp, fails the matching test. Restored, OK.
+- **Commit:** d84f5d5
+
 ## the-empty-schema-example-is-get-stats
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #198)

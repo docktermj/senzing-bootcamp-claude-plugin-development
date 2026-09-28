@@ -95,7 +95,13 @@ class ApplicabilityComesFromTheSpecification(unittest.TestCase):
         self.assertRegex(text, r"(?i)deliberately partial")
 
     def test_the_provenance_is_recorded(self):
-        self.assertRegex(flat(), r"(?i)Verified against MCP server 1\.32\.2, 2026-07-30")
+        # A dated search_docs stamp: server version, docs-index timestamp and the
+        # verification date, in the repo's existing form (#200).
+        self.assertRegex(
+            flat(),
+            r"(?i)Verified against MCP server \d+\.\d+\.\d+, docs indexed "
+            r"\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC, \d{4}-\d{2}-\d{2}",
+        )
 
     def test_type_neutral_features_are_not_excluded(self):
         """Over-correcting would drop ADDRESS/PHONE/EMAIL from every denominator."""
