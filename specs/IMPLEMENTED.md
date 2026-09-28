@@ -43,6 +43,110 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## upstream-vocabulary-is-two-closed-sets-with-a-mapping
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #223)
+- **Files changed:**
+  `.claude/skills/feedback-to-issues/SKILL.md`,
+  `.claude/skills/feedback-to-issues/issue-template.md`,
+  `.claude/skills/delegate-to-mcp-server/issue-template.md`,
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md`,
+  `tests/test_blocked_submission_has_a_vocabulary_value.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.14, 2026-09-28, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact). The change is this repo's own `Upstream:` vocabulary. The one
+  server-facing spelling it adds, a feature send written `sent <date> via submit_feedback
+  (feature, anonymous)`, matches the live `submit_feedback` description: categories
+  `bug/feature/question/general` (plus `license_request`), and "Submissions are anonymous".
+  No absence claim is made. `submit_feedback` was not called, and nothing was sent upstream.
+- **Summary:** INV-281 was written as if there were one `Upstream:` vocabulary. There are two,
+  the entry field and the issue field, and they had no written mapping. Readers and the guard had
+  drifted: Step 8.1 looked for the issue-side `sent <date>` on an entry, called `submission
+  blocked` "the one" still-owed outcome, and never classified `submission failed:`. The delegate
+  template's line was invisible to the guard, and `.claude/commands/` was never scanned.
+  - **One owner (INV-281, INV-300).** `feedback-to-issues/SKILL.md` Step 8.1 now declares
+    itself the canonical statement of both closed sets and the mapping. It gives them as two
+    tables: the rev-2 mapping, whose first column is the entry set, and an issue-value table
+    that classifies each of the 8 issue values as ending the obligation or keeping it. Step 8.1
+    reads the entry's `submitted YYYY-MM-DD` as the already-sent case. "The one outcome … STILL
+    OWED" becomes "an outcome", and `submission failed:` is classified as still owed. Step 8.5
+    and the summary record issue-field values.
+  - **Templates.** Both issue templates state the full 8-value issue set and point to Step 8.1.
+    The delegate template spells a feature send ``sent <date> via `submit_feedback` (`feature`,
+    anonymous)``. The "forbids `submit_feedback`" rationale is dropped.
+  - **`feedback.md`.** Step 3c step 5 states the entry set as a full pipe list, since the
+    criterion's exact-set rule covers `:249`. "The other three" becomes "any other value", and
+    the `/dry-run` rationale now reads "never sends on a Bootcamper's in-character yes". The entry
+    values are unchanged.
+  - **Unchanged, as scoped:** the loop's "not yet sent — needs maintainer approval" wording
+    (now a legal issue value), `dry-run` phase 3, graduation, and `specs/INVARIANTS.md`.
+  - **#153's ledger block was edited, under #223's acceptance criterion.** The first criterion
+    requires #153's `PROPOSED AMENDMENT to INV-281` block
+    (`dry-run-drafts-findings-into-the-ledger-and-files-issues`) to read superseded. Its header
+    now says `superseded by the #223 amendment block (not applied)` with both "awaiting" markers
+    dropped, and one paragraph says why. Nothing else in that entry changed. The rev-2 spec
+    weighed INV-307 and recorded that it "keeps `IMPLEMENTED.md` editable". The run's lead
+    judged this edit in scope.
+    `pending_invariants.py list` now shows one `AMENDS INV-281`, this entry's.
+- **Approach:** raced (Phase 5b), two approaches, judged against a rubric written first (issue
+  comment 3). **Winner B, one prose owner parsed by the guard**, over A (the sets held as data in
+  the test). Both met the criteria. B gives the vocabulary one owner in the prose that
+  maintainers read, and the other sites point to it. The patch applied cleanly with
+  `git apply --3way` over `ae02783`. **Adaptations:** the stale-rationale regex is now one
+  module constant, so its negative control tests the regex the guard uses rather than a copy. The
+  owner-drop control now requires **both** issue templates to fail, not any one.
+  ⚠️ **Tension with INV-300, recorded, not resolved.** INV-300 says a pointing site carries no
+  second copy of the rule it points at. The templates point to Step 8.1 and still state the full
+  issue set, because the second criterion requires every enumeration to equal its field's full
+  set. The guard holds each copy to the owner exactly, so the copies cannot drift unseen.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-281 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+    - ⛔ **This is the canonical statement of both closed `Upstream:` sets and the mapping between them.** — in `.claude/skills/feedback-to-issues/SKILL.md`
+    - ⛔ **`submission blocked: <reason>` is an outcome where the report is STILL OWED, and it must not be triaged like a decline.** — in `.claude/skills/feedback-to-issues/SKILL.md`
+
+  ⚠️ **Why this is an amendment and not a new invariant.** INV-281's rule is unchanged: a closed
+  `Upstream:` vocabulary, stated the same at every site, with a consented-but-blocked send
+  distinct from a declined one. What changes is its reading: there are two closed sets, one per
+  field, with a written mapping, and one rationale sentence (#153's drafted correction, folded in
+  here; #153's block is marked superseded). Amending a registered invariant is the maintainer's
+  sign-off alone, so `specs/INVARIANTS.md` is untouched. The block carries both markers for the
+  reason #153's block gives: `pending_invariants.py` queues it by `PROPOSED AMENDMENT to INV-281`,
+  and `tests/test_review_invariants_queue.py` counts it by "NOT minted". Applying the note
+  resolves the block: mark the bullet `applied YYYY-MM-DD` and drop both "awaiting" markers.
+  Enforced by `tests/test_blocked_submission_has_a_vocabulary_value.py`.
+
+  The drafted wording, a dated correction note appended to INV-281, with its rule and every other
+  sentence unchanged:
+
+  **INV-281** — (⛔ **Dated correction, <YYYY-MM-DD> (#223, folding in #153's drafted amendment): the rule now names two closed sets; the blocked-versus-declined distinction is unchanged.** As registered, this entry spoke of *one* vocabulary. There are **two**, and each is closed. The **entry field** (a bootcamper's feedback entry) is `not applicable | offer pending | offered, declined | submitted YYYY-MM-DD | submission failed: <reason> | submission blocked: <reason>`. The **issue field** (a filed issue's `Upstream:` line) is `not applicable | already sent <date> (per the entry) | declined by the bootcamper (per the entry) | sent <date> via submit_feedback (<category>, anonymous) | declined by the maintainer | submission failed: <reason> | submission blocked: <reason> | not yet sent — needs maintainer approval`. *"Every site MUST state the same values"* means every site that enumerates a field states that field's full set, nothing missing and nothing extra, and every value written into a field is a member of its set. **Mapping:** `not applicable`, `submitted` and `offered, declined` end the obligation and carry over as `not applicable`, `already sent <date> (per the entry)` and `declined by the bootcamper (per the entry)`. `offer pending`, `submission blocked:` and `submission failed:` keep it. Put to the maintainer, each becomes `sent …`, `declined by the maintainer`, or `submission failed:` when that send errors. When no maintainer is asked, `offer pending` becomes `not yet sent — needs maintainer approval` and the other two carry over unchanged, so the record of consent survives. `offer pending` itself is never written on an issue (#167). **One rationale sentence is corrected (#153):** *"A `/dry-run` forbids calling `submit_feedback`, so a Bootcamper's yes cannot be acted on"* is superseded by *"A `/dry-run` never sends on a Bootcamper's in-character yes, so that yes cannot be acted on."* `/dry-run` now permits `submit_feedback` only for a certain `mcp-server` finding, on the maintainer's out-of-character yes for each message (INV-314).)
+
+  *(the date is a placeholder deliberately: it is the day the maintainer approves the wording at
+  `/review-invariants`, not the day of this run.)* *(written as NNN deliberately: no new id is
+  drafted, because this amends INV-281 in place and a literal new id would cite an invariant
+  that does not exist and turn `citations.py verify` red. If the maintainer prefers a superseding
+  invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
+  rather than trusting a number written here.)*
+- **Tests:** `tests/test_blocked_submission_has_a_vocabulary_value.py` also scans
+  `.claude/commands/`. It parses both sets from the owner's tables, and a placeholder matches any
+  text in its position. An enumeration is found by the old sibling pairs, or by a pipe list with
+  at least two values from either set; the second finder reaches the delegate line. New classes:
+  - `TheOwnerStatesBothClosedSets`: both sets parse (INV-265), with no duplicates. The mapping
+    uses only issue values and covers them all. Every row is classified, and the two tables
+    agree. INV-281's distinction is pinned. Step 8.1 reads `submitted`.
+  - `EveryEnumerationEqualsOneClosedSet`: exact-set equality, naming the site plus
+    missing/extra values; both sides found; every issue template found, delegate included (INV-265).
+  - `EveryWrittenValueIsAMember`: prose values written into a labeled `Upstream:` field. Found
+    under each of `plugins/`, `.claude/skills/` and `.claude/commands/` (INV-265).
+  - `NoSiteSaysDryRunForbidsTheSend`.
+  - `TheNegativeControlsForTheClosedSets`, permanent in the suite. Each value is dropped in turn
+    from each of the 4 enumerations, and each drop yields exactly one problem naming its
+    `path:line`. An extra value fails and is named. A value dropped from the owner fails both
+    issue templates. An out-of-set value written in the loop command's prose fails once, naming
+    `unattended-issue-loop.md`. The stale-rationale regex matches the old `feedback.md`
+    sentence.
+
+  The race also restored each file from `main` in turn. Each old file failed the guard,
+  including the delegate line the old guard never saw.
+- **Commit:** uncommitted
+
 ## every-phase-b-subset-choice-writes-load-subset
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #237)
@@ -2251,7 +2355,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   outward record shown and approved on its own), INV-307 (nothing new lands in `specs/`) and
   INV-135 (`license_request` carries personal details) at the `/dry-run` surfaces, which those
   invariants already govern. The new guard enforces them there.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-281 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-281 — superseded by the #223 amendment block (not applied).** The rules already shipping:
     - ⛔ **Nothing leaves the machine except two outward acts, each under INV-314's gate: show the maintainer the exact text and get a yes, given out of character, one record at a time.** — in `.claude/skills/dry-run/SKILL.md`
     - ⛔ **Graduation Step 0 will offer to forward `mcp-server`-routed findings and send on a yes, and the yes it gets is given in character — the Bootcamper's, never the maintainer's (INV-314's scope note). Present the offer anyway; do not send.** — in `.claude/skills/dry-run/phase3-conversational.md`
 
@@ -2270,6 +2374,10 @@ entries at once. Two things a reader should know about the hashes now recorded:
   block. Mark the bullet `applied YYYY-MM-DD` and drop both "awaiting" markers, since the helper
   keeps a block queued while either one remains. Enforced by
   `tests/test_blocked_submission_has_a_vocabulary_value.py`.
+  ⚠️ **Superseded by #223, not applied.** #223's ledger entry folds this correction, word for
+  word, into its own `PROPOSED AMENDMENT to INV-281` block, so the review queue holds one
+  amendment to INV-281 rather than two that rewrite the same sentence. Both "awaiting" markers
+  are dropped here for that reason; the wording below is kept as the record of what #153 drafted.
 
   The drafted wording, a dated correction note appended to INV-281, with its rule and every other
   sentence unchanged:

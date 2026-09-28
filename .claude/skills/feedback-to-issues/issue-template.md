@@ -45,7 +45,7 @@ cause. For a feature: what to add and where it fits the module/flow.>
 - Feedback: `<feedback file path>` → "<entry title>" (<date>, Module <n>; `Source: <bootcamper-reported | self-observed (assistant retrospective)>`)
 - Priority: <High | Medium | Low | pending>
 - MCP re-check: <server version + date, and the outcome — still reproduces | fixed upstream | server now contradicts the plugin | server does not cover it | n/a (no Senzing fact) | unverified (MCP unreachable). Name the tools called. For `server does not cover it` — or any wording asserting the server lacks something — ALSO add `owner-checked: <the route that would CARRY this fact> — <what it returned>`.>
-- Upstream: <not applicable | already sent <date> (per the entry) | sent <date> via `submit_feedback` (`<category>`, anonymous) | declined by the maintainer | submission blocked: <reason> — consented but not sendable (e.g. a `/dry-run`, which forbids `submit_feedback`); the report is STILL OWED>
+- Upstream: <not applicable | already sent <date> (per the entry) | declined by the bootcamper (per the entry) | sent <date> via `submit_feedback` (`<category>`, anonymous) | declined by the maintainer | submission failed: <reason> | submission blocked: <reason> | not yet sent — needs maintainer approval> <the value `SKILL.md` Step 8.1 maps the entry's value to; that step owns both sets (INV-281, INV-300)>
 - Related issues: <#<n>, or "none"> <a closed one counts: it records a decision this may be reopening>
 - Invariants: <the INV-NNN conditions this must maintain — `specs/INVARIANTS.md` is live and still governs, whatever the archive's status>
 ```
