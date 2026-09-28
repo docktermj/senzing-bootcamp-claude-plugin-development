@@ -1288,6 +1288,16 @@ On Java, a reused reader is a shared class, whose filename rule is in
 `../bootcamp-onboarding/ground-rules.md` → "File placement" (INV-237, INV-300); do not restate it
 here.
 
+**Apply a retype decision from Phase 1.** If `docs/mapping/{source_name}_mapper.md` already has a
+`## Record Type Check` section whose decision is **Retype**, the transform applies that section's
+rule as written: the records it names are emitted with `RECORD_TYPE` `ORGANIZATION`, their name is
+mapped as `NAME_ORG` or `NAME_FULL` and never as parsed person fields, and the listed exceptions stay
+`PERSON`. The check and the rule's wording are Phase 1 Step 6's "Type/name check"
+(`phase1-quality-assessment.md`), the canonical statement; do not restate them here (INV-300). The
+source now carries both types, so if `mapping_workflow` step 3 rejects its name declarations, that
+is the step-10 rejection above and its fix (INV-136). With **Keep as-is**, or no such section,
+change nothing.
+
 **Checkpoint:** write step 13.
 
 ### 14. Test
@@ -1441,7 +1451,18 @@ If issues are found, go back to the relevant step. Retest after changes.
   ## Quality Notes
 
   - [Quality observations specific to this source]
+
+  ## Record Type Check
+
+  - **Candidates:** [N] of [M] PERSON-typed records (suffix heuristic, Module 5 Phase 1 step 6)
+  - [Decision, and its rule or cost, as Phase 1 wrote them]
   ```
+
+  **Keep the `## Record Type Check` section Phase 1 wrote.** Phase 1 Step 6's type/name check
+  creates this file with that section when a source has candidates. Write the rest of the file
+  around it and leave the section as written. When Phase 1 wrote none, the source had no
+  candidates: write the section with `0 of [M]` and the decision `none needed`. The section's
+  content is Phase 1 Step 6's "Type/name check", the canonical statement (INV-300).
 
 **Checkpoint:** write step 18.
 
