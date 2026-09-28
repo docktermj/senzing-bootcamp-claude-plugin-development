@@ -43,6 +43,66 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## json-data-is-no-longer-get-record-only
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #193)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`,
+  `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`,
+  `tests/test_partial_row_and_schema_coverage.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28.
+  `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_JSON_DATA', language='python')`
+  lists `get_entity_by_entity_id`, `get_entity_by_record_id`, `find_network_*`, `why_*`,
+  `search_by_attributes`, `why_search` and `find_path_*` alongside `get_record` in `applies_to`,
+  with `response_paths: ["RESOLVED_ENTITY.RECORDS[].JSON_DATA"]`. Only the composite
+  `SZ_RECORD_DEFAULT_FLAGS` is `get_record`-only.
+  `get_sdk_reference(topic='response_schemas', filter='get_entity_by_entity_id', language='python')`
+  gates `RECORDS[].JSON_DATA` (source values under `JSON_DATA.FEATURES[]`) on that flag,
+  `RECORDS[].FEATURES.<TYPE>[].ATTRIBUTES.*` and `.FEAT_DESC` on
+  `SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS`, `RECORDS[].FEATURE_IDS[]` on
+  `SZ_ENTITY_INCLUDE_RECORD_FEATURES`, and `RECORDS[].UNMAPPED_DATA` on
+  `SZ_ENTITY_INCLUDE_RECORD_UNMAPPED_DATA`. So the spec's re-verification criterion holds. Nothing
+  was sent upstream.
+- **Summary:** The 2026-09-28 delegation sweep found that the visualization reference shipped a
+  wrong Senzing fact: "`JSON_DATA` is `get_record`-only" (written against server 1.32.2, when the
+  member flag's `applies_to` was `["get_record"]`). Module 7's `phase2b-discover.md` repeated it.
+  - **The reference's trap is replaced** by the condition that holds (⛔ INV-080): `JSON_DATA`
+    needs `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` OR-ed in, and `SZ_ENTITY_DEFAULT_FLAGS` omits it.
+    Read `applies_to` from `topic='flags'`, and treat a blank `JSON_DATA` on an entity call as a
+    missing flag rather than a wrong route. A dated parenthetical records the old server
+    behavior.
+  - **The `get_record` table row** no longer calls it the only source of `JSON_DATA`.
+  - **The per-record source-value advice** names the two single-call routes with their flags and
+    live schema paths (raw `JSON_DATA.FEATURES[]` and mapped `FEATURES.<TYPE>[].ATTRIBUTES.*`),
+    stamped 1.37.14 / 2026-09-28. It keeps the mapped-versus-raw distinction and drops the
+    per-record-cost claim. `get_record` stays the call for one record by key.
+  - **The Records-panel enrichment** now credits `SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS` with
+    per-record `FEATURES.<TYPE>[].FEAT_DESC`, and says `SZ_ENTITY_INCLUDE_RECORD_FEATURES` returns
+    only `FEATURE_IDS[]`.
+  - **Module 7's step** restates the requirement (⛔ INV-080) and points at the reference.
+  - **Unchanged:** `:185`'s measured `SZ_ENTITY_DEFAULT_FLAGS` exclusion and its pin.
+  - **The ledger criterion** is met by PR #201's `contradicted` row for
+    `record-json-data-flag-is-get-record-only` (`issue: 193`). This PR adds no second row, by
+    maintainer decision on the issue (comment 2).
+- **Approach:** implemented directly (Phase 5a) at the maintainer's Gate 1 approval. The change
+  spans two skill directories, which is a race trigger, but it corrects one server fact where it is
+  stated and where it is pointed at, with the replacement wording specified by the refined issue.
+- **Establishes no invariant, and defers none.** Both new ⛔ lines cite INV-080 at the line. The
+  change removes a stale fact and adds no rule.
+- **Tests:** `TheJsonDataTrapIsRecorded` is rewritten as `TheJsonDataFlagRequirementIsRecorded`,
+  with 7 tests. It pins the flag requirement, the `applies_to` route, the blank-means-missing-flag
+  reading, both routes with their flags, the mapped-versus-raw distinction (kept), Module 7's new
+  wording, and a guard that neither file states the retired claim. Dropped as the spec directs:
+  `test_the_contract_warns_the_reference_itself_misleads`, `test_the_per_record_cost_is_stated`, and
+  the `applies_to: ["get_record"]` assertion. `tests/test_visualization_api_contract.py` passes
+  unchanged, including the `:254` flag-name pin and the enrichment test. Negative controls on the
+  real files: the old trap line restored in the reference fails 1 test (the stale-claim guard), and
+  Module 7's old sentence restored fails 2. Restored, `__pycache__` cleared, OK. The first
+  clean-clone run caught `test_coverage_reports`' unmarked-negatives report: the enrichment
+  sentence's dated "returns only `FEATURE_IDS[]`" read as a tool-absence claim with no marker.
+  It is restated positively, as the flag's `response_paths`, in a follow-up commit.
+- **Commit:** 435216c
+
 ## upstream-field-has-no-value-for-an-offer-still-pending
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #167)

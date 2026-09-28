@@ -239,38 +239,47 @@ class TheDumpConfirmedLinkKeysAreRecorded(unittest.TestCase):
         self.assertRegex(text, r"(?i)Run the lookup and dump anyway")
 
 
-class TheJsonDataTrapIsRecorded(unittest.TestCase):
-    """A documented path the documented method cannot return.
+class TheJsonDataFlagRequirementIsRecorded(unittest.TestCase):
+    """`JSON_DATA` on an entity call needs its flag, and the default composite omits it.
 
-    `response_schemas` for get_entity lists `RECORDS[].JSON_DATA.*`, but the flag
-    that produces `JSON_DATA` reports `applies_to: ["get_record"]` — so a viewer
-    built on the documented paths renders blank for every record, against a loaded
-    database. Both halves re-verified against the live server 2026-07-28.
+    Through server 1.32.2 `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` reported
+    `applies_to: ["get_record"]`, and the contract recorded that as a trap: the get_entity
+    schema listed `RECORDS[].JSON_DATA.*` paths no entity-family flag could produce. The server
+    has since widened the flag's `applies_to` to the entity family (re-verified on MCP server
+    1.37.14, 2026-09-28, #193), so the trap became a wrong fact that sent readers to a per-record
+    `get_record` they did not need. What holds now, and is pinned here, is the flag requirement:
+    OR the flag in, because `SZ_ENTITY_DEFAULT_FLAGS` omits it.
     """
 
-    def test_the_contract_states_json_data_is_get_record_only(self):
+    def test_the_contract_states_the_flag_requirement(self):
+        text = flat(CONTRACT)
         self.assertRegex(
-            flat(CONTRACT),
-            r"`JSON_DATA` is `get_record`-only",
-            "the trap must be stated where a reader looks up response shapes",
+            text,
+            r"`JSON_DATA` needs `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` OR-ed in, and\s*"
+            r"`SZ_ENTITY_DEFAULT_FLAGS` omits it",
+            "the flag requirement must be stated where a reader looks up response shapes",
         )
 
-    def test_the_producing_flag_and_its_applies_to_are_named(self):
-        text = flat(CONTRACT)
-        self.assertIn("SZ_ENTITY_INCLUDE_RECORD_JSON_DATA", text)
-        self.assertRegex(text, r'applies_to: \["get_record"\]')
-
-    def test_the_contract_warns_the_reference_itself_misleads(self):
-        """The point of the entry: the authoritative source is the wrong one here."""
+    def test_the_contract_sends_the_reader_to_applies_to(self):
         self.assertRegex(
             flat(CONTRACT),
-            r"reference is the thing that misleads|lists per-record source-value paths",
+            r"filter='SZ_ENTITY_INCLUDE_RECORD_JSON_DATA'\)` lists the entity family in that "
+            r"flag's `applies_to`",
+            "the contract must name the route that owns the fact rather than restate a list",
         )
 
-    def test_the_obtainable_alternative_is_named_with_its_flag(self):
+    def test_a_blank_json_data_is_read_as_a_missing_flag(self):
+        self.assertRegex(
+            flat(CONTRACT),
+            r"a blank `JSON_DATA` means the flag is missing, not that the route is\s*wrong",
+        )
+
+    def test_both_single_call_routes_are_named_with_their_flags(self):
         text = flat(CONTRACT)
+        self.assertRegex(text, r"RECORDS\[\]\.JSON_DATA")
         self.assertRegex(text, r"RECORDS\[\]\.FEATURES\.<TYPE>\[\]\.ATTRIBUTES")
         self.assertIn("SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS", text)
+        self.assertRegex(text, r"one entity-family call is enough")
 
     def test_the_alternative_is_not_claimed_to_be_identical_to_json_data(self):
         """ATTRIBUTES are mapped feature values; JSON_DATA is the raw loaded record."""
@@ -279,12 +288,24 @@ class TheJsonDataTrapIsRecorded(unittest.TestCase):
             r"mapped\*\* attributes per feature, not the raw record as loaded",
         )
 
-    def test_the_per_record_cost_is_stated(self):
-        self.assertRegex(flat(CONTRACT), r"one extra SDK call \*\*per record\*\*")
+    def test_neither_file_claims_json_data_is_get_record_only(self):
+        """The retired fact must not survive at either site that stated it."""
+        stale = re.compile(
+            r"`JSON_DATA` is `get_record`-only|is `get_record`-only, so those paths"
+            r"|the only place `JSON_DATA` is obtainable|no entity-family flag produces them"
+            r"|one extra SDK call \*\*per record\*\*|one extra call per record")
+        for path in (CONTRACT, DISCOVER):
+            with self.subTest(path=os.path.relpath(path, REPO_ROOT)):
+                self.assertIsNone(stale.search(flat(path)))
 
-    def test_the_discover_step_carries_the_trap(self):
+    def test_the_discover_step_carries_the_flag_requirement(self):
         text = flat(DISCOVER)
-        self.assertRegex(text, r"JSON_DATA")
+        self.assertRegex(
+            text,
+            r"`RECORDS\[\]\.JSON_DATA` needs `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA`, which\s*"
+            r"`SZ_ENTITY_DEFAULT_FLAGS` omits",
+        )
+        self.assertRegex(text, r"the fix\s*is the flag, not a switch to `get_record`")
         self.assertIn("SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS", text)
 
 
