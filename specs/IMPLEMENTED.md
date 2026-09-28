@@ -169,7 +169,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   it with 14 failures and 13 errors. The deferral above is load-bearing: with its verbatim quote
   removed, `test_new_hard_rules_are_cited_or_deferred` fails on the ⛔ line (it checks 2 lines
   here, this one and #219's INV-169 line).
-- **Commit:** uncommitted
+- **Commit:** d75af6e
 
 ## module-3-senz7426-relay-points-at-step-8
 
