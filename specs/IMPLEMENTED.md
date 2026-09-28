@@ -100,7 +100,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   from each entry-side enumeration in turn, and each fails. On the real file, removing it from
   the template list failed 1 test, and removing it from Step 3c step 5 failed 2 (the enumeration
   and the replace clause). Restored, `__pycache__` cleared, OK.
-- **Commit:** uncommitted
+- **Commit:** cb8304f
 
 ## person-typed-records-with-organization-names-block-matches
 
