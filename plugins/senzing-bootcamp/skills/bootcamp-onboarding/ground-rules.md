@@ -271,8 +271,12 @@ steering files.)
   the bootcamper an example file is empty on that basis.
   ⛔ **Do not take the `inline` route the response's step 3 describes.** `inline` is still not
   declared in the live `find_examples` schema, and only declared parameters may be passed (INV-136).
-  The server states this itself: *"Clients that validate arguments against the declared schema cannot
-  use this step; prefer fetching raw_url or cloning."*
+  The server states this itself, identically in `find_examples` and `generate_scaffold` (re-verified
+  on MCP server 1.37.14, 2026-09-28): *"Clients that validate arguments against the declared schema
+  cannot send inline=true — the schema will reject it, and steps 1 and 2 (raw_url / git clone) have
+  already failed by the time this step applies, so retrying them will not help either. For such a
+  client there is no route to this GitHub-hosted file through this server; report the content as
+  unreachable rather than retrying."* What to do then is the terminal step stated below.
   (This replaces the earlier reading — through 2026-07-30 on server 1.32.2 the same empty `content`
   arrived with no `content_elided` signal, so it was indistinguishable from a broken retrieval and
   was treated as one. The behavior was documented rather than reverted, so the guidance above is
@@ -286,6 +290,14 @@ steering files.)
   - `find_examples` and `generate_scaffold` — `inline` is **not** declared by either, so passing it
     is a call that cannot work, whatever the response prose advertises. Follow `access_steps`:
     `raw_url`, then clone.
+    ⛔ **Once `raw_url` and `git clone` have both failed, report the example as unreachable (INV-160).**
+    This is the terminal step for both `find_examples` and `generate_scaffold` — for example when
+    `raw.githubusercontent.com` is blocked and `git` is unavailable or `github.com` is blocked. Tell
+    the bootcamper which example could not be reached (the file and its repo) and what was tried.
+    Do not retry either step, and do not pass `inline`, which neither schema declares (INV-136).
+    Never reconstruct the file's content from memory or training data (INV-080). The step that
+    needed the example then continues on its own fallback: this adds no question and blocks
+    nothing beyond what that step already does.
   - `download_resource` — `inline` **is** declared, alongside `filename`, `filenames` and `version`,
     and each resource's own `on_failure` names it as the remedy when the URL fetch fails. It is
     therefore permitted here — after the fetch fails, not instead of it — and it costs context,

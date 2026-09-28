@@ -365,7 +365,13 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # right, or that the drawing is a true account of the system. Re-derived by running the
 # extractor -- 135, with the new pair present by name. This closes the 2026-09-24 review:
 # four deferrals decided, EXPECTED_PAIRS 131 -> 135 across it.
-EXPECTED_PAIRS = 135
+# 136 on 2026-09-28: INV-160's 2026-09-28 dated note (#197: once `raw_url` and `git clone`
+# have both failed, report the example as unreachable, never retry, pass `inline` or
+# reconstruct it from memory) names test_access_steps_terminal_step.py, which cites INV-160
+# back and states it pins the behavior, not the server's sentence (INV-219). It is INV-160's
+# first named enforcer; no new invariant was registered. Re-derived by running the
+# extractor -- 136, with the new pair present by name. EXPECTED_PAIRS 135 -> 136.
+EXPECTED_PAIRS = 136
 
 
 def pairs():
