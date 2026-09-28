@@ -194,11 +194,16 @@ MCP server. `get_capabilities` reports `senzing_version` as the string `"current
 
 ⛔ **Two kinds of command follow, and they have different owners. Do not treat them alike.**
 
-- **Server-documented (on loan — re-read it, do not trust the copy below).** The *install* command
-  comes from `sdk_guide(topic='install', platform='<platform>', language='<language>')`. Its live
-  response is authoritative; the forms below are a dated illustration (server 1.32.2, verified
-  2026-07-31) so you can see the shape without a round trip. If the response differs, **the
-  response wins.**
+- **Server-documented (on loan — re-read it, do not trust the copy below).** Two routes carry
+  these. The *install* command comes from
+  `sdk_guide(topic='install', platform='<platform>', language='<language>')`. The macOS and
+  Windows *update* command comes from `search_docs`, which serves the official Homebrew tap and
+  Scoop bucket READMEs (the two queries are under "The update command" below). Each live response
+  is authoritative; the forms below are a dated illustration (install: server 1.32.2, verified
+  2026-07-31; update: server 1.37.14, docs index 2026-09-28 03:23 UTC, verified 2026-09-28) so
+  you can see the shape without a round trip. If a response differs, **the response wins.** If
+  `search_docs` is unreachable, use the update form below as last verified on that date and say
+  that it could not be re-checked (INV-163).
 - **Plugin-owned (there is nothing to re-ask).** The **installed-version query** and the
   **available-version check** are ordinary package-manager commands. `sdk_guide` returns *install*
   commands and *presence* checks (`ls libSz.so`, `Test-Path Sz.dll`) — it documents **no version
@@ -213,16 +218,28 @@ MCP server. `get_capabilities` reports `senzing_version` as the string `"current
   zero-exit-code warning further down without exception. This is the same discipline INV-163
   requires — say what you could not verify — applied to a command rather than a check.
 
-⚠️ **On macOS and Windows the update command is plugin-owned too.** The server documents
-`brew install --cask` and `scoop install`, never `brew upgrade --cask` or `scoop update` (checked
-across `install_commands`, `gotchas` and `post_install` for both, re-confirmed 2026-08-13). Only on
-apt and yum is the update command the same server-documented `install` command. That asymmetry is the
-same coverage gap reported upstream on 2026-08-13 — the server documents installing, not updating.
+**The update command.** ⚠️ **On macOS and Windows the update command is server-documented through
+`search_docs`, not through `sdk_guide`.** `sdk_guide(topic='install')` gives the install command;
+the update command is in the official tap and bucket READMEs, which `search_docs` serves (server
+1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28):
+
+- **macOS:** `search_docs(query='homebrew-senzingsdk upgrade cask brew upgrade senzingsdk')`
+  returns `senzing/homebrew-senzingsdk`, section "Upgrade": `brew update`, then
+  `brew upgrade --cask senzingsdk`. ⚠️ A V3→V4 migration FAQ ranks above it; read down to the
+  README section rather than concluding from the first result.
+- **Windows:** `search_docs(query='scoop-senzingsdk update scoop update senzingsdk')` returns
+  `senzing/scoop-senzingsdk`, section "Update": `scoop update senzingsdk`.
+
+Only on apt and yum is the update command the same server-documented `install` command from
+`sdk_guide`. The coverage gap reported upstream on 2026-08-13 — the server documented installing,
+not updating — is **partly closed**: the update commands are now served, while the
+installed-version query, the available-version check and version-exact pins for casks and Scoop
+are still absent.
 <!-- Date corrected from 2026-07-31 on 2026-08-13: the earlier claim was unsubstantiated. A
      feature request WAS sent on 2026-07-31, but for the stdio-mode / private-deployment route — a
      different subject — and the two had been conflated, so 2026-08-13 is this gap's first report
      rather than a duplicate. Full evidence chain in the maintainer's development record. -->
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') and the same call with platform='windows' — install_commands, gotchas and post_install carry no brew upgrade --cask and no scoop update — owner: sdk_guide(topic='install', platform=<that platform>) IS the route that would carry an update command for each package manager, and both document installing only (absence negative) — server 1.36.0, 2026-09-02 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') and the same call with platform='windows' — install_commands, gotchas and post_install carry no brew upgrade --cask and no scoop update — owner: search_docs IS the route that carries the update command for each package manager: search_docs(query='homebrew-senzingsdk upgrade cask brew upgrade senzingsdk') returns the tap README's Upgrade section and search_docs(query='scoop-senzingsdk update scoop update senzingsdk') returns the bucket README's Update section, so the reader must go there rather than conclude the command is undocumented (routing negative) — server 1.37.14, 2026-09-28 -->
 
 **Linux, apt (`linux_apt`):**
 
@@ -249,13 +266,15 @@ sudo apt install -y senzingsdk-runtime senzingsdk-setup   # takes the newest ava
 
 **macOS, Homebrew cask (`macos_arm`):**
 
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') — no brew outdated, brew info or brew upgrade anywhere in the response; the brew commands it does carry are tap, trust, install --cask, uninstall --cask, untap, install/link libpq, and --prefix — owner: sdk_guide(topic='install', platform='macos_arm') IS the route that would carry a version-management command for the cask, and it carries none (absence negative) — server 1.36.0, 2026-09-02 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') and search_docs(query='brew outdated brew info senzingsdk installed version check') — neither carries brew outdated or brew info for the cask; the corpus serves the tap README's install, upgrade and uninstall usage for it and no version-check command — owner: sdk_guide(topic='install', platform='macos_arm') IS the route for the cask's commands and search_docs IS the corpus route for the tap README, so the routes that would carry a version check were asked and carry none (absence negative) — server 1.37.14, 2026-09-28 -->
 
 ```bash
-# ALL plugin-owned — sdk_guide documents no brew version-management command:
-# never outdated, info or upgrade (checked across its whole response, 2026-08-13)
+# plugin-owned — the server documents no brew version check:
+# neither outdated nor info (sdk_guide and search_docs, checked 2026-09-28)
 brew outdated --cask senzingsdk    # nothing printed = up to date
 brew info --cask senzingsdk        # installed and latest versions
+# server-documented — re-read from search_docs; this form is a dated illustration
+brew update
 brew upgrade --cask senzingsdk     # takes the newest available
 ```
 
@@ -275,14 +294,15 @@ paths still resolve.
 
 **Windows, Scoop (`windows`):**
 
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='windows') — no scoop status, scoop info or scoop update anywhere in the response; the scoop commands it does carry are bucket add, install, and config (for the EULA variable) — owner: sdk_guide(topic='install', platform='windows') IS the route that would carry a version-management command for Scoop, and it carries none (absence negative) — server 1.36.0, 2026-09-02 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='windows') and search_docs(query='scoop status scoop info senzingsdk installed version check') — neither carries scoop status or scoop info; the corpus serves the bucket README's install, update and uninstall usage for it and no version-check command — owner: sdk_guide(topic='install', platform='windows') IS the route for the bucket's commands and search_docs IS the corpus route for the bucket README, so the routes that would carry a version check were asked and carry none (absence negative) — server 1.37.14, 2026-09-28 -->
 
 ```powershell
-# plugin-owned — sdk_guide documents no scoop version-management command:
-# never status, info or update (checked across its whole response, 2026-08-13)
+# plugin-owned — the server documents no scoop version check:
+# neither status nor info (sdk_guide and search_docs, checked 2026-09-28)
 scoop status                          # lists packages with updates available
 scoop info senzingsdk/senzingsdk      # installed and latest versions
-scoop update senzingsdk/senzingsdk    # takes the newest available
+# server-documented — re-read from search_docs; this form is a dated illustration
+scoop update senzingsdk               # takes the newest available
 # server-documented — the presence probe sdk_guide gives under post_install
 Test-Path "$env:SENZING_DIR\lib\Sz.dll"   # verify it actually installed
 ```
@@ -378,13 +398,46 @@ verification below is required rather than advisory.
    **not** mark Module 2 complete. Reinstalling the previous version is the fallback; on apt its
    exact `.deb` is still addressable by filename.
 
-⚠️ **Senzing documents no 4.x → 4.y update procedure.** `search_docs` returns only V3→V4 migration
-material (`sz_dbupgrade`, `sz_configupgrade`, `sz_configtool`), and `sdk_guide` has no `upgrade`
-topic (re-checked 2026-08-13). So whether a point release needs any schema or config step is
-**undocumented, not known to be unnecessary**. Say that in the offer, and if the bootcamper already
-has a populated repository, mention that the update touches the SDK and not their data — then let
+⚠️ **A 4.x → 4.y update is covered by the target version's release notes, not by a generic
+procedure.** `sdk_guide` has no `upgrade` topic, and the migration material a generic upgrade
+query finds (`sz_dbupgrade`, `sz_configupgrade`, `sz_configtool`) is for V3→V4 only. What a point
+release needs is in the *target* version's "Migration & Action Required" notes, which
+`search_docs` serves under `category='release_notes'` (server 1.37.14, docs index 2026-09-28 03:23
+UTC, 2026-09-28). Put what applies in the offer.
+<!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y procedure for that phrasing; the corpus serves V3-to-V4 migration material for it, and the topic list carries no upgrade entry — owner: search_docs(query='upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change required migration action required', category='release_notes') IS the route that carries the point-release notes, and it returns the v4.4.0 Detailed Release Notes' Migration & Action Required section, so the reader must go there rather than conclude that no procedure is documented (routing negative) — server 1.37.14, 2026-09-28 -->
+
+- **Target 4.4.0.** Run
+  `search_docs(query='upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change required migration action required', category='release_notes')`.
+  ⚠️ The first hit is *What's New in v4* "Migration guides", a V3→V4 link list. The section you
+  want, *v4.4.0 Detailed Release Notes* "Migration & Action Required", ranks just below it: read
+  past the first hit rather than concluding the notes are missing. It covers upgrading from
+  v4.0.0 through v4.3.x. Relay the items that apply:
+  - **No schema change required** when upgrading from any v4 version.
+  - **License:** confirm the license string is valid. A corrupt value now fails startup instead
+    of silently falling back to the evaluation license.
+  - **Configuration:** the `WEBSITE` feature, the `TAX_ID_TYPE` attribute and the
+    very-common-attribute performance changes take effect only in a configuration that includes
+    them. A new install's default configuration already does; for an existing configuration,
+    Senzing Support gives the steps.
+  - **SQL Server only:** the datastore must use a UTF-8 collation, which on an existing datastore
+    is a rebuild and reload. Relay it only when the datastore is SQL Server; it does not apply
+    under the SQLite default.
+  - **Coming from 4.2.x or earlier only:** the Windows `.zip` and macOS `.dmg` installers were
+    discontinued in 4.3.0. Relay it only when the installed version is 4.2.x or earlier.
+- **Any other target** (a 4.4.x patch, 4.5 or later). Query `category='release_notes'` for the
+  *target* version's "Migration & Action Required", for example
+  `search_docs(query='upgrading to <target version> migration action required', category='release_notes')`
+  with the version filled in. That phrasing was never executed for a later target, so if the
+  results are empty or off-topic, re-query with the target's own wording before concluding
+  anything. Relay the notes when they cover the installed version. Only when the target's notes
+  do not cover it is the step **undocumented, not known to be unnecessary**; say so in the offer.
+- **`search_docs` unreachable.** Relay the 4.4.0 items above as last verified on 2026-09-28, and
+  say that they could not be re-checked (INV-163).
+
+If the bootcamper already has a populated repository, mention that the update touches the SDK and
+not their data. Add, from the 4.4.0 notes, that many matching improvements apply to already-loaded
+data only after reprocessing, so the new matching does not reach that data by itself. Then let
 them decide.
-<!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y update procedure anywhere; the corpus serves V3-to-V4 migration material for it (sz_dbupgrade, sz_configupgrade, breaking-changes, Migration.md) and no 4.x-to-4.y procedure, and the topic list carries no upgrade entry — owner: search_docs IS the corpus route for a documented procedure and sdk_guide's own topic enum is the authority on its topics, so both routes that would carry it were asked and both are empty (absence negative) — server 1.37.13, 2026-09-26 -->
 
 **Checkpoint:** record the outcome — `up-to-date`, `update-declined`, `updated-to-[version]`, or
 `check-skipped-[reason]` — under step 1 in `config/bootcamp_progress.json`, so a resumed session
@@ -420,10 +473,20 @@ if uncertain, call `sdk_guide(topic='install')` with no platform to get the live
 
 - `platform='linux_apt'`: Debian/Ubuntu/Mint (apt/dpkg)
 - `platform='linux_yum'`: RHEL/Fedora/Amazon Linux (yum/dnf)
-- `platform='macos_arm'`: macOS Apple Silicon (Homebrew cask)
-- `platform='windows'`: Windows 10/11 (Scoop)
+- `platform='macos_arm'`: macOS Apple Silicon (Homebrew cask; the tap is a preview release, below)
+- `platform='windows'`: Windows 10/11 (Scoop; the bucket is a preview release, below)
 - `platform='docker'`: Platform-independent container; the fallback and the required path for
   several cases below
+
+⚠️ **The Homebrew tap and the Scoop bucket are preview releases that Senzing does not support.**
+Each README opens with "**Preview Release — Unsupported** … provided as-is with no warranty and is
+**not supported**". For `macos_arm`,
+`search_docs(query='homebrew-senzingsdk preview release unsupported tap install cask')` returns it
+as the `senzing/homebrew-senzingsdk` section "homebrew-senzingsdk". For `windows`,
+`search_docs(query='scoop-senzingsdk update scoop update senzingsdk')` returns it at the top of the
+`senzing/scoop-senzingsdk` README (server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28).
+When you name either route, say this once, as a fact about the tap or the bucket, not as advice
+against it: they remain the native routes in rules 3 and 4 below.
 
 **Routing rules (apply in order):**
 
@@ -440,11 +503,12 @@ if uncertain, call `sdk_guide(topic='install')` with no platform to get the live
    sentence appears under `platform='macos_arm'` and its WSL2 half is wrong there.
 2. macOS Intel → **`platform='docker'`**. There is no native Intel-Mac install: the Homebrew
    tap is Apple Silicon (ARM64) only.
-3. macOS Apple Silicon (non-Python) → **`platform='macos_arm'`**. If the chosen language runs
-   on the JVM (Java), also read "The launch environment" in Step 3 before the first run —
-   installing the SDK is not the same as being able to launch against it.
+3. macOS Apple Silicon (non-Python) → **`platform='macos_arm'`**. Relay the tap's preview
+   status above. If the chosen language runs on the JVM (Java), also read "The launch
+   environment" in Step 3 before the first run — installing the SDK is not the same as being
+   able to launch against it.
 4. Windows without Scoop (non-Python) → **`platform='docker'`**. With Scoop available →
-   **`platform='windows'`**.
+   **`platform='windows'`**, and relay the bucket's preview status above.
 5. Linux → **`platform='linux_apt'`** or **`platform='linux_yum'`** based on the package
    manager.
 
