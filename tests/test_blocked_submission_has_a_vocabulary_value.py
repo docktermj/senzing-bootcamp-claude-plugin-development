@@ -32,7 +32,21 @@ enumerated, so the two enumerations cannot drift.
 Enforces **INV-281** — the `Upstream:` outcome vocabulary is a closed set stated identically at every site, and a
 consented-but-blocked send carries its own value distinct from a decline.
 
+**`offer pending` (#167).** Graduation Step 0, the bootcamper-driven flow (Step 3 -> 3c) and the
+silent in-run append all save an `mcp-server`/`both` entry before its upstream question is
+answered, so between the append and the answer no value was correct. A 2026-09-25 walk wrote an
+ad-hoc `pending (offer below)`. `offer pending` is that value. It must be listed at every
+entry-side enumeration, and `/feedback-to-issues` must read it as still owed, as it does
+`submission blocked`.
+
+⚠️ **The spec-side line is exempt for `offer pending`, and only for it.** `issue-template.md`'s
+`Upstream:` records the ISSUE's field, not the entry's: the maintainer's decision on a pending
+entry lands in its existing values (`sent <date>`, `declined by the maintainer`), so `offer
+pending` never needs to be written there (the issue's out-of-scope list; maintainer decision on
+#167). `submission blocked` is still required on every line, that one included.
+
 Source spec: `specs/graduation-upstream-offer-collides-with-the-dry-run-no-send-rule.md`.
+Source issue: #167 (`offer pending`).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -48,6 +62,8 @@ DRY_RUN = REPO_ROOT / ".claude" / "skills" / "dry-run" / "phase3-conversational.
 #: added on 2026-08-28 reached two of the vocabulary's three sites and not the third.
 MAINTAINER_SIDE = REPO_ROOT / ".claude" / "skills"
 VALUE = "submission blocked"
+#: The value for an entry saved before its upstream question was answered (#167).
+PENDING = "offer pending"
 #: The other values, used to find every place the vocabulary is enumerated.
 SIBLINGS = ("offered, declined", "submission failed")
 #: The spec-side vocabulary uses its own spelling for the same closed set.
@@ -184,6 +200,90 @@ class TheVocabularyCarriesABlockedValue(unittest.TestCase):
                   r"answer here: a dry run (?:> )?never sends on the bootcamper's answer",
             "the disclosure wording is gone, so a runner has to improvise it mid-walk — which "
             "is the situation this instruction exists to remove")
+
+
+def entry_side_enumeration_lines():
+    """The enumerations of the ENTRY's `Upstream:` field: the spec-side line is left out.
+
+    Matched on the entry-side siblings only, so the spec-side line (which carries
+    `SPEC_SIDE_SIBLINGS` and not `SIBLINGS`) drops out by the same rule that finds it.
+    """
+    return [(p, n, line) for p, n, line in enumeration_lines()
+            if all(s in line.lower() for s in SIBLINGS)]
+
+
+def missing_pending(lines):
+    return [f"{p.relative_to(REPO_ROOT)}:{n}  {line.strip()[:90]}"
+            for p, n, line in lines if PENDING not in line.lower()]
+
+
+class TheVocabularyCarriesAPendingValue(unittest.TestCase):
+    """#167: an entry saved before its upstream answer has a value of its own."""
+
+    def test_the_entry_side_enumerations_are_found(self):
+        """⛔ INV-265 — both entry-side lists in `feedback.md`, at least."""
+        self.assertGreaterEqual(len(entry_side_enumeration_lines()), 2)
+
+    def test_every_entry_side_enumeration_includes_offer_pending(self):
+        missing = missing_pending(entry_side_enumeration_lines())
+        self.assertEqual(
+            [], missing,
+            f"an entry-side `Upstream:` enumeration omits `{PENDING}`, so an entry saved "
+            "before its upstream answer has no legal value there:\n  " + "\n  ".join(missing))
+
+    def test_the_append_sites_write_it(self):
+        """Every path that appends before asking writes `offer pending`, and replaces it."""
+        fb = flatten((PLUGIN / "senzing-bootcamp" / "skills" / "bootcamp-onboarding"
+                      / "feedback.md").read_text(encoding="utf-8"))
+        grad = flatten((PLUGIN / "senzing-bootcamp" / "skills" / "graduation"
+                        / "SKILL.md").read_text(encoding="utf-8"))
+        step3 = fb[fb.index("## step 3: append the entry"):fb.index("## step 3b:")]
+        self.assertIn("write `**upstream:**` as `offer pending` when step 2b's verdict is "
+                      "`mcp-server` or `both`", step3)
+        self.assertIn("replacing `offer pending`", fb)
+        self.assertIn("never leave `offer pending` once an answer exists", fb)
+        silent = fb[fb.index("## silent in-run append"):]
+        self.assertIn("`offer pending` when step 2b says `mcp-server`/`both`", silent)
+        self.assertIn("append the entry as `offer pending`", grad)
+        self.assertIn("replaces every `offer pending` value in the same turn", grad)
+        self.assertIn("entries already reading `offer pending` from the silent in-run append",
+                      grad)
+
+    def test_a_resumed_session_re_presents_the_offer_once(self):
+        fb = flatten((PLUGIN / "senzing-bootcamp" / "skills" / "bootcamp-onboarding"
+                      / "feedback.md").read_text(encoding="utf-8"))
+        self.assertIn("### unanswered offer on resume", fb)
+        block = fb[fb.index("### unanswered offer on resume"):fb.index("## step 4:")]
+        self.assertIn("present the unanswered offer once more, then never again", block)
+        self.assertIn("(inv-006)", block)
+        self.assertIn("(inv-251) **the offer is its own turn.**", block)
+        self.assertIn("replace every `offer pending` value with the outcome", block)
+        onboarding = flatten((PLUGIN / "senzing-bootcamp" / "skills" / "bootcamp-onboarding"
+                              / "SKILL.md").read_text(encoding="utf-8"))
+        self.assertIn('follow `feedback.md` → "unanswered offer on resume"', onboarding,
+                      "the resume branch does not point at the rule, so a resumed session "
+                      "never finds the unanswered offer")
+
+    def test_the_spec_side_says_offer_pending_is_still_owed(self):
+        skill = REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "SKILL.md"
+        flat = flatten(skill.read_text(encoding="utf-8"))
+        self.assertIn(f"`{PENDING}` is still owed too", flat,
+                      "feedback-to-issues does not treat an unanswered offer as still owed, so "
+                      "the report stops being anyone's job")
+
+
+class TheNegativeControlsForThePendingValue(unittest.TestCase):
+    """Removing `offer pending` from any one enumeration must fail the guard."""
+
+    def test_removing_it_from_each_enumeration_fails(self):
+        lines = entry_side_enumeration_lines()
+        self.assertTrue(lines)
+        for i, (p, n, line) in enumerate(lines):
+            with self.subTest(site=f"{p.name}:{n}"):
+                mutant = list(lines)
+                mutant[i] = (p, n, re.sub(r"`?offer pending`?( \|)?,? ?", "", line))
+                self.assertNotIn(PENDING, mutant[i][2].lower())
+                self.assertTrue(missing_pending(mutant))
 
 
 if __name__ == "__main__":

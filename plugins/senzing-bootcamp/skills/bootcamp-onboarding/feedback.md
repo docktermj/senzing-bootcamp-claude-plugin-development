@@ -136,6 +136,10 @@ reaches the wrong maintainer and gets fixed nowhere.
 Append a formatted entry to the "Your Feedback" section. Append only: never
 rewrite the file, so earlier entries are preserved.
 
+Write `**Upstream:**` as `offer pending` when Step 2b's verdict is `mcp-server` or `both`: the
+entry is saved before Step 3c asks, so no outcome exists yet. Step 3c replaces it. Every other
+verdict gets `not applicable`.
+
 ```markdown
 ## Improvement: [brief title from the bootcamper's description]
 
@@ -144,7 +148,7 @@ rewrite the file, so earlier entries are preserved.
 **Priority:** [High/Medium/Low]
 **Source:** bootcamper-reported
 **Routing:** [plugin | mcp-server | both | host | unclear] — [one-line reason, per Step 2b]
-**Upstream:** [not applicable | offered, declined | submitted YYYY-MM-DD | submission failed: reason | submission blocked: reason]
+**Upstream:** [not applicable | offer pending | offered, declined | submitted YYYY-MM-DD | submission failed: reason | submission blocked: reason]
 
 ### What happened
 
@@ -242,8 +246,10 @@ never automatic.
    bootcamper's only follow-up route.
 
 5. **Record the outcome** in the entry's `**Upstream:**` field: `submitted YYYY-MM-DD`,
-   `offered, declined`, `submission failed: <reason>`, or `submission blocked: <reason>`. Update
-   the entry in place for this field only — do not rewrite the prose (append-only elsewhere).
+   `offered, declined`, `submission failed: <reason>`, `submission blocked: <reason>`, replacing `offer pending`.
+   Update the entry in place for this field only — do not rewrite the prose (append-only
+   elsewhere). ⛔ (INV-281) **Never leave `offer pending` once an answer exists.** It means only
+   that the question is still open.
 
    ⛔ **(INV-281) `submission blocked:` is for a *consented* send the runner was forbidden to make — it is
    not a synonym for the other three.** Use it when the answer was **yes** and the send could not
@@ -259,6 +265,26 @@ never automatic.
    The local entry is the durable record; upstream delivery is a bonus.
 
 ⛔ Ask this **once** (INV-006). If the bootcamper declines, do not re-offer for the same entry.
+
+### Unanswered offer on resume
+
+An entry still reading `offer pending` means the offer was presented, or was due, and never
+answered: the session ended on the question, or graduation's batch never got its answer. It is
+the open question, not an answered one.
+
+⛔ (INV-006) **On resume, present the unanswered offer once more, then never again.** This is
+the unanswered question being presented, not a re-ask. When a resumed session finds one or more
+`offer pending` entries in `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`:
+
+1. Show the draft for each, stripped as step 2 requires, and ask step 3's pinned 👉 question once
+   for all of them, the way graduation Step 0 batches its offer.
+2. ⛔ (INV-251) **The offer is its own turn.** End the turn on it. Re-present the pending bootcamp
+   👉 question on the next turn, after the answer, never beside the offer.
+3. Replace every `offer pending` value with the outcome, as step 5 does, and handle a failure as
+   step 6 does. The answer applies to every entry in the batch.
+
+An entry the bootcamp never returns to stays `offer pending`, and `/feedback-to-issues` treats its
+report as still owed.
 
 ## Step 4: Confirm and return
 
@@ -294,9 +320,10 @@ by `../graduation/SKILL.md` Step 0, which files the same way at the end of the r
    - **`Module:`** the module you were in when the reversal happened.
    - **`Routing:`** the Step 2b verdict with its one-line reason. A reversed *mapping* is usually
      `plugin` (the guidance let you do it), but triage rather than defaulting.
-   - **`Upstream:`** `not applicable` unless Step 2b says `mcp-server`/`both`. ⛔ **Do not offer
-     the upstream forward here** — that offer needs a 👉 question, which this path must not ask.
-     Leave it for graduation's Step 0, which batches one offer for the whole session.
+   - **`Upstream:`** `not applicable`, or `offer pending` when Step 2b says `mcp-server`/`both`.
+     ⛔ (INV-012) **Do not offer the upstream forward here** — that offer needs a 👉 question, which
+     this path must not ask. Leave it for graduation's Step 0, which batches one offer for the
+     whole session and replaces the value.
    - **What happened / Why it matters / Suggested fix** describing what *you* did and withdrew,
      in the plain past tense. The decision, the evidence that overturned it, and the effect of
      withdrawing it.

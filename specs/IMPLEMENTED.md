@@ -43,6 +43,65 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## upstream-field-has-no-value-for-an-offer-still-pending
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #167)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md`,
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/graduation/SKILL.md`,
+  `.claude/skills/feedback-to-issues/SKILL.md`,
+  `tests/test_blocked_submission_has_a_vocabulary_value.py`, `tests/test_feedback_routing.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** n/a (no Senzing fact). The change is the bootcamp's own feedback-file
+  vocabulary. It adds no claim about `submit_feedback` beyond the Step 3c text already shipping.
+- **Summary:** Three paths save an `mcp-server`/`both` feedback entry before its upstream
+  question is answered: graduation Step 0, the bootcamper-driven flow (`feedback.md` Step 3 →
+  3c), and the silent in-run append. Between the append and the answer, the closed `Upstream:`
+  vocabulary (INV-281) had no correct value, and a 2026-09-25 walk wrote an ad-hoc
+  `pending (offer below)`. `offer pending` now joins the set. It is in the Step 3 template list and
+  in Step 3c step 5's outcome list, on the same line as the other values, because the guard scans
+  line by line. Step 3 writes it for an `mcp-server`/`both` verdict, and step 5 replaces it
+  (⛔ INV-281: never left pending once an answer exists). The silent in-run append writes it and
+  leaves it for graduation. Graduation Step 0 appends as `offer pending`, batches the entries
+  already pending alongside its own, and one answer replaces every value in the same turn. A new
+  "Unanswered offer on resume" block in Step 3c owns the resume rule: re-present once (⛔
+  INV-006), batched, as its own turn (⛔ INV-251), then replace every value. The resume branch in
+  `bootcamp-onboarding/SKILL.md` Step 2 points at it (INV-300). `/feedback-to-issues` treats
+  `offer pending` as still owed, like `submission blocked`. The values that end the obligation are
+  unchanged. `issue-template.md` is unchanged, per the issue's out-of-scope list and the
+  maintainer's answer on the issue (comment 2).
+- **Approach:** implemented directly (Phase 5a), at the maintainer's Gate 1 approval. The change
+  spans three skill directories, which is a race trigger, but it repeats the `submission blocked`
+  addition exactly: same vocabulary, same sites, same guard.
+- **Establishes no invariant, and defers none.** Every new ⛔ line cites the invariant it applies
+  at the line: INV-281
+  (the closed set, and never leaving the value pending), INV-006 (the resumed offer is the open
+  question presented once), INV-251 (its own turn), and INV-012 (the silent path asks nothing).
+  The one rewrapped existing ⛔ line in the silent-append bullet now cites INV-012 as well. No rule
+  beyond them is introduced.
+- **Findings, not changed here (recorded, no issue filed):**
+    - Graduation Step 0 calls itself "Not a gate … not a 👉 question", yet its batched upstream
+      offer is a pinned 👉 question that ends a turn. The tension predates this change, which does
+      not touch it.
+    - `/dry-run`'s phase-3 doc (`phase3-conversational.md`) has no line the vocabulary scan
+      matches. It only names the `submission blocked` value it records, so it needed no change.
+- **Tests:** `tests/test_blocked_submission_has_a_vocabulary_value.py` gains two classes and 6
+  tests. They check:
+    - every entry-side enumeration (derived: lines carrying the entry-side siblings, INV-246)
+      lists `offer pending`, and at least two are found (INV-265);
+    - Step 3, the silent append and graduation Step 0 write it and replace it;
+    - the resume block states once, INV-006, its own turn per INV-251, and the replacement, and
+      the onboarding resume branch points at it;
+    - `/feedback-to-issues` names it as still owed.
+  The spec-side line is exempt for `offer pending` only, with the reason in the docstring.
+  `submission blocked` is still required on every line. `tests/test_feedback_routing.py`'s
+  outcome tuple gains `offer pending`. Negative controls: an in-suite control removes the value
+  from each entry-side enumeration in turn, and each fails. On the real file, removing it from
+  the template list failed 1 test, and removing it from Step 3c step 5 failed 2 (the enumeration
+  and the replace clause). Restored, `__pycache__` cleared, OK.
+- **Commit:** uncommitted
+
 ## person-typed-records-with-organization-names-block-matches
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #158)

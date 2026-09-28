@@ -264,6 +264,11 @@ record the confirmed behavior.
    maintainer` are the values that end the obligation; `submission blocked:` is the value
    that keeps it. Reading the first where the second was meant is how a consented report
    stops being anyone's job.
+
+   ⛔ (INV-281) **`offer pending` is STILL OWED too, and is handled the same way.** The entry was
+   saved before its upstream question was answered, and the bootcamp never came back to answer it.
+   Nobody declined anything: draft the message and put it to the maintainer, exactly as for
+   `submission blocked:`. The values that end the obligation are unchanged.
 2. **Draft the message as a technical bug report Senzing can act on without context from
    this repo:** the tool and parameters called, what came back, what was expected, the
    contradiction (quote both sides), the server version and SDK version, and the impact
