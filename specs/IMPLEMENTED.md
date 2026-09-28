@@ -43,6 +43,62 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-macos-supportpath-literal-is-version-scoped
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #199)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`,
+  `tests/test_engine_verification_and_senz2027.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.14, 2026-09-28.
+  - `sdk_guide(topic='install', platform='macos_arm', language='java')` still says "Do not pin
+    the literal: it has already drifted once — 4.4.x shipped
+    SUPPORTPATH=${INSTALLPATH}/senzing/er/data, and 4.5.0.26245 ships the Linux absolute path
+    …", with "CONFIGPATH and RESOURCEPATH are Linux paths there too". The fix is unchanged:
+    set `SUPPORTPATH` to `$(brew --prefix)/opt/senzing/data` and do not use the shipped `.ini`
+    as-is.
+  - `explain_error_code('7426')` still ranks the SUPPORTPATH cause as `common_causes[0]` and
+    "Check SUPPORTPATH FIRST — confirm the directory exists and contains the `*TransRules.sz`
+    transliteration modules" as `resolution_steps[0]`, and its macOS cause still quotes the
+    4.4.x `er/data` literal.
+  - `sdk_guide(topic='install', platform='macos_arm', language='python')` still carries only
+    the Linux-only compatibility note.
+
+  So the spec's re-verification criterion holds. Nothing was sent upstream; the report of the
+  two tools' disagreement was sent separately and is out of scope.
+- **Summary:** Module 2's Step 8 quoted the macOS cask's shipped `SUPPORTPATH` literal as fact,
+  said `sdk_guide` carried that gotcha "verbatim", and told the guide it could relay either
+  tool. The literal holds for cask 4.4.x only, and a Bootcamper on 4.5.0 looking for `er/data`
+  would find a different string.
+  - **The historical macOS note** now puts the `er/data` literal under "on cask 4.4.x and
+    earlier". Its 4.4.0.26206 / 4.3.3.26191 / 1.32.3 provenance is unchanged.
+  - **The "both tools agree" note** is re-stamped to 1.37.14 and narrowed. The tools agree on
+    the diagnosis and the fix, not on the literal. `explain_error_code`'s macOS literal is
+    marked 4.4.x-only, and `sdk_guide` is named as the tool to relay for the platform detail.
+    "Verbatim" and "So relay either one" are gone.
+  - **The `language='python'` stamp** is re-stamped to 1.37.14, because the call was re-run.
+  - **The macOS verification step 2** now says the shipped ini's `SUPPORTPATH` "does not
+    resolve to a directory holding `*TransRules.sz`, whatever its literal". It tells the guide
+    to test the directory's content, never the string. It adds that on cask 4.5.0 the shipped
+    ini's `CONFIGPATH` and `RESOURCEPATH` are Linux paths too, and it quotes no literal.
+  - **Unchanged:** the fix, the `test -d` / `*TransRules.sz` checks in step 1, "do not use the
+    shipped `.ini` as-is", and the Windows/Scoop and Linux text.
+- **Approach:** implemented directly (Phase 5a). It is one skill file plus its test.
+- **Establishes no invariant, and defers none.** The one rewrapped ⛔ line (the "both tools
+  agree" note) cites INV-169 at the line. It applies INV-169's rule to record the version an
+  observation holds for, and adds no new rule.
+- **Tests:**
+  - `tests/test_engine_verification_and_senz2027.py` gains
+    `TheMacosSupportpathLiteralIsVersionScoped` (5 tests). Every `er/data` in Module 2 has
+    `4.4.x` within 300 characters. No "gotcha … verbatim" or `platform='macos_arm'` …
+    "verbatim" claim remains. "So relay either one." is gone, and "relay `sdk_guide` for the
+    platform detail" is present. The `*TransRules.sz` content test is present. The 4.5.0
+    `CONFIGPATH` / `RESOURCEPATH` clause is present and names no literal.
+  - `TheRetractedClaimStaysRetracted`'s docstring now calls `er/data` the 4.4.x-and-earlier
+    literal and points at the new class.
+  - Negative control: with the pre-fix Module 2, the new class fails 6 assertions across its
+    5 tests. Restored, OK.
+- **Commit:** 60acbaf
+
 ## the-eula-question-precedes-every-install
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #192)

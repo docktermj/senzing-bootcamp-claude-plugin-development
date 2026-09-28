@@ -141,8 +141,10 @@ class TheRetractedClaimStaysRetracted(unittest.TestCase):
     **Updated 2026-07-31: the server documents a second platform, and this guard was narrower
     than the property it enforces.** `sdk_guide(topic='install', platform='macos_arm')` on
     server 1.32.3 states the same conditioned claim for the Homebrew cask — its shipped
-    `etc/sz_engine_config.ini` points `SUPPORTPATH` at a nonexistent `er/data` while the real
-    support data sits one level up — so the macOS pairing is as well-founded as the Scoop one.
+    `etc/sz_engine_config.ini` points `SUPPORTPATH` at a directory that does not exist while the
+    real support data sits one level up — so the macOS pairing is as well-founded as the Scoop
+    one. (On cask 4.4.x and earlier that directory is `er/data`; the literal has since drifted,
+    so `TheMacosSupportpathLiteralIsVersionScoped` below keeps the plugin from pinning it.)
     The condition regex accepted only `scoop|windows`, so it rejected a correct macOS claim.
     The *requirement* is unchanged — a pairing must carry a platform condition **and** the tool
     — only the set of platforms the server documents has grown. Widening the regex rather than
@@ -342,4 +344,82 @@ class TheSupportpathCheckIsNotGatedToOnePlatform(unittest.TestCase):
         self.assertRegex(
             text, r"(?i)fires at engine construction",
             "the pre-record nature of this failure is why the encoding cause does not apply",
+        )
+
+
+class TheMacosSupportpathLiteralIsVersionScoped(unittest.TestCase):
+    """The macOS diagnosis tests the directory's content, never a pinned literal (#199).
+
+    Module 2 quoted the cask's shipped `SUPPORTPATH=${INSTALLPATH}/senzing/er/data` as what
+    the ini says, and said `sdk_guide` carries that gotcha "verbatim". On MCP server 1.37.14
+    (2026-09-28) `sdk_guide(topic='install', platform='macos_arm', language='java')` says
+    "Do not pin the literal: it has already drifted once" — 4.4.x shipped `er/data`, and
+    4.5.0.26245 ships a Linux path that equally does not exist on a Homebrew install. A
+    Bootcamper told to look for `er/data` on 4.5.0 finds a different string and concludes
+    the diagnosis does not apply, when it does.
+
+    `explain_error_code('7426')` still quotes the 4.4.x literal on the same date, so the
+    two tools agree on the diagnosis and the fix but not on the literal. The guard below
+    keeps every surviving `er/data` inside a 4.4.x condition (INV-169: record the version an
+    observation holds for) and keeps the tool that owns the platform detail named.
+    """
+
+    WINDOW = 300
+
+    def test_er_data_appears_only_under_a_4_4_x_condition(self):
+        text = flat(MODULE_02)
+        matches = list(re.finditer(r"er/data", text))
+        self.assertTrue(matches, "Module 2 no longer mentions er/data; retire this test")
+        for match in matches:
+            window = text[max(0, match.start() - self.WINDOW):match.end() + self.WINDOW]
+            with self.subTest(at=match.start()):
+                self.assertRegex(
+                    window, r"4\.4\.x",
+                    "`er/data` appears without a 4.4.x condition in the same window. The "
+                    "literal holds for cask 4.4.x and earlier only; sdk_guide(topic='install', "
+                    "platform='macos_arm') says it has drifted (server 1.37.14, 2026-09-28)",
+                )
+
+    def test_sdk_guide_is_not_said_to_carry_the_gotcha_verbatim(self):
+        text = flat(MODULE_02)
+        self.assertNotRegex(
+            text, r"(?i)gotcha[^.]{0,60}\bverbatim\b",
+            "sdk_guide no longer states the macOS literal Module 2 quotes; 'verbatim' is false",
+        )
+        self.assertNotRegex(
+            text, r"(?i)platform='macos_arm'[^.]{0,200}\bverbatim\b",
+            "Module 2 again claims the macos_arm response carries its text verbatim",
+        )
+
+    def test_either_tool_is_not_relayed_for_the_macos_literal(self):
+        text = flat(MODULE_02)
+        self.assertNotRegex(
+            text, r"(?i)So relay either one\.",
+            "relaying either tool hands a 4.5.0 Bootcamper explain_error_code's 4.4.x literal",
+        )
+        self.assertRegex(
+            text, r"(?i)relay `sdk_guide` for the platform detail",
+            "Module 2 must name sdk_guide as the tool to relay for the macOS platform detail",
+        )
+
+    def test_the_diagnosis_tests_the_directory_content(self):
+        """"Resolves on disk" is not enough: the path can exist and hold no modules."""
+        self.assertRegex(
+            flat(MODULE_02),
+            r"(?i)does not resolve to a directory holding `\*TransRules\.sz`, whatever its "
+            r"literal",
+        )
+
+    def test_the_4_5_0_config_and_resource_paths_are_named_without_a_literal(self):
+        text = flat(MODULE_02)
+        match = re.search(
+            r"(?i)cask 4\.5\.0[^.]{0,120}`CONFIGPATH`[^.]{0,20}`RESOURCEPATH`[^.]{0,20}"
+            r"Linux paths too", text,
+        )
+        self.assertIsNotNone(
+            match, "the 4.5.0 CONFIGPATH / RESOURCEPATH clause is missing from Step 8"
+        )
+        self.assertNotRegex(
+            match.group(0), r"(?i)(?:CONFIGPATH|RESOURCEPATH)=",
+            "the 4.5.0 clause must name no literal; the server says not to pin it",
         )

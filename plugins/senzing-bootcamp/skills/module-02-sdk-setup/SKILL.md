@@ -1558,27 +1558,35 @@ call for exactly this reason.
 > **The macOS cask has the same defect, and the server documents it in more detail.**
 > `sdk_guide(topic='install', platform='macos_arm')` states that `SENZ7426` on
 > `getEngine`/`getDiagnostic`/`addRecord` "means SUPPORTPATH is WRONG — it is NOT a broken
-> install": the cask's own shipped `etc/sz_engine_config.ini` sets
+> install": on cask 4.4.x and earlier, the cask's own shipped `etc/sz_engine_config.ini` sets
 > `SUPPORTPATH=${INSTALLPATH}/senzing/er/data`, **a directory that does not exist**, while the real
 > support data (`address_datamodel`, `nomicon`, and the `*TransRules.sz` transliteration modules)
 > lives one level up at `$(brew --prefix)/opt/senzing/data`. The server reports this confirmed
 > end-to-end on cask 4.4.0.26206 and **reported against 4.3.3.26191, which ships the same wrong
 > path** (verified on MCP server 1.32.3, 2026-07-31).
 >
-> ⛔ **Both tools state this now, and they agree** — re-verified on **MCP server 1.32.9,
-> 2026-08-12**. `sdk_guide(topic='install', platform='macos_arm', language='java')` carries the
-> gotcha above verbatim, and `explain_error_code('7426')` ranks *"SUPPORTPATH points at a directory
-> with no transliteration modules … This is a configuration error, NOT a broken install"* as
-> `common_causes[0]` with *"Check SUPPORTPATH FIRST"* as `resolution_steps[0]`, naming this same
-> macOS cask case and pointing back at `sdk_guide topic='install'` for the platform detail. So relay
-> either one. Keep `sdk_guide` cited for what it still owns — the paths, env vars and EULA variable
-> — and note that the principle the earlier note rested on is unchanged: **ask the tool that owns
-> the fact.** Only its example is obsolete, because these two coverages have since converged.
+> ⛔ **Both tools agree on the diagnosis and the fix — not on the macOS literal** (INV-169) —
+> re-verified on **MCP server 1.37.14, 2026-09-28**. `explain_error_code('7426')` ranks
+> *"SUPPORTPATH points at a directory with no transliteration modules … This is a configuration
+> error, NOT a broken install"* as `common_causes[0]` with *"Check SUPPORTPATH FIRST"* as
+> `resolution_steps[0]`, naming this same macOS cask case and pointing back at
+> `sdk_guide topic='install'` for the platform detail. Both give the same fix: set `SUPPORTPATH` to
+> `$(brew --prefix)/opt/senzing/data`, and do not use the shipped `.ini` as-is. **They differ on
+> what the shipped ini says.** `explain_error_code`'s macOS cause still quotes the
+> `${INSTALLPATH}/senzing/er/data` literal, which holds for cask 4.4.x and earlier only.
+> `sdk_guide(topic='install', platform='macos_arm', language='java')` now says the literal "has
+> already drifted once" — cask 4.5.0.26245 ships a Linux path instead, and its `CONFIGPATH` and
+> `RESOURCEPATH` are Linux paths too — and tells the reader *"Do not pin the literal"*. So relay
+> either tool for the diagnosis and the fix, relay `sdk_guide` for the platform detail, and never
+> tell a Bootcamper that `explain_error_code`'s macOS literal is what their ini says. Keep
+> `sdk_guide` cited for what it still owns — the paths, env vars and EULA variable — and note that
+> the principle the earlier note rested on is unchanged: **ask the tool that owns the fact.** Only
+> its example is obsolete: the two coverages have converged on the diagnosis, not on the literal.
 >
 > ⚠️ `sdk_guide` gates this response on `language`: asked with `language='python'` for this platform
 > it returns only the "Python is Linux-only" compatibility note and **no install detail at all**, so
 > the gotcha above is invisible. Ask with a macOS-supported binding (Java or C#) to see it.
-> (Observed 1.32.9, 2026-08-12.)
+> (Observed 1.37.14, 2026-09-28.)
 > <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm', language='python') — returns no install detail, only the Linux-only note — owner: sdk_guide(topic='install', platform='macos_arm', language='python') compatibility_notes state the Python SDK is Linux-only — the absence IS the answer, not a gap — server 1.36.0, 2026-09-02 -->
 >
 > `SENZ7426` still fires at `getEngine()`, **before any record is submitted**, so "validate your
@@ -1634,10 +1642,14 @@ sibling of `er` rather than a child.** That is currently **two** platforms, both
 1. Confirm the `SUPPORTPATH` in the MCP-returned configuration exists —
    `test -d "$(brew --prefix)/opt/senzing/data"`, and that it holds the transliteration modules:
    `ls "$(brew --prefix)/opt/senzing/data"/*TransRules.sz`.
-2. If it does not, the cask's own `etc/sz_engine_config.ini` is the likely source: it sets
-   `SUPPORTPATH` to `${INSTALLPATH}/senzing/er/data`, which does not exist. **Do not use the shipped
-   `.ini` as-is, and do not copy transliteration files around** — set `SUPPORTPATH` to
-   `$(brew --prefix)/opt/senzing/data`, the `support_path` `sdk_guide` already returns.
+2. If it does not, the cask's own `etc/sz_engine_config.ini` is the likely source: its
+   `SUPPORTPATH` does not resolve to a directory holding `*TransRules.sz`, whatever its literal.
+   Test the directory's content, never the string — the literal has changed between cask
+   releases, so matching one value misses the next. On cask 4.5.0 the shipped ini's `CONFIGPATH`
+   and `RESOURCEPATH` are Linux paths too, one more reason the file is wrong for a Homebrew
+   install. **Do not use the shipped `.ini` as-is, and do not copy transliteration files around**
+   — set `SUPPORTPATH` to `$(brew --prefix)/opt/senzing/data`, the `support_path` `sdk_guide`
+   already returns.
 3. If neither path exists, report both that were tried rather than guessing a third.
 
 ⚠️ **Linux was not re-checked for this layout** (verified 2026-07-31: `sdk_guide` was asked for
