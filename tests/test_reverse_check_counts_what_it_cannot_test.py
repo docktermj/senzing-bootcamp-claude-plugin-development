@@ -1,12 +1,12 @@
 """The INV-282 reverse check never reports clean over lines it could not reach.
 
 The check has two halves that read different corpora: `since` diffs `SCAN_ROOTS`, and
-`per-rule` reads `shipped_markdown()` — the plugin alone. The procedure in
-`unattended-issue-loop/SKILL.md` took every line from the first and tested membership against
-the second, so ⛔ **a rule added under the maintainer surface could never appear in the result.**
-Measured against `7b43eee`: 112 lines in, **0** reported, 0 occurrences of `.claude/` in a 43 KB
-`--uncited` corpus. 93 of those 112 cite nothing. The set difference reported clean over rules
-it could not see.
+`per-rule` reads `shipped_markdown()` — the plugin alone. The procedure the unattended loop
+then carried (in its old project `SKILL.md`) took every line from the first and tested
+membership against the second, so ⛔ **a rule added under the maintainer surface could never
+appear in the result.** Measured against `7b43eee`: 112 lines in, **0** reported, 0
+occurrences of `.claude/` in a 43 KB `--uncited` corpus. 93 of those 112 cite nothing. The set
+difference reported clean over rules it could not see.
 
 ⚠️ **A second defect in the same script, found while fixing the first.** Its comparison key
 stripped the stop sign from the whole line while `per-rule` prints the line with it, so a rule
@@ -35,6 +35,15 @@ assertions below pin it there.
 for a span the check does not cover, and the reason the word `clean` is reserved for a run that
 tested everything it reported.
 
+⚠️ **Re-pointed 2026-09-28 (#215).** The loop that runs is the user-level
+`~/.claude/skills/unattended-issue-loop/SKILL.md`, which has no audit cycle and so never runs
+this check; ⛔ that governing copy is **not checked in CI** (INV-308). The project `SKILL.md` is
+now a pointer stub. Removed, because the text they pinned no longer exists in the repository:
+`TheHandoffQuotesTheCountsNotTheWord` (the loop's handoff quoting the counts),
+`test_the_loop_skill_calls_the_view`, and the loop command's subtest in
+`test_the_command_and_the_audit_skill_name_the_view_too`. The audit skill, which does run the
+check, is still asserted, and the stub is still asserted not to carry the broken script.
+
 Built on throwaway git repositories: this repository's own history cannot produce a range with
 an uncited plugin rule, an untested maintainer-surface rule and a clean range on demand.
 
@@ -44,7 +53,6 @@ Source issue: #80.
 
 Run:  python3 -m unittest discover -s tests
 """
-import re
 import shutil
 import subprocess
 import sys
@@ -55,7 +63,6 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFORMANCE = REPO_ROOT / ".claude/skills/production-readiness-audit/conformance.py"
 LOOP_SKILL = REPO_ROOT / ".claude/skills/unattended-issue-loop/SKILL.md"
-LOOP_COMMAND = REPO_ROOT / ".claude/commands/unattended-issue-loop.md"
 AUDIT_SKILL = REPO_ROOT / ".claude/skills/production-readiness-audit/SKILL.md"
 
 CITED = "- ⛔ **Never ship a rule with no invariant.** (INV-183)\n"
@@ -206,18 +213,6 @@ class TheUntestedSpanCarriesItsCitationRate(unittest.TestCase):
             "would make the two halves of one report disagree about the word")
 
 
-class TheHandoffQuotesTheCountsNotTheWord(unittest.TestCase):
-    """⚠️ Asserts what the loop INSTRUCTS; no offline test can watch a handoff be written."""
-
-    def test_the_loop_is_told_to_quote_the_counts(self):
-        text = re.sub(r"\s+", " ", LOOP_SKILL.read_text(encoding="utf-8"))
-        self.assertRegex(
-            text, r"quote its COUNTS, never the verdict word alone",
-            "the unattended loop's handoff may report the reverse check as a single verdict "
-            "word. `NOT CLEAN` is the ordinary result for maintainer-surface work, so a "
-            "handoff carrying only that word tells the maintainer nothing actionable (#83)")
-
-
 class TheTestedHalfStillDecides(unittest.TestCase):
     """Counting the untested half is worthless if the tested half stopped working."""
 
@@ -292,14 +287,7 @@ class TheCorporaAreReadFromTheViewsThemselves(unittest.TestCase):
 
 
 class TheDocumentsCallTheViewRatherThanCarryingTheScript(unittest.TestCase):
-    """⚠️ Three documents describe this check; a fix reaching one of them is the same drift."""
-
-    def test_the_loop_skill_calls_the_view(self):
-        text = LOOP_SKILL.read_text(encoding="utf-8")
-        self.assertIn(
-            "conformance.py reverse-check --since-last-audit", text,
-            "the unattended loop does not run the reverse check, so an unattended run has no "
-            "stated way to answer the question INV-282 requires it to answer")
+    """⚠️ Documents that describe this check call the view; a copied script is the same drift."""
 
     def test_the_loop_skill_no_longer_carries_the_broken_comparison(self):
         """The script could not match a maintainer-surface line at all; keeping it invites use."""
@@ -309,13 +297,10 @@ class TheDocumentsCallTheViewRatherThanCarryingTheScript(unittest.TestCase):
             "the loop still embeds the old membership script. It compared two views reading "
             "different corpora and reported clean over 93 uncited rules (#80)")
 
-    def test_the_command_and_the_audit_skill_name_the_view_too(self):
-        for label, path in (("the loop's command", LOOP_COMMAND),
-                            ("the audit skill", AUDIT_SKILL)):
-            with self.subTest(document=label):
-                self.assertIn(
-                    "reverse-check", path.read_text(encoding="utf-8"),
-                    "%s still describes the check without naming the view that performs it" % label)
+    def test_the_audit_skill_names_the_view(self):
+        self.assertIn(
+            "reverse-check", AUDIT_SKILL.read_text(encoding="utf-8"),
+            "the audit skill still describes the check without naming the view that performs it")
 
 
 if __name__ == "__main__":

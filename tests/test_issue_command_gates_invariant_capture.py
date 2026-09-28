@@ -24,10 +24,12 @@ alone; one that forgot the third would push a run into claiming a rule it did no
 `tests/test_spec_ledger_invariants.py` already accepts exactly these three at the ledger end —
 this pins the same contract at the command end, where the obligation is created.
 
-⛔ **Scoped to the COMMAND, not the skill.** The skill has a copy at
-`~/.claude/skills/implement-github-issue/SKILL.md` shared with repositories that have no
-`INVARIANTS.md`, so the gate belongs to this repo's front where it is true. See the provenance
-note in `.claude/skills/implement-github-issue/SKILL.md`.
+⛔ **Scoped to the COMMAND, not the skill.** The governing copy is
+`~/.claude/skills/implement-github-issue/SKILL.md`, shared with repositories that have no
+`INVARIANTS.md`, so the gate belongs to this repo's overlay, the command file, where it is true.
+Since #215 the project `SKILL.md` is a pointer stub that says so. ⚠️ **The governing copy under
+`~/.claude/skills/` is not checked in CI** -- a runner checks out only the repository -- so
+nothing here establishes that it reads the overlay (INV-308).
 
 ⚠️ **Enforces INV-309.** It asserts the command STATES the gate: that closing and the
 deferral mechanism appear in one requirement, that all three answers survive, that the command
@@ -43,7 +45,8 @@ at its current path, so a rename must bring this guard with it.
 
 Stdlib only; the command is read as text (INV-108).
 
-Source issue: #50 (add `/implement-github-issue`; retire `/implement-spec`).
+Source issue: #50 (add `/implement-github-issue`; retire `/implement-spec`); #215 (the
+command becomes the repo overlay).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -78,9 +81,9 @@ class TheCommandExistsAndFrontsTheSkill(unittest.TestCase):
         """The command names a skill; `installed_skills()` only sees the project copy."""
         self.assertTrue(
             SKILL.is_file(),
-            "%s does not exist. The skill also has a copy under ~/.claude/skills/, which no "
-            "guard in this repo can see -- so without the project copy the command names a "
-            "skill that resolves on one machine and nowhere else" % SKILL)
+            "%s does not exist. The governing copy lives under ~/.claude/skills/, which no "
+            "guard in this repo can see -- so without the pointer stub the command names a "
+            "skill that resolves on one machine and nowhere else (INV-303)" % SKILL)
 
 
 class ClosingIsGatedOnInvariantCapture(unittest.TestCase):

@@ -9,31 +9,39 @@ not have.
 ⛔ **So the gate is an opt-in label, and its failure direction is DOING NOTHING.** No label,
 no work. An unlabeled backlog is a **no-op**, not an error and not a license to widen the
 query. ⚠️ That is the whole safety property: a missing gate must mean "assume nothing", never
-"assume everything", and a loop that silently fell back to the full backlog would be
-indistinguishable from one working correctly until it had already done the damage.
+"assume everything".
 
-⚠️ **The label does not exist in the repository yet, deliberately.** The maintainer creates it
-once with `gh label create`; until then every run of this loop is a no-op. Creating it is an
-outward-facing change to repository metadata and is the maintainer's to make — which is also
-why no assertion here requires the label to exist. The loop must be correct *before* it is
-armed.
+⚠️ **Re-pointed 2026-09-28 (#215): the procedure no longer lives in this repository.** The
+governing copy is `~/.claude/skills/unattended-issue-loop/SKILL.md`; the project `SKILL.md` is a
+pointer stub and `.claude/commands/unattended-issue-loop.md` is the repo overlay. ⛔ **The
+governing text under `~/.claude/skills/` is NOT checked in CI** -- a runner checks out only the
+repository, so a test reading it would pass on one machine and fail everywhere else (INV-308).
+What this module now asserts:
 
-⚠️ **The audit half WAS blocked, and this docstring said so five days after it stopped being
-true.** `/production-readiness-audit` wrote spec files into the frozen archive, so an unattended
-audit produced output the freeze guard rejects. **#69 fixed that on 2026-09-16** -- the audit now
-files a GitHub issue when attended and records findings in the ledger when not -- and the class
-below was **inverted rather than deleted** to match. ⛔ **The two halves of this file disagreed
-until 2026-09-21** (#90): a reader got "blocked" from the docstring and "fixed, and here is what
-replaced the assertion" from the class forty lines down.
+* the label gate against the `docs/FAMILY_WORKFLOW.md` §2 row, which is where this repository
+  states it;
+* the repository-only obligations (INV-309, INV-307, no `submit_feedback`, no declining) against
+  the overlay, where they moved;
+* that neither the stub nor the overlay instructs writing into the frozen archive.
 
-⛔ **This asserts what the loop INSTRUCTS, never what a run does.** No offline test can watch
-an unattended run query GitHub, so nothing here establishes that the label filter is applied —
-only that it is stated, in terms a later editor cannot quietly drop. The same limit as the MCP
-re-check guard, and named here rather than left for the file name to imply otherwise.
+Assertions **removed** at #215, each because the text it pinned no longer exists in the
+repository and the rule is the governing copy's, not this repository's:
 
-Stdlib only; both files are read as text (INV-108).
+* `--label unattended-ok` in both files -- the governing copy deliberately lists open issues
+  and filters by label itself, because `--label` goes through GitHub's lagging search index;
+* "comment on the issue" and "remove the `unattended-ok` label" for a blocked issue -- the
+  governing copy's blocked-issue procedure;
+* the whole `TheUnattendedAuditFilesNothing` class -- the loop that runs has no audit cycle, so
+  there is no unattended audit whose filing to forbid. The audit skill keeps its own rule
+  (`tests/test_audit_files_issues_not_specs.py`).
 
-Source issue: #51 (rename to `/unattended-issue-loop`, label-gated).
+⛔ **This asserts what the repository's text INSTRUCTS, never what a run does.** No offline test
+can watch an unattended run query GitHub.
+
+Stdlib only; every file is read as text (INV-108).
+
+Source issues: #51 (rename to `/unattended-issue-loop`, label-gated); #215 (the user-level copy
+governs).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -45,6 +53,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL_DIR = REPO_ROOT / ".claude" / "skills" / "unattended-issue-loop"
 SKILL = SKILL_DIR / "SKILL.md"
 COMMAND = REPO_ROOT / ".claude" / "commands" / "unattended-issue-loop.md"
+FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
 
 OLD_SKILL_DIR = REPO_ROOT / ".claude" / "skills" / "unattended-spec-loop"
 OLD_COMMAND = REPO_ROOT / ".claude" / "commands" / "unattended-spec-loop.md"
@@ -59,6 +68,17 @@ WRITES_A_SPEC = re.compile(r"(?i)append a `?## Blocked|write .{0,20}into `?specs
 def texts():
     return {"SKILL.md": SKILL.read_text(encoding="utf-8"),
             "command": COMMAND.read_text(encoding="utf-8")}
+
+
+def overlay():
+    return flat(COMMAND.read_text(encoding="utf-8"))
+
+
+def family_row():
+    rows = [l for l in FAMILY.read_text(encoding="utf-8").splitlines()
+            if l.startswith("| `unattended-issue-loop` |")]
+    assert len(rows) == 1, "expected one §2 row for unattended-issue-loop, found %d" % len(rows)
+    return flat(rows[0])
 
 
 def flat(s):
@@ -93,38 +113,30 @@ class TheRenameIsCompleteInBothDirections(unittest.TestCase):
 
 
 class OnlyLabeledIssuesAreWorked(unittest.TestCase):
-    """The opt-in gate, and the no-op default that makes it safe."""
+    """The opt-in gate, asserted where this repository states it: the FAMILY_WORKFLOW row."""
 
-    def test_the_label_filter_is_stated(self):
-        for name, text in texts().items():
-            with self.subTest(file=name):
-                self.assertIn(
-                    "--label %s" % LABEL, text,
-                    "%s never names the `--label %s` filter, so nothing tells an unattended "
-                    "run which issues the maintainer marked safe — and the whole backlog "
-                    "becomes the default" % (name, LABEL))
+    def test_the_row_names_the_label(self):
+        self.assertIn(
+            "`%s`" % LABEL, family_row(),
+            "the §2 row for unattended-issue-loop no longer names the `%s` label, so nothing "
+            "in this repository says which issues the maintainer marked safe" % LABEL)
 
     def test_an_unlabeled_backlog_is_a_no_op(self):
         """⛔ The failure direction is the safety property, so it is asserted directly."""
-        for name, text in texts().items():
-            with self.subTest(file=name):
-                self.assertRegex(
-                    flat(text), r"no label, no work",
-                    "%s does not state that an unlabeled backlog is a no-op. Without it a "
-                    "run finding nothing labeled may 'helpfully' widen the query, which is "
-                    "the one outcome the gate exists to prevent" % name)
+        self.assertRegex(
+            family_row(), r"no label, no work",
+            "the row does not state that an unlabeled backlog is a no-op. Without it a run "
+            "finding nothing labeled may 'helpfully' widen the query")
 
     def test_the_run_may_not_label_issues_itself(self):
-        for name, text in texts().items():
-            with self.subTest(file=name):
-                self.assertRegex(
-                    flat(text), r"never add the label yourself",
-                    "%s does not forbid the run adding the label itself. Selecting the work "
-                    "is the maintainer's decision; a loop that can label can select" % name)
+        self.assertRegex(
+            family_row(), r"never adds the label itself",
+            "the row does not forbid the run adding the label itself. Selecting the work is "
+            "the maintainer's decision; a loop that can label can select")
 
 
-class ABlockedIssueIsRecordedOnTheIssue(unittest.TestCase):
-    """The old blocked path wrote into `specs/`, which INV-307 now forbids."""
+class TheArchiveStaysFrozen(unittest.TestCase):
+    """The old blocked path wrote into `specs/`, which INV-307 forbids."""
 
     def test_it_does_not_write_into_the_frozen_archive(self):
         for name, text in texts().items():
@@ -135,78 +147,50 @@ class ABlockedIssueIsRecordedOnTheIssue(unittest.TestCase):
                          "is read-only (INV-307) and the freeze guard rejects the output"
                          % (name, hit.group(0) if hit else ""))
 
-    def test_the_block_is_recorded_on_the_issue(self):
+    def test_the_overlay_names_the_one_file_it_may_write(self):
+        """#215: the old copy said "never write into specs/" beside a required ledger entry."""
         self.assertRegex(
-            flat(texts()["SKILL.md"]), r"comment on the issue",
-            "the blocked path no longer records anything on the issue. The loop's own rule is "
-            "that a note living only in the handoff dies with the conversation")
-
-    def test_the_label_is_removed_when_blocked(self):
-        self.assertRegex(
-            flat(texts()["SKILL.md"]), r"remove the `?%s`? label" % LABEL,
-            "a blocked issue keeps its label, so the next unattended run retries it blindly "
-            "and the loop can spin on one issue it cannot finish")
+            overlay(), r"inv-307.{0,120}except the issue's own `specs/implemented\.md` entry",
+            "the overlay does not say which file under specs/ an unattended run may write. "
+            "Its predecessor forbade all of specs/ while requiring a ledger entry there")
 
 
-class TheUnattendedAuditFilesNothing(unittest.TestCase):
-    """⚠️ INVERTED, not deleted, on 2026-09-16 (#69).
+class TheRepositoryOnlyGatesSurvive(unittest.TestCase):
+    """What an unattended run must never decide here, asserted on the overlay."""
 
-    This class previously asserted the audit half was **blocked**, because
-    `/production-readiness-audit` wrote findings into the frozen archive. #69 fixed that —
-    but not by making the unattended audit file issues. ⛔ **`gh issue create` leaves the
-    machine, and this loop's contract is that nothing leaves the machine unattended.** So an
-    unattended audit records findings in its dated ledger entry and files none of them.
+    def test_it_does_not_call_submit_feedback(self):
+        self.assertRegex(overlay(), r"never call `submit_feedback`")
 
-    ⛔ The assertion was **re-pointed at the new rule rather than removed**: deleting it would
-    have left the loop free to file issues unattended with nothing failing, which is the
-    hazard the block note was standing in for all along.
-    """
-
-    def test_both_files_say_an_unattended_audit_files_nothing(self):
-        for name, text in texts().items():
-            with self.subTest(file=name):
-                self.assertRegex(
-                    flat(text), r"files nothing",
-                    "%s does not say an unattended audit files nothing. `gh issue create` "
-                    "leaves the machine, and this loop's contract is that nothing leaves the "
-                    "machine unattended -- so an unattended audit that files issues breaks "
-                    "the contract as surely as one calling submit_feedback would" % name)
-
-    def test_neither_file_lets_a_run_file_the_findings_afterwards(self):
-        """The loophole the first version left: record now, file at the end of the run."""
-        for name, text in texts().items():
-            with self.subTest(file=name):
-                self.assertRegex(
-                    flat(text), r"never file (?:the audit's findings|those findings) yourself",
-                    "%s does not forbid a run filing the recorded findings itself before it "
-                    "ends. Deferring the outward-facing act to the last step of an unattended "
-                    "run does not make it attended" % name)
+    def test_it_does_not_decline(self):
+        self.assertRegex(overlay(), r"never decline",
+                         "the overlay no longer forbids declining; that is the maintainer's alone")
 
 
 class TheInvariantGateSurvives(unittest.TestCase):
     """#51's second acceptance criterion: unattended work must not skip INV-309."""
 
     def test_the_loop_points_at_the_sanctioned_deferral_path(self):
-        text = texts()["SKILL.md"]
         self.assertIn(
-            "INV-309", text,
-            "the loop no longer cites INV-309, so nothing binds an unattended run to the "
+            "inv-309", overlay(),
+            "the loop overlay no longer cites INV-309, so nothing binds an unattended run to the "
             "invariant-capture gate — and an unattended run is exactly where a shipped rule "
             "goes unrecorded, which is the 2026-08-17 defect this skill was written about")
 
     def test_it_forbids_signing_off_an_invariant(self):
         self.assertRegex(
-            flat(texts()["SKILL.md"]), r"never sign off an invariant",
-            "the loop no longer forbids signing off an invariant. Minting an ID is the "
+            overlay(), r"never sign off an invariant",
+            "the loop overlay no longer forbids signing off an invariant. Minting an ID is the "
             "maintainer's alone, and an unattended run has no maintainer to ask")
 
     def test_declining_to_mint_does_not_decline_to_record(self):
         """The 2026-08-17 defect was the *safe-looking* move, so the trap is named."""
         self.assertRegex(
-            flat(texts()["SKILL.md"]), r"declining to\s+\*?\*?mint it does not decline to ship the rule",
-            "the loop no longer warns that declining to mint is not declining to ship. That "
-            "distinction IS the 2026-08-17 defect: 'do not record an invariant the maintainer "
-            "has not agreed to' shipped the rule and registered nothing")
+            overlay(),
+            r"declining to\s+\*?\*?mint (?:it|one) "
+            r"(?:does not decline|is not declining) to ship the rule",
+            "the loop overlay no longer warns that declining to mint is not declining to ship. "
+            "That distinction IS the 2026-08-17 defect: 'do not record an invariant the "
+            "maintainer has not agreed to' shipped the rule and registered nothing")
 
 
 if __name__ == "__main__":

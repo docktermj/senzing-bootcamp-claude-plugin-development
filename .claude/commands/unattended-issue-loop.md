@@ -1,6 +1,6 @@
 ---
-description: Work the GitHub issues labeled unattended-ok while the maintainer is away, alternating implement and audit, then hand off (maintainer tool).
-argument-hint: "[push policy: local | each-cycle | at-end] [max cycles, default 5]"
+description: Work the GitHub issues labeled unattended-ok while the maintainer is away, taking each to a pull request and then a handoff (maintainer tool).
+argument-hint: "[--dry-run] [--no-merge]"
 ---
 
 Maintainer request: work the labeled issue backlog unattended.
@@ -9,82 +9,43 @@ Invoke the `unattended-issue-loop` skill and follow it end to end.
 
 Run parameters: $ARGUMENTS
 
-⛔ **It works only issues carrying the `unattended-ok` label** —
-`gh issue list --state open --label unattended-ok`. **No label, no work**, and an
-unlabeled backlog is a **no-op**: the loop stops and says so rather than guessing which
-issues are safe. ⛔ **Never add the label yourself**; selecting the work is the
-maintainer's decision, and an unlabeled issue has not been declined — it has not been
-*offered*.
+**The governing copy is `~/.claude/skills/unattended-issue-loop/SKILL.md`**, the user-level
+skill; `.claude/skills/unattended-issue-loop/SKILL.md` here is a pointer stub. This file is the
+**repo overlay**: only the obligations this repository adds on top of the governing copy, which
+reads this file and must meet everything below.
 
-- If `$ARGUMENTS` **names a push policy**, take it as answered and do not re-ask.
-- ⛔ **If `$ARGUMENTS` is empty and the maintainer is still here, ask the push policy now** —
-  local-only, push each cycle, or push once at the end. **Committing is not publishing;
-  pushing unreviewed unattended work is.**
-- ⛔ **If they are already gone, default to LOCAL ONLY.** Silence is not consent to publish.
-- A trailing number caps the cycles; otherwise the skill's five stands.
+The loop's merge policy and its label gate are stated in the
+[`docs/FAMILY_WORKFLOW.md`](../../docs/FAMILY_WORKFLOW.md) §2 row for `unattended-issue-loop`
+(INV-300), and are not restated here.
 
-**Ask the other pre-departure questions while they are still here**, because each changes what
-the run does: any labeled issue whose acceptance criteria are conditional on their choice — an unset
-priority, two viable designs, an explicit *"if the maintainer chooses"* — and how long "a
-while" is, if they offer it. ⚠️ **Do NOT ask which labeled issues to implement** — the label already answered that
-is the whole instruction, and re-asking wastes the one turn they are still present for.
+## Every worker also meets the implement overlay
 
-**Decide these yourself, without asking:** which labeled issue to take next (highest priority,
-ties to the most self-contained), how to implement within the acceptance criteria, skipping one that
-proves unimplementable unattended, and reverting your own work when the suite cannot be brought
-green.
+Each worker follows `implement-github-issue`, so
+[`.claude/commands/implement-github-issue.md`](implement-github-issue.md) binds every issue the
+loop works: the INV-309 invariant capture, the MCP re-check, the `specs/IMPLEMENTED.md` ledger
+entry, `citations.py verify` after the entry, and this repository's local CI mirror. ⛔ **Put
+that file in every worker's brief.** On 2026-09-28 those obligations reached the workers only
+because the lead copied them in by hand.
 
-⛔ **Never sign off an invariant — and declining to mint one is NOT declining to ship the
-rule.** That distinction is the 2026-08-17 defect exactly. When an implementation ships a hard
-rule, ship it **and** write an explicit `DEFERRED INVARIANT` block in the ledger entry naming
-the rule, the site, and the drafted `INV-NNN — <statement>` wording, so the maintainer's return
-costs one yes. ⛔ **Never `_None yet._`, never silence.**
+⚠️ **The preflight's CI-mirror probe runs the same mirror**, including the empty-`HOME` legs
+that overlay describes. Its `.github/workflows/*.yaml` extension applies here too.
 
-⛔ **(INV-282) Check for uncited hard rules with
-`conformance.py reverse-check --since-last-audit` — never a grep for phrases you expect.** A
-grep can only confirm lines you already thought of, and the uncited ones are by construction
-the ones you did not — that is what the check is *for*. This has produced a wrong ledger claim
-**twice**. Run it **before** writing the entry, not after. Every line it reports is then either
-cited at the line or named in a deferral; silence is neither.
+## What an unattended run must never decide in this repository
 
-⛔ **(INV-308) Read its VERDICT line rather than the absence of output.** It says `clean` only when every
-added line was tested **and** cited. The procedure this replaced compared two views that read
-different corpora, so rules under `.claude/` could never appear in its result and it reported
-clean over 93 that cite nothing (#80).
+- ⛔ **Never sign off an invariant — and declining to mint one is NOT declining to ship the
+  rule.** That distinction is the 2026-08-17 defect exactly. When an implementation ships a
+  hard rule, ship it **and** write an explicit `DEFERRED INVARIANT` block in the ledger entry
+  naming the rule, the site, and the drafted `INV-NNN — <statement>` wording, so the
+  maintainer's return costs one yes. ⛔ **Never `_None yet._`, never silence.**
+- ⛔ **Never call `submit_feedback`.** An `mcp-server`-routed finding goes in the handoff with
+  the message drafted and its `Upstream:` line reading *"not yet sent — needs maintainer
+  approval"*.
+- ⛔ **Never decline** — that is the maintainer's alone. An issue you cannot implement is
+  **blocked**, a state you record on the issue, never an entry you write into
+  `specs/DECLINED.md`.
+- ⛔ **(INV-307) Write nothing under `specs/` except the issue's own `specs/IMPLEMENTED.md`
+  entry.** Every other file there is a frozen archive, and `specs/INVARIANTS.md` changes only
+  through `/review-invariants`.
 
-⛔ **Never call `submit_feedback`.** An `mcp-server`-routed finding gets an issue whose
-`Upstream:` line reads *"not yet sent — needs maintainer approval"*, with the message drafted
-and ready. **Nothing leaves the machine unattended.**
-
-⛔ **Never decline** — that is the maintainer's alone. An issue you cannot implement is
-**blocked**, which is a state you record, never a file you edit into `DECLINED.md`.
-
-⛔ **Never relax an assertion, delete a test, or narrow a guard to reach green.** If a test
-fails, either the change is wrong or the test pinned a wrong premise — both are findings. **A
-suite made green by weakening it is the one outcome worse than a red suite, because it reads as
-success.** ⛔ Never rewrite history, force-push, or amend a previous cycle's commit, and never
-write into `specs/` at all — it is a read-only archive (INV-307).
-
-**Per cycle:** when the open set is empty or every remainder is blocked, run the audit and
-follow it. ⛔ **An unattended audit files nothing** (#69): it records each finding in its dated
-ledger entry and the handoff, marked **not filed**, because filing leaves the machine.
-⛔ **Never file those findings yourself at the end of a run, and never label anything
-`unattended-ok`.** ⚠️ **The audit reports; it does not fix in place** — the next
-implement pass is the fixing half, so do not collapse the two. ⛔ **Commit the audit record on
-its own, BEFORE the next cycle's implementations.** Its hash becomes the next
-`--since-last-audit` range start, and a record sharing a commit with the work makes that range
-begin at the work, report `0 hard-rule lines added`, and the consumer guard **skip** — going
-green by not running, with nobody watching in a loop.
-
-**Stop** when an audit records no new findings (the success condition), at the cycle cap, when
-every remaining labeled issue is blocked, when the suite cannot be brought green on a revert,
-or when the MCP server is unreachable and every remaining labeled issue asserts a Senzing fact.
-⛔ **Stop immediately when no issue carries the label** — that is a no-op, not a failure.
-
-⛔ **State lives in git, the issue tracker and `IMPLEMENTED.md` — never in the conversation.** A long
-unattended run *will* be compacted, and anything held only in context is already gone. The
-handoff leads with **what needs a yes** — every deferred invariant with its drafted wording and
-every drafted upstream message — then what is committed against hashes with the start commit,
-what is blocked and the question that unblocks each, the audit verdict per cycle on the four
-properties separately, the suite and tree state, and ⛔ **what you got wrong.** An unattended
-run is trusted on its self-report or not at all.
+⚠️ **The handoff leads with what needs a yes**: every `DEFERRED INVARIANT` with its drafted
+wording, and every drafted upstream message.

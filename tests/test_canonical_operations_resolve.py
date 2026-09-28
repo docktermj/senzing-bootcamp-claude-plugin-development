@@ -277,53 +277,75 @@ class EverySlashCommandResolvesOrDisclaims(unittest.TestCase):
 
 
 class R8HasOneHome(unittest.TestCase):
-    """INV-300 -- the command restates a family rule, so it must name where the rule lives.
+    """INV-300 -- the command defers to family rule R8, so it must name where the rule lives.
 
-    ⚠️ **This class has changed subject twice, which is the point of keeping it.** At #111 R8 and
-    the command disagreed about whether *recommending* was allowed, and the command was brought
-    up to R8's ban. At #119 the maintainer **removed that ban** and required a dependency report
-    instead, so the assertions moved with the rule rather than being deleted. What survives in
-    both directions is that the two texts cannot drift apart silently.
+    ⚠️ **This class has changed subject three times, which is the point of keeping it.** At #111
+    R8 and the command disagreed about whether *recommending* was allowed, and the command was
+    brought up to R8's ban. At #119 the maintainer **removed that ban** and required a dependency
+    report instead, and #124 made the report name a suggestion. At #215 the report moved out of
+    `implement-github-issue` altogether: R8 gives it to **the operation that chooses the issue**
+    (`/order-github-issues` in this host), and the command, now the repo overlay, only points at
+    R8. So the assertions moved with the rule rather than being deleted: the approval clause and
+    the closing suggestion are now asserted on R8, and the command is asserted NOT to restate
+    them. What survives in every direction is that the two texts cannot drift apart silently.
 
-    ⛔ **The user-global skill is deliberately NOT asserted here.**
-    `~/.claude/skills/implement-github-issue/SKILL.md` carries the same procedure and lives
-    outside this repository, so CI -- which checks out only the repo -- would fail on its
-    absence. It is therefore unguarded, and that gap is recorded in the ledger rather than
-    papered over with a test that passes only on one machine.
+    Assertions **re-pointed** at #215 (the text they pinned no longer exists in the command):
+    `requires_a_dependency_report`, `requires_approval_before_acting` and `names_a_suggestion`
+    now read R8. `no_longer_tells_the_run_to_ask_which` still reads the command.
+
+    ⛔ **The user-level skills are deliberately NOT asserted here.**
+    `~/.claude/skills/implement-github-issue/SKILL.md` and `~/.claude/skills/order-github-issues/`
+    live outside this repository, so CI -- which checks out only the repo -- would fail on their
+    absence. They are **not checked in CI**, and that gap is recorded rather than papered over
+    with a test that passes only on one machine (INV-308).
     """
 
-    def test_the_command_requires_a_dependency_report(self):
-        text = IMPLEMENT_CMD.read_text(encoding="utf-8")
-        self.assertRegex(
-            text, r"(?i)review the open issues for dependencies",
-            "%s does not require reviewing the open issues for dependencies before asking, "
-            "which amended R8 (#119) makes mandatory" % IMPLEMENT_CMD)
+    def r8(self):
+        text = FAMILY.read_text(encoding="utf-8")
+        i = text.index("**R8 —")
+        return text[i:text.index("\n---\n", i)]
 
-    def test_the_command_requires_approval_before_acting(self):
+    def test_r8_requires_a_dependency_report(self):
+        self.assertRegex(
+            self.r8(), r"(?is)review\s+the\s+open\s+set\s+for\s+dependencies",
+            "R8 no longer requires reviewing the open set for dependencies before the maintainer "
+            "chooses, which amended R8 (#119) makes mandatory")
+
+    def test_r8_requires_approval_before_acting(self):
         """⛔ The ONE clause R8 still turns on, after three narrowings in two days.
 
         As adopted R8 forbade recommending and picking; #119 dropped the recommendation ban;
-        #124 dropped *asks which issue*. This assertion has moved with each, and what it now
-        pins is the last restraint standing -- so a failure here is not a wording drift, it is
-        the command losing the only limit it has.
+        #124 dropped *asks which issue*; #215 moved the report to the choosing operation. What
+        this pins is the last restraint standing -- so a failure here is not a wording drift, it
+        is the family losing the only limit it has.
         """
-        text = IMPLEMENT_CMD.read_text(encoding="utf-8")
         self.assertRegex(
-            # ⛔ `\s+`, never literal spaces: Markdown wraps this clause across lines in both
-            # surfaces, and a single-space pattern matched neither -- the #105 defect, hit while
-            # writing the guard meant to catch exactly this kind of drift.
-            text, r"(?is)never begins?\s+work\s+on\s+an\s+issue\s+the\s+maintainer\s+has\s+not\s+approved",
-            "%s no longer requires approval before acting. That is the whole of R8 now -- the "
-            "bans on recommending (#119) and on naming a suggestion (#124) were both removed "
-            "deliberately, and this clause is what is left" % IMPLEMENT_CMD)
+            # ⛔ `\s+`, never literal spaces: Markdown wraps this clause across lines, and a
+            # single-space pattern matched nothing -- the #105 defect.
+            self.r8(),
+            r"(?is)never\s+begins?\s+work\s+on\s+an\s+issue\s+the\s+maintainer\s+has\s+not"
+            r"\s+approved",
+            "R8 no longer requires approval before acting. That is the whole of R8 now")
 
-    def test_the_command_names_a_suggestion(self):
+    def test_r8_names_a_suggestion(self):
         """#124: the report ends by naming one issue rather than asking which."""
-        text = IMPLEMENT_CMD.read_text(encoding="utf-8")
         self.assertRegex(
-            text, r"(?is)name\s+the\s+issue\s+you\s+suggest|End\s+by\s+naming\s+one\s+issue",
-            "%s does not tell the run to name a suggested issue, which amended R8 (#124) "
-            "requires of the closing report" % IMPLEMENT_CMD)
+            self.r8(), r"(?is)names\s+the\s+issue\s+it\s+suggests",
+            "R8 does not tell the choosing operation to name a suggested issue (#124)")
+
+    def test_r8_gives_the_report_to_the_choosing_operation(self):
+        """#215: `implement-github-issue` with no argument names no issue."""
+        text = re.sub(r"\s+", " ", self.r8())
+        self.assertIn("the operation that chooses the issue", text)
+        self.assertIn("/order-github-issues", text)
+        self.assertIn("names no issue", text)
+
+    def test_the_command_does_not_restate_the_report(self):
+        text = IMPLEMENT_CMD.read_text(encoding="utf-8")
+        self.assertNotRegex(
+            text, r"(?i)review the open issues for dependencies|name the issue you suggest",
+            "%s restates R8's dependency report. R8 is its one home (INV-300); since #215 the "
+            "command only points at it" % IMPLEMENT_CMD)
 
     def test_the_command_no_longer_tells_the_run_to_ask_which(self):
         """The retired clause must not linger beside the one that replaced it."""
@@ -339,8 +361,31 @@ class R8HasOneHome(unittest.TestCase):
         text = IMPLEMENT_CMD.read_text(encoding="utf-8")
         self.assertIn(
             "FAMILY_WORKFLOW.md", text,
-            "%s restates family rule R8 without naming where the rule lives, so the two can "
+            "%s defers to family rule R8 without naming where the rule lives, so the two can "
             "drift with nothing pointing from one to the other (INV-300)" % IMPLEMENT_CMD)
+        self.assertRegex(text, r"\bR8\b")
+
+
+class TheLoopRowDescribesTheLoopThatRuns(unittest.TestCase):
+    """#215: the §2 row and the §3 node described an implement-then-audit loop that never ran."""
+
+    def test_the_row_no_longer_drives_phase_three(self):
+        row = [l for l in FAMILY.read_text(encoding="utf-8").splitlines()
+               if l.startswith("| `unattended-issue-loop` |")]
+        self.assertEqual(1, len(row))
+        phase = row[0].split("|")[2].strip()
+        self.assertEqual("drives 2", phase,
+                         "the loop's phase cell is %r; the loop that runs has no audit cycle, "
+                         "so it drives phase 2 only" % phase)
+
+    def test_the_diagram_node_no_longer_drives_phase_three(self):
+        body = FAMILY.read_text(encoding="utf-8")
+        node = [l for l in body.splitlines() if l.strip().startswith('LOOP["')]
+        self.assertEqual(1, len(node), "the §3 diagram's LOOP node is gone")
+        self.assertNotRegex(node[0], r"(?i)phases? 2 and 3|phase 3",
+                            "the diagram still says the loop drives the test phase")
+        self.assertNotIn("LOOP -.-> P3", body,
+                         "the diagram still draws an edge from the loop to phase 3")
 
 
 class TagsAreNotCommands(unittest.TestCase):

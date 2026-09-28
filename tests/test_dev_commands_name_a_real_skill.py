@@ -21,8 +21,10 @@ landed the last one, so the condition this file recorded for adding it -- "when 
 complete" -- is met, and the deferral is discharged rather than left as a promise in prose.
 
 ⚠️ **A directory under `.claude/skills/` with no `SKILL.md` is not a skill** and is excluded
-from that assertion. `implement-github-issue/` is one: the skill itself is user-level and global,
-and what lives here is only its per-issue run state.
+from that assertion. ⚠️ `implement-github-issue/` used to be the example (it held only per-issue
+run state); since #215 it holds a pointer stub `SKILL.md` naming the user-level copy as governing,
+so it is a skill here and is fronted by its command. The user-level copy under `~/.claude/skills/`
+is not checked in CI (INV-308).
 
 ⚠️ **What a green run means.** Every skill *named* in a command file resolves to a directory
 with a `SKILL.md`. It does not mean the command invokes the right skill, that the skill does

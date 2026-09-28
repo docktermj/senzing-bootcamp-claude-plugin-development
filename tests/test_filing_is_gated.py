@@ -10,12 +10,20 @@ This module is the mechanical half. The rule itself is drafted as a `DEFERRED IN
 `specs/IMPLEMENTED.md`, because minting an id is the maintainer's alone.
 
 ⛔ **The hard half is telling an INSTRUCTION from a PROHIBITION**, and a first scan got it
-wrong. Searching for `gh issue create` returns **six** files, and three of them name it only to
-forbid the act:
+wrong. Searching for `gh issue create` returns several files, and some of them name it only to
+forbid or template the act. The three pinned as negatives:
 
 * `.claude/commands/feedback-to-issues.md` — forbids a `--repo` argument;
 * `.claude/skills/feedback-to-issues/issue-template.md` — a body template;
-* `.claude/skills/unattended-issue-loop/SKILL.md` — ⛔ *"An unattended audit FILES NOTHING."*
+* `.claude/skills/delegate-to-mcp-server/issue-template.md` — a body template.
+
+⚠️ **Re-pointed 2026-09-28 (#215).** The third negative was
+`.claude/skills/unattended-issue-loop/SKILL.md` (*"An unattended audit FILES NOTHING."*). That
+file is now a pointer stub, and the loop that runs has no audit cycle, so the prohibition and
+its complement assertion are gone from this repository. The delegate template replaces it so
+the negative set does not shrink toward vacuity (INV-265). ⛔ The governing loop under
+`~/.claude/skills/` is **not checked in CI** (INV-308), and what an unattended run may post is
+#216's question, not this module's.
 
 A guard that cannot tell them apart demands a gate on the rule that forbids filing, which is the
 same "satisfied by something adjacent" defect this repository keeps finding -- committed inside
@@ -23,8 +31,8 @@ the guard written to prevent it.
 
 ⛔ **The discriminator is the fence.** A `gh issue create` inside a fenced code block is a
 command the reader is told to run; one in inline backticks is prose *about* the command.
-Measured 2026-09-23: that splits the six **3 and 3**, exactly along the instruction/prohibition
-line. `ProhibitionsAreNotInstructions` pins all three negatives.
+Measured 2026-09-23 it split the six **3 and 3**, exactly along the instruction/prohibition
+line. `ProhibitionsAreNotInstructions` pins three negatives.
 
 ⚠️ **The gate is required NEAR the instruction, not anywhere in the file.** A file-wide search
 would let a gate in one section vouch for an instruction in another -- and two of these files
@@ -139,7 +147,7 @@ class ProhibitionsAreNotInstructions(unittest.TestCase):
     NEGATIVES = (
         "commands/feedback-to-issues.md",
         "skills/feedback-to-issues/issue-template.md",
-        "skills/unattended-issue-loop/SKILL.md",
+        "skills/delegate-to-mcp-server/issue-template.md",
     )
 
     def test_none_of_them_is_read_as_instructing(self):
@@ -154,14 +162,6 @@ class ProhibitionsAreNotInstructions(unittest.TestCase):
                     "%s is read as instructing filing. It names `%s` only to forbid or template "
                     "it, and flagging it would demand a gate on the rule that forbids the act"
                     % (rel, FILING))
-
-    def test_the_unattended_loop_still_forbids_filing(self):
-        """The complement: if that prohibition goes, this negative stops being a negative."""
-        text = (CLAUDE / "skills/unattended-issue-loop/SKILL.md").read_text(encoding="utf-8")
-        self.assertRegex(
-            text, r"(?i)FILES NOTHING",
-            "unattended-issue-loop no longer forbids filing, so its mention of `%s` may now be "
-            "an instruction -- and it carries no gate" % FILING)
 
 
 class TheFenceIsWhatDistinguishes(unittest.TestCase):

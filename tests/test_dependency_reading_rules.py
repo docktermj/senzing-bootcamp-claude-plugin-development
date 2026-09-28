@@ -1,7 +1,9 @@
 """The dependency report's reading rules ship, and the constructions that mislead it are pinned.
 
-Amended R8 (#119) requires `implement-github-issue`, invoked with no argument, to review the
-open issues for dependencies and report them before the maintainer chooses. ⛔ **The obvious
+Amended R8 (#119) requires a dependency review of the open issues, reported before the
+maintainer chooses. Since #215 R8 gives that review to **the operation that chooses the issue**
+(`/order-github-issues` in this host); `implement-github-issue` invoked with no argument names
+no issue. ⛔ **The obvious
 implementations of that are worse than not doing it**, which is why the rules are stated in the
 rule rather than left to whoever writes the report.
 
@@ -21,17 +23,23 @@ procedure an agent follows. It tests that **the reading rules are stated where t
 will meet them**, and it pins the two constructions that produced the wrong answers, so a later
 edit cannot quietly drop the lesson while leaving the feature.
 
-⚠️ **The user-global skill carries the same rules and is NOT checked here.**
-`~/.claude/skills/implement-github-issue/SKILL.md` lives outside this repository; CI checks out
-only the repo, so asserting on it would fail there and pass only on a maintainer's machine. It
-is unguarded, deliberately and with the gap recorded rather than hidden behind a test that
-cannot run (INV-308).
+⚠️ **Re-pointed 2026-09-28 (#215): R8 is now the only surface checked.** The command and the
+in-repo skill used to restate the rules; the command is now the repo overlay and the skill a
+pointer stub, and neither restates them. `NoOtherSurfaceRestatesTheReview` pins that, so the
+rules cannot grow a second home that drifts (INV-300).
+
+⚠️ **The user-level skills carrying the procedure are NOT checked here.**
+`~/.claude/skills/order-github-issues/SKILL.md` and
+`~/.claude/skills/implement-github-issue/SKILL.md` live outside this repository; CI checks out
+only the repo, so asserting on them would fail there and pass only on a maintainer's machine.
+They are unguarded, deliberately and with the gap recorded rather than hidden behind a test
+that cannot run (INV-308).
 
 ⚠️ **What this does NOT establish:** that any particular run's dependency report is correct,
 complete, or useful. No offline check reaches that. It establishes that the rules a correct
 report must follow are present and have not been silently removed.
 
-Source issue: #119.
+Source issues: #119; #215 (the review moves to the choosing operation).
 
 Stdlib only; both surfaces are read as text (INV-108).
 
@@ -44,16 +52,16 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COMMAND = REPO_ROOT / ".claude" / "commands" / "implement-github-issue.md"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
-#: ⛔ The in-repo skill, added at #126. It existed throughout #119 and #124 and was never
-#: checked, so it sat two amendments behind while a same-named copy under `~/.claude/skills/`
-#: received them -- the INV-300 defect ("a rule with two homes will disagree with itself")
-#: happening to R8, which the family document cites INV-300 to justify. This is the copy that
-#: is version-controlled, that the command names, and that a child port reads from a tagged
-#: release; the user-level copy is outside this repository and cannot be guarded from here.
+#: The in-repo skill, a pointer stub since #215. It was added to this guard at #126 after sitting
+#: two amendments behind the user-level copy -- the INV-300 defect ("a rule with two homes will
+#: disagree with itself") happening to R8. The fix was to give it no copy at all.
 SKILL = REPO_ROOT / ".claude" / "skills" / "implement-github-issue" / "SKILL.md"
 
-#: The surfaces that must carry the rules. Both are in-repo; the global skill is not (see above).
-SURFACES = {"the command": COMMAND, "family rule R8": FAMILY, "the in-repo skill": SKILL}
+#: The surface that must carry the rules. The user-level skills are not checked (see above).
+SURFACES = {"family rule R8": FAMILY}
+
+#: Surfaces that must NOT restate the review: R8 is its one home in this repository.
+NOT_A_HOME = {"the command": COMMAND, "the in-repo skill": SKILL}
 
 #: ⛔ The rules are looked for in the REGION THAT STATES THEM, never in the whole file. Scanning
 #: the file was the first version of this module and three negative controls walked straight
@@ -62,9 +70,7 @@ SURFACES = {"the command": COMMAND, "family rule R8": FAMILY, "the in-repo skill
 #: keyword present *somewhere* is not the rule being stated *here* -- the same defect this
 #: repository keeps finding, in the test written to prevent it.
 REGION = {
-    COMMAND: ("- If `$ARGUMENTS` is **empty**", "- If `$ARGUMENTS` **names an issue**"),
     FAMILY: ("**R8 —", "\n---\n"),
-    SKILL: ("If `$ARGUMENTS` is empty,", "Preflight —"),
 }
 
 
@@ -137,6 +143,36 @@ class EverySurfaceCarriesEveryRule(unittest.TestCase):
                     len(region), len(path.read_text(encoding="utf-8")) * 0.9,
                     "the rule region in %s is almost the whole file, so scoping bought nothing "
                     "and a keyword anywhere still satisfies the rules" % surface)
+
+
+class R8GivesTheReviewToTheChoosingOperation(unittest.TestCase):
+    """#215: the rules survive; the operation that carries them changed."""
+
+    def test_r8_names_the_choosing_operation(self):
+        self.assertIn("/order-github-issues", rule_region(FAMILY),
+                      "R8 no longer names the operation that chooses the issue in this host, so a "
+                      "reader cannot tell which operation its rules bind")
+
+    def test_implement_github_issue_with_no_argument_names_no_issue(self):
+        self.assertRegex(re.sub(r"\s+", " ", rule_region(FAMILY)), r"(?i)names no issue")
+
+
+class NoOtherSurfaceRestatesTheReview(unittest.TestCase):
+    """INV-300 -- the rules have one home; a second copy is how R8 drifted before."""
+
+    RESTATEMENTS = (r"(?i)review the open issues for dependencies", r"(?i)impl(?:y|ies) no order",
+                    r"(?i)merge risk")
+
+    def test_neither_the_command_nor_the_stub_restates_it(self):
+        for surface, path in sorted(NOT_A_HOME.items()):
+            text = path.read_text(encoding="utf-8")
+            for pattern in self.RESTATEMENTS:
+                with self.subTest(surface=surface, pattern=pattern):
+                    self.assertNotRegex(
+                        text, pattern,
+                        "%s restates R8's dependency review. R8 is its one home here; a copy "
+                        "in %s is the two-homes drift #126 and #215 each had to repair"
+                        % (surface, path))
 
 
 def normative_text(path):

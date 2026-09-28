@@ -67,7 +67,7 @@ mechanisms, not maintainer-facing phases; they keep their names.
 | `auto-test` | 3 | required | *not mandated* | Probes the live Senzing MCP server for drift |
 | `release` | 4 | required | required | **Development repository only** (R8) |
 | `propagate-to-public` | 4 | required | required | **Public working tree only** (R8) |
-| `unattended-issue-loop` | drives 2–3 | required | *not mandated* | `unattended-ok`-labeled issues only |
+| `unattended-issue-loop` | drives 2 | required | *not mandated* | `unattended-ok`-labeled issues only: no label, no work, and it never adds the label itself. **Merges** each PR whose checks pass, by default, overriding `implement-github-issue`'s never-merge inside a run, since invoking the loop is the maintainer's consent; `--no-merge` leaves every PR open |
 | `delegate-to-mcp-server` | maintenance | required | — | Parent only |
 | `compact-dev-environment` | maintenance | required | — | Parent only |
 | `review-invariants` | maintenance | required | *open question* | See §8 |
@@ -91,9 +91,8 @@ flowchart TB
     P1 ==> P2 ==> P3 ==> P4
     P3 -->|"test failures needing code changes<br/>loop back here, <b>never into maintenance</b>"| P2
 
-    LOOP["<b>unattended-issue-loop</b><br/>drives phases 2 and 3 in turn,<br/>on <i>unattended-ok</i> issues only"]
+    LOOP["<b>unattended-issue-loop</b><br/>drives phase 2,<br/>on <i>unattended-ok</i> issues only"]
     LOOP -.-> P2
-    LOOP -.-> P3
 
     classDef phase fill:#eaf2fb,stroke:#3a6ea5,color:#1b3a57
     classDef driver fill:#f3f0fa,stroke:#6a5a9a,color:#2e2350
@@ -209,15 +208,23 @@ cross-reference in both directions. The child's local tracking issue closes when
 closed but not yet released has not reached any bootcamper.
 
 **R8 — `implement-github-issue` never begins work on an issue the maintainer has not
-approved.** Invoked with no argument it reviews the open set, reports what it found, **names the
-issue it suggests**, and **stops**. It may analyze, it may rank, it may name one; it may not
-start. The command pushes branches and opens pull requests, and *acting without approval* is the
-autonomy it is designed not to have.
+approved, and choosing the issue is not its job.** Choosing belongs to **the operation that
+chooses the issue** — `/order-github-issues` in this host. That operation reviews the open set,
+reports what it found, **names the issue it suggests**, and **stops**. It may analyze, it may
+rank, it may name one; it may not start. `implement-github-issue` takes the one issue the
+maintainer names; invoked with no argument it **names no issue** and stops. It pushes branches
+and opens pull requests, and *acting without approval* is the autonomy it is designed not to
+have. ⚠️ For `unattended-issue-loop`, the `unattended-ok` label is that approval, given one
+issue at a time (§2).
+
+⚠️ **The choosing operation is a host mechanism, not a canonical operation**, so it has no §2
+row: R4 reserves names, and the invocation mechanism is the host's business. A child conforms by
+putting the rules below in whatever operation chooses the issue there.
 
 ⛔ **The report ends by naming one issue**, so the maintainer's next act is approval rather than
-selection — the command has just read the whole backlog and is the thing best placed to propose
-a target. ⚠️ **Where the open set is empty, or where no issue is a defensible suggestion, the
-report says so** rather than naming one to satisfy the form.
+selection — the choosing operation has just read the whole backlog and is the thing best placed
+to propose a target. ⚠️ **Where the open set is empty, or where no issue is a defensible
+suggestion, the report says so** rather than naming one to satisfy the form.
 
 ⛔ **It MUST first review the open set for dependencies and report them** — a suggested order
 where one follows, and which issues are independent — so the choice is made informed rather
@@ -236,9 +243,10 @@ are independent the report says so and **implies no order**.
 see [§10](#10-amendments). As adopted it forbade recommending **and** picking; 2026-09-22
 removed the ban on recommending; 2026-09-23 removed *asks which issue*. What remains is
 **approval before action**, and it is stated first above rather than last because it is no
-longer one restraint among several — it is the whole of the guarantee. ⚠️ **A child port
-reading only the current text will not see that**, which is why the trajectory is recorded and
-not just the endpoint.
+longer one restraint among several — it is the whole of the guarantee. 2026-09-28 moved the
+report, not the guarantee: the dependency review now belongs to the operation that chooses the
+issue. ⚠️ **A child port reading only the current text will not see that**, which is why the
+trajectory is recorded and not just the endpoint.
 
 ---
 
@@ -397,6 +405,37 @@ repository cites.
 ⚠️ **An amendment does not renumber.** R8 stays R8. A rule that is withdrawn keeps its number
 and says so, for the same reason `INVARIANTS.md` never reuses an id: a citation that silently
 resolves to a different rule is worse than one that fails.
+
+### 2026-09-28 — R8's dependency report moves to the operation that chooses the issue; the loop row describes the loop that runs
+
+**R8 was:** *"`implement-github-issue` never begins work on an issue the maintainer has not
+approved. Invoked with no argument it reviews the open set, reports what it found, **names the
+issue it suggests**, and **stops**."*
+
+**R8 now:** the dependency report, its reading rules and the closing suggestion belong to **the
+operation that chooses the issue**, which is `/order-github-issues` in this host.
+`implement-github-issue` invoked with no argument **names no issue**. *Never begins work on an
+issue the maintainer has not approved* is unchanged, and every reading rule survives word for
+word. No §2 row is added: the choosing operation is a host mechanism, and R4 reserves names
+only.
+
+**The §2 row for `unattended-issue-loop` was:** phase *drives 2–3*, boundary
+*"`unattended-ok`-labeled issues only"*, and the §3 diagram said it *"drives phases 2 and 3 in
+turn"*.
+
+**Now:** phase *drives 2*. The loop takes labeled issues to pull requests and runs no audit
+cycle. The row now states the loop's merge policy, and it is the only place in the parent that
+does (INV-300): the loop's command and skill link to the row rather than restating it.
+
+Why: the parent's own copies had drifted from the procedure that runs (#215). The loop that
+actually ran on 2026-09-28 merged nine PRs, while this page, the parent's command and its tests
+described a local-only implement-then-audit loop. `implement-github-issue`'s no-argument review
+had likewise moved into a separate skill. The page now describes the behavior that runs.
+
+**For a child:** move R8's dependency report into whatever operation chooses the issue in your
+host, and make `implement-github-issue` with no argument name no issue. Keep *approval before
+action* and every reading rule exactly as they are. If you ship `unattended-issue-loop`, its
+row is still *not mandated*; a child that has one states its merge policy in its own row.
 
 ### 2026-09-24 — R12 names its third marker: `Partly superseded by:`
 
