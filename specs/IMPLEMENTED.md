@@ -43,6 +43,79 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## retrofit-prose-describes-the-report-not-the-copy
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #224)
+- **Files changed:**
+  `.claude/commands/retrofit-from-public.md`, `.claude/skills/retrofit-from-public/SKILL.md`,
+  `.claude/skills/retrofit-from-public/retrofit.sh`, `.claude/skills/propagate-to-public/SKILL.md`,
+  `docs/development.md`, `tests/test_retrofit_files_issues.py`,
+  `tests/test_maintainer_docs_stay_out_of_public.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-28, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact), re-confirmed. Every changed line is maintainer apparatus: the
+  retrofit and propagate skills, one shell script's `diff` flags, a maintainer page and tests.
+  No absence claim is made.
+- **Summary:** #54 made `/retrofit-from-public` report-only, and #202 gave it a baseline, but
+  the prose around the command still partly described the retired copy into dev. This run makes
+  every maintainer-facing description say what it does: compare public against the last
+  propagation, report, and file issues here (INV-312).
+  - **The command.** The opening request, the guessed-source consequence, the `retrofit.sh`
+    paragraph and the "Never delete" bullet no longer describe a copy or add/update. The
+    inverse-transform bullet is now a rule for the filed issue's body. The pytest/reconcile
+    block is one line: the suite is run and desynced tests reconciled inside the filed issue's
+    implementation, not by this command. The "stale until 2026-09-22" note records this second
+    correction (#224), and it paraphrases the old wording rather than quoting it, so the new
+    stale-phrase guard needs no exemption.
+  - **The skill.** The frontmatter `description`'s first two sentences now describe a report
+    that files issues. The trigger phrases ("Retrofit", "bring public-repo edits", "PR fixes,
+    typo/spelling corrections") stay. The intro, asymmetries 1 and 2 (no add/update, no
+    removing by hand) and the manifest ("What gets compared", read-only) are corrected. The
+    manifest names all three build artifacts. The inverse-transform guardrail is reworded as a
+    rule for the issue body, and the "unrun suite … Step 5" guardrail is deleted; its reason
+    stays in "Why this stopped copying".
+  - **`retrofit.sh`.** Both `diff -rq` calls pass `-x __pycache__ -x '*.pyc' -x .pytest_cache`,
+    the three patterns `propagate.sh` excludes, so a public checkout where anything has run no
+    longer reads `plugins` as `DIFFERS`. The CLI, arguments, exit codes and report format are
+    unchanged.
+  - **`docs/development.md`.** `/dry-run` (#153) joins the reworked commands in the INV-307
+    paragraph, placed before `/delegate-to-mcp-server` so the next sentence's "Its ledger" still
+    refers to delegate. Only those lines of that paragraph changed (#226 plans to rewrite it).
+    The `/delegate-to-mcp-server` and `/retrofit-from-public` entries read as the issue's Scope
+    gives them. The duplicate *(children only)* marker is dropped.
+  - **`propagate-to-public/SKILL.md`.** Both exclusion lists name `docs/FAMILY_WORKFLOW.md`
+    beside `docs/development.md`. The **Excluded** section gives it its own bullet and says
+    "One of two exceptions".
+- **Approach:** raced (Phase 5b), two approaches, judged against a rubric written first (issue
+  comment 3). **Winner A, minimal prose with guards in the two existing test files**, over B
+  (the skill as the only description, with the command cut to a thin front). Both met the
+  criteria; A changes only what the issue names. The patch applied cleanly with
+  `git apply --3way` over `d042ff0`. **Adaptation:** one overlong line in the command's
+  inverse-transform bullet was rewrapped.
+- **Establishes no invariant, and defers none.** The change adds no ⛔ or MUST line. It brings
+  the prose back in line with INV-312, which already requires the report-only behavior and that
+  any transform the sync used to apply is stated as work the filed issue owes. The skill's
+  existing guardrail already requires `retrofit.sh` to stay in step with `propagate-to-public`;
+  the new parity test enforces that guardrail for the build-artifact patterns. The wording of
+  INV-312, INV-302 and INV-300 is unchanged.
+- **Tests:**
+  - `tests/test_retrofit_files_issues.py`. `GUARDED_STATUS` and `GUARDED_LISTING` carry the
+    flags through one `IGNORED` constant, and the #191 controls still mutate them.
+    `NoCopyWordingReturns` fails if "add/update", "Run the copy", "reconcile every test",
+    "Step 5" or "back into this development repo" returns to the command or the skill, matched
+    with whitespace flattened. Its negative control plants each phrase into the real text of
+    both files, once plain and once across a line wrap. `TheBuildArtifactsAreNotDifferences`
+    runs the script against a public tree carrying `scripts/__pycache__/x.pyc`, `scripts/y.pyc`
+    and `.pytest_cache/v/cache/lastfailed`: `plugins` reads `same`, and a real edit beside them
+    lists only the edit. It also checks `-x` parity with `propagate.sh`'s `excludes=(...)`
+    array. Its negative controls drop each `-x` in turn (the result is `DIFFERS`) and strip the
+    flags from the listing line only (the artifacts are printed).
+  - `tests/test_maintainer_docs_stay_out_of_public.py`. `TheSkillNamesEveryExclusion` parses
+    the skill's two lists and asserts each names `docs/<x>` for every `docs/` file in the
+    script's `rsync` excludes. Both lists must parse (INV-265). Its negative control removes
+    `docs/FAMILY_WORKFLOW.md` from each list and shows the check reports it.
+  - In the race, each old file was restored from `main` and failed its new guard.
+- **Commit:** uncommitted
+
 ## upstream-vocabulary-is-two-closed-sets-with-a-mapping
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #223)

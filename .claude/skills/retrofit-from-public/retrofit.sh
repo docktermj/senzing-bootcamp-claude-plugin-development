@@ -159,7 +159,7 @@ report_path() {
     echo "  (absent in public)      $rel"
     return 0
   fi
-  diff -rq "$src/$rel" "$base/$rel" >/dev/null 2>&1 || status=$?
+  diff -rq -x __pycache__ -x '*.pyc' -x .pytest_cache "$src/$rel" "$base/$rel" >/dev/null 2>&1 || status=$?
   case "$status" in
     0) echo "  same                    $rel"
        return 0 ;;
@@ -168,7 +168,7 @@ report_path() {
     *) echo "  ERROR                   $rel   (diff could not compare it: exit $status)"
        errors=$((errors + 1)) ;;
   esac
-  diff -rq "$src/$rel" "$base/$rel" 2>&1 | sed 's/^/      /' | head -40 || true
+  diff -rq -x __pycache__ -x '*.pyc' -x .pytest_cache "$src/$rel" "$base/$rel" 2>&1 | sed 's/^/      /' | head -40 || true
 }
 
 echo "=== Comparing the propagated paths (read-only) ==="

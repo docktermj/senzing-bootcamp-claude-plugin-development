@@ -3,8 +3,8 @@ description: Report what changed in the public access repo and file GitHub issue
 argument-hint: "[path to the public repo] (omit for ~/senzing.git/senzing-bootcamp-claude-plugin)"
 ---
 
-Maintainer request: retrofit changes made in the public access repo back into this
-development repo.
+Maintainer request: report what changed in the public access repo since the last
+propagation, and file GitHub issues in this repository describing it.
 
 Invoke the `retrofit-from-public` skill and follow it end to end.
 
@@ -17,37 +17,33 @@ Source public repo: $ARGUMENTS
 - If the source does not exist, is not a git repo, or its `origin` is not
   `Senzing/senzing-bootcamp-claude-plugin`, **ask rather than retrofitting from
   somewhere uncertain** — the script aborts on each of these, and a guessed source
-  writes an unrelated tree's content over development.
+  files issues about an unrelated tree's content.
 
 This is the **return path** of the release loop: `propagate-to-public` is
 authoritative dev → public, and this brings back the edits that happen downstream —
-PR fixes, spelling corrections, direct changes — so the two repos do not drift. Run
-the copy through `retrofit.sh`; the file operations live in that script on purpose,
-because the reverse slug rewrite is narrow and hand-running it poisons the dev repo's
-identity with Senzing URLs.
+PR fixes, spelling corrections, direct changes — so the two repos do not drift. Take
+the comparison from `retrofit.sh`; it lives in that script on purpose, because the
+baseline and the slug rewrite it compares through are narrow, and a hand-run diff
+reports every dev self-reference as a public edit.
 
 Retrofit is **not** a mirror image of propagate, and the asymmetries are the whole
 risk surface:
 
 - **Never delete.** A dev file absent from public may be a dev addition not yet
-  propagated, not a downstream deletion. The script is add/update only and *reports*
-  the difference — work that list per file with the maintainer; never delete for them.
+  propagated, not a downstream deletion. The script writes nothing and *reports*
+  the difference — the issue says what to do about it; never delete for the maintainer.
 - **Never pull governance.** `.github/`, `LICENSE`, `.vscode/`, `.gitignore` and the
   public `.claude/settings.json` are owned by the public repo. Dev keeps its own setup.
-- **Apply the inverse transform, scoped.** Only the repo slug and `marketplace.json`'s
-  owner name. `plugin.json`'s `author` is the *company* and stays `Senzing`; product
-  mentions of "Senzing" and the `docktermj/senzing-bootcamp-free-data` links are not
-  touched. The script compares public against the last propagation as that tag's
-  `propagate.sh` published it, so a public repo nobody edited reports every path
-  `same` — that is success, not a failure to find anything.
+- **Each filed issue states the inverse transform it owes, scoped.** Only the repo slug
+  and `marketplace.json`'s owner name. `plugin.json`'s `author` is the *company* and
+  stays `Senzing`; product mentions of "Senzing" and the
+  `docktermj/senzing-bootcamp-free-data` links are not touched. The script compares
+  public against the last propagation as that tag's `propagate.sh` published it, so a
+  public repo nobody edited reports every path `same` — that is success, not a failure
+  to find anything.
 
-⛔ **Run `python3 -m pytest -q` and reconcile every test the retrofit desynced.** This
-is not a formality and no guard replaces it. `tests/` is not in the public mirror and
-cannot come back, so a prose edit made downstream lands in a shipped file while the
-dev-only test pinning that sentence verbatim still asserts the old wording. Reconcile
-by **updating the assertion to the retrofitted wording** — the public edit is the
-correction — and regenerate any artifact pinned to a retrofitted file. **Never report a
-retrofit as done on an unrun suite.**
+The suite is run, and any test a brought-across edit desyncs is reconciled, inside the filed
+issue's implementation — not by this command, which changes no file.
 
 Finish by reporting the script's summary — the baseline tag it compared against, which
 propagated paths differ, which are absent in public, the "In the last propagation but not in
@@ -59,7 +55,10 @@ sees each title and body — ⛔ **in this repository only**, since cross-repo f
 `/escalate-to-parent`. Search the tracker before filing so a change already absorbed does not get
 a second issue.
 
-⚠️ **This description was stale until 2026-09-22.** It said the command retrofits changes "back
-into this development repo" and told the reader to "stop at the working tree" — wording from
+⚠️ **This description was stale until 2026-09-22.** It said the command retrofits changes back
+into the development repo and told the reader to "stop at the working tree" — wording from
 before #54, when the changes were already *in* that tree. #54 changed the skill and the script and
-left this file describing the opposite; found while registering the invariant.
+left this file describing the opposite; found while registering the invariant. ⚠️ **It was stale
+again until 2026-09-28 (#224):** it still described the script as copying into dev, and told the
+reader to run the suite and fix the tests that copy desynced — work #54 retired along with the
+copy. Found by `/production-readiness-audit`'s maintainer-surface sweep.
