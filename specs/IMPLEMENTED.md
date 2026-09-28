@@ -43,6 +43,74 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-update-path-names-its-search-docs-routes
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #194)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`,
+  `tests/test_sdk_update_offer.py`, `tests/test_prescribed_search_queries.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28. All five
+  queries the issue names return what it quotes.
+  - `search_docs(query='homebrew-senzingsdk upgrade cask brew upgrade senzingsdk')` carries
+    `senzing/homebrew-senzingsdk` section "Upgrade" (`brew update`, `brew upgrade --cask
+    senzingsdk`), ranked below a V3→V4 FAQ.
+  - `search_docs(query='scoop-senzingsdk update scoop update senzingsdk')` returns the
+    `senzing/scoop-senzingsdk` README first, with section "Update" (`scoop update senzingsdk`)
+    and the "Preview Release — Unsupported" warning.
+  - `search_docs(query='upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change required
+    migration action required', category='release_notes')` ranks *What's New in v4* "Migration
+    guides" first and *v4.4.0 Detailed Release Notes* "Migration & Action Required" second.
+  - `search_docs(query='homebrew-senzingsdk preview release unsupported tap install cask')`
+    returns the tap's "Preview Release — Unsupported" warning first.
+  - `search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure')` still serves V3→V4
+    material, with the FAQ "What are the exact steps to migrate from V3 to V4?" first.
+  - `sdk_guide(topic='install')` for `macos_arm` and `windows` (`language='java'`) still carries
+    no update command. Two extra queries, `brew outdated brew info senzingsdk installed version
+    check` and `scoop status scoop info senzingsdk installed version check`, serve the READMEs'
+    install, update and uninstall usage and no version-check command, so the check commands
+    stay plugin-owned.
+- **Summary:** Module 2 Step 1b said the server documents no macOS/Windows update command and
+  no 4.x → 4.y procedure. Both now sit on `search_docs`.
+  - **Preamble:** the "Server-documented" bullet names two routes, `sdk_guide` for the install
+    command and `search_docs` for the macOS/Windows update command, with an unreachable-server
+    fallback (INV-163).
+  - **The update command:** the "plugin-owned too" paragraph is rewritten. It names the two
+    README queries and commands, and says the 2026-08-13 upstream report is partly closed and
+    what is still absent. Its marker is now a routing negative with `search_docs` as owner.
+  - **Fences:** the macOS and Windows fences split into a plugin-owned check part and a
+    `search_docs` update part. The Scoop update is the README's `scoop update senzingsdk`;
+    `scoop info senzingsdk/senzingsdk` stays. Both markers are rescoped to the check commands
+    and name `search_docs` as a second route asked.
+  - **Point release:** the blanket "no 4.x → 4.y procedure" is replaced by the target version's
+    release notes. For 4.4.0 it relays the no-schema-change, license and configuration items,
+    and the SQL Server and pre-4.3 installer items only when they apply. Any other target gets
+    a templated query with a re-query rule, and "undocumented, not known to be unnecessary" only
+    when the notes do not cover the installed version. A populated repository hears about
+    reprocessing. The marker is now a routing negative.
+  - **Step 2:** the platform options and routing rules 3 and 4 relay the tap's and bucket's
+    "Preview Release — Unsupported" status, with provenance, as a fact and not as advice.
+  - **Unchanged:** the check commands, version-exact pins, Docker, apt/yum, the checkpoint
+    outcome values, and `specs/mcp-coverage.jsonl` (out of scope per the issue).
+- **Approach:** implemented directly (Phase 5a). It is one skill file plus its two tests.
+- **Establishes no invariant, and defers none.** No ⛔ line is added or rewrapped. The change
+  applies INV-080, INV-163, INV-194 and INV-219 and adds no new rule.
+- **Tests:**
+  - `tests/test_sdk_update_offer.py`: the plugin-owned update test is inverted to
+    "server-documented through `search_docs`", with each README query beside its command. The
+    fence-marker test matches the new split labels, and a new test checks the label order in
+    each fence. New tests cover the preamble's two routes and the Scoop README form. The
+    upstream test asserts "partly closed" and "still absent". The point-release test asserts
+    the release-notes route. New tests cover the conditional 4.4.0 items, the reprocessing note
+    and the template's re-query rule. `StepTwoRelaysThePreviewStatus` covers Step 2. The
+    module and class docstrings are corrected.
+  - `tests/test_prescribed_search_queries.py`: six new `VERIFIED_QUERIES` entries with their
+    observed hits. The `upgrade Senzing SDK 4.3 to 4.4 procedure` entry is kept and re-annotated
+    as the routing negative's missing half.
+  - Negative control: with the pre-fix Module 2, `tests/test_sdk_update_offer.py` fails 13
+    assertions and errors 3. Restored, OK.
+- **Commit:** uncommitted
+
 ## the-macos-supportpath-literal-is-version-scoped
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #199)

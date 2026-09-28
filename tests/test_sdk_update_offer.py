@@ -14,8 +14,8 @@ with their own package managers, and those package managers are the availability
 
     linux_apt   dpkg-query / apt-cache policy   + direct_download for version-exact
     linux_yum   rpm -q / yum check-update       (dnf on RHEL 8+/Fedora)
-    macos_arm   brew outdated --cask / brew info / brew upgrade --cask
-    windows     scoop status / scoop info / scoop update
+    macos_arm   brew outdated --cask / brew info   + brew update, brew upgrade --cask (search_docs)
+    windows     scoop status / scoop info          + scoop update senzingsdk (search_docs)
     docker      nothing in place — the image tag IS the version
 
 That is the INV-194 lesson a third time: one tool-and-parameters answering nothing is not the
@@ -30,7 +30,9 @@ What these tests pin, all verified against server 1.32.2 on 2026-07-31:
 * the offer is a single 👉 question, declining is safe and not re-asked (INV-006/INV-012)
 * macOS's zero-exit-code trap, which makes post-update verification mandatory not advisory
 * the per-platform EULA variable, where a wrong name or value is silently ignored
-* that no 4.x→4.y procedure is claimed to exist
+* that a 4.x→4.y update is routed to the target version's release notes (the 4.4.0
+  "Migration & Action Required" section, via `category='release_notes'`), and "undocumented"
+  survives only for a target whose notes do not cover the installed version (#194)
 * nothing blocks (INV-048), and an undeterminable version reports skipped (INV-163)
 
 Run:  python3 -m unittest discover -s tests
@@ -136,9 +138,11 @@ class CommandOwnershipIsDistinguished(unittest.TestCase):
     (`ls libSz.so`, `Test-Path Sz.dll`) and documents **no version query and no update
     check on any platform**.
 
-    ⚠️ And on macOS and Windows even the *update* command is plugin-owned: the server
-    documents `brew install --cask` and `scoop install`, never `brew upgrade --cask` or
-    `scoop update`. Only apt and yum update via the same command the server documents.
+    ⚠️ The *update* command has a second route. On apt and yum it is the same `sdk_guide`
+    install command. On macOS and Windows `sdk_guide` carries no update command, but
+    `search_docs` serves the official tap and bucket READMEs, whose "Upgrade" and "Update"
+    sections are the update commands (server 1.37.14, docs index 2026-09-28 03:23 UTC,
+    2026-09-28, #194). Until #194 Step 1b called them plugin-owned.
 
     Why it matters: an agent that fetches from `sdk_guide`, fails to find
     `brew outdated --cask`, and substitutes the install command it *did* find would run
@@ -171,8 +175,13 @@ class CommandOwnershipIsDistinguished(unittest.TestCase):
             r"(?i)no version\s+query and no update check on any of the four platforms",
         )
 
-    def test_the_macos_and_windows_update_command_is_plugin_owned(self):
-        r"""Corrects the spec's own table, which listed brew upgrade as documented.
+    def test_the_macos_and_windows_update_command_is_server_documented_through_search_docs(self):
+        r"""Inverted by #194: the update command moved from plugin-owned to `search_docs`.
+
+        This was `test_the_macos_and_windows_update_command_is_plugin_owned`, which corrected
+        the original spec's table (it listed brew upgrade as documented when `sdk_guide` did not
+        carry it). Since then the tap and bucket READMEs entered the `search_docs` corpus, so the
+        command IS server-documented, on a different route from the install command.
 
         (Raw docstring, deliberately: it quotes shipped prose containing backslash-escaped
         backticks, which are not valid Python escapes. An r-prefix preserves the quoted claim
@@ -182,26 +191,56 @@ class CommandOwnershipIsDistinguished(unittest.TestCase):
 
         ⚠️ **Asserts the ownership distinction, not the sentence that carries it (INV-219).**
         This used to also pin `never \`brew upgrade --cask\` or \`scoop update\`` — the verbatim
-        wording of a dated claim about `sdk_guide`'s content. The claim is currently true
-        (re-confirmed on both platforms, server 1.32.9, 2026-08-13), which is exactly why the pin
-        was worth removing before it broke: the guard would have failed whoever corrected the
-        sentence once the server started documenting an update command, with a message asserting
-        the opposite of what the server says. The dated claim itself lives in the `MCP-NEGATIVE`
-        marker beside it, which is the artifact built to carry it and to be re-asked.
+        wording of a dated claim about `sdk_guide`'s content. The pin was removed before it
+        broke, and #194 is the case it anticipated: the server started serving the update
+        command (through `search_docs`, server 1.37.14, 2026-09-28), and the sentence could be
+        corrected without a guard asserting the retired wording. The dated claim itself lives in
+        the `MCP-NEGATIVE` marker beside it, now a routing negative, which is the artifact built
+        to carry it and to be re-asked.
 
-        Rescoped, not deleted — the property that must hold is that Step 1b tells the reader the
-        update command is **plugin-owned on macOS and Windows and server-documented on apt/yum**,
-        which is what a reader needs and what survives the server moving.
+        Rescoped, not deleted — the property that must hold is that Step 1b tells the reader
+        **which route owns the update command on each platform**: `search_docs` on macOS and
+        Windows, the `sdk_guide` install command on apt/yum. That is what a reader needs, and it
+        is the ownership distinction, not the wording of a dated claim.
         """
         self.assertRegex(
-            self.flat, r"(?i)On macOS and Windows the update command is plugin-owned too"
+            self.flat,
+            r"(?i)On macOS and Windows the update command is server-documented through\s+"
+            r"`search_docs`",
         )
-        # The per-platform split, in whatever words: plugin-owned off Linux, server-documented on it.
-        self.assertRegex(self.flat, r"(?i)plugin-owned")
-        self.assertRegex(self.flat, r"(?i)server-documented")
+        self.assertNotRegex(
+            self.flat, r"(?i)update command is plugin-owned",
+            "the macOS/Windows update command is server-documented now; do not call it plugin-owned",
+        )
+        # Each update command sits next to the search_docs route that serves it.
+        for query, command in (
+            ("homebrew-senzingsdk upgrade cask brew upgrade senzingsdk",
+             "brew upgrade --cask senzingsdk"),
+            ("scoop-senzingsdk update scoop update senzingsdk", "scoop update senzingsdk"),
+        ):
+            with self.subTest(command=command):
+                self.assertIn("search_docs(query='%s')" % query, self.section)
+                self.assertIn(command, self.section)
         self.assertRegex(
             self.flat, r"(?i)Only on apt and yum is the update command the same"
         )
+
+    def test_the_preamble_names_both_server_routes(self):
+        """The "Server-documented" bullet must name search_docs as well as sdk_guide (#194)."""
+        text = self.section
+        bullet = text[text.index("- **Server-documented"):text.index("- **Plugin-owned")]
+        flat = re.sub(r"\s+", " ", bullet)
+        self.assertIn("sdk_guide(topic='install'", flat)
+        self.assertRegex(flat, r"(?i)\*update\* command comes from `search_docs`")
+
+    def test_the_scoop_update_form_is_the_readme_form(self):
+        """The bucket README's `scoop update senzingsdk`, not the bucket-qualified form (#194).
+
+        `scoop info senzingsdk/senzingsdk` stays: it is a plugin-owned check command.
+        """
+        self.assertNotIn("scoop update senzingsdk/senzingsdk", self.section)
+        self.assertIn("scoop update senzingsdk", self.section)
+        self.assertIn("scoop info senzingsdk/senzingsdk", self.section)
 
     def test_only_apt_and_yum_update_via_the_documented_command(self):
         self.assertRegex(
@@ -226,11 +265,28 @@ class CommandOwnershipIsDistinguished(unittest.TestCase):
         for fence_marker in (
             "# plugin-owned — sdk_guide documents neither of these",
             "# server-documented — re-read from sdk_guide",
-            "# ALL plugin-owned — sdk_guide documents no brew",
-            "# plugin-owned — sdk_guide documents no scoop",
+            "# plugin-owned — the server documents no brew version check",
+            "# plugin-owned — the server documents no scoop version check",
+            "# server-documented — re-read from search_docs; this form is a dated illustration",
         ):
             with self.subTest(marker=fence_marker[:46]):
                 self.assertIn(fence_marker, self.section)
+
+    def test_the_macos_and_windows_fences_split_ownership(self):
+        """#194: each fence's check commands are plugin-owned and its update command is not.
+
+        The label order is the property: the plugin-owned label comes before the check
+        commands, and the search_docs label before the update command.
+        """
+        for check, update in (
+            ("brew info --cask senzingsdk", "brew upgrade --cask senzingsdk"),
+            ("scoop info senzingsdk/senzingsdk", "scoop update senzingsdk"),
+        ):
+            with self.subTest(update=update):
+                owned = self.section.rindex("# plugin-owned", 0, self.section.index(check))
+                served = self.section.index("# server-documented — re-read from search_docs", owned)
+                self.assertLess(self.section.index(check), served)
+                self.assertLess(served, self.section.index(update, served))
 
     def test_the_yum_prose_form_is_labeled_too(self):
         """It is prose rather than a fence, so it needs its own marking."""
@@ -238,10 +294,14 @@ class CommandOwnershipIsDistinguished(unittest.TestCase):
         self.assertRegex(self.flat, r"(?i)\*?Server-documented\*?\s+—\s+`sudo yum install")
 
     def test_no_inlined_command_was_deleted(self):
-        """The plugin-owned half has no other source; removing it breaks the step."""
+        """The plugin-owned half has no other source; removing it breaks the step.
+
+        The update commands are server-documented now (#194), but their dated illustration
+        stays inline so the shape is visible without a round trip, as for the install command.
+        """
         for command in (
             "dpkg-query -W", "apt-cache policy", "rpm -q", "yum check-update",
-            "brew outdated --cask", "brew info --cask", "brew upgrade --cask",
+            "brew outdated --cask", "brew info --cask", "brew update", "brew upgrade --cask",
             "scoop status", "scoop info", "scoop update",
         ):
             with self.subTest(command=command):
@@ -260,8 +320,14 @@ class CommandOwnershipIsDistinguished(unittest.TestCase):
         self.assertIn("INV-163", self.section)
 
     def test_the_asymmetry_is_tied_to_the_upstream_report(self):
-        """The server documenting installing-but-not-updating is the filed gap."""
-        self.assertRegex(self.flat, r"(?i)same\s+coverage gap reported upstream")
+        """The server documenting installing-but-not-updating is the filed gap, now partly closed.
+
+        #194: the update commands are served through `search_docs`; the version queries,
+        status checks and version-exact pins are not. The sentence must say both halves.
+        """
+        self.assertRegex(self.flat, r"(?i)coverage gap reported upstream on 2026-08-13")
+        self.assertRegex(self.flat, r"(?i)\*\*partly closed\*\*")
+        self.assertRegex(self.flat, r"(?i)still absent")
 
 
 class TheVersionComparisonTrapIsStated(unittest.TestCase):
@@ -402,6 +468,37 @@ class TheSilentFailureModesAreGuarded(unittest.TestCase):
         self.assertRegex(self.flat, r"(?i)do \*?\*?not\*?\*? mark Module 2 complete")
 
 
+class StepTwoRelaysThePreviewStatus(unittest.TestCase):
+    """#194: the tap and bucket READMEs open with "Preview Release — Unsupported".
+
+    `search_docs` serves the warning for both (server 1.37.14, docs index 2026-09-28 03:23 UTC,
+    2026-09-28), and Step 2 recommends both routes, so Step 2 relays it for both, with the query
+    that serves it. It is relayed as a fact, not as advice against the route: rules 3 and 4 still
+    resolve to `macos_arm` and `windows`.
+    """
+
+    def setUp(self):
+        text = read()
+        start = text.index("## Step 2:")
+        self.section = text[start : text.index("\n## ", start + 10)]
+        self.flat = re.sub(r"\s+", " ", self.section)
+
+    def test_the_warning_is_relayed_for_both_platforms(self):
+        self.assertIn("Preview Release — Unsupported", self.section)
+        for query in (
+            "homebrew-senzingsdk preview release unsupported tap install cask",
+            "scoop-senzingsdk update scoop update senzingsdk",
+        ):
+            with self.subTest(query=query):
+                self.assertIn("search_docs(query='%s')" % query, self.flat)
+        self.assertRegex(self.flat, r"(?i)docs index 2026-09-28 03:23 UTC")
+
+    def test_the_routing_rules_still_resolve_natively_and_point_at_the_relay(self):
+        self.assertRegex(self.flat, r"(?i)not as advice\s+against it")
+        self.assertRegex(self.flat, r"(?i)\*\*`platform='macos_arm'`\*\*\. Relay the tap's preview")
+        self.assertRegex(self.flat, r"(?i)\*\*`platform='windows'`\*\*, and relay the bucket's preview")
+
+
 class ItNeitherBlocksNorOverclaims(unittest.TestCase):
 
     def setUp(self):
@@ -417,12 +514,51 @@ class ItNeitherBlocksNorOverclaims(unittest.TestCase):
         self.assertIn("INV-163", self.section)
         self.assertRegex(self.flat, r'(?i)"No data" is never "up to date"')
 
-    def test_it_states_that_no_point_release_procedure_is_documented(self):
-        """The honest limit: V3->V4 migration is documented; 4.x->4.y is not."""
-        self.assertRegex(self.flat, r"(?i)documents no 4\.x → 4\.y update procedure")
-        self.assertRegex(
-            self.flat, r"(?i)undocumented, not known to be unnecessary"
+    def test_a_point_release_is_routed_to_the_target_release_notes(self):
+        """#194: the 4.x->4.y answer is the target version's release notes, not "undocumented".
+
+        Rescoped from `test_it_states_that_no_point_release_procedure_is_documented`. The
+        v4.4.0 "Migration & Action Required" notes are served under `category='release_notes'`
+        (server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28), so the blanket negative
+        was false. "Undocumented, not known to be unnecessary" survives, scoped to a target
+        whose notes do not cover the installed version.
+        """
+        self.assertNotRegex(self.flat, r"(?i)documents no 4\.x → 4\.y update procedure")
+        self.assertIn(
+            "search_docs(query='upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change "
+            "required migration action required', category='release_notes')",
+            self.flat,
         )
+        self.assertRegex(self.flat, r"(?i)read past the first hit")
+        self.assertRegex(self.flat, r"(?i)No schema change required\*\* when upgrading from any v4")
+        self.assertRegex(
+            self.flat,
+            r"(?i)Only when the target's notes do not cover it is the step "
+            r"\*\*undocumented, not known to be unnecessary",
+        )
+
+    def test_the_conditional_4_4_0_items_are_conditional(self):
+        """SQL Server collation and the discontinued installers apply only in their cases."""
+        self.assertRegex(self.flat, r"(?i)Relay it only when the datastore is SQL Server")
+        self.assertRegex(
+            self.flat, r"(?i)Relay it only when the installed version is 4\.2\.x or earlier"
+        )
+
+    def test_a_populated_repository_hears_about_reprocessing(self):
+        self.assertRegex(self.flat, r"(?i)touches the SDK and\s+not their data")
+        self.assertRegex(self.flat, r"(?i)apply to already-loaded\s+data only after reprocessing")
+
+    def test_another_target_carries_a_re_query_rule(self):
+        """The templated query was never executed for a later target, so its section must say
+        what to do on a miss. `tests/test_prescribed_search_queries.py` enforces this for every
+        unverified literal; this pins that the template is one of them.
+        """
+        text = read()
+        at = text.index("search_docs(query='upgrading to <target version>")
+        start = text.rindex("\n### ", 0, at)
+        end = text.index("\n## ", at)
+        section = re.sub(r"\s+", " ", text[start:end])
+        self.assertRegex(section, r"(?i)re-query")
 
     def test_it_does_not_claim_apt_version_pinning(self):
         """`apt install pkg=version` is not documented by the server."""

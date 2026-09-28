@@ -53,6 +53,40 @@ VERIFIED_ON = "server 1.32.9, docs index 2026-08-11 20:52 UTC, checked 2026-08-1
 #: to stop.
 VERIFIED_QUERIES = {
     # ---------------------------------------------------------------------------------
+    # Executed 2026-09-28 on server 1.37.14 (docs index 2026-09-28 03:23 UTC) for #194, Module 2
+    # Step 1b's update path and Step 2's preview-status relay. The first two are the update
+    # commands' route; the third is the point-release notes' route, and the three after it are
+    # evidence slots of MCP-NEGATIVE markers. ⚠️ Record the PROPERTY, not ranks or scores.
+    "homebrew-senzingsdk upgrade cask brew upgrade senzingsdk":
+        "ON TARGET BELOW AN ADJACENT TOP HIT: the top hit is the V3-to-V4 FAQ 'What are the "
+        "exact steps to migrate from V3 to V4?'; the set carries senzing/homebrew-senzingsdk "
+        "section 'Upgrade' (brew update, brew upgrade --cask senzingsdk) and the README's "
+        "'Preview Release — Unsupported' warning. Step 1b says to read past the first result",
+    "scoop-senzingsdk update scoop update senzingsdk":
+        "ON TARGET: the top hit is the senzing/scoop-senzingsdk README, which opens with the "
+        "'Preview Release — Unsupported' warning and carries section 'Update' (scoop update "
+        "senzingsdk). Used at two call sites: Step 1b's update command and Step 2's preview relay",
+    "upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change required migration action required":
+        "ON TARGET BELOW AN ADJACENT TOP HIT, with category='release_notes': the top hit is "
+        "What's New in v4 'Migration guides', a V3-to-V4 link list; the target, v4.4.0 Detailed "
+        "Release Notes 'Migration & Action Required' ('No schema change required when upgrading "
+        "from any v4 version', plus license and configuration actions), ranks just below it. "
+        "Step 1b says to read past the first hit. Quoted at two sites: the step and the "
+        "routing negative's owner clause",
+    "homebrew-senzingsdk preview release unsupported tap install cask":
+        "ON TARGET: the top hit is senzing/homebrew-senzingsdk section 'homebrew-senzingsdk', "
+        "the 'Preview Release — Unsupported' warning ('provided as-is with no warranty and is "
+        "not supported')",
+    "brew outdated brew info senzingsdk installed version check":
+        "OFF TARGET BY DESIGN — the macOS check-command negative's evidence: the corpus serves "
+        "the tap README's install, upgrade and uninstall sections, its changelog and the macOS "
+        "quickstart for it, and no brew outdated or brew info usage",
+    "scoop status scoop info senzingsdk installed version check":
+        "OFF TARGET BY DESIGN — the Windows check-command negative's evidence: the corpus serves "
+        "the bucket README (install, update, uninstall), its changelog and template docs for "
+        "it, and no scoop status or scoop info usage",
+
+    # ---------------------------------------------------------------------------------
     # Executed 2026-09-28 on server 1.37.14 (docs index 2026-09-28 03:23 UTC) for #158, the
     # type/name check in Module 5 Phase 1 Step 6. The first backs the "keep" option's cost;
     # the second backs the absence the suffix list's heuristic label rests on, and its
@@ -222,12 +256,16 @@ VERIFIED_QUERIES = {
     # ⚠️ Record what the corpus SERVES, not how many hits or that "all" of them are one thing:
     # "all six hits are V3-to-V4" stood here while the index grew to ten hits, two of them not
     # migration material (server 1.37.13, 2026-09-24). Nothing scans this file for that shape.
+    # Re-executed for #194 on server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28: the
+    # marker it backs is now a ROUTING negative, and this phrasing is its missing half.
     "upgrade Senzing SDK 4.3 to 4.4 procedure":
-        "OFF TARGET BY DESIGN — the negative's evidence: the corpus serves V3-to-V4 migration "
-        "material for it, top hit the FAQ 'What are the exact steps to migrate from V3 to "
-        "V4?' naming sz_dbupgrade/sz_configupgrade/sz_configtool, and no 4.x-to-4.y procedure, "
-        "which is what module-02 Step 1b records (server 1.37.13, docs index 2026-09-24 18:45 "
-        "UTC, re-executed 2026-09-26)",
+        "OFF TARGET BY DESIGN — the routing negative's missing half: the corpus serves V3-to-V4 "
+        "migration material for this phrasing, top hit the FAQ 'What are the exact steps to "
+        "migrate from V3 to V4?' naming sz_dbupgrade/sz_configupgrade/sz_configtool, and no "
+        "4.x-to-4.y procedure. The 4.x-to-4.y notes are reached through category='release_notes' "
+        "with the 'upgrading to 4.4.0 …' phrasing above, which is what module-02 Step 1b's "
+        "marker names as the owner (server 1.37.14, docs index 2026-09-28 03:23 UTC, "
+        "re-executed 2026-09-28)",
     # Re-executed for #150 on server 1.37.13, docs index 2026-09-24 18:45 UTC (2026-09-24, and
     # again 2026-09-26 with the same result). The 2026-08-13 record said the query "gives no
     # figure"; the rebuilt index added an FAQ that states the figure outright, so the set now
