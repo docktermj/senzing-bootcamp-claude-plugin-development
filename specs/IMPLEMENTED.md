@@ -97,7 +97,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     literal and points at the new class.
   - Negative control: with the pre-fix Module 2, the new class fails 6 assertions across its
     5 tests. Restored, OK.
-- **Commit:** uncommitted
+- **Commit:** 60acbaf
 
 ## the-eula-question-precedes-every-install
 
