@@ -92,7 +92,7 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    per-source record counts you will need in 1.2 and in the report, then the records themselves. Take
    the codes and counts from the response, never from this file (INV-080).
 
-   > Verified on MCP server 1.32.2, 2026-07-30: `dataset='list'` returns **four** datasets — the three
+   > Verified on MCP server 1.37.14, 2026-09-28: `dataset='list'` returns **four** datasets — the three
    > CORD collections plus `truthset` (`available: true`) — and `dataset='truthset', source='list'`
    > returns the Truth Set's sources with their record counts. So the primary path normally succeeds;
    > treat the fallback below as genuinely exceptional rather than expected. Re-check rather than

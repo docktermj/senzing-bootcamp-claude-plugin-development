@@ -610,10 +610,10 @@ category='data_mapping')` answers it directly — read the feature's description
 | `NAME` (organization) — "Organization legal or trade name… `NAME_ORG`" | ORGANIZATION |
 | `ADDRESS`, `PHONE`, `EMAIL`, identifiers | either — do not exclude these |
 
-(Verified against MCP server 1.32.2, 2026-07-30. Re-read it for the source you are assessing rather
-than trusting this table — it is an illustration of *how the specification marks type*, not a
-substitute for asking, and it is deliberately partial: features not listed here still have to be
-checked the same way, INV-080.)
+(Verified against MCP server 1.37.14, docs indexed 2026-09-28 03:23 UTC, 2026-09-28. Re-read it for
+the source you are assessing rather than trusting this table — it is an illustration of *how the
+specification marks type*, not a substitute for asking, and it is deliberately partial: features not
+listed here still have to be checked the same way, INV-080.)
 
 **Records with no `RECORD_TYPE`.** The specification calls `RECORD_TYPE` *"Recommended"*, not
 required, and says to leave it blank when the type is unknown — so a record may legitimately have
