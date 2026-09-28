@@ -245,16 +245,16 @@ never automatic.
    **verbatim** — it carries the anonymity notice and the support address, and those are the
    bootcamper's only follow-up route.
 
-5. **Record the outcome** in the entry's `**Upstream:**` field: `submitted YYYY-MM-DD`,
-   `offered, declined`, `submission failed: <reason>`, `submission blocked: <reason>`, replacing `offer pending`.
+5. **Record the outcome** in the entry's `**Upstream:**` field, replacing `offer pending` with the value of its closed set
+   (`not applicable | offer pending | offered, declined | submitted YYYY-MM-DD | submission failed: <reason> | submission blocked: <reason>`) that says what happened.
    Update the entry in place for this field only — do not rewrite the prose (append-only
    elsewhere). ⛔ (INV-281) **Never leave `offer pending` once an answer exists.** It means only
    that the question is still open.
 
    ⛔ **(INV-281) `submission blocked:` is for a *consented* send the runner was forbidden to make — it is
-   not a synonym for the other three.** Use it when the answer was **yes** and the send could not
+   not a synonym for any other value.** Use it when the answer was **yes** and the send could not
    happen because the session operates under a no-send rule (a maintainer `/dry-run`, which
-   forbids calling `submit_feedback` under any category). ⚠️ **Never record that as
+   never sends on a Bootcamper's in-character yes). ⚠️ **Never record that as
    `offered, declined`.** The bootcamper agreed; writing down that they refused is false, and it
    is the one value that reads as *"this was considered and rejected"* to anyone deciding later
    whether the finding is still owed upstream. `submission failed:` is also wrong — nothing

@@ -71,7 +71,7 @@ reader to re-ask, in the shape
 - Verdict: <delegate | contradicted | retire-workaround>
 - MCP evidence: <tool(parameters)> on server <version>, docs index <index_built>, <date> — <what it returned, quoted>
 - Priority: <High for contradicted | Medium | Low>
-- Upstream: <not applicable | feature request sent <date> via `submit_feedback` (anonymous) | declined by the maintainer>
+- Upstream: <not applicable | already sent <date> (per the entry) | declined by the bootcamper (per the entry) | sent <date> via `submit_feedback` (`feature`, anonymous) | declined by the maintainer | submission failed: <reason> | submission blocked: <reason> | not yet sent — needs maintainer approval> <the value `../feedback-to-issues/SKILL.md` Step 8.1 maps a finding with no entry to; that step owns the set (INV-281, INV-300)>
 - Related issues: <#<n>, or "none"> <a closed one counts: it records a decision this may be reopening>
 - Invariants: <the INV-NNN conditions this must maintain>
 ```

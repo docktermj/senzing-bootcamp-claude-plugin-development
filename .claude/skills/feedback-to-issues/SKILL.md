@@ -249,26 +249,59 @@ schema, a missing response shape, guidance that produces code the SDK rejects. A
 an issue and an upstream report are not alternatives: file both when the plugin also needs to
 record the confirmed behavior.
 
-1. **Check the entry's `Upstream:` field first.** The bootcamper-facing feedback flow may
-   already have sent it (`sent <date> via submit_feedback`), in which case do not
-   re-file the same finding. A **follow-up** is worth sending only when you now have
+1. **Check the entry's `Upstream:` field first, and classify it by the table below.** The
+   bootcamper-facing feedback flow may already have sent it (`submitted YYYY-MM-DD`), in which
+   case do not re-file the same finding. A **follow-up** is worth sending only when you now have
    something the first submission lacked — that it still reproduces on a newer server
    version, or a confirmed field name/shape they can act on. Say in the message that it
    is a follow-up.
 
-   ⛔ **`submission blocked: <reason>` is the one outcome where the report is STILL OWED,
+   ⛔ (INV-281, INV-300) **This is the canonical statement of both closed `Upstream:` sets and
+   the mapping between them.** The **entry field** (a bootcamper's feedback entry) is the first
+   column of the mapping; the **issue field** (a filed issue's `Upstream:` line) is the second
+   table. Every other site that enumerates a field states that field's full set, nothing
+   missing and nothing extra, and every value written into a field is a member of its set.
+   `tests/test_blocked_submission_has_a_vocabulary_value.py` parses both tables and holds
+   every site to them.
+
+   | Entry value | Report still owed? | Issue value once the maintainer is asked | Issue value when no maintainer is asked |
+   |---|---|---|---|
+   | `not applicable` | no | `not applicable` | same |
+   | `submitted YYYY-MM-DD` | no | `already sent <date> (per the entry)` | same |
+   | `offered, declined` | no | `declined by the bootcamper (per the entry)` | same |
+   | `offer pending` | **yes** | `sent <date> via submit_feedback (<category>, anonymous)`, `declined by the maintainer`, or `submission failed: <reason>` if the maintainer's send errors | `not yet sent — needs maintainer approval` |
+   | `submission blocked: <reason>` | **yes** | as above | `submission blocked: <reason>` (keeps the record of consent) |
+   | `submission failed: <reason>` | **yes** (a retry can succeed) | as above | `submission failed: <reason>` |
+   | *(no entry: a finding the unattended loop files itself)* | **yes** | as above | `not yet sent — needs maintainer approval` |
+
+   | Issue value | Report still owed? |
+   |---|---|
+   | `not applicable` | no |
+   | `already sent <date> (per the entry)` | no |
+   | `declined by the bootcamper (per the entry)` | no |
+   | `sent <date> via submit_feedback (<category>, anonymous)` | no |
+   | `declined by the maintainer` | no |
+   | `submission failed: <reason>` | **yes** |
+   | `submission blocked: <reason>` | **yes** |
+   | `not yet sent — needs maintainer approval` | **yes** |
+
+   `offer pending` itself is never written on an issue (#167): the issue side has its own
+   pending value.
+
+   ⛔ **`submission blocked: <reason>` is an outcome where the report is STILL OWED,
    and it must not be triaged like a decline.** It means the answer was **yes** and the
    session could not send on it — a `/dry-run`, which never sends on an in-character
    answer. Nobody declined anything, so the finding still needs forwarding: draft the
    message and put it to the maintainer. ⚠️ `offered, declined` and `declined by the
-   maintainer` are the values that end the obligation; `submission blocked:` is the value
+   maintainer` are values that end the obligation; `submission blocked:` is a value
    that keeps it. Reading the first where the second was meant is how a consented report
    stops being anyone's job.
 
    ⛔ (INV-281) **`offer pending` is STILL OWED too, and is handled the same way.** The entry was
    saved before its upstream question was answered, and the bootcamp never came back to answer it.
    Nobody declined anything: draft the message and put it to the maintainer, exactly as for
-   `submission blocked:`. The values that end the obligation are unchanged.
+   `submission blocked:`. `submission failed: <reason>` is still owed as well: a retry can
+   succeed.
 2. **Draft the message as a technical bug report Senzing can act on without context from
    this repo:** the tool and parameters called, what came back, what was expected, the
    contradiction (quote both sides), the server version and SDK version, and the impact
@@ -282,9 +315,11 @@ record the confirmed behavior.
    skill takes; a decline costs nothing and the issue still stands. Then call
    `submit_feedback(category='bug', message='<the approved text>')` — `category='feature'`
    for a coverage gap that is a request rather than a defect.
-5. **Record what happened** in the triage report: sent (with the date and category),
-   declined, or already-filed. Note that the submission is anonymous, so no reply is
-   possible — if the finding needs a conversation, it needs a channel other than this tool.
+5. **Record what happened** in the triage report and on the issue's `Upstream:` line, as an
+   issue-field value from item 1's table: `sent <date> via submit_feedback (<category>, anonymous)`,
+   `declined by the maintainer`, `submission failed: <reason>` when the send errors, or
+   `already sent <date> (per the entry)` when the entry was already sent. Note that the
+   submission is anonymous, so no reply is possible — if the finding needs a conversation, it needs a channel other than this tool.
 
 ⛔ **Never send under `category='license_request'`.** That path takes personal details and
 is for evaluation licenses only; a defect report there is both wrong and a PII leak
@@ -353,7 +388,7 @@ here are the issues those entries already produced.
 
 Then list the issues created (as `#<n>` references, which GitHub renders as links), note
 anything routed to `todo.md` or left for clarification, report each upstream
-submission's outcome (sent / declined / already-filed), and offer next steps
+submission's outcome as its issue-field value (Step 8.1's table), and offer next steps
 (e.g. "I can implement #<n> next with /implement-github-issue" or "want me to open the questions
 for the unclear items?"). Do not start implementing unless asked.
 
