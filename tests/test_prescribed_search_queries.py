@@ -192,10 +192,6 @@ VERIFIED_QUERIES = {
         "Agentic Entity Resolution -> 'Why Agentic Entity Resolution Matters'",
     "what features to map":
         "ON TARGET: Senzing Entity Specification -> 'What features to map' (exact section)",
-    "SZ_WHY_ENTITIES_DEFAULT_FLAGS default recommended flags":
-        "ADJACENT: v4 Engine Flags -> 'get_entity* Flags' / SZ_ENTITY_DEFAULT_FLAGS. Right "
-        "document family and the why_* flag pages are siblings there, so a guide reaches the "
-        "material, but the top hit is not the why_entities composite itself",
     "Senzing engine configuration PostgreSQL connection":
         "ON TARGET: Senzing Engine Configuration (exact page)",
     "PostgreSQL schema DDL initialization":

@@ -222,26 +222,26 @@ class AnEmptyCompositeMembersFieldIsNotAnAbsentFact(unittest.TestCase):
     The default-flags rule needs an unhappy path, and the right one.
 
     `phase1-query-visualize.md` tells the guide to read a composite's
-    `composite_members` and confirm the flag populating a field is in it. For all three
-    `why_*` default composites that lookup returns **no** `composite_members` — only a
-    one-line description, `applies_to` as the literal glob `["why_entities*"]`, and a
-    `source_file` of the V3→V4 breaking-changes document instead of the flags reference
-    (re-verified on server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-31). A rule
-    with no unhappy path silently becomes "assume it is fine".
+    `composite_members` and confirm the flag populating a field is in it. A lookup can
+    come back without that field. The worked example is `SZ_SEARCH_BY_ATTRIBUTES_DEFAULT_FLAGS`:
+    no `composite_members`, only a description saying it "is defined as
+    SZ_SEARCH_BY_ATTRIBUTES_ALL", whose own row lists its members (re-verified on MCP server
+    1.37.14, 2026-09-28). A rule with no unhappy path silently becomes "assume it is fine".
 
     ⚠️ The obvious unhappy path is the wrong one. "No `composite_members`, so the check
     cannot be run" is a conclusion about **the tool that was asked**, not about the
-    server: `search_docs` returns the membership from the flags documentation —
-    "The default recommended flags for `why_entities`. Equivalent to:
-    `SZ_INCLUDE_FEATURE_SCORES`" (`senzing.com/docs/flags/4/flags_why`). This repo has
-    already had to retract two over-generalized absolutes (INV-169); an empty structured
-    field is the same trap in a new place.
+    server: the description names the equivalent composite, and `search_docs` is the next
+    route. This repo has already had to retract two over-generalized absolutes (INV-169);
+    an empty structured field is the same trap in a new place.
 
-    Why it matters concretely: the composite is that **one** flag, which carries no
-    entity-name flag, so `why_entities` returns `ENTITY_NAME: null` while match level,
-    why key, ER rule, every feature score and CONFIRMATIONS/DENIALS all render. That is
-    the deceptive half-populated row (INV-148) — the analysis is complete and only the
-    labels are missing, so it reads as unnamed data, not as a flags problem.
+    The example used to be the three `why_*` default composites, which returned no
+    `composite_members`, a glob `applies_to` and a breaking-changes `source_file` at server
+    1.32.2 (2026-07-31). That defect no longer reproduces at 1.37.14 (#196), so the
+    narrative is retired, and a guard below keeps it from coming back. What the `why_*`
+    composites still teach is their membership: the composite is **one** flag, carrying no
+    entity-name flag, so `why_entities` returns `ENTITY_NAME: null` while match level, why
+    key, ER rule, every feature score and CONFIRMATIONS/DENIALS all render. That is the
+    deceptive half-populated row (INV-148).
     """
 
     def setUp(self):
@@ -267,10 +267,32 @@ class AnEmptyCompositeMembersFieldIsNotAnAbsentFact(unittest.TestCase):
         self.assertRegex(
             self.flat,
             r"(?i)only ever \"the tool I asked does not document X",
-            "scoped to why_entities alone, this would not survive the next composite "
-            "documented from the breaking-changes note",
+            "scoped to one composite alone, this would not survive the next composite "
+            "whose structured membership comes back empty",
         )
         self.assertRegex(self.flat, r"(?i)empty structured field is not an absent fact")
+
+    def test_the_worked_example_is_one_the_server_produces(self):
+        """The unhappy path is taught with a composite that still has no structured members."""
+        self.assertIn("SZ_SEARCH_BY_ATTRIBUTES_DEFAULT_FLAGS", self.text)
+        self.assertRegex(
+            self.flat,
+            r"(?i)read the description first — it may name the composite it\s*equals — then "
+            r"ask `search_docs` before concluding anything",
+        )
+        self.assertRegex(self.flat, r"It is defined as SZ_SEARCH_BY_ATTRIBUTES_ALL")
+
+    def test_the_retired_why_defect_narrative_stays_gone(self):
+        """#196: the why_* composites list their members now; the old account must not return."""
+        for stale in ('["why_entities*"]', "For all three `why_*` default composites",
+                      "breaking-changes document rather than the flags reference"):
+            with self.subTest(stale=stale):
+                self.assertNotIn(stale, self.text)
+        self.assertRegex(
+            self.flat,
+            r"seen at server 1\.32\.2 on 2026-07-31 and does not reproduce at 1\.37\.14",
+            "the fix is recorded as a dated note, not silently erased",
+        )
 
     def test_or_ing_blindly_is_the_last_resort_not_the_first(self):
         """Ordering is the whole point: two tools, then explicit OR, then disclosure."""
