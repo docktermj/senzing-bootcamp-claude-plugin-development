@@ -96,7 +96,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     order check report all three install instructions.
   - `tests/test_sdk_update_offer.py` passes unchanged, including `reuse the existing wording in
     Step 3`.
-- **Commit:** uncommitted
+- **Commit:** 70ce712
 
 ## why-default-composites-list-their-members-now
 
