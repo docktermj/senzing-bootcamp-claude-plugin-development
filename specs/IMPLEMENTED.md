@@ -109,7 +109,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     as the routing negative's missing half.
   - Negative control: with the pre-fix Module 2, `tests/test_sdk_update_offer.py` fails 13
     assertions and errors 3. Restored, OK.
-- **Commit:** uncommitted
+- **Commit:** ab31215
 
 ## the-macos-supportpath-literal-is-version-scoped
 
