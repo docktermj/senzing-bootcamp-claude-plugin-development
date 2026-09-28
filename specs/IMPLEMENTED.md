@@ -95,7 +95,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     satisfy `test_no_space_before_a_comma`.
   - Negative control: re-inserting the narrative fails the guard on 2 subtests. Restored,
     `__pycache__` cleared, OK.
-- **Commit:** uncommitted
+- **Commit:** 84cc86b
 
 ## json-data-is-no-longer-get-record-only
 
