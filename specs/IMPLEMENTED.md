@@ -119,7 +119,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   is clean; `pending_invariants.py check` reports 0 mismatched and 0 unresolved; `shipped` lists
   none of INV-317 to INV-331. The full suite passed after every decision, run in a clean
   worktree with an empty `HOME`.
-- **Commit:** uncommitted
+- **Commit:** 38d5bbf
 
 ## the-two-user-level-skills-are-defined-only-at-user-level
 
