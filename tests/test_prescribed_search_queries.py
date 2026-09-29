@@ -73,6 +73,15 @@ VERIFIED_QUERIES = {
         "from any v4 version', plus license and configuration actions), ranks just below it. "
         "Step 1b says to read past the first hit. Quoted at two sites: the step and the "
         "routing negative's owner clause",
+    # Executed 2026-09-28 on server 1.37.15 (docs index 2026-09-28 23:38 UTC) for #222: the
+    # citation for Step 1b's migration tools, named by the V4 version doing the migration.
+    "sz_dbtool upgrade sz_dbupgrade sz_configupgrade replaced 4.4.0 native command-line tools":
+        "ON TARGET BELOW AN ADJACENT TOP HIT, with category='release_notes': the top hit is "
+        "What's New in v4 'Migration guides', a V3-to-V4 link list; the set carries v4.4.0 "
+        "Detailed Release Notes 'Command-line Tools & SDKs' with the v4.0 - v4.3 | v4.4.0 and "
+        "later table (sz_dbupgrade -> sz_dbtool upgrade; sz_configupgrade -> sz_configtool, "
+        "configuration upgrades folded in) and What's New in v4 'Infrastructure & tooling' with "
+        "the same table. It is a citation, not a query the guide runs",
     "homebrew-senzingsdk preview release unsupported tap install cask":
         "ON TARGET: the top hit is senzing/homebrew-senzingsdk section 'homebrew-senzingsdk', "
         "the 'Preview Release — Unsupported' warning ('provided as-is with no warranty and is "

@@ -43,6 +43,99 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## update-offer-reads-its-release-notes-before-asking
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #222)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`,
+  `tests/test_update_offer_order_and_existing_install_outcome.py`,
+  `tests/test_prescribed_search_queries.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, docs index 2026-09-28 23:38 UTC,
+  2026-09-28, `get_capabilities()`,
+  `search_docs(query='sz_dbtool upgrade sz_dbupgrade sz_configupgrade replaced 4.4.0 native command-line tools', category='release_notes')`,
+  `search_docs(query='upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change required migration action required', category='release_notes')`
+  and `search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure')`. Outcome: still
+  reproduces. The first query returns *v4.4.0 Detailed Release Notes* "Command-line Tools & SDKs"
+  with the table `sz_dbupgrade` → `sz_dbtool upgrade` and `sz_configupgrade` → `sz_configtool`
+  (configuration upgrades folded in), v4.0–v4.3 against 4.4.0 and later. *What's New in v4*
+  "Infrastructure & tooling" carries the same table. The second still ranks *What's New in v4*
+  "Migration guides" first and "Migration & Action Required" just below it, with the five items
+  Step 1b relays, so those items and the "read past the first hit" note were not changed. The
+  third still serves V3→V4 material, so the routing negative's marker still holds and was not
+  re-stamped. "A 4.x → 4.y update needs none of them" is an absence claim: owner-checked:
+  `search_docs(query='upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change required migration action required', category='release_notes')`
+  — "Migration & Action Required" is the route that carries a point release's actions; it says
+  "No schema change required when upgrading from any v4 version", names no migration tool, and
+  sends a v3 upgrade to the schema and configuration tutorials. The other three items are plugin
+  ordering and make no Senzing claim. Nothing was sent upstream.
+- **Summary:** #192 and #194 reordered and extended Module 2's Step 1b and Step 3 without
+  re-reading their neighbors. Four defects are fixed, each path now has one stated outcome, and
+  the checkpoint values, the update commands and the version checks are unchanged.
+  - **Order.** A new section, `### Before the offer: read the target's release notes`, now holds
+    the ⚠️ release-notes block, its target bullets, the "`search_docs` unreachable" bullet and
+    the populated-repository paragraph, ahead of `### The offer`. It runs only when a newer
+    version exists. The offer turn relays what applies above its single 👉 question (INV-251).
+    "Put what applies in the offer" is gone, and `### After updating` keeps only verification.
+  - **Named version.** It gets the same lookup before the install. What applies is relayed above
+    the EULA question, and no other 👉 question is asked. Notes that do not cover the installed
+    version make the step undocumented, not known to be unnecessary.
+  - **Existing install.** Step 1's V4.0+ branch now names the **existing-install path** and every
+    route onto it: no newer version, update declined, EULA declined for the update, and an
+    accepted update rejoining it. The path skips Step 2 and Step 3's Phase 1 (EULA) and Phase 2
+    (SDK package), and does not re-ask the EULA. It still runs Phase 3 (Java, C# and TypeScript
+    bindings; nothing for Python) and the environment script. The required-stops list gains
+    Phase 3. The filesystem-fallback paragraph says the same. Step 3's intro says where an
+    existing install enters. Phase 3's header no longer says "only after EULA acceptance".
+  - **Environment script heading.** `### Create the project-local environment script` now heads
+    the environment-script material in Step 3, so the name Step 1 quotes resolves. The text also
+    no longer sits under the TypeScript recovery heading.
+  - **Update, then EULA declined.** Step 1b states the outcome: install nothing, one line
+    "Keeping [installed].", `update-declined`, not offered again (INV-006), continue on the
+    existing-install path, never a failure (INV-048). Phase 1's "Stop here" is scoped to a fresh
+    install or the upgrade from below V4.0, and points an update at Step 1b.
+  - **Tool names.** `sz_dbupgrade`, `sz_configupgrade` and `sz_configtool` are called V3→V4
+    migration tools and named by the V4 version doing the migration: `sz_dbupgrade` and
+    `sz_configupgrade` for v4.0–v4.3, `sz_dbtool upgrade` and `sz_configtool` for 4.4.0 and
+    later. "A 4.x → 4.y update needs none of them" is stated. The citation is dated (server
+    1.37.15, docs index 2026-09-28 23:38 UTC).
+  - **Out of scope, unchanged:** Module 1 `phase1-discovery.md:80` and the
+    "upgrade Senzing SDK 4.3 to 4.4 procedure" allowlist entry.
+- **Approach:** implemented directly (Phase 5a). It is one skill module plus its tests. The
+  lookup block moved above the offer, and the offer's own lines were kept verbatim where the
+  change allowed, so the three ⛔ lines in the offer (the Homebrew/Scoop pin, the EULA pointer
+  and the EULA variable table) are unchanged in the diff. ⚠️ That holds under git's default
+  diff algorithm, which the new-hard-rules gate uses. Under `--diff-algorithm=patience` or
+  `histogram` the offer shows as the moved block, and the gate would count those three existing,
+  uncited rules as new. An earlier draft that rewrapped one more offer line tipped the default
+  algorithm the same way, and the gate failed; the line was restored rather than the rules
+  cited with invariants that only partly govern them.
+- **Establishes no invariant, and defers none.** Each outcome applies an invariant that already
+  binds it: INV-251 (one 👉 per turn; the named-version relay asks nothing), INV-006 (the EULA
+  is not re-asked, a declined update is not re-offered), INV-048 (a declined update never
+  blocks), INV-222 (Phase 3 and the environment script still run on an existing install) and
+  INV-163 (unreachable lookup). The one edited ⛔ line, Step 1's "Not Step 3 entirely", cites
+  INV-222 at the line. The new-hard-rules gate reports it as checked, with nothing uncited. The
+  ask-before-install rule stays unregistered, as #192 left it; this run does not change it.
+- **Tests:**
+  - `tests/test_update_offer_order_and_existing_install_outcome.py` (24 tests): every lookup
+    piece sits before `### The offer` in its own `Before the offer` section and none is under
+    `### After updating`; the offer asks one 👉 and relays above it; the named-version relay
+    asks no new question; the existing-install path's skip, EULA, Phase 3 and environment-script
+    statements; the quoted name is a heading in Step 3 that leads the environment-script prose;
+    Phase 3's header; the update-then-EULA-declined outcome and Phase 1's scoped "Stop here";
+    the versioned tool names and their dated citation.
+  - Negative controls, in the file: moving the lookup back under `### After updating` reports
+    all five pieces twice, and removing the heading reports the unresolved name. Run against
+    the pre-fix `SKILL.md`, 23 of the 24 tests fail.
+  - `tests/test_prescribed_search_queries.py`: the tool-table query is added to the allowlist
+    with its observed result.
+  - `tests/test_sdk_setup_prerequisites.py`, `tests/test_sdk_update_offer.py`,
+    `tests/test_existing_install_still_runs_the_env_script.py` and
+    `tests/test_eula_question_precedes_every_install.py` pass unchanged. Their pins ("Skip the
+    installation — Step 2, and Step 3's install commands", "Not Step 3 entirely", "Still do Step
+    3's environment-script work", Phase 1's decline branch) still hold at the rewritten text.
+- **Commit:** uncommitted
+
 ## stale-text-from-the-2026-09-28-audit-is-corrected
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #234)
