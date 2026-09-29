@@ -19,6 +19,16 @@ from it would be approving wording the plugin does not ship.
 ⚠️ This checks the QUOTE against the SOURCE, not the drafted invariant wording against
 anything. The drafted wording is new text and has nothing to be verbatim against.
 
+⛔ (INV-315) The rules are read by `pending_invariants.parse()`, over every deferral block,
+resolved ones included (#236). Only a quotation is compared. A description is sorted apart
+and never reported as mismatched, and a bullet no shape matches, or a location nothing
+resolves, fails this guard by name.
+
+⚠️ Reading through `parse()` does NOT establish that the quote it reads is the rule. `QUOTE`
+takes a bullet's first bold span, so a bullet that opens with a bold label has its LABEL
+checked. One such bullet exists (a resolved block's `6d (desired outcome).`). A change to how
+bullets are classified belongs in the parser, where the review queue gets it too, not here.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 
@@ -61,15 +71,17 @@ _HELPER_MOD = _helper()
 #: The one definition, imported rather than restated.
 resolve = _HELPER_MOD.resolve
 RESOLUTION_ROOTS = _HELPER_MOD.RESOLUTION_ROOTS
-
-# `⛔ **<quote>** ... — in `<path>`` -- the shape every deferral rule bullet uses.
-#
-# ⚠️ The `.*?` between the quote and `— in` is load-bearing. Without it this pattern
-# required the path to follow the closing `**` immediately, so it silently skipped every
-# bullet that explains itself before naming its file -- 3 of 17, including the one for
-# INV-285, which went unchecked through its own registration. A guard that skips what it
-# cannot parse reports a clean run over the subset it happened to match.
-RULE = re.compile(r"⛔ \*\*(.+?)\*\*.*?—\s*in `([^`]+)`")
+#: ⛔ **(INV-315) The rules are READ by the primary verifier's parser, never by a pattern here.**
+#: Until #236 this file classified rule bullets with a regex of its own. It had no notion of a
+#: rule's kind, so a description in the quoted shape would have been compared as a quotation;
+#: its unparsed count saw only the shape it expected; and a location `resolve()` could not
+#: resolve was dropped without a word. None of the three occurred in the ledger, so each was a
+#: failure waiting for its first bullet. `parse()` carries the kind and reports what it cannot
+#: read, so this guard inherits both instead of keeping a second reader of the same corpus.
+parse = _HELPER_MOD.parse
+#: `include_resolved=True` because a registered block's quotes still name shipping rules. The
+#: review queue never shows those blocks, and the helper keeps their boundaries in one place.
+blocks = _HELPER_MOD.blocks
 
 #: A rule gains `(INV-NNN)` at its line when the deferral is approved, so the shipped text
 #: legitimately differs from the quote by exactly that. Normalize it off BOTH sides rather
@@ -86,23 +98,50 @@ def flat(s):
     return CITATION.sub("", re.sub(r"\s+", " ", s)).strip()
 
 
-def quoted_rules():
-    """Yield (line_no, quote, location, path) for each rule bullet naming a real file."""
-    for i, line in enumerate(LEDGER.read_text(encoding="utf-8").splitlines(), 1):
-        if not line.lstrip().startswith("- "):
-            continue
-        m = RULE.search(line)
-        if not m:
-            continue
-        loc = m.group(2)
-        path = resolve(loc)
-        if path is not None:          # a location naming a command, not a file, is not a quote
-            yield i, flat(m.group(1)), loc, path
+def sort_rules(deferrals):
+    """Sort every rule `parse()` reads out of `deferrals` by what this guard does with it.
+
+    * ``quoted``      -- compared against the file it names: (where, quote, location, path, resolved)
+    * ``no_site``     -- a quotation naming no location. Skipped and counted apart, as `cmd_check`
+                         counts `no_site`: the rule is stated in the no-prose-site form, so
+                         nothing is owed and nothing is wrong.
+    * ``described``   -- one author's summary of the rule at a location. ⛔ (INV-315) Never
+                         compared, so never reported as mismatched: it was never a quote.
+    * ``unresolved``  -- a location was named and resolves under no root. ⛔ (INV-308) A failure.
+    * ``unparsed``    -- a rule bullet matching no known shape. ⛔ (INV-315) A failure.
+    """
+    out = {k: [] for k in ("quoted", "no_site", "described", "unresolved", "unparsed")}
+    for b in deferrals:
+        p = parse(b)
+        where = f"IMPLEMENTED.md:{b['line']} ({b['spec']})"
+        out["unparsed"].extend((where, line) for line in p["unparsed"])
+        for r in p["rules"]:
+            if r["kind"] != "quoted":
+                out["described"].append((where, r["text"], r["where"]))
+            elif r["site"] is None:
+                out["no_site"].append((where, r["text"]))
+            elif resolve(r["site"]) is None:
+                out["unresolved"].append((where, r["text"], r["site"]))
+            else:
+                out["quoted"].append((where, flat(r["text"]), r["site"], resolve(r["site"]),
+                                      b.get("resolved", False)))
+    return out
+
+
+def ledger_rules():
+    """Every rule in every deferral block of the ledger, resolved blocks included."""
+    return sort_rules(blocks(include_resolved=True))
+
+
+def fake_block(*bullets):
+    """A one-block ledger holding `bullets`, for testing how a shape is sorted."""
+    return [{"spec": "fixture", "line": 0, "text": "\n".join(bullets), "resolved": False}]
 
 
 class DeferralQuotesAreVerbatim(unittest.TestCase):
     def setUp(self):
         self.cache = {}
+        self.rules = ledger_rules()
 
     def source(self, path):
         if path not in self.cache:
@@ -111,29 +150,49 @@ class DeferralQuotesAreVerbatim(unittest.TestCase):
 
     def test_the_scan_finds_the_quotes(self):
         """A guard that silently matches nothing certifies nothing."""
-        found = list(quoted_rules())
-        # Every bullet that names a file must be PARSED, not just some of them -- the
-        # skip-what-you-cannot-parse gap this guard shipped with on 2026-09-01.
-        naming_a_file = [
-            l for l in LEDGER.read_text(encoding="utf-8").splitlines()
-            if l.lstrip().startswith("- ") and "⛔ **" in l and "— in `" in l
-        ]
-        self.assertEqual(
-            len(naming_a_file), len(found),
-            f"{len(naming_a_file) - len(found)} rule bullet(s) name a file but were not "
-            "parsed, so their quotes are unchecked while this guard reports a clean run.",
-        )
         self.assertGreaterEqual(
-            len(found), 10,
-            "the rule-bullet pattern matched almost nothing — the ledger's deferral shape "
-            "has changed and this guard is no longer reading it.",
+            len(self.rules["quoted"]), 10,
+            "the parser read almost no quoted rules out of the deferral blocks — the ledger's "
+            "deferral shape has changed and this guard is no longer reading it.",
+        )
+
+    def test_resolved_blocks_are_read_too(self):
+        """A registered block's quotes name shipping rules; the queue alone drops them all."""
+        self.assertTrue(
+            any(q[4] for q in self.rules["quoted"]),
+            "no quoted rule came from a resolved deferral block, so every registered block's "
+            "quotes are unchecked. Read the ledger with `blocks(include_resolved=True)`.",
+        )
+
+    def test_every_queued_block_is_read(self):
+        """Enumerating the resolved blocks must not cost a pending or held one."""
+        every = {b["line"]: b["text"] for b in blocks(include_resolved=True)}
+        lost = [f"IMPLEMENTED.md:{b['line']} ({b['spec']})" for b in blocks()
+                if every.get(b["line"]) != b["text"]]
+        self.assertEqual([], lost, "the review queue holds block(s) this guard does not read")
+
+    def test_no_rule_bullet_is_unparsed(self):
+        """⛔ (INV-315) A bullet no shape matches is unchecked, so this guard is not clean."""
+        self.assertEqual(
+            [], [f"{w}: {line[:150]}" for w, line in self.rules["unparsed"]],
+            "rule bullet(s) in a deferral block match no shape `pending_invariants.parse()` "
+            "knows, so their quotes are unchecked while this guard would report a clean run.",
+        )
+
+    def test_every_named_location_resolves(self):
+        """⛔ (INV-308) A location that resolves nowhere leaves its quote unverified."""
+        self.assertEqual(
+            [], [f"{w}: names `{loc}` for: {q[:100]}" for w, q, loc in self.rules["unresolved"]],
+            "rule(s) name a location that resolves under no root in RESOLUTION_ROOTS, so the "
+            "quote behind that location is unverified. Fix the path, or state the rule in the "
+            "no-prose-site form.",
         )
 
     def test_every_quoted_rule_appears_verbatim_in_the_file_it_names(self):
         wrong = []
-        for line_no, quote, loc, path in quoted_rules():
+        for where, quote, loc, path, _ in self.rules["quoted"]:
             if quote not in self.source(path):
-                wrong.append(f"IMPLEMENTED.md:{line_no} quotes {loc} as:\n      {quote[:150]}")
+                wrong.append(f"{where} quotes {loc} as:\n      {quote[:150]}")
         self.assertEqual(
             [], wrong,
             "a DEFERRED INVARIANT block quotes a rule that its named file does not contain "
@@ -153,6 +212,34 @@ class DeferralQuotesAreVerbatim(unittest.TestCase):
             f"a rule bullet opens bold and never closes it: {odd}. That is the signature of "
             "a quote cut off mid-sentence, and it corrupts the markdown after it.",
         )
+
+
+class RuleKindsAreSortedApart(unittest.TestCase):
+    """What the guard does with each shape `parse()` can return, on bullets built here."""
+
+    REAL = "skills/module-01-business-problem/phase1-discovery.md"
+
+    def test_a_described_rule_is_never_compared(self):
+        """⛔ (INV-315) Prose that quotes nothing is not a mismatch -- even beside a quote span."""
+        r = sort_rules(fake_block(
+            f"    - `{self.REAL}` — ⛔ prose appearing nowhere in the file, "
+            f"⛔ **Invented** — in `{self.REAL}`"))
+        self.assertEqual(1, len(r["described"]))
+        self.assertEqual([], r["quoted"], "a described rule was queued for a verbatim comparison")
+
+    def test_a_quote_naming_no_location_is_counted_apart(self):
+        r = sort_rules(fake_block("    - ⛔ **A rule stated in the no-prose-site form.**"))
+        self.assertEqual(1, len(r["no_site"]))
+        self.assertEqual([], r["quoted"] + r["unresolved"] + r["unparsed"])
+
+    def test_an_unresolvable_location_is_reported(self):
+        r = sort_rules(fake_block("    - ⛔ **A rule.** — in `no/such/file.md`"))
+        self.assertEqual("no/such/file.md", r["unresolved"][0][2])
+        self.assertEqual([], r["quoted"], "a quote was checked against a file that does not exist")
+
+    def test_an_unparsable_bullet_is_reported(self):
+        r = sort_rules(fake_block("    - ⛔ a bullet in neither shape"))
+        self.assertEqual(1, len(r["unparsed"]))
 
 
 if __name__ == "__main__":

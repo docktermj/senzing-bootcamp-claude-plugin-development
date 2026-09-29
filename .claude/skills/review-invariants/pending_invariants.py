@@ -110,14 +110,32 @@ def flat(s):
     return re.sub(r"\s+", " ", s).strip()
 
 
-def blocks():
-    """Every DEFERRED INVARIANT block that is not already resolved."""
+#: Every deferral block's own header, whatever became of it. ⚠️ Anchored to the header's opening,
+#: never found anywhere on the line, for the same reason membership below is decided by a marker:
+#: ledger prose ABOUT deferrals quotes the phrase too (an audit summary's `(resolved INV-NNN, …)`).
+#: A block the maintainer has decided keeps this header and loses its marker: registered
+#: (`(resolved INV-NNN, …)`), resolved by amending other invariants, or superseded.
+DEFERRAL_HEADER = re.compile(r"^- \*\*DEFERRED INVARIANT\b")
+
+
+def blocks(include_resolved=False):
+    """Every DEFERRED INVARIANT block that is not already resolved.
+
+    ``include_resolved=True`` also returns every block already decided, each with
+    ``resolved: True``. The review queue never shows them, but their quotes still name shipping
+    rules (#236).
+    ⛔ (INV-315) It exists so the block boundaries below stay the ONE definition:
+    `tests/test_deferral_quotes_match_their_source.py` checks every block's quotes, and a second
+    scanner there would be a second reader of the same corpus. The default is the queue,
+    unchanged, so `list`, `show`, `check` and `queue()` never see a decided block.
+    """
     lines = LEDGER.read_text(encoding="utf-8").splitlines()
     spec, out, i = None, [], 0
     while i < len(lines):
         line = lines[i]
         if line.startswith("## "):
             spec = line[3:].strip()
+        is_decided = include_resolved and bool(DEFERRAL_HEADER.match(line))
         is_deferral = ("DEFERRED INVARIANT" in line and "resolved INV-" not in line)
         # ⚠️ No `applied` test here, deliberately: the MARKER filter below is the sole arbiter,
         # and an applied amendment loses `AMENDMENT_AWAITING` exactly as a registered deferral
@@ -125,7 +143,7 @@ def blocks():
         # a negative control deleted it with nothing failing (#79, the same finding #108 made
         # about a redundant clause). One arbiter, or the next reader trusts the wrong one.
         is_amendment = AMENDMENT in line
-        if (is_deferral or is_amendment) and line.lstrip().startswith("- "):
+        if (is_deferral or is_amendment or is_decided) and line.lstrip().startswith("- "):
             buf, j = [line], i + 1
             while j < len(lines) and not (
                     lines[j].startswith("## ") or re.match(r"^- \*\*", lines[j])):
@@ -141,8 +159,12 @@ def blocks():
             # ⛔ Membership is still decided by the MARKER, never by the phrase appearing
             # in prose -- the overcount this function's comment above records applies to
             # `PROPOSED AMENDMENT` exactly as it did to `DEFERRED INVARIANT`.
-            if AWAITING in body or HELD_IN_BLOCK in body or AMENDMENT_AWAITING in body:
-                out.append({"spec": spec, "line": i + 1, "text": body})
+            queued = (is_deferral or is_amendment) and (
+                AWAITING in body or HELD_IN_BLOCK in body or AMENDMENT_AWAITING in body)
+            # A decided block has lost its marker by definition, so only its header admits it.
+            if queued or is_decided:
+                out.append({"spec": spec, "line": i + 1, "text": body,
+                            "resolved": not queued})
             i = j
             continue
         i += 1

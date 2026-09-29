@@ -43,6 +43,80 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## deferral-quote-test-reads-rules-through-parse
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #236)
+- **Files changed:** `.claude/skills/review-invariants/pending_invariants.py`,
+  `tests/test_deferral_quotes_match_their_source.py`,
+  `tests/test_rule_bullets_are_read_or_reported.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-28, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact), re-confirmed. The change is to the invariant-review helper and
+  two of its tests. No Senzing behavior is stated or changed, and no absence claim is made.
+  Nothing was sent upstream.
+- **Summary:** `tests/test_deferral_quotes_match_their_source.py` now reads the ledger's rules
+  through `pending_invariants.parse()` instead of its own `RULE` regex, so it follows INV-315.
+  - **Helper, additive.** `blocks(include_resolved=True)` also returns every deferral block
+    already decided, each marked `resolved: True`. A decided block is a top-level bullet that
+    opens with the bolded deferral phrase (the new `DEFERRAL_HEADER` pattern) and has lost its
+    queue marker. That covers the 33 registered `(resolved INV-NNN, …)` blocks, the two "resolved by amendment"
+    blocks and the superseded INV-281 amendment block. Block boundaries are still found in one
+    loop. The default call is unchanged. `list`, `check` and `show 1`, `show 5`, `show 8` print
+    byte-identical output before and after (`cmp`), and `check` still reads 60 checked,
+    0 mismatched, 0 unresolved, 0 no-prose-site, 10 described-not-quoted, 0 unparsed.
+  - **The quote test.** It compares only rules of kind `quoted`. A `described` rule is sorted
+    apart and never compared. An unparsed bullet or an unresolved location fails the test, by
+    block line and spec. A quoted rule that names no location is counted apart as `no_site`, as
+    `cmd_check` does, and does not fail. The `>= 10` floor stays, now measured on quoted rules
+    across every deferral block. The `(INV-NNN)` normalization, the docstring's 2026-09-01
+    account, its "checks the QUOTE against the SOURCE" caveat and
+    `test_no_quoted_rule_leaves_its_bold_unterminated` are kept.
+  - **Coverage, measured on `main` at `5e8e4d6`:** 60 deferral blocks (24 queued, 36 decided).
+    The test now compares **91** quoted rules, 31 of them from decided blocks, against the issue's
+    floor of 48. The old regex matched 90 bullets. Also counted: 14 no-site, 10 described,
+    0 unparsed, 0 unresolved. The blocks merged earlier today (#218, #223, #231, #237, #238,
+    #228) all parse, so no ledger block was edited.
+  - ⚠️ **One bullet's checked text changed, and the ledger was left as it is.** The old regex
+    took the bold after `⛔`. `parse()` takes a bullet's first bold span, so the INV-286 block's
+    bullet that opens `**6d (desired outcome).** ⛔ **This one is MULTI-select…**` now has its
+    label checked, not its rule. The label is in the source, so the test passes. Changing how
+    bullets are classified is out of this issue's scope, and the block is a resolved record, so
+    it is named in the test's docstring instead. `parse()` also now reads one rule the old regex
+    missed, the `**⛔ Prefer `download_url`…**` shape in the INV-292 block.
+  - **`TheTwoParsersAgree` is replaced by `OneParserReadsTheRules`.** It asserts that the quote
+    test's `parse` is `pending_invariants.parse` and is called, and that the quote test compiles
+    no pattern, and makes no inline `re` call, containing `⛔`, `\*\*` or `—`. The whitespace and
+    `(INV-NNN)` patterns contain none of these.
+- **Approach:** implemented directly (Phase 5a). It covers one subsystem, the review-invariants
+  helper and its tests.
+- **Establishes no invariant, and defers none.** The change applies INV-315 (only quotations are
+  compared, a description is never a mismatch, an unmatched bullet is reported) and INV-308 (a
+  location that resolves nowhere is named, and the block boundaries keep one definition) to a
+  second reader of the ledger. Every new ⛔ line cites INV-315 or INV-308 on the line itself.
+  INV-315's scope sentence ("today `pending_invariants.py` alone") is true again, because the
+  quote test now reads rules through that module. `specs/INVARIANTS.md` is unchanged.
+- **Tests:**
+  - `tests/test_deferral_quotes_match_their_source.py` (11 tests): the four live-ledger checks
+    above, one asserting a decided block contributes a quoted rule, one asserting every queued
+    block is also read, and four on bullets built in the test (a described bullet with a quote
+    span is not compared, a no-site quote is counted apart, an unresolvable location and an
+    unparsable bullet are reported).
+  - `tests/test_rule_bullets_are_read_or_reported.py`: `OneParserReadsTheRules` (2 tests).
+  - Mutation checks, each restored and confirmed by md5. Old and new are the pre- and post-change
+    quote test:
+    - (a) one character changed in a quoted rule of a pending block (`IMPLEMENTED.md:91`):
+      new fails, and names the block; old fails.
+    - (a′) the same in a resolved block (INV-313, `IMPLEMENTED.md:4304`): new fails; old fails.
+    - (b) a described bullet whose prose is nowhere in its source, carrying a
+      ``⛔ **X** — in `<path>` `` span: new passes; **old fails**.
+    - (c) a location changed to a file that does not exist: new fails, and names the path. Old
+      also fails, through its parsed-versus-named count rather than by naming the path.
+    - (d) the old `RULE` regex re-added to the quote test, and separately an inline
+      `re.search` with a rule pattern: `test_the_quote_guard_defines_no_rule_regex_of_its_own`
+      fails both times.
+    - Extra: the quote test reading `blocks()` instead of `blocks(include_resolved=True)` fails
+      `test_resolved_blocks_are_read_too`.
+- **Commit:** d13780a
+
 ## maintainer-surface-hard-rules-are-cited-or-deferred
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #228)
