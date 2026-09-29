@@ -270,7 +270,7 @@ Where a drafted finding goes, from step 1's ledger draft to its GitHub issue:
    issue instead of opening a duplicate; a comment adding what the issue lacks goes under the
    same gate as an issue. A duplicate of a **closed** issue references it and says what is
    new, and re-filing it needs a reason that answers the earlier decision.
-3. **File at the end of phase 1 or 2, and when a phase 3 walk pauses or ends** — ⛔ never
+3. **File at the end of phase 1 or 2, and when a phase 3 walk pauses or ends** — never
    mid-walk: a filing question inside a bootcamp turn adds a second 👉 and changes what is
    being tested. Then, one issue at a time:
 
