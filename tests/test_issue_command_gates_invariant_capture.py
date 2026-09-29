@@ -26,8 +26,9 @@ this pins the same contract at the command end, where the obligation is created.
 
 ⛔ **Scoped to the COMMAND, not the skill.** The governing copy is
 `~/.claude/skills/implement-github-issue/SKILL.md`, shared with repositories that have no
-`INVARIANTS.md`, so the gate belongs to this repo's overlay, the command file, where it is true.
-Since #215 the project `SKILL.md` is a pointer stub that says so. ⚠️ **The governing copy under
+`INVARIANTS.md`, so the gate belongs to this repo's overlay, where it is true. Since #239 the
+overlay is `.claude/skill-overlays/implement-github-issue.md`, and this repository defines no skill
+or command of that name. ⚠️ **The governing copy under
 `~/.claude/skills/` is not checked in CI** -- a runner checks out only the repository -- so
 nothing here establishes that it reads the overlay (INV-308).
 
@@ -46,7 +47,8 @@ at its current path, so a rename must bring this guard with it.
 Stdlib only; the command is read as text (INV-108).
 
 Source issue: #50 (add `/implement-github-issue`; retire `/implement-spec`); #215 (the
-command becomes the repo overlay).
+command becomes the repo overlay); #239 (the overlay moves to `.claude/skill-overlays/`, and the
+stub is removed).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -55,8 +57,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-COMMAND = REPO_ROOT / ".claude" / "commands" / "implement-github-issue.md"
-SKILL = REPO_ROOT / ".claude" / "skills" / "implement-github-issue" / "SKILL.md"
+COMMAND = REPO_ROOT / ".claude" / "skill-overlays" / "implement-github-issue.md"
 
 
 def command_text():
@@ -72,18 +73,11 @@ class TheCommandExistsAndFrontsTheSkill(unittest.TestCase):
     """Anti-vacuity: every assertion below reads this file, so it must be real."""
 
     def test_the_command_file_exists(self):
+        """Named for its history: the file is the repo overlay since #239, not a command."""
         self.assertTrue(
             COMMAND.is_file(),
-            "%s does not exist; /implement-github-issue cannot be invoked explicitly and "
-            "every assertion in this module would pass on an empty read" % COMMAND)
-
-    def test_the_skill_resolves_in_this_project(self):
-        """The command names a skill; `installed_skills()` only sees the project copy."""
-        self.assertTrue(
-            SKILL.is_file(),
-            "%s does not exist. The governing copy lives under ~/.claude/skills/, which no "
-            "guard in this repo can see -- so without the pointer stub the command names a "
-            "skill that resolves on one machine and nowhere else (INV-303)" % SKILL)
+            "%s does not exist, so every assertion in this module would pass on an empty "
+            "read" % COMMAND)
 
 
 class ClosingIsGatedOnInvariantCapture(unittest.TestCase):

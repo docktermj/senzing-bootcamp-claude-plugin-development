@@ -43,6 +43,114 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-two-user-level-skills-are-defined-only-at-user-level
+
+- **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #239)
+- **Files changed:**
+  `.claude/commands/implement-github-issue.md` → `.claude/skill-overlays/implement-github-issue.md` (moved),
+  `.claude/commands/unattended-issue-loop.md` → `.claude/skill-overlays/unattended-issue-loop.md` (moved),
+  `.claude/skills/implement-github-issue/SKILL.md` (removed),
+  `.claude/skills/unattended-issue-loop/SKILL.md` (removed),
+  `.claude/skills/production-readiness-audit/conformance.py`, `docs/development.md`,
+  `docs/FAMILY_WORKFLOW.md`, `specs/INVARIANTS.md`, `invariant-manifest.json`,
+  `specs/IMPLEMENTED.md`, and the tests listed under **Tests**
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-29, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact), re-confirmed. Every changed line is maintainer apparatus:
+  where two maintainer skills are defined, two maintainer pages, invariant text and guards. No
+  absence claim is made.
+- **Summary:** after #215, `implement-github-issue` and `unattended-issue-loop` were each
+  defined three times: the user-level skill, a project pointer stub and a project command that
+  doubled as the repo overlay. The maintainer decided on 2026-09-28 that a skill name is defined
+  in one place, and for these two that place is `~/.claude/skills/`. docktermj/.claude#68 made
+  the user-level skills read `.claude/skill-overlays/<name>.md`; it is closed, which was this
+  issue's merge condition. This run makes the repository define neither name.
+  - **Overlays.** Both command files moved to `.claude/skill-overlays/`. Each lost its frontmatter
+    and its command boilerplate: the `Maintainer request:` line, "Invoke the … skill and follow
+    it end to end", the `$ARGUMENTS` line, and the sentence calling the project `SKILL.md` a
+    pointer stub. Each keeps one line naming its governing copy and every obligation it
+    carried. Each gained the stubs' one sentence that the overlays lacked: the governing copy is
+    **not checked in CI** (INV-308). The loop overlay now points workers at
+    `.claude/skill-overlays/implement-github-issue.md`. **No obligation was removed.**
+  - **Stubs.** `.claude/skills/implement-github-issue/` and `.claude/skills/unattended-issue-loop/`
+    are removed.
+  - **The *(user level)* marker.** It is a fourth disposition beside "ships here", *(children
+    only)* and *retired*, matched per name. The §2 parent cells read `required *(user level)*`,
+    the §3 nodes carry `<i>(user level)</i>`, and so do R8's three live mentions and the §2 loop
+    row's mention of `implement-github-issue`. In `docs/development.md` it marks both list entries
+    and the INV-307 paragraph's mention, and the INV-316 and INV-302 paragraphs explain it. A
+    note under the §2 table says what the marker means for a child, and a dated §10 amendment
+    (2026-09-29) records the change with a "For a child:" line. Dated §10 amendments are left
+    unmarked, since they record what the page said on their date.
+  - **Invariants.** INV-207 and INV-309 get dated "site moves, no meaning change" corrections.
+    INV-207's 2026-09-16 correction had written the command file's path in backticks, which the
+    path guard now reports as missing; it is described in words instead, as that guard requires.
+    INV-302 gets two dated notes: a site-move correction for its run-state-directory example, and
+    an amendment saying a *(user level)* name in `docs/development.md` is not a phantom. INV-303
+    is confirmed unchanged, since it binds only files under `.claude/commands/`. INV-316 is
+    confirmed unchanged, since it already allows a marker that says where the name ships instead.
+    `invariant-manifest.json` is regenerated.
+  - **Scanners.** `conformance.py`'s `SCAN_ROOTS` gains `.claude/skill-overlays`, so the `since`
+    and `reverse-check` views still see the overlays' rules. The consumers derive from it. The
+    vocabulary guard's corpus gains the same tree.
+  - **Ledger.** #215's DEFERRED INVARIANT block (entry `the-user-level-copies-govern-both-skills`)
+    drafted a rule requiring a pointer stub. #239 removes the stubs, so that block is marked
+    superseded by the one below. Its rule sites are described in words, because two of the
+    files are gone.
+- **Approach:** implemented directly (Phase 5a), as the maintainer chose at the plan gate. The
+  maintainer also placed the §2 marker in the parent cell.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** It supersedes #215's
+  block. The rule is enforced by test rather than stated on a ⛔ line of its own. The rule
+  already shipping at its site:
+    - ⛔ **Put that file in every worker's brief.** — in `.claude/skill-overlays/unattended-issue-loop.md`
+
+  ⚠️ **Why this is not an existing invariant.** INV-300 governs a rule having one home, INV-303
+  that a command names a skill, and INV-316 that a named command resolves or carries a marker.
+  None says that a skill governed at user level must not also be defined here, or where its
+  repository-only obligations live. The drafted wording replaces #215's, which required a
+  pointer stub. Whether it needs its own id is the maintainer's call.
+
+  The drafted wording:
+
+  **INV-NNN** — A maintainer skill whose governing text is the user-level copy under
+  `~/.claude/skills/` MUST NOT also be defined in this repository: there is no
+  `.claude/skills/<name>/` and no `.claude/commands/<name>.md`. The repository's own obligations
+  for it MUST live in `.claude/skill-overlays/<name>.md`, which carries no frontmatter and no
+  command boilerplate, names the governing copy in one line, and states that the governing copy
+  is not checked in CI. A rule the overlay only points at MUST NOT be restated there. Enforced by
+  `tests/test_user_level_copies_govern.py`. (Source: GitHub issue #239.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:**
+  - `tests/test_user_level_copies_govern.py` is rewritten for overlays.
+    `ThisRepositoryDefinesNeitherName` fails if either name comes back under `.claude/skills/` or
+    `.claude/commands/`. `TheOverlaysAreRepoOnly` requires each overlay to exist, with no
+    frontmatter and no command boilerplate, stating the CI limit and naming its governing copy.
+    **Removed:** `TheStubsPointAtTheGoverningCopy` (the stubs are gone) and
+    `test_each_overlay_hint_matches_the_governing_copy`, which pinned the commands'
+    `argument-hint`. No command is left to carry a hint, and the user-level skills keep theirs.
+  - `tests/test_canonical_operations_resolve.py` and
+    `tests/test_documented_dev_commands_match_the_shipped_set.py` learn the marker. A §2 row, a
+    `docs/development.md` name or a live family-page mention marked *(user level)* passes only
+    when `.claude/skill-overlays/<name>.md` exists and `.claude/commands/<name>.md` does not.
+    `test_every_parent_required_operation_ships` accepts a `required` operation either as a
+    command file or under that same condition. Every live mention of a user-level operation on
+    the family page must carry the marker. In-suite negative controls build a temporary tree and
+    show that a missing overlay fails and that a shipping command file fails. Their INV-265
+    "certainly present" checks move from `implement-github-issue` to `dry-run`.
+  - Re-pointed from the command file or the stub to the overlay, with no assertion weakened:
+    `test_dev_commands_name_a_real_skill.py` (its anchor moves to `dry-run`),
+    `test_dependency_reading_rules.py`, `test_unattended_loop_is_label_gated.py` (its
+    `test_the_skill_declares_its_new_name` is removed, since it read the stub's frontmatter),
+    `test_issue_command_gates_invariant_capture.py` (its `test_the_skill_resolves_in_this_project`
+    is removed, since it asserted the stub existed), `test_issue_path_reverifies_senzing_facts.py`,
+    `test_all_runs_every_argument_free_view.py`, `test_reverse_check_counts_what_it_cannot_test.py`,
+    `test_the_range_boundary_reports_what_it_retires.py`, `test_declined_ledger.py`,
+    `test_spec_absence_claims_name_their_owner.py`, `test_spec_ledger_invariants.py` and
+    `test_blocked_submission_has_a_vocabulary_value.py`. The last one scans the overlays tree too,
+    and requires a written value there, where the loop's overlay writes one.
+- **Commit:** uncommitted
+
 ## check-skill-drift-is-retired
 
 - **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #240)
@@ -1397,12 +1505,16 @@ entries at once. Two things a reader should know about the hashes now recorded:
     the FAMILY_WORKFLOW row. INV-309, never sign off, the mint trap, `submit_feedback` and
     declining now assert the loop overlay. R8's approval, report and suggestion clauses now
     assert R8 instead of the command.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The change ships a
-  test-enforced rule about where a governed skill's text lives, which is the gap INV-309 exists
-  to close. The rules already shipping, at their site:
-    - ⛔ **Do not put procedure back in this file.** — in `.claude/skills/implement-github-issue/SKILL.md`
-    - ⛔ **Do not put procedure back in this file.** — in `.claude/skills/unattended-issue-loop/SKILL.md`
-    - ⛔ **Put that file in every worker's brief.** — in `.claude/commands/unattended-issue-loop.md`
+- **DEFERRED INVARIANT — NOT minted — superseded by the #239 block (entry `the-two-user-level-skills-are-defined-only-at-user-level`).**
+  #239 removed the pointer stubs this block's wording requires and moved the overlays, so the
+  review queue holds the #239 block in its place. The rule sites as #215 shipped them, described
+  because the files are gone or moved:
+    - ⛔ **Do not put procedure back in this file.** — at the time, in the project pointer stub for implement-github-issue (removed by #239)
+    - ⛔ **Do not put procedure back in this file.** — at the time, in the project pointer stub for unattended-issue-loop (removed by #239)
+    - ⛔ **Put that file in every worker's brief.** — at the time, in the loop's command overlay (moved by #239; the #239 block quotes it at its new site)
+
+  The original text of this block: The change ships a test-enforced rule about where a governed
+  skill's text lives, which is the gap INV-309 exists to close.
 
   ⚠️ **INV-300 and INV-303 may already govern part of this.** The merge policy stated once is
   INV-300, and a stub existing so the command resolves is INV-303. What is new is the shape: a

@@ -7,11 +7,13 @@ while the loop that ran merged nine PRs on 2026-09-28, and the project `implemen
 claimed a shared block the user-level copy no longer had. The tests here checked the copies that
 did not run (#215).
 
-So, for both skills:
+#215 turned the project `SKILL.md` into a pointer stub and the command file into the repo
+overlay. #239 finished the job: a skill name is defined in one place, so for both skills
 
-* the project `SKILL.md` is a **pointer stub**: it names the governing copy and the overlay, and
-  carries no procedure and no shared block;
-* the project command file is the **repo overlay**: only this repository's obligations, plus one
+* this repository defines **neither name**: no `.claude/skills/<name>/` and no
+  `.claude/commands/<name>.md`;
+* the **repo overlay** is `.claude/skill-overlays/<name>.md`, which is neither a skill nor a
+  command: no frontmatter, no command boilerplate, only this repository's obligations plus one
   line naming the governing copy, which is told to read the overlay;
 * the loop's merge policy is stated once, in the `docs/FAMILY_WORKFLOW.md` §2 row (INV-300);
 * the old tracked run-state directory is gone. The governing copy keeps state under
@@ -19,15 +21,14 @@ So, for both skills:
 
 ⚠️ **`~/.claude/skills/` is NOT checked in CI, and nothing here reads it.** A CI runner checks
 out only the repository, so a test reading the governing copy would fail there and pass on one
-machine (INV-308). The pinned `argument-hint` values below are the governing copies' values on
-2026-09-28; if a governing copy changes its hint, this test cannot see it and the overlay has to
-be updated by hand.
+machine (INV-308). Nothing here can see the governing copies' `argument-hint`, which is why #239
+dropped the check that pinned it: the command files that carried a copy of the hint are gone.
 
 ⚠️ **What this does NOT establish:** that the governing copy actually reads the overlay, or
 that a run meets the overlay's obligations. It pins that the repository's text points the right
 way and holds no second procedure.
 
-Source issue: #215.
+Source issues: #215, #239.
 
 Stdlib only; every surface is read as text (INV-108).
 
@@ -41,34 +42,19 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CLAUDE = REPO_ROOT / ".claude"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
 
-#: The skills whose user-level copy governs, with the governing copy's `argument-hint`.
-GOVERNED = {
-    "implement-github-issue": '"<GitHub issue URL or number>"',
-    "unattended-issue-loop": '"[--dry-run] [--no-merge]"',
-}
+#: The skills whose user-level copy governs. This repository carries only their overlays.
+GOVERNED = ("implement-github-issue", "unattended-issue-loop")
+
+#: Command boilerplate an overlay must not carry: it is not a command (#239).
+BOILERPLATE = (r"\$ARGUMENTS", r"(?i)\binvoke the `[a-z-]+` skill", r"(?im)^maintainer request:",
+               r"(?i)pointer stub")
 
 #: The merge-policy clause. It must appear exactly once in the repository's own text.
 MERGE_POLICY = re.compile(r"`--no-merge` leaves every PR open")
 
 
-def stub(name):
-    return CLAUDE / "skills" / name / "SKILL.md"
-
-
 def overlay(name):
-    return CLAUDE / "commands" / ("%s.md" % name)
-
-
-def split_frontmatter(path):
-    """Return (frontmatter dict, body) for a Markdown file with a leading `---` block."""
-    text = path.read_text(encoding="utf-8")
-    m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
-    assert m, "%s has no frontmatter block" % path
-    fields = {}
-    for line in m.group(1).splitlines():
-        key, _, value = line.partition(":")
-        fields[key.strip()] = value.strip()
-    return fields, m.group(2)
+    return CLAUDE / "skill-overlays" / ("%s.md" % name)
 
 
 def normative(text):
@@ -86,62 +72,50 @@ def own_markdown():
             yield p
 
 
-class TheStubsPointAtTheGoverningCopy(unittest.TestCase):
-    def test_each_stub_exists(self):
-        """INV-303: each command still names a skill that resolves to a `SKILL.md` here."""
-        for name in GOVERNED:
-            with self.subTest(skill=name):
-                self.assertTrue(stub(name).is_file(), "%s is missing" % stub(name))
+class ThisRepositoryDefinesNeitherName(unittest.TestCase):
+    """A skill name is defined in one place, and for these two that place is `~/.claude/skills/`."""
 
-    def test_the_frontmatter_keeps_name_and_description_and_is_not_model_invocable(self):
+    def test_no_project_skill_or_command_carries_the_name(self):
         for name in GOVERNED:
-            fields, _ = split_frontmatter(stub(name))
-            with self.subTest(skill=name):
-                self.assertEqual(name, fields.get("name"))
-                self.assertTrue(fields.get("description"), "the stub has no description")
-                self.assertEqual(
-                    "true", fields.get("disable-model-invocation"),
-                    "the stub is model-invocable, so the model can load the project text through "
-                    "the Skill tool while a slash command loads the governing copy -- two "
-                    "procedures depending on how it was invoked")
-
-    def test_the_body_names_the_governing_copy_the_overlay_and_the_ci_limit(self):
-        for name in GOVERNED:
-            _, body = split_frontmatter(stub(name))
-            flat = re.sub(r"\s+", " ", body)
-            for needed in ("~/.claude/skills/%s/SKILL.md" % name,
-                           ".claude/commands/%s.md" % name,
-                           "not checked in CI"):
-                with self.subTest(skill=name, needed=needed):
-                    self.assertIn(needed, flat)
-
-    def test_the_stub_carries_no_procedure_and_no_shared_block(self):
-        for name in GOVERNED:
-            _, body = split_frontmatter(stub(name))
-            with self.subTest(skill=name):
-                self.assertNotIn("SHARED-RULES", body,
-                                 "the stub carries a shared-rules block; the user-level copy "
-                                 "has none, so the block would claim a twin that does not exist")
-                self.assertNotIn("```", body, "the stub carries a command block: procedure")
-                headings = re.findall(r"^#{2,} ", body, re.M)
-                self.assertEqual([], headings,
-                                 "the stub has section headings, so it is growing a procedure "
-                                 "again beside the governing copy")
+            for path in (CLAUDE / "skills" / name, CLAUDE / "commands" / ("%s.md" % name)):
+                with self.subTest(path=str(path.relative_to(REPO_ROOT))):
+                    self.assertFalse(
+                        path.exists(),
+                        "%s is back. It is a second definition of a name the user-level copy "
+                        "already defines; the repository's rules for it belong in %s"
+                        % (path.relative_to(REPO_ROOT), overlay(name).relative_to(REPO_ROOT)))
 
 
 class TheOverlaysAreRepoOnly(unittest.TestCase):
+    def test_each_overlay_exists(self):
+        for name in GOVERNED:
+            with self.subTest(skill=name):
+                self.assertTrue(overlay(name).is_file(), "%s is missing" % overlay(name))
+
+    def test_no_overlay_carries_frontmatter_or_command_boilerplate(self):
+        for name in GOVERNED:
+            text = overlay(name).read_text(encoding="utf-8")
+            with self.subTest(skill=name, what="frontmatter"):
+                self.assertFalse(text.startswith("---"),
+                                 "the overlay has frontmatter, so it reads as a command or a "
+                                 "skill again")
+            for pattern in BOILERPLATE:
+                with self.subTest(skill=name, what=pattern):
+                    self.assertNotRegex(text, pattern)
+
+    def test_each_overlay_states_the_ci_limit(self):
+        """INV-308: the overlay is the one place a reader learns the governing copy is unchecked."""
+        for name in GOVERNED:
+            text = re.sub(r"\s+", " ", overlay(name).read_text(encoding="utf-8"))
+            with self.subTest(skill=name):
+                self.assertIn("not checked in CI", text)
+
     def test_each_overlay_names_the_governing_copy(self):
         for name in GOVERNED:
             text = re.sub(r"\s+", " ", overlay(name).read_text(encoding="utf-8"))
             with self.subTest(skill=name):
                 self.assertRegex(
                     text, r"governing copy is `~/\.claude/skills/%s/SKILL\.md`" % re.escape(name))
-
-    def test_each_overlay_hint_matches_the_governing_copy(self):
-        for name, hint in GOVERNED.items():
-            fields, _ = split_frontmatter(overlay(name))
-            with self.subTest(skill=name):
-                self.assertEqual(hint, fields.get("argument-hint"))
 
     def test_the_implement_overlay_no_longer_restates_the_no_argument_review(self):
         text = overlay("implement-github-issue").read_text(encoding="utf-8")
@@ -164,7 +138,7 @@ class TheOverlaysAreRepoOnly(unittest.TestCase):
 
     def test_the_loop_overlay_sends_workers_to_the_implement_overlay(self):
         text = overlay("unattended-issue-loop").read_text(encoding="utf-8")
-        self.assertIn("implement-github-issue.md", text,
+        self.assertIn(".claude/skill-overlays/implement-github-issue.md", text,
                       "the loop overlay does not bind its workers to the implement overlay, so "
                       "INV-309 and the ledger reach them only if the lead copies them by hand")
 
@@ -188,15 +162,14 @@ class TheMergePolicyIsStatedOnce(unittest.TestCase):
                          "the loop's merge policy is stated in more than one place, or none "
                          "(INV-300): %s" % hits)
 
-    def test_the_stub_and_the_overlay_link_to_the_row(self):
-        for path in (stub("unattended-issue-loop"), overlay("unattended-issue-loop")):
-            with self.subTest(path=path.name):
-                self.assertIn("FAMILY_WORKFLOW.md", path.read_text(encoding="utf-8"))
+    def test_the_overlay_links_to_the_row(self):
+        self.assertIn("FAMILY_WORKFLOW.md",
+                      overlay("unattended-issue-loop").read_text(encoding="utf-8"))
 
 
 class NoSecondCopyIsLeftBehind(unittest.TestCase):
     def test_the_tracked_run_state_directory_is_gone(self):
-        state = stub("implement-github-issue").parent / "state"
+        state = CLAUDE / "skills" / "implement-github-issue" / "state"
         self.assertFalse(state.exists(),
                          "%s still exists. The governing copy keeps state under "
                          "<git-common-dir>/claude-state/, so files here are stale" % state)

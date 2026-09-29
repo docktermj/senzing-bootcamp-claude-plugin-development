@@ -156,12 +156,15 @@ repository's own maintainer pages name commands.
 A command that ships has a file in `.claude/commands/`. One that does not carries its reason at
 the point of use: `/parity-check` *(children only)* and
 `/escalate-to-parent` *(children only)*, or a statement of retirement, as
-`/implement-spec` *(retired)* is below. ⚠️ **Three dispositions, not two** — the page legitimately discusses
-a command it used to ship, and forcing that into *ships* or *child's* is how a guard starts
-reporting a false phantom.
+`/implement-spec` *(retired)* is below, or *(user level)*: the name is defined only under
+`~/.claude/skills/`, and this repository keeps its obligations in
+`.claude/skill-overlays/<name>.md` (#239), as for `/implement-github-issue` *(user level)* and
+`/unattended-issue-loop` *(user level)*. ⚠️ **Four dispositions, not two** — the page
+legitimately discusses a command it used to ship, and one it runs from user level, and forcing
+either into *ships* or *child's* is how a guard starts reporting a false phantom.
 `tests/test_canonical_operations_resolve.py` holds this both ways round — a name that neither
 ships nor carries the marker fails the suite, and so does a marker placed on a command that
-*does* ship.
+*does* ship. A *(user level)* marker also fails when no overlay backs it.
 
 ⚠️ **INV-302's guard cannot see either page's diagrams.** It parses the numbered ``1. `/name` ``
 list shape only, so a phantom command inside a fenced block was invisible to it until this
@@ -172,7 +175,9 @@ the host's business (R4).
 ## Claude development skills
 
 ⛔ **(INV-302) This list and `.claude/commands/` must agree in both directions, and every
-skill must be fronted by a command.** A documented command that does not ship tells you to
+skill must be fronted by a command.** An entry marked *(user level)* is the exception INV-316
+allows: it has no command file here, and its overlay under `.claude/skill-overlays/` must
+exist. A documented command that does not ship tells you to
 run something that does not exist; one that ships undocumented is undiscoverable. Every
 entry carries a description. Do not state how many there are — the set is derived and
 compared, and a count in prose goes stale silently while reading authoritative.
@@ -180,7 +185,7 @@ compared, and a count in prose goes stale silently while reading authoritative.
 ⛔ **(INV-307) `specs/` is frozen as of the 2026-09-15 cutover; new work is tracked as
 GitHub issues.** See [`specs/README.md`](../specs/README.md). ✅ **Every command that used to
 write there has now been reworked**, and none is blocked: `/feedback-to-issues` files GitHub
-issues (#49), `/implement-spec` was retired (#50, #60), `/unattended-issue-loop` is renamed and
+issues (#49), `/implement-spec` was retired (#50, #60), `/unattended-issue-loop` *(user level)* is renamed and
 label-gated and writes only its issues' `IMPLEMENTED.md` entries (#51, #69, #215),
 `/production-readiness-audit` files issues when attended and records findings in the ledger when
 not (#69), `/dry-run` drafts each finding into its run's `IMPLEMENTED.md` entry and files issues
@@ -197,13 +202,13 @@ still written to.
 
 ### Development loop
 
-1. `/implement-github-issue` - Take the GitHub issue you name to pull-request-open on its own branch; FAMILY_WORKFLOW R8 says who chooses it.
+1. `/implement-github-issue` *(user level)* - Take the GitHub issue you name to pull-request-open on its own branch; FAMILY_WORKFLOW R8 says who chooses it.
 1. `/review-invariants` - Decide the deferred invariants awaiting sign-off.
 1. `/delegate-to-mcp-server` - Find Senzing facts the plugin still holds that the MCP server now serves, and file issues to delegate them.
 1. `/compact-dev-environment` - Try to compact the plugin.
 1. `/production-readiness-audit` - Do a thorough static review.
 1. `/dry-run` - Do a thorough runtime review.
-1. `/unattended-issue-loop` - Take the `unattended-ok` issues to pull requests unattended; see FAMILY_WORKFLOW §2 for its merge policy.
+1. `/unattended-issue-loop` *(user level)* - Take the `unattended-ok` issues to pull requests unattended; see FAMILY_WORKFLOW §2 for its merge policy.
 
 ### Publish
 

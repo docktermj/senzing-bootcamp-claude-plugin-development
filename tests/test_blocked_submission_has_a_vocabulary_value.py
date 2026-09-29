@@ -72,13 +72,15 @@ DRY_RUN = REPO_ROOT / ".claude" / "skills" / "dry-run" / "phase3-conversational.
 #: corpus of `plugins/` alone is structurally blind to it — which is exactly how the value
 #: added on 2026-08-28 reached two of the vocabulary's three sites and not the third.
 MAINTAINER_SIDE = REPO_ROOT / ".claude" / "skills"
-#: ⛔ The commands tree writes `Upstream:` values too (the unattended loop's overlay), and the
-#: guard was blind to it until #223.
+#: ⛔ The commands tree is scanned too: the unattended loop's overlay lived there and wrote
+#: `Upstream:` values, and the guard was blind to it until #223.
 COMMANDS = REPO_ROOT / ".claude" / "commands"
+#: ⛔ Since #239 the repo overlays live here, and the loop's overlay still writes a value.
+OVERLAYS = REPO_ROOT / ".claude" / "skill-overlays"
 #: The canonical statement of both closed sets and their mapping (INV-281, INV-300). Named here
 #: because it is the owner the sets are parsed from; every other site is derived by scanning.
 OWNER = MAINTAINER_SIDE / "feedback-to-issues" / "SKILL.md"
-LOOP_COMMAND = COMMANDS / "unattended-issue-loop.md"
+LOOP_COMMAND = OVERLAYS / "unattended-issue-loop.md"
 VALUE = "submission blocked"
 #: The value for an entry saved before its upstream question was answered (#167).
 PENDING = "offer pending"
@@ -102,7 +104,7 @@ def vocabulary_corpus():
     site-set-is-larger-than-the-shipped-tree case of INV-246.
     """
     out = list(shipped_markdown())
-    for tree in (MAINTAINER_SIDE, COMMANDS):
+    for tree in (MAINTAINER_SIDE, COMMANDS, OVERLAYS):
         if tree.is_dir():
             out += [p for p in tree.rglob("*.md") if "__pycache__" not in p.parts]
     return sorted(out)
@@ -600,9 +602,9 @@ class EveryEnumerationEqualsOneClosedSet(unittest.TestCase):
 
 class EveryWrittenValueIsAMember(unittest.TestCase):
     def test_written_values_are_found_in_every_tree(self):
-        """⛔ INV-265 — shipped prose, maintainer skills and the command files each write one."""
+        """⛔ INV-265 — shipped prose, maintainer skills and the repo overlays each write one."""
         sites = [site for site, _, _ in written_values(corpus_docs())]
-        for tree in ("plugins/", ".claude/skills/", ".claude/commands/"):
+        for tree in ("plugins/", ".claude/skills/", ".claude/skill-overlays/"):
             with self.subTest(tree=tree):
                 self.assertTrue([s for s in sites if s.startswith(tree)],
                                 f"no value written into an `Upstream:` field was found under "

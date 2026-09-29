@@ -46,7 +46,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-COMMAND = REPO_ROOT / ".claude" / "commands" / "implement-github-issue.md"
+COMMAND = REPO_ROOT / ".claude" / "skill-overlays" / "implement-github-issue.md"
 
 
 def text():

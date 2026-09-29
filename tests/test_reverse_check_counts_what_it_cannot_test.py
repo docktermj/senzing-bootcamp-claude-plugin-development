@@ -42,7 +42,9 @@ now a pointer stub. Removed, because the text they pinned no longer exists in th
 `TheHandoffQuotesTheCountsNotTheWord` (the loop's handoff quoting the counts),
 `test_the_loop_skill_calls_the_view`, and the loop command's subtest in
 `test_the_command_and_the_audit_skill_name_the_view_too`. The audit skill, which does run the
-check, is still asserted, and the stub is still asserted not to carry the broken script.
+check, is still asserted, and the stub was still asserted not to carry the broken script. #239
+removed the stub, so that assertion now reads the loop's repo overlay,
+`.claude/skill-overlays/unattended-issue-loop.md`.
 
 Built on throwaway git repositories: this repository's own history cannot produce a range with
 an uncited plugin rule, an untested maintainer-surface rule and a clean range on demand.
@@ -62,7 +64,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFORMANCE = REPO_ROOT / ".claude/skills/production-readiness-audit/conformance.py"
-LOOP_SKILL = REPO_ROOT / ".claude/skills/unattended-issue-loop/SKILL.md"
+#: The repository's only loop text since #239, which removed the project pointer stub.
+LOOP_SKILL = REPO_ROOT / ".claude/skill-overlays/unattended-issue-loop.md"
 AUDIT_SKILL = REPO_ROOT / ".claude/skills/production-readiness-audit/SKILL.md"
 
 CITED = "- ⛔ **Never ship a rule with no invariant.** (INV-183)\n"
