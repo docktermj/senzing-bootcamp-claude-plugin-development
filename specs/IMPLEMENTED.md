@@ -159,7 +159,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     dropping one label, and moving the requirement onto the `fpdf2` path only.
 - **Verified:** the full suite passed in the CI mirror (both legs, empty `HOME` outside `/tmp`).
   `citations.py verify` was run after this entry was written.
-- **Commit:** uncommitted
+- **Commit:** `8b51a9f`
 
 ## loose-invariant-citations-name-the-governing-rule
 
