@@ -195,7 +195,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   is a block site). The three blocks are guarded by `test_deferral_quotes_match_their_source.py`
   (21 new quotes, each verbatim in the file it names) and by `pending_invariants.py check`
   (0 mismatched, 0 unresolved, 0 unparsed).
-- **Commit:** uncommitted
+- **Commit:** b4e3036
 
 ## retrofit-prose-describes-the-report-not-the-copy
 
