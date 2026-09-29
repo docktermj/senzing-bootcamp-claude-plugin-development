@@ -62,7 +62,7 @@ A dry run must not file junk upstream or transmit a name and email. Verifying a 
 schema sends nothing; `download_resource` on anything large stays forbidden.
 
 ⛔ **(INV-007) Never fabricate a Bootcamper answer** — if the maintainer is unavailable, phase 3
-is untested, not approximated. ⛔ **Commit or `cp` aside before mutating the tree**;
+is untested, not approximated. **Commit or `cp` aside before mutating the tree**;
 `git restore` cannot tell a fix from an injected defect.
 
 ⛔ **(INV-317) Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you

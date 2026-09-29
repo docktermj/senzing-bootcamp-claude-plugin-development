@@ -163,7 +163,7 @@ and die with it. The moment an observation firms up into a finding, draft it int
 ledger entry — the SKILL's "The finding lifecycle", step 1. Do this *during* the walk, not at
 the end: this phase stops on whatever turn the maintainer stops it, so "I'll write it up when
 we finish" is a bet that there is a finish. A walk that reached eight turns holding four
-findings in conversation alone is why this paragraph exists. ⛔ **Drafting is mid-walk; filing
+findings in conversation alone is why this paragraph exists. **Drafting is mid-walk; filing
 is not.** The lifecycle asks its filing question only when the walk pauses or ends, so no
 bootcamp turn ever carries it.
 

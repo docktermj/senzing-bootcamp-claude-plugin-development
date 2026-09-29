@@ -88,7 +88,7 @@ authorized operation and it MUST:
 3. Rewrite every live citation mechanically (never by eye) and then pass
    `citations.py verify` with zero unresolved and zero unexpected IDs.
 4. State in the report, plainly, that every `INV-NNN` citation in a commit message is
-   now wrong and that `RENUMBERING.md` is the only way to read them. ⛔ **Measure the
+   now wrong and that `RENUMBERING.md` is the only way to read them. **Measure the
    figure at renumber time and give it with its date** — do not quote one from this
    file. `git log --format=%B | grep -oE 'INV-[0-9]{3}' | wc -l` is the count.
    ⚠️ This step used to name a literal **813**, measured 2026-07-31 and never
