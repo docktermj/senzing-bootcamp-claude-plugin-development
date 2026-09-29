@@ -172,7 +172,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   the five edited ⛔ lines carries its id on the line itself. `pending_invariants.py list` shows
   D1–D3 as three new pending invariants with no enforcer, and `pending_invariants.py check`
   reports 0 mismatched, 0 unresolved and 0 unparsed.
-- **Commit:** uncommitted
+- **Commit:** 9e7767b
 
 ## update-offer-reads-its-release-notes-before-asking
 
