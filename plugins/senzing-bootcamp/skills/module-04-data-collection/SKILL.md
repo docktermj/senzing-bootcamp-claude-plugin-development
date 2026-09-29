@@ -649,7 +649,7 @@ Module 5 can evaluate.
 >
 > `sample` (optional) is written only when this module creates a working sample of the collected
 > file — Step 6's smaller-slice path or Step 8b's sample choice:
-> `sample: {file_path, record_count, strategy, reason}` — the sample file under `data/samples/`, the
+> `sample: {file_path, record_count, strategy, reason}` (INV-326) — the sample file under `data/samples/`, the
 > record count **measured** from that written file (never the target that was asked for), the
 > sampling strategy, and why it was chosen. It is the record Module 6 Phase B Step 7 cites for the
 > collected → sample step of its load reconciliation (INV-243); a sample recorded nowhere leaves that
@@ -816,7 +816,7 @@ gate (INV-093) and the Senzing MCP server.
   [sampling rule](#overlap-preserving-sampling) in *"License limit and dataset size (canonical
   framing)"* at the top of this module. Do not choose a random slice by default.
 - **Document the sampling method AND why it was chosen** in the data-source registry, not just the
-  method name: write the source's `sample:` block in `config/data_sources.yaml` (Step 2's registry
+  method name: write the source's `sample:` block (INV-326) in `config/data_sources.yaml` (Step 2's registry
   schema) — the sample's `file_path`, its `record_count` **measured** from the written file,
   `strategy`, and `reason`. "Random sample" alone is exactly what leaves Module 6 unable to tell a
   no-overlap-in-the-data finding from a no-overlap-in-the-sample artifact, and a sample recorded
@@ -996,7 +996,7 @@ training data.
 
    Those are the
    Bootcamper's personal details, not diagnostic context, so the bug-report rule that strips every
-   identifier (INV-065, `../bootcamp-onboarding/feedback.md` Step 3c) cannot apply here — the call
+   identifier (INV-321, `../bootcamp-onboarding/feedback.md` Step 3c) cannot apply here — the call
    does not work without them. What carries over is the **consent discipline**, and it applies with
    more force, not less:
 
@@ -1134,7 +1134,7 @@ about a roughly half-hour load, for a load of about two minutes.
      is the canonical statement; do not restate it here (INV-300).** Validate the target record
      count (a positive integer strictly less than the collected total) and re-ask until valid.
      Create the sample with the chosen strategy and write it under `data/samples/`. Then write
-     each sampled source's `sample:` block in `config/data_sources.yaml` (Step 2's registry
+     each sampled source's `sample:` block (INV-326) in `config/data_sources.yaml` (Step 2's registry
      schema): the sample's `file_path`, its `record_count` **measured** from the written file, the
      `strategy` **and the `reason` for it** — the record Module 6 cites when it reconciles the load
      (INV-243). Leave the top-level `record_count` and `expected_record_count` untouched. Then

@@ -46,6 +46,10 @@ Asserted as behavior in shipped guidance, never as a helper, so any language sat
 
 Enforces: **INV-006**, **INV-244**, **INV-246**, **INV-300** at the sites #238 touched.
 
+Enforces **INV-320** (Phase C fixes every later source's limit before the run and writes each
+`load_subset:` block before any load starts, under every strategy). ⚠️ It pins Steps 17 to 19's
+text and cannot establish that a live loader honors the limits -- only a real load shows that.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -105,7 +109,7 @@ def budget_table():
     """Step 17's budget-table text: from its heading sentence to the orchestrator paragraph."""
     text = squash(step(17))
     start = text.index("**First, compute the per-source budget table")
-    return text[start:text.index("**Then the orchestrator loads each source", start)]
+    return text[start:text.index("**(INV-320) Then the orchestrator loads each source", start)]
 
 
 class EveryLoadPathWritesThenReadsTheBlock(unittest.TestCase):
@@ -141,14 +145,14 @@ class EveryLoadPathWritesThenReadsTheBlock(unittest.TestCase):
 
     def test_step_19_writes_every_block_before_the_run(self):
         text = squash(step(19))
-        self.assertIn("**Every remaining source's `load_subset:` block is written before the "
+        self.assertIn("**(INV-320) Every remaining source's `load_subset:` block is written before the "
                       "run starts, in Step 14's load order, for every loading strategy, and the "
                       "loader reads it**", text)
         self.assertIn("`config/data_sources.yaml`", text)
         self.assertIn("A **full** row writes none", text)
         self.assertIn("No block is written once any load has started", text)
         self.assertLess(text.index("The table is then fixed for the run"),
-                        text.index("**Every remaining source's `load_subset:` block is written"),
+                        text.index("**(INV-320) Every remaining source's `load_subset:` block is written"),
                         "the blocks must be written from the fixed table, after the re-measure")
 
 
@@ -175,7 +179,7 @@ class StepNineteenReadsTheWholeLoadMarkers(unittest.TestCase):
         self.assertIn("The table is then fixed for the run", self.text)
 
     def test_an_exhausted_budget_starts_no_load_and_is_named(self):
-        self.assertIn("**A not-loaded row starts no load.**", self.text)
+        self.assertIn("**(INV-320) A not-loaded row starts no load.**", self.text)
         self.assertIn("Leave its `load_status` unchanged, never `failed`", self.text)
         self.assertIn("not loaded because license capacity ran out", self.text)
 
@@ -255,7 +259,7 @@ class TheOrchestratorLoadsFromTheBlock(unittest.TestCase):
         self.text = squash(step(17))
 
     def test_it_reads_each_sources_block_when_its_load_starts(self):
-        self.assertIn("**Then the orchestrator loads each source from its `load_subset:` "
+        self.assertIn("**(INV-320) Then the orchestrator loads each source from its `load_subset:` "
                       "block.**", self.text)
         self.assertIn("read that source's block from `config/data_sources.yaml`", self.text)
 
@@ -275,7 +279,7 @@ class TheOrchestratorLoadsFromTheBlock(unittest.TestCase):
 
     def test_the_orchestrator_reads_the_block_and_never_writes_one(self):
         """A loader that wrote its own block would write it after the run started."""
-        start = self.text.index("**Then the orchestrator loads each source")
+        start = self.text.index("**(INV-320) Then the orchestrator loads each source")
         paragraph = self.text[start:self.text.index("Must handle:", start)]
         self.assertIsNone(WRITE.search(paragraph), paragraph)
 

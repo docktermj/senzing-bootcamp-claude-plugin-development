@@ -564,7 +564,7 @@ class TestLicenseRequestIsConsentGated(unittest.TestCase):
                       "step does not — these must not drift apart again")
 
     def test_the_defect_report_path_scopes_its_stripping_rule(self):
-        """Otherwise INV-065's 'strip the email' and this call contradict each other."""
+        """Otherwise INV-321's 'strip the email' and this call contradict each other."""
         text = (SKILLS / "bootcamp-onboarding" / "feedback.md").read_text(
             encoding="utf-8"
         )

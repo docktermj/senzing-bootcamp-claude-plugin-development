@@ -148,7 +148,7 @@ the maintainer the exact text and get a yes, given out of character, one record 
    `owner-checked:` naming the route that owns the fact (INV-194, INV-213). ⛔ A `both`
    finding does not qualify: it gets a GitHub issue with the drafted upstream message
    inside it, for the maintainer to send. The send follows `/feedback-to-issues` Step 8: a
-   self-contained technical report, everything identifying stripped (INV-065),
+   self-contained technical report, everything identifying stripped (INV-321),
    `category='bug'` or `'feature'`, and ⛔ never `category='license_request'`.
 
 A yes given in character, while answering as the Bootcamper, never authorizes either act.
@@ -189,7 +189,7 @@ using.
 
 A dry-run finding is only half done when the plugin is fixed. Follow this for each:
 
-1. ⛔ **(INV-307) Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you
+1. ⛔ **(INV-317) Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you
    find it, marked not yet filed, before fixing anything** — never into a new file under `specs/`,
    which is a read-only archive (INV-307). A finding that exists only in the conversation is
    not recorded, it is *remembered*, and it dies at session end or the next compaction. This
@@ -278,10 +278,10 @@ Where a drafted finding goes, from step 1's ledger draft to its GitHub issue:
    gh issue create --title "<the defect, not the symptom>" --body-file <file>
    ```
 
-   ⛔ **Never pass `--repo`** — this repository only, as `/feedback-to-issues` Step 7 says.
+   ⛔ **(INV-319) Never pass `--repo`** — this repository only, as `/feedback-to-issues` Step 7 says.
    Then replace the draft's marker with the issue number.
 
-   ⛔ **Never apply `unattended-ok` to an issue the run files.** Choosing what runs unattended
+   ⛔ **(INV-318) Never apply `unattended-ok` to an issue the run files.** Choosing what runs unattended
    is the maintainer's decision alone, and a run that labels its own findings lets
    `/unattended-issue-loop` execute work it generated with nobody in between.
 4. **The two outcomes that file nothing.**
@@ -301,7 +301,7 @@ Where a drafted finding goes, from step 1's ledger draft to its GitHub issue:
 
 Report to the maintainer with the severity ordering the findings deserve, and:
 
-- ⛔ **Name the issue each finding became, or its ledger draft and the lifecycle marker it
+- ⛔ **(INV-317) Name the issue each finding became, or its ledger draft and the lifecycle marker it
   carries**, and say plainly which findings are fixed and which are recorded-but-open. A
   report that lists findings without naming where they live reads as though the work is
   captured when it is only described.
@@ -323,7 +323,7 @@ and clear `__pycache__`. Leave the repo with only intended changes: `git status`
 should show the fixes, the new tests, **and the run's `specs/IMPLEMENTED.md` entry** — no
 new file under `specs/`, and nothing else.
 
-⛔ **The scratch project is disposable; the issues and the ledger entry are the run's actual
+⛔ **(INV-317) The scratch project is disposable; the issues and the ledger entry are the run's actual
 output.** Deleting the project is cleanup. Deleting or never writing the ledger drafts loses
 the run. If a run produced no issue and no ledger entry, it produced nothing durable, however
 good the conversation was.

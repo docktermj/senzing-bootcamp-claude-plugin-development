@@ -25,6 +25,10 @@ Three layers, because the contract is what a non-Python build is generated from 
    neither sign" is asserted by rendering the pre-#169 `renderHow` beside the current one on the
    same page and comparing the two outputs, rather than by re-describing the old markup.
 
+Enforces **INV-330** (a How rendering reads the final state, names an unsettled one, and never
+presents it as one resolved entity). ⚠️ It pins the reference text and the Python reference and
+cannot observe a build generated for another language.
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
@@ -138,7 +142,7 @@ class ContractStatesTheTwoSigns(unittest.TestCase):
         start = cls.text.find("**`GET /api/how?entity_id=<id>`:**")
         end = cls.text.find("**`GET /api/dashboard`", start)
         cls.how_entry = cls.text[start:end] if start >= 0 and end > start else ""
-        start = cls.text.find("**How? when the final state is unsettled.**")
+        start = cls.text.find("**(INV-330) How? when the final state is unsettled.**")
         end = cls.text.find("\n## ", start)
         cls.how_action = cls.text[start:end] if start >= 0 and end > start else ""
 

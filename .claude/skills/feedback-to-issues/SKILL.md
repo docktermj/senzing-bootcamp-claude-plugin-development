@@ -219,7 +219,7 @@ notifications have already gone out. ⚠️ This is the same gate Step 8 applies
 gh issue create --title "<title>" --body-file <file>
 ```
 
-⛔ **Never pass `--repo`, and never file anywhere but here.** In child repos cross-repo
+⛔ **(INV-319) Never pass `--repo`, and never file anywhere but here.** In child repos cross-repo
 routing is owned exclusively by `/escalate-to-parent`; this is the parent, where
 parent-to-child change travels by **parity**, so the parent never files into children at
 all. A flag naming another repository is a violation of that rule, not a convenience.
@@ -306,7 +306,7 @@ record the confirmed behavior.
    this repo:** the tool and parameters called, what came back, what was expected, the
    contradiction (quote both sides), the server version and SDK version, and the impact
    in one line. Include a minimal reproduction.
-3. **Strip everything identifying.** No bootcamper name, employer, email, file paths from
+3. **(INV-321) Strip everything identifying.** No bootcamper name, employer, email, file paths from
    their machine, host names, dataset contents, or record values — the MCP server's own
    notice forbids sending PII, and submissions are anonymous, so nothing in the message
    can be followed up with you. Describe data shape, never data.

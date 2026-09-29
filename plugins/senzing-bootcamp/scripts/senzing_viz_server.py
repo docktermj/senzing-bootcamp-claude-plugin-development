@@ -1596,7 +1596,7 @@ function _recordChips(members){var out=[];(members||[]).forEach(function(mb){(mb
   out.push("<span class='chip'>"+esc((r.DATA_SOURCE||"?")+":"+(r.RECORD_ID||"?"))+"</span>");});});
   return out.join("")||"<span class='muted'>—</span>";}
 function renderHow(data){const hr=(data.result||{}).HOW_RESULTS||{};const steps=hr.RESOLUTION_STEPS||[];
-  // An UNSETTLED final state (#169) is either of the two signs Phase D's how-state audit
+  // An UNSETTLED final state (#169, INV-330) is either of the two signs Phase D's how-state audit
   // uses (#154): FINAL_STATE.NEED_REEVALUATION non-zero (an integer per the response
   // schema), or more than one FINAL_STATE.VIRTUAL_ENTITIES[]. Either one makes both
   // one-entity sentences below false, so the notice replaces them. The notice reports the

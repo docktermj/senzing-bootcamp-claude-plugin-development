@@ -215,7 +215,7 @@ never automatic.
    verbatim error text when there is one. Keep it factual — no speculation about internals.
 
 2. ⛔ **Strip everything identifying.** No hostname, username, file path under a home directory, IP
-   address, email, company name, or data values from the bootcamper's records (INV-065). Entity names
+   address, email, company name, or data values from the bootcamper's records (INV-321). Entity names
    and record IDs from their data are **theirs** — describe the shape of the problem, never the
    content. The bootcamper's own data must never leave the machine as part of a bug report.
 

@@ -27,6 +27,10 @@ Step 14 must also stay question-free: `test_phasec_generated_path_asks_once.py` 
 Everything is asserted as behavior in shipped guidance, so any implementation language satisfies
 it (INV-002). Source: GitHub issue #165.
 
+Enforces **INV-327** (the first source is chosen by Phase C Step 14's heuristics, announced as a
+statement, and a dependency it broke is honored rather than repaired by a reload). ⚠️ It pins the
+text and cannot observe a live run's choice.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -184,7 +188,7 @@ class StepFourteenHonorsABrokenDependencyWithoutReloading(unittest.TestCase):
         self.assertIn("order the remaining sources to honor it", self.step)
 
     def test_it_does_not_reload_the_first_source(self):
-        self.assertIn("**Do not reload the first source.**", self.step)
+        self.assertIn("**(INV-327) Do not reload the first source.**", self.step)
 
 
 if __name__ == "__main__":

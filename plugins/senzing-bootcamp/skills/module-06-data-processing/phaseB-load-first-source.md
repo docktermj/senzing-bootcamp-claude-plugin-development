@@ -10,7 +10,7 @@ were registered in Phase A (step 4a), so the load runs against a config that alr
 more sources with `mapping_status: complete` in `config/data_sources.yaml` (the count Phase C's
 conditional gate uses) that choice decides the entity baseline the rest load against. Choose it
 by the ordering heuristics in Phase C step 14 (`phaseC-multi-source.md`, "Determine load order"),
-applied in that step's priority order. Step 14 owns the list; cite it rather than restating it
+applied in that step's priority order (INV-327). Step 14 owns the list; cite it rather than restating it
 here, so the two cannot drift (INV-300). If a heuristic's input is missing for a source (for
 example no `quality_score` on a `fast_pathed` source that skipped Module 5's assessment), skip
 that heuristic and apply the next one. When Module 5's optional test load ran
@@ -167,7 +167,7 @@ every record Phases B and C load into the same repository.
   positive, stop where that definition says. Otherwise:
 
   - On **1**, write `license_cap_prompt` and each selected source's `load_subset:` block as
-    [the subset record](#load-subset-record) defines, with `choice: overlap_preserving`. Select
+    [the subset record](#load-subset-record) defines (INV-325), with `choice: overlap_preserving`. Select
     **once, across every mapped source** in `data/senzing-ready/`, within the remaining cap: the
     same whole-load scope as the dataset size above. The selection method is Module 4's
     [sampling rule](../module-04-data-collection/SKILL.md#overlap-preserving-sampling); follow it
@@ -178,7 +178,7 @@ every record Phases B and C load into the same repository.
     sampling rule's first-N case applies: write `strategy: first_n` with `limit` = the remaining
     cap and `reason: license_cap`, and say which case applies.
   - On **3**, write `license_cap_prompt` and the first source's `load_subset:` block as
-    [the subset record](#load-subset-record) defines, with `choice: first_n` and
+    [the subset record](#load-subset-record) defines (INV-325), with `choice: first_n` and
     `load_subset: {strategy: first_n, limit: N, reason: license_cap}`, where N = the remaining
     cap. Write the block **before** the load, and have the loader load exactly the first N
     records, stopping there on purpose, not at the license error. Tell the bootcamper that later
@@ -234,12 +234,12 @@ definition says, adding only their own values, and the two-stage reconciliation 
   A marker recorded under a different `license_record_limit` does not match.
 - **`sqlite_volume_prompt` with `choice: "subset"`**, the SQLite first-1,000 choice's asked-once
   marker: `{decided: true, choice: "subset", loadable}`, beside Phase A's `proceed` and `migrate`.
-- **Neither marker records N or a subset file.** They record that the question was answered.
+- **(INV-325) Neither marker records N or a subset file.** They record that the question was answered.
   What each source loads is its `load_subset:` block, and that block is the only subset record
   the reconciliation cites.
 - **The remaining cap** is `license_record_limit` minus the number of records already in the
   repository.
-  - ⛔ **That count is measured through the SDK at this step, never summed from the registry.**
+  - ⛔ **(INV-324) That count is measured through the SDK at this step, never summed from the registry.**
     Route the code through the Senzing MCP server, exactly as Module 5 Step 24a counts
     `record_count` (`module-05-data-quality-mapping/phase3-test-load.md`), and never count with
     direct SQL against `database/G2C.db`. Records a test load left in the repository count
@@ -325,7 +325,7 @@ or the mapping artifact — the source's own mapping specification, or the recor
 precisely the failure INV-245 exists to prevent, and without the citation requirement this branch
 becomes a universal escape hatch wearing the rule as a disguise. No citation → `unexplained_delta`.
 
-- **No `sample:` block** — a registry written before Module 4 recorded samples: a gap only a sample
+- **No `sample:` block** (INV-326) — a registry written before Module 4 recorded samples: a gap only a sample
   could explain is **unexplained**. Nothing is inferred from a file's name or location; a path under
   `data/samples/` is not a citation.
 - **No `load_subset:` block** — a registry written before this step recorded subsets, or a subset
@@ -378,7 +378,7 @@ starting smaller:
 results here, we can load the full dataset, or switch to PostgreSQL for better performance with
 larger volumes (a production follow-up; see the graduation migration checklist)." Record the
 resulting choice in `sqlite_volume_prompt`, with `loadable`, so the question stays asked once.
-On the first 1,000 records, write it as [the subset record](#load-subset-record) defines, with
+On the first 1,000 records, write it as [the subset record](#load-subset-record) defines (INV-325), with
 only this choice's values: `sqlite_volume_prompt` with `choice: "subset"`, and on the source
 `load_subset: {strategy: first_n, limit: 1000, reason: sqlite_volume}`.
 ⛔ **An absent marker is "not asked", never "answered" (INV-244).** A load at or below the

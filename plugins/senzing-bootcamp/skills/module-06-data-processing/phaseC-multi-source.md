@@ -118,7 +118,7 @@ present it as already loaded and name no heuristic, because none was recorded.
 If step 13 recorded a dependency the first choice broke (a source that should have loaded before
 it), say so plainly, record it in `docs/loading_strategy.md` beside the first-source choice, and
 order the remaining sources to honor it.
-⛔ **Do not reload the first source.**
+⛔ **(INV-327) Do not reload the first source.**
 
 This step asks nothing and is not a turn ending: present the order and continue to step 15 in
 the same turn.
@@ -219,9 +219,9 @@ and **limit** (a first-N limit, a subset file with its measured `record_count`, 
   **full**, with no block. When the remaining loads fit under the cap, ask nothing.
 - ⛔ **A remaining cap that cannot be measured is indeterminate, never estimated (INV-244).** The
   capped rows get no limit. Say the figure is currently unavailable, and start none of those loads
-  on a remembered figure or a sum of the registry's counts.
+  on a remembered figure or a sum of the registry's counts (INV-324).
 
-**Then the orchestrator loads each source from its `load_subset:` block.** When a source's load
+**(INV-320) Then the orchestrator loads each source from its `load_subset:` block.** When a source's load
 starts, read that source's block from `config/data_sources.yaml` and load exactly the input it
 names: for `overlap_preserving`, the subset file at the block's `file_path`; for `first_n`, the
 first `limit` records of the registry `file_path`, stopping there on purpose, not at the license
@@ -320,7 +320,7 @@ is computed: if the re-measured cap is below the remaining rows' recorded `recor
 say so with both figures rather than start a load that can only hit the license error. The table
 is then fixed for the run.
 
-**Every remaining source's `load_subset:` block is written before the run starts, in Step 14's
+**(INV-320) Every remaining source's `load_subset:` block is written before the run starts, in Step 14's
 load order, for every loading strategy, and the loader reads it** (Step 17). Write each row's
 block from the fixed table into the source's entry in `config/data_sources.yaml`, as the
 definition says. A row taken from Phase B's option-1 blocks already has its block. A **full** row
@@ -334,7 +334,7 @@ before the run. Under each loading strategy Step 15 offers:
 - **Hybrid:** write every row's `load_subset:` block first, then launch the sequential chains and
   the parallel group; each load reads its own source's block.
 
-**A not-loaded row starts no load.** A source whose limit is 0, or whose Phase B block records
+**(INV-320) A not-loaded row starts no load.** A source whose limit is 0, or whose Phase B block records
 `record_count: 0`, is skipped: there is nothing to load, or its load could only hit the license
 error. Leave its `load_status` unchanged, never `failed`, and name it in the completion summary as
 not loaded because license capacity ran out.

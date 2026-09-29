@@ -54,7 +54,7 @@ the maintainer the exact text and get a yes, given out of character, one record 
    `owner-checked:` naming the route that owns the fact (INV-194, INV-213). ⛔ A `both`
    finding does not qualify: it gets a GitHub issue with the drafted upstream message
    inside it, for the maintainer to send. The send follows `/feedback-to-issues` Step 8: a
-   self-contained technical report, everything identifying stripped (INV-065),
+   self-contained technical report, everything identifying stripped (INV-321),
    `category='bug'` or `'feature'`, and ⛔ never `category='license_request'`.
 
 A yes given in character, while answering as the Bootcamper, never authorizes either act.
@@ -65,7 +65,7 @@ schema sends nothing; `download_resource` on anything large stays forbidden.
 is untested, not approximated. ⛔ **Commit or `cp` aside before mutating the tree**;
 `git restore` cannot tell a fix from an injected defect.
 
-⛔ **(INV-307) Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you
+⛔ **(INV-317) Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you
 find it, marked not yet filed, before fixing anything** — never into a new file under `specs/`,
 which is a read-only archive (INV-307). A finding that exists only in the conversation is
 not recorded. **Search open and closed issues before filing**; a finding already tracked
@@ -74,9 +74,9 @@ and when a phase 3 walk pauses or ends**, never mid-walk. ⛔ **(INV-314) Show t
 maintainer each title and body and get a yes, one issue at a time**, then replace the
 draft's marker with the issue number. **No maintainer present: file nothing** — the draft
 stays marked **not filed — needs the maintainer to file it**. **Declined:** recorded as
-declined. ⛔ **Never apply `unattended-ok` to an issue the run files.**
+declined. ⛔ **(INV-318) Never apply `unattended-ok` to an issue the run files.**
 
-⛔ **The scratch project is disposable; the issues and the ledger entry are the run's actual
+⛔ **(INV-317) The scratch project is disposable; the issues and the ledger entry are the run's actual
 output.** If a run produced no issue and no ledger entry, it produced nothing durable,
 however good the conversation was.
 
