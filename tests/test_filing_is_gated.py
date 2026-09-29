@@ -1,13 +1,10 @@
-"""Every surface that INSTRUCTS filing a GitHub issue states the gate beside the instruction.
+"""Every surface that INSTRUCTS an outward act states the gate beside the instruction.
 
-Filing is the one act in this repository that is both **outward-facing and irreversible**: the
-issue is visible the moment it exists, its notifications have gone out, and it can be edited or
-closed but never un-filed. Three skills say so in their own words. ⛔ **No invariant registers
-it** (#106), so the rule lives as three independent restatements that a later edit can weaken
-one at a time with nothing noticing.
-
-This module is the mechanical half. The rule itself is drafted as a `DEFERRED INVARIANT` in
-`specs/IMPLEMENTED.md`, because minting an id is the maintainer's alone.
+An outward act creates a record outside this repository: a GitHub issue, a comment, a pull
+request, an upstream message. It is **outward-facing and irreversible**: the record is visible
+the moment it exists, its notifications have gone out, and it can be edited or closed but never
+un-created. This module covers the four acts the maintainer commands can instruct:
+`gh issue create`, `gh issue comment`, `gh pr create`, and maintainer-side `submit_feedback`.
 
 ⛔ **The hard half is telling an INSTRUCTION from a PROHIBITION**, and a first scan got it
 wrong. Searching for `gh issue create` returns several files, and some of them name it only to
@@ -19,41 +16,57 @@ forbid or template the act. The three pinned as negatives:
 
 ⚠️ **Re-pointed 2026-09-28 (#215).** The third negative was
 `.claude/skills/unattended-issue-loop/SKILL.md` (*"An unattended audit FILES NOTHING."*). That
-file is now a pointer stub, and the loop that runs has no audit cycle, so the prohibition and
-its complement assertion are gone from this repository. The delegate template replaces it so
-the negative set does not shrink toward vacuity (INV-265). ⛔ The governing loop under
-`~/.claude/skills/` is **not checked in CI** (INV-308), and what an unattended run may post is
-#216's question, not this module's.
+file is gone (#239), and the loop that runs has no audit cycle. The delegate template replaces
+it so the negative set does not shrink toward vacuity (INV-265).
 
 A guard that cannot tell them apart demands a gate on the rule that forbids filing, which is the
 same "satisfied by something adjacent" defect this repository keeps finding -- committed inside
 the guard written to prevent it.
 
-⛔ **The discriminator is the fence.** A `gh issue create` inside a fenced code block is a
-command the reader is told to run; one in inline backticks is prose *about* the command.
-Measured 2026-09-23 it split the six **3 and 3**, exactly along the instruction/prohibition
-line. `ProhibitionsAreNotInstructions` pins three negatives.
+⛔ **For the three `gh` commands the discriminator is the fence.** A command inside a fenced
+code block is one the reader is told to run; one in inline backticks is prose *about* it.
+Measured 2026-09-29 over the 8 files that name `gh issue create`, it split them **5 and 3**,
+exactly along the instruction/prohibition line. `ProhibitionsAreNotInstructions` pins the three
+negatives. ⛔ **`submit_feedback` is an MCP call and is never fenced**, so its instruction is
+the call shape `submit_feedback(category=…)`; prose naming the tool is not one.
 
 ⚠️ **The gate is required NEAR the instruction, not anywhere in the file.** A file-wide search
-would let a gate in one section vouch for an instruction in another -- and two of these files
-are long enough for that to happen silently. Measured distances today: 7, 3 and 2 lines, on
-both sides of the instruction.
+would let a gate in one section vouch for an instruction in another. Measured 2026-09-29: 2 to
+7 lines for the five `gh issue create` sites, and 1 and 3 for the two `submit_feedback` sites,
+on both sides of the instruction.
 
-⚠️ **What this does NOT establish:** that a run actually asks, or that a maintainer actually
-answered. No offline check reaches conversational behavior; only `dry-run` phase 3 can observe
-it. This pins that the instruction is present where a reader will meet it.
+⛔ **Which records need a per-record yes is INV-314's pending scope note (#216).** Applying
+`unattended-ok` is assent, given in advance, to a closed list of acts on that issue only, and
+invoking `/implement-github-issue <n>` is assent to five comments on `<n>`. The two overlays
+under `.claude/skill-overlays/` state the list and cite the pending note. So a `gh issue
+comment` or `gh pr create` instruction may sit beside that citation instead of a yes. A new
+issue and `submit_feedback` are never on the list, and only a yes vouches for them.
+
+⛔ **The unattended surfaces instruct only acts from the list.** They are discovered, not
+listed: the loop's overlay, the Step 8.1 mapping row for a finding with no entry, and every
+branch opened by a bold *Unattended* or *No maintainer present* label. None may instruct a new
+issue, a `submit_feedback` call or adding `unattended-ok`. No `.claude/` or `tests/` file may
+say that nothing leaves the machine unattended, or that the loop files an issue itself.
+
+⚠️ **`gh issue comment` and `gh pr create` have no fenced site in this repository today.** Both
+live only in the governing copies under `~/.claude/skills/`, which this module cannot read and
+CI never has (INV-308). For those two the check runs over the whole corpus, and the synthetic
+controls in `TheCheckersAreNotVacuous` keep it from passing by finding nothing.
+
+⚠️ **What this does NOT establish.** It pins that each instruction and its gate **sit together
+in the shipped text**. It cannot establish that a run actually asks, that a maintainer actually
+answered, that an unattended run kept to the list, or which issue a comment was posted on --
+those are properties of a live turn, and only `dry-run` phase 3 observes one. An act named in
+prose rather than a fence or a call shape is outside the finders (`/dry-run`'s outbound rule is
+pinned by `tests/test_dry_run_files_issues.py` instead), and so is a `gh` verb that is not one
+of the four acts. A green run means the rule is *written* everywhere it should be, not that it
+was *obeyed*.
 
 ⛔ **Enforces INV-314** — a maintainer command creating a record outside this repository
 presents the exact text and gets the maintainer's assent first, each record separately;
 unattended, it creates nothing and writes the drafted text where the maintainer will find it.
 
-⚠️ **What an `Enforced by` clause here does NOT claim.** This module asserts that the
-instruction and its gate **sit together in the shipped text**. It cannot establish that a run
-actually asks, that a maintainer actually answered, or that an unattended run refrained from
-filing — those are properties of a live turn, and only `dry-run` phase 3 observes one. A
-green run here means the rule is *written* everywhere it should be, not that it was *obeyed*.
-
-Source issue: #106.
+Source issues: #106, #216.
 
 Stdlib only; the surfaces are discovered rather than listed (INV-246).
 
@@ -65,46 +78,149 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CLAUDE = REPO_ROOT / ".claude"
+TESTS = REPO_ROOT / "tests"
 
-#: A fenced block, indented or not. ⛔ `[ \t]*` is load-bearing: two of the three instructions
-#: sit inside list items, so their fences are indented and a column-0 pattern missed them --
-#: which made the first measurement report those surfaces as ungated.
+#: A fenced block, indented or not. ⛔ `[ \t]*` is load-bearing: two of the instructions sit
+#: inside list items, so their fences are indented and a column-0 pattern missed them -- which
+#: made the first measurement report those surfaces as ungated.
 FENCE = re.compile(r"^[ \t]*```.*?^[ \t]*```", re.M | re.S)
 
-#: The act this rule governs.
+#: The act this module was first written for.
 FILING = "gh issue create"
 
-#: The gate, matched on the CLAIM rather than one phrasing (INV-282). All three shipped
-#: wordings differ -- "get a yes first", "get a yes, before filing", "get a yes, then file".
-GATE = re.compile(r"(?i)get a yes")
+#: The three `gh` acts, each an instruction only inside a fence.
+GH_ACTS = (FILING, "gh issue comment", "gh pr create")
 
-#: How far from the instruction the gate may sit. Measured 2026-09-23: 7, 3 and 2 lines. The
+#: `submit_feedback` as a call. The prose that names the tool, forbids it or records a value
+#: from it has no `(category=` after the name.
+SUBMIT = "submit_feedback"
+SUBMIT_CALL = re.compile(r"\bsubmit_feedback\(\s*category\s*=")
+
+#: The gate, matched on the CLAIM rather than one phrasing (INV-282). The shipped wordings are
+#: "get a yes first", "get a yes, before filing", "get a yes, then file" and, at both
+#: `submit_feedback` sites, "get an explicit yes".
+GATE = re.compile(r"(?i)\bget an? (?:explicit )?yes\b")
+
+#: A citation of INV-314's pending scope note, as both overlays write it.
+PENDING = re.compile(r"INV-314\W+scope note pending\b[^\n]*#216")
+
+#: What may stand beside each act. Only a yes vouches for a new issue or `submit_feedback`,
+#: because neither is on the scope note's list.
+ACCEPTED = {
+    FILING: (GATE,),
+    "gh issue comment": (GATE, PENDING),
+    "gh pr create": (GATE, PENDING),
+    SUBMIT: (GATE,),
+}
+
+#: How far from the instruction the gate may sit. Measured 2026-09-29: at most 7 lines. The
 #: bound is deliberately small -- a file-wide search would let a gate in one section vouch for
 #: an instruction in another.
 GATE_WINDOW = 25
 
+#: The label that opens a surface's unattended branch. Both wordings the corpus uses are bold.
+UNATTENDED_BRANCH = re.compile(r"\*\*(?i:unattended|no maintainer present)(?![\w-])")
+
+#: The two unattended surfaces with no such label: the loop's overlay, which describes nothing
+#: else, and the Step 8.1 mapping row for a finding with no entry.
+LOOP_OVERLAY = "skill-overlays/unattended-issue-loop.md"
+NO_ENTRY_ROW = ("skills/feedback-to-issues/SKILL.md", re.compile(r"^[ \t]*\| \*\(no entry:", re.M))
+
+#: Adding `unattended-ok`, which no run may do (INV-318 for a filed issue; the scope note for any).
+ADDS_THE_LABEL = re.compile(r"--add-label[\s=]+[\"']?unattended-ok")
+
+#: The two claims the scope note contradicts. An unattended run creates the listed acts, so
+#: something does leave the machine; and it files no issue, so no finding is one it files itself.
+STALE_CLAIM = re.compile(
+    r"(?i)nothing leaves the machine unattended|\bfiles itself\b"
+    r"|\bunattended (?:loop|run) files (?:an? |its own )?issues?\b")
+
+
+def line_of(text, offset):
+    return text[:offset].count("\n") + 1
+
 
 def surfaces():
-    return sorted(CLAUDE.rglob("*.md"))
+    """Every markdown file under `.claude/`, other worktrees' checkouts excepted."""
+    return sorted(p for p in CLAUDE.rglob("*.md")
+                  if "worktrees" not in p.relative_to(CLAUDE).parts)
 
 
-def instruction_lines(path):
-    """Line numbers where `path` tells the reader to RUN `gh issue create`.
+def instruction_lines(text, act=FILING):
+    """Line numbers where `text` tells the reader to RUN `act`.
 
-    A fenced block is a command to execute; inline backticks are prose about one.
+    A `gh` act is an instruction inside a fenced block and prose in inline backticks.
+    `submit_feedback` is an instruction in its call shape.
     """
-    text = path.read_text(encoding="utf-8")
-    return [text[:m.start()].count("\n") + 1
-            for m in FENCE.finditer(text) if FILING in m.group(0)]
+    if act == SUBMIT:
+        return [line_of(text, m.start()) for m in SUBMIT_CALL.finditer(text)]
+    return [line_of(text, m.start()) for m in FENCE.finditer(text) if act in m.group(0)]
 
 
-def gate_lines(path):
-    text = path.read_text(encoding="utf-8")
-    return [text[:m.start()].count("\n") + 1 for m in GATE.finditer(text)]
+def ungated_lines(text, act):
+    """Instructions of `act` with nothing `ACCEPTED` for it within `GATE_WINDOW` lines."""
+    marks = [line_of(text, m.start()) for p in ACCEPTED[act] for m in p.finditer(text)]
+    return [n for n in instruction_lines(text, act)
+            if not any(abs(g - n) <= GATE_WINDOW for g in marks)]
 
 
-def instructing_surfaces():
-    return [p for p in surfaces() if instruction_lines(p)]
+def off_list_acts(text):
+    """The acts `text` instructs that an unattended run never takes."""
+    found = ["%s at +%d" % (FILING, n - 1) for n in instruction_lines(text, FILING)]
+    found += ["%s at +%d" % (SUBMIT, n - 1) for n in instruction_lines(text, SUBMIT)]
+    found += ["--add-label unattended-ok at +%d" % (line_of(text, m.start()) - 1)
+              for f in FENCE.finditer(text) for m in ADDS_THE_LABEL.finditer(f.group(0))]
+    found += ["%r at +%d" % (m.group(0), line_of(text, m.start()) - 1)
+              for m in STALE_CLAIM.finditer(text)]
+    return found
+
+
+def branch_region(text, start):
+    """From `start` to the end of its list item, table row or paragraph."""
+    first = text.rfind("\n", 0, start) + 1
+    head = text[first:].split("\n", 1)[0]
+    if head.lstrip().startswith("|"):
+        return text[start:first + len(head)]
+    indent = len(head) - len(head.lstrip())
+    end = first + len(head)
+    for line in text[end + 1:].split("\n"):
+        stripped = line.lstrip()
+        if (not stripped or stripped.startswith("#") or
+                (len(line) - len(stripped) <= indent and re.match(r"(?:[-*]|\d+\.)\s", stripped))):
+            break
+        end += 1 + len(line)
+    return text[start:end]
+
+
+def unattended_regions():
+    """`(label, text)` for every surface that describes an unattended run."""
+    out = []
+    overlay = CLAUDE / LOOP_OVERLAY
+    if overlay.is_file():
+        out.append((LOOP_OVERLAY, overlay.read_text(encoding="utf-8")))
+    rel, row = NO_ENTRY_ROW
+    if (CLAUDE / rel).is_file():
+        text = (CLAUDE / rel).read_text(encoding="utf-8")
+        out += [("%s:%d" % (rel, line_of(text, m.start())), branch_region(text, m.start()))
+                for m in row.finditer(text)]
+    for p in surfaces():
+        text = p.read_text(encoding="utf-8")
+        out += [("%s:%d" % (p.relative_to(CLAUDE).as_posix(), line_of(text, m.start())),
+                 branch_region(text, m.start()))
+                for m in UNATTENDED_BRANCH.finditer(text)]
+    return out
+
+
+def claim_corpus():
+    """Every `.claude/` and `tests/` file a stale claim could be written in, this one excepted."""
+    files = [p for p in CLAUDE.rglob("*") if p.suffix in (".md", ".py") and p.is_file()
+             and "worktrees" not in p.relative_to(CLAUDE).parts]
+    files += [p for p in TESTS.rglob("*") if p.suffix in (".md", ".py") and p.is_file()]
+    return sorted(p for p in files if p.resolve() != Path(__file__).resolve())
+
+
+def read(p):
+    return p.read_text(encoding="utf-8")
 
 
 class TheCorpusIsNotEmpty(unittest.TestCase):
@@ -115,29 +231,89 @@ class TheCorpusIsNotEmpty(unittest.TestCase):
                                 "fewer than ten markdown surfaces under %s; the glob has drifted"
                                 % CLAUDE)
 
-    def test_at_least_three_surfaces_instruct_filing(self):
-        found = instructing_surfaces()
+    def test_at_least_three_instructions_to_file(self):
+        found = sum(len(instruction_lines(read(p), FILING)) for p in surfaces())
         self.assertGreaterEqual(
-            len(found), 3,
-            "fewer than three surfaces instruct filing (%s). Either the fence pattern has "
+            found, 3,
+            "fewer than three fenced `%s` instructions (%d). Either the fence pattern has "
             "drifted or the commands stopped filing; either way the gate check below is vacuous"
-            % ", ".join(p.name for p in found))
+            % (FILING, found))
+
+    def test_at_least_two_calls_to_submit_feedback(self):
+        found = sum(len(instruction_lines(read(p), SUBMIT)) for p in surfaces())
+        self.assertGreaterEqual(
+            found, 2,
+            "fewer than two call-shaped `%s(category=…)` instructions (%d); the call-shape "
+            "finder has drifted, or the gate check below reads nothing" % (SUBMIT, found))
+
+    def test_the_unattended_set_holds_each_named_surface(self):
+        labels = [label for label, _ in unattended_regions()]
+        for rel in (LOOP_OVERLAY, "skills/production-readiness-audit/SKILL.md",
+                    "skills/dry-run/SKILL.md", "commands/dry-run.md", NO_ENTRY_ROW[0]):
+            with self.subTest(surface=rel):
+                self.assertTrue(
+                    any(label.split(":")[0] == rel for label in labels),
+                    "%s is not in the unattended set (%s). Its branch label or anchor has "
+                    "drifted, so the off-list check below no longer reads it"
+                    % (rel, ", ".join(labels)))
 
 
 class EveryInstructionCarriesTheGate(unittest.TestCase):
     def test_the_gate_is_stated_beside_each_instruction(self):
         ungated = []
-        for p in instructing_surfaces():
-            gates = gate_lines(p)
-            for line in instruction_lines(p):
-                if not any(abs(g - line) <= GATE_WINDOW for g in gates):
-                    ungated.append("%s:%d" % (p.relative_to(REPO_ROOT), line))
+        for p in surfaces():
+            text = read(p)
+            for act in ACCEPTED:
+                ungated += ["%s:%d (%s)" % (p.relative_to(REPO_ROOT), n, act)
+                            for n in ungated_lines(text, act)]
         self.assertEqual(
             [], ungated,
-            "surface(s) instruct running `%s` with no gate within %d lines: %s. Filing is "
-            "outward-facing and irreversible -- the issue exists, and its notifications have "
-            "gone out, the moment the command runs"
-            % (FILING, GATE_WINDOW, ", ".join(ungated)))
+            "surface(s) instruct an outward act with no gate within %d lines: %s. The record "
+            "exists, and its notifications have gone out, the moment the command runs. Put "
+            "'get a yes' beside it, or, for a comment or a PR on the scope note's list, cite "
+            "INV-314's pending scope note (#216)" % (GATE_WINDOW, ", ".join(ungated)))
+
+
+class UnattendedSurfacesInstructOnlyListedActs(unittest.TestCase):
+    """⛔ An unattended run creates only the scope note's list, on the issue it works."""
+
+    def test_no_unattended_surface_instructs_an_off_list_act(self):
+        for label, text in unattended_regions():
+            with self.subTest(surface=label):
+                self.assertEqual(
+                    [], off_list_acts(text),
+                    "%s describes an unattended run and instructs an act outside the scope "
+                    "note's list. Unattended, a new issue, a `submit_feedback` call and "
+                    "adding `unattended-ok` are drafted in the handoff, never taken" % label)
+
+    def test_no_file_says_nothing_leaves_or_the_loop_files(self):
+        stale = ["%s:%d" % (p.relative_to(REPO_ROOT), line_of(read(p), m.start()))
+                 for p in claim_corpus() for m in STALE_CLAIM.finditer(read(p))]
+        self.assertEqual(
+            [], stale,
+            "file(s) say nothing leaves the machine unattended, or that the unattended loop "
+            "files an issue: %s. An unattended run posts its listed comments and PR, and it "
+            "files no issue" % ", ".join(stale))
+
+
+class EachOverlayStatesItsPartOfTheList(unittest.TestCase):
+    """Until the note is applied INV-314 reads *create nothing*, so each overlay states its part."""
+
+    PARTS = {
+        LOOP_OVERLAY: ("four `/implement-github-issue` log comments", "one blocked comment",
+                       "opening its PR", "`--no-merge`", "no new issue"),
+        "skill-overlays/implement-github-issue.md": ("five comments", "escape-hatch comment",
+                                                     "per-record yes"),
+    }
+
+    def test_each_overlay_cites_the_pending_note_and_states_its_acts(self):
+        for rel, parts in self.PARTS.items():
+            text = re.sub(r"\s+", " ", read(CLAUDE / rel))
+            with self.subTest(overlay=rel):
+                self.assertRegex(text, PENDING, "%s no longer cites INV-314's pending scope "
+                                 "note (#216), so the list it states cites nothing" % rel)
+                for part in parts:
+                    self.assertIn(part, text, "%s no longer states %r" % (rel, part))
 
 
 class ProhibitionsAreNotInstructions(unittest.TestCase):
@@ -155,10 +331,10 @@ class ProhibitionsAreNotInstructions(unittest.TestCase):
             p = CLAUDE / rel
             with self.subTest(surface=rel):
                 self.assertTrue(p.is_file(), "%s no longer exists; re-derive the negatives" % rel)
-                self.assertIn(FILING, p.read_text(encoding="utf-8"),
+                self.assertIn(FILING, read(p),
                               "%s no longer mentions %r, so it exercises nothing" % (rel, FILING))
                 self.assertEqual(
-                    [], instruction_lines(p),
+                    [], instruction_lines(read(p)),
                     "%s is read as instructing filing. It names `%s` only to forbid or template "
                     "it, and flagging it would demand a gate on the rule that forbids the act"
                     % (rel, FILING))
@@ -168,16 +344,67 @@ class TheFenceIsWhatDistinguishes(unittest.TestCase):
     """The discriminator itself, pinned so a later edit cannot quietly widen it."""
 
     def test_a_fenced_command_is_an_instruction(self):
-        self.assertTrue(FENCE.search("```bash\n%s --title x\n```" % FILING))
+        self.assertEqual([1], instruction_lines("```bash\n%s --title x\n```" % FILING))
 
     def test_an_indented_fence_still_counts(self):
-        """Two of the three instructions sit in list items; a column-0 pattern missed them."""
-        self.assertTrue(FENCE.search("   ```bash\n   %s --title x\n   ```" % FILING))
+        """Two of the instructions sit in list items; a column-0 pattern missed them."""
+        self.assertEqual([1], instruction_lines("   ```bash\n   %s --title x\n   ```" % FILING))
 
     def test_inline_backticks_are_not_an_instruction(self):
-        blocks = [m for m in FENCE.finditer("a `%s` mention in prose" % FILING)
-                  if FILING in m.group(0)]
-        self.assertEqual([], blocks)
+        self.assertEqual([], instruction_lines("a `%s` mention in prose" % FILING))
+
+    def test_naming_submit_feedback_is_not_a_call(self):
+        self.assertEqual([], instruction_lines("⛔ Never call `submit_feedback`.", SUBMIT))
+
+
+class TheCheckersAreNotVacuous(unittest.TestCase):
+    """Negative controls, run on every suite: each mutation must fail the check it targets."""
+
+    SYNTHETIC = "Post the comment.\n\n```bash\n%s 12 --body-file f\n```\n"
+
+    def _site(self, rel, act):
+        text = read(CLAUDE / rel)
+        self.assertTrue(instruction_lines(text, act), "%s no longer instructs %s" % (rel, act))
+        self.assertEqual([], ungated_lines(text, act), "%s is ungated as shipped" % rel)
+        return text
+
+    def test_removing_the_gate_at_a_real_filing_site_fails(self):
+        text = self._site("skills/feedback-to-issues/SKILL.md", FILING)
+        self.assertTrue(ungated_lines(GATE.sub("", text), FILING))
+
+    def test_removing_the_gate_at_a_real_submit_feedback_site_fails(self):
+        text = self._site("skills/delegate-to-mcp-server/SKILL.md", SUBMIT)
+        self.assertTrue(ungated_lines(GATE.sub("", text), SUBMIT))
+
+    def test_an_ungated_comment_or_pr_fails_and_a_gate_or_citation_passes(self):
+        for act in ("gh issue comment", "gh pr create"):
+            with self.subTest(act=act):
+                bare = self.SYNTHETIC % act
+                self.assertEqual([3], ungated_lines(bare, act))
+                self.assertEqual([], ungated_lines("Get a yes first.\n" + bare, act))
+                self.assertEqual([], ungated_lines(
+                    "(INV-314; scope note pending at `/review-invariants`, #216)\n" + bare, act))
+
+    def test_the_citation_never_vouches_for_a_new_issue(self):
+        text = ("(INV-314; scope note pending at `/review-invariants`, #216)\n"
+                + self.SYNTHETIC % FILING)
+        self.assertEqual([4], ungated_lines(text, FILING))
+
+    def test_an_off_list_act_in_any_unattended_surface_fails(self):
+        injected = ("\n```bash\n%s --title x\n```\n" % FILING,
+                    "\nThen call `submit_feedback(category='bug', message='m')`.\n",
+                    "\n```bash\ngh issue edit 12 --add-label unattended-ok\n```\n",
+                    " Nothing leaves the machine unattended.",
+                    " A finding the unattended loop files itself.")
+        for label, text in unattended_regions():
+            for extra in injected:
+                with self.subTest(surface=label, act=extra.strip()[:30]):
+                    self.assertTrue(off_list_acts(text + extra))
+
+    def test_listed_acts_in_an_unattended_surface_pass(self):
+        text = "```bash\ngh issue comment 12 --body-file f\ngh pr create --fill\n" \
+               "gh issue edit 12 --remove-label unattended-ok\n```\n"
+        self.assertEqual([], off_list_acts(text))
 
 
 if __name__ == "__main__":

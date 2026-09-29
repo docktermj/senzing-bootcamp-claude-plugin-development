@@ -25,6 +25,23 @@ because the lead copied them in by hand.
 ⚠️ **The preflight's CI-mirror probe runs the same mirror**, including the empty-`HOME` legs
 that overlay describes. Its `.github/workflows/*.yaml` extension applies here too.
 
+## What an unattended run may create
+
+⛔ **An unattended run creates only the records on this list, and only on the issue it is
+working** (INV-314; scope note pending at `/review-invariants`, #216). INV-314's registered
+text still says *create nothing*; the pending note makes the maintainer's `unattended-ok`
+label assent, given in advance, to exactly these acts on that issue:
+
+1. the four `/implement-github-issue` log comments (Started, Clarifications, Approach, Result);
+2. one blocked comment, plus removing `unattended-ok`;
+3. pushing that issue's branch and opening its PR;
+4. merging that PR and deleting its branch, unless the run was started with `--no-merge`.
+
+It creates nothing else: no new issue, no comment on any other issue, no `submit_feedback`,
+and it never adds `unattended-ok`. Each of those is drafted in the handoff and the ledger
+instead, marked **not filed**; an upstream message carries the `Upstream:` value the
+`submit_feedback` rule below gives.
+
 ## What an unattended run must never decide in this repository
 
 - ⛔ **Never sign off an invariant — and declining to mint one is NOT declining to ship the

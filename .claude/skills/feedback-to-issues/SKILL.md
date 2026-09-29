@@ -272,7 +272,7 @@ record the confirmed behavior.
    | `offer pending` | **yes** | `sent <date> via submit_feedback (<category>, anonymous)`, `declined by the maintainer`, or `submission failed: <reason>` if the maintainer's send errors | `not yet sent — needs maintainer approval` |
    | `submission blocked: <reason>` | **yes** | as above | `submission blocked: <reason>` (keeps the record of consent) |
    | `submission failed: <reason>` | **yes** (a retry can succeed) | as above | `submission failed: <reason>` |
-   | *(no entry: a finding the unattended loop files itself)* | **yes** | as above | `not yet sent — needs maintainer approval` |
+   | *(no entry: a finding an unattended run drafts in its handoff, filing no issue)* | **yes** | as above | `not yet sent — needs maintainer approval` |
 
    | Issue value | Report still owed? |
    |---|---|

@@ -421,7 +421,8 @@ session end:
    - **Unattended** (running under `/unattended-issue-loop`) → ⛔ **(INV-314) file nothing.** Write the
      finding into the dated ledger entry from step 5 and list it in the handoff marked **not
      filed — needs the maintainer to file it**. ⚠️ **`gh issue create` leaves the machine**,
-     and the loop's autonomy contract is that *nothing leaves the machine unattended*. A
+     and an unattended run creates only the records listed for the issue it is working
+     (`.claude/skill-overlays/unattended-issue-loop.md`); a new issue is not one of them. A
      finding recorded in the ledger is durable and costs the maintainer one read; an issue
      filed by a run nobody watched cannot be un-filed.
 
