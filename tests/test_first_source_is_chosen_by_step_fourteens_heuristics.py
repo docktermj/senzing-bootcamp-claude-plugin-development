@@ -14,7 +14,7 @@ asserts, on comment-stripped prose:
 1. Phase B's opening chooses the first source by Step 14's heuristics when 2+ sources exist, and
    cites Step 14 rather than restating the list (INV-300), so the two cannot drift;
 2. it tells the bootcamper the chosen source and the deciding heuristic before Step 5, as a
-   statement — the opening poses no 👉 question (INV-012);
+   statement — the opening poses no 👉 question (INV-225);
 3. it records the choice and its reason in `docs/loading_strategy.md` and notes it in the
    checkpoint;
 4. Step 14 reads that record, presents the first source as already decided and loaded, and ranks
@@ -126,14 +126,14 @@ class TheChoiceIsStatedBeforeStepFive(unittest.TestCase):
                       "and the heuristic that actually decided it", self.opening)
 
     def test_it_is_a_statement_not_a_question(self):
-        self.assertIn("This is a statement, not a 👉 question (INV-012).", self.opening)
+        self.assertIn("This is a statement, not a 👉 question (INV-225).", self.opening)
         self.assertIn("It asks nothing and does not end the turn", self.opening)
 
     def test_the_opening_poses_no_pinned_question(self):
         posed = PINNED_QUESTION.findall(self.opening)
         self.assertEqual([], posed,
                          "Phase B's opening poses a 👉 question; the first-source choice is a "
-                         "statement, not a gate (INV-012)")
+                         "statement, not a gate (INV-225)")
 
 
 class TheChoiceIsRecorded(unittest.TestCase):

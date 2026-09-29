@@ -19,7 +19,7 @@ that heuristic and apply the next one. When Module 5's optional test load ran
 
 Before step 5, tell the bootcamper in one line which source loads first and the heuristic that
 actually decided it, for example *"Loading `<source>` first: `<the heuristic that decided it>`."*
-⛔ **This is a statement, not a 👉 question (INV-012).** It asks nothing and does not end the
+⛔ **This is a statement, not a 👉 question (INV-225).** It asks nothing and does not end the
 turn; continue to step 5. The order of the remaining sources is still reviewed at step 14.
 
 Record the choice and its reason in `docs/loading_strategy.md` as the **first-source choice**

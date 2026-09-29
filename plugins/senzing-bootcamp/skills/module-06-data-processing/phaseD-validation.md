@@ -508,7 +508,7 @@ applies:**
 - **Finding** — name each unsettled entity (entity ID and its leading name) and the sign or signs it
   showed, with "checked N of M".
 - **No finding** — every one of the M entities was checked and none showed either sign.
-  ⛔ **(INV-115) Never report "no finding" unless N equals M** — "none unsettled among those checked"
+  ⛔ **(INV-163) Never report "no finding" unless N equals M** — "none unsettled among those checked"
   and "none unsettled" read identically, and only the second is a clean result: an entity whose
   response never arrived is not an entity with nothing to report.
 - **Nothing to check** — M is 0: the export holds no entity with 2 or more records. Report
@@ -532,7 +532,7 @@ applies:**
 - **Could not measure** — some or all calls did not complete, or their responses carried no
   `FINAL_STATE`, or M is 0 and a **nothing to check** condition failed. Say how many were not
   checked ("checked N of M"), and still report any finding among the N that were.
-  ⛔ **Never collapse a partial run into "no finding" (INV-115).**
+  ⛔ **Never collapse a partial run into "no finding" (INV-163).**
 
 ⛔ **The outcome never blocks (INV-117, INV-264)** — it is carried into the decision gate below as a
 finding, exactly as the match-key audit's is, and it does not by itself choose the gate's branch;
@@ -541,7 +541,7 @@ finding, exactly as the match-key audit's is, and it does not by itself choose t
 **Record it in `docs/results_validation.md`**, which step 28 already wrote (steps 26–27 as well,
 on the multi-source path). Append a `## How-state audit` section carrying the outcome, "checked N
 of M", and the count of unsettled entities —
-⛔ **(INV-115) including zero: write "0 unsettled" rather than omitting the section**, since an
+⛔ **(INV-265) including zero: write "0 unsettled" rather than omitting the section**, since an
 absent section and a clean result would otherwise read alike — then list each flagged entity with
 its sign or signs. That rule is for **no finding**. For **nothing to check**, still write the
 section, carrying the outcome and "checked 0 of 0", but **omit the "0 unsettled" line**: no entity

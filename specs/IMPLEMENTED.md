@@ -43,6 +43,109 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## loose-invariant-citations-name-the-governing-rule
+
+- **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #227)
+- **Files changed:**
+  `.claude/skills/review-invariants/invariant_manifest.py`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`,
+  `tests/test_supersession_has_one_syntax.py`,
+  `tests/test_first_source_is_chosen_by_step_fourteens_heuristics.py`,
+  `tests/test_phase_d_how_state_audit.py`,
+  `tests/test_the_227_mis_citations_do_not_return.py` (new), `specs/IMPLEMENTED.md`
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed 2026-09-29 by reading every line the
+  change touches: each is an invariant citation on a repository rule (the manifest generator's
+  status fields, a non-yielding step, the how-state audit's outcome and recording rules). None
+  states a Senzing SDK, engine, configuration or data fact, and no absence claim is made. No MCP
+  tools called; `submit_feedback` was not called.
+- **Summary:** citation-only. Every rule keeps its wording; only the id beside it changes. Each
+  site was located by its quoted text, since #232 moved the how-state audit's lines.
+  - **INV-311 → INV-313**, `invariant_manifest.py`: the `status` bullet ("Prose is **not** read
+    as evidence"), the `partly_superseded_by` bullet ("Such an entry stays `active`") and the
+    `partly_superseded_by` code comment ("Separate from `superseded_by`, never folded into it").
+    INV-313 is the marker-and-status rule; its own text says INV-311 is not the governing rule
+    there. **Kept:** "The prose stays the source of truth" still cites INV-311, its subject.
+  - **INV-311 → INV-313**, `tests/test_supersession_has_one_syntax.py`,
+    `ThePartialPointerIsPublished`'s docstring: the partial relation reaching the published field
+    is INV-313's "field of its own" clause.
+  - **INV-012 → INV-225**, `phaseB-load-first-source.md`: "This is a statement, not a 👉
+    question". A step with no 👉 being non-yielding is INV-225's subject; INV-012 is point of view
+    and output suppression. Its test, `test_first_source_is_chosen_by_step_fourteens_heuristics.py`,
+    now names INV-225 in the docstring item, the pinned sentence and the failure message.
+  - **INV-115 → INV-163 / INV-265**, `phaseD-validation.md` → `## How-state audit`:
+    "Never report "no finding" unless N equals M" → **INV-163**; "Never collapse a partial run
+    into "no finding"" → **INV-163**; "including zero: write "0 unsettled" rather than omitting
+    the section" → **INV-265**. `tests/test_phase_d_how_state_audit.py`'s two pinned sentences
+    and both failure messages naming INV-115 as the rule for a result that never arrived now
+    name INV-163. **Kept:** "Dump ONE `how_entity` response" still cites INV-115, as does the
+    Nothing-to-check bullet's wrong-name-reader sentence (out of scope; INV-115's subject).
+  - **The three dry-run INV-065 sites: rule 1 applied on the base commit (`6342792`), all left
+    unchanged.** None cites INV-065 any more: each already cites INV-321, re-cited when the
+    maintainer registered the outbound stripping rule (#231's block is `resolved INV-321`):
+    - `.claude/skills/dry-run/SKILL.md` "everything identifying stripped (INV-321)" — rule 1, unchanged;
+    - `.claude/commands/dry-run.md` "everything identifying stripped (INV-321)" — rule 1, unchanged;
+    - `.claude/skills/dry-run/phase3-conversational.md` "its INV-321 stripping" — rule 1, unchanged.
+  - **`specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged** (INV-307). INV-251's
+    clarification is the block below, for `/review-invariants`. INV-327's own text still calls
+    the phaseB INV-012 citation "a known mis-citation #227 records"; once this lands that
+    parenthetical describes a corrected site, which is a registered entry's prose and is left for
+    `/review-invariants` to note, not edited here.
+- **Approach:** raced (Phase 5b), recorded here by the racer that produced this patch.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-251 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered, in the sentence that names the two superseded ids:
+    - ⛔ **INV-063 (the model/effort switch), INV-064 (the accepted-switch continuation), INV-135 (the license-request flow) and INV-225 (an observation supporting the non-yielding-step rule).** — in `specs/INVARIANTS.md`
+
+  ⚠️ **Why this is an amendment and not a new invariant.** INV-251's rule is unchanged. Its dated
+  account of what the 2026-08-15 search found names INV-063 and INV-064, both since superseded,
+  and a reader following those ids lands on retired entries with no pointer onward. The note
+  adds the successors and keeps the account as written. Amending a registered invariant is the
+  maintainer's sign-off alone, so `specs/INVARIANTS.md` is untouched. The block carries both
+  markers for the reason #153's block gives: `pending_invariants.py` queues it by `PROPOSED
+  AMENDMENT to INV-251`, and `tests/test_review_invariants_queue.py` counts it by "NOT minted".
+  Applying the note resolves the block: mark the bullet `applied YYYY-MM-DD` and drop both
+  "awaiting" markers. Enforced by `tests/test_one_question_per_turn_is_registered.py`.
+  ⚠️ **Applying it needs a second edit in the same change.** The note puts supersession prose
+  into INV-251, so `tests/test_supersession_has_one_syntax.py`'s `REVIEWED_NOT_A_SUPERSESSION`
+  needs an INV-251 entry, in its "prose about another pair's supersession" group, beside INV-250
+  (the precedent), or that guard fails.
+
+  The drafted wording, a note appended after INV-251's closing `(Source: …)` parenthetical, with
+  every existing sentence unchanged:
+
+  **INV-251** — (⚠️ **Clarified in place <YYYY-MM-DD>, no meaning change.** INV-063 has since been superseded by INV-119 and INV-064 by INV-069; the list above records what the 2026-08-15 search found.)
+
+  *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
+  applies the note, not the day of this run.)* *(written as NNN deliberately: no new id is
+  drafted, because this amends INV-251 in place and a literal new id would cite an invariant
+  that does not exist and turn `citations.py verify` red. If the maintainer prefers a superseding
+  invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
+  rather than trusting a number written here.)*
+- **Establishes no new invariant for the citation swaps.** Each applies an invariant already
+  registered (INV-313, INV-225, INV-163, INV-265) at a line that named the wrong one.
+- **Tests:**
+  - The three pinning tests assert the new ids (above).
+  - **New guard, `tests/test_the_227_mis_citations_do_not_return.py`.** A site-anchored table of
+    the seven re-cited rules: each finds its rule by a phrase unique to it, with the citation
+    slot captured beside it. A row fails when the anchor does not match exactly once (INV-265:
+    a reworded rule is a failure, never a pass), when the slot names the id #227 replaced, or
+    when it names anything but the governing id. It also pins the two correct citations of the
+    same ids in the same files (INV-311 "The prose stays the source of truth", INV-115 "Dump ONE
+    `how_entity` response"), so a sweep replacing every INV-311 or INV-115 fails too. It does no
+    repository-wide phrase matching. `MisCitationNegativeControls` runs in the suite: each
+    recited row reverted to its old id, each kept row swept to another id, and an anchor removed.
+  - **Negative controls on the real files**, each edit restored afterwards: with the base
+    commit's `plugins/` text restored, the updated phaseB and phaseD tests and the new guard fail
+    (`FAILED (failures=3)`). Single on-disk reversions each fail the guard naming the site: a
+    manifest INV-313 → INV-311, the kept INV-311 → INV-313, phaseB INV-225 → INV-012, phaseD
+    including-zero INV-265 → INV-115, and the kept dump-one INV-115 → INV-163. Changing an
+    off-table citation in the same section (the wrong-name reader's INV-115) leaves the guard
+    `OK`: no false positive outside its rows.
+- **Verified:** the full suite in the CI mirror, both legs, empty `HOME` outside `/tmp`;
+  `invariant_manifest.py --check` passes with `invariant-manifest.json` unchanged;
+  `pending_invariants.py list` shows one `AMENDS INV-251` block, this entry's.
+  `citations.py verify` was run after this entry was written.
+- **Commit:** `a8d0597`
+
 ## download-resource-guidance-matches-the-chunked-inline-reply
 
 - **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #225)

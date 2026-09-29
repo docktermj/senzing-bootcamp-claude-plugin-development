@@ -301,7 +301,7 @@ class EveryMarkerFormIsAccountedFor(unittest.TestCase):
 
 
 class ThePartialPointerIsPublished(unittest.TestCase):
-    """The relation reaches the artifact downstream ports actually parse (INV-311)."""
+    """The relation reaches the artifact downstream ports actually parse (INV-313)."""
 
     def published(self):
         import json
