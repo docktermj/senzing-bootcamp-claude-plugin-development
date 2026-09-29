@@ -43,10 +43,17 @@ repo carries the real `propagate.sh`, so the forward rewrite and the `docs/` exc
 are the shipped ones, not a copy. Its negative controls point the comparison back at dev's tree
 and show the tests fail.
 
+⚠️ **The command and the skill described the retired copy for a second time until #224.** #54
+changed what the command does and left "add/update", "run the copy" and "reconcile every test" in
+the prose around it. `NoCopyWordingReturns` fails if any of those phrases comes back.
+`TheBuildArtifactsAreNotDifferences` runs the script against a public tree carrying
+`__pycache__/`, `*.pyc` and `.pytest_cache/`, which the baseline never holds because
+`propagate.sh` excludes them.
+
 Stdlib only; every file is read as text (INV-108), and the fixtures use `subprocess` and
 `tempfile`.
 
-Source issues: #54, #191, #202.
+Source issues: #54, #191, #202, #224.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -60,6 +67,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL = REPO_ROOT / ".claude" / "skills" / "retrofit-from-public" / "SKILL.md"
+COMMAND = REPO_ROOT / ".claude" / "commands" / "retrofit-from-public.md"
 SCRIPT = REPO_ROOT / ".claude" / "skills" / "retrofit-from-public" / "retrofit.sh"
 PROPAGATE_REL = ".claude/skills/propagate-to-public/propagate.sh"
 PROPAGATE = REPO_ROOT / PROPAGATE_REL
@@ -168,8 +176,10 @@ class TheReasonForNotCopyingSurvives(unittest.TestCase):
 PROPAGATED = ("plugins", ".claude-plugin", "docs", "README.md")
 #: The listing line and the status capture the fix added. Each is a guard the negative
 #: controls below remove, so each must appear exactly once for the mutation to be meaningful.
-GUARDED_LISTING = """diff -rq "$src/$rel" "$base/$rel" 2>&1 | sed 's/^/      /' | head -40 || true"""
-GUARDED_STATUS = """diff -rq "$src/$rel" "$base/$rel" >/dev/null 2>&1 || status=$?"""
+#: Both carry the build-artifact exclusions (#224); `IGNORED` names them once for both.
+IGNORED = "-x __pycache__ -x '*.pyc' -x .pytest_cache "
+GUARDED_LISTING = """diff -rq %s"$src/$rel" "$base/$rel" 2>&1 | sed 's/^/      /' | head -40 || true""" % IGNORED
+GUARDED_STATUS = """diff -rq %s"$src/$rel" "$base/$rel" >/dev/null 2>&1 || status=$?""" % IGNORED
 #: The escape the old summary printed literally, built from parts so no tool turns it into the
 #: character it names on the way into this file.
 LITERAL_ESCAPE = chr(92) + "u26d4"
@@ -665,6 +675,121 @@ class TheReportIsTakenAgainstTheLastPropagation(unittest.TestCase):
         self.assertIn("plugins/senzing-bootcamp/new.md", _missing_section(fx),
                       "pointed at dev, the deletion section did not list the dev addition" +
                       self._report(fx))
+
+
+# --- #224: the prose describes the report, and build artifacts are not differences ------------- #
+
+#: Wording from the copy #54 retired. Each describes work this command no longer does.
+STALE_PHRASES = ("add/update", "Run the copy", "reconcile every test", "Step 5",
+                 "back into this development repo")
+
+
+def _stale_hits(text):
+    """The retired phrases `text` carries, whitespace-flattened so a line wrap cannot hide one."""
+    body = flat(text)
+    return [phrase for phrase in STALE_PHRASES if flat(phrase) in body]
+
+
+class NoCopyWordingReturns(unittest.TestCase):
+    """#224: the command and the skill describe the report, not the copy #54 retired."""
+
+    def _files(self):
+        return (("the command", COMMAND), ("the skill", SKILL))
+
+    def test_neither_file_describes_the_copy(self):
+        for name, path in self._files():
+            with self.subTest(file=name):
+                self.assertEqual(
+                    [], _stale_hits(path.read_text(encoding="utf-8")),
+                    "%s describes the copy #54 retired. The command compares, reports and files "
+                    "issues; the prose around it said otherwise until #224" % name)
+
+    def test_negative_control_a_planted_phrase_is_caught(self):
+        """INV-282: each phrase planted into the real text, across a line wrap too, is found."""
+        for name, path in self._files():
+            clean = path.read_text(encoding="utf-8")
+            for phrase in STALE_PHRASES:
+                for planted in (phrase, phrase.replace(" ", "\n  ", 1)):
+                    with self.subTest(file=name, planted=planted):
+                        self.assertIn(phrase, _stale_hits(clean + "\n" + planted + "\n"))
+
+
+#: `propagate.sh`'s plugin-payload exclusions: the array its `rsync` expands.
+PROPAGATE_EXCLUDES = re.compile(r"^excludes=\((?P<body>[^)\n]*)\)", re.M)
+
+
+def _propagate_excludes():
+    m = PROPAGATE_EXCLUDES.search(_propagate_text())
+    return {p.rstrip("/") for p in re.findall(r"--exclude='([^']+)'", m.group("body"))} if m else set()
+
+
+def _retrofit_ignores(line):
+    return {x.strip("'") for x in re.findall(r"-x ('[^']+'|\S+)", line)}
+
+
+#: Build artifacts in public, one per exclusion. The baseline never holds them.
+ARTIFACTS = {
+    "plugins/senzing-bootcamp/scripts/__pycache__/x.pyc": "bytecode\n",
+    "plugins/senzing-bootcamp/scripts/y.pyc": "bytecode\n",
+    "plugins/senzing-bootcamp/.pytest_cache/v/cache/lastfailed": "{}\n",
+}
+
+
+@unittest.skipUnless(HAVE_TOOLS, "bash, git, diff, tar, rsync and python3 are needed")
+class TheBuildArtifactsAreNotDifferences(unittest.TestCase):
+    """#224: a public checkout where anything has run still reports `plugins` `same`."""
+
+    def _tmpdir(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        return tmp.name
+
+    def _run(self, public_extra, script=None):
+        """Dev and public share `scripts/`, so an artifact nested in it is the only difference."""
+        dev, public = _identical_pair()
+        for tree in (dev, public):
+            tree["plugins/senzing-bootcamp/scripts/run.py"] = "print('run')\n"
+        public.update(public_extra)
+        return Fixture(self._tmpdir(), dev, public, script=script).run()
+
+    def test_retrofit_ignores_what_propagate_excludes(self):
+        """The baseline lacks exactly what propagate.sh excludes, so the comparison must too."""
+        expected = _propagate_excludes()
+        self.assertTrue(expected, "propagate.sh's `excludes=(...)` array did not parse")
+        for guard in (GUARDED_STATUS, GUARDED_LISTING):
+            with self.subTest(line=guard):
+                self.assertEqual(_script_text().count(guard), 1,
+                                 "retrofit.sh no longer carries %r" % guard)
+                self.assertEqual(_retrofit_ignores(guard), expected)
+
+    def test_artifacts_in_public_leave_plugins_same(self):
+        fx = self._run(ARTIFACTS)
+        self.assertEqual(fx.returncode, 0, fx.stdout + fx.stderr)
+        self.assertIn("  same                    plugins", fx.stdout, fx.stdout)
+        self.assertIn("0 propagated path(s) differ.", fx.stdout)
+
+    def test_the_listing_of_a_real_edit_names_no_artifact(self):
+        edit = {"plugins/senzing-bootcamp/a.md": "edited in public\n"}
+        fx = self._run(dict(ARTIFACTS, **edit))
+        listing = _listing_after(fx, "plugins")
+        self.assertEqual(len(listing), 1, "plugins/ must list only the public edit:\n" + fx.stdout)
+        self.assertIn("plugins/senzing-bootcamp/a.md", listing[0])
+
+    def test_negative_control_each_artifact_differs_without_its_exclusion(self):
+        for flag in sorted(_retrofit_ignores(GUARDED_STATUS)):
+            quoted = "'%s'" % flag if "*" in flag else flag
+            with self.subTest(dropped=flag):
+                fx = self._run(ARTIFACTS, script=_script_with("-x %s " % quoted, "", 2))
+                self.assertIn("  DIFFERS                 plugins", fx.stdout,
+                              "without -x %s the artifacts still read same; the fixture no longer "
+                              "exercises that exclusion:\n%s" % (flag, fx.stdout))
+
+    def test_negative_control_an_unexcluded_listing_prints_the_artifacts(self):
+        """The status line alone is not enough: the listing would still print the artifacts."""
+        edit = {"plugins/senzing-bootcamp/a.md": "edited in public\n"}
+        fx = self._run(dict(ARTIFACTS, **edit),
+                       script=_script_with(GUARDED_LISTING, GUARDED_LISTING.replace(IGNORED, ""), 1))
+        self.assertGreater(len(_listing_after(fx, "plugins")), 1, fx.stdout)
 
 
 if __name__ == "__main__":

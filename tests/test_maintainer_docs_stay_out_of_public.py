@@ -26,7 +26,13 @@ parsed patterns through `rsync` over a temporary tree and checks what lands.
 declared dependency of `propagate.sh`, which exits if it is missing, so its absence here is a
 property of the test machine and not of the mirror. The parse half still runs.
 
-Source issue: #111.
+⚠️ **The skill's two exclusion lists must name what the script excludes (#224).**
+`propagate-to-public/SKILL.md` lists the excluded `docs/` files twice, and both named
+`development.md` alone for as long as the script also excluded `FAMILY_WORKFLOW.md`.
+`TheSkillNamesEveryExclusion` derives the expected names from the parsed `rsync` line, so a
+third maintainer page added to the script fails here until the skill names it.
+
+Source issues: #111, #224.
 
 Stdlib only; no network, no second checkout.
 
@@ -41,6 +47,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / ".claude" / "skills" / "propagate-to-public" / "propagate.sh"
+SKILL = REPO_ROOT / ".claude" / "skills" / "propagate-to-public" / "SKILL.md"
 DOCS = REPO_ROOT / "docs"
 
 #: The maintainer pages, and why each is withheld. The set is the subject of this module, so it
@@ -136,6 +143,53 @@ class TheExclusionsActuallyExclude(unittest.TestCase):
                 (dest / "nested" / "development.md").exists(),
                 "a nested development.md was excluded too, so the pattern is not anchored to "
                 "the transfer root -- that is a different and wider rule than the one intended")
+
+
+#: The skill's two exclusion lists: the `docs/` manifest entry's "except" clause, and the
+#: **Excluded** section up to the next heading.
+SKILL_LISTS = {
+    "the docs/ manifest entry": re.compile(r"mirrored wholesale \*\*except (?P<list>.*?)\*\*", re.S),
+    "the Excluded section": re.compile(r"^\*\*Excluded\*\*(?P<list>.*?)^## ", re.M | re.S),
+}
+
+
+def skill_lists(text=None):
+    text = SKILL.read_text(encoding="utf-8") if text is None else text
+    return {name: (m.group("list") if m else None)
+            for name, rx in SKILL_LISTS.items() for m in [rx.search(text)]}
+
+
+def unnamed(listed):
+    """The `docs/` files propagate.sh excludes that `listed` does not name."""
+    return sorted("docs" + p for p in parsed_excludes() if "docs" + p not in listed)
+
+
+class TheSkillNamesEveryExclusion(unittest.TestCase):
+    """#224 -- each exclusion list in the skill names every docs/ file the script excludes."""
+
+    def test_both_lists_parse(self):
+        for name, listed in skill_lists().items():
+            with self.subTest(list=name):
+                self.assertIsNotNone(listed, "%s was not found in %s; the check below would be "
+                                             "vacuous" % (name, SKILL))
+
+    def test_each_list_names_every_excluded_page(self):
+        self.assertTrue(parsed_excludes(), "no --exclude patterns parsed; nothing to compare")
+        for name, listed in skill_lists().items():
+            with self.subTest(list=name):
+                self.assertEqual(
+                    [], unnamed(listed or ""),
+                    "%s in %s does not name every docs/ file propagate.sh excludes. The skill "
+                    "is the manifest a maintainer reads; a page the script withholds and the "
+                    "skill omits reads as published" % (name, SKILL))
+
+    def test_negative_control_removing_family_workflow_is_caught(self):
+        for name, listed in skill_lists().items():
+            with self.subTest(list=name):
+                self.assertIn("docs/FAMILY_WORKFLOW.md", listed or "",
+                              "the control has nothing to remove from %s" % name)
+                self.assertEqual(["docs/FAMILY_WORKFLOW.md"],
+                                 unnamed(listed.replace("docs/FAMILY_WORKFLOW.md", "")))
 
 
 if __name__ == "__main__":

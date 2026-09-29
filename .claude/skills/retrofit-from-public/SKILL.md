@@ -1,15 +1,15 @@
 ---
 name: retrofit-from-public
-description: 'Retrofit changes made in the public access repo (Senzing/senzing-bootcamp-claude-plugin) back into this development repo. Use when the maintainer wants to bring public-repo edits (PR fixes, typo/spelling corrections, direct changes) back into development. The inverse direction of propagate-to-public: it compares the two repos, reports what diverged, and files GitHub issues describing it -- it writes nothing into this repo, and the inverse slug rewrite is applied by whoever implements a filed issue. Maintainer tool — not part of the bootcamper experience.'
+description: 'Retrofit changes made in the public access repo (Senzing/senzing-bootcamp-claude-plugin) by reporting them: it compares public against the last propagation and files GitHub issues in this development repo describing what diverged. Use when the maintainer wants to bring public-repo edits (PR fixes, typo/spelling corrections, direct changes) to development as issues. The inverse direction of propagate-to-public: it writes nothing into this repo, and the inverse slug rewrite is applied by whoever implements a filed issue. Maintainer tool — not part of the bootcamper experience.'
 ---
 
 # Retrofit ← Public access repo
 
 This is a **maintainer** tool for developing the Senzing Bootcamp Claude Plugin
-(SBCP). It brings changes that were made in the **public access repo**
+(SBCP). It reports changes that were made in the **public access repo**
 (`Senzing/senzing-bootcamp-claude-plugin`, cloned locally at
-`~/senzing.git/senzing-bootcamp-claude-plugin`) back into this **development
-repo** (`docktermj/senzing-bootcamp-claude-plugin-development`).
+`~/senzing.git/senzing-bootcamp-claude-plugin`) and files issues describing them in
+this **development repo** (`docktermj/senzing-bootcamp-claude-plugin-development`).
 
 It is the counterpart to `propagate-to-public`. Propagate is authoritative
 (dev → public). Retrofit is the *return path* for edits that happen in public —
@@ -20,7 +20,7 @@ The work is done by [`retrofit.sh`](retrofit.sh) in this skill's directory.
 ## Retrofit is NOT a mirror image of propagate — three asymmetries
 
 1. **The transform is inverted, narrowly.** Propagate rewrites this repo's slug
-   to the public one; retrofit undoes it, or the dev repo's identity would be
+   to the public one; whatever comes back must undo it, or the dev repo's identity would be
    poisoned with Senzing URLs. Both halves are restored — the `docktermj` owner
    *and* the `-development` name suffix the public repo does not carry:
    - `Senzing/senzing-bootcamp-claude-plugin` → `docktermj/senzing-bootcamp-claude-plugin-development`
@@ -39,27 +39,27 @@ The work is done by [`retrofit.sh`](retrofit.sh) in this skill's directory.
 
 2. **It never deletes.** Propagate can mirror-with-delete because dev is the
    source of truth. Retrofit can't: a new dev file under `plugins/` not yet
-   propagated would be wrongly deleted. So retrofit is **add/update only** and
-   *reports* files the last propagation published that are absent from public, for
-   you to remove by hand — it never deletes them for you.
+   propagated would be wrongly deleted. So retrofit writes nothing and *reports*
+   files the last propagation published that are absent from public; a filed issue
+   says what to do about each — it never deletes them for you.
 
 3. **Governance is one-directional.** The public repo owns a governance layer
    (`.github/`, `LICENSE`, `.vscode/cspell.json`, `.gitignore`,
    `.claude/settings.json`) that the dev repo has never had. Retrofit **does not**
    pull it in — dev keeps its own setup.
 
-## What gets retrofit (the manifest)
+## What gets compared (the manifest)
 
-**Retrofit** (public → dev, add/update, reverse-transformed):
+**Compared** (public against the last propagation's baseline, read-only):
 
-- `plugins/senzing-bootcamp/**` — the whole plugin payload, minus `__pycache__/`
-  and `*.pyc`.
+- `plugins/senzing-bootcamp/**` — the whole plugin payload, minus `__pycache__/`,
+  `*.pyc` and `.pytest_cache/`.
 - `.claude-plugin/marketplace.json`
 - `README.md`
 - `docs/`
 
-**Never touched in dev** (dev-only — preserved because they are outside the
-retrofit paths and nothing is ever deleted):
+**Never touched in dev** (dev-only — outside the compared paths, and the script
+writes nothing anywhere in dev):
 
 - `.claude/**` — dev commands, memory, skills (**including this skill and
   `propagate-to-public`**) and `settings.local.json`.
@@ -167,14 +167,11 @@ anyway.
 
 ## Guardrails
 
-- **Apply the inverse transform, scoped.** Only the repo slug and the marketplace
-  owner name. Never touch `plugin.json`'s `author`, product mentions of "Senzing",
-  or `LICENSE`.
+- **Each filed issue states the inverse transform it owes, scoped** to the repo slug
+  and `marketplace.json`'s owner name — never `plugin.json`'s `author`, product
+  mentions of "Senzing", or `LICENSE`.
 - **Never delete, and never add.** Report what differs and let the maintainer decide; the
   script has written nothing since #54.
-- **Never report a retrofit as done on an unrun suite.** `tests/` cannot come back
-  from public, so the copy routinely moves prose out from under the assertions that
-  quote it. Step 5 is the only thing that catches it.
 - **Never pull governance** into dev.
 - **Don't guess the source.** If the public repo isn't at the default path and
   none was given, ask rather than retrofitting from somewhere uncertain.

@@ -154,7 +154,7 @@ repository's own maintainer pages name commands.
 
 ⛔ **(INV-316) A command named on a maintainer page either ships here or is marked as not shipping.**
 A command that ships has a file in `.claude/commands/`. One that does not carries its reason at
-the point of use: *(children only)* for `/parity-check` *(children only)* and
+the point of use: `/parity-check` *(children only)* and
 `/escalate-to-parent` *(children only)*, or a statement of retirement, as
 `/implement-spec` *(retired)* is below. ⚠️ **Three dispositions, not two** — the page legitimately discusses
 a command it used to ship, and forcing that into *ships* or *child's* is how a guard starts
@@ -183,7 +183,9 @@ write there has now been reworked**, and none is blocked: `/feedback-to-issues` 
 issues (#49), `/implement-spec` was retired (#50, #60), `/unattended-issue-loop` is renamed and
 label-gated and writes only its issues' `IMPLEMENTED.md` entries (#51, #69, #215),
 `/production-readiness-audit` files issues when attended and records findings in the ledger when
-not (#69), and `/delegate-to-mcp-server` files issues and writes nothing under `specs/` (#114).
+not (#69), `/dry-run` drafts each finding into its run's `IMPLEMENTED.md` entry and files issues
+from there (#153), and `/delegate-to-mcp-server` files issues and writes nothing under `specs/`
+(#114).
 ⚠️ **Its ledger, `specs/mcp-coverage.jsonl`, is not an exception to the freeze** — the guard
 globs `*.md`, so a `.jsonl` file is outside it by construction rather than by exemption.
 `IMPLEMENTED.md`, `DECLINED.md`, `INVARIANTS.md` and `README.md` are **not** frozen and are
@@ -197,7 +199,7 @@ still written to.
 
 1. `/implement-github-issue` - Take the GitHub issue you name to pull-request-open on its own branch; FAMILY_WORKFLOW R8 says who chooses it.
 1. `/review-invariants` - Decide the deferred invariants awaiting sign-off.
-1. `/delegate-to-mcp-server` - Determine if there are instructions that are in the MCP server
+1. `/delegate-to-mcp-server` - Find Senzing facts the plugin still holds that the MCP server now serves, and file issues to delegate them.
 1. `/compact-dev-environment` - Try to compact the plugin.
 1. `/production-readiness-audit` - Do a thorough static review.
 1. `/dry-run` - Do a thorough runtime review.
@@ -207,6 +209,6 @@ still written to.
 ### Publish
 
 1. `/auto-test` - Probe the live MCP server for drift; optionally walk the bootcamp.
-1. `/retrofit-from-public` - Bring public-repo edits back into development.
+1. `/retrofit-from-public` - Report what changed in the public repo and file issues describing it; writes nothing here.
 1. `/release` - Bump the version, write the CHANGELOG entry and create the git tag as one unit.
 1. `/propagate-to-public` - Mirror the shippable plugin into the public access repo.
