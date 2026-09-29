@@ -185,12 +185,13 @@ Record the validation findings:
   resolution
 - This becomes the baseline for comparison
 
-The **results dashboard** (entity counts, match statistics, and sample resolved entities) is offered
-in the **Query, Visualize and Discover** module (Module 7, Step 3c — the consolidated visualization
-gate), where all results visualization lives — Module 6 does not offer it, to avoid a duplicate
-offer. Module 6 offers **no** visualization at all: the cross-source relationship view (step 23) is
-also delivered in Module 7's single interactive app (its Entity Graph / Cross-Source / Relationship
-Network tabs, INV-104), not as a separate Module 6 page.
+The entity counts, match statistics and sample resolved entities are the **Merge Statistics** tab of
+the app offered in the **Query, Visualize and Discover** module (Module 7, Step 3c — the consolidated
+visualization gate), where all results visualization lives — Module 6 does not offer it, to avoid a
+duplicate offer. Module 6 offers **no** visualization at all: the cross-source relationship view
+(step 23) is also delivered in Module 7's single interactive app (INV-104), as its **Entity Graph**
+tab (including its "Show only entities with relationships" mode) and its **Cross-Source** tab
+(INV-155), not as a separate Module 6 page.
 
 **Checkpoint:** write step 28.
 

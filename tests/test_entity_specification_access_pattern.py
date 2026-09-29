@@ -1,4 +1,4 @@
-"""The 73 KB entity specification is consulted by targeted lookup, never read end to end.
+"""The entity specification is consulted by targeted lookup, never read end to end.
 
 Module 5 Phase 1 Step 3 retrieves the Senzing Generic Entity Specification and makes it the
 reference for the phase's comparison steps. `mapping_workflow`, which owns the mapping phase
@@ -33,12 +33,12 @@ MODULE = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
           / "module-05-data-quality-mapping")
 PHASE1 = MODULE / "phase1-quality-assessment.md"
 
-#: The scoping this spec falsified. "every subsequent step" made the 73 KB file the standing
+#: The scoping this spec falsified. "every subsequent step" made the large file the standing
 #: reference for the mapping phase too, where the workflow ships a distilled one instead.
 OVERBROAD_SCOPE = re.compile(r"(?i)in this step and every subsequent step")
 
 #: A reading notion that would mean the whole file.
-IN_FULL = r"(?:in full|end[\s-]?to[\s-]?end|front to back|full 73\s*KB|entire specification)"
+IN_FULL = r"(?:in full|end[\s-]?to[\s-]?end|front to back|full \d+\s*KB|entire specification)"
 #: Words that make such a sentence a prohibition rather than an instruction.
 NEGATED = re.compile(r"(?i)\b(?:do not|don't|never|not|rather than|no need|instead of)\b")
 
@@ -95,8 +95,19 @@ class Step3StatesTheAccessPattern(unittest.TestCase):
     def test_it_prescribes_targeted_lookup(self):
         self.assertRegex(flat(PHASE1), r"(?i)targeted lookup, never end to end")
 
-    def test_it_gives_the_size(self):
-        self.assertRegex(flat(PHASE1), r"(?i)the file is \*\*73 KB\*\*")
+    def test_it_points_to_the_size_rather_than_pinning_one(self):
+        """Rescoped by #225 from `test_it_gives_the_size`.
+
+        That test asserted a KB figure for the file, a pinned MCP-content claim INV-219 forbids a
+        test to hold: by server 1.37.14 the file had grown past it, and the test kept the stale
+        figure in shipped prose. The size still earns its place as the reason for a targeted
+        lookup, so this asserts the step says the file is large and names where its size is
+        read, the response's `size_bytes` or `total_chars`, and that no KB figure is written.
+        """
+        text = flat(PHASE1)
+        self.assertRegex(
+            text, r"(?i)the file is large: its size is the response's `size_bytes` \(or `total_chars`")
+        self.assertNotRegex(text, r"(?i)\b\d+\s*KB\b")
 
     def test_it_gives_the_reason_from_the_tool_that_owns_mapping(self):
         text = flat(PHASE1)

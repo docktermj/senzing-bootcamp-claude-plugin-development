@@ -303,12 +303,17 @@ steering files.)
     Never reconstruct the file's content from memory or training data (INV-080). The step that
     needed the example then continues on its own fallback: this adds no question and blocks
     nothing beyond what that step already does.
-  - `download_resource` — `inline` **is** declared, alongside `filename`, `filenames` and `version`,
-    and each resource's own `on_failure` names it as the remedy when the URL fetch fails. It is
-    therefore permitted here — after the fetch fails, not instead of it — and it costs context,
-    because the whole resource then arrives inside the response.
+  - `download_resource` — `inline` **is** declared, alongside `filename`, `filenames`, `offset` and
+    `version`, and each resource's own `on_failure` names it as the remedy when the URL fetch fails.
+    It is therefore permitted here — after the fetch fails, not instead of it — and it costs context.
+    **An `inline=true` reply carries the resource in bounded chunks, not in one response** (INV-234):
+    a reply that stops short says `truncated: true` and carries `next_offset` and `total_chars`, the
+    next call passes `offset` set to that `next_offset`, and the last chunk says `truncated: false`.
+    A batch (`filenames`) leaves out a file too large for one chunk and lists it under `oversize`;
+    request that file again on its own, with `filename`. Module 5 Phase 1 Step 3 is the one step
+    that puts a resource back together from chunks, and it states the procedure in full.
 
-  <!-- MCP-NEGATIVE: the declared schemas of find_examples (query, repo, file_path, list_files, language, max_lines) and generate_scaffold (language, version, workflow) — neither declares an inline parameter, while download_resource's schema does declare it — owner: each tool's declared schema as the server advertises it in the tool manifest is the authority on what that tool accepts, and all three were read there directly rather than inferred from response prose or from a sibling tool (routing negative — the schema is the route, the response's own access_steps prose is not) — server 1.36.0, 2026-09-02 -->
+  <!-- MCP-NEGATIVE: the declared schemas of find_examples (query, repo, file_path, list_files, language, max_lines) and generate_scaffold (language, version, workflow) — neither declares an inline parameter, while download_resource's schema (filename, filenames, inline, offset, version) does declare it — owner: each tool's declared schema as the server advertises it in the tool manifest is the authority on what that tool accepts, and all three were read there directly rather than inferred from response prose or from a sibling tool (routing negative — the schema is the route, the response's own access_steps prose is not) — server 1.37.15, 2026-09-29 -->
 
   ⛔ **Read this as a consequence of the schema, never as a ban on the word `inline`.** Stated as
   "never pass `inline`" the rule generalizes wrongly, and a guide that internalized it that way will

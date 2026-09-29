@@ -369,7 +369,7 @@
 
 ### Actions Taken
 
-- Downloaded the Senzing Entity Specification to `docs/reference/senzing_entity_specification.md` (73 KB) and used it as the authoritative reference throughout.
+- Downloaded the Senzing Entity Specification to `docs/reference/senzing_entity_specification.md` (its saved size matched the response's `size_bytes`) and used it as the authoritative reference throughout.
 - Profiled both sources' field structures, finding Enformion carries ~1,227 dynamic numeric root keys (the `REL_POINTER_KEY` repeated as a field name) atop ~23 stable fields.
 - Registered `ENFORMION` and `EQUIFAX` data source codes (required before preview, and needed by loading anyway).
 - Ran a readiness check on 200 records per source: structural check passed 200/200 for both, and `get_record_preview` confirmed Senzing extracts the intended features from every record.

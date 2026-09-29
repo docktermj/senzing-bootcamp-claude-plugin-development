@@ -1,9 +1,15 @@
 """`download_resource` returns a URL listing, and `inline` is permitted for it alone.
 
+MCP-NEGATIVE-SCAN: ignore-file — this file quotes the `MCP-NEGATIVE:` token as a LOCATOR, to
+find the declared-schemas marker in `ground-rules.md` and assert its parameter list and stamp.
+Those string literals are matchers, not dated claims. The absence claims below (neither
+sibling declares `inline`) are the ones that marker already carries, and it is the marker, not
+this test, that sits on the re-ask worklist.
+
 Three MCP tools answer a content request with metadata plus a URL rather than the bytes:
 `find_examples` file retrieval, `generate_scaffold`, and `download_resource`. Verified on
 server 1.32.9, 2026-08-14, `download_resource(filename='senzing_entity_specification.md')`
-returns `mode: "url"` with `size_bytes: 73051` and no content at all.
+returns `mode: "url"` with a `size_bytes` figure and no content at all.
 
 What separates the three is the escape hatch, and the rule that decides it is INV-136 —
 only parameters the live schema declares may be passed:
@@ -11,7 +17,9 @@ only parameters the live schema declares may be passed:
 * `generate_scaffold` declares `language`, `version`, `workflow`;
 * `find_examples` declares `query`, `repo`, `file_path`, `list_files`, `language`,
   `max_lines`;
-* `download_resource` declares `filename`, `filenames`, `inline`, `version`.
+* `download_resource` declares `inline` among its parameters. The full list moves (it gained
+  `offset` by server 1.37.14), so it is read from the sites and the `MCP-NEGATIVE` comment's
+  server version and date, never pinned here.
 
 So the two siblings inherit a prohibition and `download_resource` inherits a permission.
 Stated per-tool as "never pass `inline`" the rule generalizes wrongly, and a guide that
@@ -21,6 +29,17 @@ stranding a firewalled bootcamper on the step whose `on_failure` text exists for
 These tests pin three things: that every `download_resource` call site accounts for the
 listing shape, that the permission is scoped to `download_resource` alone, and that the
 two sibling prohibitions are untouched.
+
+**The inline reply is chunked (#225).** Re-verified on server 1.37.15, 2026-09-29: an
+`inline=true` reply carries a large resource in bounded chunks, each with `truncated`,
+`next_offset` and `total_chars`, and a batch lists a file too large for one chunk under
+`oversize`. `ChunkedInlineReply` pins the plugin's side of that (INV-219: structure, never the
+server's wording): both sites that describe the inline route list `offset` among the declared
+parameters and name the three reply fields, or cite the central statement; neither says the
+whole resource arrives in one response; the `MCP-NEGATIVE` comment lists `offset` and carries a
+server version and date; and Module 5 Step 3, the one step that assembles a file, states the
+procedure once, in order, while `ground-rules.md` points at it rather than restating it
+(INV-300).
 
 Enforces **INV-234** — the listing shape must be stated at every call site, or cite the one
 central statement of it.
@@ -104,8 +123,9 @@ class EveryCallSiteAccountsForTheListing(unittest.TestCase):
     def test_the_known_call_sites_are_all_found(self):
         # Pinned so the sweep cannot pass vacuously: if a call site moves or the tool is
         # renamed, this fails rather than the sweep quietly covering nothing. Re-derive by
-        # running the extractor, never by editing the number to match.
-        self.assertEqual(3, len(call_sites()), [s[0] for s in call_sites()])
+        # running the extractor, never by editing the number to match. 4 since #225: the
+        # chunk-assembly procedure in Module 5 Step 3 calls it with `inline=true`.
+        self.assertEqual(4, len(call_sites()), [s[0] for s in call_sites()])
 
     def test_each_call_site_describes_the_listing_or_cites_the_central_statement(self):
         for rel, window in call_sites():
@@ -130,15 +150,25 @@ class Phase1DescribesTheTwoStepRetrieval(unittest.TestCase):
         self.assertIn("size_bytes", text)
 
     def test_it_requires_the_saved_size_to_be_checked(self):
-        # The check, not merely the number: a step that prints 73,051 without comparing
+        # The check, not merely the number: a step that prints a size without comparing
         # it has the fact and not the gate.
         self.assertRegex(
             flat(PHASE1),
             r"(?i)check the saved file's size against the response's `size_bytes`",
         )
 
-    def test_it_states_the_size_that_was_measured(self):
-        self.assertRegex(flat(PHASE1), r"73,051 bytes")
+    def test_it_compares_with_this_response_and_pins_no_size(self):
+        """Rescoped by #225 from `test_it_states_the_size_that_was_measured`.
+
+        That test asserted the byte count measured on 2026-08-14. By server 1.37.14 the file
+        had grown past it, so the test was guarding a stale MCP-content figure, which
+        INV-219 forbids a test to pin and INV-080 forbids shipped prose to carry. What it was
+        really for is that the check compares against a real figure; that figure is the one in
+        the response, so this asserts the step says so and writes no byte count of its own.
+        """
+        text = flat(PHASE1)
+        self.assertRegex(text, r"(?i)figure in \*\*this\*\* response")
+        self.assertNotRegex(text, r"\b\d{1,3}(?:,\d{3})+ bytes\b|\b\d+\s*KB\b")
 
     def test_it_names_inline_true_as_the_fallback_with_its_reason_and_cost(self):
         text = flat(PHASE1)
@@ -211,6 +241,120 @@ class ThePermissionIsScopedToOneTool(unittest.TestCase):
             flat(GROUND_RULES),
             r"(?i)`inline` is still not\s+declared in the live `find_examples` schema",
         )
+
+
+#: A sentence naming `download_resource`'s declared parameters: it says "declared" and lists
+#: `filenames`, which only that tool has.
+DECLARED_LIST = re.compile(r"[^.]*\bdeclared\b[^.]*`filenames`[^.]*\.|[^.]*`filenames`[^.]*\bdeclared\b[^.]*\.")
+#: The three fields of a truncated inline reply.
+REPLY_FIELDS = ("`truncated", "`next_offset`", "`total_chars`")
+#: The claim #225 retired: the whole resource arriving in one response.
+WHOLE_IN_ONE = re.compile(
+    r"(?i)(?:whole|full|entire)\b[^.]{0,40}\b(?:arrives?|comes? back|is returned)\b[^.]{0,20}"
+    r"\b(?:inside|in) (?:the|one|a single) (?:response|reply)")
+#: The central statement, cited by name.
+CITES_INV234 = re.compile(r"INV-234")
+#: Module 5 Step 3's assembly procedure: from its ⛔ heading to the next paragraph that is
+#: not a numbered step.
+PROCEDURE = re.compile(
+    r"⛔ \*\*\(INV-234\) The inline reply carries the file in bounded chunks.*?(?=\n\n(?!\d\. |   ))",
+    re.S)
+
+
+def inline_sites():
+    """The two places that describe the inline route: the central bullet and Module 5."""
+    return {"ground-rules.md": GROUND_RULES, "phase1-quality-assessment.md": PHASE1}
+
+
+def procedure_text():
+    m = PROCEDURE.search(PHASE1.read_text(encoding="utf-8"))
+    return re.sub(r"\s+", " ", m.group(0)) if m else ""
+
+
+class ChunkedInlineReply(unittest.TestCase):
+    """#225 — the inline route as the live schema serves it, and one statement of assembly."""
+
+    def test_each_site_lists_offset_among_the_declared_parameters(self):
+        for name, path in inline_sites().items():
+            with self.subTest(site=name):
+                lists = [m.group(0) for m in DECLARED_LIST.finditer(flat(path))
+                         if "`inline`" in m.group(0)]
+                self.assertTrue(lists, "%s names no declared-parameter list" % name)
+                self.assertTrue(any("`offset`" in l for l in lists),
+                                "%s lists the declared parameters without `offset`" % name)
+
+    def test_each_site_describes_the_chunked_reply(self):
+        for name, path in inline_sites().items():
+            text = flat(path)
+            with self.subTest(site=name):
+                self.assertTrue(
+                    all(f in text for f in REPLY_FIELDS) or (
+                        CITES_INV234.search(text) and CITES_CENTRAL.search(text)),
+                    "%s neither names %s nor cites the central statement" % (name, REPLY_FIELDS))
+                self.assertIn("`offset`", text)
+
+    def test_no_site_says_the_whole_resource_arrives_in_one_response(self):
+        for path in shipped_markdown():
+            with self.subTest(file=str(path.relative_to(REPO_ROOT))):
+                self.assertNotRegex(flat(path), WHOLE_IN_ONE)
+
+    def test_the_central_statement_names_the_batch_oversize_rule(self):
+        text = flat(GROUND_RULES)
+        self.assertIn("`oversize`", text)
+        self.assertRegex(text, r"(?i)on its own, with `filename`")
+
+    def test_the_mcp_negative_comment_lists_offset_and_is_dated(self):
+        comment = re.search(r"<!-- MCP-NEGATIVE: the declared schemas of find_examples.*?-->",
+                            GROUND_RULES.read_text(encoding="utf-8"), re.S)
+        self.assertIsNotNone(comment, "the declared-schemas MCP-NEGATIVE comment is gone")
+        m = re.search(r"download_resource's schema \(([^)]*)\)", comment.group(0))
+        self.assertIsNotNone(m, "the comment must give download_resource's parameters in parentheses")
+        self.assertIn("offset", m.group(1))
+        self.assertIn("inline", m.group(1))
+        self.assertRegex(comment.group(0), r"server \d+\.\d+\.\d+, \d{4}-\d{2}-\d{2} -->$")
+
+    def test_module5_states_the_assembly_procedure_in_order(self):
+        text = procedure_text()
+        self.assertTrue(text, "Module 5 Step 3 has no INV-234 chunk-assembly procedure")
+        steps = [
+            ("the inline call", r"download_resource\(filename=[^)]*inline=true\)"),
+            ("the canonical path", r"docs/reference/senzing_entity_specification\.md"),
+            ("the loop on next_offset", r"`offset` set to its `next_offset`"),
+            ("append, in order", r"(?i)\*\*append\*\*[^.]*in order"),
+            ("the stop condition", r"`truncated: false`"),
+            ("the total_chars check", r"(?i)check the assembled file against `total_chars`"),
+        ]
+        at = -1
+        for label, pattern in steps:
+            with self.subTest(step=label):
+                m = re.compile(pattern).search(text, at + 1)
+                self.assertIsNotNone(m, "the procedure lacks %s after the step before it" % label)
+                at = m.start()
+
+    def test_module5_says_to_ignore_the_suggested_dest(self):
+        text = procedure_text()
+        self.assertRegex(text, r"(?i)ignore the reply's `dest`")
+        self.assertIn("INV-001", text)
+
+    def test_the_url_route_keeps_its_size_bytes_check(self):
+        text = flat(PHASE1)
+        self.assertRegex(text, r"(?i)check the saved file's size against the response's `size_bytes`")
+        self.assertRegex(procedure_text(), r"counterpart of the `size_bytes` check")
+
+    def test_module5_names_search_docs_as_the_cheaper_single_lookup(self):
+        self.assertRegex(flat(PHASE1), r"(?i)single lookup, `search_docs` is cheaper than paging")
+
+    def test_the_procedure_is_stated_once(self):
+        # INV-300: ground-rules states the reply shape and points at Module 5; it must not
+        # grow a second copy of the assembly steps that could drift from the first.
+        central = flat(GROUND_RULES)
+        self.assertRegex(central, r"Module 5 Phase 1 Step 3 is the one step")
+        self.assertNotRegex(central, r"(?i)\bappend\b[^.]{0,80}\bchunk|ignore the reply's `dest`")
+        for path in shipped_markdown():
+            if path == PHASE1:
+                continue
+            with self.subTest(file=str(path.relative_to(REPO_ROOT))):
+                self.assertNotRegex(flat(path), r"(?i)check the assembled file against `total_chars`")
 
 
 if __name__ == "__main__":
