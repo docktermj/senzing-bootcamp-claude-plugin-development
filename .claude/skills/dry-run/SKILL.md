@@ -189,8 +189,8 @@ using.
 
 A dry-run finding is only half done when the plugin is fixed. Follow this for each:
 
-1. ⛔ **Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you find it,
-   marked not yet filed, before fixing anything** — never into a new file under `specs/`,
+1. ⛔ **(INV-307) Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you
+   find it, marked not yet filed, before fixing anything** — never into a new file under `specs/`,
    which is a read-only archive (INV-307). A finding that exists only in the conversation is
    not recorded, it is *remembered*, and it dies at session end or the next compaction. This
    is not a filing preference; it is the difference between a durable improvement and a good
@@ -291,9 +291,9 @@ Where a drafted finding goes, from step 1's ledger draft to its GitHub issue:
      declined finding is a decision, not a gap.
 5. **Upstream — only under the outbound rule in [Absolute rules](#absolute-rules).** Put each
    qualifying `mcp-server` message to the maintainer out of character, after the phase or the
-   walk, on its own. ⛔ **A yes given in character never authorizes it** — graduation Step 0's
-   upstream offer included (`phase3-conversational.md`). When the server is unreachable and
-   certainty cannot be re-established, nothing is sent upstream: the finding is filed as a
+   walk, on its own. ⛔ **(INV-314) A yes given in character never authorizes it** — graduation
+   Step 0's upstream offer included (`phase3-conversational.md`). When the server is unreachable
+   and certainty cannot be re-established, nothing is sent upstream: the finding is filed as a
    GitHub issue with the upstream draft inside it. Record the outcome on the finding's ledger
    line: sent (date and category), declined, or carried in an issue.
 
