@@ -130,7 +130,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     fenced `gh issue comment` and `gh pr create` fail bare and pass with a gate or the
     citation; the citation never vouches for `gh issue create`; each off-list act and each
     stale claim, appended to every unattended surface, fails.
-- **Commit:** uncommitted
+- **Commit:** `622cba7`
 
 ## how-state-audit-reports-an-empty-population-as-nothing-to-check
 
