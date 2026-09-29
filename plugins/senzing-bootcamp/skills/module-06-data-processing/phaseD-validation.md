@@ -501,30 +501,51 @@ what one run returned, not what the flag means.
    about it waits on a Senzing route that documents it.
    <!-- MCP-NEGATIVE: search_docs(query='NEED_REEVALUATION how entity final state') and search_docs(query='reevaluate entity when to call reevaluation needed') — no indexed document defines HOW_RESULTS.FINAL_STATE.NEED_REEVALUATION or says what sets or clears it; the first query reaches the field only inside the how-flags page's example payload, which shows "NEED_REEVALUATION": 0, and the second returns re-evaluation code snippets, flag constants and a config-change FAQ, none naming the field — owner: get_sdk_reference(topic='response_schemas', filter='how_entity_by_entity_id') IS the route that would carry a field description, and it lists NEED_REEVALUATION as an integer with no description; search_docs is the prose owner, and both were asked (absence negative, INV-194) — server 1.37.13, 2026-09-27 -->
 
-**Three outcomes, like the match-key audit — state which one applies:**
+**Four outcomes — the match-key audit's three, plus one for an empty population. State which one
+applies:**
 
 - **Finding** — name each unsettled entity (entity ID and its leading name) and the sign or signs it
   showed, with "checked N of M".
 - **No finding** — every one of the M entities was checked and none showed either sign.
   ⛔ **(INV-115) Never report "no finding" unless N equals M** — "none unsettled among those checked"
   and "none unsettled" read identically, and only the second is a clean result: an entity whose
-  response never arrived is not an entity with nothing to report. With no multi-record
-  entities at all, report "checked 0 of 0" and "no finding": nothing was there to check, which is a
-  different statement from a check that failed.
+  response never arrived is not an entity with nothing to report.
+- **Nothing to check** — M is 0: the export holds no entity with 2 or more records. Report
+  "checked 0 of 0" and **nothing to check**. ⛔ **(INV-265) With M = 0 the outcome is never "no finding"** —
+  the audit's input is empty, and "no finding" is its clean result. A reader that parses
+  `RESOLVED_ENTITY.RECORDS[]` under the wrong name also finds zero multi-record entities (INV-115),
+  so prove the export was read before saying the question does not arise, as the match-key audit
+  does for relationships (its step 3). Report **nothing to check** only when **both** hold:
+  - the export returned **at least one entity**; and
+  - the lengths of `RESOLVED_ENTITY.RECORDS[]`, summed across the whole export, **equal the total
+    records loaded** that step 28 wrote to `docs/results_validation.md`. `RECORDS[]` is the
+    *"individual records that constitute the entity"*
+    (`get_sdk_reference(topic='response_schemas', filter='export_json_entity_report')`), and
+    `reporting_guide(topic='evaluation', language='<chosen_language>')` counts a load's records by
+    summing them across the export (both: server **1.37.15**, 2026-09-29). A sum that differs means
+    the reader and the load disagree, so M cannot be trusted either way.
+
+  If either fails, the outcome is **could not measure**, naming which condition failed: zero
+  entities exported, or the record sum beside the records loaded, with both figures. A load that
+  reports records but exports no entities is a reader or flag problem, not an empty population.
 - **Could not measure** — some or all calls did not complete, or their responses carried no
-  `FINAL_STATE`. Say how many were not checked ("checked N of M"), and still report any finding
-  among the N that were. ⛔ **Never collapse a partial run into "no finding" (INV-115).**
+  `FINAL_STATE`, or M is 0 and a **nothing to check** condition failed. Say how many were not
+  checked ("checked N of M"), and still report any finding among the N that were.
+  ⛔ **Never collapse a partial run into "no finding" (INV-115).**
 
 ⛔ **The outcome never blocks (INV-117, INV-264)** — it is carried into the decision gate below as a
-finding, exactly as the match-key audit's is, and it does not by itself choose the gate's branch.
+finding, exactly as the match-key audit's is, and it does not by itself choose the gate's branch;
+**nothing to check** does not move the gate either.
 
 **Record it in `docs/results_validation.md`**, which step 28 already wrote (steps 26–27 as well,
 on the multi-source path). Append a `## How-state audit` section carrying the outcome, "checked N
 of M", and the count of unsettled entities —
 ⛔ **(INV-115) including zero: write "0 unsettled" rather than omitting the section**, since an
 absent section and a clean result would otherwise read alike — then list each flagged entity with
-its sign or signs. Wherever a flagged entity's record count
-appears elsewhere in that document (the entity statistics, a spot-check table, a business-result
+its sign or signs. That rule is for **no finding**. For **nothing to check**, still write the
+section, carrying the outcome and "checked 0 of 0", but **omit the "0 unsettled" line**: no entity
+was checked, and a zero count there would read as a clean audit (INV-265). Wherever a flagged
+entity's record count appears elsewhere in that document (the entity statistics, a spot-check table, a business-result
 table), mark it **unconfirmed by the engine's construction history** and point to this section:
 the export's count and the engine's history disagree, and the document must not present the count
 as settled (INV-245).
@@ -563,7 +584,7 @@ State which of the audit's three outcomes applies; do **not** collapse the third
   third finding that routes, not a new blocker.
 
 **Present the how-state audit's outcome beside the match-key audit's**, as its own line — finding,
-no finding, or could not measure, with "checked N of M". A finding names the unsettled entities
+no finding, nothing to check, or could not measure, with "checked N of M". A finding names the unsettled entities
 and says their record counts are unconfirmed; it is reported on every branch below and does not
 move the gate to a different branch (INV-117, INV-264), because no documented remedy exists to
 iterate toward.
@@ -599,8 +620,8 @@ it as a produced file in the end-of-module summary's "Files produced" list (INV-
   statistics
 - ✅ At least one data source fully loaded with error rate < 1%
 - ✅ Redo queue drained after loading
-- ✅ How-state audit run on every multi-record entity; unsettled entities named, or zero recorded,
-  in `docs/results_validation.md`
+- ✅ How-state audit run on every multi-record entity; unsettled entities named, zero recorded, or
+  nothing to check stated, in `docs/results_validation.md`
 - ✅ Loading statistics documented in `docs/loading_strategy.md`
 - ✅ Match accuracy reviewed (sample entities checked for false positives/negatives)
 - ✅ Results validation documented in `docs/results_validation.md`
