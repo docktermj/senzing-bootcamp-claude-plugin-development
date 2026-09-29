@@ -159,7 +159,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - Negative controls: the race's script restored each old text, ran its guard and restored the
     file. 16 of 16 were caught, and each guard passed before and after. Re-run on this branch
     over `e3782c5`: 16 of 16 caught again.
-- **Commit:** uncommitted
+- **Commit:** 8216b18
 
 ## phase-c-loads-each-source-from-its-subset-record
 
