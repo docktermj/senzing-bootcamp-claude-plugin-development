@@ -61,12 +61,12 @@ A yes given in character, while answering as the Bootcamper, never authorizes ei
 A dry run must not file junk upstream or transmit a name and email. Verifying a tool's
 schema sends nothing; `download_resource` on anything large stays forbidden.
 
-⛔ **Never fabricate a Bootcamper answer** — if the maintainer is unavailable, phase 3
+⛔ **(INV-007) Never fabricate a Bootcamper answer** — if the maintainer is unavailable, phase 3
 is untested, not approximated. ⛔ **Commit or `cp` aside before mutating the tree**;
 `git restore` cannot tell a fix from an injected defect.
 
-⛔ **Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you find it,
-marked not yet filed, before fixing anything** — never into a new file under `specs/`,
+⛔ **(INV-307) Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you
+find it, marked not yet filed, before fixing anything** — never into a new file under `specs/`,
 which is a read-only archive (INV-307). A finding that exists only in the conversation is
 not recorded. **Search open and closed issues before filing**; a finding already tracked
 points at that issue instead of opening a duplicate. **File at the end of phase 1 or 2,

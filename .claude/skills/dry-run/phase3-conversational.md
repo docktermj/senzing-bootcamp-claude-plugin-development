@@ -260,9 +260,9 @@ Then:
 
 - **Record `submission blocked: dry run — a dry run never sends on an in-character yes; the
   maintainer decides after the walk`** in the entry's `Upstream:` field
-  (`../../plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md` Step 3). ⛔ **Never
-  `offered, declined`** — the maintainer answering in character said *yes*, and writing down a
-  refusal is false about the one thing the field exists to record.
+  (`../../plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md` Step 3).
+  ⛔ **(INV-281) Never `offered, declined`** — the maintainer answering in character said *yes*,
+  and writing down a refusal is false about the one thing the field exists to record.
 - **Draft the exact message into the run's ledger entry** so the send costs one approval later. A
   blocked send with no drafted text is a finding nobody can forward without redoing the work.
 - **After the walk**, an `mcp-server` finding may be offered to the maintainer, out of character,

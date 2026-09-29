@@ -43,6 +43,137 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## maintainer-surface-hard-rules-are-cited-or-deferred
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #228)
+- **Files changed:** `.claude/commands/dry-run.md`, `.claude/skills/dry-run/SKILL.md`,
+  `.claude/skills/dry-run/phase3-conversational.md`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-28, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact), re-confirmed. Every changed line is a citation id, a reflow
+  of the same words, or this ledger entry. No Senzing behavior is stated or changed, and no
+  absence claim is made. Nothing was sent upstream.
+- **Summary:** the 2026-09-28 audit's `conformance.py reverse-check` found 16 hard-rule lines on
+  the maintainer surface that cite no invariant at the line and appear in no deferral. This
+  entry puts each of the 12 non-local lines in a legitimate reverse-contract state. Behavior
+  does not change.
+  - **Cited at the line (5 lines, 4 ids).** Each id goes on the rule's own ⛔ line, inside the
+    bold, in the `(INV-314) Show the maintainer…` form `dry-run.md` already uses:
+    `.claude/commands/dry-run.md` "Never fabricate a Bootcamper answer" → INV-007;
+    `.claude/commands/dry-run.md` and `.claude/skills/dry-run/SKILL.md` "Draft each finding
+    into the run's dated `specs/IMPLEMENTED.md` entry" → INV-307; `dry-run/SKILL.md` "A yes
+    given in character never authorizes it" → INV-314 (its scope note);
+    `dry-run/phase3-conversational.md` "Never `offered, declined`" → INV-281. Three rules were
+    reflowed so the lines stay about 96 characters wide. In `phase3-conversational.md` the ⛔
+    now opens its own line (264, was 263), so the id and the rule share a line. The words are
+    unchanged.
+  - ⚠️ **INV-307 now appears twice in each "Draft each finding" rule, on purpose.** The existing
+    "which is a read-only archive (INV-307)" two lines below stays.
+    `tests/test_dry_run_files_issues.py` pins that clause, with its id, in both surfaces
+    (`SAME_WORDS`, #153's "the same swap, in the same words"). Moving the id off it would have
+    broken that guard for no gain. The id on the ⛔ line is what `own_citations` and a
+    line-level guard read.
+  - **Deferred, three blocks below, one rule each (D1–D3).** Their sites are quoted verbatim
+    and carry no placeholder id. `/review-invariants` cites each site when it mints the id.
+  - ⚠️ **One site the issue lists is dropped: D2's `.claude/skills/unattended-issue-loop/SKILL.md:224`.**
+    #215 (`341c520`) reduced that file to a 28-line pointer stub. The rule it held now lives in
+    the user-level governing copy (`~/.claude/skills/unattended-issue-loop/SKILL.md`), outside
+    this repository, and in `docs/FAMILY_WORKFLOW.md` §2's table row ("it never adds the label
+    itself"), which is not a ⛔ line. No path in this repository resolves to the old site, so
+    listing it would give `pending_invariants.py check` an unresolved quote.
+  - **Left alone:** the four local-instruction lines the issue names (`dry-run.md` "Commit or
+    `cp` aside", `compact-dev-environment/SKILL.md` "Measure the figure at renumber time",
+    `dry-run/SKILL.md` "File at the end of phase 1 or 2", `phase3-conversational.md` "Drafting
+    is mid-walk; filing is not"). #233 demotes them. Also left alone: the lines #227 owns in the
+    same dry-run files. ⚠️ `own_citations` reads one non-blank line either side, so the INV-007
+    on `dry-run.md` line 64 also falls in the window of line 65, "Commit or `cp` aside". That
+    is window arithmetic, not a claim that INV-007 governs it.
+  - `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged. No id is minted.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** D1, findings are
+  recorded durably as they are found. The rules already shipping, and every site a citation must
+  reach, each quoted:
+    - ⛔ **Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you find it, marked not yet filed, before fixing anything** — in `.claude/commands/dry-run.md` (the finding lifecycle paragraph; its ⛔ line already cites INV-307 for the archive clause) — **cite INV-NNN**
+    - ⛔ **The scratch project is disposable; the issues and the ledger entry are the run's actual output.** — in `.claude/commands/dry-run.md` (the paragraph after the lifecycle) — **cite INV-NNN**
+    - ⛔ **Draft each finding into the run's dated `specs/IMPLEMENTED.md` entry as you find it, marked not yet filed, before fixing anything** — in `.claude/skills/dry-run/SKILL.md` ("What to do with a finding", item 1; its ⛔ line already cites INV-307 for the archive clause) — **cite INV-NNN**
+    - ⛔ **Name the issue each finding became, or its ledger draft and the lifecycle marker it carries** — in `.claude/skills/dry-run/SKILL.md` ("Reporting", first bullet) — **cite INV-NNN**
+    - ⛔ **The scratch project is disposable; the issues and the ledger entry are the run's actual output.** — in `.claude/skills/dry-run/SKILL.md` ("Cleaning up") — **cite INV-NNN**
+    - ⛔ **Before stopping, confirm every finding is drafted in the run's ledger entry.** — in `.claude/skills/dry-run/phase3-conversational.md` ("Stopping") — **cite INV-NNN**
+
+  ⚠️ **Why this is not an existing invariant.** INV-307 governs where a finding may not go (a
+  new file under the frozen `specs/`) and that `IMPLEMENTED.md` stays live. It does not say a
+  finding must be written down at all, or when. INV-314 governs the maintainer's assent before
+  an outward record is created, and its "record the drafted text where the maintainer will
+  find it" clause covers only the no-maintainer case. Neither says a finding is recorded as it
+  is found and before it is fixed, nor that a run may not end with a finding held only in
+  conversation.
+
+  The drafted wording:
+
+  **INV-NNN** — A maintainer run that produces findings MUST record each one in a durable
+  repository record — its dated `specs/IMPLEMENTED.md` entry — as it is found and before fixing
+  it, and MUST NOT end with a finding held only in conversation or in its report. No enforcer is
+  named. `tests/test_dry_run_files_issues.py` pins the same lifecycle words in the command and
+  the skill (`SAME_WORDS`), and `/review-invariants` decides whether that is the enforcer.
+  (Source: GitHub issue #228.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** D2, no command labels
+  its own work for the unattended loop. The rules already shipping, and every site a citation
+  must reach, each quoted:
+    - ⛔ **Never apply `unattended-ok` to an issue the run files.** — in `.claude/commands/dry-run.md` (the filing paragraph's last sentence; the line reads "declined. Never apply `unattended-ok` to an issue the run files.") — **cite INV-NNN**
+    - ⛔ **Never apply `unattended-ok` to an issue the run files.** — in `.claude/skills/dry-run/SKILL.md` ("The finding lifecycle", step 3) — **cite INV-NNN**
+    - ⛔ **Never apply the `unattended-ok` label to an issue you file.** — in `.claude/skills/production-readiness-audit/SKILL.md` (filing the audit's findings) — **cite INV-NNN**
+
+  ⚠️ **Why this is not an existing invariant.** INV-314 gates the act of filing on the
+  maintainer's assent. It does not govern which labels a filed issue carries, and assent to
+  file is not assent to run the work unattended. `docs/FAMILY_WORKFLOW.md` §2 says the loop
+  itself never adds the label, which binds the loop, not the commands that file the issues it
+  reads. The site the issue listed in `.claude/skills/unattended-issue-loop/SKILL.md` is gone
+  (see the Summary), so this block names three sites, not four.
+
+  The drafted wording:
+
+  **INV-NNN** — No maintainer command may apply the `unattended-ok` label to an issue it files;
+  choosing work for `/unattended-issue-loop` is the maintainer's decision alone. No enforcer is
+  named. `tests/test_dry_run_files_issues.py` (`SAME_WORDS`) and
+  `tests/test_audit_files_issues_not_specs.py` assert the sentence in their surfaces, and
+  `/review-invariants` decides whether either is the enforcer. (Source: GitHub issue #228.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** D3, a filing command
+  files in this repository only. The rules already shipping, and every site a citation must
+  reach, each quoted:
+    - ⛔ **Never pass `--repo`** — in `.claude/skills/dry-run/SKILL.md` ("The finding lifecycle", step 3; the full line reads "Never pass `--repo` — this repository only, as `/feedback-to-issues` Step 7 says.") — **cite INV-NNN**
+    - ⛔ **Never pass `--repo`, and never file anywhere but here.** — in `.claude/skills/feedback-to-issues/SKILL.md` (Step 7) — **cite INV-NNN**
+    - ⛔ **Never pass `--repo`, and never file anywhere but here.** — in `.claude/skills/delegate-to-mcp-server/SKILL.md` (filing the delegation issues) — **cite INV-NNN**
+
+  ⚠️ **Why this is not an existing invariant.** INV-312 says "in its own repository only", but
+  only for a command that brings another repository's changes into this one. `/dry-run`,
+  `/feedback-to-issues` and `/delegate-to-mcp-server` are not sync commands, so INV-312 does not
+  reach them. `docs/FAMILY_WORKFLOW.md` R2 states the parity model the three sites rely on and
+  is not an invariant. INV-314 gates the act of filing, not where the issue lands.
+
+  The drafted wording:
+
+  **INV-NNN** — A maintainer command that files a GitHub issue MUST file it in this repository
+  only and MUST NOT name another repository (FAMILY_WORKFLOW R2); cross-repo filing belongs to
+  `/escalate-to-parent` alone. No enforcer is named. `tests/test_delegate_files_issues_not_specs.py`
+  asserts the "never pass `--repo`" sentence for its surface, and `/review-invariants` decides
+  whether that is the enforcer. (Source: GitHub issue #228.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** no new test (the issue puts guard tests for D1–D3 out of scope, and #233 owns the
+  guard's `.claude/` scope). Checked instead: each of the 12 non-local lines, measured against
+  `conformance.py reverse-check --ref 0d7bbe1`, either cites an id inside `own_citations`'
+  window or matches a D1–D3 quote by the guard's own probe
+  (`test_new_hard_rules_are_cited_or_deferred._comparable`, first 44 characters). Every one of
+  the five edited ⛔ lines carries its id on the line itself. `pending_invariants.py list` shows
+  D1–D3 as three new pending invariants with no enforcer, and `pending_invariants.py check`
+  reports 0 mismatched, 0 unresolved and 0 unparsed.
+- **Commit:** uncommitted
+
 ## update-offer-reads-its-release-notes-before-asking
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #222)
