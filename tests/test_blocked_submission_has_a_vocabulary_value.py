@@ -373,6 +373,28 @@ class TheVocabularyCarriesABlockedValue(unittest.TestCase):
                       "graduation names the blocked value without ruling out `offered, declined`, "
                       "which is the wrong value a runner would otherwise reach for")
 
+    def test_graduation_cites_the_step_that_lists_the_outcomes(self):
+        """Its `offered, declined` reference names `feedback.md` Step 3c step 5 (#234).
+
+        It said "(Step 3)", which in graduation is its own step and in `feedback.md` is the
+        append step; neither lists the `**Upstream:**` outcomes. The target is checked too, so
+        the pointer cannot outlive the list it points at. Negative-controlled by restoring
+        "(Step 3)".
+        """
+        grad = flatten((PLUGIN / "senzing-bootcamp" / "skills" / "graduation"
+                        / "SKILL.md").read_text(encoding="utf-8"))
+        self.assertIn("**never** `offered, declined` (`feedback.md` step 3c step 5)", grad,
+                      "graduation's `offered, declined` reference must name the feedback.md "
+                      "step that lists the `**Upstream:**` outcomes")
+        fb = flatten((PLUGIN / "senzing-bootcamp" / "skills" / "bootcamp-onboarding"
+                      / "feedback.md").read_text(encoding="utf-8"))
+        step_3c = fb[fb.index("## step 3c:"):]
+        step_5 = step_3c[step_3c.index(" 5. "):step_3c.index(" 6. ")]
+        self.assertIn("**upstream:**", step_5)
+        self.assertIn("offered, declined", step_5,
+                      "feedback.md Step 3c step 5 no longer lists `offered, declined`, so "
+                      "graduation's pointer names the wrong place")
+
     def test_the_blocked_value_is_distinguished_from_declined(self):
         """⛔ The whole point: it must not become a synonym for any other value."""
         fb = PLUGIN / "senzing-bootcamp" / "skills" / "bootcamp-onboarding" / "feedback.md"

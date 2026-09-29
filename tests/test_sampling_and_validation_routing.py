@@ -59,6 +59,29 @@ class TheSamplingRuleExistsOnce(unittest.TestCase):
     def test_step_8b_defers_instead_of_restating(self):
         self.assertRegex(flat(MODULE_04), r"(?i)canonical statement; do not restate it here")
 
+    def test_each_reference_names_the_section_that_holds_the_rule(self):
+        """The anchor sits in a section before the Workflow, not in a numbered step (#234).
+
+        The references said "earlier in this step" and "in Step 6", which sent a reader to a
+        step that does not hold the rule. The section is read from the heading above the
+        anchor, so a renamed heading moves this test with it. Negative-controlled by
+        restoring either old location.
+        """
+        raw = MODULE_04.read_text(encoding="utf-8")
+        anchor = raw.index('<a id="overlap-preserving-sampling"></a>')
+        heading = re.findall(r"(?m)^## (.+)$", raw[:anchor])[-1].strip()
+        text = flat(MODULE_04)
+        refs = [m.start() for m in re.finditer(r"\(#overlap-preserving-sampling\)", text)]
+        self.assertGreaterEqual(len(refs), 2)
+        for at in refs:
+            after = text[at:at + 160]
+            with self.subTest(reference=after[:80]):
+                self.assertIn(heading, after,
+                              f"the reference does not name {heading!r}, the section that "
+                              "holds the sampling rule")
+                self.assertNotRegex(after, r"(?i)earlier in this step|in Step 6\b",
+                                    "the reference names a step that does not hold the rule")
+
 
 class TheHazardIsStated(unittest.TestCase):
     def test_random_selection_is_named_as_destructive_for_multi_source(self):

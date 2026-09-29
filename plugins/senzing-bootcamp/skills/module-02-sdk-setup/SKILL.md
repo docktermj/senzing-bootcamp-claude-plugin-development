@@ -99,9 +99,8 @@ installed" from a path that cannot exist on this platform is how a Bootcamper wi
 gets sent to reinstall it, which is exactly what this step opens by forbidding.
 
 **Reading the version once the library is found:** use the primary route — the language version
-check, or `SzProduct.get_version()`, which returns `VERSION`, `BUILD_DATE`, `BUILD_NUMBER` and
-`NATIVE_API_VERSION` (`search_docs`, server 1.32.9, 2026-08-13). Failing that, build metadata sits
-in `szBuildVersion.json` — see "Comparing the two versions" in Step 1b.
+check, or `SzProduct.get_version()`, whose response fields Step 4 states. Failing that, build
+metadata sits in `szBuildVersion.json` — see "Comparing the two versions" in Step 1b.
 
 ⛔ **(INV-285) Its provenance differs by platform, so it is stated per platform.** One caveat spanning all
 three is what let the Windows half go stale while reading as reviewed.
@@ -1148,8 +1147,9 @@ carries `file_path`, `source_url`, `raw_url`, `size_bytes` and `line_count` per 
 source text**, so there is nothing to "save" until you fetch it: follow the response's own
 `access_steps` step 1 and fetch each `raw_url`
 (`raw.githubusercontent.com/senzing/code-snippets-v4/...`), or clone the repo per step 2 if the
-fetch is blocked. This differs from `sdk_guide`, which does inline a `code.code` string — do not
-carry that expectation across.
+fetch is blocked. If both fail, take the terminal step in `../bootcamp-onboarding/ground-rules.md`
+→ "Once `raw_url` and `git clone` have both failed" (INV-160). This differs from `sdk_guide`, which
+does inline a `code.code` string — do not carry that expectation across.
 
 ⛔ **Never pass `inline=true` to `generate_scaffold`.** Its own `access_steps` step 3 advertises
 that parameter as a "last resort", but the tool's **declared schema has no `inline` parameter at
@@ -1695,7 +1695,7 @@ MCP-returned JSON remains the starting point.
 > calls "the official Senzing Scoop bucket" (verified on MCP server 1.32.2, 2026-07-30) — places
 > `SENZING_DIR`
 > at the `er` subdirectory within the Scoop app folder (e.g.,
-> `C:\Users\<user>\scoop\apps\senzing\current\er`). The `data` directory containing
+> `C:\Users\<user>\scoop\apps\senzingsdk\current\er`). The `data` directory containing
 > `g2SifterRules.ibm` and other GNR support files is at the Scoop app version root, one level
 > above `er`, rather than inside it. This is why the fallback to `$SENZING_DIR\..\data` is
 > needed for Scoop installs.

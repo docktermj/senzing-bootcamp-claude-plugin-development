@@ -534,6 +534,21 @@ class TheLabelDescribesWhatHappened(unittest.TestCase):
         self.assertIn("900", warning)
         self.assertIn("INV-123", warning, "the caption rule this misleads is not named")
 
+    def test_the_label_comment_does_not_make_the_label_inv_123s_input(self):
+        """INV-123 derives the caption from the opened image and the tab it shows (#234).
+
+        The comment above `SINGLE_PAGE_LABEL_VIEWPORT` said INV-123 names the printed label
+        as the caption's designated input. Negative-controlled by restoring that sentence.
+        """
+        source = HELPER.read_text(encoding="utf-8")
+        m = re.search(r"((?:^#.*\n)+)SINGLE_PAGE_LABEL_VIEWPORT = ", source, re.M)
+        self.assertIsNotNone(m, "no comment block sits directly above the viewport label")
+        comment = " ".join(re.sub(r"(?m)^#\s?", "", m.group(1)).split())
+        self.assertNotRegex(comment, r"INV-123 (?:names|designates|makes) (?:that|the)",
+                            "the comment attributes the label-as-caption-input to INV-123")
+        self.assertIn("INV-123 derives the caption from the opened image and the tab it shows",
+                      comment)
+
     def test_a_clamp_warns_on_stderr(self):
         import io
         import contextlib

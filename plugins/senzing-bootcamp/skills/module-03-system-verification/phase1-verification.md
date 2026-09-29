@@ -249,7 +249,9 @@ Verify the Senzing SDK initializes correctly and connects to the database.
    <!-- MCP-NEGATIVE: generate_scaffold(language='python', workflow='initialize') — its snippets[] carry file_path, source_url, repo, raw_url, size_bytes and line_count with no content field at all — owner: generate_scaffold IS the route that would return source text, and it returns a listing plus an ordered access_steps (fetch raw_url, else git clone) instead, so fetching raw_url is the documented route (routing negative) — server 1.36.0, 2026-09-02 -->
    ⛔ `generate_scaffold` returns a **listing**, not code — `file_path`, `source_url`, `raw_url`,
    `size_bytes`, `line_count` per snippet, with no source text. Follow its own `access_steps` step
-   1 and fetch each `raw_url`; use step 2's `git clone` if the fetch is blocked. **Never pass
+   1 and fetch each `raw_url`; use step 2's `git clone` if the fetch is blocked. If both fail,
+   take the terminal step in `../bootcamp-onboarding/ground-rules.md` → "Once `raw_url` and
+   `git clone` have both failed" (INV-160). **Never pass
    `inline=true`** — the tool's `access_steps` advertises it but its declared schema has no such
    parameter (only `language`, `version`, `workflow`), so the call cannot work (INV-160's rule,
    confirmed live for `generate_scaffold` on server 1.32.2, 2026-07-29). And never reconstruct the
@@ -308,8 +310,9 @@ Verify the MCP server can generate a full pipeline script in the chosen language
      `src/system_verification/verification_data.jsonl`. That path does not exist in a bootcamp
      project, so leaving it crashes Step 6.
    - **Fetch before saving.** As in Step 3: the listing carries no source text, so fetch each
-     `raw_url` (or `git clone` per `access_steps` step 2). **Never pass `inline=true`** — undeclared
-     in the schema (INV-160).
+     `raw_url` (or `git clone` per `access_steps` step 2). If both fail, take the terminal step in
+     `../bootcamp-onboarding/ground-rules.md` → "Once `raw_url` and `git clone` have both failed".
+     **Never pass `inline=true`** — undeclared in the schema (INV-160).
 
    Why this is a ⛔ and not a preference: **Step 6 executes this file "pointing it at
    `src/system_verification/verification_data.jsonl`"**, which presupposes a script that takes a

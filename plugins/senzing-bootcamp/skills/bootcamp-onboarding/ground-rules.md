@@ -333,9 +333,9 @@ steering files.)
   description's coverage prose is still not normative, and still goes stale on the server's
   schedule rather than the plugin's.
 
-  **The live illustration, same server and date:** `search_docs`' declared description says the
-  corpus is *"~2175 chunks"*, while every `search_docs` response carries
-  `metadata.documents_indexed: 14637`. ⚠️ **Those are not necessarily contradictory — they may
+  **The live illustration, same server and date:** `search_docs`' declared description sizes the
+  corpus in chunks, while every `search_docs` response carries `metadata.documents_indexed`, a
+  different figure. ⚠️ **Those are not necessarily contradictory — they may
   simply be different units** (a chunk need not be a document), and **the tool documents neither**.
   That is the point: a reader cannot tell from the declared prose how large the corpus is, or
   whether the two figures describe the same thing. A coverage figure a caller cannot act on is

@@ -69,7 +69,7 @@ deselecting System verification forces deselecting Truth Set visualization, whic
 ## 0. Read the saved preferences first — honor them, do not ask (INV-133)
 
 ⛔ **Before Step 1, read `config/bootcamp_preferences.yaml` once.** Every capture question below is
-governed by the same rule, and it applies to **all** of them, not just model guidance:
+governed by the same rule, and it applies to **all** of them:
 
 > A setup preference already recorded in `config/bootcamp_preferences.yaml` MUST be honored, its
 > capture question MUST NOT be asked, and the saved value MUST NEVER be overwritten with a

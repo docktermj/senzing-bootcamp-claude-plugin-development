@@ -330,8 +330,8 @@ For each finding, append a `## Improvement:` entry to
   every `offer pending` value in the same turn, with the outcome Step 3c step 5 names (INV-281).
   On decline or failure, record it and continue; every entry is saved locally regardless (INV-015). ⚠️ **(INV-281) A session forbidden to
   send** — a maintainer `/dry-run` — still presents the offer, then records
-  `submission blocked: <reason>`, **never** `offered, declined` (Step 3): a yes that could not be
-  acted on is not a refusal.
+  `submission blocked: <reason>`, **never** `offered, declined` (`feedback.md` Step 3c step 5): a
+  yes that could not be acted on is not a refusal.
 - The same **Context when reported** block, describing what *you* hit rather than what the
   bootcamper saw.
 

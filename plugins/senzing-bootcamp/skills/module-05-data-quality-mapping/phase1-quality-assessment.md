@@ -585,7 +585,7 @@ intact.
 
 **So, before naming any expected cross-source pair:** count the **distinct values shared on the named
 attribute**, not the group scores. The profiling pass already holds the values, so this is cheap. If
-that count was not run, write the pair as a *candidate on group coverage, overlap unmeasured* — a
+that count was not run, write the pair as a *candidate, overlap unmeasured* — a
 prediction is still useful, but an unmarked one is what did the damage.
 
 This is not a corner case. Mixed person/organization sources are the norm in KYC, AML, sanctions

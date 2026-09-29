@@ -142,6 +142,29 @@ class TheOverviewHasNoUngovernedBullet(unittest.TestCase):
             "overview is correct — otherwise the next audit reads it as a bug",
         )
 
+    def test_it_names_every_item_with_its_own_treatment(self):
+        """The version line, the feedback-trigger bullet and the make-a-note bullet (#234).
+
+        Each has its own verbosity paragraph, so the sentence that lists them must name all
+        three. It named two after the note bullet arrived, which left the note bullet's own
+        treatment reading as the group rule's. Negative-controlled by restoring "Two carry
+        their own" with the note bullet unnamed.
+        """
+        flat = re.sub(r"\s+", " ", self.text)
+        m = re.search(r"(?i)(\w+) carry their own \(([^)]*)\)", flat)
+        self.assertIsNotNone(m, "step 3 no longer says which items carry their own treatment")
+        self.assertEqual("three", m.group(1).lower(),
+                         "three items carry their own verbosity treatment, not "
+                         f"{m.group(1)!r}")
+        named = m.group(2)
+        for item in ("version line", "feedback-trigger", "make-a-note"):
+            with self.subTest(item=item):
+                self.assertIn(item, named,
+                              f"the own-treatment sentence does not name the {item}")
+        self.assertRegex(flat, r"\*\*The note bullet is verbosity-aware",
+                         "the make-a-note bullet's own treatment paragraph is gone, so naming "
+                         "it here would point at nothing")
+
 
 class TheSetupRecapCollapsesWithoutLosingMarkers(unittest.TestCase):
     def setUp(self):
