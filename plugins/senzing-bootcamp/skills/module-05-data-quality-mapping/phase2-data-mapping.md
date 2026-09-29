@@ -553,6 +553,18 @@ step 2 with `action='advance'`, carrying `master_schemas` (at least one, each wi
 relationships, children) in `data`. Tell the user: explain the entity type decision, which fields
 map vs. skip and why.
 
+⛔ **(INV-300) Read the source's Record Type Check before you advance workflow step 2.** Open
+`docs/mapping/{source_name}_mapper.md` → `## Record Type Check`. Its rule is Phase 1 Step 6's
+"Type/name check" (`phase1-quality-assessment.md`), the canonical statement; do not restate it here.
+With **Keep as-is**, `none needed`, no section, or a Retype that names every candidate as an
+exception, change nothing. With **Retype**, the source now carries both types:
+
+- Send each master schema's `record_type` as the source's predominant type **after** the retype. It
+  stays enum-valid and is never `MIXED`, per the mixed-type rule below.
+- Say in the plan summary that the source now carries PERSON and ORGANIZATION records, and how many
+  records the retype moves. This is content in the summary, not a new question.
+- Declare nothing else here: step 11 declares how each record is typed.
+
 ⛔ **On a mixed-type source, send an enum-valid `record_type` and declare the mixture at step 3 —
 the step-2 prose asks for a value its own schema rejects.** Both halves are in the **same response**
 (re-read live, server **1.33.0, 2026-08-21**): the instructions say *"If a schema has mixed entity
@@ -570,23 +582,28 @@ what the tool's own prose says happens anyway (*"The type_discriminator details 
 Step 3 mapping"*), so nothing is lost.
 
 ⛔ **(INV-136, INV-125) Step 3 rejects a source that declares BOTH organization and person name
-fields — even when no record carries both — and its message describes the wrong problem.** A source whose name fields are
-disjoint *by record type* is rejected with:
+fields — even when no record carries both — and its message leads with the wrong problem.** A source whose name fields are
+disjoint *by record type* is rejected with this message (re-read live, server **1.37.15,
+2026-09-29**; the attribute list names the person attributes the mapping declared):
 
 ```text
-NAME_ORG cannot co-exist with person name attributes NAME_FIRST, NAME_FULL, NAME_LAST — a
-record is either a person or an organization.
+NAME_ORG cannot co-exist with person name attributes NAME_FIRST, NAME_LAST — a record is either
+a person or an organization. FIX: declare the name ONCE and let the mapper emit NAME_ORG for an
+ORGANIZATION record and NAME_FULL (or parsed person parts) for a PERSON record, branched by
+RECORD_TYPE; or use a type_discriminator to make the mapping conditional.
 ```
 
-**The fix is to declare the names through `type_discriminator.field_overrides`** — including where
-the override is **identity in both branches**, declared purely to satisfy the validator. Observed on
-two sources on server **1.33.0**, 2026-08-25, and again on 2026-08-27; both had verified-disjoint
-fields (one populated per record, selected by `RECORD_TYPE`; zero rows carrying both).
+**Where the type comes from a source field's value, the fix is to declare the names through
+`type_discriminator.field_overrides`**, the message's second route. That includes where the override
+is **identity in both branches**, declared purely to satisfy the validator. Observed on two sources
+on server **1.33.0**, 2026-08-25, and again on 2026-08-27; both had verified-disjoint fields (one
+populated per record, selected by `RECORD_TYPE`; zero rows carrying both). A retype chosen by a name
+suffix has no such field, so it takes the message's first route, as step 11 declares it.
 
-- ⚠️ **Read the message as "declare it differently", not "your data is wrong".** It states a
+- ⚠️ **Read the first sentence as "declare it differently", not "your data is wrong".** It states a
   **record-level** rule, and the mapping already satisfied it — the rejection is about the *field
-  declarations*. A run that reads it literally spends its first attempt re-checking data that is
-  correct. The rule's authoritative scope is narrower still: the Entity Specification's `Feature:
+  declarations*, which is what the `FIX:` clause says (the 1.33.0 message had no `FIX:`). A run that
+  stops at the first sentence spends its first attempt re-checking data that is correct. The rule's authoritative scope is narrower still: the Entity Specification's `Feature:
   NAME` section says *"do not mix `NAME_ORG` with parsed person fields **in the same object**"*
   (`search_docs(query='entity specification attribute names feature tables NAME_ORG ADDR_LINE1
   PHONE_NUMBER', category='data_mapping')`, server **1.33.0**, 2026-08-28) — one NAME object, not one record, and
@@ -693,6 +710,45 @@ with worked examples. An organization name belongs in `NAME_ORG`, not `NAME_FULL
 `config/data_sources.yaml` and `docs/data_source_locations.md`, where it read as settled fact.
 Splitting them would have produced a mapping that loads and validates cleanly while degrading
 resolution quality silently, which is exactly the class a quality score cannot detect.
+
+⛔ **(INV-300, INV-136) Read the source's Record Type Check before you advance workflow step 3.**
+Open `docs/mapping/{source_name}_mapper.md` → `## Record Type Check`. Its rule is Phase 1 Step 6's
+"Type/name check" (`phase1-quality-assessment.md`), the canonical statement; do not restate it here.
+With **Keep as-is**, `none needed`, no section, or a Retype that names every candidate as an
+exception, map as usual. With **Retype**, declare the name **once** and type each record with a
+computed `RECORD_TYPE`. Declare no `NAME_ORG` entry and no `type_discriminator` (INV-136):
+
+- **Parsed person name fields.** Declare them once, as the person attributes they are (for example
+  `NAME_FIRST` and `NAME_LAST`). The mapper emits `NAME_ORG` for a retyped (ORGANIZATION) record and
+  the parsed parts for a PERSON record, branched on `RECORD_TYPE`.
+- **One name field.** Declare it once as `NAME_FULL`. The mapper emits `NAME_ORG` for a retyped
+  (ORGANIZATION) record and `NAME_FULL` for a PERSON record, branched on `RECORD_TYPE`. The step 2
+  inline reference says why the ORGANIZATION branch is not `NAME_FULL`: *"On an ORGANIZATION record,
+  EVERY name maps as NAME_ORG … NAME_FULL is PERSON-only"*.
+- **The computed `RECORD_TYPE` is one `derived` field mapping:**
+
+  ```json
+  {"disposition": "derived", "derived_as": "RECORD_TYPE",
+   "source": "<the name field the rule reads>",
+   "justification": "<the Phase 1 rule and its exceptions>"}
+  ```
+
+  `source` names the single name field or, for parsed fields, the field that ends the joined name.
+  `justification` says the record is PERSON except where the Record Type Check rule retypes it to
+  ORGANIZATION, names the exceptions, and says an ORGANIZATION record's name is emitted as
+  `NAME_ORG`. Re-verified on server **1.37.15, 2026-09-29** (`mapping_workflow` workflow step 3, on
+  synthetic fields): both name shapes, declared this way, returned `status: ok` at `step: 4`. The
+  step 3 `advance_schema` gives a `derived` entry its `derived_as`, `source` and `justification`
+  keys, and its instructions reject a derived `RECORD_TYPE` that carries neither `source` nor a
+  non-empty `justification`.
+
+⚠️ **Declaring `NAME_ORG` beside the parsed fields is what step 3 rejects** with
+`NAME_ORG cannot co-exist with person name attributes …`, the block under step 10. That block's
+`type_discriminator.field_overrides` fix does not apply to a suffix retype. A `type_discriminator`
+branches on the values of one real source field (*"all sample values must be enumerated in types or
+covered by default"*, step 3 instructions, 1.37.15), and a retype is chosen by a name suffix, not a
+field value. A uniform type field, such as CORD's `NODE_TYPE: OFFICER` on every record, cannot drive
+one either. The message's own `FIX:` names the declare-once route above.
 
 ⚠️ **This advance is unconditional in both modes — there is no general guided-mode gate here, and
 that is deliberate.** Unlike step 10, the questions this step needs are *conditional*, and each is
@@ -1291,12 +1347,14 @@ here.
 **Apply a retype decision from Phase 1.** If `docs/mapping/{source_name}_mapper.md` already has a
 `## Record Type Check` section whose decision is **Retype**, the transform applies that section's
 rule as written: the records it names are emitted with `RECORD_TYPE` `ORGANIZATION`, their name is
-mapped as `NAME_ORG` or `NAME_FULL` and never as parsed person fields, and the listed exceptions stay
-`PERSON`. The check and the rule's wording are Phase 1 Step 6's "Type/name check"
-(`phase1-quality-assessment.md`), the canonical statement; do not restate them here (INV-300). The
-source now carries both types, so if `mapping_workflow` step 3 rejects its name declarations, that
-is the step-10 rejection above and its fix (INV-136). With **Keep as-is**, or no such section,
-change nothing.
+emitted as `NAME_ORG` and never as parsed person fields, and the listed exceptions stay `PERSON`.
+That is the branch on `RECORD_TYPE` that step 11 declared. With parsed name fields, a retyped
+record's `NAME_ORG` value is the parsed fields joined in the order Phase 1 Step 6 reads them. The
+check and the rule's wording are Phase 1 Step 6's "Type/name check"
+(`phase1-quality-assessment.md`), the canonical statement; do not restate them here (INV-300). Step
+15's verbatim check may report a joined `NAME_ORG`: that is a checker limitation, not a mapping
+defect, so follow its "What to do — in this order" procedure and never undo the retype to turn the
+gate green (INV-173). With **Keep as-is**, or no such section, change nothing.
 
 **Checkpoint:** write step 13.
 

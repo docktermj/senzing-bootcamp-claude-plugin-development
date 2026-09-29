@@ -43,6 +43,129 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## retype-decision-reaches-the-mapping-at-steps-10-and-11
+
+- **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #220)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`,
+  `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`,
+  `tests/test_quality_assessment_type_name_check.py`, `tests/test_step3_name_rejection_names_its_fix.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-29. Tools: `get_capabilities()`;
+  two `mapping_workflow` runs on synthetic fields (start, advance steps 1 and 2, then step 3);
+  `sz_verbatim_check.py` fetched from the workflow's own resource URL and re-read. Outcome:
+  **still reproduces**, as the issue's rev 2 recorded it.
+  - Parsed `NAME_FIRST`/`NAME_LAST` plus a `NAME_ORG` entry and a derived `RECORD_TYPE` is rejected
+    with `NAME_ORG cannot co-exist with person name attributes NAME_FIRST, NAME_LAST — a record is
+    either a person or an organization. FIX: declare the name ONCE and let the mapper emit NAME_ORG
+    for an ORGANIZATION record and NAME_FULL (or parsed person parts) for a PERSON record, branched
+    by RECORD_TYPE; or use a type_discriminator to make the mapping conditional.` That is now the
+    step 10 quote, stamped with this version and date.
+  - The parsed fields declared once, with no `NAME_ORG` and no discriminator, plus
+    `{"disposition":"derived","derived_as":"RECORD_TYPE","source":"last_name","justification":…}`
+    returned `status: ok`, `step: 4`.
+  - A single `name` field declared as `NAME_FULL`, plus the same derived `RECORD_TYPE` with
+    `source: name`, returned `status: ok`, `step: 4`.
+  - The step 3 `advance_schema` gives a `derived` entry `derived_as`, `source` and `justification`.
+    Its instructions reject a derived `RECORD_TYPE` with neither `source` nor a non-empty
+    `justification`, and say "all sample values must be enumerated in types or covered by
+    default" for a `type_discriminator`.
+  - The step 2 inline reference still says "On an ORGANIZATION record, EVERY name maps as NAME_ORG
+    … NAME_FULL is PERSON-only".
+  - `sz_verbatim_check.py` still accepts a whole source value, a pipe/semicolon segment or a
+    whitespace token, by equality, so a joined multi-token `NAME_ORG` is reported.
+
+  No absence claim is made.
+- **Summary:** #158 applied a **Retype** decision only at module step 13, two module steps after
+  workflow step 3 had declared the names, so the retype never reached the mapping. Now:
+  - **Step 10 (Plan)** gains a ⛔ (INV-300) instruction to read `## Record Type Check` before it
+    advances workflow step 2. On Retype it sends the predominant post-retype type as `record_type`
+    (enum-valid, never `MIXED`) and says in the plan summary that the source now carries both
+    types. The guided-mode question is unchanged.
+  - **Step 11 (Map)** gains a ⛔ (INV-300, INV-136) instruction to read the section before it
+    advances workflow step 3. On Retype it declares the name **once**, with no `NAME_ORG` entry and
+    no `type_discriminator`. Parsed person fields are declared as the person attributes they are,
+    and a single name field as `NAME_FULL`. In both shapes the mapper emits `NAME_ORG` for a
+    retyped record, branched on `RECORD_TYPE`. The computed `RECORD_TYPE` is a `derived` entry with
+    `derived_as`, `source` and `justification`, stamped with the server version and date. A ⚠️
+    paragraph names the NAME_ORG rejection by its message. It says declaring `NAME_ORG` beside
+    parsed fields is what the rejection rejects, and that the `field_overrides` fix does not apply
+    to a suffix retype, because a `type_discriminator` branches on one real field's values (a
+    uniform CORD `NODE_TYPE: OFFICER` cannot drive one). It does not route the reader to that fix.
+  - **Step 13** drops the sentence about workflow step 3 rejecting the name declarations. It keeps
+    the `RECORD_TYPE` `ORGANIZATION` instruction and says the name is emitted as `NAME_ORG`. For
+    parsed names the value is the fields joined in Phase 1 Step 6's order. It points at step 15's
+    "What to do — in this order" procedure for the verbatim check's report, and at INV-173.
+  - **Step 10's NAME_ORG rejection block**: the quote is the 1.37.15 message with its `FIX:`
+    clause, stamped. Sentences the new message made false are corrected. The headline now says
+    the message "leads with" the wrong problem, rather than "describes" it. The
+    `field_overrides` fix is scoped to a type that comes from a field value, and is named as the
+    message's second route. The ⚠️ bullet reads the first sentence as "declare it differently" and
+    notes the 1.33.0 message had no `FIX:`. The `field_overrides` fix itself is unchanged.
+  - **Phase 1**: the canonical statement's pointer list reads "Phase 2 steps 10, 11, 13 and 18".
+  - Steps 10 and 11 point at Phase 1 Step 6's "Type/name check" and do not restate the suffix list
+    or the rule.
+- **Deviation from the issue, stated:** step 13's name rule said "`NAME_ORG` or `NAME_FULL`".
+  Rev 2 has the mapper emit `NAME_ORG` for every retyped record, and the live step 2 reference
+  says `NAME_FULL` is PERSON-only, so step 13 now says `NAME_ORG`. The issue asked step 13 to keep
+  "the name rule". This is that rule made consistent with step 11.
+- **Finding, recorded as found (INV-317), not changed here:** Phase 1 Step 6's `Rule (retype):`
+  template line in `phase1-quality-assessment.md` still says a retyped record's name "is mapped as
+  `NAME_ORG` or `NAME_FULL`". Under rev 2 and the live step 2 reference, a retyped (ORGANIZATION)
+  record's name is `NAME_ORG` only. The issue puts Phase 1's rule out of scope, so the line is
+  unchanged. It needs its own issue.
+- **Approach:** implemented directly (Phase 5a), per the plan's Gate 1.
+- **The #158 hold's revisit condition is now met.** Entry
+  `person-typed-records-with-organization-names-block-matches` is held "after #220 lands and Phase 2
+  applies the retype decision at steps 10 and 11". This entry does not edit that block (INV-307).
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Each new ⛔ line cites a
+  registered invariant at the line: step 10's read cites INV-300, and step 11's read cites INV-300
+  and INV-136. One durable rule goes beyond them. INV-300 says where the rule lives, and INV-136
+  forbids a pre-emptive discriminator, but neither says **when** Phase 2 must apply a Retype
+  decision or how it is declared. The rule already shipping at its sites:
+    - `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`
+      — ⛔ **(INV-300) Read the source's Record Type Check before you advance workflow step 2.**
+    - the same file — ⛔ **(INV-300, INV-136) Read the source's Record Type Check before you advance workflow step 3.**
+
+  The drafted wording:
+
+  **INV-NNN** — Module 5 Phase 2 MUST read a source's `## Record Type Check` decision before it
+  advances `mapping_workflow` workflow step 2, and again before workflow step 3, never only when
+  the transform is written. On Retype, workflow step 2 MUST carry the predominant post-retype type
+  as `record_type`, never `MIXED`. Workflow step 3 MUST declare the name once, with a computed
+  `derived` `RECORD_TYPE` whose `justification` states the Phase 1 rule and its exceptions. It
+  MUST NOT declare a `NAME_ORG` entry or a `type_discriminator` for a suffix retype. The mapper
+  emits `NAME_ORG` for a retyped record, branched on `RECORD_TYPE`. Enforced by
+  `tests/test_quality_assessment_type_name_check.py`. (Source: GitHub issue #220.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here. It may fold into
+  #158's held block, whose Phase 2 clause it makes precise.)*
+- **Tests:**
+  - `tests/test_quality_assessment_type_name_check.py` gains `problems_in_phase2_plan_and_map()`
+    and `order_problems()`, both called from `problems_in_phase2()`. They check that steps 10 and 11
+    read the section before their advances and name Phase 1 Step 6 with INV-300. They check that
+    neither step restates the suffix list, and step 10's post-retype `record_type`, never `MIXED`,
+    and mixed-type summary. They check step 11's Retype block: the `derived` keys, declare once, no
+    `NAME_ORG` entry or discriminator, both name shapes branched on `RECORD_TYPE`, a version and
+    date, the rejection named by its message, and no `field_overrides` sentence without a
+    negation. They check the order: step 10's read precedes step 11, and step 11's read precedes
+    its advance paragraph and step 13. They check that step 13 has no rejection sentence and names
+    the joined-name order. Ten negative controls in `Phase2NegativeControls` mutate a copy of the
+    file, and each makes a check report a problem. The module docstring's handoff bullet is
+    updated. No assertion pins server wording (INV-219). 15 → 25 tests.
+  - `tests/test_step3_name_rejection_names_its_fix.py` (INV-219: rescoped, nothing deleted). Its
+    windows are now measured from the end of the quote's closing fence, so the quote's length no
+    longer counts. The window sizes are 1200, 1400, 1600 and 2000. The last grew from 1600 because
+    the field-value route sentence was added to the block. Every assertion keeps its phrase. The
+    docstring gives the reason, quotes the live message, and replaces "Nothing in the message
+    names `type_discriminator`" with what the `FIX:` clause does and does not name. New:
+    `test_the_quote_carries_a_server_version_and_date`, which checks shapes only, and
+    `TheWindowsAreMeasuredFromTheFence`, three negative controls on synthetic text.
+- **Verified:** the full suite passed in the CI mirror (both legs, empty `HOME` outside `/tmp`).
+  `citations.py verify` was run after this entry was written.
+- **Commit:** uncommitted
+
 ## invariant-review-2026-09-29
 
 - **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one review session)

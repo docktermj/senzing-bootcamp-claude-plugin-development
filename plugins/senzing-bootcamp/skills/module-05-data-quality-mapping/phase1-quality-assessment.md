@@ -709,7 +709,7 @@ rather than copying one from this example; a `✅` beside a 78% tells the bootca
 ### Type/name check: PERSON-typed records with organization names
 
 ⛔ (INV-300) **This is the canonical statement of the type/name check.** Step 5a sub-step 3a, Step
-7's report and Phase 2 steps 13 and 18 point here and add only what their own site needs.
+7's report and Phase 2 steps 10, 11, 13 and 18 point here and add only what their own site needs.
 
 **Why it exists.** The Entity Specification says `RECORD_TYPE` *"prevents records of different
 types from resolving"* (*Feature: RECORD_TYPE*, via `search_docs(query='RECORD_TYPE PERSON
