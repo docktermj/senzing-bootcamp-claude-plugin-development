@@ -43,6 +43,132 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## phase-c-loads-each-source-from-its-subset-record
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #238)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`,
+  `tests/test_phase_c_loads_each_source_from_its_subset_record.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-28, `get_capabilities()` and
+  `search_docs(query='Data Source Records DSR count license limit total across all data
+  sources')`. Outcome: n/a (no Senzing fact), with the issue's premise re-confirmed. "Data
+  Source Records (DSRs) Explained" says "The DSR count is the total across all these source
+  systems", so the license cap is whole-load and splitting one remaining cap across the sources
+  is right. The same article says a record re-sent under an existing data source code and record
+  ID "replaces the current one in Senzing and doesn't contribute to the DSR count", so the cap
+  Step 19 re-measures after Step 18's test load can err low, never high. Phase C states neither
+  nuance and names no new SDK method: it points at #237's remaining-cap definition. No absence
+  claim is made. Nothing was sent upstream.
+- **Summary:** Phase B loads only the first source, but the license cap and the SQLite subset
+  choice cover the whole load, and Phase C said nothing about how the rest of the budget is
+  split or that each later source writes its own `load_subset:` block. A later source loaded
+  with no subset record and reconciled as `failed` or `unexplained_delta`. Phase C now loads
+  every later source from its own block, as #237 defines it at
+  `phaseB-load-first-source.md#load-subset-record` (pointed at, never restated, INV-300).
+  - **Step 17** computes and shows a per-source budget table (source, fill order = Step 14's load
+    order, limit with its `reason`) before the orchestrator is written. It reads
+    `license_cap_prompt` and `sqlite_volume_prompt` from `config/bootcamp_preferences.yaml`.
+    `overlap_preserving` takes Phase B's blocks and computes no new budget (`record_count: 0` is
+    not loaded). `first_n` fills the remaining cap in load order with N = min(load-input count,
+    budget left), and writes `load_subset: {strategy: first_n, limit: N, reason: license_cap}`
+    only when N is below the load input. The SQLite subset limit applies per source, and with a
+    license cap too the smaller binds and `reason` names it. With no marker, or one recorded
+    under a different `license_record_limit`, Phase B's license-cap question is asked once for all
+    remaining sources, by pointer (INV-006). An unmeasurable cap is indeterminate (INV-244).
+  - **Step 17's orchestrator** reads each source's block when its load starts and loads exactly
+    the input it names, stopping on purpose, never at the license error. Stage 1 compares against
+    that input, and the ⛔ reconcile rule names it (INV-243).
+  - **Step 18** gives no test load to a source whose row is not loaded (adopted from the losing
+    approach A): its test records would spend a cap that has nothing left for it.
+  - **Step 19** re-reads both markers and re-measures the remaining cap after Step 18's test
+    load, recomputes the table and fixes it. Every remaining source's block is then written
+    **before the run starts, in Step 14's load order, for every loading strategy**, and no block
+    is written once a load has started. A not-loaded row starts no load; its `load_status` stays
+    unchanged, never `failed`, and the completion summary names it.
+  - **Step 12** shows a source's block: the "→ subset" chain step once loaded, the subset it will
+    load before that.
+  - **The closing INV-225 line** keeps "Steps 17–20 ask nothing" and adds one sentence naming the
+    one question these steps can put, Step 17's license-cap question (or Step 19's, when Step
+    18's test load tips the budget). The ⛔ is unchanged.
+  - ⚠️ **Deliberate deviation from criterion 4's literal wording.** Criterion 4 says each
+    remaining source "is limited to 1,000 records". The #164 guard
+    `test_sqlite_subset_notes_read_the_recorded_decision.PhaseCCarriesNoSqliteThreshold` fails
+    any Phase C paragraph that mentions SQLite with a threshold number, so Phase C cites the
+    limit as "the first-N figure Phase B Step 7's start-smaller suggestion writes", which is
+    `limit: 1000` there. The behavior is 1,000 per source, by pointer. That guard was not
+    weakened.
+  - **Unchanged (out of scope):** Phase B, the `load_subset:` schema, Phase D, and Phase A's
+    `proceed` and `migrate` branches. Phase A item 2's "already decided" check, which #237's
+    entry flagged, is still untouched: no #238 criterion needs it.
+- **Approach:** raced (Phase 5b), two approaches, judged against a rubric written first (issue
+  comment 3). **Winner B, Step 17 plans and Step 19 writes**, over A (every limit fixed and
+  written in Step 17, Step 19 only reads): the criteria assign the per-source writes to Step 19
+  and criterion 8 asks for a test that fails when Step 19 loses its write, which A's design
+  cannot have. The patch applied cleanly with `git apply --3way` over `4dd325e`. **One required
+  adaptation:** B's Sequential bullet wrote each block just before that source's load, which met
+  criterion 1 ("written before the run starts ... for every loading strategy") only for Parallel
+  and Hybrid. Sequential now writes every row's block first, in load order, like the other two,
+  and the guard fails any strategy that writes a block after its loads start. A's Step 18 skip
+  was adopted as well.
+- **Invariant answer.**
+  - **The one new ⛔ cites INV-244 on its line, checked and kept.** "⛔ **A remaining cap that
+    cannot be measured is indeterminate, never estimated (INV-244).**" INV-244's remedy clause
+    governs a value that cannot be measured: say plainly what could not be determined, and never
+    present an assumption as the detected value. Phase B's indeterminate sub-bullet cites INV-244
+    for the same case, and #237's entry accepted that citation. ⚠️ The same bullet's closing
+    words, "a sum of the registry's counts", are the subject of #237's first DEFERRED block (the
+    repository count is measured through the SDK, never summed from the registry), which INV-244
+    does not own. That block is not duplicated here. If the maintainer mints it, this Phase C
+    bullet is one more site for its citation.
+  - **"Step 19 is Phase C's one writer of `load_subset:`" is NOT established, and the guard does
+    not assert it.** Step 17's no-marker branch writes blocks too, on a fresh option-1 answer.
+    What the change establishes is "every block is written before the run starts", deferred
+    below.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The change ships a
+  test-enforced rule with no ⛔ line. The rules already shipping, and every site a citation must
+  reach, each quoted:
+    - ⛔ **Every remaining source's `load_subset:` block is written before the run starts, in Step 14's load order, for every loading strategy, and the loader reads it** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md` (Step 19, the rule)
+    - ⛔ **No block is written once any load has started, so every load reads a limit fixed before the run.** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md` (Step 19, the same paragraph)
+    - ⛔ **Then the orchestrator loads each source from its `load_subset:` block.** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md` (Step 17, the reading side)
+    - ⛔ **A not-loaded row starts no load.** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md` (Step 19)
+
+  ⚠️ **Why this is not an existing invariant.** INV-243 governs what stage 1 compares against,
+  INV-300 that the record is defined once, and INV-006 that the license-cap question is asked
+  once. None says when a later source's limit is fixed relative to the run. #237's second
+  DEFERRED block drafts "MUST write that source's `load_subset:` block ... before the load
+  starts, at the site where the choice is made". For a source Phase C loads, the choice is
+  Phase B's recorded marker, and the block is written at Step 19 (or Step 17 on a fresh answer),
+  before the whole run rather than before its own load. If both are registered, the maintainer
+  may prefer to amend #237's wording to cover this case instead of minting a second id.
+
+  The drafted wording:
+
+  **INV-NNN** — Where Module 6 loads more than one source against a whole-load limit (the
+  license cap, or the SQLite subset choice), every later source's `load_subset:` block MUST be
+  computed from a budget fixed before the run (the remaining cap re-measured through the SDK
+  after any test load, filled in Step 14's load order) and written before the run starts, in that
+  order, under every loading strategy, Sequential included. No block may be written once any
+  load has started, and the loader MUST only read its source's block. A source whose budget is
+  zero MUST NOT be started, test-loaded or marked `failed`. Enforced by
+  `tests/test_phase_c_loads_each_source_from_its_subset_record.py`
+  (`EveryLoadPathWritesThenReadsTheBlock`, `TheOrchestratorLoadsFromTheBlock`,
+  `StepEighteenSkipsANotLoadedSource`, `StepNineteenReadsTheWholeLoadMarkers`). (Source: GitHub
+  issue #238.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** `tests/test_phase_c_loads_each_source_from_its_subset_record.py` (new, 26 tests).
+  The loading strategies are derived from Step 15's numbered menu and the license-cap choices
+  from #237's definition (INV-246). Each Step 19 strategy bullet must write every row's block
+  before its first start or launch, and must carry no write verb after it; the orchestrator
+  paragraph must carry no write verb; Step 18 must skip a not-loaded source. Negative controls,
+  each restored byte-identical: 12 mutations each fail the guard, including the race's own
+  per-source Sequential bullet (1 failure), a Sequential bullet that writes each block after the
+  run starts (2), a Parallel bullet that writes again after launch (1), an orchestrator that
+  writes a missing block (1), Step 18 test-loading a not-loaded source (1), and a fourth
+  strategy with no Step 19 bullet (2). `main`'s Phase C fails it with 18 failures and 11 errors.
+- **Commit:** a1494a8
+
 ## inv-065-is-cited-as-the-identifier-stripping-rule
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #231)
