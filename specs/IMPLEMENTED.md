@@ -134,7 +134,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     `tests/test_eula_question_precedes_every_install.py` pass unchanged. Their pins ("Skip the
     installation — Step 2, and Step 3's install commands", "Not Step 3 entirely", "Still do Step
     3's environment-script work", Phase 1's decline branch) still hold at the rewritten text.
-- **Commit:** uncommitted
+- **Commit:** 69f7449
 
 ## stale-text-from-the-2026-09-28-audit-is-corrected
 
