@@ -198,7 +198,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     failed on exactly "Never decline".
   - Live at `cd054f4`: 47 lines, 47 checked, 0 unresolved. Before the entry, it failed on
     exactly "Never decline" and "The walk is never inferred from silence".
-- **Commit:** uncommitted
+- **Commit:** `29a440b`
 
 ## stale-counts-become-properties-and-the-freeze-covers-the-directory
 
