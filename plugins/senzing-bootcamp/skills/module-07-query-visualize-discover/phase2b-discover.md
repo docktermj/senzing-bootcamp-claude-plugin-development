@@ -109,7 +109,7 @@ connections between entities using `find_network` and `find_path`.
    method, under **any** topic, so the signature is already in the `flags` or
    `response_schemas` response you just read (verified on MCP server 1.32.2, 2026-07-30).
    Where you hold neither, ask directly:
-   `get_sdk_reference(topic='methods', filter='find_network_by_entity_id')`. Read the one for
+   `get_sdk_reference(topic='parameters', filter='find_network_by_entity_id')`. Read the one for
    the bootcamper's language: cross-language documentation is **not** authoritative for the
    shape you pass, and it is wrong for Python here.
 

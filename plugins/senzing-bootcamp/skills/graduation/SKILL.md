@@ -725,7 +725,7 @@ The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
   not see: a section damaged after its module closed, a module whose Step 2c check could not run, or
   a whole-file property (image targets, tab coverage, `--expect-modules`) that only exists at
   graduation. Treat a structural finding at this point as a signal worth reading, not routine.
-- **If the bundled script cannot be located or run:** do not stop. Generate the PDF inline instead: parse `docs/bootcamp_recap.md` and render a cover page plus one page per module (each with Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary) using `fpdf2` if importable, else a minimal valid PDF. The recap Markdown at `docs/bootcamp_recap.md` is always the source of truth, so content is never lost.
+- **If the bundled script cannot be located or run:** do not stop. Generate the PDF inline instead: parse `docs/bootcamp_recap.md` and render a cover page plus one page per module (each with Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary) using `fpdf2` if importable, else a minimal valid PDF. On either path, draw every End-of-Module Summary's three labeled blocks — What you accomplished, Files produced, Why it matters — and mark one the recap does not carry as `(not recorded)` rather than omitting it or inventing its content (INV-157). The recap Markdown at `docs/bootcamp_recap.md` is always the source of truth, so content is never lost.
 
 ⛔ **Verify the artifact, not the exit code.** A `PDF generated:` line, a zero exit, and a high
 retention percentage are all necessary and all demonstrably insufficient: in one session four separate

@@ -231,7 +231,7 @@ steering files.)
   the stricter one governs — call the tool.
 - **Tool routing:** attribute names / JSON mappings -> `mapping_workflow`; SDK code ->
   `generate_scaffold` or `sdk_guide`; **method signatures and parameter types** ->
-  `get_sdk_reference` topic `methods` (aliases `functions` / `classes` / `api`), which searches the
+  `get_sdk_reference` topic `parameters`, which searches the
   SDK docs for signatures, parameters and examples — narrow with `filter='<method or class>'`;
   flags **and response structures** ->
   `get_sdk_reference` (topics `flags` and `response_schemas`; narrow with `filter='<method>'`);
@@ -408,7 +408,7 @@ steering files.)
   reporting **0** distinct keys against a true 16, and disclosed links reporting **0** against
   556 — each reached by following the rule above and stopping at the schema.
 - **Parameter shapes, for the bootcamper's binding.** **`get_sdk_reference` answers parameter
-  shapes whenever `filter` names a method — under *any* topic**, not only `topic='methods'`. A
+  shapes whenever `filter` names a method — under *any* topic**, not only `topic='parameters'`. A
   `flags` or `response_schemas` response you already hold therefore carries the signature too,
   in a `method_signatures` block, so it needs no second call. (Verified on MCP server 1.32.2,
   2026-07-30: `topic='flags', filter='find_network_by_entity_id'` returned it alongside the flag
@@ -418,7 +418,7 @@ steering files.)
   method:
 
   ```text
-  get_sdk_reference(topic='methods', filter='find_network_by_entity_id')
+  get_sdk_reference(topic='parameters', filter='find_network_by_entity_id')
   ```
 
   returns the binding's own signature —
@@ -432,7 +432,7 @@ steering files.)
   `find_network_by_entity_id` takes a plain `List[int]` of entity IDs, not the
   `{"ENTITIES": [{"ENTITY_ID": n}]}` document the flags docs and the Java/C# signatures imply —
   passing the document raises `SzSdkError`. So read the signature **for the bootcamper's language**,
-  not the first one returned. Only when `topic='methods'` genuinely does not cover it, fall back to
+  not the first one returned. Only when `topic='parameters'` genuinely does not cover it, fall back to
   **introspecting the installed binding** (`help(...)`, `inspect.signature(...)`,
   `dir(SzEngineFlags)`) — never to another language's example.
 - **Flag families answer different questions.** Confirm what a flag family *selects*, not just
