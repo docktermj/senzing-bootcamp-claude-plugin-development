@@ -18,7 +18,7 @@ The loop's merge policy and its label gate are stated in the
 Each worker follows `implement-github-issue`, so
 [`.claude/skill-overlays/implement-github-issue.md`](implement-github-issue.md) binds every issue the
 loop works: the INV-309 invariant capture, the MCP re-check, the `specs/IMPLEMENTED.md` ledger
-entry, `citations.py verify` after the entry, and this repository's local CI mirror. ⛔ **Put
+entry, `citations.py verify` after the entry, and this repository's local CI mirror. ⛔ **(INV-309) Put
 that file in every worker's brief.** On 2026-09-28 those obligations reached the workers only
 because the lead copied them in by hand.
 
@@ -44,12 +44,12 @@ instead, marked **not filed**; an upstream message carries the `Upstream:` value
 
 ## What an unattended run must never decide in this repository
 
-- ⛔ **Never sign off an invariant — and declining to mint one is NOT declining to ship the
+- ⛔ **(INV-309) Never sign off an invariant — and declining to mint one is NOT declining to ship the
   rule.** That distinction is the 2026-08-17 defect exactly. When an implementation ships a
   hard rule, ship it **and** write an explicit `DEFERRED INVARIANT` block in the ledger entry
   naming the rule, the site, and the drafted `INV-NNN — <statement>` wording, so the
-  maintainer's return costs one yes. ⛔ **Never `_None yet._`, never silence.**
-- ⛔ **Never call `submit_feedback`.** An `mcp-server`-routed finding goes in the handoff with
+  maintainer's return costs one yes. ⛔ **(INV-309) Never `_None yet._`, never silence.**
+- ⛔ **(INV-314) Never call `submit_feedback`.** An `mcp-server`-routed finding goes in the handoff with
   the message drafted and its `Upstream:` line reading *"not yet sent — needs maintainer
   approval"*.
 - ⛔ **Never decline** — that is the maintainer's alone. An issue you cannot implement is

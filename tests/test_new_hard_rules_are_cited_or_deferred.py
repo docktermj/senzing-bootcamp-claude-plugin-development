@@ -41,13 +41,26 @@ while looking at 112 of them. ⚠️ The plugins-keyed read was not an oversight
 2026-09-03 ledger entry states it outright, reasoning about which lines could confuse the
 parser, and nobody asked what the key would do to a root added later.
 
-⚠️ **The maintainer surface is COUNTED, not checked, and the count is printed even when it is
-zero.** Command files restate their skill's rules by design and cite nothing, so checking
-`.claude/` here turns roughly 49 restatements into failures; `test_since_view_sees_the_maintainer_surface.py`
-measured that and scoped this consumer out deliberately. What was wrong was doing it by
-*silence*. The number is now reported on every run, so 93 unchecked lines are a visible
-decision rather than an invisible one — and a genuinely new `.claude/` guarantee is still not
-caught by this guard. That is the remaining gap, stated rather than closed.
+⛔ **Every scanned root is CHECKED, the maintainer surface included, with the same predicate
+(#233).** Until #233 the `.claude/` roots were counted and not checked, on the premise that
+command files restate their skill's rules and cite nothing, so checking them would turn roughly
+49 restatements into failures. The 2026-09-28 audit then found 16 uncited maintainer-surface
+rules that nothing had flagged (#228), and the premise no longer held, measured at `f81e890`
+against the range from `0d7bbe1`:
+
+- command files already cite: `.claude/commands/*.md` carried 39 `INV-` ids;
+- a rule letting a restatement inherit its skill twin's state would have cleared **0 of the 16**
+  failing lines (only 3 were command lines matching a skill line, and all 3 twins were uncited),
+  and the ~49 figure was measured at an older ref (`7b43eee`);
+- `since` reports only lines added or edited in the range, so a long-standing restatement never
+  appears. The cost falls on a command rule someone edits, and citing it then is the INV-183
+  duty the shipped corpus already carries;
+- a twin matcher would be a new phrase-derived matcher under INV-282, for no measured benefit.
+
+So a restatement gets no special treatment: a `.claude/` rule cites at its own line or is named
+in a deferral, exactly as a shipped rule is. The breakdown is still printed on every run,
+including zeroes (INV-308). The fixtures that prove the check reaches every `.claude/` root,
+independent of the live range, are in `test_reverse_contract_flags_the_maintainer_surface.py`.
 
 ⚠️ **Skips rather than fails when the range cannot be resolved** — no git, a shallow clone, an
 audit entry whose `Commit:` is `uncommitted`. A guard that hard-failed there would fail on
@@ -94,12 +107,6 @@ def _scan_roots():
 
 
 SCAN_ROOTS = _scan_roots()
-
-#: Which scanned roots this guard CHECKS and which it only counts, derived from `SCAN_ROOTS` by
-#: one rule -- the maintainer surface is not shipped -- so a fourth root joins the right half
-#: without being named here a second time.
-CHECKED_ROOTS = tuple(r for r in SCAN_ROOTS if not r.startswith(".claude/"))
-OUT_OF_SCOPE_ROOTS = tuple(r for r in SCAN_ROOTS if r.startswith(".claude/"))
 
 
 def conformance(*args):
@@ -222,11 +229,12 @@ def _comparable(text):
     return re.sub(r"\s+", " ", re.sub(r"[`*⛔]", "", text)).lower().strip()
 
 
-#: What `since` prints, split into the three populations a consumer must tell apart. Every
+#: What `since` prints, split into the two populations a consumer must tell apart. Every
 #: reported line lands in exactly one of them, and `reported` is the producer's own total -- so
-#: `checked + out_of_scope + unresolved != reported` is arithmetic that cannot be argued with.
+#: `checked + unresolved != reported` is arithmetic that cannot be argued with. There is no
+#: third, counted-but-unchecked population: every `SCAN_ROOTS` entry is checked (#233).
 Parsed = collections.namedtuple(
-    "Parsed", "checked out_of_scope unresolved unknown_headings reported")
+    "Parsed", "checked unresolved unknown_headings reported")
 
 
 def _is_heading(stripped):
@@ -266,7 +274,7 @@ def parse_since(since_output):
     tinguishable from a line that was never reported.
     """
     heading = None
-    checked, out_of_scope, unresolved = [], [], []
+    checked, unresolved = [], []
     unknown_headings, reported = [], 0
     for raw in since_output.splitlines():
         stripped = raw.strip()
@@ -291,26 +299,24 @@ def parse_since(since_output):
         root = _root_of(heading)
         if root is None:
             unresolved.append((heading, body))
-        elif root in OUT_OF_SCOPE_ROOTS:
-            out_of_scope.append((heading, body))
         else:
             checked.append((heading, _full_source_line(heading, body)))
-    return Parsed(checked, out_of_scope, unresolved, unknown_headings, reported)
+    return Parsed(checked, unresolved, unknown_headings, reported)
 
 
 def announce(parsed):
     """⛔ Report the breakdown on every run, **including the zeroes**.
 
-    An out-of-scope count that appears only when it is non-zero makes its absence ambiguous:
-    the reader cannot tell "no maintainer-surface rules were added" from "the line was dropped
-    again". One line, always, is what makes the 93 unchecked lines a decision on the record.
-    Written to stderr like the fpdf2 notice, for the same reason -- it is a notice, not output.
+    A count that appears only when it is non-zero makes its absence ambiguous: the reader
+    cannot tell "no rules were added" from "the line was dropped again". One line, always, names
+    the roots checked, so the scope is a decision on the record (INV-308). Written to stderr
+    like the fpdf2 notice, for the same reason -- it is a notice, not output.
     """
     sys.stderr.write(
-        "[new-hard-rules] %d line(s) reported since the last audit: %d checked, %d out of "
-        "scope (%s), %d unresolved\n"
-        % (parsed.reported, len(parsed.checked), len(parsed.out_of_scope),
-           ", ".join(OUT_OF_SCOPE_ROOTS) or "no out-of-scope root", len(parsed.unresolved)))
+        "[new-hard-rules] %d line(s) reported since the last audit: %d checked (%s), "
+        "%d unresolved\n"
+        % (parsed.reported, len(parsed.checked), ", ".join(SCAN_ROOTS) or "no scanned root",
+           len(parsed.unresolved)))
     sys.stderr.flush()
 
 
@@ -414,15 +420,6 @@ class EveryNewHardRuleIsAccountedFor(unittest.TestCase):
                 "the report lists no hard-rule lines at all since the newest audit entry. The "
                 "ref was accepted as recorded (no SUSPECT-REF), and the outside count is zero "
                 "too, so this is an empty range rather than a range that missed the work")
-
-        if not parsed.checked:
-            # ⚠️ A THIRD kind of nothing, and the one this guard used to disguise as the
-            # first: rules were added, all of them outside the corpus this check covers.
-            self.skipTest(
-                "%d hard-rule line(s) were added since the newest audit entry and none is in "
-                "the checked corpus (%s): %d sit under the maintainer surface, which this "
-                "guard counts and does not check. Rules WERE added -- this is not an empty "
-                "range" % (parsed.reported, ", ".join(CHECKED_ROOTS), len(parsed.out_of_scope)))
 
         unaccounted = self._unaccounted(line for _path, line in parsed.checked)
 
