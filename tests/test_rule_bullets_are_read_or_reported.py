@@ -47,6 +47,7 @@ Stdlib only; the helper is loaded by path, since it takes no `--repo` argument (
 
 Run:  python3 -m unittest discover -s tests
 """
+import ast
 import importlib.util
 import io
 import contextlib
@@ -56,7 +57,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HELPER = REPO_ROOT / ".claude" / "skills" / "review-invariants" / "pending_invariants.py"
-LEDGER = REPO_ROOT / "specs" / "IMPLEMENTED.md"
 
 #: The block that exposed this. Held, so nothing is decided from it today -- which is why the
 #: loss went unnoticed, and why the numbers below are pinned rather than left to the next reader.
@@ -247,24 +247,56 @@ class TheLiveBlockIsFullyRead(unittest.TestCase):
             "it would have almost nothing to cite")
 
 
-class TheTwoParsersAgree(unittest.TestCase):
-    """One corpus, two readers. #59's lesson was three copies of the resolution roots."""
+class OneParserReadsTheRules(unittest.TestCase):
+    """One corpus, one reader. #59's lesson was three copies of the resolution roots.
 
-    def test_every_quoted_rule_is_one_the_quote_guard_also_sees(self):
-        mod = helper()
-        guard = re.compile(r"⛔ \*\*(.+?)\*\*.*?—\s*in `([^`]+)`")
-        seen = {m.group(1) for m in
-                (guard.search(l) for l in LEDGER.read_text(encoding="utf-8").splitlines())
-                if m}
-        mine = {r["text"] for b in mod.blocks() for r in mod.parse(b)["rules"]
-                if r["kind"] == "quoted"}
-        missed = sorted(q for q in mine if not any(mod.flat(s) == q for s in seen))
+    Until #236 this class compared the quote guard's own rule regex against `parse()`, so the
+    two readers could not drift apart unnoticed. The guard now reads through `parse()`, which
+    leaves nothing to compare, so what is asserted is that it stays that way.
+    ⛔ (INV-315) A second classifier of the same bullets is the drift this class exists to stop.
+    """
+
+    QUOTE_GUARD = REPO_ROOT / "tests" / "test_deferral_quotes_match_their_source.py"
+
+    #: What only a rule-classifying pattern contains: the stop sign, the bold that carries the
+    #: quote, or the em-dash before `in`. A normalizing pattern (whitespace, `(INV-NNN)`) has none.
+    RULE_MARKS = ("⛔", r"\*\*", "—")
+
+    def guard(self):
+        spec = importlib.util.spec_from_file_location("deferral_quote_guard", self.QUOTE_GUARD)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def test_the_quote_guard_reads_rules_through_parse(self):
+        mod = self.guard()
+        parse = getattr(mod, "parse", None)
+        self.assertIsNotNone(parse, "the quote guard no longer takes `parse` from the helper")
         self.assertEqual(
-            [], missed,
-            "pending_invariants.py classifies rule(s) as QUOTED that "
-            "tests/test_deferral_quotes_match_their_source.py's own scanner does not see: %s. "
-            "The two readers have drifted, and one of them is verifying nothing"
-            % ", ".join(m[:60] for m in missed))
+            HELPER.resolve(), Path(parse.__code__.co_filename).resolve(),
+            "the quote guard's `parse` is not pending_invariants.parse, so it reads the ledger's "
+            "rules with a parser of its own")
+        calls = {n.func.id for n in ast.walk(ast.parse(self.QUOTE_GUARD.read_text(encoding="utf-8")))
+                 if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+        self.assertIn("parse", calls, "the quote guard imports `parse` and never calls it")
+
+    def test_the_quote_guard_defines_no_rule_regex_of_its_own(self):
+        """⛔ (INV-315) Checked as compiled patterns and as inline `re` calls, so both ways back fail."""
+        mod = self.guard()
+        own = [f"{name} = {v.pattern!r}" for name, v in vars(mod).items()
+               if isinstance(v, re.Pattern) and any(m in v.pattern for m in self.RULE_MARKS)]
+        tree = ast.parse(self.QUOTE_GUARD.read_text(encoding="utf-8"))
+        own += [f"line {n.lineno}: re.{n.func.attr}({n.args[0].value!r})" for n in ast.walk(tree)
+                if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                and isinstance(n.func.value, ast.Name) and n.func.value.id == "re"
+                and n.args and isinstance(n.args[0], ast.Constant)
+                and isinstance(n.args[0].value, str)
+                and any(m in n.args[0].value for m in self.RULE_MARKS)]
+        self.assertEqual(
+            [], own,
+            "tests/test_deferral_quotes_match_their_source.py classifies rule bullets with a "
+            "pattern of its own again. Two readers of one corpus drift, and one of them then "
+            "verifies nothing. Read the rules through pending_invariants.parse()")
 
 
 if __name__ == "__main__":
