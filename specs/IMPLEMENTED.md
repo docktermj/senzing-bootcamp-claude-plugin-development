@@ -167,7 +167,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   run starts (2), a Parallel bullet that writes again after launch (1), an orchestrator that
   writes a missing block (1), Step 18 test-loading a not-loaded source (1), and a fourth
   strategy with no Step 19 bullet (2). `main`'s Phase C fails it with 18 failures and 11 errors.
-- **Commit:** uncommitted
+- **Commit:** a1494a8
 
 ## inv-065-is-cited-as-the-identifier-stripping-rule
 
