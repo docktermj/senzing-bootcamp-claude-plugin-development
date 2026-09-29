@@ -12,10 +12,11 @@ template rather than a spec template. ⚠️ **A run's actual behavior is unobse
 only a real invocation shows it, and a real invocation files real issues, so it is not a test
 this suite can run.
 
-⚠️ **The ledger is not an exception to the freeze.** `specs/mcp-coverage.jsonl` lives under
-`specs/` and is still written to, which looks like a carve-out and is not: the freeze guard
-globs `*.md`, so a `.jsonl` file is outside it **by construction**. Asserted below, because a
-reader who assumes an exemption will eventually grant a real one.
+⚠️ **The ledger is a named live exception to the freeze.** `specs/mcp-coverage.jsonl` lives
+under `specs/` and is still written to because INV-307 and `docs/FAMILY_WORKFLOW.md` §8 name
+it (#142), not because the freeze guard fails to reach it: the guard checks every file in
+`specs/`. Asserted below, because an exemption nobody wrote down is one a reader will
+eventually grant again.
 
 Stdlib only; every file is read as text (INV-108).
 
@@ -27,6 +28,7 @@ Source issue: #114.
 
 Run:  python3 -m unittest discover -s tests
 """
+import importlib.util
 import re
 import unittest
 from pathlib import Path
@@ -185,19 +187,32 @@ class NothingIsWrittenIntoTheFrozenArchive(unittest.TestCase):
             "exceptions to the freeze, so a live file under a read-only archive is recorded "
             "nowhere a reader would look")
 
-    def test_the_freeze_guard_still_globs_markdown(self):
-        """⚠️ Kept, with its reason corrected.
+    def test_the_freeze_guard_checks_every_file_in_specs(self):
+        """⚠️ Rewritten to pin the new subject (#226).
 
-        This asserted the `*.md` glob *because* the ledger's exemption depended on it. That
-        dependency is gone (#142). The glob is still worth pinning — the freeze's enforced
-        subject is `specs/*.md` and a reader of INV-307 should be able to rely on that — but
-        a change to it is now a scope question, no longer a silent revocation.
+        This once asserted the `*.md` glob *because* the ledger's exemption depended on it,
+        then (#142) because the enforced subject was `specs/*.md`. The subject is now the
+        directory: every file in `specs/`, of any type, with the live records and the
+        guard's own `FROZEN-MANIFEST.txt` left out by name. So the guard must SEE the ledger
+        before it exempts it, and must exempt it only by `LIVE_RECORDS`.
         """
-        guard = text(REPO_ROOT / "tests" / "test_specs_are_frozen.py")
+        spec = importlib.util.spec_from_file_location(
+            "test_specs_are_frozen", REPO_ROOT / "tests" / "test_specs_are_frozen.py")
+        guard = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(guard)
+        live = guard.LIVE_RECORDS
+        guard.LIVE_RECORDS = set()
+        seen = guard.spec_files()
         self.assertIn(
-            'glob("*.md")', guard,
-            "the freeze guard no longer globs `*.md`; INV-307's enforced subject has moved and "
-            "the exception list should be re-read against it")
+            "mcp-coverage.jsonl", seen,
+            "the freeze guard no longer sees a non-Markdown file in specs/; INV-307's enforced "
+            "subject has narrowed from the directory, and the ledger's exemption rests on the "
+            "gap again")
+        self.assertNotIn(
+            "FROZEN-MANIFEST.txt", seen,
+            "the freeze guard treats its own manifest as a spec; it is exempt by name")
+        self.assertIn("mcp-coverage.jsonl", live,
+                      "the ledger is not a named live record in the freeze guard")
 
 
 class TheClaimIsBoundToTheCommand(unittest.TestCase):

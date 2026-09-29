@@ -43,6 +43,177 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## stale-counts-become-properties-and-the-freeze-covers-the-directory
+
+- **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #257, a sub-issue of #226)
+- **Files changed:**
+  `tests/test_specs_are_frozen.py`, `tests/test_invariant_layout_tree.py`,
+  `tests/test_delegate_files_issues_not_specs.py`, `tests/test_spec_ledger_invariants.py`,
+  `docs/development.md`, `docs/FAMILY_WORKFLOW.md`, `.claude/commands/delegate-to-mcp-server.md`,
+  `.claude/skills/delegate-to-mcp-server/SKILL.md`,
+  `.claude/skills/review-invariants/invariant_manifest.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed 2026-09-29 by reading every line the
+  change touches: the freeze guard, the layout-tree guard, and the prose describing them and
+  the live records. None states a Senzing SDK, engine, configuration or data fact, and no
+  absence claim about the server is made. Server `sz-mcp-coworker` 1.37.15, 2026-09-29,
+  `get_capabilities()` only (for the version); `submit_feedback` was not called.
+- **Summary:** the counts in tests and `docs/` become properties, the freeze covers the whole
+  directory, and the layout-tree guard probes by path. Counts re-measured on this base
+  (`ba07100`) rather than taken from the issue: the ledger-only citations and the file-less
+  ledger entries had both moved again, so each is now stated as a property, not re-pinned.
+  - **Counts become properties.** `test_specs_are_frozen.py`'s docstring and its live-record
+    failure message say "some citations resolve through the ledger alone" instead of "six";
+    `test_spec_ledger_invariants.py`'s docstring says "many ledger entries have no spec file"
+    and "every legitimately file-less entry" instead of "92"; `test_invariant_layout_tree.py`'s
+    docstring no longer says "24 file entries and 30 directory entries" and points at the
+    `EXPECTED_*` constants, which stay as the INV-265 non-vacuity floor.
+  - **`LIVE_RECORDS` is the five**: `IMPLEMENTED.md`, `DECLINED.md`, `INVARIANTS.md`,
+    `README.md`, `mcp-coverage.jsonl`. Still hard-coded; its comment says so, and that #258
+    replaces it with a parse of the "What stays live" table in `specs/README.md`.
+  - **The docs agree with it.** `docs/development.md` names the five and drops "outside it by
+    construction"; `docs/FAMILY_WORKFLOW.md` §8 already named them. The new
+    `TheDocsNameTheLiveRecords` reads the `**not** frozen` sentence of `development.md` and the
+    `specs/` bullets of §8, and fails when either names a set other than `LIVE_RECORDS`. Its
+    in-suite negative control deletes each live record from each copy in turn and asserts the
+    parsed set differs.
+  - **The freeze covers the directory.** `spec_files()` walks every file under `specs/` (any
+    type, any depth, as a `specs/`-relative path) instead of `glob("*.md")`, and leaves out
+    `FROZEN-MANIFEST.txt` by name as the guard's own input, not as a live record.
+    `test_the_freeze_guard_still_globs_markdown` is rewritten as
+    `test_the_freeze_guard_checks_every_file_in_specs`: it loads the guard, empties its
+    `LIVE_RECORDS`, and asserts the guard then sees `mcp-coverage.jsonl` and never its manifest.
+    That file's docstring drops "by construction". The four sites that said in the present
+    tense that the guard globs `specs/*.md` (the delegate command and skill,
+    `invariant_manifest.py`'s comment, and §8's history paragraph) now say it did until #257.
+    `specs/README.md:12,17` still says `*.md`; that is #258's.
+  - **The tree guard probes by path.** `extract_tree()` rebuilds each entry's project-relative
+    path from the column of its name (the open directories to its left), and `Entry.probe` is
+    that path, with the placeholder rule (the prefix before `{`) unchanged. All 55 entries
+    still resolve or are annotated; `docs/README.md` has 1 hit and `src/utils/` 2. New tests:
+    paths are unique (the two `backups/` differ), every path has one component per indentation
+    level (so the `backups/` continuation line cannot misplace `backups/packages/`), a leaf
+    name mentioned only under another path does not resolve (synthetic and against the real
+    corpus). The name-uniqueness test stays.
+  - **Two-state pin**, `TheUnproducedLeavesArePinnedInTwoStates`: `docs/README.md` with
+    `future` and `src/utils/` with `reserved` each pass when INV-050's tree carries that
+    annotation with a date in the entry's comment column, or when a pending `PROPOSED AMENDMENT
+    to INV-050` block, as `pending_invariants.py` reads the queue, carries the entry's tree line
+    (its left column unchanged) with that annotation in its comment. It passes today on the
+    block below, and after `/review-invariants` applies the block on the tree, unchanged. Its
+    in-suite controls run each arm through the real queue parser on an unannotated copy of each
+    leaf: (a) no block, and the block marked applied, fail; (b) the block's line without its
+    annotation fails; a tree annotation with no date fails.
+  - **`specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged** (INV-307). The three
+    changes to registered invariants are the blocks below.
+- **Approach:** raced (Phase 5b), recorded here by the racer that produced this patch.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-307 — awaiting the maintainer's sign-off; NOT applied.** The rules already registered:
+    - ⛔ **six citations already resolve through the ledger alone** — in `specs/INVARIANTS.md`
+    - ⛔ **the ledger carries those six citations** — in `specs/INVARIANTS.md`
+    - ⛔ **The freeze's stated subject is the DIRECTORY; its enforced subject is `*.md` in the directory** — in `specs/INVARIANTS.md`
+
+  ⚠️ **Why.** INV-307 forbids asserting a count and asserts one, twice, and the figure had
+  already moved (six at registration; 27 by `invariant_sources()` on `ba07100`). Its 2026-09-24
+  note says the enforced subject is `*.md`, and this change makes it the directory. Amending a
+  registered invariant is the maintainer's sign-off alone, so `specs/INVARIANTS.md` is
+  untouched. **Sites it affects:** INV-307 in `specs/INVARIANTS.md`; the guard's `spec_files()`
+  and `LIVE_RECORDS`; `docs/development.md` and `docs/FAMILY_WORKFLOW.md` §8, which name the
+  live records; and `specs/README.md`'s "What stays live" table, which the note names as the
+  one authoritative list. ⚠️ **Order with #258:** the note says the freeze guard reads that
+  table, which is true only once #258 lands; applied first, it points at a table that still
+  lists three until #258 merges. The block carries both markers for the reason #153's gives:
+  the queue reads `PROPOSED AMENDMENT to INV-307`, and `tests/test_review_invariants_queue.py`
+  counts "NOT minted". Applying it resolves the block: mark the bullet `applied YYYY-MM-DD` and
+  drop both "awaiting" markers. Enforced by `tests/test_specs_are_frozen.py`.
+
+  The drafted wording, a note appended after INV-307's closing `(Source: …)` parenthetical, with
+  every existing sentence unchanged:
+
+  **INV-307** — (⛔ **Dated correction, <YYYY-MM-DD> (#226): no count is asserted, and the freeze's enforced subject is now the directory; no requirement changes.** *"Six citations already resolve through the ledger alone"* and *"the ledger carries those six citations"* state a count this entry forbids, and the figure had already moved. Read both as *some citations resolve through the ledger alone*. The freeze guard now checks **every file** in `specs/`, not `*.md`, which closes the gap the 2026-09-24 note named. `FROZEN-MANIFEST.txt` is exempt **by name**, as the guard's own input, and is not a live record. The five live records are `IMPLEMENTED.md`, `DECLINED.md`, `INVARIANTS.md`, `README.md` and `mcp-coverage.jsonl`, and their one authoritative list is the "What stays live" table in `specs/README.md`, which the freeze guard reads; every other site that names them MUST agree with it.)
+
+  *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
+  applies the note, not the day of this run.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-307 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify`
+  red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint at the
+  next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-050 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+    - ⛔ **The generated Bootcamp project MUST follow this layout** — in `specs/INVARIANTS.md`
+
+  The two tree lines as they ship today, `specs/INVARIANTS.md:194` and `:196`:
+
+  ```text
+  │   └── utils/                         # Shared helpers
+  │   ├── README.md
+  ```
+
+  ⚠️ **Why.** Neither leaf has a producer under `plugins/`, and neither is annotated, so each
+  is accounted for only by a mention: once `tests/test_invariant_layout_tree.py` probes by path
+  (INV-202's amendment below), `docs/README.md` resolves on a line saying to skip it, and
+  `src/utils/` on a copy-if-present row. INV-202 needs the annotation in the entry's own comment
+  column, and `/review-invariants` applies an amendment by appending, so the block names **two
+  in-place edits** to the tree's comment column besides the note, for `/review-invariants` to
+  make as clarifications under `specs/INVARIANTS.md` rule 2 ("Maintaining this file").
+  **Sites it affects:** `specs/INVARIANTS.md:194` (`src/utils/`) and `:196` (`docs/README.md`),
+  which become, byte for byte:
+
+  ```text
+  │   └── utils/                         # Shared helpers (reserved; <YYYY-MM-DD>, #226: no step produces it)
+  │   ├── README.md                      # (future; <YYYY-MM-DD>, #226: no step writes it yet)
+  ```
+
+  and the note, appended after INV-050's closing parenthetical. The two-state pin reads the
+  annotated lines above: while this block is pending it passes on them, and once the tree is
+  edited and the block marked applied it passes on the tree. Applying the note without the two
+  tree edits, or marking the block applied without them, turns it red. Enforced by
+  `tests/test_invariant_layout_tree.py`.
+
+  The drafted wording:
+
+  **INV-050** — (⚠️ **Dated clarification, <YYYY-MM-DD> (#226): two leaves are annotated; no meaning change.** `docs/README.md` is marked `(future)` and `src/utils/` `(reserved)`. Nothing under `plugins/` produces either. `docs/README.md` is named once, by a line that says to skip it (`module-05-data-quality-mapping/phase2-data-mapping.md`). `src/utils/` is named only by graduation's copy table, which copies it if present (`graduation/SKILL.md`). Both stay in the tree, per INV-202.)
+
+  *(the dates are placeholders deliberately: `/review-invariants` fills them in on the day it
+  applies the note and the two edits.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-050 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify`
+  red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint at the
+  next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-202 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+    - ⛔ **Every leaf entry in INV-050's project-layout tree MUST be either referenced somewhere under `plugins/` or annotated in its own comment as reserved/superseded/legacy/future** — in `specs/INVARIANTS.md`
+
+  ⚠️ **Why.** "Referenced" was read by leaf name, so `docs/README.md` resolved on every
+  `README.md` the plugin mentions. The guard now probes by project-relative path; the note
+  records that reading in the rule the guard enforces. **Sites it affects:** INV-202 in
+  `specs/INVARIANTS.md`, and `Entry.probe` and `extract_tree()` in
+  `tests/test_invariant_layout_tree.py`, which rebuild and probe the path. Every entry still
+  resolves by path on `ba07100` or is annotated, so the tighter reading needs no tree change to
+  pass. Enforced by `tests/test_invariant_layout_tree.py`.
+
+  The drafted wording, a note appended after INV-202's closing `(Source: …)` parenthetical:
+
+  **INV-202** — (⚠️ **Dated clarification, <YYYY-MM-DD> (#226): "referenced" means by project-relative path.** A leaf counts as referenced only when its path from the project root appears under `plugins/` (for example `docs/README.md`, not any `README.md`). The placeholder rule is unchanged: an entry with `{…}` resolves on the prefix before the brace. The guard used to probe by leaf name, which let `docs/README.md` resolve on every `README.md` the plugin mentions.)
+
+  *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
+  applies the note.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-202 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify`
+  red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint at the
+  next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Establishes no new invariant.** The three changes above amend registered invariants and
+  are drafted, not applied; everything else applies INV-307, INV-050, INV-202 and INV-265 as
+  registered.
+- **Tests:** `python3 -m unittest discover -s tests` green in both CI legs (fpdf2 present and
+  absent, empty `HOME`); `citations.py verify` clean after this entry was written. Negative
+  controls, beyond the in-suite ones above, run on a copy of the tree and reverted: a new
+  `specs/zzz-negative-control.txt`, and separately a nested `specs/sub/a.md`, turn
+  `test_every_spec_file_is_in_the_manifest` red; a name dropped from `development.md` and,
+  separately, from §8 turns `TheDocsNameTheLiveRecords` red; the INV-050 block removed, and
+  separately marked applied as the precedent does (both "awaiting" markers dropped), and
+  separately its `utils/` or its `README.md` line's annotation removed, each turn the two-state
+  pin red; the tree edited and the block marked applied passes. ⚠️ A block that says
+  `applied` but keeps "awaiting … NOT minted" is still pending to `pending_invariants.py`, so
+  the pin still passes on it: the queue's marker filter is the one arbiter (INV-315).
+- **Commit:** uncommitted
+
 ## each-maintainer-skill-states-its-commands-rules
 
 - **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #241)

@@ -25,16 +25,15 @@ guard that gets deleted when that offender is fixed.
 
 ⚠️ **Both directions matter, and they fail differently.**
 
-1. **Nothing new lands** -- a `specs/*.md` that is neither in the manifest nor a live
-   record. This is the freeze being breached: work is being tracked where nobody is
+1. **Nothing new lands** -- a file in `specs/`, of any type, that is neither in the manifest
+   nor a live record. This is the freeze being breached: work is being tracked where nobody is
    looking for it, and it will not appear in any issue query.
 2. **Nothing quietly leaves** -- a manifest name whose file has gone. This is worse and
    quieter: `INVARIANTS.md` cites specs by slug, and `tests/test_spec_ledger_invariants.py`
    accepts *either* a file under `specs/` *or* an `IMPLEMENTED.md` entry. So deleting a
    spec that happens to be ledgered breaks no existing test while destroying the reasoning
-   an invariant points at. Six citations already resolve through the ledger alone
-   (`deep-dive-audit-2026-07-28` and five others); thinning the archive silently grows that
-   number.
+   an invariant points at. Some citations already resolve through the ledger alone
+   (`deep-dive-audit-2026-07-28` among them); thinning the archive silently adds to them.
 
 ⛔ **No count is asserted anywhere in this file, deliberately** -- the habit
 `test_documented_dev_commands_match_the_shipped_set.py` refuses by name. A test pinning
@@ -46,8 +45,14 @@ a set comparison is satisfied trivially (INV-265).
 
 ⚠️ **The live records are exempt and must stay that way.** `IMPLEMENTED.md`, `DECLINED.md`
 and `INVARIANTS.md` are historical record and live rules, not transient work items; the
-ledger in particular is what six invariant citations resolve through. Freezing them would
-break `/review-invariants`, which appends to `INVARIANTS.md` by design.
+ledger in particular is what some invariant citations resolve through. Freezing them would
+break `/review-invariants`, which appends to `INVARIANTS.md` by design. `README.md` is the
+freeze notice, and `mcp-coverage.jsonl` is `/delegate-to-mcp-server`'s ledger, a **named**
+live exception (#142) rather than one the guard fails to reach: the guard checks **every
+file** in `specs/`, not `*.md`. `FROZEN-MANIFEST.txt` is exempt **by name**, as the guard's
+own input; it is not a live record. ⚠️ `docs/development.md` and `docs/FAMILY_WORKFLOW.md`
+§8 each name the live records, and `TheDocsNameTheLiveRecords` fails when either names a
+different set.
 
 ⚠️ **Enforces INV-307.** It asserts the set in both directions, that the live records exist
 and stay out of the frozen set, and that the cutover date is stated in `specs/README.md` rather
@@ -60,12 +65,13 @@ review of the diff catches that. It likewise does not establish that a maintaine
 *refrains* from writing a spec: it detects the file after it lands, which is a report rather
 than a prevention, and nothing offline can observe a command declining to run.
 
-Stdlib only; the directory is globbed and the manifest read as text (INV-108).
+Stdlib only; the directory is walked and the manifest read as text (INV-108).
 
 Source issue: #52 (freeze `specs/`, set the cutover date).
 
 Run:  python3 -m unittest discover -s tests
 """
+import re
 import unittest
 from pathlib import Path
 
@@ -79,7 +85,14 @@ FREEZE_README = SPECS / "README.md"
 CUTOVER = "2026-09-15"
 
 #: Not frozen. Historical record and live rules -- see the module docstring.
-LIVE_RECORDS = {"IMPLEMENTED.md", "DECLINED.md", "INVARIANTS.md", "README.md"}
+#: ⚠️ Hard-coded for now, temporarily: a sibling sub-issue of #226 (#258) replaces this literal
+#: with a parse of the "What stays live" table in `specs/README.md`.
+LIVE_RECORDS = {"IMPLEMENTED.md", "DECLINED.md", "INVARIANTS.md", "README.md",
+                "mcp-coverage.jsonl"}
+
+#: The two documents outside `specs/` that name the live records.
+DEVELOPMENT_MD = REPO_ROOT / "docs" / "development.md"
+FAMILY_WORKFLOW = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
 
 #: Pointer used in every failure message, so the guard explains the freeze it enforces.
 POINTER = "specs/ is frozen (cutover %s); see specs/README.md" % CUTOVER
@@ -93,8 +106,31 @@ def manifest_names():
 
 
 def spec_files():
-    """Every `*.md` in specs/ that is not one of the live records."""
-    return {p.name for p in SPECS.glob("*.md") if p.name not in LIVE_RECORDS}
+    """Every file in specs/, of any type and at any depth, that is not a live record.
+
+    `FROZEN-MANIFEST.txt` is left out by name: it is this guard's own input, not a spec.
+    """
+    found = {p.relative_to(SPECS).as_posix() for p in SPECS.rglob("*") if p.is_file()}
+    return found - LIVE_RECORDS - {MANIFEST.name}
+
+
+#: A backticked filename, with or without its `specs/` prefix.
+RECORD_NAME = re.compile(r"`(?:specs/)?([A-Za-z0-9_-][A-Za-z0-9_.-]*\.[A-Za-z0-9]+)`")
+
+
+def named_in_development_md(text):
+    """The names in `docs/development.md`'s one sentence saying the live records are not frozen."""
+    sentences = [s for s in re.split(r"(?<=\.)\s+", re.sub(r"\s+", " ", text))
+                 if "**not** frozen" in s]
+    return set(RECORD_NAME.findall(sentences[0])) if len(sentences) == 1 else set()
+
+
+def named_in_family_workflow(text):
+    """The `specs/` files `docs/FAMILY_WORKFLOW.md` §8 lists as bullets."""
+    start = text.find("\n## 8.")
+    end = text.find("\n## ", start + 1)
+    section = text[start:end] if start != -1 else ""
+    return set(re.findall(r"(?m)^- `specs/([^`]+)`", section))
 
 
 class NeitherSetIsEmpty(unittest.TestCase):
@@ -154,7 +190,7 @@ class TheLiveRecordsStayLive(unittest.TestCase):
         self.assertEqual(
             [], absent,
             "live record(s) missing from specs/: %s. These are exempt from the freeze "
-            "because they are still written to -- the ledger is what six INVARIANTS.md "
+            "because they are still written to -- the ledger is what some INVARIANTS.md "
             "citations resolve through, and /review-invariants appends to INVARIANTS.md."
             % ", ".join(absent))
 
@@ -166,6 +202,33 @@ class TheLiveRecordsStayLive(unittest.TestCase):
             "live record(s) appear in the frozen manifest: %s. The manifest is the set that "
             "may not change; a ledger listed there is a contradiction, because appending to "
             "it is the behavior issue #52 required to keep working." % ", ".join(frozen_live))
+
+
+class TheDocsNameTheLiveRecords(unittest.TestCase):
+    """Each copy of the live-record list outside `specs/` names exactly `LIVE_RECORDS`."""
+
+    COPIES = ((DEVELOPMENT_MD, named_in_development_md),
+              (FAMILY_WORKFLOW, named_in_family_workflow))
+
+    def test_each_copy_names_the_live_records(self):
+        for path, named in self.COPIES:
+            with self.subTest(copy=path.name):
+                found = named(path.read_text(encoding="utf-8"))
+                self.assertEqual(
+                    sorted(LIVE_RECORDS), sorted(found),
+                    "%s names the live records %s; the freeze guard exempts %s. A live record "
+                    "is a decision (INV-307), so every site naming the set must name the same "
+                    "one." % (path.relative_to(REPO_ROOT).as_posix(), sorted(found),
+                              sorted(LIVE_RECORDS)))
+
+    def test_dropping_a_name_from_either_copy_is_caught(self):
+        """Negative control: each copy with one live record deleted parses to a different set."""
+        for path, named in self.COPIES:
+            text = path.read_text(encoding="utf-8")
+            for name in sorted(LIVE_RECORDS):
+                with self.subTest(copy=path.name, dropped=name):
+                    thinned = re.sub(r"`(?:specs/)?%s`" % re.escape(name), "", text)
+                    self.assertNotEqual(LIVE_RECORDS, named(thinned))
 
 
 class TheCutoverDateIsRecorded(unittest.TestCase):
