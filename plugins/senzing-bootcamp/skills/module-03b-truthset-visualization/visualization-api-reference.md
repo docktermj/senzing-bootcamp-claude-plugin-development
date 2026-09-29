@@ -494,7 +494,7 @@ steps, and `FINAL_STATE.VIRTUAL_ENTITIES[]` describes the **final state**, which
 one** virtual entity. It is not a description of one resolved entity, with or without steps. On
 failure, return `{"entity_id": <id>, "error": "..."}`.
 
-⚠️ **The final state is unsettled when either of two signs is present:**
+⚠️ **(INV-330) The final state is unsettled when either of two signs is present:**
 `HOW_RESULTS.FINAL_STATE.NEED_REEVALUATION` is non-zero (an integer), or
 `HOW_RESULTS.FINAL_STATE.VIRTUAL_ENTITIES[]` has more than one element. Either one alone is enough,
 and nothing documents whether the two always go together. Observed 2026-09-25 on Senzing SDK 4.4.1
@@ -824,7 +824,7 @@ and **How?** actions that call
 `/api/why` and `/api/how` and render the explanation (match keys, feature scores, construction
 steps) in a modal.
 
-⛔ **How? when the final state is unsettled.** When either sign in the `/api/how` entry above is
+⛔ **(INV-330) How? when the final state is unsettled.** When either sign in the `/api/how` entry above is
 present, the How explanation MUST show a visible **unsettled-state notice** that names the sign or
 signs present with the values the response carries (only the one that fired, when only one did), and
 MUST NOT claim one entity: no "built this entity in N step(s)" verdict and no "resolved directly into

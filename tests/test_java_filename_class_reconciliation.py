@@ -32,6 +32,9 @@ with 0 warnings, 0 errors on .NET 8, verified 2026-08-14), so nothing is dropped
 Enforces **INV-237** — the reconciliation is stated centrally, pointed at from every prescribing
 site, and never resolved by renaming the file or the type.
 
+Enforces **INV-237**'s 2026-09-29 correction (#161): a shared Java class is named after its class.
+⚠️ It pins the ground-rules text and cannot observe a live `javac` build of a Bootcamper's code.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

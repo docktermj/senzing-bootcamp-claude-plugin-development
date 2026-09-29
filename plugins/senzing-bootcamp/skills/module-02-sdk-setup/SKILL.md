@@ -1099,7 +1099,7 @@ Its response documents `VERSION` as a top-level string beside `BUILD_VERSION`
 2026-09-26). If a value was already recorded and this reading differs, replace it and say so,
 naming both versions. This is the one place the installed version is recorded: graduation's recap
 reads `sdk_version` and records "Unknown" when it is absent, because the Senzing MCP server is
-remote and cannot report what is installed on this machine. So do not fill the field from the
+remote and cannot report what is installed on this machine. (INV-329) So do not fill the field from the
 package manager, `szBuildVersion.json` or the MCP server. A Step 1b update runs before this step,
 so the reading here is already the post-update version. The version does not move when later
 steps write configuration, so unlike `license_record_limit` its marker records provenance, not a

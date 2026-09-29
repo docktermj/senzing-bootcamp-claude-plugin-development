@@ -30,6 +30,10 @@ maintainer between generation and execution. `/unattended-issue-loop` already fo
 adding the label — but that rule lives in the loop's file, and the audit is a different
 command whose reader may never open it.
 
+Enforces **INV-318** (no maintainer command applies `unattended-ok` to an issue it files) at the
+audit's command and skill. ⚠️ It cannot establish that a live run refrains from labeling, or that
+a filing command added later carries the sentence -- it pins the sentence where it is written.
+
 ⛔ **This asserts what the skill INSTRUCTS, never what a run does.** No offline test can
 observe `gh issue create` being called, or — harder still — *not* being called. Nothing here
 establishes that an unattended run refrains from filing; only that it is told to, in terms a

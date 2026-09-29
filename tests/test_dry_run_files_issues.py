@@ -29,6 +29,16 @@ instructions a runner reads say so.
 Enforces **INV-307** (nothing new lands in `specs/`) and **INV-314** (each outward record is shown
 and approved on its own) at the `/dry-run` surfaces.
 
+Enforces **INV-317** (a finding is recorded durably as it is found, before it is fixed, and never
+held only in conversation) through `SAME_WORDS`, which pins those lifecycle words in `/dry-run`'s
+command and skill. ⚠️ It does **not** read `/production-readiness-audit`, which states the same rule
+in its own words, and it cannot establish that a live run records before it fixes -- only a real
+`/dry-run` phase 3 observes a turn.
+
+Enforces **INV-318** (no maintainer command applies `unattended-ok` to an issue it files) through
+the same `SAME_WORDS` pin, at `/dry-run`'s command and skill. ⚠️ It cannot establish that a live run
+refrains from labeling -- it pins the sentence where it is written.
+
 Source issue: #153.
 
 Stdlib only; every file is read as text (INV-108).

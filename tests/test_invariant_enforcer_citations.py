@@ -371,7 +371,65 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # back and states it pins the behavior, not the server's sentence (INV-219). It is INV-160's
 # first named enforcer; no new invariant was registered. Re-derived by running the
 # extractor -- 136, with the new pair present by name. EXPECTED_PAIRS 135 -> 136.
-EXPECTED_PAIRS = 136
+# 137 on 2026-09-29: INV-317 (#228 D1: a maintainer run records each finding durably as it is
+# found, before fixing it, and never ends with one held only in conversation) names
+# test_dry_run_files_issues.py, which cites it back and states it does NOT read
+# `/production-readiness-audit` and cannot observe a live run. Re-derived by running the
+# extractor -- 137, with the new pair present by name. EXPECTED_PAIRS 136 -> 137.
+# 139 on 2026-09-29: INV-318 (#228 D2: no maintainer command applies `unattended-ok` to an issue
+# it files) names two tests, test_dry_run_files_issues.py and
+# test_audit_files_issues_not_specs.py. Each cites it back and states it pins the sentence, not
+# a run's behavior. Re-derived by running the extractor -- 139, with both new pairs present by
+# name. EXPECTED_PAIRS 137 -> 139.
+# 141 on 2026-09-29: INV-319 (#228 D3: a filing command files in this repository only) names
+# test_feedback_to_issues_files_in_its_own_repo.py and test_delegate_files_issues_not_specs.py.
+# Each cites it back and states it pins the rule where written, not a run. Re-derived by running
+# the extractor -- 141, with both new pairs present by name. EXPECTED_PAIRS 139 -> 141.
+# 142 on 2026-09-29: INV-320 (#238: Phase C fixes every later source's limit before the run)
+# names test_phase_c_loads_each_source_from_its_subset_record.py, which cites it back and states
+# it pins the text, not a live loader. Re-derived by running the extractor -- 142, with the new
+# pair present by name. EXPECTED_PAIRS 141 -> 142.
+# 143 on 2026-09-29: INV-321 (#231: a defect report sent off the machine carries no identifier)
+# names test_feedback_routing.py, which cites it back and states it pins the text, not a live
+# submission. Re-derived by running the extractor -- 143, with the new pair present by name.
+# EXPECTED_PAIRS 142 -> 143.
+# 144 on 2026-09-29: INV-322 (#231: a file the bootcamp writes locally carries no host
+# identifier) names test_bootcamp_notes_flow.py, which cites it back for the notes context block
+# only. Re-derived by running the extractor -- 144, with the new pair present by name.
+# EXPECTED_PAIRS 143 -> 144.
+# 145 on 2026-09-29: INV-324 (#237: the remaining license cap counts the repository through the
+# SDK, never from the registry) names test_load_reconciliation_has_two_stages.py, which cites it
+# back and states it pins Phase B's text only. Re-derived by running the extractor -- 145, with
+# the new pair present by name. EXPECTED_PAIRS 144 -> 145.
+# 146 on 2026-09-29: INV-325 (#237: every subset choice writes its `load_subset:` block, the only
+# record the reconciliation cites) names test_load_reconciliation_has_two_stages.py, which cites
+# it back and states it pins the pointers, not a live run. Re-derived by running the extractor --
+# 146, with the new pair present by name. EXPECTED_PAIRS 145 -> 146.
+# 147 on 2026-09-29: INV-326 (#157: a step that writes a working sample records it in the
+# `sample:` block) names test_load_reconciliation_has_two_stages.py, which cites it back and
+# states it pins the text, not a live run. Re-derived by running the extractor -- 147, with the
+# new pair present by name. EXPECTED_PAIRS 146 -> 147.
+# 148 on 2026-09-29: INV-327 (#165: the first source is chosen by Phase C Step 14's heuristics)
+# names test_first_source_is_chosen_by_step_fourteens_heuristics.py, which cites it back and
+# states it pins the text, not a live choice. Re-derived by running the extractor -- 148, with
+# the new pair present by name. EXPECTED_PAIRS 147 -> 148.
+# 149 on 2026-09-29: INV-328 (#155: a numbered option is persisted as a category and a null,
+# never as a count) names test_volume_option_reply_has_no_count.py, which cites it back and
+# states it pins the text, not a live call. Re-derived by running the extractor -- 149, with the
+# new pair present by name. EXPECTED_PAIRS 148 -> 149.
+# 150 on 2026-09-29: INV-329 (#168: the recap reports the SDK version setup measured, or
+# "Unknown") names test_recap_sdk_version_is_the_installed_one.py, which cites it back and states
+# it pins the text, not a live recap. Re-derived by running the extractor -- 150, with the new
+# pair present by name. EXPECTED_PAIRS 149 -> 150.
+# 151 on 2026-09-29: INV-330 (#169: a How rendering names an unsettled final state) names
+# test_how_tab_names_an_unsettled_final_state.py, which cites it back and states it pins the
+# reference text, not a generated build. Re-derived by running the extractor -- 151, with the
+# new pair present by name. EXPECTED_PAIRS 150 -> 151.
+# 152 on 2026-09-29: INV-331 (#163: a pre-load heads-up triggers on the loadable total) names
+# test_sqlite_preload_check_reads_the_loadable_total.py, which cites it back and states it pins
+# the text, not a live prompt. Re-derived by running the extractor -- 152, with the new pair
+# present by name. EXPECTED_PAIRS 151 -> 152.
+EXPECTED_PAIRS = 152
 
 
 def pairs():

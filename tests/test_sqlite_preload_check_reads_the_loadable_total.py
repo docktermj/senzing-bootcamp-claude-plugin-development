@@ -31,6 +31,10 @@ line are out of scope and stay pinned by `test_loader_concurrency_reads_database
 
 Source: GitHub issue #163.
 
+Enforces **INV-331** (a pre-load heads-up triggers on the loadable total, never on the
+production-volume answer, and "already decided" matches on the recorded figure). ⚠️ It pins
+Phase A's text and cannot observe a live prompt.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

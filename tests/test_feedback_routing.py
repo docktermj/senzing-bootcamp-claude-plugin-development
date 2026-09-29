@@ -29,8 +29,12 @@ Three properties this pins, because getting any of them wrong is worse than not 
   submissions are anonymous, so a bootcamper who says yes gets no reply channel and must be
   told that before answering.
 * **The bootcamper's data never leaves as part of a bug report.** Entity names and record
-  IDs are theirs (INV-065) — an upstream message describes the shape of a problem, never the
+  IDs are theirs (INV-321) — an upstream message describes the shape of a problem, never the
   content of their records.
+
+Enforces **INV-321** (a defect report sent off the machine carries no identifier and none of the
+Bootcamper's data) in `BootcamperDataNeverLeaves`. ⚠️ It pins the stripping list and the citation
+in the forward step and cannot establish that a live submission is stripped.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -503,7 +507,7 @@ class BootcamperDataNeverLeaves(unittest.TestCase):
         for probe in ("hostname", "username", "IP\naddress".replace("\n", " "), "email"):
             with self.subTest(probe=probe):
                 self.assertIn(probe, squashed)
-        self.assertIn("INV-065", forward_step())
+        self.assertIn("INV-321", forward_step())
 
     def test_record_content_is_explicitly_out_of_scope(self):
         squashed = plain(forward_step())
@@ -559,7 +563,7 @@ class EveryEntryPointDescribesTheRouting(unittest.TestCase):
     def test_hook_injects_the_routing_instruction(self):
         ctx = hook_context("bootcamp feedback: a tool returned a truncated error")
         self.assertTrue(ctx, "the hook must recognize a feedback prompt")
-        for probe in ("Triage", "Routing", "submit_feedback", "INV-015", "INV-065",
+        for probe in ("Triage", "Routing", "submit_feedback", "INV-015", "INV-321",
                       "showing the exact message"):
             with self.subTest(probe=probe):
                 self.assertIn(probe, ctx)

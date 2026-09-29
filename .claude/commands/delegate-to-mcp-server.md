@@ -57,7 +57,7 @@ hooks, scripts or skills — filing the issues is the deliverable, and implement
 `specs/INVARIANTS.md` is append-only, and a superseded one is *marked* superseded.
 
 ⛔ **(INV-314) Show the maintainer every issue title and body and get an explicit yes before filing**,
-and ⛔ **never pass `--repo`.** Filing is outward-facing and immediate: an issue cannot be
+and ⛔ **(INV-319) never pass `--repo`.** Filing is outward-facing and immediate: an issue cannot be
 un-filed and its notifications have already gone out. This is the parent repository, where
 parent-to-child change travels by parity from a tagged release — so the parent never files
 into a child at all.

@@ -27,6 +27,10 @@ the key at Step 4 is a claim about a turn, and ``dry-run`` phase 3's.
 
 Stdlib only, and nothing under ``plugins/`` is imported (INV-108).
 
+Enforces **INV-329** (the recap reports the SDK version the installed SDK returned, recorded at
+SDK setup Step 4, or "Unknown"; never filled from elsewhere, never re-measured at graduation).
+⚠️ It pins the text and cannot observe a live recap.
+
 Run:  python3 -m unittest discover -s tests
 """
 

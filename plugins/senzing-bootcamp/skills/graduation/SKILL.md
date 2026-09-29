@@ -324,7 +324,7 @@ For each finding, append a `## Improvement:` entry to
 - **`Upstream:`** for an `mcp-server`/`both` verdict, append the entry as `offer pending`: it is
   saved before the question is asked, so no outcome exists yet. Then offer the forward **once** per
   `../bootcamp-onboarding/feedback.md` Step 3c: show the exact message, strip anything identifying
-  (INV-065), and send only on a yes. Batch the offer — one question covering all such findings, not
+  (INV-321), and send only on a yes. Batch the offer — one question covering all such findings, not
   one per finding, so the retrospective stays a single non-blocking step. The batch also covers
   entries already reading `offer pending` from the silent in-run append. The one answer replaces
   every `offer pending` value in the same turn, with the outcome Step 3c step 5 names (INV-281).
@@ -349,7 +349,7 @@ Constraints:
 - **No feedback-flow banners.** The entry/exit banners in `../bootcamp-onboarding/feedback.md`
   mark the boundary of the *bootcamper-driven* feedback flow (INV-074). This is a graduation step,
   not that flow — do not present them.
-- **PII boundary.** Same rule as the recap (INV-065): no hostname, username, IP address, or other
+- **PII boundary.** Same rule as the recap (INV-322): no hostname, username, IP address, or other
   personal/host identifier. OS/architecture, plugin version, and model/effort are diagnostic
   context and are permitted — the line is personal/host identifiers, not environment facts.
 
@@ -358,7 +358,7 @@ Constraints:
 The recap is the crown-jewel deliverable. Produce it before the `production/`
 project so the recap PDF always exists.
 
-A finished-recap sample ships with the plugin at
+A finished-recap sample ships with the plugin (INV-065) at
 `${CLAUDE_PLUGIN_ROOT}/docs/examples/bootcamp_recap.example.pdf` (skill-relative
 fallback: `../../docs/examples/bootcamp_recap.example.pdf`). You may point the
 bootcamper to it so they see what theirs is about to look like — a non-blocking
@@ -429,7 +429,7 @@ and the hardware/software it ran on. Add these header meta lines (in the preambl
   `<this-skill-dir>/../../.claude-plugin/plugin.json`, else "Unknown" — and ⛔ never by searching
   the filesystem, which on a machine carrying two plugin checkouts records the wrong version in
   the keepsake (INV-252). Record the version only, never the path it resolved from: an absolute
-  path carries a username and this block is PII-free (INV-065).
+  path carries a username and this block is PII-free (INV-322).
 - `**Operating system:**` — OS + architecture, reused from the detected/persisted values in
   `config/bootcamp_preferences.yaml` (INV-061), e.g. `Ubuntu 24.04 (x86_64)`.
 - `**Python version:**` — the `python3 --version` of the environment.
@@ -438,7 +438,7 @@ and the hardware/software it ran on. Add these header meta lines (in the preambl
 - `**Senzing SDK:**` — the `sdk_version` recorded in `config/bootcamp_progress.json` by SDK setup
   (Module 2 Step 4, marked by `sdk_version_measured_at`): the installed SDK's own report from
   `SzProduct.get_version()`, `VERSION` only (e.g. `4.4.1`). The Senzing MCP server is remote and
-  cannot know what is installed here, so it is not the source for this line. If `sdk_version` is
+  cannot know what is installed here, so it is not the source for this line. (INV-329) If `sdk_version` is
   absent (an older progress file, or Step 4 skipped), record "Unknown" and continue: do not re-run
   the version call, and do not fill it from the package manager or the MCP server.
 - `**Database:**` — the database backend (e.g. SQLite, or PostgreSQL when chosen).
@@ -447,7 +447,7 @@ The renderer renders `Plugin version` on the cover and the `Operating system` / 
 `Language runtime` / `Senzing SDK` / `Database` lines as a distinct **Run environment** block (use
 exactly those key names so the renderer groups them). This block is written to `docs/bootcamp_recap.md`
 and the PDF only — it is **never** shown in the bootcamp output (INV-012) — and MUST NOT contain a
-hostname, username, IP address, or any other personal/host identifier (INV-065). Like every
+hostname, username, IP address, or any other personal/host identifier (INV-322). Like every
 graduation step it warns-and-continues: if a value cannot be gathered, record "Unknown" and proceed.
 
 If an in-progress recap checkpoint at `docs/progress/recap_checkpoint.md` still holds a

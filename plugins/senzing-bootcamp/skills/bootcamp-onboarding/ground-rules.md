@@ -522,7 +522,7 @@ steering files.)
     Markdown names; Module 3's build table is pinned by its own tests), and renaming the class to
     `class meridian_crm_mapper` satisfies the compiler while violating the same instruction's
     "idiomatic style for the chosen language".
-  - **A shared class — one that other files reference — goes in a file named after the class**,
+  - **(INV-237) A shared class — one that other files reference — goes in a file named after the class**,
     such as `CounterpartyApi.java`, `public` or not. This covers a shared helper and the JSON
     reader reused across modules. `javac` resolves a class from the sourcepath **by filename**, so
     a package-private class in a differently named file draws *"auxiliary class CounterpartyApi …

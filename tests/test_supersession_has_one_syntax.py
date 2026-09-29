@@ -101,6 +101,8 @@ REVIEWED_NOT_A_SUPERSESSION = {
     "INV-270": "carries a dated Correction, which is not a supersession",
     "INV-302": "carries a dated amendment (#239) that admits (user level) names to one clause; "
                "it supersedes nothing and is superseded by nothing",
+    "INV-281": "its 2026-09-29 dated correction (#223) says one RATIONALE SENTENCE is superseded; "
+               "the invariant supersedes nothing and is superseded by nothing",
 }
 
 

@@ -18,6 +18,11 @@ only `dry-run` phase 3 can judge (INV-108 keeps this suite offline).
 
 Source spec: `specs/bootcamp-notes-capture-and-recap-section.md`.
 
+Enforces **INV-322** (a file the bootcamp writes locally from context it gathers carries no
+host identifier) for the notes context block only, in
+`test_the_context_block_is_bound_by_the_privacy_rule`. ⚠️ No test here guards the recap's
+run-environment block or the retrospective's entries, and nothing offline shows a live note is clean.
+
 Run:  python3 -m unittest discover -s tests
 """
 import unittest
@@ -152,7 +157,7 @@ class TheNoteStaysTheBootcampersOwnWords(unittest.TestCase):
 
     def test_the_context_block_is_bound_by_the_privacy_rule(self):
         flat = squash(self.text)
-        self.assertIn("INV-065", flat)
+        self.assertIn("INV-322", flat)
         for forbidden in ("hostname", "username", "IP address"):
             with self.subTest(field=forbidden):
                 self.assertIn(forbidden, flat)

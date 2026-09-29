@@ -43,13 +43,30 @@ def helper(*args):
     return r.stdout
 
 
+#: The hold the skill records INSIDE a block (#58): a `**HELD YYYY-MM-DD:**` paragraph. An
+#: issue-driven deferral has no spec file, so this is its only reachable held state.
+HELD_PARAGRAPH = re.compile(r"\*\*HELD \d{4}-\d{2}-\d{2}:\*\*")
+
+
 def counted_by_scanning():
-    """(pending, held) derived by a flat marker scan -- not by splitting blocks."""
+    """(pending, held) derived by a flat marker scan -- not by splitting blocks.
+
+    ⚠️ A hold is found two ways, and this scan must see both. The older one lives in the spec
+    file (`HELD_IN_SPEC`). The one the skill now writes is a `**HELD <date>:**` paragraph inside
+    the block, which the scan reads line by line: a paragraph seen after a pending block's marker
+    line, and before the next block or section starts, moves that block from pending to held.
+    The first issue-driven hold (2026-09-29) is what showed the scan could not see it.
+    """
     text = LEDGER.read_text(encoding="utf-8")
-    spec, pending, held = None, 0, 0
+    spec, pending, held, open_pending = None, 0, 0, False
     for line in text.splitlines():
         if line.startswith("## "):
-            spec = line[3:].strip()
+            spec, open_pending = line[3:].strip(), False
+        elif line.startswith("- **") and AWAITING not in line and HELD_IN_BLOCK not in line:
+            open_pending = False
+        if open_pending and HELD_PARAGRAPH.search(line):
+            pending, held, open_pending = pending - 1, held + 1, False
+            continue
         if AWAITING not in line and HELD_IN_BLOCK not in line:
             continue
         f = SPECS / f"{spec}.md"
@@ -57,6 +74,7 @@ def counted_by_scanning():
                    or (f.is_file() and HELD_IN_SPEC in f.read_text(encoding="utf-8")))
         held += is_held
         pending += not is_held
+        open_pending = not is_held
     return pending, held
 
 

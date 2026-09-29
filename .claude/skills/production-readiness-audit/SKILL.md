@@ -398,7 +398,7 @@ what made them worth hunting.)
 Follow `dry-run`'s discipline, which exists because findings held in conversation die at
 session end:
 
-1. ⛔ **Record it as you find it, before fixing anything** — one record per root cause,
+1. ⛔ **(INV-317) Record it as you find it, before fixing anything** — one record per root cause,
    using `../feedback-to-issues/issue-template.md`. Cite `file:line`.
 
    ⛔ **Never write into `specs/`.** It is a read-only archive as of the 2026-09-15 cutover
@@ -425,7 +425,7 @@ session end:
      finding recorded in the ledger is durable and costs the maintainer one read; an issue
      filed by a run nobody watched cannot be un-filed.
 
-   ⛔ **Never apply the `unattended-ok` label to an issue you file.** An audit that labels its
+   ⛔ **(INV-318) Never apply the `unattended-ok` label to an issue you file.** An audit that labels its
    own findings lets `/unattended-issue-loop` work issues **it generated itself**, with no
    maintainer between generation and execution. Selecting what runs unattended is the
    maintainer's decision alone.

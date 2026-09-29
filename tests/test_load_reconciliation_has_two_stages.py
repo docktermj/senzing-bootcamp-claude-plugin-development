@@ -55,6 +55,21 @@ language satisfies it (INV-002). Stdlib only; shipped files are read as text (IN
 Enforces: **INV-243**, **INV-245**, **INV-246**, **INV-300** at the sites this issue touched, and
 (#237) the **INV-006** and **INV-244** citations the subset record carries.
 
+Enforces **INV-324** (the remaining license cap counts the repository's records through the SDK,
+never from the registry) in `TheSubsetRecordIsDefinedOnce`, at Phase B Step 7. ⚠️ It pins the text
+and cannot establish that a live run counts through the SDK; Phase C's citation of the same rule
+is not pinned here.
+
+Enforces **INV-325** (every subset choice writes its source's `load_subset:` block, and that block
+is the only record the reconciliation cites for the → subset step) in
+`EverySubsetChoicePointsAtTheDefinition` and `StepSevenCitesTheSubsetRecord`. ⚠️ It pins the
+pointers and Step 7's citation, and cannot establish that a live run writes the block.
+
+Enforces **INV-326** (a step that writes a working sample records it in the source's `sample:`
+block, and a reconciliation cites a sample only through that block), deriving the writer set by
+scanning every skill for a step that writes under `data/samples/` (INV-246). ⚠️ It pins the text and
+cannot establish that a live run writes the block or measures its count.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -449,13 +464,13 @@ class TheSubsetRecordIsDefinedOnce(unittest.TestCase):
         self.assertIn('`{decided: true, choice: "subset", loadable}`', self.text)
 
     def test_neither_marker_is_the_subset_citation(self):
-        self.assertIn("**Neither marker records N or a subset file.**", self.text)
+        self.assertIn("**(INV-325) Neither marker records N or a subset file.**", self.text)
         self.assertIn("the only subset record the reconciliation cites", self.text)
 
     def test_it_defines_the_remaining_cap_from_an_sdk_count(self):
         self.assertIn("**The remaining cap** is `license_record_limit` minus the number of "
                       "records already in the repository", self.text)
-        self.assertIn("⛔ **That count is measured through the SDK at this step, never summed "
+        self.assertIn("⛔ **(INV-324) That count is measured through the SDK at this step, never summed "
                       "from the registry.**", self.text)
         self.assertIn("Module 5 Step 24a", self.text)
         self.assertIn("Records a test load left in the repository count against the cap",

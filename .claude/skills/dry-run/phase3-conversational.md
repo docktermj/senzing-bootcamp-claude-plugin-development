@@ -240,7 +240,7 @@ reads as broader coverage than it had.
 ⛔ **Graduation Step 0 will offer to forward `mcp-server`-routed findings and send on a yes, and the
 yes it gets is given in character — the Bootcamper's, never the maintainer's (INV-314's scope
 note). Present the offer anyway; do not send.** Skipping the gate silently is worse: its wording,
-its batching and its INV-065 stripping are module behavior under test, and a walk that quietly
+its batching and its INV-321 stripping are module behavior under test, and a walk that quietly
 omits a step corrupts the thing phase 3 exists to observe.
 
 ⚠️ **This fires on every phase-3 walk that reaches graduation with at least one `mcp-server`
@@ -276,7 +276,7 @@ naming **both ends of the analysis** — the module it started at and how far it
 the untested remainder on either side is visible, and so the next run knows which module
 to start later than.
 
-⛔ **Before stopping, confirm every finding is drafted in the run's ledger entry.** The stop is
+⛔ **(INV-317) Before stopping, confirm every finding is drafted in the run's ledger entry.** The stop is
 not yours to schedule, so treat each turn as potentially the last: an observation that has
 firmed up and is still only in a test-notes block is one message away from being lost. A
 partial walk whose findings are written down is a contribution; a partial walk whose findings

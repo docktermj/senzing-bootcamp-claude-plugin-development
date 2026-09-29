@@ -32,6 +32,10 @@ otherwise.
 
 Stdlib only; both files are read as text (INV-108).
 
+Enforces **INV-319** (a filing command files in this repository only and names no other) at
+this command's surfaces. ⚠️ It pins the rule where it is written and cannot establish that a
+live run passes no other repository.
+
 Source issue: #49 (rename `/feedback-to-specs`; file issues instead of specs).
 
 Run:  python3 -m unittest discover -s tests

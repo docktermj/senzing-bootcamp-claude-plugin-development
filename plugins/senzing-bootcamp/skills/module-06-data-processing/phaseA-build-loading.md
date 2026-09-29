@@ -76,7 +76,7 @@ is 500 records" below), so classifying exactly 500 as `small` would route the bo
 threaded-pattern instructions and then hand them a loader the tool itself labels "demo-only".
 If the reply is a bare option number (1–4),
 select that tier directly and persist `raw_value: null`.
-⛔ **An option picks a range, not a count, so the option number is never stored in `raw_value`.**
+⛔ **(INV-328) An option picks a range, not a count, so the option number is never stored in `raw_value`.**
 Steps 3 and 4 pass `raw_value` to
 `sdk_guide` as `record_count`, and an option number there reads as a count below the demo cutover:
 picking **3 — medium production** returned the single-threaded demo loader
@@ -246,7 +246,7 @@ loader. Every tier that represents a real production system gets the threaded pa
   (the tier came from an option, so no count was given), call `sdk_guide(topic='load',
   language='<chosen_language>')` **without** `record_count`: omitting it returns the threaded
   pattern, the same safe default the "Missing or unreadable" branch below relies on. Never pass
-  the null, or an option number, as `record_count`. Add a code comment stating the
+  the null, or an option number, as `record_count` (INV-328). Add a code comment stating the
   tier and the architecture recommendation (thread pool for small and medium; distributed /
   queue-based for large). When `raw_value` is null, the comment also says the tier came from a
   range and no count was given.
@@ -351,7 +351,7 @@ patterns — as in step 3, `record_count` belongs to `sdk_guide` and is what sel
 versus single-threaded template. **When `raw_value` is null**, use step 3's null branch for the
 tier: for `small`, `medium` or `large`, omit `record_count`; for `demo`, pass the demo cutover
 read from `sdk_guide`'s `record_count` contract at call time. Never pass the null, or an option
-number, as `record_count`.
+number, as `record_count` (INV-328).
 
 **Checkpoint:** write step 4.
 
@@ -494,10 +494,10 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
 2. **Decide whether it was already decided.** If a `sqlite_volume_prompt` marker in preferences
    is `decided: true` and its `loadable` matches the current loadable total for this same load (or
    an applicable Module 4 SQLite load-time decision covers this same load), skip the prompt and
-   proceed. `tier`/`raw_value` do not decide the match; a marker with no `loadable` (written before
+   proceed. (INV-331) `tier`/`raw_value` do not decide the match; a marker with no `loadable` (written before
    the field existed) does not match, so re-evaluate on the loadable total.
 3. **Prompt only when it matters.** Present the prompt only when the database is SQLite AND it was
-   not already decided AND the **loadable total** exceeds the SQLite guidance threshold. The
+   not already decided AND the **loadable total** exceeds the SQLite guidance threshold. (INV-331) The
    production tier does not trigger this prompt: it describes the take-home system, not the load
    about to run (the production line below covers it). Source that threshold from MCP rather than
    from this file (a sourcing floor); `search_docs(query="loading",
@@ -540,7 +540,7 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
 when the database is SQLite and `production_volume.tier` is `medium` or `large`, say one line and
 ask nothing: "At your production scale, plan on PostgreSQL rather than SQLite; the graduation
 migration checklist covers the move." Say it whether or not item 4's question fires — before that
-question when it does, so the turn still ends on the question. It changes nothing about today's
+question when it does, so the turn still ends on the question. (INV-331) It changes nothing about today's
 load. On PostgreSQL, or on a `demo`/`small` tier, say nothing.
 
 *(Internal: when this heads-up fires, end the turn on the pinned question in item 4 and wait.)* Use

@@ -291,7 +291,7 @@ Then, for each approved item:
 gh issue create --title "<title>" --body-file <file>
 ```
 
-⛔ **Never pass `--repo`, and never file anywhere but here.** This is the parent repository;
+⛔ **(INV-319) Never pass `--repo`, and never file anywhere but here.** This is the parent repository;
 parent-to-child change travels by **parity**, from a tagged release, so the parent never
 files into a child at all. A flag naming another repository is a violation of that rule,
 not a convenience.

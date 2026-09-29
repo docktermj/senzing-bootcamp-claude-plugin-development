@@ -20,7 +20,7 @@ reshapes a decision sat in the gap between "every question has an origin" and "e
 has a source".
 
 ⚠️ **A second gap, separately fixed: nothing governed what may be INFERRED from identifying
-context.** INV-065's identifier-stripping discipline is about what leaves the machine in a bug
+context.** INV-321's identifier-stripping discipline is about what leaves the machine in a bug
 report, and sub-step 6a already states it cannot apply to the license call, which does not run
 without those details. So the collection side was governed and the reasoning side was not.
 

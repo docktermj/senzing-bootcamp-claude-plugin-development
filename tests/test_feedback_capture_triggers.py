@@ -2,7 +2,7 @@
 
 `feedback-capture.py` exists so a bootcamper's "I want to give feedback" is handled the same
 way **anywhere** in the bootcamp: it injects the pinned entry/exit banners, the INV-067
-append-and-verify rule, the INV-015 save-locally-whatever-the-verdict rule, and the INV-065
+append-and-verify rule, the INV-015 save-locally-whatever-the-verdict rule, and the INV-321
 show-and-consent gate before anything leaves the machine. Its trigger was a literal alternation
 of eight fixed collocations, and ten of thirteen natural paraphrases missed. The one-word gap
 between `I have feedback` (hit) and `I have some feedback about module 5` (miss) is the shape of

@@ -26,6 +26,10 @@ The SQLite pre-load check is not asserted here. After #163 its trigger is the lo
 
 Source: GitHub issue #155.
 
+Enforces **INV-328** (a reply that selects a category persists the category and a null, never
+the option's number, and every tool call branches on the null). ⚠️ It pins Phase A's text and
+cannot observe a live `sdk_guide` call.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
