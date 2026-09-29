@@ -88,9 +88,10 @@ supported, so all three are listed):
 verified on MCP server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-13.)
 
 If the library is present, report the SDK as installed and skip the **installation** — Step 2, and
-Step 3's install commands. ⛔ **(INV-222) Not Step 3 entirely: its environment-script work still runs**, and it
-is the single most likely thing an existing install is missing — see "Required stops" in the V4.0+
-branch below. Then proceed to Step 4 verification.
+Step 3's install commands (its Phase 1 EULA question and its Phase 2 SDK package).
+⛔ **(INV-222) Not Step 3 entirely: its Phase 3 and its environment-script work still run**, and the
+environment script is the single most likely thing an existing install is missing — see
+"Required stops" in the V4.0+ branch below. Then proceed to Step 4 verification.
 
 ⛔ **Only conclude "not installed" for a platform whose library you actually checked.** If the
 platform is undetermined, or the check could not run, the result is **unknown** — say so and name
@@ -133,9 +134,20 @@ straight to configuration verification."
 Then run **Step 1b** below to see whether a newer release is available, and offer it. A working
 install is never replaced without the bootcamper saying so.
 
-- **Skip the *installation* — Step 2, and Step 3's install commands.** Not Step 3 entirely: see the
-  required stop below. What is redundant on an existing install is fetching and installing the SDK;
-  nothing else in Step 3 is.
+This is the **existing-install path**. It is the same whether Step 1b finds no newer version, the
+bootcamper declines the update, or they decline the EULA for it, and an accepted update rejoins it
+(Step 1b, "After updating"):
+
+- **Skip the *installation* — Step 2, and Step 3's install commands: Step 3's Phase 1 (EULA
+  acceptance) and Phase 2 (the SDK package).** Not Step 3 entirely: see the required stops below.
+  What is redundant on an existing install is fetching and installing the SDK; nothing else in
+  Step 3 is.
+- **Do not re-ask the EULA.** Phase 1 gates installing the SDK, and this path installs no SDK.
+  Only an update the bootcamper accepts in Step 1b asks it, because an update is an install.
+- **Still run Step 3's Phase 3** (install language bindings). The Java, C# and TypeScript bindings
+  are per-project, so an existing SDK install does not provide them. For Python, Phase 3 installs
+  nothing: the bindings ship inside the SDK runtime and are made importable by the environment
+  script.
 - **Still do Step 3's environment-script work** ("Create the project-local environment script"), then
   jump to Step 4 (verify installation) to confirm it works with the chosen language.
 - If Step 4 passes, proceed to Step 5 (License), which confirms the built-in evaluation license
@@ -159,6 +171,8 @@ install is never replaced without the bootcamper saying so.
 >   install ran (INV-080). Write the script with the **same** implementation the install path uses:
 >   the zsh/bash path-resolution idiom, the fail-loudly root check, and the empty-value guard (see
 >   "The env script MUST resolve its own path…" in Step 3). One implementation, not two.
+> - **Step 3's Phase 3** (install language bindings): the Java, C# and TypeScript bindings belong
+>   to the project, not to the SDK install. Python has nothing to install here.
 > - **Step 4** (Verify Installation): confirms the SDK works with the chosen language.
 > - **Step 5** (License): a brief, no-prompt confirmation that the built-in evaluation license is
 >   active (the volume-gated License Key gate itself lives in Module 4, per INV-093).
@@ -356,53 +370,27 @@ version aloud if what you reported at Step 1 turns out to have been the package 
 or an install that no package manager owns are all *unknown*, and reporting them as current is the
 one outcome worse than not checking.
 
-### The offer
+### Before the offer: read the target's release notes
 
-Only when a newer version is genuinely available. **One 👉 question, its own turn** (INV-251), and
-it ends the turn:
-
-> 👉 **Senzing [available] is available and you have [installed] installed — would you like to
-> update?** (reply no to keep your current version; or name a specific version)
-
-- **On no:** one line — "Keeping [installed]." — then continue to Step 4. Nothing recorded as a
-  failure, and **do not ask again** this session or the next (INV-006).
-- **On yes:** update to the newest available using the platform command above.
-- **On a named version:** on **apt**, use the versioned `direct_download` URL from
-  `sdk_guide(topic='install', platform='linux_apt')` — the filenames carry the version and each
-  has a `sha256`; **verify that checksum before installing**, and note the download needs
-  `mcp.senzing.com` reachable with no inline fallback. ⛔ For **Homebrew casks and Scoop**, a
-  version-exact install is **not documented by the server** — say so and offer the latest instead,
-  rather than inventing a pin.
-
-⛔ **Ask the EULA question before any package installs** — reuse the existing wording in Step 3
-Phase 1 rather than writing a second copy. An update is an install.
-
-⛔ **The EULA variable differs per platform, and a wrong one is silently ignored:**
-
-| Platform | Variable | Value |
-|---|---|---|
-| `linux_apt`, `linux_yum` | `SENZING_ACCEPT_EULA` | `I_ACCEPT_THE_SENZING_EULA` |
-| `macos_arm` | `HOMEBREW_SENZING_ACCEPT_EULA` | `i_accept_the_senzing_eula` (**lowercase**) |
-| `windows` | `SENZING_ACCEPT_EULA` | `I_ACCEPT_THE_SENZING_EULA` |
-
-(All three verified against `sdk_guide` on server 1.32.2, 2026-07-31.) Getting the name or value
-wrong does not error — the install does nothing and reports success, which is why the
-verification below is required rather than advisory.
-
-### After updating
-
-1. **Re-run Step 4** (verify installation). It is already a required stop; route through it.
-2. **Probe the platform artifact** as shown above — exit 0 is not evidence (INV-218).
-3. **If verification fails**, say so plainly, **name the version that was working**, and do
-   **not** mark Module 2 complete. Reinstalling the previous version is the fallback; on apt its
-   exact `.deb` is still addressable by filename.
+Only when a newer version is genuinely available. With no newer version, or when the check was
+skipped, there is no lookup and no offer: record the outcome (see the checkpoint below) and continue
+on the existing-install path in Step 1. The **target** is the newest available version. Read its
+notes **now, before the offer**, so that the offer turn relays what applies instead of asking
+before it has looked. A version the bootcamper names in reply to the offer gets the same lookup
+then, before it is installed (see "The offer").
 
 ⚠️ **A 4.x → 4.y update is covered by the target version's release notes, not by a generic
 procedure.** `sdk_guide` has no `upgrade` topic, and the migration material a generic upgrade
-query finds (`sz_dbupgrade`, `sz_configupgrade`, `sz_configtool`) is for V3→V4 only. What a point
-release needs is in the *target* version's "Migration & Action Required" notes, which
-`search_docs` serves under `category='release_notes'` (server 1.37.14, docs index 2026-09-28 03:23
-UTC, 2026-09-28). Put what applies in the offer.
+query finds is for V3→V4 only. `sz_dbupgrade`, `sz_configupgrade` and `sz_configtool` are V3→V4
+migration tools, and which of them a migration uses depends on the V4 version doing it:
+`sz_dbupgrade` and `sz_configupgrade` for v4.0–v4.3, and `sz_dbtool upgrade` and `sz_configtool`
+(configuration upgrades folded in) for 4.4.0 and later. A 4.x → 4.y update needs none of them.
+(The tool table is in *v4.4.0 Detailed Release Notes*, "Command-line Tools & SDKs", from
+`search_docs(query='sz_dbtool upgrade sz_dbupgrade sz_configupgrade replaced 4.4.0 native command-line tools', category='release_notes')`;
+server 1.37.15, docs index 2026-09-28 23:38 UTC, 2026-09-28.) What a point release needs is in the
+*target* version's "Migration & Action Required" notes, which `search_docs` serves under
+`category='release_notes'` (server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28). Relay
+what applies in the offer turn, above its question.
 <!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y procedure for that phrasing; the corpus serves V3-to-V4 migration material for it, and the topic list carries no upgrade entry — owner: search_docs(query='upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change required migration action required', category='release_notes') IS the route that carries the point-release notes, and it returns the v4.4.0 Detailed Release Notes' Migration & Action Required section, so the reader must go there rather than conclude that no procedure is documented (routing negative) — server 1.37.14, 2026-09-28 -->
 
 - **Target 4.4.0.** Run
@@ -435,8 +423,71 @@ UTC, 2026-09-28). Put what applies in the offer.
 
 If the bootcamper already has a populated repository, mention that the update touches the SDK and
 not their data. Add, from the 4.4.0 notes, that many matching improvements apply to already-loaded
-data only after reprocessing, so the new matching does not reach that data by itself. Then let
-them decide.
+data only after reprocessing, so the new matching does not reach that data by itself. The offer's
+question then lets them decide.
+
+### The offer
+
+The offer comes only after the lookup above. In the offer turn, above the question, relay the items
+from the target's notes that apply to this install, and the populated-repository note when it
+applies. They are statements, not further questions.
+
+Only when a newer version is genuinely available. **One 👉 question, its own turn** (INV-251), and
+it ends the turn:
+
+> 👉 **Senzing [available] is available and you have [installed] installed — would you like to
+> update?** (reply no to keep your current version; or name a specific version)
+
+- **On no:** one line — "Keeping [installed]." — then Step 1's existing-install path. Nothing recorded as a
+  failure, and **do not ask again** this session or the next (INV-006).
+- **On yes:** update to the newest available using the platform command above.
+- **On a named version:** run the lookup above for that version and relay what applies (see
+  below), then install. On **apt**, use the versioned `direct_download` URL from
+  `sdk_guide(topic='install', platform='linux_apt')` — the filenames carry the version and each
+  has a `sha256`; **verify that checksum before installing**, and note the download needs
+  `mcp.senzing.com` reachable with no inline fallback. ⛔ For **Homebrew casks and Scoop**, a
+  version-exact install is **not documented by the server** — say so and offer the latest instead,
+  rather than inventing a pin.
+
+**A named version's notes are relayed, not asked about.** When the bootcamper names a version, run
+the lookup above for that version before installing, and relay what applies in the next turn, above
+the EULA question. Do not ask another 👉 question about it (INV-251): the bootcamper has already
+chosen, and the EULA question is the only one left before the install. When that version's notes do
+not cover the installed version, say the step is undocumented, not known to be unnecessary ("Any
+other target" above), then install. On Homebrew or Scoop the offer falls back to the latest, whose
+notes the offer turn already relayed.
+
+⛔ **Ask the EULA question before any package installs** — reuse the existing wording in Step 3
+Phase 1 rather than writing a second copy. An update is an install.
+
+⛔ **The EULA variable differs per platform, and a wrong one is silently ignored:**
+
+| Platform | Variable | Value |
+|---|---|---|
+| `linux_apt`, `linux_yum` | `SENZING_ACCEPT_EULA` | `I_ACCEPT_THE_SENZING_EULA` |
+| `macos_arm` | `HOMEBREW_SENZING_ACCEPT_EULA` | `i_accept_the_senzing_eula` (**lowercase**) |
+| `windows` | `SENZING_ACCEPT_EULA` | `I_ACCEPT_THE_SENZING_EULA` |
+
+(All three verified against `sdk_guide` on server 1.32.2, 2026-07-31.) Getting the name or value
+wrong does not error — the install does nothing and reports success, which is why the
+verification below is required rather than advisory.
+
+**If they decline the EULA here, the working install is kept and Module 2 continues** (non-blocking,
+INV-048). Install nothing. Say one line, "Keeping [installed].", record `update-declined`, and do not
+offer the update again (INV-006). Then continue on the existing-install path in Step 1: Step 3's
+Phase 3 and environment script, then Step 4. A declined EULA here is never recorded as a failure.
+Step 3 Phase 1's "Stop here" does not apply: that branch is for a fresh install or the upgrade from
+below V4.0, where there is no working install to keep.
+
+### After updating
+
+1. **Re-run Step 4** (verify installation), after rejoining the existing-install path in Step 1:
+   Step 3's Phase 3 and its environment script, with the values re-read for the updated install.
+   Step 4 is already a required stop; route through it.
+2. **Probe the platform artifact** as shown above — exit 0 is not evidence (INV-218).
+3. **If verification fails**, say so plainly, **name the version that was working**, and do
+   **not** mark Module 2 complete. Reinstalling the previous version is the fallback; on apt its
+   exact `.deb` is still addressable by filename.
 
 **Checkpoint:** record the outcome — `up-to-date`, `update-declined`, `updated-to-[version]`, or
 `check-skipped-[reason]` — under step 1 in `config/bootcamp_progress.json`, so a resumed session
@@ -524,7 +575,10 @@ always has the latest instructions.
 ## Step 3: Install Senzing SDK
 
 Follow the platform-specific instructions from `sdk_guide`. Installation has three phases, and
-the EULA question comes first: nothing is installed until the bootcamper accepts it.
+the EULA question comes first: nothing is installed until the bootcamper accepts it. An existing
+V4.0+ install (Step 1's existing-install path) skips Phase 1 and Phase 2, is not asked the EULA
+again, and starts at Phase 3; it still writes the environment script ("Create the project-local
+environment script" below).
 
 **Before recommending any approach**, call `search_docs` with `category='anti_patterns'` to
 check for known pitfalls on the user's platform.
@@ -547,9 +601,11 @@ Once the bootcamper responds, act on their answer:
 - **If they accept the EULA:** proceed to Phase 2 to install the SDK package, then Phase 3 to
   install the language-specific SDK bindings. Both run without stopping for another question.
 - **If they decline the EULA:** install nothing — no package repository, no SDK package and
-  no language bindings. Explain: "The Senzing SDK cannot be used without EULA acceptance. The
+  no language bindings. On a fresh install, or the upgrade from below V4.0, there is no working
+  SDK to fall back on. Explain: "The Senzing SDK cannot be used without EULA acceptance. The
   remaining installation steps and subsequent bootcamp modules require the SDK." Do not write
-  the checkpoint. Stop here.
+  the checkpoint. Stop here. An update of a working V4.0+ install declined here does not stop:
+  Step 1b states its outcome (keep the working install and continue).
 
 **Phase 2: Install the SDK package (only after EULA acceptance; execute without stopping):**
 
@@ -596,7 +652,8 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
   resume so they can be restarted or regenerated. (The list key stays `docker_containers` for
   compatibility with in-flight bootcamps, whatever runtime its entries name.)
 
-**Phase 3: Install language bindings (only after EULA acceptance):**
+**Phase 3: Install language bindings (after Phase 1's EULA acceptance, or directly on Step 1's
+existing-install path, which skips Phase 1 and Phase 2):**
 
 3. Install the language-specific SDK bindings — **from that ecosystem's package manager for Java
    (Maven/Gradle), C# (NuGet) and TypeScript, and NOT from a package manager at all for Python.**
@@ -768,6 +825,11 @@ genuinely been exhausted, do not re-run the same failing command: state the curr
 plain language and present the support / next-step options (for example, capture the failure
 details for a support request via `search_docs`, or take the fallback path if not already
 tried). This terminal state names the blocker and the next step rather than looping.
+
+### Create the project-local environment script
+
+Every path through Step 3 ends here, including Step 1's existing-install path, which skips the
+install phases and still writes this script.
 
 **🚨 NEVER modify the user's global shell configuration** (`~/.zshrc`, `~/.bashrc`,
 `~/.profile`, PowerShell `$PROFILE`, etc.) to set Senzing environment variables — **INV-199**.
