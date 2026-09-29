@@ -43,6 +43,121 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## how-state-audit-reports-an-empty-population-as-nothing-to-check
+
+- **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #232)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`,
+  `tests/test_phase_d_how_state_audit.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15 (docs index 2026-09-28 23:38 UTC),
+  2026-09-29. Tools: `get_capabilities()`;
+  `search_docs(query='export every record appears in exactly one entity RESOLVED_ENTITY RECORDS')`,
+  `search_docs(query='each record belongs to one resolved entity at a time')` and
+  `search_docs(query='export_json_entity_report returns every entity record count reconcile loaded records')`;
+  `get_sdk_reference(topic='response_schemas', filter='export_json_entity_report', language='python')`;
+  `reporting_guide(topic='evaluation', language='python')`. Outcome: **still reproduces**. The fact
+  rev 2's MCP note flagged, that every loaded record appears in exactly one exported entity's
+  `RESOLVED_ENTITY.RECORDS[]`, is supported by the two routes that own it:
+  - The export's response schema describes `RESOLVED_ENTITY.RECORDS[]` as *"Individual records that
+    constitute the entity"* and `RELATED_ENTITIES[]` as *"Entities related to but not resolved into
+    this one"*.
+  - The evaluation guide's export-iteration methodology counts per-source records by summing
+    `RECORDS[]` across the export (`total_records = sum(source_records.values())`), and its
+    compression rate is `1 - entities/records`. Both presume each record is counted once.
+
+  The plugin text cites those two routes, stamped 1.37.15, 2026-09-29, and states nothing stronger.
+  owner-checked: no indexed document states "each record is in exactly one entity" outright — the
+  three `search_docs` queries return the DSR pricing article, why-flags payloads and export code
+  snippets — and `get_sdk_reference(topic='response_schemas', filter='export_json_entity_report')`
+  IS the route that would carry the field's semantics; it returned the description quoted above.
+  So the precondition rests on the owner's description plus the evaluation methodology, not on the
+  corpus's silence. `submit_feedback` was not called.
+- **Summary:** #154 shipped the how-state audit's M = 0 case as "checked 0 of 0" and "no finding",
+  an empty input reported as the audit's clean result, which INV-265 forbids. A reader that parses
+  `RESOLVED_ENTITY.RECORDS[]` under the wrong name also finds zero multi-record entities, so the same
+  words covered a broken reader (INV-115). In `phaseD-validation.md` → `## How-state audit`:
+  - The lead-in now announces **four outcomes**: **Finding**, **No finding**, **Nothing to
+    check** and **Could not measure**. The M = 0 sentence is gone from **No finding**.
+  - A new **Nothing to check** bullet: M is 0, report "checked 0 of 0" and **nothing to check**,
+    with a ⛔ (INV-265) line saying M = 0 is never "no finding". It is reached only when **both**
+    hold: the export returned at least one entity, and the `RECORDS[]` lengths summed across the
+    whole export equal the total records loaded that step 28 wrote. Otherwise the outcome is
+    **could not measure**, naming the failed condition with both figures. This follows the
+    match-key audit's step 3 precedent: prove the reader can see the thing, then say the question
+    does not arise.
+  - **Could not measure** now also covers M = 0 with a failed nothing-to-check condition.
+  - The never-blocks paragraph adds that **nothing to check** does not move the gate either.
+  - The recording paragraph keeps the including-zero rule verbatim and says it is for **no
+    finding**. For **nothing to check** the `## How-state audit` section is still written, with the
+    outcome and "checked 0 of 0", and **omits** the "0 unsettled" line (INV-265).
+  - The gate's how-state line lists "finding, no finding, nothing to check, or could not measure".
+  - The success criterion reads "unsettled entities named, zero recorded, or nothing to check
+    stated".
+- **#154's three quoted rules are unchanged**, verbatim: **Never report "no finding" unless N
+  equals M**, **The outcome never blocks**, and **including zero: write "0 unsettled" rather than
+  omitting the section**. #154's entry is not edited (INV-307).
+- **For `/review-invariants`: #154's pending drafted wording no longer matches the section.** Its
+  block (`phase-d-how-state-audit-checks-every-multi-record-entity`, held 2026-09-29 "after the
+  #232/#235 Phase D outcome conflict is decided and the winning issue lands") says the audit "MUST
+  report one of three outcomes (finding / no finding / could not measure)" and "MUST record the
+  count, including zero". After this change the section has **four** outcomes: **Finding**, **No
+  finding**, **Nothing to check** and **Could not measure**. **Nothing to check** is recorded
+  **without** the "0 unsettled" line, so "including zero" now holds for **No finding** only. That
+  block's revisit condition is met when this PR merges. Its wording needs amending before it is
+  registered, or folding together with the block below.
+- **Finding, recorded as found (INV-317), not changed here:** a record re-sent with the same data
+  source and `RECORD_ID` replaces the one already loaded (`search_docs`, the "Data Source Records
+  (DSRs) Explained" article, 1.37.15, 2026-09-29). A loader whose "records loaded" figure counts
+  `add_record` calls over a source with duplicate record IDs will therefore exceed the export's
+  `RECORDS[]` sum. The audit then reports **could not measure**, which is the safe direction but a
+  false alarm. The issue specifies the comparison against step 28's figure, so the text is unchanged.
+- **Approach:** implemented directly (Phase 5a), per the plan's Gate 1.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The new ⛔ line cites
+  INV-265 at the line, and INV-265 already forbids an empty match reported as a pass. What no
+  registered invariant states is how this audit **establishes** that its population is really
+  empty, and what it writes when it is. The rules already shipping, at their site:
+    - ⛔ **With M = 0 the outcome is never "no finding"** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`
+    - **omit the "0 unsettled" line** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`
+
+  The drafted wording:
+
+  **INV-NNN** — When Data processing validation's how-state audit finds no resolved entity with 2
+  or more records (M = 0), it MUST report **nothing to check** with "checked 0 of 0", and MUST NOT
+  report "no finding" (INV-265). It MAY report **nothing to check** only when the export returned
+  at least one entity **and** the lengths of `RESOLVED_ENTITY.RECORDS[]` summed across the export
+  equal the total records loaded recorded at step 28. Otherwise it MUST report **could not
+  measure**, naming the failed condition. For **nothing to check**, the `## How-state audit`
+  section of `docs/results_validation.md` MUST still be written, with the outcome and "checked 0
+  of 0", and MUST omit the "0 unsettled" line, which stays required for **no finding**. The
+  outcome never blocks and does not move the gate's branch (INV-117, INV-264). Site:
+  `module-06-data-processing/phaseD-validation.md` → "How-state audit", its gate line and its
+  success criterion. Enforced by `tests/test_phase_d_how_state_audit.py`. (Source: GitHub issue
+  #232.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here. It may fold into #154's
+  held block when that block's wording is amended for four outcomes.)*
+- **Tests:** `tests/test_phase_d_how_state_audit.py`, 23 → 36 tests. The docstring states the
+  #232 rule. `ItHasThreeOutcomesAndNeverBlocks` becomes `ItHasFourOutcomesAndNeverBlocks`, and
+  its outcome test now requires all four. `test_including_zero` also asserts #154's quoted rule
+  verbatim. Six check functions read the text: `four_outcome_problems`,
+  `zero_population_problems` (the No finding bullet carries no 0-of-0 case, and the Nothing to
+  check bullet says M is 0, "checked 0 of 0", never "no finding", INV-265),
+  `precondition_problems` (both conditions, step 28's figure, could not measure naming the
+  condition), `recording_problems` (the section is still written, "checked 0 of 0", the "0
+  unsettled" line omitted, including-zero kept for no finding), `gate_problems` and
+  `success_problems`. `AnEmptyPopulationIsNothingToCheck` runs them on the real file, with an
+  anti-vacuity test that the four bullets, the recording paragraph and the gate line are found
+  (INV-265), and asserts #154's three quoted rules. `EmptyPopulationNegativeControls` holds nine
+  in-suite controls, each mutating a copy of the text and requiring a check to report a problem.
+  They include the pre-#232 zero case and the pre-#232 success line. **Negative control on the
+  real file:** with the pre-change `phaseD-validation.md` restored, every one of the six checks
+  reports problems (2, 6, 7, 1, 1 and 1), and the file runs `FAILED (failures=9, errors=9)`. The
+  errors are the mutation controls finding their anchors absent. After restoring, it is `OK`.
+- **Verified:** the full suite passed in the CI mirror (both legs, empty `HOME` outside `/tmp`).
+  `citations.py verify` was run after this entry was written.
+- **Commit:** uncommitted
+
 ## retype-decision-reaches-the-mapping-at-steps-10-and-11
 
 - **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #220)
