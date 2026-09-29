@@ -207,7 +207,7 @@ steering files.)
   MCP server; the internal-channels claim was the guide's own inference about how Senzing employees
   obtain licenses. Their words: *"I don't want assumptions presented as fact."* The sourced and the
   unsourced arrived in one paragraph, indistinguishable.
-- ⛔ **(INV-274, INV-065) The bootcamper's identifying context is for IDENTIFICATION and for fields a tool
+- ⛔ **(INV-274) The bootcamper's identifying context is for IDENTIFICATION and for fields a tool
   requires —
   never a premise for your reasoning about what they should choose.** Their name, email address and
   account details are collected to identify them and to satisfy a call that cannot run without them.

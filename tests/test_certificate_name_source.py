@@ -9,7 +9,7 @@ preparation at the *start* of the run, from the pre-detection value.
 So the two never met. A run that correctly rejected `docktermj`, asked, and recorded the
 answer still printed `docktermj` on the signed certificate, at exit 0, with 99% content
 retention and no warning. Only an artifact probe (`pdftotext | grep`) caught it — an
-INV-065 violation reached through a documented, correctly-followed path.
+INV-170 violation reached through a documented, correctly-followed path.
 
 Retention could not catch it either: the wrong name *does* render, so nothing is
 missing. INV-110 measures loss, not correctness.
