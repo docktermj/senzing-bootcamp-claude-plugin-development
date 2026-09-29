@@ -317,11 +317,11 @@ class ItHasFourOutcomesAndNeverBlocks(unittest.TestCase):
 
     def test_no_finding_requires_every_entity_checked(self):
         self.assertIn(
-            '(INV-115) Never report "no finding" unless N equals M', self.body,
+            '(INV-163) Never report "no finding" unless N equals M', self.body,
             "'no finding' must require every entity to have been checked — a response that "
-            "never arrived rendered as a clean result is what INV-115 forbids",
+            "never arrived rendered as a clean result is what INV-163 forbids",
         )
-        self.assertIn("Never collapse a partial run into \"no finding\" (INV-115)", self.body)
+        self.assertIn("Never collapse a partial run into \"no finding\" (INV-163)", self.body)
 
     def test_it_cites_bootcamper_facing_invariants_only(self):
         """INV-308 binds the repo's verification tooling, not a Bootcamper's guide."""
@@ -329,7 +329,7 @@ class ItHasFourOutcomesAndNeverBlocks(unittest.TestCase):
             "INV-308", self.body,
             "the how-state audit cites INV-308, which governs the repository's own "
             "verification tooling; the Bootcamper-facing rule for a result that never "
-            "arrived is INV-115",
+            "arrived is INV-163",
         )
 
     def test_it_never_blocks(self):

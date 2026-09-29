@@ -19,7 +19,7 @@ rather than invented.**
   `SUMMARY_MAX`; otherwise it is `null`, and the null count is printed. ⚠️ **A null summary means
   "not derivable", never "no rule"** — `statement` always carries the full text.
 * **`status`** — **two values, and there is no third (#112).** An entry carrying a
-  `- **Superseded by:** INV-nnn` bullet is `superseded`; every other entry is `active`. ⛔ **(INV-311)** Prose
+  `- **Superseded by:** INV-nnn` bullet is `superseded`; every other entry is `active`. ⛔ **(INV-313)** Prose
   is **not** read as evidence: supersession was written six different ways (`superseded`,
   `Superseded`, `supersedes`, `Corrected`, `Amended`, `withdrawn`), and the same word marks an
   entry that supersedes another as well as one that was superseded. Reading it produced
@@ -29,7 +29,7 @@ rather than invented.**
   model until #143, nine days after the model was retired, and the published `note` said the
   same thing to four child repositories.)
 * **`partly_superseded_by`** — the successor where only a **clause** was replaced, from a
-  `- **Partly superseded by:** INV-nnn` bullet. ⛔ **(INV-311)** Such an entry stays `active` and **still
+  `- **Partly superseded by:** INV-nnn` bullet. ⛔ **(INV-313)** Such an entry stays `active` and **still
   binds in full**; a partial supersession is not a third state. Null means no partial
   supersession, never that the entry is obsolete.
 
@@ -175,7 +175,7 @@ def build():
             "section": sections.get(inv),
             "status": status,
             "superseded_by": by,
-            # ⛔ **(INV-311) (#143) Separate from `superseded_by`, never folded into it.** A partly
+            # ⛔ **(INV-313) (#143) Separate from `superseded_by`, never folded into it.** A partly
             # superseded entry is `active` and still binds; putting its successor in
             # `superseded_by` would change what that field means for every consumer already
             # reading it. The regex existed from #112 and was referenced only by a test, so
