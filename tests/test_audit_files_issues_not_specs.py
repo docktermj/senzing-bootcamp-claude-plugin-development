@@ -16,9 +16,10 @@ contract forbids":
 * **Attended** — file a GitHub issue, after showing the maintainer the title and body and
   getting a yes. Filing is immediate and visible the moment it happens; an issue can be
   edited or closed but never un-filed.
-* **Unattended** — ⛔ **file nothing.** `gh issue create` **leaves the machine**, and
-  `/unattended-issue-loop`'s contract is that nothing leaves the machine unattended. The
-  finding goes into the dated ledger entry and the handoff, marked *not filed*.
+* **Unattended** — ⛔ **file nothing.** `gh issue create` **leaves the machine**, and an
+  unattended run creates only the records listed for the issue it is working (INV-314's
+  pending scope note, #216); a new issue is not one of them. The finding goes into the dated
+  ledger entry and the handoff, marked *not filed*.
 
 ⚠️ **A later editor will reasonably want to collapse those two branches into one.** The
 assertions below pin both, so collapsing them fails rather than quietly re-arming an
@@ -132,8 +133,9 @@ class TheTwoPathsStayDifferent(unittest.TestCase):
                 self.assertRegex(
                     flat(text), r"file nothing|files nothing",
                     "%s does not say an unattended audit files nothing. `gh issue create` "
-                    "leaves the machine, and /unattended-issue-loop's contract is that "
-                    "nothing leaves the machine unattended" % name)
+                    "leaves the machine, and an unattended run creates only the records "
+                    "listed for the issue it is working; a new issue is not one of them"
+                    % name)
 
     def test_the_unattended_finding_still_lands_somewhere(self):
         """'File nothing' without a destination loses the finding entirely."""

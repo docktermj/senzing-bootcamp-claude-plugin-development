@@ -43,6 +43,95 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## inv-314-names-what-a-run-may-create-without-a-per-record-yes
+
+- **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #216)
+- **Files changed:** `.claude/skill-overlays/unattended-issue-loop.md`,
+  `.claude/skill-overlays/implement-github-issue.md`,
+  `.claude/skills/production-readiness-audit/SKILL.md`,
+  `.claude/skills/feedback-to-issues/SKILL.md`, `tests/test_filing_is_gated.py`,
+  `tests/test_audit_files_issues_not_specs.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-29, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact), re-confirmed. Every changed line is maintainer apparatus:
+  which outward records a maintainer run may create, two overlays, two skill rationales and a
+  guard. No absence claim is made. `submit_feedback` was not called, and nothing was sent
+  upstream.
+- **Summary:** INV-314 says that where no maintainer is present a command MUST create nothing.
+  The unattended loop posts log comments, a blocked comment, a PR and a merge on the issue it
+  works, and the attended implement skill posts its log comments without a separate yes. This
+  run drafts the scope note that reconciles them, for `/review-invariants`, and makes the
+  repository surfaces and the guard agree with its list. `specs/INVARIANTS.md` is unchanged
+  (INV-307).
+  - **Overlays.** The loop overlay gains "What an unattended run may create": the closed list
+    of four acts on the issue being worked, and that everything else is drafted and marked
+    **not filed**. The implement overlay gains "What invoking this command assents to": the
+    five attended comments, with every other outward record keeping its per-record yes. Each
+    cites INV-314 and names the pending note (#216). Neither adds an act the governing copy
+    does not already take. The loop overlay's `mcp-server` rule is unchanged, and it still
+    drafts the finding with `Upstream:` "not yet sent — needs maintainer approval".
+  - **Rewording.** The audit's Unattended branch said the loop's contract is that *nothing
+    leaves the machine unattended*; it now says an unattended run creates only the records
+    listed for the issue it works, and a new issue is not one of them. "File nothing" stays.
+    `tests/test_audit_files_issues_not_specs.py` gets the same rewording in its docstring and
+    assertion message, and its `file nothing|files nothing` assertion is unchanged. The Step
+    8.1 mapping row's label now reads *(no entry: a finding an unattended run drafts in its
+    handoff, filing no issue)*, with no code span, and its values are unchanged.
+  - **Gate 2 wording.** The retired implement command's Gate 2 sentence, which the issue
+    reported, is in no file (true before this run, and still true).
+- **Approach:** raced (Phase 5b), approach A: extend `tests/test_filing_is_gated.py` in place,
+  reusing its fence rule and site discovery.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-314 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+    - ⛔ **An unattended run creates only the records on this list, and only on the issue it is working** — in `.claude/skill-overlays/unattended-issue-loop.md`
+    - ⛔ **Invoking `/implement-github-issue <n>` is assent to five comments on issue `<n>`, and to no other record** — in `.claude/skill-overlays/implement-github-issue.md`
+
+  ⚠️ **Why this is an amendment and not a new invariant.** INV-314's rule is unchanged: an
+  outward record needs the maintainer's assent first, each record separately. What the note
+  settles is *which* records one assent given in advance covers: the `unattended-ok` label for
+  the unattended list, and invoking `/implement-github-issue <n>` for its five comments. The
+  2026-09-24 "Scope" parenthetical, which settles *whose* assent the rule means, stays as it
+  is. Amending a registered invariant is the maintainer's sign-off alone, so
+  `specs/INVARIANTS.md` is untouched, and the block carries both markers as #223's INV-281
+  block did. Once the note is applied, the overlays' "pending" wording is stale; the two rule
+  bullets above name both sites, so that review finds them. Enforced by
+  `tests/test_filing_is_gated.py`.
+
+  The drafted wording, a dated scope note appended to INV-314, with its rule and every other
+  sentence unchanged:
+
+  **INV-314** — (⛔ **Dated scope note, <YYYY-MM-DD> (#216): which records a run may create without a per-record yes. The rule is unchanged for every other record.** The 2026-09-24 parenthetical above settles *whose* assent this rule means. This note settles *which* records one assent, given in advance, covers, and it covers them **on the issue being worked only**. **Unattended.** When the maintainer applies `unattended-ok` to an issue, that counts as assent to this closed list of acts on that issue: (1) the four `/implement-github-issue` log comments (Started, Clarifications, Approach, Result); (2) one blocked comment, plus removing `unattended-ok`; (3) pushing that issue's branch and opening its PR; (4) merging that PR and deleting its branch, unless the run was started with `--no-merge`. An unattended run creates nothing else: no new issue, no comment on any other issue, no `submit_feedback`, and it never adds `unattended-ok`. Each of those is drafted in the handoff and the ledger, marked **not filed** or **not yet sent — needs maintainer approval**. **Attended.** Invoking `/implement-github-issue <n>` is assent to five comments on issue `<n>`: its four log comments, and the escape-hatch comment it posts when the issue proves invalid, a duplicate, or already fixed. Their exact text is still shown, but they need no separate yes. Every other outward record keeps this rule's per-record yes: new issues, `submit_feedback`, and ad-hoc comments.)
+
+  *(the date is a placeholder deliberately: it is the day the maintainer approves the wording at
+  `/review-invariants`, not the day of this run.)* *(written as NNN deliberately: no new id is
+  drafted, because this amends INV-314 in place and a literal new id would cite an invariant
+  that does not exist and turn `citations.py verify` red. If the maintainer prefers a
+  superseding invariant instead, it is INV-NNN: mint at the next free id, and
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** `tests/test_filing_is_gated.py` is extended in place. Its fence rule, its three
+  negatives and its discovered corpus are unchanged; the corpus now skips other worktrees'
+  checkouts under `.claude/worktrees/`.
+  - **Four acts.** `gh issue create`, `gh issue comment` and `gh pr create` are instructions
+    inside a fence; `submit_feedback` is one in its call shape `submit_feedback(category=…)`.
+    Each instruction needs a gate within 25 lines. The gate pattern also matches "get an
+    explicit yes", the wording at both `submit_feedback` sites. A comment or a PR may instead
+    sit beside the citation of INV-314's pending note; a new issue and `submit_feedback` may
+    not, since neither is on the list.
+  - **Unattended surfaces** (`UnattendedSurfacesInstructOnlyListedActs`). Discovered: the loop
+    overlay, the Step 8.1 no-entry row, and every branch opened by a bold *Unattended* or *No
+    maintainer present* label (the audit skill and command, `/dry-run`'s skill and command).
+    None may instruct a new issue, a `submit_feedback` call or `--add-label unattended-ok`.
+    No `.claude/` or `tests/` file may say nothing leaves the machine unattended, or that the
+    unattended loop files an issue itself.
+  - `EachOverlayStatesItsPartOfTheList` pins the citation and the acts in both overlays.
+  - **Floors (INV-265).** At least 10 surfaces (30), 3 fenced `gh issue create` instructions
+    (5), 2 call-shaped `submit_feedback` instructions (2), and an unattended set holding each
+    named surface.
+  - **Negative controls** (`TheCheckersAreNotVacuous`, run on every suite): stripping the gate
+    at a real `gh issue create` site and at a real `submit_feedback` site fails; a synthetic
+    fenced `gh issue comment` and `gh pr create` fail bare and pass with a gate or the
+    citation; the citation never vouches for `gh issue create`; each off-list act and each
+    stale claim, appended to every unattended surface, fails.
+- **Commit:** `622cba7`
+
 ## how-state-audit-reports-an-empty-population-as-nothing-to-check
 
 - **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #232)

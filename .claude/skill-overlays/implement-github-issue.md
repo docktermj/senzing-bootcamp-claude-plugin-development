@@ -13,6 +13,15 @@ Choosing the issue is not this command's job. [`docs/FAMILY_WORKFLOW.md`](../../
 R8 gives it to the operation that chooses the issue, `/order-github-issues` in this host. With
 no argument this command names no issue.
 
+## What invoking this command assents to
+
+⛔ **Invoking `/implement-github-issue <n>` is assent to five comments on issue `<n>`, and to
+no other record** (INV-314; scope note pending at `/review-invariants`, #216): its four log
+comments (Started, Clarifications, Approach, Result), and the escape-hatch comment it posts
+when the issue proves invalid, a duplicate, or already fixed. Their exact text is still shown,
+but they need no separate yes. Every other outward record keeps INV-314's per-record yes: a
+new issue, `submit_feedback`, and an ad-hoc comment. Push and PR stay behind Gate 2's yes.
+
 ## The local CI mirror in this repository
 
 The governing copy's Phase 7 mirrors `.github/workflows/`. ⚠️ **This repository's workflow
