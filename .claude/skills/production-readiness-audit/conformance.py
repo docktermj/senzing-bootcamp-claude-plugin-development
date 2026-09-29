@@ -37,7 +37,11 @@ INV_ID = re.compile(r"INV-\d{3}")
 #:
 #: ⚠️ Scanning a root is not the same as checking it: the consumer counts the maintainer
 #: surface as explicitly out of scope. See that module's docstring for why.
-SCAN_ROOTS = ("plugins/senzing-bootcamp", ".claude/commands", ".claude/skills")
+#:
+#: `.claude/skill-overlays` joined at #239: the repo overlays for the two skills defined only at
+#: user level moved there out of `.claude/commands`, and their rules must stay in the corpus.
+SCAN_ROOTS = ("plugins/senzing-bootcamp", ".claude/commands", ".claude/skills",
+              ".claude/skill-overlays")
 
 #: ⛔ **The corpus is these roots AND `.md` only, and it stays narrow deliberately (#108).**
 #: Measured 2026-09-23 over the whole repository: **862** hard-rule lines sit inside it, against

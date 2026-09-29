@@ -1,18 +1,13 @@
----
-description: Work the GitHub issues labeled unattended-ok while the maintainer is away, taking each to a pull request and then a handoff (maintainer tool).
-argument-hint: "[--dry-run] [--no-merge]"
----
-
-Maintainer request: work the labeled issue backlog unattended.
-
-Invoke the `unattended-issue-loop` skill and follow it end to end.
-
-Run parameters: $ARGUMENTS
+# unattended-issue-loop: this repository's overlay
 
 **The governing copy is `~/.claude/skills/unattended-issue-loop/SKILL.md`**, the user-level
-skill; `.claude/skills/unattended-issue-loop/SKILL.md` here is a pointer stub. This file is the
-**repo overlay**: only the obligations this repository adds on top of the governing copy, which
-reads this file and must meet everything below.
+skill. This file is the **repo overlay**: only the obligations this repository adds on top of
+the governing copy, which reads this file and must meet everything below.
+
+⚠️ **The governing copy is not checked in CI.** It lives under `~/.claude/skills/`, outside
+this repository, and a CI runner checks out only the repository. The tests here assert this
+overlay and `docs/FAMILY_WORKFLOW.md`; nothing here establishes what the governing copy says
+on any machine (INV-308).
 
 The loop's merge policy and its label gate are stated in the
 [`docs/FAMILY_WORKFLOW.md`](../../docs/FAMILY_WORKFLOW.md) §2 row for `unattended-issue-loop`
@@ -21,7 +16,7 @@ The loop's merge policy and its label gate are stated in the
 ## Every worker also meets the implement overlay
 
 Each worker follows `implement-github-issue`, so
-[`.claude/commands/implement-github-issue.md`](implement-github-issue.md) binds every issue the
+[`.claude/skill-overlays/implement-github-issue.md`](implement-github-issue.md) binds every issue the
 loop works: the INV-309 invariant capture, the MCP re-check, the `specs/IMPLEMENTED.md` ledger
 entry, `citations.py verify` after the entry, and this repository's local CI mirror. ⛔ **Put
 that file in every worker's brief.** On 2026-09-28 those obligations reached the workers only

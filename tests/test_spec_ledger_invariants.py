@@ -464,7 +464,7 @@ class TestTheLedgerIsVerifiedAfterItIsWritten(unittest.TestCase):
     as clean. Ordering is the fix, so the ordering instruction is what gets pinned.
     """
 
-    SKILL = REPO_ROOT / ".claude" / "commands" / "implement-github-issue.md"
+    SKILL = REPO_ROOT / ".claude" / "skill-overlays" / "implement-github-issue.md"
 
     def setUp(self):
         self.assertTrue(self.SKILL.is_file(), "implement-github-issue.md moved — re-point this guard")

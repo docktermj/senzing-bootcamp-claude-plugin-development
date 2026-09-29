@@ -41,7 +41,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SPECS = REPO_ROOT / "specs"
 DECLINED = SPECS / "DECLINED.md"
 IMPLEMENTED = SPECS / "IMPLEMENTED.md"
-SKILL = REPO_ROOT / ".claude" / "commands" / "implement-github-issue.md"
+SKILL = REPO_ROOT / ".claude" / "skill-overlays" / "implement-github-issue.md"
 SCRIPT = REPO_ROOT / "tests" / "list_specs.py"
 REPORTS = REPO_ROOT / ".claude" / "skills" / "dry-run" / "coverage_reports.py"
 

@@ -39,7 +39,8 @@ that cannot run (INV-308).
 complete, or useful. No offline check reaches that. It establishes that the rules a correct
 report must follow are present and have not been silently removed.
 
-Source issues: #119; #215 (the review moves to the choosing operation).
+Source issues: #119; #215 (the review moves to the choosing operation); #239 (the overlay moves
+to `.claude/skill-overlays/`, and the stub is removed).
 
 Stdlib only; both surfaces are read as text (INV-108).
 
@@ -50,18 +51,17 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-COMMAND = REPO_ROOT / ".claude" / "commands" / "implement-github-issue.md"
+COMMAND = REPO_ROOT / ".claude" / "skill-overlays" / "implement-github-issue.md"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
-#: The in-repo skill, a pointer stub since #215. It was added to this guard at #126 after sitting
-#: two amendments behind the user-level copy -- the INV-300 defect ("a rule with two homes will
-#: disagree with itself") happening to R8. The fix was to give it no copy at all.
-SKILL = REPO_ROOT / ".claude" / "skills" / "implement-github-issue" / "SKILL.md"
+#: The in-repo skill joined this guard at #126 after sitting two amendments behind the
+#: user-level copy -- the INV-300 defect ("a rule with two homes will disagree with itself")
+#: happening to R8. #215 made it a pointer stub and #239 removed it, so it is no longer read here.
 
 #: The surface that must carry the rules. The user-level skills are not checked (see above).
 SURFACES = {"family rule R8": FAMILY}
 
 #: Surfaces that must NOT restate the review: R8 is its one home in this repository.
-NOT_A_HOME = {"the command": COMMAND, "the in-repo skill": SKILL}
+NOT_A_HOME = {"the repo overlay": COMMAND}
 
 #: ⛔ The rules are looked for in the REGION THAT STATES THEM, never in the whole file. Scanning
 #: the file was the first version of this module and three negative controls walked straight

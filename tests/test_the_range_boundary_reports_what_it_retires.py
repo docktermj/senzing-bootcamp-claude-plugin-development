@@ -53,7 +53,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFORMANCE = REPO_ROOT / ".claude" / "skills" / "production-readiness-audit" / "conformance.py"
-LOOP_SKILL = REPO_ROOT / ".claude" / "skills" / "unattended-issue-loop" / "SKILL.md"
+#: The repository's only loop text since #239, which removed the project pointer stub.
+LOOP_SKILL = REPO_ROOT / ".claude" / "skill-overlays" / "unattended-issue-loop.md"
 
 #: A ledger with two audit records, newest first. `%s` are the two recorded commits.
 TWO_RECORDS = """# Implemented Specs

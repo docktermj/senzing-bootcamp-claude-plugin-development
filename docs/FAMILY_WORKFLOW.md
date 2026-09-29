@@ -60,18 +60,23 @@ mechanisms, not maintainer-facing phases; they keep their names.
 | `feedback-to-issues` | 1 | required | required | In a child, routes each item parent-bound or local (R6) |
 | `retrofit-from-public` | 1 | required | required | Files issues. **Writes nothing into any working tree** |
 | `parity-check` | 1 | — | required | Reads a parent **tag**. Never writes to the parent |
-| `implement-github-issue` | 2 | required | required | Never merges. In a child, advances `PARENT_VERSION` on a parity close |
+| `implement-github-issue` | 2 | required *(user level)* | required | Never merges. In a child, advances `PARENT_VERSION` on a parity close |
 | `escalate-to-parent` | 2 | — | required | **The only command in a child that writes outside its own repository** |
 | `production-readiness-audit` | 3 | required | required | Consistency, coherency, completeness |
 | `dry-run` | 3 | required | required | Runtime review |
 | `auto-test` | 3 | required | *not mandated* | Probes the live Senzing MCP server for drift |
 | `release` | 4 | required | required | **Development repository only** (R8) |
 | `propagate-to-public` | 4 | required | required | **Public working tree only** (R8) |
-| `unattended-issue-loop` | drives 2 | required | *not mandated* | `unattended-ok`-labeled issues only: no label, no work, and it never adds the label itself. **Merges** each PR whose checks pass, by default, overriding `implement-github-issue`'s never-merge inside a run, since invoking the loop is the maintainer's consent; `--no-merge` leaves every PR open |
+| `unattended-issue-loop` | drives 2 | required *(user level)* | *not mandated* | `unattended-ok`-labeled issues only: no label, no work, and it never adds the label itself. **Merges** each PR whose checks pass, by default, overriding `implement-github-issue` *(user level)*'s never-merge inside a run, since invoking the loop is the maintainer's consent; `--no-merge` leaves every PR open |
 | `delegate-to-mcp-server` | maintenance | required | — | Parent only |
 | `compact-dev-environment` | maintenance | required | — | Parent only |
 | `review-invariants` | maintenance | required | *open question* | See §8 |
 | `check-skill-drift` | maintenance | retired 2026-09-28 (#240) | — | **No longer ships.** Compared a duplicated rule block against its out-of-repo twin; with each skill name defined in one place there is no twin to compare. The name stays reserved |
+
+*(user level)* in the parent column says **where** the parent meets a `required` operation, not
+whether it must: the operation ships as a user-level skill, and the parent repository carries
+only its own obligations for it, in `.claude/skill-overlays/<name>.md`. A child meets a
+`required` operation with its own command or the same way; both conform (§10, 2026-09-29).
 
 ⚠️ **Renaming is not free.** Where a child's engine, contract, tests or docs reference an
 operation by its old name, the rename is the whole change — a new file beside the old one
@@ -84,14 +89,14 @@ leaves two operations where the family expects one.
 ```mermaid
 flowchart TB
     P1["<b>Phase 1 · Generate issues</b><br/>feedback-to-issues<br/>retrofit-from-public<br/>parity-check <i>(children only)</i><br/>escalated from children <i>(parent only)</i><br/>manual"]
-    P2["<b>Phase 2 · Development</b><br/>implement-github-issue<br/>escalate-to-parent <i>(children only)</i>"]
+    P2["<b>Phase 2 · Development</b><br/>implement-github-issue <i>(user level)</i><br/>escalate-to-parent <i>(children only)</i>"]
     P3["<b>Phase 3 · Test</b><br/>production-readiness-audit<br/>dry-run<br/>auto-test <i>(parent)</i><br/>recorded host-behavior checklist <i>(children)</i>"]
     P4["<b>Phase 4 · Publish</b><br/>release<br/>then propagate-to-public"]
 
     P1 ==> P2 ==> P3 ==> P4
     P3 -->|"test failures needing code changes<br/>loop back here, <b>never into maintenance</b>"| P2
 
-    LOOP["<b>unattended-issue-loop</b><br/>drives phase 2,<br/>on <i>unattended-ok</i> issues only"]
+    LOOP["<b>unattended-issue-loop</b> <i>(user level)</i><br/>drives phase 2,<br/>on <i>unattended-ok</i> issues only"]
     LOOP -.-> P2
 
     classDef phase fill:#eaf2fb,stroke:#3a6ea5,color:#1b3a57
@@ -207,15 +212,15 @@ cross-reference in both directions. The child's local tracking issue closes when
 `parity-check` against a parent tag **containing** the fix confirms it arrived. A parent issue
 closed but not yet released has not reached any bootcamper.
 
-**R8 — `implement-github-issue` never begins work on an issue the maintainer has not
-approved, and choosing the issue is not its job.** Choosing belongs to **the operation that
-chooses the issue** — `/order-github-issues` in this host. That operation reviews the open set,
-reports what it found, **names the issue it suggests**, and **stops**. It may analyze, it may
-rank, it may name one; it may not start. `implement-github-issue` takes the one issue the
-maintainer names; invoked with no argument it **names no issue** and stops. It pushes branches
-and opens pull requests, and *acting without approval* is the autonomy it is designed not to
-have. ⚠️ For `unattended-issue-loop`, the `unattended-ok` label is that approval, given one
-issue at a time (§2).
+**R8 — `implement-github-issue` *(user level)* never begins work on an issue the maintainer
+has not approved, and choosing the issue is not its job.** Choosing belongs to **the operation
+that chooses the issue** — `/order-github-issues` in this host. That operation reviews the open
+set, reports what it found, **names the issue it suggests**, and **stops**. It may analyze, it
+may rank, it may name one; it may not start. `implement-github-issue` *(user level)* takes the
+one issue the maintainer names; invoked with no argument it **names no issue** and stops. It
+pushes branches and opens pull requests, and *acting without approval* is the autonomy it is
+designed not to have. ⚠️ For `unattended-issue-loop` *(user level)*, the `unattended-ok` label
+is that approval, given one issue at a time (§2).
 
 ⚠️ **The choosing operation is a host mechanism, not a canonical operation**, so it has no §2
 row: R4 reserves names, and the invocation mechanism is the host's business. A child conforms by
@@ -405,6 +410,27 @@ repository cites.
 ⚠️ **An amendment does not renumber.** R8 stays R8. A rule that is withdrawn keeps its number
 and says so, for the same reason `INVARIANTS.md` never reuses an id: a citation that silently
 resolves to a different rule is worse than one that fails.
+
+### 2026-09-29 — R4: a `required` operation may ship as a user-level skill plus an overlay
+
+**Was:** the parent met every operation §2 marks `required` with a command file of its own, and
+the guards read "`required` for the parent" as "has a file under `.claude/commands/`".
+`implement-github-issue` and `unattended-issue-loop` were defined three times each: a
+user-level skill, a project pointer stub and a project command that doubled as the repo overlay.
+
+**Now:** a skill name is defined in **one** place (maintainer decision, 2026-09-28). For these
+two the place is the user-level skill directory, and the parent keeps only its own obligations
+for them, in `.claude/skill-overlays/<name>.md`. That file is neither a skill nor a command. The
+§2 parent cells read `required *(user level)*`, the §3 nodes carry *(user level)*, and so does
+each live mention on the parent's maintainer pages. The name stays canonical and reserved (R4),
+and the parent still ships the operation; only the delivery changed. ⚠️ ***(user level)* is a
+disclaimer, not a silencer:** the parent's guards accept it on a name only when the overlay
+exists **and** no command file of that name does (INV-316, #239).
+
+**For a child:** you meet a `required` operation either with a command of your own or with the
+user-level skill plus `.claude/skill-overlays/<name>.md`. Both conform. If you copied the
+parent's pointer stubs, delete them and keep an overlay. A child that keeps its own command
+needs no change.
 
 ### 2026-09-28 — R4's register marks `check-skill-drift` retired
 

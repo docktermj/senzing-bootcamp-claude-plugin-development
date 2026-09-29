@@ -12,8 +12,9 @@ query. ⚠️ That is the whole safety property: a missing gate must mean "assum
 "assume everything".
 
 ⚠️ **Re-pointed 2026-09-28 (#215): the procedure no longer lives in this repository.** The
-governing copy is `~/.claude/skills/unattended-issue-loop/SKILL.md`; the project `SKILL.md` is a
-pointer stub and `.claude/commands/unattended-issue-loop.md` is the repo overlay. ⛔ **The
+governing copy is `~/.claude/skills/unattended-issue-loop/SKILL.md`, and since #239 the repo
+overlay is `.claude/skill-overlays/unattended-issue-loop.md`; this repository defines no skill
+or command of that name. ⛔ **The
 governing text under `~/.claude/skills/` is NOT checked in CI** -- a runner checks out only the
 repository, so a test reading it would pass on one machine and fail everywhere else (INV-308).
 What this module now asserts:
@@ -22,7 +23,10 @@ What this module now asserts:
   states it;
 * the repository-only obligations (INV-309, INV-307, no `submit_feedback`, no declining) against
   the overlay, where they moved;
-* that neither the stub nor the overlay instructs writing into the frozen archive.
+* that the overlay does not instruct writing into the frozen archive.
+
+`test_the_skill_declares_its_new_name` was **removed** at #239: it read the project
+`SKILL.md`'s frontmatter, and that stub is gone. The name is declared by the governing copy.
 
 Assertions **removed** at #215, each because the text it pinned no longer exists in the
 repository and the rule is the governing copy's, not this repository's:
@@ -41,7 +45,7 @@ can watch an unattended run query GitHub.
 Stdlib only; every file is read as text (INV-108).
 
 Source issues: #51 (rename to `/unattended-issue-loop`, label-gated); #215 (the user-level copy
-governs).
+governs); #239 (the overlay moves to `.claude/skill-overlays/`, and the stub is removed).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -50,9 +54,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SKILL_DIR = REPO_ROOT / ".claude" / "skills" / "unattended-issue-loop"
-SKILL = SKILL_DIR / "SKILL.md"
-COMMAND = REPO_ROOT / ".claude" / "commands" / "unattended-issue-loop.md"
+OVERLAY = REPO_ROOT / ".claude" / "skill-overlays" / "unattended-issue-loop.md"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
 
 OLD_SKILL_DIR = REPO_ROOT / ".claude" / "skills" / "unattended-spec-loop"
@@ -66,12 +68,11 @@ WRITES_A_SPEC = re.compile(r"(?i)append a `?## Blocked|write .{0,20}into `?specs
 
 
 def texts():
-    return {"SKILL.md": SKILL.read_text(encoding="utf-8"),
-            "command": COMMAND.read_text(encoding="utf-8")}
+    return {"overlay": OVERLAY.read_text(encoding="utf-8")}
 
 
 def overlay():
-    return flat(COMMAND.read_text(encoding="utf-8"))
+    return flat(OVERLAY.read_text(encoding="utf-8"))
 
 
 def family_row():
@@ -88,13 +89,11 @@ def flat(s):
 class TheRenameIsCompleteInBothDirections(unittest.TestCase):
     """Anti-vacuity: every assertion below reads these files, so they must be the real ones."""
 
-    def test_the_new_paths_exist(self):
-        for label, path in (("skill", SKILL), ("command", COMMAND)):
-            with self.subTest(what=label):
-                self.assertTrue(
-                    path.is_file(),
-                    "%s is missing at %s; the rename is half-applied and every assertion in "
-                    "this module would pass on an empty read" % (label, path))
+    def test_the_overlay_exists(self):
+        self.assertTrue(
+            OVERLAY.is_file(),
+            "the overlay is missing at %s; every assertion in this module would pass on an "
+            "empty read" % OVERLAY)
 
     def test_the_old_paths_are_gone(self):
         """A leftover copy is worse than none: two loops, one working a frozen backlog."""
@@ -104,12 +103,6 @@ class TheRenameIsCompleteInBothDirections(unittest.TestCase):
                     path.exists(),
                     "the old %s still exists at %s. Both names would resolve, and the stale "
                     "one still works the frozen `specs/` backlog" % (label, path))
-
-    def test_the_skill_declares_its_new_name(self):
-        self.assertIn(
-            "name: unattended-issue-loop", texts()["SKILL.md"],
-            "SKILL.md's frontmatter still declares the old name, so the command fronts a "
-            "skill whose own manifest disagrees with it")
 
 
 class OnlyLabeledIssuesAreWorked(unittest.TestCase):

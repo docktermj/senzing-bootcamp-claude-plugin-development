@@ -22,9 +22,10 @@ complete" -- is met, and the deferral is discharged rather than left as a promis
 
 ⚠️ **A directory under `.claude/skills/` with no `SKILL.md` is not a skill** and is excluded
 from that assertion. ⚠️ `implement-github-issue/` used to be the example (it held only per-issue
-run state); since #215 it holds a pointer stub `SKILL.md` naming the user-level copy as governing,
-so it is a skill here and is fronted by its command. The user-level copy under `~/.claude/skills/`
-is not checked in CI (INV-308).
+run state); #215 gave it a pointer stub `SKILL.md`, and #239 removed the directory. That name and
+`unattended-issue-loop` are defined only at user level, under `~/.claude/skills/`, so neither is a
+skill or a command here, and this repository keeps only `.claude/skill-overlays/<name>.md` for
+them. ⛔ The user-level copies are not checked in CI (INV-308).
 
 ⚠️ **What a green run means.** Every skill *named* in a command file resolves to a directory
 with a `SKILL.md`. It does not mean the command invokes the right skill, that the skill does
@@ -93,16 +94,20 @@ class NeitherSideIsEmpty(unittest.TestCase):
             "fewer than three skills were found in %s; the directory scan has drifted, and "
             "every command would report as phantom" % SKILLS_DIR)
         self.assertIn(
-            "implement-github-issue", skills,
+            "dry-run", skills,
             "the skill scan is missing one certainly present; it is looking in the wrong "
             "place or expecting the wrong layout")
 
     def test_the_invocation_pattern_parses(self):
-        """Anchored on a command that predates this guard, so it cannot pass tautologically."""
-        anchor = COMMANDS_DIR / "implement-github-issue.md"
+        """Anchored on a command that predates this guard, so it cannot pass tautologically.
+
+        Re-anchored from `implement-github-issue` at #239, which moved that file out of
+        `.claude/commands/` to become a repo overlay.
+        """
+        anchor = COMMANDS_DIR / "dry-run.md"
         self.assertTrue(anchor.is_file(), "%s is gone; re-anchor this test" % anchor)
         self.assertIn(
-            "implement-github-issue", skills_named_by(anchor),
+            "dry-run", skills_named_by(anchor),
             "the invocation pattern did not find the skill named in %s; command files state "
             "their skill in a shape this regex no longer matches" % anchor.name)
 

@@ -35,18 +35,32 @@ INV-302's clause that *the guard itself* must not pin a count — that clause go
 own source and is marked unassertable in the invariant rather than pretended to. The
 skill-fronting half is asserted by `test_dev_commands_name_a_real_skill.py`.
 
+⚠️ **A name may ship at user level instead (#239).** `implement-github-issue` and
+`unattended-issue-loop` are defined only under `~/.claude/skills/`, and this repository keeps
+their obligations in `.claude/skill-overlays/<name>.md`. Their entries carry the marker
+*(user level)* right after the name (INV-316: at the point of use, per name). ⛔ **The marker is
+a disclaimer, not a silencer**: it is accepted only when `.claude/skill-overlays/<name>.md`
+exists **and** `.claude/commands/<name>.md` does not. On a name that still ships a command, or
+with no overlay behind it, it fails. ⚠️ `~/.claude/skills/` is **not checked in CI** (INV-308),
+so nothing here establishes that the user-level skill exists on any machine; the overlay is
+what this repository can check.
+
 Stdlib only; both directories are listed and the docs read as text (INV-108).
 
-Source issue: #39 (`the-dev-command-list-has-drifted-from-the-shipped-set`).
+Source issues: #39 (`the-dev-command-list-has-drifted-from-the-shipped-set`); #239 (the
+*(user level)* marker).
 
 Run:  python3 -m unittest discover -s tests
 """
 import re
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COMMANDS_DIR = REPO_ROOT / ".claude" / "commands"
+OVERLAYS_DIR = REPO_ROOT / ".claude" / "skill-overlays"
 DEV_DOCS = REPO_ROOT / "docs" / "development.md"
 
 #: A list entry: ``1. `/name` - description``. The description is captured to assert it exists.
@@ -58,8 +72,31 @@ COUNT_CLAIM = re.compile(
     r"\s+(?:development\s+|maintainer\s+|dev\s+)?slash\s+commands")
 
 
+#: The marker that says a name ships at user level, directly after the name (INV-316).
+USER_LEVEL = re.compile(r"^\s*\*?\(user level\)\*?")
+
+
 def shipped_commands():
     return {"/" + p.stem for p in COMMANDS_DIR.glob("*.md")}
+
+
+def user_level_entries():
+    """Documented commands whose entry carries the *(user level)* marker."""
+    return {cmd for cmd, desc in documented_entries().items() if USER_LEVEL.match(desc)}
+
+
+def user_level_problems(commands, commands_dir, overlays_dir):
+    """Why each *(user level)* name is not one: a command still ships, or no overlay backs it."""
+    problems = []
+    for cmd in sorted(commands):
+        name = cmd.lstrip("/")
+        if (commands_dir / ("%s.md" % name)).exists():
+            problems.append("%s: marked (user level) but %s ships, so the marker would silence "
+                            "a live command" % (cmd, commands_dir / ("%s.md" % name)))
+        if not (overlays_dir / ("%s.md" % name)).is_file():
+            problems.append("%s: marked (user level) but %s is missing, so the name points "
+                            "nowhere this repository can check" % (cmd, overlays_dir / ("%s.md" % name)))
+    return problems
 
 
 def documented_entries():
@@ -77,7 +114,7 @@ class NeitherSetIsEmpty(unittest.TestCase):
             len(shipped), 3,
             "fewer than three command files were found in %s; the glob has drifted and the "
             "comparison below proves nothing" % COMMANDS_DIR)
-        self.assertIn("/implement-github-issue", shipped,
+        self.assertIn("/dry-run", shipped,
                       "the command glob is missing one certainly present; the pattern is wrong")
 
     def test_the_docs_list_parsed(self):
@@ -86,7 +123,13 @@ class NeitherSetIsEmpty(unittest.TestCase):
             len(documented), 3,
             "the command list in docs/development.md parsed to fewer than three entries; the "
             "line pattern has drifted from the list's shape")
-        self.assertIn("/implement-github-issue", documented)
+        self.assertIn("/dry-run", documented)
+
+    def test_the_user_level_branch_is_exercised(self):
+        """INV-265 -- the marker branch below is vacuous if no entry carries the marker."""
+        self.assertIn("/implement-github-issue", user_level_entries(),
+                      "no docs/development.md entry carries the (user level) marker; the branch "
+                      "that checks it proves nothing")
 
 
 class TheTwoSetsAgree(unittest.TestCase):
@@ -99,11 +142,42 @@ class TheTwoSetsAgree(unittest.TestCase):
 
     def test_every_documented_command_ships(self):
         """The phantom direction: the reader told to run something that does not exist."""
-        phantom = sorted(set(documented_entries()) - shipped_commands())
+        phantom = sorted(set(documented_entries()) - shipped_commands() - user_level_entries())
         self.assertEqual(
             [], phantom,
             "docs/development.md documents command(s) with no file under %s: %s. The entry "
             "reads as authoritative and invokes nothing" % (COMMANDS_DIR, ", ".join(phantom)))
+
+
+class AUserLevelMarkerIsADisclaimerNotASilencer(unittest.TestCase):
+    """INV-316 -- the marker is accepted only with an overlay here and no command here."""
+
+    def test_every_marked_name_really_ships_at_user_level(self):
+        problems = user_level_problems(user_level_entries(), COMMANDS_DIR, OVERLAYS_DIR)
+        self.assertEqual([], problems, "\n".join(problems))
+
+    def _tree(self):
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+        commands, overlays = root / "commands", root / "skill-overlays"
+        commands.mkdir()
+        overlays.mkdir()
+        (overlays / "demo.md").write_text("overlay\n", encoding="utf-8")
+        return commands, overlays
+
+    def test_a_well_formed_user_level_name_passes(self):
+        commands, overlays = self._tree()
+        self.assertEqual([], user_level_problems({"/demo"}, commands, overlays))
+
+    def test_the_marker_fails_when_the_overlay_is_missing(self):
+        commands, overlays = self._tree()
+        (overlays / "demo.md").unlink()
+        self.assertEqual(1, len(user_level_problems({"/demo"}, commands, overlays)))
+
+    def test_the_marker_fails_on_a_command_that_still_ships(self):
+        commands, overlays = self._tree()
+        (commands / "demo.md").write_text("command\n", encoding="utf-8")
+        self.assertEqual(1, len(user_level_problems({"/demo"}, commands, overlays)))
 
 
 class EveryEntryCarriesADescription(unittest.TestCase):

@@ -40,6 +40,14 @@ What it holds now:
   carry no diagrams of its own -- the restatement INV-300 forbids, and which had already gone
   wrong: until #111 its topology said *"one of three"* children while the family had four.
 * **Its slash-command references.** Every ``/name`` there ships or is marked *(children only)*.
+* **The *(user level)* marker (#239).** `implement-github-issue` and `unattended-issue-loop` are
+  defined only under `~/.claude/skills/`; this repository keeps their obligations in
+  `.claude/skill-overlays/<name>.md`. A §2 row marks that `required *(user level)*`, a
+  `docs/development.md` name carries *(user level)*, and so does every live mention on the family
+  page. ⛔ **The marker is a disclaimer, not a silencer** (INV-316): it is accepted only when the
+  overlay exists **and** `.claude/commands/<name>.md` does not. ⚠️ `~/.claude/skills/` is **not
+  checked in CI** (INV-308), so nothing here establishes that the user-level skill exists on any
+  machine; the overlay is what this repository can check.
 
 ⚠️ **Where the diagram check stops**, stated rather than papered over, because a guard whose
 reach is unstated gets read as total (INV-308). It reads an operation as a `<br/>`-separated
@@ -65,20 +73,26 @@ table row's *cell values* are right -- a command listed with the wrong phase, or
 `required` for children that do not have it, passes every assertion here -- or that what the
 drawing depicts is a true account of the system.
 
-Source issues: #55 (original), #111 (re-aimed), #140 (the missing direction).
+Source issues: #55 (original), #111 (re-aimed), #140 (the missing direction), #239 (the
+*(user level)* marker).
 
 Stdlib only; both directories are listed and the docs read as text (INV-108).
 
 Run:  python3 -m unittest discover -s tests
 """
 import re
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COMMANDS_DIR = REPO_ROOT / ".claude" / "commands"
 SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
-IMPLEMENT_CMD = REPO_ROOT / ".claude" / "commands" / "implement-github-issue.md"
+OVERLAYS_DIR = REPO_ROOT / ".claude" / "skill-overlays"
+#: The repo overlay for `implement-github-issue`. Named `_CMD` for its history: it was the command
+#: file until #239 moved it out of `.claude/commands/`.
+IMPLEMENT_CMD = OVERLAYS_DIR / "implement-github-issue.md"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
 DEV_DOCS = REPO_ROOT / "docs" / "development.md"
 
@@ -108,6 +122,10 @@ CHILD_ONLY = re.compile(r"\(children only", re.I)
 #: categories have to match what the corpus actually contains.
 RETIRED = re.compile(r"\b(was |were |now )?retired\b", re.I)
 
+#: What the page says when a name ships as a user-level skill with an overlay here (#239). A
+#: fourth disposition, for the same reason as the third.
+USER_LEVEL = re.compile(r"\(user level\)", re.I)
+
 #: A fenced code block. Stripped before scanning: `/usr/bin/python3` inside a ```text sample is
 #: a path in a transcript, not a command this repository claims to ship.
 FENCE = re.compile(r"^```.*?^```", re.M | re.S)
@@ -121,6 +139,25 @@ MARKER_WINDOW = 80
 
 def shipped():
     return {p.stem for p in COMMANDS_DIR.glob("*.md")}
+
+
+def user_level_problems(names, commands_dir=COMMANDS_DIR, overlays_dir=OVERLAYS_DIR):
+    """Why each name marked *(user level)* is not one: a command ships, or no overlay backs it."""
+    problems = []
+    for name in sorted(n.lstrip("/") for n in names):
+        if (commands_dir / ("%s.md" % name)).exists():
+            problems.append("%s: marked (user level) but %s ships, so the marker would silence "
+                            "a live command" % (name, commands_dir / ("%s.md" % name)))
+        if not (overlays_dir / ("%s.md" % name)).is_file():
+            problems.append("%s: marked (user level) but %s is missing, so the name points "
+                            "nowhere this repository can check"
+                            % (name, overlays_dir / ("%s.md" % name)))
+    return problems
+
+
+def user_level_rows():
+    """Operations whose §2 parent cell carries the *(user level)* marker."""
+    return {op for op, (parent, _) in table().items() if USER_LEVEL.search(parent)}
 
 
 def retired():
@@ -155,10 +192,11 @@ def diagram_operations():
 
 
 def slash_commands(path):
-    """[(command, disclaimed)] for each ``/name`` occurrence in `path`'s prose.
+    """[(command, marker)] for each ``/name`` occurrence in `path`'s prose.
 
-    `disclaimed` is true when the name carries a marker saying it does not ship here -- either
-    *(children only)* or a statement that it was retired.
+    `marker` is empty when the name carries none, and otherwise names the one it carries, saying
+    it does not ship here as a command: ``child`` for *(children only)*, ``retired`` for a
+    statement of retirement, ``user`` for *(user level)*. It is truthy exactly when disclaimed.
     """
     text = HTML_TAG.sub(" ", FENCE.sub(" ", path.read_text(encoding="utf-8")))
     hits = list(COMMAND.finditer(text))
@@ -169,7 +207,10 @@ def slash_commands(path):
         name = "/" + m.group(1)
         if name in PLACEHOLDERS:
             continue
-        out.append((name, bool(CHILD_ONLY.search(window) or RETIRED.search(window))))
+        marker = ("child" if CHILD_ONLY.search(window) else
+                  "retired" if RETIRED.search(window) else
+                  "user" if USER_LEVEL.search(window) else "")
+        out.append((name, marker))
     return out
 
 
@@ -185,7 +226,8 @@ class NothingIsEmpty(unittest.TestCase):
         self.assertIn("implement-github-issue", ops)
 
     def test_commands_were_found_on_disk(self):
-        self.assertIn("implement-github-issue", shipped(),
+        """Anchored on `dry-run` since #239 moved `implement-github-issue` out of the glob."""
+        self.assertIn("dry-run", shipped(),
                       "the command glob is missing one certainly present; the pattern is wrong")
 
     def test_the_family_page_carries_diagrams(self):
@@ -195,7 +237,8 @@ class NothingIsEmpty(unittest.TestCase):
 class TheTableAgreesWithTheShippedSet(unittest.TestCase):
     def test_every_parent_required_operation_ships(self):
         missing = sorted(op for op, (parent, _) in table().items()
-                         if "required" in parent and op not in shipped())
+                         if "required" in parent and op not in shipped()
+                         and not (op in user_level_rows() and not user_level_problems({op})))
         self.assertEqual(
             [], missing,
             "%s marks operation(s) required for the parent that have no file under %s: %s. "
@@ -228,6 +271,68 @@ class TheTableAgreesWithTheShippedSet(unittest.TestCase):
             "should not be listed, that is a decision needing a stated reason, which is why "
             "there is no exemption set to drop it into"
             % (COMMANDS_DIR, FAMILY, ", ".join(missing)))
+
+
+class AUserLevelMarkerIsADisclaimerNotASilencer(unittest.TestCase):
+    """INV-316 -- *(user level)* is accepted only with an overlay here and no command here (#239)."""
+
+    def test_the_user_level_branch_is_exercised(self):
+        """INV-265 -- the checks below prove nothing if no name carries the marker."""
+        self.assertIn("implement-github-issue", user_level_rows(),
+                      "no §2 parent cell carries (user level); the branch is untested")
+        self.assertIn("/implement-github-issue",
+                      {c for c, m in slash_commands(DEV_DOCS) if m == "user"},
+                      "no docs/development.md name carries (user level); the branch is untested")
+
+    def test_every_user_level_row_really_ships_at_user_level(self):
+        problems = user_level_problems(user_level_rows())
+        self.assertEqual([], problems, "\n".join(problems))
+
+    def test_every_user_level_name_in_development_md_really_ships_at_user_level(self):
+        problems = user_level_problems({c for c, m in slash_commands(DEV_DOCS) if m == "user"})
+        self.assertEqual([], problems, "\n".join(problems))
+
+    def test_every_live_family_mention_carries_the_marker(self):
+        """Per name, at the point of use: table cells, diagram nodes and prose alike.
+
+        §10 is excluded because it quotes what the page said on each amendment's date. A path
+        segment (`skill-overlays/implement-github-issue.md`) is a file name, not a mention.
+        """
+        text = FAMILY.read_text(encoding="utf-8")
+        live = text[:text.find("## 10. Amendments")]
+        bare = []
+        for op in sorted(user_level_rows()):
+            for m in re.finditer(r"(?<![\w/.-])%s(?![\w-])" % re.escape(op), live):
+                window = HTML_TAG.sub(" ", live[m.end():m.end() + MARKER_WINDOW])
+                if not USER_LEVEL.search(window):
+                    line = live.count("\n", 0, m.start()) + 1
+                    bare.append("%s:%d %s" % (FAMILY.name, line, op))
+        self.assertEqual([], bare,
+                         "live mention(s) of a user-level operation carry no (user level) marker "
+                         "at the point of use (INV-316): %s" % ", ".join(bare))
+
+    def _tree(self):
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+        commands, overlays = root / "commands", root / "skill-overlays"
+        commands.mkdir()
+        overlays.mkdir()
+        (overlays / "demo-op.md").write_text("overlay\n", encoding="utf-8")
+        return commands, overlays
+
+    def test_a_well_formed_user_level_name_passes(self):
+        commands, overlays = self._tree()
+        self.assertEqual([], user_level_problems({"demo-op"}, commands, overlays))
+
+    def test_the_marker_fails_when_the_overlay_is_missing(self):
+        commands, overlays = self._tree()
+        (overlays / "demo-op.md").unlink()
+        self.assertEqual(1, len(user_level_problems({"demo-op"}, commands, overlays)))
+
+    def test_the_marker_fails_on_a_command_that_still_ships(self):
+        commands, overlays = self._tree()
+        (commands / "demo-op.md").write_text("command\n", encoding="utf-8")
+        self.assertEqual(1, len(user_level_problems({"demo-op"}, commands, overlays)))
 
 
 class ARetiredOperationStaysGone(unittest.TestCase):
