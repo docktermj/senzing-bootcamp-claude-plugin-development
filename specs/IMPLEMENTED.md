@@ -115,7 +115,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
       fails both times.
     - Extra: the quote test reading `blocks()` instead of `blocks(include_resolved=True)` fails
       `test_resolved_blocks_are_read_too`.
-- **Commit:** uncommitted
+- **Commit:** d13780a
 
 ## maintainer-surface-hard-rules-are-cited-or-deferred
 
