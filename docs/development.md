@@ -191,10 +191,10 @@ label-gated and writes only its issues' `IMPLEMENTED.md` entries (#51, #69, #215
 not (#69), `/dry-run` drafts each finding into its run's `IMPLEMENTED.md` entry and files issues
 from there (#153), and `/delegate-to-mcp-server` files issues and writes nothing under `specs/`
 (#114).
-⚠️ **Its ledger, `specs/mcp-coverage.jsonl`, is not an exception to the freeze** — the guard
-globs `*.md`, so a `.jsonl` file is outside it by construction rather than by exemption.
-`IMPLEMENTED.md`, `DECLINED.md`, `INVARIANTS.md` and `README.md` are **not** frozen and are
-still written to.
+⚠️ **Its ledger, `specs/mcp-coverage.jsonl`, is a named live exception to the freeze** (#142),
+not a file the guard fails to reach: the guard checks every file in `specs/`.
+`IMPLEMENTED.md`, `DECLINED.md`, `INVARIANTS.md`, `README.md` and `mcp-coverage.jsonl` are
+**not** frozen and are still written to.
 
 ### Triage feedback
 

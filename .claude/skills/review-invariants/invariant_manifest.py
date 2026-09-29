@@ -49,9 +49,10 @@ import sys
 REPO = pathlib.Path(__file__).resolve().parents[3]
 INVARIANTS = REPO / "specs" / "INVARIANTS.md"
 
-#: ⛔ At the repository root, NOT in `specs/`. The freeze guard globs `specs/*.md`, so a `.json`
-#: there would be legal only because the glob does not reach it -- a scope-narrowing that happens
-#: to produce correct behavior, which INV-308 says must not be relied on. The root also matches
+#: ⛔ At the repository root, NOT in `specs/`. The freeze guard globbed `specs/*.md` until #257,
+#: so a `.json` there would have been legal only because the glob did not reach it -- a
+#: scope-narrowing that happens to produce correct behavior, which INV-308 says must not be relied
+#: on. It now checks every file in `specs/`. The root also matches
 #: what the file is: a release artifact for downstream consumers, not part of the archive.
 MANIFEST = REPO / "invariant-manifest.json"
 

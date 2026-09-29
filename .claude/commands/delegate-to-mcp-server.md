@@ -47,8 +47,8 @@ writes are **GitHub issues** and its own ledger, `specs/mcp-coverage.jsonl`, whi
 **named live exception** to the freeze, recorded as such in INV-307 and in
 `docs/FAMILY_WORKFLOW.md` §8. ⚠️ **It is NOT exempt because it is `.jsonl`.** That was the
 reason given here until #142, and it is the reasoning `invariant_manifest.py` rejects by name
-for its own artifact — the freeze guard globs `specs/*.md`, so a non-Markdown file there is
-legal only because the glob does not reach it, *a scope-narrowing that happens to produce
+for its own artifact — the freeze guard globbed `specs/*.md` until #257, so a non-Markdown
+file there was legal only because the glob did not reach it, *a scope-narrowing that happens to produce
 correct behavior, which INV-308 says must not be relied on*. A permission that rests on a
 guard's blind spot disappears the moment the guard is widened, and nobody widening it would
 know they were revoking one. Never modify plugin code,

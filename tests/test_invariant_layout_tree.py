@@ -1,14 +1,17 @@
 """INV-202: INV-050's layout tree must stay reachable — every entry produced, or annotated.
 
 INV-050 states "The generated Bootcamp project MUST follow this layout" followed by a
-fenced tree in `specs/INVARIANTS.md`. The tree is **correct today** — 24 file entries and
-30 directory entries, none unaccounted — and until this file nothing checked that it stays
-correct. No test parsed the tree; `tests/test_bundled_script_and_production_paths.py:14`
+fenced tree in `specs/INVARIANTS.md`. The tree is **correct today**, with every entry
+accounted for (how many it holds is `EXPECTED_*` below, the INV-265 floor, not a claim made
+here), and until this file nothing checked that it stays correct. No test parsed the tree; `tests/test_bundled_script_and_production_paths.py:14`
 mentions INV-050 only in a docstring about `src/scripts/`.
 
 The rule enforced here is **INV-202**: every leaf entry is either **referenced** somewhere
 under `plugins/`, or **annotated** in its own comment as `reserved | superseded | legacy |
-future`, and an unproduced entry gains the annotation rather than being deleted. It fails
+future`, and an unproduced entry gains the annotation rather than being deleted.
+⚠️ **"Referenced" means by project-relative path** (#226): each entry's path is rebuilt from
+the tree's indentation and that is what is probed, so `docs/README.md` no longer resolves on
+every `README.md` the plugin mentions, as it did when the probe was the leaf name. It fails
 on a future entry added without an annotation, and on an existing entry that quietly loses
 its producer.
 
@@ -25,7 +28,7 @@ comment column — the only place the annotation lives. So the comment column is
 **load-bearing data**, and `test_the_predicate_requires_the_comment_column` pins it
 directly on the predicate rather than trusting the extractor to be read correctly.
 
-Three parsing hazards are live in the current tree; each has its own test, because a
+Four parsing hazards are live in the current tree; each has its own test, because a
 later simplification that drops one would otherwise pass silently:
 
 1. The comment column must be kept (above).
@@ -34,16 +37,28 @@ later simplification that drops one would otherwise pass silently:
 3. `docs/stakeholder_summary_module{n}.md` is a **placeholder** — it never appears verbatim
    under `plugins/` (the real files are `stakeholder_summary_module1.md` and
    `_module6.md`), so it resolves on the prefix before `{`.
+4. The path is rebuilt from indentation, so `data/backups/` and the top-level `backups/` get
+   distinct paths, and the `backups/` continuation line must not break the path of
+   `backups/packages/` beneath it.
+
+⚠️ **Two leaves have no producer and are pinned in two states** (#226): `docs/README.md` is
+named once, by a line saying to skip it, and `src/utils/` only by graduation's copy table,
+which copies it if present. Each passes when INV-050's tree carries its annotation with a
+date, or while a pending `PROPOSED AMENDMENT to INV-050` block in `specs/IMPLEMENTED.md`
+carries that annotated tree line. The tree is edited only at `/review-invariants`, so the
+block arm holds until then and the tree arm afterwards, with no change here.
 
 Stdlib-only and no `plugins/` import (INV-108). The extraction is pure text over
 `specs/INVARIANTS.md` and the corpus is read with `pathlib`, so nothing shells out to
-`grep` and nothing depends on the platform's path separator — the `/` inside a directory
-probe is the tree's own textual convention, matched against file *content*, not a path.
+`grep` and nothing depends on the platform's path separator — the `/` inside a probed
+path is the tree's own textual convention, matched against file *content*, not a filesystem
+path.
 
 Source: `specs/inv050-tree-has-no-reachability-guard.md`.
 
 Run:  python3 -m unittest discover -s tests
 """
+import importlib.util
 import re
 import unittest
 from pathlib import Path
@@ -51,6 +66,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 INVARIANTS = REPO_ROOT / "specs" / "INVARIANTS.md"
 PLUGINS = REPO_ROOT / "plugins"
+LEDGER_HELPER = REPO_ROOT / ".claude" / "skills" / "review-invariants" / "pending_invariants.py"
 
 TREE_HEADING = "## INV-050: Project layout"
 
@@ -59,6 +75,14 @@ BOX_CHARS = " \t│├└─"
 
 # An entry the tree says is deliberately not produced.
 ANNOTATION = re.compile(r"reserved|superseded|legacy|future", re.IGNORECASE)
+
+#: The tree's indentation step: `├── ` and `│   ` are each four columns wide.
+INDENT = 4
+
+#: #226: the two leaves nothing produces, and the annotation each is to carry. Pinned in two
+#: states by `TheUnproducedLeavesArePinnedInTwoStates`.
+TWO_STATE_LEAVES = {"docs/README.md": "future", "src/utils/": "reserved"}
+DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 # Derived 2026-08-11 by running extract_tree() against the tree as it then stood, NOT
 # copied from any spec -- two specs disagree on this count (one says "53 entries / 23
@@ -79,23 +103,29 @@ EXPECTED_CONTINUATION_LINES = 1
 class Entry:
     """One leaf of the tree, with its comment column intact."""
 
-    def __init__(self, name, comment, line_number):
+    def __init__(self, name, comment, line_number, path=None, depth=None, left=""):
         self.name = name
         self.comment = comment
         self.line_number = line_number
+        #: The project-relative path, rebuilt from the tree's indentation. Defaults to the
+        #: name, which is the path of a top-level entry.
+        self.path = name if path is None else path
+        self.depth = depth
+        #: The line up to its comment, box-drawing included: what identifies it byte for byte.
+        self.left = left
         self.is_dir = name.endswith("/")
 
     @property
     def probe(self):
-        """The literal string to look for under `plugins/`.
+        """The literal string to look for under `plugins/`: the project-relative path.
 
         A placeholder entry (`stakeholder_summary_module{n}.md`) never appears verbatim,
         so it resolves on the prefix before the brace.
         """
-        return self.name.split("{")[0]
+        return self.path.split("{")[0]
 
     def __repr__(self):
-        return "%s (INVARIANTS.md:%d)" % (self.name, self.line_number)
+        return "%s (INVARIANTS.md:%d)" % (self.path, self.line_number)
 
 
 def extract_tree():
@@ -103,7 +133,8 @@ def extract_tree():
 
     Entries keep their comment. Names are NOT unique -- `data/backups/` and the
     top-level `backups/` both reduce to `backups/` -- so this returns a list and callers
-    must never key a dict by name.
+    must never key a dict by name. Paths are unique: each is the chain of enclosing
+    directories, found by column, plus the name.
     """
     lines = INVARIANTS.read_text(encoding="utf-8").splitlines()
     try:
@@ -118,18 +149,27 @@ def extract_tree():
     )
     closing = next(i for i in range(opening + 1, len(lines)) if lines[i].strip() == "```")
 
-    root, entries, continuations = None, [], 0
+    root, root_column, parents, entries, continuations = None, 0, [], [], 0
     for offset, line in enumerate(lines[opening + 1 : closing]):
         left, _, comment = line.partition("#")
         name = left.strip(BOX_CHARS).strip()
         if not name:
-            # A comment-only continuation line (see `backups/`): no entry here.
+            # A comment-only continuation line (see `backups/`): no entry here, and it
+            # touches no path.
             continuations += 1
             continue
+        column = left.index(name)
         if offset == 0:
-            root = name
+            root, root_column = name, column
             continue
-        entries.append(Entry(name, comment, opening + 2 + offset))
+        # The enclosing directories are the open ones to the left of this column.
+        while parents and parents[-1][0] >= column:
+            parents.pop()
+        path = "".join(parent for _, parent in parents) + name
+        entries.append(Entry(name, comment, opening + 2 + offset, path=path,
+                             depth=(column - root_column) // INDENT, left=left))
+        if name.endswith("/"):
+            parents.append((column, name))
     return root, entries, continuations
 
 
@@ -152,8 +192,48 @@ def is_annotated(entry):
 
 
 def is_accounted_for(entry, corpus):
-    """Referenced under plugins/, OR annotated. Either arm satisfies INV-050."""
+    """Referenced under plugins/ by path, OR annotated. Either arm satisfies INV-050."""
     return is_annotated(entry) or entry.probe in corpus
+
+
+def pending_amendments(target, ledger=None):
+    """Texts of the pending `PROPOSED AMENDMENT to <target>` blocks, as the queue reads them.
+
+    Read through `pending_invariants.py`, never a second parser of the ledger (INV-315): an
+    applied block leaves the queue there, so it leaves this list too. `ledger` replaces the
+    ledger's text, for the negative controls.
+    """
+    spec = importlib.util.spec_from_file_location("pending_invariants", LEDGER_HELPER)
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    if ledger is not None:
+        helper.LEDGER = _Text(ledger)
+    return [b["text"] for b in helper.blocks() if helper.parse(b)["amends"] == target]
+
+
+class _Text:
+    """A stand-in for the ledger's path: only `read_text` is called on it."""
+
+    def __init__(self, text):
+        self.text = text
+
+    def read_text(self, encoding=None):
+        return self.text
+
+
+def carries_the_annotated_line(block, entry, word):
+    """The block holds the entry's tree line, left column unchanged, with `word` in its comment."""
+    for line in block.splitlines():
+        left, sep, comment = line.partition("#")
+        if sep and left.strip() == entry.left.strip() and re.search(word, comment, re.I):
+            return True
+    return False
+
+
+def is_pinned(entry, word, blocks):
+    """The tree carries `word` with a date, or a pending INV-050 block carries the line."""
+    in_tree = re.search(word, entry.comment, re.I) and DATE.search(entry.comment)
+    return bool(in_tree) or any(carries_the_annotated_line(b, entry, word) for b in blocks)
 
 
 class TreeExtraction(unittest.TestCase):
@@ -211,6 +291,31 @@ class TreeExtraction(unittest.TestCase):
             "relaxed — but a name-keyed dict is still wrong if duplicates ever return",
         )
 
+    def test_entry_paths_are_unique(self):
+        """Hazard 4: the two `backups/` get distinct paths, so a path names one entry."""
+        _, entries, _ = extract_tree()
+        paths = [e.path for e in entries]
+        self.assertEqual(
+            len(paths), len(set(paths)),
+            "two tree entries rebuilt to the same project-relative path; the indentation "
+            "walk has lost a parent, and one of them is now probed as the other",
+        )
+
+    def test_each_path_matches_its_depth_in_the_tree(self):
+        """Hazard 4: every entry has one path component per level of indentation.
+
+        Derived from the column alone, independently of the parent walk, so a continuation
+        line that broke the walk (`backups/packages/` read as top level) fails here.
+        """
+        _, entries, _ = extract_tree()
+        wrong = [(e.path, e.depth) for e in entries
+                 if not e.path.endswith(e.name)
+                 or len(e.path.rstrip("/").split("/")) != e.depth]
+        self.assertEqual(
+            [], wrong,
+            "entry path(s) disagree with their indentation in INV-050's tree",
+        )
+
 
 class AccountedForPredicate(unittest.TestCase):
     """The rule itself, unit-tested on synthetic entries.
@@ -243,6 +348,15 @@ class AccountedForPredicate(unittest.TestCase):
     def test_the_referenced_arm_works_without_an_annotation(self):
         entry = Entry("zzz_fictional_artifact.json", "", 0)
         self.assertTrue(is_accounted_for(entry, "see zzz_fictional_artifact.json here"))
+
+    def test_the_probe_is_the_path_not_the_leaf_name(self):
+        """#226: a leaf name mentioned only under another path does not resolve the entry."""
+        entry = Entry("README.md", "", 0, path="zzz_fictional_dir/README.md")
+        self.assertEqual("zzz_fictional_dir/README.md", entry.probe)
+        self.assertFalse(
+            is_accounted_for(entry, "see README.md, and other_dir/README.md"),
+            "an entry resolved on its leaf name alone; the probe is no longer its path",
+        )
 
     def test_a_placeholder_resolves_on_its_prefix(self):
         """Hazard 3: the literal name with `{n}` matches nothing."""
@@ -286,6 +400,17 @@ class TreeIsFullyAccountedFor(unittest.TestCase):
             "delete the entry: INV-050 is cited widely and quoted in audits.",
         )
 
+    def test_a_leaf_name_under_another_path_is_unaccounted(self):
+        """Negative control on the real corpus (#226): the name is there, the path is not."""
+        entry = Entry("README.md", "", 0, path="zzz_fictional_dir/README.md")
+        self.assertIn(entry.name, self.corpus, "the control's leaf name must be in the corpus")
+        self.assertNotIn(entry.path, self.corpus, "the control's path must not be")
+        self.assertFalse(
+            is_accounted_for(entry, self.corpus),
+            "an unannotated entry resolved because its leaf name appears under a different "
+            "path; INV-202's 'referenced' is by project-relative path",
+        )
+
     def test_the_placeholder_entry_is_still_a_placeholder(self):
         """Guard the guard: if the tree stops using `{n}`, hazard 3's test is theater."""
         placeholders = [e for e in self.entry_list if "{" in e.name]
@@ -302,6 +427,68 @@ class TreeIsFullyAccountedFor(unittest.TestCase):
                     "prefix probe is no longer what makes this entry resolve",
                 )
                 self.assertIn(entry.probe, self.corpus)
+
+
+class TheUnproducedLeavesArePinnedInTwoStates(unittest.TestCase):
+    """#226: each of `TWO_STATE_LEAVES` is annotated in the tree, or about to be.
+
+    It passes while a pending `PROPOSED AMENDMENT to INV-050` block carries the annotated
+    tree line, and after `/review-invariants` edits the tree and marks the block applied. It
+    fails between the two: the block gone or applied while the tree is still unannotated.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.by_path = {e.path: e for e in extract_tree()[1]}  # paths are unique; names are not
+
+    def leaf(self, path):
+        self.assertIn(path, self.by_path, "INV-050's tree no longer has an entry at %s" % path)
+        return self.by_path[path]
+
+    def test_each_leaf_is_annotated_in_the_tree_or_in_a_pending_amendment(self):
+        blocks = pending_amendments("INV-050")
+        for path, word in TWO_STATE_LEAVES.items():
+            with self.subTest(leaf=path):
+                self.assertTrue(
+                    is_pinned(self.leaf(path), word, blocks),
+                    "%s carries no dated `%s` annotation in INV-050's tree, and no pending "
+                    "PROPOSED AMENDMENT to INV-050 in specs/IMPLEMENTED.md carries its tree "
+                    "line so annotated. Applying the block edits the tree; removing it, or "
+                    "marking it applied without the edit, leaves the leaf unannotated."
+                    % (path, word))
+
+    def fixture(self, entry, word, marker):
+        """A one-block ledger whose tree line is `entry`'s, with `word` in its comment."""
+        return ("## fixture\n\n- **DEFERRED INVARIANT — PROPOSED AMENDMENT to INV-050 — %s.**\n"
+                "  ```text\n  %s# (%s; <YYYY-MM-DD>, #226)\n  ```\n" % (marker, entry.left, word))
+
+    def test_the_negative_controls(self):
+        """Each arm through the real queue parser, on an unannotated copy of each leaf."""
+        spec = importlib.util.spec_from_file_location("pending_invariants", LEDGER_HELPER)
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+        awaiting = helper.AMENDMENT_AWAITING
+        for path, word in TWO_STATE_LEAVES.items():
+            real = self.leaf(path)
+            bare = Entry(real.name, "", 0, path=real.path, left=real.left)
+            cases = {
+                "pending block, annotated line": (self.fixture(bare, word, awaiting), True),
+                "(a) block removed": ("## fixture\n", False),
+                "(a) block marked applied": (self.fixture(bare, word, "applied 2026-10-01"),
+                                             False),
+                "(b) line lost its annotation": (self.fixture(bare, "Shared", awaiting), False),
+            }
+            for case, (ledger, expected) in cases.items():
+                with self.subTest(leaf=path, case=case):
+                    blocks = pending_amendments("INV-050", ledger=ledger)
+                    self.assertIs(expected, is_pinned(bare, word, blocks))
+            with self.subTest(leaf=path, case="annotated tree, dated"):
+                dated = Entry(real.name, " (%s; 2026-10-01, #226)" % word, 0,
+                              path=real.path, left=real.left)
+                self.assertTrue(is_pinned(dated, word, []))
+            with self.subTest(leaf=path, case="annotated tree, undated"):
+                undated = Entry(real.name, " (%s)" % word, 0, path=real.path, left=real.left)
+                self.assertFalse(is_pinned(undated, word, []))
 
 
 if __name__ == "__main__":

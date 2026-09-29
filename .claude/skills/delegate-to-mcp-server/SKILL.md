@@ -47,10 +47,11 @@ systematic version of both, and it is the only one of the four that reads the pl
   are **GitHub issues** and its own ledger, `specs/mcp-coverage.jsonl` — a **named live
   exception** to the freeze, recorded in INV-307 and in `docs/FAMILY_WORKFLOW.md` §8.
   ⚠️ **It is NOT exempt for being `.jsonl`.** That was the reason given here until #142, and
-  it is a permission resting on the freeze guard's `specs/*.md` glob — *a scope-narrowing that
+  it rested on the `specs/*.md` glob the freeze guard used until #257 — *a scope-narrowing that
   happens to produce correct behavior, which INV-308 says must not be relied on*, as
-  `invariant_manifest.py` says of its own artifact. Widening the guard would silently revoke
-  an exception nobody had recorded.
+  `invariant_manifest.py` says of its own artifact. Widening the guard would have silently
+  revoked an exception nobody had recorded; #257 widened it to every file in `specs/` only
+  after #142 had named the exception.
 - **Never modify plugin code, hooks, scripts or skills.** Filing the issues is the
   deliverable; implementing them is `/implement-github-issue`'s job.
 - ⛔ **(INV-314) Filing is outward-facing and immediate. Show the maintainer every title and body and

@@ -350,8 +350,9 @@ to:
 ⚠️ **This list said "four" and named four until 2026-09-24 (#142)**, while the fifth had been
 written to throughout. It was justified where it is used on the grounds that it is `.jsonl`
 rather than `*.md` and so *"sits outside the freeze by construction"* — which is a permission
-resting on a **guard's blind spot**, not on a decision: the freeze guard globs `specs/*.md`,
-and widening it would silently revoke an exception nobody recorded. ⛔ **(INV-307) An exception to the freeze is a DECISION and MUST be
+resting on a **guard's blind spot**, not on a decision: the freeze guard then globbed
+`specs/*.md`, and widening it would have silently revoked an exception nobody recorded (it was
+widened by #257, once #142 had named the exception). ⛔ **(INV-307) An exception to the freeze is a DECISION and MUST be
 named in this list**, never left resting on what a guard happens not to reach. The same
 repository rejects exactly this reasoning for `invariant-manifest.json`, which sits at the root
 rather than relying on the glob missing it.
