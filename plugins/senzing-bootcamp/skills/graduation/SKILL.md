@@ -260,13 +260,13 @@ Gather context before any step. Do this silently.
    ⛔ **Both, not either.** Preferences alone once printed `docktermj` on a signed certificate at
    exit 0 with 99% content retention and no warning, because the generator read only the recap line
    — the pre-check asked the question, the Bootcamper answered, and the answer was discarded
-   (INV-065). The generator now prefers preferences and prints a `NOTE:` on stderr when the two
+   (INV-170). The generator now prefers preferences and prints a `NOTE:` on stderr when the two
    disagree; treat that note as work still to do, not as confirmation.
 
    If the bootcamper declines or gives nothing usable, continue
    — graduation is non-blocking and the generator still renders a certificate, warning on stderr
    that it used the "Bootcamper" placeholder. **Never print a rejected system-account value** on the
-   certificate or into the recap (INV-065); ask, and use the answer.
+   certificate or into the recap (INV-113); ask, and use the answer.
 
 ## Step 0: Session retrospective (self-observed feedback)
 
@@ -404,7 +404,7 @@ later. The shape chosen here is the shape the bootcamper keeps.
 ⛔ **Never invent content to fill a label.** If a module's own record does not support a block, write
 what is true — "(no files — {reason})" for a module that produced none — or leave that one block out
 and let the generator mark it "(not recorded)". A keepsake that overstates what the bootcamper did is
-worse than one that shows a gap (INV-065's principle: never fabricate to fill a field). Like every
+worse than one that shows a gap (INV-157's principle: never fabricate to fill a field). Like every
 graduation step this is non-blocking: warn and continue.
 
 `--check` (Step 1b) reports these gaps per module, so run it after this backfill and re-render if it

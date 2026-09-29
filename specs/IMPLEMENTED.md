@@ -43,6 +43,160 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## inv-065-is-cited-as-the-identifier-stripping-rule
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #231)
+- **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md`,
+  `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`,
+  `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`,
+  `tests/test_certificate_name_source.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-28, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact), re-confirmed. Every changed line is a citation id or this
+  ledger entry; no Senzing behavior is stated or changed, and no absence claim is made.
+- **Summary:** INV-065 registers the sanitized example recap fixture, and 26 sites outside the
+  fixture's own tests cited it for seven other subjects. This entry settles every one of them
+  without registering anything. Behavior does not change: only citations move.
+  - **Re-cited now, to invariants that already own the subject (7 sites):**
+    `graduation/SKILL.md` Pre-check "Both, not either" → INV-170 (the answer was discarded
+    because the generator read the recap line); `graduation/SKILL.md` "Never print a rejected
+    system-account value" → INV-113; `graduation/SKILL.md`'s recap backfill, "never fabricate
+    to fill a field" → INV-157; `scripts/generate_recap_pdf.py`'s `_CERTIFICATE_NAME_OVERRIDE` comment → INV-170;
+    `tests/test_certificate_name_source.py`'s docstring → INV-170;
+    `module-04-data-collection/SKILL.md` sub-step 6a, item 2 ("Never put them in a config
+    file, the recap, or the feedback file") → INV-135, whose text says "NEVER written to
+    `config/`, the recap, or the feedback file"; `bootcamp-onboarding/ground-rules.md`
+    "(INV-274, INV-065)" → "(INV-274)".
+  - **Deferred, three blocks below (one subject each):** outbound defect-report stripping (14
+    sites), no host identifiers in local artifacts (5 sites), and never invent a name in a
+    shared report (1 site). Every site keeps `INV-065` until `/review-invariants` mints the
+    id, and its Register step 3 re-cites the site then (maintainer decision: no second issue).
+  - **Left alone:** the fixture citations (`test_example_recap_sync.py`,
+    `test_module_instructions_do_not_hardcode_the_port.py`, `test_recap_summary_blocks.py`,
+    `.claude/skills/retrofit-from-public/SKILL.md`), the historical records, and the three
+    dry-run sites' own text, which is #227's. The tests that assert the literal `INV-065`
+    (`test_feedback_routing.py`, `test_bootcamp_notes_flow.py`) are block sites and change with
+    their sites at registration.
+  - **Recorded, not amended:** nine registered invariants cite INV-065 in their own text for
+    one of these subjects. The blocks' drafted wording names each (INV-134 set the precedent of
+    recording a mis-citation in place of amending it). `specs/INVARIANTS.md` and
+    `invariant-manifest.json` are unchanged.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Outbound
+  defect-report stripping. The rules already shipping, and every site a citation must reach,
+  each quoted:
+    - ⛔ **No hostname, username, file path under a home directory, IP address, email, company name, or data values from the bootcamper's records (INV-065).** — in `plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md` (Step 3c, item 2) — **replace INV-065**
+    - ⛔ **show the exact message, strip anything identifying (INV-065), and send only on a yes.** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md` (Step 0, the `Upstream:` bullet) — **replace INV-065**
+    - ⛔ **Bootcamper's personal details, not diagnostic context, so the bug-report rule that strips every identifier** — in `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md` (sub-step 6a; the INV-065 follows these words) — **replace INV-065**
+    - ⛔ **stripping anything identifying (INV-065); never send anything external** — in `plugins/senzing-bootcamp/scripts/feedback-capture.py` (the injected routing instruction) — **replace INV-065**
+    - ⛔ **Entity names and record IDs are theirs (INV-065) — an upstream message describes the shape of a problem, never the content of their records.** — in `tests/test_feedback_routing.py` (module docstring) — **replace INV-065**
+    - ⛔ **self.assertIn("INV-065", forward_step())** — in `tests/test_feedback_routing.py` (`BootcamperDataNeverLeaves`; asserts the literal, so it changes with the `feedback.md` site) — **replace INV-065**
+    - ⛔ **for probe in ("Triage", "Routing", "submit_feedback", "INV-015", "INV-065",** — in `tests/test_feedback_routing.py` (`test_hook_injects_the_routing_instruction`; changes with the `feedback-capture.py` site) — **replace INV-065**
+    - ⛔ **Otherwise INV-065's 'strip the email' and this call contradict each other.** — in `tests/test_mcp_call_contracts.py` (`test_the_defect_report_path_scopes_its_stripping_rule`) — **replace INV-065**
+    - ⛔ **INV-065's identifier-stripping discipline is about what leaves the machine in a bug report** — in `tests/test_sourcing_reaches_beyond_technical_facts.py` (module docstring) — **replace INV-065**
+    - ⛔ **the INV-065 show-and-consent gate before anything leaves the machine** — in `tests/test_feedback_capture_triggers.py` (module docstring; the gate itself is INV-314's open question, the stripping is this rule) — **replace INV-065**
+    - ⛔ **a self-contained technical report, everything identifying stripped** — in `.claude/skills/dry-run/SKILL.md` (the `both` finding; the citation after these words is INV-065 or, after #227, the owning step) — **replace INV-065**
+    - ⛔ **a self-contained technical report, everything identifying stripped** — in `.claude/commands/dry-run.md` (the same sentence; INV-065 or, after #227, the owning step) — **replace INV-065**
+    - ⛔ **Skipping the gate silently is worse: its wording, its batching and its** — in `.claude/skills/dry-run/phase3-conversational.md` (followed by "INV-065 stripping", or after #227 by the owning step) — **replace INV-065**
+    - ⛔ **No bootcamper name, employer, email, file paths from their machine, host names, dataset contents, or record values** — in `.claude/skills/feedback-to-issues/SKILL.md` (Step 8, item 3, which states the rule and cites nothing) — **cite INV-NNN**
+
+  ⚠️ **Why this is not an existing invariant.** INV-065 registers the example recap fixture and
+  says nothing about a report. INV-135 governs the license request, the one call that may carry
+  personal details, and says the defect-report stripping cannot apply to it; it does not state
+  that stripping. INV-274 governs what may be inferred from identifying context and names the
+  stripping as another rule's subject. INV-314 governs a maintainer's assent before an outward
+  record is created, and records the Bootcamper-facing consent gate as bound by no invariant.
+  This rule is about the report's content, not the gate, and leaves that open question open.
+  Three sites quote only the words before their citation, so the quotes still match when #227
+  re-points those three citations to the owning step.
+
+  The drafted wording:
+
+  **INV-NNN** — A defect report sent off the Bootcamper's machine (a `submit_feedback`
+  submission under `category='bug'` or `'feature'`, whether the feedback flow, graduation's
+  retrospective or a maintainer command sends it) MUST carry no identifier and none of the
+  Bootcamper's data: no name, employer or company name, email address, hostname, username, file
+  path from their machine or IP address, and no dataset contents, entity names, record IDs or
+  record values. It describes the shape of the problem, never its content. The
+  evaluation-license request is outside this rule, because it cannot work without the
+  Bootcamper's details; INV-135's consent discipline governs it instead. What may be inferred
+  from details that stay on the machine is INV-274's subject. ⚠️ **Mis-citations recorded, not
+  amended:** INV-065 registers the sanitized example recap fixture, yet INV-135 and INV-274 cite
+  it in their own text for this rule; INV-274 calls it the rule that "governs what leaves the
+  machine in a bug report". Their text is left as written, as INV-134's records an earlier
+  mis-citation without amending it. Enforced by `tests/test_feedback_routing.py`
+  (`BootcamperDataNeverLeaves`). (Source: GitHub issue #231.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** No host identifiers
+  in local artifacts. The rules already shipping, and every site a citation must reach, each
+  quoted:
+    - ⛔ **The context block is machine-composed, so INV-065 binds it** — in `plugins/senzing-bootcamp/skills/bootcamp-onboarding/notes.md` (the Step 3c heading; the rule follows it) — **replace INV-065**
+    - ⛔ **Same rule as the recap (INV-065): no hostname, username, IP address, or other personal/host identifier.** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md` (Step 0, "PII boundary") — **replace INV-065**
+    - ⛔ **Record the version only, never the path it resolved from: an absolute path carries a username and this block is PII-free (INV-065).** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md` (the run-environment block, plugin version) — **replace INV-065**
+    - ⛔ **MUST NOT contain a hostname, username, IP address, or any other personal/host identifier (INV-065).** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md` (the run-environment block) — **replace INV-065**
+    - ⛔ **self.assertIn("INV-065", flat)** — in `tests/test_bootcamp_notes_flow.py` (`test_the_context_block_is_bound_by_the_privacy_rule`; asserts the literal, so it changes with the `notes.md` site) — **replace INV-065**
+
+  ⚠️ **Why this is not an existing invariant.** INV-065 is the fixture. INV-105 states this
+  boundary for the recap's environment block, INV-116 for the retrospective's entries, INV-252
+  for a resolved plugin path and INV-257 for a note's context block. Each borrows INV-065 as the
+  general rule, and none states it for every file the bootcamp writes. It is also not the
+  outbound rule above: these files stay on the machine, and the Bootcamper's own words and data
+  are welcome in them.
+
+  The drafted wording:
+
+  **INV-NNN** — A file the bootcamp writes on the Bootcamper's machine from context it gathers
+  itself (the recap and its PDF, including the run-environment block; a note's machine-composed
+  context block; a feedback entry, including graduation's self-observed retrospective entries)
+  MUST NOT contain a hostname, a username, a home-directory path or any other absolute path that
+  carries a username, an IP address, or any other personal or host identifier. Operating system
+  and architecture, plugin version, SDK version and model are environment facts, not
+  identifiers, and are permitted. Which name the certificate prints is not this rule's subject;
+  INV-113, INV-134 and INV-170 own it. ⚠️ **Mis-citations recorded, not amended:** INV-065
+  registers the sanitized example recap fixture, yet INV-105, INV-116, INV-252 and INV-257 cite
+  it in their own text for this rule, and INV-113, INV-134 and INV-170 cite it for the
+  certificate name, a subject each owns itself. Their text is left as written, as INV-134's
+  records an earlier mis-citation without amending it. Enforced by
+  `tests/test_bootcamp_notes_flow.py` (`test_the_context_block_is_bound_by_the_privacy_rule`) for
+  the notes context block only; no test guards the recap's run-environment block or the
+  retrospective's boundary. (Source: GitHub issue #231.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Never invent a name
+  in a shared report. The rule already shipping, and the site a citation must reach, quoted:
+    - ⛔ **Never transliterate or invent a name you have not confirmed in the data** — in `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md` (Data-discoveries deliverable; the rule)
+    - ⛔ **a wrong name in a shared report is worse than an awkward one (INV-065's principle: never fabricate to fill a field)** — in `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md` (the same passage; its citation) — **replace INV-065**
+
+  ⚠️ **Why this is not an existing invariant.** INV-065 is the fixture and states no principle
+  about fabrication. INV-157 forbids inventing content to fill a recap block's label, which is
+  why graduation's recap backfill now cites it; it does not reach a name the guide writes
+  into the data-discoveries report. INV-159 governs how the generator folds characters it cannot
+  render, and leaves a name's Latin spelling to the Bootcamper; it says nothing about the guide
+  choosing a name for an entity in their data.
+
+  The drafted wording:
+
+  **INV-NNN** — A name the guide writes into a report meant to be shared (Module 7's
+  data-discoveries deliverable and its PDF) MUST be one the loaded data carries for that entity.
+  When an entity's primary name is in a script the report cannot render, the guide MUST use a
+  Latin-script name or alias the data already holds and say which it used, and MUST NOT
+  transliterate a name or invent one: a wrong name in a shared report is worse than an awkward
+  one. ⚠️ **Mis-citation recorded:** the site cites "INV-065's principle: never fabricate to fill a
+  field"; INV-065 registers the sanitized example recap fixture and states no such principle.
+  No test guards this rule. (Source: GitHub issue #231.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Tests:** no new test (approach A: citations and ledger only). The re-citations are guarded
+  by `citations.py verify` (every cited id resolves) and by `test_new_hard_rules_are_cited_or_deferred.py`
+  (no ⛔ line lost its citation: each changed ⛔ line is re-cited, and line 931's stays cited and
+  is a block site). The three blocks are guarded by `test_deferral_quotes_match_their_source.py`
+  (21 new quotes, each verbatim in the file it names) and by `pending_invariants.py check`
+  (0 mismatched, 0 unresolved, 0 unparsed).
+- **Commit:** b4e3036
+
 ## retrofit-prose-describes-the-report-not-the-copy
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #224)

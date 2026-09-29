@@ -2323,7 +2323,7 @@ def _cert_attribution(recap: Recap) -> List[str]:
 # Bootcamp preparation at the *start* of the run, from the pre-detection value — so the
 # recap and preferences disagree by design after the question is asked, and the answer is
 # the newer of the two. Reading only the recap printed the rejected handle on a signed
-# certificate at exit 0, with 99% content retention and no warning (INV-065).
+# certificate at exit 0, with 99% content retention and no warning (INV-170).
 _CERTIFICATE_NAME_OVERRIDE = ""
 
 DEFAULT_PREFERENCES = Path("config") / "bootcamp_preferences.yaml"
