@@ -1,6 +1,7 @@
 ---
 name: feedback-to-issues
 description: 'Analyze a Senzing Bootcamp plugin feedback file and file it as GitHub issues in this repository, re-verifying every Senzing fact against the live Senzing MCP server first and reporting confirmed server-side defects upstream via submit_feedback. Use when the maintainer wants to process SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md, triage bootcamper feedback, or turn collected feedback into issues. Maintainer tool — not part of the bootcamper experience.'
+argument-hint: "[path to feedback file]"
 ---
 
 # Feedback → Issues

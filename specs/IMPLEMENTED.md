@@ -43,6 +43,258 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## each-maintainer-skill-states-its-commands-rules
+
+- **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #241)
+- **Files changed:** `.claude/skills/auto-test/SKILL.md`,
+  `.claude/skills/compact-dev-environment/SKILL.md`,
+  `.claude/skills/delegate-to-mcp-server/SKILL.md`, `.claude/skills/dry-run/SKILL.md`,
+  `.claude/skills/feedback-to-issues/SKILL.md`,
+  `.claude/skills/production-readiness-audit/SKILL.md`,
+  `.claude/skills/propagate-to-public/SKILL.md`, `.claude/skills/release/SKILL.md`,
+  `.claude/skills/retrofit-from-public/SKILL.md`, `.claude/skills/review-invariants/SKILL.md`,
+  `tests/test_skills_state_their_commands_argument_handling.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-29, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact), re-confirmed. Every changed line is maintainer apparatus: how
+  ten maintainer skills read their argument, and a guard. No absence claim is made.
+  `submit_feedback` was not called, and nothing was sent upstream.
+- **Measurement (posted on #241 by the maintainer before any file changed):** Claude Code
+  2.1.284, 2026-09-29. A throwaway project outside the repository held
+  `.claude/skills/sbcp-probe-241/SKILL.md` (marker `SKILL-9c2e`) and
+  `.claude/commands/sbcp-probe-241.md` (marker `COMMAND-7f3a`), and was invoked through
+  `claude -p` twice. `/sbcp-probe-241` returned `MARKER=SKILL-9c2e ARGS=[]`, and
+  `/sbcp-probe-241 probe-arg` returned `MARKER=SKILL-9c2e ARGS=[probe-arg]`. The command's
+  marker never appeared. By the issue's reading rule (only the command's marker on both runs
+  means "the command runs"), **the skill runs, with and without an argument**, and it receives
+  the argument. So none of the ten same-name command files has ever run here, and every rule
+  stated only in one of them was never in effect.
+- **Summary:** each of the ten skills now states every rule its same-name command carried that
+  the skill lacked, woven into the step the rule governs (argument handling into the step that
+  reads the argument), and deduplicated against the skill's own wording, so no moved rule is
+  stated twice in a skill. Each skill's frontmatter carries its command's `argument-hint`,
+  copied verbatim, and `disable-model-invocation` stays unset on all ten. The sentence "which is
+  why it is invoked explicitly rather than inferred" (in the `/dry-run`, `/propagate-to-public`
+  and `/release` commands) was dropped, since it is false for a model-invocable skill; the noun
+  it qualified moved as "a **test-gate action** before publishing" and "a **release-path
+  action**". `.claude/commands/` is unchanged: all ten files still ship, so INV-302, INV-303
+  and INV-316 hold as registered, and deleting them is #262. `specs/INVARIANTS.md` and
+  `invariant-manifest.json` are unchanged (INV-307).
+- **Moved rules.** Marked **[command only]** where the skill stated no part of the rule, so it
+  was never in effect; **[partial]** where the skill stated part of it and the command's extra
+  clause is what moved. Every `argument-hint` line is **[command only]** (ten).
+  - **auto-test** (7 moved, 7 command only). *Running it:* **[command only]** with no argument,
+    present the two halves (MCP probe; + simulated walk) with their costs and ask which to run;
+    **[command only]** an argument naming a walk runs both, a trailing persona and turn count
+    answer the walk's parameters, else `terse`, 12; **[command only]** the probe runs either
+    way, and first; **[command only]** ⛔ the walk is never inferred from silence (no invariant
+    cites it: the `DEFERRED INVARIANT` below). *Reading the output:* **[command only]** report
+    in severity order, naming the sandbox and whether the walk ran. *Scheduling:* **[command
+    only]** when no persona is named on a recent walk, say which one the last run used.
+    *Guardrails:* **[command only]** do not hand-run the pieces around `autotest.py`.
+  - **compact-dev-environment** (3 moved, 2 command only). *Step 1:* **[command only]** with no
+    argument, take the full census and assess all four classes, then propose a plan;
+    **[command only]** a named class still takes the full census, and scopes only the
+    assessment and the plan. *Scope and guardrails:* **[partial]** each destructive step is
+    confirmed "one asset class at a time".
+  - **delegate-to-mcp-server** (4 moved, 3 command only). *Step 1:* **[command only]** do it
+    first, before looking at anything, with the reason. *Step 2:* **[partial]** with no argument,
+    all four sources, bounded at Step 3 (the bound was item 4's); **[command only]** a named area
+    or category is the bound, said in the report. *Step 10:* **[command only]** name any site
+    whose owning tool could not be reached.
+  - **dry-run** (5 moved, 4 command only). *Intro:* **[command only]** a test-gate action
+    before publishing. *Before you start, 1:* **[partial]** asking when there is no argument
+    was the skill's; "do not read 'dry-run the plugin' as 'all three'" is the command's;
+    **[command only]** an argument naming phases answers the question, start at the lowest;
+    **[command only]** a trailing module name answers phase 3's second question. *Reporting:*
+    **[command only]** if phase 3 ran, say which module the analysis started at and that
+    everything before it was walked, not tested.
+  - **feedback-to-issues** (0 moved). Every rule its command states was already in the skill.
+    One conflict, below.
+  - **production-readiness-audit** (2 moved, 1 command only). *Step 2:* **[partial]** with no
+    argument, the four listed scopes are the run's own choice; **[command only]** a named area
+    is swept first, and every lead generator still runs, with the reason.
+  - **propagate-to-public** (4 moved, 2 command only). *Intro:* **[command only]** a
+    release-path action. *How to run:* **[partial]** no argument means the default checkout
+    (the path was the skill's); **[command only]** an argument is the destination passed to
+    `propagate.sh`. *Guardrails:* **[partial]** "Don't guess the destination" now also covers a
+    destination that does not exist, is not a git repo, or has the wrong `origin`.
+  - **release** (4 moved, 3 command only). *Intro:* **[command only]** a release-path action.
+    *How to run it:* **[command only]** `major`/`minor`/`patch` pass as flags; **[command only]**
+    an explicit version passes positionally; **[partial]** with no argument, run the dry run with
+    no bump named and show the current version and newest tag, then ask per *Never invent the
+    version* (the asking was the skill's).
+  - **retrofit-from-public** (4 moved, 2 command only). *Intro:* **[command only]** take the
+    comparison from `retrofit.sh`, never a hand-run diff, with the reason. *How to run:*
+    **[partial]** no argument means the default checkout; **[command only]** an argument is the
+    source passed to `retrofit.sh`. *Guardrails:* **[partial]** "Don't guess the source" now
+    also covers a missing source, a non-git source and the wrong `origin`.
+  - **review-invariants** (2 moved, 2 command only). *Step 2:* **[command only]** with no
+    argument, start at the first pending block; **[command only]** a number starts there, as the
+    `<n>` of `show` and `sites`.
+  - **Totals:** 35 rules moved, 26 of them command only and 9 partial, plus ten `argument-hint`
+    lines, all command only.
+- **Kept in the skill's wording, not moved.** Every other command rule was already in its skill,
+  in different words, and stays once, in the skill's words. Six of them the command marked ⛔
+  where the skill states them in bold or ⚠️ prose; the skill's form is kept, and they are listed
+  so the maintainer can see the difference: `/compact-dev-environment`'s "Report first, change
+  second" and "Re-measure every number"; `/delegate-to-mcp-server`'s "Re-ask the server this
+  session", "The server can answer it is not by itself a reason", "Delegation done badly" and
+  "Do not attempt the whole surface in one pass" (Step 2 item 4); `/dry-run`'s "Phase 3 is never
+  implied"; `/release`'s "Do not pick one" (*Never invent the version*).
+- **Conflicts (the skill's wording kept, for the maintainer):**
+  1. `/compact-dev-environment`: the command says ⛔ "Never renumber an invariant, and do not
+     propose it"; the skill forbids renumbering by default but describes a renumber the
+     maintainer directs as "a separate, explicitly authorized operation" with four MUSTs.
+  2. `/feedback-to-issues`: with no argument the command defaults to the root file, then
+     `docs/feedback/…`; the skill resolves in the same order but asks which to use when more than
+     one candidate exists.
+  3. `/production-readiness-audit`: the command says "Name the issue number each finding was
+     written into"; the skill's Step 9 says "Name the spec file each finding was written into".
+     ⚠️ The skill's wording reads stale against its own Step 8 (findings are issues or ledger
+     lines, and `specs/` is frozen, INV-307), so this one likely wants the command's wording;
+     that is the maintainer's call and this run did not change it.
+- **Approach:** raced (Phase 5b), approach b: weave each missing rule into the step it governs,
+  deduplicating against the skill's wording, rather than appending one block per skill.
+- **Note for `/review-invariants`:** the held block
+  `the-two-user-level-skills-are-defined-only-at-user-level` has the revisit condition "after
+  #241 lands, when the one-definition rule covers every maintainer skill". With the commands
+  still shipping, that rule is complete only after #262.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-302 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+    - ⛔ **every directory under `.claude/skills/` containing a `SKILL.md` MUST be fronted by at least one command** — in `specs/INVARIANTS.md`
+
+  INV-302 requires every skill to be fronted by a command, and every skill here is fronted by one of the same name, which never runs: `/<name>` runs the skill (the measurement above). Once the rules are in the skills (this run), the command files are a second definition of each name, and #262 deletes them. That deletion fails `test_every_skill_is_fronted_by_a_command` while this clause stands, so the note narrows it first. Enforced by `tests/test_documented_dev_commands_match_the_shipped_set.py` and
+  `tests/test_dev_commands_name_a_real_skill.py`, which #262 re-points. Amending a registered invariant is the maintainer's sign-off alone, so
+  `specs/INVARIANTS.md` is untouched, and the block carries both markers as #223's INV-281 and
+  #216's INV-314 blocks did.
+
+  The drafted wording, the issue's note verbatim, appended to INV-302 with every existing sentence
+  unchanged:
+
+  **INV-302** — (⛔ **Narrowed <YYYY-MM-DD> (#241) — a skill need not be fronted by a command.** Measured 2026-09-29 on Claude Code 2.1.284: when a project skill and a project command share a name, `/<name>` runs the skill, with or without an argument, so a same-name command never runs. The clause requiring every directory under `.claude/skills/` containing a `SKILL.md` to be fronted by at least one command no longer binds, and neither does the closing sentence of the #239 note, "a skill under `.claude/skills/` must still be fronted by a command". The set this invariant compares with `docs/development.md` in both directions is the skills under `.claude/skills/` together with any command under `.claude/commands/`. Every other clause is unchanged.)
+
+  *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
+  applies the note, not the day of this run.)* *(written as NNN deliberately: no new id
+  is drafted, because this amends INV-302 in place and a literal new id would cite an invariant
+  that does not exist and turn `citations.py verify` red. If the maintainer prefers a separate
+  invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
+  rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-303 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+    - ⛔ **Every maintainer slash command under `.claude/commands/` MUST name, in its body, a skill that resolves to a directory under `.claude/skills/` containing a `SKILL.md`** — in `specs/INVARIANTS.md`
+
+  INV-303 binds the content of a command file. Once #262 deletes the ten, no command ships, and a rule over an empty set is satisfied by nothing. The note keeps it binding on any command added later, an alias included, and says its enforcer must check fixtures when none ship (INV-265). Enforced by `tests/test_dev_commands_name_a_real_skill.py`. Amending a registered invariant is the maintainer's sign-off alone, so
+  `specs/INVARIANTS.md` is untouched, and the block carries both markers as #223's INV-281 and
+  #216's INV-314 blocks did.
+
+  The drafted wording, the issue's note verbatim, appended to INV-303 with every existing sentence
+  unchanged:
+
+  **INV-303** — (⚠️ **Dated note, <YYYY-MM-DD> (#241): no command ships today.** After #241's follow-up, `.claude/commands/` holds no file. This invariant still binds any command added later, including an alias whose stem differs from its skill. Its enforcer checks fixture commands when none ship, so it never passes over an empty set (INV-265).)
+
+  *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
+  applies the note, not the day of this run.)* *(written as NNN deliberately: no new id
+  is drafted, because this amends INV-303 in place and a literal new id would cite an invariant
+  that does not exist and turn `citations.py verify` red. If the maintainer prefers a separate
+  invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
+  rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-316 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+    - ⛔ **that name MUST either resolve to a shipped command file** — in `specs/INVARIANTS.md`
+
+  INV-316 resolves a name against a shipped command file, and its register direction reads "every shipped command". With no command file left, every documented name fails to resolve, and the register check passes on nothing. The note counts a skill as a shipped operation in both directions. Enforced by `tests/test_canonical_operations_resolve.py`. Amending a registered invariant is the maintainer's sign-off alone, so
+  `specs/INVARIANTS.md` is untouched, and the block carries both markers as #223's INV-281 and
+  #216's INV-314 blocks did.
+
+  The drafted wording, the issue's note verbatim, appended to INV-316 with every existing sentence
+  unchanged:
+
+  **INV-316** — (⚠️ **Dated note, <YYYY-MM-DD> (#241): skills are shipped operations too.** A name "resolves" when it matches a shipped command file **or** a skill under `.claude/skills/` with a `SKILL.md`, since `/<name>` runs the skill directly (measured 2026-09-29, Claude Code 2.1.284). The register direction reads "every shipped command or skill MUST appear in it", so the check is not vacuous once no command file ships.)
+
+  *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
+  applies the note, not the day of this run.)* *(written as NNN deliberately: no new id
+  is drafted, because this amends INV-316 in place and a literal new id would cite an invariant
+  that does not exist and turn `citations.py verify` red. If the maintainer prefers a separate
+  invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
+  rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-318 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+    - ⛔ **No maintainer command may apply the `unattended-ok` label to an issue it files** — in `specs/INVARIANTS.md`
+
+  INV-318 binds "maintainer command". Once no command file ships, the maintainer surface is the skills, and the rule as written binds nothing. Enforced by `tests/test_dry_run_files_issues.py` and `tests/test_audit_files_issues_not_specs.py`. Amending a registered invariant is the maintainer's sign-off alone, so
+  `specs/INVARIANTS.md` is untouched, and the block carries both markers as #223's INV-281 and
+  #216's INV-314 blocks did.
+
+  The drafted wording, the issue's note verbatim, appended to INV-318 with every existing sentence
+  unchanged:
+
+  **INV-318** — (⚠️ **Dated note, <YYYY-MM-DD> (#241):** "maintainer command" here means a maintainer command or skill, since the maintainer surface is defined by skills once no command file ships.)
+
+  *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
+  applies the note, not the day of this run.)* *(written as NNN deliberately: no new id
+  is drafted, because this amends INV-318 in place and a literal new id would cite an invariant
+  that does not exist and turn `citations.py verify` red. If the maintainer prefers a separate
+  invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
+  rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-319 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+    - ⛔ **A maintainer command that files a GitHub issue MUST file it in this repository only** — in `specs/INVARIANTS.md`
+
+  INV-319 binds "maintainer command", with the same gap as INV-318 once no command file ships. Enforced by `tests/test_feedback_to_issues_files_in_its_own_repo.py` and `tests/test_delegate_files_issues_not_specs.py`. Amending a registered invariant is the maintainer's sign-off alone, so
+  `specs/INVARIANTS.md` is untouched, and the block carries both markers as #223's INV-281 and
+  #216's INV-314 blocks did.
+
+  The drafted wording, the issue's note verbatim, appended to INV-319 with every existing sentence
+  unchanged:
+
+  **INV-319** — (⚠️ **Dated note, <YYYY-MM-DD> (#241):** "maintainer command" here means a maintainer command or skill, since the maintainer surface is defined by skills once no command file ships.)
+
+  *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
+  applies the note, not the day of this run.)* *(written as NNN deliberately: no new id
+  is drafted, because this amends INV-319 in place and a literal new id would cite an invariant
+  that does not exist and turn `citations.py verify` red. If the maintainer prefers a separate
+  invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
+  rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Moving the commands' rules put one new hard-rule line into a skill, and no invariant covers it. The rules already shipping, the first as a ⛔ line and the other two as plain prose at their sites:
+    - ⛔ **The walk is never inferred from silence.** — in `.claude/skills/auto-test/SKILL.md`
+    - ⛔ **Phase 3 costs the maintainer's time in a way 1 and 2 do not, so it is never implied by "dry-run the plugin".** — in `.claude/skills/dry-run/SKILL.md`
+    - ⛔ **Never invent the version.** — in `.claude/skills/release/SKILL.md`
+
+  ⚠️ **Why a new invariant rather than a citation.** No registered invariant says a maintainer
+  operation asks rather than defaults. INV-244 ("absence means *not asked*") is the nearest, and
+  governs bootcamp state fields, not a maintainer's argument; citing it would be the wrong-subject
+  citation `/production-readiness-audit` Step 3 hunts. The three rules state one subject: an
+  empty argument never chooses the costly work. Until the note is minted, the auto-test line
+  names this block at its site.
+
+  The drafted wording:
+
+  **INV-NNN** — Where a maintainer skill's argument chooses work that costs the maintainer's
+  time, spends tokens, or cuts a release (`/dry-run`'s phase 3, `/auto-test`'s simulated walk,
+  `/release`'s bump), an empty argument MUST be answered by asking, never by a default: the
+  costly choice is asked about, not inferred from silence. The skill states the rule, because
+  `/<name>` runs the skill rather than a same-name command (measured 2026-09-29, Claude Code
+  2.1.284). Enforced by `tests/test_skills_state_their_commands_argument_handling.py`, which
+  asserts the sentences are stated and cannot establish that a live run asks. (Source: GitHub
+  issue #241.)
+
+  *(written as NNN deliberately: several deferrals are pending, and a literal id would cite an
+  invariant that does not exist and turn `citations.py verify` red. Mint at the next free id,
+  and read it off `INVARIANTS.md` at registration.)*
+- **Tests:** `tests/test_skills_state_their_commands_argument_handling.py` (new).
+  `ARGUMENT_RULES` holds, for each of the ten skills, one row per `$ARGUMENTS` rule: a pattern
+  locating the rule in the command and the patterns the skill must match (23 rows).
+  - **Hint:** each skill's frontmatter carries an `argument-hint`, equal to its command's while
+    the command ships. No skill sets `disable-model-invocation` or says it is "invoked
+    explicitly rather than inferred".
+  - **Rules:** every row's skill patterns match; every paragraph or bullet of a shipping command
+    that names `$ARGUMENTS` is located by a row, so a new command rule cannot pass by being
+    absent from the table; no row's command pattern is stale.
+  - **After #262:** the command-side checks skip with a stated reason, and the skill-side checks
+    keep running from the table (INV-308, INV-265).
+  - **Negative controls** (`TheChecksAreNotVacuous`, every suite): stripping `release`'s
+    `argument-hint` fails; changing `dry-run`'s hint fails while its command ships; deleting
+    `dry-run`'s moved "trailing module name" sentence fails exactly that row; a synthetic
+    `$ARGUMENTS` bullet appended to a command fails the coverage check; the explicit-only
+    sentence is caught across a line break. Also run on disk (see the approach note).
+  - Tests that pin a sentence in a command and in its skill pass unchanged.
+- **Commit:** `5c0c6e1`
+
 ## invariants-132-157-204-match-the-server-and-the-plugin
 
 - **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #235)

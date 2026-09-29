@@ -1,6 +1,7 @@
 ---
 name: propagate-to-public
 description: 'Propagate the shippable Senzing Bootcamp plugin from this development repo into the public access repo (Senzing/senzing-bootcamp-claude-plugin). Use when the maintainer wants to publish, release, sync, or push the plugin to the public repo. Mirrors only what a user needs to install and use, rewrites development self-references to the public Senzing slug, and stops at the working tree (no commit, no push). Maintainer tool — not part of the bootcamper experience.'
+argument-hint: "[path to the public repo] (omit for ~/senzing.git/senzing-bootcamp-claude-plugin)"
 ---
 
 # Propagate → Public access repo
@@ -17,8 +18,8 @@ Senzing-org governance files (`.github/`, `LICENSE`, `.claude/settings.json`,
 `.vscode/cspell.json`, `.gitignore`) that this tool **must never touch** — it is
 a scoped mirror, not a wholesale copy.
 
-The work is done by [`propagate.sh`](propagate.sh) in this skill's directory. It
-is deterministic on purpose: a wrong `--delete` scope could destroy the public
+This is a **release-path action**. The work is done by [`propagate.sh`](propagate.sh)
+in this skill's directory. It is deterministic on purpose: a wrong `--delete` scope could destroy the public
 repo's governance files, so the file operations live in a vetted script rather
 than being hand-run each time.
 
@@ -107,6 +108,9 @@ The separate `docktermj/senzing-bootcamp-free-data` links (in Module 4) are a
    .claude/skills/propagate-to-public/propagate.sh /path/to/public-repo
    ```
 
+   With no argument, use the default checkout. An argument is the path to the public
+   repo's working tree: pass it to `propagate.sh` as its destination.
+
 The script enforces its own safety guards and **aborts** if any fail:
 
 - the source doesn't look like this dev repo,
@@ -138,7 +142,10 @@ commit or push (this matches how releases are reviewed here).
 - **Never** propagate anything on the excluded list above, even if asked to "copy
   everything" — the public repo is deliberately install-and-use only.
 - **Don't guess the destination.** If the public repo isn't at the default path
-  and none was given, ask for it rather than syncing somewhere uncertain.
+  and none was given, or the destination does not exist, is not a git repo, or its
+  `origin` is not `Senzing/senzing-bootcamp-claude-plugin`, ask for it rather than
+  syncing somewhere uncertain. The script aborts on each of these, and guessing a
+  destination is how a mirror lands in the wrong tree.
 - **Don't commit or push** as part of propagation. Sync files, report, stop.
 - If the manifest needs to change (a new shippable path, or a new dev-only path
   to exclude), update both this manifest **and** `propagate.sh` together so they

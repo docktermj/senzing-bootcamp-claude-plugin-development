@@ -1,6 +1,7 @@
 ---
 name: retrofit-from-public
 description: 'Retrofit changes made in the public access repo (Senzing/senzing-bootcamp-claude-plugin) by reporting them: it compares public against the last propagation and files GitHub issues in this development repo describing what diverged. Use when the maintainer wants to bring public-repo edits (PR fixes, typo/spelling corrections, direct changes) to development as issues. The inverse direction of propagate-to-public: it writes nothing into this repo, and the inverse slug rewrite is applied by whoever implements a filed issue. Maintainer tool — not part of the bootcamper experience.'
+argument-hint: "[path to the public repo] (omit for ~/senzing.git/senzing-bootcamp-claude-plugin)"
 ---
 
 # Retrofit ← Public access repo
@@ -15,7 +16,10 @@ It is the counterpart to `propagate-to-public`. Propagate is authoritative
 (dev → public). Retrofit is the *return path* for edits that happen in public —
 PR fixes, spelling corrections, or direct changes — so they aren't lost.
 
-The work is done by [`retrofit.sh`](retrofit.sh) in this skill's directory.
+The work is done by [`retrofit.sh`](retrofit.sh) in this skill's directory. Take the
+comparison from it, never from a hand-run diff: the baseline and the slug rewrite it
+compares through are narrow, and a hand-run diff reports every dev self-reference as a
+public edit.
 
 ## Retrofit is NOT a mirror image of propagate — three asymmetries
 
@@ -84,6 +88,9 @@ writes nothing anywhere in dev):
    ```console
    .claude/skills/retrofit-from-public/retrofit.sh /path/to/public-repo
    ```
+
+   With no argument, use the default checkout. An argument is the path to the public
+   repo's working tree: pass it to `retrofit.sh` as its source.
 
 **The baseline (#202).** Public is compared against what dev last propagated, not against
 dev's current tree, so work done in dev since then never reads as a public edit. By default
@@ -174,7 +181,10 @@ anyway.
   script has written nothing since #54.
 - **Never pull governance** into dev.
 - **Don't guess the source.** If the public repo isn't at the default path and
-  none was given, ask rather than retrofitting from somewhere uncertain.
+  none was given, or the source does not exist, is not a git repo, or its `origin` is
+  not `Senzing/senzing-bootcamp-claude-plugin`, ask rather than retrofitting from
+  somewhere uncertain. The script aborts on each of these, and a guessed source files
+  issues about an unrelated tree's content.
 - ⛔ **Don't write into the dev tree at all.** Compare, report, file issues, stop (#54).
 - Keep this manifest and `retrofit.sh` in step with `propagate-to-public` — the
   two must always agree on which paths are propagated and on the transform.

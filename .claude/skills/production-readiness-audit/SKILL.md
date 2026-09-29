@@ -1,6 +1,7 @@
 ---
 name: production-readiness-audit
 description: 'Audit the whole Senzing Bootcamp plugin for production readiness — the last static gate before dry-run. Verifies the plugin is consistent, coherent, complete and concise, and checks INVARIANTS.md against the plugin in BOTH directions: every invariant is honored, and every durable rule the plugin states is registered as an invariant. Use when the maintainer asks for a deep dive, a conformance or coherence audit, whether the plugin conforms to every invariant, whether it is consistent/coherent/complete, or whether it is ready to ship. Maintainer tool — never invoked during a bootcamp.'
+argument-hint: "[area to scope the invariant sweep to] (omit to let the lead generators choose)"
 ---
 
 # Production-readiness audit
@@ -277,6 +278,10 @@ disclosure, not a shortfall. So **scope the sweep deliberately and say what you 
 - the enumerating subset below, which rots fastest;
 - everything an invariant binds that the diff since the last audit entry touched;
 - the per-module outcome blocks, on a rotation, so no block goes unread for long.
+
+With no argument, those four are the scope the run chooses. **With an argument naming an
+area, sweep that first, and still run every lead generator** (Step 1, step 3): a scoped run
+that skips them cannot see what it chose not to look at.
 
 For each invariant in scope, ask two questions and prefer the second:
 
