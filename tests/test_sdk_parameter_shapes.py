@@ -73,11 +73,11 @@ class GroundRulesCoverParameterShapes(unittest.TestCase):
 
     def test_the_methods_topic_is_named_as_the_route_to_parameter_shapes(self):
         """The correction: MCP answers this, so the guide must be sent to MCP."""
-        self.assertIn("topic='methods'", self.text)
+        self.assertIn("topic='parameters'", self.text)
         self.assertIn(
             "find_network_by_entity_id(entity_ids: List[int]",
             self.text,
-            "ground-rules should show the signature the methods topic returns, so the "
+            "ground-rules should show the signature the parameters topic returns, so the "
             "reader can see that MCP does answer parameter shapes",
         )
 
@@ -103,7 +103,7 @@ class GroundRulesCoverParameterShapes(unittest.TestCase):
                 self.assertIn(probe, self.text)
         squashed = squash(self.text)
         self.assertIn(
-            "Only when `topic='methods'` genuinely does not cover it",
+            "Only when `topic='parameters'` genuinely does not cover it",
             squashed,
             "introspection must be framed as the fallback AFTER the MCP lookup, not as "
             "the primary route (INV-080)",
@@ -187,12 +187,12 @@ class GraphMethodParameterShapesAreDocumented(unittest.TestCase):
 
     def test_step_4d_routes_to_the_methods_topic_not_to_guesswork(self):
         """Same correction as ground-rules: this file carried the false premise too."""
-        self.assertIn("topic='methods'", self.text)
+        self.assertIn("topic='parameters'", self.text)
         self.assertNotIn(
             "the only remaining source is cross-language documentation",
             self.text,
             "step 4d again claims cross-language docs are the only source for parameter "
-            "shapes; the methods topic answers them (verified 2026-07-26)",
+            "shapes; the parameters topic answers them (verified 2026-07-26)",
         )
 
     def test_python_signature_is_given_for_both_graph_methods(self):

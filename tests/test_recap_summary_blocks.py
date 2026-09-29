@@ -365,6 +365,22 @@ class TheRequirementIsStatedWhereTheRecapIsWritten(unittest.TestCase):
         check = text.split("**Content check")[1].split("\n")[0]
         self.assertIn("three labeled blocks", check)
 
+    def test_graduations_inline_fallback_draws_them_on_both_paths(self):
+        """INV-157 (amended by #235): the inline fallback is a third renderer, and it runs
+        exactly when the script's two cannot, so it must draw the blocks too. The rule has
+        to sit in the same sentence span as both paths, or it binds only one of them."""
+        text = self.read("skills", "graduation", "SKILL.md")
+        fallback = text.split("**If the bundled script cannot be located or run:**")[1]
+        fallback = fallback.split("\n")[0]
+        paths = fallback.split("using `fpdf2` if importable, else a minimal valid PDF.")
+        self.assertEqual(2, len(paths), "the fallback no longer names both of its paths")
+        rule = paths[1]
+        self.assertIn("On either path", rule)
+        for label in ("What you accomplished", "Files produced", "Why it matters"):
+            with self.subTest(label=label):
+                self.assertIn(label, rule)
+        self.assertIn("`(not recorded)`", rule)
+
 
 # The bullet-authored shape `module-completion.md` prescribes: the two list-shaped blocks
 # get a label line and one bullet per item; "Why it matters" stays prose, inline.

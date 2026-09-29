@@ -43,6 +43,124 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariants-132-157-204-match-the-server-and-the-plugin
+
+- **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #235)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`,
+  `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`,
+  `plugins/senzing-bootcamp/skills/graduation/SKILL.md`,
+  `tests/test_sdk_parameter_shapes.py`, `tests/test_mcp_call_contracts.py`,
+  `tests/test_liveness_probe_is_not_a_document_search.py`, `tests/test_recap_summary_blocks.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-29. Tools: `get_capabilities()`
+  (`server_version` 1.37.15, `tool_count` 13, matching `MCP_TOOLS`); `get_sdk_reference`'s declared
+  input schema, re-read live: the `topic` description reads `"parameters" (aliases: functions,
+  methods, classes, api, signatures, args)` and the enum still lists `methods`; and
+  `get_sdk_reference(topic='methods', filter='find_network_by_entity_id', language='python')`,
+  which still resolves and returns `find_network_by_entity_id(entity_ids: List[int], …)`. Outcome:
+  **still reproduces**: the declared topic is `parameters`, `methods` is one of its aliases, and
+  calls using `methods` still resolve. No absence claim is made. `submit_feedback` was not called.
+- **Summary:** three registered invariants said less than the server and the plugin do. The
+  shipped prose and guards now follow the approved amendments; `specs/INVARIANTS.md` is unchanged
+  (INV-307), and the three amendments wait below for `/review-invariants`.
+  - **INV-132.** `ground-rules.md`'s tool routing names `get_sdk_reference` topic `parameters` and
+    no longer lists aliases. Every shipped `topic='methods'` call is now `topic='parameters'`:
+    `ground-rules.md` (three sites) and Module 7's `phase2b-discover.md`. The four test asserts
+    that pinned `topic='methods'` now pin `topic='parameters'`. INV-132's historical notes that
+    quote `topic='methods'` are untouched.
+  - **INV-157.** Graduation's inline fallback, used when the bundled script cannot be located or
+    run, now says that on either path (`fpdf2`, or the minimal valid PDF) it draws every
+    End-of-Module Summary's three labeled blocks and marks an absent one `(not recorded)`, never
+    inventing its content.
+  - **INV-204.** The liveness guard's tool list is `MCP_TOOLS` from `tests/test_mcp_call_contracts.py`
+    minus `get_capabilities`, imported as a module rather than copied, so a probe through
+    `explain_error_code`, `generate_scaffold` or any new server tool fails. The widened guard found
+    no offense in today's prose. The `PROHIBITION` exemption is unchanged.
+  - **Unchanged, as scoped:** `phaseD-validation.md` and INV-265 (#232 owns them),
+    `.claude/skills/dry-run/phase1-mcp-contracts.md` (a maintainer tool's dated record of a
+    2026-07-26 call, not shipped Markdown).
+- **Approach:** raced (Phase 5b); the winning approach: the guard imports `MCP_TOOLS` as a module
+  and derives its list by set difference; the fallback requirement is one sentence added to the
+  existing fallback bullet and asserted in the existing summary-blocks test module.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-132 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+    - ⛔ **Cross-language documentation is still not authoritative for the shape you must pass:** — in `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`
+    - ⛔ **Confirm the ARGUMENT types before writing the call — and note you may already have them.** — in `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`
+
+  ⚠️ **Why this is an amendment and not a new invariant.** INV-132's rule is unchanged: confirm a
+  method's parameter shape per binding, through MCP first. Only the topic's name is corrected, to
+  the one the server declares. The maintainer approved this wording on 2026-09-28 in the refinement of #229; `/review-invariants` applies it and records that approval. Enforced by `tests/test_sdk_parameter_shapes.py`, with
+  `tests/test_mcp_call_contracts.py` pinning the routing-table topic.
+
+  The drafted wording, as approved, with `<version re-read at implementation>` filled from this
+  entry's `MCP re-check` line:
+
+  **INV-132** — Replace "It also reaches them via `get_sdk_reference(topic='methods', filter='<method>')` (aliases `functions`/`classes`/`api`)" with "It also reaches them via `get_sdk_reference(topic='parameters', filter='<method>')` (the server accepts `methods` and other aliases for that topic)". Append: "(Corrected in place 2026-09-28 against MCP server 1.37.15: this invariant named `methods` as the topic with aliases `functions`/`classes`/`api`; the declared schema names `parameters` as the topic and `methods` as one of its aliases. Calls using `methods` still resolve. Source: GitHub issue #229.)"
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-132 in place
+  and a literal new id would cite an invariant that does not exist and turn `citations.py
+  verify` red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint
+  at the next free id, and read it off `INVARIANTS.md` rather than trusting a number written
+  here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-157 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+    - ⛔ **Never invent content to fill a label.** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+
+  The fallback sentence this issue adds, in the same file: "On either path, draw every
+  End-of-Module Summary's three labeled blocks — What you accomplished, Files produced, Why it
+  matters — and mark one the recap does not carry as `(not recorded)` rather than omitting it or
+  inventing its content (INV-157)."
+
+  ⚠️ **Why this is an amendment and not a new invariant.** INV-157's rule is unchanged: every
+  required block is drawn, and an absent one is marked rather than dropped or invented. Only its
+  reach widens, from the script's two renderers to graduation's inline fallback. The maintainer approved this wording on 2026-09-28 in the refinement of #229; `/review-invariants` applies it and records that approval.
+  Enforced by `tests/test_recap_summary_blocks.py`.
+
+  The drafted wording, as approved:
+
+  **INV-157** — Replace "and **both** renderers (INV-066) MUST *draw every required block*" with "and **every** renderer (both of `generate_recap_pdf.py`'s, INV-066, and graduation's inline fallback when the script cannot run) MUST *draw every required block*". Append: "(Widened in place 2026-09-28: \"both renderers\" bound only the script's two and left graduation's inline fallback unbound. Source: GitHub issue #229.)"
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-157 in place
+  and a literal new id would cite an invariant that does not exist and turn `citations.py
+  verify` red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint
+  at the next free id, and read it off `INVARIANTS.md` rather than trusting a number written
+  here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-204 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+    - ⛔ **call `get_capabilities` (about a 10-second timeout) — never a content-returning tool** — in `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`
+    - ⛔ **do not restore a `search_docs` probe** — in `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md`
+
+  ⚠️ **Why this is an amendment and not a new invariant.** INV-204's rule is unchanged: a probe uses
+  `get_capabilities`. Its tool list stops reading as exhaustive, and its guard now covers every
+  other tool. The maintainer approved this wording on 2026-09-28 in the refinement of #229; `/review-invariants` applies it and records that approval. Enforced by `tests/test_liveness_probe_is_not_a_document_search.py`.
+
+  The drafted wording, as approved:
+
+  **INV-204** — Replace "never a content-returning tool (`search_docs`, `sdk_guide`, `reporting_guide`, `find_examples`, `get_sdk_reference`)" with "never any other tool: every other tool returns content (for example `search_docs`, `sdk_guide`, `find_examples`, `get_sdk_reference`, `mapping_workflow`, `explain_error_code`)". Append: "(Widened in place 2026-09-28: the list named five tools as if exhaustive and the guard hardcoded them, so a probe through `explain_error_code` or `generate_scaffold` passed. The guard now fails on any probe tool other than `get_capabilities`. Source: GitHub issue #229.)"
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-204 in place
+  and a literal new id would cite an invariant that does not exist and turn `citations.py
+  verify` red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint
+  at the next free id, and read it off `INVARIANTS.md` rather than trusting a number written
+  here.)*
+- **Tests:**
+  - `tests/test_liveness_probe_is_not_a_document_search.py`: `CONTENT_TOOLS` is
+    `sorted(MCP_TOOLS - {"get_capabilities"})`, with `MCP_TOOLS` read from
+    `test_mcp_call_contracts` by module import. New
+    `test_the_tool_list_is_every_server_tool_but_the_probe` asserts the derivation, that
+    `get_capabilities` is in `MCP_TOOLS`, that the list is not near-empty, and that
+    `explain_error_code` and `generate_scaffold` are in it. An unreadable `MCP_TOOLS` is an import
+    error, so the guard fails loudly rather than scanning for nothing (INV-265).
+  - `tests/test_recap_summary_blocks.py`: new
+    `test_graduations_inline_fallback_draws_them_on_both_paths` asserts that the fallback bullet,
+    after naming both paths, says "On either path" and names the three labels and `(not recorded)`.
+  - `tests/test_sdk_parameter_shapes.py` (three asserts) and `tests/test_mcp_call_contracts.py`
+    (one) now assert `topic='parameters'`.
+  - **Negative controls**, each run and then restored: a Module 3 probe changed to
+    `explain_error_code` fails the liveness guard (and passes the old hardcoded guard); the same
+    with `generate_scaffold` fails; removing the `not` from `onboarding-flow.md`'s ban fails, so the
+    `PROHIBITION` exemption still bites; renaming `MCP_TOOLS` fails the guard's import. The
+    pre-change `graduation/SKILL.md` fails the new fallback test, as do dropping `(not recorded)`,
+    dropping one label, and moving the requirement onto the `fpdf2` path only.
+- **Verified:** the full suite passed in the CI mirror (both legs, empty `HOME` outside `/tmp`).
+  `citations.py verify` was run after this entry was written.
+- **Commit:** `8b51a9f`
+
 ## loose-invariant-citations-name-the-governing-rule
 
 - **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #227)

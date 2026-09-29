@@ -430,9 +430,9 @@ class TestParameterShapeRoutingGoesToMcp(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn(
-            "topic='methods'",
+            "topic='parameters'",
             text,
-            "the tool-routing table omits get_sdk_reference's `methods` topic — the one "
+            "the tool-routing table omits get_sdk_reference's `parameters` topic — the one "
             "that answers parameter shapes. Without it the guide is sent to local "
             "binding introspection, which needs a working installed SDK and contradicts "
             "the MCP-first invariant (INV-080).",

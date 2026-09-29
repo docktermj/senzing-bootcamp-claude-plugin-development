@@ -24,17 +24,30 @@ order to ban it.
 Enforces **INV-204** (a reachability or liveness probe uses `get_capabilities`, never a
 content-returning tool whose retrieval is then discarded), which names this file.
 
+**Widened 2026-09-29 (GitHub issue #235).** The tool list was a hardcoded five, so a probe
+through `explain_error_code` or `generate_scaffold` passed. It is now every tool in
+`MCP_TOOLS` (`test_mcp_call_contracts.py`, the suite's one copy of the server's tool list)
+except `get_capabilities`, so a new server tool is covered as soon as that set is updated.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
+import sys
 import unittest
 from pathlib import Path
+
+# The suite's one copy of the server's tool list. Imported, never copied: a copy here is the
+# hardcoded list this guard used to have. An unreadable MCP_TOOLS is an import error, so the
+# guard fails loudly rather than scanning for nothing (INV-265).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import test_mcp_call_contracts as contracts  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 
-#: Tools whose whole purpose is returning content — wasteful as a boolean liveness test.
-CONTENT_TOOLS = ("search_docs", "sdk_guide", "reporting_guide", "find_examples", "get_sdk_reference")
+#: The one probe tool. Every other tool returns content — wasteful as a boolean liveness test.
+PROBE_TOOL = "get_capabilities"
+CONTENT_TOOLS = tuple(sorted(contracts.MCP_TOOLS - {PROBE_TOOL}))
 
 #: Vocabulary that marks a passage as a reachability test rather than a content lookup.
 PROBE_VOCAB = re.compile(
@@ -69,7 +82,7 @@ def shipped_markdown():
 
 def offenses():
     found = []
-    tools = re.compile(r"(?i)(%s)" % "|".join(CONTENT_TOOLS))
+    tools = re.compile(r"(?i)(%s)" % "|".join(map(re.escape, CONTENT_TOOLS)))
     for path in shipped_markdown():
         flat = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
         for match in tools.finditer(flat):
@@ -84,6 +97,15 @@ def offenses():
 
 
 class NoProbeIsADocumentSearch(unittest.TestCase):
+    def test_the_tool_list_is_every_server_tool_but_the_probe(self):
+        """Derived, not hardcoded: a subset is how `explain_error_code` probes passed."""
+        self.assertIn(PROBE_TOOL, contracts.MCP_TOOLS, "MCP_TOOLS lost get_capabilities")
+        self.assertEqual(set(CONTENT_TOOLS), contracts.MCP_TOOLS - {PROBE_TOOL})
+        self.assertGreater(len(CONTENT_TOOLS), 5, "MCP_TOOLS read as near-empty — scan is vacuous")
+        for tool in ("explain_error_code", "generate_scaffold"):
+            with self.subTest(tool=tool):
+                self.assertIn(tool, CONTENT_TOOLS)
+
     def test_the_scan_reaches_the_shipped_prose(self):
         files = shipped_markdown()
         self.assertGreater(len(files), 30, "the shipped markdown corpus was not found")
