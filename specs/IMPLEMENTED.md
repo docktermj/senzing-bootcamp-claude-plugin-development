@@ -197,7 +197,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     `ground-rules.md`; drop the `search_docs` line; and restore each pinned size (2).
 - **Invariant answer (INV-309):** the `PROPOSED AMENDMENT to INV-234` block above. The new ⛔
   line cites INV-234 at the line. No new id is drafted.
-- **Commit:** uncommitted
+- **Commit:** `32648ff`
 
 ## inv-314-names-what-a-run-may-create-without-a-per-record-yes
 
