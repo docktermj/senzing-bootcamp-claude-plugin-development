@@ -164,7 +164,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     `TheWindowsAreMeasuredFromTheFence`, three negative controls on synthetic text.
 - **Verified:** the full suite passed in the CI mirror (both legs, empty `HOME` outside `/tmp`).
   `citations.py verify` was run after this entry was written.
-- **Commit:** uncommitted
+- **Commit:** db273ab
 
 ## invariant-review-2026-09-29
 
