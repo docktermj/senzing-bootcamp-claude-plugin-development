@@ -1,6 +1,7 @@
 ---
 name: compact-dev-environment
 description: 'Compact the Senzing Bootcamp plugin development environment — consolidate overlapping or superseded invariants, archive specs whose work is long landed, merge redundant test traversals, and prune stale feedback — without losing the reasoning future development depends on. Use when the maintainer wants to clean up, tidy, prune, consolidate or de-duplicate the dev environment, when INVARIANTS.md has grown unwieldy, or when the specs/tests backlog is slowing work down. Maintainer tool — not part of the bootcamper experience.'
+argument-hint: "[asset class: invariants | specs | tests | feedback] (omit to census all four)"
 ---
 
 # Compact the development environment
@@ -102,7 +103,8 @@ read old commits and be misled by them.
 ## Scope and guardrails
 
 - **Report first, change second.** The default run produces a plan and changes
-  nothing. Every destructive step is separately confirmed by the maintainer.
+  nothing. Every destructive step is separately confirmed by the maintainer, one asset
+  class at a time.
 - **Compaction targets duplication *across* invariants, never rationale *within*
   one.** These invariants read long because each carries the failure that produced
   it — that narrative is what stops the rule being re-argued or re-broken. Cutting
@@ -124,6 +126,12 @@ read old commits and be misled by them.
   skill is uniquely positioned to violate.
 
 ## Step 1: Take the census
+
+**The argument scopes the assessment, never the census.** With no argument, take the full
+census and assess all four classes, then propose a plan: breadth is cheap here, and it is
+the *acting* that is expensive. With an argument naming a class (`invariants`, `specs`,
+`tests` or `feedback`), still take the full census, because the census is what makes any
+removal safe, and scope only the assessment and the plan to that class.
 
 ```bash
 python3 .claude/skills/compact-dev-environment/citations.py census

@@ -1,12 +1,14 @@
 ---
 name: dry-run
 description: 'Dry-run the Senzing Bootcamp plugin to find defects that reading it cannot: phase 1 verifies every MCP call against the live Senzing MCP server, phase 2 executes the hooks and bundled scripts against a realistic scratch project, phase 3 walks the conversational layer with the maintainer answering as the Bootcamper. Use when the maintainer wants to dry-run, smoke-test, or exercise the plugin, verify it actually works rather than reads correctly, or asks what a fresh audit should look at next. Maintainer tool — not part of the bootcamper experience.'
+argument-hint: "[phases: 1, 2, 3 or all] [module phase 3's analysis starts at]"
 ---
 
 # Dry Run
 
 This is a **maintainer** tool for developing the Senzing Bootcamp Claude Plugin
-(SBCP). It is never invoked during a bootcamp.
+(SBCP). It is never invoked during a bootcamp. It is a **test-gate action** before
+publishing.
 
 ## Why this exists
 
@@ -37,13 +39,16 @@ and its entire factual foundation. Start there unless the maintainer says otherw
 
 ## Before you start
 
-1. **Ask which phases to run** if the maintainer did not say. Present them as a
-   numbered list (1, 2, 3, or all three); do not assume. Phase 3 costs the
+1. **Ask which phases to run** if the maintainer did not say, including when there is
+   no argument. Present them as a numbered list (1, 2, 3, or all three); do not
+   assume, and do not read "dry-run the plugin" as "all three". Phase 3 costs the
    maintainer's time in a way 1 and 2 do not, so it is never implied by "dry-run
-   the plugin".
+   the plugin". **An argument naming phases is the answer to this question:** start
+   at the lowest one.
 
    ⛔ **If phase 3 is among them, ask a second question before anything else runs:
-   which module the analysis starts at.** List the eleven modules in order, numbered,
+   which module the analysis starts at.** A trailing module name in the argument answers
+   it. Otherwise list the eleven modules in order, numbered,
    and mark which ones this environment can actually reach (step 3 below is that
    check). Everything before the chosen module is walked as a Bootcamper sees it with
    the analysis off; the analysis begins when that module does. This is not a
@@ -306,6 +311,8 @@ Report to the maintainer with the severity ordering the findings deserve, and:
   report that lists findings without naming where they live reads as though the work is
   captured when it is only described.
 - **Lead with anything that breaks a documented path**, not with the longest list.
+- **If phase 3 ran, say which module the analysis started at**, and that everything
+  before it was walked rather than tested.
 - **Say what you verified as correct**, briefly. "The routing table is right, the
   opaque-state contract is handled, no `add_data_source` confabulation" is
   information, and it stops the next audit re-checking the same ground.

@@ -1,6 +1,7 @@
 ---
 name: release
 description: 'Cut a release of the Senzing Bootcamp plugin: bump the version everywhere it is asserted, write the CHANGELOG entry, commit and create the git tag — as one operation, with no path that moves one without the others. Use when the maintainer wants to release, cut a release, bump the version, tag a version, or prepare a version for the downstream repos to port from. Stops short of publishing; /propagate-to-public is the next step. Maintainer tool — not part of the bootcamper experience.'
+argument-hint: "[major|minor|patch, or an explicit version like 0.6.0] (omit and you will be asked)"
 ---
 
 # Release
@@ -10,8 +11,8 @@ Never invoked during a bootcamp. It is the step *before*
 [`propagate-to-public`](../propagate-to-public/SKILL.md): this skill decides and
 records **which version exists**; that one publishes it.
 
-The work is done by [`release.py`](release.py) in this skill's directory, for the
-same reason `propagate-to-public` fronts `propagate.sh` — the operation has to be
+This is a **release-path action**. The work is done by [`release.py`](release.py) in
+this skill's directory, for the same reason `propagate-to-public` fronts `propagate.sh` — the operation has to be
 all-or-nothing, and a procedure a model follows step by step is exactly a procedure
 that can stop after step two. Here the steps are one function call.
 
@@ -64,6 +65,11 @@ interface offers none.
 .claude/skills/release/release.py --patch --apply  # do it
 .claude/skills/release/release.py 0.6.0 --apply    # explicit target
 ```
+
+**The argument names the bump.** Pass `major`, `minor` or `patch` as
+`--major`/`--minor`/`--patch`, and an explicit `MAJOR.MINOR.PATCH` version positionally.
+With no argument, run the dry run with no bump named, show the maintainer the current
+version and the newest tag, and ask, as *Never invent the version* under Guardrails says.
 
 ⛔ **Dry run is the default; `--apply` is what writes.** This script is fronted by a
 slash command, so it can be run by a model. Git tags are **repository-global** — a

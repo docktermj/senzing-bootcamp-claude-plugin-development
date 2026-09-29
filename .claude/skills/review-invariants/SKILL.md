@@ -1,6 +1,7 @@
 ---
 name: review-invariants
 description: 'Walk the maintainer through every DEFERRED INVARIANT block in specs/IMPLEMENTED.md one at a time — showing the rules already shipping, the drafted wording, and every site a citation must reach — then ask for a verdict (register / hold / amend) and carry out the mechanical registration for the ones approved. Never signs off an invariant itself. Maintainer tool for developing the Senzing Bootcamp Claude Plugin (SBCP); the counterpart to implement-spec, which produces the deferrals this skill resolves.'
+argument-hint: "[block number to start from] (omit to start at the top of the pending queue)"
 ---
 
 # Review Invariants
@@ -174,7 +175,9 @@ was presented to the maintainer as clean in three consecutive reviews.
 
 ## Step 2: Present one invariant
 
-One at a time. Do not batch — the maintainer is deciding, not skimming.
+One at a time. Do not batch — the maintainer is deciding, not skimming. With no
+argument, start at the first pending block; an argument naming a number starts there, as
+the `<n>` that `show` and `sites` take.
 
 ```bash
 python3 .claude/skills/review-invariants/pending_invariants.py show <n>

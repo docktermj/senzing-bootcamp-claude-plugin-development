@@ -1,6 +1,7 @@
 ---
 name: auto-test
 description: 'Run an automated, sandboxed test of the Senzing Bootcamp plugin. Probes the live Senzing MCP server for drift and for inaccurate or misleading information, checks every MCP call the plugin makes against what the server actually accepts, and optionally walks the bootcamp with a simulated Bootcamper and lints the transcript against the interaction invariants. Each run gets its own sandbox, so it is safe to run many times a day and concurrently. Use when the maintainer wants to auto-test, smoke-test on a schedule, watch for MCP server drift, or check the plugin without sitting through a dry run. Maintainer tool — not part of the bootcamper experience.'
+argument-hint: "[walk] [persona: terse|verbose|confused|impatient|offscript] [turns]"
 ---
 
 # Auto Test
@@ -49,6 +50,23 @@ Phase 3 with a human still has to happen.
 .claude/skills/auto-test/autotest.py --walk --persona confused --turns 16
 .claude/skills/auto-test/autotest.py --walk --keep    # keep the sandbox to inspect
 ```
+
+**The argument chooses the runs** (`[walk] [persona] [turns]`):
+
+- **No argument: present the two halves and ask which to run.** They cost very different
+  things and answer different questions, so the choice is the maintainer's:
+  1. **MCP probe** — zero tokens, seconds. Drift, conformance, server quality, and the
+     static-contract audit against `tests/test_mcp_call_contracts.py`.
+  2. **+ simulated walk** — spends tokens. Two OS processes run the bootcamp and answer as
+     the Bootcamper, then `transcript_lint.py` grades the saved transcript.
+- **An argument naming a walk** is the answer: run both. A trailing persona and turn count
+  answer the walk's own parameters (`--persona`, `--turns`); otherwise the defaults
+  (`terse`, 12) stand.
+- **The probe runs either way, and it runs first.** A walk against a server that has
+  drifted underneath it produces findings no one can attribute.
+
+⛔ **The walk is never inferred from silence.** It is asked about, not assumed. (No invariant
+yet: drafted as a `DEFERRED INVARIANT` in #241's `specs/IMPLEMENTED.md` entry.)
 
 Exit code is 1 if anything BREAKING was found, 0 otherwise, so it drops into cron or
 CI unchanged. `--json` prints the machine-readable report; every run also writes
@@ -128,6 +146,9 @@ Severities mean specific things:
   carries misleading information (`doc-incomplete`, `silent-accept`).
 - **INFO** — context, not action.
 
+Report the findings in that order — BREAKING, WATCH, INFO — naming the sandbox the run used
+and whether the walk was included.
+
 Two WATCH findings were live as of 2026-07-27 and are about the **server**, not the
 plugin: `generate_scaffold.language` accepts `typescript` while documenting four
 languages, and `search_docs.category` accepts any string without error, so a typo
@@ -145,7 +166,8 @@ change it, and 515 tests already cover that, while the server moves on its own.
 
 Rotate `--persona` across runs (`terse`, `verbose`, `confused`, `impatient`,
 `offscript`). A single cooperative persona is the main reason an automated walk is
-weaker than a human one, and rotation is the cheapest partial mitigation.
+weaker than a human one, and rotation is the cheapest partial mitigation. If the maintainer
+names no persona on a walk they have run recently, say which one the last run used.
 
 ## What to do with a finding
 
@@ -162,7 +184,8 @@ from an automated run.
 ## Guardrails
 
 - **Never send anything outside the machine.** No `submit_feedback`, no
-  `download_resource`. Enforced by flag in both the probe and the walk.
+  `download_resource`. Enforced by flag in both the probe and the walk. Let the flags do
+  the enforcing: do not hand-run the pieces around `autotest.py`.
 - **Never tell process A it is under test.** It destroys the only thing the walk
   measures.
 - **Never report a clean run as a passed audit.** State the coverage limits; the

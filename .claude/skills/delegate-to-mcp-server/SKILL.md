@@ -1,6 +1,7 @@
 ---
 name: delegate-to-mcp-server
 description: 'Sync the Senzing Bootcamp plugin with the live Senzing MCP server by finding Senzing facts the SBCP still holds that the server now serves itself, and filing GitHub issues to delegate them to a runtime call. Use when the maintainer wants to sync with the MCP server, retire redundant or stale Senzing content, check what the server now covers, or reduce the plugin''s Senzing-fact maintenance surface. Files GitHub issues in this repository — never edits the plugin, never writes under specs/. Maintainer tool — not part of the bootcamper experience.'
+argument-hint: "[area or category to bound this run to] (omit to take the full re-check list)"
 ---
 
 # Delegate to the Senzing MCP server
@@ -80,6 +81,10 @@ systematic version of both, and it is the only one of the four that reads the pl
 
 ## Step 1: Record both of the server's versions, and what it now covers
 
+**Do this first, before looking at anything; it is not optional.** Every ledger comparison
+is against these two axes, and a run that skips them cannot tell an expired decision from a
+current one.
+
 The server moves on **two independent axes**, and a sweep that tracks only one will
 skip exactly the rows the other changed. Get both:
 
@@ -123,6 +128,10 @@ cost of a lot of calls.
 ## Step 2: Build this run's re-check list
 
 Four sources, in priority order. Take them all; they overlap and the overlap is cheap.
+
+**The argument bounds the run.** With no argument, build the list from all four sources and
+bound the inventory at Step 3, as item 4 says. With an argument naming an area or category,
+take that as the bound, and say so in the Step 10 report, so the next run knows what was left.
 
 1. **Ledger rows stamped with a different server version or docs index** — decisions
    that may have expired (any difference on either axis, not only a newer one: a
@@ -396,6 +405,8 @@ Then, in this order:
    periodic run, and invisible unless stated.
 4. **What is still uncovered**, and which of those went upstream.
 5. **Coverage of the sweep itself**: how much of the inventory was examined and what was
-   left, so a partial run is never mistaken for a clean bill of health.
+   left, so a partial run is never mistaken for a clean bill of health. Name any site whose
+   owning tool could not be reached: a gap disclosed is a finding, and a gap skipped silently
+   is a false clean bill of health.
 
 Do not implement the issues. Offer `/implement-github-issue` as the next step.
