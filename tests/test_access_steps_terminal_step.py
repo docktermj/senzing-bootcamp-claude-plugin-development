@@ -29,6 +29,18 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 GROUND_RULES = PLUGIN / "skills" / "bootcamp-onboarding" / "ground-rules.md"
 INVARIANTS = REPO_ROOT / "specs" / "INVARIANTS.md"
+#: The module steps that send a guide down `raw_url`, then clone (#234), with the number of
+#: routes each holds. A floor, so a route dropped by a rewrite is noticed.
+ROUTE_FILES = {
+    PLUGIN / "skills" / "module-02-sdk-setup" / "SKILL.md": 1,
+    PLUGIN / "skills" / "module-03-system-verification" / "phase1-verification.md": 2,
+}
+#: A `raw_url`-then-clone route. The pointer quotes the terminal step's own lead, which
+#: begins "Once `raw_url` and `git clone`", so that quotation is not itself a route.
+ROUTE = re.compile(r"(?<!Once )`raw_url`.{0,120}?\bclone\b")
+#: The pointer: the owning file, and the terminal step's lead, by its words.
+POINTER = re.compile(
+    r"ground-rules\.md` → \"Once `raw_url` and `git clone` have both failed\"")
 
 #: The retired step-3 wording, which the server replaced by 1.37.14 (2026-09-28).
 OLD_WORDING = "cannot use this step"
@@ -99,6 +111,41 @@ class GroundRulesStatesTheTerminalStep(unittest.TestCase):
 
     def test_the_calling_step_keeps_its_own_fallback(self):
         self.assertRegex(self.step(), r"(?i)continues on its own fallback")
+
+
+class EveryRouteReachesTheTerminalStep(unittest.TestCase):
+    """Each module route points to ground-rules.md's terminal step, not a copy of it (#234).
+
+    INV-300: the step is stated once, in ground-rules.md, and a route that stops at "clone
+    if the fetch is blocked" leaves a guide with no next move when the clone fails too.
+    Negative-controlled by deleting a pointer, and by restating the step in place of it.
+    """
+
+    def test_each_route_is_followed_by_the_pointer(self):
+        for path, floor in ROUTE_FILES.items():
+            text = flat(path.read_text(encoding="utf-8"))
+            routes = list(ROUTE.finditer(text))
+            with self.subTest(file=path.name):
+                self.assertGreaterEqual(
+                    len(routes), floor,
+                    "fewer raw_url-then-clone routes than expected; the scan may be reading "
+                    "nothing")
+            for route in routes:
+                after = text[route.end(): route.end() + 250]
+                with self.subTest(file=path.name, route=route.group(0)[:60]):
+                    self.assertRegex(
+                        after, POINTER,
+                        "this raw_url-then-clone route does not point to ground-rules.md's "
+                        "terminal step (INV-160), so a guide whose clone also fails has no "
+                        "next move")
+
+    def test_the_pointer_does_not_restate_the_step(self):
+        """The step's clauses live in ground-rules.md alone (INV-300)."""
+        for path in ROUTE_FILES:
+            text = flat(path.read_text(encoding="utf-8"))
+            with self.subTest(file=path.name):
+                self.assertNotRegex(text, r"(?i)which example could not be reached")
+                self.assertNotRegex(text, r"(?i)do not retry either step")
 
 
 class TheRetiredWordingIsGone(unittest.TestCase):

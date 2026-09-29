@@ -43,6 +43,124 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## stale-text-from-the-2026-09-28-audit-is-corrected
+
+- **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #234)
+- **Files changed:** `plugins/senzing-bootcamp/scripts/capture_screenshots.py` (comments only),
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`,
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`,
+  `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/graduation/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md`,
+  `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`,
+  `tests/test_access_steps_terminal_step.py`,
+  `tests/test_blocked_submission_has_a_vocabulary_value.py`,
+  `tests/test_capture_single_page.py`, `tests/test_capture_suppressed_tabs.py`,
+  `tests/test_engine_verification_and_senz2027.py`,
+  `tests/test_find_examples_coverage_is_uncitable.py`,
+  `tests/test_group_score_is_not_a_join_prediction.py`,
+  `tests/test_minimal_verbosity_scope.py`, `tests/test_model_guidance_behavior.py`,
+  `tests/test_sampling_and_validation_routing.py`, `tests/test_step1_filesystem_fallback.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-28, `get_capabilities()`,
+  `get_sdk_reference(topic='response_schemas', filter='get_version')` and
+  `sdk_guide(topic='install', platform='windows')`. Outcome: still reproduces, for both Senzing
+  facts. `response_schemas` returns `BUILD_DATE`, `BUILD_NUMBER`, `BUILD_VERSION`,
+  `COMPATIBILITY_VERSION`, `PRODUCT_NAME`, `SCHEMA_VERSION` and `VERSION`, and no
+  `NATIVE_API_VERSION`, so Module 2 Step 4's statement and citation still hold and were not
+  re-stamped. The Windows install is `scoop install senzingsdk/senzingsdk`, so the Scoop app
+  folder is `apps\senzingsdk`. The race's own read of `search_docs` (same server, same day)
+  returned a `metadata.documents_indexed` value that had already moved from the issue's
+  figure, which is INV-280's reason for dropping both numbers. The `NATIVE_API_VERSION` absence
+  is an absence claim: owner-checked: `get_sdk_reference(topic='response_schemas',
+  filter='get_version')` — seven fields and no `NATIVE_API_VERSION`; this is the route that
+  carries `get_version()`'s response fields. The other items make no Senzing claim: they are
+  step pointers, labels and comments. Nothing was sent upstream.
+- **Summary:** The 2026-09-28 production-readiness audit (#229) flagged ten pieces of stale or
+  wrong text. Each is corrected in place, in the voice of its file, and no invariant changes.
+  - **Item 1.** Module 2 Step 1 now says `SzProduct.get_version()`, "whose response fields Step
+    4 states". Its four-field list and its `search_docs` 1.32.9 citation are gone, so
+    `NATIVE_API_VERSION` appears nowhere in the file (INV-300).
+  - **Item 2.** The three `raw_url`-then-clone routes (Module 2's `generate_scaffold` listing
+    block, and Module 3 `phase1-verification.md` Steps 3 and 4) each point to the terminal step
+    in `bootcamp-onboarding/ground-rules.md`, "Once `raw_url` and `git clone` have both
+    failed" (INV-160). They point to it and do not restate it.
+  - **Item 3.** Module 2's Scoop layout note shows `scoop\apps\senzingsdk\current\er`.
+  - **Item 4.** Module 4's two sampling-rule references (the smaller-slice bullet and Step 8b)
+    name *"License limit and dataset size (canonical framing)"* at the top of the module, where
+    `#overlap-preserving-sampling` sits.
+  - **Item 5.** Graduation's `offered, declined` reference names `feedback.md` Step 3c step 5.
+  - **Lead 8.3.** `bootcamp-preparation/SKILL.md` Step 0 no longer says "not just model
+    guidance" (INV-137 retired that question).
+  - **Lead 8.4.** The `DEFAULT_TABS` comment in `capture_screenshots.py` says a suppressed tab is
+    not captured, is recorded under `not_applicable` and is never counted in `captured`
+    (INV-232). The `SINGLE_PAGE_LABEL_VIEWPORT` comment no longer says INV-123 designates the
+    printed label as the caption's input; it says INV-123 derives the caption from the opened
+    image and the tab it shows. The code tokens are unchanged.
+  - **Lead 8.6.** `ground-rules.md` and the docstring of
+    `tests/test_find_examples_coverage_is_uncitable.py` quote neither coverage figure. The field
+    names and the "may be different units" point stay (INV-280).
+  - **Lead 8.8.** `onboarding-flow.md` says three items carry their own verbosity treatment: the
+    version line, the feedback-trigger bullet and the make-a-note bullet.
+  - **Lead 8.10.** Module 5's rule sentence uses INV-261's label *candidate, overlap
+    unmeasured*.
+- **Approach:** raced (Phase 5b), two approaches, judged against a rubric written first (issue
+  comment 3). **Winner B, fix each site in place and extend the existing guards**, over A (the
+  same fixes with one new guard module named after the audit). Both met the criteria. B puts
+  each assertion in the module that already guards its topic and changes only the listed sites.
+  The patch applied cleanly with `git apply --3way` over `e3782c5`. **Adaptation:** one extra
+  blank line before the new class in `tests/test_capture_suppressed_tabs.py` was removed.
+- **Establishes no invariant, and defers none.** Every fix brings text back in line with an
+  invariant that already binds it (INV-300, INV-160, INV-137, INV-232, INV-123, INV-280,
+  INV-214, INV-261), and none of their wording changes. The change adds no new ⛔ or MUST line.
+  One existing ⛔ line was reworded: `onboarding-flow.md`'s "Every bullet below has a verbosity
+  treatment — none is unconditional", whose count changed from two to three. The hard-rule
+  gate counts an edited ⛔ line as new, so the line now cites **INV-214** at the line. This was
+  checked against INV-214's text, which states this exact rule: "No bootcamper-facing element
+  may be left with no treatment under a preset", and a remainder without per-preset rules "MUST
+  be governed as a group". `tests/test_minimal_verbosity_scope.py` is INV-214's named enforcer
+  and already guards this line. The citation is to an existing rule, so no DEFERRED block is
+  needed.
+- **Follow-ups found by the race, out of scope here and not fixed:**
+  - INV-235's text still says "INV-123 designates that printed label as the input to the caption
+    a caller writes". The corrected `SINGLE_PAGE_LABEL_VIEWPORT` comment now says the opposite.
+    Changing INV-235 is an invariant amendment, which this issue rules out.
+  - Module 4 `module-04-data-collection/SKILL.md:148`, inside the canonical sampling section,
+    still calls the smaller-slice path "later in this step". It is not a listed site.
+  - The old `DEFAULT_TABS` comment's "the caller keeps what is useful" read as permission to
+    drop captures, which INV-146 forbids (every screenshot a capture produced reaches the
+    recap). Approach B replaced that whole sentence for lead 8.4, so the phrase is gone from
+    the shipped script. No guard asserts its absence, and no other capture-side text was
+    checked against INV-146.
+- **Tests:** each assertion sits in the module that already guards its topic.
+  - `test_step1_filesystem_fallback.py`: Step 1's `get_version()` sentence points to Step 4 and
+    names no field, and `NATIVE_API_VERSION` is absent from Module 2.
+  - `test_access_steps_terminal_step.py`: new class `EveryRouteReachesTheTerminalStep`. Every
+    route in Module 2 and Module 3 is followed by the pointer, with a floor on the route count
+    per file, and neither file restates the step's clauses.
+  - `test_engine_verification_and_senz2027.py`: no shipped file names `scoop\apps\senzing\`, and
+    Module 2 shows `apps\senzingsdk`.
+  - `test_sampling_and_validation_routing.py`: every `(#overlap-preserving-sampling)` link names
+    the heading above the anchor, read from the file, and none says "earlier in this step" or
+    "in Step 6".
+  - `test_blocked_submission_has_a_vocabulary_value.py`: graduation names `feedback.md` Step 3c
+    step 5, and that step still lists `**Upstream:**` and `offered, declined`.
+  - `test_model_guidance_behavior.py`: no shipped file says "not just model guidance".
+  - `test_capture_suppressed_tabs.py` and `test_capture_single_page.py`: assert on the comment
+    block directly above `DEFAULT_TABS` and above `SINGLE_PAGE_LABEL_VIEWPORT`.
+  - `test_find_examples_coverage_is_uncitable.py`: no shipped file quotes a chunk count or a
+    `documents_indexed` value, and the matcher checks itself on planted strings.
+  - `test_minimal_verbosity_scope.py`: the own-treatment sentence says "Three" and names all
+    three items, and the note bullet's own paragraph still exists.
+  - `test_group_score_is_not_a_join_prediction.py`: the pin requires *candidate, overlap
+    unmeasured* at the rule's own sentence and forbids "candidate on group coverage".
+  - Negative controls: the race's script restored each old text, ran its guard and restored the
+    file. 16 of 16 were caught, and each guard passed before and after. Re-run on this branch
+    over `e3782c5`: 16 of 16 caught again.
+- **Commit:** 8216b18
+
 ## phase-c-loads-each-source-from-its-subset-record
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #238)

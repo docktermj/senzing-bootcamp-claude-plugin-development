@@ -813,8 +813,8 @@ gate (INV-093) and the Senzing MCP server.
 - Create smaller sample files (sampling, a CORD subset, or a smaller substitute dataset).
 - Save samples to `data/samples/[datasource_name]_sample.[extension]`.
 - **Select for cross-source overlap when 2+ sources are present** — see the
-  [sampling rule](#overlap-preserving-sampling) earlier in this step. Do not choose a random slice
-  by default.
+  [sampling rule](#overlap-preserving-sampling) in *"License limit and dataset size (canonical
+  framing)"* at the top of this module. Do not choose a random slice by default.
 - **Document the sampling method AND why it was chosen** in the data-source registry, not just the
   method name: write the source's `sample:` block in `config/data_sources.yaml` (Step 2's registry
   schema) — the sample's `file_path`, its `record_count` **measured** from the written file,
@@ -1129,7 +1129,8 @@ about a roughly half-hour load, for a load of about two minutes.
      entity-resolution-demonstrating strategy that preserves cross-source overlaps and known
      match clusters; also accept a bootcamper-described strategy. **Where 2+ sources are present,
      present the overlap-preserving strategy as the recommended one and say why the others lose
-     cross-source matches — see the [sampling rule](#overlap-preserving-sampling) in Step 6, which
+     cross-source matches — see the [sampling rule](#overlap-preserving-sampling) in *"License
+     limit and dataset size (canonical framing)"* at the top of this module, which
      is the canonical statement; do not restate it here (INV-300).** Validate the target record
      count (a positive integer strictly less than the collected total) and re-ask until valid.
      Create the sample with the chosen strategy and write it under `data/samples/`. Then write

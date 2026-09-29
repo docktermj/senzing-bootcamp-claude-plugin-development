@@ -149,9 +149,9 @@ trying to honor a preference that cannot exist yet, and do not ask for verbosity
 
 Then give the overview (cover naturally, do not ask a question yet).
 
-⛔ **Every bullet below has a verbosity treatment — none is unconditional.** Two carry their own
-(the version line above and the feedback-trigger bullet below); the rest are governed as a group,
-so there is no bullet whose behavior under a preset is left to guesswork:
+⛔ **Every bullet below has a verbosity treatment — none is unconditional (INV-214).** Three carry
+their own (the version line above, and the feedback-trigger and make-a-note bullets below); the rest
+are governed as a group, so there is no bullet whose behavior under a preset is left to guesswork:
 
 | Preset | The overview is |
 |---|---|

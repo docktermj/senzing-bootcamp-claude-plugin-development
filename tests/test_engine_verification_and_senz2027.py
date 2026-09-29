@@ -294,6 +294,31 @@ class TheSupportpathCheckIsNotGatedToOnePlatform(unittest.TestCase):
     def test_the_macos_cause_names_the_shipped_ini(self):
         self.assertRegex(flat(MODULE_02), r"(?i)sz_engine_config\.ini")
 
+    def test_the_scoop_app_folder_is_the_installed_package(self):
+        """The Scoop app folder is named for the package the server installs (#234).
+
+        `sdk_guide(topic='install', platform='windows')` installs `senzingsdk/senzingsdk`
+        (server 1.37.15, 2026-09-28), so Scoop's app folder is `apps\\senzingsdk`. The example
+        path said `apps\\senzing`, which is not the installed package's name. Negative-
+        controlled by restoring it.
+        """
+        offenders = []
+        for path in sorted(PLUGIN.rglob("*")):
+            if not path.is_file() or "__pycache__" in path.parts:
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
+            if re.search(r"(?i)scoop[\\/]+apps[\\/]+senzing[\\/]", text):
+                offenders.append(str(path.relative_to(REPO_ROOT)))
+        self.assertEqual([], offenders,
+                         "these shipped files name a Scoop app folder `apps\\senzing\\`; the "
+                         "package is `senzingsdk`, so the folder is `apps\\senzingsdk\\`")
+        self.assertRegex(MODULE_02.read_text(encoding="utf-8"),
+                         r"scoop\\apps\\senzingsdk\\current\\er",
+                         "Module 2's Scoop layout note no longer shows the app folder")
+
     def test_linux_is_marked_not_re_checked_rather_than_widened(self):
         """Widening by inference is what this spec exists to stop doing."""
         self.assertRegex(flat(MODULE_02), r"(?i)Linux was not re-checked")

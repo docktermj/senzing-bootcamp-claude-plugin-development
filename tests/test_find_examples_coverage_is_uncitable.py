@@ -166,8 +166,8 @@ class TheLiveIllustrationStaysCheckable(unittest.TestCase):
     false claim.
 
     ⚠️ This deliberately does NOT assert that the live pair contradicts itself. The current
-    illustration is `search_docs`' declared "~2175 chunks" against a live
-    `documents_indexed: 14637`, which may simply be different units — and that is enough for
+    illustration is `search_docs`' declared chunk count against a live
+    `documents_indexed` figure, which may simply be different units — and that is enough for
     INV-280, whose subject is a coverage figure a caller cannot act on, not only one in outright
     conflict. Asserting a contradiction would pin a stronger claim than the evidence supports.
     """
@@ -194,6 +194,29 @@ class TheLiveIllustrationStaysCheckable(unittest.TestCase):
             flat, r"not necessarily contradictory — they may simply be different units",
             "the live pair must not be presented as a contradiction it may not be; the rule "
             "rests on the figure being unactionable, which is the weaker and true claim")
+
+    def test_the_live_illustration_quotes_neither_figure(self):
+        """INV-280 — the illustration names the two fields, never the numbers they carry.
+
+        It once quoted the declared chunk count and a live `documents_indexed` value; the
+        latter had already moved by the next re-check (server 1.37.15, 2026-09-28), which is
+        the rule's own reason. Negative-controlled by restoring either number.
+        """
+        figure = re.compile(r"~?\d[\d,]*\s+chunks|documents_indexed`?:\s*\d")
+        bad = []
+        for p in shipped_files():
+            for n, line in scannable_lines(p):
+                if figure.search(line):
+                    bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {line.strip()[:100]}")
+        self.assertEqual(
+            [], bad,
+            "a shipped file quotes a search_docs coverage figure. The server states the "
+            "corpus size two ways, so neither number is citeable (INV-280); name the field "
+            "and let the reader re-ask it:\n  " + "\n  ".join(bad))
+        self.assertTrue(figure.search('corpus is *"~9999 chunks"*'),
+                        "the matcher no longer detects a declared chunk count")
+        self.assertTrue(figure.search("`metadata.documents_indexed: 9999`"),
+                        "the matcher no longer detects a quoted documents_indexed value")
 
     def test_the_resolved_example_is_marked_as_history_everywhere_it_appears(self):
         """No shipped file may assert the resolved disagreement in the present tense."""

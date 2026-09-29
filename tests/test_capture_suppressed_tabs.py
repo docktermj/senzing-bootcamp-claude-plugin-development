@@ -237,5 +237,26 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual([], data["not_applicable"])
 
 
+class TheDefaultTabsCommentStatesTheRule(unittest.TestCase):
+    """The comment above `DEFAULT_TABS` describes a suppressed tab as INV-232 handles it (#234).
+
+    It said a tab whose data is absent "simply renders its empty state", which is the
+    behavior this module exists to forbid. A reader of the helper meets that comment
+    before the code, so it is guarded like the code. Negative-controlled by restoring it.
+    """
+
+    def test_the_comment_names_not_applicable_and_the_invariant(self):
+        with open(SCRIPT, encoding="utf-8") as handle:
+            source = handle.read()
+        m = re.search(r"((?:^#.*\n)+)DEFAULT_TABS = ", source, re.M)
+        self.assertIsNotNone(m, "no comment block sits directly above DEFAULT_TABS")
+        comment = " ".join(re.sub(r"(?m)^#\s?", "", m.group(1)).split())
+        self.assertIn("`not_applicable`", comment)
+        self.assertIn("INV-232", comment)
+        self.assertNotRegex(comment, r"(?i)renders its empty state",
+                            "the comment says a suppressed tab is captured empty; INV-232 "
+                            "says it is not captured at all")
+
+
 if __name__ == "__main__":
     unittest.main()

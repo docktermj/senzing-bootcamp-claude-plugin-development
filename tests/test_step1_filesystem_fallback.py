@@ -123,6 +123,26 @@ class TheVersionFileIsNotPresentedAsAnMcpFact(unittest.TestCase):
     def test_the_primary_version_route_is_the_sdk_not_the_file(self):
         self.assertRegex(self.section, r"get_version\(\)")
 
+    def test_the_version_call_points_to_step_4_for_its_fields(self):
+        """Step 4 states the `get_version()` fields once; Step 1 points there (INV-300, #234).
+
+        Step 1 listed four fields cited to an older `search_docs` read, one of which,
+        `NATIVE_API_VERSION`, the live `response_schemas` route does not return. Negative-
+        controlled by restoring that list.
+        """
+        flat = " ".join(self.section.split())
+        m = re.search(r"`SzProduct\.get_version\(\)`[^.]*\.", flat)
+        self.assertIsNotNone(m, "Step 1 no longer names `SzProduct.get_version()`")
+        sentence = m.group(0)
+        self.assertIn("Step 4", sentence,
+                      "Step 1's version route must point to Step 4 for the response fields")
+        self.assertNotRegex(sentence, r"`[A-Z][A-Z_]+`",
+                            "Step 1 names a get_version() field of its own; Step 4 states "
+                            "them, so a second list can only drift from it (INV-300)")
+        self.assertNotIn("NATIVE_API_VERSION", MODULE_02.read_text(encoding="utf-8"),
+                         "get_version() returns no NATIVE_API_VERSION "
+                         "(get_sdk_reference(topic='response_schemas', filter='get_version'))")
+
     def test_windows_metadata_is_the_sibling_data_directory(self):
         """Agrees with tests/test_sdk_update_offer.py and with Step 1b's own correction."""
         flat = " ".join(self.section.split())

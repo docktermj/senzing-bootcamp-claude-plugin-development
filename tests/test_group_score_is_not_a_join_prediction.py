@@ -89,7 +89,19 @@ class APredictionCarriesItsEvidenceOrItsAbsence(unittest.TestCase):
         self.assertIn("distinct values shared on the named", text)
 
     def test_an_unmeasured_prediction_has_prescribed_wording(self):
-        self.assertIn("candidate on group coverage, overlap unmeasured", flat())
+        """The rule's own wording is INV-261's label, the one the template below uses (#234).
+
+        It read "candidate on group coverage, overlap unmeasured", a third label beside the
+        invariant's two. Asserted at the rule site, since the template alone would satisfy a
+        bare search for the label; negative-controlled by restoring the old wording.
+        """
+        text = flat()
+        self.assertIn(
+            "If that count was not run, write the pair as a *candidate, overlap unmeasured*",
+            text)
+        self.assertNotIn("candidate on group coverage", text,
+                         "INV-261 has two labels, `measured` and `candidate, overlap "
+                         "unmeasured`; a third one reads as a different status")
 
     def test_the_evaluation_report_template_carries_both_labels(self):
         text = flat()

@@ -155,6 +155,24 @@ class TestNoFileTreatsThePreferenceAsLive(unittest.TestCase):
             f"mode-gated phrasing retired by INV-137 survives: {offenders}",
         )
 
+    def test_no_file_counts_it_among_the_capture_questions(self):
+        """Preparation's Step 0 said the preferences rule covers all capture questions,
+        "not just model guidance", as though that were still one of them (#234).
+
+        Matched on flattened text, so a line break inside the phrase cannot hide it.
+        Negative-controlled by restoring the phrase to bootcamp-preparation/SKILL.md.
+        """
+        offenders = [
+            os.path.relpath(p, REPO_ROOT) for p in shipped_markdown()
+            if re.search(r"(?i)not just model guidance", flat(p))
+        ]
+        self.assertEqual(
+            [],
+            offenders,
+            f"these files count model guidance among the capture questions: {offenders}. "
+            "INV-137 retires the question, so no preference rule is scoped against it.",
+        )
+
 
 class TestTheUnconditionalFlowIsIntact(unittest.TestCase):
     """The behavior INV-137 restores must actually be described."""
