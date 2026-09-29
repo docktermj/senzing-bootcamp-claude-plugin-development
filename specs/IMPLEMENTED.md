@@ -144,7 +144,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   `invariant_manifest.py --check` passes with `invariant-manifest.json` unchanged;
   `pending_invariants.py list` shows one `AMENDS INV-251` block, this entry's.
   `citations.py verify` was run after this entry was written.
-- **Commit:** uncommitted
+- **Commit:** `a8d0597`
 
 ## download-resource-guidance-matches-the-chunked-inline-reply
 
