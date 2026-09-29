@@ -293,7 +293,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     `$ARGUMENTS` bullet appended to a command fails the coverage check; the explicit-only
     sentence is caught across a line break. Also run on disk (see the approach note).
   - Tests that pin a sentence in a command and in its skill pass unchanged.
-- **Commit:** uncommitted
+- **Commit:** `5c0c6e1`
 
 ## invariants-132-157-204-match-the-server-and-the-plugin
 
