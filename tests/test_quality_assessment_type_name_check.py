@@ -17,8 +17,15 @@ What this pins:
   otherwise skips the step where the retype is applied (INV-198).
 * **The report and the decision**: count out of the PERSON-typed total, sample names, called
   candidates; retype or keep, with the rule or the cost, written to the source's mapper notes.
-* **The handoff to Phase 2**: step 13 applies the rule, step 18 keeps the section. Without it the
-  decision is made in Phase 1 and nothing carries it to the transform.
+* **The handoff to Phase 2**: steps 10 and 11 read the section before they advance workflow
+  steps 2 and 3, step 13 applies the rule in the transform, and step 18 keeps the section.
+  Without it the decision is made in Phase 1 and nothing carries it to the mapping. Until #220
+  only step 13 read it, two module steps after workflow step 3 had declared the names, so the
+  retype never reached the mapping (#220). On Retype, step 11 declares the name once with a
+  computed `derived` `RECORD_TYPE` (`source` and `justification`) and gives no
+  `type_discriminator.field_overrides` instruction; step 13 describes no step 3 rejection. The
+  Phase 2 checks look for structure (the section name, the `derived` keys, the INV-300
+  pointer) and pin no server wording (INV-219).
 * **Zero is reported**: Step 7 records the count for every source, zero included.
 
 The suffix list and the documented edge cases are also run against each other: the list is parsed
@@ -27,7 +34,7 @@ from the file and applied, as written, to the names the file uses as examples.
 Negative controls run inside the suite: each check is applied to a copy of the text with its
 rule removed and must report a problem.
 
-Source issue: #158.
+Source issues: #158, #220.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -211,9 +218,106 @@ def problems_in_step7(text):
     return out
 
 
-def problems_in_phase2(text):
+def plan_and_map_steps(flat):
+    """Module steps 10 (Plan) and 11 (Map), each up to the next step heading."""
+    s10 = between(flat, "### 10. Plan", "### 11. Map") or ""
+    s11 = between(flat, "### 11. Map", "### 12. Generate starter code") or ""
+    return s10, s11
+
+
+def retype_block(s11):
+    """Step 11's Record Type Check handling, up to the unconditional-advance paragraph."""
+    return between(s11, "Read the source's Record Type Check before you advance workflow step 3",
+                   "This advance is unconditional") or ""
+
+
+def sentences(text):
+    return [s for s in re.split(r"(?<=[.:;])\s+", text) if s.strip()]
+
+
+def problems_in_phase2_plan_and_map(text):
+    """Steps 10 and 11 carry the retype into the plan and the mapping (#220)."""
+    flat = squash(text)
+    s10, s11 = plan_and_map_steps(flat)
+    out = []
+    for name, step, advance in (("step 10", s10, "workflow step 2"),
+                                ("step 11", s11, "workflow step 3")):
+        read = re.search(r"Read the source's Record Type Check before you advance " + advance, step)
+        if not read:
+            out.append("Phase 2 %s does not read the Record Type Check before %s" % (name, advance))
+            continue
+        after = step[read.start():read.start() + 700]
+        if "## Record Type Check" not in after:
+            out.append("Phase 2 %s does not name the `## Record Type Check` section" % name)
+        if not re.search(r"Phase 1 Step 6's \"Type/name check\"", after):
+            out.append("Phase 2 %s does not name Phase 1 Step 6 as the canonical statement" % name)
+        if "INV-300" not in step[read.start() - 20:read.start() + 700]:
+            out.append("Phase 2 %s does not cite INV-300 at its pointer" % name)
+    for name, step in (("step 10", s10), ("step 11", s11)):
+        for token in ("`LLP`", "`GMBH`", "final whole token"):
+            if token in step:
+                out.append("Phase 2 %s restates the rule (%s) instead of pointing at it" %
+                           (name, token))
+    if s10 and not re.search(r"predominant type after the retype", s10):
+        out.append("step 10 does not send the predominant post-retype record_type")
+    if s10 and not re.search(r"never `MIXED`", s10):
+        out.append("step 10 does not rule out MIXED for a retyped source")
+    if s10 and not re.search(r"now carries PERSON and ORGANIZATION records", s10):
+        out.append("step 10's plan summary does not say the source is now mixed-type")
+    block = retype_block(s11)
+    if not block:
+        out.append("step 11 has no Retype block before its advance")
+        return out
+    for key in ('"disposition": "derived"', '"derived_as": "RECORD_TYPE"', '"source"',
+                '"justification"'):
+        if key not in block:
+            out.append("step 11's computed RECORD_TYPE does not carry %s" % key)
+    if not re.search(r"declare the name once", block, re.IGNORECASE):
+        out.append("step 11 does not declare the name once on Retype")
+    if not re.search(r"no `NAME_ORG` entry and no `type_discriminator`", block):
+        out.append("step 11 does not rule out a NAME_ORG entry and a type_discriminator")
+    if not re.search(r"Parsed person name fields.*`NAME_ORG` for a retyped.*parsed parts for a "
+                     r"PERSON record, branched on `RECORD_TYPE`", block):
+        out.append("step 11 does not branch the parsed-name case on RECORD_TYPE")
+    if not re.search(r"One name field.*once as `NAME_FULL`.*`NAME_ORG` for a retyped.*`NAME_FULL` "
+                     r"for a PERSON record, branched on `RECORD_TYPE`", block):
+        out.append("step 11 does not branch the single-name case on RECORD_TYPE")
+    if not re.search(r"server \d+\.\d+\.\d+, \d{4}-\d{2}-\d{2}", block):
+        out.append("step 11's declaration carries no server version and date")
+    if "NAME_ORG cannot co-exist" not in block:
+        out.append("step 11 does not name the NAME_ORG rejection by its message")
+    for sentence in sentences(block):
+        if "field_overrides" in sentence and not re.search(r"\bnot\b|\bno\b", sentence):
+            out.append("step 11's Retype block routes the reader to field_overrides: " +
+                       sentence[:80])
+    return out
+
+
+def order_problems(text):
+    """The section is read before workflow step 3 is advanced (#220).
+
+    Step 10's read precedes step 11, and step 11's read precedes step 11's advance paragraph
+    and step 13's transform.
+    """
     flat = squash(text)
     out = []
+    read10 = flat.find("Read the source's Record Type Check before you advance workflow step 2")
+    read11 = flat.find("Read the source's Record Type Check before you advance workflow step 3")
+    map11 = flat.find("### 11. Map")
+    advance11 = flat.find("This advance is unconditional", map11)
+    s13 = flat.find("### 13. Build the transformation program")
+    if min(read10, read11, map11, advance11, s13) < 0:
+        return ["a marker of the Phase 2 read order is missing"]
+    if not read10 < map11:
+        out.append("step 10's read is not inside step 10")
+    if not map11 < read11 < advance11 < s13:
+        out.append("step 11 does not read the section before its advance")
+    return out
+
+
+def problems_in_phase2(text):
+    flat = squash(text)
+    out = problems_in_phase2_plan_and_map(text) + order_problems(text)
     s13 = between(flat, "### 13. Build the transformation program", "### 14. Test") or ""
     if not re.search(r"Apply a retype decision from Phase 1", s13):
         out.append("Phase 2 step 13 does not apply the Phase 1 retype decision")
@@ -221,6 +325,10 @@ def problems_in_phase2(text):
         out.append("Phase 2 step 13 does not say what the retype emits")
     if not re.search(r"do not restate them here \(INV-300\)", s13):
         out.append("Phase 2 step 13 does not point at the canonical statement")
+    if re.search(r"(?i)step 3 rejects|step-10 rejection|rejects its name declarations", s13):
+        out.append("Phase 2 step 13 still describes a workflow step 3 rejection")
+    if not re.search(r"parsed fields joined in the order Phase 1 Step 6 reads them", s13):
+        out.append("Phase 2 step 13 does not say how a retyped parsed name is joined")
     s18 = between(flat, "### 18. Save and document", "### 18a.") or ""
     if "## Record Type Check" not in s18:
         out.append("the step 18 mapper template has no Record Type Check section")
@@ -316,6 +424,77 @@ class NegativeControls(unittest.TestCase):
         text = PHASE2.read_text(encoding="utf-8")
         mutant = text.replace("**Apply a retype decision from Phase 1.**", "")
         self.assertNotEqual(mutant, text)
+        self.assertTrue(problems_in_phase2(mutant))
+
+
+class Phase2NegativeControls(unittest.TestCase):
+    """Each #220 check must fail on a copy of phase2-data-mapping.md with its rule taken out."""
+
+    def setUp(self):
+        self.text = PHASE2.read_text(encoding="utf-8")
+
+    def mutate(self, old, new=""):
+        mutant = self.text.replace(old, new)
+        self.assertNotEqual(mutant, self.text, "the control's target text moved: %r" % old)
+        return mutant
+
+    def test_step_10_not_reading_the_section_fails(self):
+        mutant = self.mutate("Read the source's Record Type Check before you advance workflow step 2",
+                             "Consider the plan")
+        self.assertTrue(problems_in_phase2(mutant))
+
+    def test_step_11_not_reading_the_section_fails(self):
+        mutant = self.mutate("Read the source's Record Type Check before you advance workflow step 3",
+                             "Consider the mapping")
+        self.assertTrue(problems_in_phase2(mutant))
+
+    def test_step_11_without_the_inv_300_pointer_fails(self):
+        mutant = self.mutate("(INV-300, INV-136) Read the source's Record Type Check",
+                             "(INV-136) Read the source's Record Type Check")
+        self.assertIn("Phase 2 step 11 does not cite INV-300 at its pointer",
+                      problems_in_phase2(mutant))
+
+    def test_step_10_mixed_record_type_fails(self):
+        mutant = self.mutate("It\n  stays enum-valid and is never `MIXED`", "It is `MIXED`")
+        self.assertTrue(problems_in_phase2_plan_and_map(mutant))
+
+    def test_the_derived_record_type_without_justification_fails(self):
+        mutant = self.mutate(' "justification": "<the Phase 1 rule and its exceptions>"}', "}")
+        self.assertIn('step 11\'s computed RECORD_TYPE does not carry "justification"',
+                      problems_in_phase2(mutant))
+
+    def test_a_field_overrides_instruction_in_step_11_fails(self):
+        mutant = self.mutate("computed `RECORD_TYPE`. Declare no `NAME_ORG` entry",
+                             "computed `RECORD_TYPE`. Declare the names through "
+                             "`type_discriminator.field_overrides`. Declare no `NAME_ORG` entry")
+        self.assertTrue(any("routes the reader to field_overrides" in p
+                            for p in problems_in_phase2(mutant)))
+
+    def test_restating_the_suffix_list_in_step_11_fails(self):
+        mutant = self.mutate("Declare no `NAME_ORG` entry",
+                             "The suffixes are `LLP` and `GMBH`. Declare no `NAME_ORG` entry")
+        self.assertTrue(any("restates the rule" in p for p in problems_in_phase2(mutant)))
+
+    def test_moving_the_step_11_read_after_the_advance_fails(self):
+        start = self.text.index("⛔ **(INV-300, INV-136) Read the source's Record Type Check")
+        end = self.text.index("⚠️ **This advance is unconditional")
+        block = self.text[start:end]
+        rest = self.text[:start] + self.text[end:]
+        at = rest.index("### 12. Generate starter code")
+        mutant = rest[:at] + block + rest[at:]
+        self.assertTrue(order_problems(mutant))
+
+    def test_restoring_the_step_13_rejection_sentence_fails(self):
+        mutant = self.mutate("With **Keep as-is**, or no such section, change nothing.",
+                             "If `mapping_workflow` step 3 rejects its name declarations, that is "
+                             "the step-10 rejection above. With **Keep as-is**, or no such "
+                             "section, change nothing.")
+        self.assertIn("Phase 2 step 13 still describes a workflow step 3 rejection",
+                      problems_in_phase2(mutant))
+
+    def test_dropping_the_joined_name_order_fails(self):
+        mutant = self.mutate("parsed fields joined in the order Phase 1 Step 6 reads them",
+                             "parsed fields")
         self.assertTrue(problems_in_phase2(mutant))
 
 
