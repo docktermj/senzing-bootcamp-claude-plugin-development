@@ -149,7 +149,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     `test_spec_absence_claims_name_their_owner.py`, `test_spec_ledger_invariants.py` and
     `test_blocked_submission_has_a_vocabulary_value.py`. The last one scans the overlays tree too,
     and requires a written value there, where the loop's overlay writes one.
-- **Commit:** uncommitted
+- **Commit:** 19e33fc
 
 ## check-skill-drift-is-retired
 
