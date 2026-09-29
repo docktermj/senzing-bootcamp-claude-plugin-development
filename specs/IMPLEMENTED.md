@@ -156,7 +156,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   errors are the mutation controls finding their anchors absent. After restoring, it is `OK`.
 - **Verified:** the full suite passed in the CI mirror (both legs, empty `HOME` outside `/tmp`).
   `citations.py verify` was run after this entry was written.
-- **Commit:** uncommitted
+- **Commit:** `777beba`
 
 ## retype-decision-reaches-the-mapping-at-steps-10-and-11
 
