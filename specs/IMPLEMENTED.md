@@ -43,6 +43,162 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## download-resource-guidance-matches-the-chunked-inline-reply
+
+- **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #225)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`,
+  `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`,
+  `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md`,
+  `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf` (re-rendered),
+  `tests/test_download_resource_is_a_listing.py`, `tests/test_entity_specification_access_pattern.py`,
+  `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-29. Tools: `get_capabilities()`;
+  the declared schemas of `download_resource`, `find_examples` and `generate_scaffold` read from
+  the tool manifest; `download_resource(filename='senzing_entity_specification.md')` (URL mode);
+  the same with `inline=true` at `offset=28975` and at `offset=76900`;
+  `download_resource(filenames=['senzing_entity_specification.md', 'identifier_crosswalk.json'], inline=true)`;
+  `search_docs(query='PHONE_NUMBER entity specification', category='data_mapping')`. Outcome:
+  **still reproduces**, with **one correction** (below).
+  - `download_resource` declares `filename`, `filenames`, `inline`, `offset`, `version`.
+    `find_examples` declares `file_path`, `language`, `list_files`, `max_lines`, `query`, `repo`;
+    `generate_scaffold` declares `language`, `version`, `workflow`. Neither declares `inline`.
+  - URL mode returns `mode: "url"` and `size_bytes: 76976`. The file has changed since the
+    "73 KB" / 2026-08-14 figure, as the issue says.
+  - `inline=true` at `offset=28975` returned `truncated: true`, `next_offset: 76975`,
+    `total_chars: 76976`, `dest: "/tmp/senzing_entity_specification.md"`, and an instruction to
+    append to that `dest`. At `offset=76900` it returned `truncated: false` with **no**
+    `next_offset`.
+  - The batch left the specification out, listed it under `oversize` (with `size_chars: 76976`)
+    and said to request it alone. It returned `identifier_crosswalk.json` inline.
+  - `search_docs` returned the specification's `Feature: PHONE` section as its own result.
+  - ⚠️ **Correction: `total_chars` and the offsets count UTF-8 bytes, not characters.**
+    `total_chars` (76976) equals URL mode's `size_bytes` (76976), although the file holds
+    non-ASCII text. The chunk at `offset=28975` spans 48,000 offsets (to `next_offset: 76975`),
+    and its `content` is 48,000 UTF-8 bytes but 47,852 characters (74 non-ASCII characters,
+    3 bytes each). So a correct assembly has a **character** count below `total_chars`, and the
+    check the issue asks for would fail it. See "Deviation from the issue" below.
+
+  No absence claim is made.
+- **Summary:** Two shipped passages had fallen behind invariants that changed under them.
+  - **Module 6 step 28 (INV-155).** "The results dashboard" and "its Entity Graph / Cross-Source
+    / Relationship Network tabs" are replaced. The counts, statistics and sample entities are
+    the **Merge Statistics** tab. The cross-source relationship view is the **Entity Graph** tab
+    (with its "Show only entities with relationships" mode) and the **Cross-Source** tab, cited
+    to INV-155. INV-104 is cited only for the single app. Statements that a tab does not exist,
+    and the reserved ids, are unchanged.
+  - **`ground-rules.md`, the `download_resource` bullet (the central statement).** It lists
+    `offset` among the declared parameters. "The whole resource then arrives inside the
+    response" is replaced by the chunked reply shape (`truncated`, `next_offset`,
+    `total_chars`) and the batch `oversize` rule. It points to Module 5 Phase 1 Step 3 for the
+    assembly procedure and does not restate it (INV-300). The `MCP-NEGATIVE` comment lists
+    `download_resource`'s five parameters and is restamped server 1.37.15, 2026-09-29.
+  - **Module 5 Phase 1 Step 3, the inline fallback.** It lists `offset` among the parameters.
+    A new ⛔ (INV-234) block states the one chunk-assembly procedure, in order: request the
+    file alone with `filename`, write the first chunk to
+    `docs/reference/senzing_entity_specification.md` and ignore the `/tmp` `dest` (INV-001), call
+    again with `offset` set to `next_offset` and append each chunk in order until
+    `truncated: false`, then check the assembled file against `total_chars`. The URL route keeps
+    its `size_bytes` check. One ⚠️ paragraph says `search_docs` is cheaper for a single lookup,
+    and that paging stays the fallback because Steps 4 to 6 read the saved copy.
+  - **No pinned size.** The "73,051 bytes" and three "73 KB" figures in Step 3 are gone. The
+    URL check says to compare with the figure in *this* response, and the targeted-lookup
+    paragraph says the size is the response's `size_bytes` or `total_chars` (INV-080). The recap
+    example's "(73 KB)" now says the saved size matched `size_bytes`, and its PDF is
+    re-rendered with `generate_recap_pdf.py`. The dated verbatim `mapping_workflow` quote in
+    the access-pattern test's docstring ("the full 73KB entity specification", server 1.32.9)
+    is a record of what the server said, and stays, as the issue says.
+- **Deviation from the issue, stated (INV-080).** The issue asks the inline route to compare
+  the assembled file's **character** count with `total_chars`, "because the offsets count
+  characters". The implementation-time re-check shows the offsets and `total_chars` count
+  UTF-8 **bytes** (see the correction above), so that check fails a correct file. Step 4 of the
+  procedure therefore checks the saved file's **size in bytes** against `total_chars`, with a
+  dated ⚠️ saying why. It also says to write the content as UTF-8 with no line-ending
+  conversion, so the byte count on Windows is the server's. The check is still "against
+  `total_chars`", and the URL route's `size_bytes` check is unchanged. The issue's own rule
+  for this case is followed: the approved note below is kept **verbatim**, and the
+  contradiction is stated beside it for the maintainer.
+- **Upstream draft (not filed), for the maintainer:** `mcp-server`-routed; `submit_feedback`
+  was not called (unattended run). **Upstream:** not yet sent — needs maintainer approval.
+  The drafted message:
+
+  > `download_resource`'s schema describes `offset` as a "Character offset" and the reply field as `total_chars`, but both count UTF-8 bytes (76,976 for a 76,738-character file). Re-checked on server 1.37.15, 2026-09-29: for `senzing_entity_specification.md`, URL mode returns `size_bytes: 76976`, and `inline=true` returns `total_chars: 76976`; the file decodes to 76,738 characters. A client that follows the schema and compares the assembled file's character count with `total_chars` rejects a correct download. Please either describe `offset` and `total_chars` as byte counts, or make them count characters.
+- **Approach:** raced (Phase 5b), approach **b**: each site is self-sufficient where it is
+  used. `ground-rules.md` states the parameters and the reply shape; the Module 5 fallback,
+  the only site that assembles a file, states the whole procedure in place. The guards extend
+  the two existing tests instead of adding a module.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-234 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+    - ⛔ **(INV-234) The inline reply carries the file in bounded chunks, not in one response, so put it back together before Step 4 reads it.** — in `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`
+    - `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md` — ⛔ the `download_resource` bullet lists `offset` among the declared parameters, states the chunked `inline=true` reply (`truncated`, `next_offset`, `total_chars`) and the batch `oversize` rule, and points to Module 5 Phase 1 Step 3 for the assembly procedure.
+
+  ⚠️ **Why this is an amendment and not a new invariant.** INV-234's rule is unchanged: every
+  listing call site states the shape or cites the central statement, and a resource is
+  size-checked before use. What moved are the `download_resource` facts it cites: the
+  parameter list, and an inline reply that now arrives in chunks. Amending a registered
+  invariant is the maintainer's sign-off alone, and the repo overlay (INV-307) keeps an
+  unattended run out of `specs/INVARIANTS.md`, so it is untouched. The block carries both
+  markers for the reason #153's and #223's blocks give: `pending_invariants.py` queues it by
+  `PROPOSED AMENDMENT to INV-234`, and `tests/test_review_invariants_queue.py` counts it by
+  "NOT minted". Applying the note resolves the block: mark the bullet `applied YYYY-MM-DD` and
+  drop both "awaiting" markers. Enforced by `tests/test_download_resource_is_a_listing.py`.
+
+  ⚠️ **The implementation-time re-check contradicts one sentence of the note, and the note is
+  kept verbatim anyway**, as the issue's "Behavior and edge cases" requires. The sentence is
+  "compared with the assembled file's **character** count, because the offsets count characters
+  and character and byte counts differ for non-ASCII text". On server 1.37.15, 2026-09-29, the
+  offsets and `total_chars` count UTF-8 **bytes**: `total_chars` equals URL mode's `size_bytes`,
+  and a chunk spanning 48,000 offsets decodes to 47,852 characters. The shipped Step 3
+  therefore checks the saved file's size in bytes against `total_chars`. A second, smaller
+  point: "each reply carrying `truncated`, `next_offset` and `total_chars`" is true of a
+  truncated reply; the last reply carries `truncated: false` and no `next_offset`. The
+  maintainer may want to amend both before applying the note. A replacement for the first
+  sentence, **not** part of the drafted wording: "compared with the assembled file's size in
+  **bytes**, because on this server the offsets and `total_chars` count UTF-8 bytes, which
+  differ from characters for non-ASCII text".
+
+  The drafted wording, a dated re-verification note appended to INV-234, with its rule and
+  every existing sentence unchanged:
+
+  **INV-234** — (⚠️ **Dated re-verification, <YYYY-MM-DD> (#225): the rule is unchanged; the `download_resource` facts it cites have moved.** Re-verified live on server **1.37.15**, 2026-09-29. `download_resource` now declares `filename`, `filenames`, `inline`, `offset`, `version`: `offset` is new since the 2026-08-14 list above, and `download_resource` is still the only one of the three listing tools that declares `inline`. An `inline=true` reply no longer carries the whole resource. A large resource arrives in **bounded chunks**, each reply carrying `truncated`, `next_offset` and `total_chars`: the caller calls again with `offset` set to `next_offset` until a reply has `truncated: false`, and appends each chunk's content, in order, to the canonical save path, never to the `dest` the reply suggests. A batch (`filenames`) lists a file too large for one chunk under `oversize`, and that file is requested on its own with `filename`. **The size check on the inline route is against `total_chars`**, compared with the assembled file's **character** count, because the offsets count characters and character and byte counts differ for non-ASCII text. The URL route keeps the `size_bytes` check above. The central statement is the `download_resource` bullet in `bootcamp-onboarding/ground-rules.md`.)
+
+  *(the date is a placeholder deliberately: it is the day the maintainer approves the wording at
+  `/review-invariants`, not the day of this run.)* *(written as NNN deliberately: no new id is
+  drafted, because this amends INV-234 in place and a literal new id would cite an invariant
+  that does not exist and turn `citations.py verify` red. If the maintainer prefers a superseding
+  invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
+  rather than trusting a number written here.)*
+- **Tests (INV-219: the plugin's structure, never the server's wording):**
+  - `tests/test_download_resource_is_a_listing.py`. The docstring no longer lists four
+    parameters: it says `download_resource` declares `inline` and that the full list is read
+    from the sites and the dated `MCP-NEGATIVE` comment. The call-site pin is re-derived from
+    the extractor as 4, since the procedure adds an `inline=true` call.
+    `test_it_states_the_size_that_was_measured` is rescoped as
+    `test_it_compares_with_this_response_and_pins_no_size`, with the reason in its docstring.
+    New class `ChunkedInlineReply`:
+    - both sites list `offset` in the declared-parameter sentence and name the three reply
+      fields, or cite INV-234 and the central statement;
+    - no shipped file says the whole resource arrives in one response;
+    - `ground-rules.md` states `oversize` and "on its own, with `filename`";
+    - the `MCP-NEGATIVE` comment lists `offset` and ends with a server version and date;
+    - Module 5's procedure has its six steps in order, and says to ignore `dest` (INV-001);
+    - the URL route keeps its `size_bytes` check, and the `search_docs` line is present;
+    - the procedure is stated once: `ground-rules.md` points to it, and no other file repeats
+      its check (INV-300).
+  - `tests/test_entity_specification_access_pattern.py`. `test_it_gives_the_size` is rescoped
+    as `test_it_points_to_the_size_rather_than_pinning_one`, with the reason in its docstring.
+    The figure is dropped from the docstring's first line and the constant's comment, and
+    `IN_FULL` matches any `full <n> KB`, not only 73.
+  - **Negative controls:** 13 mutations, each confirmed to land, run against its target test
+    file, then restored. All 13 fail. They restore the "whole resource arrives" sentence; drop
+    `offset` from each site's list (2); drop the `oversize` rule; drop `offset` from, and the
+    stamp off, the `MCP-NEGATIVE` comment (2); drop "ignore the reply's `dest`"; swap
+    procedure steps 3 and 4; drop the `total_chars` check; copy the check into
+    `ground-rules.md`; drop the `search_docs` line; and restore each pinned size (2).
+- **Invariant answer (INV-309):** the `PROPOSED AMENDMENT to INV-234` block above. The new ⛔
+  line cites INV-234 at the line. No new id is drafted.
+- **Commit:** `32648ff`
+
 ## inv-314-names-what-a-run-may-create-without-a-per-record-yes
 
 - **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #216)

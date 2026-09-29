@@ -73,8 +73,9 @@ states the rule once for all three (INV-234).
    platform (INV-001).
 2. **Save the body** to the single canonical copy at
    `docs/reference/senzing_entity_specification.md` (do not create duplicate copies elsewhere), then
-   **check the saved file's size against the response's `size_bytes`** before using it. On
-   2026-08-14 that was **73,051 bytes**, and a fetched-then-saved copy matched it exactly. A
+   **check the saved file's size against the response's `size_bytes`** before using it. Compare
+   with the figure in **this** response, never one remembered from an earlier run: the file changes
+   on the server's schedule, so a size written down goes stale silently (INV-080). A
    truncated fetch, or a saved error page, is caught here in one comparison instead of surfacing in
    Step 4 as attribute names that are merely absent. (INV-228's count-check discipline, applied to a
    resource fetch rather than a dataset.)
@@ -96,16 +97,44 @@ states the rule once for all three (INV-234).
      missing `NAME_ORG` is a parse failure, not a specification change.
 
 ⚠️ **If the URL fetch fails, `inline=true` is the sanctioned fallback for this tool — and for this
-tool only.** `download_resource`'s declared schema carries `filename`, `filenames`, `inline` and
-`version`, so INV-136 permits `inline` here, and the resource's own `on_failure` names it: *"Fallback:
+tool only.** `download_resource`'s declared schema carries `filename`, `filenames`, `inline`,
+`offset` and `version`, so INV-136 permits `inline` here, and the resource's own `on_failure` names it: *"Fallback:
 call download_resource with this filename and inline=true."* Use it only **after** the URL fetch
 fails — the parameter's own description says to try the default `inline=false` first — and expect it
-to cost context, since the full 73 KB then arrives inside the response. This is the **opposite** of
+to cost context. This is the **opposite** of
 the rule for `generate_scaffold` and `find_examples`, whose schemas do not declare `inline` at all,
 so passing it there is a call that cannot work. The difference is not about the word `inline`; it is
 about what each tool's schema declares (INV-136).
 
-**How to consult it: targeted lookup, never end to end.** The file is **73 KB**. Look up the
+⛔ **(INV-234) The inline reply carries the file in bounded chunks, not in one response, so put it back together before Step 4 reads it.**
+The reply's shape is stated once in `ground-rules.md` → "Working examples" (INV-300); this is the
+one step that assembles a file from it:
+
+1. Call `download_resource(filename="senzing_entity_specification.md", inline=true)`. Request the
+   file on its own, with `filename`: a batch (`filenames`) leaves out a file too large for one
+   chunk and lists it under `oversize`.
+2. Write the reply's `content` to the canonical copy, `docs/reference/senzing_entity_specification.md`,
+   as UTF-8 with the text unchanged (no line-ending conversion). **Ignore the reply's `dest`** and
+   its instruction to save there: it names a `/tmp` path, which is not the canonical copy and does
+   not exist on Windows (INV-001).
+3. While the latest reply says `truncated: true`, call again with `offset` set to its `next_offset`,
+   and **append** that reply's `content` to the same file, in order. Stop at the reply that says
+   `truncated: false` (or carries no `next_offset`).
+4. **Check the assembled file against `total_chars`** before using it. This is the inline route's
+   counterpart of the `size_bytes` check above, and it catches a dropped or repeated chunk.
+   ⚠️ Despite its name, `total_chars` counts the file's **UTF-8 bytes**, and so do the offsets:
+   verified on server **1.37.15, 2026-09-29**, where `total_chars` equaled the URL route's
+   `size_bytes`, and a chunk decoded to fewer characters than the offsets it spanned, because the
+   file holds non-ASCII text such as em dashes. So compare the saved file's **size in bytes** with
+   `total_chars`; a character count comes out short and fails a correct assembly.
+
+⚠️ **For a single lookup, `search_docs` is cheaper than paging.** It serves the Entity
+Specification already split by section, so one attribute or feature is one `search_docs` call
+naming it, with `category='data_mapping'`. It does not replace the saved copy: Steps 4, 5, 5a and 6 read the file, so paging stays the
+fallback for fetching it.
+
+**How to consult it: targeted lookup, never end to end.** The file is large: its size is the
+response's `size_bytes` (or `total_chars` inline), not a figure written here (INV-080). Look up the
 specific feature or attribute in question — grep for the attribute code, or open the single section
 that covers it. Do **not** read it front to back. `mapping_workflow` says so itself, at both its
 step 2 and step 3 (verbatim, server 1.32.9, 2026-08-14): *"Do NOT attempt to read it end-to-end —
@@ -116,7 +145,7 @@ the rest of their session, not merely some tokens.
 attribute names, types and structures — Steps 4, 5, 5a and 6 all compare against it. From
 `mapping_workflow` step 2 onward the workflow delivers its own **distilled inline mapping
 reference** (the feature catalog, the identifier-classification workflow, and the exact attribute
-keys), and *that* is the working reference for the mapping phase; the tool states the 73 KB file "is
+keys), and *that* is the working reference for the mapping phase; the tool states the file "is
 available only as an optional deep-dive" for an edge case the inline reference does not cover. Phase
 2 already cites the inline reference — relay this rather than leaving a guide holding two references
 with no basis for preferring either.
