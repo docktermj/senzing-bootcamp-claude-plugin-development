@@ -43,6 +43,163 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-reverse-contract-guard-checks-the-maintainer-surface
+
+- **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #233)
+- **Files changed:** `tests/test_new_hard_rules_are_cited_or_deferred.py`,
+  `tests/test_reverse_contract_flags_the_maintainer_surface.py` (new),
+  `tests/test_the_gate_sees_every_scanned_root.py`,
+  `tests/test_since_view_sees_the_maintainer_surface.py`,
+  `.claude/skills/production-readiness-audit/conformance.py` (one comment),
+  `.claude/skill-overlays/unattended-issue-loop.md`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-29, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact), re-confirmed. Every changed line is a test, a docstring, a
+  citation id or this entry. No Senzing behavior is stated or changed, and no absence claim is
+  made. Nothing was sent upstream.
+- **Summary:** the reverse-contract guard now checks every root in `conformance.py`'s
+  `SCAN_ROOTS`, the three `.claude/` roots included, with the same cited-or-deferred predicate
+  as `plugins/senzing-bootcamp`.
+  - **Guard.** `CHECKED_ROOTS` and `OUT_OF_SCOPE_ROOTS`, the `.claude/`-prefix split, are
+    deleted, and `Parsed` loses its `out_of_scope` population, so no root can be counted but
+    unchecked. The roots are still read from the producer (INV-308). The skip for "rules added,
+    none in the checked corpus" is removed: once every placed line is checked, it cannot be
+    reached. `[new-hard-rules]` still prints on every run, zeroes included, and now names the
+    roots it checked. The docstring's "COUNTED, not checked" paragraph is replaced by the
+    decision and its four reasons, measured at `f81e890`.
+  - **Docstrings.** `test_since_view_sees_the_maintainer_surface.py` no longer says the consumer
+    leaves `.claude/` unchecked, and its "What a green run means" paragraph is rewritten.
+    `test_the_gate_sees_every_scanned_root.py`'s "Placed is not checked" paragraph becomes
+    "Placed is checked". `conformance.py`'s `SCAN_ROOTS` comment said the consumer counts the
+    maintainer surface as out of scope, and now says every listed root is checked.
+  - **The live range at `b2819a3`** (`2451f1a..`, ledger entry
+    `production-readiness-audit-2026-09-28`): `since` reports 42 lines, 14 under `plugins/` and
+    28 under `.claude/`. The guard's predicate, run on the 28 before this change, left exactly
+    the issue's five unaccounted, all in `.claude/skill-overlays/unattended-issue-loop.md`. #216
+    added no unaccounted line: its two rules ("An unattended run creates only the records on
+    this list…" and "Invoking `/implement-github-issue <n>` is assent to five comments…") are
+    quoted in its own PROPOSED AMENDMENT block. The other 21 cite an id on the line (INV-007,
+    INV-281, INV-300, INV-307, INV-314, INV-317, INV-318, INV-319), and `feedback-to-issues`'
+    "`submission blocked: <reason>` is an outcome…" is quoted in the
+    `upstream-vocabulary-is-two-closed-sets-with-a-mapping` block. This run's decisions, each on
+    the line carrying the ⛔ and without splitting a phrase
+    `tests/test_unattended_loop_is_label_gated.py` pins:
+    - "Put that file in every worker's brief" (line 21) → **cite INV-309**. The file carries
+      INV-309's gate (its 2026-09-29 correction: "the gate belongs to the repo overlay"), and
+      this line is what brings it to every worker.
+    - "Never sign off an invariant — and declining to mint one is NOT declining to ship the
+      rule" (line 47) → **cite INV-309**: "minting an ID is the maintainer's alone".
+    - "Never `_None yet._`, never silence" (line 51) → **cite INV-309**: "Silence is not one of
+      the three".
+    - "Never call `submit_feedback`" (line 52) → **cite INV-314**: an upstream message is a
+      record outside this repository, and with no maintainer present the command creates
+      nothing and records the drafted text.
+    - "Never decline" (line 55) → **deferred**, in the block below. The line is unchanged.
+  - ⚠️ **Line 21 is also a site of #239's HELD deferral** (entry
+    `the-two-user-level-skills-are-defined-only-at-user-level`), whose draft is about where a
+    user-level skill's repository obligations live. The two are compatible: INV-309 governs why
+    the file must reach each worker, and the HELD draft governs where the file is. The citation
+    leaves that block's quote matching, since the quote test drops `(INV-NNN)` from both sides.
+  - **The four local-instruction lines #228 left uncited were demoted by #271** (commit
+    `cd054f4`), at the maintainer's request, after the tool-permission classifier refused that
+    edit to both unattended implementations ("Security Weaken", "Logging/Audit Tampering"):
+    `.claude/commands/dry-run.md:65` ("Commit or `cp` aside…"),
+    `.claude/skills/compact-dev-environment/SKILL.md:90`,
+    `.claude/skills/dry-run/SKILL.md:268` and `.claude/skills/dry-run/phase3-conversational.md:166`
+    no longer carry a ⛔, and keep their instruction. This run did not edit them. At `cd054f4`,
+    `conformance.py since --ref 0d7bbe1` (91 lines) reports none of the four.
+  - **The live range at `cd054f4`**, with `main` now carrying #225, #227, #235, #241, #257
+    and #271: `since` reports 47 lines, all 47 checked across the four roots, 0 unresolved.
+    The widened guard, run before this entry existed, left two unaccounted: "Never decline"
+    (deferred below) and one line #241 added. This run's decision on it, by the rule the
+    maintainer recorded for #233 (cite only an invariant whose subject genuinely matches,
+    otherwise quote the line in a deferral here):
+    - "The walk is never inferred from silence" (`.claude/skills/auto-test/SKILL.md:68`) →
+      **deferred**, in the second block below. No registered invariant says a maintainer
+      operation asks rather than defaults, as #241's own block records (INV-244 governs
+      bootcamp state fields). #241's block quotes only the bold span, which the guard's
+      44-character probe overruns, so this block quotes the line through its second sentence.
+      The line is unchanged.
+    - ⚠️ **Outside the corpus, not checked by the guard:** #257 edited
+      `.claude/skills/review-invariants/invariant_manifest.py:52` ("⛔ At the repository root,
+      NOT in `specs/`…"), a `.py` line the `.md`-only corpus does not scan. The guard applies
+      its predicate to outside-corpus lines only when the in-corpus set is empty, which #233
+      does not change, so this run neither cites nor defers it.
+  - `specs/INVARIANTS.md` is unchanged (INV-307). No id is minted.
+- **Approach:** raced (Phase 5b), approach b: the INV-282 fixtures live in a new module that
+  imports the guard's parser and predicate. The live-range guard and its synthetic proofs are
+  separate subjects.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Declining an issue is
+  the maintainer's alone. The rules already shipping, and every site a citation must reach, each
+  quoted:
+    - ⛔ **Never decline** — that is the maintainer's alone. An issue you cannot implement is **blocked**, a state you record on the issue, never an entry you write into `specs/DECLINED.md`. — in `.claude/skill-overlays/unattended-issue-loop.md` ("What an unattended run must never decide in this repository", third bullet) — **cite INV-NNN**
+    - ⛔ **Never decline on your own initiative.** — in `.claude/skill-overlays/implement-github-issue.md` ("Declining an issue instead of implementing it"; this line predates the range and this run does not edit it, and it is named so sign-off cites both sites) — **cite INV-NNN**
+
+  ⚠️ **Why this is not an existing invariant.** INV-307 freezes `specs/` and keeps
+  `DECLINED.md` writable. INV-216 and INV-217 govern how `DECLINED.md` is read and what its
+  negatives carry. INV-309 is about minting invariants, not declining issues. None says who may
+  decide that a correct issue will not be built, and citing any of them would be the
+  mis-citation #227 fixes.
+
+  The drafted wording:
+
+  **INV-NNN** — Declining an issue, the decision that a correct issue will not be built and the
+  `specs/DECLINED.md` entry that records it, MUST be the maintainer's alone. No maintainer
+  command or unattended run may decline on its own initiative or write a `specs/DECLINED.md`
+  entry the maintainer did not decide. An issue a run cannot implement is recorded as
+  **blocked** on the issue instead. ⚠️ Declining is distinct from finding an issue invalid, a
+  duplicate or already fixed: that is a finding about the world and is reported, while
+  declining is a decision about what to build. Enforced by
+  `tests/test_unattended_loop_is_label_gated.py` (`test_it_does_not_decline`, the loop overlay)
+  and `tests/test_declined_ledger.py` (the implement overlay). (Source: GitHub issue #233.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** A maintainer
+  operation's costly choice is asked about, never inferred from an empty argument. The rule
+  already shipping, quoted through its second sentence so the widened guard's probe matches:
+    - ⛔ **The walk is never inferred from silence.** It is asked about, not assumed. — in `.claude/skills/auto-test/SKILL.md` — **cite INV-NNN**
+
+  ⚠️ **This is the same subject as #241's pending block** (entry
+  `each-maintainer-skill-states-its-commands-rules`), which quotes the same line with
+  `/dry-run`'s phase 3 and `/release`'s version. One sign-off covers both: mint one id and cite
+  it at every site the two blocks name. Why no existing invariant fits is recorded there.
+
+  The drafted wording, #241's draft with only its source widened to name #233:
+
+  **INV-NNN** — Where a maintainer skill's argument chooses work that costs the maintainer's
+  time, spends tokens, or cuts a release (`/dry-run`'s phase 3, `/auto-test`'s simulated walk,
+  `/release`'s bump), an empty argument MUST be answered by asking, never by a default: the
+  costly choice is asked about, not inferred from silence. The skill states the rule, because
+  `/<name>` runs the skill rather than a same-name command (measured 2026-09-29, Claude Code
+  2.1.284). Enforced by `tests/test_skills_state_their_commands_argument_handling.py`, which
+  asserts the sentences are stated and cannot establish that a live run asks. (Source: GitHub
+  issues #241 and #233.)
+
+  *(written as NNN deliberately: several deferrals are pending, and a literal id would cite an
+  invariant that does not exist and turn `citations.py verify` red. Mint at the next free id,
+  and read it off `INVARIANTS.md` at registration.)*
+- **Tests:**
+  - `tests/test_reverse_contract_flags_the_maintainer_surface.py` (new, 7 tests). It feeds
+    synthetic `since` reports to the guard's own `parse_since` and `_unaccounted`, imported by
+    path, with the ledger path pointed at a one-block fixture. It does not depend on the live
+    range. MUST flag: an uncited rule under each `.claude/` root in `SCAN_ROOTS`, which must
+    also land in `checked`. MUST NOT flag: a `.claude/commands/…` rule citing `(INV-314)` on
+    its line, and a `.claude/skills/…` rule quoted in the fixture deferral. The deferral clears
+    only the rule it quotes. The guard's own test is also run on each fixture set: it fails on
+    the uncited `.claude/skill-overlays` rule, printing its `[new-hard-rules]` line, and passes
+    on the cited and deferred ones. An INV-265 check fails if the producer gains a `.claude/`
+    root that has no fixture here.
+  - `tests/test_the_gate_sees_every_scanned_root.py`:
+    `test_the_shipped_corpus_is_checked_and_the_maintainer_surface_is_counted` becomes
+    `test_every_scanned_root_is_checked`, which asserts that one line under every scanned root
+    lands in `checked`. The two sums drop `out_of_scope`.
+  - Live: `tests.test_new_hard_rules_are_cited_or_deferred` reports 42 lines, 42 checked across
+    the four roots, 0 unresolved, and passes with this entry written. Before the entry, it
+    failed on exactly "Never decline".
+  - Live at `cd054f4`: 47 lines, 47 checked, 0 unresolved. Before the entry, it failed on
+    exactly "Never decline" and "The walk is never inferred from silence".
+- **Commit:** `29a440b`
+
 ## stale-counts-become-properties-and-the-freeze-covers-the-directory
 
 - **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #257, a sub-issue of #226)

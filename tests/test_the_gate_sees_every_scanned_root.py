@@ -1,6 +1,6 @@
 """The reverse-contract gate places every root `conformance.py since` can report.
 
-`since` diffs three roots; `tests/test_new_hard_rules_are_cited_or_deferred.py` parses its
+`since` diffs every root in `SCAN_ROOTS`; `tests/test_new_hard_rules_are_cited_or_deferred.py` parses its
 output back into files and checks each rule at its source line. Between those two halves sat
 an unwritten agreement about what the report looks like, and the consumer's half was wrong:
 its parser opened a file heading only when the heading started with `plugins/`. Every line the
@@ -14,11 +14,11 @@ Asserting today's count is right would re-create it one level up — a parser th
 because nothing is there to drop. So each root is fed through the parser as a synthetic report
 and must come out placed, and an unknown root must come out **named**, not ignored.
 
-⚠️ **Placed is not checked.** A maintainer-surface rule is counted as explicitly out of scope,
-by decision (#74) and for the reason `test_since_view_sees_the_maintainer_surface.py` records:
-command files restate their skill's rules and cite nothing. **93 of those 112 lines carry no
-citation and no deferral**, and this guard does not make them fail — it makes them countable.
-A genuinely new `.claude/` guarantee still goes unchecked, and that gap is stated, not closed.
+⛔ **Placed is checked (#233).** From #74 until #233 a maintainer-surface rule was placed and
+then only counted, on the premise that command files restate their skill's rules and cite
+nothing. #233 found the premise no longer held (the reasons are in the gate's docstring) and
+removed the split, so a line under every scanned root, `.claude/` roots included, lands in the
+population the citation check reads. `test_every_scanned_root_is_checked` pins that decision.
 
 Stdlib only; both modules are imported by path (INV-108).
 
@@ -128,7 +128,7 @@ class EveryScannedRootIsPlaced(unittest.TestCase):
             "exactly that")
         self.assertEqual(
             parsed.reported,
-            len(parsed.checked) + len(parsed.out_of_scope) + len(parsed.unresolved),
+            len(parsed.checked) + len(parsed.unresolved),
             "reported lines do not add up to the lines placed. The difference is lines that "
             "went nowhere, which is precisely how 112 of them disappeared")
 
@@ -145,22 +145,19 @@ class EveryScannedRootIsPlaced(unittest.TestCase):
                     "the parser does not recognize %r as a scanned root, although `since` "
                     "diffs it and reports rules under it" % root)
                 self.assertEqual(
-                    1, len(parsed.checked) + len(parsed.out_of_scope),
-                    "the line under %r landed in neither the checked nor the out-of-scope "
-                    "population" % root)
+                    1, len(parsed.checked),
+                    "the line under %r did not land in the checked population" % root)
 
-    def test_the_shipped_corpus_is_checked_and_the_maintainer_surface_is_counted(self):
-        """The scoping decision itself, pinned so a later edit states its intent."""
+    def test_every_scanned_root_is_checked(self):
+        """The scoping decision itself (#233), pinned so a later edit states its intent."""
+        self.assertTrue(any(r.startswith(".claude/") for r in self.roots),
+                        "the producer scans no `.claude/` root, so this pins nothing about it")
         parsed = self.gate.parse_since(report_for(self.roots))
-        self.assertTrue(
-            parsed.checked,
-            "no scanned root feeds the citation check any more, so the gate counts everything "
-            "and checks nothing -- green by having no work rather than by finding none")
-        self.assertTrue(
-            parsed.out_of_scope,
-            "no scanned root is counted as out of scope. If the maintainer surface is now "
-            "CHECKED, roughly 49 restatement lines became failures; read "
-            "tests/test_since_view_sees_the_maintainer_surface.py before deciding that is wanted")
+        self.assertEqual(
+            sorted(self.roots), sorted(self.gate._root_of(h) for h, _line in parsed.checked),
+            "a scanned root's line did not reach the citation check. Every root in SCAN_ROOTS, "
+            "the maintainer surface included, is checked with the same predicate (#233); a "
+            "root counted but not checked is the gap #233 closed")
 
 
 class AnUnknownRootIsNamedRatherThanIgnored(unittest.TestCase):

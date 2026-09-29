@@ -15,24 +15,25 @@ warns these are leads and not verdicts. `since` asks a different question -- *wh
 since the last audit?* -- where a restatement that has been there all along does not appear at
 all, and a genuinely new rule does.
 
-⚠️ **The consumer gate `tests/test_new_hard_rules_are_cited_or_deferred.py` does not CHECK the
-maintainer surface**, and this file does not assert that it does. That test requires every added
-rule to be cited at its line or named in a deferral; command files restate their skill's rules
-by design and cite nothing, so checking them turns ~49 restatement lines into failures. The
-honest options are a restatement-aware comparison or leaving the gate scoped, and neither is
-"weaken the assertion until it passes". Measured rather than assumed: widening the filter
-produced a red suite, which is why the change was reverted rather than shipped.
+⛔ **The consumer gate `tests/test_new_hard_rules_are_cited_or_deferred.py` CHECKS the
+maintainer surface (#233)**, with the same cited-or-deferred predicate as the shipped corpus.
+It first left `.claude/` unchecked: command files were taken to restate their skill's rules and
+cite nothing, and checking them was measured here at ~49 failing restatements (at `7b43eee`).
+#233 re-measured at `f81e890`: command files carried 39 `INV-` ids, and a restatement-aware
+rule would have cleared 0 of the 16 uncited lines the 2026-09-28 audit found. `since` reports
+only lines added or edited in the range, so a long-standing restatement never reaches the gate.
+A restatement gets no special treatment; it cites at its own line or is deferred.
 
 ⛔ **Scoped out is not the same as dropped, and for a year it was dropped.** The consumer keyed
 its parser on `plugins/`, so the lines this view reports under `.claude/` fell out between the
 two files: 112 of them at ref `7b43eee`, after which the gate skipped as "nothing added". #74
-rebuilt that parser to read `SCAN_ROOTS` and to report the out-of-scope count on every run. The
-scoping decision above is unchanged; what changed is that it is now stated in a number rather
-than achieved by a heading prefix nobody re-read.
+rebuilt that parser to read `SCAN_ROOTS` and to report its breakdown on every run, and #233
+then checked every root it places rather than counting the `.claude/` ones.
 
-⚠️ **What a green run means.** The `since` view's diff reaches `.claude/commands` and
-`.claude/skills`. It does not mean anything consumes that output, nor that the rules it reports
-are accounted for -- those are the scoped-out half above.
+⚠️ **What a green run means.** The `since` view's diff reaches every `.claude/` root in
+`SCAN_ROOTS`. That the rules it reports are accounted for is the consumer gate's claim, not this
+file's; `test_reverse_contract_flags_the_maintainer_surface.py` proves the gate flags an uncited
+`.claude/` rule whatever the live range holds.
 
 Stdlib only; `conformance.py` is run as a subprocess and its source read as text (INV-108).
 

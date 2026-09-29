@@ -35,8 +35,8 @@ INV_ID = re.compile(r"INV-\d{3}")
 #: added" -- green by not running. A second copy of a root list is how one end of a pipe stops
 #: meaning what the other end says.
 #:
-#: ⚠️ Scanning a root is not the same as checking it: the consumer counts the maintainer
-#: surface as explicitly out of scope. See that module's docstring for why.
+#: ⚠️ The consumer checks every root listed here with one predicate, the maintainer surface
+#: included (#233). See that module's docstring for why.
 #:
 #: `.claude/skill-overlays` joined at #239: the repo overlays for the two skills defined only at
 #: user level moved there out of `.claude/commands`, and their rules must stay in the corpus.
