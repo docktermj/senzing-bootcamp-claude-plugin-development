@@ -103,7 +103,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     therefore never checked that diagram's three nodes. The new test scans block text directly
     and says why. The existing parser is left as it is, since widening it is outside this
     issue's scope. It is a follow-up.
-- **Commit:** uncommitted
+- **Commit:** ca90cff
 
 ## deferral-quote-test-reads-rules-through-parse
 
