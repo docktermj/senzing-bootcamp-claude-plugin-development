@@ -204,7 +204,6 @@ still written to.
 1. `/production-readiness-audit` - Do a thorough static review.
 1. `/dry-run` - Do a thorough runtime review.
 1. `/unattended-issue-loop` - Take the `unattended-ok` issues to pull requests unattended; see FAMILY_WORKFLOW §2 for its merge policy.
-1. `/check-skill-drift` - Compare this repo's skills against their user-level twins and report drift.
 
 ### Publish
 

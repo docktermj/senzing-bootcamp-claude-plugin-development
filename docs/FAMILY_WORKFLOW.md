@@ -71,7 +71,7 @@ mechanisms, not maintainer-facing phases; they keep their names.
 | `delegate-to-mcp-server` | maintenance | required | — | Parent only |
 | `compact-dev-environment` | maintenance | required | — | Parent only |
 | `review-invariants` | maintenance | required | *open question* | See §8 |
-| `check-skill-drift` | maintenance | required | — | Parent only. Compares a duplicated rule block against its out-of-repo twin |
+| `check-skill-drift` | maintenance | retired 2026-09-28 (#240) | — | **No longer ships.** Compared a duplicated rule block against its out-of-repo twin; with each skill name defined in one place there is no twin to compare. The name stays reserved |
 
 ⚠️ **Renaming is not free.** Where a child's engine, contract, tests or docs reference an
 operation by its old name, the rename is the whole change — a new file beside the old one
@@ -114,10 +114,10 @@ up what the parent released; the parent additionally receives what children esca
 flowchart LR
     subgraph M["Maintenance · parent only"]
         direction LR
-        M1["delegate-to-mcp-server"] ~~~ M2["compact-dev-environment"] ~~~ M3["review-invariants"] ~~~ M4["check-skill-drift"]
+        M1["delegate-to-mcp-server"] ~~~ M2["compact-dev-environment"] ~~~ M3["review-invariants"]
     end
     classDef cmd fill:#eaf2fb,stroke:#3a6ea5,color:#1b3a57
-    class M1,M2,M3,M4 cmd
+    class M1,M2,M3 cmd
 ```
 
 Nothing in the four phases waits on these and they wait on nothing. An "optional" per-change
@@ -405,6 +405,26 @@ repository cites.
 ⚠️ **An amendment does not renumber.** R8 stays R8. A rule that is withdrawn keeps its number
 and says so, for the same reason `INVARIANTS.md` never reuses an id: a citation that silently
 resolves to a different rule is worse than one that fails.
+
+### 2026-09-28 — R4's register marks `check-skill-drift` retired
+
+**Was:** the §2 row read **maintenance · parent required · children —**, and the §3
+maintenance diagram drew it as node `M4`.
+
+**Now:** the parent column reads **retired 2026-09-28 (#240)**, and the boundary cell says the
+operation no longer ships. The row stays, so the register still holds fifteen names and
+`check-skill-drift` stays reserved family-wide. The diagram node is removed, because the
+diagram shows what runs.
+
+Why: the check compared a rule block duplicated between a skill here and its twin outside the
+repository. The maintainer decided on 2026-09-28 that a skill name is defined in one place. #215
+removed the duplicated block and #239 removes the twins, so there is nothing left to compare and
+the check could only ever report that it found no pairs. The command, the skill, its pre-commit
+hook and the hook's registration are deleted (#240).
+
+**For a child:** if you copied `check-skill-drift`, remove it, along with any hook that runs it.
+Do not give the name to anything else: it stays reserved, and the row records that no child was
+ever required to have it.
 
 ### 2026-09-28 — R8's dependency report moves to the operation that chooses the issue; the loop row describes the loop that runs
 

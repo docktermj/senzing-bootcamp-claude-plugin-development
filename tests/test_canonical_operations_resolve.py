@@ -77,6 +77,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COMMANDS_DIR = REPO_ROOT / ".claude" / "commands"
+SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
 IMPLEMENT_CMD = REPO_ROOT / ".claude" / "commands" / "implement-github-issue.md"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
 DEV_DOCS = REPO_ROOT / "docs" / "development.md"
@@ -120,6 +121,11 @@ MARKER_WINDOW = 80
 
 def shipped():
     return {p.stem for p in COMMANDS_DIR.glob("*.md")}
+
+
+def retired():
+    """Operations whose §2 parent cell says they were retired: reserved, but no longer shipped."""
+    return {op for op, (parent, _) in table().items() if RETIRED.search(parent)}
 
 
 def table():
@@ -222,6 +228,46 @@ class TheTableAgreesWithTheShippedSet(unittest.TestCase):
             "should not be listed, that is a decision needing a stated reason, which is why "
             "there is no exemption set to drop it into"
             % (COMMANDS_DIR, FAMILY, ", ".join(missing)))
+
+
+class ARetiredOperationStaysGone(unittest.TestCase):
+    """A retired §2 row keeps its name reserved (R4) and ships nothing (#240).
+
+    The row stays so a child cannot claim the name. Nothing else may come back: no command, no
+    skill, no diagram node. Without this, a retired row would satisfy every assertion above
+    while its files quietly returned.
+    """
+
+    def test_a_retired_row_was_found(self):
+        """INV-265 -- `check-skill-drift` is retired and its row stays, so the set is never empty."""
+        self.assertIn("check-skill-drift", retired(),
+                      "no §2 row in %s reads as retired; the parent-cell pattern has drifted and "
+                      "the checks below prove nothing" % FAMILY)
+
+    def test_no_retired_operation_ships(self):
+        back = sorted(op for op in retired()
+                      if op in shipped() or (SKILLS_DIR / op).exists())
+        self.assertEqual(
+            [], back,
+            "%s marks operation(s) retired, but a command under %s or a skill under %s still "
+            "ships: %s. Retire it fully, or un-retire the row" % (FAMILY, COMMANDS_DIR,
+                                                                 SKILLS_DIR, ", ".join(back)))
+
+    def test_no_retired_operation_is_drawn(self):
+        """Scans each block's raw text, not `diagram_operations()`.
+
+        That parser reads one operation per `<br/>`-separated item, so it never sees nodes chained
+        on one line with `~~~`, which is how the maintenance diagram draws them. A retired name
+        has no business anywhere in a diagram, so any whole-token mention counts.
+        """
+        blocks = MERMAID_BLOCK.findall(FAMILY.read_text(encoding="utf-8"))
+        drawn = sorted(op for op in retired()
+                       if any(re.search(r"(?<![\w-])%s(?![\w-])" % re.escape(op), b)
+                              for b in blocks))
+        self.assertEqual(
+            [], drawn,
+            "mermaid block(s) in %s still draw retired operation(s): %s. The diagrams show "
+            "what runs" % (FAMILY, ", ".join(drawn)))
 
 
 class TheDiagramsAgreeWithTheTable(unittest.TestCase):

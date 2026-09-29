@@ -43,6 +43,68 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## check-skill-drift-is-retired
+
+- **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #240)
+- **Files changed:**
+  `.claude/skills/check-skill-drift/SKILL.md` (removed),
+  `.claude/skills/check-skill-drift/skill_drift.py` (removed),
+  `.claude/commands/check-skill-drift.md` (removed),
+  `.claude/hooks/skill-drift-precommit.sh` (removed), `.claude/settings.json` (removed),
+  `tests/test_skill_drift_detector.py` (removed), `docs/development.md`,
+  `docs/FAMILY_WORKFLOW.md`, `tests/test_canonical_operations_resolve.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.15, 2026-09-29, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact), re-confirmed. Every changed line is maintainer apparatus: a
+  retired maintainer tool, its hook, and two maintainer pages. No absence claim is made.
+- **Summary:** `/check-skill-drift` (#128) compared a `SHARED-RULES` block between a skill here
+  and its twin under `~/.claude/skills/`. The maintainer decided on 2026-09-28 that a skill name
+  is defined in one place. #215 removed the block and #239 removes the twins, so the tool could
+  only ever report that it found no pairs. This run retires it.
+  - **Removed:** the skill and its script, the command, the pre-commit hook, and its test.
+    `.claude/settings.json` is removed too: its only content was the hook's registration, and it
+    was created for that hook. This is dev's own settings file. The public repo's
+    `.claude/settings.json`, which `/propagate-to-public` preserves and `/retrofit-from-public`
+    never reads, is unaffected.
+  - **`docs/development.md`:** the `/check-skill-drift` list entry is gone.
+  - **`docs/FAMILY_WORKFLOW.md`:** the §2 row stays, with the parent column reading
+    `retired 2026-09-28 (#240)` and a boundary cell saying the operation no longer ships. The
+    register still holds fifteen names, so the name stays reserved family-wide (R4). Node `M4`
+    and its entry on the `class` line leave the §3 maintenance diagram. A dated §10 amendment
+    records the retirement, with a "For a child:" line telling a child that copied the tool to
+    remove it and not to reuse the name. Both are dated 2026-09-28, the date of the decision the
+    spec names, so the cell and the amendment agree.
+  - **Acceptance grep:** every hit of
+    `git grep -n -E 'check-skill-drift|skill_drift|skill-drift|SHARED-RULES'` falls in a place
+    the criterion allows, with one exception. `tests/test_user_level_copies_govern.py:122`
+    asserts that the #215 pointer stub carries no `SHARED-RULES` block. It is an absence guard,
+    so it does not present the tool as shipping. The maintainer chose at the plan gate to keep
+    it rather than weaken a #215 guard; #239 removes that stub.
+  - A side effect: `test_skill_drift_detector.test_the_two_copies_agree_on_this_machine`, the
+    one test that failed under a maintainer's real `HOME` on `main`, is gone with its file.
+- **Approach:** implemented directly (Phase 5a), chosen by the maintainer at the plan gate. The
+  complexity test reads "race", because a config file and a slash command are removed, but the
+  spec fixes every edit.
+- **Establishes no invariant, and defers none.** The change adds no ⛔ or MUST line and amends no
+  invariant. INV-316 names the tool only in its provenance note ("shipped 2026-09-23 …"), which
+  stays true, as does its copy in `invariant-manifest.json`. The two #140 docstrings in
+  `tests/test_canonical_operations_resolve.py` stay as written. INV-302 and INV-316 hold with
+  the command gone: the retired row is neither `required` nor a bare `—`, so it trips neither
+  §2 guard, and no mermaid block names the tool.
+- **Tests:** `tests/test_canonical_operations_resolve.py` gains `ARetiredOperationStaysGone`.
+  A §2 row whose parent cell reads as retired may have no command under `.claude/commands/`, no
+  skill under `.claude/skills/`, and no whole-token mention in any mermaid block. Its non-empty
+  check (INV-265) requires `check-skill-drift` among the retired rows. Negative controls, each
+  restored afterwards: the command file put back fails, an empty skill directory put back fails,
+  node `M4` put back on the chained line fails, the name added as a `<br/>` item fails, and the
+  row set back to `required` fails the non-empty check.
+  - ⚠️ **Found while writing it:** `diagram_operations()` reads one operation per
+    `<br/>`-separated item, so it never sees nodes chained on one line with `~~~`, which is how
+    the §3 maintenance diagram draws them. `test_every_operation_drawn_is_in_the_table` has
+    therefore never checked that diagram's three nodes. The new test scans block text directly
+    and says why. The existing parser is left as it is, since widening it is outside this
+    issue's scope. It is a follow-up.
+- **Commit:** ca90cff
+
 ## deferral-quote-test-reads-rules-through-parse
 
 - **Implemented:** 2026-09-28 (**Not a spec** — a dated record of one issue-driven run, #236)
