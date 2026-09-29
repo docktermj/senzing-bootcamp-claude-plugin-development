@@ -212,7 +212,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   pin red; the tree edited and the block marked applied passes. ⚠️ A block that says
   `applied` but keeps "awaiting … NOT minted" is still pending to `pending_invariants.py`, so
   the pin still passes on it: the queue's marker filter is the one arbiter (INV-315).
-- **Commit:** uncommitted
+- **Commit:** `5277006`
 
 ## each-maintainer-skill-states-its-commands-rules
 
