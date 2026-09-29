@@ -149,6 +149,11 @@ entries at once. Two things a reader should know about the hashes now recorded:
     `test_spec_absence_claims_name_their_owner.py`, `test_spec_ledger_invariants.py` and
     `test_blocked_submission_has_a_vocabulary_value.py`. The last one scans the overlays tree too,
     and requires a written value there, where the loop's overlay writes one.
+  - `tests/test_supersession_has_one_syntax.py`: INV-302 joins `REVIEWED_NOT_A_SUPERSESSION`.
+    Its "Amended 2026-09-29" note matches the supersession vocabulary, but it widens one clause
+    and supersedes nothing. The guard's own message names recording the reason as the fix, and
+    INV-270's dated correction is the precedent. The full CI mirror found it after the first
+    commit, and the fix is commit `d151877`.
 - **Commit:** 19e33fc
 
 ## check-skill-drift-is-retired
