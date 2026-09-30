@@ -50,9 +50,12 @@ break `/review-invariants`, which appends to `INVARIANTS.md` by design. `README.
 freeze notice, and `mcp-coverage.jsonl` is `/delegate-to-mcp-server`'s ledger, a **named**
 live exception (#142) rather than one the guard fails to reach: the guard checks **every
 file** in `specs/`, not `*.md`. `FROZEN-MANIFEST.txt` is exempt **by name**, as the guard's
-own input; it is not a live record. ⚠️ `docs/development.md` and `docs/FAMILY_WORKFLOW.md`
-§8 each name the live records, and `TheDocsNameTheLiveRecords` fails when either names a
-different set.
+own input; it is not a live record. ⚠️ **The list has one home**, the "What stays live" table in
+`specs/README.md`: `LIVE_RECORDS` is parsed from it, with no fallback set (#258).
+`docs/development.md` and `docs/FAMILY_WORKFLOW.md` §8 each name the live records, and
+`TheDocsNameTheLiveRecords` fails when either names a different set. INV-307 is the third copy:
+`InvariantThreeOhSevenNamesTheList` passes on its applied note or, until `/review-invariants`
+applies it, on the unapplied amendment block, read through `pending_invariants.blocks()`.
 
 ⚠️ **Enforces INV-307.** It asserts the set in both directions, that the live records exist
 and stay out of the frozen set, and that the cutover date is stated in `specs/README.md` rather
@@ -71,6 +74,7 @@ Source issue: #52 (freeze `specs/`, set the cutover date).
 
 Run:  python3 -m unittest discover -s tests
 """
+import importlib.util
 import re
 import unittest
 from pathlib import Path
@@ -84,11 +88,45 @@ FREEZE_README = SPECS / "README.md"
 #: date cannot be dropped from the directory the issue required it to be stated in.
 CUTOVER = "2026-09-15"
 
-#: Not frozen. Historical record and live rules -- see the module docstring.
-#: ⚠️ Hard-coded for now, temporarily: a sibling sub-issue of #226 (#258) replaces this literal
-#: with a parse of the "What stays live" table in `specs/README.md`.
-LIVE_RECORDS = {"IMPLEMENTED.md", "DECLINED.md", "INVARIANTS.md", "README.md",
-                "mcp-coverage.jsonl"}
+#: A table row whose first cell names one backticked file, linked or not:
+#: `| [`IMPLEMENTED.md`](IMPLEMENTED.md) | ... |` or `| `README.md` | ... |`.
+TABLE_ROW = re.compile(r"^\|\s*\[?`([^`/]+)`\]?(?:\([^)]*\))?\s*\|")
+
+
+def parse_live_records(text):
+    """The live records named in `specs/README.md`'s "What stays live" table.
+
+    The table is the one authoritative list (#226, #258). ⛔ There is no fallback set: a table
+    that cannot be found, or parses to nothing, or names a file twice, raises -- an empty or
+    guessed exemption list would let the freeze pass over anything (INV-265). Header and
+    separator rows name no backticked file and are skipped.
+    """
+    start = text.find("\n## What stays live")
+    if start == -1:
+        raise ValueError("specs/README.md has no \"## What stays live\" section; the live-record "
+                         "list is read from its table, and there is no fallback set")
+    end = text.find("\n## ", start + 1)
+    names = [m.group(1) for line in text[start:end if end != -1 else None].splitlines()
+             for m in [TABLE_ROW.match(line.strip())] if m]
+    if not names:
+        raise ValueError("specs/README.md's \"What stays live\" table parsed to no file names; "
+                         "there is no fallback set")
+    duplicated = sorted({n for n in names if names.count(n) > 1})
+    if duplicated:
+        raise ValueError("specs/README.md's \"What stays live\" table names %s more than once"
+                         % ", ".join(duplicated))
+    return set(names)
+
+
+#: Not frozen. Historical record and live rules -- see the module docstring. Read from the table,
+#: never restated here, so the README and the guard cannot name different sets.
+LIVE_RECORDS = parse_live_records(FREEZE_README.read_text(encoding="utf-8"))
+
+#: INV-307 is the third copy of the list. Until `/review-invariants` applies its held amendment,
+#: the amendment block in the ledger carries the five names instead; `pending_invariants.py` is
+#: the one parser of that ledger (INV-315).
+INVARIANTS = SPECS / "INVARIANTS.md"
+LEDGER_HELPER = REPO_ROOT / ".claude" / "skills" / "review-invariants" / "pending_invariants.py"
 
 #: The two documents outside `specs/` that name the live records.
 DEVELOPMENT_MD = REPO_ROOT / "docs" / "development.md"
@@ -229,6 +267,105 @@ class TheDocsNameTheLiveRecords(unittest.TestCase):
                 with self.subTest(copy=path.name, dropped=name):
                     thinned = re.sub(r"`(?:specs/)?%s`" % re.escape(name), "", text)
                     self.assertNotEqual(LIVE_RECORDS, named(thinned))
+
+
+def inv307_text(invariants=None):
+    """INV-307's entry, as registered."""
+    text = invariants if invariants is not None else INVARIANTS.read_text(encoding="utf-8")
+    m = re.search(r"(?ms)^- \*\*INV-307\*\* —.*?(?=^- \*\*INV-\d{3}\*\* —|\Z)", text)
+    return m.group(0) if m else ""
+
+
+class _Text:
+    """A stand-in for the ledger's path: only `read_text` is called on it."""
+
+    def __init__(self, text):
+        self.text = text
+
+    def read_text(self, encoding=None):
+        return self.text
+
+
+def unapplied_inv307_amendments(ledger=None):
+    """Texts of every unapplied `PROPOSED AMENDMENT to INV-307` block, pending OR held.
+
+    `blocks()` lists every unapplied block; `queue()` would drop a held one, and the INV-307
+    amendment is held until this list is parsed from the table. `ledger` replaces the ledger's
+    text, for the negative controls.
+    """
+    spec = importlib.util.spec_from_file_location("pending_invariants", LEDGER_HELPER)
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    if ledger is not None:
+        helper.LEDGER = _Text(ledger)
+    return [b["text"] for b in helper.blocks() if helper.parse(b)["amends"] == "INV-307"]
+
+
+def names_the_list(text, live):
+    """The text names every live record and the table that holds them."""
+    return "What stays live" in text and all("`%s`" % n in text for n in live)
+
+
+def inv307_agrees(live, invariants=None, ledger=None):
+    """Two states, either enough: the applied note names them, or an unapplied block does."""
+    if names_the_list(inv307_text(invariants), live):
+        return True
+    return any(names_the_list(b, live) for b in unapplied_inv307_amendments(ledger))
+
+
+class TheReadmeTableIsTheList(unittest.TestCase):
+    """#258: `LIVE_RECORDS` is parsed from `specs/README.md`, and a broken table fails loudly."""
+
+    def test_the_table_names_the_five_live_records(self):
+        self.assertEqual(
+            {"IMPLEMENTED.md", "DECLINED.md", "INVARIANTS.md", "README.md", "mcp-coverage.jsonl"},
+            LIVE_RECORDS,
+            "the \"What stays live\" table in specs/README.md names %s" % sorted(LIVE_RECORDS))
+
+    def test_a_missing_table_fails_loudly(self):
+        """Negative control: the table deleted is an error naming specs/README.md, not a pass."""
+        text = FREEZE_README.read_text(encoding="utf-8")
+        start = text.index("\n## What stays live")
+        end = text.index("\n## ", start + 1)
+        for broken in (text[:start] + text[end:],
+                       re.sub(r"(?m)^\|.*\|\s*$", "", text)):
+            with self.subTest(case="section gone" if "What stays live" not in broken else "rows gone"):
+                with self.assertRaisesRegex(ValueError, r"specs/README\.md"):
+                    parse_live_records(broken)
+
+    def test_a_duplicated_row_fails_loudly(self):
+        text = FREEZE_README.read_text(encoding="utf-8")
+        row = next(l for l in text.splitlines() if l.startswith("| [`DECLINED.md`]"))
+        with self.assertRaisesRegex(ValueError, r"more than once"):
+            parse_live_records(text.replace(row, row + "\n" + row, 1))
+
+
+class InvariantThreeOhSevenNamesTheList(unittest.TestCase):
+    """INV-307's copy agrees with the table: applied note, or the unapplied amendment block."""
+
+    def test_inv307_or_its_unapplied_amendment_names_the_list(self):
+        self.assertTrue(
+            inv307_agrees(LIVE_RECORDS),
+            "neither INV-307 in specs/INVARIANTS.md nor an unapplied PROPOSED AMENDMENT to "
+            "INV-307 in specs/IMPLEMENTED.md names the \"What stays live\" table and all of %s"
+            % sorted(LIVE_RECORDS))
+
+    def test_dropping_a_name_from_the_copy_is_caught(self):
+        """Negative control: each live record removed from INV-307 and its block fails the check."""
+        invariants = INVARIANTS.read_text(encoding="utf-8")
+        ledger = (SPECS / "IMPLEMENTED.md").read_text(encoding="utf-8")
+        for name in sorted(LIVE_RECORDS):
+            with self.subTest(dropped=name):
+                pattern = r"`(?:specs/)?%s`" % re.escape(name)
+                self.assertFalse(inv307_agrees(LIVE_RECORDS, re.sub(pattern, "", invariants),
+                                               re.sub(pattern, "", ledger)))
+
+    def test_neither_state_holding_is_caught(self):
+        """Negative control: no applied note and no unapplied block fails the check."""
+        invariants = INVARIANTS.read_text(encoding="utf-8")
+        ledger = (SPECS / "IMPLEMENTED.md").read_text(encoding="utf-8")
+        self.assertFalse(inv307_agrees(LIVE_RECORDS, invariants.replace("What stays live", ""),
+                                       ledger.replace("PROPOSED AMENDMENT to INV-307", "")))
 
 
 class TheCutoverDateIsRecorded(unittest.TestCase):

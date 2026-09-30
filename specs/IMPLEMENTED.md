@@ -43,6 +43,46 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-live-record-list-is-the-readme-table
+
+- **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #258)
+- **Commit:** `e1c9e15`
+- **Files changed:** `specs/README.md`, `tests/test_specs_are_frozen.py`, `specs/IMPLEMENTED.md`
+  (this entry)
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.16, 2026-09-30, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact), re-confirmed by reading every changed line. The change names
+  the repository's own live records and tests; it states no SDK, engine or server behavior and
+  makes no absence claim.
+- **Summary:** `specs/README.md`'s "What stays live" table is now the one authoritative
+  live-record list, as #226 revision 1 decided.
+  - **The table** gains `README.md` (the freeze notice, and the list's home) and
+    `mcp-coverage.jsonl` (a **named** live exception, #142, not a file the freeze fails to
+    reach). "Six of those slugs" becomes "some of those slugs", and the frozen set is described
+    as every file in the directory except the live records and `FROZEN-MANIFEST.txt`, exempt by
+    name as the guard's input, no longer every `*.md`.
+  - **`tests/test_specs_are_frozen.py`** parses `LIVE_RECORDS` from the table through
+    `parse_live_records()`. The hard-coded set and its "temporarily" comment are gone. ⛔ There
+    is no fallback set (INV-265): a missing section, a table with no file rows, or a name listed
+    twice raises a `ValueError` naming `specs/README.md`.
+  - **INV-307 is the third copy of the list.** `InvariantThreeOhSevenNamesTheList` passes when
+    INV-307's entry names the table and all five records, or while an unapplied `PROPOSED
+    AMENDMENT to INV-307` block does. It reads the block through `pending_invariants.blocks()`,
+    not `queue()`, because the block is held, not pending (#258 revision 2). On `fc9ecfb`
+    INV-307 does not yet name the table, so the check passes on the held block.
+  - `TheDocsNameTheLiveRecords` now compares `docs/development.md` and FAMILY_WORKFLOW §8
+    against the parsed table rather than a literal.
+- **Tests:** `tests/test_specs_are_frozen.py`, 10 → 16 tests, with two new classes:
+  `TheReadmeTableIsTheList` and `InvariantThreeOhSevenNamesTheList`. In-suite negative controls:
+  a missing section and a table with no file rows each raise naming `specs/README.md`; a
+  duplicated row raises; each live record dropped from INV-307 and its block fails the check;
+  and neither state holding fails it. Run on disk and restored byte-identical: dropping the
+  `mcp-coverage.jsonl` row fails 4 tests (the table, both doc copies and the freeze direction),
+  and deleting the table stops the module with the `ValueError`.
+- **Establishes no invariant of its own.** The rule is INV-307. Its held amendment (entry
+  `stale-counts-become-properties-and-the-freeze-covers-the-directory`, `PROPOSED AMENDMENT to
+  INV-307`) has its revisit condition met once this merges: its note names this table, which is
+  now true. Apply it at `/review-invariants`.
+
 ## invariant-review-2026-09-30b
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one review session, the second that day)
