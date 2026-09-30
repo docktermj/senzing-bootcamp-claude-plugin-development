@@ -17,6 +17,10 @@ The module said both things at once: its fallback paragraph read "skip Steps 2 a
 is what a guide reads at the moment the check succeeds, and it is phrased as a
 complete instruction.
 
+#284 added the sites its `DEFERRED INVARIANT` block names that nothing here covered: the
+fallback sentence's Phase 3 half, the environment-script section's opening, the troubleshooting
+entry, and the two update-offer routes back onto the existing-install path.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 
@@ -103,6 +107,63 @@ class Step1StillRoutesAnExistingInstallThroughTheEnvironmentScript(unittest.Test
                 "The 'Required stops' block is what the corrected sentence now points at; "
                 "it must survive the fix intact.",
             )
+
+
+class TheRuleHoldsAtEverySiteTheDeferralNames(unittest.TestCase):
+    """The sites #284's `DEFERRED INVARIANT` block names that no assertion above covered.
+
+    The block drafts "an existing install still runs Step 3's Phase 3 and its environment-script
+    work" for `/review-invariants`, the half INV-222 does not state. Each test pins one site it
+    lists. ⚠️ The block also names `## Agent Behavior`'s "Skip to verification" line as a site
+    that contradicts the rule; that line is left unasserted because fixing it changes shipped
+    text, which #284 excludes.
+    """
+
+    def setUp(self):
+        self.text = (SKILLS / "module-02-sdk-setup" / "SKILL.md").read_text(encoding="utf-8")
+        self.flat = re.sub(r"\s+", " ", self.text)
+
+    def test_the_fallback_names_both_halves_that_still_run(self):
+        """Step 1's fallback: the install is skipped, Phase 3 and the env script are not."""
+        i = self.flat.find("If the library is present, report the SDK as installed")
+        self.assertNotEqual(i, -1, "Step 1's filesystem-fallback conclusion was not found.")
+        window = self.flat[i:i + 500]
+        self.assertIn(
+            "skip the **installation** — Step 2, and Step 3's install commands (its Phase 1 EULA "
+            "question and its Phase 2 SDK package).",
+            window,
+        )
+        self.assertIn(
+            "Not Step 3 entirely: its Phase 3 and its environment-script work still run", window
+        )
+
+    def test_the_environment_script_section_says_every_path_ends_there(self):
+        heading = "### Create the project-local environment script"
+        at = self.text.index(heading)
+        opening = re.sub(r"\s+", " ", self.text[at + len(heading):at + len(heading) + 250])
+        self.assertIn(
+            "Every path through Step 3 ends here, including Step 1's existing-install path, which "
+            "skips the install phases and still writes this script.",
+            opening,
+        )
+
+    def test_the_troubleshooting_entry_checks_for_the_script_first(self):
+        self.assertIn(
+            "on the existing-install path it is the artifact most likely to be missing",
+            self.flat,
+        )
+
+    def test_the_update_offer_routes_back_onto_the_path(self):
+        """No newer version, and a declined offer, both continue on the existing-install path."""
+        self.assertIn(
+            "there is no lookup and no offer: record the outcome (see the checkpoint below) and "
+            "continue on the existing-install path in Step 1.",
+            self.flat,
+        )
+        self.assertIn(
+            '**On no:** one line — "Keeping [installed]." — then Step 1\'s existing-install path.',
+            self.flat,
+        )
 
 
 if __name__ == "__main__":
