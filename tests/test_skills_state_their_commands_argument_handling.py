@@ -18,6 +18,11 @@ the skills. This guard keeps them there:
   model-invocable), and none says it is "invoked explicitly rather than inferred", a sentence
   `.claude/commands/dry-run.md` carries that would be false in a model-invocable skill.
 
+**INV-333** is the invariant this enforces for the costly choices: `/dry-run`'s phase 3,
+`/auto-test`'s simulated walk and `/release`'s bump are asked about, never defaulted from an
+empty argument. The rows pinning those three sentences are its checks; like the rest of this
+guard they establish that the rule is stated, not that a live run asks.
+
 `TheChecksAreNotVacuous` is the negative control, run on every suite: removing one skill's
 `argument-hint`, or one moved rule's sentence, fails the check that covers it (INV-265).
 

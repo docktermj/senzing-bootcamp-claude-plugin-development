@@ -43,7 +43,7 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    no argument. Present them as a numbered list (1, 2, 3, or all three); do not
    assume, and do not read "dry-run the plugin" as "all three". Phase 3 costs the
    maintainer's time in a way 1 and 2 do not, so it is never implied by "dry-run
-   the plugin". **An argument naming phases is the answer to this question:** start
+   the plugin". (INV-333) **An argument naming phases is the answer to this question:** start
    at the lowest one.
 
    ⛔ **If phase 3 is among them, ask a second question before anything else runs:

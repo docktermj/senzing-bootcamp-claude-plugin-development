@@ -155,6 +155,11 @@ class TheRepositoryOnlyGatesSurvive(unittest.TestCase):
         self.assertRegex(overlay(), r"never call `submit_feedback`")
 
     def test_it_does_not_decline(self):
+        """INV-332 -- declining is the maintainer's alone.
+
+        Asserts the rule is stated in the loop overlay. It cannot establish that a live
+        unattended run refrains from declining; only the run's own handoff shows that.
+        """
         self.assertRegex(overlay(), r"never decline",
                          "the overlay no longer forbids declining; that is the maintainer's alone")
 

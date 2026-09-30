@@ -25,7 +25,7 @@ Runs to include: $ARGUMENTS
   against a server that has drifted underneath it produces findings no one can
   attribute.
 
-⛔ **The walk is never inferred from silence.** It is asked about, not assumed.
+⛔ **The walk is never inferred from silence.** (INV-333) It is asked about, not assumed.
 
 **Rotate `--persona` across runs.** A single cooperative persona is the main reason an
 automated walk is weaker than a human one, and rotation is the cheapest partial

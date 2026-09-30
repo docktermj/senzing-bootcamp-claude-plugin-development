@@ -381,7 +381,7 @@ Demonstrate How Analysis using a concrete multi-record entity (3+ records) ident
 
    ⚠️ **Read `HOW_RESULTS.FINAL_STATE` in the same response before narrating (INV-115):** if
    `NEED_REEVALUATION` is non-zero or `VIRTUAL_ENTITIES[]` has more than one element, say so,
-   name the sign, and point to Data processing's How-state audit
+   name the sign, and point to Data processing's How-state audit (INV-334)
    (`../module-06-data-processing/phaseD-validation.md` → "How-state audit") rather than
    presenting the history as one settled construction.
 4. **Why-vs-How comparison:** explain the difference:

@@ -301,11 +301,15 @@ class TheIssuePathKnowsAboutIt(unittest.TestCase):
         self.text = SKILL.read_text(encoding="utf-8")
 
     def test_it_forbids_declining_unilaterally(self):
+        """INV-332 -- the implement overlay reserves declining to the maintainer.
+
+        Asserts the sentence is stated; it cannot establish that a live run refrains.
+        """
         flat = " ".join(self.text.split())
         self.assertRegex(
             flat, r"(?i)Never decline on your own initiative",
             "the decline rule no longer reserves the decision to the maintainer. Deciding NOT "
-            "to build something is theirs (INV-217); a run that may decline can retire work "
+            "to build something is theirs (INV-332); a run that may decline can retire work "
             "nobody ruled on")
 
     def test_it_requires_a_reason_and_a_revisit_condition(self):

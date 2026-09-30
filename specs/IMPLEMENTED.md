@@ -43,6 +43,35 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-09-30
+
+- **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one review session)
+- **Commit:** `8d19510`
+- **Files changed:** `.claude/commands/auto-test.md`, `.claude/commands/dry-run.md`, `.claude/skill-overlays/implement-github-issue.md`, `.claude/skill-overlays/unattended-issue-loop.md`, `.claude/skills/auto-test/SKILL.md`, `.claude/skills/dry-run/SKILL.md`, `.claude/skills/release/SKILL.md`, `invariant-manifest.json`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2-discover.md`, `specs/IMPLEMENTED.md`, `specs/INVARIANTS.md`, `tests/test_declined_ledger.py`, `tests/test_invariant_enforcer_citations.py`, `tests/test_phase_d_how_state_audit.py`, `tests/test_quality_assessment_type_name_check.py`, `tests/test_skills_state_their_commands_argument_handling.py`, `tests/test_supersession_has_one_syntax.py`, `tests/test_unattended_loop_is_label_gated.py`
+- **MCP re-check:** n/a (no Senzing fact is newly asserted; INV-234's note carries the byte-count fact measured live on server 1.37.15 during the 2026-09-29 loop run, and INV-336 relies on #220's live `mapping_workflow` probes of the same date)
+- **Summary:** the queue went **19 pending → 0**, and three held blocks whose revisit conditions were met were decided with them. The held set is 7.
+  - **Registered (5 ids):**
+    - **INV-332**: declining an issue is the maintainer's alone (#233).
+    - **INV-333**: an empty argument never chooses a maintainer operation's costly work. One id resolves two blocks, #241's and #233's, which carried the same wording.
+    - **INV-334**: the how-state audit checks every multi-record entity and reports one of four outcomes, M = 0 being **nothing to check**. #154's held block (revisit condition met: #232 landed) was amended to fold in #232's M = 0 rule, so one id resolves both and the outcomes are stated once.
+    - **INV-335**: Module 5's Phase 1 type/name check, its fast-path gate and the recorded decision. #158's held block, whose revisit condition (#220 landed) was met; wording unchanged.
+    - **INV-336**: Phase 2 reads the Record Type Check decision before workflow steps 2 and 3 (#220). Kept separate from INV-335 because it is a second subject.
+  - **Amendments applied (12):**
+    - INV-050 and INV-202 (#257): two tree leaves annotated in place, and "referenced" read by project-relative path.
+    - INV-302, INV-316, INV-318, INV-319 (#241): a skill need not be fronted by a command; a skill is a shipped operation; "maintainer command" covers the skill.
+    - INV-132, INV-157, INV-204 (#235): the wording the maintainer approved on 2026-09-28, dated the day applied at the maintainer's choice; INV-157's quotes unescaped.
+    - INV-251 (#227): amended before applying, with two further yeses, to name where both supersession chains end (INV-137) and then reworded so it does not read as INV-251 itself being "superseded by INV" (`tests/test_invariants_index.py`); `REVIEWED_NOT_A_SUPERSESSION` gained INV-251.
+    - INV-234 (#225): amended before applying: the inline size check compares **bytes**, not characters, and only a truncated reply carries `next_offset`.
+    - INV-314 (#216): the dated scope note naming the records a run may create without a per-record yes.
+  - **Held (2):**
+    - **INV-307's amendment (#257)**: the note names `specs/README.md`'s table as the list the freeze guard reads, which is false until #258. Revisit after #258 merges.
+    - **INV-303's note (#241)**: says no command ships and the enforcer checks fixtures, both false until #262. Revisit after #262 merges.
+  - ⚠️ **#262's gate now needs rewording.** Its description says to label it `unattended-ok` only after all five #241 amendments are applied, but INV-303's note is held until #262 lands. Only INV-302's amendment (applied) is a prerequisite. Recorded here; the issue is not edited by this review.
+  - **Citations placed after the bold span** for INV-333, INV-335 and INV-336, where an enforcer pins the bold text exactly; each is still on the rule's line. INV-334 is cited at the audit's lead sentence and Module 7's pointer, because the #227 guard pins single-id slots on three of the audit's lines.
+  - **Corrected on the way:** `tests/test_declined_ledger.py` cited INV-217 for "deciding NOT to build is theirs", now INV-332.
+- **Verification:** both CI legs green on the full diff in a clean worktree (5186 tests, `OK (skipped=3)` and `OK (skipped=65)`); `citations.py verify` clean at 335 invariants; `invariant_manifest.py --check` clean; `pending_invariants.py check` 0 mismatched, 0 unresolved; `EXPECTED_PAIRS` re-derived 152 → 158.
+- **Establishes no invariant of its own.** Every id it registers was established by an earlier implementation.
+
 ## the-reverse-contract-guard-checks-the-maintainer-surface
 
 - **Implemented:** 2026-09-29 (**Not a spec** — a dated record of one issue-driven run, #233)
@@ -128,7 +157,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Approach:** raced (Phase 5b), approach b: the INV-282 fixtures live in a new module that
   imports the guard's parser and predicate. The live-range guard and its synthetic proofs are
   separate subjects.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Declining an issue is
+- **DEFERRED INVARIANT (resolved INV-332, registered by the maintainer 2026-09-29).** Declining an issue is
   the maintainer's alone. The rules already shipping, and every site a citation must reach, each
   quoted:
     - ⛔ **Never decline** — that is the maintainer's alone. An issue you cannot implement is **blocked**, a state you record on the issue, never an entry you write into `specs/DECLINED.md`. — in `.claude/skill-overlays/unattended-issue-loop.md` ("What an unattended run must never decide in this repository", third bullet) — **cite INV-NNN**
@@ -154,7 +183,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
   and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
   read it off `INVARIANTS.md` rather than trusting a number written here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** A maintainer
+- **DEFERRED INVARIANT (resolved INV-333, registered by the maintainer 2026-09-29).** A maintainer
   operation's costly choice is asked about, never inferred from an empty argument. The rule
   already shipping, quoted through its second sentence so the widened guard's probe matches:
     - ⛔ **The walk is never inferred from silence.** It is asked about, not assumed. — in `.claude/skills/auto-test/SKILL.md` — **cite INV-NNN**
@@ -293,7 +322,12 @@ entries at once. Two things a reader should know about the hashes now recorded:
   a literal new id would cite an invariant that does not exist and turn `citations.py verify`
   red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint at the
   next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-050 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+
+  **HELD 2026-09-30:** the note names `specs/README.md`'s "What stays live" table as the list the
+  freeze guard reads, which is false until #258 makes the guard parse that table; applying it now
+  would register a sentence that is untrue today. Revisit after #258 is merged and
+  `tests/test_specs_are_frozen.py` derives `LIVE_RECORDS` from that table.
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-050 — applied 2026-09-30.** The rule already registered:
     - ⛔ **The generated Bootcamp project MUST follow this layout** — in `specs/INVARIANTS.md`
 
   The two tree lines as they ship today, `specs/INVARIANTS.md:194` and `:196`:
@@ -334,7 +368,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   a literal new id would cite an invariant that does not exist and turn `citations.py verify`
   red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint at the
   next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-202 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-202 — applied 2026-09-30.** The rule already registered:
     - ⛔ **Every leaf entry in INV-050's project-layout tree MUST be either referenced somewhere under `plugins/` or annotated in its own comment as reserved/superseded/legacy/future** — in `specs/INVARIANTS.md`
 
   ⚠️ **Why.** "Referenced" was read by leaf name, so `docs/README.md` resolved on every
@@ -487,7 +521,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   `the-two-user-level-skills-are-defined-only-at-user-level` has the revisit condition "after
   #241 lands, when the one-definition rule covers every maintainer skill". With the commands
   still shipping, that rule is complete only after #262.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-302 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-302 — applied 2026-09-30.** The clause the note bears on, as registered:
     - ⛔ **every directory under `.claude/skills/` containing a `SKILL.md` MUST be fronted by at least one command** — in `specs/INVARIANTS.md`
 
   INV-302 requires every skill to be fronted by a command, and every skill here is fronted by one of the same name, which never runs: `/<name>` runs the skill (the measurement above). Once the rules are in the skills (this run), the command files are a second definition of each name, and #262 deletes them. That deletion fails `test_every_skill_is_fronted_by_a_command` while this clause stands, so the note narrows it first. Enforced by `tests/test_documented_dev_commands_match_the_shipped_set.py` and
@@ -524,7 +558,12 @@ entries at once. Two things a reader should know about the hashes now recorded:
   that does not exist and turn `citations.py verify` red. If the maintainer prefers a separate
   invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
   rather than trusting a number written here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-316 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+
+  **HELD 2026-09-30:** the note says no command ships and that the enforcer checks fixture
+  commands, and both are false until #262 deletes the ten command files and adds the fixtures;
+  applying it now would register two untrue sentences. Revisit after #262 is merged and
+  `.claude/commands/` is empty.
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-316 — applied 2026-09-30.** The clause the note bears on, as registered:
     - ⛔ **that name MUST either resolve to a shipped command file** — in `specs/INVARIANTS.md`
 
   INV-316 resolves a name against a shipped command file, and its register direction reads "every shipped command". With no command file left, every documented name fails to resolve, and the register check passes on nothing. The note counts a skill as a shipped operation in both directions. Enforced by `tests/test_canonical_operations_resolve.py`. Amending a registered invariant is the maintainer's sign-off alone, so
@@ -542,7 +581,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   that does not exist and turn `citations.py verify` red. If the maintainer prefers a separate
   invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
   rather than trusting a number written here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-318 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-318 — applied 2026-09-30.** The clause the note bears on, as registered:
     - ⛔ **No maintainer command may apply the `unattended-ok` label to an issue it files** — in `specs/INVARIANTS.md`
 
   INV-318 binds "maintainer command". Once no command file ships, the maintainer surface is the skills, and the rule as written binds nothing. Enforced by `tests/test_dry_run_files_issues.py` and `tests/test_audit_files_issues_not_specs.py`. Amending a registered invariant is the maintainer's sign-off alone, so
@@ -560,7 +599,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   that does not exist and turn `citations.py verify` red. If the maintainer prefers a separate
   invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
   rather than trusting a number written here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-319 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-319 — applied 2026-09-30.** The clause the note bears on, as registered:
     - ⛔ **A maintainer command that files a GitHub issue MUST file it in this repository only** — in `specs/INVARIANTS.md`
 
   INV-319 binds "maintainer command", with the same gap as INV-318 once no command file ships. Enforced by `tests/test_feedback_to_issues_files_in_its_own_repo.py` and `tests/test_delegate_files_issues_not_specs.py`. Amending a registered invariant is the maintainer's sign-off alone, so
@@ -578,7 +617,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   that does not exist and turn `citations.py verify` red. If the maintainer prefers a separate
   invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
   rather than trusting a number written here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Moving the commands' rules put one new hard-rule line into a skill, and no invariant covers it. The rules already shipping, the first as a ⛔ line and the other two as plain prose at their sites:
+- **DEFERRED INVARIANT (resolved INV-333, registered by the maintainer 2026-09-29).** Moving the commands' rules put one new hard-rule line into a skill, and no invariant covers it. The rules already shipping, the first as a ⛔ line and the other two as plain prose at their sites:
     - ⛔ **The walk is never inferred from silence.** — in `.claude/skills/auto-test/SKILL.md`
     - ⛔ **Phase 3 costs the maintainer's time in a way 1 and 2 do not, so it is never implied by "dry-run the plugin".** — in `.claude/skills/dry-run/SKILL.md`
     - ⛔ **Never invent the version.** — in `.claude/skills/release/SKILL.md`
@@ -663,7 +702,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Approach:** raced (Phase 5b); the winning approach: the guard imports `MCP_TOOLS` as a module
   and derives its list by set difference; the fallback requirement is one sentence added to the
   existing fallback bullet and asserted in the existing summary-blocks test module.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-132 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-132 — applied 2026-09-30 (dated the day applied, at the maintainer's choice).** The rules already shipping:
     - ⛔ **Cross-language documentation is still not authoritative for the shape you must pass:** — in `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`
     - ⛔ **Confirm the ARGUMENT types before writing the call — and note you may already have them.** — in `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`
 
@@ -681,7 +720,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   verify` red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint
   at the next free id, and read it off `INVARIANTS.md` rather than trusting a number written
   here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-157 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-157 — applied 2026-09-30 (dated the day applied, plain quotes, at the maintainer's choice).** The rules already shipping:
     - ⛔ **Never invent content to fill a label.** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
 
   The fallback sentence this issue adds, in the same file: "On either path, draw every
@@ -702,7 +741,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   verify` red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint
   at the next free id, and read it off `INVARIANTS.md` rather than trusting a number written
   here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-204 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-204 — applied 2026-09-30 (dated the day applied, at the maintainer's choice).** The rules already shipping:
     - ⛔ **call `get_capabilities` (about a 10-second timeout) — never a content-returning tool** — in `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`
     - ⛔ **do not restore a `search_docs` probe** — in `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md`
 
@@ -790,7 +829,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     parenthetical describes a corrected site, which is a registered entry's prose and is left for
     `/review-invariants` to note, not edited here.
 - **Approach:** raced (Phase 5b), recorded here by the racer that produced this patch.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-251 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered, in the sentence that names the two superseded ids:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-251 — applied 2026-09-30 (amended wording, approved by the maintainer).** The rule already registered, in the sentence that names the two superseded ids:
     - ⛔ **INV-063 (the model/effort switch), INV-064 (the accepted-switch continuation), INV-135 (the license-request flow) and INV-225 (an observation supporting the non-yielding-step rule).** — in `specs/INVARIANTS.md`
 
   ⚠️ **Why this is an amendment and not a new invariant.** INV-251's rule is unchanged. Its dated
@@ -810,7 +849,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   The drafted wording, a note appended after INV-251's closing `(Source: …)` parenthetical, with
   every existing sentence unchanged:
 
-  **INV-251** — (⚠️ **Clarified in place <YYYY-MM-DD>, no meaning change.** INV-063 has since been superseded by INV-119 and INV-064 by INV-069; the list above records what the 2026-08-15 search found.)
+  **INV-251** — (⚠️ **Clarified in place <YYYY-MM-DD>, no meaning change.** INV-119 has since superseded INV-063, and INV-069 superseded INV-064; both chains now end at INV-137, part of which INV-138 has since replaced. The list above records what the 2026-08-15 search found.)
 
   *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
   applies the note, not the day of this run.)* *(written as NNN deliberately: no new id is
@@ -818,6 +857,12 @@ entries at once. Two things a reader should know about the hashes now recorded:
   that does not exist and turn `citations.py verify` red. If the maintainer prefers a superseding
   invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
   rather than trusting a number written here.)*
+
+  ⚠️ **Amended at `/review-invariants` 2026-09-30, before applying:** the successors named, INV-119
+  and INV-069, are themselves superseded; the note now names where both chains end, so it
+  gives the pointer onward it exists to give. Reworded again with the maintainer's yes so it
+  does not read as INV-251 itself being "superseded by INV" (`tests/test_invariants_index.py`,
+  `ANY_SUPERSESSION`).
 - **Establishes no new invariant for the citation swaps.** Each applies an invariant already
   registered (INV-313, INV-225, INV-163, INV-265) at a line that named the wrong one.
 - **Tests:**
@@ -929,7 +974,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   used. `ground-rules.md` states the parameters and the reply shape; the Module 5 fallback,
   the only site that assembles a file, states the whole procedure in place. The guards extend
   the two existing tests instead of adding a module.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-234 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-234 — applied 2026-09-30 (amended wording, approved by the maintainer).** The rules already shipping:
     - ⛔ **(INV-234) The inline reply carries the file in bounded chunks, not in one response, so put it back together before Step 4 reads it.** — in `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`
     - `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md` — ⛔ the `download_resource` bullet lists `offset` among the declared parameters, states the chunked `inline=true` reply (`truncated`, `next_offset`, `total_chars`) and the batch `oversize` rule, and points to Module 5 Phase 1 Step 3 for the assembly procedure.
 
@@ -961,7 +1006,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   The drafted wording, a dated re-verification note appended to INV-234, with its rule and
   every existing sentence unchanged:
 
-  **INV-234** — (⚠️ **Dated re-verification, <YYYY-MM-DD> (#225): the rule is unchanged; the `download_resource` facts it cites have moved.** Re-verified live on server **1.37.15**, 2026-09-29. `download_resource` now declares `filename`, `filenames`, `inline`, `offset`, `version`: `offset` is new since the 2026-08-14 list above, and `download_resource` is still the only one of the three listing tools that declares `inline`. An `inline=true` reply no longer carries the whole resource. A large resource arrives in **bounded chunks**, each reply carrying `truncated`, `next_offset` and `total_chars`: the caller calls again with `offset` set to `next_offset` until a reply has `truncated: false`, and appends each chunk's content, in order, to the canonical save path, never to the `dest` the reply suggests. A batch (`filenames`) lists a file too large for one chunk under `oversize`, and that file is requested on its own with `filename`. **The size check on the inline route is against `total_chars`**, compared with the assembled file's **character** count, because the offsets count characters and character and byte counts differ for non-ASCII text. The URL route keeps the `size_bytes` check above. The central statement is the `download_resource` bullet in `bootcamp-onboarding/ground-rules.md`.)
+  **INV-234** — (⚠️ **Dated re-verification, 2026-09-30 (#225): the rule is unchanged; the `download_resource` facts it cites have moved.** Re-verified live on server **1.37.15**, 2026-09-29. `download_resource` now declares `filename`, `filenames`, `inline`, `offset`, `version`: `offset` is new since the 2026-08-14 list above, and `download_resource` is still the only one of the three listing tools that declares `inline`. An `inline=true` reply no longer carries the whole resource. A large resource arrives in **bounded chunks**: each truncated reply carries `truncated: true`, `next_offset` and `total_chars`, and the last carries `truncated: false` and no `next_offset`. The caller calls again with `offset` set to `next_offset` until a reply has `truncated: false`, and appends each chunk's content, in order, to the canonical save path, never to the `dest` the reply suggests. A batch (`filenames`) lists a file too large for one chunk under `oversize`, and that file is requested on its own with `filename`. **The size check on the inline route is against `total_chars`**, compared with the assembled file's size in **bytes**: on this server the offsets and `total_chars` count UTF-8 bytes, although the schema describes `offset` as a character offset, and bytes and characters differ for non-ASCII text. The URL route keeps the `size_bytes` check above. The central statement is the `download_resource` bullet in `bootcamp-onboarding/ground-rules.md`.)
 
   *(the date is a placeholder deliberately: it is the day the maintainer approves the wording at
   `/review-invariants`, not the day of this run.)* *(written as NNN deliberately: no new id is
@@ -969,6 +1014,11 @@ entries at once. Two things a reader should know about the hashes now recorded:
   that does not exist and turn `citations.py verify` red. If the maintainer prefers a superseding
   invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
   rather than trusting a number written here.)*
+
+  ⚠️ **Amended at `/review-invariants` 2026-09-30, before applying, with the maintainer's yes:** the
+  size check compares bytes, not characters (the live server counts UTF-8 bytes, re-measured
+  during the 2026-09-29 run: 76,976 `total_chars` for a 76,976-byte, 76,738-character file),
+  and only a truncated reply carries `next_offset`.
 - **Tests (INV-219: the plugin's structure, never the server's wording):**
   - `tests/test_download_resource_is_a_listing.py`. The docstring no longer lists four
     parameters: it says `download_resource` declares `inline` and that the full list is read
@@ -1037,7 +1087,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     reported, is in no file (true before this run, and still true).
 - **Approach:** raced (Phase 5b), approach A: extend `tests/test_filing_is_gated.py` in place,
   reusing its fence rule and site discovery.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-314 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-314 — applied 2026-09-30.** The rules already shipping:
     - ⛔ **An unattended run creates only the records on this list, and only on the issue it is working** — in `.claude/skill-overlays/unattended-issue-loop.md`
     - ⛔ **Invoking `/implement-github-issue <n>` is assent to five comments on issue `<n>`, and to no other record** — in `.claude/skill-overlays/implement-github-issue.md`
 
@@ -1158,7 +1208,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   `RECORDS[]` sum. The audit then reports **could not measure**, which is the safe direction but a
   false alarm. The issue specifies the comparison against step 28's figure, so the text is unchanged.
 - **Approach:** implemented directly (Phase 5a), per the plan's Gate 1.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The new ⛔ line cites
+- **DEFERRED INVARIANT (resolved INV-334, registered by the maintainer 2026-09-30).** The new ⛔ line cites
   INV-265 at the line, and INV-265 already forbids an empty match reported as a pass. What no
   registered invariant states is how this audit **establishes** that its population is really
   empty, and what it writes when it is. The rules already shipping, at their site:
@@ -1279,7 +1329,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **The #158 hold's revisit condition is now met.** Entry
   `person-typed-records-with-organization-names-block-matches` is held "after #220 lands and Phase 2
   applies the retype decision at steps 10 and 11". This entry does not edit that block (INV-307).
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Each new ⛔ line cites a
+- **DEFERRED INVARIANT (resolved INV-336, registered by the maintainer 2026-09-30).** Each new ⛔ line cites a
   registered invariant at the line: step 10's read cites INV-300, and step 11's read cites INV-300
   and INV-136. One durable rule goes beyond them. INV-300 says where the rule lives, and INV-136
   forbids a pre-emptive discriminator, but neither says **when** Phase 2 must apply a Retype
@@ -3784,7 +3834,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   write into `docs/mapping/`, the pinned numbered question of sub-step 9). The issue named only
   `phase1-quality-assessment.md`. `phase2-data-mapping.md` is added because the decision is applied
   in the transform, the Locus gap the 2026-09-25 unattended run stopped on.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Each new ⛔ line cites
+- **DEFERRED INVARIANT (resolved INV-335, registered by the maintainer 2026-09-30).** Each new ⛔ line cites
   a registered invariant at the line: the canonical claim cites INV-300, the Step 5a gate cites
   INV-198, non-blocking cites INV-048, and the no-undo rule cites INV-173. The suffix list's
   provenance label cites INV-080. One durable rule goes beyond them. INV-198 gates the fast path on
@@ -4141,7 +4191,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   rather than read as agreement. INV-265's examples are all repository tooling, so it is not
   cited. Whether a Bootcamper-facing audit over an empty set should say "no finding" or a fourth
   outcome is the maintainer's call.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Each ⛔ line the change
+- **DEFERRED INVARIANT (resolved INV-334, registered by the maintainer 2026-09-30).** Each ⛔ line the change
   ships cites a registered invariant at the line, but the audit as a whole is a new durable
   guarantee that none of them states: INV-117 covers match keys only, and INV-115 governs how a
   missing value is rendered, not that every multi-record entity's history is checked. The rules
@@ -4162,16 +4212,21 @@ entries at once. Two things a reader should know about the hashes now recorded:
   argument and flag names come from `get_sdk_reference` for the Bootcamper's binding. It MUST
   flag an entity when `HOW_RESULTS.FINAL_STATE.NEED_REEVALUATION` is non-zero or
   `FINAL_STATE.VIRTUAL_ENTITIES[]` has more than one element, naming which sign fired, and MUST
-  count a response without `FINAL_STATE` as not measured. It MUST report one of three outcomes
-  (finding / no finding / could not measure) with "checked N of M", and MUST NOT report "no
-  finding" unless N equals M. It MUST record the count, including zero, in
-  `docs/results_validation.md`, with flagged entities' record counts marked unconfirmed. The
-  outcome feeds the gate as a finding and never blocks, and no remedy may be suggested while no
-  Senzing route documents the flag (INV-080/INV-149). Where Module 7's How Analysis narrates a
-  how response showing either sign, it MUST say so and point to this audit. Sites:
-  `module-06-data-processing/phaseD-validation.md` → "How-state audit";
-  `module-07-query-visualize-discover/phase2-discover.md` step 4c. Enforced by
-  `tests/test_phase_d_how_state_audit.py`. (Source: GitHub issue #154.)
+  count a response without `FINAL_STATE` as not measured. It MUST report one of four outcomes
+  (finding / no finding / nothing to check / could not measure) with "checked N of M", and MUST
+  NOT report "no finding" unless M is at least 1 and N equals M. With M = 0 it MUST report
+  **nothing to check**, never "no finding" (INV-265), and only when the export returned at least
+  one entity **and** the lengths of `RESOLVED_ENTITY.RECORDS[]` summed across the export equal the
+  total records loaded recorded at step 28; otherwise it MUST report **could not measure**, naming
+  the failed condition. It MUST record the outcome in `docs/results_validation.md`, with flagged
+  entities' record counts marked unconfirmed; the "0 unsettled" line is written for **no
+  finding** and omitted for **nothing to check**. The outcome feeds the gate as a finding and never
+  blocks or moves the gate's branch (INV-117, INV-264), and no remedy may be suggested while no
+  Senzing route documents the flag (INV-080/INV-149). Where Module 7's How Analysis narrates a how
+  response showing either sign, it MUST say so and point to this audit. Sites:
+  `module-06-data-processing/phaseD-validation.md` → "How-state audit", its gate line and its
+  success criterion; `module-07-query-visualize-discover/phase2-discover.md` step 4c. Enforced by
+  `tests/test_phase_d_how_state_audit.py`. (Source: GitHub issues #154 and #232.)
   *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
   and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
   read it off `INVARIANTS.md` rather than trusting a number written here.)*
@@ -4182,6 +4237,11 @@ entries at once. Two things a reader should know about the hashes now recorded:
   same case "Not run". Both are blocked on the maintainer's choice between them. The audit keeps
   shipping under its current citations. Revisit after the #232/#235 Phase D outcome conflict is
   decided and the winning issue lands.
+
+  ⚠️ **Revisit condition met 2026-09-30, and amended at `/review-invariants`:** #232 won and
+  merged (`6342792`). The wording above folds in #232's M = 0 rule (four outcomes, nothing to
+  check, the omitted "0 unsettled" line), so the audit's outcomes are stated once; #232's own
+  block is resolved into this one.
 - **Tests:** new `tests/test_phase_d_how_state_audit.py`, 23 tests in 7 classes, stdlib only,
   importing nothing under `plugins/` (INV-108); it loads `.claude/skills/dry-run/coverage_reports.py`
   to parse the marker with the real `MCP_NEGATIVE` pattern. It checks the section exists and sits

@@ -98,6 +98,8 @@ REVIEWED_NOT_A_SUPERSESSION = {
                "rule ABOUT supersession, supersedes nothing and is superseded by nothing",
     # -- prose about another pair's supersession, already recorded on that pair --
     "INV-250": "notes that INV-077 superseded INV-038; INV-038 carries the bullet",
+    "INV-251": "its 2026-09-30 clarification names the INV-063 and INV-064 supersession chains, "
+               "already recorded on those entries; INV-251 supersedes nothing",
     "INV-270": "carries a dated Correction, which is not a supersession",
     "INV-302": "carries a dated amendment (#239) that admits (user level) names to one clause; "
                "it supersedes nothing and is superseded by nothing",

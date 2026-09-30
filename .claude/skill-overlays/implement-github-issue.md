@@ -118,7 +118,7 @@ Some issues are correct and still should not be built — most often because the
 propose is an architectural decision rather than a defect repair. That outcome needs
 recording in `specs/DECLINED.md`, or the subject returns and the reasoning against it is lost.
 
-⛔ **Never decline on your own initiative.** This command implements what the maintainer
+⛔ **(INV-332) Never decline on your own initiative.** This command implements what the maintainer
 chooses; deciding *not* to build something is theirs alone. If an issue looks like a poor
 idea, say so and let them rule — do not write to `DECLINED.md` without their explicit
 decision. ⚠️ This is distinct from the governing copy's escape hatch: *invalid, duplicate, or

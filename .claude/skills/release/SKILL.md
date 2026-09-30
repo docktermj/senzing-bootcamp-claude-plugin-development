@@ -145,7 +145,7 @@ asked.
 - **Never hand-edit one of the three things.** Bumping `plugin.json` by hand, or adding
   a changelog entry by hand, is how the two repos drifted in the first place. If the
   script refuses, fix what it refused on — do not do its job manually.
-- **Never invent the version.** Ask the maintainer for the bump size (or the explicit
+- **Never invent the version.** (INV-333) Ask the maintainer for the bump size (or the explicit
   version) if they did not say; `release.py` refuses a bare invocation for the same
   reason, so a defaulted patch bump cannot slip through.
 - If a **new** file starts asserting the version, add it to `VERSION_SITES` in

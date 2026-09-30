@@ -65,8 +65,7 @@ Phase 3 with a human still has to happen.
 - **The probe runs either way, and it runs first.** A walk against a server that has
   drifted underneath it produces findings no one can attribute.
 
-⛔ **The walk is never inferred from silence.** It is asked about, not assumed. (No invariant
-yet: drafted as a `DEFERRED INVARIANT` in #241's `specs/IMPLEMENTED.md` entry.)
+⛔ **The walk is never inferred from silence.** (INV-333) It is asked about, not assumed.
 
 Exit code is 1 if anything BREAKING was found, 0 otherwise, so it drops into cron or
 CI unchanged. `--json` prints the machine-readable report; every run also writes

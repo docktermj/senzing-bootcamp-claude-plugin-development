@@ -52,7 +52,7 @@ instead, marked **not filed**; an upstream message carries the `Upstream:` value
 - ⛔ **(INV-314) Never call `submit_feedback`.** An `mcp-server`-routed finding goes in the handoff with
   the message drafted and its `Upstream:` line reading *"not yet sent — needs maintainer
   approval"*.
-- ⛔ **Never decline** — that is the maintainer's alone. An issue you cannot implement is
+- ⛔ **(INV-332) Never decline** — that is the maintainer's alone. An issue you cannot implement is
   **blocked**, a state you record on the issue, never an entry you write into
   `specs/DECLINED.md`.
 - ⛔ **(INV-307) Write nothing under `specs/` except the issue's own `specs/IMPLEMENTED.md`
