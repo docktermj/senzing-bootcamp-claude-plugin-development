@@ -20,6 +20,18 @@
 
 fpdf2
 
+# The recap-video renderer (plugins/senzing-bootcamp/scripts/generate_recap_video.py) draws
+# its frames with Pillow and encodes them with ffmpeg, found on PATH first and then from the
+# imageio-ffmpeg package. Neither is a runtime requirement: graduation offers the video and
+# skips it when they are missing. Without them tests/test_recap_video.py skips its drawing
+# and end-to-end tests, with a reason, and still runs its validation tests. Pillow also
+# arrives with fpdf2; it is named here because the video tests exercise it directly.
+#
+# Source issue: #299
+
+Pillow
+imageio-ffmpeg
+
 # Optional. The suite's documented runner is stdlib unittest:
 #     python3 -m unittest discover -s tests
 # pytest also works and gives a shorter summary; it is not required.

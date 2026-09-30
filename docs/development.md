@@ -18,10 +18,15 @@ python3 -m unittest discover -s tests
 
 ### Why the install step matters
 
-The only dependency is `fpdf2`, and it is **not** a runtime requirement of the plugin. The
-shipped PDF generators tier their renderers — `fpdf2` when importable, a stdlib fallback
-otherwise — so a bootcamper without it still gets a PDF, and that fallback path ships and is
-tested.
+The dependencies are `fpdf2`, `Pillow` and `imageio-ffmpeg`, and none is a runtime
+requirement of the plugin. The shipped PDF generators tier their renderers — `fpdf2` when
+importable, a stdlib fallback otherwise — so a bootcamper without it still gets a PDF, and
+that fallback path ships and is tested.
+
+The recap-video renderer, `scripts/generate_recap_video.py`, draws frames with `Pillow` and
+encodes them with ffmpeg, taken from `PATH` first and then from `imageio-ffmpeg`. Without
+them, `tests/test_recap_video.py` skips its frame-drawing and end-to-end tests with a reason
+and still runs its storyboard-validation tests.
 
 Without `fpdf2` the tests that measure the *fpdf2-rendered* output cannot exercise it. They
 skip, and the suite prints one notice up front naming the cause:
