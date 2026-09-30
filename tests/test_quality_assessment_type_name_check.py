@@ -27,6 +27,11 @@ What this pins:
   Phase 2 checks look for structure (the section name, the `derived` keys, the INV-300
   pointer) and pin no server wording (INV-219).
 * **Zero is reported**: Step 7 records the count for every source, zero included.
+* **The retyped name and its citations agree with INV-336** (#283): the template maps a retyped
+  name as `NAME_ORG` only and says how the value is built; the retype sites in Phase 2 cite
+  INV-336, not INV-136 (which governs required parameters and enumerated values); a joined
+  `NAME_ORG` is the value the verbatim check flags, not the exempt `RECORD_TYPE`; and step 10
+  takes only the enum-valid `record_type` half of the mixed-type rule.
 
 The suffix list and the documented edge cases are also run against each other: the list is parsed
 from the file and applied, as written, to the names the file uses as examples.
@@ -34,7 +39,7 @@ from the file and applied, as written, to the names the file uses as examples.
 Negative controls run inside the suite: each check is applied to a copy of the text with its
 rule removed and must report a problem.
 
-Source issues: #158, #220.
+Source issues: #158, #220, #283.
 
 Run:  python3 -m unittest discover -s tests
 
@@ -201,9 +206,19 @@ def problems_in_the_report_and_decision(text):
         ("retyped names are not parsed person fields", r"never as parsed person fields"),
         ("non-blocking", r"\(INV-048\) The check reports and asks; it never blocks"),
         ("never undo the retype for a gate", r"\(INV-173\) Never undo the Bootcamper's retype"),
+        ("a retyped name is NAME_ORG only", r"mapped as `NAME_ORG` only"),
+        ("a retyped name is never NAME_FULL", r"never as `NAME_FULL`"),
+        ("how the retyped NAME_ORG is built",
+         r"single name field's value as-is, or the parsed person fields joined with single spaces"),
+        ("the verbatim check flags a joined NAME_ORG",
+         r"verbatim check flags a retyped record's `NAME_ORG` joined from parsed name fields"),
     ):
         if not re.search(pattern, flat):
             out.append("the check does not state: " + claim)
+    if re.search(r"`NAME_ORG` or `NAME_FULL`", flat):
+        out.append("the retype rule offers NAME_FULL for a retyped name (INV-336: NAME_ORG only)")
+    if re.search(r"flags a retyped `RECORD_TYPE` value", flat):
+        out.append("the INV-173 note names RECORD_TYPE, which the verbatim check exempts")
     return out
 
 
@@ -319,6 +334,49 @@ def order_problems(text):
     return out
 
 
+def problems_in_the_name_citations(text):
+    """Each retype and name-declaration rule cites the invariant that governs it (#283).
+
+    INV-136 governs a tool's required parameters and enumerated values. None of these rules
+    states either, so none of them cites it.
+    """
+    flat = squash(text)
+    s10, s11 = plan_and_map_steps(flat)
+    out = []
+    if "(INV-300, INV-336) Read the source's Record Type Check before you advance workflow step 3" \
+            not in s11:
+        out.append("step 11's Record Type Check read does not cite (INV-300, INV-336)")
+    if "no `NAME_ORG` entry and no `type_discriminator` (INV-336)" not in s11:
+        out.append("step 11's no-NAME_ORG, no-type_discriminator rule does not cite INV-336")
+    if "INV-136" in retype_block(s11):
+        out.append("step 11's Retype block cites INV-136")
+    rejection = re.search(r"\(([^()]*)\) Step 3 rejects a source that declares BOTH", s10)
+    if not rejection:
+        out.append("step 10's NAME_ORG rejection block has no citation")
+    else:
+        if "INV-136" in rejection.group(1):
+            out.append("step 10's NAME_ORG rejection block cites INV-136")
+        if "INV-125" not in rejection.group(1):
+            out.append("step 10's NAME_ORG rejection block does not cite INV-125")
+    at = s10.find("Do not pre-emptively emit a `type_discriminator` on every source")
+    if at < 0:
+        out.append("step 10 no longer says not to emit a type_discriminator pre-emptively")
+    elif "INV-136" in s10[max(0, at - 20):at]:
+        out.append("the pre-emptive type_discriminator rule cites INV-136")
+    retype10 = between(s10, "With Retype, the source now carries both types",
+                       "Declare nothing else here") or ""
+    if "per the mixed-type rule below" in retype10:
+        out.append("step 10 defers to the whole mixed-type rule, type_discriminator included")
+    if not re.search(r"enum-valid `record_type` half of the mixed-type rule", retype10):
+        out.append("step 10 does not take only the mixed-type rule's enum-valid record_type half")
+    if not re.search(r"`type_discriminator`, does not apply to a suffix retype; step 11", retype10):
+        out.append("step 10 does not rule out the type_discriminator half and name step 11")
+    what_to_do = between(flat, "What to do — in this order:", "Four further limitations") or ""
+    if not re.search(r"or a `NAME_ORG` joined from parsed name fields", what_to_do):
+        out.append("the exemption procedure does not name a joined NAME_ORG as a reason")
+    return out
+
+
 def problems_in_phase2(text):
     flat = squash(text)
     out = problems_in_phase2_plan_and_map(text) + order_problems(text)
@@ -385,6 +443,9 @@ class TheBootcamperDecidesAndTheDecisionIsKept(unittest.TestCase):
     def test_phase_2_applies_and_keeps_the_decision(self):
         self.assertEqual([], problems_in_phase2(PHASE2.read_text(encoding="utf-8")))
 
+    def test_the_retype_rules_cite_the_invariant_that_governs_them(self):
+        self.assertEqual([], problems_in_the_name_citations(PHASE2.read_text(encoding="utf-8")))
+
 
 class NegativeControls(unittest.TestCase):
     """Each check must fail on a copy of the text with its rule taken out."""
@@ -424,6 +485,27 @@ class NegativeControls(unittest.TestCase):
         self.assertNotEqual(mutant, self.text)
         self.assertTrue(problems_in_step7(mutant))
 
+    def test_offering_name_full_for_a_retyped_name_fails(self):
+        old = "mapped as `NAME_ORG` only, never as parsed"
+        mutant = self.text.replace(old, "mapped as `NAME_ORG` or `NAME_FULL`, never as parsed")
+        self.assertNotEqual(mutant, self.text)
+        self.assertIn("the retype rule offers NAME_FULL for a retyped name (INV-336: NAME_ORG only)",
+                      problems_in_the_report_and_decision(mutant))
+
+    def test_dropping_how_the_retyped_name_is_built_fails(self):
+        mutant = self.text.replace("joined with single spaces", "joined")
+        self.assertNotEqual(mutant, self.text)
+        self.assertIn("the check does not state: how the retyped NAME_ORG is built",
+                      problems_in_the_report_and_decision(mutant))
+
+    def test_the_inv_173_note_naming_record_type_fails(self):
+        mutant = self.text.replace(
+            "flags a retyped record's `NAME_ORG` joined from parsed name fields,",
+            "flags a retyped `RECORD_TYPE` value,")
+        self.assertNotEqual(mutant, self.text)
+        self.assertIn("the INV-173 note names RECORD_TYPE, which the verbatim check exempts",
+                      problems_in_the_report_and_decision(mutant))
+
     def test_dropping_the_phase_2_handoff_fails(self):
         text = PHASE2.read_text(encoding="utf-8")
         mutant = text.replace("**Apply a retype decision from Phase 1.**", "")
@@ -453,8 +535,8 @@ class Phase2NegativeControls(unittest.TestCase):
         self.assertTrue(problems_in_phase2(mutant))
 
     def test_step_11_without_the_inv_300_pointer_fails(self):
-        mutant = self.mutate("(INV-300, INV-136) Read the source's Record Type Check",
-                             "(INV-136) Read the source's Record Type Check")
+        mutant = self.mutate("(INV-300, INV-336) Read the source's Record Type Check",
+                             "(INV-336) Read the source's Record Type Check")
         self.assertIn("Phase 2 step 11 does not cite INV-300 at its pointer",
                       problems_in_phase2(mutant))
 
@@ -480,7 +562,7 @@ class Phase2NegativeControls(unittest.TestCase):
         self.assertTrue(any("restates the rule" in p for p in problems_in_phase2(mutant)))
 
     def test_moving_the_step_11_read_after_the_advance_fails(self):
-        start = self.text.index("⛔ **(INV-300, INV-136) Read the source's Record Type Check")
+        start = self.text.index("⛔ **(INV-300, INV-336) Read the source's Record Type Check")
         end = self.text.index("⚠️ **This advance is unconditional")
         block = self.text[start:end]
         rest = self.text[:start] + self.text[end:]
@@ -495,6 +577,50 @@ class Phase2NegativeControls(unittest.TestCase):
                              "section, change nothing.")
         self.assertIn("Phase 2 step 13 still describes a workflow step 3 rejection",
                       problems_in_phase2(mutant))
+
+    def test_citing_inv_136_at_the_step_11_read_fails(self):
+        mutant = self.mutate("(INV-300, INV-336) Read the source's Record Type Check",
+                             "(INV-300, INV-136) Read the source's Record Type Check")
+        self.assertIn("step 11's Record Type Check read does not cite (INV-300, INV-336)",
+                      problems_in_the_name_citations(mutant))
+
+    def test_citing_inv_136_at_the_declare_once_rule_fails(self):
+        mutant = self.mutate("no `type_discriminator` (INV-336):", "no `type_discriminator` (INV-136):")
+        problems = problems_in_the_name_citations(mutant)
+        self.assertIn("step 11's no-NAME_ORG, no-type_discriminator rule does not cite INV-336",
+                      problems)
+        self.assertIn("step 11's Retype block cites INV-136", problems)
+
+    def test_citing_inv_136_at_the_rejection_block_fails(self):
+        mutant = self.mutate("(INV-125) Step 3 rejects a source",
+                             "(INV-136, INV-125) Step 3 rejects a source")
+        self.assertIn("step 10's NAME_ORG rejection block cites INV-136",
+                      problems_in_the_name_citations(mutant))
+
+    def test_citing_inv_136_at_the_pre_emptive_rule_fails(self):
+        mutant = self.mutate("**Do not pre-emptively emit a `type_discriminator`",
+                             "**(INV-136) Do not pre-emptively emit a `type_discriminator`")
+        self.assertIn("the pre-emptive type_discriminator rule cites INV-136",
+                      problems_in_the_name_citations(mutant))
+
+    def test_step_10_deferring_to_the_whole_mixed_type_rule_fails(self):
+        start = self.text.index("never `MIXED`: that is the enum-valid")
+        end = self.text.index("step 11 declares how each record is typed.", start)
+        end += len("step 11 declares how each record is typed.")
+        mutant = self.text[:start] + "never `MIXED`, per the mixed-type rule below." + \
+            self.text[end:]
+        problems = problems_in_the_name_citations(mutant)
+        self.assertIn("step 10 defers to the whole mixed-type rule, type_discriminator included",
+                      problems)
+        self.assertIn("step 10 does not rule out the type_discriminator half and name step 11",
+                      problems)
+
+    def test_dropping_the_joined_name_org_reason_fails(self):
+        mutant = self.mutate(
+            ", or a\n   `NAME_ORG` joined from parsed name fields, which equals no single source value)",
+            ")")
+        self.assertIn("the exemption procedure does not name a joined NAME_ORG as a reason",
+                      problems_in_the_name_citations(mutant))
 
     def test_dropping_the_joined_name_order_fails(self):
         mutant = self.mutate("parsed fields joined in the order Phase 1 Step 6 reads them",

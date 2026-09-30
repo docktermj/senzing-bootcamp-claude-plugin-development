@@ -560,7 +560,9 @@ With **Keep as-is**, `none needed`, no section, or a Retype that names every can
 exception, change nothing. With **Retype**, the source now carries both types:
 
 - Send each master schema's `record_type` as the source's predominant type **after** the retype. It
-  stays enum-valid and is never `MIXED`, per the mixed-type rule below.
+  stays enum-valid and is never `MIXED`: that is the enum-valid `record_type` half of the mixed-type
+  rule below. Its other half, a step 3 `type_discriminator`, does not apply to a suffix retype;
+  step 11 declares how each record is typed.
 - Say in the plan summary that the source now carries PERSON and ORGANIZATION records, and how many
   records the retype moves. This is content in the summary, not a new question.
 - Declare nothing else here: step 11 declares how each record is typed.
@@ -581,7 +583,7 @@ predominant type and let step 3's `type_discriminator` do the typing — which i
 what the tool's own prose says happens anyway (*"The type_discriminator details will be defined in
 Step 3 mapping"*), so nothing is lost.
 
-⛔ **(INV-136, INV-125) Step 3 rejects a source that declares BOTH organization and person name
+⛔ **(INV-125) Step 3 rejects a source that declares BOTH organization and person name
 fields — even when no record carries both — and its message leads with the wrong problem.** A source whose name fields are
 disjoint *by record type* is rejected with this message (re-read live, server **1.37.15,
 2026-09-29**; the attribute list names the person attributes the mapping declared):
@@ -611,7 +613,7 @@ suffix has no such field, so it takes the message's first route, as step 11 decl
 - ⚠️ **Expect the coverage count to drop after you apply it.** Fields moved into `field_overrides`
   are counted by nothing, so the mapping reports fewer covered fields than it dispositions. That is
   the known field-count warning described below — **not** unmapped data. Do not chase it.
-- ⛔ **(INV-136) Do not pre-emptively emit a `type_discriminator` on every source.** It is the fix for this
+- ⛔ **Do not pre-emptively emit a `type_discriminator` on every source.** It is the fix for this
   rejection, not a default: adding an identity override to a mapping that does not need one buys the
   same coverage-count surprise for nothing.
 
@@ -711,12 +713,12 @@ with worked examples. An organization name belongs in `NAME_ORG`, not `NAME_FULL
 Splitting them would have produced a mapping that loads and validates cleanly while degrading
 resolution quality silently, which is exactly the class a quality score cannot detect.
 
-⛔ **(INV-300, INV-136) Read the source's Record Type Check before you advance workflow step 3.** (INV-336)
+⛔ **(INV-300, INV-336) Read the source's Record Type Check before you advance workflow step 3.**
 Open `docs/mapping/{source_name}_mapper.md` → `## Record Type Check`. Its rule is Phase 1 Step 6's
 "Type/name check" (`phase1-quality-assessment.md`), the canonical statement; do not restate it here.
 With **Keep as-is**, `none needed`, no section, or a Retype that names every candidate as an
 exception, map as usual. With **Retype**, declare the name **once** and type each record with a
-computed `RECORD_TYPE`. Declare no `NAME_ORG` entry and no `type_discriminator` (INV-136):
+computed `RECORD_TYPE`. Declare no `NAME_ORG` entry and no `type_discriminator` (INV-336):
 
 - **Parsed person name fields.** Declare them once, as the person attributes they are (for example
   `NAME_FIRST` and `NAME_LAST`). The mapper emits `NAME_ORG` for a retyped (ORGANIZATION) record and
@@ -975,8 +977,9 @@ no MCP server version, so every bootcamper is on the current server and this is 
    mandate a type (verified 2026-07-28). Neither emission is made correct or incorrect by what the
    checker can see.
 3. **Record the exemption and its reason** in the source's mapping notes — which attribute, why the
-   checker cannot harvest it (a boolean source value, or a value derived from a field name), and that
-   the value is faithful — then **proceed**. A checker limitation MUST NOT become an iterate-forever
+   checker cannot harvest it (a boolean source value, a value derived from a field name, or a
+   `NAME_ORG` joined from parsed name fields, which equals no single source value), and that the
+   value is faithful — then **proceed**. A checker limitation MUST NOT become an iterate-forever
    loop or a blocked module (INV-048).
 4. ⛔ **Never change a source value to satisfy the tool.** For a value the harvester cannot reach it
    would not even work — the allowed set was built without it, under either emission — and distorting
