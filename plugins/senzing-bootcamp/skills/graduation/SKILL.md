@@ -1103,7 +1103,10 @@ eval database itself).
 
 **Exclude (never copy):** `config/bootcamp_progress.json`,
 `config/bootcamp_preferences.yaml`, `docs/bootcamp_recap.md`, `docs/bootcamp_notes.md`,
-`data/samples/`, `data/raw/`, `logs/`, `backups/`, and `docs/feedback/`.
+`data/samples/`, `data/raw/`, `data/subsets/`, `logs/`, `backups/`, and `docs/feedback/`.
+
+`data/subsets/` is excluded because a subset is the evaluation's license-capped or volume-capped
+slice (Module 6), not the data production loads.
 
 ⛔ **`docs/bootcamp_notes.md` is a bootcamp artifact, not production content** — exactly as
 `docs/bootcamp_recap.md` and `docs/feedback/` are. It holds the bootcamper's own ideas and
