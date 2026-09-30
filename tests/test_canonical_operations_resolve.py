@@ -55,7 +55,10 @@ What it holds now:
   page. ⛔ **The marker is a disclaimer, not a silencer** (INV-316): it is accepted only when the
   overlay exists **and** no command or skill of that name ships here. ⚠️ `~/.claude/skills/` is **not
   checked in CI** (INV-308), so nothing here establishes that the user-level skill exists on any
-  machine; the overlay is what this repository can check.
+  machine; the overlay is what this repository can check. The family-page check takes its names
+  from the §2 rows **and** the register's *(user level)* entries (#294): `order-github-issues`
+  has no §2 row, deliberately (the §10 R8 amendment), and reading the rows alone left its
+  mentions unchecked. A mention may carry a leading slash; a path segment still does not count.
 
 ⚠️ **Where the diagram check stops**, stated rather than papered over, because a guard whose
 reach is unstated gets read as total (INV-308). It reads an operation as a `<br/>`-separated
@@ -82,7 +85,7 @@ table row's *cell values* are right -- a command listed with the wrong phase, or
 drawing depicts is a true account of the system.
 
 Source issues: #55 (original), #111 (re-aimed), #140 (the missing direction), #239 (the
-*(user level)* marker).
+*(user level)* marker), #294 (the register's user-level names on the family page).
 
 Stdlib only; both directories are listed and the docs read as text (INV-108).
 
@@ -176,6 +179,34 @@ def user_level_problems(names, commands_dir=COMMANDS_DIR, overlays_dir=OVERLAYS_
 def user_level_rows():
     """Operations whose §2 parent cell carries the *(user level)* marker."""
     return {op for op, (parent, _) in table().items() if USER_LEVEL.search(parent)}
+
+
+def user_level_names():
+    """Every name marked *(user level)*: the §2 rows together with the register (#294).
+
+    `order-github-issues` has no §2 row, deliberately (§10's R8 amendment), so reading the rows
+    alone left its family-page mentions unchecked.
+    """
+    return user_level_rows() | {c.lstrip("/") for c, m in slash_commands(DEV_DOCS) if m == "user"}
+
+
+def bare_family_mentions(text, names):
+    """["FAMILY_WORKFLOW.md:<line> <name>"] for each live mention of `names` with no marker.
+
+    Live means before §10, which quotes dated text. A mention may carry a leading slash
+    (`/order-github-issues` in prose); a path segment (`skills/order-github-issues/SKILL.md`)
+    fails the lookbehind whether or not its slash is taken as the mention's own.
+    """
+    i = text.find("## 10. Amendments")
+    live = text if i == -1 else text[:i]
+    bare = []
+    for op in sorted(names):
+        for m in re.finditer(r"(?<![\w/.-])/?%s(?![\w-])" % re.escape(op), live):
+            window = HTML_TAG.sub(" ", live[m.end():m.end() + MARKER_WINDOW])
+            if not USER_LEVEL.search(window):
+                line = live.count("\n", 0, m.start()) + 1
+                bare.append("%s:%d %s" % (FAMILY.name, line, op))
+    return bare
 
 
 def retired():
@@ -342,18 +373,27 @@ class AUserLevelMarkerIsADisclaimerNotASilencer(unittest.TestCase):
         §10 is excluded because it quotes what the page said on each amendment's date. A path
         segment (`skill-overlays/implement-github-issue.md`) is a file name, not a mention.
         """
-        text = FAMILY.read_text(encoding="utf-8")
-        live = text[:text.find("## 10. Amendments")]
-        bare = []
-        for op in sorted(user_level_rows()):
-            for m in re.finditer(r"(?<![\w/.-])%s(?![\w-])" % re.escape(op), live):
-                window = HTML_TAG.sub(" ", live[m.end():m.end() + MARKER_WINDOW])
-                if not USER_LEVEL.search(window):
-                    line = live.count("\n", 0, m.start()) + 1
-                    bare.append("%s:%d %s" % (FAMILY.name, line, op))
+        bare = bare_family_mentions(FAMILY.read_text(encoding="utf-8"), user_level_names())
         self.assertEqual([], bare,
                          "live mention(s) of a user-level operation carry no (user level) marker "
                          "at the point of use (INV-316): %s" % ", ".join(bare))
+
+    def test_the_family_check_reads_the_register_names_too(self):
+        """#294: `order-github-issues` has no §2 row, so only the register brings it in."""
+        self.assertNotIn("order-github-issues", user_level_rows())
+        self.assertIn("order-github-issues", user_level_names())
+
+    def test_an_unmarked_register_name_on_the_family_page_fails(self):
+        """Negative control (#294): a slash-led mention outside §10 is reported by line."""
+        page = ("# Page\n\nChoosing is `/order-github-issues` in this host.\n\n"
+                "## 10. Amendments\n\nIt was `/order-github-issues` then.\n")
+        self.assertEqual(["%s:3 order-github-issues" % FAMILY.name],
+                         bare_family_mentions(page, {"order-github-issues"}))
+
+    def test_a_marked_mention_and_a_path_segment_pass(self):
+        page = ("`/order-github-issues` *(user level)* chooses; its copy is\n"
+                "`~/.claude/skills/order-github-issues/SKILL.md`.\n")
+        self.assertEqual([], bare_family_mentions(page, {"order-github-issues"}))
 
     def _tree(self):
         root = Path(tempfile.mkdtemp())

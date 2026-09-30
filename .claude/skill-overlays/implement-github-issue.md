@@ -10,8 +10,8 @@ overlay and `docs/FAMILY_WORKFLOW.md`; nothing here establishes what the governi
 on any machine (INV-308).
 
 Choosing the issue is not this command's job. [`docs/FAMILY_WORKFLOW.md`](../../docs/FAMILY_WORKFLOW.md)
-R8 gives it to the operation that chooses the issue, `/order-github-issues` in this host. With
-no argument this command names no issue.
+R8 gives it to the operation that chooses the issue, `/order-github-issues` *(user level)* in
+this host. With no argument this command names no issue.
 
 ## What invoking this command assents to
 
