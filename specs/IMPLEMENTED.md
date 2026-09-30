@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## data-subsets-is-excluded-at-graduation-and-queued-for-the-tree
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #286; audit finding D-F2)
-- **Commit:** uncommitted
+- **Commit:** `db1ff9b`
 - **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `tests/test_module6_data_dirs_are_copied_or_excluded.py` (new), `tests/test_invariant_layout_tree.py`, `specs/IMPLEMENTED.md`
 - **MCP re-check:** server 1.37.16 (`get_capabilities`, reachable), 2026-09-30 — n/a (no Senzing fact), re-confirmed: the change records where the plugin's own subset files live and that graduation leaves them out of `production/`. The license cap and SQLite volume limit that make Module 6 write a subset are cited where Module 6 states them, are unchanged, and nothing here restates them. No absence claim is made. Re-verification changed nothing the issue asked for. Nothing was sent upstream.
 - **Approach:** direct (Phase 5a), as the issue scopes it.
