@@ -91,7 +91,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   and INV-320 applied at one more site; the sampled-source clause is INV-326. The new negative
   control enforces INV-325 there, and the test's docstring cites it.
 - **Verification:** see the PR's CI-mirror checklist.
-- **Commit:** uncommitted
+- **Commit:** aed9aa9
 
 ## maintainer-operations-are-defined-once-as-skills
 
