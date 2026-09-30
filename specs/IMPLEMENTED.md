@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## invariant-review-2026-09-30b
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one review session, the second that day)
-- **Commit:** uncommitted
+- **Commit:** `649495f`
 - **Files changed:** `.claude/skill-overlays/implement-github-issue.md`, `.claude/skill-overlays/unattended-issue-loop.md`, `invariant-manifest.json`, `specs/IMPLEMENTED.md`, `specs/INVARIANTS.md`, `tests/test_invariant_enforcer_citations.py`, `tests/test_user_level_copies_govern.py`
 - **MCP re-check:** n/a (no Senzing fact)
 - **Summary:** no block was pending; three held blocks had their revisit conditions met and were decided. The held set is 5.
