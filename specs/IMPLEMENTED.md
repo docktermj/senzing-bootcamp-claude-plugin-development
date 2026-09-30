@@ -43,6 +43,38 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## audit-skill-finding-records-agree-with-inv-317
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #285; audit findings B-F2 and B-F8. Begun 2026-09-30 and blocked before push; resumed 2026-10-01 on `285-docktermj-2` after the maintainer allowed one requote)
+- **Commit:** uncommitted
+- **Files changed:** `.claude/skills/production-readiness-audit/SKILL.md`, `tests/test_audit_files_issues_not_specs.py`, `specs/IMPLEMENTED.md`. No file under `plugins/` changes; `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** server 1.37.16 (`get_capabilities`, reachable), 2026-10-01 (also 2026-09-30) — n/a (no Senzing fact), re-confirmed: the change rewords where a maintainer audit records its findings and amends a development-record invariant, and asserts nothing about Senzing. No absence claim is made. Nothing was sent upstream.
+- **Approach:** direct (Phase 5a), as the issue scopes it.
+- **Summary:** The audit skill's Step 8 and Step 9 now agree with INV-317, which allows a finding in a filed issue or in the run's dated `specs/IMPLEMENTED.md` entry:
+  - Step 8 item 1 (`:409`) reads "⛔ **Never write a new file under `specs/`.**" in place of "⛔ **Never write into `specs/`.**". The rest of the paragraph keeps its words; it was reflowed so the paragraph's existing `(INV-307)` sits on the ⛔ line, because `tests/test_new_hard_rules_are_cited_or_deferred.py` requires a citation at the rule's own line and the edited line counts as new.
+  - Step 9's INV-317 line (`:469`–`:472`) names the two allowed records, a filed issue or the run's dated `specs/IMPLEMENTED.md` entry marked not filed, and adds "never a new file under `specs/`, which is a read-only archive (INV-307)".
+  - Step 9's next line (`:473`) asks for "the issue number or ledger entry each finding was recorded in" in place of "the spec file each finding was written into".
+  - **One requote in another entry, allowed by the maintainer** ([#285 comment](https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/issues/285#issuecomment-5932634402), 2026-10-01). The resolved INV-317 block in `maintainer-surface-hard-rules-are-cited-or-deferred` quoted Step 9's old sentence, so `tests/test_deferral_quotes_match_their_source.py` failed once Step 9 changed. That one bullet's bold span now quotes the new Step 9 sentence, with a dated "Requoted 2026-10-01 (#285), not reworded away" note in the form #259 used. No other entry is edited.
+  - `tests/test_audit_files_issues_not_specs.py`: `test_the_prohibition_is_stated` matches the new Step 8 wording through a module constant, `PROHIBITION`. A new in-suite negative control, `test_the_prohibition_check_fails_without_it`, removes Step 8's sentence from the text and requires the check to stop matching. By hand, putting the old wording back into the skill fails both tests. No test pins Step 9's wording, as the issue scopes it: INV-317's enforcer "cannot establish the audit's wording".
+- **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` was not run locally: it is a remote reusable workflow, and no workflow file changed.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-317 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+    - ⛔ **It ships today in `/dry-run` (its command, skill and phase 3) and in `/production-readiness-audit` (its command and Step 8, which says to follow dry-run's discipline).** — in `specs/INVARIANTS.md`
+
+  INV-317 lists the sites the rule ships in, and two of them are command files that #262 deleted. `.claude/commands/` no longer exists. The list also leaves out Step 9 of the audit skill, which carries a ⛔ INV-317 line (`:469`). The enforcer sentence says `SAME_WORDS` pins the lifecycle words "in `/dry-run`'s command and skill", and `tests/test_dry_run_files_issues.py`'s `TheSkillSaysItInTheSameWords` now reads the skill alone. No requirement changes. **Sites it affects:** INV-317 in `specs/INVARIANTS.md` and its `invariant-manifest.json` statement. The sites the note names, all checked on this branch: `.claude/skills/dry-run/SKILL.md` (`:197`, `:309`, `:333`), `.claude/skills/dry-run/phase3-conversational.md` (`:279`) and `.claude/skills/production-readiness-audit/SKILL.md` (Step 8 `:406`, Step 9 `:469`). Enforced by `tests/test_dry_run_files_issues.py`. Amending a registered invariant is the maintainer's sign-off alone, so `specs/INVARIANTS.md` is untouched. The block carries both markers, as #241's INV-318 and INV-319 blocks did. Applying it resolves the block: mark the bullet `applied YYYY-MM-DD` and drop both "awaiting" markers.
+
+  The drafted wording, the issue's note verbatim, appended to INV-317 with every existing sentence
+  unchanged:
+
+  **INV-317** — (⚠️ **Dated note, <YYYY-MM-DD> (#285): the command sites no longer exist; no requirement changes.** #262 removed the command files. The rule ships in `/dry-run`'s skill and phase 3, and in `/production-readiness-audit`'s Step 8 and Step 9. Read "its command and skill" in the enforcer sentence as "its skill": `SAME_WORDS` pins the lifecycle words in `/dry-run`'s skill alone.)
+
+  *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
+  applies the note, not the day of this run.)* *(written as NNN deliberately: no new id
+  is drafted, because this amends INV-317 in place and a literal new id would cite an invariant
+  that does not exist and turn `citations.py verify` red. If the maintainer prefers a separate
+  invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
+  rather than trusting a number written here.)*
+- **Otherwise establishes no invariant.** The skill edits apply INV-317 and INV-307 as registered. The one change to a registered invariant is the amendment block above, drafted and not applied.
+
 ## invariant-review-2026-10-01
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one review session, begun 2026-09-30 after the second `/unattended-issue-loop` run that day)
@@ -2541,7 +2573,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     - ⛔ **Name the issue each finding became, or its ledger draft and the lifecycle marker it carries** — in `.claude/skills/dry-run/SKILL.md` ("Reporting", first bullet) — **cite INV-NNN**
     - ⛔ **The scratch project is disposable; the issues and the ledger entry are the run's actual output.** — in `.claude/skills/dry-run/SKILL.md` ("Cleaning up") — **cite INV-NNN**
     - ⛔ **Before stopping, confirm every finding is drafted in the run's ledger entry.** — in `.claude/skills/dry-run/phase3-conversational.md` ("Stopping") — **cite INV-NNN**
-    - ⛔ **Record every finding before fixing anything, and never into `specs/`** — in `.claude/commands/production-readiness-audit.md` (the reporting paragraph) — **cite INV-NNN** *(added at /review-invariants 2026-09-29: a repository-wide scan found it; the block had listed dry-run only)*
+    - ⛔ **Record every finding before fixing anything, as a filed issue or in the run's dated `specs/IMPLEMENTED.md` entry marked not filed — never a new file under `specs/`, which is a read-only archive (INV-307)** — in `.claude/commands/production-readiness-audit.md` (the reporting paragraph) — **cite INV-NNN** *(added at /review-invariants 2026-09-29: a repository-wide scan found it; the block had listed dry-run only)*
     - ⛔ **Record it as you find it, before fixing anything** — in `.claude/skills/production-readiness-audit/SKILL.md` ("Step 8: What to do with a finding", item 1) — **cite INV-NNN** *(added at /review-invariants 2026-09-29, as above)*
 
   ⚠️ **Amended at /review-invariants, 2026-09-29.** The draft named the record as "its dated
@@ -2549,6 +2581,13 @@ entries at once. Two things a reader should know about the hashes now recorded:
   findings. An attended `/production-readiness-audit` records each finding as a GitHub issue
   after the maintainer's yes, so the draft would have contradicted that path. The wording below
   names both records, and the two audit sites above join the block.
+
+  ⚠️ **Requoted 2026-10-01 (#285), not reworded away.** The audit bullet quoted Step 9's old
+  sentence, "Record every finding before fixing anything, and never into `specs/`", which #285
+  replaced because it contradicted INV-317 itself, so `check` would have gone red on a resolved
+  block. The quote is fixed against its source; the location is left as written, because a
+  deleted command path resolves to the skill. INV-317 and the drafted wording below are
+  unchanged. The maintainer allowed this one requote on #285, 2026-10-01.
 
   ⚠️ **Why this is not an existing invariant.** INV-307 governs where a finding may not go (a
   new file under the frozen `specs/`) and that `IMPLEMENTED.md` stays live. It does not say a

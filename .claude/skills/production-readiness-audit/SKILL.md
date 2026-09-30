@@ -406,9 +406,9 @@ session end:
 1. ⛔ **(INV-317) Record it as you find it, before fixing anything** — one record per root cause,
    using `../feedback-to-issues/issue-template.md`. Cite `file:line`.
 
-   ⛔ **Never write into `specs/`.** It is a read-only archive as of the 2026-09-15 cutover
-   (INV-307) and `tests/test_specs_are_frozen.py` rejects any new file there. Read it freely
-   — a spec often records why the plugin reads as it does — but nothing new lands there.
+   ⛔ **Never write a new file under `specs/`.** It is a read-only archive as of the 2026-09-15 cutover (INV-307)
+   and `tests/test_specs_are_frozen.py` rejects any new file there. Read it freely — a spec
+   often records why the plugin reads as it does — but nothing new lands there.
 
    ⚠️ **Where the record goes depends on whether anyone is watching, and the two paths are
    NOT the same.** This asymmetry is deliberate and must not be "simplified" into one branch:
@@ -466,10 +466,12 @@ durable.
 
 - **Lead with anything that breaks a documented path**, not the longest list. Severity
   ordering, not discovery order.
-- ⛔ **(INV-317) Record every finding before fixing anything, and never into `specs/`**, as
-  Step 8 says, so every finding the report names is already written down.
-- **Name the spec file each finding was written into**, and say which are fixed and which
-  are recorded-but-open.
+- ⛔ **(INV-317) Record every finding before fixing anything, as a filed issue or in the run's
+  dated `specs/IMPLEMENTED.md` entry marked not filed — never a new file under `specs/`, which
+  is a read-only archive (INV-307)**, as Step 8 says, so every finding the report names is
+  already written down.
+- **Name the issue number or ledger entry each finding was recorded in**, and say which are
+  fixed and which are recorded-but-open.
 - **State the verdict on each of the four properties separately.** "Consistent and
   complete; two coherence defects; concision unchanged" is information. A single
   pass/fail is not.
