@@ -32,6 +32,11 @@ when it is absent and supplies the `@requires_fpdf2` guard; see `docs/developmen
   case-folded in-project exemption, and secret detection (PEM / AWS / Senzing
   `AQAAAD` license blobs). Invoked as a subprocess because the gate reads stdin
   at import time.
+- `test_recap_video.py` — the recap-video renderer (`generate_recap_video.py`): storyboard
+  validation naming the field at fault, the project-relative image rule, exit codes 0/1/2/3,
+  every fallback stated on stderr, narration that extends its scene rather than being cut,
+  frame drawing (skipped without Pillow) and an end-to-end mp4 render (skipped without Pillow
+  or ffmpeg). Pillow and `imageio-ffmpeg` are in `requirements-dev.txt`.
 - `test_brand_sync.py` — asserts the inlined fallback palettes in
   `senzing_viz_server.py` and `generate_recap_pdf.py` stay equal to
   `brand_tokens.py`, so the hand-maintained copies cannot drift silently.

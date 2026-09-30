@@ -161,6 +161,20 @@ class BrandTokenSync(unittest.TestCase):
             )
 
 
+    def test_recap_video_fallback_in_sync(self):
+        """The recap-video renderer (#299) inlines a fallback too, so INV-184 binds it on sight.
+
+        Its palette is keyed by the video's own names (``EMBER_END`` for brand_tokens'
+        ``EMBER_GRAD_END``, and so on), mapped once in ``_TOKEN_NAMES``; the check is that the
+        palette it resolved from brand_tokens equals the inlined copy, entry for entry.
+        """
+        import generate_recap_video as video
+        self.assertEqual(set(video._FALLBACK_RGB), set(video._TOKEN_NAMES))
+        for name, rgb in video._FALLBACK_RGB.items():
+            self.assertEqual(video.PALETTE[name], rgb,
+                             f"{name} fallback diverged from brand_tokens.py")
+
+
 class SourceColorsComeFromTheData(unittest.TestCase):
     """`SOURCE_COLORS` names the Truth Set's sources, and no bootcamper uses those names
     for their own data — so a name-keyed lookup dropped every real source to one identical

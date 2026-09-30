@@ -100,6 +100,10 @@ Drive each and **inspect the artifact, not the exit code** (INV-129):
   --expect-modules "…"` with **semicolons** (two module names contain commas).
 - `generate_discoveries_pdf.py` — feed it junk and confirm it writes **no** PDF
   (INV-110).
+- `generate_recap_video.py` — render a short storyboard with one image scene pointing at a
+  missing file, and play the mp4. The stderr should say the image became a title card and
+  name the voice-over engine or its absence. Then point an image at `../outside.png` and
+  confirm it exits 1 and writes no video.
 - `capture_screenshots.py` — pass a tab that is not in the page; it must skip it with
   a message on stderr rather than saving the default tab under that name (INV-122),
   and name files by tab slug.
