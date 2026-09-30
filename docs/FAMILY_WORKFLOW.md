@@ -412,6 +412,32 @@ repository cites.
 and says so, for the same reason `INVARIANTS.md` never reuses an id: a citation that silently
 resolves to a different rule is worse than one that fails.
 
+### 2026-09-30 — R4: the parent's maintainer operations are its skills; no command file ships
+
+**Was:** each of the parent's ten project maintainer operations (`auto-test`,
+`compact-dev-environment`, `delegate-to-mcp-server`, `dry-run`, `feedback-to-issues`,
+`production-readiness-audit`, `propagate-to-public`, `release`, `retrofit-from-public`,
+`review-invariants`) was defined twice: a skill under `.claude/skills/<name>/` and a command of
+the same name under `.claude/commands/` that fronted it. The parent required every skill to be
+fronted by a command (INV-302), and its guards read "ships for the parent" as "has a file under
+`.claude/commands/`", or, since the entry below, the user-level skill plus an overlay.
+
+**Now:** each is defined once, as its skill. Measured 2026-09-29 on Claude Code 2.1.284 (#241):
+when a project skill and a project command share a name, `/<name>` runs the skill, with or
+without an argument, so none of the ten command files ever ran, and a rule stated only in one of
+them was never in effect. #241 moved every such rule into its skill, INV-302 was narrowed on
+2026-09-30 so a skill need not be fronted by a command, and #262 deleted the ten files, so
+`.claude/commands/` ships nothing. "Ships for the parent" now means a skill under
+`.claude/skills/` with a `SKILL.md`, or a command under `.claude/commands/` (INV-316's
+2026-09-30 note), and R4's register direction checks every shipped command or skill. The names
+stay canonical and reserved, and the maintainer still types `/<name>`; only the definition moved.
+
+**For a child:** if your host is Claude Code and you ship a command beside a skill of the same
+name, the command does not run there either. Move any rule the command states that its skill
+lacks into the skill, then delete the command. A command whose name differs from every skill (an
+alias) still runs and still conforms, and so does a host without skills that keeps its commands:
+the name is the invariant, and the invocation mechanism is the host's business (R4).
+
 ### 2026-09-29 — R4: a `required` operation may ship as a user-level skill plus an overlay
 
 **Was:** the parent met every operation §2 marks `required` with a command file of its own, and

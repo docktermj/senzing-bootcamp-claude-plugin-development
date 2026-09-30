@@ -31,16 +31,23 @@ maintainer between generation and execution. `/unattended-issue-loop` already fo
 adding the label — but that rule lives in the loop's file, and the audit is a different
 command whose reader may never open it.
 
-Enforces **INV-318** (no maintainer command applies `unattended-ok` to an issue it files) at the
-audit's command and skill. ⚠️ It cannot establish that a live run refrains from labeling, or that
-a filing command added later carries the sentence -- it pins the sentence where it is written.
+Enforces **INV-318** (no maintainer command or skill applies `unattended-ok` to an issue it
+files) at the audit's skill. ⚠️ It cannot establish that a live run refrains from labeling, or
+that a filing operation added later carries the sentence -- it pins the sentence where it is
+written.
+
+⚠️ **Dated note, 2026-09-30 (#262): the command-side assertions are dropped.** Until #262 each
+sentence was pinned in both the audit's command file and its skill. `/<name>` runs the skill
+(measured 2026-09-29, Claude Code 2.1.284, #241), so the command never ran; #241 moved its rules
+into the skill and #262 deleted it. Every assertion now reads the skill alone, and none was
+dropped.
 
 ⛔ **This asserts what the skill INSTRUCTS, never what a run does.** No offline test can
 observe `gh issue create` being called, or — harder still — *not* being called. Nothing here
 establishes that an unattended run refrains from filing; only that it is told to, in terms a
 later editor cannot quietly drop.
 
-Stdlib only; both files are read as text (INV-108).
+Stdlib only; the skill is read as text (INV-108).
 
 Source issue: #69 — titled for the defect it fixed, which has not described this command
 since 2026-09-16. The number is the citation; the old title is not repeated here, because
@@ -54,7 +61,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL = REPO_ROOT / ".claude" / "skills" / "production-readiness-audit" / "SKILL.md"
-COMMAND = REPO_ROOT / ".claude" / "commands" / "production-readiness-audit.md"
 
 #: An instruction to WRITE a finding into the archive, as opposed to reading it or
 #: forbidding the write. `specs/IMPLEMENTED.md` and `specs/INVARIANTS.md` are live records
@@ -64,8 +70,7 @@ WRITES_A_FINDING = re.compile(
 
 
 def texts():
-    return {"SKILL.md": SKILL.read_text(encoding="utf-8"),
-            "command": COMMAND.read_text(encoding="utf-8")}
+    return {"SKILL.md": SKILL.read_text(encoding="utf-8")}
 
 
 def flat(s):
@@ -73,10 +78,10 @@ def flat(s):
 
 
 class BothFilesExist(unittest.TestCase):
-    """Anti-vacuity: every assertion below reads these, so they must be real."""
+    """Anti-vacuity: every assertion below reads this, so it must be real."""
 
     def test_the_files_exist(self):
-        for name, path in (("skill", SKILL), ("command", COMMAND)):
+        for name, path in (("skill", SKILL),):
             with self.subTest(what=name):
                 self.assertTrue(
                     path.is_file(),

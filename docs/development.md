@@ -153,9 +153,12 @@ What stays here is repository-local: the command index below, and the rule gover
 repository's own maintainer pages name commands.
 
 ⛔ **(INV-316) A command named on a maintainer page either ships here or is marked as not shipping.**
-A command that ships has a file in `.claude/commands/`. One that does not carries its reason at
-the point of use: `/parity-check` *(children only)* and
-`/escalate-to-parent` *(children only)*, or a statement of retirement, as
+A command that ships is a skill under `.claude/skills/<name>/` with a `SKILL.md`, or a file in
+`.claude/commands/`. `/<name>` runs the skill directly (measured 2026-09-29 on Claude Code
+2.1.284, #241), so every maintainer operation here is its skill, and `.claude/commands/` ships no
+file (#262). One that does not ship carries its reason at the point of use:
+`/parity-check` *(children only)* and `/escalate-to-parent` *(children only)*, or a statement
+of retirement, as
 `/implement-spec` *(retired)* is below, or *(user level)*: the name is defined only under
 `~/.claude/skills/`, and this repository keeps its obligations in
 `.claude/skill-overlays/<name>.md` (#239), as for `/implement-github-issue` *(user level)* and
@@ -164,7 +167,8 @@ legitimately discusses a command it used to ship, and one it runs from user leve
 either into *ships* or *child's* is how a guard starts reporting a false phantom.
 `tests/test_canonical_operations_resolve.py` holds this both ways round — a name that neither
 ships nor carries the marker fails the suite, and so does a marker placed on a command that
-*does* ship. A *(user level)* marker also fails when no overlay backs it.
+*does* ship. A *(user level)* marker also fails when no overlay backs it, or when a skill or
+command of that name ships here.
 
 ⚠️ **INV-302's guard cannot see either page's diagrams.** It parses the numbered ``1. `/name` ``
 list shape only, so a phantom command inside a fenced block was invisible to it until this
@@ -174,10 +178,11 @@ the host's business (R4).
 
 ## Claude development skills
 
-⛔ **(INV-302) This list and `.claude/commands/` must agree in both directions, and every
-skill must be fronted by a command.** An entry marked *(user level)* is the exception INV-316
-allows: it has no command file here, and its overlay under `.claude/skill-overlays/` must
-exist. A documented command that does not ship tells you to
+⛔ **(INV-302) This list and the maintainer operations must agree in both directions**: every
+skill under `.claude/skills/`, together with any command under `.claude/commands/`. Each entry
+below is a skill, and `/<name>` runs it. An entry marked *(user level)* is the exception INV-316
+allows: no skill or command of that name ships here, and its overlay under
+`.claude/skill-overlays/` must exist. A documented command that does not ship tells you to
 run something that does not exist; one that ships undocumented is undiscoverable. Every
 entry carries a description. Do not state how many there are — the set is derived and
 compared, and a count in prose goes stale silently while reading authoritative.

@@ -26,7 +26,7 @@ hands the diff over, and this file asserts that it still does.
 **Enforces INV-310** — a maintainer command performing a permanent or append-only act on this
 repository's own records stops at the working tree and never commits or pushes. ⛔ **What this
 test does NOT establish:** that any run actually refrains from committing. No offline test can
-observe a `git commit` that does not happen. It establishes that both files *instruct* the stop,
+observe a `git commit` that does not happen. It establishes that the skill *instructs* the stop,
 in terms a later editor cannot quietly drop — so an `Enforced by` clause pointing here must not
 be read as a compliance claim. ⚠️ It also says nothing about `/propagate-to-public` or
 `/retrofit-from-public`, which stop at the working tree for a different reason and are recorded
@@ -37,7 +37,12 @@ run refrain from `git commit`, and nothing here establishes that one does. The s
 re-check and label-gate guards carry, named here rather than left for the file name to imply
 otherwise.
 
-Stdlib only; both files are read as text (INV-108).
+⚠️ **Dated note, 2026-09-30 (#262): the command-side assertions are dropped.** Until #262 the
+stop was pinned in the `review-invariants` command file as well as the skill. `/<name>` runs the
+skill (measured 2026-09-29, Claude Code 2.1.284, #241), so the command never ran; #262 deleted
+it. Each assertion now reads the skill alone, and none was dropped.
+
+Stdlib only; the skill is read as text (INV-108).
 
 Source issue: #78.
 
@@ -49,7 +54,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL = REPO_ROOT / ".claude" / "skills" / "review-invariants" / "SKILL.md"
-COMMAND = REPO_ROOT / ".claude" / "commands" / "review-invariants.md"
 
 #: An instruction to COMMIT the registration, as opposed to describing what the maintainer does
 #: with it afterwards. The pattern targets the imperative the skill used to carry.
@@ -57,8 +61,7 @@ COMMITS_THE_REGISTRATION = re.compile(r"(?i)verify,?\s+then\s+commit|then commit
 
 
 def texts():
-    return {"SKILL.md": SKILL.read_text(encoding="utf-8"),
-            "command": COMMAND.read_text(encoding="utf-8")}
+    return {"SKILL.md": SKILL.read_text(encoding="utf-8")}
 
 
 def flat(s):
@@ -66,10 +69,10 @@ def flat(s):
 
 
 class BothFilesExist(unittest.TestCase):
-    """Anti-vacuity: every assertion below reads these, so they must be real."""
+    """Anti-vacuity: every assertion below reads this, so it must be real."""
 
     def test_the_files_exist(self):
-        for name, path in (("skill", SKILL), ("command", COMMAND)):
+        for name, path in (("skill", SKILL),):
             with self.subTest(what=name):
                 self.assertTrue(
                     path.is_file(),

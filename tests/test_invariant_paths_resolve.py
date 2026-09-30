@@ -26,9 +26,15 @@ text cannot be changed, so the path cannot be made to resolve. `SUPERSEDED` list
 present in the register (a stale exemption fails) and it still does not resolve (an exemption
 for a path that came back fails). An entry that stops being true stops being allowed.
 
+⚠️ **Dated note, 2026-09-30 (#262): a second entry, for a deleted file.** INV-307's
+2026-09-24 dated note (#142) quotes the `delegate-to-mcp-server` command file as the site of the
+justification it retired. #262 deleted every command file, because `/<name>` runs the skill (measured 2026-09-29,
+Claude Code 2.1.284, #241), and INV-307's text cannot be edited to describe the path instead.
+The same two-halves re-justification binds it.
+
 ⚠️ **A NEW correction must describe a superseded path, never quote it.** The 2026-09-22
 correction says so in its own text and names the retired skill in prose instead. That keeps the
-exemption list at one entry rather than growing one per move.
+exemption list to the paths old register text already quotes, rather than growing one per move.
 
 ⚠️ **What this does NOT establish:** that the file at the path is the right file, that it does
 what the invariant says, or that the invariant is still true. It establishes only that the
@@ -62,6 +68,9 @@ SUPERSEDED = {
     ".claude/skills/implement-spec/list_specs.py":
         "INV-216's 2026-09-16 correction, written before #113 moved the script to "
         "tests/list_specs.py; superseded by the 2026-09-22 correction beneath it",
+    ".claude/commands/delegate-to-mcp-server.md":
+        "INV-307's 2026-09-24 dated note (#142), which names the command file as the site of the "
+        "retired by-construction justification; #262 deleted every command file (2026-09-30)",
 }
 
 
@@ -94,8 +103,8 @@ class DotPathsAreNotSkipped(unittest.TestCase):
 
     def test_a_dot_prefixed_path_is_matched(self):
         self.assertEqual(
-            [".claude/commands/release.md"],
-            PATH.findall("see `.claude/commands/release.md` for the rule"),
+            [".claude/skills/release/SKILL.md"],
+            PATH.findall("see `.claude/skills/release/SKILL.md` for the rule"),
             "a path beginning with a dot was not matched, so the entire .claude/ surface is "
             "invisible to this guard")
 

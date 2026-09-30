@@ -130,9 +130,10 @@ class TheBoundaryIsReported(unittest.TestCase):
         (shipped / "SKILL.md").write_text(
             "- ⛔ **Never ship a rule the boundary cannot count.**\n"
             "- ⛔ **Always measure what a range retires.**\n", encoding="utf-8")
-        surface = repo / ".claude" / "commands"
+        # Under `.claude/skills` since #262 took `.claude/commands` out of `SCAN_ROOTS`.
+        surface = repo / ".claude" / "skills" / "demo"
         surface.mkdir(parents=True)
-        (surface / "demo.md").write_text(
+        (surface / "SKILL.md").write_text(
             "- ⛔ **A rule on the maintainer surface, retired just the same.**\n",
             encoding="utf-8")
         git(repo, "add", "-A")

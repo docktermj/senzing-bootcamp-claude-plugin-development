@@ -35,6 +35,12 @@ then checked every root it places rather than counting the `.claude/` ones.
 file's; `test_reverse_contract_flags_the_maintainer_surface.py` proves the gate flags an uncited
 `.claude/` rule whatever the live range holds.
 
+⚠️ **Dated note, 2026-09-30 (#262): `.claude/commands` left `SCAN_ROOTS`.** #262 deleted the ten
+same-name command files, since `/<name>` runs the skill (measured 2026-09-29, Claude Code
+2.1.284, #241), so the maintainer surface this view must diff is `.claude/skills` and
+`.claude/skill-overlays`. The command directory is required again the moment a command ships
+there, read from `tests/_maintainer_surface.py`.
+
 Stdlib only; `conformance.py` is run as a subprocess and its source read as text (INV-108).
 
 Source issue: #38 (`the-github-issue-path-ships-guarantees-with-no-invariant`).
@@ -47,6 +53,8 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
+
+import _maintainer_surface as surface
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFORMANCE = REPO_ROOT / ".claude" / "skills" / "production-readiness-audit" / "conformance.py"
@@ -124,7 +132,10 @@ class TheSinceViewReachesTheMaintainerSurface(unittest.TestCase):
 
     def test_the_maintainer_surface_is_scanned(self):
         specs = diff_pathspecs()
-        missing = sorted({".claude/commands", ".claude/skills"} - specs)
+        surface_roots = {".claude/skills", ".claude/skill-overlays"}
+        if surface.command_files():
+            surface_roots.add(".claude/commands")
+        missing = sorted(surface_roots - specs)
         self.assertEqual(
             [], missing,
             "the `since` view does not diff %s, so a durable rule landing there is invisible "

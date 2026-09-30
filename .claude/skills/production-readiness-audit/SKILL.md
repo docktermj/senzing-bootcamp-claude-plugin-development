@@ -466,6 +466,8 @@ durable.
 
 - **Lead with anything that breaks a documented path**, not the longest list. Severity
   ordering, not discovery order.
+- ⛔ **(INV-317) Record every finding before fixing anything, and never into `specs/`**, as
+  Step 8 says, so every finding the report names is already written down.
 - **Name the spec file each finding was written into**, and say which are fixed and which
   are recorded-but-open.
 - **State the verdict on each of the four properties separately.** "Consistent and

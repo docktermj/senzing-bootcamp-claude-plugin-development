@@ -44,11 +44,12 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 INSTRUCTION_ROOTS = (".claude", "docs")
 
 #: Files whose whole subject is the freeze, and which therefore quote what must not be done.
-#: ⚠️ Kept to two named files rather than a pattern -- an exemption that grows by glob is how a
-#: guard stops covering the thing it was written for.
+#: ⚠️ Kept to named files rather than a pattern -- an exemption that grows by glob is how a
+#: guard stops covering the thing it was written for. (Dated note, 2026-09-30, #262: the second
+#: entry, the `delegate-to-mcp-server` command file, was deleted with every other command file,
+#: and its exemption went with it; the skill it fronted was never exempt.)
 QUOTING_THE_RULE = {
     "docs/FAMILY_WORKFLOW.md",
-    ".claude/commands/delegate-to-mcp-server.md",
 }
 
 #: The live exceptions, read from the rule rather than restated here (INV-308: one definition

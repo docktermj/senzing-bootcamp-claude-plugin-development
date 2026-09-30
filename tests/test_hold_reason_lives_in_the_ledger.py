@@ -27,6 +27,11 @@ bullet-by-bullet, so one written as its own top-level bullet terminates the bloc
 implementation"* is a property of the work; a maintainer's hold is a decision. Collapsing them is
 what made the old fallback misleading.
 
+⚠️ **Dated note, 2026-09-30 (#262): the command-side assertions are dropped.** Until #262 the
+`HELD <date>` form and the retired spec-file route were pinned in the `review-invariants` command
+file as well as the skill. `/<name>` runs the skill (measured 2026-09-29, Claude Code 2.1.284,
+#241), so the command never ran; #262 deleted it. Both assertions now read the skill alone.
+
 Stdlib only; the helper is loaded by path and its module-level roots point at a temporary tree,
 since it takes no `--repo` argument (INV-108).
 
@@ -47,7 +52,6 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HELPER = REPO_ROOT / ".claude" / "skills" / "review-invariants" / "pending_invariants.py"
 SKILL = REPO_ROOT / ".claude" / "skills" / "review-invariants" / "SKILL.md"
-COMMAND = REPO_ROOT / ".claude" / "commands" / "review-invariants.md"
 LEDGER = REPO_ROOT / "specs" / "IMPLEMENTED.md"
 
 DEFERRAL = """# Implemented Specs
@@ -190,8 +194,8 @@ class TheSpecFileRouteIsGone(unittest.TestCase):
 
 
 class TheDocumentsNameTheNewLocation(unittest.TestCase):
-    def test_both_files_say_the_hold_goes_in_the_block(self):
-        for name, path in (("SKILL.md", SKILL), ("command", COMMAND)):
+    def test_the_skill_says_the_hold_goes_in_the_block(self):
+        for name, path in (("SKILL.md", SKILL),):
             text = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
             with self.subTest(file=name):
                 self.assertIn(
@@ -199,8 +203,8 @@ class TheDocumentsNameTheNewLocation(unittest.TestCase):
                     "%s does not name the `HELD <date>:` form, so a maintainer holding a block "
                     "has no stated way to record the reason where the queue reads it" % name)
 
-    def test_neither_file_still_sends_the_reason_to_the_spec_file(self):
-        for name, path in (("SKILL.md", SKILL), ("command", COMMAND)):
+    def test_the_skill_no_longer_sends_the_reason_to_the_spec_file(self):
+        for name, path in (("SKILL.md", SKILL),):
             text = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
             with self.subTest(file=name):
                 self.assertNotRegex(

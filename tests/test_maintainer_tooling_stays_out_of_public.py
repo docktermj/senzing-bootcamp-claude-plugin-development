@@ -1,8 +1,8 @@
 """Maintainer tooling under `.claude/` is unreachable by the propagate mirror.
 
 The public access repo ships a participant runtime. `.claude/` is the maintainer half of
-this repo -- the development commands (`/implement-github-issue`, `/propagate-to-public`,
-`/retrofit-from-public`), the skills behind them, and `settings.local.json`. Publishing any
+this repo -- the maintainer operations (`/propagate-to-public`, `/retrofit-from-public` and
+the rest), each defined by its skill, and `settings.local.json`. Publishing any
 of it hands a bootcamper release-path tooling that acts on repos they do not have, and in
 the case of `retrofit-from-public` and `propagate-to-public`, tooling that would write
 across two checkouts.
@@ -34,6 +34,11 @@ wholesale, and that every source is one of the reviewed roots. It does **NOT** e
 `propagate.sh` was ever run, that the public repo's contents are correct, or that the reverse
 path (`retrofit.sh`) declines to pull governance back — those are separate concerns.
 
+⚠️ **Dated note, 2026-09-30 (#262): the tooling to protect is the skills.** The anti-vacuity
+check once counted the files under `.claude/commands/`. #262 deleted the ten same-name command
+files, since `/<name>` runs the skill (measured 2026-09-29, Claude Code 2.1.284, #241), so the
+check now counts the maintainer operations `tests/_maintainer_surface.py` derives.
+
 Stdlib only; the script is read as text (INV-108).
 
 Source issue: #19 (`/retrofit-from-public`).
@@ -45,9 +50,10 @@ import unittest
 from pathlib import PurePosixPath
 from pathlib import Path
 
+import _maintainer_surface as surface
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PROPAGATE_SH = REPO_ROOT / ".claude" / "skills" / "propagate-to-public" / "propagate.sh"
-COMMANDS_DIR = REPO_ROOT / ".claude" / "commands"
 
 #: An rsync source argument naming a path in THIS repo: "$here/<path>".
 #: The destination side is "$dest/..." and is deliberately not matched -- what the public
@@ -101,11 +107,11 @@ class NeitherSideIsEmpty(unittest.TestCase):
                 % (expected, sorted(found)))
 
     def test_there_is_maintainer_tooling_to_protect(self):
-        commands = sorted(p.name for p in COMMANDS_DIR.glob("*.md"))
-        self.assertTrue(
-            commands,
-            "no maintainer command files found in %s; this guard protects an empty directory"
-            % COMMANDS_DIR)
+        operations = sorted(surface.operations())
+        self.assertIn(
+            "propagate-to-public", operations,
+            "no maintainer skill or command was found under %s; this guard protects an empty "
+            "directory" % surface.CLAUDE_DIR)
 
 
 class TheSiblingIsNotMistakenForTheChild(unittest.TestCase):
@@ -119,7 +125,7 @@ class TheSiblingIsNotMistakenForTheChild(unittest.TestCase):
             "path components")
 
     def test_the_maintainer_dir_and_its_children_are_caught(self):
-        for path in (".claude", ".claude/commands", ".claude/commands/retrofit-from-public.md",
+        for path in (".claude", ".claude/skills", ".claude/skills/retrofit-from-public/SKILL.md",
                      ".claude/skills/propagate-to-public/propagate.sh"):
             self.assertTrue(
                 reaches_into_maintainer_dir(path),

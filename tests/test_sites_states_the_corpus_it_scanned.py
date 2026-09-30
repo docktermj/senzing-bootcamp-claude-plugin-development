@@ -27,6 +27,11 @@ than implying a measured absence.
 wrote. The assertions establish what the command prints for a block of the right *shape*; they
 do not establish that the shape matches every block the ledger has held.
 
+⚠️ **Dated note, 2026-09-30 (#262): the command-side assertion is dropped.** Until #262 the
+caveat was pinned in the `review-invariants` command file as well as the skill. `/<name>` runs
+the skill (measured 2026-09-29, Claude Code 2.1.284, #241), so the command never ran; #262
+deleted it. The skill's caveat is still asserted, with the same pattern.
+
 Stdlib only; the helper is loaded by path and its module-level roots are pointed at a temporary
 tree, since it takes no `--repo` argument (INV-108).
 
@@ -47,7 +52,6 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HELPER = REPO_ROOT / ".claude" / "skills" / "review-invariants" / "pending_invariants.py"
 SKILL = REPO_ROOT / ".claude" / "skills" / "review-invariants" / "SKILL.md"
-COMMAND = REPO_ROOT / ".claude" / "commands" / "review-invariants.md"
 
 #: A block in the shape `parse()` reads: a rule bullet naming its site, then drafted wording.
 #: ⚠️ The wording matters to the scan — its rare 6+-character words are the search terms — so a
@@ -285,13 +289,6 @@ class TheDocumentsCarryTheCaveat(unittest.TestCase):
             "SKILL.md tells the maintainer to derive the site set from `sites` without saying "
             "that its candidate scan reads one root. For an invariant shipping in `.claude/` "
             "or `tests/` that instruction points at a scan covering none of it")
-
-    def test_the_command_says_which_corpus_the_candidates_come_from(self):
-        text = re.sub(r"\s+", " ", COMMAND.read_text(encoding="utf-8"))
-        self.assertRegex(
-            text.lower(), r"scan (?:covers|reads) (?:one root|the plugin)",
-            "the command describes the three groups without saying that the candidates come "
-            "from one root, so a reader takes the group as complete")
 
 
 if __name__ == "__main__":

@@ -20,9 +20,15 @@ eventually grant again.
 
 Stdlib only; every file is read as text (INV-108).
 
-Enforces **INV-319** (a filing command files in this repository only and names no other) at
-this command's surfaces. ⚠️ It pins the rule where it is written and cannot establish that a
-live run passes no other repository.
+Enforces **INV-319** (a filing command or skill files in this repository only and names no
+other) at this operation's skill. ⚠️ It pins the rule where it is written and cannot establish
+that a live run passes no other repository.
+
+⚠️ **Dated note, 2026-09-30 (#262): the command-side assertions are dropped.** Until #262 the
+`--repo` ban, the live-exception wording, the retired glob and the spec-template pointer were
+each pinned in both the command file and `SKILL.md`. `/<name>` runs the skill (measured
+2026-09-29, Claude Code 2.1.284, #241), so the command never ran; #241 moved its rules into the
+skill and #262 deleted it. Each assertion now reads the skill alone, and none was dropped.
 
 Source issue: #114.
 
@@ -36,7 +42,6 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL_DIR = REPO_ROOT / ".claude" / "skills" / "delegate-to-mcp-server"
 SKILL = SKILL_DIR / "SKILL.md"
-COMMAND = REPO_ROOT / ".claude" / "commands" / "delegate-to-mcp-server.md"
 LEDGER_SCRIPT = SKILL_DIR / "coverage_ledger.py"
 ISSUE_TEMPLATE = SKILL_DIR / "issue-template.md"
 SPEC_TEMPLATE = SKILL_DIR / "spec-template.md"
@@ -59,9 +64,8 @@ def text(path):
 class TheInputsAreReal(unittest.TestCase):
     """INV-265 -- every assertion below reads these files."""
 
-    def test_the_skill_and_its_command_exist(self):
-        for name, path in (("SKILL.md", SKILL), ("command", COMMAND),
-                           ("coverage_ledger.py", LEDGER_SCRIPT)):
+    def test_the_skill_and_its_ledger_script_exist(self):
+        for name, path in (("SKILL.md", SKILL), ("coverage_ledger.py", LEDGER_SCRIPT)):
             with self.subTest(what=name):
                 self.assertTrue(path.is_file(), "%s is missing at %s" % (name, path))
 
@@ -88,7 +92,7 @@ class TheTemplateIsAnIssueTemplate(unittest.TestCase):
             "directs a run to it")
 
     def test_nothing_still_points_at_the_spec_template(self):
-        for name, path in (("SKILL.md", SKILL), ("command", COMMAND)):
+        for name, path in (("SKILL.md", SKILL),):
             with self.subTest(what=name):
                 self.assertNotIn(
                     "spec-template.md", text(path),
@@ -114,7 +118,7 @@ class TheOutputPathIsAnIssue(unittest.TestCase):
             "gone out -- the same reason Step 8 gates `submit_feedback`")
 
     def test_the_parent_never_files_into_a_child(self):
-        for name, path in (("SKILL.md", SKILL), ("command", COMMAND)):
+        for name, path in (("SKILL.md", SKILL),):
             with self.subTest(what=name):
                 self.assertRegex(
                     text(path), NO_REPO_FLAG,
@@ -152,9 +156,9 @@ class NothingIsWrittenIntoTheFrozenArchive(unittest.TestCase):
         nobody had written down — and `docs/FAMILY_WORKFLOW.md` §8 said *"four live exceptions"*
         while this was the fifth.
 
-        The ledger is now a **recorded decision** in INV-307 and §8, and both sites must say so.
+        The ledger is now a **recorded decision** in INV-307 and §8, and the skill must say so.
         """
-        for name, path in (("SKILL.md", SKILL), ("command", COMMAND)):
+        for name, path in (("SKILL.md", SKILL),):
             with self.subTest(what=name):
                 body = re.sub(r"\s+", " ", text(path))
                 self.assertRegex(
@@ -165,8 +169,8 @@ class NothingIsWrittenIntoTheFrozenArchive(unittest.TestCase):
                     "not reach it has been given a blind spot, not a permission" % name)
 
     def test_neither_site_still_rests_on_the_glob(self):
-        """⛔ The retired justification must not survive anywhere, in either copy."""
-        for name, path in (("SKILL.md", SKILL), ("command", COMMAND)):
+        """⛔ The retired justification must not survive anywhere."""
+        for name, path in (("SKILL.md", SKILL),):
             with self.subTest(what=name):
                 body = re.sub(r"\s+", " ", text(path))
                 stale = re.search(

@@ -274,11 +274,22 @@ def next_id():
 #: roots stayed at the old scope and its guard passed only because nothing had yet used the new.
 #:
 #: ⚠️ `REPO` is last and is what makes a repo-relative path resolve -- `tests/test_x.py`,
-#: `.claude/commands/y.md`, `specs/INVARIANTS.md`. Before #59 the roots were the three PLUGIN
+#: `.claude/skills/y/SKILL.md`, `specs/INVARIANTS.md`. Before #59 the roots were the three PLUGIN
 #: bases alone, so every rule outside `plugins/` failed to resolve and was **skipped without
 #: being counted**. It is a root rather than an allowlist of directories deliberately: a list
 #: goes stale as the repo grows, and going stale here is silent.
 RESOLUTION_ROOTS = (PLUGIN / "skills", PLUGIN / "scripts", PLUGIN, REPO)
+
+
+#: ⚠️ **A maintainer command file that no longer ships resolves to the skill it fronted (#262).**
+#: Registered blocks still name locations under `.claude/commands/`, and the ledger is
+#: append-only, so those locations cannot be rewritten. `/<name>` runs the skill when a skill
+#: and a command share a name (measured 2026-09-29, Claude Code 2.1.284), #241 moved every rule
+#: a command carried into its same-name skill, and #262 deleted the command files. So such a
+#: location resolves to `.claude/skills/<name>/SKILL.md`, and its quote is compared there,
+#: verbatim as before. A command file that still ships resolves to itself, above; a name with no
+#: skill behind it stays unresolved and is reported.
+RETIRED_COMMAND = re.compile(r"\.claude/commands/([a-z0-9][a-z0-9-]*)\.md")
 
 
 def resolve(loc):
@@ -286,6 +297,11 @@ def resolve(loc):
     for base in RESOLUTION_ROOTS:
         if (base / loc).is_file():
             return base / loc
+    retired = RETIRED_COMMAND.fullmatch(loc)
+    if retired:
+        skill = REPO / ".claude" / "skills" / retired.group(1) / "SKILL.md"
+        if skill.is_file():
+            return skill
     return None
 
 
