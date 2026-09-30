@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## invariant-review-2026-09-30
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one review session)
-- **Commit:** uncommitted
+- **Commit:** `8d19510`
 - **Files changed:** `.claude/commands/auto-test.md`, `.claude/commands/dry-run.md`, `.claude/skill-overlays/implement-github-issue.md`, `.claude/skill-overlays/unattended-issue-loop.md`, `.claude/skills/auto-test/SKILL.md`, `.claude/skills/dry-run/SKILL.md`, `.claude/skills/release/SKILL.md`, `invariant-manifest.json`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2-discover.md`, `specs/IMPLEMENTED.md`, `specs/INVARIANTS.md`, `tests/test_declined_ledger.py`, `tests/test_invariant_enforcer_citations.py`, `tests/test_phase_d_how_state_audit.py`, `tests/test_quality_assessment_type_name_check.py`, `tests/test_skills_state_their_commands_argument_handling.py`, `tests/test_supersession_has_one_syntax.py`, `tests/test_unattended_loop_is_label_gated.py`
 - **MCP re-check:** n/a (no Senzing fact is newly asserted; INV-234's note carries the byte-count fact measured live on server 1.37.15 during the 2026-09-29 loop run, and INV-336 relies on #220's live `mapping_workflow` probes of the same date)
 - **Summary:** the queue went **19 pending → 0**, and three held blocks whose revisit conditions were met were decided with them. The held set is 7.
