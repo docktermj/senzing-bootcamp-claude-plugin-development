@@ -43,6 +43,63 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## production-readiness-audit-2026-09-30
+
+**Not a spec** — a dated record of an audit run, **attended**, following 33 merged pull requests since the previous audit: the #214–#229 findings, three `/unattended-issue-loop` runs, #258, and the three 2026-09-30 `/review-invariants` sessions (#273, #277, #280).
+
+- **Implemented:** 2026-09-30 (**32 findings in 13 root-cause groups; 13 filed as #282–#294; no shipped file modified by this audit**)
+- **Files changed:** this record only.
+- **MCP re-check:** server 1.37.16, 2026-09-30. Two findings assert a Senzing fact, and the lead re-asked both. `sdk_guide(topic='install', platform='linux_apt', language='java')` states the EULA question in its install commands ("BEFORE running this command, ASK the user"), which supports #284. The same reply names no route for Java bindings, so it does not settle #287's INV-222 question; #287 asks its implementer to find the owning route (INV-213). Every other finding is internal consistency.
+- **Baseline.** `main` at `97ca983`, tree clean.
+  - Suite **5,202 OK (8 skipped)**, run as the CI mirror runs it: a fresh worktree, an empty `HOME` outside `/tmp`, and `PYTHONUSERBASE=/home/senzing/.local` so fpdf2 stays visible.
+  - `citations.py verify` clean at **336** invariants. `coverage_reports.py both` clean.
+  - `rules`: **660** hard-rule lines (461 line-anchored + 199 mid-line), **0** in a section citing no invariant.
+  - `per-rule`: **325** citing no invariant at the rule. `enumerations`: **54 of 336**.
+  - `size`: 45 shipped files, **204,794** words. `duplication`: 171 repeated passages across 101 file pairs.
+  - `since --since-last-audit` resolved to **`2451f1a`** (the 2026-09-28 entry), with no `SUSPECT-REF`: **44** hard-rule lines across 20 files.
+  - `reverse-check`: **TESTED 19 (19 cited, 0 not)**, **UNTESTED 25 (24 cited, 1 not)**, **VERDICT: NOT CLEAN**. The one uncited line is `feedback-to-issues/SKILL.md:292`, filed in #290.
+  - **Zero open issues** at the start of the run, so no finding is a duplicate.
+- **Scope, stated rather than implied.** Four read-only sweeps, each reported and read in full.
+  - **(A)** The tests and maintainer surface, against the amendments the 2026-09-30 reviews applied.
+  - **(B)** The reverse contract: all 44 lines `since` reports, plus the uncited rules they sit beside.
+  - **(C)** Completeness and coherence of the maintainer surface and Modules 3 and 5.
+  - **(D)** Consistency and concision of Modules 2, 5 and 6 and graduation, plus the Module 6 subset chain.
+  - ⚠️ **INV-028–INV-049 were read only for Modules 2, 3, 5 and 6**; the others were not re-read this run.
+- **Findings, filed.** The sweep rated D-F2 high. The lead re-read it and lowered it to medium, because nothing establishes that generated `src/load/**` code reads `data/subsets/` at run time.
+  - **Medium:** #282 (Module 3's three check lists; results validation required to "pass", against INV-229); #283 (Record Type Check template and name-mapping citations against INV-336); #284 (EULA-before-install rule and the existing-install half of module-02's INV-222 line, both unregistered); #285 (the audit skill's "never into `specs/`" against INV-317; INV-317 names removed command files); #286 (`data/subsets/` missing from INV-050's tree and graduation's Exclude list).
+  - **Low:** #287 (no Rust step in Module 2 Phase 3; Java/C#/TypeScript package managers against INV-222); #288 ("pending" wording left after the 2026-09-30 reviews); #289 (INV-132 not applied at every site); #290 (seven missing or wrong citations); #291 (live-record lists and a pinned spec count); #292 (Modules 5 and 6 drift from INV-335, Step 17 and the listing section); #293 (graduation restates ground-rules' model-switch rule); #294 (INV-316 markers for `/order-github-issues` and `/escalate-to-parent`).
+  - **Maintainer decisions taken this run, recorded in the issues.**
+    - #286: graduation leaves `data/subsets/` out of `production/`, because a subset is an evaluation artifact.
+    - #294: `/order-github-issues` is marked *(user level)* and gets a repo overlay.
+  - **Leads, not filed.**
+    - `module-02-sdk-setup/SKILL.md:448`: an absence claim with no `MCP-NEGATIVE` marker.
+    - `phase2-data-mapping.md:584`: the citation looks wrong (noted in #290's scope).
+    - `/dry-run` `:302-303`: no outcome for a consented send that fails (low confidence).
+    - The server's `download_resource` now says to use `search_docs` for the Entity Specification. That lead is for `/delegate-to-mcp-server`.
+  - The `unattended-ok` label was applied to none of them.
+- **The four properties, separately.**
+  - **Consistent:** ❌ defects. Module 3 gives three definitions of success (#282), and a template contradicts INV-336 (#283).
+  - **Coherent:** ❌ defects. Wrong invariants are cited (#285, #283, #290), and applied amendments are still described as pending (#288).
+  - **Complete:** ❌ gaps. No Rust binding step (#287), two unregistered rules (#284), and a directory missing from the project tree (#286).
+  - **Concise:** ⚠️ mostly holds. One rule is restated with drift (#293), and four cross-references point to the wrong section (#292).
+- **Verified as correct, so the next audit need not re-derive it.**
+  - INV-155's tabs and INV-204's probes hold at every site.
+  - INV-334, INV-335 and INV-336 are cited at their sites, apart from those filed in #283 and #292.
+  - INV-302, INV-303, INV-316 and INV-337 hold across the skills, overlays and `docs/development.md`, apart from #294.
+  - Every anchor in the changed files resolves.
+  - The Module 6 subset chain agrees across Phases A–C: the markers, the `load_subset:` blocks and the reconciliation.
+- ⛔ **Coverage limits.**
+  - **(1)** The **conversational invariants remain untested**: INV-251, INV-006, INV-014, INV-005/008/009 and every gate-ordering rule govern live turns, and reading cannot establish them. That is `/dry-run` phase 3 only.
+  - **(2)** The **325** standing lines from `per-rule --uncited` were not worked.
+  - **(3)** The plugin was **not executed**; this is a static pass, on Linux only.
+  - **(4)** `lint-workflows` cannot run locally. Playwright is not installed. Everything else was present: fpdf2 2.8.5, `pdftoppm`, docker, Chrome, Firefox and `libSz.so`.
+- ⛔ **My own mistakes.**
+  - The sweep's high rating of D-F2 rested on a reading the text does not support. The lead corrected it before filing.
+  - D-F3 and D-F4 are sweep leads the lead did not reproduce. #283 marks them "check first", and one of them may already be handled at `phase2-data-mapping.md:746-748`.
+  - The first filing attempt was refused by the permission classifier. The issues were filed after the maintainer asked again, unchanged from the approved drafts.
+- **Establishes no invariant.** This audit modifies no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. The rules and amendments it asks for (#284, #285, #286, #287, #288) go through `/review-invariants` as blocks. No id is written here, because an unminted id fails `citations.py verify`.
+- **Commit:** b76b967
+
 ## invariant-review-2026-09-30c
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one review session, the third that day)
