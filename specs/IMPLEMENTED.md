@@ -98,7 +98,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - D-F3 and D-F4 are sweep leads the lead did not reproduce. #283 marks them "check first", and one of them may already be handled at `phase2-data-mapping.md:746-748`.
   - The first filing attempt was refused by the permission classifier. The issues were filed after the maintainer asked again, unchanged from the approved drafts.
 - **Establishes no invariant.** This audit modifies no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. The rules and amendments it asks for (#284, #285, #286, #287, #288) go through `/review-invariants` as blocks. No id is written here, because an unminted id fails `citations.py verify`.
-- **Commit:** uncommitted
+- **Commit:** b76b967
 
 ## invariant-review-2026-09-30c
 
