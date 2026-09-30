@@ -207,6 +207,7 @@ not a file the guard fails to reach: the guard checks every file in `specs/`.
 
 ### Development loop
 
+1. `/order-github-issues` *(user level)* - Report how the open issues depend on each other and name one to start; FAMILY_WORKFLOW R8's choosing operation.
 1. `/implement-github-issue` *(user level)* - Take the GitHub issue you name to pull-request-open on its own branch; FAMILY_WORKFLOW R8 says who chooses it.
 1. `/review-invariants` - Decide the deferred invariants awaiting sign-off.
 1. `/delegate-to-mcp-server` - Find Senzing facts the plugin still holds that the MCP server now serves, and file issues to delegate them.

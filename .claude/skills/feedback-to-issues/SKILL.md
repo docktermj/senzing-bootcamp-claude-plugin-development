@@ -14,10 +14,10 @@ implement the fixes — it turns raw feedback into actionable, deduplicated issu
 developer (or a follow-up session) can act on.
 
 ⛔ **It files in its own repository and nowhere else.** In child repos cross-repo routing
-is owned exclusively by `/escalate-to-parent`; in this repo — the parent — parent-to-child
-change travels by **parity**, so the parent never files into children at all. ⚠️ A `--repo`
-argument to `gh issue create`, or any other way of naming a repository, is a violation of
-this rule rather than a convenience.
+is owned exclusively by `/escalate-to-parent` *(children only)*; in this repo — the parent —
+parent-to-child change travels by **parity**, so the parent never files into children at all.
+⚠️ A `--repo` argument to `gh issue create`, or any other way of naming a repository, is a
+violation of this rule rather than a convenience.
 
 ⛔ **It never writes into `specs/`.** That directory is a **read-only archive** as of the
 2026-09-15 cutover (INV-307). Read it for historical context — a spec often records why the
@@ -221,9 +221,9 @@ gh issue create --title "<title>" --body-file <file>
 ```
 
 ⛔ **(INV-319) Never pass `--repo`, and never file anywhere but here.** In child repos cross-repo
-routing is owned exclusively by `/escalate-to-parent`; this is the parent, where
-parent-to-child change travels by **parity**, so the parent never files into children at
-all. A flag naming another repository is a violation of that rule, not a convenience.
+routing is owned exclusively by `/escalate-to-parent` *(children only)*; this is the parent,
+where parent-to-child change travels by **parity**, so the parent never files into children
+at all. A flag naming another repository is a violation of that rule, not a convenience.
 
 Rules for the issue itself:
 

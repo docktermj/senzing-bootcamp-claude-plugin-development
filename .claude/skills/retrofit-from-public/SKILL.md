@@ -151,8 +151,8 @@ GitHub issues, not a modified working tree.**
    `/production-readiness-audit` apply, for the same reason: an issue can be edited or closed
    afterwards but never un-filed.
 5. ⛔ **(INV-312) Files in this repository only.** Cross-repo filing belongs exclusively to
-   `/escalate-to-parent`; this command never files anywhere but its own tracker, in the parent and
-   in every child that inherits it.
+   `/escalate-to-parent` *(children only)*; this command never files anywhere but its own
+   tracker, in the parent and in every child that inherits it.
 6. Each issue body carries the **public commit** (subject and SHA), the paths affected, and
    ⚠️ **the inverse slug rewrite as work still to do** — see below.
 

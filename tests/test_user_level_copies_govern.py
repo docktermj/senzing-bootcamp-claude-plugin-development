@@ -1,4 +1,4 @@
-"""The two skills whose user-level copy governs say so, and the repository keeps only its overlay.
+"""The skills whose user-level copy governs say so, and the repository keeps only its overlay.
 
 `implement-github-issue` and `unattended-issue-loop` each had a full `SKILL.md` here and another
 under `~/.claude/skills/`. The user-level copy is the one that loads, and the two had drifted
@@ -28,7 +28,12 @@ dropped the check that pinned it: the command files that carried a copy of the h
 that a run meets the overlay's obligations. It pins that the repository's text points the right
 way and holds no second procedure.
 
-Source issues: #215, #239.
+#294 added `order-github-issues` to `GOVERNED`. It never had a copy here; its overlay exists so
+that `/order-github-issues` *(user level)* resolves to something this repository can check
+(INV-316), and says that the governing copy has no overlay hook and that this repository adds
+no obligations.
+
+Source issues: #215, #239, #294.
 
 Stdlib only; every surface is read as text (INV-108).
 
@@ -47,7 +52,7 @@ CLAUDE = REPO_ROOT / ".claude"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
 
 #: The skills whose user-level copy governs. This repository carries only their overlays.
-GOVERNED = ("implement-github-issue", "unattended-issue-loop")
+GOVERNED = ("implement-github-issue", "unattended-issue-loop", "order-github-issues")
 
 #: Command boilerplate an overlay must not carry: it is not a command (#239).
 BOILERPLATE = (r"\$ARGUMENTS", r"(?i)\binvoke the `[a-z-]+` skill", r"(?im)^maintainer request:",

@@ -214,13 +214,13 @@ closed but not yet released has not reached any bootcamper.
 
 **R8 — `implement-github-issue` *(user level)* never begins work on an issue the maintainer
 has not approved, and choosing the issue is not its job.** Choosing belongs to **the operation
-that chooses the issue** — `/order-github-issues` in this host. That operation reviews the open
-set, reports what it found, **names the issue it suggests**, and **stops**. It may analyze, it
-may rank, it may name one; it may not start. `implement-github-issue` *(user level)* takes the
-one issue the maintainer names; invoked with no argument it **names no issue** and stops. It
-pushes branches and opens pull requests, and *acting without approval* is the autonomy it is
-designed not to have. ⚠️ For `unattended-issue-loop` *(user level)*, the `unattended-ok` label
-is that approval, given one issue at a time (§2).
+that chooses the issue** — `/order-github-issues` *(user level)* in this host. That operation
+reviews the open set, reports what it found, **names the issue it suggests**, and **stops**. It
+may analyze, it may rank, it may name one; it may not start. `implement-github-issue`
+*(user level)* takes the one issue the maintainer names; invoked with no argument it **names no
+issue** and stops. It pushes branches and opens pull requests, and *acting without approval* is
+the autonomy it is designed not to have. ⚠️ For `unattended-issue-loop` *(user level)*, the
+`unattended-ok` label is that approval, given one issue at a time (§2).
 
 ⚠️ **The choosing operation is a host mechanism, not a canonical operation**, so it has no §2
 row: R4 reserves names, and the invocation mechanism is the host's business. A child conforms by
@@ -486,7 +486,7 @@ approved. Invoked with no argument it reviews the open set, reports what it foun
 issue it suggests**, and **stops**."*
 
 **R8 now:** the dependency report, its reading rules and the closing suggestion belong to **the
-operation that chooses the issue**, which is `/order-github-issues` in this host.
+operation that chooses the issue**, which is `/order-github-issues` *(user level)* in this host.
 `implement-github-issue` invoked with no argument **names no issue**. *Never begins work on an
 issue the maintainer has not approved* is unchanged, and every reading rule survives word for
 word. No §2 row is added: the choosing operation is a host mechanism, and R4 reserves names
