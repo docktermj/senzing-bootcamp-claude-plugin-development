@@ -176,7 +176,7 @@ class AMismatchIsDiagnosed(unittest.TestCase):
         self.assertRegex(
             self.step,
             r"(?i)compares the engine against \*\*a prediction the guide made\*\*",
-            "the reason this check is unlike the other seven is unstated")
+            "the reason this check is unlike the installation checks is unstated")
 
     def test_it_asks_the_engine_why(self):
         self.assertRegex(self.step, r"(?i)Ask the engine why, before concluding anything",
@@ -217,7 +217,7 @@ class AMismatchIsDiagnosed(unittest.TestCase):
     def test_the_check_is_reported_separately(self):
         self.assertRegex(
             self.step,
-            r"(?i)reported separately from the other seven",
+            r"(?i)reported separately from the other checks",
             "a mismatch can still turn the module's overall result into a failure")
 
     def test_the_four_checks_still_exist(self):
@@ -238,12 +238,16 @@ class TheSuccessIndicatorDistinguishesTheChecks(unittest.TestCase):
             "the success indicator still gives the bootcamper no way to tell an install "
             "failure from a wrong prediction")
 
-    def test_it_names_the_seven_install_checks(self):
+    def test_it_names_the_eight_install_checks(self):
+        # #282: the count was "7" and each "seven" list dropped a different check. Phase 1
+        # records eight installation checkpoints; the lists are pinned to Phase 1's own
+        # `**Checkpoint:**` keys by `test_module3_check_lists_agree.py`.
         self.assertRegex(
-            self.flat, r"(?i)\*\*7 installation checks\*\*",
+            self.flat, r"(?i)\*\*8 installation checks\*\*",
             "the install checks are not counted separately")
         for check in ("MCP connectivity", "engine initialization", "SDK initialization",
-                      "code generation", "build", "data-source registration", "loading"):
+                      "code generation", "build", "data-source registration", "loading",
+                      "database operations"):
             with self.subTest(check=check):
                 self.assertIn(check, self.flat, "an install check is unnamed")
 
@@ -301,7 +305,7 @@ class TheReportCanExpressTheThirdOutcome(unittest.TestCase):
         # banner branch read "If ALL checks passed" — caught by its own negative control.
         self.assertRegex(
             self.flat,
-            r"(?i)If all seven installation checks passed:\*\* display a success banner",
+            r"(?i)If all the installation checks passed:\*\* display a success banner",
             "the success banner still branches on ALL checks, so an explained mismatch "
             "cannot reach it")
         self.assertNotRegex(
@@ -314,7 +318,7 @@ class TheReportCanExpressTheThirdOutcome(unittest.TestCase):
             "the failure summary still fires on any check, which is the FAILURES DETECTED "
             "banner on a healthy install")
         self.assertRegex(
-            self.flat, r"(?i)If ANY of the seven installation checks failed",
+            self.flat, r"(?i)If ANY of the installation checks failed",
             "the failure branch does not say which checks it reads")
 
     def test_the_banner_does_not_claim_all_checks_passed(self):
@@ -348,7 +352,7 @@ class TheReportCanExpressTheThirdOutcome(unittest.TestCase):
     def test_the_module_status_comes_from_the_install_checks(self):
         self.assertRegex(
             self.flat,
-            r"(?i)module-level `status` is set from the seven installation checks only",
+            r"(?i)module-level `status` is set from the installation checks only",
             "a healthy install can still be recorded as a failed module, and graduation "
             "reads that value")
 
@@ -357,8 +361,12 @@ class TheReportCanExpressTheThirdOutcome(unittest.TestCase):
             self.flat, r"(?i)capture that all 8 checks passed",
             "the recap — the keepsake — is still told to assert something that is false "
             "on the expectation_mismatch path")
+        self.assertNotRegex(
+            self.flat, r"(?i)all \d+ (?:System Verification )?checks passed",
+            "a counted all-passed claim is back, and it counts results validation among the "
+            "checks that passed")
         self.assertRegex(
-            self.flat, r'(?i)Never write "all 8 checks passed" unconditionally',
+            self.flat, r"(?i)Never write that every check passed unconditionally",
             "nothing stops the unconditional claim being restored for tidiness")
 
     def test_the_fix_instructions_exclude_the_mismatch(self):
