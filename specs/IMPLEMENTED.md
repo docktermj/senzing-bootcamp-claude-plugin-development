@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## bundled-recap-video-renderer
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #299, part of #297)
-- **Commit:** uncommitted
+- **Commit:** `7a92f2a`
 - **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_video.py` (new), `tests/test_recap_video.py` (new), `tests/test_brand_sync.py`, `tests/README.md`, `requirements-dev.txt`, `docs/development.md`, `.claude/skills/dry-run/phase2-hooks-and-scripts.md`, `specs/IMPLEMENTED.md`
 - **MCP re-check:** server 1.37.16, 2026-09-30 (`get_capabilities`, reachable) — n/a (no Senzing fact), re-confirmed: the renderer draws what the storyboard supplies (module names, aggregate counts, field and attribute names) and asserts nothing about Senzing itself; the mapping scene's attribute names come from the storyboard, not from the script; a grep of the script finds no Senzing attribute, method or configuration name. No absence claim is made.
 - **Approach:** raced (Phase 5b), approach b: a streamed, schema-table pipeline. One table, `SCENE_TYPES`, maps each scene type to its data fields and its drawer; validation and drawing both read it.
