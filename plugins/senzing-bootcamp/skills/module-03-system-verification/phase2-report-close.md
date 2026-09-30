@@ -181,6 +181,9 @@ visualization is a separate, standalone module that records itself at its own cl
    false on the `expectation_mismatch` path is false permanently — and the mismatch
    is the more interesting record of the two: it is the engine explaining a real resolution decision
    on the bootcamper's own machine.
+
+   Then save this module's B-roll entry under `system_verification`, per `module-completion.md`
+   2e.
 3. **Present the completion line + end-of-module summary** (INV-032): `✅ Module complete: System
    verification` and its four-part summary, per `module-completion.md` Step 3.
 4. **Transition to the next module:** ask the single transition question; on an affirmative reply,
