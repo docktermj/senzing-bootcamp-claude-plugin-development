@@ -43,6 +43,18 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-09-30c
+
+- **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one review session, the third that day)
+- **Commit:** uncommitted
+- **Files changed:** `specs/INVARIANTS.md`, `specs/IMPLEMENTED.md`, `invariant-manifest.json`
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** no block was pending. One held block's revisit condition was met and it was decided; the held set is 4.
+  - **Amendment applied:** **INV-307** (#226, via #257): the dated correction dropping the pinned "six" count, recording that the freeze checks every file in `specs/` (not `*.md`), and naming `specs/README.md`'s "What stays live" table as the one list of the five live records. Held 2026-09-30 until #258 made the guard parse that table; #258 merged (`1652a3c`). `tests/test_specs_are_frozen.py`'s INV-307 check now passes on the applied note, and no unapplied INV-307 block remains.
+  - **Still held, conditions not met:** the license-reading, #164 Phase C, census-detector and machine-portability blocks.
+- **Verification:** both CI legs green on the full diff in a clean worktree (5202 tests, `OK (skipped=8)` and `OK (skipped=70)`); `citations.py verify` clean at 336 invariants; `invariant_manifest.py --check` clean; `pending_invariants.py` 0 pending, 4 held.
+- **Establishes no invariant of its own.**
+
 ## the-live-record-list-is-the-readme-table
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #258)
@@ -503,7 +515,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - **`specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged** (INV-307). The three
     changes to registered invariants are the blocks below.
 - **Approach:** raced (Phase 5b), recorded here by the racer that produced this patch.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-307 — awaiting the maintainer's sign-off; NOT applied.** The rules already registered:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-307 — applied 2026-09-30.** The rules already registered:
     - ⛔ **six citations already resolve through the ledger alone** — in `specs/INVARIANTS.md`
     - ⛔ **the ledger carries those six citations** — in `specs/INVARIANTS.md`
     - ⛔ **The freeze's stated subject is the DIRECTORY; its enforced subject is `*.md` in the directory** — in `specs/INVARIANTS.md`
@@ -534,10 +546,12 @@ entries at once. Two things a reader should know about the hashes now recorded:
   red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint at the
   next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
 
-  **HELD 2026-09-30:** the note names `specs/README.md`'s "What stays live" table as the list the
+  **Earlier hold, 2026-09-30:** the note names `specs/README.md`'s "What stays live" table as the list the
   freeze guard reads, which is false until #258 makes the guard parse that table; applying it now
   would register a sentence that is untrue today. Revisit after #258 is merged and
   `tests/test_specs_are_frozen.py` derives `LIVE_RECORDS` from that table.
+
+  **Revisit condition met 2026-09-30:** #258 merged (`1652a3c`); `tests/test_specs_are_frozen.py` parses `LIVE_RECORDS` from the table. Applied at `/review-invariants`.
 - **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-050 — applied 2026-09-30.** The rule already registered:
     - ⛔ **The generated Bootcamp project MUST follow this layout** — in `specs/INVARIANTS.md`
 
