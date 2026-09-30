@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## graduation-video-offer-storyboard-and-render
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #300, part of #297)
-- **Commit:** uncommitted
+- **Commit:** `f759d31`
 - **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/commands/graduate.md`, `tests/test_graduation_video_step.py` (new), `tests/README.md`, `specs/IMPLEMENTED.md`
 - **MCP re-check:** server 1.37.16, 2026-09-30 (`get_capabilities`, `search_docs(query='NAME_LAST ADDR_LINE1 entity specification attributes')`) — n/a (no Senzing fact in the issue), re-confirmed: the step builds a storyboard from the bootcamper's own aggregates and asserts nothing about Senzing. The one Senzing fact the change adds is the example storyboard's three attribute names, and the server confirms all three: the Entity Specification's "Entities, features and attributes" section names `NAME_LAST` in `NAME` and `ADDR_LINE1` in `ADDRESS`, and its "Attribute reference" names `NAME_ORG` as an attribute of `NAME`. No absence claim is made.
 - **Approach:** direct (Phase 5a). A new subsection, **1c**, inside Step 1 after the recap PDF, so no later step number moves. It builds on #299's renderer exactly as shipped (`--check`, `--schema`, exit codes 0/1/2/3) and on #298's `docs/video/broll.json` format.
