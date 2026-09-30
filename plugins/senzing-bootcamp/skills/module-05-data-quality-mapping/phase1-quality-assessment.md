@@ -359,7 +359,7 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    Step 6's type/name check over every record of this source now (the canonical statement is Step
    6's "Type/name check" — INV-300), and keep its count and candidate names for Step 6 to report.
    ⛔ (INV-198) **One or more candidates means no fast-path offer, even for a source that is
-   structurally loadable and fully mapped.** The offer skips the mapping phase, which is where a
+   structurally loadable and fully mapped.** (INV-335) The offer skips the mapping phase, which is where a
    retype is applied, so it would send the source to loading with its record types undecided.
    Route it through sub-step 6 instead. Zero candidates, or zero PERSON-typed records, changes
    nothing: the offer proceeds on sub-steps 2 and 3 alone.
@@ -737,7 +737,7 @@ rather than copying one from this example; a `✅` beside a 78% tells the bootca
 
 ### Type/name check: PERSON-typed records with organization names
 
-⛔ (INV-300) **This is the canonical statement of the type/name check.** Step 5a sub-step 3a, Step
+⛔ (INV-300) **This is the canonical statement of the type/name check.** (INV-335) Step 5a sub-step 3a, Step
 7's report and Phase 2 steps 10, 11, 13 and 18 point here and add only what their own site needs.
 
 **Why it exists.** The Entity Specification says `RECORD_TYPE` *"prevents records of different

@@ -37,6 +37,10 @@ rule removed and must report a problem.
 Source issues: #158, #220.
 
 Run:  python3 -m unittest discover -s tests
+
+INV-335 (the Phase 1 type/name check, its fast-path gate and the recorded decision) and INV-336 (Phase 2
+reads that decision before workflow steps 2 and 3) are the invariants this module enforces. It pins
+the text; it cannot establish that a live run performs the check or reads the decision in time.
 """
 import re
 import unittest

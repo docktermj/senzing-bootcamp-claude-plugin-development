@@ -22,7 +22,7 @@ Phases to run: $ARGUMENTS
   answers it; otherwise list the eleven, numbered, with the environment's ceiling
   marked. Everything before that module is fast-forwarded with the analysis off.
 
-⛔ **Phase 3 is never implied.** It costs the maintainer's time in a way 1 and 2 do
+⛔ **Phase 3 is never implied.** (INV-333) It costs the maintainer's time in a way 1 and 2 do
 not, so it is included only when they actually asked for it. A command that accepts
 a phase list is precisely where "all" gets inferred from silence; it must not be.
 

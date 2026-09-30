@@ -28,6 +28,10 @@ stdlib-only, so nothing here can notice that Senzing started documenting the fla
 what puts that question on the online runs' worklist.
 
 Run:  python3 -m unittest discover -s tests
+
+INV-334 is the invariant this module enforces: the audit of every multi-record entity, its four
+outcomes and the M = 0 rule. Like every guard here it pins the text; it cannot establish that a
+live run performs the audit, which only a dry-run phase 3 walk observes.
 """
 import importlib.util
 import os

@@ -429,7 +429,27 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_sqlite_preload_check_reads_the_loadable_total.py, which cites it back and states it pins
 # the text, not a live prompt. Re-derived by running the extractor -- 152, with the new pair
 # present by name. EXPECTED_PAIRS 151 -> 152.
-EXPECTED_PAIRS = 152
+# 154 on 2026-09-29: INV-332 (declining an issue is the maintainer's alone; a run that cannot
+# implement one records it blocked) names test_unattended_loop_is_label_gated.py and
+# test_declined_ledger.py, which cite it back and state what they do NOT establish -- that a
+# live run refrains from declining. Re-derived by running the extractor -- 154, with both new
+# pairs present by name. EXPECTED_PAIRS 152 -> 154.
+# 155 on 2026-09-29: INV-333 (an empty argument never chooses a maintainer operation's costly work:
+# /dry-run's phase 3, /auto-test's walk, /release's bump are asked about) names
+# test_skills_state_their_commands_argument_handling.py, which cites it back and states what it does
+# NOT establish -- that a live run asks. Re-derived by running the extractor -- 155, with the new
+# pair present by name. EXPECTED_PAIRS 154 -> 155.
+# 156 on 2026-09-30: INV-334 (the how-state audit checks every multi-record entity, reports one of
+# four outcomes, and reports M = 0 as nothing to check) names test_phase_d_how_state_audit.py, which
+# cites it back and states what it does NOT establish -- that a live run performs the audit.
+# Re-derived by running the extractor -- 156, with the new pair present by name.
+# EXPECTED_PAIRS 155 -> 156.
+# 158 on 2026-09-30: INV-335 (Module 5's type/name check before mapping, its fast-path gate and the
+# recorded decision) and INV-336 (Phase 2 reads that decision before workflow steps 2 and 3) both name
+# test_quality_assessment_type_name_check.py, which cites both back and states what it does NOT
+# establish -- that a live run performs the check or reads the decision in time. Re-derived by running
+# the extractor -- 158, with both new pairs present by name. EXPECTED_PAIRS 156 -> 158.
+EXPECTED_PAIRS = 158
 
 
 def pairs():

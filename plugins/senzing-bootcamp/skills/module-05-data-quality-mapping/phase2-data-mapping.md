@@ -553,7 +553,7 @@ step 2 with `action='advance'`, carrying `master_schemas` (at least one, each wi
 relationships, children) in `data`. Tell the user: explain the entity type decision, which fields
 map vs. skip and why.
 
-⛔ **(INV-300) Read the source's Record Type Check before you advance workflow step 2.** Open
+⛔ **(INV-300) Read the source's Record Type Check before you advance workflow step 2.** (INV-336) Open
 `docs/mapping/{source_name}_mapper.md` → `## Record Type Check`. Its rule is Phase 1 Step 6's
 "Type/name check" (`phase1-quality-assessment.md`), the canonical statement; do not restate it here.
 With **Keep as-is**, `none needed`, no section, or a Retype that names every candidate as an
@@ -711,7 +711,7 @@ with worked examples. An organization name belongs in `NAME_ORG`, not `NAME_FULL
 Splitting them would have produced a mapping that loads and validates cleanly while degrading
 resolution quality silently, which is exactly the class a quality score cannot detect.
 
-⛔ **(INV-300, INV-136) Read the source's Record Type Check before you advance workflow step 3.**
+⛔ **(INV-300, INV-136) Read the source's Record Type Check before you advance workflow step 3.** (INV-336)
 Open `docs/mapping/{source_name}_mapper.md` → `## Record Type Check`. Its rule is Phase 1 Step 6's
 "Type/name check" (`phase1-quality-assessment.md`), the canonical statement; do not restate it here.
 With **Keep as-is**, `none needed`, no section, or a Retype that names every candidate as an

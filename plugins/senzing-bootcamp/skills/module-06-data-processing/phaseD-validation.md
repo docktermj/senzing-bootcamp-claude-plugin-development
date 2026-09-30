@@ -461,7 +461,7 @@ which is exactly the gap the UAT percentages below leave open.
 ## How-state audit (run before the iterate-vs-proceed gate)
 
 Runs on **both** paths — single-source and multi-source — right after the match-key audit, on the
-same export. It answers a question nothing else in this phase asks: is each multi-record entity's
+same export (INV-334). It answers a question nothing else in this phase asks: is each multi-record entity's
 **construction history** one the engine itself reports as settled? A drained redo queue is not that
 signal. Observed 2026-09-25 (SDK 4.4.1, SQLite, one load process per source, redo drained to an
 empty queue): three GLEIF + OFAC + OPEN-SANCTIONS entities the export reported as clean 5- and
