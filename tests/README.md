@@ -37,6 +37,10 @@ when it is absent and supplies the `@requires_fpdf2` guard; see `docs/developmen
   every fallback stated on stderr, narration that extends its scene rather than being cut,
   frame drawing (skipped without Pillow) and an end-to-end mp4 render (skipped without Pillow
   or ffmpeg). Pillow and `imageio-ffmpeg` are in `requirements-dev.txt`.
+- `test_broll_manifest.py` — the graduation-video B-roll manifest (`docs/video/broll.json`) that
+  `module-completion.md` Step 2e writes at every module's close: the entry format keyed by state
+  token, the no-raw-record-values rule, replace-on-re-completion, recreate-on-unreadable,
+  never-blocks, and that the documented example's facts validate as renderer scenes.
 - `test_brand_sync.py` — asserts the inlined fallback palettes in
   `senzing_viz_server.py` and `generate_recap_pdf.py` stay equal to
   `brand_tokens.py`, so the hand-maintained copies cannot drift silently.
