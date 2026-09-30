@@ -805,16 +805,19 @@ Run it over **every record** of each source, not a sample: the count is the sour
    - **Decision:** Retype / Keep as-is
    - **Rule (retype):** a record whose `RECORD_TYPE` is `PERSON` and whose name's final whole
      token (trailing punctuation removed, case-insensitive) is one of [the list above] is emitted
-     with `RECORD_TYPE` `ORGANIZATION`, and its name is mapped as `NAME_ORG` or `NAME_FULL`, never
-     as parsed person fields. Exceptions, kept `PERSON`: [the names or RECORD_IDs given, or none]
+     with `RECORD_TYPE` `ORGANIZATION`, and its name is mapped as `NAME_ORG` only, never as parsed
+     person fields and never as `NAME_FULL`. The `NAME_ORG` value is the single name field's value
+     as-is, or the parsed person fields joined with single spaces, in the order Module 5 Phase 1
+     Step 6 sub-step 2 reads them. Exceptions, kept `PERSON`: [the names or RECORD_IDs given, or
+     none]
    - **Cost (keep):** these [N] records stay `PERSON`, so they cannot merge with organization
      records in other sources. Such pairs stay possible matches, held apart by the record type.
    ```
 
-   Write only the rule line for a retype and only the cost line for a keep. The name rule follows
-   the Entity Specification's *Feature: NAME*: *"use `NAME_ORG` for organizations"*, and *"do not
-   mix `NAME_ORG` with parsed person fields in the same object"* (the same suffix query above
-   returns that section, MCP server 1.37.14, docs index 2026-09-28).
+   Write only the rule line for a retype and only the cost line for a keep. The name rule (INV-336)
+   follows the Entity Specification's *Feature: NAME*: *"use `NAME_ORG` for organizations"*, and
+   *"do not mix `NAME_ORG` with parsed person fields in the same object"* (the same suffix query
+   above returns that section, MCP server 1.37.14, docs index 2026-09-28).
 
 A source already checked in Step 5a sub-step 3a reuses that count and those names here. Do not run
 the check again. Its report and question belong here, because Step 5a routes such a source on to
@@ -824,9 +827,9 @@ this step.
 example because no name attribute can be identified, say so in Step 7's report and continue.
 
 ⛔ (INV-173) **Never undo the Bootcamper's retype to turn a validation gate green.** If Phase 2's
-verbatim check flags a retyped `RECORD_TYPE` value, follow that step's exemption procedure
-(`phase2-data-mapping.md`, "What to do — in this order"): record the derivation and its reason in
-the mapper notes, then proceed.
+verbatim check flags a retyped record's `NAME_ORG` joined from parsed name fields, follow that
+step's exemption procedure (`phase2-data-mapping.md`, "What to do — in this order"): record the
+derivation and its reason in the mapper notes, then proceed.
 
 **Checkpoint:** write step 6.
 

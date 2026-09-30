@@ -43,6 +43,41 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## module-5-retyped-name-and-citations-follow-inv-336
+
+- **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #283; audit findings D-F1, D-F3, D-F4 and B-F3)
+- **Commit:** `a744130`
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `tests/test_quality_assessment_type_name_check.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.16, 2026-09-30 (`get_capabilities`, reachable) — still reproduces. `download_resource(filename='sz_verbatim_check.py')` returned a listing; the fetched `url` was 5,502 bytes, matching `size_bytes`. Its `is_exempt()` is still `attr in EXEMPT_KEYS or attr.endswith("_TYPE")` with `EXEMPT_KEYS = {"DATA_SOURCE", "RECORD_ID"}`, and `check_verbatim()` still tests `if v.strip() not in allowed` against whole values, `|`/`;` segments and whitespace tokens. So a retyped `RECORD_TYPE` is waived, and a `NAME_ORG` joined from two or more parsed fields is flagged (D-F3). `search_docs(query='NAME_FULL NAME_ORG parsed person name single field', category='data_mapping')` → *Name > Feature: NAME*, top hit: *"use `NAME_ORG` for organizations; use `NAME_FULL` only when the type is unknown or only a single field exists"*, so a retyped (ORGANIZATION) record's name is `NAME_ORG` only. No absence claim is made. Re-verification changed nothing the issue asked for.
+- **Summary:** The Phase 1 `## Record Type Check` template's retype rule now maps a retyped name as `NAME_ORG` only, never as parsed person fields and never as `NAME_FULL`, and says how the value is built: the single name field's value as-is, or the parsed person fields joined with single spaces in the order Phase 1 Step 6 sub-step 2 reads them. The paragraph under the template cites INV-336 for the name rule. The INV-173 note (`phase1-quality-assessment.md`) now names a retyped record's `NAME_ORG` joined from parsed name fields as the value the verbatim check flags, not `RECORD_TYPE`, which the checker exempts as a `_TYPE` attribute. In `phase2-data-mapping.md`: step 11's Record Type Check heading cites `(INV-300, INV-336)`, with the separate trailing `(INV-336)` folded in; its declare-once rule cites INV-336 in place of INV-136; the step 10 rejection block cites `(INV-125)` only, because it states no required parameter and no enumerated value, which is what INV-136 governs; and the pre-emptive `type_discriminator` bullet no longer cites INV-136 and is deferred below. "What to do — in this order" step 3 names a `NAME_ORG` joined from parsed name fields as a third reason, beside a boolean and a value derived from a field name. The "Two things it cannot harvest" list above it is unchanged, because a joined value is not a harvesting gap: the harvester reads each part, and the whole-value comparison fails. Step 10's post-retype `record_type` bullet now takes only the enum-valid `record_type` half of the mixed-type rule, says its `type_discriminator` half does not apply to a suffix retype, and names step 11 as where the typing is declared (D-F4). `tests/test_quality_assessment_type_name_check.py`: the two tests that pinned `(INV-300, INV-136)` target `(INV-300, INV-336)` and still fail their mutants; the template checks gain `NAME_ORG` only, never `NAME_FULL`, the build rule and the joined-`NAME_ORG` INV-173 note, with a check that rejects "`NAME_ORG` or `NAME_FULL`" and "a retyped `RECORD_TYPE` value"; a new `problems_in_the_name_citations()` checks each Phase 2 citation, D-F3's step 3 and D-F4's step 10 bullet. Nine new negative controls put each old text back on a copy and see it. Run against the pre-change plugin files, the module failed 11 tests with 2 errors.
+- **Verification:** both CI legs green in this worktree with an empty `HOME` (see the PR for the verdict lines); `citations.py verify` clean after this entry was written; `lint-workflows` not run locally (remote reusable workflow; no workflow file changed).
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rule already shipping:
+    - ⛔ **Do not pre-emptively emit a `type_discriminator` on every source.** — in `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`
+
+  ⚠️ **Why it is deferred rather than cited.** Until #283 the bullet cited INV-136, which governs
+  a tool's required parameters and enumerated values; the bullet states neither. INV-336 forbids
+  a `type_discriminator` for a suffix retype only, and INV-125 governs a failed MCP-first path.
+  No registered invariant governs the rule for every other source, so the line carries no id
+  until the maintainer rules.
+
+  The drafted wording:
+
+  **INV-NNN** — Module 5 Phase 2 MUST NOT emit a `type_discriminator` on a source by default. A
+  `type_discriminator`, with its `field_overrides` (an identity override in both branches
+  included), is the fix for workflow step 3's `NAME_ORG cannot co-exist with person name
+  attributes` rejection of a source whose record type comes from a source field's value, and it
+  is added only when that rejection applies. Fields moved into `field_overrides` are counted by
+  no coverage figure, so an unneeded one costs a coverage-count drop for nothing. (Sibling to
+  INV-336, which forbids a `type_discriminator` for a suffix retype; this governs every other
+  source.) Enforced by `tests/test_quality_assessment_type_name_check.py`
+  (`problems_in_the_name_citations`, `test_citing_inv_136_at_the_pre_emptive_rule_fails`), which
+  asserts that step 10 states the rule and does not cite INV-136 for it, and **cannot** establish
+  that a live run follows it. (Source: GitHub issue #283.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist
+  and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
+  read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no invariant.** The other changes apply INV-336, INV-125 and INV-173 as registered.
+
 ## module-3-success-criteria-share-one-check-list
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #282; audit finding C-F4)
