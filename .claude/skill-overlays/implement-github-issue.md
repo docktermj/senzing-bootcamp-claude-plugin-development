@@ -1,6 +1,6 @@
 # implement-github-issue: this repository's overlay
 
-**The governing copy is `~/.claude/skills/implement-github-issue/SKILL.md`**, the user-level
+**The governing copy is `~/.claude/skills/implement-github-issue/SKILL.md`** (INV-337), the user-level
 skill. This file is the **repo overlay**: only the obligations this repository adds on top of
 the governing copy, which reads this file and must meet everything below.
 

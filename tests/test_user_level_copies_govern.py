@@ -33,6 +33,10 @@ Source issues: #215, #239.
 Stdlib only; every surface is read as text (INV-108).
 
 Run:  python3 -m unittest discover -s tests
+
+INV-337 is the invariant this module enforces: a skill governed at user level is not also defined
+here, and the repository keeps only its overlay. Like the rest of this module it checks the
+repository's side; it cannot establish what the user-level copy says on any machine (INV-308).
 """
 import re
 import unittest
