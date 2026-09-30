@@ -192,7 +192,7 @@
 ### Actions Taken
 
 - Designed 4 synthetic `VERIFY` records: a 3-record merge cluster ("Alex Quinn Verify", same DOB/address with trivial variation) and 1 distractor singleton ("Jordan Sample").
-- Ran all 8 System Verification checks: MCP connectivity, engine initialization, SDK initialization, code generation, build/compile, data source registration, data loading, results validation, and database operations — all passed.
+- Ran the System Verification checks: the installation checks — MCP connectivity, engine initialization, SDK initialization, code generation, build/compile, data source registration, data loading, and database operations — all passed, and results validation, reported separately, matched the prediction.
 - Confirmed the merge cluster resolved to one entity (entity ID 1) and the distractor stayed its own entity (entity ID 4) — exactly as designed.
 - Verified write count, read-by-entity-ID, and search-by-attributes all through generated SDK code.
 - Purged all 4 synthetic `VERIFY` records via `SzEngine.delete_record` (not a full datastore purge, to preserve other state) and confirmed zero remain.

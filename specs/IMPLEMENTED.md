@@ -43,6 +43,43 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## module-3-success-criteria-share-one-check-list
+
+- **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #282; audit finding C-F4)
+- **Commit:** `5bf5d45`
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03-system-verification/SKILL.md`, `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md`, `plugins/senzing-bootcamp/skills/module-03-system-verification/phase2-report-close.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf` (re-rendered), `tests/test_results_validation_is_diagnostic.py`, `tests/test_module3_check_lists_agree.py` (new), `specs/IMPLEMENTED.md`
+- **MCP re-check:** n/a (no Senzing fact) — re-confirmed on server 1.37.16 (`get_capabilities`, 2026-09-30, reachable): the change reconciles the module's own check names, counts and success rule, and asserts nothing about Senzing. No absence claim is made.
+- **Summary:** Module 3 now has one list of checks and one success rule. The source of truth is Phase 1's `**Checkpoint:**` blocks: eight installation checks (`mcp_connectivity`, `engine_initialization`, `sdk_initialization`, `code_generation`, `build_compilation`, `data_source_registration`, `data_loading`, `database_operations`) plus `results_validation`. `SKILL.md`'s success indicator names the eight with their keys and is the one place that states the count ("**8 installation checks**"); it sets results validation apart and says it is never required to pass (INV-229). `phase1-verification.md`'s Success criteria require the eight installation checks to pass and report `results_validation` in its own bullet, where only `failed` blocks the module; Step 7's "other seven" is now "the other checks". `phase2-report-close.md` Step 9 item 1 compiles all nine keys with the installation checks listed apart; every "seven installation checks" site now says "the installation checks"; the persisted-report JSON gains `engine_initialization`; `:177`'s "all 8 checks passed" rule and the closing success indicator no longer state a count. Two edited ⛔ lines there now cite INV-229 at the line. The example recap names the eight installation checks as passed and reports results validation in its own clause, and its PDF was re-rendered. `tests/test_results_validation_is_diagnostic.py` moves to the new wording (8, not 7; database operations named; the "seven" branch regexes now read "the installation checks") and still guards every site it guarded, plus a negative regex for any counted "all N checks passed" claim. The new `tests/test_module3_check_lists_agree.py` reads the keys from Phase 1's checkpoint blocks (every block must yield one key or say it is a data-prep marker) and fails if `SKILL.md`'s indicator, the Success criteria, Step 9 item 1 or the persisted JSON differs from them, if `results_validation` is in a pass requirement, if a second site states a count, or if the recap counts results validation inside "all passed". It was run against the pre-change plugin files and failed 17 tests with 1 error; its in-suite controls put each old defect back on a copy and see it. Nothing changes what any check does; no checkpoint key is renamed.
+- **Verification:** both CI legs green in this worktree with an empty `HOME` (see the PR for the verdict lines); `citations.py verify` clean after this entry was written; `lint-workflows` not run locally (remote reusable workflow; no workflow file changed).
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-229 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+    - ⛔ **the other seven System-verification checks each assert something about the installation** — in `specs/INVARIANTS.md`
+
+  ⚠️ **Why.** INV-229 counts the checks it separates results validation from, and the count is
+  wrong: Phase 1 records **eight** installation checkpoints beside `results_validation`, nine
+  keys in all. Each "seven" list in Module 3 dropped a different check, and #282 removed the
+  numeral from every site but one, so the invariant is now the last prose that pins a figure.
+  No requirement changes: the separation INV-229 requires is exactly what ships. Amending a
+  registered invariant is the maintainer's sign-off alone, so `specs/INVARIANTS.md` and
+  `invariant-manifest.json` are unchanged. **Sites it affects:** INV-229 in
+  `specs/INVARIANTS.md` and its `invariant-manifest.json` statement; the one stated count, in
+  `module-03-system-verification/SKILL.md`'s success indicator; and the lists
+  `tests/test_module3_check_lists_agree.py` compares with Phase 1's `**Checkpoint:**` keys.
+  Applying it resolves the block: mark the bullet `applied YYYY-MM-DD` and drop both
+  "awaiting" markers. Enforced by `tests/test_module3_check_lists_agree.py`.
+
+  The drafted wording, a note appended after INV-229's closing `(Source: …)` parenthetical,
+  with every existing sentence unchanged:
+
+  **INV-229** — (⚠️ **Dated correction, <YYYY-MM-DD> (#282): no count is asserted; no requirement changes.** *"The other seven System-verification checks"* states a count, and the count was wrong: Phase 1 records eight installation checks (`engine_initialization` and `database_operations` both count) beside `results_validation`. Read it as *the other System-verification checks*. The installation-check count is stated once, in Module 3's `SKILL.md` success indicator, and every list of the checks MUST name the keys Phase 1's `**Checkpoint:**` blocks write. Enforced by `tests/test_module3_check_lists_agree.py`.)
+
+  *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
+  applies the note, not the day of this run.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-229 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify`
+  red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint at the
+  next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Establishes no new invariant.** The change applies INV-229 as registered; the one change to a registered invariant is the amendment block above, drafted and not applied.
+
 ## order-github-issues-is-marked-user-level
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #294; audit finding C-F3)

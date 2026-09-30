@@ -573,7 +573,7 @@ Each validation check has a 30-second timeout.
      then this is a real finding. Report fail with expected versus actual, include the `why_*` output,
      and suggest re-running the load or confirming the synthetic data file loaded completely.
 
-   ⚠️ **This check is reported separately from the other seven**, which are install checks. A
+   ⚠️ **This check is reported separately from the other checks**, which are install checks. A
    mismatch the engine explains must not turn the module's overall result into a failure.
 
 **Checkpoint:** write to `config/bootcamp_progress.json`:
@@ -644,9 +644,12 @@ and visualizes it. When it is not selected, the next module is Data collection.
 
 System Verification is successfully complete when ALL of the following are true:
 
-- All 8 System Verification checkpoint entries report "passed" status (`mcp_connectivity`,
-  `sdk_initialization`, `code_generation`, `build_compilation`, `data_source_registration`,
-  `data_loading`, `results_validation`, `database_operations`).
+- Every installation checkpoint entry reports "passed" status (`mcp_connectivity`,
+  `engine_initialization`, `sdk_initialization`, `code_generation`, `build_compilation`,
+  `data_source_registration`, `data_loading`, `database_operations`).
+- The `results_validation` checkpoint entry is reported separately and is not required to be
+  "passed": `passed` and `expectation_mismatch` both complete the module, and only `failed` (a
+  mismatch the engine's explanation does not account for) blocks it (INV-229, Step 7).
 - The Verification Report is persisted to `config/bootcamp_progress.json` with a valid ISO 8601
   timestamp.
 - The synthetic verification records are purged from the database (zero `VERIFY` entities remain).
