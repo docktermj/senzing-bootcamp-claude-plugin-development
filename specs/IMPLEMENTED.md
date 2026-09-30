@@ -43,6 +43,20 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-09-30b
+
+- **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one review session, the second that day)
+- **Commit:** uncommitted
+- **Files changed:** `.claude/skill-overlays/implement-github-issue.md`, `.claude/skill-overlays/unattended-issue-loop.md`, `invariant-manifest.json`, `specs/IMPLEMENTED.md`, `specs/INVARIANTS.md`, `tests/test_invariant_enforcer_citations.py`, `tests/test_user_level_copies_govern.py`
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** no block was pending; three held blocks had their revisit conditions met and were decided. The held set is 5.
+  - **Registered:** **INV-337**: a maintainer skill governed at user level is not also defined in this repository, and the repository keeps only its overlay (#239). Held 2026-09-29 for a wider one-definition rule; #241 and #262 landed without producing one, so the narrow, enforced wording was registered as written.
+  - **Amendment applied:** **INV-303's note** (#241): no command ships, and the enforcer reads fixture commands. It was held until #262 merged (`50ae2a4`), which made both claims true.
+  - **Held again, with a new reason:** **#164's Phase C block**: covered by INV-006, INV-080, INV-300, INV-320 and INV-325, each cited at the lines that ship the rule. Its drafted wording is stale since #259 (`26981c1`) and is not to be registered as written. The 2026-09-29 paragraph is relabeled "Earlier hold", because the queue reads the first `HELD` paragraph. Revisit if a Module 6 SQLite note re-asks the question or cites an asked-once marker for N despite the guard.
+  - **Still held, conditions not met:** INV-307's amendment (#258 open), and the license-reading, census-detector and machine-portability blocks.
+- **Verification:** both CI legs green on the full diff in a clean worktree (5196 tests, `OK (skipped=8)` and `OK (skipped=70)`); `citations.py verify` clean at 336 invariants; `invariant_manifest.py --check` clean; `pending_invariants.py check` 0 mismatched, 0 unresolved; `EXPECTED_PAIRS` re-derived 158 → 159.
+- **Establishes no invariant of its own.** INV-337 was established by #239's implementation.
+
 ## phase-c-step-19-loads-each-sources-subset-record
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #259)
@@ -697,7 +711,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   that does not exist and turn `citations.py verify` red. If the maintainer prefers a separate
   invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md`
   rather than trusting a number written here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-303 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-303 — applied 2026-09-30.** The clause the note bears on, as registered:
     - ⛔ **Every maintainer slash command under `.claude/commands/` MUST name, in its body, a skill that resolves to a directory under `.claude/skills/` containing a `SKILL.md`** — in `specs/INVARIANTS.md`
 
   INV-303 binds the content of a command file. Once #262 deletes the ten, no command ships, and a rule over an empty set is satisfied by nothing. The note keeps it binding on any command added later, an alias included, and says its enforcer must check fixtures when none ship (INV-265). Enforced by `tests/test_dev_commands_name_a_real_skill.py`. Amending a registered invariant is the maintainer's sign-off alone, so
@@ -720,6 +734,8 @@ entries at once. Two things a reader should know about the hashes now recorded:
   commands, and both are false until #262 deletes the ten command files and adds the fixtures;
   applying it now would register two untrue sentences. Revisit after #262 is merged and
   `.claude/commands/` is empty.
+
+  **Revisit condition met 2026-09-30:** #262 merged (`50ae2a4`), `.claude/commands/` is gone, and the enforcer reads `tests/fixtures/maintainer-commands/`; applied at `/review-invariants`.
 - **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-316 — applied 2026-09-30.** The clause the note bears on, as registered:
     - ⛔ **that name MUST either resolve to a shipped command file** — in `specs/INVARIANTS.md`
 
@@ -1667,7 +1683,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     files are gone.
 - **Approach:** implemented directly (Phase 5a), as the maintainer chose at the plan gate. The
   maintainer also placed the §2 marker in the parent cell.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** It supersedes #215's
+- **DEFERRED INVARIANT (resolved INV-337, registered by the maintainer 2026-09-30).** It supersedes #215's
   block. The rule is enforced by test rather than stated on a ⛔ line of its own. The rule
   already shipping at its site:
     - ⛔ **Put that file in every worker's brief.** — in `.claude/skill-overlays/unattended-issue-loop.md`
@@ -1696,6 +1712,9 @@ entries at once. Two things a reader should know about the hashes now recorded:
   one-definition rule, so registering the narrow wording now would likely mean amending a
   days-old invariant. The test keeps guarding the layout meanwhile.
   Revisit after #241 lands, when the one-definition rule covers every maintainer skill.
+
+  **Revisit condition met 2026-09-30:** #241 and #262 landed and `.claude/commands/` is gone; no wider
+  one-definition rule was drafted or enforced, so the narrow wording above was registered as written.
 - **Tests:**
   - `tests/test_user_level_copies_govern.py` is rewritten for overlays.
     `ThisRepositoryDefinesNeitherName` fails if either name comes back under `.claude/skills/` or
@@ -4871,7 +4890,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id —
   read it off `INVARIANTS.md` rather than trusting a number written here.)*
 
-  **HELD 2026-09-29:** the first quoted rule and the drafted wording now conflict with registered
+  **Earlier hold, 2026-09-29:** the first quoted rule and the drafted wording now conflict with registered
   rules. `phaseC-multi-source.md` still says "load what `sqlite_volume_prompt` or the Module 4
   Step 8b load decision records", but since #237 and #238 each source loads from its
   `load_subset:` block, and INV-325 says an asked-once marker MUST NOT be cited for N. #221
@@ -4883,6 +4902,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
   sentence, which #259 replaced, so `check` would have gone red on a held block. The quote is
   fixed against its source. The drafted wording above is unchanged and still names the marker
   and Step 8b; the revisit condition is now met, and the verdict is the maintainer's.
+
+  **HELD 2026-09-30:** covered by registered invariants, so no separate id is needed: the
+  asked-once half is INV-006, loading what each source's `load_subset:` block records is INV-320 and
+  INV-325, Phase C carrying no SQLite threshold of its own is INV-080, and pointing rather than
+  restating is INV-300; each is cited at the lines that ship the rule. The drafted wording above is
+  stale (it names the marker and Step 8b, which #259 removed) and is not to be registered as written.
+  Revisit if a Module 6 SQLite note re-asks the question or cites an asked-once marker for N despite
+  the guard.
 - **Tests:** new `tests/test_sqlite_subset_notes_read_the_recorded_decision.py`, 8 tests in 3
   classes, one per issue assertion, stdlib only. A liveness test keeps assertion 1's scan from
   passing vacuously: it must find Phase B Step 7's note. The scan is anchored on *loading* a

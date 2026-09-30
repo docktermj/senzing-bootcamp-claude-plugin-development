@@ -449,7 +449,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_quality_assessment_type_name_check.py, which cites both back and states what it does NOT
 # establish -- that a live run performs the check or reads the decision in time. Re-derived by running
 # the extractor -- 158, with both new pairs present by name. EXPECTED_PAIRS 156 -> 158.
-EXPECTED_PAIRS = 158
+# 159 on 2026-09-30: INV-337 (a skill governed at user level is not also defined here; the repository
+# keeps only its overlay) names test_user_level_copies_govern.py, which cites it back and states what it
+# does NOT establish -- what the user-level copy says on any machine. Re-derived by running the
+# extractor -- 159, with the new pair present by name. EXPECTED_PAIRS 158 -> 159.
+EXPECTED_PAIRS = 159
 
 
 def pairs():
