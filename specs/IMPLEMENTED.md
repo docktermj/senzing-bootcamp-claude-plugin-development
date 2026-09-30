@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## the-live-record-list-is-the-readme-table
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #258)
-- **Commit:** uncommitted
+- **Commit:** `e1c9e15`
 - **Files changed:** `specs/README.md`, `tests/test_specs_are_frozen.py`, `specs/IMPLEMENTED.md`
   (this entry)
 - **MCP re-check:** server `sz-mcp-coworker` 1.37.16, 2026-09-30, `get_capabilities()`.
