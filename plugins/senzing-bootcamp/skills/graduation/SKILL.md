@@ -64,12 +64,14 @@ them to one line under `concise`. Refer to modules by name, never number (INV-07
    (`docs/bootcamp_recap.pdf`) and a clean, production-ready `production/` project to build on.
 3. **What we'll do.** A brief numbered overview of graduation's steps: (1) note anything that
    tripped us up this session, so the bootcamp itself improves, (2) normalize the `docs/`
-   Markdown and render the recap PDF keepsake, (3) build the `production/` project, (4) create a
+   Markdown and render the recap PDF keepsake, then offer an optional narrated 2-minute graduation
+   video (`docs/bootcamp_recap.mp4`), (3) build the `production/` project, (4) create a
    silent revisit/resume bundle — a database backup plus a return guide — so you can come back
    later (INV-094), and (5) close with the END OF SENZING BOOTCAMP banner.
 4. **Estimated time.** Give an honest, range-based estimate caveated per INV-096 — e.g.
    "⏱️ Roughly 5–15 minutes, depending on your workstation, the database backup size, and PDF
-   rendering speed." If no meaningful estimate is possible, say "hard to estimate" rather than
+   rendering speed, plus a few minutes more if you choose the optional graduation video." If no
+   meaningful estimate is possible, say "hard to estimate" rather than
    inventing a number. Suppress under `minimal`; one line under `concise`.
 
 Bootcamp graduation is terminal, so it has no "what's next / next module" line and no `✅ Module complete`
@@ -836,6 +838,235 @@ box) and the image count (which catches silently-dropped screenshots — the fai
 recap with 2 images where 8 were expected, detectable *only* by counting). The page raster is the one
 genuinely tool-gated check; its absence is the thing to announce.
 
+### 1c. Offer the graduation video (optional)
+
+The recap PDF now exists, so the video can reuse its certificate's name and date. The video is
+optional. It is built from the B-roll each module saved (`../bootcamp-onboarding/module-completion.md`
+Step 2e) and rendered by the bundled renderer, `scripts/generate_recap_video.py`, which writes
+`docs/bootcamp_recap.mp4`.
+
+⛔ **The video never blocks graduation (INV-048).** Every failure below, whether a declined install, a
+failed install, an invalid storyboard or a failed render, skips the video with a one-line message
+naming what failed, and graduation continues to Step 2.
+
+**The offer.** When Step 1b is done, end the turn on this pinned question. Ask it once per graduation
+(INV-006, INV-056):
+
+> 👉 **Would you like a narrated 2-minute graduation video of your bootcamp?** (Saved to `docs/bootcamp_recap.mp4`; reply no to skip.)
+
+- **No:** continue straight to Step 2 in the same reply turn.
+- **Yes:** continue below.
+
+⛔ **On no, write no video file at all:** no `docs/video/storyboard.json` and no
+`docs/bootcamp_recap.mp4`. The storyboard is written only after a yes.
+
+**Model quality.** There is no second model question, because graduation's best-value model/effort
+prompt already covers it. Only when the bootcamper answered **no** to that switch question, open the
+yes reply with one statement line, not a question:
+
+> ℹ️ The narration comes out best on graduation's recommended model and effort; I'll write it on your current setting.
+
+Say nothing about the model when no switch question was asked (the bootcamper was already on the
+recommendation) or when they accepted the switch.
+
+#### Write the storyboard
+
+Write `docs/video/storyboard.json` in the renderer's format. Run the renderer with `--schema` to print
+every scene type and its fields; the example below shows the shape. `video.bootcamper` is the name the
+certificate prints (INV-100; pre-check 4: `name` in `config/bootcamp_preferences.yaml`, else the recap's
+`**Bootcamper:**` line, else "Bootcamper"), and `video.graduation_date` is the recap's `**Completed:**`
+date that Step 1a stamped. Use the bootcamper's name in the narration where it fits: the opening, the
+business problem and the certificate.
+
+**Where each scene comes from.** Scenes run in the order the bootcamper experienced the bootcamp:
+Bootcamp preparation, then each module in `modules_completed` order, then the ending.
+
+- **Bootcamp preparation** always comes from `config/bootcamp_preferences.yaml`: the path, the selected
+  modules and the `programming_language`, as one `title_card`. That module writes no B-roll entry
+  (#298).
+- **Every other module** comes from its entry in `docs/video/broll.json`, keyed by its state token.
+  Its `images` become `image` scenes, its `facts` become the scenes in the table below, and its
+  `highlight` becomes the narration, or a `title_card` highlight when it has nothing on screen.
+- **A bootcamp with no `broll.json`** (it started on an older plugin version), or a module with no
+  entry in it: build that module's scenes from its `## {Module name}` section in
+  `docs/bootcamp_recap.md` and the screenshots under `docs/visualizations/` that section embeds.
+  Write the image paths as `docs/visualizations/<file>.png`, relative to the project root, not the
+  recap's `visualizations/…`.
+
+**The five animated scenes.** Each of these modules is required, so each has a scene:
+
+| Module | Scene type | Built from |
+|---|---|---|
+| Discover the Business Problem | `title_card` | the problem the bootcamper described (the entry's `highlight`), elaborated in the narration |
+| Data collection | `counter` | the characteristics of their data: `facts.sources`, records per source |
+| Data Quality, Mapping, and Transformation | `mapping` | `facts.mappings`, one scene per source, at most 8 fields each |
+| Data processing | `loading` | the loading of their data: `facts.records_loaded` and `facts.entities_resolved` |
+| Query, Visualize and Discover | `entity_merge`, then `counter` and `image` scenes | what was found: records, entities and sources, then `facts.statistics` and the results screenshots |
+
+When a module's figures are missing, draw its scene as a `title_card` with its highlight. Never
+invent a number to fill a scene (INV-157's principle: never fabricate to fill a field).
+
+⛔ **Aggregates only: no raw record values anywhere in the storyboard.** A scene may show counts,
+source names, field and attribute names, and statistics. It may not show a name, an address, a phone
+number, an identifier or any other value from the bootcamper's records, in any field, the narration and
+captions included. `broll.json` already holds only aggregates. The recap may quote records (an entity
+the bootcamper searched for, say), so on the fallback path lift only its aggregates. The video is a
+keepsake the bootcamper is encouraged to share.
+
+**The ending.** The last two scenes are always the `certificate`, then the `tag_line` with the text
+**"Resolved: [Name], Senzing graduate."**, where `[Name]` is `video.bootcamper`.
+
+**The time budget.** The planned length is **2:00**. Each module gets this share of it:
+
+| Module | State token | Share | Seconds (every module taken) |
+|---|---|---|---|
+| Bootcamp preparation | `bootcamp_preparation` | 5% | 6.0 |
+| Entity Resolution Concepts | `entity_resolution_concepts` | 5% | 6.0 |
+| Discover the Business Problem | `business_problem` | 15% | 18.0 |
+| SDK setup | `sdk_setup` | 3% | 3.6 |
+| System verification | `system_verification` | 3% | 3.6 |
+| Truth Set visualization | `truthset_visualization` | 10% | 12.0 |
+| Data collection | `data_collection` | 10% | 12.0 |
+| Data Quality, Mapping, and Transformation | `data_quality_mapping` | 10% | 12.0 |
+| Data processing | `data_processing` | 5% | 6.0 |
+| Query, Visualize and Discover | `query_visualize_discover` | 30% | 36.0 |
+| You graduated! | `graduation` | 4% | 4.8 |
+
+Bootcamp preparation and You graduated! always count. Every other module counts only when it is in
+`modules_completed`. Leave out the modules the bootcamper did not take (the optional modules skipped
+on a Customized path), and scale the shares of the rest back up to 100%:
+
+`seconds = 120 × share ÷ (sum of the shares that count)`
+
+Round each module to one decimal, and give any rounding remainder to Query, Visualize and Discover so
+the total is exactly 120. For example, a Customized path that skipped Entity Resolution Concepts,
+System verification and Truth Set visualization counts 82%:
+
+| Module | Seconds (82% counted) |
+|---|---|
+| Bootcamp preparation | 7.3 |
+| Discover the Business Problem | 22.0 |
+| SDK setup | 4.4 |
+| Data collection | 14.6 |
+| Data Quality, Mapping, and Transformation | 14.6 |
+| Data processing | 7.3 |
+| Query, Visualize and Discover | 43.9 |
+| You graduated! | 5.9 |
+
+A module's seconds may be split across several scenes; the scene durations for a module add up to
+its seconds, and You graduated!'s seconds are shared between the certificate and the tag line. Tag
+each scene with its module's state token in a `_module` key. The renderer ignores keys that begin
+with `_`, and the tag tells you which module a scene belongs to when you re-time it below. The
+renderer lengthens a scene whose narration runs past its planned duration, so keep each narration
+to about 2.5 words for every second of its scene after the first.
+
+A storyboard for a Core bootcamp, with every module taken:
+
+```json
+{
+  "video": {"bootcamper": "Ada Lovelace", "graduation_date": "2026-09-30"},
+  "scenes": [
+    {"_module": "bootcamp_preparation", "type": "title_card", "duration": 6, "module": "Bootcamp preparation", "highlight": "Core path, 10 modules, Python", "narration": "Ada chose the Core path: ten modules, in Python."},
+    {"_module": "entity_resolution_concepts", "type": "title_card", "duration": 6, "module": "Entity Resolution Concepts", "highlight": "How records become entities", "narration": "First, the idea: records that describe one thing become one entity."},
+    {"_module": "business_problem", "type": "title_card", "duration": 18, "module": "Discover the Business Problem", "highlight": "One customer view across two systems", "narration": "Then Ada's own problem. The same customers sat in two systems, under different spellings and addresses, and nobody could say how many customers there really were. That was the question to answer."},
+    {"_module": "sdk_setup", "type": "title_card", "duration": 3.6, "module": "SDK setup", "narration": "The Senzing SDK went in."},
+    {"_module": "system_verification", "type": "title_card", "duration": 3.6, "module": "System verification", "narration": "Its system check passed."},
+    {"_module": "truthset_visualization", "type": "image", "duration": 6, "image": "docs/visualizations/truthset_verification-entity-graph.png", "heading": "Truth Set: entity graph", "narration": "A practice run on the Truth Set showed resolution at work."},
+    {"_module": "truthset_visualization", "type": "image", "duration": 6, "image": "docs/visualizations/truthset_verification-merge-statistics.png", "heading": "Truth Set: merge statistics", "narration": "And how many records merged."},
+    {"_module": "data_collection", "type": "counter", "duration": 12, "title": "Records per source", "items": [{"label": "CUSTOMERS", "value": 1200}, {"label": "VENDORS", "value": 340}], "narration": "Then Ada's own data: two sources, twelve hundred customer records and three hundred forty vendor records."},
+    {"_module": "data_quality_mapping", "type": "mapping", "duration": 6, "source": "CUSTOMERS", "fields": [{"from": "last_nm", "to": "NAME_LAST"}, {"from": "street", "to": "ADDR_LINE1"}], "narration": "Each field was mapped to a Senzing attribute."},
+    {"_module": "data_quality_mapping", "type": "mapping", "duration": 6, "source": "VENDORS", "fields": [{"from": "vendor_name", "to": "NAME_ORG"}, {"from": "addr1", "to": "ADDR_LINE1"}], "narration": "Vendors too, names and addresses alike."},
+    {"_module": "data_processing", "type": "loading", "duration": 6, "records": 1540, "entities": 1310, "narration": "All 1,540 records loaded into 1,310 entities."},
+    {"_module": "query_visualize_discover", "type": "entity_merge", "duration": 12, "records": 1540, "entities": 1310, "sources": ["CUSTOMERS", "VENDORS"], "narration": "Here is what Senzing found. Records from both sources came together as the entities they really are."},
+    {"_module": "query_visualize_discover", "type": "counter", "duration": 12, "title": "What Senzing found", "items": [{"label": "Entities in both sources", "value": 118}, {"label": "Entities with several records", "value": 190}], "narration": "One hundred eighteen entities appear in both sources, the overlap nobody could see before."},
+    {"_module": "query_visualize_discover", "type": "image", "duration": 12, "image": "docs/visualizations/results_visualization-entity-graph.png", "heading": "Your resolved entities", "narration": "Every one of them is in Ada's own results app."},
+    {"_module": "graduation", "type": "certificate", "duration": 2.0, "narration": "Congratulations, Ada."},
+    {"_module": "graduation", "type": "tag_line", "duration": 2.8, "text": "Resolved: Ada Lovelace, Senzing graduate.", "narration": "Resolved: Ada Lovelace, Senzing graduate."}
+  ]
+}
+```
+
+#### Render it
+
+Check the storyboard, then render it, with the same interpreter Step 1b used (the project-local
+virtualenv's Python when Step 1b created one, otherwise `python3`):
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py" --check
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
+# or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/generate_recap_video.py
+```
+
+The renderer reads `docs/video/storyboard.json` and writes `docs/bootcamp_recap.mp4`. Act on its exit
+code:
+
+- **0, rendered.** It prints `Video generated:`, a `Duration:` line and an `Audio track:` line. Go on
+  to "Verify the video" below.
+- **1, invalid storyboard.** Each `INVALID:` line names the field at fault. Fix those fields and run
+  it again. If it is still invalid, skip the video.
+- **2, a capability is missing.** No usable ffmpeg, or no Pillow; the `ERROR:` line says which. Make
+  the install offer below.
+- **3, the render failed.** Skip the video.
+
+⛔ **Keep the storyboard whenever it was written.** Skipping the video leaves
+`docs/video/storyboard.json` in place, so the video can be rendered later by running the renderer
+again. The skip message says so, for example: "🎬 I couldn't render the graduation video (ffmpeg is
+missing). Its storyboard is saved at `docs/video/storyboard.json`, so it can be rendered later." Then
+continue to Step 2.
+
+**The install offer (exit 2).** Offer it once (INV-006), pinned:
+
+> 👉 **Rendering the video needs ffmpeg. May I install `imageio-ffmpeg` into this project's virtualenv?** (Reply no to skip the video; its storyboard is kept so you can render it later.)
+
+When Pillow is missing as well, name it in the same question: "Rendering the video needs ffmpeg and
+Pillow. May I install `imageio-ffmpeg` and Pillow into this project's virtualenv?", with the same
+answer hint. Pillow is missing when the virtualenv does not exist yet or its Python cannot run
+`import PIL`. When ffmpeg is on `PATH` and only Pillow is missing, the question names Pillow alone.
+
+On yes, install into the project-local virtualenv (INV-066). Step 1b's `fpdf2` install may have created
+it already:
+
+```bash
+python3 -m venv data/temp/recap-venv    # only if it does not exist yet
+# Linux/macOS (add Pillow when it is missing):
+data/temp/recap-venv/bin/python -m pip install imageio-ffmpeg
+data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
+# Windows:
+data\temp\recap-venv\Scripts\python -m pip install imageio-ffmpeg
+data\temp\recap-venv\Scripts\python "${CLAUDE_PLUGIN_ROOT}\scripts\generate_recap_video.py"
+```
+
+On no, or when the venv or the install fails, skip the video and keep the storyboard.
+
+#### Verify the video
+
+⛔ **Verify the rendered video, not the exit code (INV-129).** Each check is best-effort and
+non-blocking. A check that cannot run is recorded as skipped, naming the check (INV-163). Use the
+ffmpeg the render used: `ffmpeg` on `PATH`, or the `imageio-ffmpeg` binary, whose path
+`<venv python> -c "import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())"` prints. Use
+`ffprobe` where it exists. ⛔ **Never install a tool only to run a check (INV-129).**
+
+1. **Duration: within 2:00 ± 10 s**, that is 1:50 to 2:10. Read it from the file (`ffprobe`, or the
+   `Duration:` line `ffmpeg -i docs/bootcamp_recap.mp4` prints), not only from the renderer's own
+   line.
+2. **Frames.** Extract one frame at the midpoint of each scene, including the certificate and the
+   tag line, and look at each one. For example, after creating `data/temp/video-check/`:
+   `ffmpeg -ss <seconds> -i docs/bootcamp_recap.mp4 -frames:v 1 data/temp/video-check/scene-<n>.png`.
+   Work the midpoints out from the planned durations, lengthened as the renderer's `OVERRUN:` lines
+   report. Confirm that each frame shows its scene, that the certificate carries the right name and
+   that the tag line reads "Resolved: [Name], Senzing graduate.".
+3. **Audio.** When the renderer printed `Audio track: yes`, a speech engine was available, and the
+   file carries an audio stream (`ffprobe`, or the `Audio:` stream line of `ffmpeg -i`). When it
+   printed `Audio track: no`, no speech engine was available. The video then has captions only, and
+   that is not a failure.
+
+**Out of tolerance.** When the duration is outside 1:50 to 2:10, shorten the narration (a video that
+runs long) or lengthen it (a video that runs short), starting with the scenes the `OVERRUN:` lines
+name, and re-render **once**. If it is still outside, keep the video and say so, with its duration.
+
+Tell the bootcamper in one line: "🎬 Your graduation video is at `docs/bootcamp_recap.mp4` (2:03)."
+Name any check that did not run, and continue to Step 2.
+
 ## Step 2: Build the production project
 
 If `production/` already exists, pin this 👉 question verbatim (neutral lead + numbered list):
@@ -1129,7 +1360,9 @@ Cover:
 - **License** — where the license lives (`licenses/g2.lic` when custom, else the built-in
   evaluation license) and any expiry.
 - **Where things are** — point at `backups/revisit/` (state + database backup), the recap PDF, and
-  `docs/visualizations/`.
+  `docs/visualizations/`. Name `docs/bootcamp_recap.mp4` too when Step 1c produced it. When Step 1c
+  wrote a storyboard but skipped the video, say that `docs/video/storyboard.json` is kept so the
+  video can be rendered later with the bundled renderer, `generate_recap_video.py`.
 
 Then present a one-line summary of what the bundle saved and where, and continue to Step 7.
 
@@ -1167,11 +1400,16 @@ This runs exactly once, after the report, before graduation is reported finished
    (INV-048). This step is the **only** place these two reach the bootcamper — graduation is
    terminal, so a PDF unnamed here is one they never learn they have.
 
+   **Also name the graduation video, `docs/bootcamp_recap.mp4`, only if Step 1c produced it:** a
+   narrated 2-minute video of their bootcamp, to keep and share. When its duration stayed outside
+   2:00 ± 10 s after the one re-render, say so here, with its duration. When a video check did not
+   run, say which, in the same plain sentence as the PDF note below (INV-163).
+
    **If any Step 1b verification check was skipped for a missing tool, say so here in one plain sentence** — name what was not checked, not the tool names. On Windows this is the common case (poppler is typically absent, so the page raster could not run). One sentence is enough: *"One note: I verified the PDF's contents but couldn't check its page layout on this machine, so if anything looks visually off, tell me and I'll re-render."* Never describe the keepsake as verified when a check did not run — and never turn this into a 👉 question or a to-do for the bootcamper.
 
 Example (list only what exists):
 
-> 🎓 **Here's your bootcamp recap.** Your complete recap is at `docs/bootcamp_recap.pdf`: a shareable PDF that opens with a summary and then walks through every module you completed, capturing the Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary for each. Your production project is ready in `production/`: start with `production/GRADUATION_REPORT.md` and work through `production/MIGRATION_CHECKLIST.md`. Two more keepsakes are alongside the recap: `docs/business_problem.pdf`, the problem you set out to solve, and `docs/data_source_evaluation.pdf`, how ready your sources were and what was left unmapped.
+> 🎓 **Here's your bootcamp recap.** Your complete recap is at `docs/bootcamp_recap.pdf`: a shareable PDF that opens with a summary and then walks through every module you completed, capturing the Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary for each. Your production project is ready in `production/`: start with `production/GRADUATION_REPORT.md` and work through `production/MIGRATION_CHECKLIST.md`. Two more keepsakes are alongside the recap: `docs/business_problem.pdf`, the problem you set out to solve, and `docs/data_source_evaluation.pdf`, how ready your sources were and what was left unmapped. And your narrated 2-minute graduation video is at `docs/bootcamp_recap.mp4`.
 
 3. **End on the single closing question (INV-251).** The announcement carries no 👉. After it, end the graduation turn with exactly one 👉 question:
 

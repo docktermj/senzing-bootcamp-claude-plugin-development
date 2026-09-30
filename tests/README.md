@@ -41,6 +41,11 @@ when it is absent and supplies the `@requires_fpdf2` guard; see `docs/developmen
   `module-completion.md` Step 2e writes at every module's close: the entry format keyed by state
   token, the no-raw-record-values rule, replace-on-re-completion, recreate-on-unreadable,
   never-blocks, and that the documented example's facts validate as renderer scenes.
+- `test_graduation_video_step.py` — graduation Step 1c, the optional graduation video: its place
+  after the recap PDF, the offer and install questions verbatim, nothing written on no, the
+  time budget and its rescaling over the modules taken, the example storyboard validating
+  through the renderer and ending on the certificate and the tag line, the no-raw-values rule,
+  the non-blocking fallbacks for exit codes 1–3, and the duration, frame and audio checks.
 - `test_brand_sync.py` — asserts the inlined fallback palettes in
   `senzing_viz_server.py` and `generate_recap_pdf.py` stay equal to
   `brand_tokens.py`, so the hand-maintained copies cannot drift silently.
