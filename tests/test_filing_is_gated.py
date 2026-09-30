@@ -10,9 +10,15 @@ un-created. This module covers the four acts the maintainer commands can instruc
 wrong. Searching for `gh issue create` returns several files, and some of them name it only to
 forbid or template the act. The three pinned as negatives:
 
-* `.claude/commands/feedback-to-issues.md` — forbids a `--repo` argument;
+* the `--repo` prohibition the `/feedback-to-issues` command file carried, kept verbatim here;
 * `.claude/skills/feedback-to-issues/issue-template.md` — a body template;
 * `.claude/skills/delegate-to-mcp-server/issue-template.md` — a body template.
+
+⚠️ **Dated note, 2026-09-30 (#262): the first negative is a pinned text, not a file.** The
+command file that carried it was deleted by #262, since `/<name>` runs the skill (measured
+2026-09-29, Claude Code 2.1.284, #241). Its sentence is kept verbatim as `RETIRED_PROHIBITION`,
+so the negative set stays at three rather than shrinking toward vacuity (INV-265). The
+`dry-run` command also left the unattended set; the `dry-run` skill is still in it.
 
 ⚠️ **Re-pointed 2026-09-28 (#215).** The third negative was
 `.claude/skills/unattended-issue-loop/SKILL.md` (*"An unattended audit FILES NOTHING."*). That
@@ -26,7 +32,8 @@ the guard written to prevent it.
 ⛔ **For the three `gh` commands the discriminator is the fence.** A command inside a fenced
 code block is one the reader is told to run; one in inline backticks is prose *about* it.
 Measured 2026-09-29 over the 8 files that name `gh issue create`, it split them **5 and 3**,
-exactly along the instruction/prohibition line. `ProhibitionsAreNotInstructions` pins the three
+exactly along the instruction/prohibition line (7 files and **5 and 2** after #262, plus the
+pinned text). `ProhibitionsAreNotInstructions` pins the three
 negatives. ⛔ **`submit_feedback` is an MCP call and is never fenced**, so its instruction is
 the call shape `submit_feedback(category=…)`; prose naming the tool is not one.
 
@@ -249,7 +256,7 @@ class TheCorpusIsNotEmpty(unittest.TestCase):
     def test_the_unattended_set_holds_each_named_surface(self):
         labels = [label for label, _ in unattended_regions()]
         for rel in (LOOP_OVERLAY, "skills/production-readiness-audit/SKILL.md",
-                    "skills/dry-run/SKILL.md", "commands/dry-run.md", NO_ENTRY_ROW[0]):
+                    "skills/dry-run/SKILL.md", NO_ENTRY_ROW[0]):
             with self.subTest(surface=rel):
                 self.assertTrue(
                     any(label.split(":")[0] == rel for label in labels),
@@ -321,10 +328,23 @@ class ProhibitionsAreNotInstructions(unittest.TestCase):
 
     #: Each names `gh issue create` only to forbid or template it.
     NEGATIVES = (
-        "commands/feedback-to-issues.md",
         "skills/feedback-to-issues/issue-template.md",
         "skills/delegate-to-mcp-server/issue-template.md",
     )
+
+    #: The prohibition the `/feedback-to-issues` command file carried until #262 deleted it,
+    #: verbatim. It names `gh issue create` only to forbid a flag on it.
+    RETIRED_PROHIBITION = (
+        "routing is owned exclusively by `/escalate-to-parent`; in this repo — the parent —\n"
+        "parent-to-child change travels by **parity**, so the parent never files into children at\n"
+        "all. ⚠️ A `--repo` argument to `gh issue create`, or any other way of naming a repository,\n"
+        "is a violation of this rule rather than a convenience.\n")
+
+    def test_the_retired_prohibition_is_not_read_as_instructing(self):
+        self.assertIn(FILING, self.RETIRED_PROHIBITION)
+        self.assertEqual([], instruction_lines(self.RETIRED_PROHIBITION),
+                         "a prohibition naming `%s` in inline backticks is read as an "
+                         "instruction to file" % FILING)
 
     def test_none_of_them_is_read_as_instructing(self):
         for rel in self.NEGATIVES:

@@ -304,7 +304,7 @@ gh issue create --title "<title>" --body-file <file>
 ⛔ **(INV-319) Never pass `--repo`, and never file anywhere but here.** This is the parent repository;
 parent-to-child change travels by **parity**, from a tagged release, so the parent never
 files into a child at all. A flag naming another repository is a violation of that rule,
-not a convenience.
+not a convenience: whatever the finding, never pass `--repo`.
 
 **Record each issue number as you go** — Step 9's ledger rows and Step 10's report both
 need it.

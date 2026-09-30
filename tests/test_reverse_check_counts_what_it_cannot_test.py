@@ -95,9 +95,10 @@ def build(tmp, plugin_lines="", surface_lines=""):
     if plugin_lines:
         (plugin / "SKILL.md").write_text("# demo\n\n" + plugin_lines, encoding="utf-8")
     if surface_lines:
-        surface = repo / ".claude" / "commands"
+        # Under `.claude/skills` since #262 took `.claude/commands` out of `SCAN_ROOTS`.
+        surface = repo / ".claude" / "skills" / "demo"
         surface.mkdir(parents=True)
-        (surface / "demo.md").write_text("# demo command\n\n" + surface_lines, encoding="utf-8")
+        (surface / "SKILL.md").write_text("# demo skill\n\n" + surface_lines, encoding="utf-8")
     git(repo, "add", "-A")
     git(repo, "commit", "--quiet", "-m", "feat: the rules under test")
     return repo, base
@@ -130,7 +131,7 @@ class LinesOutsideTheTestedCorpusAreCounted(unittest.TestCase):
             "a hard rule added under the maintainer surface was not counted as untested. The "
             "old procedure could not match it at all and reported nothing:\n%s" % out)
         self.assertIn(
-            ".claude/commands/demo.md", out,
+            ".claude/skills/demo/SKILL.md", out,
             "the untested line's file is not named, so a reader cannot go and read it:\n%s" % out)
 
     def test_a_run_with_untested_lines_is_not_clean(self):

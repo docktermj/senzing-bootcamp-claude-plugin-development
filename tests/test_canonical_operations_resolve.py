@@ -15,11 +15,19 @@ surrounding work keeps finding. It was renamed and re-aimed instead.
 What it holds now:
 
 * **The table against the shipped set, three assertions covering both directions.** Every
-  operation the table marks `required` for the parent has a file in `.claude/commands/`; every
-  operation the table marks as having no parent counterpart (`—`) does **not**; and every file
-  under `.claude/commands/` appears in the table. `parity-check` and `escalate-to-parent` are
-  child-only, and a parent that quietly grew one would contradict the table four repositories
-  read.
+  operation the table marks `required` for the parent ships here; every operation the table
+  marks as having no parent counterpart (`—`) does **not**; and every shipped operation appears
+  in the table. `parity-check` and `escalate-to-parent` are child-only, and a parent that
+  quietly grew one would contradict the table four repositories read.
+
+  ⚠️ **Dated note, 2026-09-30 (#262): "ships" means a skill or a command.** INV-316's
+  2026-09-30 note (#241) counts a skill under `.claude/skills/` with a `SKILL.md` as a shipped
+  operation, since `/<name>` runs the skill directly (measured 2026-09-29, Claude Code
+  2.1.284), and reads the register direction as "every shipped command or skill". #262 deleted
+  the ten same-name command files, so the shipped set is the skills today. It is read from
+  `tests/_maintainer_surface.py`, the one place that reading lives (INV-300), and
+  `TheRegisterReadsTheSkills` is the negative control: a shipped skill missing from the table
+  fails.
 
   ⛔ **The third assertion is the one this file spent its first three days without, while
   claiming to have it.** This paragraph read *"The table half is exact in both directions"* and
@@ -45,7 +53,7 @@ What it holds now:
   `.claude/skill-overlays/<name>.md`. A §2 row marks that `required *(user level)*`, a
   `docs/development.md` name carries *(user level)*, and so does every live mention on the family
   page. ⛔ **The marker is a disclaimer, not a silencer** (INV-316): it is accepted only when the
-  overlay exists **and** `.claude/commands/<name>.md` does not. ⚠️ `~/.claude/skills/` is **not
+  overlay exists **and** no command or skill of that name ships here. ⚠️ `~/.claude/skills/` is **not
   checked in CI** (INV-308), so nothing here establishes that the user-level skill exists on any
   machine; the overlay is what this repository can check.
 
@@ -64,8 +72,8 @@ compares name sets. A command listed with the wrong phase, or marked `required` 
 that do not have it, passes every assertion here.
 
 ⛔ **Enforces INV-316** — a slash command named in a maintainer-facing document resolves to a
-shipped command or carries a marker at the point of use; and where the document is the
-REGISTER of an operation set, every shipped command appears in it.
+shipped command or skill or carries a marker at the point of use; and where the document is the
+REGISTER of an operation set, every shipped command or skill appears in it.
 
 ⚠️ **What an `Enforced by` clause here does NOT claim.** This module compares **name sets**.
 It cannot assert that a diagram renders, that it renders identically on GitHub, that a
@@ -86,12 +94,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-COMMANDS_DIR = REPO_ROOT / ".claude" / "commands"
-SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
-OVERLAYS_DIR = REPO_ROOT / ".claude" / "skill-overlays"
+import _maintainer_surface as surface
+
+REPO_ROOT = surface.REPO_ROOT
+COMMANDS_DIR = surface.COMMANDS_DIR
+SKILLS_DIR = surface.SKILLS_DIR
+OVERLAYS_DIR = surface.OVERLAYS_DIR
 #: The repo overlay for `implement-github-issue`. Named `_CMD` for its history: it was the command
-#: file until #239 moved it out of `.claude/commands/`.
+#: file until #239 moved it out of the command directory.
 IMPLEMENT_CMD = OVERLAYS_DIR / "implement-github-issue.md"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
 DEV_DOCS = REPO_ROOT / "docs" / "development.md"
@@ -138,16 +148,24 @@ MARKER_WINDOW = 80
 
 
 def shipped():
-    return {p.stem for p in COMMANDS_DIR.glob("*.md")}
+    """Every shipped maintainer operation: each skill, together with any command (INV-316)."""
+    return surface.operations()
 
 
-def user_level_problems(names, commands_dir=COMMANDS_DIR, overlays_dir=OVERLAYS_DIR):
-    """Why each name marked *(user level)* is not one: a command ships, or no overlay backs it."""
+def unregistered(operations, register):
+    """Shipped operations with no row in the register -- the direction the table cannot see."""
+    return sorted(set(operations) - set(register))
+
+
+def user_level_problems(names, commands_dir=COMMANDS_DIR, overlays_dir=OVERLAYS_DIR,
+                        skills_dir=SKILLS_DIR):
+    """Why each name marked *(user level)* is not one: it ships here, or no overlay backs it."""
     problems = []
     for name in sorted(n.lstrip("/") for n in names):
-        if (commands_dir / ("%s.md" % name)).exists():
-            problems.append("%s: marked (user level) but %s ships, so the marker would silence "
-                            "a live command" % (name, commands_dir / ("%s.md" % name)))
+        if surface.ships(name, commands_dir, skills_dir):
+            problems.append("%s: marked (user level) but a command under %s or a skill under %s "
+                            "ships, so the marker would silence a live operation"
+                            % (name, commands_dir, skills_dir))
         if not (overlays_dir / ("%s.md" % name)).is_file():
             problems.append("%s: marked (user level) but %s is missing, so the name points "
                             "nowhere this repository can check"
@@ -225,10 +243,10 @@ class NothingIsEmpty(unittest.TestCase):
             "drifted and every check below proves nothing" % FAMILY)
         self.assertIn("implement-github-issue", ops)
 
-    def test_commands_were_found_on_disk(self):
+    def test_operations_were_found_on_disk(self):
         """Anchored on `dry-run` since #239 moved `implement-github-issue` out of the glob."""
         self.assertIn("dry-run", shipped(),
-                      "the command glob is missing one certainly present; the pattern is wrong")
+                      "the operation scan is missing one certainly present; the pattern is wrong")
 
     def test_the_family_page_carries_diagrams(self):
         self.assertGreaterEqual(len(MERMAID_BLOCK.findall(FAMILY.read_text(encoding="utf-8"))), 3)
@@ -241,9 +259,9 @@ class TheTableAgreesWithTheShippedSet(unittest.TestCase):
                          and not (op in user_level_rows() and not user_level_problems({op})))
         self.assertEqual(
             [], missing,
-            "%s marks operation(s) required for the parent that have no file under %s: %s. "
-            "Four child repositories read this table as normative"
-            % (FAMILY, COMMANDS_DIR, ", ".join(missing)))
+            "%s marks operation(s) required for the parent that ship as neither a skill under "
+            "%s nor a command under %s: %s. Four child repositories read this table as normative"
+            % (FAMILY, SKILLS_DIR, COMMANDS_DIR, ", ".join(missing)))
 
     def test_no_child_only_operation_ships_here(self):
         """The direction that catches the parent quietly growing a child-only operation."""
@@ -251,8 +269,9 @@ class TheTableAgreesWithTheShippedSet(unittest.TestCase):
                        if parent in {"—", "-", ""} and op in shipped())
         self.assertEqual(
             [], wrong,
-            "%s records operation(s) as having no parent counterpart, but they ship under %s: "
-            "%s. The table and the repository disagree" % (FAMILY, COMMANDS_DIR, ", ".join(wrong)))
+            "%s records operation(s) as having no parent counterpart, but they ship as a skill "
+            "or command here: %s. The table and the repository disagree"
+            % (FAMILY, ", ".join(wrong)))
 
     def test_every_shipped_command_is_in_the_table(self):
         """The direction neither assertion above can reach, because both iterate the TABLE.
@@ -262,19 +281,44 @@ class TheTableAgreesWithTheShippedSet(unittest.TestCase):
         hypothetical: `check-skill-drift` shipped 2026-09-23 (#128) and was missing from the
         table until #140 -- found by an audit reading the assertions, not by anything here.
         """
-        missing = sorted(shipped() - set(table()))
+        missing = unregistered(shipped(), table())
         self.assertEqual(
             [], missing,
-            "command file(s) under %s with no row in the §2 canonical-operation table of %s: "
+            "shipped operation(s) (skills under %s, commands under %s) with no row in the §2 "
+            "canonical-operation table of %s: "
             "%s. R4 reserves operation names family-wide, so an operation absent from the table "
             "is one a child could claim for something else. Add a row -- or, if it genuinely "
             "should not be listed, that is a decision needing a stated reason, which is why "
             "there is no exemption set to drop it into"
-            % (COMMANDS_DIR, FAMILY, ", ".join(missing)))
+            % (SKILLS_DIR, COMMANDS_DIR, FAMILY, ", ".join(missing)))
+
+
+class TheRegisterReadsTheSkills(unittest.TestCase):
+    """INV-316's register direction, "every shipped command or skill" (#262).
+
+    With no command file shipping, a register check that globbed `.claude/commands/` alone would
+    compare the table with an empty set and pass on nothing. These pin that the shipped set is
+    read from the skills, and that a skill with no row fails.
+    """
+
+    def test_every_shipped_skill_is_read(self):
+        self.assertTrue(surface.skills(), "no skill was found under %s" % SKILLS_DIR)
+        self.assertLessEqual(surface.skills(), shipped(),
+                             "a skill is missing from the shipped set the register is checked "
+                             "against, so the register direction cannot see it")
+
+    def test_a_shipped_skill_missing_from_the_register_fails(self):
+        """Negative control: a skill with a `SKILL.md` and no §2 row is reported by name."""
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+        (root / "skills" / "unregistered-262").mkdir(parents=True)
+        (root / "skills" / "unregistered-262" / "SKILL.md").write_text("x\n", encoding="utf-8")
+        ops = surface.operations(root / "commands", root / "skills") | shipped()
+        self.assertIn("unregistered-262", unregistered(ops, table()))
 
 
 class AUserLevelMarkerIsADisclaimerNotASilencer(unittest.TestCase):
-    """INV-316 -- *(user level)* is accepted only with an overlay here and no command here (#239)."""
+    """INV-316 -- *(user level)* is accepted only with an overlay and nothing shipping here (#239)."""
 
     def test_the_user_level_branch_is_exercised(self):
         """INV-265 -- the checks below prove nothing if no name carries the marker."""
@@ -314,25 +358,33 @@ class AUserLevelMarkerIsADisclaimerNotASilencer(unittest.TestCase):
     def _tree(self):
         root = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, root)
-        commands, overlays = root / "commands", root / "skill-overlays"
+        commands, overlays, skills = root / "commands", root / "skill-overlays", root / "skills"
         commands.mkdir()
         overlays.mkdir()
+        skills.mkdir()
         (overlays / "demo-op.md").write_text("overlay\n", encoding="utf-8")
-        return commands, overlays
+        return commands, overlays, skills
 
     def test_a_well_formed_user_level_name_passes(self):
-        commands, overlays = self._tree()
-        self.assertEqual([], user_level_problems({"demo-op"}, commands, overlays))
+        commands, overlays, skills = self._tree()
+        self.assertEqual([], user_level_problems({"demo-op"}, commands, overlays, skills))
 
     def test_the_marker_fails_when_the_overlay_is_missing(self):
-        commands, overlays = self._tree()
+        commands, overlays, skills = self._tree()
         (overlays / "demo-op.md").unlink()
-        self.assertEqual(1, len(user_level_problems({"demo-op"}, commands, overlays)))
+        self.assertEqual(1, len(user_level_problems({"demo-op"}, commands, overlays, skills)))
 
     def test_the_marker_fails_on_a_command_that_still_ships(self):
-        commands, overlays = self._tree()
+        commands, overlays, skills = self._tree()
         (commands / "demo-op.md").write_text("command\n", encoding="utf-8")
-        self.assertEqual(1, len(user_level_problems({"demo-op"}, commands, overlays)))
+        self.assertEqual(1, len(user_level_problems({"demo-op"}, commands, overlays, skills)))
+
+    def test_the_marker_fails_on_a_skill_that_ships(self):
+        """#262: a skill is a shipped operation too (INV-316's 2026-09-30 note)."""
+        commands, overlays, skills = self._tree()
+        (skills / "demo-op").mkdir()
+        (skills / "demo-op" / "SKILL.md").write_text("skill\n", encoding="utf-8")
+        self.assertEqual(1, len(user_level_problems({"demo-op"}, commands, overlays, skills)))
 
 
 class ARetiredOperationStaysGone(unittest.TestCase):
@@ -407,17 +459,17 @@ class EverySlashCommandResolvesOrDisclaims(unittest.TestCase):
                           if c.lstrip("/") not in shipped() and not child_only})
         self.assertEqual(
             [], phantom,
-            "docs/development.md names command(s) with no file under %s and no marker saying "
-            "so -- neither '(children only)' nor a statement that it was retired: %s"
-            % (COMMANDS_DIR, ", ".join(phantom)))
+            "docs/development.md names command(s) that ship as neither a skill under %s nor a "
+            "command under %s, with no marker saying so -- neither '(children only)' nor a "
+            "statement that it was retired: %s" % (SKILLS_DIR, COMMANDS_DIR, ", ".join(phantom)))
 
     def test_a_marked_command_really_is_absent_here(self):
         mislabeled = sorted({c for c, child_only in slash_commands(DEV_DOCS)
                              if child_only and c.lstrip("/") in shipped()})
         self.assertEqual(
             [], mislabeled,
-            "docs/development.md marks %s as '(children only)' while it ships under %s"
-            % (", ".join(mislabeled), COMMANDS_DIR))
+            "docs/development.md marks %s as '(children only)' while it ships here as a skill "
+            "or command" % ", ".join(mislabeled))
 
     def test_the_child_only_branch_is_exercised(self):
         """Without a marked command the marker half is untested and green."""

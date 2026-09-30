@@ -6,10 +6,17 @@ audit it may hold nothing at all, so a green run there proves only that today's 
 module is the other half (INV-282): synthetic `since` reports, fed to the guard's own parser and
 predicate, that fix what the guard must decide whatever the live range holds.
 
-- **MUST flag:** an uncited rule under `.claude/commands/…`, `.claude/skills/…` and
-  `.claude/skill-overlays/…`. Until #233 all three roots were counted and never checked.
-- **MUST NOT flag:** a `.claude/commands/…` rule citing an `INV-` id on its line, and a
+- **MUST flag:** an uncited rule under each `.claude/` root in `SCAN_ROOTS`: `.claude/skills/…`
+  and `.claude/skill-overlays/…`. Until #233 every `.claude/` root was counted and never
+  checked.
+- **MUST NOT flag:** a `.claude/skills/…` rule citing an `INV-` id on its line, and a
   `.claude/` rule whose text is quoted in a `DEFERRED INVARIANT` block.
+
+⚠️ **Dated note, 2026-09-30 (#262): the command root's fixtures are gone with the root.** #262
+deleted the ten same-name command files and dropped `.claude/commands` from `SCAN_ROOTS`, so
+its MUST-flag fixture went too and the cited fixture moved under `.claude/skills`.
+`TheFixtureRootsAreTheProducersRoots` still demands one fixture per producer root, so a root
+added back is unproven until it gets one.
 
 ⛔ **The guard is imported, never re-implemented.** A second copy of the parser or the predicate
 here would prove the copy, not the guard. The deferral fixture replaces only the ledger path the
@@ -49,12 +56,11 @@ unaccounted = GUARD.EveryNewHardRuleIsAccountedFor._unaccounted
 #: lookup falls back to the reported text and the fixture decides the line alone.
 UNCITED = "⛔ **Never file an issue the maintainer has not seen.**"
 MUST_FLAG = {
-    ".claude/commands": ".claude/commands/fixture-233.md",
     ".claude/skills": ".claude/skills/fixture-233/SKILL.md",
     ".claude/skill-overlays": ".claude/skill-overlays/fixture-233.md",
 }
 CITED = ("⛔ **(INV-314) Never file an issue the maintainer has not seen.**",
-         ".claude/commands/fixture-233-cited.md")
+         ".claude/skills/fixture-233-cited/SKILL.md")
 DEFERRED = ("⛔ **Never merge a pull request whose issue carries no ledger entry.**",
             ".claude/skills/fixture-233-deferred/SKILL.md")
 
@@ -138,7 +144,7 @@ class AnUncitedMaintainerRuleIsFlagged(unittest.TestCase):
 
 
 class ACitedOrDeferredMaintainerRuleIsNotFlagged(unittest.TestCase):
-    def test_a_command_rule_citing_an_id_on_its_line_passes(self):
+    def test_a_maintainer_rule_citing_an_id_on_its_line_passes(self):
         with fixture_ledger():
             _parsed, lines = checked_lines(report(CITED[::-1]))
             self.assertEqual([], unaccounted(lines))

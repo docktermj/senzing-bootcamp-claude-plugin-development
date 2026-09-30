@@ -16,7 +16,7 @@ the skills. This guard keeps them there:
   whose command pattern matches nothing fails as stale.
 * **The invocation.** No skill sets `disable-model-invocation` (the ten skills stay
   model-invocable), and none says it is "invoked explicitly rather than inferred", a sentence
-  `.claude/commands/dry-run.md` carries that would be false in a model-invocable skill.
+  the `dry-run` command file carried that would be false in a model-invocable skill.
 
 **INV-333** is the invariant this enforces for the costly choices: `/dry-run`'s phase 3,
 `/auto-test`'s simulated walk and `/release`'s bump are asked about, never defaulted from an
@@ -28,7 +28,8 @@ guard they establish that the rule is stated, not that a live run asks.
 
 ⚠️ **When the commands go (#262)**, the command-side checks skip with a stated reason rather
 than pass over an empty set (INV-308), and the skill-side checks keep running from the table,
-which is then the record of what the commands said.
+which is then the record of what the commands said. (⚠️ **Dated note, 2026-09-30 (#262):** the
+ten command files are deleted, and this is the state the guard now runs in.)
 
 ⚠️ **What this does NOT establish.** It pins that the rules are *stated* in each skill. It cannot
 establish that a live run obeys one (that `/dry-run` with no argument actually asks), nor that

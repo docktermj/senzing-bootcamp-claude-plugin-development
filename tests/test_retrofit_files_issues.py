@@ -50,6 +50,11 @@ the prose around it. `NoCopyWordingReturns` fails if any of those phrases comes 
 `__pycache__/`, `*.pyc` and `.pytest_cache/`, which the baseline never holds because
 `propagate.sh` excludes them.
 
+⚠️ **Dated note, 2026-09-30 (#262): the command-side assertions are dropped.** Until #262
+`NoCopyWordingReturns` read the `retrofit-from-public` command file as well as the skill.
+`/<name>` runs the skill (measured 2026-09-29, Claude Code 2.1.284, #241), so the command never
+ran; #262 deleted it. The check and its negative control now read the skill alone.
+
 Stdlib only; every file is read as text (INV-108), and the fixtures use `subprocess` and
 `tempfile`.
 
@@ -67,7 +72,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL = REPO_ROOT / ".claude" / "skills" / "retrofit-from-public" / "SKILL.md"
-COMMAND = REPO_ROOT / ".claude" / "commands" / "retrofit-from-public.md"
 SCRIPT = REPO_ROOT / ".claude" / "skills" / "retrofit-from-public" / "retrofit.sh"
 PROPAGATE_REL = ".claude/skills/propagate-to-public/propagate.sh"
 PROPAGATE = REPO_ROOT / PROPAGATE_REL
@@ -691,12 +695,12 @@ def _stale_hits(text):
 
 
 class NoCopyWordingReturns(unittest.TestCase):
-    """#224: the command and the skill describe the report, not the copy #54 retired."""
+    """#224: the skill describes the report, not the copy #54 retired."""
 
     def _files(self):
-        return (("the command", COMMAND), ("the skill", SKILL))
+        return (("the skill", SKILL),)
 
-    def test_neither_file_describes_the_copy(self):
+    def test_the_skill_does_not_describe_the_copy(self):
         for name, path in self._files():
             with self.subTest(file=name):
                 self.assertEqual(

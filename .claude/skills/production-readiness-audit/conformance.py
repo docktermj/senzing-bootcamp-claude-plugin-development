@@ -39,9 +39,21 @@ INV_ID = re.compile(r"INV-\d{3}")
 #: included (#233). See that module's docstring for why.
 #:
 #: `.claude/skill-overlays` joined at #239: the repo overlays for the two skills defined only at
-#: user level moved there out of `.claude/commands`, and their rules must stay in the corpus.
-SCAN_ROOTS = ("plugins/senzing-bootcamp", ".claude/commands", ".claude/skills",
-              ".claude/skill-overlays")
+#: user level moved there out of the command directory, and their rules must stay in the corpus.
+#: The command directory left at #262, which deleted the ten same-name command files: `/<name>`
+#: runs the skill (measured 2026-09-29, Claude Code 2.1.284, #241), so every maintainer rule
+#: now ships under `.claude/skills` or `.claude/skill-overlays`.
+SCAN_ROOTS = ("plugins/senzing-bootcamp", ".claude/skills", ".claude/skill-overlays")
+
+#: ⚠️ **A root that held maintainer files once and holds none now, still handed to `git diff`
+#: (#262).** Git pairs a rename only between paths inside the pathspec. #239 moved two command
+#: files into `.claude/skill-overlays`, so with `.claude/commands` gone from the pathspec a range
+#: spanning that move reads each overlay as wholly ADDED, and every rule in it as new. Diffing the
+#: retired root as well keeps a move a move. While it holds no file it contributes no added line;
+#: a file added there later is reported under a heading no `SCAN_ROOTS` entry places, and
+#: `tests/test_new_hard_rules_are_cited_or_deferred.py` fails on that by name rather than leaving
+#: it unscanned.
+RETIRED_ROOTS = (".claude/commands",)
 
 #: ⛔ **The corpus is these roots AND `.md` only, and it stays narrow deliberately (#108).**
 #: Measured 2026-09-23 over the whole repository: **862** hard-rule lines sit inside it, against
@@ -302,7 +314,7 @@ def added_rule_lines(repo, ref, upto=None):
     """
     rng = ref if upto is None else "%s..%s" % (ref, upto)
     proc = subprocess.run(
-        ["git", "diff", "--unified=0", "--no-color", rng, "--", *SCAN_ROOTS],
+        ["git", "diff", "--unified=0", "--no-color", rng, "--", *SCAN_ROOTS, *RETIRED_ROOTS],
         cwd=str(repo), capture_output=True, text=True)
     if proc.returncode != 0:
         return None

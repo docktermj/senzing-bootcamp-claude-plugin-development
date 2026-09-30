@@ -43,6 +43,113 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## maintainer-operations-are-defined-once-as-skills
+
+- **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #262)
+- **Files changed:** `.claude/commands/` (the ten same-name command files deleted:
+  `auto-test.md`, `compact-dev-environment.md`, `delegate-to-mcp-server.md`, `dry-run.md`,
+  `feedback-to-issues.md`, `production-readiness-audit.md`, `propagate-to-public.md`,
+  `release.md`, `retrofit-from-public.md`, `review-invariants.md`),
+  `.claude/skills/production-readiness-audit/conformance.py`,
+  `.claude/skills/review-invariants/pending_invariants.py`,
+  `.claude/skills/production-readiness-audit/SKILL.md`,
+  `.claude/skills/delegate-to-mcp-server/SKILL.md`, `docs/development.md`,
+  `docs/FAMILY_WORKFLOW.md`, `tests/_maintainer_surface.py` (new),
+  `tests/fixtures/maintainer-commands/dry-run-probe-only.md` (new),
+  `tests/fixtures/maintainer-commands/review-invariants.md` (new), 21 existing files under `tests/`
+  (listed under **Tests**), `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.16, 2026-09-30, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact), re-confirmed. Every changed line is maintainer apparatus: the
+  command files, the guards and scripts that read them, and two maintainer pages. No Senzing
+  behavior is stated or changed, and no absence claim is made. `submit_feedback` was not called.
+- **Summary:** each maintainer operation is defined once, as its skill. The measurement on #241
+  (Claude Code 2.1.284, 2026-09-29: `/<name>` runs the skill when a skill and a command share a
+  name) means none of the ten command files ever ran, and #241 moved every rule they carried
+  into their skills. This run deletes the ten, so `.claude/commands/` is gone, and re-points
+  everything that read it.
+  - **One reading of the surface (INV-300).** `tests/_maintainer_surface.py` derives the
+    maintainer operation set: every `.claude/skills/*/SKILL.md` together with any
+    `.claude/commands/*.md`. The INV-302 set comparison, the INV-316 register and resolution
+    checks, the INV-303 enforcer, the since-view root check and the propagation guard's
+    anti-vacuity check import it rather than globbing a directory each.
+  - **INV-302** (`test_documented_dev_commands_match_the_shipped_set.py`): the documentation set
+    is compared with skills + commands. `test_every_skill_is_fronted_by_a_command` is retired, as
+    INV-302's 2026-09-30 narrowing allows. The *(user level)* marker now also fails when a skill
+    of that name ships. Negative control: a shipped skill absent from `docs/development.md` is
+    reported by name.
+  - **INV-303** (`test_dev_commands_name_a_real_skill.py`): while no command ships, the enforcer
+    reads the fixture commands under `tests/fixtures/maintainer-commands/` (one same-name front,
+    one alias), so it never passes over an empty set (INV-265); the day a command ships, it reads
+    that instead. Negative controls: the fixture set plus a command naming no real skill fails
+    as a phantom, and plus a command naming no skill fails as silent.
+  - **INV-316** (`test_canonical_operations_resolve.py`): "ships" is a skill or a command, and
+    the register direction asserts every shipped command or skill has a §2 row. Negative
+    control: a skill with a `SKILL.md` and no row is reported. Measured by hand as well: adding
+    `.claude/skills/zz-neg-262/SKILL.md` failed the register check and the INV-302 set check;
+    a fixture naming a phantom skill, and a command put back under `.claude/commands/` naming
+    one, each failed the INV-303 enforcer. All removed after.
+  - **Sentence-in-both tests** (`test_audit_files_issues_not_specs.py`,
+    `test_delegate_files_issues_not_specs.py`, `test_feedback_to_issues_files_in_its_own_repo.py`,
+    `test_dry_run_files_issues.py`, `test_review_invariants_stops_at_the_working_tree.py`,
+    `test_hold_reason_lives_in_the_ledger.py`, `test_retrofit_files_issues.py`,
+    `test_sites_states_the_corpus_it_scanned.py`): each drops only its command-side assertions and
+    keeps every skill-side one. `test_dry_run_files_issues.py`'s word-for-word comparison of the
+    command's outbound rule with the skill's goes, and `SAME_WORDS` (INV-317, INV-318) is still
+    asserted in the skill.
+  - **#241's argument guard** (`test_skills_state_their_commands_argument_handling.py`): unchanged
+    in code. Its five command-side checks skip with the reason it was built to give ("no
+    same-name command ships (#262)"), and its skill-side checks and two negative controls run.
+    The docstring gains a dated note.
+  - **Scripts.** `conformance.py`'s `SCAN_ROOTS` drops `.claude/commands`. ⚠️ Git pairs a rename
+    only inside the pathspec, so a range spanning #239's move of two command files into
+    `.claude/skill-overlays` then read both overlays as wholly added, and the reverse-contract
+    guard flagged five long-standing overlay rules as new. `RETIRED_ROOTS` keeps the retired
+    root in the `since` diff's pathspec only, so a move stays a move. It adds no line while it
+    holds no file, and a file added there later is reported under a heading no `SCAN_ROOTS` entry
+    places, which the guard fails on by name. `pending_invariants.py`'s `resolve()` no longer
+    needs a command file to exist: a location naming a deleted `.claude/commands/<name>.md`
+    resolves to `.claude/skills/<name>/SKILL.md`, where #241 put the rule, and its quote is
+    compared there verbatim as before. Eight quotes in registered blocks name command locations;
+    six were already verbatim in the skill. The other two were stated in the skill in different
+    words, so the command's wording is now also in the skill, at the step it governs: the
+    audit's Step 9 gains "Record every finding before fixing anything, and never into `specs/`"
+    (cited INV-317 on its line), and the delegate skill's filing paragraph ends "never pass
+    `--repo`." `pending_invariants.py check`: 8 quotes checked, 0 mismatched, 0 unresolved.
+  - **Other tests.** `test_invariant_paths_resolve.py`: INV-307's 2026-09-24 note quotes the
+    deleted delegate command's path, and `INVARIANTS.md` cannot be edited, so the path joins
+    `SUPERSEDED`, re-justified on every run like the first entry. `test_filing_is_gated.py`: the
+    command's `--repo` prohibition is kept verbatim as a pinned text, so the negative set stays
+    at three. `test_maintainer_tooling_stays_out_of_public.py`,
+    `test_since_view_sees_the_maintainer_surface.py`,
+    `test_reverse_contract_flags_the_maintainer_surface.py`,
+    `test_reverse_check_counts_what_it_cannot_test.py`,
+    `test_the_range_boundary_reports_what_it_retires.py`,
+    `test_no_instruction_writes_into_specs.py` and `test_issue_path_reverifies_senzing_facts.py`
+    read or name the skills, or say the command went in a dated note.
+  - **Docs.** `docs/development.md` names the skills as the maintainer operations in its INV-316
+    and INV-302 paragraphs; its list already named the ten. `docs/FAMILY_WORKFLOW.md` §10 gains
+    the dated 2026-09-30 R4 amendment with its "For a child:" paragraph, citing the #241
+    measurement.
+- **Tests:** full suite green on both CI legs, 5193 tests: `OK (skipped=8)` with fpdf2 present
+  and `OK (skipped=70)` with it absent. The five skips beyond the baseline are #241's argument
+  guard's command-side checks, each naming #262. No test was
+  deleted where the issue says re-point; the retired methods are
+  `test_every_skill_is_fronted_by_a_command` (INV-302 narrowed), and the command-side
+  `test_the_command_says_it_too`, `test_the_outbound_rule_is_word_for_word` and
+  `test_the_command_says_which_corpus_the_candidates_come_from`, whose skill-side twins remain.
+- **Invariants.** `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged (INV-307).
+  They already carry #241's notes to INV-302, INV-316, INV-318 and INV-319. **Note for
+  `/review-invariants`:** the held INV-303 note in `each-maintainer-skill-states-its-commands-rules`
+  has its revisit condition met once this merges: no command ships, and the enforcer checks
+  fixture commands. **Establishes no invariant of its own.** Every rule it enforces is INV-302,
+  INV-303, INV-316, INV-317, INV-318 or INV-319 as amended; the new hard-rule line in the audit
+  skill cites INV-317 on its line.
+- **Approach:** raced (Phase 5b); the winning approach, b: one shared helper under `tests/` for
+  the operation set, and a fixtures directory for INV-303. Approach a retired the command checks
+  in place in each test, but could not delete the ten files, so it missed the first acceptance
+  criterion.
+- **Commit:** `b7bb566`
+
 ## invariant-review-2026-09-30
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one review session)

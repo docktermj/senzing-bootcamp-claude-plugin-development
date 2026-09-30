@@ -30,11 +30,18 @@ real run obeys these rules -- only that it is told to, in terms a later editor c
 quietly drop. That gap is real and is named rather than left for the file name to imply
 otherwise.
 
-Stdlib only; both files are read as text (INV-108).
+Stdlib only; every file is read as text (INV-108).
 
-Enforces **INV-319** (a filing command files in this repository only and names no other) at
-this command's surfaces. ⚠️ It pins the rule where it is written and cannot establish that a
-live run passes no other repository.
+Enforces **INV-319** (a filing command or skill files in this repository only and names no
+other) at this operation's skill and its issue template. ⚠️ It pins the rule where it is written
+and cannot establish that a live run passes no other repository.
+
+⚠️ **Dated note, 2026-09-30 (#262): the command-side assertions are dropped.** Until #262 the
+own-repository rule, the `--repo` ban and the ban on writing a spec were each pinned in the
+command file as well as the skill. `/<name>` runs the skill (measured 2026-09-29, Claude Code
+2.1.284, #241), so the command never ran; #241 found every rule it stated already in the skill,
+and #262 deleted it. Each assertion now reads the skill and the template, and none was dropped.
+The old `feedback-to-specs` command path is still asserted gone.
 
 Source issue: #49 (rename `/feedback-to-specs`; file issues instead of specs).
 
@@ -48,9 +55,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL_DIR = REPO_ROOT / ".claude" / "skills" / "feedback-to-issues"
 SKILL = SKILL_DIR / "SKILL.md"
 TEMPLATE = SKILL_DIR / "issue-template.md"
-COMMAND = REPO_ROOT / ".claude" / "commands" / "feedback-to-issues.md"
 
 OLD_SKILL_DIR = REPO_ROOT / ".claude" / "skills" / "feedback-to-specs"
+#: The pre-#49 command, asserted gone. Dated note, 2026-09-30 (#262): no command file ships now.
 OLD_COMMAND = REPO_ROOT / ".claude" / "commands" / "feedback-to-specs.md"
 
 #: `gh issue create --repo other/thing` -- the one flag that breaks the own-repo rule.
@@ -62,8 +69,7 @@ WRITES_A_SPEC = re.compile(r"write\s+`?specs/|`specs/<[^>]*>\.md`\s*(?:using|wit
 
 def texts():
     return {"SKILL.md": SKILL.read_text(encoding="utf-8"),
-            "issue-template.md": TEMPLATE.read_text(encoding="utf-8"),
-            "command": COMMAND.read_text(encoding="utf-8")}
+            "issue-template.md": TEMPLATE.read_text(encoding="utf-8")}
 
 
 def flat(s):
@@ -74,7 +80,7 @@ class TheRenameIsCompleteInBothDirections(unittest.TestCase):
     """Anti-vacuity: every assertion below reads these files, so they must be the real ones."""
 
     def test_the_new_paths_exist(self):
-        for label, path in (("skill", SKILL), ("template", TEMPLATE), ("command", COMMAND)):
+        for label, path in (("skill", SKILL), ("template", TEMPLATE)):
             with self.subTest(what=label):
                 self.assertTrue(
                     path.is_file(),
@@ -93,8 +99,8 @@ class TheRenameIsCompleteInBothDirections(unittest.TestCase):
     def test_the_skill_declares_its_new_name(self):
         self.assertIn(
             "name: feedback-to-issues", texts()["SKILL.md"],
-            "SKILL.md's frontmatter still declares the old name, so the command fronts a "
-            "skill whose own manifest disagrees with it")
+            "SKILL.md's frontmatter still declares the old name, so `/feedback-to-issues` "
+            "names a skill whose own manifest disagrees with it")
 
 
 class ItFilesInItsOwnRepositoryOnly(unittest.TestCase):

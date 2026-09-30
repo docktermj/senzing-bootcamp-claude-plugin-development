@@ -2,9 +2,9 @@
 
 `/implement-github-issue` became the repository's development path in #50, and `specs/` froze
 in #52 — but the obligations that made the **spec** path safe stayed behind in
-`/implement-spec`, which #60 is retiring. Measured before this shipped: grepping both
-`.claude/commands/implement-github-issue.md` and its `SKILL.md` for any MCP re-verification
-returned **zero matches**.
+`/implement-spec`, which #60 is retiring. Measured before this shipped: grepping both the
+`implement-github-issue` command file (the repo overlay since #239) and its `SKILL.md` for any
+MCP re-verification returned **zero matches**.
 
 ⛔ **That is a capability, not a formality.** `implement-spec` Step 3.3 was the only place in
 the repository telling an implementer to re-ask the server before changing code.

@@ -20,7 +20,13 @@ Checks, each negative-controlled when written (#153):
    yes, and `license_request` stays forbidden;
 4. `specs/README.md` no longer says "None is left", and lists `/dry-run` with #153;
 
-plus the issue's "in the same words" requirement for `.claude/commands/dry-run.md`.
+plus the issue's "in the same words" requirement, which the command file carried until #262.
+
+⚠️ **Dated note, 2026-09-30 (#262): the command-side assertions are dropped.** Until #262 the
+lifecycle words and the outbound rule were pinned in `/dry-run`'s command file as well as its
+skill, and the two compared word for word. `/<name>` runs the skill (measured 2026-09-29, Claude
+Code 2.1.284, #241), so the command never ran; #262 deleted it. `SAME_WORDS` and every outbound
+clause are now asserted in the skill alone, and none was dropped.
 
 ⚠️ **What this does NOT establish:** that a run actually drafts, searches, asks or files. Those
 are properties of a live session; only a real `/dry-run` shows them. This pins that the
@@ -31,12 +37,12 @@ and approved on its own) at the `/dry-run` surfaces.
 
 Enforces **INV-317** (a finding is recorded durably as it is found, before it is fixed, and never
 held only in conversation) through `SAME_WORDS`, which pins those lifecycle words in `/dry-run`'s
-command and skill. ⚠️ It does **not** read `/production-readiness-audit`, which states the same rule
+skill. ⚠️ It does **not** read `/production-readiness-audit`, which states the same rule
 in its own words, and it cannot establish that a live run records before it fixes -- only a real
 `/dry-run` phase 3 observes a turn.
 
-Enforces **INV-318** (no maintainer command applies `unattended-ok` to an issue it files) through
-the same `SAME_WORDS` pin, at `/dry-run`'s command and skill. ⚠️ It cannot establish that a live run
+Enforces **INV-318** (no maintainer command or skill applies `unattended-ok` to an issue it files)
+through the same `SAME_WORDS` pin, at `/dry-run`'s skill. ⚠️ It cannot establish that a live run
 refrains from labeling -- it pins the sentence where it is written.
 
 Source issue: #153.
@@ -52,7 +58,6 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DRY_RUN = REPO_ROOT / ".claude" / "skills" / "dry-run"
 SKILL = DRY_RUN / "SKILL.md"
-COMMAND = REPO_ROOT / ".claude" / "commands" / "dry-run.md"
 PHASE3 = DRY_RUN / "phase3-conversational.md"
 FEEDBACK = REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "SKILL.md"
 README = REPO_ROOT / "specs" / "README.md"
@@ -87,8 +92,8 @@ NEGATION = re.compile(r"\b(?:never|not|no|don't|do not)\b")
 #: frozen specs and its live records are provenance, not destinations.
 SPEC_PATH = re.compile(r"specs/([A-Za-z0-9_.-]+\.md)")
 
-#: The finding lifecycle, as the command and the skill must both say it (#153: "the same swap,
-#: in the same words"). Normalized text.
+#: The finding lifecycle, as the skill must say it (#153: "the same swap, in the same words";
+#: the command that shared these words was deleted by #262). Normalized text.
 SAME_WORDS = (
     "draft each finding into the run's dated `specs/implemented.md` entry as you find it, "
     "marked not yet filed, before fixing anything",
@@ -125,8 +130,8 @@ def norm(text):
 
 
 def surfaces():
-    """Every `/dry-run` surface: the skill's own markdown and the slash command (INV-246)."""
-    return sorted(DRY_RUN.glob("*.md")) + [COMMAND]
+    """Every `/dry-run` surface: the skill's own markdown (INV-246)."""
+    return sorted(DRY_RUN.glob("*.md"))
 
 
 def destination_hits(text):
@@ -154,15 +159,19 @@ class TheInputsAreReal(unittest.TestCase):
     """INV-265 -- every assertion below is satisfied trivially by a missing file."""
 
     def test_every_surface_exists(self):
-        for path in (SKILL, COMMAND, PHASE3, FEEDBACK, README):
+        for path in (SKILL, PHASE3, FEEDBACK, README):
             with self.subTest(path=str(path.relative_to(REPO_ROOT))):
                 self.assertTrue(path.is_file(), "%s is missing" % path)
 
     def test_the_scan_covers_more_than_the_skill(self):
+        """Four: `SKILL.md` and its three phase files. The command file was a fifth until #262."""
+        found = surfaces()
         self.assertGreaterEqual(
-            len(surfaces()), 5,
-            "fewer than five /dry-run surfaces found; the glob has drifted and the "
+            len(found), 4,
+            "fewer than four /dry-run surfaces found; the glob has drifted and the "
             "destination scan below certifies less than it claims")
+        for path in (SKILL, PHASE3):
+            self.assertIn(path, found, "the surface glob missed %s" % path.name)
 
 
 class NoSurfaceNamesANewSpecAsTheDestination(unittest.TestCase):
@@ -236,12 +245,6 @@ class TheDurabilityRuleSurvives(unittest.TestCase):
                       "dry-run/SKILL.md no longer says a run with no durable record produced "
                       "nothing")
 
-    def test_the_command_says_it_too(self):
-        self.assertIn("a finding that exists only in the conversation is not recorded",
-                      norm(read(COMMAND)),
-                      "the slash command dropped the durability rule while swapping the "
-                      "destination -- the swap was to keep the rule, not to lose it")
-
     def test_phase3_keeps_draft_on_sight(self):
         flat = norm(read(PHASE3))
         self.assertIn("working notes, not the record", flat,
@@ -256,8 +259,8 @@ class TheDurabilityRuleSurvives(unittest.TestCase):
 class UpstreamIsMcpServerOnlyAndGated(unittest.TestCase):
     """Check 3 -- the only exceptions to 'nothing leaves the machine', and their limits."""
 
-    def test_both_surfaces_state_the_rule_and_its_limits(self):
-        for path in (SKILL, COMMAND):
+    def test_the_skill_states_the_rule_and_its_limits(self):
+        for path in (SKILL,):
             with self.subTest(surface=str(path.relative_to(REPO_ROOT))):
                 rule = outbound_rule(path)
                 self.assertIsNotNone(rule, "%s does not state the outbound rule" % path.name)
@@ -328,27 +331,19 @@ class TheReadmeRecordsTheRework(unittest.TestCase):
                       "new findings now become")
 
 
-class TheCommandSaysItInTheSameWords(unittest.TestCase):
-    """#153 -- `.claude/commands/dry-run.md` gets "the same swap, in the same words".
+class TheSkillSaysItInTheSameWords(unittest.TestCase):
+    """#153 -- the finding lifecycle in the shared words, now in its one home (#262).
 
-    The pre-freeze destination survived in the command as well as the skill; a command that
-    paraphrases the skill is a second wording a later edit updates one home at a time.
+    The pre-freeze destination survived in the command as well as the skill, so #153 pinned both
+    to one wording. The command was deleted by #262, and the words stay pinned in the skill.
     """
 
-    def test_every_lifecycle_clause_is_in_both(self):
-        for path in (SKILL, COMMAND):
-            flat = norm(read(path))
-            missing = [c for c in SAME_WORDS if c not in flat]
-            with self.subTest(surface=str(path.relative_to(REPO_ROOT))):
-                self.assertEqual([], missing,
-                                 "%s does not carry the finding lifecycle in the shared words: "
-                                 "%s" % (path.name, missing))
-
-    def test_the_outbound_rule_is_word_for_word(self):
-        skill, command = outbound_rule(SKILL), outbound_rule(COMMAND)
-        self.assertIsNotNone(skill, "dry-run/SKILL.md does not state the outbound rule")
-        self.assertEqual(skill, command,
-                         "the command's outbound rule is not the skill's, word for word")
+    def test_every_lifecycle_clause_is_in_the_skill(self):
+        flat = norm(read(SKILL))
+        missing = [c for c in SAME_WORDS if c not in flat]
+        self.assertEqual([], missing,
+                         "%s does not carry the finding lifecycle in the shared words: %s"
+                         % (SKILL.name, missing))
 
 
 if __name__ == "__main__":

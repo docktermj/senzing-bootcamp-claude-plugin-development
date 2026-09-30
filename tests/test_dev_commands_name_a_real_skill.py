@@ -1,72 +1,75 @@
 """Every maintainer slash command names a skill that exists.
 
-`.claude/commands/*.md` are thin fronts: each one exists only to invoke a skill under
-`.claude/skills/` explicitly, so the maintainer reaches a release-path action by typing it
-rather than by the model choosing to. That indirection is the whole value of the file, and
-it is also the whole failure mode -- a command whose skill has been renamed or removed still
-parses, still appears in the slash-command list, and still reads as authoritative. It simply
-invokes nothing.
+A file under `.claude/commands/` is a thin front: it exists only to invoke a skill under
+`.claude/skills/`. That indirection is the whole value of the file, and it is also the whole
+failure mode -- a command whose skill has been renamed or removed still parses, still appears in
+the slash-command list, and still reads as authoritative. It simply invokes nothing.
 
 Nothing connected the two directories, so a rename on either side was silent. `docs/development.md`
-demonstrates the class already, in prose rather than in a command file: it lists
+demonstrated the class in prose before any command file did: it listed
 `/compact-dev-development` and `/production-ready-review`, and the skills are named
 `compact-dev-environment` and `production-readiness-audit`. Two names pointing at nothing,
 documented as if they worked.
 
-✅ **The reverse direction -- every skill has a command -- IS now asserted**, in
-`EverySkillHasACommand` below. It was deliberately deferred while the commands were being added
-one issue at a time (#18-#26): a guard demanding the full set would have failed on every one of
-those until the last landed, which trains its reader to expect red and to push past it. #26
-landed the last one, so the condition this file recorded for adding it -- "when the set is
-complete" -- is met, and the deferral is discharged rather than left as a promise in prose.
+⚠️ **Dated note, 2026-09-30 (#262): no command ships, so this guard reads fixture commands.**
+`/<name>` runs the project skill when a skill and a command share a name (measured 2026-09-29 on
+Claude Code 2.1.284, #241), so the ten same-name command files never ran and #262 deleted them.
+INV-303 still binds any command added later, an alias included. While `.claude/commands/` holds
+no file, `_maintainer_surface.command_files_under_test()` hands this guard the fixture commands
+under `tests/fixtures/maintainer-commands/` instead, so the check never passes over an empty set
+(INV-265). The day a command ships again, the guard reads it and the fixtures step aside.
 
-⚠️ **A directory under `.claude/skills/` with no `SKILL.md` is not a skill** and is excluded
-from that assertion. ⚠️ `implement-github-issue/` used to be the example (it held only per-issue
-run state); #215 gave it a pointer stub `SKILL.md`, and #239 removed the directory. That name and
-`unattended-issue-loop` are defined only at user level, under `~/.claude/skills/`, so neither is a
-skill or a command here, and this repository keeps only `.claude/skill-overlays/<name>.md` for
-them. ⛔ The user-level copies are not checked in CI (INV-308).
-
-⚠️ **What a green run means.** Every skill *named* in a command file resolves to a directory
-with a `SKILL.md`. It does not mean the command invokes the right skill, that the skill does
-what the command claims, or that the wiring of `$ARGUMENTS` matches the skill's interface --
-those need reading. It is the phantom-reference direction only.
-
-The command's filename stem is **not** required to equal the skill it invokes. All three
-current commands happen to match, but pinning that would forbid a future alias -- two commands
-onto one skill with different defaults -- for no defect ever observed.
-
-⚠️ **Enforces INV-303 and INV-302's skill-fronting half — two invariants, opposite directions.**
-**INV-303** is the command→skill direction asserted by `test_no_command_names_a_missing_skill` and
-`test_every_command_names_at_least_one_skill`: a command must name a skill that resolves.
-**INV-302's** half is skill→command, asserted by `test_every_skill_is_fronted_by_a_command`.
-⚠️ **Enforces INV-302's skill-fronting half.** It asserts that every command names a skill that
-exists, that none is silent about the skill it fronts, and that every skill with a `SKILL.md` is
-fronted by a command. It does **NOT** establish that a command actually invokes its skill when
-typed, that the skill does what the command claims, or that `$ARGUMENTS` matches the skill's
-interface — those need reading, or a live session. The documentation half is asserted by
+⚠️ **The reverse direction -- every skill has a command -- is retired (#262).** It was asserted
+here as `test_every_skill_is_fronted_by_a_command` from #26 until INV-302 was narrowed on
+2026-09-30 (#241): a skill need not be fronted by a command, because the skill is what `/<name>`
+runs. The skill set is now compared with `docs/development.md` directly, by
 `test_documented_dev_commands_match_the_shipped_set.py`.
 
-Stdlib only; both directories are listed and the command files read as text (INV-108).
+⚠️ **A directory under `.claude/skills/` with no `SKILL.md` is not a skill**, and the skill scan
+excludes it. `implement-github-issue` and `unattended-issue-loop` are defined only at user level,
+under `~/.claude/skills/`, so neither is a skill or a command here, and this repository keeps only
+`.claude/skill-overlays/<name>.md` for them. ⛔ The user-level copies are not checked in CI
+(INV-308).
 
-Source issue: #18 (`/propagate-to-public`).
+⚠️ **What a green run means.** Every skill *named* in a command file (shipped, or a fixture while
+none ships) resolves to a directory with a `SKILL.md`, and no command file is silent about the
+skill it fronts. It does not mean a command invokes the right skill, that the skill does what the
+command claims, or that the wiring of `$ARGUMENTS` matches the skill's interface -- those need
+reading. It is the phantom-reference direction only.
+
+The command's filename stem is **not** required to equal the skill it invokes. Pinning that would
+forbid an alias -- two commands onto one skill with different defaults -- for no defect ever
+observed; one fixture is such an alias, so the permission is exercised.
+
+⚠️ **Enforces INV-303**, the command→skill direction: `test_no_command_names_a_missing_skill` and
+`test_every_command_names_at_least_one_skill`. `ANonConformingCommandFails` is the negative
+control: a fixture command naming no real skill, or naming none, fails each assertion. INV-302's
+documentation half is asserted by `test_documented_dev_commands_match_the_shipped_set.py`.
+
+Stdlib only; the directories are listed and the command files read as text (INV-108).
+
+Source issues: #18 (`/propagate-to-public`); #262 (fixture commands).
 
 Run:  python3 -m unittest discover -s tests
 """
 import re
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-COMMANDS_DIR = REPO_ROOT / ".claude" / "commands"
-SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
+import _maintainer_surface as surface
+
+SKILLS_DIR = surface.SKILLS_DIR
+FIXTURES_DIR = surface.FIXTURE_COMMANDS_DIR
 
 #: How a command file names its skill: "Invoke the `<name>` skill".
 INVOCATION = re.compile(r"`([a-z0-9][a-z0-9-]*)`\s+skill")
 
 
 def command_files():
-    return sorted(COMMANDS_DIR.glob("*.md"))
+    """The shipped command files, or the fixture commands while none ships (INV-265)."""
+    return surface.command_files_under_test()[1]
 
 
 def skills_named_by(path):
@@ -74,18 +77,36 @@ def skills_named_by(path):
 
 
 def installed_skills():
-    return {d.name for d in SKILLS_DIR.iterdir() if (d / "SKILL.md").is_file()}
+    return surface.skills()
+
+
+def phantom_references(paths, skills):
+    """`file -> `name`` for each skill a command names that is not in `skills`."""
+    return sorted("%s -> `%s`" % (path.name, name)
+                  for path in paths for name in skills_named_by(path) - skills)
+
+
+def silent_commands(paths):
+    """Command files that name no skill at all."""
+    return sorted(p.name for p in paths if not skills_named_by(p))
 
 
 class NeitherSideIsEmpty(unittest.TestCase):
     """INV-265 -- a set comparison is satisfied trivially when either side is empty."""
 
     def test_command_files_were_found(self):
-        found = command_files()
-        self.assertGreaterEqual(
-            len(found), 3,
-            "fewer than three command files were found in %s; the glob has drifted and the "
-            "checks below prove nothing" % COMMANDS_DIR)
+        """Non-empty is the floor: one command added later, an alias say, is a real set."""
+        where, found = surface.command_files_under_test()
+        self.assertTrue(
+            found,
+            "no command file was found in %s; the glob has drifted and the checks below prove "
+            "nothing" % where)
+
+    def test_fixtures_stand_in_only_while_no_command_ships(self):
+        """The fixtures are read exactly when `.claude/commands/` holds no file."""
+        where, _ = surface.command_files_under_test()
+        expected = surface.COMMANDS_DIR if surface.command_files() else FIXTURES_DIR
+        self.assertEqual(expected, where)
 
     def test_skills_were_found_on_disk(self):
         skills = installed_skills()
@@ -99,26 +120,28 @@ class NeitherSideIsEmpty(unittest.TestCase):
             "place or expecting the wrong layout")
 
     def test_the_invocation_pattern_parses(self):
-        """Anchored on a command that predates this guard, so it cannot pass tautologically.
+        """Anchored on a fixture that fronts `dry-run`, so it cannot pass tautologically.
 
         Re-anchored from `implement-github-issue` at #239, which moved that file out of
-        `.claude/commands/` to become a repo overlay.
+        `.claude/commands/` to become a repo overlay, and onto the fixtures at #262.
         """
-        anchor = COMMANDS_DIR / "dry-run.md"
+        anchor = FIXTURES_DIR / "dry-run-probe-only.md"
         self.assertTrue(anchor.is_file(), "%s is gone; re-anchor this test" % anchor)
         self.assertIn(
             "dry-run", skills_named_by(anchor),
             "the invocation pattern did not find the skill named in %s; command files state "
             "their skill in a shape this regex no longer matches" % anchor.name)
 
+    def test_an_alias_is_among_the_fixtures(self):
+        """The stem need not equal the skill; one fixture exercises that permission."""
+        self.assertTrue(
+            [p for p in surface.command_files(FIXTURES_DIR) if p.stem not in skills_named_by(p)],
+            "no fixture command is an alias, so the permission INV-303 grants is unexercised")
+
 
 class EverySkillNamedExists(unittest.TestCase):
     def test_no_command_names_a_missing_skill(self):
-        skills = installed_skills()
-        phantom = sorted(
-            "%s -> `%s`" % (path.name, name)
-            for path in command_files()
-            for name in skills_named_by(path) - skills)
+        phantom = phantom_references(command_files(), installed_skills())
         self.assertEqual(
             [], phantom,
             "command file(s) invoke a skill that does not exist under %s: %s. The command "
@@ -127,7 +150,7 @@ class EverySkillNamedExists(unittest.TestCase):
 
     def test_every_command_names_at_least_one_skill(self):
         """A front that names no skill is not a front -- it is a prompt with a slash on it."""
-        silent = sorted(p.name for p in command_files() if not skills_named_by(p))
+        silent = silent_commands(command_files())
         self.assertEqual(
             [], silent,
             "command file(s) name no skill to invoke: %s. Either the file states its skill "
@@ -135,34 +158,43 @@ class EverySkillNamedExists(unittest.TestCase):
             % ", ".join(silent))
 
 
-class EverySkillHasACommand(unittest.TestCase):
-    """The reverse direction, deferred until the set was complete and now asserted.
+class ANonConformingCommandFails(unittest.TestCase):
+    """Negative control (#262): the fixture set plus one bad command fails each assertion."""
 
-    A skill with no command is reachable only by the model choosing it -- which is the exact
-    condition every one of #18-#26 was filed to remove. Without this, the set can silently
-    regress: a new skill lands, no command is written, and nothing says so.
-    """
+    def _fixtures_plus(self, name, body):
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+        for path in surface.command_files(FIXTURES_DIR):
+            shutil.copy(path, root / path.name)
+        (root / name).write_text(body, encoding="utf-8")
+        return surface.command_files(root)
 
-    def test_every_skill_is_fronted_by_a_command(self):
-        fronted = set()
-        for path in command_files():
-            fronted |= skills_named_by(path)
-        orphaned = sorted(installed_skills() - fronted)
-        self.assertEqual(
-            [], orphaned,
-            "skill(s) under %s are fronted by no command file: %s. Each is reachable only by "
-            "the model choosing it, which is the condition #18-#26 were filed to remove"
-            % (SKILLS_DIR, ", ".join(orphaned)))
+    def test_a_fixture_naming_no_real_skill_is_a_phantom(self):
+        paths = self._fixtures_plus("phantom.md", "Invoke the `no-such-skill-262` skill.\n")
+        self.assertEqual(["phantom.md -> `no-such-skill-262`"],
+                         phantom_references(paths, installed_skills()))
 
+    def test_a_fixture_naming_no_skill_is_silent(self):
+        paths = self._fixtures_plus("silent.md", "Do the thing, end to end.\n")
+        self.assertEqual(["silent.md"], silent_commands(paths))
+
+    def test_the_fixtures_alone_pass(self):
+        paths = surface.command_files(FIXTURES_DIR)
+        self.assertEqual([], phantom_references(paths, installed_skills()))
+        self.assertEqual([], silent_commands(paths))
+
+
+class ADirectoryWithoutASkillMdIsNotASkill(unittest.TestCase):
     def test_a_directory_without_a_skill_md_is_not_counted(self):
-        """⛔ Anti-vacuity in the other direction: the exclusion must be real, not assumed."""
+        """⛔ Anti-vacuity: the exclusion must be real, not assumed."""
         stubs = [d.name for d in SKILLS_DIR.iterdir()
                  if d.is_dir() and not (d / "SKILL.md").is_file()]
         for name in stubs:
             self.assertNotIn(
                 name, installed_skills(),
-                "%r has no SKILL.md yet is counted as a skill, so the assertion above would "
-                "demand a command for a directory that is not one" % name)
+                "%r has no SKILL.md yet is counted as a skill, so every comparison of the "
+                "skill set would demand a document entry for a directory that is not one"
+                % name)
 
 
 if __name__ == "__main__":
