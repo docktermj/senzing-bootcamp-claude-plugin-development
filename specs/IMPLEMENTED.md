@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## invariant-review-2026-09-30c
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one review session, the third that day)
-- **Commit:** uncommitted
+- **Commit:** `405d8a9`
 - **Files changed:** `specs/INVARIANTS.md`, `specs/IMPLEMENTED.md`, `invariant-manifest.json`
 - **MCP re-check:** n/a (no Senzing fact)
 - **Summary:** no block was pending. One held block's revisit condition was met and it was decided; the held set is 4.
