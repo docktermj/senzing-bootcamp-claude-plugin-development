@@ -148,7 +148,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   the operation set, and a fixtures directory for INV-303. Approach a retired the command checks
   in place in each test, but could not delete the ten files, so it missed the first acceptance
   criterion.
-- **Commit:** uncommitted
+- **Commit:** `b7bb566`
 
 ## invariant-review-2026-09-30
 
