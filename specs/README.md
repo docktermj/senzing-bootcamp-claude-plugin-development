@@ -9,12 +9,13 @@ other.
 
 ## What is frozen
 
-Every `*.md` file in this directory except the live records listed below. The frozen set
+Every file in this directory except the live records listed below and `FROZEN-MANIFEST.txt`,
+which is exempt by name as the guard's own input. The frozen set
 is pinned by name in [`FROZEN-MANIFEST.txt`](FROZEN-MANIFEST.txt) and enforced in both
 directions by `tests/test_specs_are_frozen.py`:
 
 - a manifest name whose file has gone fails the suite, so the archive cannot be silently thinned
-- a `specs/*.md` that is neither in the manifest nor a live record fails the suite, so nothing new can land
+- a file in `specs/`, of any type, that is neither in the manifest nor a live record fails the suite, so nothing new can land
 
 No count is asserted anywhere — the set is derived and compared, because a number in prose
 goes stale silently while continuing to read as authoritative.
@@ -31,9 +32,11 @@ written to:
 | [`IMPLEMENTED.md`](IMPLEMENTED.md) | The completion ledger, and the **only** completion signal the repo has (INV-182). Still appended for issue-driven work. |
 | [`DECLINED.md`](DECLINED.md) | The declined-work record, and the one file in the repo whose Senzing claims have no re-verification path (INV-217). |
 | [`INVARIANTS.md`](INVARIANTS.md) | The canonical invariants. Machine-extended by design — `/review-invariants` appends to it after maintainer sign-off. |
+| [`README.md`](README.md) | This freeze notice. Its table is the one authoritative list of the live records: `tests/test_specs_are_frozen.py` reads the list from it, and every other site that names them must agree (INV-307). |
+| [`mcp-coverage.jsonl`](mcp-coverage.jsonl) | `/delegate-to-mcp-server`'s coverage ledger, appended on every run. A **named** live exception (#142), not a file the freeze fails to reach: the guard checks every file here, not only `*.md`. |
 
 **The ledger is part of the archive, not separate from it.** `INVARIANTS.md` cites its
-sources by spec slug, and six of those slugs have no file here — they resolve through an
+sources by spec slug, and some of those slugs have no file here — they resolve through an
 `IMPLEMENTED.md` entry instead (`tests/test_spec_ledger_invariants.py` accepts either).
 Retiring the ledger would break those citations. That is why it stays.
 
