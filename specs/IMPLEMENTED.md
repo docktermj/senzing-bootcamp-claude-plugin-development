@@ -43,6 +43,56 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## phase-c-step-19-loads-each-sources-subset-record
+
+- **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #259)
+- **Files changed:**
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`,
+  `tests/test_sqlite_subset_notes_read_the_recorded_decision.py`, `specs/IMPLEMENTED.md` (this
+  entry, and the first rule bullet of #164's held block)
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.16, 2026-09-30, `get_capabilities()`.
+  Outcome: n/a (no Senzing fact), re-confirmed by reading every changed line. The paragraph
+  names the bootcamp's own registry records (`load_subset:`, `sample:`) and cites repo
+  invariants. It states no SDK, engine or server behavior and no record threshold, and makes
+  no absence claim.
+- **Summary:** Phase C Step 19's SQLite paragraph said to "load what `sqlite_volume_prompt` or
+  the Module 4 Step 8b load decision records". Since #237 and #238 each source loads from its own
+  `load_subset:` block. INV-325 says an asked-once marker records only that a question was
+  answered, never N, and #221 made Step 8b's decision a sample, cited through the `sample:`
+  block (INV-326). The paragraph now says each source loads what its own `load_subset:` block
+  records, the only subset record (INV-325). It points at
+  `phaseB-load-first-source.md#load-subset-record` in Phase B step 7 rather than restating it
+  (INV-300). With no block, the source loads its full load input, the complete dataset unless
+  Module 4 sampled it, with no SQLite remark (INV-244). A sampled source's input is its sample
+  file, and its reconciliation cites the `sample:` block, never a subset. "Add nothing about it
+  here" for the SQLite volume question survives, now citing INV-006. Step 19's first paragraph,
+  the marker re-read before the run and Phase B are unchanged; the re-read stays because it
+  re-measures the cap, not what is loaded.
+- **Approach:** direct (Phase 5a), as the plan approved. No assumptions needed a maintainer.
+  Resumed on `main` at `50ae2a4` from the patch an earlier, blocked run kept (made on `6c93d2c`);
+  it applied cleanly, and this entry and the requote were redone by hand.
+- **Tests:** `tests/test_sqlite_subset_notes_read_the_recorded_decision.py`, 8 → 11 tests. The
+  Step 19 pointer and absent-decision assertions are re-pointed to the `load_subset:` wording, and
+  a sampled-source assertion is added. New class `StepNineteenNamesNoStaleLoadSource`: the SQLite
+  paragraph names the block and neither the marker nor Step 8b, and nowhere in Step 19 says
+  "load what `sqlite_volume_prompt`" or "Step 8b load decision". Negative controls, each run and
+  reverted, `__pycache__` cleared: #164's paragraph restored fails 5 tests; the stale sentence
+  appended to the new paragraph fails both new-class tests.
+- **#164's held deferral** (`phase-c-sqlite-note-reopens-the-settled-load-size-decision`): its
+  first rule bullet quoted the sentence this change replaces, so the quote checks would have gone
+  red on a held block. It is requoted to Step 19's new sentence, with a dated "Requoted
+  2026-09-30 (#259)" note; its drafted wording and HELD verdict are unchanged. This is the one
+  `specs/` edit outside this entry, which the maintainer permitted on 2026-09-30
+  (https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/issues/259#issuecomment-5915760380),
+  following #111's requote precedent. Its revisit condition, "after the stale Phase C sentence
+  is fixed (#259)", is now met. Deciding it is left to `/review-invariants` (out of scope here).
+- **Establishes no invariant of its own.** The rule this change ships, that Step 19 loads each
+  source's `load_subset:` block and never an asked-once marker or a Step 8b decision, is INV-325
+  and INV-320 applied at one more site; the sampled-source clause is INV-326. The new negative
+  control enforces INV-325 there, and the test's docstring cites it.
+- **Verification:** see the PR's CI-mirror checklist.
+- **Commit:** uncommitted
+
 ## maintainer-operations-are-defined-once-as-skills
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #262)
@@ -4799,7 +4849,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The change adds no ⛔
   line, but it ships a durable, test-enforced guarantee in plain prose, which is the gap INV-309
   exists to close (#38). The rules already shipping, plain prose at their site:
-    - ⛔ **The SQLite volume question was settled before the first load, so add nothing about it here: load what `sqlite_volume_prompt` or the Module 4 Step 8b load decision records** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`
+    - ⛔ **The SQLite volume question was settled before the first load, so add nothing about it here (INV-006). Each source loads what its own `load_subset:` block records, the only subset record (INV-325)** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`
     - ⛔ **Run on the dataset the recorded load decision names — the complete dataset unless a subset was chosen — and tell the bootcamper which one is being loaded.** — in `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`
 
   ⚠️ **INV-006 may already govern this.** The module-wide scan applies INV-006 ("each question is
@@ -4828,6 +4878,11 @@ entries at once. Two things a reader should know about the hashes now recorded:
   also reclassified Step 8b's decision as a sample, not a subset limit. The asked-once half is
   INV-006's subject and stays guarded by the test. Revisit after the stale Phase C sentence is
   fixed (#259); the finding is recorded in `invariant-review-2026-09-29`.
+
+  ⚠️ **Requoted 2026-09-30 (#259), not reworded away.** The first bullet quoted Step 19's old
+  sentence, which #259 replaced, so `check` would have gone red on a held block. The quote is
+  fixed against its source. The drafted wording above is unchanged and still names the marker
+  and Step 8b; the revisit condition is now met, and the verdict is the maintainer's.
 - **Tests:** new `tests/test_sqlite_subset_notes_read_the_recorded_decision.py`, 8 tests in 3
   classes, one per issue assertion, stdlib only. A liveness test keeps assertion 1's scan from
   passing vacuously: it must find Phase B Step 7's note. The scan is anchored on *loading* a

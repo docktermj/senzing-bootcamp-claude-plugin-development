@@ -305,10 +305,13 @@ chosen — and tell the bootcamper which one is being loaded. When it is a subse
 the full dataset can be loaded afterwards. Monitor per-source progress, error rates, overall
 completion, and elapsed/estimated time. If slow, suggest reducing parallelism.
 
-The SQLite volume question was settled before the first load, so add nothing about it here: load
-what `sqlite_volume_prompt` or the Module 4 Step 8b load decision records, as Phase B step 7
-(`phaseB-load-first-source.md`) says, rather than restating it (INV-300). No decision recorded
-means none was needed — the complete dataset, with no SQLite remark (INV-244).
+The SQLite volume question was settled before the first load, so add nothing about it here
+(INV-006). Each source loads what its own `load_subset:` block records, the only subset record
+(INV-325), as [the subset record](phaseB-load-first-source.md#load-subset-record) in Phase B
+step 7 (`phaseB-load-first-source.md`) defines it, rather than restating it (INV-300). No block
+recorded means none was needed: the source loads its full load input, the complete dataset unless
+Module 4 sampled it, with no SQLite remark (INV-244). For a sampled source, that input is its
+sample file, and its reconciliation cites the `sample:` block (INV-326), never a subset.
 
 **Before the run starts, re-read the markers and re-measure the remaining cap.** Re-read
 `license_cap_prompt` and `sqlite_volume_prompt` in `config/bootcamp_preferences.yaml`, and
