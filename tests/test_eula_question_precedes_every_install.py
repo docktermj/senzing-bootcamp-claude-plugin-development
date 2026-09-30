@@ -29,7 +29,12 @@ What these tests pin, within the Step 3 section:
 
 A negative control runs the order check against the pre-fix order and requires it to fail.
 
-Source issue: #192.
+#284 added the sites its `DEFERRED INVARIANT` block names that nothing above covered: Step 3's
+opening sentence, Phase 1's list of what counts as an install, the existing-install path's
+"Do not re-ask the EULA" exclusion, Step 1b's rule sentence, and each row of Step 1b's
+per-platform variable table (with a negative control on a swapped value).
+
+Source issues: #192, #284.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -149,6 +154,100 @@ class TheEulaQuestionPrecedesEveryInstall(unittest.TestCase):
 
     def test_no_pointer_names_the_docker_bullets_under_phase_1(self):
         self.assertNotIn("Phase 1 `docker` bullets", self.text)
+
+
+#: Step 1b's per-platform EULA variable table, row by row. Re-verified against
+#: `sdk_guide(topic='install', platform=<p>, language='java')` for each platform (server 1.37.16,
+#: 2026-09-30): the apt and yum commands export `SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA`,
+#: the Homebrew cask reads `HOMEBREW_SENZING_ACCEPT_EULA` with the lowercase value, and the Scoop
+#: manifest reads `SENZING_ACCEPT_EULA` with the uppercase value.
+EULA_VARIABLES = {
+    "`linux_apt`, `linux_yum`": ("`SENZING_ACCEPT_EULA`", "`I_ACCEPT_THE_SENZING_EULA`"),
+    "`macos_arm`": ("`HOMEBREW_SENZING_ACCEPT_EULA`", "`i_accept_the_senzing_eula`"),
+    "`windows`": ("`SENZING_ACCEPT_EULA`", "`I_ACCEPT_THE_SENZING_EULA`"),
+}
+
+
+def eula_table_rows(text):
+    """{platform cell: (variable, value)} for the table under Step 1b's EULA-variable rule."""
+    start = text.index("**The EULA variable differs per platform")
+    rows = {}
+    for line in text[start:].splitlines()[1:]:
+        if not line.startswith("|"):
+            if rows:
+                break
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) != 3 or cells[0] in ("Platform", "---") or set(cells[0]) <= {"-"}:
+            continue
+        value = cells[2].split(" (")[0].strip()
+        rows[cells[0]] = (cells[1], value)
+    return rows
+
+
+class TheEulaRuleHoldsAtEverySiteTheDeferralNames(unittest.TestCase):
+    """The sites #284's `DEFERRED INVARIANT` block names that no assertion above covered.
+
+    The block drafts the EULA-before-install rule for `/review-invariants`. Each test here pins
+    one site the block lists, so the rule the maintainer is asked to register is the rule that
+    ships at every one of them.
+    """
+
+    def setUp(self):
+        self.text = read()
+        self.flat = re.sub(r"\s+", " ", self.text)
+        self.section = re.sub(r"\s+", " ", step_3(self.text))
+
+    def test_step_3_opens_by_saying_nothing_installs_before_the_answer(self):
+        self.assertIn(
+            "the EULA question comes first: nothing is installed until the bootcamper accepts it",
+            self.section,
+        )
+
+    def test_phase_1_scopes_an_install_as_every_install_command(self):
+        """The scope the drafted wording takes over: repository, package, docker install."""
+        phase_1 = re.sub(r"\s+", " ", between(step_3(self.text), PHASE_1, PHASE_2))
+        self.assertIn(
+            "this question comes before **every** install command on **every** path: adding "
+            "the Senzing package repository (the apt or yum `senzingrepo` package, the Homebrew "
+            "tap, the Scoop bucket), installing the SDK package, and the `docker` path's "
+            "in-container `linux_apt` install",
+            phase_1,
+        )
+
+    def test_the_existing_install_path_is_excluded_and_an_accepted_update_is_not(self):
+        self.assertIn(
+            "**Do not re-ask the EULA.** Phase 1 gates installing the SDK, and this path "
+            "installs no SDK. Only an update the bootcamper accepts in Step 1b asks it, because "
+            "an update is an install.",
+            self.flat,
+        )
+
+    def test_the_update_path_states_the_rule_and_that_an_update_is_an_install(self):
+        self.assertIn(
+            "⛔ **Ask the EULA question before any package installs** — reuse the existing "
+            "wording in Step 3 Phase 1 rather than writing a second copy. An update is an "
+            "install.",
+            self.flat,
+        )
+
+    def test_the_variable_rule_says_a_wrong_one_is_silently_ignored(self):
+        self.assertIn(
+            "⛔ **The EULA variable differs per platform, and a wrong one is silently ignored:**",
+            self.text,
+        )
+
+    def test_each_platform_row_names_its_own_variable_and_value(self):
+        self.assertEqual(eula_table_rows(self.text), EULA_VARIABLES)
+
+    def test_the_row_check_sees_a_swapped_value(self):
+        """Negative control: the macOS row with the uppercase value must fail."""
+        mutant = self.text.replace(
+            "| `macos_arm` | `HOMEBREW_SENZING_ACCEPT_EULA` | `i_accept_the_senzing_eula`",
+            "| `macos_arm` | `HOMEBREW_SENZING_ACCEPT_EULA` | `I_ACCEPT_THE_SENZING_EULA`",
+        )
+        self.assertNotEqual(mutant, self.text)
+        self.assertNotEqual(eula_table_rows(mutant), EULA_VARIABLES)
 
 
 class TheOrderCheckCatchesThePreFixOrder(unittest.TestCase):
