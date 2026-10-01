@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## audit-skill-finding-records-agree-with-inv-317
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #285; audit findings B-F2 and B-F8. Begun 2026-09-30 and blocked before push; resumed 2026-10-01 on `285-docktermj-2` after the maintainer allowed one requote)
-- **Commit:** uncommitted
+- **Commit:** `30f5597`
 - **Files changed:** `.claude/skills/production-readiness-audit/SKILL.md`, `tests/test_audit_files_issues_not_specs.py`, `specs/IMPLEMENTED.md`. No file under `plugins/` changes; `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
 - **MCP re-check:** server 1.37.16 (`get_capabilities`, reachable), 2026-10-01 (also 2026-09-30) — n/a (no Senzing fact), re-confirmed: the change rewords where a maintainer audit records its findings and amends a development-record invariant, and asserts nothing about Senzing. No absence claim is made. Nothing was sent upstream.
 - **Approach:** direct (Phase 5a), as the issue scopes it.
