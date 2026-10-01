@@ -478,7 +478,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_quality_assessment_type_name_check.py, which cites it back and states what it does NOT establish
 # -- that a live run follows it. Re-derived by running the extractor -- 167, with the new pair present by
 # name. EXPECTED_PAIRS 166 -> 167.
-EXPECTED_PAIRS = 167
+# 168 on 2026-10-01: INV-229's dated correction (#282: no count of the installation checks is asserted)
+# names test_module3_check_lists_agree.py as an enforcer, which already cites INV-229 back. Re-derived by
+# running the extractor -- 168, with the new pair present by name. EXPECTED_PAIRS 167 -> 168.
+EXPECTED_PAIRS = 168
 
 
 def pairs():
