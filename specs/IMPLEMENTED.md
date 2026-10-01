@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## no-second-list-of-the-live-records-and-no-spec-count
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #291; audit findings C-F1 and C-F2)
-- **Commit:** uncommitted
+- **Commit:** 8136999
 - **Files changed:** `.claude/skills/review-invariants/pending_invariants.py`, `.claude/skill-overlays/unattended-issue-loop.md`, `.claude/skills/feedback-to-issues/SKILL.md`, `tests/test_specs_are_frozen.py`, `specs/IMPLEMENTED.md`
 - **MCP re-check:** server `sz-mcp-coworker` 1.37.16 (`get_capabilities`, reachable), 2026-09-30. n/a (no Senzing fact): the change rewords maintainer comments and instructions about the `specs/` archive and adds an offline test, and none of it states anything about Senzing. No absence claim is made. Nothing was sent upstream.
 - **Approach:** direct (Phase 5a), as the issue scopes it.
