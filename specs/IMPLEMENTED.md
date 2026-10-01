@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## skills-and-overlays-name-only-real-commands
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #296. Begun 2026-09-30 and blocked before commit; resumed 2026-10-01 on a fresh `296-docktermj-1` after the maintainer allowed one requote)
-- **Commit:** uncommitted
+- **Commit:** `2aa1d85`
 - **Files changed:** `.claude/skill-overlays/implement-github-issue.md`, `.claude/skill-overlays/unattended-issue-loop.md`, `.claude/skills/compact-dev-environment/SKILL.md`, `.claude/skills/delegate-to-mcp-server/SKILL.md`, `.claude/skills/delegate-to-mcp-server/issue-template.md`, `.claude/skills/dry-run/SKILL.md`, `.claude/skills/feedback-to-issues/SKILL.md`, `.claude/skills/production-readiness-audit/SKILL.md`, `.claude/skills/propagate-to-public/SKILL.md`, `.claude/skills/review-invariants/SKILL.md`, `tests/test_canonical_operations_resolve.py`, `tests/test_filing_is_gated.py`, `specs/IMPLEMENTED.md`. No file under `plugins/` changes; `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
 - **MCP re-check:** server `sz-mcp-coworker` 1.37.16 (`get_capabilities`, reachable), 2026-10-01 — n/a (no Senzing fact), re-confirmed: the change marks maintainer command names and widens a guard over maintainer documents, and asserts nothing about Senzing. No absence claim is made. `submit_feedback` was not called, and nothing was sent upstream.
 - **Approach:** direct (Phase 5a), as the issue scopes it.
