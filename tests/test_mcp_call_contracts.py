@@ -15,7 +15,7 @@ What the 2026-07-26 dry run found:
   actions — `profile_summary`, `entity_plan`, `schema_mappings`, `paths`, `verdict`. The
   only valid actions are start/advance/back/status/reset. One of the five sat on workflow
   step 3, and the plugin had filed a step-3 rejection upstream as an MCP-server defect.
-* `get_sdk_reference`'s `methods` topic — which answers parameter shapes — was missing
+* `get_sdk_reference`'s `parameters` topic — which answers parameter shapes — was missing
   from the tool-routing table, and INV-132 asserted the reference could not answer them
   at all, routing the guide away from MCP toward local introspection.
 
@@ -425,7 +425,7 @@ class TestEveryReportingGuideCallPassesLanguage(unittest.TestCase):
 class TestParameterShapeRoutingGoesToMcp(unittest.TestCase):
     """INV-080 forbids routing away from MCP; INV-132 briefly did exactly that."""
 
-    def test_ground_rules_routes_parameter_shapes_to_the_methods_topic(self):
+    def test_ground_rules_routes_parameter_shapes_to_the_parameters_topic(self):
         text = (SKILLS / "bootcamp-onboarding" / "ground-rules.md").read_text(
             encoding="utf-8"
         )

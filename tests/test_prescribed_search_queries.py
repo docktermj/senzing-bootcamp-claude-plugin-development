@@ -53,6 +53,17 @@ VERIFIED_ON = "server 1.32.9, docs index 2026-08-11 20:52 UTC, checked 2026-08-1
 #: to stop.
 VERIFIED_QUERIES = {
     # ---------------------------------------------------------------------------------
+    # Executed 2026-09-30 on server 1.37.16 (docs index 2026-09-29 22:00 UTC) for #289, Module 6
+    # Phase D's per-binding flag-availability route. ⚠️ Record the PROPERTY, not ranks or scores.
+    "senzing.szengineflags SzEngineFlags SZ_EXPORT_DEFAULT_FLAGS":
+        "ON TARGET: the top hit is the Python SDK reference's 'szengineflags' section "
+        "(garage.senzing.com/sz-sdk-python/senzing.html), the binding's alphabetical "
+        "SzEngineFlags member list, in which SZ_ENTITY_INCLUDE_REPRESENTATIVE_FEATURES is "
+        "followed directly by SZ_EXPORT_DEFAULT_FLAGS, so it has no SZ_EXPORT_ALL_FLAGS; the "
+        "next hits are the Java SzFlags and SzFlag fields. Naming only the flag and 'python' "
+        "('SZ_EXPORT_ALL_FLAGS SzEngineFlags python') put the Java SzFlag field first, which "
+        "is why Phase D carries a re-query rule",
+    # ---------------------------------------------------------------------------------
     # Executed 2026-09-30 on server 1.37.16 (docs index 2026-09-29 22:00 UTC) for #287, Module 2
     # Step 3 Phase 3's routes for the Java and C# bindings. The second is also the evidence slot
     # of the C# MCP-NEGATIVE marker. ⚠️ Record the PROPERTY, not ranks or scores.

@@ -10,9 +10,11 @@ lookups correctly and still lost a round trip passing
 pinned the conclusion that, since `flags` and `response_schemas` miss parameter shapes, "the
 only remaining source is cross-language documentation" and the guide should fall back to
 introspecting the installed binding. That was wrong:
-`get_sdk_reference(topic='methods', filter='find_network_by_entity_id')` returns the
-binding's own signature outright. The tests below now pin the corrected routing — MCP first,
-via the `methods` topic, with local introspection as a genuine last resort — because routing
+`get_sdk_reference(topic='parameters', filter='find_network_by_entity_id')` returns the
+binding's own signature outright (that dry run reached it through an alias the server still
+accepts; INV-132 names the topic `parameters`). The tests below now pin the corrected
+routing — MCP first, via the `parameters` topic, with local introspection as a genuine last
+resort — because routing
 the guide *away* from MCP is precisely what INV-080 forbids, and a test that pins the wrong
 premise makes the mistake permanent.
 
@@ -71,7 +73,7 @@ class GroundRulesCoverParameterShapes(unittest.TestCase):
         self.assertIn("method_signatures", squashed)
         self.assertNotIn("not what it takes", squashed)
 
-    def test_the_methods_topic_is_named_as_the_route_to_parameter_shapes(self):
+    def test_the_parameters_topic_is_named_as_the_route_to_parameter_shapes(self):
         """The correction: MCP answers this, so the guide must be sent to MCP."""
         self.assertIn("topic='parameters'", self.text)
         self.assertIn(
@@ -185,7 +187,7 @@ class GraphMethodParameterShapesAreDocumented(unittest.TestCase):
         self.assertIn("whenever `filter` names a method", squashed)
         self.assertNotIn("Neither of those topics tells you the ARGUMENT types", squashed)
 
-    def test_step_4d_routes_to_the_methods_topic_not_to_guesswork(self):
+    def test_step_4d_routes_to_the_parameters_topic_not_to_guesswork(self):
         """Same correction as ground-rules: this file carried the false premise too."""
         self.assertIn("topic='parameters'", self.text)
         self.assertNotIn(
@@ -207,13 +209,124 @@ class GraphMethodParameterShapesAreDocumented(unittest.TestCase):
     def test_guidance_stays_language_agnostic(self):
         """INV-002: only the known-divergent case is spelled out."""
         squashed = squash(self.text)
-        self.assertIn("For any other language, confirm the shape from the installed binding", squashed)
+        self.assertIn("For any other language, confirm the shape for that binding", squashed)
         self.assertIn("INV-002", self.text)
 
     def test_response_schema_rule_still_present(self):
         """The new input rule must not have displaced the INV-115 output rule."""
         self.assertIn("INV-115", self.text)
         self.assertIn("response_schemas", self.text)
+
+
+def paragraph_containing(text, marker):
+    """The blank-line-delimited paragraph of `text` that contains `marker`, squashed."""
+    for paragraph in re.split(r"\n\s*\n", text):
+        if marker in paragraph:
+            return squash(paragraph)
+    raise AssertionError(f"no paragraph contains {marker!r}")
+
+
+class LocalLookupComesAfterTheMcpRoute(unittest.TestCase):
+    """INV-132: MCP is consulted before anything local, at every site that sends the reader
+    to the installed binding (#289).
+
+    `ground-rules.md` already said so, and `test_introspection_is_the_documented_last_resort`
+    guards it. Module 7's "For any other language" paragraph and Module 6's "Confirm a
+    composite exists on *your* binding" warning still sent the reader to `help()` and
+    `dir(SzEngineFlags)` first, with MCP as an afterthought. These pin each site's MCP call,
+    the fallback framing, and the order of the two.
+    """
+
+    def assert_mcp_first(self, paragraph, mcp_call, probe, framing):
+        self.assertIn(mcp_call, paragraph)
+        self.assertIn(probe, paragraph)
+        self.assertIn(
+            framing,
+            paragraph,
+            "introspection must be framed as the fallback AFTER the MCP lookup, not as "
+            "the primary route (INV-080, INV-132)",
+        )
+        self.assertLess(
+            paragraph.index(mcp_call),
+            paragraph.index(probe),
+            "the MCP call must come before the local introspection it falls back to",
+        )
+        self.assertIn("INV-132", paragraph)
+
+    def test_module_7_routes_other_languages_to_the_parameters_topic_first(self):
+        paragraph = paragraph_containing(read(PHASE_2B), "For any other language")
+        self.assert_mcp_first(
+            paragraph,
+            "get_sdk_reference(topic='parameters', filter='<method>', "
+            "language='<chosen_language>')",
+            "help()",
+            "Only where that topic does not answer for the binding, fall back to the "
+            "installed binding itself",
+        )
+
+    def test_module_6_routes_flag_availability_to_mcp_first(self):
+        paragraph = paragraph_containing(
+            read(PHASE_D), "Confirm a composite exists on *your* binding"
+        )
+        self.assert_mcp_first(
+            paragraph,
+            "get_sdk_reference(topic='flags', filter='<method>', "
+            "language='<chosen_language>')",
+            "dir(SzEngineFlags)",
+            "Only where neither route answers, fall back to introspecting the installed binding",
+        )
+
+    def test_module_6_names_the_route_that_answers_availability(self):
+        """The live check (server 1.37.16, 2026-09-30): `topic='flags'` with `language`
+        does not narrow the flag list by binding, so the site names the call that does
+        reach a binding's own flag reference, before introspection."""
+        paragraph = paragraph_containing(
+            read(PHASE_D), "Confirm a composite exists on *your* binding"
+        )
+        self.assertIn("does not narrow that list by binding", paragraph)
+        self.assertIn("search_docs(query=", paragraph)
+        self.assertLess(
+            paragraph.index("search_docs(query="), paragraph.index("dir(SzEngineFlags)")
+        )
+
+    def test_the_facts_each_site_states_survive_the_rewording(self):
+        phase_d = paragraph_containing(
+            read(PHASE_D), "Confirm a composite exists on *your* binding"
+        )
+        self.assertIn("absent from the Python binding's `SzEngineFlags`", phase_d)
+        self.assertIn("SZ_EXPORT_ALL_FLAGS", phase_d)
+        phase_2b = read(PHASE_2B)
+        self.assertIn("find_network_by_entity_id(entity_ids: List[int]", phase_2b)
+        self.assertIn("SzSdkError", phase_2b)
+
+
+class NoSiteNamesTheTopicByAnAlias(unittest.TestCase):
+    """INV-132 names the topic `parameters`; the aliases still resolve, but neither the
+    plugin nor these tests use one as the topic's name (#289)."""
+
+    ALIAS_USE = re.compile(
+        r"topic=['\"](?:methods?|functions?|classes|class|api|signatures?|args|arguments"
+        r"|params|parameter)['\"]"
+        r"|`(?:methods|functions)` topic|\b(?:methods|functions) topic\b"
+        r"|_(?:methods|functions)_topic"
+    )
+
+    def test_no_plugin_or_test_file_names_the_topic_by_an_alias(self):
+        roots = (os.path.join(REPO_ROOT, "plugins"), os.path.join(REPO_ROOT, "tests"))
+        offenders = []
+        scanned = 0
+        for root in roots:
+            for dirpath, _dirs, files in os.walk(root):
+                for name in files:
+                    if not name.endswith((".md", ".py", ".json", ".sh")):
+                        continue
+                    path = os.path.join(dirpath, name)
+                    scanned += 1
+                    for number, line in enumerate(read(path).splitlines(), 1):
+                        if self.ALIAS_USE.search(line):
+                            offenders.append(f"{os.path.relpath(path, REPO_ROOT)}:{number}")
+        self.assertGreater(scanned, 50, "the scan found almost no files; the walk drifted")
+        self.assertEqual(offenders, [], "these name the topic by an alias, not `parameters`")
 
 
 class AnEmptyCompositeMembersFieldIsNotAnAbsentFact(unittest.TestCase):
