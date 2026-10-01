@@ -471,7 +471,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_broll_manifest.py, which cites it back and states what it does NOT establish -- that a live run
 # writes a conforming entry. Re-derived by running the extractor -- 165, with the new pair present by
 # name. EXPECTED_PAIRS 164 -> 165.
-EXPECTED_PAIRS = 165
+# 166 on 2026-10-01: INV-342 (the recap-video renderer's contract) names test_recap_video.py, which cites
+# it back and states what it does NOT establish -- the macOS and Windows speech paths. Re-derived by
+# running the extractor -- 166, with the new pair present by name. EXPECTED_PAIRS 165 -> 166.
+EXPECTED_PAIRS = 166
 
 
 def pairs():

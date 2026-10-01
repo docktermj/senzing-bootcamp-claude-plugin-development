@@ -19,20 +19,20 @@ How it works, in three passes:
    process's stdin, with the assembled narration as its second input. No frame is ever
    written to disk.
 
-⛔ **Narration is never truncated: a scene whose narration runs longer than its planned
+⛔ **(INV-342) Narration is never truncated: a scene whose narration runs longer than its planned
 duration is extended to fit, and every overrun is reported on stderr.** Without a voice the
 narration's length is estimated at ``WORDS_PER_MINUTE``, so the burned-in caption gets the
 time a listener would have had.
 
-⛔ **Captions are always burned in, whether or not there is a voice.** The caption defaults to
+⛔ **(INV-342) Captions are always burned in, whether or not there is a voice.** The caption defaults to
 the narration, so a video rendered without a speech engine still carries every word.
 
-⛔ **A storyboard image must be a project-relative local file; an absolute path, a URL, or a
+⛔ **(INV-342) A storyboard image must be a project-relative local file; an absolute path, a URL, or a
 path that resolves outside the project is rejected as an invalid storyboard.** A
 project-relative image that is missing or unreadable is not an error: that scene is drawn as a
 title card instead, and stderr says so.
 
-⛔ **The renderer is offline: it opens only local files and never fetches from the network.**
+⛔ **(INV-342) The renderer is offline: it opens only local files and never fetches from the network.**
 Fonts come from the operating system, the palette from ``brand_tokens.py`` (INV-081), the voice
 from the platform's built-in speech engine.
 
@@ -67,7 +67,7 @@ table. Keys beginning with ``_`` are comments and are ignored. The scene types:
 * ``loading`` -- records flowing into entities, with a rising counter.
 * ``entity_merge`` -- records converging into resolved entities.
 * ``certificate`` -- the Certificate of Completion, drawn from the same name, date and
-  completed-module list the recap PDF's certificate uses (INV-100): the recap
+  completed-module list the recap PDF's certificate uses (INV-100, INV-342): the recap
   (``docs/bootcamp_recap.md``) read by ``generate_recap_pdf``'s own parser, with the
   preferences name outranking it exactly as it does there. It is drawn, never rasterized from
   the PDF.
@@ -89,7 +89,7 @@ Fallbacks, each stated on stderr (INV-111)
 Exit codes
 ----------
 
-⛔ **The exit codes are separate, and no video is written unless the exit is 0; a video already
+⛔ **(INV-342) The exit codes are separate, and no video is written unless the exit is 0; a video already
 at the output path is left as it was.** The render goes to a hidden partial file beside the
 output and replaces it only once ffmpeg has succeeded.
 
