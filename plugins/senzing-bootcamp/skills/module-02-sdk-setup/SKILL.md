@@ -144,10 +144,10 @@ bootcamper declines the update, or they decline the EULA for it, and an accepted
   Step 3 is.
 - **Do not re-ask the EULA.** Phase 1 gates installing the SDK, and this path installs no SDK.
   Only an update the bootcamper accepts in Step 1b asks it, because an update is an install.
-- **Still run Step 3's Phase 3** (install language bindings). The Java, C# and TypeScript bindings
-  are per-project, so an existing SDK install does not provide them. For Python, Phase 3 installs
-  nothing: the bindings ship inside the SDK runtime and are made importable by the environment
-  script.
+- **Still run Step 3's Phase 3** (install language bindings). The Java, C#, Rust and TypeScript
+  bindings are per-project, so an existing SDK install does not provide them. For Python,
+  Phase 3 installs nothing: the bindings ship inside the SDK runtime and are made importable by
+  the environment script.
 - **Still do Step 3's environment-script work** ("Create the project-local environment script"), then
   jump to Step 4 (verify installation) to confirm it works with the chosen language.
 - If Step 4 passes, proceed to Step 5 (License), which confirms the built-in evaluation license
@@ -171,8 +171,8 @@ bootcamper declines the update, or they decline the EULA for it, and an accepted
 >   install ran (INV-080). Write the script with the **same** implementation the install path uses:
 >   the zsh/bash path-resolution idiom, the fail-loudly root check, and the empty-value guard (see
 >   "The env script MUST resolve its own path…" in Step 3). One implementation, not two.
-> - **Step 3's Phase 3** (install language bindings): the Java, C# and TypeScript bindings belong
->   to the project, not to the SDK install. Python has nothing to install here.
+> - **Step 3's Phase 3** (install language bindings): the Java, C#, Rust and TypeScript bindings
+>   belong to the project, not to the SDK install. Python has nothing to install here.
 > - **Step 4** (Verify Installation): confirms the SDK works with the chosen language.
 > - **Step 5** (License): a brief, no-prompt confirmation that the built-in evaluation license is
 >   active (the volume-gated License Key gate itself lives in Module 4, per INV-093).
@@ -655,8 +655,10 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
 **Phase 3: Install language bindings (after Phase 1's EULA acceptance, or directly on Step 1's
 existing-install path, which skips Phase 1 and Phase 2):**
 
-3. Install the language-specific SDK bindings — **from that ecosystem's package manager for Java
-   (Maven/Gradle), C# (NuGet) and TypeScript, and NOT from a package manager at all for Python.**
+3. Install the language-specific SDK bindings for the chosen language — Python, Java, C#, Rust or
+   TypeScript — **by the route the Senzing MCP server names for that language, never from a public
+   package registry that route does not name, and NOT from a package manager at all for Python.**
+   Each language's route is below; read it at run time rather than from this file (INV-080).
 
    ⛔ **Python: there is nothing to install here, and `pip install senzing` is an error-severity
    anti-pattern.** (INV-222 — INV-066's pip rules govern the plugin's own tooling only.) The `senzing` and `senzing_core` packages **ship inside `senzingsdk-runtime`**,
@@ -732,8 +734,36 @@ existing-install path, which skips Phase 1 and Phase 2):**
    perform: the routes are another language (Java and C# official; Rust and TypeScript
    community-supported) or Docker/WSL2, which this module's platform routing already covers.
 
-   For **Java, C# and TypeScript**, use that ecosystem's package manager as normal. ⚠️ The
-   bare-`pip` prohibition still applies to the plugin's **own** tooling installs (`fpdf2`,
+   For **Java, C#, Rust and TypeScript**, the bindings come through that ecosystem's tooling
+   (Maven or Gradle, NuGet, Cargo, npm), but **not from its public registry unless the route
+   names one**. Call `sdk_guide(topic='install', platform='<platform>', language='<language>')`
+   first for every language, then follow the route for the chosen one. The quotes below are
+   dated evidence of what each route said, not the command to run:
+
+   - **Java:** `sdk_guide`'s install reply names no source for the Java bindings, so the route is
+     the Java SDK reference: `search_docs(query='Java SDK sz-sdk.jar Maven Usage local Maven
+     repository')`, and follow its "Maven Usage" and "Installation in Local Maven Repository"
+     sections. On server 1.37.16 (2026-09-30) they said `sz-sdk.jar` "is not provided via Maven
+     Central" and is the one "provided with the Senzing product", used as a system-scoped
+     dependency or installed into the **local** Maven repository (`java -jar sz-sdk.jar` prints
+     the `mvn install:install-file` command for it).
+     <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt', language='java') — the reply carries no compatibility_notes and no source for the Java bindings, only the platform install and the Python gotcha — owner: search_docs IS the route that carries the Java SDK reference: search_docs(query='Java SDK sz-sdk.jar Maven Usage local Maven repository') returns its "Maven Usage" and "Installation in Local Maven Repository" sections, so the reader must go there rather than conclude the source is undocumented (routing negative) — server 1.37.16, 2026-09-30 -->
+   - **C#:** the route is the C# SDK reference: `search_docs(query='C# .NET SDK Senzing.Sdk NuGet
+     package')`. On server 1.37.16 (2026-09-30) it said "After adding the `Senzing.Sdk` NuGet
+     package to your project dependencies" and did not say where that package comes from. So
+     name no package source: if the route still names none, tell the bootcamper that, and do
+     not add a public NuGet feed on your own.
+     <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt', language='csharp') and search_docs(query='C# .NET SDK Senzing.Sdk NuGet package') — no reply says where the Senzing.Sdk NuGet package comes from; the install reply carries no compatibility_notes for C#, and the reference says only "After adding the Senzing.Sdk NuGet package to your project dependencies" — owner: search_docs IS the route that carries the C# SDK reference ("Senzing.Sdk for C#", the top hit), the one that would state the package source, and it states none; generate_scaffold(language='csharp', workflow='initialize') returns code snippets only and find_examples indexes no build files (absence negative) — server 1.37.16, 2026-09-30 -->
+   - **Rust:** call `sdk_guide(topic='install', platform='<platform>', language='rust')` and follow
+     its `compatibility_notes`, taking the dependency line from that reply. On server 1.37.16
+     (2026-09-30) it said "The Rust SDK (sz-rust-sdk) is NOT on crates.io. You MUST use a git
+     dependency."
+   - **TypeScript:** call `sdk_guide(topic='install', platform='<platform>', language='typescript')`
+     and follow its `compatibility_notes`, taking the install command from that reply. On server
+     1.37.16 (2026-09-30) it said "The TypeScript/Node.js SDK (sz-napi) is NOT on npm. You MUST
+     install from the GitHub repository". The build-from-source warning below still applies.
+
+   ⚠️ The bare-`pip` prohibition still applies to the plugin's **own** tooling installs (`fpdf2`,
    Playwright — INV-066): always an explicit `python3 -m pip`, never a bare `pip`, and PEP 668
    handled with a project-local virtualenv. That rule is about *how* to run pip for the plugin's
    helpers; it never authorizes pip for the Senzing SDK, which is not a pip package at all.

@@ -53,6 +53,22 @@ VERIFIED_ON = "server 1.32.9, docs index 2026-08-11 20:52 UTC, checked 2026-08-1
 #: to stop.
 VERIFIED_QUERIES = {
     # ---------------------------------------------------------------------------------
+    # Executed 2026-09-30 on server 1.37.16 (docs index 2026-09-29 22:00 UTC) for #287, Module 2
+    # Step 3 Phase 3's routes for the Java and C# bindings. The second is also the evidence slot
+    # of the C# MCP-NEGATIVE marker. ⚠️ Record the PROPERTY, not ranks or scores.
+    "Java SDK sz-sdk.jar Maven Usage local Maven repository":
+        "ON TARGET BELOW AN ADJACENT TOP HIT: the top hit is the FAQ 'Where is sz-sdk.jar on "
+        "Maven Central?', about a cosmetic JAR-verification warning; the set carries the "
+        "Senzing Java SDK 4.x Reference sections 'Installation in Local Maven Repository' "
+        "(java -jar sz-sdk.jar prints the mvn install:install-file command) and 'Maven Usage' "
+        "('not provided via Maven Central'; system-scoped or local-repository dependency). "
+        "Phase 3 names both sections, so the reader reads past the first hit",
+    "C# .NET SDK Senzing.Sdk NuGet package":
+        "ON TARGET, AND SILENT ON THE SOURCE: the top hit is 'Senzing.Sdk for C#', which says "
+        "'After adding the Senzing.Sdk NuGet package to your project dependencies' and does not "
+        "say where the package comes from; the next is 'v4 C# SDK Reference', a link list. "
+        "That silence is the absence the C# marker records",
+    # ---------------------------------------------------------------------------------
     # Executed 2026-09-28 on server 1.37.14 (docs index 2026-09-28 03:23 UTC) for #194, Module 2
     # Step 1b's update path and Step 2's preview-status relay. The first two are the update
     # commands' route; the third is the point-release notes' route, and the three after it are
