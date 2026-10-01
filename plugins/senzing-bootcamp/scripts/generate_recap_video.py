@@ -16,8 +16,9 @@ How it works, in three passes:
 2. **Plan the timeline.** Each scene's narration is synthesized with the platform's own
    speech engine, and the scene lasts ``max(planned duration, narration length)``.
 3. **Stream.** Frames are drawn with Pillow and written as raw RGB straight into one ffmpeg
-   process's stdin, with the assembled narration as its second input. No frame is ever
-   written to disk.
+   process's stdin. Its audio inputs are the assembled narration (48 kHz stereo, each
+   narration at its scene's start) and the synthesized music bed; the same ffmpeg call mixes
+   them (``audio_filter_graph``) and encodes the result. No frame is ever written to disk.
 
 ⛔ **(INV-342) Narration is never truncated: a scene whose narration runs longer than its planned
 duration is extended to fit, and every overrun is reported on stderr.** Without a voice the
@@ -42,7 +43,8 @@ Storyboard format
 ::
 
     {
-      "video": {"bootcamper": "Ada Lovelace", "graduation_date": "2026-09-30"},
+      "video": {"bootcamper": "Ada Lovelace", "graduation_date": "2026-09-30",
+                "music": true},
       "scenes": [
         {"type": "title_card", "duration": 6,
          "narration": "It started with a business problem.",
@@ -55,6 +57,11 @@ Storyboard format
         {"type": "tag_line", "duration": 5, "narration": "..."}
       ]
     }
+
+``video.music`` is optional and defaults to ``true``: a light, upbeat music bed synthesized at
+render time with the standard library (no audio file ships), ducked under the voice with
+``sidechaincompress`` and loudness-normalized with the voice to about -16 LUFS. ``false``
+turns it off.
 
 Every scene carries ``type``, ``duration`` (planned seconds), ``narration`` and an optional
 ``caption`` (defaults to the narration). The rest depends on the type; ``--schema`` prints the
@@ -78,10 +85,13 @@ Fallbacks, each stated on stderr (INV-111)
 ------------------------------------------
 
 * No speech engine (macOS ``say``, Windows SAPI through PowerShell ``System.Speech``, Linux
-  ``espeak-ng`` or ``espeak``): the video renders without an audio track and the captions carry
-  the narration.
-* ffmpeg is not on ``PATH`` (or lacks the H.264/AAC encoders): the binary bundled with the
-  ``imageio-ffmpeg`` package is used instead.
+  ``espeak-ng`` or ``espeak``), ``--no-voice``, or an engine that voiced no scene: the video
+  renders without a voice-over and the captions carry the narration. The music bed still plays,
+  normalized to the same -16 LUFS, so the video keeps an audio stream unless ``video.music`` is
+  ``false`` as well.
+* ffmpeg is not on ``PATH`` (or lacks the H.264/AAC encoders, or the ``sidechaincompress`` and
+  ``loudnorm`` filters the mix needs): the binary bundled with the ``imageio-ffmpeg`` package is
+  used instead, and stderr names what the first one lacked.
 * A missing or unreadable image: the scene becomes a title card.
 * No recap to read the certificate from: the storyboard's name and date are used.
 * No TrueType font: Pillow's built-in font. ``brand_tokens.py`` unavailable: the inlined palette.
@@ -94,8 +104,8 @@ at the output path is left as it was.** The render goes to a hidden partial file
 output and replaces it only once ffmpeg has succeeded.
 
 = ===========================================================================================
-0 rendered: prints ``Video generated: <path>``, its duration, and whether an audio track was
-  written
+0 rendered: prints ``Video generated: <path>``, its duration, a ``Voice:`` line and a
+  ``Music:`` line
 1 invalid storyboard: each problem names its field; nothing is written
 2 a required capability is missing (no ffmpeg, or no Pillow); nothing is written
 3 the encode itself failed (ffmpeg exited non-zero); nothing is written
@@ -108,12 +118,13 @@ Usage::
                                     [--project-root .] [--no-voice] [--check] [--schema]
 
 ``--check`` validates the storyboard and exits 0 or 1 without rendering; it needs neither
-Pillow nor ffmpeg. Source issue: #299.
+Pillow nor ffmpeg. Source issues: #299, #339.
 """
 
 from __future__ import annotations
 
 import argparse
+import array
 import datetime
 import importlib
 import importlib.util
@@ -147,7 +158,8 @@ EXIT_RENDER_FAILED = 3
 WIDTH, HEIGHT, FPS = 1920, 1080, 30
 #: Divisible by FPS, so every frame owns a whole number of audio samples and the narration
 #: can never drift against the picture however long the video runs.
-AUDIO_RATE = 44100
+AUDIO_RATE = 48000
+AUDIO_CHANNELS = 2
 SAMPLES_PER_FRAME = AUDIO_RATE // FPS
 
 #: Silence before and after a scene's narration. Part of the time a narration needs.
@@ -296,7 +308,7 @@ class FieldSpec:
 
 
 FIELD_KINDS = ("text", "count", "number", "seconds", "date", "image", "path", "text_list",
-               "items")
+               "items", "boolean")
 
 
 def F(name, kind, required=True, **kw) -> FieldSpec:
@@ -316,6 +328,8 @@ VIDEO_FIELDS = (
     F("bootcamper", "text", help="the Bootcamper's name, as the video should say it"),
     F("graduation_date", "date", help="YYYY-MM-DD"),
     F("title", "text", False),
+    F("music", "boolean", False,
+      help="the synthesized music bed under the narration; defaults to true, false turns it off"),
 )
 
 TOP_LEVEL_KEYS = ("version", "video", "scenes")
@@ -400,6 +414,9 @@ def _check_value(spec: FieldSpec, value, where: str, root: Path, errors: List[st
             errors.append(f"{where}: must be a list of non-empty strings")
         elif spec.max_items and len(value) > spec.max_items:
             errors.append(f"{where}: at most {spec.max_items} entries")
+    elif kind == "boolean":
+        if not isinstance(value, bool):
+            errors.append(f"{where}: must be true or false")
     elif kind == "items":
         if not isinstance(value, list) or not value:
             errors.append(f"{where}: must be a non-empty list")
@@ -528,6 +545,12 @@ _ENCODER = {
     "aac": re.compile(r"^\s*A\S*\s+aac\b", re.M),
 }
 
+#: The filters the audio mix needs, required the same way as the encoders (#339).
+_FILTER = {
+    "sidechaincompress": re.compile(r"^\s*\S+\s+sidechaincompress\b", re.M),
+    "loudnorm": re.compile(r"^\s*\S+\s+loudnorm\b", re.M),
+}
+
 
 def missing_encoders(ffmpeg: str) -> List[str]:
     """The required encoders `ffmpeg` lacks (all of them if it cannot be run)."""
@@ -537,6 +560,27 @@ def missing_encoders(ffmpeg: str) -> List[str]:
     except (OSError, subprocess.SubprocessError):
         return list(_ENCODER)
     return [name for name, pattern in _ENCODER.items() if not pattern.search(r.stdout)]
+
+
+def missing_filters(ffmpeg: str) -> List[str]:
+    """The filters the audio mix needs that `ffmpeg` lacks (all of them if it cannot be run)."""
+    try:
+        r = subprocess.run([ffmpeg, "-hide_banner", "-filters"], capture_output=True,
+                           text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        return list(_FILTER)
+    return [name for name, pattern in _FILTER.items() if not pattern.search(r.stdout)]
+
+
+def _lacking(ffmpeg: str) -> str:
+    """What `ffmpeg` lacks of the required encoders and filters, as a phrase; "" if nothing."""
+    parts = []
+    encoders, filters = missing_encoders(ffmpeg), missing_filters(ffmpeg)
+    if encoders:
+        parts.append(f"the {', '.join(encoders)} encoder(s)")
+    if filters:
+        parts.append(f"the {', '.join(filters)} filter(s)")
+    return " and ".join(parts)
 
 
 def _imageio_ffmpeg() -> Tuple[Optional[str], str]:
@@ -553,33 +597,33 @@ def _imageio_ffmpeg() -> Tuple[Optional[str], str]:
 def find_ffmpeg() -> Tuple[str, List[str]]:
     """(ffmpeg path, fallback notes): PATH first, then imageio-ffmpeg.
 
-    Raises CapabilityMissing when neither yields an ffmpeg with the H.264 and AAC encoders.
+    Raises CapabilityMissing when neither yields an ffmpeg with the H.264 and AAC encoders and
+    the ``sidechaincompress`` and ``loudnorm`` filters the audio mix needs.
     """
     notes: List[str] = []
     tried: List[str] = []
     on_path = shutil.which("ffmpeg")
     if on_path:
-        lacking = missing_encoders(on_path)
+        lacking = _lacking(on_path)
         if not lacking:
             return on_path, notes
-        tried.append(f"ffmpeg on PATH ({on_path}) lacks the {', '.join(lacking)} encoder(s)")
+        tried.append(f"ffmpeg on PATH ({on_path}) lacks {lacking}")
     else:
         tried.append("ffmpeg is not on PATH")
     bundled, why = _imageio_ffmpeg()
     if bundled:
-        lacking = missing_encoders(bundled)
+        lacking = _lacking(bundled)
         if not lacking:
             notes.append(f"{tried[-1]}; using the ffmpeg bundled with imageio-ffmpeg "
                          f"({bundled}).")
             return bundled, notes
-        tried.append(f"the imageio-ffmpeg binary ({bundled}) lacks the "
-                     f"{', '.join(lacking)} encoder(s)")
+        tried.append(f"the imageio-ffmpeg binary ({bundled}) lacks {lacking}")
     else:
         tried.append(why)
     raise CapabilityMissing(
         "no usable ffmpeg: " + "; ".join(tried) + ". Install the imageio-ffmpeg package into "
         "the project's virtualenv (python3 -m pip install imageio-ffmpeg), or put an ffmpeg "
-        "with libx264 and aac on PATH.")
+        "with libx264, aac, sidechaincompress and loudnorm on PATH.")
 
 
 @dataclass(frozen=True)
@@ -639,12 +683,12 @@ def find_speech_engine() -> Tuple[Optional[SpeechEngine], List[str]]:
 def choose_voice(no_voice: bool) -> Tuple[Optional[SpeechEngine], Optional[str]]:
     """(engine, fallback note): the voice-over engine, or None and why there is none."""
     if no_voice:
-        return None, ("voice-over turned off by --no-voice; the video has no audio track and "
+        return None, ("voice-over turned off by --no-voice; the video has no voice-over and "
                       "the burned-in captions carry the narration.")
     engine, tried = find_speech_engine()
     if engine is None:
         return None, ("no speech engine found (tried " + ", ".join(tried) + "); the video has "
-                      "no audio track and the burned-in captions carry the narration.")
+                      "no voice-over and the burned-in captions carry the narration.")
     return engine, None
 
 
@@ -1420,17 +1464,155 @@ def plan_timeline(storyboard: dict, ctx: RenderContext, engine: Optional[SpeechE
     return plan
 
 
+def _stereo(mono: bytes) -> bytes:
+    """Mono signed 16-bit PCM -> the same sound on both channels, interleaved."""
+    samples = array.array("h", mono)
+    both = array.array("h", bytes(2 * len(mono)))
+    both[0::2] = samples
+    both[1::2] = samples
+    return both.tobytes()
+
+
+def _wav_writer(path: Path):
+    out = wave.open(str(path), "wb")
+    out.setnchannels(AUDIO_CHANNELS)
+    out.setsampwidth(2)
+    out.setframerate(AUDIO_RATE)
+    return out
+
+
 def write_audio_track(plan: Sequence[PlannedScene], path: Path) -> None:
-    """One WAV for the whole video, each narration placed at its scene's start + lead."""
+    """One 48 kHz stereo WAV for the whole video, each narration at its scene's start + lead."""
     lead = int(NARRATION_LEAD * AUDIO_RATE) * 2
-    with wave.open(str(path), "wb") as out:
-        out.setnchannels(1)
-        out.setsampwidth(2)
-        out.setframerate(AUDIO_RATE)
+    with _wav_writer(path) as out:
         for ps in plan:
             size = ps.frames * SAMPLES_PER_FRAME * 2
             body = (b"\0" * lead + ps.pcm)[:size]
-            out.writeframes(body + b"\0" * (size - len(body)))
+            out.writeframes(_stereo(body + b"\0" * (size - len(body))))
+
+
+# --------------------------------------------------------------------------- #
+# The music bed: synthesized with the standard library, mixed in the encode's ffmpeg call
+# --------------------------------------------------------------------------- #
+#: The bed's level before the mix, how the voice ducks it, and the one loudness target
+#: every audio stream is normalized to, with a voice or without one.
+MUSIC_VOLUME = 0.3
+DUCKING = "sidechaincompress=threshold=0.03:ratio=6:attack=40:release=600"
+LOUDNORM = "loudnorm=I=-16:TP=-1.5:LRA=11"
+
+MUSIC_BPM = 120
+MUSIC_FADE_IN = 2.0
+MUSIC_FADE_OUT = 3.0
+#: I-V-vi-IV in C major, one chord a bar: four 2 s bars at 120 BPM make the 8 s cycle the
+#: bed repeats. MIDI note numbers.
+MUSIC_PROGRESSION = ((60, 64, 67), (55, 59, 62), (57, 60, 64), (53, 57, 60))
+
+
+def _hz(note: int) -> float:
+    return 440.0 * 2.0 ** ((note - 69) / 12.0)
+
+
+def _music_cycle() -> array.array:
+    """One cycle of the progression as interleaved stereo 16-bit samples.
+
+    Pads hold each chord, a decaying bass hits every beat, a soft arpeggio walks the chord in
+    eighth notes panned left and right, and a light kick marks each beat. Every note ramps in
+    and out, so the cycle joins itself without a click when it repeats.
+    """
+    rate = AUDIO_RATE
+    beat = 60.0 / MUSIC_BPM
+    bar = 4 * beat
+    frames = round(len(MUSIC_PROGRESSION) * bar * rate)
+    left = [0.0] * frames
+    right = [0.0] * frames
+
+    def note(start, seconds, hz, gain, pan, attack, release, decay=0.0, drop=0.0):
+        """A sine at `hz` from `start`; `pan` 0 is left and 1 right; `drop` sweeps it down."""
+        first, count = round(start * rate), round(seconds * rate)
+        gl = gain * math.cos(pan * math.pi / 2)
+        gr = gain * math.sin(pan * math.pi / 2)
+        rise, fall = max(1, round(attack * rate)), max(1, round(release * rate))
+        fade = math.exp(-decay / rate)
+        settle = math.exp(-30.0 / rate)
+        step = 2 * math.pi / rate
+        phase, level, sweep = 0.0, 1.0, 1.0
+        for j in range(count):
+            env = level * min(1.0, j / rise, (count - j) / fall)
+            value = env * math.sin(phase)
+            left[first + j] += gl * value
+            right[first + j] += gr * value
+            phase += step * hz * (1.0 + drop * sweep)
+            level *= fade
+            sweep *= settle
+
+    for n, chord in enumerate(MUSIC_PROGRESSION):
+        start = n * bar
+        for pitch in chord:
+            note(start, bar, _hz(pitch), 0.09, 0.5, 0.25, 0.25, decay=0.4)
+        for b in range(4):
+            note(start + b * beat, beat, _hz(chord[0] - 24), 0.30, 0.5, 0.005, 0.02, decay=5.0)
+            note(start + b * beat, 0.25, 50.0, 0.35, 0.5, 0.002, 0.03, decay=14.0, drop=1.6)
+        arpeggio = (chord[0], chord[1], chord[2], chord[1] + 12)
+        for e in range(8):
+            note(start + e * beat / 2, beat / 2, _hz(arpeggio[e % 4] + 12), 0.08,
+                 0.25 if e % 2 == 0 else 0.75, 0.005, 0.03, decay=6.0)
+
+    peak = max(max(map(abs, left)), max(map(abs, right))) or 1.0
+    scale = 0.5 * 32767 / peak
+    samples = array.array("h", bytes(4 * frames))
+    samples[0::2] = array.array("h", [round(v * scale) for v in left])
+    samples[1::2] = array.array("h", [round(v * scale) for v in right])
+    return samples
+
+
+def synthesize_music_bed(seconds: float) -> bytes:
+    """`seconds` of the music bed: 48 kHz stereo 16-bit PCM, deterministic for a length.
+
+    One cycle is synthesized and repeated to the length, then faded in over MUSIC_FADE_IN and
+    out over MUSIC_FADE_OUT across the whole bed. Standard library only.
+    """
+    frames = max(0, round(seconds * AUDIO_RATE))
+    cycle = _music_cycle()
+    cycle_frames = len(cycle) // AUDIO_CHANNELS
+    bed = cycle * (frames // cycle_frames + 1)
+    del bed[frames * AUDIO_CHANNELS:]
+    fade_in = min(frames, round(MUSIC_FADE_IN * AUDIO_RATE))
+    fade_out = min(frames, round(MUSIC_FADE_OUT * AUDIO_RATE))
+    for i in range(fade_in):
+        gain = i / fade_in
+        for c in (2 * i, 2 * i + 1):
+            bed[c] = round(bed[c] * gain)
+    for k in range(fade_out):
+        i = frames - 1 - k
+        gain = k / fade_out
+        for c in (2 * i, 2 * i + 1):
+            bed[c] = round(bed[c] * gain)
+    return bed.tobytes()
+
+
+def write_music_bed(seconds: float, path: Path) -> None:
+    """The music bed for a `seconds`-long video, as a 48 kHz stereo WAV."""
+    with _wav_writer(path) as out:
+        out.writeframes(synthesize_music_bed(seconds))
+
+
+def audio_filter_graph(voice: Optional[int], music: Optional[int]) -> Optional[str]:
+    """The ``-filter_complex`` graph for ffmpeg's audio inputs, ending at ``[aout]``.
+
+    `voice` and `music` are ffmpeg input indexes, or None when that input is absent. The music
+    is lowered to MUSIC_VOLUME and ducked by a compressor keyed on the voice, mixed with the
+    voice, and the mix is loudness-normalized. A lone voice or a lone music bed goes through the
+    same ``loudnorm``, so every audio stream has one target. None when there is no audio.
+    """
+    if voice is not None and music is not None:
+        return (f"[{music}:a]volume={MUSIC_VOLUME}[music];"
+                f"[{voice}:a]asplit=2[key][voice];"
+                f"[music][key]{DUCKING}[ducked];"
+                f"[ducked][voice]amix=inputs=2:duration=first,{LOUDNORM}[aout]")
+    alone = voice if voice is not None else music
+    if alone is None:
+        return None
+    return f"[{alone}:a]{LOUDNORM}[aout]"
 
 
 # --------------------------------------------------------------------------- #
@@ -1506,26 +1688,32 @@ def render_scene_frame(storyboard: dict, index: int, t: float, project_root=".",
 # --------------------------------------------------------------------------- #
 # Encoding: raw RGB frames streamed into one ffmpeg
 # --------------------------------------------------------------------------- #
-def encode_command(ffmpeg: str, audio: Optional[Path], output: Path) -> List[str]:
+def encode_command(ffmpeg: str, audio: Optional[Path], output: Path,
+                   music: Optional[Path] = None) -> List[str]:
+    """The one ffmpeg call: frames on stdin, the narration and the music bed mixed in."""
     cmd = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{WIDTH}x{HEIGHT}",
            "-framerate", str(FPS), "-i", "pipe:0"]
-    if audio is not None:
-        cmd += ["-i", str(audio)]
+    inputs = [p for p in (audio, music) if p is not None]
+    for path in inputs:
+        cmd += ["-i", str(path)]
+    graph = audio_filter_graph(1 if audio is not None else None,
+                               len(inputs) if music is not None else None)
     cmd += ["-map", "0:v:0"]
-    if audio is not None:
-        cmd += ["-map", "1:a:0", "-c:a", "aac", "-b:a", "160k", "-ar", str(AUDIO_RATE)]
+    if graph is not None:
+        cmd += ["-filter_complex", graph, "-map", "[aout]", "-c:a", "aac", "-b:a", "160k",
+                "-ar", str(AUDIO_RATE), "-ac", str(AUDIO_CHANNELS)]
     cmd += ["-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p",
             "-r", str(FPS), "-movflags", "+faststart", "-f", "mp4", str(output)]
     return cmd
 
 
 def stream_frames(ctx, plan, ffmpeg: str, audio: Optional[Path], output: Path,
-                  log_path: Path) -> Tuple[bool, str]:
+                  log_path: Path, music: Optional[Path] = None) -> Tuple[bool, str]:
     """Draw every frame and pipe it into ffmpeg. (succeeded, ffmpeg's complaint)."""
     with open(log_path, "wb") as log:
         try:
-            proc = subprocess.Popen(encode_command(ffmpeg, audio, output),
+            proc = subprocess.Popen(encode_command(ffmpeg, audio, output, music),
                                     stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
                                     stderr=log)
         except OSError as exc:
@@ -1620,6 +1808,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if voice_note:
         ctx.note(voice_note)
 
+    with_music = storyboard["video"].get("music", True)
     output = Path(args.output)
     partial = output.with_name(f".{output.name}.partial")
     created_dir = None if output.parent.exists() else output.parent
@@ -1629,16 +1818,22 @@ def main(argv: Optional[List[str]] = None) -> int:
         try:
             plan = plan_timeline(storyboard, ctx, engine, ffmpeg, workdir)
             voiced = [ps for ps in plan if ps.voiced]
-            audio = None
+            audio = music = None
             if voiced:
                 audio = workdir / "narration.wav"
                 write_audio_track(plan, audio)
             elif engine is not None:
-                ctx.note(f"{engine.name} voiced no scene; the video has no audio track and "
+                ctx.note(f"{engine.name} voiced no scene; the video has no voice-over and "
                          "the burned-in captions carry the narration.")
+            if with_music:
+                music = workdir / "music.wav"
+                write_music_bed(sum(ps.frames for ps in plan) / FPS, music)
+            elif not voiced:
+                ctx.note("no voice, and the storyboard turns the music off (video.music: "
+                         "false); the video has no audio stream.")
             output.parent.mkdir(parents=True, exist_ok=True)
             ok, detail = stream_frames(ctx, plan, ffmpeg, audio, partial,
-                                       workdir / "ffmpeg.log")
+                                       workdir / "ffmpeg.log", music)
             if ok:
                 os.replace(partial, output)
         except Exception as exc:  # a render defect must not masquerade as exit 1
@@ -1660,10 +1855,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"Duration: {_format_duration(total)} ({total:.1f} s, {len(plan)} scenes, planned "
           f"{planned:.1f} s)")
     if voiced:
-        print(f"Audio track: yes ({engine.name} voice-over, {len(voiced)} of {len(plan)} "
-              "scenes narrated)")
+        print(f"Voice: {engine.name} ({len(voiced)} of {len(plan)} scenes narrated)")
+    elif args.no_voice:
+        print("Voice: none (--no-voice)")
+    elif engine is None:
+        print("Voice: none (no speech engine found)")
     else:
-        print("Audio track: no (captions carry the narration)")
+        print(f"Voice: none ({engine.name} voiced no scene)")
+    print("Music: yes" if with_music else "Music: off (storyboard)")
     return EXIT_RENDERED
 
 

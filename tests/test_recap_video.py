@@ -14,8 +14,14 @@ writes at graduation into `docs/bootcamp_recap.mp4`. These tests pin its contrac
 * **The timeline** never truncates narration: an overrun extends its scene and is reported.
 * **Frame drawing** is measured through `render_scene_frame`, the drawing layer's seam, which
   needs Pillow but not ffmpeg. Skipped with a reason when Pillow is absent.
-* **End to end**, an mp4 is rendered and probed: H.264, yuv420p, 1920x1080, 30 fps, and AAC
-  when a voice spoke. Skipped with a reason when Pillow or ffmpeg is absent.
+* **The audio** is 48 kHz stereo: the narration, and a music bed synthesized with the standard
+  library (deterministic, one 8 s cycle repeated), ducked under the voice by `sidechaincompress`
+  and normalized by `loudnorm` in the encode's own ffmpeg call. The filter graph is asserted as a
+  pure function; `find_ffmpeg` requires the two filters as it requires the encoders. The
+  `Voice:` and `Music:` report lines are pinned, all four voice cases and both music cases (#339).
+* **End to end**, an mp4 is rendered and probed: H.264, yuv420p, 1920x1080, 30 fps, and one
+  48 kHz stereo AAC stream whenever a voice spoke or the music played, measuring -16 ± 1 LUFS
+  (ffmpeg's `ebur128`). Skipped with a reason when Pillow or ffmpeg is absent.
 
 ⚠️ Pillow and imageio-ffmpeg are optional dependencies of the *renderer under test*, declared in
 `requirements-dev.txt` (INV-306). The tests themselves are standard library only (INV-108):
@@ -27,12 +33,16 @@ video on failure, burns captions in, never truncates narration, accepts only pro
 images, works offline, and draws the certificate from the recap PDF's fields). It does **not**
 establish the macOS and Windows speech paths, which it covers only by the commands it builds.
 
-Source issue: #299.
+Source issues: #299, #339.
 
 Run:  python3 -m unittest discover -s tests
 """
+import array
+import ast
 import contextlib
 import copy
+import inspect
+import textwrap
 import importlib.machinery
 import importlib.util
 import io
@@ -438,7 +448,8 @@ class FallbacksAreStated(unittest.TestCase):
         fake.get_ffmpeg_exe = lambda: "/opt/imageio/ffmpeg-bundled"
         with mock.patch.dict(sys.modules, {"imageio_ffmpeg": fake}), \
                 mock.patch.object(VIDEO.shutil, "which", return_value=None), \
-                mock.patch.object(VIDEO, "missing_encoders", return_value=[]):
+                mock.patch.object(VIDEO, "missing_encoders", return_value=[]), \
+                mock.patch.object(VIDEO, "missing_filters", return_value=[]):
             path, notes = VIDEO.find_ffmpeg()
         self.assertEqual("/opt/imageio/ffmpeg-bundled", path)
         self.assertEqual(1, len(notes))
@@ -450,14 +461,16 @@ class FallbacksAreStated(unittest.TestCase):
             return ["libx264"] if exe == "/usr/local/bin/ffmpeg" else []
         with mock.patch.object(VIDEO.shutil, "which", return_value="/usr/local/bin/ffmpeg"), \
                 mock.patch.object(VIDEO, "_imageio_ffmpeg", return_value=("/opt/ff", "")), \
-                mock.patch.object(VIDEO, "missing_encoders", side_effect=lacking):
+                mock.patch.object(VIDEO, "missing_encoders", side_effect=lacking), \
+                mock.patch.object(VIDEO, "missing_filters", return_value=[]):
             path, notes = VIDEO.find_ffmpeg()
         self.assertEqual("/opt/ff", path)
         self.assertIn("lacks the libx264 encoder", notes[0])
 
     def test_path_ffmpeg_is_preferred_and_silent(self):
         with mock.patch.object(VIDEO.shutil, "which", return_value="/usr/bin/ffmpeg"), \
-                mock.patch.object(VIDEO, "missing_encoders", return_value=[]):
+                mock.patch.object(VIDEO, "missing_encoders", return_value=[]), \
+                mock.patch.object(VIDEO, "missing_filters", return_value=[]):
             self.assertEqual(("/usr/bin/ffmpeg", []), VIDEO.find_ffmpeg())
 
     def test_no_speech_engine_means_captions_only(self):
@@ -663,16 +676,356 @@ class NarrationIsNeverTruncated(unittest.TestCase):
             path = Path(tmp) / "track.wav"
             VIDEO.write_audio_track(plan, path)
             with wave.open(str(path), "rb") as track:
-                self.assertEqual(VIDEO.AUDIO_RATE, track.getframerate())
+                self.assertEqual(48000, track.getframerate())
+                self.assertEqual(2, track.getnchannels(), "the track is stereo")
                 self.assertEqual(sum(p.frames for p in plan) * VIDEO.SAMPLES_PER_FRAME,
                                  track.getnframes())
-                samples = struct.unpack("<%dh" % track.getnframes(),
-                                        track.readframes(track.getnframes()))
+                both = struct.unpack("<%dh" % (2 * track.getnframes()),
+                                     track.readframes(track.getnframes()))
+        samples = both[0::2]
+        self.assertEqual(samples, both[1::2], "the narration is the same on both channels")
         lead = int(VIDEO.NARRATION_LEAD * VIDEO.AUDIO_RATE)
         self.assertEqual(0, max(samples[:lead]), "the narration starts after the lead-in")
         self.assertEqual(1, samples[lead])
         second = plan[0].frames * VIDEO.SAMPLES_PER_FRAME
         self.assertEqual(1, samples[second + lead], "scene 2's narration starts at scene 2")
+
+
+# --------------------------------------------------------------------------- #
+# The audio: the music switch, the bed, the mix graph, the filters, the report lines (#339)
+# --------------------------------------------------------------------------- #
+class TheMusicSwitchIsValidated(unittest.TestCase):
+    def problems(self, board):
+        with tempfile.TemporaryDirectory() as root:
+            return VIDEO.validate_storyboard(board, Path(root))
+
+    def test_true_false_and_absent_are_valid(self):
+        for value in (True, False, None):
+            with self.subTest(music=value):
+                board = a_storyboard()
+                if value is not None:
+                    board["video"]["music"] = value
+                self.assertEqual([], self.problems(board))
+
+    def test_a_non_boolean_names_the_field(self):
+        for value in ("yes", 1, 0, "false", None, []):
+            with self.subTest(music=value):
+                board = a_storyboard()
+                board["video"]["music"] = value
+                problems = self.problems(board)
+                self.assertTrue(any(p.startswith("video.music:") for p in problems), problems)
+
+    def test_the_cli_exits_1_naming_the_field(self):
+        board = a_storyboard()
+        board["video"]["music"] = "on"
+        project = Project(board)
+        self.addCleanup(project.close)
+        result = project.run()
+        self.assertEqual(1, result.returncode, result.stderr)
+        self.assertIn("INVALID: video.music: must be true or false", result.stderr)
+        self.assertEqual([], project.written())
+
+    def test_the_schema_names_it(self):
+        _code, out, _err = run_main("--schema")
+        music = json.loads(out)["video"]["music"]
+        self.assertEqual("boolean", music["kind"])
+        self.assertFalse(music["required"])
+        self.assertIn("defaults to true", music["help"])
+
+
+def modules_reached(func, seen=None):
+    """Top-level names of every module `func` reaches: the modules its globals name and the
+    import statements in its source, following each module-level function it calls."""
+    seen = set() if seen is None else seen
+    seen.add(func)
+    found = set()
+    for node in ast.walk(ast.parse(textwrap.dedent(inspect.getsource(func)))):
+        if isinstance(node, ast.Import):
+            found.update(alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            found.add(node.module.split(".")[0])
+
+    def names(code):
+        yield from code.co_names
+        for const in code.co_consts:
+            if isinstance(const, types.CodeType):
+                yield from names(const)
+
+    for name in names(func.__code__):
+        value = func.__globals__.get(name)
+        if isinstance(value, types.ModuleType):
+            found.add(value.__name__.split(".")[0])
+        elif isinstance(value, types.FunctionType) and value not in seen:
+            found |= modules_reached(value, seen)
+    return found
+
+
+def _bed_with_a_global_numpy():
+    return numpy.zeros(4)  # noqa: F821 -- given a fake numpy below; never called
+
+
+def _bed_importing_numpy():
+    import numpy  # noqa: F401 -- never called; only its source is read
+    return b""
+
+
+class TheMusicBedIsStdlibAndDeterministic(unittest.TestCase):
+    def test_it_reaches_only_the_standard_library(self):
+        if not hasattr(sys, "stdlib_module_names"):
+            self.skipTest("sys.stdlib_module_names needs Python 3.10 or later")
+        reached = modules_reached(VIDEO.write_music_bed)
+        self.assertIn("math", reached, "the walk did not reach the synthesizer")
+        self.assertEqual(set(), reached - set(sys.stdlib_module_names),
+                         "the music bed must need nothing beyond the standard library")
+
+    def test_the_check_catches_numpy_negative_control(self):
+        fake = types.FunctionType(_bed_with_a_global_numpy.__code__,
+                                  {"numpy": types.ModuleType("numpy")})
+        self.assertIn("numpy", modules_reached(fake))
+        self.assertIn("numpy", modules_reached(_bed_importing_numpy))
+
+    def test_the_same_length_gives_the_same_bytes(self):
+        self.assertEqual(VIDEO.synthesize_music_bed(3.5), VIDEO.synthesize_music_bed(3.5))
+
+    def test_it_is_48k_stereo_and_spans_the_length(self):
+        bed = VIDEO.synthesize_music_bed(3.5)
+        self.assertEqual(48000, VIDEO.AUDIO_RATE)
+        self.assertEqual(round(3.5 * 48000) * 2 * 2, len(bed))
+        samples = array.array("h", bed)
+        self.assertEqual((0, 0), (samples[0], samples[1]), "the fade-in starts from silence")
+        self.assertLess(max(abs(v) for v in samples[-200:]), 400, "the fade-out ends quiet")
+        self.assertGreater(max(abs(v) for v in samples), 4000, "the bed is silent")
+        self.assertNotEqual(samples[0::2], samples[1::2], "the arpeggio is panned")
+
+    def test_one_cycle_is_repeated(self):
+        """Between the fades, the bed is one 8 s cycle repeated."""
+        rate = VIDEO.AUDIO_RATE
+        samples = array.array("h", VIDEO.synthesize_music_bed(20))
+        start, cycle = 2 * rate * 2, 8 * rate * 2
+        self.assertEqual(samples[start:start + 7 * rate * 2],
+                         samples[start + cycle:start + cycle + 7 * rate * 2])
+
+    def test_the_wav_is_written_at_48k_stereo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "music.wav"
+            VIDEO.write_music_bed(1.0, path)
+            with wave.open(str(path), "rb") as bed:
+                self.assertEqual((2, 2, 48000, 48000), (bed.getnchannels(), bed.getsampwidth(),
+                                                        bed.getframerate(), bed.getnframes()))
+
+
+def graph_sources(graph):
+    """Each label of an ffmpeg filter graph -> the input streams ("1:a", ...) it derives from."""
+    sources = {}
+    for chain in graph.split(";"):
+        ins = re.match(r"((?:\[[^\]]+\])*)", chain).group(1)
+        outs = re.search(r"((?:\[[^\]]+\])*)$", chain).group(1)
+        derived = set()
+        for label in re.findall(r"\[([^\]]+)\]", ins):
+            derived |= sources.get(label, {label})
+        for label in re.findall(r"\[([^\]]+)\]", outs):
+            sources[label] = derived
+    return sources
+
+
+def sidechain_inputs(graph):
+    """(main input's sources, sidechain key's sources) of the graph's sidechaincompress."""
+    chain = next(c for c in graph.split(";") if "sidechaincompress" in c)
+    main, key = re.findall(r"\[([^\]]+)\]", re.match(r"((?:\[[^\]]+\])*)", chain).group(1))
+    sources = graph_sources(graph)
+    return sources.get(main, {main}), sources.get(key, {key})
+
+
+class TheMixGraphDucksTheMusicUnderTheVoice(unittest.TestCase):
+    LOUDNORM = "loudnorm=I=-16:TP=-1.5:LRA=11"
+
+    def test_the_voice_keys_the_compressor_on_the_music(self):
+        graph = VIDEO.audio_filter_graph(1, 2)
+        self.assertEqual(({"2:a"}, {"1:a"}), sidechain_inputs(graph))
+        self.assertIn("[2:a]volume=0.3[", graph)
+        self.assertIn("sidechaincompress=threshold=0.03:ratio=6:attack=40:release=600", graph)
+
+    def test_the_mix_of_voice_and_ducked_music_ends_in_loudnorm(self):
+        graph = VIDEO.audio_filter_graph(1, 2)
+        self.assertTrue(graph.endswith(",%s[aout]" % self.LOUDNORM), graph)
+        self.assertEqual({"1:a", "2:a"}, graph_sources(graph)["aout"])
+        last = graph.split(";")[-1]
+        self.assertIn("amix=inputs=2", last)
+
+    def test_a_graph_keyed_on_the_music_is_caught_negative_control(self):
+        swapped = ("[2:a]asplit=2[key][music];[1:a]volume=0.3[voice];"
+                   "[voice][key]sidechaincompress[ducked];[ducked][music]amix,%s[aout]"
+                   % self.LOUDNORM)
+        self.assertNotEqual(({"2:a"}, {"1:a"}), sidechain_inputs(swapped))
+
+    def test_one_loudness_target_for_every_stream(self):
+        self.assertEqual("[1:a]%s[aout]" % self.LOUDNORM, VIDEO.audio_filter_graph(None, 1))
+        self.assertEqual("[1:a]%s[aout]" % self.LOUDNORM, VIDEO.audio_filter_graph(1, None))
+        self.assertIsNone(VIDEO.audio_filter_graph(None, None))
+
+    def test_the_encode_call_carries_the_graph(self):
+        voice, music, out = Path("voice.wav"), Path("music.wav"), Path("out.mp4")
+        cmd = VIDEO.encode_command("ffmpeg", voice, out, music)
+        self.assertEqual(["voice.wav", "music.wav"],
+                         [cmd[i + 1] for i, a in enumerate(cmd) if a == "-i"][1:])
+        self.assertEqual(VIDEO.audio_filter_graph(1, 2), cmd[cmd.index("-filter_complex") + 1])
+        self.assertEqual("[aout]", cmd[cmd.index("[aout]")])
+        self.assertEqual("48000", cmd[cmd.index("-ar") + 1])
+        self.assertEqual("2", cmd[cmd.index("-ac") + 1])
+        self.assertEqual("aac", cmd[cmd.index("-c:a") + 1])
+
+    def test_music_alone_is_input_1(self):
+        cmd = VIDEO.encode_command("ffmpeg", None, Path("out.mp4"), Path("music.wav"))
+        self.assertEqual(VIDEO.audio_filter_graph(None, 1), cmd[cmd.index("-filter_complex") + 1])
+
+    def test_no_voice_and_no_music_maps_no_audio(self):
+        cmd = VIDEO.encode_command("ffmpeg", None, Path("out.mp4"), None)
+        for flag in ("-filter_complex", "-c:a", "-ac"):
+            self.assertNotIn(flag, cmd)
+        self.assertEqual(1, cmd.count("-i"))
+
+
+FILTERS_LISTING = """Filters:
+  T.. = Timeline support
+ ..C sidechaincompress AA->A      Sidechain compressor.
+ ... loudnorm          A->A       EBU R128 loudness normalization
+ ..C amix              N->A       Audio mixing.
+"""
+
+
+class FfmpegNeedsTheMixFilters(unittest.TestCase):
+    """The two filters are required the way the libx264 and aac encoders are."""
+
+    def listing(self, stdout):
+        return mock.patch.object(VIDEO.subprocess, "run", return_value=types.SimpleNamespace(
+            stdout=stdout, stderr="", returncode=0))
+
+    def test_the_probe_reads_ffmpeg_filters(self):
+        with self.listing(FILTERS_LISTING):
+            self.assertEqual([], VIDEO.missing_filters("ffmpeg"))
+
+    def test_the_probe_names_a_missing_filter_negative_control(self):
+        without = "\n".join(l for l in FILTERS_LISTING.splitlines() if "loudnorm" not in l)
+        with self.listing(without):
+            self.assertEqual(["loudnorm"], VIDEO.missing_filters("ffmpeg"))
+
+    def test_a_binary_that_cannot_run_lacks_both(self):
+        with mock.patch.object(VIDEO.subprocess, "run", side_effect=OSError("no such file")):
+            self.assertEqual(["sidechaincompress", "loudnorm"], VIDEO.missing_filters("x"))
+
+    def test_path_ffmpeg_without_a_filter_falls_back_and_names_it(self):
+        def lacking(exe):
+            return ["loudnorm"] if exe == "/usr/local/bin/ffmpeg" else []
+        with mock.patch.object(VIDEO.shutil, "which", return_value="/usr/local/bin/ffmpeg"), \
+                mock.patch.object(VIDEO, "_imageio_ffmpeg", return_value=("/opt/ff", "")), \
+                mock.patch.object(VIDEO, "missing_encoders", return_value=[]), \
+                mock.patch.object(VIDEO, "missing_filters", side_effect=lacking):
+            path, notes = VIDEO.find_ffmpeg()
+        self.assertEqual("/opt/ff", path)
+        self.assertIn("lacks the loudnorm filter", notes[0])
+        self.assertIn("imageio-ffmpeg", notes[0])
+
+    def test_neither_with_the_filters_exits_2(self):
+        project = Project(a_storyboard())
+        self.addCleanup(project.close)
+        with mock.patch.object(VIDEO, "load_pillow", return_value=(None, None, None)), \
+                mock.patch.object(VIDEO.shutil, "which", return_value="/usr/local/bin/ffmpeg"), \
+                mock.patch.object(VIDEO, "_imageio_ffmpeg", return_value=("/opt/ff", "")), \
+                mock.patch.object(VIDEO, "missing_encoders", return_value=[]), \
+                mock.patch.object(VIDEO, "missing_filters", return_value=["sidechaincompress"]):
+            code, out, err = run_main("--storyboard", str(project.storyboard_path),
+                                      "--output", str(project.output),
+                                      "--project-root", str(project.root))
+        self.assertEqual(2, code, err)
+        self.assertIn("no usable ffmpeg", err)
+        self.assertIn("lacks the sidechaincompress filter", err)
+        self.assertIn("python3 -m pip install imageio-ffmpeg", err)
+        self.assertNotIn("Video generated", out)
+        self.assertEqual([], project.written())
+
+
+@requires_pillow
+class TheReportNamesVoiceAndMusic(unittest.TestCase):
+    """The exact `Voice:` and `Music:` lines, without ffmpeg: the encode is stubbed, and the
+    stub records which audio inputs the renderer handed it."""
+
+    def setUp(self):
+        self.board = a_storyboard([
+            {"type": "title_card", "duration": 1, "narration": "one", "module": "A"},
+            {"type": "title_card", "duration": 1, "narration": "two", "module": "B"},
+        ])
+        self.inputs = None
+
+    def render(self, *flags, music=None, engine=FAKE_ENGINE, synth=None, found=True):
+        if music is not None:
+            self.board["video"]["music"] = music
+        project = Project(self.board)
+        self.addCleanup(project.close)
+
+        def encode(ctx, plan, ffmpeg, audio, output, log_path, music=None):
+            self.inputs = (audio, music)
+            output.write_bytes(b"mp4")
+            return True, ""
+
+        engines = ((engine, []) if found else (None, ["espeak-ng (not on PATH)"]))
+        with mock.patch.object(VIDEO, "find_ffmpeg", return_value=("ffmpeg", [])), \
+                mock.patch.object(VIDEO, "find_speech_engine", return_value=engines), \
+                mock.patch.object(VIDEO, "synthesize_pcm",
+                                  side_effect=synth or (lambda *a: pcm_seconds(0.2))), \
+                mock.patch.object(VIDEO, "stream_frames", side_effect=encode):
+            code, out, err = run_main("--storyboard", str(project.storyboard_path),
+                                      "--output", str(project.output),
+                                      "--project-root", str(project.root), *flags)
+        self.assertEqual(0, code, err)
+        return out.splitlines()[2:], err
+
+    def test_a_voice_that_spoke(self):
+        lines, _err = self.render()
+        self.assertEqual(["Voice: fake-voice (2 of 2 scenes narrated)", "Music: yes"], lines)
+        self.assertTrue(all(self.inputs), "the narration and the music both reach the encode")
+
+    def test_some_scenes_voiced(self):
+        def synth(engine, text, *rest):
+            if text == "two":
+                raise RuntimeError("the voice fell over")
+            return pcm_seconds(0.2)
+        lines, _err = self.render(synth=synth)
+        self.assertEqual("Voice: fake-voice (1 of 2 scenes narrated)", lines[0])
+
+    def test_no_voice_flag(self):
+        lines, _err = self.render("--no-voice")
+        self.assertEqual(["Voice: none (--no-voice)", "Music: yes"], lines)
+        self.assertIsNone(self.inputs[0])
+        self.assertIsNotNone(self.inputs[1], "--no-voice turns off only the voice")
+
+    def test_no_speech_engine(self):
+        lines, _err = self.render(found=False)
+        self.assertEqual(["Voice: none (no speech engine found)", "Music: yes"], lines)
+        self.assertIsNotNone(self.inputs[1])
+
+    def test_an_engine_that_voiced_no_scene(self):
+        def synth(*args):
+            raise RuntimeError("the voice fell over")
+        lines, err = self.render(synth=synth)
+        self.assertEqual(["Voice: none (fake-voice voiced no scene)", "Music: yes"], lines)
+        self.assertIn("fake-voice voiced no scene", err)
+
+    def test_music_off_with_a_voice(self):
+        lines, _err = self.render(music=False)
+        self.assertEqual(["Voice: fake-voice (2 of 2 scenes narrated)",
+                          "Music: off (storyboard)"], lines)
+        self.assertIsNone(self.inputs[1])
+
+    def test_music_off_and_no_voice_means_no_audio_stream(self):
+        lines, err = self.render("--no-voice", music=False)
+        self.assertEqual(["Voice: none (--no-voice)", "Music: off (storyboard)"], lines)
+        self.assertEqual((None, None), self.inputs)
+        self.assertIn("the video has no audio stream", err)
+
+    def test_the_old_line_is_gone_negative_control(self):
+        lines, _err = self.render()
+        self.assertFalse(any(l.startswith("Audio track:") for l in lines), lines)
+        self.assertNotIn("Voice: none", "\n".join(lines))
 
 
 # --------------------------------------------------------------------------- #
@@ -793,7 +1146,7 @@ def probe(ffmpeg, path):
 class TheVideoIsRendered(unittest.TestCase):
     def setUp(self):
         self.ffmpeg, _notes = VIDEO.find_ffmpeg()
-        scenes = [
+        self.scenes = scenes = [
             {"type": "title_card", "duration": 1, "narration": "Hi.", "module": "Business Problem"},
             {"type": "image", "duration": 1, "narration": "Graph.",
              "image": "docs/video/broll/graph.png", "heading": "Entity graph"},
@@ -821,19 +1174,29 @@ class TheVideoIsRendered(unittest.TestCase):
         h, m, s = re.search(r"Duration: (\d+):(\d+):([\d.]+)", info).groups()
         self.assertAlmostEqual(printed, int(h) * 3600 + int(m) * 60 + float(s), delta=0.2)
         if audio:
-            self.assertRegex(info, r"Audio: aac")
-            self.assertIn("Audio track: yes", result.stdout)
+            self.assertEqual(1, len(re.findall(r"Audio: aac", info)), info)
+            self.assertRegex(info, r"Audio: aac.*48000 Hz, stereo")
         else:
             self.assertNotIn("Audio:", info)
-            self.assertIn("Audio track: no (captions carry the narration)", result.stdout)
+        self.assertNotIn("Audio track:", result.stdout, "the old report line is gone")
         self.assertIn("FALLBACK: scenes[2] (image): image docs/video/broll/missing.png not "
                       "found; drawing a title card instead.", result.stderr)
         self.assertIn("no recap at docs/bootcamp_recap.md", result.stderr)
 
-    def test_captions_only(self):
+    def test_no_voice_still_carries_the_music(self):
+        result = self.project.run("--no-voice")
+        self.assertPlayableMp4(result, audio=True)
+        self.assertIn("--no-voice", result.stderr)
+        self.assertIn("Voice: none (--no-voice)\nMusic: yes\n", result.stdout)
+
+    def test_no_voice_and_no_music_has_no_audio_stream(self):
+        board = a_storyboard(self.scenes)
+        board["video"]["music"] = False
+        self.project.storyboard_path.write_text(json.dumps(board), encoding="utf-8")
         result = self.project.run("--no-voice")
         self.assertPlayableMp4(result, audio=False)
-        self.assertIn("--no-voice", result.stderr)
+        self.assertIn("Voice: none (--no-voice)\nMusic: off (storyboard)\n", result.stdout)
+        self.assertIn("the video has no audio stream", result.stderr)
 
     @unittest.skipIf(sys.platform in ("win32", "darwin"),
                      "the stand-in voice is an espeak-ng on PATH, which Windows and macOS "
@@ -848,7 +1211,7 @@ class TheVideoIsRendered(unittest.TestCase):
         env = dict(os.environ, PATH=str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
         result = self.project.run(env=env)
         self.assertPlayableMp4(result, audio=True)
-        self.assertIn("espeak-ng voice-over, 5 of 5 scenes narrated", result.stdout)
+        self.assertIn("Voice: espeak-ng (5 of 5 scenes narrated)\nMusic: yes\n", result.stdout)
         self.assertEqual(5, len(re.findall(r"^OVERRUN: scenes\[\d\]", result.stderr, re.M)),
                          result.stderr)
         printed = float(re.search(r"\(([\d.]+) s,", result.stdout).group(1))
@@ -868,6 +1231,60 @@ class TheVideoIsRendered(unittest.TestCase):
         self.assertIn("no video written", err)
         self.assertEqual(b"previous video", self.project.output.read_bytes())
         self.assertEqual(["bootcamp_recap.mp4"], self.project.written())
+
+
+def integrated_lufs(ffmpeg, path):
+    """The integrated loudness of `path`'s audio, measured by ffmpeg's ebur128 filter."""
+    r = subprocess.run([ffmpeg, "-hide_banner", "-nostats", "-i", str(path), "-map", "0:a",
+                        "-af", "ebur128", "-f", "null", "-"], capture_output=True, text=True,
+                       timeout=300)
+    found = re.findall(r"^\s*I:\s+(-?[\d.]+) LUFS", r.stderr, re.M)
+    if not found:
+        raise AssertionError("ebur128 measured nothing: %s" % r.stderr[-500:])
+    return float(found[-1])
+
+
+@requires_pillow_and_ffmpeg
+class TheMixIsNormalizedToMinus16Lufs(unittest.TestCase):
+    """One target for every stream: voice and music, or music alone, at -16 ± 1 LUFS."""
+
+    def setUp(self):
+        self.ffmpeg, _notes = VIDEO.find_ffmpeg()
+        listing = subprocess.run([self.ffmpeg, "-hide_banner", "-filters"],
+                                 capture_output=True, text=True, timeout=60).stdout
+        if not re.search(r"^\s*\S+\s+ebur128\b", listing, re.M):
+            self.skipTest("this ffmpeg has no ebur128 filter, so loudness cannot be measured")
+        scenes = [{"type": "title_card", "duration": 3, "narration": "Scene %d." % n,
+                   "module": "Module %d" % n} for n in range(4)]
+        self.project = Project(a_storyboard(scenes))
+        self.addCleanup(self.project.close)
+
+    def assertNormalized(self, result):
+        self.assertEqual(0, result.returncode, result.stderr)
+        info = probe(self.ffmpeg, self.project.output)
+        self.assertEqual(1, len(re.findall(r"Audio: aac", info)), info)
+        self.assertRegex(info, r"Audio: aac.*48000 Hz, stereo")
+        lufs = integrated_lufs(self.ffmpeg, self.project.output)
+        self.assertAlmostEqual(-16.0, lufs, delta=1.0)
+
+    def test_music_alone(self):
+        result = self.project.run("--no-voice")
+        self.assertIn("Voice: none (--no-voice)\nMusic: yes\n", result.stdout)
+        self.assertNormalized(result)
+
+    @unittest.skipIf(sys.platform in ("win32", "darwin"),
+                     "the stand-in voice is an espeak-ng on PATH, which Windows and macOS "
+                     "would pass over for their own built-in engines")
+    def test_voice_and_music(self):
+        fake_bin = self.project.root / "fake-bin"
+        fake_bin.mkdir()
+        espeak = fake_bin / "espeak-ng"
+        espeak.write_text(FAKE_ESPEAK.format(python=sys.executable), encoding="utf-8")
+        espeak.chmod(0o755)
+        env = dict(os.environ, PATH=str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
+        result = self.project.run(env=env)
+        self.assertIn("Voice: espeak-ng (4 of 4 scenes narrated)\nMusic: yes\n", result.stdout)
+        self.assertNormalized(result)
 
 
 if __name__ == "__main__":

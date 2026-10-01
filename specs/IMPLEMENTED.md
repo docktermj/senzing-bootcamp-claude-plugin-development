@@ -43,6 +43,62 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## graduation-video-stereo-loudness-normalized-music-bed
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #339; sub-issue of #331, spec revision 1)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_video.py`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md` (Step 1c: the exit-0 "Render it" bullet and "Verify the video" item 3 only), `tests/test_recap_video.py`, `tests/test_graduation_video_step.py`, `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** n/a (no Senzing fact), 2026-10-01, no tool called — re-confirmed, not assumed. The change is audio synthesis, ffmpeg filter graphs, a storyboard boolean and the renderer's report lines. No added or removed line names an SDK method, an engine behavior, a Senzing document or an MCP tool (checked over the full diff). No absence claim is made, so no `owner-checked:` is owed. Nothing was sent upstream.
+- **Approach:** raced (Phase 5b), two strategies; `graph` won and was applied with `git apply --exclude=BLUEPRINT.md`, then read against the branch (built on `dcf923c`; #323, merged between, touched none of its files). The comparison is issue comment 3.
+- **Summary:** The recap video now carries one 48 kHz stereo AAC stream with a synthesized music bed ducked under the narration, loudness-normalized to -16 LUFS with or without a voice, and the renderer reports the voice and the music on separate lines.
+  - **The music bed** (`_music_cycle`, `synthesize_music_bed`, `write_music_bed`) uses `math`, `array` and `wave` only. One 8 s cycle at 120 BPM over I–V–vi–IV in C (pads, a decaying bass on each beat, a panned eighth-note arpeggio, a light kick), peak-normalized, repeated to the video's length, then given a 2 s fade-in and a 3 s fade-out over the whole length. Same length, same bytes. 120 s synthesizes in about 0.8 s.
+  - **The mix** is built by a pure `audio_filter_graph(voice, music)` and runs in the encode's own ffmpeg call, so there is no second pass: `[m:a]volume=0.3[music];[v:a]asplit=2[key][voice];[music][key]sidechaincompress=threshold=0.03:ratio=6:attack=40:release=600[ducked];[ducked][voice]amix=inputs=2:duration=first,loudnorm=I=-16:TP=-1.5:LRA=11[aout]`. A lone voice or a lone bed goes through the same `loudnorm`; neither gives no audio stream. `write_audio_track` now writes the narration timeline at 48 kHz stereo (`48000 / 30` = 1600 samples a frame, still whole).
+  - **`find_ffmpeg`** probes `ffmpeg -filters` (`missing_filters`, a `_FILTER` table beside `_ENCODER`) and treats a missing `sidechaincompress` or `loudnorm` like a missing encoder: `imageio-ffmpeg` fallback with the filter named on stderr, then exit 2.
+  - **`video.music`** is an optional `boolean` field (a new field kind), in `--schema`, defaulting to `true`; a non-boolean is `INVALID: video.music: must be true or false`, exit 1. `--no-voice` turns off only the voice.
+  - **Report lines.** `Audio track: yes/no` is replaced by exactly one `Voice:` line — `Voice: <engine> (<n> of <m> scenes narrated)`, `Voice: none (--no-voice)`, `Voice: none (no speech engine found)` or `Voice: none (<engine> voiced no scene)` — and `Music: yes` or `Music: off (storyboard)`. With no voice and the music off, a stderr note says the video has no audio stream. The voice fallback notes say "no voice-over" rather than "no audio track", since the music still plays. The module docstring's pass 3, "Storyboard format", "Fallbacks" and exit-0 row match.
+  - **Step 1c.** The exit-0 bullet names the `Voice:` and `Music:` lines; "Verify the video" item 3 reads them, with an audio stream whenever a voice spoke or `Music: yes`, and none only with `Voice: none (…)` and `Music: off (storyboard)` together.
+  - **Tests.** New in `tests/test_recap_video.py`: `TheMusicSwitchIsValidated`; `TheMusicBedIsStdlibAndDeterministic` (a transitive walk of the bed's globals and import statements against `sys.stdlib_module_names`, with two `numpy` negative controls; byte-identical output; one cycle repeated between the fades; the WAV header); `TheMixGraphDucksTheMusicUnderTheVoice` (a label tracer proves the compressor's main input is the music and its key the voice, with a swapped-graph negative control; the exact parameters; `loudnorm` last; `encode_command`'s inputs and flags); `FfmpegNeedsTheMixFilters` (stub `-filters` listings, the fallback naming the filter, exit 2 with nothing written); `TheReportNamesVoiceAndMusic` (all seven line pairs through `main()` with the encode stubbed, and the audio inputs handed to it; negative control: no `Audio track:`); `TheMixIsNormalizedToMinus16Lufs` (renders and measures `ebur128` integrated loudness, music alone and voice + music, within -16 ± 1; skips with a reason without Pillow, ffmpeg or `ebur128`). Moved, none weakened: the frame-aligned track test now checks 48 kHz, two channels, identical L/R; the three existing `find_ffmpeg` tests also stub `missing_filters`; `TheVideoIsRendered` asserts one `48000 Hz, stereo` AAC stream, `test_captions_only` became `test_no_voice_still_carries_the_music`, and `test_no_voice_and_no_music_has_no_audio_stream` is new. `tests/test_graduation_video_step.py` pins the new item 3 and exit-0 bullet, with an `Audio track` negative control on Step 1c.
+  - **Measured here** (ffmpeg 6.1.1 on PATH, so the render tests ran rather than skipped): in-suite, music alone -15.9 LUFS and stand-in voice + music -15.4; with the real espeak-ng over five scenes, voice + music -16.3, music only -15.8, voice only -16.3; every stream `aac (LC) … 48000 Hz, stereo`.
+  - **Unchanged, as the issue scopes it:** INV-340's wording, the per-platform no-voice guidance and the Piper voice (#340, #341, which key on the `Voice:` lines above), and the ⛔ (INV-342) docstring line.
+- **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` was not run locally: it is a remote reusable workflow, and no workflow file changed.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-342 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+    - ⛔ **(INV-342) Narration is never truncated: a scene whose narration runs longer than its planned duration is extended to fit, and every overrun is reported on stderr.** — in `plugins/senzing-bootcamp/scripts/generate_recap_video.py`
+
+  ⚠️ **Why.** This run ships durable guarantees about the renderer's audio, each with an
+  enforcing test, and no shipped line states them as a ⛔ rule: one 48 kHz stereo stream at a
+  single -16 LUFS target, the music ducked under the voice, a standard-library bed that is
+  deterministic, the two filters counted as part of a usable ffmpeg, and the exact `Voice:` /
+  `Music:` lines that Step 1c reads and #340 and #341 key on. That is the shape #38 found four
+  times: tested, durable and unregistered. INV-342 already governs this renderer's guarantees
+  and its exit 2 for "a usable ffmpeg", so the run drafts an amendment to it rather than a new
+  id, the way INV-213's note argues against adjacent invariants on one subject. INV-340 is
+  unchanged: "an audio track when a speech engine was available" stays true. Amending a
+  registered invariant is the maintainer's sign-off alone, so `specs/INVARIANTS.md` and
+  `invariant-manifest.json` are unchanged. **Sites it affects:** INV-342 in
+  `specs/INVARIANTS.md`, which gains the sentences below before its `Enforced by` sentence,
+  and INV-342's statement in `invariant-manifest.json`, regenerated from it
+  (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit. The shipped
+  sites are `audio_filter_graph`, `synthesize_music_bed`, `find_ffmpeg`/`missing_filters` and
+  the report lines in `main()` of `plugins/senzing-bootcamp/scripts/generate_recap_video.py`,
+  and Step 1c item 3 of `plugins/senzing-bootcamp/skills/graduation/SKILL.md`. The enforcer is
+  `tests/test_recap_video.py` (`TheMixGraphDucksTheMusicUnderTheVoice`,
+  `TheMusicBedIsStdlibAndDeterministic`, `FfmpegNeedsTheMixFilters`,
+  `TheReportNamesVoiceAndMusic`, `TheMixIsNormalizedToMinus16Lufs`) and, for Step 1c,
+  `tests/test_graduation_video_step.py`. Applying it resolves the block: mark the bullet
+  `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording:
+
+  **INV-342** — … Every audio stream it writes MUST be one 48 kHz stereo AAC stream normalized by `loudnorm=I=-16:TP=-1.5:LRA=11`, measuring -16 ± 1 LUFS integrated whether or not a voice spoke, with the music bed ducked under the voice by a `sidechaincompress` keyed on the voice; with no voice and `video.music: false` it MUST write no audio stream. The music bed MUST be synthesized at render time with the standard library only, byte-identical for a given length, so no audio asset ships. A usable ffmpeg is one with the libx264 and aac encoders and the `sidechaincompress` and `loudnorm` filters. On exit 0 it MUST print exactly one `Voice:` line — `Voice: <engine> (<n> of <m> scenes narrated)`, `Voice: none (--no-voice)`, `Voice: none (no speech engine found)` or `Voice: none (<engine> voiced no scene)` — and one `Music:` line, `Music: yes` or `Music: off (storyboard)`, since graduation's Step 1c reads them (INV-340). (⚠️ **Amended <YYYY-MM-DD> (#339): the audio contract added; the exit codes and narration rules are unchanged.**) Enforced by `tests/test_recap_video.py`, … and, for Step 1c's reading of the lines, `tests/test_graduation_video_step.py`. …
+
+  *(the `…` stand for INV-342's registered text, kept as it is; the date is a placeholder
+  deliberately: `/review-invariants` fills it in on the day it applies the amendment.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-342 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The renderer's validation, exit codes, captions and no-truncation rules apply INV-342 as registered, the stated fallbacks apply INV-111, the stdlib-only tests apply INV-108 and the skip reasons apply INV-306. No ⛔ rule is added or demoted in shipped text.
+
 ## mcp-negative-markers-in-shipped-markdown-are-html-comments
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #323; `/dry-run` 2026-10-01 finding P1-2)

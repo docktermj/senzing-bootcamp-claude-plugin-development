@@ -16,8 +16,8 @@ with the bundled renderer (`generate_recap_video.py`, #299). These tests pin:
   certificate and then "Resolved: [Name], Senzing graduate.".
 * ⛔ **No raw record values**, and the fallbacks never block graduation: exit 1, 2 and 3, a
   declined or failed install, the storyboard kept.
-* **The checks**: 2:00 ± 10 s with one re-render, frames looked at, audio when a voice existed,
-  skipped checks reported.
+* **The checks**: 2:00 ± 10 s with one re-render, frames looked at, audio read from the `Voice:`
+  and `Music:` lines (#339), skipped checks reported.
 * **Where it is named**: the closing announcement and the return guide.
 
 Stdlib only; the renderer's validator needs neither Pillow nor ffmpeg (INV-108).
@@ -450,11 +450,25 @@ class TheVideoIsChecked(unittest.TestCase):
         self.assertIn("Extract one frame at the midpoint of each scene, including the "
                       "certificate and the tag line, and look at each one", text)
 
-    def test_audio_when_a_voice_was_available(self):
+    def test_audio_when_a_voice_or_the_music_is_present(self):
+        """#339: item 3 reads the renderer's `Voice:` and `Music:` lines."""
         text = self.verify()
-        self.assertIn("When the renderer printed `Audio track: yes`, a speech engine was "
-                      "available, and the file carries an audio stream", text)
+        self.assertIn("**Audio.** Read the renderer's `Voice:` and `Music:` lines. There is an "
+                      "audio stream whenever either one is present: a `Voice:` line naming an "
+                      "engine (`Voice: <engine> (<n> of <m> scenes narrated)`), or `Music: yes`. "
+                      "Then the file carries an audio stream", text)
+        self.assertIn("`Voice: none (…)` names why no voice spoke (`--no-voice`, `no speech "
+                      "engine found`, or `<engine> voiced no scene`)", text)
         self.assertIn("that is not a failure", text)
+        self.assertIn("Only with `Voice: none (…)` and `Music: off (storyboard)` together is "
+                      "there no audio stream.", text)
+
+    def test_the_exit_0_bullet_names_the_new_lines(self):
+        self.assertIn("- **0, rendered.** It prints `Video generated:`, a `Duration:` line, a "
+                      "`Voice:` line and a `Music:` line.", squash(step_1c()))
+
+    def test_the_old_audio_track_line_is_gone_negative_control(self):
+        self.assertNotIn("Audio track", step_1c())
 
     def test_skipped_checks_are_reported(self):
         text = self.verify()
