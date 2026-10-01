@@ -233,7 +233,7 @@ Must handle: ordered loading with dependency enforcement, parallel execution if 
 loading each source from its `load_subset:` block, per-source progress/error tracking with error
 isolation, statistics aggregation, and a completion summary.
 
-⛔ **The loading scaffold's counters are process-global, so per-source tracking is not free — you
+⛔ **(INV-243) The loading scaffold's counters are process-global, so per-source tracking is not free — you
 have to build it.** The loader `sdk_guide(topic='load')` returns is written as a standalone
 `main()`, and its counters are process-wide state: in Java, `LoadViaFutures.java` declares
 `private static int errorCount / successCount / retryCount` (and a `static` retry file besides);

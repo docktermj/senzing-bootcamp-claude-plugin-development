@@ -933,7 +933,7 @@ reports every character it had to drop, naming them
 and the first affected passage on stderr, so a slip is visible rather than silent — but it reports
 the loss, it cannot undo it: the characters are gone from that PDF.
 
-Then render the PDF with the bundled generator. ⛔ **It ships inside the plugin, not in the
+Then render the PDF with the bundled generator. ⛔ **(INV-185) It ships inside the plugin, not in the
 bootcamp project** — resolve it the same way every other bundled script is resolved, and never as a
 bare `scripts/…` path, which resolves against the project working directory where no top-level
 `scripts/` exists (INV-050 puts the project's own utilities under `src/scripts/`):
