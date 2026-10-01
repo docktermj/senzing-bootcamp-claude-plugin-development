@@ -43,6 +43,52 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## csharp-package-source-comes-from-the-install-reply
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #320, spec revision 1; source: `/dry-run` 2026-10-01 phase 1, P1-4, `Source: self-observed (assistant dry run)`)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md` (Step 3 Phase 3's C# bullet and its `MCP-NEGATIVE` marker), `tests/test_no_pip_install_senzing.py` (new class `TheCSharpBulletRoutesToTheInstallReplyFirst`), `tests/test_prescribed_search_queries.py` (the C# query's comment and recorded property), `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.16 (Senzing "current"), 2026-10-01. Tools: `get_capabilities`; `sdk_guide(topic='install', platform='windows'|'linux_apt'|'linux_yum'|'macos_arm', language='csharp')`; `search_docs(query='C# .NET SDK Senzing.Sdk NuGet package')` (docs index 2026-09-29 22:00 UTC). Outcome: **server now contradicts the plugin** for `windows`, and **server does not cover it** for `linux_apt`, `linux_yum` and `macos_arm`. The `windows` reply's `gotchas` carries "C# / .NET: the Senzing.Sdk NuGet package is included in the SDK install (sdk\dotnet\), NOT published to nuget.org. Use: dotnet nuget add source "$env:SENZING_DIR\sdk\dotnet" --name SenzingLocal; dotnet add package Senzing.Sdk --source SenzingLocal". The `linux_apt` and `linux_yum` replies carry Python and platform gotchas and no C# line. The `macos_arm` reply has a Java gotcha (`${SENZING_ROOT}/sdk/java/sz-sdk.jar`) and no C# line. The `search_docs` top hit is still "Senzing.Sdk for C#", which says "After adding the `Senzing.Sdk` NuGet package to your project dependencies" and names no source. owner-checked: `sdk_guide(topic='install', platform=<platform>)` — the route that carries a per-platform package source; its `windows` reply names the source in `gotchas`, and its `linux_apt`, `linux_yum` and `macos_arm` replies carry no C# package-source note. The issue's own observation (`/opt/senzing/er/sdk/dotnet/Senzing.Sdk.4.4.2.nupkg` on a `linux_apt` install) is evidence for the issue only, and the plugin does not state it as a fact.
+- **Approach:** implemented directly (Phase 5a). The change is one bullet and its tests, following the Java bullet's pattern beside it.
+- **Summary:** Module 2's C# binding route now gets the `Senzing.Sdk` package source from the route that carries it. Before, it routed only to `search_docs` and told the guide to "name no package source", on a negative asked of `linux_apt` alone, so a Windows C# bootcamper was told the source is undocumented while `sdk_guide` gave the commands.
+  - **Route.** The bullet calls `sdk_guide(topic='install', platform='<platform>', language='csharp')` first and follows its `gotchas`. The `windows` gotcha is quoted with server 1.37.16 and 2026-10-01, and attributed to the `windows` reply at the site: it is that reply's form, with the Windows install variable in its path, so it goes to a Windows bootcamper only (INV-283). The bullet states that the `linux_apt`, `linux_yum` and `macos_arm` replies had no C# line on that date, and that `docker` follows `linux_apt`.
+  - **Fallback, in order, stopping at the first answer and telling the bootcamper which step gave it.** (1) The `search_docs` C# reference, query unchanged. (2) A `Senzing.Sdk.*.nupkg` in the `dotnet/` directory of the install's `sdk/` directory, located from this platform's own install reply (where its `PYTHONPATH` or `sz-sdk.jar` path sits) and never from another platform's. If found, that directory is a local NuGet source, presented as **observed in their install, not named by the MCP server** (INV-283). A missing directory, or one with no package, is nothing observed. (3) Neither: say no MCP route names the source and nothing in the install supplied one.
+  - **Rule.** ⛔ "Never add a public NuGet feed for `Senzing.Sdk` (nuget.org or any other) on your own (INV-222)", cited at its line. The old bullet said "do not add a public NuGet feed on your own" as prose.
+  - **Marker.** Narrowed to `linux_apt`, `linux_yum` and `macos_arm`, restamped 1.37.16, 2026-10-01. Its `owner:` clause names `sdk_guide(topic='install', platform=<platform>)` as the carrying route and records that the `windows` reply names the source, so the claim is scoped to the platforms asked. It keeps the `owner:` grammar `coverage_reports.py` parses, stays an HTML comment (#323), and `coverage_reports.py negatives` lists it with no census or enumeration flag.
+  - **Tests.** `tests/test_no_pip_install_senzing.py` keeps `test_the_other_languages_are_unchanged`, with its `search_docs` C# pin, unchanged. The new `TheCSharpBulletRoutesToTheInstallReplyFirst` has six predicates on the C# bullet: the `sdk_guide(…, language='csharp')` route comes before the `search_docs` reference; the `windows` quote is dated and attributed; the fallback steps are in order; the observation is labeled; the ⛔ public-feed rule cites INV-222 on its line; and the marker is narrowed with its `owner:` clause. Each predicate holds on the shipped bullet and fails on the pre-#320 bullet. Twelve mutants each break exactly one predicate and leave the others passing. Further tests check that "name no package source" is gone and that no unsourced `dotnet add package` or public feed URL appears. `tests/test_prescribed_search_queries.py` keeps the C# query and its pin, records the 2026-10-01 re-execution (same property), and rewords the property's last sentence: the reference's silence is now half of a negative scoped to the platforms whose install reply has no C# line.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **Upstream:** not yet sent — needs maintainer approval (out of scope for this run, INV-314). Draft (category `feature`): "sdk_guide(topic='install') names the Senzing.Sdk NuGet source (sdk\dotnet, not nuget.org) only for platform='windows'; the linux_apt, linux_yum and macos_arm replies carry no C# package-source note, so an agent on those platforms has no route to it. Server 1.37.16."
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-222 — awaiting the maintainer's sign-off; NOT applied.** The rule already shipping:
+    - ⛔ **Never add a public NuGet feed for `Senzing.Sdk` (nuget.org or any other) on your own (INV-222).** — in `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`
+
+  ⚠️ **Why.** INV-222's 2026-09-30 scope note (#287) already carries the rule this line
+  applies: a language's packages come by the route the server names, never from a public
+  registry that route does not name. So the ⛔ cites INV-222 and needs no new id. But the same
+  note says "For C#, the route did not say where the `Senzing.Sdk` NuGet package comes from",
+  which was asked of `linux_apt` only, and on 1.37.16 the `windows` reply names it. Left as it
+  is, the registered text repeats the wrong-route negative #320 removed from the plugin. The
+  run drafts a dated note rather than a rewrite, because the rule is unchanged. No other
+  INV-222 amendment is pending.
+  **Sites it affects:** INV-222 in `specs/INVARIANTS.md`, which gains the note below at its
+  end, after the 2026-09-30 scope note's closing parenthesis, and its statement in
+  `invariant-manifest.json`, regenerated from it
+  (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit. The shipped site
+  is the C# bullet in Module 2 Step 3 Phase 3. The enforcer is `tests/test_no_pip_install_senzing.py`
+  (`TheCSharpBulletRoutesToTheInstallReplyFirst`), the file INV-222 already names. Applying it
+  resolves the block: mark the bullet `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording:
+
+  **INV-222** — … (Dated note, <YYYY-MM-DD> (#320): **the C# sentence of the 2026-09-30 scope note was asked of `linux_apt` only, and the rule is unchanged.** On server 1.37.16, 2026-10-01, `sdk_guide(topic='install', platform='windows', language='csharp')` names the C# source in its `gotchas`: the `Senzing.Sdk` NuGet package "is included in the SDK install (sdk\dotnet\), NOT published to nuget.org", added as a local NuGet source. The `linux_apt`, `linux_yum` and `macos_arm` replies have no C# line. So the C# route MUST ask `sdk_guide(topic='install', platform=…, language='csharp')` first. Where that reply names no source, it falls back in order to the `search_docs` C# reference, then to a `Senzing.Sdk.*.nupkg` observed in the install's own `sdk/dotnet/` directory, presented as observed and not as MCP guidance (INV-283), then to saying that no route names the source. It MUST NOT add a public NuGet feed for `Senzing.Sdk` on its own. Enforced by `tests/test_no_pip_install_senzing.py`.)
+
+  *(the `…` stands for INV-222's registered text, kept as it is; the date is a placeholder
+  deliberately: `/review-invariants` fills it in on the day it applies the amendment.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-222 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The observation step and its labeling apply INV-283, which already requires a pair with no route-supplied value to get its own form as an observation, and the route order applies INV-194 (the owning route before concluding absence). The bullet names no language-specific rule beyond the C# route it documents, and the Java, Rust and TypeScript bullets are unchanged (INV-002). No ⛔ rule is demoted in shipped text.
+
 ## synthesized-entities-have-their-own-identifiers
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #343, spec revision 1; source: the 2026-10-01 graduation retrospective, `Source: self-observed (assistant retrospective)`)
