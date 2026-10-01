@@ -69,6 +69,15 @@ WRITES_A_FINDING = re.compile(
     r"(?i)write it into `?specs/|one spec per\s+root cause|write the spec\b")
 
 
+#: Step 8's statement that the archive takes no new file. ⚠️ It names a NEW FILE, not the
+#: directory: the same step records the audit's outcome in `specs/IMPLEMENTED.md`, which is
+#: live, so "never write into `specs/`" contradicted INV-317 beside it (#285).
+PROHIBITION = r"never write a new file under `?specs/"
+
+#: The sentence carrying the prohibition, as Step 8 writes it, for the negative control.
+PROHIBITION_SENTENCE = "⛔ **Never write a new file under `specs/`.**"
+
+
 def texts():
     return {"SKILL.md": SKILL.read_text(encoding="utf-8")}
 
@@ -103,9 +112,22 @@ class NothingIsWrittenIntoTheFrozenArchive(unittest.TestCase):
 
     def test_the_prohibition_is_stated(self):
         self.assertRegex(
-            flat(texts()["SKILL.md"]), r"never write into `?specs/",
-            "the skill does not say `specs/` may not be written to, so a reader has no way "
-            "to know why findings go elsewhere now")
+            flat(texts()["SKILL.md"]), PROHIBITION,
+            "the skill does not say no new file may be written under `specs/`, so a reader "
+            "has no way to know why findings go elsewhere now")
+
+    def test_the_prohibition_check_fails_without_it(self):
+        """Negative control: with Step 8's sentence removed, the check above must not match."""
+        text = texts()["SKILL.md"]
+        self.assertIn(
+            PROHIBITION_SENTENCE, text,
+            "Step 8's prohibition sentence moved or was reworded; update "
+            "PROHIBITION_SENTENCE so this control removes the real sentence")
+        stripped = text.replace(PROHIBITION_SENTENCE, "")
+        self.assertNotRegex(
+            flat(stripped), PROHIBITION,
+            "the prohibition check still matches with Step 8's sentence removed, so it "
+            "would pass on a skill that no longer states the prohibition")
 
     def test_reading_the_archive_is_still_permitted(self):
         """Over-correcting into 'never touch specs/' would break the audit's own inputs."""
