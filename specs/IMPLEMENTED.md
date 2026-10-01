@@ -151,7 +151,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - **Freeze guard.** `tests/test_no_instruction_writes_into_specs.py` says the freeze guard rejects a new file anywhere in `specs/`, since #257.
   - **Grep for other sites.** `pending` beside an applied INV number turned up no site beyond the issue's list, apart from `test_specs_are_frozen.py`'s helper docstring, which went with the helper. The `pending` wording left in `tests/test_invariant_layout_tree.py` belongs to #286's `data/subsets/` block, which is still pending.
 - **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` not run locally (remote reusable workflow; no workflow file changed).
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-330 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-330 — applied 2026-09-30.** The rule already registered:
     - ⛔ **that rule is held pending the #232/#235 outcome decision and is a separate subject, auditing rather than rendering** — in `specs/INVARIANTS.md`
 
   ⚠️ **Why.** INV-330's "Why this is not INV-080 or INV-149" parenthetical says Phase D's
