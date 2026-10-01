@@ -9,8 +9,8 @@ neighbors, which left four defects:
    looked.
 2. **The existing-install path met the EULA question.** Step 1 said to skip "Step 3's install
    commands", but #192 made Phase 1 (EULA acceptance) Step 3's entry point, and it is not an
-   install command. Phase 3 installs per-project bindings for Java, C# and TypeScript, which an
-   existing SDK install does not provide. The environment script had no heading, so the name
+   install command. Phase 3 installs per-project bindings for Java, C#, Rust and TypeScript
+   (Rust added by #287), which an existing SDK install does not provide. The environment script had no heading, so the name
    Step 1 quoted for it matched nothing.
 3. **An update whose EULA was declined had no outcome.** Step 1b reused Phase 1's wording, and
    Phase 1's decline branch said "Stop here", against Step 1b's non-blocking rule.
@@ -195,7 +195,7 @@ class TheExistingInstallPathHasOneOutcome(unittest.TestCase):
 
     def test_it_runs_phase_3_for_the_per_project_bindings(self):
         self.assertRegex(self.branch, r"(?i)\*\*Still run Step 3's Phase 3\*\*")
-        self.assertRegex(self.branch, r"(?i)Java, C# and TypeScript bindings are per-project")
+        self.assertRegex(self.branch, r"(?i)Java, C#, Rust and TypeScript bindings are per-project")
         self.assertRegex(self.branch, r"(?i)For Python, Phase 3 installs nothing")
 
     def test_it_still_writes_the_environment_script(self):

@@ -43,6 +43,59 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## module-2-phase-3-routes-every-language-to-its-server-route
+
+- **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #287; audit finding D-F7, with the Java lead from B-F4)
+- **Commit:** `cab1ea5`
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `tests/test_no_pip_install_senzing.py`, `tests/test_update_offer_order_and_existing_install_outcome.py`, `tests/test_prescribed_search_queries.py`, `tests/test_phase3_names_every_server_language.py` (new), `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.16 (`get_capabilities`, reachable), 2026-09-30 — still reproduces, for each non-Python language. **Rust:** `sdk_guide(topic='install', platform='linux_apt', language='rust')` → `compatibility_notes`: "The Rust SDK (sz-rust-sdk) is NOT on crates.io. You MUST use a git dependency." **TypeScript:** `sdk_guide(topic='install', platform='linux_apt', language='typescript')` → `compatibility_notes`: "The TypeScript/Node.js SDK (sz-napi) is NOT on npm. You MUST install from the GitHub repository: npm install brianmacy/sz-napi." **Java:** `sdk_guide(topic='install', platform='linux_apt', language='java')` carries no `compatibility_notes` and no source for the bindings; owner-checked: `search_docs(query='Java SDK sz-sdk.jar Maven Usage local Maven repository')` — the Senzing Java SDK 4.x Reference, "Maven Usage" ("`sz-sdk.jar` is not provided via Maven Central"; the copy "provided with the Senzing product", as a system-scoped dependency or installed into the local Maven repository) and "Installation in Local Maven Repository" (`java -jar sz-sdk.jar` generates the `mvn install:install-file` command), so the route names the source and Phase 3 sends Java there. **C#:** server does not cover it (where the `Senzing.Sdk` NuGet package comes from). `sdk_guide(topic='install', platform='linux_apt', language='csharp')` carries no `compatibility_notes`; owner-checked: `search_docs(query='C# .NET SDK Senzing.Sdk NuGet package')` — the route that carries the C# SDK reference — returns "Senzing.Sdk for C#" ("After adding the `Senzing.Sdk` NuGet package to your project dependencies") and the "v4 C# SDK Reference" link list, and neither names a package source; `generate_scaffold(language='csharp', workflow='initialize')` returns code snippets only, and `find_examples` indexes no build files (`get_capabilities`). Both absences are written into Module 2 as `MCP-NEGATIVE` markers with these owner clauses. Re-verification changed nothing the issue asked for. Nothing was sent upstream.
+- **Approach:** direct (Phase 5a), as the issue scopes it.
+- **Summary:** Module 2 Step 3 Phase 3 now covers all five languages the server supports. Step 3 names Python, Java, C#, Rust and TypeScript and sends each one's bindings "by the route the Senzing MCP server names for that language, never from a public package registry that route does not name, and NOT from a package manager at all for Python". Python's block is unchanged. The sentence that sent Java, C# and TypeScript to "that ecosystem's package manager as normal" is replaced by one bullet per language, each naming its route: Java to the Java SDK reference's two sections, C# to its SDK reference (which names no package source, so the guide names none and does not add a public feed), and Rust and TypeScript to `sdk_guide(…, language=…)`'s `compatibility_notes`. Every server quote there is dated evidence (server 1.37.16, 2026-09-30) and not a command. The Cargo git-dependency line and the `npm install` command are read from the reply at run time (INV-080). The existing-install path's "Still run Step 3's Phase 3" bullet and the Required stops' Phase 3 bullet now name "Java, C#, Rust and TypeScript" as per-project bindings. Their bold rule phrases, which #284's deferral quotes, are unchanged. The TypeScript build-from-source warning and its recovery branch are untouched, as scoped. Tests: `test_the_other_languages_are_unchanged` now pins the route rule, the generic and Rust/TypeScript `sdk_guide` calls and the two `search_docs` routes in place of "Maven/Gradle), C# (NuGet)", and fails on "package manager as normal". The `sz-napi` assertion stays. `test_it_runs_phase_3_for_the_per_project_bindings` reads the four-language list. The new `tests/test_phase3_names_every_server_language.py` fails when Phase 3 or either existing-install line stops naming any of the five languages (language names only, no server wording). It also checks that the Rust step calls `sdk_guide` with `language='rust'`, points at `compatibility_notes` and dates its quote, and that Phase 3 ships no `sz-rust-sdk = {` line. Its controls remove each language from each site, restore the pre-fix lists, insert a Cargo line and drop the Rust step. Run against the pre-change `SKILL.md` it reports Rust missing from both existing-install lines and "Phase 3 has no Rust step". The two prescribed queries are added to `VERIFIED_QUERIES` with what they returned.
+- **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` not run locally (remote reusable workflow; no workflow file changed).
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-222 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+    - ⛔ **The Senzing SDK's language packages MUST NOT be installed from a language package manager** — in `specs/INVARIANTS.md`
+
+  ⚠️ **Why.** INV-222's first sentence states a Python fact as an any-language rule. On server
+  1.37.16 (2026-09-30) the server sends Rust to a git dependency (cargo) and TypeScript to a
+  GitHub-hosted package (npm), and Java's reference sends it to a local Maven install. Read
+  literally, the sentence forbids what the server prescribes, and Module 2's Phase 3, which
+  this run aligns with the server, contradicts it. The Python rule and its reasoning are
+  unchanged. Amending a registered invariant is the maintainer's sign-off alone, so
+  `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged. **Sites it affects:**
+  INV-222 in `specs/INVARIANTS.md` and its `invariant-manifest.json` statement; Module 2 Step 3
+  Phase 3's step 3 (`module-02-sdk-setup/SKILL.md:658`–`:661`) and its four per-language
+  bullets (`:737`–`:764`), and the per-project lists at `:147` and `:174`;
+  and the INV-222 summary in `tests/test_no_pip_install_senzing.py`'s docstring ("not installed
+  from a package manager"), to be reworded when the amendment is applied. **Two edits** (the
+  issue's text): replace INV-222's first sentence with the replacement below, keeping
+  everything from "For Python specifically" on, and append the dated note after its closing
+  `(Source: …)` parenthetical. ⚠️ Whether the sentence replacement is a clarification
+  (`specs/INVARIANTS.md` rule 2) or a change of meaning that needs a new id is the maintainer's
+  call at `/review-invariants`. **Also at registration:** #284's drafted existing-install
+  invariant (`module-2-eula-and-existing-install-rules-are-queued-as-deferred-invariants`)
+  lists "the per-project Java, C# and TypeScript bindings", and its "Why" paraphrases INV-222
+  as "never from a language package manager". Both now lag this change by Rust and by this
+  amendment. That entry belongs to #284 and is left as written. Applying this amendment
+  resolves the block: mark the bullet `applied YYYY-MM-DD` and drop both "awaiting" markers.
+  Enforced by `tests/test_no_pip_install_senzing.py` and
+  `tests/test_phase3_names_every_server_language.py`.
+
+  The drafted wording. Replacement first sentence:
+
+  **INV-222** — The Senzing SDK's language packages MUST be obtained by the route the Senzing MCP server names for that language (`sdk_guide(topic='install', platform=…, language=…)`), and never from a public package registry that route does not name; for Python they ship inside the Senzing SDK runtime and are made available **by path**.
+
+  Dated note, appended to the entry:
+
+  **INV-222** — (⚠️ **Scope narrowed 2026-09-30.** The first sentence read "MUST NOT be installed from a language package manager", which stated a Python fact as an any-language rule. On server 1.37.16 (2026-09-30) the other languages the server supports do use their ecosystem's tooling, but not its public registry: a local Maven install of `sz-sdk.jar` for Java, a GitHub-hosted package for TypeScript (`sz-napi`, "NOT on npm") and a git dependency for Rust (`sz-rust-sdk`, "NOT on crates.io"). For C#, the route did not say where the `Senzing.Sdk` NuGet package comes from. Read literally, the old sentence forbade what the server prescribes, and Module 2's Phase 3 contradicted it (#287). The Python rule and its reasoning are unchanged. The shadowing and version-skew hazard below was observed for Python, and this note makes no claim that the other languages share it.)
+
+  *(the note's date is the issue's, verbatim, as the issue requires; the maintainer may re-date
+  it on the day it is applied.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-222 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify`
+  red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint at the
+  next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The one change to a registered invariant is the amendment block above, drafted and not applied. The new test pins the five language names INV-002 already requires, and the route rule it enforces is the amendment's replacement sentence. No ⛔ line is added to shipped text.
+
 ## data-subsets-is-excluded-at-graduation-and-queued-for-the-tree
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #286; audit finding D-F2)

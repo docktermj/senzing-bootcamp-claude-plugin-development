@@ -194,9 +194,35 @@ class ModuleTwoSaysWhatToDoInstead(unittest.TestCase):
             "the carve-out is implied rather than stated")
 
     def test_the_other_languages_are_unchanged(self):
+        """Their bindings defer to the server's route, never to an unnamed public registry.
+
+        Until #287 this pinned "Maven/Gradle), C# (NuGet)" — an instruction to use each
+        ecosystem's package manager "as normal", which the server contradicts for Java,
+        TypeScript and Rust. It now pins the route rule and the routes, not a server claim's
+        wording.
+        """
         self.assertRegex(
-            self.flat, r"(?i)Maven/Gradle\).{0,30}C# \(NuGet\)",
-            "the Java/C# package-manager instruction was lost")
+            self.flat,
+            r"(?i)\*\*by the route the Senzing MCP server names for that language, never from a "
+            r"public package registry that route does not name",
+            "Phase 3 no longer sends the non-Python languages to the server's route")
+        self.assertNotRegex(
+            self.flat, r"(?i)package manager as normal",
+            "Phase 3 again says the bindings come from the ecosystem's package manager as "
+            "normal, which the server contradicts for Java, TypeScript and Rust (#287)")
+        self.assertIn(
+            "sdk_guide(topic='install', platform='<platform>', language='<language>')",
+            self.flat, "Phase 3 does not send every language to sdk_guide first")
+        for language in ("rust", "typescript"):
+            with self.subTest(language=language):
+                self.assertIn(
+                    "sdk_guide(topic='install', platform='<platform>', language='%s')"
+                    % language, self.flat,
+                    "Phase 3 does not route %s through sdk_guide" % language)
+        self.assertIn("search_docs(query='Java SDK sz-sdk.jar Maven Usage local Maven "
+                      "repository')", self.flat, "Java's route to its SDK reference is gone")
+        self.assertIn("search_docs(query='C# .NET SDK Senzing.Sdk NuGet package')", self.flat,
+                      "C#'s route to its SDK reference is gone")
         self.assertIn("sz-napi", self.text,
                       "the TypeScript build-from-source warning was lost")
 
