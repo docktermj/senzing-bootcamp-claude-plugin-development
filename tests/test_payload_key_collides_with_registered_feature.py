@@ -21,13 +21,14 @@ collision is one instance of it.
 check was in the wrong place in the flow, not missing, which is why the remedy moves it to
 the mapping gate rather than inventing a new instrument.
 
-⛔ **The precedence mechanism is OBSERVATION-ONLY and these tests pin that framing**, not
-just the guidance. One run, one SDK build, the analyzer as corroborating instrument. The
-Entity Specification distinguishes payload from registered features and says choosing
-between them is a mapping decision, but states no precedence for a colliding root-level key
-— re-confirmed via `search_docs(category='data_mapping')` on server 1.32.9, 2026-08-17, and
-carried as an `MCP-NEGATIVE` marker with its owning route so a dry run re-asks it
-(INV-080/INV-149/INV-194).
+⛔ **The prohibition is documented; only its consequence is OBSERVATION-ONLY, and these
+tests pin that split**, not just the guidance. `mapping_workflow` step 2's inline *SENZING
+MAPPING REFERENCE* serves the prohibition itself — a root-level payload attribute "must NOT
+be a registered feature attribute" (server 1.37.16, 2026-10-01, #322) — so the guidance cites
+that step for the rule. What breaking it does (the key is extracted as a feature) is still
+one run, one SDK build, the analyzer as corroborating instrument: neither that step nor any
+indexed `search_docs` section states it. That absence is carried as an `MCP-NEGATIVE` marker
+with its owning route so a dry run re-asks it (INV-080/INV-149/INV-194/INV-213).
 
 Source spec: `specs/routing-a-registered-feature-attribute-to-payload-is-silently-a-no-op.md`.
 
@@ -142,8 +143,46 @@ class ThePrecedenceMechanismIsMarkedObservationOnly(unittest.TestCase):
         self.assertRegex(marker, r"server \d+\.\d+\.\d+, \d{4}-\d{2}-\d{2}$")
 
     def test_the_rule_is_not_claimed_as_documented(self):
+        """#322 — rescoped: the prohibition is cited to its route; the consequence is not.
+
+        Named for what it guarded before the server documented the rule, and kept so its
+        history stays readable: what it now refuses is the CONSEQUENCE being claimed as
+        documented.
+        """
         text = flat(PHASE2)
-        self.assertIn("not as a documented rule", text)
+        self.assertIn("This prohibition is documented: `mapping_workflow` step 2's inline "
+                      "*SENZING MAPPING REFERENCE*", text)
+        self.assertIn('"must NOT be a registered feature attribute"', text)
+        self.assertIn("server **1.37.16, 2026-10-01**", text)
+        self.assertIn("Treat the extracted-as-feature consequence as a strong local "
+                      "observation, not as documented behavior", text)
+
+    def test_the_prohibition_is_not_called_undocumented_again(self):
+        """#322 — the old framing contradicted the tool the guide is already calling."""
+        self.assertNotIn("not as a documented rule", flat(PHASE2))
+
+    def test_the_marker_is_rescoped_to_the_consequence(self):
+        """#322 / INV-213 — the claim is the consequence; the owner names both routes."""
+        lines = [l for l in PHASE2.read_text(encoding="utf-8").splitlines()
+                 if l.startswith("MCP-NEGATIVE:")]
+        self.assertEqual(1, len(lines), "expected exactly one marker in this file")
+        marker = lines[0]
+        self.assertTrue(marker.startswith(
+            "MCP-NEGATIVE: search_docs(query='payload attribute versus registered feature "
+            "attribute record root extracted as feature precedence', "
+            "category='data_mapping') — "),
+            "the marker's query string or route changed")
+        claim, _, rest = marker.partition(" — owner: ")
+        self.assertIn("no indexed section states that a root-level key named after a "
+                      "registered feature attribute is extracted as a feature", claim)
+        self.assertIn("mapping_workflow step 2's inline SENZING MAPPING REFERENCE carries "
+                      "the prohibition", rest)
+        self.assertIn("states no consequence", rest)
+        self.assertIn("search_docs over the Entity Specification IS the route that would "
+                      "carry the consequence", rest)
+        self.assertIn('"Only the attributes listed here may appear inside a feature object. '
+                      'Anything else is treated as payload"', rest)
+        self.assertTrue(marker.endswith("(absence negative) — server 1.37.16, 2026-10-01"))
 
 
 class TheCheckIsNotABlanketObjectionToPayload(unittest.TestCase):

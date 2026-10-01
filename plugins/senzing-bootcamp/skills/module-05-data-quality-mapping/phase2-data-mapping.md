@@ -761,20 +761,25 @@ rejects twice without saying why gets its own. Present the mapping table and adv
 a later reader does not read the absence as the same omission step 10 once had.
 
 ⛔ **Before accepting the plan: a root-level `payload` key MUST NOT be a registered feature
-attribute name.** Check every `disposition: payload` field's emitted key against the attribute
-catalog you already consult for `feature` mappings — the same lookup, asked of the other
-disposition. This runs **here**, where the routing decision is made, not after the output is
-analyzed.
+attribute name.** This prohibition is documented: `mapping_workflow` step 2's inline *SENZING
+MAPPING REFERENCE* says an optional root-level payload attribute "must NOT be a registered feature
+attribute", and says to rename a source field whose name collides with a reserved feature
+attribute but means something different (server **1.37.16, 2026-10-01**). Check every
+`disposition: payload` field's emitted key against the attribute catalog you already consult for
+`feature` mappings — the same lookup, asked of the other disposition. This runs **here**, where
+the routing decision is made, not after the output is analyzed.
 
 ⚠️ **This mechanism is OBSERVATION-ONLY** — one run, one SDK build, 2026-08-17, with the bundled
 analyzer's own SCHEMA warning as the corroborating instrument (it fired on the collision and cleared
 on the rename). Observed: a field routed to `payload` but emitted under its own name at the record
 root, where that name is a registered feature attribute, was extracted by Senzing as a **feature**
-anyway — so the Bootcamper's explicit routing answer was honored in form and not in effect. Treat it
-as a strong local observation, not as a documented rule, and re-confirm before relying on it
-elsewhere (INV-080/INV-149).
+anyway — so the Bootcamper's explicit routing answer was honored in form and not in effect. Only
+the prohibition is documented: `mapping_workflow` step 2 states the rule but not what breaking it
+does, and no indexed `search_docs` section states that consequence either (the marker below).
+Treat the extracted-as-feature consequence as a strong local observation, not as documented
+behavior, and re-confirm before relying on it elsewhere (INV-080/INV-149).
 
-MCP-NEGATIVE: search_docs(query='payload attribute versus registered feature attribute record root extracted as feature precedence', category='data_mapping') — no indexed section states what happens when a payload-intended key at the record root carries a registered feature attribute's name — owner: search_docs over the Entity Specification IS the route that would carry such a precedence rule, and its *Attribute reference* section states the rule for the inside-a-feature-object case -- "Only the attributes listed here may appear inside a feature object. Anything else is treated as payload" -- while no returned section states any precedence for a record-root key whose name belongs to a registered feature, which is the case asked about (absence negative) — server 1.36.0, 2026-09-02
+MCP-NEGATIVE: search_docs(query='payload attribute versus registered feature attribute record root extracted as feature precedence', category='data_mapping') — no indexed section states that a root-level key named after a registered feature attribute is extracted as a feature — owner: mapping_workflow step 2's inline SENZING MAPPING REFERENCE carries the prohibition ("must NOT be a registered feature attribute") but states no consequence of breaking it, so search_docs over the Entity Specification IS the route that would carry the consequence, and its *Attribute reference* section states the rule for the inside-a-feature-object case -- "Only the attributes listed here may appear inside a feature object. Anything else is treated as payload" -- while no returned section states what happens to a record-root key whose name belongs to a registered feature, which is the case asked about (absence negative) — server 1.37.16, 2026-10-01
 
 **On a collision, do NOT silently re-route or override the answer (INV-006).** Their intent — *do
 not match on this* — is achievable; only the key **name** is wrong. Say what will actually happen
