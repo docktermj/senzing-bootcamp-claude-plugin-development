@@ -48,11 +48,11 @@ carries its annotation with a date, as `/review-invariants` applied it on 2026-0
 then the pin also passed while a pending `PROPOSED AMENDMENT to INV-050` block carried the
 annotated tree line; that branch is gone (#288).
 
-⚠️ **One entry the tree omits is pinned in two states** (#286): Module 6 writes
-subset files under `data/subsets/`, and the tree has no entry there. The pin passes when the
+⚠️ **One entry the tree omitted is pinned in two states** (#286): Module 6 writes
+subset files under `data/subsets/`, which the tree did not name. The pin passes when the
 tree has an entry at `data/subsets/`, or while a pending `PROPOSED AMENDMENT to INV-050` block
-carries its tree line byte for byte. Applying that block also bumps `EXPECTED_DIR_ENTRIES`
-from 31 to 32, in the same edit.
+carries its tree line byte for byte. `/review-invariants` applied that block on 2026-09-30,
+inserting the entry and bumping `EXPECTED_DIR_ENTRIES` from 31 to 32 in the same edit.
 
 Stdlib-only and no `plugins/` import (INV-108). The extraction is pure text over
 `specs/INVARIANTS.md` and the corpus is read with `pathlib`, so nothing shells out to
@@ -109,7 +109,9 @@ EXPECTED_FILE_ENTRIES = 24
 #: (`specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md`). Given its own entry rather
 #: than a comment on `backups/` because a comment-only continuation line is not an entry and this
 #: is a real directory the plugin writes to -- which is also what keeps INV-202 satisfiable for it.
-EXPECTED_DIR_ENTRIES = 31
+#: 31 -> 32 on 2026-09-30: `data/subsets/` was added when `/review-invariants` applied #286's
+#: INV-050 amendment. Module 6 already wrote subset files there; only the tree omitted it.
+EXPECTED_DIR_ENTRIES = 32
 EXPECTED_CONTINUATION_LINES = 1
 
 

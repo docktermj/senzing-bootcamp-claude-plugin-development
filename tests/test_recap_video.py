@@ -22,6 +22,11 @@ writes at graduation into `docs/bootcamp_recap.mp4`. These tests pin its contrac
 availability is probed with `importlib.util.find_spec`, and Pillow is reached only through the
 script. The skip notices name the cause and the remedy and state no count.
 
+Enforces **INV-342** (the renderer validates first, keeps exit codes 0/1/2/3 separate and writes no
+video on failure, burns captions in, never truncates narration, accepts only project-relative local
+images, works offline, and draws the certificate from the recap PDF's fields). It does **not**
+establish the macOS and Windows speech paths, which it covers only by the commands it builds.
+
 Source issue: #299.
 
 Run:  python3 -m unittest discover -s tests

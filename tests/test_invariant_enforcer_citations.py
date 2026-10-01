@@ -453,7 +453,35 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # keeps only its overlay) names test_user_level_copies_govern.py, which cites it back and states what it
 # does NOT establish -- what the user-level copy says on any machine. Re-derived by running the
 # extractor -- 159, with the new pair present by name. EXPECTED_PAIRS 158 -> 159.
-EXPECTED_PAIRS = 159
+# 161 on 2026-09-30 (second review): INV-338 (the EULA question precedes every Senzing install, an
+# update included) names test_eula_question_precedes_every_install.py and
+# test_update_offer_order_and_existing_install_outcome.py; both cite it back and state what they do NOT
+# establish -- that a live run asks before installing. Re-derived by running the extractor -- 161, with
+# both new pairs present by name. EXPECTED_PAIRS 159 -> 161.
+# 163 on 2026-10-01: INV-339 (an existing install skips only the installation; Phase 3 and the
+# environment script still run) names test_existing_install_still_runs_the_env_script.py and
+# test_update_offer_order_and_existing_install_outcome.py; both cite it back and state what they do NOT
+# establish -- that a live run follows it. Re-derived by running the extractor -- 163, with both new
+# pairs present by name. EXPECTED_PAIRS 161 -> 163.
+# 164 on 2026-10-01: INV-340 (graduation's video step: offered once, nothing written on no, aggregates
+# only, never blocking) names test_graduation_video_step.py, which cites it back and states what it does
+# NOT establish -- that a live run follows it. Re-derived by running the extractor -- 164, with the new
+# pair present by name. EXPECTED_PAIRS 163 -> 164.
+# 165 on 2026-10-01: INV-341 (every completed module saves one aggregates-only B-roll entry) names
+# test_broll_manifest.py, which cites it back and states what it does NOT establish -- that a live run
+# writes a conforming entry. Re-derived by running the extractor -- 165, with the new pair present by
+# name. EXPECTED_PAIRS 164 -> 165.
+# 166 on 2026-10-01: INV-342 (the recap-video renderer's contract) names test_recap_video.py, which cites
+# it back and states what it does NOT establish -- the macOS and Windows speech paths. Re-derived by
+# running the extractor -- 166, with the new pair present by name. EXPECTED_PAIRS 165 -> 166.
+# 167 on 2026-10-01: INV-343 (Module 5 Phase 2 emits no type_discriminator by default) names
+# test_quality_assessment_type_name_check.py, which cites it back and states what it does NOT establish
+# -- that a live run follows it. Re-derived by running the extractor -- 167, with the new pair present by
+# name. EXPECTED_PAIRS 166 -> 167.
+# 168 on 2026-10-01: INV-229's dated correction (#282: no count of the installation checks is asserted)
+# names test_module3_check_lists_agree.py as an enforcer, which already cites INV-229 back. Re-derived by
+# running the extractor -- 168, with the new pair present by name. EXPECTED_PAIRS 167 -> 168.
+EXPECTED_PAIRS = 168
 
 
 def pairs():

@@ -22,6 +22,10 @@ with the bundled renderer (`generate_recap_video.py`, #299). These tests pin:
 
 Stdlib only; the renderer's validator needs neither Pillow nor ffmpeg (INV-108).
 
+Enforces **INV-340** (graduation's video step: offered once, nothing written on no, aggregates only,
+never blocking, storyboard kept, the render verified). It asserts that Step 1c *states* these rules,
+and does **not** establish that a live run follows them, which only `dry-run` phase 3 can observe.
+
 Source issue: #300 (part of #297).
 
 Run:  python3 -m unittest discover -s tests
@@ -187,7 +191,7 @@ class TheQuestionsArePinned(unittest.TestCase):
     def test_the_install_offer_is_verbatim_and_asked_once(self):
         text = step_1c()
         self.assertEqual(1, text.count(INSTALL))
-        self.assertIn("**The install offer (exit 2).** Offer it once (INV-006)", squash(text))
+        self.assertIn("**The install offer (exit 2).** Offer it once (INV-006, INV-340)", squash(text))
 
     def test_the_install_offer_names_pillow_when_it_is_missing(self):
         text = squash(step_1c())
@@ -212,7 +216,7 @@ class NoMeansNothingWritten(unittest.TestCase):
 
     def test_on_no_no_video_file_is_written(self):
         text = squash(step_1c())
-        self.assertIn("⛔ **On no, write no video file at all:** no "
+        self.assertIn("⛔ **(INV-340) On no, write no video file at all:** no "
                       "`docs/video/storyboard.json` and no `docs/bootcamp_recap.mp4`", text)
         self.assertIn("The storyboard is written only after a yes", text)
         self.assertIn("- **No:** continue straight to Step 2 in the same reply turn", text)
@@ -365,7 +369,7 @@ class NoRawRecordValues(unittest.TestCase):
 
     def test_the_rule_is_stated(self):
         text = squash(step_1c())
-        self.assertIn("⛔ **Aggregates only: no raw record values anywhere in the storyboard.**",
+        self.assertIn("⛔ **(INV-340) Aggregates only: no raw record values anywhere in the storyboard.**",
                       text)
         self.assertIn("counts, source names, field and attribute names, and statistics", text)
         for forbidden in ("a name", "an address", "a phone number", "an identifier"):
@@ -395,7 +399,7 @@ class TheFallbacksNeverBlockGraduation(unittest.TestCase):
 
     def test_the_video_never_blocks(self):
         text = squash(step_1c())
-        self.assertIn("⛔ **The video never blocks graduation (INV-048).**", text)
+        self.assertIn("⛔ **(INV-340) The video never blocks graduation (INV-048).**", text)
         self.assertIn("a declined install, a failed install, an invalid storyboard or a failed "
                       "render, skips the video with a one-line message naming what failed, and "
                       "graduation continues to Step 2", text)
@@ -415,7 +419,7 @@ class TheFallbacksNeverBlockGraduation(unittest.TestCase):
 
     def test_the_storyboard_is_kept(self):
         text = squash(step_1c())
-        self.assertIn("⛔ **Keep the storyboard whenever it was written.**", text)
+        self.assertIn("⛔ **(INV-340) Keep the storyboard whenever it was written.**", text)
         self.assertIn("so the video can be rendered later by running the renderer again", text)
 
     def test_the_check_runs_before_the_render(self):
@@ -431,7 +435,7 @@ class TheVideoIsChecked(unittest.TestCase):
         return squash(text[text.index("#### Verify the video"):])
 
     def test_verify_the_artifact_not_the_exit_code(self):
-        self.assertIn("⛔ **Verify the rendered video, not the exit code (INV-129).**",
+        self.assertIn("⛔ **Verify the rendered video, not the exit code (INV-129, INV-340).**",
                       self.verify())
 
     def test_the_duration_tolerance_and_one_re_render(self):
@@ -463,7 +467,7 @@ class TheVideoIsNamedWhereTheBootcamperLooks(unittest.TestCase):
 
     def test_the_closing_names_the_video_when_it_was_produced(self):
         closing = squash(read(GRADUATION)[read(GRADUATION).index("## Mandatory closing step"):])
-        self.assertIn("**Also name the graduation video, `docs/bootcamp_recap.mp4`, only if "
+        self.assertIn("**(INV-340) Also name the graduation video, `docs/bootcamp_recap.mp4`, only if "
                       "Step 1c produced it:**", closing)
 
     def test_the_return_guide_names_it(self):

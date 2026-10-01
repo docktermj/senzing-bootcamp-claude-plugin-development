@@ -24,7 +24,10 @@ distinguished by a nearby prohibition marker, not by file.
 
 Stdlib only, no `plugins/` import (INV-108).
 
-Enforces **INV-222** — the Senzing SDK's language packages are not installed from a package manager, and INV-066's pip rules govern the plugin's own tooling only.
+Enforces **INV-222** — the Senzing SDK's language packages come by the route the server names for each
+language and never from a public registry that route does not name (its 2026-09-30 scope note; for
+Python they ship inside the runtime, by path), and INV-066's pip rules govern the plugin's own
+tooling only.
 
 Source spec: `specs/senzing-python-sdk-must-not-be-pip-installed.md`.
 

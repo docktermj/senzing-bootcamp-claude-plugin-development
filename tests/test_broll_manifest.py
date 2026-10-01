@@ -18,6 +18,10 @@ bootcamp from memory. These tests pin:
   entry **never blocks** module completion.
 * **Bootcamp preparation writes no entry** (INV-075).
 
+Enforces **INV-341** (every completed module saves one aggregates-only B-roll entry, replaced on
+re-completion, never blocking completion). It asserts what `module-completion.md` *states*, and does
+**not** establish that a live run writes a conforming entry, which only `dry-run` phase 3 can observe.
+
 Source issue: #298 (part of #297).
 
 Run:  python3 -m unittest discover -s tests
@@ -213,7 +217,7 @@ class TheRulesAreStated(unittest.TestCase):
 
     def test_no_raw_record_values(self):
         text = squash(step_2e())
-        self.assertIn("⛔ **No raw record values, anywhere in the entry.**", text)
+        self.assertIn("⛔ **(INV-341) No raw record values, anywhere in the entry.**", text)
         self.assertIn("Only counts, source names, field and attribute names, and statistics",
                       text)
         for forbidden in ("a name", "an address", "an identifier"):
@@ -223,7 +227,7 @@ class TheRulesAreStated(unittest.TestCase):
 
     def test_re_completion_replaces_the_entry(self):
         text = squash(step_2e())
-        self.assertIn("**Re-completing a module replaces its entry.**", text)
+        self.assertIn("**(INV-341) Re-completing a module replaces its entry.**", text)
         self.assertIn("never a second entry", text)
 
     def test_a_missing_or_unreadable_file_is_recreated(self):
@@ -233,7 +237,7 @@ class TheRulesAreStated(unittest.TestCase):
 
     def test_it_never_blocks_module_completion(self):
         text = squash(step_2e())
-        self.assertIn("⛔ **The B-roll entry never blocks module completion", text)
+        self.assertIn("⛔ **(INV-341) The B-roll entry never blocks module completion", text)
         self.assertIn("A failed read or write is not a module failure", text)
         opening = squash(read(MODULE_COMPLETION).split("## Step 1:")[0])
         self.assertIn("The one exception is the B-roll entry (2e), which never blocks "
