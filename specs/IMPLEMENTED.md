@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## leftover-pending-wording-after-the-2026-09-30-reviews
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #288; audit findings L1, A-F1, A-F2, A-F4, A-F5, A-F6 and B-F9)
-- **Commit:** uncommitted
+- **Commit:** `304b8cc`
 - **Files changed:** `.claude/skill-overlays/implement-github-issue.md`, `.claude/skill-overlays/unattended-issue-loop.md`, `.claude/skills/production-readiness-audit/conformance.py`, `tests/test_filing_is_gated.py`, `tests/test_audit_files_issues_not_specs.py`, `tests/test_phase_d_how_state_audit.py`, `tests/test_specs_are_frozen.py`, `tests/test_invariant_layout_tree.py`, `tests/test_download_resource_is_a_listing.py`, `tests/test_reverse_check_counts_what_it_cannot_test.py`, `tests/test_no_instruction_writes_into_specs.py`, `specs/IMPLEMENTED.md`
 - **MCP re-check:** server `sz-mcp-coworker` 1.37.16 (`get_capabilities`, reachable), 2026-09-30, `download_resource(filename='senzing_mapping_examples.md')` and `download_resource(filename='senzing_mapping_examples.md', inline=true, offset=28400)` — still reproduces: the URL route reports `size_bytes: 28688` and the inline route `total_chars: 28688` for the same file, so `total_chars` counts what `size_bytes` counts, as INV-234 and `phase1-quality-assessment.md:125` say. That is the one Senzing fact the change carries, into a test docstring. Every other edit is wording about this repository's own invariants and tests, re-confirmed by reading each changed line, and makes no absence claim. Re-verification changed nothing the issue asked for. Nothing was sent upstream.
 - **Approach:** direct (Phase 5a), as the issue scopes it.
