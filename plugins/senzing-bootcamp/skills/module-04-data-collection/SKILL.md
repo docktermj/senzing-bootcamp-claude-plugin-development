@@ -296,6 +296,11 @@ made** for every source in it. Then read the source's entry in `config/data_sour
     it missed the band, **widen the gaps and regenerate** — never adjust a score. Inventing or nudging
     a measurement the Bootcamper is told is real is the line INV-239 draws; correcting the data before
     anything scores it is this generator's own job.
+    ⛔ **In the same pass, count identifier collisions (INV-239)** — the distinct invented entities
+    sharing an email, phone or identifier-number value that no `shared_features` entry declares (the
+    identifier rule below). On any count above zero, **regenerate the affected values or the source
+    before anything loads or scores it** — never patch the ground truth, the scores or the results
+    afterward.
   - **off-pattern values in at least one field per source** — a date in a second format among
     ISO ones, an unformatted phone among formatted ones, a lowercase state code — so
     `format_consistency` is genuinely below 100 and the "report the fields that drag it down"
@@ -314,6 +319,21 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   The per-campaign duplicate pair required above keeps its **distinct** keys, exactly as today — the
   duplication is in the entity, never in the key.
 
+  ⛔ **Give each invented entity its own identifiers (INV-239).** An **email**, a **phone** and every
+  **identifier number** (SSN, passport, driver's license, account or loyalty number) belong to exactly
+  one invented entity, person or organization, unless the scenario shares one on purpose and records
+  it under `quality_intent.shared_features` with the reason; an unlisted share is a collision. An
+  entry covers only the shares its reason describes, never every value of that feature. The
+  unit is the **entity, not the record**: the per-campaign duplicates and the cross-source overlap are
+  records of one entity and keep that entity's features, because that match is what the scenario
+  intends. **Names may repeat** across distinct entities — they are the intended **hard negatives** —
+  and so may an address or a date of birth (a household, a coincidence); the rule covers only the
+  identifiers. ⚠️ **The anti-pattern to avoid:** building a "unique" value from the name plus a small
+  number (`first.last<1-99>@…`) collides as soon as the name pool is smaller than the population.
+  Observed 2026-10-01: 7,000 people drawn from 1,197 distinct names gave 53 pairs of different people
+  the same name and email, every pair resolved together on that evidence, and the scenario's own
+  ground truth then called each merge false — a correct result reported as an error.
+
   **Record the intended band per source** in `config/data_sources.yaml`, as `quality_intent` beside
   the source's other fields:
 
@@ -331,6 +351,9 @@ made** for every source in it. Then read the source's entry in `config/data_sour
         - "postal_code missing ~35%"
         - "state missing ~30%"
         - "created_date in two formats"   # lowers format_consistency, not completeness
+      shared_features:              # deliberate sharing only; an unlisted share is a collision
+        - feature: phone
+          reason: "household landline shared by the two adults at one address"
       measured_score: 78.0          # written by the self-check, never by hand
   ```
 
