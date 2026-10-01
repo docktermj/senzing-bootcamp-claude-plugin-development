@@ -15,7 +15,7 @@ this host. With no argument this command names no issue.
 
 ## What invoking this command assents to
 
-⛔ **Invoking `/implement-github-issue <n>` is assent to five comments on issue `<n>`, and to
+⛔ **Invoking `/implement-github-issue <n>` *(user level)* is assent to five comments on issue `<n>`, and to
 no other record** (INV-314, as amended by its 2026-09-30 scope note, #216): its four log
 comments (Started, Clarifications, Approach, Result), and the escape-hatch comment it posts
 when the issue proves invalid, a duplicate, or already fixed. Their exact text is still shown,

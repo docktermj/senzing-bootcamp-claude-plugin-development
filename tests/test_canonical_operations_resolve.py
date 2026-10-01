@@ -47,7 +47,17 @@ What it holds now:
 * **`docs/development.md` against the one-home rule.** It must link to the family page and must
   carry no diagrams of its own -- the restatement INV-300 forbids, and which had already gone
   wrong: until #111 its topology said *"one of three"* children while the family had four.
-* **Its slash-command references.** Every ``/name`` there ships or is marked *(children only)*.
+* **Its slash-command references, and the skills' and overlays' (#296).** Every ``/name`` in
+  `docs/development.md` ships or carries a marker. Every ``/name`` in a `.md` file under
+  `.claude/skills/` (each `SKILL.md` and its supporting files) or `.claude/skill-overlays/` ships
+  here, is a bootcamper command under `plugins/senzing-bootcamp/commands/`, or carries a marker the
+  same rules accept: *(children only)* or a statement of retirement on a name that does not ship,
+  or *(user level)* passing `user_level_problems()`. An overlay's mention of its own skill gets no
+  exemption: the rule is per name. Both scans share one `COMMAND` pattern, which reads a ``/name``
+  preceded by `~`, `/` or `:` as a path or URL segment (`~/senzing.git`, `https://mcp.…`) and one
+  followed by `/` as a path segment (`/path/to`, `/var/tmp`), for the whole token: it cannot
+  backtrack to a shorter name and so dodge the rule. A backtick before the slash is not a path, so
+  `` `/dry-run` `` stays a command. `NOT_COMMANDS` names the one bare path the prose uses, `/tmp`.
 * **The *(user level)* marker (#239).** `implement-github-issue` and `unattended-issue-loop` are
   defined only under `~/.claude/skills/`; this repository keeps their obligations in
   `.claude/skill-overlays/<name>.md`. A §2 row marks that `required *(user level)*`, a
@@ -85,7 +95,8 @@ table row's *cell values* are right -- a command listed with the wrong phase, or
 drawing depicts is a true account of the system.
 
 Source issues: #55 (original), #111 (re-aimed), #140 (the missing direction), #239 (the
-*(user level)* marker), #294 (the register's user-level names on the family page).
+*(user level)* marker), #294 (the register's user-level names on the family page), #296 (the
+skills and overlays as a corpus, and the path rules).
 
 Stdlib only; both directories are listed and the docs read as text (INV-108).
 
@@ -108,6 +119,8 @@ OVERLAYS_DIR = surface.OVERLAYS_DIR
 IMPLEMENT_CMD = OVERLAYS_DIR / "implement-github-issue.md"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
 DEV_DOCS = REPO_ROOT / "docs" / "development.md"
+#: Where the bootcamper commands live: a name there resolves in a skill's prose (#296).
+BOOTCAMPER_COMMANDS_DIR = REPO_ROOT / "plugins" / "senzing-bootcamp" / "commands"
 
 #: A row of the §2 canonical-operation table: | `name` | phase | parent | children | boundary |
 TABLE_ROW = re.compile(r"^\|\s*`([a-z0-9-]+)`\s*\|([^|]*)\|([^|]*)\|([^|]*)\|", re.M)
@@ -120,8 +133,11 @@ MERMAID_BLOCK = re.compile(r"^```mermaid[ \t]*\n(.*?)^```[ \t]*$", re.M | re.S)
 HTML_TAG = re.compile(r"<[^>]*>")
 
 #: A slash command in prose. Three characters minimum after the slash, so `and/or` is not one;
-#: not preceded by a word character or dot, so a path segment is not either.
-COMMAND = re.compile(r"(?<![\w.])/([a-z][a-z0-9-]{2,})")
+#: not preceded by a word character or dot, so a path segment is not either. Since #296, also not
+#: preceded by `~`, `/` or `:` (`~/senzing.git`, `https://mcp.senzing.com/mcp`) nor followed by `/`
+#: (`/path/to`, `/var/tmp`). ⚠️ The lookahead also refuses a word character or hyphen, so the match
+#: cannot backtrack to a shorter name (`/pat` in `/path/to`) and so dodge the "followed by" rule.
+COMMAND = re.compile(r"(?<![\w.~/:])/([a-z][a-z0-9-]{2,})(?![\w/-])")
 
 #: An operation as a diagram spells it: one token, at least one hyphen, no slash.
 DIAGRAM_OP = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$")
@@ -147,12 +163,53 @@ FENCE = re.compile(r"^```.*?^```", re.M | re.S)
 #: Precedent: `tests/test_comment_test_pointers_resolve.py` excludes `test_x.py` the same way.
 PLACEHOLDERS = {"/name"}
 
+#: Bare paths the prose names that the pattern cannot tell from a command (#296). `/tmp` is named
+#: as the place a gate blocks ("a `HOME` in `/tmp`"), with nothing after it to mark it a path.
+NOT_COMMANDS = {"/tmp"}
+
 MARKER_WINDOW = 80
 
 
 def shipped():
     """Every shipped maintainer operation: each skill, together with any command (INV-316)."""
     return surface.operations()
+
+
+def bootcamper_commands(commands_dir=BOOTCAMPER_COMMANDS_DIR):
+    """Names of the bootcamper commands: the stems of the plugin's command files."""
+    return surface.commands(commands_dir)
+
+
+def skill_corpus(skills_dir=SKILLS_DIR, overlays_dir=OVERLAYS_DIR):
+    """Every `.md` file under the skills and the overlays, supporting files included (#296)."""
+    return sorted(skills_dir.rglob("*.md")) + sorted(overlays_dir.rglob("*.md"))
+
+
+def corpus_problems(paths, commands_dir=COMMANDS_DIR, overlays_dir=OVERLAYS_DIR,
+                    skills_dir=SKILLS_DIR, bootcamper_dir=BOOTCAMPER_COMMANDS_DIR):
+    """["<file>: <name>: <why>"] for each ``/name`` in `paths` that neither resolves nor disclaims.
+
+    A name resolves when it ships here or is a bootcamper command. A marker is accepted only on
+    a name that does not ship (INV-316: a disclaimer, not a silencer), and *(user level)* also
+    only when `user_level_problems()` finds nothing.
+    """
+    ops = surface.operations(commands_dir, skills_dir)
+    boot = bootcamper_commands(bootcamper_dir)
+    problems = []
+    for path in paths:
+        for name, marker in slash_commands(path):
+            bare = name.lstrip("/")
+            if not marker:
+                if bare not in ops and bare not in boot:
+                    problems.append("%s: %s: ships as neither a skill nor a command here, is no "
+                                    "bootcamper command, and carries no marker" % (path, name))
+            elif bare in ops:
+                problems.append("%s: %s: marked (%s) but ships here, so the marker would "
+                                "silence a live operation" % (path, name, marker))
+            elif marker == "user":
+                problems.extend("%s: %s" % (path, p) for p in user_level_problems(
+                    {bare}, commands_dir, overlays_dir, skills_dir))
+    return problems
 
 
 def unregistered(operations, register):
@@ -247,14 +304,19 @@ def slash_commands(path):
     it does not ship here as a command: ``child`` for *(children only)*, ``retired`` for a
     statement of retirement, ``user`` for *(user level)*. It is truthy exactly when disclaimed.
     """
-    text = HTML_TAG.sub(" ", FENCE.sub(" ", path.read_text(encoding="utf-8")))
+    return slash_commands_in(path.read_text(encoding="utf-8"))
+
+
+def slash_commands_in(text):
+    """`slash_commands()` on a string: fences and HTML tags stripped, placeholders skipped."""
+    text = HTML_TAG.sub(" ", FENCE.sub(" ", text))
     hits = list(COMMAND.finditer(text))
     out = []
     for i, m in enumerate(hits):
         stop = hits[i + 1].start() if i + 1 < len(hits) else len(text)
         window = text[m.end():min(stop, m.end() + MARKER_WINDOW)]
         name = "/" + m.group(1)
-        if name in PLACEHOLDERS:
+        if name in PLACEHOLDERS or name in NOT_COMMANDS:
             continue
         marker = ("child" if CHILD_ONLY.search(window) else
                   "retired" if RETIRED.search(window) else
@@ -631,6 +693,76 @@ class TheLoopRowDescribesTheLoopThatRuns(unittest.TestCase):
                          "the diagram still draws an edge from the loop to phase 3")
 
 
+class TheSkillsAndOverlaysNameOnlyRealCommands(unittest.TestCase):
+    """INV-316 over every `.md` under `.claude/skills/` and `.claude/skill-overlays/` (#296)."""
+
+    def _write(self, text):
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+        path = root / "synthetic-296.md"
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    def test_the_corpus_reads_both_directories(self):
+        """INV-265 -- an empty corpus would pass every check below."""
+        files = skill_corpus()
+        self.assertTrue([f for f in files if SKILLS_DIR in f.parents],
+                        "the scan read no .md file under %s" % SKILLS_DIR)
+        self.assertTrue([f for f in files if OVERLAYS_DIR in f.parents],
+                        "the scan read no .md file under %s" % OVERLAYS_DIR)
+        self.assertTrue([f for f in files if f.name != "SKILL.md" and SKILLS_DIR in f.parents],
+                        "the scan read no supporting file beside a SKILL.md")
+
+    def test_the_user_level_branch_is_exercised(self):
+        """INV-265 -- without a marked name the marker half is untested and green."""
+        marked = {c for f in skill_corpus() for c, m in slash_commands(f) if m == "user"}
+        self.assertIn("/implement-github-issue", marked,
+                      "no skill or overlay name carries (user level); the branch is untested")
+
+    def test_every_name_resolves_or_carries_its_marker(self):
+        problems = corpus_problems(skill_corpus())
+        self.assertEqual([], problems,
+                         "slash command(s) under %s or %s that resolve nowhere, or carry a "
+                         "marker the rules reject (INV-316):\n%s"
+                         % (SKILLS_DIR, OVERLAYS_DIR, "\n".join(problems)))
+
+    def test_an_unmarked_user_level_name_fails(self):
+        """Negative control: the failure names the file and the name."""
+        path = self._write("Then run /implement-github-issue on it.\n")
+        problems = corpus_problems([path])
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn(str(path), problems[0])
+        self.assertIn("/implement-github-issue", problems[0])
+
+    def test_a_name_that_resolves_nowhere_fails(self):
+        """Negative control: no marker excuses a name that is nowhere."""
+        path = self._write("Then run /implement-issue on it.\n")
+        self.assertEqual(1, len(corpus_problems([path])))
+
+    def test_a_user_level_marker_on_a_shipping_name_fails(self):
+        """Negative control: `dry-run` ships as a skill here, so the marker would silence it."""
+        path = self._write("Then run `/dry-run` *(user level)* on it.\n")
+        problems = corpus_problems([path])
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn("/dry-run", problems[0])
+
+    def test_a_child_only_marker_on_a_shipping_name_fails(self):
+        path = self._write("Then run `/dry-run` *(children only)* on it.\n")
+        self.assertEqual(1, len(corpus_problems([path])))
+
+    def test_a_marked_user_level_name_passes(self):
+        path = self._write("Then run `/implement-github-issue <n>` *(user level)* on it.\n")
+        self.assertEqual([], corpus_problems([path]))
+
+    def test_a_bootcamper_command_resolves(self):
+        self.assertIn("bootcamp-feedback", bootcamper_commands())
+        self.assertEqual([], corpus_problems([self._write("Run /bootcamp-feedback.\n")]))
+
+    def test_an_unknown_bootcamper_command_does_not(self):
+        self.assertNotIn("bootcamp-nonexistent", bootcamper_commands())
+        self.assertEqual(1, len(corpus_problems([self._write("Run /bootcamp-nonexistent.\n")])))
+
+
 class TagsAreNotCommands(unittest.TestCase):
     """The constructions that must NOT be read as names, pinned beside the ones that must."""
 
@@ -643,6 +775,21 @@ class TagsAreNotCommands(unittest.TestCase):
 
     def test_a_path_segment_is_not_a_command(self):
         self.assertEqual([], COMMAND.findall("plugins/senzing-bootcamp/commands"))
+
+    def test_a_path_or_url_is_not_a_command(self):
+        """#296: the constructions the skills and overlays write that are not commands."""
+        for text in ("~/senzing.git/x", "~/senzing-autotest/run", "https://mcp.senzing.com/mcp",
+                     "/path/to/repo", "/var/tmp", "/private/tmp", "a `HOME` in `/tmp`"):
+            self.assertEqual([], slash_commands_in(text), text)
+
+    def test_a_backtick_or_an_argument_does_not_hide_a_command(self):
+        self.assertEqual([("/dry-run", "")], slash_commands_in("run `/dry-run` next"))
+        self.assertEqual([("/implement-github-issue", "")],
+                         slash_commands_in("run /implement-github-issue <n> next"))
+
+    def test_a_longer_path_cannot_backtrack_to_a_shorter_name(self):
+        self.assertEqual([], COMMAND.findall("/path/to"))
+        self.assertEqual([], COMMAND.findall("/senzing-autotest/x"))
 
     def test_a_repository_name_is_not_an_operation(self):
         self.assertFalse(DIAGRAM_OP.match("kiro power"), "a two-word phrase is not an operation")

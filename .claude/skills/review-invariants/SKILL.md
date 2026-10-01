@@ -10,7 +10,7 @@ This is a **maintainer** tool for developing the Senzing Bootcamp Claude Plugin
 (SBCP). It is never invoked during a bootcamp.
 
 A deferred invariant is a **rule that is already shipping** in the plugin, guarded by a
-test, and recorded in no invariant. `/implement-github-issue` and `unattended-issue-loop` produce
+test, and recorded in no invariant. `/implement-github-issue` *(user level)* and `unattended-issue-loop` produce
 them by design: minting an invariant is the maintainer's alone, so an implementation that
 ships a hard rule writes a `DEFERRED INVARIANT` block instead of registering one. This
 skill is where those blocks get decided.
@@ -284,7 +284,7 @@ Registered INV-NNN across 4 file(s):
 ⚠️ **Why the strictest stop rather than a pre-push pause.** Registering is the most permanent
 act in this repository — `INVARIANTS.md` is append-only, so a wrong id is corrected by a dated
 note beneath it and never removed, and every future change is bound by the wording. Everything
-else here that is permanent or outward-facing is gated: `/implement-github-issue` waits twice,
+else here that is permanent or outward-facing is gated: `/implement-github-issue` *(user level)* waits twice,
 `/release` never pushes, `/propagate-to-public` never commits. ⚠️ Those two are governed by
 INV-301, which binds **releasing** specifically and does not reach this skill — the general rule
 is drafted as a deferral in `IMPLEMENTED.md` rather than borrowed from an invariant about

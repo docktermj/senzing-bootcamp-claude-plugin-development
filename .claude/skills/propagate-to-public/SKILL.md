@@ -43,7 +43,7 @@ than being hand-run each time.
   *is* the bootcamp payload and **is** propagated — do not confuse the two.)
 - `specs/**` — spec-driven development artifacts.
 - `docs/development.md` — the development-loop index (`/feedback-to-issues`,
-  `/implement-github-issue`, `/dry-run`, `/propagate-to-public`, …). ⚠️ **One of two exceptions
+  `/implement-github-issue` *(user level)*, `/dry-run`, `/propagate-to-public`, …). ⚠️ **One of two exceptions
   inside an otherwise user-facing directory.** Every skill it names is excluded from
   this mirror, so publishing it hands users a list of commands their install does not
   have. It reached the public working tree on 2026-08-16 because "`docs/` is

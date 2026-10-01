@@ -259,7 +259,7 @@ removing it silently breaks every citation that resolved to it.
    authority. A run that reports these counts as findings has run a grep, not an audit.
 
 4. **Record what this environment cannot reach**, so the report discloses rather than
-   implies: is `fpdf2` installed? `pdftoppm`/poppler? a headless browser? `docker`?
+   implies: is `fpdf2` installed? `pdftoppm` (poppler)? a headless browser? `docker`?
    `libSz.so`? Missing pieces are fine; silently skipping the paths that need them is
    not (INV-111/INV-163).
 
@@ -423,7 +423,7 @@ session end:
      closed afterwards but never un-filed — the same gate, for the same reason,
      `/feedback-to-issues` applies.
 
-   - **Unattended** (running under `/unattended-issue-loop`) → ⛔ **(INV-314) file nothing.** Write the
+   - **Unattended** (running under `/unattended-issue-loop` *(user level)*) → ⛔ **(INV-314) file nothing.** Write the
      finding into the dated ledger entry from step 5 and list it in the handoff marked **not
      filed — needs the maintainer to file it**. ⚠️ **`gh issue create` leaves the machine**,
      and an unattended run creates only the records listed for the issue it is working
@@ -432,7 +432,7 @@ session end:
      filed by a run nobody watched cannot be un-filed.
 
    ⛔ **(INV-318) Never apply the `unattended-ok` label to an issue you file.** An audit that labels its
-   own findings lets `/unattended-issue-loop` work issues **it generated itself**, with no
+   own findings lets `/unattended-issue-loop` *(user level)* work issues **it generated itself**, with no
    maintainer between generation and execution. Selecting what runs unattended is the
    maintainer's decision alone.
 

@@ -390,7 +390,7 @@ here are the issues those entries already produced.
 Then list the issues created (as `#<n>` references, which GitHub renders as links), note
 anything routed to `todo.md` or left for clarification, report each upstream
 submission's outcome as its issue-field value (Step 8.1's table), and offer next steps
-(e.g. "I can implement #<n> next with /implement-github-issue" or "want me to open the questions
+(e.g. "I can implement #<n> next with /implement-github-issue" *(user level)* or "want me to open the questions
 for the unclear items?"). Do not start implementing unless asked.
 
 **Call out anything the re-check changed.** If the current server narrowed, redirected or

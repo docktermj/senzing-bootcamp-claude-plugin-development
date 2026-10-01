@@ -79,7 +79,7 @@ reader to re-ask, in the shape
 Three notes on filling this in.
 
 **The evidence is the issue.** A delegation issue whose reader cannot tell the server's
-words from the author's is unimplementable — `/implement-github-issue` re-verifies every
+words from the author's is unimplementable — `/implement-github-issue` *(user level)* re-verifies every
 Senzing fact before touching code, and it needs to know exactly what answer to expect.
 Quote; never paraphrase.
 
