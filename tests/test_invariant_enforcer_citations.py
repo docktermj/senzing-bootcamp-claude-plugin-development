@@ -467,7 +467,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # only, never blocking) names test_graduation_video_step.py, which cites it back and states what it does
 # NOT establish -- that a live run follows it. Re-derived by running the extractor -- 164, with the new
 # pair present by name. EXPECTED_PAIRS 163 -> 164.
-EXPECTED_PAIRS = 164
+# 165 on 2026-10-01: INV-341 (every completed module saves one aggregates-only B-roll entry) names
+# test_broll_manifest.py, which cites it back and states what it does NOT establish -- that a live run
+# writes a conforming entry. Re-derived by running the extractor -- 165, with the new pair present by
+# name. EXPECTED_PAIRS 164 -> 165.
+EXPECTED_PAIRS = 165
 
 
 def pairs():

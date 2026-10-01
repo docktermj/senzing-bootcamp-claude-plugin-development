@@ -228,7 +228,7 @@ appended (2b), that block is superseded. Do two things:
 
 The graduation video is built from `docs/video/broll.json`: one entry per completed module,
 saved here while the module's work is still in context, so graduation reads one manifest instead
-of reconstructing the bootcamp from memory. Every module that runs Step 2 runs this substep,
+of reconstructing the bootcamp from memory (INV-341). Every module that runs Step 2 runs this substep,
 Entity Resolution Concepts included. A module with nothing on screen still writes its `facts` and
 `highlight`; the video draws a title card for it.
 
@@ -278,22 +278,22 @@ Step 1 adds to `modules_completed`, and each value holds five keys:
   Discover the Business Problem, a summary of the problem they described.
 - **`captured_at`** — an ISO 8601 timestamp with its timezone offset.
 
-⛔ **No raw record values, anywhere in the entry.** Only counts, source names, field and
+⛔ **(INV-341) No raw record values, anywhere in the entry.** Only counts, source names, field and
 attribute names, and statistics. Never a name, an address, a phone number, an identifier or any
 other value from the bootcamper's records, and never an entity's or a record's content, not even
 inside `highlight` or a `statistics` label. The video is a keepsake the bootcamper is encouraged
 to share, and its module scenes are built from this file.
 
-**Re-completing a module replaces its entry.** A resumed or repeated module writes its entry
+**(INV-341) Re-completing a module replaces its entry.** A resumed or repeated module writes its entry
 under the same key, overwriting the one already there, never a second entry. A key's position
 in the file carries no meaning: `modules_completed` holds the order the modules ran.
 
-**Write it:** read `docs/video/broll.json`, set this module's key, and write the whole object
+**Write it (INV-341):** read `docs/video/broll.json`, set this module's key, and write the whole object
 back. When the file is missing, create `docs/video/` and write a new object holding this entry.
 When it does not parse as a JSON object, write a new object holding this entry in its place; do
 not try to rebuild earlier modules' entries here.
 
-⛔ **The B-roll entry never blocks module completion.** A failed read or write is not a module
+⛔ **(INV-341) The B-roll entry never blocks module completion.** A failed read or write is not a module
 failure: the module completes and the recap stands. Do it quietly, with no bootcamper-facing
 line (INV-012), and move on to Step 3.
 
