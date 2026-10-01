@@ -18,11 +18,15 @@ already answered.
 Enforces **INV-236** — the reply after a yes is composed from what the dial is actually set
 to, and never re-instructs a value the Bootcamper has moved past.
 
-⛔ The sweep is the load-bearing part. This flow is mirrored in `ground-rules.md` and
+⛔ The sweep is the load-bearing part. This flow used to be mirrored in `ground-rules.md` and
 `graduation/SKILL.md`, and fixing one copy while the other regresses is the exact shape that
 left INV-097 unimplemented for seven weeks (a criterion naming a second consumer, only the
 first built). So every file carrying a pinned switch question is held to all three shapes,
-rather than the two known files being spot-checked by name.
+rather than known files being spot-checked by name.
+
+Since #293 the flow is stated once, in `ground-rules.md`; graduation points to it and keeps only
+where its own flow resumes. The sweep stays a scan, so a copy pasted back anywhere is found and
+held to all three shapes — and `test_model_switch_rule_is_stated_once.py` fails on it outright.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -104,12 +108,15 @@ def switch_question_files():
 class EveryCopyOfTheFlowCarriesAllThreeShapes(unittest.TestCase):
     """Criterion 4 — the sweep, so one copy cannot be fixed while the other regresses."""
 
-    def test_both_known_copies_are_found(self):
+    def test_the_one_copy_is_found(self):
+        """Non-vacuity, and the count: ground-rules is the only file pinning the question.
+
+        It was two (ground-rules and graduation) until #293 replaced graduation's copy with a
+        pointer. Pinned at one: a new copy of this flow must not appear at all, and if one ever
+        must, it is brought under the sweep deliberately.
+        """
         found = switch_question_files()
-        self.assertIn(GROUND_RULES, found)
-        self.assertIn(GRADUATION, found)
-        # Pinned: a new copy of this flow must be brought under the sweep deliberately.
-        self.assertEqual(2, len(found), [str(p.relative_to(PLUGIN)) for p in found])
+        self.assertEqual([GROUND_RULES], found, [str(p.relative_to(PLUGIN)) for p in found])
 
     def test_each_copy_reads_the_dial_before_replying(self):
         for path in switch_question_files():
@@ -173,51 +180,52 @@ class TheGateIsScopedToTheShapeThatNeedsIt(unittest.TestCase):
             "the old 'a yes and nothing else' rule now contradicts shapes 2 and 3",
         )
 
-    def test_graduation_says_the_same(self):
-        self.assertRegex(
-            squashed(GRADUATION),
-            r"(?i)gate follows a \*\*yes that still needs one\*\* — shape 1 above",
-        )
+    def test_graduation_takes_the_gate_from_ground_rules(self):
+        """Graduation no longer states the gate rule; it follows ground-rules' (#293).
 
-    def test_both_say_the_gate_is_skipped_where_the_dial_is_already_set(self):
-        for path in (GROUND_RULES, GRADUATION):
-            with self.subTest(file=str(path.relative_to(PLUGIN))):
-                self.assertRegex(
-                    squashed(path),
-                    r"(?i)never in shapes 2 and 3",
-                    "nothing states that the already-set cases skip the gate, so a reader "
-                    "may keep gating and ask what the transcript answered",
-                )
+        It carried its own copy of this sentence until then. What it must keep is the pointer
+        to the one copy and where its own flow resumes on the paths that skip the gate.
+        """
+        text = squashed(GRADUATION)
+        self.assertIn('`../bootcamp-onboarding/ground-rules.md` → "Module start banners and '
+                      'transitions"', text)
+        self.assertRegex(text, r"(?i)after a yes whose dial is already set")
+
+    def test_ground_rules_says_the_gate_is_skipped_where_the_dial_is_already_set(self):
+        self.assertRegex(
+            squashed(GROUND_RULES),
+            r"(?i)never in shapes 2 and 3",
+            "nothing states that the already-set cases skip the gate, so a reader "
+            "may keep gating and ask what the transcript answered",
+        )
 
     def test_shape_1_still_ends_on_the_pinned_gate(self):
         """Criterion 1: the unchanged path stays unchanged."""
-        for path in (GROUND_RULES, GRADUATION):
-            with self.subTest(file=str(path.relative_to(PLUGIN))):
-                self.assertIn(
-                    "👉 **Are you done modifying the model and effort?** (Reply yes once "
-                    "you've set your model and effort; reply no if you need more time.)",
-                    path.read_text(encoding="utf-8"),
-                    "the pinned confirmation gate's wording moved (INV-056)",
-                )
+        self.assertIn(
+            "👉 **Are you done modifying the model and effort?** (Reply yes once "
+            "you've set your model and effort; reply no if you need more time.)",
+            GROUND_RULES.read_text(encoding="utf-8"),
+            "the pinned confirmation gate's wording moved (INV-056)",
+        )
 
     def test_the_non_cli_interface_gets_the_same_shapes(self):
         """Criterion 6: a Desktop/web/IDE bootcamper can also set it before replying."""
-        for path in (GROUND_RULES, GRADUATION):
-            with self.subTest(file=str(path.relative_to(PLUGIN))):
-                self.assertRegex(
-                    squashed(path),
-                    r"(?i)shapes 2 and 3 name the \*\*setting\*\* rather than a command",
-                )
-                self.assertIn("INV-158", path.read_text(encoding="utf-8"))
+        self.assertRegex(
+            squashed(GROUND_RULES),
+            r"(?i)shapes 2 and 3 name the \*\*setting\*\* rather than a command",
+        )
+        self.assertIn("INV-158", GROUND_RULES.read_text(encoding="utf-8"))
 
 
 class TheSwitchQuestionItselfIsUnchanged(unittest.TestCase):
     """Criterion 5 — the scope note: only the reply turn moved."""
 
     def test_the_cli_switch_question_is_still_pinned_verbatim(self):
+        """`for {this module | graduation}` since #293, so graduation still asks "…for graduation?"."""
         self.assertIn(
-            "👉 **Would you like to switch to `/model {model}` + `/effort {effort}` for this "
-            "module?** (Recommended for best value; reply no to keep your current {dial}.)",
+            "👉 **Would you like to switch to `/model {model}` + `/effort {effort}` for "
+            "{this module | graduation}?** (Recommended for best value; reply no to keep your "
+            "current {dial}.)",
             GROUND_RULES.read_text(encoding="utf-8"),
         )
 
