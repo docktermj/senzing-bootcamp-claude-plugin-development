@@ -81,76 +81,29 @@ forward is the recap PDF and the `production/` project.
 ## Best-value model/effort prompt
 
 After the preface, surface the best-value model/effort before the heavier graduation work.
-Bootcamp graduation is correctness-critical: **Opus 5 + high effort**.
+Bootcamp graduation is correctness-critical — the `production/` project's code, configuration and
+docs are what the bootcamper builds on — so its recommendation is the "Bootcamp graduation" row of
+the per-stage table in `../bootcamp-onboarding/ground-rules.md`.
 
-⛔ **This is unconditional — no preference to read, no mode to choose (INV-137).** There is no
-`model_guidance` key; do not read one, and do not honor a stale one left in an old preferences file.
+The rule itself is stated once (INV-300), in `../bootcamp-onboarding/ground-rules.md` → "Module
+start banners and transitions" (its **Best-value model/effort prompt** bullet), and graduation
+follows it exactly as every module does: whether to ask, the pinned switch question (which reads
+"…for graduation?" here), what the reply does after a yes or a no, and the confirmation gate.
+Do not restate any of it here (INV-300); a second copy is how the two drifted apart. Only what is
+specific to graduation follows.
 
-⛔ **Whether to ask is decided the same way as at any module start** — compare graduation's
-recommendation against **what the bootcamper is running right now**, not against the previous
-stage's recommendation (`../bootcamp-onboarding/ground-rules.md` → "Module start banners and
-transitions"). Bootcamp graduation shares its recommendation with Query, Visualize and Discover, so a
-bootcamper arriving on Opus 5 at high effort is **already there**: give them the one-line statement
-and go straight into Step 1. Do not assume graduation is always a step up — it is not, and asking a
-bootcamper to switch to the model they are already running is the pointless question INV-006 and
-INV-012 forbid. Name only the dial that differs — **including in the answer hint**, where `{dial}`
-resolves to "model", "effort", or "model and effort" to match the stem — and when the recommendation
-sits *below* their current setting, say so in the question itself.
+- **Where the flow resumes (INV-284).** Wherever ground-rules says to present "Step 1", graduation
+  runs the Pre-checks and then its first step, Step 0 — not graduation's own Step 1. That holds on
+  every path: on the turn after the bootcamper confirms the switch, and in the same turn after a no,
+  after a yes whose dial is already set, or when no switch question was asked. The turn ends on the
+  next single 👉 question, as ground-rules says.
+- **Usually there is nothing to ask.** Bootcamp graduation shares its recommendation with Query,
+  Visualize and Discover, so a bootcamper arriving on it is usually **already there**: they get the
+  one-line statement and go straight into the Pre-checks and Step 0, and are not asked. Do not assume
+  graduation is always a step up — it is not, and asking a bootcamper to switch to the model they are
+  already running is the pointless question INV-006 and INV-012 forbid.
 
-When it **does** differ, end this turn with a single 👉 yes/no question — its own turn, not combined
-with another 👉:
-
-On the **Claude Code CLI**, pin the switch question verbatim:
-
-> 👉 **Would you like to switch to `/model opus` + `/effort high` for graduation?** (Recommended for best value; reply no to keep your current {dial}.)
-
-In **Claude Desktop, the Claude web app, or a Claude IDE extension** (or an unknown interface), pin
-the intent-based equivalent (INV-098), naming the one interface the bootcamper is on — "in your
-Claude interface" only when it cannot be determined (INV-158):
-
-> 👉 **Would you like to switch to Opus 5 at high reasoning effort for graduation?** (Recommended for best value; set it with the model and effort controls in {Claude Desktop | the Claude web app | your Claude IDE extension}; reply no to keep your current {dial}.)
-
-The switch question ends this turn. **On yes, read what the dial is actually set to before you
-compose the reply** (INV-236) — the question hands the bootcamper a command, so many will run it in
-the same turn as their yes, which is the natural response to being shown a command rather than an
-edge case. Three shapes, decided by the live setting rather than by the yes alone:
-
-1. **The dial is not yet set** — preface the reply turn with a one-line statement telling the
-   bootcamper how to make the change (run the `/model`/`/effort` commands in the Claude Code CLI, or
-   use the model and reasoning-effort controls in Claude Desktop / the Claude web app / their Claude
-   IDE extension), then end the turn on this pinned confirmation gate (its question verbatim,
-   INV-056/INV-069 — only the answer hint adapts) — do NOT start the graduation work yet:
-
-   > 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
-
-   Run the Pre-checks and the first graduation step on the turn **after** the bootcamper confirms; if
-   they need more time, acknowledge and wait, then continue — do not re-ask this gate (ask-once,
-   INV-006).
-
-2. **The dial is already at the recommended value** — acknowledge it rather than instructing it
-   ("You're on `/effort high` already: that's graduation's recommendation."), then run the Pre-checks
-   and the first step **in the same turn**, with no confirmation gate. Nothing is left to confirm
-   (INV-006/INV-012).
-
-3. **The dial is already at a different value** — state what is in force and leave it there:
-   "You're on `/effort xhigh`; graduation recommends `high`, and running higher is fine — it simply
-   costs more, nothing else." Then run the Pre-checks and the first step in the same turn. ⛔ **Never
-   re-instruct the recommended command once the bootcamper has set a different value** — they
-   answered with an action, and the table is a recommended floor, not a ceiling.
-
-In a non-CLI interface, shapes 2 and 3 name the **setting** rather than a command — "you're already
-on Opus 5 at high reasoning effort" (INV-158).
-
-On **no**, continue straight into the graduation work the same reply turn: run the Pre-checks and
-proceed to the first step, ending that turn on its own 👉 question.
-
-⛔ The confirmation gate follows a **yes that still needs one** — shape 1 above — and nothing else.
-Never after a decline; never when no switch question was asked because the recommendation already
-matched; and never in shapes 2 and 3, where the bootcamper has already set the dial and the gate
-would ask what the transcript has answered. In all of those cases the one-line statement is followed
-straight by the Pre-checks and the first step, in the same turn. You never change the session
-yourself; only the bootcamper can, which is why the switch is offered as a question rather than
-performed. See `../../docs/model-selection.md`.
+See `../../docs/model-selection.md`.
 
 ## Pre-checks
 

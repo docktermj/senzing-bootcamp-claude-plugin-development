@@ -105,11 +105,20 @@ class TheNudgeNamesEveryInterfaceItAdaptsTo(unittest.TestCase):
             with self.subTest(interface=name):
                 self.assertIn(name, text)
 
-    def test_graduation_names_all_four(self):
+    def test_graduation_takes_the_interface_wording_from_ground_rules(self):
+        """Graduation's nudge is ground-rules' nudge since #293, so the four names live there.
+
+        Graduation carried its own copy of the switch question and its interface-adapted
+        wording until then, and this test required that copy to name all four interfaces.
+        It now points to ground-rules instead, and `test_ground_rules_names_all_four` holds
+        the one copy to the same requirement. What is asserted here is that graduation did
+        not fork the interface wording back in, and that its pointer reaches the copy that
+        names them.
+        """
         text = flat(GRADUATION)
-        for name in (CLI, DESKTOP, WEB, IDE):
-            with self.subTest(interface=name):
-                self.assertIn(name, text)
+        self.assertNotIn("Would you like to switch to", text)
+        self.assertIn('`../bootcamp-onboarding/ground-rules.md` → "Module start banners and '
+                      'transitions"', text)
 
     def test_the_model_table_note_names_the_cli_by_its_full_name(self):
         """Both copies of the table carry the note; INV-114 keeps them in sync."""

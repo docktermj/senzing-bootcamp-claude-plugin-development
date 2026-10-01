@@ -1025,13 +1025,13 @@ the 👉 protocol above).
     On the **Claude Code CLI**, pin the switch question verbatim, substituting only the bracketed
     values — the stage's commands, just the one dial when only one differs, and `{dial}` to match:
 
-    > 👉 **Would you like to switch to `/model {model}` + `/effort {effort}` for this module?** (Recommended for best value; reply no to keep your current {dial}.)
+    > 👉 **Would you like to switch to `/model {model}` + `/effort {effort}` for {this module | graduation}?** (Recommended for best value; reply no to keep your current {dial}.)
 
     In **Claude Desktop, the Claude web app, or a Claude IDE extension** (or an unknown interface),
     pin the intent-based equivalent — name the stage's recommended model and effort, and do NOT
     present CLI commands as the only instruction:
 
-    > 👉 **Would you like to switch to {Model} at {effort} reasoning effort for this module?** (Recommended for best value; set it with the model and effort controls in {Claude Desktop | the Claude web app | your Claude IDE extension}; reply no to keep your current {dial}.)
+    > 👉 **Would you like to switch to {Model} at {effort} reasoning effort for {this module | graduation}?** (Recommended for best value; set it with the model and effort controls in {Claude Desktop | the Claude web app | your Claude IDE extension}; reply no to keep your current {dial}.)
 
     Substitute the one interface the bootcamper is actually on. When the interface cannot be
     determined, say "in your Claude interface" — vague only where the plugin genuinely does not

@@ -17,7 +17,10 @@ switch flow asks the bootcamper to run `/effort`, whose result lands in the tran
 (`specs/effort-above-every-recommendation-triggers-a-step-down-question-every-module.md`)
 
 Both live in prose, so they are pinned as requirements on that prose — in **every** file that
-carries the pinned question, which is what makes graduation in scope alongside the ground rules.
+carries the pinned question. That made graduation in scope alongside the ground rules until #293,
+which replaced graduation's copy with a pointer: `ground-rules.md` is now the only pinning file,
+and `test_model_switch_rule_is_stated_once.py` fails if another one appears. The scan below still
+derives the set, so a copy pasted back is held to these checks too.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -28,7 +31,6 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 GROUND_RULES = PLUGIN / "skills" / "bootcamp-onboarding" / "ground-rules.md"
-GRADUATION = PLUGIN / "skills" / "graduation" / "SKILL.md"
 MODEL_SELECTION = PLUGIN / "docs" / "model-selection.md"
 
 #: A pinned switch question: the 👉 form the bootcamper is asked, not a recap transcript
@@ -36,10 +38,10 @@ MODEL_SELECTION = PLUGIN / "docs" / "model-selection.md"
 #: example recap) and not prose describing one.
 PINNED_SWITCH = re.compile("\U0001F449" + r"\s*\*\*Would you like to switch to")
 
-#: Known pinning files when this derivation was written — a non-vacuity FLOOR, not the site
-#: set. The scan below decides what is checked (INV-246); this only stops a broken pattern
-#: degrading the guard to silence.
-KNOWN_PINNING_FILES = (GROUND_RULES, GRADUATION)
+#: Known pinning files — a non-vacuity FLOOR, not the site set. The scan below decides what is
+#: checked (INV-246); this only stops a broken pattern degrading the guard to silence. It named
+#: graduation too until #293 made ground-rules the one copy.
+KNOWN_PINNING_FILES = (GROUND_RULES,)
 
 
 def pinning_files():

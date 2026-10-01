@@ -46,6 +46,11 @@ when it is absent and supplies the `@requires_fpdf2` guard; see `docs/developmen
   time budget and its rescaling over the modules taken, the example storyboard validating
   through the renderer and ending on the certificate and the tag line, the no-raw-values rule,
   the non-blocking fallbacks for exit codes 1–3, and the duration, frame and audio checks.
+- `test_model_switch_rule_is_stated_once.py` — the model/effort switch rule is stated once, in
+  `ground-rules.md`: a scan of every shipped Markdown file finds the pinned switch question and
+  the pinned "Are you done modifying the model and effort?" gate there and nowhere else;
+  graduation keeps only its pointer, resume point, shared-recommendation note and rationale,
+  and restates no model or effort value. Negative controls paste a copy back and see it reported.
 - `test_brand_sync.py` — asserts the inlined fallback palettes in
   `senzing_viz_server.py` and `generate_recap_pdf.py` stay equal to
   `brand_tokens.py`, so the hand-maintained copies cannot drift silently.

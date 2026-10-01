@@ -20,7 +20,9 @@ surviving in a file nobody thought to check. What must hold now:
 
 1. The capture question exists **nowhere**.
 2. No shipped skill instructs the guide to read, honor or persist `model_guidance`.
-3. The done-modifying gate lives in exactly two files and is scoped to **no** mode.
+3. The done-modifying gate lives in exactly one file, `ground-rules.md`, and is scoped to
+   **no** mode. (Two files until #293: graduation carried its own copy, and now points to
+   ground-rules instead.)
 4. The requirements INV-137 explicitly retains from INV-120 — separate dials,
    changeable at any time, a below-current recommendation flagged as a downgrade —
    still appear. The downgrade flagging now applies to **both** branches: the pause
@@ -177,19 +179,24 @@ class TestNoFileTreatsThePreferenceAsLive(unittest.TestCase):
 class TestTheUnconditionalFlowIsIntact(unittest.TestCase):
     """The behavior INV-137 restores must actually be described."""
 
-    def test_both_nudge_readers_carry_the_switch_question(self):
-        for path in (GROUND_RULES, GRADUATION):
-            with self.subTest(path=os.path.basename(path)):
-                self.assertIn(SWITCH_QUESTION, read(path))
+    def test_ground_rules_carries_the_switch_question(self):
+        self.assertIn(SWITCH_QUESTION, read(GROUND_RULES))
 
-    def test_the_gate_lives_in_exactly_the_two_nudge_skills(self):
-        expected = {os.path.abspath(GROUND_RULES), os.path.abspath(GRADUATION)}
+    def test_graduation_points_to_it_instead_of_copying_it(self):
+        """Graduation reads the nudge through ground-rules since #293."""
+        text = flat(GRADUATION)
+        self.assertNotIn(SWITCH_QUESTION, text)
+        self.assertIn('`../bootcamp-onboarding/ground-rules.md` → "Module start banners and '
+                      'transitions"', text)
+
+    def test_the_gate_lives_only_in_ground_rules(self):
+        expected = {os.path.abspath(GROUND_RULES)}
         found = {os.path.abspath(p) for p in skill_markdown() if DONE_GATE in read(p)}
         self.assertEqual(
             expected,
             found,
-            "the done-modifying gate must live only in ground-rules.md and "
-            "graduation/SKILL.md",
+            "the done-modifying gate must live only in ground-rules.md; graduation and "
+            "every other skill point to it (#293)",
         )
 
     def test_the_gate_follows_a_yes_and_nothing_else(self):
@@ -202,20 +209,18 @@ class TestTheUnconditionalFlowIsIntact(unittest.TestCase):
         in **both** halves rather than one — the gate never follows a decline, and never
         follows a yes whose dial is already set.
         """
-        for path in (GROUND_RULES, GRADUATION):
-            with self.subTest(path=os.path.basename(path)):
-                text = read(path)
-                self.assertRegex(
-                    text,
-                    r"follows a \*\*yes that still needs one\*\*",
-                    "each nudge reader must state which yes the confirmation gate follows "
-                    "(INV-137/INV-236)",
-                )
-                self.assertRegex(
-                    text,
-                    r"(?i)never after a\s+decline",
-                    "the gate must never follow a decline (INV-137)",
-                )
+        text = read(GROUND_RULES)
+        self.assertRegex(
+            text,
+            r"follows a \*\*yes that still needs one\*\*",
+            "ground-rules must state which yes the confirmation gate follows "
+            "(INV-137/INV-236)",
+        )
+        self.assertRegex(
+            text,
+            r"(?i)never after a\s+decline",
+            "the gate must never follow a decline (INV-137)",
+        )
 
     def test_ground_rules_states_it_is_unconditional(self):
         self.assertRegex(
@@ -252,15 +257,14 @@ class TestTheTriggerIsTheCurrentSetting(unittest.TestCase):
     asking (INV-006, INV-012).
     """
 
-    def test_both_nudge_readers_compare_against_the_current_setting(self):
-        for path in (GROUND_RULES, GRADUATION):
-            with self.subTest(path=os.path.basename(path)):
-                self.assertRegex(
-                    flat(path),
-                    r"running right now|currently running|what the bootcamper is running",
-                    "the nudge must compare the recommendation against what the "
-                    "Bootcamper is running, not against the previous stage",
-                )
+    def test_the_nudge_compares_against_the_current_setting(self):
+        """Stated once, in ground-rules; graduation follows it there (#293)."""
+        self.assertRegex(
+            flat(GROUND_RULES),
+            r"running right now|currently running|what the bootcamper is running",
+            "the nudge must compare the recommendation against what the "
+            "Bootcamper is running, not against the previous stage",
+        )
 
     def test_the_previous_stage_is_only_a_fallback(self):
         """The fallback is now scoped PER DIAL, not to "the current setting" as a whole.
