@@ -16,10 +16,11 @@ this and strips the sign from **both** sides; the loop's copy never got that fix
 are gone because the view asks each line's own file whether an invariant is cited at it, rather
 than matching one report's rendered text against another's.
 
-⛔ **The fix is NOT to widen `per-rule`.** Its corpus carries ~165 restatement lines under the
-maintainer surface — command files restate the rules of the skills they front, by design — and
-adding them to a worklist whose own skill warns these are leads would bury the real ones. What
-was wrong is a check spanning two corpora *silently*.
+⛔ **The fix is NOT to widen `per-rule`.** Its corpus carried ~165 restatement lines under the
+maintainer surface — the command files restated the rules of the skills they fronted, by
+design, until #262 removed them — and adding them to a worklist whose own skill warns these
+are leads would have buried the real ones. What was wrong is a check spanning two corpora
+*silently*.
 
 ⚠️ **The untested count carries a citation rate (#83), and the rate is not a verdict.** With the
 span untested by construction, `NOT CLEAN` became the ordinary result for maintainer-surface work

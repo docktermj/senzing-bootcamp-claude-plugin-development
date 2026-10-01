@@ -18,8 +18,8 @@ contract forbids":
   edited or closed but never un-filed.
 * **Unattended** — ⛔ **file nothing.** `gh issue create` **leaves the machine**, and an
   unattended run creates only the records listed for the issue it is working (INV-314's
-  pending scope note, #216); a new issue is not one of them. The finding goes into the dated
-  ledger entry and the handoff, marked *not filed*.
+  scope note, applied 2026-09-30, #216); a new issue is not one of them. The finding goes
+  into the dated ledger entry and the handoff, marked *not filed*.
 
 ⚠️ **A later editor will reasonably want to collapse those two branches into one.** The
 assertions below pin both, so collapsing them fails rather than quietly re-arming an

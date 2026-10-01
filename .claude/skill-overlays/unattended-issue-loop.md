@@ -28,9 +28,9 @@ that overlay describes. Its `.github/workflows/*.yaml` extension applies here to
 ## What an unattended run may create
 
 ⛔ **An unattended run creates only the records on this list, and only on the issue it is
-working** (INV-314; scope note pending at `/review-invariants`, #216). INV-314's registered
-text still says *create nothing*; the pending note makes the maintainer's `unattended-ok`
-label assent, given in advance, to exactly these acts on that issue:
+working** (INV-314, as amended by its 2026-09-30 scope note, #216). Under that note, the
+maintainer's `unattended-ok` label is assent, given in advance, to exactly these acts on that
+issue:
 
 1. the four `/implement-github-issue` log comments (Started, Clarifications, Approach, Result);
 2. one blocked comment, plus removing `unattended-ok`;

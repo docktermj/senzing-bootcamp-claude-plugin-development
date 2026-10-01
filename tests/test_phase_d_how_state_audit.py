@@ -403,7 +403,7 @@ class TheResultsDocumentRecordsTheCount(unittest.TestCase):
         )
         self.assertIn(
             'including zero: write "0 unsettled" rather than omitting the section', self.body,
-            "#154's pending DEFERRED INVARIANT block quotes this rule verbatim; #232 keeps it",
+            "#154's DEFERRED INVARIANT block, resolved as INV-334, quotes this rule verbatim",
         )
 
     def test_flagged_record_counts_are_marked_unconfirmed(self):
@@ -447,7 +447,7 @@ class AnEmptyPopulationIsNothingToCheck(unittest.TestCase):
         self.assertTrue(paragraph_from(section(self.text, GATE_HEADING), GATE_LINE))
 
     def test_the_quoted_rules_survive(self):
-        """#154's pending DEFERRED INVARIANT block quotes these three verbatim."""
+        """#154's DEFERRED INVARIANT block, resolved as INV-334, quotes these three verbatim."""
         body = flat(section(self.text, AUDIT_HEADING))
         for rule in ('Never report "no finding" unless N equals M',
                      "The outcome never blocks", INCLUDING_ZERO):
