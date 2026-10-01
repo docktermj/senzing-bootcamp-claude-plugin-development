@@ -233,6 +233,11 @@ VERIFIED_QUERIES = {
         "declare FEATURES required",
     # Executed 2026-08-17 on server 1.32.9 (docs index 2026-08-11 20:52 UTC), later than
     # VERIFIED_ON above, which records the date the bulk of this allowlist was measured.
+    # Re-run 2026-10-01 on server 1.37.16 (docs index 2026-09-29 22:00 UTC, #322): still
+    # returns no section stating the consequence -- that a root-level key named after a
+    # registered feature attribute is extracted as a feature. The prohibition itself is now
+    # cited to mapping_workflow step 2, so the marker's claim was rescoped to the consequence
+    # and this query string was deliberately left unchanged.
     "payload attribute versus registered feature attribute record root extracted as feature precedence":
         "ADJACENT, AND DELIBERATELY SO: Senzing Entity Specification -> 'Payload attributes "
         "(optional)' (57.9), 'Attributes for the record key' (49.8), 'Mapping identifiers' "
