@@ -43,6 +43,18 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-10-01b
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one review session, the second that day)
+- **Commit:** `f4c3f95`
+- **Files changed:** `specs/INVARIANTS.md`, `specs/IMPLEMENTED.md`, `invariant-manifest.json`
+- **MCP re-check:** n/a (no Senzing fact)
+- **Summary:** one block was pending, and it was decided; the held set is unchanged at 4.
+  - **Amendment applied:** **INV-317** (#285): a dated note records that #262 removed the command files, so the rule ships in `/dry-run`'s skill and phase 3 and in `/production-readiness-audit`'s Step 8 and Step 9, and that `SAME_WORDS` pins the lifecycle words in `/dry-run`'s skill alone. No requirement changes; both claims were checked against the tree before applying (no `.claude/commands/`; the enforcer reads `dry-run/SKILL.md` only).
+  - **Still held, conditions not met:** the license-reading, #164 Phase C, census-detector and machine-portability blocks.
+- **Verification:** see the diff's verification run: `citations.py verify`, `invariant_manifest.py --check`, the invariant guards, and both CI legs in a clean worktree.
+- **Establishes no invariant of its own.**
+
 ## skills-and-overlays-name-only-real-commands
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #296. Begun 2026-09-30 and blocked before commit; resumed 2026-10-01 on a fresh `296-docktermj-1` after the maintainer allowed one requote)
@@ -73,7 +85,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - **One requote in another entry, allowed by the maintainer** ([#285 comment](https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/issues/285#issuecomment-5932634402), 2026-10-01). The resolved INV-317 block in `maintainer-surface-hard-rules-are-cited-or-deferred` quoted Step 9's old sentence, so `tests/test_deferral_quotes_match_their_source.py` failed once Step 9 changed. That one bullet's bold span now quotes the new Step 9 sentence, with a dated "Requoted 2026-10-01 (#285), not reworded away" note in the form #259 used. No other entry is edited.
   - `tests/test_audit_files_issues_not_specs.py`: `test_the_prohibition_is_stated` matches the new Step 8 wording through a module constant, `PROHIBITION`. A new in-suite negative control, `test_the_prohibition_check_fails_without_it`, removes Step 8's sentence from the text and requires the check to stop matching. By hand, putting the old wording back into the skill fails both tests. No test pins Step 9's wording, as the issue scopes it: INV-317's enforcer "cannot establish the audit's wording".
 - **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` was not run locally: it is a remote reusable workflow, and no workflow file changed.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-317 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-317 — applied 2026-10-01.** The clause the note bears on, as registered:
     - ⛔ **It ships today in `/dry-run` (its command, skill and phase 3) and in `/production-readiness-audit` (its command and Step 8, which says to follow dry-run's discipline).** — in `specs/INVARIANTS.md`
 
   INV-317 lists the sites the rule ships in, and two of them are command files that #262 deleted. `.claude/commands/` no longer exists. The list also leaves out Step 9 of the audit skill, which carries a ⛔ INV-317 line (`:469`). The enforcer sentence says `SAME_WORDS` pins the lifecycle words "in `/dry-run`'s command and skill", and `tests/test_dry_run_files_issues.py`'s `TheSkillSaysItInTheSameWords` now reads the skill alone. No requirement changes. **Sites it affects:** INV-317 in `specs/INVARIANTS.md` and its `invariant-manifest.json` statement. The sites the note names, all checked on this branch: `.claude/skills/dry-run/SKILL.md` (`:197`, `:309`, `:333`), `.claude/skills/dry-run/phase3-conversational.md` (`:279`) and `.claude/skills/production-readiness-audit/SKILL.md` (Step 8 `:406`, Step 9 `:469`). Enforced by `tests/test_dry_run_files_issues.py`. Amending a registered invariant is the maintainer's sign-off alone, so `specs/INVARIANTS.md` is untouched. The block carries both markers, as #241's INV-318 and INV-319 blocks did. Applying it resolves the block: mark the bullet `applied YYYY-MM-DD` and drop both "awaiting" markers.
