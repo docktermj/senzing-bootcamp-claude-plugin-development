@@ -176,7 +176,8 @@ def problems_in_the_5a_gate(text):
         out.append("step 5a does not withhold the offer on one or more candidates")
     if not re.search(r"\(INV-198\) One or more candidates", flat):
         out.append("the no-fast-path rule does not cite INV-198 at its line")
-    sub5 = between(flat, "5. If structurally loadable AND fully mapped", "👉 Your CORD source") or ""
+    sub5 = between(flat, "5. If structurally loadable, fully mapped AND free of type/name candidates",
+                   "👉 Your CORD source") or ""
     if not re.search(r"zero type/name candidates", sub5):
         out.append("the offer (sub-step 5) is not gated on zero candidates")
     sub6 = between(flat, "6. If structurally loadable but NOT fully mapped", "7. If NOT") or ""

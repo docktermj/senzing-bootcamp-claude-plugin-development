@@ -106,9 +106,11 @@ class BothQuestionsAreAsked(unittest.TestCase):
 
 
 class TheOfferIsNotGatedOnStructureAlone(unittest.TestCase):
-    def test_the_offer_requires_both_results(self):
+    def test_the_offer_requires_all_three_results(self):
+        """The heading names every gate: structure, coverage, and (#292, INV-335) type/name."""
         self.assertIn(
-            "**If structurally loadable AND fully mapped: present the fast-path offer.**",
+            "**If structurally loadable, fully mapped AND free of type/name candidates: "
+            "present the fast-path offer.**",
             step_5a(),
         )
 

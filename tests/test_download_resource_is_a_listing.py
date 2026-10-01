@@ -84,8 +84,11 @@ NAMES_THE_CONSEQUENCE = re.compile(
     r"(?i)not the (?:document|scripts|specification)|no content|second fetch"
     r"|fetch(?:ing)? (?:each|its|the) `?url"
 )
-#: Or the site simply points at the one place that states it for all three tools.
-CITES_CENTRAL = re.compile(r"(?i)ground-rules\.md.{0,40}Working examples")
+#: Or the site simply points at the one place that states it for all three tools: the
+#: `ground-rules.md` bullet "Three tools answer with a listing…". Only that section name
+#: counts (#292). "Working examples" is a different bullet, the `find_examples` search-mode
+#: rule, and four Module 5 pointers once sent the reader there for the listing rule.
+CITES_CENTRAL = re.compile(r"(?i)ground-rules\.md.{0,40}Three tools answer with a listing")
 
 
 def accounted_for(window):
@@ -135,8 +138,19 @@ class EveryCallSiteAccountsForTheListing(unittest.TestCase):
                     accounted_for(window),
                     "a download_resource( call in %s neither states the URL-listing shape "
                     "(a listing, and what that means for the caller) nor cites "
-                    "ground-rules.md -> 'Working examples'" % rel,
+                    "ground-rules.md -> 'Three tools answer with a listing'" % rel,
                 )
+
+    def test_a_working_examples_pointer_does_not_count_as_citing_the_central_rule(self):
+        """#292: "Working examples" is the `find_examples` search-mode bullet, not this rule."""
+        self.assertIsNone(CITES_CENTRAL.search(
+            '`ground-rules.md` → "Working examples" states the rule once for all three'))
+        self.assertIsNotNone(CITES_CENTRAL.search(
+            '`ground-rules.md` → "Three tools answer with a listing" states the rule once'))
+
+    def test_the_cited_section_name_exists_in_ground_rules(self):
+        """A pointer to a heading that was renamed away would cite nothing."""
+        self.assertIn("**Three tools answer with a listing", GROUND_RULES.read_text(encoding="utf-8"))
 
 
 class Phase1DescribesTheTwoStepRetrieval(unittest.TestCase):

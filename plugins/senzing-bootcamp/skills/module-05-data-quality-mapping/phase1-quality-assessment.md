@@ -63,8 +63,8 @@ call returns `mode: "url"` and a `resources` array whose entry carries `filename
 a `url` — and **no content**. There is nothing in the response to "save", so a guide that writes the
 response itself to the canonical path leaves Steps 4, 5, 5a and 6 reading attribute names out of a
 file that has none — and because a file still exists at the expected path, the failure is silent.
-`download_resource` is the third MCP tool with this shape; `ground-rules.md` → "Working examples"
-states the rule once for all three (INV-234).
+`download_resource` is the third MCP tool with this shape; `ground-rules.md` → "Three tools answer
+with a listing" states the rule once for all three (INV-234).
 
 **Retrieve it in two steps:**
 
@@ -107,8 +107,8 @@ so passing it there is a call that cannot work. The difference is not about the 
 about what each tool's schema declares (INV-136).
 
 ⛔ **(INV-234) The inline reply carries the file in bounded chunks, not in one response, so put it back together before Step 4 reads it.**
-The reply's shape is stated once in `ground-rules.md` → "Working examples" (INV-300); this is the
-one step that assembles a file from it:
+The reply's shape is stated once in `ground-rules.md` → "Three tools answer with a listing"
+(INV-300); this is the one step that assembles a file from it:
 
 1. Call `download_resource(filename="senzing_entity_specification.md", inline=true)`. Request the
    file on its own, with `filename`: a batch (`filenames`) leaves out a file too large for one
@@ -182,9 +182,9 @@ compliant attribute names.)
 - **Entity Specification-compliant:** Data already uses attribute names and structures that
   match the Entity Specification. CORD sources (the already-Senzing-ready fast-path class) are
   **eligible to be considered** for the fast-path (Step 5a, offered only for `provenance: cord`);
-  Step 5a decides, and it offers the skip only when the source is both structurally loadable
-  **and** fully mapped (INV-198) — a CORD source carrying fields that resolve to no specification attribute
-  goes through mapping like any other. Do not route a source past mapping from this
+  Step 5a decides, and its sub-step 5 is the one statement of the conditions the skip is offered
+  on (INV-300) — a CORD source carrying fields that resolve to no specification attribute
+  goes through mapping like any other (INV-198). Do not route a source past mapping from this
   categorization; that is Step 5a's call. Other compliant sources, including non-CORD data that
   looks Senzing-ready, continue to Phase 2, which confirms compliance and records lineage before
   loading.
@@ -239,7 +239,8 @@ obtained via the `get_sample_data` MCP tool in Module 4):
 
    ⛔ **This is the entry condition, not the fast-path condition.** Structurally loadable means the
    engine will accept the record; it does not mean every field in it has been decided about. Step 3
-   below answers that second question, and the offer in step 5 is gated on **both**. Classifying a
+   below answers that second question, and the offer in step 5 is gated on this check **and** on
+   two more: step 3 (fully mapped) and step 3a (zero type/name candidates). Classifying a
    partially-mapped source as ready on this test alone is what let a source with eleven
    undispositioned columns skip the module (see step 3).
 
@@ -373,10 +374,10 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    `senzing_ready`, read it as `senzing_loadable` and treat `fully_mapped` as unknown — re-run
    step 3 rather than inferring it, since the old field never measured coverage.)*
 
-5. **If structurally loadable AND fully mapped: present the fast-path offer.** It is offered only
-   when sub-step 3a also found **zero** type/name candidates; a source with one or more goes to
-   sub-step 6. State the coverage figure, so skipping is an informed choice rather than a silent
-   default:
+5. **If structurally loadable, fully mapped AND free of type/name candidates: present the fast-path offer.**
+   It is offered only when sub-step 3a also found **zero** type/name candidates; a source with one
+   or more goes to sub-step 6. State the coverage figure, so skipping is an informed choice rather
+   than a silent default:
 
    👉 **Your CORD source [SOURCE_NAME] is already in Senzing-loadable form, and all [N] of its fields resolve to the Senzing Entity Specification — there is nothing left to map. Would you like to skip the mapping phase and proceed directly to loading in the Data processing module?**
 
@@ -459,7 +460,7 @@ transformations:
     records_rejected: 0
     quality_score: null  # Quality assessment skipped
     fast_pathed: true
-    fast_path_reason: "CORD source structurally loadable and fully mapped: no unrecognized fields"
+    fast_path_reason: "CORD source structurally loadable, fully mapped (no unrecognized fields) and with zero type/name candidates"
 ```
 
 **Invariants:** every fast-path lineage entry MUST satisfy: `source_file == output_file` (the
