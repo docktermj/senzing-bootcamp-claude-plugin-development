@@ -178,6 +178,7 @@ These hold at the boundaries of every module.
   ├── data/                              # All data artifacts
   │   ├── raw/                           # Source data as received
   │   ├── senzing-ready/                 # Senzing-mapped JSONL output
+  │   ├── subsets/                       # License- or volume-capped load subsets (Module 6; not copied at graduation)
   │   ├── mapping/                       # Mapping working data (specs, samples, intermediates)
   │   ├── samples/                       # Sample fixtures
   │   ├── temp/                          # Scratch/intermediate working files
@@ -264,6 +265,13 @@ These hold at the boundaries of every module.
   (`module-05-data-quality-mapping/phase2-data-mapping.md`). `src/utils/` is named only by
   graduation's copy table, which copies it if present (`graduation/SKILL.md`). Both stay in the
   tree, per INV-202.)
+
+  (⚠️ **Dated clarification, 2026-09-30 (#286): `data/subsets/` is added to the tree; no meaning change.**
+  Module 6 writes each license-cap or SQLite-volume subset file there
+  (`module-06-data-processing/phaseB-load-first-source.md` → "The subset record"), and Phase C
+  loads the remaining sources' subsets from it. The directory was already produced; only the
+  tree omitted it. A subset is the evaluation's capped slice, not the data production loads, so
+  graduation excludes it (`graduation/SKILL.md` → **Exclude**).)
 
 ## Invariants added from implemented specs
 
