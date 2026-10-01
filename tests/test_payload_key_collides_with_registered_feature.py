@@ -3,7 +3,8 @@
 MCP-NEGATIVE-SCAN: ignore-file — this file asserts the marker FORMAT (that the shipped
 marker names its owning route and carries a server version and date). The token below is a
 `startswith` needle in a test body, not a dated claim about the current server, and the
-scanner would otherwise report it as a malformed marker.
+scanner would otherwise report it as a malformed marker. Since #323 the needle finds the
+marker inside its `<!-- … -->` wrapper.
 
 A Bootcamper was asked how to route a field and answered **payload**. The mapper kept the
 key under its own name at the record root — where that name is a *registered feature
@@ -47,6 +48,25 @@ PHASE3 = MODULE5 / "phase3-test-load.md"
 
 def flat(path):
     return " ".join(path.read_text(encoding="utf-8").split())
+
+
+def collision_markers():
+    """`(raw line, marker text)` for each wrapped marker whose claim is this collision.
+
+    #323 — the marker is a single-line HTML comment, `<!-- MCP-NEGATIVE: … -->`, so it is
+    found inside its wrapper and returned without it. The file also carries an unrelated
+    wrapped marker (step 2's `embedded_in` key), so the collision marker is the one whose
+    claim, before ` — owner: `, names a registered feature attribute.
+    """
+    opener, closer = "<!-- ", " -->"
+    found = []
+    for line in PHASE2.read_text(encoding="utf-8").splitlines():
+        raw = line.strip()
+        if raw.startswith(opener + "MCP-NEGATIVE:") and raw.endswith(closer):
+            marker = raw[len(opener):-len(closer)]
+            if "registered feature attribute" in marker.partition(" — owner: ")[0]:
+                found.append((raw, marker))
+    return found
 
 
 class TheCollisionIsCaughtAtTheMappingGate(unittest.TestCase):
@@ -133,14 +153,23 @@ class ThePrecedenceMechanismIsMarkedObservationOnly(unittest.TestCase):
         self.assertIn("re-confirm before relying on it", flat(PHASE2))
 
     def test_the_absence_carries_a_well_formed_negative_marker(self):
-        """INV-194 — a negative with no owning route does not parse and is not evidence."""
-        lines = [l for l in PHASE2.read_text(encoding="utf-8").splitlines()
-                 if l.startswith("MCP-NEGATIVE:")]
+        """INV-194 — a negative with no owning route does not parse and is not evidence.
+
+        #323 — rescoped to the wrapped form: the marker is an HTML comment, so the date is
+        anchored before the closing ` -->` rather than at the end of the line.
+        """
+        lines = collision_markers()
         self.assertEqual(1, len(lines), "expected exactly one marker in this file")
-        marker = lines[0]
+        raw, marker = lines[0]
         self.assertIn("owner:", marker, "the marker names no owning route")
         self.assertIn("absence negative", marker)
-        self.assertRegex(marker, r"server \d+\.\d+\.\d+, \d{4}-\d{2}-\d{2}$")
+        self.assertRegex(raw, r"server \d+\.\d+\.\d+, \d{4}-\d{2}-\d{2} -->$")
+
+    def test_the_marker_is_not_left_as_bare_prose(self):
+        """#323 — dated maintainer metadata must not render inside the skill."""
+        bare = [n for n, l in enumerate(PHASE2.read_text(encoding="utf-8").splitlines(), 1)
+                if l.lstrip().startswith("MCP-NEGATIVE:")]
+        self.assertEqual([], bare, "a bare MCP-NEGATIVE marker renders as body text")
 
     def test_the_rule_is_not_claimed_as_documented(self):
         """#322 — rescoped: the prohibition is cited to its route; the consequence is not.
@@ -163,10 +192,9 @@ class ThePrecedenceMechanismIsMarkedObservationOnly(unittest.TestCase):
 
     def test_the_marker_is_rescoped_to_the_consequence(self):
         """#322 / INV-213 — the claim is the consequence; the owner names both routes."""
-        lines = [l for l in PHASE2.read_text(encoding="utf-8").splitlines()
-                 if l.startswith("MCP-NEGATIVE:")]
+        lines = collision_markers()
         self.assertEqual(1, len(lines), "expected exactly one marker in this file")
-        marker = lines[0]
+        _, marker = lines[0]
         self.assertTrue(marker.startswith(
             "MCP-NEGATIVE: search_docs(query='payload attribute versus registered feature "
             "attribute record root extracted as feature precedence', "

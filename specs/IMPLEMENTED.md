@@ -43,6 +43,53 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## mcp-negative-markers-in-shipped-markdown-are-html-comments
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #323; `/dry-run` 2026-10-01 finding P1-2)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `tests/test_payload_key_collides_with_registered_feature.py`, `tests/test_sdk_setup_prerequisites.py`, `tests/test_shipped_negative_markers_are_html_comments.py` (new), `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** n/a (no Senzing fact), 2026-10-01, no tool called — re-confirmed, not assumed. The change adds `<!-- ` before and ` -->` after two existing marker lines and changes no character of either marker's claim, `owner:` clause, server version or date (`git diff --word-diff` shows only the two wrappers). `coverage_reports.py negatives` prints byte-identical output before and after the wrap, so the dry-run worklist that re-asks both claims is unchanged. The test edits assert marker format and placement only. No absence claim is made, so no `owner-checked:` is owed. Nothing was sent upstream: the finding is `plugin`-routed and the issue says `Upstream: not applicable`.
+- **Approach:** direct (Phase 5a), as the issue scopes it.
+- **Summary:** Every `MCP-NEGATIVE:` marker in shipped Markdown under `plugins/` is now an HTML comment, and a guard fails the suite if an unwrapped one is added.
+  - **The two markers.** `module-02-sdk-setup/SKILL.md:1666` (the `sdk_guide(topic='configure', language='python')` routing negative) and `phase2-data-mapping.md:782` (the payload-collision absence negative, as #322 left it: server 1.37.16, 2026-10-01) are each wrapped as a single-line `<!-- MCP-NEGATIVE: … -->`, text unchanged. Neither contains `-->`. The issue gave `:777` for the second; #322 moved it to `:782`.
+  - **The guard,** `tests/test_shipped_negative_markers_are_html_comments.py`. It loads `MCP_NEGATIVE_TOKEN` from `.claude/skills/dry-run/coverage_reports.py` the way `tests/test_mcp_negative_rationale_shape.py` does, so the guard and the `negatives` report share one definition of a marker. It walks every `.md` under `plugins/`, tracking `<!--` and the next `-->` across lines and in order within a line, and fails naming each offending `path:line`. A colon-less mention and an `MCP-NEGATIVE-SCAN:` annotation do not match the token. The token in backticks or in a fenced code block is flagged, as are markers after a comment closes on the same or an earlier line. Files are read as UTF-8 and split with `splitlines()`, so `\r\n` holds. Its in-test fixtures are the negative control: it flags an unwrapped marker and passes a single-line comment, a multi-line comment and a colon-less mention, plus the backtick, fence, after-close, CRLF and on-disk file-and-line cases. A non-vacuity test requires at least one shipped marker. The file carries `MCP-NEGATIVE-SCAN: ignore-file` so `/dry-run` does not count its fixtures.
+  - **The rescoped test.** `test_the_absence_carries_a_well_formed_negative_marker` is rescoped, not deleted. A shared helper, `collision_markers()`, finds the marker inside its `<!-- … -->` wrapper and returns it unwrapped. It selects by claim ("registered feature attribute" before ` — owner: `) because the file carries a second, unrelated wrapped marker (`mapping_workflow`'s `embedded_in` key) that the old `startswith("MCP-NEGATIVE:")` selector never saw. Every assertion is kept: exactly one marker, `owner:`, `absence negative`, and the server/date tail, now anchored before ` -->`. #322's `test_the_marker_is_rescoped_to_the_consequence` uses the same helper, its assertions unchanged. New: `test_the_marker_is_not_left_as_bare_prose` fails if the file has a bare marker line.
+  - **A second pinning test the issue did not list.** `tests/test_sdk_setup_prerequisites.py`'s `StepEightStatesThatPlatformIsMandatory` split Step 8 into prose and marker by `lstrip().startswith("MCP-NEGATIVE:")`, so after the wrap the Module 2 marker was read as prose and `test_the_absence_claim_carries_its_negative_marker` failed (`owner:` not found in an empty marker). It now uses `is_marker_line()`, which strips a leading `<!-- ` before the same check; a bare marker still counts there, since the new guard is what rejects it. Its assertions are unchanged.
+  - **Negative control on the real tree:** with `main`'s two plugin files restored, the guard fails naming exactly `module-02-sdk-setup/SKILL.md:1666` and `phase2-data-mapping.md:782`, and the payload module fails 3 tests (both marker tests and the bare-prose test). With the wraps reapplied, both modules pass.
+  - **Not changed, as the issue scopes it:** `docs/*.md`, markers in `.py` files, and any marker's text.
+- **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` was not run locally: it is a remote reusable workflow, and no workflow file changed.
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-209 — awaiting `/review-invariants`.** The rule already registered:
+    - ⛔ **The format is `MCP-NEGATIVE: <tool(params) asked> — <what is absent> — owner: <route that owns the fact + outcome> — server <version>, <YYYY-MM-DD>`, and a marker without the clause MUST NOT parse** — in `specs/INVARIANTS.md`
+
+  ⚠️ **Why.** INV-209 fixes a marker's text: its slots, the required `owner:` clause and the
+  two shapes. It says nothing about where the marker sits. Every marker in shipped Markdown
+  was an HTML comment by convention only, two were not, and the dated metadata rendered as body
+  text inside skills the guide executes and in the public mirror. `MCP_NEGATIVE` is not
+  anchored, so nothing noticed. The wrapper is a placement rule about the same marker, so this
+  run drafts it as an INV-209 amendment rather than a new id; INV-213's "no new ID was minted
+  deliberately" note argues the same way against adjacent invariants on one subject. Amending a
+  registered invariant is the maintainer's sign-off alone, so `specs/INVARIANTS.md` and
+  `invariant-manifest.json` are unchanged. **Sites it affects:** INV-209 in
+  `specs/INVARIANTS.md`, which gains the sentence below before its `Enforced by` sentence, and
+  INV-209's statement in `invariant-manifest.json`, regenerated from it
+  (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit. The shipped
+  sites are every `<!-- MCP-NEGATIVE: … -->` marker in `.md` under `plugins/` (34 lines carry the token today, all inside a
+  comment). The
+  enforcer is `tests/test_shipped_negative_markers_are_html_comments.py`. Applying it resolves
+  the block: mark the bullet `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording:
+
+  **INV-209** — … A marker in shipped Markdown under `plugins/` MUST sit inside an HTML comment, `<!-- MCP-NEGATIVE: … -->`, single- or multi-line: it is dated maintainer metadata for `/dry-run`, and outside a comment it renders as body text in a skill the guide executes and in the public mirror. The token in backticks or in a fenced code block renders too, so it is not exempt; a mention without the colon is not a marker. Markers in `.py` files are already code comments and `docs/` is out of scope. (⚠️ **Amended <YYYY-MM-DD> (#323): placement added; the marker's text format is unchanged.** Two shipped markers were bare paragraphs, and `MCP_NEGATIVE` parses a marker the same either way, so nothing noticed.) Enforced by `tests/test_dated_negatives_are_marked.py` and, for the wrapper, `tests/test_shipped_negative_markers_are_html_comments.py`, which loads `MCP_NEGATIVE_TOKEN` from `coverage_reports.py` rather than redefining it. …
+
+  *(the `…` stand for INV-209's registered text, kept as it is; the date is a placeholder
+  deliberately: `/review-invariants` fills it in on the day it applies the amendment.)*
+  *(written without a new id deliberately: this amends INV-209 in place, and a literal new id
+  would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The two wraps and the rescoped tests apply INV-209 (marker format, unchanged) and INV-108 (stdlib, offline guard) as registered. No ⛔ rule is added or demoted in shipped text.
+
 ## module-5-payload-rule-cites-mapping-workflow-step-2
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #322; `/dry-run` 2026-10-01 finding P1-1)
