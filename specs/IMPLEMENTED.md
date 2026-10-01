@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## graduation-points-to-ground-rules-for-the-model-switch-rule
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #293; audit finding D-F9)
-- **Commit:** uncommitted
+- **Commit:** 93d7222
 - **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `tests/test_model_switch_rule_is_stated_once.py` (new), `tests/test_post_yes_switch_reads_the_dial.py`, `tests/test_model_guidance_behavior.py`, `tests/test_model_effort_nudge_edges.py`, `tests/test_interface_naming.py`, `tests/README.md`, `specs/IMPLEMENTED.md`
 - **MCP re-check:** server `sz-mcp-coworker` 1.37.16 (`get_capabilities`, reachable), 2026-09-30. n/a (no Senzing fact): the change moves the Claude model/effort nudge's wording between two skill files and rewrites offline tests; the nudge names Claude models, effort levels and Claude interfaces, and nothing in it states anything about Senzing. No absence claim is made. Nothing was sent upstream.
 - **Approach:** direct (Phase 5a), as the issue scopes it.
