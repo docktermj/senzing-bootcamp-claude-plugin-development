@@ -70,7 +70,11 @@ uses it to decide whether the **Cross-Source** tab applies (it needs 2+ sources)
 ```
 
 Each node: `entity_id`, `entity_name`, `record_count`, `data_sources`, `records`. Each edge:
-`source_entity_id`, `target_entity_id`, `match_key`, `relationship_type`.
+`source_entity_id`, `target_entity_id`, `match_key`, `relationship_type`. The payload also carries
+`total` (every entity in the datastore), `capped` (whether the node cap applied) and
+**`related_total`**: the number of distinct entities in the **whole datastore** with at least one
+relationship — the distinct endpoints of every edge, counted **before** the cap, and present whether
+or not the cap applies. See "The graph payload is bounded, and says so".
 
 **`relationship_type` vocabulary (enumerated).** `relationship_type` MUST be one of the values
 below — a closed set, so the legend and the edge styling cannot drift apart. Derive it from the
@@ -698,6 +702,20 @@ ways, a bootcamper's explicit choice is never overridden, and an inline note sta
 "Showing the N entities that have relationships, of M total" — for the same reason the label note
 exists: otherwise a default reads as the data.
 
+When the graph payload is **capped** (`capped` is true), the shown counts are a part of the
+datastore, so every Entity Graph note says so with exact counts and none offers "all":
+
+- **Relationship mode:** "Showing N of the R entities that have relationships — the graph is capped
+  at C of M entities.", where N is the relationship-bearing entities shown, R is `related_total`, C
+  the nodes in the payload and M is `total`. No "show them all" clause.
+- **Relationship mode, none shown:** when no shown entity has a relationship, "None of the R
+  entities with relationships are among the C shown." — never "No relationships between entities
+  were found in this data.", which is true only of an uncapped payload.
+- **Full population:** "Showing C of M entities — the graph is capped; entities spanning the most
+  sources are kept first." Shown whenever `capped` is true, independent of the 400-entity threshold.
+
+When `capped` is false the notes are the uncapped wording above, unchanged.
+
 State the threshold as a number so every language implementation (INV-090) picks the same behavior.
 Re-check these against the bootcamper's **actual** scale, not the Truth Set: both defects pass every
 check 84 entities can run.
@@ -1249,8 +1267,10 @@ wrong picture and discovering it afterwards, which is what happened.
 
 ### The graph payload is bounded, and says so (required)
 
-The graph endpoint MUST cap the nodes it emits and carry **`total`** and whether a cap was applied,
-so the UI can state what it is showing rather than implying it is everything. Rank candidates by
+The graph endpoint MUST cap the nodes it emits and carry **`total`**, whether a cap was applied
+(**`capped`**), and **`related_total`** — the distinct endpoints of every edge in the whole datastore,
+counted before the cap — so the UI can state what it is showing rather than implying it is
+everything. The capped note wording is in "Defaults at production scale" item 3. Rank candidates by
 **source span first** — entities spanning most sources are the ones worth seeing — then by
 connectivity, then deterministically, so a re-rendered snapshot does not disagree with the recap
 prose describing it. ⚠️ This is about the **size and portability** of the payload and the

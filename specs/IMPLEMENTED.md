@@ -43,6 +43,53 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## capped-entity-graph-notes-state-the-cap
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #327, spec revision 1; source: `/dry-run` 2026-10-01 P3-18)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py` (`Model.graph()`, `drawGraph`'s empty note, `addGraphControls`' notes, one new `graphPayload` global), `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md` (the `/api/graph` payload paragraph, "Defaults at production scale" item 3, "The graph payload is bounded, and says so"), `tests/test_viz_capped_graph_notes.py` (new), `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** n/a (no Senzing fact), server `sz-mcp-coworker` 1.37.16 (Senzing "current"), 2026-10-01, `get_capabilities` — re-confirmed, not assumed. The change is page wording and arithmetic over the viz server's own in-memory model: a count of distinct edge endpoints and three JS note strings. No added or removed line names an SDK method, an engine behavior, a Senzing document or an MCP tool (checked over the full diff). No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** raced (Phase 5b), two strategies. `inline` won and was applied with `git apply --exclude=BLUEPRINT.md` on `9b4b9e7`, cleanly, then read against the branch. The comparison is issue comment 3. The racer's wider relationship-note gate, `capped||entities_total>400`, is **kept**: with the shipped cap of 1,500 a capped payload is always above 400, so it changes nothing there, and it keeps the capped note true for any implementation whose cap is below the threshold. Uncapped behavior is identical.
+- **Summary:** On a datastore larger than the graph's node cap, the Entity Graph no longer reports the capped subset as the whole population (P3-18: "Showing the 286 entities that have relationships, of 7084 total … show them all", with at least 4,551 entities linked).
+  - **`related_total`.** `Model.graph()` counts the distinct endpoints of every edge in the model **before** the cap and returns it beside `total` and `capped`, in capped and uncapped payloads alike. The snapshot embeds the same `graph(cap=GRAPH_NODE_CAP)` payload, so the snapshot and the recap's Entity Graph screenshot inherit the fix.
+  - **The page reads the payload's own flags.** `drawGraph` stores its payload in `graphPayload`, so `addGraphControls` reads `capped`, `total` and `related_total` without changing its signature or its two call sites, which `test_settle_signal_is_reported` and `test_capture_render_is_settled_and_fitted` pin byte for byte.
+  - **Capped notes,** each a `capped ? <new> : <existing>` branch, with every existing string literal unchanged: relationship mode, "Showing N of the R entities that have relationships — the graph is capped at C of M entities."; relationship mode with no shown relationship, "None of the R entities with relationships are among the C shown." (instead of "No relationships between entities were found in this data."); and a new full-population note, "Showing C of M entities — the graph is capped; entities spanning the most sources are kept first.", gated on `capped` alone, independent of the 400 threshold. None says "all". C is the payload's node count, which equals the cap when capped. Numbers are unformatted, as the issue scopes it.
+  - **The any-language contract** documents `total`, `capped` and `related_total` in the payload paragraph and in "The graph payload is bounded, and says so", and the three capped sentences under "Defaults at production scale" item 3, which says the uncapped wording is unchanged (INV-090).
+  - **Tests.** `tests/test_viz_capped_graph_notes.py`, 12 tests. Payload checks: a 12-entity model with `graph(cap=5)` keeps the five two-source entities and gives `capped`, `total=12` and `related_total=9`, more than the shown relationship count; uncapped carries the same 9; no edges gives 0. Note checks: regex extracts the capped and uncapped branches from the shipped source, and a strict evaluator renders each plain `"lit"+name` concatenation against real `graph()` payloads. The capped notes must carry the exact counts and no whole-word "all", and the uncapped notes must equal today's text byte for byte and contain no "capped". Negative controls: seven mutations of the shipped source each must make `problems()` non-empty (subset named as the population, "show them all" when capped, the cap dropped, the old empty note on a capped payload, the full note gated on the threshold, the uncapped branch reworded, `capped` hard-coded false). `tests/test_viz_defaults_at_scale.py::test_the_note_states_both_counts` still passes on the uncapped branch.
+  - **Known overlap, accepted:** a capped relationship mode with nothing to show renders both the empty note and "Showing 0 of the R …". Both are true, and the uncapped path already pairs its empty note with "Showing the 0 …" above 400 entities.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-154 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+    - `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md` ("Defaults at production scale" item 3, and "The graph payload is bounded, and says so") — ⛔ a capped graph payload carries `related_total`, and every Entity Graph note on it states the cap with exact counts and offers no "all"; uncapped, the notes are unchanged
+    - `plugins/senzing-bootcamp/scripts/senzing_viz_server.py` (`Model.graph()`, `drawGraph`, `addGraphControls`) — ⛔ the `related_total` field and the three capped note branches, each beside its unchanged uncapped string
+
+  ⚠️ **Why.** INV-154 pins the literal "Showing the N entities that have relationships, of M
+  total", which is false for a capped payload: N counts relationship-bearing entities inside a
+  payload already capped at 1,500, so on 7,084 entities it read 286 against at least 4,551
+  linked. This run ships the capped branch with an enforcing test, and the issue's acceptance
+  criterion asks for an amendment to INV-154 that keeps the uncapped wording and allows the
+  capped branch. Amending a registered invariant is the maintainer's sign-off alone (INV-307),
+  so `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged and the amendment is
+  drafted here. No other INV-154 amendment is pending. **Sites it affects:** INV-154 in
+  `specs/INVARIANTS.md`, which gains the sentences below after its pinned note wording and
+  before "Hiding labels does not thin edges", and its statement in `invariant-manifest.json`,
+  regenerated from it (`.claude/skills/review-invariants/invariant_manifest.py`) in the same
+  edit. The shipped sites are the two above. The enforcer is
+  `tests/test_viz_capped_graph_notes.py`, with `tests/test_viz_defaults_at_scale.py` still
+  pinning the uncapped note. Applying it resolves the block: mark the bullet
+  `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording:
+
+  **INV-154** — … and an inline note MUST state both counts ("Showing the N entities that have relationships, of M total") for the same reason the label note exists — otherwise a default reads as the data. That wording holds when the graph payload is **not** capped. When it is capped (`capped` true), the shown counts are part of the datastore, and every Entity Graph note MUST say so with exact counts and MUST NOT offer "all": the payload MUST carry `related_total`, the distinct endpoints of every edge counted before the cap; relationship mode MUST read "Showing N of the R entities that have relationships — the graph is capped at C of M entities."; relationship mode with no shown relationship MUST read "None of the R entities with relationships are among the C shown." rather than claim the data has none; and full-population mode MUST state "Showing C of M entities — the graph is capped; entities spanning the most sources are kept first." whenever `capped` is true, independent of the 400-entity threshold. (⚠️ **Amended <YYYY-MM-DD> (#327): the capped branch added; the threshold, the toggle and the uncapped wording are unchanged.**) Enforced by `tests/test_viz_capped_graph_notes.py` and, for the uncapped note, `tests/test_viz_defaults_at_scale.py`. Hiding labels does not thin edges: …
+
+  *(the `…` stand for INV-154's registered text, kept as it is; the date is a placeholder
+  deliberately: `/review-invariants` fills it in on the day it applies the amendment.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-154 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The payload bound and its source-span ranking apply the contract's "The graph payload is bounded, and says so" as registered, the same wording across languages applies INV-090, and the stdlib guard lives in the top-level `tests/` (INV-108). No ⛔ rule is added to or demoted in shipped text.
+
 ## graduation-video-local-piper-neural-voice
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #341; sub-issue of #331, spec revision 1)
