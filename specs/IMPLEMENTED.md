@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## invariant-review-2026-10-01
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one review session, begun 2026-09-30 after the second `/unattended-issue-loop` run that day)
-- **Commit:** uncommitted
+- **Commit:** `ed23f03`
 - **Files changed:** `specs/INVARIANTS.md`, `specs/IMPLEMENTED.md`, `invariant-manifest.json`, `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/scripts/generate_recap_video.py`, `tests/test_invariant_enforcer_citations.py`, `tests/test_invariant_layout_tree.py`, `tests/test_no_pip_install_senzing.py`, `tests/test_eula_question_precedes_every_install.py`, `tests/test_update_offer_order_and_existing_install_outcome.py`, `tests/test_existing_install_still_runs_the_env_script.py`, `tests/test_phase3_names_every_server_language.py`, `tests/test_graduation_video_step.py`, `tests/test_broll_manifest.py`, `tests/test_recap_video.py`, `tests/test_quality_assessment_type_name_check.py`
 - **MCP re-check:** n/a (no Senzing fact) — the session registers and cites invariants drafted by issue runs whose own entries carry their re-checks; it states no new Senzing fact.
 - **Summary:** ten blocks were pending; all ten were decided. The held set is unchanged at 4.
