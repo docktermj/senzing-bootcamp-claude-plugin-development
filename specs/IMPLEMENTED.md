@@ -189,7 +189,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Approach:** direct (Phase 5a), as the issue scopes it.
 - **Summary:** Module 2 Step 3 Phase 3 now covers all five languages the server supports. Step 3 names Python, Java, C#, Rust and TypeScript and sends each one's bindings "by the route the Senzing MCP server names for that language, never from a public package registry that route does not name, and NOT from a package manager at all for Python". Python's block is unchanged. The sentence that sent Java, C# and TypeScript to "that ecosystem's package manager as normal" is replaced by one bullet per language, each naming its route: Java to the Java SDK reference's two sections, C# to its SDK reference (which names no package source, so the guide names none and does not add a public feed), and Rust and TypeScript to `sdk_guide(…, language=…)`'s `compatibility_notes`. Every server quote there is dated evidence (server 1.37.16, 2026-09-30) and not a command. The Cargo git-dependency line and the `npm install` command are read from the reply at run time (INV-080). The existing-install path's "Still run Step 3's Phase 3" bullet and the Required stops' Phase 3 bullet now name "Java, C#, Rust and TypeScript" as per-project bindings. Their bold rule phrases, which #284's deferral quotes, are unchanged. The TypeScript build-from-source warning and its recovery branch are untouched, as scoped. Tests: `test_the_other_languages_are_unchanged` now pins the route rule, the generic and Rust/TypeScript `sdk_guide` calls and the two `search_docs` routes in place of "Maven/Gradle), C# (NuGet)", and fails on "package manager as normal". The `sz-napi` assertion stays. `test_it_runs_phase_3_for_the_per_project_bindings` reads the four-language list. The new `tests/test_phase3_names_every_server_language.py` fails when Phase 3 or either existing-install line stops naming any of the five languages (language names only, no server wording). It also checks that the Rust step calls `sdk_guide` with `language='rust'`, points at `compatibility_notes` and dates its quote, and that Phase 3 ships no `sz-rust-sdk = {` line. Its controls remove each language from each site, restore the pre-fix lists, insert a Cargo line and drop the Rust step. Run against the pre-change `SKILL.md` it reports Rust missing from both existing-install lines and "Phase 3 has no Rust step". The two prescribed queries are added to `VERIFIED_QUERIES` with what they returned.
 - **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` not run locally (remote reusable workflow; no workflow file changed).
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-222 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-222 — applied 2026-09-30, amended at review.** The rule already registered:
     - ⛔ **The Senzing SDK's language packages MUST NOT be installed from a language package manager** — in `specs/INVARIANTS.md`
 
   ⚠️ **Why.** INV-222's first sentence states a Python fact as an any-language rule. On server
@@ -216,6 +216,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
   resolves the block: mark the bullet `applied YYYY-MM-DD` and drop both "awaiting" markers.
   Enforced by `tests/test_no_pip_install_senzing.py` and
   `tests/test_phase3_names_every_server_language.py`.
+
+  ⚠️ **Amended at `/review-invariants` 2026-09-30, on the maintainer's approval.** The drafted
+  wording below made two edits, and the first (replacing INV-222's first sentence) is not
+  available: `specs/INVARIANTS.md` is append-only, and its rule 2 allows an edit only to clarify
+  wording without changing its meaning, while this sentence permits what the old one forbade.
+  The replacement sentence was therefore folded into the dated note as *"read the first sentence
+  as: …"*, as INV-302's 2026-09-30 narrowing was, and only that note was appended. The original
+  text stays readable above it. The note's remaining sentences are the drafted ones, word for word.
 
   The drafted wording. Replacement first sentence:
 
