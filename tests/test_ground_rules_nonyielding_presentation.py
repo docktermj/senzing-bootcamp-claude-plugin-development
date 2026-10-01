@@ -43,10 +43,13 @@ PHASE_C = SKILLS / "module-06-data-processing" / "phaseC-multi-source.md"
 PHASE_D = SKILLS / "module-06-data-processing" / "phaseD-validation.md"
 M7_PHASE1 = SKILLS / "module-07-query-visualize-discover" / "phase1-query-visualize.md"
 
+#: (file, the step run its pointer names, how that pointer says the run asks nothing).
+#: Phase C's run is conditional (#292): Step 17 asks the license-cap question when it is due
+#: (or Step 19 does, after Step 18's test load), so its headline must say so.
 SITES = [
-    (PHASE_C, "17–20"),
-    (PHASE_D, "21–24"),
-    (M7_PHASE1, "2–3a"),
+    (PHASE_C, "17–20", "Steps 17–20 ask nothing unless the license-cap question is due"),
+    (PHASE_D, "21–24", "Steps 21–24 ask nothing"),
+    (M7_PHASE1, "2–3a", "Steps 2–3a ask nothing"),
 ]
 
 
@@ -122,7 +125,7 @@ class EachSiteCarriesAPointer(unittest.TestCase):
     """Criterion 2 — the rule is reinforced where it actually broke."""
 
     def test_each_phase_file_points_at_the_ground_rule(self):
-        for path, _ in SITES:
+        for path, _, _ in SITES:
             with self.subTest(path.name):
                 self.assertIn(
                     "results presentation is not a turn ending",
@@ -132,12 +135,20 @@ class EachSiteCarriesAPointer(unittest.TestCase):
 
     def test_each_pointer_names_the_step_run_that_asks_nothing(self):
         """A pointer that does not say *which* steps cannot be checked against the file."""
-        for path, steps in SITES:
+        for path, steps, phrase in SITES:
             with self.subTest(path.name):
-                self.assertIn("Steps %s ask nothing" % steps, squash(path))
+                self.assertIn("Steps %s ask nothing" % steps, phrase)
+                self.assertIn(phrase, squash(path))
+
+    def test_phase_c_does_not_say_its_steps_ask_nothing_unconditionally(self):
+        """#292: Step 17 (or Step 19) can ask the license-cap question, and the turn ends on it."""
+        text = squash(PHASE_C)
+        self.assertNotIn("Steps 17–20 ask nothing, so", text)
+        self.assertIn("Step 17's license-cap question", text)
+        self.assertIn("That turn ends on it", text)
 
     def test_each_pointer_says_the_turn_continues(self):
-        for path, _ in SITES:
+        for path, _, _ in SITES:
             with self.subTest(path.name):
                 self.assertIn("this turn does not end here", squash(path))
 
@@ -154,13 +165,13 @@ class EachSiteCarriesAPointer(unittest.TestCase):
         spec while contradicting an invariant, and that actively blocked its own fix; the
         `production-readiness-audit` of 2026-08-14b found it that way.
         """
-        for path, _ in SITES:
+        for path, _, _ in SITES:
             with self.subTest(path.name):
                 self.assertNotIn("property of the **step**", squash(path))
 
     def test_every_pointer_cites_the_invariant_that_governs_it(self):
         """The other half: reachable at the step, by ID (INV-183)."""
-        for path, _ in SITES:
+        for path, _, _ in SITES:
             with self.subTest(path.name):
                 self.assertIn(
                     "INV-225", squash(path),
@@ -170,7 +181,7 @@ class EachSiteCarriesAPointer(unittest.TestCase):
 
     def test_the_pointers_keep_the_prose_cross_reference_too(self):
         """Title and ID do different jobs: what the rule says, and where to find it."""
-        for path, _ in SITES:
+        for path, _, _ in SITES:
             with self.subTest(path.name):
                 self.assertIn("A results presentation is not a turn ending", squash(path))
 

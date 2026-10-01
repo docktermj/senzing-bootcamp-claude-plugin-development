@@ -994,7 +994,7 @@ observed 2026-07-27 on SDK 4.3.3.26191, across four sources mapped end to end (`
 Limitations 1 and 3 were re-confirmed on **MCP server 1.32.9, 2026-08-14**, by reading the scripts
 the server itself delivers — `download_resource(filenames=['sz_verbatim_check.py',
 'sz_routing_report.py'])`, whose response is a **listing of URLs, not the scripts**, so reading them
-means fetching each `url` first (`ground-rules.md` → "Working examples") — and the live
+means fetching each `url` first (`ground-rules.md` → "Three tools answer with a listing") — and the live
 `mapping_workflow` step-3 schema. That is a check of the
 **mechanism**, which is what these entries assert, and it does not depend on re-running a mapping.
 Limitation **2** was confirmed end to end on **2026-08-18** by a run that finally had a source with
@@ -1214,7 +1214,7 @@ sentence above as its top hit, verified server 1.33.0, 2026-08-23; `query` is th
 required parameter, so the vocabulary is part of the instruction (INV-212) — or
 `download_resource(filename='senzing_entity_specification.md')`
 — that second call returns a **listing**, so fetch its `url` before reading, per `ground-rules.md` →
-"Working examples") — INV-080 applies to this claim as much as to any attribute name.
+"Three tools answer with a listing") — INV-080 applies to this claim as much as to any attribute name.
 
 **Do not assume a source's shape from its provenance.** CORD ships both forms: verified against the
 MCP server, London/`GLOBALDATA` returns a `FEATURES` array while Las Vegas/`PPP_LOANS` returns flat
