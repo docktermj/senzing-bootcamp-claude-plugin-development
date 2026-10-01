@@ -667,6 +667,9 @@ class Model:
         node_ids = set(self.entities)
         nodes = list(self.entities.values())
         total = len(nodes)
+        # Distinct endpoints of EVERY edge, counted before the cap, so a capped note can
+        # state the datastore's related population rather than the capped subset's (#327).
+        related_total = len({end for pair in self.edges for end in pair})
         capped = False
         if cap is not None and total > cap:
             # Rank by SOURCE SPAN first: an entity spanning several sources is the one
@@ -700,13 +703,14 @@ class Model:
                         "relationship_type": meta["relationship_type"],
                     }
                 )
-        # `total` and `capped` travel with the payload so the UI can state what it is
-        # showing rather than implying it is everything.
+        # `total`, `capped` and `related_total` travel with the payload so the UI can state
+        # what it is showing rather than implying it is everything.
         return {
             "nodes": nodes,
             "edges": edges,
             "total": total,
             "capped": capped,
+            "related_total": related_total,
             "encoding_check": self._encoding_check(nodes),
         }
 
@@ -1110,6 +1114,9 @@ function tabApplicable(id){const s=STATS||{};
 const GRAPH_SUBGRAPH_DEFAULT_ABOVE=400;
 let graphMode="all";
 let graphModeAutoSet=false;
+// The last /api/graph payload drawGraph fetched, so addGraphControls can word its notes from
+// the payload's own `capped`, `total` and `related_total` instead of the capped subset (#327).
+let graphPayload={};
 // The live force simulation for the graph tab. Toggling the mode re-enters drawGraph, and
 // the previous simulation would otherwise keep ticking against DOM nodes that have been
 // removed — wasted work and a source of jank. Stopped before each redraw.
@@ -1157,6 +1164,7 @@ let graphDrawn=false;
 async function drawGraph(){
   const c=document.getElementById("graph-container");const W=c.clientWidth,H=c.clientHeight;
   const g=await getJSON("/api/graph");const box=d3.select("#graph-container");
+  graphPayload=g;
   d3.select("#graph-container svg").remove();
   d3.select("#graph-container .legend").remove();
   d3.select("#graph-container .empty-note").remove();
@@ -1197,7 +1205,10 @@ async function drawGraph(){
   }
   if(!nodes.length){
     box.append("div").attr("class","muted empty-note").style("padding","14px")
-       .text(network?"No relationships between entities were found in this data.":"No entities to graph.");
+       .text(network?(g.capped?"None of the "+g.related_total+" entities with relationships are among the "+
+                                g.nodes.length+" shown."
+                              :"No relationships between entities were found in this data.")
+                    :"No entities to graph.");
     addGraphControls("graph-container",0);
     // (INV-298) Nothing to lay out is already settled -- without this a waiter on an empty
     // graph has no signal to wait for and falls back to its timeout, which is the fixed
@@ -1417,11 +1428,21 @@ function addGraphControls(containerId,nodeCount,forceLabelsOff){
     .text("Labels hidden — "+nodeCount+" entities would overlap. Use the toggles to show them.");
   // Same reasoning as the label note: without it the bootcamper reads a default as
   // their data, and concludes the graph is showing everything there is.
-  if(graphMode==="network"&&(STATS||{}).entities_total>GRAPH_SUBGRAPH_DEFAULT_ABOVE)
+  // (#327) When the payload is capped, `nodeCount` counts a capped subset: name it as part of
+  // the datastore's `related_total`, state the cap, and never offer "all".
+  const capped=!!graphPayload.capped;
+  if(graphMode==="network"&&(capped||(STATS||{}).entities_total>GRAPH_SUBGRAPH_DEFAULT_ABOVE))
     box.append("div").attr("class","why")
-      .text("Showing the "+nodeCount+" entities that have relationships, of "+
+      .text(capped?"Showing "+nodeCount+" of the "+graphPayload.related_total+" entities that have "+
+                   "relationships — the graph is capped at "+graphPayload.nodes.length+" of "+
+                   graphPayload.total+" entities."
+            :"Showing the "+nodeCount+" entities that have relationships, of "+
             STATS.entities_total+" total — the full population is too dense to read at this "+
-            "scale. Uncheck the toggle above to show them all.");}
+            "scale. Uncheck the toggle above to show them all.");
+  if(graphMode!=="network"&&capped)
+    box.append("div").attr("class","why")
+      .text("Showing "+graphPayload.nodes.length+" of "+graphPayload.total+" entities — the graph "+
+            "is capped; entities spanning the most sources are kept first.");}
 // Built FROM the rendered nodes, never from a static color config: a legend
 // entry then cannot exist without matching marks on screen, which is what makes
 // "the legend shows colors that appear nowhere in the graph" impossible.
