@@ -46,7 +46,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 ## modules-5-and-6-agree-with-inv-335-step-17-and-the-listing-section
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #292; audit findings C-F5, D-F5 and D-F6)
-- **Commit:** uncommitted
+- **Commit:** a49b4a6
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`, `tests/test_download_resource_is_a_listing.py`, `tests/test_ground_rules_nonyielding_presentation.py`, `tests/test_fastpath_gates_on_full_mapping.py`, `tests/test_quality_assessment_type_name_check.py`, `specs/IMPLEMENTED.md`
 - **MCP re-check:** server `sz-mcp-coworker` 1.37.16 (`get_capabilities`, reachable), 2026-09-30. The one Senzing fact the change touches is the one the four repointed pointers lean on: `download_resource(filename='senzing_entity_specification.md')` still returns `mode: "url"` and a `resources` entry with `filename`, `size_bytes` and `url` and no content, so the listing rule the pointers now name still holds. Still reproduces. The fast-path gate and the license-cap question are the plugin's own rules (INV-198, INV-335, Phase B's `license_cap_prompt`), not Senzing facts. No absence claim is made. Nothing was sent upstream.
 - **Approach:** direct (Phase 5a), as the issue scopes it.
