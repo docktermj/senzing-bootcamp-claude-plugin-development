@@ -567,7 +567,7 @@ exception, change nothing. With **Retype**, the source now carries both types:
   records the retype moves. This is content in the summary, not a new question.
 - Declare nothing else here: step 11 declares how each record is typed.
 
-⛔ **On a mixed-type source, send an enum-valid `record_type` and declare the mixture at step 3 —
+⛔ **(INV-280) On a mixed-type source, send an enum-valid `record_type` and declare the mixture at step 3 —
 the step-2 prose asks for a value its own schema rejects.** Both halves are in the **same response**
 (re-read live, server **1.33.0, 2026-08-21**): the instructions say *"If a schema has mixed entity
 types discriminated by a field (e.g., type=person/company), set record_type to `"MIXED"` and note the

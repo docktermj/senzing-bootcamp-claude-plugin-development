@@ -124,7 +124,7 @@ def blocks(include_resolved=False):
     ``include_resolved=True`` also returns every block already decided, each with
     ``resolved: True``. The review queue never shows them, but their quotes still name shipping
     rules (#236).
-    ⛔ (INV-315) It exists so the block boundaries below stay the ONE definition:
+    ⛔ (INV-308) It exists so the block boundaries below stay the ONE definition:
     `tests/test_deferral_quotes_match_their_source.py` checks every block's quotes, and a second
     scanner there would be a second reader of the same corpus. The default is the queue,
     unchanged, so `list`, `show`, `check` and `queue()` never see a decided block.

@@ -289,7 +289,7 @@ record the confirmed behavior.
    `offer pending` itself is never written on an issue (#167): the issue side has its own
    pending value.
 
-   ⛔ **`submission blocked: <reason>` is an outcome where the report is STILL OWED,
+   ⛔ (INV-281) **`submission blocked: <reason>` is an outcome where the report is STILL OWED,
    and it must not be triaged like a decline.** It means the answer was **yes** and the
    session could not send on it — a `/dry-run`, which never sends on an in-character
    answer. Nobody declined anything, so the finding still needs forwarding: draft the
