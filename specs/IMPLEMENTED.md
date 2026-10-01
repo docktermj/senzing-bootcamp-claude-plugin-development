@@ -43,6 +43,396 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## dry-run-2026-10-01
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of a `/dry-run` the maintainer requested directly: **phases 1, 2 and 3**, the phase-3 analysis starting at **Bootcamp preparation**)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md` (this entry)
+- **MCP re-check:** recorded per phase below
+- **Environment:** `senzing` Python package importable; `/opt/senzing/er/lib/libSz.so` present; license file `/etc/opt/senzing/g2.lic` present; `sqlite3` present; `fpdf2` 2.8.5; `google-chrome` and `firefox` present, no `playwright`; `docker` CLI present but the daemon unreachable. Engine start-up not yet verified at the time of writing.
+- **Summary:** all three phases ran.
+  - **Phase 1:** 4 findings. P1-1, P1-2 and P1-4 are filed as #322, #323 and #320. P1-3 is `mcp-server`; its upstream send was blocked and it was left unsent at the maintainer's choice.
+  - **Phase 2:** 2 findings, filed as #321 and #324.
+  - **Phase 3:** walked every module from Bootcamp preparation through graduation, with the maintainer answering as the Bootcamper on a generated Harborline scenario: Python, SQLite, SDK 4.4.2, MCP server 1.37.16. It produced **23 drafts, P3-1 to P3-23**. Their outcomes after the walk, each maintainer-approved:
+      - **14 issues, #325 to #338:**
+        - P3-19 → #325, P3-23 → #326, P3-18 → #327, P3-5 → #328, P3-8 → #329, P3-9 → #330.
+        - P3-20/21/22 → #331, P3-17 → #332, P3-11/12/13/15 → #333, P3-2/4 → #334, P3-1/3 → #335.
+        - P3-14 → #336, P3-10 → #337, P3-16 → #338.
+      - **Upstream sends** (`submit_feedback`, category `bug`): P3-6 and P3-7.
+      - **No finding is left unfiled.** P1-3 stays unsent, at the maintainer's earlier choice.
+      - **The walk's bootcamp feedback file** was triaged afterwards with `/feedback-to-issues`. It was archived as `feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK_1790883315.md`, with 11 new ledger lines. Ten entries map to the issues above. The guide's own generator-collision note became **#343**.
+    - P3-6 and P3-7 are `mcp-server` (P3-7 still needs verification); the rest are `plugin`.
+    - P3-20 to P3-22 were Bootcamper-reported via "bootcamp feedback".
+    - Medium severity: P3-5, P3-8, P3-9, P3-18, P3-19, P3-23.
+  - **Graduation video:** at the Bootcamper's request it was re-voiced outside the plugin (Piper neural voice plus a synthesized music bed) and improved over three review rounds. The recipe is in P3-22.
+- **Establishes no invariant.** This run fixed nothing in the plugin; every finding went to an issue or upstream. Invariants belong to the fixes.
+
+### Phase 1 — MCP call contracts
+
+- **MCP re-check:** server 1.37.16, 2026-10-01 — `get_capabilities`, `mapping_workflow` (start, step 1→2, a legacy `entity_plan` advance with an `embedded_master` lacking `embedded_in`), `sdk_guide` (install linux_apt ±java, install macos_arm python, configure python ±platform ±data_sources, load python record_count=1000), `generate_scaffold(python, initialize)`, `explain_error_code(SENZ9000)`, `get_sdk_reference` (flags ×4, parameters, response_schemas ×2), `search_docs` (×10, listed per finding). Tool schemas read from the live manifest.
+- **Enum and required-parameter sweep:** every `topic=` / `action=` / `workflow=` / `platform=` / `dataset=` literal under `plugins/` is in its tool's live enum or alias list (`workflow='orchestration'` is the documented rejection probe in `phaseC-multi-source.md`). Required parameters are present at every call site checked: `mapping_workflow(action='start')` passes `file_paths` and `workspace_dir`, `analyze_record` passes `workspace_dir`, and `get_sample_data` names `dataset`. The bare `get_sample_data()` and `generate_scaffold(workflow=…)` mentions are prose that names the required argument next to them. `common_confabulations` grep: no `add_data_source` used as an SDK method.
+
+#### P1-1 The root-level payload/feature-name rule is now documented by `mapping_workflow`, but Module 5 still calls it observation-only
+
+- **Severity:** low · **Verdict:** `plugin` · **Status:** filed as **#322** (2026-10-01, maintainer-approved)
+- **Where:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md:762-777`
+- **What the plugin says:** a root-level `payload` key must not be a registered feature attribute name. It calls this "OBSERVATION-ONLY … not a documented rule", and its `MCP-NEGATIVE` marker (server 1.36.0, 2026-09-02) gives `search_docs` over the Entity Specification as the only owner route.
+- **What the server says (1.37.16, 2026-10-01):** `mapping_workflow` step 2's inline *SENZING MAPPING REFERENCE* states the rule itself: "Optional scalar payload attributes may sit at root (must NOT be a registered feature attribute; must be scalar)". It also says to rename a colliding source field ("e.g. account-signup 'registration_date' -> 'signup_date'").
+- **The marker's narrow claim still holds:** no indexed section states the *consequence*, that such a key is extracted as a feature. The `Attribute reference` quote in the rationale reproduces with a direct query. The rationale is incomplete, though: the route that owns the *prohibition* is now `mapping_workflow` step 2, so the guide can cite the tool it is already calling.
+- **Acceptance criteria:** (1) The prose cites `mapping_workflow` step 2 as the source of the prohibition, dated. Only the *extracted-as-feature* consequence stays marked as a local observation. (2) The marker's `owner:` clause names `mapping_workflow` step 2 as the route carrying the prohibition, and the claim is rescoped to the consequence. (3) Any test pinning "OBSERVATION-ONLY" or "not a documented rule" is rescoped, not deleted.
+
+#### P1-2 Two shipped `MCP-NEGATIVE` markers are bare prose lines rather than HTML comments
+
+- **Severity:** low · **Verdict:** `plugin` · **Status:** filed as **#323** (2026-10-01, maintainer-approved)
+- **Where:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md:1666` and `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md:777`
+- **Defect:** every other marker in shipped Markdown is wrapped as `<!-- MCP-NEGATIVE: … -->`. These two are bare paragraphs, so dated maintainer metadata renders as body text in a skill the guide executes, and in the public mirror. `coverage_reports.py` parses them either way, so nothing noticed.
+- **Acceptance criteria:** (1) Both lines are wrapped in `<!-- … -->` with their text unchanged. (2) A repo-level test asserts that every `MCP-NEGATIVE:` occurrence in a shipped `.md` file under `plugins/` sits inside an HTML comment, apart from prose that only mentions the token. It is negative-controlled by unwrapping one marker.
+
+#### P1-3 `sdk_guide(topic='load')` tells users to email sales for an evaluation license, while `install`/`configure` and `get_capabilities` route through `submit_feedback(category='license_request')`
+
+- **Severity:** low · **Verdict:** `mcp-server` · **Status:** **not filed, not sent**: the upstream send was blocked by the permission classifier, and the maintainer chose to leave it unsent (2026-10-01).
+- **Evidence (server 1.37.16, 2026-10-01):** `sdk_guide(topic='load', language='python', record_count=1000)` `compatibility_notes[0]` reads "Request an evaluation license — email sales@senzing.com with name, company, email, number of records (1000), and date". `sdk_guide(topic='install', platform='linux_apt')` `gotchas` and `sdk_guide(topic='configure', platform='linux_apt')` `engine_config_notes` instead say to request "a free 10-day evaluation license (250K records) right now using submit_feedback with category='license_request'". `get_capabilities` describes `submit_feedback` as generating and emailing that license.
+- **Plugin impact:** none found. `module-06-data-processing/phaseA-build-loading.md:188-209` reconciles the load note against the measured license and never relays its menu. Module 4 Step 8a owns the license request.
+- **Upstream draft (category `bug`):** "sdk_guide(topic='load', record_count>500) compatibility_notes say to request an evaluation license by emailing sales@senzing.com, while sdk_guide(topic='install'|'configure') and get_capabilities say submit_feedback(category='license_request') issues a 10-day, 250K-record evaluation license immediately. The two routes give an agent contradictory license-request instructions for the same situation (more than 500 records). Server 1.37.16."
+
+#### P1-4 Module 2 says no MCP route names the C# `Senzing.Sdk` package source, but `sdk_guide(topic='install', platform='windows')` names it
+
+- **Severity:** medium · **Verdict:** `both` · **Status:** filed as **#320** (2026-10-01, maintainer-approved); upstream half carried in the issue, not sent
+- **Where:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md:751-756`, the C# bullet and its `MCP-NEGATIVE` marker. The marker was recorded yesterday (server 1.37.16, 2026-09-30), so the `negatives` report lists it as *current*.
+- **What the plugin says:** "no reply says where the Senzing.Sdk NuGet package comes from". It tells the guide to "name no package source: if the route still names none, tell the bootcamper that". The owner clause names `search_docs` as the route that would carry the source.
+- **What the server says (1.37.16, 2026-10-01):** `sdk_guide(topic='install', platform='windows')` `gotchas` carries: "C# / .NET: the Senzing.Sdk NuGet package is included in the SDK install (sdk\\dotnet\\), NOT published to nuget.org. Use: dotnet nuget add source \"$env:SENZING_DIR\\sdk\\dotnet\" --name SenzingLocal; dotnet add package Senzing.Sdk --source SenzingLocal". The same reply's Java gotcha names `$env:SENZING_DIR\\sdk\\java\\sz-sdk.jar`. The `macos_arm` reply names `${SENZING_ROOT}/sdk/java/sz-sdk.jar` for Java but has no C# line.
+- **Why it matters:** a Windows C# Bootcamper is told the package source is undocumented, when the route the module already calls for every language gives the exact commands. This is the INV-194 wrong-route shape: the negative was asked only for `platform='linux_apt'`, and the platform that owns the fact was never asked.
+- **Server half:** the Linux and macOS install replies do not carry the C# package-source note that the Windows reply does. Whether the Linux/macOS install also ships `sdk/dotnet` is **not** stated by any route asked, so the plugin must not infer it.
+- **Acceptance criteria:** (1) The C# bullet routes to `sdk_guide(topic='install', platform=<platform>, language='csharp')` first and follows its `gotchas`. The Windows evidence is quoted with a date. (2) The marker is rescoped to `linux_apt` and `macos_arm` only, and its owner clause records that the `windows` reply carries the source. (3) Any test pinning "no reply says where" is rescoped, not deleted. Related: closed #287, whose fix wrote this bullet. (4) The upstream half goes into the issue as a draft (category `feature`): "sdk_guide(topic='install') names the Senzing.Sdk NuGet source (sdk\\dotnet, not nuget.org) only for platform='windows'; the linux_apt and macos_arm replies carry no C# package-source note, so an agent on those platforms has no route to it. Server 1.37.16."
+
+- **Dated negatives, three-outcome re-ask (server 1.37.16, 2026-10-01):** 33 markers were DUE and 4 current.
+  - **Claim and rationale both reproduce, so no finding:** `phase2-data-mapping.md:359` (the validator names `embedded_in`); `DECLINED.md:135` and `:126`; `senzing_viz_server.py:2028`; `bootcamp-preparation/SKILL.md:272`; `module-02-sdk-setup/SKILL.md:259`, `:1053`, `:1178`, `:1250`, `:1271`, `:1403` (top-5 hits are all EULA/pricing prose), `:1666`, `:1749`, `:127`, `:255`, `:310` and `:394`; `phase1-verification.md:249`; `module-04-data-collection/SKILL.md:1102`; `module-05 SKILL.md:90` and `:76`; `phaseA-build-loading.md:379`; `module-07 phase1-query-visualize.md:239`, `:440` and `:203`; `visualization-api-reference.md:505`; `phaseD-validation.md:517`; `ground-rules.md:258` and `:316`; and the current `module-02 SKILL.md:750`.
+  - **Claim true, owner incomplete:** `phase2-data-mapping.md:777`, which is P1-1.
+  - **Current marker, wrong-route negative:** `module-02 SKILL.md:756`, which is P1-4.
+  - **Re-asked only in part:** `phaseC-multi-source.md:182` (the `find_examples(query='multi-source')` half and the `orchestration` rejection reproduce; the java and orchestrator queries were not re-run) and `module-02 SKILL.md:282` (the `sdk_guide` half reproduces; its `search_docs` half was not re-run).
+  - **Not re-asked this run:** `phaseB-load-first-source.md:87` and the two current `phaseD-validation.md:314/315` markers.
+  - **No restamps were made:** this run is draft-only, so markers whose claims hold keep their old version and date.
+- **`unmarked` report:** none.
+- **Verified correct:** `mapping_workflow`'s five-action contract, its `workspace_dir` and `file_paths` placement, and the legacy `entity_plan` route for `embedded_master`. `sdk_guide(topic='configure')` with no `data_sources` returning `init_default_config` matches `module-02-sdk-setup/SKILL.md:1862-1863` and `phase3-test-load.md:56`. `reporting_guide`'s language gate behaves as the plugin says, and `generate_scaffold` still returns a listing plus `access_steps`.
+
+<!-- phase-1 findings go above this line -->
+
+### Phase 2 — hooks and scripts
+
+- **Engine start-up (phase 2, 2026-10-01):** **the engine starts.** Senzing **4.4.1.26255** (`/opt/senzing/er/szBuildVersion.json`), `senzing_core` from `~/.local`, with `LD_LIBRARY_PATH=/opt/senzing/er/lib` (without it the viz server exits 1 on `libSz.so: cannot open shared object file`). A SQLite datastore copied from `/etc/opt/senzing/G2C.db.template` came up with **no default config** (`get_default_config_id()` → 0); `create_config_from_template()` → `register_data_source("VERIFY")` → `set_default_config(...)` seeded one, and `add_record` + `get_entity_by_record_id` then worked. `get_license()` reports `licenseType: EVAL (Solely for non-productive use)`, **`recordLimit: 0`** (uncapped), `expireDate: 2027-03-12`. So SDK setup onward is reachable for phase 3. Not exercised: a schema built from `resources/schema/*-create.sql` rather than the template DB, and PostgreSQL (`docker` daemon unreachable).
+
+#### P2-1 The transfer package's `OPEN_ME_FIRST.md` promises a revisit bundle and a `docs/REVISIT_BOOTCAMP.md` it may not contain
+
+filed as **#321** (2026-10-01, maintainer-approved) · severity **medium** · verdict **plugin**
+
+- **Problem.** `package_bootcamp.py --profile transfer`, run on a project with no `backups/revisit/` and no `docs/REVISIT_BOOTCAMP.md`, wrote an archive whose `OPEN_ME_FIRST.md` says it carries "the revisit bundle (state snapshot and database backup)" and says "**To resume:** open **`docs/REVISIT_BOOTCAMP.md`**". Neither was in the archive. Only `PACKAGE_MANIFEST.json` recorded `backups/revisit — not present in this project`. The file named "open me first" contradicts the manifest, on exactly the machine-switch path that `transfer` exists for.
+- **Root cause.** The transfer half of `OPEN_ME_FIRST.md` is static text (`plugins/senzing-bootcamp/scripts/package_bootcamp.py:383-388`) that never checks what was packaged. Two sanctioned flows reach the gap. Packaging is "available at any time" (`skills/bootcamp-onboarding/packaging.md:1-3`), but `docs/REVISIT_BOOTCAMP.md` is only written at graduation Step 6c (`skills/graduation/SKILL.md:1299`), so every pre-graduation transfer lacks it. Packaging Step 3's "if the backup cannot be produced, warn and continue" (`packaging.md:63-70`) yields a transfer package with no database while `OPEN_ME_FIRST.md` still claims one.
+- **Proposed change.** Generate the transfer "What this package is" block from what was actually included. Name the revisit bundle only when `backups/revisit/` was packaged, and point at `docs/REVISIT_BOOTCAMP.md` only when it was packaged. Otherwise say plainly that the package carries no database backup or restore guide, and what the recipient must redo (SDK setup, the database, the load).
+- **Acceptance criteria.** (1) A transfer package built with neither path present has an `OPEN_ME_FIRST.md` that names neither as included and does not instruct opening `docs/REVISIT_BOOTCAMP.md`. (2) With both present, the current wording is kept. (3) A stdlib test in `tests/` builds both cases and asserts both, negative-controlled.
+- **Affected files.** `plugins/senzing-bootcamp/scripts/package_bootcamp.py`; possibly `plugins/senzing-bootcamp/skills/bootcamp-onboarding/packaging.md` (Step 4's description of `OPEN_ME_FIRST.md`).
+- **Source.** `/dry-run` phase 2, 2026-10-01: scaffolded mid-bootcamp project, `--profile transfer` real run, archive inspected with `zipfile`. No Senzing fact involved.
+
+#### P2-2 `generate_document_pdf.py`'s own usage example omits `--subtitle`, so following it puts the discoveries subtitle on another document's cover
+
+filed as **#324** (2026-10-01, maintainer-approved) · severity **low** · verdict **plugin**
+
+- **Problem.** The alias's docstring usage example (`plugins/senzing-bootcamp/scripts/generate_document_pdf.py:15-20`) renders `docs/business_problem.md` with `--require-sections` but no `--subtitle`. Run exactly as shown, it produced a Business Problem PDF whose cover reads **"What Senzing found in your data"** (`COVER_SUBTITLE`, `generate_discoveries_pdf.py:142`), checked with `pdftotext`. The alias's `--help` description is also the discoveries line ("Render the data-discoveries Markdown into a PDF deliverable"), because it reuses `generate_discoveries_pdf.py`'s parser (`:842`, `__doc__.splitlines()[0]`). So the file that exists "for findability" introduces itself as the discoveries renderer.
+- **Root cause.** The example predates, or was not updated with, the `--subtitle` rule that graduation Step 5b states as ⛔ (`skills/graduation/SKILL.md:1198-1210`). The shipped call site is correct and passes `--subtitle`; only the script's self-description is wrong.
+- **Proposed change.** Add `--subtitle "..."` to the docstring example, and give the alias a document-agnostic `--help` description.
+- **Acceptance criteria.** (1) The docstring example passes `--subtitle`. (2) `generate_document_pdf.py --help`'s first line does not say "data-discoveries". (3) A test asserts both.
+- **Affected files.** `plugins/senzing-bootcamp/scripts/generate_document_pdf.py`, `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py` (parser description injection).
+- **Source.** `/dry-run` phase 2, 2026-10-01. No Senzing fact involved.
+
+<!-- phase-2 findings go above this line -->
+
+### Phase 3 — conversational layer (analysis from Bootcamp preparation)
+
+#### P3-1 The primer's six measured queries reach no source for two of the five things it must teach
+
+- **Severity:** low · **Verdict:** `plugin` · **Status:** filed as **#335** (2026-10-01, maintainer-approved; grouped with P3-1/3)
+- **Where:** `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/concepts.md:20-28` (the six suggested queries) against `:101-115` ("What to teach").
+- **What happened:** the docs index had moved (2026-09-29 22:00 UTC vs the note's 2026-09-01), so all six were re-run as `:45-48` instructs (server 1.37.16, 2026-10-01). Each still reaches the material it is annotated for. But none returns a source for **"what entity resolution is"** with its **false-negative** half (`:101-104`), nor for the **"three outputs: resolved entities (golden record), cross-source relationships, and deduplication"** bullet (`:114-115`). The first was found only by a seventh, self-composed query (`search_docs('What is entity resolution false negatives duplicates golden record')` → *"What Is Entity Resolution?"* section, rank 1, which defines false negative and false positive). No query run reached the "golden record" claim, so the walk omitted it under INV-273's label-or-omit rule.
+- **Why it matters:** INV-212 puts the retrieval route at the step. Here the step names the outcome without a route, so the guide must compose a query, which is exactly the hazard the same file documents (`:51-67`).
+- **Acceptance criteria:** (1) The suggested list gains a measured query reaching the *"What Is Entity Resolution?"* section (false negative and false positive defined), recorded with server version, index date and rank. (2) The "three outputs" bullet is either given a measured route or rewritten to what a measured result states. (3) Any test pinning the six-query count is updated.
+
+#### P3-2 The model/effort table names Opus 5 / Sonnet 5 after Opus 5.5 / Sonnet 5.5 shipped, so every module-start nudge resolves through the "stronger model than the table" clause
+
+- **Severity:** medium · **Verdict:** `plugin` · **Status:** filed as **#334** (2026-10-01, maintainer-approved; grouped with P3-2/4)
+- **Where:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md:1121-1134` (authoritative table) and `plugins/senzing-bootcamp/docs/model-selection.md:53-69` ("last verified 2026-07-25"). `tests/test_model_guidance_sync.py:35` `SUPERSEDED` has no 5 → 5.5 row.
+- **What happened:** at the first content-module start (Discover the Business Problem), the walk ran on **Opus 5.5** (`claude-opus-5-5`). The harness's environment block names Opus 5.5 and Sonnet 5.5 as the current family. The table's top row is Opus 5, so the model dial sits *above the table*. `ground-rules.md:1001-1004` anticipates exactly this ("If a stronger model ships and this table lags it … above-the-table is satisfied"), so the nudge became a statement and asked nothing. The clause worked. But the table recommends models that are no longer the current ones, and `model-selection.md`'s note is two months past its verification date.
+- **Why it matters:** (1) The recommendation names superseded models in every module-start statement a Bootcamper reads. (2) While the table lags, the above-the-table clause turns *every* step-down nudge into a statement for an Opus 5.5 Bootcamper, so the cost-saving offer for Sonnet stages is never made: a behavioral change caused by staleness, not by a decision. (3) INV-114's guard cannot catch it, because the superseded list is hand-maintained.
+- **Acceptance criteria:** (1) Re-verify the model family and update both tables and their CLI commands, keeping them in sync. (2) Add the superseded names to `SUPERSEDED`. (3) Restamp `model-selection.md`'s verification date. (4) Decide and record whether a step-down to the current Sonnet is still offered to an Opus 5.5 Bootcamper.
+
+#### P3-3 The pattern gallery's retrieval routes miss two of the documents they name
+
+- **Severity:** low · **Verdict:** `plugin` · **Status:** filed as **#335** (2026-10-01, maintainer-approved; grouped with P3-1/3)
+- **Where:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md:46-51` and `:70-73`.
+- **(a) The cost-table query does not return the table.** `search_docs('total economic cost mismatched identity data by sector')` (server 1.37.16, index 2026-09-29 22:00 UTC, 2026-10-01) returned the document's intro and its *Remaining Sectors* section. The *"Estimated Annual Cost of Mismatched Identity Records"* table, which carries the business-value figures, came back only on a re-query using its own heading. The step says the query "returns" the table.
+- **(b) The non-person-entity-types FAQ has no query, and the obvious one lands on a contradicting FAQ.** `:72-73` names "the non-person-entity-types FAQ (asset, claim and vehicle linking)" with no route. `search_docs('non-person entity types asset claim vehicle linking')` returned a video transcript. `search_docs('Can Senzing resolve entities other than people and organizations', category='faq')` returned *"Can I use Senzing for product matching, vehicle matching…"*, which says non-person matching "requires working with Senzing R&D". That reads as a caution, so the walk omitted the pattern. The intended article (*"Adding Non-Person Entity Types to Senzing"*, `local://non-person-entity-types-faq.md`) surfaced only at rank 2 of `search_docs('non-person entity types FAQ claims assets vehicles linking', category='faq')`, one turn too late for the gallery.
+- **Why it matters:** INV-212 puts the route at the step. (a) is recoverable by the re-query rule. (b) produces a confidently wrong conclusion, exactly the hazard `concepts.md:62-67` describes, and the step names an outcome without a route.
+- **Acceptance criteria:** (a) Record a measured query that returns the cost table as rank 1, with server version and index date. (b) Record a measured query that returns *"Adding Non-Person Entity Types to Senzing"*, and note that the product/vehicle-matching FAQ is a different document whose caution concerns *matching* non-person entities, not *linking* people to them.
+
+#### P3-4 The undeterminable-effort fallback has nothing to fall back to when effort was never readable
+
+- **Severity:** low · **Verdict:** `plugin` · **Status:** filed as **#334** (2026-10-01, maintainer-approved; grouped with P3-2/4)
+- **Where:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md:951-959` ("Only for a dial whose current value cannot be determined, fall back to that dial's value in the stage just completed") against `:975-982`, which forbids comparing recommendation to recommendation.
+- **What happened:** at the SDK setup nudge on the Claude Code CLI, no `/effort` had been run, so effort was undeterminable at this stage *and* at every earlier one. The stage just completed has no "value" for the dial, only its recommendation (medium). Using that as the fallback is the recommendation-to-recommendation comparison the same section forbids. Here it happened to produce a correct-looking effort-only step-up question (medium → high).
+- **Why it matters:** the fallback is the default case on the CLI, since effort "is not exposed by default" (`:956-957`) until the Bootcamper runs `/effort`. A rule that resolves only by the reading it forbids trains the guide to treat the surrounding ⛔ text as advisory (the "unsatisfiable rule" class, phase3-conversational.md).
+- **Acceptance criteria:** (1) State what the fallback is when no stage has ever had a determinable effort: e.g. treat the dial as "unknown" and ask the effort half whenever the stage's recommendation differs from the *previous stage's recommendation*, stated explicitly as the sanctioned proxy, or name another rule. (2) Reconcile that sentence with `:975-982` so the two cannot be read as contradicting.
+
+#### P3-5 The Step 3 environment script refuses to load until Step 8 writes the file its guard requires, so Steps 4–7 cannot source it on a fresh project
+
+- **Severity:** medium · **Verdict:** `plugin` · **Status:** filed as **#328** (2026-10-01, maintainer-approved)
+- **Where:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md:904-911` (the root guard: `if [ ! -f "$_sz_root/config/engine_config.json" ]; then … return 1`) and `:914-920` (refuses an empty configuration). The only step that writes `config/engine_config.json` is the engine-configuration step (`:1616`, `:1758`, `:1781`, Steps 7–8). The script is written at Step 3 ("Every path through Step 3 ends here", `:861`), and Step 4 must load the binding with `LD_LIBRARY_PATH` set, which on `linux_apt` with Python is exactly what the script provides (`:670-700`).
+- **Failure scenario:** a genuinely fresh project, any platform. Step 3 writes `src/scripts/senzing-env.sh`. Step 4 sources it to run `get_version`, and it prints "resolved project root has no config/engine_config.json … this is a path-resolution fault, not your Senzing install" and returns 1. The message blames path resolution for what is step ordering, so the guide either hunts a non-existent path fault or exports variables by hand. The script exists to prevent the second.
+- **Why the walk did not hit it:** `.claude/skills/dry-run/scaffold_project.py:310` lays down `config/engine_config.json` in **ALL_MODES, including `--fresh`**, so the phase-3 "fresh" project already has the file. That fixture choice masks the defect, and it belongs in the fix: `--fresh` should not pre-create a Step 8 artifact.
+- **Acceptance criteria:** (1) The env script can be sourced between Steps 3 and 8 on a fresh project: e.g. the root guard checks a file that exists from project setup (such as `config/bootcamp_progress.json`), and the configuration export is skipped with a one-line notice while `engine_config.json` is absent, rather than failing the whole script. (2) The fail-loudly property for a *wrong root* is kept. (3) `scaffold_project.py --fresh` no longer writes `config/engine_config.json`, and phase 2's fixtures still cover the pre-flight gates. (4) A repo test sources the shipped template from a project with no `engine_config.json` and asserts it exports the library and Python paths and returns 0. Negative-control it.
+
+#### P3-6 The server's initialization anti-pattern article says the SDK auto-creates the SQLite database, and the SDK does not
+
+- **Severity:** low · **Verdict:** `mcp-server` · **Status:** **sent upstream** 2026-10-01 via `submit_feedback(category='bug')`, maintainer-approved out of character; message re-verified live first and extended with the server's own contradicting "Operations and Runtime" article. No GitHub issue (verdict `mcp-server`, nothing in the plugin changes).
+- **Evidence (server 1.37.16, index 2026-09-29 22:00 UTC, 2026-10-01):** `search_docs(query='apt install senzingsdk-runtime update Linux Ubuntu pitfalls', category='anti_patterns')` returns *"Senzing Anti-Patterns: Database Initialization and Container Setup"* (`local://anti-patterns-initialization.md`), whose note reads: *"SQLite is a special case — the SDK creates and populates the SQLite database file automatically during config registration. PostgreSQL, MySQL, and MSSQL all require the schema to be applied manually."* The same server's `sdk_guide(topic='install'|'configure', platform='linux_apt')` `engine_config_notes` say the opposite: *"The DB file is NOT auto-created — you must: (1) create the directory, (2) create the schema …"*.
+- **Measured (Senzing SDK 4.4.2.26272, Ubuntu 24.04, 2026-10-01):** `init_default_config.py` (the `sdk_guide(topic='configure')` snippet) pointed at a SQLite path with no file and no schema fails with `SENZ1001|Critical Database Error '(14:unable to open database file)'` and creates no file. With the schema applied first, it seeds (config id returned). `sdk_guide` is right and the article is wrong.
+- **Plugin impact:** none. `module-02-sdk-setup/SKILL.md:1496-1523` already states the SQLite schema is not auto-applied and routes to `sdk_guide`. Nothing in the bootcamp needs to change, so the verdict is `mcp-server`.
+- **Upstream draft (category `bug`):** "search_docs anti_patterns article 'Senzing Anti-Patterns: Database Initialization and Container Setup' says 'SQLite is a special case — the SDK creates and populates the SQLite database file automatically during config registration.' On SDK 4.4.2.26272 (Ubuntu 24.04) that is false: create_config_from_template()/set_default_config() against a SQLite path with no file fails with SENZ1001 (14: unable to open database file) and creates nothing; it succeeds only after szcore-schema-sqlite-create.sql is applied. sdk_guide(topic='install'|'configure') engine_config_notes correctly say the DB file is NOT auto-created, so the two routes contradict each other. Server 1.37.16."
+
+#### P3-7 `get_sample_data` labels the synthetic Truth Set as CORD and applies its "this is REAL data" notice to it
+
+- **Severity:** low · **Verdict:** `mcp-server` (**verified 2026-10-01**, see below) · **Status:** **sent upstream** 2026-10-01 via `submit_feedback(category='bug')`, maintainer-approved out of character. No GitHub issue (verdict `mcp-server`).
+- **Verification (server 1.37.16, index 2026-09-29 22:00 UTC, 2026-10-01):**
+  - `search_docs('Entity Centric Learning Sue Jones holistic entity match')` returns senzing.com's *Entity Centric Learning vs. Record Matching*. It says: "If you would like to get your hands on synthetic data which includes Entity Centric Learning examples, download the [Senzing Synthetic Truth Set](https://github.com/Senzing/truth-sets)".
+  - The same server's article *Synthetic Truth Sets* calls it "a small pre-mapped demo truth set (CUSTOMERS, REFERENCE, WATCHLIST) … this server serves it through `get_sample_data`".
+  - `get_sample_data(dataset='list')` still names it `"Truthset CORD"`, and `dataset='truthset'` still cites the CORD collections URL.
+  - owner-checked: `search_docs` is the corpus route for what the dataset is, and states it is synthetic. `get_sample_data` is the route that mislabels it. The plugin needs no change.
+- **Evidence (server 1.37.16, 2026-10-01):** `get_sample_data`'s declared description says, for every dataset: *"IMPORTANT: This is REAL data (not synthetic) — historical snapshots for evaluation only … Always inform the user of this."* `get_sample_data(dataset='list')` and every `dataset='truthset'` reply name the Truth Set *"Truthset CORD"* (`citation.dataset_name`). Yet `search_docs('Entity Centric Learning Sue Jones holistic entity match')` returns Senzing's own page pointing readers to *"the Senzing Synthetic Truth Set"* (github.com/Senzing/truth-sets), and the plugin and `get_capabilities` call it "the Senzing demo truth set … pre-mapped, used in quickstarts".
+- **Plugin impact:** the plugin is consistent with the Truth Set being demo data: `module-03b-truthset-visualization/phase1-visualization.md:161-166` requires the INV-293 real-data disclosure only on the CORD-substitute path. But a guide that obeys the tool contract literally would tell the Bootcamper their demo data is real people. **Not yet certain:** confirm with `search_docs` that the demo Truth Set is synthetic in Senzing's own words before calling this `mcp-server`. If confirmed, nothing in the plugin needs to change.
+- **Upstream draft (category `bug`, send only once certain):** "get_sample_data applies its 'This is REAL data (not synthetic) … Always inform the user' notice to every dataset, and labels dataset='truthset' as 'Truthset CORD' in citation.dataset_name. Senzing's own documentation calls the demo truth set the 'Senzing Synthetic Truth Set'. An agent following the tool contract tells users that synthetic demo records are real people's data. Suggest scoping the REAL-data notice and the CORD label to las-vegas/london/moscow. Server 1.37.16."
+
+#### P3-8 SDK setup's "record `database_type`" rule sits after the PostgreSQL branch's last option, so the SQLite path never reaches it
+
+- **Severity:** medium · **Verdict:** `plugin` · **Status:** filed as **#329** (2026-10-01, maintainer-approved)
+- **Where:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md:1631-1646` (⛔ "Record the choice where later modules read it"), placed after `**For PostgreSQL**` (`:1550`) and its `**Option 4 — Switch to SQLite**` (`:1626`). The SQLite branch is `:1455-1548`.
+- **What happened (walk 2026-10-01):** the Bootcamper chose SQLite. The guide followed `**For SQLite**`, stopped reading at `**For PostgreSQL**` as a branch not taken, and went to Step 8. `database_type` was never written to `config/bootcamp_preferences.yaml`. This surfaced only at Data collection Step 8b, which reads the key by name (`module-04-data-collection/SKILL.md:1063-1081`) and falls back to the progress file. Module 6's `phaseA-build-loading.md:254-255, :482-489` and graduation (`SKILL.md:119, :153`) read it too.
+- **Why it matters:** the rule says it is "the **only** step in the bootcamp that knows which engine was chosen" and that without it "neither warning can **ever** fire". It is written as applying to every option, but it sits inside the branch a SQLite reader skips. This is the INV-183 placement shape: a rule must be reachable at the step that needs it.
+- **Acceptance criteria:** (1) The `database_type` write is stated where **both** branches pass through it: as a numbered sub-step at the head of Step 7 after the choice, or repeated as the last line of each branch, keeping one canonical statement. (2) A test asserts the recording instruction appears before the `**For PostgreSQL**` heading, or inside both branches.
+
+#### P3-9 Data collection Step 8b's SQLite load-time warning fires "above the load-time threshold", and no file defines that threshold
+
+- **Severity:** medium · **Verdict:** `plugin` · **Status:** filed as **#330** (2026-10-01, maintainer-approved)
+- **Where:** `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md:1083-1085` ("Warn only when the database is SQLite **and the LOADABLE total** is above the load-time threshold") and `:36`. A grep of `plugins/senzing-bootcamp/skills/` for "load-time threshold" finds only these lines. `:1097` mentions that `sdk_guide(topic='load', record_count=…)` "returns … the record-count threshold", but that reply carries two candidate numbers: the 500-record single-threaded/threaded template switch, and *"not recommended for more than 10,000 records"* in an LLM container environment (server 1.37.16, 2026-10-01).
+- **What happened (walk 2026-10-01):** a 10,000-record synthesized collection on SQLite with no license cap. Under the 500 reading the warning fires and the turn ends on the three-option load question. Under the 10,000 reading it says nothing. The step gives the guide no way to choose, so the outcome of a pinned 👉 gate is decided by an unstated number. The walk took the 10,000 reading, so no warning was shown, and records that as the guide's choice, not the plugin's.
+- **Why it matters:** this is the "unsatisfiable instruction" class (phase3-conversational.md). The gate it decides is the only collection-time heads-up before Module 6's load, and Module 6 reads its decision marker.
+- **Acceptance criteria:** (1) Step 8b names the threshold and its route. If it is a server fact, name the exact field and phrase to read (e.g. `sdk_guide(topic='load', …)` `engine_config_notes` "not recommended for more than N records") with an MCP-NEGATIVE-style dated note. If it is a plugin choice, state the number and why. (2) `:36`'s summary line matches. (3) A test asserts Step 8b contains a defined threshold.
+
+#### P3-10 The quality gate keeps offering "Improve the weakest fields first" after Step 7a has found nothing left to improve, and the one exit it names has no question or procedure
+
+- **Severity:** low · **Verdict:** `plugin` · **Status:** filed as **#337** (2026-10-01, maintainer-approved)
+- **Where:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md:973-976` (pinned 70-79 gate, option 1 always live, INV-056) against `:1055-1058` (7a step 6: "When nothing was fixable, say so rather than looping … present the gate again with the score unchanged") and `:1013-1016` (7a step 2: the only completeness route is "offer a return to that module for this source", with no pinned wording, no handling step, and nothing in Data collection that receives it).
+- **What happened (walk 2026-10-01):** STORE_POS (synthesized, deliberately gappy) scored 73.5. Option 1 normalized formats to 79.0. The Bootcamper chose option 1 again: nothing was fixable, the gate was re-presented unchanged as 7a step 6 says. They chose option 1 a **third** time. 7a step 6's "rather than looping" is unsatisfiable while the pinned gate must offer the same dead option. The guide's only non-looping move was to originate the "return to Data collection" offer from 7a step 2's one-line mention, with improvised wording.
+- **Why it matters:** an instruction the guide must follow and cannot ("do not loop" plus "re-present the same pinned options") trains it to treat the surrounding ⛔ text as advisory. The return route has no defined re-entry, and Data collection's Step 2 provenance guard would *skip* the provision question for a synthesized source rather than regenerate it.
+- **Acceptance criteria:** (1) When 7a step 6 applies, the gate is re-presented with a pinned variant whose first option is the return to Data collection for this source (or option 1 is dropped and the reason said). (2) The return route has a pinned question and a defined effect: which Data collection step runs, how the registry entry is handled, and where Module 5 resumes. (3) For `provenance: synthesized`, that effect is a regeneration with the gaps narrowed, recorded in `quality_intent`, and stated as such.
+
+#### P3-11 Module 5's step-1 "two incompatible shapes" warning is stale: the server's step-1 prose now states the array form too
+
+- **Severity:** low · **Verdict:** `plugin` · **Status:** filed as **#333** (2026-10-01, maintainer-approved; grouped with P3-11/12/13/15)
+- **Where:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md:434-466`. The ⛔ says the step-1 response's prose (`ADVANCE FORMAT:` and `ADVANCING TO STEP 2`) shows `profile_summary` as an object keyed by schema name, while the schema declares an array. It ends: *"if the prose is corrected, retire this note rather than inverting it."*
+- **What the server says (1.37.16, 2026-10-01, `mapping_workflow(action='start')` for `data/raw/web_orders.jsonl`):** the prose now reads `ADVANCE FORMAT: {"profile_summary": [{"schema_name": "<name>", "record_count": N, "field_count": N}], …}  (profile_summary is a LIST …  The legacy object keyed by schema name is still accepted by the server, but the published advance_schema only permits the list …)`, and `ADVANCING TO STEP 2` shows the list too. Prose and schema agree. Advancing with the array returned `status: ok`.
+- **Acceptance criteria:** (1) Retire the ⛔ per its own instruction, keeping one line that says to send the array because the schema declares it (INV-136). (2) Restamp or remove any MCP-NEGATIVE or test that pins the "two shapes" claim.
+
+#### P3-12 Module 5's step-18a describes a four-option detect_environment menu, and the server now offers two
+
+- **Severity:** low · **Verdict:** `plugin` (with a server note) · **Status:** filed as **#333** (2026-10-01, maintainer-approved; grouped with P3-11/12/13/15)
+- **Where:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md:1530-1568` ("a four-option menu", *skip / test_load / load+resolve / done*, with "**load+resolve** … (enters Phase 3)").
+- **What the server says (1.37.16, 2026-10-01, `mapping_workflow` approve at step 4 for WEB_ORDERS):** step 5 `detect_environment` returns `ADVANCE FORMAT: {"decision": "skip|test_load"}`, and its `advance_schema` declares `decision: enum ["skip","test_load"]`. There is no `load+resolve` and no `done`. The step-4 approve `message` instead lists four *next-step categories* (more sources, sandbox QA, load/resolve/report via sdk_guide→reporting_guide, mapped-JSONL-only), which is probably what the plugin's four options were drawn from.
+- **Server note (observation, not yet a finding):** the same step-5 instructions say the sandbox engine config "must point to `sqlite3://na:na@data/mapping/senzing_test/G2C.db`", a **relative** SQLite path. `module-02-sdk-setup/SKILL.md:1525-1535` records that a relative `SQL.CONNECTION` is discarded and fails with SENZ1001 (observed on 4.3.4). Re-test on 4.4.2 before calling it `mcp-server`. `phase3-test-load.md` should be checked for whether it already overrides this.
+- **Acceptance criteria:** (1) 18a describes the menu the server returns (`skip`, `test_load`), cites it with server version and date, and keeps the multi-source "recommend skip" guidance. (2) Any `load+resolve` / `done` reference in `phase3-test-load.md` is reconciled. (3) If a guard pins the four names, rescope it.
+
+- **Addendum (same walk, last source):** 18a's only recommendation is "skip … when one or more unmapped sources remain". At the **last** source it gives no recommendation and no question. The guide sent `skip` on the bootcamper's step-16 "1 — yes, proceed to loading", which is a reasonable reading but not one the text states. Acceptance criterion: 18a states the last-source default, and says whether the step-16 answer settles it.
+
+#### P3-13 Module 5 step 16's per-source gate asks "Ready to proceed to loading (Data processing)?" while other sources are still unmapped
+
+- **Severity:** low · **Verdict:** `plugin` · **Status:** filed as **#333** (2026-10-01, maintainer-approved; grouped with P3-11/12/13/15)
+- **Where:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md:1439-1463` (step 16, run per source inside the per-source workflow of steps 8-18), against step 19 ("Repeat for remaining data sources") and 18a ("When one or more unmapped sources remain … automatically continue to the next unmapped source").
+- **What happened (walk 2026-10-01):** after WEB_ORDERS, the first of three sources, the pinned ≥80% branch had to be asked verbatim: *"Quality looks strong. Ready to proceed to loading (Data processing)?"*, with option 1 "Yes, proceed to loading". STORE_POS and SUPPORT_TICKETS were still unmapped. A literal "1" asks to load now, which 18a and step 19 then contradict. INV-056 forbids adapting the pinned wording, and the same response's `mapping_workflow` message says "repeat mapping_workflow for each remaining data source before proceeding … all sources should be mapped before loading".
+- **Acceptance criteria:** (1) Step 16 has a per-source variant used while sources remain (e.g. "Quality looks strong for {source}. Ready to map the next source, {next}?"), and the loading question is asked only after the last source. (2) The ≥80/70-79/<70 branches each get the same split. (3) A test asserts step 16's loading question is reachable only when no unmapped source remains.
+
+#### P3-14 The cross-source shared-feature collision check fires on every parsed-vs-full or renamed-but-identical field pair, and its "one question per collision" costs a turn each
+
+- **Severity:** low · **Verdict:** `plugin` · **Status:** filed as **#336** (2026-10-01, maintainer-approved)
+- **Where:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md:888-901` ("When **two or more sources send different source fields to the same Senzing feature**, stop and confirm … Ask one 👉 question naming both fields and the feature").
+- **What happened (walk 2026-10-01):** three person sources. The check fired five times across two sources. STORE_POS vs WEB_ORDERS: `full_name` vs `first_name`+`last_name` (NAME), `address` vs `street`/`city`/`state`/`zip` (ADDRESS), `date_of_birth` vs `birth_date` (DOB). SUPPORT_TICKETS vs both: `contact_name` (NAME), `address` (ADDRESS). Every pair was the same quantity by construction, and the parsed-vs-full NAME/ADDRESS pairs are exactly the shape divergence Module 1/4 require the scenario to carry. Read literally (one question per collision), that is five consecutive turns with self-evident answers. The walk bundled each source's collisions into one yes/no question, which the text does not sanction.
+- **Why it matters:** the check's stated target is near-miss semantics, "watch **date** and **identifier** features hardest" ("year established" vs "incorporation filing date"). As written it also fires on the designed-in case, which spends the Bootcamper's attention on non-questions and dilutes the one that matters.
+- **Acceptance criteria:** (1) Scope the trigger: parsed-vs-full forms of NAME and ADDRESS, and fields carrying the same value type under different names, are noted in the mapping rationale rather than asked. The question is kept for date, identifier and other near-miss families (or for any pair the guide cannot show is the same quantity). (2) When several collisions remain for one source, one question may cover them, stated explicitly. (3) A test pins the narrowed trigger.
+
+#### P3-15 Module 5's two single-page visual steps never point at the screenshot capture that module-completion.md says "runs at the visualization step"
+
+- **Severity:** low · **Verdict:** `plugin` · **Status:** filed as **#333** (2026-10-01, maintainer-approved; grouped with P3-11/12/13/15)
+- **Where:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md:303-317` ("Whenever a module generates a visualization … capture … This runs at the visualization step, right after the page exists"; names "Data Quality, Mapping, and Transformation's quality and mapping pages" as the `--single` case) versus `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md` step 15 "Offer visualization" (no mention of capture; `grep -i 'screenshot\|capture'` finds nothing relevant in the file). `phase1-quality-assessment.md` has the same gap.
+- **What happened (walk 2026-10-01):** the guide wrote three mapping-quality pages at three step-15 visual offers and captured none of them, because the step being executed did not say to. The capture rule was met only when module-completion.md was read at step 20, which is after the step where the procedure says capture "runs". The late capture worked here because the pages are static files. INV-146's "record the capture at the step checkpoint in the same turn it ran" could not be met.
+- **Why it matters:** a rule that binds a step must be reachable from that step (INV-183). Graduation's orphan backfill embeds PNGs that exist, but it does not capture pages that were never captured.
+- **Acceptance criteria:** (1) Step 15's visual offer, and the phase-1 quality visual, cite the `--single` capture procedure in module-completion.md (cite it, don't restate it — INV-300) and record the PNG at the step checkpoint. (2) A test asserts every Module 5 visual step that writes `docs/visualizations/*.html` cites the capture procedure.
+
+#### P3-16 Module 5 puts each source's `_sample.jsonl` in `data/senzing-ready/`, while Module 6 counts "every file there" as loadable and Module 5's own gate wants a mapper doc for each file there
+
+- **Severity:** low · **Verdict:** `plugin` · **Status:** filed as **#338** (2026-10-01, maintainer-approved)
+- **Where:**
+  - `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md:1481` — "Sample output in `data/senzing-ready/[name]_sample.jsonl`".
+  - Same file `:1587` — "list ALL files in `data/senzing-ready/` and verify that EACH has a corresponding `docs/mapping/{source_name}_mapper.md`".
+  - `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md:226-228` — subset files stay out of `data/senzing-ready/` because "Phase A's loadable total counts every file there, so a subset file inside it would count its source twice".
+  - `phaseA-build-loading.md:485` — the loadable total is "the record count across **every** mapped source's file in `data/senzing-ready/` together".
+- **What happened (walk 2026-10-01):** `data/senzing-ready/` held six files: three full outputs (10,000 records) and three samples (45 records). Taken literally, the loadable total is 10,045, which counts the sampled records twice. That is the exact hazard Phase B gives as its reason for keeping subsets out of the directory. Read literally, Module 5's step-19 gate asks for `STORE_POS_SAMPLE_mapper.md` and two others. The guide used the registry's `file_path` per source (10,000) and normalized the gate by stripping `_sample`. Neither is written down.
+- **Why it matters:** both are contract disagreements between modules, not cosmetic. The double count is small here, but it scales with sample size and can push a load across the SQLite heads-up threshold that Phase A's item 3 gates on.
+- **Acceptance criteria:**
+  1. Either Module 5 writes samples somewhere other than `data/senzing-ready/` (for example `data/mapping/` or `data/samples/`), or the loadable total and the step-19 gate are both defined from each source's registry `file_path`, not from a directory listing.
+  2. Whichever is chosen, Phase B's stated reason for keeping subsets out of the directory stays true.
+  3. A test pins it.
+
+#### P3-17 Module 7 tells the guide to "keep the refusal-to-render" (INV-091), but INV-091 and the shipped reference server prescribe a CDN fallback
+
+- **Severity:** low · **Verdict:** `plugin` · **Status:** filed as **#332** (2026-10-01, maintainer-approved)
+- **Where:**
+  - `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md:747` — "⛔ **(INV-091) Keep the refusal-to-render when no asset is found.** Failing visibly is correct, and a CDN fallback would break the offline guarantee".
+  - `specs/INVARIANTS.md:752` (INV-091) — "with the `d3js.org` CDN referenced only as a fallback when the vendored asset is missing".
+  - `plugins/senzing-bootcamp/scripts/senzing_viz_server.py:1883-1894` — `_d3_script()` returns `<script src="https://d3js.org/d3.v7.min.js">` on `OSError`.
+  - Also agreeing with "never CDN": `module-03b-truthset-visualization/phase1-visualization.md:244` and `visualization-api-reference.md:887-888`.
+- **What happened (walk 2026-10-01):** at the Module 7 visualization step, the guide is told to keep a refusal the reference server it models does not have. The invariant cited as the rule's authority says the opposite. The step's own INV-091 citation therefore cannot be followed and honored at once. A guide that copies the reference, which the step instructs ("modeled on the shipped Truth Set visualization server"), inherits a silent CDN fetch in exactly the case the step says must fail visibly.
+- **Why it matters:** this is an invariant, a shipped script and three skill passages disagreeing on one behavior. The silent CDN path also defeats the air-gapped/proxy rationale the contract gives at `visualization-api-reference.md:888`.
+- **Acceptance criteria:**
+  1. Decide the behavior. Refusal-to-render matches four of the five sources and the offline rationale.
+  2. Correct INV-091 in place with a dated note (per the dry-run skill's "correct an invariant in place").
+  3. Make `_d3_script()` follow it, for example by raising or rendering a visible error panel instead of a CDN tag.
+  4. A test asserts no `d3js.org` URL can be emitted by the reference server; negative-controlled.
+
+#### P3-18 On a capped graph, the reference app's relationship-mode note describes the capped subset as the whole population
+
+- **Severity:** medium · **Verdict:** `plugin` · **Status:** filed as **#327** (2026-10-01, maintainer-approved)
+- **Where:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py:1420-1424`.
+  - `"Showing the "+nodeCount+" entities that have relationships, of "+STATS.entities_total+" total … Uncheck the toggle above to show them all."`
+  - `nodeCount` counts relationship-bearing nodes **within** the `GRAPH_NODE_CAP = 1500` payload (`:140`), not in the datastore.
+- **What happened (walk 2026-10-01, Harborline, 7,084 entities, 5,647 relationships):**
+  - The Entity Graph opened in relationship mode (more than 400 nodes) and said *"Showing the 286 entities that have relationships, of 7084 total"*.
+  - By the export, at least 4,551 entities carry a possibly-same link.
+  - Unchecking the toggle shows 1,500 of 7,084, not "them all". In full mode, the panel says nothing about the cap.
+  - The screenshot carrying this sentence is embedded in the recap keepsake (INV-146).
+- **Why it matters:** an understatement of about 16x, in a permanent artifact the Bootcamper is told to share. It is the INV-245 shape: a figure the run itself contradicts, presented as a result. The Truth Set (84 entities) never reaches the cap, which is why Module 3b's walk could not see it.
+- **Acceptance criteria:**
+  1. Under `capped`, the note names both numbers: shown-with-relationships of shown, and the datastore's relationship-bearing total, or says the shown set is a sample.
+  2. The full-population mode states the cap when `capped` is true.
+  3. "Show them all" is not claimed when the cap applies.
+  4. A test builds a capped payload and asserts the wording; negative-controlled.
+
+#### P3-19 Graduation hands over a Module 6 orchestrator that cannot run: it reads `config/data_sources.yaml`, which graduation never copies
+
+- **Severity:** medium · **Verdict:** `plugin` · **Status:** filed as **#325** (2026-10-01, maintainer-approved)
+- **Where:**
+  - `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md` step 17. "When a source's load starts, read that source's block from `config/data_sources.yaml` and load exactly the input it names … A source with no block loads its whole registry `file_path`" (INV-320). So every plugin-conformant orchestrator reads the registry at run time.
+  - `plugins/senzing-bootcamp/skills/graduation/SKILL.md` Step 2. The copy table lists `src/transform`, `src/load`, `src/query`, `src/utils`, `data/senzing-ready` and dependency manifests, but not `config/data_sources.yaml`. INV-186's rationale ("a project whose loader points at a directory that does not exist") applies to the registry exactly as it does to the data directory.
+- **What happened (walk 2026-10-01):** `production/src/load/orchestrator.py` was copied verbatim, as Step 2 requires. Run in `production/`, it exits at `registry_entry()`, because `production/config/data_sources.yaml` does not exist. The guide documented the gap in the README and in GRADUATION_REPORT's Issues section, but the copied program is broken as handed over.
+- **Why it matters:** the orchestrator is the take-home multi-source loader. INV-186 exists to stop graduation handing over code whose input path does not exist, and the registry is that input's index.
+- **Acceptance criteria:**
+  1. Graduation Step 2 copies a production-safe projection of `config/data_sources.yaml`: source names, `file_path` and any `load_subset:` blocks. It strips bootcamp-only fields (quality scores, provenance, validation history). Alternatively, Module 6 step 17 makes the registry path a parameter with a documented default.
+  2. The README's Configuration section names it.
+  3. A test asserts a graduation copy carries what a Phase C orchestrator reads.
+
+#### P3-20 A graduation video rendered without a speech engine tells the Bootcamper nothing about what to install, per platform, to get the voice-over
+
+- **Severity:** low (Bootcamper-assigned priority: High — "The video should be a shareable keepsake, and silence looks broken") · **Verdict:** `plugin` · **Status:** filed as **#331** (2026-10-01, maintainer-approved; combined with P3-20/21/22) · **Source:** bootcamper-reported (maintainer in character, via "bootcamp feedback", 2026-10-01)
+- **Where:**
+  - `plugins/senzing-bootcamp/skills/graduation/SKILL.md` Step 1c "Verify the video" item 3: "When it printed `Audio track: no`, no speech engine was available. The video then has captions only, and that is not a failure."
+  - The closing announcement wording (same file, "Mandatory closing step").
+  - The renderer already knows the per-platform engines: `plugins/senzing-bootcamp/scripts/generate_recap_video.py:612-630` (`say` on macOS, PowerShell System.Speech on Windows, `espeak-ng`/`espeak` on Linux), and its docstring at `:80-81`.
+- **What happened:** on Ubuntu 24.04 with no `espeak-ng`/`espeak`, the video rendered captions-only. The Bootcamper had to ask "Why is there no sound?" to learn that a speech engine was missing and how to add one.
+- **Bootcamper's request:** say what must be installed for audio, with different information for macOS, Linux and Windows, and give install hints (apt, brew, etc.).
+- **Acceptance criteria:**
+  1. When the renderer reports `Audio track: no`, graduation states in one line which engine was missing for this platform, how to install it, and the re-render command (the storyboard is kept).
+     - Linux: `espeak-ng` via apt/dnf.
+     - macOS: `say`, built in, so its absence is unusual.
+     - Windows: System.Speech, built in to Windows PowerShell.
+  2. The install stays the Bootcamper's action; no sudo from the guide, per INV-129/INV-066.
+  3. Optionally, the renderer's `Audio track: no` line names the engines it tried (it already collects `tried`).
+  4. A test pins that the Step 1c no-audio branch names a per-platform install route.
+
+#### P3-21 The graduation video has no music bed; the Bootcamper asked for light, upbeat background music
+
+- **Severity:** low (feature; Bootcamper-assigned priority: Medium — "It give the video a better \"feeling\".") · **Verdict:** `plugin` · **Status:** filed as **#331** (2026-10-01, maintainer-approved; combined with P3-20/21/22) · **Source:** bootcamper-reported (maintainer in character, via "bootcamp feedback", 2026-10-01)
+- **Where:** `plugins/senzing-bootcamp/scripts/generate_recap_video.py`. It mixes only the narration (when a speech engine exists) and bundles no audio asset (`scripts/vendor/` holds only `d3.v7.min.js`). Graduation Step 1c and its storyboard schema have no music field.
+- **Request:** "In the video's audio, there should be some light, but upbeat music."
+- **Design constraints to carry into the issue:**
+  - **Asset:** the track must be vendored with a license that permits redistribution inside the plugin and sharing of the rendered keepsake. Royalty-free or CC0, with the license recorded beside the asset. Never fetched at render time (offline rule, INV-091 by analogy).
+  - **Mixing:** ducked well under the narration when there is one. The track is still present when there is no speech engine (P3-20), which also removes the "silence looks broken" symptom.
+  - **Bootcamper control:** the bootcamper can turn it off, for example with a storyboard `music: false`.
+  - **A licensing-free route exists:** a procedurally synthesized bed, generated at render time with numpy, ducked by sidechain compression. This is how the maintainer's `senzing-claude-video` project does it (see P3-22).
+- **Acceptance criteria:**
+  1. The rendered MP4 carries an audio stream with the music bed at a level below the narration.
+  2. With no speech engine, the video still has the music track.
+  3. The asset's license file ships beside it.
+  4. A storyboard switch disables it.
+  5. A test asserts an audio stream exists in a render with and without a speech engine; negative-controlled.
+
+#### P3-22 On Linux the graduation video's only voice is espeak-ng, which the Bootcamper found too robotic
+
+- **Severity:** low (feature; Bootcamper-assigned priority: High — "Currently it sounds unprofessional.") · **Verdict:** `plugin` · **Status:** filed as **#331** (2026-10-01, maintainer-approved; combined with P3-20/21/22) · **Source:** bootcamper-reported (maintainer in character, via "bootcamp feedback", 2026-10-01)
+- **Where:** `plugins/senzing-bootcamp/scripts/generate_recap_video.py:612-630`. `find_speech_engine()` tries `say` (macOS) and Windows System.Speech; on Linux it tries only `espeak-ng`/`espeak`, which are formant synthesizers. No neural or offline-quality engine is tried on any platform.
+- **What happened:** the re-render with `espeak-ng` 1.51 produced a voiced video (18 of 18 scenes, 2:02). The Bootcamper said it sounds too robotic and asked whether better audio is possible.
+- **Design notes for the issue:**
+  - An offline neural engine would keep the no-network rule. Piper (`piper-tts`, a pip-installable project-venv dependency with a downloadable voice model) is one candidate; it would need the same install-offer gate as `imageio-ffmpeg` (INV-066) and a license check on the voice model.
+  - A cloud TTS would send the narration off the machine and need explicit consent.
+  - The engine should be preferred in a quality order with espeak as the fallback. Graduation should say which voice was used and, when it is espeak, that a better one is available.
+- **Acceptance criteria:**
+  1. Bootcamper's suggested fix: learn from the maintainer's separate video project (`docktermj/senzing-claude-video`, private), whose narration sounds better. What it does differently, read 2026-10-01:
+     - **Voice:** a local **Piper** neural voice (`piper-tts` in a venv, plus a voice model of about 115 MB downloaded once from the rhasspy/piper-voices collection). It does not use espeak.
+     - **Narration tuning:** per-line pronunciation replacements and speed (`length_scale`), and fixed noise settings so takes are repeatable.
+     - **Mixing:** clips placed on one stereo track, the mix loudness-normalized (ffmpeg `loudnorm`, about -16 LUFS), 48 kHz. Our renderer produces mono 44.1 kHz with no normalization.
+     - **Music bed:** synthesized procedurally in numpy, so it needs no licensing, and ducked under the voice with a sidechain compressor. This also answers P3-21 without a vendored audio asset.
+     - **Tried in this walk (2026-10-01), outside the plugin, at the Bootcamper's request:**
+       - `piper-tts` installed into the project venv; `en_US-ryan-high` (120 MB) downloaded from Hugging Face.
+       - Voiced all 18 storyboard narrations: every clip fit its scene at speed 1.0 (smallest slack 0.53 s).
+       - Added an original numpy music bed, sidechain-ducked, `loudnorm` to -16 LUFS (measured -16.4), 48 kHz stereo; the video stream was copied unchanged.
+       - ⚠️ **The ryan voice's model card licenses its dataset CC BY-NC-SA 4.0 (non-commercial).** The plugin cannot ship or default to it without a license decision. Pick a permissively licensed voice, or make the voice the Bootcamper's choice.
+     - **Bootcamper verdict (2026-10-01, "bootcamp feedback"):** "That version of the mp4 is acceptable. Capture what you did to make that mp4 and use it to update the plugin." The recipe that produced it, so the fix can reproduce it:
+       1. **Install:** project venv `data/temp/recap-venv` (`python3 -m venv`, then `pip install piper-tts numpy`; piper-tts 1.x installs a `piper` CLI beside the venv python).
+       2. **Voice:** `en_US-ryan-high.onnx` + `.onnx.json` from `huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/` (see the license caveat above).
+       3. **Narration:** per storyboard scene, `piper -m <model> --length-scale 1.0 --sentence-silence 0.15 -f vo_NN.wav`, with the narration text on stdin. Large numerals were spelled out for speech ("7,084" -> "seven thousand and eighty-four"). If a clip plus 0.35 s lead plus 0.2 s tail overran its scene, the guide retried at length-scale 0.92 / 0.85 / 0.78; none needed it.
+       4. **Placement:** each clip at scene start + 0.35 s, `aresample=44100,pan=stereo|c0=c0|c1=c0,adelay=<ms>|<ms>`, then `amix=normalize=0,apad,atrim` to the total length.
+       5. **Music bed:** original numpy synthesis at 44.1 kHz stereo. 120 BPM, a I-V-vi-IV progression in C (pads plus detuned partials, a decaying bass per beat, an eighth-note plucked arpeggio panned +/-0.3, a light pitch-swept kick), 2 s fade-in and 3 s fade-out, peak-normalized /1.1.
+       6. **Mix:** `[music]volume=0.5`, sidechain-ducked by the voice (`sidechaincompress=threshold=0.03:ratio=6:attack=40:release=600`), `amix=normalize=0`, `loudnorm=I=-16:TP=-1.5:LRA=11`, 48 kHz.
+       7. **Mux:** onto the rendered picture with `-c:v copy -c:a aac -b:a 192k -movflags +faststart -shortest`.
+       8. **Measured:** -16.4 LUFS integrated; voice windows about -17.6 dB mean against about -23 dB in music-only gaps.
+       8a. **Three review-and-improve rounds followed, at the Bootcamper's request:**
+           - business problem split into two cards with distinct highlights;
+           - highlights added to the SDK and verification cards;
+           - narration lengthened to remove dead air, leaving no gap over about 2 s;
+           - music lowered to 0.3, now about 8 dB under the voice;
+           - the white Cross-Source screenshot replaced by a full-population entity graph;
+           - the Merge Statistics images replaced by name-free 16:9 histogram crops (P3-23).
+
+           The re-voice reads real per-scene durations from the renderer's `RENDER:` lines, so overrun extensions are honored. Final file: 2:04, -16.1 LUFS, 0 silent stretches. The final storyboard is in the scratchpad (`storyboard.final.json`).
+       9. **The working script** is kept in the session scratchpad (`piper_voiceover.py`, not in the repo). The fix belongs in `scripts/generate_recap_video.py` itself: a Piper `SpeechEngine` tried before espeak, a storyboard music switch, and a loudness pass. It does not belong as a side script.
+     - **Things to settle before adopting it:** the voice download is network and about 115 MB, so it needs an install offer (INV-066) and an offline fallback to espeak. Each Piper voice model's license must be checked before the plugin names one.
+  2. At minimum: graduation tells a Linux Bootcamper on espeak that the voice is a basic one and names the better option.
+  3. Any new engine is installed only behind an install offer, into the project venv.
+
+#### P3-23 The B-roll images the graduation video is told to use can show record values, which the video's aggregates-only rule forbids
+
+- **Severity:** medium · **Verdict:** `plugin` · **Status:** filed as **#326** (2026-10-01, maintainer-approved)
+- **Where:**
+  - `plugins/senzing-bootcamp/skills/graduation/SKILL.md` Step 1c. "⛔ (INV-340) Aggregates only: no raw record values anywhere in the storyboard … It may not show a name … in any field". The QVD scene row tells the guide to use "the results screenshots". The worked example uses `results_visualization-*.png`.
+  - `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md` Step 2e. `images` lists the module's screenshots, while INV-341 bans record values in `facts`/`highlight`. Images are not mentioned.
+- **What happened (walk 2026-10-01, video review):**
+  - The Merge Statistics screenshots (Truth Set's and the Bootcamper's) carry a "Largest resolved entities" list with customer **names** and entity IDs.
+  - Search / Probe shows searched names.
+  - The first renders put the Merge Statistics image on screen. The guide caught it only on a frame-by-frame review, and replaced it with crops of the header and histogram.
+- **Why it matters:** the video is the keepsake the Bootcamper is told to share. The text fields are guarded, the images are not, and `broll.json` lists exactly those images.
+- **Acceptance criteria:**
+  1. Step 1c says which captured tabs are name-free (Entity Graph with labels hidden, Match Keys, Feature Scores, Cross-Source) and which carry record values (Merge Statistics' entity list, Search / Probe). For the latter it requires a crop or exclusion.
+  2. Module completion Step 2e marks per image whether it carries record values, or the capture helper offers a name-free crop.
+  3. A test asserts the worked example's images are from the name-free set.
+- **Also seen in the same review (fold into P3-22's renderer work):**
+  - The renderer's pan-and-zoom on a wide, short image cuts the subject off. Crops need to be 16:9.
+  - Title cards with no `highlight` (SDK setup, System verification) render as empty slates; the B-roll statistics could fill them.
+
+<!-- phase-3 findings go above this line -->
+
 ## invariant-review-2026-10-01b
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one review session, the second that day)
