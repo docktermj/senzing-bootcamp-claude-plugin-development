@@ -953,8 +953,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
 The renderer reads `docs/video/storyboard.json` and writes `docs/bootcamp_recap.mp4`. Act on its exit
 code:
 
-- **0, rendered.** It prints `Video generated:`, a `Duration:` line and an `Audio track:` line. Go on
-  to "Verify the video" below.
+- **0, rendered.** It prints `Video generated:`, a `Duration:` line, a `Voice:` line and a `Music:`
+  line. Go on to "Verify the video" below.
 - **1, invalid storyboard.** Each `INVALID:` line names the field at fault. Fix those fields and run
   it again. If it is still invalid, skip the video.
 - **2, a capability is missing.** No usable ffmpeg, or no Pillow; the `ERROR:` line says which. Make
@@ -1008,10 +1008,13 @@ ffmpeg the render used: `ffmpeg` on `PATH`, or the `imageio-ffmpeg` binary, whos
    Work the midpoints out from the planned durations, lengthened as the renderer's `OVERRUN:` lines
    report. Confirm that each frame shows its scene, that the certificate carries the right name and
    that the tag line reads "Resolved: [Name], Senzing graduate.".
-3. **Audio.** When the renderer printed `Audio track: yes`, a speech engine was available, and the
-   file carries an audio stream (`ffprobe`, or the `Audio:` stream line of `ffmpeg -i`). When it
-   printed `Audio track: no`, no speech engine was available. The video then has captions only, and
-   that is not a failure.
+3. **Audio.** Read the renderer's `Voice:` and `Music:` lines. There is an audio stream whenever
+   either one is present: a `Voice:` line naming an engine (`Voice: <engine> (<n> of <m> scenes
+   narrated)`), or `Music: yes`. Then the file carries an audio stream (`ffprobe`, or the `Audio:`
+   stream line of `ffmpeg -i`). `Voice: none (…)` names why no voice spoke (`--no-voice`, `no speech
+   engine found`, or `<engine> voiced no scene`): the captions carry the narration, and that is not a
+   failure. Only with `Voice: none (…)` and `Music: off (storyboard)` together is there no audio
+   stream.
 
 **Out of tolerance.** When the duration is outside 1:50 to 2:10, shorten the narration (a video that
 runs long) or lengthen it (a video that runs short), starting with the scenes the `OVERRUN:` lines
