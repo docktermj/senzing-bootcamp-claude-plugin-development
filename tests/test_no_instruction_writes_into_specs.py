@@ -1,7 +1,8 @@
 """No maintainer instruction tells anyone to bring a new file into existence under `specs/`.
 
 `specs/` froze on 2026-09-15 (INV-307) and `tests/test_specs_are_frozen.py` rejects a new
-`specs/*.md`. ⛔ **That guard catches a file LANDING; it cannot catch prose telling a maintainer
+file anywhere in `specs/`: since #257 it checks every file there, not only `*.md`.
+⛔ **That guard catches a file LANDING; it cannot catch prose telling a maintainer
 to create one.** The two failures are a long way apart: the instruction is written once and read
 much later, and the person who finally follows it is the one who gets the red suite.
 

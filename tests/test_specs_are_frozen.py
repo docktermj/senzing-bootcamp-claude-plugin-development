@@ -54,8 +54,9 @@ own input; it is not a live record. ⚠️ **The list has one home**, the "What 
 `specs/README.md`: `LIVE_RECORDS` is parsed from it, with no fallback set (#258).
 `docs/development.md` and `docs/FAMILY_WORKFLOW.md` §8 each name the live records, and
 `TheDocsNameTheLiveRecords` fails when either names a different set. INV-307 is the third copy:
-`InvariantThreeOhSevenNamesTheList` passes on its applied note or, until `/review-invariants`
-applies it, on the unapplied amendment block, read through `pending_invariants.blocks()`.
+`InvariantThreeOhSevenNamesTheList` passes only on its applied 2026-09-30 note (#226), which
+names the table and the five records. Until `/review-invariants` applied that note, the check
+also passed on the unapplied amendment block in the ledger; that branch is gone (#288).
 
 ⚠️ **Enforces INV-307.** It asserts the set in both directions, that the live records exist
 and stay out of the frozen set, and that the cutover date is stated in `specs/README.md` rather
@@ -74,7 +75,6 @@ Source issue: #52 (freeze `specs/`, set the cutover date).
 
 Run:  python3 -m unittest discover -s tests
 """
-import importlib.util
 import re
 import unittest
 from pathlib import Path
@@ -122,11 +122,8 @@ def parse_live_records(text):
 #: never restated here, so the README and the guard cannot name different sets.
 LIVE_RECORDS = parse_live_records(FREEZE_README.read_text(encoding="utf-8"))
 
-#: INV-307 is the third copy of the list. Until `/review-invariants` applies its held amendment,
-#: the amendment block in the ledger carries the five names instead; `pending_invariants.py` is
-#: the one parser of that ledger (INV-315).
+#: INV-307 is the third copy of the list, in its applied 2026-09-30 note (#226).
 INVARIANTS = SPECS / "INVARIANTS.md"
-LEDGER_HELPER = REPO_ROOT / ".claude" / "skills" / "review-invariants" / "pending_invariants.py"
 
 #: The two documents outside `specs/` that name the live records.
 DEVELOPMENT_MD = REPO_ROOT / "docs" / "development.md"
@@ -276,41 +273,14 @@ def inv307_text(invariants=None):
     return m.group(0) if m else ""
 
 
-class _Text:
-    """A stand-in for the ledger's path: only `read_text` is called on it."""
-
-    def __init__(self, text):
-        self.text = text
-
-    def read_text(self, encoding=None):
-        return self.text
-
-
-def unapplied_inv307_amendments(ledger=None):
-    """Texts of every unapplied `PROPOSED AMENDMENT to INV-307` block, pending OR held.
-
-    `blocks()` lists every unapplied block; `queue()` would drop a held one, and the INV-307
-    amendment is held until this list is parsed from the table. `ledger` replaces the ledger's
-    text, for the negative controls.
-    """
-    spec = importlib.util.spec_from_file_location("pending_invariants", LEDGER_HELPER)
-    helper = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(helper)
-    if ledger is not None:
-        helper.LEDGER = _Text(ledger)
-    return [b["text"] for b in helper.blocks() if helper.parse(b)["amends"] == "INV-307"]
-
-
 def names_the_list(text, live):
     """The text names every live record and the table that holds them."""
     return "What stays live" in text and all("`%s`" % n in text for n in live)
 
 
-def inv307_agrees(live, invariants=None, ledger=None):
-    """Two states, either enough: the applied note names them, or an unapplied block does."""
-    if names_the_list(inv307_text(invariants), live):
-        return True
-    return any(names_the_list(b, live) for b in unapplied_inv307_amendments(ledger))
+def inv307_agrees(live, invariants=None):
+    """INV-307's applied note names the table and every live record."""
+    return names_the_list(inv307_text(invariants), live)
 
 
 class TheReadmeTableIsTheList(unittest.TestCase):
@@ -341,31 +311,33 @@ class TheReadmeTableIsTheList(unittest.TestCase):
 
 
 class InvariantThreeOhSevenNamesTheList(unittest.TestCase):
-    """INV-307's copy agrees with the table: applied note, or the unapplied amendment block."""
+    """INV-307's copy agrees with the table, in its applied 2026-09-30 note (#226)."""
 
-    def test_inv307_or_its_unapplied_amendment_names_the_list(self):
+    #: Where INV-307's applied note opens; the negative control below removes it from there on.
+    NOTE = "(⛔ **Dated correction, 2026-09-30 (#226)"
+
+    def test_inv307_names_the_list(self):
         self.assertTrue(
             inv307_agrees(LIVE_RECORDS),
-            "neither INV-307 in specs/INVARIANTS.md nor an unapplied PROPOSED AMENDMENT to "
-            "INV-307 in specs/IMPLEMENTED.md names the \"What stays live\" table and all of %s"
-            % sorted(LIVE_RECORDS))
+            "INV-307 in specs/INVARIANTS.md does not name the \"What stays live\" table and all "
+            "of %s" % sorted(LIVE_RECORDS))
 
     def test_dropping_a_name_from_the_copy_is_caught(self):
-        """Negative control: each live record removed from INV-307 and its block fails the check."""
+        """Negative control: each live record removed from INV-307 fails the check."""
         invariants = INVARIANTS.read_text(encoding="utf-8")
-        ledger = (SPECS / "IMPLEMENTED.md").read_text(encoding="utf-8")
         for name in sorted(LIVE_RECORDS):
             with self.subTest(dropped=name):
                 pattern = r"`(?:specs/)?%s`" % re.escape(name)
-                self.assertFalse(inv307_agrees(LIVE_RECORDS, re.sub(pattern, "", invariants),
-                                               re.sub(pattern, "", ledger)))
+                self.assertFalse(inv307_agrees(LIVE_RECORDS, re.sub(pattern, "", invariants)))
 
-    def test_neither_state_holding_is_caught(self):
-        """Negative control: no applied note and no unapplied block fails the check."""
+    def test_removing_the_applied_note_is_caught(self):
+        """Negative control: INV-307 without its 2026-09-30 note fails the check."""
         invariants = INVARIANTS.read_text(encoding="utf-8")
-        ledger = (SPECS / "IMPLEMENTED.md").read_text(encoding="utf-8")
-        self.assertFalse(inv307_agrees(LIVE_RECORDS, invariants.replace("What stays live", ""),
-                                       ledger.replace("PROPOSED AMENDMENT to INV-307", "")))
+        entry = inv307_text(invariants)
+        self.assertIn(self.NOTE, entry, "negative control is stale: INV-307 no longer has the "
+                      "note it removes")
+        bare = entry[:entry.index(self.NOTE)].rstrip() + "\n"
+        self.assertFalse(inv307_agrees(LIVE_RECORDS, invariants.replace(entry, bare)))
 
 
 class TheCutoverDateIsRecorded(unittest.TestCase):

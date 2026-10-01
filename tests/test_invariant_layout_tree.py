@@ -41,14 +41,14 @@ later simplification that drops one would otherwise pass silently:
    distinct paths, and the `backups/` continuation line must not break the path of
    `backups/packages/` beneath it.
 
-⚠️ **Two leaves have no producer and are pinned in two states** (#226): `docs/README.md` is
-named once, by a line saying to skip it, and `src/utils/` only by graduation's copy table,
-which copies it if present. Each passes when INV-050's tree carries its annotation with a
-date, or while a pending `PROPOSED AMENDMENT to INV-050` block in `specs/IMPLEMENTED.md`
-carries that annotated tree line. The tree is edited only at `/review-invariants`, so the
-block arm holds until then and the tree arm afterwards, with no change here.
+⚠️ **Two leaves have no producer and are pinned by their dated annotation** (#226):
+`docs/README.md` is named once, by a line saying to skip it, and `src/utils/` only by
+graduation's copy table, which copies it if present. Each passes only when INV-050's tree
+carries its annotation with a date, as `/review-invariants` applied it on 2026-09-30. Until
+then the pin also passed while a pending `PROPOSED AMENDMENT to INV-050` block carried the
+annotated tree line; that branch is gone (#288).
 
-⚠️ **One entry the tree omits is pinned in two states the same way** (#286): Module 6 writes
+⚠️ **One entry the tree omits is pinned in two states** (#286): Module 6 writes
 subset files under `data/subsets/`, and the tree has no entry there. The pin passes when the
 tree has an entry at `data/subsets/`, or while a pending `PROPOSED AMENDMENT to INV-050` block
 carries its tree line byte for byte. Applying that block also bumps `EXPECTED_DIR_ENTRIES`
@@ -85,9 +85,9 @@ ANNOTATION = re.compile(r"reserved|superseded|legacy|future", re.IGNORECASE)
 #: The tree's indentation step: `├── ` and `│   ` are each four columns wide.
 INDENT = 4
 
-#: #226: the two leaves nothing produces, and the annotation each is to carry. Pinned in two
-#: states by `TheUnproducedLeavesArePinnedInTwoStates`.
-TWO_STATE_LEAVES = {"docs/README.md": "future", "src/utils/": "reserved"}
+#: #226: the two leaves nothing produces, and the annotation each carries. Pinned by
+#: `TheUnproducedLeavesCarryADatedAnnotation`.
+UNPRODUCED_LEAVES = {"docs/README.md": "future", "src/utils/": "reserved"}
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 #: #286: entries the tree omits, each with the tree line a pending INV-050 amendment inserts,
@@ -237,19 +237,9 @@ class _Text:
         return self.text
 
 
-def carries_the_annotated_line(block, entry, word):
-    """The block holds the entry's tree line, left column unchanged, with `word` in its comment."""
-    for line in block.splitlines():
-        left, sep, comment = line.partition("#")
-        if sep and left.strip() == entry.left.strip() and re.search(word, comment, re.I):
-            return True
-    return False
-
-
-def is_pinned(entry, word, blocks):
-    """The tree carries `word` with a date, or a pending INV-050 block carries the line."""
-    in_tree = re.search(word, entry.comment, re.I) and DATE.search(entry.comment)
-    return bool(in_tree) or any(carries_the_annotated_line(b, entry, word) for b in blocks)
+def is_pinned(entry, word):
+    """The tree carries `word` with a date in the entry's comment column."""
+    return bool(re.search(word, entry.comment, re.I) and DATE.search(entry.comment))
 
 
 def is_added(path, tree_line, entries, blocks):
@@ -451,12 +441,12 @@ class TreeIsFullyAccountedFor(unittest.TestCase):
                 self.assertIn(entry.probe, self.corpus)
 
 
-class TheUnproducedLeavesArePinnedInTwoStates(unittest.TestCase):
-    """#226: each of `TWO_STATE_LEAVES` is annotated in the tree, or about to be.
+class TheUnproducedLeavesCarryADatedAnnotation(unittest.TestCase):
+    """#226: each of `UNPRODUCED_LEAVES` carries its annotation, with a date, in the tree.
 
-    It passes while a pending `PROPOSED AMENDMENT to INV-050` block carries the annotated
-    tree line, and after `/review-invariants` edits the tree and marks the block applied. It
-    fails between the two: the block gone or applied while the tree is still unannotated.
+    `/review-invariants` applied the annotations on 2026-09-30. Until then this class also
+    passed on a pending `PROPOSED AMENDMENT to INV-050` block carrying the annotated line;
+    that branch is gone (#288).
     """
 
     @classmethod
@@ -467,50 +457,32 @@ class TheUnproducedLeavesArePinnedInTwoStates(unittest.TestCase):
         self.assertIn(path, self.by_path, "INV-050's tree no longer has an entry at %s" % path)
         return self.by_path[path]
 
-    def test_each_leaf_is_annotated_in_the_tree_or_in_a_pending_amendment(self):
-        blocks = pending_amendments("INV-050")
-        for path, word in TWO_STATE_LEAVES.items():
+    def test_each_leaf_carries_its_dated_annotation_in_the_tree(self):
+        for path, word in UNPRODUCED_LEAVES.items():
             with self.subTest(leaf=path):
                 self.assertTrue(
-                    is_pinned(self.leaf(path), word, blocks),
-                    "%s carries no dated `%s` annotation in INV-050's tree, and no pending "
-                    "PROPOSED AMENDMENT to INV-050 in specs/IMPLEMENTED.md carries its tree "
-                    "line so annotated. Applying the block edits the tree; removing it, or "
-                    "marking it applied without the edit, leaves the leaf unannotated."
-                    % (path, word))
-
-    def fixture(self, entry, word, marker):
-        """A one-block ledger whose tree line is `entry`'s, with `word` in its comment."""
-        return ("## fixture\n\n- **DEFERRED INVARIANT — PROPOSED AMENDMENT to INV-050 — %s.**\n"
-                "  ```text\n  %s# (%s; <YYYY-MM-DD>, #226)\n  ```\n" % (marker, entry.left, word))
+                    is_pinned(self.leaf(path), word),
+                    "%s carries no dated `%s` annotation in INV-050's tree. Nothing produces "
+                    "it, so the annotation is what accounts for it (#226)." % (path, word))
 
     def test_the_negative_controls(self):
-        """Each arm through the real queue parser, on an unannotated copy of each leaf."""
-        spec = importlib.util.spec_from_file_location("pending_invariants", LEDGER_HELPER)
-        helper = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(helper)
-        awaiting = helper.AMENDMENT_AWAITING
-        for path, word in TWO_STATE_LEAVES.items():
+        """The real tree with each leaf's annotation, or only its date, removed fails."""
+        lines = INVARIANTS.read_text(encoding="utf-8").splitlines()
+        for path, word in UNPRODUCED_LEAVES.items():
             real = self.leaf(path)
-            bare = Entry(real.name, "", 0, path=real.path, left=real.left)
+            at = real.line_number - 1
+            left, _, comment = lines[at].partition("#")
+            self.assertEqual(real.left, left, "the entry's line number no longer finds its line")
             cases = {
-                "pending block, annotated line": (self.fixture(bare, word, awaiting), True),
-                "(a) block removed": ("## fixture\n", False),
-                "(a) block marked applied": (self.fixture(bare, word, "applied 2026-10-01"),
-                                             False),
-                "(b) line lost its annotation": (self.fixture(bare, "Shared", awaiting), False),
+                "annotation removed": re.sub(r"\s*\(%s;[^)]*\)" % word, "", comment, flags=re.I),
+                "date removed": DATE.sub("", comment),
             }
-            for case, (ledger, expected) in cases.items():
+            for case, mutated in cases.items():
                 with self.subTest(leaf=path, case=case):
-                    blocks = pending_amendments("INV-050", ledger=ledger)
-                    self.assertIs(expected, is_pinned(bare, word, blocks))
-            with self.subTest(leaf=path, case="annotated tree, dated"):
-                dated = Entry(real.name, " (%s; 2026-10-01, #226)" % word, 0,
-                              path=real.path, left=real.left)
-                self.assertTrue(is_pinned(dated, word, []))
-            with self.subTest(leaf=path, case="annotated tree, undated"):
-                undated = Entry(real.name, " (%s)" % word, 0, path=real.path, left=real.left)
-                self.assertFalse(is_pinned(undated, word, []))
+                    self.assertNotEqual(comment, mutated, "negative control is stale")
+                    copy = lines[:at] + [left + "#" + mutated] + lines[at + 1:]
+                    bare = next(e for e in extract_tree("\n".join(copy))[1] if e.path == path)
+                    self.assertFalse(is_pinned(bare, word))
 
 
 class TheOmittedEntriesArePinnedInTwoStates(unittest.TestCase):

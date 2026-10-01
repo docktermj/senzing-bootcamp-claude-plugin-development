@@ -43,6 +43,52 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## leftover-pending-wording-after-the-2026-09-30-reviews
+
+- **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #288; audit findings L1, A-F1, A-F2, A-F4, A-F5, A-F6 and B-F9)
+- **Commit:** `304b8cc`
+- **Files changed:** `.claude/skill-overlays/implement-github-issue.md`, `.claude/skill-overlays/unattended-issue-loop.md`, `.claude/skills/production-readiness-audit/conformance.py`, `tests/test_filing_is_gated.py`, `tests/test_audit_files_issues_not_specs.py`, `tests/test_phase_d_how_state_audit.py`, `tests/test_specs_are_frozen.py`, `tests/test_invariant_layout_tree.py`, `tests/test_download_resource_is_a_listing.py`, `tests/test_reverse_check_counts_what_it_cannot_test.py`, `tests/test_no_instruction_writes_into_specs.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.16 (`get_capabilities`, reachable), 2026-09-30, `download_resource(filename='senzing_mapping_examples.md')` and `download_resource(filename='senzing_mapping_examples.md', inline=true, offset=28400)` — still reproduces: the URL route reports `size_bytes: 28688` and the inline route `total_chars: 28688` for the same file, so `total_chars` counts what `size_bytes` counts, as INV-234 and `phase1-quality-assessment.md:125` say. That is the one Senzing fact the change carries, into a test docstring. Every other edit is wording about this repository's own invariants and tests, re-confirmed by reading each changed line, and makes no absence claim. Re-verification changed nothing the issue asked for. Nothing was sent upstream.
+- **Approach:** direct (Phase 5a), as the issue scopes it.
+- **Summary:** Nothing now describes an amendment applied on 2026-09-30 as pending, and no test requires it to be.
+  - **INV-314.** Both overlays cite `(INV-314, as amended by its 2026-09-30 scope note, #216)`. The loop overlay no longer says INV-314's registered text "still says *create nothing*": under the note, the `unattended-ok` label is assent, given in advance, to the listed acts. The bold rule phrases #216's resolved block quotes are unchanged. In `tests/test_filing_is_gated.py`, `PENDING` is renamed `SCOPE_NOTE` and matches the new citation; the module docstring, the gate's failure message, `EachOverlayStatesItsPartOfTheList`'s docstring, test name and message, and the two citation fixtures in `TheCheckersAreNotVacuous` use the applied wording (none deleted). `tests/test_audit_files_issues_not_specs.py` cites the scope note as applied.
+  - **#154 → INV-334.** `tests/test_phase_d_how_state_audit.py`'s message and docstring say #154's block is resolved as INV-334, which it is; the three quoted rules are still pinned.
+  - **INV-307 guard.** `inv307_agrees` passes only on INV-307's applied 2026-09-30 note (#226). The unapplied-amendment branch is removed with its helpers `unapplied_inv307_amendments` and `_Text`, `LEDGER_HELPER` and the `importlib` import, none of which anything else calls. `test_neither_state_holding_is_caught` is deleted with the arm; `test_dropping_a_name_from_the_copy_is_caught` now mutates INV-307 only, and the new `test_removing_the_applied_note_is_caught` strips the note. Verified red on disk: INV-307 without its note fails `test_inv307_names_the_list`; restored byte-identical.
+  - **INV-050 guard (`docs/README.md`, `src/utils/` only).** `TheUnproducedLeavesArePinnedInTwoStates` becomes `TheUnproducedLeavesCarryADatedAnnotation` and `TWO_STATE_LEAVES` becomes `UNPRODUCED_LEAVES`. `is_pinned` reads the tree's dated annotation only, and `carries_the_annotated_line`, which nothing else called, is deleted. The block-arm controls are deleted with the arm. The new controls remove each leaf's annotation, and then only its date, from a copy of the real tree, and each fails. Verified red on disk: both annotations removed fails the positive test for both leaves; restored byte-identical. #286's `data/subsets/` arm (`TheOmittedEntriesArePinnedInTwoStates`, `is_added`, `pending_amendments`, `_Text`, `LEDGER_HELPER`) is untouched, as the issue requires.
+  - **`total_chars`.** `tests/test_download_resource_is_a_listing.py`'s docstring adds that `total_chars` and the offsets count UTF-8 bytes (INV-234), as `phase1-quality-assessment.md` states.
+  - **Command files.** `conformance.py`'s `cmd_reverse_check` docstring and `tests/test_reverse_check_counts_what_it_cannot_test.py` now say, in the past tense, that the command files restated their skills' rules until #262 removed them.
+  - **Freeze guard.** `tests/test_no_instruction_writes_into_specs.py` says the freeze guard rejects a new file anywhere in `specs/`, since #257.
+  - **Grep for other sites.** `pending` beside an applied INV number turned up no site beyond the issue's list, apart from `test_specs_are_frozen.py`'s helper docstring, which went with the helper. The `pending` wording left in `tests/test_invariant_layout_tree.py` belongs to #286's `data/subsets/` block, which is still pending.
+- **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` not run locally (remote reusable workflow; no workflow file changed).
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-330 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+    - ⛔ **that rule is held pending the #232/#235 outcome decision and is a separate subject, auditing rather than rendering** — in `specs/INVARIANTS.md`
+
+  ⚠️ **Why.** INV-330's "Why this is not INV-080 or INV-149" parenthetical says Phase D's
+  how-state audit (#154) "is held pending the #232/#235 outcome decision". On 2026-09-30
+  `/review-invariants` registered that rule as INV-334, folding in #232, so the sentence
+  describes a hold that has ended. Only the parenthetical is stale; what INV-330 requires is
+  unchanged, and the distinction it draws (auditing, not rendering) still holds. **Sites it
+  affects:** INV-330 in `specs/INVARIANTS.md`, which gains the note below after its closing
+  `(Source: …)` parenthetical, and INV-330's statement in `invariant-manifest.json`, which
+  carries the same text and is regenerated from it
+  (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit.
+  `tests/test_how_tab_names_an_unsettled_final_state.py` does not pin the parenthetical, so no
+  test changes. Applying it resolves the block: mark the bullet
+  `applied YYYY-MM-DD` and drop both "awaiting" markers. Enforced by
+  `tests/test_how_tab_names_an_unsettled_final_state.py`.
+
+  The drafted wording:
+
+  **INV-330** — (⚠️ **Dated note, <YYYY-MM-DD> (#288): the #154 rule is now INV-334; no requirement changes.** The parenthetical above says Phase D's how-state audit (#154) "is held pending the #232/#235 outcome decision". That rule was registered as INV-334 on 2026-09-30, folding in #232. Read the sentence as: Phase D's how-state audit flags the same two signs before the gate; that rule is INV-334, a separate subject, auditing rather than rendering.)
+
+  *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
+  applies the note.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-330 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify`
+  red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint at the
+  next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** Every other edit is wording about rules already registered (INV-314's scope note, INV-334, INV-307's note, INV-050's annotations, INV-234), and the two reduced guards enforce the applied text of INV-307 and INV-050. No ⛔ rule is added or demoted in shipped text.
+
 ## module-2-phase-3-routes-every-language-to-its-server-route
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #287; audit finding D-F7, with the Java lead from B-F4)

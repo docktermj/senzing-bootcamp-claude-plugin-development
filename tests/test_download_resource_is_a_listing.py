@@ -33,7 +33,8 @@ two sibling prohibitions are untouched.
 **The inline reply is chunked (#225).** Re-verified on server 1.37.15, 2026-09-29: an
 `inline=true` reply carries a large resource in bounded chunks, each with `truncated`,
 `next_offset` and `total_chars`, and a batch lists a file too large for one chunk under
-`oversize`. `ChunkedInlineReply` pins the plugin's side of that (INV-219: structure, never the
+`oversize`. Despite its name, `total_chars` counts the file's UTF-8 bytes, and so do the
+offsets (INV-234), as `phase1-quality-assessment.md` states. `ChunkedInlineReply` pins the plugin's side of that (INV-219: structure, never the
 server's wording): both sites that describe the inline route list `offset` among the declared
 parameters and name the three reply fields, or cite the central statement; neither says the
 whole resource arrives in one response; the `MCP-NEGATIVE` comment lists `offset` and carries a

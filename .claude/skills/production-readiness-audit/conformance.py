@@ -678,10 +678,10 @@ def cmd_reverse_check(args):
     reported, 0 occurrences of the maintainer surface in a 43 KB `--uncited` corpus. 93 of those
     112 cite nothing. The check reported clean over rules it could not reach.
 
-    ⚠️ **The fix is not to widen `per-rule`.** Its corpus carries ~165 restatement lines under
-    the maintainer surface -- command files restate the rules of the skills they front, by
-    design -- and adding them to a worklist whose own skill warns these are leads would bury the
-    real ones. What was wrong is a check spanning two corpora **silently**, so this view reports
+    ⚠️ **The fix is not to widen `per-rule`.** Its corpus carried ~165 restatement lines under
+    the maintainer surface -- the command files restated the rules of the skills they fronted,
+    by design, until #262 removed them -- and adding them to a worklist whose own skill warns
+    these are leads would have buried the real ones. What was wrong is a check spanning two corpora **silently**, so this view reports
     the span instead of hiding it.
 
     ⛔ **A run with untested lines is NOT CLEAN**, and the verdict says so in those words. Zero

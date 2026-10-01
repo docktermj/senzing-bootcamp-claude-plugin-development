@@ -42,10 +42,10 @@ would let a gate in one section vouch for an instruction in another. Measured 20
 7 lines for the five `gh issue create` sites, and 1 and 3 for the two `submit_feedback` sites,
 on both sides of the instruction.
 
-⛔ **Which records need a per-record yes is INV-314's pending scope note (#216).** Applying
-`unattended-ok` is assent, given in advance, to a closed list of acts on that issue only, and
-invoking `/implement-github-issue <n>` is assent to five comments on `<n>`. The two overlays
-under `.claude/skill-overlays/` state the list and cite the pending note. So a `gh issue
+⛔ **Which records need a per-record yes is INV-314's scope note (#216), applied 2026-09-30.**
+Applying `unattended-ok` is assent, given in advance, to a closed list of acts on that issue
+only, and invoking `/implement-github-issue <n>` is assent to five comments on `<n>`. The two
+overlays under `.claude/skill-overlays/` state the list and cite the note. So a `gh issue
 comment` or `gh pr create` instruction may sit beside that citation instead of a yes. A new
 issue and `submit_feedback` are never on the list, and only a yes vouches for them.
 
@@ -108,15 +108,15 @@ SUBMIT_CALL = re.compile(r"\bsubmit_feedback\(\s*category\s*=")
 #: `submit_feedback` sites, "get an explicit yes".
 GATE = re.compile(r"(?i)\bget an? (?:explicit )?yes\b")
 
-#: A citation of INV-314's pending scope note, as both overlays write it.
-PENDING = re.compile(r"INV-314\W+scope note pending\b[^\n]*#216")
+#: A citation of INV-314's scope note, as both overlays write it.
+SCOPE_NOTE = re.compile(r"INV-314, as amended by its 2026-09-30 scope note\b[^\n]*#216")
 
 #: What may stand beside each act. Only a yes vouches for a new issue or `submit_feedback`,
 #: because neither is on the scope note's list.
 ACCEPTED = {
     FILING: (GATE,),
-    "gh issue comment": (GATE, PENDING),
-    "gh pr create": (GATE, PENDING),
+    "gh issue comment": (GATE, SCOPE_NOTE),
+    "gh pr create": (GATE, SCOPE_NOTE),
     SUBMIT: (GATE,),
 }
 
@@ -278,7 +278,7 @@ class EveryInstructionCarriesTheGate(unittest.TestCase):
             "surface(s) instruct an outward act with no gate within %d lines: %s. The record "
             "exists, and its notifications have gone out, the moment the command runs. Put "
             "'get a yes' beside it, or, for a comment or a PR on the scope note's list, cite "
-            "INV-314's pending scope note (#216)" % (GATE_WINDOW, ", ".join(ungated)))
+            "INV-314, as amended by its 2026-09-30 scope note (#216)" % (GATE_WINDOW, ", ".join(ungated)))
 
 
 class UnattendedSurfacesInstructOnlyListedActs(unittest.TestCase):
@@ -304,7 +304,7 @@ class UnattendedSurfacesInstructOnlyListedActs(unittest.TestCase):
 
 
 class EachOverlayStatesItsPartOfTheList(unittest.TestCase):
-    """Until the note is applied INV-314 reads *create nothing*, so each overlay states its part."""
+    """Each overlay cites INV-314's scope note and states its part of the note's list."""
 
     PARTS = {
         LOOP_OVERLAY: ("four `/implement-github-issue` log comments", "one blocked comment",
@@ -313,12 +313,13 @@ class EachOverlayStatesItsPartOfTheList(unittest.TestCase):
                                                      "per-record yes"),
     }
 
-    def test_each_overlay_cites_the_pending_note_and_states_its_acts(self):
+    def test_each_overlay_cites_the_scope_note_and_states_its_acts(self):
         for rel, parts in self.PARTS.items():
             text = re.sub(r"\s+", " ", read(CLAUDE / rel))
             with self.subTest(overlay=rel):
-                self.assertRegex(text, PENDING, "%s no longer cites INV-314's pending scope "
-                                 "note (#216), so the list it states cites nothing" % rel)
+                self.assertRegex(text, SCOPE_NOTE, "%s no longer cites INV-314 as amended by "
+                                 "its 2026-09-30 scope note (#216), so the list it states "
+                                 "cites nothing" % rel)
                 for part in parts:
                     self.assertIn(part, text, "%s no longer states %r" % (rel, part))
 
@@ -403,10 +404,10 @@ class TheCheckersAreNotVacuous(unittest.TestCase):
                 self.assertEqual([3], ungated_lines(bare, act))
                 self.assertEqual([], ungated_lines("Get a yes first.\n" + bare, act))
                 self.assertEqual([], ungated_lines(
-                    "(INV-314; scope note pending at `/review-invariants`, #216)\n" + bare, act))
+                    "(INV-314, as amended by its 2026-09-30 scope note, #216)\n" + bare, act))
 
     def test_the_citation_never_vouches_for_a_new_issue(self):
-        text = ("(INV-314; scope note pending at `/review-invariants`, #216)\n"
+        text = ("(INV-314, as amended by its 2026-09-30 scope note, #216)\n"
                 + self.SYNTHETIC % FILING)
         self.assertEqual([4], ungated_lines(text, FILING))
 
