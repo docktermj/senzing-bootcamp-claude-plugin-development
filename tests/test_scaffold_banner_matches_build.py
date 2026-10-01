@@ -350,3 +350,35 @@ class TheCheckpointFixtureSaysWhatFoldingCannotReach(unittest.TestCase):
             "the unfinalized block's primary purpose is the INV-059 idempotency check. If "
             "the clip recipe crowded it out, the more valuable half was traded away.",
         )
+
+
+class EarlyModesDoNotPreCreateTheStep8Config(unittest.TestCase):
+    """#328: `--fresh` and `--seeded` start before Module 2 Step 8, which writes
+    `config/engine_config.json`. Pre-creating it there hid the env script refusing to load
+    until Step 8. The mid-bootcamp mode keeps it, so phase 2 still reaches both config gates.
+    """
+
+    CONFIG = "config/engine_config.json"
+    INCOMPLETE = "config/engine_config_incomplete.json"
+
+    def test_fresh_and_seeded_do_not_write_the_engine_config(self):
+        for mode, fresh, seeded in INVOCATIONS[1:]:
+            with self.subTest(mode=mode):
+                files, out = build_in_mode(fresh, seeded)
+                self.assertNotIn(self.CONFIG, files)
+                self.assertNotIn(self.CONFIG, {r[1] for r in scaffold.fixtures_for(mode)})
+                self.assertIn("NOT in this mode", out)
+                limits = out[out.index("NOT in this mode"):]
+                self.assertIn(self.CONFIG, limits, "the banner must name it as absent")
+
+    def test_mid_keeps_both_config_gates(self):
+        files, _ = build_in_mode(fresh=False, seeded=False)
+        self.assertIn(self.CONFIG, files)
+        self.assertIn(self.INCOMPLETE, files)
+
+    def test_the_incomplete_fixture_stays_in_every_mode(self):
+        """Out of scope for #328: the pre-flight fixture is not moved."""
+        for mode, fresh, seeded in INVOCATIONS:
+            with self.subTest(mode=mode):
+                files, _ = build_in_mode(fresh, seeded)
+                self.assertIn(self.INCOMPLETE, files)

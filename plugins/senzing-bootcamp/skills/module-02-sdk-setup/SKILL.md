@@ -902,25 +902,30 @@ fi
 _sz_root=$(cd -- "$(dirname -- "$_sz_self")/../.." && pwd)
 
 # --- fail loudly, naming the path that was computed --------------------------
-if [ ! -f "$_sz_root/config/engine_config.json" ]; then
-  printf 'senzing-env.sh: resolved project root has no config/engine_config.json\n' >&2
+# config/bootcamp_progress.json exists from project setup on, so it marks the root
+# at every step this script is sourced from (engine_config.json waits for Step 8).
+if [ ! -f "$_sz_root/config/bootcamp_progress.json" ]; then
+  printf 'senzing-env.sh: resolved project root has no config/bootcamp_progress.json\n' >&2
   printf 'senzing-env.sh:   resolved root: %s\n' "$_sz_root" >&2
   printf 'senzing-env.sh:   this is a path-resolution fault, not your Senzing install\n' >&2
   unset _sz_self _sz_root
   return 1 2>/dev/null || exit 1
 fi
 
-# --- never export an empty configuration ------------------------------------
-_sz_settings=$(cat -- "$_sz_root/config/engine_config.json")
-if [ -z "$_sz_settings" ]; then
+# --- engine configuration: skip while absent, never export an empty one -----
+if [ ! -f "$_sz_root/config/engine_config.json" ]; then
+  # Before Step 8 writes it: leave the variable unset and keep going.
+  printf 'senzing-env.sh: config/engine_config.json not written yet, so SENZING_ENGINE_CONFIGURATION_JSON is not set; source this script again after Step 8\n' >&2
+elif _sz_settings=$(cat -- "$_sz_root/config/engine_config.json"); [ -z "$_sz_settings" ]; then
   printf 'senzing-env.sh: %s is empty — refusing to export an empty configuration\n' \
     "$_sz_root/config/engine_config.json" >&2
   unset _sz_self _sz_root _sz_settings
   return 1 2>/dev/null || exit 1
+else
+  export SENZING_ENGINE_CONFIGURATION_JSON="$_sz_settings"
 fi
 
 export SENZING_PROJECT_ROOT="$_sz_root"
-export SENZING_ENGINE_CONFIGURATION_JSON="$_sz_settings"
 # Platform-specific exports (SENZING_ROOT, DYLD_LIBRARY_PATH / LD_LIBRARY_PATH, jar
 # paths) go here — take them from sdk_guide(topic='install', platform=…, language=…),
 # never from memory or from this file (INV-080).
@@ -988,14 +993,20 @@ the path to export and the check that confirms it.** Follow it rather than re-de
 here (INV-183, INV-300: the rule lives where the reader needs it, and a second dated copy is a second thing
 to keep true).
 
-Three things in that block are the point, not decoration:
+Four things in that block are the point, not decoration:
 
 - **`return 1`, never `exit 1`.** A sourced script shares the bootcamper's shell, so `exit` closes
   their terminal and `set -e` leaks into their session. `return 1 2>/dev/null || exit 1` returns when
   sourced and still exits if someone runs the file directly.
 - **The guard names the path it computed.** A wrong root that exports nothing produces an error many
   steps later that reads as a Senzing fault; a guard that prints the resolved root is diagnosable on
-  sight (the same fail-loudly rule INV-111 applies to generators).
+  sight (the same fail-loudly rule INV-111 applies to generators). The root marker is
+  `config/bootcamp_progress.json`, which project setup creates, so the guard holds from Step 4 on.
+  It is never `config/engine_config.json`: Step 8 writes that, and a guard on it blames path
+  resolution for what is only step order.
+- **Skip only the settings export while `config/engine_config.json` is absent.** Before Step 8 the
+  script prints a one-line notice, leaves `SENZING_ENGINE_CONFIGURATION_JSON` **unset**, still
+  exports `SENZING_PROJECT_ROOT` and the platform variables, and returns 0. Step 8 re-sources it.
 - **Refuse to export an empty value rather than exporting one.** Senzing's own official code snippets
   guard initialization with `if (settings == null)` — they test for **unset**, not empty — so an
   `export SENZING_ENGINE_CONFIGURATION_JSON=""` sails straight past that check and fails later,
@@ -1005,7 +1016,10 @@ Three things in that block are the point, not decoration:
 
 **Windows keeps its own script.** `senzing-env.bat` has no such problem — `%~dp0` is the batch file's
 own directory and is always available — and none of the zsh material applies there. Add the same
-fail-loudly root check to the `.bat`, and confirm the Windows variable set via `sdk_guide`.
+fail-loudly root check to the `.bat`, on `config/bootcamp_progress.json`, and the same rule for the
+settings variable: while `config/engine_config.json` is absent, print a one-line notice, leave
+`SENZING_ENGINE_CONFIGURATION_JSON` unset and set the rest; refuse an empty one. Confirm the Windows
+variable set via `sdk_guide`.
 
 ### The launch environment (JVM languages, and macOS generally)
 
@@ -1816,6 +1830,12 @@ sibling of `er` rather than a child.** That is currently **two** platforms, both
 Linux install ever produces `SENZ7426`, ask `sdk_guide(topic='install', platform='linux_apt' |
 'linux_yum')` before assuming this case applies — do not widen it by inference.
 
+**Re-source the env script now that `config/engine_config.json` exists.** Until this step the script
+skipped `SENZING_ENGINE_CONFIGURATION_JSON` with a notice, and a shell that sourced it earlier keeps
+that variable unset until it sources the script again. Source `src/scripts/senzing-env.sh` once more
+(run `senzing-env.bat` again on Windows) in the shell that launches the Bootcamper's programs, and
+confirm the "not written yet" notice no longer prints.
+
 **Checkpoint:** write step 8 to `config/bootcamp_progress.json`.
 
 ## Step 8a: Seed the default configuration (a freshly created datastore has none)
@@ -2029,9 +2049,9 @@ call succeeds** (not merely a version query).
   schema-created datastore whose config was never seeded, and it can appear several steps after the
   omission.
 - **`Unable to get settings`, or an empty `SENZING_ENGINE_CONFIGURATION_JSON`? This is the env
-  script's path resolution, not Senzing.** That message carries **no SENZ code** because it is not an
-  engine error: it is the null-check in Senzing's own official snippets, which print
-  `Unable to get settings.` and throw `IllegalArgumentException` / `ArgumentException` when
+  script's path resolution, not Senzing — or a script sourced before Step 8.** That message
+  carries **no SENZ code** because it is not an engine error: it is the null-check in Senzing's
+  own official snippets, which print `Unable to get settings.` and throw `IllegalArgumentException` / `ArgumentException` when
   `SENZING_ENGINE_CONFIGURATION_JSON` is unset. So do not send it through `explain_error_code` — there
   is no code to explain, and hunting through the engine config wastes the time. **First check whether
   the script exists at all** — on the existing-install path it is the artifact most likely to be
@@ -2039,7 +2059,9 @@ call succeeds** (not merely a version query).
   fault. If `src/scripts/senzing-env.sh` (or `senzing-env.bat`) is not there, that **is** the
   finding: write it now per Step 3's environment-script work, with the values from
   `sdk_guide(topic='install', platform=…, language=…)`. Only if it does exist, check that it was
-  **sourced** (not executed) in this shell, and that it resolved its own path
+  **sourced** (not executed) in this shell, and whether it was **sourced before Step 8 wrote
+  `config/engine_config.json`**: the script then printed a "not written yet" notice and left the
+  variable unset, so re-source it now. Then check that it resolved its own path
   under the shell in use — see [the env script's path resolution](#env-script-path-resolution). Under
   zsh, a `${BASH_SOURCE[0]}`-based script computes the wrong root and exports nothing.
   (Snippet guard verified via `search_docs`; MCP server 1.32.1, 2026-07-28.)

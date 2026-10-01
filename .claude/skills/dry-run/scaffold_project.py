@@ -307,7 +307,9 @@ PIPELINE_DEFAULTS = (
 )
 
 FIXTURE_MAP = [
-    ("config/engine_config.json", "config/engine_config.json", ALL_MODES,
+    # Mid only: Module 2 Step 8 writes this file, so --fresh/--seeded (which start before it)
+    # must not have it, or the env script's pre-Step-8 branch is never walked (#328).
+    ("config/engine_config.json", "config/engine_config.json", frozenset({"mid"}),
      "COMPLETE PIPELINE -> passes the config pre-flight and reaches the SDK gate "
      "(exit 1, libSz.so) or initializes where the SDK is present"),
     ("config/engine_config_incomplete.json", "config/engine_config_incomplete.json", ALL_MODES,
@@ -394,15 +396,18 @@ def build(root: Path, fresh: bool, seeded: bool = False) -> None:
     # `libSz.so` they are indistinguishable without reading the exit code. The 2026-09-02 run
     # was the first with a working SDK, and the SDK-missing branch turned out to have been
     # unverified by every dry run that listed it as checked.
-    (root / "config/engine_config.json").write_text(
-        json.dumps(
-            {"PIPELINE": dict(PIPELINE_DEFAULTS),
-             "SQL": {"CONNECTION": "sqlite3://na:na@%s" % (root / "database" / "G2C.db")}},
-            indent=2,
+    # Mid-bootcamp only: Module 2 Step 8 writes this file, and --fresh/--seeded start before
+    # it. Pre-creating it there hid the env script refusing to load until Step 8 (#328).
+    if not (fresh or seeded):
+        (root / "config/engine_config.json").write_text(
+            json.dumps(
+                {"PIPELINE": dict(PIPELINE_DEFAULTS),
+                 "SQL": {"CONNECTION": "sqlite3://na:na@%s" % (root / "database" / "G2C.db")}},
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
         )
-        + "\n",
-        encoding="utf-8",
-    )
     # The pre-flight gate is good behavior and stays covered by its own named fixture, rather
     # than being deleted along with the defect it was masking.
     (root / "config/engine_config_incomplete.json").write_text(
