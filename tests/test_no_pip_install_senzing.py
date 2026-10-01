@@ -230,5 +230,166 @@ class ModuleTwoSaysWhatToDoInstead(unittest.TestCase):
                       "the TypeScript build-from-source warning was lost")
 
 
+
+#: The C# bullet as it stood before #320 (commit af4e442), without its marker line. It is the
+#: whole-bullet negative control: every predicate below must fail on it.
+PRE_320_CSHARP_BULLET = """   - **C#:** the route is the C# SDK reference: `search_docs(query='C# .NET SDK Senzing.Sdk NuGet
+     package')`. On server 1.37.16 (2026-09-30) it said "After adding the `Senzing.Sdk` NuGet
+     package to your project dependencies" and did not say where that package comes from. So
+     name no package source: if the route still names none, tell the bootcamper that, and do
+     not add a public NuGet feed on your own.
+"""
+
+#: Built by concatenation so this file carries no marker token of its own (the negatives scan
+#: reads `tests/`).
+MARKER_TOKEN = "MCP-NEGATIVE" + ":"
+
+CSHARP_INSTALL_CALL = "sdk_guide(topic='install', platform='<platform>', language='csharp')"
+CSHARP_REFERENCE = "search_docs(query='C# .NET SDK Senzing.Sdk NuGet package')"
+
+
+def csharp_bullet(text):
+    """Module 2 Step 3 Phase 3's C# bullet, up to the Rust bullet."""
+    start = text.index("   - **C#:**")
+    return text[start:text.index("   - **Rust:**", start)]
+
+
+def routes_to_the_install_reply_first(bullet):
+    flat = squash(bullet)
+    return (CSHARP_INSTALL_CALL in flat and CSHARP_REFERENCE in flat
+            and flat.index(CSHARP_INSTALL_CALL) < flat.index(CSHARP_REFERENCE)
+            and re.search(r"follow\s+its `gotchas`", flat) is not None)
+
+
+def quotes_the_windows_reply_dated_and_attributed(bullet):
+    flat = squash(bullet)
+    return (re.search(r"On server 1\.37\.16 \(2026-10-01\) the \*\*`windows`\*\* reply's gotcha",
+                      flat) is not None
+            and "NOT published to nuget.org" in flat
+            and "present it to a Windows bootcamper only (INV-283)" in flat)
+
+
+def falls_back_in_order(bullet):
+    flat = squash(bullet)
+    steps = ["1. **The C# SDK reference:** `" + CSHARP_REFERENCE + "`",
+             "2. **What this machine's install holds:**",
+             "3. **Neither:**"]
+    if not all(step in flat for step in steps):
+        return False
+    positions = [flat.index(step) for step in steps]
+    return (positions == sorted(positions)
+            and "tell the bootcamper which step it was" in flat
+            and flat.index("tell the bootcamper which step it was") < positions[0])
+
+
+def labels_the_observation(bullet):
+    flat = squash(bullet)
+    return ("`Senzing.Sdk.*.nupkg`" in flat
+            and "never from another platform's reply" in flat
+            and "**observed in their install, not named by the MCP server**" in flat
+            and "means nothing was observed" in flat)
+
+
+def forbids_a_public_feed(bullet):
+    return any(line.strip().startswith("⛔ **Never add a public NuGet feed")
+               and "(INV-222)" in line for line in bullet.splitlines())
+
+
+def narrows_the_marker(bullet):
+    lines = [line for line in bullet.splitlines() if MARKER_TOKEN in line]
+    if len(lines) != 1:
+        return False
+    claim, _, rest = lines[0].partition(" — owner: ")
+    return (all(p in claim for p in ("platform='linux_apt'", "platform='linux_yum'",
+                                     "platform='macos_arm'"))
+            and "platform='windows'" not in claim
+            and "its windows reply names it" in rest
+            and "not a claim that no platform's reply names it" in rest
+            and rest.rstrip().endswith("— server 1.37.16, 2026-10-01 -->"))
+
+
+CSHARP_PREDICATES = (routes_to_the_install_reply_first, quotes_the_windows_reply_dated_and_attributed,
+                     falls_back_in_order, labels_the_observation, forbids_a_public_feed,
+                     narrows_the_marker)
+
+
+class TheCSharpBulletRoutesToTheInstallReplyFirst(unittest.TestCase):
+    """#320: the `windows` install reply names the `Senzing.Sdk` source, so C# asks it first.
+
+    Until #320 the bullet routed only to `search_docs` and said to "name no package source",
+    on a negative asked of `linux_apt` alone. On server 1.37.16 (2026-10-01)
+    `sdk_guide(topic='install', platform='windows', language='csharp')` names the local
+    `sdk\\dotnet` source in its `gotchas`, while the `linux_apt`, `linux_yum` and `macos_arm`
+    replies have no C# line. Each predicate is checked on the shipped bullet, on a mutant that
+    breaks only it, and on the pre-#320 bullet.
+    """
+
+    def setUp(self):
+        self.bullet = csharp_bullet(read(MODULE_02))
+
+    def test_every_predicate_holds_on_the_shipped_bullet(self):
+        for predicate in CSHARP_PREDICATES:
+            with self.subTest(predicate=predicate.__name__):
+                self.assertTrue(predicate(self.bullet),
+                                "Module 2's C# bullet fails %s" % predicate.__name__)
+
+    def test_every_predicate_fails_on_the_pre_320_bullet(self):
+        for predicate in CSHARP_PREDICATES:
+            with self.subTest(predicate=predicate.__name__):
+                self.assertFalse(predicate(PRE_320_CSHARP_BULLET),
+                                 "%s passes on the bullet #320 replaced, so it cannot fail"
+                                 % predicate.__name__)
+
+    def test_the_old_instruction_is_gone(self):
+        self.assertNotIn("name no package source", squash(self.bullet),
+                         "the bullet still says to name no package source, which the "
+                         "windows install reply contradicts")
+
+    def mutants(self):
+        b = self.bullet
+        # Each mutant breaks one predicate; the replacement must actually change the text.
+        yield routes_to_the_install_reply_first, b.replace(CSHARP_INSTALL_CALL, "sdk_guide()")
+        yield routes_to_the_install_reply_first, b.replace("follow\n     its `gotchas`",
+                                                           "read\n     its reply")
+        yield quotes_the_windows_reply_dated_and_attributed, b.replace(
+            "the **`windows`** reply's gotcha", "the reply's gotcha")
+        yield quotes_the_windows_reply_dated_and_attributed, b.replace(
+            "present it to a Windows bootcamper only (INV-283)", "present it")
+        yield falls_back_in_order, b.replace(
+            "1. **The C# SDK reference:**", "2. **The C# SDK reference:**").replace(
+            "2. **What this machine's install holds:**", "1. **What this machine's install holds:**")
+        yield falls_back_in_order, b.replace("tell the bootcamper which step it was", "go on")
+        yield labels_the_observation, b.replace(
+            "**observed in their install, not named by the MCP server**", "available")
+        yield labels_the_observation, b.replace("never from another platform's reply",
+                                                "or from any platform's reply")
+        yield forbids_a_public_feed, "\n".join(
+            line for line in b.splitlines() if "⛔ **Never add a public NuGet feed" not in line)
+        yield forbids_a_public_feed, b.replace("on your own (INV-222).", "on your own.")
+        yield narrows_the_marker, b.replace(", the same call with platform='linux_yum' and with "
+                                            "platform='macos_arm'", "")
+        yield narrows_the_marker, b.replace("so the claim is scoped to the platforms asked and "
+                                            "is not a claim that no platform's reply names it",
+                                            "so no platform's reply names it")
+
+    def test_each_mutant_fails_only_its_predicate(self):
+        for predicate, mutant in self.mutants():
+            with self.subTest(predicate=predicate.__name__, mutant=mutant[-60:]):
+                self.assertTrue(self.bullet != mutant,
+                                "the mutation did not apply; the bullet's wording moved")
+                self.assertFalse(predicate(mutant),
+                                 "%s does not catch the mutation built to break it"
+                                 % predicate.__name__)
+                for other in CSHARP_PREDICATES:
+                    if other is not predicate:
+                        self.assertTrue(other(mutant), "the mutant for %s also breaks %s"
+                                        % (predicate.__name__, other.__name__))
+
+    def test_the_bullet_names_no_public_feed_as_the_source(self):
+        flat = squash(self.bullet).lower()
+        self.assertNotIn("api.nuget.org", flat, "the bullet names the public NuGet feed")
+        self.assertNotRegex(flat, r"dotnet add package senzing\.sdk(?! --source)",
+                            "the bullet adds the package with no local source")
+
 if __name__ == "__main__":
     unittest.main()

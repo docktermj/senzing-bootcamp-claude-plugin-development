@@ -66,7 +66,10 @@ VERIFIED_QUERIES = {
     # ---------------------------------------------------------------------------------
     # Executed 2026-09-30 on server 1.37.16 (docs index 2026-09-29 22:00 UTC) for #287, Module 2
     # Step 3 Phase 3's routes for the Java and C# bindings. The second is also the evidence slot
-    # of the C# MCP-NEGATIVE marker. ⚠️ Record the PROPERTY, not ranks or scores.
+    # of the C# MCP-NEGATIVE marker. Re-executed 2026-10-01 on server 1.37.16 (docs index
+    # 2026-09-29 22:00 UTC) for #320, which made the C# query step 1 of the fallback after
+    # `sdk_guide(..., language='csharp')`: same property. ⚠️ Record the PROPERTY, not ranks or
+    # scores.
     "Java SDK sz-sdk.jar Maven Usage local Maven repository":
         "ON TARGET BELOW AN ADJACENT TOP HIT: the top hit is the FAQ 'Where is sz-sdk.jar on "
         "Maven Central?', about a cosmetic JAR-verification warning; the set carries the "
@@ -78,7 +81,9 @@ VERIFIED_QUERIES = {
         "ON TARGET, AND SILENT ON THE SOURCE: the top hit is 'Senzing.Sdk for C#', which says "
         "'After adding the Senzing.Sdk NuGet package to your project dependencies' and does not "
         "say where the package comes from; the next is 'v4 C# SDK Reference', a link list. "
-        "That silence is the absence the C# marker records",
+        "That silence is half the absence the C# marker records for linux_apt, linux_yum and "
+        "macos_arm; the other half is their sdk_guide install replies, which have no C# line, "
+        "while the windows reply names the source",
     # ---------------------------------------------------------------------------------
     # Executed 2026-09-28 on server 1.37.14 (docs index 2026-09-28 03:23 UTC) for #194, Module 2
     # Step 1b's update path and Step 2's preview-status relay. The first two are the update
