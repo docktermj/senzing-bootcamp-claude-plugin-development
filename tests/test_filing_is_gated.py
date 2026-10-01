@@ -307,7 +307,7 @@ class EachOverlayStatesItsPartOfTheList(unittest.TestCase):
     """Each overlay cites INV-314's scope note and states its part of the note's list."""
 
     PARTS = {
-        LOOP_OVERLAY: ("four `/implement-github-issue` log comments", "one blocked comment",
+        LOOP_OVERLAY: ("four `/implement-github-issue` *(user level)* log comments", "one blocked comment",
                        "opening its PR", "`--no-merge`", "no new issue"),
         "skill-overlays/implement-github-issue.md": ("five comments", "escape-hatch comment",
                                                      "per-record yes"),

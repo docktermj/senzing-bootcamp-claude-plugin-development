@@ -288,7 +288,7 @@ Where a drafted finding goes, from step 1's ledger draft to its GitHub issue:
 
    ⛔ **(INV-318) Never apply `unattended-ok` to an issue the run files.** Choosing what runs unattended
    is the maintainer's decision alone, and a run that labels its own findings lets
-   `/unattended-issue-loop` execute work it generated with nobody in between.
+   `/unattended-issue-loop` *(user level)* execute work it generated with nobody in between.
 4. **The two outcomes that file nothing.**
    - **No maintainer present: file nothing** (INV-314). The draft stays marked **not filed —
      needs the maintainer to file it**.

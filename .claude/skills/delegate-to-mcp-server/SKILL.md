@@ -53,7 +53,7 @@ systematic version of both, and it is the only one of the four that reads the pl
   revoked an exception nobody had recorded; #257 widened it to every file in `specs/` only
   after #142 had named the exception.
 - **Never modify plugin code, hooks, scripts or skills.** Filing the issues is the
-  deliverable; implementing them is `/implement-github-issue`'s job.
+  deliverable; implementing them is the job of `/implement-github-issue` *(user level)*.
 - ⛔ **(INV-314) Filing is outward-facing and immediate. Show the maintainer every title and body and
   get an explicit yes first** (Step 7). An issue is visible to anyone watching the
   repository the moment it is created; it can be edited or closed, never un-filed, and its
@@ -322,7 +322,7 @@ Rules beyond the template:
   an issue that removes text without saying which assertion goes with it will be reverted
   by a red suite.
 - **Give the acceptance criteria a re-verification clause** — the implementer re-asks
-  the server before changing code (`/implement-github-issue`, INV-080), and the criterion should
+  the server before changing code (`/implement-github-issue` *(user level)*, INV-080), and the criterion should
   say what answer they must get for the change to remain correct.
 - ⛔ **Any absence claim carries `owner-checked:` (INV-213).** Where a finding rests on the
   server *lacking* something — a `keep-server-lacks-it` verdict, "returns no X", "does not
@@ -410,4 +410,4 @@ Then, in this order:
    owning tool could not be reached: a gap disclosed is a finding, and a gap skipped silently
    is a false clean bill of health.
 
-Do not implement the issues. Offer `/implement-github-issue` as the next step.
+Do not implement the issues. Offer `/implement-github-issue` *(user level)* as the next step.

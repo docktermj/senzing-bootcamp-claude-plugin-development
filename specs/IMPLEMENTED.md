@@ -43,6 +43,22 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## skills-and-overlays-name-only-real-commands
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #296. Begun 2026-09-30 and blocked before commit; resumed 2026-10-01 on a fresh `296-docktermj-1` after the maintainer allowed one requote)
+- **Commit:** `2aa1d85`
+- **Files changed:** `.claude/skill-overlays/implement-github-issue.md`, `.claude/skill-overlays/unattended-issue-loop.md`, `.claude/skills/compact-dev-environment/SKILL.md`, `.claude/skills/delegate-to-mcp-server/SKILL.md`, `.claude/skills/delegate-to-mcp-server/issue-template.md`, `.claude/skills/dry-run/SKILL.md`, `.claude/skills/feedback-to-issues/SKILL.md`, `.claude/skills/production-readiness-audit/SKILL.md`, `.claude/skills/propagate-to-public/SKILL.md`, `.claude/skills/review-invariants/SKILL.md`, `tests/test_canonical_operations_resolve.py`, `tests/test_filing_is_gated.py`, `specs/IMPLEMENTED.md`. No file under `plugins/` changes; `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.16 (`get_capabilities`, reachable), 2026-10-01 — n/a (no Senzing fact), re-confirmed: the change marks maintainer command names and widens a guard over maintainer documents, and asserts nothing about Senzing. No absence claim is made. `submit_feedback` was not called, and nothing was sent upstream.
+- **Approach:** direct (Phase 5a), as the issue scopes it.
+- **Summary:** Every slash command named in a `.md` file under `.claude/skills/` or `.claude/skill-overlays/` now resolves or carries its marker, and the guard checks it (INV-316).
+  - **Markers.** *(user level)* follows the name at each of the 14 sites the issue lists, found by text because #288 reworded parts of both overlays: `compact-dev-environment/SKILL.md` (1), `delegate-to-mcp-server/SKILL.md` (3, one reworded from "`/implement-github-issue`'s job" to "the job of `/implement-github-issue` *(user level)*"), `delegate-to-mcp-server/issue-template.md` (1), `dry-run/SKILL.md` (1), `feedback-to-issues/SKILL.md` (1, after the quoted example's closing quote, so the suggested sentence is unchanged), `production-readiness-audit/SKILL.md` (2), `propagate-to-public/SKILL.md` (1), `review-invariants/SKILL.md` (2), and the two overlays (1 each, the implement overlay's mention of its own skill included: the rule is per name). The trial scan over all 21 files found exactly these 14 and no other unmarked name.
+  - **Rewording.** `production-readiness-audit/SKILL.md` Step 1's `` `pdftoppm`/poppler `` now reads `` `pdftoppm` (poppler) ``.
+  - **Guard.** `tests/test_canonical_operations_resolve.py` gains `TheSkillsAndOverlaysNameOnlyRealCommands`: `corpus_problems()` reads every `.md` under both directories (`skill_corpus()`); a name must ship here (`surface.operations()`), be a bootcamper command under `plugins/senzing-bootcamp/commands/` (`bootcamper_commands()`), or carry a marker on a name that does not ship, with *(user level)* also passing `user_level_problems()`. The shared `COMMAND` pattern is now `(?<![\w.~/:])/([a-z][a-z0-9-]{2,})(?![\w/-])`: a name preceded by `~`, `/` or `:`, or followed by `/`, is a path or URL segment, and the lookahead stops backtracking to a shorter name. `NOT_COMMANDS = {"/tmp"}` sits beside `PLACEHOLDERS`, with its reason. The module docstring's slash-command bullet names the new corpus and the path rules. `slash_commands_in()` scans a string, for the pins.
+  - **Tests.** Negative controls: an unmarked `/implement-github-issue` fails naming the file and the name; `/implement-issue` fails; *(user level)* or *(children only)* on `/dry-run` (a shipping skill) fails; `/bootcamp-nonexistent` fails while `/bootcamp-feedback` resolves. INV-265 floors: the corpus holds a file from each directory and a supporting file, and at least one name is marked *(user level)*. `TagsAreNotCommands` pins `~/senzing.git/x`, `~/senzing-autotest/run`, `https://mcp.senzing.com/mcp`, `/path/to/repo`, `/var/tmp`, `/private/tmp` and a bare `/tmp` as not commands, `` `/dry-run` `` and `/implement-github-issue <n>` as commands, and no backtracking. The `docs/development.md` checks pass unchanged with the shared pattern. `tests/test_filing_is_gated.py`'s loop-overlay literal now carries the marker.
+  - **One requote in another entry, allowed by the maintainer** ([#296 comment](https://github.com/docktermj/senzing-bootcamp-claude-plugin-development/issues/296#issuecomment-5932635314), 2026-10-01). The `inv-314-names-what-a-run-may-create-without-a-per-record-yes` entry (#216) quoted the implement overlay's sentence, and its quote runs past the guard's 80-character window, so any marker inside the window changes the quoted text. That entry's second rule bullet now quotes the marked sentence, with a dated "Requoted 2026-10-01 (#296), not reworded away" note in the form #259 used. Its drafted INV-314 wording is unchanged. No other entry is edited.
+- **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` was not run locally: it is a remote reusable workflow, and no workflow file changed.
+- **Establishes no invariant.** The markers and the widened scan apply INV-316 as registered: a slash command named in a maintainer-facing document resolves or carries a marker at the point of use. INV-316's text and its Enforced-by clause are unchanged, as the issue scopes it; the path rules and `NOT_COMMANDS` are how the enforcer reads a name, not a new rule. No ⛔ rule is added.
+
 ## audit-skill-finding-records-agree-with-inv-317
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #285; audit findings B-F2 and B-F8. Begun 2026-09-30 and blocked before push; resumed 2026-10-01 on `285-docktermj-2` after the maintainer allowed one requote)
@@ -1895,7 +1911,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
   reusing its fence rule and site discovery.
 - **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-314 — applied 2026-09-30.** The rules already shipping:
     - ⛔ **An unattended run creates only the records on this list, and only on the issue it is working** — in `.claude/skill-overlays/unattended-issue-loop.md`
-    - ⛔ **Invoking `/implement-github-issue <n>` is assent to five comments on issue `<n>`, and to no other record** — in `.claude/skill-overlays/implement-github-issue.md`
+    - ⛔ **Invoking `/implement-github-issue <n>` *(user level)* is assent to five comments on issue `<n>`, and to no other record** — in `.claude/skill-overlays/implement-github-issue.md`
+
+  ⚠️ **Requoted 2026-10-01 (#296), not reworded away.** The second bullet quoted the implement
+  overlay's sentence before #296 marked its own command name *(user level)* at the point of use
+  (INV-316), so `check` would have gone red on an applied block. The marker had to fall inside
+  the quoted span: the quote runs past the guard's 80-character window. The quote is fixed
+  against its source; the drafted wording below and INV-314 are unchanged. The maintainer
+  allowed this one requote on #296, 2026-10-01.
 
   ⚠️ **Why this is an amendment and not a new invariant.** INV-314's rule is unchanged: an
   outward record needs the maintainer's assent first, each record separately. What the note

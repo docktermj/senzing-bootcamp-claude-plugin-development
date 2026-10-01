@@ -32,7 +32,7 @@ working** (INV-314, as amended by its 2026-09-30 scope note, #216). Under that n
 maintainer's `unattended-ok` label is assent, given in advance, to exactly these acts on that
 issue:
 
-1. the four `/implement-github-issue` log comments (Started, Clarifications, Approach, Result);
+1. the four `/implement-github-issue` *(user level)* log comments (Started, Clarifications, Approach, Result);
 2. one blocked comment, plus removing `unattended-ok`;
 3. pushing that issue's branch and opening its PR;
 4. merging that PR and deleting its branch, unless the run was started with `--no-merge`.
