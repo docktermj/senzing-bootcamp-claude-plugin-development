@@ -1021,7 +1021,75 @@ runs long) or lengthen it (a video that runs short), starting with the scenes th
 name, and re-render **once**. If it is still outside, keep the video and say so, with its duration.
 
 Tell the bootcamper in one line: "🎬 Your graduation video is at `docs/bootcamp_recap.mp4` (2:03)."
-Name any check that did not run, and continue to Step 2.
+When the `Voice:` line is `Voice: none (…)`, that line only notes there is no voice: "🎬 Your
+graduation video is at `docs/bootcamp_recap.mp4` (2:03), with no voice." Keep the reason and any
+guidance for the closing announcement (below). Name any check that did not run, and continue to
+Step 2.
+
+#### When the video has no voice
+
+Read the reason in the renderer's `Voice: none (…)` line (#339) and keep it, with the `Music:` line,
+for the closing announcement, which is where the bootcamper hears it. There are three cases:
+
+| `Voice:` line | What the closing announcement adds |
+|---|---|
+| `Voice: none (no speech engine found)` | the platform's speech engine, its install hint and the re-render command, below |
+| `Voice: none (<engine> voiced no scene)` | names `<engine>` and says it could not voice the narration; no install hint, because the engine is installed |
+| `Voice: none (--no-voice)` | nothing about installing; graduation never passes `--no-voice`, so this case is defensive |
+
+A `Voice:` line that names an engine means the video has a voice, even when some scenes went
+unvoiced: none of this applies, and the renderer's per-scene notes on stderr cover the rest.
+
+**The platform's speech engine (no speech engine found).** State it in one sentence:
+
+- **Linux, WSL included:** the voice comes from `espeak-ng`. Read `ID` and `ID_LIKE` in
+  `/etc/os-release` (a plain file; reading it installs nothing) and take the first row whose names
+  appear in `ID`, then in `ID_LIKE`:
+
+  | `ID` / `ID_LIKE` names | Install hint |
+  |---|---|
+  | `debian`, `ubuntu` | `sudo apt install espeak-ng` |
+  | `fedora`, `rhel`, `centos` | `sudo dnf install espeak-ng` |
+  | `arch` | `sudo pacman -S espeak-ng` |
+  | `suse`, or a name starting `opensuse` | `sudo zypper install espeak-ng` |
+  | none of these, or no `/etc/os-release` | install `espeak-ng` with your package manager |
+
+- **macOS:** `say` is built in to macOS, so not finding it is unusual; say so. Give
+  `brew install espeak-ng` as the fallback, because the renderer tries `espeak-ng` after `say`.
+- **Windows:** the voice uses System.Speech, which comes with Windows PowerShell 5.1
+  (`powershell.exe`). PowerShell 7 (`pwsh`) alone cannot load it, which is what the renderer's
+  "not loadable" means; say so. There is no install command to give.
+
+⛔ **(INV-066, INV-340) The install hint is the bootcamper's to run.** Never run `sudo` or a system
+package manager (`apt`, `dnf`, `pacman`, `zypper`, `brew`) for it, and never install the engine for
+them.
+
+**The re-render command (no speech engine found).** The storyboard is kept, so once the engine is
+installed the same command renders the video again with a voice. Write it out with resolved
+absolute paths, so it runs as-is in the bootcamper's own terminal. `${CLAUDE_PLUGIN_ROOT}` is unset
+there, so never write it, a `<this-skill-dir>` placeholder or a relative path into the command.
+Resolve three paths:
+
+- **The interpreter Step 1c rendered with:** the project-local virtualenv's Python under the project
+  root (`<project>/data/temp/recap-venv/bin/python`; on Windows
+  `<project>\data\temp\recap-venv\Scripts\python.exe`), or else the absolute path of `python3`
+  (`command -v python3`).
+- **The renderer:** the absolute path that `${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py`
+  expands to in your shell (or the skill-relative fallback, resolved).
+- **The project root:** the absolute path of the bootcamper's project.
+
+The renderer's defaults are relative to the current directory, so pass the storyboard, the output and
+the project root explicitly, and the command works from any directory. Use the platform's shell
+syntax:
+
+- **Linux and macOS** (POSIX, single-quoted):
+  `'<interpreter>' '<renderer>' --storyboard '<project>/docs/video/storyboard.json' --output '<project>/docs/bootcamp_recap.mp4' --project-root '<project>'`
+- **Windows** (PowerShell, double-quoted, through the `&` call operator):
+  `& "<interpreter>" "<renderer>" --storyboard "<project>\docs\video\storyboard.json" --output "<project>\docs\bootcamp_recap.mp4" --project-root "<project>"`
+
+⛔ **(INV-048, INV-340) This guidance is a statement, never a question, and it never blocks graduation.**
+It changes nothing about Step 1c's outcome: the video was produced, and graduation continues to
+Step 2.
 
 ## Step 2: Build the production project
 
@@ -1364,11 +1432,24 @@ This runs exactly once, after the report, before graduation is reported finished
    2:00 ± 10 s after the one re-render, say so here, with its duration. When a video check did not
    run, say which, in the same plain sentence as the PDF note below (INV-163).
 
+   ⛔ **(INV-340) Call the video narrated only when the renderer's `Voice:` line named an engine.**
+   With `Voice: none (…)`, call it a 2-minute graduation video "with captions and music, no voice",
+   or "with captions, no voice" when the renderer printed `Music: off (storyboard)`. The same
+   sentence then carries, once, what Step 1c's "When the video has no voice" gives for its case:
+   for `no speech engine found`, the platform's speech engine, its install hint and the re-render
+   command; for `<engine> voiced no scene`, the engine that could not voice the narration, with no
+   install hint; for `--no-voice`, nothing more. It is a statement, not a question (INV-048).
+
    **If any Step 1b verification check was skipped for a missing tool, say so here in one plain sentence** — name what was not checked, not the tool names. On Windows this is the common case (poppler is typically absent, so the page raster could not run). One sentence is enough: *"One note: I verified the PDF's contents but couldn't check its page layout on this machine, so if anything looks visually off, tell me and I'll re-render."* Never describe the keepsake as verified when a check did not run — and never turn this into a 👉 question or a to-do for the bootcamper.
 
 Example (list only what exists):
 
 > 🎓 **Here's your bootcamp recap.** Your complete recap is at `docs/bootcamp_recap.pdf`: a shareable PDF that opens with a summary and then walks through every module you completed, capturing the Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary for each. Your production project is ready in `production/`: start with `production/GRADUATION_REPORT.md` and work through `production/MIGRATION_CHECKLIST.md`. Two more keepsakes are alongside the recap: `docs/business_problem.pdf`, the problem you set out to solve, and `docs/data_source_evaluation.pdf`, how ready your sources were and what was left unmapped. And your narrated 2-minute graduation video is at `docs/bootcamp_recap.mp4`.
+
+When the video has no voice because no speech engine was found, its sentence reads like this instead
+(Ubuntu, with music; the paths are illustrative):
+
+> And your 2-minute graduation video, with captions and music, no voice, is at `docs/bootcamp_recap.mp4`: no speech engine was found, and on Ubuntu the voice comes from `espeak-ng`, which you can install with `sudo apt install espeak-ng`; then run `'/home/ada/projects/my-bootcamp/data/temp/recap-venv/bin/python' '/opt/plugins/senzing-bootcamp/scripts/generate_recap_video.py' --storyboard '/home/ada/projects/my-bootcamp/docs/video/storyboard.json' --output '/home/ada/projects/my-bootcamp/docs/bootcamp_recap.mp4' --project-root '/home/ada/projects/my-bootcamp'` to render it again with a voice.
 
 3. **End on the single closing question (INV-251).** The announcement carries no 👉. After it, end the graduation turn with exactly one 👉 question:
 

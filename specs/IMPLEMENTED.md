@@ -43,6 +43,58 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## graduation-video-no-voice-per-platform-guidance
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #340; sub-issue of #331, spec revision 1)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md` (Step 1c: the status line and a new "When the video has no voice" subsection; the Mandatory closing step: the video rule and a no-voice example), `tests/test_graduation_no_voice_guidance.py` (new), `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md`, `invariant-manifest.json` and the renderer are unchanged.
+- **MCP re-check:** n/a (no Senzing fact), 2026-10-01, no tool called — re-confirmed, not assumed. The change is skill text about speech engines (`espeak-ng`, `say`, System.Speech), Linux package managers, `/etc/os-release` and shell quoting, plus a stdlib test. No added line names an SDK method, an engine behavior, a Senzing document or an MCP tool (checked over the full diff). No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** direct (Phase 5a), built on `f9e6d40` (#339 merged as PR #350), keyed on the exact `Voice:` / `Music:` lines #339 prints.
+- **Summary:** When the recap video renders with no voice, graduation now says why and, when no speech engine was found, how to get one, without the bootcamper having to ask (P3-20).
+  - **Step 1c status line.** With `Voice: none (…)`, the 🎬 line notes only "with no voice"; the reason and any guidance wait for the closing announcement.
+  - **"When the video has no voice"** (new, end of Step 1c). A table keyed on the renderer's three reasons: `no speech engine found` gives the platform's engine, install hint and re-render command; `<engine> voiced no scene` names the engine with no install hint; `--no-voice` says nothing about installing (defensive: graduation never passes it). A `Voice:` line naming an engine, even with some scenes unvoiced, is out of scope. Per platform: Linux and WSL get `espeak-ng`, with the hint chosen from `ID`, then `ID_LIKE`, in `/etc/os-release` (`debian`/`ubuntu` → `sudo apt install espeak-ng`; `fedora`/`rhel`/`centos` → `sudo dnf install espeak-ng`; `arch` → `sudo pacman -S espeak-ng`; `suse`/`opensuse*` → `sudo zypper install espeak-ng`; otherwise "install `espeak-ng` with your package manager"). macOS: `say` is built in, so its absence is unusual, with `brew install espeak-ng` as the fallback because the renderer tries `espeak-ng` after `say`. Windows: System.Speech comes with Windows PowerShell 5.1, `pwsh` alone cannot load it ("not loadable"), no install command. The re-render command is written with resolved absolute paths (the interpreter Step 1c used, the renderer `${CLAUDE_PLUGIN_ROOT}` expands to, the project root), never `${CLAUDE_PLUGIN_ROOT}` or a relative path, in POSIX single-quoted form or PowerShell `&` form.
+  - **The re-render command's working directory.** The renderer's defaults (`docs/video/storyboard.json`, `--project-root .`) are relative to the current directory, so the command passes `--storyboard`, `--output` and `--project-root` as absolute paths instead of prefixing `cd <project>`: one command, valid from any directory, with no `cd` across drives on Windows. An assumption taken by the unattended run, recorded in issue comment 2.
+  - **Closing announcement.** A ⛔ (INV-340) rule: the video is called narrated only when the `Voice:` line named an engine; otherwise "with captions and music, no voice" (or "with captions, no voice" with `Music: off (storyboard)`), and the same sentence carries the case's guidance once. A worked no-voice example (Ubuntu, illustrative paths) follows the existing example, which is unchanged.
+  - **Never installing, never blocking.** ⛔ (INV-066, INV-340): the install hint is the bootcamper's to run; the guide never runs `sudo` or a system package manager for it. ⛔ (INV-048, INV-340): the guidance is a statement, never a question, and never blocks graduation. Step 1c still carries exactly its two 👉 questions.
+  - **Tests.** `tests/test_graduation_no_voice_guidance.py`: eight checks, each a function returning its problems for a given text (the three cases; the Linux table, applied to 15 real `ID`/`ID_LIKE` pairs including a missing file; the macOS and Windows statements; the re-render command rule, both templates and the worked example's five absolute paths; the status line; the closing rule and its example, which must not say "narrated"; no system installer in any fenced block in Step 1c or the closing; no 👉 in the guidance), a check that the renderer still prints the three reasons, and 16 negative controls that remove or corrupt one piece of the skill and confirm its check fails.
+  - **Unchanged, as the issue scopes it:** the renderer, its output and the storyboard schema (#339); the Piper voice and its install offer (#341); the pre-render offer and the preface, which describe the video offered rather than the one produced.
+- **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` was not run locally: it is a remote reusable workflow, and no workflow file changed.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-340 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+    - ⛔ **(INV-340) Call the video narrated only when the renderer's `Voice:` line named an engine.** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+    - ⛔ **(INV-066, INV-340) The install hint is the bootcamper's to run.** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+    - ⛔ **(INV-048, INV-340) This guidance is a statement, never a question, and it never blocks graduation.** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+
+  ⚠️ **Why.** This run ships three ⛔ rules, each enforced by a test, about what graduation
+  says when the video has no voice. Each cites INV-340 at its line, and INV-340 does not yet
+  state them: it says the closing announcement names the video only when it was produced, not
+  how it describes a video with no voice, and nothing about install guidance. INV-066 governs
+  the plugin's own Python installs, not system packages, so it is cited for the principle and
+  does not cover "never run `sudo` or a system package manager". INV-340 already governs this
+  step, so the run drafts an amendment to it rather than a new id, as #339 did for INV-342.
+  Amending a registered invariant is the maintainer's sign-off alone, so `specs/INVARIANTS.md`
+  and `invariant-manifest.json` are unchanged. **Sites it affects:** INV-340 in
+  `specs/INVARIANTS.md`, which gains the sentences below after "The closing announcement and
+  the return guide MUST name the video only when it was produced.", and its `Enforced by`
+  sentence, which gains the new test file; INV-340's statement in `invariant-manifest.json`,
+  regenerated from it (`.claude/skills/review-invariants/invariant_manifest.py`) in the same
+  edit. The shipped sites are Step 1c's status line and "When the video has no voice", and the
+  Mandatory closing step's video rule and no-voice example, in
+  `plugins/senzing-bootcamp/skills/graduation/SKILL.md`. The enforcer is
+  `tests/test_graduation_no_voice_guidance.py`. Applying it resolves the block: mark the bullet
+  `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording:
+
+  **INV-340** — … The closing announcement and the return guide MUST name the video only when it was produced. When the renderer reports `Voice: none (…)`, Step 1c's status line MUST note only that the video has no voice, and the closing announcement MUST NOT call the video narrated: it calls it a graduation video "with captions and music, no voice" (or "with captions, no voice" with `Music: off (storyboard)`) and, in the same sentence and once, gives for `no speech engine found` the platform's speech engine, an install hint the Bootcamper runs themselves (on Linux chosen from `/etc/os-release` for apt, dnf, pacman and zypper, otherwise a generic hint; on macOS `brew install espeak-ng` as the fallback to the built-in `say`; on Windows no command, since System.Speech needs Windows PowerShell 5.1) and a re-render command written with resolved absolute paths, never `${CLAUDE_PLUGIN_ROOT}`; for `<engine> voiced no scene`, that engine, with no install hint; for `--no-voice`, nothing about installing. The guide MUST NOT run `sudo` or a system package manager for the speech engine, and this guidance MUST be a statement, never a question, that does not block graduation (INV-048). (⚠️ **Amended <YYYY-MM-DD> (#340): the no-voice wording and guidance added; the offer, storyboard, budget and verification rules are unchanged.**) Enforced by `tests/test_graduation_no_voice_guidance.py` for the no-voice guidance, and by `tests/test_graduation_video_step.py`, …
+
+  *(the `…` stand for INV-340's registered text, kept as it is; the date is a placeholder
+  deliberately: `/review-invariants` fills it in on the day it applies the amendment.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-340 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The status line and the closing's conditional naming apply INV-340 as registered, the never-blocking statement applies INV-048, and the two 👉 questions of Step 1c are unchanged (INV-006, INV-056). No ⛔ rule is added or demoted elsewhere in shipped text.
+
 ## graduation-video-stereo-loudness-normalized-music-bed
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #339; sub-issue of #331, spec revision 1)
