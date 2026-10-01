@@ -37,6 +37,10 @@ What these tests pin:
 Negative controls rebuild the pre-fix order and the missing heading and require the checks to
 fail.
 
+Enforces **INV-338** with `tests/test_eula_question_precedes_every_install.py`: the update path asks
+the EULA before installing, and a declined update keeps the working install. It asserts the plugin's
+statements and does **not** establish that a live run follows them.
+
 Source issue: #222. Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 
 Run:  python3 -m unittest discover -s tests
@@ -191,7 +195,7 @@ class TheExistingInstallPathHasOneOutcome(unittest.TestCase):
         )
 
     def test_it_does_not_re_ask_the_eula(self):
-        self.assertRegex(self.branch, r"(?i)\*\*Do not re-ask the EULA\.\*\*")
+        self.assertRegex(self.branch, r"(?i)\*\*\(INV-338\) Do not re-ask the EULA\.\*\*")
 
     def test_it_runs_phase_3_for_the_per_project_bindings(self):
         self.assertRegex(self.branch, r"(?i)\*\*Still run Step 3's Phase 3\*\*")
@@ -233,7 +237,7 @@ class AnUpdateWhoseEulaIsDeclinedContinues(unittest.TestCase):
         self.section = flat(step_1b(self.text))
 
     def test_step_1b_states_the_outcome(self):
-        at = self.section.index("**If they decline the EULA here")
+        at = self.section.index("**(INV-338) If they decline the EULA here")
         outcome = self.section[at : at + 700]
         for needle in ('"Keeping [installed]."', "`update-declined`", "INV-006", "INV-048",
                        "continue on the existing-install path in Step 1",
@@ -244,12 +248,12 @@ class AnUpdateWhoseEulaIsDeclinedContinues(unittest.TestCase):
     def test_it_comes_after_the_eula_pointer(self):
         self.assertLess(
             self.section.index("Ask the EULA question before any package installs"),
-            self.section.index("**If they decline the EULA here"),
+            self.section.index("**(INV-338) If they decline the EULA here"),
         )
 
     def test_phase_1_stop_here_is_scoped(self):
         phase_1 = flat(span(step_3(self.text), "**Phase 1: EULA acceptance", "**Phase 2:"))
-        decline = phase_1[phase_1.index("**If they decline the EULA:**") :]
+        decline = phase_1[phase_1.index("**(INV-338) If they decline the EULA:**") :]
         self.assertLess(decline.index("On a fresh install, or the upgrade from below V4.0"),
                         decline.index("Stop here."))
         self.assertRegex(decline, r"(?i)An update of a working V4\.0\+ install declined here does not stop")

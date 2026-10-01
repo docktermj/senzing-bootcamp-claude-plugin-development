@@ -453,7 +453,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # keeps only its overlay) names test_user_level_copies_govern.py, which cites it back and states what it
 # does NOT establish -- what the user-level copy says on any machine. Re-derived by running the
 # extractor -- 159, with the new pair present by name. EXPECTED_PAIRS 158 -> 159.
-EXPECTED_PAIRS = 159
+# 161 on 2026-09-30 (second review): INV-338 (the EULA question precedes every Senzing install, an
+# update included) names test_eula_question_precedes_every_install.py and
+# test_update_offer_order_and_existing_install_outcome.py; both cite it back and state what they do NOT
+# establish -- that a live run asks before installing. Re-derived by running the extractor -- 161, with
+# both new pairs present by name. EXPECTED_PAIRS 159 -> 161.
+EXPECTED_PAIRS = 161
 
 
 def pairs():

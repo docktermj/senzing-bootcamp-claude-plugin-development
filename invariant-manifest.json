@@ -1,5 +1,5 @@
 {
-  "count": 336,
+  "count": 337,
   "generator": ".claude/skills/review-invariants/invariant_manifest.py",
   "invariants": [
     {
@@ -3360,6 +3360,16 @@
       "statement": "A maintainer skill whose governing text is the user-level copy under `~/.claude/skills/` MUST NOT also be defined in this repository: there is no `.claude/skills/<name>/` and no `.claude/commands/<name>.md`. The repository's own obligations for it MUST live in `.claude/skill-overlays/<name>.md`, which carries no frontmatter and no command boilerplate, names the governing copy in one line, and states that the governing copy is not checked in CI. A rule the overlay only points at MUST NOT be restated there. (⚠️ **Why this is not INV-300, INV-303 or INV-316.** INV-300 governs a rule having one home, INV-303 that a command names a skill, and INV-316 that a named command resolves or carries a marker; none says that a skill governed at user level must not also be defined here, or where its repository-only obligations live. Held 2026-09-29 for a wider one-definition rule that #241 and #262 did not produce; registered in its narrow, enforced form.) Enforced by `tests/test_user_level_copies_govern.py`, which checks the repository's side and **cannot** establish what the user-level copy says on any machine (INV-308). (Source: `the-two-user-level-skills-are-defined-only-at-user-level`, GitHub issue #239, 2026-09-29; registered 2026-09-30.)",
       "status": "active",
       "summary": "A maintainer skill whose governing text is the user-level copy under `~/.claude/skills/` MUST NOT also be defined in this repository: there is no `.claude/skills/<name>/` and no `.claude/commands/<name>.md`.",
+      "superseded_by": null
+    },
+    {
+      "id": "INV-338",
+      "index_group": "Platform, shell, encoding and file placement",
+      "partly_superseded_by": null,
+      "section": "Invariants added from implemented specs",
+      "statement": "Module 2 MUST ask the pinned EULA question, and end the turn on it, before any Senzing install command runs, on a first install and on an update alike: an update is an install. An install command is any of Step 3 Phase 1's list: adding the Senzing package repository (the apt or yum `senzingrepo` package, the Homebrew tap, the Scoop bucket), installing the SDK package, or the `docker` path's in-container `linux_apt` install. After a yes, the package install MUST set the bootcamper's platform's EULA variable, name and value, from Step 1b's per-platform table (inside the container on `docker`), because a wrong name or value is silently ignored and the install then reports success having installed nothing (INV-218). After a no, nothing is installed: a first install, or the upgrade from below V4.0, stops, and a declined update keeps the working install and continues on the existing-install path without offering the update again (INV-006). Step 1's existing-install path installs no SDK and MUST NOT ask the EULA; the per-project language bindings Step 3 Phase 3 installs on that path are not an install under this rule. (⚠️ **Why this is not INV-218, INV-222, INV-006 or INV-056, so the question is not re-derived.** INV-218 governs verifying an install by its artifact, INV-222 how the language packages are provided, INV-006 asking once, and INV-056 the pinned wording; each is cited, not restated. None says the EULA question precedes every install, what counts as an install, that the per-platform variable is set from the table, or that the existing-install path is not asked. The variable names and values are left out of this text on purpose: they are the server's facts (INV-080), and an invariant that pinned them would go stale the day the server changed them.) Enforced by `tests/test_eula_question_precedes_every_install.py` and `tests/test_update_offer_order_and_existing_install_outcome.py`, which assert that the plugin states the rule at each site above and **cannot** establish that a live run asks before installing. (Source: `module-2-eula-and-existing-install-rules-are-queued-as-deferred-invariants`, GitHub issue #284, and `the-eula-question-precedes-every-install`, GitHub issue #192; registered 2026-09-30.)",
+      "status": "active",
+      "summary": "Module 2 MUST ask the pinned EULA question, and end the turn on it, before any Senzing install command runs, on a first install and on an update alike: an update is an install.",
       "superseded_by": null
     }
   ],

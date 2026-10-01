@@ -142,7 +142,7 @@ bootcamper declines the update, or they decline the EULA for it, and an accepted
   acceptance) and Phase 2 (the SDK package).** Not Step 3 entirely: see the required stops below.
   What is redundant on an existing install is fetching and installing the SDK; nothing else in
   Step 3 is.
-- **Do not re-ask the EULA.** Phase 1 gates installing the SDK, and this path installs no SDK.
+- **(INV-338) Do not re-ask the EULA.** Phase 1 gates installing the SDK, and this path installs no SDK.
   Only an update the bootcamper accepts in Step 1b asks it, because an update is an install.
 - **Still run Step 3's Phase 3** (install language bindings). The Java, C#, Rust and TypeScript
   bindings are per-project, so an existing SDK install does not provide them. For Python,
@@ -457,10 +457,10 @@ not cover the installed version, say the step is undocumented, not known to be u
 other target" above), then install. On Homebrew or Scoop the offer falls back to the latest, whose
 notes the offer turn already relayed.
 
-⛔ **Ask the EULA question before any package installs** — reuse the existing wording in Step 3
+⛔ **(INV-338) Ask the EULA question before any package installs** — reuse the existing wording in Step 3
 Phase 1 rather than writing a second copy. An update is an install.
 
-⛔ **The EULA variable differs per platform, and a wrong one is silently ignored:**
+⛔ **(INV-338) The EULA variable differs per platform, and a wrong one is silently ignored:**
 
 | Platform | Variable | Value |
 |---|---|---|
@@ -472,7 +472,7 @@ Phase 1 rather than writing a second copy. An update is an install.
 wrong does not error — the install does nothing and reports success, which is why the
 verification below is required rather than advisory.
 
-**If they decline the EULA here, the working install is kept and Module 2 continues** (non-blocking,
+**(INV-338) If they decline the EULA here, the working install is kept and Module 2 continues** (non-blocking,
 INV-048). Install nothing. Say one line, "Keeping [installed].", record `update-declined`, and do not
 offer the update again (INV-006). Then continue on the existing-install path in Step 1: Step 3's
 Phase 3 and environment script, then Step 4. A declined EULA here is never recorded as a failure.
@@ -575,7 +575,7 @@ always has the latest instructions.
 ## Step 3: Install Senzing SDK
 
 Follow the platform-specific instructions from `sdk_guide`. Installation has three phases, and
-the EULA question comes first: nothing is installed until the bootcamper accepts it. An existing
+the EULA question comes first: nothing is installed until the bootcamper accepts it (INV-338). An existing
 V4.0+ install (Step 1's existing-install path) skips Phase 1 and Phase 2, is not asked the EULA
 again, and starts at Phase 3; it still writes the environment script ("Create the project-local
 environment script" below).
@@ -588,7 +588,7 @@ check for known pitfalls on the user's platform.
 The Senzing SDK requires EULA acceptance before it is installed, so this question comes before
 **every** install command on **every** path: adding the Senzing package repository (the apt or
 yum `senzingrepo` package, the Homebrew tap, the Scoop bucket), installing the SDK package, and
-the `docker` path's in-container `linux_apt` install. Tell the bootcamper they can review it at
+the `docker` path's in-container `linux_apt` install (INV-338). Tell the bootcamper they can review it at
 <https://senzing.com/end-user-license-agreement/>, then present the EULA question:
 
 👉 **Do you accept the Senzing End User License Agreement (EULA)?** (respond yes or no)
@@ -600,7 +600,7 @@ Once the bootcamper responds, act on their answer:
 
 - **If they accept the EULA:** proceed to Phase 2 to install the SDK package, then Phase 3 to
   install the language-specific SDK bindings. Both run without stopping for another question.
-- **If they decline the EULA:** install nothing — no package repository, no SDK package and
+- **(INV-338) If they decline the EULA:** install nothing — no package repository, no SDK package and
   no language bindings. On a fresh install, or the upgrade from below V4.0, there is no working
   SDK to fall back on. Explain: "The Senzing SDK cannot be used without EULA acceptance. The
   remaining installation steps and subsequent bootcamp modules require the SDK." Do not write
@@ -610,7 +610,7 @@ Once the bootcamper responds, act on their answer:
 **Phase 2: Install the SDK package (only after EULA acceptance; execute without stopping):**
 
 Before the package install, set the EULA variable for the bootcamper's platform, taking its name
-and value from the table in Step 1b ("The EULA variable differs per platform"). The install then
+and value from the table in Step 1b ("The EULA variable differs per platform") (INV-338). The install then
 runs without prompting; a wrong name or value makes it do nothing and report success. On the
 `docker` path, set the `linux_apt` variable inside the container.
 
@@ -653,7 +653,7 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
   compatibility with in-flight bootcamps, whatever runtime its entries name.)
 
 **Phase 3: Install language bindings (after Phase 1's EULA acceptance, or directly on Step 1's
-existing-install path, which skips Phase 1 and Phase 2):**
+existing-install path, which skips Phase 1 and Phase 2; INV-338):**
 
 3. Install the language-specific SDK bindings for the chosen language — Python, Java, C#, Rust or
    TypeScript — **by the route the Senzing MCP server names for that language, never from a public

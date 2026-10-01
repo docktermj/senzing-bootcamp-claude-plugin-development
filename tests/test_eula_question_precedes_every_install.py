@@ -34,6 +34,11 @@ opening sentence, Phase 1's list of what counts as an install, the existing-inst
 "Do not re-ask the EULA" exclusion, Step 1b's rule sentence, and each row of Step 1b's
 per-platform variable table (with a negative control on a swapped value).
 
+Enforces **INV-338** (the EULA question precedes every Senzing install, an update included; what counts
+as an install; the per-platform variable from Step 1b's table; the existing-install path is not asked).
+It asserts that Module 2 *states* the rule at each site, and does **not** establish that a live run asks
+before installing, which only `dry-run` phase 3 can observe.
+
 Source issues: #192, #284.
 
 Run:  python3 -m unittest discover -s tests
@@ -125,8 +130,8 @@ class TheEulaQuestionPrecedesEveryInstall(unittest.TestCase):
 
     def test_the_decline_branch_installs_nothing(self):
         phase_1 = re.sub(r"\s+", " ", between(self.section, PHASE_1, PHASE_2))
-        decline = phase_1[phase_1.index("**If they decline the EULA:**") :]
-        self.assertRegex(decline, r"^\*\*If they decline the EULA:\*\* install nothing")
+        decline = phase_1[phase_1.index("**(INV-338) If they decline the EULA:**") :]
+        self.assertRegex(decline, r"^\*\*\(INV-338\) If they decline the EULA:\*\* install nothing")
         for item in ("no package repository", "no SDK package", "no language bindings"):
             self.assertIn(item, decline)
         self.assertIn("Do not write the checkpoint", decline)
@@ -142,7 +147,7 @@ class TheEulaQuestionPrecedesEveryInstall(unittest.TestCase):
         self.assertRegex(flat, r"On the `docker` path, set the `linux_apt` variable")
 
     def test_the_referenced_table_still_exists_in_step_1b(self):
-        self.assertIn("**The EULA variable differs per platform", self.text)
+        self.assertIn("**(INV-338) The EULA variable differs per platform", self.text)
 
     def test_the_update_path_points_at_step_3_phase_1(self):
         flat = re.sub(r"\s+", " ", self.text)
@@ -170,7 +175,7 @@ EULA_VARIABLES = {
 
 def eula_table_rows(text):
     """{platform cell: (variable, value)} for the table under Step 1b's EULA-variable rule."""
-    start = text.index("**The EULA variable differs per platform")
+    start = text.index("**(INV-338) The EULA variable differs per platform")
     rows = {}
     for line in text[start:].splitlines()[1:]:
         if not line.startswith("|"):
@@ -217,7 +222,7 @@ class TheEulaRuleHoldsAtEverySiteTheDeferralNames(unittest.TestCase):
 
     def test_the_existing_install_path_is_excluded_and_an_accepted_update_is_not(self):
         self.assertIn(
-            "**Do not re-ask the EULA.** Phase 1 gates installing the SDK, and this path "
+            "**(INV-338) Do not re-ask the EULA.** Phase 1 gates installing the SDK, and this path "
             "installs no SDK. Only an update the bootcamper accepts in Step 1b asks it, because "
             "an update is an install.",
             self.flat,
@@ -225,7 +230,7 @@ class TheEulaRuleHoldsAtEverySiteTheDeferralNames(unittest.TestCase):
 
     def test_the_update_path_states_the_rule_and_that_an_update_is_an_install(self):
         self.assertIn(
-            "⛔ **Ask the EULA question before any package installs** — reuse the existing "
+            "⛔ **(INV-338) Ask the EULA question before any package installs** — reuse the existing "
             "wording in Step 3 Phase 1 rather than writing a second copy. An update is an "
             "install.",
             self.flat,
@@ -233,7 +238,7 @@ class TheEulaRuleHoldsAtEverySiteTheDeferralNames(unittest.TestCase):
 
     def test_the_variable_rule_says_a_wrong_one_is_silently_ignored(self):
         self.assertIn(
-            "⛔ **The EULA variable differs per platform, and a wrong one is silently ignored:**",
+            "⛔ **(INV-338) The EULA variable differs per platform, and a wrong one is silently ignored:**",
             self.text,
         )
 
