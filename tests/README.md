@@ -36,7 +36,10 @@ when it is absent and supplies the `@requires_fpdf2` guard; see `docs/developmen
   validation naming the field at fault, the project-relative image rule, exit codes 0/1/2/3,
   every fallback stated on stderr, narration that extends its scene rather than being cut,
   frame drawing (skipped without Pillow) and an end-to-end mp4 render (skipped without Pillow
-  or ffmpeg). Pillow and `imageio-ffmpeg` are in `requirements-dev.txt`.
+  or ffmpeg). Pillow and `imageio-ffmpeg` are in `requirements-dev.txt`. The Piper voice stage
+  (#341) is tested with a stubbed `find_spec` and a fake subprocess: Piper first, the whole
+  video re-voiced by the platform engine on any Piper failure, numbers spelled out for Piper
+  only, and the public-domain default voice.
 - `test_broll_manifest.py` — the graduation-video B-roll manifest (`docs/video/broll.json`) that
   `module-completion.md` Step 2e writes at every module's close: the entry format keyed by state
   token, the no-raw-record-values rule, replace-on-re-completion, recreate-on-unreadable,

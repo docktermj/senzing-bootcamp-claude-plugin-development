@@ -939,15 +939,76 @@ A storyboard for a Core bootcamp, with every module taken:
 }
 ```
 
+#### Offer the Piper voice
+
+The renderer narrates with a local Piper neural voice, `en_US-ljspeech-high`, whenever the Python
+that runs it can find `piper` and the voice sits in `data/temp/piper-voices/`. Otherwise it uses the
+computer's built-in voice. Piper is set up when both hold:
+
+- `data/temp/recap-venv/` exists and its Python can find `piper`:
+  `<venv python> -c "import importlib.util, sys; sys.exit(importlib.util.find_spec('piper') is None)"`
+  exits 0. Here `<venv python>` is `data/temp/recap-venv/bin/python` (Windows:
+  `data\temp\recap-venv\Scripts\python`).
+- The voice is in `data/temp/piper-voices/`: `en_US-ljspeech-high.onnx` and its
+  `en_US-ljspeech-high.onnx.json` both exist.
+
+When Piper is set up, make no offer, and run `--check` and the render below with the venv's Python.
+
+**The offer.** When Piper is not set up, end the turn on this pinned question, after the storyboard is
+written and before the first render. Ask it once per graduation (INV-006, INV-056):
+
+> 👉 **May I install the Piper neural voice so the narration sounds natural?** It downloads about 200 MB into this project: `piper-tts` (GPL-3.0, runs on your machine) into `data/temp/recap-venv/`, and the public-domain `en_US-ljspeech-high` voice into `data/temp/piper-voices/`. (Reply no to narrate with your computer's built-in voice.)
+
+When the venv will also get Pillow or `imageio-ffmpeg` (the next paragraph says when), the question
+names them after `data/temp/recap-venv/`: "…into `data/temp/recap-venv/` along with Pillow and
+`imageio-ffmpeg`, which rendering needs, and the public-domain `en_US-ljspeech-high` voice…". Name
+only the one the venv will get when it gets one ("along with Pillow, which rendering needs," or "along
+with `imageio-ffmpeg`, which rendering needs,"). Every other word stays the same.
+
+**On yes,** install into the project only (INV-066), skipping each step that is already satisfied:
+
+1. Create `data/temp/recap-venv/` with `python3 -m venv data/temp/recap-venv` if it does not exist.
+2. Run **one** `python -m pip install` with the venv's Python, installing `piper-tts` when the venv
+   cannot find `piper`, plus Pillow when the venv's Python cannot `import PIL`, plus
+   `imageio-ffmpeg` when there is no ffmpeg on `PATH`.
+3. Download the voice by the route `piper-tts` documents, when it is not in
+   `data/temp/piper-voices/` yet.
+
+```bash
+python3 -m venv data/temp/recap-venv    # only if it does not exist yet
+# Linux/macOS (add Pillow and imageio-ffmpeg to the same command when they are missing):
+data/temp/recap-venv/bin/python -m pip install piper-tts
+data/temp/recap-venv/bin/python -m piper.download_voices en_US-ljspeech-high --data-dir data/temp/piper-voices
+# Windows:
+data\temp\recap-venv\Scripts\python -m pip install piper-tts
+data\temp\recap-venv\Scripts\python -m piper.download_voices en_US-ljspeech-high --data-dir data\temp\piper-voices
+```
+
+When every step succeeds, **run `--check` and the render below with the venv's Python** from then on.
+The venv now has Pillow and, without an ffmpeg on `PATH`, `imageio-ffmpeg`, so the exit-2 install
+offer cannot follow a successful install.
+
+**On no, or on any failure** (creating the venv, the `pip` install or the download), render with
+the interpreter Step 1b used, as before, and the renderer narrates with the computer's built-in voice.
+Graduation continues (INV-048, INV-340), and the exit-2 install offer still applies to that render.
+
+⛔ **(INV-066) Never run `sudo`, a bare `pip`, or an install outside `data/temp/recap-venv/` and
+`data/temp/piper-voices/`.**
+
 #### Render it
 
-Check the storyboard, then render it, with the same interpreter Step 1b used (the project-local
-virtualenv's Python when Step 1b created one, otherwise `python3`):
+Check the storyboard, then render it. Use the venv's Python when Piper is set up (above), otherwise the
+same interpreter Step 1b used (the project-local virtualenv's Python when Step 1b created one,
+otherwise `python3`). Pass no `--voice-model`: the renderer finds the voice at its default path,
+`data/temp/piper-voices/en_US-ljspeech-high.onnx`.
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py" --check
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
 # or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/generate_recap_video.py
+# With Piper set up (Linux/macOS; Windows: data\temp\recap-venv\Scripts\python):
+data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py" --check
+data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
 ```
 
 The renderer reads `docs/video/storyboard.json` and writes `docs/bootcamp_recap.mp4`. Act on its exit
@@ -1020,11 +1081,12 @@ ffmpeg the render used: `ffmpeg` on `PATH`, or the `imageio-ffmpeg` binary, whos
 runs long) or lengthen it (a video that runs short), starting with the scenes the `OVERRUN:` lines
 name, and re-render **once**. If it is still outside, keep the video and say so, with its duration.
 
-Tell the bootcamper in one line: "🎬 Your graduation video is at `docs/bootcamp_recap.mp4` (2:03)."
-When the `Voice:` line is `Voice: none (…)`, that line only notes there is no voice: "🎬 Your
-graduation video is at `docs/bootcamp_recap.mp4` (2:03), with no voice." Keep the reason and any
-guidance for the closing announcement (below). Name any check that did not run, and continue to
-Step 2.
+Tell the bootcamper in one line, naming the voice from the renderer's `Voice:` line: the engine it
+names, for example "🎬 Your graduation video is at `docs/bootcamp_recap.mp4` (2:03), narrated by Piper
+(en_US-ljspeech-high).". When the `Voice:` line is `Voice: none (…)`, that line only notes there is
+no voice: "🎬 Your graduation video is at `docs/bootcamp_recap.mp4` (2:03), with no voice." Keep the
+reason and any guidance for the closing announcement (below). Name any check that did not run, and
+continue to Step 2.
 
 #### When the video has no voice
 
@@ -1039,6 +1101,12 @@ for the closing announcement, which is where the bootcamper hears it. There are 
 
 A `Voice:` line that names an engine means the video has a voice, even when some scenes went
 unvoiced: none of this applies, and the renderer's per-scene notes on stderr cover the rest.
+
+This guidance is about the platform's speech engine only. Piper is a separate, opt-in voice, offered
+once before the render ("Offer the Piper voice" above). When the bootcamper declined it, or its
+install or its narration failed, the renderer fell back to the platform engine, so
+`Voice: none (no speech engine found)` still means no platform engine was found. Give the platform
+guidance below, and do not offer Piper again.
 
 **The platform's speech engine (no speech engine found).** State it in one sentence:
 

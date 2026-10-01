@@ -7,7 +7,13 @@ with the bundled renderer (`generate_recap_video.py`, #299). These tests pin:
 * **Where it runs**: Step 1c sits right after Step 1b's recap PDF, before Step 2, because the
   video reuses the certificate's name and date. The preface's step overview and time estimate
   name the video as optional.
-* **The two questions**, verbatim: the offer, and the one install offer after exit 2.
+* **The three questions**, verbatim: the offer, the Piper voice offer after the storyboard and
+  before the first render (#341, with its Pillow / `imageio-ffmpeg` variant), and the one install
+  offer after exit 2.
+* **The Piper paths** (#341): on yes one `python -m pip` into `data/temp/recap-venv/` and the voice
+  download into `data/temp/piper-voices/`, then `--check` and the render with the venv's Python; on
+  no or a failure, Step 1b's interpreter and the platform engine; no `--voice-model`; the voice
+  named from the `Voice:` line.
 * **On no, nothing is written**; the heads-up line appears only after a declined model switch.
 * **The time budget**: the reporter's shares, summing to 100%, scaled over the modules taken,
   with each worked example checked against the formula rather than trusted.
@@ -26,7 +32,7 @@ Enforces **INV-340** (graduation's video step: offered once, nothing written on 
 never blocking, storyboard kept, the render verified). It asserts that Step 1c *states* these rules,
 and does **not** establish that a live run follows them, which only `dry-run` phase 3 can observe.
 
-Source issue: #300 (part of #297).
+Source issues: #300 (part of #297), #341.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -52,6 +58,13 @@ INSTALL = ("> 👉 **Rendering the video needs ffmpeg. May I install `imageio-ff
            "project's virtualenv?** (Reply no to skip the video; its storyboard is kept so you "
            "can render it later.)")
 TAG_LINE = "Resolved: [Name], Senzing graduate."
+PIPER_OFFER = ("> 👉 **May I install the Piper neural voice so the narration sounds natural?** It "
+               "downloads about 200 MB into this project: `piper-tts` (GPL-3.0, runs on your "
+               "machine) into `data/temp/recap-venv/`, and the public-domain `en_US-ljspeech-high` "
+               "voice into `data/temp/piper-voices/`. (Reply no to narrate with your computer's "
+               "built-in voice.)")
+PIPER_VARIANT = ("…into `data/temp/recap-venv/` along with Pillow and `imageio-ffmpeg`, which "
+                 "rendering needs, and the public-domain `en_US-ljspeech-high` voice…")
 
 #: The reporter's budget from #300, before scaling for skipped modules. Restated here on
 #: purpose: it is the spec the step's table is checked against, not a copy of the table.
@@ -208,8 +221,8 @@ class TheQuestionsArePinned(unittest.TestCase):
     def test_no_question_asks_about_the_model(self):
         text = squash(step_1c())
         self.assertIn("There is no second model question", text)
-        self.assertEqual(2, text.count("👉"), "Step 1c asks the offer and the install offer, "
-                         "and nothing else")
+        self.assertEqual(3, text.count("👉"), "Step 1c asks the offer, the Piper voice offer "
+                         "(#341) and the install offer, and nothing else")
 
 
 class NoMeansNothingWritten(unittest.TestCase):
@@ -488,6 +501,98 @@ class TheVideoIsNamedWhereTheBootcamperLooks(unittest.TestCase):
         guide = squash(section(read(GRADUATION), "### 6c. Return guide", "## Step 7:"))
         self.assertIn("Name `docs/bootcamp_recap.mp4` too when Step 1c produced it", guide)
         self.assertIn("`docs/video/storyboard.json` is kept", guide)
+
+
+class ThePiperOfferIsPinned(unittest.TestCase):
+    """#341: one pinned Piper install offer, after the storyboard, before the first render."""
+
+    def piper(self):
+        text = step_1c()
+        return text[text.index("#### Offer the Piper voice"):text.index("#### Render it")]
+
+    def test_the_offer_is_verbatim_and_asked_once(self):
+        self.assertEqual(1, step_1c().count(PIPER_OFFER))
+        self.assertIn("Ask it once per graduation (INV-006, INV-056)", squash(self.piper()))
+
+    def test_it_comes_after_the_storyboard_and_before_the_first_render(self):
+        text = step_1c()
+        self.assertLess(text.index("#### Write the storyboard"), text.index(PIPER_OFFER))
+        self.assertLess(text.index(PIPER_OFFER), text.index("generate_recap_video.py\" --check"))
+        self.assertIn("after the storyboard is written and before the first render",
+                      squash(self.piper()))
+
+    def test_the_pillow_and_imageio_ffmpeg_variant(self):
+        text = squash(self.piper())
+        self.assertIn("When the venv will also get Pillow or `imageio-ffmpeg`", text)
+        self.assertIn(PIPER_VARIANT, text)
+        self.assertIn("Every other word stays the same", text)
+        variant = PIPER_OFFER.replace("into `data/temp/recap-venv/`, and",
+                                      "into `data/temp/recap-venv/` along with Pillow and "
+                                      "`imageio-ffmpeg`, which rendering needs, and")
+        self.assertNotEqual(PIPER_OFFER, variant, "the variant splices into the pinned offer")
+
+    def test_it_is_made_only_when_piper_is_not_set_up(self):
+        text = squash(self.piper())
+        self.assertIn("`data/temp/recap-venv/` exists and its Python can find `piper`", text)
+        self.assertIn("`en_US-ljspeech-high.onnx` and its `en_US-ljspeech-high.onnx.json` both "
+                      "exist", text)
+        self.assertIn("When Piper is set up, make no offer, and run `--check` and the render "
+                      "below with the venv's Python", text)
+
+    def test_yes_installs_into_the_project_with_an_explicit_interpreter(self):
+        text = self.piper()
+        flat = squash(text)
+        self.assertIn("Run **one** `python -m pip install` with the venv's Python", flat)
+        self.assertIn("plus Pillow when the venv's Python cannot `import PIL`", flat)
+        self.assertIn("plus `imageio-ffmpeg` when there is no ffmpeg on `PATH`", flat)
+        self.assertIn("data/temp/recap-venv/bin/python -m pip install piper-tts", text)
+        self.assertIn("data/temp/recap-venv/bin/python -m piper.download_voices "
+                      "en_US-ljspeech-high --data-dir data/temp/piper-voices", text)
+        self.assertIn("skipping each step that is already satisfied", flat)
+        self.assertNotRegex(text, r"(?m)^\s*pip install", "never a bare pip (INV-066)")
+        self.assertNotRegex(text, r"(?m)^\s*sudo\b", "never sudo (INV-066)")
+
+    def test_installs_go_only_into_the_two_project_folders(self):
+        blocks = re.findall(r"```bash\n(.*?)```", self.piper(), re.S)
+        self.assertEqual(1, len(blocks), "the Piper install has one command block")
+        commands = [l for l in blocks[0].splitlines()
+                    if " -m pip install" in l or "download_voices" in l]
+        self.assertEqual(4, len(commands), "pip and the download, on Linux/macOS and Windows")
+        for line in commands:
+            with self.subTest(line=line):
+                self.assertRegex(line, r"^data[/\\]temp[/\\]recap-venv[/\\]")
+                if "download_voices" in line:
+                    self.assertRegex(line, r"--data-dir data[/\\]temp[/\\]piper-voices$")
+
+    def test_after_a_yes_the_venv_python_renders(self):
+        flat = squash(self.piper())
+        self.assertIn("When every step succeeds, **run `--check` and the render below with the "
+                      "venv's Python** from then on", flat)
+        self.assertIn("the exit-2 install offer cannot follow a successful install", flat)
+        render = step_1c()[step_1c().index("#### Render it"):]
+        self.assertIn('data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/'
+                      'generate_recap_video.py" --check', render)
+
+    def test_no_or_a_failure_renders_with_step_1bs_interpreter(self):
+        flat = squash(self.piper())
+        self.assertIn("**On no, or on any failure** (creating the venv, the `pip` install or "
+                      "the download), render with the interpreter Step 1b used", flat)
+        self.assertIn("Graduation continues (INV-048, INV-340), and the exit-2 install offer "
+                      "still applies to that render", flat)
+
+    def test_the_render_passes_no_voice_model(self):
+        render = step_1c()[step_1c().index("#### Render it"):]
+        self.assertIn("Pass no `--voice-model`", render)
+        self.assertNotRegex(render, r"generate_recap_video\.py\"[^\n]*--voice-model")
+
+    def test_the_offer_names_the_licenses(self):
+        self.assertIn("`piper-tts` (GPL-3.0, runs on your machine)", PIPER_OFFER)
+        self.assertIn("the public-domain `en_US-ljspeech-high` voice", PIPER_OFFER)
+
+    def test_the_voice_is_named_from_the_voice_line(self):
+        flat = squash(step_1c())
+        self.assertIn("naming the voice from the renderer's `Voice:` line", flat)
+        self.assertIn("narrated by Piper (en_US-ljspeech-high).", flat)
 
 
 if __name__ == "__main__":

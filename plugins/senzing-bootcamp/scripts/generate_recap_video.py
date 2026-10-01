@@ -13,8 +13,10 @@ How it works, in three passes:
 1. **Validate.** Every scene is checked against ``SCENE_TYPES``, the one table that maps a
    scene type to its data fields and to the function that draws it. A problem is reported
    with the field that caused it (``scenes[3].items[0].value: ...``) and nothing is written.
-2. **Plan the timeline.** Each scene's narration is synthesized with the platform's own
-   speech engine, and the scene lasts ``max(planned duration, narration length)``.
+2. **Voice, then plan the timeline.** A voice-selection stage tries a local Piper neural voice
+   first (``voice_with_piper``): it voices every scene or none. When it voices none, each
+   scene's narration is synthesized with the platform's own speech engine instead. Either way
+   the scene lasts ``max(planned duration, narration length)``.
 3. **Stream.** Frames are drawn with Pillow and written as raw RGB straight into one ffmpeg
    process's stdin. Its audio inputs are the assembled narration (48 kHz stereo, each
    narration at its scene's start) and the synthesized music bed; the same ffmpeg call mixes
@@ -35,7 +37,8 @@ title card instead, and stderr says so.
 
 ⛔ **(INV-342) The renderer is offline: it opens only local files and never fetches from the network.**
 Fonts come from the operating system, the palette from ``brand_tokens.py`` (INV-081), the voice
-from the platform's built-in speech engine.
+from a local Piper model already on disk (never downloaded here) or the platform's built-in
+speech engine.
 
 Storyboard format
 -----------------
@@ -84,6 +87,15 @@ table. Keys beginning with ``_`` are comments and are ignored. The scene types:
 Fallbacks, each stated on stderr (INV-111)
 ------------------------------------------
 
+* **Piper first.** The voice is a local Piper neural voice (``piper-tts``, run as
+  ``sys.executable -m piper``, never imported) when ``piper`` is findable by this interpreter
+  and the ``--voice-model`` ``.onnx`` file and its ``.onnx.json`` config both exist. The model
+  defaults to ``data/temp/piper-voices/en_US-ljspeech-high.onnx`` under ``--project-root``.
+  Otherwise stderr names the case (``piper`` not installed for this interpreter, the model
+  missing, or its config missing) and the platform engine below is used. Numbers in Piper's
+  speech text are spelled out; the captions keep the digits.
+* **Piper fails on any scene:** Piper is dropped for the whole video, and every scene is
+  re-voiced with the platform engine, so the video never mixes two voices. stderr says so.
 * No speech engine (macOS ``say``, Windows SAPI through PowerShell ``System.Speech``, Linux
   ``espeak-ng`` or ``espeak``), ``--no-voice``, or an engine that voiced no scene: the video
   renders without a voice-over and the captions carry the narration. The music bed still plays,
@@ -115,10 +127,13 @@ Usage::
 
     python3 generate_recap_video.py [--storyboard docs/video/storyboard.json]
                                     [--output docs/bootcamp_recap.mp4]
-                                    [--project-root .] [--no-voice] [--check] [--schema]
+                                    [--project-root .] [--voice-model <model.onnx>]
+                                    [--no-voice] [--check] [--schema]
 
 ``--check`` validates the storyboard and exits 0 or 1 without rendering; it needs neither
-Pillow nor ffmpeg. Source issues: #299, #339.
+Pillow nor ffmpeg. ``--voice-model`` names a local Piper ``.onnx`` model whose ``.onnx.json``
+config sits beside it (default: ``data/temp/piper-voices/en_US-ljspeech-high.onnx`` under
+``--project-root``). Source issues: #299, #339, #341.
 """
 
 from __future__ import annotations
@@ -180,6 +195,22 @@ CAPTION_BOTTOM = HEIGHT - 44
 
 #: Modules whose import would mean a network fetch. The renderer imports none of them.
 NETWORK_MODULES = ("urllib", "http", "socket", "requests", "ftplib", "smtplib")
+
+#: The default Piper voice (#341). The default ``--voice-model`` path is built from it.
+#: License record (from #341; the model card was read 2026-10-01):
+#:   - the voice: ``en_US-ljspeech-high``, trained from scratch on the LJ Speech dataset, which
+#:     is public domain;
+#:   - the engine: ``piper-tts`` 1.8.0 is GPL-3.0-or-later. It is installed into the
+#:     Bootcamper's venv and run as a separate process, never imported; the plugin does not
+#:     ship it.
+#: Never a voice from the CC BY-NC-SA or Blizzard 2013 families (``ryan``, ``hfc_*``,
+#: ``lessac``): their licenses do not allow a shareable keepsake.
+DEFAULT_PIPER_VOICE = "en_US-ljspeech-high"
+PIPER_VOICE_DIR = "data/temp/piper-voices"
+DEFAULT_VOICE_MODEL = f"{PIPER_VOICE_DIR}/{DEFAULT_PIPER_VOICE}.onnx"
+#: Speaking parameters from the version the Bootcamper accepted (#331, P3-22).
+PIPER_LENGTH_SCALE = "1.0"
+PIPER_SENTENCE_SILENCE = "0.15"
 
 
 def _report(prefix: str, message: str) -> None:
@@ -724,6 +755,120 @@ def synthesize_pcm(engine: SpeechEngine, text: str, ffmpeg: str, workdir: Path,
     if not pcm:
         raise RuntimeError(f"{engine.name} produced no audio")
     return pcm
+
+
+# --------------------------------------------------------------------------- #
+# The voice-selection stage: Piper first, for every scene or for none (#341)
+# --------------------------------------------------------------------------- #
+_ONES = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+         "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
+         "seventeen", "eighteen", "nineteen")
+_TENS = ("", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety")
+_SCALES = ((10 ** 12, "trillion"), (10 ** 9, "billion"), (10 ** 6, "million"),
+           (1000, "thousand"))
+
+#: A free-standing number: an integer, with or without thousands separators, and an optional
+#: decimal part. Digits joined to a letter or underscore (``CORD2``, ``v4``, ``4th``) are not
+#: matched, nor is a run of digits glued to another by ``.`` or ``,`` that is not a number.
+_NUMBER = re.compile(r"(?<![\w.,])([0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.([0-9]+))?"
+                     r"(?![\w]|[.,][0-9])")
+
+
+def _integer_words(n: int) -> str:
+    """`n` (0 <= n < 10**15) in English words: 1540 -> "one thousand five hundred forty"."""
+    if n < 20:
+        return _ONES[n]
+    if n < 100:
+        tens, ones = divmod(n, 10)
+        return _TENS[tens] + (f"-{_ONES[ones]}" if ones else "")
+    if n < 1000:
+        hundreds, rest = divmod(n, 100)
+        return f"{_ONES[hundreds]} hundred" + (f" {_integer_words(rest)}" if rest else "")
+    for size, name in _SCALES:
+        if n >= size:
+            head, rest = divmod(n, size)
+            return f"{_integer_words(head)} {name}" + (f" {_integer_words(rest)}" if rest else "")
+    raise AssertionError(n)  # pragma: no cover - every n >= 1000 meets a scale
+
+
+def spell_numbers(text: str) -> str:
+    """`text` with each free-standing number written in English words, for Piper only.
+
+    ``10,000`` -> ``ten thousand``; ``3.5`` -> ``three point five`` (the digits after the point
+    are read one by one). Digits joined to letters (``CORD2``, ``v4``) are left as they are, as
+    is a number of a quadrillion or more. Standard library only; the captions and the
+    platform engines never see this text.
+    """
+    def words(match: "re.Match") -> str:
+        whole = int(match.group(1).replace(",", ""))
+        if whole >= 10 ** 15:
+            return match.group(0)
+        spoken = _integer_words(whole)
+        if match.group(2):
+            spoken += " point " + " ".join(_ONES[int(d)] for d in match.group(2))
+        return spoken
+
+    return _NUMBER.sub(words, text)
+
+
+def piper_config_path(model: Path) -> Path:
+    """The ``.onnx.json`` config that sits beside a Piper ``.onnx`` model."""
+    return model.with_name(model.name + ".json")
+
+
+def _voice_name(model: Path) -> str:
+    return model.name[:-len(".onnx")] if model.name.endswith(".onnx") else model.name
+
+
+def find_piper_voice(model: Path) -> Tuple[Optional[SpeechEngine], Optional[str]]:
+    """(the Piper engine, None), or (None, which case kept Piper out) (INV-111).
+
+    Piper is never imported: ``find_spec`` only asks whether this interpreter could find it,
+    and the engine runs it as ``sys.executable -m piper``. Only the model and its config are
+    looked at, and only on the local disk (INV-342).
+    """
+    if _find_spec("piper") is None:
+        return None, (f"Piper (piper-tts) is not installed for {sys.executable}; using the "
+                      "platform speech engine.")
+    if not model.is_file():
+        return None, f"no Piper voice model at {model}; using the platform speech engine."
+    config = piper_config_path(model)
+    if not config.is_file():
+        return None, (f"the Piper voice model {model} has no config beside it ({config} is "
+                      "missing); using the platform speech engine.")
+
+    def command(txt: str, wav: str) -> Tuple[List[str], Dict[str, str]]:
+        return ([sys.executable, "-m", "piper", "-m", str(model), "-c", str(config),
+                 "-i", txt, "-f", wav, "--length-scale", PIPER_LENGTH_SCALE,
+                 "--sentence-silence", PIPER_SENTENCE_SILENCE], {})
+
+    return SpeechEngine(f"Piper ({_voice_name(model)})", command), None
+
+
+def voice_with_piper(scenes: Sequence[dict], piper: SpeechEngine, ffmpeg: str, workdir: Path,
+                     note: Callable[[str], None]) -> Optional[List[bytes]]:
+    """Every scene's narration voiced by `piper`, as PCM in scene order; or None.
+
+    The narration Piper speaks has its numbers spelled out (``spell_numbers``). All or
+    nothing: a failure on any scene returns None, states the switch through `note`, and
+    removes what this stage wrote, so the platform engine re-voices the whole video and no
+    video ever mixes two voices.
+    """
+    stage = workdir / "piper"
+    stage.mkdir(parents=True, exist_ok=True)
+    voices: List[bytes] = []
+    for index, scene in enumerate(scenes):
+        try:
+            voices.append(synthesize_pcm(piper, spell_numbers(scene["narration"]), ffmpeg,
+                                         stage, f"scene-{index:03d}"))
+        except RuntimeError as exc:
+            note(f"scenes[{index}] ({scene['type']}): {piper.name} could not voice this "
+                 f"narration ({exc}); Piper is dropped for the whole video and every scene "
+                 "is re-voiced with the platform speech engine, so the video never mixes two "
+                 "voices.")
+            shutil.rmtree(stage, ignore_errors=True)
+            return None
+    return voices
 
 
 # --------------------------------------------------------------------------- #
@@ -1401,11 +1546,14 @@ def caption_chunks(ctx, caption: str) -> List[str]:
 
 
 def plan_timeline(storyboard: dict, ctx: RenderContext, engine: Optional[SpeechEngine],
-                  ffmpeg: Optional[str], workdir: Optional[Path]) -> List[PlannedScene]:
+                  ffmpeg: Optional[str], workdir: Optional[Path],
+                  voices: Optional[Sequence[bytes]] = None) -> List[PlannedScene]:
     """Resolve fallbacks, synthesize narration, and fix every scene's length.
 
-    A scene lasts max(planned, narration + lead + tail), so narration is never cut; each
-    extension is reported on stderr as an OVERRUN.
+    `voices`, when given, is every scene's narration already voiced by the voice-selection
+    stage (``voice_with_piper``), and nothing is synthesized here. A scene lasts
+    max(planned, narration + lead + tail), so narration is never cut; each extension is
+    reported on stderr as an OVERRUN.
     """
     video = storyboard["video"]
     plan: List[PlannedScene] = []
@@ -1437,7 +1585,9 @@ def plan_timeline(storyboard: dict, ctx: RenderContext, engine: Optional[SpeechE
         narration = scene["narration"]
         caption = scene.get("caption") or narration
         pcm, voiced = b"", False
-        if engine is not None and ffmpeg and workdir is not None:
+        if voices is not None:
+            pcm, voiced = voices[index], True
+        elif engine is not None and ffmpeg and workdir is not None:
             try:
                 pcm = synthesize_pcm(engine, narration, ffmpeg, workdir, f"scene-{index:03d}")
                 voiced = True
@@ -1763,6 +1913,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--project-root", default=".",
                         help="images and the recap resolve against this (default: the "
                              "current directory)")
+    parser.add_argument("--voice-model", default=None,
+                        help="a local Piper .onnx voice model, its .onnx.json beside it "
+                             f"(default: {DEFAULT_VOICE_MODEL} under --project-root)")
     parser.add_argument("--no-voice", action="store_true",
                         help="skip the voice-over; the burned-in captions carry the narration")
     parser.add_argument("--check", action="store_true",
@@ -1804,9 +1957,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     if PALETTE_NOTE:
         ctx.note(PALETTE_NOTE)
 
-    engine, voice_note = choose_voice(args.no_voice)
-    if voice_note:
-        ctx.note(voice_note)
+    piper = None
+    if not args.no_voice:
+        model = Path(args.voice_model) if args.voice_model else root / DEFAULT_VOICE_MODEL
+        piper, piper_note = find_piper_voice(model)
+        if piper_note:
+            ctx.note(piper_note)
+    engine = None
 
     with_music = storyboard["video"].get("music", True)
     output = Path(args.output)
@@ -1816,7 +1973,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     with tempfile.TemporaryDirectory(prefix="sbcp-video-") as tmp:
         workdir = Path(tmp)
         try:
-            plan = plan_timeline(storyboard, ctx, engine, ffmpeg, workdir)
+            voices = (voice_with_piper(storyboard["scenes"], piper, ffmpeg, workdir, ctx.note)
+                      if piper is not None else None)
+            if voices is not None:
+                engine = piper
+            else:
+                engine, voice_note = choose_voice(args.no_voice)
+                if voice_note:
+                    ctx.note(voice_note)
+            plan = plan_timeline(storyboard, ctx, engine, ffmpeg, workdir, voices)
             voiced = [ps for ps in plan if ps.voiced]
             audio = music = None
             if voiced:

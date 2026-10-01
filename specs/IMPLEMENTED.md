@@ -43,6 +43,94 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## graduation-video-local-piper-neural-voice
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #341; sub-issue of #331, spec revision 1)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_video.py`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md` (Step 1c: a new "Offer the Piper voice" subsection, "Render it", the status line, and one paragraph in "When the video has no voice"), `tests/test_recap_video.py`, `tests/test_graduation_video_step.py`, `tests/test_graduation_no_voice_guidance.py`, `docs/development.md`, `tests/README.md`, `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** n/a (no Senzing fact), server `sz-mcp-coworker` 1.37.16, 2026-10-01, `get_capabilities` — re-confirmed, not assumed. The change covers TTS (Piper, `say`, System.Speech, `espeak-ng`), ffmpeg, a number speller, pip and venv paths. Across the full diff, the only added line that names Senzing is the tag line "Resolved: Ada Lovelace, Senzing graduate." used as speller test input, and no added line names an SDK method, an engine behavior, a Senzing document or an MCP tool. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Facts taken from the issue, unverified here:** the `piper-tts` 1.8.0 CLI flags (`-m`, `-c`, `-i`/`--input-file`, `-f`, `--length-scale`, `--sentence-silence`) and `python -m piper.download_voices <voice> --data-dir <dir>`; `piper-tts` 1.8.0 being GPL-3.0-or-later; the `en_US-ljspeech-high` model card (trained from scratch on LJ Speech, public domain, read 2026-10-01 per the issue); and the ~200 MB download figure. These are not Senzing facts, so the MCP server cannot check them, and `piper-tts` could not be installed in this run. Piper is stubbed in every test (`find_spec` and the subprocess). A first live render with Piper is the check still owed. `piper-tts` is installed unpinned, as the issue words it.
+- **Approach:** raced (Phase 5b), two strategies. `stage` won and was applied with `git apply --3way --exclude=BLUEPRINT.md`, built on `f9e6d40` (#339 merged as PR #350) and read against `b7a850d`, which adds #340 (PR #351). Five files applied cleanly. The `SKILL.md` hunk conflicted at Step 1c's status line and was resolved by hand so that both #340's and #341's text are present (see Summary). The comparison is issue comment 3.
+- **Summary:** The recap video now narrates with a local Piper neural voice, `en_US-ljspeech-high`, when the Bootcamper accepts a one-time install, and otherwise falls back to the platform engine (P3-21, P3-22).
+  - **The voice-selection stage** (`find_piper_voice`, `voice_with_piper`) runs before the unchanged platform path. `find_piper_voice(model)` checks `find_spec("piper")` (Piper is never imported), then the `.onnx`, then its `.onnx.json`. When one is missing it names the case on stderr (INV-111): Piper not installed for `sys.executable`, no model at the path, or the config missing. When all three are present it returns `SpeechEngine("Piper (en_US-ljspeech-high)")`, whose command is `sys.executable -m piper -m <model> -c <model>.json -i <txt> -f <wav> --length-scale 1.0 --sentence-silence 0.15`. `voice_with_piper` voices every scene or returns None. The first failure logs one note, deletes `workdir/piper/` and hands the whole video to `choose_voice`, so a video never mixes two voices. `choose_voice` now runs only when Piper did not voice the video, and `plan_timeline` gains an optional `voices=` that every existing caller leaves unset.
+  - **`spell_numbers`** (stdlib) applies to Piper's text only. `10,000` becomes "ten thousand" and `3.5` "three point five". `CORD2`, `v4`, `4th`, `x_5`, malformed groupings and values of 10^15 and up are left as they are. Captions and the platform engines get the narration unchanged.
+  - **`--voice-model`** defaults to `<project-root>/data/temp/piper-voices/en_US-ljspeech-high.onnx`, and an explicit value resolves like `--storyboard`. `DEFAULT_PIPER_VOICE`, `PIPER_VOICE_DIR` and `DEFAULT_VOICE_MODEL` carry the license record in a comment beside them. The module docstring's pass 2, its INV-342 offline sentence, its Fallbacks section and its usage line name Piper and `--voice-model`. `NETWORK_MODULES` still holds, and the renderer downloads nothing.
+  - **#339's lines are kept exactly.** The `Voice:` line comes from whichever engine produced the audio through #339's unchanged print logic, so Piper prints `Voice: Piper (en_US-ljspeech-high) (n of m scenes narrated)`. A Piper failure with no platform engine prints `Voice: none (no speech engine found)`, the true reason.
+  - **Step 1c, "Offer the Piper voice"** (new, between "Write the storyboard" and "Render it"). Piper counts as set up when `data/temp/recap-venv/`'s Python can find `piper` and both `en_US-ljspeech-high.onnx` and `.onnx.json` exist; then no offer is made and the venv's Python renders. Otherwise the run ends the turn on the pinned offer, asked once (INV-006, INV-056), with its Pillow / `imageio-ffmpeg` variants. On yes: the venv is created if it is missing, then one `<venv python> -m pip install` (`piper-tts`, plus Pillow and/or `imageio-ffmpeg` when they are missing), then `<venv python> -m piper.download_voices en_US-ljspeech-high --data-dir data/temp/piper-voices`, skipping any step already satisfied. `--check` and the render then use the venv's Python. On no or any failure, it renders with Step 1b's interpreter and the platform engine, and the exit-2 offer still applies (INV-048, INV-340). There is a new ⛔ (INV-066) line: never `sudo`, a bare `pip`, or an install outside the two folders. "Render it" names the interpreter, passes no `--voice-model`, and shows the venv lines.
+  - **Merged with #340 (the conflict resolution).** Step 1c's status line keeps #340's rule (with `Voice: none (…)` it notes only "with no voice", and the reason waits for the closing announcement) and adds #341's naming of the engine from the `Voice:` line ("…, narrated by Piper (en_US-ljspeech-high)."). "When the video has no voice" gains one paragraph saying its hints are for the platform engine only. Piper is the separate opt-in offered before the render, so `no speech engine found` after a declined or failed Piper still means no platform engine, and Piper is not offered again. #340's three cases, its Linux/macOS/Windows hints, its re-render command and its closing-announcement rule are unchanged.
+  - **Tests.** `tests/test_recap_video.py` has six new classes: `NumbersAreSpelledForPiper`, `PiperIsFoundOrTheCaseIsNamed`, `PiperIsNeverImported` (an AST scan with negative controls for each import form), `TheDefaultVoiceIsPublicDomain` (with a `ryan`/`hfc_*`/`lessac` negative control), `TheVoiceStageIsAllOrNothing` (with a Piper-succeeds negative control), and `PiperComesFirstInTheRender` (the full `main`, with a stubbed `find_spec` and subprocess). `tests/test_graduation_video_step.py` has `ThePiperOfferIsPinned`, with 11 tests. ⚠️ **Two exact 👉 counts were moved from 2 to 3, not weakened**, because the issue adds exactly one question: `test_no_question_asks_about_the_model` (`test_graduation_video_step.py`), and #340's `test_the_offer_and_install_offer_stay_the_only_questions`, renamed `test_the_three_offers_stay_the_only_questions` (`test_graduation_no_voice_guidance.py`). Both are still exact counts, and #340's "no 👉 in the guidance" check is unchanged and green.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-342 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+    - ⛔ **(INV-342) The renderer is offline: it opens only local files and never fetches from the network.** — in `plugins/senzing-bootcamp/scripts/generate_recap_video.py`
+
+  ⚠️ **Why.** This run ships durable renderer guarantees, each with an enforcing test, that no
+  shipped ⛔ line states: Piper first, as a subprocess and never imported; the three named
+  fallback cases; the whole-video fallback that never mixes two voices; number spelling in
+  Piper's text only; and a public-domain default voice. INV-342 already governs this renderer's
+  guarantees, so the run drafts an amendment to it rather than a new id. **How it relates to
+  the pending INV-342 amendment from #339** (`graduation-video-stereo-loudness-normalized-music-bed`,
+  still awaiting): it is additive and independent. Its sentences go after #339's drafted
+  sentences and before `Enforced by`, and it changes none of #339's wording. Piper's line is
+  #339's `Voice: <engine> (<n> of <m> scenes narrated)` shape. Both can be applied in one edit.
+  If #339's is held, this one applies on its own to INV-342's registered text. Amending a
+  registered invariant is the maintainer's sign-off alone, so `specs/INVARIANTS.md` and
+  `invariant-manifest.json` are unchanged. **Sites it affects:** INV-342 in
+  `specs/INVARIANTS.md`, and its statement in `invariant-manifest.json`, regenerated from it
+  (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit. The shipped sites
+  are `find_piper_voice`, `voice_with_piper`, `spell_numbers`, `DEFAULT_PIPER_VOICE` and its
+  license comment, and the voice stage in `main()` of
+  `plugins/senzing-bootcamp/scripts/generate_recap_video.py`. The enforcer is
+  `tests/test_recap_video.py` (`NumbersAreSpelledForPiper`, `PiperIsFoundOrTheCaseIsNamed`,
+  `PiperIsNeverImported`, `TheDefaultVoiceIsPublicDomain`, `TheVoiceStageIsAllOrNothing`,
+  `PiperComesFirstInTheRender`). Applying it resolves the block: mark the bullet
+  `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording:
+
+  **INV-342** — … It MUST try a local Piper voice first: `piper-tts` run only as a subprocess of `sys.executable`, found by `importlib.util.find_spec` and never imported, and used only when the `--voice-model` `.onnx` (default `data/temp/piper-voices/en_US-ljspeech-high.onnx` under `--project-root`) and its `.onnx.json` both exist on local disk, with stderr naming which case kept it out (INV-111). A Piper failure on any scene MUST re-voice the whole video with the platform engine, so no video mixes two voices. Numbers MUST be spelled out in Piper's speech text only, with the captions and the platform engines given the narration unchanged. The default voice MUST be the public-domain `en_US-ljspeech-high`, with its license record beside the constant, and never a `ryan`, `hfc_*` or `lessac` voice. (⚠️ **Amended <YYYY-MM-DD> (#341): the Piper voice added; the exit codes, narration, offline and #339 audio rules are unchanged.**) Enforced by `tests/test_recap_video.py`, …
+
+  *(the `…` stand for INV-342's registered text, plus #339's amendment once applied, kept as
+  they are; the date is a placeholder deliberately: `/review-invariants` fills it in on the day
+  it applies the amendment.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-342 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-340 — awaiting the maintainer's sign-off; NOT applied.** The rule already shipping:
+    - ⛔ **(INV-066) Never run `sudo`, a bare `pip`, or an install outside `data/temp/recap-venv/` and `data/temp/piper-voices/`.** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+
+  ⚠️ **Why.** Step 1c now asks a second install question and switches interpreters after a yes.
+  INV-340 states only the exit-2 install offer, so the Piper offer, where it falls, what a yes
+  installs and where, and which Python renders afterwards are tested (`ThePiperOfferIsPinned`)
+  and unregistered. INV-066 governs the install and is cited at the new ⛔ line. It does not
+  name the two folders or the interpreter switch. INV-340 already governs this step, so the
+  run drafts an amendment rather than a new id. **How it relates to the pending INV-340
+  amendment from #340** (`graduation-video-no-voice-per-platform-guidance`, still awaiting): it
+  is additive and independent. #340's sentences follow "The closing announcement and the return
+  guide MUST name the video only when it was produced.", and this one's go before "Exit 2 from
+  the renderer MUST lead to one install offer". Neither changes the other's words. The only
+  shared ground is #340's status-line sentence, which this run's merge keeps verbatim while
+  adding the voice name for a voiced video. Both can be applied in one edit, or either one
+  alone. **Sites it affects:** INV-340 in `specs/INVARIANTS.md`, and its statement in
+  `invariant-manifest.json`, regenerated from it in the same edit. The shipped site is Step 1c's
+  "Offer the Piper voice" and "Render it" in
+  `plugins/senzing-bootcamp/skills/graduation/SKILL.md`. The enforcer is
+  `tests/test_graduation_video_step.py::ThePiperOfferIsPinned`. Applying it resolves the block:
+  mark the bullet `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording:
+
+  **INV-340** — … After the storyboard is written and before the first render, when `data/temp/recap-venv/`'s Python cannot find `piper` or the `en_US-ljspeech-high` voice (`.onnx` and `.onnx.json`) is missing from `data/temp/piper-voices/`, it MUST make one pinned Piper install offer, asked once (INV-006, INV-056). On yes it MUST install only into `data/temp/recap-venv/` (one `python -m pip install` with that venv's interpreter, adding Pillow and `imageio-ffmpeg` when they are missing) and `data/temp/piper-voices/`, never with `sudo` or a bare `pip` (INV-066), and then run `--check` and the render with the venv's Python. On no or any failure it MUST render with Step 1b's interpreter and the platform engine and not block graduation (INV-048). The render MUST pass no `--voice-model`, and the status line MUST name the voice from the renderer's `Voice:` line. Exit 2 from the renderer MUST lead to one install offer … (⚠️ **Amended <YYYY-MM-DD> (#341): the Piper offer and the interpreter switch added; the video offer, storyboard, budget, verification and #340 no-voice rules are unchanged.**) Enforced by `tests/test_graduation_video_step.py`, …
+
+  *(the `…` stand for INV-340's registered text, plus #340's amendment once applied, kept as
+  they are; the date is a placeholder deliberately: `/review-invariants` fills it in on the day
+  it applies the amendment.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-340 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The stated fallbacks apply INV-111, the offline model read applies INV-342 as registered, the asked-once offer applies INV-006 and INV-056, the never-blocking fallback applies INV-048, and the stdlib-only tests apply INV-108. The only new ⛔ line cites INV-066 on that line, and no ⛔ rule is demoted.
+
 ## graduation-video-no-voice-per-platform-guidance
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #340; sub-issue of #331, spec revision 1)
