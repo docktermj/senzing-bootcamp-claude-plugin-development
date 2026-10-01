@@ -1663,7 +1663,7 @@ raise an error, it just leaves you with the bootstrap code and nothing to config
 bootcamper's platform. If the response has no `environment` key, that is what happened — re-issue
 the call with `platform` rather than reconstructing the paths by hand.
 
-MCP-NEGATIVE: sdk_guide(topic='configure', language='python') — returns no `environment` block, so neither `engine_config` nor `default_paths` — owner: sdk_guide(topic='configure', platform='linux_apt', language='python') IS the route that carries it and returned `environment.default_paths` plus `environment.engine_config` when asked (routing negative) — server 1.36.0, 2026-09-02
+<!-- MCP-NEGATIVE: sdk_guide(topic='configure', language='python') — returns no `environment` block, so neither `engine_config` nor `default_paths` — owner: sdk_guide(topic='configure', platform='linux_apt', language='python') IS the route that carries it and returned `environment.default_paths` plus `environment.engine_config` when asked (routing negative) — server 1.36.0, 2026-09-02 -->
 
 **Build the JSON from `environment.default_paths`, not from the `engine_config` blob.** That response
 carries both — **provided `platform` was passed** (above). `default_paths` gives plain, correct

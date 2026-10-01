@@ -58,6 +58,20 @@ def squash(text):
     return re.sub(r"\s+", " ", re.sub(r"^[ \t]*>[ \t]?", "", text, flags=re.M))
 
 
+def is_marker_line(line):
+    """A line that opens with a negative marker, wrapped `<!-- … -->` or not.
+
+    #323 wraps Step 8's marker in an HTML comment, so the line now opens with `<!-- `; a
+    bare marker still counts here, and `tests/test_shipped_negative_markers_are_html_comments.py`
+    is what rejects it. The prefix is assembled rather than written out: the marker scanner
+    reads `tests/` too.
+    """
+    s = line.lstrip()
+    if s.startswith("<!-- "):
+        s = s[len("<!-- "):]
+    return s.startswith("MCP-" + "NEGATIVE:")
+
+
 class TheScanIsNotVacuous(unittest.TestCase):
     def test_the_module_exists(self):
         self.assertTrue(MODULE_02.is_file(), "module-02 SKILL.md moved")
@@ -351,8 +365,8 @@ class StepEightStatesThatPlatformIsMandatory(unittest.TestCase):
     #: unparseable marker of this file's own (it turned the suite red twice).
     def setUp(self):
         raw = section(read(), "## Step 8: Create Engine Configuration", "## Step 8a:")
-        marker_lines = [l for l in raw.splitlines() if l.lstrip().startswith("MCP-" + "NEGATIVE:")]
-        prose_lines = [l for l in raw.splitlines() if not l.lstrip().startswith("MCP-" + "NEGATIVE:")]
+        marker_lines = [l for l in raw.splitlines() if is_marker_line(l)]
+        prose_lines = [l for l in raw.splitlines() if not is_marker_line(l)]
         self.step8 = squash(raw)
         self.prose = squash("\n".join(prose_lines))
         self.marker = squash("\n".join(marker_lines))
