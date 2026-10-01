@@ -43,6 +43,59 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## synthesized-entities-have-their-own-identifiers
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #343, spec revision 1; source: the 2026-10-01 graduation retrospective, `Source: self-observed (assistant retrospective)`)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md` (Step 2's `provenance: synthesized` branch: one sentence added to the band self-check, one ⛔ paragraph after the record-key block, and a `shared_features` entry in the sample `quality_intent`), `tests/test_synthesized_entities_have_their_own_identifiers.py` (new), `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** n/a (no Senzing fact), server `sz-mcp-coworker` 1.37.16 (Senzing "current"), 2026-10-01, `get_capabilities` — re-confirmed, not assumed. The change is the plugin's own rule for generated data: which identifying values two invented entities may share, and a count the generator runs on its own files. "Every pair resolved together on that evidence" is reported as what the 2026-10-01 walk observed, not stated as an engine rule. No added line names an SDK method, an engine behavior, a Senzing document or an MCP tool. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** raced (Phase 5b), two strategies. `beside` won and was applied with `git apply --exclude=BLUEPRINT.md` on `d76a3dc`, cleanly, then read against the branch. The comparison is issue comment 3. One adaptation: a sentence scoping each `shared_features` entry to the shares its reason describes, plus its predicate and negative control (below). Without it, a feature-level entry for `phone` would excuse every phone collision in the source.
+- **Assumption (issue comment 2):** a `shared_features` entry is feature-level, `{feature, reason}`. The issue says it names "the feature and the reason" and leaves the shape open.
+- **Summary:** Module 4's synthesized-scenario rules now give each invented entity its own identifiers. Before, a generator could give two different people the same name and email, and Senzing correctly merged them. On the 2026-10-01 walk, 53 pairs of different people out of 7,000 were merged this way, and the scenario's ground truth then reported each correct merge as an error.
+  - **The rule.** A ⛔ paragraph directly after "Never put a gap in a record key", citing INV-239. An email, a phone and every identifier number (SSN, passport, driver's license, account or loyalty number) belong to exactly one invented entity, person or organization. The exception is a share the scenario makes on purpose and records under `quality_intent.shared_features` with the reason. An unlisted share is a collision, and an entry covers only the shares its reason describes. The unit is the entity, not the record, so the per-campaign duplicates and the cross-source overlap keep their entity's features. Names may repeat, as the intended hard negatives, and so may addresses and dates of birth. The paragraph names the anti-pattern (`first.last<1-99>@…` collides once the name pool is smaller than the population) and gives the dated observation.
+  - **The self-check.** A ⛔ sentence added to the end of the existing band self-check, citing INV-239: in the same pass, count the distinct entities sharing an identifier value that no `shared_features` entry declares. On any count above zero, regenerate the affected values or the source before anything loads or scores it. Never patch the ground truth, the scores or the results afterward. Every existing sentence of the band self-check is unchanged.
+  - **The sample.** The MERIDIAN_CRM `quality_intent` gains `shared_features: [{feature: phone, reason: "household landline shared by the two adults at one address"}]` between `gaps` and `measured_score`. The gap rates, band and score are unchanged, so `tests/test_generated_gap_rates_reach_their_band.py` still recomputes 78.0.
+  - **Tests.** `tests/test_synthesized_entities_have_their_own_identifiers.py`, 16 tests, stdlib only, scoped to the same `synthesized_branch()` as `test_synthesized_scenario_has_quality_gaps.py`.
+    - Placement: the rule comes after the record-key block and before the sample. The self-check sits inside the band self-check, before the off-pattern bullet. Each ⛔ cites INV-239 on its own line.
+    - Seven clause predicates (the features, declared sharing, an entry scoped to its reason, same-entity records, names as hard negatives, address and date of birth, the anti-pattern). Each must hold on the rule paragraph and fail on the branch with that paragraph cut out.
+    - The self-check predicate, with a negative control.
+    - The sample YAML, with three negative controls: the entry removed, the reason removed, and `shared_features` outside `quality_intent`.
+    - The band self-check, the record-key rule and the rest of the sample still read as before. The rule and its check name no language or tool.
+    - Removing only the adaptation's sentence fails exactly its predicate. Against the unmodified SKILL.md the guard fails (`FAILED (failures=4, errors=6)`, from the race).
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-239 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+    - ⛔ **Give each invented entity its own identifiers (INV-239).** — in `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`
+    - ⛔ **In the same pass, count identifier collisions (INV-239)** — in `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`
+
+  ⚠️ **Why.** INV-239 requires generated data to carry the flaws Module 5 teaches, and none
+  that corrupt a measurement: no gap in a record key. It says nothing about the identifying
+  features of distinct entities. So a faithful generation could give two invented people the
+  same email, Senzing would merge them on that evidence, and the scenario's own ground truth
+  would call the merge false. Both new ⛔ lines cite INV-239 and extend it beyond its
+  registered wording, so the run drafts an amendment to it rather than a new id. No other
+  INV-239 amendment is pending.
+  **Sites it affects:** INV-239 in `specs/INVARIANTS.md`, which gains the sentences below after
+  "…with the duplication in the entity." and before "⚠️ **The reason this is the generator's
+  rule and not the scorer's:**", with its enforcer clause extended to name the new test. Its
+  statement in `invariant-manifest.json` is regenerated from it
+  (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit. The shipped
+  sites are the two above, both in Module 4 Step 2's synthesized branch. The enforcer is
+  `tests/test_synthesized_entities_have_their_own_identifiers.py`, beside the existing
+  `tests/test_synthesized_scenario_has_quality_gaps.py`. Applying it resolves the block: mark
+  the bullet `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording:
+
+  **INV-239** — … a required duplicate pair keeps distinct keys, with the duplication in the entity. Each distinct invented entity, person or organization, MUST carry its own email, phone and identifier numbers (SSN, passport, driver's license, account or loyalty number), unless the scenario shares one on purpose and records it under `quality_intent.shared_features` with a reason; an unlisted share is a collision, and an entry covers only the shares its reason describes. The unit is the entity, not the record: records of one entity, such as a required duplicate pair or the cross-source overlap, keep that entity's features. Names, addresses and dates of birth MAY repeat across distinct entities, and shared names are the intended hard negatives. The generator MUST count undeclared collisions in the same pass as the band self-check and, on any, MUST regenerate the affected values or the source before anything loads or scores it, never patching ground truth, scores or results afterward. Observed 2026-10-01: emails built from the name plus a number from 1 to 99 gave 53 pairs of different people, out of 7,000 drawn from 1,197 names, the same name and email; each pair was merged and the ground truth called each merge false. (⚠️ **Amended <YYYY-MM-DD> (#343): identifier uniqueness across distinct entities and its self-check added; the gap, band, `quality_intent` and record-key rules are unchanged.**) ⚠️ **The reason this is the generator's rule and not the scorer's:** … Enforced by `tests/test_synthesized_entities_have_their_own_identifiers.py` and `tests/test_synthesized_scenario_has_quality_gaps.py`. (Source: …
+
+  *(the `…` stand for INV-239's registered text, kept as it is; the date is a placeholder
+  deliberately: `/review-invariants` fills it in on the day it applies the amendment.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-239 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The record-key rule this sits beside applies INV-180, and is unchanged. The rule states a property of the generated data and names no language or tool (INV-002). No ⛔ rule is demoted in shipped text.
+
 ## env-script-loads-before-step-8
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #328, spec revision 1; source: `/dry-run` 2026-10-01 P3-5)
