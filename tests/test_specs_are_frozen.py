@@ -2,7 +2,7 @@
 
 GitHub issues replaced `specs/` as the tracking mechanism at the **2026-09-15 cutover**
 (issue #52). The directory stays as the historical record of why the plugin reads as it
-does -- 519 files that `INVARIANTS.md` cites by slug -- but it is closed to new work.
+does -- the files `INVARIANTS.md` cites by slug -- but it is closed to new work.
 
 ⛔ **A freeze stated only in prose is a convention, not a guarantee.** Every message below
 names the freeze and points at `specs/README.md` rather than reporting a bare set difference,
@@ -57,6 +57,15 @@ own input; it is not a live record. ⚠️ **The list has one home**, the "What 
 `InvariantThreeOhSevenNamesTheList` passes only on its applied 2026-09-30 note (#226), which
 names the table and the five records. Until `/review-invariants` applied that note, the check
 also passed on the unapplied amendment block in the ledger; that branch is gone (#288).
+
+⚠️ **No fourth copy, and no pinned count (#291).** Two sites had drifted from the table: a
+comment that named four of the five, and an overlay that called every other file under
+`specs/` frozen. `NoSecondListOfTheLiveRecords` scans the maintainer files and fails on any
+block that names three or more live records unless it names exactly the table's set or names
+the "What stays live" table itself, which is the sanctioned alternative to listing.
+`NoInstructionPinsASpecCount` fails on an instruction that states how many specs there are,
+for the reason the paragraph above gives for this file asserting none. `tests/` is outside
+that second scan because test docstrings hold dated measurements.
 
 ⚠️ **Enforces INV-307.** It asserts the set in both directions, that the live records exist
 and stay out of the frozen set, and that the cutover date is stated in `specs/README.md` rather
@@ -338,6 +347,181 @@ class InvariantThreeOhSevenNamesTheList(unittest.TestCase):
                       "note it removes")
         bare = entry[:entry.index(self.NOTE)].rstrip() + "\n"
         self.assertFalse(inv307_agrees(LIVE_RECORDS, invariants.replace(entry, bare)))
+
+
+#: The list check's scope (#291): every maintainer file that could restate the live records.
+#: `.claude/commands/` and a root `CLAUDE.md` are scanned when they exist.
+LIST_SCOPE = (".claude/skills", ".claude/skill-overlays", ".claude/commands", "docs", "tests")
+LIST_SUFFIXES = (".md", ".py")
+
+#: The count check's scope (#291): instruction files only. `.claude/skills` contributes its
+#: `*.md`; the other directories contribute every file. `tests/` is out, deliberately.
+COUNT_SCOPE = (".claude/skill-overlays", ".claude/commands", "docs")
+
+#: Files at the repository root that both checks read when present.
+ROOT_FILES = ("CLAUDE.md",)
+
+#: The pointer that stands in for a list: a block naming the table names the set by reference.
+TABLE_POINTER = "What stays live"
+
+#: A live record, backticked, with or without its `specs/` prefix. Built from `LIVE_RECORDS`,
+#: so the check has no second copy of the set.
+LIVE_NAME = re.compile(r"`(?:specs/)?(%s)`" % "|".join(re.escape(n) for n in sorted(LIVE_RECORDS)))
+
+#: A stated number of specs ("519 specs", "1,204 specs"). "212 spec files" does not match.
+SPEC_COUNT = re.compile(r"\b\d[\d,]*\s+specs\b")
+
+
+def outside_worktrees(path):
+    return path.relative_to(REPO_ROOT).parts[:2] != (".claude", "worktrees")
+
+
+def walk(directory, suffixes=None):
+    base = REPO_ROOT / directory
+    if not base.is_dir():
+        return []
+    return [p for p in base.rglob("*") if p.is_file() and outside_worktrees(p)
+            and (suffixes is None or p.suffix in suffixes)]
+
+
+def root_files():
+    return [REPO_ROOT / n for n in ROOT_FILES if (REPO_ROOT / n).is_file()]
+
+
+def list_scope_files():
+    return sorted({p for d in LIST_SCOPE for p in walk(d, LIST_SUFFIXES)} | set(root_files()))
+
+
+def count_scope_files():
+    found = set(walk(".claude/skills", (".md",)))
+    found |= {p for d in COUNT_SCOPE for p in walk(d)}
+    return sorted(found | set(root_files()))
+
+
+def blocks(text):
+    """Each run of non-blank lines, with the 1-based line it starts on."""
+    run, start = [], 0
+    for number, line in enumerate(text.splitlines() + [""], 1):
+        if line.strip():
+            if not run:
+                start = number
+            run.append(line)
+        elif run:
+            yield start, "\n".join(run)
+            run = []
+
+
+def listing_blocks(text):
+    """Each block naming three or more live records, with the set of names it names."""
+    for start, block in blocks(text):
+        names = set(LIVE_NAME.findall(block))
+        if len(names) >= 3:
+            yield start, block, names
+
+
+def block_agrees(block, names):
+    """The block names exactly the table's set, or names the table instead of listing."""
+    return names == LIVE_RECORDS or TABLE_POINTER in re.sub(r"\s+", " ", block)
+
+
+def disagreeing_blocks(text):
+    """(line, names) for each listing block that neither matches the table nor points at it."""
+    return [(start, sorted(names)) for start, block, names in listing_blocks(text)
+            if not block_agrees(block, names)]
+
+
+class NoSecondListOfTheLiveRecords(unittest.TestCase):
+    """#291: a site naming the live records names exactly the table's set, or points at it."""
+
+    #: The sanctioned copies outside `specs/`, which list the set rather than point at it.
+    LISTING_COPIES = (DEVELOPMENT_MD, FAMILY_WORKFLOW)
+
+    def test_the_scan_found_files(self):
+        """INV-265: an empty scan passes every block check trivially."""
+        files = list_scope_files()
+        self.assertGreaterEqual(len(files), 1, "the list check scanned no files")
+        for copy in self.LISTING_COPIES:
+            self.assertIn(copy, files, "the list check's scope no longer reaches %s"
+                          % copy.relative_to(REPO_ROOT).as_posix())
+
+    def test_every_block_names_the_set_or_the_table(self):
+        offenders = ["%s:%d names %s" % (path.relative_to(REPO_ROOT).as_posix(), line, names)
+                     for path in list_scope_files()
+                     for line, names in disagreeing_blocks(path.read_text(encoding="utf-8"))]
+        self.assertEqual(
+            [], offenders,
+            "a block names three or more live records but neither the table's set %s nor "
+            "the \"%s\" table in specs/README.md (INV-307). Point at the table instead of "
+            "listing, or name the whole set where a test checks it: %s"
+            % (sorted(LIVE_RECORDS), TABLE_POINTER, "; ".join(offenders)))
+
+    def test_the_three_sanctioned_copies_are_found(self):
+        """INV-265: each sanctioned copy is a listing block the check sees, and it agrees."""
+        copies = [(path.relative_to(REPO_ROOT).as_posix(), path.read_text(encoding="utf-8"))
+                  for path in self.LISTING_COPIES]
+        copies.append(("INV-307", inv307_text()))
+        for label, text in copies:
+            with self.subTest(copy=label):
+                found = list(listing_blocks(text))
+                self.assertTrue(found, "%s has no block naming three or more live records; "
+                                "the list check would pass it without reading it" % label)
+                self.assertTrue(all(block_agrees(block, names) for _, block, names in found))
+
+    def test_dropping_a_name_from_a_sanctioned_copy_is_caught(self):
+        """Negative control: a copy with one live record deleted fails the list check."""
+        for path in self.LISTING_COPIES:
+            text = path.read_text(encoding="utf-8")
+            listing = [block for _, block, names in listing_blocks(text) if names == LIVE_RECORDS]
+            self.assertTrue(listing, "negative control is stale: %s no longer lists the set"
+                            % path.name)
+            for name in sorted(LIVE_RECORDS):
+                with self.subTest(copy=path.name, dropped=name):
+                    pattern = r"`(?:specs/)?%s`" % re.escape(name)
+                    thinned = text.replace(listing[0], re.sub(pattern, "", listing[0]))
+                    self.assertTrue(disagreeing_blocks(thinned))
+
+    def test_the_old_four_name_list_is_caught(self):
+        """Negative control: the comment #291 removed from `pending_invariants.py`, put back."""
+        path = REPO_ROOT / ".claude" / "skills" / "review-invariants" / "pending_invariants.py"
+        text = path.read_text(encoding="utf-8")
+        self.assertEqual([], disagreeing_blocks(text))
+        four = ", ".join("`%s`" % n for n in sorted(LIVE_RECORDS - {"mcp-coverage.jsonl"}))
+        old = "#: it already excludes the live\n#: records (%s) that a prefix test\n" % four
+        self.assertTrue(disagreeing_blocks(text + "\n" + old))
+
+
+class NoInstructionPinsASpecCount(unittest.TestCase):
+    """#291: no instruction states how many specs the archive holds."""
+
+    def test_the_scan_found_files(self):
+        """INV-265: an empty scan finds no count trivially."""
+        files = count_scope_files()
+        self.assertGreaterEqual(len(files), 1, "the count check scanned no files")
+        self.assertIn(REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "SKILL.md", files)
+
+    def test_no_instruction_states_a_spec_count(self):
+        offenders = ["%s: %r" % (path.relative_to(REPO_ROOT).as_posix(), m.group(0))
+                     for path in count_scope_files()
+                     for m in SPEC_COUNT.finditer(
+                         path.read_text(encoding="utf-8", errors="replace"))]
+        self.assertEqual(
+            [], offenders,
+            "an instruction pins a spec count, which goes stale on the next archive operation "
+            "while reading as authoritative. State the property instead (\"every spec in it is "
+            "implemented or declined\"): %s" % "; ".join(offenders))
+
+    def test_a_pinned_count_is_caught(self):
+        """Negative control: "519 specs" put back into a scanned instruction file is found."""
+        path = REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "SKILL.md"
+        text = path.read_text(encoding="utf-8")
+        self.assertIsNone(SPEC_COUNT.search(text))
+        self.assertIsNotNone(SPEC_COUNT.search(text + "\nIt is an archive of 519 specs.\n"))
+
+    def test_a_dated_file_count_is_not_a_spec_count(self):
+        """The pattern leaves "spec files" and "files" measurements alone, as #291 scopes it."""
+        for phrase in ("212 spec files", "519 files", "the specs"):
+            with self.subTest(phrase=phrase):
+                self.assertIsNone(SPEC_COUNT.search(phrase))
 
 
 class TheCutoverDateIsRecorded(unittest.TestCase):
