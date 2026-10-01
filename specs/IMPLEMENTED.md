@@ -43,6 +43,53 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## data-subsets-is-excluded-at-graduation-and-queued-for-the-tree
+
+- **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #286; audit finding D-F2)
+- **Commit:** `db1ff9b`
+- **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `tests/test_module6_data_dirs_are_copied_or_excluded.py` (new), `tests/test_invariant_layout_tree.py`, `specs/IMPLEMENTED.md`
+- **MCP re-check:** server 1.37.16 (`get_capabilities`, reachable), 2026-09-30 — n/a (no Senzing fact), re-confirmed: the change records where the plugin's own subset files live and that graduation leaves them out of `production/`. The license cap and SQLite volume limit that make Module 6 write a subset are cited where Module 6 states them, are unchanged, and nothing here restates them. No absence claim is made. Re-verification changed nothing the issue asked for. Nothing was sent upstream.
+- **Approach:** direct (Phase 5a), as the issue scopes it.
+- **Summary:** Graduation's Step 2 **Exclude** list gains `data/subsets/`, followed by its reason: a subset is the evaluation's license-capped or volume-capped slice (Module 6), not the data production loads. The copy table is unchanged, so the `production/` graduation builds is unchanged; the exclusion is now stated rather than implied, and the Step 5 report lists it in its files-excluded table like any other excluded item. The new `tests/test_module6_data_dirs_are_copied_or_excluded.py` reads every `data/<dir>/` path named in `module-06-data-processing/*.md` and fails when one is neither a Source row of graduation's copy table nor an **Exclude** entry; its in-suite negative control takes `data/subsets/` off the list and sees exactly that directory reported, and run against the pre-change `graduation/SKILL.md` the check failed naming `data/subsets/` (`phaseB-load-first-source.md`, `phaseC-multi-source.md`). `data/mapping/`, `data/temp/` and `data/backups/`, which other modules name, stay out of scope (a follow-up issue, drafted in the PR and **not filed**). INV-050's tree still omits `data/subsets/`: the amendment below inserts it at `/review-invariants`, and `tests/test_invariant_layout_tree.py`'s new `TheOmittedEntriesArePinnedInTwoStates` pins it in two states: passing on this block's tree line while it is pending, and on the tree's entry once applied. Its controls, through the real queue parser, see it fail with the block removed, marked applied or carrying a changed line, and on a `subsets/` entry at another path. The block was verified to be what makes the real-ledger check pass: before this entry was written it failed. A further test inserts the drafted line after `data/senzing-ready/` and checks that it parses to `data/subsets/`, adds exactly one directory entry, and keeps the comment column aligned. `EXPECTED_DIR_ENTRIES` stays 31 until the amendment is applied.
+- **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` not run locally (remote reusable workflow; no workflow file changed).
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-050 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+    - ⛔ **The generated Bootcamp project MUST follow this layout** — in `specs/INVARIANTS.md`
+
+  ⚠️ **Why.** Module 6 writes each license-cap or SQLite-volume subset file under
+  `data/subsets/` (`module-06-data-processing/phaseB-load-first-source.md` → "The subset
+  record"), and Phase C loads the remaining sources' subsets from it, but INV-050's tree has no
+  entry there. The directory lives under the enumerated `data/`, so nothing is out of layout;
+  the tree names every other `data/` directory the flow produces and only this one is missing.
+  `/review-invariants` applies an amendment by appending, so the block names **two in-place
+  edits** besides the note, for it to make as clarifications under `specs/INVARIANTS.md` rule 2
+  ("Maintaining this file"). **Sites it affects:** INV-050's tree in `specs/INVARIANTS.md`,
+  which gains this line directly after `data/senzing-ready/` (`:180`), byte for byte, comment
+  column aligned with its neighbors:
+
+  ```text
+  │   ├── subsets/                       # License- or volume-capped load subsets (Module 6; not copied at graduation)
+  ```
+
+  and `EXPECTED_DIR_ENTRIES` in `tests/test_invariant_layout_tree.py`, bumped from 31 to 32 in
+  the same edit, since the tree then extracts one more directory; and the note, appended after
+  INV-050's closing parenthetical. The two-state pin reads the tree line above: while this
+  block is pending it passes on it, and once the tree is edited and the block marked applied it
+  passes on the tree. Marking the block applied without the insert turns it red. Applying it
+  resolves the block: mark the bullet `applied YYYY-MM-DD` and drop both "awaiting" markers.
+  Enforced by `tests/test_invariant_layout_tree.py`.
+
+  The drafted wording:
+
+  **INV-050** — (⚠️ **Dated clarification, <YYYY-MM-DD> (#286): `data/subsets/` is added to the tree; no meaning change.** Module 6 writes each license-cap or SQLite-volume subset file there (`module-06-data-processing/phaseB-load-first-source.md` → "The subset record"), and Phase C loads the remaining sources' subsets from it. The directory was already produced; only the tree omitted it. A subset is the evaluation's capped slice, not the data production loads, so graduation excludes it (`graduation/SKILL.md` → **Exclude**).)
+
+  *(the date is a placeholder deliberately: `/review-invariants` fills it in on the day it
+  applies the note and the two edits.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-050 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify`
+  red. If the maintainer prefers a superseding invariant instead, it is INV-NNN: mint at the
+  next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The one change to a registered invariant is the amendment block above, drafted and not applied. The copy-set test enforces the **Exclude** entry that block's note states; a general rule that every `data/<dir>/` any module names is copied or excluded would be false today for `data/mapping/`, `data/temp/` and `data/backups/`, so it is left to the follow-up issue rather than drafted here.
+
 ## module-2-eula-and-existing-install-rules-are-queued-as-deferred-invariants
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #284; audit findings B-F1 and B-F4)

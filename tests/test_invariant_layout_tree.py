@@ -48,6 +48,12 @@ date, or while a pending `PROPOSED AMENDMENT to INV-050` block in `specs/IMPLEME
 carries that annotated tree line. The tree is edited only at `/review-invariants`, so the
 block arm holds until then and the tree arm afterwards, with no change here.
 
+⚠️ **One entry the tree omits is pinned in two states the same way** (#286): Module 6 writes
+subset files under `data/subsets/`, and the tree has no entry there. The pin passes when the
+tree has an entry at `data/subsets/`, or while a pending `PROPOSED AMENDMENT to INV-050` block
+carries its tree line byte for byte. Applying that block also bumps `EXPECTED_DIR_ENTRIES`
+from 31 to 32, in the same edit.
+
 Stdlib-only and no `plugins/` import (INV-108). The extraction is pure text over
 `specs/INVARIANTS.md` and the corpus is read with `pathlib`, so nothing shells out to
 `grep` and nothing depends on the platform's path separator — the `/` inside a probed
@@ -83,6 +89,13 @@ INDENT = 4
 #: states by `TheUnproducedLeavesArePinnedInTwoStates`.
 TWO_STATE_LEAVES = {"docs/README.md": "future", "src/utils/": "reserved"}
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+#: #286: entries the tree omits, each with the tree line a pending INV-050 amendment inserts,
+#: byte for byte. Pinned in two states by `TheOmittedEntriesArePinnedInTwoStates`.
+TWO_STATE_ADDITIONS = {
+    "data/subsets/": "  │   ├── subsets/                       # License- or volume-capped "
+                     "load subsets (Module 6; not copied at graduation)",
+}
 
 # Derived 2026-08-11 by running extract_tree() against the tree as it then stood, NOT
 # copied from any spec -- two specs disagree on this count (one says "53 entries / 23
@@ -128,15 +141,18 @@ class Entry:
         return "%s (INVARIANTS.md:%d)" % (self.path, self.line_number)
 
 
-def extract_tree():
+def extract_tree(text=None):
     """Return (root_name, entries, continuation_line_count) from INV-050's fenced tree.
 
     Entries keep their comment. Names are NOT unique -- `data/backups/` and the
     top-level `backups/` both reduce to `backups/` -- so this returns a list and callers
     must never key a dict by name. Paths are unique: each is the chain of enclosing
-    directories, found by column, plus the name.
+    directories, found by column, plus the name. `text` replaces `specs/INVARIANTS.md`'s
+    text, for the #286 controls.
     """
-    lines = INVARIANTS.read_text(encoding="utf-8").splitlines()
+    if text is None:
+        text = INVARIANTS.read_text(encoding="utf-8")
+    lines = text.splitlines()
     try:
         heading = next(i for i, l in enumerate(lines) if l.strip() == TREE_HEADING)
     except StopIteration:
@@ -234,6 +250,12 @@ def is_pinned(entry, word, blocks):
     """The tree carries `word` with a date, or a pending INV-050 block carries the line."""
     in_tree = re.search(word, entry.comment, re.I) and DATE.search(entry.comment)
     return bool(in_tree) or any(carries_the_annotated_line(b, entry, word) for b in blocks)
+
+
+def is_added(path, tree_line, entries, blocks):
+    """The tree has an entry at `path`, or a pending INV-050 block carries `tree_line` exactly."""
+    in_tree = any(e.path == path for e in entries)
+    return in_tree or any(tree_line in block.splitlines() for block in blocks)
 
 
 class TreeExtraction(unittest.TestCase):
@@ -489,6 +511,84 @@ class TheUnproducedLeavesArePinnedInTwoStates(unittest.TestCase):
             with self.subTest(leaf=path, case="annotated tree, undated"):
                 undated = Entry(real.name, " (%s)" % word, 0, path=real.path, left=real.left)
                 self.assertFalse(is_pinned(undated, word, []))
+
+
+class TheOmittedEntriesArePinnedInTwoStates(unittest.TestCase):
+    """#286: each of `TWO_STATE_ADDITIONS` is in the tree, or about to be.
+
+    It passes while a pending `PROPOSED AMENDMENT to INV-050` block carries the entry's tree
+    line byte for byte, and after `/review-invariants` inserts that line and marks the block
+    applied. It fails between the two: the block gone or applied while the tree still lacks
+    the entry.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = INVARIANTS.read_text(encoding="utf-8")
+        cls.entries = extract_tree()[1]
+
+    def test_each_entry_is_in_the_tree_or_in_a_pending_amendment(self):
+        blocks = pending_amendments("INV-050")
+        for path, line in TWO_STATE_ADDITIONS.items():
+            with self.subTest(entry=path):
+                self.assertTrue(
+                    is_added(path, line, self.entries, blocks),
+                    "INV-050's tree has no entry at %s, and no pending PROPOSED AMENDMENT to "
+                    "INV-050 in specs/IMPLEMENTED.md carries its tree line byte for byte. "
+                    "Applying the block inserts the line; removing it, or marking it applied "
+                    "without the insert, leaves the entry out of the tree." % path)
+
+    def test_the_line_lands_at_its_path_when_inserted(self):
+        """The drafted line, inserted where the block says, is one more directory at `path`.
+
+        So applying the block and bumping `EXPECTED_DIR_ENTRIES` by one is the whole edit, and
+        the tree arm of the pin then holds on the entry the line creates.
+        """
+        anchor = "  │   ├── senzing-ready/ "
+        for path, line in TWO_STATE_ADDITIONS.items():
+            with self.subTest(entry=path):
+                lines = self.text.splitlines()
+                at = next(i for i, l in enumerate(lines) if l.startswith(anchor))
+                lines.insert(at + 1, line)
+                entries = extract_tree("\n".join(lines))[1]
+                self.assertIn(path, [e.path for e in entries])
+                self.assertEqual(
+                    EXPECTED_DIR_ENTRIES + 1, len([e for e in entries if e.is_dir]))
+                self.assertEqual(
+                    self.text.splitlines()[at].index("#"), line.index("#"),
+                    "the drafted line's comment column is not aligned with its neighbors")
+
+    def fixture(self, line, marker):
+        """A one-block ledger that carries `line` in its fenced tree."""
+        return ("## fixture\n\n- **DEFERRED INVARIANT — PROPOSED AMENDMENT to INV-050 — %s.**\n"
+                "  ```text\n%s\n  ```\n" % (marker, line))
+
+    def test_the_negative_controls(self):
+        """Each arm through the real queue parser, on a tree that lacks each entry."""
+        spec = importlib.util.spec_from_file_location("pending_invariants", LEDGER_HELPER)
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+        awaiting = helper.AMENDMENT_AWAITING
+        for path, line in TWO_STATE_ADDITIONS.items():
+            bare = [e for e in self.entries if e.path != path]
+            name = path.rstrip("/").rsplit("/", 1)[-1] + "/"
+            cases = {
+                "pending block, exact line": (self.fixture(line, awaiting), True),
+                "(a) block removed": ("## fixture\n", False),
+                "(a) block marked applied": (self.fixture(line, "applied 2026-10-01"), False),
+                "(b) line changed": (self.fixture(line.replace("Module 6", "Module 5"),
+                                                  awaiting), False),
+            }
+            for case, (ledger, expected) in cases.items():
+                with self.subTest(entry=path, case=case):
+                    blocks = pending_amendments("INV-050", ledger=ledger)
+                    self.assertIs(expected, is_added(path, line, bare, blocks))
+            with self.subTest(entry=path, case="in the tree"):
+                added = bare + [Entry(name, "", 0, path=path)]
+                self.assertTrue(is_added(path, line, added, []))
+            with self.subTest(entry=path, case="same name at another path"):
+                elsewhere = bare + [Entry(name, "", 0, path="zzz_fictional_dir/" + name)]
+                self.assertFalse(is_added(path, line, elsewhere, []))
 
 
 if __name__ == "__main__":
