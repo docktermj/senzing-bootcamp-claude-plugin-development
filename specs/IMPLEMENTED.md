@@ -406,7 +406,7 @@ filed as **#324** (2026-10-01, maintainer-approved) · severity **low** · verdi
            - the white Cross-Source screenshot replaced by a full-population entity graph;
            - the Merge Statistics images replaced by name-free 16:9 histogram crops (P3-23).
 
-           The re-voice reads real per-scene durations from the renderer's `RENDER:` lines, so overrun extensions are honoured. Final file: 2:04, -16.1 LUFS, 0 silent stretches. The final storyboard is in the scratchpad (`storyboard.final.json`).
+           The re-voice reads real per-scene durations from the renderer's `RENDER:` lines, so overrun extensions are honored. Final file: 2:04, -16.1 LUFS, 0 silent stretches. The final storyboard is in the scratchpad (`storyboard.final.json`).
        9. **The working script** is kept in the session scratchpad (`piper_voiceover.py`, not in the repo). The fix belongs in `scripts/generate_recap_video.py` itself: a Piper `SpeechEngine` tried before espeak, a storyboard music switch, and a loudness pass. It does not belong as a side script.
      - **Things to settle before adopting it:** the voice download is network and about 115 MB, so it needs an install offer (INV-066) and an offline fallback to espeak. Each Piper voice model's license must be checked before the plugin names one.
   2. At minimum: graduation tells a Linux Bootcamper on espeak that the voice is a basic one and names the better option.
