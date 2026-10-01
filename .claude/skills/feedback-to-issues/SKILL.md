@@ -143,7 +143,7 @@ produced no issue is never re-triaged forever.
 
 - **Read `specs/INVARIANTS.md`.** This is the ruleset every issue must respect. ⚠️ It is **live and still written to**, unlike the rest of `specs/`.
 - **List the open issues** — `gh issue list --state open --limit 100` — and record each title and the problem it covers, so you can deduplicate against work already tracked. ⛔ **Check closed issues too** for anything you are about to file (`gh issue list --state closed --search <terms>`): re-filing something decided against wastes the decision, and a closed issue often records *why*.
-- **Read `specs/` as history, never as a backlog.** It is a read-only archive (INV-307) of 519 specs, all of them already implemented or declined. A spec often explains why the plugin reads as it does, which is worth reading before proposing to change it — but nothing there is open work, and nothing new goes there. `specs/DECLINED.md` is the one to check before re-proposing something: it records the argument *against* a change that the spec itself argues *for*.
+- **Read `specs/` as history, never as a backlog.** It is a read-only archive (INV-307), and every spec in it is implemented or declined. A spec often explains why the plugin reads as it does, which is worth reading before proposing to change it — but nothing there is open work, and nothing new goes there. `specs/DECLINED.md` is the one to check before re-proposing something: it records the argument *against* a change that the spec itself argues *for*.
 
 ## Step 5: Re-verify every Senzing fact against the live MCP server
 

@@ -56,8 +56,9 @@ instead, marked **not filed**; an upstream message carries the `Upstream:` value
   **blocked**, a state you record on the issue, never an entry you write into
   `specs/DECLINED.md`.
 - ⛔ **(INV-307) Write nothing under `specs/` except the issue's own `specs/IMPLEMENTED.md`
-  entry.** Every other file there is a frozen archive, and `specs/INVARIANTS.md` changes only
-  through `/review-invariants`.
+  entry.** Every other file there is either frozen or a live record written only by its own
+  command (`specs/INVARIANTS.md` only through `/review-invariants`). The "What stays live"
+  table in [`specs/README.md`](../../specs/README.md) names the live records.
 
 ⚠️ **The handoff leads with what needs a yes**: every `DEFERRED INVARIANT` with its drafted
 wording, and every drafted upstream message.

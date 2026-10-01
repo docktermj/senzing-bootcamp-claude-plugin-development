@@ -320,8 +320,9 @@ def shipped_files():
 #:
 #: ⛔ Read from the manifest rather than by testing for a `specs/` prefix. The manifest is the
 #: repository's own authority on what the freeze covers, and it already excludes the live
-#: records (`IMPLEMENTED.md`, `INVARIANTS.md`, `DECLINED.md`, `README.md`) that a prefix test
-#: would wrongly sweep in. A prefix is a second definition of the freeze; this is the first one.
+#: records that a prefix test would wrongly sweep in. They are named in one place, the
+#: "What stays live" table in `specs/README.md`, and are not listed here. A prefix is a second
+#: definition of the freeze; this is the first one.
 FROZEN_MANIFEST = SPECS / "FROZEN-MANIFEST.txt"
 
 
