@@ -19,6 +19,13 @@ writes at graduation into `docs/bootcamp_recap.mp4`. These tests pin its contrac
   and normalized by `loudnorm` in the encode's own ffmpeg call. The filter graph is asserted as a
   pure function; `find_ffmpeg` requires the two filters as it requires the encoders. The
   `Voice:` and `Music:` report lines are pinned, all four voice cases and both music cases (#339).
+* **The Piper voice** (#341) is chosen by a voice-selection stage before the platform engines:
+  Piper is found with a stubbed `find_spec` (never imported) and run through a fake subprocess
+  as `sys.executable -m piper`. Each case that keeps it out is named on stderr; a failure on any
+  scene re-voices every scene with the platform engine (a Piper that succeeds keeps every scene,
+  the negative control); numbers are spelled out in Piper's text only; and the default voice is
+  the public-domain `en_US-ljspeech-high`, never a `ryan`, `hfc_*` or `lessac` voice. Piper
+  1.8.0 itself is never installed or run by these tests.
 * **End to end**, an mp4 is rendered and probed: H.264, yuv420p, 1920x1080, 30 fps, and one
   48 kHz stereo AAC stream whenever a voice spoke or the music played, measuring -16 ± 1 LUFS
   (ffmpeg's `ebur128`). Skipped with a reason when Pillow or ffmpeg is absent.
@@ -33,7 +40,7 @@ video on failure, burns captions in, never truncates narration, accepts only pro
 images, works offline, and draws the certificate from the recap PDF's fields). It does **not**
 establish the macOS and Windows speech paths, which it covers only by the commands it builds.
 
-Source issues: #299, #339.
+Source issues: #299, #339, #341.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -1285,6 +1292,429 @@ class TheMixIsNormalizedToMinus16Lufs(unittest.TestCase):
         result = self.project.run(env=env)
         self.assertIn("Voice: espeak-ng (4 of 4 scenes narrated)\nMusic: yes\n", result.stdout)
         self.assertNormalized(result)
+
+
+# --------------------------------------------------------------------------- #
+# The Piper voice: the voice-selection stage before the platform engines (#341)
+# --------------------------------------------------------------------------- #
+PIPER_SPEC = importlib.machinery.ModuleSpec("piper", None)
+_REAL_FIND_SPEC = VIDEO._find_spec
+
+
+def piper_findable(name):
+    """A stand-in for `find_spec`: `piper` is findable, everything else is as it really is."""
+    return PIPER_SPEC if name == "piper" else _REAL_FIND_SPEC(name)
+
+
+def piper_missing(name):
+    return None if name == "piper" else _REAL_FIND_SPEC(name)
+
+
+def write_voice(root, model=True, config=True, rel=None):
+    """The default voice's model and config under `root`; returns the model's path."""
+    path = Path(root) / (rel or VIDEO.DEFAULT_VOICE_MODEL)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if model:
+        path.write_bytes(b"onnx")
+    if config:
+        VIDEO.piper_config_path(path).write_text("{}", encoding="utf-8")
+    return path
+
+
+class FakeProcesses:
+    """A fake `subprocess.run` for Piper, a platform engine and ffmpeg's decode.
+
+    Each engine writes a WAV whose samples all carry its own marker, and the fake decode hands
+    the samples back, so a scene's PCM says which engine voiced it. `calls` records each
+    engine run with the text it was given, in order.
+    """
+
+    PIPER, PLATFORM = 7, 3
+
+    def __init__(self, piper_fails_on=None):
+        self.piper_fails_on = piper_fails_on
+        self.calls = []
+
+    def run(self, argv, **_kw):
+        argv = [str(a) for a in argv]
+        if argv[0] == "ffmpeg":
+            data = Path(argv[argv.index("-i") + 1]).read_bytes()[44:]
+            return subprocess.CompletedProcess(argv, 0, stdout=data, stderr=b"")
+        if argv[:3] == [sys.executable, "-m", "piper"]:
+            who, marker = "piper", self.PIPER
+            text_file, wav = argv[argv.index("-i") + 1], argv[argv.index("-f") + 1]
+        elif argv[0] == "fake-platform":
+            who, marker, text_file, wav = "platform", self.PLATFORM, argv[1], argv[2]
+        else:
+            raise AssertionError("unexpected subprocess %r" % argv)
+        text = Path(text_file).read_text(encoding="utf-8")
+        self.calls.append((who, text))
+        if who == "piper" and self.piper_fails_on and self.piper_fails_on in text:
+            return subprocess.CompletedProcess(argv, 1, stdout=b"", stderr=b"piper fell over")
+        Path(wav).write_bytes(b"\0" * 44 + struct.pack("<h", marker) * 4800)
+        return subprocess.CompletedProcess(argv, 0, stdout=b"", stderr=b"")
+
+    def who(self):
+        return [who for who, _text in self.calls]
+
+
+FAKE_PLATFORM = VIDEO.SpeechEngine("fake-platform",
+                                   lambda txt, wav: (["fake-platform", txt, wav], {}))
+
+
+def markers(pcm):
+    return set(array.array("h", pcm))
+
+
+class NumbersAreSpelledForPiper(unittest.TestCase):
+    """`spell_numbers` is pure: integers with and without separators, and decimals."""
+
+    CASES = {
+        "10,000": "ten thousand",
+        "3.5": "three point five",
+        "0": "zero",
+        "19": "nineteen",
+        "42": "forty-two",
+        "100": "one hundred",
+        "7084": "seven thousand eighty-four",
+        "1,540": "one thousand five hundred forty",
+        "2,000,001": "two million one",
+        "3.50": "three point five zero",
+    }
+
+    def test_the_pinned_cases(self):
+        for digits, words in self.CASES.items():
+            with self.subTest(digits=digits):
+                self.assertEqual(words, VIDEO.spell_numbers(digits))
+
+    def test_numbers_inside_a_sentence(self):
+        self.assertEqual("All one thousand five hundred forty records loaded into one "
+                         "thousand three hundred ten entities.",
+                         VIDEO.spell_numbers("All 1,540 records loaded into 1,310 entities."))
+        self.assertEqual("In two thousand twenty-six, one hundred eighteen of them.",
+                         VIDEO.spell_numbers("In 2026, 118 of them."))
+
+    def test_digits_joined_to_letters_are_left_negative_control(self):
+        for text in ("CORD2", "v4", "4th", "x_5", "CORD2 and v4"):
+            with self.subTest(text=text):
+                self.assertEqual(text, VIDEO.spell_numbers(text))
+
+    def test_text_without_numbers_is_unchanged(self):
+        self.assertEqual("Resolved: Ada Lovelace, Senzing graduate.",
+                         VIDEO.spell_numbers("Resolved: Ada Lovelace, Senzing graduate."))
+
+    def test_it_is_standard_library_only(self):
+        if not hasattr(sys, "stdlib_module_names"):
+            self.skipTest("sys.stdlib_module_names needs Python 3.10 or later")
+        self.assertEqual(set(), modules_reached(VIDEO.spell_numbers)
+                         - set(sys.stdlib_module_names))
+
+
+class PiperIsFoundOrTheCaseIsNamed(unittest.TestCase):
+    """INV-111: each case that keeps Piper out is named; with all three present it is used."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.root = Path(self._tmp.name)
+
+    def find(self, finder, model):
+        with mock.patch.object(VIDEO, "_find_spec", side_effect=finder):
+            return VIDEO.find_piper_voice(model)
+
+    def test_piper_not_installed_names_the_interpreter(self):
+        engine, note = self.find(piper_missing, write_voice(self.root))
+        self.assertIsNone(engine)
+        self.assertIn("Piper (piper-tts) is not installed for %s" % sys.executable, note)
+
+    def test_a_missing_model_names_its_path(self):
+        model = write_voice(self.root, model=False, config=False)
+        engine, note = self.find(piper_findable, model)
+        self.assertIsNone(engine)
+        self.assertIn("no Piper voice model at %s" % model, note)
+
+    def test_a_missing_config_is_named(self):
+        model = write_voice(self.root, config=False)
+        engine, note = self.find(piper_findable, model)
+        self.assertIsNone(engine)
+        self.assertIn("has no config beside it", note)
+        self.assertIn(str(VIDEO.piper_config_path(model)), note)
+
+    def test_all_present_gives_the_piper_engine(self):
+        model = write_voice(self.root)
+        engine, note = self.find(piper_findable, model)
+        self.assertIsNone(note)
+        self.assertEqual("Piper (en_US-ljspeech-high)", engine.name)
+
+    def test_it_runs_as_a_subprocess_of_this_interpreter(self):
+        model = write_voice(self.root)
+        engine, _note = self.find(piper_findable, model)
+        argv, env = engine.command("in.txt", "out.wav")
+        self.assertEqual([sys.executable, "-m", "piper",
+                          "-m", str(model), "-c", str(model) + ".json",
+                          "-i", "in.txt", "-f", "out.wav",
+                          "--length-scale", "1.0", "--sentence-silence", "0.15"], argv)
+        self.assertEqual({}, env)
+
+    def test_the_config_sits_beside_the_model(self):
+        self.assertEqual(Path("v/en_US-ljspeech-high.onnx.json"),
+                         VIDEO.piper_config_path(Path("v/en_US-ljspeech-high.onnx")))
+
+
+def imports_piper(source):
+    """Every way `source` imports `piper`: import statements, import_module, __import__."""
+    found = []
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            found += [a.name for a in node.names if a.name.split(".")[0] == "piper"]
+        elif isinstance(node, ast.ImportFrom) and (node.module or "").split(".")[0] == "piper":
+            found.append(node.module)
+        elif isinstance(node, ast.Call):
+            name = getattr(node.func, "attr", getattr(node.func, "id", ""))
+            if name in ("import_module", "__import__") and any(
+                    isinstance(a, ast.Constant) and str(a.value).split(".")[0] == "piper"
+                    for a in node.args):
+                found.append(name)
+    return found
+
+
+class PiperIsNeverImported(unittest.TestCase):
+
+    def test_the_renderer_never_imports_piper(self):
+        self.assertEqual([], imports_piper(SCRIPT.read_text(encoding="utf-8")))
+
+    def test_the_check_catches_an_import_negative_control(self):
+        for source in ("import piper", "from piper.voice import PiperVoice",
+                       "importlib.import_module('piper')", "__import__('piper')"):
+            with self.subTest(source=source):
+                self.assertNotEqual([], imports_piper(source))
+
+    def test_finding_it_imports_nothing(self):
+        with tempfile.TemporaryDirectory() as root, \
+                mock.patch.object(VIDEO, "_find_spec", side_effect=piper_findable):
+            VIDEO.find_piper_voice(write_voice(root))
+        self.assertNotIn("piper", sys.modules)
+
+
+#: The voice families whose licenses (CC BY-NC-SA, Blizzard 2013) rule them out.
+FORBIDDEN_VOICES = re.compile(r"(?:^|[-_])(?:ryan|hfc_\w+|lessac)(?:[-_]|$)")
+
+
+class TheDefaultVoiceIsPublicDomain(unittest.TestCase):
+
+    def test_the_default_is_ljspeech_high(self):
+        self.assertEqual("en_US-ljspeech-high", VIDEO.DEFAULT_PIPER_VOICE)
+        self.assertEqual("data/temp/piper-voices/en_US-ljspeech-high.onnx",
+                         VIDEO.DEFAULT_VOICE_MODEL)
+
+    def test_the_default_is_no_forbidden_family(self):
+        for name in (VIDEO.DEFAULT_PIPER_VOICE, VIDEO.DEFAULT_VOICE_MODEL):
+            with self.subTest(name=name):
+                self.assertIsNone(FORBIDDEN_VOICES.search(Path(name).name))
+
+    def test_the_check_catches_the_forbidden_families_negative_control(self):
+        for name in ("en_US-ryan-high", "en_US-hfc_female-medium", "en_US-hfc_male-medium",
+                     "en_US-lessac-high"):
+            with self.subTest(name=name):
+                self.assertIsNotNone(FORBIDDEN_VOICES.search(name))
+
+    def test_the_license_record_sits_beside_the_constant(self):
+        source = SCRIPT.read_text(encoding="utf-8")
+        at = source.index('DEFAULT_PIPER_VOICE = "en_US-ljspeech-high"')
+        record = squash_comment(source[source.rindex("\n\n", 0, at):at])
+        for fact in ("en_US-ljspeech-high", "trained from scratch on the LJ Speech dataset",
+                     "public domain", "model card was read 2026-10-01",
+                     "piper-tts 1.8.0 is GPL-3.0-or-later",
+                     "installed into the Bootcamper's venv and run as a separate process",
+                     "the plugin does not ship it"):
+            with self.subTest(fact=fact):
+                self.assertIn(fact, record)
+
+    def test_the_docstring_names_piper_and_the_flag(self):
+        doc = VIDEO.__doc__
+        fallbacks = doc[doc.index("Fallbacks, each stated"):doc.index("Exit codes\n")]
+        self.assertIn("Piper", fallbacks)
+        self.assertIn("--voice-model", fallbacks)
+        usage = doc[doc.index("Usage::"):]
+        self.assertIn("[--voice-model <model.onnx>]", usage)
+
+
+def squash_comment(text):
+    """A `#:` comment block as one line of prose, without its markers or backticks."""
+    lines = [re.sub(r"^\s*#:?\s?", "", l) for l in text.strip().splitlines()]
+    return re.sub(r"\s+", " ", " ".join(lines)).replace("``", "")
+
+
+class TheVoiceStageIsAllOrNothing(unittest.TestCase):
+    """`voice_with_piper`, with a fake subprocess: no Pillow, no ffmpeg, no Piper."""
+
+    SCENES = [{"type": "title_card", "narration": "We loaded 10,000 records."},
+              {"type": "counter", "narration": "At 3.5 a second, with CORD2."},
+              {"type": "tag_line", "narration": "Resolved."}]
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.root = Path(self._tmp.name)
+        with mock.patch.object(VIDEO, "_find_spec", side_effect=piper_findable):
+            self.piper, _note = VIDEO.find_piper_voice(write_voice(self.root))
+        self.work = self.root / "work"
+        self.work.mkdir()
+
+    def stage(self, fake):
+        notes = []
+        with mock.patch.object(VIDEO.subprocess, "run", side_effect=fake.run):
+            voices = VIDEO.voice_with_piper(self.SCENES, self.piper, "ffmpeg", self.work,
+                                            notes.append)
+        return voices, notes
+
+    def test_a_piper_that_succeeds_voices_every_scene_negative_control(self):
+        fake = FakeProcesses()
+        voices, notes = self.stage(fake)
+        self.assertEqual(3, len(voices))
+        for pcm in voices:
+            self.assertEqual({FakeProcesses.PIPER}, markers(pcm))
+        self.assertEqual([], notes)
+
+    def test_piper_speaks_the_numbers_spelled_out(self):
+        fake = FakeProcesses()
+        self.stage(fake)
+        self.assertEqual(["We loaded ten thousand records.",
+                          "At three point five a second, with CORD2.", "Resolved."],
+                         [text for _who, text in fake.calls])
+
+    def test_a_failure_on_one_scene_gives_none_and_says_so(self):
+        fake = FakeProcesses(piper_fails_on="three point five")
+        voices, notes = self.stage(fake)
+        self.assertIsNone(voices)
+        self.assertEqual(1, len(notes))
+        self.assertIn("scenes[1] (counter): Piper (en_US-ljspeech-high) could not voice", notes[0])
+        self.assertIn("Piper is dropped for the whole video", notes[0])
+        self.assertIn("never mixes two voices", notes[0])
+        self.assertEqual(["piper", "piper"], fake.who(), "it stops at the first failure")
+
+    def test_a_failure_leaves_no_partial_output(self):
+        self.stage(FakeProcesses(piper_fails_on="Resolved"))
+        self.assertEqual([], list(self.work.iterdir()))
+
+
+@requires_pillow
+class PiperComesFirstInTheRender(unittest.TestCase):
+    """The whole render, with Piper findable through a stubbed `find_spec`, a fake subprocess
+    for every engine and the decode, and the encode stubbed to record the plan."""
+
+    def setUp(self):
+        self.board = a_storyboard([
+            {"type": "title_card", "duration": 1, "narration": "We loaded 10,000 records.",
+             "module": "A"},
+            {"type": "title_card", "duration": 1, "narration": "At 3.5 a second.",
+             "module": "B"},
+        ])
+        self.project = Project(self.board)
+        self.addCleanup(self.project.close)
+        self.plan = None
+        self.platform_lookups = 0
+
+    def render(self, fake, *flags, finder=piper_findable, voice=True, config=True,
+               platform=FAKE_PLATFORM):
+        write_voice(self.project.root, model=voice, config=config)
+
+        def encode(ctx, plan, ffmpeg, audio, output, log_path, music=None):
+            self.plan = plan
+            output.write_bytes(b"mp4")
+            return True, ""
+
+        def find_speech_engine():
+            self.platform_lookups += 1
+            return (platform, []) if platform else (None, ["espeak-ng (not on PATH)"])
+
+        with mock.patch.object(VIDEO, "_find_spec", side_effect=finder), \
+                mock.patch.object(VIDEO, "find_ffmpeg", return_value=("ffmpeg", [])), \
+                mock.patch.object(VIDEO, "find_speech_engine", side_effect=find_speech_engine), \
+                mock.patch.object(VIDEO.subprocess, "run", side_effect=fake.run), \
+                mock.patch.object(VIDEO, "stream_frames", side_effect=encode):
+            code, out, err = run_main("--storyboard", str(self.project.storyboard_path),
+                                      "--output", str(self.project.output),
+                                      "--project-root", str(self.project.root), *flags)
+        self.assertEqual(0, code, err)
+        return out.splitlines()[2:], err
+
+    def scene_markers(self):
+        return [markers(ps.pcm) for ps in self.plan]
+
+    def test_piper_narrates_with_the_default_model_and_no_flag(self):
+        fake = FakeProcesses()
+        lines, err = self.render(fake)
+        self.assertEqual(["Voice: Piper (en_US-ljspeech-high) (2 of 2 scenes narrated)",
+                          "Music: yes"], lines)
+        self.assertEqual([{FakeProcesses.PIPER}] * 2, self.scene_markers())
+        self.assertEqual(["piper", "piper"], fake.who())
+        self.assertEqual(0, self.platform_lookups, "Piper voiced it; no platform engine is "
+                         "looked for")
+        self.assertNotIn("Piper", err)
+
+    def test_a_piper_failure_re_voices_the_whole_video(self):
+        fake = FakeProcesses(piper_fails_on="three point five")
+        lines, err = self.render(fake)
+        self.assertEqual("Voice: fake-platform (2 of 2 scenes narrated)", lines[0])
+        self.assertEqual([{FakeProcesses.PLATFORM}] * 2, self.scene_markers(),
+                         "no scene keeps Piper audio")
+        self.assertEqual(["piper", "piper", "platform", "platform"], fake.who(),
+                         "Piper is tried first, then the platform engine voices every scene")
+        self.assertIn("Piper is dropped for the whole video", err)
+
+    def test_a_piper_failure_with_no_platform_engine_has_no_voice(self):
+        fake = FakeProcesses(piper_fails_on="ten thousand")
+        lines, err = self.render(fake, platform=None)
+        self.assertEqual(["Voice: none (no speech engine found)", "Music: yes"], lines)
+        self.assertTrue(all(not ps.voiced for ps in self.plan))
+        self.assertIn("Piper is dropped for the whole video", err)
+
+    def test_only_piper_hears_the_numbers_spelled_out(self):
+        fake = FakeProcesses(piper_fails_on="three point five")
+        self.render(fake)
+        self.assertEqual([("piper", "We loaded ten thousand records."),
+                          ("piper", "At three point five a second."),
+                          ("platform", "We loaded 10,000 records."),
+                          ("platform", "At 3.5 a second.")], fake.calls)
+        self.assertEqual(["We loaded 10,000 records.", "At 3.5 a second."],
+                         [ps.caption for ps in self.plan], "the captions keep the digits")
+
+    def test_piper_missing_falls_back_and_names_the_interpreter(self):
+        fake = FakeProcesses()
+        lines, err = self.render(fake, finder=piper_missing)
+        self.assertEqual("Voice: fake-platform (2 of 2 scenes narrated)", lines[0])
+        self.assertIn("FALLBACK: Piper (piper-tts) is not installed for %s" % sys.executable,
+                      err)
+        self.assertEqual(["platform", "platform"], fake.who())
+
+    def test_a_missing_model_falls_back_and_names_it(self):
+        fake = FakeProcesses()
+        lines, err = self.render(fake, voice=False, config=False)
+        self.assertEqual("Voice: fake-platform (2 of 2 scenes narrated)", lines[0])
+        self.assertIn("no Piper voice model at %s"
+                      % (self.project.root / VIDEO.DEFAULT_VOICE_MODEL), err)
+        self.assertEqual(["platform", "platform"], fake.who())
+
+    def test_a_missing_config_falls_back_and_says_so(self):
+        fake = FakeProcesses()
+        lines, err = self.render(fake, config=False)
+        self.assertEqual("Voice: fake-platform (2 of 2 scenes narrated)", lines[0])
+        self.assertIn("has no config beside it", err)
+        self.assertEqual(["platform", "platform"], fake.who())
+
+    def test_an_explicit_voice_model_is_used(self):
+        other = write_voice(self.project.root, rel="voices/en_GB-alba-medium.onnx")
+        fake = FakeProcesses()
+        lines, _err = self.render(fake, "--voice-model", str(other), voice=False, config=False)
+        self.assertEqual("Voice: Piper (en_GB-alba-medium) (2 of 2 scenes narrated)", lines[0])
+
+    def test_no_voice_skips_piper_too(self):
+        fake = FakeProcesses()
+        lines, err = self.render(fake, "--no-voice")
+        self.assertEqual(["Voice: none (--no-voice)", "Music: yes"], lines)
+        self.assertEqual([], fake.calls)
+        self.assertNotIn("Piper", err)
 
 
 if __name__ == "__main__":

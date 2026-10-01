@@ -27,6 +27,9 @@ The recap-video renderer, `scripts/generate_recap_video.py`, draws frames with `
 encodes them with ffmpeg, taken from `PATH` first and then from `imageio-ffmpeg`. Without
 them, `tests/test_recap_video.py` skips its frame-drawing and end-to-end tests with a reason
 and still runs its storyboard-validation tests.
+Its Piper voice (`piper-tts`, #341) is **not** a development dependency: the renderer only runs
+it as `sys.executable -m piper`, and the tests stub `find_spec` and the subprocess instead of
+installing it.
 
 Without `fpdf2` the tests that measure the *fpdf2-rendered* output cannot exercise it. They
 skip, and the suite prints one notice up front naming the cause:

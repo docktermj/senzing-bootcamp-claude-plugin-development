@@ -354,8 +354,9 @@ class TheGuidanceIsStated(unittest.TestCase):
             with self.subTest(check=check.__name__):
                 self.assertEqual([], check(text))
 
-    def test_the_offer_and_install_offer_stay_the_only_questions(self):
-        self.assertEqual(2, step_1c(read()).count("👉"))
+    def test_the_three_offers_stay_the_only_questions(self):
+        self.assertEqual(3, step_1c(read()).count("👉"), "Step 1c asks the video offer, the "
+                         "Piper voice offer (#341) and the exit-2 install offer, and nothing else")
 
 
 class NegativeControls(unittest.TestCase):
