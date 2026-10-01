@@ -128,9 +128,12 @@ connections between entities using `find_network` and `find_path`.
    the SDK: that error names the expected signature outright, so recovery is immediate — but the
    round trip is avoidable.)
 
-   For any other language, confirm the shape from the installed binding (its own reference,
-   `help()`, or equivalent introspection) rather than copying Python's or another language's form
-   (INV-002 — this module is language-agnostic; only the *known-divergent* case is spelled out).
+   For any other language, confirm the shape for that binding with
+   `get_sdk_reference(topic='parameters', filter='<method>', language='<chosen_language>')` rather
+   than copying Python's or another language's form (INV-002 — this module is language-agnostic;
+   only the *known-divergent* case is spelled out). Only where that topic does not answer for the
+   binding, fall back to the installed binding itself: its own reference, `help()`, or equivalent
+   introspection (INV-132).
 
    Select flags appropriate for relationship exploration and explain each: "I'm using [flag] so
    we can see [what it provides]." For example: "I'm using [relationship detail flag] so we can
