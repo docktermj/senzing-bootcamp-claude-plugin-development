@@ -458,7 +458,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_update_offer_order_and_existing_install_outcome.py; both cite it back and state what they do NOT
 # establish -- that a live run asks before installing. Re-derived by running the extractor -- 161, with
 # both new pairs present by name. EXPECTED_PAIRS 159 -> 161.
-EXPECTED_PAIRS = 161
+# 163 on 2026-10-01: INV-339 (an existing install skips only the installation; Phase 3 and the
+# environment script still run) names test_existing_install_still_runs_the_env_script.py and
+# test_update_offer_order_and_existing_install_outcome.py; both cite it back and state what they do NOT
+# establish -- that a live run follows it. Re-derived by running the extractor -- 163, with both new
+# pairs present by name. EXPECTED_PAIRS 161 -> 163.
+EXPECTED_PAIRS = 163
 
 
 def pairs():

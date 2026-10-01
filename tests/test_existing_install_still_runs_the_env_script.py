@@ -21,6 +21,10 @@ complete instruction.
 fallback sentence's Phase 3 half, the environment-script section's opening, the troubleshooting
 entry, and the two update-offer routes back onto the existing-install path.
 
+Enforces **INV-339** (an existing install skips only the installation: Phase 3 and the environment
+script still run before verification). It asserts that Module 2 *states* the rule at each site, and
+does **not** establish that a live run follows it, which only `dry-run` phase 3 can observe.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 

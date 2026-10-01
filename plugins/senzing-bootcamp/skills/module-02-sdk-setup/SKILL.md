@@ -89,7 +89,7 @@ verified on MCP server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-13.)
 
 If the library is present, report the SDK as installed and skip the **installation** — Step 2, and
 Step 3's install commands (its Phase 1 EULA question and its Phase 2 SDK package).
-⛔ **(INV-222) Not Step 3 entirely: its Phase 3 and its environment-script work still run**, and the
+⛔ **(INV-339) Not Step 3 entirely: its Phase 3 and its environment-script work still run**, and the
 environment script is the single most likely thing an existing install is missing — see
 "Required stops" in the V4.0+ branch below. Then proceed to Step 4 verification.
 
@@ -134,7 +134,7 @@ straight to configuration verification."
 Then run **Step 1b** below to see whether a newer release is available, and offer it. A working
 install is never replaced without the bootcamper saying so.
 
-This is the **existing-install path**. It is the same whether Step 1b finds no newer version, the
+This is the **existing-install path** (INV-339). It is the same whether Step 1b finds no newer version, the
 bootcamper declines the update, or they decline the EULA for it, and an accepted update rejoins it
 (Step 1b, "After updating"):
 
@@ -144,18 +144,18 @@ bootcamper declines the update, or they decline the EULA for it, and an accepted
   Step 3 is.
 - **(INV-338) Do not re-ask the EULA.** Phase 1 gates installing the SDK, and this path installs no SDK.
   Only an update the bootcamper accepts in Step 1b asks it, because an update is an install.
-- **Still run Step 3's Phase 3** (install language bindings). The Java, C#, Rust and TypeScript
+- **(INV-339) Still run Step 3's Phase 3** (install language bindings). The Java, C#, Rust and TypeScript
   bindings are per-project, so an existing SDK install does not provide them. For Python,
   Phase 3 installs nothing: the bindings ship inside the SDK runtime and are made importable by
   the environment script.
-- **Still do Step 3's environment-script work** ("Create the project-local environment script"), then
+- **(INV-339) Still do Step 3's environment-script work** ("Create the project-local environment script"), then
   jump to Step 4 (verify installation) to confirm it works with the chosen language.
 - If Step 4 passes, proceed to Step 5 (License), which confirms the built-in evaluation license
   without prompting (the License Key gate is in Module 4, per INV-093). After Step 5, proceed to
   Step 6 (create the project directory structure), then Step 7 (database).
 - Mark Module 2 as complete once verification passes.
 
-> **Required stops:** These steps are NEVER skipped, even when the SDK is already installed:
+> **Required stops (INV-339):** These steps are NEVER skipped, even when the SDK is already installed:
 >
 > - **Step 3's environment script** (`src/scripts/senzing-env.sh`, or `senzing-env.bat` on Windows):
 >   ⛔ **the single most likely thing an existing install is missing.** Step 3 is titled "Install
@@ -578,7 +578,7 @@ Follow the platform-specific instructions from `sdk_guide`. Installation has thr
 the EULA question comes first: nothing is installed until the bootcamper accepts it (INV-338). An existing
 V4.0+ install (Step 1's existing-install path) skips Phase 1 and Phase 2, is not asked the EULA
 again, and starts at Phase 3; it still writes the environment script ("Create the project-local
-environment script" below).
+environment script" below) (INV-339).
 
 **Before recommending any approach**, call `search_docs` with `category='anti_patterns'` to
 check for known pitfalls on the user's platform.
@@ -653,7 +653,7 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
   compatibility with in-flight bootcamps, whatever runtime its entries name.)
 
 **Phase 3: Install language bindings (after Phase 1's EULA acceptance, or directly on Step 1's
-existing-install path, which skips Phase 1 and Phase 2; INV-338):**
+existing-install path, which skips Phase 1 and Phase 2; INV-338, INV-339):**
 
 3. Install the language-specific SDK bindings for the chosen language — Python, Java, C#, Rust or
    TypeScript — **by the route the Senzing MCP server names for that language, never from a public
@@ -858,7 +858,7 @@ tried). This terminal state names the blocker and the next step rather than loop
 
 ### Create the project-local environment script
 
-Every path through Step 3 ends here, including Step 1's existing-install path, which skips the
+(INV-339) Every path through Step 3 ends here, including Step 1's existing-install path, which skips the
 install phases and still writes this script.
 
 **🚨 NEVER modify the user's global shell configuration** (`~/.zshrc`, `~/.bashrc`,
@@ -1993,7 +1993,8 @@ call succeeds** (not merely a version query).
 ## Agent Behavior
 
 - Always check for an existing installation first: if the SDK is present and V4.0+, do NOT
-  reinstall. Skip to verification.
+  reinstall. Skip only the installation and continue on Step 1's existing-install path: Step 3's
+  Phase 3 and its environment script still run before verification (INV-339).
 - Do NOT offer alternatives: install the SDK natively (or via Docker where the routing rules
   require it).
 - Use the `sdk_guide` MCP tool for current platform-specific instructions.
@@ -2034,7 +2035,7 @@ call succeeds** (not merely a version query).
   `SENZING_ENGINE_CONFIGURATION_JSON` is unset. So do not send it through `explain_error_code` — there
   is no code to explain, and hunting through the engine config wastes the time. **First check whether
   the script exists at all** — on the existing-install path it is the artifact most likely to be
-  missing, and asking whether an absent file was sourced sends the reader looking for the wrong
+  missing (INV-339), and asking whether an absent file was sourced sends the reader looking for the wrong
   fault. If `src/scripts/senzing-env.sh` (or `senzing-env.bat`) is not there, that **is** the
   finding: write it now per Step 3's environment-script work, with the values from
   `sdk_guide(topic='install', platform=…, language=…)`. Only if it does exist, check that it was

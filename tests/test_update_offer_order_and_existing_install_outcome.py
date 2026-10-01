@@ -37,6 +37,10 @@ What these tests pin:
 Negative controls rebuild the pre-fix order and the missing heading and require the checks to
 fail.
 
+Enforces **INV-339** with `tests/test_existing_install_still_runs_the_env_script.py`: every route onto
+the existing-install path still runs Phase 3 and the environment script. It asserts the plugin's
+statements and does **not** establish that a live run follows them.
+
 Enforces **INV-338** with `tests/test_eula_question_precedes_every_install.py`: the update path asks
 the EULA before installing, and a declined update keeps the working install. It asserts the plugin's
 statements and does **not** establish that a live run follows them.
@@ -198,7 +202,7 @@ class TheExistingInstallPathHasOneOutcome(unittest.TestCase):
         self.assertRegex(self.branch, r"(?i)\*\*\(INV-338\) Do not re-ask the EULA\.\*\*")
 
     def test_it_runs_phase_3_for_the_per_project_bindings(self):
-        self.assertRegex(self.branch, r"(?i)\*\*Still run Step 3's Phase 3\*\*")
+        self.assertRegex(self.branch, r"(?i)\*\*\(INV-339\) Still run Step 3's Phase 3\*\*")
         self.assertRegex(self.branch, r"(?i)Java, C#, Rust and TypeScript bindings are per-project")
         self.assertRegex(self.branch, r"(?i)For Python, Phase 3 installs nothing")
 
