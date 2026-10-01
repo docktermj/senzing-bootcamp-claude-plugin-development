@@ -43,6 +43,23 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-10-01
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one review session, begun 2026-09-30 after the second `/unattended-issue-loop` run that day)
+- **Commit:** uncommitted
+- **Files changed:** `specs/INVARIANTS.md`, `specs/IMPLEMENTED.md`, `invariant-manifest.json`, `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/scripts/generate_recap_video.py`, `tests/test_invariant_enforcer_citations.py`, `tests/test_invariant_layout_tree.py`, `tests/test_no_pip_install_senzing.py`, `tests/test_eula_question_precedes_every_install.py`, `tests/test_update_offer_order_and_existing_install_outcome.py`, `tests/test_existing_install_still_runs_the_env_script.py`, `tests/test_phase3_names_every_server_language.py`, `tests/test_graduation_video_step.py`, `tests/test_broll_manifest.py`, `tests/test_recap_video.py`, `tests/test_quality_assessment_type_name_check.py`
+- **MCP re-check:** n/a (no Senzing fact) — the session registers and cites invariants drafted by issue runs whose own entries carry their re-checks; it states no new Senzing fact.
+- **Summary:** ten blocks were pending; all ten were decided. The held set is unchanged at 4.
+  - **Registered:** **INV-338** (the EULA question precedes every Senzing install, #284/#192); **INV-339** (an existing install skips only the installation, #284); **INV-340** (graduation's video step, #300); **INV-341** (the B-roll manifest, #298); **INV-342** (the recap-video renderer, #299); **INV-343** (Module 5 emits no `type_discriminator` by default, #283). Each carries its rejected-citation note in its text and is cited at every site found by grepping, not only the block's list; each enforcer cites it back.
+  - **Amended before minting:** **INV-339**, whose draft named "Java, C# and TypeScript" bindings, written before #287 added Rust; the registered text names Java, C#, Rust and TypeScript. In the same edit, Module 2's `## Agent Behavior` bullet ("Skip to verification.") was narrowed to the installation, so no shipped line contradicted the rule at registration, and Step 1's fallback line now cites INV-339 in place of INV-222. Widening the guard to catch an unnarrowed "skip to verification" remains #284's drafted follow-up.
+  - **Registered as drafted on the maintainer's decision, with the risk recorded:** **INV-340**'s 2:00 ± 10 s tolerance, one re-render and per-module shares are untested by a live render; the invariant's text says a first real render that moves them is corrected by a dated note.
+  - **Amendments applied:** **INV-330** (#288: the #154 rule is now INV-334), **INV-050** (#286: `data/subsets/` inserted in the tree; `EXPECTED_DIR_ENTRIES` 31 → 32), **INV-229** (#282: no count of the installation checks), and **INV-222** (#287, **amended at review**: the drafted first-sentence replacement was not available under `specs/INVARIANTS.md` rule 2 and the append-only rule, so the replacement sentence was folded into the dated note as "read the first sentence as: …", following INV-302's 2026-09-30 narrowing).
+  - **Test anchors moved with the citations.** Tests that pinned a rule's exact text were updated to the cited form (`(INV-NNN)` inside the rule's bold); none was weakened, and each negative control still fails its mutant. `EXPECTED_PAIRS` was re-derived by running the extractor at each registration, 159 → 168.
+  - **Still held, conditions not met:** the license-reading, #164 Phase C, census-detector and machine-portability blocks.
+  - **Not decided here:** #285's INV-317 amendment and #296's requote are on unmerged or blocked issues and never reached the queue.
+- **Verification:** both CI legs green on the full diff in a clean worktree with an empty `HOME` (5424 tests, `OK (skipped=8)` and `OK (skipped=87)`, the fpdf2 notice printed); `citations.py verify` clean at 342 invariants; `coverage_reports.py shipped` lists none of INV-338–INV-343; `pending_invariants.py` 0 pending, 4 held.
+- **Establishes no invariant of its own.** Every invariant it registers was established by an earlier issue's implementation.
+
 ## graduation-points-to-ground-rules-for-the-model-switch-rule
 
 - **Implemented:** 2026-09-30 (**Not a spec** — a dated record of one issue-driven run, #293; audit finding D-F9)
