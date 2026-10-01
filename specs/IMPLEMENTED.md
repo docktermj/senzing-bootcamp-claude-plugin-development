@@ -43,6 +43,55 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## env-script-loads-before-step-8
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #328, spec revision 1; source: `/dry-run` 2026-10-01 P3-5)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md` (the env-script template, its explanatory bullets, the `.bat` prose, a re-source paragraph at the end of Step 8, and the `Unable to get settings` troubleshooting entry), `.claude/skills/dry-run/scaffold_project.py` (`FIXTURE_MAP` and `build()`), `tests/test_env_script_shell_portability.py`, `tests/test_scaffold_banner_matches_build.py`, `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** n/a (no Senzing fact), server `sz-mcp-coworker` 1.37.16 (Senzing "current"), 2026-10-01, `get_capabilities` — re-confirmed, not assumed. The change is the plugin's own step order: which project file marks the root, and what the script does before Step 8 writes `config/engine_config.json`. The one Senzing fact nearby, that the official snippets guard initialization by testing the settings variable for unset (INV-175, `search_docs`, server 1.32.1, 2026-07-28), is restated by the new bullet's "unset" but not changed, and no added line names an SDK method, an engine behavior or an MCP tool. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** raced (Phase 5b), two strategies. `inplace` won and was applied with `git apply --exclude=BLUEPRINT.md` on `9e7256b`, cleanly, then read against the branch. The comparison is issue comment 3. One adaptation: a troubleshooting line the patch left overlong was reflowed, with no wording change.
+- **Summary:** SDK setup's environment script now loads from Step 4 on, instead of refusing until Step 8 had written `config/engine_config.json` and blaming path resolution for what was step order (P3-5).
+  - **Root guard.** The fail-loudly guard tests `config/bootcamp_progress.json`, which onboarding's project setup creates. A wrong root still returns non-zero, names the computed root and calls it a path-resolution fault, and its message no longer names `engine_config.json`.
+  - **Engine configuration.** One `if`/`elif`/`else`, with no early return. While `config/engine_config.json` is absent, the script prints one line saying it is not written yet and to source the script again after Step 8, leaves `SENZING_ENGINE_CONFIGURATION_JSON` unset, then exports `SENZING_PROJECT_ROOT` and runs the platform exports, and returns 0. An existing but empty file is still refused, and nothing is exported, because `SENZING_PROJECT_ROOT` is now exported after the refusal. With both files present, behavior is unchanged. `return 1 2>/dev/null || exit 1` is unchanged, and the new path does not `exit`. The absent branch skips the export, as the issue says, rather than unsetting an inherited value.
+  - **Prose.** "Four things in that block", up from three: the root marker and why it is never `engine_config.json`, and skipping only the settings export. The `.bat` prose names the same marker and the same skip-with-notice rule. Step 8 ends with re-sourcing the script in the shell that launches the Bootcamper's programs and checking that the notice no longer prints. The `Unable to get settings` troubleshooting entry names "sourced before Step 8" as a cause beside path resolution.
+  - **Dry-run scaffold.** `--fresh` and `--seeded` no longer write `config/engine_config.json`, in `FIXTURE_MAP` and in `build()`, so the banner still matches the build. The mid-bootcamp mode, which phase 2 uses, still writes it, so both config pre-flight gates keep their fixtures. `config/engine_config_incomplete.json` stays in every mode.
+  - **Tests.** `tests/test_env_script_shell_portability.py` sources the shipped template, with a sentinel export inserted at the platform-exports placeholder, in four cases: before Step 8, a wrong root, an empty configuration, and both files present. `TheScriptLoadsBeforeStep8InBash` and `…InZsh` run them, and the zsh class skips and says so where zsh is not installed. The probe now reports after a failed source too, tells unset from empty with `${VAR+set}`, and scrubs inherited values. The wrong-root fixtures remove `bootcamp_progress.json`, and `test_the_config_path_matches_what_module_2_creates` asserts the root guard tests exactly `config/bootcamp_progress.json` and that onboarding still creates it. `NegativeControls` has 9 tests: the verbatim pre-#328 template fails the before-Step-8, wrong-root and marker checks, and mutants of the shipped template are each caught (an early return in the absent branch, an empty export there, a two-line notice, the root exported before the refusal, a dropped settings export). `tests/test_scaffold_banner_matches_build.py::EarlyModesDoNotPreCreateTheStep8Config` checks the file is absent from `--fresh` and `--seeded` and named in their banners as absent, present in mid, and that the incomplete fixture is in every mode.
+  - ⚠️ **zsh is not runtime-verified.** zsh is not installed on this machine, so `TheScriptLoadsBeforeStep8InZsh` and the existing zsh case skip and say so. The bash cases ran.
+  - **A stale line, left alone:** `.claude/skills/dry-run/phase2-hooks-and-scripts.md:43` says `--fresh` and `--seeded` "create only the two config files plus the feedback file". It was already inaccurate before this change, and is outside the issue's named sites.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-175 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+    - `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md` (the env-script template and its bullets) — ⛔ the root guard tests `config/bootcamp_progress.json`, never a file a later step writes; while `config/engine_config.json` is absent the script skips only the settings export, with a one-line notice, and returns 0; an empty file is still refused with nothing exported
+    - `.claude/skills/dry-run/scaffold_project.py` (`FIXTURE_MAP`, `build()`) — ⛔ the modes that start before Step 8 do not pre-create `config/engine_config.json`
+
+  ⚠️ **Why.** INV-175 requires a sourced script to verify the path it computed before
+  exporting anything derived from it, and never to export an empty value. It does not say
+  **what** the verification may test, and the shipped guard tested a file Step 8 writes, so
+  every source from Step 4 to Step 7 failed as a path fault. This run ships the corrected
+  rule with enforcing tests, and INV-175 is the invariant that governs this script, so the run
+  drafts an amendment to it rather than a new id. No other INV-175 amendment is pending.
+  **Sites it affects:** INV-175 in `specs/INVARIANTS.md`, which gains the sentences below after
+  "…rather than only asserted present." and before "(Extends INV-166/INV-167", and its
+  statement in `invariant-manifest.json`, regenerated from it
+  (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit. The shipped
+  sites are the two above. The enforcers are `tests/test_env_script_shell_portability.py`
+  (`TheScriptLoadsBeforeStep8InBash`, `TheScriptLoadsBeforeStep8InZsh`, `NegativeControls`,
+  `AMisresolvedRootFailsLoudly`, `test_the_config_path_matches_what_module_2_creates`) and
+  `tests/test_scaffold_banner_matches_build.py::EarlyModesDoNotPreCreateTheStep8Config`.
+  Applying it resolves the block: mark the bullet `applied YYYY-MM-DD` and drop the
+  "awaiting" marker.
+
+  The drafted wording:
+
+  **INV-175** — … and the shipped snippet MUST be executed by a test rather than only asserted present. The verification MUST test a file that exists at every step the script is sourced from: for the project env script that is `config/bootcamp_progress.json`, which project setup creates, never a file a later step writes such as `config/engine_config.json`, because a guard on a later step's file reports step order as a path-resolution fault. While `config/engine_config.json` is absent the script MUST skip only the `SENZING_ENGINE_CONFIGURATION_JSON` export, leaving it unset, MUST print a one-line notice to source the script again after Step 8, and MUST still export everything else and return 0. An existing but empty `config/engine_config.json` MUST still be refused, with nothing exported. Dry-run fixtures for modes that start before Step 8 MUST NOT pre-create that file. (⚠️ **Amended <YYYY-MM-DD> (#328): the root marker and the pre-Step-8 branch added; the shell-portability, `return`-never-`exit` and no-empty-export rules are unchanged.**) Enforced by `tests/test_env_script_shell_portability.py` and `tests/test_scaffold_banner_matches_build.py`. (Extends INV-166/INV-167 …
+
+  *(the `…` stand for INV-175's registered text, kept as it is; the date is a placeholder
+  deliberately: `/review-invariants` fills it in on the day it applies the amendment.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-175 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The fail-loudly message naming the computed root applies INV-111, the language-agnostic template applies INV-002, and nothing is written outside the project (INV-199, INV-200). No ⛔ rule is added to or demoted in shipped text.
+
 ## capped-entity-graph-notes-state-the-cap
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #327, spec revision 1; source: `/dry-run` 2026-10-01 P3-18)
