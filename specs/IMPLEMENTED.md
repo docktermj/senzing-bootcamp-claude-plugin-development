@@ -51,7 +51,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **MCP re-check:** recorded per phase below
 - **Environment:** `senzing` Python package importable; `/opt/senzing/er/lib/libSz.so` present; license file `/etc/opt/senzing/g2.lic` present; `sqlite3` present; `fpdf2` 2.8.5; `google-chrome` and `firefox` present, no `playwright`; `docker` CLI present but the daemon unreachable. Engine start-up not yet verified at the time of writing.
 - **Summary:** all three phases ran.
-  - **Phase 1:** 4 findings. P1-1, P1-2 and P1-4 are filed as #322, #323 and #320. P1-3 is `mcp-server`; its upstream send was blocked and it was left unsent at the maintainer's choice.
+  - **Phase 1:** 4 findings. P1-1, P1-2 and P1-4 are filed as #322, #323 and #320. P1-3 is `mcp-server`: its first upstream send was blocked, and it was sent after the walk with the maintainer's approval.
   - **Phase 2:** 2 findings, filed as #321 and #324.
   - **Phase 3:** walked every module from Bootcamp preparation through graduation, with the maintainer answering as the Bootcamper on a generated Harborline scenario: Python, SQLite, SDK 4.4.2, MCP server 1.37.16. It produced **23 drafts, P3-1 to P3-23**. Their outcomes after the walk, each maintainer-approved:
       - **14 issues, #325 to #338:**
@@ -59,7 +59,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
         - P3-20/21/22 → #331, P3-17 → #332, P3-11/12/13/15 → #333, P3-2/4 → #334, P3-1/3 → #335.
         - P3-14 → #336, P3-10 → #337, P3-16 → #338.
       - **Upstream sends** (`submit_feedback`, category `bug`): P3-6 and P3-7.
-      - **No finding is left unfiled.** P1-3 stays unsent, at the maintainer's earlier choice.
+      - **No finding is left unfiled.** P1-3 was also sent upstream after the walk, once the maintainer approved it.
       - **The walk's bootcamp feedback file** was triaged afterwards with `/feedback-to-issues`. It was archived as `feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK_1790883315.md`, with 11 new ledger lines. Ten entries map to the issues above. The guide's own generator-collision note became **#343**.
     - P3-6 and P3-7 are `mcp-server` (P3-7 still needs verification); the rest are `plugin`.
     - P3-20 to P3-22 were Bootcamper-reported via "bootcamp feedback".
@@ -90,7 +90,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 #### P1-3 `sdk_guide(topic='load')` tells users to email sales for an evaluation license, while `install`/`configure` and `get_capabilities` route through `submit_feedback(category='license_request')`
 
-- **Severity:** low · **Verdict:** `mcp-server` · **Status:** **not filed, not sent**: the upstream send was blocked by the permission classifier, and the maintainer chose to leave it unsent (2026-10-01).
+- **Severity:** low · **Verdict:** `mcp-server` · **Status:** **sent upstream** 2026-10-01 via `submit_feedback(category='bug')`, maintainer-approved out of character. The first attempt during phase 1 was blocked by the permission classifier; the send was re-verified live and made after the walk. Re-verification found both routes in a single `sdk_guide(topic='load', record_count=1000)` reply (`compatibility_notes` vs `engine_config_notes`). No GitHub issue (verdict `mcp-server`).
 - **Evidence (server 1.37.16, 2026-10-01):** `sdk_guide(topic='load', language='python', record_count=1000)` `compatibility_notes[0]` reads "Request an evaluation license — email sales@senzing.com with name, company, email, number of records (1000), and date". `sdk_guide(topic='install', platform='linux_apt')` `gotchas` and `sdk_guide(topic='configure', platform='linux_apt')` `engine_config_notes` instead say to request "a free 10-day evaluation license (250K records) right now using submit_feedback with category='license_request'". `get_capabilities` describes `submit_feedback` as generating and emailing that license.
 - **Plugin impact:** none found. `module-06-data-processing/phaseA-build-loading.md:188-209` reconciles the load note against the measured license and never relays its menu. Module 4 Step 8a owns the license request.
 - **Upstream draft (category `bug`):** "sdk_guide(topic='load', record_count>500) compatibility_notes say to request an evaluation license by emailing sales@senzing.com, while sdk_guide(topic='install'|'configure') and get_capabilities say submit_feedback(category='license_request') issues a 10-day, 250K-record evaluation license immediately. The two routes give an agent contradictory license-request instructions for the same situation (more than 500 records). Server 1.37.16."
