@@ -1,5 +1,5 @@
 {
-  "count": 341,
+  "count": 342,
   "generator": ".claude/skills/review-invariants/invariant_manifest.py",
   "invariants": [
     {
@@ -3410,6 +3410,16 @@
       "statement": "The bundled recap-video renderer, `scripts/generate_recap_video.py`, MUST validate the storyboard before drawing anything, naming the field at fault and exiting 1 on an invalid one. It MUST exit 2 when Pillow or a usable ffmpeg (on `PATH`, then from `imageio-ffmpeg`) is missing and 3 when the encode fails, and on every non-zero exit it MUST write no video and leave an existing one in place. It MUST burn captions in whether or not there is a voice, and MUST NOT truncate narration: a scene whose narration outruns its planned duration is extended to fit and the overrun reported on stderr. It MUST accept only project-relative local image files; an absolute path, a URL or a path resolving outside the project is an invalid storyboard, while a missing project-relative image becomes a title card, stated on stderr (INV-111). It MUST open only local files. Its certificate scene MUST take its name, date and module list from the recap through `generate_recap_pdf`'s own parser, as the recap PDF's certificate does (INV-100). (⚠️ **Why this is not INV-081, INV-111, INV-100, INV-110 or INV-122, so the question is not re-derived.** INV-081 governs the palette and offline rendering of every generated deliverable, and INV-111 governs stating a fallback; both are cited, not restated. INV-100 governs the recap PDF's certificate, and this renderer reads that certificate's fields rather than defining its own. INV-110 and INV-122 give exit semantics to the PDF generator and the capture helper, not to this script. None says what the video renderer guarantees about narration, captions, image paths or its exit codes. ⚠️ **Exit 3 is not in #299's text:** both of its raced implementations added it, so that an encoder failure is not read as exit 2's \"install something\", and graduation's video step (INV-340) branches on it.) Enforced by `tests/test_recap_video.py`, which renders storyboards end to end where ffmpeg and Pillow are present and **cannot** establish the macOS and Windows speech paths, which it covers only by the commands it builds. (Source: `bundled-recap-video-renderer`, GitHub issue #299; registered 2026-10-01.)",
       "status": "active",
       "summary": "The bundled recap-video renderer, `scripts/generate_recap_video.py`, MUST validate the storyboard before drawing anything, naming the field at fault and exiting 1 on an invalid one.",
+      "superseded_by": null
+    },
+    {
+      "id": "INV-343",
+      "index_group": "Data quality, mapping and validation gates",
+      "partly_superseded_by": null,
+      "section": "Invariants added from implemented specs",
+      "statement": "Module 5 Phase 2 MUST NOT emit a `type_discriminator` on a source by default. A `type_discriminator`, with its `field_overrides` (an identity override in both branches included), is the fix for workflow step 3's `NAME_ORG cannot co-exist with person name attributes` rejection of a source whose record type comes from a source field's value, and it is added only when that rejection applies. Fields moved into `field_overrides` are counted by no coverage figure, so an unneeded one costs a coverage-count drop for nothing. (Sibling to INV-336, which forbids a `type_discriminator` for a suffix retype; this governs every other source.) (⚠️ **Why this is not INV-136, INV-336 or INV-125, so the question is not re-derived.** Until #283 the rule cited INV-136, which governs a tool's required parameters and enumerated values; the rule states neither. INV-336 forbids a `type_discriminator` for a suffix retype only, and INV-125 governs a failed MCP-first path.) Enforced by `tests/test_quality_assessment_type_name_check.py` (`problems_in_the_name_citations`, `test_citing_inv_136_at_the_pre_emptive_rule_fails`), which asserts that step 10 states the rule and does not cite INV-136 for it, and **cannot** establish that a live run follows it. (Source: `module-5-retyped-name-and-citations-follow-inv-336`, GitHub issue #283; registered 2026-10-01.)",
+      "status": "active",
+      "summary": "Module 5 Phase 2 MUST NOT emit a `type_discriminator` on a source by default.",
       "superseded_by": null
     }
   ],

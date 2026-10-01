@@ -39,6 +39,10 @@ from the file and applied, as written, to the names the file uses as examples.
 Negative controls run inside the suite: each check is applied to a copy of the text with its
 rule removed and must report a problem.
 
+Enforces **INV-343** (Phase 2 emits no `type_discriminator` by default, only for step 3's NAME_ORG
+rejection): it asserts that step 10 states the rule and does not cite INV-136 for it, and does **not**
+establish that a live run follows it.
+
 Source issues: #158, #220, #283.
 
 Run:  python3 -m unittest discover -s tests
@@ -599,7 +603,7 @@ class Phase2NegativeControls(unittest.TestCase):
                       problems_in_the_name_citations(mutant))
 
     def test_citing_inv_136_at_the_pre_emptive_rule_fails(self):
-        mutant = self.mutate("**Do not pre-emptively emit a `type_discriminator`",
+        mutant = self.mutate("**(INV-343) Do not pre-emptively emit a `type_discriminator`",
                              "**(INV-136) Do not pre-emptively emit a `type_discriminator`")
         self.assertIn("the pre-emptive type_discriminator rule cites INV-136",
                       problems_in_the_name_citations(mutant))

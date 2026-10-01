@@ -474,7 +474,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 166 on 2026-10-01: INV-342 (the recap-video renderer's contract) names test_recap_video.py, which cites
 # it back and states what it does NOT establish -- the macOS and Windows speech paths. Re-derived by
 # running the extractor -- 166, with the new pair present by name. EXPECTED_PAIRS 165 -> 166.
-EXPECTED_PAIRS = 166
+# 167 on 2026-10-01: INV-343 (Module 5 Phase 2 emits no type_discriminator by default) names
+# test_quality_assessment_type_name_check.py, which cites it back and states what it does NOT establish
+# -- that a live run follows it. Re-derived by running the extractor -- 167, with the new pair present by
+# name. EXPECTED_PAIRS 166 -> 167.
+EXPECTED_PAIRS = 167
 
 
 def pairs():

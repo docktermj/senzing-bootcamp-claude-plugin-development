@@ -613,7 +613,7 @@ suffix has no such field, so it takes the message's first route, as step 11 decl
 - ⚠️ **Expect the coverage count to drop after you apply it.** Fields moved into `field_overrides`
   are counted by nothing, so the mapping reports fewer covered fields than it dispositions. That is
   the known field-count warning described below — **not** unmapped data. Do not chase it.
-- ⛔ **Do not pre-emptively emit a `type_discriminator` on every source.** It is the fix for this
+- ⛔ **(INV-343) Do not pre-emptively emit a `type_discriminator` on every source.** It is the fix for this
   rejection, not a default: adding an identity override to a mapping that does not need one buys the
   same coverage-count surprise for nothing.
 
