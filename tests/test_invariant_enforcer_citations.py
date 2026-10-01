@@ -463,7 +463,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_update_offer_order_and_existing_install_outcome.py; both cite it back and state what they do NOT
 # establish -- that a live run follows it. Re-derived by running the extractor -- 163, with both new
 # pairs present by name. EXPECTED_PAIRS 161 -> 163.
-EXPECTED_PAIRS = 163
+# 164 on 2026-10-01: INV-340 (graduation's video step: offered once, nothing written on no, aggregates
+# only, never blocking) names test_graduation_video_step.py, which cites it back and states what it does
+# NOT establish -- that a live run follows it. Re-derived by running the extractor -- 164, with the new
+# pair present by name. EXPECTED_PAIRS 163 -> 164.
+EXPECTED_PAIRS = 164
 
 
 def pairs():

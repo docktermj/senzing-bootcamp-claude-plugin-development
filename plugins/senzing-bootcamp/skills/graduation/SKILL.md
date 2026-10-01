@@ -798,7 +798,7 @@ optional. It is built from the B-roll each module saved (`../bootcamp-onboarding
 Step 2e) and rendered by the bundled renderer, `scripts/generate_recap_video.py`, which writes
 `docs/bootcamp_recap.mp4`.
 
-⛔ **The video never blocks graduation (INV-048).** Every failure below, whether a declined install, a
+⛔ **(INV-340) The video never blocks graduation (INV-048).** Every failure below, whether a declined install, a
 failed install, an invalid storyboard or a failed render, skips the video with a one-line message
 naming what failed, and graduation continues to Step 2.
 
@@ -810,7 +810,7 @@ naming what failed, and graduation continues to Step 2.
 - **No:** continue straight to Step 2 in the same reply turn.
 - **Yes:** continue below.
 
-⛔ **On no, write no video file at all:** no `docs/video/storyboard.json` and no
+⛔ **(INV-340) On no, write no video file at all:** no `docs/video/storyboard.json` and no
 `docs/bootcamp_recap.mp4`. The storyboard is written only after a yes.
 
 **Model quality.** There is no second model question, because graduation's best-value model/effort
@@ -859,17 +859,17 @@ Bootcamp preparation, then each module in `modules_completed` order, then the en
 When a module's figures are missing, draw its scene as a `title_card` with its highlight. Never
 invent a number to fill a scene (INV-157's principle: never fabricate to fill a field).
 
-⛔ **Aggregates only: no raw record values anywhere in the storyboard.** A scene may show counts,
+⛔ **(INV-340) Aggregates only: no raw record values anywhere in the storyboard.** A scene may show counts,
 source names, field and attribute names, and statistics. It may not show a name, an address, a phone
 number, an identifier or any other value from the bootcamper's records, in any field, the narration and
 captions included. `broll.json` already holds only aggregates. The recap may quote records (an entity
 the bootcamper searched for, say), so on the fallback path lift only its aggregates. The video is a
 keepsake the bootcamper is encouraged to share.
 
-**The ending.** The last two scenes are always the `certificate`, then the `tag_line` with the text
+**The ending (INV-340).** The last two scenes are always the `certificate`, then the `tag_line` with the text
 **"Resolved: [Name], Senzing graduate."**, where `[Name]` is `video.bootcamper`.
 
-**The time budget.** The planned length is **2:00**. Each module gets this share of it:
+**The time budget (INV-340).** The planned length is **2:00**. Each module gets this share of it:
 
 | Module | State token | Share | Seconds (every module taken) |
 |---|---|---|---|
@@ -961,13 +961,13 @@ code:
   the install offer below.
 - **3, the render failed.** Skip the video.
 
-⛔ **Keep the storyboard whenever it was written.** Skipping the video leaves
+⛔ **(INV-340) Keep the storyboard whenever it was written.** Skipping the video leaves
 `docs/video/storyboard.json` in place, so the video can be rendered later by running the renderer
 again. The skip message says so, for example: "🎬 I couldn't render the graduation video (ffmpeg is
 missing). Its storyboard is saved at `docs/video/storyboard.json`, so it can be rendered later." Then
 continue to Step 2.
 
-**The install offer (exit 2).** Offer it once (INV-006), pinned:
+**The install offer (exit 2).** Offer it once (INV-006, INV-340), pinned:
 
 > 👉 **Rendering the video needs ffmpeg. May I install `imageio-ffmpeg` into this project's virtualenv?** (Reply no to skip the video; its storyboard is kept so you can render it later.)
 
@@ -993,7 +993,7 @@ On no, or when the venv or the install fails, skip the video and keep the storyb
 
 #### Verify the video
 
-⛔ **Verify the rendered video, not the exit code (INV-129).** Each check is best-effort and
+⛔ **Verify the rendered video, not the exit code (INV-129, INV-340).** Each check is best-effort and
 non-blocking. A check that cannot run is recorded as skipped, naming the check (INV-163). Use the
 ffmpeg the render used: `ffmpeg` on `PATH`, or the `imageio-ffmpeg` binary, whose path
 `<venv python> -c "import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())"` prints. Use
@@ -1316,7 +1316,7 @@ Cover:
 - **License** — where the license lives (`licenses/g2.lic` when custom, else the built-in
   evaluation license) and any expiry.
 - **Where things are** — point at `backups/revisit/` (state + database backup), the recap PDF, and
-  `docs/visualizations/`. Name `docs/bootcamp_recap.mp4` too when Step 1c produced it. When Step 1c
+  `docs/visualizations/`. Name `docs/bootcamp_recap.mp4` too when Step 1c produced it (INV-340). When Step 1c
   wrote a storyboard but skipped the video, say that `docs/video/storyboard.json` is kept so the
   video can be rendered later with the bundled renderer, `generate_recap_video.py`.
 
@@ -1356,7 +1356,7 @@ This runs exactly once, after the report, before graduation is reported finished
    (INV-048). This step is the **only** place these two reach the bootcamper — graduation is
    terminal, so a PDF unnamed here is one they never learn they have.
 
-   **Also name the graduation video, `docs/bootcamp_recap.mp4`, only if Step 1c produced it:** a
+   **(INV-340) Also name the graduation video, `docs/bootcamp_recap.mp4`, only if Step 1c produced it:** a
    narrated 2-minute video of their bootcamp, to keep and share. When its duration stayed outside
    2:00 ± 10 s after the one re-render, say so here, with its duration. When a video check did not
    run, say which, in the same plain sentence as the PDF note below (INV-163).
