@@ -115,7 +115,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - Sweep D wrote one file, its `enumerations` output, to the session scratchpad. That was outside the brief's no-write rule, though nothing in the repository changed.
   - Before this audit, the lead filed #379 on a rank measured with `max_results=3`. A capped call drops results and shifts ranks; #379's worker re-measured and found the claim false. #383 therefore requires the default `max_results` for every rank it records.
 - **Establishes no invariant.** This audit modifies no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. The rule and amendment choices it raises go through `/review-invariants` as blocks: #383's choice on INV-291's reach, and #394's unregistered rule. No id is written here, because an unminted id fails `citations.py verify`.
-- **Commit:** uncommitted
+- **Commit:** fa5ad03
 
 ## module-0-primer-restamp-and-stamp-guard
 
