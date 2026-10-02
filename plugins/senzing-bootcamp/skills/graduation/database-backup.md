@@ -38,8 +38,9 @@ the same way: it says the archive carries no database and why, rather than refus
 ## Restore
 
 Record the exact **restore** command wherever this backup is described — `SKILL.md` Step 6c's return
-guide (`docs/REVISIT_BOOTCAMP.md`), which the `transfer` archive carries and its `OPEN_ME_FIRST.md`
-points at:
+guide (`docs/REVISIT_BOOTCAMP.md`), which a `transfer` archive carries, and its `OPEN_ME_FIRST.md`
+points at, only when the guide was packaged; a backup packaged without it gets the step below
+in `OPEN_ME_FIRST.md` itself:
 
 - **SQLite** — copy the file back to `database/`.
 - **PostgreSQL** — `pg_restore` (or `psql <` for a plain dump) into a fresh database.
