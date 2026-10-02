@@ -14,12 +14,58 @@ from the `mapping_workflow` MCP tool. NEVER hand-code or guess Senzing attribute
 never reuse mapping output from one source for another. Never guess SDK method signatures: use
 `generate_scaffold` / `get_sdk_reference`.
 
+<a id="receiving-a-quality-iteration"></a>
+
+## Receiving a `quality_iteration` (from Query, Visualize and Discover)
+
+⛔ **(INV-284) Check for it before anything else in this phase.** When
+`config/bootcamp_progress.json` carries a `quality_iteration` whose `stage` is `remap`, the
+Bootcamper chose the return at Module 7 step 3b, and this is not a run of this module: show no start
+banner, journey map or overview, write no Module 5 checkpoint (leave `current_module` and
+`current_step` as Module 7 set them, so its progress is not overwritten), and remap only the sources
+the key names. Which stages run and where Module 7 resumes are stated once, in
+`../module-07-query-visualize-discover/phase1-query-visualize.md` step 3b → "The quality-iteration
+route" (INV-300); this block says only how the remap is done.
+
+For each source in `sources` not yet listed in `completed`, in order:
+
+1. **Record what was loaded, before anything is rewritten.** Write the RECORD_IDs of the source's
+   current load input to `data/mapping/{source_name}_loaded_record_ids.txt`, one per line: its
+   registry `file_path`, narrowed by its `load_subset:` block when one is recorded (Module 6
+   Phase B's [subset record](../module-06-data-processing/phaseB-load-first-source.md#load-subset-record)).
+   Module 6's receiving branch compares the remapped file against this set. If the file already
+   exists, an interrupted return wrote it: keep it, because the load input may since have been
+   rewritten.
+2. **Run Steps 8–18 for this source:** a full `mapping_workflow` run, as Step 8's per-source
+   requirement demands, never a reuse of the earlier run's output. Address the finding Module 7 named
+   in its explanation statement where it arises, most often at Step 11. Step 18 rewrites
+   `docs/mapping/{source_name}_mapper.md` and the source's lineage document. The source's own
+   `config/mapping_state_[datasource].json` is still written and deleted as "Mapping state
+   checkpointing" says; only the steps' `config/bootcamp_progress.json` checkpoints are not written.
+   **A named source with `fast_pathed: true` is remapped too:** "Skip fast-pathed sources" below
+   does not apply to a source the key names. Step 17's registry write also sets `fast_pathed:
+   false`, so Module 6 reloads the remapped output at the `file_path` Step 17 records, not the
+   original `data/raw/` file.
+3. ⛔ **(INV-177) Step 19's relocation guard runs between sources:** before the next named source's
+   `mapping_workflow(action='start')`, confirm this source's profile report, `schema_hints.md` and
+   `JOURNAL.md` are relocated under their source-qualified names. Step 19's per-source completion
+   check also applies: `docs/mapping/{source_name}_mapper.md` exists before the source is done.
+4. **Add the source to `completed`** in one quiet write.
+
+**Phase 1, Phase 3 and Step 20 do not run.** ⛔ **(INV-284) No re-scoring, no test load, and no
+Module Completion:** no second Module 5 recap section, no progress update, no transition question,
+and `data_quality_mapping` is not added to `modules_completed` again.
+
+**When every named source is remapped,** set `stage` to `reload` and `completed` to `[]` in one
+write, then continue into Module 6's
+[Receiving a `quality_iteration`](../module-06-data-processing/phaseB-load-first-source.md#receiving-a-quality-iteration).
+
 ## Skip fast-pathed sources
 
 Before starting the mapping workflow for a source, check its registry entry in
 `config/data_sources.yaml`. If `fast_pathed` is `true` and `mapping_status` is `complete`, skip
 this source entirely: it has already been routed to Module 6. Proceed to the next unmapped
-source.
+source. A source a `quality_iteration` names is not skipped: the receiving branch above remaps it.
 
 ## Mapping verbosity check (before starting the mapping workflow)
 

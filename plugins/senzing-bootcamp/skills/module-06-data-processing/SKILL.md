@@ -20,6 +20,9 @@ absolute precedence as a mandatory gate.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.
+**When it carries a `quality_iteration`, none of this runs:** go straight to Phase B →
+[Receiving a `quality_iteration`](phaseB-load-first-source.md#receiving-a-quality-iteration). A
+return runs only the steps it names, so the steps it leaves out are not skipped steps.
 
 **Purpose:** Guide the Data Processing workflow: build a production-quality loading program,
 load all data sources into Senzing, process redo records, and validate entity resolution
