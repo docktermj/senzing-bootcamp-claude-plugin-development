@@ -41,7 +41,8 @@ generic query is not it: the documentation's own words are industry terms, so "e
 cases" reaches about four categories and leaves the rest looking uncovered when they are not. Two
 routes carry most of the material. Everything from here to the end of this step **is** the retrieval
 strategy INV-212 requires — the vocabulary, the documents that hold the material, the queries that
-return confidently wrong content, and what to do with a topic the searches do not reach:
+return confidently wrong content, and what to do with a topic the searches do not reach. Each
+measured route names what it returned and at what rank (INV-291):
 
 - **Business value, for nearly every category** — `search_docs(query='Estimated Annual Cost of
   Mismatched Identity Records')` returns the *"Estimated Annual Cost of Mismatched Identity

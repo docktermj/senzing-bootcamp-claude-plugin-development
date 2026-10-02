@@ -502,7 +502,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # comment) names test_shipped_negative_markers_are_html_comments.py, which already cites INV-209 back.
 # Re-derived by running the extractor -- 173, the one new pair present by name and none removed.
 # EXPECTED_PAIRS 172 -> 173.
-EXPECTED_PAIRS = 173
+# 174 on 2026-10-02: INV-291's note (#335: a measured route records what it returned and its rank)
+# names test_pattern_gallery_shortfall.py, which already cites INV-291 back
+# (test_module_0_suggested_queries_are_measured.py was already a pair). Re-derived by running the
+# extractor -- 174, the one new pair present by name and none removed. EXPECTED_PAIRS 173 -> 174.
+EXPECTED_PAIRS = 174
 
 
 def pairs():
