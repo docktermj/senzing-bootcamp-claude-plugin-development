@@ -506,7 +506,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # names test_pattern_gallery_shortfall.py, which already cites INV-291 back
 # (test_module_0_suggested_queries_are_measured.py was already a pair). Re-derived by running the
 # extractor -- 174, the one new pair present by name and none removed. EXPECTED_PAIRS 173 -> 174.
-EXPECTED_PAIRS = 174
+# 176 on 2026-10-02: INV-331's note (#330, with #345: Step 8b uses Phase A's threshold, and its marker
+# records the figure compared) names test_step_8b_uses_module_6s_sqlite_threshold.py, which now cites
+# INV-331 back, and test_sqlite_load_time_prompt_is_defined_and_matched.py, which already did.
+# Re-derived by running the extractor -- 176, both new pairs present by name and none removed.
+# EXPECTED_PAIRS 174 -> 176.
+EXPECTED_PAIRS = 176
 
 
 def pairs():

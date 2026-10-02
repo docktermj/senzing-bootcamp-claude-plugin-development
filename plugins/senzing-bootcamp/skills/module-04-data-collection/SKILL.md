@@ -1171,7 +1171,7 @@ about a roughly half-hour load, for a load of about two minutes.
    non-SQLite engine, or indeterminate inputs) say nothing about load time and continue to the
    Step 9 transition. A 19,500-record collection under a 500-record cap therefore says
    **nothing**, which is correct: 500 records is not a long load.
-   - ⛔ **One threshold for both SQLite heads-ups.** This step and Module 6's pre-load check compare
+   - ⛔ **(INV-331) One threshold for both SQLite heads-ups.** This step and Module 6's pre-load check compare
      against the same MCP-sourced threshold, so a load this step warns about is a load Module 6
      would ask about, and the choice sub-step 4 records is one Module 6 honors. Never compare
      against another figure here: not `sdk_guide`'s template switch, and not the caution in its

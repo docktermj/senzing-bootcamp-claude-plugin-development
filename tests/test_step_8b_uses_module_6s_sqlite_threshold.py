@@ -35,6 +35,11 @@ over a mutated copy, and the pre-#330 wording (kept below as fixtures) fails the
 Everything is asserted as behavior in shipped guidance, so any implementation language
 satisfies it (INV-002).
 
+Enforces **INV-331**'s 2026-10-02 note (#330, with #345): Step 8b uses the same MCP-sourced
+threshold as Module 6 Phase A's pre-load check. It asserts that the guidance *states* this, and
+does **not** establish that a live run fires both heads-ups on the same loads, which only
+`dry-run` phase 3 can observe.
+
 Source: GitHub issue #330, from the 2026-10-01 dry run, P3-9.
 
 Run:  python3 -m unittest discover -s tests
