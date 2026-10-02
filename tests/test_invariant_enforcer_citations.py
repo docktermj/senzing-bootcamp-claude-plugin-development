@@ -524,7 +524,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_viz_capped_graph_notes.py, which already cited INV-154 back, and test_viz_defaults_at_scale.py,
 # which now does. Re-derived by running the extractor -- 182, both new pairs present by name and none
 # removed. EXPECTED_PAIRS 180 -> 182.
-EXPECTED_PAIRS = 182
+# 183 on 2026-10-02: INV-084's note (#338: data/senzing-ready/ holds only full outputs, folded in at
+# review rather than minted) names test_mapping_samples_stay_out_of_senzing_ready.py, which now cites
+# INV-084 back. Re-derived by running the extractor -- 183, the one new pair present by name and none
+# removed. EXPECTED_PAIRS 182 -> 183.
+EXPECTED_PAIRS = 183
 
 
 def pairs():

@@ -95,7 +95,7 @@ ground-rules file-placement contract:
   `schema_hints.md` → `docs/mapping/{source_name}_schema_hints.md`, `JOURNAL.md` →
   `docs/mapping/{source_name}_JOURNAL.md`. Mapping working data (`*_mapping_spec.json`, the
   per-source `{source}_sample.jsonl`, intermediate analyzer JSONL) → `data/mapping/`. Final
-  transformed, load-ready JSONL stays in `data/senzing-ready/`.
+  transformed, load-ready JSONL stays in `data/senzing-ready/`, and nothing partial does (INV-084).
   - ⛔ **The profile report has TWO possible filenames, and BOTH must be relocated.** A single-file
     start writes `profile_report.md`; a multi-file start writes one
     `profile_report_<stem>.md` **per input** (server 1.33.0, verified 2026-08-23 — see "the
