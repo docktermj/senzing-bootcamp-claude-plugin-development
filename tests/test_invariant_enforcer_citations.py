@@ -520,7 +520,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_env_script_shell_portability.py and test_scaffold_banner_matches_build.py, which now both cite
 # INV-175 back. Re-derived by running the extractor -- 180, both new pairs present by name and none
 # removed. EXPECTED_PAIRS 178 -> 180.
-EXPECTED_PAIRS = 180
+# 182 on 2026-10-02: INV-154's note (#327: the capped Entity Graph notes state the cap) names
+# test_viz_capped_graph_notes.py, which already cited INV-154 back, and test_viz_defaults_at_scale.py,
+# which now does. Re-derived by running the extractor -- 182, both new pairs present by name and none
+# removed. EXPECTED_PAIRS 180 -> 182.
+EXPECTED_PAIRS = 182
 
 
 def pairs():

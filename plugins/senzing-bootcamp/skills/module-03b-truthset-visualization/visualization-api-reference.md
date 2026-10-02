@@ -703,7 +703,7 @@ ways, a bootcamper's explicit choice is never overridden, and an inline note sta
 exists: otherwise a default reads as the data.
 
 When the graph payload is **capped** (`capped` is true), the shown counts are a part of the
-datastore, so every Entity Graph note says so with exact counts and none offers "all":
+datastore, so every Entity Graph note says so with exact counts and none offers "all" (INV-154):
 
 - **Relationship mode:** "Showing N of the R entities that have relationships — the graph is capped
   at C of M entities.", where N is the relationship-bearing entities shown, R is `related_total`, C
