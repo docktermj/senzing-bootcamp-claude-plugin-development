@@ -264,7 +264,9 @@ Step 1 adds to `modules_completed`, and each value holds five keys:
   exist on disk, and write `[]` when the module produced none. ⚠️ **The path is relative to the
   project root, not to the recap** — `docs/visualizations/…` here, where the recap's image line
   writes `visualizations/…` (INV-161 governs the recap, not this manifest). The video renderer
-  resolves storyboard images against the project root.
+  resolves storyboard images against the project root. List every screenshot the module
+  produced, name-bearing ones included: graduation, not this manifest, decides which are
+  name-free enough for the video (`../graduation/SKILL.md` Step 1c).
 - **`facts`** — the numbers and names the scene shows, as aggregates, with only the keys that
   apply to this module:
   - `sources`: `[{"name": <source name>, "records": <count>}]`;

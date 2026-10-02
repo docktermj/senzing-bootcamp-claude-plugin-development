@@ -838,13 +838,14 @@ Bootcamp preparation, then each module in `modules_completed` order, then the en
   modules and the `programming_language`, as one `title_card`. That module writes no B-roll entry
   (#298).
 - **Every other module** comes from its entry in `docs/video/broll.json`, keyed by its state token.
-  Its `images` become `image` scenes, its `facts` become the scenes in the table below, and its
-  `highlight` becomes the narration, or a `title_card` highlight when it has nothing on screen.
+  Its name-free `images` (see "Only name-free screenshots" below) become `image` scenes, its
+  `facts` become the scenes in the table below, and its `highlight` becomes the narration, or a
+  `title_card` highlight when it has nothing on screen.
 - **A bootcamp with no `broll.json`** (it started on an older plugin version), or a module with no
   entry in it: build that module's scenes from its `## {Module name}` section in
   `docs/bootcamp_recap.md` and the screenshots under `docs/visualizations/` that section embeds.
   Write the image paths as `docs/visualizations/<file>.png`, relative to the project root, not the
-  recap's `visualizations/…`.
+  recap's `visualizations/…`. Use only the name-free ones among them, by the same rule.
 
 **The five animated scenes.** Each of these modules is required, so each has a scene:
 
@@ -854,7 +855,7 @@ Bootcamp preparation, then each module in `modules_completed` order, then the en
 | Data collection | `counter` | the characteristics of their data: `facts.sources`, records per source |
 | Data Quality, Mapping, and Transformation | `mapping` | `facts.mappings`, one scene per source, at most 8 fields each |
 | Data processing | `loading` | the loading of their data: `facts.records_loaded` and `facts.entities_resolved` |
-| Query, Visualize and Discover | `entity_merge`, then `counter` and `image` scenes | what was found: records, entities and sources, then `facts.statistics` and the results screenshots |
+| Query, Visualize and Discover | `entity_merge`, then `counter` and `image` scenes | what was found: records, entities and sources, then `facts.statistics` and the name-free results screenshots |
 
 When a module's figures are missing, draw its scene as a `title_card` with its highlight. Never
 invent a number to fill a scene (INV-157's principle: never fabricate to fill a field).
@@ -862,9 +863,35 @@ invent a number to fill a scene (INV-157's principle: never fabricate to fill a 
 ⛔ **(INV-340) Aggregates only: no raw record values anywhere in the storyboard.** A scene may show counts,
 source names, field and attribute names, and statistics. It may not show a name, an address, a phone
 number, an identifier or any other value from the bootcamper's records, in any field, the narration and
-captions included. `broll.json` already holds only aggregates. The recap may quote records (an entity
-the bootcamper searched for, say), so on the fallback path lift only its aggregates. The video is a
-keepsake the bootcamper is encouraged to share.
+captions included. `broll.json`'s text fields hold only aggregates (INV-341), but its `images` name
+every screenshot the module produced, and a screenshot can show record values. So images pass the
+name-free rule below before they go in. The recap may quote records (an entity the bootcamper
+searched for, say), so on the fallback path lift only its aggregates. The video is a keepsake the
+bootcamper is encouraged to share.
+
+⛔ **(INV-340) Only name-free screenshots go in the video.** An image becomes an `image` scene only
+when its file name is `<name>-<slug>.png` with `<slug>` one of the three name-free tab slugs below
+(`capture_screenshots.py` `TABS` names them). Every other image is left out of the storyboard.
+
+| Image | Tab | In the video |
+|---|---|---|
+| `<name>-match-keys.png` | Match Keys | yes: name-free |
+| `<name>-feature-scores.png` | Feature Scores | yes: name-free |
+| `<name>-cross-source.png` | Cross-Source | yes: name-free |
+| `<name>-merge-statistics.png` | Merge Statistics | no: its "Largest resolved entities" list shows entity names and IDs |
+| `<name>-search-probe.png` | Search / Probe | no: it shows the names that were searched |
+| `<name>-entity-graph.png` | Entity Graph | no: a capture keeps the entity-name node labels whenever the graph has 40 nodes or fewer |
+| `<name>.png`, a single-page capture such as `data_quality_assessment.png` or the mapping summary | none | no: a model-authored page can carry sample values |
+| any other name, including the reserved `relationship-network` and `record-merges` slugs | any other | no: not on the allow-list |
+
+- **The allow-list is the only way in.** A name that matches none of the three slugs is left out,
+  so a new or renamed tab stays out until it is added to this table.
+- **One rule for every image.** It applies to the Truth Set's images (`truthset_verification-…`)
+  as to the bootcamper's own, and on the fallback path to the screenshots under
+  `docs/visualizations/` the recap embeds.
+- **A module left with no image** gets no `image` scene. Draw it as a module with nothing on
+  screen: its `facts` scenes, or a `title_card` with its highlight, in the same seconds.
+- **Nothing is cropped or edited.** A left-out image stays on disk and in the recap PDF.
 
 **The ending (INV-340).** The last two scenes are always the `certificate`, then the `tag_line` with the text
 **"Resolved: [Name], Senzing graduate."**, where `[Name]` is `video.bootcamper`.
@@ -924,15 +951,15 @@ A storyboard for a Core bootcamp, with every module taken:
     {"_module": "business_problem", "type": "title_card", "duration": 18, "module": "Discover the Business Problem", "highlight": "One customer view across two systems", "narration": "Then Ada's own problem. The same customers sat in two systems, under different spellings and addresses, and nobody could say how many customers there really were. That was the question to answer."},
     {"_module": "sdk_setup", "type": "title_card", "duration": 3.6, "module": "SDK setup", "narration": "The Senzing SDK went in."},
     {"_module": "system_verification", "type": "title_card", "duration": 3.6, "module": "System verification", "narration": "Its system check passed."},
-    {"_module": "truthset_visualization", "type": "image", "duration": 6, "image": "docs/visualizations/truthset_verification-entity-graph.png", "heading": "Truth Set: entity graph", "narration": "A practice run on the Truth Set showed resolution at work."},
-    {"_module": "truthset_visualization", "type": "image", "duration": 6, "image": "docs/visualizations/truthset_verification-merge-statistics.png", "heading": "Truth Set: merge statistics", "narration": "And how many records merged."},
+    {"_module": "truthset_visualization", "type": "image", "duration": 6, "image": "docs/visualizations/truthset_verification-match-keys.png", "heading": "Truth Set: match keys", "narration": "A practice run on the Truth Set showed resolution at work."},
+    {"_module": "truthset_visualization", "type": "image", "duration": 6, "image": "docs/visualizations/truthset_verification-cross-source.png", "heading": "Truth Set: cross-source overlap", "narration": "And how its sources overlapped."},
     {"_module": "data_collection", "type": "counter", "duration": 12, "title": "Records per source", "items": [{"label": "CUSTOMERS", "value": 1200}, {"label": "VENDORS", "value": 340}], "narration": "Then Ada's own data: two sources, twelve hundred customer records and three hundred forty vendor records."},
     {"_module": "data_quality_mapping", "type": "mapping", "duration": 6, "source": "CUSTOMERS", "fields": [{"from": "last_nm", "to": "NAME_LAST"}, {"from": "street", "to": "ADDR_LINE1"}], "narration": "Each field was mapped to a Senzing attribute."},
     {"_module": "data_quality_mapping", "type": "mapping", "duration": 6, "source": "VENDORS", "fields": [{"from": "vendor_name", "to": "NAME_ORG"}, {"from": "addr1", "to": "ADDR_LINE1"}], "narration": "Vendors too, names and addresses alike."},
     {"_module": "data_processing", "type": "loading", "duration": 6, "records": 1540, "entities": 1310, "narration": "All 1,540 records loaded into 1,310 entities."},
     {"_module": "query_visualize_discover", "type": "entity_merge", "duration": 12, "records": 1540, "entities": 1310, "sources": ["CUSTOMERS", "VENDORS"], "narration": "Here is what Senzing found. Records from both sources came together as the entities they really are."},
     {"_module": "query_visualize_discover", "type": "counter", "duration": 12, "title": "What Senzing found", "items": [{"label": "Entities in both sources", "value": 118}, {"label": "Entities with several records", "value": 190}], "narration": "One hundred eighteen entities appear in both sources, the overlap nobody could see before."},
-    {"_module": "query_visualize_discover", "type": "image", "duration": 12, "image": "docs/visualizations/results_visualization-entity-graph.png", "heading": "Your resolved entities", "narration": "Every one of them is in Ada's own results app."},
+    {"_module": "query_visualize_discover", "type": "image", "duration": 12, "image": "docs/visualizations/results_visualization-cross-source.png", "heading": "Your sources, side by side", "narration": "Every one of them is in Ada's own results app."},
     {"_module": "graduation", "type": "certificate", "duration": 2.0, "narration": "Congratulations, Ada."},
     {"_module": "graduation", "type": "tag_line", "duration": 2.8, "text": "Resolved: Ada Lovelace, Senzing graduate.", "narration": "Resolved: Ada Lovelace, Senzing graduate."}
   ]

@@ -43,6 +43,63 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## graduation-video-uses-only-name-free-screenshots
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #326, spec revision 1; observed on a 2026-10-01 walk, where the first renders put Merge Statistics screenshots on screen)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md` (Step 1c: the "where each scene comes from" bullets, the Query, Visualize and Discover row, the aggregates-only paragraph, a new ⛔ "Only name-free screenshots" paragraph with its table and four bullets, and three `image` scenes of the worked example), `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md` (Step 2e `images`: one sentence), `tests/test_graduation_video_step.py` (new class `OnlyNameFreeScreenshots`, three helpers, docstring), `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md`, `invariant-manifest.json`, `capture_screenshots.py`, `senzing_viz_server.py`, the renderer and the `broll.json` format are unchanged.
+- **MCP re-check:** n/a (no Senzing fact), server `sz-mcp-coworker` 1.37.16 (Senzing "current"), 2026-10-01, `get_capabilities` — re-confirmed, not assumed. The change is which of the plugin's own screenshot files the graduation video may use, keyed on the plugin's own tab slugs (`capture_screenshots.py` `TABS`) and its own viz server's label cap (`CAPTURE_LABEL_MAX = 40`). No added line names an SDK method, an engine behavior, a Senzing document or an MCP tool (checked over the full diff). No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** implemented directly (Phase 5a), built on `7f585fd`. The issue settled the route (exclusion by tab slug; no crop, no format change).
+- **Summary:** The graduation video no longer shows a screenshot that can carry a record value. Before, Step 1c banned names in every storyboard field but built `image` scenes from "the results screenshots", and its worked example used Entity Graph and Merge Statistics images.
+  - **The rule.** A new ⛔ (INV-340) paragraph: an image becomes an `image` scene only when its name is `<name>-<slug>.png` with `<slug>` one of `match-keys`, `feature-scores` or `cross-source`, as `capture_screenshots.py` `TABS` names them. Every other image is left out. A table names each case and why: `merge-statistics` (the "Largest resolved entities" list), `search-probe` (the searched names), `entity-graph` (node labels kept at 40 nodes or fewer, `senzing_viz_server.py` `CAPTURE_LABEL_MAX`), single-page `<name>.png` captures such as `data_quality_assessment.png` and the mapping summary (sample values), and any other name, the reserved `relationship-network` and `record-merges` included.
+  - **Its reach.** The allow-list is the only way in, so a new or renamed tab stays out until it is added. One rule covers the Truth Set's images and the Bootcamper's, on the `broll.json` path and on the fallback path (the screenshots under `docs/visualizations/` the recap embeds). A module left with no image is drawn as a module with nothing on screen, in the same seconds. Nothing is cropped or edited, and a left-out image stays on disk and in the recap PDF.
+  - **Wording fixed.** The scene-source bullets say "name-free `images`" and "only the name-free ones"; the Query, Visualize and Discover row says "the name-free results screenshots"; "`broll.json` already holds only aggregates" became "`broll.json`'s text fields hold only aggregates (INV-341), but its `images` name every screenshot the module produced", so it no longer implies the images are aggregates.
+  - **The worked example.** Its three `image` scenes now use `truthset_verification-match-keys.png`, `truthset_verification-cross-source.png` and `results_visualization-cross-source.png`. Every duration and per-module total is unchanged (still 120 s), and it still validates through the renderer's `validate_storyboard`. #347, later in this run, adds an Intro scene and re-times this example; this run left the seconds alone for it, as the issue says.
+  - **Module completion Step 2e.** One sentence under `images`: list every screenshot, name-bearing ones included, because graduation decides which are name-free. The five-key format is unchanged and `tests/test_broll_manifest.py` passes unmodified.
+  - **Tests.** `OnlyNameFreeScreenshots` in `tests/test_graduation_video_step.py`, 12 stdlib tests: the ⛔ line; the allow-list Step 1c's table states (rows whose verdict starts "yes") is exactly `{match-keys, feature-scores, cross-source}`, restated in the test as the spec; each slug is in `capture_screenshots.py` `TABS`, read by `ast` without importing the helper, with a non-vacuity check; the left-out rows name `merge-statistics`, `search-probe`, `entity-graph`, single-page captures and both reserved slugs; every `image` path in the example ends in `-<slug>.png` with an allowed slug, checked against both the stated table and the restated set, with a check that the example has an image scene at all; the Truth Set scenes use `truthset_verification-` images; the Truth Set and fallback reach; the no-image module; the Query, Visualize and Discover row; the corrected `broll.json` sentence; the Step 2e sentence. **Negative controls** (`test_negative_controls`): the checker reports exactly the bad path when an example image is swapped for `merge-statistics`, `entity-graph`, `search-probe`, `record-merges` or the single-page `data_quality_assessment.png`, and the table parse stops matching the set when Entity Graph is flipped to "yes" or Cross-Source to "no". Also checked by hand: with the pre-#326 `plugins/` files restored, 10 of the 12 fail (`FAILED (failures=10)`), and the old example's three images are all reported against the new table.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **Differs from the issue:** the acceptance criterion "INV-340 carries the dated #326 note and cites the new test" is met by the drafted amendment below, not by an edit to `specs/INVARIANTS.md`, which only `/review-invariants` writes (INV-307). The issue dates the note 2026-10-01; the draft keeps the date as a placeholder, as the neighboring INV-340 drafts do, for `/review-invariants` to fill on the day it applies it.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-340 — awaiting the maintainer's sign-off; NOT applied.** The rule already shipping:
+    - ⛔ **(INV-340) Only name-free screenshots go in the video.** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+
+  ⚠️ **Why.** INV-340 says the storyboard holds only aggregates, but registers nothing about the
+  images it shows, and Step 1c's own reassurance that `broll.json` "already holds only
+  aggregates" was true of its text fields only. This run ships a ⛔ rule, cited to INV-340 at
+  its line and enforced by `OnlyNameFreeScreenshots`, that closes the gap with a fixed allow-list.
+  INV-340 already governs this step, and the issue asks for a dated note on it, so the run drafts
+  an amendment rather than a new id. INV-341 is unchanged: the manifest still lists every
+  screenshot. **How it relates to the two pending INV-340 amendments in this run** (#340,
+  `graduation-video-no-voice-per-platform-guidance`, and #341,
+  `graduation-video-local-piper-neural-voice`, both still awaiting): it is additive and
+  independent. Its sentence goes directly after "The storyboard MUST hold only aggregates, never a
+  raw record value, the narration included.", which neither of them touches; #341's go before
+  "Exit 2 from the renderer", and #340's after "The closing announcement and the return guide MUST
+  name the video only when it was produced.". None changes another's words, and its `Enforced by`
+  addition names a class in the file INV-340 already cites. All three can be applied in one edit,
+  or this one alone to INV-340's registered text. Amending a registered invariant is the
+  maintainer's sign-off alone, so `specs/INVARIANTS.md` and `invariant-manifest.json` are
+  unchanged. **Sites it affects:** INV-340 in `specs/INVARIANTS.md`, and its statement in
+  `invariant-manifest.json`, regenerated from it
+  (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit. The shipped site is
+  Step 1c's "Only name-free screenshots" paragraph, its table and bullets, in
+  `plugins/senzing-bootcamp/skills/graduation/SKILL.md`. **Checked, not a site:**
+  `module-completion.md` Step 2e's new sentence points to graduation and states no rule of its
+  own. The enforcer is `tests/test_graduation_video_step.py::OnlyNameFreeScreenshots`. Applying it
+  resolves the block: mark the bullet `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording:
+
+  **INV-340** — … The storyboard MUST hold only aggregates, never a raw record value, the narration included. An image MUST go in the storyboard only when its file name is `<name>-<slug>.png` with `<slug>` one of the name-free tab slugs `match-keys`, `feature-scores` and `cross-source` (as `capture_screenshots.py` `TABS` names them); every other image, Merge Statistics, Search / Probe, Entity Graph and single-page captures included, MUST be left out, for the Truth Set's images as for the Bootcamper's, on the `broll.json` path and the fallback path alike, without cropping or editing the file. … (⚠️ **Amended <YYYY-MM-DD> (#326): the name-free screenshot allow-list added, because a screenshot can show record values that the aggregates-only rule bans; the offer, budget, ending, verification and the #340 and #341 rules are unchanged.**) Enforced by `tests/test_graduation_video_step.py` (`OnlyNameFreeScreenshots` for the screenshot allow-list), …
+
+  *(the `…` stand for INV-340's registered text, plus #340's and #341's amendments once applied,
+  kept as they are; the date is a placeholder deliberately: `/review-invariants` fills it in on
+  the day it applies the amendment, and the issue names 2026-10-01.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-340 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The Step 2e sentence leaves INV-341's format and its no-raw-values rule as registered, the no-image fallback applies Step 1c's existing nothing-on-screen rule, and the stdlib tests apply INV-108. The only new ⛔ line cites INV-340 at the line, and no ⛔ rule is demoted.
+
 ## graduation-writes-the-registry-its-copied-orchestrator-reads
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #325, spec revision 1; source: `/dry-run` 2026-10-01 phase 3, P3-19, `Source: self-observed (assistant dry run)`)
