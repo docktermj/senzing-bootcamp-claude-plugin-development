@@ -260,5 +260,74 @@ class TheExistingCrossReferencesStillResolve(unittest.TestCase):
         )
 
 
+#: The note's one current stamp: version and docs index, captured up to the comma before "measured".
+CURRENT_STAMP = re.compile(
+    r"Current measurement: MCP server (1\.\d+\.\d+), docs index ([^,]+), measured")
+#: An inline restatement of it. Matches only the "measured on MCP server" form, so the dated
+#: 1.35.3 history ("checked** on MCP server 1.35.3, docs index …") is never read as a stamp.
+INLINE_STAMP = re.compile(r"measured on MCP server (1\.\d+\.\d+), docs index ([^,]+),")
+
+
+def stamp_disagreements(body):
+    """``(current, inline, problems)`` for the stamps in ``body``.
+
+    ``current`` is the ``(version, docs index)`` pair of the "Current measurement" stamp, or
+    ``None``; ``inline`` lists the pairs of every "measured on MCP server …" stamp; ``problems``
+    names each way the two disagree, empty when they agree.
+    """
+    flat = re.sub(r"\s+", " ", body)
+    m = CURRENT_STAMP.search(flat)
+    current = (m.group(1), m.group(2).strip()) if m else None
+    inline = [(v, i.strip()) for v, i in INLINE_STAMP.findall(flat)]
+    problems = []
+    if current is None:
+        problems.append("no 'Current measurement: MCP server …' stamp")
+    if not inline:
+        problems.append("no inline 'measured on MCP server …' stamp")
+    problems.extend("inline stamp %r differs from the current stamp %r" % (pair, current)
+                    for pair in inline if current is not None and pair != current)
+    return current, inline, problems
+
+
+class TheInlineStampMatchesTheCurrentStamp(unittest.TestCase):
+    """#379: the primer states its measurement twice, and the two copies must name one run.
+
+    The ranks the inline routes state were taken on the stamped measurement (INV-291), so an
+    inline stamp left on an older run dates those ranks to a run the note no longer describes.
+    """
+
+    def test_every_inline_stamp_names_the_current_measurement(self):
+        current, inline, problems = stamp_disagreements(text())
+        self.assertEqual(
+            problems, [],
+            "concepts.md must state one measurement (INV-291): every 'measured on MCP server …' "
+            "stamp names the same server version and docs index as the 'Current measurement' "
+            "stamp. Restamp both together. Current: %r; inline: %r." % (current, inline),
+        )
+
+    def test_a_mismatched_pair_fails_the_check(self):
+        """Negative control: the check reports the drift it exists to catch."""
+        body = ("**Current measurement: MCP server 1.37.18, docs index 2026-10-02 11:23 UTC, "
+                "measured 2026-10-02**\n\n(measured on MCP server 1.37.16, docs index "
+                "2026-09-29 22:00 UTC, 2026-10-01)")
+        _, _, problems = stamp_disagreements(body)
+        self.assertEqual(len(problems), 1, problems)
+        self.assertIn("1.37.16", problems[0])
+
+    def test_a_missing_inline_stamp_fails_the_check(self):
+        """Negative control: deleting the inline stamp cannot pass silently."""
+        body = ("**Current measurement: MCP server 1.37.18, docs index 2026-10-02 11:23 UTC, "
+                "measured 2026-10-02**")
+        _, _, problems = stamp_disagreements(body)
+        self.assertEqual(problems, ["no inline 'measured on MCP server …' stamp"])
+
+    def test_the_history_paragraph_is_not_read_as_a_stamp(self):
+        """The 1.35.3 history is dated record, not the current measurement."""
+        _, inline, _ = stamp_disagreements(text())
+        self.assertNotIn("1.35.3", [v for v, _ in inline])
+        self.assertIn("on MCP server 1.35.3, docs index", re.sub(r"\s+", " ", text()),
+                      "The history paragraph this test protects has moved; re-point it.")
+
+
 if __name__ == "__main__":
     unittest.main()

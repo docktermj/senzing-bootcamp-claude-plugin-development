@@ -43,6 +43,31 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## module-0-primer-restamp-and-stamp-guard
+
+- **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #379, spec revision 1; the restamp #377 noticed)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/concepts.md` (the "Current measurement" stamp, the inline stamp in the "Nothing is lost by requiring the call" paragraph, and one sentence added to the "What it produces" bullet), `tests/test_module_0_suggested_queries_are_measured.py` (one new class), `specs/IMPLEMENTED.md`. The 1.35.3 history paragraph, the test file's docstring, the queries and `tests/test_prescribed_search_queries.py` are unchanged, as the issue scoped.
+- **MCP re-check:** server now contradicts the issue on one rank; every other result still reproduces. Server `sz-mcp-coworker` 1.37.18 (Senzing "current", docs index 2026-10-02 11:23 UTC), 2026-10-02. Tools: `get_capabilities`; `search_docs` for each of the eight listed queries, run before any edit, and the MDM query run a second time (`max_results=5`), with the same order.
+  - `"What is entity resolution false negative false positive true match"` → *"What Is Entity Resolution?"* at **rank 1** (136.5).
+  - `"Senzing principle-based entity resolution approach"` → *"Benefits of the Senzing Principle Based Approach"* at **rank 1** (177.0).
+  - `"entity resolution relationships disclosed discovered"` → *"How Does Relationship Awareness Improve Entity Resolution?"* at **rank 1** (86.2).
+  - `"ambiguous matches invisible false positives"` → *"What Are Ambiguous Matches and Invisible False Positives?"* at **rank 1** (116.6).
+  - `"Senzing differentiators real-time explainability attribution"` → *"Senzing Explainability Functionality"* at **rank 2** (114.3), behind the same page's *"Explainability Resources"* links (130.7).
+  - `"How does entity resolution work steps process"` → *"How Does Entity Resolution Work?"* at **rank 1** (134.9).
+  - `"entity resolution false positives false negatives accuracy"` → *"What Are Ambiguous Matches and Invisible False Positives?"* at **rank 2** (83.6), behind a Verisk case study (87.2).
+  - `"difference between entity resolution and master data management"` → *"What Is the Difference Between Entity Resolution and Master Data Management (MDM)?"* at **rank 1** (134.3). The FAQ answer *"Entity Resolution FAQ > What is the difference between entity resolution and master data management (MDM)?"* is at **rank 3** (122.2), not rank 2 as the issue says. Rank 2 (130.2) is a different FAQ, *"How does Senzing integrate with MDM (Master Data Management) systems?"*.
+  - The inline routes (*"What Is Entity Resolution?"* and *"How Does Entity Resolution Work?"*, both rank 1; the false-positives query's Verisk case study above its on-topic section) come from the same runs and are unchanged.
+  - No route is below rank 3, so the issue's follow-up rule did not fire. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** implemented directly (Phase 5a). Prose in one file, plus one test class following the neighboring tests in the same file.
+- **Summary:**
+  - **Restamp.** The stamp now reads "Current measurement: MCP server 1.37.18, docs index 2026-10-02 11:23 UTC, measured 2026-10-02", still with every entry re-run on that date. The inline stamp names the same measurement. Every rank in the table and in the inline routes matched the re-run, so none changed. The two rows below rank 1 keep their "read down the list" notes (INV-291).
+  - **The MDM FAQ rank.** It stays "read down that list to rank 3", because that is what the re-run measured. The bullet now adds that rank 2 is a different FAQ, *"How does Senzing integrate with MDM (Master Data Management) systems?"*, so a reader doesn't stop there. That FAQ is the likely source of #377's "rank 2" reading.
+  - **The stamp guard.** `TheInlineStampMatchesTheCurrentStamp` fails unless every "measured on MCP server …" stamp in `concepts.md` names the same server version and docs index as the "Current measurement" stamp. It also fails when there is no inline stamp, and its message cites INV-291. It matches only the "measured on MCP server" form, so the 1.35.3 history ("on MCP server 1.35.3, docs index …") is not read as a stamp. A test checks that too. Negative controls run the check on a 1.37.16-inline/1.37.18-current pair and on a text with no inline stamp; both fail. Two live mutations of `concepts.md` were also tried: putting back the old inline stamp, and deleting the inline stamp. Each turned the guard red (`FAILED (failures=1)`), and restoring the file turned it green.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **Differs from the issue:** (1) The issue says the MDM FAQ answer moved to rank 2 and asks for "read down that list to rank 2" if the re-run agrees. The re-run doesn't agree: it puts the FAQ at rank 3, so the rank stays 3, and the restamp is still owed because the docs index moved. (2) One sentence is added to the bullet, naming the different FAQ at rank 2. The issue didn't ask for it; it is there so the next reader doesn't make the same misreading.
+- **Establishes no invariant.** The restamp and the guard apply INV-291 as amended (one stamped measurement, each rank recorded on it). The stdlib test applies INV-108. No ⛔ line is added, and none is demoted.
+
 ## four-stale-lines-noticed-during-the-2026-10-01-runs
 
 - **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #377, spec revision 1; four out-of-scope findings noticed while implementing #328, #334 and #335)
