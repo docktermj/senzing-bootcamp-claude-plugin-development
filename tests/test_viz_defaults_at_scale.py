@@ -22,6 +22,11 @@ The JS is exercised by transcribing the shipped expressions rather than running 
 browser: the guarantees are arithmetic, and a headless browser is not available on
 every machine that runs this suite (INV-052/INV-066).
 
+Enforces **INV-154**'s uncapped note ("Showing the N entities that have relationships, of M
+total"), which its 2026-10-02 note (#327) keeps for an uncapped payload. The capped branch is
+`tests/test_viz_capped_graph_notes.py`'s. Transcribing the JS does **not** establish what a browser
+renders.
+
 Run:  python3 -m unittest discover -s tests
 """
 import os

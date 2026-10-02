@@ -26,6 +26,10 @@ nothing is described that was not written, and nothing is written that is not de
 future fixture added to `build()` without a banner row fails here, which a corrected static
 list would not have prevented.
 
+Enforces **INV-175**'s 2026-10-02 note (#328) for the dry-run fixtures: the modes that start before
+Step 8 do not pre-create `config/engine_config.json`. It does **not** establish anything about the
+env script itself, which `tests/test_env_script_shell_portability.py` executes.
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

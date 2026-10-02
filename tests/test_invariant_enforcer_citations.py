@@ -481,7 +481,62 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 168 on 2026-10-01: INV-229's dated correction (#282: no count of the installation checks is asserted)
 # names test_module3_check_lists_agree.py as an enforcer, which already cites INV-229 back. Re-derived by
 # running the extractor -- 168, with the new pair present by name. EXPECTED_PAIRS 167 -> 168.
-EXPECTED_PAIRS = 168
+# 169 on 2026-10-02: INV-239's dated note (#343: distinct invented entities carry their own
+# identifiers) names test_synthesized_entities_have_their_own_identifiers.py, which already cites
+# INV-239 back. Re-derived by running the extractor -- 169, the one new pair present by name and none
+# removed. EXPECTED_PAIRS 168 -> 169.
+# 170 on 2026-10-02: INV-239's second dated note (#337: a regeneration requested after Module 5's gate
+# has fired is exempt from the 70-79% requirement) names
+# test_no_progress_gate_returns_to_data_collection.py, which already cites INV-239 back. Re-derived by
+# running the extractor -- 170, the one new pair present by name and none removed.
+# EXPECTED_PAIRS 169 -> 170.
+# 171 on 2026-10-02: INV-342's audio-contract note (#339) names test_graduation_video_step.py for Step
+# 1c's reading of the Voice:/Music: lines, and that file now cites INV-342 back, stating it does not
+# establish that the renderer prints them. (test_recap_video.py, the note's other enforcer, was
+# already a pair.) Re-derived by running the extractor -- 171, the one new pair present by name and
+# none removed. EXPECTED_PAIRS 170 -> 171.
+# 172 on 2026-10-02: INV-340's no-voice note (#340) names test_graduation_no_voice_guidance.py, which
+# already cites INV-340 back. Re-derived by running the extractor -- 172, the one new pair present by
+# name and none removed. EXPECTED_PAIRS 171 -> 172.
+# 173 on 2026-10-02: INV-209's placement note (#323: a marker in shipped Markdown sits inside an HTML
+# comment) names test_shipped_negative_markers_are_html_comments.py, which already cites INV-209 back.
+# Re-derived by running the extractor -- 173, the one new pair present by name and none removed.
+# EXPECTED_PAIRS 172 -> 173.
+# 174 on 2026-10-02: INV-291's note (#335: a measured route records what it returned and its rank)
+# names test_pattern_gallery_shortfall.py, which already cites INV-291 back
+# (test_module_0_suggested_queries_are_measured.py was already a pair). Re-derived by running the
+# extractor -- 174, the one new pair present by name and none removed. EXPECTED_PAIRS 173 -> 174.
+# 176 on 2026-10-02: INV-331's note (#330, with #345: Step 8b uses Phase A's threshold, and its marker
+# records the figure compared) names test_step_8b_uses_module_6s_sqlite_threshold.py, which now cites
+# INV-331 back, and test_sqlite_load_time_prompt_is_defined_and_matched.py, which already did.
+# Re-derived by running the extractor -- 176, both new pairs present by name and none removed.
+# EXPECTED_PAIRS 174 -> 176.
+# 178 on 2026-10-02: INV-091's dated correction (#332: the CDN fallback is withdrawn; the server
+# refuses to render without the vendored D3) names test_viz_server_refuses_to_render_without_d3.py
+# and test_project_local_visualization_finds_its_d3.py, which both already cite INV-091 back.
+# Re-derived by running the extractor -- 178, both new pairs present by name and none removed.
+# EXPECTED_PAIRS 176 -> 178.
+# 180 on 2026-10-02: INV-175's note (#328: the root marker and the pre-Step-8 branch) names
+# test_env_script_shell_portability.py and test_scaffold_banner_matches_build.py, which now both cite
+# INV-175 back. Re-derived by running the extractor -- 180, both new pairs present by name and none
+# removed. EXPECTED_PAIRS 178 -> 180.
+# 182 on 2026-10-02: INV-154's note (#327: the capped Entity Graph notes state the cap) names
+# test_viz_capped_graph_notes.py, which already cited INV-154 back, and test_viz_defaults_at_scale.py,
+# which now does. Re-derived by running the extractor -- 182, both new pairs present by name and none
+# removed. EXPECTED_PAIRS 180 -> 182.
+# 183 on 2026-10-02: INV-084's note (#338: data/senzing-ready/ holds only full outputs, folded in at
+# review rather than minted) names test_mapping_samples_stay_out_of_senzing_ready.py, which now cites
+# INV-084 back. Re-derived by running the extractor -- 183, the one new pair present by name and none
+# removed. EXPECTED_PAIRS 182 -> 183.
+# 184 on 2026-10-02: INV-344 (inside a per-source loop, no whole-run question while another source
+# remains) names test_module5_step16_asks_about_loading_only_after_the_last_source.py, which cites it
+# back and states what it does NOT establish -- that a live run follows it. Re-derived by running the
+# extractor -- 184, the new pair present by name and none removed. EXPECTED_PAIRS 183 -> 184.
+# 185 on 2026-10-02: INV-186's note (#325: the source registry is copied into production/ as a
+# projection, folded in at review rather than minted) names test_bundled_script_and_production_paths.py,
+# which already cites INV-186 back. Re-derived by running the extractor -- 185, the one new pair
+# present by name and none removed. EXPECTED_PAIRS 184 -> 185.
+EXPECTED_PAIRS = 185
 
 
 def pairs():

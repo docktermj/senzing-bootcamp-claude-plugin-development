@@ -28,6 +28,10 @@ as `skip`, with no question asked.
 The checks are pure functions over the text, so the negative controls below run the same
 functions over mutated copies.
 
+Enforces **INV-344** (inside a per-source loop, no whole-run question while another source
+remains). It asserts that step 16 and step 18a *state* the rule, and does **not** establish that a
+live run follows it, which only `dry-run` phase 3 can observe.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

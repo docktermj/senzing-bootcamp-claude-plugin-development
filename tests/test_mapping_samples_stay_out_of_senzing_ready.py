@@ -18,6 +18,10 @@ These tests pin the fix:
 
 The first two predicates are negative-controlled against the pre-#338 lines, held below.
 
+Enforces **INV-084**'s 2026-10-02 note (#338): `data/senzing-ready/` holds only each mapped
+source's full, load-ready output. It asserts what the guidance *states*, and does **not** establish
+that a live run writes no partial file there, which only `dry-run` phase 3 can observe.
+
 Run:  python3 -m unittest discover -s tests
 """
 import os

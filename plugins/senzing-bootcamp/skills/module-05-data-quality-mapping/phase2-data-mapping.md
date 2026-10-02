@@ -95,7 +95,7 @@ ground-rules file-placement contract:
   `schema_hints.md` → `docs/mapping/{source_name}_schema_hints.md`, `JOURNAL.md` →
   `docs/mapping/{source_name}_JOURNAL.md`. Mapping working data (`*_mapping_spec.json`, the
   per-source `{source}_sample.jsonl`, intermediate analyzer JSONL) → `data/mapping/`. Final
-  transformed, load-ready JSONL stays in `data/senzing-ready/`.
+  transformed, load-ready JSONL stays in `data/senzing-ready/`, and nothing partial does (INV-084).
   - ⛔ **The profile report has TWO possible filenames, and BOTH must be relocated.** A single-file
     start writes `profile_report.md`; a multi-file start writes one
     `profile_report_<stem>.md` **per input** (server 1.33.0, verified 2026-08-23 — see "the
@@ -1455,7 +1455,7 @@ remains**: `config/data_sources.yaml` has a source other than this one whose `ma
 not `complete`. Fast-pathed sources are `complete` (see "Skip fast-pathed sources"), so they never
 count. Read the registry before choosing the question. Each question is pinned verbatim (INV-056).
 
-**While one or more unmapped sources remain**, ask about the next source, not about loading.
+**While one or more unmapped sources remain** (INV-344), ask about the next source, not about loading.
 `{source}` is this source's name, and `{next}` is the next unmapped source, the one step 19 maps next:
 
 - **Quality ≥80% and all critical fields mapped:**
@@ -1483,7 +1483,7 @@ Handling (INV-284): "Yes, map {next}", "Move on to the next source, {next}" and 
 {next} anyway" continue through steps 17–18a, where 18a's multi-source rule recommends `skip`, to
 step 19, which starts {next}'s own `mapping_workflow` run. Every iterate option goes to step 17.
 
-**When no unmapped source remains** (this is the last source, or the only one), ask the loading
+**When no unmapped source remains** (INV-344; this is the last source, or the only one), ask the loading
 question:
 
 - **Quality ≥80% and all critical fields mapped:**
@@ -1615,7 +1615,7 @@ own `mapping_workflow` run. Tell the bootcamper: "Steps 5–8 are an optional sa
 you still have sources to map and the real load happens in Data processing, I'll skip the per-source
 test load and move on to the next unmapped source."
 
-**Last source (no unmapped source remains):** a step-16 answer that proceeds to loading (≥80%
+**Last source (no unmapped source remains):** (INV-344) a step-16 answer that proceeds to loading (≥80%
 option 1, 70-79% option 1, or <70% option 2) settles this decision as **skip**. Tell the bootcamper
 so in one line, for example "You chose to proceed to loading, so I'll skip the optional sandbox test
 load; the real load happens in Data processing.", advance with `skip`, ask no 👉 question here, and

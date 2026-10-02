@@ -42,7 +42,11 @@ Enforces **INV-340** (graduation's video step: offered once, nothing written on 
 never blocking, storyboard kept, the render verified). It asserts that Step 1c *states* these rules,
 and does **not** establish that a live run follows them, which only `dry-run` phase 3 can observe.
 
-Source issues: #300 (part of #297), #341, #326, #347.
+Also enforces **INV-342**'s 2026-10-02 audio-contract note (#339) for Step 1c's side of it: Step 1c
+reads the renderer's exact `Voice:` and `Music:` lines. It does **not** establish that the renderer
+prints them, which `tests/test_recap_video.py` asserts.
+
+Source issues: #300 (part of #297), #339, #341, #326, #347.
 
 Run:  python3 -m unittest discover -s tests
 """
