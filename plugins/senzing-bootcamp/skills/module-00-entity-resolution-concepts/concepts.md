@@ -121,7 +121,8 @@ the list for *"What Are Ambiguous Matches and Invisible False Positives?"* rathe
 the first row.
 
 - **What entity resolution is:** deciding whether different records refer to the *same
-  real-world entity* (person or organization), then matching, relating, and deduplicating them.
+  real-world entity* (a person, organization, product, vessel or another entity type), then
+  matching, relating, and deduplicating them.
 - **Two failure modes:** false negatives (same entity split apart) and false positives
   (different entities merged). The documentation carries a sharper framing of the second worth
   using — an **ambiguous match** (a record that could legitimately belong to more than one

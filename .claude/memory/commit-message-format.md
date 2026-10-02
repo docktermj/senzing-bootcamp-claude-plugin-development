@@ -15,7 +15,7 @@ issue: #97
 
 <body explaining what the defect was and what the fix does>
 
-Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Co-Authored-By: <the model attribution line your session supplies>
 ```
 
 **Why the trailer rather than a subject prefix:** GitHub scans the whole commit message
