@@ -498,7 +498,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 172 on 2026-10-02: INV-340's no-voice note (#340) names test_graduation_no_voice_guidance.py, which
 # already cites INV-340 back. Re-derived by running the extractor -- 172, the one new pair present by
 # name and none removed. EXPECTED_PAIRS 171 -> 172.
-EXPECTED_PAIRS = 172
+# 173 on 2026-10-02: INV-209's placement note (#323: a marker in shipped Markdown sits inside an HTML
+# comment) names test_shipped_negative_markers_are_html_comments.py, which already cites INV-209 back.
+# Re-derived by running the extractor -- 173, the one new pair present by name and none removed.
+# EXPECTED_PAIRS 172 -> 173.
+EXPECTED_PAIRS = 173
 
 
 def pairs():

@@ -1049,7 +1049,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - **Negative control on the real tree:** with `main`'s two plugin files restored, the guard fails naming exactly `module-02-sdk-setup/SKILL.md:1666` and `phase2-data-mapping.md:782`, and the payload module fails 3 tests (both marker tests and the bare-prose test). With the wraps reapplied, both modules pass.
   - **Not changed, as the issue scopes it:** `docs/*.md`, markers in `.py` files, and any marker's text.
 - **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` was not run locally: it is a remote reusable workflow, and no workflow file changed.
-- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-209 — awaiting `/review-invariants`.** The rule already registered:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-209 — applied 2026-10-02, amended at review.** The rule already registered:
     - ⛔ **The format is `MCP-NEGATIVE: <tool(params) asked> — <what is absent> — owner: <route that owns the fact + outcome> — server <version>, <YYYY-MM-DD>`, and a marker without the clause MUST NOT parse** — in `specs/INVARIANTS.md`
 
   ⚠️ **Why.** INV-209 fixes a marker's text: its slots, the required `owner:` clause and the
@@ -1069,12 +1069,9 @@ entries at once. Two things a reader should know about the hashes now recorded:
   enforcer is `tests/test_shipped_negative_markers_are_html_comments.py`. Applying it resolves
   the block: mark the bullet `applied YYYY-MM-DD` and drop the "awaiting" marker.
 
-  The drafted wording:
+  The drafted wording, as applied on 2026-10-02 (amended at review from a mid-entry insertion into a dated note):
 
-  **INV-209** — … A marker in shipped Markdown under `plugins/` MUST sit inside an HTML comment, `<!-- MCP-NEGATIVE: … -->`, single- or multi-line: it is dated maintainer metadata for `/dry-run`, and outside a comment it renders as body text in a skill the guide executes and in the public mirror. The token in backticks or in a fenced code block renders too, so it is not exempt; a mention without the colon is not a marker. Markers in `.py` files are already code comments and `docs/` is out of scope. (⚠️ **Amended <YYYY-MM-DD> (#323): placement added; the marker's text format is unchanged.** Two shipped markers were bare paragraphs, and `MCP_NEGATIVE` parses a marker the same either way, so nothing noticed.) Enforced by `tests/test_dated_negatives_are_marked.py` and, for the wrapper, `tests/test_shipped_negative_markers_are_html_comments.py`, which loads `MCP_NEGATIVE_TOKEN` from `coverage_reports.py` rather than redefining it. …
-
-  *(the `…` stand for INV-209's registered text, kept as it is; the date is a placeholder
-  deliberately: `/review-invariants` fills it in on the day it applies the amendment.)*
+  **INV-209** — … (Source: `mcp-negative-markers-must-name-the-owning-route`, 2026-08-13.) (⚠️ **Dated note, 2026-10-02 (#323): where a marker sits; its text format above is unchanged.** A marker in shipped Markdown under `plugins/` MUST sit inside an HTML comment, `<!-- MCP-NEGATIVE: … -->`, single- or multi-line: it is dated maintainer metadata for `/dry-run`, and outside a comment it renders as body text in a skill the guide executes and in the public mirror. The token in backticks or in a fenced code block renders too, so it is not exempt; a mention without the colon is not a marker. Markers in `.py` files are already code comments and `docs/` is out of scope. Two shipped markers were bare paragraphs, and `MCP_NEGATIVE` parses a marker the same either way, so nothing noticed. Enforced by `tests/test_shipped_negative_markers_are_html_comments.py`, which loads `MCP_NEGATIVE_TOKEN` from `coverage_reports.py` rather than redefining it.)
   *(written without a new id deliberately: this amends INV-209 in place, and a literal new id
   would cite an invariant that does not exist and turn `citations.py verify` red. If the
   maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
