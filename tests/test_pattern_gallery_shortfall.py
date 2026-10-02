@@ -22,6 +22,15 @@ which is the more dangerous shape because a plausible result does not invite a r
   the one recognized category with no business-use-case material, so the wrong answer is the only
   answer a plain query gets.
 
+#335 (server 1.37.16, docs index 2026-09-29 22:00 UTC, 2026-10-01) found two of the step's named
+documents without a working route. The cost-table query reached the cost document but put its
+*"Estimated Annual Cost of Mismatched Identity Records"* table at rank 3, behind the intro and the
+*"Remaining Sectors"* section, while the step said it "returns" the table. The
+non-person-entity-types FAQ had no query at all, and the obvious one landed on a different FAQ
+about *matching* non-person entities, whose caution reads as a reason to drop the pattern. Each
+route now names the document it returns and its rank. Like INV-291's query list, the guard pins
+that measured result and never the query's wording.
+
 Enforces **INV-212**.
 
 Run:  python3 -m unittest discover -s tests
@@ -87,6 +96,69 @@ class Step3TellsTheGuideHowToQuery(unittest.TestCase):
         self.assertRegex(
             self.body, r"(?i)do not restate",
             "the pointer must say not to restate the reasoning, matching how Step 14 defers to it",
+        )
+
+
+#: The documents Step 3 names, each with the heading its measured route returns.
+MEASURED_ROUTES = {
+    "cost table": '*"Estimated Annual Cost of Mismatched Identity Records"* table',
+    "non-person FAQ": '*"Adding Non-Person Entity Types to Senzing"*',
+}
+
+#: A measured route's stamp: rank, then server version, docs index date and measurement date.
+ROUTE_STAMP = re.compile(
+    r"\*\*rank ([1-3])\*\* \(MCP server 1\.\d+\.\d+, docs index 20\d\d-\d\d-\d\d"
+    r"[^)]*, measured 20\d\d-\d\d-\d\d\)")
+
+
+class Step3RecordsWhatEachNamedRouteReturns(unittest.TestCase):
+    """#335: a route names the document it returns and its rank, with a dated stamp."""
+
+    def setUp(self):
+        self.flat = flat(step_3(PHASE_1.read_text(encoding="utf-8")))
+
+    def route(self, target):
+        """The text from a `search_docs` call's "returns <target>" to the end of its stamp."""
+        m = re.search(r"`search_docs\(query='[^']+'(?:, category='[^']+')?\)` returns "
+                      r"(?:the )?" + re.escape(target), self.flat)
+        self.assertIsNotNone(
+            m, "Step 3 has no `search_docs(...)` call recorded as returning %s" % target)
+        return self.flat[m.start():m.end() + 200]
+
+    def test_each_named_document_has_a_route_with_rank_and_stamp(self):
+        for label, target in MEASURED_ROUTES.items():
+            with self.subTest(route=label):
+                self.assertRegex(
+                    self.route(target), ROUTE_STAMP,
+                    "The %s route must record the rank it returned (1, or 3 or better) with the "
+                    "server version, docs index date and measurement date. A route without them "
+                    "cannot be re-checked when the index moves." % label,
+                )
+
+    def test_the_sector_query_is_not_said_to_return_the_table(self):
+        """The defect #335 fixed: a query that reached the document was said to return its table."""
+        self.assertNotRegex(
+            self.flat,
+            r"by sector[^`]*'\)` returns `economic-cost-mismatched-identity-data\.md`, whose",
+            "Step 3 again says the sector-worded query returns the cost table. Measured, it put "
+            "the table at rank 3, behind the document's intro and its Remaining Sectors section.",
+        )
+
+    def test_the_matching_faq_is_distinguished_from_the_linking_faq(self):
+        self.assertIn(
+            "product matching, vehicle matching, or other non-person entities", self.flat,
+            "Step 3 must name the product/vehicle-matching FAQ, so the guide recognizes it when a "
+            "query returns it instead of the non-person-entity-types FAQ.",
+        )
+        self.assertRegex(
+            self.flat, r"(?i)different document",
+            "Step 3 must say the matching FAQ is a different document.",
+        )
+        self.assertRegex(
+            self.flat, r"\*\*matching\*\* non-person entities.{0,200}\*\*linking\*\* people",
+            "Step 3 must say the matching FAQ's caution concerns MATCHING non-person entities, "
+            "not LINKING people to them. Without it the caution reads as a reason to drop the "
+            "pattern.",
         )
 
 

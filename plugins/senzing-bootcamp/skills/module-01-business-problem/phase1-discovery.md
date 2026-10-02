@@ -43,12 +43,18 @@ routes carry most of the material. Everything from here to the end of this step 
 strategy INV-212 requires — the vocabulary, the documents that hold the material, the queries that
 return confidently wrong content, and what to do with a topic the searches do not reach:
 
-- **Business value, for nearly every category** — `search_docs(query='total economic cost mismatched
-  identity data by sector …')` returns `economic-cost-mismatched-identity-data.md`, whose
-  *"Estimated Annual Cost of Mismatched Identity Records"* table quantifies ten sectors. Its
-  appendix breaks several sectors into ER-attributable typologies. **Cite the figures as returned by
-  `search_docs`, never from this file** — the numbers live in the document, so a revision changes
-  them in one place.
+- **Business value, for nearly every category** — `search_docs(query='Estimated Annual Cost of
+  Mismatched Identity Records')` returns the *"Estimated Annual Cost of Mismatched Identity
+  Records"* table of `economic-cost-mismatched-identity-data.md` at **rank 1** (MCP server 1.37.16,
+  docs index 2026-09-29 22:00 UTC, measured 2026-10-01). The table quantifies ten sectors, and the
+  document's appendix breaks several sectors into ER-attributable typologies. **Cite the figures as
+  returned by `search_docs`, never from this file** — the numbers live in the document, so a
+  revision changes them in one place.
+
+  ⚠️ **A sector-worded query reaches the document but not the table.** On the same measurement,
+  `'total economic cost mismatched identity data by sector'` returned the document's intro at
+  rank 1 and its *"Remaining Sectors"* section at rank 2, with the table only at rank 3. Use the
+  table's own heading.
 
   ⚠️ **Two of the ten rows are "All Sectors" rows, and one of them is the row most bootcamper
   scenarios actually need.** Lead with **`All Sectors: Cross-Industry Data Quality`** whenever the
@@ -71,6 +77,18 @@ return confidently wrong content, and what to do with a topic the searches do no
   Detection), the USCIS fraud case study, the MDM integration FAQ (Vendor MDM: free resolution vs
   forced separation via a Trusted ID), and the non-person-entity-types FAQ (asset, claim and
   vehicle linking).
+
+  - **The non-person-entity-types FAQ** — `search_docs(query='Adding Non-Person Entity Types to
+    Senzing', category='faq')` returns *"Adding Non-Person Entity Types to Senzing"*
+    (`non-person-entity-types-faq.md`) at **rank 1** (MCP server 1.37.16, docs index 2026-09-29
+    22:00 UTC, measured 2026-10-01).
+
+    ⚠️ **Rank 2 is a different document, and looser queries put it first:** the FAQ *"Can I use
+    Senzing for product matching, vehicle matching, or other non-person entities?"*. Its caution,
+    that this needs work with Senzing R&D, concerns **matching** non-person entities to each other.
+    This pattern is about **linking** people and organizations to assets, claims and vehicles,
+    which is what the non-person-entity-types FAQ describes. Do not let that caution drop the
+    pattern.
 
 ⛔ **Two category names are homonym traps that return confidently WRONG content, not nothing** —
 which is worse, because a wrong-looking result invites a re-query and a plausible one does not:
