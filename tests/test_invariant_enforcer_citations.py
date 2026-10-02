@@ -532,7 +532,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # remains) names test_module5_step16_asks_about_loading_only_after_the_last_source.py, which cites it
 # back and states what it does NOT establish -- that a live run follows it. Re-derived by running the
 # extractor -- 184, the new pair present by name and none removed. EXPECTED_PAIRS 183 -> 184.
-EXPECTED_PAIRS = 184
+# 185 on 2026-10-02: INV-186's note (#325: the source registry is copied into production/ as a
+# projection, folded in at review rather than minted) names test_bundled_script_and_production_paths.py,
+# which already cites INV-186 back. Re-derived by running the extractor -- 185, the one new pair
+# present by name and none removed. EXPECTED_PAIRS 184 -> 185.
+EXPECTED_PAIRS = 185
 
 
 def pairs():
