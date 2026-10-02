@@ -521,7 +521,9 @@ Based on the assessment — evidence first, wording second:
   merged on [match keys], and each is the same [person/organization]. Possible matches are [x]% of
   entities. Quality looks good — let's proceed to visualizations."
 - **Marginal:** "I see some potential issues. Here are the specific entities to review." (Show the
-  sampled entities and pairs with their match keys, then ask whether to proceed or iterate.)
+  sampled entities and pairs with their match keys, then ask whether to proceed or iterate.) On
+  "proceed", continue to **3c**. On "iterate", enter
+  [the quality-iteration route](#the-quality-iteration-route) below, as its Marginal clause says.
 - **Poor:** a high possible-match rate is a **finding, not a verdict on the mapping.** Show the
   possible-match pairs and name the match-key pattern they share, then run the test below before
   saying anything about mapping. ⛔ **The band says to look hard; it does not say what you will
@@ -584,22 +586,81 @@ mapping" is worth keeping — and a finding that routed nowhere must not be sile
 
 **Module 5 feedback loop (when quality is poor or the bootcamper requests iteration):**
 
-Explain first, as a statement: their loaded data and query programs will be preserved; after
-remapping, they'll reload the affected sources and re-evaluate here. Then end the turn on this
-single question:
+Explain first, as a statement: name the sources the finding implicates, and say that their loaded
+data and query programs will be preserved; after remapping, they'll reload the affected sources and
+re-evaluate here. Then end the turn on this single question:
 
 👉 **Would you like to return to the Data Quality, Mapping, and Transformation module to refine your data mapping?**
 
 *(Internal: end the turn on this question and wait.)*
 
-If accepted:
+**Handling each answer (INV-284).**
 
-1. Note which data sources need remapping in `config/bootcamp_progress.json` under a
-   `quality_iteration` key.
-2. Set `current_module` to `data_quality_mapping` (Module 5's name token — `current_module` holds
-   a name token, never a catalog number, per INV-086) and `current_step` to the Phase 2 start step.
-3. Load `../module-05-data-quality-mapping/phase2-data-mapping.md` and begin at its Phase 2
-   (step 8, "Start") for the source being refined.
+- **Declined:** record the finding for the module recap and continue to **3c**, whose pinned
+  visualization offer closes the turn.
+- **Accepted:** run the quality-iteration route below. ⛔ **(INV-006) The pinned question's yes IS the
+  route's go-ahead, so ask no second confirmation.**
+- **Marginal's "iterate":** give the explanation statement above, then enter the route directly with
+  `from_verdict: "marginal"`. ⛔ **(INV-006) The Module 5 question above is not asked as well:** the
+  "iterate" answer is already the go-ahead.
+
+<a id="the-quality-iteration-route"></a>
+
+**The quality-iteration route, for the named sources only.** ⛔ **(INV-300) This is the canonical
+statement of the route:** which stages run, in what order, and where the flow resumes. Module 5's and
+Module 6's receiving branches say only how their stage is done, and cite this step. The model is
+Module 5's `collection_return` (`../module-05-data-quality-mapping/phase1-quality-assessment.md`
+Step 7b): the Bootcamper stays in this module throughout, and no module is re-entered or re-completed.
+
+1. **Record the return in one quiet write** to `config/bootcamp_progress.json`: set `current_step` to
+   `"3b"`, add
+
+   ```json
+   "quality_iteration": {
+     "sources": ["<DATA_SOURCE>", "..."],
+     "from_verdict": "poor | marginal",
+     "stage": "remap | reload",
+     "completed": [],
+     "started_at": "<ISO 8601>"
+   }
+   ```
+
+   and append `{"sources", "from_verdict", "started_at", "before"}` to
+   `module_7_query.quality_iterations`, where `before` holds the three indicators of the quality
+   summary above. `sources` lists the sources named in the explanation statement. `stage` starts at
+   `remap`. `completed` lists the sources whose current stage has finished. ⛔ **(INV-284)
+   `current_module` is not changed:** the Bootcamper stays in this module, and the key is what lets an
+   interrupted return resume.
+
+2. **Run the two stages, in order, for the named sources only:**
+
+   | `stage` | What runs | Stated in |
+   |---|---|---|
+   | `remap` | Module 5 Phase 2 Steps 8–18 for each named source, with Step 19's relocation guard between sources. Phase 1, Phase 3 and Step 20 do not run | [Module 5 → Receiving a `quality_iteration`](../module-05-data-quality-mapping/phase2-data-mapping.md#receiving-a-quality-iteration) |
+   | `reload` | Module 6: the RECORD_ID-set comparison and delete, then each named source's reload with the existing loading program, then redo. Phase A runs only when a source's input path changed. Phase D and the completion step do not run | [Module 6 → Receiving a `quality_iteration`](../module-06-data-processing/phaseB-load-first-source.md#receiving-a-quality-iteration) |
+
+   When every named source is remapped, set `stage` to `reload` and `completed` to `[]` in one write,
+   then continue into Module 6's branch.
+   ⛔ **(INV-284) No module is completed on a return:** no Module Completion for Module 5 or Module 6,
+   nothing added to `modules_completed` again, no recap section for either, no progress update and no
+   transition question. Neither branch writes a checkpoint of its own module, so `current_module` and
+   `current_step` stay as this step set them.
+
+3. **Resume here.** When the reload stage finishes, clear `quality_iteration` and set `current_step`
+   to `"3b"` in one write. Then re-run step 3b in full on the reloaded data: the sampled entities,
+   the quality summary and the verdict. ⛔ **(INV-284) That is a new state, NOT an INV-006
+   repeat**, so present whichever branch the new indicators select. The return may be offered again,
+   with no cap, because each return measures a new state. At step 3b's checkpoint, record the new
+   indicators as `after` on the latest `module_7_query.quality_iterations` entry.
+
+4. **An interrupted return** resumes from `current_step: "3b"` with `quality_iteration` present: this
+   module's `SKILL.md` **First:** routes by `stage` to the first source not listed in `completed`. Do
+   not re-present the step-3b question, whose answer is already recorded.
+
+5. **The recap.** Module 7's own recap section records the iteration, as
+   "Module completion" at the end of this file says.
+
+Outcomes 2 and 3 of the Poor band never reach this route (INV-264, above).
 
 **Checkpoint:** write step 3b.
 
@@ -1015,9 +1076,17 @@ except the live `why`/`how`/`search`. Then ask the teardown gate, pinned verbati
 Module 7 is the **last content module before graduation** (required in every path). Once the gate
 is satisfied and the teardown step above is done or skipped, run the standard **Module Completion**
 process in `../bootcamp-onboarding/module-completion.md` (update progress, append the Module 7 recap
-section to `docs/bootcamp_recap.md`, and present the end-of-module summary). Because this is the last
-content module, the completion process ends with the graduation offer rather than a next-module
-transition:
+section to `docs/bootcamp_recap.md`, and present the end-of-module summary).
+
+**The Module 7 recap section records every quality iteration.** For each entry in
+`module_7_query.quality_iterations` (step 3b's
+[quality-iteration route](#the-quality-iteration-route)), record which sources were remapped and
+reloaded, the verdict that sent them (`from_verdict`), and the indicators before and after.
+⛔ **(INV-284) This section is the only record of it:** the return wrote no Module 5 or Module 6
+recap section and added nothing to `modules_completed`.
+
+Because this is the last content module, the completion process ends with the graduation offer
+rather than a next-module transition:
 
 👉 **Would you like to graduate now and generate your production project and recap?**
 

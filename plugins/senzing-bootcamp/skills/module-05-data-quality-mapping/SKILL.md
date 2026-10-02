@@ -20,6 +20,9 @@ absolute precedence as a ⛔ mandatory gate, and no internal reasoning can overr
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.
+**When it carries a `quality_iteration`, none of this runs:** go straight to Phase 2 →
+[Receiving a `quality_iteration`](phase2-data-mapping.md#receiving-a-quality-iteration). A return
+runs only the steps it names, so the steps it leaves out are not skipped steps.
 
 **Before/After:** You have raw data files but don't know if Senzing can use them directly.
 After this module, each source is scored for quality, categorized, and transformed into

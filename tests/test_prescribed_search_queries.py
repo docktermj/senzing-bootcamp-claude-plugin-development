@@ -705,6 +705,23 @@ VERIFIED_QUERIES = {
             "get_capabilities",
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-02",
     },
+    # ---------------------------------------------------------------------------------
+    # Executed for #392 on server 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-02, at the
+    # default max_results. Module 6 Phase B's quality_iteration receiving branch cites it for the
+    # record-key replacement that lets a reload skip deleting the records whose IDs survived.
+    "Data Source Records DSRs Explained same DATA_SOURCE RECORD_ID replaces": {
+        "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
+        "sections": ("Uniquely Identifying Records in Senzing",),
+        "returned":
+            "ON TARGET BELOW AN ADJACENT TOP HIT: the top three hits are sections of 'Data Source "
+            "Records (DSRs) Explained'. The top hit is 'Important Nuances > Expanding Data "
+            "Sources'; the second is 'Uniquely Identifying Records in Senzing', which says the "
+            "data source code plus the record ID is a record's unique key and that a record sent "
+            "with a key that matches a loaded record replaces it; the third is 'Important Nuances "
+            "> Event Sources'. The rest of the set is register_data_source code examples. The "
+            "site says to read past the first hit",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-02",
+    },
     # "entity resolution quality evaluation" was listed here as OFF TARGET on 2026-08-12 and is
     # gone: Module 7 Step 3b no longer prescribes it. It returned the Buyer's Guide's
     # vendor-selection steps rather than precision/recall material, and

@@ -27,6 +27,64 @@ Record the choice and its reason in `docs/loading_strategy.md` as the **first-so
 it in step 5's checkpoint too. Step 14 reads it from the file, so a resumed session does not lose
 it. With a single source there is no choice: say nothing and record nothing.
 
+<a id="receiving-a-quality-iteration"></a>
+
+## Receiving a `quality_iteration` (from Query, Visualize and Discover)
+
+⛔ **(INV-284) Check for it before anything else in this module, Phase A included.** When
+`config/bootcamp_progress.json` carries a `quality_iteration` whose `stage` is `reload`, the
+Bootcamper chose the return at Module 7 step 3b and Module 5 has remapped the named sources. This is
+not a run of this module: show no start banner, journey map or overview, write no Module 6
+checkpoint (leave `current_module` and `current_step` as Module 7 set them, so its progress is not
+overwritten), and reload only the sources the key names. Which stages run and where Module 7 resumes
+are stated once, in `../module-07-query-visualize-discover/phase1-query-visualize.md` step 3b → "The
+quality-iteration route" (INV-300); this block says only how the reload is done.
+
+For each source in `sources` not yet listed in `completed`, in order:
+
+1. **Phase A runs only when the source's input path changed.** When the remap left the registry
+   `file_path` the loading program reads unchanged, reuse the existing program in `src/load/` as it
+   is. When it changed, run Phase A for this source only before the reload.
+2. **Compare the RECORD_ID sets before the reload.** The previous set is the one Module 5's
+   [receiving branch](../module-05-data-quality-mapping/phase2-data-mapping.md#receiving-a-quality-iteration)
+   recorded in `{source_name}_loaded_record_ids.txt` before the remap. The new set is the
+   RECORD_IDs the reload will load: the remapped file, narrowed by the source's `load_subset:` block
+   when one is recorded ([the subset record](#load-subset-record)). An `overlap_preserving` subset
+   file was cut from the previous mapping, so rewrite it from the remapped file with the same
+   RECORD_IDs, and re-measure its `record_count`, before comparing.
+3. **Delete the records whose RECORD_IDs no longer appear,** using the record-delete call the Senzing
+   MCP server documents for the chosen language, never one from memory (INV-080):
+   `sdk_guide(topic='delete', language='<chosen_language>')` returns the delete loop, and
+   `get_sdk_reference(topic='parameters', filter='delete_record', language='<chosen_language>')`
+   returns that binding's signature, whose name and arguments differ by binding. Report how many
+   were deleted. When the sets are equal, nothing is deleted. The remaining records need no delete:
+   a record whose data source code and RECORD_ID match a loaded record replaces it
+   (`search_docs(query='Data Source Records DSRs Explained same DATA_SOURCE RECORD_ID replaces')` →
+   "Data Source Records (DSRs) Explained" → "Uniquely Identifying Records in Senzing", its second
+   hit: read past the first, the same document's "Important Nuances > Expanding Data Sources";
+   server 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-02).
+4. **Reload the source with the existing loading program:** `phaseB-load-first-source.md` Step 7
+   (below) on a single-source run, or `phaseC-multi-source.md` Step 19 for this source alone on a
+   multi-source run. Step 7's license check, its two-stage reconciliation (INV-243) and its `load_status` update in
+   `config/data_sources.yaml` apply as written. Back up `database/G2C.db` first, as for any load.
+5. **Add the source to `completed`** in one quiet write, and delete its
+   `{source_name}_loaded_record_ids.txt`.
+
+When every named source is reloaded, **process redo once** by Step 9 below on a
+single-source run, or `phaseC-multi-source.md` Step 20 on a multi-source run. Then return to Module 7
+step 3b's resume, which clears the key.
+
+⛔ **(INV-327) This deliberate replacement by record key is not the first-source reload INV-327
+forbids.** That rule forbids repairing a broken load-order dependency by reloading the first source,
+which double-loads its records. Here each record replaces its own earlier version by key, and the
+records whose RECORD_IDs left the source are deleted first, so nothing is loaded twice.
+
+**Phase D and Module 6's completion step do not run.** ⛔ **(INV-284) No validation, no
+iterate-vs-proceed gate and no Module Completion:** no second Module 6 recap section, no progress
+update, no transition question, and `data_processing` is not added to `modules_completed` again.
+Module 7 step 3b is where the re-evaluation happens. The first-source choice above, and Phase B's
+other steps, do not run either.
+
 ## 5. Test with sample data (if Phase 3 was skipped)
 
 If the bootcamper did not complete Phase 3 in Module 5, run the loading program on a small
