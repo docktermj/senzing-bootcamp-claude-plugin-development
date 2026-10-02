@@ -130,7 +130,7 @@
 ### Questions & Responses
 
 - **Q:** Would you like to switch to `/model opus` + `/effort high` for this module?
-    - **R:** Yes (set Opus 5 at high effort).
+    - **R:** Yes (set Opus 5.5 at high effort).
 - **Q:** Are you done modifying the model and effort?
     - **R:** Yes.
 - **Q:** Which database would you like to use?
@@ -185,7 +185,7 @@
 ### Questions & Responses
 
 - **Q:** Would you like to switch to `/model sonnet` for this module?
-    - **R:** Yes (step down from Opus 5; effort stayed at high).
+    - **R:** Yes (step down from Opus 5.5; effort stayed at high).
 - **Q:** Are you done modifying the model and effort?
     - **R:** Yes.
 

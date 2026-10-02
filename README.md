@@ -86,7 +86,7 @@ and starting the Bootcamp.
         1. Close *Directory* pane.
 1. In Claude Desktop, on the bottom,
     1. Choose the Mode: "**auto**" for a smooth ride.
-    1. Choose the Model "**Sonnet 5**".
+    1. Choose the Model "**Sonnet 5.5**".
     1. Choose the Effort: "**medium**".
 1. In Claude Desktop, near the bottom, in the agentic chat, enter:
 

@@ -47,8 +47,8 @@ For the desktop application instead, see
     cd senzing-bootcamp
     ```
 
-1. *Command line options:* run most of the bootcamp on **Sonnet 5** for
-   the best value and switch up to **Opus 5** for the correctness-critical
+1. *Command line options:* run most of the bootcamp on **Sonnet 5.5** for
+   the best value and switch up to **Opus 5.5** for the correctness-critical
    stretches: **SDK setup**, **Data Quality, Mapping, and Transformation**,
    and **Bootcamp graduation**. The bootcamp surfaces the recommendation at the start of
    each module, so you never have to remember which is which.
@@ -58,7 +58,7 @@ For the desktop application instead, see
 1. Example command:
 
     ```console
-    claude --model claude-sonnet-5 --effort medium --permission-mode auto
+    claude --model claude-sonnet-5-5 --effort medium --permission-mode auto
     ```
 
 1. *Note:* besides the Claude Code CLI and Claude Desktop,

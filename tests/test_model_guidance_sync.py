@@ -33,14 +33,69 @@ MODEL_SELECTION = os.path.join(PLUGIN, "docs", "model-selection.md")
 # guards. Add a row whenever a model is superseded; the last element of each pair
 # is the current replacement, quoted in the failure message.
 SUPERSEDED = [
-    ("Opus 4.8", "Opus 5"),
-    ("claude-opus-4-8", "claude-opus-5"),
+    ("Opus 4.8", "Opus 5.5"),
+    ("claude-opus-4-8", "claude-opus-5-5"),
+    ("Opus 5", "Opus 5.5"),
+    ("Sonnet 5", "Sonnet 5.5"),
+    ("Fable 5", "Fable 5.1"),
+    ("claude-opus-5", "claude-opus-5-5"),
+    ("claude-sonnet-5", "claude-sonnet-5-5"),
+    ("claude-fable-5", "claude-fable-5-1"),
 ]
 
-# The one file allowed to name a superseded model: the staleness note in
-# docs/model-selection.md deliberately cites the prior model to explain that
-# Opus 5 inherited its price. Scoped to that file so it can't become a loophole.
+
+def superseded_pattern(stale):
+    """Match `stale` only where it ends at a version boundary.
+
+    A plain substring test cannot hold a row like ("Opus 5", "Opus 5.5"): the stale
+    name is a prefix of its own replacement, as `claude-opus-5` is of
+    `claude-opus-5-5`. So a display name must not be followed by `.<digit>` or a
+    digit ("Opus 5" is not "Opus 5.5", but is "Opus 5," "Opus 5 /" and a
+    sentence-final "Opus 5."), and an ID must not be followed by `-<digit>` or a
+    digit (`claude-opus-5` is not `claude-opus-5-5`, but is `claude-opus-5[1m]`).
+    """
+    if stale.startswith("claude-"):
+        return re.compile(r"(?<![\w-])" + re.escape(stale) + r"(?!-?\d)")
+    return re.compile(r"\b" + re.escape(stale) + r"(?!\.?\d)")
+
+
+# The one block allowed to name a superseded model: the staleness note in
+# docs/model-selection.md deliberately cites the prior models to explain the
+# supersession. Only that blockquote is exempt, never the rest of the file: a
+# whole-file exemption is how that file's tier table kept naming Fable 5, Opus 5
+# and Sonnet 5 after they were superseded.
 STALENESS_NOTE_FILE = os.path.join(PLUGIN, "docs", "model-selection.md")
+STALENESS_NOTE_MARKER = "> **Point-in-time data"
+
+
+def without_staleness_note(text):
+    """`text` with the staleness-note blockquote removed, and nothing else.
+
+    The block is the run of `>` lines that starts at STALENESS_NOTE_MARKER. With
+    no marker nothing is removed, so a missing note exempts nothing.
+    """
+    lines = text.splitlines(keepends=True)
+    kept, in_note = [], False
+    for line in lines:
+        if line.startswith(STALENESS_NOTE_MARKER):
+            in_note = True
+        elif in_note and not line.startswith(">"):
+            in_note = False
+        if not in_note:
+            kept.append(line)
+    return "".join(kept)
+
+
+def superseded_offenders(rel, text, exempt_note=False):
+    """Every superseded name or ID in `text`, as failure-message lines."""
+    if exempt_note:
+        text = without_staleness_note(text)
+    return [
+        f"{rel}: '{stale}' should be '{current}'"
+        for stale, current in SUPERSEDED
+        if superseded_pattern(stale).search(text)
+    ]
+
 
 TABLE_HEADER = "| Stage | Recommended | CLI commands |"
 
@@ -100,15 +155,25 @@ class NoSupersededModelReferences(unittest.TestCase):
         for path in shipped_markdown():
             with open(path, encoding="utf-8") as fh:
                 text = fh.read()
-            for stale, current in SUPERSEDED:
-                if stale not in text:
-                    continue
-                if path == STALENESS_NOTE_FILE:
-                    continue  # documents the supersession on purpose
-                rel = os.path.relpath(path, REPO_ROOT)
-                offenders.append(f"{rel}: '{stale}' should be '{current}'")
+            rel = os.path.relpath(path, REPO_ROOT)
+            offenders += superseded_offenders(
+                rel, text, exempt_note=(path == STALENESS_NOTE_FILE)
+            )
         self.assertEqual(
             offenders, [], "superseded model references found:\n  " + "\n  ".join(offenders)
+        )
+
+    def test_the_staleness_note_is_found_and_names_what_it_supersedes(self):
+        """The exemption is earned: the note exists and is what explains the supersession."""
+        with open(STALENESS_NOTE_FILE, encoding="utf-8") as fh:
+            text = fh.read()
+        self.assertIn(STALENESS_NOTE_MARKER, text)
+        removed = len(text) - len(without_staleness_note(text))
+        self.assertGreater(removed, 0, "the staleness-note block was not found")
+        self.assertNotEqual(
+            superseded_offenders("note", text), [],
+            "the staleness note no longer names the superseded models, so the "
+            "exemption is not exercised",
         )
 
     def test_switch_command_names_a_current_model(self):
@@ -122,6 +187,81 @@ class NoSupersededModelReferences(unittest.TestCase):
             self.assertEqual(
                 stale_ids, [], f"/model {model_id} names a superseded model"
             )
+
+
+class SupersededMatcherRespectsVersionBoundaries(unittest.TestCase):
+    """Negative controls for the matcher and the exemption, on synthetic text.
+
+    Both directions are proven: the current names must pass, and each stale name
+    must fail in every position a sentence can put it. A plain `stale in text`
+    check fails the first half ("Opus 5" is inside "Opus 5.5"); a whole-file
+    exemption fails the second half for model-selection.md.
+    """
+
+    def hits(self, text):
+        return [stale for stale, _ in SUPERSEDED if superseded_pattern(stale).search(text)]
+
+    def test_current_names_and_ids_do_not_match(self):
+        for text in (
+            "Opus 5.5, high effort", "Sonnet 5.5 / medium", "Fable 5.1 sits above",
+            "`claude-opus-5-5`", "/model claude-sonnet-5-5", "claude-fable-5-1",
+            "claude-opus-5-5[1m]", "anthropic.claude-opus-5-5",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual([], self.hits(text))
+
+    def test_stale_display_names_match_at_every_boundary(self):
+        for name in ("Opus 5", "Sonnet 5", "Fable 5"):
+            for text in (f"{name}, high", f"{name} / high", f"run {name}.",
+                         f"on {name}\n", f"**{name}**", f"({name})"):
+                with self.subTest(text=text):
+                    self.assertIn(name, self.hits(text))
+
+    def test_stale_ids_match_at_every_boundary(self):
+        for model_id in ("claude-opus-5", "claude-sonnet-5", "claude-fable-5"):
+            for text in (f"`{model_id}`", f"/model {model_id} ", f"{model_id}[1m]",
+                         f"--model {model_id}\n", f"{model_id}."):
+                with self.subTest(text=text):
+                    self.assertIn(model_id, self.hits(text))
+
+    def test_the_old_substring_check_could_not_hold_the_new_rows(self):
+        """Why the matcher changed: the substring test flags the current names."""
+        current = "Opus 5.5 and Sonnet 5.5, `claude-opus-5-5`, Fable 5.1"
+        self.assertTrue(any(stale in current for stale, _ in SUPERSEDED))
+        self.assertEqual([], self.hits(current))
+
+    def test_older_rows_still_match(self):
+        self.assertIn("Opus 4.8", self.hits("Opus 4.8 at high"))
+        self.assertIn("claude-opus-4-8", self.hits("`claude-opus-4-8`"))
+
+    def test_the_exemption_covers_only_the_staleness_note(self):
+        note = (
+            f"{STALENESS_NOTE_MARKER} — re-verify.** Opus 5.5 superseded Opus 5\n"
+            "> (`claude-opus-5`), now legacy.\n"
+        )
+        clean = "| Opus 5.5 (`claude-opus-5-5`) | High |\n\n" + note + "\nAfter the note.\n"
+        self.assertEqual([], superseded_offenders("m.md", clean, exempt_note=True))
+        for stale in ("Opus 5", "`claude-sonnet-5`"):
+            for where in ("before", "after"):
+                text = (f"{stale} row\n\n" + note) if where == "before" else (note + f"\n{stale} row\n")
+                with self.subTest(stale=stale, where=where):
+                    self.assertNotEqual(
+                        [], superseded_offenders("m.md", text, exempt_note=True),
+                        "a superseded name outside the staleness note must fail the guard",
+                    )
+
+    def test_a_missing_note_exempts_nothing(self):
+        text = "> Opus 5 is mentioned in some other quote.\n"
+        self.assertNotEqual([], superseded_offenders("m.md", text, exempt_note=True))
+
+    def test_the_live_model_selection_file_fails_with_a_stale_tier_row(self):
+        """The real file, with one superseded row put back into its tier table."""
+        with open(MODEL_SELECTION, encoding="utf-8") as fh:
+            text = fh.read()
+        self.assertEqual([], superseded_offenders("m.md", text, exempt_note=True))
+        stale = text.replace("| Opus 5.5 (`claude-opus-5-5`) |", "| Opus 5 (`claude-opus-5`) |", 1)
+        self.assertNotEqual(stale, text, "the tier-table row was not found")
+        self.assertNotEqual([], superseded_offenders("m.md", stale, exempt_note=True))
 
 
 class StageTablesAgree(unittest.TestCase):
@@ -150,7 +290,7 @@ class EveryStageHasExactlyOneRecommendation(unittest.TestCase):
     Bootcamper is running; where the current setting is undeterminable it falls
     back to the previous stage's row. Both need a value on each side, so a stage
     missing from the table leaves the comparison undefined — Entity Resolution
-    Concepts was absent this way. And a cell offering two answers ("Sonnet 5,
+    Concepts was absent this way. And a cell offering two answers ("Sonnet 5.5,
     high effort (Opus if bespoke load code)") cannot be pinned into a verbatim
     switch question (INV-056) nor compared against a single current setting.
     """

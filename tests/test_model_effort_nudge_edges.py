@@ -4,7 +4,7 @@
 rule says to name only the dial that differs — but the trailing hint hardcoded "reply no to
 keep your current *model*" outside any bracket. An effort-only switch therefore asked about
 effort and told the bootcamper what declining does to the model. INV-056 pins the wording, so
-the guide could not fix it at runtime. It is the common case: a bootcamper who stays on Opus 5
+the guide could not fix it at runtime. It is the common case: a bootcamper who stays on Opus 5.5
 through the conversational stages meets an effort-only step-up at SDK setup.
 (`specs/effort-only-switch-question-says-keep-your-current-model.md`)
 
@@ -177,10 +177,29 @@ class AnEffortAboveTheWholeTableIsNotAMismatch(unittest.TestCase):
                       "the maintainer decision the carve-out narrows is not cited")
 
     def test_the_model_dial_case_is_addressed(self):
+        """#334: the model dial HAS the case — Fable 5.1 sits above the top row, Opus 5.5.
+
+        The old answer ("no equivalent case today … Opus 5 is the table's top row, so
+        nothing a bootcamper can select sits above it") was already false while Fable 5
+        was listed above Opus 5.
+        """
+        self.assertNotRegex(
+            self.flat, r"(?i)dial has no equivalent case today|nothing a bootcamper can select",
+            "ground-rules still claims nothing sits above the table's top model")
         self.assertRegex(
-            self.flat, r"(?i)model.{0,40}dial has no equivalent case today",
-            "the spec asked whether the model dial needs the same case; the answer is "
-            "not recorded, so the question returns when a stronger model ships")
+            self.flat, r"(?i)model\*?\*? dial has the same case today",
+            "the model dial's above-the-table case is not stated")
+        self.assertRegex(
+            self.flat, r"Fable 5\.1 sits above the table's top row, Opus 5\.5",
+            "the model above the table is not named")
+        self.assertRegex(
+            self.flat, r"(?i)\*?\*?never\*?\*? a model question",
+            "a bootcamper on Fable 5.1 could still be asked a model question")
+
+    def test_model_selection_mirrors_the_model_dial_case(self):
+        text = squash(read(MODEL_SELECTION))
+        self.assertNotIn("Model has no equivalent case today", text)
+        self.assertRegex(text, r"Fable 5\.1 sits above the table's top row, Opus 5\.5")
 
 
 class EffortIsNotClaimedToBeUnreadable(unittest.TestCase):

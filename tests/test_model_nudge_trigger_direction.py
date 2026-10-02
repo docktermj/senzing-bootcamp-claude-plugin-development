@@ -9,10 +9,10 @@ this superseded" (INV-138, superseding INV-137's trigger).
 `bootcamp-preparation/SKILL.md` Step 3a summarized that as "when the recommendation changes …
 when it is unchanged", which is the stage-to-stage comparison the ⛔ forbids by name.
 
-This was not hypothetical. The stage table recommends Sonnet 5 at medium effort for four
+This was not hypothetical. The stage table recommends Sonnet 5.5 at medium effort for four
 consecutive stages — Onboarding, Bootcamp preparation, Entity Resolution Concepts and Discover
 the Business Problem — so on a live walk (2026-08-12) the two files produced different behavior
-at the same moment: reading `ground-rules.md`, a bootcamper on Opus 5 was asked to switch;
+at the same moment: reading `ground-rules.md`, a bootcamper on Opus 5.5 was asked to switch;
 reading the summary, the recommendation was "unchanged" and no question was asked. For the first
 four stages of every Core run the summary suppressed the question entirely.
 
