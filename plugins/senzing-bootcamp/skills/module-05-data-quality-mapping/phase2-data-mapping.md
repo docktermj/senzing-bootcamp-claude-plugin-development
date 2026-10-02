@@ -723,8 +723,9 @@ one either. The message's own `FIX:` names the declare-once route above.
 ⚠️ **This advance is unconditional in both modes — there is no general guided-mode gate here, and
 that is deliberate.** Unlike step 10, the questions this step needs are *conditional*, and each is
 already pinned or specified where it triggers: a field the tool returns below 0.80 confidence gets
-its `QUESTION FORMAT` options reshaped into a 👉 question (see the carve-out above), two source fields
-aimed at one feature family gets the shared-feature collision question below, and a validator that
+its `QUESTION FORMAT` options reshaped into a 👉 question (see the carve-out above), the
+shared-feature collision check below asks only about the cross-source pairs its exemptions leave
+(its "Asked — every other pair" list), and a validator that
 rejects twice without saying why gets its own. Present the mapping table and advance. Stated here so
 a later reader does not read the absence as the same omission step 10 once had.
 
@@ -858,12 +859,44 @@ without any of the three, and the returned `state` carried the server's own comp
 The step-3 typed `payload` branch does not declare the three properties at all, which is consistent
 with the server computing them rather than reading them.
 
-⛔ **Shared-feature collision check (cross-source).** After mapping a source, compare its feature
-targets against the sources already mapped. When **two or more sources send different source fields
-to the same Senzing feature**, stop and confirm the two fields measure the *same quantity* — not
-merely the same *kind* of thing. Ask one 👉 question naming both fields and the feature (its wording
-is necessarily specific to the collision, so it is not a pinned question), and record the answer
-with the mapping rationale.
+⛔ **Shared-feature collision check (cross-source) (INV-012, INV-251, INV-006) — ask only about
+pairs whose sameness the guide cannot show.** After mapping a source, compare its feature targets
+against the sources already mapped. A **pair** is two sources sending different source fields to
+the same Senzing feature. Every pair is either exempt or asked; a question whose answer is
+self-evident is output the Bootcamper does not need (INV-012).
+
+**Exempt — recorded, not asked.** A pair is exempt when either of these holds:
+
+1. **Parsed vs. full NAME or ADDRESS, with the same subject and role.** One source sends the full
+   form (`full_name`, `address`), the other the parsed components (`first_name` + `last_name`;
+   `street`/`city`/`state`/`zip`), **and** both describe the same subject in the same role: both
+   the record subject's name, or both the same address usage.
+2. **Same quantity under a different name, on a feature-specific feature.** The feature names
+   exactly one quantity, and both field names denote that quantity: `DOB` (`date_of_birth` vs.
+   `birth_date`), `SSN`.
+
+Record each exempt pair as one line in that source's `docs/mapping/` write-up, in both verbose and
+concise `mapping_verbosity`. In verbose mode the line also goes in the mapping table's rationale
+column. An exempt pair produces no chat output (INV-012).
+
+**Asked — every other pair.** That includes:
+
+- a pair on a **feature-generic** feature, meaning one that admits several different quantities:
+  `REGISTRATION_DATE` ("year established" vs. "incorporation filing date"), `OTHER_ID`,
+  `NATIONAL_ID`;
+- a pair whose field names denote **different quantities** (`BID` vs. `EFX_ID`);
+- a pair whose **subject or role differs or is unclear**: a full home `address` vs. a parsed
+  `billing_street`/…, or a `contact_name` that may name someone other than the record subject;
+- any pair the guide cannot show is the same quantity.
+
+For an asked pair, stop and confirm the two fields measure the *same quantity*, not merely the same
+*kind* of thing. Ask **one** 👉 question per source, covering every asked pair that source has: list
+each pair with its feature, ask whether each pair measures the same quantity, and ask the
+Bootcamper to name any pair that doesn't (INV-251: one question per turn; its wording is
+necessarily specific to the pairs, so it is not a pinned question). Record the answer per pair with
+the mapping rationale. A source with both kinds records its exempt pairs and asks only about the
+rest. A source with only exempt pairs asks nothing, and the step does not yield on this check. A
+pair's recorded answer is not asked again when a later source is mapped (INV-006).
 
 This is the one check the validation scripts structurally **cannot** perform: they each see a single
 source, and the defect only exists in the relationship between two. Watch **date** and **identifier**
