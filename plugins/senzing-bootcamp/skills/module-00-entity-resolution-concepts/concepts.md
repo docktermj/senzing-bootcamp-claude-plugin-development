@@ -31,7 +31,7 @@ Suggested queries:
 
 ⚠️ **Every entry here was MEASURED, one at a time, not composed.** Each was run against the live
 index and kept only because it returns the material it is for. **Current measurement: MCP server
-1.37.16, docs index 2026-09-29 22:00 UTC, measured 2026-10-01**, with every entry re-run on that
+1.37.18, docs index 2026-10-02 11:23 UTC, measured 2026-10-02**, with every entry re-run on that
 date. What each one returned:
 
 | Query | Returns | Rank |
@@ -111,7 +111,7 @@ right, which is exactly why nobody notices when it is not.
 
 **Nothing is lost by requiring the call:** the material is fully retrievable, and the queries that
 reach it are in the suggested list above — the requirement travels with its route, per INV-212
-(measured on MCP server 1.37.16, docs index 2026-09-29 22:00 UTC, 2026-10-01). The route to *what
+(measured on MCP server 1.37.18, docs index 2026-10-02 11:23 UTC, 2026-10-02). The route to *what
 entity resolution is* is *"What is entity resolution false negative false positive true match"*,
 which returns the *"What Is Entity Resolution?"* section of *"What Is Entity Resolution? How It
 Works & Why It Matters."* at **rank 1**. The pipeline query returns the same document's *"How Does
@@ -142,7 +142,8 @@ the first row.
   places beyond entity resolution. Reached by the MDM query above (*"What Is the Difference Between
   Entity Resolution and Master Data Management (MDM)?"*, rank 1); read down that list to rank 3,
   the FAQ answer to the same question, for ER as the deduplicated foundation an MDM program builds
-  on.
+  on. Rank 2 is a different FAQ, *"How does Senzing integrate with MDM (Master Data Management)
+  systems?"*, so don't stop there.
 
 ### How Senzing handles it (pull specifics from MCP)
 
