@@ -495,7 +495,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # establish that the renderer prints them. (test_recap_video.py, the note's other enforcer, was
 # already a pair.) Re-derived by running the extractor -- 171, the one new pair present by name and
 # none removed. EXPECTED_PAIRS 170 -> 171.
-EXPECTED_PAIRS = 171
+# 172 on 2026-10-02: INV-340's no-voice note (#340) names test_graduation_no_voice_guidance.py, which
+# already cites INV-340 back. Re-derived by running the extractor -- 172, the one new pair present by
+# name and none removed. EXPECTED_PAIRS 171 -> 172.
+EXPECTED_PAIRS = 172
 
 
 def pairs():
