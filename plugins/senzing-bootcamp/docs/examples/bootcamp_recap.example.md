@@ -22,7 +22,7 @@
 - Two failure modes: false negatives (same entity split apart) and false positives (different entities merged).
 - The conceptual pipeline: ingestion/standardization -> candidate selection (blocking) -> comparison/scoring -> classification -> entity clustering.
 - Disclosed vs. discovered relationships (Senzing docs via MCP).
-- Three outputs: resolved entities (golden record), cross-source relationships, deduplication.
+- What it produces: matched records grouped into unified entities, and relationships tracked between those entities.
 - Senzing-specific: principle-based matching (vs. hand-written rules), pre-configured for people and organizations, differentiators (real-time, no model training, explainability with "why matched/why not/how" attribution, scalability as a composable library). Sourced from Senzing docs via the MCP server.
 
 ### Questions & Responses

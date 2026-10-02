@@ -43,6 +43,27 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## four-stale-lines-noticed-during-the-2026-10-01-runs
+
+- **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #377, spec revision 1; four out-of-scope findings noticed while implementing #328, #334 and #335)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md` (line 25), `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf` (re-rendered), `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/concepts.md` (the "What entity resolution is" bullet), `.claude/skills/dry-run/phase2-hooks-and-scripts.md` (the `--fresh`/`--seeded` sentence), `.claude/memory/commit-message-format.md` (the example trailer), `tests/test_example_recap_uses_no_golden_record.py` (new), `specs/IMPLEMENTED.md`. `bootcamp_recap.example.truthset.png`, the screenshots under `docs/examples/visualizations/` and the primer's dated measurement sentence are unchanged, as the issue scoped.
+- **MCP re-check:** still reproduces, server `sz-mcp-coworker` 1.37.18 (Senzing "current", docs index 2026-10-02 11:23 UTC), 2026-10-02. Tools: `get_capabilities`; `search_docs` for three of the primer's suggested queries.
+  - `"What is entity resolution false negative false positive true match"` → *"What Is Entity Resolution?"* at **rank 1**, which says "An **entity** is a real-world person, organization, product, or vessel represented in data — among other entity types". The item 2 condition holds, so the edit was made.
+  - `"difference between entity resolution and master data management"` → *"What Is the Difference Between Entity Resolution and Master Data Management (MDM)?"* at **rank 1**, which lists "golden record management" under MDM. The rule item 1 applies still has its source.
+  - `"How does entity resolution work steps process"` → *"How Does Entity Resolution Work?"* at **rank 1**, whose step 5 reads "Matched records are grouped into unified entities". Item 1's new wording still has its source.
+- **Approach:** implemented directly (Phase 5a). Every replacement text was pinned by the spec, and the guard follows the neighboring stdlib tests.
+- **Summary:**
+  - **Item 1.** The example recap's "Three outputs: resolved entities (golden record), …" line now reads "What it produces: matched records grouped into unified entities, and relationships tracked between those entities", the primer's own wording since #335. The PDF was re-rendered with the command in `tests/test_example_recap_sync.py`: 13 of 13 images embedded.
+  - **Item 1's guard.** `tests/test_example_recap_uses_no_golden_record.py` fails on any "golden record" in the example, case-insensitive and across line breaks, and its message cites the primer's rule. A second test checks that the primer still states the rule. A negative-control class runs the check on the pre-fix line, a term split across a line break, and the fixed wording. Restoring the pre-fix file makes it fail at line 25.
+  - **Item 2.** The primer's parenthetical now reads "(a person, organization, product, vessel or another entity type)", rewrapped to the file's width.
+  - **Item 3.** The dry-run phase-2 note names the three `config/` files `--fresh` and `--seeded` write (`bootcamp_progress.json`, `bootcamp_preferences.yaml`, `engine_config_incomplete.json`), and says neither mode writes `engine_config.json`, citing #328. Checked against `build()` in `scaffold_project.py`.
+  - **Item 4.** The example trailer in the commit-format memory is now `Co-Authored-By: <the model attribution line your session supplies>` and names no model. `tests/test_one_commit_convention.py` reads only "Conventional Commits" and the `issue: #` trailer from that file.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **Differs from the issue:** none.
+- **Noticed, not changed:** the primer (`concepts.md`, the "What it produces" bullet) says to "read down that list to rank 3" for the MDM FAQ answer. On the measurement above, that FAQ (*"Entity Resolution FAQ > What is the difference between entity resolution and master data management (MDM)?"*) is now at **rank 2**. It is still a route under INV-291's rank-3 limit, but the stated rank is stale. Out of scope here.
+- **Establishes no invariant.** Each edit brings a line back in line with an existing rule or a re-verified fact: item 1 applies the primer's #335 rule, items 2 and 3 correct facts, and item 4 removes a value that goes stale. The guard enforces the primer's existing rule on one file. The stdlib test applies INV-108. No ⛔ line is added, and none is demoted.
+
 ## invariant-review-2026-10-02
 
 - **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one review session)
