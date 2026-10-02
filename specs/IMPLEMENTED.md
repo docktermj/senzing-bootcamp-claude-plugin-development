@@ -734,7 +734,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     - The band self-check, the record-key rule and the rest of the sample still read as before. The rule and its check name no language or tool.
     - Removing only the adaptation's sentence fails exactly its predicate. Against the unmodified SKILL.md the guard fails (`FAILED (failures=4, errors=6)`, from the race).
 - **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-239 — awaiting the maintainer's sign-off; NOT applied.** The rules already shipping:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-239 — applied 2026-10-02, amended at review.** The rules already shipping:
     - ⛔ **Give each invented entity its own identifiers (INV-239).** — in `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`
     - ⛔ **In the same pass, count identifier collisions (INV-239)** — in `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`
 
@@ -743,11 +743,11 @@ entries at once. Two things a reader should know about the hashes now recorded:
   features of distinct entities. So a faithful generation could give two invented people the
   same email, Senzing would merge them on that evidence, and the scenario's own ground truth
   would call the merge false. Both new ⛔ lines cite INV-239 and extend it beyond its
-  registered wording, so the run drafts an amendment to it rather than a new id. No other
-  INV-239 amendment is pending.
-  **Sites it affects:** INV-239 in `specs/INVARIANTS.md`, which gains the sentences below after
-  "…with the duplication in the entity." and before "⚠️ **The reason this is the generator's
-  rule and not the scorer's:**", with its enforcer clause extended to name the new test. Its
+  registered wording, so the run drafts an amendment to it rather than a new id. #337 (entry `module-5-no-progress-gate-returns-to-data-collection`) also amends INV-239,
+  with a separate dated note on post-gate regeneration; the two do not overlap.
+  **Sites it affects:** INV-239 in `specs/INVARIANTS.md`, which gains the dated note below, appended before INV-239's `(Source: …)` clause
+  (amended at review: the draft inserted the sentences mid-text, which `INVARIANTS.md`'s
+  append-only rule does not allow). Its
   statement in `invariant-manifest.json` is regenerated from it
   (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit. The shipped
   sites are the two above, both in Module 4 Step 2's synthesized branch. The enforcer is
@@ -755,12 +755,9 @@ entries at once. Two things a reader should know about the hashes now recorded:
   `tests/test_synthesized_scenario_has_quality_gaps.py`. Applying it resolves the block: mark
   the bullet `applied YYYY-MM-DD` and drop the "awaiting" marker.
 
-  The drafted wording:
+  The drafted wording, as applied on 2026-10-02 (amended at review from the mid-text draft into a dated note):
 
-  **INV-239** — … a required duplicate pair keeps distinct keys, with the duplication in the entity. Each distinct invented entity, person or organization, MUST carry its own email, phone and identifier numbers (SSN, passport, driver's license, account or loyalty number), unless the scenario shares one on purpose and records it under `quality_intent.shared_features` with a reason; an unlisted share is a collision, and an entry covers only the shares its reason describes. The unit is the entity, not the record: records of one entity, such as a required duplicate pair or the cross-source overlap, keep that entity's features. Names, addresses and dates of birth MAY repeat across distinct entities, and shared names are the intended hard negatives. The generator MUST count undeclared collisions in the same pass as the band self-check and, on any, MUST regenerate the affected values or the source before anything loads or scores it, never patching ground truth, scores or results afterward. Observed 2026-10-01: emails built from the name plus a number from 1 to 99 gave 53 pairs of different people, out of 7,000 drawn from 1,197 names, the same name and email; each pair was merged and the ground truth called each merge false. (⚠️ **Amended <YYYY-MM-DD> (#343): identifier uniqueness across distinct entities and its self-check added; the gap, band, `quality_intent` and record-key rules are unchanged.**) ⚠️ **The reason this is the generator's rule and not the scorer's:** … Enforced by `tests/test_synthesized_entities_have_their_own_identifiers.py` and `tests/test_synthesized_scenario_has_quality_gaps.py`. (Source: …
-
-  *(the `…` stand for INV-239's registered text, kept as it is; the date is a placeholder
-  deliberately: `/review-invariants` fills it in on the day it applies the amendment.)*
+  **INV-239** — … (⚠️ **Dated note, 2026-10-02 (#343): distinct invented entities carry their own identifiers; the rules above still bind.** Each distinct invented entity, person or organization, MUST carry its own email, phone and identifier numbers (SSN, passport, driver's license, account or loyalty number), unless the scenario shares one on purpose and records it under `quality_intent.shared_features` with a reason; an unlisted share is a collision, and an entry covers only the shares its reason describes. The unit is the entity, not the record: records of one entity, such as a required duplicate pair or the cross-source overlap, keep that entity's features. Names, addresses and dates of birth MAY repeat across distinct entities, and shared names are the intended hard negatives. The generator MUST count undeclared collisions in the same pass as the band self-check and, on any, MUST regenerate the affected values or the source before anything loads or scores it, never patching ground truth, scores or results afterward. Observed 2026-10-01: emails built from the name plus a number from 1 to 99 gave 53 pairs of different people, out of 7,000 drawn from 1,197 names, the same name and email; each pair was merged and the ground truth called each merge false. Enforced by `tests/test_synthesized_entities_have_their_own_identifiers.py`.) (Source: …
   *(written as NNN deliberately: no new id is drafted, because this amends INV-239 in place and
   a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
   maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
