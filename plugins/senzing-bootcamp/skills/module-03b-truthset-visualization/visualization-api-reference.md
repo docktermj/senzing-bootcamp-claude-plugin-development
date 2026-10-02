@@ -907,6 +907,13 @@ snapshot that reaches for a CDN is broken in exactly the air-gapped and proxy-re
 where it matters most (INV-091). See `phase1-visualization.md` → "Render offline" for the vendored
 asset's location.
 
+⛔ **(INV-091) When the vendored asset is missing or unreadable, refuse to render.** The server MUST
+fail visibly, with an error that names the missing asset (`d3.v7.min.js`), and MUST write no page or
+snapshot. It MUST NOT fall back to the `d3js.org` CDN or any other network source for D3: a page that
+loads D3 from the network is the broken snapshot this section describes, reached silently. The
+bundled reference checks for the asset before any settings or engine work and exits non-zero;
+implement the equivalent for your language (INV-090).
+
 ### Why? / How? — plain language first, raw JSON behind a twistie
 
 The API returns the SDK response verbatim; that is about *availability*, not about what the UI

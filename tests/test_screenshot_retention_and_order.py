@@ -173,9 +173,13 @@ class OmittingAnInertCaptureIsNotAnOption(unittest.TestCase):
     #: legitimate prose — the recap PDF "reports every one it drops" is required by INV-162,
     #: and "the optional ones are yours to include or skip" is about modules. A guard that
     #: fires on the rule it is protecting gets deleted rather than fixed.
+    #: The third branch catches an offer whose object is the *tab* the capture shows: Module 3b
+    #: shipped "either omit the Search / Probe tab or caption it" until 2026-10-02 (#382), which
+    #: the image-word branches could not see. Up to three words may name the tab.
     OMISSION_OF_AN_IMAGE = re.compile(
         r"\bor\s+(?:omit|drop)\s+(?:it|the\s+)?(?:image|screenshot|capture|png)\b"
-        r"|\bor\s+the\s+(?:image|screenshot|capture)\s+(?:MUST\s+)?be\s+omitted",
+        r"|\bor\s+the\s+(?:image|screenshot|capture)\s+(?:MUST\s+)?be\s+omitted"
+        r"|\b(?:either|or)\s+(?:omit|drop)\s+the\s+(?:[\w/]+\s+){0,3}?tabs?\b",
         re.I,
     )
     #: In the two call sites the referent of a bare "or omit it" is always the capture, so the
@@ -205,6 +209,8 @@ class OmittingAnInertCaptureIsNotAnOption(unittest.TestCase):
         self.assertRegex("caption it explicitly as the empty/inactive state or omit it",
                          self.BARE_OMISSION_OFFER)
         self.assertRegex("the caption MUST say so or the image MUST be omitted",
+                         self.OMISSION_OF_AN_IMAGE)
+        self.assertRegex("either omit the Search / Probe tab or caption it as the inactive state",
                          self.OMISSION_OF_AN_IMAGE)
 
     def test_the_patterns_do_not_fire_on_the_rules_they_protect(self):
