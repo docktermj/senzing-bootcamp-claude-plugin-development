@@ -1384,7 +1384,7 @@ sample record, any observations.
 > - **Verbose:** Show pass/fail result, the output file path, a sample transformed record, and
 >   any observations (warnings, skipped records, format issues).
 > - **Concise:** Show pass/fail result and the output file path only (e.g., "✅ Pass: output:
->   data/senzing-ready/customers_sample.jsonl").
+>   data/mapping/customers_sample.jsonl").
 
 **Checkpoint:** write step 14.
 
@@ -1529,7 +1529,7 @@ If issues are found, go back to the relevant step. Retest after changes.
 
 - Program in `src/transform/`.
 - Docs in `docs/mapping/mapping_[name].md` (field mappings, logic, quality, how to run).
-- Sample output in `data/senzing-ready/[name]_sample.jsonl`.
+- Sample output in `data/mapping/[name]_sample.jsonl`.
 - **Transformation lineage:** Create `docs/mapping/transformation_lineage_[name].md` for this
   data source, covering source file info, transformation program, output file info, field
   mappings, format changes, filters, quality improvements, and before/after record counts. (The
