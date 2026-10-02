@@ -33,7 +33,9 @@ branches produce the run, and each is correct in its own right:
   a settled decision.
 - **Step 8a's volume-skip** passes without a question when the collected total is inside the license
   limit, which that step calls the common case.
-- **Step 8b** says nothing when the loadable total is below its threshold.
+- **Step 8b** says nothing when the loadable total is at or below the SQLite threshold that
+  item 3 of Module 6 Phase A's [SQLite volume pre-load check](../module-06-data-processing/phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate)
+  sources from the Senzing MCP server, or when the server does not return that threshold.
 
 ⛔ **This is path-dependent, not fixed — and that is the half most likely to catch you out.** On the
 **bring-your-own-data** path, Step 2 *does* ask (the pinned "How would you like to provide the data
@@ -1104,10 +1106,23 @@ about a roughly half-hour load, for a load of about two minutes.
      up on the check.
 
 2. **Decide whether to warn.** Warn only when the database is SQLite **and the LOADABLE total** is
-   above the load-time threshold. Otherwise (loadable at or below the threshold, any non-SQLite
-   engine, or indeterminate inputs) say nothing about load time and continue to the Step 9
-   transition. A 19,500-record collection under a 500-record cap therefore says **nothing**, which
-   is correct: 500 records is not a long load.
+   above **the SQLite threshold of Module 6 Phase A's pre-load check** — item 3 of the
+   [SQLite volume pre-load check](../module-06-data-processing/phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate),
+   which sources it from the Senzing MCP server through `search_docs(query="loading",
+   category="anti_patterns")` → "Do Not Use SQLite in Production". Ask that route at request time
+   and compare against what it returns. Item 3 is the one statement of this threshold, so no
+   figure for it is written here (INV-300). Otherwise (loadable at or below the threshold, any
+   non-SQLite engine, or indeterminate inputs) say nothing about load time and continue to the
+   Step 9 transition. A 19,500-record collection under a 500-record cap therefore says
+   **nothing**, which is correct: 500 records is not a long load.
+   - ⛔ **One threshold for both SQLite heads-ups.** This step and Module 6's pre-load check compare
+     against the same MCP-sourced threshold, so a load this step warns about is a load Module 6
+     would ask about, and the choice sub-step 4 records is one Module 6 honors. Never compare
+     against another figure here: not `sdk_guide`'s template switch, and not the caution in its
+     license note (see the `sdk_guide` note below).
+   - **The server does not return the threshold, or the call errors:** the threshold is
+     indeterminate. Say nothing about load time and continue to the Step 9 transition, as item 3
+     does. Never substitute a remembered figure (INV-080).
    - **Warn:** consult the **Senzing MCP server** at request time for the timing figures
      (expected throughput, throughput degradation, expected load duration, redo-phase
      duration). Any figure the server does not return, or that errors, stays unavailable: never
@@ -1117,8 +1132,12 @@ about a roughly half-hour load, for a load of about two minutes.
      That query returns the **Hardware Sizing FAQ**, which is where the timing material lives:
      throughput per engine core, the three load phases (Phase 1 runs 10-100x faster than Phase 3,
      so a Phase-3 estimate is conservative), and worked load-time examples. `sdk_guide(topic='load',
-     record_count=…)` returns the license note and the record-count threshold but **no timing
-     figures at all**, so it is the wrong route for this. ⚠️ Nearby wordings do **not** find the FAQ
+     record_count=…)` is the wrong route for this. It returns the license note and a record count,
+     but that count is the **template switch**, the volume above which it serves the threaded
+     loader instead of the single-threaded demo. It is **not this warning's threshold**, and
+     neither is the license note's caution about its own container environment. It returns **no
+     timing figures at all** (template switch and license-note caution re-checked on MCP server
+     1.37.16, 2026-10-01). ⚠️ Nearby wordings do **not** find the FAQ
      — "hardware sizing capacity planning records per second load time" returns flag docs and code
      snippets instead — so use the query as written rather than paraphrasing it (verified on MCP
      server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-14).
