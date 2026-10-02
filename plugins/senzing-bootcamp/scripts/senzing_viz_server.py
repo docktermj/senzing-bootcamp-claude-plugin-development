@@ -102,7 +102,9 @@ The Senzing native library must be importable (source the project
 ``src/scripts/senzing-env.sh`` first).
 
 Exit code 0 means the entity model was built successfully (and, if requested, the
-snapshot was written); non-zero means it could not be built.
+snapshot was written); non-zero means it could not be built. A missing vendored D3 asset
+(``vendor/d3.v7.min.js`` beside this file) is checked first and also exits non-zero: the
+server refuses to render rather than fetch D3 from the network (INV-091).
 """
 
 from __future__ import annotations
@@ -187,7 +189,8 @@ def confirm_server_identity(port, host=BIND_HOST, timeout=5.0):
 # Brand tokens ship in this same directory. Import them so the visualization shares
 # the Senzing style guide's palette with the recap PDF; fall back to an inlined copy
 # of the same values if the module is ever unavailable, so this script keeps working
-# in isolation (mirrors the vendored-D3 offline fallback).
+# in isolation. (The vendored D3 has no such fallback: without it the server refuses to
+# render, because the only substitute would be a network fetch — INV-091.)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Fallback palette, used only if brand_tokens is unavailable. Named at module scope
 # so tests/test_brand_sync.py can assert it stays equal to brand_tokens.py — the two
@@ -1901,18 +1904,33 @@ PROBE_BODY_LIVE = (
 )
 
 
-def _d3_script():
-    """Return an inline <script> carrying the vendored D3, so the visualization
-    renders with no network access. Fall back to the CDN tag only if the vendored
-    asset is missing."""
-    vendored = os.path.join(
+def _d3_path():
+    """The vendored D3 asset, resolved beside this file (the plugin's layout)."""
+    return os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "vendor", "d3.v7.min.js"
     )
+
+
+def _d3_script():
+    """Return an inline <script> carrying the vendored D3, so the visualization
+    renders with no network access.
+
+    ⛔ (INV-091) There is no CDN fallback. When the asset is missing or unreadable
+    this raises, so no code path can emit a network URL for D3: a page that fetched
+    D3 would fail in exactly the air-gapped and proxy-restricted settings the vendored
+    asset exists for. ``main()`` checks for the asset before any other work; this
+    raise covers the asset disappearing while the live server runs, and the request
+    then fails through the handler's error path."""
+    vendored = _d3_path()
     try:
         with open(vendored, encoding="utf-8") as fh:
             return "<script>" + fh.read() + "</script>"
-    except OSError:
-        return '<script src="https://d3js.org/d3.v7.min.js"></script>'
+    except OSError as exc:
+        raise RuntimeError(
+            "vendored D3 asset missing or unreadable: "
+            f"{vendored} ({exc.strerror or exc}); "
+            "refusing to render without it (INV-091)"
+        ) from exc
 
 
 def render_page(title, data_shim="", probe_body=None, sources=None):
@@ -2397,6 +2415,21 @@ def main(argv=None):
     ap.add_argument("--no-serve", action="store_true",
                     help="build the model (and snapshot) then exit without serving")
     args = ap.parse_args(argv)
+
+    # ⛔ (INV-091) Refuse to render without the vendored D3, before settings or engine
+    # work, so neither the live server nor --snapshot is produced. A snapshot written
+    # without it would pass this script's exit-code gate and break offline.
+    d3_path = _d3_path()
+    try:
+        with open(d3_path, "rb"):
+            pass
+    except OSError as exc:
+        sys.stderr.write(
+            "ERROR: the vendored D3 asset is missing or unreadable: "
+            f"{d3_path} ({exc.strerror or exc}). "
+            "Refusing to render without it; restore the file and run again.\n"
+        )
+        return 1
 
     settings, source, problem = resolve_settings(args.settings,
                                                  os.getenv("SENZING_ENGINE_CONFIGURATION_JSON", ""),
