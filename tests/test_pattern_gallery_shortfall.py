@@ -31,6 +31,11 @@ about *matching* non-person entities, whose caution reads as a reason to drop th
 route now names the document it returns and its rank. Like INV-291's query list, the guard pins
 that measured result and never the query's wording.
 
+#342 (same server and index, 2026-10-01) added the other four named sources: the use-cases page's
+*"Customer 360°"* and *"Fraud Detection"* sections, the USCIS case-study page and the MDM
+integration FAQ, each at rank 1. Under both use-cases routes, rank 2 is the same page's bare
+`[Read More]` link stub, so the step quotes the stubs and calls them a miss.
+
 Enforces **INV-212**.
 
 Run:  python3 -m unittest discover -s tests
@@ -103,7 +108,15 @@ class Step3TellsTheGuideHowToQuery(unittest.TestCase):
 MEASURED_ROUTES = {
     "cost table": '*"Estimated Annual Cost of Mismatched Identity Records"* table',
     "non-person FAQ": '*"Adding Non-Person Entity Types to Senzing"*',
+    "use-cases page, Customer 360": '*"Customer 360°"* section of *"Senzing Use Cases"*',
+    "use-cases page, Fraud Detection": '*"Fraud Detection"* section of *"Senzing Use Cases"*',
+    "USCIS case study": '*"USCIS Improves Fraud Analytics with Senzing Entity Resolution"*',
+    "MDM integration FAQ":
+        '*"How does Senzing integrate with MDM (Master Data Management) systems?"*',
 }
+
+#: The use-cases page's bare link stubs, which rank 2 under the two category routes (#342).
+USE_CASE_STUBS = ("[Read More](/customer-360/)", "[Read More](/risk-fraud-detection)")
 
 #: A measured route's stamp: rank, then server version, docs index date and measurement date.
 ROUTE_STAMP = re.compile(
@@ -112,7 +125,7 @@ ROUTE_STAMP = re.compile(
 
 
 class Step3RecordsWhatEachNamedRouteReturns(unittest.TestCase):
-    """#335: a route names the document it returns and its rank, with a dated stamp."""
+    """#335, #342: a route names the document it returns and its rank, with a dated stamp."""
 
     def setUp(self):
         self.flat = flat(step_3(PHASE_1.read_text(encoding="utf-8")))
@@ -134,6 +147,20 @@ class Step3RecordsWhatEachNamedRouteReturns(unittest.TestCase):
                     "server version, docs index date and measurement date. A route without them "
                     "cannot be re-checked when the index moves." % label,
                 )
+
+    def test_the_use_cases_routes_call_the_link_stub_a_miss(self):
+        """#342: each category route's rank 2 is a bare link stub, which must not read as a hit."""
+        for stub in USE_CASE_STUBS:
+            with self.subTest(stub=stub):
+                self.assertIn(
+                    stub, self.flat,
+                    "Step 3 must quote the use-cases page's link stub %s that ranks 2 under its "
+                    "category route, so the guide recognizes it." % stub,
+                )
+        self.assertRegex(
+            self.flat, r"(?i)bare link stub\*\* \(`\[Read More\].{0,200}is a miss",
+            "Step 3 must say the stub under the use-cases routes is a miss, not a second source.",
+        )
 
     def test_the_sector_query_is_not_said_to_return_the_table(self):
         """The defect #335 fixed: a query that reached the document was said to return its table."""

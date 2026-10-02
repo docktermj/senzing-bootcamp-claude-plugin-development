@@ -78,6 +78,30 @@ return confidently wrong content, and what to do with a topic the searches do no
   forced separation via a Trusted ID), and the non-person-entity-types FAQ (asset, claim and
   vehicle linking).
 
+  - **The use-cases page, Customer 360** — `search_docs(query='Senzing use cases Customer 360')`
+    returns the *"Customer 360°"* section of *"Senzing Use Cases"*
+    (`senzing.com/entity-resolution-use-cases/`) at **rank 1** (MCP server 1.37.16, docs index
+    2026-09-29 22:00 UTC, measured 2026-10-01).
+  - **The use-cases page, Fraud Detection** — `search_docs(query='Senzing use cases Fraud
+    Detection')` returns the *"Fraud Detection"* section of *"Senzing Use Cases"* at **rank 1**
+    (MCP server 1.37.16, docs index 2026-09-29 22:00 UTC, measured 2026-10-01).
+
+    ⚠️ **Rank 2 of both is the same page's bare link stub** (`[Read More](/customer-360/)` and
+    `[Read More](/risk-fraud-detection)`, under *"Explore More Senzing Use Cases"*). That is a
+    miss, not a second source: read the rank-1 section, which states the category's goal in a
+    sentence before its link.
+  - **The USCIS fraud case study** — `search_docs(query='USCIS Improves Fraud Analytics with
+    Senzing Entity Resolution')` returns *"USCIS Improves Fraud Analytics with Senzing Entity
+    Resolution"* (the case-study page) at **rank 1** (MCP server 1.37.16, docs index 2026-09-29
+    22:00 UTC, measured 2026-10-01), and ranks 2 and 3 are the same page's *"USCIS Selected
+    Senzing Entity Resolution for Fraud Detection"* and *"USCIS Project Goals"* sections. The
+    case-study PDF is indexed separately under the title *"CASE STUDY"*.
+  - **The MDM integration FAQ** — `search_docs(query='How does Senzing integrate with MDM
+    (Master Data Management) systems?', category='faq')` returns *"How does Senzing integrate
+    with MDM (Master Data Management) systems?"* at **rank 1** (MCP server 1.37.16, docs index
+    2026-09-29 22:00 UTC, measured 2026-10-01). It names the two integration styles, free
+    resolution and forced separation via a Trusted ID. Without the `category`, the FAQ is still
+    rank 1 and the server article *"MDM Integration Patterns with Senzing"* is rank 2.
   - **The non-person-entity-types FAQ** — `search_docs(query='Adding Non-Person Entity Types to
     Senzing', category='faq')` returns *"Adding Non-Person Entity Types to Senzing"*
     (`non-person-entity-types-faq.md`) at **rank 1** (MCP server 1.37.16, docs index 2026-09-29
