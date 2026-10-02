@@ -1487,6 +1487,47 @@ Ask: 👉 **Which database would you like to use? Reply with a number:**
 
 *(Internal: end the turn on this question and wait.)*
 
+**Once the Bootcamper answers, before either branch below.** Both instructions sit here, ahead of
+the branches, because every path through this step passes this point; an instruction placed after
+the last branch is skipped by a guide that follows the other one.
+
+1. ⛔ **Record the choice where later modules read it.** Write the engine chosen to
+   `config/bootcamp_preferences.yaml` under the key **`database_type`**, with the value **`sqlite`**
+   or **`postgresql`** (lowercase, exactly these two spellings). Set the key, replacing any earlier
+   value — when Step 7 runs again, on a resume or a changed mind, never add a second entry:
+
+   ```yaml
+   database_type: sqlite   # or: postgresql
+   ```
+
+   This is the **only** step in the bootcamp that knows which engine was chosen. These read
+   `database_type` from that file by name, and each handles an absent key with a fallback of its
+   own:
+
+   - **Module 4** (`../module-04-data-collection/SKILL.md`) **Step 8b**, the SQLite load-time
+     warning — notes the defect and falls back to the engine recorded in
+     `config/bootcamp_progress.json`.
+   - **Module 6** (`../module-06-data-processing/phaseA-build-loading.md`) **§3**, the loader's
+     worker count — treats the engine as SQLite and serializes the writes, which on PostgreSQL is
+     merely slower.
+   - **Module 6**, the same file's **SQLite volume pre-load check** — falls back to
+     `config/bootcamp_progress.json` and notes the gap.
+   - **Graduation** (`../graduation/SKILL.md`) **`## Pre-checks`** — notes the defect and carries
+     on with the value indeterminate; **Step 3**'s production configuration files take the value
+     from there.
+   - **`../graduation/database-backup.md`** — determines the engine from
+     `config/engine_config.json`'s connection string.
+
+   A fallback is a guess about what this write would have said, and a wrong guess hands a
+   PostgreSQL Bootcamper a serialized loader and SQLite warnings with no reason given. Do not
+   record the choice only in `config/bootcamp_progress.json`: the readers look there only after
+   this key is missing, and a different key name is the same failure as no key at all.
+
+2. **Checkpoint:** write step 7 to `config/bootcamp_progress.json` **when the chosen branch's
+   setup is finished, before Step 8** — not now. A checkpoint written as Step 7 starts marks the
+   step done before the database exists, and a resume would skip the setup; until it is written,
+   a resumed session runs Step 7 again.
+
 **For SQLite** (recommended for bootcamp):
 
 ⛔ **Before creating it, check whether the project sits on a mounted host filesystem — measure the
@@ -1658,28 +1699,12 @@ then wire the `postgresql://` connection via `sdk_guide(topic='configure', ...)`
 the schema DDL to that database, and wire the `postgresql://` connection as above. Managed cloud
 PostgreSQL typically requires SSL (`PGSSLMODE=require`) — confirm via MCP.
 
-**Option 4 — Switch to SQLite:** proceed with the SQLite setup above.
+**Option 4 — Switch to SQLite:** first rewrite `database_type` to `sqlite` by applying
+instruction 1 at the head of this step again (it replaces the `postgresql` value written there),
+then proceed with the SQLite setup above.
 
 SQLite remains the default recommendation for pure evaluation; PostgreSQL (especially via Docker)
 is the production-style path. INV-037 is satisfied by any of these paths.
-
-⛔ **Record the choice where later modules read it.** Whichever option was taken, write the engine
-to `config/bootcamp_preferences.yaml` under the key **`database_type`**, with the value
-**`sqlite`** or **`postgresql`** (lowercase, exactly these two spellings):
-
-```yaml
-database_type: sqlite   # or: postgresql
-```
-
-This is the **only** step in the bootcamp that knows which engine was chosen, and two later steps
-depend on the answer: Module 4 Step 8b's SQLite load-time warning and Module 6's
-`phaseA-build-loading.md` heads-up both read `database_type` from that file by name. Without this
-write, both reads find nothing, both fall through their "indeterminate → say nothing" branches, and
-neither warning can **ever** fire — regardless of the database chosen or the dataset size. Do not
-record it only in `config/bootcamp_progress.json`: nothing reads it from there, and a different key
-name is the same failure as no key at all.
-
-**Checkpoint:** write step 7 to `config/bootcamp_progress.json`.
 
 ## Step 8: Create Engine Configuration
 
