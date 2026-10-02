@@ -1,5 +1,5 @@
 {
-  "count": 342,
+  "count": 343,
   "generator": ".claude/skills/review-invariants/invariant_manifest.py",
   "invariants": [
     {
@@ -3420,6 +3420,16 @@
       "statement": "Module 5 Phase 2 MUST NOT emit a `type_discriminator` on a source by default. A `type_discriminator`, with its `field_overrides` (an identity override in both branches included), is the fix for workflow step 3's `NAME_ORG cannot co-exist with person name attributes` rejection of a source whose record type comes from a source field's value, and it is added only when that rejection applies. Fields moved into `field_overrides` are counted by no coverage figure, so an unneeded one costs a coverage-count drop for nothing. (Sibling to INV-336, which forbids a `type_discriminator` for a suffix retype; this governs every other source.) (⚠️ **Why this is not INV-136, INV-336 or INV-125, so the question is not re-derived.** Until #283 the rule cited INV-136, which governs a tool's required parameters and enumerated values; the rule states neither. INV-336 forbids a `type_discriminator` for a suffix retype only, and INV-125 governs a failed MCP-first path.) Enforced by `tests/test_quality_assessment_type_name_check.py` (`problems_in_the_name_citations`, `test_citing_inv_136_at_the_pre_emptive_rule_fails`), which asserts that step 10 states the rule and does not cite INV-136 for it, and **cannot** establish that a live run follows it. (Source: `module-5-retyped-name-and-citations-follow-inv-336`, GitHub issue #283; registered 2026-10-01.)",
       "status": "active",
       "summary": "Module 5 Phase 2 MUST NOT emit a `type_discriminator` on a source by default.",
+      "superseded_by": null
+    },
+    {
+      "id": "INV-344",
+      "index_group": "Questions, gates and bootcamper-facing conversation",
+      "partly_superseded_by": null,
+      "section": "Invariants added from implemented specs",
+      "statement": "Inside a per-source loop, a pinned gate MUST NOT ask a question whose answer concerns the whole run while another source remains. Module 5 Phase 2's step 16 MUST end on a per-source question (map the next source, or iterate on this one) while `config/data_sources.yaml` has another source whose `mapping_status` is not `complete`, and MUST ask its loading questions only when no such source remains; fast-pathed sources are `complete` and never count. At the last source, a step-16 answer that proceeds to loading MUST settle `mapping_workflow` step 5's `detect_environment` decision as `skip`, told in one line with no question, and `test_load` is taken only on the Bootcamper's explicit request. (⚠️ **Why this is not INV-056, INV-136, INV-146, INV-183, INV-284, INV-300 or INV-251, so the question is not re-derived.** The first six, which #333 names, cover pinning the wording, calling the tool as its schema states, recording the capture, reaching a rule from its step, handling every option, and citing a single statement; INV-251 fixes how many questions a turn holds. None says *when* a question about the whole run may be asked inside a per-source loop, which is what went wrong on the 2026-10-01 walk: a pinned \"proceed to loading?\" after the first of three sources.) Enforced by `tests/test_module5_step16_asks_about_loading_only_after_the_last_source.py`, which asserts that step 16 and step 18a *state* these rules and **cannot** establish that a live run follows them. (Source: `module-5-mapping-prose-matches-server-1-37-16`, GitHub issue #333, from the 2026-10-01 dry run, P3-12 and P3-13; registered 2026-10-02.)",
+      "status": "active",
+      "summary": "Inside a per-source loop, a pinned gate MUST NOT ask a question whose answer concerns the whole run while another source remains.",
       "superseded_by": null
     }
   ],

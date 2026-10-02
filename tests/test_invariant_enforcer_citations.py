@@ -528,7 +528,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # review rather than minted) names test_mapping_samples_stay_out_of_senzing_ready.py, which now cites
 # INV-084 back. Re-derived by running the extractor -- 183, the one new pair present by name and none
 # removed. EXPECTED_PAIRS 182 -> 183.
-EXPECTED_PAIRS = 183
+# 184 on 2026-10-02: INV-344 (inside a per-source loop, no whole-run question while another source
+# remains) names test_module5_step16_asks_about_loading_only_after_the_last_source.py, which cites it
+# back and states what it does NOT establish -- that a live run follows it. Re-derived by running the
+# extractor -- 184, the new pair present by name and none removed. EXPECTED_PAIRS 183 -> 184.
+EXPECTED_PAIRS = 184
 
 
 def pairs():
