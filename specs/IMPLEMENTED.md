@@ -909,7 +909,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
   maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
   and read it off `INVARIANTS.md` rather than trusting a number written here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-340 — awaiting the maintainer's sign-off; NOT applied.** The rule already shipping:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-340 — applied 2026-10-02, amended at review.** The rule already shipping:
     - ⛔ **(INV-066) Never run `sudo`, a bare `pip`, or an install outside `data/temp/recap-venv/` and `data/temp/piper-voices/`.** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
 
   ⚠️ **Why.** Step 1c now asks a second install question and switches interpreters after a yes.
@@ -931,13 +931,9 @@ entries at once. Two things a reader should know about the hashes now recorded:
   `tests/test_graduation_video_step.py::ThePiperOfferIsPinned`. Applying it resolves the block:
   mark the bullet `applied YYYY-MM-DD` and drop the "awaiting" marker.
 
-  The drafted wording:
+  The drafted wording, as applied on 2026-10-02 (amended at review from a mid-entry insertion into a dated note):
 
-  **INV-340** — … After the storyboard is written and before the first render, when `data/temp/recap-venv/`'s Python cannot find `piper` or the `en_US-ljspeech-high` voice (`.onnx` and `.onnx.json`) is missing from `data/temp/piper-voices/`, it MUST make one pinned Piper install offer, asked once (INV-006, INV-056). On yes it MUST install only into `data/temp/recap-venv/` (one `python -m pip install` with that venv's interpreter, adding Pillow and `imageio-ffmpeg` when they are missing) and `data/temp/piper-voices/`, never with `sudo` or a bare `pip` (INV-066), and then run `--check` and the render with the venv's Python. On no or any failure it MUST render with Step 1b's interpreter and the platform engine and not block graduation (INV-048). The render MUST pass no `--voice-model`, and the status line MUST name the voice from the renderer's `Voice:` line. Exit 2 from the renderer MUST lead to one install offer … (⚠️ **Amended <YYYY-MM-DD> (#341): the Piper offer and the interpreter switch added; the video offer, storyboard, budget, verification and #340 no-voice rules are unchanged.**) Enforced by `tests/test_graduation_video_step.py`, …
-
-  *(the `…` stand for INV-340's registered text, plus #340's amendment once applied, kept as
-  they are; the date is a placeholder deliberately: `/review-invariants` fills it in on the day
-  it applies the amendment.)*
+  **INV-340** — … that does not block graduation (INV-048). Enforced by `tests/test_graduation_no_voice_guidance.py`.) (⚠️ **Dated note, 2026-10-02 (#341): the Piper install offer and the interpreter switch; the video offer, storyboard, budget, verification and no-voice rules above are unchanged.** After the storyboard is written and before the first render, when `data/temp/recap-venv/`'s Python cannot find `piper` or the `en_US-ljspeech-high` voice (`.onnx` and `.onnx.json`) is missing from `data/temp/piper-voices/`, it MUST make one pinned Piper install offer, asked once (INV-006, INV-056). On yes it MUST install only into `data/temp/recap-venv/` (one `python -m pip install` with that venv's interpreter, adding Pillow and `imageio-ffmpeg` when they are missing) and `data/temp/piper-voices/`, never with `sudo` or a bare `pip` (INV-066), and then run `--check` and the render with the venv's Python. On no or any failure it MUST render with Step 1b's interpreter and the platform engine and not block graduation (INV-048). The render MUST pass no `--voice-model`, and the status line MUST name the voice from the renderer's `Voice:` line. Enforced by `tests/test_graduation_video_step.py`.)
   *(written as NNN deliberately: no new id is drafted, because this amends INV-340 in place and
   a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
   maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
