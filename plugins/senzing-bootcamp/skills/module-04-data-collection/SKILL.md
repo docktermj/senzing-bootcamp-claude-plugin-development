@@ -52,7 +52,9 @@ and the single-write checkpoint that follows from it; it is stated once, there, 
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work. Read `current_step` and
-resume at the right step.
+resume at the right step. **When it carries a `collection_return`, none of this runs:** go straight
+to Step 2 → [Receiving a `collection_return`](#receiving-a-collection-return). A return runs only the
+steps it names, so the steps it leaves out are not skipped steps.
 
 > **User reference:** Detailed background for this module lives in the Kiro Power at
 > `docs/modules/MODULE_4_DATA_COLLECTION.md` (the docs port is a later porting phase).
@@ -199,6 +201,59 @@ complete list.
 **Checkpoint:** write step 1 to `config/bootcamp_progress.json`.
 
 ### 2. For each data source, collect the data
+
+<a id="receiving-a-collection-return"></a>
+
+**Receiving a `collection_return` (from Data Quality, Mapping, and Transformation).** ⛔ **(INV-284)
+Check for it before anything else in this step.** When `config/bootcamp_progress.json` carries a
+`collection_return`, the Bootcamper chose the return route at Module 5's no-progress gate, and this
+is not a run of this module: show no start banner, journey map or overview, write no Module 4
+checkpoint (leave `current_module` and `current_step` as Module 5 set them, so its progress is not
+overwritten), and collect only the one source the key names. Which steps run and where Module 5
+resumes are stated once, in
+`../module-05-data-quality-mapping/phase1-quality-assessment.md` Step 7b (INV-300); this block says
+only how the source is collected.
+
+- **`provenance: synthesized` → regenerate this source only, targeting `>=80`.** The marker guard
+  below would regenerate from the recorded `quality_intent` and land back in the same band, so this
+  regeneration replaces the target rather than repeating it.
+  - **Keep the same records:** the same `RECORD_ID`s and entities, with the gap fields filled in.
+    That keeps the cross-source overlap Modules 6 and 7 demonstrate, and leaves the record count
+    unchanged, so Step 8a's license decision still stands and is not re-run.
+  - **Generate no off-pattern values**, so the format normalization Module 5 already did is not
+    undone.
+  - Write `data/raw/<source>-regenerated.<ext>`. The original and any `-improved` file stay where
+    they are.
+  - ⛔ **(INV-239) Both self-checks in this step apply to the regeneration:** verify it against the
+    band (if it misses `>=80`, narrow the gaps further and regenerate; never adjust a score), and
+    count identifier collisions (on any count above zero, regenerate the affected values).
+  - ⛔ **(INV-243) Repoint the registry entry using Module 5 Step 7a step 4's field list**, and record
+    the previous `file_path` in the same entry.
+  - Record the regeneration by rewriting these keys of the source's `quality_intent` (the sample
+    under *Record the intended band per source* below shows the whole block):
+
+    ```yaml
+    target_band: ">=80"           # was the band the original generation targeted
+    regenerated:
+      from_band: "70-79"          # the band the gate fired in: "70-79" or "<70"
+      reason: "Bootcamper chose the return route at Module 5's no-progress gate"
+      at: "<ISO 8601>"
+    gaps: [...]                   # the narrowed rates actually generated
+    measured_score: 86.0          # written by the self-check, never by hand
+    ```
+
+    ⚠️ **This lifts the source out of the 70-79% band INV-239 requires**, at the Bootcamper's request
+    after the gate has fired. The original generation already met that requirement, and the
+    `regenerated` record is what shows a later run the departure was asked for.
+- **`provenance: own` or `unknown` → ask the provision question below for this source**, even though
+  a provenance is recorded; `unknown` is handled exactly as `own`. Save the new export beside the
+  original under a new name, never over it (INV-050), record the previous `file_path` in the entry,
+  set `provenance` from the answer as *CORD Provenance Recording* below does, then run the
+  remaining steps Step 7b names for this source.
+- `cord` and `free_data` sources never arrive here: Step 7b offers a fixed dataset no return.
+
+When the source is collected, go back to Module 5 at the step Step 7b names. Step 9 does not run on a
+return.
 
 ⛔ **First check whether Module 1 already answered this for this source — and if so, do NOT ask.**
 
@@ -406,8 +461,9 @@ source, so it is not a textually identical question — it escapes a literal INV
 being exactly the repetition INV-006 exists to prevent.
 
 Only when the source has **no** recorded provenance — the Bootcamper is bringing their own data —
-ask how they want to provide it. Pin this question verbatim (INV-051), never joining the choices
-with "or":
+or on a `collection_return` for an `own` or `unknown` source
+([above](#receiving-a-collection-return)), ask how they want to provide it. Pin this question
+verbatim (INV-051), never joining the choices with "or":
 
 👉 **How would you like to provide the data for this source? Reply with a number:**
 
@@ -1213,6 +1269,11 @@ apply the behavior directly for now.)_
 **Checkpoint:** write step 8b to `config/bootcamp_progress.json`.
 
 ### 9. Module completion and transition to Module 5
+
+**Not on a `collection_return`.** ⛔ **(INV-284) When `config/bootcamp_progress.json` carries one,
+this step does not run at all:** no Module Completion, no second Module 4 recap section, no progress
+update and no transition question. The Bootcamper never left Module 5, so return there at the step
+Module 5's Step 7b names ([Step 2](#receiving-a-collection-return)).
 
 Run the standard **Module Completion** process in `../bootcamp-onboarding/module-completion.md`
 (update progress, append the Module 4 recap section to `docs/bootcamp_recap.md`, and present the
