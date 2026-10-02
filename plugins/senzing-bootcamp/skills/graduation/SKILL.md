@@ -828,12 +828,24 @@ Write `docs/video/storyboard.json` in the renderer's format. Run the renderer wi
 every scene type and its fields; the example below shows the shape. `video.bootcamper` is the name the
 certificate prints (INV-100; pre-check 4: `name` in `config/bootcamp_preferences.yaml`, else the recap's
 `**Bootcamper:**` line, else "Bootcamper"), and `video.graduation_date` is the recap's `**Completed:**`
-date that Step 1a stamped. Use the bootcamper's name in the narration where it fits: the opening, the
-business problem and the certificate.
+date that Step 1a stamped. Set `video.title` to "Senzing Agentic AI Bootcamp". Use the bootcamper's
+name in the narration where it fits: the Intro, the business problem and the certificate.
 
 **Where each scene comes from.** Scenes run in the order the bootcamper experienced the bootcamp:
-Bootcamp preparation, then each module in `modules_completed` order, then the ending.
+the Intro, then Bootcamp preparation, then each module in `modules_completed` order, then the ending.
 
+- **The Intro** always opens the video, on every path. It is one `title_card` built from the
+  `video` object alone, and writes no B-roll entry:
+  - `"_module": "intro"`, the one `_module` tag that is not a module's state token;
+  - `module`: "Senzing Agentic AI Bootcamp";
+  - `highlight`: "[Name] · [Date]";
+  - `narration`: "This is [Name]'s Senzing Agentic AI Bootcamp, [Date]."
+
+  `[Name]` is `video.bootcamper`, so the Intro shows exactly the name the certificate shows, the
+  "Bootcamper" fallback included. `[Date]` is `video.graduation_date`, the recap's `**Completed:**`
+  date, written out in words as the certificate prints it, `Month D, YYYY` (e.g. "October 1,
+  2026"). The Intro carries the bootcamper's own name and the date, as the certificate does, and no
+  record value.
 - **Bootcamp preparation** always comes from `config/bootcamp_preferences.yaml`: the path, the selected
   modules and the `programming_language`, as one `title_card`. That module writes no B-roll entry
   (#298).
@@ -900,8 +912,9 @@ when its file name is `<name>-<slug>.png` with `<slug>` one of the three name-fr
 
 | Module | State token | Share | Seconds (every module taken) |
 |---|---|---|---|
-| Bootcamp preparation | `bootcamp_preparation` | 5% | 6.0 |
-| Entity Resolution Concepts | `entity_resolution_concepts` | 5% | 6.0 |
+| Intro | `intro` | 3% | 3.6 |
+| Bootcamp preparation | `bootcamp_preparation` | 3% | 3.6 |
+| Entity Resolution Concepts | `entity_resolution_concepts` | 4% | 4.8 |
 | Discover the Business Problem | `business_problem` | 15% | 18.0 |
 | SDK setup | `sdk_setup` | 3% | 3.6 |
 | System verification | `system_verification` | 3% | 3.6 |
@@ -912,7 +925,8 @@ when its file name is `<name>-<slug>.png` with `<slug>` one of the three name-fr
 | Query, Visualize and Discover | `query_visualize_discover` | 30% | 36.0 |
 | You graduated! | `graduation` | 4% | 4.8 |
 
-Bootcamp preparation and You graduated! always count. Every other module counts only when it is in
+Intro, Bootcamp preparation and You graduated! always count, whichever optional modules were
+skipped. Every other module counts only when it is in
 `modules_completed`. Leave out the modules the bootcamper did not take (the optional modules skipped
 on a Customized path), and scale the shares of the rest back up to 100%:
 
@@ -920,34 +934,38 @@ on a Customized path), and scale the shares of the rest back up to 100%:
 
 Round each module to one decimal, and give any rounding remainder to Query, Visualize and Discover so
 the total is exactly 120. For example, a Customized path that skipped Entity Resolution Concepts,
-System verification and Truth Set visualization counts 82%:
+System verification and Truth Set visualization counts 83%:
 
-| Module | Seconds (82% counted) |
+| Module | Seconds (83% counted) |
 |---|---|
-| Bootcamp preparation | 7.3 |
-| Discover the Business Problem | 22.0 |
-| SDK setup | 4.4 |
-| Data collection | 14.6 |
-| Data Quality, Mapping, and Transformation | 14.6 |
-| Data processing | 7.3 |
-| Query, Visualize and Discover | 43.9 |
-| You graduated! | 5.9 |
+| Intro | 4.3 |
+| Bootcamp preparation | 4.3 |
+| Discover the Business Problem | 21.7 |
+| SDK setup | 4.3 |
+| Data collection | 14.5 |
+| Data Quality, Mapping, and Transformation | 14.5 |
+| Data processing | 7.2 |
+| Query, Visualize and Discover | 43.4 |
+| You graduated! | 5.8 |
 
 A module's seconds may be split across several scenes; the scene durations for a module add up to
 its seconds, and You graduated!'s seconds are shared between the certificate and the tag line. Tag
-each scene with its module's state token in a `_module` key. The renderer ignores keys that begin
+each scene with its module's state token in a `_module` key (the Intro with `intro`). The renderer ignores keys that begin
 with `_`, and the tag tells you which module a scene belongs to when you re-time it below. The
 renderer lengthens a scene whose narration runs past its planned duration, so keep each narration
-to about 2.5 words for every second of its scene after the first.
+to about 2.5 words for every second of its scene after the first. The Intro's line usually runs a
+little past its 3.6 seconds; the renderer lengthens it and reports it, and the total stays inside
+the tolerance below.
 
 A storyboard for a Core bootcamp, with every module taken:
 
 ```json
 {
-  "video": {"bootcamper": "Ada Lovelace", "graduation_date": "2026-09-30"},
+  "video": {"bootcamper": "Ada Lovelace", "graduation_date": "2026-09-30", "title": "Senzing Agentic AI Bootcamp"},
   "scenes": [
-    {"_module": "bootcamp_preparation", "type": "title_card", "duration": 6, "module": "Bootcamp preparation", "highlight": "Core path, 10 modules, Python", "narration": "Ada chose the Core path: ten modules, in Python."},
-    {"_module": "entity_resolution_concepts", "type": "title_card", "duration": 6, "module": "Entity Resolution Concepts", "highlight": "How records become entities", "narration": "First, the idea: records that describe one thing become one entity."},
+    {"_module": "intro", "type": "title_card", "duration": 3.6, "module": "Senzing Agentic AI Bootcamp", "highlight": "Ada Lovelace · September 30, 2026", "narration": "This is Ada Lovelace's Senzing Agentic AI Bootcamp, September 30, 2026."},
+    {"_module": "bootcamp_preparation", "type": "title_card", "duration": 3.6, "module": "Bootcamp preparation", "highlight": "Core path, 10 modules, Python", "narration": "Ada chose Core: ten modules, in Python."},
+    {"_module": "entity_resolution_concepts", "type": "title_card", "duration": 4.8, "module": "Entity Resolution Concepts", "highlight": "How records become entities", "narration": "First: records that describe one thing become one entity."},
     {"_module": "business_problem", "type": "title_card", "duration": 18, "module": "Discover the Business Problem", "highlight": "One customer view across two systems", "narration": "Then Ada's own problem. The same customers sat in two systems, under different spellings and addresses, and nobody could say how many customers there really were. That was the question to answer."},
     {"_module": "sdk_setup", "type": "title_card", "duration": 3.6, "module": "SDK setup", "narration": "The Senzing SDK went in."},
     {"_module": "system_verification", "type": "title_card", "duration": 3.6, "module": "System verification", "narration": "Its system check passed."},

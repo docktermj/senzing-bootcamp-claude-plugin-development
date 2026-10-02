@@ -17,6 +17,10 @@ with the bundled renderer (`generate_recap_video.py`, #299). These tests pin:
 * **On no, nothing is written**; the heads-up line appears only after a declined model switch.
 * **The time budget**: the reporter's shares, summing to 100%, scaled over the modules taken,
   with each worked example checked against the formula rather than trusted.
+* **The Intro** (#347): the budget's first row (`intro`, 3%), always counted; Step 1c states its
+  `title_card`, its highlight, its narration and `video.title`; `intro` is the one `_module`
+  token that is not a module state token; and the worked example opens on it. Negative controls
+  drop or move the Intro, alter its narration, and slip in a second non-module token.
 * **The storyboard**: the documented example validates through the renderer's own
   `validate_storyboard`, runs exactly 2:00, carries the five animated scenes, and ends on the
   certificate and then "Resolved: [Name], Senzing graduate.".
@@ -38,7 +42,7 @@ Enforces **INV-340** (graduation's video step: offered once, nothing written on 
 never blocking, storyboard kept, the render verified). It asserts that Step 1c *states* these rules,
 and does **not** establish that a live run follows them, which only `dry-run` phase 3 can observe.
 
-Source issues: #300 (part of #297), #341, #326.
+Source issues: #300 (part of #297), #341, #326, #347.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -79,11 +83,13 @@ PIPER_OFFER = ("> 👉 **May I install the Piper neural voice so the narration s
 PIPER_VARIANT = ("…into `data/temp/recap-venv/` along with Pillow and `imageio-ffmpeg`, which "
                  "rendering needs, and the public-domain `en_US-ljspeech-high` voice…")
 
-#: The reporter's budget from #300, before scaling for skipped modules. Restated here on
+#: The reporter's budget from #300, as #347 changed it (an Intro taken from Bootcamp preparation
+#: and Entity Resolution Concepts), before scaling for skipped modules. Restated here on
 #: purpose: it is the spec the step's table is checked against, not a copy of the table.
 BUDGET = {
-    "Bootcamp preparation": 5,
-    "Entity Resolution Concepts": 5,
+    "Intro": 3,
+    "Bootcamp preparation": 3,
+    "Entity Resolution Concepts": 4,
     "Discover the Business Problem": 15,
     "SDK setup": 3,
     "System verification": 3,
@@ -94,9 +100,19 @@ BUDGET = {
     "Query, Visualize and Discover": 30,
     "You graduated!": 4,
 }
-ALWAYS_COUNTED = ("Bootcamp preparation", "You graduated!")
+ALWAYS_COUNTED = ("Intro", "Bootcamp preparation", "You graduated!")
 REMAINDER_MODULE = "Query, Visualize and Discover"
 OPTIONAL = ("Entity Resolution Concepts", "System verification", "Truth Set visualization")
+
+#: #347: the Intro scene, restated from the issue as the spec Step 1c is checked against.
+INTRO_TOKEN = "intro"
+INTRO_TITLE = "Senzing Agentic AI Bootcamp"
+INTRO_HIGHLIGHT = "[Name] · [Date]"
+INTRO_NARRATION = "This is [Name]'s Senzing Agentic AI Bootcamp, [Date]."
+#: Month names for writing `video.graduation_date` out as the certificate prints it. Restated
+#: rather than taken from `strftime("%B")`, whose output follows the machine's locale.
+MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August",
+          "September", "October", "November", "December")
 
 #: The reporter's five animated scenes: module -> the scene type that draws it.
 ANIMATED = {
@@ -139,10 +155,11 @@ def table_rows(text, header_start):
     raise AssertionError("no table whose header starts %r" % header_start)
 
 
-def budget_table():
+def budget_table(text=None):
     """module -> (state token, share, seconds with every module taken)."""
     out = {}
-    for module, token, share, seconds in table_rows(step_1c(), "| Module | State token | Share"):
+    rows = table_rows(step_1c() if text is None else text, "| Module | State token | Share")
+    for module, token, share, seconds in rows:
         out[module] = (token.strip("`"), int(share.rstrip("%")), float(seconds))
     return out
 
@@ -168,6 +185,46 @@ def state_tokens():
     """Bootcamp preparation's module list: display name -> state token."""
     rows = re.findall(r"^\| \d+ \| ([^|]+?) \| [^|]+ \| `([a-z_]+)` \|", read(PREPARATION), re.M)
     return {name: token for name, token in rows}
+
+
+def date_in_words(iso):
+    """`YYYY-MM-DD` as `Month D, YYYY`, the way the certificate prints it."""
+    year, month, day = (int(part) for part in iso.split("-"))
+    return "%s %d, %d" % (MONTHS[month - 1], day, year)
+
+
+def intro_problems(storyboard):
+    """What is wrong with the storyboard's opening, measured against #347's Intro."""
+    video, scenes = storyboard["video"], storyboard["scenes"]
+    if not scenes:
+        return ["the storyboard has no scenes"]
+    name, date = video["bootcamper"], date_in_words(video["graduation_date"])
+    first, problems = scenes[0], []
+    expected = {
+        "_module": INTRO_TOKEN,
+        "type": "title_card",
+        "module": INTRO_TITLE,
+        "highlight": INTRO_HIGHLIGHT.replace("[Name]", name).replace("[Date]", date),
+        "narration": INTRO_NARRATION.replace("[Name]", name).replace("[Date]", date),
+    }
+    for key, value in expected.items():
+        if first.get(key) != value:
+            problems.append("first scene %s is %r, not %r" % (key, first.get(key), value))
+    if video.get("title") != INTRO_TITLE:
+        problems.append("video.title is %r, not %r" % (video.get("title"), INTRO_TITLE))
+    later = [i for i, s in enumerate(scenes) if i and s.get("_module") == INTRO_TOKEN]
+    if later:
+        problems.append("an intro scene appears after the opening, at %s" % later)
+    return problems
+
+
+def non_module_tokens(tokens, module_tokens):
+    """The `_module` tokens that are not a module's state token, in first-seen order."""
+    out = []
+    for token in tokens:
+        if token not in module_tokens and token not in out:
+            out.append(token)
+    return out
 
 
 def load_renderer():
@@ -302,9 +359,17 @@ class TheTimeBudget(unittest.TestCase):
         self.assertEqual(100, sum(share for _t, share, _s in table.values()))
 
     def test_the_tokens_are_bootcamp_preparations(self):
+        """Every token is a module state token, except `intro`, the one allowed other (#347)."""
         tokens = state_tokens()
         self.assertIn("business_problem", tokens.values(), "could not read the module list")
-        for module, (token, _share, _seconds) in budget_table().items():
+        self.assertNotIn(INTRO_TOKEN, tokens.values(), "`intro` must not be a module's token")
+        table = budget_table()
+        self.assertEqual((INTRO_TOKEN, 3, 3.6), table["Intro"])
+        self.assertEqual([INTRO_TOKEN], non_module_tokens(
+            [token for token, _share, _seconds in table.values()], set(tokens.values())))
+        for module, (token, _share, _seconds) in table.items():
+            if token == INTRO_TOKEN:
+                continue
             with self.subTest(module=module):
                 self.assertIn(token, tokens.values())
                 if module in tokens:
@@ -323,15 +388,17 @@ class TheTimeBudget(unittest.TestCase):
         self.assertIn("`seconds = 120 × share ÷ (sum of the shares that count)`", text)
         self.assertIn("give any rounding remainder to Query, Visualize and Discover so the "
                       "total is exactly 120", text)
-        self.assertIn("Bootcamp preparation and You graduated! always count", text)
+        self.assertIn("Intro, Bootcamp preparation and You graduated! always count, whichever "
+                      "optional modules were skipped", text)
         self.assertIn("Every other module counts only when it is in `modules_completed`", text)
         self.assertIn("scale the shares of the rest back up to 100%", text)
 
     def test_the_skipped_optional_modules_example_is_rescaled(self):
         counted = [m for m in BUDGET if m not in OPTIONAL]
-        self.assertEqual(82, sum(BUDGET[m] for m in counted))
-        self.assertIn("counts 82%", squash(step_1c()))
-        rows = table_rows(step_1c(), "| Module | Seconds (82% counted)")
+        self.assertEqual(83, sum(BUDGET[m] for m in counted))
+        self.assertIn("counts 83%", squash(step_1c()))
+        self.assertNotIn("counts 82%", squash(step_1c()), "the pre-#347 example is gone")
+        rows = table_rows(step_1c(), "| Module | Seconds (83% counted)")
         example = {module: float(seconds) for module, seconds in rows}
         self.assertEqual(counted, list(example), "every counted module, and only those")
         expected = scaled(counted)
@@ -339,6 +406,84 @@ class TheTimeBudget(unittest.TestCase):
             with self.subTest(module=module):
                 self.assertAlmostEqual(expected[module], example[module], places=1)
         self.assertAlmostEqual(120, sum(example.values()), places=6)
+
+
+class TheIntro(unittest.TestCase):
+    """#347: every video opens on an Intro naming the bootcamp, the bootcamper and the date."""
+
+    def test_the_intro_scene_is_specified(self):
+        text = squash(step_1c())
+        self.assertIn("**The Intro** always opens the video, on every path. It is one "
+                      "`title_card` built from the `video` object alone", text)
+        self.assertIn('`"_module": "intro"`, the one `_module` tag that is not a module\'s '
+                      "state token", text)
+        self.assertIn('`module`: "%s"' % INTRO_TITLE, text)
+        self.assertIn('`highlight`: "%s"' % INTRO_HIGHLIGHT, text)
+        self.assertIn('`narration`: "%s"' % INTRO_NARRATION, text)
+        self.assertIn('Set `video.title` to "%s"' % INTRO_TITLE, text)
+
+    def test_name_and_date_follow_the_certificate(self):
+        text = squash(step_1c())
+        self.assertIn("`[Name]` is `video.bootcamper`, so the Intro shows exactly the name the "
+                      "certificate shows, the \"Bootcamper\" fallback included", text)
+        self.assertIn("`[Date]` is `video.graduation_date`, the recap's `**Completed:**` date, "
+                      "written out in words as the certificate prints it, `Month D, YYYY` "
+                      "(e.g. \"October 1, 2026\")", text)
+        self.assertIn("as the certificate does, and no record value", text)
+        self.assertEqual("October 1, 2026", date_in_words("2026-10-01"))
+
+    def test_the_intro_comes_first_in_the_scene_order(self):
+        text = squash(step_1c())
+        self.assertIn("the Intro, then Bootcamp preparation, then each module in "
+                      "`modules_completed` order, then the ending", text)
+        bullets = step_1c()
+        self.assertLess(bullets.index("- **The Intro** always opens"),
+                        bullets.index("- **Bootcamp preparation** always comes"))
+
+    def test_the_intro_always_counts(self):
+        self.assertIn("Intro", ALWAYS_COUNTED)
+        self.assertEqual("Intro", list(budget_table())[0], "the budget's first row")
+        rows = table_rows(step_1c(), "| Module | Seconds (83% counted)")
+        self.assertEqual("Intro", rows[0][0], "a Customized path keeps the Intro")
+        self.assertNotIn("Intro", OPTIONAL)
+
+    def test_the_example_opens_on_the_intro(self):
+        self.assertEqual([], intro_problems(example_storyboard()))
+
+    def test_the_example_tags_only_module_tokens_and_intro(self):
+        tokens = [s["_module"] for s in example_storyboard()["scenes"]]
+        self.assertEqual([INTRO_TOKEN], non_module_tokens(tokens, set(state_tokens().values())))
+
+    def test_negative_controls(self):
+        base = example_storyboard()
+        moved = example_storyboard()
+        moved["scenes"].insert(1, moved["scenes"].pop(0))
+        dropped = example_storyboard()
+        dropped["scenes"].pop(0)
+        reworded = example_storyboard()
+        reworded["scenes"][0]["narration"] = "Welcome to Ada's bootcamp."
+        undated = example_storyboard()
+        undated["scenes"][0]["highlight"] = "Ada Lovelace · 2026-09-30"
+        untitled = example_storyboard()
+        del untitled["video"]["title"]
+        for label, storyboard in (("moved", moved), ("dropped", dropped),
+                                  ("reworded", reworded), ("ISO date", undated),
+                                  ("no video.title", untitled)):
+            with self.subTest(control=label):
+                self.assertNotEqual([], intro_problems(storyboard))
+        self.assertEqual([], intro_problems(base))
+        module_tokens = set(state_tokens().values())
+        tokens = [s["_module"] for s in base["scenes"]]
+        self.assertEqual([INTRO_TOKEN, "opening"],
+                         non_module_tokens(tokens + ["opening"], module_tokens))
+        renamed = step_1c().replace("| Intro | `intro` |", "| Intro | `opening` |")
+        self.assertNotEqual(renamed, step_1c(), "the token mutation matched nothing")
+        self.assertEqual(["opening"], non_module_tokens(
+            [token for token, _s, _sec in budget_table(renamed).values()], module_tokens))
+        dropped_row = step_1c().replace("| Intro | `intro` | 3% | 3.6 |\n", "")
+        self.assertNotEqual(dropped_row, step_1c(), "the row-removal mutation matched nothing")
+        self.assertNotEqual(list(BUDGET), list(budget_table(dropped_row)))
+        self.assertNotEqual(100, sum(share for _t, share, _s in budget_table(dropped_row).values()))
 
 
 class TheStoryboard(unittest.TestCase):

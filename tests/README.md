@@ -46,8 +46,9 @@ when it is absent and supplies the `@requires_fpdf2` guard; see `docs/developmen
   never-blocks, and that the documented example's facts validate as renderer scenes.
 - `test_graduation_video_step.py` — graduation Step 1c, the optional graduation video: its place
   after the recap PDF, the offer and install questions verbatim, nothing written on no, the
-  time budget and its rescaling over the modules taken, the example storyboard validating
-  through the renderer and ending on the certificate and the tag line, the no-raw-values rule,
+  time budget and its rescaling over the modules taken, the Intro scene that always opens it
+  (#347), the example storyboard validating through the renderer, opening on the Intro and
+  ending on the certificate and the tag line, the no-raw-values rule,
   the non-blocking fallbacks for exit codes 1–3, and the duration, frame and audio checks.
 - `test_model_switch_rule_is_stated_once.py` — the model/effort switch rule is stated once, in
   `ground-rules.md`: a scan of every shipped Markdown file finds the pinned switch question and

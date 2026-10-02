@@ -43,6 +43,64 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## graduation-video-opens-on-an-intro-scene
+
+- **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #347, spec revision 1; the reporter's request to add an Intro to #300's time budget)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md` (Step 1c: `video.title` in "Write the storyboard", the scene order and a new **The Intro** bullet in "Where each scene comes from", the budget table's new Intro row and its Bootcamp preparation and Entity Resolution Concepts shares, the "always count" sentence, the Customized-path example now at 83%, the `_module` tag sentence, an Intro narration-length note, and the worked example's `video` object and first three scenes), `tests/test_graduation_video_step.py` (`BUDGET`, `ALWAYS_COUNTED`, the Intro constants, three helpers, new class `TheIntro`, the reworked token test, the 83% test, the "always count" assertion, docstring), `tests/README.md` (the file's line), `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md`, `invariant-manifest.json` and the renderer are unchanged.
+- **MCP re-check:** n/a (no Senzing fact), server `sz-mcp-coworker` 1.37.16 (Senzing "current"), 2026-10-01, `get_capabilities` — re-confirmed, not assumed. The change is the plugin's own video time budget, its own storyboard example and its own scene wording. No added line names an SDK method, an engine behavior, a Senzing document or an MCP tool (checked over the full diff); "Senzing Agentic AI Bootcamp" is the bootcamp's own title, as the issue gives it. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** implemented directly (Phase 5a), built on `1a7e4f3`, after #326 (PR #360) changed the worked example's images and kept its durations. The issue settled the route: the existing `title_card` scene, with `video.title` set, and no renderer change. The renderer already accepts an optional `video.title` (`VIDEO_FIELDS` in `generate_recap_video.py`).
+- **Summary:** Every graduation video now opens on an Intro scene naming the bootcamp, the Bootcamper and the graduation date. Before, it started straight on Bootcamp preparation.
+  - **The budget.** A new first row, Intro, `intro`, 3%, 3.6 s. Bootcamp preparation goes from 5% to 3% (3.6 s) and Entity Resolution Concepts from 5% to 4% (4.8 s). Every other row is unchanged, the shares still total 100%, and the full-path seconds total 120.0. "Intro, Bootcamp preparation and You graduated! always count, whichever optional modules were skipped."
+  - **The Customized-path example.** Skipping Entity Resolution Concepts, System verification and Truth Set visualization now counts 83%, with the issue's seconds (Intro 4.3, Bootcamp preparation 4.3, Discover the Business Problem 21.7, SDK setup 4.3, Data collection 14.5, Data Quality, Mapping, and Transformation 14.5, Data processing 7.2, Query, Visualize and Discover 43.4, You graduated! 5.8). They total exactly 120.0 with no rounding remainder.
+  - **The Intro scene.** One `title_card`, built from the `video` object alone and writing no B-roll entry: `"_module": "intro"`, the one `_module` tag that is not a module state token; `module` "Senzing Agentic AI Bootcamp"; `highlight` "[Name] · [Date]"; `narration` "This is [Name]'s Senzing Agentic AI Bootcamp, [Date].". `[Name]` is `video.bootcamper`, so the Intro shows exactly what the certificate shows, the "Bootcamper" fallback included. `[Date]` is `video.graduation_date` written as the certificate prints it, `Month D, YYYY` (`generate_recap_pdf._format_date`). It carries the Bootcamper's own name and the date, as the certificate does, and no record value. `video.title` is set to "Senzing Agentic AI Bootcamp". "Where each scene comes from" lists the Intro first, and a sentence notes that its line usually runs a little past 3.6 s, which the renderer extends and reports.
+  - **The worked example.** It opens on the Intro (3.6 s, "Ada Lovelace · September 30, 2026"). Bootcamp preparation is re-timed from 6 to 3.6 s and Entity Resolution Concepts from 6 to 4.8 s, with their narration trimmed to fit (7 and 9 words). Every later scene, and #326's three name-free images, are unchanged. The scenes still total 120 s, and the example still validates through the renderer's `validate_storyboard`.
+  - **Tests.** `tests/test_graduation_video_step.py`. `BUDGET` restates the new shares, and the existing table and full-path tests check them. `test_the_tokens_are_bootcamp_preparations` now requires `intro` to be the budget's one non-module token, with `(intro, 3, 3.6)` as its row, and every other token a module's state token. The 83% test checks the issue's table against the formula and that "counts 82%" is gone. New class `TheIntro`, 7 tests: the scene's wording stated in Step 1c; name and date following the certificate (with `date_in_words("2026-10-01") == "October 1, 2026"`, using a restated month list rather than locale-dependent `strftime`); the Intro first in the scene order; Intro always counted, first in the budget and in the 83% table; the example opening on the Intro (`intro_problems`: tag, type, title, highlight and narration filled from `video`, `video.title`, and no later `intro` scene); the example's `_module` tags all module tokens except `intro`. **Negative controls** (`TheIntro.test_negative_controls`): `intro_problems` reports a problem when the Intro is moved second, dropped, reworded, given an ISO date, or `video.title` is removed; a slipped-in `opening` token is reported beside `intro`; a budget row renamed to `opening` is reported as the non-module token; and the budget with the Intro row removed no longer matches `BUDGET` or totals 100. Also checked by hand: with the pre-#347 `graduation/SKILL.md` restored and the new tests kept, 13 tests fail (`FAILED (failures=11, errors=2)`); restoring the change, the file passes (74 tests, `OK`).
+- **Interaction noted, not changed:** #341's Piper path spells numbers out (`spell_numbers`), so the Intro's date is spoken "September thirty, two thousand twenty-six" (and "October 1, 2026" as "October one, two thousand twenty-six"), checked by running `spell_numbers` on the example narration. The captions keep the digits. Ordinal days and a year read as "twenty twenty-six" are out of this issue's scope, so the speller is unchanged.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **Differs from the issue:** the acceptance criterion "INV-340 is corrected in place with a dated note" is met by the drafted amendment below, not by an edit to `specs/INVARIANTS.md`, which only `/review-invariants` writes (INV-307). The issue gives the note no date; the draft keeps it as a placeholder, as the neighboring INV-340 drafts do.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-340 — awaiting the maintainer's sign-off; NOT applied.** The rule already shipping:
+    - `plugins/senzing-bootcamp/skills/graduation/SKILL.md` — ⛔ the storyboard opens on the Intro scene, which always counts *(Step 1c's **The Intro** bullet, the budget table's Intro row and its "always count" sentence; stated as guidance under INV-340's budget, with no ⛔ line of its own)*
+
+  ⚠️ **Why.** INV-340 registers that the storyboard starts with "Bootcamp preparation's scene"
+  and is planned "across the documented per-module shares", and its own Why says a change to
+  the reporter's shares "is corrected by a dated note here". This run ships an Intro that
+  always opens the storyboard and always counts, and moves two shares to pay for it, so the
+  issue asks for that dated note. It amends INV-340 rather than minting an id: the Intro is a
+  scene of the storyboard INV-340 already governs. **How it relates to the three pending INV-340
+  amendments in this run** (#341, `graduation-video-local-piper-neural-voice`; #340,
+  `graduation-video-no-voice-per-platform-guidance`; #326,
+  `graduation-video-uses-only-name-free-screenshots`, all still awaiting): it is additive and
+  independent. It changes only the "On yes it MUST write `docs/video/storyboard.json` …"
+  sentence, which none of them touches: #326's sentence goes after the aggregates-only
+  sentence, #341's before "Exit 2 from the renderer", and #340's after "The closing
+  announcement and the return guide MUST name the video only when it was produced.". #341's
+  and #326's notes each say the budget is unchanged *by them*, which stays true. Its `Enforced
+  by` addition names classes in the file INV-340 already cites. All four can be applied in one
+  edit, or this one alone to INV-340's registered text. Amending a registered invariant is the
+  maintainer's sign-off alone, so `specs/INVARIANTS.md` and `invariant-manifest.json` are
+  unchanged. **Sites it affects:** INV-340 in `specs/INVARIANTS.md`, and its statement in
+  `invariant-manifest.json`, regenerated from it
+  (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit. The shipped site is
+  Step 1c's **The Intro** bullet, the budget table and its "always count" sentence, in
+  `plugins/senzing-bootcamp/skills/graduation/SKILL.md`. The enforcer is
+  `tests/test_graduation_video_step.py` (`TheIntro`, and `TheTimeBudget` for the shares).
+  Applying it resolves the block: mark the bullet `applied YYYY-MM-DD` and drop the "awaiting"
+  marker.
+
+  The drafted wording:
+
+  **INV-340** — … On yes it MUST write `docs/video/storyboard.json` from `docs/video/broll.json` (from the recap and its screenshots when a module has no entry), opening on the Intro scene — one `title_card` titled "Senzing Agentic AI Bootcamp", with the highlight "[Name] · [Date]" and the narration "This is [Name]'s Senzing Agentic AI Bootcamp, [Date].", where [Name] is the certificate's name and [Date] the graduation date as the certificate prints it, tagged `intro`, the one `_module` tag that is not a module state token — then Bootcamp preparation's scene from `config/bootcamp_preferences.yaml`, planned at 2:00 across the documented per-module shares scaled over the modules taken, in which the Intro, Bootcamp preparation and You graduated! always count, and ending on the certificate scene and then the tag line "Resolved: [Name], Senzing graduate.". … (⚠️ **Amended <YYYY-MM-DD> (#347): the storyboard opens on the Intro scene, which always counts; its 3% share is taken from Bootcamp preparation (5% → 3%) and Entity Resolution Concepts (5% → 4%). The offer, the aggregates rule, the ending, the verification and the #340, #341 and #326 rules are unchanged.**) Enforced by `tests/test_graduation_video_step.py` (`TheIntro` for the Intro scene), …
+
+  *(the `…` stand for INV-340's registered text, plus #340's, #341's and #326's amendments once
+  applied, kept as they are; the date is a placeholder deliberately: `/review-invariants` fills
+  it in on the day it applies the amendment.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-340 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The Intro reuses the existing `title_card` scene and the renderer's existing optional `video.title`, so INV-342 is untouched; its name follows INV-100's certificate name; the stdlib tests apply INV-108. No ⛔ line is added and none is demoted.
+
 ## graduation-video-uses-only-name-free-screenshots
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #326, spec revision 1; observed on a 2026-10-01 walk, where the first renders put Merge Statistics screenshots on screen)
