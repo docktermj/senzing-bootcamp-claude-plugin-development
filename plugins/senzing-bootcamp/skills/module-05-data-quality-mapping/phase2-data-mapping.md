@@ -254,7 +254,7 @@ the same** and only four `advance` calls happen in Phase 2:
 | 12-16 | 4 generate_validate | **one** `advance` at step 15, `data={'verdict': ...}` |
 | 17-18 | — | no advance; `rework_*` verdicts route back |
 | 18a | 5 detect_environment | the menu returned by step 15's advance; answering it may enter Phase 3 |
-| Phase 3 (21-26) | 6-8 | the optional sandbox test load — see `phase3-test-load.md` |
+| Phase 3 (21-25) | 6-8 | the optional sandbox test load — see `phase3-test-load.md`; every exit returns to step 19 (or step 17 to iterate) |
 
 Steps 12, 13, 14 and 16 do **not** advance the workflow — they are work performed *inside* workflow
 step 4 (generate sample JSON, lint, write and run the mapper, analyze output) before its single
@@ -1639,10 +1639,10 @@ response arrives.
 ⛔ **Why the placement matters.** This block previously sat under step 11 (Map), and
 `phase3-test-load.md` pointed at step 11 as its entry. Both were wrong in the same direction:
 choosing `test_load` there entered Phase 3 before the transformation program existed, so Phase 3's
-step 22 had no "Phase 2 transformation output" to sample, and Phase 3's step 26 closes the module —
-which would have skipped steps 12–18 entirely, including the transform code INV-042/INV-043 require
-and step 19's mandatory per-source `docs/mapping/{source_name}_mapper.md` gate. Entering from 18a,
-every prerequisite Phase 3 assumes is already on disk.
+step 22 had no "Phase 2 transformation output" to sample, and Phase 3's exits rejoin Phase 2 at
+step 19 — which would have skipped steps 12–18 entirely, including the transform code
+INV-042/INV-043 require and the `docs/mapping/{source_name}_mapper.md` that step 19's per-source gate
+checks. Entering from 18a, every prerequisite Phase 3 assumes is already on disk.
 
 Do NOT stop at the menu: explain it and relay a recommendation so the bootcamper never hits a dead
 end.
@@ -1670,7 +1670,11 @@ continue to step 19.
 
 **Explicit choice is preserved:** If the bootcamper explicitly asks for the sandbox test load
 (**test_load**), at any source, follow that path into Phase 3 (`phase3-test-load.md`) unchanged.
-The real production load still happens in Data processing regardless.
+The real production load still happens in Data processing regardless. Phase 3 tests this source
+only, and every exit from it returns here: its step 25 "yes" and its skip exits resume at step 19,
+and its step 25 "no" at step 17 (`phase3-test-load.md` → "Leaving Phase 3", INV-344). So a test load
+chosen on a source that is not the last continues to the next unmapped source, with no question
+about the whole run.
 
 **Checkpoint:** write step 18a.
 
@@ -1705,8 +1709,18 @@ complete, delete its `config/mapping_state_[datasource].json` checkpoint.
 
 ### 20. Module completion and transition
 
-Once all sources are mapped, **complete the module** — this is Module 5's completion site whenever
-the optional Phase 3 was not taken. Run the standard **Module Completion** process in
+Once all sources are mapped, **complete the module** — this is Module 5's only completion site,
+whether or not any source took the optional Phase 3 test load (Phase 3 returns to step 19 and never
+completes the module).
+
+> **Optional: baseline status summary (advisory, non-blocking):** When any source took the Phase 3
+> test load, you MAY surface which data sources still lack an ER baseline (compare the set of
+> `config/er_baseline_*.json` files against the mapped sources). It is read-only, never blocks
+> the workflow, and never creates, modifies, or deletes a baseline. (The Kiro
+> `baseline_status.py` helper is a later porting phase; report coverage directly if you choose
+> to.)
+
+Run the standard **Module Completion** process in
 `../bootcamp-onboarding/module-completion.md`: present the end-of-module summary (INV-032), append
 the name-based Module 5 recap section to `docs/bootcamp_recap.md` (INV-085), show the
 `✅ Module complete: Data Quality, Mapping, and Transformation` line (INV-079), and end the turn on the pinned
@@ -1718,8 +1732,7 @@ transition 👉 question naming the **next selected module** from `selected_modu
 
 Do **not** choose the next module by re-checking SDK state — `selected_modules` already fixes the
 order (SDK setup precedes Data Quality, Mapping, and Transformation; Data processing follows it). **Run Module
-Completion exactly once:** if the bootcamper took Phase 3 and its step 26 already completed the
-module (`data_quality_mapping` is already in `modules_completed`), skip completion here and present
-only the transition.
+Completion exactly once,** here: Phase 3 never runs it. A resume that finds Module 5 already complete
+presents only the transition question above (this module's `SKILL.md` → "Resuming").
 
 **Checkpoint:** write step 20.
