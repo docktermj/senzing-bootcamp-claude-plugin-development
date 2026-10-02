@@ -1,8 +1,8 @@
 """A path a step tells the guide to run must resolve where that step actually runs.
 
-`deep-dive-audit-2026-07-30b`. Three path defects of one shape, none of which any existing
-test could see, because each is a *string in prose* that is only wrong relative to a working
-directory no test had modeled.
+`deep-dive-audit-2026-07-30b`. Three path defects of one shape (a fourth, #325, is item 4),
+none of which any existing test could see, because each is a *string in prose* that is only
+wrong relative to a working directory no test had modeled.
 
 1. **A bundled script invoked by a bare project-relative path.** Module 7 said:
 
@@ -27,6 +27,13 @@ directory no test had modeled.
    reader to the Desktop path — while INV-001 makes Windows supported and INV-158 makes the
    CLI one of the two interfaces the install docs must document.
 
+4. **A production copy that left out the registry its own copied code reads (#325).** Module 6
+   Phase C step 17 has the orchestrator read each source's entry in `config/data_sources.yaml`
+   when it runs (INV-320), and graduation copied `src/load/**` verbatim while copying nothing
+   from `config/`. Step 2 now writes a projection of the registry to the same path under
+   `production/` (INV-186), keeping only `version`, `name`, `file_path` and `format`, so no
+   evaluation-only `load_subset:` limit reaches production.
+
 Written as sweeps, not as three assertions about three lines, so the next one is caught too.
 
 Enforces **INV-185** (a command run against a bundled script resolves it inside the plugin
@@ -45,6 +52,7 @@ SKILLS = PLUGIN / "skills"
 COMMANDS = PLUGIN / "commands"
 SCRIPTS = PLUGIN / "scripts"
 GRADUATION = SKILLS / "graduation" / "SKILL.md"
+PHASE_C = SKILLS / "module-06-data-processing" / "phaseC-multi-source.md"
 CLI_INSTALL_DOC = REPO_ROOT / "docs" / "README.md"
 
 # The scripts that ship inside the plugin. A step that runs one of these is running a file
@@ -208,17 +216,85 @@ class BundledScriptsAreInvokedByAResolvedPath(unittest.TestCase):
         )
 
 
+def copy_table_rows(text):
+    """(source, destination) for each row of graduation's Step 2 copy table."""
+    rows = []
+    for line in text.splitlines():
+        if line.startswith("| `") and "production/" in line:
+            cells = [c.strip().strip("`") for c in line.strip("|").split("|")]
+            if len(cells) >= 2:
+                rows.append((cells[0], cells[1]))
+    return rows
+
+
+def graduation_step(text, number):
+    """Graduation's `## Step <number>:` section, up to the next `## ` heading."""
+    start = text.index("\n## Step %s:" % number)
+    end = text.find("\n## ", start + 1)
+    return text[start:] if end == -1 else text[start:end]
+
+
+def step17_registry_paths(phase_c):
+    """The `config/` files Phase C step 17 tells the orchestrator to read when it runs."""
+    paragraphs = [p for p in re.split(r"\n\s*\n", phase_c)
+                  if "(INV-320) Then the orchestrator loads" in p]
+    return {path for p in paragraphs
+            for path in re.findall(r"`(config/[^`]+)`", p)}
+
+
+def registry_rows_missing(phase_c, graduation):
+    """Each registry step 17 reads that Step 2 does not land at its own path under production/."""
+    rows = dict(copy_table_rows(graduation))
+    return sorted(path for path in step17_registry_paths(phase_c)
+                  if rows.get(path) != "production/" + path)
+
+
+def projection_bullet(graduation, label):
+    """The backticked items of Step 2's `- **<label>:**` projection bullet, or None."""
+    m = re.search(r"(?ms)^- \*\*%s:\*\*(.*?)(?=^- \*\*|^\s*$)" % re.escape(label),
+                  graduation_step(graduation, 2))
+    return None if m is None else re.findall(r"`([^`]+)`", m.group(1))
+
+
+#: The projection's allowlist (#325): what production's orchestrator needs and nothing more.
+PROJECTION_KEEPS = {"version", "sources:", "name", "file_path", "format"}
+
+
+def projection_problems(graduation):
+    """Why Step 2's projection would carry an evaluation-only field, or [] when it would not."""
+    keep, strip = (projection_bullet(graduation, "Keep only"),
+                   projection_bullet(graduation, "Strip"))
+    if keep is None or strip is None:
+        return ["Step 2 has no **Keep only:** / **Strip:** projection bullet"]
+    problems = []
+    if set(keep) != PROJECTION_KEEPS:
+        problems.append("Keep only names %s, not %s" % (sorted(keep), sorted(PROJECTION_KEEPS)))
+    for field in ("load_subset:", "sample:"):
+        if field not in strip:
+            problems.append("Strip does not name %s" % field)
+    return problems
+
+
+def readme_names_the_registry(graduation):
+    """Step 4's Configuration bullet names the registry and the subset sources' full load."""
+    flat = " ".join(graduation_step(graduation, 4).split())
+    m = re.search(r"\*\*Configuration names the registry\.\*\*(.*?)(?= - \*\*|$)", flat)
+    return bool(m) and all(
+        needle in m.group(1)
+        for needle in ("`config/data_sources.yaml`", "`load_subset:`", "whole `file_path`"))
+
+
+def report_lists_the_projection(graduation):
+    """Step 5's files-generated table lists the projection."""
+    flat = " ".join(graduation_step(graduation, 5).split())
+    return "files-generated table (it lists `production/config/data_sources.yaml`" in flat
+
+
 class ProductionCopyPreservesThePathsItsCodeUses(unittest.TestCase):
     """Copied code is not rewritten, so its inputs must land where it looks for them."""
 
     def _copy_table_rows(self):
-        rows = []
-        for line in GRADUATION.read_text(encoding="utf-8").splitlines():
-            if line.startswith("| `") and "production/" in line:
-                cells = [c.strip().strip("`") for c in line.strip("|").split("|")]
-                if len(cells) >= 2:
-                    rows.append((cells[0], cells[1]))
-        return rows
+        return copy_table_rows(GRADUATION.read_text(encoding="utf-8"))
 
     def test_the_copy_table_is_readable(self):
         rows = self._copy_table_rows()
@@ -282,6 +358,77 @@ class ProductionCopyPreservesThePathsItsCodeUses(unittest.TestCase):
             "and production/README.md — otherwise the missing input is silent.\n"
             "Paragraphs found:\n  " + "\n  ".join(paragraphs),
         )
+
+
+    # -- #325: the registry the Phase C orchestrator reads ------------------------------
+
+    def test_step17_still_names_the_registry_it_reads(self):
+        """Not vacuous: the paragraph parser finds the registry, or the next test checks nothing."""
+        self.assertEqual(
+            {"config/data_sources.yaml"},
+            step17_registry_paths(PHASE_C.read_text(encoding="utf-8")),
+            "Phase C step 17's (INV-320) paragraph no longer parses, or reads another file",
+        )
+
+    def test_the_registry_step17_reads_keeps_its_path(self):
+        """INV-186: the orchestrator is copied verbatim, so its registry lands where it looks."""
+        missing = registry_rows_missing(PHASE_C.read_text(encoding="utf-8"),
+                                        GRADUATION.read_text(encoding="utf-8"))
+        self.assertEqual(
+            [], missing,
+            "Phase C step 17 tells the orchestrator to read these at run time, and graduation "
+            "Step 2 does not write them to the same path under production/, so the copied "
+            "loader stops at its registry lookup: %s" % missing,
+        )
+
+    def test_the_projection_carries_no_evaluation_only_field(self):
+        self.assertEqual([], projection_problems(GRADUATION.read_text(encoding="utf-8")))
+
+    def test_the_readme_configuration_names_the_registry(self):
+        self.assertTrue(
+            readme_names_the_registry(GRADUATION.read_text(encoding="utf-8")),
+            "Step 4's **Configuration names the registry.** bullet must name "
+            "`config/data_sources.yaml`, the sources that had a `load_subset:` block, and that "
+            "production loads each one's whole `file_path`",
+        )
+
+    def test_the_report_lists_the_projection(self):
+        self.assertTrue(
+            report_lists_the_projection(GRADUATION.read_text(encoding="utf-8")),
+            "Step 5's files-generated table must list production/config/data_sources.yaml",
+        )
+
+    def test_negative_controls(self):
+        """Each check above fails on the defect it exists for."""
+        graduation = GRADUATION.read_text(encoding="utf-8")
+        phase_c = PHASE_C.read_text(encoding="utf-8")
+        row = ("| `config/data_sources.yaml` | `production/config/data_sources.yaml` |")
+        self.assertIn(row, graduation, "the control's copy-table row moved")
+
+        # 1. The pre-#325 copy table: no registry row.
+        without_row = "\n".join(l for l in graduation.splitlines() if not l.startswith(row))
+        self.assertEqual(["config/data_sources.yaml"],
+                         registry_rows_missing(phase_c, without_row))
+        # 2. The registry flattened out of config/.
+        flattened = graduation.replace(row, row.replace("production/config/", "production/"), 1)
+        self.assertEqual(["config/data_sources.yaml"],
+                         registry_rows_missing(phase_c, flattened))
+        # 3. load_subset: kept, so production inherits the evaluation's cap.
+        keep = "- **Keep only:** `version`,"
+        self.assertIn(keep, graduation, "the control's Keep only bullet moved")
+        leaky = graduation.replace(keep, "- **Keep only:** `load_subset:`, `version`,", 1)
+        self.assertTrue(projection_problems(leaky))
+        # 4. load_subset: dropped from the Strip list.
+        unstripped = graduation.replace("including `load_subset:`, ", "including ", 1)
+        self.assertNotEqual(graduation, unstripped, "the control's Strip entry moved")
+        self.assertIn("Strip does not name load_subset:", projection_problems(unstripped))
+        # 5. The README bullet gone.
+        bullet = "**Configuration names the registry.**"
+        self.assertFalse(readme_names_the_registry(graduation.replace(bullet, "", 1)))
+        # 6. The report no longer lists the projection.
+        listed = "(it lists\n`production/config/data_sources.yaml`"
+        self.assertIn(listed, graduation, "the control's Step 5 wording moved")
+        self.assertFalse(report_lists_the_projection(graduation.replace(listed, "(", 1)))
 
 
 class InstallDocsCoverEverySupportedPlatform(unittest.TestCase):
