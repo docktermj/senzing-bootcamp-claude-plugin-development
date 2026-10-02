@@ -113,7 +113,10 @@ class TheMeasurementIsNamedAndNonBlocking(unittest.TestCase):
     def test_senzings_own_anti_patterns_are_cited_with_version_and_date(self):
         self.assertIn("category='anti_patterns'", self.branch,
                       "the anti-pattern route is not named")
-        self.assertRegex(self.branch, r"1\.33\.0, 2026-08-21",
+        # Re-measured for #383 (was 1.33.0, 2026-08-21): the prose stamp follows the
+        # VERIFIED_QUERIES record in tests/test_prescribed_search_queries.py.
+        self.assertRegex(self.branch,
+                         r"1\.37\.19\*\*, docs index 2026-10-02 18:46\s+UTC, \*\*2026-10-02",
                          "the anti-pattern citation carries no server version and date")
 
 

@@ -744,7 +744,8 @@ existing-install path, which skips Phase 1 and Phase 2; INV-338, INV-339):**
    - **Java:** `sdk_guide`'s install reply names no source for the Java bindings, so the route is
      the Java SDK reference: `search_docs(query='Java SDK sz-sdk.jar Maven Usage local Maven
      repository')`, and follow its "Maven Usage" and "Installation in Local Maven Repository"
-     sections. On server 1.37.16 (2026-09-30) they said `sz-sdk.jar` "is not provided via Maven
+     sections. Its top hit is an FAQ about a JAR-verification warning: read past the first hit to
+     those two sections. On server 1.37.16 (2026-09-30) they said `sz-sdk.jar` "is not provided via Maven
      Central" and is the one "provided with the Senzing product", used as a system-scoped
      dependency or installed into the **local** Maven repository (`java -jar sz-sdk.jar` prints
      the `mvn install:install-file` command for it).
@@ -1553,8 +1554,10 @@ slower, and a Bootcamper has no reason to suspect storage.
    *"Senzing entity resolution is I/O intensive … Avoid network-attached storage (NAS/NFS) for the
    database data directory … Run `check_repository_performance()` to validate your storage meets
    requirements"* — and *"Do Not Skip check_repository_performance() Before Production"*, which says
-   to run it **before** a large load (re-verified server **1.33.0, 2026-08-21**). A mount crossed by
-   a translation layer is that case.
+   to run it **before** a large load (re-verified server **1.37.19**, docs index 2026-10-02 18:46
+   UTC, **2026-10-02**). The second is in the top hit, *Senzing Anti-Patterns: Configuration and
+   Initialization*; the first is in the next, *Architecture and Performance*, so read past the
+   first hit. A mount crossed by a translation layer is that case.
 
 ⚠️ **Observation-only, one workstation, recorded with its conditions rather than asserted as a rule:**
 on Windows 11 + WSL2 Ubuntu with Senzing SDK 4.3.4 and SQLite, `check_repository_performance(5)`
@@ -1641,9 +1644,13 @@ and say so.
 
 **MCP-first (INV-080):** confirm the current PostgreSQL connection-URL format, the schema-DDL path,
 and the engine-config wiring from the Senzing MCP server at runtime — do not treat the values below
-as authoritative. Use `search_docs(query='Senzing engine configuration PostgreSQL connection')` and
-`search_docs(query='PostgreSQL schema DDL initialization', category='anti_patterns')`, and generate
-the engine config with `sdk_guide(topic='configure', ...)` — never hand-construct
+as authoritative. Use `search_docs(query='Senzing engine configuration PostgreSQL connection')`,
+whose top hit is the *Senzing Engine Configuration* page's introduction: read past the first hit
+to the same page's "Section: SQL > CONNECTION", which carries the PostgreSQL connection-URL
+format. Use `search_docs(query='PostgreSQL schema DDL initialization', category='anti_patterns')`,
+whose top hit is *Senzing Anti-Patterns: Database Initialization and Container Setup* → "PostgreSQL
+Schema Is NOT Auto-Created by the SDK", with the schema-DDL path per platform. Generate the engine
+config with `sdk_guide(topic='configure', ...)` — never hand-construct
 `SENZING_ENGINE_CONFIGURATION_JSON`.
 
 **Option 1 — PostgreSQL in a Docker container:**

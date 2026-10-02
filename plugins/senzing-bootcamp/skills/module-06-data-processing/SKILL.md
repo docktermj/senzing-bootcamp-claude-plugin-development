@@ -46,7 +46,9 @@ When the bootcamper hits an error during this module:
    returns nothing, continue to step 2.
 2. Present the matching pitfall/fix for this module (full `common-pitfalls` reference is a
    later porting phase; for now, use `search_docs` to look up the symptom, e.g.
-   `search_docs(query="loading", category="anti_patterns", version="current")`).
+   `search_docs(query="loading", category="anti_patterns", version="current")`, whose loading
+   pitfalls are in its second hit, *Senzing Anti-Patterns: Architecture and Performance*: read
+   past the first hit).
 
 ## Loading code and safety (applies to every load step)
 

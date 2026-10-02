@@ -247,7 +247,8 @@ phase: validate them directly for now.)*
 
 Treat the Senzing MCP server as the ONLY source of CORD facts: never training data. Call
 `get_sample_data` and/or `search_docs(query='CORD datasets: names, contents, and availability
-for entity resolution scenarios')` to learn which datasets exist and what they contain. Present
+for entity resolution scenarios')` (its top hit is *Collections Of Relatable Data (CORDs)* →
+"What Is a CORD?") to learn which datasets exist and what they contain. Present
 values exactly as returned. Wait up to 30s; retry once.
 
 ⛔ **`truthset` is NOT eligible to back a generated scenario, for two independent reasons.**

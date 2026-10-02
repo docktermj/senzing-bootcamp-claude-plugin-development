@@ -1023,7 +1023,8 @@ training data.
 
 6. **Obtain a Senzing License Key (option 3, or option 4's in-flow request).** Consult the Senzing
    MCP server first: `search_docs(query='temporary evaluation license for a dataset larger than the
-   default limit')` and present the returned guidance. Present the available paths as distinct,
+   default limit')`, whose top hit is the EULA's *Senzing Non-Production License* section, and
+   present the returned guidance. Present the available paths as distinct,
    individually selectable options — the in-flow MCP request (sub-step 6a below), the external
    channel, and apply-an-existing-key (sub-step 5). Source the request channel's address and any
    capacity/validity figures from MCP at runtime rather than this file (they have changed before, and
@@ -1165,8 +1166,9 @@ about a roughly half-hour load, for a load of about two minutes.
    above **the SQLite threshold of Module 6 Phase A's pre-load check** — item 3 of the
    [SQLite volume pre-load check](../module-06-data-processing/phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate),
    which sources it from the Senzing MCP server through `search_docs(query="loading",
-   category="anti_patterns")` → "Do Not Use SQLite in Production". Ask that route at request time
-   and compare against what it returns. Item 3 is the one statement of this threshold, so no
+   category="anti_patterns")` → "Do Not Use SQLite in Production", in its second hit, *Senzing
+   Anti-Patterns: Architecture and Performance* (read past the first hit).
+   Ask that route at request time and compare against what it returns. Item 3 is the one statement of this threshold, so no
    figure for it is written here (INV-300). Otherwise (loadable at or below the threshold, any
    non-SQLite engine, or indeterminate inputs) say nothing about load time and continue to the
    Step 9 transition. A 19,500-record collection under a 500-record cap therefore says
