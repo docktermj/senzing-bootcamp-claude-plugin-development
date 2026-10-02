@@ -643,6 +643,13 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
   **INV-NNN** — Every statement `OPEN_ME_FIRST.md` makes about what a package contains MUST be built from `PACKAGE_MANIFEST.json`'s `included` list, never from what exists on disk or from static text, so the two can never disagree. Every path it names as included MUST appear in that list. A part that is not included (the recap PDF, the database backup, the state snapshot, the restore guide, `config/`, the mappings, `src/`, the keepsakes, the visualizations, `production/`) MUST NOT be named as included, and the text MUST say plainly what is missing and what the recipient does instead: open the manifest's `included` list when there is no recap PDF; restore a backup by its file type when there is no restore guide; redo SDK setup, the database and the load when there is neither a backup nor a guide. The pointer to `docs/REVISIT_BOOTCAMP.md` MUST appear only when that file is included. Enforced by `tests/test_open_me_first_matches_the_manifest.py`. (Source: GitHub issue #321.)
   *(written as NNN deliberately: a literal id here would cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a number written here.)*
+
+  **HELD 2026-10-02:** held with the packaging feature's Draft 1
+  (`the-bootcamp-cannot-leave-the-machine-it-was-built-on`, held 2026-08-27), whose manifest rule this
+  extends to `OPEN_ME_FIRST.md`. The 2026-10-01 dry run's phase 2 exercised packaging and found this
+  gap; phase 3 has not yet exercised it. Revisit with Draft 1 once `dry-run` phase 3 has exercised
+  packaging, and register the two together or fold this into it.
+
 - **Otherwise establishes no new invariant.** The restore steps quote `graduation/database-backup.md` (INV-094's single implementation, INV-048), and no exclusion rule, path or manifest field changed. No ⛔ rule is demoted in shipped text.
 
 ## csharp-package-source-comes-from-the-install-reply
