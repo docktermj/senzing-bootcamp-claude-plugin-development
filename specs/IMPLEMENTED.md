@@ -454,6 +454,13 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
   **INV-NNN** — SDK setup Step 7 MUST record the engine chosen as `database_type` in `config/bootcamp_preferences.yaml`, valued `sqlite` or `postgresql`, setting the key and replacing any earlier value, and MUST state that write exactly once, at the head of the step before its `**For SQLite**` and `**For PostgreSQL**` branches, so every path through the step reads it. A rule meant for every branch MUST NOT be placed inside the last branch: a guide that follows another branch never reaches it. The step-7 checkpoint MUST be stated at the same head and written only when the chosen branch's setup is finished, never as the step starts, or a resume skips the setup. PostgreSQL's switch-to-SQLite option MUST rewrite the key by pointing to that head instruction, with no second copy. Enforced by `tests/test_database_type_write_precedes_the_step7_branches.py`. (Source: GitHub issue #329, from the 2026-10-01 dry run, P3-8.)
   *(written as NNN deliberately: a literal id here would cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a number written here.)*
+
+  **HELD 2026-10-02:** the maintainer decided on 2026-10-01 (#329's spec) that this placement fix
+  registers no invariant; the block exists only so the moved ⛔ line stays accounted for.
+  Revisit if a step-wide rule is again placed inside one branch of a step, here or in another
+  module, or if a later change moves the `database_type` write off the head of Step 7 despite
+  the guard.
+
 - **Otherwise establishes no invariant.** INV-183 is not cited at the site, as the issue decided. INV-296's worker-count read depends on the key and is unchanged. The stdlib tests apply INV-108. No ⛔ line is added beyond the moved one above, and none is demoted.
 
 ## graduation-video-opens-on-an-intro-scene
