@@ -124,8 +124,11 @@ limit: never from a remembered or hardcoded figure:
   cap** toward a smaller dataset, here, in the module where the sampling decision is actually made.
   - **Measure it** by Step 8a sub-step 7 below, which calls `SzProduct.get_license()` and parses
     `recordLimit`. Follow that step rather than restating it (INV-300).
-  - **Persist it** as `license_record_limit` in `config/bootcamp_progress.json`, so this module's
-    later steps, Module 6 and graduation all see a detected value instead of the same absence.
+  - **Persist it** as `license_record_limit` in `config/bootcamp_progress.json`, together with
+    `license_record_limit_measured_at: "module-04 sampling decision (engine configuration in force)"`
+    (INV-295), so this module's later steps, Module 6 and graduation all see a detected value
+    instead of the same absence, and can tell it was taken with a complete view rather than SDK
+    setup's provisional one.
   - **Then re-enter the two branches above** with the measured value. `recordLimit: 0` lands on the
     no-cap branch and no sampling is recommended for license reasons.
   - **Only if the measurement fails** (no engine yet, SDK error) fall back to the **built-in
@@ -1114,10 +1117,19 @@ language='<chosen_language>', version='current')` (`recordLimit`: `0` = unlimite
    an empty or shallow result from that lookup is coverage, not a failed call, so do not retry it
    (INV-149). Generate a scaffold that calls `SzProduct.get_license()`, save the returned JSON to
    `config/license.json` — later steps read that file — parse `recordLimit`, and write
-   `license_record_limit` into `config/bootcamp_progress.json`. Only if `recordLimit` is absent from
+   `license_record_limit` into `config/bootcamp_progress.json`, together with
+   `license_record_limit_measured_at: "module-04 step 8a (engine configuration in force)"`
+   (INV-295). Only if `recordLimit` is absent from
    the saved JSON, read that file to find the name the field actually carries before parsing it
    (INV-115). Report the detected limit to the bootcamper (e.g. "Your license
    allows up to N records," or "no record cap (unlimited)" when `0`).
+
+   **When a figure was already recorded and this measurement disagrees with it**, apply SDK
+   setup's (Module 2) Step 5a sub-step 3 rule rather than restating it (INV-300): replace the
+   recorded figure and say the earlier one was withdrawn, naming both numbers. ⚠️ **A correction
+   that RAISES the limit is said aloud too** (INV-295). It is the direction most likely to be
+   swallowed, and anything already sized against the smaller figure was sized against a ceiling
+   that does not exist.
 
 This gate is non-blocking on the obtain paths (the bootcamp proceeds on the evaluation license while
 a key is pending). Once resolved — or when the volume was within the limit — clear
