@@ -56,7 +56,7 @@ OLD_CLI_QUESTION = (
     "> 👉 **Would you like to switch to `/model opus` + `/effort high` for graduation?** "
     "(Recommended for best value; reply no to keep your current {dial}.)\n")
 OLD_INTENT_QUESTION = (
-    "> 👉 **Would you like to switch to Opus 5 at high reasoning effort for graduation?** "
+    "> 👉 **Would you like to switch to Opus 5.5 at high reasoning effort for graduation?** "
     "(Recommended for best value; set it with the model and effort controls in {Claude Desktop "
     "| the Claude web app | your Claude IDE extension}; reply no to keep your current {dial}.)\n")
 OLD_GATE = (
@@ -224,7 +224,7 @@ class NegativeControls(unittest.TestCase):
 
     def test_a_restated_value_is_reported(self):
         section = graduation_section(read(GRADUATION))
-        pasted = section + "Bootcamp graduation is correctness-critical: **Opus 5 + high effort**."
+        pasted = section + "Bootcamp graduation is correctness-critical: **Opus 5.5 + high effort**."
         self.assertNotEqual([], RESTATED_VALUE.findall(squash(pasted)))
 
     def test_a_reference_in_quotes_is_not_a_pin(self):

@@ -95,8 +95,8 @@ class BothTablesCoverEverySkill(unittest.TestCase):
     def test_bootcamp_preparation_matches_the_stage_table_recommendation(self):
         """The two tables must not disagree about the same stage's recommendation."""
         flat = " ".join(text().split())
-        self.assertRegex(flat, r"`bootcamp-preparation`[^|]*\|[^|]*\|\s*Sonnet 5, medium\s*\|")
-        self.assertRegex(flat, r"\| Bootcamp preparation \| Sonnet 5, medium effort \|")
+        self.assertRegex(flat, r"`bootcamp-preparation`[^|]*\|[^|]*\|\s*Sonnet 5\.5, medium\s*\|")
+        self.assertRegex(flat, r"\| Bootcamp preparation \| Sonnet 5\.5, medium effort \|")
 
 
 if __name__ == "__main__":

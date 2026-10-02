@@ -61,8 +61,8 @@ immediately before Step 1:
    ⛔ **Do not pre-decide whether to ask — compare against what the bootcamper is running right
    now** (INV-138), not against the previous module's recommendation. This step used to assert the
    recommendation was "unchanged from System verification" and therefore a statement rather than a
-   question; that became false when this module was re-rated to Opus 5 / high effort while System
-   verification stayed on Sonnet 5, so a bootcamper who took the previous module's recommendation
+   question; that became false when this module was re-rated to Opus 5.5 / high effort while System
+   verification stayed on Sonnet 5.5, so a bootcamper who took the previous module's recommendation
    was never offered the switch for the module that *generates* the visualization server. Read the
    table, compare, and let the comparison decide: differing → the pinned 👉 switch question naming
    only the dial that differs; matching → the one-line statement.

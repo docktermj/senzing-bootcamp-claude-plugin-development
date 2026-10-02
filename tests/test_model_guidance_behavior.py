@@ -251,8 +251,8 @@ class TestTheTriggerIsTheCurrentSetting(unittest.TestCase):
     """Ask because a change is needed — not because the table moved.
 
     The trigger used to be "did the recommendation change from the stage just
-    completed", which asks a Bootcamper already running Opus 5 / high to switch
-    to Opus 5 / high. Running one model throughout is a supported choice, so that
+    completed", which asks a Bootcamper already running Opus 5.5 / high to switch
+    to Opus 5.5 / high. Running one model throughout is a supported choice, so that
     was the common case: six questions on the full path, none of which needed
     asking (INV-006, INV-012).
     """
@@ -273,7 +273,7 @@ class TestTheTriggerIsTheCurrentSetting(unittest.TestCase):
         original phrasing — "only when the current setting cannot be determined" — treated model
         and effort as one thing to determine or not. In a live session they differ: the model is
         knowable, the reasoning effort is exposed nowhere. Read all-or-nothing, the fallback would
-        compare a determinable Opus 5 against the previous stage's Sonnet 5, find it unchanged, and
+        compare a determinable Opus 5.5 against the previous stage's Sonnet 5.5, find it unchanged, and
         suppress the switch offer entirely. The intent this test guards is unchanged — the previous
         stage is a fallback, never the primary rule — so only the wording moved.
         """
@@ -301,7 +301,7 @@ class TestTheTriggerIsTheCurrentSetting(unittest.TestCase):
         )
 
     def test_graduation_does_not_assume_it_is_always_a_step_up(self):
-        """Graduation shares Opus 5 / high with Module 7, so it usually is not."""
+        """Graduation shares Opus 5.5 / high with Module 7, so it usually is not."""
         text = flat(GRADUATION)
         self.assertNotRegex(
             text,
@@ -313,7 +313,7 @@ class TestTheTriggerIsTheCurrentSetting(unittest.TestCase):
             text,
             r"already there|already matched|already running",
             "graduation must say what to do when the Bootcamper is already on "
-            "Opus 5 at high effort",
+            "Opus 5.5 at high effort",
         )
 
 
@@ -371,6 +371,110 @@ class TestMaintainerDocMatches(unittest.TestCase):
             r"\| `advisory` \*\(default\)\*",
             "the three-mode table is retired; keep only the historical note",
         )
+
+
+#: The pre-#334 fallback sentence and ⛔ lead, verbatim (whitespace collapsed). Kept as the
+#: negative control: the default CLI case (effort never read) resolved only through the
+#: recommendation-to-recommendation comparison the ⛔ lead forbade without scope.
+PRE_334_FALLBACK = (
+    "⛔ **Compare the recommendation against what the bootcamper is running right now — not "
+    "against the previous stage's recommendation.** You are told which model you are running, "
+    "so read the model side from that; for effort, use the value in force when you can "
+    "determine it. **Resolve \"cannot be determined\" PER DIAL, not for the setting as a "
+    "whole** — model and effort are separate dials (INV-137), and in a live session they "
+    "routinely sit in different epistemic states at the same moment: the model is knowable to "
+    "the assistant, while the reasoning effort is **not exposed by default**. So compare each "
+    "dial on its own evidence: a determinable model is compared **directly** even when effort "
+    "is not, and vice versa. **Only for a dial whose current value cannot be determined**, fall "
+    "back to that dial's value in the stage just completed."
+)
+
+
+def effort_proxy_problems(text):
+    """What the undeterminable-dial rule is missing, in collapsed-whitespace `text`.
+
+    #334: the fallback must be stated as the one sanctioned proxy — this stage's
+    recommended value against the previous stage's (INV-138's "previous stage's row"),
+    asked only when they differ, for a dial never determined in this conversation — and
+    the ⛔ "not against the previous stage's recommendation" lead must be scoped to dials
+    that can be determined, so the two cannot be read as contradicting.
+    """
+    problems = []
+    lead = re.search(
+        r"⛔ \(INV-138\) \*\*For every dial whose current value can be determined, compare "
+        r"the recommendation against what the bootcamper is running right now — not against "
+        r"the previous stage's recommendation\.\*\*", text)
+    if not lead:
+        problems.append("the ⛔ lead is not scoped to dials whose value can be determined")
+    if not re.search(r"proxy at the end of this paragraph is its rule", text):
+        problems.append("the ⛔ lead does not point to the proxy")
+    if not re.search(r"has never been determined in this conversation, use the \*\*proxy\*\*", text):
+        problems.append("the proxy is not limited to a dial never determined in this conversation")
+    if not re.search(
+        r"compare this stage's recommended value for that dial against the recommended value "
+        r"for it in the stage just completed \(that stage's row in the table below, INV-138's "
+        r"\"previous stage's row\"\)", text):
+        problems.append("the proxy does not compare this stage's row with the previous stage's")
+    if not re.search(r"ask that dial's half only when the two differ", text):
+        problems.append("the proxy does not say it asks only when the two rows differ")
+    if not re.search(
+        r"⛔ \(INV-138\) \*\*The proxy is the only sanctioned "
+        r"recommendation-to-recommendation comparison\.\*\*", text):
+        problems.append("the proxy is not stated as the only sanctioned comparison")
+    if "fall back to that dial's value in the stage just completed" in text:
+        problems.append("the old fallback sentence is still present")
+    return problems
+
+
+class TestTheUndeterminableDialHasOneStatedRule(unittest.TestCase):
+    """#334: the effort fallback names the proxy, and the ⛔ lead carries its scope."""
+
+    def test_ground_rules_states_the_proxy_and_scopes_the_lead(self):
+        self.assertEqual([], effort_proxy_problems(flat(GROUND_RULES)))
+
+    def test_negative_control_the_old_wording_fails(self):
+        problems = effort_proxy_problems(PRE_334_FALLBACK)
+        self.assertGreaterEqual(len(problems), 5, problems)
+        self.assertIn("the old fallback sentence is still present", problems)
+        self.assertIn(
+            "the ⛔ lead is not scoped to dials whose value can be determined", problems)
+
+    def test_negative_control_an_unscoped_lead_fails(self):
+        live = flat(GROUND_RULES)
+        unscoped = live.replace(
+            "⛔ (INV-138) **For every dial whose current value can be determined, compare",
+            "⛔ (INV-138) **Compare", 1)
+        self.assertNotEqual(live, unscoped)
+        self.assertIn("the ⛔ lead is not scoped to dials whose value can be determined",
+                      effort_proxy_problems(unscoped))
+
+    def test_a_determined_dial_still_never_uses_the_proxy(self):
+        """Unchanged: once an `/effort` result is in the transcript, use the latest value."""
+        text = flat(GROUND_RULES)
+        self.assertIn("previous-stage fallback MUST NOT be used for it", text)
+        self.assertIn("Read the most recent such value, not the earliest", text)
+        self.assertRegex(text, r"it is the previous-stage fallback the rest of this section refers to")
+
+    def test_model_selection_mirrors_the_proxy(self):
+        text = flat(MODEL_SELECTION)
+        self.assertNotIn("fall back to the previous stage's value", text)
+        self.assertIn("has never been determined in this conversation, use the **proxy**", text)
+        self.assertIn("ask that dial's half only when the two differ", text)
+        self.assertIn("The proxy is the **only** sanctioned recommendation-to-recommendation "
+                      "comparison", text)
+        self.assertIn("the most recent such value is the one compared, and the proxy must not "
+                      "be used for it", text)
+
+
+class TestTheStepDownDecisionIsRecorded(unittest.TestCase):
+    """#334: Opus 5.5 is the top row, not above it, so a Sonnet 5.5 stage still asks."""
+
+    def test_model_selection_records_the_symmetric_step_down(self):
+        text = flat(MODEL_SELECTION)
+        self.assertIn("reaffirmed 2026-10-01", text)
+        self.assertRegex(
+            text, r"a bootcamper on Opus 5\.5 entering a Sonnet 5\.5 stage is \*\*asked\*\*, "
+                  r"and the question flags it as a step down \(INV-139\)")
 
 
 if __name__ == "__main__":

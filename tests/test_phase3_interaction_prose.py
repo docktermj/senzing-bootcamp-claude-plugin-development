@@ -25,8 +25,8 @@ the situation it governs:
   not cover the topic — and "the docs are silent" is what tempts a training-data fallback.
 * **Per-dial resolution (item 8).** INV-138 treated "the current setting" as one thing to determine
   or not. Model and effort are separate dials in different epistemic states: the model is knowable,
-  the effort is not. Read all-or-nothing, the fallback would compare a determinable Opus 5 against
-  the previous stage's Sonnet 5, find it unchanged, and suppress the switch offer entirely.
+  the effort is not. Read all-or-nothing, the fallback would compare a determinable Opus 5.5 against
+  the previous stage's Sonnet 5.5, find it unchanged, and suppress the switch offer entirely.
 * **Write batching (item 9).** Step 10a persisted per answer where Bootcamp preparation holds and
   writes once (INV-058) — two or three diffs to one file inside one step.
 
