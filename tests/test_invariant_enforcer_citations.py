@@ -485,7 +485,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # identifiers) names test_synthesized_entities_have_their_own_identifiers.py, which already cites
 # INV-239 back. Re-derived by running the extractor -- 169, the one new pair present by name and none
 # removed. EXPECTED_PAIRS 168 -> 169.
-EXPECTED_PAIRS = 169
+# 170 on 2026-10-02: INV-239's second dated note (#337: a regeneration requested after Module 5's gate
+# has fired is exempt from the 70-79% requirement) names
+# test_no_progress_gate_returns_to_data_collection.py, which already cites INV-239 back. Re-derived by
+# running the extractor -- 170, the one new pair present by name and none removed.
+# EXPECTED_PAIRS 169 -> 170.
+EXPECTED_PAIRS = 170
 
 
 def pairs():
