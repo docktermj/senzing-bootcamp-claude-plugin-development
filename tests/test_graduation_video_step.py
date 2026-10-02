@@ -22,6 +22,12 @@ with the bundled renderer (`generate_recap_video.py`, #299). These tests pin:
   certificate and then "Resolved: [Name], Senzing graduate.".
 * ⛔ **No raw record values**, and the fallbacks never block graduation: exit 1, 2 and 3, a
   declined or failed install, the storyboard kept.
+* ⛔ **Only name-free screenshots** (#326): Step 1c's allow-list is exactly the `match-keys`,
+  `feature-scores` and `cross-source` tab slugs, each a slug in `capture_screenshots.py` `TABS`;
+  every `image` scene in the example ends in `-<slug>.png` with one of them; the name-bearing
+  captures are named as left out; and module completion Step 2e defers the choice to graduation.
+  Negative controls feed the checks a `merge-statistics`, an `entity-graph` and a single-page
+  `<name>.png` image, and a widened allow-list.
 * **The checks**: 2:00 ± 10 s with one re-render, frames looked at, audio read from the `Voice:`
   and `Music:` lines (#339), skipped checks reported.
 * **Where it is named**: the closing announcement and the return guide.
@@ -32,10 +38,11 @@ Enforces **INV-340** (graduation's video step: offered once, nothing written on 
 never blocking, storyboard kept, the render verified). It asserts that Step 1c *states* these rules,
 and does **not** establish that a live run follows them, which only `dry-run` phase 3 can observe.
 
-Source issues: #300 (part of #297), #341.
+Source issues: #300 (part of #297), #341, #326.
 
 Run:  python3 -m unittest discover -s tests
 """
+import ast
 import importlib.util
 import json
 import re
@@ -51,6 +58,12 @@ GRADUATION = SKILLS / "graduation" / "SKILL.md"
 GRADUATE_COMMAND = PLUGIN / "commands" / "graduate.md"
 PREPARATION = SKILLS / "bootcamp-preparation" / "SKILL.md"
 RENDERER = PLUGIN / "scripts" / "generate_recap_video.py"
+CAPTURE = PLUGIN / "scripts" / "capture_screenshots.py"
+MODULE_COMPLETION = SKILLS / "bootcamp-onboarding" / "module-completion.md"
+
+#: The name-free tab slugs from #326, revision 1. Restated here on purpose: it is the spec
+#: Step 1c's table is checked against, not a copy of the table.
+NAME_FREE_SLUGS = {"match-keys", "feature-scores", "cross-source"}
 
 OFFER = ("> 👉 **Would you like a narrated 2-minute graduation video of your bootcamp?** "
          "(Saved to `docs/bootcamp_recap.mp4`; reply no to skip.)")
@@ -163,6 +176,39 @@ def load_renderer():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def stated_name_free_slugs(text):
+    """The slugs Step 1c's image table lets into the video: rows whose verdict starts "yes"."""
+    slugs = set()
+    for image, _tab, verdict in table_rows(text, "| Image | Tab | In the video"):
+        if verdict.startswith("yes"):
+            match = re.fullmatch(r"`<name>-([a-z-]+)\.png`", image)
+            if not match:
+                raise AssertionError("a name-free row names no `<name>-<slug>.png`: %r" % image)
+            slugs.add(match.group(1))
+    return slugs
+
+
+def image_problems(storyboard, allowed):
+    """Every `image` scene path that does not end in `-<slug>.png` with `<slug>` allowed."""
+    problems = []
+    for scene in storyboard["scenes"]:
+        if scene["type"] != "image":
+            continue
+        name = scene["image"].rsplit("/", 1)[-1]
+        if not any(name.endswith("-%s.png" % slug) for slug in allowed):
+            problems.append(scene["image"])
+    return problems
+
+
+def capture_tab_slugs():
+    """The filename slugs in `capture_screenshots.py` `TABS`, read without importing it."""
+    for node in ast.parse(read(CAPTURE)).body:
+        if (isinstance(node, ast.Assign) and len(node.targets) == 1
+                and getattr(node.targets[0], "id", None) == "TABS"):
+            return {slug for slug, _label in ast.literal_eval(node.value).values()}
+    raise AssertionError("capture_screenshots.py defines no TABS")
 
 
 class TheStepIsWhereTheVideoCanReuseTheCertificate(unittest.TestCase):
@@ -406,6 +452,103 @@ class NoRawRecordValues(unittest.TestCase):
 
     def test_never_invent_a_number(self):
         self.assertIn("Never invent a number to fill a scene", squash(step_1c()))
+
+
+class OnlyNameFreeScreenshots(unittest.TestCase):
+    """#326: a screenshot can show record values, so the video takes only allow-listed tabs."""
+
+    def test_the_rule_is_stated(self):
+        text = squash(step_1c())
+        self.assertIn("⛔ **(INV-340) Only name-free screenshots go in the video.**", text)
+        self.assertIn("only when its file name is `<name>-<slug>.png` with `<slug>` one of the "
+                      "three name-free tab slugs below", text)
+        self.assertIn("Every other image is left out of the storyboard.", text)
+        self.assertIn("**The allow-list is the only way in.**", text)
+
+    def test_the_stated_allow_list_is_exactly_the_name_free_slugs(self):
+        self.assertEqual(NAME_FREE_SLUGS, stated_name_free_slugs(step_1c()))
+
+    def test_each_name_free_slug_is_a_capture_tab(self):
+        tabs = capture_tab_slugs()
+        self.assertIn("merge-statistics", tabs, "the TABS reader went vacuous")
+        for slug in NAME_FREE_SLUGS:
+            with self.subTest(slug=slug):
+                self.assertIn(slug, tabs)
+
+    def test_the_name_bearing_captures_are_named_as_left_out(self):
+        left_out = [image + " " + tab for image, tab, verdict in
+                    table_rows(step_1c(), "| Image | Tab | In the video") if verdict.startswith("no")]
+        joined = " ".join(left_out)
+        for named in ("`<name>-merge-statistics.png`", "`<name>-search-probe.png`",
+                      "`<name>-entity-graph.png`", "`<name>.png`, a single-page capture",
+                      "`relationship-network`", "`record-merges`"):
+            with self.subTest(named=named):
+                self.assertIn(named, joined)
+        self.assertIn("whenever the graph has 40 nodes or fewer", squash(step_1c()))
+
+    def test_the_example_uses_only_allow_listed_images(self):
+        storyboard = example_storyboard()
+        self.assertTrue(any(s["type"] == "image" for s in storyboard["scenes"]),
+                        "the example carries no image scene, so this check would be vacuous")
+        self.assertEqual([], image_problems(storyboard, stated_name_free_slugs(step_1c())))
+        self.assertEqual([], image_problems(storyboard, NAME_FREE_SLUGS))
+
+    def test_the_example_shows_truth_set_images_too(self):
+        images = [s["image"] for s in example_storyboard()["scenes"]
+                  if s["type"] == "image" and s["_module"] == "truthset_visualization"]
+        self.assertTrue(images)
+        self.assertTrue(all("/truthset_verification-" in image for image in images))
+
+    def test_the_rule_reaches_the_truth_set_and_the_fallback(self):
+        text = squash(step_1c())
+        self.assertIn("**One rule for every image.** It applies to the Truth Set's images "
+                      "(`truthset_verification-…`) as to the bootcamper's own, and on the "
+                      "fallback path to the screenshots under `docs/visualizations/` the recap "
+                      "embeds.", text)
+        self.assertIn("Use only the name-free ones among them, by the same rule.", text)
+        self.assertIn("Its name-free `images`", text)
+
+    def test_a_module_left_with_no_image(self):
+        text = squash(step_1c())
+        self.assertIn("**A module left with no image** gets no `image` scene.", text)
+        self.assertIn("in the same seconds", text)
+        self.assertIn("**Nothing is cropped or edited.**", text)
+
+    def test_the_results_row_says_name_free(self):
+        rows = {module: built for module, _kind, built in
+                table_rows(step_1c(), "| Module | Scene type | Built from")}
+        self.assertIn("the name-free results screenshots", rows[REMAINDER_MODULE])
+
+    def test_broll_images_are_not_called_aggregates(self):
+        text = squash(read(GRADUATION))
+        self.assertNotIn("`broll.json` already holds only aggregates", text)
+        self.assertIn("`broll.json`'s text fields hold only aggregates (INV-341), but its "
+                      "`images` name every screenshot the module produced", text)
+
+    def test_module_completion_leaves_the_choice_to_graduation(self):
+        text = squash(read(MODULE_COMPLETION))
+        self.assertIn("List every screenshot the module produced, name-bearing ones included: "
+                      "graduation, not this manifest, decides which are name-free enough for "
+                      "the video (`../graduation/SKILL.md` Step 1c).", text)
+
+    def test_negative_controls(self):
+        allowed = stated_name_free_slugs(step_1c())
+        for bad in ("docs/visualizations/truthset_verification-merge-statistics.png",
+                    "docs/visualizations/results_visualization-entity-graph.png",
+                    "docs/visualizations/results_visualization-search-probe.png",
+                    "docs/visualizations/data_quality_assessment.png",
+                    "docs/visualizations/results_visualization-record-merges.png"):
+            with self.subTest(image=bad):
+                storyboard = example_storyboard()
+                scene = next(s for s in storyboard["scenes"] if s["type"] == "image")
+                scene["image"] = bad
+                self.assertEqual([bad], image_problems(storyboard, allowed))
+        widened = step_1c().replace("| Entity Graph | no:", "| Entity Graph | yes:")
+        self.assertNotEqual(widened, step_1c(), "the widening mutation matched nothing")
+        self.assertNotEqual(NAME_FREE_SLUGS, stated_name_free_slugs(widened))
+        narrowed = step_1c().replace("| Cross-Source | yes:", "| Cross-Source | no:")
+        self.assertNotEqual(narrowed, step_1c(), "the narrowing mutation matched nothing")
+        self.assertNotEqual(NAME_FREE_SLUGS, stated_name_free_slugs(narrowed))
 
 
 class TheFallbacksNeverBlockGraduation(unittest.TestCase):
