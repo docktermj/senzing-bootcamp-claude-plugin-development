@@ -43,6 +43,80 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## production-readiness-audit-2026-10-02
+
+**Not a spec** — a dated record of an audit run, **attended**. It follows 52 merged pull requests since the previous audit: the #282–#294 fixes, two `/unattended-issue-loop` runs, the 2026-10-01 dry run's findings, the 2026-10-02 `/review-invariants` session (PR #375), and #320, #377 and #379.
+
+- **Implemented:** 2026-10-02 (**39 findings in 17 root-cause groups; filed as #381–#397; no shipped file modified by this audit**)
+- **Files changed:** this record only.
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.18, 2026-10-02. Two findings assert a Senzing fact, and the lead re-asked both.
+  - `get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')` lists `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` with `"requires_flags":["SZ_INCLUDE_MATCH_KEY_DETAILS"]`. This supports #387: the server now contradicts `module-07…/phase1-query-visualize.md:441-443`.
+  - `get_sample_data(dataset='list')` lists the four datasets but does not say whether their sources are mapped, so #397 item 6 asks its implementer to re-check per source before rewording.
+  - Every other finding is internal consistency.
+- **Baseline.** `main` at `aeaf19d`, tree clean.
+  - Suite **5,801 OK (12 skipped)**, run as the CI mirror runs it: a fresh worktree, an empty `HOME` outside `/tmp`, and `PYTHONUSERBASE=/home/senzing/.local` so fpdf2 stays visible.
+  - `citations.py verify` clean at **343** invariants. `coverage_reports.py both` clean.
+  - `rules`: **684** hard-rule lines (476 line-anchored + 208 mid-line), **0** in a section citing no invariant.
+  - `per-rule`: **310** citing no invariant at the rule. `enumerations`: **58 of 343**.
+  - `size`: 45 shipped files, **216,837** words. `duplication`: 141 repeated passages across 101 file pairs.
+  - `since --since-last-audit` resolved to **`b76b967`** (the 2026-09-30 entry), with no `SUSPECT-REF`: **54** hard-rule lines across 14 files.
+  - `reverse-check`: **TESTED 49 (48 cited, 1 not)**, **UNTESTED 5 (5 cited, 0 not)**, **VERDICT: NOT CLEAN**. The one uncited line, `module-02-sdk-setup/SKILL.md:1494`, is the HELD deferral `module-02-step-7-records-database-type-before-its-branches` (revisit condition not met), so it is decided rather than open.
+  - **Zero open issues** at the start of the run, so no finding is a duplicate.
+- **Scope, stated rather than implied.** Four read-only sweeps, each reported in full and every finding re-checked by the lead at its site before filing.
+  - **(A)** The reverse contract: all 54 lines `since` reports, each judged cited-correctly, cited-wrongly, deferred or unregistered.
+  - **(B)** The forward contract for INV-337–INV-344 and the 20 dated notes or corrections of 2026-10-01 and 2026-10-02 on 14 invariants, at every site each binds.
+  - **(C)** The per-module outcome blocks the previous audit did not read (Modules 0, 1, 4 and 7, onboarding and graduation), with their consistency and completeness.
+  - **(D)** The maintainer surface changed since `b76b967`, the 58 enumerating invariants against what ships, and drift between duplicated passages.
+  - ⚠️ **Modules 2, 3, 5 and 6 were read only where a sweep's lines or invariants led there.** The INV-291 class in #383 was not swept one by one through Modules 3, 5 and 6.
+- **Findings, filed.**
+  - **Medium:**
+    - #381: Module 2's existing-install message announces the skip INV-339 forbids, and the guard matches one of three phrasings.
+    - #382: Module 3b omits INV-091's refuse-to-render rule and still offers omitting a tab (INV-123).
+    - #383: INV-291's 2026-10-02 note binds inline routes that only two files stamp and rank. It needs the maintainer's choice to apply the note or narrow it.
+    - #384: Module 5 Phase 3 has no route back to the remaining sources, and its shortcut skips a Required module.
+    - #385: Module 4 writes `license_record_limit` without INV-295's marker, and the guard is file-scoped.
+    - #386: compact-dev-environment still archives and deletes specs (INV-307) and routes invariant merges to a command that cannot mint (INV-309).
+    - #387: Module 7 Step 3a's retired `WHY_KEY_DETAILS` claim survived a line wrap that the guard cannot see.
+    - #388: Module 7's capture command names step 3b's port, plus two smaller references.
+    - #389: onboarding says SDK setup walks through licensing (INV-093).
+    - #390: graduation's screenshot remedy names a bundled script by bare path, and the INV-185 guard requires a runner.
+    - #391: Windows (PowerShell 5.1) gaps in license apply, recap render, the return guide and `pg_dump >` (INV-001).
+    - #392: Module 7's return-to-Module-5 option has no resume step (INV-284).
+  - **Low:**
+    - #393: INV-340 is not applied at three graduation and renderer sites.
+    - #394: Module 5's synthesized-source disclosure and "never silently regenerate" rules have no invariant. The issue asks for a deferral block.
+    - #395: auto-test against INV-317, the implement overlay's "Step 4", and the INV-337 guard's unstated limit.
+    - #396: INV-084's guard catches only `_sample.jsonl`.
+    - #397: eight small coherence and concision items, including the public install page listing 3 of the 6 Opus stages.
+  - **Severity changed by the lead.** Sweep D rated #386 high. The lead lowered it to medium, because `test_specs_are_frozen.py` would fail an actual archive move and no Bootcamper path is involved.
+  - **Leads, not filed.** Each turns on how one sentence is read.
+    - `module-04-data-collection/SKILL.md:223-224`: the regeneration's "Generate no off-pattern values", against INV-239's #337 note ("the rules above still bind").
+    - `module-05-data-quality-mapping/phase2-data-mapping.md:550-552`: the MIXED-type route ("let step 3's `type_discriminator` do the typing"), against INV-343 ("added only when that rejection applies").
+  - The `unattended-ok` label was applied to none of them (INV-318).
+- **The four properties, separately.**
+  - **Consistent:** ❌ defects. Two announcements contradict their own invariant (#381, #389). A retired claim survives (#387). A state field is written without its marker (#385).
+  - **Coherent:** ❌ defects. Two cross-references resolve to the wrong step (#388). A maintainer skill contradicts the freeze it sits under (#386). The renderer's own example breaks its rule (#393).
+  - **Complete:** ❌ gaps. Two gate options have no resume path (#384, #392). Rules are missing at Module 3b's sites (#382). Windows forms are missing (#391). One rule is unregistered (#394).
+  - **Concise:** ⚠️ mostly holds. One pointer site carries a second copy, and one governing rule sits far from its use (#397 items 7 and 8).
+- **Verified as correct, so the next audit need not re-derive it.**
+  - INV-337, INV-338, INV-341, INV-342 (in code, with `test_recap_video.py` covering each clause), INV-343 at step 10, and INV-344 at step 16 and 18a hold at every site.
+  - INV-340's base rule and all four notes hold, apart from #393: the storyboard shares sum to 100%, and the 83% example and the Core example total 120 s.
+  - The 2026-10-02 notes on INV-229, INV-222, INV-209, INV-186, INV-175, INV-154 and INV-331 hold at their sites.
+  - The index places INV-337–INV-344 once each, in fitting groups.
+  - INV-314's five-comment list matches across the overlays. INV-316, INV-318, INV-319 and INV-332 hold across the maintainer skills.
+  - The six HELD deferrals were confirmed held and not re-raised.
+  - Concision: 55 duplicated-passage groups were read side by side, and only the two filed in #385 and #382 had drifted.
+- ⛔ **Coverage limits.**
+  - **(1)** The **conversational invariants remain untested**: INV-251, INV-006, INV-014, INV-005/008/009 and every gate-ordering rule govern live turns, and reading cannot establish them. That is `/dry-run` phase 3 only.
+  - **(2)** The **310** standing lines from `per-rule --uncited` were not worked.
+  - **(3)** The plugin was **not executed**. This is a static pass, on Linux only. The Windows findings in #391 are read from the text and from PowerShell 5.1 behavior, not run.
+  - **(4)** `lint-workflows` cannot run locally. Playwright is not installed. Present: fpdf2 2.8.5, `pdftoppm`, docker, Chrome, and `libSz.so`.
+- ⛔ **My own mistakes.**
+  - Sweep D wrote one file, its `enumerations` output, to the session scratchpad. That was outside the brief's no-write rule, though nothing in the repository changed.
+  - Before this audit, the lead filed #379 on a rank measured with `max_results=3`. A capped call drops results and shifts ranks; #379's worker re-measured and found the claim false. #383 therefore requires the default `max_results` for every rank it records.
+- **Establishes no invariant.** This audit modifies no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. The rule and amendment choices it raises go through `/review-invariants` as blocks: #383's choice on INV-291's reach, and #394's unregistered rule. No id is written here, because an unminted id fails `citations.py verify`.
+- **Commit:** uncommitted
+
 ## module-0-primer-restamp-and-stamp-guard
 
 - **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #379, spec revision 1; the restamp #377 noticed)
