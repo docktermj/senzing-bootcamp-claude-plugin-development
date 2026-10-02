@@ -243,6 +243,12 @@ Whatever the language, the server MUST reproduce the reference's behavior:
   `../../scripts/vendor/d3.v7.min.js`, INV-252) into both
   the live page and the standalone snapshot; never fetch from a CDN. (D3 runs in the browser, so
   this holds regardless of the server's language.)
+  - ⛔ **(INV-091) Refuse to render when the vendored D3 is missing or unreadable.** The server
+    MUST fail visibly, with an error that names the missing asset (`d3.v7.min.js`), and MUST
+    write no page or snapshot. It MUST NOT fall back to the `d3js.org` CDN or any other network
+    source for D3: a fallback would break the offline guarantee that is the reason D3 is vendored
+    at all. Check for the asset before serving or writing anything, by whatever means your
+    language reads a file.
 - **Use the Senzing brand (INV-081):** take the palette and typography from the shipped brand
   tokens (`${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py`, skill-relative fallback
   `../../scripts/brand_tokens.py` — INV-252; mirrored in `senzing_viz_server.py`). A non-Python server
@@ -384,7 +390,9 @@ captured empty or inactive, say so in the caption — an undisclosed empty panel
 having nothing in it (INV-123).
 
 If the server could not be started, fall back to `--html docs/visualizations/truthset_verification.html`
-and either omit the Search / Probe tab or caption it as the inactive state. If no headless capability
+and caption the Search / Probe tab as the inactive state; omitting it is not an alternative (INV-123,
+INV-146; `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots"
+says why). If no headless capability
 is available it skips silently; otherwise **keep every captured tab and embed them all** in this
 module's recap `Actions Taken`, in the app's tab order — capture is one image per tab (INV-122), so
 there is nothing redundant to drop and a count cap can only delete unique content (INV-146). This is

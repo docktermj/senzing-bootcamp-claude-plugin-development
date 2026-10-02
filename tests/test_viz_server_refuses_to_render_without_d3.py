@@ -17,8 +17,17 @@ These tests pin the refusal:
    returning a page, so the live server cannot serve a CDN tag either.
 3. **Static:** the string ``d3js.org`` appears nowhere in the server's source.
 
-With the asset present, D3 is still inlined (the last test), so supported installs are
-unchanged.
+With the asset present, D3 is still inlined, so supported installs are unchanged.
+
+4. **Module 3b's two sites (#382):** the step that generates a language-native Truth Set
+   server stated only the no-CDN half of the rule. The "Render offline (INV-091)" bullet in
+   ``phase1-visualization.md`` and "Offline rendering (required)" in
+   ``visualization-api-reference.md`` must each state all four elements of the refusal — a
+   missing or unreadable asset makes the server refuse to render and fail visibly; the failure
+   names the missing asset; no page or snapshot is written; there is no fallback to the
+   ``d3js.org`` CDN or any other network source — and cite INV-091. A negative control deletes
+   each element in turn from an in-memory copy and sees the check report it. Module 7's
+   refusal is pinned by ``tests/test_project_local_visualization_finds_its_d3.py``.
 
 Stdlib only; the server is loaded from a file path, never installed or imported as a
 package (INV-108). No Senzing engine is needed.
@@ -30,6 +39,7 @@ Run:  python3 -m unittest discover -s tests
 
 import importlib.util
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -44,6 +54,26 @@ VENDORED = SCRIPTS / "vendor" / "d3.v7.min.js"
 
 CDN_HOST = "d3js.org"
 ASSET_NAME = "d3.v7.min.js"
+
+MODULE_3B = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills" / "module-03b-truthset-visualization"
+PHASE1 = MODULE_3B / "phase1-visualization.md"
+CONTRACT = MODULE_3B / "visualization-api-reference.md"
+
+#: The four elements of INV-091's refusal (its 2026-10-02 correction), element 1 split into
+#: its three parts so "missing" alone cannot stand in for "missing or unreadable", plus the
+#: citation. Matched against whitespace-collapsed text; backticks are optional.
+REFUSAL_ELEMENTS = {
+    "1a. missing or unreadable": r"\bmissing\s+or\s+unreadable\b",
+    "1b. refuses to render": r"\brefus(?:e|es|ing)\s+to\s+render\b",
+    "1c. fails visibly": r"\bfail(?:s|ing)?\s+visibly\b",
+    "2. names the missing asset": r"\bnam(?:e|es|ing)\s+the\s+missing\s+asset\b.{0,20}?d3\.v7\.min\.js",
+    "3. writes no page or snapshot": r"\bwrites?\s+no\s+page\s+or\s+snapshot\b",
+    "4. no CDN or network fallback": (
+        r"\b(?:never|MUST\s+NOT|must\s+not)\s+fall\s+back\s+to\s+the\s+`?d3js\.org`?\s+CDN"
+        r"\s+or\s+any\s+other\s+network\s+source\b"
+    ),
+    "citation": r"\bINV-091\b",
+}
 
 
 def load(path, name):
@@ -155,6 +185,73 @@ class WithTheAssetPresentD3IsStillInlined(unittest.TestCase):
                         "the vendored D3 must be inlined, not linked.")
         self.assertIn(VENDORED.read_text(encoding="utf-8"), tag,
                       "the inlined script must carry the vendored asset's contents.")
+
+
+def _flat(text):
+    return re.sub(r"\s+", " ", text)
+
+
+def render_offline_bullet(text):
+    """Module 3b ``phase1-visualization.md``: the "Render offline (INV-091)" bullet, nested lines included."""
+    match = re.search(r"^- \*\*Render offline \(INV-091\):\*\*.*?(?=^- |^#|\Z)", text, re.S | re.M)
+    return match.group(0) if match else ""
+
+
+def offline_rendering_section(text):
+    """``visualization-api-reference.md``: the "Offline rendering (required)" section."""
+    match = re.search(r"^### Offline rendering \(required\)\n.*?(?=^#{1,3} |\Z)", text, re.S | re.M)
+    return match.group(0) if match else ""
+
+
+def missing_elements(section):
+    flat = _flat(section)
+    return [name for name, pattern in REFUSAL_ELEMENTS.items()
+            if not re.search(pattern, flat, re.I)]
+
+
+class Module3bStatesTheRefusalInFull(unittest.TestCase):
+    """Both Module 3b sites that tell the guide how to build the server state all four elements."""
+
+    SITES = (
+        ("phase1-visualization.md, Render offline", PHASE1, render_offline_bullet),
+        ("visualization-api-reference.md, Offline rendering (required)", CONTRACT,
+         offline_rendering_section),
+    )
+
+    def sections(self):
+        for label, path, extract in self.SITES:
+            yield label, extract(path.read_text(encoding="utf-8"))
+
+    def test_each_site_is_found(self):
+        for label, section in self.sections():
+            with self.subTest(site=label):
+                self.assertTrue(section.strip(), f"{label}: the section was not found; "
+                                "a rename must move this guard with it.")
+
+    def test_each_site_states_every_element_and_cites_inv_091(self):
+        for label, section in self.sections():
+            with self.subTest(site=label):
+                self.assertEqual(
+                    [], missing_elements(section),
+                    f"{label} must state INV-091's refusal in full: a missing or unreadable "
+                    "vendored D3 makes the server refuse to render and fail visibly, naming the "
+                    "missing asset, writing no page or snapshot, and never falling back to the "
+                    "d3js.org CDN or any other network source.",
+                )
+
+    def test_removing_any_element_is_caught(self):
+        """Negative control: delete each element in turn from an in-memory copy."""
+        for label, section in self.sections():
+            for name, pattern in REFUSAL_ELEMENTS.items():
+                with self.subTest(site=label, element=name):
+                    mutated = re.sub(pattern, "", _flat(section), flags=re.I)
+                    self.assertIn(name, missing_elements(mutated))
+
+    def test_the_rule_is_not_narrowed_to_a_python_mechanism(self):
+        """The generated server may be in any language (INV-090)."""
+        for label, section in self.sections():
+            with self.subTest(site=label):
+                self.assertNotIn("__file__", section)
 
 
 if __name__ == "__main__":
