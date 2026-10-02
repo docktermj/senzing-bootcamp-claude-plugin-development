@@ -46,7 +46,8 @@ steering files.)
   step presented alone ends a turn with **zero** 👉, and folded in it looks like advancing two
   steps, so the guide must break one rule or the other and learns to read ⛔ as advisory.
   - **A run of them is the same case, not a worse one.** Non-yielding steps often come several in a
-    row — Module 1 Phase 1's 4a/4b/5/5a, SDK setup's 1b/4/5/6 on an existing install,
+    row — Module 1 Phase 1's 4a/4b/5/5a, SDK setup's 3/4/5/6 on an existing install (its Step 3 there
+    being only Phase 3 and the environment script),
     **the whole of System verification**, which contains exactly one 👉 (its module-transition
     question), and **Data collection's generated-scenario path, whose Steps 1-8b ask nothing** (that
     one is path-dependent: the bring-your-own-data path does ask, at Step 2). A faithful turn there

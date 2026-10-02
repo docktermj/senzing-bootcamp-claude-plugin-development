@@ -141,7 +141,11 @@ class TheGroundRulesListNamesTheFourthInstance(unittest.TestCase):
     def test_the_three_existing_instances_survive(self):
         block = squash(GROUND_RULES)
         self.assertRegex(block, r"Module 1 Phase 1's 4a/4b/5/5a")
-        self.assertRegex(block, r"SDK setup's 1b/4/5/6 on an existing install")
+        self.assertRegex(
+            block,
+            r"SDK setup's 3/4/5/6 on an existing install \(its Step 3 there being only Phase 3 and "
+            r"the environment script\)",
+        )
         self.assertRegex(block, r"\*\*the whole of System verification\*\*")
 
     def test_the_model_marking_in_system_verification_is_unchanged(self):
