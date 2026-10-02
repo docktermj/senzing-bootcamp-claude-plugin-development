@@ -511,7 +511,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # INV-331 back, and test_sqlite_load_time_prompt_is_defined_and_matched.py, which already did.
 # Re-derived by running the extractor -- 176, both new pairs present by name and none removed.
 # EXPECTED_PAIRS 174 -> 176.
-EXPECTED_PAIRS = 176
+# 178 on 2026-10-02: INV-091's dated correction (#332: the CDN fallback is withdrawn; the server
+# refuses to render without the vendored D3) names test_viz_server_refuses_to_render_without_d3.py
+# and test_project_local_visualization_finds_its_d3.py, which both already cite INV-091 back.
+# Re-derived by running the extractor -- 178, both new pairs present by name and none removed.
+# EXPECTED_PAIRS 176 -> 178.
+EXPECTED_PAIRS = 178
 
 
 def pairs():
