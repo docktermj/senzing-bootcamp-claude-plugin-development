@@ -490,7 +490,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_no_progress_gate_returns_to_data_collection.py, which already cites INV-239 back. Re-derived by
 # running the extractor -- 170, the one new pair present by name and none removed.
 # EXPECTED_PAIRS 169 -> 170.
-EXPECTED_PAIRS = 170
+# 171 on 2026-10-02: INV-342's audio-contract note (#339) names test_graduation_video_step.py for Step
+# 1c's reading of the Voice:/Music: lines, and that file now cites INV-342 back, stating it does not
+# establish that the renderer prints them. (test_recap_video.py, the note's other enforcer, was
+# already a pair.) Re-derived by running the extractor -- 171, the one new pair present by name and
+# none removed. EXPECTED_PAIRS 170 -> 171.
+EXPECTED_PAIRS = 171
 
 
 def pairs():

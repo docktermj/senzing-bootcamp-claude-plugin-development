@@ -1021,7 +1021,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - **Measured here** (ffmpeg 6.1.1 on PATH, so the render tests ran rather than skipped): in-suite, music alone -15.9 LUFS and stand-in voice + music -15.4; with the real espeak-ng over five scenes, voice + music -16.3, music only -15.8, voice only -16.3; every stream `aac (LC) … 48000 Hz, stereo`.
   - **Unchanged, as the issue scopes it:** INV-340's wording, the per-platform no-voice guidance and the Piper voice (#340, #341, which key on the `Voice:` lines above), and the ⛔ (INV-342) docstring line.
 - **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` was not run locally: it is a remote reusable workflow, and no workflow file changed.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-342 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-342 — applied 2026-10-02, amended at review.** The rule already registered:
     - ⛔ **(INV-342) Narration is never truncated: a scene whose narration runs longer than its planned duration is extended to fit, and every overrun is reported on stderr.** — in `plugins/senzing-bootcamp/scripts/generate_recap_video.py`
 
   ⚠️ **Why.** This run ships durable guarantees about the renderer's audio, each with an
@@ -1035,7 +1035,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   unchanged: "an audio track when a speech engine was available" stays true. Amending a
   registered invariant is the maintainer's sign-off alone, so `specs/INVARIANTS.md` and
   `invariant-manifest.json` are unchanged. **Sites it affects:** INV-342 in
-  `specs/INVARIANTS.md`, which gains the sentences below before its `Enforced by` sentence,
+  `specs/INVARIANTS.md`, which gains the dated note below, appended after its `(Source: …)` clause (amended at review: the draft inserted the sentences before its `Enforced by` sentence, which `INVARIANTS.md`'s append-only rule does not allow),
   and INV-342's statement in `invariant-manifest.json`, regenerated from it
   (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit. The shipped
   sites are `audio_filter_graph`, `synthesize_music_bed`, `find_ffmpeg`/`missing_filters` and
@@ -1047,12 +1047,9 @@ entries at once. Two things a reader should know about the hashes now recorded:
   `tests/test_graduation_video_step.py`. Applying it resolves the block: mark the bullet
   `applied YYYY-MM-DD` and drop the "awaiting" marker.
 
-  The drafted wording:
+  The drafted wording, as applied on 2026-10-02 (amended at review from the mid-entry draft into a dated note):
 
-  **INV-342** — … Every audio stream it writes MUST be one 48 kHz stereo AAC stream normalized by `loudnorm=I=-16:TP=-1.5:LRA=11`, measuring -16 ± 1 LUFS integrated whether or not a voice spoke, with the music bed ducked under the voice by a `sidechaincompress` keyed on the voice; with no voice and `video.music: false` it MUST write no audio stream. The music bed MUST be synthesized at render time with the standard library only, byte-identical for a given length, so no audio asset ships. A usable ffmpeg is one with the libx264 and aac encoders and the `sidechaincompress` and `loudnorm` filters. On exit 0 it MUST print exactly one `Voice:` line — `Voice: <engine> (<n> of <m> scenes narrated)`, `Voice: none (--no-voice)`, `Voice: none (no speech engine found)` or `Voice: none (<engine> voiced no scene)` — and one `Music:` line, `Music: yes` or `Music: off (storyboard)`, since graduation's Step 1c reads them (INV-340). (⚠️ **Amended <YYYY-MM-DD> (#339): the audio contract added; the exit codes and narration rules are unchanged.**) Enforced by `tests/test_recap_video.py`, … and, for Step 1c's reading of the lines, `tests/test_graduation_video_step.py`. …
-
-  *(the `…` stand for INV-342's registered text, kept as it is; the date is a placeholder
-  deliberately: `/review-invariants` fills it in on the day it applies the amendment.)*
+  **INV-342** — … (Source: `bundled-recap-video-renderer`, GitHub issue #299; registered 2026-10-01.) (⚠️ **Dated note, 2026-10-02 (#339): the audio contract; the exit codes and narration rules above are unchanged.** Every audio stream it writes MUST be one 48 kHz stereo AAC stream normalized by `loudnorm=I=-16:TP=-1.5:LRA=11`, measuring -16 ± 1 LUFS integrated whether or not a voice spoke, with the music bed ducked under the voice by a `sidechaincompress` keyed on the voice; with no voice and `video.music: false` it MUST write no audio stream. The music bed MUST be synthesized at render time with the standard library only, byte-identical for a given length, so no audio asset ships. A usable ffmpeg is one with the libx264 and aac encoders and the `sidechaincompress` and `loudnorm` filters. On exit 0 it MUST print exactly one `Voice:` line — `Voice: <engine> (<n> of <m> scenes narrated)`, `Voice: none (--no-voice)`, `Voice: none (no speech engine found)` or `Voice: none (<engine> voiced no scene)` — and one `Music:` line, `Music: yes` or `Music: off (storyboard)`, since graduation's Step 1c reads them (INV-340). Enforced by `tests/test_recap_video.py` and, for Step 1c's reading of the lines, `tests/test_graduation_video_step.py`.)
   *(written as NNN deliberately: no new id is drafted, because this amends INV-342 in place and
   a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
   maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
