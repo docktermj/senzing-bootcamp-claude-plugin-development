@@ -43,6 +43,75 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## module-5-no-progress-gate-returns-to-data-collection
+
+- **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #337, spec revision 2; from the `dry-run-2026-10-01` entry, P3-10, `Source: self-observed (assistant dry run)`)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md` (the gate header, both band bullets, the synthesized-source disclosure, the internal note, Step 7a steps 2, 5 and 6 and its closing ⚠️, and the new Step 7b), `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md` (the **First:** paragraph, Step 2's new "Receiving a `collection_return`" block and the provision question's precondition, and Step 9's opener), `tests/test_no_progress_gate_returns_to_data_collection.py` (new), `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** n/a (no Senzing fact), server `sz-mcp-coworker` 1.37.18 (Senzing "current"), 2026-10-02, `get_capabilities` and `get_sample_data(dataset='list')` — re-confirmed, not assumed. The change is about the plugin's own gate, progress state and `quality_intent` record. The one adjacent fact, that a `cord` source is a fixed published dataset, still holds: `get_sample_data` lists the four CORD collections (las-vegas, london, moscow, truthset), and its tool description calls the data "REAL data … historical snapshots". No added line names an SDK method, an engine behavior or a Senzing document. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** raced (Phase 5b) on `a7c8668`, with two strategies: `section` (one new Step 7b that the other sites cite) and `inline` (the variants beneath each band, with Step 7a step 6 as the handler). `section` won on fit with INV-300's state-it-once rule. Two of `inline`'s safeguards were adopted, and the guard covers both: a return writes no Module 4 checkpoint (it leaves `current_module` and `current_step` as Module 5 set them), and an `own` or `unknown` re-export is saved beside the original under a new name, never over it (INV-050).
+- **Summary:**
+  - **When the variant applies.** New `### 7b. Return to Data collection — when nothing mechanical is left to fix` is the canonical statement (INV-300). Every time a gating band's question is about to be presented (the first time, after a Step 7a pass that fixed everything, and after one that found nothing), it checks Step 6's measures: `format_consistency` at 100% and no repeated `(DATA_SOURCE, RECORD_ID)` pair. It also applies when a Step 7a pass has just found nothing it could fix, which closes the loop when formats are below 100% but none can be normalized. That clause goes slightly beyond the spec's measure-based test. Where mechanical work remains, the band's existing question is presented unchanged.
+  - **The pinned variants (INV-056).** For a `synthesized`, `own` or `unknown` source, each band keeps its 👉 line verbatim. The options are *1. Return to Data collection for this source.* plus *2. Continue to mapping now.* (70–79%) or *2. Proceed anyway, knowing the results may be limited.* (<70%). ⛔ (INV-284) No improvement option is offered when nothing mechanical is left. After a pass that found nothing, the statement line first says "The score is unchanged at [score]".
+  - **`cord` and `free_data`.** Each band gets a pinned statement that completeness cannot change for a fixed dataset (the <70% one adds that results may be limited). There is no 👉, and the flow continues into Phase 2 in the same turn.
+  - **The handling step (INV-284).**
+    - Option 2 is handled as the band's own second option.
+    - Option 1 runs the return route. ⛔ (INV-006) It IS the route's pinned question, so no second confirmation is asked.
+    - The route writes a `collection_return` key (`source`, `provenance`, `from_band`, `resume_step`, `started_at`) and `current_step: "7b"`. `current_module` is unchanged.
+    - A table names the Module 4 steps per provenance and the Module 5 resume step: `synthesized` → Step 2's regeneration, resume at **Step 6**; `own` → the provision question, Steps 3 and 8, and Step 8a only when the count changed, resume at **Step 4**; `unknown` → as `own`.
+    - ⛔ (INV-284) Module 4's Step 9 does not run at all.
+    - On resume the key is cleared and the gate is re-presented as a new state, not an INV-006 repeat.
+    - An interrupted return resumes from the key without re-asking.
+  - **Citing sites.** The gate header, both band bullets, the disclosure ("the applicable pinned question — the band's question below, or its no-progress variant in Step 7b"), the internal note, Step 7a steps 2, 5 and 6, and the closing ⚠️ all point at Step 7b. Step 7a step 2 no longer carries the improvised "offer a return to that module".
+  - **Module 4.**
+    - The **First:** paragraph skips the banner and journey map on a return.
+    - An anchored `Receiving a collection_return` block heads Step 2. For `synthesized` it regenerates this source only to `>=80`: same records and `RECORD_ID`s, no off-pattern values, a new `data/raw/<source>-regenerated.<ext>`, both self-checks (⛔ INV-239), and the registry repointed with the previous `file_path` recorded (⛔ INV-243). Its `quality_intent` record rewrites `target_band: ">=80"` and adds `regenerated: {from_band, reason, at}`, `gaps` and `measured_score`. Because the record count is unchanged, Step 8a is not re-run.
+    - For `own` and `unknown`, the block asks the provision question even though a provenance is recorded. The new file is saved beside the original (INV-050), the previous `file_path` is recorded, and `provenance` is set from the answer.
+    - The provision question's precondition admits that case.
+    - Step 9 opens with `**Not on a collection_return.**` ⛔ (INV-284): no Module Completion, no second recap section, no progress update, no transition question.
+  - **Tests.** `tests/test_no_progress_gate_returns_to_data_collection.py`, 20 stdlib tests. Each check is a function of the file text, scoped to its site:
+    - the variants and their exact options;
+    - no improve option;
+    - the trigger moments and "unchanged";
+    - no second confirmation;
+    - the fixed-dataset statement (no 👉, no return);
+    - the handling table's steps and resume steps;
+    - the Step 9 sentence;
+    - the citing sites;
+    - the receiving block and its `quality_intent` record;
+    - the provision precondition;
+    - Step 9's opener;
+    - the return option stated only in Step 7b;
+    - the bands' original questions unchanged.
+
+    11 negative controls run the same checks on mutated copies, and each must report a problem: the variant removed, an improve option in it, the handling step removed, a wrong resume step, the receiving branch removed, `free_data` given the variant, a `free_data` row in the table, Step 7a step 2's old wording restored, the Step 9 opener removed, a return that writes Module 4 checkpoints, and an `own` re-export saved over the original.
+- **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written). `lint-workflows` was not run locally: it is a remote reusable workflow, and no workflow file changed.
+- **Differs from the issue:**
+  - The acceptance criterion asking for the INV-239 amendment is met by the queued block below, drafted for `/review-invariants`. `specs/INVARIANTS.md` is untouched (INV-307), as the issue itself says.
+  - Step 7b also applies after a Step 7a pass that found nothing it could fix, even when the measures alone would not select it, so a dead option cannot reappear.
+  - The two `inline` safeguards above are additions the spec does not name.
+  - The reworded sites include a few sentences beyond the issue's list (the gate header's one-👉 scope, the internal note, Step 7a step 5 and its closing ⚠️, and Module 4's **First:** paragraph and provision precondition). These keep the files free of contradictions with Step 7b.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-239 — awaiting the maintainer's sign-off; NOT applied.** The rule already shipping:
+    - ⛔ **(INV-239) Both self-checks in this step apply to the regeneration:** — in `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`
+
+  ⚠️ **Why.** INV-239 requires a synthesized scenario to span the bands, with at least one source in **70-79%**. Module 4's return-route regeneration lifts that source to `>=80` when the Bootcamper asks for it at Module 5's no-progress gate. Read literally, INV-239 forbids that. But the original generation already satisfied the requirement: the source was generated in the band, scored there, and the gate fired, so the contrast was shown and the remediation branch was reached. The exemption is therefore a dated note, not a rewording, as the issue asks. The ⛔ line above cites INV-239 for the regeneration's self-checks. The `quality_intent.regenerated` record is what lets a later run tell a requested departure from a generation fault, which is INV-239's own purpose for `quality_intent`.
+
+  **How it relates to #343's pending INV-239 amendment** (entry `synthesized-entities-have-their-own-identifiers`). Both amend INV-239, and neither rewords the other, so they apply in either order. #343 inserts sentences into the body after "…with the duplication in the entity." and extends the enforcer clause. This note is appended after INV-239's `(Source: …)` clause, so it touches none of #343's text. Its "any identifier-collision count INV-239 requires" reads correctly with or without #343 applied; with #343 applied, it names #343's self-check, which the regeneration must also pass (the shipped ⛔ line already says so). #343's block says "No other INV-239 amendment is pending". That is now stale, but INV-307 keeps this run out of #343's entry, so `/review-invariants` should take the two together.
+
+  **Sites it affects:** INV-239 in `specs/INVARIANTS.md`, which gains the dated note below at its end, and its `invariant-manifest.json` statement, regenerated with `.claude/skills/review-invariants/invariant_manifest.py` in the same edit. The shipped site is Module 4 Step 2's "Receiving a `collection_return`" block (`#receiving-a-collection-return`), cited from Module 5's `phase1-quality-assessment.md` Step 7b. The enforcer is `tests/test_no_progress_gate_returns_to_data_collection.py` (`receiving_problems`), beside `tests/test_synthesized_scenario_has_quality_gaps.py`. Applying it resolves the block: mark the bullet `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording, appended to INV-239:
+
+  **INV-239** — … (Source: `synthesized-scenarios-make-the-quality-gate-unreachable`, 2026-08-14.) ⚠️ **Dated note, <YYYY-MM-DD> (#337): a regeneration the Bootcamper requests after the Module 5 gate has fired is exempt from the 70-79% requirement; nothing above is superseded.** The original generation already satisfied that requirement: the source was generated in its band, scored there, and the gate fired, so the contrast was shown and the remediation branch was reached. When the Bootcamper then chooses Module 5's return to Data collection for a `synthesized` source, Module 4 MAY regenerate that source alone to `>=80`, keeping its records and `RECORD_ID`s. The regeneration MUST still pass the generation's self-checks (the band check against its new target, and any identifier-collision count INV-239 requires). It MUST record the departure in that source's `quality_intent`: the new `target_band`, the band it was regenerated from, the reason and the time. That way a later run reads a requested regeneration, not a generation fault. The gap, record-key and `quality_intent` rules above still bind the regeneration. Enforced by `tests/test_no_progress_gate_returns_to_data_collection.py`.
+
+  *(the `…` stand for INV-239's registered text, and #343's pending sentences if applied first, kept as they are; the date is a placeholder
+  deliberately: `/review-invariants` fills it in on the day it applies the amendment.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-239 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **The no-progress variant establishes no new invariant: INV-284 and INV-056 cover it.** INV-056 pins every gate question's wording, and the variant's options and statements are pinned verbatim in Step 7b. INV-284 requires every pinned option to have a handling step that does something and says where the flow resumes, and calls an option with nothing to execute **unsatisfiable**. An improvement option offered when nothing mechanical is left is exactly that, so 7b's ⛔ "never offer an improvement option" cites INV-284. INV-284 also already sanctions re-presenting the re-scored gate after a return (not an INV-006 repeat). INV-284's own "Observed 2026-08-28" names this gate's improve path, so the new rule is a closer application of it, not a new subject. Step 7b's single-statement claim applies INV-300. Every new ⛔ line cites INV-006, INV-239, INV-243, INV-284 or INV-300 at the line, none is demoted, and `test_new_hard_rules_are_cited_or_deferred` passes without a deferral. If the maintainer wants the "never a dead option" rule explicit, the alternative is a dated note on INV-284 rather than a new id.
+
 ## graduation-video-voice-is-leveled-before-the-mix
 
 - **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #372, spec revision 1; from #331's end-to-end check)

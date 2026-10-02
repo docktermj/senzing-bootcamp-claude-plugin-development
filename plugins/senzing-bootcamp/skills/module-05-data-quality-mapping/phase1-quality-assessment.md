@@ -944,7 +944,8 @@ counted, say so in the report rather than omitting the pair.
 
 After presenting the quality assessment, guide the user's decision.
 
-**Where the score gates — 70-79% and below 70% — ask exactly one 👉 question to close the turn.**
+**Where the score gates — 70-79% and below 70% — ask exactly one 👉 question to close the turn**,
+except on a fixed dataset with nothing mechanical left to fix, which Step 7b continues without one.
 At **≥80% there is no decision to make**: state the result and continue straight into Phase 2 in the
 same turn, letting Phase 2's first step supply that turn's single 👉.
 
@@ -968,30 +969,34 @@ question, because anything meant to inform the answer goes before it
 > Improving them means regenerating data we authored a few minutes ago. That is a fair choice, it
 > is just not the same as fixing a real dataset."
 
-Then present the pinned question **unchanged, with both options live** (INV-056). ⛔ **Never
+Then present the applicable pinned question — the band's question below, or its no-progress variant
+in Step 7b — **unchanged, with both options live** (INV-056). ⛔ **Never
 silently regenerate.** Rewriting the Bootcamper's data as the answer to a question they were not
 told meant that is the failure this disclosure exists to prevent.
 
 - **Quality ≥80%:** "Your data quality is strong. Let's continue to mapping." **(statement, no 👉;
   continue into Phase 2 this turn)**
-- **Quality 70-79%:** "Your data quality is acceptable but has some gaps. You can continue to
-  mapping now, or improve the weakest fields first."
+- **Quality 70-79%** *(where mechanical work remains; with nothing mechanical left to fix, present
+  this band's no-progress variant in Step 7b instead)*: "Your data quality is acceptable but has
+  some gaps. You can continue to mapping now, or improve the weakest fields first."
 
   👉 **Your data quality is acceptable but has some gaps. What would you like to do? Reply with a number:**
 
   1. Improve the weakest fields first.
   2. Continue to mapping now.
 
-- **Quality <70%:** "Your data quality needs attention before mapping will produce good
-  results. I'd recommend focusing on [specific issues: e.g., filling missing phone numbers,
-  standardizing address formats]."
+- **Quality <70%** *(where mechanical work remains; with nothing mechanical left to fix, present
+  this band's no-progress variant in Step 7b instead)*: "Your data quality needs attention before
+  mapping will produce good results. I'd recommend focusing on [specific issues: e.g., filling
+  missing phone numbers, standardizing address formats]."
 
   👉 **Your data quality needs attention before mapping will produce good results. What would you like to do? Reply with a number:**
 
   1. Work on improving the data first.
   2. Proceed anyway, knowing the results may be limited.
 
-*(Internal: in the two gating branches, end the turn on the applicable question and wait. In the
+*(Internal: in the two gating branches, end the turn on the applicable question and wait — Step 7b's
+fixed-dataset statement excepted, which continues into Phase 2. In the
 ≥80% branch no question applies — do not manufacture one; continue into Phase 2 this same turn and
 end on its first 👉.)*
 
@@ -1019,8 +1024,10 @@ advisory, so treat this as executable, not advisory.
    - ⛔ **(INV-284) Not fixable here — `completeness`** (0.70 of the score, and usually what put the source in
      the band). **A missing value cannot be invented**, and offering to fill one is offering to
      fabricate data. Say that plainly. The honest route is a better export from the source system,
-     which is Data collection's job: offer a return to that module for this source, and say the
-     bootcamp will pick up here with the new file.
+     or for a generated source a regeneration, which is Data collection's job. Name it, and say it
+     is offered at the re-presented gate as Step 7b's return to Data collection, once nothing
+     mechanical is left to fix. Its wording, its handling and where the bootcamp picks up are stated
+     in Step 7b, not here (INV-300).
 
 3. **Write the improved data as a NEW file; never overwrite what was collected.** Put it beside the
    original as `data/raw/<source>-improved.<ext>` and record the original `file_path` in the same
@@ -1057,17 +1064,127 @@ advisory, so treat this as executable, not advisory.
    one.** INV-006 forbids re-asking a question already answered about the same state; the score has
    changed, so this is a new question about a new state, and the Bootcamper's earlier answer was
    about the old figure. Present whichever band's pinned question the **new** score selects — a
-   source that crossed into ≥80% gets no question at all and continues into Phase 2 this turn.
+   source that crossed into ≥80% gets no question at all and continues into Phase 2 this turn. A
+   pass that fixed everything leaves nothing mechanical, so the band's form is Step 7b's.
 
 6. **When nothing was fixable, say so rather than looping.** If the gaps are entirely completeness,
-   there is no mechanical work to do: state that, name the return-to-collection route from step 2,
-   and present the gate again with the score **unchanged and identified as unchanged**. Never
-   re-present an unchanged score as an improvement.
+   there is no mechanical work to do: say so, and never re-present an unchanged score as an
+   improvement. Step 7b now applies; it states how the unchanged score is identified and what the
+   gate offers instead (INV-284).
 
 ⚠️ **On a `provenance: synthesized` source this path is still available and still honest** — the
 disclosure above has already told the Bootcamper the gaps are deliberate. Normalizing formats in
-generated data is real work with a real re-score; if they ask to regenerate instead, that is Module
-4's Step 2, and it is their call to make with the disclosure in hand.
+generated data is real work with a real re-score; if they ask to regenerate instead, that is Step
+7b's return route, and it is their call to make with the disclosure in hand.
+
+### 7b. Return to Data collection — when nothing mechanical is left to fix
+
+⛔ **(INV-300) This is the canonical statement of the gate's no-progress variant and of the return
+route it offers.** The gate above, Step 7a and Module 4's receiving branch point here; none of them
+restates it.
+
+**When it applies.** Check every time a gating band's question (70-79% or <70%) is about to be
+presented: the first time, after a Step 7a pass that fixed everything, and after one that found
+nothing. **Nothing mechanical is left to fix** when Step 6's measures for this source show
+`format_consistency` at 100% **and** no repeated `(DATA_SOURCE, RECORD_ID)` pair, the only two
+dimensions Step 7a step 2 calls fixable here, or when a Step 7a pass has just found nothing it
+could fix. Then this step's form of the band replaces the band's question. Where mechanical work
+remains, present the band's question above unchanged.
+
+⛔ **(INV-284) Never offer an improvement option when nothing mechanical is left to fix.** Step 7a
+would find nothing to do and hand back the same gate, so the option is a dead choice that loops.
+Observed 2026-10-01: STORE_POS (synthesized) went 73.5 → 79.0 on format normalization, and the
+Bootcamper then chose "Improve the weakest fields first" twice more with nothing left to improve.
+
+**After a pass that found nothing, say first that the score is unchanged** (one statement line,
+before the 👉): "The score is unchanged at [score]: there was nothing mechanical left to fix."
+
+**Read `provenance` for this source from `config/data_sources.yaml`**; it selects the form.
+
+**`synthesized`, `own` or `unknown` → the pinned no-progress variant (INV-056).** The INV-284
+disclosure above still precedes it on a `synthesized` source. The question line is the band's own:
+
+- **Quality 70-79%:** "Your data quality is acceptable but has some gaps. What is left is missing
+  values, which this module cannot fill; a better export, or a regeneration of generated data, can."
+
+  👉 **Your data quality is acceptable but has some gaps. What would you like to do? Reply with a number:**
+
+  1. Return to Data collection for this source.
+  2. Continue to mapping now.
+
+- **Quality <70%:** "Your data quality needs attention before mapping will produce good results.
+  What is left is missing values, which this module cannot fill; a better export, or a
+  regeneration of generated data, can."
+
+  👉 **Your data quality needs attention before mapping will produce good results. What would you like to do? Reply with a number:**
+
+  1. Return to Data collection for this source.
+  2. Proceed anyway, knowing the results may be limited.
+
+*(Internal: end the turn on the applicable question and wait.)*
+
+**`cord` or `free_data` → no return; a statement, and no 👉 at this gate.** Both are fixed datasets,
+one from `get_sample_data` and one from the free-data catalog, so completeness cannot change and a
+return would offer nothing (INV-012). Say the band's line, then continue into Phase 2 in the same
+turn, letting Phase 2's first step supply that turn's 👉:
+
+- **Quality 70-79%:** "Your data quality is acceptable but has some gaps. What is left is missing
+  values, and this is a fixed dataset, so its completeness cannot change. Let's continue to
+  mapping." **(statement, no 👉; continue into Phase 2 this turn)**
+- **Quality <70%:** "Your data quality needs attention before mapping will produce good results.
+  What is left is missing values, and this is a fixed dataset, so its completeness cannot change,
+  and the results may be limited. Let's continue to mapping." **(statement, no 👉; continue into
+  Phase 2 this turn)**
+
+**Handling each option (INV-284).**
+
+- **Option 2** is the band's own second option and is handled as it is there: continue into Phase 2
+  this turn. Nothing is written for the return.
+- **Option 1** runs the return route below. ⛔ **(INV-006) Option 1 IS the return route's pinned
+  question: the answer is the go-ahead, so ask no second confirmation.** The same route runs when the
+  Bootcamper asks, in their own words, for a regeneration or a new export of this source.
+
+**The return route, for this source only:**
+
+1. **Record the return in one quiet write** to `config/bootcamp_progress.json`: set `current_step`
+   to `"7b"` and add
+
+   ```json
+   "collection_return": {
+     "source": "<DATA_SOURCE>",
+     "provenance": "synthesized | own | unknown",
+     "from_band": "70-79 | <70",
+     "resume_step": 6,
+     "started_at": "<ISO 8601>"
+   }
+   ```
+
+   with `resume_step` from the table below. ⛔ **(INV-284) `current_module` is not changed:** the
+   Bootcamper stays in this module, and the key is what lets an interrupted return resume.
+
+2. **Run Module 4's receiving branch** —
+   [`../module-04-data-collection/SKILL.md`](../module-04-data-collection/SKILL.md#receiving-a-collection-return)
+   Step 2 → "Receiving a `collection_return`", which says how each provenance is collected. Only the
+   steps in this table run:
+
+   | `provenance` | Module 4 steps that run | Module 5 resumes at |
+   |---|---|---|
+   | `synthesized` | Step 2's synthesized branch, regenerating this source only to `>=80` | **Step 6** (re-score): the schema is unchanged |
+   | `own` | Step 2's provision question for this source, then Step 3 (verify) and Step 8 (tracking); Step 8a's volume check for this source only when the record count changed | **Step 4** (compare with the Entity Specification): a new export can change shape. Steps 5, 6 and the gate follow |
+   | `unknown` | exactly as `own`; the answer sets `provenance` | **Step 4**, as `own` |
+
+   ⛔ **(INV-284) Module 4's Step 9 does not run at all on a return:** no Module Completion, no
+   second Module 4 recap section, no progress update and no transition question. Module Completion
+   would move `current_module` past this module, and there is no module transition to ask about.
+
+3. **Resume here.** When those steps finish, clear `collection_return` and set `current_step` to the
+   resume step in one write, then continue at that step for this source. The gate is re-presented
+   with the new score: ⛔ **(INV-284) that is a new state, NOT an INV-006 repeat**, so present
+   whichever form the new score and this step's check select. At ≥80% there is no question.
+
+4. **An interrupted return** resumes from `current_step: "7b"` with `collection_return` present:
+   continue the return for the named source from the first Module 4 step not yet done, and do not
+   re-present the gate, whose answer is already recorded.
 
 **Success indicator:** ✅ All data sources categorized + `docs/data_source_evaluation.md`
 created.
