@@ -28,7 +28,12 @@ writes at graduation into `docs/bootcamp_recap.mp4`. These tests pin its contrac
   1.8.0 itself is never installed or run by these tests.
 * **End to end**, an mp4 is rendered and probed: H.264, yuv420p, 1920x1080, 30 fps, and one
   48 kHz stereo AAC stream whenever a voice spoke or the music played, measuring -16 ± 1 LUFS
-  (ffmpeg's `ebur128`). Skipped with a reason when Pillow or ffmpeg is absent.
+  with a true peak at or under -1.0 dBFS (ffmpeg's `ebur128`). Skipped with a reason when
+  Pillow or ffmpeg is absent.
+* **The voice leveler** (#372): every voiced stream is compressed, keyed on itself, before it
+  keys the ducking or reaches `loudnorm`. Step 1c's worked two-minute storyboard, voiced by a
+  speech-like stand-in (`FAKE_SPEECH`), measures in the band, and the same render with the
+  graph from before #372 misses it (the negative control).
 
 ⚠️ Pillow and imageio-ffmpeg are optional dependencies of the *renderer under test*, declared in
 `requirements-dev.txt` (INV-306). The tests themselves are standard library only (INV-108):
@@ -40,7 +45,7 @@ video on failure, burns captions in, never truncates narration, accepts only pro
 images, works offline, and draws the certificate from the recap PDF's fields). It does **not**
 establish the macOS and Windows speech paths, which it covers only by the commands it builds.
 
-Source issues: #299, #339, #341.
+Source issues: #299, #339, #341, #372.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -835,12 +840,40 @@ def graph_sources(graph):
     return sources
 
 
-def sidechain_inputs(graph):
-    """(main input's sources, sidechain key's sources) of the graph's sidechaincompress."""
-    chain = next(c for c in graph.split(";") if "sidechaincompress" in c)
+def sidechain_inputs(graph, compressor=VIDEO.DUCKING):
+    """(main input's sources, sidechain key's sources) of the graph's `compressor` chain.
+
+    The ducking compressor by default. The voice's leveler (#372) is a second
+    sidechaincompress, keyed on the voice itself, so each is picked by its own parameters. A
+    ducking chain written without them (a negative control's) is the first sidechaincompress
+    that is not the leveler.
+    """
+    leveler = VIDEO.LEVELER.split(";")[-1].split("]")[-1]
+    params = compressor.split(";")[-1].split("]")[-1]
+    chains = graph.split(";")
+    chain = next((c for c in chains if params in c), None)
+    if chain is None and compressor is VIDEO.DUCKING:
+        chain = next((c for c in chains if "sidechaincompress" in c and leveler not in c), None)
+    if chain is None:
+        raise StopIteration("no %s chain in %s" % (params, graph))
     main, key = re.findall(r"\[([^\]]+)\]", re.match(r"((?:\[[^\]]+\])*)", chain).group(1))
     sources = graph_sources(graph)
     return sources.get(main, {main}), sources.get(key, {key})
+
+
+def unleveled_graph(voice, music):
+    """The graph as it was before #372: no leveler, the voice split straight into key and mix.
+
+    The negative control for the leveler. A real two-minute narration mixed this way measured
+    about -17.6 LUFS, outside -16 ± 1.
+    """
+    if voice is not None and music is not None:
+        return (f"[{music}:a]volume={VIDEO.MUSIC_VOLUME}[music];"
+                f"[{voice}:a]asplit=2[key][voice];"
+                f"[music][key]{VIDEO.DUCKING}[ducked];"
+                f"[ducked][voice]amix=inputs=2:duration=first,{VIDEO.LOUDNORM}[aout]")
+    alone = voice if voice is not None else music
+    return None if alone is None else f"[{alone}:a]{VIDEO.LOUDNORM}[aout]"
 
 
 class TheMixGraphDucksTheMusicUnderTheVoice(unittest.TestCase):
@@ -867,8 +900,32 @@ class TheMixGraphDucksTheMusicUnderTheVoice(unittest.TestCase):
 
     def test_one_loudness_target_for_every_stream(self):
         self.assertEqual("[1:a]%s[aout]" % self.LOUDNORM, VIDEO.audio_filter_graph(None, 1))
-        self.assertEqual("[1:a]%s[aout]" % self.LOUDNORM, VIDEO.audio_filter_graph(1, None))
+        self.assertEqual("[1:a]%s,%s[aout]" % (self.LEVELER, self.LOUDNORM),
+                         VIDEO.audio_filter_graph(1, None))
         self.assertIsNone(VIDEO.audio_filter_graph(None, None))
+
+    # The voice leveler (#372): every voiced stream is compressed, keyed on itself, before it
+    # keys the ducking or reaches loudnorm. The parameters are the ones #372 measured.
+    LEVELER = ("asplit=2[lv][lk];"
+               "[lv][lk]sidechaincompress=threshold=0.05:ratio=4:attack=5:release=150:makeup=1")
+
+    def test_the_leveler_is_keyed_on_the_voice_itself(self):
+        self.assertEqual(self.LEVELER, VIDEO.LEVELER)
+        for graph in (VIDEO.audio_filter_graph(1, 2), VIDEO.audio_filter_graph(1, None)):
+            self.assertEqual(({"1:a"}, {"1:a"}), sidechain_inputs(graph, VIDEO.LEVELER), graph)
+
+    def test_the_voice_is_leveled_before_the_ducking_split(self):
+        graph = VIDEO.audio_filter_graph(1, 2)
+        self.assertIn("[1:a]%s,asplit=2[key][voice];" % self.LEVELER, graph)
+        self.assertLess(graph.index(self.LEVELER), graph.index(VIDEO.DUCKING))
+        self.assertEqual(1, graph.count("[lv][lk]sidechaincompress"))
+
+    def test_an_unleveled_graph_is_caught_negative_control(self):
+        """Today's chain before #372 (the voice split straight into key and mix) fails."""
+        unleveled = unleveled_graph(1, 2)
+        self.assertNotIn(self.LEVELER, unleveled)
+        with self.assertRaises(StopIteration):
+            sidechain_inputs(unleveled, VIDEO.LEVELER)
 
     def test_the_encode_call_carries_the_graph(self):
         voice, music, out = Path("voice.wav"), Path("music.wav"), Path("out.mp4")
@@ -1143,6 +1200,54 @@ with wave.open(out, "wb") as w:
                            for i in range(int(22050 * 1.5))))
 """
 
+# A speech-like stand-in for espeak-ng (#372), standard library only and deterministic. Real
+# narration peaks far above its loudness: voiced syllables are glottal-pulse trains (in-phase
+# harmonics), stress varies syllable to syllable, and pauses are short. FAKE_ESPEAK's steady
+# sine has none of that, which is why it normalized fine while real speech did not. Tuned
+# against a real espeak-ng narration of Step 1c's worked storyboard (-17.5 LUFS, -0.9 dBTP
+# assembled): this one assembles to about -19.2 LUFS, -0.8 dBTP, and through the chain
+# before #372 its mix measures about -18.5 LUFS, as real speech's did (-17.6).
+FAKE_SPEECH = """#!{python}
+import math, random, struct, sys, wave
+RATE = 22050
+def speak(text, rng, base=15000):
+    out = []
+    for word in text.split():
+        for _ in range(max(1, min(4, sum(ch in "aeiouyAEIOUY" for ch in word)))):
+            if rng.random() < 0.4:  # a fricative onset
+                n = int(RATE * 0.06)
+                out += [int(0.18 * base * math.sin(math.pi * i / n) * rng.uniform(-1, 1))
+                        for i in range(n)]
+            amp = base * (1.0 if rng.random() < 0.2 else rng.choice((0.25, 0.45)))  # stress
+            f0, glide = rng.uniform(100, 160), rng.uniform(-0.25, 0.25)
+            n, phase = int(RATE * rng.uniform(0.12, 0.22)), 0.0
+            for i in range(n):
+                phase += 2 * math.pi * f0 * (1 + glide * i / n) / RATE
+                env = math.sin(math.pi * i / n) ** 0.6
+                out.append(int(amp * env * sum(math.cos(k * phase) for k in range(1, 9)) / 4))
+            out += [0] * int(RATE * 0.01)
+        out += [0] * int(RATE * 0.03)
+        if word[-1:] in ".,!?:;":
+            out += [0] * int(RATE * 0.2)
+    return out
+out = sys.argv[sys.argv.index("-w") + 1]
+text = open(sys.argv[sys.argv.index("-f") + 1], encoding="utf-8").read()
+pcm = speak(text, random.Random(len(text)))
+with wave.open(out, "wb") as w:
+    w.setnchannels(1); w.setsampwidth(2); w.setframerate(RATE)
+    w.writeframes(b"".join(struct.pack("<h", max(-32767, min(32767, s))) for s in pcm))
+"""
+
+
+def fake_engine_env(root, script=FAKE_SPEECH):
+    """An environment whose PATH finds `script` as espeak-ng first."""
+    fake_bin = Path(root) / "fake-bin"
+    fake_bin.mkdir(exist_ok=True)
+    espeak = fake_bin / "espeak-ng"
+    espeak.write_text(script.format(python=sys.executable), encoding="utf-8")
+    espeak.chmod(0o755)
+    return dict(os.environ, PATH=str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
+
 
 def probe(ffmpeg, path):
     return subprocess.run([ffmpeg, "-hide_banner", "-i", str(path)], capture_output=True,
@@ -1251,6 +1356,22 @@ def integrated_lufs(ffmpeg, path):
     return float(found[-1])
 
 
+def true_peak(ffmpeg, path):
+    """The true peak of `path`'s audio in dBFS, as delivered (ebur128, peak=true)."""
+    r = subprocess.run([ffmpeg, "-hide_banner", "-nostats", "-i", str(path), "-map", "0:a",
+                        "-af", "ebur128=peak=true", "-f", "null", "-"], capture_output=True,
+                       text=True, timeout=300)
+    found = re.findall(r"^\s*Peak:\s+(-?[\d.]+|-inf) dBFS", r.stderr, re.M)
+    if not found:
+        raise AssertionError("ebur128 measured no true peak: %s" % r.stderr[-500:])
+    return float(found[-1])
+
+
+#: The true-peak limit on the delivered AAC (#372). loudnorm targets -1.5 dBTP; AAC encoding
+#: overshoots that by a few tenths of a dB, which this limit allows for.
+DELIVERED_TRUE_PEAK = -1.0
+
+
 @requires_pillow_and_ffmpeg
 class TheMixIsNormalizedToMinus16Lufs(unittest.TestCase):
     """One target for every stream: voice and music, or music alone, at -16 ± 1 LUFS."""
@@ -1273,6 +1394,20 @@ class TheMixIsNormalizedToMinus16Lufs(unittest.TestCase):
         self.assertRegex(info, r"Audio: aac.*48000 Hz, stereo")
         lufs = integrated_lufs(self.ffmpeg, self.project.output)
         self.assertAlmostEqual(-16.0, lufs, delta=1.0)
+        self.assertLessEqual(true_peak(self.ffmpeg, self.project.output), DELIVERED_TRUE_PEAK)
+
+    @unittest.skipIf(sys.platform in ("win32", "darwin"),
+                     "the stand-in voice is an espeak-ng on PATH, which Windows and macOS "
+                     "would pass over for their own built-in engines")
+    def test_voice_alone(self):
+        """`video.music: false` with a speech-like voice: the leveled voice alone (#372)."""
+        storyboard = json.loads(self.project.storyboard_path.read_text(encoding="utf-8"))
+        storyboard["video"]["music"] = False
+        self.project.storyboard_path.write_text(json.dumps(storyboard), encoding="utf-8")
+        result = self.project.run(env=fake_engine_env(self.project.root))
+        self.assertIn("Voice: espeak-ng (4 of 4 scenes narrated)\nMusic: off (storyboard)\n",
+                      result.stdout)
+        self.assertNormalized(result)
 
     def test_music_alone(self):
         result = self.project.run("--no-voice")
@@ -1292,6 +1427,69 @@ class TheMixIsNormalizedToMinus16Lufs(unittest.TestCase):
         result = self.project.run(env=env)
         self.assertIn("Voice: espeak-ng (4 of 4 scenes narrated)\nMusic: yes\n", result.stdout)
         self.assertNormalized(result)
+
+
+def worked_storyboard():
+    """Step 1c's worked two-minute storyboard, read by the suite's one copy of the parser."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import test_graduation_video_step  # noqa: E402 - a sibling test module, as in INV-265's guard
+    return test_graduation_video_step.example_storyboard()
+
+
+@requires_pillow_and_ffmpeg
+@unittest.skipIf(sys.platform in ("win32", "darwin"),
+                 "the stand-in voice is an espeak-ng on PATH, which Windows and macOS would "
+                 "pass over for their own built-in engines")
+class TheWorkedStoryboardReachesTheTargetWithASpeechLikeVoice(unittest.TestCase):
+    """#372: a two-minute speech-like narration with the music measures -16 ± 1 LUFS.
+
+    The short scenes above normalize with or without the leveler; a full narration did not
+    (-17.6 LUFS with real espeak-ng, -17.9 with Piper). So this renders Step 1c's own worked
+    storyboard, voiced by FAKE_SPEECH, and renders it again in-process with the graph from
+    before #372 as the negative control: that one must miss the target.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.ffmpeg, _notes = VIDEO.find_ffmpeg()
+        listing = subprocess.run([cls.ffmpeg, "-hide_banner", "-filters"],
+                                 capture_output=True, text=True, timeout=60).stdout
+        if not re.search(r"^\s*\S+\s+ebur128\b", listing, re.M):
+            raise unittest.SkipTest("this ffmpeg has no ebur128 filter, so loudness cannot "
+                                    "be measured")
+        cls.scenes = len(worked_storyboard()["scenes"])
+        cls.project = Project(worked_storyboard())
+        env = fake_engine_env(cls.project.root)
+        cls.result = cls.project.run(env=env)
+        cls.control = cls.project.root / "docs" / "unleveled.mp4"
+        with mock.patch.dict(os.environ, {"PATH": env["PATH"]}), \
+                mock.patch.object(VIDEO, "audio_filter_graph", unleveled_graph):
+            cls.control_code, _out, cls.control_err = run_main(
+                "--storyboard", str(cls.project.storyboard_path), "--output", str(cls.control),
+                "--project-root", str(cls.project.root))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.close()
+
+    def test_it_is_voiced_with_the_music(self):
+        self.assertEqual(0, self.result.returncode, self.result.stderr)
+        self.assertIn("Voice: espeak-ng (%d of %d scenes narrated)\nMusic: yes\n"
+                      % (self.scenes, self.scenes), self.result.stdout)
+
+    def test_the_mix_measures_minus_16_lufs(self):
+        self.assertEqual(0, self.result.returncode, self.result.stderr)
+        self.assertAlmostEqual(-16.0, integrated_lufs(self.ffmpeg, self.project.output),
+                               delta=1.0)
+
+    def test_the_true_peak_stays_under_the_delivered_limit(self):
+        self.assertEqual(0, self.result.returncode, self.result.stderr)
+        self.assertLessEqual(true_peak(self.ffmpeg, self.project.output), DELIVERED_TRUE_PEAK)
+
+    def test_the_unleveled_chain_misses_the_target_negative_control(self):
+        """Without the leveler the same render falls outside the band, so the test can fail."""
+        self.assertEqual(0, self.control_code, self.control_err)
+        self.assertLess(integrated_lufs(self.ffmpeg, self.control), -17.0)
 
 
 # --------------------------------------------------------------------------- #

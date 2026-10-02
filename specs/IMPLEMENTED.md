@@ -43,6 +43,53 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## graduation-video-voice-is-leveled-before-the-mix
+
+- **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #372, spec revision 1; from #331's end-to-end check)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_video.py`, `tests/test_recap_video.py`, `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** n/a (no Senzing fact), 2026-10-02, no tool called — re-confirmed, not assumed. The change is an ffmpeg filter chain, its docstring and its tests; no added or removed line names an SDK method, an engine behavior, a Senzing document or an MCP tool (checked over the full diff). No absence claim is made, so no `owner-checked:` is owed. Nothing was sent upstream.
+- **Approach:** implemented directly (Phase 5a), built on `3a4a286`: one module, the parameters fixed by the issue, and `DUCKING` as the pattern.
+- **Summary:** Every voiced stream is now leveled before it is mixed, so a two-minute narration with the music reaches the -16 LUFS target that #339 set and #331's acceptance criterion 2 requires.
+  - **The leveler.** `LEVELER = "asplit=2[lv][lk];[lv][lk]sidechaincompress=threshold=0.05:ratio=4:attack=5:release=150:makeup=1"`, a compressor keyed on the voice itself, sits beside `DUCKING`. `audio_filter_graph()` applies it at the head of the voice's chain: `[v:a]LEVELER,asplit=2[key][voice];…` with the music, and `[v:a]LEVELER,LOUDNORM[aout]` for voice alone. `LOUDNORM` and the music-alone chain are unchanged, and no new ffmpeg filter is needed (`asplit` and `sidechaincompress` were already in the graph and `find_ffmpeg` already requires `sidechaincompress`).
+  - **Why it works (corrects the issue's root cause).** Before `loudnorm`, a ducked mix of real espeak-ng narration measured -24.9 LUFS integrated with a -6.9 dBTP true peak: peaks 18 dB above its loudness. Between `LOUDNORM`'s -16 LUFS target and its -1.5 dBTP ceiling there are only 14.5 dB, so `loudnorm` had to limit, and the integrated level landed near -17.6. The issue's revision says the true-peak ceiling is "not the cause" because `TP=-1.0` changed nothing; a further sweep shows `TP=0`, the highest `loudnorm` accepts, still leaves 16 dB of room and still lands at -17.3. So the ceiling is involved, but no allowed ceiling can fix it. The leveler lowers the mix's peak-to-loudness ratio, which is why it works. The fix is the one the issue chose; only the explanation differs.
+  - **The test's stand-in voice.** `FAKE_SPEECH` is a standard-library, deterministic fake `espeak-ng`. Its voiced syllables are in-phase harmonic pulse trains (glottal-like peaks), with stress that varies by syllable, soft fricatives and short pauses. Three simpler stand-ins were tried and normalized fine through the old chain, so they could not fail: a sine with clicks, stressed-syllable sawtooth harmonics, and a denser version of that. This one was tuned against a real espeak-ng narration of the worked storyboard. The real voice assembles to -17.5 LUFS and -0.9 dBTP; the stand-in to -19.2 and -0.8. Through the old chain its mix measures -18.5, as real speech's did (-17.6).
+  - **Tests.** In `tests/test_recap_video.py`:
+    - `TheWorkedStoryboardReachesTheTargetWithASpeechLikeVoice` renders Step 1c's worked storyboard, read through `test_graduation_video_step.example_storyboard()`, voiced by `FAKE_SPEECH` with the music. It asserts both report lines, -16 ± 1 LUFS, and a true peak of at most -1.0 dBFS on the delivered AAC. It then renders again in-process with `audio_filter_graph` patched to `unleveled_graph` (the chain before #372) as the negative control, which must measure below -17.0.
+    - `TheMixIsNormalizedToMinus16Lufs` gains `test_voice_alone` (`video.music: false`, speech-like voice) and the same true-peak check on every case.
+    - `TheMixGraphDucksTheMusicUnderTheVoice` pins `LEVELER`, checks that the leveler is keyed on the voice itself in both voiced graphs and comes before the ducking split, and rejects the unleveled graph (a negative control). `sidechain_inputs()` now picks a compressor by its parameters, so the ducking assertions still check the ducking compressor. A parameterless ducking chain (the existing swapped-graph control) still resolves.
+    - The end-to-end tests are Linux-only and skip with a reason otherwise, as the existing voice test does: Windows and macOS would pass over an `espeak-ng` on `PATH`.
+  - **Negative control on the real tree:** with `origin/main`'s renderer swapped in, the worked-storyboard test fails at -18.5 LUFS and `test_voice_alone` at -17.4, and the graph tests error (no `LEVELER`). With this change restored, every case passes.
+  - **Measured here** (ffmpeg 6.1.1, Ubuntu, 2026-10-02):
+
+    | Render (worked storyboard) | Before | After |
+    |---|---|---|
+    | Piper `en_US-ljspeech-high` + music (real, `piper-tts` 1.8.0) | -17.9 LUFS | -16.6 LUFS, -1.6 dBTP |
+    | espeak-ng + music (real) | -17.6 LUFS | -16.3 LUFS, -1.5 dBTP |
+    | `FAKE_SPEECH` + music | -18.5 LUFS | -16.2 LUFS, -1.5 dBTP |
+    | `FAKE_SPEECH`, voice alone | -17.4 LUFS (short storyboard) | -16.0 LUFS, -1.5 dBTP |
+    | music alone (`--no-voice`) | -15.9 LUFS | unchanged |
+
+  - **Unchanged:** the `Voice:` / `Music:` lines, the single 48 kHz stereo AAC stream, the exit codes, `LOUDNORM`, the music bed and the scene timing.
+- **Verification:** see the PR for the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and `citations.py verify` (run after this entry was written). `lint-workflows` was not run locally: it is a remote reusable workflow, and no workflow file changed.
+- **Differs from the issue:** the root-cause explanation, as above. Relaxing the true peak fails because no `TP` that `loudnorm` accepts leaves enough room, not because the ceiling is unrelated. Everything the issue asks for is implemented as specified.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-342 — awaiting the maintainer's sign-off; NOT applied.** The rule already registered:
+    - ⛔ **(INV-342) Narration is never truncated: a scene whose narration runs longer than its planned duration is extended to fit, and every overrun is reported on stderr.** — in `plugins/senzing-bootcamp/scripts/generate_recap_video.py`
+
+  ⚠️ **Why.** #339's pending amendment to INV-342 (entry `graduation-video-stereo-loudness-normalized-music-bed`) states the audio contract, but its chain has no leveler, and a two-minute narration measured outside the -16 ± 1 it promises. This run ships the leveler, tested, so the drafted contract should say every voiced stream is leveled first. It amends #339's draft, which is still pending, rather than INV-342's registered text directly. Applied together, #339's draft takes this change. Applied after #339's, this is one more dated note. Amending a registered invariant is the maintainer's sign-off alone, so `specs/INVARIANTS.md`, `invariant-manifest.json` and #339's entry are unchanged. **Sites it affects:** INV-342 in `specs/INVARIANTS.md` (and its regenerated `invariant-manifest.json` statement). The shipped site is `LEVELER` and `audio_filter_graph()` in `plugins/senzing-bootcamp/scripts/generate_recap_video.py`. The enforcer is `tests/test_recap_video.py` (`TheWorkedStoryboardReachesTheTargetWithASpeechLikeVoice`, `TheMixIsNormalizedToMinus16Lufs`, `TheMixGraphDucksTheMusicUnderTheVoice`). Applying it resolves the block: mark the bullet `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording, in #339's sentence (the change in bold):
+
+  **INV-342** — … Every audio stream it writes MUST be one 48 kHz stereo AAC stream normalized by `loudnorm=I=-16:TP=-1.5:LRA=11`, measuring -16 ± 1 LUFS integrated whether or not a voice spoke, **with every voiced stream first leveled by a `sidechaincompress` keyed on the voice itself, so a full narration's peaks leave `loudnorm` room to reach the target,** and with the music bed ducked under the voice by a `sidechaincompress` keyed on the voice; … (⚠️ **Amended <YYYY-MM-DD> (#372): the voice leveler added, measured on a two-minute narration; the target, the ducking and the report lines are unchanged.**) Enforced by `tests/test_recap_video.py` (`TheWorkedStoryboardReachesTheTargetWithASpeechLikeVoice` for a full narration), …
+
+  *(the `…` stand for INV-342's text and #339's pending sentences, kept as they are; the date is a placeholder
+  deliberately: `/review-invariants` fills it in on the day it applies the amendment.)*
+  *(written as NNN deliberately: no new id is drafted, because this amends INV-342 in place and
+  a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant.** The tests apply INV-108 (stdlib only) and INV-306 (skip reasons). No ⛔ rule is added or demoted in shipped text.
+
 ## module-5-sample-output-stays-out-of-senzing-ready
 
 - **Implemented:** 2026-10-01 (**Not a spec** — a dated record of one issue-driven run, #338, spec revision 1; from the `dry-run-2026-10-01` entry, P3-16, `Source: self-observed (assistant dry run)`)
