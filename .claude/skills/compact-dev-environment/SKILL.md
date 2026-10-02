@@ -1,7 +1,7 @@
 ---
 name: compact-dev-environment
-description: 'Compact the Senzing Bootcamp plugin development environment — consolidate overlapping or superseded invariants, archive specs whose work is long landed, merge redundant test traversals, and prune stale feedback — without losing the reasoning future development depends on. Use when the maintainer wants to clean up, tidy, prune, consolidate or de-duplicate the dev environment, when INVARIANTS.md has grown unwieldy, or when the specs/tests backlog is slowing work down. Maintainer tool — not part of the bootcamper experience.'
-argument-hint: "[asset class: invariants | specs | tests | feedback] (omit to census all four)"
+description: 'Compact the Senzing Bootcamp plugin development environment — propose consolidating overlapping or superseded invariants (as blocks for /review-invariants), census the frozen specs archive read-only, merge redundant test traversals, and prune stale feedback — without losing the reasoning future development depends on. Use when the maintainer wants to clean up, tidy, prune, consolidate or de-duplicate the dev environment, when INVARIANTS.md has grown unwieldy, or when the specs/tests backlog is slowing work down. Maintainer tool — not part of the bootcamper experience.'
+argument-hint: "[asset class: invariants | specs (read-only census) | tests | feedback] (omit to census all four)"
 ---
 
 # Compact the development environment
@@ -13,9 +13,11 @@ future development needs to know.
 
 **Why "compact" and not "clean".** Cleaning implies removal; the job here is
 compaction in the database sense — same information, less to drag along. Almost
-every good outcome of this skill is a *merge* or a *move*, not a delete. The name
-matters because the failure mode is a maintainer who runs a "clean" skill and
-loses the reason a rule exists.
+every good outcome of this skill is a *merge*, not a delete: invariants consolidated
+through `/review-invariants`, test traversals combined. Specs take no part in it: they
+are read, never moved, annotated or deleted (INV-307). The name matters because the
+failure mode is a maintainer who runs a "clean" skill and loses the reason a rule
+exists.
 
 ## The one thing to understand before touching anything
 
@@ -25,13 +27,13 @@ alone. Measured in this repo on 2026-07-31:
 
 | Asset | What it is | Citations | Safe operation |
 |---|---|---|---|
-| Invariant `INV-NNN` | an **address**: 4,981 live citations across plugin text, specs, tests and skills — **plus 813 in commit messages, which cannot be edited** | very high | merge, supersede, trim — **never renumber casually** |
-| Spec file | a **record**; its address is the `## <name>` heading in `IMPLEMENTED.md` | moderate | archive (move), rarely delete |
+| Invariant `INV-NNN` | an **address**: 4,981 live citations across plugin text, specs, tests and skills — **plus 813 in commit messages, which cannot be edited** | very high | propose a merge, supersession or demotion as a block for `/review-invariants` (INV-309) — **never renumber casually** |
+| Spec file | a **record** in the frozen archive (INV-307); its address is the `## <name>` heading in `IMPLEMENTED.md` | moderate | read only: never moved, annotated or deleted |
 | Test | **enforcement**; deleting one silently removes a guarantee | n/a | merge traversals, never merge assertions |
 | Feedback archive | a **record**; its address is the `entry_id` hash in `feedback/PROCESSED.jsonl` | low | prune files, **never prune ledger lines** |
 
-**Never break an address. Records may be moved or pruned.** That single rule
-decides most calls this skill has to make.
+**Never break an address. Feedback records may be pruned; spec records stay as they are
+(INV-307).** That single rule decides most calls this skill has to make.
 
 ⚠️ **Re-measure these numbers; do not cite them.** The 2026-07-30 versions of the
 two figures above were **wrong the day they were written** — the table claimed
@@ -117,8 +119,9 @@ read old commits and be misled by them.
   speed; never merge two assertions into one, and never delete a test without
   naming which invariant or behavior loses its enforcement.
 - **`IMPLEMENTED.md` and `PROCESSED.jsonl` are append-only.** They are the ledgers
-  that make specs and feedback re-findable. Files they point at may move; the
-  ledger lines never go.
+  that make specs and feedback re-findable. Archived feedback files they point at may
+  be pruned, and the specs they point at stay where they are (INV-307); the ledger
+  lines never go.
 - **Git is not a backup for the working set.** "It's in history" is true and
   nearly useless — nobody greps history for a rule they don't know exists. Use it
   to justify pruning *records*, never to justify dropping a *rule*.
@@ -155,16 +158,47 @@ Read `specs/INVARIANTS.md` in full. Sort every invariant into one of five:
 |---|---|---|
 | `load-bearing` | states a rule still true, cited or enforced | keep, untouched |
 | `mergeable` | two or more invariants state **one** rule from different angles | propose a merge (below) |
-| `superseded` | its rule is now stated by a later invariant | mark superseded; never delete |
+| `superseded` | its rule is now stated by a later invariant | propose a supersession (below); never delete |
 | `unenforced` | no test cites it and none could | see below — usually a keep |
-| `not-an-invariant` | guidance or preference, not a testable MUST | propose demotion to `ground-rules.md` |
+| `not-an-invariant` | guidance or preference, not a testable MUST | propose a demotion (below) |
 
 **Merging is the main win.** Two invariants that say one thing become one new
-invariant at the next free ID, with both originals marked
-`(superseded by INV-NNN)`. The file gets shorter, the rule gets clearer, and
-every existing citation still resolves. Propose merges only where the rules are
-genuinely the same — an invariant that is a *special case* of another is not a
-duplicate, and collapsing it loses the case.
+invariant, with both originals marked superseded by it. The file gets shorter, the
+rule gets clearer, and every existing citation still resolves. Propose merges only
+where the rules are genuinely the same — an invariant that is a *special case* of
+another is not a duplicate, and collapsing it loses the case.
+
+### Merges, supersessions and demotions are blocks for `/review-invariants`
+
+⛔ **This skill never edits `specs/INVARIANTS.md` and never mints an id (INV-309).** It
+proposes, and `/review-invariants` decides. After the maintainer's explicit yes in Step 6,
+it appends one dated entry to `specs/IMPLEMENTED.md` holding the blocks below, then tells
+the maintainer to run `/review-invariants`. A run that finds nothing mergeable,
+superseded or demotable writes no entry.
+
+- **A merge:** one `DEFERRED INVARIANT` block for the merged rule, with its drafted id
+  written as `INV-NNN`, and one `PROPOSED AMENDMENT` block per original, marking it
+  superseded by the merged rule.
+- **A supersession:** one `PROPOSED AMENDMENT` block on the superseded invariant, naming
+  the later invariant that now states its rule.
+- **A demotion** (`not-an-invariant`): one `PROPOSED AMENDMENT` block marking the
+  invariant demoted. A change to `ground-rules.md` wording is filed as a GitHub issue
+  instead, because that file is plugin text, and plugin text changes through an issue.
+
+Write each block in the shape the "Writing one" section of
+`.claude/skills/review-invariants/SKILL.md` defines. An amendment names the real id it
+amends; only the merged rule's drafted id is `INV-NNN`. Then run
+`python3 .claude/skills/review-invariants/pending_invariants.py list` and confirm every
+block is queued.
+
+**Why they are routed this way (INV-309).** Minting an id is the maintainer's alone,
+through `/review-invariants`, and `INVARIANTS.md` changes only by a dated correction
+appended beneath the original. A merge needs a new id, and a supersession or a demotion
+changes a rule already in force, so each one is a decision rather than mechanical work.
+Sending one to `/implement-github-issue` *(user level)* does not help: that command
+cannot mint either, and it writes a block in place of the change. Writing the block here
+puts the decision in the queue `/review-invariants` already walks, with the census this
+run took beside it.
 
 **On the ~91 invariants no test cites** (measured 2026-07-31): "no test cites it"
 is a prompt, not a verdict. Three different things produce it:
@@ -179,34 +213,42 @@ is a prompt, not a verdict. Three different things produce it:
 
 Only the third case with *no* remaining relevance is a demotion candidate.
 
-## Step 3: Assess the specs
+## Step 3: Census the specs (read-only)
 
-A spec is a record of a decision; the ledger heading is what makes it findable.
+⛔ **Specs are read, never moved, annotated or deleted (INV-307).** `specs/` froze on
+2026-09-15 into a read-only archive pinned by name in `specs/FROZEN-MANIFEST.txt`, and
+`tests/test_specs_are_frozen.py` fails on any file added, removed or changed there. A spec
+is a record of a decision; the ledger heading is what makes it findable, and this step
+checks that link without acting on it.
+
+So the `specs` class has one verdict, **leave**, and the Step 6 report says so. `census`
+still reports every spec file against its `IMPLEMENTED.md` heading. What it can surface
+is a broken link — a heading with no spec file, or an invariant `Source:` that does not
+resolve — and that is a `verify` problem to report, never a spec to change.
 
 - **Implemented and stable** → leave them. ⛔ **Archiving was measured on 2026-07-30
   and rejected**; an earlier draft of this skill recommended it, wrongly. Three
-  findings, all of which a future run should re-check rather than re-derive: (a) the
-  benefit is **3.5 ms** — spec discovery over 215 files is a glob, and no maintainer
-  reads 212 spec files, they read the computed list; (b) `feedback-to-issues` Step 4
-  lists **every** `specs/*.md` to deduplicate against, so archiving would hide solved
-  problems and it would start writing duplicate specs, silently; (c)
-  `tests/test_spec_ledger_invariants.py` resolves an invariant's `Source:` via
-  `SPECS / f"{name}.md"`. Archiving is only worth revisiting if those consumers are
-  taught to read `specs/archive/` **first**, and the reading burden is
-  `IMPLEMENTED.md` (2,986 lines) regardless, which archiving does not touch.
-- **Implemented but the change was later reverted or superseded** → the spec is
-  now *misleading*, because it reads as describing shipped behavior. Do not
-  delete it: append a dated note saying what superseded it, then archive. The
-  ledger entry stays.
-- **Cited as a `Source:` by an invariant** → the name must remain resolvable.
-  Archiving is fine; deleting is not, because `INVARIANTS.md` names it.
-- **Never implemented and no longer wanted** → the only real delete candidate,
-  and it still needs the maintainer's explicit yes.
+  findings: (a) the benefit is **3.5 ms** — spec discovery over 215 files is a glob,
+  and no maintainer reads 212 spec files, they read the computed list; (b)
+  `feedback-to-issues` Step 4 lists **every** `specs/*.md` to deduplicate against, so
+  hiding implemented work from that list would let it write duplicates of solved
+  problems, silently; (c) `tests/test_spec_ledger_invariants.py` resolves an
+  invariant's `Source:` via `SPECS / f"{name}.md"`. The reading burden is
+  `IMPLEMENTED.md` (2,986 lines) regardless. The 2026-09-15 freeze then settled the
+  question for good, so there is nothing here to revisit.
+- **Implemented but the change was later reverted or superseded** → leave the spec as
+  it is. It now reads as describing shipped behavior, so name it in the report; the
+  correction lives where live work records it (the issue that superseded it, and that
+  issue's `IMPLEMENTED.md` entry), never in the spec.
+- **Cited as a `Source:` by an invariant** → leave. The name must stay resolvable, and
+  `verify` checks that it does.
+- **Never implemented and no longer wanted** → leave, and name it in the report. If
+  the maintainer decides not to build it, that decision is recorded in
+  `specs/DECLINED.md`, the live record for it; the spec file stays.
 
-⛔ **Do not delete a spec to make a count smaller.** `IMPLEMENTED.md` was 2,986
-lines on 2026-07-31 and is the actual reading burden; the spec files are looked at
-one at a time. Archiving helps the glob; deleting helps nothing and costs
-provenance.
+⛔ **No spec changes to make a count smaller (INV-307).** `IMPLEMENTED.md` was 2,986
+lines on 2026-07-31 and is the actual reading burden; the spec files are looked at one
+at a time, so even before the freeze, removing one helped nothing and cost provenance.
 
 ## Step 4: Assess the tests
 
@@ -319,25 +361,32 @@ Report before/after numbers per asset class, then the plan as a table:
 
 | Asset | Verdict | Proposed | Citations at risk |
 |---|---|---|---|
-| `INV-0xx` + `INV-0yy` | `mergeable` | merge → new ID, both superseded | 14 live, 0 broken |
-| `specs/<name>.md` | implemented, stable | archive | ledger heading unchanged |
+| `INV-0xx` + `INV-0yy` | `mergeable` | blocks for `/review-invariants`: a merged rule at `INV-NNN`, an amendment per original | 14 live, 0 broken |
+| `specs/` | frozen archive (INV-307) | leave | ledger headings resolve |
 | `tests/test_a.py` + `test_b.py` | duplicate walk | one traversal, subTest per check | — |
 | feedback | below threshold | no action | — |
 
 Then:
 
-- **Semantic changes go through a spec** — merging invariants, demoting one,
-  deleting a test, deleting a spec. File it, let `/implement-github-issue` *(user level)* execute it. The
-  spec is where the reasoning survives.
+- **Invariant changes go to `/review-invariants` as blocks** — merging invariants,
+  superseding one, demoting one (Step 2). After the maintainer's yes, append the entry
+  holding the blocks to `specs/IMPLEMENTED.md`, confirm `pending_invariants.py list`
+  queues each one, and tell the maintainer to run `/review-invariants`. ⛔ (INV-309) Never
+  edit `specs/INVARIANTS.md` here, and never send an invariant change to
+  `/implement-github-issue` *(user level)*, which cannot mint either.
+- **Other semantic changes go through a GitHub issue** — deleting a test, or the
+  `ground-rules.md` wording a demotion needs. File it once the maintainer has said yes
+  to that issue's exact text (INV-314), and let `/implement-github-issue` *(user level)*
+  execute it. The issue is where the reasoning survives.
 - **Mechanical changes may be executed here**, one class at a time, each with the
-  maintainer's explicit yes: archiving specs, merging test traversals, pruning
-  feedback files. After each, run `citations.py verify` and the full suite, and
-  report both.
+  maintainer's explicit yes: merging test traversals, pruning feedback files. After
+  each, run `citations.py verify` and the full suite, and report both.
 - **Renumbering, if authorized at all, is last** and is its own confirmation.
 
 ⛔ **Never batch a delete with a move.** If a run does both, a maintainer
 reviewing the diff cannot tell which was which, and the delete is the one that
-needed the attention.
+needed the attention. This binds the feedback files, the only records this skill
+prunes; specs are neither moved nor deleted.
 
 Close by stating what was *not* compacted and why — an asset class you examined
 and left alone is a result, and saying so stops the next run re-deriving it.
