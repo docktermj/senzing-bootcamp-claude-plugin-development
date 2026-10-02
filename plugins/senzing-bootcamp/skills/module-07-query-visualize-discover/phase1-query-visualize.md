@@ -438,12 +438,17 @@ raising (`get_sdk_reference(topic='response_schemas', filter='why_entities', lan
 the document shared by `why_entities`, `why_records` and `why_record_in_entity` — server 1.33.0,
 2026-08-21).
 <!-- MCP-NEGATIVE: get_sdk_reference(topic='response_schemas', filter='why_entities', language='python') — no MATCH_KEY, ERRULE_CODE or MATCH_KEY_DETAILS field appears under WHY_RESULTS[] at any depth — owner: get_sdk_reference(topic='response_schemas', filter='why_entities') IS the route that owns the why response document (shared by why_entities, why_records and why_record_in_entity), so its field list is the answer rather than a miss; the same document carries the renamed trio one level in, at WHY_RESULTS[].MATCH_INFO — WHY_KEY, WHY_ERRULE_CODE and WHY_KEY_DETAILS, of which only WHY_KEY_DETAILS is flag-gated (requires_flags SZ_INCLUDE_MATCH_KEY_DETAILS) — which is what makes the absence a rename rather than a gap (absence negative) — server 1.36.0, 2026-09-02 -->
-⚠️ **Getting
-`WHY_KEY_DETAILS` to appear may require `SZ_INCLUDE_MATCH_KEY_DETAILS` plus a relations flag**: no
-flag is *documented* to populate it, yet it was absent without that flag on two SDK builds
-(observation-only). If it is missing for the flags in force, say so explicitly and fall back to
-`FEATURE_SCORES` rather than rendering an empty section — the full statement is in
-`phase2-discover.md` step 4b.3, which states it once (INV-179, INV-300).
+⚠️ **`WHY_KEY_DETAILS` needs `SZ_INCLUDE_MATCH_KEY_DETAILS`, and that flag needs a relations
+flag — the server documents both.** Read the first from `response_schemas` for the Bootcamper's
+binding: `get_sdk_reference(topic='response_schemas', filter='why_entities',
+language='<chosen_language>')` marks `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` with
+`requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]`. Read the second from that flag's own row:
+`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')` says it is *"dependent on
+using one of the following flags: SZ_ENTITY_INCLUDE_ALL_RELATIONS,
+SZ_ENTITY_INCLUDE_POSSIBLY_SAME_RELATIONS, …"* (server **1.37.19**, 2026-10-02). If the field is
+missing for the flags in force, say so explicitly and fall back to `FEATURE_SCORES` rather than
+rendering an empty section — the full statement is in `phase2-discover.md` step 4b.3, which states
+it once (INV-179, INV-300).
 
 **Checkpoint:** write step 3a.
 
