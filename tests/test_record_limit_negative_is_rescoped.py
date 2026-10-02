@@ -204,7 +204,9 @@ class TheAllowlistEntryIsRescoped(unittest.TestCase):
     """The query stays accountable in VERIFIED_QUERIES, recorded as it now behaves."""
 
     def setUp(self):
-        self.entry = verified_queries().get(QUERY)
+        record = verified_queries().get(QUERY)
+        # #383: each entry is a record; the property text is its "returned" field.
+        self.entry = record.get("returned") if isinstance(record, dict) else record
 
     def test_the_entry_is_kept(self):
         self.assertTrue(self.entry,

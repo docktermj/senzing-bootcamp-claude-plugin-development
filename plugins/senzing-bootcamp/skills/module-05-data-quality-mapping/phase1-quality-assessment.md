@@ -89,7 +89,9 @@ with a listing" states the rule once for all three (INV-234).
    - ⚠️ **The same names render the other way through a different route, which is what makes this a
      trap rather than a typo.** `search_docs(query='entity specification attribute names feature
      tables NAME_ORG ADDR_LINE1 PHONE_NUMBER', category='data_mapping')` returns those same tables
-     with the names **backticked** (`` `OTHER_ID_TYPE` ``). A parse tuned on a `search_docs` excerpt
+     with the names **backticked** (`` `OTHER_ID_TYPE` ``): its top hit is the specification's
+     *Entities, features and attributes* section, and reading past the first hit reaches *Name >
+     Feature: NAME* with its attribute table. A parse tuned on a `search_docs` excerpt
      works there and under-collects here — and this saved document is what Step 4 reads.
    - ⛔ **(INV-080) Do not pin an attribute count in this file** — whatever the document holds today, a figure
      written into shipped prose is one nobody re-measures, and it goes stale silently because it
@@ -597,7 +599,8 @@ cross-source join prediction.** Completeness for a grouped family — the Entity
 *Identifiers* section groups `NATIONAL_ID`, `PASSPORT`, `TAX_ID`, `LEI_NUMBER` and `TRUSTED_ID`
 (verified via `search_docs(query='Identifiers NATIONAL_ID PASSPORT TAX_ID TRUSTED_ID feature group',
 category='data_mapping')`, server 1.32.9, 2026-08-17; query re-verified on 1.33.0, 2026-08-23,
-returning the *Identifiers* feature sections) — counts the group
+returning the *Identifiers* feature sections, *Identifiers > Feature: TAX_ID* and *Identifiers >
+Feature: NATIONAL_ID*) — counts the group
 as present when **any** member is populated. That is the right answer to *does this record carry an
 identifier at all*. It is not evidence for *will these two sources join*, because a join needs
 presence-of-**same**, not presence-of-any.
@@ -629,7 +632,8 @@ wrong with it.
 
 **Derive applicability from the Entity Specification, not from a list in this file.** The
 specification states the type in its own wording, so `search_docs(query='what features to map',
-category='data_mapping')` answers it directly — read the feature's description and section heading:
+category='data_mapping')` answers it directly in the specification's *What features to map*
+section — read the feature's description and section heading:
 
 | What the specification says | Applies to |
 |---|---|

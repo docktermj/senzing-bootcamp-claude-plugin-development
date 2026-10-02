@@ -576,8 +576,9 @@ suffix has no such field, so it takes the message's first route, as step 11 decl
   stops at the first sentence spends its first attempt re-checking data that is correct. The rule's authoritative scope is narrower still: the Entity Specification's `Feature:
   NAME` section says *"do not mix `NAME_ORG` with parsed person fields **in the same object**"*
   (`search_docs(query='entity specification attribute names feature tables NAME_ORG ADDR_LINE1
-  PHONE_NUMBER', category='data_mapping')`, server **1.33.0**, 2026-08-28) — one NAME object, not one record, and
-  certainly not one declaration.
+  PHONE_NUMBER', category='data_mapping')`, server **1.37.19**, docs index 2026-10-02 18:46 UTC,
+  2026-10-02; read past the first hit) — one NAME object, not one record, and certainly not one
+  declaration.
 - ⚠️ **Expect the coverage count to drop after you apply it.** Fields moved into `field_overrides`
   are counted by nothing, so the mapping reports fewer covered fields than it dispositions. That is
   the known field-count warning described below — **not** unmapped data. Do not chase it.
@@ -653,7 +654,7 @@ Map fields to Senzing attributes, then advance workflow step 3 with `action='adv
 `disposition` — `feature`, `payload`, `ignore`, `derived`, or `extract`). NEVER guess
 attribute names. For non-Latin data:
 `search_docs(query='data quality practices multi-language non-Latin', category='globalization')`
-— the other query terms, the sections to ask for, and the phrasings that return wrong content
+(the Globalization Guide's *CJK+English cross-script matching* section) — the other query terms, the sections to ask for, and the phrasings that return wrong content
 are in this module's `SKILL.md` → "Multi-language data" (INV-212); do not re-derive them here.
 Tell the user: show
 the mapping table with reasoning for each decision and a confidence score.

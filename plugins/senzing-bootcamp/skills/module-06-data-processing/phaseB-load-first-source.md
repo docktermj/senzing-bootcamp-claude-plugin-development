@@ -80,7 +80,8 @@ returns **no document naming that message** — owner-checked: `search_docs` is 
 documented engine message, and the nearest material it serves is the *"Enabling the Per-Entity
 Feature Store & Advisory Locking in Senzing 4.4.0"* article, which states that on SQLite the engine
 *"falls back to `LEASE` automatically"* with no advisory locks; so the message is uncovered by the
-corpus rather than missed by the query (absence negative) — server **1.36.0**, 2026-09-02. An
+corpus rather than missed by the query (absence negative) — server **1.37.19**, docs index
+2026-10-02 18:46 UTC, 2026-10-02. An
 `out of sync` line seen during a concurrent SQLite load is therefore reported as **an environment
 observation**, with the SDK version and date, or not characterized at all (INV-080/INV-149) — never
 as a Senzing fact and never as reassurance the plugin cannot source.
@@ -430,7 +431,9 @@ loop condition: it is a full table scan per call, so the drain becomes O(n²) �
 processing a redo record generates more redo records, the loop runs longer than the initial count
 suggests (a backlog of 384 took 400 processed calls in the reported session). Confirm the method
 names for the chosen binding from MCP (INV-080/INV-132), and confirm the anti-pattern itself via
-`search_docs(query="redo", category="anti_patterns")` rather than trusting this note.
+`search_docs(query="redo", category="anti_patterns")` → *Senzing Anti-Patterns: Architecture and
+Performance*, "Do Not Use count_redo_records() as a Loop Condition", rather than trusting this
+note.
 
 Report the terminal condition: how many redo records were processed, and that the queue reached
 empty. A drain that finishes silently cannot be told from one still running.

@@ -127,7 +127,9 @@ class LoaderGenerationReadsDatabaseType(unittest.TestCase):
         self.assertIn("does not support concurrent\n  writes", self.text)
         self.assertRegex(
             self.text,
-            r"server\s+\*\*1\.36\.0\*\*, 2026-09-02",
+            # Re-measured for #383 (was **1.36.0**, 2026-09-02): the prose stamp follows the
+            # VERIFIED_QUERIES record in tests/test_prescribed_search_queries.py.
+            r"server\s+\*\*1\.37\.19\*\*, docs index 2026-10-02 18:46 UTC, 2026-10-02",
             "a Senzing fact written into the plugin carries the tool, version and date",
         )
 
