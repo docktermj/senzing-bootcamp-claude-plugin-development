@@ -363,8 +363,11 @@ single-threaded loading, entity resolution gets progressively slower as the data
 
 ⛔ **Check first whether this was already decided, and say nothing if it was.** Read the
 `sqlite_volume_prompt` marker in `config/bootcamp_preferences.yaml` (Phase A's pre-load check) and
-the Module 4 Step 8b load decision. If either records a choice for this same load — `proceed`,
-`subset`, `sample`, or a database switch — **honor it silently and load what it says**. For
+the `sqlite_load_time_prompt` marker Module 4 Step 8b writes there, which covers this load only
+as item 2 of Phase A's
+[pre-load check](phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate)
+matches it (INV-300). If either records a choice for this same load — `proceed`, `subset`,
+`sample`, or a database switch — **honor it silently and load what it says**. For
 `subset`, take N from the source's `load_subset:` block (its `limit`), because
 `sqlite_volume_prompt` does not record N. Two gates already put
 this to the bootcamper; re-opening it here would be a third ask on a settled question (INV-006) and

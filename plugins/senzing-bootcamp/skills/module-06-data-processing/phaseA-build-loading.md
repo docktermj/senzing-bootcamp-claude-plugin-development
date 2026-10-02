@@ -493,9 +493,44 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
      recap rather than vanishing.
 2. **Decide whether it was already decided.** If a `sqlite_volume_prompt` marker in preferences
    is `decided: true` and its `loadable` matches the current loadable total for this same load (or
-   an applicable Module 4 SQLite load-time decision covers this same load), skip the prompt and
-   proceed. (INV-331) `tier`/`raw_value` do not decide the match; a marker with no `loadable` (written before
+   a `sqlite_load_time_prompt` marker covers this same load, as the sub-items below say), skip the
+   prompt and proceed. (INV-331) `tier`/`raw_value` do not decide the match; a marker with no `loadable` (written before
    the field existed) does not match, so re-evaluate on the loadable total.
+
+   `sqlite_load_time_prompt` is Module 4's marker in `config/bootcamp_preferences.yaml`, defined by
+   [data collection Step 8b](../module-04-data-collection/SKILL.md#8b-sqlite-load-time-warning-collection-time-heads-up)
+   sub-step 4, which gives its fields. Its `loadable` is Step 8b's figure, pre-mapping and
+   license-capped, not the mapped-file total item 1 reads, so the two are never compared directly.
+   These sub-items are the one statement of how Module 6 matches it; Phase B Step 7 cites them
+   (INV-300).
+
+   1. **It covers this same load only when Step 8b's figure still holds.** Recompute
+      `min(collected_total, effective_limit)` from the current `config/data_sources.yaml` and
+      license state by Step 8b sub-step 1's rules, counting each source as sub-step 4's
+      `collected_total` does. The marker matches only when that figure equals its `loadable`. A
+      source added or removed, a re-sample, or a license applied or changed since Module 4 gives a
+      different figure, so the marker does not match. Mapping that changes the record count (for
+      example, embedded masters) does not affect the match, because the recomputation reads the
+      registry and not `data/senzing-ready/`. A marker with no `loadable` does not match.
+   2. **An unreadable registry or license state is indeterminate, so the marker does not match.**
+      This overrides Step 8b sub-step 1's "treat an unreadable license state as unbounded" for this
+      recomputation. That fallback lets the collection-time warning still fire; here it would
+      invent the figure that decides whether a recorded answer applies, so evaluate the load on
+      item 3's trigger instead.
+   3. **A matching marker covers the load according to its `choice`.**
+      - `proceed`: covers the load as this check's own **Proceed on SQLite** does. Skip the
+        prompt, and still say item 4's serialized-writer line (INV-296), applying the writer
+        reduction if step 3 did not.
+      - `sample`: covers the load. The sample is what Module 5 mapped, and `collected_total`
+        already counts the sample's `record_count`.
+      - `switch_db`: covers the load only when `database_type` is no longer `sqlite`, and on a
+        non-SQLite engine item 3 does not prompt anyway. While `database_type` is still `sqlite`,
+        the marker does not cover the load: say first, in one line, that the switch chosen at data
+        collection was not applied, then evaluate the load on item 3's trigger.
+   4. **An absent marker is "not asked", never "answered" (INV-244).** Step 8b writes the marker
+      only when its warning fired, so an absent one means the loadable total was at or below the
+      threshold, the engine was not SQLite, or the inputs were indeterminate. Evaluate the load on
+      item 3's trigger, as for a marker that does not match.
 3. **Prompt only when it matters.** Present the prompt only when the database is SQLite AND it was
    not already decided AND the **loadable total** exceeds the SQLite guidance threshold. (INV-331) The
    production tier does not trigger this prompt: it describes the take-home system, not the load
