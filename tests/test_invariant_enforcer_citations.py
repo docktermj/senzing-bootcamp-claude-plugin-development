@@ -516,7 +516,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # and test_project_local_visualization_finds_its_d3.py, which both already cite INV-091 back.
 # Re-derived by running the extractor -- 178, both new pairs present by name and none removed.
 # EXPECTED_PAIRS 176 -> 178.
-EXPECTED_PAIRS = 178
+# 180 on 2026-10-02: INV-175's note (#328: the root marker and the pre-Step-8 branch) names
+# test_env_script_shell_portability.py and test_scaffold_banner_matches_build.py, which now both cite
+# INV-175 back. Re-derived by running the extractor -- 180, both new pairs present by name and none
+# removed. EXPECTED_PAIRS 178 -> 180.
+EXPECTED_PAIRS = 180
 
 
 def pairs():

@@ -30,6 +30,11 @@ configuration is absent the script skips only that one export, with a one-line n
 inserted at the template's platform-exports placeholder to prove that section still runs, and
 ``NegativeControls`` runs the same checks against the pre-#328 template and against mutants.
 
+Enforces **INV-175** (a sourced script resolves itself in the default shell, verifies the path it
+computed, and never exits the bootcamper's shell) and its 2026-10-02 note (#328: the root marker
+and the pre-Step-8 branch). It executes the shipped template in bash, and in zsh only where zsh is
+installed, skipping with a reason otherwise; it does **not** establish behavior in a live session.
+
 Run:  python3 -m unittest discover -s tests
 """
 import os

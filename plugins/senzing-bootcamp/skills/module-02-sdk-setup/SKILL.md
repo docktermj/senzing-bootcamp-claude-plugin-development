@@ -1019,13 +1019,13 @@ Four things in that block are the point, not decoration:
 - **`return 1`, never `exit 1`.** A sourced script shares the bootcamper's shell, so `exit` closes
   their terminal and `set -e` leaks into their session. `return 1 2>/dev/null || exit 1` returns when
   sourced and still exits if someone runs the file directly.
-- **The guard names the path it computed.** A wrong root that exports nothing produces an error many
+- **The guard names the path it computed (INV-175).** A wrong root that exports nothing produces an error many
   steps later that reads as a Senzing fault; a guard that prints the resolved root is diagnosable on
   sight (the same fail-loudly rule INV-111 applies to generators). The root marker is
   `config/bootcamp_progress.json`, which project setup creates, so the guard holds from Step 4 on.
   It is never `config/engine_config.json`: Step 8 writes that, and a guard on it blames path
   resolution for what is only step order.
-- **Skip only the settings export while `config/engine_config.json` is absent.** Before Step 8 the
+- **Skip only the settings export while `config/engine_config.json` is absent (INV-175).** Before Step 8 the
   script prints a one-line notice, leaves `SENZING_ENGINE_CONFIGURATION_JSON` **unset**, still
   exports `SENZING_PROJECT_ROOT` and the platform variables, and returns 0. Step 8 re-sources it.
 - **Refuse to export an empty value rather than exporting one.** Senzing's own official code snippets
