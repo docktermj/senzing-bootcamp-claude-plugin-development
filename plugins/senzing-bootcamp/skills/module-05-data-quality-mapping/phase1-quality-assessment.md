@@ -867,6 +867,13 @@ the third; both are the statements of record, so read them rather than reconstru
 4. **Verify the rendered page, not the exit status** (INV-129): open it and confirm the bars and the
    per-field numbers actually drew. Best-effort and non-blocking, like every check in this module.
 
+**Capture it for the recap, right after the page is written and verified.** Follow
+`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", using its
+`--single` case: this page has no tabs, so it is one image, with `{name}` the page's file name
+without `.html`. That section is the statement of record for the helper, its exit codes and the skip
+rules (INV-300). Record the PNG path in the step-6 checkpoint, rewriting it in the same turn
+(INV-146). It is embedded in this module's recap at module close.
+
 ## 7. Summarize findings and save the evaluation report
 
 Create `docs/data_source_evaluation.md`:

@@ -431,39 +431,7 @@ Run the profiler, then summarize columns/types/completeness/quality. Advance wor
 `action='advance'`, carrying `profile_summary` (one entry per source schema, each with
 `schema_name`, `record_count`, `field_count`) in `data`.
 
-⛔ **The step-1 response states this payload twice, in two incompatible shapes — send the ARRAY.**
-Its prose (`ADVANCE FORMAT:` at the top, and again under `ADVANCING TO STEP 2`) shows
-`profile_summary` as an **object keyed by schema name**:
-
-```text
-{"profile_summary": {"<schema_name>": {"record_count": N, "field_count": N}}}   ← the prose form; NOT what the schema declares
-```
-
-while the inline JSON Schema and the `advance_schema` field — introduced as *"the EXACT contract for
-the payload you send to advance FROM step 1. Match it exactly"* — define it as an **array** of
-objects each requiring `schema_name`, with `additionalProperties: false` and `minItems: 1`:
-
-```text
-{"profile_summary": [{"schema_name": "<name>", "record_count": N, "field_count": N}]}   ← the array the schema declares — send this
-```
-
-The two cannot both be what the contract says: the prose form carries no `schema_name` key, which the
-schema requires and `additionalProperties: false` forbids substituting. **Send the array because the
-schema declares the array** — that is the durable reason, and it is also what the typed `payload`
-branch (`for_step 1`) constrains decoding to. Step 2's own prose and schema **do** agree, so this is
-specific to step 1. Reported upstream; re-check whether it still applies rather than assuming, and if
-the prose is corrected, retire this note rather than inverting it.
-
-⚠️ **Do not reason from what the server happens to accept — that half has already changed once.**
-Until 2026-08-23 this note said the prose form *"does NOT work"*, verified on **server 1.32.9,
-2026-08-12** where the array form advanced. Re-measured on **server 1.33.0, 2026-08-23**: the
-object-keyed prose payload **also advances**, returning `status: "ok"` at step 2 with no
-`ENFORCEMENT NOTICE` and no `grammar_violation_count`. So the server now accepts both shapes.
-⛔ **This changes nothing about which to send (INV-136 — the guide calls a tool as its live schema
-states, not as the server happens to tolerate).** Acceptance is not a contract and can be withdrawn;
-the declared schema is the contract, and it still says array. What the change does show is that a
-caution phrased as *"that one fails"* expires while a caution phrased as *"the schema declares this"*
-does not — which is why the labels above name the contract rather than the outcome.
+⛔ **Send `profile_summary` as the array** — `[{"schema_name": "<name>", "record_count": N, "field_count": N}]` — **because the step's `advance_schema` declares it (INV-136)**. The step's prose states the same list form, and this payload advanced with `status: "ok"` on server 1.37.16, 2026-10-01.
 
 **The profile-report filename depends on how many files you pass, and the server handles the
 multi-file case itself.** Verified on server **1.33.0, 2026-08-23** by calling
@@ -1434,7 +1402,14 @@ page — source field names, target attributes, sample values — so the escapin
 `ground-rules.md` → "Visual deliverables (Senzing brand)" and the visualization contract's
 "Rendering contract" are the statements of record.
 
-**Checkpoint:** write step 15.
+**Capture it for the recap, right after the page is written and verified.** Follow
+`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", using its
+`--single` case: this page has no tabs, so it is one image, with `{name}` = `mapping_[name]_quality`.
+That section is the statement of record for the helper, its exit codes and the skip rules (INV-300).
+Record the PNG path in this step's checkpoint, in the same turn (INV-146). It is embedded in this
+module's recap at module close.
+
+**Checkpoint:** write step 15 (with the captured PNG path, when there is one).
 
 ### 16. Review
 
@@ -1442,7 +1417,41 @@ Confirm with the user: output format correct, quality acceptable, ready for prod
 adjustment.
 
 **Iterate vs. proceed decision gate:** After presenting quality results, guide the decision and
-close the turn on one 👉 question:
+close the turn on one 👉 question. Which questions apply depends on whether an **unmapped source
+remains**: `config/data_sources.yaml` has a source other than this one whose `mapping_status` is
+not `complete`. Fast-pathed sources are `complete` (see "Skip fast-pathed sources"), so they never
+count. Read the registry before choosing the question. Each question is pinned verbatim (INV-056).
+
+**While one or more unmapped sources remain**, ask about the next source, not about loading.
+`{source}` is this source's name, and `{next}` is the next unmapped source, the one step 19 maps next:
+
+- **Quality ≥80% and all critical fields mapped:**
+
+  👉 **Quality looks strong for {source}. Ready to map the next source, {next}? Reply with a number:**
+
+  1. Yes, map {next}.
+  2. No, I'd like to iterate on {source} first.
+
+- **Quality 70-79%:**
+
+  👉 **Quality for {source} is acceptable. What would you like to do? Reply with a number:**
+
+  1. Move on to the next source, {next}.
+  2. Iterate to improve [specific weak areas] first.
+
+- **Quality <70%:**
+
+  👉 **Quality for {source} needs improvement before loading will produce meaningful results. I'd recommend going back to address [specific issues]. What would you like to do? Reply with a number:**
+
+  1. Iterate to improve the data.
+  2. Move on to {next} anyway, knowing results may be limited.
+
+Handling (INV-284): "Yes, map {next}", "Move on to the next source, {next}" and "Move on to
+{next} anyway" continue through steps 17–18a, where 18a's multi-source rule recommends `skip`, to
+step 19, which starts {next}'s own `mapping_workflow` run. Every iterate option goes to step 17.
+
+**When no unmapped source remains** (this is the last source, or the only one), ask the loading
+question:
 
 - **Quality ≥80% and all critical fields mapped:**
 
@@ -1464,6 +1473,10 @@ close the turn on one 👉 question:
 
   1. Iterate to improve the data.
   2. Proceed anyway, knowing results may be limited.
+
+Handling (INV-284): a proceed answer ("Yes, proceed to loading", "Proceed to loading now",
+"Proceed anyway") continues through steps 17–18a, where it settles the sandbox menu as `skip`
+(see 18a's last-source rule), then to steps 19 and 20. Every iterate option goes to step 17.
 
 *(Internal: end the turn on the applicable question and wait.)*
 
@@ -1535,7 +1548,11 @@ If issues are found, go back to the relevant step. Retest after changes.
 ### 18a. Step 5 `detect_environment` menu handling (the optional-sandbox decision)
 
 The `approve` verdict at step 15 advances workflow step 4, and the response to that advance carries
-the workflow's **Step 5 (`detect_environment`)** with a four-option menu. Handle it **here**, once
+the workflow's **Step 5 (`detect_environment`)**, which takes one decision with two values, `skip`
+or `test_load` (server 1.37.16, 2026-10-01: `ADVANCE FORMAT: {"decision": "skip|test_load"}`, and
+its `advance_schema` declares `decision` as `enum ["skip", "test_load"]`). The same response's
+message lists four numbered *next steps* (more sources to map, sandbox QA, load and report, done):
+those are advice, not values the step accepts. Handle the decision **here**, once
 this source's mapper is written, run, reviewed and documented (steps 12–18) — not at the moment the
 response arrives.
 
@@ -1552,14 +1569,11 @@ end.
 
 **`mapping_workflow` Steps 5–8 are optional sandbox validation** (Phase 3). They let you
 trial-load the mapped source into a throwaway sandbox to preview entity resolution. They are
-NOT the production load: the real load happens in **Data processing**. The four options are:
+NOT the production load: the real load happens in **Data processing**. The two options are:
 
 - **skip:** skip the per-source sandbox test load and move on. **Recommended when one or
   more unmapped sources remain.**
 - **test_load:** run the optional sandbox test load (enters Phase 3) for this source.
-- **load+resolve:** run the optional sandbox test load and resolve entities (enters Phase 3)
-  for this source.
-- **done:** finish the mapping workflow for this source without a sandbox test load.
 
 **Multi-source continuation (recommended path):** When one or more unmapped sources remain,
 recommend **skip**: the real load is deferred to Data processing, so a per-source sandbox test load
@@ -1568,9 +1582,15 @@ own `mapping_workflow` run. Tell the bootcamper: "Steps 5–8 are an optional sa
 you still have sources to map and the real load happens in Data processing, I'll skip the per-source
 test load and move on to the next unmapped source."
 
-**Explicit choice is preserved:** If the bootcamper explicitly chooses **test_load** or
-**load+resolve**, follow that path into Phase 3 (`phase3-test-load.md`) unchanged. The real
-production load still happens in Data processing regardless.
+**Last source (no unmapped source remains):** a step-16 answer that proceeds to loading (≥80%
+option 1, 70-79% option 1, or <70% option 2) settles this decision as **skip**. Tell the bootcamper
+so in one line, for example "You chose to proceed to loading, so I'll skip the optional sandbox test
+load; the real load happens in Data processing.", advance with `skip`, ask no 👉 question here, and
+continue to step 19.
+
+**Explicit choice is preserved:** If the bootcamper explicitly asks for the sandbox test load
+(**test_load**), at any source, follow that path into Phase 3 (`phase3-test-load.md`) unchanged.
+The real production load still happens in Data processing regardless.
 
 **Checkpoint:** write step 18a.
 

@@ -32,6 +32,10 @@ is certainly reading at that moment.
 
 Written as a sweep rather than two assertions, so the *next* ad-hoc HTML offer is caught too.
 
+The same reachability applies to the screenshot capture (#333): each generating step must cite
+`module-completion.md` → "Capturing visualization screenshots", its `--single` case, and
+INV-146's record-at-the-checkpoint rule, or the page reaches the recap only at module close.
+
 Enforces **INV-183** (a step that generates a bootcamper-facing artifact must name, at that
 step, every rule governing how it is produced) for generated HTML. INV-183 names this file
 as its enforcer and is deliberately broader than this test: the next such artifact may not
@@ -63,6 +67,19 @@ REQUIRED_RULES = {
     # statement of record in the visualization contract.
     "escaping data-sourced strings (INV-106)": ("inv-106",),
     "artifact verification (INV-129)": ("inv-129",),
+}
+
+# The screenshot capture a generated page owes the recap (#333). `module-completion.md` says
+# capture "runs at the visualization step, right after the page exists" and names these
+# single-page deliverables as its `--single` case, and INV-146 has the capture recorded at that
+# step's checkpoint in the same turn. Neither is reachable unless the step that writes the page
+# cites the procedure (INV-183), so every probe here must appear in the generating file. Cited,
+# not restated: the procedure itself stays in `module-completion.md` (INV-300).
+CAPTURE_PROBES = {
+    'the capture procedure (module-completion.md → "Capturing visualization screenshots")':
+        "capturing visualization screenshots",
+    "its single-page case (`--single`)": "--single",
+    "recording the capture at the step checkpoint (INV-146)": "inv-146",
 }
 
 # The tabbed apps, whose own module files carry these rules already and are not ad hoc offers.
@@ -109,6 +126,33 @@ class EveryHtmlOfferNamesItsRules(unittest.TestCase):
             "— the rule exists but is unreachable from where the page is authored:\n  "
             + "\n  ".join(missing),
         )
+
+    def test_each_offer_cites_the_screenshot_capture(self):
+        """A page written with no capture pointer reaches the recap only at module close.
+
+        Seen on the 2026-10-01 walk: three Module 5 pages were written and none was captured
+        until module close, so INV-146's "record the capture at the step checkpoint in the
+        same turn" could not be met at any of them.
+        """
+        missing = []
+        for path in html_generating_files():
+            flat = flatten(path.read_text(encoding="utf-8"))
+            for rule, probe in CAPTURE_PROBES.items():
+                if probe not in flat:
+                    missing.append(f"{path.name}: does not cite {rule}")
+        self.assertEqual(
+            [],
+            missing,
+            "a step generating bootcamper-facing HTML does not point at the screenshot "
+            "capture, so the capture is unreachable from where the page is written:\n  "
+            + "\n  ".join(missing),
+        )
+
+    def test_the_cited_capture_section_exists(self):
+        """The citation must land on something: the heading and its `--single` case."""
+        text = MODULE_COMPLETION.read_text(encoding="utf-8")
+        self.assertIn("## Capturing visualization screenshots", text)
+        self.assertIn("--single", text)
 
     def test_each_offer_keeps_the_page_under_docs_visualizations(self):
         """INV-070, and what makes these pages bootcamper-facing deliverables at all."""
