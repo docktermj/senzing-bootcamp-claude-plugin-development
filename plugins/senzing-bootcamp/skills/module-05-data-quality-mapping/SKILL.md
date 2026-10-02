@@ -23,6 +23,8 @@ banner, journey map, before/after framing, a brief numbered overview of this mod
 **When it carries a `quality_iteration`, none of this runs:** go straight to Phase 2 →
 [Receiving a `quality_iteration`](phase2-data-mapping.md#receiving-a-quality-iteration). A return
 runs only the steps it names, so the steps it leaves out are not skipped steps.
+**When it records Module 5 at the retired step 26, none of this runs either:** Module 5 is already
+complete, and [Resuming](#resuming) says what to present.
 
 **Before/After:** You have raw data files but don't know if Senzing can use them directly.
 After this module, each source is scored for quality, categorized, and transformed into
@@ -118,8 +120,19 @@ either one:
 - **Phase 1: Quality Assessment** (steps 1–7): `phase1-quality-assessment.md`
   (includes a Senzing-readiness check and fast-path-to-loading offer for eligible sources).
 - **Phase 2: Data Mapping** (steps 8–20): `phase2-data-mapping.md`.
-- **Phase 3: Test Load and Validate (Optional)** (steps 21–26): `phase3-test-load.md`.
+- **Phase 3: Test Load and Validate (Optional)** (steps 21–25): `phase3-test-load.md`. It tests
+  one source and always returns to Phase 2 (step 19, or step 17 to iterate). Module 5 is completed
+  only at Phase 2 step 20.
+
+## Resuming
 
 Read `current_step` from `config/bootcamp_progress.json` and resume at the right phase. During
 mapping, also read any `config/mapping_state_[datasource].json` checkpoint to resume a
 per-source `mapping_workflow` run where it left off.
+
+**A progress file that recorded Module 5 at step 26.** Phase 3 used to end on a step 26, which ran
+Module Completion and then wrote its checkpoint, so a Module 5 `current_step` of 26 written under
+that flow means Module 5 is already complete. Treat it so: present only Phase 2 step 20's pinned
+transition 👉 question, naming the next selected module from `selected_modules`, and checkpoint as
+step 20 does. Do not run Module Completion again: no second Module 5 recap section, no second
+end-of-module summary, and no Phase 3 question (INV-284).
