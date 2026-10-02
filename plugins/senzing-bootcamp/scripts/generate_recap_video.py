@@ -63,7 +63,8 @@ Storyboard format
 
 ``video.music`` is optional and defaults to ``true``: a light, upbeat music bed synthesized at
 render time with the standard library (no audio file ships), ducked under the voice with
-``sidechaincompress`` and loudness-normalized with the voice to about -16 LUFS. ``false``
+``sidechaincompress`` and loudness-normalized with the voice to about -16 LUFS. The voice is
+leveled first (``LEVELER``), so its peaks leave ``loudnorm`` room to reach that target. ``false``
 turns it off.
 
 Every scene carries ``type``, ``duration`` (planned seconds), ``narration`` and an optional
@@ -1649,6 +1650,13 @@ def write_audio_track(plan: Sequence[PlannedScene], path: Path) -> None:
 MUSIC_VOLUME = 0.3
 DUCKING = "sidechaincompress=threshold=0.03:ratio=6:attack=40:release=600"
 LOUDNORM = "loudnorm=I=-16:TP=-1.5:LRA=11"
+#: A compressor keyed on the voice itself, applied to every voiced stream before anything
+#: else (#372). Speech peaks high above its loudness: a ducked mix of real narration peaks
+#: about 18 dB over its integrated level, more than the 14.5 dB between LOUDNORM's -16 LUFS
+#: and its -1.5 dBTP ceiling, so loudnorm had to limit and landed near -17.6 LUFS. Leveling
+#: the voice lowers that ratio, and the mix reaches the target.
+LEVELER = ("asplit=2[lv][lk];"
+           "[lv][lk]sidechaincompress=threshold=0.05:ratio=4:attack=5:release=150:makeup=1")
 
 MUSIC_BPM = 120
 MUSIC_FADE_IN = 2.0
@@ -1749,20 +1757,22 @@ def write_music_bed(seconds: float, path: Path) -> None:
 def audio_filter_graph(voice: Optional[int], music: Optional[int]) -> Optional[str]:
     """The ``-filter_complex`` graph for ffmpeg's audio inputs, ending at ``[aout]``.
 
-    `voice` and `music` are ffmpeg input indexes, or None when that input is absent. The music
-    is lowered to MUSIC_VOLUME and ducked by a compressor keyed on the voice, mixed with the
-    voice, and the mix is loudness-normalized. A lone voice or a lone music bed goes through the
-    same ``loudnorm``, so every audio stream has one target. None when there is no audio.
+    `voice` and `music` are ffmpeg input indexes, or None when that input is absent. The voice
+    is leveled first (LEVELER). The music is lowered to MUSIC_VOLUME and ducked by a compressor
+    keyed on the leveled voice, mixed with it, and the mix is loudness-normalized. A lone voice
+    (leveled) or a lone music bed goes through the same ``loudnorm``, so every audio stream has
+    one target. None when there is no audio.
     """
     if voice is not None and music is not None:
         return (f"[{music}:a]volume={MUSIC_VOLUME}[music];"
-                f"[{voice}:a]asplit=2[key][voice];"
+                f"[{voice}:a]{LEVELER},asplit=2[key][voice];"
                 f"[music][key]{DUCKING}[ducked];"
                 f"[ducked][voice]amix=inputs=2:duration=first,{LOUDNORM}[aout]")
-    alone = voice if voice is not None else music
-    if alone is None:
+    if voice is not None:
+        return f"[{voice}:a]{LEVELER},{LOUDNORM}[aout]"
+    if music is None:
         return None
-    return f"[{alone}:a]{LOUDNORM}[aout]"
+    return f"[{music}:a]{LOUDNORM}[aout]"
 
 
 # --------------------------------------------------------------------------- #
