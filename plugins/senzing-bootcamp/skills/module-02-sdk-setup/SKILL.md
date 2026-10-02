@@ -128,8 +128,9 @@ is missing.
 
 **If the SDK is found and version is V4.0+:**
 
-Tell the user: "Senzing SDK is already installed (version [X]). No need to reinstall, skipping
-straight to configuration verification."
+Tell the user: "Senzing SDK is already installed (version [X]). No need to reinstall: I'll skip the
+installation, then set up this project's environment script (and your language's bindings, if it
+needs them) before verifying it."
 
 Then run **Step 1b** below to see whether a newer release is available, and offer it. A working
 install is never replaced without the bootcamper saying so.

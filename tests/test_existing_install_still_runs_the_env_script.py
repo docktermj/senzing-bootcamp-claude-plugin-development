@@ -21,6 +21,11 @@ complete instruction.
 fallback sentence's Phase 3 half, the environment-script section's opening, the troubleshooting
 entry, and the two update-offer routes back onto the existing-install path.
 
+#381 widened the scan to all three phrasings INV-339 forbids ("skip Steps 2 and 3", a bare
+"skip Step 3", and "straight to verification"), sentence by sentence over whitespace-collapsed
+text, after Step 1's existing-install announcement shipped "skipping straight to configuration
+verification" wrapped across two lines where the per-line, one-phrasing scan could not see it.
+
 Enforces **INV-339** (an existing install skips only the installation: Phase 3 and the environment
 script still run before verification). It asserts that Module 2 *states* the rule at each site, and
 does **not** establish that a live run follows it, which only `dry-run` phase 3 can observe.
@@ -35,36 +40,95 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "plugins" / "senzing-bootcamp" / "skills"
 
-#: "skip ... Step 3" with no narrowing word between them. ``[^.\n]`` keeps the
-#: match inside one sentence so a later sentence's "Step 3" cannot satisfy it.
+#: "skip ... Steps 2 and 3" with no narrowing word between them. ``[^.\n]`` keeps the
+#: match inside one sentence so a later sentence's "Step 3" cannot satisfy it. Counts in
+#: every shipped file: no other skill numbers a "Steps 2 and 3" pair it could mean.
 SKIPS_STEP_3 = re.compile(r"skip[^.\n]{0,60}\bStep(?:s)?\s+2\s+and\s+3\b", re.IGNORECASE)
 
-#: The words that narrow such a statement to the install half.
-NARROWERS = ("installation", "install commands", "not step 3 entirely")
+#: A bare "skip ... Step 3" (#381). Other skills have a Step 3 of their own, so this counts
+#: only in Module 2's files or in a sentence that names Module 2 (see ``in_module_2_scope``).
+SKIPS_BARE_STEP_3 = re.compile(r"\bskip\w*\b[^.\n]{0,60}?\bStep\s+3\b", re.IGNORECASE)
+
+#: "straight to ... verification" or "skip(ping) to ... verification" (#381): the route past
+#: Step 3 named by its destination instead of by its number. Same scope as the bare pattern.
+STRAIGHT_TO_VERIFICATION = re.compile(
+    r"(?:\bstraight\s+to|\bskip\w*\s+to)\b[^.\n]{0,60}?\bverification\b", re.IGNORECASE
+)
+
+#: The words that narrow such a statement to the install half, or deny the skip outright.
+NARROWERS = ("installation", "install commands", "not step 3 entirely", "never skipped")
+
+#: A sentence naming Module 2 brings the scoped patterns into play outside its own files.
+MODULE_2_NAMES = re.compile(r"\bSDK setup\b|\bModule 2\b", re.IGNORECASE)
+
+#: Where one markdown block ends and the next begins: a blank line, a list item, a heading,
+#: a table row or a fence. Sentences are split inside a block, never across one.
+BLOCK_BREAK = re.compile(r"\n\s*\n|\n(?=\s*(?:[-*+]\s|\d+[.)]\s|#|\||```|>))")
+
+#: A sentence ends at ., ! or ? (with any closing quote, emphasis or bracket) and a space.
+SENTENCE_END = re.compile(r"(?<=[.!?])[\"'*_)\]]*\s+")
 
 
 def shipped_markdown():
     return sorted(SKILLS.rglob("*.md"))
 
 
+def sentences(text):
+    """Each sentence of ``text`` with whitespace collapsed, so a wrapped sentence is one unit."""
+    for block in BLOCK_BREAK.split(text):
+        flat = re.sub(r"\s+", " ", block).strip()
+        for sentence in SENTENCE_END.split(flat):
+            if sentence:
+                yield sentence
+
+
+def in_module_2_scope(sentence, in_module_2_file):
+    return in_module_2_file or bool(MODULE_2_NAMES.search(sentence))
+
+
+def forbidden_skips(sentence, in_module_2_file):
+    """The INV-339 phrasings ``sentence`` uses, by name; empty when it uses none.
+
+    A sentence carrying a narrowing word is never flagged: it confines the skip to the
+    installation, or says the steps are not skipped at all.
+    """
+    if any(w in sentence.lower() for w in NARROWERS):
+        return []
+    found = []
+    if SKIPS_STEP_3.search(sentence):
+        found.append("skip Steps 2 and 3")
+    if in_module_2_scope(sentence, in_module_2_file):
+        if SKIPS_BARE_STEP_3.search(sentence):
+            found.append("skip Step 3")
+        if STRAIGHT_TO_VERIFICATION.search(sentence):
+            found.append("straight to verification")
+    return found
+
+
 class NoShippedTextLicensesSkippingStep3Wholesale(unittest.TestCase):
-    def test_no_sentence_says_to_skip_steps_2_and_3_without_narrowing_it(self):
-        """Derived by scanning (INV-246), not by naming the file the spec cited."""
+    def test_no_sentence_says_to_skip_step_3_without_narrowing_it(self):
+        """Derived by scanning (INV-246), not by naming the file the spec cited.
+
+        Sentence by sentence over whitespace-collapsed text (#381): the defect this widening
+        was written for wrapped "skipping" and "straight to configuration verification" onto
+        two lines, so a per-line scan could not see it.
+        """
+        module_2 = SKILLS / "module-02-sdk-setup"
         offenders = []
         for path in shipped_markdown():
-            for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-                if not SKIPS_STEP_3.search(line):
-                    continue
-                window = line.lower()
-                if any(w in window for w in NARROWERS):
-                    continue
-                offenders.append("%s:%d %s" % (path.relative_to(REPO), n, line.strip()[:90]))
+            in_module_2_file = module_2 in path.parents
+            for sentence in sentences(path.read_text(encoding="utf-8")):
+                found = forbidden_skips(sentence, in_module_2_file)
+                if found:
+                    offenders.append("%s [%s] %s" % (
+                        path.relative_to(REPO), ", ".join(found), sentence[:120]))
         self.assertEqual(
             [], offenders,
-            "A shipped line tells the guide to skip Steps 2 and 3 without narrowing the skip to "
-            "the INSTALLATION. Step 3 also writes the project-local environment script, which an "
-            "existing install is the most likely thing to be missing -- and the failure surfaces "
-            "in a later module as what looks like a broken SDK: %s" % offenders,
+            "A shipped sentence tells the guide to skip Step 3, or Steps 2 and 3, or to go "
+            "straight to verification, without narrowing the skip to the INSTALLATION. Step 3 "
+            "also writes the project-local environment script, which an existing install is the "
+            "most likely thing to be missing -- and the failure surfaces in a later module as "
+            "what looks like a broken SDK: %s" % offenders,
         )
 
     def test_the_scan_pattern_still_matches_the_historical_defect(self):
@@ -81,6 +145,56 @@ class NoShippedTextLicensesSkippingStep3Wholesale(unittest.TestCase):
             "The historical sentence must NOT contain a narrowing word -- if it did, the guard "
             "would exempt the very line it exists to reject.",
         )
+
+
+class TheWidenedGuardFailsOnEachForbiddenPhrasing(unittest.TestCase):
+    """Negative controls for #381: each phrasing INV-339 names, fed through the real scan."""
+
+    def flagged(self, text, in_module_2_file):
+        return [f for s in sentences(text) for f in forbidden_skips(s, in_module_2_file)]
+
+    def test_skip_steps_2_and_3_is_flagged_in_any_file(self):
+        self.assertEqual(
+            ["skip Steps 2 and 3"],
+            self.flagged("Report the SDK as installed and skip Steps 2 and 3.", False),
+        )
+
+    def test_a_bare_skip_step_3_is_flagged(self):
+        self.assertIn("skip Step 3", self.flagged("The SDK is present, so skip Step 3.", True))
+
+    def test_a_bare_skip_step_3_naming_module_2_is_flagged_outside_its_files(self):
+        self.assertIn(
+            "skip Step 3",
+            self.flagged("On an existing install, SDK setup can skip Step 3.", False),
+        )
+
+    def test_the_historical_announcement_is_flagged_where_it_wrapped(self):
+        """The #381 defect verbatim, with the line break it shipped with."""
+        historical = ('Tell the user: "Senzing SDK is already installed (version [X]). No need to '
+                      'reinstall, skipping\nstraight to configuration verification."')
+        self.assertEqual(["straight to verification"], self.flagged(historical, True))
+
+    def test_skip_to_verification_is_flagged(self):
+        self.assertIn(
+            "straight to verification",
+            self.flagged("If the SDK is installed, skip to verification.", True),
+        )
+
+    def test_another_skills_own_step_3_is_not_flagged(self):
+        """The `bootcamp-preparation:228` shape: its own Step 3, naming neither Module 2 nor SDK setup."""
+        self.assertEqual(
+            [], self.flagged("Skip straight from Step 3 to Step 4 and confirm the result.", False)
+        )
+
+    def test_the_narrowed_sentences_module_2_ships_are_not_flagged(self):
+        for correct in (
+            "If the library is present, report the SDK as installed and skip the **installation** "
+            "— Step 2, and Step 3's install commands.",
+            "These steps are NEVER skipped, even when the SDK is already installed.",
+            "Not Step 3 entirely: its Phase 3 and its environment-script work still run.",
+        ):
+            with self.subTest(correct=correct):
+                self.assertEqual([], self.flagged(correct, True))
 
 
 class Step1StillRoutesAnExistingInstallThroughTheEnvironmentScript(unittest.TestCase):
@@ -101,6 +215,22 @@ class Step1StillRoutesAnExistingInstallThroughTheEnvironmentScript(unittest.Test
             "environment-script" in window or "environment script" in window,
             "Step 1's fallback conclusion must say the environment-script work still runs. "
             "Without it the paragraph reads as a complete instruction to skip all of Step 3.",
+        )
+
+    def test_the_existing_install_announcement_skips_only_the_installation(self):
+        """#381: the V4.0+ announcement is what the Bootcamper hears; it narrows the skip.
+
+        Presence of "skip the installation", not the verbatim sentence, so the wording can be
+        polished without breaking the guard.
+        """
+        flat = re.sub(r"\s+", " ", self.text)
+        i = flat.find('"Senzing SDK is already installed (version [X]).')
+        self.assertNotEqual(i, -1, "Step 1's existing-install announcement was not found.")
+        announcement = flat[i:flat.index('"', i + 1) + 1]
+        self.assertIn(
+            "skip the installation", announcement,
+            "The existing-install announcement must narrow the skip to the installation "
+            "(INV-339): %s" % announcement,
         )
 
     def test_the_required_stops_block_is_intact(self):
