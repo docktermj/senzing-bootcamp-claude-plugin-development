@@ -138,9 +138,10 @@ class TheMarkerRecordsAndMatchesOnLoadable(PreLoadCheck):
         self.assertIn("a marker with no `loadable`", self.item2)
         self.assertIn("does not match, so re-evaluate on the loadable total", self.item2)
 
-    def test_the_module_4_clause_stays(self):
-        self.assertIn("an applicable Module 4 SQLite load-time decision covers this same load",
-                      self.item2)
+    def test_the_module_4_clause_names_its_marker(self):
+        """#345: the Module 4 clause names `sqlite_load_time_prompt`, not an undefined decision."""
+        self.assertIn("a `sqlite_load_time_prompt` marker covers this same load", self.item2)
+        self.assertNotIn("an applicable Module 4 SQLite load-time decision", self.item2)
 
 
 class TheProductionLineIsAStatement(PreLoadCheck):

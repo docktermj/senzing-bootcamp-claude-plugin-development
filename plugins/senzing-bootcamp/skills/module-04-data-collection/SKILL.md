@@ -1186,9 +1186,24 @@ about a roughly half-hour load, for a load of about two minutes.
      porting phase). Do not inline or restate the migration steps here. Then record the decision
      (sub-step 4).
 
-4. **Record the decision.** Write a load-decision marker capturing the choice
-   (`proceed`, `sample`, or `switch_db`) keyed to the collected dataset identity, so the
-   Module 6 SQLite heads-up does not redundantly re-ask about this same load.
+4. **Record the decision.** Write `sqlite_load_time_prompt`, this step's marker in
+   `config/bootcamp_preferences.yaml`, modeled on Module 6's `sqlite_volume_prompt`:
+   `{decided: true, choice, loadable, collected_total, effective_limit}`.
+   - `choice` is `proceed`, `sample` or `switch_db`.
+   - `collected_total` is the registry total the formula used: each source's `sample:`
+     `record_count` where it has a `sample:` block (sub-step 3 writes one when it samples),
+     otherwise its `record_count`.
+   - `effective_limit` is the limit sub-step 1 resolved, `0` when unbounded (as
+     `license_record_limit` uses it).
+   - `loadable` is `min(collected_total, effective_limit)`, with `0` read as unbounded.
+
+   It records the load-time question as asked once (INV-006), so the Module 6 SQLite heads-up
+   does not re-ask about this same load. Its `loadable` keeps this step's meaning, pre-mapping and
+   license-capped, and is never the mapped-file total Module 6 counts. Whether a later load is
+   this same load is decided by item 2 of Module 6 Phase A's
+   [SQLite volume pre-load check](../module-06-data-processing/phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate),
+   which recomputes this formula and is the one statement of that matching rule (INV-300). When
+   sub-step 2 says nothing, write no marker: an absent one means "not asked" (INV-244).
 
 Refer to the Senzing MCP server by name only (never a URL). Use only synthetic/persisted values
 : never echo credentials or connection strings. _(The Kiro `volume_utils` and
