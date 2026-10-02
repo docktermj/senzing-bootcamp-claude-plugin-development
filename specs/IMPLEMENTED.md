@@ -43,6 +43,32 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-10-02
+
+- **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one review session)
+- **Commit:** uncommitted
+- **Files changed:** `specs/INVARIANTS.md`, `specs/IMPLEMENTED.md`, `invariant-manifest.json`, `tests/test_invariant_enforcer_citations.py`, six enforcer docstrings (back-citations), and citations at the rule's line in five shipped files (`phase1-discovery.md`, Module 2 `SKILL.md`, Module 4 `SKILL.md`, `phase2-data-mapping.md`, `visualization-api-reference.md`)
+- **MCP re-check:** n/a (no Senzing fact is introduced; the amendments' facts were re-verified by the runs that drafted them, and are dated in the text)
+- **Summary:** 22 blocks were pending at the start (20 queued, plus #323's INV-209 amendment, brought into the queue by fixing its header, which lacked the `awaiting the maintainer's sign-off; NOT applied` marker the queue reads). All were decided. None is left pending; the held set is 6.
+  - **Registered (one new id): INV-344** (#333): inside a per-source loop, no whole-run question while another source remains. Cited at the three step-16/18a heads in `phase2-data-mapping.md`; the block's rejected-citation reasoning (INV-056, INV-136, INV-146, INV-183, INV-284, INV-300, INV-251) is kept in the invariant.
+  - **Amendments applied (16), each as a dated note appended to the invariant, never a rewrite.** Most drafts inserted text mid-entry or replaced a clause; `INVARIANTS.md` is append-only, so each was recast at review into a dated note (or, for INV-091, a dated correction):
+    - INV-239 ×2: #343 identifier uniqueness across invented entities; #337 a post-gate regeneration is exempt from the 70–79% requirement.
+    - INV-342 ×3: #339 the audio contract; #341 the Piper voice; #372 every voiced stream leveled first.
+    - INV-340 ×4: #340 no-voice guidance; #341 the Piper install offer; #326 name-free screenshots; #347 the Intro scene.
+    - INV-209 (#323): a marker in shipped Markdown sits inside an HTML comment.
+    - INV-291 (#335, with #342): a measured route records what it returned and its rank; no entry count. `(INV-291)` cited at Module 1 Step 3.
+    - INV-331 (#330, with #345): Step 8b uses Phase A item 3's threshold; its `sqlite_load_time_prompt` marker records the figure compared. `(INV-331)` cited at Module 4's ⛔ line.
+    - INV-091 (#332): the CDN fallback clause withdrawn by a dated correction; the server refuses to render without the vendored D3.
+    - INV-222 (#320): the C# package source comes from the Windows install reply; never a public NuGet feed.
+    - INV-175 (#328): the env script's root marker and the pre-Step-8 branch. `(INV-175)` cited at Module 2's two template bullets.
+    - INV-154 (#327): the capped Entity Graph notes. `(INV-154)` cited at the contract's capped-notes paragraph.
+  - **Folded into an existing invariant instead of minting (2):** #338 into **INV-084** (the directory's own invariant; the block had offered INV-331); #325 into **INV-186** (which it upholds and the shipped line already cites). `(INV-084)` cited at Module 5's file-placement rule.
+  - **Held (2):** #329's Step 7 placement rule, per the maintainer's 2026-10-01 no-invariant decision; #321's `OPEN_ME_FIRST.md` rule, held with the packaging feature's Draft 1 until `dry-run` phase 3 has exercised packaging.
+  - **Still held, conditions not met:** the license-reading, #164 Phase C, census-detector and machine-portability blocks.
+  - **`EXPECTED_PAIRS` 168 → 185,** re-derived by the extractor at each step, every new pair checked by name and none removed.
+- **Verification:** both CI legs green on the full diff in a clean worktree, with an empty `HOME` (5792 tests, `OK (skipped=12)` and `OK (skipped=116)`, the absent leg printing its fpdf2 notice); `citations.py verify` clean at 343 invariants; `invariant_manifest.py --check` clean; `pending_invariants.py check` 0 mismatched, 0 unresolved. One red found and fixed before this record: today's two INV-239 notes opened "nothing above is superseded", which `test_supersession_has_one_syntax` reads as supersession vocabulary; both now read "the rules above still bind".
+- **Establishes no invariant of its own.** Every invariant it registers or amends was established by an earlier issue's implementation.
+
 ## module-5-no-progress-gate-returns-to-data-collection
 
 - **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #337, spec revision 2; from the `dry-run-2026-10-01` entry, P3-10, `Source: self-observed (assistant dry run)`)
