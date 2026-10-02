@@ -117,86 +117,86 @@ class TheOverrideIsScoped(unittest.TestCase):
 
 
 class TheStepOneAdvanceShapeCautionIsCorrect(unittest.TestCase):
-    """`mapping_workflow` step 1 states its advance payload in two incompatible shapes.
+    """Step 9 says to send `mapping_workflow` step 1's `profile_summary` as the array.
 
-    Its prose shows `profile_summary` as an object keyed by schema name; its inline JSON
-    Schema and `advance_schema` define an array of objects each requiring `schema_name`,
-    with `additionalProperties: false`. **Send the array, because the schema declares the
-    array** — that is the durable reason, and it is what the typed `payload` branch
-    constrains decoding to. This guard exists so a later edit cannot invert the caution and
-    send readers to the shape the schema rejects.
+    **Send the array, because the step's `advance_schema` declares it (INV-136).** That is the
+    durable reason, and it is what the typed `payload` branch (`for_step 1`) constrains decoding
+    to. This guard exists so a later edit cannot invert the line and send readers to a shape the
+    schema does not declare.
 
-    ⚠️ **Corrected 2026-08-23. The original reason expired; the instruction did not.** This
-    class was written against "the ARRAY advances, the prose form cannot validate" (server
-    1.32.9, 2026-08-12). Re-measured on **1.33.0, 2026-08-23**: the object-keyed prose payload
-    **also advances**, `status: "ok"`, no enforcement notice. So the server now accepts both
-    shapes and the caution is phrased against the declared contract instead of against an
-    outcome. See `specs/step-1s-does-not-work-claim-about-the-object-shape-is-stale.md`.
+    ⚠️ **Retired 2026-10-01 (#333): the "two incompatible shapes" caution is gone, on purpose.**
+    Until then step 9 carried a ⛔ block saying the step-1 prose showed `profile_summary` as an
+    object keyed by schema name while the schema declared an array, plus a ⚠️ history paragraph
+    on which shapes the server accepted (1.32.9, 2026-08-12; 1.33.0, 2026-08-23). The block
+    ended "if the prose is corrected, retire this note rather than inverting it". On server
+    1.37.16, 2026-10-01, the prose states the list form too ("profile_summary is a LIST — one
+    entry per source schema"), and advancing with the array returned `status: "ok"`. So both
+    collapsed into one line, and this class now asserts that line and forbids the retired claim
+    from coming back. History: `specs/step-1s-does-not-work-claim-about-the-object-shape-is-stale.md`.
 
-    ⛔ **Scoped to the caution, not the file.** `setUp` read `text()` — the whole 1454-line
-    file — so both assertions below were satisfied by any dated stamp or any "array … works"
-    phrasing anywhere in it. Two negative controls escaped on exactly that: stripping the
-    caution's provenance passed because a neighboring claim carried its own stamp, and deleting
-    "send the ARRAY" passed because the words appear in the caution's own history sentence. An
-    assertion about a *section* says nothing about the *sentence*.
+    ⛔ **Scoped to the line, not the file.** An earlier version read the whole file, so its
+    assertions were satisfied by any dated stamp or any "array" phrasing anywhere in it. The
+    window below is the one paragraph, and the "incompatible shapes" check reads step 9 whole.
     """
 
-    #: The caution block: its stop sign to the start of the next unrelated claim.
-    START = "⛔ **The step-1 response states this payload twice"
+    #: The rule's paragraph: its stop sign to the start of the next unrelated claim.
+    START = "⛔ **Send `profile_summary` as the array**"
     END = "**The profile-report filename depends on how many files you pass"
 
     def setUp(self):
         body = text()
         start = body.index(self.START)
-        try:
-            end = body.index(self.END, start)
-        except ValueError:  # the neighboring claim moved; fall back to a generous window
-            end = start + 4000
+        end = body.index(self.END, start)
         self.body = body[start:end]
-        assert len(self.body) > 400, (
-            "the step-1 caution window collapsed to %d chars — the anchors moved and every "
-            "assertion below is now inspecting almost nothing" % len(self.body))
+        assert 150 < len(self.body) < 600, (
+            "the step-1 line's window is %d chars; the anchors moved, or the one line grew "
+            "back into a block" % len(self.body))
+        step_start = body.index("### 9. Profile")
+        self.step = body[step_start:body.index("### 10. Plan", step_start)]
 
-    def test_the_caution_exists_and_names_both_shapes(self):
-        flat = re.sub(r"\s+", " ", self.body)
-        self.assertIn("profile_summary", flat)
-        self.assertRegex(
-            flat, r"(?i)two incompatible shapes|incompatible shapes",
-            "the step-1 advance caution is missing; without it a guide following the tool's "
-            "own prose sends a payload that cannot validate")
+    def test_it_is_one_line(self):
+        self.assertEqual(
+            1, len(self.body.strip().splitlines()),
+            "the step-1 payload rule is one line (#333); a multi-line block here is the "
+            "retired caution coming back")
 
-    def test_it_names_the_array_as_the_working_form(self):
+    def test_it_names_the_array_and_cites_inv_136(self):
         """The one thing that must never invert."""
         flat = re.sub(r"\s+", " ", self.body).replace("**", "")
+        self.assertIn("profile_summary", flat)
         self.assertRegex(
-            flat, r"(?i)send the ARRAY|array form advanced|array.{0,40}works",
-            "the caution must say the ARRAY is what works. Inverting this would send every "
-            "reader to the shape the schema rejects.")
+            flat, r"(?i)as the array",
+            "the line must say to send profile_summary as the ARRAY")
+        self.assertIn('[{"schema_name": "<name>", "record_count": N, "field_count": N}]', flat,
+                      "the line must show the array shape it names")
+        self.assertRegex(
+            flat, r"(?i)advance_schema. declares it \(INV-136\)",
+            "the line must give the durable reason (the schema declares the array) and cite "
+            "INV-136, the rule that a tool is called as its live schema states")
         self.assertNotRegex(
-            flat, r"(?i)send the OBJECT|object form is the one to send"
-                  r"|prose form is what the schema declares",
-            "the caution names the object form as the one to send — that is backwards; the "
-            "schema declares the array, and that is the durable reason.\n"
-            "⚠️ Re-worded 2026-08-23: the old pattern also forbade `object form advanced`, which "
-            "made it impossible to state truthfully that 1.33.0 accepts BOTH shapes. What must "
-            "stay forbidden is naming the object form as the one to SEND, not observing that the "
-            "server tolerates it.")
+            flat, r"(?i)send the OBJECT|object form is the one to send|keyed by schema name",
+            "the line names the object form; the schema declares the array")
+
+    def test_the_incompatible_shapes_claim_does_not_return(self):
+        flat = re.sub(r"\s+", " ", self.step)
+        self.assertNotRegex(
+            flat, r"(?i)incompatible shapes|two shapes|both shapes|prose form",
+            "step 9 again says step 1 states its payload in two shapes. On server 1.37.16, "
+            "2026-10-01, its prose and its schema agree on the list (#333); re-verify live "
+            "before restoring any such caution")
 
     def test_it_carries_dated_provenance(self):
-        """A well-formed version and date — deliberately NOT which.
+        """A well-formed version and date, deliberately NOT which (INV-206).
 
-        ⚠️ **Unpinned 2026-08-23.** This asserted the literals `1.32.9` and `2026-08-12`, which
-        made an honest re-verification break the test: on 1.33.0 the object form the caution
-        described as failing now advances, and correcting that claim means re-dating the caution.
-        A guard that punishes re-asking is a guard that gets worked around
-        (`specs/guards-pinning-a-dated-negative-outlive-it.md`). What matters is that a date is
-        present at all, because the suite is offline (INV-108) and the date is the only re-check
-        mechanism.
+        Unpinned 2026-08-23 so an honest re-verification can re-date the line instead of
+        breaking this test (`specs/guards-pinning-a-dated-negative-outlive-it.md`). What matters
+        is that a date is present at all, because the suite is offline (INV-108) and the date
+        is the only re-check mechanism.
         """
         flat = re.sub(r"\s+", " ", self.body)
         self.assertRegex(
             flat, r"server\s+\*{0,2}1\.\d+\.\d+\*{0,2},\s*\d{4}-\d{2}-\d{2}",
-            "the caution carries no `server <version>, <date>` stamp, so a later run cannot "
+            "the line carries no `server <version>, <date>` stamp, so a later run cannot "
             "tell how stale it is")
 
 

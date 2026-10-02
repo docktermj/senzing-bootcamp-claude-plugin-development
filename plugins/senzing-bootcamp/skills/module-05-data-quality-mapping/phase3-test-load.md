@@ -11,10 +11,11 @@ render them. Signal a stop by ending the turn on the single 👉 question and wa
 > `detect_environment` menu handled in `phase2-data-mapping.md` at **step 18a** — after that
 > source's mapper has been written, run, reviewed and documented (steps 12–18), so the
 > transformation output step 22 samples below actually exists. When the bootcamper explicitly
-> chooses **test_load** or **load+resolve** at that menu, follow the workflow below
+> chooses **test_load** at that menu, follow the workflow below
 > (`mapping_workflow` steps 5–8, Steps 21–26) unchanged. When sources remain unmapped, the
-> Phase 2 guidance instead recommends **skip** and continues to the next source: the real
-> production load is still deferred to Data processing in either case.
+> Phase 2 guidance instead recommends **skip** and continues to the next source; at the last
+> source, a step-16 answer that proceeds to loading settles it as **skip**. The real production
+> load is still deferred to Data processing in every case.
 
 **Before starting Phase 3:** The Senzing SDK must be installed and configured (SDK setup). If it
 is not yet set up, inform the bootcamper: "Phase 3 requires the Senzing SDK (from SDK setup). You can
