@@ -1181,6 +1181,7 @@ does not exist; on a copy failure, log and continue):
 | `src/query/**` | `production/src/query/` | Query/discovery code |
 | `src/utils/**` | `production/src/utils/` | Shared helpers |
 | `data/senzing-ready/**` | `production/data/senzing-ready/` | Senzing-ready data |
+| `config/data_sources.yaml` | `production/config/data_sources.yaml` | Data-source registry, written as a projection (below), not copied whole |
 | `requirements.txt` / `pom.xml` / `Cargo.toml` / `package.json` / `*.csproj` | `production/` | Dependency manifest |
 
 ⛔ **Every destination above keeps the source's path relative to the project root, and
@@ -1189,6 +1190,28 @@ input from `data/senzing-ready/` (INV-084 — `../module-06-data-processing/phas
 step "Mapped sources"), so flattening the data to `production/data/` hands the bootcamper a project
 whose loader points at a directory that does not exist. Copy the tree, do not rewrite the code: the
 loader is theirs, and a path edited by graduation is a change they never saw made.
+
+⛔ **(INV-186) `config/data_sources.yaml` is written to `production/config/data_sources.yaml` as a
+projection, never copied whole, and never left out.** The multi-source orchestrator in `src/load/**`
+reads each source's registry entry when it runs (`../module-06-data-processing/phaseC-multi-source.md`
+step 17, INV-320), so without the registry at that path the copied loader stops at its first lookup.
+The projection describes what production loads, not what the evaluation loaded:
+
+- **Keep only:** `version`, the `sources:` mapping with its keys as the registry has them, and per
+  source `name`, `file_path` and `format`.
+- **Strip:** every other field, including `load_subset:`, `sample:`, `quality_score`,
+  `quality_intent`, `provenance`, `validation_status`, `validation_checks`, `mapping_status`,
+  `load_status`, `record_count`, `expected_record_count`, `file_size_bytes` and the timestamps.
+- **Sources:** every source whose `file_path` is non-null, fast-pathed sources included (their
+  `data/raw/` input is disclosed as the paragraph on fast-pathed sources below says). Omit a source
+  whose `file_path` is null, such as a documented-location-only source.
+- **Why `load_subset:` goes:** it is the evaluation's limit. An `overlap_preserving` block names a
+  subset file under the excluded `data/subsets/` (below), and a `first_n` block's `limit` is the
+  evaluation's license or SQLite cap. A source with no block loads its whole registry `file_path`
+  (step 17), which is what production loads. `sample:` goes for the same reason: its file is under
+  the excluded `data/samples/`.
+- **Merge** regenerates the projection, as it does every generated file. A missing registry is
+  skipped like any other missing source; a write failure is logged and the step continues.
 
 Create `production/database/.gitkeep` as an empty placeholder (never copy the
 eval database itself).
@@ -1248,6 +1271,11 @@ the files are exactly as they were before this paragraph.
 ## Step 4: Production README and migration checklist
 
 - **`production/README.md`:** parameterized by `programming_language`, `database_type`, and the data sources from `config/data_sources.yaml`. Use no bootcamp language (no "bootcamp", "module", "track", or "bootcamper"). Sections: Project Overview, Prerequisites, Installation, Configuration, Usage, Project Structure. Show it to the bootcamper and apply any requested revisions.
+  - **Configuration names the registry.** Say that `config/data_sources.yaml` is the registry the
+    loader reads, holding each source's `file_path` and `format` (the Step 2 projection). Then name
+    each source the evaluation loaded as a subset (one whose bootcamp registry entry has a
+    `load_subset:` block), and say that production loads its whole `file_path`. No source was loaded
+    as a subset → omit that sentence.
   - **Where `integration_targets` is known** (INV-097), name those systems in **Project Overview** as what the resolved entities are meant to feed, and in **Configuration** as the integration points a reader will need to wire up — the resolved data exists to reach them, so a README that never mentions them describes half the job. Absent → omit; never write "none" or a placeholder.
 - **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the bootcamp does not include dedicated performance/security/monitoring/deployment modules, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) are not covered in depth during the bootcamp: complete these items before deploying," and mark those items with ⚠️.
   - **The Performance section MUST carry the DEFAULT-flags item** — ⚠️ *"Replace `*_DEFAULT_FLAGS`
@@ -1282,7 +1310,9 @@ above, the `- [ ]` checkboxes, and the tables are content, not formatting.
 
 Always generate `production/GRADUATION_REPORT.md`, even if earlier steps had
 errors. Include: completion timestamp, bootcamp path (Core/Customized) and the modules completed,
-`programming_language`, `database_type`, a files-generated table, a files-excluded table, and
+`programming_language`, `database_type`, a files-generated table (it lists
+`production/config/data_sources.yaml`, the Step 2 registry projection, with the other generated
+files), a files-excluded table, and
 next steps (fill in secrets, obtain a production license, work through the
 checklist, configure CI/CD, test with production data). Record the Module 1 answers too when
 present — the intended `deployment_target`/`cloud_provider` and the `integration_targets`
