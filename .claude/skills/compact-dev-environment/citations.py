@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Citation census and referential-integrity check for the SBCP dev environment.
 
-`compact-dev-environment` merges invariants, archives specs and prunes feedback. Every
-one of those operations can break a reference, and the references here are dense enough
+`compact-dev-environment` proposes invariant merges, merges test traversals and prunes
+feedback, and reads the frozen specs archive without changing it. Every change it makes or
+proposes can break a reference, and the references here are dense enough
 that eyeballing them is not a plan: on 2026-08-12 this repo held **6,265** live
 `INV-NNN` citations across shipped plugin text, specs, tests and skills — plus 990 more
 in commit messages, which cannot be edited and are therefore outside anything this script

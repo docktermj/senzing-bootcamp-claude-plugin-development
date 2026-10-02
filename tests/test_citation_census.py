@@ -1,6 +1,7 @@
 r"""The citation census behind `compact-dev-environment`.
 
-That skill merges invariants, archives specs and prunes feedback. Each of those can
+That skill proposes invariant merges, merges test traversals and prunes feedback, and it
+reads the frozen specs archive without changing it. Each change it makes or proposes can
 break a reference, and the reference density here rules out doing it by eye: 4,614 live
 `INV-NNN` citations across shipped plugin text, specs, tests and skills on 2026-07-30.
 
