@@ -22,6 +22,7 @@ file as its enforcer. INV-121's coverage here is path-scoped by design -- see it
 
 Run:  python3 -m unittest discover -s tests
 """
+import ast
 import os
 import re
 import subprocess
@@ -1043,6 +1044,71 @@ class TestTheRendererIsFindable(unittest.TestCase):
         for forbidden in ("add_argument", "ArgumentParser", "REQUIRED_SECTIONS"):
             with self.subTest(forbidden=forbidden):
                 self.assertNotIn(forbidden, body.split('"""', 2)[-1])
+
+    # The alias is "for findability", so it must describe itself as a renderer for any
+    # document: following its own usage example once put the discoveries subtitle on a
+    # Business Problem cover, and its --help introduced it as the discoveries renderer (#324).
+    BUSINESS_PROBLEM_SUBTITLE = "The problem this bootcamp set out to solve"
+    DISCOVERIES_HELP = "Render the data-discoveries Markdown into a PDF deliverable."
+
+    @staticmethod
+    def help_description(script):
+        """The description paragraph `--help` prints between the usage block and the options."""
+        result = subprocess.run(
+            [sys.executable, script, "--help"],
+            capture_output=True, text=True,
+            env=dict(os.environ, COLUMNS="200"),  # no wrapping: compare the line whole
+        )
+        if result.returncode != 0:
+            raise AssertionError(f"{script} --help exited {result.returncode}: {result.stderr}")
+        paragraphs = [p for p in re.split(r"\n\s*\n", result.stdout) if p.strip()]
+        if not paragraphs or not paragraphs[0].startswith("usage:"):
+            raise AssertionError(f"unexpected --help layout:\n{result.stdout}")
+        return " ".join(paragraphs[1].split())
+
+    @staticmethod
+    def wrapper_docstring_source():
+        """The docstring exactly as written, so `\\`-continued example lines stay separate."""
+        with open(WRAPPER, encoding="utf-8") as handle:
+            return handle.read().split('"""', 2)[1]
+
+    def wrapper_usage_example(self):
+        """The reST literal block that follows the docstring's `::` line."""
+        lines = self.wrapper_docstring_source().splitlines()
+        start = next(i for i, line in enumerate(lines) if line.rstrip().endswith("::"))
+        block = []
+        for line in lines[start + 1:]:
+            if line.strip() and not line.startswith("    "):
+                break
+            block.append(line)
+        return "\n".join(block)
+
+    def test_the_wrappers_help_introduces_it_in_its_own_words(self):
+        with open(WRAPPER, encoding="utf-8") as handle:
+            first_line = ast.get_docstring(ast.parse(handle.read())).splitlines()[0]
+        description = self.help_description(WRAPPER)
+        self.assertEqual(first_line, description)
+        self.assertNotIn("data-discoveries", description)
+
+    def test_the_discoveries_help_is_unchanged(self):
+        self.assertEqual(self.DISCOVERIES_HELP, self.help_description(SCRIPT))
+
+    def test_the_wrappers_usage_example_passes_a_non_discoveries_subtitle(self):
+        example = self.wrapper_usage_example()
+        self.assertIn("generate_document_pdf.py", example)
+        self.assertIn("--require-sections", example)
+        self.assertIn(f'--subtitle "{self.BUSINESS_PROBLEM_SUBTITLE}"', example)
+        self.assertNotEqual(load_generator_module().COVER_SUBTITLE,
+                            self.BUSINESS_PROBLEM_SUBTITLE)
+        with open(GRADUATION, encoding="utf-8") as handle:
+            self.assertIn(f'--subtitle "{self.BUSINESS_PROBLEM_SUBTITLE}"', handle.read(),
+                          "the example's subtitle no longer matches graduation Step 5b's")
+
+    def test_the_wrapper_warns_to_pass_subtitle_and_names_the_default(self):
+        paragraphs = re.split(r"\n\s*\n", self.wrapper_docstring_source())
+        warning = [p for p in paragraphs if p.startswith("⛔ **Pass `--subtitle`")]
+        self.assertEqual(1, len(warning), "no ⛔ Pass `--subtitle` note in the docstring")
+        self.assertIn(load_generator_module().COVER_SUBTITLE, " ".join(warning[0].split()))
 
     def test_the_wrapper_reports_a_broken_install_rather_than_crashing(self):
         self.assertRegex(
