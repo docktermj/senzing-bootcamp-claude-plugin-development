@@ -186,7 +186,7 @@ class TheMarkerStringIsUnchanged(unittest.TestCase):
         self.assertGreaterEqual(
             len(self.sites), 4,
             "fewer than four shipped files match the marker verbatim (found %d: %s). The "
-            "spec's whole caution is that four files match this exact string, so a rename "
+            "spec's whole caution is that several shipped files match this exact string, so a rename "
             "fails silently — either one was edited, or this scan no longer reads them"
             % (len(self.sites), [p.name for p in self.sites]))
 
@@ -276,7 +276,7 @@ class GraduationSaysTheDropNeedsNoAction(unittest.TestCase):
         self.assertRegex(
             self.flat, r"(?i)do not edit the marker out of the Markdown",
             "graduation does not warn against the tempting wrong fix — removing the emoji — "
-            "which the spec flags as a rename across four files with a silent failure mode")
+            "which the spec flags as a rename across several files with a silent failure mode")
 
     def test_step_5b_says_the_exemption_is_the_marker_line_only(self):
         self.assertRegex(
