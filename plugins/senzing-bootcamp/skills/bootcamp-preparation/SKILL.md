@@ -441,7 +441,7 @@ suppressed, so an honored preference is visible rather than looking like a quest
 - **The module list is separated by semicolons, not commas.** Two display names contain internal
   commas — *Data Quality, Mapping, and Transformation* and *Query, Visualize and Discover* — so a
   comma-separated Core list reads as **fourteen** modules instead of eleven. This is the same reason
-  `generate_recap_pdf.py --check --expect-modules` takes a semicolon-separated list. The names
+  `generate_recap_pdf.py`'s `--check --expect-modules` takes a semicolon-separated list. The names
   themselves must stay verbatim (INV-079), so the separator is the only place this can be fixed.
 - **The label is "Programming language", never the bare "Language"** — the rule stated in Step 4
   above, and it applies to every bootcamper-facing line, not only to the question.
