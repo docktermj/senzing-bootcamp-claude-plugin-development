@@ -41,11 +41,20 @@ skill. ⚠️ It does **not** read `/production-readiness-audit`, which states t
 in its own words, and it cannot establish that a live run records before it fixes -- only a real
 `/dry-run` phase 3 observes a turn.
 
+⚠️ **Dated note, 2026-10-02 (#395): it now reads `/auto-test` as well.**
+`AutoTestRecordsBeforeItFixes` pins `/auto-test`'s "What to do with a finding" section to
+INV-317's order: the record-first sentence, citing INV-317, comes before "fix the class"; a
+scheduled run's report becomes findings only at the maintainer's triage, which records first;
+and a server-side finding is recorded first too. Until #395 that section restated dry-run's
+rules fix-first. A negative control removes the sentence, puts it back in fix-first order, and
+restores the pre-#395 wording, and each turns the check red. It still does not read
+`/production-readiness-audit`, and it cannot observe a live `/auto-test` triage.
+
 Enforces **INV-318** (no maintainer command or skill applies `unattended-ok` to an issue it files)
 through the same `SAME_WORDS` pin, at `/dry-run`'s skill. ⚠️ It cannot establish that a live run
 refrains from labeling -- it pins the sentence where it is written.
 
-Source issue: #153.
+Source issues: #153, #395.
 
 Stdlib only; every file is read as text (INV-108).
 
@@ -61,6 +70,7 @@ SKILL = DRY_RUN / "SKILL.md"
 PHASE3 = DRY_RUN / "phase3-conversational.md"
 FEEDBACK = REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "SKILL.md"
 README = REPO_ROOT / "specs" / "README.md"
+AUTO_TEST = REPO_ROOT / ".claude" / "skills" / "auto-test" / "SKILL.md"
 
 #: Wordings that name `specs/` (or a spec file) as where a finding GOES. Matched on normalized
 #: text (see `norm`). A match preceded closely by a negation -- "never write it into `specs/`" --
@@ -344,6 +354,101 @@ class TheSkillSaysItInTheSameWords(unittest.TestCase):
         self.assertEqual([], missing,
                          "%s does not carry the finding lifecycle in the shared words: %s"
                          % (SKILL.name, missing))
+
+
+#: `/auto-test`'s record-first sentence (#395). Normalized text, as `norm` produces it.
+AUTO_TEST_RECORD = ("(inv-317) record each finding as you find it, before fixing anything: in "
+                    "the run's dated `specs/implemented.md` entry, marked not yet filed, or as a "
+                    "github issue filed after the maintainer's yes (inv-314)")
+#: The first fix step. It must come after the record, never before.
+AUTO_TEST_FIX = "fix the class not the instance"
+AUTO_TEST_AFTER = "only after the record, in dry-run's order"
+AUTO_TEST_REPORT = ("(inv-317) a scheduled run's `report.json` or log is raw output, not a "
+                    "recorded finding.")
+AUTO_TEST_TRIAGE = ("its lines become findings when the maintainer triages the report, and that "
+                    "triage records each one, as above, before fixing it")
+AUTO_TEST_SERVER_RECORD = "the fix is not in this repo. record it first, as above."
+AUTO_TEST_SERVER_BAN = "not via `submit_feedback` from an automated run"
+
+#: The section as it read before #395: dry-run's rules restated fix-first.
+AUTO_TEST_BEFORE_395 = """## What to do with a finding
+
+Follow [`dry-run`](../dry-run/SKILL.md)'s rules — they apply unchanged: fix the class
+not the instance, write a repo-level test, ⛔ **negative-control it**, record it in
+`specs/IMPLEMENTED.md`, and register or explicitly disclaim the invariant in
+`specs/INVARIANTS.md`.
+
+For a **server-side** finding (`doc-incomplete`, `silent-accept`, `doc-wrong`) the
+fix is not in this repo. Note it, work around it in the plugin if it can mislead a
+bootcamper, and consider reporting it upstream — but ⛔ **not** via `submit_feedback`
+from an automated run.
+"""
+
+
+def finding_section(text):
+    """`/auto-test`'s "What to do with a finding" section, up to the next heading; None if absent."""
+    start = text.find("## What to do with a finding")
+    if start == -1:
+        return None
+    end = text.find("\n## ", start + 1)
+    return text[start:end if end != -1 else len(text)]
+
+
+def record_first_problems(section):
+    """What keeps `section` from stating INV-317's record-first order; empty when it does."""
+    if section is None:
+        return ["no 'What to do with a finding' section"]
+    flat = norm(section)
+    problems = []
+    for clause, why in ((AUTO_TEST_RECORD, "the record-first sentence, citing INV-317"),
+                        (AUTO_TEST_FIX, "the first fix step"),
+                        (AUTO_TEST_AFTER, "'only after the record'"),
+                        (AUTO_TEST_REPORT, "the scheduled run's report is not a recorded finding"),
+                        (AUTO_TEST_TRIAGE, "the report becomes findings at the maintainer's triage"),
+                        (AUTO_TEST_SERVER_RECORD, "a server-side finding is recorded first"),
+                        (AUTO_TEST_SERVER_BAN, "no `submit_feedback` from an automated run")):
+        if clause not in flat:
+            problems.append("missing: %s" % why)
+    if AUTO_TEST_RECORD in flat and AUTO_TEST_FIX in flat:
+        if flat.index(AUTO_TEST_RECORD) > flat.index(AUTO_TEST_FIX):
+            problems.append("fix-first order: 'fix the class' comes before the record")
+    if AUTO_TEST_SERVER_RECORD in flat and AUTO_TEST_SERVER_BAN in flat:
+        if flat.index(AUTO_TEST_SERVER_RECORD) > flat.index(AUTO_TEST_SERVER_BAN):
+            problems.append("the server-side paragraph records after it reports")
+    return problems
+
+
+class AutoTestRecordsBeforeItFixes(unittest.TestCase):
+    """#395 -- ⛔ INV-317 at `/auto-test`: record each finding before fixing it, in dry-run's order."""
+
+    def test_the_section_states_the_record_first_order(self):
+        self.assertTrue(AUTO_TEST.is_file(), "%s is missing" % AUTO_TEST)
+        problems = record_first_problems(finding_section(read(AUTO_TEST)))
+        self.assertEqual([], problems,
+                         "auto-test/SKILL.md 'What to do with a finding' does not state INV-317's "
+                         "order: record each finding first, then fix it:\n  "
+                         + "\n  ".join(problems))
+
+    def test_negative_controls(self):
+        """Each mutation of the live section must turn the check red."""
+        live = finding_section(read(AUTO_TEST))
+        self.assertIsNotNone(live, "auto-test/SKILL.md has no 'What to do with a finding' section")
+        paragraphs = live.split("\n\n")
+        record = [p for p in paragraphs if AUTO_TEST_RECORD in norm(p)]
+        fix = [p for p in paragraphs if AUTO_TEST_FIX in norm(p)]
+        self.assertEqual((1, 1), (len(record), len(fix)),
+                         "the record and fix paragraphs cannot be told apart, so the controls "
+                         "below would mutate nothing")
+        removed = live.replace(record[0] + "\n\n", "")
+        swapped = (live.replace(record[0], "\0RECORD\0").replace(fix[0], record[0])
+                   .replace("\0RECORD\0", fix[0]))
+        for name, mutated in (("record-first sentence removed", removed),
+                              ("put back in fix-first order", swapped),
+                              ("the pre-#395 wording", AUTO_TEST_BEFORE_395)):
+            with self.subTest(control=name):
+                self.assertNotEqual(live, mutated, "the control changed nothing")
+                self.assertTrue(record_first_problems(mutated),
+                                "the check passes with the %s" % name)
 
 
 if __name__ == "__main__":

@@ -43,6 +43,59 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## auto-test-records-findings-first-and-the-implement-overlay-names-phase-6
+
+- **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #395, spec revision 1; from the `production-readiness-audit-2026-10-02` entry, findings B-F6, D-F6 and B-F9, `Source: self-observed (maintainer audit)`)
+- **Commit:** uncommitted
+- **Files changed:** `.claude/skills/auto-test/SKILL.md` ("What to do with a finding"), `.claude/skill-overlays/implement-github-issue.md` (the ledger section's heading and its phase order; the CI section's pointer to it), `tests/test_spec_ledger_invariants.py` (`TestTheLedgerIsVerifiedAfterItIsWritten` and the module docstring), `tests/test_dry_run_files_issues.py` (new `AutoTestRecordsBeforeItFixes` and the module docstring's INV-317 paragraph), `tests/test_user_level_copies_govern.py` (docstrings only), `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md`, `invariant-manifest.json`, `autotest.py`, `transcript_lint.py`, the probe and the user-level copy under `~/.claude/skills/` are unchanged.
+- **MCP re-check:** server `sz-mcp-coworker` **1.37.19** (Senzing "current"), 2026-10-02, `get_capabilities` — **n/a (no Senzing fact)**, re-confirmed rather than assumed: every changed line is about this repository's maintainer process (when a finding is recorded, where the ledger write sits in the implement run, what a test guard can see). No changed line states an SDK method, an engine behavior, a Senzing document or an MCP tool's behavior. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** implemented directly (Phase 5a), built on `b519779`. The issue named every site; `auto-test`'s section sat at `SKILL.md:171-181` and the overlay heading at `implement-github-issue.md:96`, as the issue says.
+- **Summary:**
+  - **`/auto-test` records first.** "What to do with a finding" now follows dry-run's order. Its first rule is "⛔ (INV-317) Record each finding as you find it, before fixing anything": in the run's dated `specs/IMPLEMENTED.md` entry marked not yet filed, or as a GitHub issue filed after the maintainer's yes (INV-314), never in a new file under `specs/` (INV-307). Then "Only after the record, in dry-run's order (its steps 2 to 6)" come the fix of the class, the repo-level test, the negative control, recording the outcome in the same entry, and registering or disclaiming the invariant. The pointer to dry-run's rules is kept.
+  - **A scheduled run's report.** A new ⛔ (INV-317) rule says a scheduled `autotest.py` run's `report.json` or log is raw output, not a recorded finding: its lines become findings when the maintainer triages the report, and that triage records each one before fixing it.
+  - **Server-side findings.** The paragraph now says "Record it first, as above" before the workaround and the upstream report; "⛔ not via `submit_feedback` from an automated run" is unchanged.
+  - **The overlay names the governing copy's phase.** "## Step 4: Record the implementation" is now "## Phase 6: Record the implementation". It places the work in three numbered steps: Phase 6 writes the entry after the tests pass and before the Phase 6 commit, in the same commit as the change; Phase 7 runs `citations.py verify` with the CI mirror, after the entry exists; and "⛔ (INV-207) After any later edit to the ledger, run `citations.py verify` again before Gate 2". A clean scan from before that edit does not count. The CI section's "see Step 4" now reads `see "Phase 6: Record the implementation" below`. The overlay has no "Step 4" left.
+  - **The INV-207 guard follows the rename.** `step_four()` is now `phase_six()`, reading the section under the new heading, and the tests are renamed to match. The three pinned things are unchanged (the scan after the entry, its reason, a count is not a result). Two tests are new: `test_the_overlay_names_no_step_the_governing_copy_lacks` (no `\bStep 4\b` anywhere in the overlay, and the CI section points at the renamed heading) and `test_phase_six_places_the_entry_and_the_scan_in_the_governing_phases` (the five placement clauses, stated in phase order).
+  - **The INV-337 guard states its limit.** A comment at `GOVERNED`, and a sentence in the module docstring's INV-337 paragraph, say it is a fixed list. The guard cannot find a skill governed at user level that the list leaves out, because CI cannot list `~/.claude` (INV-308), and adding a name is a manual step whenever an overlay is added.
+  - **Record-first guard.** `AutoTestRecordsBeforeItFixes` slices auto-test's "What to do with a finding" section. It requires the record-first sentence citing INV-317 to come before "fix the class not the instance", along with "only after the record", the scheduled-report rule and its triage sentence. In the server-side paragraph, "record it first, as above" must come before the `submit_feedback` ban. Its `test_negative_controls` deletes the record paragraph, swaps it behind the fix paragraph, and substitutes the pre-#395 section, and asserts the check reports each one.
+  - **Controls against the real files** (each file copied to the run's scratch directory first, then copied back, and `cmp` reported it identical):
+    - Pre-#395 `auto-test/SKILL.md` (`git show origin/main:`): `AutoTestRecordsBeforeItFixes` gave `FAILED (failures=2)`. Five clauses were missing, among them "the record-first sentence, citing INV-317".
+    - The record paragraph moved behind the fix paragraph: `FAILED (failures=2)`, "fix-first order: 'fix the class' comes before the record".
+    - Pre-#395 overlay: `TestTheLedgerIsVerifiedAfterItIsWritten` gave `FAILED (failures=1, errors=4)`, the heading not found.
+    - The overlay's re-run step deleted: `FAILED (failures=2, errors=1)`, with the re-run and does-not-count patterns missing.
+    - On the edited files both classes pass.
+- **Not changed, recorded:** auto-test's "⛔ **negative-control it**" line is byte-identical to `origin/main`. The record-first order was written around it rather than by rewrapping it, so the line is not new and keeps its place in the standing uncited backlog. No invariant governs negative controls in general. INV-207's statement still says its guard pins "`implement-spec`'s Step 4", and its 2026-09-29 correction already moves the site to this overlay, which is still the file read. The heading inside the file is now "Phase 6". No amendment is drafted for that; adding a note is the maintainer's call.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`), of `pending_invariants.py list` and `check`, and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **Differs from the issue:** none in substance. The issue asks for the INV-317 site list to change through `/review-invariants`, not by a direct edit, so the change is the PROPOSED AMENDMENT below and `specs/INVARIANTS.md` is not edited (INV-307; the `unattended-issue-loop` overlay). The issue calls the drafted text a "dated correction". It is written as a ⚠️ dated note because it adds a site to the list and changes no meaning. If the maintainer reads the incomplete site list as a meaning change, it can be re-marked ⛔ when applied.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-317 — awaiting the maintainer's sign-off; NOT applied.**
+    - ⛔ **(INV-317) Record each finding as you find it, before fixing anything:** — in `.claude/skills/auto-test/SKILL.md`
+    - ⛔ **(INV-317) A scheduled run's `report.json` or log is raw output, not a recorded finding.** — in `.claude/skills/auto-test/SKILL.md`
+
+  ⚠️ **Why.** INV-317 binds "a maintainer run that produces findings", and `/auto-test` is one.
+  Its site list does not name it: "It ships today in `/dry-run` (its command, skill and phase 3) and in `/production-readiness-audit` (its command and Step 8, which says to follow dry-run's discipline)."
+  Until #395, `/auto-test`'s "What to do with a finding" restated dry-run's rules fix-first. It
+  now states the rule and cites INV-317 at both lines above, and
+  `tests/test_dry_run_files_issues.py` (the enforcer INV-317 already names) pins it. Without the
+  note, a reader of INV-317 cannot tell `/auto-test` is bound, and a later edit that puts its
+  steps back in fix-first order looks unregulated.
+
+  **Sites it affects:** INV-317 in `specs/INVARIANTS.md` (the note goes after its existing
+  2026-10-01 note, #285), and its statement in `invariant-manifest.json`, regenerated from it
+  (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit. `EXPECTED_PAIRS`
+  is unchanged, because INV-317 already names `tests/test_dry_run_files_issues.py`. The shipped
+  sites are the two ⛔ lines above, which already cite INV-317. Applying the amendment resolves
+  the block: mark the bullet `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording, to append after INV-317's existing 2026-10-01 note:
+
+  **INV-317** — … (⚠️ **Dated note, 2026-10-02 (#395): `/auto-test` is a site too; no requirement changes.** The site list above names only `/dry-run` and `/production-readiness-audit`. `/auto-test`'s "What to do with a finding" section also ships the rule: it records each finding before fixing it, in dry-run's order, as a GitHub issue filed after the maintainer's yes or in the run's dated `specs/IMPLEMENTED.md` entry marked not yet filed. It also says a scheduled `autotest.py` run's `report.json` or log is raw output, not a recorded finding; its lines become findings when the maintainer triages the report, and that triage records each one before fixing it. Until #395 the section restated dry-run's rules fix-first. Read the site list as also naming that section. The rules above still bind. Enforced by `tests/test_dry_run_files_issues.py`, whose `AutoTestRecordsBeforeItFixes` pins the section's record-first order, with a negative control that removes the record, puts it back in fix-first order, and restores the pre-#395 wording.)
+
+  *(written as NNN deliberately: no new id is drafted, because this appends a note to INV-317
+  and a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant** (INV-309). The two new ⛔ lines in `/auto-test` state INV-317 and cite it. The overlay's new ⛔ line states INV-207's verify-after-record rule for a later ledger edit and cites it. The `GOVERNED` comment states INV-308's limit for INV-337's guard. No ⛔ line is demoted.
+
 ## module-5-synthesized-source-disclosure-is-deferred-and-drops-borrowed-citations
 
 - **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #394, spec revision 1; from the `production-readiness-audit-2026-10-02` entry, finding A-F4, `Source: self-observed (maintainer audit)`)

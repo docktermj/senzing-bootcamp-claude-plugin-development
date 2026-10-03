@@ -40,7 +40,7 @@ files end in `.yaml`, not `.yml`**, so read `.github/workflows/*.yaml`.
 - **`lint-workflows.yaml` calls a remote reusable workflow and cannot run locally.** Carry it
   to Gate 2 as a known gap. It skips itself when no workflow file changes.
 - **`python3 .claude/skills/compact-dev-environment/citations.py verify`** is not in CI but is
-  required here; see Step 4 for when to run it.
+  required here; see "Phase 6: Record the implementation" below for when to run it.
 
 ## ⛔ (INV-309) Invariant capture is a gate on closing, not a step to remember
 
@@ -93,10 +93,20 @@ suite certifying both.
 implementing the corrected version. The next reader needs to know the issue and the change
 differ, and why.
 
-## Step 4: Record the implementation
+## Phase 6: Record the implementation
 
 Write the `specs/IMPLEMENTED.md` entry — what changed, the `MCP re-check` outcome, and the
 invariant answer the gate above requires.
+
+**Where it sits in the governing copy's phases:**
+
+1. **Phase 6:** write the entry after the tests pass and before the Phase 6 commit, and put it
+   in the same commit as the change and its tests.
+2. **Phase 7:** run `citations.py verify` with the rest of the local CI mirror, after the entry
+   exists.
+3. ⛔ **(INV-207) After any later edit to the ledger, run `citations.py verify` again before
+   Gate 2** — a Phase 7 fix that changes the entry, or a correction to it. A clean scan from
+   before that edit does not count: it measured a ledger that no longer exists.
 
 ⛔ **Run `citations.py verify` AFTER the entry is written, never before.** Naming the command
 without the ordering is what already failed: a run took the scan during its criterion walk,
