@@ -18,6 +18,19 @@ These tests pin the fix:
 
 The first two predicates are negative-controlled against the pre-#338 lines, held below.
 
+A file-name pattern cannot tell a partial file from a full one, so #396 adds section-scoped checks
+(each section runs from its `### ` heading to the next `### ` heading):
+
+- step 14 writes its test run to `data/mapping/{source}_sample.jsonl`, in the instruction itself;
+- step 15 writes its test run to `data/mapping/{source}_quality.jsonl`, passes that path as the
+  workflow-step-4 `output_path`, and keeps it there even when the run covers every record;
+- neither section names `data/senzing-ready/` at all, whatever the file name;
+- step 18 runs the transformation program on the whole source into
+  `data/senzing-ready/[name].jsonl`, so the folder Data processing loads from is still filled.
+
+These are negative-controlled against the pre-#396 step 14 and 15 openings, held below, and
+against a `data/senzing-ready/` path of any name injected into either section.
+
 Enforces **INV-084**'s 2026-10-02 note (#338): `data/senzing-ready/` holds only each mapped
 source's full, load-ready output. It asserts what the guidance *states*, and does **not** establish
 that a live run writes no partial file there, which only `dry-run` phase 3 can observe.
@@ -35,6 +48,8 @@ PHASE2 = os.path.join(SKILLS, "module-05-data-quality-mapping", "phase2-data-map
 PHASE_A = os.path.join(SKILLS, "module-06-data-processing", "phaseA-build-loading.md")
 PHASE_B = os.path.join(SKILLS, "module-06-data-processing", "phaseB-load-first-source.md")
 
+STEP14_HEAD = "### 14. Test"
+STEP15_HEAD = "### 15. Quality analysis"
 STEP18_HEAD = "### 18. Save and document"
 
 # The lines as they stood before #338, verbatim, for the negative controls.
@@ -42,6 +57,19 @@ OLD_STEP18_LINE = "- Sample output in `data/senzing-ready/[name]_sample.jsonl`."
 OLD_STEP14_EXAMPLE = (
     '>   data/senzing-ready/customers_sample.jsonl").'
 )
+
+# The step 14 and 15 openings as they stood before #396, verbatim, for the negative controls.
+OLD_STEP14_OPENING = "Run on 10-100 records from `data/samples/`. Validate with"
+OLD_STEP15_OPENING = (
+    "Run on 1000+ records. Evaluate feature distribution, coverage, quality scores. This is "
+    "workflow\nstep 4's single advance: `action='advance'`, carrying `verdict` in `data` — "
+    "`approve`,\n`rework_mapping`, or `rework_code` — plus `output_path` and `records_output`. "
+    "A `rework_*` verdict"
+)
+
+STEP14_OUTPUT = "`data/mapping/{source}_sample.jsonl`"
+STEP15_OUTPUT = "`data/mapping/{source}_quality.jsonl`"
+STEP18_FULL_OUTPUT = "`data/senzing-ready/[name].jsonl`"
 
 # A `data/senzing-ready/` path (either separator) whose file name ends in `_sample.jsonl`.
 SAMPLE_IN_SENZING_READY = re.compile(
@@ -61,11 +89,48 @@ def flat(text):
     return re.sub(r"\s+", " ", text)
 
 
-def step18_section(text):
-    """Step 18, from its heading up to the next `### ` heading."""
-    start = text.index(STEP18_HEAD)
-    end = text.find("\n### ", start + len(STEP18_HEAD))
+def section(text, head):
+    """One step, from its heading up to the next `### ` heading."""
+    start = text.index(head)
+    end = text.find("\n### ", start + len(head))
     return text[start:end if end != -1 else len(text)]
+
+
+def step18_section(text):
+    return section(text, STEP18_HEAD)
+
+
+def instruction_text(section_text):
+    """The section without its `>` presentation blocks, so an example cannot stand in for the rule."""
+    return flat("\n".join(
+        line for line in section_text.splitlines() if not line.lstrip().startswith(">")
+    ))
+
+
+def names_senzing_ready(section_text):
+    """Any mention of the load-ready folder, whatever file name follows it (#396)."""
+    return re.search(r"senzing-ready", section_text) is not None
+
+
+def step14_writes_to_mapping(section_text):
+    return STEP14_OUTPUT in instruction_text(section_text)
+
+
+def step15_writes_to_mapping(section_text):
+    body = instruction_text(section_text)
+    return (
+        f"write its output to {STEP15_OUTPUT}" in body
+        and f"`output_path` ({STEP15_OUTPUT})" in body
+        and "even when the run covers every record" in body
+    )
+
+
+def step18_writes_full_output(section_text):
+    body = flat(section_text)
+    return (
+        "run the transformation program on the whole source and write "
+        f"{STEP18_FULL_OUTPUT}" in body
+    )
 
 
 def places_sample_in_mapping(section):
@@ -130,6 +195,87 @@ class TestNoSampleIsDirectedIntoSenzingReady(unittest.TestCase):
         self.assertFalse(names_sample_in_senzing_ready("`data/senzing-ready/customers.jsonl`"))
         self.assertFalse(names_sample_in_senzing_ready("`data/mapping/customers_sample.jsonl`"))
         self.assertFalse(names_sample_in_senzing_ready("`data/senzing-ready/*.jsonl`"))
+
+
+class TestTestRunsStayInDataMapping(unittest.TestCase):
+    """Steps 14 and 15 are test runs: they write to `data/mapping/` only (#396, INV-084)."""
+
+    def setUp(self):
+        self.text = read(PHASE2)
+        self.s14 = section(self.text, STEP14_HEAD)
+        self.s15 = section(self.text, STEP15_HEAD)
+
+    def test_sections_end_at_the_next_step(self):
+        self.assertNotIn(STEP15_HEAD, self.s14)
+        self.assertNotIn("### 16.", self.s15)
+
+    def test_step14_names_its_sample_output_in_the_instruction(self):
+        self.assertTrue(step14_writes_to_mapping(self.s14),
+                        f"Step 14 must write its test run to {STEP14_OUTPUT} (#396).")
+        self.assertFalse(names_senzing_ready(self.s14),
+                         "Step 14 is a test run and must name no `data/senzing-ready/` path.")
+
+    def test_step15_names_its_output_and_output_path(self):
+        self.assertTrue(
+            step15_writes_to_mapping(self.s15),
+            f"Step 15 must write to {STEP15_OUTPUT}, pass it as `output_path`, and keep it there "
+            "even when the run covers every record (#396).",
+        )
+        self.assertFalse(names_senzing_ready(self.s15),
+                         "Step 15 is a test run and must name no `data/senzing-ready/` path.")
+
+    def test_steps_14_and_15_write_different_files(self):
+        self.assertNotIn(STEP15_OUTPUT, self.s14)
+        self.assertNotIn(STEP14_OUTPUT, self.s15)
+
+    def test_negative_control_rejects_the_old_openings(self):
+        new14 = self.s14[self.s14.index("Run the transformation program"):
+                         self.s14.index("Validate with") + len("Validate with")]
+        old14 = self.s14.replace(new14, OLD_STEP14_OPENING)
+        self.assertNotEqual(old14, self.s14)
+        self.assertFalse(step14_writes_to_mapping(old14))
+
+        new15 = self.s15[self.s15.index("Run the transformation program"):
+                         self.s15.index("A `rework_*` verdict") + len("A `rework_*` verdict")]
+        old15 = self.s15.replace(new15, OLD_STEP15_OPENING)
+        self.assertNotEqual(old15, self.s15)
+        self.assertFalse(step15_writes_to_mapping(old15))
+
+    def test_negative_control_an_example_alone_does_not_count(self):
+        only_example = self.s14.replace(
+            f"write its output to\n{STEP14_OUTPUT}", "write its output somewhere"
+        )
+        self.assertNotEqual(only_example, self.s14)
+        self.assertIn("data/mapping/customers_sample.jsonl", only_example)
+        self.assertFalse(step14_writes_to_mapping(only_example))
+
+    def test_negative_control_rejects_any_senzing_ready_path(self):
+        for name in ("customers.jsonl", "customers_partial.jsonl", "x_subset.jsonl", ""):
+            for sec in (self.s14, self.s15):
+                for sep in ("/", "\\"):
+                    injected = sec + f"\nWrite the run to `data{sep}senzing-ready{sep}{name}`.\n"
+                    self.assertTrue(names_senzing_ready(injected), (name, sep))
+
+
+class TestStep18WritesTheFullOutput(unittest.TestCase):
+    """The load-ready file comes from step 18 alone, so `data/senzing-ready/` is still filled (#396)."""
+
+    def test_step18_runs_the_whole_source_into_senzing_ready(self):
+        self.assertTrue(
+            step18_writes_full_output(step18_section(read(PHASE2))),
+            f"Step 18 must run the transformation program on the whole source into {STEP18_FULL_OUTPUT}.",
+        )
+
+    def test_full_output_matches_step12_example(self):
+        self.assertIn("data/senzing-ready/customers.jsonl", section(read(PHASE2), "### 12."))
+
+    def test_negative_control_rejects_step18_without_the_line(self):
+        s18 = step18_section(read(PHASE2))
+        start = s18.index("- Full output:")
+        end = s18.index("\n- ", start + 1)
+        without = s18[:start] + s18[end + 1:]
+        self.assertNotEqual(without, s18)
+        self.assertFalse(step18_writes_full_output(without))
 
 
 class TestDirectoryBasedDefinitionsStayDirectoryListings(unittest.TestCase):

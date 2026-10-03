@@ -1416,7 +1416,8 @@ gate green (INV-173). With **Keep as-is**, or no such section, change nothing.
 
 ### 14. Test
 
-Run on 10-100 records from `data/samples/`. Validate with
+Run the transformation program on 10-100 records from `data/samples/` and write its output to
+`data/mapping/{source}_sample.jsonl`, the sample step 18 records. Validate with
 `analyze_record(workspace_dir='data/mapping')` — ⛔ `workspace_dir` is a **required** parameter on
 this tool as well (INV-136), and it is where the analyzer script and its reports are written, so it
 takes the same project-local mapping directory as the workflow, which INV-200 requires of every
@@ -1437,9 +1438,14 @@ sample record, any observations.
 
 ### 15. Quality analysis
 
-Run on 1000+ records. Evaluate feature distribution, coverage, quality scores. This is workflow
+Run the transformation program on 1000+ records, or on every record when the source has 1000 or
+fewer, and write its output to `data/mapping/{source}_quality.jsonl`. The output stays there even
+when the run covers every record: this is a test run, and the load-ready file is step 18's alone.
+Its name differs from step 14's, so this run never overwrites the sample. Evaluate feature
+distribution, coverage, quality scores. This is workflow
 step 4's single advance: `action='advance'`, carrying `verdict` in `data` — `approve`,
-`rework_mapping`, or `rework_code` — plus `output_path` and `records_output`. A `rework_*` verdict
+`rework_mapping`, or `rework_code` — plus `output_path` (`data/mapping/{source}_quality.jsonl`)
+and `records_output`. A `rework_*` verdict
 is what routes step 17's iterate path. On `approve`, the response carries the workflow's Step 5
 (`detect_environment`) menu; keep its `state` and handle that menu at **step 18a**, after this
 source's mapper is written, reviewed and documented — not here. Tell the user: overall score, per-feature coverage with what
@@ -1575,6 +1581,9 @@ If issues are found, go back to the relevant step. Retest after changes.
 ### 18. Save and document
 
 - Program in `src/transform/`.
+- Full output: run the transformation program on the whole source and write
+  `data/senzing-ready/[name].jsonl`, the load-ready file Data processing loads. Point the source's
+  `file_path` in `config/data_sources.yaml` at it (step 17's registry note).
 - Docs in `docs/mapping/mapping_[name].md` (field mappings, logic, quality, how to run).
 - Sample output in `data/mapping/[name]_sample.jsonl`.
 - **Transformation lineage:** Create `docs/mapping/transformation_lineage_[name].md` for this
