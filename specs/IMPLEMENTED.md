@@ -43,6 +43,20 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## module-7-three-references-resolve-to-the-step-and-state-that-own-them
+
+- **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #388, spec revision 1; from the `production-readiness-audit-2026-10-02` entry, findings C-F3, C-F15 and C-F11 (Module 7 part), `Source: self-observed (maintainer audit)`)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md` (the step 3c capture command's port placeholder; the closing sentence after the integration table), `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2-discover.md` (Step 4a's record-ID source), `specs/IMPLEMENTED.md`. No test is added or changed, as the issue's Out of scope says. Module 3b's `<the port 2.3 actually bound>` is unchanged.
+- **MCP re-check:** server `sz-mcp-coworker` **1.37.19** (Senzing "current"), 2026-10-02, `get_capabilities`, `search_docs(query='RECORD_ID DATA_SOURCE record keys entity specification', category='data_mapping')` — **n/a (no Senzing fact)** for the port placeholder and the pattern list, re-confirmed rather than assumed: both are references inside the plugin. Step 4a's new wording names the record key `DATA_SOURCE` + `RECORD_ID`; the Entity Specification's "Attributes for the record key" section still says both sit at the root of each JSON record and that "retrieval uses `DATA_SOURCE` + `RECORD_ID`", so that fact **still holds**. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** implemented directly (Phase 5a), built on `8f5d8c1` (after #387). Each site was located by content: the issue's line numbers had drifted (the capture command sat at `:836`, the closing sentence at `:1134-1135`; `phase2-discover.md:57-58` had not moved).
+- **Summary:**
+  - **The capture command names step 3c.** `--url "http://localhost:<the port 3b actually bound>"` now reads `<the port 3c actually bound>`. In Module 7, step 3b is Quality evaluation and step 3c starts the results server; the old placeholder was Module 3b's `<the port 2.3 actually bound>` with the step id swapped. The form matches Module 3b's.
+  - **Step 4a takes record IDs from state a shipped step writes.** The reference to `config/bootcamp_progress.json` "under the Module 5 loading results" is gone: no shipped file writes loading results there, and loading is Module 6. Step 4a now reads each source's `file_path` from `config/data_sources.yaml`, the file Module 6 loaded (`module-06-data-processing/phaseA-build-loading.md` step 2), and takes `DATA_SOURCE` and `RECORD_ID` from its records. It names both locations `file_path` can point at, `data/senzing-ready/` for a mapped source and the original `data/raw/` file for a fast-pathed one, so the issue's edge case is covered.
+  - **The closing sentence names all six patterns.** It adds "or watchlist screening", matching the table's sixth row.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **Invariant:** this change **establishes no invariant** (INV-309). The three edits are one-off copy corrections, so they make every reference resolve to what it means and add no new guarantee. The issue scopes out a guard for these phrases, because a test would only pin the current wording. INV-122 and INV-193, which the issue names, are unchanged. No ⛔ line is added to the plugin, and none is demoted.
+
 ## module-7-step-3a-states-the-documented-why-key-details-requirement
 
 - **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #387, spec revision 1; from the `production-readiness-audit-2026-10-02` entry, finding C-F2, `Source: self-observed (maintainer audit)`)

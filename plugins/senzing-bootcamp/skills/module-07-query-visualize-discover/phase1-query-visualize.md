@@ -833,7 +833,7 @@ of the Truth Set. It MUST:
 
   ```bash
   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" \
-    --url "http://localhost:<the port 3b actually bound>" \
+    --url "http://localhost:<the port 3c actually bound>" \
     --name results_visualization --tabs all --query "<a name present in the loaded data>"
   ```
 
@@ -1132,4 +1132,5 @@ The caller knows the record IDs and data source codes they loaded; entity IDs ar
 Senzing.
 
 Present the integration options and help the bootcamper choose the pattern that fits their use
-case: batch reports, a REST API, streaming events, database sync, or duplicate detection.
+case: batch reports, a REST API, streaming events, database sync, duplicate detection, or
+watchlist screening.
