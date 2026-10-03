@@ -54,8 +54,10 @@ deliverable in INV-050's layout tree.
 ### Step 4a: Data pattern analysis
 
 Analyze the bootcamper's loaded data to identify interesting entities for the Discover
-demonstrations. Use the bootcamper's known record IDs (in `config/bootcamp_progress.json` under
-the Module 5 loading results, or from the data sources in `config/data_sources.yaml`).
+demonstrations. Use the bootcamper's known record IDs, taken from the files Module 6 loaded: for
+each source, read its `file_path` from `config/data_sources.yaml` (in `data/senzing-ready/` for a
+mapped source, the original `data/raw/` file for a fast-pathed one) and take `DATA_SOURCE` and
+`RECORD_ID` from its records.
 
 1. **Identify multi-record entities (3+ records):** iterate over the loaded record IDs and, via
    generated SDK code, call `get_entity_by_record_id(data_source, record_id)` for each. Collect
