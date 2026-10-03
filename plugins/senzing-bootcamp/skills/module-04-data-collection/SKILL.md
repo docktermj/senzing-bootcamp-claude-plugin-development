@@ -1015,10 +1015,19 @@ training data.
 5. **Apply a Senzing License Key (options 1–2).** 🚨 Never ask the bootcamper to paste a license key
    into chat. Decode/place it to `licenses/g2.lic`:
    - **Base64 string** — Linux/macOS: `echo '<BASE64_STRING>' | base64 --decode > licenses/g2.lic`;
-     Windows (PowerShell):
-     `[System.Convert]::FromBase64String('<BASE64_STRING>') | Set-Content -Path licenses\g2.lic -AsByteStream`.
-     Verify it is binary with `file licenses/g2.lic`.
-   - **`.lic` file** — `cp /path/to/g2.lic licenses/g2.lic`.
+     Windows (PowerShell 5.1 and 7):
+     `[System.IO.File]::WriteAllBytes((Join-Path (Get-Location) 'licenses\g2.lic'), [System.Convert]::FromBase64String('<BASE64_STRING>'))`.
+     The path must be absolute: `WriteAllBytes` resolves a relative path against .NET's working
+     directory, not PowerShell's current location.
+   - **`.lic` file** — Linux/macOS: `cp <path-to>/g2.lic licenses/g2.lic`; Windows:
+     `Copy-Item <path-to>\g2.lic licenses\g2.lic`.
+   - **Check that it is binary.** Linux/macOS: `file licenses/g2.lic`; Windows:
+     `Format-Hex licenses\g2.lic | Select-Object -First 1`. Either shows only that the file exists,
+     is non-empty and is not Base64 text; it says nothing about the license itself. Sub-step 7's
+     limit detection is the authoritative check on every platform.
+
+   ⚠️ The Windows forms above are written for PowerShell 5.1 and 7 but are unverified on Windows:
+   no test runs them there.
 
    Then add `LICENSEFILE` to the engine config PIPELINE section
    (`"PIPELINE": { "LICENSEFILE": "licenses/g2.lic" }`) and record `license: custom` in

@@ -627,10 +627,11 @@ should look professional). Install it **robustly**, never with a bare `pip`:
   distros) and never touches the global/system Python:
 
   ```bash
-  python3 -m venv data/temp/recap-venv
   # Linux/macOS:
+  python3 -m venv data/temp/recap-venv
   data/temp/recap-venv/bin/python -m pip install fpdf2
   # Windows:
+  py -3 -m venv data\temp\recap-venv
   data\temp\recap-venv\Scripts\python -m pip install fpdf2
   ```
 
@@ -654,9 +655,14 @@ if you created one above; otherwise `python3`:
 ```bash
 # fpdf2 already importable, or using the stdlib fallback:
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py"
-# Or, when you installed fpdf2 into the project-local venv above:
+# Or, when you installed fpdf2 into the project-local venv above (Linux/macOS):
 data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py"
+# Windows:
+data\temp\recap-venv\Scripts\python "${CLAUDE_PLUGIN_ROOT}\scripts\generate_recap_pdf.py"
 ```
+
+The Windows lines are written for PowerShell 5.1 and 7 but are unverified on Windows: no test
+runs them there.
 
 If `${CLAUDE_PLUGIN_ROOT}` is not set in the current context, resolve the script
 relative to this skill's directory instead (this skill lives at
@@ -1525,10 +1531,12 @@ Cover:
 - **What you accomplished** — per completed module, drawn from the recap.
 - **Your business problem and data sources** — from `docs/business_problem.md` /
   `config/data_sources.yaml`.
-- **Restore the database** — the exact SQLite copy-back or PostgreSQL `pg_restore` / `psql` command
-  recorded in Step 6a.
-- **Re-initialize and re-run** — how to re-source `src/scripts/senzing-env.sh` (if present) and
-  re-init the engine, then re-run the loader, queries, and visualization.
+- **Restore the database** — the exact SQLite copy-back or PostgreSQL `pg_restore -d` / `psql -f`
+  command recorded in Step 6a, as `database-backup.md` → "Restore" writes it: never a `<` or `>`
+  redirection, which Windows PowerShell 5.1 rejects or re-encodes.
+- **Re-initialize and re-run** — how to re-run the project env script created in Module 2
+  (`source src/scripts/senzing-env.sh` on Linux/macOS, `src\scripts\senzing-env.bat` on Windows)
+  and re-init the engine, then re-run the loader, queries, and visualization.
 - **License** — where the license lives (`licenses/g2.lic` when custom, else the built-in
   evaluation license) and any expiry.
 - **Where things are** — point at `backups/revisit/` (state + database backup), the recap PDF, and
