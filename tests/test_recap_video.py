@@ -110,8 +110,9 @@ def scenes_of_every_type():
     return [
         {"type": "title_card", "duration": 2, "narration": "It started with a business problem.",
          "module": "Business Problem", "highlight": "Three sources, one customer view"},
-        {"type": "image", "duration": 2, "narration": "Here is the entity graph.",
-         "image": "docs/video/broll/graph.png", "heading": "Entity graph"},
+        {"type": "image", "duration": 2, "narration": "Here are the match keys.",
+         "image": "docs/visualizations/results_visualization-match-keys.png",
+         "heading": "Match keys"},
         {"type": "counter", "duration": 2, "narration": "Records loaded per source.",
          "title": "Records loaded",
          "items": [{"label": "CRM", "value": 1200}, {"label": "WEB", "value": 800}]},
@@ -151,7 +152,7 @@ class Project:
             self.storyboard_path.write_text(json.dumps(storyboard), encoding="utf-8")
         self.output = self.root / "docs" / "bootcamp_recap.mp4"
         if with_image:
-            self.write_screenshot("docs/video/broll/graph.png")
+            self.write_screenshot("docs/visualizations/results_visualization-match-keys.png")
 
     def write_screenshot(self, rel):
         from PIL import Image, ImageDraw  # only reached from Pillow-guarded tests
@@ -211,6 +212,20 @@ class TheSchemaIsOneTable(unittest.TestCase):
         """The docstring's list is what #300's author reads; it must not drift from the table."""
         documented = set(re.findall(r"^\* ``([a-z_]+)`` --", VIDEO.__doc__, re.M))
         self.assertEqual(set(VIDEO.SCENE_TYPES), documented)
+
+    def test_the_documented_example_shows_only_name_free_screenshots(self):
+        """#393: the docstring example is what a storyboard author copies, so its images obey
+        graduation's name-free allow-list (INV-340's #326 note) and live where screenshots
+        live, `docs/visualizations/`. The renderer itself still accepts any project-relative
+        image (INV-342); this pins the example, not the behavior."""
+        images = re.findall(r'"image":\s*"([^"]+)"', VIDEO.__doc__)
+        self.assertTrue(images, "the docstring example names no image scene")
+        for image in images:
+            with self.subTest(image=image):
+                self.assertRegex(
+                    image,
+                    r"^docs/visualizations/[a-z0-9_]+-(match-keys|feature-scores|cross-source)"
+                    r"\.png$")
 
     def test_schema_flag_prints_the_table(self):
         code, out, _ = run_main("--schema")
@@ -323,11 +338,11 @@ class ImagesMustBeProjectRelative(unittest.TestCase):
         return VIDEO.project_relative_problem(value, self.root)
 
     def test_a_relative_path_inside_the_project_is_accepted(self):
-        self.assertIsNone(self.problem("docs/video/broll/graph.png"))
+        self.assertIsNone(self.problem("docs/visualizations/results_visualization-match-keys.png"))
 
     def test_a_missing_relative_image_is_not_a_validation_error(self):
         """It becomes a title card at render time; see FallbacksAreStated."""
-        self.assertIsNone(self.problem("docs/video/broll/not-there.png"))
+        self.assertIsNone(self.problem("docs/visualizations/not-there.png"))
 
     def test_absolute_paths_are_rejected(self):
         for value in ("/etc/hosts", "C:\\Users\\ada\\shot.png", "C:shot.png",
@@ -528,7 +543,8 @@ class FallbacksAreStated(unittest.TestCase):
             plan = VIDEO.plan_timeline(board, ctx, None, None, None)
         self.assertEqual("title_card", plan[1].kind)
         self.assertEqual("image", plan[1].type)
-        self.assertIn("FALLBACK: scenes[1] (image): image docs/video/broll/graph.png not found; "
+        self.assertIn("FALLBACK: scenes[1] (image): image "
+                      "docs/visualizations/results_visualization-match-keys.png not found; "
                       "drawing a title card instead.", err.getvalue())
 
     @requires_pillow
@@ -536,7 +552,8 @@ class FallbacksAreStated(unittest.TestCase):
         board = a_storyboard()
         err = io.StringIO()
         with tempfile.TemporaryDirectory() as root, contextlib.redirect_stderr(err):
-            path = Path(root) / "docs" / "video" / "broll" / "graph.png"
+            path = (Path(root) / "docs" / "visualizations"
+                    / "results_visualization-match-keys.png")
             path.parent.mkdir(parents=True)
             path.write_bytes(b"this is not a png")
             ctx = VIDEO.RenderContext(VIDEO.load_pillow(), board["video"], Path(root))
@@ -1260,10 +1277,11 @@ class TheVideoIsRendered(unittest.TestCase):
         self.ffmpeg, _notes = VIDEO.find_ffmpeg()
         self.scenes = scenes = [
             {"type": "title_card", "duration": 1, "narration": "Hi.", "module": "Business Problem"},
-            {"type": "image", "duration": 1, "narration": "Graph.",
-             "image": "docs/video/broll/graph.png", "heading": "Entity graph"},
+            {"type": "image", "duration": 1, "narration": "Match keys.",
+             "image": "docs/visualizations/results_visualization-match-keys.png",
+             "heading": "Match keys"},
             {"type": "image", "duration": 1, "narration": "Gone.",
-             "image": "docs/video/broll/missing.png"},
+             "image": "docs/visualizations/missing.png"},
             {"type": "certificate", "duration": 1, "narration": "Well done."},
             {"type": "tag_line", "duration": 1, "narration": "Resolved."},
         ]
@@ -1291,7 +1309,7 @@ class TheVideoIsRendered(unittest.TestCase):
         else:
             self.assertNotIn("Audio:", info)
         self.assertNotIn("Audio track:", result.stdout, "the old report line is gone")
-        self.assertIn("FALLBACK: scenes[2] (image): image docs/video/broll/missing.png not "
+        self.assertIn("FALLBACK: scenes[2] (image): image docs/visualizations/missing.png not "
                       "found; drawing a title card instead.", result.stderr)
         self.assertIn("no recap at docs/bootcamp_recap.md", result.stderr)
 

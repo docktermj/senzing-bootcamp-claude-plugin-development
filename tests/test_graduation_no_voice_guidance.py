@@ -13,7 +13,8 @@ graduation handles each (#340):
 * **`--no-voice`:** nothing about installing.
 
 Step 1c's status line notes only that the video has no voice, the closing announcement never
-calls a voiceless video "narrated", the guide never runs `sudo` or a system package manager
+calls a voiceless video "narrated" (its "Also name the graduation video" paragraph leaves the word
+to the ⛔ rule after it, #393), the guide never runs `sudo` or a system package manager
 (INV-066), and the guidance is a statement that never blocks graduation (INV-048, INV-340).
 
 Each property is a function that returns its problems for a given text, so the negative
@@ -23,7 +24,7 @@ that it fails.
 Stdlib only. These tests assert that the skill *states* the guidance; only `dry-run` phase 3 can
 observe a live run following it.
 
-Source issue: #340 (part of #331).
+Source issues: #340 (part of #331), #393.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -100,6 +101,13 @@ def closing_video_rule(text):
     body = closing(text)
     start = body.index("**(INV-340) Also name the graduation video")
     return body[start:body.index("**If any Step 1b verification check was skipped", start)]
+
+
+def closing_video_paragraph(text):
+    """The closing step's "Also name the graduation video" paragraph, up to the ⛔ rule that
+    alone decides whether the video is called narrated (#393)."""
+    rule = closing_video_rule(text)
+    return rule[:rule.index("⛔ **(INV-340) Call the video narrated only when")]
 
 
 def no_voice_example(text):
@@ -293,6 +301,9 @@ def problems_with_the_closing(text):
                    "for `--no-voice`, nothing more"):
         if needed not in rule:
             problems.append("the closing rule is missing %r" % needed)
+    if "narrated" in closing_video_paragraph(text):
+        problems.append("the closing's \"Also name the graduation video\" paragraph calls the "
+                        "video narrated; leave that to the ⛔ rule after it")
     example = no_voice_example(text)
     if "narrated" in example:
         problems.append("the no-voice example calls the video narrated")
@@ -418,6 +429,11 @@ class NegativeControls(unittest.TestCase):
         self.assertFlags(problems_with_the_closing,
                          "> And your 2-minute graduation video, with captions",
                          "> And your narrated 2-minute graduation video, with captions")
+
+    def test_narrated_in_the_paragraph_that_names_the_video(self):
+        self.assertFlags(problems_with_the_closing, "only if Step 1c produced it:** a\n"
+                         "   2-minute video", "only if Step 1c produced it:** a\n"
+                         "   narrated 2-minute video")
 
     def test_the_closing_rule(self):
         self.assertFlags(problems_with_the_closing, "or \"with captions, no voice\" when the "
