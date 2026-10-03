@@ -1045,7 +1045,7 @@ offer cannot follow a successful install.
 the interpreter Step 1b used, as before, and the renderer narrates with the computer's built-in voice.
 Graduation continues (INV-048, INV-340), and the exit-2 install offer still applies to that render.
 
-⛔ **(INV-066) Never run `sudo`, a bare `pip`, or an install outside `data/temp/recap-venv/` and
+⛔ **(INV-066, INV-340) Never run `sudo`, a bare `pip`, or an install outside `data/temp/recap-venv/` and
 `data/temp/piper-voices/`.**
 
 #### Render it
@@ -1581,7 +1581,7 @@ This runs exactly once, after the report, before graduation is reported finished
    terminal, so a PDF unnamed here is one they never learn they have.
 
    **(INV-340) Also name the graduation video, `docs/bootcamp_recap.mp4`, only if Step 1c produced it:** a
-   narrated 2-minute video of their bootcamp, to keep and share. When its duration stayed outside
+   2-minute video of their bootcamp, to keep and share. When its duration stayed outside
    2:00 ± 10 s after the one re-render, say so here, with its duration. When a video check did not
    run, say which, in the same plain sentence as the PDF note below (INV-163).
 
