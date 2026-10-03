@@ -182,8 +182,9 @@ file.
 - One thing to know if you customize: *Truth Set visualization* is the interactive web app that
   shows Senzing working on your machine — if you deselect it, you won't see that visual
   verification.
-- Licensing: a built-in evaluation license covers the bootcamp's demos; more capacity options
-  exist and SDK setup walks through them.
+- Licensing: a built-in evaluation license covers the bootcamp's demos. If your own data needs
+  more capacity, Data collection checks once your record count is known and walks you through the
+  options then.
 - If you hit unfamiliar terms (Entity Specification, DATA_SOURCE, entity resolution), ask and
   I'll look up the current definition from the Senzing docs on demand.
 - **How long it takes:** the bootcamp is **module-sized, not clock-sized** — each module tells you
