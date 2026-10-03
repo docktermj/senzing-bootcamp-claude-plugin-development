@@ -953,6 +953,10 @@ moment.
 
 Applies to **Entity Graph** in both of its modes.
 
+**Node colors follow "Coloring graph nodes" (INV-259)**, under "Server lifetime" below: what a node's
+color is keyed on, how the palette is allocated, and what the legend names. The bullets here do not
+restate it.
+
 - **Independent label toggles.** Separate show/hide controls for **node** (entity name) labels and
   **edge** (match key / relationship type) labels. Two independent dials, not one combined control,
   so a bootcamper can declutter for an overview pass or drill into detail without switching tabs.

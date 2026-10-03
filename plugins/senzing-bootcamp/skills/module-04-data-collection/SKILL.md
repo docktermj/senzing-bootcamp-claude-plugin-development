@@ -39,13 +39,14 @@ branches produce the run, and each is correct in its own right:
 
 ⛔ **This is path-dependent, not fixed — and that is the half most likely to catch you out.** On the
 **bring-your-own-data** path, Step 2 *does* ask (the pinned "How would you like to provide the data
-for this source?" question), so a guide who learned this module there will meet the run of nine
-unexpectedly on a generated scenario. Check the provenance before assuming which shape you are in.
+for this source?" question), so a guide who learned this module there will meet the whole
+non-yielding run unexpectedly on a generated scenario. Check the provenance before assuming which
+shape you are in.
 
 **Checkpoint consequence:** the non-yielding steps' checkpoints collapse into **one** write at the end
-of the shared turn, carrying the **last completed step** — not nine writes inside it. If the turn stops
-early, write what actually completed, so a resume lands on the right step rather than replaying work
-or skipping it.
+of the shared turn, carrying the **last completed step** — not one write per step inside it. If the
+turn stops early, write what actually completed, so a resume lands on the right step rather than
+replaying work or skipping it.
 
 See `../bootcamp-onboarding/ground-rules.md` → the 👉 protocol, which defines the non-yielding step
 and the single-write checkpoint that follows from it; it is stated once, there, and not restated here (INV-300).
@@ -122,8 +123,8 @@ limit: never from a remembered or hardcoded figure:
   nothing about the installed license** — it is a measurement that did not happen.
   Treating that silence as "no custom license" is what steers a bootcamper whose license has **no
   cap** toward a smaller dataset, here, in the module where the sampling decision is actually made.
-  - **Measure it** by Step 8a sub-step 7 below, which calls `SzProduct.get_license()` and parses
-    `recordLimit`. Follow that step rather than restating it (INV-300).
+  - **Measure it** by Step 8a sub-step 7 below, which calls `getLicense()`/`get_license()` on
+    `SzProduct` and parses `recordLimit`. Follow that step rather than restating it (INV-300).
   - **Persist it** as `license_record_limit` in `config/bootcamp_progress.json`, together with
     `license_record_limit_measured_at: "module-04 sampling decision (engine configuration in force)"`
     (INV-295), so this module's later steps, Module 6 and graduation all see a detected value
@@ -489,7 +490,8 @@ data to practice with — recommend CORD data as the primary alternative:
 > learning, because the matching problems in them are the ones real data actually has.
 >
 > I can pull CORD datasets (Las Vegas, London, Moscow) using the `get_sample_data` tool: these
-> are ready-to-use Senzing JSONL files.
+> are Senzing JSONL files the engine can load, though some sources may still need mapping, which
+> Module 5 checks for you.
 >
 > Learn more about CORD: <https://senzing.com/senzing-ready-data-collections-cord/>"
 
@@ -1124,9 +1126,9 @@ language='<chosen_language>', version='current')` (`recordLimit`: `0` = unlimite
    cap). Confirm the response shape via `get_sdk_reference(topic='response_schemas',
    filter='get_license')`, which documents `recordLimit` (integer) (MCP server 1.37.14, 2026-09-28);
    an empty or shallow result from that lookup is coverage, not a failed call, so do not retry it
-   (INV-149). Generate a scaffold that calls `SzProduct.get_license()`, save the returned JSON to
-   `config/license.json` — later steps read that file — parse `recordLimit`, and write
-   `license_record_limit` into `config/bootcamp_progress.json`, together with
+   (INV-149). Generate a scaffold that calls `getLicense()`/`get_license()` on `SzProduct`, save
+   the returned JSON to `config/license.json` — later steps read that file — parse `recordLimit`,
+   and write `license_record_limit` into `config/bootcamp_progress.json`, together with
    `license_record_limit_measured_at: "module-04 step 8a (engine configuration in force)"`
    (INV-295). Only if `recordLimit` is absent from
    the saved JSON, read that file to find the name the field actually carries before parsing it
@@ -1332,8 +1334,8 @@ if it's already in the right format for Senzing."
   design whenever no CORD collection fits the chosen category, and which Step 2 handles by generating
   the files without asking. Applying "last resort" there would re-open a settled decision and push
   CORD at a category Module 1 already ruled it out for.
-- **If they pick ICIJ Offshore Leaks from the free-data catalog, give the dated caveat** stated in
-  full at the secondary-options step above: as of **2026-08-11** its four sample files do not join —
+- **If they pick ICIJ Offshore Leaks from the free-data catalog, give the dated caveat:** as of
+  **2026-08-11** its four sample files do not join —
   not one of the 10 rows in `relationships-sample.csv` has an endpoint present in the node files —
   so the disclosed-relationship (`REL_ANCHOR`/`REL_POINTER`) exercise is unavailable from that file;
   offer `service_provider` on `nodes-entities-sample.csv` as the workable alternative, and do not

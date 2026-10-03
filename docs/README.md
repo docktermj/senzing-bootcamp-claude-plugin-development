@@ -49,8 +49,9 @@ For the desktop application instead, see
 
 1. *Command line options:* run most of the bootcamp on **Sonnet 5.5** for
    the best value and switch up to **Opus 5.5** for the correctness-critical
-   stretches: **SDK setup**, **Data Quality, Mapping, and Transformation**,
-   and **Bootcamp graduation**. The bootcamp surfaces the recommendation at the start of
+   stretches: **SDK setup**, **Truth Set visualization**, and everything from
+   **Data Quality, Mapping, and Transformation** through **graduation**.
+   The bootcamp surfaces the recommendation at the start of
    each module, so you never have to remember which is which.
 
    For the smoothest ride, run the Claude Code CLI with `--permission-mode auto`.

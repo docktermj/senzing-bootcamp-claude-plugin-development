@@ -5,7 +5,7 @@ takes — Data collection asks nothing until Step 9's transition. Steps 1-8b are
 non-yielding: Step 2's marker/provenance guard skips the provision question and generates the
 files, Step 8a's volume-skip passes when the collected total is inside the license limit, and
 Step 8b is silent below its threshold. Observed 2026-08-14 with three generated sources, 36
-records against a 500-record limit: zero 👉 questions across nine steps, exactly as the file
+records against a 500-record limit: zero 👉 questions across Steps 1-8b, exactly as the file
 requires.
 
 That behavior is correct under INV-225. What was missing is the **marking**. The module the
@@ -18,7 +18,7 @@ rules in separate sections is how the non-yielding case became unfollowable in t
 The conditional nature is the sharp edge, and it cuts toward marking rather than away: System
 verification is *always* non-yielding, so a reader learns it once; Data collection is
 non-yielding only on the generated-scenario path, so a reader who learned the module on the
-bring-your-own-data path (where Step 2 does ask) meets the run of nine unexpectedly.
+bring-your-own-data path (where Step 2 does ask) meets the whole non-yielding run unexpectedly.
 
 No new invariant: INV-225 already requires the behavior, the single write and the partial-turn
 fallback. This adds the local marking that makes it followable from inside the module, and the

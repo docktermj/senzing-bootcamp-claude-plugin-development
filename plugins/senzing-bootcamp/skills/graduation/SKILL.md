@@ -139,9 +139,9 @@ Gather context before any step. Do this silently.
    environment templates, Step 4 into the README and the migration checklist's Deployment section,
    Step 5 into the graduation report.
 
-   ⛔ **Never ask for them here.** They are asked once, in Module 1 (INV-006/INV-097), and Module 1
-   may not even have run under a Customized path (INV-076) — so **absent is normal, silent, and
-   changes nothing**: every step below states its no-value behavior, and each simply stays generic.
+   ⛔ **Never ask for them here.** They are asked once, in Module 1 (INV-006/INV-097), so **absent
+   is normal, silent, and changes nothing**: every step below states its no-value behavior, and each
+   simply stays generic.
    An empty value is the same as absent.
 2. **Read progress:** load `config/bootcamp_progress.json` and extract `modules_completed`.
 3. **Fallback — and distinguish a missing file from a missing key.** They are different failures
@@ -1468,8 +1468,9 @@ emoji cannot be set in the PDF's Latin-1 core fonts and is dropped from that lin
 expected and harmless.** The marker is a machine-readable flag for the plugin's own branches
 (Module 4 Step 2, Module 6 Phase C step 15, Module 6 Phase D step 25a), every one of which reads it from
 the **Markdown**; nothing reads it from the PDF. So do not substitute a name, do not add an ASCII
-description, and above all do not edit the marker out of the Markdown to quiet the renderer — four
-files match that exact string and changing it breaks them silently.
+description, and above all do not edit the marker out of the Markdown to quiet the renderer —
+several shipped files and the recap renderer match that exact string, and changing it breaks them
+silently.
 
 ⛔ **This exemption is the marker line and nothing else (INV-266).** The renderer suppresses only the tally
 entry whose passage *is* that line; a ROBOT FACE anywhere else in the document, and every other
