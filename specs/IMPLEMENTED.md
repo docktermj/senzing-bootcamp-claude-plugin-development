@@ -43,6 +43,19 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## onboarding-welcome-licensing-bullet-names-data-collection
+
+- **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #389, spec revision 1; from the `production-readiness-audit-2026-10-02` entry, finding C-F4, `Source: self-observed (maintainer audit)`)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md` (the welcome overview's `- Licensing:` bullet), `tests/test_welcome_licensing_names_data_collection.py` (new), `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md` is not edited, as the issue's Out of scope says; Module 2, Module 4 Step 8a and Module 1's `license_guidance_deferred` logic are unchanged.
+- **MCP re-check:** server `sz-mcp-coworker` **1.37.19** (Senzing "current"), 2026-10-02, `get_capabilities`, `search_docs(query='built-in evaluation license record limit')` — **n/a (no Senzing fact)**, re-confirmed rather than assumed: the changed clause says where the plugin asks about capacity, which is plugin behavior (INV-093), not a Senzing fact. The bullet's first clause ("a built-in evaluation license covers the bootcamp's demos") is unchanged by this run. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** implemented directly (Phase 5a), built on `a2461fe` (after #388). The bullet sat where the issue said (`onboarding-flow.md:185-186`).
+- **Summary:**
+  - **The welcome names Data collection, conditionally.** The bullet now reads, verbatim from the issue's Scope: "Licensing: a built-in evaluation license covers the bootcamp's demos. If your own data needs more capacity, Data collection checks once your record count is known and walks you through the options then." The old line ("…more capacity options exist and SDK setup walks through them.") dated from a28a3c0, one day before INV-093 moved the License Key prompt out of SDK setup, and promised a walkthrough at a module that asks nothing. Because Module 4 Step 8a is volume-gated and asks nothing in the common case, the new wording makes the options conditional on the data.
+  - **A guard holds the bullet.** `tests/test_welcome_licensing_names_data_collection.py` locates the `- Licensing:` bullet with its continuation lines (failing if it is missing), requires "Data collection", forbids "SDK setup" and "Module 2", and checks the conditional "If your own data needs more capacity". Its docstring cites INV-093. Negative controls run the same check against the pre-fix line, a text with no bullet, and a bullet naming only Module 2; all three fail as they should. Against the pre-fix file itself the guard fails twice.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **Invariant:** this change **establishes no invariant** (INV-309). It brings one bootcamper-facing sentence into line with INV-093, which is already registered and unchanged, and adds a guard for that sentence; it adds no new guarantee. No "Enforced by" line is added to INV-093, as the issue scopes out, so the guard is cited from its own docstring only; whether INV-093 should name it is for `/review-invariants`. No ⛔ line is added to the plugin, and none is demoted.
+
 ## module-7-three-references-resolve-to-the-step-and-state-that-own-them
 
 - **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #388, spec revision 1; from the `production-readiness-audit-2026-10-02` entry, findings C-F3, C-F15 and C-F11 (Module 7 part), `Source: self-observed (maintainer audit)`)
