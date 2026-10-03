@@ -170,13 +170,26 @@ names no persona on a walk they have run recently, say which one the last run us
 
 ## What to do with a finding
 
-Follow [`dry-run`](../dry-run/SKILL.md)'s rules — they apply unchanged: fix the class
+Follow [`dry-run`](../dry-run/SKILL.md)'s rules. They apply unchanged, and in dry-run's
+order: the finding is recorded first and fixed after.
+
+⛔ **(INV-317) Record each finding as you find it, before fixing anything:** in the run's
+dated `specs/IMPLEMENTED.md` entry, marked not yet filed, or as a GitHub issue filed after
+the maintainer's yes (INV-314). Never put it in a new file under `specs/` (INV-307). A fixed
+finding no longer reproduces, so a run that fixes first leaves no evidence the finding existed.
+
+Only after the record, in dry-run's order (its steps 2 to 6): fix the class
 not the instance, write a repo-level test, ⛔ **negative-control it**, record it in
-`specs/IMPLEMENTED.md`, and register or explicitly disclaim the invariant in
-`specs/INVARIANTS.md`.
+the same `specs/IMPLEMENTED.md` entry (what was done, and the issue the finding became),
+and register or explicitly disclaim the invariant in `specs/INVARIANTS.md`.
+
+⛔ **(INV-317) A scheduled run's `report.json` or log is raw output, not a recorded finding.**
+An `autotest.py` run on a schedule writes its report and nothing else. Its lines become
+findings when the maintainer triages the report, and that triage records each one, as above,
+before fixing it.
 
 For a **server-side** finding (`doc-incomplete`, `silent-accept`, `doc-wrong`) the
-fix is not in this repo. Note it, work around it in the plugin if it can mislead a
+fix is not in this repo. Record it first, as above. Then work around it in the plugin if it can mislead a
 bootcamper, and consider reporting it upstream — but ⛔ **not** via `submit_feedback`
 from an automated run.
 

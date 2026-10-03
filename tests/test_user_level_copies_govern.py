@@ -42,6 +42,8 @@ Run:  python3 -m unittest discover -s tests
 INV-337 is the invariant this module enforces: a skill governed at user level is not also defined
 here, and the repository keeps only its overlay. Like the rest of this module it checks the
 repository's side; it cannot establish what the user-level copy says on any machine (INV-308).
+⚠️ It covers only the skills named in `GOVERNED`, a fixed list: it cannot find a skill governed
+at user level that the list leaves out, because CI cannot list `~/.claude` (#395).
 """
 import re
 import unittest
@@ -52,6 +54,13 @@ CLAUDE = REPO_ROOT / ".claude"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
 
 #: The skills whose user-level copy governs. This repository carries only their overlays.
+#:
+#: ⚠️ **A fixed list, and the guard cannot see past it (INV-308).** Every check below reads only
+#: the names here. A skill governed at user level that is missing from this tuple is checked by
+#: nothing, and this guard cannot find it: that would mean listing `~/.claude/skills/`, which a
+#: CI runner does not have. Adding a name here is a manual step whenever an overlay is added
+#: under `.claude/skill-overlays/` (#395). A check that this tuple matches that directory was
+#: considered and not chosen.
 GOVERNED = ("implement-github-issue", "unattended-issue-loop", "order-github-issues")
 
 #: Command boilerplate an overlay must not carry: it is not a command (#239).

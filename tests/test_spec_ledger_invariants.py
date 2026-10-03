@@ -29,7 +29,11 @@ is recorded, never before; and evidence for "identifier X is unused" must not qu
 names this file as its enforcer. `TestTheLedgerIsVerifiedAfterItIsWritten` pins the three
 things `implement-spec`'s Step 4 must say: that `citations.py verify` runs after the entry is
 written, *why* (the ledger is inside the corpus the scan reads), and that a test count is not
-a verdict. The detection itself belongs to `citations.py verify`, which caught all three
+a verdict. (⚠️ **Dated note, 2026-10-02 (#395): the section is now the implement overlay's
+"## Phase 6: Record the implementation".** It was "## Step 4", a step the governing copy does not
+have; the overlay now names the governing copy's phases, and the class also pins the order
+against them: entry before the Phase 6 commit, the scan in Phase 7, again after any later
+ledger edit before Gate 2. The three things above are unchanged.) The detection itself belongs to `citations.py verify`, which caught all three
 instances; what this file guards is that the ordering instruction cannot be quietly dropped.
 
 ⚠️ **Named by INV-307, and the reason its deletion direction exists.** The backward check
@@ -470,37 +474,77 @@ class TestTheLedgerIsVerifiedAfterItIsWritten(unittest.TestCase):
         self.assertTrue(self.SKILL.is_file(), "implement-github-issue.md moved — re-point this guard")
         self.body = self.SKILL.read_text(encoding="utf-8")
 
-    def step_four(self):
-        """Step 4 only: the instruction has to live in the step that writes the entry."""
-        start = self.body.index("## Step 4: Record the implementation")
+    HEADING = "## Phase 6: Record the implementation"
+
+    def phase_six(self):
+        """The ledger section only: the instruction has to live in the section that writes the entry.
+
+        Named for the governing copy's Phase 6, which writes the tests and makes the commit. It
+        was "## Step 4", residue of the command file the overlay replaced (#395).
+        """
+        start = self.body.index(self.HEADING)
         end = self.body.index("## Declining an issue instead of implementing it", start)
         return re.sub(r"\s+", " ", self.body[start:end]).replace("**", "")
 
-    def test_step_four_requires_the_scan_after_the_entry(self):
-        section = self.step_four()
+    def test_the_overlay_names_no_step_the_governing_copy_lacks(self):
+        """The governing copy is organized as Phases 0-9; a "Step 4" places nothing (#395)."""
+        self.assertIn(self.HEADING, self.body,
+                      "the overlay's ledger section is not headed %r" % self.HEADING)
+        self.assertNotRegex(
+            self.body, r"\bStep 4\b",
+            "the overlay still names a 'Step 4'. The governing copy has Phases 0-9 and no Step 4, "
+            "so a worker cannot place the ledger write against Phase 7 or Gate 2")
+        self.assertIn('see "Phase 6: Record the implementation"', self.body,
+                      "the CI section no longer points at the renamed ledger section")
+
+    def test_phase_six_requires_the_scan_after_the_entry(self):
+        section = self.phase_six()
         self.assertIn(
             "citations.py verify", section,
-            "Step 4 never names the citation scan, so nothing tells a run to re-check the "
+            "Phase 6 never names the citation scan, so nothing tells a run to re-check the "
             "corpus its own entry just joined")
         self.assertRegex(
             section, r"(?i)AFTER the entry is written|after the ledger entry is written",
-            "Step 4 must say the scan runs AFTER the entry is written. Naming the command "
+            "Phase 6 must say the scan runs AFTER the entry is written. Naming the command "
             "without the ordering is what already failed: the scan ran during the criterion "
             "walk, the entry was written afterwards, and the entry was what broke it.")
 
-    def test_step_four_says_why_the_ordering_matters(self):
+    def test_phase_six_places_the_entry_and_the_scan_in_the_governing_phases(self):
+        """Entry before the Phase 6 commit; scan in Phase 7; again after a later edit (#395)."""
+        section = self.phase_six()
+        for pattern, why in (
+                (r"(?i)Phase 6: write the entry [^.]*before the Phase 6 commit",
+                 "the entry is not placed before the Phase 6 commit"),
+                (r"(?i)in the same commit as the change",
+                 "the entry is not put in the same commit as the change"),
+                (r"(?i)Phase 7: run `citations\.py verify`[^.]*after the entry exists",
+                 "the scan is not placed in Phase 7, after the entry exists"),
+                (r"(?i)after any later edit to the ledger, run `citations\.py verify` again "
+                 r"before Gate 2",
+                 "the scan is not re-run after a later ledger edit, before Gate 2"),
+                (r"(?i)a clean scan from before that edit does not count",
+                 "nothing says a scan taken before a later ledger edit does not count")):
+            with self.subTest(pattern=pattern):
+                self.assertRegex(section, pattern, why)
+        order = [section.index(s) for s in ("Phase 6: write the entry",
+                                             "Phase 7: run `citations.py verify`",
+                                             "run `citations.py verify` again before Gate 2")]
+        self.assertEqual(sorted(order), order,
+                         "the three placements are not stated in phase order")
+
+    def test_phase_six_says_why_the_ordering_matters(self):
         """Without the reason, the ordering reads as ceremony and gets optimized away."""
-        section = self.step_four()
+        section = self.phase_six()
         self.assertRegex(
             section, r"(?i)ledger is (\*\*)?inside(\*\*)? the corpus|inside the corpus",
             "the ordering must carry its reason — that the ledger is part of what the scan "
             "reads — or a later editor will reasonably move it back next to the other checks")
 
-    def test_step_four_warns_that_a_count_is_not_a_result(self):
+    def test_phase_six_warns_that_a_count_is_not_a_result(self):
         """The same run also read `Ran N tests` and missed `FAILED` on the next line."""
-        section = self.step_four()
+        section = self.phase_six()
         self.assertRegex(
             section, r"(?i)A count is not a result|read the runner's verdict",
-            "Step 4 must warn that a test count is not a verdict. The run that recorded a "
+            "Phase 6 must warn that a test count is not a verdict. The run that recorded a "
             "red suite as '1792 passed' took the number off the `Ran 1792 tests` line while "
             "`FAILED (failures=1, skipped=3)` sat directly beneath it")
