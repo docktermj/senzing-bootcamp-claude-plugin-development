@@ -959,7 +959,7 @@ improvising one breaches INV-056, which pins every gate question's wording preci
 drift at runtime. The ≥80% branch is the common one for curated data — a CORD source routinely
 scores there — so this is the path most runs take.
 
-⛔ **(INV-284) On a `provenance: synthesized` source, disclose before the 👉 — those gaps are deliberate.**
+⛔ **On a `provenance: synthesized` source, disclose before the 👉 — those gaps are deliberate.**
 Read `provenance` for this source from `config/data_sources.yaml`. When it is `synthesized`, Module
 4's Step 2 was **required** to manufacture exactly these gaps (INV-239: *"missing values in non-key
 fields, enough to put at least one source in the 70-79% band… That band opens the remediation
@@ -974,9 +974,10 @@ question, because anything meant to inform the answer goes before it
 > is just not the same as fixing a real dataset."
 
 Then present the applicable pinned question — the band's question below, or its no-progress variant
-in Step 7b — **unchanged, with both options live** (INV-056). ⛔ **Never
-silently regenerate.** Rewriting the Bootcamper's data as the answer to a question they were not
-told meant that is the failure this disclosure exists to prevent.
+in Step 7b — **unchanged, with both options live** (INV-056).
+
+⛔ **Never silently regenerate.** Rewriting the Bootcamper's data as the answer to a question they
+were not told meant that is the failure this disclosure exists to prevent.
 
 - **Quality ≥80%:** "Your data quality is strong. Let's continue to mapping." **(statement, no 👉;
   continue into Phase 2 this turn)**
@@ -1105,7 +1106,7 @@ before the 👉): "The score is unchanged at [score]: there was nothing mechanic
 
 **Read `provenance` for this source from `config/data_sources.yaml`**; it selects the form.
 
-**`synthesized`, `own` or `unknown` → the pinned no-progress variant (INV-056).** The INV-284
+**`synthesized`, `own` or `unknown` → the pinned no-progress variant (INV-056).** The synthesized-source
 disclosure above still precedes it on a `synthesized` source. The question line is the band's own:
 
 - **Quality 70-79%:** "Your data quality is acceptable but has some gaps. What is left is missing

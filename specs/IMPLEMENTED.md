@@ -43,6 +43,45 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## module-5-synthesized-source-disclosure-is-deferred-and-drops-borrowed-citations
+
+- **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #394, spec revision 1; from the `production-readiness-audit-2026-10-02` entry, finding A-F4, `Source: self-observed (maintainer audit)`)
+- **Commit:** uncommitted
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md` (the synthesized-source disclosure header; the no-silent-regeneration sentence, now its own paragraph; Step 7b's pointer back to the disclosure), `specs/IMPLEMENTED.md`. `specs/INVARIANTS.md`, `invariant-manifest.json` and every test are unchanged.
+- **MCP re-check:** server `sz-mcp-coworker` **1.37.19** (Senzing "current"), 2026-10-02, `get_capabilities` — **n/a (no Senzing fact)**, re-confirmed rather than assumed: every changed line is an invariant citation or a paragraph break in the plugin's own guidance about data the bootcamp generated. No changed line states an SDK method, an engine behavior, a Senzing document or an MCP tool's behavior. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** implemented directly (Phase 5a), built on `201d249`. The sites were located by content, because #384 and #392 moved the issue's line numbers: the disclosure header now sits at `phase1-quality-assessment.md:962` (the issue's `:958`) and the no-silent-regeneration rule at `:979-980` (the issue's `:973-974`).
+- **Summary:**
+  - **The disclosure header no longer cites INV-284.** It reads "⛔ **On a `provenance: synthesized` source, disclose before the 👉 — those gaps are deliberate.**", with its wording and its position before the 👉 question unchanged. INV-284 covers option handling at a pinned gate, not this disclosure.
+  - **"Never silently regenerate" is its own paragraph.** It no longer shares a sentence with `(INV-056)`, which stays on the "unchanged, with both options live" sentence it governs. The rule's wording is unchanged.
+  - **Both rules are uncited until the id is minted.** The DEFERRED INVARIANT block below names them, so `/review-invariants` cites the minted id at both sites (its step 3).
+- **Beyond the issue, recorded:** Step 7b's "The INV-284 disclosure above still precedes it on a `synthesized` source" now reads "The synthesized-source disclosure above …". It names the same disclosure, and left as it was it would go on attributing the disclosure to INV-284 after the header stopped doing so. Nothing else in Step 7b changes, and its `(INV-056)` citation stays.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`), of `pending_invariants.py list` and `check`, and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed. The two enforcer tests pass unmodified.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** The rules already
+  shipping:
+    - ⛔ **On a `provenance: synthesized` source, disclose before the 👉 — those gaps are deliberate.** — in `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`
+    - ⛔ **Never silently regenerate.** — in `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`
+
+  **Sites it affects:** both lines are in Module 5 Phase 1's gate section of
+  `phase1-quality-assessment.md`: the disclosure header (`:962`), and the paragraph
+  "Never silently regenerate. Rewriting the Bootcamper's data as the answer to a question they
+  were not told meant that is the failure this disclosure exists to prevent." (`:979-980`).
+  Neither cites an invariant now. Registering the block cites the minted id at both.
+
+  ⚠️ **Why this is not INV-284, INV-239 or INV-056, so the question is not re-derived.** INV-284
+  covers option handling at any pinned gate: every option has a handling step, and re-presenting
+  a re-scored gate is not an INV-006 repeat. INV-239 covers what generated data contains, and its
+  2026-10-02 note (#337) covers a regeneration the Bootcamper requests. INV-056 pins a gate
+  question's wording. None of them says the deliberate gaps are disclosed before the question,
+  or that data is never regenerated silently. Until #394 the header cited INV-284 and the
+  regeneration rule sat in the sentence citing INV-056, so both looked governed by invariants
+  whose subject is something else. The two rules are one guarantee, because the file says the
+  disclosure exists to prevent silent regeneration.
+
+  The drafted wording:
+
+  **INV-NNN** — On a source whose `config/data_sources.yaml` entry records `provenance: synthesized`, Module 5's quality gate MUST disclose before the gate's 👉 that the source's gaps are deliberate: the bootcamp generated them so the assessment has something to find, and improving them means regenerating data the bootcamp authored. It MUST then present the applicable pinned question (the band's question, or its no-progress variant in Step 7b) unchanged, with both options live. ⛔ The guide MUST NEVER regenerate the Bootcamper's data without saying so: rewriting their data as the answer to a question they were not told meant that is the failure the disclosure exists to prevent. Enforced by `tests/test_gate_options_have_handling_steps.py`, whose `test_a_synthesized_source_is_disclosed_before_the_question` asserts the disclosure precedes the 70-79% gate question and `test_it_forbids_silent_regeneration` asserts the prohibition is stated. *(written as NNN deliberately: a literal id here would cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant** (INV-309). No ⛔ line is added or demoted: the two rules above already shipped, and this run only removes the citations that named other invariants' subjects. `specs/INVARIANTS.md` is not edited.
+
 ## graduation-video-sites-apply-inv-340-to-the-install-citation-the-closing-paragraph-and-the-renderer-example
 
 - **Implemented:** 2026-10-02 (**Not a spec** — a dated record of one issue-driven run, #393, spec revision 1; from the `production-readiness-audit-2026-10-02` entry, findings A-F2, A-F3 and B-F8, `Source: self-observed (maintainer audit)`)
