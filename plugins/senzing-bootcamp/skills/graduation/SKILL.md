@@ -471,7 +471,7 @@ none of these are covered by it:
      `not_present`, `not_applicable` and `failed`. A `not_applicable` tab is **not** a shortfall:
      the app suppresses a tab whose data does not exist (Cross-Source with one data source,
      Match Keys and Feature Scores with no multi-record entities), so it was never on screen and
-     is correctly absent from the recap. `generate_recap_pdf.py --check` already reads it and fails on a
+     is correctly absent from the recap. `generate_recap_pdf.py`'s `--check` already reads it and fails on a
      shortfall, naming the missing tab slugs; if `--check` reported
      `SKIPPED: tab-coverage check`, no manifest was found and this check has **not** run — say so
      rather than treating it as passed (INV-163).
@@ -520,9 +520,11 @@ none of these are covered by it:
    of the manifests that existed and false of the bootcamp.
 
    ⛔ **(INV-048, INV-193) Offer the remedy — it is cheap while the artifacts are still on disk.** Re-start the app and
-   re-run the capture against it (`capture_screenshots.py --url http://localhost:<port> --name
-   <name>`), then re-embed via the backfill path, rather than proceeding with a recap that pictures
-   the sample dataset in place of the Bootcamper's results.
+   re-run the capture against it with the bundled tool,
+   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" --url http://localhost:<port> --name <name>`
+   (INV-185; skill-relative fallback `../../scripts/capture_screenshots.py`, INV-252), then
+   re-embed via the backfill path, rather than proceeding with a recap that pictures the sample
+   dataset in place of the Bootcamper's results.
 
    ⚠️ **None of this is blocking.** The recap PDF is produced unconditionally (INV-048) and a missing
    manifest does **not** fail `--check`; the requirement is that graduation **states** the shortfall,

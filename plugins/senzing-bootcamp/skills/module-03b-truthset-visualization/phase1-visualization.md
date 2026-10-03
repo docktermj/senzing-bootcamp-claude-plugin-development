@@ -229,8 +229,8 @@ Whatever the language, the server MUST reproduce the reference's behavior:
 - ⛔ **(INV-122) Implement `?tab=<id>` and `?q=<text>` deep-linking, applied at the end of `init()`** — after
   the async data load and `buildNav()` have settled. It is specified under *"Tab identifiers and
   deep-linking (required)"* in `visualization-api-reference.md`, and it is **not decoration: it is
-  the only way a tab of the LIVE app can be selected for a screenshot.** `capture_screenshots.py
-  --url` drives a live server solely by appending `?tab=`; the injected `activate()` with its
+  the only way a tab of the LIVE app can be selected for a screenshot.** `capture_screenshots.py`'s
+  `--url` drives a live server solely by appending `?tab=`; the injected `activate()` with its
   `#navbtn-` click fallback runs against a saved **snapshot** only. ⚠️ **A server with every tab,
   section id and nav id correct but no deep-linking is indistinguishable from a correct one until
   you open the images** — it serves its default tab for every request, so the capture writes one

@@ -34,6 +34,14 @@ wrong relative to a working directory no test had modeled.
    `production/` (INV-186), keeping only `version`, `name`, `file_path` and `format`, so no
    evaluation-only `load_subset:` limit reaches production.
 
+5. **A bundled script invoked with no runner in front of it (#390).** Graduation's one remedy
+   for a recap missing the Bootcamper's results screenshots read "re-run the capture against
+   it (`capture_screenshots.py --url http://localhost:<port> --name <name>`)". The sweep for
+   item 1 looked only at lines carrying an interpreter token, so a runner-less span was
+   invisible to it, and that span also wrapped across two lines. `inline_invocations()` reads
+   every inline backticked span whole, across line breaks, whether or not a runner precedes
+   the script name.
+
 Written as sweeps, not as three assertions about three lines, so the next one is caught too.
 
 Enforces **INV-185** (a command run against a bundled script resolves it inside the plugin
@@ -214,6 +222,138 @@ class BundledScriptsAreInvokedByAResolvedPath(unittest.TestCase):
             r"(?m)^\s*python3 scripts/generate_discoveries_pdf\.py\s*$",
             "the bare project-relative invocation is back; it exits 2 from a project root",
         )
+
+
+#: An inline code span: a backtick run, then content up to the next run of the same length.
+#: The content may cross a line break (a wrapped span is one span) but never a blank line,
+#: so one stray backtick cannot pair spans across paragraphs.
+_SPAN = re.compile(r"(?s)(?<!`)(`+)(?!`)((?:(?!\n[ \t]*\n).)+?)(?<!`)\1(?!`)")
+
+#: A span is an INVOCATION when a bundled script name is followed, inside the span, by an
+#: argument. `capture_screenshots.py` alone, or `capture_screenshots.py`'s, is a reference.
+_INVOKED = re.compile(
+    r"""(?<![\w.-])(?:%s)["']?\s+\S""" % "|".join(re.escape(n) for n in BUNDLED_SCRIPTS))
+
+#: An absolute path INTO the plugin is resolved by construction: it is what
+#: `${CLAUDE_PLUGIN_ROOT}/scripts/<name>.py` expands to. Graduation's re-render command must
+#: be written that way, because `${CLAUDE_PLUGIN_ROOT}` is unset in the Bootcamper's own
+#: terminal. An absolute path that does not pass through the plugin's directory is not.
+_ABSOLUTE_INTO_PLUGIN = re.compile(
+    r"""(?:^|[\s'"])(?:/|[A-Za-z]:[\\/])(?:[^\s'"`]*[\\/])?senzing-bootcamp[\\/]"""
+    r"""(?:[^\s'"`]*[\\/])?scripts[\\/](?:%s)""" % "|".join(re.escape(n) for n in BUNDLED_SCRIPTS))
+
+
+def inline_invocations(text):
+    """(lineno, span) for each inline span that invokes a bundled script, whitespace collapsed.
+
+    Fenced blocks are blanked first; they stay covered by `invocation_lines()` and
+    `parameterized_without_a_script()`. Blanking keeps the line numbers right.
+    """
+    kept, in_fence = [], False
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            kept.append("")
+        else:
+            kept.append("" if in_fence else line)
+    body = "\n".join(kept)
+    out = []
+    for m in _SPAN.finditer(body):
+        span = " ".join(m.group(2).split())
+        if _INVOKED.search(span):
+            out.append((body.count("\n", 0, m.start()) + 1, span))
+    return out
+
+
+def span_is_resolved(span):
+    return any(marker in span for marker in RESOLVED) or bool(_ABSOLUTE_INTO_PLUGIN.search(span))
+
+
+def unresolved_inline_invocations(text):
+    return [(i, span) for i, span in inline_invocations(text) if not span_is_resolved(span)]
+
+
+class AnInlineInvocationResolvesItsScript(unittest.TestCase):
+    """#390: INV-185 for a span with no runner in front of the script, or one that wraps.
+
+    No exemption list. A span that only talks about a script's flag names the script in the
+    possessive (`capture_screenshots.py`'s `--url`), so it pairs no bare name with an argument.
+    """
+
+    def test_no_inline_span_runs_a_bundled_script_by_an_unresolved_path(self):
+        problems = [
+            "%s:%d  `%s`" % (p.relative_to(REPO_ROOT), i, span)
+            for p in prose_files()
+            for i, span in unresolved_inline_invocations(p.read_text(encoding="utf-8"))
+        ]
+        self.assertEqual(
+            [], problems,
+            "an inline span runs a bundled script without resolving it inside the plugin. Run "
+            "from the bootcamp project it fails with \"can't open file\". Name it as "
+            "${CLAUDE_PLUGIN_ROOT}/scripts/<name>.py with the skill-relative fallback "
+            "../../scripts/<name>.py (INV-185, INV-252); if the span is prose about a flag, "
+            "write the script name in the possessive, as `<name>.py`'s `--flag`.")
+
+    def test_the_span_sweep_finds_the_known_invocations(self):
+        """Non-vacuity: a regex drift that matches nothing would pass forever."""
+        found = [(p.name, span) for p in prose_files()
+                 for _, span in inline_invocations(p.read_text(encoding="utf-8"))]
+        names = {n for _, span in found for n in BUNDLED_SCRIPTS if n in span}
+        self.assertGreaterEqual(len(found), 2, "the span sweep matched almost nothing: %s" % found)
+        self.assertIn("capture_screenshots.py", names)
+        self.assertIn("generate_recap_video.py", names)
+        self.assertTrue(
+            any("${CLAUDE_PLUGIN_ROOT}" in span for _, span in found),
+            "the span sweep found no ${CLAUDE_PLUGIN_ROOT} invocation, so the resolved route is "
+            "not being exercised")
+
+    def test_the_graduation_remedy_is_resolved(self):
+        """The one that was broken, named explicitly so a regression is unambiguous."""
+        flat = " ".join(GRADUATION.read_text(encoding="utf-8").split())
+        remedy = ('`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" --url '
+                  'http://localhost:<port> --name <name>` (INV-185; skill-relative fallback '
+                  '`../../scripts/capture_screenshots.py`, INV-252)')
+        self.assertTrue(
+            remedy in flat,
+            "graduation's screenshot remedy must resolve the capture tool inside the plugin, "
+            "with the skill-relative fallback, the way Module 3b and Module 7 name it")
+
+    def test_negative_controls(self):
+        """The sweep fails on the defect it exists for, and passes on the fix."""
+        # (a) The original graduation span, runner-less and wrapped across two lines.
+        shipped = ("   re-run the capture against it (`capture_screenshots.py --url "
+                   "http://localhost:<port> --name\n   <name>`), then re-embed via the backfill path")
+        self.assertEqual(
+            [(1, "capture_screenshots.py --url http://localhost:<port> --name <name>")],
+            unresolved_inline_invocations(shipped))
+        # The line sweep could not see it: no runner on either line.
+        self.assertFalse(any(_RUNNER.search(line) for line in shipped.splitlines()))
+        # (b) A runner-less single-line span.
+        self.assertEqual([(2, "generate_recap_pdf.py --check")],
+                         unresolved_inline_invocations("x\n`generate_recap_pdf.py --check` reads it"))
+        # A bare project-relative path with a runner, and an absolute path outside the plugin.
+        self.assertTrue(unresolved_inline_invocations(
+            "`python3 scripts/capture_screenshots.py --url x`"))
+        self.assertTrue(unresolved_inline_invocations(
+            "`'/home/ada/my-bootcamp/scripts/generate_recap_video.py' --storyboard s`"))
+        # (c) The resolved forms pass, and are still seen as invocations.
+        for resolved in (
+                '`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" --url x --name n`',
+                "`python3 ../../scripts/capture_screenshots.py --url x`",
+                "`'/opt/plugins/senzing-bootcamp/scripts/generate_recap_video.py' --storyboard s`",
+                '`& "C:\\plugins\\senzing-bootcamp\\scripts\\generate_recap_video.py" --output o`'):
+            self.assertEqual(1, len(inline_invocations(resolved)), resolved)
+            self.assertEqual([], unresolved_inline_invocations(resolved), resolved)
+        # A reference is not an invocation, nor is a possessive followed by a flag span.
+        for reference in ("`capture_screenshots.py`", "`capture_screenshots.py`'s `--url` mode",
+                          "`generate_recap_pdf.py`'s `--check --expect-modules`"):
+            self.assertEqual([], inline_invocations(reference), reference)
+        # A fenced block is left to the line sweep, and the line numbers survive blanking.
+        fenced = "```bash\ncapture_screenshots.py --url x\n```\n`generate_recap_pdf.py --check`"
+        self.assertEqual([(4, "generate_recap_pdf.py --check")], inline_invocations(fenced))
+        # A blank line ends a span, so a stray backtick cannot pair across paragraphs.
+        self.assertEqual([(3, "capture_screenshots.py --url x")],
+                         inline_invocations("a ` stray\n\n`capture_screenshots.py --url x`"))
 
 
 def copy_table_rows(text):
