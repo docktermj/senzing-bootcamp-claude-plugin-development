@@ -359,8 +359,10 @@ WRAP_WIDTH = 85
 #: "Restore" section. A backup of any other type is named by path with no restore step.
 SQLITE_RESTORE = "a SQLite file; copy it back to `database/` to restore it"
 PG_DUMP_SUFFIX = ".dump"
-PG_RESTORE = ("a `pg_dump` file; restore it with `pg_restore` (or `psql <` for a plain dump) "
-              "into a fresh database")
+#: The file is named by an argument, never a `<` redirection, which Windows PowerShell 5.1 rejects.
+PG_RESTORE = ("a `pg_dump` file; restore it into a fresh database with "
+              "`pg_restore -U <user> -d <db> <file>` (or `psql -U <user> -d <db> -f <file>` for a "
+              "plain dump), never with a `<` redirection")
 
 
 def _para(text):

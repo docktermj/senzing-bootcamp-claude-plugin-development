@@ -253,8 +253,10 @@ class TheRestoreStepFollowsTheBackupsFileType(CaseTest):
 
     def problems(self, text):
         out, f = [], flat(text)
-        if ("`backups/revisit/database/senzing.dump` is a `pg_dump` file; restore it with "
-                "`pg_restore` (or `psql <` for a plain dump) into a fresh database") not in f:
+        if ("`backups/revisit/database/senzing.dump` is a `pg_dump` file; restore it into a "
+                "fresh database with `pg_restore -U <user> -d <db> <file>` (or "
+                "`psql -U <user> -d <db> -f <file>` for a plain dump), never with a `<` "
+                "redirection") not in f:
             out.append("the pg_dump file has no pg_restore step")
         if "**Database backup:** `backups/revisit/database/snapshot.bak`." not in f:
             out.append("a backup of another type is not named by path alone")
