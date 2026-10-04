@@ -276,7 +276,7 @@ bootcamper's specific data, sources, and outcomes (not generic marketing). If in
 exist, explain how Senzing fits alongside them as a foundational layer.
 
 **Retrieve the material with `search_docs(query='entity resolution business value')`.** Verified live
-on **MCP server 1.32.9, docs index 2026-08-11, checked 2026-08-12**: it returns the *Entity Resolution
+on **MCP server 1.37.19, docs index 2026-10-02 18:46 UTC, checked 2026-10-04**: it returns the *Entity Resolution
 Buyer's Guide* ("Five Primary Business Use Cases", and its evaluation steps including Time To Value)
 and *Agentic Entity Resolution* ("Why Agentic Entity Resolution Matters", whose Business Impact list
 is broken out by use case). Read the bootcamper's use case **out of** those results.

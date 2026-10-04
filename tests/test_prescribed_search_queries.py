@@ -80,6 +80,13 @@ DOCS_INDEX_FORMAT = "%Y-%m-%d %H:%M UTC"
 # The measurement #383 made, for every entry whose record lacked a docs index time, a band from
 # the closed set, or the section returned: server 1.37.19, docs index 2026-10-02 18:46 UTC,
 # 2026-10-02, at the default max_results.
+#
+# The measurement #417 made, for the 15 entries still stamped before the 2026-09-24 index
+# rebuild: server 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-04, all on that one index, at
+# the default max_results, with the category each entry's sites pass. No route was broken; each
+# record was re-dated or rewritten to what came back. Two site stamps were left alone because they
+# vouch for a second claim that no longer holds (the hardware-sizing and Identifiers records say
+# which); the ledger entry for #417 drafts their follow-ups.
 
 #: query -> a record of what the query returned, so the verification is re-checkable and not
 #: just asserted. "Verified" means EXECUTED and its result written down — not "ideal". Where a
@@ -317,82 +324,94 @@ VERIFIED_QUERIES = {
     # `search_docs`' ONLY required parameter, so nine shipped references passing a bare
     # `category=` named a call a schema-respecting client cannot construct. Each query below
     # was chosen by executing it and reading the result, not by paraphrasing the destination.
+# Re-executed for #417 (stamp above VERIFIED_QUERIES): every one still returns its recorded
+# section at rank 1, except that the REL_ANCHOR_KEY query's first two sections swapped places.
     "community wrapper not the official SDK package registry": {
         "band": "ON TARGET",
         "sections": ("Senzing Anti-Patterns: Ecosystem and Dependencies",),
         "returned":
-            "ON TARGET and #1: Senzing Anti-Patterns: Ecosystem and Dependencies (36.2), which "
-            "carries 'Do Not pip install senzing', 'Do Not Use Maven Central Senzing Artifacts' "
-            "and 'Do Not Use senzing-garage Repos Without Direction' -- the official-vs-community "
-            "packaging material a TypeScript community wrapper's failed from-source build needs. "
-            "Then 'Installing in Sandboxed or Restricted-Egress Environments' (27.1). NOTE: an "
-            "earlier attempt phrased as 'typescript node install build native bindings' ranked "
-            "the PostgreSQL/container article first instead -- the corpus has no TypeScript-"
-            "specific anti-pattern article, so the vocabulary that works names the PACKAGING "
-            "concern, not the language",
-        "server": "1.33.0", "docs_index": "2026-08-20 17:33 UTC", "measured": "2026-08-23",
+            "ON TARGET and #1, with category='anti_patterns': Senzing Anti-Patterns: Ecosystem "
+            "and Dependencies, which carries 'Do Not pip install senzing', 'Do Not Use Maven "
+            "Central Senzing Artifacts' and 'Do Not Use senzing-garage Repos Without Direction' "
+            "-- the official-vs-community packaging material a TypeScript community wrapper's "
+            "failed from-source build needs. Then 'Installing in Sandboxed or Restricted-Egress "
+            "Environments', 'Database Initialization and Container Setup' and 'Operations and "
+            "Runtime' (four results). NOTE (2026-08-23): an earlier attempt phrased as "
+            "'typescript node install build native bindings' ranked the PostgreSQL/container "
+            "article first instead -- the corpus has no TypeScript-specific anti-pattern article, "
+            "so the vocabulary that works names the PACKAGING concern, not the language",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     "NAME_FULL NAME_ORG parsed person name single field": {
         "band": "ON TARGET",
         "sections": ("Name > Feature: NAME", "Feature: NAME"),
         "returned":
-            "ON TARGET and #1: Senzing Entity Specification -> 'Name > Feature: NAME' (68.7), "
-            "carrying both quoted strings verbatim -- NAME_FULL as 'Single-field name when type "
-            "(person vs org) is unknown or only a full name is provided', and the Rules line "
-            "'Prefer parsed person names ... use NAME_FULL only when the type is unknown or only "
-            "a single field exists'. Used at three call sites",
-        "server": "1.33.0", "docs_index": "2026-08-20 17:33 UTC", "measured": "2026-08-23",
+            "ON TARGET and #1: Senzing Entity Specification -> 'Name > Feature: NAME', carrying "
+            "both quoted strings verbatim -- NAME_FULL as 'Single-field name when type (person vs "
+            "org) is unknown or only a full name is provided', and the Rules line 'Prefer parsed "
+            "person names ... use NAME_FULL only when the type is unknown or only a single field "
+            "exists'. Then 'Entities, features and attributes' and 'Identifiers > Feature: "
+            "LEI_NUMBER'. Used at three call sites",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     "REL_ANCHOR_KEY REL_POINTER disclosed relationship keys": {
         "band": "ON TARGET",
         "sections": ("Disclosed relationship mapping guidance", "Feature: REL_POINTER",
                      "Feature: REL_ANCHOR"),
         "returned":
-            "ON TARGET and #1: Senzing Entity Specification -> 'Disclosed relationship mapping "
-            "guidance' (213.3), then 'Feature: REL_POINTER' (205.5) and 'Feature: REL_ANCHOR' "
-            "(163.3). Together these carry the string-valued JSON examples (\"ORG1001\", "
-            "\"ACME-1001\") AND the REL_ANCHOR_KEY guidance column's bare 1001 -- both halves of "
-            "the does-not-mandate-a-type claim the mapping sites make. Used at two call sites",
-        "server": "1.33.0", "docs_index": "2026-08-20 17:33 UTC", "measured": "2026-08-23",
+            "ON TARGET: Senzing Entity Specification -> 'Feature: REL_POINTER' first, then "
+            "'Disclosed relationship mapping guidance' and 'Feature: REL_ANCHOR', still the top "
+            "three (the 2026-08-23 record had the guidance section first). Together these carry "
+            "the string-valued JSON examples (\"ORG1001\", \"ACME-1001\") AND the REL_ANCHOR_KEY "
+            "row's bare example value 1001 -- both halves of the does-not-mandate-a-type claim "
+            "the mapping sites make. Used at two call sites",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     "usage type distinguishes multiple instances payload optional attributes": {
         "band": "ON TARGET",
         "sections": ("Usage types and payload (optional attributes)",),
         "returned":
             "ON TARGET and #1: Senzing Entity Specification -> 'Usage types and payload (optional "
-            "attributes)' (86.6), carrying the quoted definition verbatim: 'A short label that "
-            "distinguishes multiple instances of the same feature on one entity'",
-        "server": "1.33.0", "docs_index": "2026-08-20 17:33 UTC", "measured": "2026-08-23",
+            "attributes)', carrying the quoted definition verbatim: 'A short label that "
+            "distinguishes multiple instances of the same feature on one entity'. Then 'Payload "
+            "attributes (optional)' and 'Mapping usage types'",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     "Identifiers NATIONAL_ID PASSPORT TAX_ID TRUSTED_ID feature group": {
         "band": "ON TARGET",
         "sections": ("Identifiers > Feature: TAX_ID", "Identifiers > Feature: NATIONAL_ID"),
         "returned":
-            "ON TARGET: Senzing Entity Specification -> 'Identifiers > Feature: TAX_ID' (106.0) "
-            "and 'Identifiers > Feature: NATIONAL_ID' (95.9). These are members OF the Identifiers "
-            "section, which is what the call site's grouping claim rests on -- the section heading "
-            "itself is not a separately indexed chunk, so the members are the evidence",
-        "server": "1.33.0", "docs_index": "2026-08-20 17:33 UTC", "measured": "2026-08-23",
+            "ON TARGET: Senzing Entity Specification -> 'Identifiers > Feature: TAX_ID', then "
+            "'Identifiers > Feature: NATIONAL_ID' and 'Mapping identifiers'. These are members OF "
+            "the Identifiers section, which is what the call site's grouping claim rests on -- "
+            "the section heading itself is not a separately indexed chunk, so the members are the "
+            "evidence. NOTE: the set has no TRUSTED_ID section, and the specification files it as "
+            "'Trusted ID > Feature: TRUSTED_ID', not under Identifiers (checked in the same "
+            "measurement). The site's list of Identifiers members names TRUSTED_ID, so its prose "
+            "stamp was left alone and a follow-up drafted (#417)",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     "ACCOUNT_NUMBER ACCOUNT_DOMAIN account feature": {
         "band": "ON TARGET",
         "sections": ("Feature: ACCOUNT",),
         "returned":
-            "ON TARGET and #1: Senzing Entity Specification -> 'Identifiers > Feature: ACCOUNT' "
-            "(98.2), carrying 'Domain/system for the account number' verbatim -- the definition "
-            "the call site quotes",
-        "server": "1.33.0", "docs_index": "2026-08-20 17:33 UTC", "measured": "2026-08-23",
+            "ON TARGET and #1: Senzing Entity Specification -> 'Identifiers > Feature: ACCOUNT', "
+            "carrying 'Domain/system for the account number' verbatim -- the definition the call "
+            "site quotes",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     "recommended JSON schema FEATURES list multiple values sub-list": {
         "band": "ON TARGET",
         "sections": ("Recommended JSON schema",),
         "returned":
-            "ON TARGET and #1: Senzing Entity Specification -> 'Recommended JSON schema' (82.8), "
+            "ON TARGET and #1: Senzing Entity Specification -> 'Recommended JSON schema', "
             "carrying the quoted sentence verbatim ('In prior versions we allowed a flat JSON "
             "structure with a separate sub-list for each feature that had multiple values. While "
-            "we still support that, we now recommend ...') plus the Schema Validation Rules that "
-            "declare FEATURES required",
-        "server": "1.33.0", "docs_index": "2026-08-20 17:33 UTC", "measured": "2026-08-23",
+            "we still support that, we now recommend ...'). The 2026-08-23 record also named the "
+            "Schema Validation Rules that declare FEATURES required; the excerpt returned here "
+            "ends inside the organization example and does not show them, so they are no longer "
+            "recorded. No site quotes them",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     # Executed 2026-08-17 on server 1.32.9 (docs index 2026-08-11 20:52 UTC), later than
     # VERIFIED_ON above, which records the date the bulk of this allowlist was measured.
@@ -450,20 +469,35 @@ VERIFIED_QUERIES = {
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-02",
     },
     # The six below were measured on server 1.32.9, docs index 2026-08-11 20:52 UTC, on
-    # 2026-08-12 (fdbc922): the stamp the module-level VERIFIED_ON recorded for them.
+    # 2026-08-12 (fdbc922): the stamp the module-level VERIFIED_ON recorded for them. #383
+    # re-executed two of them; #417 re-executed the other four, with the same sections returned.
     "entity resolution business value": {
         "band": "ON TARGET",
         "sections": ("Five Primary Business Use Cases", "Why Agentic Entity Resolution Matters"),
         "returned":
-            "ON TARGET: Entity Resolution Buyer's Guide -> 'Five Primary Business Use Cases'; "
-            "Agentic Entity Resolution -> 'Why Agentic Entity Resolution Matters'",
-        "server": "1.32.9", "docs_index": "2026-08-11 20:52 UTC", "measured": "2026-08-12",
+            "ON TARGET: Entity Resolution Buyer's Guide -> 'Five Primary Business Use Cases > "
+            "Step 1: Define your organization's use case for entity resolution before evaluating "
+            "solutions'; Agentic Entity Resolution -> 'Why Agentic Entity Resolution Matters', "
+            "whose Business Impact list is broken out by use case; then the Buyer's Guide's 'The "
+            "Steps To Evaluating Entity Resolution' (Step 6: Time To Value). In the same "
+            "measurement 'value proposition Supply Chain' still returns senzing/libpostal geodata "
+            "chains scripts first and the sz_spark changelog's 'CI / supply chain' heading, and "
+            "'entity resolution business value supply chain' still puts the libpostal "
+            "chains_tsv.py script first, above the real material, as Step 14 says",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     "what features to map": {
         "band": "ON TARGET",
         "sections": ("What features to map",),
-        "returned": "ON TARGET: Senzing Entity Specification -> 'What features to map' (exact section)",
-        "server": "1.32.9", "docs_index": "2026-08-11 20:52 UTC", "measured": "2026-08-12",
+        "returned":
+            "ON TARGET, with category='data_mapping': Senzing Entity Specification -> 'What "
+            "features to map' (exact section), whose table describes DOB as 'Person date of "
+            "birth', NAME (person) as 'Personal names' and NAME (organization) as 'Organization "
+            "legal or trade name'. The NATIONALITY, CITIZENSHIP and PLACE_OF_BIRTH rows ('Person "
+            "...') and the 'Feature: REGISTRATION_DATE (organizations)' and 'Feature: "
+            "REGISTRATION_COUNTRY (organizations)' headings that Phase 1's applicability table "
+            "quotes were checked in the same measurement",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     # Re-executed for #383 on server 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-02: the
     # 2026-08-12 record, "ON TARGET: Senzing Engine Configuration (exact page)", named a page
@@ -501,31 +535,37 @@ VERIFIED_QUERIES = {
     "CORD datasets: names, contents, and availability for entity resolution scenarios": {
         "band": "ON TARGET",
         "sections": ("What Is a CORD?",),
-        "returned": "ON TARGET: Collections Of Relatable Data (CORDs) -> 'What Is a CORD?'",
-        "server": "1.32.9", "docs_index": "2026-08-11 20:52 UTC", "measured": "2026-08-12",
+        "returned":
+            "ON TARGET: Collections Of Relatable Data (CORDs) -> 'What Is a CORD?' (the section "
+            "name renders in bold); the same page's 'Moscow CORD' section is in the set below it",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     "temporary evaluation license for a dataset larger than the default limit": {
         "band": "ON TARGET",
         "sections": ("Senzing Non-Production License",),
         "returned":
-            "ON TARGET: End User License Agreement (EULA) -> 'Senzing Non-Production License' "
-            "(relevance 171, the highest in this set)",
-        "server": "1.32.9", "docs_index": "2026-08-11 20:52 UTC", "measured": "2026-08-12",
+            "ON TARGET: End User License Agreement (EULA) & Warranty Statement -> '1. GRANT OF "
+            "LICENSE.' > 'A. Senzing Non-Production License', the highest-scoring hit; 'B. "
+            "Senzing Production License' follows just below it",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     # Executed against server 1.32.9, docs indexed 2026-08-11 20:52 UTC, on 2026-08-14, for
-    # module-04 Step 8b's load-time estimate.
+    # module-04 Step 8b's load-time estimate. Re-executed for #417: the route still holds, and the
+    # longer phrasing the 2026-08-14 record warned about now finds the FAQ too (see its NOTE).
     "hardware sizing capacity planning": {
         "band": "ON TARGET",
         "sections": ("Hardware Sizing FAQ",),
         "returned":
-            "ON TARGET: Hardware Sizing FAQ -> 'Full Article' (relevance 113.4), carrying "
-            "throughput per engine core (~5-10 rec/sec steady state), the three load phases "
-            "(Phase 1 is 10-100x faster than Phase 3) and worked load-time examples (1,000 "
-            "records ~2 min; 100,000 ~55 min). ⚠️ The phrasing is load-bearing: adding the "
-            "obvious extra terms — 'hardware sizing capacity planning records per second load "
-            "time' — drops the FAQ entirely and returns add_record flag docs and loading code "
-            "snippets instead. Step 8b says so at the call site",
-        "server": "1.32.9", "docs_index": "2026-08-11 20:52 UTC", "measured": "2026-08-14",
+            "ON TARGET: Hardware Sizing FAQ -> 'Full Article', carrying throughput per engine "
+            "core (~5-10 records/second steady state), the three load phases (Phase 1 throughput "
+            "can be 10-100x higher than Phase 3) and worked load-time examples (1,000 records ~2 "
+            "minutes; 100,000 ~55 minutes). NOTE: the 2026-08-14 record said the longer phrasing "
+            "'hardware sizing capacity planning records per second load time' drops the FAQ "
+            "entirely. In this measurement that phrasing returns the FAQ first, then add_record "
+            "flag docs and loading code snippets, so Step 8b's 'Nearby wordings do not find the "
+            "FAQ' warning no longer reproduces: its prose stamp was left alone and a follow-up "
+            "drafted (#417)",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     # ⚠️ The three below are NOT queries a step tells the guide to RUN. Each is the evidence slot
     # of an `MCP-NEGATIVE` marker — a query that was executed and came back without the fact. The
@@ -575,27 +615,31 @@ VERIFIED_QUERIES = {
     # queries the step tells the guide to RUN; the last two are the evidence slots of its two
     # `MCP-NEGATIVE` markers — quoted in order to be forbidden. All four executed against server
     # 1.32.9, docs indexed 2026-08-11 20:52 UTC, on 2026-08-13; "globalization" was re-executed
-    # for #149 (below).
+    # for #149 (below), and the other three for #417, in the same measurement as the four
+    # "Section to ask for" rows of Module 5's table, which the two prose stamps there vouch for.
     "UTF-8 encoding non-Latin character support multi-language data quality": {
         "band": "ON TARGET",
         "sections": ("What languages does Senzing support?",),
         "returned":
-            "ON TARGET with category='globalization': Senzing Globalization Guide -> 'What languages "
-            "does Senzing support?', which states the UTF-8 and cross-script answer outright. ⚠️ Three "
-            "of six hits are category='code_example' rows (libpostal encoding.py, a Rust FFI guide) "
-            "carrying HIGHER relevance_score (63.6 vs 39.8) but returned AFTER the on-topic rows — the "
-            "filter promotes rather than restricts, so never rank this set by score",
-        "server": "1.32.9", "docs_index": "2026-08-11 20:52 UTC", "measured": "2026-08-13",
+            "ON TARGET with category='globalization': Senzing Globalization Guide -> 'What "
+            "languages does Senzing support?', which states the UTF-8 and cross-script answer "
+            "outright, then 'Advanced personal name comparisons > Supported cultural groups' and "
+            "'... > Additional Cultural Support'. ⚠️ category='code_example' rows (libpostal "
+            "encoding.py, a Rust FFI guide) carry a HIGHER relevance_score but are returned AFTER "
+            "the on-topic rows -- the filter promotes rather than restricts, so never rank this "
+            "set by score",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     "data quality practices multi-language non-Latin": {
         "band": "ON TARGET",
         "sections": ("CJK+English cross-script matching",),
         "returned":
-            "ON TARGET with category='globalization': Globalization Guide -> 'Address matching examples "
-            "> CJK+English cross-script matching (new in v4)' (relevance 12.8), whose prose carries the "
+            "ON TARGET with category='globalization': Globalization Guide -> 'Address matching "
+            "examples > CJK+English cross-script matching (new in v4)', whose prose carries the "
             "practice — native-to-native beats native-to-Romanized, and for non-CJK cross-script, "
-            "Romanize via an address-hygiene product and supply both forms. All three hits are the Guide",
-        "server": "1.32.9", "docs_index": "2026-08-11 20:52 UTC", "measured": "2026-08-13",
+            "Romanize via an address-hygiene product and supply both forms. Three Guide rows come "
+            "first; repo docs/best-practices.md files follow with a higher relevance_score",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     # Re-executed for #149 on server 1.37.13, docs index 2026-09-24 18:45 UTC, 2026-09-26, at
     # max_results=6 and at the default. The 2026-08-13 record above this entry said its best
@@ -620,12 +664,16 @@ VERIFIED_QUERIES = {
         "band": "OFF TARGET BY DESIGN",
         "sections": (),
         "returned":
-            "OFF TARGET BY DESIGN — the negative's evidence: FIVE OF FIVE hits are repo "
-            "docs/best-practices.md template files (senzingsdk-tools, scoop-senzingsdk, "
-            "homebrew-senzingsdk, senzingapi-tools, senzingsdk-runtime), all about Markdown lint and "
-            "Dockerfiles, scores 89.5-89.8, two of them title-only stubs. No globalization content at "
-            "all — the phrase 'best practices' is the whole defect",
-        "server": "1.32.9", "docs_index": "2026-08-11 20:52 UTC", "measured": "2026-08-13",
+            "OFF TARGET BY DESIGN — the negative's evidence: the top six of ten hits are repo "
+            "docs/best-practices.md template files (senzingsdk-tools, senzingapi-runtime, "
+            "senzingapi-tools, senzingsdk-runtime, homebrew-senzingsdk, scoop-senzingsdk), all "
+            "about Markdown lint and Dockerfiles, two of them title-only stubs; the rest are a "
+            "libpostal-data address-parser quality note, a 'Data Quality & Accuracy' use-case "
+            "blurb, an economic-cost appendix and an FFI 'Best Practices' list. No globalization "
+            "content at all — the phrase 'best practices' is the whole defect. With "
+            "category='globalization' the three Guide rows come first and the same files follow, "
+            "scoring ~89 against the Guide's ~9–13",
+        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     "szBuildVersion.json build version file location": {
         "band": "OFF TARGET BY DESIGN",
@@ -1035,8 +1083,8 @@ class StepFourteenHandlesAMiss(unittest.TestCase):
 
     def test_it_carries_the_verification_stamp(self):
         flat = self.flat()
-        self.assertIn("1.32.9", flat)
-        self.assertIn("2026-08-12", flat)
+        self.assertIn("1.37.19", flat)
+        self.assertIn("2026-10-04", flat)
 
     def test_it_forbids_appending_the_category(self):
         """The measured cause: the category token, not the abstract phrasing."""
