@@ -20,7 +20,7 @@ question when a Module 4 decision covers the same load, so Step 8b now uses item
 too, cited by link rather than restated (INV-300), with no figure written into the step. Both
 heads-ups then fire on the same loads.
 
-Five checks, each a pure function over the text, so every negative control runs the same check
+Six checks, each a pure function over the text, so every negative control runs the same check
 over a mutated copy, and the pre-#330 wording (kept below as fixtures) fails them:
 
 1. Step 8b sub-step 2 cites item 3 by a link that resolves to Phase A's section heading, names
@@ -31,6 +31,13 @@ over a mutated copy, and the pre-#330 wording (kept below as fixtures) fails the
    threshold, carries a dated MCP note, and names no figure.
 4. No skill says "load-time threshold".
 5. Item 3 still sources its threshold from that route, so the citation points at a real rule.
+6. (#439) Step 8b no longer says that a nearby wording of the hardware-sizing query fails to
+   find the Hardware Sizing FAQ. That warning was stamped on server 1.32.9 (2026-08-14), and on
+   server 1.37.19, docs index 2026-10-02 18:46 UTC (2026-10-04), the longer phrasing it quoted
+   returns the FAQ at rank 1. Its replacement tells the guide to use the query as written,
+   because a paraphrase is unmeasured, cites INV-291, and carries no example phrasing and no
+   stamp, so no measurement can make it stale. The pre-#439 sentence is kept below as a
+   fixture, and restoring it fails the check.
 
 Everything is asserted as behavior in shipped guidance, so any implementation language
 satisfies it (INV-002).
@@ -66,6 +73,10 @@ ROUTE_QUERY = 'search_docs(query="loading",'
 ROUTE_CATEGORY = 'category="anti_patterns")'
 ROUTE_ARTICLE = '"Do Not Use SQLite in Production"'
 SDK_GUIDE = "`sdk_guide(topic='load',"
+#: The end of the `sdk_guide` sentence's own stamp, which ends the passage check 3 reads (#439).
+SDK_GUIDE_STAMP_END = "1.37.16, 2026-10-01)"
+#: The rule that replaced the retired warning (#439): the start of its sentence.
+AS_WRITTEN_RULE = "⚠️ Use the query as written"
 
 #: A link from Module 4 to a section of Phase A, and the fragment it names.
 PHASE_A_LINK = re.compile(
@@ -207,8 +218,8 @@ def sdk_guide_problems(step):
     at = text.find(SDK_GUIDE + " record_count=…)`")
     if at < 0:
         return ["Step 8b no longer names sdk_guide(topic='load', record_count=…)"]
-    end = text.find("⚠️ Nearby wordings", at)
-    passage = text[at:end if end > 0 else at + 800]
+    end = text.find(SDK_GUIDE_STAMP_END, at, at + 800)
+    passage = text[at:end + len(SDK_GUIDE_STAMP_END) if end > 0 else at + 800]
     problems = []
     if re.search(r"(?i)record-count threshold", passage):
         problems.append('the sdk_guide sentence still calls its figure "the record-count '
@@ -223,6 +234,48 @@ def sdk_guide_problems(step):
                         "2026-10-01)")
     if figures_in(passage.replace("1.37.16", "")):
         problems.append("the sdk_guide sentence names a figure")
+    return problems
+
+
+#: The retired claim (#439): a wording of the query "does not find" the FAQ, or the longer
+#: phrasing the old warning quoted as one that misses.
+RETIRED_CLAIM = re.compile(
+    r"(?i)(?:wordings?|phrasings?|paraphras\w*)\W+(?:\w+\W+){0,3}?do(?:es)?\W+(?:\*\*)?not"
+    r"(?:\*\*)?\W+find\W+the\W+FAQ"
+    r"|records per second load time")
+#: A stamp or a measurement: a server version, a date, or the words a stamp is written with.
+A_STAMP = re.compile(r"\b\d+\.\d+\.\d+\b|\b\d{4}-\d{2}-\d{2}\b|(?i:\bverified\b|\bindexed\b|"
+                     r"\bre-checked\b|\bmeasured\b|\bserver\b)")
+#: A quoted phrasing: text in double quotes, or a backticked or single-quoted query.
+A_QUOTED_PHRASING = re.compile(r"\"[^\"]+\"|“[^”]+”|'[^']{3,}'|`[^`]+`")
+
+
+def as_written_problems(step):
+    """Check 6 (#439): the retired claim is gone, and its replacement cites no measurement."""
+    text = flat(step)
+    problems = []
+    for m in RETIRED_CLAIM.finditer(text):
+        problems.append(f"Step 8b says a phrasing does not find the FAQ: {m.group(0)!r}")
+    at = text.find(AS_WRITTEN_RULE)
+    if at < 0:
+        return problems + ["Step 8b does not tell the guide to use the query as written"]
+    # The rule's sentence: up to the first full stop that ends it (one followed by a space).
+    # `sentences()` would run on into the `MCP-NEGATIVE` comment that follows it.
+    rule = re.match(r".*?\.(?=\s|$)", text[at:]) or re.match(r".*", text[at:])
+    rule = rule.group(0)
+    if not re.search(r"(?i)paraphrase is unmeasured", rule):
+        problems.append("the as-written rule does not say a paraphrase is unmeasured")
+    if not re.search(r"(?i)not evidence about what it returns", rule):
+        problems.append("the as-written rule does not say a query's words are not evidence "
+                        "about what it returns")
+    if "(INV-291)" not in rule:
+        problems.append("the as-written rule does not cite INV-291")
+    stamp = A_STAMP.search(rule)
+    if stamp:
+        problems.append(f"the as-written rule carries a stamp or measurement: {stamp.group(0)!r}")
+    quoted = A_QUOTED_PHRASING.search(rule)
+    if quoted:
+        problems.append(f"the as-written rule quotes an example phrasing: {quoted.group(0)!r}")
     return problems
 
 
@@ -255,6 +308,11 @@ PRE_FIX_SDK_GUIDE = """`sdk_guide(topic='load',
      record_count=…)` returns the license note and the record-count threshold but **no timing
      figures at all**, so it is the wrong route for this. ⚠️ Nearby wordings do **not** find the FAQ
 """
+#: The pre-#439 warning, verbatim, kept so the negative control restores the retired claim.
+PRE_439_WARNING = """⚠️ Nearby wordings do **not** find the FAQ
+     — "hardware sizing capacity planning records per second load time" returns flag docs and code
+     snippets instead — so use the query as written rather than paraphrasing it (verified on MCP
+     server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-14)."""
 
 
 class StepEightBUsesItemThreesThreshold(unittest.TestCase):
@@ -289,6 +347,9 @@ class StepEightBUsesItemThreesThreshold(unittest.TestCase):
 
     def test_item_3_still_sources_the_threshold_from_that_route(self):
         self.assertEqual(item_3_problems(self.phase_a), [])
+
+    def test_the_as_written_rule_cites_no_measurement(self):
+        self.assertEqual(as_written_problems(self.step), [])
 
     def test_the_slug_matches_githubs_for_the_section_heading(self):
         """The fragment rule itself, pinned on the heading this link depends on."""
@@ -332,8 +393,7 @@ class NegativeControls(unittest.TestCase):
     def test_the_pre_fix_sdk_guide_sentence_fails(self):
         flat_step = flat(self.step)
         at = flat_step.index(SDK_GUIDE)
-        end = flat_step.index("⚠️ Nearby wordings", at) + len("⚠️ Nearby wordings do **not** find "
-                                                                "the FAQ")
+        end = flat_step.index(SDK_GUIDE_STAMP_END, at) + len(SDK_GUIDE_STAMP_END)
         broken = flat_step[:at] + flat(PRE_FIX_SDK_GUIDE) + flat_step[end:]
         problems = sdk_guide_problems(broken)
         self.assertTrue(any("record-count threshold" in p for p in problems), problems)
@@ -381,6 +441,49 @@ class NegativeControls(unittest.TestCase):
         broken = self.mutate("the **template switch**, the volume above which",
                              "the **template switch**, 500 records, the volume above which")
         self.assertTrue(any("names a figure" in p for p in sdk_guide_problems(broken)))
+
+    def as_written_rule(self):
+        """The replacement sentence (#439) as it sits in the step, line breaks included."""
+        at = self.step.index(AS_WRITTEN_RULE)
+        return self.step[at:self.step.index("(INV-291).", at) + len("(INV-291).")]
+
+    def test_the_pre_439_warning_fails(self):
+        broken = self.mutate(self.as_written_rule(), PRE_439_WARNING)
+        problems = as_written_problems(broken)
+        self.assertTrue(any("does not find the FAQ" in p for p in problems), problems)
+        self.assertTrue(any("records per second load time" in p for p in problems), problems)
+        self.assertTrue(any("use the query as written" in p for p in problems), problems)
+
+    def test_the_retired_claim_beside_the_rule_fails(self):
+        """The old claim, reworded and wrapped, appended after a rule that is otherwise intact."""
+        for claim in ("Nearby wordings do **not** find the FAQ.",
+                      "A longer phrasing does not\n     find the FAQ.",
+                      "Paraphrases do not find the FAQ."):
+            with self.subTest(claim=claim):
+                rule = self.as_written_rule()
+                broken = self.mutate(rule, rule + " " + claim)
+                problems = as_written_problems(broken)
+                self.assertTrue(any("does not find the FAQ" in p for p in problems), problems)
+
+    def test_a_stamp_on_the_rule_fails(self):
+        for stamp in (" (verified on MCP server 1.37.19, 2026-10-04)",
+                      " (docs indexed 2026-10-02 18:46 UTC)"):
+            with self.subTest(stamp=stamp):
+                broken = self.mutate("(INV-291).", "(INV-291)" + stamp + ".")
+                problems = as_written_problems(broken)
+                self.assertTrue(any("stamp or measurement" in p for p in problems), problems)
+
+    def test_an_example_phrasing_on_the_rule_fails(self):
+        broken = self.mutate("rather than paraphrasing it:",
+                             'rather than paraphrasing it as "hardware sizing load time":')
+        problems = as_written_problems(broken)
+        self.assertTrue(any("example phrasing" in p for p in problems), problems)
+
+    def test_a_rule_without_its_citation_or_reason_fails(self):
+        broken = self.mutate("(INV-291).", ".")
+        self.assertTrue(any("cite INV-291" in p for p in as_written_problems(broken)))
+        broken = self.mutate("a paraphrase\n     is unmeasured", "a paraphrase is risky")
+        self.assertTrue(any("unmeasured" in p for p in as_written_problems(broken)))
 
     def test_item_3_losing_its_route_fails(self):
         at = self.phase_a.index(ITEM_3)

@@ -552,6 +552,9 @@ VERIFIED_QUERIES = {
     # Executed against server 1.32.9, docs indexed 2026-08-11 20:52 UTC, on 2026-08-14, for
     # module-04 Step 8b's load-time estimate. Re-executed for #417: the route still holds, and the
     # longer phrasing the 2026-08-14 record warned about now finds the FAQ too (see its NOTE).
+    # Re-executed for #439 on the same index (1.37.19, docs index 2026-10-02 18:46 UTC,
+    # 2026-10-04): the FAQ is still rank 1 for both phrasings, so the stamp is not re-dated, and
+    # Step 8b's warning was replaced by a rule that cites no measurement (see the NOTE).
     "hardware sizing capacity planning": {
         "band": "ON TARGET",
         "sections": ("Hardware Sizing FAQ",),
@@ -562,9 +565,10 @@ VERIFIED_QUERIES = {
             "minutes; 100,000 ~55 minutes). NOTE: the 2026-08-14 record said the longer phrasing "
             "'hardware sizing capacity planning records per second load time' drops the FAQ "
             "entirely. In this measurement that phrasing returns the FAQ first, then add_record "
-            "flag docs and loading code snippets, so Step 8b's 'Nearby wordings do not find the "
-            "FAQ' warning no longer reproduces: its prose stamp was left alone and a follow-up "
-            "drafted (#417)",
+            "flag docs and loading code snippets (#417, again in #439). #439 resolved Step 8b's "
+            "'Nearby wordings do not find the FAQ' warning: it replaced the warning and its "
+            "stamp with a rule that cites no measurement, to use the query as written because a "
+            "paraphrase is unmeasured (INV-291)",
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     # ⚠️ The three below are NOT queries a step tells the guide to RUN. Each is the evidence slot
