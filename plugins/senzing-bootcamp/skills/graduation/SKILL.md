@@ -1020,7 +1020,8 @@ with `imageio-ffmpeg`, which rendering needs,"). Every other word stays the same
 
 **On yes,** install into the project only (INV-066), skipping each step that is already satisfied:
 
-1. Create `data/temp/recap-venv/` with `python3 -m venv data/temp/recap-venv` if it does not exist.
+1. Create `data/temp/recap-venv/` with `python3 -m venv data/temp/recap-venv` (Windows:
+   `py -3 -m venv data\temp\recap-venv`) if it does not exist.
 2. Run **one** `python -m pip install` with the venv's Python, installing `piper-tts` when the venv
    cannot find `piper`, plus Pillow when the venv's Python cannot `import PIL`, plus
    `imageio-ffmpeg` when there is no ffmpeg on `PATH`.
@@ -1028,14 +1029,18 @@ with `imageio-ffmpeg`, which rendering needs,"). Every other word stays the same
    `data/temp/piper-voices/` yet.
 
 ```bash
-python3 -m venv data/temp/recap-venv    # only if it does not exist yet
 # Linux/macOS (add Pillow and imageio-ffmpeg to the same command when they are missing):
+python3 -m venv data/temp/recap-venv    # only if it does not exist yet
 data/temp/recap-venv/bin/python -m pip install piper-tts
 data/temp/recap-venv/bin/python -m piper.download_voices en_US-ljspeech-high --data-dir data/temp/piper-voices
 # Windows:
+py -3 -m venv data\temp\recap-venv    # only if it does not exist yet
 data\temp\recap-venv\Scripts\python -m pip install piper-tts
 data\temp\recap-venv\Scripts\python -m piper.download_voices en_US-ljspeech-high --data-dir data\temp\piper-voices
 ```
+
+The Windows lines are written for PowerShell 5.1 and 7 but are unverified on Windows: no test
+runs them there.
 
 When every step succeeds, **run `--check` and the render below with the venv's Python** from then on.
 The venv now has Pillow and, without an ffmpeg on `PATH`, `imageio-ffmpeg`, so the exit-2 install
@@ -1094,14 +1099,18 @@ On yes, install into the project-local virtualenv (INV-066). Step 1b's `fpdf2` i
 it already:
 
 ```bash
-python3 -m venv data/temp/recap-venv    # only if it does not exist yet
 # Linux/macOS (add Pillow when it is missing):
+python3 -m venv data/temp/recap-venv    # only if it does not exist yet
 data/temp/recap-venv/bin/python -m pip install imageio-ffmpeg
 data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
 # Windows:
+py -3 -m venv data\temp\recap-venv    # only if it does not exist yet
 data\temp\recap-venv\Scripts\python -m pip install imageio-ffmpeg
 data\temp\recap-venv\Scripts\python "${CLAUDE_PLUGIN_ROOT}\scripts\generate_recap_video.py"
 ```
+
+The Windows lines are written for PowerShell 5.1 and 7 but are unverified on Windows: no test
+runs them there.
 
 On no, or when the venv or the install fails, skip the video and keep the storyboard.
 
