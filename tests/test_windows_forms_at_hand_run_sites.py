@@ -26,6 +26,16 @@ Windows and that had no correct Windows form:
    into the container's filesystem. The packaged `OPEN_ME_FIRST.md` restore step
    (`package_bootcamp.py`'s `PG_RESTORE`) is the same step and is held to the same rule.
 
+5. **Graduation Step 1c (the Piper voice and the `imageio-ffmpeg` install), #420.** Step 1c
+   created the same recap venv three more times with the POSIX form only, and in both code blocks
+   the venv line sat above `# Linux/macOS`, shared by both platforms. Each block now creates it
+   under `# Linux/macOS` and, as `py -3 -m venv data\\temp\\recap-venv`, under `# Windows:`;
+   the list item names the Windows form in a parenthetical; and each block is followed by Step
+   1b's "unverified on Windows" sentence. A scan of every `.md` under the plugin pairs each
+   `python3 -m venv <path>` with `py -3 -m venv <path, / as \\>` in the same fenced code block,
+   or, outside code blocks, the same paragraph or list item (text between blank lines), so a
+   new venv site is caught without a line number (INV-246).
+
 These tests pin the forms. They **cannot** establish that the Windows forms run on Windows: this
 repo's CI runs on Linux, so each site says on its own text that its Windows form is unverified
 there (INV-163), and a test pins that disclosure too.
@@ -38,6 +48,8 @@ import ast
 import re
 import unittest
 from pathlib import Path
+
+from _wrapped_text import blocks
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
@@ -53,6 +65,16 @@ WINDOWS_RENDER = ('data\\temp\\recap-venv\\Scripts\\python '
                   '"${CLAUDE_PLUGIN_ROOT}\\scripts\\generate_recap_pdf.py"')
 WINDOWS_VENV = "py -3 -m venv data\\temp\\recap-venv"
 UNVERIFIED = "unverified on Windows"
+#: Step 1b's whole disclosure sentence, which Step 1c repeats after each of its code blocks.
+DISCLOSURE = ("The Windows lines are written for PowerShell 5.1 and 7 but are unverified on "
+              "Windows: no test runs them there.")
+POSIX_VENV_LINE = "python3 -m venv data/temp/recap-venv    # only if it does not exist yet"
+WINDOWS_VENV_LINE = "py -3 -m venv data\\temp\\recap-venv    # only if it does not exist yet"
+
+#: A POSIX venv creation and its path, which ends at whitespace or a closing backtick.
+POSIX_VENV = re.compile(r"python3 -m venv ([^\s`]+)")
+#: A code-fence line, read as `_wrapped_text` reads one.
+FENCE_LINE = re.compile(r"^[ \t]*(`{3,}|~{3,})")
 
 #: A PostgreSQL client command, as the first word of a command or after `docker exec <c>`.
 PG_COMMAND = re.compile(r"\b(?:pg_dump|pg_restore|psql)\s+-")
@@ -81,6 +103,92 @@ def step_1b(text):
 
 def step_6c(text):
     return between(text, "### 6c. Return guide", "## Step 7:")
+
+
+def step_1c(text):
+    return between(text, "### 1c.", "## Step 2:")
+
+
+def units(text):
+    """The text's pairing units, in order: ``(kind, [(lineno, line), ...])``.
+
+    ``kind`` is ``"fence"`` for the whole contents of one fenced code block and ``"prose"`` for
+    one block between blank lines (a paragraph, or a list's lines). The cut is
+    `_wrapped_text.blocks`; the only change is that the blocks inside one fence are joined, since
+    a blank line inside a code block does not end the code block.
+    """
+    out, fence, current = [], None, None
+    for block in blocks(text):
+        opener = FENCE_LINE.match(block[0][1]) if len(block) == 1 else None
+        if opener and (fence is None or opener.group(1)[0] == fence):
+            if fence is None:
+                fence, current = opener.group(1)[0], []
+            else:
+                out.append(("fence", current))
+                fence, current = None, None
+        elif fence:
+            current.extend(block)
+        else:
+            out.append(("prose", block))
+    if fence:
+        out.append(("fence", current))
+    return out
+
+
+def flat_unit(block):
+    """A unit's text with whitespace collapsed, and the line each word came from."""
+    words = [(lineno, word) for lineno, line in block for word in line.split()]
+    return " ".join(word for _, word in words), [lineno for lineno, _ in words]
+
+
+def venv_sites(text):
+    """``(lineno, path, paired)`` for every `python3 -m venv <path>` in ``text``.
+
+    ``paired`` is whether `py -3 -m venv <path with / as \\>` is in the same unit (see `units`).
+    The conversion is literal: `/` becomes `\\` and nothing else changes.
+    """
+    sites = []
+    for _, block in units(text):
+        flat_text, origin = flat_unit(block)
+        for match in POSIX_VENV.finditer(flat_text):
+            windows = "py -3 -m venv " + match.group(1).replace("/", "\\")
+            paired = re.search(re.escape(windows) + r"(?![^\s`])", flat_text) is not None
+            sites.append((origin[flat_text[:match.start()].count(" ")], match.group(1), paired))
+    return sites
+
+
+def unpaired_venvs(text):
+    return [(lineno, path) for lineno, path, paired in venv_sites(text) if not paired]
+
+
+def venv_blocks_out_of_layout(text):
+    """Each fenced block creating the recap venv whose lines are not, in this order: a
+    `# Linux/macOS` comment, the POSIX venv line, `# Windows:`, the Windows venv line."""
+    bad = []
+    for kind, block in units(text):
+        lines = [line.strip() for _, line in block]
+        if kind != "fence" or POSIX_VENV_LINE not in lines:
+            continue
+        posix = lines.index(POSIX_VENV_LINE)
+        linux = next((i for i, l in enumerate(lines) if l.startswith("# Linux/macOS")), None)
+        windows = lines.index("# Windows:") if "# Windows:" in lines else None
+        py = lines.index(WINDOWS_VENV_LINE) if WINDOWS_VENV_LINE in lines else None
+        if None in (linux, windows, py) or not linux < posix < windows < py:
+            bad.append(block[0][0])
+    return bad
+
+
+def venv_blocks_without_disclosure(text):
+    """Each fenced block creating a venv whose next unit does not carry `DISCLOSURE`."""
+    found = units(text)
+    bad = []
+    for i, (kind, block) in enumerate(found):
+        if kind != "fence" or not POSIX_VENV.search(flat_unit(block)[0]):
+            continue
+        after = found[i + 1] if i + 1 < len(found) else None
+        if after is None or after[0] != "prose" or DISCLOSURE not in flat_unit(after[1])[0]:
+            bad.append(block[0][0])
+    return bad
 
 
 def redirecting_pg_commands(text):
@@ -161,6 +269,44 @@ class TheRecapRenderHasAWindowsForm(unittest.TestCase):
 
     def test_the_windows_lines_are_disclosed_as_unverified(self):
         self.assertIn(UNVERIFIED, flat(self.step))
+
+
+class EveryVenvCreationHasAWindowsForm(unittest.TestCase):
+    """#420: every `python3 -m venv <path>` under the plugin has its `py -3` form beside it."""
+
+    def setUp(self):
+        self.graduation = GRADUATION.read_text(encoding="utf-8")
+
+    def test_every_site_under_the_plugin_is_paired(self):
+        problems = []
+        for path in sorted(PLUGIN.rglob("*.md")):
+            for lineno, venv in unpaired_venvs(path.read_text(encoding="utf-8")):
+                problems.append(f"{path.relative_to(REPO_ROOT)}:{lineno}: python3 -m venv {venv}")
+        self.assertEqual([], problems,
+                         "pair each with `py -3 -m venv <path, / as \\>` in the same fenced code "
+                         "block, or the same paragraph or list item")
+
+    def test_the_scan_finds_the_graduation_sites(self):
+        """Guard the guard: Step 1b's site and Step 1c's three are found, and found paired."""
+        self.assertEqual(1, len(venv_sites(step_1b(self.graduation))))
+        sites = venv_sites(step_1c(self.graduation))
+        self.assertEqual(3, len(sites), sites)
+        self.assertTrue(all(paired for _, _, paired in sites), sites)
+        self.assertGreaterEqual(len(venv_sites(self.graduation)), 4)
+
+    def test_the_step_1c_list_item_names_the_windows_form(self):
+        self.assertIn("(Windows: `py -3 -m venv data\\temp\\recap-venv`)",
+                      flat(step_1c(self.graduation)))
+
+    def test_step_1c_blocks_split_the_venv_line_per_platform(self):
+        step = step_1c(self.graduation)
+        fenced = [b for kind, b in units(step) if kind == "fence"
+                  and POSIX_VENV_LINE in [line.strip() for _, line in b]]
+        self.assertEqual(2, len(fenced))
+        self.assertEqual([], venv_blocks_out_of_layout(step))
+
+    def test_step_1c_blocks_are_disclosed_as_unverified(self):
+        self.assertEqual([], venv_blocks_without_disclosure(step_1c(self.graduation)))
 
 
 class TheReturnGuideNamesBothEnvScripts(unittest.TestCase):
@@ -264,6 +410,52 @@ class NegativeControls(unittest.TestCase):
 
     def test_placeholders_alone_are_not_redirections(self):
         self.assertEqual([], redirecting_pg_commands("`pg_restore -U <user> -d <db> <file>`"))
+
+    OLD_1C_BLOCK = ("```bash\n"
+                    "python3 -m venv data/temp/recap-venv    # only if it does not exist yet\n"
+                    "# Linux/macOS (add Pillow when it is missing):\n"
+                    "data/temp/recap-venv/bin/python -m pip install imageio-ffmpeg\n"
+                    "# Windows:\n"
+                    "data\\temp\\recap-venv\\Scripts\\python -m pip install imageio-ffmpeg\n"
+                    "```\n")
+    OLD_1C_ITEM = ("1. Create `data/temp/recap-venv/` with `python3 -m venv data/temp/recap-venv` "
+                   "if it does not exist.\n"
+                   "2. Run **one** `python -m pip install` with the venv's Python.\n")
+
+    def test_the_old_shared_venv_block_is_caught(self):
+        self.assertEqual(1, len(unpaired_venvs(self.OLD_1C_BLOCK)))
+        self.assertEqual(1, len(venv_blocks_out_of_layout(self.OLD_1C_BLOCK)))
+
+    def test_a_windows_line_above_the_posix_comment_is_out_of_layout(self):
+        shared = self.OLD_1C_BLOCK.replace(
+            "# Linux/macOS", "py -3 -m venv data\\temp\\recap-venv    # only if it does not "
+            "exist yet\n# Linux/macOS")
+        self.assertEqual([], unpaired_venvs(shared))
+        self.assertEqual(1, len(venv_blocks_out_of_layout(shared)))
+
+    def test_the_old_list_item_is_caught(self):
+        self.assertEqual([(1, "data/temp/recap-venv")], unpaired_venvs(self.OLD_1C_ITEM))
+
+    def test_a_step_1c_block_without_the_disclosure_is_caught(self):
+        step = step_1c(GRADUATION.read_text(encoding="utf-8"))
+        wrapped = ("The Windows lines are written for PowerShell 5.1 and 7 but are unverified on "
+                   "Windows: no test\nruns them there.")
+        self.assertEqual(2, step.count(wrapped))
+        self.assertEqual(1, len(venv_blocks_without_disclosure(step.replace(wrapped, "", 1))))
+
+    def test_a_windows_form_in_another_block_is_not_paired(self):
+        apart = self.OLD_1C_ITEM + "\nOn Windows, `py -3 -m venv data\\temp\\recap-venv`.\n"
+        self.assertEqual(1, len(unpaired_venvs(apart)))
+        fenced = "```\npython3 -m venv a/b\n```\n```\npy -3 -m venv a\\b\n```\n"
+        self.assertEqual(1, len(unpaired_venvs(fenced)))
+
+    def test_the_path_conversion_is_literal(self):
+        self.assertEqual(1, len(unpaired_venvs("`python3 -m venv a/b` or `py -3 -m venv a/b`")))
+        self.assertEqual(1, len(unpaired_venvs("`python3 -m venv a/b` or `py -3 -m venv a\\bc`")))
+        self.assertEqual([], unpaired_venvs("`python3 -m venv a/b` or\n`py -3 -m venv a\\b`"))
+
+    def test_a_blank_line_inside_a_fence_does_not_split_the_code_block(self):
+        self.assertEqual([], unpaired_venvs("```\npython3 -m venv a/b\n\npy -3 -m venv a\\b\n```"))
 
     def test_the_old_packaged_restore_is_caught(self):
         old = ("a `pg_dump` file; restore it with `pg_restore` (or `psql <` for a plain dump) "
