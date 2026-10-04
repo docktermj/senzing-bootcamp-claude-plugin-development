@@ -46,6 +46,8 @@ import sys
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO = Path(__file__).resolve().parent.parent
 SERVER = REPO / "plugins" / "senzing-bootcamp" / "scripts" / "senzing_viz_server.py"
 
@@ -375,6 +377,7 @@ class TheHeaderDescribesBothBuildPaths(unittest.TestCase):
     def test_the_usage_block_shows_the_export_invocation(self):
         """A form shown nowhere is a form a reader does not know exists."""
         usage = self.header[self.header.index("Usage:"):]
+        # Line-scoped by design (#424): each usage example is one command line.
         without_records = [
             line for line in usage.splitlines()
             if "senzing_viz_server.py" in line and "--records" not in line
@@ -623,11 +626,11 @@ class EveryShippedSiteAgreesAboutTheExportFlags(unittest.TestCase):
                 yield path
 
     def test_no_shipped_file_carries_the_retired_instruction(self):
+        # Matched across line wraps (#424): the instruction is a sentence, and prose wraps.
         offenders = [
             f"{p.relative_to(REPO)}:{i}"
             for p in self.shipped_files()
-            for i, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1)
-            if self.RETIRED.search(line)
+            for i in match_lines(p.read_text(encoding="utf-8"), self.RETIRED)
         ]
         self.assertEqual(
             [], offenders,
@@ -636,6 +639,14 @@ class EveryShippedSiteAgreesAboutTheExportFlags(unittest.TestCase):
             "SZ_ENTITY_INCLUDE_* flag lists the export methods in applies_to — and it names "
             "the composition observed to return no RELATED_ENTITIES at all.",
         )
+
+    def test_a_wrapped_retired_instruction_is_caught(self):
+        """Negative control (#424): the sentence wraps between "composite" and "into"."""
+        wrapped = ("For the export, do not pin a `DEFAULT_FLAGS` composite\n"
+                   "into the export call; pass the flags directly.\n")
+        self.assertEqual([1], match_lines(wrapped, self.RETIRED))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(self.RETIRED.search(l) for l in wrapped.split("\n")))
 
     def test_the_modules_that_teach_the_export_call_name_the_composite(self):
         """Both teaching sites must name what to pass, not only what to avoid."""

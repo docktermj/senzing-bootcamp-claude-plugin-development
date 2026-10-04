@@ -101,7 +101,12 @@ def read(path):
 
 
 def references():
-    """[(shipped_path, referenced_test_name, the line)] across the whole shipped corpus."""
+    """[(shipped_path, referenced_test_name, the line)] across the whole shipped corpus.
+
+    Line-scoped by design (#424): a test pointer is one path token (``tests/test_x.py``) and
+    each mirror symbol is one identifier, so a line break cannot split either; and most of
+    this corpus is Python comments, which ``match_lines``'s Markdown blocks do not model.
+    """
     out = []
     for path in shipped_source():
         if "__pycache__" in str(path):

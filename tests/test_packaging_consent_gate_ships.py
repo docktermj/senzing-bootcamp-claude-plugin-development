@@ -105,6 +105,8 @@ class TheQuestionIsSingularPinnedAndNumbered(Base):
         ⚠️ A bare `.count("👉")` reads 2 here, and the second is the trigger paragraph's prose
         reference to "one 👉 question per yielding turn (INV-251)" -- a citation of the rule,
         not a question. INV-251 governs questions asked; only a marker that OPENS a line is one.
+        Line-scoped by design for that reason (#424): a question opens on one line however it
+        wraps after that.
         """
         asked = [line for line in self.raw.splitlines() if line.lstrip().startswith("👉")]
         self.assertEqual(

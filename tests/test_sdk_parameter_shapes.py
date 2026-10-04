@@ -35,6 +35,8 @@ import os
 import re
 import unittest
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILLS = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp", "skills")
 GROUND_RULES = os.path.join(SKILLS, "bootcamp-onboarding", "ground-rules.md")
@@ -322,11 +324,21 @@ class NoSiteNamesTheTopicByAnAlias(unittest.TestCase):
                         continue
                     path = os.path.join(dirpath, name)
                     scanned += 1
-                    for number, line in enumerate(read(path).splitlines(), 1):
-                        if self.ALIAS_USE.search(line):
-                            offenders.append(f"{os.path.relpath(path, REPO_ROOT)}:{number}")
+                    # Matched across line wraps (#424): "`methods`\ntopic" is two words.
+                    for number in match_lines(read(path), self.ALIAS_USE):
+                        offenders.append(f"{os.path.relpath(path, REPO_ROOT)}:{number}")
         self.assertGreater(scanned, 50, "the scan found almost no files; the walk drifted")
         self.assertEqual(offenders, [], "these name the topic by an alias, not `parameters`")
+
+    def test_a_wrapped_alias_is_caught_at_its_first_line(self):
+        """Negative control (#424): the alias ends line 1 and "topic" begins line 2.
+
+        The fixture is assembled at runtime, because this file is in the corpus it scans.
+        """
+        wrapped = "Read the `" + "methods`" + "\n" + "topic first.\n"
+        self.assertEqual([1], match_lines(wrapped, self.ALIAS_USE))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(self.ALIAS_USE.search(l) for l in wrapped.split("\n")))
 
 
 class AnEmptyCompositeMembersFieldIsNotAnAbsentFact(unittest.TestCase):

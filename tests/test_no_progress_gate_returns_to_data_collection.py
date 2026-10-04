@@ -75,7 +75,10 @@ def between(text, start, end):
 
 
 def options_after(text, question):
-    """The numbered options directly below each occurrence of `question`."""
+    """The numbered options directly below each occurrence of `question`.
+
+    Line-scoped by design (#424): each option opens on its own numbered line.
+    """
     out = []
     for m in re.finditer(re.escape(question), text):
         opts = []
@@ -129,7 +132,11 @@ def variant_problems(phase1):
 
 
 def provenance_lead(step, arrow_target):
-    """The provenances named in the bold lead line `**`a`, `b` … → <arrow_target>`."""
+    """The provenances named in the bold lead line `**`a`, `b` … → <arrow_target>`.
+
+    Line-scoped by design (#424): the lead is one line of backticked tokens and an arrow, and
+    a lead that wrapped would return None and fail the check rather than pass it.
+    """
     for line in step.split("\n"):
         if line.startswith("**`") and "→" in line and arrow_target in line:
             return set(PROVENANCES.findall(line.split("→")[0]))
@@ -162,6 +169,7 @@ def fixed_dataset_problems(phase1):
         if re.search(r"👉\s*\*\*", block):
             problems.append("the fixed-dataset block carries a 👉 question")
     table = between(step, "| `provenance` |", "\n\n")
+    # Line-scoped by design (#424): a table row is one line.
     if table is not None:
         rows = set(PROVENANCES.findall(" ".join(
             l.strip().strip("|").split("|")[0] for l in table.split("\n")[2:]
@@ -187,6 +195,7 @@ def handling_problems(phase1):
         if needle not in route.replace("`", "") and needle not in f.replace("`", ""):
             problems.append("the return route does not carry %r" % needle)
     rows = {}
+    # Line-scoped by design (#424): a table row is one line.
     for line in route.split("\n"):
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if len(cells) == 3 and PROVENANCES.fullmatch(cells[0]):

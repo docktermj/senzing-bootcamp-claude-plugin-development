@@ -348,6 +348,7 @@ class TestTabIdsAreContract(unittest.TestCase):
         start = text.index("### Tab identifiers and deep-linking")
         section = text[start : text.index("Headline counts belong", start)]
         documented = {}
+        # Line-scoped by design (#424): the contract is a table, and a table row is one line.
         for line in section.splitlines():
             cells = [c.strip() for c in line.strip("|").split("|")]
             if len(cells) == 5 and cells[1].startswith("`") and cells[1] != "`Id`":

@@ -33,6 +33,8 @@ import sys
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 SERVER = PLUGIN / "scripts" / "senzing_viz_server.py"
@@ -68,6 +70,25 @@ REMOVAL_CONTEXT = (
     "record-merges",          # ditto
     "Relationship Networks (exploring",  # the Discover demo of find_network, not a tab
 )
+
+
+#: A removed tab's label. Matched by ``match_lines`` across line wraps (#424): each label is
+#: two words, and "Record\nMerges cards" stood in `visualization-api-reference.md` as a live
+#: surface, unseen by a line-at-a-time read, until the conversion found it.
+REMOVED_LABEL = re.compile("|".join(re.escape(label) for label in REMOVED_TAB_LABELS))
+#: A stale tab count.
+EIGHT_TABS = re.compile(r"(?i)\b(eight|8) tabs\b")
+
+
+def live_removed_tab_lines(text):
+    """1-based lines where a removed tab's label starts outside a removal context.
+
+    The removal context is read on that line, as before #424, so a context phrase that wraps
+    away from it fails closed.
+    """
+    lines = text.split("\n")
+    return [n for n in match_lines(text, REMOVED_LABEL)
+            if not any(marker in lines[n - 1] for marker in REMOVAL_CONTEXT)]
 
 
 def shipped_markdown():
@@ -107,13 +128,11 @@ class NoShippedFilePresentsARemovedTabAsLive(unittest.TestCase):
     def test_no_live_reference_to_a_removed_tab(self):
         offenders = []
         for path in shipped_markdown():
-            for lineno, line in enumerate(path.read_text().splitlines(), 1):
-                if not any(label in line for label in REMOVED_TAB_LABELS):
-                    continue
-                if any(marker in line for marker in REMOVAL_CONTEXT):
-                    continue
+            text = path.read_text()
+            for lineno in live_removed_tab_lines(text):
                 offenders.append(
-                    f"{path.relative_to(REPO_ROOT)}:{lineno}: {line.strip()[:110]}"
+                    f"{path.relative_to(REPO_ROOT)}:{lineno}: "
+                    f"{text.split(chr(10))[lineno - 1].strip()[:110]}"
                 )
         self.assertEqual(
             [],
@@ -126,10 +145,30 @@ class NoShippedFilePresentsARemovedTabAsLive(unittest.TestCase):
     def test_no_shipped_file_claims_eight_tabs(self):
         offenders = []
         for path in shipped_markdown():
-            for lineno, line in enumerate(path.read_text().splitlines(), 1):
-                if re.search(r"\b(eight|8) tabs\b", line, re.I):
-                    offenders.append(f"{path.relative_to(REPO_ROOT)}:{lineno}")
+            for lineno in match_lines(path.read_text(), EIGHT_TABS):
+                offenders.append(f"{path.relative_to(REPO_ROOT)}:{lineno}")
         self.assertEqual([], offenders, f"stale tab count: {offenders}")
+
+    def test_the_wrapped_live_reference_the_conversion_found_is_caught(self):
+        """Negative control (#424): the sentence as it shipped before this fix, wrapped."""
+        shipped = ("That set applies to: the Entity Graph node detail (in either mode), Record\n"
+                   "Merges cards, the Merge Statistics bucket drill-down.\n")
+        self.assertEqual([1], live_removed_tab_lines(shipped))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(label in line for line in shipped.split("\n")
+                             for label in REMOVED_TAB_LABELS))
+
+    def test_the_corrected_sentence_names_no_removed_tab(self):
+        """Must-not-flag (INV-282): the cards are Search / Probe's merged-entity cards now."""
+        self.assertEqual([], live_removed_tab_lines(
+            "That set applies to: the Entity Graph node detail (in either mode), the "
+            "merged-entity cards on\nSearch / Probe, the Merge Statistics bucket drill-down.\n"))
+
+    def test_a_wrapped_tab_count_is_caught(self):
+        """Negative control (#424): "eight" ends line 1 and "tabs" begins line 2."""
+        wrapped = "The app opens with all eight\ntabs visible.\n"
+        self.assertEqual([1], match_lines(wrapped, EIGHT_TABS))
+        self.assertFalse(any(EIGHT_TABS.search(l) for l in wrapped.split("\n")))
 
 
 class EveryTabInventoryAgrees(unittest.TestCase):
@@ -149,6 +188,7 @@ class EveryTabInventoryAgrees(unittest.TestCase):
         start = text.index("### Tab identifiers and deep-linking")
         section = text[start : text.index("Headline counts belong", start)]
         documented = {}
+        # Line-scoped by design (#424): the contract is a table, and a table row is one line.
         for line in section.splitlines():
             cells = [c.strip() for c in line.strip("|").split("|")]
             if len(cells) == 5 and cells[1].startswith("`") and cells[1] != "`Id`":
@@ -162,7 +202,12 @@ class EveryTabInventoryAgrees(unittest.TestCase):
                 self.assertNotIn(removed, module.DEFAULT_TABS, "must not be a default")
 
     def test_module_instructions_that_enumerate_tabs_name_the_live_six(self):
-        """A file listing 3+ tab labels is enumerating the set; it must not miss one or add one."""
+        """A file listing 3+ tab labels is enumerating the set; it must not miss one or add one.
+
+        Line-scoped by design (#424): every line this flags carries a removed label outside a
+        removal context, which ``test_no_live_reference_to_a_removed_tab`` already reports
+        across line wraps; this adds only the enumeration framing, judged on the line.
+        """
         problems = []
         for path in shipped_markdown():
             for lineno, line in enumerate(path.read_text().splitlines(), 1):

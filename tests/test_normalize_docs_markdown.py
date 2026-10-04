@@ -72,6 +72,12 @@ def run(args, cwd):
 
 
 class HouseRulesApplied(unittest.TestCase):
+    """The normalizer's line layout: blank lines around headings, fence lines, list items.
+
+    Line-scoped by design (#424): each rule here is about where lines fall in the output, so
+    lines are the unit asserted.
+    """
+
     def setUp(self):
         self.mod = load()
         self.out = self.mod.normalize_text(MESSY)
@@ -309,7 +315,8 @@ class GraduationDocumentsTheDiscipline(unittest.TestCase):
         self.assertIn("non-blocking", section)
         self.assertIn("INV-048", section)
         # The prose legitimately *mentions* the marker ("None of these is a 👉 question"),
-        # so assert no line actually POSES one rather than banning the character.
+        # so assert no line actually POSES one rather than banning the character. Line-scoped
+        # by design (#424): a 👉 that opens a line opens a question.
         posed = [l for l in section.splitlines() if l.lstrip().startswith("👉")]
         self.assertEqual([], posed, "a verification step must never be a 👉 question")
 

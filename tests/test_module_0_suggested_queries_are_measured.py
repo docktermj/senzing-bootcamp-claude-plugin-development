@@ -68,6 +68,8 @@ def suggested_queries():
     the note — so a mutation that removes the note took down the list assertions too, which
     say nothing about the note and should still have passed. A parser that depends on the
     thing under test cannot report cleanly on it.
+
+    Line-scoped by design (#424): each entry is one list item holding one quoted query.
     """
     body = text()
     start = body.index("Suggested queries:")
@@ -168,7 +170,10 @@ class TheListDeclaresItselfMeasured(unittest.TestCase):
 
 
 def measurement_rows():
-    """``(query, returns, rank)`` for each row of the note's measurement table."""
+    """``(query, returns, rank)`` for each row of the note's measurement table.
+
+    Line-scoped by design (#424): a table row is one line.
+    """
     rows = []
     for line in text().split("\n"):
         m = re.match(r'^\| "([^"]+)" \| (.+?) \| (\d+)\b.*\|\s*$', line)
@@ -225,6 +230,7 @@ class TheWhatIsEntityResolutionRouteIsRecorded(unittest.TestCase):
         for query, returns, rank in measurement_rows():
             if rank > 1:
                 with self.subTest(query=query):
+                    # Line-scoped by design (#424): the note is a cell of this table row.
                     line = next(ln for ln in text().split("\n") if ln.startswith('| "%s"' % query))
                     self.assertRegex(
                         line, r"(?i)read down the list",

@@ -139,6 +139,12 @@ def step9_json_keys(phase2_text):
 
 
 def recap_verification_line(recap_text):
+    """The example recap's System Verification bullet.
+
+    Line-scoped by design (#424): the example recap writes each bullet as one unwrapped line,
+    as a generated recap does, and the checks below split that line at "all passed"; a bullet
+    that wrapped there would fail them rather than pass.
+    """
     lines = [ln for ln in recap_text.splitlines()
              if ln.startswith("- ") and "System Verification checks" in ln]
     return lines

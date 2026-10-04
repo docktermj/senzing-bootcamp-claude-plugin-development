@@ -89,6 +89,9 @@ class EachRuleCitesItsInvariantAtItsLine(unittest.TestCase):
         cls.conformance = _load_conformance()
 
     def window_citations(self, rel, needle):
+        # Line-scoped by design (#424): ``own_citations`` is conformance.py's line-indexed
+        # window (the rule's line and one non-blank line either side), and a needle that
+        # wrapped would be found zero times and fail the count, never pass it.
         lines = (REPO_ROOT / rel).read_text(encoding="utf-8").splitlines()
         hits = [i for i, line in enumerate(lines) if needle in line]
         self.assertEqual(

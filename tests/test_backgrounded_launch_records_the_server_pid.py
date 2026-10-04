@@ -49,7 +49,11 @@ CAPTURES_PID = re.compile(r"=\s*\$!")
 
 
 def logical_lines(block):
-    """Shell lines with backslash continuations joined, so a wrapped command is one unit."""
+    """Shell lines with backslash continuations joined, so a wrapped command is one unit.
+
+    Line-scoped by design (#424): the text is a fenced shell block, where a newline ends a
+    command unless a backslash continues it, so a logical line is the unit the shell runs.
+    """
     joined, buffer = [], ""
     for raw in block.split("\n"):
         stripped = raw.rstrip()

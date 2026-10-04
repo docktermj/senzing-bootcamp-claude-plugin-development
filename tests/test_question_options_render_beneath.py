@@ -32,6 +32,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "plugins" / "senzing-bootcamp" / "skills"
 
@@ -39,12 +41,29 @@ SKILLS = REPO / "plugins" / "senzing-bootcamp" / "skills"
 #: "(1)" rather than on any particular question wording, so a new gate with a new phrasing is
 #: caught by the same pattern (INV-282: match the claim, not the phrasings already seen).
 INLINE_OPTIONS = re.compile(r"👉.*?\(1\)\s*\S")
+#: The same shape across a line wrap (#424). Markdown renders a wrapped paragraph as one, so
+#: a "(1)" on the line the question wraps onto still renders on the question's line.
+#: ``match_lines`` reads each block with whitespace collapsed; the match stops at another 👉.
+INLINE_OPTIONS_WRAPPED = re.compile(r"👉(?:(?!👉).)*?\(1\)\s*\S")
+
+
+def inline_option_lines(text):
+    """1-based lines of each 👉 whose options render inline, on its line or wrapped."""
+    hits = {n for n, line in enumerate(text.split("\n"), 1)
+            if "👉" in line and INLINE_OPTIONS.search(line)}
+    return sorted(hits | set(match_lines(text, INLINE_OPTIONS_WRAPPED)))
+
+
 #: Both prompt idioms in the plugin: single-select and the comma-separated multi-select.
 NUMBER_PROMPT = re.compile(r"(?i)reply with (?:a number|the numbers)")
 
 
 def question_lines():
-    """[(path, lineno, line)] for every 👉 line in shipped skills."""
+    """[(path, lineno, line)] for every 👉 line in shipped skills.
+
+    Only the non-vacuity floor reads these lines now (#424): a floor fails closed, since a
+    wrap can only lower the count it measures.
+    """
     out = []
     for md in sorted(SKILLS.rglob("*.md")):
         for lineno, line in enumerate(md.read_text(encoding="utf-8").split("\n"), 1):
@@ -55,11 +74,11 @@ def question_lines():
 
 class OptionsNeverShareTheQuestionsLine(unittest.TestCase):
     def test_no_question_carries_its_options_inline(self):
-        offenders = [
-            "%s:%d  %s" % (md.relative_to(REPO), lineno, line.strip()[:90])
-            for md, lineno, line in question_lines()
-            if INLINE_OPTIONS.search(line)
-        ]
+        offenders = []
+        for md in sorted(SKILLS.rglob("*.md")):
+            text = md.read_text(encoding="utf-8")
+            offenders += ["%s:%d  %s" % (md.relative_to(REPO), n, text.split("\n")[n - 1].strip()[:90])
+                          for n in inline_option_lines(text)]
         self.assertEqual(
             [], offenders,
             "A 👉 question renders its options on its own line. `ground-rules.md` requires them "
@@ -86,6 +105,20 @@ class OptionsNeverShareTheQuestionsLine(unittest.TestCase):
             historical, INLINE_OPTIONS,
             "The matcher must catch the exact shape that shipped, or the guard proves nothing.",
         )
+
+    def test_a_wrapped_question_with_inline_options_is_caught(self):
+        """Negative control (#424): the question wraps and its "(1)" is on the second line."""
+        wrapped = ("👉 **What priority would you give this? Reply with a number:**\n"
+                   "(1) High, (2) Medium, (3) Low.\n")
+        self.assertEqual([1], inline_option_lines(wrapped))
+        # The old line-at-a-time check, kept only to show the fixture is the hard case.
+        self.assertFalse(any("👉" in l and INLINE_OPTIONS.search(l) for l in wrapped.split("\n")))
+
+    def test_options_in_a_list_beneath_are_not_inline(self):
+        """Must-not-flag (INV-282): a blank line, then the numbered list."""
+        self.assertEqual([], inline_option_lines(
+            "👉 **What priority would you give this? Reply with a number:**\n\n"
+            "1. High\n2. Medium\n3. Low\n"))
 
     def test_the_pattern_leaves_a_correct_question_alone(self):
         """⚠️ Negative control: a 👉 whose options are beneath it must NOT match."""

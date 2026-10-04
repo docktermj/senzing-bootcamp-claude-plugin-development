@@ -109,6 +109,7 @@ import unittest
 from pathlib import Path
 
 import _maintainer_surface as surface
+from _wrapped_text import match_lines
 
 REPO_ROOT = surface.REPO_ROOT
 COMMANDS_DIR = surface.COMMANDS_DIR
@@ -647,20 +648,30 @@ class R8HasOneHome(unittest.TestCase):
 
     def test_the_command_does_not_restate_the_report(self):
         text = IMPLEMENT_CMD.read_text(encoding="utf-8")
-        self.assertNotRegex(
-            text, r"(?i)review the open issues for dependencies|name the issue you suggest",
+        self.assertEqual(
+            [], match_lines(text, RESTATED_REPORT),
             "%s restates R8's dependency report. R8 is its one home (INV-300); since #215 the "
             "command only points at it" % IMPLEMENT_CMD)
 
     def test_the_command_no_longer_tells_the_run_to_ask_which(self):
         """The retired clause must not linger beside the one that replaced it."""
         text = IMPLEMENT_CMD.read_text(encoding="utf-8")
-        stale = [l for l in text.splitlines() if "ask which one" in l.lower()]
+        stale = match_lines(text, ASK_WHICH)
         self.assertEqual(
             [], stale,
-            "%s still tells the run to ask which issue. #124 replaced that with naming a "
-            "suggestion; a surface carrying both instructs two different closings: %s"
-            % (IMPLEMENT_CMD, stale[:1]))
+            "%s still tells the run to ask which issue, at line(s) %s. #124 replaced that with "
+            "naming a suggestion; a surface carrying both instructs two different closings"
+            % (IMPLEMENT_CMD, stale))
+
+    def test_both_retired_phrases_are_caught_when_wrapped(self):
+        """Negative control (#424): each phrase split across two lines is still found."""
+        for pattern, wrapped, at in (
+                (ASK_WHICH, "If none is given,\nask which\none to work.\n", 2),
+                (RESTATED_REPORT, "First review the open\nissues for dependencies.\n", 1)):
+            with self.subTest(pattern=pattern.pattern[:30]):
+                self.assertEqual([at], match_lines(wrapped, pattern))
+                # The old line-at-a-time read, kept only to show the fixture is the hard case.
+                self.assertFalse(any(pattern.search(l) for l in wrapped.split("\n")))
 
     def test_the_command_names_the_family_rule(self):
         text = IMPLEMENT_CMD.read_text(encoding="utf-8")
@@ -671,8 +682,18 @@ class R8HasOneHome(unittest.TestCase):
         self.assertRegex(text, r"\bR8\b")
 
 
+#: R8's dependency report, restated (#215), and the retired "ask which one" clause (#124).
+#: Matched by ``match_lines`` across line wraps (#424).
+RESTATED_REPORT = re.compile(r"(?i)review the open issues for dependencies|name the issue you suggest")
+ASK_WHICH = re.compile(r"(?i)ask which one")
+
+
 class TheLoopRowDescribesTheLoopThatRuns(unittest.TestCase):
-    """#215: the §2 row and the §3 node described an implement-then-audit loop that never ran."""
+    """#215: the §2 row and the §3 node described an implement-then-audit loop that never ran.
+
+    Line-scoped by design (#424): the row is a table row and the node is one Mermaid node
+    line, each one line by construction.
+    """
 
     def test_the_row_no_longer_drives_phase_three(self):
         row = [l for l in FAMILY.read_text(encoding="utf-8").splitlines()

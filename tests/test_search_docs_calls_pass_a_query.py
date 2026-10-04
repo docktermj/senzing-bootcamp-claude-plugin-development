@@ -81,7 +81,12 @@ def shipped_markdown():
 
 
 def references():
-    """(path, line, args, exempt) for every `search_docs(` reference in shipped prose."""
+    """(path, line, args, exempt) for every `search_docs(` reference in shipped prose.
+
+    The reference is matched on the whole text (``REFERENCE`` is DOTALL), so a wrapped call is
+    read whole. Line-scoped by design (#424): only the exemption is found by line, and it is
+    one token (``EXEMPTION_MARKER``) in a window of lines above the reference.
+    """
     for path in shipped_markdown():
         text = path.read_text(encoding="utf-8")
         lines = text.split("\n")

@@ -53,6 +53,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGINS = REPO_ROOT / "plugins"
 SKILLS = PLUGINS / "senzing-bootcamp" / "skills"
@@ -77,7 +79,10 @@ INTERNAL_CLOSE = re.compile(r"\)[*_]")
 
 
 def sections(text):
-    """[(heading, [lines])] — split on Markdown headings, which bound a step."""
+    """[(heading, [lines])] — split on Markdown headings, which bound a step.
+
+    Line-scoped by design (#424): a heading is one line.
+    """
     out, head, buf = [], "(top)", []
     for line in text.splitlines():
         if line.startswith("#"):
@@ -89,18 +94,28 @@ def sections(text):
     return out
 
 
+def cues_after_a_pointer(lines):
+    """The lines of ``lines`` on which a 'before they answer' cue starts after a 👉.
+
+    ⚠️ **Matched across line wraps (#424).** A cue is prose, and "before they\nanswer" was
+    invisible to a line-at-a-time read. Each 👉 line is blanked first, as the line read skipped
+    it, which also keeps a cue from joining the question text; ``match_lines`` then reads the
+    rest with whitespace collapsed, and a cue counts when it starts after the first 👉.
+    """
+    first = next((k for k, line in enumerate(lines) if POINTER in line), None)
+    if first is None:
+        return []
+    text = "\n".join("" if POINTER in line else line for line in lines)
+    return [lines[n - 1] for n in match_lines(text, BEFORE_ANSWERING) if n - 1 > first]
+
+
 def misplaced_before_answer_instructions():
     """[(relpath, heading, line)] for a 'before they answer' cue following a 👉 in one section."""
     bad = []
     for path in sorted(SKILLS.rglob("*.md")):
         for head, lines in sections(path.read_text(encoding="utf-8")):
-            seen_pointer = False
-            for line in lines:
-                if POINTER in line:
-                    seen_pointer = True
-                    continue
-                if seen_pointer and BEFORE_ANSWERING.search(line):
-                    bad.append((str(path.relative_to(REPO_ROOT)), head, line.strip()[:120]))
+            for line in cues_after_a_pointer(lines):
+                bad.append((str(path.relative_to(REPO_ROOT)), head, line.strip()[:120]))
     return bad
 
 
@@ -110,6 +125,9 @@ def indent(line):
 
 def block_after(lines, i):
     """The lines of the question block that follow the 👉 line ``lines[i]``.
+
+    Line-scoped by design (#424): the block is found by its structure, a ``>`` marker or a
+    numbered option opening each line, and its prose is judged by placement, not by phrase.
 
     Blockquoted: the rest of the quote, with its ``>`` markers removed. Not blockquoted: the
     numbered list starting at the first non-blank line after the 👉, or nothing when that line
@@ -176,6 +194,12 @@ def question_blocks():
 
 
 def index_of(lines, predicate):
+    """The index of the first line ``predicate`` accepts, or -1.
+
+    Line-scoped by design (#424): it anchors an ordering check on a known phrase, and every
+    caller asserts the result is not -1, so a phrase that wrapped fails the check rather than
+    passing it.
+    """
     for i, line in enumerate(lines):
         if predicate(line):
             return i
@@ -225,14 +249,29 @@ class NoInstructionSaysBeforeTheAnswerAfterTheQuestion(unittest.TestCase):
             "",
             "Tell the bootcamper what they are consenting to before they answer: the URL dies.",
         ]
-        seen, hits = False, []
-        for line in historical:
-            if POINTER in line:
-                seen = True
-                continue
-            if seen and BEFORE_ANSWERING.search(line):
-                hits.append(line)
+        hits = cues_after_a_pointer(historical)
         self.assertEqual(1, len(hits), "the detector must fire on the shape it was built for")
+
+    def test_the_detector_finds_a_wrapped_cue(self):
+        """Negative control (#424): "before they" ends line 3 and "answer" begins line 4."""
+        wrapped = [
+            "- teardown gate. → \U0001f449 **Ready for me to stop the server?**",
+            "",
+            "Tell the bootcamper what they are consenting to before they",
+            "answer: the URL dies.",
+        ]
+        self.assertEqual([wrapped[2]], cues_after_a_pointer(wrapped))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(BEFORE_ANSWERING.search(line) for line in wrapped))
+
+    def test_a_cue_before_the_pointer_is_not_flagged(self):
+        """Must-not-flag (INV-282): the reassurance goes BEFORE the 👉, wrapped or not."""
+        self.assertEqual([], cues_after_a_pointer([
+            "Tell them what they are consenting to before they",
+            "answer: the URL dies.",
+            "",
+            "\U0001f449 **Ready for me to stop the server?**",
+        ]))
 
     def test_the_detector_ignores_answer_handling_that_follows_a_question(self):
         """Answer handling after a 👉 is correct and must not be flagged."""
@@ -242,13 +281,7 @@ class NoInstructionSaysBeforeTheAnswerAfterTheQuestion(unittest.TestCase):
             "On **yes**, ask one follow-up on the next turn and hold the named systems.",
             "If the bootcamper skips, default to verbose, persist it, and say so.",
         ]
-        seen, hits = False, []
-        for line in ok:
-            if POINTER in line:
-                seen = True
-                continue
-            if seen and BEFORE_ANSWERING.search(line):
-                hits.append(line)
+        hits = cues_after_a_pointer(ok)
         self.assertEqual([], hits, "answer-handling instructions must not trip the scan")
 
 

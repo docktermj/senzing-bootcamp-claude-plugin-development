@@ -40,6 +40,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins"
 #: An attribute count pinned into shipped prose — the figure nobody re-measures.
@@ -59,6 +61,20 @@ PINNED_COUNT = re.compile(
 
 def flatten(text):
     return re.sub(r"\s+", " ", text).lower()
+
+
+def pinned_counts(text):
+    """1-based lines where a pinned attribute count starts, outside the measurement note.
+
+    ⚠️ **Matched across line wraps (#424).** "110\nspecification attributes" was invisible
+    to a line-at-a-time read; ``match_lines`` reads each Markdown block with whitespace
+    collapsed. The exemption still reads the line the match starts on, as before, so a note
+    whose wording wraps away from that line is flagged rather than exempted.
+    """
+    lines = text.split("\n")
+    return [n for n in match_lines(text, PINNED_COUNT)
+            if "measured on the served document" not in flatten(lines[n - 1])
+            and "re-measure" not in flatten(lines[n - 1])]
 
 
 def scoring_files():
@@ -147,15 +163,26 @@ class TheCatalogParseRuleIsStated(unittest.TestCase):
         """⛔ A figure in shipped prose is one nobody re-measures."""
         bad = []
         for p in catalog_files():
-            for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
-                if PINNED_COUNT.search(line) and "measured on the served document" not in \
-                        flatten(line) and "re-measure" not in flatten(line):
-                    bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {line.strip()[:90]}")
+            text = p.read_text(encoding="utf-8")
+            for n in pinned_counts(text):
+                bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {text.split(chr(10))[n - 1].strip()[:90]}")
         self.assertEqual(
             [], bad,
             "a shipped file pins a specification attribute count outside the dated "
             "measurement note. Confirm the parse against the saved copy instead:\n  "
             + "\n  ".join(bad))
+
+    def test_a_wrapped_count_is_caught_at_its_first_line(self):
+        """Negative control (#424): "110" ends line 1 and "specification attributes" line 2."""
+        wrapped = "Save the saved copy. The specification defines 110\nspecification attributes.\n"
+        self.assertEqual([1], pinned_counts(wrapped))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(PINNED_COUNT.search(l) for l in wrapped.split("\n")))
+
+    def test_the_dated_measurement_note_is_not_a_pin(self):
+        """Must-not-flag (INV-282): the note that measured the count may state it."""
+        self.assertEqual([], pinned_counts(
+            "It held 110 specification attributes, measured on the served document.\n"))
 
     def test_the_scan_is_not_vacuous(self):
         for planted in ("the specification defines 110 attributes",

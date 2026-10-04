@@ -43,6 +43,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 RULES_LIST = (PLUGIN / "skills" / "module-03-system-verification" / "phase1-verification.md")
@@ -98,16 +100,23 @@ class NoShippedFileCitesARuleByBareOrdinal(unittest.TestCase):
             text = read(path)
             if DEFINES_A_RULE_LIST.search(text) or NAMES_A_FILE.search(text):
                 continue
-            for n, line in enumerate(text.splitlines(), 1):
-                if BARE_ORDINAL.search(line):
-                    offenders.append("%s:%d: %s"
-                                     % (path.relative_to(REPO_ROOT), n, line.strip()[:140]))
+            # Matched across line wraps (#424): "per agent\nrule 3" is one citation.
+            for n in match_lines(text, BARE_ORDINAL):
+                offenders.append("%s:%d: %s" % (path.relative_to(REPO_ROOT), n,
+                                                text.split("\n")[n - 1].strip()[:140]))
         self.assertEqual(
             [], offenders,
             "a shipped file cites a numbered rule by ordinal and neither defines that list nor "
             "names any file that could. The ordinal is re-pointed silently by any edit to the "
             "list, and a guide cannot resolve it at the step where it must act (INV-183):\n  "
             + "\n  ".join(offenders))
+
+    def test_a_wrapped_bare_ordinal_is_caught_at_its_first_line(self):
+        """Negative control (#424): "per agent" ends line 1 and "rule 3" begins line 2."""
+        wrapped = "Stop here and ask, per agent\nrule 3, before writing anything.\n"
+        self.assertEqual([1], match_lines(wrapped, BARE_ORDINAL))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(BARE_ORDINAL.search(l) for l in wrapped.split("\n")))
 
     def test_the_cross_module_routing_citation_names_the_file_it_indexes(self):
         """Pinned: bootcamp-preparation indexes a list that lives in Module 2."""

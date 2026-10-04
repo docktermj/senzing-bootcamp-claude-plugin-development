@@ -23,6 +23,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 NORMALIZER = PLUGIN / "scripts" / "normalize_docs_markdown.py"
@@ -45,18 +47,23 @@ def shipped_markdown():
         yield path
 
 
+#: A space before a comma. Matched by ``match_lines`` across line wraps (#424): Markdown
+#: renders a line break as a space, so a comma that opens a line reads "word ," aloud just as
+#: the orphaned comma on one line does.
+SPACE_BEFORE_COMMA = re.compile(r" ,")
+
+
 class TestPunctuationHygiene(unittest.TestCase):
 
     def test_no_space_before_a_comma(self):
         offenders = []
         for path in shipped_markdown():
-            for n, line in enumerate(
-                path.read_text(encoding="utf-8", errors="replace").splitlines(), 1
-            ):
-                if " ," in line:
-                    offenders.append(
-                        f"{path.relative_to(REPO_ROOT)}:{n}: {line.strip()[:100]}"
-                    )
+            text = path.read_text(encoding="utf-8", errors="replace")
+            lines = text.split("\n")
+            for n in match_lines(text, SPACE_BEFORE_COMMA):
+                offenders.append(
+                    f"{path.relative_to(REPO_ROOT)}:{n}: {lines[n - 1].strip()[:100]}"
+                )
         self.assertEqual(
             [],
             offenders,
@@ -65,7 +72,20 @@ class TestPunctuationHygiene(unittest.TestCase):
             + "\n  ".join(offenders),
         )
 
+    def test_a_comma_that_opens_a_line_is_caught(self):
+        """Negative control (#424): "[Source B]" ends line 1 and the comma opens line 2."""
+        wrapped = "records from [Source A] and [Source B]\n, let's see why Senzing decided.\n"
+        self.assertEqual([1], match_lines(wrapped, SPACE_BEFORE_COMMA))
+        # The old line-at-a-time check, kept only to show the fixture is the hard case.
+        self.assertFalse(any(" ," in line for line in wrapped.split("\n")))
+
+    def test_a_comma_after_a_word_that_ends_a_line_is_not_flagged(self):
+        """Must-not-flag (INV-282): a comma, then a wrap, is ordinary prose."""
+        self.assertEqual([], match_lines("records from [Source A],\nlet's see why.\n",
+                                         SPACE_BEFORE_COMMA))
+
     def test_no_trailing_whitespace(self):
+        """Line-scoped by design (#424): trailing whitespace is a property of a line."""
         offenders = []
         for path in shipped_markdown():
             for n, line in enumerate(
@@ -109,6 +129,8 @@ class TestNoShippedMarkdownIsMojibake(unittest.TestCase):
             return False
         return not NORM.mojibake_lines(self.INLINE_CODE.sub("", line))
 
+    # Line-scoped by design (#424): mojibake is a character-level defect, with no phrase in it
+    # for a line break to split.
     def _offenders(self):
         found = []
         for path in shipped_markdown():

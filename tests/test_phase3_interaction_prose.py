@@ -176,7 +176,10 @@ class TheKnowledgeCheckOffersABenefitNotAnAssessment(unittest.TestCase):
         self.assertNotRegex(self.OFFER, r"\bor\b")
 
     def test_the_module_no_longer_frames_the_exercise_as_a_test(self):
-        """Heading and prose, not just the pinned line — the frame is the whole section."""
+        """Heading and prose, not just the pinned line — the frame is the whole section.
+
+        Line-scoped by design (#424): "quiz" is one word, which a line break cannot split.
+        """
         text = CONCEPTS.read_text(encoding="utf-8")
         self.assertIn("## Optional knowledge check (offer before the readiness gate)", text)
         uses = [

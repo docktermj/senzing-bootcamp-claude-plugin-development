@@ -38,7 +38,10 @@ def text():
 
 
 def display_names():
-    """Module display names from the table that is their source of truth (INV-079)."""
+    """Module display names from the table that is their source of truth (INV-079).
+
+    Line-scoped by design (#424): a table row is one line.
+    """
     names = []
     for line in text().splitlines():
         m = re.match(r"^\|\s*\d+\s*\|\s*([^|]+?)\s*\|", line)
@@ -48,7 +51,11 @@ def display_names():
 
 
 def recap_template():
-    """The fenced block the guide prints in Step 7."""
+    """The fenced block the guide prints in Step 7.
+
+    Line-scoped by design (#424): it is a ```text template printed as written, so each line
+    is one printed line, and a label is the text before the colon on its own line.
+    """
     blocks = re.findall(r"```text\n(.*?)```", text(), re.DOTALL)
     for block in blocks:
         if "Bootcamp preparation complete" in block:

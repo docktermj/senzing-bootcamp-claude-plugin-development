@@ -66,7 +66,10 @@ def recommendation_sites():
     """Each place the catalog is recommended by URL, paired with the lines that follow it.
 
     Keyed on the URL rather than on line numbers: the spec cited `:190` and `:664`, and both
-    had already drifted by the time it was implemented."""
+    had already drifted by the time it was implemented.
+
+    Line-scoped by design (#424): the anchor is a URL, one token with no space in it, and the
+    window that follows it is collapsed (``flat``) before any phrase is matched."""
     lines = text().splitlines()
     sites = {}
     for i, line in enumerate(lines):

@@ -59,7 +59,10 @@ def mojibake(text):
 
 
 def powershell_blocks(path):
-    """Yield (line_number, line) for every line inside a PowerShell fence."""
+    """Yield (line_number, line) for every line inside a PowerShell fence.
+
+    Line-scoped by design (#424): a fenced PowerShell line is one command.
+    """
     inside = False
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         stripped = line.strip()

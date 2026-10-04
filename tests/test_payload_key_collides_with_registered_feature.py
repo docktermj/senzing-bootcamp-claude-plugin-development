@@ -57,6 +57,9 @@ def collision_markers():
     found inside its wrapper and returned without it. The file also carries an unrelated
     wrapped marker (step 2's `embedded_in` key), so the collision marker is the one whose
     claim, before ` — owner: `, names a registered feature attribute.
+
+    Line-scoped by design (#424): INV-209 requires the marker on ONE line, and #323 wraps it
+    in a single-line HTML comment.
     """
     opener, closer = "<!-- ", " -->"
     found = []
@@ -92,6 +95,9 @@ class TheBootcampersAnswerIsNotOverridden(unittest.TestCase):
         self.assertIn("do NOT silently re-route or override the answer", flat(PHASE2))
 
     def test_the_collision_offers_a_rename_as_a_pinned_question(self):
+        # Line-scoped by design (#424): presence checks on the one pinned question line; a
+        # question that wrapped would fail them (no single line, or no yes/no ending), never
+        # pass them.
         text = PHASE2.read_text(encoding="utf-8")
         question = [l for l in text.splitlines()
                     if l.lstrip().startswith("> 👉") and "registered Senzing feature" in l]
@@ -166,7 +172,10 @@ class ThePrecedenceMechanismIsMarkedObservationOnly(unittest.TestCase):
         self.assertRegex(raw, r"server \d+\.\d+\.\d+, \d{4}-\d{2}-\d{2} -->$")
 
     def test_the_marker_is_not_left_as_bare_prose(self):
-        """#323 — dated maintainer metadata must not render inside the skill."""
+        """#323 — dated maintainer metadata must not render inside the skill.
+
+        Line-scoped by design (#424): a marker is bare when it opens a line outside a comment.
+        """
         bare = [n for n, l in enumerate(PHASE2.read_text(encoding="utf-8").splitlines(), 1)
                 if l.lstrip().startswith("MCP-NEGATIVE:")]
         self.assertEqual([], bare, "a bare MCP-NEGATIVE marker renders as body text")

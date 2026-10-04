@@ -55,6 +55,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 
@@ -196,6 +198,7 @@ class TestActionNamesAreInTheEnum(unittest.TestCase):
     """A payload field name used as an action is rejected by the server."""
 
     def test_no_invented_workflow_actions(self):
+        # Line-scoped by design (#424): `action='…'` is one token with no space in it.
         offenders = []
         for path, text in skill_text():
             for n, line in enumerate(text.splitlines(), 1):
@@ -247,7 +250,13 @@ class TestRequiredParamsArePresent(unittest.TestCase):
         )
 
     def test_workspace_dir_is_project_local(self):
-        """The parameter exists to keep tool output inside the project."""
+        """The parameter exists to keep tool output inside the project.
+
+        Line-scoped by design (#424): the parameter and each forbidden directory are single
+        tokens, and the exemption reads the same line for its negation; matching a
+        whitespace-collapsed block instead would let a "never" anywhere in the paragraph exempt
+        a real value written beside the parameter.
+        """
         offenders = []
         for path, text in skill_text():
             for n, line in enumerate(text.splitlines(), 1):
@@ -372,16 +381,21 @@ class TestEveryReportingGuideCallPassesLanguage(unittest.TestCase):
     nothing and cannot go stale.
     """
 
+    #: A `reporting_guide(topic=…)` call with no `language` before its closing parenthesis.
+    #: Matched by ``match_lines`` across line wraps (#424): a call wrapped inside its argument
+    #: list never closed on one line, so a line-at-a-time read skipped it unchecked.
+    NO_LANGUAGE = re.compile(r"reporting_guide\(\s*topic\s*=(?:(?!language)[^)])*\)")
+
+    def calls_without_language(self, text):
+        lines = text.split("\n")
+        return ["%d: %s" % (n, lines[n - 1].strip()[:110])
+                for n in match_lines(text, self.NO_LANGUAGE)]
+
     def test_no_reporting_guide_call_omits_language(self):
-        pattern = re.compile(r"reporting_guide\(\s*topic\s*=[^)]*\)")
         offenders = []
         for path in sorted(SKILLS.rglob("*.md")):
-            for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-                for match in pattern.finditer(line):
-                    if "language" not in match.group(0):
-                        offenders.append(
-                            "%s:%d: %s" % (path.relative_to(REPO_ROOT), number, match.group(0))
-                        )
+            offenders += ["%s:%s" % (path.relative_to(REPO_ROOT), hit)
+                          for hit in self.calls_without_language(path.read_text(encoding="utf-8"))]
         self.assertEqual(
             [],
             offenders,
@@ -412,12 +426,26 @@ class TestEveryReportingGuideCallPassesLanguage(unittest.TestCase):
             "a day and the rule is unconditional now",
         )
 
+    def test_a_wrapped_call_without_language_is_caught(self):
+        """Negative control (#424): the call opens on line 1 and closes on line 2."""
+        wrapped = "consult `reporting_guide(topic='entity_views',\nversion='current')`.\n"
+        self.assertEqual(["1: consult `reporting_guide(topic='entity_views',"],
+                         self.calls_without_language(wrapped))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(re.search(r"reporting_guide\(\s*topic\s*=[^)]*\)", line)
+                             for line in wrapped.split("\n")))
+
+    def test_a_wrapped_call_with_language_passes(self):
+        """Must-not-flag (INV-282): the shipped shape, `language` on the wrapped line."""
+        self.assertEqual([], self.calls_without_language(
+            "consult `reporting_guide(topic='graph',\nlanguage='<lang>', version='current')`.\n"))
+
     def test_the_scan_is_not_vacuous(self):
         """A regex that stops matching would make the guard pass silently."""
         found = sum(
-            len(re.findall(r"reporting_guide\(\s*topic", line))
+            len(match_lines(path.read_text(encoding="utf-8"),
+                            re.compile(r"reporting_guide\(\s*topic")))
             for path in SKILLS.rglob("*.md")
-            for line in path.read_text(encoding="utf-8").splitlines()
         )
         self.assertGreater(found, 5, "found almost no reporting_guide calls; the glob drifted")
 

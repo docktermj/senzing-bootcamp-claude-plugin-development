@@ -25,8 +25,11 @@ run-environment block or the retrospective's entries, and nothing offline shows 
 
 Run:  python3 -m unittest discover -s tests
 """
+import re
 import unittest
 from pathlib import Path
+
+from _wrapped_text import match_lines
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
@@ -52,6 +55,15 @@ def squash(text):
     return " ".join(text.split())
 
 
+#: The note control posed as a question: a 👉 followed, in the same Markdown block and before
+#: any other 👉, by "make a note". Matched by ``match_lines`` on whitespace-collapsed blocks
+#: (#424), so a question that wraps between "make a" and "note" is still caught.
+NOTE_QUESTION = re.compile(r"(?i)👉[^👉]*?make a note")
+
+#: A wrapped instance for the negative control: "make a" ends line 1, "note" begins line 2.
+WRAPPED_NOTE_QUESTION = "👉 **Would you like to make a\nnote before we go on?**\n"
+
+
 class TheFlowShips(unittest.TestCase):
 
     def test_the_workflow_file_exists(self):
@@ -64,7 +76,11 @@ class TheFlowShips(unittest.TestCase):
         self.assertIn("notes.md", read(COMMAND))
 
     def test_the_hooks_readme_purpose_still_begins_with_to(self):
-        """INV-016 — and it must now name the note branch as well."""
+        """INV-016 — and it must now name the note branch as well.
+
+        Line-scoped by design (#424): the purpose is a cell of the README's table row, and a
+        table row is one line.
+        """
         row = [l for l in read(HOOKS_README).splitlines()
                if "feedback-capture.py" in l]
         self.assertTrue(row, "the hook is not listed in the README Purpose table")
@@ -86,7 +102,11 @@ class TheBannersBracketTheFlow(unittest.TestCase):
         self.assertIn(EXIT_BANNER, self.text)
 
     def test_the_glyph_is_distinct_from_the_feedback_flow(self):
-        """⛔ INV-074's whole purpose: two flows, two glyphs, told apart at a glance."""
+        """⛔ INV-074's whole purpose: two flows, two glyphs, told apart at a glance.
+
+        Line-scoped by design (#424): each banner is a one-line string pinned verbatim
+        (``ENTRY_BANNER``, ``EXIT_BANNER``), so the line holding it is the banner.
+        """
         self.assertIn("📝", read(FEEDBACK), "fixture check: the feedback glyph moved")
         banner_lines = [l for l in self.text.splitlines() if "BOOTCAMP NOTE" in l
                         or "NOTE SAVED" in l]
@@ -216,9 +236,23 @@ class TheControlIsTaught(unittest.TestCase):
         self.assertIn(NOTES_FILE, flat)
 
     def test_the_preface_bullet_is_a_statement_not_a_question(self):
-        for line in read(ONBOARDING_FLOW).splitlines():
-            if "make a note" in line.lower() and line.lstrip().startswith("👉"):
-                self.fail(f"the note control is posed as a question: {line!r}")
+        text = read(ONBOARDING_FLOW)
+        posed = match_lines(text, NOTE_QUESTION)
+        self.assertEqual([], posed, "the note control is posed as a question at line(s) %s: %r"
+                         % (posed, [text.split("\n")[n - 1] for n in posed]))
+
+    def test_a_wrapped_note_question_is_caught(self):
+        """Negative control (#424): the question wraps inside "make a note"."""
+        self.assertEqual([1], match_lines(WRAPPED_NOTE_QUESTION, NOTE_QUESTION))
+        # The old line-at-a-time check, kept only to show the fixture is the hard case.
+        self.assertFalse(any("make a note" in line.lower() and line.lstrip().startswith("👉")
+                             for line in WRAPPED_NOTE_QUESTION.split("\n")))
+
+    def test_the_statement_form_is_not_a_question(self):
+        """Must-not-flag (INV-282): the preface teaches the control as a statement."""
+        self.assertEqual([], match_lines(
+            '- Say "make a note" at any time and I will save it to\n`docs/bootcamp_notes.md`.\n',
+            NOTE_QUESTION))
 
 
 class GraduationFoldsTheNotesIntoTheKeepsake(unittest.TestCase):

@@ -361,6 +361,8 @@ class TheRequirementIsStatedWhereTheRecapIsWritten(unittest.TestCase):
         self.assertIn("Never invent content to fill a label", text)
 
     def test_graduations_check_step_mentions_the_blocks(self):
+        # Line-scoped by design (#424): a presence check on the step's own line fails closed;
+        # a phrase that wrapped off it would fail this, never pass it.
         text = self.read("skills", "graduation", "SKILL.md")
         check = text.split("**Content check")[1].split("\n")[0]
         self.assertIn("three labeled blocks", check)
@@ -368,7 +370,10 @@ class TheRequirementIsStatedWhereTheRecapIsWritten(unittest.TestCase):
     def test_graduations_inline_fallback_draws_them_on_both_paths(self):
         """INV-157 (amended by #235): the inline fallback is a third renderer, and it runs
         exactly when the script's two cannot, so it must draw the blocks too. The rule has
-        to sit in the same sentence span as both paths, or it binds only one of them."""
+        to sit in the same sentence span as both paths, or it binds only one of them.
+
+        Line-scoped by design (#424): the fallback's line stands in for that span, and every
+        check on it is a presence check, so a wrap fails it rather than passing it."""
         text = self.read("skills", "graduation", "SKILL.md")
         fallback = text.split("**If the bundled script cannot be located or run:**")[1]
         fallback = fallback.split("\n")[0]
@@ -423,6 +428,8 @@ class ListShapedBlocksAreAuthoredAsLists(unittest.TestCase):
     """
 
     def example(self):
+        # Line-scoped by design (#424): the checks on these lines are layout (a label opening
+        # its own line, what follows it), which is about lines.
         with open(
             os.path.join(
                 REPO_ROOT, "plugins", "senzing-bootcamp", "docs", "examples",

@@ -141,6 +141,8 @@ class TheLicenseDecodeWorksOnPowerShell5And7(unittest.TestCase):
 
 
 class TheRecapRenderHasAWindowsForm(unittest.TestCase):
+    """Line-scoped by design (#424): each form asserted here is one command line."""
+
     def setUp(self):
         self.step = step_1b(GRADUATION.read_text(encoding="utf-8"))
 

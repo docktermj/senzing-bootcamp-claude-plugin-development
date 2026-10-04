@@ -296,6 +296,10 @@ def enumeration_lines():
     version of this passed its own negative control: removing the value from the entry
     template still left it elsewhere in the same file, so the drift the guard exists to
     catch was invisible to it. The vocabulary drifts one enumeration at a time.
+    **Line-scoped by design (#424), for the same reason:** a block is coarser than an
+    enumeration too, so matching whitespace-collapsed blocks would let the value in prose beside
+    an enumeration stand in for the value missing from it. Each enumeration ships as one
+    bracketed or backticked list on one line, which is the unit read here.
 
     ⚠️ **Two finders, either one enough (#223).** A line with both siblings of either side, as
     before; or a pipe list with at least two values from either closed set. The second finds a

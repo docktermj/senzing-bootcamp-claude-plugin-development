@@ -174,6 +174,9 @@ class ExactlyOneSiteOwnsTheStrategy(unittest.TestCase):
     def test_the_strategy_marks_its_negatives_for_re_asking(self):
         """A routing negative with no marker is invisible to coverage_reports.py.
 
+        Line-scoped by design (#424): INV-209 requires the marker on ONE line, because the
+        scanner's regex is not DOTALL; reading lines is what checks that it is.
+
         ⚠️ The token is assembled at runtime on purpose. Written as a literal, this line is
         itself marker-shaped, and `coverage_reports.py negatives` reported this test file as a
         third MALFORMED marker — a guard polluting the worklist it exists to protect.

@@ -182,6 +182,7 @@ class ContractDescribesSixTabs(unittest.TestCase):
         self.assertIn("strict **superset**", self.text)
 
     def test_entity_graph_row_documents_the_mode_toggle(self):
+        # Line-scoped by design (#424): a table row is one line; so is the next test's.
         row = [l for l in self.text.splitlines() if l.startswith("| **Entity Graph**")][0]
         self.assertIn("Show only entities with relationships", row)
         self.assertIn("relationships_total", row)

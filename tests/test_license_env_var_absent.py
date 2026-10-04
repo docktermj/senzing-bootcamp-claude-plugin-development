@@ -63,7 +63,11 @@ def plugin_text_files():
 
 class TheConfabulatedSpellingIsNeverUsedAsAVariable(unittest.TestCase):
     def test_no_file_uses_the_bad_spelling_except_to_warn_against_it(self):
-        """SENZING_LICENSE_PATH appears only in the two notes whose subject is that it is wrong."""
+        """SENZING_LICENSE_PATH appears only in the two notes whose subject is that it is wrong.
+
+        Line-scoped by design (#424): the pattern is one identifier, which a line break cannot
+        split.
+        """
         offenders = []
         for path in plugin_text_files():
             if path in ALLOWED_TO_NAME_BAD:
@@ -102,6 +106,9 @@ def env_example_key_list(text):
     window wide enough to reach the bullet also swallows the surrounding ⛔ prose -- which itself
     mentions the variable, so removing the key from the LIST still left the assertion satisfied.
     That miss was found by negative control, not review.
+
+    The bullet's wrapped continuations are joined here, so this is no line-at-a-time read
+    (#424).
     """
     lines = text.splitlines()
     for i, line in enumerate(lines):

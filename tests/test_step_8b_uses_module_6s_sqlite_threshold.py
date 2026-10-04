@@ -48,6 +48,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
 MODULE_04 = SKILLS / "module-04-data-collection" / "SKILL.md"
@@ -80,6 +82,10 @@ NOT_A_FIGURE = re.compile(
     re.IGNORECASE,
 )
 DIGIT = re.compile(r"\d")
+
+
+#: The retired name for Module 6's threshold.
+LOAD_TIME_THRESHOLD = re.compile(r"(?i)load-time threshold")
 
 
 def read(path):
@@ -268,11 +274,18 @@ class StepEightBUsesItemThreesThreshold(unittest.TestCase):
         self.assertEqual(sdk_guide_problems(self.step), [])
 
     def test_no_skill_says_load_time_threshold(self):
+        # Matched across line wraps (#424): "load-time\nthreshold" is still the old name.
         hits = [f"{p.relative_to(SKILLS)}:{n}"
                 for p in sorted(SKILLS.rglob("*.md"))
-                for n, line in enumerate(read(p).splitlines(), 1)
-                if "load-time threshold" in line.lower()]
+                for n in match_lines(read(p), LOAD_TIME_THRESHOLD)]
         self.assertEqual(hits, [])
+
+    def test_a_wrapped_old_name_is_caught_at_its_first_line(self):
+        """Negative control (#424): "load-time" ends line 1 and "threshold" begins line 2."""
+        wrapped = "Compare the estimate with the load-time\nthreshold in Phase A.\n"
+        self.assertEqual([1], match_lines(wrapped, LOAD_TIME_THRESHOLD))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any("load-time threshold" in l.lower() for l in wrapped.split("\n")))
 
     def test_item_3_still_sources_the_threshold_from_that_route(self):
         self.assertEqual(item_3_problems(self.phase_a), [])

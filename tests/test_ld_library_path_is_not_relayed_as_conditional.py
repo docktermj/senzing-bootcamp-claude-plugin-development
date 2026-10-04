@@ -35,6 +35,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills" /
          "module-02-sdk-setup" / "SKILL.md")
@@ -46,6 +48,25 @@ def text():
 
 def flat():
     return " ".join(text().split())
+
+
+#: The server's hedge. Matched by ``match_lines`` across line wraps (#424): the hedge is
+#: prose, and "only needed\nif the native lib" was invisible to a line-at-a-time read.
+HEDGE = re.compile(r"only needed if (?:the )?native lib")
+
+
+def unattributed_hedges(body):
+    """["<line>: <text>"] for each hedge whose passage names no source and is not quoted."""
+    lines = body.split("\n")
+    offenders = []
+    for lineno in match_lines(body, HEDGE):
+        index, line = lineno - 1, lines[lineno - 1]
+        window = " ".join(lines[max(0, index - 3):index + 3])
+        attributed = (line.lstrip().startswith(">") or "env_vars" in window
+                      or "gotchas" in window)
+        if not attributed:
+            offenders.append(f"{lineno}: {line.strip()}")
+    return offenders
 
 
 class TheConditionalGlossIsGone(unittest.TestCase):
@@ -64,20 +85,24 @@ class TheConditionalGlossIsGone(unittest.TestCase):
         prose and wraps, so a line-level check reported a correctly-attributed relay whose
         attribution sat on the line above.
         """
-        lines = text().splitlines()
-        offenders = []
-        for index, line in enumerate(lines):
-            if "only needed if native lib" not in line and \
-               "only needed if the native lib" not in line:
-                continue
-            window = " ".join(lines[max(0, index - 3):index + 3])
-            attributed = (line.lstrip().startswith(">") or "env_vars" in window
-                          or "gotchas" in window)
-            if not attributed:
-                offenders.append(f"{index + 1}: {line.strip()}")
+        offenders = unattributed_hedges(text())
         self.assertEqual([], offenders,
                          "the hedge appears unattributed, as though it were the plugin's "
                          "own claim:\n  " + "\n  ".join(offenders))
+
+    def test_a_wrapped_unattributed_hedge_is_reported_at_its_first_line(self):
+        """Negative control (#424): "only needed" ends line 2 and "if the native" begins line 3."""
+        wrapped = ("Set the variables below.\nLD_LIBRARY_PATH is only needed\n"
+                   "if the native library is not found automatically.\n")
+        self.assertEqual(["2: LD_LIBRARY_PATH is only needed"], unattributed_hedges(wrapped))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(HEDGE.search(l) for l in wrapped.split("\n")))
+
+    def test_an_attributed_wrapped_hedge_is_not_reported(self):
+        """Must-not-flag (INV-282): the server's `gotchas` line, quoted with its source."""
+        self.assertEqual([], unattributed_hedges(
+            "The server's `gotchas` reads: LD_LIBRARY_PATH is only needed\n"
+            "if the native library is not found automatically.\n"))
 
     def test_the_attribution_check_is_not_vacuous(self):
         """A bare hedge with nothing naming its source must be reported."""
@@ -193,6 +218,8 @@ class ThePathsAreQuotedNotAdopted(unittest.TestCase):
     """INV-080 — every path figure carries the route that produced it."""
 
     def test_each_senzing_path_appears_with_provenance_nearby(self):
+        # Line-scoped by design (#424): the anchor is a path, one token with no space in it,
+        # and the window it opens spans lines.
         body = text()
         for number, line in enumerate(body.splitlines(), 1):
             if "/opt/senzing/er/lib" not in line:

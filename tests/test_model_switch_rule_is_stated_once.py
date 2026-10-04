@@ -26,6 +26,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import blocks, match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 GROUND_RULES = PLUGIN / "skills" / "bootcamp-onboarding" / "ground-rules.md"
@@ -78,8 +80,24 @@ def shipped_corpus():
 
 
 def pinning_sites(corpus, pattern):
-    """The files in `corpus` that pin `pattern`."""
-    return [path for path, text in corpus.items() if pattern.search(text)]
+    """The files in `corpus` that pin `pattern`, matched across line wraps (#424)."""
+    return [path for path, text in corpus.items() if match_lines(text, pattern)]
+
+
+def pinned_questions(text, pattern):
+    """Each pinned question ``pattern`` opens, read across line wraps (#424).
+
+    A question runs from the 👉 to the next one in its Markdown block, or to the end of the
+    block, with whitespace collapsed. A pinned question is its own ``>`` paragraph, so one on
+    a single line reads exactly as that line did; one that wraps keeps its closing ``?**``.
+    """
+    found = []
+    for block in blocks(text):
+        flat = " ".join(" ".join(line for _n, line in block).split())
+        starts = [m.start() for m in pattern.finditer(flat)] + [len(flat)]
+        found += [flat[a:b].strip() for a, b in zip(starts, starts[1:])]
+    assert len(found) == len(match_lines(text, pattern)), "match_lines and the block scan disagree"
+    return found
 
 
 def graduation_section(text):
@@ -128,13 +146,32 @@ class GroundRulesIsTheOnlyCopy(unittest.TestCase):
 
     def test_ground_rules_pins_both_forms_for_graduation_too(self):
         """Acceptance criterion 3: the bootcamper still sees "…for graduation?"."""
-        questions = [line for line in read(GROUND_RULES).splitlines()
-                     if PINNED_SWITCH.search(line)]
+        questions = pinned_questions(read(GROUND_RULES), PINNED_SWITCH)
         self.assertEqual(2, len(questions), "expected the CLI and the intent-based form")
         for line in questions:
             with self.subTest(line=line[:70]):
                 self.assertIn("for {this module | graduation}?**", line)
                 self.assertNotIn("for this module?**", line)
+
+
+class PinnedQuestionsAreReadAcrossLineWraps(unittest.TestCase):
+    """Negative controls for the #424 conversion."""
+
+    WRAPPED = ("> 👉 **Would you like to switch to `/model opus` + `/effort high` for this\n"
+               "> module?** (Recommended for best value; reply no to keep your current {dial}.)\n")
+
+    def test_a_wrapped_question_keeps_its_closing_words(self):
+        (question,) = pinned_questions(self.WRAPPED, PINNED_SWITCH)
+        self.assertIn("for this module?**", question)
+        # The old line-at-a-time read cut the question at the wrap.
+        (line,) = [l for l in self.WRAPPED.split("\n") if PINNED_SWITCH.search(l)]
+        self.assertNotIn("for this module?**", line)
+
+    def test_a_question_wrapped_inside_its_opening_words_is_still_a_pin(self):
+        wrapped = "> 👉 **Would you like to switch\n> to `/model opus` for graduation?**\n"
+        self.assertEqual(["x.md"], pinning_sites({"x.md": wrapped}, PINNED_SWITCH))
+        # The old raw-text search, kept only to show the fixture is the hard case.
+        self.assertIsNone(PINNED_SWITCH.search(wrapped))
 
 
 class GraduationKeepsOnlyWhatIsSpecificToIt(unittest.TestCase):

@@ -37,6 +37,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
 GRADUATION = SKILLS / "graduation" / "SKILL.md"
@@ -59,6 +61,13 @@ WRITERS = {
 NEVER_WRITTEN = ("language", "database", "data_sources")
 
 
+#: A pinned question ``👉 **…?**`` whose bold run asks about deployment or integration. Matched
+#: by ``match_lines`` on whitespace-collapsed blocks (#424), so a bold run that wraps is read
+#: whole; one line at a time, ``(.+?)\*\*`` never closed on such a line and the question passed.
+DEPLOYMENT_QUESTION = re.compile(
+    r"👉\s*\*\*(?=(?:(?!\*\*).)*\?)(?=(?:(?!\*\*).)*(?i:deploy|integrat))")
+
+
 def graduation_text():
     return GRADUATION.read_text(encoding="utf-8")
 
@@ -78,6 +87,8 @@ def declared_keys():
     key appeared *somewhere* in Pre-checks, and mutation-testing caught it: deleting the
     `integration_targets` table row still passed, because the prose below it mentions the key
     too. "Declared as a key to read" is the property; "mentioned nearby" is not.
+
+    Line-scoped by design (#424): a table row is one line.
     """
     keys = set()
     for line in prechecks_section().splitlines():
@@ -197,13 +208,29 @@ class TestModule1AnswersReachGraduation(unittest.TestCase):
         questions ("the answers to two pinned 👉 questions asked in Module 1") is not
         graduation asking one, and a keyword-anywhere-near-👉 rule flags it.
         """
-        for line in graduation_text().splitlines():
+        text = graduation_text()
+        asked = match_lines(text, DEPLOYMENT_QUESTION)
+        self.assertEqual(
+            [], asked,
+            "graduation must not ask a 👉 question about deployment or integration — asked "
+            "once in Module 1 (INV-006/INV-097): %r"
+            % [text.split("\n")[n - 1].strip()[:110] for n in asked])
+
+    def test_a_wrapped_deployment_question_is_caught(self):
+        """Negative control (#424): the bold run opens on line 1 and closes on line 2."""
+        wrapped = "👉 **Where do you plan to\ndeploy this?**\n"
+        self.assertEqual([1], match_lines(wrapped, DEPLOYMENT_QUESTION))
+        # The old line-at-a-time check, kept only to show the fixture is the hard case.
+        for line in wrapped.split("\n"):
             m = re.search(r"👉\s*\*\*(.+?)\*\*", line)
-            if m and "?" in m.group(1) and re.search(r"deploy|integrat", m.group(1), re.I):
-                self.fail(
-                    "graduation must not ask a 👉 question about deployment or integration — "
-                    f"asked once in Module 1 (INV-006/INV-097): {m.group(1)[:110]}"
-                )
+            self.assertFalse(m and "?" in m.group(1)
+                             and re.search(r"deploy|integrat", m.group(1), re.I))
+
+    def test_prose_about_module_1s_questions_is_not_a_question(self):
+        """Must-not-flag (INV-282): naming Module 1's pinned questions asks nothing."""
+        self.assertEqual([], match_lines(
+            "Use the answers to two pinned 👉 questions asked in Module 1 about where they\n"
+            "will deploy and what they integrate with.\n", DEPLOYMENT_QUESTION))
 
     def test_absence_is_explicitly_harmless(self):
         flat = re.sub(r"\s+", " ", graduation_text()).lower()

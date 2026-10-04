@@ -42,8 +42,11 @@ Source spec: `specs/find-examples-self-describes-two-different-coverages.md`.
 Run:  python3 -m unittest discover -s tests
 """
 import re
+import tempfile
 import unittest
 from pathlib import Path
+
+from _wrapped_text import match_lines
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins"
@@ -82,6 +85,19 @@ def scannable_lines(path):
     return out
 
 
+def figure_lines(path, pattern):
+    """1-based lines where ``pattern`` starts in ``path``, outside a quoted-history block.
+
+    ⚠️ **Matched across line wraps (#424).** A figure is a number beside a word ("37
+    repositories", "~9999 chunks"), and prose wraps between them; read one line at a time, a
+    wrapped figure passed. ``match_lines`` runs the pattern on whitespace-collapsed Markdown
+    blocks, so ``COUNT_NEAR_REPO``'s ``[^.\n]`` now spans a wrap within a block. A match whose
+    first line is inside a block the marker exempts is dropped, as before.
+    """
+    scanned = {n for n, _line in scannable_lines(path)}
+    return [n for n in match_lines(path.read_text(encoding="utf-8"), pattern) if n in scanned]
+
+
 def shipped_files():
     """Shipped markdown plus scripts — a count could be written into either."""
     return sorted(p for p in PLUGIN.rglob("*")
@@ -93,9 +109,9 @@ class NoShippedFileCitesACoverageFigure(unittest.TestCase):
     def test_no_shipped_file_states_a_repository_count(self):
         bad = []
         for p in shipped_files():
-            for n, line in scannable_lines(p):
-                if COUNT_NEAR_REPO.search(line):
-                    bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {line.strip()[:100]}")
+            lines = p.read_text(encoding="utf-8").split("\n")
+            for n in figure_lines(p, COUNT_NEAR_REPO):
+                bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {lines[n - 1].strip()[:100]}")
         self.assertEqual(
             [], bad,
             "a shipped file states a find_examples repository count. A coverage figure is "
@@ -108,9 +124,9 @@ class NoShippedFileCitesACoverageFigure(unittest.TestCase):
     def test_no_shipped_file_enumerates_the_stale_extension_list(self):
         bad = []
         for p in shipped_files():
-            for n, line in scannable_lines(p):
-                if STALE_EXTENSIONS.search(line):
-                    bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {line.strip()[:100]}")
+            lines = p.read_text(encoding="utf-8").split("\n")
+            for n in figure_lines(p, STALE_EXTENSIONS):
+                bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {lines[n - 1].strip()[:100]}")
         self.assertEqual(
             [], bad,
             "a shipped file enumerates find_examples' indexed extensions ending at `.rs`. "
@@ -126,6 +142,19 @@ class NoShippedFileCitesACoverageFigure(unittest.TestCase):
                         "the count matcher no longer detects the claim it exists for")
         self.assertTrue(STALE_EXTENSIONS.search("Indexes source code (.py, .java, .cs, .rs)"),
                         "the extension matcher no longer detects the stale list")
+
+    def test_a_wrapped_figure_is_caught_at_its_first_line(self):
+        """Negative control (#424): the number ends line 2 and its noun begins line 3."""
+        wrapped = ("Use find_examples for code.\nIt indexes 37\nSenzing GitHub repositories, "
+                   "and the chunk count is ~9999\nchunks.\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "wrapped.md"
+            path.write_text(wrapped, encoding="utf-8")
+            self.assertEqual([2], figure_lines(path, COUNT_NEAR_REPO))
+            self.assertEqual([3], figure_lines(path, re.compile(r"~?\d[\d,]*\s+chunks")))
+        # The old line-at-a-time scan, kept only to show the fixture is the hard case.
+        for pattern in (COUNT_NEAR_REPO, re.compile(r"~?\d[\d,]*\s+chunks")):
+            self.assertFalse(any(pattern.search(l) for l in wrapped.split("\n")))
 
     def test_the_exemption_is_narrow(self):
         """⛔ The marker must not become a file-wide opt-out — but it need not exist at all.
@@ -205,9 +234,9 @@ class TheLiveIllustrationStaysCheckable(unittest.TestCase):
         figure = re.compile(r"~?\d[\d,]*\s+chunks|documents_indexed`?:\s*\d")
         bad = []
         for p in shipped_files():
-            for n, line in scannable_lines(p):
-                if figure.search(line):
-                    bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {line.strip()[:100]}")
+            lines = p.read_text(encoding="utf-8").split("\n")
+            for n in figure_lines(p, figure):
+                bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {lines[n - 1].strip()[:100]}")
         self.assertEqual(
             [], bad,
             "a shipped file quotes a search_docs coverage figure. The server states the "

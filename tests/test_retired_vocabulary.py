@@ -30,6 +30,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 
@@ -142,6 +144,19 @@ def shipped_files():
         yield path
 
 
+def retired_term_lines(text, pattern):
+    """1-based lines where a retired term starts.
+
+    Multiline heading patterns are matched against the whole text, since a heading is one
+    line. The rest go through ``match_lines`` (#424), so a term of two words ("Path\nA",
+    "Claude\napp") is found across a line wrap at the line it starts on. The allow-rule still
+    reads that line, as before, so retirement framing that wraps away from it fails closed.
+    """
+    if pattern.flags & re.MULTILINE:
+        return [text[: m.start()].count("\n") + 1 for m in pattern.finditer(text)]
+    return match_lines(text, pattern)
+
+
 def marked_as_retired(line):
     low = line.lower()
     return any(marker in low for marker in RETIREMENT_MARKERS)
@@ -156,20 +171,9 @@ class TestRetiredVocabulary(unittest.TestCase):
             rel = path.relative_to(REPO_ROOT)
             text = path.read_text(encoding="utf-8", errors="replace")
             for label, pattern, invariant, instead in RETIRED_TERMS:
-                # Multiline heading patterns are matched against the whole text; the
-                # rest line by line, because the allow-rule is per line.
-                if pattern.flags & re.MULTILINE:
-                    hits = [
-                        text[: m.start()].count("\n") + 1 for m in pattern.finditer(text)
-                    ]
-                else:
-                    hits = [
-                        n
-                        for n, line in enumerate(text.splitlines(), 1)
-                        if pattern.search(line)
-                    ]
+                hits = retired_term_lines(text, pattern)
                 for lineno in hits:
-                    line = text.splitlines()[lineno - 1]
+                    line = text.split("\n")[lineno - 1]
                     if marked_as_retired(line):
                         continue
                     offenders.append(
@@ -192,6 +196,22 @@ class TestRetiredVocabulary(unittest.TestCase):
             with self.subTest(term=label):
                 self.assertTrue(label and instead, "each entry needs a label and advice")
                 self.assertRegex(invariant, r"^INV-\d{3}$")
+
+    def test_a_wrapped_retired_term_is_caught_at_its_first_line(self):
+        """Negative control (#424): "Path" ends line 1 and "A" begins line 2."""
+        wrapped = "At the module transition, Path\nA proceeds to graduation.\n"
+        pattern = next(p for label, p, _, _ in RETIRED_TERMS if label.startswith("A/B/C"))
+        self.assertEqual([1], retired_term_lines(wrapped, pattern))
+        self.assertFalse(marked_as_retired(wrapped.split("\n")[0]))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(pattern.search(l) for l in wrapped.split("\n")))
+
+    def test_a_wrapped_term_framed_as_retired_is_allowed(self):
+        """Must-not-flag (INV-282): the honest back-compat note, wrapped."""
+        wrapped = "Older sessions may store this as the legacy Claude\napp wording.\n"
+        pattern = next(p for label, p, _, _ in RETIRED_TERMS if label.startswith('"Claude app"'))
+        (n,) = retired_term_lines(wrapped, pattern)
+        self.assertTrue(marked_as_retired(wrapped.split("\n")[n - 1]))
 
     def test_the_known_regression_would_be_caught(self):
         """Self-check: the exact sentence that shipped must fail the rule.

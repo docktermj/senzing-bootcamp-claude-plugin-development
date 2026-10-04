@@ -155,6 +155,7 @@ class TheStepOneAdvanceShapeCautionIsCorrect(unittest.TestCase):
         self.step = body[step_start:body.index("### 10. Plan", step_start)]
 
     def test_it_is_one_line(self):
+        # Line-scoped by design (#424): the rule under test is that the body is one line.
         self.assertEqual(
             1, len(self.body.strip().splitlines()),
             "the step-1 payload rule is one line (#333); a multi-line block here is the "

@@ -73,6 +73,8 @@ def without_staleness_note(text):
 
     The block is the run of `>` lines that starts at STALENESS_NOTE_MARKER. With
     no marker nothing is removed, so a missing note exempts nothing.
+
+    Line-scoped by design (#424): a `>` marker opens each line of a blockquote.
     """
     lines = text.splitlines(keepends=True)
     kept, in_note = [], False
@@ -128,6 +130,8 @@ def stage_table(path):
 
     Tolerates leading indentation: the ground-rules copy is nested inside a
     bullet, the model-selection copy sits at column zero.
+
+    Line-scoped by design (#424): a table row is one line.
     """
     with open(path, encoding="utf-8") as fh:
         lines = [line.strip() for line in fh]

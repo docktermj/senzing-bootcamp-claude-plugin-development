@@ -39,6 +39,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGINS = REPO_ROOT / "plugins"
 MODULE = PLUGINS / "senzing-bootcamp" / "skills" / "module-05-data-quality-mapping"
@@ -85,11 +87,13 @@ def phase3_problems(text):
     problems = []
     if STEP_26.search(text):
         problems.append("phase3 still names step 26 or steps 21–26")
+    # Line-scoped by design (#424): the title is the file's first line, an ATX heading.
     if "(steps 21–25)" not in text.splitlines()[0]:
         problems.append("phase3's title does not give the steps as 21–25")
-    if SHORTCUT.search(text):
+    # Matched across line wraps (#424): both carry literal spaces, which a line break defeats.
+    if match_lines(text, SHORTCUT):
         problems.append("phase3 still carries the shortcut path or modules_skipped")
-    if TO_DATA_PROCESSING.search(text):
+    if match_lines(text, TO_DATA_PROCESSING):
         problems.append("phase3 still sends an exit straight to Data processing")
     if "module-completion.md" in text or RUNS_COMPLETION.search(text):
         problems.append("phase3 still runs Module Completion")
@@ -145,6 +149,7 @@ def phase3_problems(text):
             "Phase 2 step 20",
             "Phase 3 never runs Module Completion",
         ), "Leaving Phase 3")
+        # Line-scoped by design (#424): a table row is one line.
         rows = [r for r in leaving.splitlines() if r.startswith("| ") and "---" not in r][1:]
         exits = {"SDK not set up": "Phase 2 step 19", "detection fails": "Phase 2 step 19",
                  "Step 25 **yes**": "Phase 2 step 19", "Step 25 **no**": "Phase 2 step 17"}
@@ -325,10 +330,22 @@ class Phase3ExitsReturnToThePerSourceLoop(unittest.TestCase):
             "resume points at step 26": self.mutate(p3, "which Phase 3 steps (21–25) completed",
                                                     "which Phase 3 steps (21–26) completed"),
             "title keeps 21–26": self.mutate(p3, "(steps 21–25)", "(steps 21–26)"),
+            # #424: the same two defects, wrapped inside the phrase.
+            "SDK skip proceeds to Data processing, wrapped": self.mutate(
+                p3, "then Phase 2 step 19.\n\n## Workflow",
+                "then proceed to Data\nprocessing.\n\n## Workflow"),
+            "step 25 yes asks a whole-run question, wrapped": self.mutate(
+                p3, "**Checkpoint:** write step 25.",
+                "👉 **Which path would\nyou like to take?**\n\n**Checkpoint:** write step 25."),
         }
         for name, mutant in mutants.items():
             with self.subTest(mutant=name):
                 self.assertNotEqual([], phase3_problems(mutant))
+
+    def test_the_wrapped_mutants_are_the_hard_case(self):
+        """#424: a raw-text search for either phrase misses the wrapped form."""
+        self.assertIsNone(TO_DATA_PROCESSING.search("then proceed to Data\nprocessing."))
+        self.assertIsNone(SHORTCUT.search("👉 **Which path would\nyou like to take?**"))
 
     def test_negative_controls_phase2(self):
         p2 = self.p2

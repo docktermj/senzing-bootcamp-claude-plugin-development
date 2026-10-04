@@ -98,7 +98,11 @@ def the_check(text):
 
 
 def suffix_list(check):
-    """The suffix list: the one line in the check made only of backticked upper-case tokens."""
+    """The suffix list: the one line in the check made only of backticked upper-case tokens.
+
+    Line-scoped by design (#424): the list is found as a line holding only backticked tokens,
+    and a list that wrapped would not be found, which fails the checks rather than passing.
+    """
     for line in check.splitlines():
         tokens = re.findall(r"`([^`]+)`", line)
         rest = re.sub(r"`[^`]+`", "", line).replace(",", "").strip()

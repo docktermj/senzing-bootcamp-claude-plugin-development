@@ -24,6 +24,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 PREP = PLUGIN / "skills" / "bootcamp-preparation" / "SKILL.md"
@@ -48,8 +50,24 @@ BANNED_VARIANTS = (
 )
 
 
+def variant_lines(text, variant):
+    """1-based lines where ``variant`` starts, matched across line wraps (#424).
+
+    A module name is several words, and prose wraps wherever the column runs out, so a
+    line-at-a-time ``in`` check missed a banned name split across two lines.
+    """
+    return match_lines(text, re.compile(re.escape(variant)))
+
+
+#: A banned variant wrapped mid-name, for the negative control.
+WRAPPED_VARIANT = "Next up is the module called SDK Installation\nand Configuration, in Module 2.\n"
+
+
 def canonical_names():
-    """Display names from the Bootcamp preparation module table, in order."""
+    """Display names from the Bootcamp preparation module table, in order.
+
+    Line-scoped by design (#424): a table row is one line.
+    """
     rows = []
     for line in PREP.read_text(encoding="utf-8").splitlines():
         m = re.match(r"^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*`([^`]+)`", line)
@@ -96,18 +114,31 @@ class TestNoInventedVariants(unittest.TestCase):
         offenders = []
         for path in shipped_and_public_files():
             text = path.read_text(encoding="utf-8", errors="replace")
-            for n, line in enumerate(text.splitlines(), 1):
-                for variant in BANNED_VARIANTS:
-                    if variant in line:
-                        offenders.append(
-                            f"{path.relative_to(REPO_ROOT)}:{n} uses '{variant}'"
-                        )
+            for variant in BANNED_VARIANTS:
+                for n in variant_lines(text, variant):
+                    offenders.append(
+                        f"{path.relative_to(REPO_ROOT)}:{n} uses '{variant}'"
+                    )
         self.assertEqual(
             [],
             offenders,
             "Off-canon module name(s); use the spelling in bootcamp-preparation's "
             "module table (INV-079):\n  " + "\n  ".join(offenders),
         )
+
+    def test_a_wrapped_variant_is_caught_at_its_first_line(self):
+        """Negative control (#424): "Installation" ends line 1 and "and" begins line 2."""
+        self.assertEqual([1], variant_lines(WRAPPED_VARIANT, "SDK Installation and Configuration"))
+        # The old line-at-a-time check, kept only to show the fixture is the hard case.
+        self.assertFalse(any("SDK Installation and Configuration" in line
+                             for line in WRAPPED_VARIANT.split("\n")))
+
+    def test_a_wrapped_canonical_name_is_not_a_variant(self):
+        """Must-not-flag (INV-282): the canonical name, wrapped, trips no banned variant."""
+        text = "Then comes Data Quality, Mapping,\nand Transformation, and after it Query,\nVisualize and Discover.\n"
+        for variant in BANNED_VARIANTS:
+            with self.subTest(variant=variant):
+                self.assertEqual([], variant_lines(text, variant))
 
     def test_banned_variants_do_not_collide_with_canonical_names(self):
         """A banned string that is a substring of a canonical name would be unfixable."""
