@@ -43,6 +43,47 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## inv-207-names-the-implement-overlays-phase-6-section
+
+- **Implemented:** 2026-10-04 (**Not a spec** — a dated record of one issue-driven run, #421, spec revision 1; follow-up from #395 (PR #413), recorded in its ledger entry and PR, `Source: self-observed (assistant unattended run)`)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md` (this entry). `specs/INVARIANTS.md`, `invariant-manifest.json`, `.claude/skill-overlays/implement-github-issue.md` and `tests/test_spec_ledger_invariants.py` are unchanged, as the issue scopes.
+- **MCP re-check:** n/a (no Senzing fact), server `sz-mcp-coworker` **1.37.19** (Senzing "current"), 2026-10-04, `get_capabilities` — re-confirmed, not assumed. The entry is about which heading in this repository's own overlay an invariant names. No line names an SDK method, an engine behavior, a Senzing document or an MCP tool. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** implemented directly (Phase 5a), built on `c263910`. The only deliverable is the PROPOSED AMENDMENT below.
+- **Summary:**
+  - **What INV-207 says today.** Its "Enforced by" sentence says the guard pins the ordering instruction "in `implement-spec`'s Step 4". The 2026-09-16 correction moved the site to the `/implement-github-issue` command file, and the 2026-09-29 correction moved it again, to `.claude/skill-overlays/implement-github-issue.md`. Since #395 (PR #413) that overlay's section is "## Phase 6: Record the implementation", and neither the overlay directory nor a command file has a "Step 4" (checked with `grep -rln "Step 4" .claude/skill-overlays`; `.claude/commands/` no longer exists). A reader who follows INV-207 to its site looks for a heading that is not there.
+  - **The guard still points back.** `tests/test_spec_ledger_invariants.py` still cites INV-207 in its module docstring, which already carries a 2026-10-02 (#395) note naming the Phase 6 section. Its `TestTheLedgerIsVerifiedAfterItIsWritten` class reads `SKILL = REPO_ROOT / ".claude" / "skill-overlays" / "implement-github-issue.md"` and `HEADING = "## Phase 6: Record the implementation"`. Checked, not edited.
+  - **The overlay still states the rule.** Its Phase 6 section carries the ⛔ ordering line and a ⛔ (INV-207) line requiring a fresh `citations.py verify` after any later ledger edit. Quoted below as the rules already shipping.
+  - **The drafted note** is a `⚠️ Dated note`, not a `⛔ Dated correction`, because the meaning does not change. It goes after INV-207's `(Source: …)` clause, not after the two corrections inside the entry, so the original and both corrections stay readable as written. The only repository path it names is `.claude/skill-overlays/implement-github-issue.md`, which resolves.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `pending_invariants.py list` shows this block as `AMENDS INV-207`, and `pending_invariants.py check` is clean. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **Differs from the issue:** nothing. The issue already scopes the note as a draft in this entry, applied through `/review-invariants` (INV-307; the `unattended-issue-loop` overlay), so `specs/INVARIANTS.md` is not edited.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-207 — awaiting the maintainer's sign-off; NOT applied.**
+    - ⛔ **Run `citations.py verify` AFTER the entry is written, never before.** — in `.claude/skill-overlays/implement-github-issue.md`
+
+  ⚠️ **Why.** INV-207's statement names "`implement-spec`'s Step 4" as the site its guard pins,
+  and its two corrections move that site to the implement overlay without naming a section. #395
+  renamed the overlay's section "## Phase 6: Record the implementation", after the governing
+  copy's phases, and re-pointed the guard at that heading. Without the note, a reader who follows
+  INV-207 to its site looks for a "Step 4" that no longer exists anywhere, and cannot tell from
+  the invariant which section the guard reads.
+
+  **Sites it affects:** INV-207 in `specs/INVARIANTS.md` (the note goes after its `(Source: …)`
+  clause), and its statement in `invariant-manifest.json`, regenerated from it
+  (`.claude/skills/review-invariants/invariant_manifest.py`) in the same edit. `EXPECTED_PAIRS`
+  is unchanged, because INV-207 already names `tests/test_spec_ledger_invariants.py`. The shipped
+  site is the line above, in the overlay section the note names. Applying the amendment resolves
+  the block: mark the bullet `applied YYYY-MM-DD` and drop the "awaiting" marker.
+
+  The drafted wording, to append after INV-207's `(Source: …)` clause:
+
+  **INV-207** — … (⚠️ **Dated note, 2026-10-04 (#421): the site's heading is now "Phase 6: Record the implementation"; the rule is unchanged.** The statement's "`implement-spec`'s Step 4", which the 2026-09-29 correction moved to `.claude/skill-overlays/implement-github-issue.md`, is that overlay's "## Phase 6: Record the implementation" section since #395, named after the governing copy's phases. No overlay or command file has a "Step 4" any more. ⚠️ **The condition is unchanged:** a claim about this repo's own reference graph is still verified **after** it is recorded, and evidence that an identifier is unused still MUST NOT quote it. The rules above still bind. Enforced by `tests/test_spec_ledger_invariants.py`, whose `TestTheLedgerIsVerifiedAfterItIsWritten` reads that section by its heading and pins the ordering, its reason, and the count-is-not-a-result warning.)
+
+  *(written as NNN deliberately: no new id is drafted, because this appends a note to INV-207
+  and a literal new id would cite an invariant that does not exist and turn `citations.py verify` red. If the
+  maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id,
+  and read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant** (INV-309). The block above is an amendment to INV-207, not a new rule. No ⛔ line is added anywhere and none is demoted.
+
 ## graduation-step-1c-creates-the-recap-venv-with-a-windows-form
 
 - **Implemented:** 2026-10-04 (**Not a spec** — a dated record of one issue-driven run, #420, spec revision 1; follow-up (b) drafted in #391's `windows-forms-for-license-apply-recap-render-return-guide-and-database-backup` entry and filed by the maintainer, `Source: self-observed (assistant unattended run)`)
