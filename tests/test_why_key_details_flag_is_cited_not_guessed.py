@@ -27,7 +27,9 @@ line by line it missed the claim in Module 7 Step 3a for a month, because "no" e
 and "flag is *documented*" began the next. It now also matches bold (``**documented**``), and
 still reports each offender as ``file:line``, mapped back from the normalized match.
 ``WRAPPED_RETIRED_SENTENCE`` is the wrapped Step 3a sentence #387 removed, kept as a permanent
-negative control.
+negative control. Since #426 the matching is the shared ``match_lines(text, RETIRED)`` from
+``tests/_wrapped_text.py``, which collapses whitespace within each Markdown block rather than
+across the whole file; this file's own ``retired_claim_lines`` is gone.
 
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
@@ -36,12 +38,14 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "plugins" / "senzing-bootcamp" / "skills"
 
-#: The retired claim, in every phrasing that shipped, plain, italic or bold. Matched against
-#: whitespace-normalized text (see ``retired_claim_lines``), so a single space stands for any
-#: run of whitespace, line breaks included.
+#: The retired claim, in every phrasing that shipped, plain, italic or bold. Matched by
+#: ``match_lines`` against whitespace-collapsed Markdown blocks (``tests/_wrapped_text.py``), so
+#: a single space stands for any run of whitespace, line breaks included.
 RETIRED = re.compile(r"(?i)no flag is \*{0,2}documented\*{0,2}[^.]{0,30}populat")
 
 #: The Step 3a sentence #387 removed, wrapped as it shipped
@@ -52,29 +56,6 @@ WRAPPED_RETIRED_SENTENCE = """⚠️ **Getting
 flag is *documented* to populate it, yet it was absent without that flag on two SDK builds
 (observation-only). If it is missing for the flags in force, say so explicitly and fall back to
 """
-
-
-def retired_claim_lines(text):
-    """1-based line numbers in ``text`` where a match of ``RETIRED`` starts.
-
-    The text is whitespace-normalized first (every run of whitespace becomes one space), so a
-    phrase wrapped across lines is still one match. Each normalized character keeps the offset
-    of the original character it came from, so a match's start maps back to its real line.
-    """
-    normalized, origin = [], []
-    in_space = False
-    for offset, char in enumerate(text):
-        if char.isspace():
-            if not in_space:
-                normalized.append(" ")
-                origin.append(offset)
-            in_space = True
-        else:
-            normalized.append(char)
-            origin.append(offset)
-            in_space = False
-    flat = "".join(normalized)
-    return [text.count("\n", 0, origin[m.start()]) + 1 for m in RETIRED.finditer(flat)]
 
 
 def shipped_markdown():
@@ -91,7 +72,7 @@ class TheRetiredClaimIsGone(unittest.TestCase):
     def test_no_file_says_no_flag_documents_the_field(self):
         offenders = []
         for md in shipped_markdown():
-            for lineno in retired_claim_lines(md.read_text(encoding="utf-8")):
+            for lineno in match_lines(md.read_text(encoding="utf-8"), RETIRED):
                 offenders.append("%s:%d" % (md.relative_to(REPO), lineno))
         self.assertEqual(
             [], offenders,
@@ -106,7 +87,7 @@ class TheRetiredClaimIsGone(unittest.TestCase):
 
         The match starts at "no", which ends the fixture's second line.
         """
-        self.assertEqual([2], retired_claim_lines(WRAPPED_RETIRED_SENTENCE))
+        self.assertEqual([2], match_lines(WRAPPED_RETIRED_SENTENCE, RETIRED))
         # The old line-at-a-time scan, kept here only to show the fixture is the hard case.
         self.assertFalse(any(RETIRED.search(line)
                              for line in WRAPPED_RETIRED_SENTENCE.split("\n")),
@@ -117,17 +98,17 @@ class TheRetiredClaimIsGone(unittest.TestCase):
         for word in ("documented", "*documented*", "**documented**"):
             with self.subTest(form=word):
                 self.assertEqual(
-                    [1], retired_claim_lines("No flag is %s as populating it." % word))
+                    [1], match_lines("No flag is %s as populating it." % word, RETIRED))
 
     def test_the_matcher_reports_the_line_of_each_match(self):
         text = "intro\nno flag is documented to\npopulate it.\n\nok\nno flag\nis **documented** to populate it."
-        self.assertEqual([2, 6], retired_claim_lines(text))
+        self.assertEqual([2, 6], match_lines(text, RETIRED))
 
     def test_the_matcher_passes_the_documented_requirement(self):
         """The corrected wording names the flag; it must not trip the retired-claim matcher."""
-        self.assertEqual([], retired_claim_lines(
+        self.assertEqual([], match_lines(
             "`WHY_KEY_DETAILS` needs `SZ_INCLUDE_MATCH_KEY_DETAILS`, and that flag needs a "
-            "relations\nflag — the server documents both."))
+            "relations\nflag — the server documents both.", RETIRED))
 
     def test_the_scan_still_finds_the_files(self):
         """A scan matching nothing would make every assertion below vacuous."""
