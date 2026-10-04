@@ -28,6 +28,9 @@ Prefer asserting what IS true ("module 2 names the tool that states the link") o
 not be said ("module 2 must say the other tool does not"): the second form is the one that
 goes stale.
 
+No phrase-level pattern (#438): its line reads are of test files' assertion lines, which are Python
+source, as #424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

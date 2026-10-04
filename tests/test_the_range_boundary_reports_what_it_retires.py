@@ -38,6 +38,8 @@ Stdlib only; the maintainer script is loaded by path, never imported as a packag
 Source issue: #76 (`--since-last-audit` retires unexamined rules when the next audit record
 lands).
 
+No phrase-level pattern (#438): its line reads parse a script's stdout, as #424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import contextlib

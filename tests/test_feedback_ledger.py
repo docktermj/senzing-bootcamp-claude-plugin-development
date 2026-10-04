@@ -16,6 +16,9 @@ makes a Windows re-save recognizable, and the two bugs found while exercising it
 * a disposition recorded as `unrecorded` had no correction path that respected
   append-only, hence `annotate` plus last-wins reads.
 
+No phrase-level pattern (#438): its line reads are JSON lines and Python source lines, not Markdown
+prose, as #425 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

@@ -25,6 +25,9 @@ INV-143 asks for an inventory covering what generated **deliverables** carry, so
 iterate the whole `_UNICODE_MAP` across **both** renderers rather than sampling: a character
 added to the map later cannot be added to only one path without failing here.
 
+No phrase-level pattern (#438): its one line read takes the first line of a fixture, its title, as
+#424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

@@ -21,6 +21,9 @@ per-rule view that had silently become section-scoped too.
 Runs `conformance.py` as a subprocess against a synthetic repo, so it asserts the shipped
 behavior of the script rather than a reimplementation of its regex (stdlib only, INV-108).
 
+No phrase-level pattern (#438): it parses `conformance.py`'s stdout and finds a reported source line
+by its prefix; it matches no prose, as #424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

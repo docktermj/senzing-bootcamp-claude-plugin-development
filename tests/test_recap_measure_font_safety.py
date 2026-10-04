@@ -28,6 +28,9 @@ that is already there (INV-157 warns against precisely that).
 Both halves are pinned here: the class (no raw measurement anywhere) and the trigger
 (the title split), plus end-to-end assertions that the renderer actually stays on fpdf2.
 
+No phrase-level pattern (#438): its line reads are of Python source, the `get_string_width` calls,
+as #424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import os

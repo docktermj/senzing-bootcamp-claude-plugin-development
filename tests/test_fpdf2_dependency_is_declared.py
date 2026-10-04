@@ -36,6 +36,9 @@ Stdlib only (INV-108); the manifest and docs are read as text.
 
 Source issue: #30.
 
+No phrase-level pattern (#438): its line reads are `requirements-dev.txt` lines; its `docs/` and
+README checks look for one token, as #425 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

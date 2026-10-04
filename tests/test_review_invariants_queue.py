@@ -14,6 +14,9 @@ the marker string, versus the helper's block splitting. Agreement between two me
 is evidence; re-running the helper's own logic would not be.
 
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
+
+No phrase-level pattern (#438): its line reads are of `specs/IMPLEMENTED.md`, the ledger, which is
+outside the in-scope corpora, as #425 recorded (INV-346).
 """
 
 import re

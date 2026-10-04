@@ -38,6 +38,9 @@ observable from a unit test, and all of which the pipeline itself reports.
 
 Source issue: #33.
 
+No phrase-level pattern (#438): its line reads are of a YAML workflow and of `propagate.sh`, a shell
+script, not of Markdown prose, as #425 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

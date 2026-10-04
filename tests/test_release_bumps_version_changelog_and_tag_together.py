@@ -53,6 +53,9 @@ Stdlib only (INV-108); git builds the fixture, as in
 
 Source issue: #27 (`/release`).
 
+No phrase-level pattern (#438): its line reads are of `release.py`'s source lines, as #424 recorded
+(INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import json
