@@ -556,7 +556,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # line wrap; #426) names test_wrapped_text.py and test_why_key_details_flag_is_cited_not_guessed.py,
 # each of which cites it back and states what it does NOT establish. Re-derived by running the
 # extractor -- 191, both new pairs present by name and none removed. EXPECTED_PAIRS 189 -> 191.
-EXPECTED_PAIRS = 191
+# 192 on 2026-10-04: INV-346's dated correction (#438: every line-reading test gives a verdict) names
+# test_every_line_reading_guard_gives_a_verdict.py, which already cites INV-346 back. Re-derived by
+# running the extractor -- 192, the one new pair present by name and none removed.
+# EXPECTED_PAIRS 191 -> 192.
+EXPECTED_PAIRS = 192
 
 
 def pairs():
