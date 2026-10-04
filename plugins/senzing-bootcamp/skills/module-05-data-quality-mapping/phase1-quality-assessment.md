@@ -596,11 +596,14 @@ not exist.
 
 ⛔ **A GROUP score is not evidence that two sources share an ATTRIBUTE, and MUST NOT be read as a
 cross-source join prediction.** Completeness for a grouped family — the Entity Specification's
-*Identifiers* section groups `NATIONAL_ID`, `PASSPORT`, `TAX_ID`, `LEI_NUMBER` and `TRUSTED_ID`
+*Identifiers* section groups identifiers such as `NATIONAL_ID`, `PASSPORT`, `TAX_ID` and
+`LEI_NUMBER`; `TRUSTED_ID` is not one of them, and is filed under its own *Trusted ID* heading
 (verified via `search_docs(query='Identifiers NATIONAL_ID PASSPORT TAX_ID TRUSTED_ID feature group',
-category='data_mapping')`, server 1.32.9, 2026-08-17; query re-verified on 1.33.0, 2026-08-23,
-returning the *Identifiers* feature sections, *Identifiers > Feature: TAX_ID* and *Identifiers >
-Feature: NATIONAL_ID*) — counts the group
+category='data_mapping')`, server 1.32.9, 2026-08-17; query re-verified on 1.37.19, docs index
+2026-10-02 18:46 UTC, 2026-10-04, returning the *Identifiers* feature sections, *Identifiers >
+Feature: TAX_ID* and *Identifiers > Feature: NATIONAL_ID*; the same measurement served
+*Identifiers > Feature: PASSPORT*, *Identifiers > Feature: LEI_NUMBER* and *Trusted ID > Feature:
+TRUSTED_ID*) — counts the group
 as present when **any** member is populated. That is the right answer to *does this record carry an
 identifier at all*. It is not evidence for *will these two sources join*, because a join needs
 presence-of-**same**, not presence-of-any.

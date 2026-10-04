@@ -377,6 +377,9 @@ VERIFIED_QUERIES = {
             "attributes (optional)' and 'Mapping usage types'",
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
+    # Re-executed for #440 on the same index (1.37.19, docs index 2026-10-02 18:46 UTC,
+    # 2026-10-04): same top three, so the stamp is not re-dated. Phase 1 Step 6's sentence was
+    # corrected to match the specification and its prose stamp re-dated (see the NOTE).
     "Identifiers NATIONAL_ID PASSPORT TAX_ID TRUSTED_ID feature group": {
         "band": "ON TARGET",
         "sections": ("Identifiers > Feature: TAX_ID", "Identifiers > Feature: NATIONAL_ID"),
@@ -387,8 +390,10 @@ VERIFIED_QUERIES = {
             "the section heading itself is not a separately indexed chunk, so the members are the "
             "evidence. NOTE: the set has no TRUSTED_ID section, and the specification files it as "
             "'Trusted ID > Feature: TRUSTED_ID', not under Identifiers (checked in the same "
-            "measurement). The site's list of Identifiers members names TRUSTED_ID, so its prose "
-            "stamp was left alone and a follow-up drafted (#417)",
+            "measurement). The query string still names TRUSTED_ID; the site does not count it "
+            "as a member. #440 rewrote the site to name Identifiers members non-exhaustively "
+            "('such as' NATIONAL_ID, PASSPORT, TAX_ID and LEI_NUMBER), to say TRUSTED_ID is "
+            "filed under its own Trusted ID heading, and to re-date its prose stamp",
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
     "ACCOUNT_NUMBER ACCOUNT_DOMAIN account feature": {

@@ -719,8 +719,11 @@ separate fields** — so one `full_name` column is a direct mapping to `NAME_FUL
 
 ⚠️ **Two further rules from the same section, because getting them wrong is silent.** Do not mix
 `NAME_FULL` with parsed name fields in one `NAME` object, do not mix `NAME_ORG` with parsed person
-fields, and do not split one name across two `NAME` objects — the specification marks all three ❌
-with worked examples. An organization name belongs in `NAME_ORG`, not `NAME_FULL`.
+fields, and do not split one name across two `NAME` objects. *Name > Feature: NAME* states the
+first two as a Rules line, and shows ❌ worked examples for the last two: the split, and `NAME_ORG`
+with parsed person fields. The `NAME_FULL` mix has the Rules line only (re-verified with the query
+above on 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-04). An organization name belongs in
+`NAME_ORG`, not `NAME_FULL`.
 
 ⚠️ **This is the reversal these routes exist to prevent:** one run recorded, a module earlier, that a
 `full_name` and a `"Last, First"` `member_name` each "needed splitting" — in both
@@ -1026,8 +1029,9 @@ no MCP server version, so every bootcamper is on the current server and this is 
    the check re-runnable (INV-212). Swap the query for the attribute you are actually confirming.
    For
    the relationship keys, the specification's JSON examples show string values (`"ORG1001"`,
-   `"ACME-1001"`) while its `REL_ANCHOR_KEY` guidance column shows a bare `1001`, so it does not
-   mandate a type (verified 2026-07-28). Neither emission is made correct or incorrect by what the
+   `"ACME-1001"`) while its `REL_ANCHOR_KEY` row shows a bare `1001` in the Example column, so it
+   does not mandate a type (re-verified with the query above on 1.37.19, docs index 2026-10-02
+   18:46 UTC, 2026-10-04, in *Feature: REL_ANCHOR*). Neither emission is made correct or incorrect by what the
    checker can see.
 3. **Record the exemption and its reason** in the source's mapping notes — which attribute, why the
    checker cannot harvest it (a boolean source value, a value derived from a field name, or a
