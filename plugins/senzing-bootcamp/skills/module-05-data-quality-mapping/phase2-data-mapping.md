@@ -44,7 +44,7 @@ For each source in `sources` not yet listed in `completed`, in order:
    checkpointing" says; only the steps' `config/bootcamp_progress.json` checkpoints are not written.
    **A named source with `fast_pathed: true` is remapped too:** "Skip fast-pathed sources" below
    does not apply to a source the key names. Step 17's registry write also sets `fast_pathed:
-   false`, so Module 6 reloads the remapped output at the `file_path` Step 17 records, not the
+   false`, so Module 6 reloads the remapped output at the `file_path` Step 18 records, not the
    original `data/raw/` file.
 3. ⛔ **(INV-177) Step 19's relocation guard runs between sources:** before the next named source's
    `mapping_workflow(action='start')`, confirm this source's profile report, `schema_hints.md` and
@@ -1574,8 +1574,7 @@ Handling (INV-284): a proceed answer ("Yes, proceed to loading", "Proceed to loa
 If issues are found, go back to the relevant step. Retest after changes.
 
 > **Data source registry:** Update the source's `mapping_status` to `complete` in
-> `config/data_sources.yaml` and set `updated_at`. If a transformed file was created, update
-> `file_path` to the `data/senzing-ready/` output.
+> `config/data_sources.yaml` and set `updated_at`.
 
 **Checkpoint:** write step 17.
 
@@ -1584,7 +1583,7 @@ If issues are found, go back to the relevant step. Retest after changes.
 - Program in `src/transform/`.
 - Full output: run the transformation program on the whole source and write
   `data/senzing-ready/[name].jsonl`, the load-ready file Data processing loads. Point the source's
-  `file_path` in `config/data_sources.yaml` at it (step 17's registry note).
+  `file_path` in `config/data_sources.yaml` at it.
 - Docs in `docs/mapping/mapping_[name].md` (field mappings, logic, quality, how to run).
 - Sample output in `data/mapping/[name]_sample.jsonl`.
 - **Transformation lineage:** Create `docs/mapping/transformation_lineage_[name].md` for this
