@@ -1070,7 +1070,8 @@ $_sz_root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 # --- fail loudly, naming the path that was computed --------------------------------
 # config/bootcamp_progress.json exists from project setup on, so it marks the root
 # at every step this script is loaded from (engine_config.json waits for Step 8).
-# Use return, never exit: exit closes the Bootcamper's window when dot-sourced.
+# Use return, never exit (INV-175): return ends this script and leaves the
+# session as it was.
 $_sz_progress = Join-Path (Join-Path $_sz_root 'config') 'bootcamp_progress.json'
 if (-not (Test-Path -LiteralPath $_sz_progress -PathType Leaf)) {
   Write-Host 'senzing-env.ps1: resolved project root has no config/bootcamp_progress.json'
@@ -1114,8 +1115,10 @@ unverified on Windows PowerShell 5.1 here, and so is each rule below (INV-163):
 - **Dot-sourced, or nothing.** Run as `.\src\scripts\senzing-env.ps1`, without the leading `. `, it
   prints the dot-sourced command, sets nothing and returns, so every window loads it the one way
   every site gives.
-- **`return`, never `exit` (INV-175).** A dot-sourced script runs in the Bootcamper's own session, so
-  `exit` closes their PowerShell window.
+- **`return`, never `exit` (INV-175).** A dot-sourced script runs in the Bootcamper's own session, and
+  `return` ends the script while leaving that session as it was. INV-175 forbids `exit` in a sourced
+  script. What `exit` does there is not the reason: under `pwsh` 7 a dot-sourced `exit` was measured
+  ending only the script, and under Windows PowerShell 5.1 it is unverified here.
 - **The root guard and the settings rule are the `.sh`'s (INV-175).** It checks the resolved root for
   `config/bootcamp_progress.json` and names the path it computed on failure, setting nothing. While
   `config/engine_config.json` is absent it prints the one-line notice, leaves

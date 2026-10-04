@@ -133,7 +133,7 @@ def snippet_problems(snippet):
     if "dot-source this script again after Step 8" not in code:
         problems.append("the notice does not say to dot-source it again after Step 8")
     if re.search(r"(?im)^\s*exit\b|[;{]\s*exit\b", code):
-        problems.append("calls exit, which closes the Bootcamper's window when dot-sourced")
+        problems.append("calls exit, which INV-175 forbids in a sourced script")
     if code.count("return") < 3:
         problems.append("does not return from each refusal")
     if re.search(r"(?i)\bsetx\b", code):
@@ -184,7 +184,7 @@ MUTANTS = (
      lambda s: s.replace(" -Encoding utf8", "")),
     ("does not refuse an empty configuration",
      lambda s: s.replace("[string]::IsNullOrWhiteSpace($_sz_settings)", "$false")),
-    ("calls exit, which closes the Bootcamper's window when dot-sourced",
+    ("calls exit, which INV-175 forbids in a sourced script",
      lambda s: s.replace("ErrorAction SilentlyContinue\n  return\n}",
                          "ErrorAction SilentlyContinue\n  exit 1\n}", 1)),
     ("runs setx, which writes the global environment (INV-199)",
@@ -423,10 +423,17 @@ class ThePs1RunsUnderPwsh(unittest.TestCase):
         self.assertSurvived(got)
         self.assertEqual(str(fx.root), report.get("ROOT"))
 
-    def test_negative_control_an_exit_kills_the_session(self):
-        """The survival check has teeth: the wrong-root branch with `exit` ends the session."""
+    def test_negative_control_a_dead_session_is_seen(self):
+        """The survival check has teeth: a wrong-root branch that ends the process is caught.
+
+        It ends the process with `[Environment]::Exit(1)`, not `exit`. The first CI run of this
+        class (PR #432) measured that a dot-sourced `exit 1` under `pwsh -Command` ends only the
+        script, and the caller's next statement still runs, so `exit` cannot serve as the control.
+        `exit` stays forbidden by the static pin above, because INV-175 forbids it.
+        """
         mutant = documented_snippet().replace(
-            "ErrorAction SilentlyContinue\n  return\n}", "ErrorAction SilentlyContinue\n  exit 1\n}", 1)
+            "ErrorAction SilentlyContinue\n  return\n}",
+            "ErrorAction SilentlyContinue\n  [Environment]::Exit(1)\n}", 1)
         self.assertNotEqual(mutant, documented_snippet())
         fx = self.project(progress=False, snippet=mutant)
         got, _ = fx.run(self.pwsh)
