@@ -6,8 +6,8 @@ Module 7 Step 3a carried a retired claim for a month because "no" ended one line
 "flag is *documented*" began the next. This module holds the one matcher such guards share, so
 each does not grow its own collapse rule.
 
-⛔ **A guard whose rule is about a phrase or a sentence MUST match it across a line wrap; a guard
-that reads single lines on purpose MUST say why.**
+⛔ **(INV-346) A guard whose rule is about a phrase or a sentence MUST match it across a line wrap;
+a guard that reads single lines on purpose MUST say why.**
 
 ``match_lines(text, pattern)`` returns the 1-based line on which each match of ``pattern``
 starts, in order of appearance, so a guard can keep reporting ``file:line``.

@@ -31,6 +31,10 @@ negative control. Since #426 the matching is the shared ``match_lines(text, RETI
 ``tests/_wrapped_text.py``, which collapses whitespace within each Markdown block rather than
 across the whole file; this file's own ``retired_claim_lines`` is gone.
 
+Also enforces **INV-346** as its first consumer: the absence check reads wrapped prose through
+``match_lines``, with a wrapped negative control. It does **not** establish that any other guard
+does the same.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 
