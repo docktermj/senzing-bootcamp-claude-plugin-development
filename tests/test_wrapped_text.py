@@ -10,6 +10,11 @@ own lines, in order.
 ⚠️ Each "not matched across a boundary" test has a positive twin with the boundary removed, so a
 matcher that matched nothing at all would fail here rather than pass every negative.
 
+Enforces **INV-346** (a guard whose rule is about a phrase or a sentence matches it across a line
+wrap): it pins the block rules of the shared reader every such guard uses. It does **not** establish
+that every guard in `tests/` uses that reader, or says why it reads single lines; #424 and #425
+recorded that sweep, and nothing re-checks it here.
+
 Stdlib only (INV-108).
 
 Source issue: #426.

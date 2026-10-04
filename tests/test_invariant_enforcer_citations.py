@@ -548,7 +548,15 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # exact rank) names test_prescribed_search_queries.py, which already cites INV-291 back. Re-derived by
 # running the extractor -- 188, the one new pair present by name and none removed.
 # EXPECTED_PAIRS 187 -> 188.
-EXPECTED_PAIRS = 188
+# 189 on 2026-10-04: INV-175's dated correction (#419: the Windows env script is a dot-sourced
+# senzing-env.ps1, never a .bat) names test_env_script_powershell.py, which already cites INV-175
+# back. Re-derived by running the extractor -- 189, the one new pair present by name and none
+# removed. EXPECTED_PAIRS 188 -> 189.
+# 191 on 2026-10-04: INV-346 (a guard whose rule is about a phrase or a sentence matches it across a
+# line wrap; #426) names test_wrapped_text.py and test_why_key_details_flag_is_cited_not_guessed.py,
+# each of which cites it back and states what it does NOT establish. Re-derived by running the
+# extractor -- 191, both new pairs present by name and none removed. EXPECTED_PAIRS 189 -> 191.
+EXPECTED_PAIRS = 191
 
 
 def pairs():
