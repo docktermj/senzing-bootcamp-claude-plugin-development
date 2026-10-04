@@ -24,6 +24,10 @@ depending on the detector staying fixed.
 change; what must not regress is that the paragraph stating it names its governing ID, and that
 the invariant's own text still says the thing the citation promises.
 
+No phrase-level pattern (#438): its only line read is of entries in `specs/INVARIANTS.md`; it reads
+`plugins/` by blank-line paragraphs, in presence checks that fail closed, as #424 recorded
+(INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

@@ -19,6 +19,9 @@ file path because `.claude/skills/dry-run` is not an importable package.
 
 Source spec: `specs/dry-run-scaffold-uses-a-verification-filename-the-plugin-never-writes.md`.
 
+No phrase-level pattern (#438): its line reads are the JSON lines of a scaffold's records, as #424
+recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

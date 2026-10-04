@@ -45,6 +45,9 @@ Source issue: #110.
 
 Stdlib only; the helper is loaded by path, since it takes no `--repo` argument (INV-108).
 
+No phrase-level pattern (#438): its line reads only count a ledger block's bullet lines, as #425
+recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import ast

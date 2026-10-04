@@ -62,6 +62,9 @@ path.
 
 Source: `specs/inv050-tree-has-no-reachability-guard.md`.
 
+No phrase-level pattern (#438): its line reads are of INV-050's fenced tree in
+`specs/INVARIANTS.md`, read as tree lines by column, as #424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

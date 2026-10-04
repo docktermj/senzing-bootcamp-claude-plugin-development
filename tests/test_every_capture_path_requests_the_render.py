@@ -22,6 +22,9 @@ through the single helper.
 Stdlib only; the script is read as text and loaded by path, never imported from ``plugins/`` as
 a package (INV-108).
 
+No phrase-level pattern (#438): its line reads are of Python source lines it finds with `ast`, as
+#424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 

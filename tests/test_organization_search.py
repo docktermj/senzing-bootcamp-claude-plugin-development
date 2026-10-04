@@ -17,6 +17,9 @@ These tests drive the real `Model.search()` with a fake engine that behaves the 
 Senzing does — matching a name only under the attribute it was mapped with — plus
 guardrails on the guidance so a server in another language inherits the rule.
 
+No phrase-level pattern (#438): its line reads are of Python source, the handler's code lines, as
+#424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

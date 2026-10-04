@@ -38,6 +38,9 @@ now requires, and fails if an entry moves a script back into `args`.
 asserting nothing (the tell was a 0.000s run that spawned no subprocess). A guard that reads the
 shape it was written against, rather than the shape in the file, certifies whatever it finds.
 
+No phrase-level pattern (#438): its line reads are of a subprocess's stderr, as #424 recorded
+(INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import json

@@ -14,6 +14,9 @@ recap and archived specs stay out, `INVARIANTS.md` stays in — because a drifte
 turns a sweep that found nothing into a sweep that looked nowhere, and the two read
 identically in a report.
 
+No phrase-level pattern (#438): its line reads are JSON lines; its SKILL.md checks are presence
+checks, which a wrap can only make fail, as #425 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

@@ -21,6 +21,9 @@ the fractional tick *positions* and only rounds their labels, rendering ``0 0 0 
 — duplicated labels at unequal spacing, which is worse than the bug because it looks
 deliberate. The tick VALUES have to be integers.
 
+No phrase-level pattern (#438): its line reads strip `//` comments from JavaScript source lines, as
+#424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import math

@@ -28,6 +28,9 @@ snapshot, never on engine behavior.
 
 Enforces **INV-210**.
 
+No phrase-level pattern (#438): its one line read takes the first line of a resolver's problem
+message, as #424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 

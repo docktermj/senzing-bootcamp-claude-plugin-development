@@ -18,6 +18,9 @@ that each invariant's own text still says the thing the citation promises. Scope
 paragraph rather than the line because both citations sit on a continuation line of a wrapped
 paragraph — a per-line check would pass while the citation drifted into a neighboring rule.
 
+No phrase-level pattern (#438): its line reads are of entry lines in `specs/INVARIANTS.md`, which is
+outside the in-scope corpora, as #424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import unittest

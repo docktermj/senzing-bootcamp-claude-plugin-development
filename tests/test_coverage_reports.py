@@ -26,6 +26,9 @@ Three properties, one per way it could rot:
 3. **The affected report finds a known gap** and does not crash on the audit entries that
    have no spec file at all.
 
+No phrase-level pattern (#438): its line reads are of the index lines of `specs/INVARIANTS.md`,
+which is outside the in-scope corpora, as #424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

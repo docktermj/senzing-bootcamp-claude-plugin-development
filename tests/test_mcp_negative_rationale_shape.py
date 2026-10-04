@@ -23,6 +23,9 @@ census fixtures must be flagged AND property-shaped fixtures must not. A detecto
 flags everything would satisfy a one-sided test while making the report useless.
 
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
+
+No phrase-level pattern (#438): it tokenizes Python source, and its one other line read looks up a
+quoted historical line through `git show`, as #424 recorded (INV-346).
 """
 
 import ast

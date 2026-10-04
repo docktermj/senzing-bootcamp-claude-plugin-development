@@ -41,6 +41,10 @@ Source issue: #386.
 
 Stdlib only; the tree is read as text (INV-108).
 
+No phrase-level pattern (#438): it is already wrap-aware: `offending_units` joins a paragraph's or a
+list item's lines before it matches, and `.py` prose is read through `tokenize`, as #425 recorded
+(INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 import io

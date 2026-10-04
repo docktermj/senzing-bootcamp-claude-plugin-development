@@ -31,6 +31,9 @@ Enforces **INV-329** (the recap reports the SDK version the installed SDK return
 SDK setup Step 4, or "Unknown"; never filled from elsewhere, never re-measured at graduation).
 ⚠️ It pins the text and cannot observe a live recap.
 
+No phrase-level pattern (#438): it is already wrap-aware: it joins a paragraph's lines, and a
+bullet's lines with their continuations, before it matches, as #424 recorded (INV-346).
+
 Run:  python3 -m unittest discover -s tests
 """
 
