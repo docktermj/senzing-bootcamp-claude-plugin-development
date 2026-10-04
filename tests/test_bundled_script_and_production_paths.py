@@ -85,7 +85,12 @@ def prose_files():
 
 
 def invocation_lines():
-    """(path, lineno, line) for each line invoking a bundled script with an interpreter."""
+    """(path, lineno, line) for each line invoking a bundled script with an interpreter.
+
+    Line-scoped by design (#418, INV-346): each hit is a command line, which a newline ends in
+    the shell that runs it. A command wrapped across two lines of prose sits in an inline code
+    span, and `inline_invocations()` below reads those with whitespace collapsed (#390).
+    """
     out = []
     runner = re.compile(r"(?:^|\s)(?:python3?|py -3|[\w./\\-]*/(?:python3?|bin/python))\s")
     for path in prose_files():
