@@ -55,8 +55,8 @@ transformation programs tested + output validated with quality >70%.
   training data. ⛔ **Query with the filter and the sections below — a bare
   `search_docs(query="globalization")` does not reach this material** (INV-212). All four
   topics live in **one document**, the "Senzing Globalization Guide". This call reaches it and
-  is verified (server 1.32.9, 2026-08-13) — swap the query for the terms in the row you need,
-  and keep the filter either way:
+  is verified (server 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-04) — swap the query for
+  the terms in the row you need, and keep the filter either way:
 
   ```text
   search_docs(query='UTF-8 encoding non-Latin character support multi-language data quality', category='globalization')
@@ -82,16 +82,16 @@ transformation programs tested + output validated with quality >70%.
 
   ⛔ **The words "best practices" are their own trap (INV-212): they return confidently wrong
   content, which is worse than returning nothing.** Unfiltered,
-  `query='multi-language data quality best practices'` returned **five of five** results as
-  repo `docs/best-practices.md` template files (`senzingsdk-tools`, `scoop-senzingsdk`,
-  `homebrew-senzingsdk`, `senzingapi-tools`, `senzingsdk-runtime`) about Markdown lint and
-  Dockerfiles — **no globalization content at all**, two of them title-only stubs. With
-  `category='globalization'` the on-topic rows come back first, but those same files remain in
-  the set carrying the **highest** `relevance_score` (~89–92 against ~12–16), so never rank by
-  score here. Seeing any of this
+  `query='multi-language data quality best practices'` returned its **top six of ten** results
+  as repo `docs/best-practices.md` template files (`senzingsdk-tools`, `senzingapi-runtime`,
+  `senzingapi-tools`, `senzingsdk-runtime`, `homebrew-senzingsdk`, `scoop-senzingsdk`) about
+  Markdown lint and Dockerfiles — **no globalization content at all**, two of them title-only
+  stubs. With `category='globalization'` the on-topic rows come back first, but those same files
+  remain in the set carrying the **highest** `relevance_score` (~89 against ~9–13), so never rank
+  by score here. Seeing any of this
   is evidence you mis-queried, never that the documentation is thin. (The sections above and
-  this trap verified live via `search_docs`, server 1.32.9, docs indexed 2026-08-11 20:52 UTC,
-  2026-08-13.)
+  this trap verified live via `search_docs`, server 1.37.19, docs indexed 2026-10-02 18:46 UTC,
+  2026-10-04.)
   <!-- MCP-NEGATIVE: search_docs(query='multi-language data quality best practices') — returns no globalization content at all — the hits are repo template docs/best-practices.md files about Markdown lint and Dockerfiles, none carrying non-Latin or cross-script guidance — owner: search_docs(query='data quality practices multi-language non-Latin', category='globalization') returns it, as "Address matching examples > CJK+English cross-script matching" (routing negative — the category filter is what recovers it) — server 1.36.0, 2026-09-02 -->
 
 ## Error handling

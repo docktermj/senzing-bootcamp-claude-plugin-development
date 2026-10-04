@@ -329,7 +329,7 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    category='data_mapping')` for the usage-type half and
    `search_docs(query='NAME_FULL NAME_ORG parsed person name single field', category='data_mapping')` for
    *Feature: NAME*, MCP server 1.32.8, docs index 2026-08-11; both queries re-verified as top hits
-   on 1.33.0, 2026-08-23). Resolve each
+   on 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-04). Resolve each
    key against the specification you hold, and where a key is a catalog attribute carrying such a
    label, count it as a specification attribute. ⛔ The label **encoding** on a flat attribute name
    is an observed shape, not something the indexed specification states — so where you cannot

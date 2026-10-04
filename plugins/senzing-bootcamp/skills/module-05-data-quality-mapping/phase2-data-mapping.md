@@ -712,8 +712,8 @@ name is provided"*, and its `NAME` rule reads *"Prefer parsed person names
 (`NAME_FIRST`/`NAME_LAST`/…) when available; use `NAME_ORG` for organizations; use `NAME_FULL` only
 when the type is unknown or only a single field exists"*
 (`search_docs(query='NAME_FULL NAME_ORG parsed person name single field', category='data_mapping')` →
-*Name > Feature: NAME*, top hit; server 1.32.9, 2026-08-17, query re-verified on 1.33.0,
-2026-08-23). "When available" means **the source provides
+*Name > Feature: NAME*, top hit; server 1.32.9, 2026-08-17, query re-verified on
+1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-04). "When available" means **the source provides
 separate fields** — so one `full_name` column is a direct mapping to `NAME_FULL`, and a
 `"Last, First"` column is too, however parseable it looks.
 
@@ -1214,8 +1214,8 @@ exit 1). `ACCOUNT_DOMAIN` is not in `EXEMPT_KEYS` and does not end `_TYPE`, so t
 The mapping is **right** — `ACCOUNT_DOMAIN` is defined as "Domain/system for the account number"
 (`search_docs(query='ACCOUNT_NUMBER ACCOUNT_DOMAIN account feature',
 category='data_mapping')`, Entity Specification, *Identifiers > Feature: ACCOUNT*, verified
-2026-07-29; query re-verified as top hit on 1.33.0, 2026-08-23, returning "Domain/system for the
-account number" verbatim), and a currency/network code is exactly that.
+2026-07-29; query re-verified as top hit on 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-04, returning
+"Domain/system for the account number" verbatim), and a currency/network code is exactly that.
 
 **What to do:**
 
@@ -1263,7 +1263,8 @@ in as many words:
 Re-confirm that statement from the MCP server rather than trusting this file (a sourcing floor)
 (`search_docs(query='recommended JSON schema FEATURES list multiple values sub-list',
 category='data_mapping')` — that query returns the *Recommended JSON schema* section carrying the
-sentence above as its top hit, verified server 1.33.0, 2026-08-23; `query` is the tool's only
+sentence above as its top hit, verified server 1.37.19, docs index 2026-10-02 18:46 UTC,
+2026-10-04; `query` is the tool's only
 required parameter, so the vocabulary is part of the instruction (INV-212) — or
 `download_resource(filename='senzing_entity_specification.md')`
 — that second call returns a **listing**, so fetch its `url` before reading, per `ground-rules.md` →
