@@ -1536,8 +1536,10 @@ Cover:
   command recorded in Step 6a, as `database-backup.md` → "Restore" writes it: never a `<` or `>`
   redirection, which Windows PowerShell 5.1 rejects or re-encodes.
 - **Re-initialize and re-run** — how to re-run the project env script created in Module 2
-  (`source src/scripts/senzing-env.sh` on Linux/macOS, `src\scripts\senzing-env.bat` on Windows)
-  and re-init the engine, then re-run the loader, queries, and visualization.
+  (`source src/scripts/senzing-env.sh` on Linux/macOS, `. .\src\scripts\senzing-env.ps1` on Windows,
+  dot-sourced in the PowerShell window that runs the programs; the Windows form is unverified on
+  Windows PowerShell 5.1 here, INV-163) and re-init the engine, then re-run the loader, queries, and
+  visualization.
 - **License** — where the license lives (`licenses/g2.lic` when custom, else the built-in
   evaluation license) and any expiry.
 - **Where things are** — point at `backups/revisit/` (state + database backup), the recap PDF, and

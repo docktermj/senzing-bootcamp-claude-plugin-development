@@ -265,8 +265,9 @@ Whatever the language, the server MUST reproduce the reference's behavior:
 
 Save the generated server and its assets under `src/server/` (INV-050). The Senzing native library
 must be importable, so run everything with the project env sourced (the `src/scripts/senzing-env.sh`
-/ `senzing-env.bat` created in Module 2): `source src/scripts/senzing-env.sh` on Linux/macOS, or
-`src\scripts\senzing-env.bat` on Windows first.
+/ `src\scripts\senzing-env.ps1` created in Module 2): `source src/scripts/senzing-env.sh` on
+Linux/macOS, or `. .\src\scripts\senzing-env.ps1` on Windows first, dot-sourced in the PowerShell
+window that runs the server (the Windows form is unverified on Windows PowerShell 5.1 here, INV-163).
 
 ### 2.1 Choose the path
 
