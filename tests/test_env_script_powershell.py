@@ -27,6 +27,12 @@ These tests do three jobs:
    runs it there. It is PowerShell 7 on Linux: nothing here runs the script on Windows or under
    Windows PowerShell 5.1, which is why each site says so.
 
+Line-scoped by design (#418, INV-346): the reads that split on newlines (``code_lines``, the
+placeholder count, the throwaway project's insert, and ``notices``) read the PowerShell snippet's
+code lines or ``pwsh``'s output, where a newline ends a statement or a message. Every check on
+Markdown prose reads it with whitespace collapsed: through ``_wrapped_text.blocks``, or, for the
+Module 2 prose pins, over the whole file.
+
 Run:  python3 -m unittest discover -s tests
 """
 import os

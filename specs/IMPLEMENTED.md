@@ -43,6 +43,21 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## line-reading-guards-coverage-closes-with-the-two-owed-verdicts
+
+- **Implemented:** 2026-10-04 (**Not a spec** — a dated record of one issue-driven run, #418, spec revision 3; the parent of #424, #425 and #426, all closed. `Source: self-observed (assistant unattended run)`)
+- **Commit:** uncommitted
+- **Files changed:** `tests/test_env_script_powershell.py` (module docstring only), `tests/test_bundled_script_and_production_paths.py` (the `invocation_lines()` docstring only), `specs/IMPLEMENTED.md`. No matcher, assertion or shipped file changes; `tests/_wrapped_text.py`, `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** server `sz-mcp-coworker` **1.37.19** (Senzing "current"), 2026-10-04, `get_capabilities` — **n/a (no Senzing fact)**, re-confirmed rather than assumed. Two docstrings in dev-only tests say why their reads are line-scoped; nothing asserts anything about the server, the SDK or the engine. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** implemented directly (Phase 5a), built on `33b0580`. The maintainer chose at Gate 1 to keep a guard that enforces verdict coverage out of this PR (a follow-up, below).
+- **Summary:**
+  - **The coverage check, re-run.** #418's second acceptance criterion re-runs the scan recorded in the `shared-wrap-aware-matcher-and-the-387-guard-moves-onto-it` entry ("The command, verbatim") and asks that no candidate lack a verdict across #424's, #425's and #426's entries. On `33b0580` it reported #424's partition as **113** files, not the 112 #424 recorded: the new candidate was `tests/test_env_script_powershell.py`, which #419 added after #424 merged, with no verdict. #425's partition (23) and the three precedent guards were all covered.
+  - **`tests/test_env_script_powershell.py`: line-scoped by design.** Its newline splits (`code_lines`, the placeholder count, the throwaway project's insert, and `notices`) read the PowerShell snippet's code lines or `pwsh`'s output, where a newline ends a statement or a message. Every check on Markdown prose already reads it with whitespace collapsed, through `_wrapped_text.blocks` or, for the Module 2 prose pins, over the whole file. The docstring now says so (INV-346).
+  - **`tests/test_bundled_script_and_production_paths.py`: the sentence INV-346 owed.** #426's entry judged #390's guard already wrap-aware and noted that, once the rule was registered, its `invocation_lines()` would owe a sentence saying why it reads single lines. INV-346 was registered on 2026-10-04. The docstring now says each hit is a command line, which a newline ends in the shell that runs it, and that a command wrapped in prose sits in an inline code span that `inline_invocations()` reads with whitespace collapsed. This is a docstring sentence, not the "rewriting #390's guard onto the helper" the spec scopes out (recorded as an assumption in issue comment 2).
+  - **The coverage, after this change.** Every candidate the scan reports now has a verdict: #424's 112 in its entry, `tests/test_env_script_powershell.py` here, #425's 23 in its entry, and the three precedent guards in #426's entry.
+- **Follow-up, drafted, not filed (maintainer's choice at Gate 1):** add a guard that re-runs the line-reading scan and fails on any candidate whose docstring or read gives neither a wrap-aware read (`match_lines`, `blocks`, a whitespace collapse) nor a "Line-scoped by design" reason. Without it, the next line-reading test added after a sweep gets no verdict, as #419's did. The files #424 and #425 judged "no phrase-level pattern" carry no marker today, so the guard would touch about 40 of them.
+- **Invariant (INV-309):** **establishes no invariant.** It applies INV-346, already registered, at the two guards that were not yet in line with it. No ⛔ line is added or demoted.
+
 ## invariant-review-2026-10-04
 
 - **Implemented:** 2026-10-04 (**Not a spec** — a dated record of one review session)
