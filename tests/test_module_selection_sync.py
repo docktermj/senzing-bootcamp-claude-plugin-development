@@ -63,7 +63,10 @@ def core_branch_tokens(text):
 
 
 def table_tokens(text):
-    """State tokens from the module-list table, in row order."""
+    """State tokens from the module-list table, in row order.
+
+    Line-scoped by design (#424): a table row is one line.
+    """
     tokens = []
     for line in text.splitlines():
         if not line.startswith("|") or line.startswith("|---") or "State token" in line:

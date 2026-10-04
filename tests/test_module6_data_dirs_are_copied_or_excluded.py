@@ -37,7 +37,10 @@ def step2(text):
 
 
 def copied_dirs(text):
-    """The `data/<dir>/` of each Source cell in Step 2's copy table."""
+    """The `data/<dir>/` of each Source cell in Step 2's copy table.
+
+    Line-scoped by design (#424): a table row is one line.
+    """
     dirs = set()
     for line in step2(text).splitlines():
         if not line.startswith("| `"):

@@ -299,7 +299,11 @@ def read(rel):
 
 
 def m4_step_8a_substep_7(text):
-    """Module 4 Step 8a sub-step 7, located by its text, ending at the next column-0 paragraph."""
+    """Module 4 Step 8a sub-step 7, located by its text, ending at the next column-0 paragraph.
+
+    Line-scoped by design (#424): the locator matches the numbered item's own opening line,
+    and a miss raises rather than passing.
+    """
     lines = text.splitlines()
     first = next(
         (i for i, l in enumerate(lines) if re.match(r"^\d+\. \*\*Detect the active license's record limit", l)),

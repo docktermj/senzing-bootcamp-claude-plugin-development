@@ -60,6 +60,8 @@ import os
 import re
 import unittest
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHIPPED = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp")
 
@@ -99,6 +101,14 @@ NOT_A_CLAIM = (
      "two code constructs sharing a closed value set, not two statements of one rule"),
     ("two statements of the same idea cannot drift apart",
      "an authoring note about aligned wording; it names no owner and points nowhere"),
+    # The next two were found by the #424 conversion: each is wrapped in the shipped text
+    # ("cannot\ndrift", "do not\nrestate"), so no line-at-a-time scan ever saw them.
+    ("so it cannot drift at runtime",
+     "INV-056's pinned gate wording: the drift is improvisation at runtime, not a second "
+     "statement of a rule"),
+    ("so do not restate them here, just follow them",
+     "MCP sourcing: `explain_error_code` owns the SENZ2207 resolution steps, which is "
+     "INV-080's subject (cited in the same paragraph), not this one"),
 )
 
 #: Measured at 42 on 2026-09-03. A floor, not a pin — the corpus grows.
@@ -143,21 +153,66 @@ def shipped_markdown():
                 yield os.path.join(dirpath, name)
 
 
+def claims_in(text):
+    """[(lineno, line, window)] for each line on which a non-exempt claim starts.
+
+    ⚠️ **Matched across line wraps (#424).** ``match_lines`` runs ``CLAIM`` on
+    whitespace-collapsed Markdown blocks, so a claim such as "stated\nonce" is found and
+    reported at the line where it starts. Read one line at a time, a wrapped claim was
+    invisible, and an uncited one passed. ``WRAPPED_UNCITED_CLAIM`` below is the control.
+    """
+    lines = text.split("\n")
+    found = []
+    for lineno in sorted(set(match_lines(text, CLAIM))):
+        index = lineno - 1
+        window = "\n".join(lines[max(0, index - WINDOW):index + WINDOW + 1])
+        # An exemption phrase can wrap too, so it is looked for in the collapsed window.
+        if any(phrase in " ".join(window.split()) for phrase, _why in NOT_A_CLAIM):
+            continue
+        found.append((lineno, lines[index].strip(), window))
+    return found
+
+
 def ownership_claims():
     """[(relpath, lineno, line, window)] for every claim that is not exempt."""
     found = []
     for path in shipped_markdown():
         with open(path, encoding="utf-8") as handle:
-            lines = handle.read().split("\n")
-        for index, line in enumerate(lines):
-            if not CLAIM.search(line):
-                continue
-            window = "\n".join(lines[max(0, index - WINDOW):index + WINDOW + 1])
-            if any(phrase in window for phrase, _why in NOT_A_CLAIM):
-                continue
-            found.append(
-                (os.path.relpath(path, REPO_ROOT), index + 1, line.strip(), window))
+            text = handle.read()
+        for lineno, line, window in claims_in(text):
+            found.append((os.path.relpath(path, REPO_ROOT), lineno, line, window))
     return found
+
+
+#: A claim wrapped mid-phrase, with no citation in its passage: "stated" ends line 1 and "once"
+#: begins line 2. A line-at-a-time scan never saw it (#424).
+WRAPPED_UNCITED_CLAIM = """Draw the sample exactly as Module 5 says. The sampling rule is stated
+once, in Step 6, and every other module points there.
+"""
+
+
+class ClaimsAreMatchedAcrossLineWraps(unittest.TestCase):
+    """Negative controls for the #424 conversion to ``match_lines``."""
+
+    def test_a_wrapped_uncited_claim_is_reported_at_its_first_line(self):
+        found = claims_in(WRAPPED_UNCITED_CLAIM)
+        self.assertEqual([1], [lineno for lineno, _line, _window in found])
+        self.assertIsNone(CITATION.search(found[0][2]), "the fixture must stay uncited")
+        # The old line-at-a-time scan, kept only to show the fixture is the hard case.
+        self.assertFalse(any(CLAIM.search(line) for line in WRAPPED_UNCITED_CLAIM.split("\n")),
+                         "the fixture no longer splits the claim across lines")
+
+    def test_the_same_claim_with_its_citation_is_not_an_offender(self):
+        """Must-not-flag (INV-282): the corrected passage cites INV-300 and passes."""
+        cited = WRAPPED_UNCITED_CLAIM.replace("points there.", "points there (INV-300).")
+        found = claims_in(cited)
+        self.assertEqual([1], [lineno for lineno, _line, _window in found])
+        self.assertIsNotNone(CITATION.search(found[0][2]))
+
+    def test_a_wrapped_owner_declaration_is_found(self):
+        text = "Keep this paragraph whole. This is the\ncanonical statement of the rule.\n"
+        self.assertEqual([1], match_lines(text, OWNER_SIDE))
+        self.assertFalse(any(OWNER_SIDE.search(line) for line in text.split("\n")))
 
 
 class TheScanSeesTheCorpus(unittest.TestCase):
@@ -172,8 +227,8 @@ class TheScanSeesTheCorpus(unittest.TestCase):
 
     def test_every_exemption_still_matches_real_text(self):
         """An exemption for text that no longer exists silently widens as prose changes."""
-        corpus = "\n".join(
-            open(p, encoding="utf-8").read() for p in shipped_markdown())
+        corpus = " ".join(" ".join(
+            open(p, encoding="utf-8").read() for p in shipped_markdown()).split())
         for phrase, why in NOT_A_CLAIM:
             with self.subTest(phrase=phrase[:40]):
                 # ⚠️ `assertIn` against the corpus prints the whole haystack on failure —
@@ -241,16 +296,16 @@ class EveryClaimNamesAnAuthority(unittest.TestCase):
         offenders = []
         for path in shipped_markdown():
             with open(path, encoding="utf-8") as handle:
-                lines = handle.read().split("\n")
-            for index, line in enumerate(lines):
-                if not OWNER_SIDE.search(line):
-                    continue
+                text = handle.read()
+            lines = text.split("\n")
+            for lineno in sorted(set(match_lines(text, OWNER_SIDE))):
+                index = lineno - 1
                 window = "\n".join(lines[max(0, index - WINDOW):index + WINDOW + 1])
                 if "INV-300" in window:
                     continue
                 offenders.append(
                     "  %s:%d — %s"
-                    % (os.path.relpath(path, REPO_ROOT), index + 1, line.strip()[:130]))
+                    % (os.path.relpath(path, REPO_ROOT), lineno, lines[index].strip()[:130]))
         self.assertEqual(
             [], offenders,
             "a passage declares itself the canonical statement of a rule and does not cite "
@@ -302,16 +357,17 @@ class EveryClaimNamesAnAuthority(unittest.TestCase):
         pinned to today's number would have accepted the wrong one before it, which is the
         shape `counting-the-writers-of-license-record-limit-is-the-wrong-invariant` forbids.
         """
-        loose = re.compile(r"is\s+the\s+canonical\s+statement", re.I)
+        # ⚠️ Matched across line wraps (#424). ``match_lines`` collapses each run of
+        # whitespace to one space, so "this is" before the loose phrase is exactly "this " and
+        # the lookbehind tells a pointer from an owner even when the line breaks between them.
+        pointer = re.compile(r"(?<!this )is\s+the\s+canonical\s+statement", re.I)
         owners, pointers = [], []
         for path in shipped_markdown():
             with open(path, encoding="utf-8") as handle:
-                lines = handle.read().split("\n")
-            for index, line in enumerate(lines):
-                if not loose.search(line):
-                    continue
-                where = "%s:%d" % (os.path.relpath(path, REPO_ROOT), index + 1)
-                (owners if OWNER_SIDE.search(line) else pointers).append(where)
+                text = handle.read()
+            rel = os.path.relpath(path, REPO_ROOT)
+            owners += ["%s:%d" % (rel, n) for n in match_lines(text, OWNER_SIDE)]
+            pointers += ["%s:%d" % (rel, n) for n in match_lines(text, pointer)]
         self.assertTrue(
             owners,
             "no shipped passage is classified owner-side, so the exemption applies to nothing "

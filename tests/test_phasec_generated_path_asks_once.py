@@ -52,7 +52,11 @@ def text():
 
 
 def step_range(start_heading, end_heading):
-    """The lines of the file between two ``## `` headings."""
+    """The lines of the file between two ``## `` headings.
+
+    Line-scoped by design (#424): a heading is one line, and the questions in the range are
+    counted by the 👉 that opens each one, which opens on one line however it wraps.
+    """
     lines = text().splitlines()
     start = next(i for i, l in enumerate(lines) if l.startswith(start_heading))
     end = next(i for i, l in enumerate(lines) if i > start and l.startswith(end_heading))

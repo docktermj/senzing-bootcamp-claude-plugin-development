@@ -296,7 +296,7 @@ the use case's own business vocabulary — "supplier due diligence", "beneficial
 [`../module-00-entity-resolution-concepts/concepts.md`](../module-00-entity-resolution-concepts/concepts.md)
 states in full, including why the failure is dangerous: a query that misses looks exactly like
 documentation that does not cover the topic, which makes a training-data fallback feel justified. Do
-not restate that reasoning here — follow it.
+not restate that reasoning here — follow it (INV-300).
 
 **If nothing relevant comes back after re-querying, say less — do not invent value.** Tie the value
 to what MCP *did* return earlier in this module: the data sources you actually found, their record

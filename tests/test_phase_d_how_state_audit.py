@@ -71,7 +71,10 @@ def load_reports():
 
 
 def section(text, heading, level="## "):
-    """The body from `heading` up to the next heading of the same level, or None."""
+    """The body from `heading` up to the next heading of the same level, or None.
+
+    Line-scoped by design (#424): a heading is one line.
+    """
     lines = text.split("\n")
     start = None
     for i, line in enumerate(lines):
@@ -213,6 +216,8 @@ def gate_problems(text):
 
 
 def success_problems(text):
+    # Line-scoped by design (#424): REDO_LINE is a pinned line, found whole; the criterion
+    # after it is read across its two lines and flattened.
     lines = text.split("\n")
     if REDO_LINE not in lines:
         return ["the redo success line is missing"]
@@ -367,6 +372,7 @@ class NoRemedyAndTheNegativeIsMarked(unittest.TestCase):
         self.assertIn("INV-080/INV-149", self.body)
 
     def test_the_marker_parses_and_names_both_owner_routes(self):
+        # Line-scoped by design (#424): INV-209 requires the marker on ONE line.
         reports = load_reports()
         markers = [m for m in (reports.MCP_NEGATIVE.search(line)
                                for line in self.body.split("\n")) if m]

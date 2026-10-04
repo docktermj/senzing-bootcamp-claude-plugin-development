@@ -23,6 +23,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 
@@ -47,19 +49,27 @@ def skill_files():
         yield path
 
 
-def deferral_lines():
-    """Yield (path, lineno, text) where text joins the line with its predecessor.
+def deferrals_in(text):
+    """[(lineno, window)] for each deferral marker in ``text``, at the line it starts on.
 
-    Notes wrap, so a path can sit on the line above the marker. Joining the pair keeps
-    the extraction from missing those without scanning whole paragraphs.
+    ⚠️ **The marker is matched across line wraps (#424).** ``match_lines`` runs ``DEFERRAL``
+    on whitespace-collapsed Markdown blocks, so "a later\nphase" is found; read one line at a
+    time it was not, and thirteen markers in shipped skills wrapped that way. The window is the
+    start line with the line before it and the line after it: notes wrap, so a path can sit on
+    the line above the marker, and a wrapped marker ends on the line below.
     """
+    lines = text.split("\n")
+    out = []
+    for n in sorted(set(match_lines(text, DEFERRAL))):
+        out.append((n, " ".join(lines[max(0, n - 2):n + 1])))
+    return out
+
+
+def deferral_lines():
+    """Yield (path, lineno, text) for each deferral marker in the shipped skills."""
     for path in skill_files():
-        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-        for n, line in enumerate(lines, 1):
-            if not DEFERRAL.search(line):
-                continue
-            prev = lines[n - 2] if n >= 2 else ""
-            yield path, n, (prev + " " + line)
+        for n, window in deferrals_in(path.read_text(encoding="utf-8", errors="replace")):
+            yield path, n, window
 
 
 class TestDeferralsStillDescribeSomethingMissing(unittest.TestCase):
@@ -110,6 +120,16 @@ class TestDeferralsStillDescribeSomethingMissing(unittest.TestCase):
             f"only {len(found)} deferral notes matched; DEFERRAL has probably drifted "
             "and these tests are now vacuous",
         )
+
+    def test_a_wrapped_deferral_is_found_with_its_module(self):
+        """Negative control (#424): "a later" ends line 2 and "phase" begins line 3."""
+        wrapped = ("Return to mapping.\nLoad the Module 5 skill (the Module 5 port comes in a later\n"
+                   "phase; route to its Phase 2 entry point once it ships).\n")
+        found = deferrals_in(wrapped)
+        self.assertEqual([2], [n for n, _window in found])
+        self.assertEqual(["5"], MODULE_PORT.findall(found[0][1]))
+        # The old line-at-a-time scan, kept only to show the fixture is the hard case.
+        self.assertFalse(any(DEFERRAL.search(l) for l in wrapped.split("\n")))
 
     def test_the_known_regression_would_be_caught(self):
         """Self-check on the exact sentence that shipped."""

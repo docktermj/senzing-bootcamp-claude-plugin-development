@@ -174,7 +174,10 @@ EULA_VARIABLES = {
 
 
 def eula_table_rows(text):
-    """{platform cell: (variable, value)} for the table under Step 1b's EULA-variable rule."""
+    """{platform cell: (variable, value)} for the table under Step 1b's EULA-variable rule.
+
+    Line-scoped by design (#424): a table row is one line.
+    """
     start = text.index("**(INV-338) The EULA variable differs per platform")
     rows = {}
     for line in text[start:].splitlines()[1:]:

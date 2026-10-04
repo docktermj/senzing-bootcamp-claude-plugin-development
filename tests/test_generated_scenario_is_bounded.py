@@ -37,6 +37,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins"
 #: A wall-clock claim the step cannot know. Matched near a load/scenario word so the many
@@ -111,9 +113,12 @@ class EveryScenarioGeneratorIsBounded(unittest.TestCase):
         """A minutes/hours figure invented here is one the run contradicts."""
         bad = []
         for p in scenario_files():
-            for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
-                if WALL_CLOCK.search(line):
-                    bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {line.strip()[:90]}")
+            # Matched across line wraps (#424): "30\nminutes" or a figure whose load word is
+            # on the next line was invisible to a line-at-a-time read.
+            text = p.read_text(encoding="utf-8")
+            lines = text.split("\n")
+            for n in match_lines(text, WALL_CLOCK):
+                bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {lines[n - 1].strip()[:90]}")
         self.assertEqual(
             [], bad,
             "a scenario-generation site states a wall-clock load figure it cannot know — "
@@ -134,6 +139,13 @@ class EveryScenarioGeneratorIsBounded(unittest.TestCase):
                 self.assertRegex(
                     window, r"do not tie the ceiling to the license",
                     "the ceiling must say plainly that it is about duration, not capacity")
+
+    def test_a_wrapped_figure_is_caught_at_its_first_line(self):
+        """Negative control (#424): "about 30" ends line 1 and "minutes" begins line 2."""
+        wrapped = "Generating it and running the load takes about 30\nminutes on a laptop.\n"
+        self.assertEqual([1], match_lines(wrapped, WALL_CLOCK))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(WALL_CLOCK.search(l) for l in wrapped.split("\n")))
 
     def test_the_scan_is_not_vacuous(self):
         """⛔ INV-265 — prove the matchers still detect what they exist for."""

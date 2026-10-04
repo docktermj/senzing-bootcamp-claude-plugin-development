@@ -176,6 +176,8 @@ class TheBranchAsksOneQuestionAndIsNotASecondGate(unittest.TestCase):
         self.flat = " ".join(self.branch.split())
 
     def test_it_carries_exactly_one_pinned_question(self):
+        # Line-scoped by design (#424): this counts questions by the 👉 that opens each one,
+        # and a question opens on one line however it wraps after that.
         posed = [l for l in self.branch.splitlines()
                  if l.lstrip().lstrip(">").strip().startswith("👉")]
         self.assertEqual(1, len(posed),
@@ -222,6 +224,7 @@ class PhaseADefersToPhaseB(unittest.TestCase):
         body = PHASE_A.read_text(encoding="utf-8")
         start = body.index("**Positive and below the dataset size**")
         end = body.index("- **Absent or null**", start)
+        # Line-scoped by design (#424): a 👉 that opens a line opens a question.
         posed = [l for l in body[start:end].splitlines()
                  if l.lstrip().lstrip(">").strip().startswith("👉")]
         self.assertEqual([], posed, "Phase A's branch asks a question of its own")

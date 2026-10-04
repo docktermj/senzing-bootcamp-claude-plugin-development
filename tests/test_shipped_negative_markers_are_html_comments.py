@@ -59,6 +59,9 @@ def unwrapped_markers(text):
 
     The comment state is carried across lines, and within a line each `<!--`, `-->` and token
     is taken in order, so a marker after a comment closes on the same line is still flagged.
+
+    Line-scoped by design (#424): the marker token and both comment delimiters are single
+    tokens, and the state that spans lines is carried explicitly.
     """
     flagged = []
     inside = False

@@ -42,6 +42,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import blocks, match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HOOKS_JSON = REPO_ROOT / "plugins" / "senzing-bootcamp" / "hooks" / "hooks.json"
 HOOKS_README = REPO_ROOT / "plugins" / "senzing-bootcamp" / "hooks" / "README.md"
@@ -75,6 +77,9 @@ HOOK_TOPIC = re.compile(r"hook", re.I)
 def hook_paragraphs(text):
     """(unit, first line number) for each unit of prose whose subject is hooks.
 
+    The lines are only gathered into units here; ``HOOK_COUNT`` uses ``\\s+`` and runs on the
+    whole unit, so a count wrapped inside a unit is already seen (#424).
+
     A unit is a blank-line-delimited block, further split at list-item boundaries. The list
     split matters: `phase2`'s fixture list is one block containing both "all four subsections"
     (recap subsections, correct) and "the durability hooks" three bullets later, so a
@@ -96,6 +101,26 @@ def hook_paragraphs(text):
     for unit, line_no in units:
         if HOOK_TOPIC.search(unit):
             yield unit, line_no
+
+
+#: "<cardinal> hook(s)", the figure the comparison test measures against the manifest.
+NUMBERED_HOOKS = re.compile(r"\b(%s)\s+hooks?\b" % _CARDINAL, re.I)
+
+
+def hook_counts(text):
+    """[(lineno, cardinal)] for each "<cardinal> hook(s)" in ``text``, across line wraps.
+
+    The lines come from ``match_lines`` (#424), so "six\nhooks" is found at the line "six" is
+    on. The cardinals come from the same blocks, collapsed the same way (every run of
+    whitespace to one space, trimmed) and searched in the same order, so the two lists line up.
+    """
+    found = []
+    for block in blocks(text):
+        flat = " ".join(" ".join(line for _n, line in block).split())
+        found += [m.group(1) for m in NUMBERED_HOOKS.finditer(flat)]
+    lines = match_lines(text, NUMBERED_HOOKS)
+    assert len(lines) == len(found), "match_lines and the block scan disagree"
+    return list(zip(lines, found))
 
 
 def hook_manifest():
@@ -173,13 +198,19 @@ class NoDryRunFileStatesAHookCount(unittest.TestCase):
                    7: "seven", 8: "eight", 9: "nine", 10: "ten"}
         truthful = {str(len(entries)), spelled.get(len(entries), "")}
         for path in phase_files():
-            for i, line in enumerate(read(path).splitlines(), 1):
-                for match in re.finditer(r"\b(%s)\s+hooks?\b" % _CARDINAL, line, re.I):
-                    with self.subTest(site="%s:%d" % (path.name, i)):
-                        self.assertIn(
-                            match.group(1).lower(), truthful,
-                            "%s:%d says %r hooks; hooks.json declares %d entries"
-                            % (path.name, i, match.group(1), len(entries)))
+            for i, cardinal in hook_counts(read(path)):
+                with self.subTest(site="%s:%d" % (path.name, i)):
+                    self.assertIn(
+                        cardinal.lower(), truthful,
+                        "%s:%d says %r hooks; hooks.json declares %d entries"
+                        % (path.name, i, cardinal, len(entries)))
+
+    def test_a_wrapped_count_is_read_at_its_line(self):
+        """Negative control (#424): "six" ends line 2 and "hooks" begins line 3."""
+        wrapped = "Phase 2 runs the scripts.\nIt then checks that all six\nhooks exit 0.\n"
+        self.assertEqual([(2, "six")], hook_counts(wrapped))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(NUMBERED_HOOKS.search(l) for l in wrapped.split("\n")))
 
 
 class TheInstructionNamesItsSourceInstead(unittest.TestCase):

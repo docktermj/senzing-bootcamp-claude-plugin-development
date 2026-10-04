@@ -299,6 +299,8 @@ class ShippedFilesDoNotCiteNeverPropagatedPaths(unittest.TestCase):
     EXCLUDED = ("specs/", ".claude/", ".sync-state.json")
 
     def test_no_shipped_markdown_cites_an_excluded_path(self):
+        """Line-scoped by design (#424): each excluded name is a path token with no space in
+        it, so a line break cannot split it."""
         offenders = []
         for path in sorted((REPO_ROOT / "plugins").rglob("*.md")):
             for lineno, line in enumerate(path.read_text().splitlines(), 1):

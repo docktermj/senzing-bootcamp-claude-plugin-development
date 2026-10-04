@@ -28,6 +28,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import blocks, match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 PHASE2 = PLUGIN / "skills" / "module-05-data-quality-mapping" / "phase2-data-mapping.md"
@@ -71,18 +73,41 @@ def enclosing_section(text, index):
     return "(whole file)", text
 
 
+def end_turn_instructions(text):
+    """[(lineno, tail)] for each end-the-turn instruction in ``text``, across line wraps.
+
+    ⚠️ **Matched across line wraps (#424).** ``END_TURN`` searched the raw text, whose line
+    breaks its literal spaces cannot match, so five instructions wrapped as "end the\nturn on"
+    were never checked. The lines come from ``match_lines``; each tail is the 120 characters
+    from the instruction, from the same blocks collapsed the same way (every run of whitespace
+    to one space, trimmed) and searched in the same order, so the two lists line up. A tail
+    is no longer cut at the end of the physical line, so a step named after a wrap is read.
+    """
+    tails = []
+    for block in blocks(text):
+        flat = " ".join(" ".join(line for _n, line in block).split())
+        tails += [flat[m.start():m.start() + 120] for m in END_TURN.finditer(flat)]
+    lines = match_lines(text, END_TURN)
+    assert len(lines) == len(tails), "match_lines and the block scan disagree"
+    return list(zip(lines, tails))
+
+
+def line_offset(text, lineno):
+    """The character offset where 1-based line ``lineno`` starts."""
+    return sum(len(line) + 1 for line in text.split("\n")[:lineno - 1])
+
+
 def obligations():
     """[(relpath, section title, resolved target body)] for every end-the-turn instruction."""
     found = []
     for path in sorted(PLUGIN.rglob("*.md")):
         text = path.read_text(encoding="utf-8")
-        for m in END_TURN.finditer(text):
-            title, body = enclosing_section(text, m.start())
+        for lineno, tail in end_turn_instructions(text):
+            title, body = enclosing_section(text, line_offset(text, lineno))
             # Resolve a cross-reference before falling back to the enclosing section: the
             # carve-out deliberately states the rule where it applies and keeps the wording
             # at the step that owns it.
-            tail = text[m.start():m.start() + 120]
-            named = NAMES_STEP.search(tail.split("\n")[0])
+            named = NAMES_STEP.search(tail)
             target = body
             if named:
                 referenced = section_for_step(text, named.group(1))
@@ -108,6 +133,24 @@ class EveryEndTheTurnInstructionResolvesToAQuestion(unittest.TestCase):
                     "question, so the guide is told to stop on a question that does not "
                     "exist" % (rel, title),
                 )
+
+
+class TheInstructionIsReadAcrossLineWraps(unittest.TestCase):
+    """Negative controls for the #424 conversion."""
+
+    WRAPPED = ("### 4. Pick a source\n\nList them, then end the\nturn on the question at\n"
+               "**step\n9**.\n\n### 9. Choose\n\n👉 **Which source first?**\n")
+
+    def test_a_wrapped_instruction_is_found_at_its_first_line(self):
+        found = end_turn_instructions(self.WRAPPED)
+        self.assertEqual([3], [n for n, _tail in found])
+        # The old raw-text search, kept only to show the fixture is the hard case.
+        self.assertIsNone(END_TURN.search(self.WRAPPED))
+
+    def test_its_wrapped_step_reference_resolves_to_the_owning_section(self):
+        (_n, tail), = end_turn_instructions(self.WRAPPED)
+        self.assertEqual("9", NAMES_STEP.search(tail).group(1))
+        self.assertIn(QUESTION_MARK, section_for_step(self.WRAPPED, "9"))
 
 
 class Step10CarriesThePinnedEntityPlanQuestion(unittest.TestCase):

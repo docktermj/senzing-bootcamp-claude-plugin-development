@@ -112,7 +112,10 @@ def squash(text):
 
 
 def sections(path):
-    """[(heading, body)] split on `##`/`###` headings, outside fenced code blocks."""
+    """[(heading, body)] split on `##`/`###` headings, outside fenced code blocks.
+
+    Line-scoped by design (#424): a heading is one line.
+    """
     out, heading, body, fenced = [], "", [], False
     for line in path.read_text(encoding="utf-8").split("\n"):
         if line.lstrip().startswith(("```", "~~~")):

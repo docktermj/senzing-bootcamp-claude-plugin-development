@@ -146,7 +146,10 @@ def step_1c():
 
 
 def table_rows(text, header_start):
-    """The body rows of the Markdown table whose header row begins with `header_start`."""
+    """The body rows of the Markdown table whose header row begins with `header_start`.
+
+    Line-scoped by design (#424): a table row is one line.
+    """
     lines = text.splitlines()
     for i, line in enumerate(lines):
         if line.startswith(header_start):
@@ -847,6 +850,7 @@ class ThePiperOfferIsPinned(unittest.TestCase):
     def test_installs_go_only_into_the_two_project_folders(self):
         blocks = re.findall(r"```bash\n(.*?)```", self.piper(), re.S)
         self.assertEqual(1, len(blocks), "the Piper install has one command block")
+        # Line-scoped by design (#424): these are command lines in a bash fence.
         commands = [l for l in blocks[0].splitlines()
                     if " -m pip install" in l or "download_voices" in l]
         self.assertEqual(4, len(commands), "pip and the download, on Linux/macOS and Windows")

@@ -160,6 +160,7 @@ class TheMarkerIsRescopedNotDeleted(unittest.TestCase):
     """The marker keeps its routing conclusion and states only what the ranking supports."""
 
     def setUp(self):
+        # Line-scoped by design (#424): INV-209 requires an MCP-NEGATIVE marker on ONE line.
         reports = load_reports()
         self.reports = reports
         lines = [line for line in step5_block().split("\n") if TOKEN in line and QUERY in line]

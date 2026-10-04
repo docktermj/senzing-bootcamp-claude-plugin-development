@@ -28,6 +28,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import blocks, match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 GROUND_RULES = PLUGIN / "skills" / "bootcamp-onboarding" / "ground-rules.md"
@@ -63,10 +65,24 @@ def squash(text):
     return re.sub(r"\s+", " ", text)
 
 
+SWITCH = re.compile(r"Would you like to switch to")
+
+
 def switch_questions(text):
-    """Every pinned 'Would you like to switch to …' line."""
-    return [line.strip() for line in text.splitlines()
-            if "Would you like to switch to" in line]
+    """Every pinned 'Would you like to switch to …' question, read across line wraps (#424).
+
+    Each question runs from its opening words to the next question in its Markdown block, or
+    to the end of the block, with whitespace collapsed. A pinned question is its own block
+    (a ``>`` paragraph), so a question on one line reads exactly as that line did before; one
+    that wraps now keeps its answer hint, which a line-at-a-time read cut off.
+    """
+    found = []
+    for block in blocks(text):
+        flat = " ".join(" ".join(line for _n, line in block).split())
+        starts = [m.start() for m in SWITCH.finditer(flat)] + [len(flat)]
+        found += [flat[a:b].strip() for a, b in zip(starts, starts[1:])]
+    assert len(found) == len(match_lines(text, SWITCH)), "match_lines and the block scan disagree"
+    return found
 
 
 class TheScanIsNotVacuous(unittest.TestCase):
@@ -93,6 +109,20 @@ class TheScanIsNotVacuous(unittest.TestCase):
                 self.assertGreaterEqual(
                     len(switch_questions(read(path))), 2,
                     "expected both the CLI and the interface-neutral form in %s" % path.name)
+
+
+class TheQuestionIsReadAcrossLineWraps(unittest.TestCase):
+    """Negative control for the #424 conversion."""
+
+    WRAPPED = ("> 👉 **Would you like to switch to `/model opus` for this module?** (Recommended;\n"
+               "> reply no to keep your current model.)\n")
+
+    def test_a_wrapped_hint_stays_with_its_question(self):
+        (question,) = switch_questions(self.WRAPPED)
+        self.assertIn("keep your current model", question)
+        # The old line-at-a-time read cut the hint off at the wrap.
+        (line,) = [l for l in self.WRAPPED.split("\n") if "Would you like to switch to" in l]
+        self.assertNotIn("keep your current model", line)
 
 
 class TheAnswerHintNamesTheDialTheQuestionAsksAbout(unittest.TestCase):

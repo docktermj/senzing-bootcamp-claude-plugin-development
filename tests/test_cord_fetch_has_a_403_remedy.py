@@ -36,6 +36,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "plugins" / "senzing-bootcamp" / "skills"
 MODULE_4 = SKILLS / "module-04-data-collection" / "SKILL.md"
@@ -146,21 +148,33 @@ class TheObservationIsDatedAndScoped(unittest.TestCase):
         )
 
 
+#: An instruction to disguise the client. Matched by ``match_lines`` across line wraps (#424):
+#: "set a custom\nUser-Agent" is one instruction however the column falls.
+INSTRUCTS_A_USER_AGENT = re.compile(
+    r"(?i)(?:set|send|pass|use|supply|spoof)\s+(?:an?\s+|the\s+)?"
+    r"(?:custom\s+|different\s+|browser\s+)?user[- ]agent")
+#: The wording of a line that FORBIDS it, which must quote it to be followable.
+FORBIDS = re.compile(r"(?i)never set|do not set|never send|not a working")
+
+
+def user_agent_instructions(text):
+    """1-based lines where an instruction to set a User-Agent starts, minus forbidding lines.
+
+    ⚠️ The exemption still reads the line the match starts on, as before #424: a forbidding
+    phrase that wraps away from that line is not seen, so the guard flags rather than exempts.
+    """
+    lines = text.split("\n")
+    return [n for n in match_lines(text, INSTRUCTS_A_USER_AGENT)
+            if not FORBIDS.search(lines[n - 1])]
+
+
 class NothingInstructsASpoofedUserAgent(unittest.TestCase):
     """Derived by scanning all shipped markdown, not by checking the file just edited."""
 
     def test_no_shipped_file_instructs_setting_a_user_agent(self):
-        instructs = re.compile(
-            r"(?i)(?:set|send|pass|use|supply|spoof)\s+(?:an?\s+|the\s+)?"
-            r"(?:custom\s+|different\s+|browser\s+)?user[- ]agent")
         offenders = []
         for md in sorted(SKILLS.rglob("*.md")):
-            for lineno, line in enumerate(md.read_text(encoding="utf-8").split("\n"), 1):
-                if not instructs.search(line):
-                    continue
-                # ⚠️ Self-pinning: the line that FORBIDS it must quote it to be followable.
-                if re.search(r"(?i)never set|do not set|never send|not a working", line):
-                    continue
+            for lineno in user_agent_instructions(md.read_text(encoding="utf-8")):
                 offenders.append("%s:%d" % (md.relative_to(REPO), lineno))
         self.assertEqual(
             [], offenders,
@@ -168,6 +182,18 @@ class NothingInstructsASpoofedUserAgent(unittest.TestCase):
             "habit, and `Mozilla/5.0` measured 403 on the same host anyway. Offenders: %s"
             % offenders,
         )
+
+    def test_a_wrapped_instruction_is_caught_at_its_first_line(self):
+        """Negative control (#424): "a custom" ends line 1 and "User-Agent" begins line 2."""
+        wrapped = "If the host refuses the fetch, set a custom\nUser-Agent header and retry.\n"
+        self.assertEqual([1], user_agent_instructions(wrapped))
+        # The old line-at-a-time scan, kept only to show the fixture is the hard case.
+        self.assertFalse(any(INSTRUCTS_A_USER_AGENT.search(l) for l in wrapped.split("\n")))
+
+    def test_the_forbidding_line_is_not_an_instruction(self):
+        """Must-not-flag (INV-282): the prohibition quotes what it forbids."""
+        self.assertEqual([], user_agent_instructions(
+            "Never set a custom User-Agent to get past a 403; it is not a working remedy.\n"))
 
     def test_the_prohibition_is_stated_where_the_temptation_is(self):
         self.assertRegex(

@@ -211,6 +211,8 @@ class TheNoHandWrittenRuleIsScopedToSdkCalls(unittest.TestCase):
         self.assertIn("backoff loop is ordinary code", body)
 
     def test_the_absence_is_a_dated_negative_naming_both_owner_routes(self):
+        # Line-scoped by design (#424): INV-209 requires an MCP-NEGATIVE marker on ONE line,
+        # because the scanner's regex is not DOTALL.
         marker = [ln for ln in step_17_raw().splitlines() if "MCP-NEGATIVE:" in ln]
         self.assertEqual(len(marker), 1, marker)
         line = marker[0]

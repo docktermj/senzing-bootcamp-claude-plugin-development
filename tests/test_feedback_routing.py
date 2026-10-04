@@ -47,6 +47,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 FEEDBACK = PLUGIN / "skills" / "bootcamp-onboarding" / "feedback.md"
@@ -99,6 +101,10 @@ def verdict_set_sites():
     shape is checked rather than the meaning because "is this line enumerating the taxonomy?" is a
     semantic judgment, and the two looser rules tried first both failed (above). If a third shape
     ever ships, extend this — do not read a green run as proof it did not.
+
+    Line-scoped by design (#424): each series ships as one bracketed or backticked list on one
+    line, and a whitespace-collapsed block is coarser than a series, so a verdict named in
+    prose beside a series would stand in for the one missing from it.
     """
     hits = []
     for path in sorted(PLUGIN.rglob("*.md")):
@@ -117,13 +123,25 @@ def local_only_rule_lines():
     deliberately. They matter most, though — each one is a place a verdict could silently become
     upstream-eligible by omission.
     """
-    markers = ("skip this step entirely", "stays local")
     hits = []
     for path in sorted(PLUGIN.rglob("*.md")):
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if any(m in line for m in markers):
-                hits.append((path, line))
+        hits += [(path, line) for line in local_only_rule_lines_in(path.read_text(encoding="utf-8"))]
     return hits
+
+
+#: The phrases that state the local-only rule. Matched by ``match_lines`` across line wraps
+#: (#424), so "skip this step\nentirely" is still a site.
+LOCAL_ONLY_MARKERS = re.compile(r"skip this step entirely|stays local")
+
+
+def local_only_rule_lines_in(text):
+    """The line on which each local-only marker starts.
+
+    The marker is found across line wraps; the verdicts are still asserted on the line where
+    it starts, as before #424, which is where this rule's sites name them.
+    """
+    lines = text.split("\n")
+    return [lines[n - 1] for n in sorted(set(match_lines(text, LOCAL_ONLY_MARKERS)))]
 
 
 def read(path):
@@ -220,6 +238,8 @@ class TheTriggerIsTaughtBeforeItCanBeUsed(unittest.TestCase):
         self.assertIn("comes straight back", squashed)
 
     def test_it_is_a_statement_not_a_question(self):
+        # Line-scoped by design (#424): a 👉 that opens a line opens a question, and a
+        # question opens on one line however it wraps after that.
         posed = [l for l in self.overview.splitlines() if l.lstrip().startswith("👉")]
         self.assertEqual([], posed, "the preface overview must not pose a 👉 question")
         self.assertIn("never make it a 👉 question", plain(self.overview))
@@ -259,6 +279,7 @@ class TriageStepExists(unittest.TestCase):
         """The bootcamper reported a symptom; naming the component is not their job."""
         step = triage_step()
         self.assertIn("no 👉 question", step)
+        # Line-scoped by design (#424): a 👉 that opens a line opens a question.
         posed = [l for l in step.splitlines() if l.lstrip().startswith("👉")]
         self.assertEqual([], posed, "triage must not pose a question to the bootcamper")
 
@@ -283,7 +304,8 @@ class TriageStepExists(unittest.TestCase):
             "harness report falls through to `both` or `unclear`")
 
     def test_host_is_defined_as_owned_by_the_claude_interface(self):
-        #: ⛔ Anchored to the TABLE ROW, not to tokens anywhere in the step. A mutation escaped
+        #: ⛔ Anchored to the TABLE ROW, not to tokens anywhere in the step. Line-scoped by
+        #: design (#424): a table row is one line. A mutation escaped
         #: during negative-control: deleting the `host` row still passed, because both "`host`"
         #: and "Claude interface" also appear in the discriminating question above the table.
         #: Every verdict needs a row — the table is where a triaging guide actually looks.
@@ -381,6 +403,14 @@ class LocalOnlyVerdictsAreNamedWhereverTheRuleIsStated(unittest.TestCase):
             len(lines), 2,
             "the local-only rule is stated in fewer places than expected — either it was "
             "removed, or the marker phrases this scan derives from were reworded")
+
+    def test_a_wrapped_marker_is_still_a_site(self):
+        """Negative control (#424): "skip this step" ends line 1 and "entirely" begins line 2."""
+        wrapped = "For `plugin` or `unclear`, skip this step\nentirely and continue to Step 4.\n"
+        self.assertEqual(["For `plugin` or `unclear`, skip this step"],
+                         local_only_rule_lines_in(wrapped))
+        # The old line-at-a-time scan, kept only to show the fixture is the hard case.
+        self.assertFalse(any(LOCAL_ONLY_MARKERS.search(l) for l in wrapped.split("\n")))
 
     def test_each_names_every_non_eligible_verdict(self):
         for path, line in local_only_rule_lines():

@@ -21,7 +21,10 @@ reason yesterday's audit had to retract a finding:**
   copy. The seven sites of the other kind — a no-fork rule cited to INV-179 instead of INV-183
   — are entirely out of its reach; nothing about them is duplicated.
 - It compares **single lines** in shipped markdown only. A rule broken across a line break, or
-  stated in a bundled script's comment, is invisible to it.
+  stated in a bundled script's comment, is invisible to it. **Line-scoped by design (#424):**
+  the unit compared is one cited rule line, and ``FLOOR`` was measured over lines; comparing
+  whitespace-collapsed blocks instead would hold paragraphs to a floor calibrated on lines, so
+  a block unit needs its own re-measured floor, not this one.
 
 So a green run means "no restated rule disagrees with its twin", never "every citation is
 correct". The general near-duplicate scan this was narrowed from is **deliberately not** here:
@@ -153,6 +156,9 @@ class TheScanCanSeeTheCorpus(unittest.TestCase):
 #: INV-179's whole subject is a field an SDK response did not populate. Every citation of it
 #: must therefore sit in a passage about flags — checked over a WINDOW rather than the line,
 #: because a rule is routinely and correctly cited at its bullet head several lines up.
+#: Line-scoped by design (#424): the anchor is the single token ``INV-179``, which cannot
+#: wrap, and the window spans lines; every term below is one word or token, so no phrase in
+#: it can be split by a line break.
 FLAG_VOCABULARY = re.compile(
     r"\bflag|composite|SZ_[A-Z_]+|blank|absent|response_schemas|field\b", re.I
 )

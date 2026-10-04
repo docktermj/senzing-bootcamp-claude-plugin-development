@@ -291,11 +291,14 @@ def labels_the_observation(bullet):
 
 
 def forbids_a_public_feed(bullet):
+    # Line-scoped by design (#424): a ⛔ rule opens its own line and cites its invariant there,
+    # which is the line ``conformance.py`` reads as the rule.
     return any(line.strip().startswith("⛔ **Never add a public NuGet feed")
                and "(INV-222)" in line for line in bullet.splitlines())
 
 
 def narrows_the_marker(bullet):
+    # Line-scoped by design (#424): INV-209 requires an MCP-NEGATIVE marker on ONE line.
     lines = [line for line in bullet.splitlines() if MARKER_TOKEN in line]
     if len(lines) != 1:
         return False

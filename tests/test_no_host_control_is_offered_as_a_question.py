@@ -64,6 +64,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import blocks, match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 GROUND_RULES = PLUGIN / "skills" / "bootcamp-onboarding" / "ground-rules.md"
@@ -124,6 +126,27 @@ def squash(text):
     return re.sub(r"\s+", " ", text)
 
 
+def pinned_questions(text):
+    """[(lineno, question)] for each pinned 👉 question, read across line wraps (#424).
+
+    A question runs from its 👉 to the next 👉 in its Markdown block, or to the end of the
+    block, with whitespace collapsed, and is reported at the line its 👉 is on. The line that
+    holds the 👉 is added whole, as before #424, so nothing the line check saw is lost; what a
+    wrap adds is the rest of a question that runs onto the next line.
+    """
+    spans = []
+    for block in blocks(text):
+        flat = " ".join(" ".join(line for _n, line in block).split())
+        starts = [m.start() for m in PINNED_QUESTION.finditer(flat)]
+        for a, b in zip(starts, starts[1:] + [len(flat)]):
+            nxt = flat.find("\U0001F449", a + 1)
+            spans.append(flat[a:nxt if a < nxt < b else b])
+    lines = match_lines(text, PINNED_QUESTION)
+    assert len(lines) == len(spans), "match_lines and the block scan disagree"
+    raw = text.split("\n")
+    return [(n, raw[n - 1] + " " + span) for n, span in zip(lines, spans)]
+
+
 def section(text, heading):
     """The body of one `## ` section, so a rule can be required WHERE it binds."""
     lines = text.splitlines()
@@ -154,10 +177,10 @@ class NoShippedQuestionOffersAHostControl(unittest.TestCase):
     def test_no_pinned_question_names_a_session_or_host_control(self):
         offenders = []
         for path in shipped_markdown():
-            for n, line in enumerate(read(path).splitlines(), 1):
-                if PINNED_QUESTION.search(line) and HOST_CONTROL.search(line):
+            for n, question in pinned_questions(read(path)):
+                if HOST_CONTROL.search(question):
                     rel = path.relative_to(REPO_ROOT)
-                    offenders.append("%s:%d: %s" % (rel, n, line.strip()[:140]))
+                    offenders.append("%s:%d: %s" % (rel, n, question.strip()[:140]))
         self.assertEqual(
             [], offenders,
             "a 👉 question offers a control that belongs to the bootcamper's Claude session, "
@@ -175,16 +198,15 @@ class NoShippedQuestionOffersAHostControl(unittest.TestCase):
         """
         offenders = []
         for path in shipped_markdown():
-            for n, line in enumerate(read(path).splitlines(), 1):
-                m = PINNED_QUESTION.search(line)
-                if not m:
-                    continue
-                question = line[m.start():]
+            for n, question in pinned_questions(read(path)):
+                # The question from its 👉 on, as before #424: text ahead of the 👉 on its line
+                # is not the question.
+                question = question[PINNED_QUESTION.search(question).start():]
                 for cmd in SLASH_COMMAND.findall(question):
                     if cmd not in SANCTIONED_SLASH:
                         offenders.append(
                             "%s:%d: /%s — %s"
-                            % (path.relative_to(REPO_ROOT), n, cmd, line.strip()[:110]))
+                            % (path.relative_to(REPO_ROOT), n, cmd, question.strip()[:110]))
         self.assertEqual(
             [], offenders,
             "a 👉 question offers a slash command that is not `/model` or `/effort`. Those two "
@@ -193,7 +215,11 @@ class NoShippedQuestionOffersAHostControl(unittest.TestCase):
             + "\n  ".join(offenders))
 
     def test_the_model_effort_switch_is_still_asked_as_a_question(self):
-        """The exception must survive — otherwise this guard passes by deleting the rule's subject."""
+        """The exception must survive — otherwise this guard passes by deleting the rule's subject.
+
+        Line-scoped by design (#424): a presence check fails closed. A wrap can hide a
+        question from the line read and so make this fail, never pass one that is missing.
+        """
         asked = [line
                  for path in shipped_markdown()
                  for line in read(path).splitlines()
@@ -203,13 +229,38 @@ class NoShippedQuestionOffersAHostControl(unittest.TestCase):
                         "it as the sole exception, so its disappearance means the exception or "
                         "the question form changed")
 
+    def test_a_wrapped_question_offering_a_host_control_is_caught(self):
+        """Negative control (#424): the control is named on the line the question wraps onto."""
+        wrapped = ("👉 **Before we load, would you like to switch on\nauto mode, or "
+                   "run `/compact` first?**\n")
+        (n, question), = pinned_questions(wrapped)
+        self.assertEqual(1, n)
+        self.assertTrue(HOST_CONTROL.search(question))
+        self.assertIn("compact", SLASH_COMMAND.findall(question))
+        # The old line-at-a-time check, kept only to show the fixture is the hard case.
+        first = wrapped.split("\n")[0]
+        self.assertFalse(HOST_CONTROL.search(first))
+        self.assertEqual([], SLASH_COMMAND.findall(first))
+
+    def test_a_question_followed_by_prose_about_the_host_is_not_flagged(self):
+        """Must-not-flag (INV-282): the next block is not the question."""
+        text = ("👉 **Shall we load the sample now?**\n\n"
+                "(Auto mode belongs to your Claude session; the bootcamp never offers it.)\n")
+        self.assertEqual([], [n for n, q in pinned_questions(text) if HOST_CONTROL.search(q)])
+
+    def test_a_wrapped_suppression_claim_is_caught(self):
+        """Negative control (#424): "the plugin" ends line 1 and "disables auto" begins line 2."""
+        wrapped = "During the bootcamp the plugin\ndisables auto mode for you.\n"
+        self.assertEqual([1], match_lines(wrapped, SUPPRESSION_CLAIM))
+        self.assertFalse(any(SUPPRESSION_CLAIM.search(l) for l in wrapped.split("\n")))
+
     def test_no_shipped_file_claims_the_plugin_suppresses_a_host_control(self):
         offenders = []
         for path in shipped_markdown():
-            for n, line in enumerate(read(path).splitlines(), 1):
-                if SUPPRESSION_CLAIM.search(line):
-                    rel = path.relative_to(REPO_ROOT)
-                    offenders.append("%s:%d: %s" % (rel, n, line.strip()[:140]))
+            text = read(path)
+            for n in match_lines(text, SUPPRESSION_CLAIM):
+                rel = path.relative_to(REPO_ROOT)
+                offenders.append("%s:%d: %s" % (rel, n, text.split("\n")[n - 1].strip()[:140]))
         self.assertEqual(
             [], offenders,
             "a shipped file claims the bootcamp removes a host control. It cannot — a plugin "

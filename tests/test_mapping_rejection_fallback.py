@@ -14,7 +14,10 @@ gate the workflow would have run.
 Run:  python3 -m unittest discover -s tests
 """
 import os
+import re
 import unittest
+
+from _wrapped_text import match_lines
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODULE5 = os.path.join(
@@ -27,6 +30,25 @@ SKILL = os.path.join(MODULE5, "SKILL.md")
 def read(path):
     with open(path, encoding="utf-8") as handle:
         return handle.read()
+
+
+#: " or " inside a pinned question's bold run. Matched by ``match_lines`` across line wraps
+#: (#424), so an "or" on the line a long question wraps onto is still read.
+OR_IN_QUESTION = re.compile(r"👉\s*\*\*(?:(?!\*\*).)*? or ")
+
+
+def or_in_question(text):
+    """1-based lines of each 👉 question offering alternatives with "or".
+
+    The first line opened by a 👉 is read whole, as before #424; ``match_lines`` adds a bold
+    run that wraps, which that line alone cannot show.
+    """
+    lines = text.split("\n")
+    first = next((n for n, line in enumerate(lines, 1) if line.strip().startswith("👉")), None)
+    hits = set(match_lines(text, OR_IN_QUESTION))
+    if first is not None and " or " in lines[first - 1]:
+        hits.add(first)
+    return sorted(hits)
 
 
 def rejection_section():
@@ -98,11 +120,22 @@ class TestPinnedFallbackQuestion(unittest.TestCase):
 
     def test_question_avoids_the_word_or_between_alternatives(self):
         """INV-009 discourages 'or'; the options are a numbered list instead."""
-        question_line = [
-            line for line in self.section.splitlines() if line.strip().startswith("👉")
-        ]
-        self.assertTrue(question_line)
-        self.assertNotIn(" or ", question_line[0])
+        self.assertIn("👉", self.section)
+        self.assertEqual([], or_in_question(self.section))
+
+    def test_a_wrapped_or_in_the_question_is_caught(self):
+        """Negative control (#424): the bold run wraps and "or" is on its second line."""
+        wrapped = ("👉 **The validator rejected this source twice. Shall I write the mapper\n"
+                   "by hand or skip the source?**\n")
+        self.assertEqual([1], or_in_question(wrapped))
+        # The old check read only the 👉 line, kept here to show the fixture is the hard case.
+        self.assertNotIn(" or ", wrapped.split("\n")[0])
+
+    def test_or_in_the_options_below_the_question_is_not_the_question(self):
+        """Must-not-flag (INV-282): an option may say "or"; the rule is about the question."""
+        self.assertEqual([], or_in_question(
+            "👉 **How would you like to proceed? Reply with a number:**\n"
+            "1. Retry once more, or\n2. Skip this source\n"))
 
     def test_turn_ends_on_the_question(self):
         """INV-007: the bootcamper answers; the plugin never assumes."""

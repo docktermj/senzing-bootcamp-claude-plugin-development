@@ -87,7 +87,11 @@ def headings(text):
 
 
 def gate_options(text):
-    """(option_text, end_offset) for every numbered option belonging to a 👉 question."""
+    """(option_text, end_offset) for every numbered option belonging to a 👉 question.
+
+    Line-scoped by design (#424): an option opens on its own numbered line, and what is
+    matched is its LEADING verb, which sits on that line however the option wraps.
+    """
     options = []
     offset = 0
     in_list = False

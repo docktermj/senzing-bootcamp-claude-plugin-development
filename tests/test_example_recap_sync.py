@@ -363,6 +363,10 @@ class TestPdfMatchesItsSource(unittest.TestCase):
 
         Headings and bullets are rendered; blank lines, rules, meta lines and
         image tags are not. Long lines are sampled because short ones repeat.
+
+        Line-scoped by design (#424): a line here is a staleness probe, not a phrase a rule
+        is about. Each one's leading run must appear in the squashed PDF text, so where the
+        source wraps changes which probes are taken, never whether a stale PDF is caught.
         """
         keep = []
         in_comment = False

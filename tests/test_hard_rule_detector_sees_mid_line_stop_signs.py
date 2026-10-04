@@ -103,7 +103,11 @@ class NounUsesStayOut(unittest.TestCase):
                     "defect this replaced." % (name, CONF.classify(line)))
 
     def test_the_corpus_fixture_the_spec_named_is_still_excluded(self):
-        """`model-selection.md`'s conventions parenthetical — named in the spec as the fixture."""
+        """`model-selection.md`'s conventions parenthetical — named in the spec as the fixture.
+
+        Line-scoped by design (#424): ``conformance.py`` classifies one line at a time, and this
+        asserts what that classifier does with the line.
+        """
         path = PLUGIN / "docs" / "model-selection.md"
         self.assertTrue(path.is_file(), "fixture file moved: %s" % path)
         offenders = [

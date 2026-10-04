@@ -61,6 +61,8 @@ def squash(text):
 def is_marker_line(line):
     """A line that opens with a negative marker, wrapped `<!-- … -->` or not.
 
+    Line-scoped by design (#424): INV-209 requires the marker on ONE line.
+
     #323 wraps Step 8's marker in an HTML comment, so the line now opens with `<!-- `; a
     bare marker still counts here, and `tests/test_shipped_negative_markers_are_html_comments.py`
     is what rejects it. The prefix is assembled rather than written out: the marker scanner

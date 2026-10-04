@@ -116,7 +116,10 @@ def current_version():
 
 
 def files_asserting(version):
-    """{relpath: [(line number, line)]} for every tracked, scanned file stating `version`."""
+    """{relpath: [(line number, line)]} for every tracked, scanned file stating `version`.
+
+    Line-scoped by design (#424): a version is one token, which a line break cannot split.
+    """
     found = {}
     for relpath in tracked_files():
         if not is_scanned(relpath):

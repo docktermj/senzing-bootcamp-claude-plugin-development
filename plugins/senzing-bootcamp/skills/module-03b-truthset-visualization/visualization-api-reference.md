@@ -810,8 +810,8 @@ subset**:
 | **Why?** | `/api/why?entity_id=` | why the records resolved together |
 | **How?** | `/api/how?entity_id=` | how the entity was constructed |
 
-That set applies to: the Entity Graph node detail (in either mode), Record
-Merges cards, the Merge Statistics bucket drill-down **and** its `sample_entities` list, the
+That set applies to: the Entity Graph node detail (in either mode), the merged-entity cards on
+Search / Probe, the Merge Statistics bucket drill-down **and** its `sample_entities` list, the
 Cross-Source cell drill-down, the Match Keys row drill-down, and Search / Probe results. Implement
 it as **one shared renderer** invoked from every surface — the failure mode this prevents is real:
 the buttons were added per-code-path, so each new entity surface silently shipped with a different
@@ -955,7 +955,7 @@ Applies to **Entity Graph** in both of its modes.
 
 **Node colors follow "Coloring graph nodes" (INV-259)**, under "Server lifetime" below: what a node's
 color is keyed on, how the palette is allocated, and what the legend names. The bullets here do not
-restate it.
+restate it (INV-300).
 
 - **Independent label toggles.** Separate show/hide controls for **node** (entity name) labels and
   **edge** (match key / relationship type) labels. Two independent dials, not one combined control,

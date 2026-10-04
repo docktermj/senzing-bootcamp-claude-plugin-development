@@ -119,7 +119,10 @@ def no_voice_example(text):
 
 
 def table(text, header_start):
-    """Body rows of the Markdown table whose header row starts with `header_start`."""
+    """Body rows of the Markdown table whose header row starts with `header_start`.
+
+    Line-scoped by design (#424): a table row is one line.
+    """
     lines = text.splitlines()
     for i, line in enumerate(lines):
         if line.strip().startswith(header_start):

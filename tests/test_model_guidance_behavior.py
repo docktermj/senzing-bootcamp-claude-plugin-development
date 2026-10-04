@@ -38,6 +38,8 @@ import os
 import re
 import unittest
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGIN = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp")
 GROUND_RULES = os.path.join(PLUGIN, "skills", "bootcamp-onboarding", "ground-rules.md")
@@ -50,7 +52,12 @@ DONE_GATE = "Are you done modifying the model and effort?"
 SWITCH_QUESTION = "Would you like to switch to"
 
 # Phrasings that would mean a file is treating the retired preference as live.
+#: ⚠️ A verb negated just before it ("do not honor", "never read") forbids the use rather
+#: than instructing it, so it is not matched. Found by the #424 conversion: Bootcamp
+#: preparation's retirement note says "do not honor a\nstale `model_guidance` key", which a
+#: line-at-a-time read never saw and a wrap-aware read flagged (INV-282: fix the matcher).
 LIVE_PREFERENCE_USE = re.compile(
+    r"(?<!not )(?<!NOT )(?<!not\*\* )(?<!never )(?<!Never )"
     r"(Read|read|honou?r|Honou?r|persist|Persist|carry)\s+[^.\n]{0,40}`model_guidance`"
     r"|`model_guidance`[^.\n]{0,30}(from|to)\s+`config/bootcamp_preferences\.yaml`",
 )
@@ -69,6 +76,15 @@ RETIRED_MODE_PHRASINGS = (
 def read(path):
     with open(path, encoding="utf-8") as handle:
         return handle.read()
+
+
+def phrase_lines(text, phrase):
+    """1-based lines where the literal ``phrase`` starts, matched across line wraps (#424).
+
+    A retired phrase searched in the raw text, or one line at a time, passes once a line
+    break falls inside it; ``match_lines`` reads each Markdown block with whitespace collapsed.
+    """
+    return match_lines(text, re.compile(re.escape(phrase)))
 
 
 def flat(path):
@@ -99,7 +115,8 @@ class TestTheQuestionIsGone(unittest.TestCase):
 
     def test_no_shipped_file_asks_it(self):
         offenders = [
-            os.path.relpath(p, REPO_ROOT) for p in shipped_markdown() if QUESTION in read(p)
+            os.path.relpath(p, REPO_ROOT) for p in shipped_markdown()
+            if phrase_lines(read(p), QUESTION)
         ]
         self.assertEqual(
             [],
@@ -134,9 +151,8 @@ class TestNoFileTreatsThePreferenceAsLive(unittest.TestCase):
     def test_no_skill_reads_or_honors_it(self):
         offenders = []
         for path in skill_markdown():
-            for n, line in enumerate(read(path).splitlines(), 1):
-                if LIVE_PREFERENCE_USE.search(line):
-                    offenders.append(f"{os.path.relpath(path, REPO_ROOT)}:{n}")
+            for n in match_lines(read(path), LIVE_PREFERENCE_USE):
+                offenders.append(f"{os.path.relpath(path, REPO_ROOT)}:{n}")
         self.assertEqual(
             [],
             offenders,
@@ -149,13 +165,37 @@ class TestNoFileTreatsThePreferenceAsLive(unittest.TestCase):
         for path in shipped_markdown():
             text = read(path)
             for phrase in RETIRED_MODE_PHRASINGS:
-                if phrase in text:
-                    offenders.append(f"{os.path.relpath(path, REPO_ROOT)}: {phrase!r}")
+                for n in phrase_lines(text, phrase):
+                    offenders.append(f"{os.path.relpath(path, REPO_ROOT)}:{n}: {phrase!r}")
         self.assertEqual(
             [],
             offenders,
             f"mode-gated phrasing retired by INV-137 survives: {offenders}",
         )
+
+    def test_each_retired_phrasing_is_caught_when_wrapped(self):
+        """Negative controls (#424): each phrase split across two lines is still found."""
+        cases = (
+            (LIVE_PREFERENCE_USE, "Before the module starts, read the\n`model_guidance` key.\n"),
+            (re.compile(re.escape(QUESTION)), "Ask: How would you like model\nguidance handled?\n"),
+            (re.compile(re.escape("Under `advisory`")), "Under\n`advisory`, offer the switch.\n"),
+        )
+        for pattern, wrapped in cases:
+            with self.subTest(pattern=pattern.pattern[:30]):
+                self.assertEqual([1], match_lines(wrapped, pattern))
+                # The old line-at-a-time read, kept only to show the fixture is the hard case.
+                self.assertFalse(any(pattern.search(l) for l in wrapped.split("\n")))
+
+    def test_a_retirement_note_is_not_a_live_read(self):
+        """Must-not-flag (INV-282): saying the key is retired, or forbidding its use, reads
+        nothing. The second case is Bootcamp preparation's own note, wrapped as it ships."""
+        for text in ("There is no `model_guidance` preference any more; the key is retired\n"
+                     "(INV-137).\n",
+                     "Do **not** reintroduce the question, and do not honor a\n"
+                     "stale `model_guidance` key left in an old preferences file.\n",
+                     "Never read `model_guidance` from an old file.\n"):
+            with self.subTest(text=text[:40]):
+                self.assertEqual([], match_lines(text, LIVE_PREFERENCE_USE))
 
     def test_no_file_counts_it_among_the_capture_questions(self):
         """Preparation's Step 0 said the preferences rule covers all capture questions,

@@ -22,21 +22,33 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MODULE_02 = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
              / "module-02-sdk-setup" / "SKILL.md")
 INVARIANTS = REPO_ROOT / "specs" / "INVARIANTS.md"
 
 
-def module_02_lines():
-    return MODULE_02.read_text(encoding="utf-8").split("\n")
+ZERO_EXIT = re.compile(r"(?i)zero exit code")
+NOT_EVIDENCE = re.compile(r"exit 0 is not evidence")
+
+
+def lines_stating(pattern, text=None):
+    """The line on which each statement of ``pattern`` starts, matched across wraps (#424).
+
+    The citation is still asserted on that line, as before: a statement that wraps and puts
+    its citation on the next line fails rather than passes.
+    """
+    text = MODULE_02.read_text(encoding="utf-8") if text is None else text
+    lines = text.split("\n")
+    return [lines[n - 1] for n in match_lines(text, pattern)]
 
 
 class BothStatementsCiteTheInstallRule(unittest.TestCase):
     def test_the_brew_zero_exit_rule_cites_inv218(self):
         """The ⛔ that explains why a zero exit is not evidence."""
-        hits = [ln for ln in module_02_lines()
-                if "ZERO EXIT CODE" in ln.upper()]
+        hits = lines_stating(ZERO_EXIT)
         self.assertTrue(hits, "the zero-exit-code rule is gone from module 2")
         for line in hits:
             with self.subTest(line=line.strip()[:60]):
@@ -48,8 +60,7 @@ class BothStatementsCiteTheInstallRule(unittest.TestCase):
                 )
 
     def test_the_post_update_probe_cites_inv218_not_inv129(self):
-        hits = [ln for ln in module_02_lines()
-                if "exit 0 is not evidence" in ln]
+        hits = lines_stating(NOT_EVIDENCE)
         self.assertTrue(hits, "the post-update artifact probe instruction is gone")
         for line in hits:
             with self.subTest(line=line.strip()[:60]):
@@ -60,6 +71,19 @@ class BothStatementsCiteTheInstallRule(unittest.TestCase):
                     "Citing it here sends a reader to the wrong rule — the defect INV-218 was "
                     "registered to fix",
                 )
+
+
+class BothStatementsAreFoundWhenWrapped(unittest.TestCase):
+    """Negative controls for the #424 conversion."""
+
+    def test_each_wrapped_statement_is_found_at_its_first_line(self):
+        for pattern, wrapped in (
+                (ZERO_EXIT, "⛔ **A ZERO EXIT\nCODE FROM `brew` DOES NOT MEAN IT INSTALLED**.\n"),
+                (NOT_EVIDENCE, "2. **Probe the platform artifact** — exit 0 is\nnot evidence.\n")):
+            with self.subTest(pattern=pattern.pattern):
+                self.assertEqual([wrapped.split("\n")[0]], lines_stating(pattern, wrapped))
+                # The old line-at-a-time read, kept only to show the fixture is the hard case.
+                self.assertFalse(any(pattern.search(l) for l in wrapped.split("\n")))
 
 
 class TheTwoInvariantsStayDistinct(unittest.TestCase):

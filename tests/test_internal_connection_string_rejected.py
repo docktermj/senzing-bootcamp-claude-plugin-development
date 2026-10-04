@@ -115,6 +115,9 @@ class InternalConnectionStringRejected(unittest.TestCase):
 
         ground-rules.md is the one permitted mention, because forbidding the scheme
         requires naming it.
+
+        Line-scoped by design (#424): ``internal://`` is one token, which a line break cannot
+        split.
         """
         offenders = []
         for path in _shipped_files():

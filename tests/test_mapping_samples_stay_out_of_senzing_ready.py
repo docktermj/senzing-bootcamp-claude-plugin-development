@@ -101,7 +101,11 @@ def step18_section(text):
 
 
 def instruction_text(section_text):
-    """The section without its `>` presentation blocks, so an example cannot stand in for the rule."""
+    """The section without its `>` presentation blocks, so an example cannot stand in for the rule.
+
+    Line-scoped by design (#424): a `>` marker opens each line of a blockquote; the rest is
+    flattened before anything is matched.
+    """
     return flat("\n".join(
         line for line in section_text.splitlines() if not line.lstrip().startswith(">")
     ))
@@ -168,6 +172,7 @@ class TestStep18PlacesTheSampleInDataMapping(unittest.TestCase):
 
 class TestNoSampleIsDirectedIntoSenzingReady(unittest.TestCase):
     def test_no_plugin_file_names_a_sample_in_senzing_ready(self):
+        # Line-scoped by design (#424): the pattern is one path with no whitespace in it.
         offenders = []
         for path in plugin_text_files():
             try:

@@ -40,6 +40,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp"
 
@@ -98,7 +100,7 @@ def qualifying_sites():
         lines = path.read_text(encoding="utf-8").splitlines()
         for heading, start, end in sections(lines):
             block = range(start, end)
-            suppress_at = [i for i in block if SUPPRESS.search(lines[i])]
+            suppress_at = suppressions(lines, start, end)
             if not suppress_at:
                 continue
             for i in block:
@@ -108,6 +110,26 @@ def qualifying_sites():
                 if governing:
                     found.append((path, heading, i, lines))
     return found
+
+
+def suppressions(lines, start, end):
+    """Indexes in ``lines[start:end]`` where a suppression instruction starts.
+
+    ⚠️ **Matched across line wraps (#424).** "do not\nask" is still an instruction, and a
+    line-at-a-time read never saw it, so its question was never checked.
+
+    Line-scoped by design otherwise: a question is found by the 👉 that opens its line.
+    """
+    return [start + n - 1 for n in match_lines("\n".join(lines[start:end]), SUPPRESS)]
+
+
+def stated_condition(context):
+    """True when the paragraph above a question states a self-contained condition.
+
+    Read in order with whitespace collapsed (#424), so a condition that wraps ("only\nwhen")
+    is seen; ``preceding_context`` collects the lines bottom-up.
+    """
+    return bool(SELF_CONTAINED.search(" ".join(" ".join(reversed(context)).split())))
 
 
 def preceding_context(lines, index):
@@ -162,6 +184,7 @@ class TheUatStepBranchesBeforeItAsks(unittest.TestCase):
         end = next(i for i, l in enumerate(self.lines)
                    if i > start and l.startswith(("### ", "## ")))
         branch = self.lines[start:end]
+        # Line-scoped by design (#424): a 👉 that opens a line opens a question.
         posed = [l for l in branch if l.lstrip().startswith("👉")]
         self.assertEqual([], posed,
                          "the bootcamp-generated branch poses a question; it must "
@@ -202,7 +225,7 @@ class NoSuppressedBranchLeavesAPinnedQuestionUnguarded(unittest.TestCase):
             context = preceding_context(lines, index)
             sub = enclosing_subheading(lines, index, section_start)
             scoped_by_subheading = sub is not None
-            stated = any(SELF_CONTAINED.search(l) for l in context)
+            stated = stated_condition(context)
             relative_only = (any(RELATIVE_ONLY.search(l) for l in context)
                              and not stated)
             if scoped_by_subheading or stated:
@@ -220,6 +243,21 @@ class NoSuppressedBranchLeavesAPinnedQuestionUnguarded(unittest.TestCase):
             [], offenders,
             "a 'do not ask' branch sits above a pinned question a guide can reach "
             "without re-reading the branch:\n  " + "\n  ".join(offenders))
+
+    def test_a_wrapped_suppression_still_governs_the_question_below_it(self):
+        """Negative control (#424): "do not" ends line 2 and "ask" begins line 3."""
+        lines = ["## 9. Confirm", "", "If the source was generated, do not",
+                 "ask; go on to the spot-check.", "", "👉 **Shall we involve your team?**"]
+        self.assertEqual([2], suppressions(lines, 0, len(lines)))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(SUPPRESS.search(l) for l in lines))
+
+    def test_a_wrapped_self_contained_condition_is_stated(self):
+        """Must-not-flag (INV-282): "Only\nwhen" wrapped above the question still states it."""
+        context = preceding_context(["**Only", "when the source has real stakeholders** — offer it:",
+                                     "", "👉 **Shall we involve your team?**"], 3)
+        self.assertTrue(stated_condition(context))
+        self.assertFalse(any(SELF_CONTAINED.search(l) for l in context))
 
     def test_a_relative_otherwise_condition_is_rejected(self):
         """Negative control for the discriminator, on the exact shape that failed.

@@ -147,6 +147,7 @@ class TheLookupPrecedesTheOffer(unittest.TestCase):
 
     def test_the_lookup_has_a_section_of_its_own_before_the_offer(self):
         at = self.section.index(LOOKUP_PIECES[0])
+        # Line-scoped by design (#424): a heading is one line.
         heading = self.section[enclosing_heading(self.section, at) + 1 :].split("\n", 1)[0]
         self.assertIn("Before the offer", heading)
         self.assertLess(self.section.index(heading), self.section.index(OFFER))
@@ -301,6 +302,7 @@ class TheChecksCatchThePreFixShape(unittest.TestCase):
         text = read()
         section = step_1b(text)
         lookup = subsection(section, "### Before the offer")
+        # Line-scoped by design (#424): this drops the heading line to build a mutant.
         body = lookup.split("\n", 1)[1]
         # The pre-fix order: the lookup's body under `### After updating`, below the offer.
         mutant_section = section.replace(lookup, "")

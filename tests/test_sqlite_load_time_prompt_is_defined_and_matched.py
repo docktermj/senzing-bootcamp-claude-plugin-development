@@ -42,6 +42,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
 MODULE_04 = SKILLS / "module-04-data-collection" / "SKILL.md"
@@ -274,11 +276,18 @@ class TheMarkerIsDefinedAndMatched(unittest.TestCase):
         self.assertEqual(phase_b_problems(step_7_check(self.phase_b)), [])
 
     def test_no_skill_names_the_old_decision(self):
+        # Matched across line wraps (#424): each old name is several words.
         hits = [f"{p.relative_to(SKILLS)}:{n}"
                 for p in sorted(SKILLS.rglob("*.md"))
-                for n, line in enumerate(read(p).splitlines(), 1)
-                if OLD_NAMES.search(line)]
+                for n in match_lines(read(p), OLD_NAMES)]
         self.assertEqual(hits, [])
+
+    def test_a_wrapped_old_name_is_caught_at_its_first_line(self):
+        """Negative control (#424): "Step 8b load" ends line 1 and "decision" begins line 2."""
+        wrapped = "Ask as in Module 4's Step 8b load\ndecision before loading.\n"
+        self.assertEqual([1], match_lines(wrapped, OLD_NAMES))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(OLD_NAMES.search(l) for l in wrapped.split("\n")))
 
     def test_the_links_resolve(self):
         self.assertIn(PHASE_A_FRAGMENT, fragments(self.phase_a))

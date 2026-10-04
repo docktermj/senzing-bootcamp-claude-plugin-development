@@ -39,6 +39,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "plugins" / "senzing-bootcamp" / "skills"
 CANONICAL = SKILLS / "module-04-data-collection" / "SKILL.md"
@@ -77,6 +79,24 @@ def shipped_markdown():
     return sorted(SKILLS.rglob("*.md"))
 
 
+#: The real-data notice's wording, which a 👉 must not carry.
+NOTICE = re.compile(r"(?i)historical snapshot|not operational|real data")
+#: The same, after a 👉 in the same Markdown block and before any other 👉, matched by
+#: ``match_lines`` on whitespace-collapsed blocks so a question that wraps is still read (#424).
+NOTICE_QUESTION = re.compile(r"(?i)👉[^👉]*?(?:historical snapshot|not operational|real data)")
+
+
+def notice_questions(text):
+    """1-based lines of each 👉 that carries the notice's wording.
+
+    The line check reads the whole line holding a 👉, as it did before #424; ``match_lines``
+    adds a question whose wording wraps onto the next line, which the line check cannot see.
+    """
+    hits = {n for n, line in enumerate(text.split("\n"), 1)
+            if "👉" in line and NOTICE.search(line)}
+    return sorted(hits | set(match_lines(text, NOTICE_QUESTION)))
+
+
 def enclosing_section(text, pos):
     """The Markdown section containing ``pos`` -- previous heading to the next of any depth.
 
@@ -112,6 +132,9 @@ def canonical_block(text):
     ⚠️ Also scoped deliberately: the guidance beside it QUOTES the tool contract, so a
     whole-file check passed with the disclosure stripped out of the block the Bootcamper
     reads. The obligation is to inform them, not to record the obligation nearby.
+
+    The lines are only gathered here; the claims are matched on the whole block, so this is
+    no line-at-a-time read (#424).
     """
     i = text.index('> "Senzing provides **CORD')
     lines = []
@@ -129,6 +152,9 @@ class CordIsNeverDescribedAsSynthetic(unittest.TestCase):
         The prohibition has to quote the banned wording to be followable, so an exemption
         is unavoidable; it is scoped to a line that also forbids it rather than to a file,
         so a new descriptive use in the same file is still caught.
+
+        Line-scoped by design (#424): "real-world-like" is one hyphenated token, which a line
+        break cannot split.
         """
         offenders = []
         for md in shipped_markdown():
@@ -228,15 +254,25 @@ class TheDisclosureIsAStatementAndTheFetchRulesAreUntouched(unittest.TestCase):
         self.text = CANONICAL.read_text(encoding="utf-8")
 
     def test_no_question_asks_the_bootcamper_about_the_real_data_notice(self):
-        for line in self.text.split("\n"):
-            if "👉" not in line:
-                continue
-            self.assertNotRegex(
-                line, r"(?i)historical snapshot|not operational|real data",
-                "The disclosure is a statement, never a 👉. They have already chosen sample "
-                "data; a question here asks something with no action behind it (INV-012), and "
-                "adds a gate the plugin's question economy argues against.",
-            )
+        self.assertEqual(
+            [], notice_questions(self.text),
+            "The disclosure is a statement, never a 👉. They have already chosen sample "
+            "data; a question here asks something with no action behind it (INV-012), and "
+            "adds a gate the plugin's question economy argues against.",
+        )
+
+    def test_a_wrapped_notice_question_is_caught(self):
+        """Negative control (#424): "real" ends line 1 and "data" begins line 2."""
+        wrapped = "👉 **Do you understand that this is real\ndata about real people?**\n"
+        self.assertEqual([1], notice_questions(wrapped))
+        # The old line-at-a-time check, kept only to show the fixture is the hard case.
+        self.assertFalse(any("👉" in l and NOTICE.search(l) for l in wrapped.split("\n")))
+
+    def test_the_notice_as_a_statement_beside_a_question_is_not_flagged(self):
+        """Must-not-flag (INV-282): the notice is stated in its own paragraph, then the 👉."""
+        self.assertEqual([], notice_questions(
+            "These are real records: historical snapshots, not for operational\nuse.\n\n"
+            "👉 **Which source should we load first?**\n"))
 
     def test_the_existing_fetch_url_guidance_survives(self):
         for phrase in ("source_download_url", "download_url"):
