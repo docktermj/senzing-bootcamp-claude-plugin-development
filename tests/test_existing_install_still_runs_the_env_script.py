@@ -248,9 +248,10 @@ class TheRuleHoldsAtEverySiteTheDeferralNames(unittest.TestCase):
 
     The block drafts "an existing install still runs Step 3's Phase 3 and its environment-script
     work" for `/review-invariants`, the half INV-222 does not state. Each test pins one site it
-    lists. ⚠️ The block also names `## Agent Behavior`'s "Skip to verification" line as a site
-    that contradicts the rule; that line is left unasserted because fixing it changes shipped
-    text, which #284 excludes.
+    lists. The block also named `## Agent Behavior`'s "Skip to verification" line as a site that
+    contradicted the rule. That line was fixed under #284 (3c55ea7, the INV-339 registration), and
+    no test here pins its wording: since #381, `NoShippedTextLicensesSkippingStep3Wholesale`
+    reads every sentence of Module 2's files, so it fails if the line contradicts INV-339 again.
     """
 
     def setUp(self):

@@ -12,6 +12,9 @@ It claimed the server covers only 4 of 10 categories. That was concluded from tw
 the same ask-the-wrong-route error that produced INV-208 the same day (INV-194). Queried by SECTOR
 vocabulary, `economic-cost-mismatched-identity-data.md` quantifies ten sectors, supplying the
 business-value attribute for nearly every category. The gap was retrieval strategy, never coverage.
+That history is why the step's rule once read "Query by SECTOR vocabulary". #397 replaced it with
+the rule that ships now: query by the document's own title or heading (INV-212), because the
+sector-worded query reached the cost document but not its table (#335, below).
 
 Two category names are homonym traps that return confidently WRONG content rather than nothing,
 which is the more dangerous shape because a plausible result does not invite a re-query:
@@ -64,16 +67,34 @@ def step_3(text):
     return text[start:end]
 
 
+#: A ⛔ sentence in whitespace-collapsed text: from the marker to the first sentence end, where a
+#: closing `**` may follow the full stop.
+STOP_SENTENCE = re.compile(r"⛔.*?[.!?](?:\*\*)?(?=\s|$)")
+
+
+def states_the_title_or_heading_rule(body):
+    """True when a ⛔ sentence in ``body`` says to query by the "own title or heading" and cites
+    INV-212.
+
+    It pins the phrase and the citation, not the sentence, so polishing the wording still passes.
+    It reads whitespace-collapsed text because the sentence wraps in `phase1-discovery.md`.
+    """
+    return any(
+        re.search(r"(?i)own title or heading", sentence) and "INV-212" in sentence
+        for sentence in STOP_SENTENCE.findall(flat(body))
+    )
+
+
 class Step3TellsTheGuideHowToQuery(unittest.TestCase):
     def setUp(self):
         self.body = step_3(PHASE_1.read_text(encoding="utf-8"))
 
-    def test_it_names_the_sector_vocabulary_strategy(self):
-        self.assertRegex(
-            self.body, r"(?i)sector vocabulary|by SECTOR",
-            "Step 3 must tell the guide to query by sector/business vocabulary rather than by the "
-            "category label — the omission that made one generic query look like the server's "
-            "coverage.",
+    def test_its_stop_rule_says_to_query_by_the_documents_own_title_or_heading(self):
+        self.assertTrue(
+            states_the_title_or_heading_rule(self.body),
+            "Step 3's ⛔ rule must tell the guide to query by the document's own title or heading, "
+            "citing INV-212, rather than by the category label or a generic phrase. One generic "
+            "query is what made the server's coverage look like four categories of ten.",
         )
 
     def test_it_names_the_document_carrying_business_value(self):
@@ -101,6 +122,62 @@ class Step3TellsTheGuideHowToQuery(unittest.TestCase):
         self.assertRegex(
             self.body, r"(?i)do not restate",
             "the pointer must say not to restate the reasoning, matching how Step 14 defers to it",
+        )
+
+
+class TheTitleOrHeadingCheckRejectsTheRetiredRule(unittest.TestCase):
+    """Controls for `states_the_title_or_heading_rule`, fed synthetic Step 3 bodies (#423).
+
+    The guard it replaced asked for "sector vocabulary" and stayed green after #397 retired that
+    rule, because the measured negative query still contains "by sector". These bodies go through
+    the same helper as the real text.
+    """
+
+    #: The measured negative query Step 3 still quotes, which kept the old guard green.
+    NEGATIVE_QUERY = (
+        "`'total economic cost mismatched identity data by sector'` returned the document's "
+        "intro at\n  rank 1."
+    )
+
+    def test_the_retired_sector_vocabulary_rule_is_rejected(self):
+        body = (
+            "## 3. If they want patterns\n\n"
+            "⛔ **Query by SECTOR vocabulary, not by the category label.** This is the step's "
+            "real work, and one\ngeneric query is not it.\n\n"
+            "  ⚠️ **A sector-worded query reaches the document but not the table.** "
+            + self.NEGATIVE_QUERY + "\n"
+        )
+        self.assertFalse(
+            states_the_title_or_heading_rule(body),
+            "The check accepted the retired sector-vocabulary rule. It must not pass on the "
+            "measured negative query alone.",
+        )
+
+    def test_the_phrase_without_the_citation_is_rejected(self):
+        body = "⛔ **Query by the document's own title or\nheading, not by the category label.**"
+        self.assertFalse(
+            states_the_title_or_heading_rule(body),
+            "The check must also require the INV-212 citation in the ⛔ sentence.",
+        )
+
+    def test_the_phrase_outside_a_stop_sentence_is_rejected(self):
+        body = (
+            "⛔ **(INV-212) Query by SECTOR vocabulary.** Some guides query by the document's own "
+            "title or heading."
+        )
+        self.assertFalse(
+            states_the_title_or_heading_rule(body),
+            "The phrase must be in the ⛔ sentence itself, not in prose after it.",
+        )
+
+    def test_a_reworded_rule_keeping_the_phrase_and_citation_passes(self):
+        body = (
+            "⛔ **Search by each document's own title or heading, never by the bare category "
+            "label\n(INV-212).** This is the step's real work."
+        )
+        self.assertTrue(
+            states_the_title_or_heading_rule(body),
+            "Rewording that keeps \"own title or heading\" and INV-212 must still pass.",
         )
 
 
