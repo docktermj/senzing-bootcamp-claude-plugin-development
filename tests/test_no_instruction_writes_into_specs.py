@@ -37,6 +37,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import blocks, match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 #: Where maintainer instructions live. ⛔ `tests/` is excluded deliberately: this very file
@@ -103,6 +105,23 @@ def live_exceptions():
     return set(re.findall(r"`specs/([A-Za-z0-9_.-]+\.[A-Za-z0-9]+)`", section))
 
 
+def instructions(text):
+    """[(line_no, name)] for each `<verb> ... specs/<name>` in ``text``, across line wraps.
+
+    Matched across line wraps (#425): "create\nspecs/audit-log.md" is the same instruction. The
+    lines come from ``match_lines``, at the line the verb is on; the names come from the same
+    blocks, collapsed the same way and searched in the same order, so the two lists line up. The
+    gap still stops at `.` and `;`, so a match stays inside one sentence.
+    """
+    names = []
+    for block in blocks(text):
+        flat = " ".join(" ".join(line for _n, line in block).split())
+        names += [m.group(1) for m in INSTRUCTION.finditer(flat)]
+    starts = match_lines(text, INSTRUCTION)
+    assert len(starts) == len(names), "match_lines and the block scan disagree"
+    return list(zip(starts, names))
+
+
 def offenders():
     """[(path, line_no, text)] for each instruction to create a file under `specs/`."""
     allowed = live_exceptions()
@@ -118,13 +137,13 @@ def offenders():
             if rel in QUOTING_THE_RULE:
                 continue
             try:
-                lines = path.read_text(encoding="utf-8").splitlines()
+                text = path.read_text(encoding="utf-8")
             except (OSError, UnicodeDecodeError):
                 continue
-            for n, line in enumerate(lines, 1):
-                for m in INSTRUCTION.finditer(line):
-                    if m.group(1) not in allowed:
-                        out.append((rel, n, line.strip()[:110]))
+            lines = text.split("\n")
+            for n, name in instructions(text):
+                if name not in allowed:
+                    out.append((rel, n, lines[n - 1].strip()[:110]))
     return out
 
 
@@ -166,6 +185,22 @@ class TheMatcherIsDerivedFromTheClaim(unittest.TestCase):
             "the matcher flags correct prose: %s. A guard that fires on legitimate text is "
             "relaxed rather than fixed, and this one would train its reader to ignore it"
             % "; ".join(wrong))
+
+
+class InstructionsAreMatchedAcrossLineWraps(unittest.TestCase):
+    """Negative controls (#425): a wrapped instruction is still an instruction."""
+
+    def test_a_wrapped_instruction_is_found_at_the_verbs_line(self):
+        wrapped = "When the run finishes,\ncreate a summary at\n`specs/audit-log.md` for the record.\n"
+        self.assertEqual([(2, "audit-log.md")], instructions(wrapped))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(INSTRUCTION.search(l) for l in wrapped.split("\n")))
+
+    def test_a_wrapped_live_record_is_still_allowed(self):
+        """Must not flag (INV-282): recording in the ledger is legitimate however it wraps."""
+        wrapped = "Record the outcome in\n`specs/IMPLEMENTED.md` before the commit.\n"
+        self.assertEqual([(1, "IMPLEMENTED.md")], instructions(wrapped))
+        self.assertIn("IMPLEMENTED.md", live_exceptions())
 
 
 class NoInstructionCreatesASpecFile(unittest.TestCase):

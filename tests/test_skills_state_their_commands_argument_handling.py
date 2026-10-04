@@ -190,7 +190,11 @@ def split_frontmatter(text):
 
 
 def frontmatter_value(text, key):
-    """The raw value of a top-level frontmatter key, or None when the key is absent."""
+    """The raw value of a top-level frontmatter key, or None when the key is absent.
+
+    Line-scoped by design (#425): a front-matter key and its value are one line. The argument
+    rules themselves are matched on whitespace-collapsed text (`squash`), across line wraps.
+    """
     for line in split_frontmatter(text)[0]:
         if line.startswith(key + ":"):
             return line[len(key) + 1:].strip()

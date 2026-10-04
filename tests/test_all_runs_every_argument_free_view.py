@@ -52,6 +52,7 @@ def declared_subcommands():
 
 
 def section_headers(text):
+    """The `== ` headers in a view's stdout. Line-scoped by design (#425): a header is a line."""
     return [l.strip() for l in text.splitlines() if l.startswith("== ")]
 
 
@@ -177,6 +178,8 @@ class SinceCanComputeItsOwnRef(unittest.TestCase):
                 text = (REPO_ROOT / rel).read_text(encoding="utf-8")
                 if "conformance.py since" not in text:
                     continue
+                # Line-scoped by design (#425): each call site is a command line in a bash
+                # fence, where a newline ends the command, so its argument is read to line end.
                 for m in re.finditer(r"conformance\.py since ([^\n`]*)", text):
                     arg = m.group(1).strip()
                     self.assertNotRegex(

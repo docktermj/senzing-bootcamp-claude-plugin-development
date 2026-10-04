@@ -35,6 +35,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MEMORY = REPO_ROOT / ".claude" / "memory"
 DOCS = sorted((REPO_ROOT / ".claude").rglob("*.md")) + sorted((REPO_ROOT / "docs").rglob("*.md"))
@@ -45,10 +47,14 @@ DOCS = sorted((REPO_ROOT / ".claude").rglob("*.md")) + sorted((REPO_ROOT / "docs
 #: Both orders occur -- "the title must be prefixed with `#n`" and "use `#n ...` as the subject"
 #: -- so the claim is matched rather than one sentence shape: an instruction, the issue token,
 #: and the words subject/title, in either arrangement. ⚠️ The verbs are \b-anchored so "used to
-#: require" (history) does not read as "use".
+#: require" (history) does not read as "use". ⚠️ And `prefix` after "a", "the", "subject" or
+#: "title" is the NOUN, not the verb: read across a line wrap (#425), "**Why the trailer rather
+#: than a subject prefix:** GitHub scans the whole commit message for `#<number>`, so ... a
+#: subject" matched as an instruction, though it explains why the rule was retired (INV-282).
 SUBJECT_PREFIX_RULE = re.compile(
     r"(?:title|subject)[^.]{0,80}?prefix[^.]{0,40}?`?#<?(?:issue[- ]?number|n)>?"
-    r"|\b(?:prefix|prefixed|use|must be)\b[^.]{0,80}?#<?(?:issue[- ]?number|n)>?"
+    r"|\b(?:(?<!\ba )(?<!\bthe )(?<!\bsubject )(?<!\btitle )prefix|prefixed|use|must be)\b"
+    r"[^.]{0,80}?#<?(?:issue[- ]?number|n)>?"
     r"[^.]{0,80}?(?:subject|title)"
     # ⛔ A third arrangement, found in `retrofit-from-public/SKILL.md` the same day this guard
     # shipped: "commit subjects in these repos start with `#<issue-number>`". It states the rule
@@ -78,12 +84,26 @@ LEGITIMATE = (
     "The `SKIP_GIT_CONVENTIONS=1` escape exists for genuinely non-conforming commits",
     "The alternative was to instruct a `SKIP_GIT_CONVENTIONS=1` bypass of the convention",
     "this memory used to require `#<issue-number> <description>` subjects",
+    # The shipped sentence #425's wrap-aware read first flagged: `prefix` is a noun here.
+    "**Why the trailer rather than a subject prefix:** GitHub scans the whole commit message "
+    "for `#<number>`, so a trailer collates the commit with its issue just as a subject prefix "
+    "did — while the subject stays scannable by type.",
 )
 
 
 def hits(text):
     return [m.group(0) for p in (SUBJECT_PREFIX_RULE, BYPASS_INSTRUCTION)
             for m in p.finditer(text)]
+
+
+def hit_lines(text):
+    """The lines where either matcher's hit starts, in order, matched across line wraps (#425).
+
+    "prefix the commit\ncommand with `SKIP_GIT_CONVENTIONS=1`" is the same instruction as one
+    line, so each Markdown block is read with its whitespace collapsed, through ``match_lines``.
+    """
+    return sorted(n for p in (SUBJECT_PREFIX_RULE, BYPASS_INSTRUCTION)
+                  for n in match_lines(text, p))
 
 
 class TheMatchersAreCalibrated(unittest.TestCase):
@@ -106,6 +126,23 @@ class TheMatchersAreCalibrated(unittest.TestCase):
                     "deletes the reason with the error" % wording)
 
 
+class TheSweepReadsAcrossLineWraps(unittest.TestCase):
+    """Negative controls (#425): a wrapped instruction is still the instruction."""
+
+    def test_a_wrapped_instruction_is_found_at_its_first_line(self):
+        wrapped = ("For spec work, use `#n <description>` as\nthe subject, and prefix the commit\n"
+                   "command with `SKIP_GIT_CONVENTIONS=1`.\n")
+        self.assertEqual([1, 2], hit_lines(wrapped))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(hits(l) for l in wrapped.split("\n")))
+
+    def test_wrapped_legitimate_prose_is_not_flagged(self):
+        """Must not flag (INV-282): naming the escape, or the old rule, stays sayable wrapped."""
+        self.assertEqual([], hit_lines("The `SKIP_GIT_CONVENTIONS=1` escape exists for\n"
+                                       "genuinely non-conforming commits; this memory used to\n"
+                                       "require `#<issue-number> <description>` subjects.\n"))
+
+
 class OnlyOneConventionIsDocumented(unittest.TestCase):
     def test_the_scan_has_files_to_read(self):
         """INV-265 — the sweep passes trivially over an empty file list."""
@@ -116,9 +153,11 @@ class OnlyOneConventionIsDocumented(unittest.TestCase):
     def test_no_document_instructs_the_retired_convention(self):
         offenders = []
         for f in DOCS:
-            for n, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
-                for hit in hits(line):
-                    offenders.append("%s:%d  %r" % (f.relative_to(REPO_ROOT), n, hit))
+            text = f.read_text(encoding="utf-8")
+            lines = text.split("\n")
+            for n in hit_lines(text):
+                offenders.append("%s:%d  %s" % (f.relative_to(REPO_ROOT), n,
+                                                lines[n - 1].strip()[:110]))
         self.assertEqual(
             [], offenders,
             "a document still instructs the retired convention -- an issue number in the "

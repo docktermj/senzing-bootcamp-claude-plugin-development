@@ -48,6 +48,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 #: Live documents a maintainer reads to decide what to run. ⛔ `specs/` carries only its README:
@@ -130,6 +132,15 @@ def hits(text):
     return [m.group(0) for p in MATCHERS for m in p.finditer(text)]
 
 
+def hit_lines(text):
+    """The lines where any matcher's hit starts, in order, matched across line wraps (#425).
+
+    "the audit half\nis blocked" makes the claim as surely as one line does, so the scan reads
+    each Markdown block with its whitespace collapsed, through ``match_lines``.
+    """
+    return sorted(n for p in MATCHERS for n in match_lines(text, p))
+
+
 class TheMatcherIsCalibrated(unittest.TestCase):
     """⛔ INV-282 — pinned in both directions, or the scan below proves nothing."""
 
@@ -158,15 +169,34 @@ class TheMatcherIsCalibrated(unittest.TestCase):
             "guard is reading almost nothing")
 
 
+class TheScanReadsAcrossLineWraps(unittest.TestCase):
+    """Negative controls (#425): a wrapped claim is still the claim."""
+
+    def test_a_wrapped_claim_is_found_at_its_first_line(self):
+        wrapped = ("Run the loop knowing that its audit half\nstays blocked, and\n"
+                   "`/production-readiness-audit` still\nwrites specs.\n")
+        self.assertEqual([1, 3], hit_lines(wrapped))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(hits(l) for l in wrapped.split("\n")))
+
+    def test_wrapped_history_is_not_flagged(self):
+        """Must not flag (INV-282): the past tense stays sayable when it wraps."""
+        self.assertEqual([], hit_lines("This paragraph said the audit half\nwas blocked "
+                                       "until 2026-09-21, and `/delegate-to-mcp-server`\n"
+                                       "wrote spec files until #114 reworked it.\n"))
+
+
 class NoLiveDocumentCarriesTheStaleClaim(unittest.TestCase):
     def test_no_document_says_the_audit_half_is_blocked_or_writes_specs(self):
         offenders = []
         for f in SCANNED:
             if not f.is_file():
                 continue
-            for n, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
-                for hit in hits(line):
-                    offenders.append("%s:%d  %r" % (f.relative_to(REPO_ROOT), n, hit))
+            text = f.read_text(encoding="utf-8")
+            lines = text.split("\n")
+            for n in hit_lines(text):
+                offenders.append("%s:%d  %s" % (f.relative_to(REPO_ROOT), n,
+                                                lines[n - 1].strip()[:110]))
         self.assertEqual(
             [], offenders,
             "a live document asserts, in the present tense, that the loop's audit half remains "
