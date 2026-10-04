@@ -536,7 +536,19 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # projection, folded in at review rather than minted) names test_bundled_script_and_production_paths.py,
 # which already cites INV-186 back. Re-derived by running the extractor -- 185, the one new pair
 # present by name and none removed. EXPECTED_PAIRS 184 -> 185.
-EXPECTED_PAIRS = 185
+# 186 on 2026-10-03: INV-345 (on a synthesized source, disclose the deliberate gaps before the gate's
+# question, and never regenerate silently; #394) names test_gate_options_have_handling_steps.py, which
+# cites it back and states what it does NOT establish -- that a live turn obeys it. Re-derived by
+# running the extractor -- 186, the new pair present by name and none removed. EXPECTED_PAIRS 185 -> 186.
+# 187 on 2026-10-03: INV-344's note (#384: Phase 3's exits return to the per-source loop) names
+# test_module5_phase3_exits_return_to_the_per_source_loop.py, which already cites INV-344 back.
+# Re-derived by running the extractor -- 187, the one new pair present by name and none removed.
+# EXPECTED_PAIRS 186 -> 187.
+# 188 on 2026-10-03: INV-291's note (#383: an inline route records a rank band and a stamp, not an
+# exact rank) names test_prescribed_search_queries.py, which already cites INV-291 back. Re-derived by
+# running the extractor -- 188, the one new pair present by name and none removed.
+# EXPECTED_PAIRS 187 -> 188.
+EXPECTED_PAIRS = 188
 
 
 def pairs():

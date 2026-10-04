@@ -26,6 +26,13 @@ same skill file, or an inline branch at the gate) saying what the guide does whe
 where the flow resumes; and where that step changes the state the gate measured, re-presenting the
 gate is not an INV-006 repeat.
 
+Also enforces **INV-345** (on a `provenance: synthesized` source, disclose the deliberate gaps
+before the gate's 👉, and never regenerate the Bootcamper's data silently):
+`test_a_synthesized_source_is_disclosed_before_the_question` and
+`test_it_forbids_silent_regeneration`. They assert that the skill file *states* both rules, and do
+**not** establish that a live turn discloses before it asks or never regenerates silently, which
+only `dry-run` phase 3 can observe.
+
 Source spec:
 `specs/the-quality-gates-improve-option-has-no-procedure-and-is-incoherent-on-a-generated-scenario.md`.
 
