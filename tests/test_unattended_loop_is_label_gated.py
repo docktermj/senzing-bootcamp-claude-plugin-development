@@ -53,6 +53,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OVERLAY = REPO_ROOT / ".claude" / "skill-overlays" / "unattended-issue-loop.md"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
@@ -76,6 +78,7 @@ def overlay():
 
 
 def family_row():
+    """The §2 table row for the loop. Line-scoped by design (#425): a table row is one line."""
     rows = [l for l in FAMILY.read_text(encoding="utf-8").splitlines()
             if l.startswith("| `unattended-issue-loop` |")]
     assert len(rows) == 1, "expected one §2 row for unattended-issue-loop, found %d" % len(rows)
@@ -133,12 +136,20 @@ class TheArchiveStaysFrozen(unittest.TestCase):
 
     def test_it_does_not_write_into_the_frozen_archive(self):
         for name, text in texts().items():
-            hit = WRITES_A_SPEC.search(text)
+            # Matched across line wraps (#425): "write it\ninto `specs/` as you find it".
+            hits = match_lines(text, WRITES_A_SPEC)
             with self.subTest(file=name):
-                self.assertIsNone(
-                    hit, "%s still instructs writing into the frozen archive (%r). `specs/` "
-                         "is read-only (INV-307) and the freeze guard rejects the output"
-                         % (name, hit.group(0) if hit else ""))
+                self.assertEqual(
+                    [], hits, "%s still instructs writing into the frozen archive, at line(s) "
+                              "%s. `specs/` is read-only (INV-307) and the freeze guard rejects "
+                              "the output" % (name, hits))
+
+    def test_a_wrapped_write_into_the_archive_is_found(self):
+        """Negative control (#425): "into" ends line 1 and "`specs/` as you find" begins line 2."""
+        wrapped = "When blocked, write the finding into\n`specs/ as you find it.\n"
+        self.assertEqual([1], match_lines(wrapped, WRITES_A_SPEC))
+        # The old raw-text search, kept only to show the fixture is the hard case.
+        self.assertIsNone(WRITES_A_SPEC.search(wrapped))
 
     def test_the_overlay_names_the_one_file_it_may_write(self):
         """#215: the old copy said "never write into specs/" beside a required ledger entry."""

@@ -35,6 +35,7 @@ SKILL = REPO / ".claude" / "skills" / "production-readiness-audit" / "SKILL.md"
 LEDGER = REPO / "specs" / "IMPLEMENTED.md"
 
 #: A shell line that greps audit headings out of the ledger, however it is worded.
+#: Line-scoped by design (#425): the command sits in a fence, where a newline ends it.
 #: ⚠️ Matched LINE-wise, not with a pipe-excluding character class: the grep pattern
 #: itself contains an escaped `\|` alternation, so `[^|]*` stops inside the quotes and
 #: the scan finds nothing — which looks identical to a skill with no such command.

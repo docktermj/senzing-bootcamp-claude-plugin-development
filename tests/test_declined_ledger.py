@@ -144,6 +144,9 @@ def skill_section(text, title):
     Fence-aware on purpose: the decline section's own entry template is a fenced block whose
     first line is `## <spec-name>`, so a plain `(?=^## )` boundary truncates the section right
     where the interesting part starts.
+
+    Line-scoped by design (#425): a section is cut at its heading and fence lines, each of which
+    is one line; what the section says is then read as a whole.
     """
     out, inside, fenced = [], False, False
     for line in text.split("\n"):

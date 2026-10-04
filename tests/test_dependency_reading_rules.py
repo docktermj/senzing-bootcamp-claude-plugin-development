@@ -50,12 +50,17 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COMMAND = REPO_ROOT / ".claude" / "skill-overlays" / "implement-github-issue.md"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
 #: The in-repo skill joined this guard at #126 after sitting two amendments behind the
 #: user-level copy -- the INV-300 defect ("a rule with two homes will disagree with itself")
 #: happening to R8. #215 made it a pointer stub and #239 removed it, so it is no longer read here.
+
+#: A clause forbidding the operation to recommend, which R8 dropped at #119.
+RECOMMENDATION_BAN = re.compile(r"(?i)does not recommend|do not recommend")
 
 #: The surface that must carry the rules. The user-level skills are not checked (see above).
 SURFACES = {"family rule R8": FAMILY}
@@ -157,22 +162,40 @@ class R8GivesTheReviewToTheChoosingOperation(unittest.TestCase):
         self.assertRegex(re.sub(r"\s+", " ", rule_region(FAMILY)), r"(?i)names no issue")
 
 
+#: Wordings that restate R8's dependency review (INV-300).
+RESTATEMENTS = (r"(?i)review the open issues for dependencies", r"(?i)impl(?:y|ies) no order",
+                r"(?i)merge risk")
+
+
+def restatement_lines(text, pattern):
+    """Lines where ``pattern`` starts in ``text``, matched across line wraps (#425).
+
+    "merge\nrisk" restates the rule as surely as "merge risk" does, so a line-at-a-time or
+    literal-space search would let a wrapped restatement through.
+    """
+    return match_lines(text, re.compile(pattern))
+
+
 class NoOtherSurfaceRestatesTheReview(unittest.TestCase):
     """INV-300 -- the rules have one home; a second copy is how R8 drifted before."""
-
-    RESTATEMENTS = (r"(?i)review the open issues for dependencies", r"(?i)impl(?:y|ies) no order",
-                    r"(?i)merge risk")
 
     def test_neither_the_command_nor_the_stub_restates_it(self):
         for surface, path in sorted(NOT_A_HOME.items()):
             text = path.read_text(encoding="utf-8")
-            for pattern in self.RESTATEMENTS:
+            for pattern in RESTATEMENTS:
                 with self.subTest(surface=surface, pattern=pattern):
-                    self.assertNotRegex(
-                        text, pattern,
-                        "%s restates R8's dependency review. R8 is its one home here; a copy "
-                        "in %s is the two-homes drift #126 and #215 each had to repair"
-                        % (surface, path))
+                    self.assertEqual(
+                        [], restatement_lines(text, pattern),
+                        "%s restates R8's dependency review at these lines. R8 is its one home "
+                        "here; a copy in %s is the two-homes drift #126 and #215 each had to "
+                        "repair" % (surface, path))
+
+    def test_a_wrapped_restatement_is_found_at_its_first_line(self):
+        """Negative control (#425): "merge" ends line 2 and "risk" begins line 3."""
+        wrapped = "Before choosing:\nshared files are merge\nrisk, not order.\n"
+        self.assertEqual([2], restatement_lines(wrapped, r"(?i)merge risk"))
+        # The old raw-text search, kept only to show the fixture is the hard case.
+        self.assertIsNone(re.search(r"(?i)merge risk", wrapped))
 
 
 def normative_text(path):
@@ -188,19 +211,35 @@ def normative_text(path):
     return text[:i] if i != -1 else text
 
 
+def ban_lines(text):
+    """Lines where a recommendation ban starts, matched across line wraps (#425)."""
+    return match_lines(text, RECOMMENDATION_BAN)
+
+
 class TheRecommendationBanIsGone(unittest.TestCase):
     """R8 dropped it at #119. A surface still imposing it contradicts the rule it implements."""
 
     def test_no_surface_still_forbids_recommending(self):
         for surface, path in sorted(SURFACES.items()):
             with self.subTest(surface=surface):
-                stale = [l for l in normative_text(path).splitlines()
-                         if re.search(r"(?i)does not recommend|do not recommend", l)]
+                stale = ban_lines(normative_text(path))
                 self.assertEqual(
                     [], stale,
-                    "%s still forbids recommending in its normative text. R8 removed that "
-                    "clause at #119; a surface keeping it tells the operation to do the "
-                    "opposite of the rule it cites: %s" % (surface, stale[:1]))
+                    "%s still forbids recommending in its normative text, at line(s) %s. R8 "
+                    "removed that clause at #119; a surface keeping it tells the operation to "
+                    "do the opposite of the rule it cites" % (surface, stale))
+
+    def test_a_wrapped_ban_is_found_at_its_first_line(self):
+        """Negative control (#425): "do not" ends line 1 and "recommend" begins line 2."""
+        wrapped = "The report lists the issues and do not\nrecommend one of them.\n"
+        self.assertEqual([1], ban_lines(wrapped))
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(RECOMMENDATION_BAN.search(l) for l in wrapped.split("\n")))
+
+    def test_the_rule_that_replaced_the_ban_is_not_flagged(self):
+        """Must not flag (INV-282): naming the issue it suggests is the current rule."""
+        self.assertEqual([], ban_lines("The report names the issue it\nsuggests, with its "
+                                       "evidence.\n"))
 
     def test_the_amendment_log_is_what_was_excluded(self):
         """The exclusion must remove the LOG, not the rules -- otherwise it hides everything."""

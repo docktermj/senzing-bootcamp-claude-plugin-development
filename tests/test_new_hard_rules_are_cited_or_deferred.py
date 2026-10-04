@@ -257,6 +257,9 @@ def _full_source_line(relpath, body):
 
     A citation past the cut is invisible, which once flagged four cited rules as uncited --
     including a 638-character bullet carrying two ids.
+
+    Line-scoped by design (#425): the contract is a citation on the rule's OWN line (INV-183),
+    and `since` reports source lines, so the unit read here is one line.
     """
     path = REPO_ROOT / relpath
     if path.exists():

@@ -27,6 +27,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import blocks, match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL = REPO_ROOT / ".claude/skills/production-readiness-audit/SKILL.md"
 INVARIANTS = REPO_ROOT / "specs" / "INVARIANTS.md"
@@ -63,18 +65,52 @@ def live_audit_entry_count():
     return len(heads)
 
 
-def statements(pattern):
-    """(line number, matched number, whole line) for each hit, skipping fenced code."""
+def without_fences(text):
+    """``text`` with every fence line and fenced line blanked, so line numbers are kept."""
     out, fenced = [], False
-    for i, line in enumerate(SKILL.read_text(encoding="utf-8").splitlines(), 1):
+    for line in text.split("\n"):
         if line.lstrip().startswith("```"):
             fenced = not fenced
+            out.append("")
             continue
-        if fenced:
-            continue
-        for m in re.finditer(pattern, line, re.IGNORECASE):
-            out.append((i, m.group(1), line.strip()))
-    return out
+        out.append("" if fenced else line)
+    return "\n".join(out)
+
+
+def statements_in(text, pattern):
+    """(line number, matched number, start line) for each hit in ``text``, skipping fenced code.
+
+    Matched across line wraps (#425): "194" can end one line and "invariants" begin the next.
+    The lines come from ``match_lines``; the numbers come from the same blocks, collapsed the
+    same way and searched in the same order, so the two lists line up. The line returned is the
+    one the match starts on, so ``HISTORICAL`` is read there, as it was read on the one line
+    before; a marker that wraps to the next line does not exempt (fails closed).
+    """
+    text = without_fences(text)
+    compiled = re.compile(pattern, re.IGNORECASE)
+    numbers = []
+    for block in blocks(text):
+        flat = " ".join(" ".join(line for _n, line in block).split())
+        numbers += [m.group(1) for m in compiled.finditer(flat)]
+    starts = match_lines(text, compiled)
+    assert len(starts) == len(numbers), "match_lines and the block scan disagree"
+    lines = text.split("\n")
+    return [(n, number, lines[n - 1].strip()) for n, number in zip(starts, numbers)]
+
+
+def statements(pattern):
+    """``statements_in`` over the audit skill."""
+    return statements_in(SKILL.read_text(encoding="utf-8"), pattern)
+
+
+#: "<N> invariants". ⛔ Not `N invariants` bare: "vocabulary retired two invariants ago" is a
+#: relative DISTANCE, not a count of the ruleset, and the first version of this guard failed on
+#: it. A trailing ago/later/earlier/apart marks the idiom.
+INVARIANT_COUNT = r"\b(%s)\s+invariants\b(?!\s+(?:ago|later|earlier|apart))" % NUMBER
+
+#: "<N> audit entries", "<N> `deep-dive-audit-*` runs" and the like.
+AUDIT_ENTRY_COUNT = (r"\b(%s)\s+(?:`?(?:deep-dive-audit|production-readiness-audit)[`*-]*\s+)?"
+                     r"(?:prior\s+|ledger\s+|audit\s+)*(?:entries|runs)\b" % NUMBER)
 
 
 # A figure presented as a dated historical fact is legitimate; one presented as the current
@@ -88,11 +124,7 @@ class NoStaleInvariantCount(unittest.TestCase):
         live = live_invariant_count()
         self.assertGreater(live, 0, "parsed no invariants from INVARIANTS.md")
         offenders = []
-        # ⛔ Not `N invariants` bare: "vocabulary retired two invariants ago" is a relative
-        # DISTANCE, not a count of the ruleset, and the first version of this guard failed
-        # on it. A trailing ago/later/earlier/apart marks the idiom.
-        for lineno, token, line in statements(
-                r"\b(%s)\s+invariants\b(?!\s+(?:ago|later|earlier|apart))" % NUMBER):
+        for lineno, token, line in statements(INVARIANT_COUNT):
             value = as_int(token)
             if value is None or HISTORICAL.search(line):
                 continue
@@ -111,9 +143,7 @@ class NoStaleAuditEntryCount(unittest.TestCase):
         live = live_audit_entry_count()
         self.assertGreater(live, 0, "parsed no audit entries from IMPLEMENTED.md")
         offenders = []
-        pattern = (r"\b(%s)\s+(?:`?(?:deep-dive-audit|production-readiness-audit)[`*-]*\s+)?"
-                   r"(?:prior\s+|ledger\s+|audit\s+)*(?:entries|runs)\b" % NUMBER)
-        for lineno, token, line in statements(pattern):
+        for lineno, token, line in statements(AUDIT_ENTRY_COUNT):
             value = as_int(token)
             if value is None or HISTORICAL.search(line):
                 continue
@@ -125,6 +155,33 @@ class NoStaleAuditEntryCount(unittest.TestCase):
             "the audit skill states a count of audit entries the ledger contradicts. The "
             "required-reading rule is supposed to name no fixed count or set:\n  %s"
             % "\n  ".join(offenders))
+
+
+class CountsAreMatchedAcrossLineWraps(unittest.TestCase):
+    """Negative controls (#425): a count wrapped across a line break is still a count."""
+
+    def test_a_wrapped_invariant_count_is_found_at_its_first_line(self):
+        wrapped = "Step 2 checks all 194\ninvariants on every run.\n"
+        self.assertEqual([(1, "194")], [(n, t) for n, t, _ in statements_in(wrapped,
+                                                                          INVARIANT_COUNT)])
+        # The old line-at-a-time read, kept only to show the fixture is the hard case.
+        self.assertFalse(any(re.search(INVARIANT_COUNT, l, re.I) for l in wrapped.split("\n")))
+
+    def test_a_wrapped_audit_entry_count_is_found_at_its_first_line(self):
+        wrapped = "Read the\nsix `deep-dive-audit`\nentries first.\n"
+        self.assertEqual([(2, "six")], [(n, t) for n, t, _ in statements_in(wrapped,
+                                                                          AUDIT_ENTRY_COUNT)])
+        self.assertFalse(any(re.search(AUDIT_ENTRY_COUNT, l, re.I) for l in wrapped.split("\n")))
+
+    def test_a_wrapped_distance_is_not_a_count(self):
+        """Must not flag (INV-282): the "ago" idiom still reads as a distance when it wraps."""
+        self.assertEqual([], statements_in("vocabulary retired two invariants\nago.\n",
+                                           INVARIANT_COUNT))
+
+    def test_a_count_inside_a_fence_is_still_skipped(self):
+        """Must not flag: fenced output is printed by a generator, not stated by the skill."""
+        fenced = "```text\n194\ninvariants\n```\n"
+        self.assertEqual([], statements_in(fenced, INVARIANT_COUNT))
 
 
 class TheReadingListIsARuleNotASet(unittest.TestCase):

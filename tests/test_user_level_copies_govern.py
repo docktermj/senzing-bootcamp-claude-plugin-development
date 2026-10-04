@@ -49,6 +49,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _wrapped_text import match_lines
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CLAUDE = REPO_ROOT / ".claude"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
@@ -69,6 +71,27 @@ BOILERPLATE = (r"\$ARGUMENTS", r"(?i)\binvoke the `[a-z-]+` skill", r"(?im)^main
 
 #: The merge-policy clause. It must appear exactly once in the repository's own text.
 MERGE_POLICY = re.compile(r"`--no-merge` leaves every PR open")
+
+
+#: Wordings of the retired no-argument dependency review in the implement overlay.
+NO_ARGUMENT_REVIEW = (r"review the open issues for dependencies", r"is \*\*empty\*\*")
+
+#: Wordings of the retired local-only implement-then-audit loop.
+RETIRED_LOOP = (r"(?i)push policy", r"(?i)local[ -]only", r"(?i)audit cycle",
+                r"/production-readiness-audit")
+
+#: A claim that this repository ships a second copy of a governed skill.
+SECOND_COPY = re.compile(r"(?i)the one that ships to the (?:four )?child ports"
+                         r"|byte-identical in both")
+
+
+def stale_lines(text, pattern):
+    """Lines where ``pattern`` starts in ``text``, matched across line wraps (#425).
+
+    Each stale wording below is a phrase, and "push\npolicy" says it as surely as one line does,
+    so a literal-space search of the raw text would let a wrapped copy through.
+    """
+    return match_lines(text, re.compile(pattern))
 
 
 def overlay(name):
@@ -137,20 +160,19 @@ class TheOverlaysAreRepoOnly(unittest.TestCase):
 
     def test_the_implement_overlay_no_longer_restates_the_no_argument_review(self):
         text = overlay("implement-github-issue").read_text(encoding="utf-8")
-        for stale in ("review the open issues for dependencies", "is **empty**"):
+        for stale in NO_ARGUMENT_REVIEW:
             with self.subTest(stale=stale):
-                self.assertNotIn(
-                    stale, text,
+                self.assertEqual(
+                    [], stale_lines(text, stale),
                     "the overlay restates the no-argument dependency review. R8 now gives it to "
                     "the operation that chooses the issue; a second statement here drifts")
 
     def test_the_loop_overlay_asks_no_push_policy_and_runs_no_audit(self):
         text = overlay("unattended-issue-loop").read_text(encoding="utf-8")
-        for stale in (r"(?i)push policy", r"(?i)local[ -]only", r"(?i)audit cycle",
-                      r"/production-readiness-audit"):
+        for stale in RETIRED_LOOP:
             with self.subTest(stale=stale):
-                self.assertNotRegex(
-                    text, stale,
+                self.assertEqual(
+                    [], stale_lines(text, stale),
                     "the loop overlay still describes the retired local-only "
                     "implement-then-audit loop, which is not the loop that runs")
 
@@ -163,6 +185,7 @@ class TheOverlaysAreRepoOnly(unittest.TestCase):
 
 class TheMergePolicyIsStatedOnce(unittest.TestCase):
     def test_it_is_stated_in_the_family_row(self):
+        # Line-scoped by design (#425): the §2 row is a table row, and a table row is one line.
         row = [l for l in FAMILY.read_text(encoding="utf-8").splitlines()
                if l.startswith("| `unattended-issue-loop` |")]
         self.assertEqual(1, len(row), "the §2 row for unattended-issue-loop is missing")
@@ -175,7 +198,8 @@ class TheMergePolicyIsStatedOnce(unittest.TestCase):
             text = p.read_text(encoding="utf-8")
             if p == FAMILY:
                 text = normative(text)
-            hits += [str(p.relative_to(REPO_ROOT))] * len(MERGE_POLICY.findall(text))
+            # Matched across line wraps (#425): a restatement wrapped mid-clause still counts.
+            hits += [str(p.relative_to(REPO_ROOT))] * len(match_lines(text, MERGE_POLICY))
         self.assertEqual(["docs/FAMILY_WORKFLOW.md"], hits,
                          "the loop's merge policy is stated in more than one place, or none "
                          "(INV-300): %s" % hits)
@@ -193,12 +217,25 @@ class NoSecondCopyIsLeftBehind(unittest.TestCase):
                          "<git-common-dir>/claude-state/, so files here are stale" % state)
 
     def test_no_file_claims_this_repository_ships_a_second_copy(self):
-        stale = re.compile(r"(?i)the one that ships to the (?:four )?child ports"
-                           r"|byte-identical in both")
         found = [str(p.relative_to(REPO_ROOT)) for p in own_markdown()
-                 if stale.search(p.read_text(encoding="utf-8"))]
+                 if match_lines(p.read_text(encoding="utf-8"), SECOND_COPY)]
         self.assertEqual([], found,
                          "a file still claims a shared copy of a governed skill lives here")
+
+    def test_wrapped_stale_wordings_are_found_at_their_first_line(self):
+        """Negative control (#425): each check finds its wording wrapped across two lines."""
+        cases = (
+            (r"review the open issues for dependencies",
+             "With no argument, review the open issues\nfor dependencies first.\n"),
+            (r"(?i)push policy", "Ask the maintainer for a push\npolicy before starting.\n"),
+            (MERGE_POLICY.pattern, "The loop merges each PR; `--no-merge` leaves every\nPR open.\n"),
+            (SECOND_COPY.pattern, "This SKILL.md is the one that ships to the four\nchild ports.\n"),
+        )
+        for pattern, wrapped in cases:
+            with self.subTest(pattern=pattern):
+                self.assertEqual([1], stale_lines(wrapped, pattern))
+                # The old raw-text search, kept only to show the fixture is the hard case.
+                self.assertIsNone(re.search(pattern, wrapped))
 
     def test_the_corpus_is_not_empty(self):
         """INV-265: the scans above pass trivially over nothing."""
