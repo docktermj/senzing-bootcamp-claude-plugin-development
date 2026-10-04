@@ -564,9 +564,11 @@ class TheSourcingRuleIsNotRelaxed(unittest.TestCase):
         )
 
     def test_windows_keeps_its_own_script_and_idiom(self):
+        """#419: the Windows script is a dot-sourced `.ps1` locating itself by `$PSScriptRoot`;
+        `tests/test_env_script_powershell.py` executes it."""
         text = flat(MODULE_02)
-        self.assertRegex(text, r"(?i)Windows keeps its own script")
-        self.assertIn("%~dp0", text)
+        self.assertRegex(text, r"(?i)Windows keeps its own script: `src\\scripts\\senzing-env\.ps1`")
+        self.assertIn("$PSScriptRoot", text)
 
     def test_no_zsh_material_is_imposed_on_windows(self):
         self.assertRegex(flat(MODULE_02), r"(?i)none of the zsh material applies there")

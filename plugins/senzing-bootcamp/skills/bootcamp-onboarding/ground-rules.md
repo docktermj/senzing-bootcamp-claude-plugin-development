@@ -610,6 +610,11 @@ the platform's **default** shell — not only in bash. On macOS that shell is **
   closes their terminal and `set -e` leaks into the rest of their session. Use `return`.
 - **Verify the resolved path before using it, and name it when it is wrong.** Silently exporting a
   variable computed from a wrong root is the failure this prevents.
+- **On Windows the shell is PowerShell, so the env script is a `.ps1` the Bootcamper dot-sources:**
+  `. .\src\scripts\senzing-env.ps1`. A `.bat` run from PowerShell sets its variables in a child
+  `cmd.exe`, and none of them reach the session. Module 2 owns the script:
+  [the Windows script](../module-02-sdk-setup/SKILL.md#env-script-windows). Its Windows form is
+  unverified on Windows PowerShell 5.1 here (INV-163).
 
 ## Running a file you just wrote, when the run happens somewhere else
 

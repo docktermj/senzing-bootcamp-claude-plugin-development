@@ -15,8 +15,9 @@ Windows and that had no correct Windows form:
 2. **Graduation Step 1b (render the recap PDF).** The venv render line and the venv creation
    line had no Windows form, while the pip line between them did.
 3. **Graduation Step 6c (the return guide).** It said to re-source `senzing-env.sh` "(if
-   present)", which silently drops the step on Windows, where Module 2 writes
-   `senzing-env.bat`.
+   present)", which silently drops the step on Windows. #419 replaced Module 2's
+   `senzing-env.bat` with a dot-sourced `senzing-env.ps1`, so the Windows form is now
+   `. .\\src\\scripts\\senzing-env.ps1`.
 4. **`graduation/database-backup.md` (the PostgreSQL backup and restore).** The backup wrote the
    binary dump with `>`, which PowerShell 5.1 re-encodes as text, silently until a restore; the
    restore used `psql <`, which PowerShell 5.1 rejects as a parser error. The commands now name
@@ -166,8 +167,11 @@ class TheReturnGuideNamesBothEnvScripts(unittest.TestCase):
     def setUp(self):
         self.step = flat(step_6c(GRADUATION.read_text(encoding="utf-8")))
 
-    def test_it_names_the_bat_for_windows(self):
-        self.assertIn("`src\\scripts\\senzing-env.bat` on Windows", self.step)
+    def test_it_dot_sources_the_ps1_for_windows(self):
+        """#419: a `.bat` run from PowerShell sets nothing in the session; the `.ps1` does."""
+        self.assertIn("`. .\\src\\scripts\\senzing-env.ps1` on Windows", self.step)
+        self.assertNotIn("senzing-env.bat", self.step)
+        self.assertIn("unverified on Windows PowerShell 5.1", self.step)
         self.assertIn("`source src/scripts/senzing-env.sh` on Linux/macOS", self.step)
 
     def test_if_present_no_longer_drops_the_step(self):

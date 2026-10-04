@@ -158,7 +158,8 @@ bootcamper declines the update, or they decline the EULA for it, and an accepted
 
 > **Required stops (INV-339):** These steps are NEVER skipped, even when the SDK is already installed:
 >
-> - **Step 3's environment script** (`src/scripts/senzing-env.sh`, or `senzing-env.bat` on Windows):
+> - **Step 3's environment script** (`src/scripts/senzing-env.sh`, or `src\scripts\senzing-env.ps1` on
+>   Windows, dot-sourced; its Windows form is unverified on Windows PowerShell 5.1 here, INV-163):
 >   ⛔ **the single most likely thing an existing install is missing.** Step 3 is titled "Install
 >   Senzing SDK" and does **two** jobs — it installs the SDK *and* it writes the project-local script
 >   that exports the library and Python paths. Only the first is redundant here. Skipping both leaves
@@ -886,10 +887,12 @@ install phases and still writes this script.
 
 **🚨 NEVER modify the user's global shell configuration** (`~/.zshrc`, `~/.bashrc`,
 `~/.profile`, PowerShell `$PROFILE`, etc.) to set Senzing environment variables — **INV-199**.
-Instead, create a project-local environment script at `src/scripts/senzing-env.sh` (or the
-platform equivalent for Windows) that sets `SENZING_ROOT`, library paths, and any other
-Senzing-specific variables. Source this script before running bootcamp tasks. This keeps the
-bootcamp self-contained and avoids side effects on the user's system.
+Instead, create a project-local environment script at `src/scripts/senzing-env.sh` (on Windows,
+`src\scripts\senzing-env.ps1`; see [the Windows script](#env-script-windows)) that sets
+`SENZING_ROOT`, library paths, and any other Senzing-specific variables. Source this script before
+running bootcamp tasks; on Windows, dot-source it with `. .\src\scripts\senzing-env.ps1` (unverified
+on Windows PowerShell 5.1 here, INV-163). This keeps the bootcamp self-contained and avoids side
+effects on the user's system.
 
 ⛔ **`sdk_guide` will tell you to persist to a shell profile. Do not act on it — say so instead.**
 `sdk_guide(topic='install', platform='macos_arm', language='java')` returns *"DYLD_LIBRARY_PATH must
@@ -1037,12 +1040,107 @@ Four things in that block are the point, not decoration:
   `senzing/code-snippets-v4` `java/snippets/information/GetVersion.java` and the C# equivalents doing
   exactly this; MCP server 1.32.1, 2026-07-28.)
 
-**Windows keeps its own script.** `senzing-env.bat` has no such problem — `%~dp0` is the batch file's
-own directory and is always available — and none of the zsh material applies there. Add the same
-fail-loudly root check to the `.bat`, on `config/bootcamp_progress.json`, and the same rule for the
-settings variable: while `config/engine_config.json` is absent, print a one-line notice, leave
-`SENZING_ENGINE_CONFIGURATION_JSON` unset and set the rest; refuse an empty one. Confirm the Windows
-variable set via `sdk_guide`.
+<a id="env-script-windows"></a>
+
+**Windows keeps its own script: `src\scripts\senzing-env.ps1`, dot-sourced.** Assume Windows
+PowerShell 5.1 (the ground rules' "Windows and PowerShell"). A `.bat` file run from PowerShell runs in
+a child `cmd.exe`, so the variables it sets never reach the PowerShell window, and nothing reports it:
+the next program fails later or finds the wrong library. So Windows gets a PowerShell script and no
+`.bat`, and never both: two Windows scripts would drift (one implementation, not two). `$PSScriptRoot`
+is the script's own directory however it was reached, so none of the zsh material applies there. The
+Bootcamper loads it from the project root, in the PowerShell window that will run their programs, with
+`. .\src\scripts\senzing-env.ps1`. This snippet is unverified on Windows PowerShell 5.1 here: CI runs
+it under `pwsh` 7 on Linux only (INV-163).
+
+```powershell
+# --- refuse to run unless dot-sourced ------------------------------------------
+# Every site gives the dot-sourced form. Run any other way, the script prints that
+# form, sets nothing and returns.
+if ($MyInvocation.InvocationName -ne '.') {
+  Write-Host 'senzing-env.ps1: dot-source this script, with the leading dot and space:'
+  Write-Host '  . .\src\scripts\senzing-env.ps1'
+  return
+}
+
+# --- resolve this script's own location -------------------------------------------
+# $PSScriptRoot is this file's directory (src\scripts) however it was reached, so the
+# project root does not depend on the current directory.
+$_sz_root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+
+# --- fail loudly, naming the path that was computed --------------------------------
+# config/bootcamp_progress.json exists from project setup on, so it marks the root
+# at every step this script is loaded from (engine_config.json waits for Step 8).
+# Use return, never exit (INV-175): return ends this script and leaves the
+# session as it was.
+$_sz_progress = Join-Path (Join-Path $_sz_root 'config') 'bootcamp_progress.json'
+if (-not (Test-Path -LiteralPath $_sz_progress -PathType Leaf)) {
+  Write-Host 'senzing-env.ps1: resolved project root has no config/bootcamp_progress.json'
+  Write-Host "senzing-env.ps1:   resolved root: $_sz_root"
+  Write-Host 'senzing-env.ps1:   this is a path-resolution fault, not your Senzing install'
+  Remove-Variable -Name _sz_root, _sz_progress -ErrorAction SilentlyContinue
+  return
+}
+
+# --- engine configuration: skip while absent, never set an empty one ---------------
+$_sz_config = Join-Path (Join-Path $_sz_root 'config') 'engine_config.json'
+$_sz_settings = $null
+if (Test-Path -LiteralPath $_sz_config -PathType Leaf) {
+  # Explicit UTF-8: without -Encoding, Windows PowerShell 5.1 reads the file in the
+  # ANSI codepage (INV-166).
+  $_sz_settings = Get-Content -LiteralPath $_sz_config -Raw -Encoding utf8
+  if ([string]::IsNullOrWhiteSpace($_sz_settings)) {
+    Write-Host "senzing-env.ps1: $_sz_config is empty - refusing to set an empty configuration"
+    Remove-Variable -Name _sz_root, _sz_progress, _sz_config, _sz_settings -ErrorAction SilentlyContinue
+    return
+  }
+} else {
+  # Before Step 8 writes it: leave the variable unset and keep going.
+  Write-Host 'senzing-env.ps1: config/engine_config.json not written yet, so SENZING_ENGINE_CONFIGURATION_JSON is not set; dot-source this script again after Step 8'
+}
+
+$env:SENZING_PROJECT_ROOT = $_sz_root
+if ($null -ne $_sz_settings) {
+  $env:SENZING_ENGINE_CONFIGURATION_JSON = $_sz_settings.Trim()
+}
+# Platform-specific settings go here, each as $env:NAME = '...' -- take them from
+# sdk_guide(topic='install', platform='windows', language=...): its env_vars AND the
+# gotchas[] entry for the chosen language in the SAME response, never from memory or
+# from this file (INV-080). Do not set what that response says the install already
+# sets. Never use setx, which writes the user's global environment (INV-199).
+Remove-Variable -Name _sz_root, _sz_progress, _sz_config, _sz_settings -ErrorAction SilentlyContinue
+```
+
+What the snippet carries, and why (INV-175's rules for a sourced script, in PowerShell). The script is
+unverified on Windows PowerShell 5.1 here, and so is each rule below (INV-163):
+- **Dot-sourced, or nothing.** Run as `.\src\scripts\senzing-env.ps1`, without the leading `. `, it
+  prints the dot-sourced command, sets nothing and returns, so every window loads it the one way
+  every site gives.
+- **`return`, never `exit` (INV-175).** A dot-sourced script runs in the Bootcamper's own session, and
+  `return` ends the script while leaving that session as it was. INV-175 forbids `exit` in a sourced
+  script. What `exit` does there is not the reason: under `pwsh` 7 a dot-sourced `exit` was measured
+  ending only the script, and under Windows PowerShell 5.1 it is unverified here.
+- **The root guard and the settings rule are the `.sh`'s (INV-175).** It checks the resolved root for
+  `config/bootcamp_progress.json` and names the path it computed on failure, setting nothing. While
+  `config/engine_config.json` is absent it prints the one-line notice, leaves
+  `SENZING_ENGINE_CONFIGURATION_JSON` unset, sets the rest and returns normally; Step 8 dot-sources it
+  again. It refuses an empty configuration and sets nothing.
+- **Explicit UTF-8 in, ASCII only in the script (INV-166).** It reads the configuration with
+  `-Encoding utf8`. Write the script itself through your file tools, UTF-8 with no BOM and ASCII only:
+  Windows PowerShell 5.1 reads a `.ps1` that has no BOM in the ANSI codepage, so any other character
+  in it would be misread.
+- **The variable set comes from `sdk_guide` (INV-080).** On `sdk_guide(topic='install',
+  platform='windows', language=…)` (server 1.37.19, 2026-10-04), `env_vars` says the Scoop install
+  sets `SENZING_DIR` and puts `er\lib` on `PATH` itself, and the language's `gotchas[]` entry names
+  what that language adds; for Java it is the SDK jar on `$env:CLASSPATH`. Read them again at run
+  time rather than from this paragraph.
+
+**When PowerShell refuses to run the script.** The Windows client's default execution policy refuses
+scripts. The Scoop install that `sdk_guide` gives sets `RemoteSigned` for the current user, but an
+install made another way may never have run it. When dot-sourcing fails with "running scripts is
+disabled on this system", tell the Bootcamper to run `Set-ExecutionPolicy -Scope Process Bypass` and
+then dot-source `. .\src\scripts\senzing-env.ps1` again. It lasts only for that PowerShell window and
+changes no global configuration (INV-199). This fallback is unverified on Windows PowerShell 5.1
+here (INV-163).
 
 ### The launch environment (JVM languages, and macOS generally)
 
@@ -1134,8 +1232,9 @@ classpath bullet above: the jar path is an install-layout observation there, not
 not a JVM-only concern:** on `linux_apt` with **Python**, `LD_LIBRARY_PATH` is required too, and
 `sdk_guide`'s `env_vars` hedges it while its language-specific `gotchas[]` entry does not — see
 Step 3's Python note, which is where a non-JVM author will be. On
-**Windows**, the DYLD/LD variables do not apply at all and the env script is a `.bat`; the
-classpath separator is `;`, not `:`. The zsh word-splitting caveat is macOS/zsh-specific and the
+**Windows**, the DYLD/LD variables do not apply at all and the env script is `senzing-env.ps1`,
+dot-sourced with `. .\src\scripts\senzing-env.ps1` (unverified on Windows PowerShell 5.1 here,
+INV-163); the classpath separator is `;`, not `:`. The zsh word-splitting caveat is macOS/zsh-specific and the
 `timeout` caveat is macOS-specific — **neither applies on Linux**, where both behave as expected.
 Non-JVM languages need none of the JVM-specific items above.
 
@@ -1217,7 +1316,7 @@ unreachable at `/opt/senzing/er/sdk/python`; with `PYTHONPATH` set, it resolved 
 Linux-only concern because the Python SDK itself is: *"The Senzing Python SDK is ONLY supported on
 Linux. It is NOT supported on macOS or Windows"* (`sdk_guide(topic='install', platform='macos_arm',
 language='python')` → `compatibility_notes`, server 1.33.0, 2026-08-26). So this check has no
-macOS/Windows Python form to add, and the `DYLD_LIBRARY_PATH` and `senzing-env.bat` guidance stays
+macOS/Windows Python form to add, and the `DYLD_LIBRARY_PATH` and Windows env-script guidance stays
 exactly as it is.
 
 ⚠️ **What it looks like when the engine is attempted here** (measured live on a healthy install,
@@ -1887,8 +1986,9 @@ Linux install ever produces `SENZ7426`, ask `sdk_guide(topic='install', platform
 **Re-source the env script now that `config/engine_config.json` exists.** Until this step the script
 skipped `SENZING_ENGINE_CONFIGURATION_JSON` with a notice, and a shell that sourced it earlier keeps
 that variable unset until it sources the script again. Source `src/scripts/senzing-env.sh` once more
-(run `senzing-env.bat` again on Windows) in the shell that launches the Bootcamper's programs, and
-confirm the "not written yet" notice no longer prints.
+(on Windows, dot-source `. .\src\scripts\senzing-env.ps1` again, unverified on Windows PowerShell 5.1
+here, INV-163) in the shell that launches the Bootcamper's programs, and confirm the "not written
+yet" notice no longer prints.
 
 **Checkpoint:** write step 8 to `config/bootcamp_progress.json`.
 
@@ -2110,10 +2210,15 @@ call succeeds** (not merely a version query).
   is no code to explain, and hunting through the engine config wastes the time. **First check whether
   the script exists at all** — on the existing-install path it is the artifact most likely to be
   missing (INV-339), and asking whether an absent file was sourced sends the reader looking for the wrong
-  fault. If `src/scripts/senzing-env.sh` (or `senzing-env.bat`) is not there, that **is** the
-  finding: write it now per Step 3's environment-script work, with the values from
-  `sdk_guide(topic='install', platform=…, language=…)`. Only if it does exist, check that it was
-  **sourced** (not executed) in this shell, and whether it was **sourced before Step 8 wrote
+  fault. If `src/scripts/senzing-env.sh` (on Windows, `src\scripts\senzing-env.ps1`) is not there,
+  that **is** the finding: write it now per Step 3's environment-script work, with the values from
+  `sdk_guide(topic='install', platform=…, language=…)`. On Windows, a project made before the `.ps1`
+  that has only the old `senzing-env.bat` counts as not there: write the `.ps1` per
+  [the Windows script](#env-script-windows), have the Bootcamper dot-source it with
+  `. .\src\scripts\senzing-env.ps1`, and do not tell them to run the `.bat`, which sets nothing in a
+  PowerShell window (unverified on Windows PowerShell 5.1 here, INV-163). Only if it does exist, check
+  that it was **sourced** (not executed; dot-sourced on Windows) in this shell, and whether it was
+  **sourced before Step 8 wrote
   `config/engine_config.json`**: the script then printed a "not written yet" notice and left the
   variable unset, so re-source it now. Then check that it resolved its own path
   under the shell in use — see [the env script's path resolution](#env-script-path-resolution). Under

@@ -205,8 +205,9 @@ class TheOtherPlatformBranchesAreUndisturbed(unittest.TestCase):
 
     def test_the_windows_bat_guidance_survives(self):
         flat_text = flat()
-        self.assertIn("the DYLD/LD variables do not apply at all and the env script is a "
-                      "`.bat`", flat_text)
+        # #419: the Windows env script is a dot-sourced `.ps1`, no longer a `.bat`.
+        self.assertIn("the DYLD/LD variables do not apply at all and the env script is "
+                      "`senzing-env.ps1`, dot-sourced", flat_text)
         self.assertIn("the classpath separator is `;`, not `:`", flat_text)
 
     def test_the_linux_note_is_reachable_from_the_non_jvm_path(self):

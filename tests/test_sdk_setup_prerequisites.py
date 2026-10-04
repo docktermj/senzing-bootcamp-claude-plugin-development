@@ -205,7 +205,8 @@ class TheEnvScriptSurvivesTheSkip(unittest.TestCase):
         self.assertRegex(
             self.flat,
             r"(?i)\*\*Step 3's environment script\*\* \(`src/scripts/senzing-env\.sh`, or "
-            r"`senzing-env\.bat` on Windows\)",
+            r"`src\\scripts\\senzing-env\.ps1` on Windows, dot-sourced; its Windows form is "
+            r"unverified on Windows PowerShell 5\.1 here, INV-163\)",
             "the required-stops list still names only Step 4 and Step 5")
         self.assertRegex(
             self.flat, r"(?i)the single most likely thing an existing install is missing",
