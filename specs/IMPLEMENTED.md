@@ -43,6 +43,262 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## shared-wrap-aware-matcher-and-the-387-guard-moves-onto-it
+
+- **Implemented:** 2026-10-03 (**Not a spec** — a dated record of one issue-driven run, #426, spec revision 1; part of #418, spec revision 2)
+- **Commit:** uncommitted
+- **Files changed:** `tests/_wrapped_text.py` (new: `match_lines`), `tests/test_wrapped_text.py` (new, 32 tests), `tests/test_why_key_details_flag_is_cited_not_guessed.py` (`retired_claim_lines` removed; its four call sites now call `match_lines(…, RETIRED)`; the `RETIRED` comment and the module docstring updated to match), `specs/IMPLEMENTED.md` (this entry). `tests/test_existing_install_still_runs_the_env_script.py` (#381) and `tests/test_bundled_script_and_production_paths.py` (#390) are byte-identical to `main`. `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** server `sz-mcp-coworker` **1.37.19** (Senzing "current"), 2026-10-03, `get_capabilities` — **n/a (no Senzing fact)**, re-confirmed rather than assumed: every changed line is test code, a test docstring, or this entry, and none states an SDK method, an engine behavior, a Senzing document or an MCP tool's behavior. No absence claim is made, so no `owner-checked:` is owed. Nothing is upstream-bound.
+- **Approach:** implemented directly (Phase 5a), built on `71ecfcc`. The helper follows `tests/_maintainer_surface.py`: a `_`-prefixed module in `tests/` that guards import by name, so `unittest discover` never collects it.
+- **Summary:**
+  - **`match_lines(text, pattern) -> list[int]`.** It cuts the text into Markdown blocks, collapses each run of whitespace within a block to one space, trims the block, and runs the compiled `pattern` on each block on its own. It returns the 1-based line where each match starts, in order, so a guard keeps reporting `file:line`. Block boundaries: a blank line; a code-fence line (its own block); the end of each table row (a row is its own block); an ATX heading line (its own block); and front matter, from a `---` on line 1 to the next `---` (its contents are one block). A fence line is any line whose first non-blank characters are three backticks or `~~~`, so an indented fence counts; inside a fence only a blank line ends a block. Leading `>` markers are stripped outside a fence, so a wrapped blockquote matches, and a marker-only line is blank. A `---` line anywhere but line 1, or an unclosed one there, is ordinary text.
+  - **Differs from the issue's wording, recorded:** the issue says list lines with no blank line between them are one block "as in #381's `sentences`". They are one block in `match_lines`, as the issue specifies, but #381's `BLOCK_BREAK` (`tests/test_existing_install_still_runs_the_env_script.py:66`) also breaks before a list marker, so on that point #381 is not the precedent. The helper follows the issue's rule, and its docstring says #381 differs.
+  - **One reading beyond the spec's words, recorded:** a fence is closed only by a fence line of the same character, so a `~~~` fence can hold backtick lines as content (CommonMark's rule). The spec defines what a fence line is and is silent on which closes which; without this, a `~~~` fence wrapping a fenced example would close early and its contents would be read as prose. `test_a_backtick_line_inside_a_tilde_fence_is_content` pins it.
+  - **Its tests** (`tests/test_wrapped_text.py`, 32) cover every case the issue lists. A wrapped match is reported at its start line. A phrase split by a blank line, a fence line, a table-row boundary, a heading line or the front-matter boundary is not matched, and each of those negatives has a positive twin with the boundary removed, so a matcher that matched nothing would fail. `a[\s\S]*b` matches only within one block. A phrase wrapped across `> …` / `> …` is matched at its start. An indented fence in a list item and a `~~~` fence are fences. A `# comment` line inside a fence is not a heading. Two matches are reported at their own lines, in order.
+  - **#387's guard is on the helper.** `test_why_key_details_flag_is_cited_not_guessed.py` imports `match_lines` and no longer defines `retired_claim_lines`. Each of its 12 tests keeps its assertions and expected values (`[2]`, `[1]` per emphasis form, `[2, 6]`, `[]`); only the call changed. Its whole-file presence checks (`re.sub(r"\s+", " ", …)` before `assertRegex`) are untouched, as the issue scopes them out.
+  - **Mutation run.** The wrapped Step 3a sentence #387 removed (`phase1-query-visualize.md:441-443` at `c762046`) was appended to the current `phase1-query-visualize.md`, the file first copied to the run's scratch directory. `test_no_file_says_no_flag_documents_the_field` failed with `FAILED (failures=1)` and offender `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md:1139`, the appended line where "no" sits. After the saved copy was restored, `cmp` against it reported no difference and the sha256 was `1e16872f0e69fc84eee1ecfe8a2e5d687b20be08bb898024d2038cd2678e9f52` both before the mutation and after the restore.
+- **The scan that derives #424's and #425's candidate sets (INV-246).** Defined once here, so #424, #425 and #418 re-run it rather than re-derive it. It reads only `tests/*.py`, uses the standard library only, and is run with `bash` from the repository root. It parses each file with `ast`, so a docstring that merely mentions a path or a method is not a read.
+  - **A file reads text one line at a time** when its code calls or names `.splitlines`, `.readlines` or `.readline`; calls `.split` (including `re.split`) with a first argument of exactly `"\n"`, `"\r\n"`, `r"\n"`, `r"\r\n"` or `r"\r?\n"`; or iterates (a `for` loop or a comprehension, directly or through `enumerate`) an `open(…)` / `….open(…)` / `StringIO(…)` call or a name bound to one by `with … as` or `=`.
+  - **A file reads a corpus** when a string literal outside its docstrings has `plugins` as a `/`-separated segment (`plugins/`); contains `.claude/skills`, or the file has both the literals `".claude"` and `"skills"`, or it imports `_maintainer_surface` (`.claude/skills/`); has `docs` as a segment (`docs/`); or is exactly `README.md` or `./README.md` (`README.md`).
+  - **A candidate** is a file that does both. The test is textual and errs wide: a `docs` literal naming a scratch project's `docs/` folder counts. A candidate is a file the sweep gives a verdict, not a file known to be wrong.
+  - **The partition rule.** The three precedent guards are excluded from both partitions, whether or not the scan matches them. Of the rest, a candidate the scan tags `plugins/` belongs to **#424**; every other candidate belongs to **#425**. The tags in each line of the output are the corpora the scan found, so a reader can see why a file landed where it did.
+  - **The precedent guards' verdicts:**
+    - #387's `tests/test_why_key_details_flag_is_cited_not_guessed.py` — **converted here** to `match_lines`. The scan still matches it, because its negative control splits `WRAPPED_RETIRED_SENTENCE` on `"\n"` on purpose, to show a line-at-a-time scan finds nothing there; the comment at that line says so.
+    - #381's `tests/test_existing_install_still_runs_the_env_script.py` — **already wrap-aware, unchanged** (byte-identical to `main`). Its `sentences` cuts text into blocks (`BLOCK_BREAK`: a blank line, or a line break before a list marker, a heading, a table row, a fence or a blockquote) and collapses whitespace before it matches, so it reads no single lines, and the scan does not match it.
+    - #390's `tests/test_bundled_script_and_production_paths.py` — **already wrap-aware for its prose rule, unchanged** (byte-identical to `main`). `inline_invocations` collapses whitespace inside each inline code span, so a wrapped span is one invocation. The scan matches it because its other reads are line-shaped on purpose: an interpreter invocation on a command line, fenced or not (`invocation_lines`, `parameterized_without_a_script`), a copy-table row (`copy_table_rows`), a single-line PowerShell command, and two negative controls that read or rebuild a fixture line by line. ⚠️ Not every one of those reads says why at the read; if the drafted invariant below is registered, that file is a site where a sentence is owed. This issue keeps it byte-identical, so the sentence is not written here.
+  - **The command, verbatim:**
+
+```bash
+python3 - <<'EOF'
+import ast, pathlib
+PRECEDENTS = {"tests/test_why_key_details_flag_is_cited_not_guessed.py",
+              "tests/test_existing_install_still_runs_the_env_script.py",
+              "tests/test_bundled_script_and_production_paths.py"}
+NEWLINE = {"\n", "\r\n", r"\n", r"\r\n", r"\r?\n"}
+def opens(n):
+    return isinstance(n, ast.Call) and (
+        getattr(n.func, "id", None) == "open" or getattr(n.func, "attr", None) in ("open", "StringIO"))
+def linewise(tree):
+    handles = {i.optional_vars.id for n in ast.walk(tree) if isinstance(n, (ast.With, ast.AsyncWith))
+               for i in n.items if opens(i.context_expr) and isinstance(i.optional_vars, ast.Name)}
+    handles |= {t.id for n in ast.walk(tree) if isinstance(n, ast.Assign) and opens(n.value)
+                for t in n.targets if isinstance(t, ast.Name)}
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Attribute) and n.attr in ("splitlines", "readlines", "readline"):
+            return True
+        if (isinstance(n, ast.Call) and getattr(n.func, "attr", None) == "split" and n.args
+                and isinstance(n.args[0], ast.Constant) and n.args[0].value in NEWLINE):
+            return True
+        if isinstance(n, (ast.For, ast.AsyncFor, ast.comprehension)):
+            it = n.iter
+            if isinstance(it, ast.Call) and getattr(it.func, "id", None) == "enumerate" and it.args:
+                it = it.args[0]
+            if opens(it) or (isinstance(it, ast.Name) and it.id in handles):
+                return True
+    return False
+def corpora(tree):
+    docs = {id(b[0].value) for n in ast.walk(tree)
+            if isinstance(n, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+            for b in [n.body] if b and isinstance(b[0], ast.Expr) and isinstance(b[0].value, ast.Constant)}
+    consts = [n.value for n in ast.walk(tree) if isinstance(n, ast.Constant)
+              and isinstance(n.value, str) and id(n) not in docs]
+    segs = [s.strip("/").split("/") for s in consts]
+    mods = {a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names}
+    mods |= {n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)}
+    found = set()
+    if any("plugins" in p for p in segs):
+        found.add("plugins/")
+    if (any(".claude/skills" in s for s in consts) or {".claude", "skills"} <= set(consts)
+            or "_maintainer_surface" in mods):
+        found.add(".claude/skills/")
+    if any("docs" in p for p in segs):
+        found.add("docs/")
+    if any(s in ("README.md", "./README.md") for s in consts):
+        found.add("README.md")
+    return found
+rows = []
+for path in sorted(pathlib.Path("tests").glob("*.py")):
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    reads = corpora(tree)
+    if linewise(tree) and reads:
+        rows.append((path.as_posix(), sorted(reads)))
+matched = {path for path, _ in rows}
+cands = [r for r in rows if r[0] not in PRECEDENTS]
+p424 = [r for r in cands if "plugins/" in r[1]]
+p425 = [r for r in cands if "plugins/" not in r[1]]
+print("precedents, excluded from both partitions:")
+for path in sorted(PRECEDENTS):
+    print("  %s  (matched by the scan: %s)" % (path, "yes" if path in matched else "no"))
+for name, part in (("#424, reads plugins/", p424), ("#425, every other candidate", p425)):
+    print("\n%s: %d" % (name, len(part)))
+    for path, reads in part:
+        print("  %s  [%s]" % (path, ", ".join(reads)))
+EOF
+```
+
+  - **Its output at this commit, verbatim** (#424: **112** files; #425: **23** files; 135 candidates in all, plus the three precedents above). `tests/_wrapped_text.py` and `tests/test_wrapped_text.py` are not candidates: neither reads a corpus.
+
+  ```text
+  precedents, excluded from both partitions:
+    tests/test_bundled_script_and_production_paths.py  (matched by the scan: yes)
+    tests/test_existing_install_still_runs_the_env_script.py  (matched by the scan: no)
+    tests/test_why_key_details_flag_is_cited_not_guessed.py  (matched by the scan: yes)
+
+  #424, reads plugins/: 112
+    tests/test_a_restated_rule_keeps_its_authority.py  [plugins/]
+    tests/test_a_single_statement_claim_names_its_authority.py  [plugins/]
+    tests/test_any_language_contract_complete.py  [plugins/]
+    tests/test_backgrounded_launch_records_the_server_pid.py  [plugins/]
+    tests/test_blocked_submission_has_a_vocabulary_value.py  [.claude/skills/, plugins/]
+    tests/test_bootcamp_notes_flow.py  [README.md, docs/, plugins/]
+    tests/test_canonical_module_names.py  [README.md, docs/, plugins/]
+    tests/test_canonical_operations_resolve.py  [.claude/skills/, docs/, plugins/]
+    tests/test_capture_tabs.py  [docs/, plugins/]
+    tests/test_classpath_root_is_platform_qualified.py  [plugins/]
+    tests/test_comment_test_pointers_resolve.py  [docs/, plugins/]
+    tests/test_concepts_teaching_section_claims_no_exemption.py  [plugins/]
+    tests/test_conformance_sees_a_rule_beside_a_citation.py  [.claude/skills/, plugins/]
+    tests/test_cord_fetch_has_a_403_remedy.py  [plugins/]
+    tests/test_cord_is_disclosed_as_real_data.py  [plugins/]
+    tests/test_coverage_reports.py  [.claude/skills/, plugins/]
+    tests/test_dated_negatives_are_marked.py  [.claude/skills/, plugins/]
+    tests/test_deferral_freshness.py  [plugins/]
+    tests/test_deferral_quotes_match_their_source.py  [.claude/skills/, plugins/]
+    tests/test_discoveries_pdf.py  [docs/, plugins/]
+    tests/test_dry_run_scaffold_paths_exist.py  [.claude/skills/, plugins/]
+    tests/test_dry_run_states_no_hook_count.py  [.claude/skills/, README.md, plugins/]
+    tests/test_end_the_turn_questions_exist.py  [plugins/]
+    tests/test_env_script_shell_portability.py  [plugins/]
+    tests/test_eula_question_precedes_every_install.py  [plugins/]
+    tests/test_every_capture_path_requests_the_render.py  [plugins/]
+    tests/test_example_recap_sync.py  [docs/, plugins/]
+    tests/test_feedback_routing.py  [docs/, plugins/]
+    tests/test_find_examples_coverage_is_uncitable.py  [plugins/]
+    tests/test_free_data_catalog_caveats.py  [plugins/]
+    tests/test_gate_options_have_handling_steps.py  [plugins/]
+    tests/test_generated_scenario_is_bounded.py  [plugins/]
+    tests/test_globalization_retrieval_strategy.py  [plugins/]
+    tests/test_graduation_no_voice_guidance.py  [docs/, plugins/]
+    tests/test_graduation_reads_persisted_answers.py  [plugins/]
+    tests/test_graduation_video_step.py  [docs/, plugins/]
+    tests/test_graph_colors_by_source_combination.py  [plugins/]
+    tests/test_hard_rule_citations.py  [plugins/]
+    tests/test_hard_rule_detector_sees_mid_line_stop_signs.py  [.claude/skills/, docs/, plugins/]
+    tests/test_hook_entries_name_a_script.py  [plugins/]
+    tests/test_install_verification_citation.py  [plugins/]
+    tests/test_internal_connection_string_rejected.py  [plugins/]
+    tests/test_invariant_layout_tree.py  [.claude/skills/, README.md, docs/, plugins/]
+    tests/test_ld_library_path_is_not_relayed_as_conditional.py  [plugins/]
+    tests/test_license_cap_branch_offers_the_apply_route.py  [plugins/]
+    tests/test_license_env_var_absent.py  [plugins/]
+    tests/test_license_limit_is_written_only_from_a_measurement.py  [plugins/]
+    tests/test_license_limit_reading_is_complete.py  [plugins/]
+    tests/test_load_reconciliation_has_two_stages.py  [plugins/]
+    tests/test_mapping_rejection_fallback.py  [plugins/]
+    tests/test_mapping_samples_stay_out_of_senzing_ready.py  [plugins/]
+    tests/test_markdown_hygiene.py  [plugins/]
+    tests/test_mcp_call_contracts.py  [plugins/]
+    tests/test_mcp_negative_rationale_shape.py  [.claude/skills/, plugins/]
+    tests/test_model_effort_nudge_edges.py  [docs/, plugins/]
+    tests/test_model_guidance_behavior.py  [docs/, plugins/]
+    tests/test_model_guidance_sync.py  [README.md, docs/, plugins/]
+    tests/test_model_switch_rule_is_stated_once.py  [plugins/]
+    tests/test_module06_orchestrator_guidance.py  [plugins/]
+    tests/test_module3_check_lists_agree.py  [docs/, plugins/]
+    tests/test_module5_phase3_exits_return_to_the_per_source_loop.py  [plugins/]
+    tests/test_module6_data_dirs_are_copied_or_excluded.py  [docs/, plugins/]
+    tests/test_module_0_suggested_queries_are_measured.py  [plugins/]
+    tests/test_module_selection_sync.py  [plugins/]
+    tests/test_no_host_control_is_offered_as_a_question.py  [plugins/]
+    tests/test_no_pip_install_senzing.py  [plugins/]
+    tests/test_no_progress_gate_returns_to_data_collection.py  [plugins/]
+    tests/test_normalize_docs_markdown.py  [docs/, plugins/]
+    tests/test_one_question_per_turn_is_registered.py  [.claude/skills/, plugins/]
+    tests/test_organization_search.py  [plugins/]
+    tests/test_packaging_consent_gate_ships.py  [plugins/]
+    tests/test_partial_row_and_schema_coverage.py  [plugins/]
+    tests/test_payload_key_collides_with_registered_feature.py  [plugins/]
+    tests/test_phase3_interaction_prose.py  [plugins/]
+    tests/test_phase_d_how_state_audit.py  [.claude/skills/, docs/, plugins/]
+    tests/test_phasec_generated_path_asks_once.py  [plugins/]
+    tests/test_preparation_recap_template.py  [plugins/]
+    tests/test_quality_assessment_type_name_check.py  [docs/, plugins/]
+    tests/test_quality_score_inputs_are_checked_before_scoring.py  [plugins/]
+    tests/test_question_options_render_beneath.py  [plugins/]
+    tests/test_reassurance_precedes_question.py  [plugins/]
+    tests/test_recap_measure_font_safety.py  [plugins/]
+    tests/test_recap_sdk_version_is_the_installed_one.py  [plugins/]
+    tests/test_recap_summary_blocks.py  [docs/, plugins/]
+    tests/test_recap_video.py  [docs/, plugins/]
+    tests/test_record_limit_negative_is_rescoped.py  [.claude/skills/, plugins/]
+    tests/test_release_bumps_version_changelog_and_tag_together.py  [.claude/skills/, docs/, plugins/]
+    tests/test_release_covers_every_version_site.py  [.claude/skills/, plugins/]
+    tests/test_retired_vocabulary.py  [README.md, docs/, plugins/]
+    tests/test_retrofit_files_issues.py  [.claude/skills/, README.md, docs/, plugins/]
+    tests/test_root_readme_exception.py  [README.md, plugins/]
+    tests/test_rule_citations_name_their_file.py  [plugins/]
+    tests/test_sdk_parameter_shapes.py  [plugins/]
+    tests/test_sdk_setup_prerequisites.py  [plugins/]
+    tests/test_search_docs_calls_pass_a_query.py  [plugins/]
+    tests/test_shipped_negative_markers_are_html_comments.py  [.claude/skills/, plugins/]
+    tests/test_sqlite_load_time_prompt_is_defined_and_matched.py  [plugins/]
+    tests/test_stdlib_writer_character_safety.py  [plugins/]
+    tests/test_step_8b_uses_module_6s_sqlite_threshold.py  [plugins/]
+    tests/test_suppressed_branch_has_no_pinned_question.py  [plugins/]
+    tests/test_tab_set_is_singular.py  [docs/, plugins/]
+    tests/test_the_2026_09_30_audit_rules_cite_their_invariants.py  [.claude/skills/, plugins/]
+    tests/test_the_range_boundary_reports_what_it_retires.py  [.claude/skills/, plugins/]
+    tests/test_the_seven_triaged_rules_keep_their_citations.py  [.claude/skills/, plugins/]
+    tests/test_tool_directives_do_not_override_interaction.py  [plugins/]
+    tests/test_update_offer_order_and_existing_install_outcome.py  [plugins/]
+    tests/test_visualization_model_build_scales.py  [plugins/]
+    tests/test_viz_histogram_integer_ticks.py  [plugins/]
+    tests/test_viz_settings_resolution.py  [plugins/]
+    tests/test_viz_tab_consolidation.py  [plugins/]
+    tests/test_windows_forms_at_hand_run_sites.py  [plugins/]
+    tests/test_windows_powershell_guidance.py  [docs/, plugins/]
+
+  #425, every other candidate: 23
+    tests/test_all_runs_every_argument_free_view.py  [.claude/skills/]
+    tests/test_audit_skill_reads_the_newest_entries.py  [.claude/skills/]
+    tests/test_audit_skill_states_no_stale_count.py  [.claude/skills/]
+    tests/test_ci_workflow_guards_the_fpdf2_matrix.py  [.claude/skills/]
+    tests/test_compact_dev_environment_leaves_specs_frozen.py  [.claude/skills/]
+    tests/test_coverage_ledger.py  [.claude/skills/, docs/]
+    tests/test_declined_ledger.py  [.claude/skills/]
+    tests/test_dependency_reading_rules.py  [docs/]
+    tests/test_dry_run_files_issues.py  [.claude/skills/, README.md]
+    tests/test_feedback_ledger.py  [.claude/skills/]
+    tests/test_fpdf2_dependency_is_declared.py  [README.md, docs/]
+    tests/test_new_hard_rules_are_cited_or_deferred.py  [.claude/skills/]
+    tests/test_no_instruction_writes_into_specs.py  [docs/]
+    tests/test_no_stale_blocked_claim.py  [README.md, docs/]
+    tests/test_one_commit_convention.py  [docs/]
+    tests/test_readme_does_not_undercount_claude_interfaces.py  [README.md, docs/]
+    tests/test_review_invariants_queue.py  [.claude/skills/]
+    tests/test_rule_bullets_are_read_or_reported.py  [.claude/skills/]
+    tests/test_skills_state_their_commands_argument_handling.py  [.claude/skills/]
+    tests/test_specs_are_frozen.py  [.claude/skills/, README.md, docs/]
+    tests/test_todo_triage_is_recorded.py  [README.md]
+    tests/test_unattended_loop_is_label_gated.py  [.claude/skills/, docs/]
+    tests/test_user_level_copies_govern.py  [.claude/skills/, docs/]
+  ```
+
+  ⚠️ **The lists are this commit's measurement, not a fixed set.** A sweep re-runs the command on its own base, which may differ (for instance after #423), and records its own output; where it differs from the lists above, the re-run wins and the sweep says what moved.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`), of `pending_invariants.py list` and `check`, and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** A guard whose rule is about a phrase matches it across a line wrap. The rule already shipping, quoted:
+    - ⛔ **A guard whose rule is about a phrase or a sentence MUST match it across a line wrap; a guard that reads single lines on purpose MUST say why.** — in `tests/_wrapped_text.py`
+
+  **Sites it affects:** the statement is the module docstring of `tests/_wrapped_text.py`; its first consumer is `tests/test_why_key_details_flag_is_cited_not_guessed.py`. Every candidate in the two partitions above is a site the sweeps (#424, #425) give a verdict under this rule, and #390's guard is a site where a sentence would be owed (see its verdict above). No site is under `plugins/`, so `test_new_hard_rules_are_cited_or_deferred` does not scan it, and `pending_invariants.py check` resolves the quote through the repository root.
+
+  ⚠️ **Why a new id rather than a note on INV-282 or INV-246.** INV-282 says a guard's matcher is derived from the claim rather than from the phrasings seen, and INV-246 says a guard derives its sites by scan. Neither says anything about where a phrase falls on the page: a matcher derived from the claim, swept across every derived site, still misses the claim when the column wraps it. #387 was exactly that case: the matcher and the sites were right, and the read was one line at a time. The issue asks for a drafted rule both sweeps enforce, so it is drafted here as its own invariant; the maintainer may instead fold it into INV-282 as a dated note.
+
+  The drafted wording:
+
+  **INV-NNN** — A guard in `tests/` whose rule is about a phrase or a sentence in Markdown prose MUST match it across a line wrap, and MUST still report the line on which each match starts. The shared reader is `match_lines(text, pattern)` in `tests/_wrapped_text.py`, which collapses whitespace within each Markdown block and never across a blank line, a code fence, a table row, a heading or the front matter; a guard that cuts text into sentences or code spans with whitespace collapsed (#381's `sentences`, #390's `inline_invocations`) meets the rule too. A guard that reads single lines on purpose, because its rule is about a line (a command line, a table row, a heading, a fence, a line-anchored marker), MUST say why, in its docstring or at the read. ⛔ Markdown wraps prose wherever the column runs out, so a line-at-a-time read certifies only the phrasings that happen to fit on one line: Module 7 Step 3a carried a retired claim for a month while the guard against it passed, because "no" ended one line and "flag is *documented*" began the next (#387). Enforced by `tests/test_wrapped_text.py`, which pins the matcher's block rules, and by `tests/test_why_key_details_flag_is_cited_not_guessed.py`, its first consumer; #424 and #425 apply it to the remaining guards. (Source: GitHub issue #426, part of #418.)
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant** (INV-309). No ⛔ line is added to the plugin or to `.claude/`, and none is demoted; the one ⛔ line this run adds is the rule above, in `tests/_wrapped_text.py`. `specs/INVARIANTS.md` is not edited.
+
 ## invariant-review-2026-10-03
 
 - **Implemented:** 2026-10-03 (**Not a spec** — a dated record of one review session)
