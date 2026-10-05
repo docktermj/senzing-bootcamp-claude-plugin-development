@@ -1121,7 +1121,7 @@ From `plugins/senzing-bootcamp/.claude-plugin/plugin.json`:
 ```json
 {
   "name": "senzing-bootcamp",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "description": "Guided bootcamp for learning Senzing entity resolution with Claude Code, from first demo to production deployment.",
   "author": {
     "name": "Senzing"

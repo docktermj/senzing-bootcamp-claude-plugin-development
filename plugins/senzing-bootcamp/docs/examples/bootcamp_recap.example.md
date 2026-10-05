@@ -5,7 +5,7 @@
 **Completed:** 2026-07-30
 **Programming language:** Python
 **Path:** Core
-**Plugin version:** 0.5.3
+**Plugin version:** 0.6.0
 **Operating system:** Ubuntu 24.04.4 LTS (x86_64)
 **Python version:** 3.12.3
 **Language runtime:** Python 3.12.3

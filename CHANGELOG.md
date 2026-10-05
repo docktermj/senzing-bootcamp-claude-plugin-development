@@ -1,0 +1,1454 @@
+# Changelog
+
+Every released version of the Senzing Bootcamp Claude Plugin, newest first. The
+downstream development repositories (Kiro, ChatGPT, Copilot) port from a **tagged**
+release rather than from HEAD, so an entry here with no matching git tag is not a
+release anyone can target.
+
+Written by `.claude/skills/release/release.py`. Do not hand-edit an entry's heading:
+the version, this file and the tag are written together on purpose.
+
+> Entries **0.5.3 and earlier** were reconstructed from git history when this file was
+> first created. They were not authored at release time, so they list commit subjects
+> rather than curated release notes.
+
+## [0.6.0] - 2026-10-04
+
+- docs: fix BLUEPRINT.md spelling and its VERSION_SITES copy
+- fix(release): move BLUEPRINT.md's manifest copy with the version
+- docs: add BLUEPRINT.md
+- docs(ledger): record the entity specification report sent upstream
+- docs(invariants): apply the inv-346 verdict-coverage correction
+- docs(module-05): correct three descriptions of the Entity Specification
+- docs(module-04): replace step 8b's stale nearby-wordings warning
+- test(guards): fail when a line-reading test gives no inv-346 verdict
+- test(guards): give the last two line-reading guards their verdicts
+- docs(invariants): register inv-346 and apply the 2026-10-04 review
+- fix(module-05): state the full output's file_path write once, at step 18
+- docs(invariants): draft an INV-207 note naming the Phase 6 section
+- fix(graduation): give step 1c's recap venv a windows form
+- test(windows): fix the pwsh negative control and the exit rationale
+- fix(windows): replace senzing-env.bat with a dot-sourced senzing-env.ps1
+- test(search-routes): re-measure the 15 records stamped before the rebuild
+- test(guards): match maintainer and docs guard phrases across line wraps
+- test(guards): match plugins/ guard phrases across line wraps
+- test: re-point two guards at the rules that ship now
+- test: add shared wrap-aware matcher and move #387's guard onto it
+- docs(invariants): register inv-345 and apply the 2026-10-03 review
+- docs: fix eight small coherence and concision drifts
+- fix(module-5): send test runs to data/mapping and write the full output
+- fix(maintainer): make auto-test record findings first and name Phase 6
+- docs(module-5): defer the synthesized-source disclosure rule
+- fix(graduation): apply INV-340 at three graduation-video sites
+- fix(graduation): give hand-run commands a PowerShell 5.1 form
+- fix(graduation): resolve the screenshot remedy's capture tool
+- fix(onboarding): name Data collection in the welcome's licensing bullet
+- fix(module-07): point three references at the step and state that own them
+- chore(ledger): record the #387 commit hash
+- fix(module-07): state the documented WHY_KEY_DETAILS requirement in step 3a
+- fix(compact-dev-environment): leave specs frozen and route invariant changes to review-invariants
+- chore(ledger): record the #385 commit hash
+- fix(module-04): write license_record_limit with its INV-295 marker
+- chore(ledger): record the #384 commit hash
+- fix(module-05): return every phase 3 exit to the per-source loop
+- chore(ledger): record the #392 commit hash
+- fix(module-07): give the return to data quality mapping a receiving route
+- chore(ledger): record the #383 commit hash
+- test(search-routes): stamp and band every inline search_docs route
+- chore(ledger): record the #382 commit hash
+- fix(module-03b): state INV-091's full refusal and caption the inert tab
+- chore(ledger): record the #381 commit hash
+- fix(module-02): narrow the existing-install announcement to the install
+- chore(ledger): record the 2026-10-02 audit commit hash
+- docs(specs): record the 2026-10-02 production-readiness audit
+- docs(module-0): restamp the primer's routes on the 2026-10-02 index
+- docs: fix four stale lines noticed during the 2026-10-01 runs
+- chore(ledger): record that #320's upstream note was sent
+- docs(ledger): record the 2026-10-02 invariant review
+- docs(ledger): hold #321's open-me-first deferral with packaging
+- docs(invariants): fold the production registry projection into inv-186
+- docs(ledger): hold #329's step 7 placement deferral
+- docs(invariants): register inv-344, no whole-run question mid-loop
+- docs(invariants): fold the senzing-ready exclusivity rule into inv-084
+- docs(invariants): add the capped entity graph notes to inv-154
+- docs(invariants): inv-175 note: the env script's root marker
+- docs(invariants): inv-222 note: where the c# package source comes from
+- docs(invariants): correct inv-091 by withdrawing its cdn fallback
+- docs(invariants): extend inv-331 to data collection's step 8b heads-up
+- docs(invariants): inv-291 note: a route records its result and rank
+- docs(invariants): inv-209 note: shipped markers sit in html comments
+- docs(invariants): inv-340 note: the storyboard opens on an intro scene
+- docs(invariants): add the name-free screenshot allow-list to inv-340
+- docs(invariants): add the piper install offer to inv-340
+- docs(invariants): add the no-voice guidance to inv-340
+- docs(invariants): inv-342 note: every voiced stream is leveled first
+- docs(invariants): add the piper voice rules to inv-342
+- docs(invariants): add the recap video's audio contract to inv-342
+- docs(invariants): inv-239 note: post-gate regeneration is exempt
+- docs(invariants): inv-239 note: invented entities own their identifiers
+- fix(module-05): offer a return to data collection when nothing is left to fix
+- fix(recap-video): level the voice before the mix so it reaches -16 LUFS
+- fix(module-05): save each source's sample to data/mapping/
+- fix(module-05): ask the collision question only when sameness is unclear
+- fix(search-routes): record measured routes for the gallery's other sources
+- fix(search-routes): record measured routes for what modules 0 and 1 teach
+- fix(model-guidance): name the current model family and the effort proxy
+- fix(data-collection): define step 8b's sqlite load-time marker
+- fix(module-05): align mapping prose with server 1.37.16
+- fix(viz): refuse to render when the vendored d3 asset is missing
+- fix(data-collection): use module 6's sqlite threshold in step 8b
+- fix(sdk-setup): record database_type before step 7's branches
+- feat(graduation): open the graduation video on an intro scene
+- fix(graduation): keep name-bearing screenshots out of the video
+- fix(graduation): write the registry the copied orchestrator reads
+- fix(scripts): give the document pdf alias its own help and subtitle
+- fix(packaging): build open_me_first.md from the manifest's included list
+- fix(module-02): take the c# package source from the install reply
+- fix(module-04): give each generated entity its own identifiers
+- fix(module-02): load the env script before step 8 writes the config
+- fix(viz): state the cap in the entity graph notes on a capped payload
+- feat(graduation): narrate the recap video with a local Piper voice
+- feat(graduation): explain a voiceless recap video and how to fix it
+- feat(graduation): add a ducked, normalized music bed to the recap video
+- fix(plugin): wrap the two bare MCP-NEGATIVE markers in HTML comments
+- fix(module-05): cite mapping_workflow step 2 for the payload key rule
+- chore(ledger): record that P1-3 was sent upstream after the 2026-10-01 dry run
+- fix(ledger): use the US spelling "honored" in the 2026-10-01 dry-run entry
+- chore(ledger): record the 2026-10-01 dry run and archive its feedback
+- chore(ledger): record the 2026-10-01b invariant review's commit hash
+- docs(invariants): note that inv-317's command sites no longer exist
+- chore(ledger): record the #296 implementation commit hash
+- test(guards): resolve every slash command in the skills and overlays
+- chore(ledger): record the #285 implementation commit hash
+- docs(audit): record findings where inv-317 allows, not "never into specs"
+- chore(ledger): record the 2026-10-01 invariant review's commit hash
+- docs(specs): record the 2026-10-01 invariant review
+- docs(invariants): correct inv-229's count of the installation checks
+- docs(invariants): register inv-343, no default type_discriminator
+- docs(invariants): register inv-342, the recap-video renderer contract
+- docs(invariants): register inv-341, the aggregates-only b-roll entry
+- docs(invariants): register inv-340, the graduation video step
+- docs(invariants): register inv-339, existing install skips only install
+- docs(invariants): register inv-338, the eula before every install
+- docs(invariants): add data/subsets/ to inv-050's project tree
+- docs(invariants): narrow inv-222 to the route the server names
+- docs(invariants): note that inv-330's held #154 rule is now inv-334
+- chore(ledger): record the #293 implementation commit hash
+- fix(graduation): point to ground-rules for the model-switch rule
+- chore(ledger): record the #292 implementation commit hash
+- fix(module-05): align modules 5 and 6 with the rules they restate
+- chore(ledger): record the #291 implementation commit hash
+- docs(specs): point every live-record list at the README table
+- chore(ledger): record the #290 implementation commit hash
+- docs(invariants): cite the governing invariant at seven hard rules
+- chore(ledger): record the #289 implementation commit hash
+- fix(guides): apply inv-132 at the module 6 and module 7 sites
+- chore(ledger): record the #288 implementation commit hash
+- docs(invariants): retire pending wording for applied amendments
+- chore(ledger): record the #287 implementation commit hash
+- fix(module-02): give phase 3 a route for every server language
+- chore(ledger): record the #286 implementation commit hash
+- fix(graduation): exclude data/subsets/ and queue its tree entry
+- chore(ledger): record the #284 implementation commit hash
+- test(module-02): queue the EULA and existing-install rules for review
+- chore(ledger): record the #300 implementation commit hash
+- feat(graduation): offer, script and render the graduation video
+- chore(ledger): record the #298 implementation commit hash
+- feat(module-completion): save each module's graduation-video b-roll
+- chore(ledger): record the #299 implementation commit hash
+- feat(scripts): add the bundled recap-video renderer
+- chore(ledger): record the #283 implementation commit hash
+- fix(module-5): map a retyped name as NAME_ORG and cite INV-336
+- chore(ledger): record the #282 implementation commit hash
+- fix(module-3): use one check list and one success rule
+- chore(ledger): record the #294 implementation commit hash
+- docs(inv-316): mark /order-github-issues and /escalate-to-parent
+- chore(ledger): record the 2026-09-30 audit commit hash
+- docs(specs): record the 2026-09-30 production-readiness audit
+- chore(state): record the invariant-review commit hash
+- docs(invariants): apply INV-307's dated correction
+- chore(ledger): record the #258 implementation commit hash
+- test(specs): parse the live-record list from the README table
+- chore(state): record the invariant-review commit hash
+- docs(invariants): record the second 2026-09-30 invariant review
+- chore(ledger): record the #259 implementation commit hash
+- fix(module-06): load each source's load_subset block in Phase C Step 19
+- chore(ledger): record the #262 implementation commit hash
+- refactor(maintainer): delete the ten same-name command files
+- chore(state): record the invariant-review commit hash
+- docs(invariants): record the 2026-09-30 invariant review
+- chore(ledger): record the #233 implementation commit hash
+- test(conformance): check the maintainer surface in the reverse contract
+- docs(maintainer): demote four local instructions to plain prose
+- chore(ledger): record the #257 implementation commit hash
+- test(specs): widen the freeze to every file and probe the layout tree by path
+- chore(ledger): record the #241 implementation commit hash
+- fix(skills): state each same-name command's rules in its skill
+- chore(ledger): record the #235 implementation commit hash
+- fix(invariants): align inv-132, inv-157 and inv-204 sites with server
+- chore(ledger): record the #227 implementation commit hash
+- fix(citations): name the governing invariant at the #227 mis-cited sites
+- chore(ledger): record the #225 implementation commit hash
+- fix(download-resource): describe the chunked inline reply and stop pinning sizes
+- chore(ledger): record the #216 implementation commit hash
+- docs(inv-314): name what a run may create without a per-record yes
+- chore(ledger): record the #232 implementation commit hash
+- fix(module-06): report an empty how-state population as nothing to check
+- chore(ledger): record the #220 implementation commit hash
+- fix(module-05): apply a retype decision at mapping steps 10 and 11
+- chore(state): record the invariant-review commit hash
+- docs(invariants): record the 2026-09-29 invariant review
+- chore(state): note the #239 supersession-guard fix in the ledger
+- test(invariants): record INV-302's dated amendment as no supersession
+- chore(state): record the #239 commit hash
+- refactor(skills): define the two user-level skills only at user level
+- chore(state): record the #240 commit hash
+- chore(skills): retire /check-skill-drift
+- chore(state): record the #236 commit hash
+- test(review-invariants): read deferral quotes through parse()
+- chore(state): record the #228 commit hash
+- docs(dry-run): cite or defer the maintainer-surface hard rules
+- chore(state): record the #222 commit hash
+- fix(module-02): read release notes before the update offer
+- chore(state): record the #234 commit hash
+- fix(plugin): correct stale text flagged by the 2026-09-28 audit
+- chore(state): record the #238 commit hash
+- feat(module-06): load each phase c source from its subset record
+- chore(state): record the #231 commit hash
+- refactor(citations): re-cite INV-065 sites to the rules that own them
+- chore(state): record the #224 commit hash
+- fix(retrofit): describe the report, not the retired copy
+- chore(state): record the #223 commit hash
+- feat(feedback-to-issues): state both closed upstream sets and their mapping
+- chore(state): record the #237 commit hash
+- feat(module-06): record every phase b subset choice in load_subset
+- chore(state): record the #219 commit hash
+- fix(module-03): point the SENZ7426 relay at Module 2 Step 8
+- chore(state): record the #218 commit hash
+- fix(skills): make every license reading an owner or an INV-300 pointer
+- chore(state): record the #221 commit hash
+- fix(module-06): give step 8b's sample one chain role in load reconciliation
+- chore(state): record the #215 commit hash
+- refactor(skills): let the user-level copies govern both skills
+- chore(state): record the 2026-09-28 audit commit hash
+- docs(specs): record the 2026-09-28 production-readiness audit
+- chore(state): record the #200 commit hash
+- fix(citations): restamp three mcp citations re-read at 1.37.14
+- chore(state): record the #198 commit hash
+- fix(schemas): make get_stats the empty response_schemas example
+- chore(state): record the #202 commit hash
+- fix(retrofit): compare public against the last-propagated tag
+- chore(state): record the #191 commit hash
+- fix(retrofit): report every path instead of stopping at the first diff
+- chore(state): record the #195 commit hash
+- fix(ground-rules): describe a gated reporting_guide reply as no content
+- chore(state): record the #197 commit hash
+- fix(ground-rules): report an unreachable access_steps example
+- chore(state): record the #194 commit hash
+- fix(module-02): route update commands and 4.x upgrades to search_docs
+- chore(state): record the #199 commit hash
+- fix(module-02): scope the macos supportpath literal to cask 4.4.x
+- chore(state): record the #192 commit hash
+- fix(module-02): ask the eula question before installing anything
+- chore(state): record the #196 commit hash
+- fix(module-07): replace the fixed why_* defect as the worked example
+- fix(visualization): state RECORD_FEATURES' response path positively
+- chore(state): record the #193 commit hash
+- fix(visualization): state JSON_DATA's flag requirement, not get_record-only
+- chore(ledger): record the 2026-09-28 MCP delegation sweep
+- chore(state): record the #167 commit hash
+- fix(feedback): record an unanswered upstream offer as offer pending
+- test(queries): record the #158 search_docs queries as verified
+- chore(state): record the #158 commit hash
+- fix(module-05): check PERSON-typed records for organization names
+- chore(state): record the #157 commit hash
+- fix(module-06): reconcile the load count in two stages
+- chore(state): record the #161 commit hash
+- fix(java): name a shared class's file after the class
+- chore(state): record the #154 commit hash
+- feat(module-06): audit every multi-record entity's how state in Phase D
+- chore(state): record the #166 commit hash
+- fix(module-07): pin the teardown step, entity count and 2-degree method
+- chore(state): record the #162 commit hash
+- fix(module-06): put the volume question's framing before its pointer
+- chore(state): record the #160 commit hash
+- fix(module-06): state how to split a match key before counting suppressors
+- chore(state): record the #165 commit hash
+- fix(module-06): choose the first source by step 14's heuristics
+- chore(state): record the #155 commit hash
+- fix(module-06): store no record count for a volume option reply
+- chore(state): record the #164 commit hash
+- fix(module-06): stop phase c re-opening the settled sqlite load size
+- chore(state): record the #153 commit hash
+- fix(dry-run): draft findings into the ledger and file issues, not specs
+- chore(state): record the #152 commit hash
+- fix(dry-run): stop the scaffold banner claiming an unreachable chip clip
+- chore(state): record the #168 commit hash
+- fix(graduation): read the installed SDK version from SDK setup's record
+- chore(state): record the #169 commit hash
+- fix(viz): name an unsettled final state on the How tab
+- chore(state): record the #163 commit hash
+- fix(module-06): key the SQLite pre-load heads-up on the loadable total
+- chore(state): record the #150 commit hash
+- fix(module-02): stop saying search_docs has no record-limit figure
+- chore(state): record the #149 commit hash
+- fix(module-05): stop calling bare-globalization guide hits a stub
+- chore(state): record the #151 commit hash
+- fix(dry-run): flag positive universals over results as a census
+- chore(state): record the #156 commit hash
+- fix(module-06): scope phase c's no-hand-written rule to sdk calls
+- Update
+- chore(state): record the #159 commit hash
+- fix(viz): compare legend combination rows in the encoding self-check
+- docs(specs): record the 2026-09-24 invariant review
+- docs(invariants): register INV-316
+- docs(invariants): register INV-315
+- docs(invariants): register INV-314
+- docs(invariants): register INV-313
+- chore(state): advance the #142 run state to pr-open
+- chore(state): record the #142 commit hash
+- fix(specs): stop documenting writes into the frozen archive
+- chore(state): advance the #143 run state to pr-open
+- chore(state): record the #143 commit hash
+- fix(invariants): name the partial-supersession marker and publish it
+- chore(state): correct the #141 comment log
+- chore(state): advance the #141 run state to pr-open
+- chore(state): record the #141 commit hash
+- fix(family): retire R12's stale premise and re-arm the guard behind it
+- chore(state): record the #140 commit hash
+- fix(family): bind the canonical-operation table in both directions
+- chore(state): record that #135 reached pr-open
+- chore(specs): record the audit record commit hash
+- docs(specs): record the 2026-09-24 production-readiness audit
+- docs(dry-run): warn that a host Markdown hook fights the walk
+- chore(state): record that #114 reached pr-open
+- feat(delegate-to-mcp-server): file GitHub issues instead of spec files
+- chore(state): record that #134 reached pr-open
+- docs(module-07): point step 2 at the factory-lifetime rule (INV-152)
+- chore(state): record that #53 reached pr-open
+- docs(specs): record the todo.md triage and drop the stale pointer
+- chore(state): record the #112 commit hash
+- fix(invariants): one supersession syntax, and status from a bullet
+- chore(state): record the #79 commit hash
+- feat(review-invariants): queue amendments to registered invariants
+- chore(state): record the #108 commit hash
+- fix(conformance): state the corpus and count what ships outside it
+- chore(state): record the #106 commit hash
+- test(filing): hold every filing instruction to the gate beside it
+- fix(skills): state the blind spots even when nothing was compared
+- chore(state): record the #128 commit hash
+- feat(skills): share a rules block between both skill copies and detect drift
+- chore(state): record the #126 commit hash
+- fix(skills): bring the in-repo implement-github-issue up to R8
+- chore(state): record the #124 commit hash
+- feat(family): R8 names the issue it suggests and stops
+- chore(state): record the #122 commit hash
+- fix(invariants): stop one word flipping INV-216 to status unclear
+- chore(state): record the #113 commit hash
+- refactor(specs): move list_specs.py beside the tests that consume it
+- chore(state): record the #119 commit hash
+- docs(ledger): repair an entry corrupted by a wrapped-phrase match
+- feat(family): R8 requires a dependency report before the choice
+- chore(state): record the #117 commit hash
+- docs(family): record the R8 and R12 amendments in the page itself
+- chore(state): record the #111 commit hash
+- docs(family): adopt FAMILY_WORKFLOW.md as the normative workflow
+- chore(state): record the #110 commit hash
+- fix(review-invariants): read every rule bullet or report it unparsed
+- chore(state): record the #105 commit hash
+- fix(review-invariants): read an Enforced by clause that wrapped
+- chore(state): record the #55 commit hash
+- docs(development): diagram the repository and per-change flow
+- docs(invariants): register INV-312
+- docs(invariants): register INV-311
+- chore(state): record the #88 commit hash
+- feat(invariants): publish a machine-readable manifest for downstream ports
+- chore(state): record the #54 commit hash
+- feat(retrofit): file issues instead of writing into the dev tree
+- chore(state): record the #92 commit hash
+- fix(review-invariants): separate ineligible files from merely unscanned
+- chore(state): record the #96 commit hash
+- test(pointers): widen the pointer guard to every root and fold in the second
+- chore(state): record the #56 commit hash
+- docs(memory): adopt one commit convention repo-wide
+- chore(state): record the #97 commit hash
+- test(citations): pin the statement of what verify does not check
+- chore(state): advance the #91 run state to pr-open
+- chore(state): record the #91 commit hash
+- docs(tests): correct the INV-308 disclosure to the coverage it actually has
+- chore(state): advance the #90 run state to pr-open
+- chore(state): record the #90 commit hash
+- fix(docs): stop saying the audit half is blocked five days after it was not
+- chore(state): record the audit record commit hash
+- docs(specs): record the 2026-09-21 production-readiness audit
+- chore(state): advance the #58 run state to pr-open
+- chore(state): record the #58 commit hash
+- fix(review-invariants): record a hold in the ledger block, not the spec file
+- chore(state): record the invariant-review-2026-09-21 commit hash
+- docs(invariants): register INV-310
+- chore(state): advance the #78 run state to pr-open
+- chore(state): record the #78 commit hash
+- fix(review-invariants): stop at the working tree instead of committing
+- chore(state): advance the #83 run state to pr-open
+- chore(state): record the #83 commit hash
+- feat(conformance): report the untested span's citation rate
+- chore(state): advance the #77 run state to pr-open
+- chore(state): record the #77 commit hash
+- fix(review-invariants): state the scanned corpus on every sites run
+- chore(state): advance the #80 run state to pr-open
+- chore(state): record the #80 commit hash
+- fix(conformance): stop the INV-282 check reporting clean over lines it cannot reach
+- chore(state): advance the #76 run state to pr-open
+- chore(state): record the #76 commit hash
+- feat(conformance): report what an audit record retires from the range
+- chore(state): advance the #74 run state to pr-open
+- chore(state): record the #74 commit hash
+- fix(conformance): stop the reverse-contract gate discarding rules outside plugins/
+- chore(state): advance the #72 run state to pr-open
+- chore(state): record the audit record commit hash
+- docs(specs): record the 2026-09-17 production-readiness audit
+- chore(state): record the #72 commit hash
+- fix(specs): suffix the duplicate 2026-09-16 review heading
+- chore(state): advance the #69 run state to pr-open
+- chore(state): record the #69 implement-github-issue run
+- fix(audit): record findings as issues or in the ledger, never in specs/
+- chore(state): advance the #51 run state to pr-open
+- docs(loop): cite #69 as the issue blocking the audit half
+- chore(state): record the #51 implement-github-issue run
+- feat(commands)!: rename the loop to /unattended-issue-loop, label-gated
+- chore(state): record the #60 retirement PR
+- chore(state): advance the #60 run state to pr-open
+- feat(commands)!: retire /implement-spec, keeping list_specs.py
+- fix(invariants): widen INV-213's subject and close the review
+- fix(invariants): amend four invariants naming a retiring command
+- chore(state): advance the #60 run state to pr-open
+- chore(state): record the #60 implement-github-issue run
+- feat(commands): re-verify Senzing facts on the issue-driven path
+- fix(specs): restore the Commit field lost in the merge resolution
+- chore(state): advance the #49 run state to pr-open
+- chore(state): record the #49 implement-github-issue run
+- feat(commands)!: rename /feedback-to-specs and file issues instead of specs
+- docs(specs): record the 2026-09-16 invariant review
+- feat(invariants): register INV-309, the issue path accounts for its rules
+- feat(invariants): register INV-308, report what could not be verified
+- chore(state): advance the #59 run state to pr-open
+- chore(state): record the #59 implement-github-issue run
+- fix(review-invariants): report what check could not verify
+- chore(state): advance the #50 run state to pr-open
+- chore(state): record the #50 implement-github-issue run
+- feat(commands): add /implement-github-issue and gate invariant capture
+- feat(invariants): register INV-307, specs/ is a read-only archive
+- chore(state): advance the #52 run state to pr-open
+- chore(state): record the #52 implement-github-issue run
+- feat(specs): freeze specs/ and record the 2026-09-15 cutover
+- chore(state): advance the #47 run state to pr-open
+- chore(state): record the #47 implement-github-issue run
+- feat(invariants): register INV-306 and close the 2026-09-14 review
+- feat(invariants): register INV-305, the fpdf2 CI matrix runs both cells
+- feat(invariants): register INV-304, the propagate mirror never publishes .claude/
+- feat(invariants): register INV-303, every command names a skill that resolves
+- feat(invariants): register INV-302, the maintainer command surface agrees both ways
+- feat(invariants): register INV-301, releases move every version record or none
+- chore(state): advance the #27 run state to pr-open
+- feat(release): add the /release skill and command
+- chore(state): advance the #39 run state to pr-open
+- chore(state): record the #39 implement-github-issue run
+- feat(tests): pin the maintainer command set in both directions
+- chore(state): advance the #38 run state to pr-open
+- feat(conformance): see new hard rules on the maintainer surface, and defer four invariants
+- docs(specs): record the two 2026-09-14 audit findings
+- chore(state): advance the #26 run state to pr-open
+- chore(state): record the #26 implement-github-issue run
+- feat(commands): add /unattended-spec-loop slash command
+- chore(state): advance the #25 run state to pr-open
+- chore(state): record the #25 implement-github-issue run
+- feat(commands): add /review-invariants slash command
+- chore(state): advance the #24 run state to pr-open
+- chore(state): record the #24 implement-github-issue run
+- feat(commands): add /compact-dev-environment slash command
+- chore(state): advance the #23 run state to pr-open
+- chore(state): record the #23 implement-github-issue run
+- feat(commands): add /delegate-to-mcp-server slash command
+- chore(state): advance the #22 run state to pr-open
+- chore(state): record the #22 implement-github-issue run
+- feat(commands): add /production-readiness-audit slash command
+- chore(state): record the #21 implement-github-issue run
+- feat(commands): add /auto-test slash command
+- chore(state): advance the #20 run state to pr-open
+- chore(state): record the #20 implement-github-issue run
+- feat(commands): add /dry-run slash command
+- style: use prettier's emphasis delimiter in the linters README
+- ci: fetch full history, and configure the linters the org template configures
+- ci: run the suite with and without fpdf2 on every pull request
+- #30 Add state
+- test(deps): declare fpdf2 and skip rather than fail without it
+- #19 Add state
+- feat(commands): add /retrofit-from-public slash command
+- #18 Add skill
+- feat(commands): add /propagate-to-public slash command
+- #17 Rename
+
+## [0.5.3] - 2026-09-03
+
+- chore(specs): record the owner-side classifier commit hash
+- fix(invariants): classify a canonical-statement pointer as a pointer
+- chore(specs): record the cycle-2 audit commit hash
+- docs(specs): record the cycle-2 audit, which found nothing
+- chore(specs): record the INV-300 notes-rewording commit hash
+- fix(invariants): take the line numbers out of INV-300's notes
+- docs(specs): block the owner-side detector spec on an unfirable control
+- chore(specs): record the cycle-1 audit commit hash
+- docs(specs): record the cycle-1 audit and its two findings
+- chore(specs): record the INV-300 two-sides commit hash
+- fix(invariants): give INV-300 its owner side, approved before the run
+- chore(specs): record the INV-300 guard-scope commit hash
+- fix(invariants): assert INV-300's owner obligation and record what is not
+- chore(specs): record the 2026-09-03f audit commit hash
+- docs(specs): record the 2026-09-03f audit and its two findings
+- chore(specs): record the INV-300 commit hash
+- feat(invariants): register INV-300 and cite it at every ownership claim
+- fix(specs): drop the unminted id again, this time from the queue quote
+- docs(specs): note that review-invariants cannot see this draft
+- chore(specs): record the cycle-3 audit commit hash
+- docs(specs): record the cycle-3 audit, which found nothing
+- chore(specs): record the merge-probe commit hash
+- fix(audit-tooling): see a merge and a root commit in the work-commit probe
+- fix(specs): drop the unminted invariant id that turned the suite red
+- chore(specs): record the cycle-2 audit commit hash
+- docs(specs): record the cycle-2 audit and its one finding
+- docs(specs): block the no-fork invariant spec on maintainer sign-off
+- chore(specs): record the since-last-audit commit hash
+- fix(audit-tooling): widen the since-last-audit range past a work commit
+- chore(specs): record the cycle-1 audit commit hash
+- docs(specs): record the cycle-1 audit and its two findings
+- chore(specs): record the 2026-09-03b audit and implementation hashes
+- fix(citations): point mis-cited invariant references at the rules that govern
+- fix(specs): account for the two predicted files the entry left unnamed
+- chore(specs): record the capture-path commit hash
+- fix(capture): request the settled render on every capture path
+- chore(specs): record the 2026-09-03 audit commit hash
+- docs(specs): record the 2026-09-03 audit and its two findings
+- chore(specs): record the capture-render commit hash
+- fix(viz): render captures settled, fitted and label-capped
+- chore(specs): record the INV-298 reporting-half commit hash
+- feat(capture): report when an animated view is captured unsettled
+- feat(viz): expose a settled signal, and correct this spec's root cause
+- test(viz): reproduce the label occlusion on the full Truth Set
+- chore(specs): record the cycle-2 audit commit hash
+- docs(specs): record the cycle-2 audit, which found nothing
+- chore(specs): record the capture-exit-split commit hash
+- fix(module-completion): split exit 1 from exit 2 when capture fails
+- chore(specs): record the INV-124 citation-correction commit hash
+- fix(module-03b): cite INV-002/INV-090 for the any-language claim, not INV-124
+- chore(specs): record the cycle-1 audit commit hash
+- docs(specs): record the cycle-1 audit and its two findings
+- chore(specs): record the graph-label-layer commit hash
+- fix(viz): paint node labels in their own layer, after every circle
+- chore(specs): record the sample-tuple scoping commit hash
+- fix(module-06): scope Step 4a's sample tuple to the language it came from
+- chore(specs): record the INV-122 scoping commit hash
+- docs(invariants): scope INV-122 to distinguish an unknown tab id from an absent tab
+- chore(specs): record the scaffold-fixture commit hash
+- fix(dry-run): make the scaffold's engine_config reach the SDK gate
+- chore(specs): record the negatives-restamp commit hash
+- chore(negatives): restamp 25 re-asked markers to 1.36.0, correct two rationales
+- chore(specs): record the census-detector commit hash
+- feat(dry-run): report enumerated name-lists beside count-shaped rationales
+- chore(specs): record the savepoint hash for both 2026-09-02 implementations
+- #1 Savepoint
+- chore(specs): record the suppressor-bucket commit hash
+- fix(module-06): split per-record and relationship suppressors in the match-key audit
+- docs(specs): record eight findings from the 2026-09-02 dry run
+- docs(dry-run): record the self-matching pgrep guard as an absolute rule
+- docs(specs): record the export-flags submission and close the other two
+- docs(specs): record the mapping-step3 re-drive against server 1.35.4
+- chore(specs): record both hashes and the third git-add-A conflation
+- fix(module-03b): name the per-record build's Truth Set scope in the overview
+- docs(specs): record the phase-2 finding on the cover-chip fixture
+- chore(specs): record the audit-fix hashes and the shared-commit deviation
+- chore(specs): record the audit-fix commit hashes
+- fix(specs): repair the text today's registration edits landed in
+- chore(specs): record the audit's own commit hash
+- docs(specs): record production-readiness-audit-2026-09-02
+- test(invariants): guard INV-287, the one registered without an enforcer
+- fix(invariants): restore INV-293 to the wording the maintainer approved
+- chore(specs): record the invariant-review commit hash
+- chore(specs): record the 2026-09-02 invariant review
+- feat(invariants): register INV-295, a measurement records when it was taken
+- feat(invariants): register INV-294, structure is decided by contents
+- feat(invariants): register INV-293, a disclosure obligation binds every path
+- feat(invariants): register INV-292, a refusal is not a throttle
+- feat(invariants): register INV-291, a shipped query is measured first
+- feat(invariants): register INV-290, resolve disagreeing sources by cause
+- feat(invariants): register INV-289, reuse by resemblance names its scale
+- feat(invariants): register INV-288, a fence never runs past its own next opening
+- feat(invariants): register INV-287, an exception ships with its rule
+- feat(skills): add review-invariants, a guided walk through pending deferrals
+- feat(invariants): register INV-286, complementary options are multi-select
+- feat(invariants): register INV-285, provenance is stated per fact
+- fix(specs): re-quote seven truncated deferral rules from their source
+- chore(specs): record the export composite commit hash
+- fix(viz-server): pass the export-documented composite to the export call
+- fix(specs): move both new ledger entries out of the format comment
+- chore(specs): record the export flag coupling commit hash
+- fix(viz-server): couple the export flag set to the fields _absorb reads
+- chore(specs): record the viz-server header commit hash
+- fix(viz-server): describe both build paths in the module header
+- chore(plugin): bump version to 0.5.3
+- chore(specs): record the fifth audit's own commit hash
+- chore(specs): record production-readiness-audit-2026-09-01e
+- chore(specs): record the audit-finding fixes' commit hash
+- fix(recap,viz): bound fence spans, and make the export build reachable
+- chore(specs): record the fourth audit's own commit hash
+- chore(specs): record production-readiness-audit-2026-09-01d
+- chore(specs): record the Module 7 visualization commit hash for both specs
+- fix(module-07): build the viz model from the export stream, and keep its D3
+- chore(specs): record the WHY_KEY_DETAILS citation commit hash
+- fix(module-07): cite the flag that populates WHY_KEY_DETAILS
+- chore(specs): record the recap-checkpoint lift commit hash
+- fix(recap): lift the RECAP-CHECKPOINT fence before module parsing
+- docs(specs): triage 5 bootcamp feedback entries into 4 specs
+- chore(specs): record the third audit's own commit hash
+- chore(specs): record production-readiness-audit-2026-09-01c
+- chore(specs): record the cycle-2 audit's own commit hash
+- chore(specs): record production-readiness-audit-2026-09-01b
+- chore(specs): name the predicted file the deferral-id spec did not change
+- chore(specs): record the two remaining audit-finding specs
+- chore(specs): record the line-citation guard's commit hash
+- fix(tests): require a hard rule's citation on its own line, not beside it
+- chore(specs): record the audit entry's own commit hash
+- chore(specs): record production-readiness-audit-2026-09-01
+- chore(specs): record the screenshot-embed timing commit hash
+- fix(module-completion): embed screenshots when the recap section exists
+- chore(specs): record the version-precedence commit hash
+- fix(module-02): resolve a version disagreement by its cause, not by precedence
+- chore(specs): record the build-version provenance commit hash
+- fix(module-02): state szBuildVersion.json's provenance per platform
+- chore(specs): record the suggested-query fix's commit hash
+- fix(module-00): replace two suggested queries that reach none of their material
+- chore(specs): record the question-rendering commit hash for both specs
+- fix(module-01): render question options beneath the 👉, and multi-select 6d
+- chore(specs): record the routing-report relay's commit hash
+- fix(module-05): relay that the routing report miscounts payload as dropped
+- chore(specs): record the flag-annotation relay in the ledger
+- fix(ground-rules): send an absent SDK field to the flags, not the schema
+- chore(specs): record the CORD 403 remedy's commit hash
+- fix(module-04): give a 403 CORD fetch a remedy instead of a dead end
+- chore(specs): record the CORD disclosure fix's commit hash
+- fix(cord): disclose that CORD is real data on every path that acquires it
+- chore(specs): record the negative-rationale fix's commit hash
+- fix(dry-run): re-verify a negative marker's rationale, not just its claim
+- chore(specs): correct a British spelling in the Step 15 ledger entry
+- chore(specs): record the Step 15 branch fix's commit hash
+- fix(module-01): branch Step 15's confirmation gate for the generated path
+- chore(specs): record the feedback-step-2 fix's commit hash
+- fix(feedback): ask only the questions a partial report has not answered
+- chore(specs): record the step-5a coverage-check fix's commit hash
+- fix(mapping): decide sub-list structure by contents, not by key shape
+- chore(specs): record the step-1 skip-contradiction fix's commit hash
+- fix(sdk-setup): skipping the install is not skipping Step 3
+- chore(specs): record the step-5a license fix's commit hash
+- fix(license): re-measure the record limit once the engine config exists
+- docs(specs): file the 14 findings from dry-run phase 3
+- docs(specs): file the two findings from dry-run phase 1
+- chore(specs): record the merge-histogram fix's commit hash
+- fix(viz): label the merge histogram's y-axis in whole entities
+- chore(specs): record the registry-update fix's commit hash
+- fix(module-05): update every registry field the improve path changes
+- chore(specs): record the pre-flight ordering fix's commit hash
+- fix(capture): move the deep-linking pre-flight below the single-page net
+- chore(specs): record audit-2026-08-31's own commit hash
+- docs(specs): record audit-2026-08-31 — two findings, both this session's own
+- docs(specs): record the linux_apt Java coverage report as submitted
+- chore(specs): record the capture and improve-path commit hash
+- fix(module-03b,module-05): refuse an unverifiable capture, define the improve path
+- chore(specs): record the Step 5a and classpath commit hash
+- fix(module-02): measure the license at Step 5a, and qualify the classpath
+- chore(specs): record the 2026-08-28 dry-run record's own commit hash
+- docs(specs): record the 2026-08-28 dry-run and commit its four findings
+- feat(specs): register INV-277 through INV-282 with maintainer sign-off
+- chore(specs): record the absence-branch-guard commit hash
+- test(license): reach all four absence branches, not three
+- chore(specs): record audit-2026-08-28g's own commit hash
+- docs(specs): record audit-2026-08-28g — loop cap reached, one finding open
+- chore(specs): record the concept-level-matcher commit hash
+- fix(license): match the writer-count claim, not the phrasings already seen
+- chore(specs): record audit-2026-08-28f's own commit hash
+- docs(specs): record audit-2026-08-28f — the guard inherited its author's blind spot
+- chore(specs): record the measured-only-property commit hash
+- fix(license): state the measured-only property instead of counting writers
+- chore(specs): record audit-2026-08-28e's own commit hash
+- docs(specs): record audit-2026-08-28e — the writer count is the wrong shape
+- chore(specs): record the persist-the-measurement commit hash
+- fix(license): persist the measured limit, and name both writers at all three sites
+- chore(specs): record audit-2026-08-28d's own commit hash
+- docs(specs): record audit-2026-08-28d — the license fix may not fix it
+- chore(specs): record the citation-coverage commit hash
+- fix(loop): make the reverse-contract check a set difference, not a grep
+- chore(specs): record audit-2026-08-28c's own commit hash
+- docs(specs): record audit-2026-08-28c and its citation finding
+- chore(specs): record the score-inputs commit hash
+- fix(module-05): check both hand-authored score inputs before reporting
+- chore(specs): record the protected-launcher commit hash
+- docs(viz): warn that macOS protected launchers strip DYLD from a server
+- chore(specs): record the step3-name-rejection commit hash
+- docs(module-05): name type_discriminator as the fix for the step-3 rejection
+- chore(specs): record the measured-license-limit commit hash
+- fix(license): write the measured limit only, and stop inferring detection
+- chore(specs): record the scenario-size-ceiling commit hash
+- feat(module-01): bound the generated scenario and state what exceeding it costs
+- docs(specs): triage six feedback entries into five specs
+- chore(specs): record audit-2026-08-28b's own commit hash
+- docs(specs): record audit-2026-08-28b — no spec, loop terminates
+- chore(specs): record the upstream-vocabulary commit hash
+- fix(feedback-to-specs): give the spec side a blocked-send value
+- chore(specs): record audit-2026-08-28's own commit hash
+- docs(specs): record production-readiness-audit-2026-08-28 and its finding
+- chore(specs): record the find-examples coverage commit hash
+- fix(ground-rules): a declared schema governs parameters, not coverage
+- chore(specs): record the blocked-submission commit hash
+- feat(feedback): add a vocabulary value for a consented-but-blocked send
+- chore(specs): record the json-p-gap fourth-site commit hash
+- fix(module-03): cover the javax.json gap at the fourth build site
+- chore(specs): record the step1-license-framing commit hash
+- fix(module-06): gate step 1 license framing on the measured limit
+- chore(specs): record the truth-set-encoding-self-check commit hash
+- fix(viz): the Truth Set does exercise the encoding self-check — correct all five sites
+- chore(specs): record the java-initialize-scaffold commit hash
+- docs(specs): close java-initialize-scaffold as no-change, upstream-only
+- feat(skills): add /unattended-spec-loop for working the backlog while away
+- docs(specs): record that both upstream reports were sent 2026-08-27
+- docs(specs): file six open findings from the 2026-08-27 dry run
+- fix(scripts): refuse to fold an unreadable recap instead of crashing or erasing it
+- chore(specs): record the second invariant-review commit hash
+- feat(specs): register INV-272 through INV-275 with maintainer sign-off
+- chore(specs): record the invariant-review commit hash
+- feat(specs): register INV-268 through INV-271 with maintainer sign-off
+- chore(specs): record audit-2026-08-26d's own commit hash
+- docs(specs): record production-readiness-audit-2026-08-26d -- no spec produced
+- chore(specs): record the iteration-4 commit hash
+- fix(packaging)!: scan every member for secrets, not just listed extensions
+- chore(specs): record audit-2026-08-26c's own commit hash
+- docs(specs): record production-readiness-audit-2026-08-26c and its high-severity finding
+- chore(specs): record the iteration-3 commit hash on both entries
+- docs: align the user-facing docs with what the plugin actually ships
+- chore(specs): record audit-2026-08-26b's own commit hash
+- docs(specs): record production-readiness-audit-2026-08-26b and its two findings
+- chore(specs): record the iteration-2 commit hash on its three entries
+- fix(specs): implement the three audit-2026-08-26 findings
+- chore(specs): record the audit entry's own commit hash
+- docs(specs): record production-readiness-audit-2026-08-26 and its three findings
+- chore(specs): backfill the ten commit hashes from this round
+- feat(packaging): add /package-bootcamp so the bootcamp can leave the machine
+- fix(module-01): keep the bootcamper's own words beside each refinement
+- fix(onboarding): source assertions about Senzing, not just SDK facts
+- fix(graduation): give tab coverage a denominator off the manifests
+- fix(module-07): request the breakdown the how call promises
+- fix(viz): label the legend by the denominator it actually counts
+- feat(viz): verify the source-set encoding against the running app
+- fix(onboarding): acknowledge a transition answer before loading
+- fix(module-02): route env-script exports to gotchas as the full set
+- fix(module-07): confirm composite flag representation per binding
+- #1 Add spec
+- #1 Save specs
+- #1 Prepare for repository renaming
+- #1 Feedback to specs
+
+## [0.5.2] - 2026-08-24
+
+- #1 docs(specs): record 4d5a91c for the audit iteration 3 entry
+- #1 docs(specs): record audit iteration 3 — no findings, loop stays closed
+- #1 docs(specs): record 42d4e69 for the INV-265..267 entries
+- #1 feat(invariants): register INV-265..267 at the maintainer's sign-off
+- #1 docs(specs): record 97a22c1 for the audit iteration 2 entry
+- #1 docs(specs): record audit iteration 2 — no findings, loop terminates
+- #1 docs(specs): record 13bc904 for the step-1 caution entry
+- #1 fix(module-05): phrase the step-1 caution against the schema, not luck
+- #1 docs(specs): record 57737e7 for the 2026-08-23 audit entry
+- #1 docs(specs): record the 2026-08-23 production-readiness audit
+- #1 docs(specs): record 966ec0c for the step-route entry
+- #1 fix(skills): give four steps the route that supplies them
+- #1 docs(specs): record 86b0354 for the profile-report filename entry
+- #1 fix(module-05): retire the fixed profiler collision, cover both names
+- #1 docs(specs): record 5c065fb for the search_docs query entry
+- #1 fix(skills): give every search_docs reference the query it requires
+- #1 docs(specs): record 94e22c4 for the violation-budget entry
+- #1 fix(module-05): say what a malformed advance costs, correctly
+- #1 docs(specs): record 1bcb25f for the generic-concept-label entry
+- #1 fix(module-00): stop the teaching label reading as an MCP exemption
+- #1 docs(specs): describe the spelling slip instead of writing it
+- #1 docs(specs): record 0f4ae7f for the subshell-pid entry
+- #1 fix(module-03b): keep the recorded pid off the subshell
+- #1 docs(specs): record 4f31bd1 for the marker-drop exemption entry
+- #1 fix(graduation): exempt the generated-scenario marker's dropped emoji
+- #1 docs(specs): record 2217c13 for the dry-run hook-count entry
+- #1 fix(dry-run): ask the manifest for the hook list, never a count
+- #1 docs(specs): record e63e5a7 for the overview-bullet-count entry
+- #1 fix(onboarding): stop counting the overview bullets
+- #1 fix(specs): lift 29 ledger entries out of the format comment
+- #1 docs(specs): record six findings from the full phase-3 dry run
+- #1 docs(specs): record the hook-fix commit hash in the ledger
+- #1 docs(specs): track two findings left untracked by an earlier session
+- #1 docs(specs): record the conditional profile-report filename
+- #1 fix(hooks): run each hook script from the command string
+- #1 fix(audit-tooling): label stale negatives; re-ask all 21 — none were false
+- #1 docs(specs): record the audit's negatives-backlog finding
+- #1 docs(specs): record 6ef6719 for the teardown-contract entry
+- #1 fix(module-03b,module-07): give teardown a container route; guard the hook shape
+- #1 feat(invariants): register INV-262..264 at the maintainer's sign-off
+- #1 docs(specs): record audit iteration 3 — no findings, loop terminates
+- #1 docs(specs): record audit iteration 2 and harden the ref resolver
+- #1 fix(audit-tooling): make the new conformance views reachable
+- #1 docs(specs): correct three wrong no-invariant claims in the ledger
+- #1 fix(skills): cite the invariant governing seven previously-invisible rules
+- #1 fix(audit-tooling): see hard rules whose stop sign is not first on its line
+- #1 fix(audit-skill): replace every stale baseline with a rule
+- #1 fix(module-07,module-03b): cite INV-122 at both capture blocks
+- #1 fix(specs): guard the ledger file and give conformance a per-rule view
+- #1 docs(specs): record 0383cf4 for the audit entry
+- #1 docs(specs): record the 2026-08-21 production-readiness audit
+- #1 docs(specs): record 1f799d6 for the poor-band entry
+- #1 fix(module-07): make the Poor band a finding, not a mapping verdict
+- #1 docs(specs): record fb5386f for the gap-rates entry
+- #1 fix(module-04): state the low band as a completeness target, not gap rates
+- #1 docs(specs): record 9a9e36b for the registration entry
+- #1 fix(module-06): build registration idempotency, do not catch for it
+- #1 docs(specs): account for the module-01 entry's predicted files
+- #1 docs(specs): record 13b3120 for the module-01 route entry
+- #1 fix(module-01): name the route that carries the built-in license capacity
+- #1 docs(specs): record e805e57 for the capture-script entry
+- #1 fix(capture): name the bundled capture script at both requiring steps
+- #1 docs(specs): record 73dde66 and 82975a0 for the two partial entries
+- #1 feat(prep): state what Python on Windows or macOS costs at the language gate
+- #1 feat(module-02): measure the datastore's filesystem before creating it
+- #1 fix(specs): repair the ledger corrupted by 60b839f
+- #1 docs(specs): record 60b839f for the two module-07 entries
+- #1 fix(module-07): name the whole WHY_* family and CONFIRMATIONS' third state
+- #1 docs(specs): record cccae8b and 2019549 for the pdf and retry entries
+- #1 docs(specs): record cccae8b and the bind-mount entry
+- #1 fix(ground-rules): retry a just-written file before believing its syntax error
+- #1 fix(pdf): branch the dropped-character remedy on what was dropped
+- #1 docs(specs): record ef543c3 for the three module-05 entries
+- #1 fix(module-05): confirm two limitations and pre-empt MIXED
+- #1 docs(specs): record 2759bce for the eval-license retirement entry
+- #1 fix(module-04): retire the eval-license duration note and its guard
+- #1 docs(specs): triage sixteen feedback entries into fourteen specs
+- #1 docs(specs): triage seven feedback entries into six specs
+- #1 chore(plugin): bump version to 0.5.2
+- #1 docs(specs): file the WHY_KEY_DETAILS gap and annotate two invariants
+- #1 docs(specs): record fd759e9 for the INV-259..261 entry
+- #1 feat(invariants): register INV-259..261 for the audit's seven rules
+- #1 docs(specs): record a9468a5 for the audit entry
+- #1 docs(audit): record the 2026-08-17 production-readiness audit
+- #1 docs(specs): record 0bcc11d for the shape-vs-mapping entry
+- #1 fix(module-04): describe source shape, not what fields map to
+- #1 docs(specs): record 76e642e for the why-key-details flag entry
+- #1 fix(module-07): withdraw the ban on the flag WHY_KEY_DETAILS needs
+- #1 docs(specs): record 4f54a14 for the license-cap-branch entry
+- #1 fix(module-06): offer the apply route where the license cap bites
+- #1 docs(specs): record 027d8c2 for the generated-dataset-size entry
+- #1 fix(module-04): treat generated dataset size as a license decision
+- #1 docs(specs): record 66b56a5 for the count-reconciliation entry
+- #1 fix(module-06): route an explained count delta as reconciled, not failed
+- #1 docs(specs): record bbd4847 for the LD_LIBRARY_PATH entry
+- #1 fix(module-02): require LD_LIBRARY_PATH on a stock apt install
+- #1 docs(specs): record d6a3b2f for the network-endpoint entry
+- #1 fix(module-07): name both endpoint conventions in one network response
+- #1 docs(specs): record 8644bb6 for the graph-color entry
+- #1 fix(viz): color graph nodes by the source combination, not the first source
+- #1 docs(specs): record 407a6ca for the viz bind/probe entry
+- #1 fix(viz): require a loopback bind and a post-bind identity probe
+- #1 docs(specs): record 9296dcc for the how-analysis keys entry
+- #1 fix(module-07): name the confusable virtual-entity keys at step 4c
+- #1 docs(specs): record 3aab1d0 for the payload-collision entry
+- #1 fix(module-05): catch a payload key that is a registered feature attribute
+- #1 docs(specs): record 3d38b3d for the group-vs-attribute entry
+- #1 fix(module-05): a group completeness score is not a join prediction
+- #1 docs(specs): record b86201d for the tab-manifest merge entry
+- #1 fix(capture): merge the tab manifest instead of truncating it
+- #1 docs(specs): record 1d85ab3 for the Phase C merge entry
+- #1 fix(module-06): merge Phase C's two self-answered confirms into one
+- #1 docs(specs): record 6e8bfb8 for the per-module recap check entry
+- #1 fix(recap): check recap structure at every module, not once at graduation
+- #1 docs(specs): record 8f94d33 for the step-25 branching entry
+- #1 fix(module-06): branch step 25 before it asks, not twelve lines after
+- #1 docs(specs): record 1b42648 for the bootcamp-notes entry
+- #1 feat(notes): let the Bootcamper capture their own ideas, and keep them
+- #1 docs(specs): record e970ac6 for the US English entry
+- #1 feat(invariants): register and guard US English as INV-253
+- #1 fix(tests): assert the archive guard against code, not comments
+- #1 docs(specs): triage the 2026-08-17 feedback into five specs
+- #1 docs(specs): triage the 2026-08-16 feedback into three specs
+- #1 docs(specs): spec the US English invariant and its guard
+- #1 style(repo): migrate British English spellings to US English
+- #1 Retrofit from public
+- #1 fix(skills): exclude docs/development.md from the public mirror
+- #1 Add spec
+
+## [0.5.1] - 2026-08-16
+
+- #1 docs(specs): triage the 2026-08-15/16 feedback into eight specs
+- #1 docs(specs): record d7b3192 for the bundled-asset entries
+- #1 fix(skills): resolve bundled assets the guide READS, not just the ones it runs
+- #1 docs(specs): record c75006b for the plugin-root resolution entry
+- #1 fix(onboarding): resolve the plugin version from the running plugin root
+- #1 chore(plugin): bump version to 0.5.1
+- #1 docs(specs): record e631be2 for the 2026-08-15n audit entry
+- #1 docs(specs): record the fifteenth 2026-08-15 audit -- no findings
+- #1 docs(specs): record 9dd81e7 for the compile-cleanly entry
+- #1 fix(tests): compile every Python source, catching what bytecode caching hid
+- #1 docs(specs): record 998f75c for the 2026-08-15m audit entry
+- #1 docs(specs): record the thirteenth 2026-08-15 audit -- latent syntax error
+- #1 docs(specs): record d35046d for the INV-251 relabel-correction entry
+- #1 fix(invariants): correct twelve count citations and widen their guard
+- #1 docs(specs): record f062e56 for the 2026-08-15l audit entry
+- #1 docs(specs): record the twelfth 2026-08-15 audit -- one finding, not fixed
+- #1 docs(specs): record 993df3a for the INV-251 entry
+- #1 fix(invariants): register INV-251 for the one-question-per-turn rule
+- #1 docs(specs): record b43c4c0 for the 2026-08-15k audit entry
+- #1 docs(specs): record the eleventh 2026-08-15 audit -- one HIGH finding, not fixed
+- #1 docs(specs): record 999b4ea for the INV-250 entry
+- #1 fix(invariants): register INV-250 for the clause INV-077's supersession dropped
+- #1 docs(specs): record 46630a7 for the 2026-08-15j audit entry
+- #1 docs(specs): record the tenth 2026-08-15 audit -- one finding, not fixed
+- #1 docs(specs): record 356c00d for the step8-platform-rule entry
+- #1 fix(module-02): state the platform-is-mandatory rule at Step 8 (INV-183)
+- #1 docs(specs): record 9737a6d for the 2026-08-15i audit entry
+- #1 docs(specs): record the ninth 2026-08-15 audit -- one finding, not fixed
+- #1 docs(specs): record aab515c for the 2026-08-15h audit entry
+- #1 docs(specs): record the eighth 2026-08-15 audit -- no findings, loop converged
+- #1 docs(specs): record eeb407f for the 2026-08-15g audit entry
+- #1 docs(specs): record the seventh 2026-08-15 audit -- one self-caught finding
+- #1 test(feedback): widen the verdict-site scan to reach the local-only rule (INV-246)
+- #1 fix(specs): state that the 2026-08-15f audit entry establishes no invariant
+- #1 docs(specs): record 192c219 for the 2026-08-15f audit entry
+- #1 docs(specs): record the sixth 2026-08-15 audit -- one finding, fixed
+- #1 docs(specs): record c9dfe60 for the feedback-routing entry
+- #1 fix(feedback): add a `host` routing verdict for harness-owned defects (INV-248/249)
+- #1 docs(specs): record 3d52531 for the host-rendered-prompt entry
+- #1 fix(onboarding): handle a host-rendered prompt over a pending question (INV-247)
+- #1 docs(specs): spec the host-rendered auto-mode prompt interruption
+- #1 docs(specs): record e6f6569 for the 2026-08-15e audit entry
+- #1 docs(specs): record the fifth 2026-08-15 audit -- no findings
+- #1 docs(specs): record 90f7618 for the any-language contract entry
+- #1 fix(tests): derive the any-language contract's candidate set (INV-002/INV-090)
+- #1 docs(specs): record 616056f for the 2026-08-15d audit entry
+- #1 docs(specs): record the fourth 2026-08-15 audit
+- #1 docs(specs): record 494f5ef for the 2026-08-15c audit entry
+- #1 docs(specs): record the third 2026-08-15 audit -- no findings
+- #1 docs(specs): record f04abc1 for the two INV-246 conformance entries
+- #1 fix(tests): derive guard site sets by scanning, not by listing (INV-246)
+- #1 docs(specs): record 18abe7e for the 2026-08-15b audit entry
+- #1 docs(specs): record the second 2026-08-15 audit
+- #1 docs(specs): account for the predicted file in the INV-247 guard entry
+- #1 docs(specs): record 2c81466 for the INV-247 guard-scope entry
+- #1 fix(tests): make the INV-247 guard enforce the class, not a word list
+- #1 docs(specs): record 57161ad for the turn-shape alternation entry
+- #1 fix(ground-rules): state the two turn shapes as alternatives (INV-005)
+- #1 docs(specs): record 0d448cb for the rule-citation entry
+- #1 fix(module-03,03b,prep): cite rules by file and subject, not by ordinal
+- #1 docs(specs): record 3ddda13 for the apparatus-exempt carve-out entry
+- #1 fix(invariants): record the apparatus-exempt carve-out where it binds
+- #1 docs(specs): record 21de0f9 for the 2026-08-15 audit entry
+- #1 docs(specs): record the 2026-08-15 production-readiness audit
+- #1 Update
+- #1 docs(specs): record a60b669 for the question-provenance entry
+- #1 fix(ground-rules): close the 👉 question set on provenance (INV-247)
+- #1 docs(specs): record 7729016 for the pointer-citation entry
+- #1 fix(module-06,07): name the invariant the pointers obey (INV-225, INV-183)
+- #1 docs(specs): record a9c7b01 for the per-source reconciliation entry
+- #1 fix(module-06): reconcile per-source counts everywhere they land (INV-243)
+- #1 docs(specs): record b5ddc31 for the module-04 licence entry
+- #1 fix(module-04): measure the licence limit here too (INV-244, INV-246)
+- #1 docs(specs): record 71a7f08 for the 2026-08-14b audit entry
+- #1 docs(specs): record production-readiness-audit-2026-08-14b
+- #1 docs(invariants): split INV-243 into INV-245, widen INV-242's guard
+- #1 docs(invariants): scope INV-244 so the test_load_status branch stays legal
+- #1 docs(invariants): record maintainer approval of INV-242, INV-243, INV-244
+- #1 docs(specs): record 6eda9e0 for the license-measurement entry
+- #1 fix(module-06): measure the license limit instead of assuming it (INV-244)
+- #1 docs(specs): record 68014be for the orchestrator-stats entry
+- #1 fix(module-06): per-source stats need scoping, not static counters (INV-243)
+- #1 docs(specs): record de73e72 for the phase-ordering entry
+- #1 fix(module-06): defer the pre-load test load to Phase B step 5
+- #1 docs(specs): record c25f415 as the why-flags follow-up
+- #1 fix(module-07): the why-flag defect was in phase1 too (INV-179)
+- #1 docs(specs): record 4e90e66 for the results-presentation entry
+- #1 fix(ground-rules): a results presentation is not a turn ending (INV-225)
+- #1 docs(specs): record faa894b for the bulleted-images entry
+- #1 fix(recap): embed screenshots written as Actions Taken bullets (INV-242)
+- #1 docs(specs): record d880b63 for the why-key-details entry
+- #1 fix(module-07): parse WHY_KEY_DETAILS, not MATCH_KEY_DETAILS (INV-179)
+- #1 fix(capture): correct for window chrome in the Selenium path (INV-235)
+- #1 refactor(invariants): split INV-234 and INV-235 into one condition each
+- #1 docs(specs): record 47d5642 for the non-yielding-run entry
+- #1 docs(collection): mark the generated-scenario path as non-yielding
+- #1 docs(specs): record e4418e2 for the synthesized-scenario entry
+- #1 fix(collection): generated data must be able to fail the quality gate (INV-239)
+- #1 docs(specs): record 1c65f65 for the completeness denominator entry
+- #1 fix(quality): state the completeness denominator positively (INV-238)
+- #1 docs(specs): record 5a9b436 for the Java filename entry
+- #1 fix(java): reconcile snake_case filenames with Java class naming (INV-237)
+- #1 docs(specs): record 81ab598 for the post-yes switch entry
+- #1 fix(model-effort): read the dial before replying to a switch yes (INV-236)
+- #1 docs(specs): record 41c4c94 for the single-page capture entry
+- #1 fix(capture): --single captures the whole document, and says what it captured (INV-235)
+- #1 docs(specs): record four Module 5 implementations from the phase-3 walk
+- #1 fix(module5): four phase-3 dry-run findings in the mapping module (INV-233, INV-234)
+- #1 docs(specs): record ten findings from the 2026-08-14 phase-3 dry run
+- #1 docs(specs): record the commit hashes for INV-231 and INV-232
+- #1 fix(capture): never screenshot or count a tab the app suppressed (INV-232)
+- #1 fix(ground-rules): forbid the internal:// datastore CONNECTION (INV-231)
+- #1 docs(specs): record INV-230 and the shipped-citation guard in both entries
+- #1 test(invariants): guard that a minted invariant cannot ship uncited
+- #1 feat(invariants): register INV-230, the dataset-spelling rule
+- #1 docs(specs): record d2d6128 for the audit entry
+- #1 docs(specs): record the 2026-08-14 audit and its four implementations
+- #1 fix(modules): spell the Truth Set two words in prose, one in identifiers
+- #1 docs(skills): cite the ten invariants shipped text never named
+- #1 fix(dry-run): the shipped-citation report could not read a module's name
+- #1 fix(module-03): let the verification report say the install is fine
+- #1 feat(invariants): record INV-222 through INV-229, approved by the maintainer
+- #1 docs(specs): record 73a360e for the verbatim-check freshness entry
+- #1 docs(mapping): date the verbatim-check limitations per limitation
+- #1 docs(specs): record 89e8edd for the verification and pattern-gallery entries
+- #1 fix(verification): diagnose a results mismatch instead of failing the install
+- #1 docs(specs): record 708cd88 for the truthset-eligibility and scaffold-figures entries
+- #1 fix(module1): rule truthset out of generated scenarios, and refresh the scaffold figures
+- #1 docs(specs): record 7493f15 for the truthset-download entry
+- #1 fix(truthset): download the Truth Set instead of saving the preview
+- #1 docs(specs): record 038e84d for the two data-collection entries
+- #1 fix(data-collection): recognise a synthesized scenario, and size the load by what loads
+- #1 docs(specs): record 76bf7fe for the resume-predicate entry
+- #1 fix(resume): make "a bootcamp is underway" mean a module is recorded
+- #1 docs(specs): say why senzing_viz_server.py is unchanged
+- #1 docs(specs): record ce21d2e for the viz-contract entry
+- #1 fix(viz): reconcile the API contract with the shape the reference server returns
+- #1 docs(specs): record 0ee814b for the feedback-trigger entry
+- #1 fix(hooks): widen the feedback trigger without catching the bootcamper's own bugs
+- #1 docs(specs): record 9ce2c1f for the Step 4 and engine-config entries
+- #1 fix(sdk-setup): verify the binding at Step 4, and build valid engine JSON at Step 8
+- #1 docs(specs): record e7032d2 for the two SDK-setup prerequisite entries
+- #1 fix(sdk-setup): apply the SQLite schema, and keep the env script on the skip path
+- #1 docs(specs): record why the pip-install spec has no ledger entry
+- #1 fix(sdk-setup): stop instructing a pip install of the Senzing Python SDK
+- #1 docs(specs): record 9ca7be2 for the recap-header entry
+- #1 fix(recap): give the recap header an owner instead of two assumptions
+- #1 docs(specs): record bb9d208 for the single-page capture entry
+- #1 feat(capture): add a single-page mode so a tabless deliverable yields one image
+- #1 docs(specs): record 5bb88c8 and 25b3d26 for the non-yielding and README entries
+- #1 fix(protocol): define the non-yielding step so one-step-at-a-time is followable
+- #1 fix(module1): create the project README before a step tells you to update it
+- #1 docs(specs): record 516344f and 129b8ce for the freshness and option-placement entries
+- #1 fix(mcp): name presentation freshness and the sourcing floor as distinct rules
+- #1 fix(preparation): render a runtime-generated option list beneath its question
+- #1 docs(specs): record f1b262a for the two model/effort nudge entries
+- #1 fix(nudge): make the switch hint dial-aware and exempt above-table effort
+- #1 docs(specs): name INVARIANTS.md in the source-encoding entry
+- #1 docs(specs): record ca023ed for the source-encoding entry
+- #1 fix(viz): count source encodings as rendered, not as assigned
+- #1 docs(specs): record f875f17 for the scaffold-fixture entry
+- #1 fix(dry-run): point the verification fixture at the filename the plugin writes
+- #1 docs(specs): record cae1339 for the viz-server-pid entry
+- #1 fix(viz): stop the visualization server by pid, never by name
+- #1 docs(specs): record f6ed0ce for the phase-3 start-point entry
+- #1 feat(dry-run): let phase 3 choose where the analysis starts
+- #1 docs(specs): retract and decline the anti-rationalization spec
+- #1 docs(specs): record 0315af4 for the concision-pass entry
+- #1 docs(specs): concision pass — spec the drifted precedence clause
+- #1 docs(specs): record 0fcacea for the standing-items triage entry
+- #1 docs(specs): close two of the three standing items, 33/33 enumerations
+- #1 docs(specs): record 113dc3d for the coverage-report classification entry
+- #1 feat(dry-run): classify both coverage reports' known non-defects
+- #1 docs(specs): record a421ba9 for the coverage-report triage entry
+- #1 docs(specs): triage both coverage reports, spec the noise
+- #1 docs(specs): record 86e9638 alongside bca9576 for the sweep entry
+- #1 docs(specs): finish the enumeration sweep, 31 of 33 checked
+- #1 docs(specs): record bca9576 for the enumeration-sweep entry
+- #1 docs(invariants): re-confirm two dated MCP enumerations at 1.32.9
+- #1 docs(specs): record aa013dc for the shipped-citation triage entry
+- #1 docs(skills): cite the 13 invariants no shipped file named
+- #1 docs(specs): record 4823559 alongside 921c9c2 for the report entry
+- #1 docs(invariants): re-file INV-108 as a development rule
+- #1 docs(specs): record 921c9c2 for the shipped-citation report entry
+- #1 feat(dry-run): report invariants the shipped plugin never cites
+- #1 docs(specs): record 404d35f and 1d03b58 for the 13b entry
+- #1 docs(specs): spec the missing shipped-citation report, record 13b
+- #1 test(negatives): diagnose a malformed marker's actual cause
+- #1 docs(specs): record 3d9cab6 for the globalization retrieval entry
+- #1 fix(module-05): give globalization retrieval a strategy (INV-212)
+- #1 docs(specs): record f3b444d for the 2026-08-13 audit entry
+- #1 docs(specs): record the 2026-08-13 production-readiness audit
+- #1 docs(specs): record 47bd05e for the hard-rule triage entry
+- #1 docs(skills): cite invariants on 14 hard rules, register INV-220/221
+- #1 docs(specs): record 51a318b for the INV-174 guard entry
+- #1 test(module-05): guard INV-174, the last enumerating invariant no test cited
+- #1 docs(specs): record 7281f30 for the INV-219 entry
+- #1 feat(tests): register INV-219 and unpin the last claim-wording guard
+- #1 docs(specs): record the commit hash for the three prose-negative entries
+- #1 feat(dry-run): report unmarked prose negatives, then verify and mark all six
+- #1 docs(specs): spec the five outstanding items from the 2026-08-13 session
+- #1 docs(specs): record dafbe88 for the three audit-finding entries
+- #1 fix(module-02): detect an install on every platform, and register INV-218
+- #1 docs(specs): record db7b790 as the commit for the module-02 marker entry
+- #1 fix(module-02): mark four dated sdk_guide negatives, and stop a guard pinning one
+- #1 fix(onboarding): recognise a reporting_guide gate by needs_input, not by a field name
+- #1 docs(specs): record 967d9fb as the commit for both DECLINED.md entries
+- #1 fix(specs): scan DECLINED.md for negatives, and correct the one it hid
+- #1 docs(specs): ledger the candidate-set script and three self-inflicted failures
+- #1 feat(implement-spec): compute the candidate set instead of hand-counting it
+- #1 docs(specs): record the 2026-08-13 revisit check on the declined MCP-route spec
+- Revert "#1 fix(onboarding): a route for bootcampers who cannot add an MCP server"
+- #1 docs(specs): ledger the MCP-policy route, incl. a withdrawn server citation
+- #1 fix(onboarding): a route for bootcampers who cannot add an MCP server
+- #1 docs(specs): ledger the minimal-verbosity fix and a second alternation false-miss
+- #1 fix(skills): a verbosity preset governs form, not only kind
+- #1 docs(specs): ledger the spec-absence guard, and two of my own errors in it
+- #1 feat(specs): a spec asserting server absence must name the owning route
+- #1 docs(specs): ledger the pattern-gallery fix and the diagnosis it corrected
+- #1 fix(module-01): give the pattern gallery a retrieval strategy
+- #1 docs(specs): ledger the reassurance-ordering fix and what the sweep found
+- #1 fix(skills): put anything that informs an answer BEFORE its 👉 question
+- #1 docs(specs): ledger the viz-server settings fix, incl. a false-miss in mutation
+- #1 fix(viz-server): pick engine settings by content, and validate before acting
+- #1 test(dry-run): make the negative-marker guard test its mechanism, not the repo
+- #1 fix(dry-run): report MCP-NEGATIVE markers that are present but do not parse
+- #1 feat(dry-run): MCP-NEGATIVE markers must name the route that OWNS the fact
+- #1 docs(specs): record the minimal-verbosity under-specification finding
+- #1 docs(specs): record two dry-run findings not yet fixed
+- #1 test(license-env): anchor assertions to their blocks, not the whole file
+- #1 fix(module-02,graduation): INV-208 was wrong — SENZING_LICENSE_FILE is real
+- #1 test(license-env): strengthen the guard its own negative control defeated
+- #1 fix(graduation,module-02): remove the fabricated license-path env var
+- #1 docs(specs): fill in the commit hash for the two INV-207 ledger entries
+- #1 fix(module-05,specs): plan-time embedded-master check, and INV-207
+- Improve
+- #1 docs(specs): fill in the commit hash for the INV-206 ledger entry
+- #1 fix(module-05): make the embedded_master payload runnable, and record INV-206
+- #1 docs(specs): record two findings the fresh-session step-3 walk surfaced
+- #1 docs(specs): fill in the commit hash for the two step-3 ledger entries
+- #1 fix(module-05): document embedded_master, and extend INV-205 to question form
+- #1 docs(specs): fill in the commit hash for the step-3 dry-run entry
+- #1 docs(specs): record the step-3 walk, and two findings it surfaced
+- #1 fix(module-05): reweight the quality score so duplicates barely count
+- #1 docs(specs): fill in the commit hash for the four ledger entries
+- #1 fix(module-05): define the quality score, scope the gate, verify inputs
+- #1 docs(specs): fill in the commit hash for the two ledger entries
+- #1 fix(modules): correct the licence fields and rank interaction first
+- #1 docs(specs): fill in the commit hash for the phase-3 ledger entry
+- #1 docs(specs): record the phase-3 walk at Module 5, and its five findings
+- #1 docs(specs): fill in the commit hash for the dry-run ledger entry
+- #1 docs(specs): record dry-run phases 1-2, and the license_request field discrepancy
+- #1 docs(specs): fill in the commit hash for the two audit-fix ledger entries
+- #1 fix(module-03b,tests): stop hardcoding the viz port, and assert the invariant->test link
+- #1 docs(specs): fill in the commit hash for the audit ledger entry
+- #1 docs(specs): record the 2026-08-12 production-readiness audit findings
+- #1 docs(specs): record the hold on the widened-scope invariant, and its trigger
+- #1 docs(specs): fill in the commit hash for the cross-reference ledger entry
+- #1 docs(specs): point INV-107 and INV-050 at the rules that widened their scope
+- #1 fix(compact-dev-environment): correct the citation figures its own skill records as wrong
+- #1 docs(specs): record the SENZ2027 coverage gap as reported upstream
+- #1 docs(specs): re-ask the seven open coverage gaps against server 1.32.9
+- #1 docs(bootcamp-preparation): re-verify the sdk_guide language-lookup claims on 1.32.9
+- #1 docs(specs): record the commit hashes for the two follow-up spec entries
+- #1 feat(dry-run): make dated MCP negatives enumerable, and guard them in tests
+- #1 fix(module-07): route Step 3b quality context to reporting_guide, require evidence
+- #1 fix(modules): rename the module Graduation to "Bootcamp graduation"
+- #1 docs(specs): record the commit hashes for the nine dry-run spec entries
+- #1 fix(module-01): replace Step 14s BM25-hostile query and give it a fallback
+- #1 fix(dry-run): make the scaffold fixture banner report the mode it built
+- #1 feat(module-07): relay the servers DEFAULT_FLAGS production caution
+- #1 docs(module-02): de-quantify Step 4 initialize-workflow evidence, refresh its stamp
+- #1 fix(bootcamp-preparation): compare the model/effort recommendation against the live session
+- #1 fix(bootcamp-preparation): make the Step 7 recap obey the rules its own file states
+- #1 fix(module-03): probe MCP reachability with get_capabilities, and register INV-204
+- #1 docs(module-04): record that the eval-licence duration is contested upstream
+- #1 fix(module-03): relay explain_error_code SENZ7426 instead of suppressing it
+- Improve
+- Improve
+- Improve
+- Improve
+- Improve
+- #1 docs(specs): record the commit hash for the CORD fetch-integrity entry
+- #1 fix(module-04): gate CORD collection on HTTP status and record counts
+- Improve
+- Improve
+- #1 docs(specs): record the dry-run-2026-08-12 report
+- #1 docs(specs): record 10 dry-run findings against MCP server 1.32.9
+- #1 docs(specs): record the INV-050 tree guard, and decline its refuted spec
+- #1 test(invariants): guard INV-050's layout tree and register INV-202
+- #1 docs(specs): record the write-gate and contract-guard implementations
+- #1 test(mcp): classify every called tool and register INV-201
+- #1 fix(hooks): block every write that resolves outside the project
+- #1 docs(specs): record the INV-200 and second-audit commit hashes
+- #1 feat(invariants): register INV-200 and close the untested temp-var branch
+- #1 docs(specs): record the INV-199 and audit commit hashes
+- #1 feat(invariants): register INV-199, the only rule about files outside the project
+- #1 docs(invariants): point three generalised rules forward, and guard the class
+- #1 docs(specs): record the match-key-details commit hash
+- #1 fix(module-03b): match-key-details flag does apply to the export methods
+- #1 docs(specs): record the MCP-sweep ledger rows and three commit hashes
+- #1 fix(ground-rules): the elided find_examples payload is declared, not failed
+- #1 fix(module-03b): a fifth response_schemas stops-short site, corrected
+- #1 fix(module-02): seeding snippet is selected by data_sources, not by position
+- #1 docs(specs): record the knowledge-check reframing commit hash
+- #1 feat(module-00): offer the knowledge check as a benefit, not a test
+- #1 docs(specs): record the readiness-gate commit hash
+- #1 fix(module-05): gate the fast-path on fully mapped, not just loadable
+- #1 docs(specs): record the ICIJ free-data caveat commit hash
+- #1 fix(module-04): state what the ICIJ free-data sample currently supports
+- #1 docs(specs): record the feedback-trigger commit hash
+- #1 feat(onboarding): teach the feedback trigger in the preface
+- #1 docs(specs): record the container-lifecycle-runtime commit hash
+- #1 fix(hooks): dispatch container lifecycle on the recorded runtime
+- #1 docs(specs): record the step-1 profiler-defects commit hash
+- #1 fix(mapping): document three step-1 profiler defects at their steps
+- #1 docs(specs): record the step-4 gate-limitations commit hash
+- #1 fix(mapping): document three step-4 gate limitations at the step
+- #1 docs(specs): record the SUPPORTPATH-trap commit hash
+- #1 fix(sdk-setup): the SUPPORTPATH trap is not Windows-only
+- #1 docs(specs): record the DECLINED-ledger commit hash
+- #1 feat(specs): add a DECLINED ledger so ruled-out specs stop recurring
+- #1 docs(specs): record both upstream reports as sent
+- #1 docs(specs): finish the feedback triage and archive the input
+- #1 docs(specs): spec five bootcamp-feedback findings (triage pass 1-2)
+- #1 docs(specs): record fd71055 as the two entries' commit hash
+- #1 fix(graduation): announce the keepsake PDFs, guard both renderers
+- #1 docs(specs): record 3818597 as the two entries' commit hash
+- #1 fix(bootcamp): require the inert caption, except the root README
+- #1 docs(specs): record e53fece as the four entries' commit hash
+- #1 fix(specs): classify supersession by degree, link invariant pairs
+- #1 docs(specs): spec six invariant conflicts found by cross-reading
+- #1 feat(skills): add production-readiness-audit, the last gate before dry-run
+- #1 fix(specs): repair 22 ledger hashes killed by a history rewrite
+- #1 fix(compact): correct own baselines, read ledger last-wins
+- #1 chore(specs): record 8ba1b5c as the command-ownership commit
+- #1 fix(module-02): split server-owned commands from plugin-owned update checks
+- #1 docs(specs): sweep the MCP-fact surface added today, and spec what it found
+- #1 docs(specs): record the upstream feature request on 4.x -> 4.y updates
+- #1 chore(specs): record 3ebaac6 as the SDK update-offer commit
+- #1 feat(module-02): offer to update an existing Senzing install, per platform
+- #1 chore(specs): record 4828c50 as the character-safety commit
+- #1 fix(pdf): stop the stdlib writer substituting '?' for 24 characters (INV-143)
+- #1 chore(specs): record 5008604 as the reversed-decision-capture commit
+- #1 feat(feedback): file a reversed decision when it happens, not from recall
+- #1 chore(specs): record b438994 as the document-renderer commit
+- #1 feat(pdf): make the required-section list a parameter, not a constant
+- #1 docs(specs): record the upstream follow-up on SZ_WHY_ENTITIES_DEFAULT_FLAGS
+- #1 chore(specs): record 8b436d1 as the bullet-spacing commit
+- #1 fix(recap): space every bullet list by default, structurally
+- #1 chore(specs): record db28caf as the poppler fix's commit
+- #1 fix(graduation): poppler is not part of macOS, and INV-163's own source said it was
+- #1 chore(specs): fill in the four commit hashes the ledger recorded as uncommitted
+- #1 fix(module-07): one tool's empty field is not the server's silence (INV-194)
+- #1 fix(recap): give the tab-coverage count an external denominator (INV-193)
+- #1 feat(hooks): create the recap checkpoint deterministically, and report every no-op
+- #1 fix(module-07): find_path returns ENTITY_PATH_LINKS, not ENTITY_NETWORK_LINKS
+- #1 docs(specs): spec the last two feedback entries, archive the batch
+- #1 test(auto-test): add the auto-test skill and its harness test
+- #1 docs(specs): triage feedback — two overturned decisions and a composite gap
+- #1 docs(specs): triage feedback — the three wrong-output bugs
+- #1 docs(specs): tenth sweep pass — flag claims all verified accurate
+- #1 docs(specs): record 144ab6f in the Windows/Scoop ledger entry
+- #1 fix(mcp): drop "unofficial" Scoop, cite the now-sourced SENZ7426 masking
+- #1 docs(specs): Windows/Scoop sweep — one claim wrong, one rejection reopened
+- #1 docs(specs): eighth sweep pass — generate_scaffold verified, gap sent upstream
+- #1 docs(specs): record 7427f0d in the SENZ7221 ledger entry
+- #1 fix(mcp): SENZ7221 now names its own remedy; stop telling the guide otherwise
+- #1 docs(specs): SENZ7221 now names its own remedy; the plugin says it does not
+- #3 Add development documentation
+- #1 docs(skills): correct two over-claims in compact-dev-environment
+- #1 docs(specs): mark superseded rules in the invariants index
+- #1 test(guards): add not-vacuous guards to four corpus sweeps
+- #1 docs(specs): record 8ef6689 in the invariants-index entry
+- #1 docs(specs): add a topical index to INVARIANTS.md
+- #1 feat(skills): add compact-dev-environment, with a citation census
+- #1 docs(specs): record 33d527e in the reporting_guide blanket-rule entry
+- #1 fix(mcp): always pass language to reporting_guide, drop the topic list
+- #1 docs(specs): record INV-192, the optional-but-gating parameter class
+- #1 docs(specs): record 9de67f7 in the reporting_guide ledger entry
+- #1 fix(mcp): pass language to reporting_guide topics that gate on it
+- #1 docs(specs): record 407c705 in the MATCH_INFO ledger entry
+- #1 fix(mcp): response_schemas reaches MATCH_INFO, correct four stale sites
+- #1 docs(specs): record 7b15c16 in the two new ledger entries
+- #1 fix(mcp): correct the stale claim that flags/response_schemas omit signatures
+- #1 docs(specs): fourth stamp pass — twelve of sixteen now re-verified
+- #1 docs(specs): third stamp pass — data_mart quote, response paths, find_examples
+- #1 docs(specs): second stamp pass — SENZ2027 and find_network re-verified
+- #1 docs(specs): record the get_record_preview coverage gap sent upstream
+- #1 docs(specs): sweep the expired 1.32.1 provenance stamps
+- #1 feat(skills): add delegate-to-mcp-server sweep, and its first finding
+- #1 docs(specs): record e54fcf8 in the two new ledger entries
+- #1 fix(viz): retry past a failed name attribute; PR #7 review minors
+
+## [0.5.0] - 2026-07-30
+
+- #1 fix(examples): anonymize recap example, make its PDF regenerable
+- #1 Update examples
+- #1 docs(specs): record the 2026-07-30b audit and INV-185-189
+- #1 fix(paths): resolve bundled scripts, keep production data paths
+- #1 Record the 2026-07-30 sweep and INV-184
+- #1 Close three gaps found by sweeping this session's own changes
+- #1 Record d41b1c1 as the commit for the example recap entry
+- #1 Make the example recap's claims true of the example
+- #1 Record 9f89347 as the commit for the two audit entries
+- #1 Put the rules where the artifact is authored; record INV-183
+- #1 Record e966b3d as the commit for the three graduation entries
+- #1 Make graduation read the answers and keys it was already promised
+- #1 Record 60bc9da as the commit for the minor-fixes entry
+- #1 Verify ledger claims against criteria; three audit minor fixes
+- #1 Retire the superseded numeric verbatim-check claim; record INV-181
+- #1 Dry-run phase 3, pass 2 of 2: the interaction prose; spec complete
+- #1 Dry-run phase 3, pass 1 of 2: the five MCP-gated and Medium items
+- #1 Name the third cause of a blank field, and the record-identity fold
+- #1 Make the PDF generators report characters they drop; record INV-178
+- #1 Implement three Module 5 mapping specs; record INV-177
+- #1 Triage 7 feedback entries; fix summary-block shape and pin the label layout
+- #1 Make dry-run findings durable: write them into specs as they are found
+- #1 Record the implementing commit for the dry-run phases 1-2 entry
+- #1 Dry run phases 1-2: fold before measuring, and call get_sample_data correctly
+- #1 Record the implementing commit for audit finding 3
+- #1 Apply INV-153's distinctness rule to every truncated label, not just match keys
+- #1 Record the implementing commit for the fourth deep-dive audit
+- #1 Write recap image paths the way INV-161 resolves them
+- #1 Withdraw the refuted reporting_guide report and record the auto-test gap
+- #1 Record the implementing commit for the env-script portability entry
+- #1 Make the sourced env script resolve its own path under zsh
+- #1 Record the implementing commit for the sampling and routing entries
+- #1 Sample for overlap, and route Module 6 validation to a named topic
+- #1 Record the implementing commit for the two Phase 1 entries
+- #1 Score completeness per record type, and signpost preview's prerequisite
+- #1 Triage a macOS bootcamp's six entries into five specs
+- #1 File the get_capabilities precondition inconsistency upstream
+- #1 Stop re-processing feedback: per-entry dedup, archive, and a ledger
+- #1 Record the implementing commit for the engine-verification entry
+- #1 Verify the engine, not the version, and name what SENZ2027 means
+- #1 Rewrite the SUPPORTPATH spec against what the server actually says
+- #1 Record the implementing commit for the verbatim-gate entry
+- #1 Don't let an unsatisfiable verbatim gate block a correct mapping (INV-173)
+- #1 Record the implementing commit for the three keepsake-fidelity entries
+- #1 Print the name the bootcamper chose, and stop the keepsake lying to them
+- #1 Record the implementing commit for the config-seeding entry
+- #1 Seed the default config before registering data sources (SENZ7221)
+- #1 Re-verify a spec's Senzing facts against the live server before implementing
+- #1 Triage six new feedback entries into five specs, two filed upstream
+- #1 Re-verify feedback against the live MCP server before writing specs
+- #1 Record the implementing commit for the response-path entry
+- #1 Record the network-link keys and the get_record-only JSON_DATA trap
+- #1 Record the implementing commit for the browser-lookup and export-flag entries
+- #1 Find the Windows browser, and stop asserting the export drops relationships
+- #1 Record the implementing commit for the two High-priority entries
+- #1 Search organizations by NAME_ORG and document PowerShell's semantics
+- #1 Record the implementing commit for the two Windows-feedback entries
+- #1 Triage Windows bootcamp feedback into eight specs and implement two
+- #1 Implement find_examples empty-content guard (INV-160)
+- #1 Record upstream filings and spec find_examples empty-content guard
+- #1 3-Cs
+- #1 Record the implementing commit for the interface-naming entry
+- #1 name-the-claude-interface
+- #1 Fix issue with recap PDF
+- #1 Improve Certificate of Completion
+- #1 Update British to English spelling
+- #1 Record the implementing commit for the deep-dive audit entry
+- #1 Fix the eight findings from the 2026-07-27 deep-dive audit
+
+## [0.4.1] - 2026-07-26
+
+- #1 Bump plugin patch version to 0.4.1
+- #1 Record the implementing commit for the final four feedback specs
+- #1 Close the last four feedback specs: licence, redo, factory, viz scale
+- #1 Record the implementing commit for the response-schema coverage work
+- #1 Say what a shallow response_schemas result means, and flag partial rows
+- #1 Record the implementing commit for the screenshot retention work
+- #1 Keep every captured tab in the recap, in the app's tab order
+- #1 Record the implementing commit for the analyzer conformance fix
+- #1 Stop treating a supported record shape as a structural failure
+- #1 Record the implementing commit for the discoveries-PDF table work
+- #1 Render discoveries-PDF tables as a grid, and space its paragraphs
+- #1 Add eight specs triaged from the 2026-07-26 bootcamp feedback
+- #1 Record the implementing commit for the model/effort re-assessment
+- #1 Re-rate each module's model/effort and ask only when it differs
+- #1 Close the dry run's five open items, including an unreachable verbosity check
+- #1 Retire the model-guidance modes; always pause when the recommendation changes
+- #1 Honor every saved setup preference, not just model guidance
+- #1 Turn the three-phase dry run into a maintainer skill, fixture included
+- #1 Stop the recap silently downgrading to the plainer renderer on a clipped title
+- #1 Fix the MCP calls Module 5 could never have made; gate the licence request
+- #1 Mechanise the supersession-drift class that three audits kept finding by hand
+- #1 Retire the last track-model gate; record the name invariant that was never filed
+- #1 Triage bootcamp feedback plugin-vs-MCP-server and offer an upstream forward
+- #1 Carry the XSS guard into the any-language contract; close Windows temp gaps
+- #1 Correct the SZ_EXPORT_ALL_FLAGS claim and file the four upstream requests
+- #1 Fix four invariant-audit findings and guard the tab set across files
+- #1 Verify SDK parameter shapes and honor a saved model-guidance preference
+- #1 Consolidate the visualization to six tabs and guard the snapshot rebuild
+- #1 Verify deliverables at the artifact level and guard the CommonMark pass
+- #1 Implement three more feedback specs and record INV-126 to INV-128
+- #1 Triage bootcamp feedback into 13 specs and implement five
+- #1 Report unfinalized modules in the recap validator
+- #1 Normalize Module 7's name to the canonical spelling
+- #1 Fix five pre-testing audit findings
+- #1 Record commit hash for the data-discoveries spec
+- #1 Produce the data-discoveries deliverable on every path
+- #1 Record commit hash for the model-guidance mode spec
+- #1 Make model/effort guidance a bootcamper-chosen mode
+- #1 Record commit hash for the generated-scenario diagrams spec
+- #1 Generate diagrams instead of asking for them on the generated path
+- #1 Record commit hash for the viz-teardown and volume specs
+- #1 Fix viz server teardown and production-volume question
+- #1 Record commit hash for the two mapping-validation specs
+- #1 Add semantic mapping validation to modules 5 and 6
+- #1 chore(git): ignore the numbered feedback-triage input files
+- #1 docs(specs): record the implementation commit in the ledger
+- #1 docs(sdk-setup): document the JVM launch environment and scaffold JSON gap
+- #1 docs(specs): record the implementation commit in the ledger
+- #1 feat(visualization): specify the interaction and rendering contract
+- #1 docs(specs): record the implementation commit in the ledger
+- #1 feat(bootcamp): require SDK response-schema lookup; add graduation retrospective
+- #1 docs(specs): record the implementation commit in the ledger
+- #1 feat(bootcamp): refresh model guidance, rename Module 5, harden quiz + certificate
+- #1 docs(specs): record the implementation commit in the ledger
+- #1 fix(graduation): fail loudly when the recap PDF would drop its content
+- #1 Address PR #4 code-review findings
+- #1 Retrofit
+- #1 Add skills
+
+## [0.3.6] - 2026-07-23
+
+- #1 fix(bootcamp): second-audit coherence nits and write-gate hardening
+- #1 feat(bootcamp): show plugin version at start, record env in recap
+- #1 docs(bootcamp): pre-test audit coherence fixes and NIT cleanup
+- #1 refactor(bootcamp): consolidate cross-source viz offer into Module 7
+- #1 feat(bootcamp): consolidate Module 7 visualizations into one tabbed app
+- #1 Fix heading
+- #1 chore(bootcamp): bump plugin version to 0.3.6
+- #1 fix(bootcamp): clear re-audit coherence nits (A-E)
+- #1 fix(bootcamp): audit polish — apparatus/menu/wording coherence nits
+- #1 fix(bootcamp): correct certificate completion date + stale viz/module coherence
+- #1 fix(bootcamp): reconcile stale module/setup docs with INV-096/097/095/079
+- #1 feat(bootcamp): consolidate per-module recap into an End-of-Module Summary
+- #1 feat(bootcamp): open graduation with the full module preface
+- #1 feat(bootcamp): make Phase C load questions provenance-aware
+- #1 feat(bootcamp): offer generate/synthesize data in the Data collection menu
+- #1 Refactor docs
+- #1 feat(bootcamp): brand recap cover with the Senzing logo
+- #1 feat(bootcamp): render why/how visually instead of raw JSON in the viz
+- #1 feat(bootcamp): add why/how explainability and clickable histogram to viz
+- #1 feat(bootcamp): offer PostgreSQL in a Docker container as a db option
+- #1 feat(bootcamp): track and tear down docker containers across sessions
+- #1 feat(bootcamp): add landscape certificate of completion to recap PDF
+- #1 feat(bootcamp): recap setup choices at end of bootcamp preparation
+- #1 feat(bootcamp): make model/effort nudge surface-aware
+- #1 refactor(bootcamp): move integration/deploy questions to module 1
+- #1 feat(bootcamp): auto-init git and add module time estimates
+- #1 feat(bootcamp): save a revisit/resume bundle at graduation
+- #1 refactor(bootcamp): consolidate license key gate into module 4
+- #1 docs(bootcamp): add 14 improvement specs from bootcamp feedback
+- #1 refactor(bootcamp): consolidate module 7 visualization offers
+- #1 fix(bootcamp): state no action needed in system verification banner
+- #1 fix(bootcamp): remove sample recap PDF pointer from welcome overview
+- #1 Update
+
+## [0.3.5] - 2026-07-21
+
+- Earliest tagged release; history before this tag is not itemized.
