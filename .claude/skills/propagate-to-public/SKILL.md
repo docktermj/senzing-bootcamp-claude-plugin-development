@@ -79,6 +79,20 @@ files point users at the Senzing repo:
   wherever it appears (README marketplace URL and raw-content PDF link,
   `docs/README.md` `marketplace add` command, `plugin.json` homepage/repository).
 - `marketplace.json` owner `"name": "docktermj"` → `"name": "Senzing"`.
+- `marketplace.json` marketplace `"name": "senzing-bootcamp-dev"` → `"name": "senzing-bootcamp"`,
+  and `senzing-bootcamp-dev` → `senzing-bootcamp` in every rewritten file, which turns the
+  `docs/README.md` install, update and uninstall commands back into
+  `senzing-bootcamp@senzing-bootcamp` and `marketplace remove senzing-bootcamp` (#449).
+
+⛔ **The dev marketplace has its own name so both can be registered on one machine.**
+Claude Code keys marketplaces by name and refuses one name with two sources, so the dev repo
+could not be added where the published plugin was installed. Publishing the dev name would
+change the plugin ID for every existing install, so the rewrite back is part of the rename,
+not a follow-up. `senzing-bootcamp-dev` is a *prefix* of longer names, so it is matched only
+where no name character (`[A-Za-z0-9_-]`) follows. The plugin's own name in `plugin.json`
+stays `senzing-bootcamp` in both repos and is never rewritten.
+`tests/test_propagate_publishes_the_published_marketplace_name.py` runs the script and checks
+the result.
 
 ⛔ **The two slugs differ in owner *and* name.** The development repo carries a
 `-development` suffix the public repo does not, so `SLUG_OLD` in `propagate.sh`

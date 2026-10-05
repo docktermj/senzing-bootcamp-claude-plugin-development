@@ -91,13 +91,26 @@ rsync -a "$here/README.md" "$dest/README.md"
 # untouched (different repo name, so its slug never matches). Idempotent: rsync
 # re-copies the docktermj-flavored source each run, then this pass rewrites it
 # again.
+#
+# The marketplace NAME is rewritten too (#449). Claude Code keys marketplaces by
+# name, so the dev repo's marketplace is `senzing-bootcamp-dev` -- otherwise it
+# cannot be added beside the published `senzing-bootcamp`. Publishing the dev
+# name would change the plugin ID (`senzing-bootcamp@senzing-bootcamp`) for
+# every existing install, so it is rewritten back here: the exact `"name"` in
+# marketplace.json, and the install commands in the docs. `MKT_OLD` is a PREFIX
+# of longer names, like SLUG_OLD's hazard above, so it is matched only where no
+# name character follows, never as a bare substring. The plugin's own name in
+# plugin.json is `senzing-bootcamp` in both repos and is not touched.
 echo
 echo "=== Rewriting self-references (docktermj/...-development -> Senzing) ==="
 python3 - "$dest" <<'PY'
-import os, sys
+import os, re, sys
 dest = sys.argv[1]
 SLUG_OLD = "docktermj/senzing-bootcamp-claude-plugin-development"
 SLUG_NEW = "Senzing/senzing-bootcamp-claude-plugin"
+MKT_OLD = "senzing-bootcamp-dev"
+MKT_NEW = "senzing-bootcamp"
+MKT_RE = re.compile(re.escape(MKT_OLD) + r"(?![A-Za-z0-9_-])")
 
 targets = [os.path.join(dest, "README.md")]
 for sub in ("plugins", ".claude-plugin", "docs"):
@@ -116,6 +129,8 @@ for f in targets:
     t = s.replace(SLUG_OLD, SLUG_NEW)
     if os.path.basename(f) == "marketplace.json":
         t = t.replace('"name": "docktermj"', '"name": "Senzing"')
+        t = t.replace('"name": "%s"' % MKT_OLD, '"name": "%s"' % MKT_NEW)
+    t = MKT_RE.sub(MKT_NEW, t)
     if t != s:
         with open(f, "w", encoding="utf-8") as fh:
             fh.write(t)

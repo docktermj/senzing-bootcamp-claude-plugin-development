@@ -497,7 +497,8 @@ def _propagation_scenario():
         "plugins/senzing-bootcamp/b.md": "b\n",
         "plugins/senzing-bootcamp/slug.md": "See https://github.com/%s\n" % DEV_SLUG,
         ".claude-plugin/marketplace.json":
-            '{\n  "owner": { "name": "docktermj" },\n  "source": "%s"\n}\n' % DEV_SLUG,
+            '{\n  "name": "senzing-bootcamp-dev",\n  "owner": { "name": "docktermj" },\n'
+            '  "source": "%s"\n}\n' % DEV_SLUG,
         "docs/guide.md": "guide\n",
         "docs/development.md": "maintainer only -- propagate.sh excludes this\n",
         "README.md": "Install from %s\n" % DEV_SLUG,
@@ -507,7 +508,8 @@ def _propagation_scenario():
         "plugins/senzing-bootcamp/b.md": "b\n",
         "plugins/senzing-bootcamp/slug.md": "See https://github.com/%s\n" % PUBLIC_SLUG,
         ".claude-plugin/marketplace.json":
-            '{\n  "owner": { "name": "Senzing" },\n  "source": "%s"\n}\n' % PUBLIC_SLUG,
+            '{\n  "name": "senzing-bootcamp",\n  "owner": { "name": "Senzing" },\n'
+            '  "source": "%s"\n}\n' % PUBLIC_SLUG,
         "docs/guide.md": "guide\n",
         "README.md": "Install from %s\n" % PUBLIC_SLUG,
     }
@@ -582,6 +584,8 @@ class TheReportIsTakenAgainstTheLastPropagation(unittest.TestCase):
         """slug.md and marketplace.json differ from dev only by the forward rewrite.
 
         README.md does too; it has a path line of its own, which the first test asserts `same`.
+        The two marketplace.json files differ in the marketplace name as well as the owner
+        (#449), so a name-only difference must not be reported either.
         """
         for name in ("slug.md", "marketplace.json"):
             with self.subTest(file=name):
