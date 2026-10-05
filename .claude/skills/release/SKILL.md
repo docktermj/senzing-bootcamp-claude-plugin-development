@@ -42,7 +42,8 @@ is the kiro-power shape, and it is what `release.py` and
 
 ## What it does, in one unit
 
-1. Rewrites every entry in `VERSION_SITES` (the two files above).
+1. Rewrites every entry in `VERSION_SITES`: the two files above, and the verbatim copy
+   of the manifest in `BLUEPRINT.md`'s section 3.
 2. Creates `CHANGELOG.md` if absent — **seeded from the tags that already exist**,
    one entry each, newest first — and prepends the new entry thereafter.
 3. Commits those files, and **only** those files.

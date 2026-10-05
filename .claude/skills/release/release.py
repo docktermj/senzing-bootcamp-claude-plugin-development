@@ -92,6 +92,12 @@ VERSION_SITES = (
         "why": ("the shipped reference recap's meta row -- "
                 "tests/test_example_recap_sync.py pins it to the manifest"),
     },
+    {
+        "path": "BLUEPRINT.md",
+        "pattern": re.compile(r'^(\s*"version":\s*")(\d+\.\d+\.\d+)(")', re.M),
+        "why": ("BLUEPRINT.md's verbatim copy of the plugin manifest (section 3) -- "
+                "/update-blueprint compares it with plugin.json line by line"),
+    },
 )
 
 CHANGELOG_HEADER = """\
