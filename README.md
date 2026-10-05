@@ -33,6 +33,9 @@ recap PDF you can keep and share, and a production starter. See
   It generates SDK code,
   looks up Senzing facts,
   and provides working examples.
+- Python 3, available as `python3` on the `PATH`.
+  The bootcamp's hooks and its graduation recap run on it.
+  On Windows, if only `python` or `py` is installed, add a `python3` entry to the `PATH`.
 - Minimum of a [Claude Max 5x] plan.
   - *Note:* Multiple 5-hour windows of a [Claude Pro] plan will work, but you will not be able to complete the bootcamp in one session.
 - *Recommended, but not mandatory:*
@@ -69,21 +72,18 @@ and starting the Bootcamp.
     1. In the *Code* pane, click "**New**".
 1. In Claude Desktop, near the bottom, choose the "Working directory" (it might say "Select folder...")
     1. Create and use a new folder for the Senzing Bootcamp.
-1. In Claude Desktop, on the bottom, click the "Add" icon (**+**) > **Add Plugins...** (Or it may be just "Plugins").
-    1. In the *Directory* pane, near "Filter by" and "Sort by", click the "Add Marketplace" icon (**+**).
+1. In Claude Desktop, on the bottom, click the "Add" icon (**+**) > **Plugins** > **Manage plugins**.
+    1. In the upper-right of the *Plugins* pane, click **Add** > **Add Marketplace**.
         1. If the plus sign is missing, see [Troubleshooting: Claude Desktop inoperative](#claude-desktop-inoperative)
     1. In the *Add marketplace* pane, enter "**URL:**"
 
         ```console
-        https://github.com/docktermj/senzing-bootcamp-claude-plugin-development
+        https://github.com/Senzing/senzing-bootcamp-claude-plugin
         ```
 
     1. Click the "**Sync**" button.
-    1. In the *Directory* pane,
-        1. Select "**Code**" tab.
-        1. Select "**Senzing bootcamp**".
-        1. Click on "**Install**".
-        1. Close *Directory* pane.
+    1. To the right of *Senzing bootcamp*, **Add** > "install for project (personal)".
+    1. Close *Plugins* dialog.
 1. In Claude Desktop, on the bottom,
     1. Choose the Mode: "**auto**" for a smooth ride.
     1. Choose the Model "**Sonnet 5.5**".
@@ -114,7 +114,7 @@ the issue may be with an incomplete installation of Claude Desktop.
 - Claude Desktop requires `git` to be installed.
 
 [Bootcamp commands]: docs/README.md#bootcamp-commands
-[bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin-development/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
+[bootcamp_recap.pdf]: https://raw.githubusercontent.com/Senzing/senzing-bootcamp-claude-plugin/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
 [Claude Desktop]: https://claude.ai/download
 [Claude Max 5x]: https://claude.com/pricing
 [Claude Pro]: https://claude.com/pricing
