@@ -8,7 +8,7 @@
   page too.
   Differences from them are deliberate: README blocks that hold several
   commands are split into one step and one command block per command, and the
-  model tip names no modules (the bootcamp says when to switch to Opus 5).
+  model tip names no modules (the bootcamp says when to switch to Opus 5.5).
 -->
 <html lang="en">
   <head>
@@ -106,26 +106,25 @@
               <li>Near the bottom, choose the working directory (it might say <strong>Select folder...</strong>), and select your new, empty folder for the bootcamp.</li>
               <li>
                 Install the Senzing Bootcamp plugin:
+                <p class="step__alt"><strong>Note:</strong> These steps may change with the version of Claude Desktop.</p>
                 <ol class="substeps" type="a">
-                  <li>On the bottom, click the <strong>Add</strong> icon (<strong>+</strong>).</li>
-                  <li>Click <strong>Add Plugins...</strong> (or it may be just <strong>Plugins</strong>).</li>
-                  <li>In the <em>Directory</em> pane, near <strong>Filter by</strong> and <strong>Sort by</strong>, click the <strong>Add Marketplace</strong> icon (<strong>+</strong>). If the plus sign is missing, see <a href="#claude-desktop-inoperative">Troubleshooting</a>.</li>
+                  <li>On the bottom, click the <strong>Add</strong> icon (<strong>+</strong>), then <strong>Plugins</strong> &gt; <strong>Manage plugins</strong>.</li>
+                  <li>Select the <strong>Yours</strong> tab.</li>
+                  <li>In the upper-right of the <em>Plugins</em> pane, click <strong>Add</strong> &gt; <strong>Add Marketplace</strong>. If the plus sign is missing, see <a href="#claude-desktop-inoperative">Troubleshooting</a>.</li>
                   <li>
                     In the <em>Add marketplace</em> pane, for <strong>URL:</strong>, enter:
                     <div class="cmd"><pre><code>https://github.com/docktermj/senzing-bootcamp-claude-plugin-development</code></pre></div>
                   </li>
                   <li>Click <strong>Sync</strong>.</li>
-                  <li>In the <em>Directory</em> pane, select the <strong>Code</strong> tab.</li>
-                  <li>Select <strong>Senzing bootcamp</strong>.</li>
-                  <li>Click <strong>Install</strong>.</li>
-                  <li>Close the <em>Directory</em> pane.</li>
+                  <li>To the right of <strong>Senzing bootcamp</strong>, click <strong>Add</strong> &gt; <strong>install for project (personal)</strong>.</li>
+                  <li>Close the <em>Plugins</em> dialog.</li>
                 </ol>
               </li>
               <li>
                 On the bottom, set the mode, model and effort:
                 <ol class="substeps" type="a">
                   <li>Choose the Mode <strong>auto</strong> for a smooth ride.</li>
-                  <li>Choose the Model <strong>Sonnet 5</strong>.</li>
+                  <li>Choose the Model <strong>Sonnet 5.5</strong>.</li>
                   <li>Choose the Effort <strong>medium</strong>.</li>
                 </ol>
               </li>
@@ -174,7 +173,7 @@
                 <div class="cmd"><pre><code>cd senzing-bootcamp</code></pre></div>
               </li>
               <li>
-                Start the Claude Code CLI on <strong>Sonnet 5</strong> at medium effort, with <code>--permission-mode auto</code> for the smoothest ride:
+                Start the Claude Code CLI on <strong>Sonnet 5.5</strong> at medium effort, with <code>--permission-mode auto</code> for the smoothest ride:
                 <div class="cmd"><pre><code>claude --model claude-sonnet-5 --effort medium --permission-mode auto</code></pre></div>
               </li>
               <li>
@@ -203,7 +202,7 @@
           <div class="tips">
             <div class="tip" id="model">
               <h3>Model and effort</h3>
-              <p>Sonnet 5 at medium effort for most modules. At the start of each module the bootcamp tells you when to switch to Opus 5.</p>
+              <p>Sonnet 5.5 at medium effort for most modules. At the start of each module the bootcamp tells you when to switch to Opus 5.5.</p>
             </div>
             <div class="tip" id="commands">
               <h3>Bootcamp commands</h3>
