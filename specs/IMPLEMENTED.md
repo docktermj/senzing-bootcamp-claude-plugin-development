@@ -43,6 +43,34 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## pages-site-exists-only-in-the-public-repo
+
+- **Implemented:** 2026-10-05 (**Not a spec** — a dated record of one issue-driven run, #452, spec revision 1, found by `/retrofit-from-public`. `Source: maintainer request`)
+- **Commit:** uncommitted
+- **Files changed:** `docs/index.html`, `docs/index.css`, `docs/.nojekyll`, `docs/images/apple-touch-icon.png`, `docs/images/favicon-32.png`, `docs/images/senzing-logo.png` (all new, from public at `a621066`), `.claude/skills/propagate-to-public/propagate.sh`, `.claude/skills/propagate-to-public/SKILL.md`, `tests/test_propagate_publishes_the_pages_site.py` (new), `BLUEPRINT.md`, `specs/IMPLEMENTED.md` (this entry). `specs/INVARIANTS.md` and `invariant-manifest.json` are unchanged.
+- **MCP re-check:** n/a (no Senzing fact). Re-confirmed: the change moves a static page and widens the propagate rewrite; it states nothing about Senzing that was not already on the published page.
+- **Approach:** implemented directly (Phase 5a), built on `27fd738`. The ownership decision (option A, dev owns the site) was settled in the issue's spec revision 1.
+- **Summary:**
+  - **The site.** The six files come from public at `a621066`, byte for byte except for two changes. `docs/index.html` carries the inverse transform at nine sites: `Senzing/senzing-bootcamp-claude-plugin` → `docktermj/senzing-bootcamp-claude-plugin-development` (the `marketplace add` command, the Claude Desktop marketplace URL, and the nav and footer GitHub links), `senzing-bootcamp@senzing-bootcamp` → `senzing-bootcamp@senzing-bootcamp-dev` (install, two update commands, uninstall), and `marketplace remove senzing-bootcamp` → `marketplace remove senzing-bootcamp-dev`. `docs/index.css` line 13 reads `gray` (INV-253). The PNGs and `.nojekyll` are unchanged.
+  - **The rewrite pass.** `propagate.sh` names its suffixes once, `REWRITTEN_SUFFIXES = (".md", ".json", ".html", ".css")`, with a comment saying why `.html` and `.css` joined. Only the two new site files carry those suffixes, so nothing else in the mirror changes. `propagate-to-public/SKILL.md`'s `docs/` manifest entry names the site, and its transform section names `docs/index.html` and the suffix list.
+  - **New test, `tests/test_propagate_publishes_the_pages_site.py` (8 tests).** It reuses the propagate helpers of `tests/test_propagate_publishes_the_published_marketplace_name.py` by import. Source side: the six paths exist, the page carries the dev slug and install ID and not the public slug, and the script's suffix line reads all four suffixes. Running `propagate.sh` against this repository: all six paths land, the PNGs byte for byte; no propagated file of any type holds the dev slug (read as bytes); and the published page names the public slug and `senzing-bootcamp@senzing-bootcamp`. Negative control: with `.html` dropped from the suffixes, the dev slug survives in `docs/index.html` and is caught.
+  - **Manual check (one time).** Propagated this branch into a fresh copy of public at `a621066`. `docs/index.html` round-trips byte-identical. In `docs/`, only `index.css` (the `gray` fix) and `docs/README.md` differ. **Assumption, stated:** the issue's "`docs/` differs only in the `index.css` comment" is read as applying to the site's six paths. `docs/README.md`'s difference is dev's own work since `0.5.3` (Sonnet 5.5 / Opus 5.5, `f519e472` and `fbf39e7a`), the same situation as #451.
+  - **Not changed, by scope:** the page still names Sonnet 5 and Opus 5 where `docs/README.md` now names 5.5. A follow-up issue is drafted for the maintainer, with the test the spec asks for (the page's `claude plugin …` commands match `docs/README.md`).
+  - **Blueprint.** `/update-blueprint 452`: sections 2 (six layout entries), 5 (`propagate-to-public` and 5.56 `docs/`), 8 (counts and key cases), 9 (three binaries) and 10 (#452's line).
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **DEFERRED INVARIANT — new invariant, awaiting the maintainer's sign-off; NOT minted.** No dev slug reaches the public tree, whatever the file type. The rule already shipping, quoted:
+    - ⛔ **The pass reads `.md`, `.json`, `.html` and `.css` files** — in `.claude/skills/propagate-to-public/SKILL.md`
+
+  **Sites it affects:** the statement is in `propagate-to-public/SKILL.md` ("Transform applied during propagation"); the mechanism is `REWRITTEN_SUFFIXES` and its comment in `propagate.sh`; the enforcer is `tests/test_propagate_publishes_the_pages_site.py`. No site is under `plugins/`.
+
+  ⚠️ **It may fold into #449's pending draft.** The `dev-marketplace-name-collides-with-the-published-one` block drafts the marketplace-name half of the same rule: what `propagate.sh` publishes carries no dev self-reference. The maintainer may register the two as one "self-references are rewritten on propagation" invariant, naming both enforcers, instead of two ids. Neither is INV-304, which governs which sources the mirror reads, not what it does to their content.
+
+  The drafted wording:
+
+  **INV-NNN** — No file that `propagate.sh` publishes, of any type, may hold the development repository's slug `docktermj/senzing-bootcamp-claude-plugin-development`. The rewrite pass MUST read every text file type that carries it (today `.md`, `.json`, `.html` and `.css`, named once as `REWRITTEN_SUFFIXES`), and a file type added to a propagated root that carries the slug MUST be added to that list in the same change. ⛔ The pass read only `.md` and `.json` until #452 brought the GitHub Pages site into `docs/`; without `.html`, `docs/index.html` would have published the dev slug in its install commands and links. Enforced by `tests/test_propagate_publishes_the_pages_site.py`, which runs `propagate.sh` against this repository and reads every published file as bytes, with a negative control that drops `.html` from the list, and **cannot** establish that a file type nobody propagates yet will be added to the list when it arrives.
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant** (INV-309). The one ⛔ line this run adds is the rule above, in `propagate-to-public/SKILL.md`; none is demoted. `specs/INVARIANTS.md` is not edited.
+
 ## dev-marketplace-name-collides-with-the-published-one
 
 - **Implemented:** 2026-10-05 (**Not a spec** — a dated record of one issue-driven run, #449, spec revision 1. `Source: maintainer request`)

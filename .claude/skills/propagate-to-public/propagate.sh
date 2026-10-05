@@ -111,13 +111,18 @@ SLUG_NEW = "Senzing/senzing-bootcamp-claude-plugin"
 MKT_OLD = "senzing-bootcamp-dev"
 MKT_NEW = "senzing-bootcamp"
 MKT_RE = re.compile(re.escape(MKT_OLD) + r"(?![A-Za-z0-9_-])")
+# The text files the pass reads. `.html` and `.css` joined `.md` and `.json` when
+# the GitHub Pages site moved into docs/ (#452): docs/index.html carries the slug
+# and the install commands, and a suffix left off this list publishes the dev
+# slug unrewritten. Binaries (the site's PNGs) are never opened.
+REWRITTEN_SUFFIXES = (".md", ".json", ".html", ".css")
 
 targets = [os.path.join(dest, "README.md")]
 for sub in ("plugins", ".claude-plugin", "docs"):
     root = os.path.join(dest, sub)
     for dp, _, fns in os.walk(root):
         for fn in fns:
-            if fn.endswith((".md", ".json")):
+            if fn.endswith(REWRITTEN_SUFFIXES):
                 targets.append(os.path.join(dp, fn))
 
 changed = 0

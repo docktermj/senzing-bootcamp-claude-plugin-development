@@ -73,6 +73,8 @@ and starting the Bootcamp.
 1. In Claude Desktop, near the bottom, choose the "Working directory" (it might say "Select folder...")
     1. Create and use a new folder for the Senzing Bootcamp.
 1. In Claude Desktop, on the bottom, click the "Add" icon (**+**) > **Plugins** > **Manage plugins**.
+    > **Note:** These instructions may change depending on version of Claude App.
+    1. Select the "Yours" tab.
     1. In the upper-right of the *Plugins* pane, click **Add** > **Add Marketplace**.
         1. If the plus sign is missing, see [Troubleshooting: Claude Desktop inoperative](#claude-desktop-inoperative)
     1. In the *Add marketplace* pane, enter "**URL:**"
@@ -110,6 +112,7 @@ and a `production/` starter project.
 If you are unable to enter and process prompts in Claude Desktop
 or if you are unable to add a Claude Marketplace or Claude plugin,
 the issue may be with an incomplete installation of Claude Desktop.
+
 
 - Claude Desktop requires `git` to be installed.
 
