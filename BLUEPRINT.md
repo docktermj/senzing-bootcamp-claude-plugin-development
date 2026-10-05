@@ -1979,10 +1979,16 @@ receiving branch.
   - Prefer `download_url` (capped) over `source_download_url`.
   - Check the HTTP status: retry a 429 with backoff, switch URLs on a 403.
   - Match the counted records to `record_count`, or to the cap for a capped
-    fetch.
+    fetch; the cap is read from `download_url_max_records`, never stated.
+  - A source listed with `truncated: true` has a capped `record_count`: an
+    uncapped fetch must hold at least that many, a capped one exactly
+    `min(record_count, download_url_max_records)`. One anchored rule
+    (`#truncated-cord-source`) states this; every reader of
+    `expected_record_count` links it.
   - Stage in `data/temp/`, then move to `data/raw/`.
 - **Registry fields.** `name`, `file_path`, `format`, `record_count`
-  (measured), `expected_record_count`, `file_size_bytes`, `quality_score`,
+  (measured), `expected_record_count`, `truncated` (only for a truncated
+  CORD source), `file_size_bytes`, `quality_score`,
   `mapping_status: pending`, `load_status: not_loaded`,
   `validation_status`, `validation_checks`, `provenance`
   (`cord|own|free_data|synthesized|unknown`), `added_at` and `updated_at`.
@@ -8313,8 +8319,8 @@ probe it with `importlib.util.find_spec` and let the code under test import it.
   `fpdf2 is not installed`.
 - **The absent leg** first fails if `import fpdf` works. The log must contain
   `fpdf2 is not installed` and match `OK (skipped=N)` with N of at least 1.
-- **Recorded results.** The newest ledger entry (`invariant-review-2026-10-04b`
-  in `specs/IMPLEMENTED.md`) records 6113 tests, both legs run in a clean
+- **Recorded results.** The ledger entry `invariant-review-2026-10-04b`
+  (in `specs/IMPLEMENTED.md`) records 6113 tests, both legs run in a clean
   worktree with an empty `HOME`: `OK (skipped=13)` on the present leg and
   `OK (skipped=117)` on the absent leg.
 - **Local CI mirror.** This is a maintainer practice, set out in
@@ -8344,7 +8350,7 @@ collected as tests:
     non-empty `SBCP_QUIET_FPDF2_NOTICE` silences it.
   - It exports the decorator `requires_fpdf2`.
   - It is a module rather than a `conftest.py`, which `unittest` never loads.
-- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 49
+- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 50
   files. `blocks(text)` splits Markdown into blocks, and
   `match_lines(text, pattern)` returns the 1-based start line of each match. The
   rules are in 8.4.1.
@@ -8444,21 +8450,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6132 test methods in 369 files, matching `inventory.test_count_total`.
+There are 6153 test methods in 369 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6132.
+sum to 6153.
 
-Two files run more tests than they define, so discovery collects 6139:
+Two files run more tests than they define, so discovery collects 6160:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6132`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6153`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6139`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6160`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -8511,7 +8517,7 @@ looks wrong.
 - `tests/test_container_lifecycle_runtimes.py`: 18
 - `tests/test_container_teardown_has_a_route_and_a_failure_report.py`: 8
 - `tests/test_cord_fetch_has_a_403_remedy.py`: 17
-- `tests/test_cord_fetch_integrity.py`: 29
+- `tests/test_cord_fetch_integrity.py`: 50
 - `tests/test_cord_is_disclosed_as_real_data.py`: 10
 - `tests/test_coverage_check_looks_inside_root_arrays.py`: 6
 - `tests/test_coverage_ledger.py`: 36
@@ -9973,3 +9979,6 @@ Senzing licensing, with no SPDX identifier.
   so every propagation would have deleted it)
 - #466: name Claude Desktop in `README.md`'s plugin-install note (it said
   "Claude App", which INV-158 retires, so the suite was red on `main`)
+- #448: read the CORD `download_url` cap from the response and treat a
+  truncated source's count as a floor on the uncapped route (Module 4 still
+  stated a 10,000 cap after #214 closed without its fix)

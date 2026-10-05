@@ -1263,7 +1263,8 @@ The projection describes what production loads, not what the evaluation loaded:
   source `name`, `file_path` and `format`.
 - **Strip:** every other field, including `load_subset:`, `sample:`, `quality_score`,
   `quality_intent`, `provenance`, `validation_status`, `validation_checks`, `mapping_status`,
-  `load_status`, `record_count`, `expected_record_count`, `file_size_bytes` and the timestamps.
+  `load_status`, `record_count`, `expected_record_count`, `truncated` (as
+  [the truncated-source rule](../module-04-data-collection/SKILL.md#truncated-cord-source) defines), `file_size_bytes` and the timestamps.
 - **Sources:** every source whose `file_path` is non-null, fast-pathed sources included (their
   `data/raw/` input is disclosed as the paragraph on fast-pathed sources below says). Omit a source
   whose `file_path` is null, such as a documented-location-only source.

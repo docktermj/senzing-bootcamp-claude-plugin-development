@@ -181,7 +181,7 @@ class TheCountCheckIsMandatory(unittest.TestCase):
         self.assertRegex(
             self.step,
             r"(?i)`min\(record_count, download_url_max_records\)` from `download_url`",
-            "the capped route's expectation is unstated, so a 10,000-record slice reads "
+            "the capped route's expectation is unstated, so a capped slice reads "
             "as a mismatch")
 
     def test_it_says_what_the_check_is_for(self):
@@ -220,7 +220,7 @@ class ModuleFourNoLongerStatesOneEgressHost(unittest.TestCase):
     def test_the_capped_download_rule_survives(self):
         self.assertRegex(
             self.flat, r"(?i)serves at most `download_url_max_records` records per request",
-            "the 10,000-record cap rule was lost")
+            "the capped-download rule was lost")
 
 
 if __name__ == "__main__":

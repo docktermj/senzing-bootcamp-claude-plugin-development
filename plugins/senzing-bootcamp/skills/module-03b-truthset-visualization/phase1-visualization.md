@@ -104,10 +104,12 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    That failure is silent: the graph renders, looks plausible, and misrepresents what Senzing did on
    the module the bootcamp treats as its showpiece. Verified on **MCP server 1.32.9, 2026-08-14**:
    `dataset='truthset', source='list'` returns `records: []` with `total_available: 159` and three
-   sources; a per-source call returns a preview with `citation.note` reading *"Showing N of 17
-   records (preview). To get more: download_url serves up to 10000 records per request and needs only
-   mcp.senzing.com allowed; source_download_url is the complete uncapped file but requires egress to
-   raw.githubusercontent.com."*
+   sources. A per-source call returns a preview whose `citation.note` ends, as re-read on **MCP
+   server 1.37.19, 2026-10-04** (`get_sample_data(dataset='truthset', source='WATCHLIST', limit=1,
+   offset=0)`), *"Showing 1 of 17 records (preview). To get more: download_url serves up to 250000
+   records per request and needs only mcp.senzing.com allowed; source_download_url is the complete
+   uncapped file but requires egress to raw.githubusercontent.com."* The cap in it is the server's
+   figure on that date: read `download_url_max_records` from the response rather than from this note.
 
    So **download the records**, then verify the count:
 
