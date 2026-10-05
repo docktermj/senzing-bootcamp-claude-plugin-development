@@ -113,6 +113,7 @@ If you are unable to enter and process prompts in Claude Desktop
 or if you are unable to add a Claude Marketplace or Claude plugin,
 the issue may be with an incomplete installation of Claude Desktop.
 
+
 - Claude Desktop requires `git` to be installed.
 
 [Bootcamp commands]: docs/README.md#bootcamp-commands
