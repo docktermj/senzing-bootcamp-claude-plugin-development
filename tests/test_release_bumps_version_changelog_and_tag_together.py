@@ -72,6 +72,8 @@ RELEASE_PY = REPO_ROOT / ".claude" / "skills" / "release" / "release.py"
 
 MANIFEST_REL = "plugins/senzing-bootcamp/.claude-plugin/plugin.json"
 EXAMPLE_REL = "plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md"
+#: BLUEPRINT.md copies plugin.json verbatim in its section 3, so it is a version site too (#446).
+BLUEPRINT_REL = "BLUEPRINT.md"
 CHANGELOG_REL = "CHANGELOG.md"
 
 
@@ -101,10 +103,13 @@ def write_sites(repo, version):
     example.parent.mkdir(parents=True, exist_ok=True)
     example.write_text("# Senzing Bootcamp Recap\n\n**Plugin version:** %s\n" % version,
                        encoding="utf-8")
+    (Path(repo) / BLUEPRINT_REL).write_text(
+        "# Blueprint\n\n```json\n{\n  \"name\": \"senzing-bootcamp\",\n"
+        "  \"version\": \"%s\",\n}\n```\n" % version, encoding="utf-8")
 
 
 def build_fixture(prefix):
-    """A repo shaped like this one: two version sites, two lightweight tags, no CHANGELOG.
+    """A repo shaped like this one: three version sites, two lightweight tags, no CHANGELOG.
 
     The tags are LIGHTWEIGHT on purpose -- all seven tags this repo already carries are,
     so the changelog seeder has to read dates off the commit rather than off a tag object.
@@ -177,7 +182,7 @@ class ADryRunChangesNothing(unittest.TestCase):
     def test_the_dry_run_states_what_it_would_change(self):
         """A preview that shows nothing is not a preview; the maintainer approves on it."""
         _, out, _ = release(self.repo, "--minor", "--dry-run")
-        for expected in (MANIFEST_REL, EXAMPLE_REL, CHANGELOG_REL, "0.4.1", "0.5.0"):
+        for expected in (MANIFEST_REL, EXAMPLE_REL, BLUEPRINT_REL, CHANGELOG_REL, "0.4.1", "0.5.0"):
             self.assertIn(expected, out,
                           "the dry run did not mention %r, so it does not show what the "
                           "release would do" % expected)
@@ -202,13 +207,16 @@ class AReleaseMovesAllThreeTogether(unittest.TestCase):
     def test_the_release_succeeded(self):
         self.assertEqual(0, self.code, "release failed: %s%s" % (self.out, self.err))
 
-    def test_both_version_sites_advanced(self):
+    def test_every_version_site_advanced(self):
         manifest = json.loads((self.repo / MANIFEST_REL).read_text(encoding="utf-8"))
         self.assertEqual("0.5.0", manifest["version"])
         self.assertIn("**Plugin version:** 0.5.0",
                       (self.repo / EXAMPLE_REL).read_text(encoding="utf-8"),
                       "the manifest advanced and the shipped example recap did not -- the "
                       "split tests/test_example_recap_sync.py already fails on")
+        self.assertIn('"version": "0.5.0"',
+                      (self.repo / BLUEPRINT_REL).read_text(encoding="utf-8"),
+                      "the manifest advanced and BLUEPRINT.md's verbatim copy of it did not")
 
     def test_the_changelog_was_created_and_seeded_from_the_existing_tags(self):
         text = (self.repo / CHANGELOG_REL).read_text(encoding="utf-8")
@@ -287,7 +295,7 @@ class AReleaseMovesAllThreeTogether(unittest.TestCase):
     def test_the_release_commit_carries_the_release_and_nothing_else(self):
         touched = sorted(git(self.repo, "show", "--name-only", "--format=", "HEAD").split())
         self.assertEqual(
-            sorted([CHANGELOG_REL, MANIFEST_REL, EXAMPLE_REL]), touched,
+            sorted([CHANGELOG_REL, MANIFEST_REL, EXAMPLE_REL, BLUEPRINT_REL]), touched,
             "the release commit touched %s; a release commit that sweeps in other work "
             "cannot be reverted as a unit" % touched)
 
