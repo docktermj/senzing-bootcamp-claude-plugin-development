@@ -30,8 +30,8 @@ receives the shippable plugin through `/propagate-to-public`.
 
 ## 2. Repository layout
 
-- `.claude-plugin/marketplace.json`: the plugin marketplace this repository
-  serves; lists the one plugin (section 6.3).
+- `.claude-plugin/marketplace.json`: the `senzing-bootcamp-dev` marketplace
+  this repository serves; lists the one plugin (section 6.3).
 - `.claude/memory/`: project memory notes loaded by Claude Code sessions in this
   repository.
 - `.claude/skill-overlays/`: repo overlays: obligations this repository adds to
@@ -66,6 +66,8 @@ receives the shippable plugin through `/propagate-to-public`.
   feedback file.
 - `.sync-state.json`: records the Kiro Power commit the plugin was first
   scaffolded from.
+- `CHANGELOG.md`: release notes, one entry per version, written by `/release`
+  (section 9).
 - `MIGRATION.md`: migration notes from the Kiro Power predecessor to this Claude
   Code plugin.
 - `README.md`: repository README for maintainers.
@@ -73,8 +75,8 @@ receives the shippable plugin through `/propagate-to-public`.
   which skill owns each.
 - `docs/README.md`: user-facing install, update and uninstall guide (mirrored to
   the public repository).
-- `docs/development.md`: developer guide: layout, tests, release and
-  propagation.
+- `docs/development.md`: developer guide: layout, tests, release,
+  propagation and installing the development plugin.
 - `feedback/`: archived Bootcamper feedback reports and the processed-feedback
   log.
 - `invariant-manifest.json`: generated machine-readable copy of the invariant
@@ -1140,7 +1142,7 @@ From `.claude-plugin/marketplace.json`:
 
 ```json
 {
-  "name": "senzing-bootcamp",
+  "name": "senzing-bootcamp-dev",
   "owner": {
     "name": "docktermj"
   },
@@ -1187,7 +1189,7 @@ From `docs/README.md`:
 
 ```sh
     claude plugin marketplace add docktermj/senzing-bootcamp-claude-plugin-development
-    claude plugin install senzing-bootcamp@senzing-bootcamp
+    claude plugin install senzing-bootcamp@senzing-bootcamp-dev
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -1405,7 +1407,7 @@ From `.github/workflows/test-suite.yaml`:
 ### 5.1 `.claude-plugin/marketplace.json`
 
 The marketplace catalog at the repository root. It names the marketplace
-`senzing-bootcamp`, owned by `docktermj`, described as the Senzing bootcamp
+`senzing-bootcamp-dev`, owned by `docktermj`, described as the Senzing bootcamp
 plugin for Claude Code. It lists exactly one plugin, also named
 `senzing-bootcamp`, whose source is the relative directory
 `./plugins/senzing-bootcamp`, with a one-sentence description (guided bootcamp
@@ -1413,7 +1415,9 @@ for learning Senzing entity resolution with Claude Code, from first demo to
 production deployment) and the keywords `senzing`, `bootcamp`,
 `entity-resolution`, `tutorial` and `guided-learning`. Adding the repository as
 a marketplace and installing `senzing-bootcamp` from it is how a user gets the
-plugin.
+plugin. The `-dev` suffix lets it be registered beside the published
+`senzing-bootcamp` marketplace, which Claude Code would otherwise refuse as one
+name with two sources; `propagate.sh` rewrites it back on publish (#449).
 
 ### 5.2 `plugins/senzing-bootcamp/.claude-plugin/plugin.json`
 
@@ -3512,8 +3516,13 @@ non-zero. It prints source, destination, origin and branch, then runs `rsync
 (`docktermj/senzing-bootcamp-claude-plugin-development`, the suffixed form
 deliberately) to `SLUG_NEW` in every `.md` and `.json` under the mirrored
 roots plus `README.md`, and `"name": "docktermj"` to `"name": "Senzing"` in
-`marketplace.json`, printing each rewritten file and a count. It ends with
-`git status --short` of the destination and a review reminder; exit 0.
+`marketplace.json`. The same pass rewrites the marketplace name
+`"name": "senzing-bootcamp-dev"` to `"name": "senzing-bootcamp"` in
+`marketplace.json`, and `senzing-bootcamp-dev` to `senzing-bootcamp` in every
+rewritten file wherever no `[A-Za-z0-9_-]` follows it (#449), so the published
+plugin ID stays `senzing-bootcamp@senzing-bootcamp`. It prints each rewritten
+file and a count, then ends with `git status --short` of the destination and a
+review reminder; exit 0.
 
 ### 5.49 `.claude/skills/release`
 
@@ -3577,9 +3586,10 @@ subject or SHA, show each title and body and get a yes (INV-314), file with
 commit, the affected paths and, as work still owed, the narrow inverse
 rewrite (`Senzing/senzing-bootcamp-claude-plugin` back to
 `docktermj/senzing-bootcamp-claude-plugin-development`, and
-`marketplace.json`'s owner name; never `plugin.json`'s author or product
-mentions). It stopped copying (#54) because copied prose desynced dev-only
-tests.
+`marketplace.json`'s owner name, and the marketplace name `senzing-bootcamp`
+back to `senzing-bootcamp-dev` where it names the marketplace; never
+`plugin.json`'s author or plugin name, or product mentions). It stopped
+copying (#54) because copied prose desynced dev-only tests.
 
 `retrofit.sh [--base <dev-tag>] [path]` (bash, `set -euo pipefail`). Exit 2
 for a usage error (`--base` without a value, an unknown option, too many
@@ -3838,16 +3848,20 @@ Mirrored to the public repo except two maintainer pages.
 - `README.md` (user-facing, propagated): Claude Code CLI install on macOS,
   Linux, WSL and Windows; `claude plugin marketplace add` with this repo's
   slug (rewritten to the public slug on propagation) and `claude plugin
-  install senzing-bootcamp@senzing-bootcamp`; update; model guidance (Sonnet
-  for most modules, Opus for the correctness-critical ones) and an example
-  `claude --model ... --effort medium --permission-mode auto`; the shipped
+  install senzing-bootcamp@senzing-bootcamp-dev` (the marketplace name is
+  rewritten to `senzing-bootcamp` on propagation); update; model guidance
+  (Sonnet for most modules, Opus for the correctness-critical ones) and an
+  example `claude --model ... --effort medium --permission-mode auto`; the shipped
   slash commands (`/start-bootcamp`, `/bootcamp-feedback`, `/graduate`,
   `/bootcamp-note`, `/package-bootcamp`) with their plain-English
   equivalents; uninstall.
 - `development.md` (maintainer, excluded from propagation): install
   `requirements-dev.txt`, run `python3 -m unittest discover -s tests`; why
   fpdf2, Pillow and imageio-ffmpeg are dev-only, the fpdf2 skip notice
-  (silenced by `SBCP_QUIET_FPDF2_NOTICE=1`) and the two-leg CI matrix; the US
+  (silenced by `SBCP_QUIET_FPDF2_NOTICE=1`) and the two-leg CI matrix;
+  installing the development plugin as `senzing-bootcamp@senzing-bootcamp-dev`
+  beside the published one, enabled one at a time, and the one-time re-add for
+  an older install (#449); the US
   English convention (INV-253, `tests/test_us_english_spelling.py`, waivers
   by path, word and count; listed exceptions); what downstream ports may rely
   on (`invariant-manifest.json`, INV-311, INV-313); a pointer to
@@ -8358,7 +8372,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 367 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 368 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8408,21 +8422,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6113 test methods in 367 files, matching `inventory.test_count_total`.
+There are 6124 test methods in 368 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6113.
+sum to 6124.
 
-Two files run more tests than they define, so discovery collects 6120:
+Two files run more tests than they define, so discovery collects 6131:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6113`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6124`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6120`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6131`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -8663,6 +8677,7 @@ looks wrong.
 - `tests/test_profile_report_relocation_covers_both_filenames.py`: 15
 - `tests/test_project_local_visualization_finds_its_d3.py`: 8
 - `tests/test_project_readme_is_created.py`: 13
+- `tests/test_propagate_publishes_the_published_marketplace_name.py`: 11
 - `tests/test_python_sources_compile_cleanly.py`: 7
 - `tests/test_quality_assessment_type_name_check.py`: 35
 - `tests/test_quality_iteration_returns_to_step_3b.py`: 23
@@ -8801,7 +8816,7 @@ blueprint describes that Markdown but does not embed it, by the maintainer's
 choice, so those tests cannot pass on a rebuild from this blueprint alone. They
 need the original text. These are heuristic estimates, accurate to about 10%:
 
-- About 230 of the 367 files (about 3,500 tests, 57%) read only Markdown or
+- About 230 of the 368 files (about 3,500 tests, 57%) read only Markdown or
   register text and never run a script.
 - Counted per test method, about 3,600 tests (59%) assert that a phrase is
   present, absent, in order or in place. This includes wording checks inside
@@ -9279,6 +9294,9 @@ These are the scripts under `.claude/skills/`:
     server version or the docs index changes.
 - **Propagation.**
   - `propagate.sh` never reaches `.claude/`, `.github/` or the maintainer docs.
+  - `propagate.sh` publishes the marketplace as `senzing-bootcamp`: no
+    whole-name `senzing-bootcamp-dev` survives in any propagated file, and
+    longer names and the plugin name are untouched (#449).
   - `retrofit.sh` writes nothing and lists at most 40 lines.
   - Documented command sets equal the shipped sets.
   - Every outward act states its gate.
@@ -9324,6 +9342,7 @@ in `tests/` are fixtures for the secret scanners and are not reproduced here.
 
 ### Binaries and large fixtures
 
+- `CHANGELOG.md`: release notes, large because every version has an entry.
 - `invariant-manifest.json`: generated invariant manifest (above).
 - `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf`:
   example graduation recap shown to Bootcampers.
@@ -9914,3 +9933,9 @@ Senzing licensing, with no SPDX identifier.
   now returns the Hardware Sizing FAQ at rank 1)
 - #440: correct three Module 5 descriptions of the Entity Specification's
   structure (they no longer matched what `search_docs` serves)
+- #446: add `BLUEPRINT.md`, written by `/create-blueprint` (nothing described
+  the project in one transportable file for `/update-blueprint` and
+  `/verify-blueprint` to work from)
+- #449: name the dev marketplace `senzing-bootcamp-dev` and rewrite it back on
+  propagation (one name with two sources kept the dev repo from being added
+  where the published plugin was installed)

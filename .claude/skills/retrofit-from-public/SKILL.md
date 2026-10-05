@@ -29,6 +29,14 @@ public edit.
    *and* the `-development` name suffix the public repo does not carry:
    - `Senzing/senzing-bootcamp-claude-plugin` → `docktermj/senzing-bootcamp-claude-plugin-development`
    - `marketplace.json` owner `"name": "Senzing"` → `"name": "docktermj"` (that file only)
+   - `marketplace.json` marketplace `"name": "senzing-bootcamp"` → `"name": "senzing-bootcamp-dev"`,
+     and the install commands' marketplace: `senzing-bootcamp@senzing-bootcamp` →
+     `senzing-bootcamp@senzing-bootcamp-dev`, `marketplace remove senzing-bootcamp` →
+     `marketplace remove senzing-bootcamp-dev` (#449)
+
+   ⚠️ **The marketplace name is restored only where it names the marketplace.** A bare
+   `senzing-bootcamp` is also the plugin's own name (`plugin.json`, the `/senzing-bootcamp:…`
+   slash-command namespace) and a container name, and those are the same in both repos.
 
    It is **not** a blanket `Senzing → docktermj`. `plugin.json`'s
    `"author": { "name": "Senzing" }` is the *company* (stays Senzing in both
@@ -175,8 +183,9 @@ anyway.
 ## Guardrails
 
 - **Each filed issue states the inverse transform it owes, scoped** to the repo slug
-  and `marketplace.json`'s owner name — never `plugin.json`'s `author`, product
-  mentions of "Senzing", or `LICENSE`.
+  and `marketplace.json`'s owner name, and to the marketplace name where it names the
+  marketplace (#449) — never `plugin.json`'s `author` or plugin name, product mentions of
+  "Senzing", or `LICENSE`.
 - **Never delete, and never add.** Report what differs and let the maintainer decide; the
   script has written nothing since #54.
 - **Never pull governance** into dev.

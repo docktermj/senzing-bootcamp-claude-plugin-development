@@ -30,13 +30,13 @@ For the desktop application instead, see
 
     ```console
     claude plugin marketplace add docktermj/senzing-bootcamp-claude-plugin-development
-    claude plugin install senzing-bootcamp@senzing-bootcamp
+    claude plugin install senzing-bootcamp@senzing-bootcamp-dev
     ```
 
 1. If the Senzing Bootcamp Claude Plugin is already installed, update it.
 
     ```console
-    claude plugin update senzing-bootcamp@senzing-bootcamp
+    claude plugin update senzing-bootcamp@senzing-bootcamp-dev
     ```
 
 1. Create a new directory for the bootcamp.
@@ -90,8 +90,8 @@ have to remember them:
 1. Uninstall the plugin and marketplace.
 
     ```console
-    claude plugin uninstall senzing-bootcamp@senzing-bootcamp
-    claude plugin marketplace remove senzing-bootcamp
+    claude plugin uninstall senzing-bootcamp@senzing-bootcamp-dev
+    claude plugin marketplace remove senzing-bootcamp-dev
     ```
 
 [Claude Code for VSCode]: https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code

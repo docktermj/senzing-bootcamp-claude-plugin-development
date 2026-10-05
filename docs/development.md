@@ -57,6 +57,33 @@ failed as 41 assertions about certificate names, grid alignment and label wrappi
 which named the missing package anywhere in their traceback. The suite read as 41 product
 defects when the only defect was an unstated prerequisite.
 
+## Installing the development plugin
+
+This repository's marketplace is named `senzing-bootcamp-dev`, so it can be registered on a
+machine that already has the published `senzing-bootcamp` marketplace (#449). Claude Code keys
+marketplaces by name and refuses one name with two sources. `/propagate-to-public` rewrites the
+name back to `senzing-bootcamp` on publish, so the published plugin ID never changes.
+
+```console
+claude plugin marketplace add docktermj/senzing-bootcamp-claude-plugin-development
+claude plugin install senzing-bootcamp@senzing-bootcamp-dev
+```
+
+⚠️ **Enable the development and published plugins one at a time.** Both plugins are named
+`senzing-bootcamp`, so their slash commands share one namespace and collide when both are
+enabled, even though both marketplaces can be registered side by side.
+
+**Migrating an older development install.** Before #449 this marketplace was also named
+`senzing-bootcamp`, so an install from it carries the old ID. Re-add it once; the plugin ID
+becomes `senzing-bootcamp@senzing-bootcamp-dev`:
+
+```console
+claude plugin uninstall senzing-bootcamp@senzing-bootcamp
+claude plugin marketplace remove senzing-bootcamp
+claude plugin marketplace add docktermj/senzing-bootcamp-claude-plugin-development
+claude plugin install senzing-bootcamp@senzing-bootcamp-dev
+```
+
 ## Conventions
 
 ### Spelling: US English, not British English
