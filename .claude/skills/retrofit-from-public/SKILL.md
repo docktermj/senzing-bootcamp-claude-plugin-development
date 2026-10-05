@@ -35,8 +35,8 @@ public edit.
      `marketplace remove senzing-bootcamp-dev` (#449)
 
    ⚠️ **The marketplace name is restored only where it names the marketplace.** A bare
-   `senzing-bootcamp` is also the plugin's own name (`plugin.json`, the `/senzing-bootcamp:…`
-   slash-command namespace) and a container name, and those are the same in both repos.
+   `senzing-bootcamp` is also the plugin's own name (`plugin.json`, and the namespace of
+   its slash commands) and a container name, and those are the same in both repos.
 
    It is **not** a blanket `Senzing → docktermj`. `plugin.json`'s
    `"author": { "name": "Senzing" }` is the *company* (stays Senzing in both
