@@ -12,6 +12,18 @@ the version, this file and the tag are written together on purpose.
 > first created. They were not authored at release time, so they list commit subjects
 > rather than curated release notes.
 
+## [0.6.1] - 2026-10-05
+
+- #456 Savepoint
+- #452 Savepoint
+- #452 Savepoint
+- #452 Savepoint
+- feat(docs): own the github pages quick-start site in dev
+- #451 Update instructions
+- test(spelling): waive the changelog's verbatim commit subjects
+- fix(retrofit): drop a slash-command token and a british spelling
+- fix(propagate): give the dev marketplace its own name
+
 ## [0.6.0] - 2026-10-04
 
 - docs: fix BLUEPRINT.md spelling and its VERSION_SITES copy
