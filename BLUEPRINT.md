@@ -1,5 +1,5 @@
 # Blueprint: docktermj/senzing-bootcamp-claude-plugin-development
-<!-- blueprint: sha=a5fac5672499eaa0cf35d36cf9833882425b70de date=2026-10-04 -->
+<!-- blueprint: sha=542f8135b9e5b07ef49d041543bfdd494df57e6d date=2026-10-04 -->
 
 ## 1. Purpose
 
@@ -1211,7 +1211,7 @@ on:
 <!-- markdownlint-enable MD013 -->
 
 Top-level `permissions: {}` and a concurrency group per workflow and head ref,
-cancelling in progress.
+canceling in progress.
 
 #### 4.1.1 `lint-workflows`
 
@@ -1251,7 +1251,7 @@ on:
 <!-- markdownlint-enable MD013 -->
 
 Top-level `permissions: {}` and a concurrency group per workflow and head ref,
-cancelling in progress.
+canceling in progress.
 
 #### 4.2.1 `test-suite`
 
@@ -1566,7 +1566,7 @@ Module completion (`module-completion.md`, before the transition question):
 - Step 2a: create `docs/bootcamp_recap.md`'s header if missing (name,
   started, programming language, path, plugin version).
 - Step 2b: append `## {Name} — {timestamp}` with H3 Information Shared,
-  Questions & Responses, Actions Taken, End-of-Module Summary (labelled What
+  Questions & Responses, Actions Taken, End-of-Module Summary (labeled What
   you accomplished and Files produced lists, Why it matters, optional
   takeaway). Embed every captured screenshot on its own line as
   `visualizations/<name>-<tab>.png` in tab order, captioned from the image.
@@ -2043,7 +2043,7 @@ means the module is complete: only the transition question is asked.
   - The registry gets `senzing_loadable`, `fully_mapped` and
     `unmapped_fields`.
   - If every source fast-paths, a pinned question offers a raw source to
-    practise mapping on.
+    practice mapping on.
 - **Step 6 score.** 0.70 times completeness, plus 0.25 times
   format consistency, plus 0.05 times (100 minus the duplicate rate).
   - Completeness is per record over fields applicable to its
@@ -2055,9 +2055,9 @@ means the module is complete: only the transition question is asked.
   - A 100%/0% per-type split blocks the score.
   - Bands are 80+, 70-79 and below 70. The score is written to
     `quality_score`.
-  - Cross-source pairs are labelled `measured` or "candidate, overlap
+  - Cross-source pairs are labeled `measured` or "candidate, overlap
     unmeasured".
-- **Type/name check.** A PERSON record whose name ends in an organisation
+- **Type/name check.** A PERSON record whose name ends in an organization
   suffix (LLP, LP, PLC, LIMITED, LTD, LLC, INC, CORP, CORPORATION, GMBH) is
   a candidate. The pinned retype-or-keep answer goes to
   `## Record Type Check` in `docs/mapping/{source}_mapper.md`.
@@ -3148,7 +3148,7 @@ A missing subcommand or bad option is an argparse usage error (exit 2).
 
 `widened_scope.py [--repo] [--all-verbs]` parses `INVARIANTS.md` entries and
 reports candidate one-way links: a later invariant whose sentence uses a
-`SCOPE_VERBS` verb (supersede, generalise, amends, restates, replaces,
+`SCOPE_VERBS` verb (supersede, generalize, amends, restates, replaces,
 reverses, retires, widens; `--all-verbs` adds `EXTRA_VERBS`) and names an
 earlier invariant that never names it back. Output is a shortlist with the
 sentence (cut at 200 characters) and a warning that most hits are false
@@ -3543,7 +3543,8 @@ the manifest, an existing tag, a target not newer than the newest semver tag
 (sorted numerically), and a manifest that differs from the newest tag (unless
 `--allow-divergent-base`, which downgrades only that refusal to a warning).
 `rewrite_sites` plans every `VERSION_SITES` edit in memory (the manifest's
-`"version"` line and the example recap's `**Plugin version:**` row), refusing
+`"version"` line, the example recap's `**Plugin version:**` row, and the
+manifest's verbatim copy in `BLUEPRINT.md` section 3), refusing
 a missing file, a pattern that no longer matches, a site already stating a
 different version, or a no-op rewrite. `plan_changelog` builds an entry
 `## [X.Y.Z] - <today>` listing non-merge commit subjects since the newest tag;
@@ -4857,6 +4858,12 @@ VERSION_SITES = (
         "pattern": re.compile(r'^(\*\*Plugin version:\*\*[ \t]*)(\d+\.\d+\.\d+)([ \t]*)$', re.M),
         "why": ("the shipped reference recap's meta row -- "
                 "tests/test_example_recap_sync.py pins it to the manifest"),
+    },
+    {
+        "path": "BLUEPRINT.md",
+        "pattern": re.compile(r'^(\s*"version":\s*")(\d+\.\d+\.\d+)(")', re.M),
+        "why": ("BLUEPRINT.md's verbatim copy of the plugin manifest (section 3) -- "
+                "/update-blueprint compares it with plugin.json line by line"),
     },
 )
 CHANGELOG_HEADER = """\
@@ -9622,7 +9629,7 @@ Senzing licensing, with no SPDX identifier.
   diff (`set -e` with `pipefail` aborted the script exactly when there was
   something to report)
 - #192: ask the EULA question in Module 2 before installing anything (the SDK
-  was installed before the Bootcamper accepted the licence, contradicting the
+  was installed before the Bootcamper accepted the license, contradicting the
   update path)
 - #193: state `JSON_DATA`'s flag requirement instead of calling it
   `get_record`-only (the server now serves it on entity, find, why and search
