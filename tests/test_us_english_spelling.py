@@ -261,6 +261,12 @@ PER_FILE_WAIVERS = {
         "`## Deviations` section quotes two more (the German fixture, and a feedback "
         "title a sibling spec cites) while recording where the exemptions came from.",
     ),
+    "CHANGELOG.md": (
+        {"licence": 6, "recognise": 2, "generalised": 1},
+        "Entries 0.5.3 and earlier were reconstructed from git history and list commit "
+        "subjects verbatim. Correcting the spelling would misquote the commits the entries "
+        "name; the changelog's own prose uses US spelling.",
+    ),
     "specs/INVARIANTS.md": (
         {"licence": 1},
         "INV-253's own statement names the British form it forbids, so the rule can be "
