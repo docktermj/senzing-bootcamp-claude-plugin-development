@@ -32,7 +32,9 @@ than being hand-run each time.
   `__pycache__/`, `*.pyc` and `.pytest_cache/`.
 - `.claude-plugin/marketplace.json` — required for `claude plugin marketplace add`.
 - `README.md` — user-facing (Claude Desktop install instructions).
-- `docs/` — user-facing (`docs/README.md`, Claude Code CLI install). Treated as
+- `docs/` — user-facing (`docs/README.md`, Claude Code CLI install, and the GitHub Pages
+  quick-start site: `docs/index.html`, `docs/index.css`, `docs/images/` and the empty
+  `docs/.nojekyll`, owned here since #452). Treated as
   a **user-facing** directory and mirrored wholesale **except `docs/development.md`
   and `docs/FAMILY_WORKFLOW.md`** (see Excluded); do **not** put maintainer-only notes here.
 
@@ -77,11 +79,13 @@ files point users at the Senzing repo:
 
 - `docktermj/senzing-bootcamp-claude-plugin-development` → `Senzing/senzing-bootcamp-claude-plugin`
   wherever it appears (README marketplace URL and raw-content PDF link,
-  `docs/README.md` `marketplace add` command, `plugin.json` homepage/repository).
+  `docs/README.md` `marketplace add` command, `plugin.json` homepage/repository, and the
+  Pages site's `docs/index.html`: its `marketplace add` command, Claude Desktop marketplace
+  URL and GitHub links).
 - `marketplace.json` owner `"name": "docktermj"` → `"name": "Senzing"`.
 - `marketplace.json` marketplace `"name": "senzing-bootcamp-dev"` → `"name": "senzing-bootcamp"`,
   and `senzing-bootcamp-dev` → `senzing-bootcamp` in every rewritten file, which turns the
-  `docs/README.md` install, update and uninstall commands back into
+  `docs/README.md` and `docs/index.html` install, update and uninstall commands back into
   `senzing-bootcamp@senzing-bootcamp` and `marketplace remove senzing-bootcamp` (#449).
 
 ⛔ **The dev marketplace has its own name so both can be registered on one machine.**
@@ -101,6 +105,12 @@ MUST stay the suffixed string. Left unsuffixed it still matches — as a
 `Senzing/senzing-bootcamp-claude-plugin-development`. For the same reason a
 dev-tree file still carrying the old unsuffixed slug is not matched at all, and
 ships a `docktermj/…` link to the public repo.
+
+⛔ **The pass reads `.md`, `.json`, `.html` and `.css` files** (`REWRITTEN_SUFFIXES` in
+`propagate.sh`). `.html` and `.css` joined when the Pages site moved into `docs/` (#452): a
+suffix left off the list publishes the dev slug unrewritten. Binaries are never opened.
+`tests/test_propagate_publishes_the_pages_site.py` checks that the site's files land and that
+no propagated file of any type still holds the dev slug.
 
 The separate `docktermj/senzing-bootcamp-free-data` links (in Module 4) are a
 **different repo** and are intentionally left unchanged.

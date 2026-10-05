@@ -71,12 +71,19 @@ receives the shippable plugin through `/propagate-to-public`.
 - `MIGRATION.md`: migration notes from the Kiro Power predecessor to this Claude
   Code plugin.
 - `README.md`: repository README for maintainers.
+- `docs/.nojekyll`: empty marker that makes GitHub Pages serve `docs/` as-is,
+  without Jekyll (section 5.56).
 - `docs/FAMILY_WORKFLOW.md`: the operations shared across the plugin family and
   which skill owns each.
 - `docs/README.md`: user-facing install, update and uninstall guide (mirrored to
   the public repository).
 - `docs/development.md`: developer guide: layout, tests, release,
   propagation and installing the development plugin.
+- `docs/images/apple-touch-icon.png`: Pages site touch icon (section 9).
+- `docs/images/favicon-32.png`: Pages site favicon (section 9).
+- `docs/images/senzing-logo.png`: Pages site logo (section 9).
+- `docs/index.css`: stylesheet of the GitHub Pages quick-start site.
+- `docs/index.html`: the GitHub Pages quick-start site (section 5.56).
 - `feedback/`: archived Bootcamper feedback reports and the processed-feedback
   log.
 - `invariant-manifest.json`: generated machine-readable copy of the invariant
@@ -3493,7 +3500,8 @@ checkout `~/senzing.git/senzing-bootcamp-claude-plugin`; argument overrides
 the path) and stops at the working tree: no commit, push or PR unless asked
 (then Conventional Commits with an `issue: #<n>` trailer). Manifest:
 propagated are `plugins/senzing-bootcamp/**`, `.claude-plugin/`, `README.md`
-and `docs/` except `docs/development.md` and `docs/FAMILY_WORKFLOW.md`;
+and `docs/` (with the Pages site, #452) except `docs/development.md` and
+`docs/FAMILY_WORKFLOW.md`;
 excluded are `.claude/**`, `specs/**`, `feedback/**` (bootcamper text),
 `MIGRATION.md`, top-level `scripts/`, `.sync-state.json`, `resources/`, caches
 and the dev `.gitignore`; preserved (never touched) are the public repo's
@@ -3514,8 +3522,10 @@ non-zero. It prints source, destination, origin and branch, then runs `rsync
 `tests/test_maintainer_tooling_stays_out_of_public.py` parses it), and copies
 `README.md`. An embedded Python pass rewrites `SLUG_OLD`
 (`docktermj/senzing-bootcamp-claude-plugin-development`, the suffixed form
-deliberately) to `SLUG_NEW` in every `.md` and `.json` under the mirrored
-roots plus `README.md`, and `"name": "docktermj"` to `"name": "Senzing"` in
+deliberately) to `SLUG_NEW` in every `.md`, `.json`, `.html` and `.css` file
+(`REWRITTEN_SUFFIXES`; the last two since #452, for the Pages site) under the
+mirrored roots plus `README.md`, never opening a binary, and
+`"name": "docktermj"` to `"name": "Senzing"` in
 `marketplace.json`. The same pass rewrites the marketplace name
 `"name": "senzing-bootcamp-dev"` to `"name": "senzing-bootcamp"` in
 `marketplace.json`, and `senzing-bootcamp-dev` to `senzing-bootcamp` in every
@@ -3844,6 +3854,18 @@ may prune archives but never ledger lines.
 ### 5.56 `docs/`
 
 Mirrored to the public repo except two maintainer pages.
+
+- `index.html`, `index.css`, `images/` and `.nojekyll` (user-facing,
+  propagated; moved here from the public repo by #452): the GitHub Pages
+  quick-start site, one page with Before you start (plan, MCP network access,
+  Python 3, an empty folder, recommended data), install and start for Claude
+  Desktop (with its marketplace URL) and the Claude Code CLI, what happens
+  next, tips (model and effort, bootcamp commands, update or uninstall),
+  troubleshooting and other assistants. A header comment says its commands
+  come from `README.md` and `docs/README.md` and must follow them. It carries
+  this repo's slug and `senzing-bootcamp@senzing-bootcamp-dev`, rewritten to
+  the public ones on propagation. `.nojekyll` is empty and makes Pages serve
+  the files as-is.
 
 - `README.md` (user-facing, propagated): Claude Code CLI install on macOS,
   Linux, WSL and Windows; `claude plugin marketplace add` with this repo's
@@ -8372,7 +8394,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 368 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 369 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8422,21 +8444,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6124 test methods in 368 files, matching `inventory.test_count_total`.
+There are 6132 test methods in 369 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6124.
+sum to 6132.
 
-Two files run more tests than they define, so discovery collects 6131:
+Two files run more tests than they define, so discovery collects 6139:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6124`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6132`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6131`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6139`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -8677,6 +8699,7 @@ looks wrong.
 - `tests/test_profile_report_relocation_covers_both_filenames.py`: 15
 - `tests/test_project_local_visualization_finds_its_d3.py`: 8
 - `tests/test_project_readme_is_created.py`: 13
+- `tests/test_propagate_publishes_the_pages_site.py`: 8
 - `tests/test_propagate_publishes_the_published_marketplace_name.py`: 11
 - `tests/test_python_sources_compile_cleanly.py`: 7
 - `tests/test_quality_assessment_type_name_check.py`: 35
@@ -8816,7 +8839,7 @@ blueprint describes that Markdown but does not embed it, by the maintainer's
 choice, so those tests cannot pass on a rebuild from this blueprint alone. They
 need the original text. These are heuristic estimates, accurate to about 10%:
 
-- About 230 of the 368 files (about 3,500 tests, 57%) read only Markdown or
+- About 230 of the 369 files (about 3,500 tests, 57%) read only Markdown or
   register text and never run a script.
 - Counted per test method, about 3,600 tests (59%) assert that a phrase is
   present, absent, in order or in place. This includes wording checks inside
@@ -9297,6 +9320,9 @@ These are the scripts under `.claude/skills/`:
   - `propagate.sh` publishes the marketplace as `senzing-bootcamp`: no
     whole-name `senzing-bootcamp-dev` survives in any propagated file, and
     longer names and the plugin name are untouched (#449).
+  - `propagate.sh` publishes the six Pages site files, and no propagated file
+    of any type still holds the dev slug; with `.html` off the rewrite
+    suffixes, the slug survives in `docs/index.html` and is caught (#452).
   - `retrofit.sh` writes nothing and lists at most 40 lines.
   - Documented command sets equal the shipped sets.
   - Every outward act states its gate.
@@ -9343,6 +9369,9 @@ in `tests/` are fixtures for the secret scanners and are not reproduced here.
 ### Binaries and large fixtures
 
 - `CHANGELOG.md`: release notes, large because every version has an entry.
+- `docs/images/apple-touch-icon.png`: Pages site touch icon.
+- `docs/images/favicon-32.png`: Pages site favicon.
+- `docs/images/senzing-logo.png`: Pages site logo.
 - `invariant-manifest.json`: generated invariant manifest (above).
 - `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf`:
   example graduation recap shown to Bootcampers.
@@ -9939,3 +9968,6 @@ Senzing licensing, with no SPDX identifier.
 - #449: name the dev marketplace `senzing-bootcamp-dev` and rewrite it back on
   propagation (one name with two sources kept the dev repo from being added
   where the published plugin was installed)
+- #452: move the GitHub Pages quick-start site into dev's `docs/` and rewrite
+  `.html` and `.css` on propagation (the site existed only in the public repo,
+  so every propagation would have deleted it)

@@ -1,0 +1,333 @@
+<!doctype html>
+<!--
+  Claude quick-start page for the Senzing Bootcamp.
+  The install steps, commands, URLs, UI labels, model names and plan minimum
+  come from this repo's README.md ("Requirements", "Using Claude Desktop" and
+  "Troubleshooting") and docs/README.md ("Using the Claude Code CLI",
+  "Bootcamp commands" and "Uninstall plugin"). When those change, update this
+  page too.
+  Differences from them are deliberate: README blocks that hold several
+  commands are split into one step and one command block per command, and the
+  model tip names no modules (the bootcamp says when to switch to Opus 5).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Senzing Bootcamp for Claude</title>
+    <meta name="description" content="Install the Senzing Bootcamp Claude Code plugin and start the bootcamp: from nothing installed to a running bootcamp in Claude Desktop or the Claude Code CLI.">
+    <link rel="canonical" href="https://hub.senzing.com/senzing-bootcamp-claude-plugin/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Senzing Bootcamp for Claude">
+    <meta property="og:description" content="From nothing installed to a running Senzing Bootcamp in Claude Code, in Claude Desktop or the Claude Code CLI.">
+    <meta property="og:url" content="https://hub.senzing.com/senzing-bootcamp-claude-plugin/">
+    <meta name="theme-color" content="#0F0D0C">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com/">
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&amp;family=Roboto+Mono:wght@400;500&amp;display=swap">
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="nav">
+      <div class="wrap nav__inner">
+        <a class="brand" href="#top" aria-label="Senzing Bootcamp for Claude, back to top">
+          <img class="brand__mark" src="images/senzing-logo.png" alt="" width="32" height="32">
+          <span class="brand__word">SENZING</span>
+        </a>
+        <nav aria-label="Site">
+          <ul class="nav__links">
+            <li><a class="nav__cta" href="https://hub.senzing.com/bootcamp/">All bootcamps</a></li>
+            <li><a href="https://github.com/docktermj/senzing-bootcamp-claude-plugin-development">GitHub</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero dark" id="top" aria-labelledby="hero-title">
+        <div class="wrap hero__inner">
+          <div>
+            <p class="label">Quick start</p>
+            <h1 id="hero-title">Senzing Bootcamp for <span class="grad">Claude</span></h1>
+            <p class="lead">From nothing installed to a running bootcamp, in Claude Desktop or the Claude Code CLI.</p>
+            <div class="actions">
+              <a class="btn btn--primary" href="#install">Get started</a>
+            </div>
+            <p class="hero__alt"><a href="https://hub.senzing.com/bootcamp/">New to the bootcamp? Start at hub.senzing.com/bootcamp</a></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="light white" id="before" aria-labelledby="before-title">
+        <div class="wrap">
+          <p class="label">Checklist</p>
+          <h2 id="before-title">Before you start</h2>
+          <ul class="checklist">
+            <li><strong>Plan:</strong> at least a <a href="https://claude.com/pricing">Claude Max 5x</a> plan. A <a href="https://claude.com/pricing">Claude Pro</a> plan also works, across several 5-hour windows, but not in one session.</li>
+            <li><strong>Network access to the <a href="https://mcp.senzing.com/mcp">Senzing MCP server</a></strong> (<code>https://mcp.senzing.com/mcp</code>). The bootcamp cannot proceed without it. On a corporate network or VPN, ask for the domain <code>mcp.senzing.com</code> to be allowed.</li>
+            <li><strong>Python 3</strong>, available as <code>python3</code> on the <code>PATH</code>. The bootcamp's hooks and its graduation recap run on it. On Windows, if only <code>python</code> or <code>py</code> is installed, add a <code>python3</code> entry to the <code>PATH</code>.</li>
+            <li><strong>A new, empty folder</strong> for the bootcamp.</li>
+            <li><span class="tag">Recommended</span> <strong>A business problem and 5,000 to 20,000 records.</strong> A problem that needs entity resolution, and records that illustrate it. Recommended, not mandatory.</li>
+            <li><span class="tag tag--req">Claude Desktop only</span> <strong><code>git</code> installed.</strong> Claude Desktop requires it. Without it, the <strong>Add Marketplace</strong> icon (<strong>+</strong>) is missing and the plugin cannot be installed.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="light offwhite" id="install" aria-labelledby="install-title">
+        <div class="wrap">
+          <p class="label">Install and start</p>
+          <h2 id="install-title">Install the plugin and start the bootcamp</h2>
+          <p class="intro">Choose one path. Both end with the bootcamp running in Claude Code.</p>
+          <ul class="paths">
+            <li><a href="#claude-desktop">Claude Desktop (no terminal)</a></li>
+            <li><a href="#claude-code-cli">Claude Code CLI</a></li>
+          </ul>
+
+          <div class="path" id="claude-desktop">
+            <h3>Claude Desktop</h3>
+            <p class="path__kind">Claude Code inside the desktop application. No terminal needed.</p>
+            <ol class="steps">
+              <li>Download and install <a href="https://claude.ai/download">Claude Desktop</a>.</li>
+              <li>
+                Start Claude Desktop.
+                <p class="step__alt">If asked, install <code>git</code>.</p>
+              </li>
+              <li>
+                Open a new Claude Code session:
+                <ol class="substeps" type="a">
+                  <li>In the left-hand pane, choose <strong>&lt;/&gt; Code</strong>.</li>
+                  <li>In the <em>Code</em> pane, click <strong>New</strong>.</li>
+                </ol>
+              </li>
+              <li>Near the bottom, choose the working directory (it might say <strong>Select folder...</strong>), and select your new, empty folder for the bootcamp.</li>
+              <li>
+                Install the Senzing Bootcamp plugin:
+                <ol class="substeps" type="a">
+                  <li>On the bottom, click the <strong>Add</strong> icon (<strong>+</strong>).</li>
+                  <li>Click <strong>Add Plugins...</strong> (or it may be just <strong>Plugins</strong>).</li>
+                  <li>In the <em>Directory</em> pane, near <strong>Filter by</strong> and <strong>Sort by</strong>, click the <strong>Add Marketplace</strong> icon (<strong>+</strong>). If the plus sign is missing, see <a href="#claude-desktop-inoperative">Troubleshooting</a>.</li>
+                  <li>
+                    In the <em>Add marketplace</em> pane, for <strong>URL:</strong>, enter:
+                    <div class="cmd"><pre><code>https://github.com/docktermj/senzing-bootcamp-claude-plugin-development</code></pre></div>
+                  </li>
+                  <li>Click <strong>Sync</strong>.</li>
+                  <li>In the <em>Directory</em> pane, select the <strong>Code</strong> tab.</li>
+                  <li>Select <strong>Senzing bootcamp</strong>.</li>
+                  <li>Click <strong>Install</strong>.</li>
+                  <li>Close the <em>Directory</em> pane.</li>
+                </ol>
+              </li>
+              <li>
+                On the bottom, set the mode, model and effort:
+                <ol class="substeps" type="a">
+                  <li>Choose the Mode <strong>auto</strong> for a smooth ride.</li>
+                  <li>Choose the Model <strong>Sonnet 5</strong>.</li>
+                  <li>Choose the Effort <strong>medium</strong>.</li>
+                </ol>
+              </li>
+              <li>
+                Near the bottom, in the agentic chat, enter:
+                <div class="cmd"><pre><code>Start the bootcamp</code></pre></div>
+                <p class="step__alt">Or use the <code>/start-bootcamp</code> command. See <a href="#commands">Bootcamp commands</a> for the rest.</p>
+              </li>
+            </ol>
+          </div>
+
+          <div class="path" id="claude-code-cli">
+            <h3>Claude Code CLI</h3>
+            <p class="path__kind">Claude Code in a terminal.</p>
+            <ol class="steps">
+              <li>
+                Install the Claude Code CLI:
+                <div class="cmd-pair">
+                  <div>
+                    <p class="cmd__label">macOS, Linux, or WSL</p>
+                    <div class="cmd"><pre><code>curl -fsSL https://claude.ai/install.sh | bash</code></pre></div>
+                  </div>
+                  <div>
+                    <p class="cmd__label">Windows, in PowerShell</p>
+                    <div class="cmd"><pre><code>irm https://claude.ai/install.ps1 | iex</code></pre></div>
+                  </div>
+                </div>
+                <p class="step__alt">Windows is fully supported. If you would rather not use a terminal at all, <a href="#claude-desktop">Claude Desktop</a> is the graphical route and works on Windows too.</p>
+              </li>
+              <li>
+                Add the Senzing Bootcamp marketplace:
+                <div class="cmd"><pre><code>claude plugin marketplace add docktermj/senzing-bootcamp-claude-plugin-development</code></pre></div>
+              </li>
+              <li>
+                Install the Senzing Bootcamp Claude Plugin:
+                <div class="cmd"><pre><code>claude plugin install senzing-bootcamp@senzing-bootcamp-dev</code></pre></div>
+                <p class="step__alt">If the plugin is already installed, update it instead:</p>
+                <div class="cmd"><pre><code>claude plugin update senzing-bootcamp@senzing-bootcamp-dev</code></pre></div>
+              </li>
+              <li>
+                Create a new directory for the bootcamp:
+                <div class="cmd"><pre><code>mkdir senzing-bootcamp</code></pre></div>
+              </li>
+              <li>
+                Change into it:
+                <div class="cmd"><pre><code>cd senzing-bootcamp</code></pre></div>
+              </li>
+              <li>
+                Start the Claude Code CLI on <strong>Sonnet 5</strong> at medium effort, with <code>--permission-mode auto</code> for the smoothest ride:
+                <div class="cmd"><pre><code>claude --model claude-sonnet-5 --effort medium --permission-mode auto</code></pre></div>
+              </li>
+              <li>
+                Start the bootcamp. Tell Claude:
+                <div class="cmd"><pre><code>Start the bootcamp</code></pre></div>
+              </li>
+            </ol>
+          </div>
+
+          <p class="after-steps"><a href="https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code">Claude Code for VS Code</a> and other Claude Code clients also run the plugin. Install it the way your client installs plugins, then start the bootcamp the same way.</p>
+        </div>
+      </section>
+
+      <section class="light white" id="next" aria-labelledby="next-title">
+        <div class="wrap">
+          <p class="label">After you start</p>
+          <h2 id="next-title">What happens next</h2>
+          <p class="prose">The bootcamp first asks you to choose your curriculum, level of detail, and programming language, then guides you module by module. <a href="https://hub.senzing.com/bootcamp/">See every module</a></p>
+        </div>
+      </section>
+
+      <section class="light offwhite" id="tips" aria-labelledby="tips-title">
+        <div class="wrap">
+          <p class="label">Good to know</p>
+          <h2 id="tips-title">Tips</h2>
+          <div class="tips">
+            <div class="tip" id="model">
+              <h3>Model and effort</h3>
+              <p>Sonnet 5 at medium effort for most modules. At the start of each module the bootcamp tells you when to switch to Opus 5.</p>
+            </div>
+            <div class="tip" id="commands">
+              <h3>Bootcamp commands</h3>
+              <p>The plugin ships these slash commands. Each also works as plain English, so you never have to remember them.</p>
+              <div class="table-wrap">
+                <table class="commands">
+                  <thead>
+                    <tr><th scope="col">Command</th><th scope="col">What it does</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><code>/start-bootcamp</code></td><td>Start the bootcamp, or resume one already in progress (same as saying “Start the bootcamp”).</td></tr>
+                    <tr><td><code>/bootcamp-feedback</code></td><td>Share feedback about the bootcamp at any time (same as saying “bootcamp feedback”). Saved locally to <code>docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md</code>.</td></tr>
+                    <tr><td><code>/graduate</code></td><td>Graduate: render the recap PDF and generate the <code>production/</code> starter project. Bootcamp graduation normally follows the last module on its own, so use this only to graduate early or to re-run it.</td></tr>
+                    <tr><td><code>/bootcamp-note</code></td><td>Jot down an idea, question, reminder or to-do at any time (same as saying “make a note”). Saved locally to <code>docs/bootcamp_notes.md</code> and folded into your recap at graduation.</td></tr>
+                    <tr><td><code>/package-bootcamp</code></td><td>Package your bootcamp into a single zip under <code>backups/packages/</code> (same as saying “back up the bootcamp”) — either the results to share, or everything needed to continue on another machine. Written locally; nothing is sent anywhere.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="tip" id="update-uninstall">
+              <h3>Update or uninstall</h3>
+              <p>Update the plugin:</p>
+              <div class="cmd"><pre><code>claude plugin update senzing-bootcamp@senzing-bootcamp-dev</code></pre></div>
+              <p>Uninstall the plugin:</p>
+              <div class="cmd"><pre><code>claude plugin uninstall senzing-bootcamp@senzing-bootcamp-dev</code></pre></div>
+              <p>Remove the marketplace:</p>
+              <div class="cmd"><pre><code>claude plugin marketplace remove senzing-bootcamp-dev</code></pre></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="light white" id="troubleshooting" aria-labelledby="troubleshooting-title">
+        <div class="wrap">
+          <p class="label">If something goes wrong</p>
+          <h2 id="troubleshooting-title">Troubleshooting</h2>
+          <div class="tips">
+            <div class="tip" id="claude-desktop-inoperative">
+              <h3>Claude Desktop won’t take prompts, or the Add Marketplace + is missing</h3>
+              <p>The Claude Desktop installation may be incomplete. Claude Desktop requires <code>git</code>: install <code>git</code>, then restart Claude Desktop.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="closing dark" id="other" aria-labelledby="other-title">
+        <div class="wrap">
+          <p class="label">Other platforms</p>
+          <h2 id="other-title">Using a different AI assistant?</h2>
+          <p class="lead">The same bootcamp runs in Kiro and ChatGPT.</p>
+          <div class="actions">
+            <a class="btn btn--outline" href="https://hub.senzing.com/senzing-bootcamp-kiro-power/">Kiro</a>
+            <a class="btn btn--outline" href="https://hub.senzing.com/senzing-bootcamp-chatgpt-plugin/">ChatGPT</a>
+            <a class="btn btn--outline" href="https://hub.senzing.com/bootcamp/">All bootcamps</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer dark">
+      <div class="wrap footer__inner">
+        <p class="brand">
+          <img class="brand__mark" src="images/senzing-logo.png" alt="Senzing logo" width="32" height="32">
+          <span class="brand__word">SENZING</span>
+        </p>
+        <p>Senzing Agentic AI Bootcamp · © 2026 Senzing, Inc.</p>
+        <ul class="footer__links">
+          <li><a href="https://github.com/docktermj/senzing-bootcamp-claude-plugin-development">GitHub</a></li>
+          <li><a href="https://hub.senzing.com/bootcamp/">All bootcamps</a></li>
+          <li><a href="#top">Back to top</a></li>
+        </ul>
+      </div>
+    </footer>
+
+    <script>
+      // Progressive enhancement: add a Copy button to each command block.
+      // Without JavaScript there is no button, and every command can still be
+      // selected and copied by hand.
+      (function () {
+        var blocks = document.querySelectorAll(".cmd");
+        Array.prototype.forEach.call(blocks, function (block) {
+          var code = block.querySelector("code");
+          var button = document.createElement("button");
+          var timer;
+
+          button.type = "button";
+          button.className = "cmd__copy";
+          button.textContent = "Copy";
+          button.setAttribute("aria-live", "polite");
+
+          function show(label) {
+            button.textContent = label;
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+              button.textContent = "Copy";
+            }, 2000);
+          }
+
+          function fail() {
+            show("Copy failed");
+            try {
+              var range = document.createRange();
+              var selection = window.getSelection();
+              range.selectNodeContents(code);
+              selection.removeAllRanges();
+              selection.addRange(range);
+            } catch (e) {
+              // Selection is best effort; the text can still be selected by hand.
+            }
+          }
+
+          button.addEventListener("click", function () {
+            try {
+              Promise.resolve(navigator.clipboard.writeText(code.textContent)).then(function () {
+                show("Copied");
+              }, fail);
+            } catch (e) {
+              fail();
+            }
+          });
+
+          block.appendChild(button);
+        });
+      })();
+    </script>
+  </body>
+</html>
