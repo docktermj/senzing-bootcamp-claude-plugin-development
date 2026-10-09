@@ -43,6 +43,34 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## nothing-checks-the-pages-site-commands-against-docs-readme
+
+- **Implemented:** 2026-10-09 (**Not a spec** — a dated record of one issue-driven run, #455, spec revision 1, filed as the follow-up #452 drafted. `Source: maintainer request`)
+- **Commit:** uncommitted
+- **Files changed:** `tests/test_pages_site_commands_match_docs_readme.py` (new), `tests/test_propagate_publishes_the_pages_site.py` (docstring only), `BLUEPRINT.md` (by `/update-blueprint 455`), `specs/IMPLEMENTED.md` (this entry). `docs/index.html`, `docs/README.md` and `specs/INVARIANTS.md` are unchanged.
+- **MCP re-check:** n/a (no Senzing fact). Re-confirmed: the change compares Claude Code `claude plugin …` commands between two of this repository's documents and states nothing about Senzing.
+- **Approach:** implemented directly (Phase 5a), built on `c4ece76`. A test-only change with an existing pattern (`tests/test_readme_does_not_undercount_claude_interfaces.py` reads the same README as text).
+- **Summary:**
+  - **What was there.** Both files name the same five commands today, in their dev form since #452: `marketplace add docktermj/senzing-bootcamp-claude-plugin-development`, `install`, `update` and `uninstall` of `senzing-bootcamp@senzing-bootcamp-dev`, and `marketplace remove senzing-bootcamp-dev`. The page shows `update` twice. So the new test is green on arrival, and no drift was found to report.
+  - **New test, `tests/test_pages_site_commands_match_docs_readme.py` (10 tests).** It reads the text of every `<code>` element of `docs/index.html` with `html.parser` (entities unescaped) and every line inside a `console` fence of `docs/README.md`, indented or not; each non-blank line is stripped, and those starting `claude plugin ` are the commands. It asserts the two sets are equal, and on a difference lists the commands found only on the page and only in the README. Either side yielding nothing fails and names that file, so `∅ == ∅` cannot pass. Five synthetic tests pin the extraction rules: unescaping and stripping, text outside `<code>` ignored, indented fences read line by line, non-`console` fences and prose ignored, and duplicates and splitting not counted as drift. Three negative controls run on the real files in memory: one page command changed (the failure lists it on both sides), the page's `<code>` removed, and the README's `console` fences relabelled (each names only its own file).
+  - **One-time on-disk check.** With `docs/index.html` copied aside, one page command was changed on disk: the comparison failed and listed it as only on the page and the README's form as only in the README. The copy was restored and `cmp` confirmed it byte-identical.
+  - **The docstring.** `tests/test_propagate_publishes_the_pages_site.py` no longer says nothing checks the commands; it names the new test.
+  - **Not checked, by scope:** the page's other commands (`curl …`, `irm …`, `mkdir`, `cd`, `claude --model …`, "Start the bootcamp"), model names in prose, the slash-command table, the Claude Desktop route and the propagated tree. The new test's docstring says so.
+  - **Blueprint.** `/update-blueprint 455`: section 8 (the file and test counts, the new file's count, and a key case in 8.4.10) and section 10 (#455's line, added). The header SHA is unchanged. The blueprint was already over its soft token budget (about 126,700 tokens before, 126,900 after).
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **DEFERRED INVARIANT — new invariant, awaiting the maintainer's sign-off; NOT minted.** The Pages site's install commands follow `docs/README.md`. Until this run the page's header comment asked for it ("When those change, update this page too") and nothing enforced it. The rule already shipping, quoted:
+    - ⛔ **The page names exactly the `claude plugin …` commands `docs/README.md` names.** — in `tests/test_pages_site_commands_match_docs_readme.py`
+
+  **Sites it affects:** the request is the header comment of `docs/index.html`; the enforcer is `tests/test_pages_site_commands_match_docs_readme.py`; `tests/test_propagate_publishes_the_pages_site.py` points at it. No site is under `plugins/`.
+
+  ⚠️ **It may be too narrow to mint, or may fold into #452's pending draft.** It binds two maintainer-facing documents, not the plugin, and only their `claude plugin …` commands. The maintainer may hold it, or register it with #452's "no dev slug reaches the public tree" draft as one rule about the Pages site.
+
+  The drafted wording:
+
+  **INV-NNN** — The `claude plugin …` commands on the GitHub Pages site (`docs/index.html`, inside `<code>`) MUST be, as a set, the `claude plugin …` commands in `docs/README.md`'s `console` blocks. A change to either file's commands MUST change the other in the same change. Repeats and the page's one-command-per-block splitting are not differences. ⛔ The page repeats the README's install commands and nothing compared them until #455, so the two could drift silently, as their model names already had. Enforced by `tests/test_pages_site_commands_match_docs_readme.py`, which fails naming the file when either side yields no command, with a negative control that changes one command on the page, and **cannot** establish that the page's other commands, its prose or its Claude Desktop route follow their sources.
+  *(written as NNN deliberately: a literal id here would cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a number written here.)*
+- **Otherwise establishes no new invariant** (INV-309). The one ⛔ line this run adds is the rule above, in the new test's docstring; none is demoted. `specs/INVARIANTS.md` is not edited.
+
 ## sdk-setup-container-names-are-project-derived
 
 - **Implemented:** 2026-10-09 (**Not a spec** — a dated record of one issue-driven run, #461, spec revision 1. `Source: self-observed (assistant retrospective)`, from `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Fixed Docker container name collides across bootcamp projects")

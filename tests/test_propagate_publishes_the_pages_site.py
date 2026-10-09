@@ -16,7 +16,8 @@ script's suffixes and shows the slug survives in `docs/index.html` and is caught
 
 ⚠️ **What a green run does not establish.** It does not compare the published page with the
 public repo's copy: that was a one-time manual check, recorded in #452's pull request. Nor
-does it check that the page's `claude plugin …` commands match `docs/README.md`.
+does it check that the page's `claude plugin …` commands match `docs/README.md`:
+`tests/test_pages_site_commands_match_docs_readme.py` does that (#455).
 
 ⚠️ **Where `bash`, `git`, `rsync` or `python3` is absent, the module SKIPS and says so**
 (INV-308), as its sibling `tests/test_propagate_publishes_the_published_marketplace_name.py`
