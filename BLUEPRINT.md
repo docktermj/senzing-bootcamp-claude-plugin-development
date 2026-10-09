@@ -8469,7 +8469,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 370 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 371 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8519,12 +8519,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6189 test methods in 370 files, matching `inventory.test_count_total`.
+There are 6199 test methods in 371 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6189.
+sum to 6199.
 
-Two files run more tests than they define, so discovery collects 6196:
+Two files run more tests than they define, so discovery collects 6206:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -8757,6 +8757,7 @@ looks wrong.
 - `tests/test_overview_bullets_are_not_counted.py`: 8
 - `tests/test_package_bootcamp.py`: 35
 - `tests/test_packaging_consent_gate_ships.py`: 15
+- `tests/test_pages_site_commands_match_docs_readme.py`: 10
 - `tests/test_partial_row_and_schema_coverage.py`: 39
 - `tests/test_pattern_gallery_shortfall.py`: 21
 - `tests/test_payload_key_collides_with_registered_feature.py`: 23
@@ -8915,7 +8916,7 @@ blueprint describes that Markdown but does not embed it, by the maintainer's
 choice, so those tests cannot pass on a rebuild from this blueprint alone. They
 need the original text. These are heuristic estimates, accurate to about 10%:
 
-- About 230 of the 370 files (about 3,500 tests, 57%) read only Markdown or
+- About 230 of the 371 files (about 3,500 tests, 57%) read only Markdown or
   register text and never run a script.
 - Counted per test method, about 3,600 tests (59%) assert that a phrase is
   present, absent, in order or in place. This includes wording checks inside
@@ -9420,6 +9421,11 @@ These are the scripts under `.claude/skills/`:
   - the documented runner.
 - **The example recap.** `tests/test_example_recap_sync.py` requires the example
   recap PDF to match its source Markdown and the plugin version in the manifest.
+- **The Pages site.** `tests/test_pages_site_commands_match_docs_readme.py`
+  requires the `claude plugin …` commands inside `<code>` in `docs/index.html`
+  to equal, as a set, those in `docs/README.md`'s `console` fences, indented or
+  not. Either side yielding none fails and names its file; a changed page
+  command is caught (#455).
 
 ## 9. Not embedded
 
@@ -10061,3 +10067,6 @@ Senzing licensing, with no SPDX identifier.
   `docker_lifecycle.py container-name`, and pick PostgreSQL's host port with
   `free-port` (a fixed `senzing-bootcamp` name collided across two bootcamp
   projects, and the hooks find containers by exact name)
+- #455: compare the Pages site's `claude plugin …` commands with
+  `docs/README.md`'s, as sets, in a new test (the page repeats the README's
+  install commands, and nothing checked that it followed them)
