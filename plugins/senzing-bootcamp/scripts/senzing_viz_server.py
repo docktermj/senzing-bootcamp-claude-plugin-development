@@ -1807,17 +1807,29 @@ async function drawMatchKeys(){const d=await getJSON("/api/matchkeys");const box
   // "...ISTRATION_COUNTRY+LEI_NUMBER" and could not be told apart. Counts were
   // right, labels useless, and the chart looked fine.
   const W=Math.min(720,box.node().clientWidth),barh=26;
+  // Size from the RENDERED width, never an assumed one. The fixed estimate this
+  // replaced was below the advance of every monospace font (about 0.6em, 6.6px at
+  // 11px), so a 25-character key got a gutter 11px too narrow and its leading "+N"
+  // started left of the SVG -- the head again, the distinguishing part. Measure the
+  // advance once, in the labels' own font (one monospace font, so one advance serves
+  // every label); when there is no 2D context or the result is not a positive number,
+  // fall back to 0.62em, which over-estimates every common monospace font.
+  const adv=(function(){const sample="+NAME+ADDRESS+NATIONAL_ID+OTHER_ID_0123456789";
+    try{const ctx=document.createElement("canvas").getContext("2d");
+      if(ctx){ctx.font="11px __CODE_FONT__";const a=ctx.measureText(sample).width/sample.length;
+        if(isFinite(a)&&a>0)return a;}}catch(e){}
+    return 11*0.62;})();
   const longest=d3.max(items,function(z){return (z.match_key||"").length;})||0;
-  const gutter=Math.max(150,Math.min(320,longest*5.9+14));
+  const gutter=Math.max(150,Math.min(320,longest*adv+14));
   const mm={t:6,r:44,b:6,l:Math.min(gutter,W*0.55)},H=mm.t+mm.b+items.length*barh;
   // MIDDLE-ellipsize, never left-trim. Right-trimming alone is not enough: real
   // keys are "+A+B+C..." sequences that often share a long prefix and differ only
   // in the last segment, so head-only truncation renders the top bars identically
   // -- the same unreadable chart, just failing from the other end. Keeping both
   // ends makes keys that differ at either end distinguishable.
-  const maxChars=Math.max(8,Math.floor((mm.l-10)/5.9));
-  function fitKey(k){k=k||"";if(k.length<=maxChars)return k;
-    const tail=Math.max(6,Math.floor((maxChars-1)*0.5)),head=maxChars-1-tail;
+  const maxChars=Math.max(8,Math.floor((mm.l-10)/adv));
+  function fitKey(k,n){k=k||"";n=Math.max(1,n===undefined?maxChars:n);if(k.length<=n)return k;
+    const tail=Math.max(Math.min(6,n-2),Math.floor((n-1)*0.5)),head=n-1-tail;
     return k.slice(0,head)+"…"+k.slice(k.length-tail);}
   // The requirement is DISTINCTNESS, not the ellipsis strategy: no two rendered
   // labels may be identical unless their underlying values are. Middle-ellipsis
@@ -1831,7 +1843,10 @@ async function drawMatchKeys(){const d=await getJSON("/api/matchkeys");const box
     if(seen[label]===undefined){seen[label]=i;return;}
     // Only a real collision (different source values) needs disambiguating.
     if(items[seen[label]].match_key===items[i].match_key)return;
-    fitted[i]=label+" ("+(i+1)+")";
+    // The suffix counts inside the width budget: fit to maxChars minus its length
+    // first, or the suffixed label overruns the gutter and loses its head.
+    const sfx=" ("+(i+1)+")";
+    fitted[i]=fitKey(items[i].match_key,maxChars-sfx.length)+sfx;
   });
   function labelFor(i){return fitted[i];}
   const svg=box.append("svg").attr("width",W).attr("height",H);
