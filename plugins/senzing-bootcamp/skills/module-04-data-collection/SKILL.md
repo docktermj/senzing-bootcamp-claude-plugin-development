@@ -510,8 +510,9 @@ the response exactly as the tool gives it, and say **which** of the two you are 
 are not interchangeable (both fields verified live, `get_sample_data(dataset='las-vegas',
 source='GLEIF', limit=1)`, MCP server 1.32.9, 2026-08-12):
 
-- **`download_url`** serves at most `download_url_max_records` records per request — **10,000** —
-  and needs only `mcp.senzing.com` reachable.
+- **`download_url`** serves at most `download_url_max_records` records per request, and needs only
+  `mcp.senzing.com` reachable. **Read the cap from that field in the response; never state it as a
+  fixed number** (INV-080): the server has changed it before.
 - **`source_download_url`** is the complete uncapped file, and needs egress to **whatever host that
   URL actually names — read it from the response.** For the CORD collections that is `senzing.com`
   (`las-vegas/GLEIF` → `https://senzing.com/datasets/gleif-lasvegas.jsonl`, verified as above), but it
@@ -525,12 +526,41 @@ source='GLEIF', limit=1)`, MCP server 1.32.9, 2026-08-12):
   returns `citation.download_url` pointing at **`mcp.senzing.com`**. Same field name, different hosts
   (same server and date).
 
-So `download_url` is **not** "the full file" for any source larger than the cap: of the 11
-`las-vegas` sources **6 exceed it**, `EQUIFAX` alone having 72,799 records. Verified live —
-`download_url` for `NOMINO-RISK`, whose MCP `record_count` is 14,119, returned exactly 10,000
-records (server 1.32.9, 2026-08-12). When the Bootcamper needs a whole source, present
-`source_download_url`; when egress is restricted to the MCP host, present `download_url` and say
-plainly that it is a 10,000-record slice.
+So `download_url` is **not** "the full file" for any source larger than the cap; which sources
+those are is read from the response (`record_count` against `download_url_max_records`), never from
+this file. When the Bootcamper needs a whole source, present `source_download_url`; when egress is
+restricted to the MCP host, present `download_url` and say plainly that it is a slice of at most
+`download_url_max_records` records, quoting the figure the response gave. A source listed with
+`truncated: true` is presented as [the truncated-source rule](#truncated-cord-source) says.
+
+<a id="truncated-cord-source"></a>
+
+**⛔ (INV-203) A truncated source: its listed `record_count` is a cap, not its size.** This is the
+canonical statement of the truncated-source rule. Check 2 of
+[CORD fetch integrity](#cord-fetch-integrity), the registry schema and every other reader of
+`expected_record_count` link here rather than restating it (INV-300).
+
+- **What `truncated: true` means.** A `get_sample_data(dataset=…, source='list')` entry carrying
+  `truncated: true` reports a `record_count` that is **itself capped**: it is not the size of the
+  file. The file at `source_download_url` is larger, and `download_url` serves a slice of it. Tell
+  the Bootcamper so when you present the source.
+- **What the registry records.** The source's `config/data_sources.yaml` entry records
+  `expected_record_count` as that capped figure, with **`truncated: true`** beside it. Write the
+  field only for a source whose list entry carries it; an entry without it is unaffected.
+- **What the count must meet**, by the URL fetched:
+  - via **`source_download_url`** (uncapped) → the figure is a **floor**: a file with **at least**
+    `record_count` records passes, and one with fewer is a failed collection, retried as check 1
+    directs;
+  - via **`download_url`** (capped) → exact, `min(record_count, download_url_max_records)`, with the
+    cap read from the same response. Say that this is a slice of a larger file, sized by that cap.
+- **Every later reader** of `expected_record_count` treats it as a floor on the collected file's
+  size when the entry carries `truncated: true`, and as the exact figure otherwise. A step that
+  leaves `expected_record_count` untouched leaves `truncated` untouched with it.
+
+Illustration only, dated, never a constant: `get_sample_data(dataset='las-vegas', source='list')`
+listed `EQUIFAX` and `OPENDATA` with `"record_count": 250000, "truncated": true`, and
+`get_sample_data(dataset='las-vegas', source='GLEIF', limit=1, offset=0)` returned
+`download_url_max_records: 250000` (server 1.37.19, 2026-10-04). Read both from the response.
 
 <a id="cord-fetch-integrity"></a>
 
@@ -592,10 +622,11 @@ elsewhere (INV-300).**
    source. Count the records in the fetched file (a count, in whatever language the Bootcamper chose;
    this is not a shell idiom) and compare against the expected count **for the URL you used**:
 
-   - fetched via **`source_download_url`** → expect exactly `record_count`;
+   - fetched via **`source_download_url`** → expect exactly `record_count`, unless the source is
+     truncated, as [the truncated-source rule](#truncated-cord-source) defines;
    - fetched via **`download_url`** → expect `min(record_count, download_url_max_records)`, because
-     the endpoint caps the response. Comparing a capped fetch against the full `record_count` would
-     fail 6 of the 11 `las-vegas` sources for no reason.
+     the endpoint caps the response; read the cap from the same response. Comparing a capped fetch
+     against the full `record_count` would fail every source larger than the cap for no reason.
 
    A mismatch is a **failed collection, not a warning**: re-fetch with the backoff from check 1, and
    if it persists, report it to the Bootcamper and leave the source uncollected rather than passing a
@@ -609,7 +640,8 @@ elsewhere (INV-300).**
    never reaches the source's final name cannot be mistaken for its data by Module 5 or Module 6.
 
 Record **both** counts in the source's `config/data_sources.yaml` entry — `record_count` (what you
-counted) and `expected_record_count` (what the server stated) — and both checks under
+counted) and `expected_record_count` (what the server stated, with `truncated: true` beside it as
+[the truncated-source rule](#truncated-cord-source) defines) — and both checks under
 `validation_checks` (`http_status_ok`, `record_count_matches_expected`), so the comparison stays
 auditable instead of living only in the turn that ran it. (INV-243: a per-source figure is
 reconciled against that source's own input before it is shown, and this registry entry is where
@@ -722,7 +754,8 @@ Module 5 can evaluate.
 > when no file was collected, e.g. a documented-location-only source), `expected_record_count` (the
 > count the provider stated, so the two can be compared here and re-checked later (INV-243) — for CORD this is
 > the MCP `record_count`, capped as [CORD fetch integrity](#cord-fetch-integrity) describes; null
-> when no independent figure exists), `file_size_bytes`,
+> when no independent figure exists), `truncated: true` beside it only for a CORD source listed as
+> truncated, as [the truncated-source rule](#truncated-cord-source) defines, `file_size_bytes`,
 > `quality_score: null`, `mapping_status: pending`, `load_status: not_loaded`,
 > `validation_status: pending`, `validation_checks: {}`, and `added_at` and
 > `updated_at` to the current ISO 8601 timestamp. If an entry already exists for that
@@ -740,7 +773,8 @@ Module 5 can evaluate.
 > sampling strategy, and why it was chosen. It is the record Module 6 Phase B Step 7 cites for the
 > collected → sample step of its load reconciliation (INV-243); a sample recorded nowhere leaves that
 > step nothing to cite, so Module 6 reports the gap as unexplained. ⛔ (INV-243) **Writing it never
-> touches the source's top-level `record_count` or `expected_record_count`**, which keep describing
+> touches the source's top-level `record_count` or `expected_record_count`** (nor `truncated`, as
+> [the truncated-source rule](#truncated-cord-source) defines), which keep describing
 > the collected file: overwriting them with the sample's figures would destroy the baseline the load
 > is reconciled against. A smaller **substitute dataset** is a new collection, not a sample: record
 > it as its own collected file with its own measured `record_count`, and write no `sample:` block.
@@ -748,7 +782,8 @@ Module 5 can evaluate.
 > **Data File Validation:** After each file is saved to `data/raw/`, sanity-check it (readable,
 > non-empty, expected format/encoding, and — wherever an independent expected count exists — a record
 > count that **matches** it rather than one that merely looks plausible, per
-> [CORD fetch integrity](#cord-fetch-integrity)) and update the registry with the
+> [CORD fetch integrity](#cord-fetch-integrity), or meets it for a truncated source, as
+> [the truncated-source rule](#truncated-cord-source) defines) and update the registry with the
 > results — set that source's `validation_status` to `passed` or `failed` and record each check's
 > outcome under `validation_checks`, which is what Step 7 reads. Present the outcome to the bootcamper. If all checks pass, confirm the file is ready
 > and move on to the next data source. If any check fails, show the failure details and
@@ -907,7 +942,8 @@ gate (INV-093) and the Senzing MCP server.
   `strategy`, and `reason`. "Random sample" alone is exactly what leaves Module 6 unable to tell a
   no-overlap-in-the-data finding from a no-overlap-in-the-sample artifact, and a sample recorded
   nowhere leaves Module 6's load reconciliation nothing to cite (INV-243). Leave the top-level
-  `record_count` and `expected_record_count` untouched: they describe the collected file.
+  `record_count` and `expected_record_count` untouched, with `truncated` as
+  [the truncated-source rule](#truncated-cord-source) defines: they describe the collected file.
 - **A smaller substitute dataset is a new collection, not a sample.** Record it as its own collected
   file with its own measured `record_count` (Step 2's registry), and write no `sample:` block.
 - Ensure the sample exercises what the **business problem** needs: for a cross-source problem that
@@ -1258,7 +1294,8 @@ about a roughly half-hour load, for a load of about two minutes.
      each sampled source's `sample:` block (INV-326) in `config/data_sources.yaml` (Step 2's registry
      schema): the sample's `file_path`, its `record_count` **measured** from the written file, the
      `strategy` **and the `reason` for it** — the record Module 6 cites when it reconciles the load
-     (INV-243). Leave the top-level `record_count` and `expected_record_count` untouched. Then
+     (INV-243). Leave the top-level `record_count` and `expected_record_count` untouched, with
+     `truncated` as [the truncated-source rule](#truncated-cord-source) defines. Then
      record the decision (sub-step 4).
    - **Switch to an alternative database (e.g. PostgreSQL):** route the bootcamper to the
      database-migration guide (the Kiro `docs/guides/DATABASE_MIGRATION.md` guide is a later

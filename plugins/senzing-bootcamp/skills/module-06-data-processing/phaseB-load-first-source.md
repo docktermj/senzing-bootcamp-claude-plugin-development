@@ -281,7 +281,8 @@ definition says, adding only their own values, and the two-stage reconciliation 
   - `reason`: `license_cap` or `sqlite_volume`.
 
   Like Module 4's `sample:` block, writing it never touches the source's top-level
-  `record_count` or `expected_record_count` (INV-243), and it leaves `sample:` as it is.
+  `record_count` or `expected_record_count` (INV-243), nor `truncated`, as
+  [the truncated-source rule](../module-04-data-collection/SKILL.md#truncated-cord-source) defines, and it leaves `sample:` as it is.
 - **Subset files live under `data/subsets/`, never in `data/senzing-ready/`.** Phase A's loadable
   total counts every file there, so a subset file inside it would count its source twice. The
   directory is created when option 1 first writes to it.
@@ -321,7 +322,8 @@ and where the loaded figure is recorded.**
 about to overwrite is the baseline.** This is the canonical statement of the two-stage load
 reconciliation and its outcomes; Phase C Steps 12 and 17 and Phase D Step 27 point here and add
 only what their own site needs (INV-300). `record_count` already holds the count Data collection
-**measured in the collected file**, alongside `expected_record_count` (what the provider stated),
+**measured in the collected file**, alongside `expected_record_count` (what the provider stated, a
+floor when the entry carries `truncated: true`, as [the truncated-source rule](../module-04-data-collection/SKILL.md#truncated-cord-source) defines),
 recorded there precisely "so the two can be compared here and re-checked later". But the collected
 file is often **not** what the loader read: Data collection directs a working sample whenever the
 scenario is sized below the collected volume (Module 4 → "Sampling rule"), and Module 5 maps it and
@@ -414,7 +416,8 @@ strategy. **A sampled source whose mapping also multiplies records cites both st
 collected → sample → mapped.**
 
 **The baseline stays immutable in every branch** (INV-243) — `record_count` and
-`expected_record_count` are never overwritten and the loaded figure is recorded beside it. That half
+`expected_record_count` are never overwritten and the loaded figure is recorded beside it; nor is
+`truncated`, as [the truncated-source rule](../module-04-data-collection/SKILL.md#truncated-cord-source) defines. That half
 of the rule is correct and is not what changed.
 
 **⚠️ SQLite performance note — only when the volume question is still open.** On SQLite with

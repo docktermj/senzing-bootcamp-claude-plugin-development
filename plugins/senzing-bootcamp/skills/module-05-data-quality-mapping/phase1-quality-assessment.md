@@ -674,7 +674,7 @@ breakdown costs nothing — the profiling pass already holds both per-type count
 ⚠️ **This is a precondition, not another heuristic.** The check above fires *after* a low score
 exists and keys on a NAME/ADDRESS pattern; this one runs *before* any score is reported and keys on
 the applicability set itself, which is the input that was wrong. On 2026-08-25 four fields on a
-72,799-record source were marked "both" while measuring 100% / 91.5% / 42.3% / 100% on
+large source were marked "both" while measuring 100% / 91.5% / 42.3% / 100% on
 `ORGANIZATION` and **0%** on `PERSON` — the source's person records are officer and contact records
 attached to a company, where a business address structurally cannot exist. The source scored 70.5%
 and landed in the remediation band; corrected, it scores 85.7% and passes. ⛔ **(INV-174) The applicability
@@ -1058,7 +1058,8 @@ advisory, so treat this as executable, not advisory.
    - **`updated_at`** → the current ISO 8601 timestamp.
 
    ⛔ **(INV-203) Leave `expected_record_count`, `validation_status` and `validation_checks` describing the
-   ORIGINAL fetch, and say in the entry that they do.** Those fields record that a *fetched* file
+   ORIGINAL fetch, and say in the entry that they do.** Leave `truncated` with them, as
+   [the truncated-source rule](../module-04-data-collection/SKILL.md#truncated-cord-source) defines. Those fields record that a *fetched* file
    arrived with a 2xx status and a count matching what the provider stated (INV-203); the improved
    file was derived here, not fetched, so re-pointing them at it would assert a check nobody ran.
    ⚠️ **`record_count` is the opposite case and must NOT be left alone for the same reason** — it is

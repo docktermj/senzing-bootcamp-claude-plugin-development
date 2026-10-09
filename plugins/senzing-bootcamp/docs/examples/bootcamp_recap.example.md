@@ -315,7 +315,7 @@
 ### Actions Taken
 
 - Initial pass: downloaded 3,000-record preview batches of Enformion and Equifax to compute cross-source name overlap (15 shared names found); built 250-record samples per source.
-- On request, expanded scope: downloaded 10,000-record preview batches from each source (the download endpoint's apparent cap) and found 98 shared name-keys (115 Enformion records, 103 Equifax records).
+- On request, expanded scope: downloaded a capped preview batch from each source (as many records as the download endpoint serves per request) and found 98 shared name-keys (115 Enformion records, 103 Equifax records).
 - Rebuilt final samples at 2,500 records per source (5,000 total), keeping all 98 matched pairs whole and filling the remainder randomly (seed 42) for singletons and non-matches.
 - Re-validated both files at the new scale: readable, non-empty, valid UTF-8 JSONL, expected record count, consistent `DATA_SOURCE`, `RECORD_ID` present on every record — both `passed`.
 - Updated `config/data_sources.yaml` and `config/cord_metadata.yaml` (new SHA-256 hashes) to reflect the expanded samples.
