@@ -21,7 +21,7 @@ serve the visualizations, capture screenshots, package the project, and
 implement the hooks.
 
 The rest of the repository is the development apparatus: a stdlib `unittest`
-suite of about 6,200 tests that guards the skill text and the scripts,
+suite of about 6,300 tests that guards the skill text and the scripts,
 maintainer skills under `.claude/skills/` (audits, dry runs, releases, invariant
 review, propagation to the public repository), a frozen spec archive and live
 ledgers under `specs/` (the invariant register, the implementation ledger,
@@ -1700,7 +1700,9 @@ steps 9 to 17. Every step checkpoints to `config/bootcamp_progress.json`.
 - 4a, generated: one category of Customer 360, Fraud Detection, Data
   Migration, Compliance, Marketing, Healthcare, Supply Chain, KYC,
   Insurance, Vendor MDM; at least two sources; cross-source mapping
-  divergence; quality variation; about 10,000 records unless asked.
+  divergence; quality variation; about 10,000 records unless asked. Each
+  success criterion is one the generated data can demonstrate, because Data
+  collection generates against the criteria.
 - 4b: `get_sample_data` decides CORD backing (`las-vegas`, `london`,
   `moscow` when the domain fits, provenance `cord`, stated as real data;
   never `truthset`) or `synthesized`.
@@ -1974,13 +1976,22 @@ receiving branch.
     (`#name-sharing-budget`): entities sharing a normalized name, deliberate
     and chance together, stay under 5% of invented entities, with at least
     one declared pair (the count is a lower bound; nicknames are not counted).
+  - The data supports every success criterion in `docs/business_problem.md`,
+    walked before generating; a criterion it cannot generate is named in the
+    generation summary. When a criterion names households or related parties,
+    it carries households (2-4 different people sharing a surname and street
+    address) and chains (one person linking two households by a declared
+    shared phone), at least 100 and 5 on the default ~10,000-record scenario,
+    scaled for a smaller one; households stay outside the name-sharing budget.
   - The generated data is self-scored with Module 5's formula and
     regenerated on a band miss, an identifier collision, or a name-sharing
     share of 0.05 or more or fewer pairs than declared. The result goes
     to `quality_intent` (`target_band`, `gaps`, `shared_features`,
     `measured_score`), and the name count to the top-level
     `scenario_intent.name_collisions` (`declared_pairs`, `reason`,
-    `measured_entities`, `measured_share`).
+    `measured_entities`, `measured_share`). The criterion-coverage check in the
+    same pass writes `quality_intent.relationship_intent`'s
+    `measured_households` and `measured_chains` and regenerates on a shortfall.
 - **No provenance.** A pinned five-option question: upload, URL or path,
   database, API, or generate. Generate recommends CORD
   (`get_sample_data(dataset='list')`) and states that it is real data, then
@@ -2322,7 +2333,10 @@ discoveries file. 4a finds multi-record, cross-source and related entities
 a 2+ degree pair, up to three hubs; links from `ENTITY_NETWORK_LINKS[]` or
 `ENTITY_PATH_LINKS[]` with `MIN_ENTITY_ID`/`MAX_ENTITY_ID`; Python takes a list
 of ints), or records `skipped`/`no_relationships`, then sets
-`discover_phase` to `"completed"` and returns to the gate.
+`discover_phase` to `"completed"` and returns to the gate. On a synthesized
+source whose `quality_intent` carries `relationship_intent`, or whose scenario's
+success criteria name households or related parties, reaching the 4d or step 7
+fallback is reported as a bootcamp generation defect with `/bootcamp-feedback`.
 
 ### 5.16 `plugins/senzing-bootcamp/skills/graduation/`
 
@@ -8446,7 +8460,7 @@ collected as tests:
     non-empty `SBCP_QUIET_FPDF2_NOTICE` silences it.
   - It exports the decorator `requires_fpdf2`.
   - It is a module rather than a `conftest.py`, which `unittest` never loads.
-- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 51
+- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 52
   files. `blocks(text)` splits Markdown into blocks, and
   `match_lines(text, pattern)` returns the 1-based start line of each match. The
   rules are in 8.4.1.
@@ -8496,7 +8510,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 371 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 372 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8546,21 +8560,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6239 test methods in 372 files, matching `inventory.test_count_total`.
+There are 6274 test methods in 373 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6239.
+sum to 6274.
 
-Two files run more tests than they define, so discovery collects 6246:
+Two files run more tests than they define, so discovery collects 6281:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6239`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6274`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6246`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6281`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -8672,6 +8686,7 @@ looks wrong.
 - `tests/test_fpdf2_dependency_is_declared.py`: 12
 - `tests/test_free_data_catalog_caveats.py`: 14
 - `tests/test_gate_options_have_handling_steps.py`: 10
+- `tests/test_generated_data_supports_its_success_criteria.py`: 35
 - `tests/test_generated_dataset_size_is_a_license_decision.py`: 18
 - `tests/test_generated_gap_rates_reach_their_band.py`: 12
 - `tests/test_generated_html_deliverables.py`: 9
@@ -8944,7 +8959,7 @@ blueprint describes that Markdown but does not embed it, by the maintainer's
 choice, so those tests cannot pass on a rebuild from this blueprint alone. They
 need the original text. These are heuristic estimates, accurate to about 10%:
 
-- About 230 of the 372 files (about 3,500 tests, 57%) read only Markdown or
+- About 230 of the 373 files (about 3,500 tests, 57%) read only Markdown or
   register text and never run a script.
 - Counted per test method, about 3,600 tests (59%) assert that a phrase is
   present, absent, in order or in place. This includes wording checks inside
@@ -10102,6 +10117,11 @@ Senzing licensing, with no SPDX identifier.
   budget under 5% of invented entities, recorded in `scenario_intent`, and
   report the measured figure in Module 7 step 3b (a small name pool put a
   clean resolution in the Poor band by construction)
+- #459: generate a synthesized scenario's data against its success criteria,
+  with households and chains (at least 100 and 5) when a criterion names
+  related parties, recorded and measured in `relationship_intent`, and report
+  Module 7's no-path fallback on such a scenario as a bootcamp generation
+  defect (a Customer 360 scenario promised households its data never had)
 - #463: size the Match Keys label gutter from the advance measured in the
   labels' font (0.62 em when unmeasurable), fit a suffixed label inside the
   budget, and test the left edge in pixels (an assumed 5.9 px per character

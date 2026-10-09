@@ -233,7 +233,9 @@ only how the source is collected.
     count collisions in the same pass: identifier collisions (on any count above zero, regenerate
     the affected values) and name sharing, rewriting `scenario_intent.name_collisions` from the new
     count (on a share of 0.05 or more, or fewer pairs than `declared_pairs`, regenerate names; see
-    [the name-sharing budget](#name-sharing-budget)).
+    [the name-sharing budget](#name-sharing-budget)). Where the source records a
+    `relationship_intent`, re-measure its households and chains in the same pass and rewrite their
+    measured counts; a shortfall regenerates, as on the first generation.
   - ⛔ **(INV-243) Repoint the registry entry using Module 5 Step 7a step 4's field list**, and record
     the previous `file_path` in the same entry.
   - Record the regeneration by rewriting these keys of the source's `quality_intent` (the sample
@@ -320,8 +322,15 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   value is uniformly formatted, which scores **100.0** and lands every source in the ≥80% band. That
   makes two of the three gating branches in Data Quality, Mapping, and Transformation unreachable on
   this path, and a Bootcamper who sees `100% ✅` three times reasonably concludes the quality step is
-  a formality — in the module whose first phase is *Quality Assessment*. So the generated data must
-  also carry:
+  a formality — in the module whose first phase is *Quality Assessment*.
+
+  ⛔ **Generate against the success criteria, too (INV-239).** The generated data must support every
+  success criterion the generated business case states. Walk the criteria in
+  `docs/business_problem.md` before generating, and give each one records that can demonstrate it.
+  A criterion this step does not know how to generate (a business-metric target such as *"cut
+  duplicate mailings by 20%"*) is **named in the generation summary** you give the Bootcamper when
+  the files are written: never invent data for it, and never drop it silently. So the generated data
+  must also carry the entries below, the last of them only when a criterion asks for it:
 
   - **missing values in non-key fields**, enough to put **at least one source in the 70-79%
     band**. ⛔ **State this as a completeness target, not as per-field rates:** leave **30-43% of all
@@ -375,6 +384,14 @@ made** for every source in it. Then read the source's entry in `config/data_sour
     were lost), then count again. Never patch the ground truth, the scores or the results afterward.
     The count runs on every generation, a regeneration after Module 5's gate included, and each run
     rewrites both measured fields.
+    ⛔ **In the same pass, check criterion coverage (INV-239)** — every success criterion walked
+    above has generated records behind it, or is named in the generation summary. Where a source
+    records a `relationship_intent`, count its households and chains as the households entry below
+    defines them, and write the counts as `measured_households` and `measured_chains`; the
+    self-check writes both, never by hand, as it writes `measured_score`. **Regenerate before
+    anything loads or scores** when either count falls short of its intended figure, then count
+    again; never patch the recorded counts, the ground truth, the scores or the results afterward.
+    Like the counts above, this runs on every generation and rewrites both measured counts.
   - **off-pattern values in at least one field per source** — a date in a second format among
     ISO ones, an unformatted phone among formatted ones, a lowercase state code — so
     `format_consistency` is genuinely below 100 and the "report the fields that drag it down"
@@ -382,6 +399,27 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   - **at least one source at ≥80%**, so the Bootcamper sees the **contrast** between a strong source
     and a weak one rather than a uniformly gappy dataset. The comparison is the teaching.
   - the structural complexity above, unchanged — the two are additive, not alternatives.
+  - ⛔ **(INV-239) households and chains, when a success criterion names households or related
+    parties** — required then; when no criterion does, generate neither and omit
+    `relationship_intent`:
+    - **households:** 2–4 *different* invented people sharing a surname and a street address,
+      optionally also a home landline, each with a distinct first name and date of birth;
+    - **chains:** a person who belongs to one household and also shares a phone with a member of a
+      second household, so the two households connect only through that person: their other
+      members are 2 degrees apart, the path Query, Visualize and Discover's step 4d looks for.
+
+    Generate **at least 100 households and at least 5 chains** on the default ~10,000-record
+    scenario (INV-277), in proportion for a scenario sized smaller, never below one chain. **Declare
+    every shared phone under `quality_intent.shared_features` with its reason**, the household
+    landline and the chain's phone as separate entries, or the identifier-collision self-check above
+    counts it and forces a regeneration; a shared address may be declared too, though the identifier
+    rule below already lets an address repeat. ⚠️ **A household shares a surname, not a name**, so it
+    stays outside [the name-sharing budget](#name-sharing-budget): members with distinct first names
+    share no normalized name, add nothing to `measured_entities` and are never hard-negative pairs
+    toward `declared_pairs`. A father and son told apart only by `Sr.`/`Jr.` normalize to one name,
+    because suffixes are ignored, so they are not a household here and would count against that
+    budget. Record the intended counts as `relationship_intent` in the source's `quality_intent`
+    (the sample below); the criterion-coverage self-check above writes the measured counts.
 
   **State the intent when you generate, not just the mechanics:** the gaps are there so the quality
   assessment has something to find. A generator that "helpfully" produces clean data defeats the
@@ -467,6 +505,14 @@ made** for every source in it. Then read the source's entry in `config/data_sour
       shared_features:              # deliberate sharing only; an unlisted share is a collision
         - feature: phone
           reason: "household landline shared by the two adults at one address"
+        - feature: phone
+          reason: "chain: one household member shares a mobile with a member of a second household"
+      relationship_intent:          # only when a success criterion names households or related parties
+        criterion: "group customers who live together into households"
+        households: 120             # intended; at least 100 on the default ~10,000-record scenario
+        chains: 6                   # intended; at least 5
+        measured_households: 120    # written by the self-check, never by hand
+        measured_chains: 6          # written by the self-check, never by hand
       measured_score: 78.0          # written by the self-check, never by hand
   ```
 
