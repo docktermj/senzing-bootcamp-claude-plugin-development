@@ -89,6 +89,8 @@ def page_commands(text):
 
 def readme_commands(text):
     """Every `claude plugin …` command inside a `console` fence, indented or not."""
+    # Line-scoped by design (#455): in a console fence each non-blank line is one command,
+    # and a fence is never reflowed, so a line is the unit the comparison is about.
     lines, fence = [], None
     for line in text.splitlines():
         match = FENCE.match(line)
