@@ -43,6 +43,21 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## readme-names-the-retired-claude-app
+
+- **Implemented:** 2026-10-09 (**Not a spec** — a dated record of one issue-driven run, #466, spec revision 1. `Source: maintainer request`)
+- **Commit:** 4bcbe42 (the `README.md` fix, merged by PR #467; this entry and the blueprint line came in a follow-up PR)
+- **Files changed:** `README.md`, `BLUEPRINT.md`, `specs/IMPLEMENTED.md` (this entry). `specs/INVARIANTS.md` is unchanged.
+- **MCP re-check:** n/a (no Senzing fact). Re-confirmed: the change renames a Claude interface in an install note and states nothing about Senzing.
+- **Approach:** implemented directly (Phase 5a). The `/unattended-issue-loop` preflight of 2026-10-09 found `main` red at `8579ecc` and stopped before working any issue; this issue fixes that.
+- **Summary:**
+  - **The defect.** #452 (`3a1479d1`, 2026-10-05) added `README.md:76`, "> **Note:** These instructions may change depending on version of Claude App." INV-158 retires "Claude App" for an interface, so `test_retired_vocabulary.TestRetiredVocabulary.test_retired_terms_are_always_framed_as_retired` failed in both CI legs, on GitHub (`7cfdcd88`, `8579ecc3`) and locally.
+  - **The fix.** The line now says "Claude Desktop", which matches the section heading ("Using Claude Desktop") and the same note on the Pages site (`docs/index.html:109`).
+  - **The public repo** carries the same line at `README.md:76`. `propagate.sh` copies the dev `README.md` over it, so the next `/propagate-to-public` fixes it; it is not edited directly.
+  - **Blueprint.** `/update-blueprint 466` adds #466's decision-log line.
+- **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
+- **Establishes no invariant** (INV-309): INV-158 already states the rule, and `test_retired_terms_are_always_framed_as_retired` already enforces it. No ⛔ line is added or demoted.
+
 ## pages-site-exists-only-in-the-public-repo
 
 - **Implemented:** 2026-10-05 (**Not a spec** — a dated record of one issue-driven run, #452, spec revision 1, found by `/retrofit-from-public`. `Source: maintainer request`)
