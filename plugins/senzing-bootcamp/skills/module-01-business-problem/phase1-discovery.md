@@ -197,8 +197,9 @@ bootcamper explicitly accepts option 3.)*
 - **Accepted:** generate a complete scenario in-session: a non-empty problem description,
   exactly one use-case category from the recognized set (Customer 360, Fraud Detection, Data
   Migration, Compliance, Marketing, Healthcare, Supply Chain, KYC, Insurance, Vendor MDM), and
-  a non-empty definition of success. If a pattern was picked in Step 3, the category must match
-  it. Decide CORD vs. synthetic data per Step 4b. **Validate invariants** before recording: at
+  a non-empty definition of success. Write each success criterion as one the generated data can
+  demonstrate, because Data collection generates the data against these criteria. If a pattern was
+  picked in Step 3, the category must match it. Decide CORD vs. synthetic data per Step 4b. **Validate invariants** before recording: at
   least two distinctly named data sources, each with ≥1 record; the data carries **cross-source
   mapping divergence** — at least two sources describing the same feature in **different shapes**
   (one a single name field, another parsed components; one a free-text address, another parts), so

@@ -173,6 +173,22 @@ connections between entities using `find_network` and `find_path`.
    more degrees to show. Here is `find_path` on a direct connection instead." In that case, leave
    out the "these aren't directly connected" line below.
 
+   ⛔ **(INV-239) On a generated scenario that promised households, this fallback is a bootcamp
+   defect.** The scenario promised them when a loaded source's entry in `config/data_sources.yaml`
+   records `provenance: synthesized` and its `quality_intent` carries a `relationship_intent`, or
+   when a loaded source records `provenance: synthesized` and the scenario's success criteria in
+   `docs/business_problem.md` name households or related parties. The second test covers a scenario
+   generated before `relationship_intent` existed. Either way, Data collection was required to
+   generate households and the chains between them, which give a path of 2 or more degrees. Reaching
+   this fallback, or step 7's, on such a scenario means the bootcamp's generated data is missing what
+   its scenario promised, not that the Bootcamper's data lacks it. Say so plainly with the fallback,
+   and suggest `/bootcamp-feedback`: "This scenario promised households and related people, so there
+   should be a path of 2 or more degrees here. It's missing because of a defect in the data the
+   bootcamp generated, not anything about your data. You can report it with `/bootcamp-feedback`."
+   On a CORD source, the Bootcamper's own data, or a generated scenario with no `relationship_intent`
+   and no success criterion naming households or related parties, the fallback's wording stands as
+   written.
+
    Show the shortest path of relationships:
    - State which two entities and why: "Let's find the shortest path between Entity [ID1] and
      Entity [ID2]. These aren't directly connected, so we'll see the intermediate entities
@@ -203,6 +219,11 @@ connections between entities using `find_network` and `find_path`.
 7. **Graceful fallback (no relationships in data):** if the bootcamper's data contains no entity
    relationships or disclosed connections (as determined in step 4a), do NOT attempt the live
    demonstration. Instead:
+   - ⛔ **(INV-239) On a generated scenario that promised households** (the condition in step 4's
+     generated-scenario paragraph, including a scenario whose success criteria name households or
+     related parties), first say that the bootcamp's generated data is missing the
+     relationships its scenario promised, that this is a bootcamp defect rather than a property of
+     the Bootcamper's data, and suggest `/bootcamp-feedback`. Then continue below.
    - State: "Your data doesn't contain disclosed relationships, so I'll explain what this would
      look like with connected data."
    - Describe what `find_network` returns when entities are connected: a graph structure with
