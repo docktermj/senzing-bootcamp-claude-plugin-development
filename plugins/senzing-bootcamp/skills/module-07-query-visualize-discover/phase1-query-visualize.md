@@ -520,6 +520,23 @@ records, which sources, and the match key that joined them. This applies to **ev
 including the one that proceeds — a verdict with no records behind it is the "Bad" example above,
 and **Acceptable** is the branch a Bootcamper is least likely to question.
 
+<a id="measured-name-sharing"></a>
+
+⛔ **(INV-239, INV-264) On a generated scenario, report the name sharing it measured.** The band is
+always computed on the **raw** possible-match rate above; this figure explains a band, never moves
+it. Use it only when **both** hold: every loaded source's entry in `config/data_sources.yaml` records
+`provenance: synthesized`, and the registry carries a top-level `scenario_intent.name_collisions`
+block (Data collection's self-check wrote it before anything loaded, under
+[the name-sharing budget](../module-04-data-collection/SKILL.md#name-sharing-budget)). Then, on a
+**Marginal** or **Poor** verdict, report `measured_entities` beside the count of entities with a
+possible match, as numbers, keeping the two units apart (the measured figure counts invented
+entities, not resolved entities with a possible match): "300 entities have a possible match; Data
+collection measured 112 invented entities that share a name with a different invented person — a
+lower bound, because nicknames and typo variants are not counted." When the block is
+absent (a scenario generated before it existed, or no generated scenario) or any loaded source is
+not `synthesized` (its entities are outside the count), report no measured figure: the steps below
+run exactly as written.
+
 Based on the assessment — evidence first, wording second:
 
 - **Acceptable:** name what you examined, then proceed. "I looked at entities [IDs]: [n] records
@@ -576,7 +593,13 @@ Then route on what the evidence shows:
      source. Check the **populated share per field**: Module 5 already measured it as `completeness`,
      so read that figure rather than inventing a measurement.
    - **Name-only collisions** in small or synthetic datasets, from a limited name pool. On a
-     generated scenario the plugin built that pool.
+     generated scenario the plugin built that pool. Where
+     [the measured name sharing](#measured-name-sharing) above applies and its `measured_entities`
+     is **more than half** of the entities with a possible match, cite that figure here instead of
+     the pool: "[n] entities have a possible match; Data collection measured, before loading,
+     [measured_entities] invented entities that share a name with a different invented person — a
+     lower bound, because nicknames and typo variants are not counted." Otherwise keep the
+     sentence before this one.
 3. **Could not determine** — say so, record it, and continue to **3c**. Do not guess in either
    direction; an unsupported "mapping looks fine" is the same defect as an unsupported remap.
 

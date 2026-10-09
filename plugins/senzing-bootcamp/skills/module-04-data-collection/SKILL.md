@@ -230,7 +230,10 @@ only how the source is collected.
     they are.
   - ⛔ **(INV-239) Both self-checks in this step apply to the regeneration:** verify it against the
     band (if it misses `>=80`, narrow the gaps further and regenerate; never adjust a score), and
-    count identifier collisions (on any count above zero, regenerate the affected values).
+    count collisions in the same pass: identifier collisions (on any count above zero, regenerate
+    the affected values) and name sharing, rewriting `scenario_intent.name_collisions` from the new
+    count (on a share of 0.05 or more, or fewer pairs than `declared_pairs`, regenerate names; see
+    [the name-sharing budget](#name-sharing-budget)).
   - ⛔ **(INV-243) Repoint the registry entry using Module 5 Step 7a step 4's field list**, and record
     the previous `file_path` in the same entry.
   - Record the regeneration by rewriting these keys of the source's `quality_intent` (the sample
@@ -362,6 +365,16 @@ made** for every source in it. Then read the source's entry in `config/data_sour
     identifier rule below). On any count above zero, **regenerate the affected values or the source
     before anything loads or scores it** — never patch the ground truth, the scores or the results
     afterward.
+    ⛔ **In the same pass, count name sharing (INV-239)** — the distinct invented entities that share
+    a normalized name with at least one other distinct entity, and the name-sharing pairs among them,
+    as [the name-sharing budget](#name-sharing-budget) below defines both. Write the count to
+    `scenario_intent.name_collisions` as `measured_entities`, and that count divided by all invented
+    entities as `measured_share`; the self-check writes both, never by hand, as it writes
+    `measured_score`. **Regenerate names before anything loads or scores** when `measured_share` is
+    0.05 or more, or when fewer name-sharing pairs exist than `declared_pairs` (the hard negatives
+    were lost), then count again. Never patch the ground truth, the scores or the results afterward.
+    The count runs on every generation, a regeneration after Module 5's gate included, and each run
+    rewrites both measured fields.
   - **off-pattern values in at least one field per source** — a date in a second format among
     ISO ones, an unformatted phone among formatted ones, a lowercase state code — so
     `format_consistency` is genuinely below 100 and the "report the fields that drag it down"
@@ -387,13 +400,52 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   entry covers only the shares its reason describes, never every value of that feature. The
   unit is the **entity, not the record**: the per-campaign duplicates and the cross-source overlap are
   records of one entity and keep that entity's features, because that match is what the scenario
-  intends. **Names may repeat** across distinct entities — they are the intended **hard negatives** —
-  and so may an address or a date of birth (a household, a coincidence); the rule covers only the
-  identifiers. ⚠️ **The anti-pattern to avoid:** building a "unique" value from the name plus a small
+  intends. **Names may repeat** across distinct entities — they are the intended **hard negatives**,
+  held inside [the name-sharing budget](#name-sharing-budget) below — and so may an address or a
+  date of birth (a household, a coincidence); the rule covers only the identifiers. ⚠️ **The anti-pattern to avoid:** building a "unique" value from the name plus a small
   number (`first.last<1-99>@…`) collides as soon as the name pool is smaller than the population.
   Observed 2026-10-01: 7,000 people drawn from 1,197 distinct names gave 53 pairs of different people
   the same name and email, every pair resolved together on that evidence, and the scenario's own
   ground truth then called each merge false — a correct result reported as an error.
+
+  <a id="name-sharing-budget"></a>
+
+  ⛔ **Keep name sharing inside one budget (INV-239).** Count the distinct invented entities that
+  share a normalized name with at least one other distinct entity, deliberate and chance together:
+  they stay **below 5% of all invented entities**, which is Query, Visualize and Discover's
+  **Acceptable** possible-match threshold. Size the name pool to the population to stay there —
+  enough first and last names, or a long-tailed surname distribution. The deliberate hard negatives
+  are a declared **minimum of at least one pair** inside that budget, so the shared names the
+  identifier rule above keeps are an amount the scenario chose, not an accident of pool size.
+  - **What counts as the same name.** A person: first name plus last name, after lowercasing,
+    trimming, collapsing whitespace and stripping punctuation, ignoring middle names and suffixes. An
+    organization: the organization name, normalized the same way. Nicknames and typo variants
+    (Jon/John, Bob/Robert) are not counted, so the count is a **lower bound** on the name-only
+    relationships the engine will make; the headroom below 5% is there to absorb them.
+  - **The unit is the entity, as in the identifier rule above.** Records of one entity (the
+    per-campaign duplicates, the cross-source overlap, deliberate name variants of one person) are
+    never a collision, and two name-sharing entities make one pair.
+  - **Record it once for the whole scenario**, because name sharing is a property of the scenario,
+    not of one source: a top-level `scenario_intent:` block in `config/data_sources.yaml`, beside
+    `version` and `sources:`. The self-check above writes the measured fields.
+
+    ```yaml
+    version: "1"
+    scenario_intent:
+      name_collisions:
+        declared_pairs: 40            # deliberate hard negatives; at least 1
+        reason: "different people who share a common name, to show Senzing does not merge on name alone"
+        measured_entities: 112        # written by the self-check, never by hand
+        measured_share: 0.019         # measured_entities / invented entities (112 of 5,900); must be < 0.05
+    sources:
+      # one entry per source, each with its own quality_intent (below)
+    ```
+
+  ⚠️ **The anti-pattern to avoid:** a name pool sized for a demo, not for the population. Observed
+  2026-10-05: about 5,500 people drawn from 129 first names and 135 last names left only 76.5% of
+  full names unique, and after loading 32.7% of entities had a possible match, every one on `+NAME`
+  alone. Resolution was clean (precision 100%, no false merges), yet Query, Visualize and Discover's
+  step 3b showed the **Poor** band, by construction of the data.
 
   **Record the intended band per source** in `config/data_sources.yaml`, as `quality_intent` beside
   the source's other fields:
@@ -778,6 +830,14 @@ Module 5 can evaluate.
 > the collected file: overwriting them with the sample's figures would destroy the baseline the load
 > is reconciled against. A smaller **substitute dataset** is a new collection, not a sample: record
 > it as its own collected file with its own measured `record_count`, and write no `sample:` block.
+>
+> `scenario_intent` (optional, top level beside `version` and `sources:`, never inside a source
+> entry) is written only for a generated scenario:
+> `scenario_intent: {name_collisions: {declared_pairs, reason, measured_entities, measured_share}}`.
+> Its rule, its sample and who writes each field are in
+> [the name-sharing budget](#name-sharing-budget); `measured_entities` and `measured_share` are
+> written by Step 2's self-check, never by hand. A registry without it is a scenario generated
+> before the block existed, or not generated at all.
 
 > **Data File Validation:** After each file is saved to `data/raw/`, sanity-check it (readable,
 > non-empty, expected format/encoding, and — wherever an independent expected count exists — a record
