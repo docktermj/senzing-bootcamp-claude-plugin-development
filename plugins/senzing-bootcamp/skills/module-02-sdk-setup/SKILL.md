@@ -644,7 +644,8 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
   query programs, so it lives with the cross-cutting execution rules and is linked from the step
   that creates the condition.
 - **Record the container for lifecycle tracking (INV-101).** When you start the container,
-  give it a stable `--name` and append an entry to a `docker_containers` list in
+  give it the `--name` that [the container-naming rule](#container-naming) below prints for the
+  base `senzing-bootcamp`, and append an entry to a `docker_containers` list in
   `config/bootcamp_progress.json` — at least its `name` and the `runtime` you actually used
   (`docker`, `podman`, or `container` for Apple's `container` CLI); also `image` and `purpose`
   when handy. **Record the runtime truthfully**: the hooks stop and report each container with
@@ -653,6 +654,46 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
   recorded containers on exit (`<runtime> stop`, not remove) and `SessionStart` surfaces them on
   resume so they can be restarted or regenerated. (The list key stays `docker_containers` for
   compatibility with in-flight bootcamps, whatever runtime its entries name.)
+
+<a id="container-naming"></a>
+
+**Naming a container the bootcamp creates.** This is the canonical statement of the rule; the
+container route above and Step 7's PostgreSQL Option 1 link here rather than restating it
+(INV-300). A fixed name such as `senzing-bootcamp` collides with the same name from another
+bootcamp project on this machine, and the lifecycle hooks find containers by exact name, so one
+project's `SessionEnd` would stop, and its `SessionStart` would report, the other's container.
+
+1. **Take the name from the helper; never choose one yourself.** From the project root, on the
+   host, with the site's base name (`senzing-bootcamp` for the SDK container,
+   `bootcamp-postgres` for PostgreSQL) and the runtime you will create it with:
+
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/docker_lifecycle.py" container-name <base> --runtime <runtime>
+   # or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/docker_lifecycle.py container-name <base> --runtime <runtime>
+   ```
+
+   It prints `<base>-<project>-<hash6>`, derived from the project directory. Create the container
+   with exactly that `--name`, and record exactly that name in `docker_containers`, with a
+   `host_port` field when the step publishes a port. Every later command and module reads the
+   recorded name and port, never a literal.
+2. **A name in use by another project is skipped for you.** For `docker` and `podman` the helper
+   checks the name with a read-only `ps`. When a container of that name exists and this project's
+   `docker_containers` does not record it, the helper prints the first free of `-2` … `-9`
+   instead. Tell the Bootcamper the name you used and why, for example: "A container named
+   `senzing-bootcamp-demo-1a2b3c` belongs to another project on this machine, so this one is
+   `senzing-bootcamp-demo-1a2b3c-2`." A name this project already records is printed unchanged:
+   it is this project's own container, so restart it with `<runtime> start` instead of creating
+   it again.
+3. **Apple `container`, or a check that could not run.** The helper prints the derived name
+   unchecked and says so on stderr. If creating the container then fails because the name is in
+   use, append `-2`, `-3` … yourself, retry, and tell the Bootcamper the name you used.
+4. **When the helper exits non-zero, stop and ask the Bootcamper.** That means `-2` … `-9` are all
+   taken (or, for `free-port`, no port in its range is free). Do not invent a name or a port.
+5. ⛔ (INV-101, INV-195) **Never remove, stop, start or reuse a container that this project's
+   `docker_containers` does not record.** A name already in use is someone else's environment,
+   most likely another bootcamp's, and removing it to free the name destroys that environment.
+   This holds for every recovery, a failed `run` included. The helper itself never removes,
+   stops, starts or runs a container.
 
 **Phase 3: Install language bindings (after Phase 1's EULA acceptance, or directly on Step 1's
 existing-install path, which skips Phase 1 and Phase 2; INV-338, INV-339):**
@@ -1762,32 +1803,47 @@ config with `sdk_guide(topic='configure', ...)` — never hand-construct
    python3 -c "import secrets; print(secrets.token_hex(16))"
    ```
 
-   Then run an official `postgres` image with a stable `--name`, a **project-local volume** (data
-   persists in the working directory, not an ephemeral layer), the generated password (never the
-   guessable default `senzing`), and the port **bound to localhost only** (`127.0.0.1:`, so the
-   database is not exposed on other network interfaces):
+   Then take the container's name and its host port from the helper, from the project root. The
+   name follows [the container-naming rule](#container-naming) in Step 3 with the base
+   `bootcamp-postgres`, conflicts, a non-zero exit and the never-touch rule included. `free-port`
+   prints `5432` when a socket can bind `127.0.0.1:5432`, else the first free port in 5433–5531:
 
    ```bash
-   docker run -d --name bootcamp-postgres \
-     -e POSTGRES_USER=senzing -e POSTGRES_PASSWORD=<generated-password> -e POSTGRES_DB=G2 \
-     -p 127.0.0.1:5432:5432 -v "$(pwd)/database/postgres:/var/lib/postgresql/data" postgres:16
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/docker_lifecycle.py" container-name bootcamp-postgres --runtime docker
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/docker_lifecycle.py" free-port 5432
+   # or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/docker_lifecycle.py <same arguments>
    ```
 
-   On a later resume, restart the existing container with `docker start bootcamp-postgres` (which
-   preserves the baked-in password) rather than a fresh `docker run`.
+   Run an official `postgres` image with the printed name as `<pg-container>` and the printed port
+   as `<host_port>`, a **project-local volume** (data persists in the working directory, not an
+   ephemeral layer), the generated password (never the guessable default `senzing`), and the port
+   **bound to localhost only** (`127.0.0.1:`, so the database is not exposed on other network
+   interfaces):
+
+   ```bash
+   docker run -d --name <pg-container> \
+     -e POSTGRES_USER=senzing -e POSTGRES_PASSWORD=<generated-password> -e POSTGRES_DB=G2 \
+     -p 127.0.0.1:<host_port>:5432 -v "$(pwd)/database/postgres:/var/lib/postgresql/data" postgres:16
+   ```
+
+   On a later resume, restart the recorded container with `docker start <pg-container>` (which
+   preserves the baked-in password) rather than a fresh `docker run`. If that start fails because
+   the recorded `host_port` is now in use, say so and ask the Bootcamper: a published port cannot
+   be changed on an existing container, and recreating it is their call, never a silent fix.
 
 2. Record the container for lifecycle tracking (INV-101): append it to `docker_containers` in
-   `config/bootcamp_progress.json` — at least its `name` and the `runtime` you actually used
-   (`docker`, or `podman` / `container` if that is what started it) — so the SessionEnd hook
-   stops it on exit and SessionStart offers to restart it.
-3. Wait until the server is ready (poll `docker exec bootcamp-postgres pg_isready`).
+   `config/bootcamp_progress.json` — its `name` (`<pg-container>`), the `runtime` you actually used
+   (`docker`, or `podman` / `container` if that is what started it), and `host_port`
+   (`<host_port>`) — so the SessionEnd hook stops it on exit and SessionStart offers to restart it.
+   An entry with no `host_port` means `5432`, the only port earlier projects used.
+3. Wait until the server is ready (poll `docker exec <pg-container> pg_isready`).
 4. Apply the Senzing PostgreSQL schema DDL **before any SDK use** — the SDK does NOT auto-create it
    (unlike SQLite). MCP confirms the DDL ships with the SDK install at
    `/opt/senzing/er/resources/schema/szcore-schema-postgresql-create.sql`; apply it against the
    container:
 
    ```bash
-   docker exec -i bootcamp-postgres psql -U senzing -d G2 \
+   docker exec -i <pg-container> psql -U senzing -d G2 \
      < /opt/senzing/er/resources/schema/szcore-schema-postgresql-create.sql
    ```
 
@@ -1795,7 +1851,8 @@ config with `sdk_guide(topic='configure', ...)` — never hand-construct
    initialization anti-patterns doc).
 5. Wire the connection into the engine config (Step 8): the `SQL.CONNECTION` URL is
    `postgresql://user:password@host:port/database` (MCP-confirmed), where `password` is the
-   generated value from Step 1 (not the old `senzing` default). Generate the full engine config
+   generated value from Step 1 (not the old `senzing` default) and `port` is the container's
+   recorded `host_port`, never an assumed `5432`. Generate the full engine config
    via `sdk_guide(topic='configure', ...)` and save it to `config/engine_config.json`.
 
 **Option 2 — Install PostgreSQL locally:** install and start a local PostgreSQL server, create the

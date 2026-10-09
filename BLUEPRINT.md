@@ -108,8 +108,8 @@ receives the shippable plugin through `/propagate-to-public`.
   captures each tab of a running visualization app as PNGs.
 - `plugins/senzing-bootcamp/scripts/checkpoint-tick.py`: UserPromptSubmit hook:
   counts turns toward the next recap checkpoint.
-- `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`: starts, inspects and
-  tears down the Bootcamper's Docker containers.
+- `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`: names, inspects and
+  tears down the Bootcamper's containers, and picks a free host port.
 - `plugins/senzing-bootcamp/scripts/feedback-capture.py`: UserPromptSubmit hook:
   captures feedback typed in the prompt.
 - `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`:
@@ -1770,7 +1770,11 @@ facts come from MCP tools; SENZ codes go to `explain_error_code`, then
   path: a plain Debian container running the `linux_apt` steps, project
   bind-mounted, each container appended to `docker_containers` (`name`,
   `runtime`, optional `image`, `purpose`); `session-start.py` reports them and
-  `session-end.py` stops them. Phase 3 binds by the MCP-named route only: Python
+  `session-end.py` stops them. An anchored rule (`#container-naming`) names
+  every container the bootcamp creates with `docker_lifecycle.py
+  container-name <base>` (project-derived; `-2` … `-9` past another project's
+  container; stop and ask on a non-zero exit), and never removes, stops,
+  starts or reuses a container `docker_containers` does not record. Phase 3 binds by the MCP-named route only: Python
   installs nothing (`pip install senzing` forbidden; shadowing detected via
   `senzing.__file__`); Java the product `sz-sdk.jar`; C# a local `Senzing.Sdk`
   NuGet source; Rust a git dependency; TypeScript from GitHub, with a
@@ -1803,9 +1807,11 @@ facts come from MCP tools; SENZ codes go to `explain_error_code`, then
   mount) report `check_repository_performance`, never relocating; apply the
   `sdk_guide` schema via Python `sqlite3` to `database/G2C.db`, with an
   absolute connection string, never `/tmp`. PostgreSQL asks how: Docker
-  (recommended; generated password, localhost port, volume
-  `database/postgres`, `pg_isready`, schema DDL, `docker_containers` entry),
-  local, existing server, or switch to SQLite.
+  (recommended; name from `container-name bootcamp-postgres`, localhost port
+  from `free-port 5432` recorded as `host_port` and used in `SQL.CONNECTION`,
+  absent meaning 5432; a busy port on resume is reported and asked about;
+  generated password, volume `database/postgres`, `pg_isready`, schema DDL,
+  `docker_containers` entry), local, existing server, or switch to SQLite.
 - Step 8, engine config: `sdk_guide(topic='configure', platform, language)`,
   built from `environment.default_paths` (not the brace-doubled
   `engine_config`), `SQL.CONNECTION` repointed, saved to
@@ -2524,8 +2530,9 @@ exits 0.
 
 ### 5.25 `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`
 
-Library module (no CLI) for `session-start.py` and `session-end.py`.
-Containers the bootcamp starts are listed in `config/bootcamp_progress.json`
+Library module for `session-start.py` and `session-end.py`, and the command
+line Module 2 runs before it creates a container (#461). Importing it runs
+nothing. Containers the bootcamp starts are listed in `config/bootcamp_progress.json`
 under `docker_containers`; an entry has a `name` and a `runtime`, and a bare
 string or missing `runtime` means `docker`.
 
@@ -2541,6 +2548,24 @@ string or missing `runtime` means `docker`.
   `STATE_PROBE_RUNTIMES` or the probe fails) or noting the CLI is missing,
   and asks the guide to offer restart or regeneration; empty string when
   nothing is recorded.
+- `derived_container_name` returns `<base>-<slug>-<hash6>` for the working
+  directory or `project_dir`. `project_slug` is the real path's basename,
+  lowercased, each run outside `[a-z0-9_.-]` made `-`, `-_.` stripped from both
+  ends, then cut to `SLUG_MAX` (32), or `project` when empty. `project_hash6`
+  is the first 6 hex characters of SHA-256 over the normcased real path. A
+  base outside `NAME_CHARSET` raises `ValueError`.
+- `container_name` walks the derived name, then `-2` … `-9`, and returns
+  `(name, how)`: a name `docker_containers` records is `recorded`; otherwise
+  `_container_state` decides, `missing` giving `free`, `unknown` giving
+  `unprobed`, and `running` or `stopped` moving on. All taken returns
+  `(None, "exhausted")`. Its only container command is the `ps` probe.
+- `free_port` returns the preferred port, or the first of the next
+  `PORT_SPAN` (99) that `_can_bind` binds on `127.0.0.1` without
+  `SO_REUSEADDR`, else None.
+- `main` runs `container-name` and `free-port`, printing the name or port.
+  Exit 0 when printed (an unprobed name adds a note on stderr); 1 when every
+  candidate or port is taken, with a message on stderr; 2 for a base outside
+  the charset or no subcommand (argparse usage errors also exit 2).
 
 ### 5.26 `plugins/senzing-bootcamp/scripts/feedback-capture.py`
 
@@ -5217,6 +5242,24 @@ def stop_started_containers():
     ...
 def resume_summary():
     ...
+NAME_CHARSET = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_.-]*\Z")
+SLUG_MAX = 32
+SLUG_FALLBACK = "project"
+CONFLICT_SUFFIXES = tuple(range(2, 10))
+PORT_SPAN = 99
+LOOPBACK = "127.0.0.1"
+def project_slug(project_dir):
+    ...
+def project_hash6(project_dir):
+    ...
+def derived_container_name(base, project_dir=None):
+    ...
+def container_name(base, runtime=DEFAULT_RUNTIME):
+    ...
+def free_port(preferred):
+    ...
+def main(argv=None):
+    ...
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -7428,7 +7471,30 @@ From `plugins/senzing-bootcamp/scripts/capture_screenshots.py`:
 
 <!-- markdownlint-enable MD013 -->
 
-#### 6.2.16 `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`
+#### 6.2.16 `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`:
+
+```python
+    parser = argparse.ArgumentParser(
+        prog="docker_lifecycle.py",
+        description="Name a bootcamp container, or pick its host port, before creating it.")
+    sub = parser.add_subparsers(dest="command")
+    named = sub.add_parser(
+        "container-name", help="print the project-derived name to create a container with")
+    named.add_argument("base", help="the site's base name, e.g. senzing-bootcamp")
+    named.add_argument("--runtime", default=DEFAULT_RUNTIME, type=str.lower,
+                       choices=sorted(KNOWN_RUNTIMES),
+                       help="the CLI that will create the container (default: docker)")
+    port = sub.add_parser("free-port", help="print a free host loopback port")
+    port.add_argument("preferred", type=_port_number, help="the port to try first, e.g. 5432")
+```
+
+<!-- markdownlint-enable MD013 -->
+
+#### 6.2.17 `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`
 
 <!-- markdownlint-disable MD013 -->
 
@@ -7470,7 +7536,7 @@ From `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`:
 
 <!-- markdownlint-enable MD013 -->
 
-#### 6.2.17 `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`
+#### 6.2.18 `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`
 
 <!-- markdownlint-disable MD013 -->
 
@@ -7523,7 +7589,7 @@ From `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`:
 
 <!-- markdownlint-enable MD013 -->
 
-#### 6.2.18 `plugins/senzing-bootcamp/scripts/generate_recap_video.py`
+#### 6.2.19 `plugins/senzing-bootcamp/scripts/generate_recap_video.py`
 
 <!-- markdownlint-disable MD013 -->
 
@@ -7552,7 +7618,7 @@ From `plugins/senzing-bootcamp/scripts/generate_recap_video.py`:
 
 <!-- markdownlint-enable MD013 -->
 
-#### 6.2.19 `plugins/senzing-bootcamp/scripts/normalize_docs_markdown.py`
+#### 6.2.20 `plugins/senzing-bootcamp/scripts/normalize_docs_markdown.py`
 
 <!-- markdownlint-disable MD013 -->
 
@@ -7574,7 +7640,7 @@ From `plugins/senzing-bootcamp/scripts/normalize_docs_markdown.py`:
 
 <!-- markdownlint-enable MD013 -->
 
-#### 6.2.20 `plugins/senzing-bootcamp/scripts/package_bootcamp.py`
+#### 6.2.21 `plugins/senzing-bootcamp/scripts/package_bootcamp.py`
 
 <!-- markdownlint-disable MD013 -->
 
@@ -7595,7 +7661,7 @@ From `plugins/senzing-bootcamp/scripts/package_bootcamp.py`:
 
 <!-- markdownlint-enable MD013 -->
 
-#### 6.2.21 `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`
+#### 6.2.22 `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`
 
 <!-- markdownlint-disable MD013 -->
 
@@ -7624,7 +7690,7 @@ From `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`:
 
 <!-- markdownlint-enable MD013 -->
 
-#### 6.2.22 `.claude/skills/propagate-to-public/propagate.sh`
+#### 6.2.23 `.claude/skills/propagate-to-public/propagate.sh`
 
 <!-- markdownlint-disable MD013 -->
 
@@ -7636,7 +7702,7 @@ From `.claude/skills/propagate-to-public/propagate.sh`:
 
 <!-- markdownlint-enable MD013 -->
 
-#### 6.2.23 `.claude/skills/retrofit-from-public/retrofit.sh`
+#### 6.2.24 `.claude/skills/retrofit-from-public/retrofit.sh`
 
 <!-- markdownlint-disable MD013 -->
 
@@ -7668,7 +7734,7 @@ while [ "$#" -gt 0 ]; do
 
 <!-- markdownlint-enable MD013 -->
 
-#### 6.2.24 `scripts/sync-check.sh`
+#### 6.2.25 `scripts/sync-check.sh`
 
 <!-- markdownlint-disable MD013 -->
 
@@ -7980,6 +8046,8 @@ From `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`:
 ```python
 def _run(args, timeout=30):
     ...
+def _can_bind(port, host=LOOPBACK):
+    ...
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -7987,6 +8055,7 @@ def _run(args, timeout=30):
 Used by:
 
 - `_run`: `test_container_lifecycle_runtimes.py`
+- `_can_bind`: `test_container_names_are_project_derived.py`
 
 ### 7.5 `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`
 
@@ -8400,7 +8469,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 369 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 370 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8450,21 +8519,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6153 test methods in 369 files, matching `inventory.test_count_total`.
+There are 6189 test methods in 370 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6153.
+sum to 6189.
 
-Two files run more tests than they define, so discovery collects 6160:
+Two files run more tests than they define, so discovery collects 6196:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6153`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6189`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6160`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6196`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -8515,6 +8584,7 @@ looks wrong.
 - `tests/test_conformance_scans.py`: 27
 - `tests/test_conformance_sees_a_rule_beside_a_citation.py`: 8
 - `tests/test_container_lifecycle_runtimes.py`: 18
+- `tests/test_container_names_are_project_derived.py`: 36
 - `tests/test_container_teardown_has_a_route_and_a_failure_report.py`: 8
 - `tests/test_cord_fetch_has_a_403_remedy.py`: 17
 - `tests/test_cord_fetch_integrity.py`: 50
@@ -8845,7 +8915,7 @@ blueprint describes that Markdown but does not embed it, by the maintainer's
 choice, so those tests cannot pass on a rebuild from this blueprint alone. They
 need the original text. These are heuristic estimates, accurate to about 10%:
 
-- About 230 of the 369 files (about 3,500 tests, 57%) read only Markdown or
+- About 230 of the 370 files (about 3,500 tests, 57%) read only Markdown or
   register text and never run a script.
 - Counted per test method, about 3,600 tests (59%) assert that a phrase is
   present, absent, in order or in place. This includes wording checks inside
@@ -9264,6 +9334,11 @@ tests a rebuild can pass from behavior alone.
     `docker_containers` count as `docker`.
   - An unknown runtime is never executed.
   - An absent CLI runs nothing and is named, and the hooks still exit 0.
+  - `container-name` (`tests/test_container_names_are_project_derived.py`)
+    derives `<base>-<slug>-<hash6>`, moves to `-2` … `-9` past an unrecorded
+    container, returns a recorded name unchanged, and issues no command but
+    `ps`. `free-port` skips a bound port and never sets `SO_REUSEADDR`. Two
+    projects sharing a basename each stop only their own container.
 - **`brand_tokens.py`** (`tests/test_brand_sync.py`). Every inlined fallback
   palette equals `brand_tokens.py`. Source colors are deterministic and never
   signal green, and exceeding capacity triggers a warning.
@@ -9982,3 +10057,7 @@ Senzing licensing, with no SPDX identifier.
 - #448: read the CORD `download_url` cap from the response and treat a
   truncated source's count as a floor on the uncapped route (Module 4 still
   stated a 10,000 cap after #214 closed without its fix)
+- #461: name every container Module 2 creates from its project with
+  `docker_lifecycle.py container-name`, and pick PostgreSQL's host port with
+  `free-port` (a fixed `senzing-bootcamp` name collided across two bootcamp
+  projects, and the hooks find containers by exact name)
