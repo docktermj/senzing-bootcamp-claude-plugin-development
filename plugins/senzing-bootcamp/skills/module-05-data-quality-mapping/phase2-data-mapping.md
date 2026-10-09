@@ -967,12 +967,49 @@ it produces silently suppressed merges that only the post-load match-key audit w
 > **Availability-aware mapping validation:** `mapping_workflow` advertises three validation
 > scripts. Run them by availability: do NOT treat any one as a hard blocking gate.
 >
+> **Where the scripts run, and with which Python.** All four scripts `mapping_workflow` delivers
+> (`sz_schema_generator.py`, `sz_json_analyzer.py`, `sz_verbatim_check.py` and
+> `sz_routing_report.py`) run where the bootcamp's SDK runs: **inside the container on the
+> `docker` route, on the host on a native route** (`linux_apt`, `linux_yum`, `macos_arm`,
+> `windows`). They are Python tools whatever language the Bootcamper chose. **`sz_json_analyzer.py`
+> needs Python 3.10 or newer; the other three carry no measured floor** (the measurement is the ⛔
+> entry directly below this gate).
+>
+> ⛔ **(INV-080, INV-006) Check the analyzer's Python before its first run, never after a `SyntaxError`.**
+> Run `python3 --version` where the analyzer will run: inside the container on the `docker` route
+> (its `debian:bookworm-slim` base normally ships 3.11, but run the check rather than assume it),
+> on the host on a native route. On Windows the command name is `python3` too, which
+> the plugin already requires on `PATH`. At **3.10 or newer**, run the analyzer there. **Below
+> 3.10**, do not run it: say plainly that the analyzer needs Python 3.10 or newer and which version
+> `python3` is here, so a bare `SyntaxError` is never the first thing the Bootcamper sees, and end
+> the turn on this one question:
+
+> 👉 **The mapping analyzer needs Python 3.10 or newer, and the `python3` here is {version}. Shall I install a newer Python alongside it so the analyzer can run?** (respond yes or no)
+
+> - **Yes:** install a Python 3.10 or newer alongside the existing `python3`, never replacing it,
+>   by the platform's usual route: Homebrew on macOS, the distribution's package manager on Linux
+>   (inside the container on the `docker` route), the python.org installer or `winget` on Windows.
+>   A command that needs administrator rights (`sudo`, an elevated prompt) is shown for the
+>   Bootcamper to run. Confirm the new interpreter with `--version`, then run the analyzer with
+>   that interpreter, named explicitly, for every later run. If the install fails, take the **no**
+>   path.
+> - **No:** tell the Bootcamper the analyzer is being skipped because the Python here is older
+>   than 3.10, record the skip and its reason in the source's mapping notes, and continue with
+>   items 2 and 3 below under their optional/best-effort handling. The skip stands for the rest of
+>   the session (every later source, and step 14's `analyze_record` run): do not ask again (INV-006)
+>   unless the Bootcamper asks to install one. The module's closing summary names the analyzer as a
+>   check that did not run (INV-163).
+>
+> Once the check has passed, a `SyntaxError` from the analyzer is not the version floor (a partial
+> download is one cause): handle it as any other failed run.
+>
 > 1. **`sz_json_analyzer.py` (primary validation):** structural + Entity-Specification
->    validation, currently hosted (HTTP 200). When available, run it and use its result as the
->    authoritative check **for what it actually measures** — conformance to the *recommended*
->    schema, which is not the same question as "will this data load and resolve" (see the ⛔
->    conformance block below). It is **sufficient to proceed**: when the verbatim/routing scripts
->    below are unavailable, a passing `sz_json_analyzer.py` result lets you continue.
+>    validation, currently hosted (HTTP 200). When available, and once the Python check above has
+>    passed, run it and use its result as the authoritative check **for what it actually
+>    measures** — conformance to the *recommended* schema, which is not the same question as
+>    "will this data load and resolve" (see the ⛔ conformance block below). It is **sufficient
+>    to proceed**: when the verbatim/routing scripts below are unavailable, a passing
+>    `sz_json_analyzer.py` result lets you continue.
 > 2. **`sz_verbatim_check.py` (verbatim-fidelity, optional/best-effort):** if available, run it
 >    and report the result; if unavailable (HTTP 404 / no working inline fallback), tell the
 >    bootcamper it is being skipped because the script is unavailable, treat it as
@@ -987,9 +1024,25 @@ it produces silently suppressed merges that only the post-load match-key audit w
 > 3. **`sz_routing_report.py` (routing-coverage, optional/best-effort):** same handling as the
 >    verbatim check, including the CSV crash.
 >
-> In short: anchor validation on `sz_json_analyzer.py`; degrade the verbatim and routing checks
-> to optional/best-effort when their scripts are unavailable, and never leave the bootcamper
-> blocked at this step because of a 404.
+> In short: check the analyzer's Python first, then anchor validation on `sz_json_analyzer.py`;
+> degrade the verbatim and routing checks to optional/best-effort when their scripts are
+> unavailable, and never leave the bootcamper blocked at this step because of a 404 or an old
+> Python.
+
+⛔ **(INV-080) `sz_json_analyzer.py` needs Python 3.10 or newer: measured on server 1.37.26,
+2026-10-09.** `download_resource(filenames=['sz_json_analyzer.py'])` answers with a listing, not the
+script (`ground-rules.md` → "Three tools answer with a listing"), naming
+`https://mcp.senzing.com/resources/sz_json_analyzer.py` (72,786 bytes); fetched from that `url`,
+the script's **line 370 is a `match` statement** (`match family:`), syntax Python added in 3.10.
+`py_compile` fails under Python 3.9.25 with `SyntaxError: invalid syntax` at that line and passes
+under 3.10.19. The other three scripts the workflow delivers (`sz_schema_generator.py`, 37,937
+bytes; `sz_verbatim_check.py`, 5,502; `sz_routing_report.py`, 6,855) compile under 3.8.20 and
+3.9.25, so no floor is stated for them. First measured on server 1.37.19, 2026-10-05, when the `match` sat at line 367 and the
+script's header stated no minimum version. On 1.37.26 its docstring reads "Requires Python 3.10 or
+newer", so upstream now documents the floor; a 3.9 interpreter still stops with a `SyntaxError`
+before any code runs, which is why the gate checks first. **If upstream lowers the floor, or
+documents a different one, update or remove this entry and the gate's check with it**, re-measured
+the same way.
 
 ⛔ **The verbatim check harvests source *values* only, so whatever it cannot harvest is
 unsatisfiable — not strict.** Verified against the current resource (server **1.32.2**,

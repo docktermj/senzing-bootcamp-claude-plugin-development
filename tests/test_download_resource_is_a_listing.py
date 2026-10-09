@@ -128,8 +128,10 @@ class EveryCallSiteAccountsForTheListing(unittest.TestCase):
         # Pinned so the sweep cannot pass vacuously: if a call site moves or the tool is
         # renamed, this fails rather than the sweep quietly covering nothing. Re-derive by
         # running the extractor, never by editing the number to match. 4 since #225: the
-        # chunk-assembly procedure in Module 5 Step 3 calls it with `inline=true`.
-        self.assertEqual(4, len(call_sites()), [s[0] for s in call_sites()])
+        # chunk-assembly procedure in Module 5 Step 3 calls it with `inline=true`. 5 since #462:
+        # the analyzer's Python-floor entry after Module 5's validation gate names the call
+        # that measures the floor.
+        self.assertEqual(5, len(call_sites()), [s[0] for s in call_sites()])
 
     def test_each_call_site_describes_the_listing_or_cites_the_central_statement(self):
         for rel, window in call_sites():
