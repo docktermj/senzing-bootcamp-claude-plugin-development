@@ -2147,6 +2147,14 @@ means the module is complete: only the transition question is asked.
     checks are best-effort, and their known limitations are recorded as
     exemptions. After two unactionable rejections, a pinned three-option
     fallback question is asked.
+  - All four `mapping_workflow` scripts run where the SDK runs: in the
+    container on `docker`, on the host on a native route. The analyzer
+    needs Python 3.10 or newer (a `match` statement, measured on server
+    1.37.26, 2026-10-09, in a ⛔ entry after the gate); the other three
+    carry no measured floor. `python3 --version` is checked where it runs
+    before its first run. Below 3.10 a pinned yes/no question offers to
+    install a newer Python alongside; on no, the analyzer is skipped,
+    recorded in the mapping notes and not offered again that session.
 - **Steps 12-20.**
   - Step 13 writes `src/transform/transform_<name>.<ext>`.
   - Step 14 writes `{source}_sample.jsonl` and checks it with
@@ -8510,7 +8518,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 372 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 374 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8560,10 +8568,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6274 test methods in 373 files, matching `inventory.test_count_total`.
+There are 6287 test methods in 374 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6274.
+sum to 6287.
 
 Two files run more tests than they define, so discovery collects 6281:
 
@@ -8584,6 +8592,7 @@ looks wrong.
 - `tests/test_acknowledge_precedes_the_loading_it_precedes.py`: 8
 - `tests/test_all_runs_every_argument_free_view.py`: 7
 - `tests/test_amendments_are_queued.py`: 12
+- `tests/test_analyzer_python_floor_is_cited.py`: 13
 - `tests/test_answer_options_render_below_the_question.py`: 11
 - `tests/test_any_language_citations_name_the_right_rule.py`: 4
 - `tests/test_any_language_contract_complete.py`: 16
@@ -8959,7 +8968,7 @@ blueprint describes that Markdown but does not embed it, by the maintainer's
 choice, so those tests cannot pass on a rebuild from this blueprint alone. They
 need the original text. These are heuristic estimates, accurate to about 10%:
 
-- About 230 of the 373 files (about 3,500 tests, 57%) read only Markdown or
+- About 230 of the 374 files (about 3,500 tests, 57%) read only Markdown or
   register text and never run a script.
 - Counted per test method, about 3,600 tests (59%) assert that a phrase is
   present, absent, in order or in place. This includes wording checks inside
@@ -9146,6 +9155,9 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   - The fast path is gated on full mapping (INV-198).
   - A `mapping_workflow` rejection gets at most two retries and then a pinned
     three-option question. The malformed-advance budget is five violations.
+  - The analyzer gate states where the scripts run and checks the analyzer's
+    Python 3.10 floor first; the floor entry after it keeps its evidence,
+    server version and date (`test_analyzer_python_floor_is_cited.py`).
   - Samples go to `data/mapping/`, and the full output to `data/senzing-ready/`
     at Step 18.
 - **Module 6.**
@@ -10122,6 +10134,10 @@ Senzing licensing, with no SPDX identifier.
   related parties, recorded and measured in `relationship_intent`, and report
   Module 7's no-path fallback on such a scenario as a bootcamp generation
   defect (a Customer 360 scenario promised households its data never had)
+- #462: state where Module 5's mapping scripts run and check the analyzer's
+  Python 3.10 floor before its first run, with one install offer and a
+  recorded skip on no, citing the measured floor after the gate (a macOS
+  host's Python 3.9 showed the Bootcamper a `SyntaxError` from the analyzer)
 - #463: size the Match Keys label gutter from the advance measured in the
   labels' font (0.62 em when unmeasurable), fit a suffixed label inside the
   budget, and test the left edge in pixels (an assumed 5.9 px per character
