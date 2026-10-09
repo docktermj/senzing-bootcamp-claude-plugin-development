@@ -9971,3 +9971,5 @@ Senzing licensing, with no SPDX identifier.
 - #452: move the GitHub Pages quick-start site into dev's `docs/` and rewrite
   `.html` and `.css` on propagation (the site existed only in the public repo,
   so every propagation would have deleted it)
+- #466: name Claude Desktop in `README.md`'s plugin-install note (it said
+  "Claude App", which INV-158 retires, so the suite was red on `main`)
