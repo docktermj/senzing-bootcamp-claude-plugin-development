@@ -21,7 +21,7 @@ serve the visualizations, capture screenshots, package the project, and
 implement the hooks.
 
 The rest of the repository is the development apparatus: a stdlib `unittest`
-suite of about 6,100 tests that guards the skill text and the scripts,
+suite of about 6,200 tests that guards the skill text and the scripts,
 maintainer skills under `.claude/skills/` (audits, dry runs, releases, invariant
 review, propagation to the public repository), a frozen spec archive and live
 ledgers under `specs/` (the invariant register, the implementation ledger,
@@ -1970,11 +1970,17 @@ receiving branch.
     gaps: one source in the 70-79 band (30-43% of slots empty), off-pattern
     values in each source, one source at 80 or above. Keys are never
     gapped, and identifiers are unique per entity unless listed in
-    `quality_intent.shared_features`.
+    `quality_intent.shared_features`. Names may repeat inside one budget
+    (`#name-sharing-budget`): entities sharing a normalized name, deliberate
+    and chance together, stay under 5% of invented entities, with at least
+    one declared pair (the count is a lower bound; nicknames are not counted).
   - The generated data is self-scored with Module 5's formula and
-    regenerated on a band miss or an identifier collision. The result goes
+    regenerated on a band miss, an identifier collision, or a name-sharing
+    share of 0.05 or more or fewer pairs than declared. The result goes
     to `quality_intent` (`target_band`, `gaps`, `shared_features`,
-    `measured_score`).
+    `measured_score`), and the name count to the top-level
+    `scenario_intent.name_collisions` (`declared_pairs`, `reason`,
+    `measured_entities`, `measured_share`).
 - **No provenance.** A pinned five-option question: upload, URL or path,
   database, API, or generate. Generate recommends CORD
   (`get_sample_data(dataset='list')`) and states that it is real data, then
@@ -1999,7 +2005,9 @@ receiving branch.
   `validation_status`, `validation_checks`, `provenance`
   (`cord|own|free_data|synthesized|unknown`), `added_at` and `updated_at`.
   The optional `sample: {file_path, record_count, strategy, reason}` never
-  touches the top-level counts. A CORD snapshot goes to
+  touches the top-level counts. The optional top-level `scenario_intent`
+  block sits beside `version` and `sources:`, only for a generated scenario,
+  and graduation's projection drops it. A CORD snapshot goes to
   `config/cord_metadata.yaml`.
 - **Steps 3-8.** Verify the files. Write `docs/data_collection_checklist.md`
   and `docs/data_source_locations.md`. Give a privacy note, make
@@ -2273,8 +2281,12 @@ Phase 1 (`phase1-query-visualize.md`):
   `WHY_KEY_DETAILS`).
 - Step 3b uses `reporting_guide` `quality` and `evaluation`, shows sampled
   entities as evidence, grades Acceptable (possible matches under 5%), Marginal
-  (5-15%) or Poor; only a mapping-actionable Poor asks whether to go back to
-  Module 5. Accepting writes `quality_iteration` (`sources`, `from_verdict`,
+  (5-15%) or Poor on the raw rate; only a mapping-actionable Poor asks whether
+  to go back to Module 5. On an all-synthesized scenario with
+  `scenario_intent.name_collisions`, a Marginal or Poor verdict also reports
+  the measured name-sharing figure beside the possible-match count, as a
+  separate lower-bound figure (`#measured-name-sharing`), and outcome 2 cites
+  it when it is more than half of the entities with a possible match. Accepting writes `quality_iteration` (`sources`, `from_verdict`,
   `stage`, `completed`, `started_at`) and appends to
   `module_7_query.quality_iterations`; after remap and reload, 3b reruns and
   records `after`.
@@ -8419,7 +8431,7 @@ collected as tests:
     non-empty `SBCP_QUIET_FPDF2_NOTICE` silences it.
   - It exports the decorator `requires_fpdf2`.
   - It is a module rather than a `conftest.py`, which `unittest` never loads.
-- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 50
+- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 51
   files. `blocks(text)` splits Markdown into blocks, and
   `match_lines(text, pattern)` returns the 1-based start line of each match. The
   rules are in 8.4.1.
@@ -8519,21 +8531,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6199 test methods in 371 files, matching `inventory.test_count_total`.
+There are 6233 test methods in 372 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6199.
+sum to 6233.
 
-Two files run more tests than they define, so discovery collects 6206:
+Two files run more tests than they define, so discovery collects 6240:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6189`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6223`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6196`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6230`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -8863,6 +8875,7 @@ looks wrong.
 - `tests/test_supersession_has_one_syntax.py`: 16
 - `tests/test_suppressed_branch_has_no_pinned_question.py`: 9
 - `tests/test_synthesized_entities_have_their_own_identifiers.py`: 16
+- `tests/test_synthesized_name_sharing_has_a_budget.py`: 34
 - `tests/test_synthesized_scenario_has_quality_gaps.py`: 21
 - `tests/test_tab_manifest_survives_recapture.py`: 14
 - `tests/test_tab_set_is_singular.py`: 25
@@ -8916,7 +8929,7 @@ blueprint describes that Markdown but does not embed it, by the maintainer's
 choice, so those tests cannot pass on a rebuild from this blueprint alone. They
 need the original text. These are heuristic estimates, accurate to about 10%:
 
-- About 230 of the 371 files (about 3,500 tests, 57%) read only Markdown or
+- About 230 of the 372 files (about 3,500 tests, 57%) read only Markdown or
   register text and never run a script.
 - Counted per test method, about 3,600 tests (59%) assert that a phrase is
   present, absent, in order or in place. This includes wording checks inside
@@ -10070,3 +10083,7 @@ Senzing licensing, with no SPDX identifier.
 - #455: compare the Pages site's `claude plugin …` commands with
   `docs/README.md`'s, as sets, in a new test (the page repeats the README's
   install commands, and nothing checked that it followed them)
+- #458: bound a generated scenario's name sharing to one declared, measured
+  budget under 5% of invented entities, recorded in `scenario_intent`, and
+  report the measured figure in Module 7 step 3b (a small name pool put a
+  clean resolution in the Poor band by construction)
