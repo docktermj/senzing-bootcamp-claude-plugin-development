@@ -681,6 +681,15 @@ highest bars all render as the same trailing fragment and cannot be told apart �
 labels useless, chart looking fine. Required behavior:
 
 - Size the label gutter from the longest key present, up to a cap, before truncating anything.
+- ⛔ **(INV-153) No label glyph may start left of the chart's left edge.** Size the gutter from the
+  **rendered** width of the labels: measure the label font's per-character advance in the font the
+  labels are drawn in (the reference measures it once with a canvas `measureText`), or, where it
+  cannot be measured, estimate it at **no less than 0.62 em**. Use that one advance for both the
+  gutter and the truncation limit. A fixed estimate below the font's real advance clips the head of a
+  right-anchored label, the part that distinguishes it: the reference once assumed 5.9 px per
+  character at 11 px, against about 6.6 px, and its 25-character key started 11 px left of the edge.
+  A disambiguating suffix counts inside the width budget: fit the key to the limit minus the suffix's
+  length, then append it.
 - **Middle-ellipsize** (`+NAME+ADDRESS+NATIONAL_ID+…RATION_COUNTRY+LEI_NUMBER`); never trim from the
   left. Right-truncation alone is **not** sufficient: match keys are `+A+B+C…` sequences that
   commonly share a long prefix and differ only in the final segment, so head-only truncation renders
