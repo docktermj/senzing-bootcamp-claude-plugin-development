@@ -53,7 +53,8 @@ output it addresses.
 
 - ⚠️ **(INV-275) Derive from the REFINED prose, not from the `> "…"` quotes beside it.** Those blockquotes
   are the Bootcamper's own words, preserved so a misrendering can be caught at Module 1's
-  confirmation gate; they are provenance, not requirements input. **But read them when the two
+  confirmation gate and shown again beside the requirements at this one (below); they are
+  provenance, not requirements input. **But read them when the two
   disagree** — a quote that contradicts the prose above it means the refinement drifted, and the
   quote is what the Bootcamper actually said. Raise the discrepancy here rather than deriving a
   requirement from either side of it: on 2026-08-25 a *possible*-fraud routing rule was rendered
@@ -68,12 +69,33 @@ Present one combined list, in this order:
    your success criterion about [X]"), so it is listed once, not twice.
 2. **From your business problem.** Each derived requirement their answer did not cover, with
    its source ("From your success criterion about [X]..." or "From your desired output format
-   of [Y]..."), marked **(not asked for)**. When the answer covers every derived requirement,
-   this part is empty and nothing is marked.
+   of [Y]..."), marked **(not asked for)**, with its source's Module 1 quote beneath it (below).
+   When the answer covers every derived requirement, this part is empty and nothing is marked.
 
 **At most 10 requirements in the combined list.** Their questions come first and are never
 dropped to make room; add derived requirements only while the list holds fewer than 10. If their
 questions alone reach 10, add no derived requirement and keep all of theirs.
+
+⛔ **(INV-275) Show both versions: beside each derived requirement, the Bootcamper's own Module 1
+words for its source.** Under each requirement in part 2, show the `> "…"` line that
+`docs/business_problem.md` carries under the section the requirement came from (Success Criteria
+or Desired Output), labeled as theirs: "Your words in Module 1:" and then the quote, exactly as
+the file has it. Take it from the file, never from memory of the conversation: it is the line
+they confirmed in Module 1, it can be checked against the document, and it survives a resumed
+session. When several requirements come from one section, its quote goes beside each of them.
+
+- **No quote in the document, none shown.** Where that section carries no `> "…"` line, show the
+  requirement without one and never invent one. That covers a desired output picked from Step
+  6d's options, which leaves no prose to quote, and the generated scenario, whose document carries
+  no quotes at all. An invented "verbatim" line is worse than none, because it looks like evidence.
+- **Their questions need no second version.** Part 1 already quotes their own words, so it carries
+  no Module 1 quote, and neither does a derived requirement listed there under their question.
+
+**Say which is which, before the question.** State plainly that each "Your words in Module 1"
+line is what they said, as `docs/business_problem.md` saved it, that the requirement above it is
+your rendering of it, and that a mismatch between a requirement and the quote beside it is
+exactly what the confirming question is asking about. This is part of the list, not a question:
+it adds no 👉 (INV-251).
 
 Then end the turn on the confirming question, the only 👉 in this turn:
 
@@ -97,8 +119,9 @@ Do not ask the open question again.
 
 - **Business-problem path:** present the derived requirements as the guide's suggestion
   ("Here is what your business problem suggests:"), every item marked **(not asked for)**, and
-  end on the same confirming 👉 as Turn 2. If they then drop every item, offer the common
-  queries as the fallback-path bullet below does.
+  end on the same confirming 👉 as Turn 2. Each item carries its Module 1 quote, or none, as
+  Turn 2 shows it, and the turn says which is which before the 👉. If they then drop every item,
+  offer the common queries as the fallback-path bullet below does.
 - **Fallback path:** offer the common queries below as numbered options, then end the turn on
   the one 👉 beneath them, and build the requirements from their choice:
 
