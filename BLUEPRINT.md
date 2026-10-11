@@ -1910,7 +1910,12 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   (`github_fallback`); else a 👉 offer of CORD (`cord_substitute`).
 - 1.2: register the codes present, then load with generated code.
 - 2.1: Python runs `scripts/senzing_viz_server.py`; other languages
-  generate a server in `src/server/` and never run the reference.
+  generate a server in `src/server/` and never run the reference. On the
+  container route (anchor `#container-route-server-copy`, the one statement
+  2.2, 2.3, the Python fallback and the contract link) the host copies the
+  server, `brand_tokens.py` and `vendor/d3.v7.min.js` into
+  `data/temp/truthset-viz/` before each in-container run and runs that copy;
+  a failed copy stops the step.
 - 2.2: snapshot first: `--records`, `--title`, `--dataset`, `--snapshot`
   set to `docs/visualizations/truthset_verification.html`, `--no-serve`.
   Run the encoding self-check (legend combination rows must equal
@@ -8523,6 +8528,8 @@ _FALLBACK_BRAND = {
     @staticmethod
     def _encoding_check(nodes):
         ...
+def _d3_path():
+    ...
 def _d3_script():
     ...
 def _esc_html(s):
@@ -8544,6 +8551,7 @@ Used by:
 - `_FALLBACK_STROKES`: `test_brand_sync.py`
 - `_FALLBACK_STROKE_WIDTHS`: `test_brand_sync.py`
 - `_absorb`: `test_visualization_model_build_scales.py`
+- `_d3_path`: `test_truthset_container_route_runs_a_project_copy.py`
 - `_d3_script`: `test_viz_server_refuses_to_render_without_d3.py`
 - `_encoding_check`: `test_encoding_self_check_is_stated_as_behavior.py`
 - `_esc_html`: `test_any_language_contract_complete.py`,
@@ -8659,7 +8667,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 378 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 379 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8696,7 +8704,7 @@ How scripts are loaded:
   by path is needed because the scripts are not a package and some names, such
   as `write-gate.py`, are not valid identifiers. Section 7 lists the non-public
   items these tests touch.
-- **As a subprocess** (72 files, 45 of which also load in process).
+- **As a subprocess** (73 files, 45 of which also load in process).
   `sys.executable` runs the script with real arguments or stdin. Tests assert
   the exit code, exact stdout and stderr lines, and the files written. Hooks
   that read stdin at import time, such as `write-gate.py`, `feedback-capture.py`
@@ -8709,21 +8717,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6405 test methods in 378 files, matching `inventory.test_count_total`.
+There are 6421 test methods in 379 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6405.
+sum to 6421.
 
-Two files run more tests than they define, so discovery collects 6327:
+Two files run more tests than they define, so discovery collects 6343:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6320`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6336`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6327`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6343`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -9072,6 +9080,7 @@ looks wrong.
 - `tests/test_tool_directives_do_not_override_interaction.py`: 30
 - `tests/test_truth_set_spelling.py`: 5
 - `tests/test_truthset_acquisition_call.py`: 14
+- `tests/test_truthset_container_route_runs_a_project_copy.py`: 16
 - `tests/test_truthset_download_is_the_dataset.py`: 20
 - `tests/test_truthset_is_not_called_single_source.py`: 6
 - `tests/test_truthset_visualization_reports_empty_as_failure.py`: 9
@@ -10319,3 +10328,11 @@ Senzing licensing, with no SPDX identifier.
   renders as its own page, and closes by stating there is no script from here
   (graduation handed over a PDF and a project, never the ability to direct the
   next build)
+- #490: on SDK setup's container route, Truth Set visualization's Python path
+  copies `senzing_viz_server.py`, `brand_tokens.py` and `vendor/d3.v7.min.js`
+  into `data/temp/truthset-viz/` before each in-container run and runs that
+  copy, stated once in `phase1-visualization.md` 2.1 and linked from 2.2, 2.3,
+  the Python fallback and "Serving from the SDK container" (the plugin's
+  `scripts/` is not mounted in the container, so the server and its D3 were
+  unreachable there; a copy, not a mount, because `${CLAUDE_PLUGIN_ROOT}` is a
+  versioned cache directory)

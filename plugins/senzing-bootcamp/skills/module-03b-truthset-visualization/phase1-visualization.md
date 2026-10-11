@@ -278,7 +278,50 @@ Read `programming_language` from `config/bootcamp_preferences.yaml`:
 - **Python** → the reference implementation *is* the server. Resolve `scripts/senzing_viz_server.py`
   (`${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py` in a command/hook context, else
   `../../scripts/senzing_viz_server.py` relative to this skill) and run it directly. This is the
-  **only** path on which `senzing_viz_server.py` runs.
+  **only** path on which `senzing_viz_server.py` runs. That resolved path is `<viz-server-path>` in
+  2.2, 2.3 and the Python fallback below on every route except SDK setup's container route.
+
+  <a id="container-route-server-copy"></a>
+
+  ⛔ **(INV-091, INV-260) On SDK setup's container route (the `docker` path, whose SDK container
+  `docker_containers` records), run a project copy of the server, refreshed before each run.** This
+  is the canonical statement of the copy; 2.2, 2.3, the Python fallback below and
+  `visualization-api-reference.md` → "Serving from the SDK container" link here rather than
+  restating it (INV-300). The resolved path is a **host** path, and the SDK container mounts only
+  the project, so the plugin's `scripts/` does not exist inside it. Copying the server alone is not
+  enough: it loads `brand_tokens.py` and the vendored D3 from beside its own file, and without D3 it
+  refuses to render (INV-091).
+
+  Before **each** in-container run (the 2.2 snapshot build, the 2.3 launch and the Python fallback),
+  copy three files from the plugin's `scripts/` on the host into `data/temp/truthset-viz/`, keeping
+  their relative layout and overwriting any earlier copy: `senzing_viz_server.py`,
+  `brand_tokens.py` and `vendor/d3.v7.min.js`, which lands at
+  `data/temp/truthset-viz/vendor/d3.v7.min.js`. Run it on the host, from the project root, with
+  `VIZ_SRC` the plugin's `scripts/` directory resolved as above:
+
+  ```bash
+  VIZ_SRC="${CLAUDE_PLUGIN_ROOT}/scripts"
+  mkdir -p data/temp/truthset-viz/vendor &&
+    cp "$VIZ_SRC/senzing_viz_server.py" "$VIZ_SRC/brand_tokens.py" data/temp/truthset-viz/ &&
+    cp "$VIZ_SRC/vendor/d3.v7.min.js" data/temp/truthset-viz/vendor/
+  ```
+
+  The in-container `<viz-server-path>` is then `data/temp/truthset-viz/senzing_viz_server.py`. The
+  copy lands in the mounted project, so the container sees it at `/app/data/temp/truthset-viz/` with
+  no `exec`, and the vendored D3 sits beside the server wherever it runs.
+
+  - ⛔ **A failed copy stops the step (INV-091).** If any of the three source files is missing or a
+    copy exits non-zero, report which file and do not run the server, neither the earlier copy
+    nor a partial one.
+  - **Copy every time, with no version check.** The refresh before each run is what keeps the copy
+    equal to the installed plugin, so a plugin update between runs is picked up.
+  - **A copy, not a mount.** `${CLAUDE_PLUGIN_ROOT}` is a versioned cache directory, so a mount of
+    it pins the container to the plugin version it was created under, and finds nothing once that
+    version's directory is removed. A mount would also mean recreating every existing container;
+    the copy works on them unchanged. Module 7 step 3c copies D3 into the project for the same
+    reason.
+  - `data/temp/` is the project's temp location (INV-050); the copy is not removed at module close.
+    Native routes run the resolved plugin path with no copy.
 - **Any other language** → generate the server in that language per the contract above, modeled on
   `senzing_viz_server.py` + `visualization-api-reference.md`, saved under `src/server/`. Do **not**
   run `senzing_viz_server.py`. Generate code via the MCP tools and a generator per your language's
@@ -292,7 +335,9 @@ if they never open the live server. This is the artifact the completion gate che
 visualization is guaranteed to exist (INV-077). Write it to
 `docs/visualizations/truthset_verification.html` from `src/system_verification/truthset_data.jsonl`,
 titled "Senzing Truth Set", and tell it what the data **is** so the retained snapshot says so
-(INV-172). For Python, that is:
+(INV-172). For Python, that is the command below. On SDK setup's container route run it in the
+SDK container, after making [the project copy 2.1 states](#container-route-server-copy), whose
+path is `<viz-server-path>` there:
 
 ```bash
 python3 <viz-server-path> \
@@ -451,8 +496,9 @@ inside the container as `visualization-api-reference.md` → "Serving from the S
 that section is the canonical statement of the launch, the host-side check and the URL, so follow it
 there rather than from a copy (INV-300). For this step, `<server command>` is
 `python3 <viz-server-path> --records src/system_verification/truthset_data.jsonl --title "Senzing Truth Set" --dataset "the Senzing Truth Set"`,
-with `<viz-server-path>` as the container sees it under the mounted project, or your own server's
-equivalent. Record in `truthset_visualization.checks.web_service` the container-namespace `pid`,
+with `<viz-server-path>` the project copy that
+[2.1's container-route statement](#container-route-server-copy) makes before this launch, or your
+own server's equivalent. Record in `truthset_visualization.checks.web_service` the container-namespace `pid`,
 `port` `8080`, the `host_port` and the container's `name`. Step 2.4 and the screenshots use the URL
 `confirm-viz` printed. If the Bootcamper declines to recreate a container that has no published
 port, there is no live server: say so, and continue with "Fallback: guarantee the snapshot if the
@@ -647,8 +693,9 @@ D3 inlined (INV-091), Senzing brand tokens applied (INV-081), edges mapped `sour
 `target_entity_id` → `source`/`target` before `forceLink` — written to
 `docs/visualizations/truthset_verification.html`, so the completion gate's guarantee holds. Produce
 it with the chosen language's tooling (a generator, not direct HTML+JS file-writes). Only when the
-chosen language is **Python** may you fall back to the bundled `senzing_viz_server.py`; for any
-other language `senzing_viz_server.py` is never run. The full response schemas and the
+chosen language is **Python** may you fall back to the bundled `senzing_viz_server.py` (on SDK
+setup's container route, to [the project copy 2.1 states](#container-route-server-copy), made
+again before this run); for any other language `senzing_viz_server.py` is never run. The full response schemas and the
 search-enrichment specification are in `visualization-api-reference.md`.
 
 When the bootcamper has finished exploring, load `phase2-close.md`.
