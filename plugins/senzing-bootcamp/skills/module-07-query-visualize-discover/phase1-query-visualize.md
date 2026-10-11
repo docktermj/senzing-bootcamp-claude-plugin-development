@@ -20,9 +20,10 @@ visualization data come from `reporting_guide`. Never query `database/G2C.db` ta
   sections are missing or empty).
 
 ⛔ **The Bootcamper's question comes first, on both paths.** Turn 1 asks only the open question
-below and shows no derived requirement, not even a hint of one. A list shown first leaves only
-"approve it?" to ask, and real Bootcampers answered "No" to that and never said what they wanted
-to know. Their answer is the requirements' first source; the business problem checks it.
+below, its one 👉 (INV-251), and shows no derived requirement, not even a hint of one. A list
+shown first leaves only "approve it?" to ask, and real Bootcampers answered "No" to that and never
+said what they wanted to know. Their answer is the requirements' first source; the business
+problem checks it.
 
 ### Turn 1: the open question (both paths)
 
