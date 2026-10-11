@@ -2303,8 +2303,10 @@ by graduation. No SQL: entity operations are generated SDK code from
 
 Phase 1 (`phase1-query-visualize.md`):
 
-- Step 1 derives 1-10 query requirements from `docs/business_problem.md` and
-  asks for adjustments, or asks what the data must answer.
+- Step 1 first asks what the Bootcamper wants to find out about their data,
+  then lists their questions beside the requirements derived from
+  `docs/business_problem.md`, marking those not asked for, in a combined list
+  of at most 10, and ends on one confirming question (`#requirements-gate`).
 - Step 2 writes programs in `src/query/` from
   `generate_scaffold(workflow='query')`, with flags and response paths looked up
   in `get_sdk_reference` (`flags`, `response_schemas`, `parameters`). Programs
@@ -8616,7 +8618,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 375 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 376 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8666,10 +8668,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6333 test methods in 375 files, matching `inventory.test_count_total`.
+There are 6345 test methods in 376 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6333.
+sum to 6345.
 
 Two files run more tests than they define, so discovery collects 6327:
 
@@ -8882,6 +8884,7 @@ looks wrong.
 - `tests/test_module5_step16_asks_about_loading_only_after_the_last_source.py`:
   5
 - `tests/test_module6_data_dirs_are_copied_or_excluded.py`: 5
+- `tests/test_module7_asks_the_bootcampers_question_first.py`: 12
 - `tests/test_module7_discover_instructions.py`: 17
 - `tests/test_module_0_suggested_queries_are_measured.py`: 18
 - `tests/test_module_5_describes_the_entity_specification_as_served.py`: 9
@@ -10263,3 +10266,7 @@ Senzing licensing, with no SPDX identifier.
 - #476: register INV-347 through INV-351 and apply the dated amendments to
   INV-153, INV-203 and INV-239, closing the 2026-10-10 review (nine deferred
   blocks from the 2026-10-09 issue runs awaited the maintainer's decision)
+- #478: ask Module 7 step 1's open question before showing any derived
+  requirement, then list the Bootcamper's questions beside the derived ones,
+  marking those not asked for (a list shown first left only "approve it?" to
+  ask, and both real Bootcampers answered "No")

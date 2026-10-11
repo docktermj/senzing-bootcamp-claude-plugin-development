@@ -478,8 +478,10 @@
 
 ### Questions & Responses
 
-- **Q:** Is there anything you'd like to adjust? (about the derived query requirements)
-    - **R:** No.
+- **Q:** What do you want to find out about your data?
+    - **R:** Which customers show up in both Enformion and Equifax, and what one customer's whole record looks like across the two.
+- **Q:** Shall I build queries for this list, or would you like to drop or change any of it? (your two questions beside three requirements from the business problem, marked not asked for)
+    - **R:** Keep all five.
 - **Q:** The quality indicators are marginal on their raw values. What would you like to do?
     - **R:** Proceed to visualization and the Discover phase.
 - **Q:** Would you like an interactive visualization of your resolved data?
@@ -495,7 +497,7 @@
 
 ### Actions Taken
 
-- Derived five query requirements from the business problem's success criteria and desired output, and built a program for each in `src/query/`.
+- Asked what you wanted to find out before showing anything derived, set your two questions beside three more requirements derived from the business problem's success criteria and desired output (a review queue, search, and a master-list export, each marked not asked for), and built a program for each of the five in `src/query/`.
 - Ran all five: 20 cross-source merges found, entity 360 with source provenance confirmed, a 128-pair review queue built, search verified on both an organization and a person, and a 4,971-entity master list exported to CSV and JSONL.
 - Evaluated quality using proxy indicators (no truth set available), reported the marginal 8.2% possible-match rate honestly, and explained why iteration would not help — showing three specific entities as evidence rather than asserting it.
 - Built the interactive visualization pointed at the bootcamper's own data, with dataset wording naming their sources rather than the Truth Set, and verified the snapshot offline with all six tabs.
