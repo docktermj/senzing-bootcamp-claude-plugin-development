@@ -590,7 +590,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # establish -- that a file type nobody propagates yet will be added to the list. Re-derived by
 # running the extractor -- 199, the new pair present by name and none removed.
 # EXPECTED_PAIRS 198 -> 199.
-EXPECTED_PAIRS = 199
+# 200 on 2026-10-11: INV-351 (the dev marketplace name is rewritten back on publish; #449) names
+# test_propagate_publishes_the_published_marketplace_name.py, which cites it back and states what it
+# does NOT establish -- that `claude plugin marketplace add` accepts both side by side. Re-derived by
+# running the extractor -- 200, the new pair present by name and none removed.
+# EXPECTED_PAIRS 199 -> 200.
+EXPECTED_PAIRS = 200
 
 
 def pairs():

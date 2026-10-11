@@ -32,7 +32,7 @@ public edit.
    - `marketplace.json` marketplace `"name": "senzing-bootcamp"` → `"name": "senzing-bootcamp-dev"`,
      and the install commands' marketplace: `senzing-bootcamp@senzing-bootcamp` →
      `senzing-bootcamp@senzing-bootcamp-dev`, `marketplace remove senzing-bootcamp` →
-     `marketplace remove senzing-bootcamp-dev` (#449)
+     `marketplace remove senzing-bootcamp-dev` (#449, INV-351)
 
    ⚠️ **The marketplace name is restored only where it names the marketplace.** A bare
    `senzing-bootcamp` is also the plugin's own name (`plugin.json`, and the namespace of

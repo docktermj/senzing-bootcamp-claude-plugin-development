@@ -88,7 +88,7 @@ files point users at the Senzing repo:
   `docs/README.md` and `docs/index.html` install, update and uninstall commands back into
   `senzing-bootcamp@senzing-bootcamp` and `marketplace remove senzing-bootcamp` (#449).
 
-⛔ **The dev marketplace has its own name so both can be registered on one machine.**
+⛔ **(INV-351) The dev marketplace has its own name so both can be registered on one machine.**
 Claude Code keys marketplaces by name and refuses one name with two sources, so the dev repo
 could not be added where the published plugin was installed. Publishing the dev name would
 change the plugin ID for every existing install, so the rewrite back is part of the rename,

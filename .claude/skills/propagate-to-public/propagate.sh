@@ -92,7 +92,7 @@ rsync -a "$here/README.md" "$dest/README.md"
 # re-copies the docktermj-flavored source each run, then this pass rewrites it
 # again.
 #
-# The marketplace NAME is rewritten too (#449). Claude Code keys marketplaces by
+# The marketplace NAME is rewritten too (#449, INV-351). Claude Code keys marketplaces by
 # name, so the dev repo's marketplace is `senzing-bootcamp-dev` -- otherwise it
 # cannot be added beside the published `senzing-bootcamp`. Publishing the dev
 # name would change the plugin ID (`senzing-bootcamp@senzing-bootcamp`) for
