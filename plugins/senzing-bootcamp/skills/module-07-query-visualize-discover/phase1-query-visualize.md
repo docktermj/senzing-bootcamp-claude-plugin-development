@@ -35,6 +35,14 @@ again, whatever the answer.)*
 Split the answer into one question per thing the Bootcamper wants to find out, and keep their
 own words for each. These are **their questions**.
 
+**This is Module 7's directing step.** The open 👉's shape, the result beside the expectation, the
+"you pick" fallback, once per module and the `You directed:` line are stated once in
+`../bootcamp-onboarding/ground-rules.md` → "Directing steps"; follow them there rather than a copy
+here (INV-300). The open question above is its 👉, their questions are what they direct, and the
+check is step 3a. An answer of "I don't know" is the handed-back case: "When the answer is 'I don't
+know'" below is what the step does then, and the recap records that the guide chose. Record
+`directing_steps.query_visualize_discover` in step 1's checkpoint.
+
 <a id="requirements-gate"></a>
 
 ### Turn 2, business-problem path: the confirming gate
@@ -469,6 +477,19 @@ Execute the queries to understand results, using the run command for the chosen 
 **Checkpoint:** write step 3.
 
 ### 3a. Present query results and matching concepts
+
+**Their questions first, each beside its answer.** This is the check of step 1's directing step
+(`../bootcamp-onboarding/ground-rules.md` → "Directing steps", INV-300). Present the requirements
+that came from the Bootcamper's own answer before any other result, each as: the question they
+posed in step 1, quoted ("You asked: '…'"), the answer the queries gave, and `matches` when the
+answer addresses what they asked, or `differs` when it answers less or something else. Name each
+difference in one line: what is missing, and why, from the query's own output or the data it ran
+on (a field the mapping never carried, a source not loaded, no records that fit). Requirements
+marked **(not asked for)** in step 1 follow, and are not listed as theirs. When the guide chose the
+requirements (step 1's "I don't know" path), present the results as below with no comparison. The
+[headline entity](#headline-entity) step 1 showed is not one of these answers and is not compared:
+the guide chose it, by the rule there. A difference they want to act on is what step 3b's quality evaluation and its offer to return to
+mapping already carry.
 
 **If entity resolution found zero or very few matches:** this is a valid result, don't assume
 something is broken. Tell the bootcamper: "Entity resolution found very few matches. This could

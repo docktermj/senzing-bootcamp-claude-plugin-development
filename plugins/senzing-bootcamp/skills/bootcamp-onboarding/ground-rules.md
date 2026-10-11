@@ -217,6 +217,78 @@ works; each site states only what is predicted and which engine call answers it,
   optional "why" follows the prediction in quotes. The in-progress recap checkpoint carries it at the
   step boundary like any other answer.
 
+<a id="directing-steps"></a>
+
+## Directing steps
+
+In each hands-on module, one step is handed to the Bootcamper to direct. They say in their own
+words what the step should build and what they expect to see, the guide builds it, and the result
+is shown beside what they expected. For this rule the hands-on modules are Data Quality, Mapping,
+and Transformation, Data processing, and Query, Visualize and Discover. This section is the one
+statement of how every directing step works. Each site states only its own 👉, what is built from
+the answer and which result is checked, and points here.
+
+| Module | Site | What the Bootcamper directs | What is checked against it |
+|---|---|---|---|
+| Data Quality, Mapping, and Transformation | `../module-05-data-quality-mapping/phase2-data-mapping.md` step 11, on the first source with a column `mapping_workflow` did not recognize | What each such column becomes, and what they expect the mapped record to show | Step 12's sample record |
+| Data processing | `../module-06-data-processing/phaseD-validation.md` step 21 | Which records to look up, what they expect Senzing to have done with them, and why | The lookup result, as text |
+| Query, Visualize and Discover | `../module-07-query-visualize-discover/phase1-query-visualize.md` step 1, Turn 1 | What they want to find out about their data | Step 3a's answers |
+
+- **One open 👉, pinned at its site (INV-247).** It asks what to build and what they expect as one
+  question, with no numbered options and no menu, because the answer is the Bootcamper's own words
+  rather than a pick from the guide's. Whatever helps them answer (the columns, sample values, what
+  a choice means) goes before the 👉, as the 👉 protocol above requires. The guide offers no
+  recommendation of its own unless asked to choose: a recommendation is what "you pick" gets. It
+  is the turn's only 👉 (INV-251), and the turn ends on it.
+- ⛔ **The Bootcamper directs in words; the guide writes every line of code.** Never ask them to
+  write, edit or paste code. Their words are the specification, and the code comes from the MCP
+  tools exactly as it does elsewhere (INV-080): attribute names from `mapping_workflow`, SDK calls
+  from `generate_scaffold` and `get_sdk_reference`. A choice their words make that the tools cannot
+  honor is built the nearest way the tools allow, said in one line when it is built, and named as
+  a difference in the comparison below.
+- **The result beside the expectation.** Once the result exists, show it beside their words, item
+  by item: what they asked for or expected (quoted), what came out, and `matches` or `differs`.
+  Name every difference in one line: what they expected, what happened, and where the evidence is.
+  The evidence comes from the tool's or the engine's own output, not from the guide's reasoning
+  (INV-080). Everything they said is in the comparison; nothing they did not say is listed as
+  theirs. The comparison asks nothing, so it is non-yielding (INV-225) and goes in the same turn as
+  the next 👉.
+- **A difference is a finding, not a grade.** Do not say who was right, do not score, and do not
+  re-ask. When the Bootcamper wants to act on a difference, the steps that already exist carry it
+  (the site says which). The comparison adds no question of its own.
+- **Not a prediction.** "Predictions before results" above governs numbered predictions with a
+  skip. A directing step's expectation is open and in the Bootcamper's words, so that section's
+  numbered form does not apply; the two share only that a difference is never graded.
+- **"You pick" and "I don't know".** An answer that hands the step back ("you pick", "I don't
+  know", "you decide", "whatever you think", or the same in other words) gets what the step did
+  before directing steps existed, as the site states it. Do not ask the directing question again
+  (INV-006), add no question the step did not already have, and mark nothing as theirs. A partial
+  answer directs what it covers: the guide decides the rest as before and says so in one line,
+  without asking about it.
+- **Once per module, on the first source it applies to.** Where a module repeats its steps per
+  source, the directing step runs on the first source the site's condition holds for. Every later
+  source, and every later pass through the step (a resume after it ran, a `quality_iteration`
+  remap), gets the step as before. Record it in `config/bootcamp_progress.json` as
+  `directing_steps.<module name token>`, set to `directed`, `guide_chose` or `none`, in the write
+  at that step boundary (INV-012). A value already there means the step has run.
+- **No site, no directing step.** When the site's condition never holds (the site says when), the
+  module has no directing step, records `none` at module completion, and no other step stands in
+  for it.
+- **Recording.** The 👉 and its answer are an ordinary Questions & Responses line
+  (`module-completion.md`). The module's End-of-Module Summary carries one `**You directed:**`
+  line, inline, after `**Why it matters:**` and before the optional takeaway. The recap keeps its
+  four subsections and three labeled blocks, so the recap generator and its `--check` need nothing
+  new. Its three forms:
+  - directed: `**You directed:** {what they asked for, in their words}. You caught: {each
+    difference, one clause each}.`, or `… Nothing differed.` when everything matched;
+  - handed back: `**You directed:** nothing this module. You asked me to choose ("{their words}"),
+    so the guide chose {what it did}.`;
+  - no site: `**You directed:** nothing this module. {Why the step did not arise}, so there was no
+    step to hand over.`
+
+  The in-progress recap checkpoint carries the line from the step boundary where the comparison
+  was shown, or where the step was handed back.
+
 ## Mandatory gates and step order
 
 - Steps marked `⛔` are mandatory gates. NEVER skip a ⛔ gate or a numbered 👉 step - no context

@@ -23,6 +23,37 @@ looking at that response, the usable subset is its `Validation:` patterns, which
 
 ## 21. Validate match accuracy
 
+**The directing step comes first.** This is Module 6's directing step. The open 👉's shape, the
+result beside the expectation, the "you pick" fallback, once per module and the `You directed:`
+line are stated once in `../bootcamp-onboarding/ground-rules.md` → "Directing steps"; follow them
+there rather than a copy here (INV-300). Only what is particular to step 21 is here.
+
+- **When it runs.** The first time Phase D reaches step 21, before any sample is queried. When
+  `directing_steps.data_processing` is already set, it has run: go straight to the review below.
+- **Before the 👉**, one line: this check looks at records they choose, and they can name records
+  by ID or describe them by the details they hold.
+- **The question**, the turn's only 👉:
+
+👉 **Which of your records should I look up to check how Senzing resolved them? Name them in your own words, with what you expect Senzing to have done with them and why.**
+
+*(Internal: end the turn on this question and wait.)*
+
+- **Building from the answer.** Find each record they named: by `DATA_SOURCE` and record ID where
+  they gave one, otherwise by searching on the details they described. Look each one up with
+  `get_entity_by_record_id` through the generated query code below, never with SQL. Show the result
+  as text, beside their words: for each record, the entity it resolved to, and for each pair or
+  group they named, whether the records share an entity, then `matches` or `differs`. For a pair
+  that differs, the evidence is the engine's own output: the match key for records that merged,
+  or `why_records` for records that stayed apart. A record that cannot be found is a difference,
+  named in one line; do not ask for another. This is text only, like every check in this module
+  (step 23: no visualization here). A difference they want to act on goes the way any accuracy
+  problem here does: the review's last bullet, back to Module 5.
+- **"You pick" or "I don't know"**, which is the expected answer on CORD or generated data, where
+  the Bootcamper may not know which records should merge: run the review below as it stands, with
+  the guide choosing the sample.
+- **Then the review below**, in the same turn as the comparison, covering the records they named
+  among the sample.
+
 Review the entity resolution results:
 
 - Query a sample of known records (SDK method `get_entity_by_record_id`) to check how they
@@ -96,10 +127,13 @@ matches), data completeness. If accuracy is poor, revisit Module 5 mapping.
 
 **Checkpoint:** write step 24.
 
-⛔ **Steps 21–24 ask nothing, so this turn does not end here** — validation results and evidence
-tables are the output most likely to be mistaken for a turn ending, because they conclude something
-(`ground-rules.md` → "A results presentation is not a turn ending", INV-225). Continue in the same turn to
-the next step that actually asks.
+⛔ (INV-225) **Steps 21–24 ask nothing unless step 21's directing question is due; when it is not,
+this turn does not end here** — validation results and evidence tables are the output most likely
+to be mistaken for a turn ending, because they conclude something (`ground-rules.md` → "A results
+presentation is not a turn ending", INV-225). Continue in the same turn to the next step that
+actually asks. The one question these steps can put is step 21's directing question, and only the
+first time Phase D reaches it. That turn ends on it; the next turn shows the comparison and runs
+steps 21–24 through, asking nothing.
 
 ## 25. Execute UAT with business users
 

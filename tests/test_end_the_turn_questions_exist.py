@@ -229,10 +229,20 @@ class TheSiblingAdvancesSayWhetherTheyGate(unittest.TestCase):
     def setUp(self):
         self.text = PHASE2.read_text(encoding="utf-8")
 
-    def test_step_11_states_its_advance_is_unconditional(self):
-        step11 = section_for_step(self.text, "11")
-        self.assertRegex(step11, r"(?i)advance is unconditional in both modes")
+    def test_step_11_states_it_has_no_general_gate(self):
+        """#485 amended step 11: its advance waits on the directing question, once per module.
+
+        It used to say the advance was "unconditional in both modes", which the directing
+        question contradicts. What it still says, and what this pins, is that there is no
+        *general* guided-mode gate, that this is deliberate, and that every question it does
+        ask is conditional and named, the directing question among them.
+        """
+        step11 = re.sub(r"\s+", " ", section_for_step(self.text, "11"))
+        self.assertRegex(step11,
+                         r"(?i)no general guided-mode gate before this advance, in either mode")
         self.assertRegex(step11, r"(?i)deliberate")
+        self.assertRegex(step11, r"(?i)the directing question below, asked once per module")
+        self.assertNotRegex(step11, r"(?i)advance is unconditional in both modes")
 
     def test_step_15_states_its_advance_is_unconditional(self):
         step15 = section_for_step(self.text, "15")

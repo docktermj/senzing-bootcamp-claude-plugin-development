@@ -1533,6 +1533,17 @@ Ground rules (`ground-rules.md`, every turn):
   engine's output. ⛔ Never graded; the guide never predicts; no result, no
   prediction. Questions & Responses records `{prediction} → {engine's call}
   (agreed)` or `(differed)`, or `skipped → {engine's call}`.
+- Directing steps (`#directing-steps`, the one statement Module 5 step 11,
+  Module 6 step 21 and Module 7 step 1 cite): one step per hands-on module,
+  once, on the first source it applies to, recorded as
+  `directing_steps.<token>` (`directed`, `guide_chose`, `none`). One open 👉
+  pinned at its site asks what to build and what they expect, with no menu or
+  recommendation. ⛔ The guide writes every line of code, from the MCP tools.
+  The result is shown beside their words, `matches` or `differs`, every
+  difference named from the tool's or engine's output, non-yielding and never
+  graded; not a prediction. "You pick" or "I don't know" gets the step as
+  before, with no re-ask. The End-of-Module Summary carries a
+  `**You directed:**` line in one of three forms.
 - MCP-first: every Senzing fact (and claim about Senzing the company) comes
   from an MCP call this turn, a skill file, or a local measurement, else is
   labeled inference or omitted; a local measurement beats generic MCP
@@ -1603,6 +1614,10 @@ Module completion (`module-completion.md`, before the transition question):
   takeaway). Embed every captured screenshot on its own line as
   `visualizations/<name>-<tab>.png` in tab order, captioned from the image.
   A prediction's Questions & Responses line takes the ground rules' format.
+  In Modules 5, 6 and 7 the summary also carries one inline `**You
+  directed:**` line after Why it matters, in the ground rules' three forms
+  (directed with what they caught, handed back, or no site); it is not a
+  fourth block, so `--check` is unchanged.
 - Step 2c: re-read, repair, run `generate_recap_pdf.py --check` silently,
   print `Recap updated: {Name}.`
 - Step 2d: strip checkpoint blocks and clear the checkpoint.
@@ -2198,6 +2213,17 @@ means the module is complete: only the transition question is asked.
   - Step 11 dispositions are feature, payload, ignore, derived and extract.
     One name field maps to `NAME_FULL`; a retype becomes a derived
     `RECORD_TYPE`.
+  - Step 11 has no general gate, deliberately; its questions are
+    conditional. Its directing step (ground rules' "Directing steps") runs
+    once, in both modes, on the first source with a column the mapping does
+    not send to a feature at confidence 0.80 or above (other than the
+    `RECORD_ID` column): the placed columns' table, each undecided column
+    with samples, then one pinned open 👉 asking what each becomes and what
+    they expect the record to show, standing in for those columns'
+    `QUESTION FORMAT` questions. Attribute names still come from the tool's
+    reference; a feature with no family becomes payload and a difference.
+    Step 12 shows that source's sample record beside their words. With no
+    such column anywhere, or every source fast-pathed, there is none.
   - Pinned questions cover a payload key that collides with a feature name
     (rename to `{KEY}_PAYLOAD`) and non-exempt cross-source feature pairs.
   - Validation: `sz_json_analyzer.py` is primary. The verbatim and routing
@@ -2318,6 +2344,15 @@ unchanged; one redo drain.
 
 Phase D (`phaseD-validation.md`, steps 21-28):
 
+- Step 21's directing step, the first time Phase D reaches it (ground rules'
+  "Directing steps", `directing_steps.data_processing`): one pinned open 👉
+  asks which records to look up and what they expect Senzing did and why; the
+  next turn finds them by ID or by their details, looks each up with
+  `get_entity_by_record_id` in generated code, and shows as text, beside their
+  words, each record's entity and each named pair's shared-or-not, with the
+  match key or `why_records` as evidence. A missing record is a difference,
+  never a re-ask; "you pick" (expected on CORD or generated data) runs the
+  review as it stands. Otherwise steps 21-24 ask nothing.
 - Spot-check entities, UAT in `docs/uat_results.md`; with 2+ sources,
   cross-source and quality checks, UAT (self-directed for a generated business
   case, else asks about business users), and `docs/results_validation.md`.
@@ -2356,7 +2391,9 @@ Phase 1 (`phase1-query-visualize.md`):
   answered and never in the gate's turn, it shows the headline entity
   (`#headline-entity`): most data sources, then most records, then the lowest
   `ENTITY_ID`, as text with no 👉 of its own, recorded as
-  `module_7_query.headline_entity`.
+  `module_7_query.headline_entity`. The open question is Module 7's directing
+  step (ground rules' "Directing steps"); "I don't know" is the handed-back
+  case, recorded as `directing_steps.query_visualize_discover`.
 - Step 2 writes programs in `src/query/` from
   `generate_scaffold(workflow='query')`, with flags and response paths looked up
   in `get_sdk_reference` (`flags`, `response_schemas`, `parameters`). Programs
@@ -2364,7 +2401,11 @@ Phase 1 (`phase1-query-visualize.md`):
   `(data_source, record_id)` before counting. Examples: `find_duplicates`,
   `search_entities`, `customer_360`, `query_results`.
 - Step 3 runs them; 3a presents results and why output (`WHY_KEY`,
-  `WHY_KEY_DETAILS`).
+  `WHY_KEY_DETAILS`). It opens with their questions, each quoted ("You asked:
+  '…'") beside its answer and marked `matches` or `differs`, every difference
+  named from the query's own output; requirements marked not asked for follow
+  and are not credited, a guide-chosen list gets no comparison, and the
+  headline entity is not compared.
 - Step 3b uses `reporting_guide` `quality` and `evaluation`, shows sampled
   entities as evidence, grades Acceptable (possible matches under 5%), Marginal
   (5-15%) or Poor on the raw rate; only a mapping-actionable Poor asks whether
@@ -8740,7 +8781,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 383 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 384 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8790,21 +8831,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6524 test methods in 383 files, matching `inventory.test_count_total`.
+There are 6561 test methods in 384 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6524.
+sum to 6561.
 
-Two files run more tests than they define, so discovery collects 6446:
+Two files run more tests than they define, so discovery collects 6483:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6439`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6476`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6446`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6483`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -8879,6 +8920,7 @@ looks wrong.
 - `tests/test_delegate_files_issues_not_specs.py`: 18
 - `tests/test_dependency_reading_rules.py`: 13
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
+- `tests/test_directing_steps.py`: 36
 - `tests/test_discoveries_pdf.py`: 57
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
@@ -8936,7 +8978,7 @@ looks wrong.
 - `tests/test_graph_colors_by_source_combination.py`: 25
 - `tests/test_graph_label_distinctness.py`: 18
 - `tests/test_graph_labels_paint_after_circles.py`: 13
-- `tests/test_ground_rules_nonyielding_presentation.py`: 14
+- `tests/test_ground_rules_nonyielding_presentation.py`: 15
 - `tests/test_group_score_is_not_a_join_prediction.py`: 15
 - `tests/test_hard_rule_citations.py`: 6
 - `tests/test_hard_rule_detector_sees_mid_line_stop_signs.py`: 8
@@ -10414,6 +10456,15 @@ Senzing licensing, with no SPDX identifier.
   renders as its own page, and closes by stating there is no script from here
   (graduation handed over a PDF and a project, never the ability to direct the
   next build)
+- #485: one step per hands-on module is handed to the Bootcamper to direct, by
+  the ground rules' one "Directing steps" rule: Module 5 step 11 (what the
+  columns `mapping_workflow` did not place become, checked at step 12's sample
+  record), Module 6 step 21 (which records to look up and what Senzing should
+  have done, checked as text) and Module 7 step 1's open question (checked at
+  step 3a), each with one open pinned 👉, the result beside their words with
+  every difference named, "you pick" taking the step as before, and a
+  `**You directed:**` recap line (every hands-on step was directed by the
+  guide, so the Bootcamper only ever approved)
 - #486: the Truth Set close says it was practice data built to contain matches
   and names the Module 1 problem before its one 👉; "wow moment" moves to
   Module 7's results app; one resolved own-data entity is shown as text, by
