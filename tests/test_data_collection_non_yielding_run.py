@@ -149,10 +149,15 @@ class TheGroundRulesListNamesTheFourthInstance(unittest.TestCase):
         self.assertRegex(block, r"\*\*the whole of System verification\*\*")
 
     def test_the_model_marking_in_system_verification_is_unchanged(self):
-        """This fix copies that module's shape; if it moved, the two have diverged."""
+        """This fix copies that module's shape; if it moved, the two have diverged.
+
+        The count is two since #479 added the Mari prediction; the ⚠️ marking that names each
+        👉 is the shape this fix copied, and it is unchanged.
+        """
         self.assertRegex(
             squash(VERIFICATION),
-            r"⚠️ \*\*This module has exactly one 👉 question\*\* — the module-transition question",
+            r"⚠️ \*\*This module has exactly two 👉 questions\*\* — the Mari prediction at Step 7a "
+            r"of `phase1-verification\.md`, and the module-transition question",
         )
 
 

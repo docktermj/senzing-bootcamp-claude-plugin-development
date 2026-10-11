@@ -1523,6 +1523,16 @@ Ground rules (`ground-rules.md`, every turn):
   never asked. Never fabricate answers; `🛑`/`⛔` markers are internal.
   Acknowledge each answer briefly and specifically, before any skill load.
 - ⛔ gates and numbered steps are never skipped.
+- Predictions before results (`#predictions-before-results`, the one statement
+  System verification Step 7a, Discover Step 4a-pairs and step 4b item 1a
+  cite): ⛔ the prediction is asked before its result exists, an already-run
+  result held back; a numbered choice whose skip is the last option ("Just
+  show me the engine's answer.") or, on a multi-select, a `— reply "skip"`
+  clause; the reveal is non-yielding and goes with the next 👉, showing the
+  prediction, the engine's call, `agreed` or `differed` and one line from the
+  engine's output. ⛔ Never graded; the guide never predicts; no result, no
+  prediction. Questions & Responses records `{prediction} → {engine's call}
+  (agreed)` or `(differed)`, or `skipped → {engine's call}`.
 - MCP-first: every Senzing fact (and claim about Senzing the company) comes
   from an MCP call this turn, a skill file, or a local measurement, else is
   labeled inference or omitted; a local measurement beats generic MCP
@@ -1582,6 +1592,7 @@ Module completion (`module-completion.md`, before the transition question):
   you accomplished and Files produced lists, Why it matters, optional
   takeaway). Embed every captured screenshot on its own line as
   `visualizations/<name>-<tab>.png` in tab order, captioned from the image.
+  A prediction's Questions & Responses line takes the ground rules' format.
 - Step 2c: re-read, repair, run `generate_recap_pdf.py --check` silently,
   print `Recap updated: {Name}.`
 - Step 2d: strip checkpoint blocks and clear the checkpoint.
@@ -1849,9 +1860,9 @@ to end on synthetic records. Files: `SKILL.md` (start apparatus, error
 routing, resume from `current_step`), `phase1-verification.md` (steps 1-8),
 `phase2-report-close.md` (steps 9-11). Code is in `programming_language`
 from `config/bootcamp_preferences.yaml`; artifacts go in
-`src/system_verification/`; no SQL against `database/G2C.db`. Every step is
-non-yielding: the only 👉 is the closing transition, so progress is written
-once per turn. Each check lands in `module_3_verification.checks`.
+`src/system_verification/`; no SQL against `database/G2C.db`. Every step but
+7a is non-yielding: the two 👉 are Step 7a's Mari prediction and the closing
+transition, so progress is written once per turn. Each check lands in `module_3_verification.checks`.
 
 - Opt-out ("skip verification"): write `module_3_verification` status
   `skipped`, reason `bootcamper_opted_out`; warn; gate 3→4 `skipped`.
@@ -1863,8 +1874,9 @@ once per turn. Each check lands in `module_3_verification.checks`.
   2 Step 8's SUPPORTPATH check.
 - 2: write 4 or more `VERIFY` records to `verification_data.jsonl`: a 2-3
   record merge cluster (identical names, DOB, address and feature set; only
-  formatting varies) plus a singleton distractor. Records `synthetic_data`
-  (`expected_entities`, `expected_merge_record_count`).
+  formatting varies) plus a singleton distractor. The cluster's person is
+  `Marisol`. Records `synthetic_data` (`expected_entities`,
+  `expected_merge_record_count`), never counting 7a's `Mari` record.
 - 3 `sdk_initialization`: fetch the scaffold's `raw_url` (`git clone`
   fallback, never `inline=true`), save `verify_init.<ext>`, run (30 s).
 - 4 `code_generation`: from `full_pipeline` pick the loader that reads an
@@ -1879,11 +1891,20 @@ once per turn. Each check lands in `module_3_verification.checks`.
 - 7 `results_validation`: entity count, cluster merged, distractor alone.
   On mismatch ask `why_records`/`why_entities`: explained gives
   `expectation_mismatch` plus `engine_explanation`, else `failed`.
-- 8 `database_operations`: write count, read by id, attribute search (30 s).
+- 7a, a prediction and not a check: copy a Marisol record with `NAME_FIRST`
+  `Mari` and a new `RECORD_ID` (`DATA_SOURCE` `VERIFY`) to `mari_record.jsonl`,
+  show it and ask "will it join Marisol's entity?" (joins / separate / just
+  show me) before loading; the next turn loads it, compares the two records'
+  entity IDs and reveals the live call with `why_records`' `WHY_KEY`.
+  `mari_prediction` sits outside `checks`. No Marisol entity skips it
+  unasked; a failure is one line, never a failed check.
+- 8 `database_operations`: write count (plus one when 7a loaded the `Mari`
+  record), read by id, attribute search (30 s).
 - 9: module `status` and banner use the eight install checks only; results
   validation is reported on its own line and never as a failure. Persists
   `timestamp`, `status`, `checks`, `fix_instructions`; failure means re-run.
-- 10: purge `VERIFY` records via SDK code; keep the files.
+- 10: purge `VERIFY` records via SDK code, 7a's `Mari` record included (its
+  ID is in `mari_record.jsonl`); keep the files.
 - 11: add `system_verification` to `modules_completed`, gate 3→4
   `completed`, append `## System verification — {timestamp}` to
   `docs/bootcamp_recap.md`, B-roll, 👉 transition to `truthset_visualization`
@@ -2357,7 +2378,13 @@ Phase 1 (`phase1-query-visualize.md`):
 Phase 2a (`phase2-discover.md`): an opt-in, separate from 3c, sets
 `discover_phase` to `skipped` or `in_progress`; declining never skips the
 discoveries file. 4a finds multi-record, cross-source and related entities
-(`steps.4a.patterns_found`); 4b demonstrates `why_records` with
+(`steps.4a.patterns_found`). 4a-pairs then shows 3 record pairs from 4a's
+entities (at least one resolved together and one not; fewer when the data is
+short, none said in one line), one per turn, each a same-or-different
+prediction whose reveal goes with the next 👉, checkpointed per pair in
+`steps.4a-pairs`. For Truth Set alumni 4b opens with item 1a: the chosen
+entity's records (in the 3c app when it is up, else as text) and a multi-select
+of its feature types, before any `why_*` call. 4b demonstrates `why_records` with
 `SZ_INCLUDE_MATCH_KEY_DETAILS` plus a relations flag, 4c narrates
 `how_entity` (both fall back to `FEATURE_SCORES`, both checkpoint
 `entity_demonstrated`), each ending with continue-or-finish. Phase 2b
@@ -8667,7 +8694,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 379 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 380 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8717,21 +8744,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6421 test methods in 379 files, matching `inventory.test_count_total`.
+There are 6447 test methods in 380 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6421.
+sum to 6447.
 
-Two files run more tests than they define, so discovery collects 6343:
+Two files run more tests than they define, so discovery collects 6369:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6336`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6362`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6343`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6369`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -8951,7 +8978,7 @@ looks wrong.
 - `tests/test_no_pip_install_senzing.py`: 18
 - `tests/test_no_progress_gate_returns_to_data_collection.py`: 20
 - `tests/test_no_stale_blocked_claim.py`: 9
-- `tests/test_non_yielding_steps.py`: 20
+- `tests/test_non_yielding_steps.py`: 22
 - `tests/test_normalize_docs_markdown.py`: 34
 - `tests/test_one_commit_convention.py`: 8
 - `tests/test_one_question_per_turn_is_registered.py`: 12
@@ -8974,6 +9001,7 @@ looks wrong.
 - `tests/test_plugin_manifest_reads_resolve_inside_the_plugin.py`: 13
 - `tests/test_poor_band_requires_a_mapping_cause.py`: 15
 - `tests/test_post_yes_switch_reads_the_dial.py`: 19
+- `tests/test_predictions_before_results.py`: 24
 - `tests/test_preparation_recap_template.py`: 9
 - `tests/test_prescribed_search_queries.py`: 25
 - `tests/test_profile_report_relocation_covers_both_filenames.py`: 15
@@ -10322,6 +10350,15 @@ Senzing licensing, with no SPDX identifier.
   requirement, then list the Bootcamper's questions beside the derived ones,
   marking those not asked for (a list shown first left only "approve it?" to
   ask, and both real Bootcampers answered "No")
+- #479: ask the Bootcamper to predict before three results: System
+  verification's new Step 7a (will a `Mari` copy of a Marisol record join her
+  entity?), Discover's Step 4a-pairs (3 record pairs, same entity or not) and,
+  for Truth Set alumni, step 4b item 1a (which features joined this entity?),
+  with the skip, the reveal, "informs, never grades" and the Questions &
+  Responses line stated once in the ground rules' "Predictions before results"
+  and cited from each site; System verification now has two 👉 (every
+  prediction was the guide's own, so the Bootcamper never committed to an
+  expectation before a result was shown)
 - #481: graduation's Step 0b shows "Decisions you made" and "How you got it
   built" from the recorded recap, asks for a one-line takeaway and a "Next
   time" request, folds them into a `BOOTCAMP-HANDOVER` fence the recap PDF

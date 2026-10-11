@@ -48,8 +48,12 @@ steering files.)
   - **A run of them is the same case, not a worse one.** Non-yielding steps often come several in a
     row — Module 1 Phase 1's 4a/4b/5/5a, SDK setup's 3/4/5/6 on an existing install (its Step 3 there
     being only Phase 3 and the environment script),
-    **the whole of System verification**, which contains exactly one 👉 (its module-transition
-    question), and **Data collection's generated-scenario path, whose Steps 1-8b ask nothing** (that
+    **the whole of System verification**, which contains exactly two 👉 — its Mari prediction
+    (`../module-03-system-verification/phase1-verification.md` Step 7a) and its module-transition
+    question — so Steps 1–7 run inside the turn that ends on the prediction, and the reveal, Step 8
+    and the close run inside the turn that ends on the transition. The prediction is the second 👉
+    because a prediction asked after its result predicts nothing (see "Predictions before results"
+    below), and **Data collection's generated-scenario path, whose Steps 1-8b ask nothing** (that
     one is path-dependent: the bring-your-own-data path does ask, at Step 2). A faithful turn there
     generates code, runs it, and loads data before it may legally end. That is correct: the turn ends
     where the bootcamper is actually asked something.
@@ -168,6 +172,50 @@ steering files.)
   the next step this same turn. Never suggest pausing, "take a break", or "pick this up later".
 - After the bootcamper answers a pending 👉 question, processing that answer is the FIRST
   action of your turn. Never reply with a dot, empty text, or under 50 characters.
+
+<a id="predictions-before-results"></a>
+
+## Predictions before results
+
+At three points the Bootcamper commits to an expectation before the engine's result is shown, and
+then sees the two side by side. This section is the one statement of how every prediction point
+works; each site states only what is predicted and which engine call answers it, and points here.
+
+| Site | What the Bootcamper predicts | What answers it |
+|---|---|---|
+| System verification, `phase1-verification.md` Step 7a | Will one `Mari` record join Marisol's entity? | The entity the loaded record resolved into |
+| Query, Visualize and Discover, `phase2-discover.md` Step 4a-pairs | For each record pair: same entity or not? | Whether step 4a found the two records in one entity |
+| Query, Visualize and Discover, `phase2-discover.md` step 4b item 1a (Truth Set alumni only) | Which features joined this entity's records? | `why_records` on those records |
+
+- ⛔ **The prediction is asked before the result exists in the conversation.** Do not show, mention
+  or hint at the result before the Bootcamper answers: where the engine call has not run yet, run it
+  only after the answer; where it already has (step 4a's entity IDs), hold its outcome back. The
+  turn ends on the prediction's 👉, and the result arrives in the next turn.
+- **A numbered choice (INV-051).** A neutral lead question and a numbered list, as the knowledge
+  check asks its items (`../module-00-entity-resolution-concepts/concepts.md`). The skip is always
+  available: on a single-choice prediction it is the last numbered option, "Just show me the
+  engine's answer."; on a multi-select it is its own clause, `— reply "skip" to just see the engine's
+  answer.` A reply of "just show me" or "skip" in any words is a skip too. Where the site invites a
+  "why" in the Bootcamper's own words, it is optional and never re-asked.
+- **One 👉 per turn (INV-251).** The reveal asks nothing, so it is non-yielding (INV-225): present it
+  in the same turn as the next 👉, which is the next prediction or the next asking step.
+- **The reveal shows both, together.** Their prediction (or "skipped"), the engine's call, and
+  `agreed` or `differed`, followed by **one line** on what the engine used to decide, taken from the
+  engine's own output, such as a why key or a match key (INV-080). Never the guide's own reasoning.
+- ⛔ **A prediction informs; it is never graded.** A prediction that differs from the engine is not
+  wrong: never say "correct" or "incorrect", never keep a score or a tally, and never re-ask. This is
+  the opposite of the knowledge check's "when the answer is wrong, say so", on purpose: a
+  knowledge-check item has an answer sourced in advance, while a prediction about this engine on this
+  data has none until the engine runs, and the engine's call is what is being taught.
+- **The guide does not predict.** It offers no expectation of its own, does not say which option is
+  likely, and does not validate the outcome: whatever the engine decided is reported as its call.
+- **No result, no prediction.** When the step that would show the result does not run (an opt-out, a
+  declined opt-in, data that cannot supply the case), the prediction is not asked.
+- **Recording.** Each prediction is one line in the module's **Questions & Responses**
+  (`module-completion.md`), in ask order: `- **{the 👉 question}** — {prediction} → {engine's call}
+  (agreed)`, or `(differed)`; a skip is `- **{the 👉 question}** — skipped → {engine's call}`. An
+  optional "why" follows the prediction in quotes. The in-progress recap checkpoint carries it at the
+  step boundary like any other answer.
 
 ## Mandatory gates and step order
 

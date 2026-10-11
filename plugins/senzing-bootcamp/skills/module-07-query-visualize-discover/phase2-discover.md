@@ -102,6 +102,51 @@ entities with relationships (disclosed or discovered) found. The `relationships`
 but K is a count of **entities**, not of clusters or of relationships. Also set top-level
 `current_step` to `"4a"`.
 
+### Step 4a-pairs: Same entity or not?
+
+Before the why and how demonstrations, the Bootcamper predicts how the engine resolved a few pairs
+of their own records. This is a prediction point: the skip, the reveal's shape, "informs, never
+grades" and the Questions & Responses line are stated once in
+`../bootcamp-onboarding/ground-rules.md` → "Predictions before results"; follow them there rather
+than a copy here (INV-300).
+
+1. **Choose 3 pairs from step 4a's entities.** Step 4a's `get_entity_by_record_id` calls already
+   hold each record's entity ID, so no new call is needed to know the answers. Hold them back.
+   - **At least one pair that resolved together:** two records of one multi-record entity,
+     cross-source when step 4a found one. Prefer an entity other than the one step 4b will
+     demonstrate, when step 4a supplies another.
+   - **At least one pair that did not:** two records in different entities. Prefer two related
+     entities (step 4a item 3), which share something, over two that share nothing.
+   - **The third pair** is either kind. Mix the order, and never say how many pairs resolved
+     together.
+   - **When step 4a cannot supply 3,** including its graceful fallback for limited data, show as
+     many as it can, even if they are all one kind. When it can supply none, say so in one line and
+     continue to step 4b.
+2. **Show one pair per turn, then ask.** Present the two records' features side by side, read from
+   the loaded file each came from (the `file_path` step 4a used). Show no entity ID, match key or
+   any other sign of the engine's answer. End the turn on:
+
+   👉 **Are these two records the same entity? Reply with a number, and add a few words on why if you like:**
+
+   1. Same entity.
+   2. Different entities.
+   3. Just show me the engine's answer.
+
+   *(Internal: end the turn on this question and wait.)*
+3. **Reveal it in the same turn as the next 👉.** The engine's call is "same entity" when step 4a
+   found both records in one entity, and "different entities" otherwise. The one line on what the
+   engine used is the `WHY_KEY` from `why_records` on the pair. `why_records` answers for a pair
+   that did not resolve too; when the two were never compared, the line says so. Step 4b
+   introduces `why_records` in full, and its item 3 is where its flags and response shape are
+   looked up (INV-115). The next 👉 is the next pair's question. After the last pair it is step 4b's
+   first 👉: item 1a's when it applies, otherwise item 7's.
+
+**Checkpoint:** update `module_7_query.steps["4a-pairs"]` at the end of each pair's turn, so a
+resume lands on the next pair rather than repeating one:
+`{"status": "in_progress|completed", "pairs": [{"records": ["<DS>:<ID>", "<DS>:<ID>"],
+"prediction": "same|different|skipped", "engine": "same|different",
+"agreement": "agreed|differed|skipped"}]}`.
+
 ### Step 4b: Why Analysis introduction
 
 Demonstrate Why Analysis using a concrete cross-source entity identified in step 4a. This
@@ -113,6 +158,31 @@ teaches the bootcamper how Senzing explains its resolution decisions.
    because it compares two specific source records, which is easier to follow. State what you
    are using: "I'll use Entity [ID], which contains records from [Source A] and [Source B] —
    let's see why Senzing decided these belong to the same real-world entity."
+1a. **Own-entity prediction (Truth Set alumni only).** Run this item only when
+   `truthset_visualization` is in `modules_completed` in `config/bootcamp_progress.json`.
+   Otherwise go straight to item 2, as before. This is a prediction point: the skip, the reveal's
+   shape, "informs, never grades" and the Questions & Responses line are stated once in
+   `../bootcamp-onboarding/ground-rules.md` → "Predictions before results"; follow them there
+   rather than a copy here (INV-300).
+   - **Show the entity's records before any `why_*` call.** When step 3c built the visualization app
+     and its server is still running (`m7_visualizations` records a port), give its URL and the
+     entity ID to open there. Otherwise show the two records item 1 named as text, feature by
+     feature.
+   - **The options are this entity's feature types**, built at runtime: the feature types the two
+     records carry, read from the engine's entity response rather than from the source columns.
+     Look up the record-feature flag with
+     `get_sdk_reference(topic='flags', filter='get_entity_by_record_id')` (INV-115). Then end the turn
+     on this question, with the numbered feature types directly beneath it:
+
+     👉 **Which features do you think joined these records? Reply with the numbers, comma-separated — reply "skip" to just see the engine's answer.**
+
+     1. {feature type}
+     2. {feature type}, and one line per remaining feature type
+
+     *(Internal: end the turn on this question and wait.)*
+   - **The reveal is items 2–5**, presented on the next turn. Open item 4 by putting the
+     Bootcamper's picks beside the `+FEATURE` components of `WHY_KEY`: `agreed` when the two sets
+     are the same, `differed` otherwise, naming the features they share.
 2. **SDK method introduction:** before generating the SDK call, briefly explain the two Why
    Analysis methods:
    - `why_records`: compares two specific source records and explains why they resolved

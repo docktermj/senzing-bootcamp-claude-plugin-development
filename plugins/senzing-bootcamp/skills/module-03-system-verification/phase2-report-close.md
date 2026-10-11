@@ -147,7 +147,10 @@ visualization module, which stops its own at its close).
 2. **Purge verification data from the database:**
    - Remove the synthetic `VERIFY` records loaded in Phase 1 from the Senzing database, using
      generated Senzing SDK code (via `get_sdk_reference` + `sdk_guide`); never direct SQL against
-     `database/G2C.db`.
+     `database/G2C.db`. That includes Step 7a's `Mari` record when it was loaded: its record ID is
+     in `src/system_verification/mari_record.jsonl`, not in `verification_data.jsonl`, and a
+     record is deleted by its data source and record ID, so a purge that reads only the Step 2 file
+     leaves it behind.
    - After purge, verify zero `VERIFY` entities remain while preserving any other database state.
    - If the purge fails: report a fail status identifying which records could not be removed.
      Provide a Fix_Instruction advising the bootcamper to re-run cleanup or manually reset the

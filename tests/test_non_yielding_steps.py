@@ -8,10 +8,18 @@ a privacy reminder explicitly labeled statement-only, does not have.
 
 The obvious resolution was unwritten, so the guide had to break a rule and learn to read ⛔ as
 advisory. The consequential form is not one step: Module 1 Phase 1 has four non-yielding steps
-in a row, SDK setup has four on an existing install, and **System verification has exactly one
+in a row, SDK setup has four on an existing install, and **System verification had exactly one
 👉 in the whole module** — so a faithful walk generates code, runs it and loads data inside a
 single turn, while three of that module's own instructions describe a mechanism it never
 provides.
+
+⚠️ **System verification now has exactly two 👉 (#479).** The Mari prediction at Step 7a is the
+second, because a prediction must be asked before the engine decides, and asked after its result
+it predicts nothing (`ground-rules.md` → "Predictions before results"). The rule is unchanged:
+Steps 1–7 are still a non-yielding run, now inside the turn that ends on the prediction, and the
+reveal, Step 8 and the close run inside the turn that ends on the transition question. The
+ground rules, the module's SKILL.md and phase 1's header each say so and say why; this file pins
+all three.
 
 The fix names the concept once in the ground rules and decouples checkpoint boundaries from
 turn boundaries. This file pins that, and pins the module that made it urgent.
@@ -175,18 +183,55 @@ class ModuleOneStepOneIsMarkedNonYielding(unittest.TestCase):
             "the question the shared turn ends on is gone")
 
 
-class SystemVerificationSaysItHasOneQuestion(unittest.TestCase):
-    """The module whose own gate-precedence rule was unimplementable end to end."""
+class SystemVerificationSaysItHasTwoQuestions(unittest.TestCase):
+    """The module whose own gate-precedence rule was unimplementable end to end.
 
-    def test_the_skill_file_names_the_single_question(self):
+    It had one 👉 until #479 added the Mari prediction as a second. Every place that counts the
+    module's questions must count two and give the reason, or the guide is told two things.
+    """
+
+    def test_the_skill_file_names_both_questions(self):
         flat = squash(read(M3_SKILL))
         self.assertRegex(
-            flat, r"(?i)This module has exactly one 👉 question",
-            "the module still asserts one-step-at-a-time with no mention that it provides "
-            "one 👉 in total")
+            flat, r"(?i)This module has exactly two 👉 questions\*\* — the Mari prediction at "
+                  r"Step 7a of `phase1-verification\.md`, and the module-transition question",
+            "the module does not name the two 👉 it provides")
+        self.assertRegex(
+            flat, r"(?i)The prediction is the second because it must be asked before the engine "
+                  r"decides",
+            "the second 👉 is permitted without saying why")
+        self.assertNotRegex(flat, r"(?i)exactly one 👉 question",
+                            "a stale 'exactly one' count survives beside the new one")
         self.assertRegex(
             flat, r"(?i)a rule about\s*order and completeness, not about turns",
             "the rule is not reinterpreted, so it remains unfollowable as written")
+
+    def test_the_ground_rules_permit_the_second_question_and_say_why(self):
+        flat = squash(read(GROUND_RULES))
+        self.assertRegex(
+            flat, r"(?i)\*\*the whole of System verification\*\*, which contains exactly two 👉 — "
+                  r"its Mari prediction",
+            "the non-yielding rule still counts one 👉 in System verification")
+        self.assertRegex(
+            flat, r"(?i)a prediction asked after its result predicts nothing",
+            "the ground rules permit the second 👉 without the reason")
+        self.assertNotRegex(flat, r"(?i)which contains exactly one 👉",
+                            "the stale one-question count survives in the ground rules")
+
+    def test_phase1_names_the_one_yielding_step_and_says_why(self):
+        flat = squash(read(M3_PHASE1))
+        self.assertRegex(
+            flat, r"(?i)Every step in this phase is NON-YIELDING except Step 7a \(INV-225\)",
+            "phase 1's header does not name the one step that asks")
+        self.assertRegex(
+            flat, r"(?i)a prediction asked after its result predicts nothing",
+            "phase 1's header permits the second 👉 without the reason")
+        self.assertNotRegex(flat, r"(?i)this module's only 👉 is the module-transition",
+                            "phase 1's header still says the transition is the only 👉")
+        step = flat[flat.index("### Step 7a"):flat.index("### Step 8")]
+        self.assertEqual(step.count("👉 **"), 1, "Step 7a must ask exactly one 👉 question")
+        rest = flat.replace(step, "")
+        self.assertNotIn("👉 **", rest, "a phase 1 step other than 7a asks a 👉 question")
 
     def test_phase1_says_its_steps_are_non_yielding(self):
         flat = squash(read(M3_PHASE1))
