@@ -43,6 +43,27 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-10-10
+
+- **Implemented:** 2026-10-10 to 2026-10-11 (**Not a spec** — a dated record of one review session that ran past midnight; the blocks decided before it are dated 2026-10-10, the rest 2026-10-11)
+- **Commit:** uncommitted
+- **Files changed:** `specs/INVARIANTS.md`, `specs/IMPLEMENTED.md`, `invariant-manifest.json`, `tests/test_invariant_enforcer_citations.py`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`, `docs/index.html`, `docs/development.md`, `.claude/skills/propagate-to-public/SKILL.md`, `.claude/skills/propagate-to-public/propagate.sh`, `.claude/skills/retrofit-from-public/SKILL.md`, `tests/test_analyzer_python_floor_is_cited.py`, `tests/test_pages_site_commands_match_docs_readme.py`, `tests/test_container_names_are_project_derived.py`, `tests/test_propagate_publishes_the_pages_site.py`, `tests/test_propagate_publishes_the_published_marketplace_name.py`
+- **MCP re-check:** server re-asked for one block. `get_sample_data(dataset='las-vegas', source='list')`, 2026-10-11, still lists `EQUIFAX` and `OPENDATA` with `record_count` 250,000 and `truncated: true`, so INV-203's correction holds on today's server. No other block introduces a Senzing fact at review.
+- **Summary:** 9 blocks were pending at the start, from the 2026-10-09 issue runs. All 9 were decided; none is left pending, and the held set is unchanged at 6.
+  - **Registered (5), each cited at every site the rule ships and back-cited from its enforcer:**
+    - **INV-347** (#462): Module 5 checks the analyzer's Python against the measured floor before its first run. Cited at the gate's ⛔ check line, now `(INV-347, INV-080, INV-006)`; the block's quote of that line was updated to match.
+    - **INV-348** (#455): the Pages site's `claude plugin …` commands match `docs/README.md`'s. Cited in the enforcer's ⛔ line and in `docs/index.html`'s header comment. Filed under *the development record itself*. Kept apart from #452's slug draft: two subjects.
+    - **INV-349** (#461): containers take a project-derived name, and no container this project does not record is ever touched. Cited at Module 2's ⛔ never-touch line and in `container_name()`'s docstring. The naming scheme and the never-touch rule were weighed as two invariants and kept as one, since the never-touch clause is the reason for the naming. Filed under *Module flow* beside INV-195.
+    - **INV-350** (#452): no file `propagate.sh` publishes, of any type, holds the dev repository's slug. Cited in `propagate-to-public/SKILL.md` and `propagate.sh`'s `REWRITTEN_SUFFIXES` comment.
+    - **INV-351** (#449): the dev marketplace is named apart from the published one and rewritten back on publish. Cited in `propagate-to-public/SKILL.md`, `propagate.sh`'s rewrite comment, `retrofit-from-public/SKILL.md`'s inverse and `docs/development.md`. INV-350 and INV-351 were offered as one "self-references are rewritten" invariant and registered as two, one testable condition and one enforcer each.
+  - **Amendments applied (4), appended to the invariant, never a rewrite:**
+    - **INV-239**, two ⚠️ dated notes in merge order: #458 (name sharing stays inside one budget), then #459 (generated data supports every success criterion), because #459's note refers to #458's budget.
+    - **INV-153**, a ⚠️ dated note (#463): the label gutter is sized from the rendered width. The reference server's measuring code (`senzing_viz_server.py`) carries no citation, consistent with INV-106's pattern that the any-language contract, not the Python reference, states the requirement.
+    - **INV-203**, a ⛔ dated correction (#214, #448): a truncated source's expected count is a floor on the uncapped route, and the cap is read from the response. The wording is the one approved in #214's spec revision 1.
+  - **`EXPECTED_PAIRS` 192 → 200,** re-derived by the extractor after each step, each new pair checked by name and none removed. INV-203's correction added none, since INV-203 already named its enforcer.
+- **Verification:** see the verdict lines recorded with the run: the full suite on a clean clone of `origin/main` with this diff applied, `citations.py verify` clean at 350 invariants, `invariant_manifest.py` regenerated, `coverage_reports.py shipped` listing none of INV-347 to INV-351, and `pending_invariants.py check` 0 mismatched, 0 unresolved. The suite run in the main checkout fails 12 tests on 20 stray, gitignored `.claude/worktrees/` scratch directories; those failures predate this session and are not this diff's.
+- **Establishes no invariant of its own.** Every invariant it registers or amends was established by an earlier issue's implementation.
+
 ## module-5-analyzer-gate-names-the-python-floor-and-where-the-scripts-run
 
 - **Implemented:** 2026-10-09 (**Not a spec** — a dated record of one issue-driven run, #462, spec revision 1; filed by the graduation retrospective, `Source: self-observed (assistant retrospective)`, from `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "mapping_workflow's sz_json_analyzer.py fails on Python 3.9": on a 2026-10-05 run the analyzer gate ran `sz_json_analyzer.py` on a macOS host whose `python3` was 3.9 and the Bootcamper's first sight of it was a `SyntaxError`). Branch `462-docktermj-1`, built on `c7bbc6d` (`origin/main`, 2026-10-09).
