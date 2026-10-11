@@ -569,7 +569,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # stays inside one budget) names test_synthesized_name_sharing_has_a_budget.py, which already cites
 # INV-239 back. Re-derived by running the extractor -- 194, the one new pair present by name and
 # none removed. EXPECTED_PAIRS 193 -> 194.
-EXPECTED_PAIRS = 194
+# 195 on 2026-10-10: INV-239's dated note (#459: generated data supports every success criterion)
+# names test_generated_data_supports_its_success_criteria.py, which already cites INV-239 back.
+# Re-derived by running the extractor -- 195, the one new pair present by name and none removed.
+# EXPECTED_PAIRS 194 -> 195.
+EXPECTED_PAIRS = 195
 
 
 def pairs():
