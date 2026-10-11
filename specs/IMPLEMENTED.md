@@ -359,7 +359,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - **Not changed, by scope:** the page still names Sonnet 5 and Opus 5 where `docs/README.md` now names 5.5. A follow-up issue is drafted for the maintainer, with the test the spec asks for (the page's `claude plugin …` commands match `docs/README.md`).
   - **Blueprint.** `/update-blueprint 452`: sections 2 (six layout entries), 5 (`propagate-to-public` and 5.56 `docs/`), 8 (counts and key cases), 9 (three binaries) and 10 (#452's line).
 - **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
-- **DEFERRED INVARIANT — new invariant, awaiting the maintainer's sign-off; NOT minted.** No dev slug reaches the public tree, whatever the file type. The rule already shipping, quoted:
+- **DEFERRED INVARIANT (resolved INV-350, registered by the maintainer 2026-10-11).** No dev slug reaches the public tree, whatever the file type. The rule already shipping, quoted:
     - ⛔ **The pass reads `.md`, `.json`, `.html` and `.css` files** — in `.claude/skills/propagate-to-public/SKILL.md`
 
   **Sites it affects:** the statement is in `propagate-to-public/SKILL.md` ("Transform applied during propagation"); the mechanism is `REWRITTEN_SUFFIXES` and its comment in `propagate.sh`; the enforcer is `tests/test_propagate_publishes_the_pages_site.py`. No site is under `plugins/`.

@@ -24,6 +24,10 @@ does it check that the page's `claude plugin …` commands match `docs/README.md
 does. The propagate helpers are imported from that sibling, so the two run the script the
 same way.
 
+Enforces **INV-350** (no file `propagate.sh` publishes, of any type, holds the dev repository's slug,
+and the rewrite pass reads every text file type that carries it). It does **not** establish that a
+file type nobody propagates yet will be added to `REWRITTEN_SUFFIXES` when it arrives.
+
 Source issue: #452.
 
 Stdlib only; no network, no second checkout.

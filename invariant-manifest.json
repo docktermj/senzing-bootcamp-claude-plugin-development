@@ -1,5 +1,5 @@
 {
-  "count": 348,
+  "count": 349,
   "generator": ".claude/skills/review-invariants/invariant_manifest.py",
   "invariants": [
     {
@@ -3480,6 +3480,16 @@
       "statement": "Every container the bootcamp creates MUST take its name from `docker_lifecycle.py container-name <base>`, which derives `<base>-<slug>-<hash6>` from the project directory (the slug from its basename, the hash from SHA-256 over its normcased real path) and, for `docker` and `podman`, moves to `-2` … `-9` past a name held by a container that this project's `docker_containers` does not record. The name created is the name recorded, and every later command reads the recorded name, and the recorded `host_port` for a published port, never a literal. ⛔ No container that this project's `docker_containers` does not record may ever be removed, stopped, started or reused, by the helper, by a hook, or by the guide recovering from a failed `run`; the helper issues no container command but the read-only `ps` probe. A fixed name let one project's SessionEnd stop another project's container, and the obvious recovery from the collision, removing the container in the way, would have destroyed another project's environment (#461). (⚠️ **Why a new id rather than a note on INV-195 or INV-101, so the question is not re-derived.** INV-101 says a started container is recorded and stopped at SessionEnd; INV-195 says every lifecycle action dispatches on the recorded runtime. Neither says how a container is named before it is recorded, nor anything about containers this project did not record, and the collision this fixes happened with both satisfied. The naming scheme and the never-touch rule were weighed as two invariants at review and kept as one, since the never-touch clause is the reason for the naming.) Enforced by `tests/test_container_names_are_project_derived.py`, which stubs every container CLI and asserts the derivation, the conflict walk against an allowlist of `ps` alone (negative control: the hooks' `stop` is flagged), two projects with one basename each stopping only their own container (negative control: the old fixed name collides), and Module 2's text, and **cannot** establish that the guide keeps the never-touch rule in a live recovery, which is conversational, or that Apple `container`'s name-in-use failure is recognized, since its `ps` is unverified. (Source: `sdk-setup-container-names-are-project-derived`, GitHub issue #461, 2026-10-09; registered 2026-10-11.)",
       "status": "active",
       "summary": null,
+      "superseded_by": null
+    },
+    {
+      "id": "INV-350",
+      "index_group": "The development record itself",
+      "partly_superseded_by": null,
+      "section": "Invariants added from implemented specs",
+      "statement": "No file that `propagate.sh` publishes, of any type, may hold the development repository's slug `docktermj/senzing-bootcamp-claude-plugin-development`. The rewrite pass MUST read every text file type that carries it (today `.md`, `.json`, `.html` and `.css`, named once as `REWRITTEN_SUFFIXES`), and a file type added to a propagated root that carries the slug MUST be added to that list in the same change. ⛔ The pass read only `.md` and `.json` until #452 brought the GitHub Pages site into `docs/`; without `.html`, `docs/index.html` would have published the dev slug in its install commands and links. (⚠️ **Why a new id rather than a note on INV-304, so the question is not re-derived.** INV-304 says which sources the mirror may read; it says nothing about what the self-reference rewrite does to the content it reads, and no invariant registered that rewrite. The maintainer weighed one \"self-references are rewritten on propagation\" invariant against two at review and registered two, one testable condition and one enforcer each: INV-350 for the repository slug, INV-351 for the marketplace name.) Enforced by `tests/test_propagate_publishes_the_pages_site.py`, which runs `propagate.sh` against this repository and reads every published file as bytes, with a negative control that drops `.html` from the list, and **cannot** establish that a file type nobody propagates yet will be added to the list when it arrives. (Source: `pages-site-exists-only-in-the-public-repo`, GitHub issue #452, 2026-10-05; registered 2026-10-11.)",
+      "status": "active",
+      "summary": "No file that `propagate.sh` publishes, of any type, may hold the development repository's slug `docktermj/senzing-bootcamp-claude-plugin-development`.",
       "superseded_by": null
     }
   ],

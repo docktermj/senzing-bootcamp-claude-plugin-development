@@ -106,7 +106,7 @@ MUST stay the suffixed string. Left unsuffixed it still matches — as a
 dev-tree file still carrying the old unsuffixed slug is not matched at all, and
 ships a `docktermj/…` link to the public repo.
 
-⛔ **The pass reads `.md`, `.json`, `.html` and `.css` files** (`REWRITTEN_SUFFIXES` in
+⛔ **(INV-350) The pass reads `.md`, `.json`, `.html` and `.css` files** (`REWRITTEN_SUFFIXES` in
 `propagate.sh`). `.html` and `.css` joined when the Pages site moved into `docs/` (#452): a
 suffix left off the list publishes the dev slug unrewritten. Binaries are never opened.
 `tests/test_propagate_publishes_the_pages_site.py` checks that the site's files land and that
