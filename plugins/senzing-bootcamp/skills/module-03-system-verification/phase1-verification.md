@@ -6,13 +6,17 @@ directives, never rendered; signal a stop by ending the turn on the single 👉 
 waiting. This sequential rule has the same precedence as a mandatory gate; no internal reasoning
 overrides it.
 
-⛔ **Every step in this phase is NON-YIELDING** — this module's only 👉 is the module-transition
-question at the end of `phase2-report-close.md`. So "one at a time" here means *in order and in
-full*, inside the turn that ends on that question; it does **not** mean one turn per step, because a
-turn ending on a step that asks nothing would end with zero 👉 (INV-225). A faithful walk therefore
-generates code, runs it, registers a data source and loads records before the turn legally ends,
-and that is correct — the turn ends where the bootcamper is actually asked something. The concept
-and the checkpoint consequence are defined once in
+⛔ **Every step in this phase is NON-YIELDING except Step 7a (INV-225)** — this module has two 👉: the
+Mari prediction at Step 7a, and the module-transition question at the end of
+`phase2-report-close.md`. The prediction is the second 👉 because it has to be asked before the
+engine decides, and a prediction asked after its result predicts nothing (the ground rules'
+"Predictions before results"). So "one at a time" here means *in order and in full*, inside the
+turn that ends on the next of those two questions; it does **not** mean one turn per step, because
+a turn ending on a step that asks nothing would end with zero 👉 (INV-225). A faithful walk therefore
+generates code, runs it, registers a data source, loads records and validates them before the first
+turn legally ends on the prediction, and loads the Mari record, runs Step 8 and closes the module
+before the second ends on the transition. That is correct — the turn ends where the bootcamper is
+actually asked something. The concept and the checkpoint consequence are defined once in
 `../bootcamp-onboarding/ground-rules.md` → the 👉 protocol.
 
 ## Opt-Out Gate
@@ -81,9 +85,10 @@ The following rules are mandatory for the agent executing this module:
 9. **No orphaned processes:** System Verification starts no web service; the separate Truth Set
    visualization module starts and terminates its own web service within its own phases.
 10. **Progress persistence:** every step MUST record its checkpoint in
-    `config/bootcamp_progress.json`. Because this phase's steps are non-yielding and share one
-    turn, make **one write at the end of that turn** carrying the last completed step rather than
-    eleven writes inside it — the per-step record is still complete, and eleven writes in a single
+    `config/bootcamp_progress.json`. Because this phase's steps are non-yielding and share a turn
+    (Steps 1–7a's question in the first, Step 7a's reveal and Step 8 in the second), make **one
+    write at the end of that turn** carrying the last completed step, once per turn, rather than a
+    write per step inside it — the per-step record is still complete, and many writes in a single
     turn is the noise INV-012 exists to reduce (`../bootcamp-onboarding/ground-rules.md` →
     "Progress and state"). If the turn cannot complete, write what did complete before stopping,
     so resume lands on the right step.
@@ -217,6 +222,10 @@ names/addresses).
      phone/address *formatting* varied resolved to **2 entities** with a 3-record cluster, and passed.
      The engine was right both times; only the prediction changed. (This is an observation of this
      install's behavior, not an MCP claim — INV-080/INV-149.)
+   - **Give the merge cluster's person the first name `Marisol`**, the same string in every record
+     of the cluster. Step 7a asks the Bootcamper about a `Mari` record against this entity. That
+     record is **not** one of this step's records: it is never written to `verification_data.jsonl`
+     and never counted in the expected outcome below, so Step 7 never checks it.
    - **At least one distractor:** 1+ record for a **different** synthetic person that must stay a
      **singleton** (its own entity).
    - Give every record a `DATA_SOURCE` of `VERIFY` (one synthetic source code is enough) and a
@@ -597,6 +606,63 @@ explanation into `engine_explanation`: Step 9 reports it, and it is the most int
 module produces. `failed` is reserved for the case where the explanation does **not** account for
 the difference, or `why_*` itself errored.
 
+### Step 7a: The Mari Prediction (this phase's one 👉)
+
+A prediction exercise, not a verification check. Step 7 has already validated the cluster, and
+nothing here changes `results_validation`, the `synthetic_data` expectations, Step 9's verdict or
+its `fix_instructions` (INV-082 is unchanged: the verification records stay deterministic by
+construction, and this record is not one of them). This is a prediction point: the skip, the
+reveal's shape, "informs, never grades" and the Questions & Responses line are stated once in
+`../bootcamp-onboarding/ground-rules.md` → "Predictions before results"; follow them there rather
+than a copy here (INV-300).
+
+**When there is no Marisol entity to join**, because Step 6 loaded nothing or the Marisol records
+cannot be found, skip this step without asking (no result, no prediction), record
+`mari_prediction` as `{"status": "not_run"}`, and continue to Step 8.
+
+1. **Compose the record.** Copy one Marisol record from Step 2's merge cluster and change only
+   `NAME_FIRST`, to `Mari`, and `RECORD_ID`, to a new unique value. Keep `DATA_SOURCE` `VERIFY`, which
+   Step 5a registered. Write it to `src/system_verification/mari_record.jsonl`, its own file;
+   `verification_data.jsonl` is unchanged. It is modeled on Step 2's worked counter-example, with
+   the nickname as its one difference. That counter-example is an observation of one install, so it
+   says nothing about what this install will do.
+2. **Show it, then ask. Load nothing yet.** Present the `Mari` record beside the Marisol record it
+   was copied from, feature by feature, and say in one line that only the first name differs. Then
+   end the turn on:
+
+   👉 **Will this `Mari` record join Marisol's entity? Reply with a number:**
+
+   1. Yes, it joins Marisol's entity.
+   2. No, it stays a separate entity.
+   3. Just show me the engine's answer.
+
+   *(Internal: end the turn on this question and wait.)*
+3. **After the answer, load and look.** Load `mari_record.jsonl` with `verify_pipeline.[ext]`, as
+   Step 6 loads its file, with the same 120-second timeout. Then, in generated SDK code (via
+   `get_sdk_reference` + `sdk_guide`, never from memory), get the entity of the `Mari` record and of
+   the Marisol record it was copied from, by record ID. Marisol's entity is the copied record's
+   entity, whatever Step 7 concluded about the cluster.
+4. **Reveal the engine's live call beside the prediction:** joined when the two entity IDs are the
+   same, separate when they differ. Add the one line on what the engine used: the `WHY_KEY` from
+   `why_records` on the two records. When they stayed apart, `why_records` still answers, and the
+   line says which of the two reasons applies: they never became candidates, or they were compared
+   and scored too low to resolve. Look up its flags and response shape as Step 7 does (INV-115).
+   ⚠️ The guide does not predict this outcome and does not validate it. Either result is the
+   engine's call on this install and neither is a fault, so it never reaches Step 7's diagnostic.
+   If the load or a call fails, say so in one line in place of the reveal, record the failure, and
+   continue. It is not a verification check.
+5. Continue in the same turn to Step 8, Phase 2 and the module-transition question.
+
+**Checkpoint:** write to `config/bootcamp_progress.json` (a prediction record, not one of the
+report's verification checks), outside `checks`, so Step 9's check list and verdict never read it:
+
+```json
+{"module_3_verification": {"mari_prediction": {
+  "status": "completed|not_run|load_failed", "record_id": "<the Mari RECORD_ID>",
+  "prediction": "joins|separate|skipped", "engine": "joined|separate",
+  "agreement": "agreed|differed|skipped"}}}
+```
+
 ### Step 8: Database Operations
 
 Verify read, write, and search operations against the Senzing database. Each operation has a
@@ -605,7 +671,7 @@ Verify read, write, and search operations against the Senzing database. Each ope
 
 1. **Verify write count:**
    - Confirm the record count returned by the Senzing engine matches the synthetic record count
-     established during data loading (Step 6).
+     established during data loading (Step 6), plus one when Step 7a loaded the `Mari` record.
 2. **Verify read by entity ID:**
    - Retrieve the merge-cluster entity (from Step 7) by its entity ID.
    - Confirm the response contains at least: the entity ID, one constituent record key (data
