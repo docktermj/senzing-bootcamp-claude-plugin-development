@@ -565,7 +565,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # it does NOT establish -- that a live run checks before running, or that the floor still holds.
 # Re-derived by running the extractor -- 193, the new pair present by name and none removed.
 # EXPECTED_PAIRS 192 -> 193.
-EXPECTED_PAIRS = 193
+# 194 on 2026-10-10: INV-239's dated note (#458: name sharing between distinct invented entities
+# stays inside one budget) names test_synthesized_name_sharing_has_a_budget.py, which already cites
+# INV-239 back. Re-derived by running the extractor -- 194, the one new pair present by name and
+# none removed. EXPECTED_PAIRS 193 -> 194.
+EXPECTED_PAIRS = 194
 
 
 def pairs():
