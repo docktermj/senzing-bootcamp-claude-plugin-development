@@ -80,7 +80,9 @@ file, the same bootcamper-visible write noise, and the questions are consecutive
 numbered step. Hold `integration_targets` and `deployment_target` (plus `cloud_provider` when it
 applies), then write them together below.
 
-First, software integration:
+First, software integration. Before asking, say as a statement: "If you name a system, Module 7
+offers to export your resolved results in that system's import format." Module 7's step 4e
+(`../module-07-query-visualize-discover/phase2b-discover.md`) is where this answer is acted on.
 
 👉 **Will your entity-resolution results need to interface with other software (CRM, search engine, data warehouse, API gateway, downstream app)?**
 

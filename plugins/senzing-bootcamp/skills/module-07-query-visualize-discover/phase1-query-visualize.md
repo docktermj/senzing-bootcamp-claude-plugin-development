@@ -1017,13 +1017,14 @@ or exit early at any demonstration point.
 
 - Load `phase2-discover.md` for steps 4a–4c (data pattern analysis, why analysis, how
   analysis).
-- Then load `phase2b-discover.md` for step 4d (relationship networks) and Discover Phase
-  Completion. (The former step 4e data-specific visualization suggestions are now tabs of the
-  step-3c visualization app — Match Keys, Feature Scores, Cross-Source, and Entity Graph's
-  relationship mode.)
+- Then load `phase2b-discover.md` for step 4d (relationship networks), step 4e (export for the
+  systems named in Module 1) and Discover Phase Completion. (The data-specific visualization
+  suggestions once numbered step 4e are now tabs of the step-3c visualization app — Match Keys,
+  Feature Scores, Cross-Source, and Entity Graph's relationship mode.)
 
-Steps 4a–4d each checkpoint individually to `config/bootcamp_progress.json`. After the Discover
-phase completes or is skipped, return here for the Query Completeness Gate.
+Steps 4a–4e each checkpoint individually to `config/bootcamp_progress.json`. Step 4e runs on every
+path, including a declined or shortened Discover phase, because it reads the loaded data rather
+than Discover's findings. After it, return here for the Query Completeness Gate.
 
 ## Success criteria
 
