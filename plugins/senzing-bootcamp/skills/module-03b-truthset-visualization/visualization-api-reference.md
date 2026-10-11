@@ -868,9 +868,11 @@ one entity" sentence.
 
 ## Rendering contract
 
-These are requirements, not suggestions. This module is the bootcamp's "wow moment" — the surface
-whose whole purpose is a strong first impression — so the quality bar below is the **default every
-implementation ships**, not something a bootcamper has to ask for one improvement at a time.
+These are requirements, not suggestions. They cover both apps built from this contract: the Truth
+Set app, and Module 7's results app, which shows the Bootcamper's own data resolved and is the
+moment the bootcamp builds to (`../module-07-query-visualize-discover/SKILL.md`). So the quality bar
+below is the **default every implementation ships**, not something a bootcamper has to ask for one
+improvement at a time.
 
 ### Escaping data-sourced strings (required — security)
 
@@ -950,7 +952,7 @@ and defeats the entire purpose of the feature, which exists to make Senzing's re
 
 ### Modal chrome
 
-Entity-detail dialogs (Records / Why? / How?) are a primary "wow moment" surface and get the same
+Entity-detail dialogs (Records / Why? / How?) are a primary surface in both apps and get the same
 visual care as the headline tabs: a real header bar (title plus a close control) visually separated
 from the body, deliberate spacing and typographic hierarchy, and a subtle entrance transition.
 Palette and type come from `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (INV-081; skill-relative

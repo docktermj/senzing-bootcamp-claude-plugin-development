@@ -4,7 +4,7 @@ Follow `../bootcamp-onboarding/ground-rules.md`. `🛑`/`⛔` are internal direc
 rendered; signal a stop by ending the turn on the single 👉 question and waiting.
 
 **Purpose:** stand up an interactive visualization **web app** that shows the bootcamper a
-resolved Senzing **Truth Set**, their "wow moment" with entity resolution. This module owns the
+resolved Senzing **Truth Set**, practice data built to contain matches. This module owns the
 Truth Set end to end — System Verification does not acquire, load, or visualize it.
 
 **Prerequisites:** the Senzing SDK is installed and initialized (Module 2) and the engine is
@@ -47,8 +47,8 @@ immediately before Step 1:
 3. **Journey map (INV-029):** refresh it with `truthset_visualization` now `🔄` current — `System
    verification` `✅`, the remaining `selected_modules` `⬜` upcoming.
 4. **Before/After (INV-030):** *Before,* entity resolution is proven on synthetic data but unseen;
-   *after,* the bootcamper has watched the Senzing Truth Set resolve in an interactive web app —
-   their "wow moment".
+   *after,* the bootcamper has watched the Senzing Truth Set resolve in an interactive web app — a
+   practice run on data built to contain matches, before their own data.
 5. **Step overview (INV-031):** briefly enumerate this module's steps — acquire the Truth Set →
    register the codes + load → build and serve the visualization → explore it → clean up.
 6. **Estimated time (INV-096):** give an honest, range-based estimate (a handful of minutes,

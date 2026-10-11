@@ -282,7 +282,7 @@
 - `src/system_verification/load_truthset.py` — loads the Truth Set
 - `src/system_verification/cleanup_truthset.py` — purges the Truth Set records
 
-**Why it matters:** This is the "wow moment" — concrete proof of what entity resolution does, on a dataset with known ground truth, before you point Senzing at your own messier data. The saved snapshot is yours to share with your team.
+**Why it matters:** This was practice data, built to contain matches — concrete proof of what entity resolution does, on a dataset with known ground truth, before you point Senzing at your own messier data. The saved snapshot is yours to share with your team.
 
 ---
 
@@ -469,6 +469,14 @@
 
 ### Information Shared
 
+**Headline entity:** AUGMENTI CONSULTING LLC (entity 200021), 2 records from 2 data sources, ENFORMION and EQUIFAX. No entity in your data spans more sources, none that spans both holds more records, and of the entities that tie with it, it has the lowest entity ID.
+
+- ENFORMION record ENF-118734: AUGMENTI CONSULTING LLC, with its Enformion business ID (`BID`)
+- EQUIFAX record EFX-55102: AUGMENTI CONSULTING LLC, with its Equifax ID (`EFX_ID`)
+- **Why they resolved together:** match key `+NAME+ADDRESS`, the same name at the same address in two systems. Their business IDs are of different types, which do not interact, so nothing held the two records apart.
+
+**Also shared:**
+
 - Reading match keys in your own data's terms: `+` means the feature contributed, `-` means it detracted, and the difference between `+NAME` alone (queued for review) and `+NAME+ADDRESS` (resolved) is the whole gap between 20 merges and 128 review items.
 - Flag defaults differ per method and this bites silently: `SZ_ENTITY_DEFAULT_FLAGS` (get_entity) carries both `RECORDS[]` and `RECORD_SUMMARY[]`, but `SZ_SEARCH_BY_ATTRIBUTES_ALL` carries only the summary — so a habit learned on get_entity yields an empty records list on search, with a correct field name and no error.
 - `NAME_ORG` is the organization name attribute; an organization name sent as `NAME_FULL` matches nothing and raises nothing. Roughly half this data is organizations, so the search tries both.
@@ -498,6 +506,7 @@
 ### Actions Taken
 
 - Asked what you wanted to find out before showing anything derived, set your two questions beside three more requirements derived from the business problem's success criteria and desired output (a review queue, search, and a master-list export, each marked not asked for), and built a program for each of the five in `src/query/`.
+- Showed the headline entity, AUGMENTI CONSULTING LLC, as a first answer once the list was confirmed, retrieved by `src/query/show_entity.py` through the SDK.
 - Ran all five: 20 cross-source merges found, entity 360 with source provenance confirmed, a 128-pair review queue built, search verified on both an organization and a person, and a 4,971-entity master list exported to CSV and JSONL.
 - Evaluated quality using proxy indicators (no truth set available), reported the marginal 8.2% possible-match rate honestly, and explained why iteration would not help — showing three specific entities as evidence rather than asserting it.
 - Built the interactive visualization pointed at the bootcamper's own data, with dataset wording naming their sources rather than the Truth Set, and verified the snapshot offline with all six tabs.
@@ -536,7 +545,7 @@
 - `docs/visualizations/results_visualization-*.png` — six screenshots, one per tab
 - `docs/master_list.csv` and `.jsonl` — the 4,971-entity master list
 - `docs/er_statistics.json`, `docs/discover_candidates.json` — the underlying measurements
-- `src/query/` — eleven programs: `sz_common.py`, `find_cross_source_merges.py`, `customer_360.py`, `review_queue.py`, `search_entities.py`, `export_master_list.py`, `discover_candidates.py`, `why_analysis.py`, `why_entities.py`, `how_analysis.py`, `relationship_network.py`, `probe_network_shape.py`
+- `src/query/` — twelve programs: `sz_common.py`, `show_entity.py`, `find_cross_source_merges.py`, `customer_360.py`, `review_queue.py`, `search_entities.py`, `export_master_list.py`, `discover_candidates.py`, `why_analysis.py`, `why_entities.py`, `how_analysis.py`, `relationship_network.py`, `probe_network_shape.py`
 
 **Why it matters:** You can now answer "who is who across these two systems?" with evidence for every claim — and just as importantly, explain precisely why 128 pairs *cannot* be answered yet, which is the difference between a result you can act on and a number you have to trust.
 

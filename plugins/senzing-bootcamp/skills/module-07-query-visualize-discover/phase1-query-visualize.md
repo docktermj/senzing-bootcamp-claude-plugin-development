@@ -100,6 +100,30 @@ Common queries (guidance for both paths): find duplicates within a source; find 
 matches; search for specific entities; get an entity 360 view; retrieve and format resolved
 entities.
 
+<a id="headline-entity"></a>
+
+### Once the requirements are settled: the headline entity
+
+At the end of this step, in the turn that settles the requirements (after the
+[confirming gate](#requirements-gate) is answered, after the fallback path's answer, or after the
+choice that follows "I don't know"), show the **headline entity** as a first answer to their
+question: **the entity with the most data sources, ties broken by the most records, then by the
+lowest `ENTITY_ID`**. The last rule makes the choice deterministic, so step 1, its checkpoint and
+the recap block re-run at Module 7's close all name the same entity. On a single-source run every
+entity has one data source, so the most records decides, then the lowest `ENTITY_ID`. Introduce it
+in one line as the entity their sources agree on most. How it is retrieved and shown, and what to say when
+no entity has two or more records, is stated once in
+[`ground-rules.md`](../bootcamp-onboarding/ground-rules.md#entity-as-text) → "Showing one resolved
+entity as text" (INV-300); follow it there rather than restating it.
+
+- ⛔ **Never before the open question is answered, and never in the gate's turn.** Turn 1 holds
+  only the open question, and the gate's turn holds only the list and its question. The headline
+  entity comes after the Bootcamper has said what they want to find out.
+- **No 👉 of its own.** It is a statement: the turn continues to step 2 and ends on that turn's
+  single 👉 (INV-225, INV-251).
+- **Record it** in this step's checkpoint as `module_7_query.headline_entity`: the entity ID shown,
+  or `"none"`. A resumed session does not show it again.
+
 **Checkpoint:** write step 1 to `config/bootcamp_progress.json` once the requirements are
 settled.
 
@@ -761,6 +785,11 @@ visualization). Offer it here, after the query results
 Discover-phase opt-in in step 4 is asked **independently** of this decision and covers only the
 why/how/network demonstrations — it is not gated on, or bundled with, the visualization choice.
 
+**This app is the bootcamp's "wow moment":** the Bootcamper's own data, resolved. The Truth Set app
+was the practice run on data built to contain matches. The rendering contract's quality bar
+(`visualization-api-reference.md` → "Rendering contract") holds for both apps, and this is the one
+it is there for.
+
 Pin the offer verbatim:
 
 > 👉 **Would you like an interactive visualization of your resolved data — entity graph with its relationship view, merge statistics, cross-source overlap, and match/feature analysis, all in one app?**
@@ -1168,6 +1197,25 @@ Module 7 is the **last content module before graduation** (required in every pat
 is satisfied and the teardown step above is done or skipped, run the standard **Module Completion**
 process in `../bootcamp-onboarding/module-completion.md` (update progress, append the Module 7 recap
 section to `docs/bootcamp_recap.md`, and present the end-of-module summary).
+
+<a id="headline-block"></a>
+
+**The Module 7 recap section opens with the headline block.** Its first entry, at the top of
+`### Information Shared`, is a `**Headline entity:**` block on step 1's
+[headline entity](#headline-entity): its records, its data sources, and why they resolved together.
+It sits inside "Information Shared" rather than above it because the recap PDF renders the four
+named subsections first, so this is the one place it leads in both the Markdown and the PDF.
+Retrieve it again now with step 1's selection rule (most data sources, then most records, then the
+lowest `ENTITY_ID`), because a quality iteration may have changed the data since step 1; if the entity differs from `module_7_query.headline_entity`, say so in one line
+of the block. How it is retrieved and what it shows, including the block's wording when no entity
+has two or more records, is stated once in
+[`ground-rules.md`](../bootcamp-onboarding/ground-rules.md#entity-as-text) → "Showing one resolved
+entity as text" (INV-300); follow it there rather than restating it.
+
+- **Written whether or not the visualization ran.** The block is text, so a step-3c decline, a
+  capture that failed or a server never started changes nothing about it.
+- **Screenshots keep the app's tab order.** The block opens the section; the screenshots stay in
+  "Actions Taken", in the order step 3c's "Embed in the app's own tab order" rule sets.
 
 **The Module 7 recap section records every quality iteration.** For each entry in
 `module_7_query.quality_iterations` (step 3b's

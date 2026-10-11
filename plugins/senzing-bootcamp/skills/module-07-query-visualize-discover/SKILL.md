@@ -34,6 +34,10 @@ results yet. After this module you'll have query programs that answer your busin
 visualizations of your resolved entities, and (optionally) a tour of Senzing's advanced
 discover capabilities (why, how, relationship networks).
 
+**Where the bootcamp peaks.** This module carries the bootcamp's "wow moment": the Bootcamper's own
+data, resolved, shown first as the headline entity at the end of step 1 and then in the results app
+(step 3c). The Truth Set module was the practice run on data built to contain matches.
+
 **Prerequisites:**
 
 - ✅ Module 6 complete (all sources loaded, single or multi-source).
