@@ -55,7 +55,8 @@ nothing follows them:
 > working with here. It changes the loading program's *architecture*: a demo loader and a
 > fifty-million-record loader are genuinely different programs (single-threaded vs. thread-pooled,
 > batching, checkpoint/resume, throughput instrumentation, queue-based distribution). Answer for
-> your real target volume even if it dwarfs the bootcamp dataset. This program is yours to take home.
+> your real target volume even if it dwarfs the bootcamp dataset. This program is yours to take home,
+> and so are the decisions behind it, starting with this one.
 >
 > If you're not sure, pick the range your best estimate falls in — it can be revisited.
 >

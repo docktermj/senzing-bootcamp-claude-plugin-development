@@ -136,6 +136,25 @@ BOOTCAMP_NOTES_END = "<!-- BOOTCAMP-NOTES:END -->"
 #: Default heading for the notes section when the folded block carries none.
 BOOTCAMP_NOTES_TITLE = "Notes, Ideas and Questions"
 
+# Fence markers graduation wraps its handover in (#481): "Decisions you made", "How you got
+# it built", the Bootcamper's one-line takeaway and their "Next time" request.
+#
+# ⛔ (INV-258) Lifted by its OWN lifter, `_extract_handover_block`, before module parsing —
+# the same discipline as the notes fence, and for the same reason: the block opens with a
+# `## ` heading, and every `## ` that reaches the module loop is a module, cited on the
+# Certificate of Completion (INV-100) and held to the four-subsection check (INV-103). The
+# fence, never the heading text, is what keeps it out.
+BOOTCAMP_HANDOVER_START = "<!-- BOOTCAMP-HANDOVER:START -->"
+BOOTCAMP_HANDOVER_END = "<!-- BOOTCAMP-HANDOVER:END -->"
+
+#: Default heading for the handover page when the folded block carries none.
+BOOTCAMP_HANDOVER_TITLE = "What You Take With You"
+
+#: The line under the handover page's heading, in both renderers.
+BOOTCAMP_HANDOVER_SUBTITLE = (
+    "From here there is no script: your decisions, how it got built, and your next request"
+)
+
 # Recap image references: `![alt](path)` on a line of its own.
 # An embedded screenshot: ``![alt](path)`` alone on its line.
 #
@@ -289,12 +308,44 @@ class NotesSection:
 
 
 @dataclass
+class HandoverSection:
+    """Graduation's handover, folded into the recap at graduation (#481).
+
+    Deliberately NOT a ``ModuleSection`` (INV-258's discipline, applied to a second fence):
+    it never reaches the certificate's module citation (INV-100), either renderer's cover
+    module list, or the four-subsection completeness check (INV-103). ``parts`` are its
+    ``### `` subsections in source order — "Decisions you made", "How you got it built",
+    "Your takeaway", "Next time" — and a part with no content is dropped at parse time,
+    because a list with no supporting entries is left out of the keepsake, never shown empty.
+    """
+
+    title: str = BOOTCAMP_HANDOVER_TITLE
+    parts: List[Tuple[str, List[str]]] = field(default_factory=list)
+    #: Source characters this section accounted for, counted at parse time from the lines
+    #: the parser placed — the same rule, and the same reason, as `NotesSection.source_chars`
+    #: (INV-110): a line the parser could not place stays uncounted and shows up as loss.
+    source_chars: int = 0
+
+    def part(self, name: str) -> Optional[List[str]]:
+        target = _normalize_heading(name)
+        for heading, lines in self.parts:
+            if _normalize_heading(heading) == target:
+                return lines
+        return None
+
+    def __bool__(self) -> bool:
+        """Falsey when empty: no page, no contents row, no "(none)" (#481)."""
+        return bool(self.parts)
+
+
+@dataclass
 class Recap:
     title: str
     meta: List[Tuple[str, str]]  # ("Bootcamper", "Ada"), ...
     modules: List[ModuleSection]
     # Defaulted so every existing construction site and test keeps working unchanged.
     notes: Optional[NotesSection] = None
+    handover: Optional[HandoverSection] = None
 
 
 # The suffix the durability hooks leave on a folded-but-unfinalized section, in place of
@@ -716,6 +767,7 @@ def stray_fence_markers(text: str):
     out = []
     for start_marker, end_marker in (
         (BOOTCAMP_NOTES_START, BOOTCAMP_NOTES_END),
+        (BOOTCAMP_HANDOVER_START, BOOTCAMP_HANDOVER_END),
     ) + tuple(DISCARDED_FENCES):
         _spans, strays = _fence_spans(text, start_marker, end_marker)
         out.extend((start_marker, i) for i in strays)
@@ -757,6 +809,116 @@ def _extract_notes_block(text: str) -> Tuple[str, Optional[NotesSection]]:
     inner = text[start + len(BOOTCAMP_NOTES_START):]
     notes = _parse_notes_block(inner)
     return text[:start], (notes if notes.entries else None)
+
+
+def _parse_handover_block(inner: str) -> HandoverSection:
+    """Parse the inside of a BOOTCAMP-HANDOVER fence into a :class:`HandoverSection`.
+
+    A ``## `` before the first part sets the title; each ``### `` opens a part; every other
+    line belongs to the open part. A part with no non-blank line is dropped, and its heading
+    is not counted, because nothing of it reaches the page.
+    """
+    section = HandoverSection()
+    current: Optional[Tuple[str, List[str]]] = None
+
+    def close() -> None:
+        nonlocal current
+        if current is not None:
+            heading, lines = current
+            while lines and not lines[-1].strip():
+                lines.pop()
+            while lines and not lines[0].strip():
+                lines.pop(0)
+            if any(line.strip() for line in lines):
+                section.parts.append((heading, lines))
+                section.source_chars += len(heading) + sum(
+                    len(line.strip()) for line in lines if line.strip())
+        current = None
+
+    for raw in inner.splitlines():
+        line = raw.rstrip("\n")
+        h2 = re.match(r"^##\s+(.*)$", line)
+        if h2 and current is None and not section.parts:
+            title = h2.group(1).strip()
+            if title:
+                section.title = title
+                section.source_chars += len(line.strip())
+            continue
+        h3 = re.match(r"^###\s+(.*)$", line)
+        if h3:
+            close()
+            current = (h3.group(1).strip(), [])
+            continue
+        if current is None:
+            # Stray text before the first part reaches no field and renders nowhere, so it
+            # is deliberately NOT counted — it must show up as content loss (INV-110).
+            continue
+        if line.strip() == "---":
+            continue
+        current[1].append(line)
+    close()
+    return section
+
+
+def _next_fence_start(text: str, pos: int) -> int:
+    """Where the next fence of ANOTHER type opens at or after ``pos``, else ``len(text)``."""
+    stop = len(text)
+    for marker in (BOOTCAMP_NOTES_START, RECAP_CHECKPOINT_START):
+        found = text.find(marker, pos)
+        if found != -1:
+            stop = min(stop, found)
+    return stop
+
+
+def handover_block_count(text: str) -> int:
+    """How many WELL-FORMED BOOTCAMP-HANDOVER blocks ``text`` carries.
+
+    More than one is a defect: graduation replaces the block's contents on a re-run and
+    never appends a second (INV-085). :func:`audit_recap` reports it, so ``--check`` fails.
+    """
+    spans, _strays = _fence_spans(text, BOOTCAMP_HANDOVER_START, BOOTCAMP_HANDOVER_END)
+    return len(spans)
+
+
+def _extract_handover_block(text: str) -> Tuple[str, Optional[HandoverSection]]:
+    """Lift the BOOTCAMP-HANDOVER fence out of ``text`` before any module parsing (#481).
+
+    Its own lifter, modeled on :func:`_extract_notes_block` (INV-258) and leaving that one
+    untouched. Returns ``(text_without_the_block, handover_or_None)``.
+
+    - **Every well-formed block is lifted**, not only the first. A second block means a
+      re-run appended rather than replaced (INV-085); `audit_recap` reports it, but its
+      ``## `` must still never reach the module loop. The LAST block — the newest write —
+      is the one rendered.
+    - **A stray START** (its END belongs to a later block) is left in place and reported by
+      `stray_fence_markers`, exactly as INV-288 requires: sweeping it would delete any
+      finalized module between the two markers.
+    - **A truncated block** — a START after the last well-formed block with no END after it,
+      the write cut off mid-fold — runs to the next fence of another type, or to end of
+      text. Graduation appends this block after the last module section, so that costs the
+      handover's formatting at worst, never a module and never the certificate; stopping at
+      the next fence keeps a notes block folded after it from being swallowed.
+    """
+    spans, _strays = _fence_spans(text, BOOTCAMP_HANDOVER_START, BOOTCAMP_HANDOVER_END)
+    inners: List[str] = []
+    cuts: List[Tuple[int, int]] = []
+    for start, end in spans:
+        inners.append(text[start + len(BOOTCAMP_HANDOVER_START): end - len(BOOTCAMP_HANDOVER_END)])
+        cuts.append((start, end))
+    trailing = text.find(BOOTCAMP_HANDOVER_START, spans[-1][1] if spans else 0)
+    if trailing != -1:
+        body = trailing + len(BOOTCAMP_HANDOVER_START)
+        stop = _next_fence_start(text, body)
+        inners.append(text[body:stop])
+        cuts.append((trailing, stop))
+    # Right to left, so an earlier cut's indices stay valid after a later removal.
+    for start, end in sorted(cuts, reverse=True):
+        text = text[:start] + text[end:]
+    for inner in reversed(inners):
+        handover = _parse_handover_block(inner)
+        if handover:
+            return text, handover
+    return text, None
 
 
 #: Fenced blocks lifted out of the recap before module parsing and then DISCARDED.
@@ -802,6 +964,11 @@ _MODULE_HEADING_RE = re.compile(r"(?m)^##\s+\S")
 
 
 def parse_recap(text: str) -> Recap:
+    # The handover fence is lifted FIRST (#481). Graduation folds it after the notes, so a
+    # notes fence truncated mid-fold would otherwise run to end of text over a well-formed
+    # handover block and parse its parts as notes. Lifting a well-formed block first is
+    # safe in every order: it removes exactly its own span (INV-288).
+    text, handover = _extract_handover_block(text)
     text, notes = _extract_notes_block(text)
 
     # ⛔ THE LIFT MUST NEVER EMPTY THE RECAP. A checkpoint fence contains only the
@@ -908,7 +1075,7 @@ def parse_recap(text: str) -> Recap:
             while content and not content[0].strip():
                 content.pop(0)
 
-    return Recap(title=title, meta=meta, modules=modules, notes=notes)
+    return Recap(title=title, meta=meta, modules=modules, notes=notes, handover=handover)
 
 
 # --------------------------------------------------------------------------- #
@@ -997,6 +1164,7 @@ def _source_content_chars(text: str) -> int:
         # markers are here for the UNTERMINATED case, where the block itself survives
         # the lift (see `_strip_discarded_fences`).
         if line in (BOOTCAMP_NOTES_START, BOOTCAMP_NOTES_END,
+                    BOOTCAMP_HANDOVER_START, BOOTCAMP_HANDOVER_END,
                     RECAP_CHECKPOINT_START, RECAP_CHECKPOINT_END):
             continue
         total += len(line)
@@ -1024,6 +1192,11 @@ def _rendered_content_chars(recap: Recap) -> int:
     # (INV-110). The keepsake would be destroyed by the feature meant to enrich it.
     if recap.notes:
         total += recap.notes.source_chars
+    # The handover is counted for the same reason (#481): it is the Bootcamper's decisions
+    # and their own words, and scoring it as lost content would push a long one toward the
+    # refuse-to-render threshold (INV-110).
+    if recap.handover:
+        total += recap.handover.source_chars
     return total
 
 
@@ -1466,6 +1639,18 @@ def audit_recap(
     # deleted finalized modules), so its content stays in the document, and for the notes
     # fence that is a Bootcamper's private note one heading away from the recap (INV-100).
     # Neither silently deleting it nor silently rendering it is acceptable; naming it is.
+    # A second handover block means a re-run APPENDED instead of replacing (INV-085). Both
+    # are lifted, so neither becomes a module, and the newest renders — but the source now
+    # carries two, and only the operator can say which one is the Bootcamper's.
+    handovers = handover_block_count(source_text)
+    if handovers > 1:
+        warnings.append(
+            "recap carries %d %s … %s blocks — graduation replaces the block's contents on "
+            "a re-run and never appends a second (INV-085); the last one was rendered. "
+            "Keep one and remove the others." % (
+                handovers, BOOTCAMP_HANDOVER_START, BOOTCAMP_HANDOVER_END)
+        )
+
     for marker, index in stray_fence_markers(source_text):
         warnings.append(
             "stray %s at offset %d — its closing marker belongs to a later block, so the "
@@ -2040,16 +2225,23 @@ def render_with_fpdf2(recap: Recap, output: Path) -> bool:
         notes_start = (
             _render_notes_page(measure, epw, recap.notes) if recap.notes else None
         )
+        # ⚠️ The handover page, like the notes page, is rendered in BOTH passes, or every
+        # page number the TOC reports after it shifts (#481).
+        handover_start = (
+            _render_handover_page(measure, epw, recap.handover) if recap.handover else None
+        )
         _render_certificate(measure, recap)
 
         pdf = new_pdf()
         _render_cover(pdf, epw, recap)
         if recap.modules:
-            _render_toc(pdf, epw, recap, starts, notes_start)
+            _render_toc(pdf, epw, recap, starts, notes_start, handover_start)
         for mod in recap.modules:
             _render_module_page(pdf, epw, mod)
         if recap.notes:
             _render_notes_page(pdf, epw, recap.notes)
+        if recap.handover:
+            _render_handover_page(pdf, epw, recap.handover)
         _render_certificate(pdf, recap)
 
         _ensure_parent(output)
@@ -2807,7 +2999,8 @@ def _render_certificate(pdf, recap: Recap) -> None:
 
 
 def _render_toc(pdf, epw: float, recap: Recap, starts: Optional[List[int]],
-                notes_start: Optional[int] = None) -> None:
+                notes_start: Optional[int] = None,
+                handover_start: Optional[int] = None) -> None:
     """Render the table of contents. ``starts`` is None in the measure pass
     (placeholder page numbers, identical layout) and the real per-module start
     pages in the final pass, so both passes paginate identically."""
@@ -2846,6 +3039,18 @@ def _render_toc(pdf, epw: float, recap: Recap, starts: Optional[List[int]],
         pdf.set_text_color(*BLUE)
         pdf.set_font("Helvetica", "B", 11)
         pdf.cell(16, 8, "" if notes_start is None else str(notes_start), align="R")
+        pdf.ln(8)
+
+    # The handover row goes last, after the notes row, mirroring where its page sits
+    # (#481). A row in the contents, never a module.
+    if recap.handover:
+        pdf.set_x(pdf.l_margin)
+        pdf.set_text_color(*INK)
+        pdf.set_font("Helvetica", "", 11)
+        pdf.cell(epw - 16, 8, _clip(_safe(recap.handover.title), 66))
+        pdf.set_text_color(*BLUE)
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.cell(16, 8, "" if handover_start is None else str(handover_start), align="R")
         pdf.ln(8)
 
 
@@ -2953,6 +3158,30 @@ def _render_notes_page(pdf, epw: float, notes: NotesSection) -> int:
         pdf.set_draw_color(*LINE)
         y = pdf.get_y()
         pdf.line(pdf.l_margin, y, pdf.l_margin + epw, y)
+    return start
+
+
+def _render_handover_page(pdf, epw: float, handover: HandoverSection) -> int:
+    """Render graduation's handover onto a fresh page; return its start page (#481).
+
+    Placed after the notes page and before the Certificate of Completion: the last thing
+    the keepsake says before the certificate is what the Bootcamper decided, how it got
+    built, and the request they will make next time, with no script.
+    """
+    pdf.add_page()
+    start = pdf.page_no()
+    pdf.set_fill_color(*NAVY)
+    pdf.rect(0, 0, pdf.w, 24, style="F")
+    pdf.set_xy(pdf.l_margin, 6)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(epw, 9, _clip(_safe(handover.title), 62))
+    pdf.set_xy(pdf.l_margin, 15)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(epw, 5, _safe(BOOTCAMP_HANDOVER_SUBTITLE))
+    pdf.ln(24)
+    for heading, lines in handover.parts:
+        _render_subsection(pdf, epw, heading, lines)
     return start
 
 
@@ -3545,6 +3774,15 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
                     add_wrapped(
                         "Elaboration (written by the bootcamp): "
                         f"{_md_inline_to_text(note.elaboration)}", "F1", 9.5, 12)
+
+        # Graduation's handover, after the notes and before the certificate — the fpdf2
+        # renderer's position too (INV-066 parity, #481).
+        if recap.handover:
+            add("", "F1", 10, 0)
+            add_wrapped(recap.handover.title, "F2", 15, 0)
+            add_wrapped(BOOTCAMP_HANDOVER_SUBTITLE, "F1", 9.5, 0)
+            for heading, lines in recap.handover.parts:
+                _stdlib_subsection(add, add_wrapped, heading, lines)
 
         # Paginate tokens into pages of content streams.
         pages: List[str] = []

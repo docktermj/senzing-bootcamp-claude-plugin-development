@@ -63,11 +63,13 @@ them to one line under `concise`. Refer to modules by name, never number (INV-07
    still lives in the bootcamp workspace. After: you keep two things — a professional recap PDF
    (`docs/bootcamp_recap.pdf`) and a clean, production-ready `production/` project to build on.
 3. **What we'll do.** A brief numbered overview of graduation's steps: (1) note anything that
-   tripped us up this session, so the bootcamp itself improves, (2) normalize the `docs/`
+   tripped us up this session, so the bootcamp itself improves, (2) look back at the decisions you
+   made and how you got it built, then ask for your one-line takeaway and the one request you would
+   give an AI assistant next time, (3) normalize the `docs/`
    Markdown and render the recap PDF keepsake, then offer an optional narrated 2-minute graduation
-   video (`docs/bootcamp_recap.mp4`), (3) build the `production/` project, (4) create a
+   video (`docs/bootcamp_recap.mp4`), (4) build the `production/` project, (5) create a
    silent revisit/resume bundle — a database backup plus a return guide — so you can come back
-   later (INV-094), and (5) close with the END OF SENZING BOOTCAMP banner.
+   later (INV-094), and (6) close with the END OF SENZING BOOTCAMP banner.
 4. **Estimated time.** Give an honest, range-based estimate caveated per INV-096 — e.g.
    "⏱️ Roughly 5–15 minutes, depending on your workstation, the database backup size, and PDF
    rendering speed, plus a few minutes more if you choose the optional graduation video." If no
@@ -307,6 +309,66 @@ Constraints:
 - **PII boundary.** Same rule as the recap (INV-322): no hostname, username, IP address, or other
   personal/host identifier. OS/architecture, plugin version, and model/effort are diagnostic
   context and are permitted — the line is personal/host identifiers, not environment facts.
+
+## Step 0b: Hand over the ability (decisions, how it got built, next time)
+
+Run this right after Step 0 and **before** Step 1 renders the recap PDF, so the PDF, the recap and
+`docs/REVISIT_BOOTCAMP.md` all carry what it records. The rest of graduation hands over things: a
+PDF and a `production/` project. This step hands over the ability: what the Bootcamper decided, how
+they got it built with an AI assistant and the Senzing MCP server, and the one request that starts
+their next build with no bootcamp script.
+
+Read `docs/bootcamp_recap.md` first, and the checkpoint narrative Step 1a folds when one still
+holds content, so nothing recorded is missed. Build two lists:
+
+- **Decisions you made:** from each module's **Questions & Responses** (the record
+  `../bootcamp-onboarding/module-completion.md` Step 2a writes). One line per answer that **chose
+  something**: a menu choice, such as the record-volume range for the loading program, or an open
+  answer that set a direction, such as the business problem or which sources to load. Prefix each
+  line with the module's name.
+- **How you got it built:** one line per module, `**{Module name}:** you asked for {…}; the AI built
+  {…} with the Senzing MCP server.` Draw what was asked from that module's **Questions &
+  Responses** and what was built from its **Actions Taken**. A module with neither adds no line.
+
+⛔ **Readiness, teardown and consent gates are not decisions.** Leave out "ready to continue?",
+"may I install…?", "tear down the container?" and every answer like them: it let the bootcamp
+proceed and chose nothing about what was built.
+
+⛔ **Both lists come from the recorded recap and nothing else.** Never invent a decision, a request
+or a build step to fill a list, and never fill one from memory of the session. A list with no
+supporting entries is left out: no heading, no "(none)".
+
+**The takeaway turn.** Show both lists (statements, not questions), then end the turn on exactly one
+👉 question (INV-251), pinned verbatim (INV-056):
+
+> 👉 **In one line, what will you take away from this bootcamp?** (Reply "skip" to leave it out.)
+
+Record the answer in the Bootcamper's words, as given: never reworded, summarized or completed. With
+no takeaway ("skip", a pass, or nothing usable), the line is left out, never written as "N/A", as
+`../bootcamp-onboarding/module-completion.md` already does for a module's takeaway.
+
+**The "Next time" turn.** In the next turn, end on exactly one 👉 question (INV-251), pinned verbatim
+(INV-056):
+
+> 👉 **Next time there is no bootcamp script: what one request would you give an AI assistant with the Senzing MCP server to start a build on a new source of your own data?** (Name the data or domain. Reply "skip" and I'll draft one from your data.)
+
+- **They state it:** record it in their words, as given.
+- **They pass:** offer **one** draft request drawn from their data, their business problem in
+  `docs/business_problem.md` and their sources in `config/data_sources.yaml`, naming their own data
+  or domain. Offering it is a statement, not a question: show it in one line and continue.
+
+⛔ **The guide's draft is labeled as the guide's, wherever it is recorded.** Record it as
+`**The guide's draft (you passed):** {the draft}`, never as their words: in the recap, in
+`docs/REVISIT_BOOTCAMP.md` and in the closing announcement.
+
+Then continue to Step 1 in the same turn. Step 1a folds both lists, the takeaway and the "Next time"
+request into the recap, and Step 6c and the closing announcement repeat them.
+
+**On a re-run of graduation**, a takeaway or "Next time" request the recap's handover block already
+records is not asked again (INV-006); the two lists are rebuilt from the recap as it now stands.
+
+Non-blocking like every graduation step: if the recap cannot be read, leave both lists out, still
+ask the two questions, and continue.
 
 ## Step 1: Finalize the recap and render the recap PDF
 
@@ -575,9 +637,47 @@ parsing begins, so nothing inside it can become a module.
 - **`docs/bootcamp_notes.md` itself survives graduation intact.** The fold copies; it never moves,
   empties or deletes the bootcamper's notes file.
 
-**Normalize the Markdown (once, before rendering).** Now — after reconcile and the notes fold, and
-**before** the Step 1b render — make a single best-effort CommonMark pass over `docs/*.md`, including
-`docs/bootcamp_recap.md`. Scope it to top-level `docs/*.md` only: **never recurse into
+**Fold the handover into the recap (after the notes fold, before normalize and render).** Write
+Step 0b's two lists, the takeaway and the "Next time" request into `docs/bootcamp_recap.md` **after
+the notes block** (after the last module section when there are no notes), fenced exactly like this:
+
+```markdown
+<!-- BOOTCAMP-HANDOVER:START -->
+## What You Take With You
+
+### Decisions you made
+
+- {Module name}: {the decision, as recorded in that module's Questions & Responses}
+
+### How you got it built
+
+- **{Module name}:** you asked for {…}; the AI built {…} with the Senzing MCP server.
+
+### Your takeaway
+
+{the Bootcamper's one line, as given}
+
+### Next time
+
+{their request, as given, or: **The guide's draft (you passed):** {the draft}}
+<!-- BOOTCAMP-HANDOVER:END -->
+```
+
+⛔ **(INV-258) The fence keeps the handover out of the modules, not its heading.** The generator
+lifts this block with its own lifter before module parsing, as it lifts the notes fence, and prints
+it as its own page after the notes and before the Certificate of Completion. `--check` never counts
+it as a module.
+
+- **Replace, never append (INV-085).** If the fence is already present, replace its contents; never
+  write a second block. `--check` fails on a recap that carries two. It never touches a module
+  section.
+- **Leave out what is absent.** A list with no entries, a passed takeaway, or a missing request is
+  left out with its `### ` heading. ⛔ **When all four are absent, write no fence (INV-258)**: no
+  heading and no "(none)" page, as the notes fold does; remove a fence an earlier run left.
+
+**Normalize the Markdown (once, before rendering).** Now — after reconcile, the notes fold and the
+handover fold, and **before** the Step 1b render — make a single best-effort CommonMark pass over
+`docs/*.md`, including `docs/bootcamp_recap.md`. Scope it to top-level `docs/*.md` only: **never recurse into
 `docs/feedback/`, and never rewrite, empty, or delete the bootcamper's feedback file**
 (`docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` must survive graduation intact — INV-015).
 During the bootcamp these files were written plain (see
@@ -1540,6 +1640,11 @@ Cover:
 - **Quick start when you return** — a short command list at the very top (re-source the env, restore
   the database, re-init the engine, re-run a query and the visualization).
 - **What you accomplished** — per completed module, drawn from the recap.
+- **Decisions you made** and **How you got it built** — the two lists from Step 0b, exactly as
+  Step 1a folded them into the recap's handover block. A list with no entries is left out here
+  too.
+- **Next time** — the request from Step 0b, in the Bootcamper's words, or labeled as the guide's
+  draft when it is one: the place to start when they come back with a new source, with no script.
 - **Your business problem and data sources** — from `docs/business_problem.md` /
   `config/data_sources.yaml`.
 - **Restore the database** — the exact SQLite copy-back or PostgreSQL `pg_restore -d` / `psql -f`
@@ -1584,6 +1689,15 @@ This runs exactly once, after the report, before graduation is reported finished
    requires a path to be announced when a graduation bash block writes one; this design deliberately
    writes none.)
 
+   **State that from here there is no script, and repeat the "Next time" request.** Close the
+   announcement with both, as statements: that from here there is no script, and that they direct
+   an AI assistant with the Senzing MCP server themselves; then the request Step 0b recorded,
+   quoted as recorded, saying it is the guide's draft when it is one.
+
+   ⛔ **(INV-251) Neither sentence is a question, and neither adds a 👉.** The turn still ends on
+   the unchanged closing question in item 3. When Step 0b recorded no request, state only that
+   there is no script.
+
    **Also name the two keepsake documents Step 5b rendered — each only if it exists:**
    `docs/business_problem.pdf` (the problem this bootcamp set out to solve — the document a
    stakeholder is most likely to be shown) and `docs/data_source_evaluation.pdf` (how ready each
@@ -1610,7 +1724,7 @@ This runs exactly once, after the report, before graduation is reported finished
 
 Example (list only what exists):
 
-> 🎓 **Here's your bootcamp recap.** Your complete recap is at `docs/bootcamp_recap.pdf`: a shareable PDF that opens with a summary and then walks through every module you completed, capturing the Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary for each. Your production project is ready in `production/`: start with `production/GRADUATION_REPORT.md` and work through `production/MIGRATION_CHECKLIST.md`. Two more keepsakes are alongside the recap: `docs/business_problem.pdf`, the problem you set out to solve, and `docs/data_source_evaluation.pdf`, how ready your sources were and what was left unmapped. And your narrated 2-minute graduation video is at `docs/bootcamp_recap.mp4`.
+> 🎓 **Here's your bootcamp recap.** Your complete recap is at `docs/bootcamp_recap.pdf`: a shareable PDF that opens with a summary and then walks through every module you completed, capturing the Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary for each. Your production project is ready in `production/`: start with `production/GRADUATION_REPORT.md` and work through `production/MIGRATION_CHECKLIST.md`. Two more keepsakes are alongside the recap: `docs/business_problem.pdf`, the problem you set out to solve, and `docs/data_source_evaluation.pdf`, how ready your sources were and what was left unmapped. And your narrated 2-minute graduation video is at `docs/bootcamp_recap.mp4`. From here there is no script: you direct an AI assistant with the Senzing MCP server yourself. Next time, start with your own request: "Help me map and load our vendor master file into Senzing and find the vendors that are also customers."
 
 When the video has no voice because no speech engine was found, its sentence reads like this instead
 (Ubuntu, with music; the paths are illustrative):

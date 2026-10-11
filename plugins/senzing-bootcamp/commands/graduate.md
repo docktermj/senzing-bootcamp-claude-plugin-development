@@ -5,7 +5,9 @@ description: 'Graduate the Senzing bootcamp: generate the recap PDF and a produc
 The bootcamper wants to graduate the Senzing bootcamp.
 
 Invoke the `graduation` skill and follow it: show the GRADUATION banner, present the
-graduation preface (journey map, before/after, step overview, estimated time), finalize
+graduation preface (journey map, before/after, step overview, estimated time), show the
+decisions the bootcamper made and how they got it built, ask for their one-line takeaway and their
+"Next time" request, finalize
 `docs/bootcamp_recap.md` and render `docs/bootcamp_recap.pdf`, offer the optional graduation
 video (`docs/bootcamp_recap.mp4`), build the `production/`
 project, create the revisit/resume bundle, then emit the guaranteed-recap announcement
