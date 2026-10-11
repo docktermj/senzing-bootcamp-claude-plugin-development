@@ -770,14 +770,59 @@ covered by default"*, step 3 instructions, 1.37.15), and a retype is chosen by a
 field value. A uniform type field, such as CORD's `NODE_TYPE: OFFICER` on every record, cannot drive
 one either. The message's own `FIX:` names the declare-once route above.
 
-⚠️ **This advance is unconditional in both modes — there is no general guided-mode gate here, and
-that is deliberate.** Unlike step 10, the questions this step needs are *conditional*, and each is
-already pinned or specified where it triggers: a field the tool returns below 0.80 confidence gets
-its `QUESTION FORMAT` options reshaped into a 👉 question (see the carve-out above), the
-shared-feature collision check below asks only about the cross-source pairs its exemptions leave
-(its "Asked — every other pair" list), and a validator that
-rejects twice without saying why gets its own. Present the mapping table and advance. Stated here so
-a later reader does not read the absence as the same omission step 10 once had.
+⚠️ **There is no general guided-mode gate before this advance, in either mode, and that is
+deliberate.** Unlike step 10, the questions this step needs are *conditional*, and each is already
+pinned or specified where it triggers: the directing question below, asked once per module on the
+first source it applies to; a field the tool returns below 0.80 confidence gets its `QUESTION
+FORMAT` options reshaped into a 👉 question (see the carve-out above); the shared-feature collision
+check below asks only about the cross-source pairs its exemptions leave (its "Asked — every other
+pair" list); and a validator that rejects twice without saying why gets its own. Present the
+mapping table and advance once the questions that apply have been answered. Stated here so a later
+reader does not read the absence of a general gate as the same omission step 10 once had.
+
+**The directing step (once per module).** This is Module 5's directing step. The open 👉's shape,
+the result beside the expectation, the "you pick" fallback, once per module and the `You
+directed:` line are stated once in `../bootcamp-onboarding/ground-rules.md` → "Directing steps";
+follow them there rather than a copy here (INV-300). Only what is particular to step 11 is here.
+
+- **Where it runs.** On the first source, in mapping order, with at least one column
+  `mapping_workflow` did not recognize: a column that this step's mapping, made from the tool's own
+  reference, does not send to a feature at confidence 0.80 or above, other than the column that
+  supplies `RECORD_ID`. The step 2 reference says that anything outside its feature catalog "is
+  payload or ignore" (server 1.37.27, 2026-10-11), so these are the columns with a real decision
+  in them. On a CORD source, Phase 1 Step 6 has already named them (`unmapped_fields`). It runs in
+  verbose and concise mode alike. A source with no such column passes the directing step to the
+  next source that has one. When every source is fast-pathed, or no source has such a column,
+  Module 5 has no directing step.
+
+  <!-- MCP-NEGATIVE-SCAN: not-a-tool-claim — "has no directing step" and "no such column" are facts
+       about this module's flow and the Bootcamper's own source, not about any MCP tool's content.
+       The tool claim in this bullet is POSITIVE and quoted inline: step 2's reference says anything
+       outside its feature catalog "is payload or ignore", re-read live from mapping_workflow on
+       server 1.37.27, 2026-10-11 (#485). -->
+- **Before the 👉.** Present the mapping table for the columns the tool did place, as the
+  presentation rules below say for the mode. Then list each undecided column with its population
+  and sample values, and say in one line what each destination means: a feature Senzing matches
+  on, payload carried on the record and not matched, or ignored and left out. Offer no
+  recommendation.
+- **The question.** It is the turn's only 👉, and it stands in for the `QUESTION FORMAT` question
+  each of these columns would otherwise get, so none of them is asked twice:
+
+👉 **What should each of these columns become in {source}'s mapped record? Say it in your own words, with what you expect the record to show for each one.**
+
+*(Internal: end the turn on this question and wait.)*
+
+- **Building from the answer.** Each column takes the destination they gave. For a feature, the
+  family and attribute come from `mapping_workflow`'s reference, never from their wording (the
+  MCP-first invariant at the top of this phase). When they ask for a feature the reference has no
+  family for, map the column as payload, which keeps its value on the record, say so in one line,
+  and carry it to step 12 as a difference. Every check below still runs on the result: the
+  payload-key collision, the list-valued payload warning and the cross-source collision check.
+  Then advance as usual.
+- **"You pick".** Map these columns the way this step otherwise would, from the tool's reference.
+  For a column below 0.80 confidence, take the recommendation its `QUESTION FORMAT` question would
+  have offered rather than asking it: the column was just asked about (INV-006).
+- **The check is at step 12**, which shows this source's sample record beside their words.
 
 ⛔ **Before accepting the plan: a root-level `payload` key MUST NOT be a registered feature
 attribute name.** This prohibition is documented: `mapping_workflow` step 2's inline *SENZING
@@ -1426,6 +1471,15 @@ contract above). Tell the user: show a sample target JSON record so they see the
 > - **Concise:** State the output file path and format only (e.g., "Output:
 >   data/senzing-ready/customers.jsonl: one JSON record per line").
 
+**On the directing source, the sample record is the check.** When step 11 ran the directing step
+on this source and the Bootcamper directed it, show one sample record in both modes, then the
+comparison the directing-step rule describes (`../bootcamp-onboarding/ground-rules.md` →
+"Directing steps", INV-300): for each column they decided, their words, where the column landed in
+the record (the attribute, the payload key, or absent), and `matches` or `differs`, with every
+difference named, including any feature step 11 had to route to payload. When they want a column
+changed, step 16's gate offers the way back to step 17; this step asks nothing (INV-225). On every
+other source, and after "you pick", present as the mode says.
+
 After `mapping_workflow` generates output files into the workspace, place them into the correct
 project subdirectories per the file-placement guidance above (`.py` → `src/`, transformed JSONL
 → `data/senzing-ready/`, mapping docs → `docs/mapping/`, etc.). Regenerating a `docs/README.md`
@@ -1509,7 +1563,8 @@ is what routes step 17's iterate path. On `approve`, the response carries the wo
 source's mapper is written, reviewed and documented — not here. Tell the user: overall score, per-feature coverage with what
 it means for matching, any issues found.
 
-⚠️ **This advance is unconditional in both modes too, and for a different reason than step 11's.**
+⚠️ **This advance is unconditional in both modes, for a different reason than step 11's lack of a
+general gate.**
 The `verdict` is not a preference the bootcamper holds — it is a QA judgment that follows from the
 analyzer's own output (features at 0%, a short record count, a payload that should have been a
 feature), so putting it to a vote would be asking them to ratify evidence they have just been shown.

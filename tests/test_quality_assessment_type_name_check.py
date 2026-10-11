@@ -253,10 +253,19 @@ def plan_and_map_steps(flat):
     return s10, s11
 
 
+#: The lead of step 11's advance paragraph (reworded by #485; see `retype_block`).
+STEP_11_ADVANCE = "There is no general guided-mode gate before this advance"
+
+
 def retype_block(s11):
-    """Step 11's Record Type Check handling, up to the unconditional-advance paragraph."""
+    """Step 11's Record Type Check handling, up to the advance paragraph.
+
+    #485 reworded that paragraph's lead from "This advance is unconditional" to "There is no
+    general guided-mode gate before this advance", because step 11 now asks the directing
+    question; :data:`STEP_11_ADVANCE` is its new lead.
+    """
     return between(s11, "Read the source's Record Type Check before you advance workflow step 3",
-                   "This advance is unconditional") or ""
+                   STEP_11_ADVANCE) or ""
 
 
 def sentences(text):
@@ -332,7 +341,7 @@ def order_problems(text):
     read10 = flat.find("Read the source's Record Type Check before you advance workflow step 2")
     read11 = flat.find("Read the source's Record Type Check before you advance workflow step 3")
     map11 = flat.find("### 11. Map")
-    advance11 = flat.find("This advance is unconditional", map11)
+    advance11 = flat.find(STEP_11_ADVANCE, map11)
     s13 = flat.find("### 13. Build the transformation program")
     if min(read10, read11, map11, advance11, s13) < 0:
         return ["a marker of the Phase 2 read order is missing"]
@@ -572,7 +581,7 @@ class Phase2NegativeControls(unittest.TestCase):
 
     def test_moving_the_step_11_read_after_the_advance_fails(self):
         start = self.text.index("⛔ **(INV-300, INV-336) Read the source's Record Type Check")
-        end = self.text.index("⚠️ **This advance is unconditional")
+        end = self.text.index("⚠️ **" + STEP_11_ADVANCE)
         block = self.text[start:end]
         rest = self.text[:start] + self.text[end:]
         at = rest.index("### 12. Generate starter code")
