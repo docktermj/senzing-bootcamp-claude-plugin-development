@@ -445,6 +445,19 @@ For any other language, start your server's equivalent. It should report a URL l
 `http://localhost:8080`. If port 8080 is in use, use a different port and tell the Bootcamper the
 chosen URL.
 
+⛔ **(INV-260) On SDK setup's container route (the `docker` path, whose SDK container
+`docker_containers` records), the launch above does not reach the Bootcamper's browser.** Start the server
+inside the container as `visualization-api-reference.md` → "Serving from the SDK container" states;
+that section is the canonical statement of the launch, the host-side check and the URL, so follow it
+there rather than from a copy (INV-300). For this step, `<server command>` is
+`python3 <viz-server-path> --records src/system_verification/truthset_data.jsonl --title "Senzing Truth Set" --dataset "the Senzing Truth Set"`,
+with `<viz-server-path>` as the container sees it under the mounted project, or your own server's
+equivalent. Record in `truthset_visualization.checks.web_service` the container-namespace `pid`,
+`port` `8080`, the `host_port` and the container's `name`. Step 2.4 and the screenshots use the URL
+`confirm-viz` printed. If the Bootcamper declines to recreate a container that has no published
+port, there is no live server: say so, and continue with "Fallback: guarantee the snapshot if the
+live server cannot run" below.
+
 ⛔ **Record the process id along with the port** — `$!` in a POSIX shell as above,
 `$proc.Id` from `Start-Process … -PassThru` in PowerShell. It is the only unambiguous handle on the
 server, and Step 4 has no other way to name what it must stop: the server may be written in any of

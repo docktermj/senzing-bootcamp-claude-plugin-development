@@ -928,8 +928,21 @@ rather than the kill's exit status. Full rule:
 `../module-03b-truthset-visualization/visualization-api-reference.md` → "Server lifetime" →
 "Identifying the server process".
 
+⛔ **On SDK setup's container route, start it inside the SDK container (INV-260).** A server started
+on the host, or bound to the container's loopback, does not reach the Bootcamper's browser.
+`../module-03b-truthset-visualization/visualization-api-reference.md` → "Serving from the SDK
+container" is the canonical statement of the launch, the host-side check and the URL; follow it
+there rather than from a copy (INV-300). Here `<server command>` is this step's server, pointed at
+the Bootcamper's own data, with paths as the container sees them. Hand over, and capture against,
+the URL `confirm-viz` printed: `http://localhost:<host_port>`, never `<port>` from the server's own
+line. Record the container-namespace pid, `port` `8080`, the `host_port` and the container's
+`name` in `m7_visualizations`, and probe the bound address at teardown as its item 4 says. If the
+Bootcamper declines to recreate a container that has no published port, there is no live server:
+say so, keep the snapshot as the deliverable, and continue to "Next: Discover phase (step 4)".
+
 ⛔ **A port that binds is not a port that was free, so never read a successful start as proof.**
-The server the bootcamper writes here MUST bind the loopback interface explicitly and MUST confirm,
+The server the bootcamper writes here MUST bind the loopback interface explicitly (the container's
+own interface address on the container route, never the wildcard) and MUST confirm,
 before the URL is handed over, that the process answering `/api/stats` is the one just started —
 both required by the any-language contract (`visualization-api-reference.md` → "Binding the port"
 and "Confirming the server that answers is yours"). ⚠️ **A wildcard bind coexists with an existing
