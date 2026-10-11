@@ -5,7 +5,7 @@ commands of `docs/README.md`, and its header comment says it must follow them. U
 module nothing checked that it did, so the two could drift silently, as the model names in
 their prose already had.
 
-⛔ **The page names exactly the `claude plugin …` commands `docs/README.md` names.** This
+⛔ **(INV-348) The page names exactly the `claude plugin …` commands `docs/README.md` names.** This
 module extracts every `claude plugin …` command from the page (the text inside each
 `<code>` element, HTML-unescaped, one command per non-blank stripped line) and from the README
 (each non-blank stripped line inside its `console` fences, including the fences indented inside

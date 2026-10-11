@@ -576,7 +576,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 196 on 2026-10-10: INV-153's dated note (#463: the gutter is sized from the rendered width) names
 # test_viz_defaults_at_scale.py, which already cites INV-153 back. Re-derived by running the
 # extractor -- 196, the one new pair present by name and none removed. EXPECTED_PAIRS 195 -> 196.
-EXPECTED_PAIRS = 196
+# 197 on 2026-10-10: INV-348 (the Pages site's `claude plugin` commands match docs/README.md's; #455)
+# names test_pages_site_commands_match_docs_readme.py, which cites it back and states what it does NOT
+# establish -- that the page's other commands, prose or Claude Desktop route follow their sources.
+# Re-derived by running the extractor -- 197, the new pair present by name and none removed.
+# EXPECTED_PAIRS 196 -> 197.
+EXPECTED_PAIRS = 197
 
 
 def pairs():

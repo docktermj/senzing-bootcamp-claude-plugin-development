@@ -244,8 +244,8 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - **Not checked, by scope:** the page's other commands (`curl …`, `irm …`, `mkdir`, `cd`, `claude --model …`, "Start the bootcamp"), model names in prose, the slash-command table, the Claude Desktop route and the propagated tree. The new test's docstring says so.
   - **Blueprint.** `/update-blueprint 455`: section 8 (the file and test counts, the new file's count, and a key case in 8.4.10) and section 10 (#455's line, added). The header SHA is unchanged. The blueprint was already over its soft token budget (about 126,700 tokens before, 126,900 after).
 - **Verification:** the verdict lines of both CI legs (empty `HOME` outside `/tmp`) and of `citations.py verify` (run after this entry was written) are in the PR. `lint-workflows` was not run locally, because it is a remote reusable workflow and no workflow file changed.
-- **DEFERRED INVARIANT — new invariant, awaiting the maintainer's sign-off; NOT minted.** The Pages site's install commands follow `docs/README.md`. Until this run the page's header comment asked for it ("When those change, update this page too") and nothing enforced it. The rule already shipping, quoted:
-    - ⛔ **The page names exactly the `claude plugin …` commands `docs/README.md` names.** — in `tests/test_pages_site_commands_match_docs_readme.py`
+- **DEFERRED INVARIANT (resolved INV-348, registered by the maintainer 2026-10-10).** The Pages site's install commands follow `docs/README.md`. Until this run the page's header comment asked for it ("When those change, update this page too") and nothing enforced it. The rule already shipping, quoted:
+    - ⛔ **(INV-348) The page names exactly the `claude plugin …` commands `docs/README.md` names.** — in `tests/test_pages_site_commands_match_docs_readme.py`
 
   **Sites it affects:** the request is the header comment of `docs/index.html`; the enforcer is `tests/test_pages_site_commands_match_docs_readme.py`; `tests/test_propagate_publishes_the_pages_site.py` points at it. No site is under `plugins/`.
 
