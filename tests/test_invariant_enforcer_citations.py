@@ -595,7 +595,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # does NOT establish -- that `claude plugin marketplace add` accepts both side by side. Re-derived by
 # running the extractor -- 200, the new pair present by name and none removed.
 # EXPECTED_PAIRS 199 -> 200.
-EXPECTED_PAIRS = 200
+# 201 on 2026-10-11: INV-260's dated note (#460: one bind address besides loopback, inside the SDK
+# container only) names test_container_viz_port_is_published_and_checked.py, which already cites
+# INV-260 back. Re-derived by running the extractor -- 201, the one new pair present by name and none
+# removed. EXPECTED_PAIRS 200 -> 201.
+EXPECTED_PAIRS = 201
 
 
 def pairs():
