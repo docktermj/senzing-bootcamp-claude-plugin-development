@@ -1547,6 +1547,16 @@ Ground rules (`ground-rules.md`, every turn):
   `*_MATCHING_INFO` flag; the SDK factory must outlive its engines.
   Attribution is light and suppressed under `minimal`.
 - No SQL against `database/G2C.db`.
+- Showing one resolved entity as text (`#entity-as-text`, the one statement
+  Module 6's midpoint entity, Module 7's headline entity and Module 7's recap
+  headline block cite): `src/query/show_entity.[ext]` ranks an export limited
+  to multi-record entities, with the per-source record summary, by the
+  caller's rule, which always ends on the lowest entity ID, then fetches the
+  chosen entity by ID. It shows a line naming the entity, one line per record
+  (at most 10, then "and N more") and why they resolved together, from the
+  response only, as a statement with no 👉. ⛔ With no multi-record entity it
+  says so and shows none, never a single-record or invented one; that line is
+  the whole recap block. A failed program is one line and does not block.
 - Files stay in the project (no `/tmp`, no shell-profile edits). Layout:
   `src/`, `src/scripts/`, `docs/` (all `.md` but `README.md`), `data/`,
   `data/temp/`, `data/mapping/`, `src/resources/`, `config/`,
@@ -1966,7 +1976,11 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   `python3` probe of the bound address), confirm the port free in 5 s, then
   purge last.
 - 5: record after `system_verification`, recap section with
-  `visualizations/…` images, B-roll, 👉 transition.
+  `visualizations/…` images, B-roll, then the curtain line as a statement
+  immediately before the one 👉 transition: the Truth Set was practice data,
+  built to contain matches, and next comes the Bootcamper's own data and the
+  Module 1 problem, in one clause from `docs/business_problem.md`'s Problem
+  Description ("your own data" alone when that file is missing).
 
 Contract:
 
@@ -2280,7 +2294,10 @@ Phase B (`phaseB-load-first-source.md`, steps 5-11):
   records, writing `validation_checks.load_count_matches_source` as `pass`,
   `expected_delta` (plus `load_reconciliation`) or `unexplained_delta` (plus
   `issues`). Baseline counts are never overwritten.
-- Step 9 drains redo until fetch returns nothing (never polling the count). Step
+- Step 9 drains redo until fetch returns nothing (never polling the count),
+  then shows the midpoint entity (`#midpoint-entity`): the first source's
+  entity with the most records, ties broken by the lowest `ENTITY_ID`, as text
+  with no visualization and no 👉, and none on a quality-iteration reload. Step
   10 records the incremental strategy in `docs/loading_strategy.md`; step 11
   marks the source loaded; 2+ sources with `mapping_status: complete` go to
   Phase C, else Phase D.
@@ -2335,6 +2352,11 @@ Phase 1 (`phase1-query-visualize.md`):
   then lists their questions beside the requirements derived from
   `docs/business_problem.md`, marking those not asked for, in a combined list
   of at most 10, and ends on one confirming question (`#requirements-gate`).
+  In the turn that settles the requirements, never before the open question is
+  answered and never in the gate's turn, it shows the headline entity
+  (`#headline-entity`): most data sources, then most records, then the lowest
+  `ENTITY_ID`, as text with no 👉 of its own, recorded as
+  `module_7_query.headline_entity`.
 - Step 2 writes programs in `src/query/` from
   `generate_scaffold(workflow='query')`, with flags and response paths looked up
   in `get_sdk_reference` (`flags`, `response_schemas`, `parameters`). Programs
@@ -2366,7 +2388,8 @@ Phase 1 (`phase1-query-visualize.md`):
   `m7_visualizations` records `offered`, `accepted`, `artifact`, `port` and
   `pid`. On the container route it launches by the contract's "Serving from
   the SDK container", and without a published port continues with no live
-  server.
+  server. Module 7's `SKILL.md` and step 3c name this app, not the Truth Set's,
+  as the bootcamp's peak; the rendering contract's requirements cover both.
 - On every path it writes `docs/bootcamp_data_discoveries.md` (six named
   sections, Headline numbers through What was not found, with `**Measurement:**`
   and near-miss labels, Latin-script text) and its PDF via
@@ -2374,6 +2397,9 @@ Phase 1 (`phase1-query-visualize.md`):
   reported, never blocking.
 - Query Completeness Gate, then (only if a server started) a separate stop
   question that stops by recorded pid. Completion runs `module-completion.md`,
+  opens Module 7's recap section with the headline block (`#headline-block`,
+  the first entry of `### Information Shared`, re-retrieved with step 1's rule
+  and written whether or not 3c ran; screenshots stay in tab order),
   recaps every quality iteration and offers graduation, invoking the
   `graduation` skill on yes.
 
@@ -6248,7 +6274,7 @@ main{padding:0}
 button.probe{border:1px solid var(--line);background:#fff;border-radius:16px;padding:5px 12px;margin:2px;cursor:pointer;font-size:13px}
 .muted{color:var(--muted)}
 .modal-bg{position:fixed;inset:0;background:rgba(15,13,12,.5);display:none;align-items:center;justify-content:center;z-index:50}
-/* Entity-detail dialogs are a primary "wow moment" surface and get the same
+/* Entity-detail dialogs are a primary surface in both apps and get the same
    care as the headline tabs: a real header bar separated from the body, a
    circular close control, and a subtle entrance transition (contract:
    "Modal chrome"). */
@@ -8714,7 +8740,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 381 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 383 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8764,21 +8790,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6493 test methods in 381 files, matching `inventory.test_count_total`.
+There are 6524 test methods in 383 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6493.
+sum to 6524.
 
-Two files run more tests than they define, so discovery collects 6415:
+Two files run more tests than they define, so discovery collects 6446:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6408`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6439`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6415`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6446`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -9005,6 +9031,7 @@ looks wrong.
 - `tests/test_one_question_per_turn_is_registered.py`: 12
 - `tests/test_open_me_first_matches_the_manifest.py`: 20
 - `tests/test_organization_search.py`: 23
+- `tests/test_own_data_entity_shown_as_text.py`: 22
 - `tests/test_overview_bullets_are_not_counted.py`: 8
 - `tests/test_package_bootcamp.py`: 35
 - `tests/test_packaging_consent_gate_ships.py`: 15
@@ -9127,6 +9154,7 @@ looks wrong.
 - `tests/test_the_seven_triaged_rules_keep_their_citations.py`: 3
 - `tests/test_todo_triage_is_recorded.py`: 9
 - `tests/test_tool_directives_do_not_override_interaction.py`: 30
+- `tests/test_truth_set_is_the_practice_run.py`: 9
 - `tests/test_truth_set_spelling.py`: 5
 - `tests/test_truthset_acquisition_call.py`: 14
 - `tests/test_truthset_container_route_runs_a_project_copy.py`: 16
@@ -10386,6 +10414,14 @@ Senzing licensing, with no SPDX identifier.
   renders as its own page, and closes by stating there is no script from here
   (graduation handed over a PDF and a project, never the ability to direct the
   next build)
+- #486: the Truth Set close says it was practice data built to contain matches
+  and names the Module 1 problem before its one 👉; "wow moment" moves to
+  Module 7's results app; one resolved own-data entity is shown as text, by
+  the ground rules' one "Showing one resolved entity as text" procedure, at
+  Module 6 step 9 (most records), at the end of Module 7 step 1 (most data
+  sources, then most records) and atop Module 7's recap, each rule ending on
+  the lowest `ENTITY_ID` so a re-run names the same entity (the Truth Set was
+  staged as the bootcamp's peak and Module 7 as a demonstration)
 - #487: Module 7's new step 4e, on every Discover path, offers one export per
   system named in Module 1's `integration_targets` (one offer when none was
   named), in a format the AI names or asks for, never shipped or invented, with

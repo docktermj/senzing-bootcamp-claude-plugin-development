@@ -44,8 +44,9 @@ Before starting Module 3 steps, check whether the bootcamper has explicitly requ
 3. Update gate 3→4 to "skipped" and proceed to the next selected module.
 
 > **The visualization is a separate module.** System Verification produces **no** visualization —
-> the guaranteed Truth Set web-app "wow moment" is delivered by the selectable **Truth Set
-> visualization** module (`truthset_visualization`), a separate, standalone module run **next**
+> the guaranteed Truth Set web app (the practice run before the Bootcamper's own data) is
+> delivered by the selectable **Truth Set visualization** module (`truthset_visualization`), a
+> separate, standalone module run **next**
 > whenever selected (always in Core; in Customized only if chosen). Skipping System Verification
 > does NOT skip that module, and System Verification does not offer a standalone Truth Set demo of
 > its own.

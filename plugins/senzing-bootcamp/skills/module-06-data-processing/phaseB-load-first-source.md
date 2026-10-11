@@ -508,6 +508,21 @@ correct answer.
 Tell the bootcamper: "Processing the redo queue now. This refines entity resolution, without
 it, some matches would be incomplete."
 
+<a id="midpoint-entity"></a>
+
+**The midpoint entity.** Once the redo queue reports empty, show one resolved entity from the first
+source: **the entity with the most records, ties broken by the lowest `ENTITY_ID`**. Introduce it
+in one line as the first entity resolved from their own data. How it is retrieved and shown, and what to say when no entity has two or more
+records, is stated once in [`ground-rules.md`](../bootcamp-onboarding/ground-rules.md#entity-as-text)
+→ "Showing one resolved entity as text" (INV-300); follow it there rather than restating it.
+
+- **Text only, with no visualization.** Module 7 offers the one visualization of the Bootcamper's
+  data (`phaseD-validation.md` step 23, INV-104).
+- **No 👉.** Steps 9–11 ask nothing, so the midpoint entity does not end the turn (INV-225).
+- **Shown once, at the first load.** A quality-iteration reload also drains redo by this step (see
+  [Receiving a `quality_iteration`](#receiving-a-quality-iteration)); it shows no midpoint entity,
+  because Module 7 step 3b is where its results are read.
+
 **Checkpoint:** write step 9.
 
 ## 10. Incremental loading strategy

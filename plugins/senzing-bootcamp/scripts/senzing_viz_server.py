@@ -4,8 +4,8 @@
 Per INV-090 the Truth Set visualization server is built in the bootcamper's chosen
 programming language, modeled on this reference and the ``visualization-api-reference.md``
 contract; this Python script is run directly only when the chosen language is Python. It
-delivers the standalone **Truth Set visualization module** (Module 3b) "wow moment" and is
-reused for Module 7 result views. System Verification (Module 3) uses synthetic data and
+delivers the standalone **Truth Set visualization module** (Module 3b), a practice run on data
+built to contain matches, and is reused for Module 7 result views. System Verification (Module 3) uses synthetic data and
 does not visualize (INV-082/INV-087).
 
 It builds an entity model from the records the bootcamper loaded (by looking each
@@ -1106,7 +1106,7 @@ main{padding:0}
 button.probe{border:1px solid var(--line);background:#fff;border-radius:16px;padding:5px 12px;margin:2px;cursor:pointer;font-size:13px}
 .muted{color:var(--muted)}
 .modal-bg{position:fixed;inset:0;background:rgba(15,13,12,.5);display:none;align-items:center;justify-content:center;z-index:50}
-/* Entity-detail dialogs are a primary "wow moment" surface and get the same
+/* Entity-detail dialogs are a primary surface in both apps and get the same
    care as the headline tabs: a real header bar separated from the body, a
    circular close control, and a subtle entrance transition (contract:
    "Modal chrome"). */

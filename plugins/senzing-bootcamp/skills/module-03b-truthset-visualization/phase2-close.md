@@ -171,7 +171,20 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
    `✅ Module complete: Truth Set visualization` and its four-part summary, per `module-completion.md`
    Step 3. (This module's module-start banner/journey/before-after/step-overview were already shown at
    its module start in Phase 1, so only its close is presented here.)
-4. **Transition to the next module:** ask the single transition question (once), then on an
+4. **Transition to the next module.** First say the **curtain line**, a statement immediately
+   before the transition 👉 and never a second question
+   (`../bootcamp-onboarding/module-completion.md`: one 👉 ends the turn, INV-251). It names the
+   Truth Set as practice data built to contain matches and points to the Bootcamper's own problem,
+   named in one clause taken from the "Problem Description" in `docs/business_problem.md`:
+
+   > That was practice data, built to contain matches. Next comes your own data, and the problem
+   > you brought in Module 1: {one clause from `docs/business_problem.md`}.
+
+   When `docs/business_problem.md` is missing, it says "your own data" and names no problem:
+
+   > That was practice data, built to contain matches. Next comes your own data.
+
+   Then ask the single transition question (once), and on an
    affirmative reply **(INV-272) acknowledge it in one short visible line naming that module before invoking
    its skill** (the ground rules' acknowledge clause and
    `../bootcamp-onboarding/module-completion.md` Step 4 own the ordering — a skill invocation and its

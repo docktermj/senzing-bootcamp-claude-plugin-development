@@ -526,6 +526,63 @@ works; each site states only what is predicted and which engine call answers it,
   scaffolding tools, not direct entity-query tools, so entity operations are done through
   generated SDK code.)
 
+<a id="entity-as-text"></a>
+
+## Showing one resolved entity as text
+
+This is the canonical statement of how the guide shows one resolved entity from the Bootcamper's
+own data as text (INV-300). Three places use it, and each carries only its own selection rule and
+where it appears:
+
+- the **midpoint entity**, at the end of Module 6 step 9
+  ([`phaseB-load-first-source.md`](../module-06-data-processing/phaseB-load-first-source.md#midpoint-entity));
+- the **headline entity**, at the end of Module 7 step 1
+  ([`phase1-query-visualize.md`](../module-07-query-visualize-discover/phase1-query-visualize.md#headline-entity));
+- the **headline block** that opens Module 7's recap section
+  ([`phase1-query-visualize.md`](../module-07-query-visualize-discover/phase1-query-visualize.md#headline-block)).
+
+The caller says which entity to pick. Everything below is the same for all three.
+
+1. **Retrieve it with generated SDK code, never SQL** (the rule above). Write one small program,
+   `src/query/show_entity.[ext]` in the chosen language, from the MCP server and never from memory
+   (INV-080), and reuse it at every site. It does two things:
+   - **Rank.** Iterate the entity export, limited to entities with more than one record.
+     `reporting_guide(topic='export', language='<chosen_language>', version='current')` gives the
+     export loop; `get_sdk_reference(topic='flags', filter='export_json_entity_report',
+     language='<chosen_language>')` gives the flag that limits it to multi-record entities, and the
+     entity flags that put each entity's record count per data source on its row. ⚠️ The
+     entity-selection flag alone returns rows that carry nothing but the entity ID, with no error,
+     so ask for the per-source record summary as well. Rank the rows by the caller's rule. Every
+     caller's rule ends on the lowest entity ID, so a re-run over the same data names the same
+     entity, whatever order the export returns its rows in.
+   - **Fetch.** Get the chosen entity by its entity ID, with its records and their matching
+     information. `get_sdk_reference(topic='parameters', filter='get_entity_by_entity_id',
+     language='<chosen_language>')` gives this binding's method name and arguments, which differ by
+     binding.
+
+   Look up both response shapes with `get_sdk_reference(topic='response_schemas', filter='<method>',
+   language='<chosen_language>')` before writing the parser (INV-115): a wrong field name renders a
+   blank, not an error.
+2. **What is shown.** Text in the conversation, never a visualization or a file:
+   - one line naming the entity: its name as Senzing gives it, its entity ID, its record count and
+     its data sources;
+   - one line per record: its data source, its record ID and the values that identify it (name,
+     address, phone, or whatever the mapping carries), at most 10 lines, then "and N more";
+   - one or two plain sentences on **why they resolved together**, read from the match key and
+     resolution rule the entity response gives each record. Say only what the response shows.
+
+   Record values may be quoted here and in the recap; the graduation video never carries them
+   (INV-340).
+3. **It asks nothing.** It is a statement with no 👉, so it never ends a turn (INV-225); the turn
+   ends on the next step's single 👉 (INV-251).
+4. **No entity has two or more records.** Say so plainly in one line, for example *"No records have
+   resolved together yet: every entity holds a single record."*, and show no entity.
+   ⛔ **Never show a single-record entity in its place, and never make one up.** An entity the
+   engine did not return is a simulated result. In the recap's headline block, that one line is
+   the block: the recap says the same thing the conversation did.
+5. **The program fails.** Say in one line what failed and show no entity. It does not block the
+   step: continue with it.
+
 ## File placement
 
 - **ALL files stay inside the working directory (INV-200).** Never `/tmp`, `%TEMP%`, or

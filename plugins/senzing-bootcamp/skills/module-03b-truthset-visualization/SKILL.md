@@ -1,6 +1,6 @@
 ---
 name: module-03b-truthset-visualization
-description: 'Bootcamp module: Truth Set Visualization. Use when the bootcamper starts or resumes the Truth Set visualization module — stand up an interactive web app of the resolved Senzing Truth Set (the "wow moment") after System Verification. A standalone module, separate from System Verification.'
+description: 'Bootcamp module: Truth Set Visualization. Use when the bootcamper starts or resumes the Truth Set visualization module — stand up an interactive web app of the resolved Senzing Truth Set (practice data built to contain matches) after System Verification. A standalone module, separate from System Verification.'
 ---
 
 # Truth Set Visualization (standalone module)
@@ -89,8 +89,8 @@ Truth Set DATA.
   unavailable and run the graceful-degradation path in `phase1-visualization.md`, Step 1, 1.1.)
 - **Approval rationale:** the workspace normally allows only `mcp.senzing.com` as an external
   endpoint. This exception exists because the source is the official Senzing-published deterministic
-  data with a ground-truth key, needed to preserve a deterministic "wow moment" when the MCP Truth Set
-  is unavailable.
+  data with a ground-truth key, needed to keep the Truth Set demonstration deterministic when the MCP
+  Truth Set is unavailable.
 - **Scope limit:** the fallback fetches Truth Set DATA only. All Senzing SDK facts, method
   signatures, and expected-behavior definitions continue to come from the MCP server.
 - Full detection, provenance recording, and graceful degradation live in the Step 1 flow in
