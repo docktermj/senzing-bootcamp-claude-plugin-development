@@ -689,7 +689,7 @@ project's `SessionEnd` would stop, and its `SessionStart` would report, the othe
    use, append `-2`, `-3` … yourself, retry, and tell the Bootcamper the name you used.
 4. **When the helper exits non-zero, stop and ask the Bootcamper.** That means `-2` … `-9` are all
    taken (or, for `free-port`, no port in its range is free). Do not invent a name or a port.
-5. ⛔ (INV-101, INV-195) **Never remove, stop, start or reuse a container that this project's
+5. ⛔ (INV-349, INV-101, INV-195) **Never remove, stop, start or reuse a container that this project's
    `docker_containers` does not record.** A name already in use is someone else's environment,
    most likely another bootcamp's, and removing it to free the name destroys that environment.
    This holds for every recovery, a failed `run` included. The helper itself never removes,

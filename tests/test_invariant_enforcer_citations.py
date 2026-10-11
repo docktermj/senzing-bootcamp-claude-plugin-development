@@ -560,7 +560,42 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_every_line_reading_guard_gives_a_verdict.py, which already cites INV-346 back. Re-derived by
 # running the extractor -- 192, the one new pair present by name and none removed.
 # EXPECTED_PAIRS 191 -> 192.
-EXPECTED_PAIRS = 192
+# 193 on 2026-10-10: INV-347 (Module 5 checks the analyzer's Python against the measured floor before
+# its first run; #462) names test_analyzer_python_floor_is_cited.py, which cites it back and states what
+# it does NOT establish -- that a live run checks before running, or that the floor still holds.
+# Re-derived by running the extractor -- 193, the new pair present by name and none removed.
+# EXPECTED_PAIRS 192 -> 193.
+# 194 on 2026-10-10: INV-239's dated note (#458: name sharing between distinct invented entities
+# stays inside one budget) names test_synthesized_name_sharing_has_a_budget.py, which already cites
+# INV-239 back. Re-derived by running the extractor -- 194, the one new pair present by name and
+# none removed. EXPECTED_PAIRS 193 -> 194.
+# 195 on 2026-10-10: INV-239's dated note (#459: generated data supports every success criterion)
+# names test_generated_data_supports_its_success_criteria.py, which already cites INV-239 back.
+# Re-derived by running the extractor -- 195, the one new pair present by name and none removed.
+# EXPECTED_PAIRS 194 -> 195.
+# 196 on 2026-10-10: INV-153's dated note (#463: the gutter is sized from the rendered width) names
+# test_viz_defaults_at_scale.py, which already cites INV-153 back. Re-derived by running the
+# extractor -- 196, the one new pair present by name and none removed. EXPECTED_PAIRS 195 -> 196.
+# 197 on 2026-10-10: INV-348 (the Pages site's `claude plugin` commands match docs/README.md's; #455)
+# names test_pages_site_commands_match_docs_readme.py, which cites it back and states what it does NOT
+# establish -- that the page's other commands, prose or Claude Desktop route follow their sources.
+# Re-derived by running the extractor -- 197, the new pair present by name and none removed.
+# EXPECTED_PAIRS 196 -> 197.
+# 198 on 2026-10-11: INV-349 (containers take a project-derived name, and no unrecorded container is
+# ever touched; #461) names test_container_names_are_project_derived.py, which cites it back and states
+# what it does NOT establish -- that a live recovery keeps the never-touch rule. Re-derived by running
+# the extractor -- 198, the new pair present by name and none removed. EXPECTED_PAIRS 197 -> 198.
+# 199 on 2026-10-11: INV-350 (no file propagate.sh publishes holds the dev repository's slug; #452)
+# names test_propagate_publishes_the_pages_site.py, which cites it back and states what it does NOT
+# establish -- that a file type nobody propagates yet will be added to the list. Re-derived by
+# running the extractor -- 199, the new pair present by name and none removed.
+# EXPECTED_PAIRS 198 -> 199.
+# 200 on 2026-10-11: INV-351 (the dev marketplace name is rewritten back on publish; #449) names
+# test_propagate_publishes_the_published_marketplace_name.py, which cites it back and states what it
+# does NOT establish -- that `claude plugin marketplace add` accepts both side by side. Re-derived by
+# running the extractor -- 200, the new pair present by name and none removed.
+# EXPECTED_PAIRS 199 -> 200.
+EXPECTED_PAIRS = 200
 
 
 def pairs():

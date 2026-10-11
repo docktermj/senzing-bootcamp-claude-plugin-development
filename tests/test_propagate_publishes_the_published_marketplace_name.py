@@ -25,6 +25,10 @@ absence is a property of the test machine, not of the mirror. Nothing here estab
 `claude plugin marketplace add` accepts the two marketplaces side by side: that needs the
 `claude` CLI and the network, and is checked by hand in the pull request.
 
+Enforces **INV-351** (the dev marketplace is named apart from the published one and rewritten back on
+the way out, so the published plugin ID never changes). It does **not** establish that `claude plugin
+marketplace add` accepts both marketplaces side by side, which needs the `claude` CLI and the network.
+
 Source issue: #449.
 
 Stdlib only; no network, no second checkout.

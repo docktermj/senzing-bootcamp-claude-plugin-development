@@ -88,7 +88,7 @@ files point users at the Senzing repo:
   `docs/README.md` and `docs/index.html` install, update and uninstall commands back into
   `senzing-bootcamp@senzing-bootcamp` and `marketplace remove senzing-bootcamp` (#449).
 
-⛔ **The dev marketplace has its own name so both can be registered on one machine.**
+⛔ **(INV-351) The dev marketplace has its own name so both can be registered on one machine.**
 Claude Code keys marketplaces by name and refuses one name with two sources, so the dev repo
 could not be added where the published plugin was installed. Publishing the dev name would
 change the plugin ID for every existing install, so the rewrite back is part of the rename,
@@ -106,7 +106,7 @@ MUST stay the suffixed string. Left unsuffixed it still matches — as a
 dev-tree file still carrying the old unsuffixed slug is not matched at all, and
 ships a `docktermj/…` link to the public repo.
 
-⛔ **The pass reads `.md`, `.json`, `.html` and `.css` files** (`REWRITTEN_SUFFIXES` in
+⛔ **(INV-350) The pass reads `.md`, `.json`, `.html` and `.css` files** (`REWRITTEN_SUFFIXES` in
 `propagate.sh`). `.html` and `.css` joined when the Pages site moved into `docs/` (#452): a
 suffix left off the list publishes the dev slug unrewritten. Binaries are never opened.
 `tests/test_propagate_publishes_the_pages_site.py` checks that the site's files land and that

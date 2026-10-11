@@ -60,7 +60,7 @@ defects when the only defect was an unstated prerequisite.
 ## Installing the development plugin
 
 This repository's marketplace is named `senzing-bootcamp-dev`, so it can be registered on a
-machine that already has the published `senzing-bootcamp` marketplace (#449). Claude Code keys
+machine that already has the published `senzing-bootcamp` marketplace (#449, INV-351). Claude Code keys
 marketplaces by name and refuses one name with two sources. `/propagate-to-public` rewrites the
 name back to `senzing-bootcamp` on publish, so the published plugin ID never changes.
 

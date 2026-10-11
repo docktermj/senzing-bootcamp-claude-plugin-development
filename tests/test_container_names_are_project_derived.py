@@ -36,8 +36,11 @@ Every container CLI is stubbed (`FakeCli` from `test_container_lifecycle_runtime
 development machine has a real `docker`, and an unstubbed test could act on real containers.
 The one real-world call is a TCP bind on 127.0.0.1, which `free-port` exists to make.
 
-The safety rule is drafted as a DEFERRED INVARIANT in `specs/IMPLEMENTED.md`
-(`sdk-setup-container-names-are-project-derived`); it extends INV-101 and INV-195.
+Enforces **INV-349** (every container the bootcamp creates takes a project-derived name from the
+helper, and no container this project does not record is ever removed, stopped, started or
+reused); it extends INV-101 and INV-195. It does **not** establish that the guide keeps the
+never-touch rule in a live recovery, which only `dry-run` phase 3 can observe, or that Apple
+`container`'s name-in-use failure is recognized, since its `ps` is unverified.
 
 Run:  python3 -m unittest discover -s tests
 """
