@@ -1410,7 +1410,10 @@ and makes one HTTP request; it never starts, stops or removes a container.
    ```
 
    `<server command>` is the module's own launch line with paths as the container sees them; a
-   server in another language takes the address and the port through its own options. The env is
+   server in another language takes the address and the port through its own options. On Truth
+   Set visualization's Python path the server is the project copy that
+   [`phase1-visualization.md` 2.1](phase1-visualization.md#container-route-server-copy) makes on
+   the host before each run; the plugin's own `scripts/` is not mounted in the container. The env is
    sourced as its own statement and the server is the only backgrounded command, so `$!` is the
    server's pid in the **container** namespace ("Identifying the server process" below). Record
    it with `port` `8080`, the `host_port` and the container's name. Port `8080` held inside the
