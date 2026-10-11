@@ -643,12 +643,17 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
   somewhere else". Do not restate them here (INV-183, INV-300): the rule applies from this module through
   query programs, so it lives with the cross-cutting execution rules and is linked from the step
   that creates the condition.
+- **Publish the visualization port when you create the container (INV-260).** A port cannot be
+  published on a container that already exists, and Truth Set visualization and Query, Visualize
+  and Discover both serve a browser page from this container. Create it with
+  `-p 127.0.0.1:<host_port>:8080`, taking `<host_port>` from `free-port 8080`, and record it as
+  `host_port`, as [the visualization-port rule](#visualization-port) below states.
 - **Record the container for lifecycle tracking (INV-101).** When you start the container,
   give it the `--name` that [the container-naming rule](#container-naming) below prints for the
   base `senzing-bootcamp`, and append an entry to a `docker_containers` list in
-  `config/bootcamp_progress.json` — at least its `name` and the `runtime` you actually used
-  (`docker`, `podman`, or `container` for Apple's `container` CLI); also `image` and `purpose`
-  when handy. **Record the runtime truthfully**: the hooks stop and report each container with
+  `config/bootcamp_progress.json` — at least its `name`, the `runtime` you actually used
+  (`docker`, `podman`, or `container` for Apple's `container` CLI) and its `host_port`; also
+  `image` and `purpose` when handy. **Record the runtime truthfully**: the hooks stop and report each container with
   the CLI named there, so a wrong value means a container is reported under a tool that never
   started it. An entry with no `runtime` is treated as `docker`. The `SessionEnd` hook stops
   recorded containers on exit (`<runtime> stop`, not remove) and `SessionStart` surfaces them on
@@ -694,6 +699,63 @@ project's `SessionEnd` would stop, and its `SessionStart` would report, the othe
    most likely another bootcamp's, and removing it to free the name destroys that environment.
    This holds for every recovery, a failed `run` included. The helper itself never removes,
    stops, starts or runs a container.
+
+<a id="visualization-port"></a>
+
+**Publishing the visualization port on the SDK container.** This is the canonical statement of
+how the SDK container publishes the visualization port and how a container without one is
+recreated; the container route above, and the launch steps in Truth Set visualization and Query,
+Visualize and Discover, link here rather than restating it (INV-300). Inside the container a
+visualization server listens on port `8080`, bound to the container's own interface address
+(`../module-03b-truthset-visualization/visualization-api-reference.md` → "Binding the port"). The
+host reaches it only through a port published to host loopback.
+
+1. **Choose the host port with the helper, before you create the container.** From the project
+   root, on the host:
+
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/docker_lifecycle.py" free-port 8080
+   # or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/docker_lifecycle.py free-port 8080
+   ```
+
+   It prints `8080` when that host loopback port is free, else the first free port above it. When
+   it prints another port, tell the Bootcamper, for example: "Port 8080 is in use on this machine,
+   so your visualizations will open at `http://localhost:8081`." The container port stays `8080`.
+2. **Publish it to host loopback only.** Add `-p 127.0.0.1:<host_port>:8080` to the container
+   command `sdk_guide` gives you, with the printed port as `<host_port>`, for example:
+
+   ```bash
+   <runtime> run -d -it --name <name> -p 127.0.0.1:<host_port>:8080 -v "$(pwd)":/app -w /app debian:bookworm-slim bash
+   ```
+
+   ⛔ (INV-260) Never drop the `127.0.0.1:` host address from `-p`: without it the port is published
+   on every host interface. docker, podman and Apple `container` each accept
+   `-p [host-ip:]host-port:container-port`.
+3. **Record it as `host_port`** on the container's `docker_containers` entry, beside `name` and
+   `runtime`. Later modules read it with `docker_lifecycle.py`'s `viz-port <name>`, never a literal.
+4. **A container recorded without `host_port` was created before this rule.** A launch step finds
+   it when `viz-port <name>` exits `3`, and comes here. Recreate it only after the Bootcamper agrees:
+   recreating stops the container they are using.
+   - First, on the host, run `<runtime> commit --help` with the recorded runtime. If it succeeds,
+     the installed SDK can be kept by committing the container to an image. If it fails, the new
+     container repeats this module's in-container install, Step 3 Phase 1 through Phase 3, and
+     Phase 1 asks the EULA question again (INV-338).
+   - Before the question, say what will happen: the container stops and is replaced by one with the
+     port published, the project files stay because they are mounted from the host, and the SDK
+     is either kept in a committed image or installed again. Then ask, and end the turn on it:
+
+     👉 **Shall I recreate the SDK container `<name>` with the visualization port published, so the
+     visualization can open in your browser?**
+
+   - **Yes:** take `<host_port>` from `free-port 8080`. If `commit --help` succeeded, run
+     `<runtime> commit <name> <name>-sdk` and use `<name>-sdk` as the image. Then
+     `<runtime> stop <name>`, `<runtime> rm <name>`, and create it again with the same `--name`,
+     the same mount and the image (the committed one, or the base image), published as in item 2.
+     Update the same `docker_containers` entry with `host_port`, and `image` when you committed.
+     Without a committed image, run the in-container install now. Then return to the launch step.
+   - **No:** the visualization cannot be served live from this container. Say so plainly and
+     continue on the launch step's no-live-server path. ⛔ (INV-260) Never offer a relay or a proxy, inside
+     or outside the container, and never improvise another way to reach the server.
 
 **Phase 3: Install language bindings (after Phase 1's EULA acceptance, or directly on Step 1's
 existing-install path, which skips Phase 1 and Phase 2; INV-338, INV-339):**

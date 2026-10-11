@@ -44,6 +44,23 @@ directory, moving to ``-2`` ... ``-9`` past a name another project's container h
 stops, starts or runs a container: the only container command either issues is the
 read-only ``ps`` probe of ``_container_state``. Each exits non-zero, with a message on
 stderr, when it has nothing safe to print.
+
+And it is the host-side half of serving a visualization from the SDK container (#460),
+where the server binds the container's own interface address on port 8080 and the host
+reaches it only through the port SDK setup published to host loopback:
+
+    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/docker_lifecycle.py" viz-port <container>
+    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/docker_lifecycle.py" confirm-viz <container> --log <file> [--wait <seconds>]
+    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/docker_lifecycle.py" confirm-viz <container> --nonce <nonce>
+
+``viz-port`` prints the ``host_port`` recorded on that container's ``docker_containers``
+entry, and exits 3 when the entry records none (a container created before the port
+was published, which the guide offers to recreate). ``confirm-viz`` reads the nonce the
+server printed on its startup line, probes ``http://127.0.0.1:<host_port>/api/stats``
+FROM THE HOST, and prints the Bootcamper's URL only when the nonce answered there is
+the one printed; a disagreement or an unanswerable probe exits non-zero (INV-260).
+Neither issues any container command at all: they read the progress file and make one
+HTTP request.
 """
 import argparse
 import hashlib
@@ -54,6 +71,8 @@ import shutil
 import socket
 import subprocess
 import sys
+import time
+import urllib.request
 
 PROGRESS = os.path.join("config", "bootcamp_progress.json")
 
@@ -347,6 +366,120 @@ def free_port(preferred):
     return None
 
 
+# ---------------------------------------------------------------------------
+# Serving a visualization from the SDK container (#460). Host-side only: these read the
+# progress file and make one HTTP request to host loopback. They issue no container
+# command, not even ``ps``, and they never start, stop or remove anything (INV-349).
+# ---------------------------------------------------------------------------
+
+#: The port a visualization server listens on INSIDE the SDK container, always. The
+#: container's own network namespace has nothing else on it, and SDK setup publishes
+#: ``127.0.0.1:<host_port>`` to it, choosing ``host_port`` with ``free-port 8080``.
+VIZ_CONTAINER_PORT = 8080
+
+#: Exit codes shared by ``viz-port`` and ``confirm-viz``. The guide branches on 0 (go
+#: on) and 3 (offer to recreate the container); every other code stops the step and
+#: relays the message on stderr.
+EXIT_OK = 0
+EXIT_CONFLICT = 1          # a DIFFERENT server answered the published port
+EXIT_NO_HOST_PORT = 3      # the container is recorded, but with no published port
+EXIT_UNRECORDED = 4        # this project's docker_containers does not record it
+EXIT_NO_ANSWER = 5         # no startup line, no nonce, or the probe could not complete
+EXIT_BAD_RECORD = 6        # the recorded host_port is not a TCP port
+
+#: The token every visualization server ends its startup line with (any language).
+NONCE_TOKEN = re.compile(r"server_nonce=([A-Za-z0-9._-]+)")
+STARTUP_MARK = "Visualization running:"
+
+
+def recorded_host_port(name):
+    """Look up ``name`` in this project's ``docker_containers``.
+
+    Returns ``(code, value)``: ``(EXIT_OK, port)``, ``(EXIT_NO_HOST_PORT, None)`` when the
+    entry carries no ``host_port``, ``(EXIT_UNRECORDED, None)`` when no entry has that
+    name, or ``(EXIT_BAD_RECORD, raw)`` when the recorded value is not a TCP port.
+    """
+    for entry in tracked_containers():
+        if entry.get("name") != name:
+            continue
+        raw = entry.get("host_port")
+        if raw is None or raw == "":
+            return EXIT_NO_HOST_PORT, None
+        try:
+            port = int(raw)
+        except (TypeError, ValueError):
+            return EXIT_BAD_RECORD, raw
+        if isinstance(raw, bool) or not 1 <= port <= 65535:
+            return EXIT_BAD_RECORD, raw
+        return EXIT_OK, port
+    return EXIT_UNRECORDED, None
+
+
+def _record_problem(code, name, raw=None):
+    """The stderr message for a ``recorded_host_port`` code other than ``EXIT_OK``."""
+    if code == EXIT_NO_HOST_PORT:
+        return (
+            "%s is recorded with no host_port: it was created before SDK setup published "
+            "the visualization port, and a port cannot be published on an existing "
+            "container. Ask the Bootcamper whether to recreate it with the port published "
+            "(Module 2, \"Publishing the visualization port on the SDK container\", "
+            "item 4). Never start a relay or proxy instead.\n" % name)
+    if code == EXIT_UNRECORDED:
+        return (
+            "%s is not in this project's docker_containers. Never act on a container this "
+            "project does not record (INV-349); read the SDK container's name from "
+            "config/bootcamp_progress.json.\n" % name)
+    return ("%s records host_port %r, which is not a TCP port (1-65535). Stop and tell "
+            "the Bootcamper; do not guess a port.\n" % (name, raw))
+
+
+def nonce_from_startup_log(path, wait=0.0, poll=0.5):
+    """The nonce on the LAST startup line in ``path``, waiting up to ``wait`` seconds for
+    one to appear (the model build runs before the server binds). ``None`` when no
+    startup line carrying ``server_nonce=`` turned up in time."""
+    deadline = time.monotonic() + max(wait, 0.0)
+    while True:
+        try:
+            with open(path, encoding="utf-8", errors="replace") as fh:
+                lines = fh.read().splitlines()
+        except OSError:
+            lines = []
+        for line in reversed(lines):
+            if STARTUP_MARK in line:
+                found = NONCE_TOKEN.search(line)
+                if found:
+                    return found.group(1)
+                break
+        if time.monotonic() >= deadline:
+            return None
+        time.sleep(poll)
+
+
+def probe_published_viz(host_port, nonce, timeout=5.0):
+    """Ask ``http://127.0.0.1:<host_port>/api/stats``, on the host, which server answers.
+
+    Returns ``(code, answered)``: ``EXIT_OK`` when the answered ``server_nonce`` equals
+    ``nonce``, ``EXIT_CONFLICT`` when it differs (or is absent), ``EXIT_NO_ANSWER`` when
+    the request could not complete. A probe that cannot complete is a failure, never a
+    pass: the failure this gate exists for looks exactly like success.
+    """
+    url = "http://%s:%d/api/stats" % (LOOPBACK, host_port)
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:
+            body = json.loads(response.read().decode("utf-8"))
+    except Exception as exc:  # noqa: BLE001 - any failure here must stop the handover
+        return EXIT_NO_ANSWER, "%s: %s" % (type(exc).__name__, exc)
+    answered = body.get("server_nonce") if isinstance(body, dict) else None
+    if answered == nonce:
+        return EXIT_OK, answered
+    return EXIT_CONFLICT, answered
+
+
+def bootcamper_url(host_port):
+    """The URL handed to the Bootcamper: always built from the recorded ``host_port``."""
+    return "http://localhost:%d" % host_port
+
+
 def _port_number(text):
     value = int(text)
     if not 1 <= value <= 65535:
@@ -358,7 +491,8 @@ def main(argv=None):
     """The ``python3 docker_lifecycle.py <subcommand>`` entry point. Returns an exit code."""
     parser = argparse.ArgumentParser(
         prog="docker_lifecycle.py",
-        description="Name a bootcamp container, or pick its host port, before creating it.")
+        description="Name a bootcamp container, or pick its host port, before creating it; "
+                    "read and check the SDK container's published visualization port.")
     sub = parser.add_subparsers(dest="command")
     named = sub.add_parser(
         "container-name", help="print the project-derived name to create a container with")
@@ -368,6 +502,21 @@ def main(argv=None):
                        help="the CLI that will create the container (default: docker)")
     port = sub.add_parser("free-port", help="print a free host loopback port")
     port.add_argument("preferred", type=_port_number, help="the port to try first, e.g. 5432")
+    viz_port = sub.add_parser(
+        "viz-port", help="print the host_port recorded for a container (exit 3: none recorded)")
+    viz_port.add_argument("name", help="the SDK container's recorded name")
+    confirm = sub.add_parser(
+        "confirm-viz",
+        help="probe the published visualization port from the host and print the URL "
+             "only if the server answering is the one just started")
+    confirm.add_argument("name", help="the SDK container's recorded name")
+    source = confirm.add_mutually_exclusive_group(required=True)
+    source.add_argument("--nonce", help="the server_nonce the server printed")
+    source.add_argument("--log", help="the server's output file, to read the startup line from")
+    confirm.add_argument("--wait", type=float, default=0.0,
+                         help="seconds to wait for the startup line in --log (default: 0)")
+    confirm.add_argument("--timeout", type=float, default=5.0,
+                         help="seconds the HTTP probe may take (default: 5)")
     args = parser.parse_args(argv)
 
     if args.command == "container-name":
@@ -402,6 +551,46 @@ def main(argv=None):
             return 1
         print(found)
         return 0
+
+    if args.command in ("viz-port", "confirm-viz"):
+        code, value = recorded_host_port(args.name)
+        if code != EXIT_OK:
+            sys.stderr.write("%s: %s" % (args.command, _record_problem(code, args.name, value)))
+            return code
+        host_port = value
+        if args.command == "viz-port":
+            print(host_port)
+            return EXIT_OK
+        nonce = args.nonce
+        if nonce is None:
+            nonce = nonce_from_startup_log(args.log, wait=args.wait)
+            if nonce is None:
+                sys.stderr.write(
+                    "confirm-viz: no startup line carrying server_nonce= appeared in %s "
+                    "within %gs. The server did not finish starting, or does not print its "
+                    "nonce; read the log, and do not hand over any URL.\n"
+                    % (args.log, args.wait))
+                return EXIT_NO_ANSWER
+        code, answered = probe_published_viz(host_port, nonce, timeout=args.timeout)
+        if code == EXIT_NO_ANSWER:
+            sys.stderr.write(
+                "confirm-viz: nothing answered http://%s:%d/api/stats from the host (%s). "
+                "The server started inside %s, but the published port does not reach it. "
+                "Do not hand over the URL, and do not start a relay; report this to the "
+                "Bootcamper.\n" % (LOOPBACK, host_port, answered, args.name))
+            return code
+        if code == EXIT_CONFLICT:
+            sys.stderr.write(
+                "confirm-viz: host port %d is answered by a DIFFERENT server.\n"
+                "  started:     %s\n"
+                "  answered by: %s\n"
+                "The page at that URL would show the other server's data under this "
+                "project's title. Do not hand over the URL; stop and report the conflict "
+                "(INV-260).\n"
+                % (host_port, nonce, answered or "(no server_nonce in the response)"))
+            return code
+        print(bootcamper_url(host_port))
+        return EXIT_OK
 
     parser.print_usage(sys.stderr)
     return 2

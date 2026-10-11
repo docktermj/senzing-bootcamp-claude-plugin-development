@@ -78,6 +78,13 @@ Usage:
     python3 senzing_viz_server.py --records src/system_verification/truthset_data.jsonl \\
         --snapshot docs/visualizations/truthset_verification.html --no-serve
 
+    # Inside the SDK container (the container route), bind the container's own interface
+    # address on port 8080; the host reaches it only through the port published to host
+    # loopback. Never a wildcard (INV-260):
+    python3 senzing_viz_server.py --records ... --port 8080 --bind-host <interface address>
+
+The startup line ends with ``server_nonce=<nonce>``, the value ``/api/stats`` answers with.
+
 Settings resolution, in this order — the precedence is **content-aware**, not
 existence-based:
 
@@ -111,6 +118,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import ipaddress
 import json
 import os
 import sys
@@ -130,6 +138,51 @@ from urllib.parse import urlparse, parse_qs
 #: wrong. See the any-language contract's "Binding the port (required)".
 BIND_HOST = "127.0.0.1"
 
+#: The wildcard spellings ``--bind-host`` refuses by name. ``check_bind_host`` also
+#: refuses any other unspecified address (``::0``, ``0:0::0``) through ``ipaddress``.
+WILDCARD_BIND_HOSTS = frozenset({"", "0.0.0.0", "::"})
+
+
+def check_bind_host(host):
+    """Return ``host`` when this server may bind it; raise ``ValueError`` otherwise.
+
+    ⛔ The wildcard stays forbidden everywhere (INV-260). The one address besides
+    ``BIND_HOST`` that the container route passes is the SDK container's OWN interface
+    address, resolved inside the container at launch: in the container's network
+    namespace that interface is reachable only through the port published to HOST
+    LOOPBACK (``-p 127.0.0.1:<host_port>:8080``), so the host stays exposed on loopback
+    only. A literal IPv4 address is required: a hostname could resolve to anything,
+    including the wildcard, and the guide must hand the server exactly what it resolved.
+    """
+    text = (host or "").strip()
+    if text in WILDCARD_BIND_HOSTS or text == "*":
+        raise ValueError(
+            f"--bind-host {host!r} is a wildcard address, which this server never binds "
+            "(INV-260): a wildcard bind coexists with another loopback listener on the "
+            "same port. Pass 127.0.0.1 (the default), or on the container route the "
+            "container's own interface address.")
+    try:
+        address = ipaddress.ip_address(text)
+    except ValueError:
+        raise ValueError(
+            f"--bind-host {host!r} is not an IPv4 address. Pass a literal address, never "
+            "a hostname.") from None
+    if address.is_unspecified:
+        raise ValueError(
+            f"--bind-host {host!r} is a wildcard address, which this server never binds "
+            "(INV-260).")
+    if address.version != 4:
+        raise ValueError(f"--bind-host {host!r} is not an IPv4 address.")
+    return text
+
+
+def _bind_host_arg(text):
+    """``argparse`` type for ``--bind-host``: ``check_bind_host`` as a usage error."""
+    try:
+        return check_bind_host(text)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from None
+
 #: Joins an entity's sorted source codes into the single key its color is chosen by.
 #: Mirrored in the page's `srcKeyOf()`; the any-language contract states it as behavior.
 SOURCE_KEY_SEP = "|"
@@ -148,6 +201,11 @@ SERVER_NONCE = uuid.uuid4().hex
 
 def confirm_server_identity(port, host=BIND_HOST, timeout=5.0):
     """True when `/api/stats` on `port` is answered by THIS process.
+
+    ``host`` is the address this server bound. On the container route that is the
+    container's interface address, where a ``127.0.0.1`` probe would find nothing and
+    stop the handover; the probe that gates the Bootcamper's URL there is the HOST-side
+    one (``docker_lifecycle.py confirm-viz``), against the published port.
 
     ⛔ A successful bind is not proof the port was free. A foreign **wildcard**-bound
     listener coexists with our loopback bind, both succeed, and either process may answer
@@ -185,6 +243,60 @@ def confirm_server_identity(port, host=BIND_HOST, timeout=5.0):
         "project's title. Stop the other server, or use --port for a free port.\n"
     )
     return False
+
+
+def startup_line(host, port, nonce=None):
+    """The line printed once the identity probe passed, carrying ``server_nonce=<nonce>``.
+
+    Every implementation, in every language, ends this line with that token: the
+    container route's host-side check reads the nonce from it and compares it with what
+    the published port answers. The URL keeps ``localhost`` for the default bind, so a
+    run with no ``--bind-host`` prints what it always printed, plus the token. Bound to
+    any other address it names that address, which is NOT the Bootcamper's URL: on the
+    container route that URL is built from the recorded ``host_port``.
+    """
+    shown = "localhost" if host == BIND_HOST else host
+    return (f"Visualization running: http://{shown}:{port} "
+            f"server_nonce={nonce or SERVER_NONCE}")
+
+
+def start_serving(handler, host, port, timeout=5.0):
+    """Bind ``host:port``, serve in a background thread, and confirm the answer is ours.
+
+    Returns ``(httpd, thread)``, or ``None`` after reporting on stderr: a refused bind
+    host, a failed bind, or an identity probe that disagreed or could not complete. On
+    ``None`` nothing is left serving and the socket is closed.
+    """
+    try:
+        host = check_bind_host(host)
+    except ValueError as exc:
+        sys.stderr.write(f"ERROR: {exc}\n")
+        return None
+    try:
+        httpd = ThreadingHTTPServer((host, port), handler)
+    except OSError as exc:
+        sys.stderr.write(
+            f"ERROR: could not bind {host}:{port} ({exc}).\n"
+            "Another server already holds that port on this interface. Stop it, "
+            "or start this one on a different port with --port.\n"
+        )
+        return None
+
+    # ⛔ Serve in the background just long enough to ask WHICH server answers this port,
+    # before the URL is printed for anyone to open. A successful bind is not proof the
+    # port was free: a foreign WILDCARD listener coexists with this loopback bind, and
+    # then either process may answer. The loopback bind above covers the opposite case
+    # (a colliding loopback listener fails cleanly); only this probe covers both. The
+    # probe targets the address actually bound, so a container-mode bind is asked too.
+    import threading
+
+    serving = threading.Thread(target=httpd.serve_forever, daemon=True)
+    serving.start()
+    if not confirm_server_identity(port, host=host, timeout=timeout):
+        httpd.shutdown()
+        httpd.server_close()
+        return None
+    return httpd, serving
 
 # Brand tokens ship in this same directory. Import them so the visualization shares
 # the Senzing style guide's palette with the recap PDF; fall back to an inlined copy
@@ -2406,7 +2518,8 @@ def resolve_settings(path, env_value, log):
     return "", None, "No engine settings (missing --settings file and env var).\n"
 
 
-def main(argv=None):
+def build_arg_parser():
+    """The command line ``main`` parses."""
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--settings", default="config/engine_config.json")
     # ⛔ Optional on purpose. With records, the model is built per record — correct for the
@@ -2429,7 +2542,17 @@ def main(argv=None):
                     help="also write a self-contained standalone HTML to this path")
     ap.add_argument("--no-serve", action="store_true",
                     help="build the model (and snapshot) then exit without serving")
-    args = ap.parse_args(argv)
+    # ⛔ Never a wildcard (INV-260). Only the container route passes it, with the
+    # container's own interface address; see `check_bind_host`.
+    ap.add_argument("--bind-host", default=BIND_HOST, type=_bind_host_arg,
+                    help="the IPv4 address to bind (default: 127.0.0.1). On the container "
+                         "route, the container's own interface address. A wildcard "
+                         "(\"\", 0.0.0.0, ::) is refused.")
+    return ap
+
+
+def main(argv=None):
+    args = build_arg_parser().parse_args(argv)
 
     # ⛔ (INV-091) Refuse to render without the vendored D3, before settings or engine
     # work, so neither the live server nor --snapshot is produced. A snapshot written
@@ -2476,31 +2599,12 @@ def main(argv=None):
         return 0
 
     handler = make_handler(model, engine, flags, sz, args.title)
-    try:
-        httpd = ThreadingHTTPServer((BIND_HOST, args.port), handler)
-    except OSError as exc:
-        sys.stderr.write(
-            f"ERROR: could not bind {BIND_HOST}:{args.port} ({exc}).\n"
-            "Another server already holds that port on the loopback interface. Stop it, "
-            "or start this one on a different port with --port.\n"
-        )
+    started = start_serving(handler, args.bind_host, args.port)
+    if started is None:
         return 1
+    httpd, serving = started
 
-    # ⛔ Serve in the background just long enough to ask WHICH server answers this port,
-    # before the URL is printed for anyone to open. A successful bind is not proof the
-    # port was free: a foreign WILDCARD listener coexists with this loopback bind, and
-    # then either process may answer. The loopback bind above covers the opposite case
-    # (a colliding loopback listener fails cleanly); only this probe covers both.
-    import threading
-
-    serving = threading.Thread(target=httpd.serve_forever, daemon=True)
-    serving.start()
-    if not confirm_server_identity(args.port):
-        httpd.shutdown()
-        httpd.server_close()
-        return 1
-
-    print(f"Visualization running: http://localhost:{args.port}")
+    print(startup_line(args.bind_host, args.port), flush=True)
     print("Press Ctrl+C to stop.")
     try:
         serving.join()

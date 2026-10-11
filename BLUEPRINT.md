@@ -109,7 +109,8 @@ receives the shippable plugin through `/propagate-to-public`.
 - `plugins/senzing-bootcamp/scripts/checkpoint-tick.py`: UserPromptSubmit hook:
   counts turns toward the next recap checkpoint.
 - `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`: names, inspects and
-  tears down the Bootcamper's containers, and picks a free host port.
+  tears down the Bootcamper's containers, picks a free host port, and checks
+  the SDK container's published visualization port.
 - `plugins/senzing-bootcamp/scripts/feedback-capture.py`: UserPromptSubmit hook:
   captures feedback typed in the prompt.
 - `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`:
@@ -1771,12 +1772,22 @@ facts come from MCP tools; SENZ codes go to `explain_error_code`, then
   or `HOMEBREW_SENZING_ACCEPT_EULA` with a lowercase value) and installs. Docker
   path: a plain Debian container running the `linux_apt` steps, project
   bind-mounted, each container appended to `docker_containers` (`name`,
-  `runtime`, optional `image`, `purpose`); `session-start.py` reports them and
-  `session-end.py` stops them. An anchored rule (`#container-naming`) names
+  `runtime`, `host_port`, optional `image`, `purpose`); `session-start.py`
+  reports them and `session-end.py` stops them. An anchored rule
+  (`#container-naming`) names
   every container the bootcamp creates with `docker_lifecycle.py
   container-name <base>` (project-derived; `-2` … `-9` past another project's
   container; stop and ask on a non-zero exit), and never removes, stops,
-  starts or reuses a container `docker_containers` does not record. Phase 3 binds by the MCP-named route only: Python
+  starts or reuses a container `docker_containers` does not record. A second
+  anchored rule (`#visualization-port`, canonical for the launch steps that
+  link it) creates the SDK container with `-p 127.0.0.1:<host_port>:8080`,
+  `host_port` from `free-port 8080` (a different port is told to the
+  Bootcamper), never without `127.0.0.1:`, and records it. A container
+  recorded without it (`viz-port` exit 3 at launch) is recreated only after a
+  👉 question: `<runtime> commit --help` decides whether the SDK is kept in a
+  committed `<name>-sdk` image or reinstalled (Step 3 Phases 1-3, EULA asked
+  again); on no there is no live server, and no relay or proxy is offered.
+  Phase 3 binds by the MCP-named route only: Python
   installs nothing (`pip install senzing` forbidden; shadowing detected via
   `senzing.__file__`); Java the product `sz-sdk.jar`; C# a local `Senzing.Sdk`
   NuGet source; Rust a git dependency; TypeScript from GitHub, with a
@@ -1909,7 +1920,10 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   localhost port, `--name truthset_verification`, `--tabs all`, `--query`.
   Non-blocking, skipped only on its exit code.
 - 2.3: source the env on its own line, background with plain `&` (no
-  `nohup`), port 8080 or a free one; record pid and port.
+  `nohup`), port 8080 or a free one; record pid and port. On the container
+  route it follows the contract's "Serving from the SDK container" instead,
+  states only its own server command and checkpoint fields, and without a
+  published port has no live server.
 - 2.4: probe every endpoint (10 s); zero entities fails. 2.4b: any change
   means rebuilding the snapshot. 2.5: URL, snapshot path, tour, then 👉
   "ready to continue?", which never authorizes teardown. Writes
@@ -1921,7 +1935,8 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   visualization server and clean up the Truth Set data?" On yes: rebuild a
   stale snapshot, capture missing screenshots, kill by pid (never
   `pkill -f`; port lookup fallback; in Docker `sh -c 'kill'` and a
-  `python3` probe), confirm the port free in 5 s, then purge last.
+  `python3` probe of the bound address), confirm the port free in 5 s, then
+  purge last.
 - 5: record after `system_verification`, recap section with
   `visualizations/…` images, B-roll, 👉 transition.
 
@@ -2319,7 +2334,9 @@ Phase 1 (`phase1-query-visualize.md`):
   sources, and screenshots (skipped only on its exit code) from
   `capture_screenshots.py --name results_visualization`. The server stays up;
   `m7_visualizations` records `offered`, `accepted`, `artifact`, `port` and
-  `pid`.
+  `pid`. On the container route it launches by the contract's "Serving from
+  the SDK container", and without a published port continues with no live
+  server.
 - On every path it writes `docs/bootcamp_data_discoveries.md` (six named
   sections, Headline numbers through What was not found, with `**Measurement:**`
   and near-miss labels, Latin-script text) and its PDF via
@@ -2564,8 +2581,9 @@ exits 0.
 
 ### 5.25 `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`
 
-Library module for `session-start.py` and `session-end.py`, and the command
-line Module 2 runs before it creates a container (#461). Importing it runs
+Library module for `session-start.py` and `session-end.py`, the command
+line Module 2 runs before it creates a container (#461), and the host side of
+serving a visualization from the SDK container (#460). Importing it runs
 nothing. Containers the bootcamp starts are listed in `config/bootcamp_progress.json`
 under `docker_containers`; an entry has a `name` and a `runtime`, and a bare
 string or missing `runtime` means `docker`.
@@ -2596,10 +2614,30 @@ string or missing `runtime` means `docker`.
 - `free_port` returns the preferred port, or the first of the next
   `PORT_SPAN` (99) that `_can_bind` binds on `127.0.0.1` without
   `SO_REUSEADDR`, else None.
+- `recorded_host_port` looks a name up in `docker_containers` and returns
+  `(code, value)`: `(EXIT_OK, port)`; `EXIT_NO_HOST_PORT` when `host_port` is
+  absent or empty; `EXIT_UNRECORDED` for no such entry; `EXIT_BAD_RECORD`
+  with the raw value when it is a bool, not an integer, or outside 1-65535.
+- `nonce_from_startup_log` reads the last line holding `STARTUP_MARK` and
+  returns its `server_nonce=` token (`NONCE_TOKEN`), polling until `wait`
+  seconds pass; None when that line has no token or none appears.
+- `probe_published_viz` GETs `http://127.0.0.1:<host_port>/api/stats` from
+  the host and returns `EXIT_OK` when its `server_nonce` equals the nonce,
+  `EXIT_CONFLICT` when it differs or is absent, and `EXIT_NO_ANSWER` when the
+  request fails in any way. `bootcamper_url` is `http://localhost:<port>`.
+- Neither `viz-port` nor `confirm-viz` issues any container command.
 - `main` runs `container-name` and `free-port`, printing the name or port.
   Exit 0 when printed (an unprobed name adds a note on stderr); 1 when every
   candidate or port is taken, with a message on stderr; 2 for a base outside
   the charset or no subcommand (argparse usage errors also exit 2).
+- `viz-port <name>` prints the recorded `host_port`. `confirm-viz <name>`
+  takes `--nonce`, or `--log` (with `--wait`, default 0), plus `--timeout`
+  (default 5), and prints `bootcamper_url` only when the probe returns
+  `EXIT_OK`. Both exit with the `recorded_host_port` code and a stderr
+  message when it is not `EXIT_OK` (3 asks the guide to offer recreating the
+  container, never a relay); `confirm-viz` exits 5 when no nonce is found in
+  the log or nothing answers, and 1 when another server answers, naming both
+  nonces.
 
 ### 5.26 `plugins/senzing-bootcamp/scripts/feedback-capture.py`
 
@@ -2881,7 +2919,8 @@ needs the Senzing Python SDK (`senzing`, `senzing_core`).
 - CLI: `--settings` (default `config/engine_config.json`); `--records`
   (JSONL files or globs, optional); `--port` (default 8080); `--title`
   (default "Senzing Entity Resolution"); `--dataset` (snapshot wording,
-  default "the loaded data"); `--snapshot <path>`; `--no-serve`.
+  default "the loaded data"); `--snapshot <path>`; `--no-serve`;
+  `--bind-host` (default `BIND_HOST`, checked by `check_bind_host`).
 - Settings (`resolve_settings`): the file wins when its `PIPELINE` has
   all `REQUIRED_PIPELINE_KEYS`, else a complete
   `SENZING_ENGINE_CONFIGURATION_JSON`; the winner is stated when both
@@ -2914,8 +2953,17 @@ needs the Senzing Python SDK (`senzing`, `senzing_core`).
   `fetch` shim (search empty, Why/How point to the live server); Search /
   Probe becomes `_snapshot_probe_html` (note, merged-entity browse, up to
   five verified example cards).
-- Serving binds `BIND_HOST` and prints the URL only after
-  `confirm_server_identity` sees this process's `SERVER_NONCE`.
+- Bind host (`check_bind_host`): `""`, `0.0.0.0`, `::`, `*`, any other
+  unspecified address, a hostname and any IPv6 address are refused with a
+  `ValueError`; a literal IPv4 address is returned stripped. The container
+  route passes the container's own interface address.
+- Serving (`start_serving`) binds the checked host, serves from a daemon
+  thread and returns `(httpd, thread)` only after `confirm_server_identity`,
+  probing the bound address, sees this process's `SERVER_NONCE`; otherwise
+  it reports on stderr, closes the socket and returns None. `main` then
+  prints `startup_line` with `flush=True`:
+  `Visualization running: http://localhost:<port> server_nonce=<nonce>`,
+  naming the bound address instead of `localhost` for any other bind.
 
 Exit codes:
 
@@ -2923,7 +2971,8 @@ Exit codes:
   stopped.
 - 1: vendored D3 missing (checked first, so no snapshot), model build
   failed, port bind failed, or another process answers the port.
-- 2: no usable engine settings.
+- 2: no usable engine settings, or a refused `--bind-host` (an argparse
+  usage error).
 
 ### 5.37 `plugins/senzing-bootcamp/scripts/session-end.py`
 
@@ -5292,6 +5341,23 @@ def container_name(base, runtime=DEFAULT_RUNTIME):
     ...
 def free_port(preferred):
     ...
+VIZ_CONTAINER_PORT = 8080
+EXIT_OK = 0
+EXIT_CONFLICT = 1          # a DIFFERENT server answered the published port
+EXIT_NO_HOST_PORT = 3      # the container is recorded, but with no published port
+EXIT_UNRECORDED = 4        # this project's docker_containers does not record it
+EXIT_NO_ANSWER = 5         # no startup line, no nonce, or the probe could not complete
+EXIT_BAD_RECORD = 6        # the recorded host_port is not a TCP port
+NONCE_TOKEN = re.compile(r"server_nonce=([A-Za-z0-9._-]+)")
+STARTUP_MARK = "Visualization running:"
+def recorded_host_port(name):
+    ...
+def nonce_from_startup_log(path, wait=0.0, poll=0.5):
+    ...
+def probe_published_viz(host_port, nonce, timeout=5.0):
+    ...
+def bootcamper_url(host_port):
+    ...
 def main(argv=None):
     ...
 ```
@@ -5987,10 +6053,17 @@ From `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`:
 
 ```python
 BIND_HOST = "127.0.0.1"
+WILDCARD_BIND_HOSTS = frozenset({"", "0.0.0.0", "::"})
+def check_bind_host(host):
+    ...
 SOURCE_KEY_SEP = "|"
 GRAPH_NODE_CAP = 1500
 SERVER_NONCE = uuid.uuid4().hex
 def confirm_server_identity(port, host=BIND_HOST, timeout=5.0):
+    ...
+def startup_line(host, port, nonce=None):
+    ...
+def start_serving(handler, host, port, timeout=5.0):
     ...
 class Model:
     def __init__(self):
@@ -7017,6 +7090,8 @@ def write_snapshot(model, engine, flags, title, out_path, port=8080, dataset="")
 REQUIRED_PIPELINE_KEYS = ("CONFIGPATH", "RESOURCEPATH", "SUPPORTPATH")
 def resolve_settings(path, env_value, log):
     ...
+def build_arg_parser():
+    ...
 def main(argv=None):
     ...
 ```
@@ -7529,7 +7604,8 @@ From `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`:
 ```python
     parser = argparse.ArgumentParser(
         prog="docker_lifecycle.py",
-        description="Name a bootcamp container, or pick its host port, before creating it.")
+        description="Name a bootcamp container, or pick its host port, before creating it; "
+                    "read and check the SDK container's published visualization port.")
     sub = parser.add_subparsers(dest="command")
     named = sub.add_parser(
         "container-name", help="print the project-derived name to create a container with")
@@ -7539,6 +7615,21 @@ From `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`:
                        help="the CLI that will create the container (default: docker)")
     port = sub.add_parser("free-port", help="print a free host loopback port")
     port.add_argument("preferred", type=_port_number, help="the port to try first, e.g. 5432")
+    viz_port = sub.add_parser(
+        "viz-port", help="print the host_port recorded for a container (exit 3: none recorded)")
+    viz_port.add_argument("name", help="the SDK container's recorded name")
+    confirm = sub.add_parser(
+        "confirm-viz",
+        help="probe the published visualization port from the host and print the URL "
+             "only if the server answering is the one just started")
+    confirm.add_argument("name", help="the SDK container's recorded name")
+    source = confirm.add_mutually_exclusive_group(required=True)
+    source.add_argument("--nonce", help="the server_nonce the server printed")
+    source.add_argument("--log", help="the server's output file, to read the startup line from")
+    confirm.add_argument("--wait", type=float, default=0.0,
+                         help="seconds to wait for the startup line in --log (default: 0)")
+    confirm.add_argument("--timeout", type=float, default=5.0,
+                         help="seconds the HTTP probe may take (default: 5)")
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -7735,6 +7826,12 @@ From `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`:
                     help="also write a self-contained standalone HTML to this path")
     ap.add_argument("--no-serve", action="store_true",
                     help="build the model (and snapshot) then exit without serving")
+    # ⛔ Never a wildcard (INV-260). Only the container route passes it, with the
+    # container's own interface address; see `check_bind_host`.
+    ap.add_argument("--bind-host", default=BIND_HOST, type=_bind_host_arg,
+                    help="the IPv4 address to bind (default: 127.0.0.1). On the container "
+                         "route, the container's own interface address. A wildcard "
+                         "(\"\", 0.0.0.0, ::) is refused.")
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -8104,7 +8201,8 @@ def _can_bind(port, host=LOOPBACK):
 Used by:
 
 - `_run`: `test_container_lifecycle_runtimes.py`
-- `_can_bind`: `test_container_names_are_project_derived.py`
+- `_can_bind`: `test_container_names_are_project_derived.py`,
+  `test_container_viz_port_is_published_and_checked.py`
 
 ### 7.5 `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`
 
@@ -8518,7 +8616,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 374 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 375 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8568,21 +8666,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6287 test methods in 374 files, matching `inventory.test_count_total`.
+There are 6333 test methods in 375 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6287.
+sum to 6333.
 
-Two files run more tests than they define, so discovery collects 6281:
+Two files run more tests than they define, so discovery collects 6327:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6274`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6320`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6281`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6327`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -8635,6 +8733,7 @@ looks wrong.
 - `tests/test_conformance_sees_a_rule_beside_a_citation.py`: 8
 - `tests/test_container_lifecycle_runtimes.py`: 18
 - `tests/test_container_names_are_project_derived.py`: 36
+- `tests/test_container_viz_port_is_published_and_checked.py`: 28
 - `tests/test_container_teardown_has_a_route_and_a_failure_report.py`: 8
 - `tests/test_cord_fetch_has_a_403_remedy.py`: 17
 - `tests/test_cord_fetch_integrity.py`: 50
@@ -8944,7 +9043,7 @@ looks wrong.
 - `tests/test_viz_defaults_at_scale.py`: 22
 - `tests/test_viz_endpoint_sync.py`: 7
 - `tests/test_viz_histogram_integer_ticks.py`: 6
-- `tests/test_viz_server_bind_and_identity.py`: 22
+- `tests/test_viz_server_bind_and_identity.py`: 40
 - `tests/test_viz_server_process_handle.py`: 17
 - `tests/test_viz_server_refuses_to_render_without_d3.py`: 12
 - `tests/test_viz_settings_resolution.py`: 12
@@ -9360,10 +9459,14 @@ tests a rebuild can pass from behavior alone.
   - **Verification.** A server that ignores `?tab=` fails the capture. Identical
     captures are deleted. An unsettled animated tab is reported.
   - **The manifest** merges re-captures.
-- **`senzing_viz_server.py`** (19 files).
-  - **Bind and identity.** The server binds loopback, never the wildcard. It
-    serves a per-process `server_nonce` on `/api/stats`, and a foreign answer
-    stops startup.
+- **`senzing_viz_server.py`** (20 files).
+  - **Bind and identity.** The server binds loopback by default, never the
+    wildcard. It serves a per-process `server_nonce` on `/api/stats`, and a
+    foreign answer stops startup. `--bind-host` and `start_serving` refuse
+    `""`, `0.0.0.0`, `::` and every other unspecified address; a real bind on
+    `127.0.0.2` (skipped where it cannot bind) is probed at the bound address;
+    a failed probe leaves nothing listening; the startup line ends with
+    `server_nonce=<nonce>`.
   - **D3.** Without D3 it refuses to render and never falls back to a CDN.
   - **Settings.** A stub `config/engine_config.json` containing
     `{"PIPELINE": {}}` never beats a complete
@@ -9395,6 +9498,14 @@ tests a rebuild can pass from behavior alone.
     container, returns a recorded name unchanged, and issues no command but
     `ps`. `free-port` skips a bound port and never sets `SO_REUSEADDR`. Two
     projects sharing a basename each stop only their own container.
+  - `viz-port` and `confirm-viz`
+    (`tests/test_container_viz_port_is_published_and_checked.py`) run against
+    real sockets: this server's nonce prints `http://localhost:<host_port>`;
+    a foreign nonce exits 1, no nonce in the log or no listener exits 5, and
+    none prints a URL. An entry without `host_port` exits 3, an unrecorded
+    name 4, a bad port 6. Neither issues any container command. Every `-p`
+    in the shipped Markdown publishing 8080 carries `127.0.0.1:` (negative
+    control: an unqualified form is caught).
 - **`brand_tokens.py`** (`tests/test_brand_sync.py`). Every inlined fallback
   palette equals `brand_tokens.py`. Source colors are deterministic and never
   signal green, and exceeding capacity triggers a warning.
@@ -10134,6 +10245,12 @@ Senzing licensing, with no SPDX identifier.
   related parties, recorded and measured in `relationship_intent`, and report
   Module 7's no-path fallback on such a scenario as a bootcamp generation
   defect (a Customer 360 scenario promised households its data never had)
+- #460: publish the SDK container's visualization port to host loopback at
+  creation, recorded as `host_port`, bind the server to the container's own
+  interface address there, and hand over the URL only after a host-side
+  nonce probe (`docker_lifecycle.py confirm-viz`) agrees (the loopback-bound
+  server in the container was unreachable from the host, and the guide
+  improvised a `0.0.0.0` relay)
 - #462: state where Module 5's mapping scripts run and check the analyzer's
   Python 3.10 floor before its first run, with one install offer and a
   recorded skip on no, citing the measured floor after the gate (a macOS
@@ -10143,3 +10260,6 @@ Senzing licensing, with no SPDX identifier.
   budget, and test the left edge in pixels (an assumed 5.9 px per character
   clipped the head of any key of about 22 or more characters, and its test
   reused the same constant)
+- #476: register INV-347 through INV-351 and apply the dated amendments to
+  INV-153, INV-203 and INV-239, closing the 2026-10-10 review (nine deferred
+  blocks from the 2026-10-09 issue runs awaited the maintainer's decision)

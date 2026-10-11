@@ -1321,6 +1321,24 @@ it to the language's default.
 a *bind failure* is describing only one of the two cases. A failure stops the step; this succeeds and
 produces nondeterministic results, which is strictly worse.
 
+⛔ **(INV-260) The one other address: inside the SDK container, bind the container's own interface
+address, on port `8080`.** On SDK setup's container route the server runs inside a container, where
+`127.0.0.1` is the container's own loopback. The port SDK setup published does not reach it, so a
+loopback-bound server there is unreachable from the Bootcamper's browser. Make the bind address a
+setting of your server that defaults to `127.0.0.1`, so every other route is unchanged. On the
+container route, resolve the container's interface address **inside the container, at launch** —
+`python3 -c "import socket; print(socket.gethostbyname(socket.gethostname()))"` run in the container
+— and pass it in. Never hard-code it, and never take it from host-side inspection.
+
+- ⛔ **The wildcard stays forbidden on every route (INV-260).** Refuse `""`, `0.0.0.0` and `::` as a bind
+  address, whatever passed them, and never let a missing setting fall back to one.
+- ⚠️ **Why the interface address is safe where the wildcard is not.** The loopback rule's two reasons
+  live on the host: a stranger's loopback listener, and exposure. The container's network namespace
+  holds no other project's listener, and the only way in from the host is the port SDK setup
+  published to host loopback (`-p 127.0.0.1:<host_port>:8080`), so the host is still exposed on
+  loopback only. A wildcard bind inside the container would also accept every other interface the
+  runtime attaches, which is why the wildcard stays forbidden there too.
+
 ### Confirming the server that answers is yours (required — INV-260)
 
 ⛔ **After binding and before handing the URL to the Bootcamper, probe `/api/stats` and confirm the
@@ -1339,6 +1357,88 @@ directions.** A loopback bind makes a colliding *loopback* listener fail cleanly
 when the pre-existing listener is itself **wildcard**-bound — then your loopback bind is the one that
 succeeds alongside it. Only asking which server answered covers both. Socket coexistence rules differ
 across platforms, so the probe, not the bind, is what must hold on Linux, macOS and Windows alike.
+
+⛔ **Print the nonce on the startup line (INV-260).** Once the probe has passed, every implementation,
+in every language, prints one line that starts `Visualization running:` and ends with the token
+`server_nonce=<nonce>`, the same value `/api/stats` answers with. Nothing else may follow the token on
+that line. The container route reads the nonce from this line, so a server that omits it cannot be
+handed over there.
+
+**Probe the address you bound.** A server bound to the container's interface address does not
+listen on `127.0.0.1`, so its own probe asks the bound address. A loopback probe there would find
+nothing and, correctly, stop the handover.
+
+⛔ **(INV-260) On the container route the server's own probe is not the gate; a probe from the
+host is.** The server's probe runs inside the container and proves nothing about what the
+Bootcamper's browser reaches at `http://localhost:<host_port>`. Before the URL is handed over,
+probe `/api/stats` at the published port **from the host** and compare the nonce answered there
+with the one on the startup line. A disagreement or an unanswerable probe stops the step and
+reports the conflict, exactly as above; it never becomes a warning above a working link.
+
+<a id="container-route"></a>
+
+### Serving from the SDK container (required on the container route — INV-260)
+
+This is the canonical statement of the container-route launch, its host-side check and the URL to
+hand over; Truth Set visualization (`phase1-visualization.md` 2.3) and Query, Visualize and
+Discover (`../module-07-query-visualize-discover/phase1-query-visualize.md` step 3c) link here rather
+than restating it (INV-300). Run the host commands from the project root, on the host. `<runtime>`
+and `<container>` are the SDK container's recorded `runtime` and `name` in `docker_containers`
+(INV-195, INV-349). The helper is `${CLAUDE_PLUGIN_ROOT}/scripts/docker_lifecycle.py` (fallback
+`../../scripts/docker_lifecycle.py` relative to this skill, INV-252). It reads the progress file
+and makes one HTTP request; it never starts, stops or removes a container.
+
+1. **Read the published port.**
+
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/docker_lifecycle.py" viz-port <container>
+   ```
+
+   It prints the recorded `host_port`. Exit `3` means the container was created before SDK setup
+   published the port: follow `../module-02-sdk-setup/SKILL.md` → "Publishing the visualization
+   port on the SDK container", item 4, which asks the Bootcamper before recreating it, then come
+   back here. Any other non-zero exit stops the step: relay its message.
+2. **Start the server inside the container**, bound to the container's interface address on port
+   `8080`, with its output in `logs/viz-server.log` under the mounted project:
+
+   ```bash
+   VIZ_PID=$(<runtime> exec <container> sh -c '
+     . src/scripts/senzing-env.sh
+     BIND=$(python3 -c "import socket; print(socket.gethostbyname(socket.gethostname()))")
+     <server command> --port 8080 --bind-host "$BIND" > logs/viz-server.log 2>&1 &
+     echo $!')
+   ```
+
+   `<server command>` is the module's own launch line with paths as the container sees them; a
+   server in another language takes the address and the port through its own options. The env is
+   sourced as its own statement and the server is the only backgrounded command, so `$!` is the
+   server's pid in the **container** namespace ("Identifying the server process" below). Record
+   it with `port` `8080`, the `host_port` and the container's name. Port `8080` held inside the
+   container can only be an earlier visualization server from this project: the log reports the
+   failed bind, and it is stopped as item 4 says before starting again.
+3. **Confirm from the host, and hand over only the URL the helper prints.**
+
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/docker_lifecycle.py" confirm-viz <container> --log logs/viz-server.log --wait 120
+   ```
+
+   It waits for the startup line, reads its `server_nonce=`, probes
+   `http://127.0.0.1:<host_port>/api/stats` from the host, and prints `http://localhost:<host_port>`
+   only when the nonce answered there is the one printed. Hand over that URL, and run the endpoint
+   checks and screenshots against it. Never build the URL from the server's startup line, which
+   names the container's address. ⛔ Only exit `0` hands over a URL (INV-260). Exit `1` (a different server
+   answered) and exit `5` (no startup line, or no answer) stop the step: report the message,
+   withhold the URL, and never start a relay or proxy in its place.
+4. **Stop it by the container rules in "Identifying the server process", probing the address it
+   bound.** The server does not listen on the container's `127.0.0.1`, so the in-container `python3`
+   port probe asks the interface address:
+
+   ```bash
+   <runtime> exec <container> python3 -c "import socket; a = socket.gethostbyname(socket.gethostname()); s = socket.socket(); s.settimeout(1); print('listening' if s.connect_ex((a, 8080)) == 0 else 'free')"
+   ```
+
+   ⚠️ Never probe the host port to confirm teardown: while the container runs, the runtime can keep
+   accepting connections on the published port whether or not a server listens behind it.
 
 ### Identifying the server process (required)
 
@@ -1409,7 +1509,8 @@ the SDK install brings in:
   `procps`; `/bin/kill` is a `procps` binary and is not there. The pid is the one INV-223 requires
   the launch to have recorded.
 - **Probe the port with `python3`**, since `lsof` is absent: a short `socket` connect against the
-  port, run with `docker exec <container> python3 -c …`. `python3` is present because the SDK
+  port, run with `docker exec <container> python3 -c …`, at the address the server bound (the
+  container's interface address, per "Serving from the SDK container" item 4). `python3` is present because the SDK
   install put it there, and this is the same probe the host path makes with `lsof` — the same
   question asked by the only tool available.
 
