@@ -1,4 +1,4 @@
-# Module 7, Phase 2b: Discover, Part B (step 4d)
+# Module 7, Phase 2b: Discover, Part B (steps 4d–4e)
 
 Follow the ground rules. `🛑`/`⛔` are internal directives, never render them; signal a stop by
 ending the turn on the single 👉 question and waiting. On load, read
@@ -6,8 +6,9 @@ ending the turn on the single 👉 question and waiting. On load, read
 `module_7_query.steps`. Resume from the first incomplete step; do not re-run completed
 demonstrations.
 
-Load this file after completing steps 4a–4c in `phase2-discover.md`. When complete, return to
-`phase1-query-visualize.md` for the Query Completeness Gate.
+Load this file after completing steps 4a–4c in `phase2-discover.md`, or for step 4e alone from any
+Discover exit (the opt-in decline and the two early exits in `phase2-discover.md`). When complete,
+return to `phase1-query-visualize.md` for the Query Completeness Gate.
 
 **No direct SQL and no fabricated methods (see SKILL.md):** `find_network` and `find_path` are
 SDK methods, not MCP tools. Generate the SDK code, sourcing flags and signatures from
@@ -235,13 +236,9 @@ connections between entities using `find_network` and `find_path`.
      relationship-rich data.
    - Write step 4d status as `"skipped"` with reason `"no_relationships"` in the checkpoint.
 8. **Transition:** relationship-network exploration is the final Discover demonstration. After
-   presenting it (or the fallback above), end the turn on this single question:
-
-   👉 **Would you like to continue to module completion now?**
-
-   *(Internal: end the turn on this question and wait.)* The Discover phase is complete either
-   way — proceed to Discover phase completion below, then return to `phase1-query-visualize.md`
-   for the Query Completeness Gate.
+   presenting it (or the fallback above), write this step's checkpoint and continue to step 4e
+   below. Module 7's transition question is asked at the end of step 4e, after its export offers,
+   and never in the same turn as one of them (INV-251).
 
 **Checkpoint:** write step 4d under `module_7_query.steps.4d`:
 
@@ -251,20 +248,164 @@ connections between entities using `find_network` and `find_path`.
 Include the `reason` field only when the step is skipped. Also set top-level `current_step` to
 `"4d"`.
 
+### Step 4e: Export for the systems named in Module 1
+
+Module 1 Step 10a asked whether the results must interface with other software, and held the
+systems the Bootcamper named as `integration_targets` in `config/bootcamp_preferences.yaml`
+(INV-097). This step is where that answer is acted on: it offers to export the resolved results
+in each named system's import format, proves the export carries the entities, the relationships
+between them and the business attributes asked for, and only then hands the file over.
+
+**It runs on every path:** after step 4d, and from every Discover exit (the opt-in decline and the
+two early exits in `phase2-discover.md`). The export reads the loaded data, not Discover's
+findings, so a skipped or shortened walkthrough changes nothing here. On resume, do not re-offer a
+system already recorded under `module_7_query.steps.4e.targets` (INV-006).
+
+The step does not load the export into the target system, and no vendor's tooling is a
+prerequisite: the deliverable is the written file (or files) and the program that writes them.
+
+⛔ **No target's import format ships in this plugin: take it from your own knowledge of the system, or from the Bootcamper.**
+There is no template, schema or column list here to copy for any system, and no fixed list of
+supported systems.
+
+1. **Read the targets.** Read `integration_targets` from `config/bootcamp_preferences.yaml`. A
+   missing key or an empty list means no system was named.
+2. **No system named.** Say so as a statement first: "In Module 1 you didn't name a system your
+   results need to feed, so there's nothing set up to export for." Then offer once (INV-006):
+
+   👉 **Is there a system you'd like your resolved results exported for? If so, name it.**
+
+   *(Internal: end the turn on this question and wait.)* A reply that names a system continues at
+   item 3's **Yes** branch for that one system, without asking item 3's question again. Record it
+   in this step's checkpoint, not in `config/bootcamp_preferences.yaml`, which Module 1 owns.
+   ⛔ **Any reply that does not name a system ends the step with nothing produced.**
+   Write the checkpoint `{"status": "skipped", "reason": "no_target"}` and go to the transition
+   below.
+3. **Offer, one system per turn.** For each named system, in the order Module 1 recorded them,
+   each offer in a turn of its own (INV-251):
+
+   👉 **Would you like me to export your resolved results in [system]'s import format?**
+
+   *(Internal: end the turn on this question and wait.)* `[system]` is the name as recorded.
+   - **No:** record `{"system": "<name>", "status": "declined"}` and offer the next system on the
+     next turn.
+   - **Yes:** run items 4–10 for this system, then offer the next one.
+4. **Name the target format.** From your own knowledge of the system, state its import format and
+   the files it takes (a property-graph database, for example, often takes one file of nodes and
+   one of edges), so the Bootcamper can correct you before anything is written.
+   ⛔ **When you cannot name the format confidently, say so and ask for it; write nothing until it arrives, and never invent one.**
+   Ask:
+
+   👉 **I don't know [system]'s import format well enough to write it without guessing. Could you share the format, or a link to its documentation?**
+
+   *(Internal: end the turn on this question and wait.)* Write the export from what they share. If
+   they have neither, record `{"system": "<name>", "status": "skipped", "reason":
+   "format_unknown"}`, write nothing for this system, and offer the next one.
+5. **Ask which business attributes the nodes must carry.** Senzing resolves the entities and the
+   relationships; the business payload, such as amounts, account roles or statuses, is in the
+   source records' own fields. Ask, as its own turn:
+
+   👉 **Which fields from your source records should each node carry (for example, amounts or account roles)? Reply "none" if the entities and relationships are enough.**
+
+   *(Internal: end the turn on this question and wait.)* Hold the fields named; item 9 checks the
+   export against them.
+6. **Take the Senzing side from the MCP server, at this step.** ⛔ (INV-080) Which SDK calls and flags the program uses, and which entities and relationships become nodes and edges, come from the server now, never from this file or from memory:
+   - `reporting_guide(topic='graph', language='<chosen_language>')`: the export and network
+     patterns, and the graph anti-patterns.
+   - `reporting_guide(topic='data_mart', language='<chosen_language>', scale='<scale>')`: the
+     relationship pattern an edge list follows. The topic requires `scale`; take it from the
+     topic's own decision tree against the loaded record count rather than asking another
+     question.
+   - `get_sdk_reference(topic='flags', filter='export_json_entity_report')` and
+     `get_sdk_reference(topic='response_schemas', filter='export_json_entity_report')`: the export's
+     flags and its row shape. The method's signature for the Bootcamper's binding comes back with
+     them; read that binding's, not another language's.
+
+   ⛔ **Edges are Senzing relationships, each carrying its match type and match key; never write an edge per shared feature.**
+   That is the `graph` topic's own anti-pattern (server 1.37.27, 2026-10-11): feature-level edges
+   bloat the graph with noise.
+7. **Check one export row before writing the reader.** ⛔ (INV-115) Dump one row and read its top-level keys before any code parses the export.
+   Generate a short program that opens the export with the flags chosen in item 6, fetches one
+   row, prints its top-level keys, and prints whether one of its records carries that record's
+   source JSON (`JSON_DATA`). Show the Bootcamper the keys. Then:
+   - **`RELATED_ENTITIES` is absent:** the flags did not ask for relationships. Find the
+     relationship flags in item 6's `flags` response, add them, and dump again. If it is still
+     absent there are no relationships to export; continue, and item 9 reports the zero-edge
+     failure with this result.
+   - **Business attributes need a per-record `get_record` pass.** The fields asked for in item 5
+     live in each record's `JSON_DATA`, and `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` is the flag that
+     returns it. Re-ask before relying on this:
+     `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_JSON_DATA')`. On server
+     1.37.27 (2026-10-11) its `applies_to` lists `get_record` and the entity, search, why, path
+     and network calls, but neither export method, so an export row does not carry the record JSON
+     however its flags are set; `get_record`'s default composite, `SZ_RECORD_DEFAULT_FLAGS`, is
+     that one flag. So for each record in each exported entity, call `get_record` and read the
+     fields from its `JSON_DATA`. If the lookup now lists an export method and the dumped row
+     already carries `JSON_DATA`, read the fields from the row and skip the pass: the dumped row is
+     the authority for what this installation returns.
+     <!-- MCP-NEGATIVE: get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_JSON_DATA') — its applies_to names get_record and the entity, search, why, path and network calls, and neither export_json_entity_report nor export_csv_entity_report — owner: the flag's own applies_to IS the route that carries which methods accept it; search_docs returns the Java SzFlag javadoc listing SZ_EXPORT_FLAGS among its usage groups, which is why the dumped row decides (absence negative) — server 1.37.27, 2026-10-11 -->
+8. **Write and run the export program.** Write it in the Bootcamper's chosen language
+   (`programming_language` in `config/bootcamp_preferences.yaml`, INV-002), with the SDK code
+   sourced as item 6 says, and save it under `src/query/` (for example
+   `src/query/export_<system>.<ext>`), so graduation's existing `src/query/**` copy carries it into
+   `production/` unchanged. It writes its files under `data/temp/exports/<system>/`, which it
+   recreates on every run. Run it.
+9. **Count what was written, then report it.** ⛔ (INV-129) Count from the written files, never from the exit status or the program's own log:
+   - the **entity count**: nodes written;
+   - the **edge count**: edges written;
+   - the **attribute count**: nodes that carry the fields asked for in item 5 (left out when the
+     answer was "none").
+
+   Report all three to the Bootcamper.
+   ⛔ **A zero edge count is a failure, never a finished export.**
+   Say the export failed, give item 7's result (whether `RELATED_ENTITIES` appeared, and with
+   which flags), and do not hand the file over as finished. Record `"status": "failed", "reason":
+   "zero_edges"` for this system. When step 4a found no relationships in the data, say that too.
+   When the fields asked for are on no node, report the attribute count as zero and name item 7's
+   `get_record` pass as the first cause to check.
+10. **Hand over.** When the edge count is above zero, give the path of each written file and of the
+    program, and the command that reruns it. Record `"status": "exported"` with the format, the
+    program, the outputs and the three counts.
+
+**Transition.** When every named system has been offered (or the single offer in item 2 was
+answered), and the step was entered from step 4d, end the turn on Module 7's transition question,
+in a turn of its own and never merged with an offer above (INV-251):
+
+👉 **Would you like to continue to module completion now?**
+
+*(Internal: end the turn on this question and wait.)* Either way, proceed to Discover phase
+completion below, then return to `phase1-query-visualize.md` for the Query Completeness Gate. When
+the step was entered from a Discover exit, the Bootcamper already chose to move on at that exit's
+question, so do not ask it again: return to `phase1-query-visualize.md` for the Query Completeness
+Gate.
+
+**Checkpoint:** write step 4e under `module_7_query.steps.4e`:
+
+- When no system was named and none was given at item 2:
+  `{"status": "skipped", "reason": "no_target"}`.
+- Otherwise `{"status": "completed", "targets": [...]}`, one entry per system, each written as
+  soon as that system's offer is settled: `{"system": "<name>", "status": "declined"}`,
+  `{"system": "<name>", "status": "skipped", "reason": "format_unknown"}`, `{"system": "<name>",
+  "status": "failed", "reason": "zero_edges", "entities": <n>, "edges": 0, "attribute_nodes":
+  <n>}`, or `{"system": "<name>", "status": "exported", "format": "<format>", "program":
+  "src/query/<file>", "outputs": [...], "entities": <n>, "edges": <n>, "attribute_nodes": <n>}`.
+
+Also set top-level `current_step` to `"4e"`.
+
 ### Discover phase completion
 
-After step 4d is complete (or after any early exit), update the top-level `discover_phase`
+After step 4e is complete (or after any early exit), update the top-level `discover_phase`
 status in `config/bootcamp_progress.json` under `module_7_query`:
 
 - Set `"discover_phase": "completed"` when all steps 4a–4d have been checkpointed (whether
-  completed or individually skipped due to data limitations).
+  completed or individually skipped due to data limitations). Step 4e runs on every path, so it
+  does not decide this status.
 - Set `"discover_phase": "skipped"` when the bootcamper declines the Discover phase at the
   opt-in prompt or exits early at any transition point.
 
-(The former step 4e — data-specific visualization suggestions — are now tabs of the Phase 1
-step-3c visualization app (Match Keys, Feature Scores, Cross-Source, and Entity Graph's
-relationship mode) and are
-no longer part of the Discover phase.)
+(The data-specific visualization suggestions that were once numbered step 4e are now tabs of the
+Phase 1 step-3c visualization app (Match Keys, Feature Scores, Cross-Source, and Entity Graph's
+relationship mode) and are no longer part of the Discover phase. Step 4e is now the export above.)
 
 The full checkpoint structure in `config/bootcamp_progress.json` is:
 
@@ -275,7 +416,8 @@ The full checkpoint structure in `config/bootcamp_progress.json` is:
       "4a": {"status": "completed", "patterns_found": {"multi_record": 5, "cross_source": 3, "relationships": 2}},
       "4b": {"status": "completed", "entity_demonstrated": 1234},
       "4c": {"status": "completed", "entity_demonstrated": 5678},
-      "4d": {"status": "completed"}
+      "4d": {"status": "completed"},
+      "4e": {"status": "completed", "targets": [{"system": "<as named>", "status": "exported", "format": "<format named in item 4>", "program": "src/query/<program file>", "outputs": ["data/temp/exports/<system>/<file>"], "entities": 1200, "edges": 340, "attribute_nodes": 1150}]}
     },
     "discover_phase": "completed"
   }
@@ -286,5 +428,6 @@ After updating the `discover_phase` status, return to `phase1-query-visualize.md
 Completeness Gate.
 
 **Success:** Discover phase completed (or explicitly skipped), data patterns analyzed, why/how
-analysis demonstrated, and relationship networks explored. (Data-specific visualization
+analysis demonstrated, relationship networks explored, and an export offered for each system named
+in Module 1 (or once, when none was named). (Data-specific visualization
 suggestions are offered separately at the Phase 1 step-3c visualization gate.)

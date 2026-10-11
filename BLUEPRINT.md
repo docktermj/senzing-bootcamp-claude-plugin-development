@@ -1730,7 +1730,9 @@ steps 9 to 17. Every step checkpoints to `config/bootcamp_progress.json`.
   `docs/data_architecture.md`; otherwise it asks for diagrams.
 - 10a: integration question (and systems), then deployment target (cloud,
   container, local, not sure); one write of `integration_targets`,
-  `deployment_target`, `cloud_provider` to preferences.
+  `deployment_target`, `cloud_provider` to preferences. A statement before the
+  pinned integration question says Module 7 offers an export for a named
+  system, and names Module 7's step 4e as where the answer is acted on.
 - 11: `docs/business_problem.md` from a fixed template, with verbatim
   bootcamper quote lines on prose sections only. Generated scenarios add
   the `> 🤖 Bootcamp-generated business case` marker, the diagram link and
@@ -2387,12 +2389,30 @@ entity's records (in the 3c app when it is up, else as text) and a multi-select
 of its feature types, before any `why_*` call. 4b demonstrates `why_records` with
 `SZ_INCLUDE_MATCH_KEY_DETAILS` plus a relations flag, 4c narrates
 `how_entity` (both fall back to `FEATURE_SCORES`, both checkpoint
-`entity_demonstrated`), each ending with continue-or-finish. Phase 2b
+`entity_demonstrated`), each ending with continue-or-finish. The opt-in
+decline and both finish exits run step 4e before the gate. Phase 2b
 (`phase2b-discover.md`, 4d) shows `find_network` and `find_path` (hub method for
 a 2+ degree pair, up to three hubs; links from `ENTITY_NETWORK_LINKS[]` or
 `ENTITY_PATH_LINKS[]` with `MIN_ENTITY_ID`/`MAX_ENTITY_ID`; Python takes a list
-of ints), or records `skipped`/`no_relationships`, then sets
-`discover_phase` to `"completed"` and returns to the gate. On a synthesized
+of ints), or records `skipped`/`no_relationships`, then hands on to 4e.
+Step 4e, on every path, exports for the systems in `integration_targets`: none
+named means a statement and one offer, and a reply naming no system ends it
+with nothing produced (`no_target`); otherwise one pinned offer per system per
+turn. ⛔ No target's import format ships: the AI names it from its own
+knowledge or asks for it, writing nothing invented (`format_unknown`). A pinned
+question asks which source fields the nodes carry. The Senzing side comes at
+the step from `reporting_guide` `graph` and `data_mart` and the export's
+`flags` and `response_schemas`; edges are Senzing relationships with match
+type and match key, never per shared feature. One export row is dumped and its
+keys read first (relation flags added when `RELATED_ENTITIES` is absent);
+business attributes take a per-record `get_record` pass, re-asked at the step,
+skipped when the dumped row already carries `JSON_DATA`. The program, in the
+chosen language under `src/query/`, writes `data/temp/exports/<system>/`;
+entity, edge and attribute counts come from the written files, and zero edges
+is a failure, never handed over. Each system lands in `steps.4e.targets`. The
+transition question follows the offers in its own turn (not repeated after a
+Discover exit); then `discover_phase` is set to `"completed"` and the module
+returns to the gate. On a synthesized
 source whose `quality_intent` carries `relationship_intent`, or whose scenario's
 success criteria name households or related parties, reaching the 4d or step 7
 fallback is reported as a bootcamp generation defect with `/bootcamp-feedback`.
@@ -8694,7 +8714,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 380 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 381 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8744,21 +8764,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6447 test methods in 380 files, matching `inventory.test_count_total`.
+There are 6493 test methods in 381 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6447.
+sum to 6493.
 
-Two files run more tests than they define, so discovery collects 6369:
+Two files run more tests than they define, so discovery collects 6415:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6362`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6408`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6369`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6415`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -8963,6 +8983,7 @@ looks wrong.
 - `tests/test_module6_data_dirs_are_copied_or_excluded.py`: 5
 - `tests/test_module7_asks_the_bootcampers_question_first.py`: 12
 - `tests/test_module7_discover_instructions.py`: 17
+- `tests/test_module7_exports_for_integration_targets.py`: 46
 - `tests/test_module_0_suggested_queries_are_measured.py`: 18
 - `tests/test_module_5_describes_the_entity_specification_as_served.py`: 9
 - `tests/test_module_7_points_at_the_factory_lifetime_rule.py`: 9
@@ -10365,6 +10386,15 @@ Senzing licensing, with no SPDX identifier.
   renders as its own page, and closes by stating there is no script from here
   (graduation handed over a PDF and a project, never the ability to direct the
   next build)
+- #487: Module 7's new step 4e, on every Discover path, offers one export per
+  system named in Module 1's `integration_targets` (one offer when none was
+  named), in a format the AI names or asks for, never shipped or invented, with
+  the Senzing side from `reporting_guide` at the step, a one-row key check, a
+  per-record `get_record` pass for business attributes, and counts from the
+  written files where zero edges is a failure; Module 1 Step 10a names Module 7
+  as where its answer is acted on (no module read `integration_targets`, and a
+  real Bootcamper's graph load came out with no relationships and no business
+  attributes)
 - #490: on SDK setup's container route, Truth Set visualization's Python path
   copies `senzing_viz_server.py`, `brand_tokens.py` and `vendor/d3.v7.min.js`
   into `data/temp/truthset-viz/` before each in-container run and runs that

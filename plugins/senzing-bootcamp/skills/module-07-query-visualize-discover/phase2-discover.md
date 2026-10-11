@@ -7,7 +7,7 @@ ending the turn on the single 👉 question and waiting. On load, read
 demonstrations.
 
 Load this file when Phase 1 reaches step 4. When steps 4a–4c are complete, load
-`phase2b-discover.md` for step 4d.
+`phase2b-discover.md` for step 4d and step 4e.
 
 **No direct SQL and no fabricated methods (see SKILL.md):** every entity operation here
 (`get_entity_by_record_id`, `why_records`, `why_entities`, `how_entity`) is generated SDK
@@ -37,7 +37,8 @@ Then ask whether to proceed.
 *(Internal: end the turn on this question and wait.)*
 
 - **Declines:** write `discover_phase: "skipped"` to `config/bootcamp_progress.json` under
-  `module_7_query` and return to `phase1-query-visualize.md` for the Query Completeness Gate.
+  `module_7_query`, run step 4e (the export offer) in `phase2b-discover.md`, which runs on every
+  path, and then return to `phase1-query-visualize.md` for the Query Completeness Gate.
 - **Agrees:** write `discover_phase: "in_progress"` under `module_7_query` and continue to
   step 4a.
 
@@ -329,8 +330,9 @@ teaches the bootcamper how Senzing explains its resolution decisions.
    2. Proceed to module completion.
 
    *(Internal: end the turn on this question and wait.)* If the bootcamper chooses to exit,
-   write `discover_phase: "skipped"` to `config/bootcamp_progress.json` and return to
-   `phase1-query-visualize.md` for the Query Completeness Gate.
+   write `discover_phase: "skipped"` to `config/bootcamp_progress.json`, run step 4e (the export
+   offer) in `phase2b-discover.md`, and then return to `phase1-query-visualize.md` for the Query
+   Completeness Gate.
 
 **Checkpoint:** write step 4b under `module_7_query.steps.4b`, using
 `{"status": "completed", "entity_demonstrated": <entity_id>}` where `<entity_id>` is the numeric
@@ -481,8 +483,9 @@ Demonstrate How Analysis using a concrete multi-record entity (3+ records) ident
    2. Proceed to module completion.
 
    *(Internal: end the turn on this question and wait.)* If the bootcamper chooses to exit,
-   write `discover_phase: "skipped"` to `config/bootcamp_progress.json` and return to
-   `phase1-query-visualize.md` for the Query Completeness Gate.
+   write `discover_phase: "skipped"` to `config/bootcamp_progress.json`, run step 4e (the export
+   offer) in `phase2b-discover.md`, and then return to `phase1-query-visualize.md` for the Query
+   Completeness Gate.
 
 **Checkpoint:** write step 4c under `module_7_query.steps.4c`, using
 `{"status": "completed", "entity_demonstrated": <entity_id>}` where `<entity_id>` is the numeric
@@ -490,5 +493,5 @@ entity ID used in the How Analysis demonstration. Also set top-level `current_st
 
 ---
 
-**Next:** load `phase2b-discover.md` for step 4d (relationship networks) and Discover Phase
-Completion.
+**Next:** load `phase2b-discover.md` for step 4d (relationship networks), step 4e (export for
+the systems named in Module 1) and Discover Phase Completion.
