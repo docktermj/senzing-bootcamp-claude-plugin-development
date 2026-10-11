@@ -12,47 +12,96 @@ visualization data come from `reporting_guide`. Never query `database/G2C.db` ta
 ## 1. Define query requirements
 
 **First action, before any bootcamper interaction in this step:** read
-`docs/business_problem.md`.
+`docs/business_problem.md` and choose the path. Show nothing from it yet.
 
-**IF** `docs/business_problem.md` exists AND contains at least one success criterion or at
-least one non-empty desired-output field:
+- **Business-problem path:** `docs/business_problem.md` exists AND contains at least one
+  success criterion or at least one non-empty desired-output field.
+- **Fallback path:** otherwise (file missing, OR both success-criteria and desired-outputs
+  sections are missing or empty).
 
-- Derive between 1 and 10 query requirements from the success criteria and desired outputs in
-  the document. Each derived requirement must reference the specific success criterion or
-  desired output it addresses.
-  - ⚠️ **(INV-275) Derive from the REFINED prose, not from the `> "…"` quotes beside it.** Those blockquotes
-    are the Bootcamper's own words, preserved so a misrendering can be caught at Module 1's
-    confirmation gate; they are provenance, not requirements input. **But read them when the two
-    disagree** — a quote that contradicts the prose above it means the refinement drifted, and the
-    quote is what the Bootcamper actually said. Raise the discrepancy here rather than deriving a
-    requirement from either side of it: on 2026-08-25 a *possible*-fraud routing rule was rendered
-    as *confirmed* fraud, and requirement 7 came out titled "Confirmed-fraud candidate list" three
-    modules downstream of the substitution.
-- Present them with this attribution: "Based on your business problem, here are
-  the query requirements I've derived:"
-- List each requirement with its source (e.g. "From your success criterion about [X]..." or
-  "From your desired output format of [Y]...").
+⛔ **The Bootcamper's question comes first, on both paths.** Turn 1 asks only the open question
+below, its one 👉 (INV-251), and shows no derived requirement, not even a hint of one. A list
+shown first leaves only "approve it?" to ask, and real Bootcampers answered "No" to that and never
+said what they wanted to know. Their answer is the requirements' first source; the business
+problem checks it.
 
-👉 **Is there anything you'd like to adjust?**
+### Turn 1: the open question (both paths)
+
+👉 **What do you want to find out about your data?**
+
+*(Internal: end the turn on this question and wait. It is asked once in this step and never
+again, whatever the answer.)*
+
+Split the answer into one question per thing the Bootcamper wants to find out, and keep their
+own words for each. These are **their questions**.
+
+<a id="requirements-gate"></a>
+
+### Turn 2, business-problem path: the confirming gate
+
+Derive between 1 and 10 query requirements from the success criteria and desired outputs in
+the document. Each derived requirement must reference the specific success criterion or desired
+output it addresses.
+
+- ⚠️ **(INV-275) Derive from the REFINED prose, not from the `> "…"` quotes beside it.** Those blockquotes
+  are the Bootcamper's own words, preserved so a misrendering can be caught at Module 1's
+  confirmation gate; they are provenance, not requirements input. **But read them when the two
+  disagree** — a quote that contradicts the prose above it means the refinement drifted, and the
+  quote is what the Bootcamper actually said. Raise the discrepancy here rather than deriving a
+  requirement from either side of it: on 2026-08-25 a *possible*-fraud routing rule was rendered
+  as *confirmed* fraud, and requirement 7 came out titled "Confirmed-fraud candidate list" three
+  modules downstream of the substitution. Raise it beside the affected requirement in this turn,
+  under the confirming question below, never as a second 👉 (INV-251).
+
+Present one combined list, in this order:
+
+1. **Your questions.** Each of their questions, quoting their own words ("You asked: '…'").
+   Where a derived requirement covers one, name its Module 1 source beside it ("this matches
+   your success criterion about [X]"), so it is listed once, not twice.
+2. **From your business problem.** Each derived requirement their answer did not cover, with
+   its source ("From your success criterion about [X]..." or "From your desired output format
+   of [Y]..."), marked **(not asked for)**. When the answer covers every derived requirement,
+   this part is empty and nothing is marked.
+
+**At most 10 requirements in the combined list.** Their questions come first and are never
+dropped to make room; add derived requirements only while the list holds fewer than 10. If their
+questions alone reach 10, add no derived requirement and keep all of theirs.
+
+Then end the turn on the confirming question, the only 👉 in this turn:
+
+👉 **Shall I build queries for this list, or would you like to drop or change any of it?**
 
 *(Internal: end the turn on this question and wait.)*
 
-- **Accepts or modifies:** proceed with the confirmed requirements.
-- **Rejects all derived requirements:** ask the fresh open-ended question below (the same 👉
-  question as the ELSE branch), without referencing the rejected items.
+- **Confirms, or changes items:** proceed with the confirmed list. Each requirement that came
+  from their answer keeps their own words.
+- **Drops the derived requirements:** proceed with their questions only. Do not ask the open
+  question again.
 
-**ELSE** (file missing, OR both success-criteria and desired-outputs sections are missing or
-empty): ask the fresh open-ended question:
+### After the answer, fallback path
 
-👉 **What questions do you need to answer with your data?**
+Nothing is derived, so nothing is marked. Build one requirement per question, each quoting
+their own words, and proceed to step 2.
 
-*(Internal: end the turn and wait.)*
+### When the answer is "I don't know" (or similar)
+
+Do not ask the open question again.
+
+- **Business-problem path:** present the derived requirements as the guide's suggestion
+  ("Here is what your business problem suggests:"), every item marked **(not asked for)**, and
+  end on the same confirming 👉 as Turn 2. If they then drop every item, offer the common
+  queries as the fallback-path bullet below does.
+- **Fallback path:** offer the common queries below as numbered options, then end the turn on
+  the one 👉 beneath them, and build the requirements from their choice:
+
+  👉 **Which of these would you like to find out?**
 
 Common queries (guidance for both paths): find duplicates within a source; find cross-source
 matches; search for specific entities; get an entity 360 view; retrieve and format resolved
 entities.
 
-**Checkpoint:** write step 1 to `config/bootcamp_progress.json`.
+**Checkpoint:** write step 1 to `config/bootcamp_progress.json` once the requirements are
+settled.
 
 ## 2. Create query programs
 
