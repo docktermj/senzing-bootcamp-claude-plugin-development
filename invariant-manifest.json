@@ -1,5 +1,5 @@
 {
-  "count": 347,
+  "count": 348,
   "generator": ".claude/skills/review-invariants/invariant_manifest.py",
   "invariants": [
     {
@@ -3470,6 +3470,16 @@
       "statement": "The `claude plugin …` commands on the GitHub Pages site (`docs/index.html`, inside `<code>`) MUST be, as a set, the `claude plugin …` commands in `docs/README.md`'s `console` blocks. A change to either file's commands MUST change the other in the same change. Repeats and the page's one-command-per-block splitting are not differences. ⛔ The page repeats the README's install commands and nothing compared them until #455, so the two could drift silently, as their model names already had. (⚠️ **Why a separate id rather than one Pages-site rule with #452's slug draft, so the question is not re-derived.** The #452 draft governs which repository a published file names; this governs two documents agreeing with each other. Two subjects are two invariants, so the maintainer registered this one on its own at review, 2026-10-10.) Enforced by `tests/test_pages_site_commands_match_docs_readme.py`, which fails naming the file when either side yields no command, with a negative control that changes one command on the page, and **cannot** establish that the page's other commands, its prose or its Claude Desktop route follow their sources. (Source: `nothing-checks-the-pages-site-commands-against-docs-readme`, GitHub issue #455, 2026-10-09; registered 2026-10-10.)",
       "status": "active",
       "summary": "The `claude plugin …` commands on the GitHub Pages site (`docs/index.html`, inside `<code>`) MUST be, as a set, the `claude plugin …` commands in `docs/README.md`'s `console` blocks.",
+      "superseded_by": null
+    },
+    {
+      "id": "INV-349",
+      "index_group": "Module flow, selection and progress",
+      "partly_superseded_by": null,
+      "section": "Invariants added from implemented specs",
+      "statement": "Every container the bootcamp creates MUST take its name from `docker_lifecycle.py container-name <base>`, which derives `<base>-<slug>-<hash6>` from the project directory (the slug from its basename, the hash from SHA-256 over its normcased real path) and, for `docker` and `podman`, moves to `-2` … `-9` past a name held by a container that this project's `docker_containers` does not record. The name created is the name recorded, and every later command reads the recorded name, and the recorded `host_port` for a published port, never a literal. ⛔ No container that this project's `docker_containers` does not record may ever be removed, stopped, started or reused, by the helper, by a hook, or by the guide recovering from a failed `run`; the helper issues no container command but the read-only `ps` probe. A fixed name let one project's SessionEnd stop another project's container, and the obvious recovery from the collision, removing the container in the way, would have destroyed another project's environment (#461). (⚠️ **Why a new id rather than a note on INV-195 or INV-101, so the question is not re-derived.** INV-101 says a started container is recorded and stopped at SessionEnd; INV-195 says every lifecycle action dispatches on the recorded runtime. Neither says how a container is named before it is recorded, nor anything about containers this project did not record, and the collision this fixes happened with both satisfied. The naming scheme and the never-touch rule were weighed as two invariants at review and kept as one, since the never-touch clause is the reason for the naming.) Enforced by `tests/test_container_names_are_project_derived.py`, which stubs every container CLI and asserts the derivation, the conflict walk against an allowlist of `ps` alone (negative control: the hooks' `stop` is flagged), two projects with one basename each stopping only their own container (negative control: the old fixed name collides), and Module 2's text, and **cannot** establish that the guide keeps the never-touch rule in a live recovery, which is conversational, or that Apple `container`'s name-in-use failure is recognized, since its `ps` is unverified. (Source: `sdk-setup-container-names-are-project-derived`, GitHub issue #461, 2026-10-09; registered 2026-10-11.)",
+      "status": "active",
+      "summary": null,
       "superseded_by": null
     }
   ],

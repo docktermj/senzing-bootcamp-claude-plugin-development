@@ -305,7 +305,8 @@ def container_name(base, runtime=DEFAULT_RUNTIME):
 
     The only container command this issues is ``_container_state``'s read-only
     ``ps``. It never removes, stops, starts or runs anything: a name in use that this
-    project does not record is another project's container, and is left alone.
+    project does not record is another project's container, and is left alone
+    (INV-349).
     """
     derived = derived_container_name(base)
     recorded = {c.get("name") for c in tracked_containers()}

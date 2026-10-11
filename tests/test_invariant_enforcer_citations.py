@@ -581,7 +581,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # establish -- that the page's other commands, prose or Claude Desktop route follow their sources.
 # Re-derived by running the extractor -- 197, the new pair present by name and none removed.
 # EXPECTED_PAIRS 196 -> 197.
-EXPECTED_PAIRS = 197
+# 198 on 2026-10-11: INV-349 (containers take a project-derived name, and no unrecorded container is
+# ever touched; #461) names test_container_names_are_project_derived.py, which cites it back and states
+# what it does NOT establish -- that a live recovery keeps the never-touch rule. Re-derived by running
+# the extractor -- 198, the new pair present by name and none removed. EXPECTED_PAIRS 197 -> 198.
+EXPECTED_PAIRS = 198
 
 
 def pairs():
