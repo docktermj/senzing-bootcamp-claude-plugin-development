@@ -975,7 +975,7 @@ it produces silently suppressed merges that only the post-load match-key audit w
 > needs Python 3.10 or newer; the other three carry no measured floor** (the measurement is the ⛔
 > entry directly below this gate).
 >
-> ⛔ **(INV-080, INV-006) Check the analyzer's Python before its first run, never after a `SyntaxError`.**
+> ⛔ **(INV-347, INV-080, INV-006) Check the analyzer's Python before its first run, never after a `SyntaxError`.**
 > Run `python3 --version` where the analyzer will run: inside the container on the `docker` route
 > (its `debian:bookworm-slim` base normally ships 3.11, but run the check rather than assume it),
 > on the host on a native route. On Windows the command name is `python3` too, which

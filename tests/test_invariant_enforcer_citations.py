@@ -560,7 +560,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_every_line_reading_guard_gives_a_verdict.py, which already cites INV-346 back. Re-derived by
 # running the extractor -- 192, the one new pair present by name and none removed.
 # EXPECTED_PAIRS 191 -> 192.
-EXPECTED_PAIRS = 192
+# 193 on 2026-10-10: INV-347 (Module 5 checks the analyzer's Python against the measured floor before
+# its first run; #462) names test_analyzer_python_floor_is_cited.py, which cites it back and states what
+# it does NOT establish -- that a live run checks before running, or that the floor still holds.
+# Re-derived by running the extractor -- 193, the new pair present by name and none removed.
+# EXPECTED_PAIRS 192 -> 193.
+EXPECTED_PAIRS = 193
 
 
 def pairs():

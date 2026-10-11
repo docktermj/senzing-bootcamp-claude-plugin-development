@@ -32,6 +32,12 @@ run of whitespace made one space, so a phrase wrapped across lines still matches
 Each check is a function over the file's text, so the negative controls at the bottom run the
 same predicate against a copy with the pinned part removed or changed and confirm it fails.
 
+Enforces **INV-347** (before Module 5 runs the analyzer, the Python where it runs is checked against
+the measured floor; below it, one install offer and a recorded, non-repeated skip, never a bare
+`SyntaxError`). It asserts that the gate and the entry *state* this. It does **not** establish that a
+live run checks before running, which only `dry-run` phase 3 can observe, or that the floor still
+holds on today's server, which only a re-measurement can.
+
 Source issue: #462.
 
 Run:  python3 -m unittest discover -s tests
