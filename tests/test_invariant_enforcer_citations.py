@@ -573,7 +573,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # names test_generated_data_supports_its_success_criteria.py, which already cites INV-239 back.
 # Re-derived by running the extractor -- 195, the one new pair present by name and none removed.
 # EXPECTED_PAIRS 194 -> 195.
-EXPECTED_PAIRS = 195
+# 196 on 2026-10-10: INV-153's dated note (#463: the gutter is sized from the rendered width) names
+# test_viz_defaults_at_scale.py, which already cites INV-153 back. Re-derived by running the
+# extractor -- 196, the one new pair present by name and none removed. EXPECTED_PAIRS 195 -> 196.
+EXPECTED_PAIRS = 196
 
 
 def pairs():
