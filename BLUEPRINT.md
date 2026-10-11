@@ -21,7 +21,7 @@ serve the visualizations, capture screenshots, package the project, and
 implement the hooks.
 
 The rest of the repository is the development apparatus: a stdlib `unittest`
-suite of about 6,300 tests that guards the skill text and the scripts,
+suite of about 6,400 tests that guards the skill text and the scripts,
 maintainer skills under `.claude/skills/` (audits, dry runs, releases, invariant
 review, propagation to the public repository), a frozen spec archive and live
 ledgers under `specs/` (the invariant register, the implementation ledger,
@@ -2384,12 +2384,20 @@ and continues; the recap PDF is guaranteed.
   (`Source: self-observed (assistant retrospective)`, `Routing:`,
   `Upstream:`) to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`, with
   one batched `submit_feedback` offer, and re-reads to verify.
+- Step 0b, before the PDF: "Decisions you made" (Questions & Responses
+  answers that chose something; readiness, teardown and consent gates left
+  out) and "How you got it built" (one line per module, from Questions &
+  Responses and Actions Taken), both only from the recorded recap, then a
+  pinned takeaway question and, in the next turn, a pinned "Next time"
+  request; a pass gets one draft labeled as the guide's.
 - Step 1a reconciles `docs/bootcamp_recap.md`: a section per
   `modules_completed` entry, the three summary blocks, `**Completed:**`, a
   PII-free run-environment block (`sdk_version` for the SDK), any
   `docs/progress/recap_checkpoint.md` narrative, orphaned screenshots in
   tab order, capture-shortfall warnings from `<name>-tabs.json`, notes
-  between `BOOTCAMP-NOTES:START/END`, then `normalize_docs_markdown.py`.
+  between `BOOTCAMP-NOTES:START/END`, Step 0b's handover between
+  `BOOTCAMP-HANDOVER:START/END` (replaced on a re-run, absent when empty),
+  then `normalize_docs_markdown.py`.
 - Step 1b offers `fpdf2` in `data/temp/recap-venv/`, runs
   `generate_recap_pdf.py` and `--check --expect-modules` (semicolons),
   trusts only `PDF generated:`, falls back inline, and reports any
@@ -2420,9 +2428,11 @@ and continues; the recap PDF is guaranteed.
   `--subtitle` and `--require-sections`.
 - Step 6 writes `backups/revisit/`: the database backup (SQLite copy or
   `pg_dump -Fc -f`, never redirection), state snapshot, `RESUME_STATE.json`
-  and `docs/REVISIT_BOOTCAMP.md`.
+  and `docs/REVISIT_BOOTCAMP.md`, which carries both Step 0b lists and the
+  "Next time" request.
 - Close: confirm the PDF, announce only existing artifacts plus a
-  `/package-bootcamp` statement, ask "anything else you would like to
+  `/package-bootcamp` statement, state that there is no script from here and
+  repeat the "Next time" request, ask "anything else you would like to
   explore?"; on decline set `bootcamp_complete: true` and show the END OF
   SENZING BOOTCAMP banner once.
 
@@ -2459,8 +2469,10 @@ graduation. The Bootcamper is then returned to exactly where they left off.
 
 The `/graduate` command. It invokes the `graduation` skill: the GRADUATION
 banner, the graduation preface (journey map, before/after, step overview,
-estimated time), finalizing `docs/bootcamp_recap.md` and rendering
-`docs/bootcamp_recap.pdf`, the optional video `docs/bootcamp_recap.mp4`, the
+estimated time), the decisions the Bootcamper made and how they got it built
+with their takeaway and "Next time" request, finalizing
+`docs/bootcamp_recap.md` and rendering `docs/bootcamp_recap.pdf`, the optional
+video `docs/bootcamp_recap.mp4`, the
 `production/` project, the revisit/resume bundle, the guaranteed-recap
 announcement and the single closing 👉 question asking whether there is
 anything else to explore. Only after the Bootcamper declines further
@@ -2712,8 +2724,11 @@ Renders `DEFAULT_INPUT` (`docs/bootcamp_recap.md`) into `DEFAULT_OUTPUT`
 (comma-separated, overrides `--progress`). Optional imports: `fpdf2` (with
 Pillow) and `brand_tokens`.
 
-- `parse_recap` lifts the BOOTCAMP-NOTES fence into a `NotesSection` and
-  drops `DISCARDED_FENCES`, unless that would leave no `##` heading. A
+- `parse_recap` first lifts every BOOTCAMP-HANDOVER fence into a
+  `HandoverSection` (the newest block wins; an unterminated one stops at the
+  next fence of another type), then the BOOTCAMP-NOTES fence into a
+  `NotesSection`, and drops `DISCARDED_FENCES`, unless that would leave no
+  `##` heading. A
   stray START is skipped, never paired (`_fence_spans`). An unterminated
   notes fence runs to end of text; an unterminated checkpoint fence stays.
   Each `##` becomes a `ModuleSection` (`_split_title_date` splits off a
@@ -2724,7 +2739,8 @@ Pillow) and `brand_tokens`.
   exempt), duplicate modules and `--expect-modules` gaps. Fatal: no `##`
   sections, no recognized sub-section anywhere, or retention below
   `MIN_CONTENT_RETENTION`. Warnings: incomplete sections, leftover
-  checkpoint markers, stray fences.
+  checkpoint markers, stray fences, more than one handover block
+  (`handover_block_count`).
 - Images (`IMAGE_LINE_RE`) resolve against the recap's directory, then the
   cwd; a bullet marker before one is allowed. URLs are never fetched.
   Each non-embedded image is reported once on stderr.
@@ -2738,7 +2754,8 @@ Pillow) and `brand_tokens`.
     which has no manifest.
 - `render_with_fpdf2` renders twice for exact contents page numbers: a
   cover (`senzing_logo_light.png`, else a drawn ring), contents, one page
-  per module (four sub-sections, then any extras), notes, and a landscape
+  per module (four sub-sections, then any extras), notes, the handover page
+  (`BOOTCAMP_HANDOVER_SUBTITLE` under its heading), and a landscape
   certificate (`_CERT_*` geometry). A missing summary block prints
   "(not recorded)", and tables become grids (aligned monospace as a last
   resort). Bullets are spaced apart before each top-level bullet. If fpdf2
@@ -5521,6 +5538,12 @@ RECAP_CHECKPOINT_END = "<!-- RECAP-CHECKPOINT:END -->"
 BOOTCAMP_NOTES_START = "<!-- BOOTCAMP-NOTES:START -->"
 BOOTCAMP_NOTES_END = "<!-- BOOTCAMP-NOTES:END -->"
 BOOTCAMP_NOTES_TITLE = "Notes, Ideas and Questions"
+BOOTCAMP_HANDOVER_START = "<!-- BOOTCAMP-HANDOVER:START -->"
+BOOTCAMP_HANDOVER_END = "<!-- BOOTCAMP-HANDOVER:END -->"
+BOOTCAMP_HANDOVER_TITLE = "What You Take With You"
+BOOTCAMP_HANDOVER_SUBTITLE = (
+    "From here there is no script: your decisions, how it got built, and your next request"
+)
 IMAGE_LINE_RE = re.compile(r"^(?:[-*+]\s+)?!\[(.*?)\]\((.+?)\)$")
 IMAGE_URL_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*://")
 MIN_CONTENT_RETENTION = 0.60
@@ -5553,14 +5576,26 @@ class NotesSection:
     def __bool__(self) -> bool:
         ...
 @dataclass
+class HandoverSection:
+    title: str = BOOTCAMP_HANDOVER_TITLE
+    parts: List[Tuple[str, List[str]]] = field(default_factory=list)
+    source_chars: int = 0
+    def part(self, name: str) -> Optional[List[str]]:
+        ...
+    def __bool__(self) -> bool:
+        ...
+@dataclass
 class Recap:
     title: str
     meta: List[Tuple[str, str]]  # ("Bootcamper", "Ada"), ...
     modules: List[ModuleSection]
     notes: Optional[NotesSection] = None
+    handover: Optional[HandoverSection] = None
 def parse_table(text: str) -> Tuple[List[str], List[List[str]]]:
     ...
 def stray_fence_markers(text: str):
+    ...
+def handover_block_count(text: str) -> int:
     ...
 DISCARDED_FENCES: Tuple[Tuple[str, str], ...] = (
     (RECAP_CHECKPOINT_START, RECAP_CHECKPOINT_END),
@@ -8260,6 +8295,8 @@ def _still_in_list_item(line: str, was_in_item: bool) -> bool:
     ...
 def _normalize_heading(name: str) -> str:
     ...
+def _extract_notes_block(text: str) -> Tuple[str, Optional[NotesSection]]:
+    ...
 def _source_content_chars(text: str) -> int:
     ...
 def _rendered_content_chars(recap: Recap) -> int:
@@ -8373,10 +8410,12 @@ Used by:
 - `_cert_attribution`: `test_recap_pdf_guard.py`
 - `_cert_citation`: `test_recap_pdf_certificate.py`
 - `_cert_fields`: `test_certificate_name_source.py`,
-  `test_recap_notes_section.py`, `test_recap_pdf_font_safety.py`,
-  `test_recap_video.py`
+  `test_recap_handover_section.py`, `test_recap_notes_section.py`,
+  `test_recap_pdf_font_safety.py`, `test_recap_video.py`
 - `_clip`: `test_dry_run_scaffold.py`, `test_recap_pdf_font_safety.py`
 - `_describe_dropped`: `test_stdlib_writer_character_safety.py`
+- `_extract_notes_block`: `test_recap_checkpoint_is_lifted_before_module_parsing.py`,
+  `test_recap_handover_section.py`
 - `_fold_to_latin1`: `test_generated_scenario_marker_drop_is_exempt.py`
 - `_is_top_level_bullet`: `test_recap_pdf_guard.py`
 - `_next_nonblank_is_bullet`: `test_recap_pdf_guard.py`
@@ -8384,11 +8423,13 @@ Used by:
   `test_new_line_labels.py`, `test_recap_pdf_guard.py`
 - `_partition_meta`: `test_recap_pdf_guard.py`
 - `_pdf_escape`: `test_stdlib_writer_character_safety.py`
-- `_rendered_content_chars`: `test_recap_notes_section.py`
+- `_rendered_content_chars`: `test_recap_handover_section.py`,
+  `test_recap_notes_section.py`
 - `_safe`: `test_dropped_character_remedy_branches.py`,
   `test_dry_run_scaffold.py`, `test_recap_measure_font_safety.py`,
   `test_recap_pdf_font_safety.py`, `test_stdlib_writer_character_safety.py`
-- `_source_content_chars`: `test_recap_notes_section.py`
+- `_source_content_chars`: `test_recap_handover_section.py`,
+  `test_recap_notes_section.py`
 - `_split_title_date`: `test_recap_measure_font_safety.py`
 - `_stdlib_certificate_stream`: `test_recap_pdf_certificate.py`,
   `test_recap_pdf_guard.py`
@@ -8618,7 +8659,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 376 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 378 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8668,10 +8709,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6345 test methods in 376 files, matching `inventory.test_count_total`.
+There are 6405 test methods in 378 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6345.
+sum to 6405.
 
 Two files run more tests than they define, so discovery collects 6327:
 
@@ -8807,6 +8848,7 @@ looks wrong.
 - `tests/test_globalization_retrieval_strategy.py`: 15
 - `tests/test_graduation_announces_what_it_produces.py`: 12
 - `tests/test_graduation_ending_surfaces.py`: 7
+- `tests/test_graduation_hands_over_the_ability.py`: 30
 - `tests/test_graduation_no_voice_guidance.py`: 20
 - `tests/test_graduation_reads_persisted_answers.py`: 15
 - `tests/test_graduation_video_step.py`: 74
@@ -8943,6 +8985,7 @@ looks wrong.
 - `tests/test_reassurance_precedes_question.py`: 18
 - `tests/test_recap_checkpoint_is_lifted_before_module_parsing.py`: 15
 - `tests/test_recap_checkpoint_writer.py`: 26
+- `tests/test_recap_handover_section.py`: 30
 - `tests/test_recap_header_is_owned.py`: 22
 - `tests/test_recap_measure_font_safety.py`: 14
 - `tests/test_recap_notes_section.py`: 22
@@ -10270,3 +10313,9 @@ Senzing licensing, with no SPDX identifier.
   requirement, then list the Bootcamper's questions beside the derived ones,
   marking those not asked for (a list shown first left only "approve it?" to
   ask, and both real Bootcampers answered "No")
+- #481: graduation's Step 0b shows "Decisions you made" and "How you got it
+  built" from the recorded recap, asks for a one-line takeaway and a "Next
+  time" request, folds them into a `BOOTCAMP-HANDOVER` fence the recap PDF
+  renders as its own page, and closes by stating there is no script from here
+  (graduation handed over a PDF and a project, never the ability to direct the
+  next build)
