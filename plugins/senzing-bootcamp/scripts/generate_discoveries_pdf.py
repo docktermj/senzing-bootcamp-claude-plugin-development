@@ -147,7 +147,11 @@ DEFAULT_OUTPUT = "docs/bootcamp_data_discoveries.pdf"
 # The findings a complete discoveries document carries. Matched case- and
 # punctuation-insensitively against H2 headings, so a document may word them
 # more naturally ("What Senzing did NOT find, and why") and still match.
+# "your question answered" comes first in the document: it walks each Module 7
+# step-1 requirement to its finding (#480). Only its presence is checked here; the
+# Query Completeness Gate checks its rows against module_7_query.query_requirements.
 REQUIRED_SECTIONS = [
+    "your question answered",
     "headline numbers",
     "merges and match keys",
     "review queue",
@@ -720,6 +724,9 @@ def render_with_stdlib(doc: Discoveries, output: Path) -> bool:
         margin = 54.0
         line_h = 14.0
         max_width_chars = 92
+        # A table row is 9 pt Courier (0.6 em a character) indented 12 pt, so this many
+        # characters fit between the margins.
+        table_chars = int((page_w - 2 * margin - 12) / (0.6 * 9))
 
         tokens: List[Tuple[str, str, float, float]] = []
 
@@ -771,21 +778,36 @@ def render_with_stdlib(doc: Discoveries, output: Path) -> bool:
                 header, rows = parse_table(block.text)
                 if not header:
                     continue
-                cols = [[_md_inline_to_text(c) for c in header]] + [
-                    [_md_inline_to_text(c) for c in r] for r in rows
+                # Sanitized first, as in `add_wrapped`: the widths count characters.
+                cols = [[_safe(_md_inline_to_text(c)) for c in header]] + [
+                    [_safe(_md_inline_to_text(c)) for c in r] for r in rows
                 ]
                 widths = [
-                    min(max(len(row[i]) for row in cols), 46)
+                    max(1, min(max(len(row[i]) for row in cols), 46))
                     for i in range(len(header))
                 ]
+                # Fit the whole row inside the line, then WRAP each cell within its
+                # column rather than cutting it. Cutting cells at the column width and
+                # the row at the line width dropped the end of every long cell and
+                # every column past the line, so a three-column "Your question,
+                # answered" table (#480) lost its answers' reasons and its third
+                # column on the fallback path, while the fpdf2 grid wrapped them.
+                while (
+                    sum(widths) + 2 * (len(widths) - 1) > table_chars
+                    and max(widths) > 8
+                ):
+                    widths[widths.index(max(widths))] -= 1
                 for row_index, row in enumerate(cols):
-                    line = "  ".join(
-                        cell[:w].ljust(w) for cell, w in zip(row, widths)
-                    ).rstrip()
-                    # F3 is monospace. Space-padding a PROPORTIONAL face produces
-                    # ragged pseudo-columns, which is not the aligned monospace
-                    # rendering INV-142 permits as the lesser path.
-                    add(line[:max_width_chars], "F3", 9, 12)
+                    wrapped = [_wrap(cell, w) for cell, w in zip(row, widths)]
+                    for k in range(max(len(lines) for lines in wrapped)):
+                        line = "  ".join(
+                            (lines[k] if k < len(lines) else "").ljust(w)
+                            for lines, w in zip(wrapped, widths)
+                        ).rstrip()
+                        # F3 is monospace. Space-padding a PROPORTIONAL face produces
+                        # ragged pseudo-columns, which is not the aligned monospace
+                        # rendering INV-142 permits as the lesser path.
+                        add(line[:max_width_chars], "F3", 9, 12)
                     if row_index == 0:
                         rule = "  ".join("-" * w for w in widths)
                         add(rule[:max_width_chars], "F3", 9, 12)

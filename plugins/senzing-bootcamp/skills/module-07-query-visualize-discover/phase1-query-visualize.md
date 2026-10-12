@@ -158,6 +158,38 @@ entity as text" (INV-300); follow it there rather than restating it.
 **Checkpoint:** write step 1 to `config/bootcamp_progress.json` once the requirements are
 settled.
 
+<a id="query-requirements"></a>
+
+⛔ **Save the settled list with it, as `module_7_query.query_requirements`.** The Query
+Completeness Gate checks the discoveries document's `## Your question, answered` section against
+this list, possibly in a later session or after step 3b's return through Modules 5 and 6, when the
+conversation that settled it is gone. Save one entry per requirement, in the order the list was
+shown, each with its `text` and its Module 1 `source`:
+
+```json
+{
+  "module_7_query": {
+    "query_requirements": [
+      {"text": "<their question, in their own words>", "source": "Bootcamper's answer"},
+      {"text": "<a derived requirement>", "source": "Success criterion: <the criterion it came from>"},
+      {"text": "<a derived requirement>", "source": "Desired output: <the output it came from>"}
+    ]
+  }
+}
+```
+
+- **`text`:** the requirement as confirmed, including any change made at the
+  [confirming gate](#requirements-gate). One of their questions keeps their own words.
+- **`source`:** where it came from. One of their questions, on either path, is
+  `"Bootcamper's answer"`, followed by the success criterion or desired output the gate named
+  beside it when it named one ("Bootcamper's answer; matches success criterion: …"). A derived
+  requirement names the success criterion or desired output it was derived from. A common query
+  picked after "I don't know" on the fallback path is `"Bootcamper's answer"` too: they chose it.
+- **No requirement confirmed** (every item dropped and nothing picked): save
+  `"query_requirements": []`. The discoveries section then says so in one line.
+- **The saved list does not change after this step.** Step 3b's quality iteration and its return
+  through Modules 5 and 6 leave it as it is, and a question raised after step 1 is not added to it.
+
 ## 2. Create query programs
 
 For each query type, create a program in `src/query/` using the bootcamper's chosen language.
@@ -1121,7 +1153,35 @@ long session should still leave knowing what Senzing found in *their* data. Gene
 in one line (no yes/no gate).
 
 Source every figure through generated SDK code and `reporting_guide` — never direct SQL against
-`database/G2C.db`. Write these six sections; the generator checks for them by name:
+`database/G2C.db`. Write these seven sections, in this order; the generator checks for them by
+name.
+
+⛔ **First, `## Your question, answered`**, before any finding: each requirement the Bootcamper
+set out to answer, walked to what this document found. Write it as a Markdown table with exactly
+these three columns, one row per entry in `module_7_query.query_requirements` (saved by step 1,
+[above](#query-requirements)), in their saved order. The generator draws a table from consecutive
+lines that each start and end with `|`, so keep each row on one line and put no `|` inside a cell
+(INV-242):
+
+```markdown
+| Requirement | Answer | Where in this document |
+|---|---|---|
+| <the saved text> | <the finding that answers it> | <the section heading that shows it> |
+```
+
+- **Answer:** the finding itself, not "see below". When nothing here answers it, write
+  `not answered, because <reason>`. When part of it is answered, write what was answered, then
+  `not fully answered, because <reason>`.
+- **Where in this document:** the heading of the section that carries the evidence, such as
+  `Review queue`; `none` for a requirement that is not answered.
+- **No requirement confirmed** (the saved list is empty): no table. Write one line instead:
+  `No query requirements were confirmed in Module 7 step 1.`
+- **No saved list** (a Module 7 checkpointed at step 1 before the list was saved): write the rows
+  from the requirements in the conversation, or else from `docs/business_problem.md`.
+- **A question raised after step 1** may be added as a further row after the saved ones; the gate
+  below does not require it.
+
+**Then the six findings sections:**
 
 1. **`## Headline numbers, interpreted`** — records loaded, entities resolved, merge count, and what
    those numbers *mean* here. Never bare counts.
@@ -1156,7 +1216,10 @@ diagrams with `|` and `v`. ⛔ **(INV-323) Never transliterate or invent a name 
 in the data** — a wrong name in a shared report is worse than an awkward one. The generator now
 reports every character it had to drop, naming them
 and the first affected passage on stderr, so a slip is visible rather than silent — but it reports
-the loss, it cannot undo it: the characters are gone from that PDF.
+the loss, it cannot undo it: the characters are gone from that PDF. The rule covers
+`## Your question, answered` too, including a requirement that quotes the Bootcamper's own words:
+when those words are not in Latin script, write the requirement in Latin script and mark it as
+your rendering, not their quote.
 
 Then render the PDF with the bundled generator. ⛔ **(INV-185) It ships inside the plugin, not in the
 bootcamp project** — resolve it the same way every other bundled script is resolved, and never as a
@@ -1175,8 +1238,9 @@ optional PDF dependency is required; and per INV-110 it refuses to write a PDF a
 document would lose most of its content, rather than reporting success over an empty deliverable.
 
 ⛔ **Verify the PDF carries the findings — a `PDF generated:` line is not verification** (INV-129).
-Extract text from the written PDF and confirm real findings appear (fpdf2 compresses its content
-streams, so decompress before searching). If extraction shows an empty or near-empty document, say
+Extract text from the written PDF and confirm real findings appear, including the rows of
+`## Your question, answered` (fpdf2 compresses its content streams, so decompress before
+searching). If extraction shows an empty or near-empty document, say
 so and fix the Markdown rather than shipping it.
 
 **Non-blocking.** If either file cannot be produced, report exactly what failed and continue — this
@@ -1200,7 +1264,21 @@ Before wrapping up the module, confirm:
 4. **Data-discoveries deliverable produced?** `docs/bootcamp_data_discoveries.md` and `.pdf` exist
    and the PDF's extracted text carries the findings — or, if they could not be produced, the
    bootcamper was told why. Never silently absent.
-5. **Ready to proceed?**
+5. **Their question answered?** Every requirement in `module_7_query.query_requirements` appears
+   in the discoveries document's `## Your question, answered` section exactly once, with an
+   *Answer* cell that is a finding, `not answered, because <reason>`, or a partial answer ending
+   `not fully answered, because <reason>`. When one is missing, add its row (and remove a
+   duplicate), then re-render the PDF and check its extracted text again, as the deliverable
+   requires, before continuing.
+   - **An empty saved list** passes when the section carries its one line saying no requirement
+     was confirmed.
+   - **No saved list** (step 1 was checkpointed before the list was saved): check only that the
+     section exists.
+   - **Rows for questions raised after step 1** are allowed and not required.
+   - This item asks the Bootcamper nothing and adds no 👉 (INV-251). A section that still cannot be
+     fixed is reported like the deliverable above (**Non-blocking**) and never blocks the gate or
+     graduation.
+6. **Ready to proceed?**
 
 ## Visualization server teardown (its own turn)
 
