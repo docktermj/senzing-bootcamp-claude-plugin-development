@@ -1544,6 +1544,18 @@ Ground rules (`ground-rules.md`, every turn):
   graded; not a prediction. "You pick" or "I don't know" gets the step as
   before, with no re-ask. The End-of-Module Summary carries a
   `**You directed:**` line in one of three forms.
+- Worked steers (`#worked-steers`, the one statement the four Act 2 hands-on
+  modules' `SKILL.md` files cite; Act 1 shows none): ⛔ fired only when code
+  the AI generated fails when run (non-zero exit, exception, `EMPTY` line) or
+  an engine-output audit withdraws an AI decision; at most one per module,
+  the first, ⛔ never staged, and an unfixed failure is no steer. Two lines:
+  what went wrong, given away by quoted evidence; what the AI was asked to
+  change. Before Data processing a statement; from Data processing on, the
+  first line, then one pinned ask-first 👉, a request that works used "as you
+  asked", otherwise fixed with a "differs from yours" clause, never asked
+  twice; a question already due moves to the next turn. Required output,
+  merged with `; ` under minimal; a `Worked steer shown:` checkpoint line
+  stops a second steer after a resume.
 - MCP-first: every Senzing fact (and claim about Senzing the company) comes
   from an MCP call this turn, a skill file, or a local measurement, else is
   labeled inference or omitted; a local measurement beats generic MCP
@@ -1583,7 +1595,8 @@ Ground rules (`ground-rules.md`, every turn):
   `updated_at`). Keep `docs/progress/recap_checkpoint.md` filled between
   `RECAP-CHECKPOINT:START/END` markers.
 - Reversed decisions (an audit changes a mapping, a score is corrected, a
-  change is abandoned) are filed via `feedback.md`'s silent append.
+  change is abandoned) are filed via `feedback.md`'s silent append; the same
+  reversal can also be the module's worked steer, which is shown.
 - Verbosity presets `minimal`/`concise`/`standard`/`detailed`; required
   output is never suppressed, only merged with a semicolon and a space.
 - Any-time controls (never the turn's 👉): feedback, make a note (feedback
@@ -8846,10 +8859,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6606 test methods in 387 files, matching `inventory.test_count_total`.
+There are 6631 test methods in 388 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6574.
+sum to 6599.
 
 Two files run more tests than they define, so discovery collects 6496:
 
@@ -9249,6 +9262,7 @@ looks wrong.
 - `tests/test_windows_browser_discovery.py`: 23
 - `tests/test_windows_forms_at_hand_run_sites.py`: 40
 - `tests/test_windows_powershell_guidance.py`: 21
+- `tests/test_worked_steers.py`: 25
 - `tests/test_wrapped_text.py`: 32
 - `tests/test_write_gate.py`: 23
 
@@ -10499,6 +10513,13 @@ Senzing licensing, with no SPDX identifier.
   a wrong answer follows Module 0's wrong-answer rule (cited, not restated),
   and the refresher offer follows the answer (the reminder re-taught the
   concepts, so the Bootcamper never retrieved one)
+- #484: each Act 2 hands-on module shows at most one worked steer, by the
+  ground rules' one "Worked steers" rule: when generated code fails when run
+  or an engine-output audit withdraws an AI decision, two lines say what went
+  wrong, what gave it away and what the AI was asked to change; from Data
+  processing on the guide first asks what the Bootcamper would ask the AI to
+  change; the silent-filing rule cross-references it (the guide fixed the
+  AI's failures out of sight, so the Bootcamper never saw it steered back)
 - #485: one step per hands-on module is handed to the Bootcamper to direct, by
   the ground rules' one "Directing steps" rule: Module 5 step 11 (what the
   columns `mapping_workflow` did not place become, checked at step 12's sample
