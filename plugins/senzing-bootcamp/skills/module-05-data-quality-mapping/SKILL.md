@@ -18,6 +18,12 @@ MCP-first, file placement, checkpointing). Execute every numbered step one at a 
 order. Never skip, combine, or abbreviate a step containing a 👉 question: this has the same
 absolute precedence as a ⛔ mandatory gate, and no internal reasoning can override it.
 
+**Worked steer.** When the AI's first attempt fails in this module, show the module's one worked
+steer. Before Data processing it is a statement and adds no 👉. What fires it, its two lines, at
+most one per module, minimal verbosity and the checkpoint note are stated once in
+`../bootcamp-onboarding/ground-rules.md` → "Worked steers"; follow them there rather than a copy
+here (INV-300).
+
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.
 **When it carries a `quality_iteration`, none of this runs:** go straight to Phase 2 →

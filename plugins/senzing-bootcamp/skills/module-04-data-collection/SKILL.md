@@ -23,6 +23,12 @@ MCP-first, file placement, checkpointing). Execute every numbered step one at a 
 order. Never skip, combine, or abbreviate a step containing a 👉 question: this has the same
 absolute precedence as a mandatory gate.
 
+**Worked steer.** When the AI's first attempt fails in this module, show the module's one worked
+steer. Before Data processing it is a statement and adds no 👉. What fires it, its two lines, at
+most one per module, minimal verbosity and the checkpoint note are stated once in
+`../bootcamp-onboarding/ground-rules.md` → "Worked steers"; follow them there rather than a copy
+here (INV-300).
+
 ⚠️ **On the generated-scenario path this module has exactly one 👉 question** — Step 9's module
 transition. Steps 1-8b are all **non-yielding** there, so they run in order inside the turn that ends
 on that question: "one at a time" is a rule about order and completeness, not about turns. Three

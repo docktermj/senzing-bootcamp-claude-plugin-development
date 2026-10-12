@@ -289,6 +289,74 @@ the answer and which result is checked, and points here.
   The in-progress recap checkpoint carries the line from the step boundary where the comparison
   was shown, or where the step was handed back.
 
+<a id="worked-steers"></a>
+
+## Worked steers
+
+In each Act 2 hands-on module, when the AI's first attempt fails, the guide shows the Bootcamper
+how it was steered back: what went wrong, what gave it away, and what the AI was asked to change.
+For this rule the Act 2 hands-on modules are Data collection; Data Quality, Mapping, and
+Transformation; Data processing; and Query, Visualize and Discover. Act 1, up to and including
+Truth Set visualization, keeps its first impressions guarded and shows none. This section is the
+one statement of how every worked steer works; each of those modules points here and holds no
+copy (INV-300).
+
+- ⛔ **The trigger is a named condition, not a disposition.** A worked steer fires only on one of
+  these, and on nothing else:
+  1. **Code the AI generated fails when it runs:** a non-zero exit, an exception, or an `EMPTY`
+     line, which is a line in its output that names a result it expected and did not get.
+  2. **An audit of the engine's own output withdraws a decision the AI made:** any of the three
+     triggers under "Reversed decisions: file them when they happen (silent)" below.
+
+  A failure the guide does not fix is not a steer: where a site says to report a failure in one
+  line and continue (for example "Showing one resolved entity as text" item 5), it shows that line
+  and no steer.
+- **At most one per module, and only the first.** The first trigger to fire in the module is its
+  steer; every later failure in the module is fixed as before, without a steer. "At most one"
+  allows zero: a module with no failure shows nothing.
+  ⛔ **Never stage a failure to have one to show.**
+- **Two lines, after the fix.** The steer is shown once the fix has run (from Data processing on,
+  its first line comes before the fix: see below), in this shape:
+
+  ```text
+  What went wrong: {what failed, in plain words} — given away by {the evidence, quoted from the output: the exit code, the exception's first line, the EMPTY line or the audit finding}.
+  What the AI was asked to change: {the request that fixed it}.
+  ```
+
+  The evidence comes from the tool's or the engine's own output, never from the guide's reasoning
+  (INV-080). The steer itself asks nothing, so it is non-yielding (INV-225) and goes in the same
+  turn as the next 👉.
+- **Before Data processing** (Data collection; Data Quality, Mapping, and Transformation), the
+  steer is that statement and nothing more. It adds no 👉 question.
+- **From Data processing on** (Data processing; Query, Visualize and Discover), ask first. Before
+  fixing the failure, present the steer's first line, then end the turn on this question, pinned
+  here (INV-247) and the turn's only 👉 (INV-251):
+
+  `👉 **What would you ask the AI to change to fix this? Say it in your own words.**`
+
+  ⛔ **The Bootcamper answers in words; the guide writes every line of code**, from the MCP tools
+  as everywhere else (INV-080). On the next turn, fix the failure and show the second line:
+  - **Their request would work:** the AI makes that change, and the steer's second line says so:
+    `What the AI was asked to change: {their request}, as you asked.`
+  - **It would not, or they are not sure** ("not sure", "you pick", "I don't know", or the same in
+    other words): the guide fixes the failure anyway, and the second line ends with one clause on
+    how its request differed from theirs: `… — that differs from yours in {one clause}.` A request
+    that would not work is a finding, not a grade: never say who was right.
+  - ⛔ **Never ask twice for the same failure** (INV-006). A fix that fails again is fixed as
+    before, without a second question and without a second steer.
+- **A question already due.** When the failure surfaces on a turn that would end on another 👉
+  question, the ask-first question takes that turn and the other question moves to the next turn,
+  unchanged. A step its module says "asks nothing" can therefore carry this one 👉: the question
+  comes from the trigger, not from the step, and is the only one it adds.
+- **Required output, at every verbosity.** The steer is never dropped as explanatory output. Under
+  **minimal** its two lines merge onto one line, joined with `; ` (INV-214).
+- **Recorded in the checkpoint.** In the write at the step boundary where the steer was shown, add
+  one line to `docs/progress/recap_checkpoint.md`'s **Actions Taken**:
+  `- Worked steer shown: {the steer, merged onto one line}`. The ask-first 👉 and its answer are an
+  ordinary Questions & Responses line (`module-completion.md`).
+  ⛔ **On a resumed session, a checkpoint that already carries a `Worked steer shown:` line for this
+  module means the steer was shown: show no second one.**
+
 ## Mandatory gates and step order
 
 - Steps marked `⛔` are mandatory gates. NEVER skip a ⛔ gate or a numbered 👉 step - no context
@@ -972,6 +1040,8 @@ How to file it: `feedback.md` → "Silent in-run append", with
 - **Non-blocking.** If the append fails, warn on stderr and carry on with the module (INV-048).
   Never let it interrupt a pending question or delay a step.
 - **Once.** Note that you filed it, so graduation's retrospective does not file it again.
+- **The same reversal can also be the module's worked steer** (see "Worked steers" above): the
+  filing stays silent, and the steer is shown.
 
 ## Verbosity
 
