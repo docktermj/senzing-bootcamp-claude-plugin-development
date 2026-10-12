@@ -9,8 +9,9 @@ working file.
 Step 4e, a closing step of the Discover phase in `phase2b-discover.md`, is where that answer is
 acted on. These tests pin what the step states:
 
-1. **The offer**, driven by `integration_targets`, one system per turn, before Module 7's single
-   transition question and never in the same turn as it.
+1. **The offer**, driven by `integration_targets`, one system per turn. Since #488 the step
+   closes with no transition question: the turn that settles the last offer runs on to Discover
+   phase completion (`tests/test_confirmations_with_one_sensible_answer.py` pins that close).
 2. **The no-target path**: say so, offer once, and produce nothing unless a system is named.
 3. **The unknown-format path**: say so, ask for the format or its documentation, write nothing.
 4. **The one-row key check** before the reader is written, with what to do when
@@ -24,8 +25,8 @@ acted on. These tests pin what the step states:
    (INV-056); no shipped step is named "Enrichment"; and **no target's import schema ships in the
    plugin**.
 
-⛔ Negative control for (1): move the transition question back into step 4d and
-`test_the_transition_question_is_asked_after_the_offers_not_in_step_4d` fails.
+⛔ Negative control for (1): put the retired "continue to module completion now?" question back
+anywhere in `phase2b-discover.md` and `test_no_transition_question_follows_the_offers` fails.
 
 These assert that the skill files STATE the rules; they cannot establish that a live run follows
 them. Stdlib only; nothing under ``plugins/`` is imported (INV-108).
@@ -60,7 +61,9 @@ UNKNOWN_FORMAT = (
 ATTRIBUTES = (
     "👉 **Which fields from your source records should each node carry (for example, amounts "
     "or account roles)? Reply \"none\" if the entities and relationships are enough.**")
-TRANSITION = "👉 **Would you like to continue to module completion now?**"
+#: Retired by #488: both answers took the same route. Kept to assert its absence.
+RETIRED_TRANSITION = "Would you like to continue to module completion now?"
+CLOSE = "**Close: no transition question.**"
 M1_INTEGRATION_QUESTION = (
     "👉 **Will your entity-resolution results need to interface with other software (CRM, "
     "search engine, data warehouse, API gateway, downstream app)?**")
@@ -95,7 +98,7 @@ def item(section, number):
     m = re.search(r"^%d\. " % number, section, re.M)
     if not m:
         raise AssertionError("item %d is missing from step 4e" % number)
-    nxt = re.search(r"^(%d)\. |^\*\*Transition\.\*\*" % (number + 1), section[m.end():], re.M)
+    nxt = re.search(r"^(%d)\. |^\*\*Close: " % (number + 1), section[m.end():], re.M)
     return section[m.start():m.end() + nxt.start()] if nxt else section[m.start():]
 
 
@@ -318,26 +321,26 @@ class TheSenzingSideAndTheProgram(unittest.TestCase):
         self.assertEqual("src/query/", steps["4e"]["targets"][0]["program"][:len("src/query/")])
 
 
-class TheTransitionQuestion(unittest.TestCase):
-    """(1) The offers come before Module 7's single transition question, never with it."""
+class TheClose(unittest.TestCase):
+    """(1) The offers come first; the step closes with no transition question (#488)."""
 
-    def test_the_transition_question_is_asked_after_the_offers_not_in_step_4d(self):
+    def test_no_transition_question_follows_the_offers(self):
         text = read(PHASE2B)
-        self.assertEqual(1, text.count(TRANSITION), "the transition question has one place")
-        self.assertNotIn(TRANSITION, step_4d(),
-                         "asked in step 4d it precedes the export offers it must follow")
+        self.assertNotIn(RETIRED_TRANSITION, text,
+                         "both answers took the same route, so #488 retired the question")
         section = step_4e()
-        self.assertIn(TRANSITION, section)
-        self.assertLess(section.index(OFFER), section.index(TRANSITION))
+        self.assertIn(CLOSE, section)
+        self.assertLess(section.index(OFFER), section.index(CLOSE))
 
     def test_step_4d_hands_on_to_step_4e(self):
         d = flat(step_4d())
         self.assertIn("continue to step 4e below", d)
+        self.assertIn("Ask no transition question here", d)
 
-    def test_the_transition_is_its_own_turn(self):
+    def test_each_offer_still_ends_its_own_turn(self):
         section = step_4e()
-        tail = flat(section[section.index("**Transition.**"):])
-        self.assertIn("never merged with an offer above (INV-251)", tail)
+        tail = flat(section[section.index(CLOSE):])
+        self.assertIn("Each offer above still ends its own turn", tail)
 
 
 class EveryDiscoverExitReachesStep4e(unittest.TestCase):

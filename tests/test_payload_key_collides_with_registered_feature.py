@@ -94,24 +94,27 @@ class TheBootcampersAnswerIsNotOverridden(unittest.TestCase):
     def test_silent_re_routing_is_forbidden(self):
         self.assertIn("do NOT silently re-route or override the answer", flat(PHASE2))
 
-    def test_the_collision_offers_a_rename_as_a_pinned_question(self):
-        # Line-scoped by design (#424): presence checks on the one pinned question line; a
-        # question that wrapped would fail them (no single line, or no yes/no ending), never
-        # pass them.
-        text = PHASE2.read_text(encoding="utf-8")
-        question = [l for l in text.splitlines()
-                    if l.lstrip().startswith("> 👉") and "registered Senzing feature" in l]
-        self.assertEqual(1, len(question), "the collision has no single pinned question")
-        self.assertIn("Shall I store it as", question[0])
-        self.assertTrue(question[0].rstrip().endswith("(respond yes or no)"),
-                        "the collision question is not answerable yes/no (INV-008)")
+    def test_the_collision_renames_the_key_without_a_question(self):
+        """#488 — the rename carries out their "payload" answer, so it is not asked.
+
+        Until #488 a pinned yes/no 👉 asked "Shall I store it as `{KEY}_PAYLOAD` instead…?",
+        a question with one sensible answer. `test_confirmations_with_one_sensible_answer.py`
+        pins its absence with a negative control.
+        """
+        text = flat(PHASE2)
+        self.assertIn("**Emit `{KEY}_PAYLOAD`** in place of `{KEY}`", text)
+        self.assertIn("**Say so in one line, as a statement**, naming the field and why", text)
+        self.assertIn("**Ask no question for it.**", text)
+        self.assertNotIn("Shall I store it as", text)
 
     def test_it_says_what_senzing_will_actually_do(self):
         self.assertIn("Senzing will resolve on it anyway", flat(PHASE2))
 
-    def test_both_answers_are_recorded(self):
+    def test_the_rename_and_a_reversal_are_recorded(self):
         text = flat(PHASE2)
-        self.assertIn("never leave the collision unrecorded either way", text)
+        self.assertIn("**Record the rename in the mapping table's reasoning column**, so the "
+                      "collision is never left unrecorded", text)
+        self.assertIn("Record that they accept the field being matched on", text)
 
 
 class AListValuedPayloadRouteIsWarned(unittest.TestCase):

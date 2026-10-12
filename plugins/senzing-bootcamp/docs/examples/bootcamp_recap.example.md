@@ -500,8 +500,6 @@
     - **R:** Continue to How Analysis.
 - **Q:** What would you like to do next? (after How Analysis)
     - **R:** Continue to Relationship Networks (exploring how entities connect to each other).
-- **Q:** Would you like to continue to module completion now?
-    - **R:** Yes.
 
 ### Actions Taken
 

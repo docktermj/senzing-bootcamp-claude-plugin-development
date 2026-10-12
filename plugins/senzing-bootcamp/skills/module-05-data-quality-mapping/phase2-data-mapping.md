@@ -846,14 +846,22 @@ behavior, and re-confirm before relying on it elsewhere (INV-080/INV-149).
 <!-- MCP-NEGATIVE: search_docs(query='payload attribute versus registered feature attribute record root extracted as feature precedence', category='data_mapping') — no indexed section states that a root-level key named after a registered feature attribute is extracted as a feature — owner: mapping_workflow step 2's inline SENZING MAPPING REFERENCE carries the prohibition ("must NOT be a registered feature attribute") but states no consequence of breaking it, so search_docs over the Entity Specification IS the route that would carry the consequence, and its *Attribute reference* section states the rule for the inside-a-feature-object case -- "Only the attributes listed here may appear inside a feature object. Anything else is treated as payload" -- while no returned section states what happens to a record-root key whose name belongs to a registered feature, which is the case asked about (absence negative) — server 1.37.16, 2026-10-01 -->
 
 **On a collision, do NOT silently re-route or override the answer (INV-006).** Their intent — *do
-not match on this* — is achievable; only the key **name** is wrong. Say what will actually happen
-and offer the fix, ending the turn on one pinned 👉 question:
+not match on this* — is achievable; only the key **name** is wrong. So rename the key and say so:
+the rename carries out the answer they already gave, and a question about it would have only one
+sensible answer (#488).
 
-> 👉 **`{field}` is routed to payload, but `{KEY}` is a registered Senzing feature attribute — at the record root Senzing will resolve on it anyway. Shall I store it as `{KEY}_PAYLOAD` instead, so it rides along without matching?** (respond yes or no)
-
-On **yes**, emit the renamed key and record the rename in the mapping table's reasoning column. On
-**no**, record that the Bootcamper accepts the field being matched on, so the decision is theirs and
-is visible later — never leave the collision unrecorded either way.
+- **Emit `{KEY}_PAYLOAD`** in place of `{KEY}`.
+- **Say so in one line, as a statement**, naming the field and why: "`{field}` is routed to
+  payload, but `{KEY}` is a registered Senzing feature attribute — at the record root Senzing will
+  resolve on it anyway — so I'm storing it as `{KEY}_PAYLOAD`, and it rides along without
+  matching."
+- **Record the rename in the mapping table's reasoning column**, so the collision is never left
+  unrecorded.
+- **Ask no question for it.** The turn continues to the step's next question, and the step's
+  conditional questions listed above are unchanged: the rename adds none.
+- **They want it matched after all:** they can say so at any time, and the mapping is changed back,
+  as for any other routing answer. Record that they accept the field being matched on, so the
+  decision is theirs and is visible later.
 
 ⚠️ **A list-valued field routed to `payload` is joined into ONE literal value.** A multi-valued
 column becomes a single meaningless string: the observed signature was `"XXX; VGB; GBR"` in

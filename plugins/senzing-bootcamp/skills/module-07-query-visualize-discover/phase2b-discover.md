@@ -237,8 +237,8 @@ connections between entities using `find_network` and `find_path`.
    - Write step 4d status as `"skipped"` with reason `"no_relationships"` in the checkpoint.
 8. **Transition:** relationship-network exploration is the final Discover demonstration. After
    presenting it (or the fallback above), write this step's checkpoint and continue to step 4e
-   below. Module 7's transition question is asked at the end of step 4e, after its export offers,
-   and never in the same turn as one of them (INV-251).
+   below. Ask no transition question here: step 4e's export offers come next, and Discover ends
+   at step 4e's close without one.
 
 **Checkpoint:** write step 4d under `module_7_query.steps.4d`:
 
@@ -279,7 +279,7 @@ supported systems.
    item 3's **Yes** branch for that one system, without asking item 3's question again. Record it
    in this step's checkpoint, not in `config/bootcamp_preferences.yaml`, which Module 1 owns.
    ⛔ **Any reply that does not name a system ends the step with nothing produced.**
-   Write the checkpoint `{"status": "skipped", "reason": "no_target"}` and go to the transition
+   Write the checkpoint `{"status": "skipped", "reason": "no_target"}` and go to the close
    below.
 3. **Offer, one system per turn.** For each named system, in the order Module 1 recorded them,
    each offer in a turn of its own (INV-251):
@@ -367,17 +367,16 @@ supported systems.
     program, and the command that reruns it. Record `"status": "exported"` with the format, the
     program, the outputs and the three counts.
 
-**Transition.** When every named system has been offered (or the single offer in item 2 was
-answered), and the step was entered from step 4d, end the turn on Module 7's transition question,
-in a turn of its own and never merged with an offer above (INV-251):
-
-👉 **Would you like to continue to module completion now?**
-
-*(Internal: end the turn on this question and wait.)* Either way, proceed to Discover phase
-completion below, then return to `phase1-query-visualize.md` for the Query Completeness Gate. When
-the step was entered from a Discover exit, the Bootcamper already chose to move on at that exit's
-question, so do not ask it again: return to `phase1-query-visualize.md` for the Query Completeness
-Gate.
+**Close: no transition question.** When every named system has been offered (or the single offer
+in item 2 was answered), ask no question about moving on. Both answers to one would take the same
+route, so a "yes" there would carry no decision (#488). In the same turn that settles the last
+offer, continue to Discover phase completion below, then to the Query Completeness Gate in
+`phase1-query-visualize.md`. End that turn on the next 👉 the flow already has, never on a new one
+(INV-251): the visualization server teardown question (`phase1-query-visualize.md` → "Visualization
+server teardown"), or, when no server was started, the graduation offer at the end of Module
+Completion. Each offer above still ends its own turn. This close is the same on every path: entered
+from step 4d, or from a Discover exit, where the Bootcamper already chose to move on at that exit's
+question.
 
 **Checkpoint:** write step 4e under `module_7_query.steps.4e`:
 
