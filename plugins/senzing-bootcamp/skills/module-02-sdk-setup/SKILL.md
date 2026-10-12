@@ -728,6 +728,8 @@ host reaches it only through a port published to host loopback.
    <runtime> run -d -it --name <name> -p 127.0.0.1:<host_port>:8080 -v "$(pwd)":/app -w /app debian:bookworm-slim bash
    ```
 
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
    ⛔ (INV-260) Never drop the `127.0.0.1:` host address from `-p`: without it the port is published
    on every host interface. docker, podman and Apple `container` each accept
    `-p [host-ip:]host-port:container-port`.
@@ -1800,6 +1802,8 @@ Step 8a's:
      database/G2C.db "<schema path from sdk_guide>"
    ```
 
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
    The server returns the CLI form (`sqlite3 <db> < <schema>.sql`) — treat that as the illustration
    of *what* to apply, not as the command to run.
 3. **Seed the Senzing configuration** — that is Step 8a, below. Do not attempt it here.
@@ -1888,6 +1892,8 @@ config with `sdk_guide(topic='configure', ...)` — never hand-construct
      -p 127.0.0.1:<host_port>:5432 -v "$(pwd)/database/postgres:/var/lib/postgresql/data" postgres:16
    ```
 
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
    On a later resume, restart the recorded container with `docker start <pg-container>` (which
    preserves the baked-in password) rather than a fresh `docker run`. If that start fails because
    the recorded `host_port` is now in use, say so and ask the Bootcamper: a published port cannot
@@ -1900,17 +1906,35 @@ config with `sdk_guide(topic='configure', ...)` — never hand-construct
    An entry with no `host_port` means `5432`, the only port earlier projects used.
 3. Wait until the server is ready (poll `docker exec <pg-container> pg_isready`).
 4. Apply the Senzing PostgreSQL schema DDL **before any SDK use** — the SDK does NOT auto-create it
-   (unlike SQLite). MCP confirms the DDL ships with the SDK install at
-   `/opt/senzing/er/resources/schema/szcore-schema-postgresql-create.sql`; apply it against the
-   container:
+   (unlike SQLite). The DDL ships with the SDK install. Take `<schema path from MCP>` for the
+   platform the SDK is installed on from the anti-patterns search above, at runtime (INV-080). On
+   server 1.37.27 (2026-10-12) it named `szcore-schema-postgresql-create.sql` under
+   `/opt/senzing/er/resources/schema/` for Linux and Docker, and other paths for Windows and macOS.
 
-   ```bash
-   docker exec -i <pg-container> psql -U senzing -d G2 \
-     < /opt/senzing/er/resources/schema/szcore-schema-postgresql-create.sql
-   ```
+   - **On SDK setup's container route** (the `docker` path), the DDL exists only inside the SDK
+     container; the host has no `/opt/senzing`. Copy it into the project first, with the SDK
+     container's recorded `runtime` as `<runtime>` (INV-195) and its recorded name as
+     `<sdk-container>`, then apply the project copy:
 
-   Re-confirm the exact path via MCP; the Windows/macOS SDK install path differs (see the
-   initialization anti-patterns doc).
+     ```bash
+     <runtime> cp "<sdk-container>:<schema path from MCP>" database/szcore-schema-postgresql-create.sql &&
+       docker exec -i <pg-container> psql -U senzing -d G2 < database/szcore-schema-postgresql-create.sql
+     ```
+
+     Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
+     The copy lands in the project's `database/` (INV-200). If `<runtime> cp --help` fails, the
+     runtime has no `cp`: copy it through the project mount instead, with
+     `<runtime> exec <sdk-container> cp "<schema path from MCP>" /app/database/`. A failed copy
+     stops the step: report it and do not run `psql`.
+   - **On a native route**, where the SDK is installed on the host, apply the host file directly:
+
+     ```bash
+     docker exec -i <pg-container> psql -U senzing -d G2 < "<schema path from MCP>"
+     ```
+
+     Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
 5. Wire the connection into the engine config (Step 8): the `SQL.CONNECTION` URL is
    `postgresql://user:password@host:port/database` (MCP-confirmed), where `password` is the
    generated value from Step 1 (not the old `senzing` default) and `port` is the container's
@@ -1919,7 +1943,10 @@ config with `sdk_guide(topic='configure', ...)` — never hand-construct
 
 **Option 2 — Install PostgreSQL locally:** install and start a local PostgreSQL server, create the
 Senzing database, apply the schema DDL as above (`psql -f .../szcore-schema-postgresql-create.sql`),
-then wire the `postgresql://` connection via `sdk_guide(topic='configure', ...)`.
+then wire the `postgresql://` connection via `sdk_guide(topic='configure', ...)`. On SDK setup's
+container route the DDL is taken from the SDK container, as Option 1's container-route command
+takes it, never from a host path: copy it into `database/` with that command's `<runtime> cp`,
+then apply the copy with `psql -f database/szcore-schema-postgresql-create.sql`.
 
 **Option 3 — Use an existing PostgreSQL server:** obtain the host/port/database/credentials, apply
 the schema DDL to that database, and wire the `postgresql://` connection as above. Managed cloud

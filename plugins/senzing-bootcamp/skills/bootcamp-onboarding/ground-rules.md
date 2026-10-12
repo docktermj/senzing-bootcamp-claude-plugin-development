@@ -839,6 +839,22 @@ points at syntax rather than at the real cause — a command written for another
 When a PowerShell counterpart to a bash block is offered anywhere in the bootcamp, it MUST use the
 PowerShell form — never a copied `&&`.
 
+<a id="guide-run-blocks"></a>
+
+**Guide-run and hand-run blocks.** This is the canonical statement of which command blocks need a
+PowerShell form; each guide-run site links here rather than restating it (INV-300).
+
+- **A guide-run block** is one the guide runs itself with its Bash tool. It runs in the guide's
+  POSIX shell, which on Windows is Git Bash, so it needs no PowerShell form, and the 5.1 limits
+  above (`&&`, inline `python -c`, heredocs) do not apply to it. No test runs it on Windows, so
+  it is followed by one line, in the same wording at every site, that links here and says so
+  (INV-163): "Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows:
+  no test runs it there."
+- **A hand-run block** is one the Bootcamper types into their own terminal. On Windows it needs a
+  PowerShell 5.1 form that meets the rules above (INV-167).
+- A guide-run block that fails in the guide's shell follows its own site's failure rule. There is
+  no PowerShell fallback.
+
 ## Sourced scripts and the default shell
 
 A script the bootcamper is told to `source` runs in **their** interactive shell, so it MUST work in

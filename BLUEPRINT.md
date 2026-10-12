@@ -1588,7 +1588,12 @@ Ground rules (`ground-rules.md`, every turn):
   `package.json`. Never `internal://` as the datastore.
 - Platform notes: Java standalone files use a package-private class;
   PowerShell 5.1 syntax and encodings; sourced env scripts work under zsh and
-  never `exit`; on Docker a fresh parse error is retried once.
+  never `exit`; on Docker a fresh parse error is retried once. Anchor
+  `#guide-run-blocks` is the one statement of which blocks owe a PowerShell
+  form: a guide-run block (run by the guide's Bash tool) runs in its POSIX
+  shell, Git Bash on Windows, and is followed by one fixed pointer line that
+  links here and says it is unverified on Windows; a hand-run block (typed by
+  the Bootcamper) needs a PowerShell 5.1 form.
 - Visual deliverables use `brand_tokens.py`, render offline, escape data.
 - State: write rarely and batched, once per turn at step boundaries:
   `current_step` and `step_history[<module>]` (`last_completed_step`,
@@ -1876,6 +1881,12 @@ facts come from MCP tools; SENZ codes go to `explain_error_code`, then
   absent meaning 5432; a busy port on resume is reported and asked about;
   generated password, volume `database/postgres`, `pg_isready`, schema DDL,
   `docker_containers` entry), local, existing server, or switch to SQLite.
+  The DDL path comes from MCP at runtime. On SDK setup's container route the
+  host has no `/opt/senzing`, so the DDL is copied out of the SDK container
+  into `database/` with the recorded runtime's `cp` and that copy is applied
+  (a failed copy stops the step); a native route applies the host file. The
+  local-PostgreSQL option points at the same container-route copy. The
+  container-route blocks here carry the `#guide-run-blocks` pointer line.
 - Step 8, engine config: `sdk_guide(topic='configure', platform, language)`,
   built from `environment.default_paths` (not the brace-doubled
   `engine_config`), `SQL.CONNECTION` repointed, saved to
@@ -1976,7 +1987,8 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   2.2, 2.3, the Python fallback and the contract link) the host copies the
   server, `brand_tokens.py` and `vendor/d3.v7.min.js` into
   `data/temp/truthset-viz/` before each in-container run and runs that copy;
-  a failed copy stops the step.
+  a failed copy stops the step. The copy block, and the contract's in-container
+  launch block, carry the `#guide-run-blocks` pointer line.
 - 2.2: snapshot first: `--records`, `--title`, `--dataset`, `--snapshot`
   set to `docs/visualizations/truthset_verification.html`, `--no-serve`.
   Run the encoding self-check (legend combination rows must equal
@@ -8772,7 +8784,7 @@ collected as tests:
     non-empty `SBCP_QUIET_FPDF2_NOTICE` silences it.
   - It exports the decorator `requires_fpdf2`.
   - It is a module rather than a `conftest.py`, which `unittest` never loads.
-- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 52
+- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 61
   files. `blocks(text)` splits Markdown into blocks, and
   `match_lines(text, pattern)` returns the 1-based start line of each match. The
   rules are in 8.4.1.
@@ -8826,7 +8838,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 390 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 391 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8876,7 +8888,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6631 test methods in 388 files, matching `inventory.test_count_total`.
+There are 6683 test methods in 391 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -9026,6 +9038,7 @@ looks wrong.
 - `tests/test_graph_label_distinctness.py`: 18
 - `tests/test_graph_labels_paint_after_circles.py`: 13
 - `tests/test_ground_rules_nonyielding_presentation.py`: 16
+- `tests/test_guide_run_blocks_declare_their_shell.py`: 27
 - `tests/test_group_score_is_not_a_join_prediction.py`: 15
 - `tests/test_hard_rule_citations.py`: 6
 - `tests/test_hard_rule_detector_sees_mid_line_stop_signs.py`: 8
@@ -9336,6 +9349,16 @@ need the original text. These are heuristic estimates, accurate to about 10%:
   hand-rolled `REPO_ROOT.rglob`, `REPO_ROOT.glob("**…`,
   `(REPO_ROOT / ".claude").rglob`, `CLAUDE.rglob`, `os.walk(REPO_ROOT` or
   `os.walk(CLAUDE` in `tests/*.py`; a walk through a variable is not caught.
+- **Guide-run blocks.** `tests/test_guide_run_blocks_declare_their_shell.py`
+  (27 tests) finds each of six container-route blocks by a line of its own
+  block and requires the paragraph after its closing fence to be the one
+  pointer line to `ground-rules.md#guide-run-blocks`, with a sweep holding
+  every link to that anchor to the same wording; it checks the ground-rules
+  statement, that Module 2's PostgreSQL schema step never redirects from a
+  host `/opt/senzing` path and copies the DDL out of the SDK container into
+  `database/` with `<runtime> cp`, that Option 2 says the same, and runs the
+  container-route block with `sh` against stub runtimes (a failed copy never
+  reaches `psql`).
 - **Line-by-line guards.**
   `tests/test_every_line_reading_guard_gives_a_verdict.py` requires every test
   that reads a corpus line by line to use the matcher or to state an INV-346
@@ -10586,6 +10609,14 @@ Senzing licensing, with no SPDX identifier.
   `scripts/` is not mounted in the container, so the server and its D3 were
   unreachable there; a copy, not a mount, because `${CLAUDE_PLUGIN_ROOT}` is a
   versioned cache directory)
+- #508: container-route blocks state their shell: `ground-rules.md`'s
+  `#guide-run-blocks` says guide-run blocks run in the guide's POSIX shell (Git
+  Bash on Windows) and need no PowerShell form while hand-run blocks keep
+  #391's, and each of the six sites carries one pointer line with the
+  "unverified on Windows" disclosure; Module 2's PostgreSQL schema step copies
+  the DDL out of the SDK container into `database/` on that route (the route
+  Windows users take ran bash-only commands with no disclosure, and the schema
+  step read `/opt/senzing` on a host that has none)
 - #515: every test that walks the repository from its root or `.claude/` takes
   its files from `tests/_corpus.py`'s `corpus_files()` (`git ls-files -z
   --cached --others --exclude-standard`, existing files only, Claude Code's

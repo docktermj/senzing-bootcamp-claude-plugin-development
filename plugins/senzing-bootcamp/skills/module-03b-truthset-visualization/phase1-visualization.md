@@ -306,6 +306,8 @@ Read `programming_language` from `config/bootcamp_preferences.yaml`:
     cp "$VIZ_SRC/vendor/d3.v7.min.js" data/temp/truthset-viz/vendor/
   ```
 
+  Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
   The in-container `<viz-server-path>` is then `data/temp/truthset-viz/senzing_viz_server.py`. The
   copy lands in the mounted project, so the container sees it at `/app/data/temp/truthset-viz/` with
   no `exec`, and the vendored D3 sits beside the server wherever it runs.
