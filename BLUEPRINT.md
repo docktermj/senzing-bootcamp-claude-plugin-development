@@ -2144,7 +2144,12 @@ receiving branch, and a `setup_detour` goes to SDK setup's.
   `validation_status`, `validation_checks`, `provenance`
   (`cord|own|free_data|synthesized|unknown`), `added_at` and `updated_at`.
   The optional `sample: {file_path, record_count, strategy, reason}` never
-  touches the top-level counts. The optional top-level `scenario_intent`
+  touches the top-level counts. `mapping_status` is `pending`, `in_progress`,
+  `complete` or `skipped`; the one statement of `skipped`
+  (`#mapping-status-values`, linked by every reader) says a skipped source is
+  never mapped next or waited for, never loaded or put in the production
+  config, named in the Module 5 recap and production README, and its mapping
+  checkpoint is kept, never resumed. The optional top-level `scenario_intent`
   block sits beside `version` and `sources:`, only for a generated scenario,
   and graduation's projection drops it. A CORD snapshot goes to
   `config/cord_metadata.yaml`.
@@ -2255,10 +2260,11 @@ means the module is complete: only the transition question is asked.
   - A `quality_iteration` with stage `remap` writes
     `data/mapping/{source}_loaded_record_ids.txt`, reruns steps 8-18 per
     named source, then sets stage `reload` and hands to Module 6.
-  - Fast-pathed sources are skipped.
+  - Fast-pathed and `skipped` sources are passed over.
   - A pinned question sets `mapping_verbosity` (verbose or concise).
   - `config/mapping_state_<ds>.json` keeps state, decisions and
-    `validation_rejections`, and is deleted when the source is done.
+    `validation_rejections`, and is deleted when the source is done (kept,
+    and never resumed, for a `skipped` source).
 - **`mapping_workflow` contract.**
   - `start` needs `file_paths` and `data.workspace_dir='data/mapping'`.
   - The actions are `start`, `advance`, `back`, `status` and `reset`.
@@ -2292,8 +2298,13 @@ means the module is complete: only the transition question is asked.
     cover non-exempt cross-source feature pairs.
   - Validation: `sz_json_analyzer.py` is primary. The verbatim and routing
     checks are best-effort, and their known limitations are recorded as
-    exemptions. After two unactionable rejections, a pinned three-option
-    fallback question is asked.
+    exemptions. After two unactionable rejections, a pinned fallback
+    question offers write the mapper, try once more, or skip. Once more is a
+    fresh `start` with decisions fast-tracked; a second unactionable
+    rejection is appended and re-asks without it. Skip writes
+    `mapping_status: skipped` and `updated_at`, keeps the checkpoint and
+    continues at step 19; it is left out when no other source is
+    `complete`. With only the mapper option left, one line and no 👉.
   - All four `mapping_workflow` scripts run where the SDK runs: in the
     container on `docker`, on the host on a native route. The analyzer
     needs Python 3.10 or newer (a `match` statement, measured on server
@@ -2308,14 +2319,17 @@ means the module is complete: only the transition question is asked.
     `analyze_record(workspace_dir='data/mapping')`.
   - Step 15 writes `{source}_quality.jsonl`, advances with the verdict and
     offers a visual.
-  - Step 16 asks a pinned next-source or loading question per band.
+  - Step 16 asks a pinned next-source or loading question per band; an
+    unmapped source is one neither `complete` nor `skipped`.
   - Step 17 sets `mapping_status: complete`.
   - Step 18 writes `data/senzing-ready/<name>.jsonl` (now `file_path`) and
     `transformation_lineage_<name>.md`.
   - Step 18a answers `detect_environment` with `skip` or `test_load`.
   - Step 19 moves the reports to `docs/mapping/` under source-qualified
-    names and requires a mapper doc for every ready file.
-  - Step 20 is the only Module Completion.
+    names and requires a mapper doc for every ready file (not for a
+    `skipped` source).
+  - Step 20 is the only Module Completion, once every source is `complete`
+    or `skipped`; the recap names each `skipped` source and why.
 - **Phase 3.** Register the data source, then run workflow steps 6-8. ER
   stats go to `config/er_current_<ds>.json`; the first run becomes
   `er_baseline_<ds>.json`, and later runs ask a pinned accept-or-iterate
@@ -2351,7 +2365,8 @@ Phase A (`phaseA-build-loading.md`, steps 1-4a):
   defaults to `demo`. License framing appears only when the measured
   `license_record_limit` (progress file) is positive and below the dataset size;
   an absent or provisional value is measured via Module 4 Step 8a sub-step 7.
-- Step 2 sets `load_status: loading`. Step 3 writes
+- Step 2 sets `load_status: loading`; a `skipped` source is not loaded here
+  or later, and Phase C's gate neither counts nor loads it. Step 3 writes
   `src/load/load_<source>.<ext>` from `sdk_guide` with `topic='load'` and
   `record_count=<raw_value>` (threaded above 500 or when omitted); SQLite
   (`database_type`, absent treated as SQLite) serializes writes, and a header
@@ -2643,7 +2658,8 @@ and continues; the recap PDF is guaranteed.
   `src/transform`, `src/load`, `src/query`, `src/utils`,
   `data/senzing-ready/` and the dependency manifest; writes
   `production/config/data_sources.yaml` keeping only `version` and each
-  source's `name`, `file_path`, `format`; never copies progress,
+  source's `name`, `file_path`, `format` (a `skipped` source is left out,
+  and Step 4's README names it as not mapped); never copies progress,
   preferences, recap, notes, `data/raw`, `data/samples`, `data/subsets`,
   `logs`, `backups`, `docs/feedback`.
 - Step 3: `.env.example` (`SENZING_ENGINE_CONFIGURATION_JSON`,
@@ -8912,7 +8928,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 397 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 398 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8962,7 +8978,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6888 test methods in 397 files, matching `inventory.test_count_total`.
+There are 6905 test methods in 398 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -9309,6 +9325,7 @@ looks wrong.
 - `tests/test_since_view_sees_the_maintainer_surface.py`: 7
 - `tests/test_sites_states_the_corpus_it_scanned.py`: 14
 - `tests/test_skills_state_their_commands_argument_handling.py`: 14
+- `tests/test_skipped_mapping_status.py`: 17
 - `tests/test_snapshot_and_capture_fidelity.py`: 24
 - `tests/test_source_encoding_renders_distinctly.py`: 9
 - `tests/test_sourcing_reaches_beyond_technical_facts.py`: 18
@@ -9589,7 +9606,11 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   - Completeness is measured per record type (INV-174).
   - The fast path is gated on full mapping (INV-198).
   - A `mapping_workflow` rejection gets at most two retries and then a pinned
-    three-option question. The malformed-advance budget is five violations.
+    question. Its retry and skip options have handlers, skip writes
+    `mapping_status: skipped` and is offered only while another source is
+    `complete`, and every reader links the one statement of `skipped`
+    (`test_skipped_mapping_status.py`). The malformed-advance budget is five
+    violations.
   - The analyzer gate states where the scripts run and checks the analyzer's
     Python 3.10 floor first; the floor entry after it keeps its evidence,
     server version and date (`test_analyzer_python_floor_is_cited.py`).
@@ -10803,3 +10824,10 @@ Senzing licensing, with no SPDX identifier.
   config and re-asks the question, and a Module 6 return re-sizes the loader
   for PostgreSQL (both options handed off to migration guidance that does not
   exist)
+- #527: Module 5's validator-rejection gate handles "try once more" (one fresh
+  `mapping_workflow` run; a second unactionable rejection re-asks without it)
+  and "skip" (a new `mapping_status: skipped`, offered only while another
+  source is `complete`, checkpoint kept), and `skipped` is stated once at
+  Module 4's registry schema and linked from steps 16, 19 and 20, Module 6,
+  the recap and graduation (options 2 and 3 had no handling step, and a
+  skipped source had no registry state)

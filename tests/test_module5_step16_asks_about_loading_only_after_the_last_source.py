@@ -12,7 +12,8 @@ remaining data source before proceeding".
 So step 16 now has two sets of pinned questions (#333):
 
 - **while an unmapped source remains** (`config/data_sources.yaml` has another source whose
-  `mapping_status` is not `complete`), three per-source questions about mapping `{next}`;
+  `mapping_status` is neither `complete` nor `skipped`, since #527), three per-source questions
+  about mapping `{next}`;
 - **when none remains**, the original three loading questions, unchanged.
 
 Each option has a handling step (INV-284): moving on goes through 17-18a to step 19, iterating
@@ -92,7 +93,7 @@ def step16_problems(s16):
     """Everything wrong with step 16's gate, as a list of strings."""
     problems = []
     flat = re.sub(r"\s+", " ", s16)
-    for marker in ("config/data_sources.yaml", "mapping_status", "complete"):
+    for marker in ("config/data_sources.yaml", "mapping_status", "complete", "skipped"):
         if marker not in flat:
             problems.append(f"the unmapped-source condition does not name {marker!r}")
     if WHILE_REMAINING not in s16:
