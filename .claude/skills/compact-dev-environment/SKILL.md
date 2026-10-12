@@ -27,7 +27,7 @@ alone. Measured in this repo on 2026-07-31:
 
 | Asset | What it is | Citations | Safe operation |
 |---|---|---|---|
-| Invariant `INV-NNN` | an **address**: 4,981 live citations across plugin text, specs, tests and skills — **plus 813 in commit messages, which cannot be edited** | very high | propose a merge, supersession or demotion as a block for `/review-invariants` (INV-309) — **never renumber casually** |
+| Invariant `INV-NNN` | an **address**: 4,981 live citations across plugin text, specs, tests and skills — **plus 813 in commit messages, which cannot be edited** | very high | propose a merge, supersession or demotion as a block for `/review-invariants` — **never renumber casually** |
 | Spec file | a **record** in the frozen archive (INV-307); its address is the `## <name>` heading in `IMPLEMENTED.md` | moderate | read only: never moved, annotated or deleted |
 | Test | **enforcement**; deleting one silently removes a guarantee | n/a | merge traversals, never merge assertions |
 | Feedback archive | a **record**; its address is the `entry_id` hash in `feedback/PROCESSED.jsonl` | low | prune files, **never prune ledger lines** |
@@ -170,7 +170,7 @@ another is not a duplicate, and collapsing it loses the case.
 
 ### Merges, supersessions and demotions are blocks for `/review-invariants`
 
-⛔ **This skill never edits `specs/INVARIANTS.md` and never mints an id (INV-309).** It
+⛔ **This skill never edits `specs/INVARIANTS.md` and never mints an id.** It
 proposes, and `/review-invariants` decides. After the maintainer's explicit yes in Step 6,
 it appends one dated entry to `specs/IMPLEMENTED.md` holding the blocks below, then tells
 the maintainer to run `/review-invariants`. A run that finds nothing mergeable,
@@ -185,18 +185,18 @@ superseded or demotable writes no entry.
   invariant demoted. A change to `ground-rules.md` wording is filed as a GitHub issue
   instead, because that file is plugin text, and plugin text changes through an issue.
 
-Write each block in the shape the "Writing one" section of
-`.claude/skills/review-invariants/SKILL.md` defines. An amendment names the real id it
+Write each block as [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one)
+shows (INV-300). An amendment names the real id it
 amends; only the merged rule's drafted id is `INV-NNN`. Then run
 `python3 .claude/skills/review-invariants/pending_invariants.py list` and confirm every
 block is queued.
 
-**Why they are routed this way (INV-309).** Minting an id is the maintainer's alone,
+**Why they are routed this way.** Minting an id is the maintainer's alone,
 through `/review-invariants`, and `INVARIANTS.md` changes only by a dated correction
 appended beneath the original. A merge needs a new id, and a supersession or a demotion
 changes a rule already in force, so each one is a decision rather than mechanical work.
 Sending one to `/implement-github-issue` *(user level)* does not help: that command
-cannot mint either, and it writes a block in place of the change. Writing the block here
+cannot mint either (INV-309), and it writes a block in place of the change. Writing the block here
 puts the decision in the queue `/review-invariants` already walks, with the census this
 run took beside it.
 
@@ -371,9 +371,10 @@ Then:
 - **Invariant changes go to `/review-invariants` as blocks** — merging invariants,
   superseding one, demoting one (Step 2). After the maintainer's yes, append the entry
   holding the blocks to `specs/IMPLEMENTED.md`, confirm `pending_invariants.py list`
-  queues each one, and tell the maintainer to run `/review-invariants`. ⛔ (INV-309) Never
-  edit `specs/INVARIANTS.md` here, and never send an invariant change to
-  `/implement-github-issue` *(user level)*, which cannot mint either.
+  queues each one, and tell the maintainer to run `/review-invariants`.
+  ⛔ **Never edit `specs/INVARIANTS.md` here.**
+  ⛔ (INV-309) Never send an invariant change to `/implement-github-issue` *(user level)*,
+  which cannot mint either.
 - **Other semantic changes go through a GitHub issue** — deleting a test, or the
   `ground-rules.md` wording a demotion needs. File it once the maintainer has said yes
   to that issue's exact text (INV-314), and let `/implement-github-issue` *(user level)*

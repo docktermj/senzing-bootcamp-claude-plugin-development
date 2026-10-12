@@ -3440,7 +3440,7 @@ Procedure (report first; each destructive step confirmed per class). Step
 1 runs `citations.py census`, `citations.py verify` and
 `coverage_reports.py invariants`. Step 2 sorts invariants into
 `load-bearing`, `mergeable`, `superseded`, `unenforced`, `not-an-invariant`;
-the skill never edits `INVARIANTS.md` or mints an ID (INV-309): after a yes
+the skill never edits `INVARIANTS.md` or mints an ID: after a yes
 it appends one dated ledger entry with a `DEFERRED INVARIANT` block per merged
 rule (`INV-NNN`) and a `PROPOSED AMENDMENT` per superseded, merged or demoted
 original, checks `pending_invariants.py list`, and hands off to
@@ -3587,7 +3587,9 @@ Bootcamper answer; commit or copy aside before mutating; clear `__pycache__`
 after same-size reverts; bracket `pgrep -f` patterns. Findings are drafted on
 sight into a `## dry-run-<YYYY-MM-DD>` **Not a spec** ledger entry (INV-317,
 INV-307) in the issue-template shape; then fix the class, add a stdlib test
-(INV-108), negative-control it, record the outcome and invariant answer.
+(INV-108), negative-control it, record the outcome and invariant answer: a new
+rule or a correction is queued as a `DEFERRED INVARIANT` or `PROPOSED AMENDMENT`
+block for `/review-invariants`, never written to `INVARIANTS.md` (#520).
 Filing happens after a phase or walk pause, never mid-walk, after searching
 open and closed issues and per-issue approval; never `--repo` (INV-319) or
 `unattended-ok` (INV-318); no maintainer, nothing filed. The report names
@@ -3762,7 +3764,9 @@ all`, `since --since-last-audit`, `coverage_reports.py both` and
 `citations.py verify` (leads, not verdicts), and record unreachable tools.
 Step 2: a scoped, disclosed forward sweep (generator hits, `enumerations`,
 what changed since the last audit, a rotation of outcome blocks). Step 3:
-each reverse hit is an unregistered rule (draft, sign-off, next ID), a
+each reverse hit is an unregistered rule (drafted and queued as a
+`DEFERRED INVARIANT` block for `/review-invariants`, which alone writes
+`INVARIANTS.md`; Step 8 queues a correction as a `PROPOSED AMENDMENT`), a
 missing citation, or not a durable rule; also hunt wrong citations. Steps 4
 to 6: consistency and coherence, completeness (three platforms, every
 language, deliverables verified, INV-129), concision (`size`,
@@ -8814,7 +8818,7 @@ collected as tests:
     non-empty `SBCP_QUIET_FPDF2_NOTICE` silences it.
   - It exports the decorator `requires_fpdf2`.
   - It is a module rather than a `conftest.py`, which `unittest` never loads.
-- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 64
+- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 65
   files. `blocks(text)` splits Markdown into blocks, and
   `match_lines(text, pattern)` returns the 1-based start line of each match. The
   rules are in 8.4.1.
@@ -8832,7 +8836,7 @@ collected as tests:
   spec files minus the `specs/IMPLEMENTED.md` and `specs/DECLINED.md` headings.
   It reports any spec found in both. Listing exits 0, and `--check` exits 2 when
   a spec is in both.
-- `tests/_corpus.py`: the shared corpus listing (#515), used by 12 files.
+- `tests/_corpus.py`: the shared corpus listing (#515), used by 13 files.
   `corpus_files(*subtrees, root=REPO_ROOT, suffixes=None)` lists tracked and
   untracked, non-ignored files from `git ls-files -z`, and always prunes Claude
   Code's runtime directories (section 5.62).
@@ -8868,7 +8872,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 394 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 395 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8918,7 +8922,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6806 test methods in 394 files, matching `inventory.test_count_total`.
+There are 6825 test methods in 395 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -9082,6 +9086,7 @@ looks wrong.
 - `tests/test_interface_naming.py`: 12
 - `tests/test_internal_connection_string_rejected.py`: 2
 - `tests/test_inv174_per_record_applicability.py`: 12
+- `tests/test_invariant_changes_route_through_review_invariants.py`: 19
 - `tests/test_invariant_crossreferences.py`: 32
 - `tests/test_invariant_enforcer_citations.py`: 4
 - `tests/test_invariant_layout_tree.py`: 19
@@ -9865,6 +9870,17 @@ These are the scripts under `.claude/skills/`:
   - `retrofit.sh` writes nothing and lists at most 40 lines.
   - Documented command sets equal the shipped sets.
   - Every outward act states its gate.
+- **Invariant routing.**
+  `tests/test_invariant_changes_route_through_review_invariants.py` (#520):
+  - no skill under `.claude/skills/` except `review-invariants` tells its
+    reader to register, mint, append to or correct in place an invariant in
+    `specs/INVARIANTS.md`; prohibitions and questions pass;
+  - every skill that accounts for an invariant, a derived set with `dry-run`,
+    `production-readiness-audit`, `auto-test` and `compact-dev-environment` as
+    a floor, names `/review-invariants` and links the heading over
+    `review-invariants`' block template ("Writing one");
+  - every `(INV-309)` citation sits in a sentence about
+    `/implement-github-issue`.
 
 #### 8.4.10 CI and release hygiene
 
@@ -10716,3 +10732,14 @@ Senzing licensing, with no SPDX identifier.
   derived-site guard checks every skill section that names a plugin asset, and
   a `PROPOSED AMENDMENT to INV-091` is queued (the container mounts only the
   project, so those reads failed on SDK setup's `docker` route)
+- #520: every maintainer skill routes a change to `specs/INVARIANTS.md` the
+  same way: `dry-run` steps 5 and 6, `production-readiness-audit` Step 3,
+  Step 8 items 5 and 6 and its Guardrails, and `auto-test`'s finding section
+  queue a `DEFERRED INVARIANT` or `PROPOSED AMENDMENT` block in the run's
+  ledger entry with one shared line that links `review-invariants`' "Writing
+  one" (INV-300), and only `/review-invariants` writes the register;
+  `compact-dev-environment` keeps INV-309 only on its `/implement-github-issue`
+  sentences, a guard enforces the routing and the INV-309 scope, and a new
+  `DEFERRED INVARIANT` (`INV-NNN`) is queued (INV-309 binds only the
+  issue-driven path, while three skills told their reader to edit the
+  register by hand)

@@ -307,9 +307,12 @@ Work the output of all three views (`rules` and `per-rule` come from `all`; `sin
 hit, decide between:
 
 - **Unregistered rule** → the plugin guarantees something the ruleset does not record.
-  Draft the invariant, get the maintainer's sign-off on the wording (never record one
-  they have not agreed to), and append it per `INVARIANTS.md`'s own rules — next unused
-  ID, index entry in the same edit, provenance.
+  Draft the invariant: its wording, its enforcer and every site it ships at. The
+  maintainer's sign-off on the wording and the id come later, through `/review-invariants`.
+  ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
+  `DEFERRED INVARIANT` block in the run's `specs/IMPLEMENTED.md` entry, as
+  [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
+  (INV-300), then tell the maintainer to run `/review-invariants`.
 - **Missing citation** → the rule *is* registered; the text just does not say which
   invariant governs. Add the citation. This is not cosmetic: INV-183 requires a step
   that generates an artifact to name its governing rules **at that step**, and a rule
@@ -448,14 +451,22 @@ session end:
 5. **Record the outcome in `specs/IMPLEMENTED.md`** — ⚠️ still live and exempt from the
    freeze, and the audit's own record that it **ran** and what it concluded, including
    "found nothing", which is a result. Reference each filed finding by issue number; an
-   unattended run writes the findings themselves here. Then either register the invariant it
+   unattended run writes the findings themselves here. Then either queue the invariant it
    establishes or state that it establishes none (`tests/test_spec_ledger_invariants.py`
-   enforces this). An audit that changes shipped code and leaves no ledger entry is the
-   failure adjacent to the one INV-182 prevents — follow the `deep-dive-audit-*`
-   precedent and record it as a dated `## production-readiness-audit-<date>` entry
-   marked **Not a spec**.
-6. **Correct an invariant in place when the invariant is what is wrong** — a dated note
-   saying what was verified and when. Never delete or renumber it.
+   enforces this).
+   ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
+   `DEFERRED INVARIANT` block in the run's `specs/IMPLEMENTED.md` entry, as
+   [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
+   (INV-300), then tell the maintainer to run `/review-invariants`. An audit that changes
+   shipped code and leaves no ledger entry is the failure adjacent to the one INV-182
+   prevents — follow the `deep-dive-audit-*` precedent and record it as a dated
+   `## production-readiness-audit-<date>` entry marked **Not a spec**.
+6. **Propose a correction when the invariant is what is wrong** — a dated note saying what
+   was verified and when. Never delete or renumber it.
+   ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
+   `PROPOSED AMENDMENT` block in the run's `specs/IMPLEMENTED.md` entry, as
+   [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
+   (INV-300), then tell the maintainer to run `/review-invariants`.
 
 ⛔ **Do not end a run with unrecorded findings.** Before reporting, list what you found
 and confirm each is **either a filed issue or a line in the dated ledger entry**. "I
@@ -494,8 +505,14 @@ durable.
   this session or not asserted (INV-080). Do not launder a Senzing claim out of a spec,
   the ledger, or this file. Most audit findings are internal consistency and touch no
   Senzing fact — say so explicitly rather than implying a re-check happened.
-- **`INVARIANTS.md` is append-only.** New invariants need the maintainer's sign-off on
-  the wording, the next unused ID, and an index entry in the same edit.
+- **`INVARIANTS.md` is append-only, and only `/review-invariants` writes to it.** A new
+  invariant needs the maintainer's sign-off on the wording, and so does a correction.
+  ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
+  `DEFERRED INVARIANT` block for a new rule, or a `PROPOSED AMENDMENT` block for a correction,
+  in the run's ledger entry, as
+  [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
+  (INV-300), then tell the maintainer to run `/review-invariants`. An unattended run, which
+  cannot get a sign-off, takes the same route.
 - **`.claude/` never ships.** `propagate.sh` mirrors `plugins/`, `.claude-plugin/`,
   `docs/` and `README.md` only, so this skill and its helper stay maintainer-side.
 - **Apply the Goldilocks Principle to this file too.** If a future run finds this skill
