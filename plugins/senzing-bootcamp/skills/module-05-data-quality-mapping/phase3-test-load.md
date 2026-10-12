@@ -171,12 +171,22 @@ correct project subdirectories per the file-placement guidance in `phase2-data-m
 ### 25. Present results and decision gate
 
 Present the Phase 3 results summary for this data source: records loaded, entities created,
-deduplication rate, quality assessment, and any issues found. Then pin the decision-gate question
-verbatim:
+deduplication rate, quality assessment, and any issues found. Whether a question follows depends on
+step 24d (#488):
+
+- **Step 24d's gate was not presented** (the first test load for this source, whose baseline step
+  24b saved without asking): this gate is the only offer to iterate, so pin the decision-gate
+  question verbatim:
 
 👉 **Are you ready to proceed?** (respond yes or no)
 
 *(Internal: end the turn on this question and wait.)*
+
+- **Step 24d's gate was presented:** its answer already settled accept or iterate, so ask nothing
+  here. Present the summary as statements and follow that answer: **accept** (its option 1) takes
+  the **yes** route below, and **iterate** (its option 2) takes the **no** route. Step 24d already
+  told the Bootcamper they can return to Phase 2, so do not repeat that offer as a question. The
+  turn ends on the next question the route reaches (INV-251).
 
 > **Data source registry:** Update the source's `test_load_status` to `complete` and
 > `test_entity_count` to the entity count from the test load in `config/data_sources.yaml`. Set
@@ -206,8 +216,8 @@ than this one.
 |---|---|---|
 | SDK not set up, and the bootcamper skips (Before starting Phase 3) | `test_load_status: skipped` | Phase 2 step 19 |
 | Step 21 detection fails, and the bootcamper skips | `test_load_status: skipped` | Phase 2 step 19 |
-| Step 25 **yes** | `test_load_status: complete`, `test_entity_count` (step 25's registry note) | Phase 2 step 19 |
-| Step 25 **no** | as step 25's registry note left it | Phase 2 step 17 |
+| Step 25 **yes**, or step 24d's **accept** | `test_load_status: complete`, `test_entity_count` (step 25's registry note) | Phase 2 step 19 |
+| Step 25 **no**, or step 24d's **iterate** | as step 25's registry note left it | Phase 2 step 17 |
 
 > **Data source registry (skip exit):** Update **this source's** `test_load_status` to `skipped`
 > in `config/data_sources.yaml` and set `updated_at`. Leave every other source's entry as it is: a
@@ -249,6 +259,7 @@ has, after its Module Completion already ran: this module's `SKILL.md` → "Resu
 - ✅ Test load completed for each data source (or explicitly skipped).
 - ✅ Entity resolution results reviewed (deduplication rate, quality assessment).
 - ✅ Step 25 answered, and the flow returned to Phase 2 (step 19, or step 17 to iterate).
+  When step 24d's gate was presented, its answer is step 25's.
 
 ## Interpreting `analyze_record` results
 

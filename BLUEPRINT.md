@@ -2237,8 +2237,9 @@ means the module is complete: only the transition question is asked.
     reference; a feature with no family becomes payload and a difference.
     Step 12 shows that source's sample record beside their words. With no
     such column anywhere, or every source fast-pathed, there is none.
-  - Pinned questions cover a payload key that collides with a feature name
-    (rename to `{KEY}_PAYLOAD`) and non-exempt cross-source feature pairs.
+  - A payload key that collides with a feature name is renamed to
+    `{KEY}_PAYLOAD` and said in one line, with no question. Pinned questions
+    cover non-exempt cross-source feature pairs.
   - Validation: `sz_json_analyzer.py` is primary. The verbatim and routing
     checks are best-effort, and their known limitations are recorded as
     exemptions. After two unactionable rejections, a pinned three-option
@@ -2268,7 +2269,9 @@ means the module is complete: only the transition question is asked.
 - **Phase 3.** Register the data source, then run workflow steps 6-8. ER
   stats go to `config/er_current_<ds>.json`; the first run becomes
   `er_baseline_<ds>.json`, and later runs ask a pinned accept-or-iterate
-  question. Step 25 asks yes or no: yes goes to step 19, no to step 17.
+  question. Step 25 asks yes or no only when that question was not asked;
+  otherwise it follows its answer. Yes (accept) goes to step 19, no
+  (iterate) to step 17.
   The registry gets `test_load_status` and `test_entity_count`.
 
 ### 5.14 `plugins/senzing-bootcamp/skills/module-06-data-processing/`
@@ -2502,10 +2505,10 @@ business attributes take a per-record `get_record` pass, re-asked at the step,
 skipped when the dumped row already carries `JSON_DATA`. The program, in the
 chosen language under `src/query/`, writes `data/temp/exports/<system>/`;
 entity, edge and attribute counts come from the written files, and zero edges
-is a failure, never handed over. Each system lands in `steps.4e.targets`. The
-transition question follows the offers in its own turn (not repeated after a
-Discover exit); then `discover_phase` is set to `"completed"` and the module
-returns to the gate. On a synthesized
+is a failure, never handed over. Each system lands in `steps.4e.targets`. No
+transition question follows the offers: the turn that settles the last one sets
+`discover_phase` to `"completed"` and returns to the gate, ending on the
+teardown 👉, or on the graduation offer when no server ran. On a synthesized
 source whose `quality_intent` carries `relationship_intent`, or whose scenario's
 success criteria name households or related parties, reaching the 4d or step 7
 fallback is reported as a bootcamp generation defect with `/bootcamp-feedback`.
@@ -8809,7 +8812,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 386 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 389 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8922,6 +8925,7 @@ looks wrong.
 - `tests/test_concepts_teaching_section_claims_no_exemption.py`: 12
 - `tests/test_config_seeding_guidance.py`: 16
 - `tests/test_confirmation_gate_is_satisfiable_on_a_generated_scenario.py`: 9
+- `tests/test_confirmations_with_one_sensible_answer.py`: 10
 - `tests/test_conformance_scans.py`: 27
 - `tests/test_conformance_sees_a_rule_beside_a_citation.py`: 8
 - `tests/test_container_lifecycle_runtimes.py`: 18
@@ -10546,6 +10550,11 @@ Senzing licensing, with no SPDX identifier.
   as where its answer is acted on (no module read `integration_targets`, and a
   real Bootcamper's graph load came out with no relationships and no business
   attributes)
+- #488: Discover's "continue to module completion now?" and Module 5's
+  `{KEY}_PAYLOAD` question are removed, and Module 5 step 25 asks only when
+  step 24d's accept-or-iterate gate was not presented; five pacing gates are
+  kept (a confirmation with one sensible answer trains the automatic "yes" that
+  lets meaning drift at the gates that matter)
 - #490: on SDK setup's container route, Truth Set visualization's Python path
   copies `senzing_viz_server.py`, `brand_tokens.py` and `vendor/d3.v7.min.js`
   into `data/temp/truthset-viz/` before each in-container run and runs that
