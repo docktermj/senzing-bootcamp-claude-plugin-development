@@ -49,6 +49,7 @@ import re
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
 from _wrapped_text import match_lines
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -106,11 +107,8 @@ def normative(text):
 
 def own_markdown():
     """The repository's own Markdown under `.claude/` and `docs/`, never a scratch worktree."""
-    for root in (CLAUDE, REPO_ROOT / "docs"):
-        for p in sorted(root.rglob("*.md")):
-            if "worktrees" in p.relative_to(REPO_ROOT).parts:
-                continue
-            yield p
+    for root in (".claude", "docs"):
+        yield from corpus_files(root, suffixes={".md"})
 
 
 class ThisRepositoryDefinesNeitherName(unittest.TestCase):

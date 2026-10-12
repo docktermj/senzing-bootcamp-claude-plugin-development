@@ -37,6 +37,7 @@ import re
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
 from _wrapped_text import blocks, match_lines
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -127,12 +128,7 @@ def offenders():
     allowed = live_exceptions()
     out = []
     for root in INSTRUCTION_ROOTS:
-        base = REPO_ROOT / root
-        if not base.is_dir():
-            continue
-        for path in sorted(base.rglob("*")):
-            if not path.is_file() or path.suffix not in {".md", ".py", ".sh"}:
-                continue
+        for path in corpus_files(root, suffixes={".md", ".py", ".sh"}):
             rel = path.relative_to(REPO_ROOT).as_posix()
             if rel in QUOTING_THE_RULE:
                 continue

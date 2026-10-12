@@ -4260,7 +4260,7 @@ page is scaled from; cited by `generate_recap_pdf.py` and
 `tests/test_recap_pdf_certificate.py`), and `2026-sz-light.png` (a logo
 asset). No shipped code reads these files at runtime.
 
-### 5.62 `tests/_wrapped_text.py` and `tests/_maintainer_surface.py`
+### 5.62 `tests/_wrapped_text.py`, `tests/_maintainer_surface.py` and `tests/_corpus.py`
 
 Shared stdlib test helpers (INV-108).
 
@@ -4284,6 +4284,18 @@ spaces, trims it, runs the compiled pattern per block, and returns the
 none ship, the fixtures under `tests/fixtures/maintainer-commands/` so the
 INV-303 enforcer never runs over an empty set. Guards for INV-302, INV-316,
 INV-318 and INV-319 import it.
+
+`_corpus.py` is the one listing of the repository's own files for guards that
+walk from the root or `.claude/` (#515). `corpus_files(*subtrees, root=REPO_ROOT,
+suffixes=None)` runs `git -C <root> ls-files -z --cached --others
+--exclude-standard` as an argument list, keeps paths that exist on disk as
+files, filters by repo-relative subtree and `Path.suffix`, and returns them
+sorted. `RUNTIME_DIRS` (`.claude/worktrees`, `.claude/checkpoints`,
+`.claude/mailbox`, `.claude/agent-memory-local`, `.claude/routines/.state`) are
+pruned at any depth whatever git reports (`is_runtime(parts)`). When git is
+missing or exits non-zero, `_walk_listing` walks the root, pruning `.git`,
+`RUNTIME_DIRS` and `FALLBACK_PRUNED` (`__pycache__`, `.pytest_cache`,
+`.history`).
 
 ## 6. Exact contracts
 
@@ -8745,10 +8757,8 @@ probe it with `importlib.util.find_spec` and let the code under test import it.
   - Present leg: when `fpdf2` lives in the user site, set `PYTHONUSERBASE` to
     the real user base, or the empty `HOME` hides it.
   - Absent leg: run from a `python3 -m venv --without-pip` venv.
-  - Use a clean worktree. Tree-scanning guards also read untracked files, and in
-    this checkout, with other sessions' files under `.claude/worktrees/`, a run
-    at this SHA reported `FAILED (failures=5, errors=6, skipped=13)` for that
-    reason alone.
+  - Scratch under `.claude/worktrees/` is harmless: guards that walk the root
+    or `.claude/` list files through `tests/_corpus.py`, which prunes it (#515).
 
 The helper modules have names that do not start with `test_`, so they are never
 collected as tests:
@@ -8780,6 +8790,10 @@ collected as tests:
   spec files minus the `specs/IMPLEMENTED.md` and `specs/DECLINED.md` headings.
   It reports any spec found in both. Listing exits 0, and `--check` exits 2 when
   a spec is in both.
+- `tests/_corpus.py`: the shared corpus listing (#515), used by 12 files.
+  `corpus_files(*subtrees, root=REPO_ROOT, suffixes=None)` lists tracked and
+  untracked, non-ignored files from `git ls-files -z`, and always prunes Claude
+  Code's runtime directories (section 5.62).
 
 Skip conventions. Every reason names its cause and states no count.
 
@@ -8812,7 +8826,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 389 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 390 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8935,6 +8949,7 @@ looks wrong.
 - `tests/test_cord_fetch_has_a_403_remedy.py`: 17
 - `tests/test_cord_fetch_integrity.py`: 50
 - `tests/test_cord_is_disclosed_as_real_data.py`: 10
+- `tests/test_corpus.py`: 15
 - `tests/test_coverage_check_looks_inside_root_arrays.py`: 6
 - `tests/test_coverage_ledger.py`: 36
 - `tests/test_coverage_reports.py`: 48
@@ -9313,6 +9328,14 @@ need the original text. These are heuristic estimates, accurate to about 10%:
     backtick lines. Inside a fence, `#`, `|` and `---` lines are content, and
     only a blank line ends a block.
   - The lines of one list, with no blank line between them, form one block.
+- **Corpus listing.** `tests/test_corpus.py` (15 tests) plants a canary under
+  every runtime directory of a throwaway git repository and asserts
+  `corpus_files()` returns none of them, while it still returns a tracked file,
+  an untracked one and an oddly named one, and drops a deleted tracked file and
+  an ignored one, by git and by the fallback walk. It also fails on a
+  hand-rolled `REPO_ROOT.rglob`, `REPO_ROOT.glob("**…`,
+  `(REPO_ROOT / ".claude").rglob`, `CLAUDE.rglob`, `os.walk(REPO_ROOT` or
+  `os.walk(CLAUDE` in `tests/*.py`; a walk through a variable is not caught.
 - **Line-by-line guards.**
   `tests/test_every_line_reading_guard_gives_a_verdict.py` requires every test
   that reads a corpus line by line to use the matcher or to state an INV-346
@@ -10563,3 +10586,9 @@ Senzing licensing, with no SPDX identifier.
   `scripts/` is not mounted in the container, so the server and its D3 were
   unreachable there; a copy, not a mount, because `${CLAUDE_PLUGIN_ROOT}` is a
   versioned cache directory)
+- #515: every test that walks the repository from its root or `.claude/` takes
+  its files from `tests/_corpus.py`'s `corpus_files()` (`git ls-files -z
+  --cached --others --exclude-standard`, existing files only, Claude Code's
+  runtime directories always pruned, a pruned walk without git), with a canary
+  guard and a hand-rolled walk guard in `tests/test_corpus.py` (untracked loop
+  scratch under `.claude/worktrees/` turned 7 tests red in the main checkout)

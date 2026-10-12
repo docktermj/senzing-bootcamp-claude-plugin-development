@@ -88,6 +88,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SPECS = REPO_ROOT / "specs"
 MANIFEST = SPECS / "FROZEN-MANIFEST.txt"
@@ -372,16 +374,8 @@ LIVE_NAME = re.compile(r"`(?:specs/)?(%s)`" % "|".join(re.escape(n) for n in sor
 SPEC_COUNT = re.compile(r"\b\d[\d,]*\s+specs\b")
 
 
-def outside_worktrees(path):
-    return path.relative_to(REPO_ROOT).parts[:2] != (".claude", "worktrees")
-
-
 def walk(directory, suffixes=None):
-    base = REPO_ROOT / directory
-    if not base.is_dir():
-        return []
-    return [p for p in base.rglob("*") if p.is_file() and outside_worktrees(p)
-            and (suffixes is None or p.suffix in suffixes)]
+    return corpus_files(directory, suffixes=suffixes)
 
 
 def root_files():

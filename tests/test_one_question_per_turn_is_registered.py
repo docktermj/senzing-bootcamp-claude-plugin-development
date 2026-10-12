@@ -40,6 +40,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 INVARIANTS = REPO_ROOT / "specs" / "INVARIANTS.md"
@@ -139,9 +141,7 @@ def misattributed_count_claims():
     for root, suffixes in ((PLUGIN, (".md",)),
                            (REPO_ROOT / "tests", (".py",)),
                            (REPO_ROOT / ".claude", (".py", ".md"))):
-        for path in sorted(root.rglob("*")):
-            if path.suffix not in suffixes or not path.is_file():
-                continue
+        for path in corpus_files(root.relative_to(REPO_ROOT).as_posix(), suffixes=suffixes):
             if path.name == "test_one_question_per_turn_is_registered.py":
                 continue          # this file quotes every wording deliberately
             text = path.read_text(encoding="utf-8", errors="replace")

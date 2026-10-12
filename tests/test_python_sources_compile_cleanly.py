@@ -36,6 +36,8 @@ import unittest
 import warnings
 from pathlib import Path
 
+from _corpus import corpus_files
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 #: Roots scanned, derived by walking each rather than listing files (INV-246). A file added
@@ -52,10 +54,7 @@ def python_sources():
     """Every `.py` under the scanned roots, discovered rather than listed (INV-246)."""
     found = []
     for root in ROOTS:
-        base = REPO_ROOT / root
-        if not base.exists():
-            continue
-        found.extend(sorted(p for p in base.rglob("*.py") if p.is_file()))
+        found.extend(corpus_files(root, suffixes={".py"}))
     return found
 
 

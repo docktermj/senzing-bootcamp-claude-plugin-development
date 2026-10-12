@@ -83,9 +83,10 @@ import re
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CLAUDE = REPO_ROOT / ".claude"
-TESTS = REPO_ROOT / "tests"
 
 #: A fenced block, indented or not. ⛔ `[ \t]*` is load-bearing: two of the instructions sit
 #: inside list items, so their fences are indented and a column-0 pattern missed them -- which
@@ -148,9 +149,8 @@ def line_of(text, offset):
 
 
 def surfaces():
-    """Every markdown file under `.claude/`, other worktrees' checkouts excepted."""
-    return sorted(p for p in CLAUDE.rglob("*.md")
-                  if "worktrees" not in p.relative_to(CLAUDE).parts)
+    """Every markdown file under `.claude/`; `_corpus` keeps worktree scratch out."""
+    return corpus_files(".claude", suffixes={".md"})
 
 
 def instruction_lines(text, act=FILING):
@@ -220,9 +220,7 @@ def unattended_regions():
 
 def claim_corpus():
     """Every `.claude/` and `tests/` file a stale claim could be written in, this one excepted."""
-    files = [p for p in CLAUDE.rglob("*") if p.suffix in (".md", ".py") and p.is_file()
-             and "worktrees" not in p.relative_to(CLAUDE).parts]
-    files += [p for p in TESTS.rglob("*") if p.suffix in (".md", ".py") and p.is_file()]
+    files = corpus_files(".claude", "tests", suffixes={".md", ".py"})
     return sorted(p for p in files if p.resolve() != Path(__file__).resolve())
 
 

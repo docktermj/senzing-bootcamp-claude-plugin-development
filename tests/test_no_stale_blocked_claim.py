@@ -48,6 +48,7 @@ import re
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
 from _wrapped_text import match_lines
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -55,9 +56,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 #: Live documents a maintainer reads to decide what to run. ⛔ `specs/` carries only its README:
 #: the archive is frozen and the ledger records history verbatim, including this defect.
 SCANNED = (
-    sorted((REPO_ROOT / "docs").rglob("*.md"))
-    + sorted((REPO_ROOT / ".claude").rglob("*.md"))
-    + sorted((REPO_ROOT / "tests").rglob("*.py"))
+    corpus_files("docs", suffixes={".md"})
+    + corpus_files(".claude", suffixes={".md"})
+    + corpus_files("tests", suffixes={".py"})
     + [REPO_ROOT / "specs" / "README.md"]
 )
 
