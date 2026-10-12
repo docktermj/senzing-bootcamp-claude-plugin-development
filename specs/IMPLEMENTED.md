@@ -122,7 +122,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   - Sweep D reported the transcript linter has six checks. `CHECKS` holds five, and #514 says five.
   - Sweep D created two throwaway clones under the session scratchpad, which its brief allowed. Nothing in the repository changed.
 - **Establishes no invariant.** This audit modifies no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. The rule and amendment choices it raises go through `/review-invariants` as blocks: #506's return contract, #519's wrong-answer and recall rule, #514's six linter notes, #517's INV-356 note and #520's INV-309 scope. No id is written here, because an unminted id fails `citations.py verify`.
-- **Commit:** uncommitted
+- **Commit:** aecbc38
 
 ## invariant-review-2026-10-12
 
