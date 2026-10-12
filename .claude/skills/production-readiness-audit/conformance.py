@@ -106,12 +106,17 @@ CODE_SPAN = re.compile(r"`[^`]*`")
 # a list item's prose, and a rule continuing a sentence.
 #
 # The discriminator is what FOLLOWS the stop sign, not where it sits: a rule leads into a
-# bolded span, a capitalized word, or an imperative. Dropping the anchor without this would
-# add real rules and real noise together, and a count nobody trusts is the defect `rules`
-# already had.
+# bolded span, a capitalized word, an imperative, or a parenthesized invariant citation
+# (`⛔ (INV-NNN) …`). Dropping the anchor without this would add real rules and real noise
+# together, and a count nobody trusts is the defect `rules` already had.
+#
+# ⚠️ The citation lead-in (#516) also covers `**⛔ (INV-NNN) …` at the start of a line: this
+# pattern is searched, not anchored, so a `**` before the stop sign needs no alternative of its
+# own. Measured 2026-10-12 across `SCAN_ROOTS` and `docs/`: 32 lines had been invisible to every
+# view (12 `.md`, 20 `.py`/`.sh`); the anchored count stayed at 701.
 IMPERATIVE = (r"never|always|do not|don't|use|keep|prefer|treat|stop|ask|read|write|check"
               r"|state|name|strip|report|verify|cite|record|leave|derive|scope")
-MID_LINE_RULE = re.compile(r"⛔\s*(?:\*\*|[A-Z]|(?:%s)\b)" % IMPERATIVE, re.IGNORECASE)
+MID_LINE_RULE = re.compile(r"⛔\s*(?:\*\*|[A-Z]|\(INV-|(?:%s)\b)" % IMPERATIVE, re.IGNORECASE)
 
 # The stop sign used as a NOUN is prose about the convention, not a rule: "a ⛔ gate", "the old
 # ⛔", "Steps marked `⛔`". 32 such lines, correctly excluded.

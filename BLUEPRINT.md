@@ -3750,7 +3750,8 @@ property, coverage limits and own mistakes, and offers `dry-run`.
 `conformance.py [--repo] <view>` (stdlib, read-only). A hard-rule line is
 classified by `classify`: `anchored` (`ANCHORED_RULE`: a leading ⛔ or a
 bolded MUST/NEVER/ALWAYS) or `mid-line` (a ⛔ outside code spans followed by
-bold, a capital or an `IMPERATIVE` word, excluding `NOUN_USE`). Views over
+bold, a capital, an `IMPERATIVE` word or an `(INV-` citation, excluding
+`NOUN_USE`). Views over
 `plugins/senzing-bootcamp/**/*.md` unless noted:
 
 - `rules`: hard rules whose enclosing heading section cites no `INV-NNN`,
@@ -5131,7 +5132,7 @@ HARD_RULE = ANCHORED_RULE
 CODE_SPAN = re.compile(r"`[^`]*`")
 IMPERATIVE = (r"never|always|do not|don't|use|keep|prefer|treat|stop|ask|read|write|check"
               r"|state|name|strip|report|verify|cite|record|leave|derive|scope")
-MID_LINE_RULE = re.compile(r"⛔\s*(?:\*\*|[A-Z]|(?:%s)\b)" % IMPERATIVE, re.IGNORECASE)
+MID_LINE_RULE = re.compile(r"⛔\s*(?:\*\*|[A-Z]|\(INV-|(?:%s)\b)" % IMPERATIVE, re.IGNORECASE)
 NOUN_USE = re.compile(
     r"(?:\b(?:a|an|the|its|any|each|every|marked|old|same)\s+(?:\w+\s+)?)⛔"
     r"|⛔\s*(?:gates?|convention|marker|lead-in|sign|glyphs?)\b",
@@ -10623,3 +10624,8 @@ Senzing licensing, with no SPDX identifier.
   runtime directories always pruned, a pruned walk without git), with a canary
   guard and a hand-rolled walk guard in `tests/test_corpus.py` (untracked loop
   scratch under `.claude/worktrees/` turned 7 tests red in the main checkout)
+- #516: `conformance.py`'s `MID_LINE_RULE` accepts a parenthesized invariant
+  citation after the stop sign, so `⛔ (INV-NNN)` mid-line and `**⛔ (INV-NNN)`
+  lines are `mid-line` in every view; `ANCHORED_RULE` and `NOUN_USE` are
+  unchanged (32 cited rule lines were invisible to `rules`, `per-rule`, `since`
+  and `reverse-check`, and the anchored count stayed at 701)
