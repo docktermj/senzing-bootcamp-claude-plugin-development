@@ -570,8 +570,28 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
      `database_type` was absent then and is known now — apply it before the load rather than
      carrying a thread-pooled loader into a datastore this question just confirmed is SQLite.
    - **Migrate to PostgreSQL:** record `sqlite_volume_prompt` = `{decided: true, choice:
-     "migrate", loadable, tier, raw_value}` in preferences, then hand off to the database-migration
-     guidance (PostgreSQL migration is a production follow-up; see the graduation migration checklist). Do not restate migration steps here (INV-300).
+     "migrate", loadable, tier, raw_value}` in preferences, then run the switch as a detour through
+     SDK setup: Module 2 Step 7's PostgreSQL branch, then Steps 8, 8a and 9, then every source's
+     `DATA_SOURCE` code registered in the new datastore. The flow resumes at Phase B. Nothing is
+     loaded yet, so nothing moves, and no load starts until the detour ends.
+     - **Start it in one quiet write** to `config/bootcamp_progress.json`: add the `setup_detour`
+       record that SDK setup's
+       [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour)
+       defines, with `purpose: "database_switch"` and `return_to: {"module": "data_processing",
+       "resume": "phase-b", "reask": "sqlite-volume-check"}`. ⛔ **(INV-284) `current_module` is
+       not changed:** the Bootcamper stays in this module, and the key is what lets an interrupted
+       detour resume. That branch is the one statement of which steps run and how the detour ends
+       (INV-300).
+     - **When it finishes,** `database_type` is `postgresql`, so this check asks nothing more and
+       the production line says nothing. ⛔ **(INV-296) Before the Phase B load, give the loader
+       its PostgreSQL worker count.** Step 3 serialized the writes for SQLite; its `postgresql`
+       bullet now governs, so take the tier's full concurrency, rewrite the code comment that
+       explained the reduction to say the loader now runs on PostgreSQL, and rebuild the loader if
+       the language is compiled. A `demo`-tier loader is single-threaded by its tier and is left
+       as it is. Then continue to Phase B.
+     - **When it cannot finish,** `database_type` is still `sqlite`: name the failure in one line,
+       then present item 4's question again. Item 2 does not skip it on the recorded `migrate`,
+       and the answer replaces that marker.
 
    In both branches `loadable` is the total item 3 compared; `tier` and `raw_value` are kept for
    the record only and decide nothing.
@@ -585,8 +605,7 @@ load. On PostgreSQL, or on a `demo`/`small` tier, say nothing.
 
 *(Internal: when this heads-up fires, end the turn on the pinned question in item 4 and wait.)* Use
 only synthetic/persisted values, never echo credentials or connection strings. (The Kiro
-helpers `volume_utils.py`, `preferences_utils.py`, `load_time_warning.py`, and the migration
-guide are later porting phases; apply the logic inline and refer to the graduation migration checklist for PostgreSQL migration for
-now.)
+helpers `volume_utils.py`, `preferences_utils.py` and `load_time_warning.py` are later porting
+phases; apply the logic inline for now.)
 
 Proceed to Phase B (`phaseB-load-first-source.md`).

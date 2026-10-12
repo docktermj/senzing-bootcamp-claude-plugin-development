@@ -61,7 +61,10 @@ and the single-write checkpoint that follows from it; it is stated once, there, 
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work. Read `current_step` and
 resume at the right step. **When it carries a `collection_return`, none of this runs:** go straight
 to Step 2 → [Receiving a `collection_return`](#receiving-a-collection-return). A return runs only the
-steps it names, so the steps it leaves out are not skipped steps.
+steps it names, so the steps it leaves out are not skipped steps. **When it carries a
+`setup_detour`, none of this runs either:** Step 8b's database switch is part-way through, so go to
+SDK setup's [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour),
+which finishes it and returns here.
 
 > **User reference:** Detailed background for this module lives in the Kiro Power at
 > `docs/modules/MODULE_4_DATA_COLLECTION.md` (the docs port is a later porting phase).
@@ -1407,10 +1410,21 @@ about a roughly half-hour load, for a load of about two minutes.
      (INV-243). Leave the top-level `record_count` and `expected_record_count` untouched, with
      `truncated` as [the truncated-source rule](#truncated-cord-source) defines. Then
      record the decision (sub-step 4).
-   - **Switch to an alternative database (e.g. PostgreSQL):** route the bootcamper to the
-     database-migration guide (the Kiro `docs/guides/DATABASE_MIGRATION.md` guide is a later
-     porting phase). Do not inline or restate the migration steps here. Then record the decision
-     (sub-step 4).
+   - **Switch to an alternative database (e.g. PostgreSQL):** record the decision (sub-step 4),
+     then run the switch as a detour through SDK setup: Module 2 Step 7's PostgreSQL branch, then
+     Steps 8, 8a and 9, then every source's `DATA_SOURCE` code registered in the new datastore.
+     The flow resumes at Step 9. Nothing is loaded yet, so nothing moves.
+     - **Start it in one quiet write** to `config/bootcamp_progress.json`: set `current_step` to
+       `"8b"` and add the `setup_detour` record that SDK setup's
+       [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour)
+       defines, with `purpose: "database_switch"` and `return_to: {"module": "data_collection",
+       "resume": "9", "reask": "8b"}`. ⛔ **(INV-284) `current_module` is not changed:** the
+       Bootcamper stays in this module, and the key is what lets an interrupted detour resume.
+       That branch is the one statement of which steps run and how the detour ends (INV-300).
+     - **When it finishes,** `database_type` is `postgresql`: continue to Step 9.
+     - **When it cannot finish,** `database_type` is still `sqlite`: name the failure in one line,
+       then ask sub-step 2's question again, with option 2 omitted as that sub-step says when the
+       license caps the load. The answer replaces the `switch_db` marker.
 
 4. **Record the decision.** Write `sqlite_load_time_prompt`, this step's marker in
    `config/bootcamp_preferences.yaml`, modeled on Module 6's `sqlite_volume_prompt`:

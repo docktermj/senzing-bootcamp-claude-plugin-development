@@ -26,7 +26,9 @@ overrides it.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work. Resume at
-`current_step` if progress already exists.
+`current_step` if progress already exists. **When it carries a `setup_detour`, none of this runs:**
+go straight to [Receiving a `setup_detour`](#receiving-a-setup-detour). A detour runs only the
+steps it names, so the steps it leaves out are not skipped steps.
 
 Install and configure the Senzing SDK natively on the bootcamper's machine. This is the first
 setup step of the bootcamp: once the SDK is installed, all subsequent modules use it directly.
@@ -60,6 +62,88 @@ When the bootcamper hits an error during this module:
 
 > The TypeScript from-source build has its own recovery branch (see Step 3). A mid-build
 > compile failure is handled there, not by this generic SENZ-code path.
+
+<a id="receiving-a-setup-detour"></a>
+
+## Receiving a `setup_detour` (from a later module)
+
+⛔ **(INV-284) Check for it before anything else in this module.** When
+`config/bootcamp_progress.json` carries a `setup_detour`, a later module sent the Bootcamper here for
+some of this module's steps, and this is not a run of this module: show no start banner, journey map
+or overview, write no Module 2 checkpoint (leave `current_module` and `current_step` as the offering
+module set them, so its progress is not overwritten), and run only the steps the record names.
+⛔ **(INV-284) A detour completes no module:** no Module Completion, no second Module 2 recap
+section, no progress update, no transition question, and `sdk_setup` is not added to
+`modules_completed` again.
+
+**This is the one statement of the detour** (INV-300): the record, the steps each kind of detour
+runs, and how it finishes or hands back. The offering module states only that it offers the
+detour, the steps by name, and where it resumes. A new detour adds a row to the table below, never
+a branch of its own.
+
+**The record.** The offering module writes it in one quiet write to
+`config/bootcamp_progress.json`, copying `steps` from its row below:
+
+```json
+"setup_detour": {
+  "purpose": "database_switch",
+  "steps": ["7-postgresql", "8", "8a", "9", "register-sources"],
+  "completed": [],
+  "return_to": {
+    "module": "data_processing",
+    "resume": "<where the offering module resumes when every step is done>",
+    "reask": "<the step whose question is asked again when the detour cannot finish>"
+  },
+  "started_at": "<ISO 8601>"
+}
+```
+
+`return_to.module` is the offering module's key in `modules_completed`. `completed` lists the steps
+that have finished.
+
+**The detours:**
+
+| `purpose` | `steps`, in order | When every step is done | When it cannot finish | Offered at |
+|---|---|---|---|---|
+| `database_switch` | `7-postgresql`: [Step 7](#step-7-configure-database)'s PostgreSQL branch, from its "How would you like to run PostgreSQL?" question. `8`: Step 8. `8a`: Step 8a. `9`: Step 9. `register-sources`: every source's `DATA_SOURCE` code registered in the new datastore | Write `database_type: postgresql` by Step 7's instruction 1, which replaces `sqlite`, and delete `config/engine_config.sqlite.json` | Restore `config/engine_config.json` from `config/engine_config.sqlite.json` when that copy exists, then re-source the environment script. `database_type` was never rewritten, so it is still `sqlite` | Data collection Step 8b, option 3; Data processing Phase A's SQLite volume pre-load check, option 2 |
+
+**Running it.** For each step in `steps` not listed in `completed`, in order, run the step as this
+module states it, then add it to `completed` in one quiet write in place of that step's
+**Checkpoint:**. For `database_switch`:
+
+- **`7-postgresql`.** Start at "How would you like to run PostgreSQL?". The Step 7 database question
+  is not asked: the offering module's option already chose PostgreSQL. ⛔ **(INV-284) Step 7's
+  instruction 1 is not applied here:** `database_type` stays `sqlite` until the detour finishes,
+  so a detour that stops part-way leaves it as it was. A container is named and recorded as Option 1 says (INV-349),
+  never by a literal name. **Option 4, "Switch to SQLite", ends the detour as one that cannot
+  finish:** the SQLite datastore is still in place, so there is nothing to set up.
+- **`8`.** Before Step 8 writes `config/engine_config.json`, copy the SQLite one to
+  `config/engine_config.sqlite.json`. If that copy already exists, an interrupted detour wrote it:
+  keep it, because `config/engine_config.json` may already point at PostgreSQL.
+- **`register-sources`.** The new datastore knows none of the Bootcamper's codes, so register every
+  `DATA_SOURCE` code `config/data_sources.yaml` lists before the next load (INV-089), by Data
+  processing's [step 4a](../module-06-data-processing/phaseA-build-loading.md#4a-register-the-data-source-codes-before-loading)
+  items 2–4. Where `src/load/register_data_sources.[ext]` already exists, run it again as it is: it
+  is re-runnable by construction and now reaches the new datastore. Where it does not, generate it
+  by item 2 first.
+
+**When every step is done,** apply the row's "When every step is done", then clear `setup_detour` in
+one write and return to `return_to.module` at `return_to.resume`, where the offering module says
+what happens next. If the session stops between the two writes, the key is still present with every
+step in `completed`: apply the finish again, which is safe to repeat.
+
+**When it cannot finish:** a step fails, Error Handling above does not get it to pass, and the
+Bootcamper stops, in their own words or with Step 7's option 4. Ask no question of your own here.
+Apply the row's "When it cannot finish", leave any container Step 7 started recorded in
+`docker_containers` and never remove it (removing it is the Bootcamper's call), clear
+`setup_detour` in one write, and return to `return_to.module`. There, say what failed in one line,
+then ask the `return_to.reask` step's question again: its own options are the retry and the stay.
+⛔ **(INV-284) That is a new state, NOT an INV-006 repeat**, so the answer the offering module
+recorded before the detour does not suppress it, and the new answer replaces that record.
+
+**An interrupted detour** resumes from the key: the offering module's **First:** sends it here.
+Continue at the first step in `steps` not listed in `completed`, and do not ask the offering
+module's question again, whose answer is already recorded.
 
 ## Step 1: Check for Existing Installation (MUST DO FIRST)
 
@@ -1715,6 +1799,9 @@ the last branch is skipped by a guide that follows the other one.
    ```yaml
    database_type: sqlite   # or: postgresql
    ```
+
+   **On a `setup_detour`, this write waits for the detour to finish:**
+   [Receiving a `setup_detour`](#receiving-a-setup-detour) says when it is made.
 
    This is the **only** step in the bootcamp that knows which engine was chosen. These read
    `database_type` from that file by name, and each handles an absent key with a fallback of its

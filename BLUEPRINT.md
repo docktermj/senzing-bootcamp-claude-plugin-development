@@ -1795,7 +1795,9 @@ Senzing SDK natively in the chosen language. It reads
 `config/bootcamp_progress.json` (resuming at `current_step`), shows the
 ground-rules module opening, and checkpoints each step number there. Senzing
 facts come from MCP tools; SENZ codes go to `explain_error_code`, then
-`search_docs`.
+`search_docs`. A `setup_detour` (from Module 4 Step 8b or Module 6 Phase A)
+skips the banner and every Module 2 checkpoint and runs only its receiving
+branch.
 
 - Step 1, existing install: a language version check from
   `sdk_guide(topic='install', platform, language)`, else a probe for the
@@ -1871,8 +1873,8 @@ facts come from MCP tools; SENZ codes go to `explain_error_code`, then
   `data/mapping/`, `data/temp/`, `database/`, `docs/`, `config/`,
   `licenses/`.
 - Step 7, database question (SQLite or PostgreSQL): writes `database_type`
-  (`sqlite`/`postgresql`) to `config/bootcamp_preferences.yaml`; checkpoint
-  only after setup. SQLite: on a mounted host filesystem (WSL2 `/mnt/`, bind
+  (`sqlite`/`postgresql`) to `config/bootcamp_preferences.yaml` (on a
+  `setup_detour`, only when the detour finishes); checkpoint only after setup. SQLite: on a mounted host filesystem (WSL2 `/mnt/`, bind
   mount) report `check_repository_performance`, never relocating; apply the
   `sdk_guide` schema via Python `sqlite3` to `database/G2C.db`, with an
   absolute connection string, never `/tmp`. PostgreSQL asks how: Docker
@@ -1899,6 +1901,22 @@ facts come from MCP tools; SENZ codes go to `explain_error_code`, then
   as authoritative, saying any change aloud.
 - Step 9: from `generate_scaffold(workflow='initialize')`, run the snippet
   that calls an engine method (chosen by shape, not count or name).
+- Receiving a `setup_detour` (`#receiving-a-setup-detour`), the one statement
+  of a detour: the offering module writes a record (`purpose`, `steps`,
+  `completed`, `return_to` with `module`, `resume` and `reask`, `started_at`)
+  and leaves `current_module` as it is; a table has one row per `purpose`.
+  `database_switch` runs Step 7's PostgreSQL branch from "How would you like
+  to run PostgreSQL?", Steps 8, 8a and 9, then registers every registry
+  `DATA_SOURCE` code by Module 6 step 4a. Each step's checkpoint becomes an add
+  to `completed`; no banner, Module 2 checkpoint, completion, recap or
+  transition. `database_type` stays `sqlite` until every step is done; the
+  SQLite `config/engine_config.json` is copied to
+  `config/engine_config.sqlite.json` before Step 8. Finished, it writes
+  `postgresql`, deletes the copy, clears the key and returns to
+  `return_to.resume`. Unfinished (a failed step and the Bootcamper stops, or
+  Step 7's option 4), it restores the copy, clears the key, and the offering
+  module names the failure and asks `return_to.reask` again as a new state.
+  An interrupted detour continues at the first step not in `completed`.
 
 Completion runs `bootcamp-onboarding/module-completion.md` (Module 2 recap
 in `docs/bootcamp_recap.md`), asks the transition question naming the next
@@ -2061,7 +2079,7 @@ Contract:
 registers it in `config/data_sources.yaml`, and holds the single
 license-key gate. It starts from `config/bootcamp_progress.json` with the
 standard banner set. A `collection_return` instead runs only Step 2's
-receiving branch.
+receiving branch, and a `setup_detour` goes to SDK setup's.
 
 - **License framing.** Every capacity decision, including how many records
   to generate, reads `license_record_limit` and
@@ -2158,6 +2176,10 @@ receiving branch.
   question offers load, sample (dropped if the license already caps) or
   switch database. The answer is written to `sqlite_load_time_prompt` with
   `decided`, `choice`, `loadable`, `collected_total` and `effective_limit`.
+  Switch database records `switch_db`, sets `current_step: "8b"` and runs SDK
+  setup's `setup_detour` (`database_switch`, resume Step 9, re-ask 8b):
+  finished, it continues to Step 9; unfinished, it names the failure and asks
+  the question again.
 - **Close.** Each step writes `current_step`; steps with no question share
   one write at the end of the turn. Step 9 runs Module Completion and asks
   the pinned transition question, but not on a return. A return
@@ -2309,7 +2331,8 @@ redo and validates resolution. `SKILL.md` holds the module rules and routes to
 four phase files by `current_step`. A `quality_iteration` (from Module 7 step
 3b or Phase D's gate) skips the banner and all Module 6 checkpoints and routes
 by `stage`: `reload` runs only Phase B's receiving branch, `remap` goes to
-Module 5's, and Phase D's gate is not re-presented. Rules: SENZ errors go to `explain_error_code`;
+Module 5's, and Phase D's gate is not re-presented. A `setup_detour` goes to
+SDK setup's receiving branch. Rules: SENZ errors go to `explain_error_code`;
 loader, redo and query code comes only from `generate_scaffold` (`add_records`,
 `redo`, `query`) and `sdk_guide`; paths under `/tmp/` or `ExampleEnvironment`
 become `database/G2C.db`; back up before each load; no SQL against the database;
@@ -2342,7 +2365,12 @@ Phase A (`phaseA-build-loading.md`, steps 1-4a):
 - SQLite heads-up: when the loadable total exceeds the MCP-sourced threshold and
   no `sqlite_volume_prompt` or Module 4 `sqlite_load_time_prompt` marker covers
   the load, ask proceed or migrate to PostgreSQL and record
-  `sqlite_volume_prompt` `{decided, choice, loadable, tier, raw_value}`. On
+  `sqlite_volume_prompt` `{decided, choice, loadable, tier, raw_value}`.
+  Migrate runs SDK setup's `setup_detour` (`database_switch`, resume Phase B,
+  re-ask this check). Finished, the loader takes the tier's full PostgreSQL
+  concurrency before Phase B (comment rewritten, rebuilt if compiled; a
+  `demo` loader is left as it is); unfinished, the failure is named and the
+  question asked again, which the `migrate` marker does not skip. On
   SQLite a `medium` or `large` tier also gets a one-line PostgreSQL
   recommendation.
 
@@ -8884,7 +8912,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 396 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 397 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8934,7 +8962,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6858 test methods in 396 files, matching `inventory.test_count_total`.
+There are 6888 test methods in 397 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -9015,6 +9043,7 @@ looks wrong.
 - `tests/test_data_collection_generated_scenarios.py`: 22
 - `tests/test_data_collection_non_yielding_run.py`: 20
 - `tests/test_database_backup_has_one_implementation.py`: 12
+- `tests/test_database_switch_detours_through_sdk_setup.py`: 30
 - `tests/test_database_type_write_precedes_the_step7_branches.py`: 14
 - `tests/test_datastore_mount_crossing_is_measured.py`: 13
 - `tests/test_dated_negatives_are_marked.py`: 14
@@ -10765,3 +10794,12 @@ Senzing licensing, with no SPDX identifier.
   branches hand back to the return point, Phase D re-runs in full from step 21
   and its recap reports `module_6_processing.quality_iterations` (the gate's
   "Iterate now" and the <80% "go back to Module 5" had no step to run)
+- #528: Module 6 Phase A's "Migrate to PostgreSQL" and Module 4 Step 8b's
+  "Switch to an alternative database" run Module 2's PostgreSQL setup (Step 7's
+  PostgreSQL branch, Steps 8, 8a, 9, then source registration) as a detour
+  through one generic `setup_detour` receiving branch with a row per
+  `purpose`, and return to Phase B or Step 9; `database_type` changes only
+  when the detour finishes, an unfinished one restores the SQLite engine
+  config and re-asks the question, and a Module 6 return re-sizes the loader
+  for PostgreSQL (both options handed off to migration guidance that does not
+  exist)
