@@ -29,16 +29,18 @@ it. With a single source there is no choice: say nothing and record nothing.
 
 <a id="receiving-a-quality-iteration"></a>
 
-## Receiving a `quality_iteration` (from Query, Visualize and Discover)
+## Receiving a `quality_iteration` (from Query, Visualize and Discover, or Phase D)
 
 ⛔ **(INV-284) Check for it before anything else in this module, Phase A included.** When
 `config/bootcamp_progress.json` carries a `quality_iteration` whose `stage` is `reload`, the
-Bootcamper chose the return at Module 7 step 3b and Module 5 has remapped the named sources. This is
-not a run of this module: show no start banner, journey map or overview, write no Module 6
-checkpoint (leave `current_module` and `current_step` as Module 7 set them, so its progress is not
-overwritten), and reload only the sources the key names. Which stages run and where Module 7 resumes
-are stated once, in `../module-07-query-visualize-discover/phase1-query-visualize.md` step 3b → "The
-quality-iteration route" (INV-300); this block says only how the reload is done.
+Bootcamper chose the return at Module 7 step 3b or at this module's Phase D gate (the key's
+`return_to` says which), and Module 5 has remapped the named sources. This is not a run of this
+module: show no start banner, journey map or overview, write no Module 6 checkpoint (leave
+`current_module` and `current_step` as Module 7 set them, or as Phase D left them on a Phase D
+return, so that progress is not overwritten), and reload only the sources the key names. Which
+stages run and where the flow resumes at each return point are stated once, in
+`../module-07-query-visualize-discover/phase1-query-visualize.md` step 3b → "The quality-iteration
+route" (INV-300); this block says only how the reload is done.
 
 For each source in `sources` not yet listed in `completed`, in order:
 
@@ -71,8 +73,9 @@ For each source in `sources` not yet listed in `completed`, in order:
    `{source_name}_loaded_record_ids.txt`.
 
 When every named source is reloaded, **process redo once** by Step 9 below on a
-single-source run, or `phaseC-multi-source.md` Step 20 on a multi-source run. Then return to Module 7
-step 3b's resume, which clears the key.
+single-source run, or `phaseC-multi-source.md` Step 20 on a multi-source run. Then hand back to the
+key's `return_to` by the route's resume (step 3b, item 3), which clears the key: Module 7 step 3b on
+`module_7_step_3b`, or this module's Phase D, from step 21, on `module_6_phase_d`.
 
 ⛔ **(INV-327) This deliberate replacement by record key is not the first-source reload INV-327
 forbids.** That rule forbids repairing a broken load-order dependency by reloading the first source,
@@ -82,7 +85,8 @@ records whose RECORD_IDs left the source are deleted first, so nothing is loaded
 **Phase D and Module 6's completion step do not run.** ⛔ **(INV-284) No validation, no
 iterate-vs-proceed gate and no Module Completion:** no second Module 6 recap section, no progress
 update, no transition question, and `data_processing` is not added to `modules_completed` again.
-Module 7 step 3b is where the re-evaluation happens. The first-source choice above, and Phase B's
+The re-evaluation happens at the return point, after the resume: Module 7 step 3b, or Phase D run
+again in full. The first-source choice above, and Phase B's
 other steps, do not run either.
 
 ## 5. Test with sample data (if Phase 3 was skipped)

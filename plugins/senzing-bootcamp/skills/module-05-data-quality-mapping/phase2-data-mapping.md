@@ -16,14 +16,16 @@ never reuse mapping output from one source for another. Never guess SDK method s
 
 <a id="receiving-a-quality-iteration"></a>
 
-## Receiving a `quality_iteration` (from Query, Visualize and Discover)
+## Receiving a `quality_iteration` (from Query, Visualize and Discover, or Data Processing)
 
 ⛔ **(INV-284) Check for it before anything else in this phase.** When
 `config/bootcamp_progress.json` carries a `quality_iteration` whose `stage` is `remap`, the
-Bootcamper chose the return at Module 7 step 3b, and this is not a run of this module: show no start
-banner, journey map or overview, write no Module 5 checkpoint (leave `current_module` and
-`current_step` as Module 7 set them, so its progress is not overwritten), and remap only the sources
-the key names. Which stages run and where Module 7 resumes are stated once, in
+Bootcamper chose the return at Module 7 step 3b or at Module 6 Phase D's gate (the key's
+`return_to` says which), and this is not a run of this module: show no start banner, journey map or
+overview, write no Module 5 checkpoint (leave `current_module` and `current_step` as Module 7 set
+them, or as Module 6 Phase D left them on a Phase D return, so that module's progress is not
+overwritten), and remap only the sources the key names. Which stages run and where the flow
+resumes at each return point are stated once, in
 `../module-07-query-visualize-discover/phase1-query-visualize.md` step 3b → "The quality-iteration
 route" (INV-300); this block says only how the remap is done.
 
@@ -37,8 +39,8 @@ For each source in `sources` not yet listed in `completed`, in order:
    exists, an interrupted return wrote it: keep it, because the load input may since have been
    rewritten.
 2. **Run Steps 8–18 for this source:** a full `mapping_workflow` run, as Step 8's per-source
-   requirement demands, never a reuse of the earlier run's output. Address the finding Module 7 named
-   in its explanation statement where it arises, most often at Step 11. Step 18 rewrites
+   requirement demands, never a reuse of the earlier run's output. Address the finding the offering
+   step named in its explanation statement where it arises, most often at Step 11. Step 18 rewrites
    `docs/mapping/{source_name}_mapper.md` and the source's lineage document. The source's own
    `config/mapping_state_[datasource].json` is still written and deleted as "Mapping state
    checkpointing" says; only the steps' `config/bootcamp_progress.json` checkpoints are not written.
