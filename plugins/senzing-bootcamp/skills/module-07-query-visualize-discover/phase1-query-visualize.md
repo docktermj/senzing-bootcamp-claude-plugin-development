@@ -1003,20 +1003,37 @@ of the Truth Set. It MUST:
   `docs/visualizations/`, other output → `docs/` or `data/`; never `/tmp/`); pull
   entity/relationship/report data through generated SDK code and `reporting_guide`, never direct
   SQL.
-- Render offline with the vendored D3 asset inlined, no CDN (INV-091), and take palette/typography
-  from `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (INV-081; skill-relative fallback
-  `../../scripts/brand_tokens.py`, INV-252).
+- Render offline with the vendored D3 asset inlined, no CDN (INV-091), and brand the pages with the
+  palette/typography token values from `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (INV-081;
+  skill-relative fallback `../../scripts/brand_tokens.py`, INV-252).
+  - ⛔ **(INV-081, INV-091) Copy the brand-token values into the server's own code when you write
+    it, in every language, Python included.** Read them from `brand_tokens.py` on the host, where
+    the plugin path resolves. The server never imports `brand_tokens.py` and never reads any
+    `${CLAUDE_PLUGIN_ROOT}` path at runtime: on SDK setup's `docker` route it runs inside the SDK
+    container (INV-260), which mounts only the project, so the plugin's `scripts/` is not there. A
+    Python server importing it would fail there or fall back silently to an inlined palette, and a
+    server in another language cannot import it at all. Truth Set visualization's rule for a
+    non-Python server is the precedent:
+    [`phase1-visualization.md`](../module-03b-truthset-visualization/phase1-visualization.md) →
+    "Use the Senzing brand". One rule on every route, so a native route carries the values too.
   - ⛔ **(INV-091) Copy the D3 asset into the project and resolve it from there — the reference's
     lookup is
     position-dependent and does not travel.** `senzing_viz_server.py` finds `vendor/d3.v7.min.js`
     beside **its own file**, which is correct in the plugin's layout and finds nothing for a server
-    written into `src/server/`. Copy the asset under the project on first build and read it from
-    that path, so the live app keeps working after a plugin update moves or replaces the cached
-    plugin directory — Step 6c tells the Bootcamper they can return to this visualization, and that
-    promise is only as durable as the asset it needs. ⚠️ **The standalone snapshot is unaffected**:
-    D3 is inlined into it at build time, so only the **live server** is at risk.
+    written into `src/server/`. At first build, copy it on the host from
+    `${CLAUDE_PLUGIN_ROOT}/scripts/vendor/d3.v7.min.js` (skill-relative fallback
+    `../../scripts/vendor/d3.v7.min.js`, INV-252) to `src/server/vendor/d3.v7.min.js`, on every
+    route, and have the server resolve it from beside its own file there. That path is inside the
+    project, so the server finds it inside the SDK container too, and the live app keeps working
+    after a plugin update moves or replaces the cached plugin directory — Step 6c tells the
+    Bootcamper they can return to this visualization, and that promise is only as durable as the
+    asset it needs. The token values and this copy are fixed at first build; a later plugin update
+    does not reach an existing server. ⚠️ **The standalone snapshot is unaffected**: D3 is inlined
+    into it at build time, so only the **live server** is at risk.
   - ⛔ **(INV-091) Keep the refusal-to-render when no asset is found.** Failing visibly is correct,
     and a CDN fallback would break the offline guarantee that is the reason for vendoring D3 at all.
+    If the first-build copy failed, or `src/server/vendor/d3.v7.min.js` is later missing, the server
+    names `d3.v7.min.js` and writes no page; copy it again from the plugin on the host.
 - Write a self-contained standalone HTML snapshot under `docs/visualizations/` (INV-070), passing
   the app **dataset wording that names the Bootcamper's own sources** — e.g. "your CUSTOMERS and
   REFERENCE data", built from `config/data_sources.yaml`. ⛔ Never let it default to neutral wording

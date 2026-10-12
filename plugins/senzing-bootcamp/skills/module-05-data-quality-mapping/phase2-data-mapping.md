@@ -1622,7 +1622,9 @@ inside any inline `<script>` payload (INV-106); and verify the rendered page rat
 status (INV-129). The mapping summary carries **more** bootcamper-authored text than the phase 1
 page — source field names, target attributes, sample values — so the escaping rule matters most here.
 `ground-rules.md` → "Visual deliverables (Senzing brand)" and the visualization contract's
-"Rendering contract" are the statements of record.
+"Rendering contract" are the statements of record. Where this page is generated is stated once, at
+[`phase1-quality-assessment.md` → step 6's quality page](phase1-quality-assessment.md#quality-page-runs-on-the-host),
+and binds this page too (INV-300).
 
 **Capture it for the recap, right after the page is written and verified.** Follow
 `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", using its
