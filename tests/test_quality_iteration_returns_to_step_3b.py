@@ -17,12 +17,18 @@ The fix follows the `collection_return` precedent (#346). The route is stated **
 * the resume clears the key in one write and re-runs step 3b as a new state;
 * Module 7's own recap section is where the iteration is recorded.
 
+#526 added a second return point, Module 6 Phase D's iterate-vs-proceed gate. The checks above
+pass unchanged; `return_point_problems` only adds that the route names both return points in the
+key, states the iteration record once for both, and hands a Module 6 return back to Phase D.
+`tests/test_phase_d_iterate_now_enters_the_quality_iteration_route.py` covers the Phase D side.
+
 ⛔ **Each check is a function of the file text, so the negative controls run the SAME check on a
 mutated copy** (INV-265): restoring the old `current_module` write, removing a First: clause or a
 receiving branch, skipping a fast-pathed named source, or dropping the delete, the INV-327
 sentence or the one-write resume must each make it report a problem.
 
 Source issue: #392. Invariants: INV-006, INV-177, INV-284, INV-300, INV-327.
+Second return point: #526 (part of #504).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -227,6 +233,26 @@ def m6_receiving_problems(phaseb):
     return problems
 
 
+def return_point_problems(phase1):
+    """#526: the route names Module 6 Phase D as its second return point, keyed by `return_to`."""
+    loop = between(phase1, ROUTE_ANCHOR, STEP_3C)
+    if loop is None:
+        return ["step 3b has no quality-iteration route"]
+    problems = []
+    json_block = re.search(r'```json\n\s*"quality_iteration": \{(.*?)\}\n\s*```', loop, re.S)
+    if not json_block or '"return_to": "module_7_step_3b | module_6_phase_d"' not in json_block.group(1):
+        problems.append("the quality_iteration key does not record both return points as return_to")
+    problems += missing(loop, (
+        "Two steps offer it, and each is a return point",
+        "phaseD-validation.md#iterate-vs-proceed-decision-gate",
+        "This is the one statement of the record's shape, for both return points",
+        "`module_6_processing.quality_iterations`",
+        "On a Module 6 Phase D return",
+        "re-run Phase D in full",
+    ), "step 3b's route")
+    return problems
+
+
 def recap_problems(phase1):
     """Criterion 8: Module 7's own recap section records the iteration."""
     completion = between(phase1, "## Module completion", "👉")
@@ -280,6 +306,9 @@ class TheLiveFilesMeetEveryCriterion(unittest.TestCase):
 
     def test_module_6_receives_the_reload(self):
         self.assertEqual([], m6_receiving_problems(self.f["phaseb"]))
+
+    def test_the_route_names_module_6_phase_d_as_a_return_point(self):
+        self.assertEqual([], return_point_problems(self.f["phase1"]))
 
     def test_module_7_recap_records_the_iteration(self):
         self.assertEqual([], recap_problems(self.f["phase1"]))
@@ -378,6 +407,11 @@ class EachCheckFailsWhenItsSiteIsRemoved(unittest.TestCase):
         mutated = self.mutate(self.f["phaseb"], "**Phase D and Module 6's completion step do "
                               "not run.**", "**Then run Phase D and complete the module.**")
         self.assertTrue(m6_receiving_problems(mutated))
+
+    def test_a_route_with_only_the_step_3b_return_point_fails(self):
+        mutated = self.mutate(self.f["phase1"], '"return_to": "module_7_step_3b | module_6_phase_d"',
+                              '"return_to": "module_7_step_3b"')
+        self.assertTrue(return_point_problems(mutated))
 
     def test_removing_the_recap_record_fails(self):
         para = between(self.f["phase1"], "**The Module 7 recap section records every quality "

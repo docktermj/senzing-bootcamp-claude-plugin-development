@@ -27,9 +27,15 @@ here (INV-300).
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.
-**When it carries a `quality_iteration`, none of this runs:** go straight to Phase B →
-[Receiving a `quality_iteration`](phaseB-load-first-source.md#receiving-a-quality-iteration). A
-return runs only the steps it names, so the steps it leaves out are not skipped steps.
+**When it carries a `quality_iteration`, none of this runs:** route by its `stage`, at the first
+source not listed in `completed`. `reload` goes straight to Phase B →
+[Receiving a `quality_iteration`](phaseB-load-first-source.md#receiving-a-quality-iteration). `remap`
+reaches this module only on an interrupted return its Phase D gate offered, and goes to Module 5's
+[Receiving a `quality_iteration`](../module-05-data-quality-mapping/phase2-data-mapping.md#receiving-a-quality-iteration).
+Do not re-present Phase D's gate or its source question, whose answers are already recorded. The
+route is stated once, in `../module-07-query-visualize-discover/phase1-query-visualize.md` step 3b →
+"The quality-iteration route" (INV-300). A return runs only the steps it names, so the steps it
+leaves out are not skipped steps.
 
 **Purpose:** Guide the Data Processing workflow: build a production-quality loading program,
 load all data sources into Senzing, process redo records, and validate entity resolution

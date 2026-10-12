@@ -2306,9 +2306,10 @@ means the module is complete: only the transition question is asked.
 
 Module 6 builds a production-quality loader, loads every mapped source, drains
 redo and validates resolution. `SKILL.md` holds the module rules and routes to
-four phase files by `current_step`. A `quality_iteration` with `stage: reload`
-(from Module 7 step 3b) skips the banner and all Module 6 checkpoints and runs
-only Phase B's receiving branch. Rules: SENZ errors go to `explain_error_code`;
+four phase files by `current_step`. A `quality_iteration` (from Module 7 step
+3b or Phase D's gate) skips the banner and all Module 6 checkpoints and routes
+by `stage`: `reload` runs only Phase B's receiving branch, `remap` goes to
+Module 5's, and Phase D's gate is not re-presented. Rules: SENZ errors go to `explain_error_code`;
 loader, redo and query code comes only from `generate_scaffold` (`add_records`,
 `redo`, `query`) and `sdk_guide`; paths under `/tmp/` or `ExampleEnvironment`
 become `database/G2C.db`; back up before each load; no SQL against the database;
@@ -2378,8 +2379,9 @@ Phase B (`phaseB-load-first-source.md`, steps 5-11):
 - Receiving a `quality_iteration`: per named source, rerun Phase A only if its
   path changed, delete records missing from
   `{source_name}_loaded_record_ids.txt` via `sdk_guide(topic='delete')`, reload,
-  add to `completed`; drain redo once, return to Module 7 step 3b. No Phase D,
-  no completion, no checkpoint.
+  add to `completed`; drain redo once, hand back to the key's `return_to`
+  (Module 7 step 3b, or Phase D from step 21). No Phase D in the branch, no
+  completion, no checkpoint.
 
 Phase C (`phaseC-multi-source.md`, steps 12-20, 2+ sources): inventory;
 dependencies (generated sources get one yes/no for "none, Sequential"; real
@@ -2413,12 +2415,20 @@ Phase D (`phaseD-validation.md`, steps 21-28):
   `NEED_REEVALUATION` or several virtual entities, "checked N of M", appended as
   `## How-state audit`.
 - Gate on per-record results (never the relationship bucket): 90% or better
-  proceeds, below 80% recommends Module 5, 80-89% asks iterate or move on.
+  proceeds; 80-89% and below 80% ask the same pinned iterate-or-move-on
+  question word for word, with "Iterate now" marked recommended below 80%.
+  "Iterate now" asks no second confirmation, asks which sources only when 2+
+  are loaded, and enters Module 7 step 3b's quality-iteration route with
+  `return_to: "module_6_phase_d"`; after the reload, Phase D re-runs in full
+  from step 21 and asks the gate again, with no cap. The "revisit Module 5"
+  lines point at this gate.
   `docs/stakeholder_summary_module6.md` is always written. Failed loads: restore
   the backup or resume; multi-source failures offer skip, retry or
   restore-and-restart.
-- Completion runs `module-completion.md`, asks the transition question, sets
-  `current_step: null` and starts Module 7.
+- Completion runs `module-completion.md`, records each
+  `module_6_processing.quality_iterations` entry in the recap, asks the
+  transition question, sets `current_step: null` and starts Module 7. Module 6
+  completes once, however many iterations ran.
 
 ### 5.15 `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/`
 
@@ -2470,10 +2480,12 @@ Phase 1 (`phase1-query-visualize.md`):
   `scenario_intent.name_collisions`, a Marginal or Poor verdict also reports
   the measured name-sharing figure beside the possible-match count, as a
   separate lower-bound figure (`#measured-name-sharing`), and outcome 2 cites
-  it when it is more than half of the entities with a possible match. Accepting writes `quality_iteration` (`sources`, `from_verdict`,
+  it when it is more than half of the entities with a possible match. Accepting writes `quality_iteration` (`return_to`, `sources`, `from_verdict`,
   `stage`, `completed`, `started_at`) and appends to
   `module_7_query.quality_iterations`; after remap and reload, 3b reruns and
-  records `after`.
+  records `after`. The route is the one statement for both return points
+  (step 3b and Module 6 Phase D's gate), including the iteration record's
+  shape and which list each return point appends to.
 - Step 3c asks once for an interactive app. Accepted, it builds a server in
   `src/server/` modeled on `senzing_viz_server.py`: six tabs (Entity Graph,
   Merge Statistics, Match Keys, Feature Scores, Cross-Source, Search / Probe),
@@ -8872,7 +8884,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 395 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 396 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8922,7 +8934,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6825 test methods in 395 files, matching `inventory.test_count_total`.
+There are 6858 test methods in 396 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -9187,6 +9199,7 @@ looks wrong.
 - `tests/test_phase3_names_every_server_language.py`: 8
 - `tests/test_phase_c_loads_each_source_from_its_subset_record.py`: 26
 - `tests/test_phase_d_how_state_audit.py`: 36
+- `tests/test_phase_d_iterate_now_enters_the_quality_iteration_route.py`: 31
 - `tests/test_phasec_generated_path_asks_once.py`: 12
 - `tests/test_plugin_manifest_reads_resolve_inside_the_plugin.py`: 13
 - `tests/test_poor_band_requires_a_mapping_cause.py`: 15
@@ -9201,7 +9214,7 @@ looks wrong.
 - `tests/test_propagate_publishes_the_published_marketplace_name.py`: 11
 - `tests/test_python_sources_compile_cleanly.py`: 7
 - `tests/test_quality_assessment_type_name_check.py`: 35
-- `tests/test_quality_iteration_returns_to_step_3b.py`: 23
+- `tests/test_quality_iteration_returns_to_step_3b.py`: 25
 - `tests/test_quality_presence_test.py`: 18
 - `tests/test_quality_score_and_preview_prereq.py`: 27
 - `tests/test_quality_score_inputs_are_checked_before_scoring.py`: 11
@@ -10743,3 +10756,12 @@ Senzing licensing, with no SPDX identifier.
   `DEFERRED INVARIANT` (`INV-NNN`) is queued (INV-309 binds only the
   issue-driven path, while three skills told their reader to edit the
   register by hand)
+- #526: Module 6 Phase D's "Iterate now" runs Module 7 step 3b's
+  quality-iteration route and comes back: the key records `return_to`
+  (`module_7_step_3b` or `module_6_phase_d`), the route states the iteration
+  record once for both, the <80% branch asks the 80-89% pinned question word
+  for word with "Iterate now" recommended, "Iterate now" asks no second
+  confirmation and asks for sources only with 2+ loaded, the receiving
+  branches hand back to the return point, Phase D re-runs in full from step 21
+  and its recap reports `module_6_processing.quality_iterations` (the gate's
+  "Iterate now" and the <80% "go back to Module 5" had no step to run)

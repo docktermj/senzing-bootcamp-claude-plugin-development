@@ -815,27 +815,44 @@ re-evaluate here. Then end the turn on this single question:
 statement of the route:** which stages run, in what order, and where the flow resumes. Module 5's and
 Module 6's receiving branches say only how their stage is done, and cite this step. The model is
 Module 5's `collection_return` (`../module-05-data-quality-mapping/phase1-quality-assessment.md`
-Step 7b): the Bootcamper stays in this module throughout, and no module is re-entered or re-completed.
+Step 7b): the Bootcamper stays in the offering module throughout, and no module is re-entered or
+re-completed.
 
-1. **Record the return in one quiet write** to `config/bootcamp_progress.json`: set `current_step` to
-   `"3b"`, add
+**Two steps offer it, and each is a return point.** This step is one. The other is Module 6 Phase D's
+[iterate-vs-proceed gate](../module-06-data-processing/phaseD-validation.md#iterate-vs-proceed-decision-gate),
+whose "Iterate now" enters the route here and does not restate it. The key records which one offered
+it, as `return_to`, and that is where step 3 below hands the Bootcamper back. Everything else in the
+route is the same for both.
+
+1. **Record the return in one quiet write** to `config/bootcamp_progress.json`. From this step, set
+   `current_step` to `"3b"`. From Module 6 Phase D, leave `current_step` as Phase D's last checkpoint
+   wrote it. In the same write, add
 
    ```json
    "quality_iteration": {
+     "return_to": "module_7_step_3b | module_6_phase_d",
      "sources": ["<DATA_SOURCE>", "..."],
-     "from_verdict": "poor | marginal",
+     "from_verdict": "poor | marginal | uat_below_80 | uat_80_89",
      "stage": "remap | reload",
      "completed": [],
      "started_at": "<ISO 8601>"
    }
    ```
 
-   and append `{"sources", "from_verdict", "started_at", "before"}` to
-   `module_7_query.quality_iterations`, where `before` holds the three indicators of the quality
-   summary above. `sources` lists the sources named in the explanation statement. `stage` starts at
+   and append the **iteration record** `{"return_to", "sources", "from_verdict", "started_at",
+   "before"}` to the offering module's list. ⛔ **(INV-300) This is the one statement of the
+   record's shape, for both return points;** Module 6 Phase D points here rather than restating it.
+   Step 3's resume adds `after`, the same indicators measured again:
+
+   | Offered by | `return_to` | List | `from_verdict` | `before` and `after` hold |
+   |---|---|---|---|---|
+   | Module 7 step 3b (this step) | `module_7_step_3b` | `module_7_query.quality_iterations` | `poor` or `marginal` | the three indicators of the quality summary above |
+   | Module 6 Phase D's gate | `module_6_phase_d` | `module_6_processing.quality_iterations` | `uat_below_80` or `uat_80_89` | the UAT %, the per-record match accuracy, and the match-key and how-state audit outcomes the gate presented |
+
+   `sources` lists the sources named in the offering step's explanation statement. `stage` starts at
    `remap`. `completed` lists the sources whose current stage has finished. ⛔ **(INV-284)
-   `current_module` is not changed:** the Bootcamper stays in this module, and the key is what lets an
-   interrupted return resume.
+   `current_module` is not changed:** the Bootcamper stays in the offering module (Module 7, or
+   Module 6 on a Phase D return), and the key is what lets an interrupted return resume.
 
 2. **Run the two stages, in order, for the named sources only:**
 
@@ -849,21 +866,34 @@ Step 7b): the Bootcamper stays in this module throughout, and no module is re-en
    ⛔ **(INV-284) No module is completed on a return:** no Module Completion for Module 5 or Module 6,
    nothing added to `modules_completed` again, no recap section for either, no progress update and no
    transition question. Neither branch writes a checkpoint of its own module, so `current_module` and
-   `current_step` stay as this step set them.
+   `current_step` stay as the offering step left them. On a Module 6 Phase D return, Module 6 is
+   completed once, later, by Phase D's own completion step.
 
-3. **Resume here.** When the reload stage finishes, clear `quality_iteration` and set `current_step`
+3. **Resume here.** When the reload stage finishes, resume at the key's `return_to`. On a step-3b
+   return, clear `quality_iteration` and set `current_step`
    to `"3b"` in one write. Then re-run step 3b in full on the reloaded data: the sampled entities,
    the quality summary and the verdict. ⛔ **(INV-284) That is a new state, NOT an INV-006
    repeat**, so present whichever branch the new indicators select. The return may be offered again,
    with no cap, because each return measures a new state. At step 3b's checkpoint, record the new
    indicators as `after` on the latest `module_7_query.quality_iterations` entry.
 
-4. **An interrupted return** resumes from `current_step: "3b"` with `quality_iteration` present: this
-   module's `SKILL.md` **First:** routes by `stage` to the first source not listed in `completed`. Do
-   not re-present the step-3b question, whose answer is already recorded.
+   **On a Module 6 Phase D return**, clear `quality_iteration` and set `current_step` to `21` in one
+   write. Then re-run Phase D in full on the reloaded data: steps 21–28, the match-key and how-state
+   audits, then the gate. ⛔ **(INV-284) That too is a new state, NOT an INV-006 repeat**, so present
+   whichever branch the new results select, and the return may be offered again with no cap. Before
+   presenting the gate, record its indicators as `after` on the latest
+   `module_6_processing.quality_iterations` entry.
 
-5. **The recap.** Module 7's own recap section records the iteration, as
-   "Module completion" at the end of this file says.
+4. **An interrupted return** resumes from the key, never from the question that offered it. From
+   this step it resumes from `current_step: "3b"` with `quality_iteration` present: this module's
+   `SKILL.md` **First:** routes by `stage` to the first source not listed in `completed`. Do not
+   re-present the step-3b question, whose answer is already recorded. From Module 6 Phase D,
+   `current_module` is still Module 6, and Module 6's `SKILL.md` **First:** routes by `stage` the
+   same way: do not re-present Phase D's gate or its source question.
+
+5. **The recap.** The offering module's own recap section records the iteration: Module 7's, as
+   "Module completion" at the end of this file says, and Module 6's, as Phase D's "Module completion
+   and transition to Module 7" says.
 
 Outcomes 2 and 3 of the Poor band never reach this route (INV-264, above).
 

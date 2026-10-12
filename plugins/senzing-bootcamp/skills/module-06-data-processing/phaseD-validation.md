@@ -19,6 +19,13 @@ well-formed SQL that cannot run against a single-database SQLite workspace. If y
 looking at that response, the usable subset is its `Validation:` patterns, which run against
 **exported entity JSON** rather than the data mart.
 
+**Run again after a quality iteration.** When the gate's "Iterate now" sent sources through the
+quality-iteration route, the route's resume brings the Bootcamper back to step 21. What the resume
+writes and what re-runs are stated once, in
+`../module-07-query-visualize-discover/phase1-query-visualize.md` step 3b → "The quality-iteration
+route", item 3 (INV-300). Step 21's directing question is not asked again:
+`directing_steps.data_processing` is already set.
+
 ## Single-source validation (always)
 
 ## 21. Validate match accuracy
@@ -47,7 +54,7 @@ there rather than a copy here (INV-300). Only what is particular to step 21 is h
   or `why_records` for records that stayed apart. A record that cannot be found is a difference,
   named in one line; do not ask for another. This is text only, like every check in this module
   (step 23: no visualization here). A difference they want to act on goes the way any accuracy
-  problem here does: the review's last bullet, back to Module 5.
+  problem here does: the review's last bullet, to the gate's "Iterate now".
 - **"You pick" or "I don't know"**, which is the expected answer on CORD or generated data, where
   the Bootcamper may not know which records should merge: run the review below as it stands, with
   the guide choosing the sample.
@@ -61,7 +68,10 @@ Review the entity resolution results:
 - Look for expected matches, are records that should match resolving to the same entity?
 - Look for false positives, are unrelated records being incorrectly merged?
 - Look for false negatives, are records that should match resolving to separate entities?
-- If match accuracy is poor, revisit data quality (Module 5) or mapping before proceeding
+- If match accuracy is poor, say so and carry it into the
+  [iterate-vs-proceed gate](#iterate-vs-proceed-decision-gate) below. Its "Iterate now" takes the
+  sources through [the quality-iteration route](../module-07-query-visualize-discover/phase1-query-visualize.md#the-quality-iteration-route)
+  and back to this phase; nothing is remapped before the gate is asked
 
 Use `generate_scaffold(language='<chosen_language>', workflow='query', version='current')` to
 generate SDK code that retrieves sample entities for review. Use
@@ -123,7 +133,9 @@ metrics.
 
 Validate: match accuracy (query known records via the generated SDK code / SDK method
 `get_entity_by_record_id`), false positives (incorrect merges), false negatives (missed
-matches), data completeness. If accuracy is poor, revisit Module 5 mapping.
+matches), data completeness. If accuracy is poor, say so and carry it into the
+[iterate-vs-proceed gate](#iterate-vs-proceed-decision-gate), whose "Iterate now" enters
+[the quality-iteration route](../module-07-query-visualize-discover/phase1-query-visualize.md#the-quality-iteration-route).
 
 **Checkpoint:** write step 24.
 
@@ -604,6 +616,8 @@ as settled (INV-245).
 
 This audit asks nothing, so continue in the same turn to the gate below (INV-225).
 
+<a id="iterate-vs-proceed-decision-gate"></a>
+
 ## Iterate vs. proceed decision gate
 
 Route on the UAT / match-accuracy results, **and present the match-key audit outcome alongside
@@ -647,17 +661,56 @@ iterate toward.
   bootcamper should hear it before moving on. ⚠️ **A zero per-record bucket with a large
   relationship bucket lands here**, and that is the intended routing, not a leak: the numbers are
   strong *and* the finding stands.
-- **UAT <80%:** state "Results need improvement — I recommend going back to Data Quality, Mapping, and Transformation
-  to refine the mapping." and proceed to the transition question.
-- **UAT 80–89%:** results are mixed, so ask the bootcamper to decide with a single pinned question
-  (neutral lead + numbered list, INV-051):
+- **UAT 80–89%:** results are mixed, so ask the gate question below.
+- **UAT <80%:** say "Results need improvement — I recommend iterating now: refining the mapping in
+  Data Quality, Mapping, and Transformation, then reloading." and ask the same gate question below,
+  with option 1 marked *(recommended)*. ⛔ **(INV-284) This branch asks; it does not state a
+  recommendation and then offer only moving on**, which left the recommended work with no step to
+  run.
 
-  👉 **Most tests pass but there are gaps. What would you like to do? Reply with a number:**
+The gate question, asked word for word on both of those branches, pinned (INV-056) as a neutral
+lead and a numbered list (INV-051):
 
-  1. Iterate now to improve the results before moving on.
-  2. Move forward to the next module.
+👉 **Most tests pass but there are gaps. What would you like to do? Reply with a number:**
 
-  *(Internal: end the turn on this question and wait.)*
+1. Iterate now to improve the results before moving on.
+2. Move forward to the next module.
+
+*(Internal: end the turn on this question and wait.)*
+
+On the <80% branch, option 1 ends with *(recommended)*; nothing else in the question changes, the
+lead included.
+
+**Handling each answer (INV-284).**
+
+- **2, "Move forward":** run "Module completion and transition to Module 7" below. Module 6 is
+  completed once, there, however many iterations came before it.
+- **1, "Iterate now":** ⛔ **(INV-006) The pinned question's answer IS the go-ahead, so ask no
+  second confirmation.** Then, in order:
+  1. **Name the sources.** The candidates are the sources whose `load_status` is `loaded` in
+     `config/data_sources.yaml`. With one, ask nothing and use it. With two or more, end the turn on
+     this single question, one numbered line per loaded source, in load order:
+
+     👉 **Which sources should I remap and reload? Reply with one or more numbers:**
+
+     1. `<DATA_SOURCE>`
+     2. `<DATA_SOURCE>`
+
+     *(Internal: end the turn on this question and wait.)*
+
+     The numbers they reply with are the sources. This chooses what to iterate on; it is not a
+     second confirmation of "Iterate now", and it is asked only once.
+  2. **Explain, as a statement:** name the sources, and say that their loaded data and query
+     programs are kept, that their mapping is refined in Data Quality, Mapping, and Transformation
+     and they are reloaded, and that validation then runs again here. It asks nothing.
+  3. **Enter [the quality-iteration route](../module-07-query-visualize-discover/phase1-query-visualize.md#the-quality-iteration-route)**
+     with `return_to: "module_6_phase_d"` and `from_verdict` set to this gate's band
+     (`uat_80_89` or `uat_below_80`). The route, the key it writes and the iteration record it
+     appends to `module_6_processing.quality_iterations` are stated once, in
+     `../module-07-query-visualize-discover/phase1-query-visualize.md` step 3b → "The
+     quality-iteration route" (INV-300); this gate says only what it hands the route. The route's
+     resume brings the Bootcamper back here: Phase D runs again in full, from step 21, and this gate
+     is asked again on the new results.
 
 ## Stakeholder summary
 
@@ -706,6 +759,14 @@ Follow the Decision Gate above to frame readiness. When results are ready, run t
 **Module Completion** process in `../bootcamp-onboarding/module-completion.md` (update progress,
 append the Module 6 recap section to `docs/bootcamp_recap.md`, and present the end-of-module
 summary), then close the module:
+
+**The Module 6 recap section records every quality iteration.** For each entry in
+`module_6_processing.quality_iterations` (the iteration record whose shape step 3b's
+[quality-iteration route](../module-07-query-visualize-discover/phase1-query-visualize.md#the-quality-iteration-route)
+states once, INV-300), record which sources were remapped and reloaded, the band that sent them
+(`from_verdict`), and the indicators before and after. ⛔ **(INV-284) This section is the only record
+of it:** the return wrote no Module 5 recap section and added nothing to `modules_completed`, and
+Module 6 itself is completed once, here.
 
 👉 **Are you ready to move on to the next module: {next module name}?**
 
