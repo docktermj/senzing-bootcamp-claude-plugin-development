@@ -472,10 +472,13 @@ class TestRendersASoundDocument(unittest.TestCase):
                 "achievable ceiling",
                 "Relationship networks",
                 # The first section's table (#480): its heading, a requirement, and a
-                # "not answered, because" cell.
+                # "not answered, because" cell. Probes are kept inside one wrapped cell
+                # line: the stdlib writer wraps a long cell across lines (see
+                # test_stdlib_table_wraps_long_cells_instead_of_cutting_them).
                 "Your question, answered",
-                "Which customers appear in both sources?",
-                "not answered, because no watchlist source was loaded",
+                "Which customers appear",
+                "not answered, because",
+                "Where in this",
                 # Table content. Its absence was invisible to this test for as long as
                 # the probe list omitted it, while the whole table rendered off-page.
                 "Match key",
@@ -751,7 +754,30 @@ class TestStdlibFallback(unittest.TestCase):
             self.assertIn("POSSIBLY_SAME", text)
             # The first section's table reaches the stdlib PDF too (#480).
             self.assertIn("Your question, answered", text)
-            self.assertIn("Which customers appear in both sources?", text)
+            self.assertIn("Which customers appear", text)
+
+    def test_stdlib_table_wraps_long_cells_instead_of_cutting_them(self):
+        """#480: the stdlib writer cut each cell at 46 characters and each row at the line
+        width, so a three-column "Your question, answered" table lost the end of every
+        long answer and its whole third column. Every word must reach the PDF."""
+        answer = ("not answered, because the loaded sources carry no watchlist and no "
+                  "sanctions list, so nothing here can say which parties are sanctioned")
+        doc_text = GOOD_DOC.replace(
+            "| Which records belong to sanctioned parties? | not answered, because no "
+            "watchlist source was loaded | none |",
+            "| Which records belong to sanctioned parties? | %s | Zygomorphic heading |" % answer,
+        )
+        self.assertIn(answer, doc_text, "fixture substitution failed")
+        module = self.load_module()
+        doc = module.parse_discoveries(doc_text)
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "stdlib.pdf"
+            self.assertTrue(module.render_with_stdlib(doc, out))
+            text = pdf_text(out)
+        for word in answer.replace(",", "").split() + ["Zygomorphic", "heading",
+                                                       "Where in this document"]:
+            with self.subTest(word=word):
+                self.assertIn(word, text)
 
     def test_audit_accepts_the_good_document(self):
         module = self.load_module()

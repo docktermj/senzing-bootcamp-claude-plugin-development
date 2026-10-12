@@ -2831,7 +2831,8 @@ falling back to `_FALLBACK_RGB` with a stderr note.
 - Renders with fpdf2 (cover, ember headings, real table grids with the
   header repeated on page breaks, `_NEW_LINE_LABELS` on their own line,
   gaps per `_needs_item_gap`), falling back to a stdlib writer with
-  monospace tables when fpdf2 is absent or fails.
+  monospace tables when fpdf2 is absent or fails; it fits a table's columns
+  inside the line and wraps each cell within its column, never cutting it.
 - Exit codes: 0 after printing `PDF generated:` with renderer and retention
   (dropped-character warning first, on stderr), or an `OK:` line with
   `--check`. 1 when `--require-sections` names nothing, the input is missing
@@ -8845,7 +8846,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6590 test methods in 386 files, matching `inventory.test_count_total`.
+There are 6591 test methods in 386 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6574.
@@ -8935,7 +8936,7 @@ looks wrong.
 - `tests/test_dependency_reading_rules.py`: 13
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
 - `tests/test_directing_steps.py`: 36
-- `tests/test_discoveries_pdf.py`: 57
+- `tests/test_discoveries_pdf.py`: 58
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
 - `tests/test_download_resource_is_a_listing.py`: 27
@@ -10472,9 +10473,9 @@ Senzing licensing, with no SPDX identifier.
   `module_7_query.query_requirements`, the discoveries document leads with
   "Your question, answered" (each requirement walked to its finding, or "not
   answered, because …"), `REQUIRED_SECTIONS` checks for it, and the Query
-  Completeness Gate checks it against the saved list (the document never walked
-  back to what the Bootcamper set out to learn, and nothing was kept to check
-  against)
+  Completeness Gate checks it against the saved list; the stdlib PDF writer
+  wraps table cells instead of cutting them (the document never walked back to
+  what the Bootcamper set out to learn, and nothing was kept to check against)
 - #481: graduation's Step 0b shows "Decisions you made" and "How you got it
   built" from the recorded recap, asks for a one-line takeaway and a "Next
   time" request, folds them into a `BOOTCAMP-HANDOVER` fence the recap PDF
