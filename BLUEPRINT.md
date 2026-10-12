@@ -8849,7 +8849,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 391 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 392 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8899,7 +8899,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6728 test methods in 391 files, matching `inventory.test_count_total`.
+There are 6744 test methods in 392 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -8962,7 +8962,7 @@ looks wrong.
 - `tests/test_concepts_teaching_section_claims_no_exemption.py`: 12
 - `tests/test_config_seeding_guidance.py`: 16
 - `tests/test_confirmation_gate_is_satisfiable_on_a_generated_scenario.py`: 9
-- `tests/test_confirmations_with_one_sensible_answer.py`: 14
+- `tests/test_confirmations_with_one_sensible_answer.py`: 18
 - `tests/test_conformance_scans.py`: 27
 - `tests/test_conformance_sees_a_rule_beside_a_citation.py`: 8
 - `tests/test_container_lifecycle_runtimes.py`: 18
@@ -8990,7 +8990,7 @@ looks wrong.
 - `tests/test_delegate_files_issues_not_specs.py`: 18
 - `tests/test_dependency_reading_rules.py`: 13
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
-- `tests/test_directing_steps.py`: 36
+- `tests/test_directing_steps.py`: 41
 - `tests/test_discoveries_pdf.py`: 58
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
@@ -9029,7 +9029,7 @@ looks wrong.
 - `tests/test_first_source_is_chosen_by_step_fourteens_heuristics.py`: 18
 - `tests/test_fpdf2_dependency_is_declared.py`: 12
 - `tests/test_free_data_catalog_caveats.py`: 14
-- `tests/test_gate_options_have_handling_steps.py`: 10
+- `tests/test_gate_options_have_handling_steps.py`: 14
 - `tests/test_generated_data_supports_its_success_criteria.py`: 35
 - `tests/test_generated_dataset_size_is_a_license_decision.py`: 18
 - `tests/test_generated_gap_rates_reach_their_band.py`: 12
@@ -9119,6 +9119,7 @@ looks wrong.
 - `tests/test_module5_phase3_exits_return_to_the_per_source_loop.py`: 9
 - `tests/test_module5_step16_asks_about_loading_only_after_the_last_source.py`:
   5
+- `tests/test_module5_step18_validates_the_full_output.py`: 6
 - `tests/test_module6_data_dirs_are_copied_or_excluded.py`: 5
 - `tests/test_module7_asks_the_bootcampers_question_first.py`: 12
 - `tests/test_module7_discover_instructions.py`: 17
@@ -9282,7 +9283,7 @@ looks wrong.
 - `tests/test_update_offer_order_and_existing_install_outcome.py`: 24
 - `tests/test_us_english_spelling.py`: 18
 - `tests/test_user_level_copies_govern.py`: 15
-- `tests/test_verbatim_check_limitation.py`: 43
+- `tests/test_verbatim_check_limitation.py`: 46
 - `tests/test_verbatim_check_limitations_freshness.py`: 23
 - `tests/test_version_precedence_handles_an_unmanaged_install.py`: 10
 - `tests/test_visualization_api_contract.py`: 19
@@ -10669,3 +10670,10 @@ Senzing licensing, with no SPDX identifier.
   step 24d's rejected branch states that iterate returns to Phase 2 step 17 and
   step 25 points to it, and a `PROPOSED AMENDMENT to INV-356` is queued (closed
   reader lists and restated behavior went stale when #487 and #488 shipped)
+- #521: Module 5's step 11 names its `directing_steps.data_quality_mapping`
+  record, step 24d checkpoints its answer and Phase 3 session resume follows it
+  by pointer, step 16 discloses a synthesized source before its 70-79% and <70%
+  questions, the reachings table is re-checked live on server 1.37.27, step 18
+  validates the full load-ready file (skipped with the analyzer), and a
+  `PROPOSED AMENDMENT to INV-345` is queued (six gaps the 2026-10-12 audit found
+  where #485, #488 and #394 left the text behind)

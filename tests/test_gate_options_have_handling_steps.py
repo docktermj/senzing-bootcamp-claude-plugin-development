@@ -33,6 +33,11 @@ before the gate's 👉, and never regenerate the Bootcamper's data silently):
 **not** establish that a live turn discloses before it asks or never regenerates silently, which
 only `dry-run` phase 3 can observe.
 
+#521 extends the disclosure to Phase 2 step 16's quality gate (INV-345's 2026-10-12 note, queued for
+the maintainer's sign-off): `Step16DisclosesOnASynthesizedSource` asserts that step 16 points at
+Phase 1's one statement of the wording (INV-300) before the 70-79% and <70% questions of both
+blocks, keeps those questions verbatim with both options, and marks no ≥80% question.
+
 Source spec:
 `specs/the-quality-gates-improve-option-has-no-procedure-and-is-incoherent-on-a-generated-scenario.md`.
 
@@ -260,6 +265,154 @@ class TheImprovePathIsUsable(unittest.TestCase):
         self.assertRegex(self.text, r"[Nn]ever\s+\*\*silently\s+regenerate|silently regenerate",
                          "nothing forbids answering the question by rewriting the "
                          "Bootcamper's data without telling them")
+
+
+PHASE2 = MODULE / "phase2-data-mapping.md"
+PHASE1 = MODULE / "phase1-quality-assessment.md"
+ANCHOR = '<a id="synthesized-source-disclosure"></a>'
+#: The band marker that carries the pointer to the rule paragraph into each gated band.
+BAND_MARKER = "*(on a synthesized source, the disclosure above first)*:"
+#: The rule paragraph's opening and its pointer, matched on whitespace-collapsed text (INV-346).
+STEP16_RULE = ("⛔ **(INV-345) On a `provenance: synthesized` source, the 70-79% and <70% questions "
+               "are disclosed first.**")
+STEP16_POINTER = ("its wording is stated once, at Phase 1's [synthesized-source disclosure]"
+                  "(phase1-quality-assessment.md#synthesized-source-disclosure); say it as written "
+                  "there rather than a copy here (INV-300)")
+#: Step 16's gated questions (#333), which stay verbatim (INV-056), each with its options.
+GATED = (
+    ("👉 **Quality for {source} is acceptable. What would you like to do? Reply with a number:**",
+     ("1. Move on to the next source, {next}.",
+      "2. Iterate to improve [specific weak areas] first.")),
+    ("👉 **Quality for {source} needs improvement before loading will produce meaningful results. "
+     "I'd recommend going back to address [specific issues]. What would you like to do? Reply with "
+     "a number:**",
+     ("1. Iterate to improve the data.",
+      "2. Move on to {next} anyway, knowing results may be limited.")),
+    ("👉 **Quality is acceptable. What would you like to do? Reply with a number:**",
+     ("1. Proceed to loading now.", "2. Iterate to improve [specific weak areas] first.")),
+    ("👉 **Quality needs improvement before loading will produce meaningful results. I'd recommend "
+     "going back to address [specific issues]. What would you like to do? Reply with a number:**",
+     ("1. Iterate to improve the data.", "2. Proceed anyway, knowing results may be limited.")),
+)
+UNGATED = (
+    "👉 **Quality looks strong for {source}. Ready to map the next source, {next}? Reply with a "
+    "number:**",
+    "👉 **Quality looks strong. Ready to proceed to loading (Data processing)? Reply with a number:**",
+)
+
+
+def _flat(text):
+    return re.sub(r"\s+", " ", text)
+
+
+def step16_disclosure_problems(phase2, phase1):
+    """Step 16 discloses before every 70-79% and <70% question, by pointing at Phase 1 (#521)."""
+    start = phase2.find("### 16. Review")
+    end = phase2.find("### 17. Iterate", start)
+    if start < 0 or end < 0:
+        return ["step 16 moved"]
+    s16 = phase2[start:end]
+    flat = _flat(s16)
+    problems = []
+    if ANCHOR not in phase1:
+        return ["Phase 1 has no synthesized-source-disclosure anchor"]
+    if not phase1.index(ANCHOR) < phase1.index("those gaps are deliberate"):
+        problems.append("Phase 1's anchor does not sit on the disclosure")
+    for needle, what in ((STEP16_RULE, "the INV-345 rule"),
+                         (STEP16_POINTER, "the pointer to Phase 1's one statement (INV-300)"),
+                         ("Then ask the band's pinned question unchanged, with both options live "
+                          "(INV-056)", "the question unchanged with both options live"),
+                         ("Say it even when the Bootcamper heard it at Phase 1's gate",
+                          "that it is said again after Phase 1's gate"),
+                         ("The ≥80% band gets no disclosure", "that the ≥80% band gets none")):
+        if needle not in flat:
+            problems.append("step 16 does not state %s" % what)
+    if "One thing worth knowing before you choose" in s16:
+        problems.append("step 16 copies Phase 1's disclosure wording (INV-300)")
+    rule_at = flat.find(STEP16_RULE)
+    lines = s16.split("\n")
+    for question, options in GATED:
+        if s16.count(question) != 1:
+            problems.append("a gated question is not kept verbatim once: %s" % question[:50])
+            continue
+        q_line = next(i for i, line in enumerate(lines) if line.strip() == question)
+        band = next((lines[i] for i in range(q_line - 1, -1, -1)
+                     if lines[i].startswith("- **Quality")), "")
+        if BAND_MARKER not in band:
+            problems.append("the band before %r carries no disclosure marker" % question[:50])
+        if rule_at < 0 or not rule_at < flat.find(_flat(question)):
+            problems.append("the disclosure rule does not precede %r" % question[:50])
+        after = s16[s16.index(question) + len(question):].split("👉", 1)[0]
+        for option in options:
+            if option not in after:
+                problems.append("%r lost its option %r" % (question[:40], option))
+    for question in UNGATED:
+        q_line = next((i for i, line in enumerate(lines) if line.strip() == question), None)
+        if q_line is None:
+            problems.append("a ≥80%% question moved: %s" % question[:50])
+            continue
+        band = next((lines[i] for i in range(q_line - 1, -1, -1)
+                     if lines[i].startswith("- **Quality")), "")
+        if BAND_MARKER in band:
+            problems.append("a ≥80%% band carries the disclosure marker")
+    if s16.count(BAND_MARKER) != 4:
+        problems.append("step 16 carries %d disclosure markers, not 4" % s16.count(BAND_MARKER))
+    return problems
+
+
+def _move_rule_last(phase2):
+    """Step 16 with its rule paragraph moved below every question (a negative control)."""
+    start = phase2.index("⛔ **(INV-345) On a `provenance: synthesized` source, the 70-79%")
+    end = phase2.index("\n\n", start)
+    rule = phase2[start:end]
+    without = phase2[:start] + phase2[end + 2:]
+    closing = "*(Internal: end the turn on the applicable question and wait.)*"
+    return without.replace(closing, rule + "\n\n" + closing, 1)
+
+
+class Step16DisclosesOnASynthesizedSource(unittest.TestCase):
+    """#521: INV-345's disclosure also precedes step 16's 70-79% and <70% questions."""
+
+    def setUp(self):
+        self.phase2 = PHASE2.read_text(encoding="utf-8")
+        self.phase1 = PHASE1.read_text(encoding="utf-8")
+
+    def test_step_16_discloses_before_the_gated_questions(self):
+        self.assertEqual([], step16_disclosure_problems(self.phase2, self.phase1))
+
+    def test_the_link_resolves(self):
+        self.assertEqual(1, self.phase1.count(ANCHOR))
+
+    def test_negative_controls(self):
+        p2, p1 = self.phase2, self.phase1
+        first_gated = GATED[0][0]
+        mutants = {
+            "rule dropped": (p2.replace(STEP16_RULE[:40], "⛔ **(see below) Something else", 1), p1),
+            "pointer dropped": (p2.replace("(phase1-quality-assessment.md#synthesized-source-"
+                                           "disclosure)", "", 1), p1),
+            "wording copied": (p2.replace("**While one or more unmapped sources remain**",
+                                          '> "One thing worth knowing before you choose."\n\n'
+                                          "**While one or more unmapped sources remain**", 1), p1),
+            "a band loses its marker": (p2.replace("- **Quality 70-79%** " + BAND_MARKER,
+                                                   "- **Quality 70-79%:**", 1), p1),
+            "≥80% band marked": (p2.replace("- **Quality ≥80% and all critical fields mapped:**",
+                                            "- **Quality ≥80% and all critical fields mapped** "
+                                            + BAND_MARKER, 1), p1),
+            "question reworded": (p2.replace(first_gated, first_gated.replace("acceptable",
+                                                                              "fine"), 1), p1),
+            "anchor dropped": (p2, p1.replace(ANCHOR, "", 1)),
+            "rule moved after the questions": (_move_rule_last(p2), p1),
+        }
+        for name, (m2, m1) in mutants.items():
+            with self.subTest(mutant=name):
+                self.assertNotEqual((p2, p1), (m2, m1), "the mutation no longer applies")
+                self.assertNotEqual([], step16_disclosure_problems(m2, m1))
+
+    def test_a_rewrap_still_passes(self):
+        """INV-346: the rule paragraph's phrase checks read whitespace-collapsed text."""
+        m2 = self.phase2.replace("say it\nas written there", "say it as\nwritten there", 1)
+        self.assertNotEqual(self.phase2, m2, "the re-wrap no longer applies")
+        self.assertEqual([], step16_disclosure_problems(m2, self.phase1))
 
 
 if __name__ == "__main__":

@@ -44,9 +44,14 @@ phase 3 and `auto-test`'s transcript linter observe them. This pins that the ski
 INV-354 names this file as its enforcer; the ⛔ pattern requires its citation, and passing it is no
 evidence that a live run obeys it.
 
+#521 closed a Module 5 gap: step 11 now names its record, `directing_steps.data_quality_mapping`,
+and says a value already set means the step has run, as Modules 6 and 7 do; its checkpoint writes
+the record; and it says Phase 1 named the columns at Step 5a (sub-steps 4 and 6), not Step 6.
+`m5_problems` pins all three, with negative controls and a re-wrap control.
+
 Stdlib only; shipped markdown read as text (INV-108).
 
-Source issue: #485 (part of #465).
+Source issue: #485 (part of #465); Module 5's record, #521.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -292,10 +297,25 @@ def m5_problems(phase2, module_files=()):
         "the check is at step 12": r"\*\*The check is at step 12\*\*",
         "the old unconditional sentence is gone": r"no general guided-mode gate before this "
                                                   r"advance, in either mode",
+        # #521: the record, named as Modules 6 and 7 name theirs, and what a set value means.
+        "the progress record": r"Record `directing_steps\.data_quality_mapping` in step 11's "
+                               r"checkpoint",
+        "an existing record means it has run": r"`directing_steps\.data_quality_mapping` is "
+                                               r"already set, it has run",
+        "a set record gets no second directing 👉": r"remap, map the columns as the rest of this "
+                                                    r"step says, with no directing 👉",
+        "the checkpoint writes the record": r"\*\*Checkpoint:\*\* write step 11, with "
+                                            r"`directing_steps\.data_quality_mapping`",
+        # #521: Phase 1 names the columns at Step 5a (sub-steps 4 and 6), not at Step 6.
+        "Phase 1 Step 5a named the columns": r"Phase 1 Step 5a has already named them "
+                                             r"\(`unmapped_fields`, recorded at its sub-step 4 "
+                                             r"and named to the Bootcamper at its sub-step 6\)",
     }
     for what, pattern in required.items():
         if not match_lines(step11, pattern):
             problems.append("step 11 does not state %s" % what)
+    if match_lines(step11, r"Phase 1 Step 6 has already named them"):
+        problems.append("step 11 says Phase 1 Step 6 named the columns (it is Step 5a)")
     if match_lines(step11, r"(?i)advance is unconditional in both modes"):
         problems.append("step 11 still says its advance is unconditional (contradicts the "
                         "directing question)")
@@ -656,6 +676,37 @@ class TheChecksCatchARegression(unittest.TestCase):
     def test_m5_step_12_check_dropped(self):
         text = read(M5_PHASE2).replace("show one sample record in both modes", "show the path")
         self.assertReports(m5_problems(text), "the sample record is shown in both modes")
+
+    def test_m5_record_not_named(self):
+        text = read(M5_PHASE2).replace("Record `directing_steps.data_quality_mapping` in step 11's",
+                                       "Record it in step 11's")
+        self.assertReports(m5_problems(text), "the progress record")
+
+    def test_m5_set_record_not_treated_as_run(self):
+        text = read(M5_PHASE2).replace("`directing_steps.data_quality_mapping` is already set, "
+                                       "it has run", "the step may run again")
+        self.assertReports(m5_problems(text), "an existing record means it has run")
+
+    def test_m5_checkpoint_drops_the_record(self):
+        text = read(M5_PHASE2).replace(
+            "**Checkpoint:** write step 11, with `directing_steps.data_quality_mapping` on the "
+            "source the\ndirecting step ran on.", "**Checkpoint:** write step 11.")
+        self.assertReports(m5_problems(text), "the checkpoint writes the record")
+
+    def test_m5_step_6_reference_restored(self):
+        text = read(M5_PHASE2).replace("Phase 1 Step 5a has already named them",
+                                       "Phase 1 Step 6 has already named them")
+        problems = m5_problems(text)
+        self.assertReports(problems, "Phase 1 Step 5a named the columns")
+        self.assertReports(problems, "it is Step 5a")
+
+    def test_m5_record_rewrapped_still_passes(self):
+        """INV-346: the phrase checks hold when the paragraph is wrapped differently."""
+        text = read(M5_PHASE2).replace("When `directing_steps.data_quality_mapping` is already set",
+                                       "When\n  `directing_steps.data_quality_mapping` is\n  already "
+                                       "set")
+        self.assertNotEqual(read(M5_PHASE2), text, "the re-wrap no longer applies")
+        self.assertEqual([], m5_problems(text, module_texts(M5_DIR)))
 
     def test_m5_second_directing_step_elsewhere(self):
         texts = module_texts(M5_DIR) + ["This is Module 5's directing step.\n\n" + M5_QUESTION]

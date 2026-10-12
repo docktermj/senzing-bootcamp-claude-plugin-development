@@ -31,6 +31,14 @@ nor fails a correct one; the negative controls include re-wrapped and reworded v
 Candidate 1's close is also what INV-356's proposed #517 amendment states: each export offer is
 its own turn, and the turn that settles the last one ends on the next 👉 the flow already has.
 
+#521 makes candidate 6 survive an interruption: step 24d writes its answer (`accept` or
+`iterate`) as its checkpoint, and "Phase 3 session resume" follows a recorded answer at step 25
+without asking either question again, falling back to step 25 when there is no record (a first
+test load, or a progress file written before #521). The record is stated once, at step 24d's
+checkpoint, and resume points to it rather than restating it (INV-300; grafted from #521's losing
+strategy B). ``Step24dAnswerSurvivesAnInterruption`` pins both sites, the pointer, and that resume
+carries no copy of the record, again only that the file STATES them.
+
 The kept gates (candidates 3, 4, 5, 7 and 8) are pinned by their own tests; ``KeptGates`` checks
 only that each still stands at its site, so a later "tidy" of this issue's kind cannot take one.
 
@@ -225,6 +233,52 @@ def phase3_exit_problems(text):
     return problems
 
 
+STEP24D_CHECKPOINT = ("**Checkpoint:** when this gate was presented, write step 24d to "
+                      "`config/bootcamp_progress.json` with its answer, `accept` or `iterate`.")
+
+
+def step24d_checkpoint_problems(text):
+    """#521: step 24d records its answer, so an interruption before step 25 does not lose it."""
+    s24d = between(text, "#### 24d.", "### 25.")
+    if s24d is None:
+        return ["step 24d moved"]
+    problems = need(s24d, (STEP24D_CHECKPOINT,
+                           "On a first test load it was not presented, so there is nothing to "
+                           "record."), "step 24d")
+    if not problems and flat(s24d).find(flat(STEP24D_CHECKPOINT)) < flat(s24d).find(
+            "*(Internal: end the turn on this question and wait.)*"):
+        problems.append("step 24d's checkpoint comes before its question is answered")
+    return problems
+
+
+def resume_problems(text):
+    """#521: "Phase 3 session resume" follows a recorded step 24d answer at step 25, unasked."""
+    resume = between(text, "## Phase 3 session resume", "## Rules")
+    if resume is None:
+        return ["Phase 3 session resume moved"]
+    problems = need(resume, (
+        "When step 24d's answer is recorded (the record is stated once, at step 24d's "
+        "**Checkpoint**; INV-300), that answer already settled step 25",
+        "present the Phase 3 results again as statements, ask nothing, and follow the recorded "
+        "answer, `accept` by the **yes** route and `iterate` by the **no** route",
+        "Ask neither step 24d's question nor step 25's again (INV-006)",
+        "With no step 24d record (a first test load, or a progress file written before step 24d "
+        "recorded its answer), resume from step 25 as above",
+    ), "Phase 3 session resume")
+    if "👉" in resume:
+        problems.append("Phase 3 session resume asks a 👉 question")
+    # INV-300: what the record holds, and where it is written, is stated at step 24d only.
+    for copy in ("write step 24d", "with its answer, `accept` or `iterate`",
+                 "records step 24d with its answer"):
+        if copy in flat(resume):
+            problems.append("Phase 3 session resume restates step 24d's record (%r) instead of "
+                            "pointing to its checkpoint" % copy)
+    s24d = between(text, "#### 24d.", "### 25.")
+    if s24d is None or "**Checkpoint:** when this gate was presented, write step 24d" not in s24d:
+        problems.append("Phase 3 session resume points to a step 24d checkpoint that is not there")
+    return problems
+
+
 # -------------------------------------------------------------------------------------- tests
 
 
@@ -410,6 +464,68 @@ class Phase3SaysWhereIterateGoes(unittest.TestCase):
                     sentence)
                 self.assertIn("the retired phrase %r is back" % RETIRED_STEP25_TOLD,
                               phase3_exit_problems(mutant))
+
+
+class Step24dAnswerSurvivesAnInterruption(unittest.TestCase):
+    """#521: the 24d answer is checkpointed, and resume follows it at step 25 without asking."""
+
+    def test_step_24d_checkpoints_its_answer(self):
+        self.assertEqual([], step24d_checkpoint_problems(read(M5_PHASE3)))
+
+    def test_resume_follows_the_recorded_answer(self):
+        self.assertEqual([], resume_problems(read(M5_PHASE3)))
+
+    def test_the_rules_hold_through_a_rewrap(self):
+        """INV-346: a different wrap of the same words still passes."""
+        text = read(M5_PHASE3)
+        mutant = text.replace("ask nothing, and follow the recorded answer, `accept` by\nthe **yes** route",
+                              "ask\nnothing, and follow the recorded answer, `accept` by the **yes** route", 1)
+        mutant = mutant.replace("(the record is stated once, at step 24d's **Checkpoint**;\nINV-300), that",
+                                "(the record is\nstated once, at step 24d's **Checkpoint**; INV-300), that", 1)
+        mutant = mutant.replace("with\nits answer, `accept`", "with its\nanswer, `accept`", 1)
+        self.assertNotEqual(text, mutant, "the re-wrap no longer applies")
+        self.assertEqual([], step24d_checkpoint_problems(mutant))
+        self.assertEqual([], resume_problems(mutant))
+
+    def test_negative_controls(self):
+        text = read(M5_PHASE3)
+        checkpoint = {
+            "checkpoint dropped": text.replace(
+                "**Checkpoint:** when this gate was presented, write step 24d", "Then", 1),
+            "answer not recorded": text.replace("with\nits answer, `accept` or `iterate`.",
+                                                "and move on.", 1),
+        }
+        resume = {
+            "resume asks again": text.replace(
+                "Ask neither step 24d's question nor step 25's\nagain (INV-006).",
+                "Ask step 25's question again:\n\n👉 **Ready?**", 1),
+            "iterate route lost": text.replace("`iterate` by the **no** route",
+                                               "`iterate` by the **yes**\nroute", 1),
+            "pointer to step 24d's checkpoint dropped": text.replace(
+                "When step 24d's answer is recorded (the record is stated once, at step 24d's "
+                "**Checkpoint**;\nINV-300), that", "When step 24d was answered, that", 1),
+            "the pointer's target is gone": text.replace(
+                "**Checkpoint:** when this gate was presented, write step 24d", "Then", 1),
+            "old progress file not handled": text.replace(
+                "or a progress file written before step\n24d recorded its answer", "only", 1),
+        }
+        # The pointer kept, and the record restated beside it: reported as a restatement.
+        restated = text.replace(
+            "Ask neither step 24d's question nor step 25's\nagain (INV-006).",
+            "Step 24d wrote `config/bootcamp_progress.json` with its answer, `accept` or\n"
+            "`iterate`. Ask neither step 24d's question nor step 25's again (INV-006).", 1)
+        with self.subTest(mutant="record restated beside the pointer"):
+            self.assertNotEqual(text, restated, "the mutation no longer applies")
+            self.assertTrue(any("restates step 24d's record" in p
+                                for p in resume_problems(restated)), resume_problems(restated))
+        for name, mutant in checkpoint.items():
+            with self.subTest(mutant=name):
+                self.assertNotEqual(text, mutant, "the mutation no longer applies")
+                self.assertNotEqual([], step24d_checkpoint_problems(mutant))
+        for name, mutant in resume.items():
+            with self.subTest(mutant=name):
+                self.assertNotEqual(text, mutant, "the mutation no longer applies")
+                self.assertNotEqual([], resume_problems(mutant))
 
 
 class KeptGates(unittest.TestCase):

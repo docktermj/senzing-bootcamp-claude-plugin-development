@@ -39,7 +39,7 @@ Senzing JSON: validated and ready to load.
 **Prerequisites:** ✅ Module 4 complete (data sources collected, files in `data/raw/`).
 
 **Success indicator:** ✅ Each data source evaluated (sources evaluated, mapped) +
-transformation programs tested + output validated with quality >70%.
+transformation programs tested + output validated; quality score reported at step 16.
 
 ## Reference notes
 
