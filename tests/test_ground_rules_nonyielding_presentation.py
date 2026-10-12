@@ -47,11 +47,12 @@ M7_PHASE1 = SKILLS / "module-07-query-visualize-discover" / "phase1-query-visual
 #: Phase C's run is conditional (#292): Step 17 asks the license-cap question when it is due
 #: (or Step 19 does, after Step 18's test load), so its headline must say so. Phase D's run is
 #: conditional too (#485): step 21 asks the module's directing question the first time Phase D
-#: reaches it.
+#: reaches it. Module 7's run is conditional too (#483): step 3a asks its recall question unless
+#: the zero-or-very-few-matches branch ran.
 SITES = [
     (PHASE_C, "17–20", "Steps 17–20 ask nothing unless the license-cap question is due"),
     (PHASE_D, "21–24", "Steps 21–24 ask nothing unless step 21's directing question is due"),
-    (M7_PHASE1, "2–3a", "Steps 2–3a ask nothing"),
+    (M7_PHASE1, "2–3a", "Steps 2–3a ask nothing unless step 3a's recall question is due"),
 ]
 
 
@@ -154,6 +155,13 @@ class EachSiteCarriesAPointer(unittest.TestCase):
         text = squash(PHASE_D)
         self.assertNotIn("Steps 21–24 ask nothing, so", text)
         self.assertIn("step 21's directing question", text)
+        self.assertIn("That turn ends on it", text)
+
+    def test_module_7_does_not_say_its_steps_ask_nothing_unconditionally(self):
+        """#483: step 3a asks its recall question, and the turn ends on it."""
+        text = squash(M7_PHASE1)
+        self.assertNotIn("Steps 2–3a ask nothing, so", text)
+        self.assertIn("step 3a's [recall question](#recall-question)", text)
         self.assertIn("That turn ends on it", text)
 
     def test_each_pointer_says_the_turn_continues(self):

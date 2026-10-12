@@ -8846,7 +8846,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6591 test methods in 386 files, matching `inventory.test_count_total`.
+There are 6606 test methods in 387 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6574.
@@ -8993,7 +8993,7 @@ looks wrong.
 - `tests/test_graph_colors_by_source_combination.py`: 25
 - `tests/test_graph_label_distinctness.py`: 18
 - `tests/test_graph_labels_paint_after_circles.py`: 13
-- `tests/test_ground_rules_nonyielding_presentation.py`: 15
+- `tests/test_ground_rules_nonyielding_presentation.py`: 16
 - `tests/test_group_score_is_not_a_join_prediction.py`: 15
 - `tests/test_hard_rule_citations.py`: 6
 - `tests/test_hard_rule_detector_sees_mid_line_stop_signs.py`: 8
@@ -9068,6 +9068,7 @@ looks wrong.
 - `tests/test_module7_discover_instructions.py`: 17
 - `tests/test_module7_exports_for_integration_targets.py`: 46
 - `tests/test_module7_gate_shows_both_versions.py`: 13
+- `tests/test_module7_recall_question.py`: 14
 - `tests/test_module7_your_question_answered.py`: 14
 - `tests/test_module_0_suggested_queries_are_measured.py`: 18
 - `tests/test_module_5_describes_the_entity_specification_as_served.py`: 9
@@ -10490,6 +10491,14 @@ Senzing licensing, with no SPDX identifier.
   artifact is drafted in the ledger, not applied (the requirements were
   confirmed on the guide's rendering alone, so a changed meaning surfaced only
   in a retrospective)
+- #483: Module 7 step 3a's matching-concepts reminder is replaced by one
+  numbered recall question about an entity in the Bootcamper's own results
+  (features and match keys, confidence scores or cross-source connections),
+  its answer read from that result and checked against the MCP server; it
+  ends 3a's turn as the one 👉, skipped on the zero-or-very-few-matches branch,
+  a wrong answer follows Module 0's wrong-answer rule (cited, not restated),
+  and the refresher offer follows the answer (the reminder re-taught the
+  concepts, so the Bootcamper never retrieved one)
 - #485: one step per hands-on module is handed to the Bootcamper to direct, by
   the ground rules' one "Directing steps" rule: Module 5 step 11 (what the
   columns `mapping_workflow` did not place become, checked at step 12's sample
