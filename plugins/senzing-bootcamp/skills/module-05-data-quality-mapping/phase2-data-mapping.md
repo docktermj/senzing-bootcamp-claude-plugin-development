@@ -259,7 +259,7 @@ the same** and only four `advance` calls happen in Phase 2:
 | 12-16 | 4 generate_validate | **one** `advance` at step 15, `data={'verdict': ...}` |
 | 17-18 | — | no advance; `rework_*` verdicts route back |
 | 18a | 5 detect_environment | the menu returned by step 15's advance; answering it may enter Phase 3 |
-| Phase 3 (21-25) | 6-8 | the optional sandbox test load — see `phase3-test-load.md`; every exit returns to step 19 (or step 17 to iterate) |
+| Phase 3 (21-25) | 6-8 | the optional sandbox test load — see `phase3-test-load.md`; every exit returns to step 19 (or step 17 to iterate), and an [SDK repair](phase3-test-load.md#the-sdk-repair-question) comes back to step 21 |
 
 Steps 12, 13, 14 and 16 do **not** advance the workflow — they are work performed *inside* workflow
 step 4 (generate sample JSON, lint, write and run the mapper, analyze output) before its single
@@ -1881,7 +1881,9 @@ The real production load still happens in Data processing regardless. Phase 3 te
 only, and every exit from it returns here: its step 25 "yes" and its skip exits resume at step 19,
 and its step 25 "no" at step 17 (`phase3-test-load.md` → "Leaving Phase 3", INV-344). So a test load
 chosen on a source that is not the last continues to the next unmapped source, with no question
-about the whole run.
+about the whole run. Its [SDK repair](phase3-test-load.md#the-sdk-repair-question) is a detour
+through SDK setup that comes back to Phase 3 step 21 for the same source, so it leaves this loop no
+more than the test load itself does.
 
 **Checkpoint:** write step 18a.
 

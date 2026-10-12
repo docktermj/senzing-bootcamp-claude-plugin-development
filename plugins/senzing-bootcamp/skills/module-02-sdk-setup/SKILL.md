@@ -106,6 +106,7 @@ that have finished.
 | `purpose` | `steps`, in order | When every step is done | When it cannot finish | Offered at |
 |---|---|---|---|---|
 | `database_switch` | `7-postgresql`: [Step 7](#step-7-configure-database)'s PostgreSQL branch, from its "How would you like to run PostgreSQL?" question. `8`: Step 8. `8a`: Step 8a. `9`: Step 9. `register-sources`: every source's `DATA_SOURCE` code registered in the new datastore | Write `database_type: postgresql` by Step 7's instruction 1, which replaces `sqlite`, and delete `config/engine_config.sqlite.json` | Restore `config/engine_config.json` from `config/engine_config.sqlite.json` when that copy exists, then re-source the environment script. `database_type` was never rewritten, so it is still `sqlite` | Data collection Step 8b, option 3; Data processing Phase A's SQLite volume pre-load check, option 2 |
+| `sdk_repair` | `1`: [Step 1](#step-1-check-for-existing-installation-must-do-first), which moves past whatever is already in place. `1b`: Step 1b. `2`: Step 2. `3`: Step 3. `4`: Step 4. `5`: Step 5. `6`: Step 6. `7`: Step 7. `8`: Step 8. `8a`: Step 8a. `9`: [Step 9](#step-9-test-database-connection) | Write `database_type` by Step 7's instruction 1, naming the engine `config/engine_config.json` connects to | Nothing to restore: the setup was already failing when the detour began, and `database_type` was never rewritten | Data Quality, Mapping, and Transformation Phase 3's SDK repair question, before Phase 3 starts and at step 21 when detection fails |
 
 **Running it.** For each step in `steps` not listed in `completed`, in order, run the step as this
 module states it, then add it to `completed` in one quiet write in place of that step's
@@ -127,17 +128,29 @@ module states it, then add it to `completed` in one quiet write in place of that
   is re-runnable by construction and now reaches the new datastore. Where it does not, generate it
   by item 2 first.
 
+For `sdk_repair`:
+
+- **`1`.** Step 1 decides what is already in place, as it does on any run. A step its path moves
+  past (Step 1b without a V4.0+ install, Step 2 with one) is added to `completed` without running,
+  and Step 3 runs only the parts that path keeps (INV-339). Step 1's "Mark Module 2 as complete
+  once verification passes" does not apply: a detour completes no module.
+- **`7`.** Step 7 runs as it states, from its database question. Its instruction 1 waits for the
+  finish, as on every detour, and the engine it then records is the one Step 8 wrote into
+  `config/engine_config.json`. Option 4 of its PostgreSQL branch, "Switch to SQLite", is an answer
+  here and not a stop: it continues to Step 7's SQLite branch.
+
 **When every step is done,** apply the row's "When every step is done", then clear `setup_detour` in
 one write and return to `return_to.module` at `return_to.resume`, where the offering module says
 what happens next. If the session stops between the two writes, the key is still present with every
 step in `completed`: apply the finish again, which is safe to repeat.
 
 **When it cannot finish:** a step fails, Error Handling above does not get it to pass, and the
-Bootcamper stops, in their own words or with Step 7's option 4. Ask no question of your own here.
-Apply the row's "When it cannot finish", leave any container Step 7 started recorded in
-`docker_containers` and never remove it (removing it is the Bootcamper's call), clear
-`setup_detour` in one write, and return to `return_to.module`. There, say what failed in one line,
-then ask the `return_to.reask` step's question again: its own options are the retry and the stay.
+Bootcamper stops, in their own words or, on a `database_switch`, with Step 7's option 4.
+Ask no question of your own here. Apply the row's "When it cannot finish", leave any container
+Step 7 started recorded in `docker_containers` and never remove it (removing it is the
+Bootcamper's call), clear `setup_detour` in one write, and return to `return_to.module`. There,
+say what failed in one line, then ask the `return_to.reask` step's question again: its own
+options are the retry and the stay.
 ⛔ **(INV-284) That is a new state, NOT an INV-006 repeat**, so the answer the offering module
 recorded before the detour does not suppress it, and the new answer replaces that record.
 

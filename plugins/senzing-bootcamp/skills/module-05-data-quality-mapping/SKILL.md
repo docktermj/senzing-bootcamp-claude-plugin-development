@@ -31,6 +31,11 @@ banner, journey map, before/after framing, a brief numbered overview of this mod
 runs only the steps it names, so the steps it leaves out are not skipped steps.
 **When it records Module 5 at the retired step 26, none of this runs either:** Module 5 is already
 complete, and [Resuming](#resuming) says what to present.
+**When it carries a `setup_detour`, none of this runs either:** Phase 3's SDK repair is part-way
+through, so go to SDK setup's
+[Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour), which
+finishes it and returns to Phase 3
+[step 21](phase3-test-load.md#21-sdk-environment-detection) for the same source.
 
 **Before/After:** You have raw data files but don't know if Senzing can use them directly.
 After this module, each source is scored for quality, categorized, and transformed into

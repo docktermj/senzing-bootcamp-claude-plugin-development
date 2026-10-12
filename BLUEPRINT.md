@@ -1795,8 +1795,8 @@ Senzing SDK natively in the chosen language. It reads
 `config/bootcamp_progress.json` (resuming at `current_step`), shows the
 ground-rules module opening, and checkpoints each step number there. Senzing
 facts come from MCP tools; SENZ codes go to `explain_error_code`, then
-`search_docs`. A `setup_detour` (from Module 4 Step 8b or Module 6 Phase A)
-skips the banner and every Module 2 checkpoint and runs only its receiving
+`search_docs`. A `setup_detour` (from Module 4 Step 8b, Module 5 Phase 3 or
+Module 6 Phase A) skips the banner and every Module 2 checkpoint and runs only its receiving
 branch.
 
 - Step 1, existing install: a language version check from
@@ -1917,6 +1917,12 @@ branch.
   Step 7's option 4), it restores the copy, clears the key, and the offering
   module names the failure and asks `return_to.reask` again as a new state.
   An interrupted detour continues at the first step not in `completed`.
+  `sdk_repair` (Module 5 Phase 3's SDK repair question) runs every step from
+  Step 1 to Step 9; Step 1's path decides what runs (a step it moves past is
+  added to `completed` unrun, and its "Mark Module 2 as complete" does not
+  apply), Step 7 asks its database question and writes `database_type` at the
+  finish, and its option 4 is an answer there, a stop only on a
+  `database_switch`. Nothing is restored when it cannot finish.
 
 Completion runs `bootcamp-onboarding/module-completion.md` (Module 2 recap
 in `docs/bootcamp_recap.md`), asks the transition question naming the next
@@ -2198,7 +2204,8 @@ receiving branch, and a `setup_detour` goes to SDK setup's.
 `phase1-quality-assessment.md` (steps 1-7), `phase2-data-mapping.md`
 (8-20) and the optional `phase3-test-load.md` (21-25). Non-Latin guidance
 uses `search_docs(..., category='globalization')`. A `quality_iteration`
-skips the banner and goes straight to Phase 2. A legacy `current_step` 26
+skips the banner and goes straight to Phase 2, and a `setup_detour` goes to
+SDK setup's receiving branch. A legacy `current_step` 26
 means the module is complete: only the transition question is asked.
 
 - **Steps 1-5.** Take the sources from the registry. Verify files and
@@ -2336,6 +2343,13 @@ means the module is complete: only the transition question is asked.
   question. Step 25 asks yes or no only when that question was not asked;
   otherwise it follows its answer. Yes (accept) goes to step 19, no
   (iterate) to step 17.
+  With no working SDK (before Phase 3, or step 21's detection failure), a
+  pinned repair-or-skip question, stated once at `#the-sdk-repair-question`
+  and asked from step 21 by link: repair writes `current_step: 21` and a
+  `setup_detour` (`sdk_repair`, resume `21:<DATA_SOURCE>`) and resumes at
+  step 21 for this source, a repeat failure re-asking as a new state; skip
+  goes to step 19. Step 18a, the step map and Phase 3 session resume point to
+  it.
   The registry gets `test_load_status` and `test_entity_count`.
 
 ### 5.14 `plugins/senzing-bootcamp/skills/module-06-data-processing/`
@@ -8945,7 +8959,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 398 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 399 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -9216,6 +9230,7 @@ looks wrong.
 - `tests/test_module5_full_output_file_path_is_written_at_step_18.py`: 18
 - `tests/test_module5_phase1_gates_and_scoring.py`: 14
 - `tests/test_module5_phase3_exits_return_to_the_per_source_loop.py`: 9
+- `tests/test_module5_phase3_sdk_repair_detours_through_sdk_setup.py`: 39
 - `tests/test_module5_step16_asks_about_loading_only_after_the_last_source.py`:
   5
 - `tests/test_module5_step18_validates_the_full_output.py`: 6
@@ -10860,3 +10875,9 @@ Senzing licensing, with no SPDX identifier.
   INVARIANT for Module 0's wrong-answer rule and Module 7's recall question
   is queued (the pointers named the single-statement rule but not the rule
   they point at, and the wrong-answer rule was registered nowhere)
+- #530: Module 5 Phase 3's two offers to go back to SDK setup become one
+  pinned repair-or-skip question, stated once and asked again from step 21 by
+  link; repair is an `sdk_repair` row in SDK setup's `setup_detour` table
+  (Step 1 to Step 9, completing no module) and a fifth "Leaving Phase 3" exit
+  that resumes at Phase 3 step 21 for the same source (both offers were prose
+  with no handling, and nothing said where the flow came back)
