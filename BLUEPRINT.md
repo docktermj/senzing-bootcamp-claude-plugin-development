@@ -10620,6 +10620,13 @@ Senzing licensing, with no SPDX identifier.
   `scripts/` is not mounted in the container, so the server and its D3 were
   unreachable there; a copy, not a mount, because `${CLAUDE_PLUGIN_ROOT}` is a
   versioned cache directory)
+- #506: the cross-module return contract (`collection_return`,
+  `quality_iteration`: the offering module records the key and stays current,
+  the receiving module checks it first, shows no start apparatus, writes no
+  checkpoint and completes no module) is queued as one `DEFERRED INVARIANT`
+  block in `specs/IMPLEMENTED.md` with its 17 quoted sites, and no plugin file
+  changes (every site cited INV-284, which covers only option handling at a
+  pinned gate)
 - #507: Discover step 4b item 1a shows its records as text only, and
   "Already-shown entities" in `phase2-discover.md` excludes the headline entity
   and the entity holding Module 6's new `midpoint_record` checkpoint key from
