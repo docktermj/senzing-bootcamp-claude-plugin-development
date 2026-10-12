@@ -34,7 +34,8 @@ line inside backticks; counting lines that contain the full question keeps prose
 across a wrap.
 
 ⛔ **What this cannot establish:** that a live guide shows the steer, asks first, or writes the
-checkpoint line. Those are properties of a conversation; `dry-run` phase 3 and `auto-test`'s
+checkpoint line. INV-352 names this file as its enforcer; the three ⛔ patterns above require its
+citation, and passing them is no evidence that a live run obeys it. Those are properties of a conversation; `dry-run` phase 3 and `auto-test`'s
 transcript linter observe them. This pins that the skill files STATE them.
 
 Stdlib only; shipped markdown read as text (INV-108).
@@ -98,7 +99,7 @@ RULE_REQUIRED = {
     "it is the one statement (INV-300)": r"This section is the one statement of how every worked "
                                          r"steer works; each of those modules points here and "
                                          r"holds no copy \(INV-300\)",
-    "the trigger is a named condition": r"⛔ \*\*The trigger is a named condition, not a "
+    "the trigger is a named condition": r"⛔ \*\*\(INV-352\) The trigger is a named condition, not a "
                                         r"disposition\.\*\*",
     "trigger 1: generated code fails when run": r"\*\*Code the AI generated fails when it runs:\*\* "
                                                 r"a non-zero exit, an exception, or an `EMPTY` "
@@ -111,7 +112,7 @@ RULE_REQUIRED = {
     "later failures are fixed as before": r"every later failure in the module is fixed as before, "
                                           r"without a steer",
     "zero is allowed": r"\"At most one\" allows zero: a module with no failure shows nothing",
-    "a failure is never staged": r"⛔ \*\*Never stage a failure to have one to show\.\*\*",
+    "a failure is never staged": r"⛔ \*\*\(INV-352\) Never stage a failure to have one to show\.\*\*",
     "two lines": r"\*\*Two lines, after the fix\.\*\*",
     "the first line's shape": r"What went wrong: \{what failed, in plain words\} — given away by "
                               r"\{the evidence, quoted from the output",
@@ -129,7 +130,7 @@ RULE_REQUIRED = {
                                           r"fixing the failure",
     "the question is pinned and the only 👉 (INV-247, INV-251)":
         r"pinned here \(INV-247\) and the turn's only 👉 \(INV-251\)",
-    "the guide writes the code": r"⛔ \*\*The Bootcamper answers in words; the guide writes every "
+    "the guide writes the code": r"⛔ \*\*\(INV-352\) The Bootcamper answers in words; the guide writes every "
                                  r"line of code\*\*",
     "a request that works is used": r"\*\*Their request would work:\*\* the AI makes that change, "
                                     r"and the steer's second line says so",

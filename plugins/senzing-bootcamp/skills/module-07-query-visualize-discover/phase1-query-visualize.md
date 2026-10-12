@@ -19,7 +19,7 @@ visualization data come from `reporting_guide`. Never query `database/G2C.db` ta
 - **Fallback path:** otherwise (file missing, OR both success-criteria and desired-outputs
   sections are missing or empty).
 
-⛔ **The Bootcamper's question comes first, on both paths.** Turn 1 asks only the open question
+⛔ **(INV-359) The Bootcamper's question comes first, on both paths.** Turn 1 asks only the open question
 below, its one 👉 (INV-251), and shows no derived requirement, not even a hint of one. A list
 shown first leaves only "approve it?" to ask, and real Bootcampers answered "No" to that and never
 said what they wanted to know. Their answer is the requirements' first source; the business
@@ -147,7 +147,7 @@ no entity has two or more records, is stated once in
 [`ground-rules.md`](../bootcamp-onboarding/ground-rules.md#entity-as-text) → "Showing one resolved
 entity as text" (INV-300); follow it there rather than restating it.
 
-- ⛔ **Never before the open question is answered, and never in the gate's turn.** Turn 1 holds
+- ⛔ **(INV-355) Never before the open question is answered, and never in the gate's turn.** Turn 1 holds
   only the open question, and the gate's turn holds only the list and its question. The headline
   entity comes after the Bootcamper has said what they want to find out.
 - **No 👉 of its own.** It is a statement: the turn continues to step 2 and ends on that turn's
@@ -160,7 +160,7 @@ settled.
 
 <a id="query-requirements"></a>
 
-⛔ **Save the settled list with it, as `module_7_query.query_requirements`.** The Query
+⛔ **(INV-353) Save the settled list with it, as `module_7_query.query_requirements`.** The Query
 Completeness Gate checks the discoveries document's `## Your question, answered` section against
 this list, possibly in a later session or after step 3b's return through Modules 5 and 6, when the
 conversation that settled it is gone. Save one entry per requirement, in the order the list was
@@ -1184,7 +1184,7 @@ Source every figure through generated SDK code and `reporting_guide` — never d
 `database/G2C.db`. Write these seven sections, in this order; the generator checks for them by
 name.
 
-⛔ **First, `## Your question, answered`**, before any finding: each requirement the Bootcamper
+⛔ **(INV-353) First, `## Your question, answered`**, before any finding: each requirement the Bootcamper
 set out to answer, walked to what this document found. Write it as a Markdown table with exactly
 these three columns, one row per entry in `module_7_query.query_requirements` (saved by step 1,
 [above](#query-requirements)), in their saved order. The generator draws a table from consecutive

@@ -330,11 +330,11 @@ holds content, so nothing recorded is missed. Build two lists:
   {…} with the Senzing MCP server.` Draw what was asked from that module's **Questions &
   Responses** and what was built from its **Actions Taken**. A module with neither adds no line.
 
-⛔ **Readiness, teardown and consent gates are not decisions.** Leave out "ready to continue?",
+⛔ **(INV-358) Readiness, teardown and consent gates are not decisions.** Leave out "ready to continue?",
 "may I install…?", "tear down the container?" and every answer like them: it let the bootcamp
 proceed and chose nothing about what was built.
 
-⛔ **Both lists come from the recorded recap and nothing else.** Never invent a decision, a request
+⛔ **(INV-358) Both lists come from the recorded recap and nothing else.** Never invent a decision, a request
 or a build step to fill a list, and never fill one from memory of the session. A list with no
 supporting entries is left out: no heading, no "(none)".
 
@@ -357,7 +357,7 @@ no takeaway ("skip", a pass, or nothing usable), the line is left out, never wri
   `docs/business_problem.md` and their sources in `config/data_sources.yaml`, naming their own data
   or domain. Offering it is a statement, not a question: show it in one line and continue.
 
-⛔ **The guide's draft is labeled as the guide's, wherever it is recorded.** Record it as
+⛔ **(INV-358) The guide's draft is labeled as the guide's, wherever it is recorded.** Record it as
 `**The guide's draft (you passed):** {the draft}`, never as their words: in the recap, in
 `docs/REVISIT_BOOTCAMP.md` and in the closing announcement.
 

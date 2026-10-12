@@ -41,6 +41,8 @@ a wrap.
 ⛔ **What this cannot establish:** that a live guide asks the question, builds what was asked,
 compares honestly, or writes the recap line. Those are properties of a conversation; `dry-run`
 phase 3 and `auto-test`'s transcript linter observe them. This pins that the skill files STATE them.
+INV-354 names this file as its enforcer; the ⛔ pattern requires its citation, and passing it is no
+evidence that a live run obeys it.
 
 Stdlib only; shipped markdown read as text (INV-108).
 
@@ -183,7 +185,7 @@ RULE_REQUIRED = {
     "the guide offers no recommendation first": r"offers no\s+recommendation of its own unless "
                                                  r"asked to choose",
     "one 👉 per turn (INV-251)": r"only 👉 \(INV-251\)",
-    "the guide writes every line of code": r"⛔ \*\*The Bootcamper directs in words; the guide "
+    "the guide writes every line of code": r"⛔ \*\*\(INV-354\) The Bootcamper directs in words; the guide "
                                            r"writes every line of code\.\*\*",
     "the Bootcamper is never asked for code": r"Never ask them to\s+write, edit or paste code",
     "the code comes from the MCP tools (INV-080)": r"the code comes from the MCP\s+tools exactly "

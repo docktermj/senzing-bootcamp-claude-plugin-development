@@ -23,7 +23,8 @@ its negative control.
 ⛔ **What this cannot establish:** that a live guide saves the list, writes the rows, or runs the
 gate item. Those are properties of a conversation; `dry-run` phase 3 and `auto-test`'s
 transcript linter observe them. This pins that the skill file STATES them, and that the
-generator warns when the section is missing.
+generator warns when the section is missing. INV-353 names this file as its enforcer; passing it is
+no evidence that a live run saves the list or writes faithful rows.
 
 Stdlib only; shipped markdown read as text (INV-108).
 
@@ -48,7 +49,7 @@ SECTION = "## Your question, answered"
 NEXT_SECTION = "## Headline numbers, interpreted"
 #: The new section is stated ahead of the six numbered findings sections, so their numbering
 #: (and the ⛔ rule on the sixth) is untouched.
-FIRST = "**First, `%s`**" % SECTION
+FIRST = "**(INV-353) First, `%s`**" % SECTION
 FINDINGS_START = "1. **`%s`**" % NEXT_SECTION
 
 

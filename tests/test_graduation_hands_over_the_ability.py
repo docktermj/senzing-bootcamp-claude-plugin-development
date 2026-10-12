@@ -15,7 +15,9 @@ only from the recorded recap is a conversational property that only `dry-run` ph
 
 The checks read whitespace-collapsed sections, so a phrase that wraps still matches (INV-346).
 
-Source issue: #481 (part of #465).
+Source issue: #481 (part of #465). INV-358 names this file as its enforcer; the three Step 0b ⛔
+assertions require its citation, and passing them is no evidence that a live graduation draws only
+from the record or keeps the Bootcamper's words.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -121,11 +123,11 @@ class TheTwoListsComeFromTheRecordOnly(unittest.TestCase):
         self.assertIn("an open answer that set a direction", decisions)
 
     def test_readiness_teardown_and_consent_gates_are_left_out(self):
-        self.assertIn("⛔ **Readiness, teardown and consent gates are not decisions.**", FLAT_0B)
+        self.assertIn("⛔ **(INV-358) Readiness, teardown and consent gates are not decisions.**", FLAT_0B)
 
     def test_how_it_got_built_is_one_line_per_module_from_both_subsections(self):
         built = FLAT_0B[FLAT_0B.index("**How you got it built:**"):
-                        FLAT_0B.index("⛔ **Readiness")]
+                        FLAT_0B.index("⛔ **(INV-358) Readiness")]
         self.assertIn("one line per module", built)
         self.assertIn("with the Senzing MCP server", built)
         self.assertIn("**Questions & Responses**", built)
@@ -133,7 +135,7 @@ class TheTwoListsComeFromTheRecordOnly(unittest.TestCase):
         self.assertIn("A module with neither adds no line.", built)
 
     def test_nothing_is_invented_and_an_empty_list_is_left_out(self):
-        self.assertIn("⛔ **Both lists come from the recorded recap and nothing else.**", FLAT_0B)
+        self.assertIn("⛔ **(INV-358) Both lists come from the recorded recap and nothing else.**", FLAT_0B)
         self.assertIn("Never invent a decision", FLAT_0B)
         self.assertIn('A list with no supporting entries is left out: no heading, no "(none)".',
                       FLAT_0B)
@@ -181,7 +183,7 @@ class TheAnswersStayTheBootcampers(unittest.TestCase):
         self.assertIn("offer **one** draft request drawn from their data", FLAT_0B)
         self.assertIn("`docs/business_problem.md`", FLAT_0B)
         self.assertIn("`config/data_sources.yaml`", FLAT_0B)
-        self.assertIn("⛔ **The guide's draft is labeled as the guide's, wherever it is recorded.**",
+        self.assertIn("⛔ **(INV-358) The guide's draft is labeled as the guide's, wherever it is recorded.**",
                       FLAT_0B)
         self.assertIn("`**The guide's draft (you passed):** {the draft}`", FLAT_0B)
         self.assertIn("never as their words", FLAT_0B)

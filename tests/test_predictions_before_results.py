@@ -38,7 +38,9 @@ across a wrap.
 
 ⛔ **What this cannot establish:** that a live guide holds the result back, asks before loading,
 or never grades. Those are properties of a conversation; `dry-run` phase 3 and `auto-test`'s
-transcript linter observe them. This pins that the skill files STATE them.
+transcript linter observe them. This pins that the skill files STATE them. INV-357 names this file
+as its enforcer; the grading pattern requires its citation, and passing it is no evidence that a live
+run obeys it.
 
 Stdlib only; shipped markdown read as text (INV-108).
 
@@ -200,7 +202,7 @@ def rule_problems(ground_rules):
         return ["the ground rules have no %r section" % RULE_HEADING]
     problems = []
     required = {
-        "the prediction comes before the result": r"⛔ \*\*The prediction is asked before the "
+        "the prediction comes before the result": r"⛔ \*\*\(INV-357\) The prediction is asked before the "
                                                   r"result exists in the conversation\.\*\*",
         "an already-run result is held back": r"hold its outcome back",
         "the result arrives on the next turn": r"the result arrives in the next turn",
@@ -213,7 +215,7 @@ def rule_problems(ground_rules):
         "the reveal is non-yielding (INV-225)": r"so it is non-yielding \(INV-225\)",
         "the reveal shows both with agreed/differed": r"`agreed` or `differed`",
         "one line from the engine's own output": r"\*\*one line\*\* on what the engine used",
-        "it is never graded": r"⛔ \*\*A prediction informs; it is never graded\.\*\*",
+        "it is never graded": r"⛔ \*\*\(INV-357\) A prediction informs; it is never graded\.\*\*",
         "it is never graded (no correct/incorrect)": r"never say \"correct\" or \"incorrect\"",
         "it is never graded (no score)": r"never keep a score or a tally",
         "it is never graded (no re-ask)": r"and never re-ask\.",
@@ -550,7 +552,7 @@ class TheChecksCatchARegression(unittest.TestCase):
                         "%r went unnoticed: %r" % (expected, problems))
 
     def test_the_grading_guard_removed_from_the_shared_rule(self):
-        self._rule_check(r"- ⛔ \*\*A prediction informs; it is never graded\.\*\*.*?(?=\n- )",
+        self._rule_check(r"- ⛔ \*\*\(INV-357\) A prediction informs; it is never graded\.\*\*.*?(?=\n- )",
                          "the rule does not state that it is never graded")
 
     def test_the_grading_guard_softened_in_the_shared_rule(self):

@@ -264,7 +264,7 @@ system already recorded under `module_7_query.steps.4e.targets` (INV-006).
 The step does not load the export into the target system, and no vendor's tooling is a
 prerequisite: the deliverable is the written file (or files) and the program that writes them.
 
-⛔ **No target's import format ships in this plugin: take it from your own knowledge of the system, or from the Bootcamper.**
+⛔ **(INV-356) No target's import format ships in this plugin: take it from your own knowledge of the system, or from the Bootcamper.**
 There is no template, schema or column list here to copy for any system, and no fixed list of
 supported systems.
 
@@ -278,7 +278,7 @@ supported systems.
    *(Internal: end the turn on this question and wait.)* A reply that names a system continues at
    item 3's **Yes** branch for that one system, without asking item 3's question again. Record it
    in this step's checkpoint, not in `config/bootcamp_preferences.yaml`, which Module 1 owns.
-   ⛔ **Any reply that does not name a system ends the step with nothing produced.**
+   ⛔ **(INV-356) Any reply that does not name a system ends the step with nothing produced.**
    Write the checkpoint `{"status": "skipped", "reason": "no_target"}` and go to the close
    below.
 3. **Offer, one system per turn.** For each named system, in the order Module 1 recorded them,
@@ -293,7 +293,7 @@ supported systems.
 4. **Name the target format.** From your own knowledge of the system, state its import format and
    the files it takes (a property-graph database, for example, often takes one file of nodes and
    one of edges), so the Bootcamper can correct you before anything is written.
-   ⛔ **When you cannot name the format confidently, say so and ask for it; write nothing until it arrives, and never invent one.**
+   ⛔ **(INV-356) When you cannot name the format confidently, say so and ask for it; write nothing until it arrives, and never invent one.**
    Ask:
 
    👉 **I don't know [system]'s import format well enough to write it without guessing. Could you share the format, or a link to its documentation?**
@@ -321,7 +321,7 @@ supported systems.
      flags and its row shape. The method's signature for the Bootcamper's binding comes back with
      them; read that binding's, not another language's.
 
-   ⛔ **Edges are Senzing relationships, each carrying its match type and match key; never write an edge per shared feature.**
+   ⛔ **(INV-356) Edges are Senzing relationships, each carrying its match type and match key; never write an edge per shared feature.**
    That is the `graph` topic's own anti-pattern (server 1.37.27, 2026-10-11): feature-level edges
    bloat the graph with noise.
 7. **Check one export row before writing the reader.** ⛔ (INV-115) Dump one row and read its top-level keys before any code parses the export.
@@ -357,7 +357,7 @@ supported systems.
      answer was "none").
 
    Report all three to the Bootcamper.
-   ⛔ **A zero edge count is a failure, never a finished export.**
+   ⛔ **(INV-356) A zero edge count is a failure, never a finished export.**
    Say the export failed, give item 7's result (whether `RELATED_ENTITIES` appeared, and with
    which flags), and do not hand the file over as finished. Record `"status": "failed", "reason":
    "zero_edges"` for this system. When step 4a found no relationships in the data, say that too.
