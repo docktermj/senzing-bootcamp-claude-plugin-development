@@ -38,7 +38,7 @@ own words for each. These are **their questions**.
 **This is Module 7's directing step.** The open 👉's shape, the result beside the expectation, the
 "you pick" fallback, once per module and the `You directed:` line are stated once in
 `../bootcamp-onboarding/ground-rules.md` → "Directing steps"; follow them there rather than a copy
-here (INV-300). The open question above is its 👉, their questions are what they direct, and the
+here (INV-300, INV-354). The open question above is its 👉, their questions are what they direct, and the
 check is step 3a. An answer of "I don't know" is the handed-back case: "When the answer is 'I don't
 know'" below is what the step does then, and the recap records that the guide chose. Record
 `directing_steps.query_visualize_discover` in step 1's checkpoint.
@@ -145,7 +145,7 @@ entity has one data source, so the most records decides, then the lowest `ENTITY
 in one line as the entity their sources agree on most. How it is retrieved and shown, and what to say when
 no entity has two or more records, is stated once in
 [`ground-rules.md`](../bootcamp-onboarding/ground-rules.md#entity-as-text) → "Showing one resolved
-entity as text" (INV-300); follow it there rather than restating it.
+entity as text" (INV-300, INV-355); follow it there rather than restating it.
 
 - ⛔ **(INV-355) Never before the open question is answered, and never in the gate's turn.** Turn 1 holds
   only the open question, and the gate's turn holds only the list and its question. The headline
@@ -534,7 +534,7 @@ Execute the queries to understand results, using the run command for the chosen 
 ### 3a. Present query results and matching concepts
 
 **Their questions first, each beside its answer.** This is the check of step 1's directing step
-(`../bootcamp-onboarding/ground-rules.md` → "Directing steps", INV-300). Present the requirements
+(`../bootcamp-onboarding/ground-rules.md` → "Directing steps", INV-300, INV-354). Present the requirements
 that came from the Bootcamper's own answer before any other result, each as: the question they
 posed in step 1, quoted ("You asked: '…'"), the answer the queries gave, and `matches` when the
 answer addresses what they asked, or `differs` when it answers less or something else. Name each
@@ -1403,11 +1403,11 @@ section to `docs/bootcamp_recap.md`, and present the end-of-module summary).
 It sits inside "Information Shared" rather than above it because the recap PDF renders the four
 named subsections first, so this is the one place it leads in both the Markdown and the PDF.
 Retrieve it again now with step 1's selection rule (most data sources, then most records, then the
-lowest `ENTITY_ID`), because a quality iteration may have changed the data since step 1; if the entity differs from `module_7_query.headline_entity`, say so in one line
+lowest `ENTITY_ID`; INV-355), because a quality iteration may have changed the data since step 1; if the entity differs from `module_7_query.headline_entity`, say so in one line
 of the block. How it is retrieved and what it shows, including the block's wording when no entity
 has two or more records, is stated once in
 [`ground-rules.md`](../bootcamp-onboarding/ground-rules.md#entity-as-text) → "Showing one resolved
-entity as text" (INV-300); follow it there rather than restating it.
+entity as text" (INV-300, INV-355); follow it there rather than restating it.
 
 - **Written whether or not the visualization ran.** The block is text, so a step-3c decline, a
   capture that failed or a server never started changes nothing about it.

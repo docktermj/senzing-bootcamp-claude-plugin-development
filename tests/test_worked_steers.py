@@ -18,8 +18,11 @@ So the clauses are checked where they live:
   staged, the two-line shape, the evidence source, the statement form before Data processing, the
   pinned ask-first 👉 and the handling of its answer, the question already due, minimal verbosity
   (INV-214) and the checkpoint note.
-- **Per module** (`citation_problems`): the pointer with INV-300, the form that module uses
-  (statement, or ask first), and no copy of a rule-only clause.
+- **Per module** (`citation_problems`): the pointer with INV-300 and INV-352, the form that
+  module uses (statement, or ask first), and no copy of a rule-only clause.
+- **At every pointer, derived** (`pointer_citation_problems`, #519): every shipped sentence that
+  points at "Worked steers", found by scan rather than from `ACT2` (INV-246), cites INV-352, so a
+  reader at the pointer can name the rule as well as the single-statement discipline.
 - **Act 1** (`act1_problems`): no mention of the rule and no copy of its question.
 - **The silent-filing section** (`cross_reference_problems`): the one-line cross-reference, which
   keeps the filing silent and shows the steer.
@@ -27,6 +30,12 @@ So the clauses are checked where they live:
 The checks are pure functions over a file's text, so each also runs on a mutated copy as its
 negative control (`TheChecksCatchARegression`). Each mutation must make the check report the
 problem it targets, not merely some problem.
+
+⚠️ **What the derived scan cannot see** (`tests/_pointer_sites.py` says how it reads): a pointer
+that names the section in other words, with neither the quoted name "Worked steers" nor the
+`ground-rules.md#worked-steers` anchor; a pointer outside `plugins/` or outside Markdown; the
+owner's own cross-references inside `ground-rules.md`, which are excluded; whether INV-352 is
+the right invariant for what the sentence says; and a sentence cut early at an abbreviation.
 
 ⚠️ **The 👉 counts read single lines on purpose (INV-346).** The pinned question sits on its own
 line inside backticks; counting lines that contain the full question keeps prose that mentions
@@ -40,7 +49,7 @@ transcript linter observe them. This pins that the skill files STATE them.
 
 Stdlib only; shipped markdown read as text (INV-108).
 
-Source issue: #484 (part of #465).
+Source issue: #484 (part of #465); the citation at every pointer, #519.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -48,6 +57,7 @@ import re
 import unittest
 from pathlib import Path
 
+import _pointer_sites
 import _wrapped_text
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -73,9 +83,11 @@ ACT1 = ("module-00-entity-resolution-concepts", "module-01-business-problem",
         "module-02-sdk-setup", "module-03-system-verification",
         "module-03b-truthset-visualization")
 
-#: The pointer every Act 2 module carries instead of a copy (INV-300).
+#: The pointer every Act 2 module carries instead of a copy (INV-300), citing the rule (INV-352).
 CITATION = (r'stated once in\s+`\.\./bootcamp-onboarding/ground-rules\.md` → "Worked steers"; '
-            r'follow them there rather than a copy\s+here \(INV-300\)')
+            r'follow them there rather than a copy\s+here \(INV-300, INV-352\)')
+#: The section every pointer names, its anchor, and the invariant each pointer cites (#519).
+SECTION, ANCHOR, INVARIANT = "Worked steers", "worked-steers", "INV-352"
 #: What that pointer must name, so a module cannot quietly drop a clause it defers to.
 POINTER_NAMES = ("What fires it", "its two lines", "at most one per module", "minimal verbosity",
                  "the checkpoint note")
@@ -244,10 +256,11 @@ def citation_problems(skill, where, form):
     """A module points at the shared rule, names what it defers to, and carries no copy."""
     problems = []
     if not match_lines(skill, CITATION):
-        problems.append("%s does not point at the shared rule with INV-300" % where)
+        problems.append("%s does not point at the shared rule with INV-300 and %s"
+                        % (where, INVARIANT))
     flat = squash(skill)
     start = flat.find("**Worked steer.**")
-    pointer = flat[start:flat.find("(INV-300)", start)] if start >= 0 else ""
+    pointer = flat[start:flat.find("(INV-300", start)] if start >= 0 else ""
     for phrase in POINTER_NAMES:
         if phrase not in pointer:
             problems.append("%s's pointer does not name %s" % (where, phrase))
@@ -271,6 +284,11 @@ def act1_problems(text, where):
     if question_lines(text):
         problems.append("%s carries the ask-first 👉" % where)
     return problems
+
+
+def pointer_citation_problems(texts):
+    """Every derived pointer to "Worked steers" cites INV-352 in its own sentence (#519)."""
+    return _pointer_sites.uncited_pointers(texts, SECTION, ANCHOR, INVARIANT)
 
 
 # --------------------------------------------------------------------------------------------
@@ -327,6 +345,21 @@ class EachAct2ModuleCitesIt(unittest.TestCase):
                 count = sum(len(match_lines(read(p), CITATION))
                             for p in sorted((SKILLS / module).glob("*.md")))
                 self.assertEqual(1, count)
+
+
+class EveryPointerCitesTheRule(unittest.TestCase):
+    """The pointer sites are derived by scan (INV-246), so a later one without INV-352 fails."""
+
+    def test_every_pointer_cites_inv_352(self):
+        self.assertEqual([], pointer_citation_problems(_pointer_sites.shipped_texts()))
+
+    def test_the_scan_finds_every_act2_pointer(self):
+        """Not vacuous: the derived set holds each module's known pointer."""
+        found = {path for path, _, _ in _pointer_sites.pointers(
+            _pointer_sites.shipped_texts(), SECTION, ANCHOR)}
+        for module in ACT2:
+            with self.subTest(module=module):
+                self.assertIn(SKILLS / module / "SKILL.md", found)
 
 
 class Act1KeepsItsBehavior(unittest.TestCase):
@@ -425,9 +458,56 @@ class TheChecksCatchARegression(unittest.TestCase):
 
     def test_module_pointer_dropped(self):
         skill = read(SKILLS / "module-04-data-collection" / "SKILL.md").replace(
-            "here (INV-300).\n\n⚠️ **On the generated", "here.\n\n⚠️ **On the generated")
+            "here (INV-300, INV-352).\n\n⚠️ **On the generated",
+            "here.\n\n⚠️ **On the generated")
         self.assertReports(citation_problems(skill, "m4", STATEMENT),
                            "does not point at the shared rule")
+
+    def test_module_pointer_without_inv_352(self):
+        skill = read(SKILLS / "module-04-data-collection" / "SKILL.md").replace(
+            "(INV-300, INV-352)", "(INV-300)")
+        self.assertReports(citation_problems(skill, "m4", STATEMENT),
+                           "does not point at the shared rule")
+
+    # --- the derived pointer sites (#519) ----------------------------------------------------
+
+    def test_each_derived_pointer_loses_its_citation(self):
+        """Every shipped pointer (four since #519), in turn, is reported when it drops INV-352."""
+        shipped = _pointer_sites.shipped_texts()
+        sites = _pointer_sites.pointers(shipped, SECTION, ANCHOR)
+        self.assertGreaterEqual(len(sites), 4, "the scan went blind")
+        for path, line, _ in sites:
+            with self.subTest(site="%s:%d" % (path.name, line)):
+                texts = _pointer_sites.without_citation(shipped, path, line, INVARIANT)
+                self.assertReports(pointer_citation_problems(texts),
+                                   "%s:%d" % (path.relative_to(REPO_ROOT).as_posix(), line))
+
+    def test_a_new_pointer_site_without_the_citation(self):
+        """A site no list names: the scan finds it because it points at the section."""
+        texts = _pointer_sites.shipped_texts()
+        texts[SKILLS / "graduation" / "new-step.md"] = (
+            "A later step points at `../bootcamp-onboarding/ground-rules.md` → "
+            "\"Worked\nsteers\" rather than a copy here (INV-300).\n")
+        self.assertReports(pointer_citation_problems(texts), "graduation/new-step.md:1")
+
+    def test_a_new_pointer_by_anchor_without_the_citation(self):
+        texts = {SKILLS / "graduation" / "new-step.md":
+                 "See [the steer](../bootcamp-onboarding/ground-rules.md#worked-steers) "
+                 "(INV-300).\n"}
+        self.assertReports(pointer_citation_problems(texts), "without citing INV-352")
+
+    def test_a_rewrapped_citation_still_passes(self):
+        """INV-346: the name and the citation may each wrap; the sentence is still one unit."""
+        texts = {SKILLS / "graduation" / "new-step.md":
+                 "Stated once in `ground-rules.md` → \"Worked\nsteers\"; follow them there "
+                 "(INV-300,\nINV-352).\n"}
+        self.assertEqual([], pointer_citation_problems(texts))
+
+    def test_a_citation_in_another_sentence_does_not_count(self):
+        texts = {SKILLS / "graduation" / "new-step.md":
+                 "This is the steer (INV-352). It is stated once in `ground-rules.md` → "
+                 "\"Worked steers\" (INV-300).\n"}
+        self.assertReports(pointer_citation_problems(texts), "without citing INV-352")
 
     def test_module_pointer_names_less(self):
         skill = read(SKILLS / "module-05-data-quality-mapping" / "SKILL.md").replace(

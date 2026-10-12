@@ -790,7 +790,7 @@ reader does not read the absence of a general gate as the same omission step 10 
 **The directing step (once per module).** This is Module 5's directing step. The open 👉's shape,
 the result beside the expectation, the "you pick" fallback, once per module and the `You
 directed:` line are stated once in `../bootcamp-onboarding/ground-rules.md` → "Directing steps";
-follow them there rather than a copy here (INV-300). Only what is particular to step 11 is here.
+follow them there rather than a copy here (INV-300, INV-354). Only what is particular to step 11 is here.
 
 - **Where it runs.** On the first source, in mapping order, with at least one column
   `mapping_workflow` did not recognize: a column that this step's mapping, made from the tool's own
@@ -1524,7 +1524,7 @@ contract above). Tell the user: show a sample target JSON record so they see the
 **On the directing source, the sample record is the check.** When step 11 ran the directing step
 on this source and the Bootcamper directed it, show one sample record in both modes, then the
 comparison the directing-step rule describes (`../bootcamp-onboarding/ground-rules.md` →
-"Directing steps", INV-300): for each column they decided, their words, where the column landed in
+"Directing steps", INV-300, INV-354): for each column they decided, their words, where the column landed in
 the record (the attribute, the payload key, or absent), and `matches` or `differs`, with every
 difference named, including any feature step 11 had to route to payload. When they want a column
 changed, step 16's gate offers the way back to step 17; this step asks nothing (INV-225). On every

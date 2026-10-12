@@ -515,10 +515,10 @@ it, some matches would be incomplete."
 <a id="midpoint-entity"></a>
 
 **The midpoint entity.** Once the redo queue reports empty, show one resolved entity from the first
-source: **the entity with the most records, ties broken by the lowest `ENTITY_ID`**. Introduce it
+source: **the entity with the most records, ties broken by the lowest `ENTITY_ID`** (INV-355). Introduce it
 in one line as the first entity resolved from their own data. How it is retrieved and shown, and what to say when no entity has two or more
 records, is stated once in [`ground-rules.md`](../bootcamp-onboarding/ground-rules.md#entity-as-text)
-→ "Showing one resolved entity as text" (INV-300); follow it there rather than restating it.
+→ "Showing one resolved entity as text" (INV-300, INV-355); follow it there rather than restating it.
 
 - **Text only, with no visualization.** Module 7 offers the one visualization of the Bootcamper's
   data (`phaseD-validation.md` step 23, INV-104).

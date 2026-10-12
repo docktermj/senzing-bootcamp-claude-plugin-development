@@ -24,6 +24,14 @@ So the clauses are checked where they live:
   grading guard and the skip recording it defers to.
 - **In the shared section** (`rule_problems`): the rule-only clauses, among them the grading guard
   and the skipped line format.
+- **At every pointer, derived** (`pointer_citation_problems`, #519): every shipped sentence that
+  points at "Predictions before results", found by scan rather than from the three sites above
+  (INV-246), cites INV-357, so a reader at the pointer can name the rule as well as the
+  single-statement discipline. Since #519 that is six sentences: the three sites' pointers, the
+  Questions & Responses rule in `module-completion.md`, and System verification's two statements
+  that the prediction is asked before the engine decides (its `SKILL.md`, and the opening of
+  `phase1-verification.md`), which make no single-statement claim and so cite INV-357 without
+  INV-300.
 
 **No route to the answer before the 👉 (#507).** A site can show its result without stating it: the
 visualization app's entity view renders each record's match key and the why verdict, which is
@@ -52,6 +60,13 @@ guard deleted, the skip recording deleted, the citation dropped, and an app rout
 `TheAlreadyShownEntities` drops each exclusion, case, pointer and site consequence in turn.
 Each must make the check report the problem it targets, not merely some problem.
 
+⚠️ **What the derived scan cannot see** (`tests/_pointer_sites.py` says how it reads): a pointer
+that names the section in other words, with neither the quoted name "Predictions before results"
+nor the `ground-rules.md#predictions-before-results` anchor; a pointer outside `plugins/` or
+outside Markdown; the owner's own cross-references inside `ground-rules.md`, which are excluded;
+whether INV-357 is the right invariant for what the sentence says; and a sentence cut early at an
+abbreviation.
+
 ⚠️ **The 👉 counts read single lines on purpose (INV-346).** A 👉 question is its own line by
 construction; counting lines that *start* with `👉 **` keeps prose that mentions the marker
 ("the next 👉") from being counted. Phrase checks use `_wrapped_text.match_lines`, which matches
@@ -65,7 +80,8 @@ run obeys it.
 
 Stdlib only; shipped markdown read as text (INV-108).
 
-Source issues: #479 (part of #465); #507 (the app route and the already-shown entities).
+Source issues: #479 (part of #465); #507 (the app route and the already-shown entities); #519
+(the citation at every pointer).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -73,6 +89,7 @@ import re
 import unittest
 from pathlib import Path
 
+import _pointer_sites
 import _wrapped_text
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -109,9 +126,13 @@ MARI_REVEAL = "**Reveal the engine's live call beside the prediction"
 PAIRS_REVEAL = "**Reveal it in the same turn as the next 👉.**"
 OWN_REVEAL = "**The reveal is items 2–5**"
 
-#: The pointer every site carries instead of a copy (INV-300).
+#: The pointer every site carries instead of a copy (INV-300), citing the rule (INV-357).
 CITATION = (r'stated once in\s+`\.\./bootcamp-onboarding/ground-rules\.md` → "Predictions before '
-            r'results"; follow them there\s+rather than a copy here \(INV-300\)')
+            r'results"; follow them there\s+rather than a copy here \(INV-300, INV-357\)')
+#: The section every pointer names, its anchor, and the invariant each pointer cites (#519).
+SECTION, ANCHOR, INVARIANT = ("Predictions before results", "predictions-before-results",
+                              "INV-357")
+M3_SKILL = SKILLS / "module-03-system-verification" / "SKILL.md"
 #: What that pointer must name, so a site cannot quietly drop a clause it defers to.
 POINTER_NAMES = {
     "the grading guard": '"informs, never grades"',
@@ -222,10 +243,11 @@ def citation_problems(site, where):
     """A site points at the shared rule, names what it defers to, and carries no copy of it."""
     problems = []
     if not match_lines(site, CITATION):
-        problems.append("%s does not point at the shared rule with INV-300" % where)
+        problems.append("%s does not point at the shared rule with INV-300 and %s"
+                        % (where, INVARIANT))
     flat = squash(site)
     start = flat.find("This is a prediction point:")
-    pointer = flat[start:flat.find("(INV-300)", start)] if start >= 0 else ""
+    pointer = flat[start:flat.find("(INV-300", start)] if start >= 0 else ""
     for what, phrase in POINTER_NAMES.items():
         if phrase not in pointer:
             problems.append("%s's pointer does not name %s (%s)" % (where, what, phrase))
@@ -233,6 +255,11 @@ def citation_problems(site, where):
         if match_lines(site, phrase):
             problems.append("%s restates the shared rule (%s)" % (where, phrase))
     return problems
+
+
+def pointer_citation_problems(texts):
+    """Every derived pointer to "Predictions before results" cites INV-357 in its own sentence."""
+    return _pointer_sites.uncited_pointers(texts, SECTION, ANCHOR, INVARIANT)
 
 
 def app_route_problems(where, before):
@@ -578,13 +605,61 @@ class TheRuleIsStatedOnce(unittest.TestCase):
         flat = squash(read(COMPLETION))
         self.assertRegex(
             flat, r'its format is stated once in `ground-rules\.md` → "Predictions before '
-                  r'results" \(INV-300\)',
+                  r'results" \(INV-300, INV-357\)',
             "module-completion's Questions & Responses rule does not point at the line format")
 
     def test_negative_control_a_removed_clause_is_reported(self):
         text = read(GROUND_RULES).replace("hold its outcome back", "show it")
         self.assertIn("the rule does not state that an already-run result is held back",
                       rule_problems(text))
+
+
+class EveryPointerCitesTheRule(unittest.TestCase):
+    """The pointer sites are derived by scan (INV-246), so a later one without INV-357 fails."""
+
+    def test_every_pointer_cites_inv_357(self):
+        self.assertEqual([], pointer_citation_problems(_pointer_sites.shipped_texts()))
+
+    def test_the_scan_finds_every_known_site(self):
+        """Not vacuous: the derived set holds each file whose pointer this guard knows."""
+        found = [path for path, _, _ in _pointer_sites.pointers(
+            _pointer_sites.shipped_texts(), SECTION, ANCHOR)]
+        for path, count in ((M3_SKILL, 1), (M3_PHASE1, 2), (DISCOVER, 2), (COMPLETION, 1)):
+            with self.subTest(path=path.name):
+                self.assertGreaterEqual(found.count(path), count)
+
+    def test_system_verification_cites_only_the_rule(self):
+        """Its two statements make no single-statement claim, so INV-300 is not added (#519)."""
+        for path, pattern in (
+                (M3_SKILL, r'decides \(the ground rules\' "Predictions before results", '
+                           r'INV-357\)\.'),
+                (M3_PHASE1, r'predicts nothing \(the ground rules\' "Predictions before results", '
+                            r'INV-357\)\.')):
+            with self.subTest(path=path.name):
+                self.assertTrue(match_lines(read(path), pattern))
+                self.assertFalse(match_lines(read(path), r'"Predictions before results", '
+                                                         r'INV-300'))
+
+    def test_negative_control_each_derived_pointer_loses_its_citation(self):
+        """Every shipped pointer (six since #519), in turn, is reported when it drops INV-357."""
+        shipped = _pointer_sites.shipped_texts()
+        sites = _pointer_sites.pointers(shipped, SECTION, ANCHOR)
+        self.assertGreaterEqual(len(sites), 6, "the scan went blind")
+        for path, line, _ in sites:
+            with self.subTest(site="%s:%d" % (path.name, line)):
+                problems = pointer_citation_problems(
+                    _pointer_sites.without_citation(shipped, path, line, INVARIANT))
+                where = "%s:%d" % (path.relative_to(REPO_ROOT).as_posix(), line)
+                self.assertTrue(any(where in p for p in problems), problems)
+
+    def test_negative_control_a_new_pointer_site_without_the_citation(self):
+        """A site no list names: the scan finds it by the section's name, wrapped (INV-346)."""
+        texts = _pointer_sites.shipped_texts()
+        texts[SKILLS / "graduation" / "new-step.md"] = (
+            "This is a prediction point, stated once in `ground-rules.md` → \"Predictions\n"
+            "before results\"; follow them there rather than a copy here (INV-300).\n")
+        self.assertTrue(any("graduation/new-step.md:1" in p
+                            for p in pointer_citation_problems(texts)))
 
 
 class TheMariPrediction(unittest.TestCase):
@@ -860,8 +935,12 @@ class TheChecksCatchARegression(unittest.TestCase):
                    "'s pointer does not name the skip recording")
 
     def test_the_citation_dropped(self):
-        self.check(lambda s, q, r: s.replace("(INV-300)", ""),
+        self.check(lambda s, q, r: s.replace("(INV-300, INV-357)", ""),
                    " does not point at the shared rule with INV-300")
+
+    def test_the_rule_citation_dropped(self):
+        self.check(lambda s, q, r: s.replace("(INV-300, INV-357)", "(INV-300)"),
+                   " does not point at the shared rule with INV-300 and INV-357")
 
     #: (a route to the visualization app, the markers it must be reported by). Each form but the
     #: last carries one marker alone, so a marker dropped from `APP_ROUTE` fails its own subtest.

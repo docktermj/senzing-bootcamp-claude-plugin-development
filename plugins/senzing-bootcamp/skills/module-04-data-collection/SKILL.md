@@ -27,7 +27,7 @@ absolute precedence as a mandatory gate.
 steer. Before Data processing it is a statement and adds no 👉. What fires it, its two lines, at
 most one per module, minimal verbosity and the checkpoint note are stated once in
 `../bootcamp-onboarding/ground-rules.md` → "Worked steers"; follow them there rather than a copy
-here (INV-300).
+here (INV-300, INV-352).
 
 ⚠️ **On the generated-scenario path this module has exactly one 👉 question** — Step 9's module
 transition. Steps 1-8b are all **non-yielding** there, so they run in order inside the turn that ends

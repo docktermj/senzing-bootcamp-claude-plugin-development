@@ -4362,7 +4362,7 @@ page is scaled from; cited by `generate_recap_pdf.py` and
 `tests/test_recap_pdf_certificate.py`), and `2026-sz-light.png` (a logo
 asset). No shipped code reads these files at runtime.
 
-### 5.62 `tests/_wrapped_text.py`, `tests/_maintainer_surface.py` and `tests/_corpus.py`
+### 5.62 `tests/_wrapped_text.py`, `tests/_maintainer_surface.py`, `tests/_corpus.py` and `tests/_pointer_sites.py`
 
 Shared stdlib test helpers (INV-108).
 
@@ -4398,6 +4398,19 @@ pruned at any depth whatever git reports (`is_runtime(parts)`). When git is
 missing or exits non-zero, `_walk_listing` walks the root, pruning `.git`,
 `RUNTIME_DIRS` and `FALLBACK_PRUNED` (`__pycache__`, `.pytest_cache`,
 `.history`).
+
+`_pointer_sites.py` derives every shipped pointer to one `ground-rules.md`
+section (#519, INV-246). `shipped_texts()` reads every `.md` under `plugins/`
+from `_corpus.corpus_files` except `ground-rules.md` itself. `sentences(text)`
+collapses each `_wrapped_text.blocks` block to one line and cuts it where `.`,
+`!` or `?` (with any closing quote, emphasis or bracket) meets a space,
+keeping each character's source line. `pointer_pattern(name, anchor)` matches
+the section name in double quotes at any wrap, or `ground-rules.md#<anchor>`.
+`pointers(texts, name, anchor)` returns `(path, line, sentence)` for each
+pointing sentence; `uncited_pointers(texts, name, anchor, invariant)` reports
+each whose sentence lacks the invariant as a whole token; and
+`without_citation(texts, path, line, invariant)` removes the first citation on
+or after that line, for negative controls.
 
 ## 6. Exact contracts
 
@@ -8874,7 +8887,7 @@ collected as tests:
     non-empty `SBCP_QUIET_FPDF2_NOTICE` silences it.
   - It exports the decorator `requires_fpdf2`.
   - It is a module rather than a `conftest.py`, which `unittest` never loads.
-- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 65
+- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 66
   files. `blocks(text)` splits Markdown into blocks, and
   `match_lines(text, pattern)` returns the 1-based start line of each match. The
   rules are in 8.4.1.
@@ -8892,10 +8905,14 @@ collected as tests:
   spec files minus the `specs/IMPLEMENTED.md` and `specs/DECLINED.md` headings.
   It reports any spec found in both. Listing exits 0, and `--check` exits 2 when
   a spec is in both.
-- `tests/_corpus.py`: the shared corpus listing (#515), used by 13 files.
+- `tests/_corpus.py`: the shared corpus listing (#515), used by 14 files.
   `corpus_files(*subtrees, root=REPO_ROOT, suffixes=None)` lists tracked and
   untracked, non-ignored files from `git ls-files -z`, and always prunes Claude
   Code's runtime directories (section 5.62).
+- `tests/_pointer_sites.py`: the derived pointer scan (#519), used by 4 files.
+  `uncited_pointers(texts, name, anchor, invariant)` reports every shipped
+  sentence that points at a `ground-rules.md` section, by quoted name or
+  anchor, without citing the invariant (section 5.62).
 
 Skip conventions. Every reason names its cause and states no count.
 
@@ -8978,7 +8995,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6905 test methods in 398 files, matching `inventory.test_count_total`.
+There are 6932 test methods in 398 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -9071,7 +9088,7 @@ looks wrong.
 - `tests/test_delegate_files_issues_not_specs.py`: 18
 - `tests/test_dependency_reading_rules.py`: 13
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
-- `tests/test_directing_steps.py`: 41
+- `tests/test_directing_steps.py`: 48
 - `tests/test_discoveries_pdf.py`: 58
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
@@ -9230,7 +9247,7 @@ looks wrong.
 - `tests/test_one_question_per_turn_is_registered.py`: 12
 - `tests/test_open_me_first_matches_the_manifest.py`: 20
 - `tests/test_organization_search.py`: 23
-- `tests/test_own_data_entity_shown_as_text.py`: 22
+- `tests/test_own_data_entity_shown_as_text.py`: 28
 - `tests/test_overview_bullets_are_not_counted.py`: 8
 - `tests/test_package_bootcamp.py`: 35
 - `tests/test_packaging_consent_gate_ships.py`: 15
@@ -9249,7 +9266,7 @@ looks wrong.
 - `tests/test_plugin_manifest_reads_resolve_inside_the_plugin.py`: 13
 - `tests/test_poor_band_requires_a_mapping_cause.py`: 15
 - `tests/test_post_yes_switch_reads_the_dial.py`: 19
-- `tests/test_predictions_before_results.py`: 43
+- `tests/test_predictions_before_results.py`: 49
 - `tests/test_preparation_recap_template.py`: 9
 - `tests/test_prescribed_search_queries.py`: 43
 - `tests/test_profile_report_relocation_covers_both_filenames.py`: 15
@@ -9391,7 +9408,7 @@ looks wrong.
 - `tests/test_windows_browser_discovery.py`: 23
 - `tests/test_windows_forms_at_hand_run_sites.py`: 40
 - `tests/test_windows_powershell_guidance.py`: 21
-- `tests/test_worked_steers.py`: 25
+- `tests/test_worked_steers.py`: 33
 - `tests/test_wrapped_text.py`: 32
 - `tests/test_write_gate.py`: 23
 
@@ -9497,6 +9514,10 @@ These read `specs/INVARIANTS.md`:
 - **Citation pins.** Named rules cite named invariants at their own line, and
   each cited invariant still promises what the rule claims:
   - "stated once" claims cite INV-300;
+  - every shipped sentence that points at "Worked steers", "Directing steps",
+    "Showing one resolved entity as text" or "Predictions before results"
+    cites INV-352, INV-354, INV-355 or INV-357 in that sentence, beside any
+    INV-300; the sites are derived by `tests/_pointer_sites.py`, not listed;
   - INV-251 covers two or more 👉 questions in a turn;
   - INV-017 allows exactly two root-Markdown exceptions;
   - INV-218 governs install verification, and INV-129 does not.
@@ -10831,3 +10852,11 @@ Senzing licensing, with no SPDX identifier.
   Module 4's registry schema and linked from steps 16, 19 and 20, Module 6,
   the recap and graduation (options 2 and 3 had no handling step, and a
   skipped source had no registry state)
+- #519: every shipped pointer to the ground rules' "Worked steers",
+  "Directing steps", "Showing one resolved entity as text" and "Predictions
+  before results" cites INV-352, INV-354, INV-355 or INV-357 beside its
+  INV-300 (19 sites, found by a derived scan in `tests/_pointer_sites.py`
+  that fails any later pointer without the citation), and a DEFERRED
+  INVARIANT for Module 0's wrong-answer rule and Module 7's recall question
+  is queued (the pointers named the single-statement rule but not the rule
+  they point at, and the wrong-answer rule was registered nowhere)

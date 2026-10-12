@@ -135,7 +135,7 @@ Before the why and how demonstrations, the Bootcamper predicts how the engine re
 of their own records. This is a prediction point: the skip, the reveal's shape, "informs, never
 grades" and the Questions & Responses line are stated once in
 `../bootcamp-onboarding/ground-rules.md` → "Predictions before results"; follow them there rather
-than a copy here (INV-300).
+than a copy here (INV-300, INV-357).
 
 1. **Choose 3 pairs from step 4a's entities.** Step 4a's `get_entity_by_record_id` calls already
    hold each record's entity ID, so no new call is needed to know the answers. Hold them back.
@@ -202,7 +202,7 @@ teaches the bootcamper how Senzing explains its resolution decisions.
    item 2 in the same way, so nothing is predicted whose answer was already shown. This is a
    prediction point: the skip, the reveal's shape, "informs, never grades" and the Questions &
    Responses line are stated once in `../bootcamp-onboarding/ground-rules.md` → "Predictions
-   before results"; follow them there rather than a copy here (INV-300).
+   before results"; follow them there rather than a copy here (INV-300, INV-357).
    - **Show the entity's records before any `why_*` call, as text only.** Show the two records item 1
      named as text, feature by feature, read from the loaded file each came from. Do not send the
      Bootcamper to step 3c's app for them before the 👉: its entity view shows each record's match
