@@ -36,6 +36,11 @@ Do not re-present Phase D's gate or its source question, whose answers are alrea
 route is stated once, in `../module-07-query-visualize-discover/phase1-query-visualize.md` step 3b →
 "The quality-iteration route" (INV-300). A return runs only the steps it names, so the steps it
 leaves out are not skipped steps.
+**When it carries a `setup_detour`, none of this runs either:** Phase A's switch to PostgreSQL is
+part-way through, so go to SDK setup's
+[Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour), which
+finishes it and returns to Phase A's
+[SQLite volume pre-load check](phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate).
 
 **Purpose:** Guide the Data Processing workflow: build a production-quality loading program,
 load all data sources into Senzing, process redo records, and validate entity resolution
