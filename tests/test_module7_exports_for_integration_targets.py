@@ -24,12 +24,17 @@ acted on. These tests pin what the step states:
 8. **Module 1 Step 10a** names Module 7 outside its pinned question, which stays verbatim
    (INV-056); no shipped step is named "Enrichment"; and **no target's import schema ships in the
    plugin**.
+9. **Every list of `integration_targets` readers names Module 7 step 4e** (#517): Module 1's
+   Phase 1 note lists it beside the problem statement and graduation, and graduation's Step 1a
+   calls itself the *last* place the answers change anything, naming step 4e as acting on them
+   earlier. These read the text through `tests/_wrapped_text.py` (INV-346) and check the property,
+   not one wording; the negative controls include re-wrapped and reordered variants.
 
 ⛔ Negative control for (1): put the retired "continue to module completion now?" question back
 anywhere in `phase2b-discover.md` and `test_no_transition_question_follows_the_offers` fails.
 
 These assert that the skill files STATE the rules; they cannot establish that a live run follows
-them. INV-356 names this file as its enforcer; passing it is no evidence that a live run obeys it.
+them. INV-356 names this file as its enforcer (and its proposed #517 amendment keeps it); passing it is no evidence that a live run obeys it.
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 
@@ -37,6 +42,8 @@ import json
 import re
 import unittest
 from pathlib import Path
+
+from _wrapped_text import match_lines
 
 REPO = Path(__file__).resolve().parent.parent
 PLUGIN = REPO / "plugins" / "senzing-bootcamp"
@@ -47,6 +54,7 @@ PHASE2 = M7 / "phase2-discover.md"
 PHASE2B = M7 / "phase2b-discover.md"
 M7_SKILL = M7 / "SKILL.md"
 M1_PHASE2 = SKILLS / "module-01-business-problem" / "phase2-document-confirm.md"
+M1_PHASE1 = SKILLS / "module-01-business-problem" / "phase1-discovery.md"
 GRADUATION = SKILLS / "graduation" / "SKILL.md"
 
 STEP_4D = "### Step 4d: Relationship network exploration"
@@ -105,7 +113,7 @@ def item(section, number):
 
 class TheScanIsNotVacuous(unittest.TestCase):
     def test_every_file_and_anchor_exists(self):
-        for path in (PHASE1, PHASE2, PHASE2B, M7_SKILL, M1_PHASE2, GRADUATION):
+        for path in (PHASE1, PHASE2, PHASE2B, M7_SKILL, M1_PHASE2, M1_PHASE1, GRADUATION):
             with self.subTest(file=path.name):
                 self.assertTrue(path.is_file(), "%s moved" % path.relative_to(REPO))
         text = read(PHASE2B)
@@ -382,6 +390,115 @@ class ModuleOneNamesModuleSeven(unittest.TestCase):
         self.assertLess(named, self.step.index(M1_INTEGRATION_QUESTION))
         self.assertNotIn("Module 7", M1_INTEGRATION_QUESTION)
         self.assertIn("`../module-07-query-visualize-discover/phase2b-discover.md`", self.step)
+
+
+#: The closed reader lists #517 retired: each left Module 7 step 4e out.
+RETIRED_READER_LISTS = (
+    "read from there by the problem statement (Phase 2) and by graduation",
+    "graduation is the only place they can still change anything",
+)
+
+#: Module 1's note: one sentence names every reader, in any order (lookaheads, not a sequence).
+M1_READERS = re.compile(r"read from there by (?=[^.]*\bthe problem statement\b)"
+                        r"(?=[^.]*\bModule 7's step 4e\b)(?=[^.]*\bgraduation\b)")
+#: Graduation's Step 1a block: it is the LAST place, and step 4e acts on the answers earlier.
+GRADUATION_READERS = re.compile(r"^(?=.*\*\*1a — what the Module 1 answers are for)"
+                                r"(?=.*\bModule 7's step 4e\b[^.;]*`integration_targets`[^.;]*\bearlier\b)"
+                                r"(?=.*\bthe last place they can still change anything\b)")
+
+
+def says(text, pattern):
+    """True when ``pattern`` matches inside one Markdown block of ``text``, across any wrap (INV-346)."""
+    return bool(match_lines(text, pattern if hasattr(pattern, "finditer") else re.compile(pattern)))
+
+
+def reader_list_problems(m1_phase1, graduation):
+    """#517: both reader lists of `integration_targets` name Module 7 step 4e."""
+    problems = []
+    for name, text in (("phase1-discovery.md", m1_phase1), ("graduation/SKILL.md", graduation)):
+        for phrase in RETIRED_READER_LISTS:
+            if says(text, re.escape(phrase)):
+                problems.append("%s: the closed list %r is back" % (name, phrase))
+    if not says(m1_phase1, M1_READERS):
+        problems.append("phase1-discovery.md: the reader list does not name the problem "
+                        "statement, Module 7's step 4e and graduation")
+    if not says(graduation, GRADUATION_READERS):
+        problems.append("graduation/SKILL.md: Step 1a does not call graduation the last place, "
+                        "with Module 7's step 4e acting on `integration_targets` earlier")
+    return problems
+
+
+class EveryReaderListNamesModuleSeven(unittest.TestCase):
+    """(9) #517: no list of `integration_targets` readers leaves Module 7 step 4e out."""
+
+    def setUp(self):
+        self.m1 = read(M1_PHASE1)
+        self.grad = read(GRADUATION)
+
+    def mutate(self, text, old, new):
+        mutant = text.replace(old, new, 1)
+        self.assertNotEqual(text, mutant, "the mutation no longer applies: %r" % old)
+        return mutant
+
+    def test_both_lists_name_step_4e(self):
+        self.assertEqual([], reader_list_problems(self.m1, self.grad))
+
+    def test_no_shipped_file_keeps_a_retired_list(self):
+        hits = ["%s: %r" % (path.relative_to(REPO), phrase)
+                for path in shipped_text_files() if path.suffix == ".md"
+                for phrase in RETIRED_READER_LISTS if says(read(path), re.escape(phrase))]
+        self.assertEqual([], hits)
+
+    def test_a_rewrap_or_reorder_changes_nothing(self):
+        m1_cases = {
+            "re-wrapped": ("by Module 7's step 4e (the export for the\nsystems named)",
+                           "by Module 7's\nstep 4e (the export for the systems named)"),
+            "reordered": ("by the problem statement (Phase 2), by Module 7's step 4e (the export "
+                          "for the\nsystems named) and by graduation",
+                          "by graduation, by Module 7's step 4e (the export for the\nsystems "
+                          "named) and by the problem statement (Phase 2)"),
+        }
+        for name, (old, new) in m1_cases.items():
+            with self.subTest(module_1=name):
+                self.assertEqual([], reader_list_problems(self.mutate(self.m1, old, new), self.grad))
+        old = ("acts on `integration_targets` earlier, through its exports;\n   Bootcamp graduation "
+               "is the last place they can still change anything, because the")
+        new = ("acts on\n   `integration_targets` earlier, through its exports; Bootcamp graduation "
+               "is the last\n   place they can still change anything, because the")
+        self.assertEqual([], reader_list_problems(self.m1, self.mutate(self.grad, old, new)))
+
+    def test_negative_controls(self):
+        m1_mutants = {
+            "the pre-#517 list, re-wrapped": (
+                "(Phase 2), by Module 7's step 4e (the export for the\nsystems named) and by "
+                "graduation", "(Phase 2) and by\ngraduation"),
+            "Module 7 swapped for another reader": (
+                "by Module 7's step 4e (the export for the\nsystems named)",
+                "by Module 5's step 18 (the save step)"),
+            "Module 7 named in the next sentence only": (
+                "(Phase 2), by Module 7's step 4e (the export for the\nsystems named) and by "
+                "graduation.)", "(Phase 2) and by graduation. Module 7's step 4e reads it too.)"),
+        }
+        for name, (old, new) in m1_mutants.items():
+            with self.subTest(module_1=name):
+                self.assertNotEqual([], reader_list_problems(self.mutate(self.m1, old, new),
+                                                             self.grad))
+        grad_mutants = {
+            "only place restored": ("the last place they can", "the only place they can"),
+            "only place restored, re-wrapped": (
+                "Bootcamp graduation is the last place they can still change anything",
+                "Bootcamp graduation is the only\n   place they can still change anything"),
+            "step 4e dropped": (
+                "Module 7's step 4e acts on `integration_targets` earlier, through its exports;\n"
+                "   Bootcamp", "Bootcamp"),
+            "step 4e acts later, not earlier": (
+                "acts on `integration_targets` earlier, through", "acts on `integration_targets` "
+                "after it, through"),
+        }
+        for name, (old, new) in grad_mutants.items():
+            with self.subTest(graduation=name):
+                self.assertNotEqual([], reader_list_problems(self.m1,
+                                                             self.mutate(self.grad, old, new)))
 
 
 def shipped_text_files():

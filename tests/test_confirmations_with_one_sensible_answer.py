@@ -18,12 +18,26 @@ sensible answer trained the automatic "yes" that lets meaning drift at the gates
    file as its enforcer: these tests pin that step 25 states the rule, and do NOT establish that a
    live run follows step 24d's answer or keeps step 25 silent.
 
+#517 swept the Module 5 Phase 3 text that still described the behavior #488 removed
+(``Phase3SaysWhereIterateGoes``): the SCHEMA finding resolves a collision as step 11 does (rename
+the key and say so, never "offer the rename"); step 24d's "If rejected" keeps the baseline and
+says iterate returns to Phase 2 step 17, with re-entry to Phase 3 needing **test_load** at step
+18a again (never "Inform the bootcamper they can return"); and step 25 points to that statement
+rather than restating it (INV-300), naming the same step 17 on its **no** route (never "Step 24d
+already told the Bootcamper they can return to Phase 2"). Those checks read
+the text through `tests/_wrapped_text.py` (INV-346), so a re-wrap neither hides a retired phrase
+nor fails a correct one; the negative controls include re-wrapped and reworded variants.
+
+Candidate 1's close is also what INV-356's proposed #517 amendment states: each export offer is
+its own turn, and the turn that settles the last one ends on the next 👉 the flow already has.
+
 The kept gates (candidates 3, 4, 5, 7 and 8) are pinned by their own tests; ``KeptGates`` checks
 only that each still stands at its site, so a later "tidy" of this issue's kind cannot take one.
 
 ⛔ Each check is a pure function of the file text, so the negative controls run the SAME check on
 a mutated copy (INV-265): restoring either removed question, or dropping candidate 6's condition,
-must make it report a problem.
+must make it report a problem. For #517 the controls also run re-wrapped copies, which must
+report the same thing as the text they re-wrap.
 
 These assert that the skill files STATE the rules; they cannot establish that a live run follows
 them, which only `dry-run` phase 3 can observe. Stdlib only; nothing under ``plugins/`` is
@@ -34,6 +48,8 @@ Run:  python3 -m unittest discover -s tests
 import re
 import unittest
 from pathlib import Path
+
+from _wrapped_text import match_lines
 
 REPO = Path(__file__).resolve().parent.parent
 PLUGIN = REPO / "plugins" / "senzing-bootcamp"
@@ -50,6 +66,12 @@ RETIRED_PAYLOAD = "Shall I store it as `{KEY}_PAYLOAD` instead"
 STEP25_QUESTION = "👉 **Are you ready to proceed?** (respond yes or no)"
 TEARDOWN = "## Visualization server teardown (its own turn)"
 GRADUATION_OFFER = "👉 **Would you like to graduate now and generate your production project and recap?**"
+#: Retired by #517: step 11 renames the key and says so, and asks nothing (#488).
+RETIRED_RENAME_OFFER = "offer the rename"
+#: Retired by #517: step 25 routes iterate to Phase 2 step 17 itself (#488), so this is not optional.
+RETIRED_RETURN_NOTICE = "Inform the bootcamper they can return"
+#: Retired by #517: step 25 leaned on step 24d's optional wording; it now points to 24d's statement.
+RETIRED_STEP25_TOLD = "Step 24d already told the Bootcamper they can return to Phase 2"
 
 
 def read(path):
@@ -68,6 +90,11 @@ def between(text, start, end):
         return None
     j = text.find(end, i + len(start))
     return None if j == -1 else text[i:j]
+
+
+def says(text, pattern):
+    """True when ``pattern`` matches inside one Markdown block of ``text``, across any wrap (INV-346)."""
+    return bool(match_lines(text, re.compile(pattern)))
 
 
 def need(block, needles, where):
@@ -158,6 +185,43 @@ def step25_problems(text):
         ), "step 25's presented case")
     problems += need(s25, ("Handling (INV-284)", "**yes** → Phase 2 step 19",
                            "**no** → Phase 2 step 17"), "step 25")
+    return problems
+
+
+def phase3_exit_problems(text):
+    """#517, inside `phase3-test-load.md`: the text #488 left stale says what the steps now do."""
+    problems = []
+    for phrase in (RETIRED_RENAME_OFFER, RETIRED_RETURN_NOTICE, RETIRED_STEP25_TOLD):
+        if says(text, r"(?i)" + re.escape(phrase)):
+            problems.append("the retired phrase %r is back" % phrase)
+    if not says(text, r"as step 11 prescribes\b[^.]*\brename the key and say so\b[^.]*"
+                      r"\bnever silently re-route\b"):
+        problems.append("the SCHEMA finding does not resolve a collision as step 11 does "
+                        "(rename the key and say so, never silently re-route)")
+    s24d = between(text, "#### 24d.", "### 25.")
+    case = between(text, "**Step 24d's gate was presented:**", "**Data source registry:**")
+    if s24d is None or case is None:
+        return problems + ["step 24d or step 25's presented case moved"]
+    rejected = re.search(r"\*\*If rejected:\*\*(.*?)(?=\n\S|\Z)", s24d, re.S)
+    if rejected is None:
+        return problems + ["step 24d has no **If rejected:** item"]
+    rejected = rejected.group(0)
+    if not says(rejected, r"Keep the existing baseline unchanged\."):
+        problems.append("step 24d's If rejected does not keep the baseline unchanged")
+    if not says(rejected, r"\b[Ii]terate\b[^.]*\breturns to Phase 2 step \d+"):
+        problems.append("step 24d's If rejected does not say where iterate returns")
+    if not says(rejected, r"\bRe-entering Phase 3\b[^.]*\*\*test_load\*\* at step 18a again"):
+        problems.append("step 24d does not say re-entering Phase 3 needs test_load at step 18a")
+    if not says(case, r"\bStep 24d's \*\*If rejected\*\* line already states where iterate goes\b"):
+        problems.append("step 25's presented case does not point to step 24d's statement")
+    if says(case, r"\bPhase 2\b"):
+        problems.append("step 25's presented case restates where iterate goes (INV-300)")
+    # Both sites must name ONE destination: step 24d's statement and step 25's **no** route.
+    told = re.search(r"returns to Phase 2 step (\d+)", flat(rejected))
+    routed = re.search(r"\*\*no\*\* → Phase 2 step (\d+)", flat(text))
+    if told and routed and told.group(1) != routed.group(1):
+        problems.append("step 24d sends iterate to step %s, step 25's no route to step %s"
+                        % (told.group(1), routed.group(1)))
     return problems
 
 
@@ -253,6 +317,99 @@ class Candidate6Step25AsksOnlyWhenStep24dDidNot(unittest.TestCase):
             with self.subTest(mutant=name):
                 self.assertNotEqual(text, mutant, "the mutation no longer applies")
                 self.assertNotEqual([], step25_problems(mutant))
+
+
+class Phase3SaysWhereIterateGoes(unittest.TestCase):
+    """#517: step 24d, step 25 and the SCHEMA finding describe Phase 3's exits as they behave."""
+
+    #: Re-wraps of the shipped text that change no word. Each must still report nothing.
+    REWRAPS = {
+        "step 24d's destination": ("Iterate returns to Phase 2 step 17 to\n  adjust",
+                                   "Iterate returns to Phase 2\n  step 17 to adjust"),
+        "step 24d's re-entry": ("**test_load** at\n  step 18a again",
+                                "**test_load**\n  at step 18a again"),
+        "step 25's pointer": ("Step 24d's\n  **If rejected** line already states where iterate goes",
+                              "Step 24d's **If rejected**\n  line already states where\n  iterate goes"),
+        "the SCHEMA finding": ("rename the key and say so, never silently re-route",
+                               "rename the key\nand say so, never silently\nre-route"),
+    }
+
+    def setUp(self):
+        self.text = read(M5_PHASE3)
+
+    def mutate(self, old, new):
+        mutant = self.text.replace(old, new, 1)
+        self.assertNotEqual(self.text, mutant, "the mutation no longer applies: %r" % old)
+        return mutant
+
+    def test_the_exits(self):
+        self.assertEqual([], phase3_exit_problems(self.text))
+
+    def test_a_rewrap_changes_nothing(self):
+        for name, (old, new) in self.REWRAPS.items():
+            with self.subTest(rewrap=name):
+                self.assertEqual([], phase3_exit_problems(self.mutate(old, new)))
+
+    def test_negative_controls(self):
+        rejected_now = between(self.text, "- **If rejected:**", "\n\n")
+        retired_24d = ("- **If rejected:** Keep the existing baseline unchanged. Inform the "
+                       "bootcamper they can return\n  to Phase 2 to adjust their mapping and "
+                       "re-run Phase 3 to see updated results.")
+        mutants = {
+            "rename offer restored": (
+                "rename the key and say so, never silently re-route",
+                "offer the rename, never silently re-route"),
+            "rename offer beside the rename, re-wrapped": (
+                "never silently re-route — rather than",
+                "never silently re-route, or offer the\nrename — rather than"),
+            "rename offer restored, capitalized": (
+                "prescribes — rename the key and say so, never",
+                "prescribes — Offer the rename and say so, never"),
+            "step 24d's retired wording restored": (rejected_now, retired_24d),
+            "return notice restored, re-wrapped": (
+                "say so as a statement.",
+                "Inform the bootcamper they\n  can return to Phase 2 later."),
+            "step 24d names no destination": (
+                "Iterate returns to Phase 2 step 17 to\n  adjust",
+                "Iterate goes back to the mapping to\n  adjust"),
+            "step 24d and step 25 disagree": (
+                "Iterate returns to Phase 2 step 17 to", "Iterate returns to Phase 2 step 16 to"),
+            "re-entry by step 18a dropped": (
+                "needs the bootcamper's explicit **test_load** at\n  step 18a again",
+                "is the bootcamper's call"),
+            "baseline no longer kept": (
+                "**If rejected:** Keep the existing baseline unchanged.",
+                "**If rejected:** Restore the previous baseline."),
+            "step 25 points nowhere": (
+                "Step 24d's\n  **If rejected** line already states where iterate goes",
+                "Step 24d already\n  offered this"),
+            "step 25 restates the destination": (
+                "  The turn ends on the next question the route reaches (INV-251).",
+                "  Iterate returns to Phase 2 step 17. The turn ends on the next question the "
+                "route reaches (INV-251)."),
+        }
+        for name, (old, new) in mutants.items():
+            with self.subTest(mutant=name):
+                self.assertNotEqual([], phase3_exit_problems(self.mutate(old, new)))
+
+    def test_the_old_step_25_sentence_is_reported_by_name(self):
+        """Restoring step 25's pre-#517 sentence, wrapped as it shipped, reports that phrase itself.
+
+        Asserting the message, not just a non-empty list, keeps this control honest: the restored
+        sentence also names "Phase 2", which another check reports on its own.
+        """
+        mutants = {
+            "as it shipped": "Step 24d already\n  told the Bootcamper they can return to Phase 2",
+            "re-wrapped, lower case": "step 24d already told the\n  Bootcamper they can return to "
+                                      "Phase\n  2",
+        }
+        for name, sentence in mutants.items():
+            with self.subTest(mutant=name):
+                mutant = self.mutate(
+                    "Step 24d's\n  **If rejected** line already states where iterate goes",
+                    sentence)
+                self.assertIn("the retired phrase %r is back" % RETIRED_STEP25_TOLD,
+                              phase3_exit_problems(mutant))
 
 
 class KeptGates(unittest.TestCase):

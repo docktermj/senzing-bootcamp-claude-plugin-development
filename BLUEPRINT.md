@@ -8795,7 +8795,7 @@ collected as tests:
     non-empty `SBCP_QUIET_FPDF2_NOTICE` silences it.
   - It exports the decorator `requires_fpdf2`.
   - It is a module rather than a `conftest.py`, which `unittest` never loads.
-- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 61
+- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 63
   files. `blocks(text)` splits Markdown into blocks, and
   `match_lines(text, pattern)` returns the 1-based start line of each match. The
   rules are in 8.4.1.
@@ -8899,7 +8899,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6720 test methods in 391 files, matching `inventory.test_count_total`.
+There are 6728 test methods in 391 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -8962,7 +8962,7 @@ looks wrong.
 - `tests/test_concepts_teaching_section_claims_no_exemption.py`: 12
 - `tests/test_config_seeding_guidance.py`: 16
 - `tests/test_confirmation_gate_is_satisfiable_on_a_generated_scenario.py`: 9
-- `tests/test_confirmations_with_one_sensible_answer.py`: 10
+- `tests/test_confirmations_with_one_sensible_answer.py`: 14
 - `tests/test_conformance_scans.py`: 27
 - `tests/test_conformance_sees_a_rule_beside_a_citation.py`: 8
 - `tests/test_container_lifecycle_runtimes.py`: 18
@@ -9122,7 +9122,7 @@ looks wrong.
 - `tests/test_module6_data_dirs_are_copied_or_excluded.py`: 5
 - `tests/test_module7_asks_the_bootcampers_question_first.py`: 12
 - `tests/test_module7_discover_instructions.py`: 17
-- `tests/test_module7_exports_for_integration_targets.py`: 46
+- `tests/test_module7_exports_for_integration_targets.py`: 50
 - `tests/test_module7_gate_shows_both_versions.py`: 13
 - `tests/test_module7_recall_question.py`: 14
 - `tests/test_module7_your_question_answered.py`: 14
@@ -10656,3 +10656,9 @@ Senzing licensing, with no SPDX identifier.
   lines are `mid-line` in every view; `ANCHORED_RULE` and `NOUN_USE` are
   unchanged (32 cited rule lines were invisible to `rules`, `per-rule`, `since`
   and `reverse-check`, and the anchored count stayed at 701)
+- #517: Module 1 Phase 1's note and graduation's Step 1a name Module 7's step 4e
+  as a reader of `integration_targets` (graduation is "the last place", not "the
+  only place"), Module 5 Phase 3's SCHEMA finding renames the key and says so,
+  step 24d's rejected branch states that iterate returns to Phase 2 step 17 and
+  step 25 points to it, and a `PROPOSED AMENDMENT to INV-356` is queued (closed
+  reader lists and restated behavior went stale when #487 and #488 shipped)
