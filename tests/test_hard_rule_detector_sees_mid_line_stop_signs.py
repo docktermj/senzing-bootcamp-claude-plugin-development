@@ -19,7 +19,8 @@ six rules that had been invisible to every view.
 
 ⛔ **The fix is not "drop the anchor".** That would add real rules and real noise together, and
 a count nobody trusts is the defect `rules` already had. The discriminator is what FOLLOWS the
-stop sign: a bolded span, a capitalized word, or an imperative. A stop sign used as a noun
+stop sign: a bolded span, a capitalized word, an imperative, or (#516) a parenthesized
+invariant citation such as `⛔ (INV-NNN)`. A stop sign used as a noun
 ("a `⛔` gate", "the old ⛔"), one that survives only inside a code span, and one at end-of-line
 are all excluded.
 
@@ -52,6 +53,21 @@ MISSED_SHAPES = {
         "- **`Upstream:`** `not applicable` unless Step 2b says `mcp-server`. ⛔ **Do not offer it.**",
     "continuing a sentence":
         'read from `plugin.json`, else "Unknown". ⛔ never found by searching the filesystem',
+    # #516: a parenthesized invariant citation right after the stop sign. `(` matched none of
+    # the lead-ins, so seven cited rules added in one audit range were invisible to every view.
+    "a citation after a mid-line stop sign":
+        "continue on the launch step's no-live-server path. ⛔ (INV-260) Never offer a relay "
+        "or a proxy, inside",
+    # The bold span holds no MUST/NEVER/ALWAYS, so the frozen anchored alternatives cannot
+    # claim it: this line reaches MID_LINE_RULE, which is searched, not anchored.
+    "a citation after a bolded stop sign":
+        "**⛔ (INV-203) A truncated source: its listed `record_count` is a cap, not its size.** "
+        "This is the",
+    "a citation list after the stop sign":
+        "5. ⛔ (INV-349, INV-101, INV-195) **Never remove, stop, start or reuse a container "
+        "that this project's",
+    "a heading led by a cited stop sign":
+        "## ⛔ (INV-309) Invariant capture is a gate on closing, not a step to remember",
 }
 
 # Prose ABOUT the convention, which must stay out. Each is a real corpus line.
@@ -66,6 +82,12 @@ NOUN_USES = {
         "Follow the ground rules throughout: `🛑`/`⛔` are internal, never rendered;",
     "a trailing stop sign wrapping to the next line":
         "needs an arm in which that flag is absent. Following the old ⛔",
+    # #516's negative controls: the citation lead-in must not reach past NOUN_USE or the
+    # code-span strip.
+    "the glyph as a noun before a citation":
+        "Module 7 carries a ⛔ (INV-091) bullet for each export target.",
+    "a cited stop sign inside a code span":
+        "Write the lead-in as `⛔ (INV-091)` when the rule cites its invariant.",
 }
 
 
@@ -75,9 +97,9 @@ class TheMissedShapesAreNowSeen(unittest.TestCase):
             with self.subTest(shape=name):
                 self.assertEqual(
                     "mid-line", CONF.classify(line),
-                    "%s is not recognized as a hard rule. This is one of the three shapes the "
-                    "line-start anchor missed; 191 corpus lines were invisible because of it."
-                    % name)
+                    "%s is not recognized as a hard rule. This is a shape the line-start "
+                    "anchor missed: 191 corpus lines were invisible because of the first three, "
+                    "and 32 more (#516) because a citation followed the stop sign." % name)
 
     def test_the_anchored_shape_still_classifies_as_anchored(self):
         """Anchored hits must keep their label, because past figures counted only those."""

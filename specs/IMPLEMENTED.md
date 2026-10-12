@@ -43,6 +43,31 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## conformance-sees-a-stop-sign-followed-by-a-citation
+
+- **Implemented:** 2026-10-12 (**Not a spec** — a dated record of one issue-driven run, #516, spec revision 1; `Source:` production-readiness audit 2026-10-12, sweep A, F4). Implemented directly (Phase 5a), by `/unattended-issue-loop`. Branch `516-docktermj-1`, built on `9a4067db` (`origin/main`, 2026-10-12).
+- **Commit:** uncommitted
+- **Files changed:** `.claude/skills/production-readiness-audit/conformance.py` (one `MID_LINE_RULE` alternative and its comment), `tests/test_hard_rule_detector_sees_mid_line_stop_signs.py` (four positive fixtures, two negative controls, docstring and message), `BLUEPRINT.md` (decision-log line), this entry.
+- **MCP re-check:** n/a (no Senzing fact), re-confirmed rather than assumed. Server `sz-mcp-coworker` **1.37.27** (Senzing "current", `get_capabilities`), 2026-10-12. The change decides which lines of this repository's own prose a maintainer audit tool counts as hard rules; it names no SDK method, attribute, flag, error code, engine behavior or MCP route, and makes no absence claim, so no `owner-checked:` is owed.
+- **Approach:** direct, as the spec proposes. `MID_LINE_RULE` gains `\(INV-` as a fourth lead-in after the stop sign. It is searched, not anchored, so the one alternative covers both `⛔ (INV-NNN)` mid-line and `**⛔ (INV-NNN)` at the start of a line. `ANCHORED_RULE` and `NOUN_USE` are unchanged.
+- **Summary:**
+  - **The pattern.** `MID_LINE_RULE` is now `⛔\s*(?:\*\*|[A-Z]|\(INV-|(?:IMPERATIVE)\b)`. The comment above it names the citation as the fourth lead-in and records the 2026-10-12 measurement. `classify()` is unchanged, so every view that calls it (`rules`, `per-rule`, `since`, `reverse-check`) inherits the change; `EveryViewInheritsOneDefinition` already holds them to that.
+  - **Tests.** `MISSED_SHAPES` gains four corpus lines: a citation after a mid-line stop sign (`module-02-sdk-setup/SKILL.md`, INV-260), a citation after a bolded stop sign with no MUST/NEVER/ALWAYS in the bold span (`module-04-data-collection/SKILL.md`, INV-203), a citation list (`5. ⛔ (INV-349, INV-101, INV-195) …`) and the `## ⛔ (INV-309) …` heading in `.claude/skill-overlays/implement-github-issue.md`. Each was confirmed to classify `None` under the old pattern and `"mid-line"` under the new one. `NOUN_USES` gains the two negative controls the spec names: the glyph as a noun before a citation (`a ⛔ (INV-091) bullet`) and a citation inside a code span; both stay `None`. `test_the_anchored_shape_still_classifies_as_anchored` passes unchanged.
+  - **The new baseline (each view's figures, before → after, measured 2026-10-12 on this branch):**
+
+    | View | Before | After |
+    |---|---|---|
+    | `rules` | 749 (520 line-anchored + **229** mid-line), 0 in a section citing no invariant | 759 (520 line-anchored + **239** mid-line), 0 in a section citing no invariant |
+    | `per-rule` | 749 hard-rule lines, 305 citing no invariant at the rule | 759 hard-rule lines, 305 citing no invariant at the rule (all ten new lines cite one) |
+    | `since --ref fa5ad03` | 81 lines (58 anchored + **23** mid-line), across 20 files; outside the corpus: 3 lines in 1 file | 88 lines (58 anchored + **30** mid-line), across 20 files; outside the corpus: 4 lines in 2 files (adds `scripts/generate_recap_pdf.py:142`, INV-258) |
+    | `reverse-check --ref fa5ad03` | TESTED 73 (73 cited), UNTESTED 8 (8 cite); VERDICT: NOT CLEAN (untested lines) | TESTED 79 (79 cited), UNTESTED 9 (9 cite); VERDICT: NOT CLEAN (untested lines) |
+    | `since` / `reverse-check --since-last-audit` (`aecbc38`) | 0 lines; VERDICT: clean | 0 lines; VERDICT: clean |
+
+    The seven lines `since --ref fa5ad03` gained are the seven the issue lists (`module-02-sdk-setup/SKILL.md:757` is now line 759, after #508). Across every `.md`, `.py` and `.sh` file under `SCAN_ROOTS` and `docs/`, mid-line rose from 292 to 304 in `.md` (+12) and from 110 to 130 in `.py`/`.sh` (+20), 32 lines in all, and line-anchored stayed at **701** (641 `.md` + 60 `.py`/`.sh`), as the issue measured. Later audits compare against the "After" column.
+- **Verification:** both CI legs (empty `HOME` outside `/tmp`; fpdf2 present via `PYTHONUSERBASE`, and absent in a `--without-pip` venv) ran on this branch's commit, and `citations.py verify` ran after this entry was written. Their verdict lines are in the PR. `lint-workflows` was not run locally: it is a remote reusable workflow and no workflow file changed.
+- **Differs from the issue:** (1) Two positive fixtures beyond the two the acceptance criteria name: the citation list and the heading, both named in the spec's edge cases and scope. (2) The `⛔ (INV-NNN) …` fixture puts the stop sign mid-line, because a line that starts with the glyph is already `"anchored"` and would test the frozen pattern instead of the fix. (3) `since` and `reverse-check` print no anchored/mid-line split, so their mid-line figures above were measured by applying `classify()` to the lines `added_rule_lines()` returns; no output format changed, as the spec's Compatibility section requires.
+- **Establishes no invariant** (INV-309). The change widens a detector that INV-308 (report what could not be checked) and INV-282 (a guard's matcher follows the claim, with every shipped phrasing and every non-match pinned as a fixture) already govern; the new fixtures are INV-282's obligation met, not a new guarantee. No ⛔ line was added outside this ledger and the test file, and none was demoted.
+
 ## container-route-guide-run-blocks-declare-their-shell
 
 - **Implemented:** 2026-10-12 (**Not a spec** — a dated record of one issue-driven run, #508, spec revision 1: six blocks on SDK setup's container route, the route Windows users take, were written for a POSIX shell with no word on which shell runs them and no INV-163 disclosure, and Option 1's PostgreSQL schema step redirected from `/opt/senzing/…` on the host, which on that route exists only inside the SDK container). Raced by `/unattended-issue-loop` (Phase 5b); branch `508-docktermj-1`, built on `35c43fb6` (`origin/main`, 2026-10-12; the winning patch was built on `951dd953` and applied cleanly).
