@@ -10,7 +10,7 @@ overrides it.
 Mari prediction at Step 7a, and the module-transition question at the end of
 `phase2-report-close.md`. The prediction is the second 👉 because it has to be asked before the
 engine decides, and a prediction asked after its result predicts nothing (the ground rules'
-"Predictions before results"). So "one at a time" here means *in order and in full*, inside the
+"Predictions before results", INV-357). So "one at a time" here means *in order and in full*, inside the
 turn that ends on the next of those two questions; it does **not** mean one turn per step, because
 a turn ending on a step that asks nothing would end with zero 👉 (INV-225). A faithful walk therefore
 generates code, runs it, registers a data source, loads records and validates them before the first
@@ -621,7 +621,7 @@ its `fix_instructions` (INV-082 is unchanged: the verification records stay dete
 construction, and this record is not one of them). This is a prediction point: the skip, the
 reveal's shape, "informs, never grades" and the Questions & Responses line are stated once in
 `../bootcamp-onboarding/ground-rules.md` → "Predictions before results"; follow them there rather
-than a copy here (INV-300).
+than a copy here (INV-300, INV-357).
 
 **When there is no Marisol entity to join**, because Step 6 loaded nothing or the Marisol records
 cannot be found, skip this step without asking (no result, no prediction), record

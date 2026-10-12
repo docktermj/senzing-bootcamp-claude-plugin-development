@@ -33,7 +33,7 @@ route", item 3 (INV-300). Step 21's directing question is not asked again:
 **The directing step comes first.** This is Module 6's directing step. The open 👉's shape, the
 result beside the expectation, the "you pick" fallback, once per module and the `You directed:`
 line are stated once in `../bootcamp-onboarding/ground-rules.md` → "Directing steps"; follow them
-there rather than a copy here (INV-300). Only what is particular to step 21 is here.
+there rather than a copy here (INV-300, INV-354). Only what is particular to step 21 is here.
 
 - **When it runs.** The first time Phase D reaches step 21, before any sample is queried. When
   `directing_steps.data_processing` is already set, it has run: go straight to the review below.

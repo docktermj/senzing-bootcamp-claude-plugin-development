@@ -22,7 +22,7 @@ or token budget) can override it.
 ⚠️ **This module has exactly two 👉 questions** — the Mari prediction at Step 7a of
 `phase1-verification.md`, and the module-transition question at the end of
 `phase2-report-close.md`. The prediction is the second because it must be asked before the engine
-decides (the ground rules' "Predictions before results"). Every other step is **non-yielding**, so
+decides (the ground rules' "Predictions before results", INV-357). Every other step is **non-yielding**, so
 "one at a time" is a rule about order and completeness, not about turns: the steps run in order
 inside the turn that ends on the next of those two questions. See `../bootcamp-onboarding/ground-rules.md` → the 👉 protocol, which defines the
 non-yielding step and the single-write checkpoint that follows from it.

@@ -23,7 +23,7 @@ steer, and ask first: the pinned ask-first 👉 comes before the fix, and it may
 this module says asks nothing. What fires it, its two lines, at most one per module, how the
 Bootcamper's answer is handled, minimal verbosity and the checkpoint note are stated once in
 `../bootcamp-onboarding/ground-rules.md` → "Worked steers"; follow them there rather than a copy
-here (INV-300).
+here (INV-300, INV-352).
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.

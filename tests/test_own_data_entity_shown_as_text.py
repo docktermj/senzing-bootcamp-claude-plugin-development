@@ -18,12 +18,27 @@ resolved entity as text" (INV-300). The three sites cite it and carry only their
 rule and placement. Every selection rule ends on the lowest ``ENTITY_ID`` (grafted from the
 losing race approach): the export's row order is not a tie-break, and step 1, its checkpoint and
 the recap block re-run at Module 7's close must all name the same entity. These checks pin both halves: the owner carries the procedure in full, and
-each pointer names it, cites INV-300, and carries no second copy of the procedure's own phrases.
+each pointer names it, cites INV-300 and INV-355, and carries no second copy of the procedure's
+own phrases.
+The Module 6 midpoint and the recap block also cite INV-355 on their selection rule's own line,
+since each states that clause of the invariant beside its pointer (#519).
 ⚠️ That last check is narrower than INV-300's "no second copy": it can only see the procedure's
 distinctive phrases reappearing, not a paraphrase.
 
 The checks are pure functions over a passage's text, so each also runs on a mutated copy as its
 negative control.
+
+**At every pointer, derived** (`pointer_citation_problems`, #519): every shipped sentence that
+points at "Showing one resolved entity as text", found by scan rather than from the three sites
+above (INV-246), cites INV-355. The scan, not a list, is what found that Module 7 step 1's pointer
+cited INV-300 alone while its ⛔ bullet below carried INV-355.
+
+⚠️ **What the derived scan cannot see** (`tests/_pointer_sites.py` says how it reads): a pointer
+that names the section in other words, with neither the quoted name nor the
+`ground-rules.md#entity-as-text` anchor; a pointer outside `plugins/` or outside Markdown; the
+owner's own cross-references inside `ground-rules.md` (its "Worked steers" item 5 mention among
+them), which are excluded; whether INV-355 is the right invariant for what the sentence says; and
+a sentence cut early at an abbreviation.
 
 ⚠️ **The 👉 counts read single lines on purpose (INV-346).** A 👉 question is its own line by
 construction, and counting lines that *start* with `👉 **` keeps prose that mentions the marker
@@ -37,7 +52,7 @@ passing it is no evidence that a live run obeys it.
 
 Stdlib only; shipped markdown read as text (INV-108).
 
-Source issue: #486.
+Source issue: #486; the citation at every pointer, #519.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -46,6 +61,8 @@ import re
 import sys
 import unittest
 from pathlib import Path
+
+import _pointer_sites
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
@@ -60,6 +77,10 @@ GENERATOR = PLUGIN / "scripts" / "generate_recap_pdf.py"
 OWNER_HEADING = "## Showing one resolved entity as text"
 OWNER_ANCHOR = '<a id="entity-as-text"></a>'
 OWNER_LINK = "ground-rules.md#entity-as-text"
+#: The section every pointer names, its anchor, and the invariant each pointer cites (#519).
+SECTION, ANCHOR, INVARIANT = "Showing one resolved entity as text", "entity-as-text", "INV-355"
+#: The citation each pointer carries: the single statement (INV-300) and the rule (INV-355).
+POINTER_CITATION = "(INV-300, INV-355)"
 
 #: Phrases only the procedure may carry. A pointer that repeats one has begun a second copy.
 PROCEDURE_ONLY = (
@@ -150,15 +171,15 @@ def owner_problems(text):
 
 
 def pointer_problems(passage, rule_phrases, name):
-    """A citing site: names the owner, cites INV-300, carries its own rule and no copy."""
+    """A citing site: names the owner, cites INV-300 and INV-355, has its own rule and no copy."""
     if not passage:
         return ["%s is missing" % name]
     problems = []
     f = flat(passage)
     if OWNER_LINK not in passage:
         problems.append("%s does not link %s" % (name, OWNER_LINK))
-    if "(INV-300)" not in f:
-        problems.append("%s does not cite INV-300" % name)
+    if POINTER_CITATION not in f:
+        problems.append("%s does not cite INV-300 and INV-355 %s" % (name, POINTER_CITATION))
     if "stated once" not in f:
         problems.append("%s does not say the procedure is stated once" % name)
     for phrase in rule_phrases:
@@ -190,7 +211,7 @@ def midpoint_problems(text):
     passage = midpoint(text)
     problems = pointer_problems(
         passage,
-        ("the entity with the most records, ties broken by the lowest `ENTITY_ID`",
+        ("the entity with the most records, ties broken by the lowest `ENTITY_ID`** (INV-355)",
          "from the first source",
          "Text only, with no visualization", "No 👉", "does not end the turn (INV-225)",
          "shows no midpoint entity"),
@@ -255,9 +276,14 @@ def recap_block_problems(text):
          "at the top of `### Information Shared`", "**Headline entity:**",
          "its records, its data sources, and why they resolved together",
          "step 1's selection rule (most data sources, then most records, then the lowest "
-         "`ENTITY_ID`)", "Written whether or not the visualization ran",
+         "`ENTITY_ID`; INV-355)", "Written whether or not the visualization ran",
          "Screenshots keep the app's tab order"),
         "Module 7's recap headline block")
+
+
+def pointer_citation_problems(texts):
+    """Every derived pointer to the procedure cites INV-355 in its own sentence (#519)."""
+    return _pointer_sites.uncited_pointers(texts, SECTION, ANCHOR, INVARIANT)
 
 
 def load_generator():
@@ -394,6 +420,72 @@ class TheRecapHeadlineBlock(unittest.TestCase):
         subsections first, so any other subsection would not lead in the PDF."""
         gen = load_generator()
         self.assertEqual("Information Shared", gen.REQUIRED_SECTIONS[0])
+
+
+class EveryPointerCitesTheRule(unittest.TestCase):
+    """The pointer sites are derived by scan (INV-246), so a later one without INV-355 fails."""
+
+    def test_every_pointer_cites_inv_355(self):
+        self.assertEqual([], pointer_citation_problems(_pointer_sites.shipped_texts()))
+
+    def test_the_scan_finds_the_three_sites(self):
+        """Not vacuous: the derived set holds the midpoint, the headline and the recap block."""
+        found = [path for path, _, _ in _pointer_sites.pointers(
+            _pointer_sites.shipped_texts(), SECTION, ANCHOR)]
+        self.assertGreaterEqual(found.count(MODULE_6_B), 1)
+        self.assertGreaterEqual(found.count(MODULE_7), 2)
+
+    def test_control_each_derived_pointer_loses_its_citation(self):
+        """Every shipped pointer (three since #519), in turn, is reported when it drops INV-355."""
+        shipped = _pointer_sites.shipped_texts()
+        sites = _pointer_sites.pointers(shipped, SECTION, ANCHOR)
+        self.assertGreaterEqual(len(sites), 3, "the scan went blind")
+        for path, line, _ in sites:
+            with self.subTest(site="%s:%d" % (path.name, line)):
+                problems = pointer_citation_problems(
+                    _pointer_sites.without_citation(shipped, path, line, INVARIANT))
+                where = "%s:%d" % (path.relative_to(REPO_ROOT).as_posix(), line)
+                self.assertTrue(any(where in p for p in problems), problems)
+
+    def test_control_a_new_pointer_site_without_the_citation(self):
+        """A site no list names: the scan finds it by the section's name, wrapped (INV-346)."""
+        texts = _pointer_sites.shipped_texts()
+        texts[SKILLS / "graduation" / "new-step.md"] = (
+            "How it is shown is stated once in `ground-rules.md` → \"Showing one resolved\n"
+            "entity as text\" (INV-300); follow it there rather than restating it.\n")
+        self.assertTrue(any("graduation/new-step.md:1" in p
+                            for p in pointer_citation_problems(texts)))
+
+    def test_control_a_new_pointer_by_anchor_only(self):
+        texts = {SKILLS / "graduation" / "new-step.md":
+                 "Show it as [the ground rules say](../bootcamp-onboarding/ground-rules.md"
+                 "#entity-as-text) (INV-300).\n"}
+        self.assertTrue(pointer_citation_problems(texts))
+
+    def test_control_a_site_without_inv_355_fails_its_site_check(self):
+        """Each site's own check needs INV-355 at the pointer and, where it states the selection
+        rule beside the pointer, on that rule too."""
+        recap_pointer = ('as text" (INV-300, INV-355); follow it there rather than restating '
+                         'it.\n\n- **Written')
+        for problems_of, path, old, needle in (
+                (midpoint_problems, MODULE_6_B, 'as text" (INV-300, INV-355)',
+                 "does not cite INV-300 and INV-355"),
+                (midpoint_problems, MODULE_6_B, "`ENTITY_ID`** (INV-355)",
+                 "lacks its own rule"),
+                (headline_problems, MODULE_7,
+                 'as text" (INV-300, INV-355); follow it there rather than restating it.\n\n'
+                 '- ⛔',
+                 "does not cite INV-300 and INV-355"),
+                (recap_block_problems, MODULE_7, recap_pointer,
+                 "does not cite INV-300 and INV-355"),
+                (recap_block_problems, MODULE_7, "`ENTITY_ID`; INV-355)", "lacks its own rule")):
+            with self.subTest(old=old):
+                text = path.read_text(encoding="utf-8")
+                self.assertEqual(1, text.count(old))
+                cut = (old.replace(", INV-355", "").replace(" (INV-355)", "")
+                       .replace("; INV-355", ""))
+                problems = problems_of(text.replace(old, cut))
+                self.assertTrue(any(needle in p for p in problems), problems)
 
 
 class TheExampleRecapModelsIt(unittest.TestCase):

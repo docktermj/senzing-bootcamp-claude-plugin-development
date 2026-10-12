@@ -24,7 +24,13 @@ So the clauses are checked where they live:
   three recap forms.
 - **Per site** (`m5_problems`, `m6_problems`, `m7_problems`): the pinned 👉, exactly one per
   module (INV-251), open (no numbered options and no "or" between choices, INV-051), the pointer
-  to the shared rule with INV-300, no copy of a rule-only clause, and the site's own content.
+  to the shared rule with INV-300 and INV-354, no copy of a rule-only clause, and the site's own
+  content.
+- **At every pointer, derived** (`pointer_citation_problems`, #519): every shipped sentence that
+  points at "Directing steps", found by scan rather than from the sites named here (INV-246),
+  cites INV-354, so a reader at the pointer can name the rule as well as the single-statement
+  discipline. Since #519 that is six sentences: steps 11 and 12 of Module 5, step 21 of Module 6,
+  steps 1 and 3a of Module 7, and the `You directed:` line in `module-completion.md`.
 - **The recap** (`completion_problems` and `RecapGeneratorIsUnchanged`): the `You directed:` line
   is stated where the recap is written, and the generator's `--check` passes a recap carrying it
   with its three required blocks unchanged.
@@ -32,6 +38,12 @@ So the clauses are checked where they live:
 The checks are pure functions over a file's text, so each also runs on a mutated copy as its
 negative control (`TheChecksCatchARegression`). Each mutation must make the check report the
 problem it targets, not merely some problem.
+
+⚠️ **What the derived scan cannot see** (`tests/_pointer_sites.py` says how it reads): a pointer
+that names the section in other words, with neither the quoted name "Directing steps" nor the
+`ground-rules.md#directing-steps` anchor; a pointer outside `plugins/` or outside Markdown; the
+owner's own cross-references inside `ground-rules.md`, which are excluded; whether INV-354 is
+the right invariant for what the sentence says; and a sentence cut early at an abbreviation.
 
 ⚠️ **The 👉 counts read single lines on purpose (INV-346).** A 👉 question is its own line by
 construction; counting lines that *start* with `👉 **` keeps prose that mentions the marker ("the
@@ -51,7 +63,7 @@ the record; and it says Phase 1 named the columns at Step 5a (sub-steps 4 and 6)
 
 Stdlib only; shipped markdown read as text (INV-108).
 
-Source issue: #485 (part of #465); Module 5's record, #521.
+Source issue: #485 (part of #465); Module 5's record, #521; the citation at every pointer, #519.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -64,6 +76,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import _pointer_sites
 import _wrapped_text
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -90,9 +103,11 @@ M7_QUESTION = "👉 **What do you want to find out about your data?**"
 #: Step 3a's one 👉 since #483, which ends 3a's turn; it is a recall question, not a directing one.
 M7_RECALL_QUESTION = "👉 **What does that tell you about entity {ENTITY_ID}? Reply with a number:**"
 
-#: The pointer every site carries instead of a copy (INV-300).
+#: The pointer every site carries instead of a copy (INV-300), citing the rule (INV-354).
 CITATION = (r'stated once in\s+`\.\./bootcamp-onboarding/ground-rules\.md` → "Directing steps";\s+'
-            r'follow them\s+there rather than a copy here \(INV-300\)')
+            r'follow them\s+there rather than a copy here \(INV-300, INV-354\)')
+#: The section every pointer names, its anchor, and the invariant each pointer cites (#519).
+SECTION, ANCHOR, INVARIANT = "Directing steps", "directing-steps", "INV-354"
 #: What that pointer must name, so a site cannot quietly drop a clause it defers to.
 POINTER_NAMES = ("the result beside the expectation", '"you pick" fallback', "once per module",
                  "`You directed:`")
@@ -161,10 +176,11 @@ def citation_problems(site, where):
     """A site points at the shared rule, names what it defers to, and carries no copy of it."""
     problems = []
     if not match_lines(site, CITATION):
-        problems.append("%s does not point at the shared rule with INV-300" % where)
+        problems.append("%s does not point at the shared rule with INV-300 and %s"
+                        % (where, INVARIANT))
     flat = squash(site)
     start = flat.find("directing step")
-    pointer = flat[start:flat.find("(INV-300)", start)] if start >= 0 else ""
+    pointer = flat[start:flat.find("(INV-300", start)] if start >= 0 else ""
     for phrase in POINTER_NAMES:
         if phrase not in pointer:
             problems.append("%s's pointer does not name %s" % (where, phrase))
@@ -328,7 +344,8 @@ def m5_problems(phase2, module_files=()):
         "every difference named": r"with every\s+difference named",
         "the way back is step 16's gate": r"step 16's gate offers the way back to step 17",
         "step 12 asks nothing (INV-225)": r"this step asks nothing \(INV-225\)",
-        "it points at the shared rule (INV-300)": r"\"Directing steps\", INV-300\)",
+        "it points at the shared rule (INV-300, INV-354)": r"\"Directing steps\", INV-300, "
+                                                           r"INV-354\)",
     }
     for what, pattern in check.items():
         if not match_lines(step12, pattern):
@@ -434,7 +451,8 @@ def m7_problems(phase1):
     if first < 0 or zero < 0 or not first < zero:
         problems.append("step 3a does not present their questions first")
     for what, pattern in {
-        "it is the directing step's check (INV-300)": r"\"Directing steps\", INV-300\)",
+        "it is the directing step's check (INV-300, INV-354)": r"\"Directing steps\", "
+                                                               r"INV-300, INV-354\)",
         "their question is quoted": r"the question they\s+posed in step 1, quoted \(\"You asked: "
                                     r"'…'\"\)",
         "matches or differs": r"`matches` when the\s+answer addresses what they asked, or "
@@ -476,8 +494,8 @@ def completion_problems(completion):
         "the line is for the three hands-on modules only":
             r"The `You directed:` line, in Data Quality, Mapping, and Transformation, Data "
             r"processing, and Query, Visualize and Discover only",
-        "its forms are stated once in the ground rules (INV-300)":
-            r"stated once in `ground-rules\.md` → \"Directing steps\" \(INV-300\)",
+        "its forms are stated once in the ground rules (INV-300, INV-354)":
+            r"stated once in `ground-rules\.md` → \"Directing steps\" \(INV-300, INV-354\)",
         "an unset record means the no-site form": r"is still unset at this point had no "
                                                   r"directing step",
         "it is not a fourth block": r"It is not a fourth block",
@@ -485,6 +503,11 @@ def completion_problems(completion):
         if not match_lines(completion, pattern):
             problems.append("module-completion.md does not state %s" % what)
     return problems
+
+
+def pointer_citation_problems(texts):
+    """Every derived pointer to "Directing steps" cites INV-354 in its own sentence (#519)."""
+    return _pointer_sites.uncited_pointers(texts, SECTION, ANCHOR, INVARIANT)
 
 
 # --------------------------------------------------------------------------------------------
@@ -520,6 +543,21 @@ class EachModuleHasOneDirectingStep(unittest.TestCase):
         self.assertNotIn(M5_QUESTION, asked)
         self.assertNotIn(M6_QUESTION, asked)
         self.assertEqual(1, asked.count(M7_QUESTION))
+
+
+class EveryPointerCitesTheRule(unittest.TestCase):
+    """The pointer sites are derived by scan (INV-246), so a later one without INV-354 fails."""
+
+    def test_every_pointer_cites_inv_354(self):
+        self.assertEqual([], pointer_citation_problems(_pointer_sites.shipped_texts()))
+
+    def test_the_scan_finds_every_known_site(self):
+        """Not vacuous: the derived set holds each file this guard already checks."""
+        found = [path for path, _, _ in _pointer_sites.pointers(
+            _pointer_sites.shipped_texts(), SECTION, ANCHOR)]
+        for path, count in ((M5_PHASE2, 2), (M6_PHASED, 1), (M7_PHASE1, 2), (COMPLETION, 1)):
+            with self.subTest(path=path.name):
+                self.assertGreaterEqual(found.count(path), count)
 
 
 class TheRecapCarriesTheLine(unittest.TestCase):
@@ -663,8 +701,8 @@ class TheChecksCatchARegression(unittest.TestCase):
         self.assertReports(m5_problems(text), "still says its advance is unconditional")
 
     def test_m5_pointer_dropped(self):
-        text = read(M5_PHASE2).replace("(INV-300). Only what is particular to step 11", ". Only "
-                                       "what is particular to step 11")
+        text = read(M5_PHASE2).replace("(INV-300, INV-354). Only what is particular to step 11",
+                                       ". Only what is particular to step 11")
         self.assertReports(m5_problems(text), "does not point at the shared rule")
 
     def test_m5_rule_restated_at_the_site(self):
@@ -780,8 +818,45 @@ class TheChecksCatchARegression(unittest.TestCase):
         self.assertReports(completion_problems(text), "no `**You directed:**` line")
 
     def test_completion_pointer_dropped(self):
-        text = read(COMPLETION).replace('"Directing steps" (INV-300)', '"Directing steps"')
+        text = read(COMPLETION).replace('"Directing steps" (INV-300, INV-354)', '"Directing steps"')
         self.assertReports(completion_problems(text), "stated once in the ground rules")
+
+    # --- the derived pointer sites (#519) ----------------------------------------------------
+
+    def test_m5_pointer_without_inv_354(self):
+        text = read(M5_PHASE2).replace("(INV-300, INV-354). Only what is particular to step 11",
+                                       "(INV-300). Only what is particular to step 11")
+        self.assertReports(m5_problems(text), "does not point at the shared rule")
+
+    def test_m7_check_without_inv_354(self):
+        text = read(M7_PHASE1).replace('"Directing steps", INV-300, INV-354). Present',
+                                       '"Directing steps", INV-300). Present')
+        self.assertReports(m7_problems(text), "it is the directing step's check")
+
+    def test_each_derived_pointer_loses_its_citation(self):
+        """Every shipped pointer (six since #519), in turn, is reported when it drops INV-354."""
+        shipped = _pointer_sites.shipped_texts()
+        sites = _pointer_sites.pointers(shipped, SECTION, ANCHOR)
+        self.assertGreaterEqual(len(sites), 6, "the scan went blind")
+        for path, line, _ in sites:
+            with self.subTest(site="%s:%d" % (path.name, line)):
+                texts = _pointer_sites.without_citation(shipped, path, line, INVARIANT)
+                self.assertReports(pointer_citation_problems(texts),
+                                   "%s:%d" % (path.relative_to(REPO_ROOT).as_posix(), line))
+
+    def test_a_new_pointer_site_without_the_citation(self):
+        """A site no list names: the scan finds it because it points at the section."""
+        texts = _pointer_sites.shipped_texts()
+        texts[SKILLS / "graduation" / "new-step.md"] = (
+            "Its shape is stated once in `../bootcamp-onboarding/ground-rules.md` → \"Directing\n"
+            "steps\"; follow them there rather than a copy here (INV-300).\n")
+        self.assertReports(pointer_citation_problems(texts), "graduation/new-step.md:1")
+
+    def test_a_rewrapped_citation_still_passes(self):
+        """INV-346: the name and the citation may each wrap; the sentence is still one unit."""
+        texts = {SKILLS / "graduation" / "new-step.md":
+                 "Stated once in `ground-rules.md` → \"Directing\nsteps\" (INV-300,\nINV-354).\n"}
+        self.assertEqual([], pointer_citation_problems(texts))
 
 
 if __name__ == "__main__":
