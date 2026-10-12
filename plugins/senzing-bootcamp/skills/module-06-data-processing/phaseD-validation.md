@@ -406,11 +406,14 @@ which is exactly the gap the UAT percentages below leave open.
 
    The role notation is documented in the Senzing MCP server article *"MATCH_KEY / WHY_KEY
    Direction Notation for Disclosed Relationships"*, which defines the `(ROLE:)`, `(:ROLE)` and
-   `(ROLE:ROLE)` forms; counting suppressors needs only their removal, not their direction. A
+   `(ROLE:ROLE)` forms; counting suppressors needs only their removal, not their direction
+   (`search_docs(query='MATCH_KEY disclosed relationship REL_POINTER role in match key')` returns
+   that article as its top hit, on target, server **1.37.27**, docs index 2026-10-11 18:43 UTC). A
    dashed domain breaks the naive split for the reason the Entity Specification's *Feature:
    REL_ANCHOR* gives: *"Use a domain code without dashes to avoid confusion in downstream match key
-   parsing."* (both from `search_docs(query='MATCH_KEY disclosed relationship REL_POINTER role in
-   match key')`, server **1.37.13**, docs index 2026-09-24 18:45 UTC). The `\-` form itself is an
+   parsing."* That query ranks *Feature: REL_ANCHOR* fourth, so it is not this rule's route: the
+   relationship-key route is stated once, in
+   `../module-05-data-quality-mapping/phase2-data-mapping.md` → "11. Map" (INV-300). The `\-` form itself is an
    **engine-side observation**: 2026-09-25, a four-source load (GLEIF, ICIJ, OFAC, OPEN-SANCTIONS;
    455 disclosed relationships), SDK version not recorded.
 

@@ -1822,7 +1822,7 @@ facts come from MCP tools; SENZ codes go to `explain_error_code`, then
   `linux_apt` on Windows); Intel Mac to docker; Apple Silicon to `macos_arm`;
   Windows with Scoop to `windows`, else docker; Linux to `linux_apt` or
   `linux_yum`. Tap and bucket are flagged as unsupported previews.
-- Step 3, install: `search_docs(category='anti_patterns')` first. Phase 1 asks
+- Step 3, install: a platform-neutral `anti_patterns` query first. Phase 1 asks
   the EULA before anything installs; a decline on a fresh install stops with no
   checkpoint. Phase 2 sets the platform's EULA variable (`SENZING_ACCEPT_EULA`,
   or `HOMEBREW_SENZING_ACCEPT_EULA` with a lowercase value) and installs. Docker
@@ -8889,7 +8889,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6683 test methods in 391 files, matching `inventory.test_count_total`.
+There are 6701 test methods in 391 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -9157,7 +9157,7 @@ looks wrong.
 - `tests/test_post_yes_switch_reads_the_dial.py`: 19
 - `tests/test_predictions_before_results.py`: 24
 - `tests/test_preparation_recap_template.py`: 9
-- `tests/test_prescribed_search_queries.py`: 25
+- `tests/test_prescribed_search_queries.py`: 43
 - `tests/test_profile_report_relocation_covers_both_filenames.py`: 15
 - `tests/test_project_local_visualization_finds_its_d3.py`: 8
 - `tests/test_project_readme_is_created.py`: 13
@@ -10618,6 +10618,14 @@ Senzing licensing, with no SPDX identifier.
   the DDL out of the SDK container into `database/` on that route (the route
   Windows users take ran bash-only commands with no disclosure, and the schema
   step read `/opt/senzing` on a host that has none)
+- #513: inline `search_docs` routes in Modules 2, 3, 5 and 6 name a query
+  measured on the current index with its section, band and stamp, a route used
+  at several sites is stated once and the others point at it, and
+  `tests/test_prescribed_search_queries.py` keys `VERIFIED_QUERIES` on
+  `(query, category)`, drops `Feature: REL_ANCHOR` from the MATCH_KEY record,
+  rejects a `category=` with no `query=` and follows each route pointer (the
+  sites cited queries never measured, targets below rank 3 or no query at all,
+  and the guard keyed on query text alone could not tell categories apart)
 - #515: every test that walks the repository from its root or `.claude/` takes
   its files from `tests/_corpus.py`'s `corpus_files()` (`git ls-files -z
   --cached --others --exclude-standard`, existing files only, Claude Code's

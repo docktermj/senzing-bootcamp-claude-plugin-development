@@ -712,8 +712,10 @@ name is provided"*, and its `NAME` rule reads *"Prefer parsed person names
 (`NAME_FIRST`/`NAME_LAST`/…) when available; use `NAME_ORG` for organizations; use `NAME_FULL` only
 when the type is unknown or only a single field exists"*
 (`search_docs(query='NAME_FULL NAME_ORG parsed person name single field', category='data_mapping')` →
-*Name > Feature: NAME*, top hit; server 1.32.9, 2026-08-17, query re-verified on
-1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-04). "When available" means **the source provides
+*Name > Feature: NAME*, top hit, on target; server 1.32.9, 2026-08-17, query re-verified on
+1.37.27, docs index 2026-10-11 18:43 UTC, 2026-10-12). This is the canonical statement of the
+*Feature: NAME* route, and Phase 1's type/name check points here for it rather than restating it
+(INV-300). "When available" means **the source provides
 separate fields** — so one `full_name` column is a direct mapping to `NAME_FULL`, and a
 `"Last, First"` column is too, however parseable it looks.
 
@@ -1133,11 +1135,15 @@ no MCP server version, so every bootcamper is on the current server and this is 
    category='data_mapping')` at the time you map it — `query` is the tool's only required
    parameter, so a bare category is not a callable form, and naming the vocabulary is what makes
    the check re-runnable (INV-212). Swap the query for the attribute you are actually confirming.
-   For
-   the relationship keys, the specification's JSON examples show string values (`"ORG1001"`,
-   `"ACME-1001"`) while its `REL_ANCHOR_KEY` row shows a bare `1001` in the Example column, so it
-   does not mandate a type (re-verified with the query above on 1.37.19, docs index 2026-10-02
-   18:46 UTC, 2026-10-04, in *Feature: REL_ANCHOR*). Neither emission is made correct or incorrect by what the
+   For the relationship keys, this query is the bootcamp's relationship-key route: it returns the
+   Entity Specification's *Feature: REL_POINTER* first, then *Disclosed relationship mapping
+   guidance*, then *Feature: REL_ANCHOR*, so read past the first hit to the third for anything
+   `REL_ANCHOR` says (on target below an adjacent top hit; server 1.37.27, docs index 2026-10-11
+   18:43 UTC, 2026-10-12). This is the canonical statement of that route: the other sites that rely
+   on *Feature: REL_ANCHOR* or *Feature: REL_POINTER* point here rather than restating it
+   (INV-300). The specification's JSON examples show string values (`"ORG1001"`, `"ACME-1001"`)
+   while its `REL_ANCHOR_KEY` row shows a bare `1001` in the Example column of *Feature:
+   REL_ANCHOR*, so it does not mandate a type. Neither emission is made correct or incorrect by what the
    checker can see.
 3. **Record the exemption and its reason** in the source's mapping notes — which attribute, why the
    checker cannot harvest it (a boolean source value, a value derived from a field name, or a
@@ -1221,15 +1227,15 @@ against the resource list `download_resource` advertises. Mechanism, not a re-ru
 
    The Entity Specification defines all of them — its *Feature: REL_ANCHOR* and *Feature:
    REL_POINTER* sections give `REL_ANCHOR_DOMAIN`/`KEY` and `REL_POINTER_DOMAIN`/`KEY`/`ROLE` with
-   rules and worked examples (`search_docs`, server 1.32.3, docs index 2026-07-31 20:21 UTC) — so the
-   gate rejects scaffolding the specification prescribes.
+   rules and worked examples (both returned by the relationship-key route in "What to do" item 2
+   above, which says to read past its first hit for *Feature: REL_ANCHOR*) — so the gate rejects
+   scaffolding the specification prescribes.
 
    When you choose the `REL_ANCHOR_DOMAIN` and `REL_POINTER_DOMAIN` values, use codes without dashes.
    The Entity Specification's *Feature: REL_ANCHOR* defines the domain as *"a code (without dashes)"*
    and gives the rule *"Use a domain code without dashes to avoid confusion in downstream match key
-   parsing."* — its *Feature: REL_POINTER* refers `REL_POINTER_DOMAIN` back to that definition
-   (`search_docs(query='MATCH_KEY disclosed relationship REL_POINTER role in match key')`, server
-   1.37.13, docs index 2026-09-24 18:45 UTC).
+   parsing."* — its *Feature: REL_POINTER* refers `REL_POINTER_DOMAIN` back to that definition (the
+   same relationship-key route, item 2 above, where *Feature: REL_ANCHOR* is the third hit).
 3. **Neither script runs on a CSV source. CONFIRMED CURRENT — server 1.32.9, 2026-08-14.**
    `sz_verbatim_check.py` and `sz_routing_report.py` both
    define `load_jsonl(path)` as `json.loads(ln)` over the file's non-blank lines, with **no** CSV

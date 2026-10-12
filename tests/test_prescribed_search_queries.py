@@ -51,6 +51,26 @@ every shipped site of that query names at least one of them. The pinned lists (`
 query table and Module 1 Step 3's gallery) keep exact ranks under their own guards
 (`test_module_0_suggested_queries_are_measured.py`, `test_pattern_gallery_shortfall.py`).
 
+**#513 closed three gaps that let unmeasured routes through.** Measured on server 1.37.27, docs
+index 2026-10-11 18:43 UTC, 2026-10-12:
+
+- **Records are keyed on `(query, category)`.** Module 5 Phase 3 passed `"globalization"` with
+  `category="globalization"`, and the guard matched it to the record for the bare term, whose band
+  is `OFF TARGET BY DESIGN`, so its positive use was never checked.
+- **A record's `sections` names only what its band supports.** The MATCH_KEY record listed
+  `Feature: REL_ANCHOR`, which it returns fourth, so a site citing that query for the no-dashes
+  rule passed. A target below rank 3 is not a route.
+- **A `search_docs` mention that passes `category=` and names no `query=` fails**, in prose as well
+  as in a call: Module 2 said "call `search_docs` with `category='anti_patterns'`", which
+  `test_search_docs_calls_pass_a_query.py` cannot see because it reads only `search_docs(` calls.
+
+**A route used at more than one site is stated once, and the other sites point at it (INV-300).**
+A pointing site says the route "is stated once, in `<file>` → \"<heading or bold lead>\"". The
+guard follows the pointer, takes the measured routes in the section it lands on, and checks the
+pointing site against their records: it must name a section one of them returns. A pointer that
+lands nowhere, or on a section with no measured route, fails. The read-past obligation stays with
+the canonical site, which INV-291 binds; a pointer is outside INV-291's scope by its own text.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -88,8 +108,11 @@ DOCS_INDEX_FORMAT = "%Y-%m-%d %H:%M UTC"
 # vouch for a second claim that no longer holds (the hardware-sizing and Identifiers records say
 # which); the ledger entry for #417 drafts their follow-ups.
 
-#: query -> a record of what the query returned, so the verification is re-checkable and not
-#: just asserted. "Verified" means EXECUTED and its result written down — not "ideal". Where a
+#: (query, category) -> a record of what the query returned, so the verification is re-checkable
+#: and not just asserted. The category is the `category=` the call passes, or None for a call
+#: that passes none (#513): `category` boosts rather than filters, so the same words under two
+#: categories are two measurements, and keying on the words alone matched a filtered call to an
+#: unfiltered call's record. "Verified" means EXECUTED and its result written down — not "ideal". Where a
 #: phrasing lands on adjacent rather than on-target material that is said so explicitly, because
 #: an allowlist that quietly upgrades "I ran it" into "it is good" is the same laundering this
 #: guard exists to stop.
@@ -97,7 +120,7 @@ VERIFIED_QUERIES = {
     # ---------------------------------------------------------------------------------
     # Executed 2026-09-30 on server 1.37.16 (docs index 2026-09-29 22:00 UTC) for #289, Module 6
     # Phase D's per-binding flag-availability route. ⚠️ Record the PROPERTY, not ranks or scores.
-    "senzing.szengineflags SzEngineFlags SZ_EXPORT_DEFAULT_FLAGS": {
+    ("senzing.szengineflags SzEngineFlags SZ_EXPORT_DEFAULT_FLAGS", None): {
         "band": "ON TARGET",
         "sections": ("szengineflags", "SzEngineFlags"),
         "returned":
@@ -117,7 +140,7 @@ VERIFIED_QUERIES = {
     # 2026-09-29 22:00 UTC) for #320, which made the C# query step 1 of the fallback after
     # `sdk_guide(..., language='csharp')`: same property. ⚠️ Record the PROPERTY, not ranks or
     # scores.
-    "Java SDK sz-sdk.jar Maven Usage local Maven repository": {
+    ("Java SDK sz-sdk.jar Maven Usage local Maven repository", None): {
         "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
         "sections": ("Maven Usage", "Installation in Local Maven Repository"),
         "returned":
@@ -129,7 +152,7 @@ VERIFIED_QUERIES = {
             "Phase 3 names both sections, so the reader reads past the first hit",
         "server": "1.37.16", "docs_index": "2026-09-29 22:00 UTC", "measured": "2026-09-30",
     },
-    "C# .NET SDK Senzing.Sdk NuGet package": {
+    ("C# .NET SDK Senzing.Sdk NuGet package", None): {
         "band": "ON TARGET",
         "sections": ("Senzing.Sdk for C#",),
         "returned":
@@ -146,7 +169,7 @@ VERIFIED_QUERIES = {
     # Step 1b's update path and Step 2's preview-status relay. The first two are the update
     # commands' route; the third is the point-release notes' route, and the three after it are
     # evidence slots of MCP-NEGATIVE markers. ⚠️ Record the PROPERTY, not ranks or scores.
-    "homebrew-senzingsdk upgrade cask brew upgrade senzingsdk": {
+    ("homebrew-senzingsdk upgrade cask brew upgrade senzingsdk", None): {
         "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
         "sections": ("Upgrade",),
         "returned":
@@ -156,7 +179,7 @@ VERIFIED_QUERIES = {
             "'Preview Release — Unsupported' warning. Step 1b says to read past the first result",
         "server": "1.37.14", "docs_index": "2026-09-28 03:23 UTC", "measured": "2026-09-28",
     },
-    "scoop-senzingsdk update scoop update senzingsdk": {
+    ("scoop-senzingsdk update scoop update senzingsdk", None): {
         "band": "ON TARGET",
         "sections": ("Update", "Preview Release — Unsupported"),
         "returned":
@@ -165,7 +188,8 @@ VERIFIED_QUERIES = {
             "senzingsdk). Used at two call sites: Step 1b's update command and Step 2's preview relay",
         "server": "1.37.14", "docs_index": "2026-09-28 03:23 UTC", "measured": "2026-09-28",
     },
-    "upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change required migration action required": {
+    ("upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change required migration action required",
+     "release_notes"): {
         "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
         "sections": ("Migration & Action Required",),
         "returned":
@@ -179,7 +203,8 @@ VERIFIED_QUERIES = {
     },
     # Executed 2026-09-28 on server 1.37.15 (docs index 2026-09-28 23:38 UTC) for #222: the
     # citation for Step 1b's migration tools, named by the V4 version doing the migration.
-    "sz_dbtool upgrade sz_dbupgrade sz_configupgrade replaced 4.4.0 native command-line tools": {
+    ("sz_dbtool upgrade sz_dbupgrade sz_configupgrade replaced 4.4.0 native command-line tools",
+     "release_notes"): {
         "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
         "sections": ("Command-line Tools & SDKs",),
         "returned":
@@ -191,7 +216,7 @@ VERIFIED_QUERIES = {
             "the same table. It is a citation, not a query the guide runs",
         "server": "1.37.15", "docs_index": "2026-09-28 23:38 UTC", "measured": "2026-09-28",
     },
-    "homebrew-senzingsdk preview release unsupported tap install cask": {
+    ("homebrew-senzingsdk preview release unsupported tap install cask", None): {
         "band": "ON TARGET",
         "sections": ("Preview Release — Unsupported",),
         "returned":
@@ -200,7 +225,7 @@ VERIFIED_QUERIES = {
             "not supported')",
         "server": "1.37.14", "docs_index": "2026-09-28 03:23 UTC", "measured": "2026-09-28",
     },
-    "brew outdated brew info senzingsdk installed version check": {
+    ("brew outdated brew info senzingsdk installed version check", None): {
         "band": "OFF TARGET BY DESIGN",
         "sections": (),
         "returned":
@@ -209,7 +234,7 @@ VERIFIED_QUERIES = {
             "quickstart for it, and no brew outdated or brew info usage",
         "server": "1.37.14", "docs_index": "2026-09-28 03:23 UTC", "measured": "2026-09-28",
     },
-    "scoop status scoop info senzingsdk installed version check": {
+    ("scoop status scoop info senzingsdk installed version check", None): {
         "band": "OFF TARGET BY DESIGN",
         "sections": (),
         "returned":
@@ -224,7 +249,8 @@ VERIFIED_QUERIES = {
     # type/name check in Module 5 Phase 1 Step 6. The first backs the "keep" option's cost;
     # the second backs the absence the suffix list's heuristic label rests on, and its
     # emptiness of a suffix list is the evidence.
-    "RECORD_TYPE PERSON ORGANIZATION prevent records of different types from resolving": {
+    ("RECORD_TYPE PERSON ORGANIZATION prevent records of different types from resolving",
+     "data_mapping"): {
         "band": "ON TARGET",
         "sections": ("Feature: RECORD_TYPE",),
         "returned":
@@ -234,35 +260,46 @@ VERIFIED_QUERIES = {
             "whose RECORD_TYPE row reads 'Include when known to prevent cross-type resolution'",
         "server": "1.37.14", "docs_index": "2026-09-28 03:23 UTC", "measured": "2026-09-28",
     },
-    "organization name suffix tokens LLC LTD INC person or organization name classification": {
+    # Re-executed for #513 on server 1.37.27, docs index 2026-10-11 18:43 UTC, 2026-10-12, at the
+    # default max_results. The 2026-09-28 record put 'Feature: NAME' second and three libpostal
+    # scripts below it; neither holds, so it was replaced, not re-dated. Phase 1 Step 6's
+    # retype-rule line used to cite this query for 'Feature: NAME' positively, which the band
+    # never supported; it now points at Module 5 step 11's NAME route instead.
+    ("organization name suffix tokens LLC LTD INC person or organization name classification",
+     None): {
         "band": "EMPTY OF A SUFFIX LIST",
         "sections": (),
         "returned":
-            "EMPTY OF A SUFFIX LIST, WHICH IS THE POINT. #1 is an FAQ on non-person entities "
-            "(89.1). #2 is Senzing Entity Specification 'Feature: NAME' (56.0), whose rules read "
-            "'use NAME_ORG for organizations' and 'do not mix NAME_ORG with parsed person fields in "
-            "the same object' -- the name rule the retype applies. #3-#5 are senzing/libpostal "
-            "tokenize and name-normalization scripts. No hit is a list of organization suffixes",
-        "server": "1.37.14", "docs_index": "2026-09-28 03:23 UTC", "measured": "2026-09-28",
+            "EMPTY OF A SUFFIX LIST, WHICH IS THE POINT. The set opens with FAQs (product and other "
+            "non-person entity matching; sending a search name as both NAME_FULL and NAME_ORG; not "
+            "splitting a single full-name field) and the MCP server article 'Adding Non-Person "
+            "Entity Types to Senzing'; the Entity Specification's 'Name > Feature: NAME' comes only "
+            "after those four, so this query is not that section's route. The rest is an error "
+            "code, the v4.4.0 release notes' 'Organization names' matching changes and unrelated "
+            "code files. No hit is a list of organization suffixes",
+        "server": "1.37.27", "docs_index": "2026-10-11 18:43 UTC", "measured": "2026-10-12",
     },
 
     # ---------------------------------------------------------------------------------
     # Executed 2026-09-26 on server 1.37.13 (docs index 2026-09-24 18:45 UTC) for #160, the
     # match-key tokenizing rule in Phase D step 2 and Module 5's no-dashes domain line. The
     # same phrasing is the one the issue's refinement recorded.
-    "MATCH_KEY disclosed relationship REL_POINTER role in match key": {
+    # Re-executed for #513 on server 1.37.27, docs index 2026-10-11 18:43 UTC, 2026-10-12, at the
+    # default max_results: the same order. 'Feature: REL_ANCHOR' is fourth, and a target below
+    # rank 3 is not a route (INV-291), so it is no longer in `sections` and no site cites this
+    # query for it. The dash rule's sites point at the relationship-key route below instead.
+    ("MATCH_KEY disclosed relationship REL_POINTER role in match key", None): {
         "band": "ON TARGET",
-        "sections": ("MATCH_KEY / WHY_KEY Direction Notation for Disclosed Relationships",
-                     "Feature: REL_POINTER", "Feature: REL_ANCHOR"),
+        "sections": ("MATCH_KEY / WHY_KEY Direction Notation for Disclosed Relationships",),
         "returned":
-            "ON TARGET. #1 is the Senzing MCP server article 'MATCH_KEY / WHY_KEY Direction "
-            "Notation for Disclosed Relationships' (278.1), defining the (ROLE:), (:ROLE) and "
-            "(ROLE:ROLE) forms; its source is local:// and it is cited by title. #2 is Senzing "
-            "Entity Specification 'Feature: REL_POINTER' (259.3), whose REL_POINTER_DOMAIN row "
-            "reads 'See REL_ANCHOR_DOMAIN above'. #4 is 'Feature: REL_ANCHOR' (179.5), carrying "
-            "'a code (without dashes)' and 'Use a domain code without dashes to avoid confusion in "
-            "downstream match key parsing.' Used at two call sites",
-        "server": "1.37.13", "docs_index": "2026-09-24 18:45 UTC", "measured": "2026-09-26",
+            "ON TARGET. The top hit is the Senzing MCP server article 'MATCH_KEY / WHY_KEY "
+            "Direction Notation for Disclosed Relationships', defining the (ROLE:), (:ROLE) and "
+            "(ROLE:ROLE) forms; its source is local:// and it is cited by title. Then the Entity "
+            "Specification's 'Feature: REL_POINTER' and 'Disclosed relationship mapping guidance', "
+            "and only then 'Feature: REL_ANCHOR', which carries the no-dashes rule: fourth, so "
+            "this query is not that rule's route. Used at one call site, Phase D step 2, for the "
+            "article",
+        "server": "1.37.27", "docs_index": "2026-10-11 18:43 UTC", "measured": "2026-10-12",
     },
 
     # ---------------------------------------------------------------------------------
@@ -275,7 +312,7 @@ VERIFIED_QUERIES = {
     # 2026-09-02 record had no docs index): still no hit names the message. The record below
     # replaces the 2026-09-02 one, which ranked the advisory-locking article #1 (86.7) and
     # 'Scaling Out Your Database With Clustering' #2 (76.4).
-    "resolved entity is out of sync expected got concurrent loading SQLite lock": {
+    ("resolved entity is out of sync expected got concurrent loading SQLite lock", None): {
         "band": "EMPTY OF THE TARGET",
         "sections": (),
         "returned":
@@ -302,7 +339,8 @@ VERIFIED_QUERIES = {
     # 2026-08-28 record had no docs index), with category='data_mapping' as both sites pass it:
     # the same two sections in the same order. The 2026-08-28 record called it ON TARGET; the
     # load-bearing section is the second hit, so its band is the read-past one.
-    "entity specification attribute names feature tables NAME_ORG ADDR_LINE1 PHONE_NUMBER": {
+    ("entity specification attribute names feature tables NAME_ORG ADDR_LINE1 PHONE_NUMBER",
+     "data_mapping"): {
         "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
         "sections": ("Name > Feature: NAME", "Feature: NAME",
                      "Entities, features and attributes"),
@@ -326,7 +364,7 @@ VERIFIED_QUERIES = {
     # was chosen by executing it and reading the result, not by paraphrasing the destination.
 # Re-executed for #417 (stamp above VERIFIED_QUERIES): every one still returns its recorded
 # section at rank 1, except that the REL_ANCHOR_KEY query's first two sections swapped places.
-    "community wrapper not the official SDK package registry": {
+    ("community wrapper not the official SDK package registry", "anti_patterns"): {
         "band": "ON TARGET",
         "sections": ("Senzing Anti-Patterns: Ecosystem and Dependencies",),
         "returned":
@@ -342,7 +380,11 @@ VERIFIED_QUERIES = {
             "so the vocabulary that works names the PACKAGING concern, not the language",
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
-    "NAME_FULL NAME_ORG parsed person name single field": {
+    # Re-executed for #513 on server 1.37.27, docs index 2026-10-11 18:43 UTC, 2026-10-12, at the
+    # default max_results: the same top three, with two FAQs carrying a higher relevance_score
+    # returned after them (the category boosts rather than filters). Phase 1 Step 6's retype
+    # rule now reaches this route by pointing at Module 5 step 11, its canonical statement.
+    ("NAME_FULL NAME_ORG parsed person name single field", "data_mapping"): {
         "band": "ON TARGET",
         "sections": ("Name > Feature: NAME", "Feature: NAME"),
         "returned":
@@ -351,23 +393,31 @@ VERIFIED_QUERIES = {
             "org) is unknown or only a full name is provided', and the Rules line 'Prefer parsed "
             "person names ... use NAME_FULL only when the type is unknown or only a single field "
             "exists'. Then 'Entities, features and attributes' and 'Identifiers > Feature: "
-            "LEI_NUMBER'. Used at three call sites",
-        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
+            "LEI_NUMBER'. Used at three call sites, and Phase 1 Step 6 points at step 11's",
+        "server": "1.37.27", "docs_index": "2026-10-11 18:43 UTC", "measured": "2026-10-12",
     },
-    "REL_ANCHOR_KEY REL_POINTER disclosed relationship keys": {
-        "band": "ON TARGET",
+    # Re-executed for #513 on server 1.37.27, docs index 2026-10-11 18:43 UTC, 2026-10-12, at the
+    # default max_results: the same top three in the same order. The 2026-10-04 record called it
+    # ON TARGET, but every site relies on 'Feature: REL_ANCHOR' (the REL_ANCHOR_KEY row, the
+    # no-dashes rule), which is third, so its band is the read-past one (INV-291). Module 5 step
+    # 11 states the route once; Module 4, Module 5's later step 11 lines and Phase D point at it.
+    ("REL_ANCHOR_KEY REL_POINTER disclosed relationship keys", "data_mapping"): {
+        "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
         "sections": ("Disclosed relationship mapping guidance", "Feature: REL_POINTER",
                      "Feature: REL_ANCHOR"),
         "returned":
-            "ON TARGET: Senzing Entity Specification -> 'Feature: REL_POINTER' first, then "
-            "'Disclosed relationship mapping guidance' and 'Feature: REL_ANCHOR', still the top "
-            "three (the 2026-08-23 record had the guidance section first). Together these carry "
-            "the string-valued JSON examples (\"ORG1001\", \"ACME-1001\") AND the REL_ANCHOR_KEY "
-            "row's bare example value 1001 -- both halves of the does-not-mandate-a-type claim "
-            "the mapping sites make. Used at two call sites",
-        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
+            "ON TARGET BELOW AN ADJACENT TOP HIT: Senzing Entity Specification -> 'Feature: "
+            "REL_POINTER' first, then 'Disclosed relationship mapping guidance', then 'Feature: "
+            "REL_ANCHOR', which carries the REL_ANCHOR_KEY row's bare example value 1001, the "
+            "domain as 'a code (without dashes)' and the rule 'Use a domain code without dashes to "
+            "avoid confusion in downstream match key parsing.' The MCP server's direction-notation "
+            "article is fourth. Together the three carry the string-valued JSON examples "
+            "(\"ORG1001\", \"ACME-1001\") AND the bare 1001 -- both halves of the "
+            "does-not-mandate-a-type claim -- and the no-dashes rule. The canonical site says to "
+            "read past the first hit",
+        "server": "1.37.27", "docs_index": "2026-10-11 18:43 UTC", "measured": "2026-10-12",
     },
-    "usage type distinguishes multiple instances payload optional attributes": {
+    ("usage type distinguishes multiple instances payload optional attributes", "data_mapping"): {
         "band": "ON TARGET",
         "sections": ("Usage types and payload (optional attributes)",),
         "returned":
@@ -380,7 +430,7 @@ VERIFIED_QUERIES = {
     # Re-executed for #440 on the same index (1.37.19, docs index 2026-10-02 18:46 UTC,
     # 2026-10-04): same top three, so the stamp is not re-dated. Phase 1 Step 6's sentence was
     # corrected to match the specification and its prose stamp re-dated (see the NOTE).
-    "Identifiers NATIONAL_ID PASSPORT TAX_ID TRUSTED_ID feature group": {
+    ("Identifiers NATIONAL_ID PASSPORT TAX_ID TRUSTED_ID feature group", "data_mapping"): {
         "band": "ON TARGET",
         "sections": ("Identifiers > Feature: TAX_ID", "Identifiers > Feature: NATIONAL_ID"),
         "returned":
@@ -396,7 +446,7 @@ VERIFIED_QUERIES = {
             "filed under its own Trusted ID heading, and to re-date its prose stamp",
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
-    "ACCOUNT_NUMBER ACCOUNT_DOMAIN account feature": {
+    ("ACCOUNT_NUMBER ACCOUNT_DOMAIN account feature", "data_mapping"): {
         "band": "ON TARGET",
         "sections": ("Feature: ACCOUNT",),
         "returned":
@@ -405,7 +455,7 @@ VERIFIED_QUERIES = {
             "site quotes",
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
-    "recommended JSON schema FEATURES list multiple values sub-list": {
+    ("recommended JSON schema FEATURES list multiple values sub-list", "data_mapping"): {
         "band": "ON TARGET",
         "sections": ("Recommended JSON schema",),
         "returned":
@@ -428,7 +478,8 @@ VERIFIED_QUERIES = {
     # Re-executed for #383 on server 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-02, with
     # category='data_mapping' (its record read "ADJACENT, AND DELIBERATELY SO", outside the band
     # set): the same three specification sections, and still no precedence.
-    "payload attribute versus registered feature attribute record root extracted as feature precedence": {
+    ("payload attribute versus registered feature attribute record root extracted as feature precedence",
+     "data_mapping"): {
         "band": "EMPTY OF THE PRECEDENCE RULE",
         "sections": (),
         "returned":
@@ -453,7 +504,7 @@ VERIFIED_QUERIES = {
     # read: Configuration and Initialization (12.6), then Architecture and Performance (12.0),
     # with a Rust code example (35.4) the filter did not exclude. That example is gone: the call
     # now returns four anti-pattern articles ("Returned 4 of 10 results").
-    "loading": {
+    ("loading", "anti_patterns"): {
         "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
         "sections": ("Senzing Anti-Patterns: Architecture and Performance",
                      "Do Not Use SQLite in Production", "Do Not Use Single-Threaded Loading",
@@ -476,7 +527,7 @@ VERIFIED_QUERIES = {
     # The six below were measured on server 1.32.9, docs index 2026-08-11 20:52 UTC, on
     # 2026-08-12 (fdbc922): the stamp the module-level VERIFIED_ON recorded for them. #383
     # re-executed two of them; #417 re-executed the other four, with the same sections returned.
-    "entity resolution business value": {
+    ("entity resolution business value", None): {
         "band": "ON TARGET",
         "sections": ("Five Primary Business Use Cases", "Why Agentic Entity Resolution Matters"),
         "returned":
@@ -491,7 +542,7 @@ VERIFIED_QUERIES = {
             "chains_tsv.py script first, above the real material, as Step 14 says",
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
-    "what features to map": {
+    ("what features to map", "data_mapping"): {
         "band": "ON TARGET",
         "sections": ("What features to map",),
         "returned":
@@ -507,7 +558,7 @@ VERIFIED_QUERIES = {
     # Re-executed for #383 on server 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-02: the
     # 2026-08-12 record, "ON TARGET: Senzing Engine Configuration (exact page)", named a page
     # and no section.
-    "Senzing engine configuration PostgreSQL connection": {
+    ("Senzing engine configuration PostgreSQL connection", None): {
         "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
         "sections": ("SQL > CONNECTION",),
         "returned":
@@ -524,7 +575,7 @@ VERIFIED_QUERIES = {
     # index 2026-10-02 18:46 UTC, 2026-10-02, with category='anti_patterns' as the site passes
     # it, before naming the section at the site: the Database Setup page is no longer in the
     # set, so the 2026-08-12 record was replaced, not re-dated.
-    "PostgreSQL schema DDL initialization": {
+    ("PostgreSQL schema DDL initialization", "anti_patterns"): {
         "band": "ON TARGET",
         "sections": ("PostgreSQL Schema Is NOT Auto-Created by the SDK",),
         "returned":
@@ -537,7 +588,7 @@ VERIFIED_QUERIES = {
             "and Runtime' articles",
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-02",
     },
-    "CORD datasets: names, contents, and availability for entity resolution scenarios": {
+    ("CORD datasets: names, contents, and availability for entity resolution scenarios", None): {
         "band": "ON TARGET",
         "sections": ("What Is a CORD?",),
         "returned":
@@ -545,7 +596,7 @@ VERIFIED_QUERIES = {
             "name renders in bold); the same page's 'Moscow CORD' section is in the set below it",
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
-    "temporary evaluation license for a dataset larger than the default limit": {
+    ("temporary evaluation license for a dataset larger than the default limit", None): {
         "band": "ON TARGET",
         "sections": ("Senzing Non-Production License",),
         "returned":
@@ -560,7 +611,7 @@ VERIFIED_QUERIES = {
     # Re-executed for #439 on the same index (1.37.19, docs index 2026-10-02 18:46 UTC,
     # 2026-10-04): the FAQ is still rank 1 for both phrasings, so the stamp is not re-dated, and
     # Step 8b's warning was replaced by a rule that cites no measurement (see the NOTE).
-    "hardware sizing capacity planning": {
+    ("hardware sizing capacity planning", None): {
         "band": "ON TARGET",
         "sections": ("Hardware Sizing FAQ",),
         "returned":
@@ -588,7 +639,7 @@ VERIFIED_QUERIES = {
     # migration material (server 1.37.13, 2026-09-24). Nothing scans this file for that shape.
     # Re-executed for #194 on server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28: the
     # marker it backs is now a ROUTING negative, and this phrasing is its missing half.
-    "upgrade Senzing SDK 4.3 to 4.4 procedure": {
+    ("upgrade Senzing SDK 4.3 to 4.4 procedure", None): {
         "band": "OFF TARGET BY DESIGN",
         "sections": (),
         "returned":
@@ -606,7 +657,7 @@ VERIFIED_QUERIES = {
     # figure"; the rebuilt index added an FAQ that states the figure outright, so the set now
     # answers it and only the ranking keeps it off target. That record was replaced, not
     # re-dated. ⚠️ Record the ranking property, not ranks or scores: they move on a rebuild.
-    "evaluation license record limit how many records without a license": {
+    ("evaluation license record limit how many records without a license", None): {
         "band": "OFF TARGET BY DESIGN",
         "sections": (),
         "returned":
@@ -626,20 +677,24 @@ VERIFIED_QUERIES = {
     # 1.32.9, docs indexed 2026-08-11 20:52 UTC, on 2026-08-13; "globalization" was re-executed
     # for #149 (below), and the other three for #417, in the same measurement as the four
     # "Section to ask for" rows of Module 5's table, which the two prose stamps there vouch for.
-    "UTF-8 encoding non-Latin character support multi-language data quality": {
+    # Re-executed for #513 on server 1.37.27, docs index 2026-10-11 18:43 UTC, 2026-10-12, at the
+    # default max_results: the same three Guide rows first. Phase 3's encoding line now reaches
+    # this route by pointing at Module 5's SKILL.md instead of passing the bare term with the
+    # filter, whose call the guard had matched to the bare term's OFF TARGET record below.
+    ("UTF-8 encoding non-Latin character support multi-language data quality", "globalization"): {
         "band": "ON TARGET",
         "sections": ("What languages does Senzing support?",),
         "returned":
             "ON TARGET with category='globalization': Senzing Globalization Guide -> 'What "
             "languages does Senzing support?', which states the UTF-8 and cross-script answer "
             "outright, then 'Advanced personal name comparisons > Supported cultural groups' and "
-            "'... > Additional Cultural Support'. ⚠️ category='code_example' rows (libpostal "
-            "encoding.py, a Rust FFI guide) carry a HIGHER relevance_score but are returned AFTER "
-            "the on-topic rows -- the filter promotes rather than restricts, so never rank this "
-            "set by score",
-        "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
+            "'... > Additional Cultural Support'. ⚠️ Rows of other categories (a Rust FFI guide's "
+            "encoding notes, a data-providers page) carry a HIGHER relevance_score but are "
+            "returned AFTER the on-topic rows -- the filter promotes rather than restricts, so "
+            "never rank this set by score",
+        "server": "1.37.27", "docs_index": "2026-10-11 18:43 UTC", "measured": "2026-10-12",
     },
-    "data quality practices multi-language non-Latin": {
+    ("data quality practices multi-language non-Latin", "globalization"): {
         "band": "ON TARGET",
         "sections": ("CJK+English cross-script matching",),
         "returned":
@@ -655,7 +710,13 @@ VERIFIED_QUERIES = {
     # Guide hit was a bare title with no prose; the rebuilt index returns Guide sections with
     # prose, so that record was replaced rather than re-dated. ⚠️ Record the PROPERTY, not the
     # ranks: a rank order is what went stale here, and the next rebuild can move it again.
-    "globalization": {
+    # Keyed with no category since #513, the form its sites quote. Phase 3's encoding line passed
+    # the same term WITH category='globalization' and was matched to this negative record, so its
+    # positive use was never checked. Re-asked for #513 both ways on server 1.37.27, docs index
+    # 2026-10-11 18:43 UTC, 2026-10-12: each returns Guide sections plus the Global* matches, and
+    # neither returns the 'What languages' section. Not re-dated, because Module 5's prose stamp
+    # for this paragraph vouches for the 2026-09-26 measurement.
+    ("globalization", None): {
         "band": "OFF TARGET BY DESIGN",
         "sections": (),
         "returned":
@@ -669,7 +730,7 @@ VERIFIED_QUERIES = {
             "2026-09-26)",
         "server": "1.37.13", "docs_index": "2026-09-24 18:45 UTC", "measured": "2026-09-26",
     },
-    "multi-language data quality best practices": {
+    ("multi-language data quality best practices", None): {
         "band": "OFF TARGET BY DESIGN",
         "sections": (),
         "returned":
@@ -684,7 +745,7 @@ VERIFIED_QUERIES = {
             "scoring ~89 against the Guide's ~9–13",
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-04",
     },
-    "szBuildVersion.json build version file location": {
+    ("szBuildVersion.json build version file location", None): {
         "band": "OFF TARGET BY DESIGN",
         "sections": (),
         "returned":
@@ -701,7 +762,7 @@ VERIFIED_QUERIES = {
     # marker as the corpus route asked for a meaning of the flag. Re-executed for #154 on the
     # same server and index, 2026-09-27, with the same result: Phase D's How-state audit quotes
     # it in its own MCP-NEGATIVE marker.
-    "NEED_REEVALUATION how entity final state": {
+    ("NEED_REEVALUATION how entity final state", None): {
         "band": "OFF TARGET BY DESIGN",
         "sections": (),
         "returned":
@@ -718,7 +779,7 @@ VERIFIED_QUERIES = {
     # ⚠️ Record the PROPERTY, not ranks or scores: they move on a rebuild.
     # Re-executed for #383 on server 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-02 (its
     # record read "ADJACENT, NOT ON TARGET", outside the band set): the same material.
-    "reevaluate entity when to call reevaluation needed": {
+    ("reevaluate entity when to call reevaluation needed", None): {
         "band": "EMPTY OF A NEED_REEVALUATION TIE",
         "sections": (),
         "returned":
@@ -735,7 +796,7 @@ VERIFIED_QUERIES = {
     # `query="…"`. Both executed for #383 on server 1.37.19, docs index 2026-10-02 18:46 UTC,
     # 2026-10-02, at the default max_results.
     # Module 6 Phase B's redo-drain step tells the guide to confirm the anti-pattern through it.
-    "redo": {
+    ("redo", "anti_patterns"): {
         "band": "ON TARGET",
         "sections": ("Do Not Use count_redo_records() as a Loop Condition",),
         "returned":
@@ -749,7 +810,7 @@ VERIFIED_QUERIES = {
     },
     # The onboarding preface quotes it as the probe NOT to use; the claim it carries is that it
     # returns a multi-page FAQ article rather than a cheap reachability answer.
-    "health check": {
+    ("health check", None): {
         "band": "OFF TARGET BY DESIGN",
         "sections": (),
         "returned":
@@ -766,7 +827,7 @@ VERIFIED_QUERIES = {
     # Executed for #392 on server 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-02, at the
     # default max_results. Module 6 Phase B's quality_iteration receiving branch cites it for the
     # record-key replacement that lets a reload skip deleting the records whose IDs survived.
-    "Data Source Records DSRs Explained same DATA_SOURCE RECORD_ID replaces": {
+    ("Data Source Records DSRs Explained same DATA_SOURCE RECORD_ID replaces", None): {
         "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
         "sections": ("Uniquely Identifying Records in Senzing",),
         "returned":
@@ -778,6 +839,42 @@ VERIFIED_QUERIES = {
             "> Event Sources'. The rest of the set is register_data_source code examples. The "
             "site says to read past the first hit",
         "server": "1.37.19", "docs_index": "2026-10-02 18:46 UTC", "measured": "2026-10-02",
+    },
+    # ---------------------------------------------------------------------------------
+    # The two below were executed for #513 on server 1.37.27, docs index 2026-10-11 18:43 UTC,
+    # 2026-10-12, at the default max_results. Each replaces a route that named no query: Module 2
+    # Step 3's "call search_docs with category='anti_patterns'" (a call a schema-respecting
+    # client cannot construct, INV-212), and Module 2 Step 8's SENZ2027 FAQ citation, stamped
+    # "search_docs, verified 2026-07-30". Module 2's Agent Behavior list and Module 3 Step 1a
+    # point at these two sites rather than restating them (INV-300).
+    ("install Senzing SDK installation pitfalls", "anti_patterns"): {
+        "band": "ON TARGET",
+        "sections": ("Senzing Anti-Patterns: Installing in Sandboxed or Restricted-Egress "
+                     "Environments",),
+        "returned":
+            "ON TARGET, with category='anti_patterns' (four results): the top hit is the MCP "
+            "server article 'Senzing Anti-Patterns: Installing in Sandboxed or Restricted-Egress "
+            "Environments' (unreachable package repositories and the MCP-hosted direct "
+            "downloads, PyPI bindings are not the runtime, vendor buckets, 'Do Not Hand-Code "
+            "Install Commands From Training Data', and the macOS SUPPORTPATH template trap). Then "
+            "'Database Initialization and Container Setup', 'Ecosystem and Dependencies' and "
+            "'Operations and Runtime'. The query names no platform, so it is one call on every "
+            "platform; the site says to read every article it returns",
+        "server": "1.37.27", "docs_index": "2026-10-11 18:43 UTC", "measured": "2026-10-12",
+    },
+    ("SENZ2027 Plugin initialization error GNR data files failed to load", None): {
+        "band": "ON TARGET",
+        "sections": ("I get SENZ2027 Plugin initialization error GNR data files failed to load",),
+        "returned":
+            "ON TARGET: the top hit is the FAQ 'I get SENZ2027 Plugin initialization error GNR "
+            "data files failed to load' ('You are missing the senzingsdk-runtime data directory. "
+            "The libraries are present but the GNR data files (in resources/data/) are not "
+            "deployed'), from the v4 hardware and software requirements page. The rest is "
+            "recipes and code-snippet loaders and the engine error-code entry for SENZ2027 "
+            "(EAS_ERR_PLUGIN_INIT). explain_error_code('SENZ2027') returns only generic "
+            "resolution steps, which is why Module 2 cites the FAQ. The #513 issue expected no "
+            "route to reach this FAQ at rank 3 or better; this one does, at rank 1",
+        "server": "1.37.27", "docs_index": "2026-10-11 18:43 UTC", "measured": "2026-10-12",
     },
     # "entity resolution quality evaluation" was listed here as OFF TARGET on 2026-08-12 and is
     # gone: Module 7 Step 3b no longer prescribes it. It returned the Buyer's Guide's
@@ -799,8 +896,40 @@ READ_PAST = re.compile(
 )
 
 #: Both quote styles (#383): a double-quoted literal was invisible to the single-quote form.
-QUERY_LITERAL = re.compile(r"""search_docs\(query=(?:'([^']*)'|"([^"]*)")""")
+#: The `category=` that follows the query, in either quote style and across a line wrap, is
+#: captured too (#513), because a record is keyed on `(query, category)`.
+QUERY_LITERAL = re.compile(
+    r"""search_docs\(query=(?:'([^']*)'|"([^"]*)")"""
+    r"""(?:\s*,\s*category=(?:'([^']*)'|"([^"]*)"))?""")
 HEADING = re.compile(r"(?m)^#{2,4} ")
+
+#: A `category=` argument with a value, and a `query=` argument, anywhere in a sentence (#513).
+#: The value is required so that prose about the parameter ("a bare `category=` is a call a
+#: client cannot construct") is not read as a call.
+CATEGORY_ARG = re.compile(r"""\bcategory\s*=\s*['"]""")
+QUERY_ARG = re.compile(r"\bquery\s*=")
+#: Where a sentence ends: a terminator before whitespace, a blank line, or a new list item.
+SENTENCE_BREAK = re.compile(r"[.!?](?=\s)|\n[ \t]*\n|\n[ \t]*(?:[-*+]|\d+[.)])[ \t]")
+#: The exemption `test_search_docs_calls_pass_a_query.py` reviews and caps: prose that names a
+#: category to describe what it indexes. Honored here on the same terms, so the two guards cannot
+#: disagree about one site.
+CATEGORY_PROSE_MARKER = "SEARCH-DOCS-CATEGORY-PROSE:"
+MARKER_LOOKBEHIND_LINES = 4
+
+#: A site that points at a route stated elsewhere (#513, INV-300):
+#: "… route … is stated once, in `<file>` → "<heading or bold lead>"". Read on text with
+#: emphasis removed and wraps collapsed, so a pointer wrapped across lines is still one pointer.
+ROUTE_POINTER = re.compile(
+    r"\broute\b[^.;]{0,160}?\bis stated once\b[^`]{0,80}?`(?P<path>[^`\s]+\.md)`"
+    r"\s*→\s*\"(?P<anchor>[^\"]+)\"")
+
+
+def call_text(key):
+    """How a record key reads as a call, for messages."""
+    query, category = key
+    if category is None:
+        return f"search_docs(query='{query}')"
+    return f"search_docs(query='{query}', category='{category}')"
 
 
 def shipped_markdown():
@@ -816,7 +945,10 @@ def sections(text):
 
 
 def queries_in(label, text):
-    """(label, query, enclosing section text) for every query literal in one document."""
+    """(label, (query, category), enclosing section text) for every query literal in a document.
+
+    `category` is None for a call that passes none.
+    """
     found = []
     spans = sections(text)
     for match in QUERY_LITERAL.finditer(text):
@@ -824,17 +956,18 @@ def queries_in(label, text):
             (text[a:b] for a, b in spans if a <= match.start() < b), text
         )
         literal = match.group(1) if match.group(1) is not None else match.group(2)
+        category = match.group(3) if match.group(3) is not None else match.group(4)
         # Whitespace-collapsed: a literal wrapped across source lines is still one
         # query. A line-based scan misses these entirely — three of the eight
         # prescribed queries in this corpus are wrapped, and all three were invisible
         # to the first version of this guard.
         query = re.sub(r"\s+", " ", literal).strip()
-        found.append((label, query, section))
+        found.append((label, (query, category), section))
     return found
 
 
 def prescribed_queries():
-    """(path, query, enclosing section text) for every prescribed query literal."""
+    """(path, (query, category), enclosing section text) for every prescribed query literal."""
     found = []
     for path in shipped_markdown():
         text = path.read_text(encoding="utf-8")
@@ -845,10 +978,131 @@ def prescribed_queries():
 def unaccounted(found, allowlist):
     """Query sites with no allowlist entry and no re-query rule in their section."""
     return [
-        f"{label}: search_docs(query='{query}')"
-        for label, query, section in found
-        if query not in allowlist and not REQUERY_RULE.search(section)
+        f"{label}: {call_text(key)}"
+        for label, key, section in found
+        if key not in allowlist and not REQUERY_RULE.search(section)
     ]
+
+
+def key_problems(key):
+    """A VERIFIED_QUERIES key that is not a (query, category-or-None) pair (#513)."""
+    if (isinstance(key, tuple) and len(key) == 2 and isinstance(key[0], str) and key[0]
+            and (key[1] is None or (isinstance(key[1], str) and key[1]))):
+        return []
+    return [f"VERIFIED_QUERIES key {key!r} is not a (query, category or None) pair, so a site "
+            f"cannot be matched to the category it passes (INV-291)"]
+
+
+def bare_category_mentions(label, text):
+    """Sentences that mention `search_docs`, pass a `category=` value and name no `query=`.
+
+    `query` is the tool's only required parameter, so such a mention prescribes a call a
+    schema-respecting client cannot construct, and names no vocabulary to re-run (INV-212).
+    """
+    breaks = [0]
+    for match in SENTENCE_BREAK.finditer(text):
+        breaks.append(match.end() if match.group(0)[0] in ".!?" else match.start())
+    breaks.append(len(text))
+    lines = text.split("\n")
+    problems, seen = [], set()
+    for match in re.finditer(r"search_docs", text):
+        start = max(b for b in breaks if b <= match.start())
+        end = min(b for b in breaks if b > match.start())
+        if start in seen:
+            continue
+        seen.add(start)
+        sentence = " ".join(text[start:end].split())
+        if not CATEGORY_ARG.search(sentence) or QUERY_ARG.search(sentence):
+            continue
+        line_no = text.count("\n", 0, match.start()) + 1
+        window = lines[max(0, line_no - 1 - MARKER_LOOKBEHIND_LINES):line_no]
+        if any(CATEGORY_PROSE_MARKER in line for line in window):
+            continue
+        problems.append(f"{label}:{line_no}: a search_docs mention passes category= and names "
+                        f"no query=: {sentence[:110]!r} (INV-212)")
+    return problems
+
+
+def pointer_text(text):
+    """Text as the pointer regex reads it: no blockquote markers or emphasis, wraps collapsed."""
+    text = re.sub(r"(?m)^\s*>\s?", "", text).replace("*", "")
+    return re.sub(r"\s+", " ", text.replace("“", "\"").replace("”", "\""))
+
+
+def route_pointers(label, text):
+    """(label, path, anchor, enclosing section text) for every route pointer in a document."""
+    found = []
+    for a, b in sections(text):
+        for match in ROUTE_POINTER.finditer(pointer_text(text[a:b])):
+            found.append((label, match.group("path"), match.group("anchor"), text[a:b]))
+    return found
+
+
+def owner_section(text, anchor):
+    """The heading section holding `anchor` as a heading or a bold lead, or None."""
+    for match in re.finditer(r"(?m)^.*$", text):
+        line = match.group(0)
+        heading = re.match(r"#{1,6}\s+(.*)$", line)
+        if heading:
+            hit = heading.group(1).replace("*", "").replace("`", "").strip() == anchor
+        else:
+            hit = re.match(r"\s*(?:[-*+]\s+)?\*\*" + re.escape(anchor), line) is not None
+        if hit:
+            return next(text[a:b] for a, b in sections(text) if a <= match.start() < b)
+    return None
+
+
+def pointer_problems(pointers, allowlist, load):
+    """Route pointers that land nowhere, on no measured route, or name none of its sections.
+
+    `load(label, path)` returns the target's (label, text), or None when it does not resolve.
+    """
+    problems = []
+    for label, path, anchor, site in pointers:
+        where = f"{label}: the route pointer to `{path}` → \"{anchor}\""
+        target = load(label, path)
+        if target is None:
+            problems.append(f"{where} names no shipped file (INV-291, INV-300)")
+            continue
+        target_label, target_text = target
+        owner = owner_section(target_text, anchor)
+        if owner is None:
+            problems.append(f"{where} names no heading or bold lead in {target_label} "
+                            f"(INV-291, INV-300)")
+            continue
+        records = [allowlist[key] for _l, key, _s in queries_in(target_label, owner)
+                   if isinstance(allowlist.get(key), dict)
+                   and allowlist[key].get("band") in POSITIVE_BANDS]
+        if not records:
+            problems.append(f"{where} lands on a section with no measured search_docs route "
+                            f"(INV-291, INV-300)")
+            continue
+        names = [n for r in records for n in r.get("sections", ())]
+        if not any(flat(name) in flat(site) for name in names):
+            problems.append(f"{where} names none of the sections its route returns: "
+                            f"{sorted(set(names))} (INV-291)")
+    return problems
+
+
+def shipped_pointers():
+    found = []
+    for path in shipped_markdown():
+        found.extend(route_pointers(path.relative_to(REPO_ROOT),
+                                    path.read_text(encoding="utf-8")))
+    return found
+
+
+def load_shipped(label, path):
+    """Resolve a pointer's path against the pointing file's directory, as a Markdown link is."""
+    target = (REPO_ROOT / label).parent / path
+    try:
+        target = target.resolve()
+        target.relative_to(SKILLS.resolve())
+    except ValueError:
+        return None
+    if not target.is_file():
+        return None
+    return target.relative_to(REPO_ROOT.resolve()), target.read_text(encoding="utf-8")
 
 
 def flat(text):
@@ -865,9 +1119,9 @@ def band_is_known(band):
     )
 
 
-def record_problems(query, record):
+def record_problems(key, record):
     """Every way one VERIFIED_QUERIES value fails the INV-291 record (#383). Empty means sound."""
-    where = f"VERIFIED_QUERIES[{query!r}]"
+    where = f"VERIFIED_QUERIES[{key!r}]"
     if not isinstance(record, dict):
         return [f"{where} is a {type(record).__name__}, not a record with a stamp and a band "
                 f"(INV-291)"]
@@ -925,16 +1179,16 @@ def record_problems(query, record):
 def site_problems(found, allowlist):
     """Sites of a positive-band entry that name no section it returns, or skip the read-past."""
     problems = []
-    for label, query, section in found:
-        record = allowlist.get(query)
+    for label, key, section in found:
+        record = allowlist.get(key)
         if not isinstance(record, dict) or record.get("band") not in POSITIVE_BANDS:
             continue
         text = flat(section)
         if not any(flat(name) in text for name in record.get("sections", ())):
-            problems.append(f"{label}: search_docs(query='{query}') names none of "
+            problems.append(f"{label}: {call_text(key)} names none of "
                             f"{record.get('sections')} (INV-291)")
         if record["band"] == BELOW_TOP_HIT and not READ_PAST.search(text):
-            problems.append(f"{label}: search_docs(query='{query}') is {BELOW_TOP_HIT} and its "
+            problems.append(f"{label}: {call_text(key)} is {BELOW_TOP_HIT} and its "
                             f"section does not say to read past the first hit (INV-291)")
     return problems
 
@@ -945,7 +1199,7 @@ class EveryPrescribedQueryIsAccountedFor(unittest.TestCase):
         self.assertGreaterEqual(len(found), 5, "the query scan came up empty or too small")
 
     def test_the_scan_sees_double_quoted_literals(self):
-        quoted = {q for _p, q, _s in prescribed_queries()} & {"redo", "health check"}
+        quoted = {q for _p, (q, _c), _s in prescribed_queries()} & {"redo", "health check"}
         self.assertEqual({"redo", "health check"}, quoted,
                          "QUERY_LITERAL no longer matches search_docs(query=\"…\") (INV-291)")
 
@@ -964,8 +1218,8 @@ class EveryPrescribedQueryIsAccountedFor(unittest.TestCase):
 
     def test_the_allowlist_has_no_dead_entries(self):
         """An allowlist that outlives its queries starts exempting things by accident."""
-        live = {query for _p, query, _s in prescribed_queries()}
-        dead = sorted(set(VERIFIED_QUERIES) - live)
+        live = {key for _p, key, _s in prescribed_queries()}
+        dead = sorted(set(VERIFIED_QUERIES) - live, key=str)
         self.assertEqual(
             [], dead,
             "VERIFIED_QUERIES lists phrasings no shipped file prescribes any more — remove "
@@ -973,8 +1227,18 @@ class EveryPrescribedQueryIsAccountedFor(unittest.TestCase):
         )
 
     def test_every_allowlist_entry_is_a_stamped_banded_record(self):
-        problems = [p for q, r in VERIFIED_QUERIES.items() for p in record_problems(q, r)]
+        problems = [p for k, r in VERIFIED_QUERIES.items()
+                    for p in key_problems(k) + record_problems(k, r)]
         self.assertEqual([], problems, "\n".join(problems))
+
+    def test_the_scan_reads_the_category_in_either_quote_style(self):
+        """A category passed with double quotes keys its site as surely as one with single."""
+        keys = {key for _p, key, _s in prescribed_queries()}
+        self.assertIn(("redo", "anti_patterns"), keys,
+                      "QUERY_LITERAL no longer reads category=\"…\" (#513)")
+        self.assertIn(("loading", "anti_patterns"), keys)
+        self.assertIn(("globalization", None), keys,
+                      "a call with no category must key on None (#513)")
 
     def test_every_site_names_its_section_and_reads_past_an_adjacent_top_hit(self):
         problems = site_problems(prescribed_queries(), VERIFIED_QUERIES)
@@ -983,6 +1247,41 @@ class EveryPrescribedQueryIsAccountedFor(unittest.TestCase):
             "An inline route's site must name the section its record says it returns, and a "
             "route whose target sits below an adjacent top hit must say to read past the first "
             "hit (INV-291):\n  " + "\n  ".join(problems))
+
+    def test_no_mention_passes_a_category_without_a_query(self):
+        problems = [p for path in shipped_markdown()
+                    for p in bare_category_mentions(path.relative_to(REPO_ROOT),
+                                                    path.read_text(encoding="utf-8"))]
+        self.assertEqual(
+            [], problems,
+            "A shipped sentence tells the guide to call search_docs with a category and names no "
+            "query (#513). `query` is the tool's only required parameter, so the call cannot be "
+            "constructed, and a reader cannot re-run it. Name the measured query in the same "
+            "sentence (INV-212, INV-291):\n  " + "\n  ".join(problems))
+
+
+class EveryRoutePointerLandsOnItsRecord(unittest.TestCase):
+    """#513: a route stated once is followed from each site that points at it (INV-300)."""
+
+    def test_the_scan_finds_the_pointers(self):
+        """Anti-vacuity: the sites #513 converted to pointers are all found."""
+        labels = {str(label) for label, _p, _a, _s in shipped_pointers()}
+        for name in ("phase3-test-load.md", "phaseD-validation.md",
+                     "module-04-data-collection/SKILL.md", "phase1-verification.md",
+                     "phase1-quality-assessment.md", "module-02-sdk-setup/SKILL.md"):
+            with self.subTest(site=name):
+                self.assertTrue(any(label.endswith(name) for label in labels),
+                                f"no route pointer found in {name}; the pointer form moved and "
+                                f"this guard is checking nothing there")
+
+    def test_every_pointer_lands_on_a_measured_route_and_names_its_section(self):
+        problems = pointer_problems(shipped_pointers(), VERIFIED_QUERIES, load_shipped)
+        self.assertEqual(
+            [], problems,
+            "A site points at a route stated elsewhere, and the route does not hold for it: the "
+            "pointer must land on a heading or bold lead whose section carries a measured "
+            "search_docs route, and the pointing site must name a section that route returns "
+            "(INV-291, INV-300):\n  " + "\n  ".join(problems))
 
 
 def _good_record(**changes):
@@ -1063,19 +1362,174 @@ class TheGuardFailsWhereItShould(unittest.TestCase):
                              "does not mention")
 
     def test_a_site_that_names_no_section_fails(self):
-        allowlist = {"what features to map": _good_record()}
+        allowlist = {("what features to map", None): _good_record()}
         text = "## Step\n\nRun `search_docs(query='what features to map')`.\n"
         self.assert_rejected(site_problems(queries_in("fixture.md", text), allowlist),
                              "names none of")
 
     def test_a_below_top_hit_site_without_read_past_fails(self):
-        allowlist = {"what features to map": _good_record(band=BELOW_TOP_HIT)}
+        allowlist = {("what features to map", None): _good_record(band=BELOW_TOP_HIT)}
         text = ("## Step\n\nRun `search_docs(query='what features to map')`; its *What "
                 "features to map* section answers it.\n")
         self.assert_rejected(site_problems(queries_in("fixture.md", text), allowlist),
                              "read past the first hit")
         fixed = text.replace("answers it.", "answers it: read past the first hit.")
         self.assertEqual([], site_problems(queries_in("fixture.md", fixed), allowlist))
+
+
+#: Module 5 Phase 3's encoding line before #513: the bare term WITH the globalization filter.
+PRE_513_PHASE_3 = ("## Encoding\n\n- Non-Latin scripts: `search_docs(query=\"globalization\", "
+                   "category=\"globalization\")`. For the sections, see this module's `SKILL.md` "
+                   "→ \"Multi-language data\" (INV-212, INV-300).\n")
+#: Phase D step 2 and Module 5 step 11 before #513: the MATCH_KEY query cited for the dash rule.
+PRE_513_DASH_RULE = ("## Step\n\nThe Entity Specification's *Feature: REL_ANCHOR* gives the rule "
+                     "*\"Use a domain code without dashes\"* (`search_docs(query='MATCH_KEY "
+                     "disclosed relationship REL_POINTER role in\nmatch key')`, server 1.37.13).\n")
+#: Module 2 Step 3 before #513: a category and no query.
+PRE_513_ANTI_PATTERNS = ("## Step 3\n\n**Before recommending any approach**, call `search_docs` "
+                         "with `category='anti_patterns'` to\ncheck for known pitfalls.\n")
+
+
+class TheRekeyedGuardFailsWhereItShould(unittest.TestCase):
+    """#513 negative controls: each new check rejects the shape that let a route through."""
+
+    def test_a_key_that_is_not_a_query_category_pair_fails(self):
+        for key in ("globalization", ("globalization",), ("globalization", ""), ("", None)):
+            with self.subTest(key=key):
+                problems = key_problems(key)
+                self.assertTrue(problems)
+                self.assertIn("INV-291", problems[0])
+        self.assertEqual([], key_problems(("globalization", None)))
+        self.assertEqual([], key_problems(("loading", "anti_patterns")))
+
+    def test_the_pre_513_phase_3_call_no_longer_matches_the_bare_terms_record(self):
+        """The filtered call was matched to the bare term's OFF TARGET record and never checked."""
+        found = queries_in("fixture.md", PRE_513_PHASE_3)
+        self.assertEqual([("globalization", "globalization")], [k for _l, k, _s in found])
+        self.assertIn(("globalization", None), VERIFIED_QUERIES)
+        self.assertEqual(
+            ["fixture.md: search_docs(query='globalization', category='globalization')"],
+            unaccounted(found, VERIFIED_QUERIES))
+
+    def test_the_same_words_under_two_categories_are_two_records(self):
+        """A site is checked against its own category's record, never the other one's."""
+        allowlist = {
+            ("globalization", None): _good_record(band="OFF TARGET BY DESIGN", sections=()),
+            ("globalization", "globalization"): _good_record(
+                sections=("Supported cultural groups",),
+                returned="ON TARGET: 'Advanced personal name comparisons > Supported cultural "
+                         "groups'"),
+        }
+        filtered = "## Step\n\nRun `search_docs(query='globalization', category='globalization')`.\n"
+        bare = "## Step\n\nNever run `search_docs(query='globalization')`.\n"
+        self.assertEqual([], unaccounted(queries_in("f.md", filtered + bare), allowlist))
+        # The filtered site is held to the positive record, and names none of its sections.
+        problems = site_problems(queries_in("f.md", filtered), allowlist)
+        self.assertTrue(any("names none of" in p and "category='globalization'" in p
+                            for p in problems), problems)
+        # The bare site is held to the negative record, which asks nothing of it.
+        self.assertEqual([], site_problems(queries_in("f.md", bare), allowlist))
+        # Keyed on the words alone, the filtered site took the negative record and passed:
+        # the defect #513 fixed.
+        by_words = {"globalization": allowlist[("globalization", None)]}
+        self.assertNotIn("names none of", " ".join(
+            site_problems([(l, k[0], s) for l, k, s in queries_in("f.md", filtered)], by_words)))
+
+    def test_a_site_citing_the_match_key_query_only_for_rel_anchor_fails(self):
+        problems = site_problems(queries_in("fixture.md", PRE_513_DASH_RULE), VERIFIED_QUERIES)
+        self.assertTrue(any("names none of" in p for p in problems), problems)
+        self.assertNotIn("Feature: REL_ANCHOR", VERIFIED_QUERIES[
+            ("MATCH_KEY disclosed relationship REL_POINTER role in match key", None)]["sections"],
+            "Feature: REL_ANCHOR is fourth for the MATCH_KEY query; a target below rank 3 is "
+            "not a route (INV-291)")
+
+    def test_a_bare_category_mention_fails(self):
+        problems = bare_category_mentions("fixture.md", PRE_513_ANTI_PATTERNS)
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn("fixture.md:3", problems[0])
+        self.assertIn("INV-212", problems[0])
+        double = PRE_513_ANTI_PATTERNS.replace("'anti_patterns'", '"anti_patterns"')
+        self.assertEqual(1, len(bare_category_mentions("fixture.md", double)))
+        in_a_call = "## Step\n\nUse `search_docs(category='anti_patterns')` first.\n"
+        self.assertEqual(1, len(bare_category_mentions("fixture.md", in_a_call)))
+
+    def test_a_category_mention_with_its_query_passes(self):
+        """Must-not-flag: the corrected sentence, prose about the parameter, and the marker."""
+        fixed = ("## Step 3\n\nCheck with `search_docs(query='install Senzing SDK installation "
+                 "pitfalls',\ncategory='anti_patterns')` before recommending anything.\n")
+        about = ("## Step\n\n`query` is `search_docs`' only required parameter — a bare "
+                 "`category=` is a call no client can construct.\n")
+        marked = ("## Step\n\n<!-- SEARCH-DOCS-CATEGORY-PROSE: names the `sdk` category -->\n"
+                  "`search_docs(category='sdk')` indexes community wrapper docs too.\n")
+        for text in (fixed, about, marked):
+            with self.subTest(text=text[:40]):
+                self.assertEqual([], bare_category_mentions("fixture.md", text))
+
+    def test_a_sentence_boundary_ends_the_search_for_a_query(self):
+        """A query in the NEXT sentence does not license a bare category in this one."""
+        text = ("## Step\n\nCall `search_docs` with `category='anti_patterns'`. Then run "
+                "`search_docs(query='loading', category='anti_patterns')`.\n")
+        self.assertEqual(1, len(bare_category_mentions("fixture.md", text)))
+
+
+#: A two-file fixture: a canonical route and the sites that point at it.
+OWNER_FILE = ("# Owner\n\n## 11. Map\n\nConfirm with `search_docs(query='REL_ANCHOR_KEY "
+              "REL_POINTER disclosed relationship keys', category='data_mapping')`; read past the "
+              "first hit to *Feature: REL_ANCHOR*.\n\n## 12. Next\n\nNothing measured here.\n")
+
+
+def _pointer_site(anchor="11. Map", path="owner.md", names="*Feature: REL_ANCHOR*"):
+    return (f"## Audit\n\nThe rule is {names}'s. Its route is stated once, in\n`{path}` → "
+            f"\"{anchor}\" (INV-300).\n")
+
+
+def _load_fixture(label, path):
+    return ("owner.md", OWNER_FILE) if path == "owner.md" else None
+
+
+class TheRoutePointerCheckFailsWhereItShould(unittest.TestCase):
+    """#513 negative controls for the pointer-following check (INV-300, INV-291)."""
+
+    def problems(self, site):
+        return pointer_problems(route_pointers("site.md", site), VERIFIED_QUERIES, _load_fixture)
+
+    def assert_rejected(self, problems, needle):
+        self.assertTrue(problems, "the check passed a defective pointer")
+        self.assertTrue(any(needle in p for p in problems), problems)
+        self.assertTrue(all("INV-291" in p for p in problems), problems)
+
+    def test_a_sound_pointer_passes(self):
+        self.assertEqual(1, len(route_pointers("site.md", _pointer_site())))
+        self.assertEqual([], self.problems(_pointer_site()))
+
+    def test_a_pointer_wrapped_across_lines_is_still_found(self):
+        site = _pointer_site().replace("stated once, in\n", "stated\nonce, in\n")
+        self.assertEqual(1, len(route_pointers("site.md", site)))
+
+    def test_a_pointer_to_no_file_fails(self):
+        self.assert_rejected(self.problems(_pointer_site(path="missing.md")), "names no shipped")
+
+    def test_a_pointer_to_no_heading_fails(self):
+        self.assert_rejected(self.problems(_pointer_site(anchor="13. Gone")),
+                             "names no heading or bold lead")
+
+    def test_a_pointer_to_a_section_with_no_measured_route_fails(self):
+        self.assert_rejected(self.problems(_pointer_site(anchor="12. Next")),
+                             "no measured search_docs route")
+
+    def test_a_pointing_site_that_names_none_of_the_routes_sections_fails(self):
+        """The pointing site is checked against the record of the route it lands on."""
+        self.assert_rejected(self.problems(_pointer_site(names="*Feature: NAME*")),
+                             "names none of the sections its route returns")
+
+    def test_a_bold_lead_anchors_a_pointer(self):
+        owner = OWNER_FILE.replace("## 11. Map\n\n", "## Notes\n\n- **Relationship keys:** ")
+
+        def load(label, path):
+            return ("owner.md", owner) if path == "owner.md" else None
+        site = _pointer_site(anchor="Relationship keys")
+        self.assertEqual([], pointer_problems(route_pointers("site.md", site),
+                                              VERIFIED_QUERIES, load))
 
 
 class StepFourteenHandlesAMiss(unittest.TestCase):

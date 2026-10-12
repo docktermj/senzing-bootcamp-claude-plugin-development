@@ -56,7 +56,10 @@ QUESTION = "👉 **Do you accept the Senzing End User License Agreement (EULA)?*
 REPO_ADD = "1. Add the Senzing package repository."
 PACKAGE_INSTALL = "2. Install the Senzing SDK package."
 DOCKER_INSTALL = "follow the `linux_apt` steps inside it"
-ANTI_PATTERNS = "call `search_docs` with `category='anti_patterns'`"
+#: #513: the lookup names its measured query; the bare-category form named a call no
+#: schema-respecting client can construct (INV-212).
+ANTI_PATTERNS = ("`search_docs(query='install Senzing SDK installation pitfalls', "
+                 "category='anti_patterns')`")
 
 PHASE_1 = "**Phase 1: EULA acceptance"
 PHASE_2 = "**Phase 2: Install the SDK package"

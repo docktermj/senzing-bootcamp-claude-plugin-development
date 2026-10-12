@@ -582,8 +582,18 @@ V4.0+ install (Step 1's existing-install path) skips Phase 1 and Phase 2, is not
 again, and starts at Phase 3; it still writes the environment script ("Create the project-local
 environment script" below) (INV-339).
 
-**Before recommending any approach**, call `search_docs` with `category='anti_patterns'` to
-check for known pitfalls on the user's platform.
+**Before recommending any approach**, check for known install pitfalls with
+`search_docs(query='install Senzing SDK installation pitfalls', category='anti_patterns')`. The
+query names no platform on purpose, so it is the same call on every platform. Its top hit, on
+target, is the MCP server article *Senzing Anti-Patterns: Installing in Sandboxed or
+Restricted-Egress Environments* (blocked package repositories, the MCP-hosted direct downloads,
+"Do Not Hand-Code Install Commands From Training Data", and the macOS `SUPPORTPATH` trap); the
+*Database Initialization and Container Setup* and *Ecosystem and Dependencies* anti-pattern
+articles follow it, so read every article it returns and apply the ones that match the user's
+platform (server 1.37.27, docs index 2026-10-11 18:43 UTC, 2026-10-12). `query` is the tool's
+only required parameter, so naming the vocabulary is what makes this check runnable (INV-212).
+This is the canonical statement of the install anti-patterns route; the Agent Behavior list
+points here for it (INV-300).
 
 **Phase 1: EULA acceptance (requires bootcamper input, before anything is installed):**
 
@@ -2005,7 +2015,11 @@ violation of the same sentence.
 **What `SENZ2027` is actually telling you: the support data is not where the configuration points.**
 Call `explain_error_code('SENZ2027')` first as always (INV-080) — it returns
 `EAS_ERR_PLUGIN_INIT: Plugin initialization error`. The actionable detail is in the Senzing FAQ
-(`search_docs`, verified 2026-07-30 on MCP server 1.32.2):
+that
+`search_docs(query='SENZ2027 Plugin initialization error GNR data files failed to load')` returns
+as its top hit, on target (server 1.37.27, docs index 2026-10-11 18:43 UTC, 2026-10-12). This is
+the canonical statement of that route; Module 3's engine initialization check points here for it
+(INV-300):
 
 > **I get SENZ2027 Plugin initialization error GNR data files failed to load** — You are missing the
 > senzingsdk-runtime data directory. The libraries are present but the GNR data files (in
@@ -2318,7 +2332,9 @@ call succeeds** (not merely a version query).
 - Do NOT offer alternatives: install the SDK natively (or via Docker where the routing rules
   require it).
 - Use the `sdk_guide` MCP tool for current platform-specific instructions.
-- Use `search_docs` with `category='anti_patterns'` before recommending approaches.
+- Check the install anti-patterns before recommending approaches: the `search_docs` route, which
+  returns *Senzing Anti-Patterns: Installing in Sandboxed or Restricted-Egress Environments*
+  first, is stated once, in `SKILL.md` → "Step 3: Install Senzing SDK" (INV-300).
 - **NEVER guess engine configuration values:** take `CONFIGPATH`, `RESOURCEPATH`, `SUPPORTPATH` and
   the connection-string form from
   `sdk_guide(topic='configure', platform='<user_platform>', language='<chosen_language>')`, and build

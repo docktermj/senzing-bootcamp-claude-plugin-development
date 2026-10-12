@@ -355,8 +355,17 @@ class Step2StatesHowToSplitAKey(unittest.TestCase):
         )
         self.assertRegex(
             self.step,
-            r"server \*\*1\.37\.13\*\*, docs index 2026-09-24 18:45 UTC",
+            r"server \*\*1\.37\.27\*\*, docs index 2026-10-11 18:43 UTC",
             "a Senzing fact written into the plugin carries its server version (INV-080)",
+        )
+        # #513: the MATCH_KEY query ranks Feature: REL_ANCHOR fourth, so the dash rule's route is
+        # the pointer to Module 5 step 11's relationship-key route, which
+        # test_prescribed_search_queries.py follows and checks against its record.
+        self.assertRegex(
+            self.step,
+            r"stated once, in `\.\./module-05-data-quality-mapping/phase2-data-mapping\.md` → "
+            r"\"11\. Map\" \(INV-300\)",
+            "the dash rule must point at Module 5 step 11's relationship-key route (#513)",
         )
 
     def test_the_escape_form_is_labeled_an_observation_with_its_conditions(self):

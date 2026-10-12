@@ -132,7 +132,7 @@ The reply's shape is stated once in `ground-rules.md` → "Three tools answer wi
 
 ⚠️ **For a single lookup, `search_docs` is cheaper than paging.** It serves the Entity
 Specification already split by section, so one attribute or feature is one `search_docs` call
-naming it, with `category='data_mapping'`. It does not replace the saved copy: Steps 4, 5, 5a and 6 read the file, so paging stays the
+whose `query=` names it, with `category='data_mapping'`. It does not replace the saved copy: Steps 4, 5, 5a and 6 read the file, so paging stays the
 fallback for fetching it.
 
 **How to consult it: targeted lookup, never end to end.** The file is large: its size is the
@@ -775,8 +775,10 @@ Run it over **every record** of each source, not a sample: the count is the sour
 
    ⚠️ **This suffix list is the plugin's own heuristic, not a Senzing fact (INV-080).** No MCP route
    serves one: `search_docs(query='organization name suffix tokens LLC LTD INC person or
-   organization name classification')` returns the Entity Specification's NAME rules and libpostal
-   scripts, none of them a suffix list (MCP server 1.37.14, docs index 2026-09-28). If a route
+   organization name classification')` returns name and entity-type FAQs, the Entity
+   Specification's *Feature: NAME* and the v4.4.0 release notes' organization-name matching
+   changes, none of them a suffix list (MCP server 1.37.27, docs index 2026-10-11 18:43 UTC,
+   2026-10-12). If a route
    serves one later, switch to it. The list is short on purpose. It leaves out tokens that are also
    surnames or name particles, because a false candidate costs the Bootcamper a question and a
    wrong retype costs a real person their matches.
@@ -824,8 +826,9 @@ Run it over **every record** of each source, not a sample: the count is the sour
 
    Write only the rule line for a retype and only the cost line for a keep. The name rule (INV-336)
    follows the Entity Specification's *Feature: NAME*: *"use `NAME_ORG` for organizations"*, and
-   *"do not mix `NAME_ORG` with parsed person fields in the same object"* (the same suffix query
-   above returns that section, MCP server 1.37.14, docs index 2026-09-28).
+   *"do not mix `NAME_ORG` with parsed person fields in the same object"*. The suffix query above
+   is not that section's route: it ranks *Feature: NAME* below four other hits. The route to
+   *Feature: NAME* is stated once, in `phase2-data-mapping.md` → "11. Map" (INV-300).
 
 A source already checked in Step 5a sub-step 3a reuses that count and those names here. Do not run
 the check again. Its report and question belong here, because Step 5a routes such a source on to
