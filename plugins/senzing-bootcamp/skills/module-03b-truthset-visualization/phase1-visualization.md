@@ -504,7 +504,9 @@ own server's equivalent. Record in `truthset_visualization.checks.web_service` t
 `port` `8080`, the `host_port` and the container's `name`. Step 2.4 and the screenshots use the URL
 `confirm-viz` printed. If the Bootcamper declines to recreate a container that has no published
 port, there is no live server: say so, and continue with "Fallback: guarantee the snapshot if the
-live server cannot run" below.
+live server cannot run" below, recording `reason: "recreate_declined"` as the
+[no-live-server completion rule](phase2-close.md#no-live-server-completion) requires; that rule is
+stated once, at the pre-advancement gate in `phase2-close.md` (INV-300).
 
 ⛔ **Record the process id along with the port** — `$!` in a POSIX shell as above,
 `$proc.Id` from `Start-Process … -PassThru` in PowerShell. It is the only unambiguous handle on the
@@ -675,17 +677,25 @@ Never treat a yes here as consent to stop the server.
 {
   "truthset_visualization": {
     "checks": {
-      "web_service": {"status": "passed|failed", "port": <port>, "pid": <pid>},
-      "web_page": {"status": "passed|failed", "url": "http://localhost:<port>/",
+      "web_service": {"status": "passed|failed|unavailable", "port": <port>, "pid": <pid>,
+                      "reason": "recreate_declined|server_failed"},
+      "web_page": {"status": "passed|failed|unavailable", "url": "http://localhost:<port>/",
                    "snapshot": "docs/visualizations/truthset_verification.html"}
     }
   }
 }
 ```
 
+`reason` is written only with `"unavailable"`, which records no `pid` on `web_service` and no
+`url` on `web_page`. What `"unavailable"` and its two reasons mean, and when the gate accepts them,
+is the [no-live-server completion rule](phase2-close.md#no-live-server-completion), stated once in
+`phase2-close.md` (INV-300).
+
 **Success indicator:** ✅ The standalone snapshot exists at
-`docs/visualizations/truthset_verification.html` AND the live app served its endpoints and
-the entity-graph page.
+`docs/visualizations/truthset_verification.html` AND the live app served its endpoints, **or**
+the no-live-server state is recorded with its reason
+([no-live-server completion rule](phase2-close.md#no-live-server-completion), INV-300). A live app
+serves the entity-graph page among its endpoints.
 
 ## Fallback: guarantee the snapshot if the live server cannot run
 
@@ -699,5 +709,12 @@ chosen language is **Python** may you fall back to the bundled `senzing_viz_serv
 setup's container route, to [the project copy 2.1 states](#container-route-server-copy), made
 again before this run); for any other language `senzing_viz_server.py` is never run. The full response schemas and the
 search-enrichment specification are in `visualization-api-reference.md`.
+
+**Close the fallback by recording the no-live-server state:** `web_service` and `web_page` as
+`"unavailable"`, with `reason: "server_failed"`, or `reason: "recreate_declined"` when 2.3's
+declined recreate sent you here. A `"failed"` status left in place does not complete the module.
+The record's shape and what follows it are the
+[no-live-server completion rule](phase2-close.md#no-live-server-completion), stated once in
+`phase2-close.md` (INV-300).
 
 When the bootcamper has finished exploring, load `phase2-close.md`.

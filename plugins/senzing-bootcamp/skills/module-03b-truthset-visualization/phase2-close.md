@@ -9,7 +9,9 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 > verify BOTH the checkpoints and the artifact on disk:
 >
 > - In `config/bootcamp_progress.json`: `truthset_visualization.checks.web_service.status` =
->   `"passed"` and `truthset_visualization.checks.web_page.status` = `"passed"`.
+>   `"passed"` and `truthset_visualization.checks.web_page.status` = `"passed"`, or both
+>   `"unavailable"` with a `reason` on `web_service`, as the no-live-server completion rule below
+>   allows.
 > - **The visualization artifact actually exists on disk:** the standalone snapshot written by the
 >   visualization server (`docs/visualizations/truthset_verification.html`) is present and non-empty. This is
 >   the hard guarantee that the visualization always happened; a checkpoint alone is not sufficient.
@@ -30,7 +32,8 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 >   empty match as a broken check rather than agreement — a check that passes by comparing nothing
 >   certifies exactly what it never looked at. A genuine
 >   divergence means the visualization changed after the snapshot was built (Phase 1, 2.4b) and the
->   snapshot was never rebuilt.
+>   snapshot was never rebuilt. With no live server there is nothing to compare against; the
+>   no-live-server completion rule below says what replaces this comparison.
 >
 > If the checkpoints are missing OR the snapshot file does not exist OR the snapshot was built from
 > zero records, the agent MUST execute Steps 1–2 immediately (load `phase1-visualization.md`) and run
@@ -43,21 +46,74 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 > up, then re-verify. If the rebuild is not possible, warn the bootcamper that the saved copy shows
 > an earlier version of the app and say how it differs — never let the recap claim a change the
 > keepsake does not carry. This warning does not block module completion.
+>
+> <a id="no-live-server-completion"></a>
+> **No-live-server completion.** This is the canonical statement of how this module completes
+> when no live server ran. Step 3, Step 4 and the success indicator below, `SKILL.md`'s success
+> indicator, and `phase1-visualization.md` (2.3's declined recreate, the checkpoint, its success
+> indicator and its "Fallback" section) point here rather than restating it (INV-300).
+>
+> - **The no-live-server path** is one of two routes, each with its own `reason`:
+>   `"recreate_declined"`, when the bootcamper declined to recreate a container that has no
+>   published port (`phase1-visualization.md` 2.3); and `"server_failed"`, when the server could
+>   not be made to serve after iterating with the MCP tools (`phase1-visualization.md` →
+>   "Fallback: guarantee the snapshot if the live server cannot run").
+> - **Record it as its own state, never as `passed`:** `web_service` is
+>   `{"status": "unavailable", "reason": "recreate_declined"}` or
+>   `{"status": "unavailable", "reason": "server_failed"}`, with no `pid`; `web_page` is
+>   `{"status": "unavailable", "snapshot": "docs/visualizations/truthset_verification.html"}`,
+>   with no `url`.
+> - **The gate accepts** `web_service.status` = `"passed"`, or `"unavailable"` with one of the
+>   two reasons, **and**, on either, the snapshot conditions above: present, non-empty, and built
+>   from `records_total > 0`.
+> - ⛔ **A missing, empty or zero-record snapshot blocks on every status (INV-077).** `unavailable`
+>   excuses the server, never the snapshot: the STOP paragraph above applies unchanged, and routes
+>   back to Phase 1.
+> - **`failed` is not accepted.** It means the fallback has not finished: load
+>   `phase1-visualization.md`, run its "Fallback" section, which ends by recording `unavailable`
+>   with `reason: "server_failed"`, then re-verify. `unavailable` with no reason, or with any other
+>   reason, is not accepted either: record which of the two routes led here first.
+> - ⛔ **On `unavailable`, check the snapshot's own tab set instead (INV-130, INV-155, INV-265).**
+>   There is no running server to compare against, so assert that the snapshot contains each of
+>   INV-155's six identifiers, `id="tab-graph"`, `id="tab-stats"`, `id="tab-matchkeys"`,
+>   `id="tab-features"`, `id="tab-overlap"` and `id="tab-probe"`, each with a non-zero count. A
+>   zero count for any of them means the check did not run, not that it passed (INV-265): warn the
+>   bootcamper which tab the saved copy lacks. As with the comparison, this warns and never blocks
+>   module completion (INV-130, INV-048).
+> - **Show the snapshot before close.** On `unavailable`, tell the bootcamper there is no live
+>   server and give them the snapshot by its file path,
+>   `docs/visualizations/truthset_verification.html`, to open in a browser, before Step 5.
+> - **Step 4 on `unavailable`:** run item 1 (rebuild the snapshot if it is stale) and item 4 (the
+>   purge). Skip item 2, the live-server screenshots: there is no running engine to capture
+>   Search / Probe from, and capture is best-effort anyway. Skip item 3, termination: no `pid` was
+>   recorded and no server runs, so INV-223's kill-by-pid does not apply. **Still ask the
+>   teardown question**, because the purge is irreversible; its disclosure says there is no live
+>   server, so no URL goes dead and there is nothing to stop, and that the Truth Set records will
+>   be removed from the database (exploring further means reloading them).
+> - **Success** on this path is "the no-live-server state is recorded with its reason" in place
+>   of "the live app served its endpoints", and the web service is terminated only when one ran.
 
 ## Step 3: Visualization completeness check
 
 Confirm that `config/bootcamp_progress.json` contains BOTH `web_service` and `web_page` checkpoint
 entries under `truthset_visualization.checks` (this module's own checks). If either entry is missing
-or has `"status": "failed"`:
+or has a status other than `"passed"`:
 
 - If missing: STOP. Do not close the module. Return to Phase 1 and execute Steps 1–2 fully by loading
   `phase1-visualization.md`.
-- If failed: note the failure and proceed (failed is different from skipped/missing; it means the
-  step was attempted).
+- If `"failed"` or `"unavailable"`: apply the
+  [no-live-server completion rule](#no-live-server-completion), stated once at the gate above
+  (INV-300). It says which of the two the gate accepts and what to do about the other.
 
 ## Step 4: Cleanup
 
 Terminate the web service and purge the Truth Set data from the database.
+
+**When `web_service.status` is `"unavailable"`,** skip item 2 (the live-server screenshots) and
+item 3 (server termination) below: no server ran, so there is nothing to capture from or to stop.
+The reasons, and what the disclosure before the teardown question says, follow the
+[no-live-server completion rule](#no-live-server-completion), stated once at the gate above
+(INV-300).
 
 ⛔ **Ask the teardown gate first — do not proceed to the steps below until the bootcamper says
 yes.** Per the server-lifetime contract in `visualization-api-reference.md` → "Server lifetime",
@@ -198,5 +254,7 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
 **Checkpoint:** write to `config/bootcamp_progress.json`.
 
 **Success indicator:** ✅ The standalone snapshot exists (built from a non-empty Truth Set) + the
-live app served its endpoints + the web service is terminated + the Truth Set data is purged +
-`truthset_visualization` is recorded in `modules_completed` with its own recap section.
+live app served its endpoints, **or** the no-live-server state is recorded with its reason
+([no-live-server completion rule](#no-live-server-completion), INV-300) + the web service is
+terminated when one ran + the Truth Set data is purged + `truthset_visualization` is recorded in
+`modules_completed` with its own recap section.

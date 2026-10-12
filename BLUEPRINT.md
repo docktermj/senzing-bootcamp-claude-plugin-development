@@ -2001,20 +2001,33 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   `nohup`), port 8080 or a free one; record pid and port. On the container
   route it follows the contract's "Serving from the SDK container" instead,
   states only its own server command and checkpoint fields, and without a
-  published port has no live server.
+  published port has no live server (`reason: "recreate_declined"`).
 - 2.4: probe every endpoint (10 s); zero entities fails. 2.4b: any change
   means rebuilding the snapshot. 2.5: URL, snapshot path, tour, then 👉
   "ready to continue?", which never authorizes teardown. Writes
-  `truthset_visualization.checks` `web_service` (port, pid) and `web_page`
-  (url, snapshot).
-- Gate: both checks passed, snapshot non-empty, its `id="tab-<name>"` set
-  matches the live app (zero counts are a broken check); else redo 1-2.
+  `truthset_visualization.checks` `web_service` (status
+  `passed|failed|unavailable`, port, pid, and with `unavailable` only a
+  `reason` of `recreate_declined|server_failed` and no pid) and `web_page`
+  (status, url, snapshot; no url on `unavailable`). The Fallback, when the
+  server cannot serve, ends by recording `unavailable` (`server_failed`, or
+  2.3's `recreate_declined`).
+- Gate: both checks passed, or both `unavailable` with a reason, per the
+  anchored no-live-server completion rule (`#no-live-server-completion`, the
+  one statement Step 3, Step 4, 2.3, the checkpoint, the Fallback and all three
+  success indicators link, INV-300); on either, snapshot non-empty and built
+  from `records_total > 0` (a bad snapshot blocks on every status). `failed`
+  is not accepted and runs the Fallback. Live: its `id="tab-<name>"` set
+  matches the live app (zero counts are a broken check); `unavailable`: the
+  snapshot holds all six ids with non-zero counts and its path is shown;
+  both warn only. Else redo 1-2.
 - 4: after stating consequences, ask 👉 "Ready for me to stop the
   visualization server and clean up the Truth Set data?" On yes: rebuild a
   stale snapshot, capture missing screenshots, kill by pid (never
   `pkill -f`; port lookup fallback; in Docker `sh -c 'kill'` and a
   `python3` probe of the bound address), confirm the port free in 5 s, then
-  purge last.
+  purge last. On `unavailable` Step 4 says itself that it skips the
+  screenshots and the kill, and still asks the question with a no-live-server
+  disclosure.
 - 5: record after `system_verification`, recap section with
   `visualizations/…` images, B-roll, then the curtain line as a statement
   immediately before the one 👉 transition: the Truth Set was practice data,
@@ -8849,7 +8862,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 392 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 393 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8899,7 +8912,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6744 test methods in 392 files, matching `inventory.test_count_total`.
+There are 6787 test methods in 393 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -9278,6 +9291,7 @@ looks wrong.
 - `tests/test_truthset_download_is_the_dataset.py`: 20
 - `tests/test_truthset_is_not_called_single_source.py`: 6
 - `tests/test_truthset_visualization_reports_empty_as_failure.py`: 9
+- `tests/test_truthset_viz_no_live_server_completes.py`: 37
 - `tests/test_unattended_loop_is_label_gated.py`: 13
 - `tests/test_undecodable_recap_is_never_overwritten.py`: 10
 - `tests/test_update_offer_order_and_existing_install_outcome.py`: 24
@@ -10677,3 +10691,12 @@ Senzing licensing, with no SPDX identifier.
   validates the full load-ready file (skipped with the analyzer), and a
   `PROPOSED AMENDMENT to INV-345` is queued (six gaps the 2026-10-12 audit found
   where #485, #488 and #394 left the text behind)
+- #512: Module 3b completes on its no-live-server path: `web_service` and
+  `web_page` record `unavailable` with `reason` `recreate_declined` or
+  `server_failed`, the gate accepts it on a present, non-empty, non-zero-record
+  snapshot (a bad snapshot blocks on every status), `failed` routes to the
+  Fallback, Step 3's "note the failure and proceed" is gone, and the snapshot's
+  own six tab ids replace the live comparison, all stated once at
+  `phase2-close.md`'s `#no-live-server-completion` with Step 4 naming its own
+  skips, and a `PROPOSED AMENDMENT to INV-130` is queued (the fallback the
+  module prescribed could never pass its completion gate)
