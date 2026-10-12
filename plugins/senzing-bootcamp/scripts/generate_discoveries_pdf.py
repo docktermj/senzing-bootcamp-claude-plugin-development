@@ -147,7 +147,11 @@ DEFAULT_OUTPUT = "docs/bootcamp_data_discoveries.pdf"
 # The findings a complete discoveries document carries. Matched case- and
 # punctuation-insensitively against H2 headings, so a document may word them
 # more naturally ("What Senzing did NOT find, and why") and still match.
+# "your question answered" comes first in the document: it walks each Module 7
+# step-1 requirement to its finding (#480). Only its presence is checked here; the
+# Query Completeness Gate checks its rows against module_7_query.query_requirements.
 REQUIRED_SECTIONS = [
+    "your question answered",
     "headline numbers",
     "merges and match keys",
     "review queue",

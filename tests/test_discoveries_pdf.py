@@ -49,6 +49,13 @@ GOOD_DOC = """# Data Discoveries
 **Bootcamper:** Ada Lovelace
 **Sources:** ENFORMION, EQUIFAX
 
+## Your question, answered
+
+| Requirement | Answer | Where in this document |
+|---|---|---|
+| Which customers appear in both sources? | 4 cross-source merges, near the overlap ceiling | Merges and match keys |
+| Which records belong to sanctioned parties? | not answered, because no watchlist source was loaded | none |
+
 ## Headline numbers, interpreted
 
 - **Records loaded:** 4,012 across two sources, which is the full mapped set
@@ -444,7 +451,7 @@ class TestRendersASoundDocument(unittest.TestCase):
             self.assertEqual(0, result.returncode, result.stderr)
             # "findings" dropped 2026-07-31: the list is a parameter now, so the
             # count is against whatever was expected, not against six findings.
-            self.assertIn("6/6 expected sections present", result.stdout)
+            self.assertIn("7/7 expected sections present", result.stdout)
             self.assertFalse(
                 os.path.exists(os.path.join(tmp, "docs", "bootcamp_data_discoveries.pdf")),
                 "--check must not write a PDF.",
@@ -464,6 +471,11 @@ class TestRendersASoundDocument(unittest.TestCase):
                 "POSSIBLY_SAME",
                 "achievable ceiling",
                 "Relationship networks",
+                # The first section's table (#480): its heading, a requirement, and a
+                # "not answered, because" cell.
+                "Your question, answered",
+                "Which customers appear in both sources?",
+                "not answered, because no watchlist source was loaded",
                 # Table content. Its absence was invisible to this test for as long as
                 # the probe list omitted it, while the whole table rendered off-page.
                 "Match key",
@@ -737,6 +749,9 @@ class TestStdlibFallback(unittest.TestCase):
             text = pdf_text(out)
             self.assertIn("Headline numbers", text)
             self.assertIn("POSSIBLY_SAME", text)
+            # The first section's table reaches the stdlib PDF too (#480).
+            self.assertIn("Your question, answered", text)
+            self.assertIn("Which customers appear in both sources?", text)
 
     def test_audit_accepts_the_good_document(self):
         module = self.load_module()
@@ -759,9 +774,10 @@ class TestModuleWiring(unittest.TestCase):
         self.assertIn("docs/bootcamp_data_discoveries.md", text)
         self.assertIn("generate_discoveries_pdf.py", text)
 
-    def test_all_six_sections_are_specified(self):
+    def test_all_seven_sections_are_specified(self):
         text = self.read(PHASE1)
         for section in (
+            "Your question, answered",
             "Headline numbers",
             "Merges and match keys",
             "Review queue",

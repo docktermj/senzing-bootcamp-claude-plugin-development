@@ -127,11 +127,12 @@ class EveryAllowlistedLabelIsStatedWhereItIsAuthored(unittest.TestCase):
 
 
 class TheSectionHeadingsTheGeneratorChecksAreStated(unittest.TestCase):
-    """The discoveries generator audits by section name; the instruction lists all six."""
+    """The discoveries generator audits by section name; the instruction lists all seven."""
 
-    def test_all_six_section_headings_are_written_out(self):
+    def test_all_seven_section_headings_are_written_out(self):
         text = squash(SURFACES[1][3])
         for heading in (
+            "Your question, answered",
             "Headline numbers, interpreted",
             "Merges and match keys",
             "Review queue",
@@ -145,6 +146,29 @@ class TheSectionHeadingsTheGeneratorChecksAreStated(unittest.TestCase):
     def test_the_instruction_says_the_generator_checks_them_by_name(self):
         """Why the exact form matters, not merely what to write."""
         self.assertIn("the generator checks for them by name", squash(SURFACES[1][3]))
+
+    def test_every_required_section_is_written_out_as_a_heading(self):
+        """Read from the generator, so a section added to REQUIRED_SECTIONS without telling
+        the guide how to write it fails here (#480 added the first one since this file)."""
+        stated = {
+            DISCOVERIES._normalize(h)
+            for h in re.findall(r"`## ([^`]+)`", squash(SURFACES[1][3]))
+        }
+        for wanted in DISCOVERIES.REQUIRED_SECTIONS:
+            with self.subTest(wanted):
+                self.assertTrue(
+                    any(DISCOVERIES._normalize(wanted) in heading for heading in stated),
+                    "REQUIRED_SECTIONS checks for %r, and the instruction never writes a "
+                    "`## ` heading that matches it (INV-242)" % wanted,
+                )
+
+    def test_your_question_answered_states_its_table_shape(self):
+        """INV-242: the section is a table, and the generator draws one only from consecutive
+        lines that start and end with `|`. The instruction must show the header row and say so."""
+        text = squash(SURFACES[1][3])
+        self.assertIn("| Requirement | Answer | Where in this document |", text)
+        self.assertIn("start and end with `|`", text)
+        self.assertIn("no `|` inside a cell", text)
 
 
 class TheRecapImageShapeRemainsStated(unittest.TestCase):

@@ -2397,7 +2397,12 @@ Phase 1 (`phase1-query-visualize.md`):
   `ENTITY_ID`, as text with no 👉 of its own, recorded as
   `module_7_query.headline_entity`. The open question is Module 7's directing
   step (ground rules' "Directing steps"); "I don't know" is the handed-back
-  case, recorded as `directing_steps.query_visualize_discover`.
+  case, recorded as `directing_steps.query_visualize_discover`. The checkpoint
+  saves the settled list as `module_7_query.query_requirements`
+  (`#query-requirements`): `{"text", "source"}` per requirement in the order
+  shown, `source` `"Bootcamper's answer"` for their own questions or the
+  success criterion or desired output a derived one came from, `[]` when none
+  was confirmed, never changed after step 1.
 - Step 2 writes programs in `src/query/` from
   `generate_scaffold(workflow='query')`, with flags and response paths looked up
   in `get_sdk_reference` (`flags`, `response_schemas`, `parameters`). Programs
@@ -2435,12 +2440,16 @@ Phase 1 (`phase1-query-visualize.md`):
   the SDK container", and without a published port continues with no live
   server. Module 7's `SKILL.md` and step 3c name this app, not the Truth Set's,
   as the bootcamp's peak; the rendering contract's requirements cover both.
-- On every path it writes `docs/bootcamp_data_discoveries.md` (six named
-  sections, Headline numbers through What was not found, with `**Measurement:**`
-  and near-miss labels, Latin-script text) and its PDF via
+- On every path it writes `docs/bootcamp_data_discoveries.md` (seven named
+  sections: first Your question, answered, a *Requirement* / *Answer* / *Where
+  in this document* table with one row per saved requirement, answered or "not
+  answered, because …", then Headline numbers through What was not found, with
+  `**Measurement:**` and near-miss labels, Latin-script text) and its PDF via
   `generate_discoveries_pdf.py`, whose extracted text is checked; failure is
   reported, never blocking.
-- Query Completeness Gate, then (only if a server started) a separate stop
+- Query Completeness Gate (item 5 checks that every saved requirement appears
+  in Your question, answered exactly once, adding a missing row and
+  re-rendering; it asks nothing and never blocks), then (only if a server started) a separate stop
   question that stops by recorded pid. Completion runs `module-completion.md`,
   opens Module 7's recap section with the headline block (`#headline-block`,
   the first entry of `### Information Shared`, re-retrieved with step 1's rule
@@ -5579,6 +5588,7 @@ COVER_SUBTITLE = "What Senzing found in your data"
 DEFAULT_INPUT = "docs/bootcamp_data_discoveries.md"
 DEFAULT_OUTPUT = "docs/bootcamp_data_discoveries.pdf"
 REQUIRED_SECTIONS = [
+    "your question answered",
     "headline numbers",
     "merges and match keys",
     "review queue",
@@ -8785,7 +8795,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 385 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 386 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8835,7 +8845,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6574 test methods in 385 files, matching `inventory.test_count_total`.
+There are 6590 test methods in 386 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6574.
@@ -8867,7 +8877,7 @@ looks wrong.
 - `tests/test_audit_files_issues_not_specs.py`: 11
 - `tests/test_audit_skill_reads_the_newest_entries.py`: 4
 - `tests/test_audit_skill_states_no_stale_count.py`: 9
-- `tests/test_authored_shapes_are_stated.py`: 6
+- `tests/test_authored_shapes_are_stated.py`: 8
 - `tests/test_auto_test_harness.py`: 11
 - `tests/test_backgrounded_launch_records_the_server_pid.py`: 12
 - `tests/test_blocked_submission_has_a_vocabulary_value.py`: 29
@@ -9057,6 +9067,7 @@ looks wrong.
 - `tests/test_module7_discover_instructions.py`: 17
 - `tests/test_module7_exports_for_integration_targets.py`: 46
 - `tests/test_module7_gate_shows_both_versions.py`: 13
+- `tests/test_module7_your_question_answered.py`: 14
 - `tests/test_module_0_suggested_queries_are_measured.py`: 18
 - `tests/test_module_5_describes_the_entity_specification_as_served.py`: 9
 - `tests/test_module_7_points_at_the_factory_lifetime_rule.py`: 9
@@ -9602,9 +9613,9 @@ tests a rebuild can pass from behavior alone.
 - **`generate_discoveries_pdf.py`** (`tests/test_discoveries_pdf.py`).
   - **Arguments:** `--input`, `--output`, `--check`, `--require-sections`,
     `--no-section-check` and `--subtitle`.
-  - **Sections.** Six named sections are required, matched case-insensitively. A
-    recap-shaped or headingless document is refused, and an empty
-    `--require-sections` is an error.
+  - **Sections.** Seven named sections are required, led by "your question
+    answered", matched case-insensitively. A recap-shaped or headingless
+    document is refused, and an empty `--require-sections` is an error.
   - **`generate_document_pdf.py`** only delegates to this script.
 - **`generate_recap_video.py`** (`tests/test_recap_video.py`, 131 tests).
   - **Exit codes:** 0 rendered, 1 invalid storyboard, 2 missing capability, 3
@@ -10457,6 +10468,13 @@ Senzing licensing, with no SPDX identifier.
   and cited from each site; System verification now has two 👉 (every
   prediction was the guide's own, so the Bootcamper never committed to an
   expectation before a result was shown)
+- #480: Module 7 step 1 saves the settled requirements as
+  `module_7_query.query_requirements`, the discoveries document leads with
+  "Your question, answered" (each requirement walked to its finding, or "not
+  answered, because …"), `REQUIRED_SECTIONS` checks for it, and the Query
+  Completeness Gate checks it against the saved list (the document never walked
+  back to what the Bootcamper set out to learn, and nothing was kept to check
+  against)
 - #481: graduation's Step 0b shows "Decisions you made" and "How you got it
   built" from the recorded recap, asks for a one-line takeaway and a "Next
   time" request, folds them into a `BOOTCAMP-HANDOVER` fence the recap PDF
