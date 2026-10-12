@@ -2387,6 +2387,10 @@ Phase 1 (`phase1-query-visualize.md`):
   then lists their questions beside the requirements derived from
   `docs/business_problem.md`, marking those not asked for, in a combined list
   of at most 10, and ends on one confirming question (`#requirements-gate`).
+  Beside each derived requirement the gate shows the `> "…"` line
+  `docs/business_problem.md` carries for its source, read from the file and
+  labeled as their Module 1 words, or none where the file has none, and says
+  that a mismatch between the two is what it asks about (INV-275).
   In the turn that settles the requirements, never before the open question is
   answered and never in the gate's turn, it shows the headline entity
   (`#headline-entity`): most data sources, then most records, then the lowest
@@ -8781,7 +8785,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 384 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 385 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8831,21 +8835,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6561 test methods in 384 files, matching `inventory.test_count_total`.
+There are 6574 test methods in 385 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6561.
+sum to 6574.
 
-Two files run more tests than they define, so discovery collects 6483:
+Two files run more tests than they define, so discovery collects 6496:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6476`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 6489`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6483`. No other count
+run count. With `pwsh` installed, the run reports `Ran 6496`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -9052,6 +9056,7 @@ looks wrong.
 - `tests/test_module7_asks_the_bootcampers_question_first.py`: 12
 - `tests/test_module7_discover_instructions.py`: 17
 - `tests/test_module7_exports_for_integration_targets.py`: 46
+- `tests/test_module7_gate_shows_both_versions.py`: 13
 - `tests/test_module_0_suggested_queries_are_measured.py`: 18
 - `tests/test_module_5_describes_the_entity_specification_as_served.py`: 9
 - `tests/test_module_7_points_at_the_factory_lifetime_rule.py`: 9
@@ -9444,6 +9449,8 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   - A how call requests the `MATCH_KEY_DETAILS` flag.
   - `find_network` uses two endpoint conventions.
   - The teardown question is asked once.
+  - Step 1's confirming gate shows each derived requirement beside its Module 1
+    quote, says a mismatch is what it asks about, and invents no quote.
   - The visualization model is built from the export stream.
 - **Graduation.**
   - Step 1c, the video, has pinned offers, a two-minute budget, the Intro first,
@@ -10456,6 +10463,14 @@ Senzing licensing, with no SPDX identifier.
   renders as its own page, and closes by stating there is no script from here
   (graduation handed over a PDF and a project, never the ability to direct the
   next build)
+- #482: show both versions at Module 7 step 1's confirming gate: beside each
+  derived requirement, the `> "…"` quote `docs/business_problem.md` carries for
+  its source, labeled as the Bootcamper's Module 1 words, with a statement
+  that a mismatch is what the gate asks about and no quote invented where the
+  file has none; INV-275's widening to every gate that confirms a derived
+  artifact is drafted in the ledger, not applied (the requirements were
+  confirmed on the guide's rendering alone, so a changed meaning surfaced only
+  in a retrospective)
 - #485: one step per hands-on module is handed to the Bootcamper to direct, by
   the ground rules' one "Directing steps" rule: Module 5 step 11 (what the
   columns `mapping_workflow` did not place become, checked at step 12's sample
