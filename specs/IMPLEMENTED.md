@@ -43,6 +43,87 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## production-readiness-audit-2026-10-12
+
+**Not a spec** — a dated record of an audit run, **attended**. It follows 65 merged pull requests since the previous audit: the #381–#397 fixes, the line-wrap guard work, the 2026-10-03, 10-04, 10-04b, 10-10 and 10-12 `/review-invariants` sessions, and the #465 sub-issues (#478–#490) from the 2026-10-11 `/unattended-issue-loop` run.
+
+- **Implemented:** 2026-10-12 (**57 distinct findings, 56 filed in 20 root-cause groups as #504–#523; no shipped file modified by this audit**)
+- **Files changed:** this record only.
+- **MCP re-check:** server `sz-mcp-coworker` 1.37.27, docs index 2026-10-11 18:43 UTC, 2026-10-12. Three filed groups assert a Senzing fact, and each was re-asked this session.
+  - #507: `search_docs("MATCH_KEY entity response which features matched records resolved together")` (lead) returns *Consuming get_entity Responses → RECORDS* at rank 6: "`MATCH_KEY` - Representation of matched source record features … `+NAME+ADDRESS-DOB` … indicates `NAME` and `ADDRESS` matched". So the app's match-key chips are the answer to the prediction.
+  - #509: `analyze_record(workspace_dir='data/mapping')` (sweep B) returns `sz_json_analyzer.py` with "Requires Python 3.10 or newer" and the command `python3 data/mapping/sz_json_analyzer.py`.
+  - #513: three `search_docs` routes (sweep C, default `max_results`). Bare `globalization` returns no "What languages does Senzing support?" section, the MATCH_KEY query puts "Feature: REL_ANCHOR" 4th, and the suffix query puts Feature: NAME 5th. The issue's items 4–5 are unmeasured, and its implementer re-asks them.
+  - #523 item 12 (the longest feature-type code) is unverified and left to its implementer. Every other finding is internal consistency.
+- **Baseline.** `main` at `a9a0a563`, tree clean.
+  - **Suite red in the main checkout:** 7 failed, 6,622 passed. Every failure is a corpus-wide scan reading the untracked 742 MB `.claude/worktrees/scratch-loop-2026-10-11/` left by the 2026-10-11 loop (#515).
+  - **Suite green in a clean worktree** of the same commit: **6,629 passed, 19 skipped** (pytest). The audit ran from that worktree.
+  - `citations.py verify` clean at **358** invariants. `coverage_reports.py both`: 46 invariants cited by no test file (3 superseded, 25 outcome, 18 development), **none** naming a shipped artifact uncited in `plugins/`, and no unmarked dated tool-absence claim.
+  - `rules`: **749** hard-rule lines (520 line-anchored + 229 mid-line), **0** in a section citing no invariant.
+  - `per-rule`: **305** citing no invariant at the rule. `enumerations`: **64 of 358**.
+  - `size`: 45 shipped files, **239,996** words. `duplication`: 192 repeated passages across 110 file pairs.
+  - `since --since-last-audit` resolved to **`fa5ad03`** (the 2026-10-02 entry), with no `SUSPECT-REF`: **81** hard-rule lines across 20 files.
+  - `reverse-check`: **TESTED 73 (73 cited, 0 not)**, **UNTESTED 8 (8 cited, 0 not)**, **VERDICT: NOT CLEAN** on the untested lines alone. Seven further lines of the shape `⛔ (INV-NNN)` were invisible to both views (#516).
+  - `pending_invariants.py list`: 0 pending, 6 held; the highest minted id is INV-359.
+  - **Zero open issues** at the start of the run, so no finding is a duplicate.
+- **Scope, stated rather than implied.** Four read-only sweeps, each reported in full. The lead re-checked every high and medium finding at its site before filing.
+  - **(A)** The reverse contract: all 81 lines `since` reports, each judged cited-correctly, cited-wrongly, partially cited, deferred or unregistered, plus wrong citations in the wider diff (spot-checked) and the index placement of INV-345–INV-359.
+  - **(B)** The forward contract for INV-344–INV-359 and the 15 dated notes added since `fa5ad03`, at every site each binds, with each new invariant's guard read against its text.
+  - **(C)** The per-module outcome blocks the previous audit did not read: Modules 2, 3, Truth Set visualization (3b), 5 and 6. This included the INV-291 inline-route class through Modules 3, 5 and 6 that the 2026-10-02 audit left unswept.
+  - **(D)** The maintainer surface changed since `fa5ad03`, the 64 enumerating invariants against what ships, drift between duplicated passages (72 groups read), and the test-corpus hygiene lead from the baseline.
+  - ⚠️ **Modules 0, 1, 4, 7, onboarding and graduation were read only where a sweep's lines or invariants led there.** `visualization-api-reference.md:20-1162` was not swept one by one.
+- **Findings, filed.** No issue carries the `unattended-ok` label (INV-318).
+  - **High:**
+    - #504: five gate options in Modules 3, 5 and 6 have no handling step (Module 6 Phase D's "Iterate now" among them), and the INV-284 guard scans only Module 5 and only iterate verbs.
+    - #505: Module 2 Step 8's Windows SUPPORTPATH check reads an unset `$SENZING_DIR` instead of `$env:SENZING_DIR`, and the step says "do not modify the paths" while modifying them.
+  - **Medium:**
+    - #506: the `collection_return`/`quality_iteration` return contract is registered nowhere and cites INV-284 at ten sites; `phase1-query-visualize.md:1374` cites it wrongly.
+    - #507: Module 7 step 4b item 1a routes to the app, whose match key answers the INV-357 prediction, and 4a-pairs/4b can reuse an entity whose resolution was already shown.
+    - #508: container-route commands (#460, #490, the PostgreSQL branch) have no PowerShell form, on the route Windows users take (INV-001).
+    - #509: INV-347's Python floor is checked only at step 11's gate, not at step 14 or Phase 3.
+    - #510: Module 2's existing-install path stops at Step 7.
+    - #511: Module 3 Step 5's .NET, Rust and TypeScript build commands assume files no step creates (INV-002).
+    - #512: Module 3b's completion check cannot pass on its own no-live-server fallback.
+    - #513: inline search routes in Modules 2, 3, 5 and 6 cite unmeasured, below-rank-3 or off-band queries (INV-291).
+    - #514: INV-352–355, INV-357 and INV-359, and seven test docstrings, say `auto-test`'s transcript linter observes behaviors none of its five checks can see.
+    - #515: corpus-walking tests read untracked `.claude/worktrees/`. Three tests exclude it with three idioms, and eight do not.
+    - #516: `conformance.py`'s `MID_LINE_RULE` cannot match `⛔ (INV-NNN)`, so `since` and `reverse-check` under-report (INV-308).
+  - **Low:**
+    - #517: INV-356, INV-097's two reader lists and two Phase 3 sentences are stale after #487/#488.
+    - #518: the example recap lacks the #465 content (`You directed:`, prediction lines, the handover, a worked steer).
+    - #519: Module 0's wrong-answer rule and Module 7's recall question (#483) are registered nowhere. The issue asks for a deferral block.
+    - #520: compact-dev-environment cites INV-309 for a broader rule than INV-309 states, and three sibling skills register invariants directly.
+    - #521: six small Module 5 gaps.
+    - #522: dev `README.md` names the public repository at the Desktop route and PDF link (since #451). `BLUEPRINT.md` describes the README two ways. Needs the maintainer's decision.
+    - #523: fourteen small coherence items.
+  - **Not filed.** Sweep D's L5 — INV-107's 2026-08-12 note says "all three generators" where four fallback palettes now exist. All four are tested, and INV-184 states the property, so no action is needed. Sweep C's L13 also put the coloring section under "## Server lifetime", which #397 item 8 already decided to leave in place with a pointer.
+  - **Severity set by the lead.** Sweep C rated #505's self-contradiction (M1) medium. It is filed with the high SUPPORTPATH defect because both sit in the same step.
+- **The four properties, separately.**
+  - **Consistent:** ❌ defects. Files contradict themselves (#505, #504 item 4, #523 item 6). An invariant contradicts the shipped flow (#517). Invariants and tests claim checks that don't exist (#514).
+  - **Coherent:** ❌ defects. A rule set cites an invariant on another subject (#506). The skills disagree on how an invariant is registered (#520). Cross-references point to the wrong section (#523).
+  - **Complete:** ❌ gaps. Gate options have no route (#504). A completion gate is unsatisfiable (#512). An install path is truncated (#510). Windows forms are missing (#505, #508). Language rows are unbuildable (#511). Rules are applied at one of three sites (#509, #507). Rules are unregistered (#506, #519).
+  - **Concise:** ⚠️ mostly holds. Of 72 duplicated-passage groups, only the two in #523 items 1–2 had drifted. No governing rule was found buried below its point of use.
+- **Verified as correct, so the next audit need not re-derive it.**
+  - 73 of the 81 `since` lines cite the invariant that governs them. INV-344–INV-359 each sit in the index once, in a fitting group.
+  - INV-352 (four Act 2 modules, guard both ways), INV-353, INV-354 (Modules 5, 6, 7), INV-355 (three sites), INV-356, INV-358 and INV-359 hold at their sites, apart from the issues above. INV-357's three points hold as stated, apart from #507.
+  - INV-225's two-👉 note, INV-258's handover fence, INV-344's #488 note, INV-349 and INV-260's eleven container-route sites hold.
+  - INV-091's #490 note holds in substance; only the shell form is open (#508). INV-350/351 (`REWRITTEN_SUFFIXES`, anchored `MKT_RE`) also hold.
+  - INV-175's Windows env-load sites hold.
+  - Modules 2, 3, 3b, 5 and 6 hold INV-035–037, INV-040–045, INV-082/083, INV-086/087, INV-123, INV-155's six tab ids and INV-243.
+  - Every markdown link and relative path in those five modules resolves.
+  - The five slash commands in `docs/README.md` and `index.html` match `plugins/senzing-bootcamp/commands/`.
+  - The maintainer skills changed since `fa5ad03` agree with INV-307, INV-314, INV-317 and INV-318.
+- ⛔ **Coverage limits.**
+  - **(1)** The **conversational invariants remain untested**: INV-251, INV-006, INV-014, INV-005/008/009, INV-352–355, INV-357, INV-359 and every gate-ordering rule govern live turns, and reading cannot establish them. That is `/dry-run` phase 3 only (see #514).
+  - **(2)** The **305** standing lines from `per-rule --uncited` were not worked.
+  - **(3)** The plugin was **not executed**. This is a static pass, on Linux only. The Windows findings (#505, #508) are read from the text and PowerShell 5.1 semantics, not run.
+  - **(4)** Present: fpdf2 2.8.5, `pdftoppm`, docker, Chrome, ffmpeg and `libSz.so`. Absent: Playwright and `pwsh`. `lint-workflows` was not run.
+- ⛔ **My own mistakes.**
+  - My first `gh issue create` attempt ran the 20 filings as one scripted loop, and Claude Code's auto-mode classifier refused it. The issues were then filed one command at a time, after the maintainer's second go-ahead. Nothing was filed twice.
+  - Sweep D reported the transcript linter has six checks. `CHECKS` holds five, and #514 says five.
+  - Sweep D created two throwaway clones under the session scratchpad, which its brief allowed. Nothing in the repository changed.
+- **Establishes no invariant.** This audit modifies no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. The rule and amendment choices it raises go through `/review-invariants` as blocks: #506's return contract, #519's wrong-answer and recall rule, #514's six linter notes, #517's INV-356 note and #520's INV-309 scope. No id is written here, because an unminted id fails `citations.py verify`.
+- **Commit:** uncommitted
+
 ## invariant-review-2026-10-12
 
 - **Implemented:** 2026-10-12 (**Not a spec** — a dated record of one review session over the blocks the 2026-10-11 unattended run wrote for #465's sub-issues and #490)
