@@ -128,6 +128,9 @@ Read `current_step` from `config/bootcamp_progress.json` and resume at the right
 
 **Success indicator:** ✅ The standalone snapshot exists at
 `docs/visualizations/truthset_verification.html` (built from a non-empty Truth Set) AND the live app
-served its endpoints and the entity-graph page; the web service is terminated and the Truth Set
-data purged at close; `truthset_visualization` is recorded in `modules_completed` with its own recap
-section (INV-085/INV-086/INV-087).
+served its endpoints, **or** the no-live-server state is recorded with its reason
+([no-live-server completion rule](phase2-close.md#no-live-server-completion), stated once in
+`phase2-close.md`, INV-300); a live app serves the entity-graph page among its endpoints; the web
+service, when one ran, is terminated and the Truth Set data purged at close;
+`truthset_visualization` is recorded in `modules_completed` with its own recap section
+(INV-085/INV-086/INV-087).
