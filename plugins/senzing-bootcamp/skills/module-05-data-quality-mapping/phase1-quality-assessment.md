@@ -965,6 +965,8 @@ improvising one breaches INV-056, which pins every gate question's wording preci
 drift at runtime. The ≥80% branch is the common one for curated data — a CORD source routinely
 scores there — so this is the path most runs take.
 
+<a id="synthesized-source-disclosure"></a>
+
 ⛔ **(INV-345) On a `provenance: synthesized` source, disclose before the 👉 — those gaps are deliberate.**
 Read `provenance` for this source from `config/data_sources.yaml`. When it is `synthesized`, Module
 4's Step 2 was **required** to manufacture exactly these gaps (INV-239: *"missing values in non-key

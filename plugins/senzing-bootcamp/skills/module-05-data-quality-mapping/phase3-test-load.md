@@ -170,6 +170,10 @@ degraded, or unchanged). Explain what the changes mean:
 After `mapping_workflow` steps 5–8 generate output files into the workspace, place them into the
 correct project subdirectories per the file-placement guidance in `phase2-data-mapping.md`.
 
+**Checkpoint:** when this gate was presented, write step 24d to `config/bootcamp_progress.json` with
+its answer, `accept` or `iterate`. On a first test load it was not presented, so there is nothing
+to record.
+
 ### 25. Present results and decision gate
 
 Present the Phase 3 results summary for this data source: records loaded, entities created,
@@ -240,6 +244,13 @@ which Phase 3 steps (21–25) completed. Restart `mapping_workflow` and fast-tra
 completed steps (5–8). If the test load (step 22) completed but evaluation (step 24) did not,
 re-run evaluation without reloading. Step 25 is Phase 3's last gate: if the session was interrupted
 before it was answered, present the Phase 3 results again and resume from step 25.
+
+When step 24d's answer is recorded (the record is stated once, at step 24d's **Checkpoint**;
+INV-300), that answer already settled step 25 (its "Step 24d's gate was presented" case): present
+the Phase 3 results again as statements, ask nothing, and follow the recorded answer, `accept` by
+the **yes** route and `iterate` by the **no** route. Ask neither step 24d's question nor step 25's
+again (INV-006). With no step 24d record (a first test load, or a progress file written before step
+24d recorded its answer), resume from step 25 as above.
 
 A progress file written under the old flow can record a Module 5 step that this phase no longer
 has, after its Module Completion already ran: this module's `SKILL.md` → "Resuming" handles it.

@@ -792,7 +792,8 @@ follow them there rather than a copy here (INV-300). Only what is particular to 
   reference, does not send to a feature at confidence 0.80 or above, other than the column that
   supplies `RECORD_ID`. The step 2 reference says that anything outside its feature catalog "is
   payload or ignore" (server 1.37.27, 2026-10-11), so these are the columns with a real decision
-  in them. On a CORD source, Phase 1 Step 6 has already named them (`unmapped_fields`). It runs in
+  in them. On a CORD source, Phase 1 Step 5a has already named them (`unmapped_fields`, recorded at
+  its sub-step 4 and named to the Bootcamper at its sub-step 6). It runs in
   verbose and concise mode alike. A source with no such column passes the directing step to the
   next source that has one. When every source is fast-pathed, or no source has such a column,
   Module 5 has no directing step.
@@ -802,6 +803,10 @@ follow them there rather than a copy here (INV-300). Only what is particular to 
        The tool claim in this bullet is POSITIVE and quoted inline: step 2's reference says anything
        outside its feature catalog "is payload or ignore", re-read live from mapping_workflow on
        server 1.37.27, 2026-10-11 (#485). -->
+- **Its record.** Record `directing_steps.data_quality_mapping` in step 11's checkpoint on the
+  source it ran on. When `directing_steps.data_quality_mapping` is already set, it has run: on a
+  resume, a later source or a `quality_iteration` remap, map the columns as the rest of this step
+  says, with no directing 👉.
 - **Before the 👉.** Present the mapping table for the columns the tool did place, as the
   presentation rules below say for the mode. Then list each undecided column with its population
   and sample values, and say in one line what each destination means: a feature Senzing matches
@@ -1114,7 +1119,9 @@ else does not:
 1. **A boolean.** `collect_strings()` skips `bool` deliberately, and says why in its own docstring:
    there is no unambiguous verbatim string form for a JSON boolean (Python's `str(True)` is `"True"`,
    not JSON's `"true"`), so admitting booleans would let a case transform slip through rather than
-   catch one. A source `true` emitted as `"true"` is therefore reported however you emit it.
+   catch one. A source `true` emitted as the string `"true"` or `"True"` is therefore reported. Emitted
+   as a JSON boolean it passes unread, because `check_verbatim()` checks string values only
+   (re-run against the delivered script, server 1.37.27, 2026-10-12).
 2. **A value derived from a source field NAME rather than a field value** — see the section below,
    which is the common case in practice.
 
@@ -1285,25 +1292,26 @@ and proceed (INV-173). For the CSV case the workable route is to adapt CSV→JSO
 checker's own `verify()`, so the executed logic stays upstream's, unmodified.
 
 ⛔ **Do not ship a patched copy of any of these scripts.** They are MCP-delivered, and a fork masks
-the upstream fix (INV-173) — the numeric-value entry above is the proof that these do get fixed. Work
-around them and re-check whether the workaround is still needed.
+the upstream fix (INV-080, INV-173). The numeric case in `sz_verbatim_check.py` is the worked
+example: reported 2026-07-28 and fixed in 1.32.2 (the numeric-value entry above), and a fork would
+still be carrying the workaround today. Work around them, and re-check whether the workaround is
+still needed.
 
-Do not ship a patched copy of `sz_verbatim_check.py`: it is delivered by the MCP server, so the fix
-arrives from upstream and a fork would mask it (INV-080). The numeric case is the worked example —
-reported 2026-07-28, fixed in 1.32.2 — and a fork would still be carrying the workaround today.
-
-**One mechanism, three known reachings — recognize the fourth on sight rather than filing it as a
-discovery.** `sz_verbatim_check.py` harvests the allowed set from source **values**, and every
-entry in this block is that one scope limit reached by a different route:
+**One mechanism, four known reachings — recognize the fifth on sight rather than filing it as a
+discovery.** `sz_verbatim_check.py` harvests the allowed set from source **values**, and each row
+below is that one scope limit reached by a different route. Each was re-run against the script the
+server delivers (server 1.37.27, 2026-10-12): every row's emitted value is reported, exit 1, while a
+numeric source value emitted as a string now passes, so numbers are no longer a reaching.
 
 | The emitted value is derived from… | Where it is documented here |
 |---|---|
-| a source value stored as a **JSON number** (non-string) | the non-string-values entry above |
-| a source **field name** | this entry |
+| a source **boolean**, emitted as a string (`"true"`) | "Two things it cannot harvest", item 1, above |
+| a source **field name** | the field-name entry directly below |
+| a `NAME_ORG` **joined** from parsed name fields (a Phase 1 retype) | step 13's "Apply a retype decision from Phase 1" |
 | a **hash** over identity fields (`RECORD_HASH`) | limitation 2's REL_*_KEY condition |
 
 Any value the mapper computes rather than copies will be absent from the allowed set, whatever
-produced it. If you meet a fourth route, the resolution is the same four steps — confirm
+produced it. If you meet a fifth route, the resolution is the same four steps — confirm
 faithfulness on the Entity Specification's terms, record the exemption and its reason, proceed, and
 never alter a source value to satisfy the tool (INV-048/INV-173).
 
@@ -1469,7 +1477,8 @@ valid**, and it is not **semantically validated** until data is loaded and the m
 Data processing's match-key audit is where that happens. A bootcamper who hears "all gates green"
 and infers "the mapping is correct" has been misled by omission.
 
-**Checkpoint:** write step 11.
+**Checkpoint:** write step 11, with `directing_steps.data_quality_mapping` on the source the
+directing step ran on.
 
 ### 12. Generate starter code
 
@@ -1635,6 +1644,18 @@ remains**: `config/data_sources.yaml` has a source other than this one whose `ma
 not `complete`. Fast-pathed sources are `complete` (see "Skip fast-pathed sources"), so they never
 count. Read the registry before choosing the question. Each question is pinned verbatim (INV-056).
 
+⛔ **(INV-345) On a `provenance: synthesized` source, the 70-79% and <70% questions are disclosed
+first.** Read `provenance` for this source from `config/data_sources.yaml` with the registry read
+above. When it is `synthesized`, the source's gaps were built in on purpose (INV-239), so
+"iterate to improve the data" means regenerating data the bootcamp authored. In both the 70-79%
+and the <70% band, in both blocks below, say Phase 1's one-line disclosure before the 👉: its
+wording is stated once, at Phase 1's
+[synthesized-source disclosure](phase1-quality-assessment.md#synthesized-source-disclosure); say it
+as written there rather than a copy here (INV-300). Then ask the band's pinned question unchanged,
+with both options live (INV-056). Say it even when the Bootcamper heard it at Phase 1's gate: that
+gate and this one are separate decisions, and the disclosure is a statement, not a question. The
+≥80% band gets no disclosure.
+
 **While one or more unmapped sources remain** (INV-344), ask about the next source, not about loading.
 `{source}` is this source's name, and `{next}` is the next unmapped source, the one step 19 maps next:
 
@@ -1645,14 +1666,14 @@ count. Read the registry before choosing the question. Each question is pinned v
   1. Yes, map {next}.
   2. No, I'd like to iterate on {source} first.
 
-- **Quality 70-79%:**
+- **Quality 70-79%** *(on a synthesized source, the disclosure above first)*:
 
   👉 **Quality for {source} is acceptable. What would you like to do? Reply with a number:**
 
   1. Move on to the next source, {next}.
   2. Iterate to improve [specific weak areas] first.
 
-- **Quality <70%:**
+- **Quality <70%** *(on a synthesized source, the disclosure above first)*:
 
   👉 **Quality for {source} needs improvement before loading will produce meaningful results. I'd recommend going back to address [specific issues]. What would you like to do? Reply with a number:**
 
@@ -1673,14 +1694,14 @@ question:
   1. Yes, proceed to loading.
   2. No, I'd like to iterate on something first.
 
-- **Quality 70-79%:**
+- **Quality 70-79%** *(on a synthesized source, the disclosure above first)*:
 
   👉 **Quality is acceptable. What would you like to do? Reply with a number:**
 
   1. Proceed to loading now.
   2. Iterate to improve [specific weak areas] first.
 
-- **Quality <70%:**
+- **Quality <70%** *(on a synthesized source, the disclosure above first)*:
 
   👉 **Quality needs improvement before loading will produce meaningful results. I'd recommend going back to address [specific issues]. What would you like to do? Reply with a number:**
 
@@ -1757,6 +1778,25 @@ If issues are found, go back to the relevant step. Retest after changes.
   around it and leave the section as written. When Phase 1 wrote none, the source had no
   candidates: write the section with `0 of [M]` and the decision `none needed`. The section's
   content is Phase 1 Step 6's "Type/name check", the canonical statement (INV-300).
+
+**Validate the full output (INV-043).** Step 15 analyzed a separate quality run, which for a source
+over 1000 records is not the file Data processing loads, so check the load-ready file itself. Run
+the MCP-delivered `sz_json_analyzer.py` that step 14 uses (same `analyze_record` route, same
+`data/mapping/` workspace) on `data/senzing-ready/[name].jsonl`, and compare the record count its
+report gives (`**Records:** N`) with the source's record count minus the records the
+transformation lineage above records as filtered on purpose. Read both checks from the report, not
+from the exit code: the analyzer reports a malformed line (`JSON error line N`, then `N JSON parse
+error(s)`), leaves it out of its count, and still exits 0 (measured on server 1.37.27,
+2026-10-12).
+
+- **Analyzer clean and counts match:** say so in one line and continue with this step.
+- **A parse error, or a count difference the lineage does not explain:** this is a defect in the
+  transformation program, not a preference. Say which check failed (the analyzer's parse errors,
+  or the expected and actual counts) and go to step 17 to fix the program, with no 👉, as step 15's
+  `rework_*` verdict does.
+- **The analyzer was skipped for the session** (the **No** path of step 11's Python check, above,
+  INV-347): this check is skipped with it. Do not run it and ask nothing (INV-006); the module's
+  closing summary names it, with the analyzer, as a check that did not run (INV-163).
 
 **Checkpoint:** write step 18.
 

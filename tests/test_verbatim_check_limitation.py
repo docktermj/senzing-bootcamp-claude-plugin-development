@@ -24,6 +24,12 @@ turn the gate green — does not even work, and distorts the data.
 The upstream defect was reported to Senzing on 2026-07-28. These tests pin the
 plugin-side mitigation that has to hold until (and whether or not) it is fixed there.
 
+#521 brought the "known reachings" table up to date (``TheReachingsTableIsCurrent``): server 1.32.2
+fixed the numeric case, so it has no numeric row; it has the boolean and joined-`NAME_ORG` rows; no
+row points at "this entry"; and its heading's count matches its rows. Each reaching was re-run
+against the script server 1.37.27 delivers, 2026-10-12. The same issue merged the two near-duplicate
+no-fork paragraphs into one, which ``no_fork_problems`` reads.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -181,14 +187,41 @@ class TheFlowIsNotBlocked(unittest.TestCase):
         self.assertIn("INV-048", flat(PHASE2))
 
 
+def no_fork_problems(text):
+    """The no-fork paragraph (INV-173) names the checker and INV-080, read from ``flat`` text."""
+    match = re.search(
+        r"(?i)do not ship a patched copy of any of these scripts\.\*\*(.*?)(?=⛔|\*\*One "
+        r"mechanism)", text)
+    if match is None:
+        return ["the no-fork rule (INV-173) is gone"]
+    return [problem for needle, problem in (
+        ("`sz_verbatim_check.py`", "the no-fork rule no longer names the verbatim checker"),
+        ("INV-080", "the no-fork rule no longer cites INV-080"),
+    ) if needle not in match.group(1)]
+
+
 class TheResourceIsNotForked(unittest.TestCase):
     """INV-080: the checker comes from the MCP server; a fork would mask the fix."""
 
     def test_the_guidance_forbids_shipping_a_patched_copy(self):
-        self.assertRegex(
-            flat(PHASE2),
-            r"(?i)[Dd]o not ship a patched copy of `sz_verbatim_check\.py`",
-        )
+        """#521 merged the checker's own no-fork paragraph into the all-scripts one.
+
+        So the rule is read from that one paragraph, which must still name the checker and the
+        invariant that delivers it (INV-080), whatever its wrap.
+        """
+        self.assertEqual([], no_fork_problems(flat(PHASE2)))
+
+    def test_no_fork_negative_controls(self):
+        text = flat(PHASE2)
+        for name, mutant in {
+            "rule dropped": text.replace("Do not ship a patched copy of any of these scripts.",
+                                         "Patch these scripts as needed.", 1),
+            "checker unnamed": text.replace("The numeric case in `sz_verbatim_check.py` is",
+                                            "The numeric case is", 1),
+        }.items():
+            with self.subTest(mutant=name):
+                self.assertNotEqual(text, mutant, "the mutation no longer applies")
+                self.assertNotEqual([], no_fork_problems(mutant))
 
     def test_the_plugin_ships_no_copy_of_the_checker(self):
         matches = list(PLUGIN.rglob("sz_verbatim_check*.py"))
@@ -217,6 +250,87 @@ class TheEmissionChoiceIsSpecDriven(unittest.TestCase):
             r"(?i)Senzing links disclosed relationships for both",
             "a live-engine observation must not be shipped as an assertion",
         )
+
+
+#: Number words the reachings heading may use, so its count can be read back as an int.
+NUMBER_WORDS = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
+
+
+def reachings_problems(text):
+    """#521: the "known reachings" table is current, and its heading counts its rows.
+
+    Read from ``flat`` text (whitespace collapsed) for the prose, and from the raw rows for the
+    table, so a re-wrap of the heading paragraph does not move the check (INV-346).
+    """
+    flat_text = re.sub(r"\s+", " ", re.sub(r"(?m)^\s*>\s?", "", text))
+    head = re.search(r"\*\*One mechanism, (\w+) known reachings — recognize the (\w+) on sight",
+                     flat_text)
+    if head is None:
+        return ["the reachings heading is gone"]
+    start = text.index("| The emitted value is derived from…")
+    end = text.index("Any value the mapper computes rather than copies", start)
+    rows = [line for line in text[start:end].splitlines()
+            if line.startswith("| ") and not line.startswith("| The emitted")]
+    problems = []
+    count = NUMBER_WORDS.get(head.group(1))
+    if count != len(rows):
+        problems.append("the heading says %s reachings and the table has %d rows"
+                        % (head.group(1), len(rows)))
+    if ordinal(head.group(2)) != (count or 0) + 1:
+        problems.append("the heading's next reaching (%s) does not follow its count"
+                        % head.group(2))
+    table = "\n".join(rows)
+    if re.search(r"(?i)JSON number|numeric", table):
+        problems.append("the table still lists the numeric case, fixed in 1.32.2")
+    if "**boolean**" not in table:
+        problems.append("the table has no boolean row")
+    if not re.search(r"`NAME_ORG` \*\*joined\*\* from parsed name fields", table):
+        problems.append("the table has no joined-NAME_ORG row")
+    if re.search(r"\| this entry \|", table):
+        problems.append("a row points at 'this entry', which is not the entry it means")
+    if not re.search(r"server 1\.\d+\.\d+, \d{4}-\d{2}-\d{2}\): every row's emitted value is "
+                     r"reported", flat_text):
+        problems.append("the reachings are not re-checked against a dated server version")
+    if len(re.findall(r"(?i)do not ship a patched copy", flat_text)) != 1:
+        problems.append("the no-fork rule is stated more than once (the merged paragraphs split)")
+    return problems
+
+
+def ordinal(word):
+    return {"third": 3, "fourth": 4, "fifth": 5, "sixth": 6, "seventh": 7}.get(word)
+
+
+class TheReachingsTableIsCurrent(unittest.TestCase):
+    """#521: no numeric row, boolean and joined-NAME_ORG rows, a heading that counts its rows."""
+
+    def setUp(self):
+        self.text = PHASE2.read_text(encoding="utf-8")
+
+    def test_the_table(self):
+        self.assertEqual([], reachings_problems(self.text))
+
+    def test_negative_controls(self):
+        text = self.text
+        boolean_row = next(line for line in text.splitlines()
+                           if line.startswith("| a source **boolean**"))
+        mutants = {
+            "numeric row restored": text.replace(
+                boolean_row, boolean_row + "\n| a source value stored as a **JSON number** "
+                "(non-string) | the non-string-values entry above |", 1),
+            "boolean row dropped": text.replace(boolean_row + "\n", "", 1),
+            "joined row dropped": text.replace("`NAME_ORG` **joined** from", "`NAME_ORG` from", 1),
+            "self-reference restored": text.replace("| the field-name entry directly below |",
+                                                    "| this entry |", 1),
+            "count off by one": text.replace("One mechanism, four known reachings",
+                                             "One mechanism, three known reachings", 1),
+            "duplicate no-fork paragraph restored": text.replace(
+                "**One mechanism,", "Do not ship a patched copy of `sz_verbatim_check.py`.\n\n"
+                "**One mechanism,", 1),
+        }
+        for name, mutant in mutants.items():
+            with self.subTest(mutant=name):
+                self.assertNotEqual(text, mutant, "the mutation no longer applies")
+                self.assertNotEqual([], reachings_problems(mutant))
 
 
 if __name__ == "__main__":
