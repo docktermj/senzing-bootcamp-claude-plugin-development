@@ -236,17 +236,25 @@ A dry-run finding is only half done when the plugin is fixed. Follow this for ea
    in the originating session, one existing test had **pinned the wrong premise**,
    which is how the defect it covered survived three audits.
 5. **Record the outcome** in the same `specs/IMPLEMENTED.md` entry step 1 drafted into,
-   naming the issue each finding became, and either register the invariant it establishes
-   in `specs/INVARIANTS.md` or state that it establishes none —
-   `tests/test_spec_ledger_invariants.py` enforces this for entries dated on or after its
-   cutoff. Two homes, two purposes: the **issue** is the finding as pending work, the
-   **ledger** is what was done about it and where each finding went. A finding you did not
-   fix has an open issue (or a draft marked not filed) and a ledger line saying it is open,
-   which is exactly right — it stays visible as outstanding rather than looking handled.
-6. **Correct an invariant in place when the invariant itself is wrong.** INV-132
+   naming the issue each finding became, and either queue the invariant it establishes or
+   state that it establishes none — `tests/test_spec_ledger_invariants.py` enforces this for
+   entries dated on or after its cutoff.
+   ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
+   `DEFERRED INVARIANT` block in the run's `specs/IMPLEMENTED.md` entry, as
+   [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
+   (INV-300), then tell the maintainer to run `/review-invariants`. Two homes, two
+   purposes: the **issue** is the finding as pending work, the **ledger** is what was done
+   about it and where each finding went. A finding you did not fix has an open issue (or a
+   draft marked not filed) and a ledger line saying it is open, which is exactly right — it
+   stays visible as outstanding rather than looking handled.
+6. **Propose a correction when the invariant itself is wrong.** INV-132
    asserted the MCP reference could not answer parameter shapes; the server answers
-   them. Add a dated correction note explaining what was verified and when. An
-   invariant that encodes a false premise is worse than a missing one.
+   them. The correction is a dated note explaining what was verified and when.
+   ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
+   `PROPOSED AMENDMENT` block in the run's `specs/IMPLEMENTED.md` entry, as
+   [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
+   (INV-300), then tell the maintainer to run `/review-invariants`. An invariant that
+   encodes a false premise is worse than a missing one.
 
 ⛔ **Do not end a run with unwritten findings.** Before reporting, list what you found and
 confirm each one is drafted in the run's ledger entry and has reached the end of the
