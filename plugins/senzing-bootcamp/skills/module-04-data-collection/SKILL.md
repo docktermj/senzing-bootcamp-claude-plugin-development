@@ -871,6 +871,23 @@ Module 5 can evaluate.
 > with its outcome) are written by the Data File Validation step below and read back by Step 7 —
 > Step 7 cannot confirm what this entry never recorded, so both fields belong in the schema here.
 >
+> <a id="mapping-status-values"></a>`mapping_status` (`pending` | `in_progress` | `complete` |
+> `skipped`) is `pending` when written here; Module 5 writes the rest: `in_progress` at Phase 2
+> step 8, `complete` at step 17 or on Phase 1 Step 5a's fast path, and `skipped` only when the
+> Bootcamper chooses to skip the source at Phase 2 step 11's validator-rejection gate. **What
+> `skipped` means is stated here once (INV-300), and every step that reads `mapping_status` points
+> here and states only what it does with it.** A `skipped` source has no mapper and no
+> Senzing-ready file, and gets neither for the rest of the run:
+>
+> - **It is not an unmapped source.** Nothing maps it next, offers it as the next source, or waits
+>   for it before Module 5 completes.
+> - **It is not a mapped source.** Nothing loads it, and the production configuration leaves it
+>   out.
+> - **It is named wherever it is left out:** in Module 5's recap, with why it was skipped, and in
+>   the production README, as not mapped.
+> - **Its `config/mapping_state_[datasource].json` is kept, and never resumed.** That file holds the
+>   source's only copy of `validation_rejections`, the evidence the upstream fix needs.
+>
 > `sample` (optional) is written only when this module creates a working sample of the collected
 > file — Step 6's smaller-slice path or Step 8b's sample choice:
 > `sample: {file_path, record_count, strategy, reason}` (INV-326) — the sample file under `data/samples/`, the

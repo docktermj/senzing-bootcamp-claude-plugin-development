@@ -68,6 +68,8 @@ Before starting the mapping workflow for a source, check its registry entry in
 `config/data_sources.yaml`. If `fast_pathed` is `true` and `mapping_status` is `complete`, skip
 this source entirely: it has already been routed to Module 6. Proceed to the next unmapped
 source. A source a `quality_iteration` names is not skipped: the receiving branch above remaps it.
+A source whose `mapping_status` is `skipped` is passed over the same way, and its mapping is not
+restarted ([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)).
 
 ## Mapping verbosity check (before starting the mapping workflow)
 
@@ -111,7 +113,8 @@ write a checkpoint to `config/mapping_state_[datasource].json`:
 
 On session resume: read the checkpoint, show the user where they left off, restart
 `mapping_workflow`, fast-track through decided steps, and resume from the first incomplete step.
-**Delete the checkpoint when mapping for that source is complete.**
+**Delete the checkpoint when mapping for that source is complete.** A `skipped` source's checkpoint
+is kept and is not resumed ([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)).
 
 When step-3 validation rejects a payload, append the **verbatim** returned text to a
 `validation_rejections` array on the same checkpoint, and record `mapper_source` once the mapper
@@ -1438,7 +1441,8 @@ case.
 2. **Capture the evidence first.** Before falling back, write the raw rejection text **verbatim**
    into that source's `config/mapping_state_[datasource].json` (a `validation_rejections` array).
    It is the only diagnostic the upstream fix has, and it is otherwise lost when the session ends.
-3. **Ask, do not decide.** Present this pinned 👉 question (INV-051/INV-056, numbered, no "or"):
+3. **Ask, do not decide.** Present this pinned 👉 question (INV-051/INV-056, numbered, no "or"),
+   offering only the options that "Which options are offered", below, leaves in:
 
    👉 **The mapping validator rejected this source twice without saying why. How would you like to proceed? Reply with a number:**
 
@@ -1447,6 +1451,14 @@ case.
    3. **Skip this source** — continue with the sources that mapped successfully.
 
    *(Internal: end the turn on this question and wait — INV-007.)*
+
+   **Which options are offered.** Leave option 3 out when no other source in
+   `config/data_sources.yaml` has `mapping_status: complete`: skipping would leave nothing to load.
+   Leave option 2 out when the gate is asked again after option 2's own rejection (item 7). Number
+   the options that remain from 1, in the order above, and keep the question's wording (INV-056).
+   **When only option 1 remains**, there is one sensible answer, so ask nothing: say in one line
+   that the validator rejected the source again and that you will write the mapper against the
+   Senzing Entity Specification, then continue with item 4, with no 👉.
 
 4. **On option 1, the fallback is bounded, not a free hand.** State plainly what still holds:
    - Attribute names come from the Senzing Entity Specification in `docs/reference/` (see
@@ -1461,6 +1473,19 @@ case.
 5. **Record how each mapper was produced.** Note the fallback and its reason in the source's
    mapping-state checkpoint and in its `docs/mapping/` write-up, so a reader of the deliverable can
    tell which sources went through `mapping_workflow` and which did not.
+6. **On option 2, run `mapping_workflow` once more for this source, in full.** Restart it with
+   `action='start'` as step 8 does, fast-track through the decisions already in the source's
+   mapping-state checkpoint, and submit a new step-3 payload. If it passes, continue step 11 as
+   normal. If it is rejected with an actionable reason, correct the payload against that reason.
+7. **If option 2's run is rejected without an actionable reason too**, append the rejection text
+   to `validation_rejections` (item 2), then ask item 3's question again **without option 2**.
+   Option 2 has been spent and one more rejection is on record, so this is a new state, not an
+   INV-006 repeat (INV-284). Item 3's "Which options are offered" says what remains.
+8. **On option 3, skip the source.** Set its `mapping_status` to `skipped` and set `updated_at` in
+   `config/data_sources.yaml`, and keep its `config/mapping_state_[datasource].json`
+   ([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values) says why). Steps
+   12–18a do not run for it. Say in one line that the source is skipped and why,
+   then continue at step 19 with the next source.
 
 `mapping_workflow` remains the default and documented path. Never offer this fallback
 preemptively — only after two unactionable rejections of the same source.
@@ -1645,8 +1670,11 @@ adjustment.
 **Iterate vs. proceed decision gate:** After presenting quality results, guide the decision and
 close the turn on one 👉 question. Which questions apply depends on whether an **unmapped source
 remains**: `config/data_sources.yaml` has a source other than this one whose `mapping_status` is
-not `complete`. Fast-pathed sources are `complete` (see "Skip fast-pathed sources"), so they never
-count. Read the registry before choosing the question. Each question is pinned verbatim (INV-056).
+neither `complete` nor `skipped`. Fast-pathed sources are `complete` (see "Skip fast-pathed
+sources"), and a `skipped` source is never mapped next
+([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)), so neither counts and neither is
+offered as `{next}`. Read the registry before choosing the question. Each question is pinned
+verbatim (INV-056).
 
 ⛔ **(INV-345) On a `provenance: synthesized` source, the 70-79% and <70% questions are disclosed
 first.** Read `provenance` for this source from `config/data_sources.yaml` with the registry read
@@ -1884,13 +1912,19 @@ or mark the current source done until its mapping specification markdown is save
 sources are mapped, confirm every completed source has its own file. When a source's mapping is
 complete, delete its `config/mapping_state_[datasource].json` checkpoint.
 
+**A `skipped` source** ([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)): the
+mapping-spec gate and the per-source completion checkpoint above do not apply to it, because it has no mapper. Expect no
+`docs/mapping/{source_name}_mapper.md` for it, and keep its checkpoint. The next source is the next
+unmapped one, as step 16 defines it; when none remains, continue to step 20.
+
 **Checkpoint:** write step 19.
 
 ### 20. Module completion and transition
 
-Once all sources are mapped, **complete the module** — this is Module 5's only completion site,
-whether or not any source took the optional Phase 3 test load (Phase 3 returns to step 19 and never
-completes the module).
+Once every source's `mapping_status` is `complete` or `skipped`
+([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)), **complete the module** — this
+is Module 5's only completion site, whether or not any source took the optional Phase 3 test load
+(Phase 3 returns to step 19 and never completes the module).
 
 > **Optional: baseline status summary (advisory, non-blocking):** When any source took the Phase 3
 > test load, you MAY surface which data sources still lack an ER baseline (compare the set of
@@ -1898,6 +1932,11 @@ completes the module).
 > the workflow, and never creates, modifies, or deletes a baseline. (The Kiro
 > `baseline_status.py` helper is a later porting phase; report coverage directly if you choose
 > to.)
+
+**The recap names each `skipped` source.** In the Module 5 recap section's **Actions Taken**, name
+each source whose `mapping_status` is `skipped` and why it was skipped: the mapping validator
+rejected it without an actionable reason (its `validation_rejections` hold the text), and the
+Bootcamper chose to skip it. No `skipped` source: add nothing.
 
 Run the standard **Module Completion** process in
 `../bootcamp-onboarding/module-completion.md`: present the end-of-module summary (INV-032), append

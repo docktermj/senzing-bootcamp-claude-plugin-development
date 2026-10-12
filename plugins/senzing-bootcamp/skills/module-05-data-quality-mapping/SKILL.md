@@ -118,8 +118,8 @@ either one:
   and proceed;
 - **step-3 validation rejects the payload with no actionable reason** (a truncated error naming no
   field) → capture the raw rejection to the source's checkpoint, stop after two attempts, and offer
-  the pinned three-option question. Writing the mapper against the Entity Specification is a
-  sanctioned outcome there, with all three quality gates still running.
+  the pinned question with the options Phase 2 step 11 leaves in. Writing the mapper against the
+  Entity Specification is a sanctioned outcome there, with all three quality gates still running.
 
 ## Phases
 
@@ -134,7 +134,8 @@ either one:
 
 Read `current_step` from `config/bootcamp_progress.json` and resume at the right phase. During
 mapping, also read any `config/mapping_state_[datasource].json` checkpoint to resume a
-per-source `mapping_workflow` run where it left off.
+per-source `mapping_workflow` run where it left off. A `skipped` source's checkpoint is not resumed
+([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)).
 
 **A progress file that recorded Module 5 at step 26.** Phase 3 used to end on a step 26, which ran
 Module Completion and then wrote its checkpoint, so a Module 5 `current_step` of 26 written under

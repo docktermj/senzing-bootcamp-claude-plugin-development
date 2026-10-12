@@ -9,7 +9,9 @@ serves it.
 **Conditional gate.** Read `config/data_sources.yaml` and count sources with `mapping_status:
 complete`. If there is only ONE data source, skip Phase C entirely and proceed to Phase D
 (`phaseD-validation.md`). Only present these steps when the bootcamper has 2 or more sources to
-load.
+load. A source whose `mapping_status` is `skipped` is not loaded: it is not counted here, and step
+12's inventory lists it as skipped and not loaded
+([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)).
 
 ## 12. Inventory all data sources
 

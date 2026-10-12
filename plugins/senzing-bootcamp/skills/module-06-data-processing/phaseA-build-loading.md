@@ -159,6 +159,10 @@ from `config/data_sources.yaml` rather than assuming a fixed directory:
   `data/raw/`, which Module 5's fast-path kept as the source's `file_path` (no transformation)
 - Direct Entity Specification-compliant data files; database query results or API responses
 
+A source whose `mapping_status` is `skipped` is not loaded: leave it out here and in every later
+step of this module, even though its `file_path` still names a collected file
+([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)).
+
 Update the source's `load_status` to `loading` in `config/data_sources.yaml` and set
 `updated_at`.
 

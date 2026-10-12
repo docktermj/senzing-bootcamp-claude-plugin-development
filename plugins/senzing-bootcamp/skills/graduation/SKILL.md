@@ -1368,7 +1368,9 @@ The projection describes what production loads, not what the evaluation loaded:
   [the truncated-source rule](../module-04-data-collection/SKILL.md#truncated-cord-source) defines), `file_size_bytes` and the timestamps.
 - **Sources:** every source whose `file_path` is non-null, fast-pathed sources included (their
   `data/raw/` input is disclosed as the paragraph on fast-pathed sources below says). Omit a source
-  whose `file_path` is null, such as a documented-location-only source.
+  whose `file_path` is null, such as a documented-location-only source. Omit a source whose
+  `mapping_status` is `skipped` too: it has no mapper, so production has nothing to load it with,
+  and Step 4's README names it ([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)).
 - **Why `load_subset:` goes:** it is the evaluation's limit. An `overlap_preserving` block names a
   subset file under the excluded `data/subsets/` (below), and a `first_n` block's `limit` is the
   evaluation's license or SQLite cap. A source with no block loads its whole registry `file_path`
@@ -1440,6 +1442,12 @@ the files are exactly as they were before this paragraph.
     each source the evaluation loaded as a subset (one whose bootcamp registry entry has a
     `load_subset:` block), and say that production loads its whole `file_path`. No source was loaded
     as a subset → omit that sentence.
+  - **Configuration names each source that is not mapped.** For each source whose bootcamp registry
+    entry has `mapping_status: skipped`, which Step 2's projection leaves out
+    ([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)), say that it is not mapped, so
+    the registry does not list it and the loader does not load it, and that its mapping was stopped
+    after the mapping validator rejected it without a usable reason. No such source → omit that
+    sentence.
   - **Where `integration_targets` is known** (INV-097), name those systems in **Project Overview** as what the resolved entities are meant to feed, and in **Configuration** as the integration points a reader will need to wire up — the resolved data exists to reach them, so a README that never mentions them describes half the job. Absent → omit; never write "none" or a placeholder.
 - **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the bootcamp does not include dedicated performance/security/monitoring/deployment modules, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) are not covered in depth during the bootcamp: complete these items before deploying," and mark those items with ⚠️.
   - **The Performance section MUST carry the DEFAULT-flags item** — ⚠️ *"Replace `*_DEFAULT_FLAGS`
