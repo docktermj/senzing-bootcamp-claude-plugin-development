@@ -50,6 +50,8 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
+from _corpus import corpus_files
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # --- BEGIN VOCABULARY AND EXEMPTION DATA -------------------------------------------- #
@@ -379,17 +381,14 @@ def corpus():
     """
     if _CORPUS_CACHE:
         return _CORPUS_CACHE
-    stack = [REPO_ROOT]
-    while stack:
-        directory = stack.pop()
-        for child in sorted(directory.iterdir()):
-            if child.is_dir():
-                if child.name not in SKIP_DIRS:
-                    stack.append(child)
-            elif child.suffix.lower() in TEXT_SUFFIXES:
-                rel = child.relative_to(REPO_ROOT).as_posix()
-                _CORPUS_CACHE.append(
-                    (rel, child.read_text(encoding="utf-8", errors="replace")))
+    for child in corpus_files():
+        rel_parts = child.relative_to(REPO_ROOT).parts
+        if SKIP_DIRS.intersection(rel_parts[:-1]):
+            continue
+        if child.suffix.lower() in TEXT_SUFFIXES:
+            rel = "/".join(rel_parts)
+            _CORPUS_CACHE.append(
+                (rel, child.read_text(encoding="utf-8", errors="replace")))
     return _CORPUS_CACHE
 
 

@@ -28,6 +28,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
+
 # ⚠️ **Matches the ROUTE, not the exact argument string.** These assertions pinned the literal
 # `search_docs(category='data_mapping')`, which stopped matching when
 # `specs/search-docs-instructions-omit-the-required-query-parameter.md` gave every shipped
@@ -194,8 +196,8 @@ class ThePluginNeverRepairsTheData(unittest.TestCase):
     def test_no_sample_data_is_vendored_into_this_repository(self):
         """The check the prose cannot make: a later 'helpful' commit adding a fixed copy."""
         vendored = [
-            p for p in REPO_ROOT.rglob("*.csv")
-            if ".git" not in p.parts and "node_modules" not in p.parts
+            p for p in corpus_files(suffixes={".csv"})
+            if "node_modules" not in p.relative_to(REPO_ROOT).parts
         ]
         self.assertEqual(
             [], vendored, f"sample data must not be copied into this repo: {vendored}"

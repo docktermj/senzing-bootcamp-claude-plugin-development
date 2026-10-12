@@ -35,11 +35,12 @@ import re
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
 from _wrapped_text import match_lines
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MEMORY = REPO_ROOT / ".claude" / "memory"
-DOCS = sorted((REPO_ROOT / ".claude").rglob("*.md")) + sorted((REPO_ROOT / "docs").rglob("*.md"))
+DOCS = corpus_files(".claude", suffixes={".md"}) + corpus_files("docs", suffixes={".md"})
 
 #: An instruction to put the issue number in the SUBJECT, which is the retired convention. The
 #: matcher targets the act -- prefixing a title/subject with `#n` -- not the phrasings that

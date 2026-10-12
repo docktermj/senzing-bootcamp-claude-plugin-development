@@ -41,6 +41,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 TESTS = REPO_ROOT / "tests"
@@ -90,10 +92,8 @@ SCANNED_ROOTS = (PLUGIN, REPO_ROOT / "tests", REPO_ROOT / ".claude", REPO_ROOT /
 
 def shipped_source():
     """Every script and Markdown file a maintainer reads, discovered rather than listed (INV-246)."""
-    out = []
-    for root in SCANNED_ROOTS:
-        out += list(root.rglob("*.py")) + list(root.rglob("*.md"))
-    return sorted(out)
+    roots = [root.relative_to(REPO_ROOT).as_posix() for root in SCANNED_ROOTS]
+    return corpus_files(*roots, suffixes={".py", ".md"})
 
 
 def read(path):
