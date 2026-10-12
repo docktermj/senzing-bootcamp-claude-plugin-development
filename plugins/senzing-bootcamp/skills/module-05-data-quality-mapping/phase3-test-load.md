@@ -182,7 +182,7 @@ step 24d (#488):
 
 *(Internal: end the turn on this question and wait.)*
 
-- **Step 24d's gate was presented:** its answer already settled accept or iterate, so ask nothing
+- **Step 24d's gate was presented:** (INV-344) its answer already settled accept or iterate, so ask nothing
   here. Present the summary as statements and follow that answer: **accept** (its option 1) takes
   the **yes** route below, and **iterate** (its option 2) takes the **no** route. Step 24d already
   told the Bootcamper they can return to Phase 2, so do not repeat that offer as a question. The

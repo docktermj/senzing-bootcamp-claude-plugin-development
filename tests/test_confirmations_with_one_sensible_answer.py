@@ -14,7 +14,9 @@ sensible answer trained the automatic "yes" that lets meaning drift at the gates
    one line, records it in the mapping table's reasoning column, and asks nothing.
 3. **Candidate 6, Module 5 step 25's "Are you ready to proceed?"** It is asked only when step
    24d's gate was not presented. When it was, step 25 follows that answer: accept takes the yes
-   route, iterate the no route, with no 👉 at step 25.
+   route, iterate the no route, with no 👉 at step 25. INV-344's 2026-10-11 dated note names this
+   file as its enforcer: these tests pin that step 25 states the rule, and do NOT establish that a
+   live run follows step 24d's answer or keeps step 25 silent.
 
 The kept gates (candidates 3, 4, 5, 7 and 8) are pinned by their own tests; ``KeptGates`` checks
 only that each still stands at its site, so a later "tidy" of this issue's kind cannot take one.

@@ -29,7 +29,8 @@ acted on. These tests pin what the step states:
 anywhere in `phase2b-discover.md` and `test_no_transition_question_follows_the_offers` fails.
 
 These assert that the skill files STATE the rules; they cannot establish that a live run follows
-them. Stdlib only; nothing under ``plugins/`` is imported (INV-108).
+them. INV-356 names this file as its enforcer; passing it is no evidence that a live run obeys it.
+Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 
 import json

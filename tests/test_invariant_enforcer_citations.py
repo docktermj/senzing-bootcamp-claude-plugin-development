@@ -599,7 +599,64 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # container only) names test_container_viz_port_is_published_and_checked.py, which already cites
 # INV-260 back. Re-derived by running the extractor -- 201, the one new pair present by name and none
 # removed. EXPECTED_PAIRS 200 -> 201.
-EXPECTED_PAIRS = 201
+# 202 on 2026-10-12: INV-344's dated note (#488: step 25 asks only when step 24d's gate was not
+# presented) names test_confirmations_with_one_sensible_answer.py, which now cites INV-344 back and
+# states what it does NOT establish -- that a live run follows step 24d's answer. Re-derived by
+# running the extractor -- 202, the one new pair present by name and none removed.
+# EXPECTED_PAIRS 201 -> 202.
+# 203 on 2026-10-12: INV-352 (one worked steer per Act 2 hands-on module; #484) names
+# test_worked_steers.py, which cites it back and states what it does NOT establish -- that a live
+# guide shows the steer, asks first or writes the checkpoint line. Re-derived by running the
+# extractor -- 203, the new pair present by name and none removed. EXPECTED_PAIRS 202 -> 203.
+# 204 on 2026-10-12: INV-353 (Module 7 saves step 1's requirements and the discoveries document
+# answers each first; #480) names test_module7_your_question_answered.py, which cites it back and
+# states what it does NOT establish -- that a live guide saves the list or writes faithful rows.
+# Re-derived by running the extractor -- 204, the new pair present by name and none removed.
+# EXPECTED_PAIRS 203 -> 204.
+# 205 on 2026-10-12: INV-275's dated note (#482: the both-versions scope widens to every gate that
+# confirms a derived artifact) names test_module7_gate_shows_both_versions.py, which already cites
+# INV-275 back. Re-derived by running the extractor -- 205, the one new pair present by name and
+# none removed. EXPECTED_PAIRS 204 -> 205.
+# 206 on 2026-10-12: INV-354 (one step per hands-on module is directed by the Bootcamper; #485)
+# names test_directing_steps.py, which cites it back and states what it does NOT establish -- that a
+# live guide builds what was asked or compares honestly. Re-derived by running the extractor -- 206,
+# the new pair present by name and none removed. EXPECTED_PAIRS 205 -> 206.
+# 207 on 2026-10-12: INV-355 (one resolved own-data entity shown as text at three places; #486)
+# names test_own_data_entity_shown_as_text.py, which cites it back and states what it does NOT
+# establish -- that a live guide shows the right entity or retrieves it with SDK code. Re-derived by
+# running the extractor -- 207, the new pair present by name and none removed.
+# EXPECTED_PAIRS 206 -> 207.
+# 208 on 2026-10-12: INV-356 (Module 7 step 4e exports for the systems named in Module 1; #487)
+# names test_module7_exports_for_integration_targets.py, which cites it back and states what it does
+# NOT establish -- that a live run follows the rules. Re-derived by running the extractor -- 208,
+# the new pair present by name and none removed. EXPECTED_PAIRS 207 -> 208.
+# 209 on 2026-10-12: INV-097's dated note (#487: Module 7 reads `integration_targets` too) names
+# test_module7_exports_for_integration_targets.py, which already cites INV-097 back. Re-derived by
+# running the extractor -- 209, the one new pair present by name and none removed.
+# EXPECTED_PAIRS 208 -> 209.
+# 210 on 2026-10-12: INV-357 (predictions before results, never graded; #479) names
+# test_predictions_before_results.py, which cites it back and states what it does NOT establish --
+# that a live guide holds the result back or never grades. Re-derived by running the extractor --
+# 210, the new pair present by name and none removed. EXPECTED_PAIRS 209 -> 210.
+# 211 on 2026-10-12: INV-091's dated note (#490: the vendored D3 sits beside the bundled server
+# wherever it runs) names test_truthset_container_route_runs_a_project_copy.py, which already cites
+# INV-091 back. Re-derived by running the extractor -- 211, the one new pair present by name and
+# none removed. EXPECTED_PAIRS 210 -> 211.
+# 213 on 2026-10-12: INV-258's dated note (#481: graduation's handover fence is held to the notes
+# fence's discipline) names test_recap_handover_section.py and
+# test_graduation_hands_over_the_ability.py, both of which already cite INV-258 back. Re-derived by
+# running the extractor -- 213, the two new pairs present by name and none removed.
+# EXPECTED_PAIRS 211 -> 213.
+# 214 on 2026-10-12: INV-358 (graduation hands over the ability; #481) names
+# test_graduation_hands_over_the_ability.py, which cites it back and states what it does NOT
+# establish -- that a live graduation draws only from the record. Re-derived by running the
+# extractor -- 214, the new pair present by name and none removed. EXPECTED_PAIRS 213 -> 214.
+# 215 on 2026-10-12: INV-359 (Module 7 step 1 asks the Bootcamper's question before showing anything
+# derived; #478) names test_module7_asks_the_bootcampers_question_first.py, which cites it back and
+# states what it does NOT establish -- that a live guide asks in that order or quotes faithfully.
+# Re-derived by running the extractor -- 215, the new pair present by name and none removed.
+# EXPECTED_PAIRS 214 -> 215.
+EXPECTED_PAIRS = 215
 
 
 def pairs():

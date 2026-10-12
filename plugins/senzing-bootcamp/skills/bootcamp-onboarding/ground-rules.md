@@ -187,7 +187,7 @@ works; each site states only what is predicted and which engine call answers it,
 | Query, Visualize and Discover, `phase2-discover.md` Step 4a-pairs | For each record pair: same entity or not? | Whether step 4a found the two records in one entity |
 | Query, Visualize and Discover, `phase2-discover.md` step 4b item 1a (Truth Set alumni only) | Which features joined this entity's records? | `why_records` on those records |
 
-- ⛔ **The prediction is asked before the result exists in the conversation.** Do not show, mention
+- ⛔ **(INV-357) The prediction is asked before the result exists in the conversation.** Do not show, mention
   or hint at the result before the Bootcamper answers: where the engine call has not run yet, run it
   only after the answer; where it already has (step 4a's entity IDs), hold its outcome back. The
   turn ends on the prediction's 👉, and the result arrives in the next turn.
@@ -202,7 +202,7 @@ works; each site states only what is predicted and which engine call answers it,
 - **The reveal shows both, together.** Their prediction (or "skipped"), the engine's call, and
   `agreed` or `differed`, followed by **one line** on what the engine used to decide, taken from the
   engine's own output, such as a why key or a match key (INV-080). Never the guide's own reasoning.
-- ⛔ **A prediction informs; it is never graded.** A prediction that differs from the engine is not
+- ⛔ **(INV-357) A prediction informs; it is never graded.** A prediction that differs from the engine is not
   wrong: never say "correct" or "incorrect", never keep a score or a tally, and never re-ask. This is
   the opposite of the knowledge check's "when the answer is wrong, say so", on purpose: a
   knowledge-check item has an answer sourced in advance, while a prediction about this engine on this
@@ -240,7 +240,7 @@ the answer and which result is checked, and points here.
   a choice means) goes before the 👉, as the 👉 protocol above requires. The guide offers no
   recommendation of its own unless asked to choose: a recommendation is what "you pick" gets. It
   is the turn's only 👉 (INV-251), and the turn ends on it.
-- ⛔ **The Bootcamper directs in words; the guide writes every line of code.** Never ask them to
+- ⛔ **(INV-354) The Bootcamper directs in words; the guide writes every line of code.** Never ask them to
   write, edit or paste code. Their words are the specification, and the code comes from the MCP
   tools exactly as it does elsewhere (INV-080): attribute names from `mapping_workflow`, SDK calls
   from `generate_scaffold` and `get_sdk_reference`. A choice their words make that the tools cannot
@@ -301,7 +301,7 @@ Truth Set visualization, keeps its first impressions guarded and shows none. Thi
 one statement of how every worked steer works; each of those modules points here and holds no
 copy (INV-300).
 
-- ⛔ **The trigger is a named condition, not a disposition.** A worked steer fires only on one of
+- ⛔ **(INV-352) The trigger is a named condition, not a disposition.** A worked steer fires only on one of
   these, and on nothing else:
   1. **Code the AI generated fails when it runs:** a non-zero exit, an exception, or an `EMPTY`
      line, which is a line in its output that names a result it expected and did not get.
@@ -314,7 +314,7 @@ copy (INV-300).
 - **At most one per module, and only the first.** The first trigger to fire in the module is its
   steer; every later failure in the module is fixed as before, without a steer. "At most one"
   allows zero: a module with no failure shows nothing.
-  ⛔ **Never stage a failure to have one to show.**
+  ⛔ **(INV-352) Never stage a failure to have one to show.**
 - **Two lines, after the fix.** The steer is shown once the fix has run (from Data processing on,
   its first line comes before the fix: see below), in this shape:
 
@@ -334,7 +334,7 @@ copy (INV-300).
 
   `👉 **What would you ask the AI to change to fix this? Say it in your own words.**`
 
-  ⛔ **The Bootcamper answers in words; the guide writes every line of code**, from the MCP tools
+  ⛔ **(INV-352) The Bootcamper answers in words; the guide writes every line of code**, from the MCP tools
   as everywhere else (INV-080). On the next turn, fix the failure and show the second line:
   - **Their request would work:** the AI makes that change, and the steer's second line says so:
     `What the AI was asked to change: {their request}, as you asked.`
@@ -354,7 +354,7 @@ copy (INV-300).
   one line to `docs/progress/recap_checkpoint.md`'s **Actions Taken**:
   `- Worked steer shown: {the steer, merged onto one line}`. The ask-first 👉 and its answer are an
   ordinary Questions & Responses line (`module-completion.md`).
-  ⛔ **On a resumed session, a checkpoint that already carries a `Worked steer shown:` line for this
+  ⛔ **(INV-352) On a resumed session, a checkpoint that already carries a `Worked steer shown:` line for this
   module means the steer was shown: show no second one.**
 
 ## Mandatory gates and step order
@@ -717,7 +717,7 @@ The caller says which entity to pick. Everything below is the same for all three
    ends on the next step's single 👉 (INV-251).
 4. **No entity has two or more records.** Say so plainly in one line, for example *"No records have
    resolved together yet: every entity holds a single record."*, and show no entity.
-   ⛔ **Never show a single-record entity in its place, and never make one up.** An entity the
+   ⛔ **(INV-355) Never show a single-record entity in its place, and never make one up.** An entity the
    engine did not return is a simulated result. In the recap's headline block, that one line is
    the block: the recap says the same thing the conversation did.
 5. **The program fails.** Say in one line what failed and show no entity. It does not block the
