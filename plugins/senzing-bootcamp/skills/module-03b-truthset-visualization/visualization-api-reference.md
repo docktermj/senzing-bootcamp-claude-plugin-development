@@ -1411,6 +1411,8 @@ and makes one HTTP request; it never starts, stops or removes a container.
      echo $!')
    ```
 
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
    `<server command>` is the module's own launch line with paths as the container sees them; a
    server in another language takes the address and the port through its own options. On Truth
    Set visualization's Python path the server is the project copy that
