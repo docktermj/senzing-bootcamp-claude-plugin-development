@@ -443,4 +443,5 @@ undetermined items remain, Phase 1 is complete — proceed to Phase 2 (load
 the scenario is identified and before the problem statement is written (INV-097) — not here in
 Phase 1 and not in Bootcamp preparation. Their answers are persisted to
 `config/bootcamp_preferences.yaml` (`integration_targets`, `deployment_target`/`cloud_provider`)
-and read from there by the problem statement (Phase 2) and by graduation.)
+and read from there by the problem statement (Phase 2), by Module 7's step 4e (the export for the
+systems named) and by graduation.)

@@ -136,7 +136,8 @@ Gather context before any step. Do this silently.
    **1a — what the Module 1 answers are for (INV-097).** `integration_targets` and
    `deployment_target`/`cloud_provider` are the bootcamper's own answers to two pinned 👉 questions
    asked in Module 1 Phase 2 Step 10a — what the resolved results must talk to, and where this is
-   going to run. Bootcamp graduation is the only place they can still change anything, because the
+   going to run. Module 7's step 4e acts on `integration_targets` earlier, through its exports;
+   Bootcamp graduation is the last place they can still change anything, because the
    `production/` project **is** the thing being deployed: Step 3 stamps them into the container and
    environment templates, Step 4 into the README and the migration checklist's Deployment section,
    Step 5 into the graduation report.

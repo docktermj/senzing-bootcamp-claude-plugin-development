@@ -162,8 +162,10 @@ degraded, or unchanged). Explain what the changes mean:
 - **If accepted:** Copy `config/er_current_{datasource}.json` to
   `config/er_baseline_{datasource}.json`. Confirm: "New baseline saved. Future test loads will
   compare against these results."
-- **If rejected:** Keep the existing baseline unchanged. Inform the bootcamper they can return
-  to Phase 2 to adjust their mapping and re-run Phase 3 to see updated results.
+- **If rejected:** Keep the existing baseline unchanged. Iterate returns to Phase 2 step 17 to
+  adjust this source's mapping, by step 25's **no** route (INV-344); say so as a statement.
+  Re-entering Phase 3 to see updated results needs the bootcamper's explicit **test_load** at
+  step 18a again.
 
 After `mapping_workflow` steps 5–8 generate output files into the workspace, place them into the
 correct project subdirectories per the file-placement guidance in `phase2-data-mapping.md`.
@@ -184,9 +186,9 @@ step 24d (#488):
 
 - **Step 24d's gate was presented:** (INV-344) its answer already settled accept or iterate, so ask nothing
   here. Present the summary as statements and follow that answer: **accept** (its option 1) takes
-  the **yes** route below, and **iterate** (its option 2) takes the **no** route. Step 24d already
-  told the Bootcamper they can return to Phase 2, so do not repeat that offer as a question. The
-  turn ends on the next question the route reaches (INV-251).
+  the **yes** route below, and **iterate** (its option 2) takes the **no** route. Step 24d's
+  **If rejected** line already states where iterate goes, so do not repeat that offer as a question.
+  The turn ends on the next question the route reaches (INV-251).
 
 > **Data source registry:** Update the source's `test_load_status` to `complete` and
 > `test_entity_count` to the entity count from the test load in `config/data_sources.yaml`. Set
@@ -294,8 +296,8 @@ shape. It means the Bootcamper's routing answer was not honored: at the record r
 extracted as a feature regardless of the payload intent (observation-only, 2026-08-17 — see
 `phase2-data-mapping.md` step 11, which carries the full marker and its evidence). If it reaches
 this phase at all, step 11's collision check did not run or was skipped; resolve it as step 11
-prescribes — offer the rename, never silently re-route — rather than filing it under the conformance
-split above and continuing.
+prescribes — rename the key and say so, never silently re-route — rather than filing it under the
+conformance split above and continuing.
 
 ## Encoding
 
