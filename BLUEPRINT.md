@@ -2215,7 +2215,10 @@ means the module is complete: only the transition question is asked.
   `## Record Type Check` in `docs/mapping/{source}_mapper.md`.
 - **Step 7 and the gate.** Step 7 writes `docs/data_source_evaluation.md`.
   The optional visual is a branded, offline page captured with
-  `--single`.
+  `--single`, generated on the host on every route, `docker` included,
+  because it needs no SDK and the plugin's `scripts/` resolves only there
+  (stated once at step 6's `#quality-page-runs-on-the-host`; Phase 2's
+  step 15 page links it, INV-300).
   - 80+ asks nothing. 70-79 and below 70 ask a pinned improve-or-continue
     question, with a disclosure first for `synthesized` data.
   - 7a improves format and duplicates only, writing
@@ -2475,8 +2478,11 @@ Phase 1 (`phase1-query-visualize.md`):
   `src/server/` modeled on `senzing_viz_server.py`: six tabs (Entity Graph,
   Merge Statistics, Match Keys, Feature Scores, Cross-Source, Search / Probe),
   colored by whole source set with the encoding self-check, `NAME_ORG` search
-  fallback, built from the export stream, D3 copied into the project, loopback
-  bind with an identity check, a snapshot
+  fallback, built from the export stream, the brand-token values copied into
+  the server's own code in every language (it never imports `brand_tokens.py`
+  or reads a `${CLAUDE_PLUGIN_ROOT}` path at runtime), D3 copied on the host
+  at first build to `src/server/vendor/d3.v7.min.js` (a missing copy refuses
+  to render and is copied again), loopback bind with an identity check, a snapshot
   `docs/visualizations/results_visualization.html` naming the Bootcamper's own
   sources, and screenshots (skipped only on its exit code) from
   `capture_screenshots.py --name results_visualization`. The server stays up;
@@ -8808,7 +8814,7 @@ collected as tests:
     non-empty `SBCP_QUIET_FPDF2_NOTICE` silences it.
   - It exports the decorator `requires_fpdf2`.
   - It is a module rather than a `conftest.py`, which `unittest` never loads.
-- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 63
+- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 64
   files. `blocks(text)` splits Markdown into blocks, and
   `match_lines(text, pattern)` returns the 1-based start line of each match. The
   rules are in 8.4.1.
@@ -8862,7 +8868,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 393 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 394 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -8912,7 +8918,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6787 test methods in 393 files, matching `inventory.test_count_total`.
+There are 6806 test methods in 394 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -8980,6 +8986,7 @@ looks wrong.
 - `tests/test_conformance_sees_a_rule_beside_a_citation.py`: 8
 - `tests/test_container_lifecycle_runtimes.py`: 18
 - `tests/test_container_names_are_project_derived.py`: 36
+- `tests/test_container_route_reads_no_plugin_asset.py`: 19
 - `tests/test_container_viz_port_is_published_and_checked.py`: 28
 - `tests/test_container_teardown_has_a_route_and_a_failure_report.py`: 8
 - `tests/test_cord_fetch_has_a_403_remedy.py`: 17
@@ -10700,3 +10707,12 @@ Senzing licensing, with no SPDX identifier.
   `phase2-close.md`'s `#no-live-server-completion` with Step 4 naming its own
   skips, and a `PROPOSED AMENDMENT to INV-130` is queued (the fallback the
   module prescribed could never pass its completion gate)
+- #525: nothing that runs inside the SDK container reads a plugin asset by its
+  plugin path: Module 5's quality pages are generated on the host on every
+  route, stated once at step 6's `#quality-page-runs-on-the-host` and linked
+  from step 15, and Module 7's server copies the brand-token values into its
+  own code in every language and resolves D3 from
+  `src/server/vendor/d3.v7.min.js`, copied on the host at first build; a
+  derived-site guard checks every skill section that names a plugin asset, and
+  a `PROPOSED AMENDMENT to INV-091` is queued (the container mounts only the
+  project, so those reads failed on SDK setup's `docker` route)

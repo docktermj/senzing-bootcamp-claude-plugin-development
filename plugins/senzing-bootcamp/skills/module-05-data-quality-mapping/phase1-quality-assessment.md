@@ -853,6 +853,18 @@ If the bootcamper accepts, generate a self-contained HTML page and save it to
 `docs/visualizations/` (INV-070). (The full Visualization Protocol / `visualization-guide` is a later
 porting phase; offer directly for now.)
 
+<a id="quality-page-runs-on-the-host"></a>
+
+⛔ **(INV-091) Generate the quality page on the host, on every route, including SDK setup's
+`docker` route.** This is the canonical statement of where the page is built; Phase 2's step 15
+links here rather than restating it (INV-300). The page needs no SDK: it is HTML written from the
+quality results already in hand. And the plugin's `scripts/`, where the brand tokens and the
+vendored D3 below live, resolves only on the host, because the SDK container mounts only the
+project. So build the page, and any generator script you write for it, on the host even where this
+module's `mapping_workflow` scripts run inside the container (`phase2-data-mapping.md` → "Where the
+scripts run, and with which Python" covers those scripts only). The asset rules below then apply
+unchanged. On a native route the host is where the SDK runs, so nothing changes there.
+
 ⛔ **This page is a bootcamper-facing visual deliverable, so the four rules below bind it** — it is
 saved, kept, and shareable, exactly like the Truth Set app's snapshot. See
 `../bootcamp-onboarding/ground-rules.md` → "Visual deliverables (Senzing brand)" for the first two
