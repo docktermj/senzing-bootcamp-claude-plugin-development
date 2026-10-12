@@ -154,12 +154,18 @@ INV-080), create an engine, and release it.
    `${BASH_SOURCE[0]}`-based script computes the wrong project root and exports nothing. Send the
    bootcamper to Module 2's
    [env script path resolution](../module-02-sdk-setup/SKILL.md#env-script-path-resolution).
-   (Snippet guard verified via `search_docs` on MCP server 1.32.1, 2026-07-28.)
+   (The snippet guard is what `find_examples(query='Unable to get settings')` returns first:
+   `senzing/code-snippets-v4` `java/snippets/information/GetRepositoryInfo.java`, which throws
+   `IllegalArgumentException("Unable to get settings")` when the variable is `null`; with
+   `language='csharp'` it returns the C# twin, which throws `ArgumentException`. On target, MCP
+   server 1.37.27, 2026-10-12.)
 2. Call `explain_error_code(error_code="<code>", version="current")` and present what it returns.
 3. **If the code is `SENZ2027`**, add the cause its own resolution steps do not name: the libraries
    loaded but their support data did not — the runtime **data directory** is not where the
    configuration points. Send the bootcamper to Module 2's Step 8 SUPPORTPATH check (on Windows/Scoop,
-   the sibling-directory case). Verified against the Senzing FAQ on MCP server 1.32.2, 2026-07-30.
+   the sibling-directory case). The cause is the Senzing FAQ *I get SENZ2027 Plugin initialization
+   error GNR data files failed to load*, and the `search_docs` route that returns it is stated
+   once, in `../module-02-sdk-setup/SKILL.md` → "Step 8: Create Engine Configuration" (INV-300).
 3b. **If the code is `SENZ7426`**, relay what `explain_error_code` returned (step 2 already says to)
    and send them to the *same* Step 8 check. How the tool compares with
    `sdk_guide(topic='install', …)` on this code is stated once, in Module 2 Step 8's *"Both tools

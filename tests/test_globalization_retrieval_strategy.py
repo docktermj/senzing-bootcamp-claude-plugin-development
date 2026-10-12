@@ -81,11 +81,19 @@ class EveryGlobalizationRetrievalFilters(unittest.TestCase):
         for path in POINTER_SITES:
             calls = GLOBALIZATION_CALL.findall(prose(path))
             with self.subTest(site=path.name):
-                self.assertTrue(
-                    calls,
-                    "%s no longer retrieves globalization material; if that is deliberate, "
-                    "drop it from this guard rather than leaving a dead assertion" % path.name,
-                )
+                if not calls:
+                    # #513: a site may carry no call of its own and point at the strategy's
+                    # route instead (INV-300). `test_prescribed_search_queries.py` follows that
+                    # pointer and checks the site against the route's record, so the pointer
+                    # must be in the form it parses.
+                    self.assertRegex(
+                        " ".join(prose(path).split()),
+                        r"route is stated once, in this module's `SKILL\.md` → "
+                        r"\"Multi-language data\"",
+                        "%s no longer retrieves globalization material and does not point at "
+                        "the strategy's route either; if that is deliberate, drop it from this "
+                        "guard rather than leaving a dead assertion" % path.name,
+                    )
                 for call in calls:
                     self.assertIn(
                         "category=", call,

@@ -532,11 +532,14 @@ class TheSymptomIsNamedWhereItLands(unittest.TestCase):
 
     def test_the_snippet_finding_carries_its_provenance(self):
         """INV-080: server version and date, and the tool that established it."""
-        for path in (MODULE_02, PHASE_1):
-            with self.subTest(file=path.name):
-                self.assertRegex(
-                    flat(path), r"(?i)`search_docs`.{0,60}1\.32\.1, 2026-07-28|1\.32\.1, 2026-07-28"
-                )
+        self.assertRegex(
+            flat(MODULE_02), r"(?i)`search_docs`.{0,60}1\.32\.1, 2026-07-28|1\.32\.1, 2026-07-28"
+        )
+        # #513: Module 3's stamp named `search_docs` and no query. The route that returns the
+        # snippet guard is `find_examples`, re-measured and named with its query.
+        text = flat(PHASE_1)
+        self.assertIn("find_examples(query='Unable to get settings')", text)
+        self.assertRegex(text, r"MCP server 1\.37\.27, 2026-10-12")
 
     def test_verification_checks_it_before_reaching_for_explain_error_code(self):
         text = PHASE_1.read_text(encoding="utf-8")

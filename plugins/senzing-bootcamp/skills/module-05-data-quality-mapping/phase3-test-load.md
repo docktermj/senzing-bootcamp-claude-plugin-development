@@ -300,9 +300,10 @@ split above and continuing.
 ## Encoding
 
 - Detect encoding in the profiling step. Convert to UTF-8 in the transformation program.
-- Non-Latin scripts: `search_docs(query="globalization", category="globalization")`. For the
-  sections to ask for by topic — and the two phrasings that return wrong content — see this
-  module's `SKILL.md` → "Multi-language data" (INV-212, INV-300) rather than restating them.
+- Non-Latin scripts: the `search_docs` route is stated once, in this module's `SKILL.md` →
+  "Multi-language data" (INV-212, INV-300). Its filtered call returns the Globalization Guide's
+  "What languages does Senzing support?" section first, for UTF-8; for the other sections to ask
+  for by topic, and the two phrasings that return wrong content, read it there rather than here.
 - Strip the UTF-8 BOM from Windows CSV files. JSON libraries handle special character escaping.
 - That covers a BOM arriving in **input** data. The more damaging case is a BOM you *write*: on
   PowerShell 5.1, `Out-File -Encoding utf8` prefixes the file it creates, so record 1 of a generated

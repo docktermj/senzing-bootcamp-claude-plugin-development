@@ -777,11 +777,9 @@ before they map it.** Checked directly against `docktermj/senzing-bootcamp-free-
 2. **So the disclosed-relationship exercise is unavailable from that file.** That exercise is the
    `REL_ANCHOR`/`REL_POINTER` family — `REL_ANCHOR_DOMAIN`/`REL_ANCHOR_KEY` on the record being
    pointed at, `REL_POINTER_DOMAIN`/`REL_POINTER_KEY`/`REL_POINTER_ROLE` on the record pointing at
-   it (Senzing Entity Specification, *Feature: REL_ANCHOR* and *Feature: REL_POINTER*; confirmed via
-   `search_docs(query='REL_ANCHOR_KEY REL_POINTER disclosed relationship keys',
-   category='data_mapping')` against MCP server 1.32.8, docs index 2026-08-11 — query re-verified
-   on 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-04, returning *Disclosed relationship
-   mapping guidance* and both feature sections). Mapping
+   it (Senzing Entity Specification, *Feature: REL_ANCHOR* and *Feature: REL_POINTER*; the
+   `search_docs` route that returns both is stated once, in
+   `../module-05-data-quality-mapping/phase2-data-mapping.md` → "11. Map" (INV-300)). Mapping
    `relationships-sample.csv` anyway fails silently: the files parse, the mapping validates, the
    load succeeds, and nothing relates.
 3. **The workable alternative on this source is `service_provider`**, populated on all 10 rows of

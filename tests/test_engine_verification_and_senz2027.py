@@ -91,7 +91,19 @@ class TheSenz2027DiagnosticIsNamed(unittest.TestCase):
         )
 
     def test_the_quote_carries_its_provenance(self):
-        self.assertRegex(flat(MODULE_02), r"(?i)verified 2026-07-30 on MCP server 1\.32\.2")
+        """#513: the provenance is a measured route, not a bare tool name and a date.
+
+        The 2026-07-30 stamp named `search_docs` and no query, so the next reader could not
+        re-run it (INV-291). The route below returns the FAQ as its top hit on the stamped
+        index; its record is in `test_prescribed_search_queries.py`.
+        """
+        text = flat(MODULE_02)
+        self.assertIn(
+            "search_docs(query='SENZ2027 Plugin initialization error GNR data files failed to "
+            "load')", text)
+        self.assertRegex(text, r"server 1\.37\.27, docs index 2026-10-11 18:43 UTC, 2026-10-12")
+        self.assertNotRegex(text, r"(?i)verified 2026-07-30 on MCP server 1\.32\.2",
+                            "the stale stamp with no query is back (#513)")
 
     def test_explain_error_code_is_still_first(self):
         self.assertRegex(flat(MODULE_02), r"explain_error_code\('SENZ2027'\)")
