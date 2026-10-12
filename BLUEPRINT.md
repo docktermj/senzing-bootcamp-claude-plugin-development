@@ -2351,7 +2351,11 @@ Phase B (`phaseB-load-first-source.md`, steps 5-11):
 - Step 9 drains redo until fetch returns nothing (never polling the count),
   then shows the midpoint entity (`#midpoint-entity`): the first source's
   entity with the most records, ties broken by the lowest `ENTITY_ID`, as text
-  with no visualization and no 👉, and none on a quality-iteration reload. Step
+  with no visualization and no 👉, and none on a quality-iteration reload. Its
+  checkpoint records `midpoint_record`: the `"<DATA_SOURCE>:<RECORD_ID>"` of
+  that entity's record with the lowest `RECORD_ID`, or `"none"` when the step
+  showed no entity (a record identifies the entity across later loads; an
+  entity ID does not). Step
   10 records the incremental strategy in `docs/loading_strategy.md`; step 11
   marks the source loaded; 2+ sources with `mapping_status: complete` go to
   Phase C, else Phase D.
@@ -2492,9 +2496,15 @@ discoveries file. 4a finds multi-record, cross-source and related entities
 entities (at least one resolved together and one not; fewer when the data is
 short, none said in one line), one per turn, each a same-or-different
 prediction whose reveal goes with the next 👉, checkpointed per pair in
-`steps.4a-pairs`. For Truth Set alumni 4b opens with item 1a: the chosen
-entity's records (in the 3c app when it is up, else as text) and a multi-select
-of its feature types, before any `why_*` call. 4b demonstrates `why_records` with
+`steps.4a-pairs`. "Already-shown entities" (`#already-shown-entities`, the
+one statement 4a-pairs item 1 and 4b item 1 point to) excludes the headline
+entity and the entity that now holds `midpoint_record` (looked up with
+`get_entity_by_record_id`; `"none"` or absent excludes nothing): 4a-pairs uses
+no record of theirs, and 4b item 1 prefers another entity, demonstrating an
+excluded one only when nothing else qualifies, and then skips item 1a. For
+Truth Set alumni 4b opens with item 1a: the chosen entity's records, as text
+only (the 3c app's entity view shows the match key, the answer), and a
+multi-select of its feature types, before any `why_*` call. 4b demonstrates `why_records` with
 `SZ_INCLUDE_MATCH_KEY_DETAILS` plus a relations flag, 4c narrates
 `how_entity` (both fall back to `FEATURE_SCORES`, both checkpoint
 `entity_demonstrated`), each ending with continue-or-finish. The opt-in
@@ -8889,7 +8899,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6701 test methods in 391 files, matching `inventory.test_count_total`.
+There are 6720 test methods in 391 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -9155,7 +9165,7 @@ looks wrong.
 - `tests/test_plugin_manifest_reads_resolve_inside_the_plugin.py`: 13
 - `tests/test_poor_band_requires_a_mapping_cause.py`: 15
 - `tests/test_post_yes_switch_reads_the_dial.py`: 19
-- `tests/test_predictions_before_results.py`: 24
+- `tests/test_predictions_before_results.py`: 43
 - `tests/test_preparation_recap_template.py`: 9
 - `tests/test_prescribed_search_queries.py`: 43
 - `tests/test_profile_report_relocation_covers_both_filenames.py`: 15
@@ -10610,6 +10620,15 @@ Senzing licensing, with no SPDX identifier.
   `scripts/` is not mounted in the container, so the server and its D3 were
   unreachable there; a copy, not a mount, because `${CLAUDE_PLUGIN_ROOT}` is a
   versioned cache directory)
+- #507: Discover step 4b item 1a shows its records as text only, and
+  "Already-shown entities" in `phase2-discover.md` excludes the headline entity
+  and the entity holding Module 6's new `midpoint_record` checkpoint key from
+  4a-pairs and 4b item 1 (item 1a skipped when only an excluded one qualifies);
+  `tests/test_predictions_before_results.py` fails on a pre-👉 route to the
+  visualization app (`m7_visualizations`, URL, port, `localhost`, `127.0.0.1`,
+  `http(s)://`) and on a dropped exclusion (the app's entity view renders the
+  match key and why verdict that item 1a asks the Bootcamper to predict, and an
+  entity already resolved on screen has had its answer shown, INV-357)
 - #508: container-route blocks state their shell: `ground-rules.md`'s
   `#guide-run-blocks` says guide-run blocks run in the guide's POSIX shell (Git
   Bash on Windows) and need no PowerShell form while hand-run blocks keep

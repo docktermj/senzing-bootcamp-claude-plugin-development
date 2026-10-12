@@ -103,6 +103,32 @@ entities with relationships (disclosed or discovered) found. The `relationships`
 but K is a count of **entities**, not of clusters or of relationships. Also set top-level
 `current_step` to `"4a"`.
 
+<a id="already-shown-entities"></a>
+
+### Already-shown entities
+
+Before the Discover phase the bootcamp has already shown two entities resolved on screen, each with
+its records and why they resolved together: Module 6's midpoint entity and Module 7's headline
+entity. A prediction about either would ask for an answer the Bootcamper has already seen (INV-357).
+This is the one statement of which entities that excludes; step 4a-pairs item 1 and step 4b item 1
+point here and say only what they do with an excluded entity (INV-300). Work the set out once, after
+step 4a's calls and before step 4a-pairs:
+
+1. **The headline entity:** the entity ID recorded as `module_7_query.headline_entity` at Module 7
+   step 1. When it is `"none"` (no entity had two or more records) or absent, there is no headline
+   exclusion.
+2. **The entity that now holds `midpoint_record`:** the `"<DATA_SOURCE>:<RECORD_ID>"` Module 6 step 9
+   recorded in `config/bootcamp_progress.json`. Locate its entity with `get_entity_by_record_id` on
+   that data source and record ID, in the same generated SDK code step 4a uses. A record identifies
+   the entity across later loads, and an entity ID does not, so look it up rather than reuse an ID.
+   When `midpoint_record` is `"none"` or absent (a progress file written before Module 6 recorded it,
+   or a quality-iteration reload, which shows no midpoint entity), there is no midpoint exclusion.
+   Do not re-derive it from Module 6's selection rule.
+
+When the midpoint record now sits in the headline entity, that is one exclusion, not two. Nothing
+else is excluded: entities in step 3a's query results, or browsed freely in step 3c's app, are not,
+because nothing records what was viewed there.
+
 ### Step 4a-pairs: Same entity or not?
 
 Before the why and how demonstrations, the Bootcamper predicts how the engine resolved a few pairs
@@ -113,6 +139,12 @@ than a copy here (INV-300).
 
 1. **Choose 3 pairs from step 4a's entities.** Step 4a's `get_entity_by_record_id` calls already
    hold each record's entity ID, so no new call is needed to know the answers. Hold them back.
+   - **Never an already-shown entity.** The headline entity (`headline_entity`) and the entity
+     that holds `midpoint_record` are excluded, as
+     [Already-shown entities](#already-shown-entities) states once (INV-300): no record of theirs
+     is used for any pair. The rules below, and the fallback when step 4a cannot supply 3, apply to
+     what remains, so when every multi-record entity is excluded only pairs that did not resolve
+     together are left.
    - **At least one pair that resolved together:** two records of one multi-record entity,
      cross-source when step 4a found one. Prefer an entity other than the one step 4b will
      demonstrate, when step 4a supplies another.
@@ -154,21 +186,27 @@ Demonstrate Why Analysis using a concrete cross-source entity identified in step
 teaches the bootcamper how Senzing explains its resolution decisions.
 
 1. **Entity selection:** select a cross-source entity from step 4a, one whose records come
-   from two or more distinct data sources. Use the specific record IDs to call `why_records`,
-   or the entity IDs to call `why_entities`. Prefer `why_records` for the initial demonstration
-   because it compares two specific source records, which is easier to follow. State what you
-   are using: "I'll use Entity [ID], which contains records from [Source A] and [Source B] —
+   from two or more distinct data sources. Prefer one that is not excluded: the headline entity
+   (`headline_entity`) and the entity that holds `midpoint_record` are, as
+   [Already-shown entities](#already-shown-entities) states once (INV-300). When only excluded
+   entities qualify, demonstrate one of them anyway, and item 1a is skipped. For a Bootcamper who is
+   not a Truth Set alumnus item 1a never runs, so the exclusion is a preference only. Use the
+   specific record IDs to call `why_records`, or the entity IDs to call `why_entities`. Prefer
+   `why_records` for the initial demonstration because it compares two specific source records,
+   which is easier to follow. State what you are using: "I'll use Entity [ID], which contains records from [Source A] and [Source B] —
    let's see why Senzing decided these belong to the same real-world entity."
 1a. **Own-entity prediction (Truth Set alumni only).** Run this item only when
    `truthset_visualization` is in `modules_completed` in `config/bootcamp_progress.json`.
-   Otherwise go straight to item 2, as before. This is a prediction point: the skip, the reveal's
-   shape, "informs, never grades" and the Questions & Responses line are stated once in
-   `../bootcamp-onboarding/ground-rules.md` → "Predictions before results"; follow them there
-   rather than a copy here (INV-300).
-   - **Show the entity's records before any `why_*` call.** When step 3c built the visualization app
-     and its server is still running (`m7_visualizations` records a port), give its URL and the
-     entity ID to open there. Otherwise show the two records item 1 named as text, feature by
-     feature.
+   Otherwise go straight to item 2, as before. **Skip it as well when item 1 had to use an
+   excluded entity** (see [Already-shown entities](#already-shown-entities)) and go straight to
+   item 2 in the same way, so nothing is predicted whose answer was already shown. This is a
+   prediction point: the skip, the reveal's shape, "informs, never grades" and the Questions &
+   Responses line are stated once in `../bootcamp-onboarding/ground-rules.md` → "Predictions
+   before results"; follow them there rather than a copy here (INV-300).
+   - **Show the entity's records before any `why_*` call, as text only.** Show the two records item 1
+     named as text, feature by feature, read from the loaded file each came from. Do not send the
+     Bootcamper to step 3c's app for them before the 👉: its entity view shows each record's match
+     key and the why verdict, which are this prediction's answer (INV-357).
    - **The options are this entity's feature types**, built at runtime: the feature types the two
      records carry, read from the engine's entity response rather than from the source columns.
      Look up the record-feature flag with

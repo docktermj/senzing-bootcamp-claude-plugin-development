@@ -176,6 +176,11 @@ def step_9(text):
     return section(text, "## 9. Process redo records", ("\n## 10.",))
 
 
+#: Step 9's checkpoint, which since #507 goes on to record `midpoint_record` (pinned by
+#: `test_predictions_before_results.py`), so only its opening is matched here.
+STEP_9_CHECKPOINT = "**Checkpoint:** write step 9 ("
+
+
 def midpoint(text):
     return section(step_9(text), '<a id="midpoint-entity"></a>', ("**Checkpoint:**",))
 
@@ -195,7 +200,7 @@ def midpoint_problems(text):
             problems.append("the midpoint entity comes before the redo queue is drained")
         if "reports empty" not in flat(passage):
             problems.append("the midpoint entity is not placed after the queue reports empty")
-        if step.find(passage) > step.find("**Checkpoint:** write step 9."):
+        if step.find(passage) > step.find(STEP_9_CHECKPOINT):
             problems.append("the midpoint entity is not at the end of step 9")
     return problems
 
@@ -324,8 +329,9 @@ class TheMidpointEntity(unittest.TestCase):
         self.assertTrue(any("restates" in p for p in midpoint_problems(mutated)))
 
     def test_control_a_question_is_reported(self):
-        mutated = self.TEXT.replace("**Checkpoint:** write step 9.",
-                                    "👉 **Want to see another?**\n\n**Checkpoint:** write step 9.")
+        mutated = self.TEXT.replace(STEP_9_CHECKPOINT,
+                                    "👉 **Want to see another?**\n\n" + STEP_9_CHECKPOINT)
+        self.assertNotEqual(mutated, self.TEXT)
         self.assertTrue(midpoint_problems(mutated))
 
     def test_control_moved_before_the_drain_is_reported(self):

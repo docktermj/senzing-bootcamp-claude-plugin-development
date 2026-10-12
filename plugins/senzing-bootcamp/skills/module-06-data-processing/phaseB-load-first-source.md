@@ -523,7 +523,11 @@ records, is stated once in [`ground-rules.md`](../bootcamp-onboarding/ground-rul
   [Receiving a `quality_iteration`](#receiving-a-quality-iteration)); it shows no midpoint entity,
   because Module 7 step 3b is where its results are read.
 
-**Checkpoint:** write step 9.
+**Checkpoint:** write step 9 (record `midpoint_record` in `config/bootcamp_progress.json`: the
+`"<DATA_SOURCE>:<RECORD_ID>"` of the midpoint entity's record with the lowest `RECORD_ID`, or
+`"none"` when this step showed no entity). A record identifies the entity across later loads, and an
+entity ID does not. Module 7's Discover phase reads it to keep its predictions off this entity
+([`phase2-discover.md`](../module-07-query-visualize-discover/phase2-discover.md#already-shown-entities)).
 
 ## 10. Incremental loading strategy
 
