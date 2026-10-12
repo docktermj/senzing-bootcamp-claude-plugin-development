@@ -17,15 +17,44 @@ render them. Signal a stop by ending the turn on the single 👉 question and wa
 > Phase 2 guidance instead recommends **skip** and continues to the next source; at the last
 > source, a step-16 answer that proceeds to loading settles it as **skip**. The real production
 > load is still deferred to Data processing in every case. Phase 3 is a detour for **this source**
-> inside Phase 2's per-source loop, so every way out of it returns to Phase 2: see
-> [Leaving Phase 3](#leaving-phase-3).
+> inside Phase 2's per-source loop, so every way out of it returns to Phase 2, or, for an SDK
+> repair, to step 21 for this source: see [Leaving Phase 3](#leaving-phase-3).
+
+<a id="the-sdk-repair-question"></a>
 
 **Before starting Phase 3:** The Senzing SDK must be installed and configured (SDK setup). If it
-is not yet set up, inform the bootcamper: "Phase 3 requires the Senzing SDK (from SDK setup). You can
-skip the test load for this source and carry on mapping (the real load happens in Data processing),
-or complete SDK setup first and return here." If the bootcamper chooses to skip, leave by the
-**skip exit** in [Leaving Phase 3](#leaving-phase-3): `test_load_status: skipped` for **this source
-only**, then Phase 2 step 19.
+is not yet set up, say so in one line, then pin the SDK repair question below. This is the one
+statement of that question and its handling (INV-300): step 21 asks it too, when detection fails,
+and points here rather than carrying a copy.
+
+👉 **Phase 3's test load needs a working Senzing SDK. What would you like to do? Reply with a number:**
+
+1. Repair the SDK setup, then come back to this test load.
+2. Skip the test load for this source and carry on mapping (the real load happens in Data processing).
+
+*(Internal: end the turn on this question and wait.)*
+
+Handling (INV-284), each named again in [Leaving Phase 3](#leaving-phase-3):
+
+- **1, repair** → a detour through SDK setup, not a run of it: Module 2 Step 1 ("Check for Existing
+  Installation"), which moves past whatever is already in place, through Step 9 ("Test Database
+  Connection"). The flow resumes at step 21 for this source.
+  - **Start it in one quiet write** to `config/bootcamp_progress.json`: set `current_step` to `21`
+    and add the `setup_detour` record that SDK setup's
+    [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour)
+    defines, with `purpose: "sdk_repair"` and `return_to: {"module": "data_quality_mapping",
+    "resume": "21:<DATA_SOURCE>", "reask": "the-sdk-repair-question"}`, where `<DATA_SOURCE>` is
+    this source's code. ⛔ **(INV-284) `current_module` is not changed:** the Bootcamper stays in
+    this module, and the key is what lets an interrupted detour resume without asking this question
+    again. That branch is the one statement of which steps run, that the detour completes no
+    module, and how it ends (INV-300).
+  - **When it finishes,** run step 21 for the source `return_to.resume` names, and continue from
+    there when detection passes. ⛔ **(INV-284) If detection fails again, ask this question again:
+    that is a new state, NOT an INV-006 repeat**, so the earlier answer does not suppress it.
+  - **When it cannot finish,** name the failure in one line, then ask this question again, a new
+    state as above.
+- **2, skip** → leave by the **skip exit** in [Leaving Phase 3](#leaving-phase-3):
+  `test_load_status: skipped` for **this source only**, then Phase 2 step 19.
 
 ## Workflow (per data source that completed Phase 2)
 
@@ -33,10 +62,12 @@ only**, then Phase 2 step 19.
 
 Call `mapping_workflow(action='advance')` to advance to step 5 (SDK environment detection). The
 workflow checks whether the Senzing SDK is installed and a database is configured. If detection
-fails, offer to skip this source's test load or return to Module 2. If the bootcamper skips, leave
-by the **skip exit** in [Leaving Phase 3](#leaving-phase-3): `test_load_status: skipped` for **this
-source only**, then Phase 2 step 19. (Pass the exact `mapping_workflow` state
-from Phase 2 unchanged; checkpoint to `config/mapping_state_[datasource].json` after this step.)
+fails, say so in one line, then ask [the SDK repair question](#the-sdk-repair-question), which
+states the question and its handling once (INV-300). Its repair resumes at this step for this
+source, and its option to skip this source's test load leaves by the **skip exit** in
+[Leaving Phase 3](#leaving-phase-3): `test_load_status: skipped` for **this source only**, then
+Phase 2 step 19. (Pass the exact `mapping_workflow` state from Phase 2 unchanged; checkpoint to
+`config/mapping_state_[datasource].json` after this step.)
 
 **Checkpoint:** write step 21 to `config/bootcamp_progress.json`.
 
@@ -216,12 +247,16 @@ Handling (INV-284), each named again in [Leaving Phase 3](#leaving-phase-3):
 ⛔ **(INV-344) Every exit from Phase 3 returns to Phase 2's per-source loop.** Phase 3 runs for one
 source, so its exits are gates inside the per-source loop: none asks a question about the whole run,
 none proceeds to Data processing directly, and none writes the registry entry of any source other
-than this one.
+than this one. The SDK repair exit leaves for SDK setup and comes back to step 21 for **this source
+only**, so it never leaves the loop: Phase 2's step 19 is still ahead of it. A detour that cannot
+finish comes back to [the SDK repair question](#the-sdk-repair-question) instead, whose answers are
+the exits below.
 
 | Exit | This source's registry entry | Resumes at |
 |---|---|---|
 | SDK not set up, and the bootcamper skips (Before starting Phase 3) | `test_load_status: skipped` | Phase 2 step 19 |
 | Step 21 detection fails, and the bootcamper skips | `test_load_status: skipped` | Phase 2 step 19 |
+| SDK repair chosen (Before starting Phase 3, or step 21's detection failure), and the detour through SDK setup finishes | unchanged | Phase 3 step 21 |
 | Step 25 **yes**, or step 24d's **accept** | `test_load_status: complete`, `test_entity_count` (step 25's registry note) | Phase 2 step 19 |
 | Step 25 **no**, or step 24d's **iterate** | as step 25's registry note left it | Phase 2 step 17 |
 
@@ -244,6 +279,9 @@ which Phase 3 steps (21–25) completed. Restart `mapping_workflow` and fast-tra
 completed steps (5–8). If the test load (step 22) completed but evaluation (step 24) did not,
 re-run evaluation without reloading. Step 25 is Phase 3's last gate: if the session was interrupted
 before it was answered, present the Phase 3 results again and resume from step 25.
+A progress file carrying a `setup_detour` does not reach this section first: this module's
+`SKILL.md` **First:** sends it to SDK setup, which finishes
+[the SDK repair](#the-sdk-repair-question) and returns to step 21.
 
 When step 24d's answer is recorded (the record is stated once, at step 24d's **Checkpoint**;
 INV-300), that answer already settled step 25 (its "Step 24d's gate was presented" case): present

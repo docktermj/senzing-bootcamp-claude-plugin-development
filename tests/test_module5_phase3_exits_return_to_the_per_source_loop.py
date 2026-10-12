@@ -23,6 +23,13 @@ and proceeded to Data processing, step 21's detection-failure skip went nowhere 
   step 20's transition question, with no second Module Completion (the one place the number may
   still appear, in Module 5's `SKILL.md`).
 
+#530 adds a fifth exit row: the SDK repair, chosen at the SDK repair question (before Phase 3, or
+when step 21's detection fails), leaves for SDK setup as a `setup_detour` and resumes at **Phase 3
+step 21** for this source. It never leaves the per-source loop, because Phase 2 step 19 is still
+ahead of it. The question, its handling and the detour are asserted by
+`tests/test_module5_phase3_sdk_repair_detours_through_sdk_setup.py`; here the row count and the
+row's target are.
+
 ⛔ **Each check is a pure function of the file text, so the negative controls run the SAME check
 on a mutated copy** (INV-265): restoring step 26, the shortcut JSON, an all-sources skip, a skip
 that proceeds to Data processing, a step 25 with no handling, a second completion site, or a
@@ -151,7 +158,9 @@ def phase3_problems(text):
         ), "Leaving Phase 3")
         # Line-scoped by design (#424): a table row is one line.
         rows = [r for r in leaving.splitlines() if r.startswith("| ") and "---" not in r][1:]
-        exits = {"SDK not set up": "Phase 2 step 19", "detection fails": "Phase 2 step 19",
+        # #530 adds the SDK repair exit, which resumes inside Phase 3 for this source.
+        exits = {"SDK not set up": "Phase 2 step 19", "detection fails, and the bootcamper skips":
+                 "Phase 2 step 19", "SDK repair chosen": "Phase 3 step 21",
                  "Step 25 **yes**": "Phase 2 step 19", "Step 25 **no**": "Phase 2 step 17"}
         for name, target in exits.items():
             row = [r for r in rows if name in r]
@@ -302,13 +311,14 @@ class Phase3ExitsReturnToThePerSourceLoop(unittest.TestCase):
                 '```json\n{"modules_skipped": {"6": {"reason": "shortcut_path"}}}\n```\n\n'
                 + LEAVING_ANCHOR),
             "SDK skip marks every source": self.mutate(
-                p3, "`test_load_status: skipped` for **this source\nonly**",
-                "`test_load_status: skipped` for each source"),
+                p3, "`test_load_status: skipped` for **this source only**, then Phase 2 step 19."
+                    "\n\n## Workflow",
+                "`test_load_status: skipped` for each source, then Phase 2 step 19.\n\n## Workflow"),
             "SDK skip proceeds to Data processing": self.mutate(
                 p3, "then Phase 2 step 19.\n\n## Workflow",
                 "then proceed to Data processing.\n\n## Workflow"),
             "step 21 skip unrouted": self.mutate(
-                p3, "source only**, then Phase 2 step 19. (Pass", "source only**. (Pass"),
+                p3, "source only**, then\nPhase 2 step 19. (Pass", "source only**. (Pass"),
             "step 25 yes asks a whole-run question": self.mutate(
                 p3, "**Checkpoint:** write step 25.",
                 "👉 **Which path would you like to take?**\n\n**Checkpoint:** write step 25."),
@@ -318,6 +328,8 @@ class Phase3ExitsReturnToThePerSourceLoop(unittest.TestCase):
             "an exit row dropped": self.mutate(
                 p3, "| Step 21 detection fails, and the bootcamper skips | `test_load_status: "
                     "skipped` | Phase 2 step 19 |\n", ""),
+            "the repair row retargeted to Phase 2": self.mutate(
+                p3, "| unchanged | Phase 3 step 21 |\n", "| unchanged | Phase 2 step 19 |\n"),
             "an exit row retargeted": self.mutate(
                 p3, "| as step 25's registry note left it | Phase 2 step 17 |",
                 "| as step 25's registry note left it | Data processing |"),
