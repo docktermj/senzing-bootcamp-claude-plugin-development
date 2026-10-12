@@ -25,10 +25,31 @@ So the clauses are checked where they live:
 - **In the shared section** (`rule_problems`): the rule-only clauses, among them the grading guard
   and the skipped line format.
 
+**No route to the answer before the 👉 (#507).** A site can show its result without stating it: the
+visualization app's entity view renders each record's match key and the why verdict, which is
+exactly what step 4b item 1a asks the Bootcamper to predict, and an entity the bootcamp already
+resolved on screen has had its answer shown. So two more checks:
+
+- **No app route** (`app_route_problems`, run by `point_problems` on the text before each site's
+  👉, and on step 4b item 1 before item 1a): no `m7_visualizations`, no URL, no port, and no
+  local address (`localhost`, `127.0.0.1`, `http://`, `https://`). Item 1a must state that its
+  records are shown as text only. The markers are single tokens, so a line wrap cannot split one
+  (INV-346).
+- **Already-shown entities, stated once** (`already_shown_problems`, INV-300). One named section
+  of `phase2-discover.md`, "Already-shown entities", states which entities are excluded (the
+  headline entity and the entity that holds Module 6's `midpoint_record`), how the latter is
+  located (`get_entity_by_record_id` on the record), and the `"none"`/absent cases. Step 4a-pairs
+  item 1 and step 4b item 1 each point there, name both exclusions, carry no copy of the section,
+  and state what they do with an excluded entity: unavailable for any pair, or preferred against
+  with item 1a skipped. `midpoint_checkpoint_problems` checks that Module 6 step 9's checkpoint
+  records `midpoint_record`.
+
 The checks are pure functions over a file's text, so each one also runs on a mutated copy as its
-negative control. `TheChecksCatchARegression` runs six regressions against every site: the reveal
+negative control. `TheChecksCatchARegression` runs eight regressions against every site: the reveal
 stated before the 👉, the skip removed, a second 👉 added, the options unnumbered, the grading
-guard deleted, and the skip recording deleted. The last two also run against the shared section.
+guard deleted, the skip recording deleted, the citation dropped, and an app route added before the
+👉 (each marker alone, and two together). The grading guard and the skip recording also run against the shared section.
+`TheAlreadyShownEntities` drops each exclusion, case, pointer and site consequence in turn.
 Each must make the check report the problem it targets, not merely some problem.
 
 ⚠️ **The 👉 counts read single lines on purpose (INV-346).** A 👉 question is its own line by
@@ -44,7 +65,7 @@ run obeys it.
 
 Stdlib only; shipped markdown read as text (INV-108).
 
-Source issue: #479 (part of #465).
+Source issues: #479 (part of #465); #507 (the app route and the already-shown entities).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -61,6 +82,7 @@ COMPLETION = SKILLS / "bootcamp-onboarding" / "module-completion.md"
 M3_PHASE1 = SKILLS / "module-03-system-verification" / "phase1-verification.md"
 M3_PHASE2 = SKILLS / "module-03-system-verification" / "phase2-report-close.md"
 DISCOVER = SKILLS / "module-07-query-visualize-discover" / "phase2-discover.md"
+MODULE_6_B = SKILLS / "module-06-data-processing" / "phaseB-load-first-source.md"
 
 RULE_HEADING = "## Predictions before results"
 MARI_HEADING = "### Step 7a: The Mari Prediction"
@@ -68,6 +90,9 @@ PAIRS_HEADING = "### Step 4a-pairs: Same entity or not?"
 STEP_4B_HEADING = "### Step 4b: Why Analysis introduction"
 OWN_ITEM = "1a. **Own-entity prediction (Truth Set alumni only).**"
 OWN_ITEM_END = "\n2. **SDK method introduction:**"
+SELECTION_ITEM = "1. **Entity selection:**"
+PAIRS_ITEM_1 = "1. **Choose 3 pairs from step 4a's entities.**"
+PAIRS_ITEM_2 = "\n2. **Show one pair per turn, then ask.**"
 
 MARI_QUESTION = "👉 **Will this `Mari` record join Marisol's entity? Reply with a number:**"
 PAIR_QUESTION = ("👉 **Are these two records the same entity? Reply with a number, and add a few "
@@ -91,6 +116,54 @@ CITATION = (r'stated once in\s+`\.\./bootcamp-onboarding/ground-rules\.md` → "
 POINTER_NAMES = {
     "the grading guard": '"informs, never grades"',
     "the skip recording": "the Questions & Responses line",
+}
+
+#: What routes the Bootcamper to the visualization app (#507): the checkpoint key that records its
+#: port, a URL, a port, or a local address (`localhost`, `127.0.0.1`, `http://`, `https://`). Each
+#: is one token, so a wrap cannot split it (INV-346).
+APP_ROUTE = re.compile(r"m7_visualizations|\bURL\b|https?://|\blocalhost\b|127\.0\.0\.1|\bport\b",
+                       re.IGNORECASE)
+
+#: The one statement of which entities the Discover predictions exclude (#507, INV-300).
+SHOWN_ANCHOR = '<a id="already-shown-entities"></a>'
+SHOWN_HEADING = "### Already-shown entities"
+SHOWN_LINK = "[Already-shown entities](#already-shown-entities)"
+#: What the section must state; each key is the problem's wording.
+SHOWN_REQUIRED = {
+    "the headline entity is excluded": r"\*\*The headline entity:\*\* the entity ID recorded as "
+                                       r"`module_7_query\.headline_entity`",
+    "the entity holding midpoint_record is excluded": r"\*\*The entity that now holds "
+                                                      r"`midpoint_record`:\*\*",
+    "the midpoint entity is located by its record": r"Locate its entity with "
+                                                    r"`get_entity_by_record_id` on that data source "
+                                                    r"and record ID",
+    "a none or absent headline_entity excludes nothing": r'When it is `"none"`[^.]* or absent, '
+                                                         r"there is no headline exclusion",
+    "a none or absent midpoint_record excludes nothing": r'When `midpoint_record` is `"none"` or '
+                                                         r"absent[^.]*there is no midpoint "
+                                                         r"exclusion",
+    "the midpoint entity is never re-derived": r"Do not re-derive it from Module 6's selection "
+                                               r"rule",
+    "an overlap is one exclusion": r"that is one exclusion, not two",
+    "it is the one statement (INV-300)": r"This is the one statement of which entities that "
+                                         r"excludes;[^.]*\(INV-300\)",
+    "it serves INV-357": r"already seen \(INV-357\)",
+}
+#: Phrases only that section may carry; a site that holds one has forked it (INV-300).
+SHOWN_ONLY = (r"Do not re-derive", r"one exclusion, not two", r"there is no (?:headline|midpoint) "
+              r"exclusion", r"Locate its entity with")
+#: What each pointing site must state of its own, beside the pointer.
+PAIRS_EXCLUSION = {
+    "no excluded entity is used for any pair": r"no record of theirs is used for any pair",
+    "its limited-data fallback covers what remains": r"the fallback when step 4a cannot supply 3, "
+                                                     r"apply to what remains",
+}
+SELECTION_EXCLUSION = {
+    "it prefers an entity that is not excluded": r"Prefer one that is not excluded",
+    "item 1a is skipped when only excluded entities qualify": r"When only excluded entities "
+                                                              r"qualify, demonstrate one of them "
+                                                              r"anyway, and item 1a is skipped",
+    "the exclusion is a preference only outside the alumni": r"the exclusion is a preference only",
 }
 
 #: Phrases only the shared rule may carry; a site that holds one has forked it (INV-300).
@@ -162,11 +235,20 @@ def citation_problems(site, where):
     return problems
 
 
+def app_route_problems(where, before):
+    """``before`` (the text ahead of a site's 👉) names no route to the visualization app (#507)."""
+    found = sorted({m.group(0) for m in APP_ROUTE.finditer(before)}, key=str.lower)
+    if found:
+        return ["%s routes to the visualization app before its 👉 (%s)" % (where, ", ".join(found))]
+    return []
+
+
 def point_problems(where, step, question, reveal, multi_select=False):
     """The per-site clauses every prediction point shares.
 
     One 👉 (INV-251), a numbered list of choices beneath it (INV-051), a skip (the last option
-    on a single choice, a clause of the 👉 line on a multi-select), and the 👉 before the reveal.
+    on a single choice, a clause of the 👉 line on a multi-select), the 👉 before the reveal, and
+    no route to the visualization app before the 👉 (#507).
     """
     problems = []
     asked = questions(step)
@@ -189,6 +271,7 @@ def point_problems(where, step, question, reveal, multi_select=False):
         problems.append("%s has no reveal (%r)" % (where, reveal))
     elif ask < 0 or shown < ask:
         problems.append("%s shows its result before its 👉" % where)
+    problems += app_route_problems(where, step[:ask] if ask >= 0 else step)
     return problems
 
 
@@ -355,8 +438,9 @@ def own_entity_problems(discover):
     explanation = step.find("4. **Plain-language explanation of the output:**")
     if not at < first_call < explanation:
         problems.append("item 1a does not come before step 4b's why_records call")
-    if step.find("1. **Entity selection:**") > at:
+    if step.find(SELECTION_ITEM) > at:
         problems.append("item 1a comes before the entity it predicts about is chosen")
+    problems += app_route_problems("step 4b item 1", step[:at])
     problems += point_problems("step 4b item 1a", item_1a, OWN_QUESTION, OWN_REVEAL,
                                multi_select=True)
     if questions(step)[:1] != [OWN_QUESTION]:
@@ -367,8 +451,13 @@ def own_entity_problems(discover):
         "otherwise step 4b runs as before": r"Otherwise go straight to item 2, as before",
         "records are shown before any why call": r"Show the entity's records before any "
                                                  r"`why_\*` call",
-        "the app is used when step 3c built it": r"When step 3c built the visualization app",
-        "text is the fallback": r"Otherwise show the two\s+records item 1 named as text",
+        "its records are shown as text only": r"Show the entity's records before any `why_\*` "
+                                              r"call, as text only",
+        "the two records are shown as text, feature by feature": r"Show the two records item 1 "
+                                                                 r"named as text, feature by "
+                                                                 r"feature",
+        "it is skipped when item 1 used an excluded entity": r"Skip it as well when item 1 had to "
+                                                             r"use an excluded entity",
         "the options are the entity's feature types": r"The options are this entity's feature "
                                                       r"types",
         "the reveal is why_records' output": r"The reveal is items 2–5",
@@ -382,12 +471,101 @@ def own_entity_problems(discover):
 
 
 # --------------------------------------------------------------------------------------------
+# Discover, the already-shown entities (#507)
+# --------------------------------------------------------------------------------------------
+
+def shown_section(discover):
+    return section(discover, SHOWN_HEADING, ("\n### ",))
+
+
+def pairs_item_1(discover):
+    return section(pairs_step(discover), PAIRS_ITEM_1, (PAIRS_ITEM_2,))
+
+
+def selection_item(discover):
+    return section(section(discover, STEP_4B_HEADING, ("### Step 4c",)), SELECTION_ITEM,
+                   (OWN_ITEM,))
+
+
+def pointer_site_problems(where, site, own):
+    """A site points at the section, names both exclusions, states ``own``, and copies nothing."""
+    if not site:
+        return ["%s is missing" % where]
+    problems = []
+    if not match_lines(site, re.escape(SHOWN_LINK) + r" states once \(INV-300\)"):
+        problems.append("%s does not point at the already-shown section with INV-300" % where)
+    if not match_lines(site, r"\(`headline_entity`\)"):
+        problems.append("%s does not name the headline exclusion (headline_entity)" % where)
+    if not match_lines(site, r"the entity that holds `midpoint_record`"):
+        problems.append("%s does not name the midpoint exclusion (midpoint_record)" % where)
+    for what, pattern in own.items():
+        if not match_lines(site, pattern):
+            problems.append("%s does not state that %s" % (where, what))
+    for phrase in SHOWN_ONLY:
+        if match_lines(site, phrase):
+            problems.append("%s restates the already-shown section (%s)" % (where, phrase))
+    return problems
+
+
+def already_shown_problems(discover):
+    """The exclusion is stated once and both Discover predictions point at it (#507, INV-300)."""
+    problems = []
+    shown = shown_section(discover)
+    if not shown:
+        problems.append("phase2-discover.md has no %r section" % SHOWN_HEADING)
+    else:
+        if (SHOWN_ANCHOR + "\n\n" + SHOWN_HEADING) not in discover:
+            problems.append("the already-shown section is not anchored for its pointers")
+        step_4a = discover.find("### Step 4a: Data pattern analysis")
+        at, pairs = discover.find(SHOWN_HEADING), discover.find(PAIRS_HEADING)
+        if not 0 <= step_4a < at < pairs:
+            problems.append("the already-shown section is not between step 4a and step 4a-pairs")
+        for what, pattern in SHOWN_REQUIRED.items():
+            if not match_lines(shown, pattern):
+                problems.append("the already-shown section does not state that %s" % what)
+        if questions(shown):
+            problems.append("the already-shown section asks a 👉 question")
+    problems += pointer_site_problems("Step 4a-pairs item 1", pairs_item_1(discover),
+                                      PAIRS_EXCLUSION)
+    problems += pointer_site_problems("step 4b item 1", selection_item(discover),
+                                      SELECTION_EXCLUSION)
+    for phrase in SHOWN_ONLY:
+        if match_lines(own_item(discover), phrase):
+            problems.append("step 4b item 1a restates the already-shown section (%s)" % phrase)
+    return problems
+
+
+def midpoint_checkpoint(module_6_b):
+    step_9 = section(module_6_b, "## 9. Process redo records", ("\n## 10.",))
+    return section(step_9, "**Checkpoint:** write step 9", ("\n\n",))
+
+
+def midpoint_checkpoint_problems(module_6_b):
+    """Module 6 step 9's checkpoint records the midpoint entity by one of its records (#507)."""
+    checkpoint = midpoint_checkpoint(module_6_b)
+    if not checkpoint:
+        return ["Module 6 step 9 has no checkpoint"]
+    required = {
+        "it records midpoint_record": r"record `midpoint_record` in `config/bootcamp_progress\.json`",
+        "the value is one record of the entity": r'the `"<DATA_SOURCE>:<RECORD_ID>"` of the '
+                                                 r"midpoint entity's record with the lowest "
+                                                 r"`RECORD_ID`",
+        "it is none when no entity was shown": r'or `"none"` when this step showed no entity',
+        "a record, not an entity ID, identifies it": r"A record identifies the entity across later "
+                                                     r"loads, and an entity ID does not",
+        "it points at the reader": r"phase2-discover\.md#already-shown-entities",
+    }
+    return ["Module 6 step 9's checkpoint does not state that %s" % what
+            for what, pattern in required.items() if not match_lines(checkpoint, pattern)]
+
+
+# --------------------------------------------------------------------------------------------
 # Tests
 # --------------------------------------------------------------------------------------------
 
 class TheFilesExist(unittest.TestCase):
     def test_every_file_exists(self):
-        for path in (GROUND_RULES, COMPLETION, M3_PHASE1, M3_PHASE2, DISCOVER):
+        for path in (GROUND_RULES, COMPLETION, M3_PHASE1, M3_PHASE2, DISCOVER, MODULE_6_B):
             with self.subTest(file=path.name):
                 self.assertTrue(path.is_file(), "%s moved" % path)
 
@@ -476,6 +654,149 @@ class TheOwnEntityPrediction(unittest.TestCase):
         self.assertIn("item 1a does not state that it runs only for Truth Set alumni",
                       own_entity_problems(text))
 
+    def test_negative_control_the_old_app_route_restored(self):
+        """The route #507 removed, put back word for word, is reported, and so is losing "text only"."""
+        item = own_item(self.discover)
+        start = item.index("   - **Show the entity's records")
+        end = item.index("   - **The options are")
+        old = ("   - **Show the entity's records before any `why_*` call.** When step 3c built the "
+               "visualization app\n     and its server is still running (`m7_visualizations` records "
+               "a port), give its URL and the\n     entity ID to open there. Otherwise show the two "
+               "records item 1 named as text, feature by\n     feature.\n")
+        problems = own_entity_problems(self.discover.replace(item, item[:start] + old + item[end:]))
+        self.assertIn("step 4b item 1a routes to the visualization app before its 👉 "
+                      "(m7_visualizations, port, URL)", problems)
+        self.assertIn("item 1a does not state that its records are shown as text only", problems)
+
+    def test_negative_control_a_route_in_item_1(self):
+        """Item 1 sits before item 1a's 👉, so a route there leaks the answer too."""
+        item = selection_item(self.discover)
+        mutated = item.replace("State what you are using:",
+                               "Give the Bootcamper the app's URL for it. State what you are using:")
+        self.assertNotEqual(mutated, item)
+        self.assertIn("step 4b item 1 routes to the visualization app before its 👉 (URL)",
+                      own_entity_problems(self.discover.replace(item, mutated)))
+
+
+class TheAlreadyShownEntities(unittest.TestCase):
+    """#507: the exclusion is stated once, both predictions point at it, Module 6 records it.
+
+    In the style of `TheChecksCatchARegression`: each control mutates one clause and asserts the
+    problem that clause's check reports, not merely some problem.
+    """
+
+    def setUp(self):
+        self.discover = read(DISCOVER)
+        self.module_6_b = read(MODULE_6_B)
+
+    def test_the_exclusion_is_stated_once_and_both_sites_point_at_it(self):
+        self.assertEqual(already_shown_problems(self.discover), [])
+
+    def test_module_6_step_9_records_midpoint_record(self):
+        self.assertEqual(midpoint_checkpoint_problems(self.module_6_b), [])
+
+    def assertCaught(self, cut, old, new, expected, problems_of=already_shown_problems, text=None):
+        text = self.discover if text is None else text
+        part = cut(text)
+        self.assertTrue(part, "the section the control mutates is missing")
+        mutated = re.sub(old, new, part, count=1)
+        self.assertNotEqual(mutated, part, "the mutation did not change it: %r" % old)
+        problems = problems_of(text.replace(part, mutated))
+        self.assertTrue(any(p.startswith(expected) for p in problems),
+                        "%r went unnoticed: %r" % (expected, problems))
+
+    def test_the_headline_exclusion_dropped_from_the_section(self):
+        self.assertCaught(shown_section, r"`module_7_query\.headline_entity`", "the entity",
+                          "the already-shown section does not state that the headline entity is "
+                          "excluded")
+
+    def test_the_midpoint_exclusion_dropped_from_the_section(self):
+        self.assertCaught(shown_section, _loose("**The entity that now holds `midpoint_record`:**"),
+                          "**Another entity:**",
+                          "the already-shown section does not state that the entity holding "
+                          "midpoint_record is excluded")
+
+    def test_the_lookup_by_record_dropped(self):
+        self.assertCaught(shown_section, _loose("Locate its entity with `get_entity_by_record_id`"),
+                          "Reuse its entity ID",
+                          "the already-shown section does not state that the midpoint entity is "
+                          "located by its record")
+
+    def test_the_none_cases_dropped(self):
+        for old, wanted in (("there is no headline\nexclusion", "a none or absent headline_entity"),
+                            ("there is no midpoint exclusion", "a none or absent midpoint_record")):
+            with self.subTest(case=wanted):
+                self.assertCaught(shown_section, _loose(old), "exclude it anyway",
+                                  "the already-shown section does not state that %s" % wanted)
+
+    def test_the_re_derivation_allowed(self):
+        self.assertCaught(shown_section, _loose("Do not re-derive it from Module 6's selection rule."),
+                          "Re-derive it from Module 6's selection rule.",
+                          "the already-shown section does not state that the midpoint entity is "
+                          "never re-derived")
+
+    def test_the_overlap_counted_twice(self):
+        self.assertCaught(shown_section, _loose("that is one exclusion, not two"),
+                          "that is two exclusions",
+                          "the already-shown section does not state that an overlap is one "
+                          "exclusion")
+
+    SITES = (("Step 4a-pairs item 1", pairs_item_1), ("step 4b item 1", selection_item))
+
+    def test_a_pointer_dropped(self):
+        for where, cut in self.SITES:
+            with self.subTest(site=where):
+                self.assertCaught(cut, _loose(SHOWN_LINK + " states once (INV-300)"), "this",
+                                  "%s does not point at the already-shown section" % where)
+
+    def test_an_exclusion_dropped_at_a_site(self):
+        for where, cut in self.SITES:
+            for old, wanted in (("(`headline_entity`)", "the headline exclusion"),
+                                ("the entity that holds `midpoint_record`", "the midpoint exclusion")):
+                with self.subTest(site=where, exclusion=wanted):
+                    self.assertCaught(cut, _loose(old), "another entity",
+                                      "%s does not name %s" % (where, wanted))
+
+    def test_a_site_restates_the_section(self):
+        for where, cut in self.SITES:
+            with self.subTest(site=where):
+                self.assertCaught(cut, _loose("states once (INV-300)"),
+                                  "states once (INV-300). Do not re-derive it",
+                                  "%s restates the already-shown section" % where)
+
+    def test_the_pairs_consequence_dropped(self):
+        self.assertCaught(pairs_item_1, _loose("no record of theirs is used for any pair"),
+                          "avoid them where you can",
+                          "Step 4a-pairs item 1 does not state that no excluded entity is used")
+
+    def test_the_selection_preference_dropped(self):
+        self.assertCaught(selection_item, _loose("Prefer one that is not excluded"),
+                          "Any will do",
+                          "step 4b item 1 does not state that it prefers an entity that is not "
+                          "excluded")
+
+    def test_the_item_1a_skip_dropped(self):
+        self.assertCaught(selection_item, _loose("and item 1a is skipped"), "",
+                          "step 4b item 1 does not state that item 1a is skipped")
+        self.assertCaught(own_item, _loose("**Skip it as well when item 1 had to use an excluded "
+                                           "entity**"), "**Keep it**",
+                          "item 1a does not state that it is skipped when item 1 used an excluded "
+                          "entity", problems_of=own_entity_problems)
+
+    def test_the_section_removed(self):
+        text = self.discover.replace(shown_section(self.discover), "")
+        self.assertIn("phase2-discover.md has no %r section" % SHOWN_HEADING,
+                      already_shown_problems(text))
+
+    def test_the_checkpoint_forgets_midpoint_record(self):
+        for old, wanted in (("record `midpoint_record`", "it records midpoint_record"),
+                            ('`"none"` when this step', "it is none when no entity was shown"),
+                            ("lowest `RECORD_ID`", "the value is one record of the entity")):
+            with self.subTest(clause=wanted):
+                self.assertCaught(midpoint_checkpoint, _loose(old), "something",
+                                  "Module 6 step 9's checkpoint does not state that %s" % wanted,
+                                  problems_of=midpoint_checkpoint_problems, text=self.module_6_b)
+
 
 def _loose(phrase):
     """``phrase`` as a regex that matches across a line wrap."""
@@ -483,7 +804,7 @@ def _loose(phrase):
 
 
 class TheChecksCatchARegression(unittest.TestCase):
-    """Six regressions, each run against every site; each must report the problem it targets.
+    """Eight regressions, each run against every site; each must report the problem it targets.
 
     Carried over from #479's approach A, adapted to the shared rule: the per-site clauses (one
     👉, numbered options with a skip, the reveal after the 👉) are mutated at each site, and the
@@ -541,6 +862,26 @@ class TheChecksCatchARegression(unittest.TestCase):
     def test_the_citation_dropped(self):
         self.check(lambda s, q, r: s.replace("(INV-300)", ""),
                    " does not point at the shared rule with INV-300")
+
+    #: (a route to the visualization app, the markers it must be reported by). Each form but the
+    #: last carries one marker alone, so a marker dropped from `APP_ROUTE` fails its own subtest.
+    ROUTES = (
+        ("Open it in the app recorded in `m7_visualizations`.", "m7_visualizations"),
+        ("Give its URL and the entity ID to open there.", "URL"),
+        ("The app is on the port step 3c recorded.", "port"),
+        ("Open localhost in a browser and find the entity.", "localhost"),
+        ("Open 127.0.0.1 in a browser and find the entity.", "127.0.0.1"),
+        ("Open http://viz.example and find the entity.", "http://"),
+        ("Open https://viz.example and find the entity.", "https://"),
+        ("Open http://localhost:8080 to see it.", "http://, localhost"),
+    )
+
+    def test_an_app_route_added_before_the_question(self):
+        """#507: each marker of a route to the visualization app, put ahead of each site's 👉."""
+        for route, markers in self.ROUTES:
+            with self.subTest(route=route):
+                self.check(lambda s, q, r: s.replace(q, "%s\n\n%s" % (route, q), 1),
+                           " routes to the visualization app before its 👉 (%s)" % markers)
 
     def _rule_check(self, pattern, expected):
         text = read(GROUND_RULES)
