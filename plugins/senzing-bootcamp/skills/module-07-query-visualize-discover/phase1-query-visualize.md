@@ -553,22 +553,8 @@ need adjustment, perhaps key fields weren't mapped or data quality is too low, o
 working with a single source that has no internal duplicates. Let's investigate which one."
 Check: are name/address/phone fields populated? Were they mapped correctly during Data Quality,
 Mapping, and Transformation? Is the data-quality score above 70%? If the data genuinely has no
-duplicates, that's a valid finding, document it.
-
-**Matching-concepts reminder.** When presenting results, briefly remind the bootcamper of the
-matching concepts introduced earlier in the bootcamp, a sentence or two each, not a full re-explanation:
-
-- **Features:** the categories of identifying information (NAME, ADDRESS, PHONE, etc.) Senzing
-  extracts and compares, and how to read match-key strings like `+NAME+ADDRESS+PHONE`.
-- **Confidence scores:** numeric indicators of match strength reflecting how many features
-  agreed (higher means more evidence), not absolute probabilities.
-- **Cross-source connections:** matches between records from different data sources, revealing
-  the same entity exists in multiple systems.
-
-Adapt the reminders to the bootcamper's own data context, reference the feature types, scores,
-and data sources present in their current results, not the earlier sample data. Then tell
-them: "If you'd like a deeper refresher on how Senzing matching works, features, scoring, or
-cross-source connections, just ask and I'll walk through it again."
+duplicates, that's a valid finding, document it. On this branch step 3a asks no recall question
+(below): the investigation proceeds as written, and the turn continues into 3b.
 
 When presenting results from `how_entity` or the `why_*` methods (`why_entities`,
 `why_records`, `why_record_in_entity`), ensure the query was called with
@@ -599,12 +585,54 @@ missing for the flags in force, say so explicitly and fall back to `FEATURE_SCOR
 rendering an empty section — the full statement is in `phase2-discover.md` step 4b.3, which states
 it once (INV-179, INV-300).
 
+<a id="recall-question"></a>
+
+**One recall question, last, and it ends this turn.** Ask the Bootcamper to recall one matching
+concept from their own results instead of reminding them of it. Skip it when the zero-or-very-few-matches
+branch above ran.
+
+1. **Pick one entity in their current results and one concept it shows:** features and match
+   keys (its match key), confidence scores (a feature score, present only when the query passed
+   `SZ_INCLUDE_FEATURE_SCORES`, above), or cross-source connections (records from more than one
+   data source). Prefer an entity that answers a question they asked in step 1.
+2. **Read the correct answer from that entity's own response, never from training data or the
+   earlier sample data, and check it against the MCP server before asking** (INV-080): confirm
+   what the field means with `get_sdk_reference(topic='response_schemas', filter='<the method
+   that returned it>', language='<chosen_language>')`. For `get_entity_by_entity_id` that schema
+   describes `RESOLVED_ENTITY.RECORDS[].MATCH_KEY` as *"Features that matched: + means
+   contributed, - means detracted"* and `RESOLVED_ENTITY.RECORD_SUMMARY[]` as records grouped by
+   data source with counts (server 1.37.27, 2026-10-11). Module 0 is optional, so the question is
+   about their result, never about Module 0's content.
+3. **Ask it as a numbered choice**, the shape Module 0's knowledge check states
+   (`../module-00-entity-resolution-concepts/concepts.md` → "Optional knowledge check", INV-051).
+   First state the field and its value, quoted from the result, then end the turn on this, the
+   turn's one 👉 (INV-251), with the options directly beneath it: the correct reading, and
+   neighboring real concepts as the wrong ones.
+
+👉 **What does that tell you about entity {ENTITY_ID}? Reply with a number:**
+
+*(Internal: end the turn on this question and wait.)*
+
+**On the answer, the next turn.** A correct answer is confirmed in one line, naming the field
+that shows it.
+⛔ (INV-300) **A wrong answer follows Module 0's wrong-answer rule, stated once in
+`../module-00-entity-resolution-concepts/concepts.md` → "Optional knowledge check" (INV-300);
+follow it there rather than a copy here.** Ground the re-teach in this entity's result; there
+is no next item, so moving on means step 3b, and the question is not asked again. "Skip" or
+an exit signal moves on with no penalty, by that section's exit rule. Then, as a statement:
+"If you'd like a deeper refresher on how Senzing matching works, features, scoring, or
+cross-source connections, just ask and I'll walk through it again." Continue into 3b in the
+same turn, up to its next 👉.
+
 **Checkpoint:** write step 3a.
 
-⛔ **Steps 2–3a ask nothing, so this turn does not end here** — the business answers this step
-presents are a results presentation, which reads as an ending and is not one (`ground-rules.md` →
-"A results presentation is not a turn ending", INV-225). Continue into 3b/3c in the same turn, up to the
-next 👉.
+⛔ (INV-225) **Steps 2–3a ask nothing unless step 3a's recall question is due; when it is not,
+this turn does not end here** — the business answers this step presents are a results
+presentation, which reads as an ending and is not one (`ground-rules.md` → "A results
+presentation is not a turn ending", INV-225). Continue into 3b/3c in the same turn, up to the
+next 👉. The one question these steps can put is step 3a's [recall question](#recall-question),
+due whenever the zero-or-very-few-matches branch did not run. That turn ends on it; 3b starts
+on the next turn, after the answer.
 
 ### 3b. Quality evaluation
 

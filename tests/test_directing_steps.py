@@ -80,6 +80,8 @@ M6_QUESTION = ("👉 **Which of your records should I look up to check how Senzi
                "and why.**")
 #: #478's open question, which #485 makes Module 7's directing 👉 without rewording it.
 M7_QUESTION = "👉 **What do you want to find out about your data?**"
+#: Step 3a's one 👉 since #483, which ends 3a's turn; it is a recall question, not a directing one.
+M7_RECALL_QUESTION = "👉 **What does that tell you about entity {ENTITY_ID}? Reply with a number:**"
 
 #: The pointer every site carries instead of a copy (INV-300).
 CITATION = (r'stated once in\s+`\.\./bootcamp-onboarding/ground-rules\.md` → "Directing steps";\s+'
@@ -430,8 +432,9 @@ def m7_problems(phase1):
     }.items():
         if not match_lines(step3a, pattern):
             problems.append("step 3a does not state %s" % what)
-    if questions(step3a):
-        problems.append("step 3a asks a 👉 question (it is non-yielding, INV-225)")
+    # #483: step 3a's one 👉 is its recall question, pinned in test_module7_recall_question.py.
+    if [q for q in questions(step3a) if q != M7_RECALL_QUESTION]:
+        problems.append("step 3a asks a 👉 question other than its recall question (INV-251)")
     return problems
 
 
@@ -693,8 +696,8 @@ class TheChecksCatchARegression(unittest.TestCase):
         block = section(text, "**Their questions first, each beside its answer.**",
                         ("**If entity resolution found zero",))
         text = text.replace(block, "")
-        text = text.replace("**Matching-concepts reminder.**",
-                            block + "**Matching-concepts reminder.**")
+        text = text.replace("**One recall question, last",
+                            block + "**One recall question, last")
         self.assertReports(m7_problems(text), "does not present their questions first")
 
     def test_m7_derived_listed_as_theirs(self):
@@ -706,7 +709,7 @@ class TheChecksCatchARegression(unittest.TestCase):
             "**If entity resolution found zero or very few matches:**",
             "👉 **Did that answer your question?**\n\n"
             "**If entity resolution found zero or very few matches:**")
-        self.assertReports(m7_problems(text), "step 3a asks a 👉 question")
+        self.assertReports(m7_problems(text), "step 3a asks a 👉 question other than its recall")
 
     def test_m7_pointer_dropped(self):
         text = read(M7_PHASE1).replace("**This is Module 7's directing step.**", "**Note.**")
