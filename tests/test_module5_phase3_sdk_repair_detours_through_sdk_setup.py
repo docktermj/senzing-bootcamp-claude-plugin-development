@@ -129,7 +129,7 @@ def statement_problems(p3):
         "This is the one statement of that question and its handling (INV-300)",
         "step 21 asks it too, when detection fails, and points here",
         "*(Internal: end the turn on this question and wait.)*",
-        "Handling (INV-284)",
+        "Handling each answer (INV-284)",
         "1, repair → a detour through SDK setup, not a run of it: Module 2 Step 1 (\"Check for "
         "Existing Installation\"), which moves past whatever is already in place, through Step 9 "
         "(\"Test Database Connection\")",

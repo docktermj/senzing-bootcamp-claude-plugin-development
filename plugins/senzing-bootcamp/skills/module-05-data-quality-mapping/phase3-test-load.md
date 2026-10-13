@@ -34,7 +34,7 @@ and points here rather than carrying a copy.
 
 *(Internal: end the turn on this question and wait.)*
 
-Handling (INV-284), each named again in [Leaving Phase 3](#leaving-phase-3):
+**Handling each answer (INV-284).** Each is named again in [Leaving Phase 3](#leaving-phase-3):
 
 - **1, repair** → a detour through SDK setup, not a run of it: Module 2 Step 1 ("Check for Existing
   Installation"), which moves past whatever is already in place, through Step 9 ("Test Database
@@ -197,6 +197,13 @@ degraded, or unchanged). Explain what the changes mean:
   adjust this source's mapping, by step 25's **no** route (INV-344); say so as a statement.
   Re-entering Phase 3 to see updated results needs the bootcamper's explicit **test_load** at
   step 18a again.
+
+**Handling each answer (INV-284).**
+
+- **1, "Accept these results as your new baseline":** **If accepted** above, then step 25, which
+  takes its **yes** route to Phase 2 step 19.
+- **2, "Iterate on the mapping and try again":** **If rejected** above, then step 25, which takes
+  its **no** route to Phase 2 step 17.
 
 After `mapping_workflow` steps 5–8 generate output files into the workspace, place them into the
 correct project subdirectories per the file-placement guidance in `phase2-data-mapping.md`.

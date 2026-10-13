@@ -97,6 +97,14 @@ that reads `raw_value` has a branch for `null`.
 (The Kiro helpers `answer_binding.py` / `volume_utils.py` encode this parsing and persistence;
 the script port is a later phase, apply the logic inline for now.)
 
+**Handling each answer (INV-284).** Each option selects its tier by the classification above, with
+`raw_value: null`; then echo the consequence (below), frame the license, and continue to step 2.
+
+- **1, "500 or fewer":** `demo`.
+- **2, "More than 500, up to 500,000":** `small`.
+- **3, "More than 500,000, up to 10,000,000":** `medium`.
+- **4, "More than 10,000,000":** `large`.
+
 ⛔ **Echo the consequence back before generating any code.** State the tier *and* the architecture
 it selects, and invite a correction — a misread costs nothing to fix here and is expensive to
 discover once the loader is written. For example: "Medium production, so I'll build a thread-pooled
@@ -599,6 +607,12 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
 
    In both branches `loadable` is the total item 3 compared; `tier` and `raw_value` are kept for
    the record only and decide nothing.
+
+   **Handling each answer (INV-284).**
+
+   - **1, "Proceed on SQLite":** the **Proceed on SQLite** branch above, then the Phase B load.
+   - **2, "Migrate to PostgreSQL":** the **Migrate to PostgreSQL** branch above, a detour through SDK
+     setup that resumes at Phase B, or asks this question again when it cannot finish.
 
 **Production line (a statement about the take-home system, no 👉).** Once, at this same point,
 when the database is SQLite and `production_volume.tier` is `medium` or `large`, say one line and

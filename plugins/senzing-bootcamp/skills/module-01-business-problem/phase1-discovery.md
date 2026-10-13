@@ -190,6 +190,13 @@ you'll work through *your* real data. If you don't, I can generate a realistic s
 *(Internal: end the turn on this 👉 choice and wait. Do NOT generate a scenario before the
 bootcamper explicitly accepts option 3.)*
 
+**Handling each answer (INV-284).**
+
+- **1, "Describe a real business case":** they describe it; continue at Step 5, which infers the
+  details from their response.
+- **2, "Adopt a design pattern":** as 1, for the pattern picked in Step 3.
+- **3, "I don't have my own data":** Step 4a's **Accepted** branch, which continues at Step 5.
+
 **Checkpoint:** write step 4.
 
 ### 4a. Business Case Offer: acceptance handling (branch)
@@ -411,6 +418,13 @@ what they already covered.
   > 2. **Organizations**
   > 3. **Both**
 
+  **Handling each answer (INV-284).** The answer is the record types; then the next undetermined
+  item, or Phase 2 when none remains.
+
+  - **1, "People":** recorded.
+  - **2, "Organizations":** recorded.
+  - **3, "Both":** recorded.
+
 - **6c (source count).** 👉 **How many distinct data sources will we work with?**
 
 - **6d (desired outcome).** ⛔ **(INV-286) This one is MULTI-select, and asking it as single-select loses a
@@ -434,6 +448,14 @@ what they already covered.
 
   ⚠️ **Leave 6b single-select.** Its **Both** option already covers its combinations, and record
   types are a closed three-way set rather than an open list.
+
+  **Handling each answer (INV-284).** Every number chosen is recorded, as the rule above says; then
+  the next undetermined item, or Phase 2 when none remains.
+
+  - **1, "A clean master list":** recorded.
+  - **2, "An API":** recorded.
+  - **3, "Reports":** recorded.
+  - **4, "Something else":** recorded.
 
 *(Internal: end each turn on its question and wait; checkpoint after each.)* When no
 undetermined items remain, Phase 1 is complete — proceed to Phase 2 (load

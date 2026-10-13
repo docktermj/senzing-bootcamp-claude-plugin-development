@@ -247,6 +247,16 @@ every record Phases B and C load into the same repository.
     records, stopping there on purpose, not at the license error. Tell the bootcamper that later
     sources get only what is left of the cap, possibly nothing: the cost this option's own warning
     names ("cross-source overlap may be lost").
+
+  **Handling each answer (INV-284).**
+
+  - **1, "Load an overlap-preserving subset now":** the **On 1** item above, after the remaining
+    cap is measured; then this step's load.
+  - **2, "Apply a license I have":** Step 8a sub-step 5, then re-measure and re-enter these
+    branches, as the paragraph after the question says.
+  - **3, "Load the first records as they come":** the **On 3** item above, after the remaining cap
+    is measured; then this step's load.
+
 - **Absent or null** — ⛔ **"never measured", not "no custom license": measure before warning.** (INV-244) This
   is the same branch, and the same trap, as Phase A's — **every step that writes
   `license_record_limit` writes only a MEASURED value**, so its absence says nothing about the

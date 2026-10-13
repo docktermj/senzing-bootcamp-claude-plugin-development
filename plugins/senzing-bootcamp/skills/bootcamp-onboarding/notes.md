@@ -114,6 +114,14 @@ from answering the same question twice, not from confirming a changed artifact.
 ⚠️ **Options 2 and 3 are each offered once.** Once applied, that option drops off the list,
 so the loop is finite by construction and the bootcamper cannot be walked round it.
 
+**Handling each answer (INV-284).**
+
+- **1, "Save it":** Step 4 (append, then verify), then Step 5.
+- **2, "Add my bootcamp context":** add the `**Context:**` block (Steps 3b and 3c), then re-present
+  the recital above.
+- **3, "Elaborate it":** add the `**Elaboration:**` (Step 3b), then re-present the recital above.
+- **4, "Reword it":** take their correction as the note, then re-present the recital above.
+
 ## Step 3b: Attribution is structural, not stylistic
 
 The note body is the **bootcamper's words**. An elaboration (option 3) is stored under its

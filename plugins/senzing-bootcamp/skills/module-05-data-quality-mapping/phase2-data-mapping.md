@@ -88,6 +88,12 @@ Read `config/bootcamp_preferences.yaml` and check the `mapping_verbosity` key.
   If the bootcamper skips or doesn't answer directly: default to `verbose`, persist it, and
   say: "Defaulting to verbose mode: say 'switch to concise' anytime if you want less detail."
 
+  **Handling each answer (INV-284).** Persist the choice as above, then start the workflow at
+  step 8.
+
+  - **1, "Verbose mode":** `verbose`; step 10 then asks its entity-plan question.
+  - **2, "Concise mode":** `concise`; step 10 then advances with no question.
+
 - **If `mapping_verbosity` is already set to `verbose` or `concise`:** Say "Using your
   [verbose/concise] mapping preference from last time: say 'switch to [other]' if you'd prefer
   [less detail/more detail]" and proceed without waiting.
@@ -696,6 +702,13 @@ without going `back`, and the tool's own inline reference warns that a whole-rec
 whenever ANY field changes, so the resolver treats every source update as a NEW record
 (duplicate/stale entities)" — a stable natural key is preferred, and a derived hash is a documented
 last resort (server 1.32.9, 2026-08-14).
+
+**Handling each answer (INV-284).** As the **Verbose** item above says:
+
+- **1, "Looks right — map the fields":** advance, checkpoint step 10, and continue to step 11.
+- **2, "Change the entity type":** revise the plan and re-present it.
+- **3, "Change which field identifies each record":** revise the plan and re-present it.
+- **4, "Something else":** revise the plan as they describe and re-present it.
 
 **Checkpoint:** write step 10.
 
@@ -1461,6 +1474,14 @@ case.
    that the validator rejected the source again and that you will write the mapper against the
    Senzing Entity Specification, then continue with item 4, with no 👉.
 
+   **Handling each answer (INV-284).** The numbers are the full list's; after an option is left
+   out, read the answer by the option's text.
+
+   - **1, "Write the mapper against the Senzing Entity Specification":** items 4 and 5, then the
+     rest of this step, its three quality gates included.
+   - **2, "Try the mapping workflow once more":** items 6 and 7.
+   - **3, "Skip this source":** item 8, which continues at step 19.
+
 4. **On option 1, the fallback is bounded, not a free hand.** State plainly what still holds:
    - Attribute names come from the Senzing Entity Specification in `docs/reference/` (see
      "Entity specification reference" below) — **never** from training data or memory. The
@@ -1713,9 +1734,14 @@ gate and this one are separate decisions, and the disclosure is a statement, not
   1. Iterate to improve the data.
   2. Move on to {next} anyway, knowing results may be limited.
 
-Handling (INV-284): "Yes, map {next}", "Move on to the next source, {next}" and "Move on to
-{next} anyway" continue through steps 17–18a, where 18a's multi-source rule recommends `skip`, to
-step 19, which starts {next}'s own `mapping_workflow` run. Every iterate option goes to step 17.
+**Handling each answer (INV-284).** A move-on answer continues through steps 17–18a, where 18a's
+multi-source rule recommends `skip`, to step 19, which starts {next}'s own `mapping_workflow` run.
+Every iterate option goes to step 17.
+
+- **1, "Yes, map {next}" or "Move on to the next source, {next}":** move on.
+- **2, "Move on to {next} anyway":** move on.
+- **1, "Iterate to improve the data":** iterate.
+- **2, "No, I'd like to iterate on {source} first" or "Iterate to improve":** iterate.
 
 **When no unmapped source remains** (INV-344; this is the last source, or the only one), ask the loading
 question:
@@ -1741,9 +1767,14 @@ question:
   1. Iterate to improve the data.
   2. Proceed anyway, knowing results may be limited.
 
-Handling (INV-284): a proceed answer ("Yes, proceed to loading", "Proceed to loading now",
-"Proceed anyway") continues through steps 17–18a, where it settles the sandbox menu as `skip`
-(see 18a's last-source rule), then to steps 19 and 20. Every iterate option goes to step 17.
+**Handling each answer (INV-284).** A proceed answer continues through steps 17–18a, where it
+settles the sandbox menu as `skip` (see 18a's last-source rule), then to steps 19 and 20. Every
+iterate option goes to step 17.
+
+- **1, "Yes, proceed to loading" or "Proceed to loading now":** proceed.
+- **2, "Proceed anyway":** proceed.
+- **1, "Iterate to improve the data":** iterate.
+- **2, "No, I'd like to iterate on something first" or "Iterate to improve":** iterate.
 
 *(Internal: end the turn on the applicable question and wait.)*
 

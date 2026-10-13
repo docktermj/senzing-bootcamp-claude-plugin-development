@@ -438,11 +438,16 @@ obtained via the `get_sample_data` MCP tool in Module 4):
 
    *(Internal: end the turn on this question and wait.)*
 
-   - **Options 1-2:** return to Module 4's data-collection flow to acquire the source, register it
-     with `provenance` other than `cord`, then run this module normally on it. Its caveats apply
-     — for the free-data catalog, give the ICIJ note in Module 4 before recommending that sample.
-   - **Option 3:** continue. Record the choice so graduation can state that no mapping was
-     authored, rather than leaving the recap silent about it.
+   **Handling each answer (INV-284).**
+
+   - **1, "Yes — a raw variant of the same data":** return to Module 4's data-collection flow to
+     acquire the source, register it with `provenance` other than `cord`, then run this module
+     normally on it.
+   - **2, "Yes — a raw sample from the free-data catalog":** as 1. Its caveats apply: give the
+     ICIJ note in Module 4 before recommending that sample.
+   - **3, "No — continue without a mapping exercise":** continue to Step 7's report.
+     Record the choice so graduation can state that no mapping was authored, rather than leaving
+     the recap silent about it.
 
 **Fast-path data-lineage entry:** Record a lineage entry ONLY for a source that was explicitly
 fast-pathed (the bootcamper confirmed the offer above). Never record one for a source that went
@@ -800,9 +805,14 @@ Run it over **every record** of each source, not a sample: the count is the sour
 
    *(Internal: end the turn on this question and wait.)*
 
-   - **Option 1:** ask which candidates, if any, are real people, and take "none" as an answer.
-     Every other candidate is retyped. Write the section below with the rule and those exceptions.
-   - **Option 2:** write the section below with the cost stated, and change nothing else.
+   **Handling each answer (INV-284).** Either way item 6 writes the decision; then the next source
+   with candidates, one per turn, and after the last the rest of this step.
+
+   - **1, "Retype them to ORGANIZATION":** ask which candidates, if any, are real people, and take
+     "none" as an answer. Every other candidate is retyped. Write the section below with the rule
+     and those exceptions.
+   - **2, "Keep them as PERSON":** write the section below with the cost stated, and change nothing
+     else.
 6. **Write the decision to `docs/mapping/{source_name}_mapper.md`**, under a `## Record Type
    Check` section. If the file does not exist yet, create it with its `# Mapping Specification:
    {SOURCE_NAME}` title and this section only. Phase 2 step 18 writes the rest of it and keeps this
@@ -1025,6 +1035,13 @@ fixed-dataset statement excepted, which continues into Phase 2. In the
 ≥80% branch no question applies — do not manufacture one; continue into Phase 2 this same turn and
 end on its first 👉.)*
 
+**Handling each answer (INV-284).** One list serves both gating bands.
+
+- **1, "Improve the weakest fields first" or "Work on improving the data first":** Step 7a, which
+  re-scores the source and re-presents the gate.
+- **2, "Continue to mapping now" or "Proceed anyway":** continue into Phase 2 this turn, as the
+  ≥80% band does.
+
 ### 7a. The improve path — what option 1 means, in both gating bands
 
 ⛔ **(INV-284) This step is what the gate's first option executes.** Both gating bands offer to improve the
@@ -1162,13 +1179,14 @@ turn, letting Phase 2's first step supply that turn's 👉:
   and the results may be limited. Let's continue to mapping." **(statement, no 👉; continue into
   Phase 2 this turn)**
 
-**Handling each option (INV-284).**
+**Handling each answer (INV-284).**
 
-- **Option 2** is the band's own second option and is handled as it is there: continue into Phase 2
-  this turn. Nothing is written for the return.
-- **Option 1** runs the return route below. ⛔ **(INV-006) Option 1 IS the return route's pinned
-  question: the answer is the go-ahead, so ask no second confirmation.** The same route runs when the
-  Bootcamper asks, in their own words, for a regeneration or a new export of this source.
+- **2, "Continue to mapping now" or "Proceed anyway":** the band's own second option, handled as it
+  is there: continue into Phase 2 this turn. Nothing is written for the return.
+- **1, "Return to Data collection for this source":** runs the return route below.
+  ⛔ **(INV-006) Option 1 IS the return route's pinned question: the answer is the go-ahead, so ask
+  no second confirmation.** The same route runs when the Bootcamper asks, in their own words, for a
+  regeneration or a new export of this source.
 
 **The return route, for this source only:**
 

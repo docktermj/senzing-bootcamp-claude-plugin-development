@@ -158,6 +158,13 @@ turn on the 👉 question:
 
 *(Internal: end the turn on this question and wait.)*
 
+**Handling each answer (INV-284).** Continue to step 16. The strategy chosen shapes the orchestrator
+(step 17) and the run (step 19, under its own name there).
+
+- **1, "Sequential":** step 19's **Sequential** case.
+- **2, "Parallel":** step 19's **Parallel** case.
+- **3, "Hybrid":** step 19's **Hybrid** case.
+
 **Checkpoint:** write step 15.
 
 ## 16. Pre-load validation checklist

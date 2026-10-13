@@ -157,7 +157,7 @@ def fixed_dataset_problems(phase1):
     if fixed != {"cord", "free_data"}:
         problems.append("the no-return statement covers %r; it must be cord and free_data"
                         % (sorted(fixed or ()),))
-    block = between(step, "**`cord` or `free_data` →", "**Handling each option")
+    block = between(step, "**`cord` or `free_data` →", "**Handling each answer")
     if block is None:
         problems.append("Step 7b has no fixed-dataset block")
     else:
