@@ -9167,6 +9167,7 @@ looks wrong.
 - `tests/test_every_capture_path_requests_the_render.py`: 8
 - `tests/test_every_invariant_is_cited_in_shipped_text.py`: 4
 - `tests/test_every_line_reading_guard_gives_a_verdict.py`: 9
+- `tests/test_example_recap_shows_every_recap_element.py`: 12
 - `tests/test_example_recap_sync.py`: 15
 - `tests/test_example_recap_uses_no_golden_record.py`: 5
 - `tests/test_existing_install_still_runs_the_env_script.py`: 22
@@ -9344,7 +9345,7 @@ looks wrong.
 - `tests/test_reassurance_precedes_question.py`: 18
 - `tests/test_recap_checkpoint_is_lifted_before_module_parsing.py`: 15
 - `tests/test_recap_checkpoint_writer.py`: 26
-- `tests/test_recap_handover_section.py`: 30
+- `tests/test_recap_handover_section.py`: 31
 - `tests/test_recap_header_is_owned.py`: 22
 - `tests/test_recap_measure_font_safety.py`: 14
 - `tests/test_recap_notes_section.py`: 22
@@ -10045,6 +10046,12 @@ These are the scripts under `.claude/skills/`:
   - the documented runner.
 - **The example recap.** `tests/test_example_recap_sync.py` requires the example
   recap PDF to match its source Markdown and the plugin version in the manifest.
+  `tests/test_example_recap_shows_every_recap_element.py` requires the example
+  to carry the headline entity, a `You directed:` line after `Why it matters:`
+  in each hands-on module, a prediction line ending `(agreed)` or `(differed)`,
+  one handover block after the notes with its four subsections, and a
+  `Worked steer shown:` line in an Act 2 module's Actions Taken, and names the
+  one missing (#518).
 - **The Pages site.** `tests/test_pages_site_commands_match_docs_readme.py`
   requires the `claude plugin …` commands inside `<code>` in `docs/index.html`
   to equal, as a set, those in `docs/README.md`'s `console` fences, indented or
@@ -10907,6 +10914,14 @@ Senzing licensing, with no SPDX identifier.
   `check_apparatus`, and seven `PROPOSED AMENDMENT` blocks (INV-251, INV-352 to
   INV-355, INV-357, INV-359) are queued (a reused sentence template credited the
   linter with judgments a count-or-regex check cannot make)
+- #518: the shipped example recap shows every recap element the #465 steps
+  write: a `You directed:` line in Modules 5, 6 and 7 (no-site, handed-back and
+  directed forms), three Discover step 4a-pairs prediction lines, a worked steer
+  for the `NAME_FULL` search that returned `EMPTY`, and a handover block after
+  the notes; its PDF is regenerated, and
+  `tests/test_example_recap_shows_every_recap_element.py` fails naming any
+  missing element (the #465 sub-issues changed the producing steps but not the
+  example, which graduation shows Bootcampers as the shape to expect)
 - #525: nothing that runs inside the SDK container reads a plugin asset by its
   plugin path: Module 5's quality pages are generated on the host on every
   route, stated once at step 6's `#quality-page-runs-on-the-host` and linked
