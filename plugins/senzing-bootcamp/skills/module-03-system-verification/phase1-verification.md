@@ -19,6 +19,12 @@ before the second ends on the transition. That is correct — the turn ends wher
 actually asked something. The concept and the checkpoint consequence are defined once in
 `../bootcamp-onboarding/ground-rules.md` → the 👉 protocol.
 
+⚠️ **A failed run asks one more 👉: Step 9's retry-or-move-on question** (`phase2-report-close.md`
+Step 9 item 7). It ends the turn the report is written in, before cleanup; moving on then runs
+cleanup and the close, which still end on the transition question. A run whose Step 1a fails never
+reaches Step 7a (Agent Rule 4's one exception, below), so its first turn runs Step 1, Step 1a and
+the report, and ends on that question. Every turn still ends on exactly one 👉.
+
 ## Opt-Out Gate
 
 Before starting Module 3 steps, check whether the bootcamper has explicitly requested to skip.
@@ -69,6 +75,10 @@ The following rules are mandatory for the agent executing this module:
 4. **All checks execute regardless of failures:** if any step fails, continue executing all
    subsequent steps. No short-circuiting. The Verification Report MUST include the status of
    every check.
+   **The one exception is a Step 1a failure.** When the engine does not initialize, Step 1a stops
+   before generation or loading, so Steps 2–8 cannot run: record each of their checks as
+   `"status": "skipped"` and continue in the same turn to Phase 2, whose Verification Report is
+   still written in full, every check included. Every other failure continues to the next step.
 5. **Artifact isolation:** all verification artifacts (scripts and data files) MUST be created
    within `src/system_verification/`. No verification files outside it.
 6. **Timeouts enforced:** every step MUST enforce its defined timeout. If a process exceeds its
@@ -178,6 +188,14 @@ INV-080), create an engine, and release it.
    of the record-level exception that block names, it becomes the over-generalization it forbids.
 4. Do not diagnose from the code alone beyond that: any other code goes through `explain_error_code`
    and `search_docs` per this module's Error handling section.
+
+**Then record the rest as skipped and go to the report (Agent Rule 4's one exception).** Record
+`engine_initialization` as `failed`, and `sdk_initialization`, `code_generation`,
+`build_compilation`, `data_source_registration`, `data_loading`, `results_validation` and
+`database_operations` each as `"status": "skipped"`: they never ran, so they neither passed nor
+failed. Step 7a's Mari prediction is not asked, by its own clause for a run with no Marisol entity
+(`mari_prediction` `not_run`). Continue in the same turn to `phase2-report-close.md` Step 9, which
+writes the report in full and ends the turn on its retry-or-move-on question.
 
 This is a check, not a 👉 question — run it silently and report only on failure (INV-012).
 

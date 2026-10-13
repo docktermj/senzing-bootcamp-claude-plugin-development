@@ -27,6 +27,12 @@ decides (the ground rules' "Predictions before results", INV-357). Every other s
 inside the turn that ends on the next of those two questions. See `../bootcamp-onboarding/ground-rules.md` → the 👉 protocol, which defines the
 non-yielding step and the single-write checkpoint that follows from it.
 
+⚠️ **That count is a passing run's. A failed run also asks Step 9's retry-or-move-on question**
+(`phase2-report-close.md` Step 9 item 7), which ends the turn the report is written in; moving on
+runs cleanup and the close, which still end on the transition question. A run whose engine fails
+to initialize at Step 1a skips Steps 2–8 and the Mari prediction (`phase1-verification.md` Agent
+Rule 4's one exception), so it reaches that question in its first turn.
+
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.
 

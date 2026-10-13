@@ -71,7 +71,7 @@ Generate a structured summary of the System Verification checks.
    • <check_name>: <error_summary>
      Fix: <Fix_Instruction>
 
-   Please resolve the issues above and re-run system verification.
+   Fix the issues above, then choose below whether to re-run system verification.
    ```
 
    ⛔ **An `expectation_mismatch` MUST NOT appear here.** There is nothing to resolve and nothing to
@@ -105,7 +105,10 @@ Generate a structured summary of the System Verification checks.
    - The `fix_instructions` array SHALL contain one entry per failed check, each with the check
      name and remediation text. ⛔ **An `expectation_mismatch` contributes NO entry** — there is
      nothing to remediate.
-   - If verification was interrupted, mark unexecuted checks as `"status": "skipped"`.
+   - If verification was interrupted, mark unexecuted checks as `"status": "skipped"`. So does a
+     Step 1a failure: every check after `engine_initialization` is `skipped`
+     (`phase1-verification.md` Agent Rule 4's one exception), and the report is still written in
+     full, one entry per check.
    - ⛔ **The module-level `status` is set from the installation checks only** (INV-229). A
      healthy install MUST NOT be recorded as a failed module because a prediction was wrong:
      graduation and the resume bundle read this file rather than the prose above, so a wrong value
@@ -120,8 +123,31 @@ Generate a structured summary of the System Verification checks.
 6. **If all the installation checks passed:** proceed to Step 10 (Cleanup) — including when
    `results_validation` is `expectation_mismatch`.
 7. **If any installation check failed** (or `results_validation` is `failed`): do NOT proceed to
-   cleanup. Advise the bootcamper to fix the issues and re-run System verification from the
-   beginning.
+   cleanup yet. Write step 9's checkpoint (below), then end the turn on this question, pinned
+   (INV-056) as a neutral lead and a numbered list (INV-051):
+
+   👉 **System verification found failures. What would you like to do? Reply with a number:**
+
+   1. Retry System verification from the beginning, once the issues above are fixed.
+   2. Move on to the next module, with System verification recorded as failed.
+
+   *(Internal: end the turn on this question and wait.)*
+
+   **Handling each answer (INV-284).**
+
+   - **1, "Retry":** ⛔ **(INV-006) The answer IS the go-ahead, so ask no second confirmation.**
+     Resume at `phase1-verification.md` Step 1 and run Phase 1 again from there, in order and in
+     full (Agent Rule 8 overwrites this module's synthetic `VERIFY` artifacts); the new run's
+     Step 9 replaces this report. ⛔ **(INV-284) Retries are not capped: each attempt measures a new
+     state, so asking this question again after another failed run is NOT an INV-006 repeat and
+     MUST NOT be suppressed as one.**
+   - **2, "Move on":** run Step 10 (Cleanup), then Step 11 (Module Close), which ends on the
+     transition question. ⛔ **(INV-229) The report's module-level `status` stays `failed`:** do not
+     rewrite it on the way out, because graduation reads it from there.
+   - **An interruption that leaves this question unanswered resumes at it.** A session that
+     resumes with step 9 as the last checkpoint and the report's module-level `status` `failed`
+     has this question pending: re-present it verbatim (the ground rules' Ask-once rule on a pending,
+     unanswered question) rather than going on to Step 10, and run no check again.
 
    ⛔ **Cleanup MUST NOT be gated on an `expectation_mismatch`.** Step 10 is the only place the
    synthetic `VERIFY` records are purged, and INV-131 makes that teardown the module's last action —
