@@ -1959,17 +1959,30 @@ written once per turn. Each check lands in `module_3_verification.checks`.
   `Marisol`. Records `synthetic_data` (`expected_entities`,
   `expected_merge_record_count`), never counting 7a's `Mari` record.
 - 3 `sdk_initialization`: fetch the scaffold's `raw_url` (`git clone`
-  fallback, never `inline=true`), save `verify_init.<ext>`, run (30 s).
+  fallback, never `inline=true`), save program `verify_init`, build it, run
+  (30 s).
 - 4 `code_generation`: from `full_pipeline` pick the loader that reads an
-  input file, repoint it, save `verify_pipeline.<ext>`. A missing JSON
+  input file, repoint it, save program `verify_pipeline`. A missing JSON
   library (Java `javax.json`) is swapped, SDK calls untouched, noted in the
   header.
-- 5 `build_compilation`: per-language build (120 s).
+- 5 `build_compilation`: build `verify_pipeline` (120 s, dependency
+  resolution included). Step 5's table is the one statement of how each
+  program (`verify_init`, `verify_pipeline`, `register_data_sources`,
+  `validate_results`, `mari_lookup`, `database_operations`) is built and run;
+  steps 3, 5a, 6, 7, 7a and 8 cite it. Python and Java stay flat in
+  `src/system_verification/` (Java `javac -d .../classes`, run through Module
+  2's Java launch route). C#, Rust and TypeScript get a folder and manifest
+  per program from `dotnet new console`, `cargo init` or `npm init` plus
+  `tsc --init`; the Senzing dependency comes from `generate_scaffold`'s
+  `dependency_note` or Module 2's C# route, never a public NuGet feed. Rust
+  shares one `--target-dir`; TypeScript emits to `dist/` and runs it with
+  `node` (#511).
 - 5a `data_source_registration`: `sdk_guide(topic='configure')` code
-  `register_data_sources.<ext>` registers the codes present and sets the
+  `register_data_sources` registers the codes present and sets the
   default config, re-runnable (60 s); codes go to `config/data_sources.yaml`.
 - 6 `data_loading`: run the pipeline (120 s); counts must match.
-- 7 `results_validation`: entity count, cluster merged, distractor alone.
+- 7 `results_validation` (program `validate_results`): entity count, cluster
+  merged, distractor alone.
   On mismatch ask `why_records`/`why_entities`: explained gives
   `expectation_mismatch` plus `engine_explanation` and continues (nothing is
   fixed or re-run), else `failed`.
@@ -9055,7 +9068,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 6932 test methods in 398 files, matching `inventory.test_count_total`.
+There are 7121 test methods in 405 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6599.
@@ -9276,6 +9289,7 @@ looks wrong.
 - `tests/test_module06_orchestrator_guidance.py`: 20
 - `tests/test_module06_phase_ordering.py`: 15
 - `tests/test_module07_why_flags.py`: 17
+- `tests/test_module3_build_and_run_table.py`: 13
 - `tests/test_module3_check_lists_agree.py`: 24
 - `tests/test_module5_full_output_file_path_is_written_at_step_18.py`: 18
 - `tests/test_module5_phase1_gates_and_scoring.py`: 14
@@ -9677,7 +9691,9 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   - All five server languages, Rust included, are named.
 - **Module 3.** The eight installation checks must pass. Results validation is
   diagnostic and never required to pass. The liveness probe is
-  `get_capabilities`.
+  `get_capabilities`. Step 5's table gives all five languages a build and a
+  run command, every program is created by an earlier step that cites the
+  table, and TypeScript's build has no `--noEmit`.
 - **Module 3b.**
   - The Truth Set is downloaded, not saved from the preview.
   - A CORD 403 or 429 is never retried blindly.
@@ -10876,6 +10892,15 @@ Senzing licensing, with no SPDX identifier.
   (the path stopped at Step 7 and completed Module 2 "once verification
   passes", so a guide following it finished with no engine config and no
   verified engine)
+- #511: Module 3 Step 5's one build-and-run table gives each of the five
+  languages a build and a run command for every program, steps 3, 5a, 6, 7,
+  7a and 8 cite it, and C#, Rust and TypeScript programs get a folder and a
+  manifest each from the toolchain's init command with the server's
+  `dependency_note` or Module 2's C# route; Java runs through Module 2's
+  launch route; `tests/test_module3_build_and_run_table.py` pins it (the
+  table built a `.csproj` and a `Cargo.toml` no step created and compiled
+  TypeScript with `--noEmit` before running it, so only Python and Java
+  worked)
 - #513: inline `search_docs` routes in Modules 2, 3, 5 and 6 name a query
   measured on the current index with its section, band and stamp, a route used
   at several sites is stated once and the others point at it, and

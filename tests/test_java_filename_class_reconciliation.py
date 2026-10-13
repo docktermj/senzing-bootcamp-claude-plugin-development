@@ -172,11 +172,17 @@ class NoPrescribedFilenameChanged(unittest.TestCase):
     """Criterion 4 — the fix must not ripple into machinery that reads these names."""
 
     def test_the_verification_build_table_still_names_verify_pipeline_java(self):
+        # #511 made the table generic over `<name>`; the Java file stays flat and snake_case,
+        # and `verify_pipeline` stays a prescribed program of that table.
+        text = read(VERIFICATION)
         self.assertIn(
-            "| Java | `javac src/system_verification/verify_pipeline.java` |",
-            read(VERIFICATION),
+            "| Java | `src/system_verification/<name>.java` | "
+            "`javac -d src/system_verification/classes -sourcepath src/system_verification "
+            "src/system_verification/<name>.java` |",
+            text,
             "the build table's Java row moved; graduation and this module's own tests read it",
         )
+        self.assertIn("| `verify_pipeline` | Step 4 |", text)
 
     def test_the_transform_filename_pattern_survives(self):
         self.assertIn("src/transform/transform_[name].[ext]", read(MAPPING))
@@ -202,12 +208,27 @@ class TheOtherLanguagesAreUntouched(unittest.TestCase):
     """Criterion 6 — Python, Rust and TypeScript have no coupling, so no new instruction."""
 
     def test_the_build_table_rows_are_unchanged(self):
+        # The rows as #511 rewrote them: one build and one run command per language, C#, Rust
+        # and TypeScript in a folder per program. tests/test_module3_build_and_run_table.py
+        # checks what the rows must do; this pins their exact text.
         text = read(VERIFICATION)
         for row in (
-            "| Python | `python3 -m py_compile src/system_verification/verify_pipeline.py` |",
-            "| C# | `dotnet build src/system_verification/` |",
-            "| Rust | `cargo build --manifest-path src/system_verification/Cargo.toml` |",
-            "| TypeScript | `tsc src/system_verification/verify_pipeline.ts --noEmit` |",
+            "| Python | `src/system_verification/<name>.py` | "
+            "`python3 -m py_compile src/system_verification/<name>.py` | "
+            "`python3 src/system_verification/<name>.py` |",
+            "| C# | `src/system_verification/<name>/` holding `<name>.csproj` and `<name>.cs` | "
+            "`dotnet build src/system_verification/<name>` | "
+            "`dotnet run --no-build --project src/system_verification/<name>` |",
+            "| Rust | `src/system_verification/<name>/` holding `Cargo.toml` and `src/main.rs` | "
+            "`cargo build --manifest-path src/system_verification/<name>/Cargo.toml "
+            "--target-dir src/system_verification/target` | "
+            "`cargo run --manifest-path src/system_verification/<name>/Cargo.toml "
+            "--target-dir src/system_verification/target` |",
+            "| TypeScript | `src/system_verification/<name>/` holding `package.json`, "
+            "`tsconfig.json` and `<name>.ts` | "
+            "`tsc --project src/system_verification/<name> "
+            "--outDir src/system_verification/<name>/dist` | "
+            "`node src/system_verification/<name>/dist/<name>.js` |",
         ):
             with self.subTest(row=row.split("|")[1].strip()):
                 self.assertIn(row, text)
