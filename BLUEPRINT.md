@@ -1937,7 +1937,8 @@ routing, resume from `current_step`), `phase1-verification.md` (steps 1-8),
 from `config/bootcamp_preferences.yaml`; artifacts go in
 `src/system_verification/`; no SQL against `database/G2C.db`. Every step but
 7a is non-yielding: the two 👉 are Step 7a's Mari prediction and the closing
-transition, so progress is written once per turn. Each check lands in `module_3_verification.checks`.
+transition, plus Step 9's retry-or-move-on on a failed run, so progress is
+written once per turn. Each check lands in `module_3_verification.checks`.
 
 - Opt-out ("skip verification"): write `module_3_verification` status
   `skipped`, reason `bootcamper_opted_out`; warn; gate 3→4 `skipped`.
@@ -1946,7 +1947,8 @@ transition, so progress is written once per turn. Each check lands in `module_3_
 - 1a `engine_initialization`: init and release an engine from the
   `generate_scaffold(workflow='initialize')` code; stop on failure. No SENZ
   code means an unsourced env script; `SENZ2027`/`SENZ7426` point to Module
-  2 Step 8's SUPPORTPATH check.
+  2 Step 8's SUPPORTPATH check. A failure is Agent Rule 4's one exception:
+  checks 3-8 are recorded `skipped`, 7a is not asked, and Step 9 follows.
 - 2: write 4 or more `VERIFY` records to `verification_data.jsonl`: a 2-3
   record merge cluster (identical names, DOB, address and feature set; only
   formatting varies) plus a singleton distractor. The cluster's person is
@@ -1977,7 +1979,9 @@ transition, so progress is written once per turn. Each check lands in `module_3_
   record), read by id, attribute search (30 s).
 - 9: module `status` and banner use the eight install checks only; results
   validation is reported on its own line and never as a failure. Persists
-  `timestamp`, `status`, `checks`, `fix_instructions`; failure means re-run.
+  `timestamp`, `status`, `checks`, `fix_instructions`. A failure ends on 👉
+  retry (back to Step 1, uncapped) or move on (10 and 11, `status` stays
+  `failed`); an unanswered question is re-presented on resume.
 - 10: purge `VERIFY` records via SDK code, 7a's `Mari` record included (its
   ID is in `mari_record.jsonl`); keep the files.
 - 11: add `system_verification` to `modules_completed`, gate 3→4
@@ -1985,7 +1989,8 @@ transition, so progress is written once per turn. Each check lands in `module_3_
   `docs/bootcamp_recap.md`, B-roll, 👉 transition to `truthset_visualization`
   if selected, else Data collection.
 
-Timeouts kill the process, record a fail and continue; SENZ codes go to
+Timeouts kill the process, record a fail and continue (only a Step 1a
+failure skips the rest); SENZ codes go to
 `explain_error_code`.
 
 ### 5.11 `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/`
@@ -8959,7 +8964,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 399 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 400 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10875,6 +10880,12 @@ Senzing licensing, with no SPDX identifier.
   INVARIANT for Module 0's wrong-answer rule and Module 7's recall question
   is queued (the pointers named the single-statement rule but not the rule
   they point at, and the wrong-answer rule was registered nowhere)
+- #529: System verification's Agent Rule 4 names its one exception, a Step 1a
+  failure, which records Steps 2-8's checks as `skipped` and still writes the
+  full report, and a failed run ends on a pinned retry-or-move-on question
+  whose handlers resume at Phase 1 Step 1 (uncapped) or run cleanup and the
+  close with `status: failed` kept (Step 1a's stop contradicted "no
+  short-circuiting", and a failed run ended on advice with no question)
 - #530: Module 5 Phase 3's two offers to go back to SDK setup become one
   pinned repair-or-skip question, stated once and asked again from step 21 by
   link; repair is an `sdk_repair` row in SDK setup's `setup_detour` table
