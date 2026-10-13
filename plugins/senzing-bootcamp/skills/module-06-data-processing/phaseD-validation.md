@@ -760,7 +760,8 @@ it as a produced file in the end-of-module summary's "Files produced" list (INV-
 
 - ✅ All sources loaded (or failures documented) with error rate < 1% per source
 - ✅ Dependencies respected, cross-source matches reviewed
-- ✅ Orchestrator program saved in `src/load/orchestrator.[ext]`
+- ✅ Orchestrator program saved as the program `orchestrator` in `src/load`, at the path
+  `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives
 - ✅ Cross-source match accuracy validated
 - ✅ UAT executed, results and the UAT % in `docs/uat_results.md`
 - ✅ Stakeholder sign-off obtained (25b), or self-directed validation recorded (25a)

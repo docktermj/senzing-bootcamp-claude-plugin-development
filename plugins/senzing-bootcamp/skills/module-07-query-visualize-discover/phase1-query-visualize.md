@@ -192,7 +192,11 @@ shown, each with its `text` and its Module 1 `source`:
 
 ## 2. Create query programs
 
-For each query type, create a program in `src/query/` using the bootcamper's chosen language.
+For each query type, create a program in the bootcamper's chosen language: save it as the program
+`[query_name]` in `src/query`, where `[query_name]` is a short snake_case name for the query (for
+example `find_duplicates`), at the path and with the project that
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, then build it
+with that section's build command.
 
 ⛔ **(INV-152) Before factoring engine setup into a shared helper, read the factory-lifetime
 rule.** Writing several query programs is exactly when that helper gets written, and getting
@@ -200,7 +204,9 @@ what it returns wrong yields an engine that is already dead: it fails at the **f
 call, far from the helper that caused it, with `SzSdkError - engine object has been destroyed
 and can no longer be used, create a new one`. The message names a symptom, not the cause, so
 it is easy to debug in the wrong place. [`ground-rules.md`](../bootcamp-onboarding/ground-rules.md)
-states the rule and its fix in full; follow it rather than restating it here (INV-300).
+states the rule and its fix in full; follow it rather than restating it here (INV-300). In C#,
+Rust and TypeScript there is no shared helper to write: each program is its own project in its own
+folder, so each carries its own engine setup, and the factory-lifetime rule applies inside it.
 
 On Java, a shared helper is a shared class, whose filename rule is in
 [`ground-rules.md`](../bootcamp-onboarding/ground-rules.md) → "File placement" (INV-237); do not
@@ -527,7 +533,9 @@ finding.
 
 ## 3. Run exploratory queries
 
-Execute the queries to understand results, using the run command for the chosen language.
+Run each query program `[query_name]` in `src/query`, built at step 2, with its run command in
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program", to understand the
+results.
 
 **Checkpoint:** write step 3.
 

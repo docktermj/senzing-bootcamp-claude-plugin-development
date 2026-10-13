@@ -61,7 +61,7 @@ POINTS_AT_CENTRAL = re.compile(
     r"(?i)ground-rules\.md.{0,60}File placement|INV-237"
 )
 #: Filenames other machinery reads, which this fix must not change.
-PRESCRIBED_NAMES = ("verify_pipeline.java", "transform_[name].[ext]")
+PRESCRIBED_NAMES = ("verify_pipeline.java", "`transform_[name]`")
 
 
 def read(path):
@@ -184,7 +184,9 @@ class NoPrescribedFilenameChanged(unittest.TestCase):
         self.assertIn("| `verify_pipeline` | Step 4 |", read(VERIFICATION))
 
     def test_the_transform_filename_pattern_survives(self):
-        self.assertIn("src/transform/transform_[name].[ext]", read(MAPPING))
+        # #563 names the transform as a program, `<name>` = `transform_[name]` in `<dir>` =
+        # `src/transform`, whose path the ground rules' "Building and running a program" gives.
+        self.assertIn("as the program `transform_[name]` in `src/transform`", squashed(MAPPING))
 
     def test_no_pascal_case_java_path_was_introduced(self):
         # The tempting fix is renaming to PascalCase.java per language. It ripples further

@@ -683,9 +683,11 @@ where it appears:
 
 The caller says which entity to pick. Everything below is the same for all three.
 
-1. **Retrieve it with generated SDK code, never SQL** (the rule above). Write one small program,
-   `src/query/show_entity.[ext]` in the chosen language, from the MCP server and never from memory
-   (INV-080), and reuse it at every site. It does two things:
+1. **Retrieve it with generated SDK code, never SQL** (the rule above). Write one small program in
+   the chosen language, from the MCP server and never from memory (INV-080), and save it as the
+   program `show_entity` in `src/query`, at the path and with the project that "Building and running
+   a program" below gives. Build and run it with that section's commands, and reuse it at every
+   site. It does two things:
    - **Rank.** Iterate the entity export, limited to entities with more than one record.
      `reporting_guide(topic='export', language='<chosen_language>', version='current')` gives the
      export loop; `get_sdk_reference(topic='flags', filter='export_json_entity_report',
@@ -874,6 +876,12 @@ the server or Module 2's route, never from memory (INV-080):
 5. **A package the code imports beyond the Senzing SDK and the standard library** is a non-SDK
    dependency: resolve it before the build, as `../module-02-sdk-setup/SKILL.md` → "MCP Java
    scaffolds may need a JSON library the install does not provide" says.
+
+**Code that came from `sdk_guide` or `reporting_guide`** has no `dependency_note` to read. For Rust
+and TypeScript, take the dependency line from the `DEPENDENCY:` entry in the `compatibility_notes`
+of `sdk_guide(topic=<the program's topic>, language='<chosen_language>')` instead, exactly as it
+gives it.
+<!-- MCP-NEGATIVE: sdk_guide(topic='load', language='rust' and 'typescript', record_count=100), sdk_guide(topic='configure', language='rust', data_sources=['CUSTOMERS']) and reporting_guide(topic='export', language='rust', scale='small') — none of the replies carries a dependency_note field, and each sdk_guide reply states the Senzing dependency line among its own compatibility notes — owner: generate_scaffold IS the route that returns a dependency_note, and an sdk_guide reply's own notes are where that route states the line, so the line is read there (absence negative) — server 1.37.28, 2026-10-13 -->
 
 ## Windows and PowerShell
 

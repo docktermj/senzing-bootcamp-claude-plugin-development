@@ -185,8 +185,13 @@ Module 6 loading program works as a template. Fix failures before proceeding.
 The orchestrator's Senzing calls come from the Step 3 loader (Phase A, "Create the production
 loading program"), run once per source; its SDK code is
 `generate_scaffold(language='<chosen_language>', workflow='add_records', version='current')`.
-Override any `/tmp/` or `ExampleEnvironment` paths to `database/G2C.db`. Save to
-`src/load/orchestrator.[ext]`.
+Override any `/tmp/` or `ExampleEnvironment` paths to `database/G2C.db`. Save it as the program
+`orchestrator` in `src/load`, at the path and with the project that
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, then build it
+with that section's build command. In C#, Rust and TypeScript a program cannot use another program's
+folder, so the orchestrator carries the loading code itself, or runs each source's `load_[name]` in
+its own process with that section's run command, the second of the two ways below to keep its counts
+per source.
 
 <!-- MCP-NEGATIVE: find_examples(query='multi-source') with and without language='java', and find_examples(query='orchestrator load multiple data sources') — no indexed example is a multi-source load orchestrator (ordered per-source loading, per-source error isolation, reconciliation); the first returns examples: [] plus a hint, the second only single-source loaders, data-source registration snippets and CHANGELOGs — owner: find_examples IS the route for indexed example code and returned none; generate_scaffold IS the route for SDK templates and has no orchestration workflow (workflow='orchestration' is rejected with the list initialize, configure, add_records, delete, query, redo, stewardship, information, error_handling, full_pipeline, and full_pipeline returns single-source initialize/configure/load/search snippets) (absence negative) — server 1.37.13, 2026-09-26 -->
 
@@ -297,10 +302,11 @@ only at the total.
 
 ## 18. Test orchestrator with sample data
 
-Test the orchestrator with 10–100 records per source. Verify: sources load without errors,
-dependencies respected, progress tracking works, error handling triggers correctly. Report the
-sample-data test results and let the bootcamper know the orchestrator is ready for the full
-dataset.
+Run the program `orchestrator` in `src/load` with its run command in
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program", on 10–100 records per
+source. Verify: sources load without errors, dependencies respected, progress tracking works, error
+handling triggers correctly. Report the sample-data test results and let the bootcamper know the
+orchestrator is ready for the full dataset.
 
 A source whose Step 17 budget-table row is **not loaded** gets no test load either: its test
 records would count against a remaining cap that has nothing left for it.
@@ -310,9 +316,11 @@ records would count against a remaining cap that has nothing left for it.
 ## 19. Run full orchestration
 
 Run on the dataset the recorded load decision names — the complete dataset unless a subset was
-chosen — and tell the bootcamper which one is being loaded. When it is a subset, say so and that
-the full dataset can be loaded afterwards. Monitor per-source progress, error rates, overall
-completion, and elapsed/estimated time. If slow, suggest reducing parallelism.
+chosen — and tell the bootcamper which one is being loaded. When it is a subset, say so and that the
+full dataset can be loaded afterwards. Run it as the program `orchestrator` in `src/load`, with its
+run command in `../bootcamp-onboarding/ground-rules.md` → "Building and running a program". Monitor
+per-source progress, error rates, overall completion, and elapsed/estimated time. If slow, suggest
+reducing parallelism.
 
 The SQLite volume question was settled before the first load, so add nothing about it here
 (INV-006). Each source loads what its own `load_subset:` block records, the only subset record

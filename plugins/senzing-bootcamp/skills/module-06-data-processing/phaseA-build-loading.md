@@ -354,8 +354,10 @@ The program must include production-quality features:
   throughput, and error summary.
 - SDK initialization, record-loading loop, and proper cleanup.
 
-**Save the program** in `src/load/` with a clear name (e.g.
-`src/load/load_customer_db.[ext]`).
+**Save the program** as the program `load_[name]` in `src/load`, where `[name]` is this source's
+name (for example `load_customer_db`), at the path and with the project that
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives for the chosen
+language, then build it with that section's build command. Each source gets its own `load_[name]`.
 
 **Checkpoint:** write step 3.
 
@@ -391,7 +393,10 @@ Truth Set visualization module already run.
    `sdk_guide(topic='configure', language=<from `programming_language`>, data_sources=[<the codes
    from step 1>])` (and `generate_scaffold` if it exposes a data-source registration workflow),
    reading the language from `config/bootcamp_preferences.yaml` (never a hardcoded default). Save it
-   to `src/load/register_data_sources.[ext]` (INV-018).
+   as the program `register_data_sources` in `src/load` (INV-018), at the path and with the project
+   that `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives. When Data
+   Quality, Mapping, and Transformation's step 21a already wrote it there, this replaces its code
+   with this step's codes, in the same place, and reuses its manifest, as that section says.
 
    <!-- MCP-NEGATIVE: sdk_guide(topic='configure', language='python', data_sources=['ECOMMERCE_ORDERS','POS_LOYALTY','EMAIL_MARKETING']) — none of the three supplied codes appears anywhere in the response; the returned snippet still carries the hardcoded sample tuple — owner: sdk_guide(topic='configure', data_sources=[...]) IS the route that would carry substituted codes — data_sources is its own documented parameter ("Data sources to register (for configure topic)"), so this call was asked WITH the codes rather than inferred from a sibling call, and its response selected the registration snippet correctly while substituting nothing (absence negative) — server 1.36.0, 2026-09-02 -->
    ⛔ **`data_sources` SELECTS the snippet and SUBSTITUTES nothing — you must fill in the codes
@@ -478,12 +483,13 @@ Truth Set visualization module already run.
    schedule and nothing here notices. That reason survives the alignment; the prohibition is
    unchanged. Quote `get_capabilities` for what
    the index covers.
-3. **Build the registration code if the language requires it** (compiled languages — Java, C#,
-   Rust, TypeScript), using the same per-language build command as the loader.
-4. **Execute it before the Phase B load.** On success, record the registered codes in
-   `config/data_sources.yaml`. On failure, capture the output, call `explain_error_code` for any
-   SENZ codes, and report with remediation; the loading program's generic SENZ handling remains a
-   fallback.
+3. **Build it** with the build command in `../bootcamp-onboarding/ground-rules.md` → "Building and
+   running a program", with `<dir>` = `src/load` and `<name>` = `register_data_sources`, in every
+   language.
+4. **Run it before the Phase B load,** with that section's run command. On success, record the
+   registered codes in `config/data_sources.yaml`. On failure, capture the output, call
+   `explain_error_code` for any SENZ codes, and report with remediation; the loading program's
+   generic SENZ handling remains a fallback.
 
 In Phase C (multiple sources), register each additional source's code the same way before its
 load — idempotently, so re-registering an existing code is a no-op.
