@@ -771,7 +771,7 @@ The caller says which entity to pick. Everything below is the same for all three
   and the launcher runs.
   - **Do not rename the file, and do not rename the class.** The prescribed filenames are read by
     other machinery (graduation maps artifacts by base name; Module 5 source-qualifies exactly three
-    Markdown names; Module 3's build table is pinned by its own tests), and renaming the class to
+    Markdown names; Module 3's program table is pinned by its own tests), and renaming the class to
     `class meridian_crm_mapper` satisfies the compiler while violating the same instruction's
     "idiomatic style for the chosen language".
   - **(INV-237) A shared class — one that other files reference — goes in a file named after the class**,
@@ -795,6 +795,85 @@ The caller says which entity to pick. Everything below is the same for all three
     a Python-centric reading of these filenames looks correct: the defect is invisible until the
     bootcamper's first `javac`, where the error names class *visibility* while the cause is a
     filename convention two documents away.
+
+## Building and running a program
+
+⛔ **This section is the one statement of how a Bootcamper program is created, built and run
+(INV-300).** A step that saves, builds or runs a program names its `<dir>` and `<name>` and cites
+this section; it never restates a command. Two placeholders key every line below:
+
+- **`<dir>`** is the program's directory, project-relative: `src/system_verification`,
+  `src/load`, `src/transform` or `src/query`. The step that saves the program names it.
+- **`<name>`** is the program's base name, such as `verify_pipeline`. The step that saves the
+  program names it too, and that step is the one that creates the program.
+
+For example, System verification's `verify_pipeline` is `<dir>` = `src/system_verification` and
+`<name>` = `verify_pipeline`, so its Python build is
+`python3 -m py_compile src/system_verification/verify_pipeline.py`.
+
+| Language | Program files | Build | Run |
+|----------|---------------|-------|-----|
+| Python | `<dir>/<name>.py` | `python3 -m py_compile <dir>/<name>.py` | `python3 <dir>/<name>.py` |
+| Java | `<dir>/<name>.java` | `javac -d <dir>/classes -sourcepath <dir> <dir>/<name>.java` | `java <ClassName>` through Module 2's Java launch route, with `<dir>/classes` added to the classpath that route sets |
+| C# | `<dir>/<name>/` holding `<name>.csproj` and `<name>.cs` | `dotnet build <dir>/<name>` | `dotnet run --no-build --project <dir>/<name>` |
+| Rust | `<dir>/<name>/` holding `Cargo.toml` and `src/main.rs` | `cargo build --manifest-path <dir>/<name>/Cargo.toml --target-dir <dir>/target` | `cargo run --manifest-path <dir>/<name>/Cargo.toml --target-dir <dir>/target` |
+| TypeScript | `<dir>/<name>/` holding `package.json`, `tsconfig.json` and `<name>.ts` | `tsc --project <dir>/<name> --outDir <dir>/<name>/dist` | `node <dir>/<name>/dist/<name>.js` |
+
+**Every language:**
+
+- **Run every command from the project root, in the shell where Module 2's env script is sourced**
+  (Module 2 Step 8 re-sources it), so the native library and the SDK bindings are on the paths the
+  program needs. A program opens its `<dir>/...` paths relative to that root. The paths use
+  forward slashes and the commands use no shell-specific syntax, so they run unchanged in a POSIX
+  shell and in PowerShell (INV-002).
+- **Every build has a 120-second timeout, dependency resolution included.** A build that does not
+  finish in time is terminated and fails with the timeout Fix_Instruction of the step that ran it.
+  A program's run timeout belongs to that step.
+- **A build that fails because a tool is not found** gets a Fix_Instruction naming that tool:
+  `dotnet`, `cargo`, `tsc`, `node` or `javac`.
+
+**Per language:**
+
+- **Java:** `javac` finds the SDK jar on the classpath Module 2's env script exports, and every
+  program in `<dir>` compiles into the one `<dir>/classes` folder, so `-sourcepath <dir>` lets a
+  shared helper in `<dir>`, such as the JSON reader, compile beside it ("File placement" above
+  names its file, INV-237). `<ClassName>` is the program's top-level class. The run goes through
+  Module 2's launch route (`../module-02-sdk-setup/SKILL.md` → "The launch environment"): the
+  project-local launcher on macOS, and the env-sourced shell elsewhere. That route owns the SDK
+  jar's path and the platform's classpath separator, so neither is written here.
+- **Rust:** every program in `<dir>` shares the one `--target-dir <dir>/target`, so the Senzing
+  SDK crate compiles once rather than once per program. `cargo run` rebuilds only when the source
+  changed since the build.
+- **TypeScript:** the build emits JavaScript into the program's `dist/` folder, and the run executes
+  that emitted file. Never add `--noEmit` to this build: the run depends on its output.
+
+**Creating a C#, Rust or TypeScript program's project.** These languages build a project, not a
+loose file, and a C# project holds only one top-level-statements program. So each program gets its
+own folder and manifest, `<dir>/<name>/`. The step that generates the program creates its project
+before saving the code. The MCP server returns source files only, never a manifest, so the
+manifest comes from the language's own init command, and the Senzing dependency line comes from
+the server or Module 2's route, never from memory (INV-080):
+<!-- MCP-NEGATIVE: generate_scaffold(workflow='full_pipeline') for language='csharp', 'rust' and 'typescript' — each listing names source files only, with no .csproj, Cargo.toml or package.json; rust and typescript carry a dependency_note with the one Senzing dependency line, csharp carries none — owner: generate_scaffold IS the route that returns a workflow's files, and find_examples, the corpus index, says it indexes no build files or project configuration, so no route serves a manifest (absence negative) — server 1.37.28, 2026-10-13 -->
+
+1. **The folder already has its manifest** (a re-run or a resume): reuse it. Skip the init command,
+   which fails or overwrites when the manifest exists, and only replace the code.
+2. **C#:** `dotnet new console --name <name> --output <dir>/<name>`. Save the program as
+   `<name>.cs` in that folder and delete the template's `Program.cs`, since two
+   top-level-statement files cannot build together. Then add `Senzing.Sdk` from the package source
+   Module 2's C# route found (`../module-02-sdk-setup/SKILL.md` → Phase 3, the **C#** bullet):
+   `dotnet add <dir>/<name> package Senzing.Sdk --source <that source>`. When that route found no
+   source, stop with the route's own outcome (INV-283). ⛔ **Never add a public NuGet feed for
+   `Senzing.Sdk` (INV-222).**
+3. **Rust:** `cargo init --name <name> --vcs none <dir>/<name>`. Save the program as that folder's
+   `src/main.rs`, the file Cargo builds the binary from. Add the dependency line from the
+   `dependency_note` of the `generate_scaffold` response the code came from under `[dependencies]`
+   in its `Cargo.toml`, exactly as the note gives it.
+4. **TypeScript:** change into `<dir>/<name>/` and run `npm init -y`, then the install command from
+   the `dependency_note` of the `generate_scaffold` response the code came from, then `tsc --init`.
+   Change back to the project root, and save the program as `<name>.ts` in the folder.
+5. **A package the code imports beyond the Senzing SDK and the standard library** is a non-SDK
+   dependency: resolve it before the build, as `../module-02-sdk-setup/SKILL.md` → "MCP Java
+   scaffolds may need a JSON library the install does not provide" says.
 
 ## Windows and PowerShell
 
