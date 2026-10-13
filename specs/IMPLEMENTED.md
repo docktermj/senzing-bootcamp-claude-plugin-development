@@ -56,7 +56,10 @@ entries at once. Two things a reader should know about the hashes now recorded:
   4. **Steps 3, 5a, 6, 7, 7a and 8** cite the table. Step 3 builds `verify_init` before running it, with Step 5's 120-second build timeout, and a failed build fails the check. Step 5a's "same per-language build command as Step 5" is gone. Step 5 item 3 names the missing build tool.
 - **Verification:** `tests/test_module3_build_and_run_table.py` (13 tests) passes, and fails 26 assertions with 3 errors against `main`'s `phase1-verification.md` (negative control). The local CI mirror and `citations.py verify` were run after this entry was written; their verdict lines are in the PR.
 - **What the issue left to the implementer, and what was chosen:** (1) Step 7 joins the citing steps, since its query code is built and run too (answer 2A); (2) C#'s template `Program.cs` is deleted, since two top-level-statement files cannot build together; (3) Rust's code goes in the `src/main.rs` that `cargo init` makes, so the folder and the package name carry the base name; (4) Java adds `-sourcepath` so a shared helper (INV-237) compiles beside the program.
-- **DEFERRED INVARIANT.** The rule this run ships. It lives at `phase1-verification.md` Step 5 (the ⛔ line citing INV-300, and the "Creating a C#, Rust or TypeScript program's project" list), and the guard's assertions are its enforcer.
+- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Every Module 3 program is created by an earlier step and built and run by Step 5's one table. The rule already shipping, quoted:
+    - ⛔ **This table is the one statement of how every Module 3 program is built and run (INV-300).** — in `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md` (Step 5, above the program table) — cites INV-300 at the line; **add INV-NNN** if registered
+
+  The "Creating a C#, Rust or TypeScript program's project" list under the same step carries the rest of the rule, and its ⛔ line cites INV-222.
 
   **Sites it affects:** `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md` Steps 3, 4, 5, 5a, 6, 7, 7a and 8; `tests/test_module3_build_and_run_table.py` (the enforcer); `tests/test_java_filename_class_reconciliation.py` (pins the rows).
 
