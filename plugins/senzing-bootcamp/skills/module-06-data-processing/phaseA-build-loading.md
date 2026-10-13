@@ -590,7 +590,7 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
        record that SDK setup's
        [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour)
        defines, with `purpose: "database_switch"` and `return_to: {"module": "data_processing",
-       "resume": "phase-b", "reask": "sqlite-volume-check"}`. ⛔ **(INV-284) `current_module` is
+       "resume": "phase-b", "reask": "sqlite-volume-check"}`. ⛔ **(INV-284, INV-366) `current_module` is
        not changed:** the Bootcamper stays in this module, and the key is what lets an interrupted
        detour resume. That branch is the one statement of which steps run and how the detour ends
        (INV-300).

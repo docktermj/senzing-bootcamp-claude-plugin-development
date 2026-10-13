@@ -170,7 +170,7 @@ another is not a duplicate, and collapsing it loses the case.
 
 ### Merges, supersessions and demotions are blocks for `/review-invariants`
 
-⛔ **This skill never edits `specs/INVARIANTS.md` and never mints an id.** It
+⛔ **This skill never edits `specs/INVARIANTS.md` and never mints an id.** (INV-365) It
 proposes, and `/review-invariants` decides. After the maintainer's explicit yes in Step 6,
 it appends one dated entry to `specs/IMPLEMENTED.md` holding the blocks below, then tells
 the maintainer to run `/review-invariants`. A run that finds nothing mergeable,
@@ -372,7 +372,7 @@ Then:
   superseding one, demoting one (Step 2). After the maintainer's yes, append the entry
   holding the blocks to `specs/IMPLEMENTED.md`, confirm `pending_invariants.py list`
   queues each one, and tell the maintainer to run `/review-invariants`.
-  ⛔ **Never edit `specs/INVARIANTS.md` here.**
+  ⛔ **Never edit `specs/INVARIANTS.md` here.** (INV-365)
   ⛔ (INV-309) Never send an invariant change to `/implement-github-issue` *(user level)*,
   which cannot mint either.
 - **Other semantic changes go through a GitHub issue** — deleting a test, or the

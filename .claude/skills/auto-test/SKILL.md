@@ -186,7 +186,7 @@ and either queue the invariant it establishes or explicitly state that it establ
 `DEFERRED INVARIANT` block for a new rule, or a `PROPOSED AMENDMENT` block for a correction,
 in the run's `specs/IMPLEMENTED.md` entry, as
 [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
-(INV-300), then tell the maintainer to run `/review-invariants`.
+(INV-300), then tell the maintainer to run `/review-invariants` (INV-365).
 
 ⛔ **(INV-317) A scheduled run's `report.json` or log is raw output, not a recorded finding.**
 An `autotest.py` run on a schedule writes its report and nothing else. Its lines become

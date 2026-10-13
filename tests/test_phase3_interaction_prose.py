@@ -233,7 +233,9 @@ class TheChangeabilityNotePrecedesItsQuestion(unittest.TestCase):
 
 
 class TheKnowledgeCheckDefinesWrongAnswersAndAnswerShape(unittest.TestCase):
-    """Items 5 and 6."""
+    """Items 5 and 6. Enforces INV-362's Module 0 half (the wrong-answer rule, registered
+    2026-10-13): it asserts `concepts.md` STATES the rule and cannot establish that a live guide
+    names a wrong answer plainly or re-teaches it, which only `dry-run` phase 3 observes."""
 
     def setUp(self):
         self.text = flat(CONCEPTS)

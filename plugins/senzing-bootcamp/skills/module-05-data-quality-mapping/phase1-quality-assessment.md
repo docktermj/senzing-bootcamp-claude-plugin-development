@@ -1203,7 +1203,7 @@ turn, letting Phase 2's first step supply that turn's 👉:
    }
    ```
 
-   with `resume_step` from the table below. ⛔ **(INV-284) `current_module` is not changed:** the
+   with `resume_step` from the table below. ⛔ **(INV-284, INV-366) `current_module` is not changed:** the
    Bootcamper stays in this module, and the key is what lets an interrupted return resume.
 
 2. **Run Module 4's receiving branch** —
@@ -1217,7 +1217,7 @@ turn, letting Phase 2's first step supply that turn's 👉:
    | `own` | Step 2's provision question for this source, then Step 3 (verify) and Step 8 (tracking); Step 8a's volume check for this source only when the record count changed | **Step 4** (compare with the Entity Specification): a new export can change shape. Steps 5, 6 and the gate follow |
    | `unknown` | exactly as `own`; the answer sets `provenance` | **Step 4**, as `own` |
 
-   ⛔ **(INV-284) Module 4's Step 9 does not run at all on a return:** no Module Completion, no
+   ⛔ **(INV-284, INV-366) Module 4's Step 9 does not run at all on a return:** no Module Completion, no
    second Module 4 recap section, no progress update and no transition question. Module Completion
    would move `current_module` past this module, and there is no module transition to ask about.
 
@@ -1226,7 +1226,7 @@ turn, letting Phase 2's first step supply that turn's 👉:
    with the new score: ⛔ **(INV-284) that is a new state, NOT an INV-006 repeat**, so present
    whichever form the new score and this step's check select. At ≥80% there is no question.
 
-4. **An interrupted return** resumes from `current_step: "7b"` with `collection_return` present:
+4. **(INV-366) An interrupted return** resumes from `current_step: "7b"` with `collection_return` present:
    continue the return for the named source from the first Module 4 step not yet done, and do not
    re-present the gate, whose answer is already recorded.
 

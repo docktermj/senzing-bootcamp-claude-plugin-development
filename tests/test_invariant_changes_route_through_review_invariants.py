@@ -45,9 +45,9 @@ neither the file, an invariant nor an id ("update the register"). It does not re
 `review-invariants`, the one skill that does edit `specs/INVARIANTS.md`, or the skill overlays,
 which already route through `/review-invariants` under INV-309.
 
-Enforces the rule drafted as `INV-NNN` in the `DEFERRED INVARIANT` block of the
-`maintainer-skills-route-invariant-changes-through-review-invariants` ledger entry, which is not
-yet minted; `/review-invariants` cites the id back here when it registers it.
+Enforces INV-365 (registered 2026-10-13 from the
+`maintainer-skills-route-invariant-changes-through-review-invariants` block). It reads skill
+text only: it cannot establish that a live run writes the block rather than editing the file.
 
 Source issue: #520.
 
@@ -376,7 +376,8 @@ class NegativeControls(unittest.TestCase):
     def test_restoring_auto_tests_pre_520_sentence_fails(self):
         live_tail = "and either queue the invariant it establishes"
         start = self.live.index(live_tail)
-        end = self.live.index("(INV-300), then tell the maintainer to run `/review-invariants`.",
+        end = self.live.index("(INV-300), then tell the maintainer to run `/review-invariants` "
+                              "(INV-365).",
                               start)
         end = self.live.index("\n", end)
         restored = self.live[:start] + AUTO_TEST_BEFORE_520 + self.live[end:]
@@ -422,7 +423,7 @@ class NegativeControls(unittest.TestCase):
 
     def test_restoring_compacts_step_6_citation_fails(self):
         compact = read(SKILLS / "compact-dev-environment" / "SKILL.md")
-        old = ("  ⛔ **Never edit `specs/INVARIANTS.md` here.**\n"
+        old = ("  ⛔ **Never edit `specs/INVARIANTS.md` here.** (INV-365)\n"
                "  ⛔ (INV-309) Never send an invariant change to")
         self.assertIn(old, compact)
         mutated = compact.replace(

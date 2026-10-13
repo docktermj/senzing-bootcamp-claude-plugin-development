@@ -38,6 +38,9 @@ guide follows them. `dry-run` phase 3 observes that.
 Source issue: #526 (part of #504). Invariants: INV-006, INV-051, INV-056, INV-284, INV-300,
 INV-346.
 
+Also enforces INV-366 (the cross-module return contract, registered 2026-10-13) for the `quality_iteration` route from Module 6 Phase D:
+it asserts the skill files *state* the contract and cannot establish that a live run follows it.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -233,7 +236,7 @@ def route_problems(phase1):
         "the UAT %, the per-record match accuracy, and the match-key and how-state audit outcomes",
         "the Bootcamper stays in the offering module",
     ), "step 3b's route")
-    resume = span(loop, "On a Module 6 Phase D return", "4. An interrupted return")
+    resume = span(loop, "On a Module 6 Phase D return", "4. (INV-366) An interrupted return")
     if resume is None:
         problems.append("the resume does not hand a Module 6 return back to Phase D")
     else:
@@ -246,7 +249,7 @@ def route_problems(phase1):
             "record its indicators as `after` on the latest "
             "`module_6_processing.quality_iterations` entry",
         ), "the Module 6 resume")
-    interrupted = span(loop, "4. An interrupted return", "5. The recap.")
+    interrupted = span(loop, "4. (INV-366) An interrupted return", "5. The recap.")
     if interrupted is None:
         problems.append("the route does not say how an interrupted return resumes")
     else:
@@ -319,7 +322,7 @@ def recap_problems(phase_d):
         ROUTE_LINK,
         "states once, INV-300",
         "the indicators before and after",
-        "(INV-284) This section is the only record of it",
+        "(INV-366) This section is the only record of it",
         "Module 6 itself is completed once, here",
     ), "Phase D's Module completion")
 

@@ -26,12 +26,12 @@ here (INV-300, INV-352).
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.
-**When it carries a `quality_iteration`, none of this runs:** go straight to Phase 2 →
+**(INV-366) When it carries a `quality_iteration`, none of this runs:** go straight to Phase 2 →
 [Receiving a `quality_iteration`](phase2-data-mapping.md#receiving-a-quality-iteration). A return
 runs only the steps it names, so the steps it leaves out are not skipped steps.
 **When it records Module 5 at the retired step 26, none of this runs either:** Module 5 is already
 complete, and [Resuming](#resuming) says what to present.
-**When it carries a `setup_detour`, none of this runs either:** Phase 3's SDK repair is part-way
+**(INV-366) When it carries a `setup_detour`, none of this runs either:** Phase 3's SDK repair is part-way
 through, so go to SDK setup's
 [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour), which
 finishes it and returns to Phase 3

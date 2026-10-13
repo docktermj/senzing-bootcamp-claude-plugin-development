@@ -42,6 +42,9 @@ them, which only `dry-run` phase 3 can observe.
 Source issue: #530 (part of #504). Invariants: INV-006, INV-051, INV-056, INV-284, INV-300,
 INV-344.
 
+Also enforces INV-366 (the cross-module return contract, registered 2026-10-13) for the `setup_detour` (the SDK repair):
+it asserts the skill files *state* the contract and cannot establish that a live run follows it.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -139,7 +142,7 @@ def statement_problems(p3):
         "`purpose: \"sdk_repair\"`",
         "`return_to: {\"module\": \"data_quality_mapping\", \"resume\": \"21:<DATA_SOURCE>\", "
         "\"reask\": \"the-sdk-repair-question\"}`",
-        "(INV-284) `current_module` is not changed",
+        "(INV-284, INV-366) `current_module` is not changed",
         "resume without asking this question again",
         "That branch is the one statement of which steps run, that the detour completes no "
         "module, and how it ends (INV-300)",
@@ -230,7 +233,7 @@ def receiving_problems(m2):
         return problems + ["SDK setup has no 'Receiving a setup_detour' section"]
     problems += missing(block, (
         "show no start banner, journey map or overview, write no Module 2 checkpoint",
-        "(INV-284) A detour completes no module: no Module Completion, no second Module 2 recap "
+        "(INV-284, INV-366) A detour completes no module: no Module Completion, no second Module 2 recap "
         "section, no progress update, no transition question, and `sdk_setup` is not added to "
         "`modules_completed` again",
         "A new detour adds a row to the table below, never a branch of its own",
@@ -443,7 +446,7 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
                                       "do not ask it again (INV-006)"))
 
     def test_the_repair_changes_current_module(self):
-        self.assertCaught(self.mutate("phase3", "⛔ **(INV-284) `current_module` is not changed:**",
+        self.assertCaught(self.mutate("phase3", "⛔ **(INV-284, INV-366) `current_module` is not changed:**",
                                       "Set `current_module` to `sdk_setup`:"))
 
     def test_the_record_restated_in_phase_3(self):
@@ -477,7 +480,7 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
                                       "## Step 1: Check for Existing Installation"))
 
     def test_the_repair_completes_module_2(self):
-        self.assertCaught(self.mutate("module-02", "⛔ **(INV-284) A detour completes no module:**",
+        self.assertCaught(self.mutate("module-02", "⛔ **(INV-284, INV-366) A detour completes no module:**",
                                       "**Then run Module Completion for SDK setup:**"))
 
     def test_step_1_marks_module_2_complete(self):
@@ -520,7 +523,7 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
 
     def test_the_first_clause_dropped(self):
         clause = first_clause(self.f["module-05"])
-        start = clause.index("**When it carries a `setup_detour`")
+        start = clause.index("**(INV-366) When it carries a `setup_detour`")
         self.assertCaught(self.mutate("module-05", clause[start:]))
 
 

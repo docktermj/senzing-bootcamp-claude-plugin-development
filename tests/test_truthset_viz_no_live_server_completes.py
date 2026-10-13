@@ -133,7 +133,7 @@ RULE_CLAUSES = (
     ("snapshot tab check", r"On `unavailable`, check the snapshot's own tab set instead"),
     ("non-zero count", r"each with a non-zero count"),
     ("zero count did not run", r"means the check did not run, not that it passed \(INV-265\)"),
-    ("warns, never blocks", r"warns and never blocks module completion \(INV-130, INV-048\)"),
+    ("warns, never blocks", r"warns and never blocks module completion \(INV-130\)"),
     ("show the snapshot path", r"give them the snapshot by its file path, "
                                r"`docs/visualizations/truthset_verification\.html`"),
     ("skip item 2", r"Skip item 2, the live-server screenshots"),

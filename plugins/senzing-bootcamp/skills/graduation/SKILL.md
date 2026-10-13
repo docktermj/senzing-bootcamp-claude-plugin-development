@@ -1449,7 +1449,7 @@ the files are exactly as they were before this paragraph.
     each source the evaluation loaded as a subset (one whose bootcamp registry entry has a
     `load_subset:` block), and say that production loads its whole `file_path`. No source was loaded
     as a subset → omit that sentence.
-  - **Configuration names each source that is not mapped.** For each source whose bootcamp registry
+  - **Configuration names each source that is not mapped.** (INV-363) For each source whose bootcamp registry
     entry has `mapping_status: skipped`, which Step 2's projection leaves out
     ([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)), say that it is not mapped, so
     the registry does not list it and the loader does not load it, and that its mapping was stopped

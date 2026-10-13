@@ -31,7 +31,7 @@ it. With a single source there is no choice: say nothing and record nothing.
 
 ## Receiving a `quality_iteration` (from Query, Visualize and Discover, or Phase D)
 
-⛔ **(INV-284) Check for it before anything else in this module, Phase A included.** When
+⛔ **(INV-284, INV-366) Check for it before anything else in this module, Phase A included.** When
 `config/bootcamp_progress.json` carries a `quality_iteration` whose `stage` is `reload`, the
 Bootcamper chose the return at Module 7 step 3b or at this module's Phase D gate (the key's
 `return_to` says which), and Module 5 has remapped the named sources. This is not a run of this
@@ -82,7 +82,7 @@ forbids.** That rule forbids repairing a broken load-order dependency by reloadi
 which double-loads its records. Here each record replaces its own earlier version by key, and the
 records whose RECORD_IDs left the source are deleted first, so nothing is loaded twice.
 
-**Phase D and Module 6's completion step do not run.** ⛔ **(INV-284) No validation, no
+**Phase D and Module 6's completion step do not run.** ⛔ **(INV-284, INV-366) No validation, no
 iterate-vs-proceed gate and no Module Completion:** no second Module 6 recap section, no progress
 update, no transition question, and `data_processing` is not added to `modules_completed` again.
 The re-evaluation happens at the return point, after the resume: Module 7 step 3b, or Phase D run

@@ -24,6 +24,10 @@ others. This guard reads the example and fails, naming the element, unless it ca
 Every check is negative-controlled: each element is removed from a copy of the example, and the
 guard must name that element.
 
+This module enforces INV-065's 2026-10-12 note (#518, applied 2026-10-13). It reads the shipped
+example only: it does not establish that a recap a live run writes carries these elements, which
+only `dry-run` phase 3 observes.
+
 Line-scoped by design (#518): every element is a recap line whose shape is fixed by its producing
 step, a `**Label:**` line, a bullet, a `###` heading or a fence marker, each written on one line,
 so the guard reads lines rather than wrapped phrases.

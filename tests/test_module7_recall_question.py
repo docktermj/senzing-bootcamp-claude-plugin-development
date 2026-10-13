@@ -29,7 +29,8 @@ across a wrap.
 
 ⛔ **What this cannot establish:** that a live guide picks a fitting entity, reads the answer from
 it, asks well-formed options, or re-teaches a wrong answer. Those are properties of a conversation;
-only `dry-run` phase 3 observes them. This pins that the skill file STATES them.
+only `dry-run` phase 3 observes them. This pins that the skill file STATES them. It enforces
+INV-362's step 3a half (registered 2026-10-13).
 
 Stdlib only; shipped markdown read as text (INV-108).
 

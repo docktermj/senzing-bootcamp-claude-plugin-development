@@ -588,7 +588,7 @@ it once (INV-179, INV-300).
 <a id="recall-question"></a>
 
 **One recall question, last, and it ends this turn.** Ask the Bootcamper to recall one matching
-concept from their own results instead of reminding them of it. Skip it when the zero-or-very-few-matches
+concept from their own results instead of reminding them of it (INV-362). Skip it when the zero-or-very-few-matches
 branch above ran.
 
 1. **Pick one entity in their current results and one concept it shows:** features and match
@@ -602,7 +602,7 @@ branch above ran.
    describes `RESOLVED_ENTITY.RECORDS[].MATCH_KEY` as *"Features that matched: + means
    contributed, - means detracted"* and `RESOLVED_ENTITY.RECORD_SUMMARY[]` as records grouped by
    data source with counts (server 1.37.27, 2026-10-11). Module 0 is optional, so the question is
-   about their result, never about Module 0's content.
+   about their result, never about Module 0's content (INV-362).
 3. **Ask it as a numbered choice**, the shape Module 0's knowledge check states
    (`../module-00-entity-resolution-concepts/concepts.md` → "Optional knowledge check", INV-051).
    First state the field and its value, quoted from the result, then end the turn on this, the
@@ -615,7 +615,7 @@ branch above ran.
 
 **On the answer, the next turn.** A correct answer is confirmed in one line, naming the field
 that shows it.
-⛔ (INV-300) **A wrong answer follows Module 0's wrong-answer rule, stated once in
+⛔ (INV-300, INV-362) **A wrong answer follows Module 0's wrong-answer rule, stated once in
 `../module-00-entity-resolution-concepts/concepts.md` → "Optional knowledge check" (INV-300);
 follow it there rather than a copy here.** Ground the re-teach in this entity's result; there
 is no next item, so moving on means step 3b, and the question is not asked again. "Skip" or
@@ -850,7 +850,7 @@ route is the same for both.
    | Module 6 Phase D's gate | `module_6_phase_d` | `module_6_processing.quality_iterations` | `uat_below_80` or `uat_80_89` | the UAT %, the per-record match accuracy, and the match-key and how-state audit outcomes the gate presented |
 
    `sources` lists the sources named in the offering step's explanation statement. `stage` starts at
-   `remap`. `completed` lists the sources whose current stage has finished. ⛔ **(INV-284)
+   `remap`. `completed` lists the sources whose current stage has finished. ⛔ **(INV-284, INV-366)
    `current_module` is not changed:** the Bootcamper stays in the offering module (Module 7, or
    Module 6 on a Phase D return), and the key is what lets an interrupted return resume.
 
@@ -863,7 +863,7 @@ route is the same for both.
 
    When every named source is remapped, set `stage` to `reload` and `completed` to `[]` in one write,
    then continue into Module 6's branch.
-   ⛔ **(INV-284) No module is completed on a return:** no Module Completion for Module 5 or Module 6,
+   ⛔ **(INV-284, INV-366) No module is completed on a return:** no Module Completion for Module 5 or Module 6,
    nothing added to `modules_completed` again, no recap section for either, no progress update and no
    transition question. Neither branch writes a checkpoint of its own module, so `current_module` and
    `current_step` stay as the offering step left them. On a Module 6 Phase D return, Module 6 is
@@ -884,7 +884,7 @@ route is the same for both.
    presenting the gate, record its indicators as `after` on the latest
    `module_6_processing.quality_iterations` entry.
 
-4. **An interrupted return** resumes from the key, never from the question that offered it. From
+4. **(INV-366) An interrupted return** resumes from the key, never from the question that offered it. From
    this step it resumes from `current_step: "3b"` with `quality_iteration` present: this module's
    `SKILL.md` **First:** routes by `stage` to the first source not listed in `completed`. Do not
    re-present the step-3b question, whose answer is already recorded. From Module 6 Phase D,
@@ -1419,7 +1419,7 @@ entity as text" (INV-300, INV-355); follow it there rather than restating it.
 `module_7_query.quality_iterations` (step 3b's
 [quality-iteration route](#the-quality-iteration-route)), record which sources were remapped and
 reloaded, the verdict that sent them (`from_verdict`), and the indicators before and after.
-⛔ **(INV-284) This section is the only record of it:** the return wrote no Module 5 or Module 6
+⛔ **(INV-366) This section is the only record of it:** the return wrote no Module 5 or Module 6
 recap section and added nothing to `modules_completed`.
 
 Because this is the last content module, the completion process ends with the graduation offer

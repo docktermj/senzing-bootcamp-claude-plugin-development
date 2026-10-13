@@ -18,7 +18,7 @@ never reuse mapping output from one source for another. Never guess SDK method s
 
 ## Receiving a `quality_iteration` (from Query, Visualize and Discover, or Data Processing)
 
-⛔ **(INV-284) Check for it before anything else in this phase.** When
+⛔ **(INV-284, INV-366) Check for it before anything else in this phase.** When
 `config/bootcamp_progress.json` carries a `quality_iteration` whose `stage` is `remap`, the
 Bootcamper chose the return at Module 7 step 3b or at Module 6 Phase D's gate (the key's
 `return_to` says which), and this is not a run of this module: show no start banner, journey map or
@@ -54,7 +54,7 @@ For each source in `sources` not yet listed in `completed`, in order:
    check also applies: `docs/mapping/{source_name}_mapper.md` exists before the source is done.
 4. **Add the source to `completed`** in one quiet write.
 
-**Phase 1, Phase 3 and Step 20 do not run.** ⛔ **(INV-284) No re-scoring, no test load, and no
+**Phase 1, Phase 3 and Step 20 do not run.** ⛔ **(INV-284, INV-366) No re-scoring, no test load, and no
 Module Completion:** no second Module 5 recap section, no progress update, no transition question,
 and `data_quality_mapping` is not added to `modules_completed` again.
 
@@ -1483,7 +1483,7 @@ case.
    Leave option 2 out when the gate is asked again after option 2's own rejection (item 7). Number
    the options that remain from 1, in the order above, and keep the question's wording (INV-056).
    **When only option 1 remains**, there is one sensible answer, so ask nothing: say in one line
-   that the validator rejected the source again and that you will write the mapper against the
+   that the validator rejected the source again (INV-363) and that you will write the mapper against the
    Senzing Entity Specification, then continue with item 4, with no 👉.
 
    **Handling each answer (INV-284).** The numbers are the full list's; after an option is left
@@ -1515,7 +1515,7 @@ case.
    to `validation_rejections` (item 2), then ask item 3's question again **without option 2**.
    Option 2 has been spent and one more rejection is on record, so this is a new state, not an
    INV-006 repeat (INV-284). Item 3's "Which options are offered" says what remains.
-8. **On option 3, skip the source.** Set its `mapping_status` to `skipped` and set `updated_at` in
+8. **On option 3, skip the source.** (INV-363) Set its `mapping_status` to `skipped` and set `updated_at` in
    `config/data_sources.yaml`, and keep its `config/mapping_state_[datasource].json`
    ([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values) says why). Steps
    12–18a do not run for it. Say in one line that the source is skipped and why,
@@ -1981,7 +1981,7 @@ is Module 5's only completion site, whether or not any source took the optional 
 > `baseline_status.py` helper is a later porting phase; report coverage directly if you choose
 > to.)
 
-**The recap names each `skipped` source.** In the Module 5 recap section's **Actions Taken**, name
+**The recap names each `skipped` source.** (INV-363) In the Module 5 recap section's **Actions Taken**, name
 each source whose `mapping_status` is `skipped` and why it was skipped: the mapping validator
 rejected it without an actionable reason (its `validation_rejections` hold the text), and the
 Bootcamper chose to skip it. No `skipped` source: add nothing.

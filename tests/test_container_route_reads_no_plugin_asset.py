@@ -52,7 +52,7 @@ shipped text. Prose is read wrap-aware (INV-346).
 
 Stdlib only; nothing under the plugin is imported (INV-108).
 
-Enforces **INV-091** (the DEFERRED note #525 drafts), **INV-081**, **INV-252** and **INV-300**.
+Enforces **INV-091** (its #525 note, applied 2026-10-13), **INV-081**, **INV-252** and **INV-300**.
 
 Run:  python3 -m unittest discover -s tests
 """

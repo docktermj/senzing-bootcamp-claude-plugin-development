@@ -22,6 +22,9 @@ like:** it is a text scan for those spellings. A walk through an intermediate va
 across lines is not caught. The canary
 guard, which proves the helper excludes what it must, and review cover that gap.
 
+This module enforces INV-367 (registered 2026-10-13). Its walk guard is a text scan for the known
+walk forms: it cannot see a walk through an intermediate variable or a recursive `iterdir`.
+
 Stdlib only (INV-108).
 
 Source issue: #515.
