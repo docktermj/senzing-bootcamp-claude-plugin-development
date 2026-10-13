@@ -28,8 +28,8 @@ file by construction; counting lines that *start* with `👉 **` keeps prose tha
 
 ⛔ **What this cannot establish:** that a live guide copies the quote faithfully, puts it beside the
 right requirement, or leaves one out where the file has none. Those are properties of a
-conversation; `dry-run` phase 3 and `auto-test`'s transcript linter observe them. This pins that the
-skill file STATES them, and that the Module 1 template really carries the quote slots the gate reads.
+conversation; only `dry-run` phase 3 observes them. This pins that the skill file STATES them, and
+that the Module 1 template really carries the quote slots the gate reads.
 
 Enforces **INV-275** at Module 7's gate (the both-versions rule, widened beyond
 `docs/business_problem.md`'s own gate by the amendment #482 drafts; until it is applied, INV-275's

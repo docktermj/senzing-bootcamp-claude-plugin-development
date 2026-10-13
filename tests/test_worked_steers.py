@@ -44,8 +44,8 @@ across a wrap.
 
 ⛔ **What this cannot establish:** that a live guide shows the steer, asks first, or writes the
 checkpoint line. INV-352 names this file as its enforcer; the three ⛔ patterns above require its
-citation, and passing them is no evidence that a live run obeys it. Those are properties of a conversation; `dry-run` phase 3 and `auto-test`'s
-transcript linter observe them. This pins that the skill files STATE them.
+citation, and passing them is no evidence that a live run obeys it. Those are properties of a
+conversation; only `dry-run` phase 3 observes them. This pins that the skill files STATE them.
 
 Stdlib only; shipped markdown read as text (INV-108).
 

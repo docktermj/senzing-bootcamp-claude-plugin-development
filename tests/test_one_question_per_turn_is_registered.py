@@ -2,8 +2,8 @@
 
 For the plugin's whole history until 2026-08-15 the rule `ground-rules.md` calls **"the #1
 bootcamper complaint"** was stated in 13 shipped places, enforced with zero-tolerance
-framing, checked at runtime by `auto-test`'s transcript linter — and registered in no
-invariant. Six sites cited an authority and every one was wrong:
+framing, checked at runtime by `auto-test`'s transcript linter (`check_one_pointer_per_turn`)
+— and registered in no invariant. Six sites cited an authority and every one was wrong:
 
 * **INV-005** is the 👉 *marker* rule in full — *"Each question to the Bootcamper is preceded
   by 👉."* A turn ending on three 👉-prefixed questions satisfies it completely.
@@ -24,9 +24,10 @@ of them.**
 
 1. **The behavior.** Whether a guide actually ends a turn on one question is a live-turn
    property. Reading files cannot establish it, and an offline suite (INV-108) never will.
-   The only mechanism that checks it is `.claude/skills/auto-test/transcript_lint.py`, against
-   real transcripts; `dry-run` phase 3 judges a live turn. A clean run here means the rule is
-   *registered and correctly cited* — never that it is obeyed.
+   The only mechanism that checks it is `.claude/skills/auto-test/transcript_lint.py`'s
+   `check_one_pointer_per_turn`, against real transcripts; `dry-run` phase 3 judges a live
+   turn. A clean run here means the rule is *registered and correctly cited* — never that it
+   is obeyed.
 2. **Its own reach is a heuristic.** ``states_the_count`` fires on a line carrying the 👉
    marker, a mention of a *turn*, and a quantity word. That is broader than the phrase list it
    replaced — which shipped green over six wrong citations — but it is still a guess about how

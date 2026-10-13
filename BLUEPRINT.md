@@ -8960,7 +8960,7 @@ collected as tests:
   spec files minus the `specs/IMPLEMENTED.md` and `specs/DECLINED.md` headings.
   It reports any spec found in both. Listing exits 0, and `--check` exits 2 when
   a spec is in both.
-- `tests/_corpus.py`: the shared corpus listing (#515), used by 14 files.
+- `tests/_corpus.py`: the shared corpus listing (#515), used by 15 files.
   `corpus_files(*subtrees, root=REPO_ROOT, suffixes=None)` lists tracked and
   untracked, non-ignored files from `git ls-files -z`, and always prunes Claude
   Code's runtime directories (section 5.62).
@@ -9238,6 +9238,7 @@ looks wrong.
 - `tests/test_license_limit_is_written_only_from_a_measurement.py`: 14
 - `tests/test_license_limit_reading_is_complete.py`: 16
 - `tests/test_license_record_limit_is_measured_only.py`: 6
+- `tests/test_linter_credits_name_a_function_it_runs.py`: 24
 - `tests/test_list_specs.py`: 10
 - `tests/test_listing_selection_is_by_shape.py`: 12
 - `tests/test_liveness_probe_is_not_a_document_search.py`: 7
@@ -9579,6 +9580,11 @@ These read `specs/INVARIANTS.md`:
   - INV-251 covers two or more 👉 questions in a turn;
   - INV-017 allows exactly two root-Markdown exceptions;
   - INV-218 governs install verification, and INV-129 does not.
+- **Linter credits.** A sentence in `tests/`, `.claude/skills/` or the register
+  that credits `auto-test`'s transcript linter must name a `check_*` function
+  the linter runs, read from its `CHECKS` and `lint()`; a register entry may
+  instead carry a later dated note, or a pending `PROPOSED AMENDMENT` for its id
+  (#514).
 
 #### 8.4.3 Ledger and specs-archive guards
 
@@ -10892,6 +10898,15 @@ Senzing licensing, with no SPDX identifier.
   `phase2-close.md`'s `#no-live-server-completion` with Step 4 naming its own
   skips, and a `PROPOSED AMENDMENT to INV-130` is queued (the fallback the
   module prescribed could never pass its completion gate)
+- #514: no test docstring or dev skill credits `auto-test`'s transcript linter
+  with a behavior it has no function for: eight "cannot establish" paragraphs
+  say only `dry-run` phase 3 observes it, the INV-251 enforcer's two sentences
+  name `check_one_pointer_per_turn`, a guard
+  (`tests/test_linter_credits_name_a_function_it_runs.py`) fails a sentence
+  crediting the linter unless every function it names is in `CHECKS` or is
+  `check_apparatus`, and seven `PROPOSED AMENDMENT` blocks (INV-251, INV-352 to
+  INV-355, INV-357, INV-359) are queued (a reused sentence template credited the
+  linter with judgments a count-or-regex check cannot make)
 - #525: nothing that runs inside the SDK container reads a plugin asset by its
   plugin path: Module 5's quality pages are generated on the host on every
   route, stated once at step 6's `#quality-page-runs-on-the-host` and linked

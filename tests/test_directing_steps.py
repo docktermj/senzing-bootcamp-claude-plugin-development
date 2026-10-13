@@ -51,10 +51,10 @@ next 👉") from being counted. Phrase checks use `_wrapped_text.match_lines`, w
 a wrap.
 
 ⛔ **What this cannot establish:** that a live guide asks the question, builds what was asked,
-compares honestly, or writes the recap line. Those are properties of a conversation; `dry-run`
-phase 3 and `auto-test`'s transcript linter observe them. This pins that the skill files STATE them.
-INV-354 names this file as its enforcer; the ⛔ pattern requires its citation, and passing it is no
-evidence that a live run obeys it.
+compares honestly, or writes the recap line. Those are properties of a conversation; only `dry-run`
+phase 3 observes them. This pins that the skill files STATE them. INV-354 names this file as its
+enforcer; the ⛔ pattern requires its citation, and passing it is no evidence that a live run obeys
+it.
 
 #521 closed a Module 5 gap: step 11 now names its record, `directing_steps.data_quality_mapping`,
 and says a value already set means the step has run, as Modules 6 and 7 do; its checkpoint writes

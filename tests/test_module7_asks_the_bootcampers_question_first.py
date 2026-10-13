@@ -25,10 +25,10 @@ this file by construction, and counting lines that *start* with `👉 **` is wha
 mentions the marker ("the same confirming 👉") from being counted as a question. Phrase checks
 use `_wrapped_text.match_lines`, which matches across a wrap.
 
-⛔ **What this cannot establish:** that a live guide asks in this order, quotes faithfully, or
-marks what was not asked for. Those are properties of a conversation; `dry-run` phase 3 and
-`auto-test`'s transcript linter observe them. This pins that the skill file STATES them. INV-359
-names this file as its enforcer; passing it is no evidence that a live run obeys it.
+⛔ **What this cannot establish:** that a live guide asks in this order, quotes faithfully, or marks
+what was not asked for. Those are properties of a conversation; only `dry-run` phase 3 observes
+them. This pins that the skill file STATES them. INV-359 names this file as its enforcer; passing it
+is no evidence that a live run obeys it.
 
 Stdlib only; shipped markdown read as text (INV-108).
 

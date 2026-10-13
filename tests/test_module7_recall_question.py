@@ -28,9 +28,8 @@ to its next 👉") from being counted. Phrase checks use `_wrapped_text.match_li
 across a wrap.
 
 ⛔ **What this cannot establish:** that a live guide picks a fitting entity, reads the answer from
-it, asks well-formed options, or re-teaches a wrong answer. Those are properties of a
-conversation; `dry-run` phase 3 and `auto-test`'s transcript linter observe them. This pins that
-the skill file STATES them.
+it, asks well-formed options, or re-teaches a wrong answer. Those are properties of a conversation;
+only `dry-run` phase 3 observes them. This pins that the skill file STATES them.
 
 Stdlib only; shipped markdown read as text (INV-108).
 

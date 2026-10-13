@@ -21,10 +21,10 @@ The checks are pure functions over the shipped text, so each one also runs on a 
 its negative control.
 
 ⛔ **What this cannot establish:** that a live guide saves the list, writes the rows, or runs the
-gate item. Those are properties of a conversation; `dry-run` phase 3 and `auto-test`'s
-transcript linter observe them. This pins that the skill file STATES them, and that the
-generator warns when the section is missing. INV-353 names this file as its enforcer; passing it is
-no evidence that a live run saves the list or writes faithful rows.
+gate item. Those are properties of a conversation; only `dry-run` phase 3 observes them. This pins
+that the skill file STATES them, and that the generator warns when the section is missing. INV-353
+names this file as its enforcer; passing it is no evidence that a live run saves the list or writes
+faithful rows.
 
 Stdlib only; shipped markdown read as text (INV-108).
 
