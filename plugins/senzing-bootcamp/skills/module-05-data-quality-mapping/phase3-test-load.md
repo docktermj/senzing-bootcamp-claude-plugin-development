@@ -74,13 +74,17 @@ Phase 2 step 19. (Pass the exact `mapping_workflow` state from Phase 2 unchanged
 ### 21a. Register the data source code (before the test load)
 
 Before the step 22 test load, ensure the source's `DATA_SOURCE` code is registered in the Senzing
-engine config (INV-089), so the load does not fail with `SENZ2207: Data source code [...] does not exist` —
-the same register-before-load guarantee System Verification and Module 6 use. Collect the distinct
-`DATA_SOURCE` value(s) in this source's Phase 2 transformation output. If `mapping_workflow` step 6
-registers the code as part of loading, this is already satisfied; otherwise generate the
-registration via `sdk_guide(topic='configure')` (in the `programming_language`), saving any
-generated file under `src/` (e.g. `src/load/`) per INV-018 — it loads the current default config,
-registers the code, and sets it as the new default, idempotently — and run it first. Never rely on Module 2's default config, which predates data collection.
+engine config (INV-089), so the load does not fail with `SENZ2207: Data source code [...] does not
+exist` — the same register-before-load guarantee System Verification and Module 6 use. Collect the
+distinct `DATA_SOURCE` value(s) in this source's Phase 2 transformation output. If
+`mapping_workflow` step 6 registers the code as part of loading, this is already satisfied;
+otherwise generate the registration via `sdk_guide(topic='configure')` (in the
+`programming_language`) and save it as the program `register_data_sources` in `src/load` (INV-018),
+at the path and with the project that `../bootcamp-onboarding/ground-rules.md` → "Building and
+running a program" gives — it loads the current default config, registers the code, and sets it as
+the new default, idempotently — then build and run it first with that section's commands. Data
+processing step 4a regenerates this same program, in the same place, with every code it loads. Never
+rely on Module 2's default config, which predates data collection.
 
 ⚠️ **If this phase's sandbox database was created fresh, seed its default configuration first.** The
 registration snippet reads the current default config and builds from it, so against a
@@ -125,8 +129,11 @@ rate suggests about data quality, and whether the mapping is producing good resu
 
 After evaluating entity resolution results, capture the current statistics to a JSON file for
 comparison tracking. Query the following counts through the Senzing SDK: never with direct SQL
-against `database/G2C.db`. Per the ground-rules MCP routing, get counts/stats via
-`reporting_guide`, or generate SDK code with `generate_scaffold` / `find_examples` and run it:
+against `database/G2C.db`. Per the ground-rules MCP routing, get counts/stats via `reporting_guide`,
+or generate SDK code with `generate_scaffold` / `find_examples`. Either way the counts come from a
+program: save it as the program `er_stats` in `src/query`, at the path and with the project that
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, then build and
+run it with that section's commands:
 
 - **entity_count:** total resolved entities
 - **record_count:** total records loaded

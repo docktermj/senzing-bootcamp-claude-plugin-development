@@ -1352,7 +1352,7 @@ does not exist; on a copy failure, log and continue):
 | `src/utils/**` | `production/src/utils/` | Shared helpers |
 | `data/senzing-ready/**` | `production/data/senzing-ready/` | Senzing-ready data |
 | `config/data_sources.yaml` | `production/config/data_sources.yaml` | Data-source registry, written as a projection (below), not copied whole |
-| `requirements.txt` / `pom.xml` / `Cargo.toml` / `package.json` / `*.csproj` | `production/` | Dependency manifest |
+| `requirements.txt` / `pom.xml` / `Cargo.toml` / `package.json` / `*.csproj` | `production/` | Root dependency manifest. Only Python's `requirements.txt` sits at the root: C#, Rust and TypeScript manifests travel inside their program folders, which the `src/**` rows copy unchanged |
 
 ⛔ **Every destination above keeps the source's path relative to the project root, and
 `data/senzing-ready/` in particular.** (INV-186) The code in `src/load/**` is copied **verbatim** and reads its
@@ -1444,6 +1444,12 @@ the files are exactly as they were before this paragraph.
 ## Step 4: Production README and migration checklist
 
 - **`production/README.md`:** parameterized by `programming_language`, `database_type`, and the data sources from `config/data_sources.yaml`. Use no bootcamp language (no "bootcamp", "module", "track", or "bootcamper"). Sections: Project Overview, Prerequisites, Installation, Configuration, Usage, Project Structure. Show it to the bootcamper and apply any requested revisions.
+  - **Usage gives each copied program's build and run commands.** One entry per program under
+    `production/src/`, with its build and run commands as `../bootcamp-onboarding/ground-rules.md` →
+    "Building and running a program" gives them for `programming_language`, with that program's
+    `<dir>` and `<name>`, run from `production/`, where every program keeps its project-relative
+    path. For Java, say that the run needs the Senzing SDK jar and `<dir>/classes` on the classpath:
+    the launcher `../module-02-sdk-setup/SKILL.md` → "The launch environment" sets up is not copied.
   - **Configuration names the registry.** Say that `config/data_sources.yaml` is the registry the
     loader reads, holding each source's `file_path` and `format` (the Step 2 projection). Then name
     each source the evaluation loaded as a subset (one whose bootcamp registry entry has a

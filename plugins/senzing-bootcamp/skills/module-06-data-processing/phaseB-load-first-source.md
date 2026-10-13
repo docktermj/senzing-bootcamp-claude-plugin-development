@@ -92,7 +92,8 @@ other steps, do not run either.
 ## 5. Test with sample data (if Phase 3 was skipped)
 
 If the bootcamper did not complete Phase 3 in Module 5, run the loading program on a small
-subset first:
+subset first: the program `load_[name]` in `src/load`, built at Phase A step 3, with its run command
+in `../bootcamp-onboarding/ground-rules.md` → "Building and running a program".
 
 - Start with 10–100 records
 - Verify the program connects to the engine
@@ -153,7 +154,10 @@ as a Senzing fact and never as reassurance the plugin cannot source.
 
 ## 7. Load the full dataset
 
-Run the program on the complete data source with production-quality monitoring:
+Run the program `load_[name]` in `src/load` with its run command in
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program", on the complete data
+source with production-quality monitoring. The load's own timeout is this step's; the build, at
+Phase A step 3, keeps that section's build timeout.
 
 - Monitor progress and throughput performance
 - Watch for error-rate trends (increasing errors may indicate data issues)
@@ -468,9 +472,11 @@ no marker; say nothing here and write none.
 
 ## 8. Save and document the loading program
 
-- Save in `src/load/` with a clear name (e.g. `src/load/load_customer_db.[ext]`); all loading
-  programs live in `src/load/`
-- Document how to run it (command line, configuration)
+- The program `load_[name]` in `src/load`, saved at Phase A step 3 at the path
+  `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives; all loading
+  programs live in `src/load`
+- Document how to run it: its build and run commands as that section gives them, with `<dir>` =
+  `src/load` and `<name>` = `load_[name]`, and its configuration
 - Note any prerequisites or dependencies
 - Keep it for future reloads or updates
 
@@ -482,10 +488,12 @@ After loading completes, drain the redo queue. Redo records are deferred re-eval
 refine the entity resolution graph, without processing them, results are incomplete.
 
 Use `generate_scaffold(language='<chosen_language>', workflow='redo', version='current')` for the
-redo processing pattern. The loading program (or a separate script) should sequentially process
-all pending redos until the queue is empty. If the generated redo scaffold uses `/tmp/`,
-`ExampleEnvironment`, or any path outside the working directory, override the database path to
-`database/G2C.db`.
+redo processing pattern. The loading program, or a separate program saved as the program
+`process_redo` in `src/load` at the path and with the project that
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, and built and run
+with that section's commands, should sequentially process all pending redos until the queue is
+empty. If the generated redo scaffold uses `/tmp/`, `ExampleEnvironment`, or any path outside the
+working directory, override the database path to `database/G2C.db`.
 
 ⛔ **The bootcamp needs a batch drain that terminates. Check the returned snippet before running
 it.** The MCP redo templates target *streaming ingest*, where never stopping is the point: the

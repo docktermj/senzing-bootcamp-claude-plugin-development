@@ -1573,8 +1573,9 @@ Ground rules (`ground-rules.md`, every turn):
 - No SQL against `database/G2C.db`.
 - Showing one resolved entity as text (`#entity-as-text`, the one statement
   Module 6's midpoint entity, Module 7's headline entity and Module 7's recap
-  headline block cite): `src/query/show_entity.[ext]` ranks an export limited
-  to multi-record entities, with the per-source record summary, by the
+  headline block cite): the program `show_entity` in `src/query`, created, built
+  and run as "Building and running a program" says (#563), ranks an export
+  limited to multi-record entities, with the per-source record summary, by the
   caller's rule, which always ends on the lowest entity ID, then fetches the
   chosen entity by ID. It shows a line naming the entity, one line per record
   (at most 10, then "and N more") and why they resolved together, from the
@@ -1587,18 +1588,21 @@ Ground rules (`ground-rules.md`, every turn):
   `database/G2C.db`. Root whitelist: `.gitignore`, `.env`, `.env.example`,
   `README.md`, `requirements.txt`, `pom.xml`, `*.csproj`, `Cargo.toml`,
   `package.json`. Never `internal://` as the datastore.
-- Building and running a program (the one statement, INV-300, that Module 3's
-  steps cite): keyed on `<dir>` (`src/system_verification`, `src/load`,
-  `src/transform`, `src/query`) and `<name>`, it gives each of the five
-  languages its files, a build and a run command. Python and Java stay flat in
-  `<dir>` (Java `javac -d <dir>/classes -sourcepath <dir>`, run through Module
-  2's Java launch route); C#, Rust and TypeScript get `<dir>/<name>/` with a
-  manifest from `dotnet new console`, `cargo init` or `npm init` plus
-  `tsc --init`, the Senzing dependency from `generate_scaffold`'s
-  `dependency_note` or Module 2's C# route, never a public NuGet feed. Rust
-  shares `<dir>/target`; TypeScript emits to `dist/` and runs it with `node`.
-  Commands run from the project root; every build has a 120-second timeout;
-  a missing tool gets a Fix_Instruction naming it (#562).
+- Building and running a program (the one statement, INV-300, that every step
+  saving, building or running a program cites by `<dir>` and `<name>`: Modules
+  2, 3, 5, 6 and 7, graduation and the ground rules' entity program, #563):
+  keyed on `<dir>` (`src/system_verification`, `src/load`, `src/transform`,
+  `src/query`) and `<name>`, it gives each of the five languages its files, a
+  build and a run command. Python and Java stay flat in `<dir>` (Java `javac -d
+  <dir>/classes -sourcepath <dir>`, run through Module 2's Java launch route);
+  C#, Rust and TypeScript get `<dir>/<name>/` with a manifest from `dotnet new
+  console`, `cargo init` or `npm init` plus `tsc --init`, the Senzing dependency
+  from `generate_scaffold`'s `dependency_note`, the `DEPENDENCY:` entry of
+  `sdk_guide`'s `compatibility_notes` for code from `sdk_guide` or
+  `reporting_guide` (#563), or Module 2's C# route, never a public NuGet feed.
+  Rust shares `<dir>/target`; TypeScript emits to `dist/` and runs it with
+  `node`. Commands run from the project root; every build has a 120-second
+  timeout; a missing tool gets a Fix_Instruction naming it (#562).
 - Platform notes: Java standalone files use a package-private class;
   PowerShell 5.1 syntax and encodings; sourced env scripts work under zsh and
   never `exit`; on Docker a fresh parse error is retried once. Anchor
@@ -2352,7 +2356,8 @@ means the module is complete: only the transition question is asked.
     install a newer Python alongside; on no, the analyzer is skipped,
     recorded in the mapping notes and not offered again that session.
 - **Steps 12-20.**
-  - Step 13 writes `src/transform/transform_<name>.<ext>`.
+  - Step 13 saves and builds the program `transform_<name>` in
+    `src/transform`, one per source, by the ground rules' statement (#563).
   - Step 14 writes `{source}_sample.jsonl` and checks it with
     `analyze_record(workspace_dir='data/mapping')`.
   - Step 15 writes `{source}_quality.jsonl`, advances with the verdict and
@@ -2368,8 +2373,10 @@ means the module is complete: only the transition question is asked.
     `skipped` source).
   - Step 20 is the only Module Completion, once every source is `complete`
     or `skipped`; the recap names each `skipped` source and why.
-- **Phase 3.** Register the data source, then run workflow steps 6-8. ER
-  stats go to `config/er_current_<ds>.json`; the first run becomes
+- **Phase 3.** Register the data source (the program `register_data_sources`
+  in `src/load`), then run workflow steps 6-8. ER stats, from the program
+  `er_stats` in `src/query`, go to `config/er_current_<ds>.json`; the first
+  run becomes
   `er_baseline_<ds>.json`, and later runs ask a pinned accept-or-iterate
   question. Step 25 asks yes or no only when that question was not asked;
   otherwise it follows its answer. Yes (accept) goes to step 19, no
@@ -2411,17 +2418,19 @@ Phase A (`phaseA-build-loading.md`, steps 1-4a):
   `license_record_limit` (progress file) is positive and below the dataset size;
   an absent or provisional value is measured via Module 4 Step 8a sub-step 7.
 - Step 2 sets `load_status: loading`; a `skipped` source is not loaded here
-  or later, and Phase C's gate neither counts nor loads it. Step 3 writes
-  `src/load/load_<source>.<ext>` from `sdk_guide` with `topic='load'` and
-  `record_count=<raw_value>` (threaded above 500 or when omitted); SQLite
+  or later, and Phase C's gate neither counts nor loads it. Step 3 saves and
+  builds the program `load_<source>` in `src/load` from `sdk_guide` with
+  `topic='load'` and `record_count=<raw_value>` (threaded above 500 or when
+  omitted); SQLite
   (`database_type`, absent treated as SQLite) serializes writes, and a header
   comment records tier and concurrency. Non-stdlib scaffold imports are fixed
   before compiling by swapping only the JSON library. The loader logs failures
   to `logs/loading_errors.json` and reports throughput.
 - Step 4a registers each `DATA_SOURCE` code in the data via
   `sdk_guide(topic='configure', data_sources=[...])`, codes substituted by hand,
-  as a re-runnable `src/load/register_data_sources.<ext>`, run before any load;
-  the codes are recorded in the registry.
+  as the re-runnable program `register_data_sources` in `src/load`, over
+  Module 5's, built and run before any load; the codes are recorded in the
+  registry.
 - SQLite heads-up: when the loadable total exceeds the MCP-sourced threshold and
   no `sqlite_volume_prompt` or Module 4 `sqlite_load_time_prompt` marker covers
   the load, ask proceed or migrate to PostgreSQL and record
@@ -2475,10 +2484,10 @@ Phase C (`phaseC-multi-source.md`, steps 12-20, 2+ sources): inventory;
 dependencies (generated sources get one yes/no for "none, Sequential"; real
 sources are asked, then choose Sequential, Parallel or Hybrid); load order
 (reference first, quality, density, volume); checklist;
-`src/load/orchestrator.<ext>` with a per-source budget table, per-source
-counters, backoff retry and error isolation; sample test; every `load_subset:`
-block written before the run, not-loaded sources skipped with `load_status`
-unchanged; one redo drain.
+the program `orchestrator` in `src/load` with a per-source budget table,
+per-source counters, backoff retry and error isolation; sample test; every
+`load_subset:` block written before the run, not-loaded sources skipped with
+`load_status` unchanged; one redo drain.
 
 Phase D (`phaseD-validation.md`, steps 21-28):
 
@@ -2551,7 +2560,8 @@ Phase 1 (`phase1-query-visualize.md`):
   shown, `source` `"Bootcamper's answer"` for their own questions or the
   success criterion or desired output a derived one came from, `[]` when none
   was confirmed, never changed after step 1.
-- Step 2 writes programs in `src/query/` from
+- Step 2 saves and builds one program `[query_name]` per query in `src/query`
+  (each C#, Rust or TypeScript program carries its own engine setup) from
   `generate_scaffold(workflow='query')`, with flags and response paths looked up
   in `get_sdk_reference` (`flags`, `response_schemas`, `parameters`). Programs
   iterate over loaded record IDs via `get_entity_by_record_id` and fold on
@@ -2645,8 +2655,9 @@ the step from `reporting_guide` `graph` and `data_mart` and the export's
 type and match key, never per shared feature. One export row is dumped and its
 keys read first (relation flags added when `RELATED_ENTITIES` is absent);
 business attributes take a per-record `get_record` pass, re-asked at the step,
-skipped when the dumped row already carries `JSON_DATA`. The program, in the
-chosen language under `src/query/`, writes `data/temp/exports/<system>/`;
+skipped when the dumped row already carries `JSON_DATA`. The program
+`export_<system>` in `src/query`, in the chosen language, writes
+`data/temp/exports/<system>/`;
 entity, edge and attribute counts come from the written files, and zero edges
 is a failure, never handed over. Each system lands in `steps.4e.targets`. No
 transition question follows the offers: the turn that settles the last one sets
@@ -2703,7 +2714,9 @@ and continues; the recap PDF is guaranteed.
   checks 2:00 plus or minus 10 s.
 - Step 2 builds `production/` (asks overwrite, merge or abort): copies
   `src/transform`, `src/load`, `src/query`, `src/utils`,
-  `data/senzing-ready/` and the dependency manifest; writes
+  `data/senzing-ready/` and the root dependency manifest (only Python's sits
+  at the root; C#, Rust and TypeScript manifests travel in their program
+  folders); writes
   `production/config/data_sources.yaml` keeping only `version` and each
   source's `name`, `file_path`, `format` (a `skipped` source is left out,
   and Step 4's README names it as not mapped); never copies progress,
@@ -2712,8 +2725,10 @@ and continues; the recap PDF is guaranteed.
 - Step 3: `.env.example` (`SENZING_ENGINE_CONFIGURATION_JSON`,
   `SENZING_LICENSE_FILE`, `DATABASE_URL`, `LOG_LEVEL`),
   `docker-compose.yml` by `database_type`, `.gitignore`. Step 4:
-  `production/README.md` and `production/MIGRATION_CHECKLIST.md` (six
-  sections; DEFAULT-flags item with its export exception). Step 5:
+  `production/README.md`, whose Usage gives each program's build and run
+  commands from the ground rules' statement (#563), and
+  `production/MIGRATION_CHECKLIST.md` (six sections; DEFAULT-flags item with
+  its export exception). Step 5:
   `production/GRADUATION_REPORT.md`; 5a normalizes with
   `--docs-dir production`; 5b renders `docs/business_problem.pdf` and
   `docs/data_source_evaluation.pdf` via `generate_document_pdf.py` with
@@ -9115,7 +9130,7 @@ looks wrong.
 - `tests/test_bootcamp_notes_flow.py`: 33
 - `tests/test_brand_sync.py`: 31
 - `tests/test_broll_manifest.py`: 20
-- `tests/test_build_and_run_statement.py`: 30
+- `tests/test_build_and_run_statement.py`: 51
 - `tests/test_build_version_provenance_is_per_platform.py`: 8
 - `tests/test_bundled_script_and_production_paths.py`: 23
 - `tests/test_business_problem_preserves_the_original_wording.py`: 17
@@ -9704,6 +9719,11 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   Module 3 restates none of them and every program is created by an earlier
   step that cites the section, the commands for `src/system_verification`
   match Module 3's at `db3dac7f`, and TypeScript's build has no `--noEmit`.
+  Twenty-one pinned sites in Modules 2, 5, 6 and 7 and the ground rules name
+  their program by `<dir>` and `<name>` and cite the section, no program is
+  built or run before a site creates it, no shipped file restates a command
+  of the statement's shape, and the held deferral's widened wording, drafted
+  in #563's ledger entry, covers every module that builds programs (#563).
 - **Module 3b.**
   - The Truth Set is downloaded, not saved from the preview.
   - A CORD 403 or 429 is never retried blindly.
@@ -11072,6 +11092,15 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_build_and_run_statement.py` replaces
   `tests/test_module3_build_and_run_table.py` (the statement named only
   `src/system_verification`, so Modules 5 to 7 could not cite it)
+- #563: every program Modules 2, 5, 6 and 7, graduation and the ground rules'
+  entity program save, build or run is named as the program `<name>` in
+  `<dir>` at the point of use and cites the ground rules' "Building and
+  running a program", created before any step builds it, including Module 5's
+  `register_data_sources` and `er_stats`; Rust and TypeScript code from
+  `sdk_guide` or `reporting_guide` takes its dependency line from `sdk_guide`'s
+  `DEPENDENCY:` note, and the held deferral's widened wording is drafted in
+  the ledger (Modules 5 to 7 stated no command, and no step created the C#,
+  Rust or TypeScript manifest)
 - #566: Module 2's C# bullet follows each platform's own `sdk_guide` install
   reply for the `Senzing.Sdk` source, with one dated note giving each
   platform's path, a two-step fallback (an observed `.nupkg`, then "Neither")

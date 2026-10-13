@@ -1573,10 +1573,16 @@ docs index is a later porting phase: skip it for now.
 
 ### 13. Build the transformation program
 
-Use `generate_scaffold` or the mapping workflow output as the foundation. Handle: input
-reading, field mapping, type conversion, cleansing, `DATA_SOURCE`/`RECORD_ID`, and error
-handling. Save to `src/transform/transform_[name].[ext]`. Tell the user: the file path, what it
-reads/writes, and what it handles.
+Use `generate_scaffold` or the mapping workflow output as the foundation. Handle: input reading,
+field mapping, type conversion, cleansing, `DATA_SOURCE`/`RECORD_ID`, and error handling. Save it as
+the program `transform_[name]` in `src/transform`, where `[name]` is this source's name, at the path
+and with the project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a
+program" gives for the chosen language, then build it with that section's build command. Tell the
+user: the file path, what it reads/writes, and what it handles.
+
+**One program per source, the transform.** The `<name>_mapper.<ext>` that `mapping_workflow` step 4
+asks for is this program's foundation, not a separate program to build. Each mapped source gets its
+own `transform_[name]`; a `skipped` source has no mapper, so it gets none.
 
 ⛔ **On Java, that `snake_case` filename and an idiomatic class name cannot both be `public`** —
 declare the top-level class package-private and keep the prescribed path. Applies equally to the
@@ -1612,7 +1618,9 @@ gate green (INV-173). With **Keep as-is**, or no such section, change nothing.
 
 ### 14. Test
 
-Run the transformation program on 10-100 records from `data/samples/` and write its output to
+Run the transformation program, `transform_[name]` in `src/transform`, built at step 13, with its
+run command in `../bootcamp-onboarding/ground-rules.md` → "Building and running a program", on
+10-100 records from `data/samples/` and write its output to
 `data/mapping/{source}_sample.jsonl`, the sample step 18 records. Validate with
 `analyze_record(workspace_dir='data/mapping')` — ⛔ `workspace_dir` is a **required** parameter on
 this tool as well (INV-136), and it is where the analyzer script and its reports are written, so it
@@ -1635,9 +1643,11 @@ sample record, any observations.
 
 ### 15. Quality analysis
 
-Run the transformation program on 1000+ records, or on every record when the source has 1000 or
-fewer, and write its output to `data/mapping/{source}_quality.jsonl`. The output stays there even
-when the run covers every record: this is a test run, and the load-ready file is step 18's alone.
+Run the transformation program, `transform_[name]` in `src/transform`, with its run command in
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program", on 1000+ records, or
+on every record when the source has 1000 or fewer, and write its output to
+`data/mapping/{source}_quality.jsonl`. The output stays there even when the run covers every
+record: this is a test run, and the load-ready file is step 18's alone.
 Its name differs from step 14's, so this run never overwrites the sample. Evaluate feature
 distribution, coverage, quality scores. This is workflow
 step 4's single advance: `action='advance'`, carrying `verdict` in `data` — `approve`,
@@ -1804,7 +1814,9 @@ If issues are found, go back to the relevant step. Retest after changes.
 
 ### 18. Save and document
 
-- Program in `src/transform/`.
+- The program `transform_[name]` in `src/transform`, saved at step 13 at the path
+  `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, and run with
+  that section's run command.
 - Full output: run the transformation program on the whole source and write
   `data/senzing-ready/[name].jsonl`, the load-ready file Data processing loads. Point the source's
   `file_path` in `config/data_sources.yaml` at it.

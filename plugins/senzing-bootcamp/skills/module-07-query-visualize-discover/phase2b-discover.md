@@ -325,9 +325,11 @@ supported systems.
    That is the `graph` topic's own anti-pattern (server 1.37.27, 2026-10-11): feature-level edges
    bloat the graph with noise.
 7. **Check one export row before writing the reader.** ⛔ (INV-115) Dump one row and read its top-level keys before any code parses the export.
-   Generate a short program that opens the export with the flags chosen in item 6, fetches one
-   row, prints its top-level keys, and prints whether one of its records carries that record's
-   source JSON (`JSON_DATA`). Show the Bootcamper the keys. Then:
+   Generate a short program, saved as the program `export_row_<system>` in `src/query` at the path
+   and with the project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a
+   program" gives, and built and run with that section's commands. It opens the export with the
+   flags chosen in item 6, fetches one row, prints its top-level keys, and prints whether one of its
+   records carries that record's source JSON (`JSON_DATA`). Show the Bootcamper the keys. Then:
    - **`RELATED_ENTITIES` is absent:** the flags did not ask for relationships. Find the
      relationship flags in item 6's `flags` response, add them, and dump again. If it is still
      absent there are no relationships to export; continue, and item 9 reports the zero-edge
@@ -346,10 +348,12 @@ supported systems.
      <!-- MCP-NEGATIVE: get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_JSON_DATA') — its applies_to names get_record and the entity, search, why, path and network calls, and neither export_json_entity_report nor export_csv_entity_report — owner: the flag's own applies_to IS the route that carries which methods accept it; search_docs returns the Java SzFlag javadoc listing SZ_EXPORT_FLAGS among its usage groups, which is why the dumped row decides (absence negative) — server 1.37.27, 2026-10-11 -->
 8. **Write and run the export program.** Write it in the Bootcamper's chosen language
    (`programming_language` in `config/bootcamp_preferences.yaml`, INV-002), with the SDK code
-   sourced as item 6 says, and save it under `src/query/` (for example
-   `src/query/export_<system>.<ext>`), so graduation's existing `src/query/**` copy carries it into
-   `production/` unchanged. It writes its files under `data/temp/exports/<system>/`, which it
-   recreates on every run. Run it.
+   sourced as item 6 says, and save it as the program `export_<system>` in `src/query`, at the path
+   and with the project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a
+   program" gives, so graduation's existing `src/query/**` copy carries it, with its manifest, into
+   `production/` unchanged. It writes its files under
+   `data/temp/exports/<system>/`, which it recreates on every run. Build and run it with that
+   section's commands.
 9. **Count what was written, then report it.** ⛔ (INV-129) Count from the written files, never from the exit status or the program's own log:
    - the **entity count**: nodes written;
    - the **edge count**: edges written;

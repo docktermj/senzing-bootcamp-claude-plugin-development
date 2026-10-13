@@ -308,7 +308,9 @@ class TheSenzingSideAndTheProgram(unittest.TestCase):
         eight = flat(item(self.section, 8))
         self.assertIn("`programming_language`", eight)
         self.assertIn("INV-002", eight)
-        self.assertIn("under `src/query/`", eight)
+        # #563: saved as a program at the path the ground rules' "Building and running a
+        # program" gives, so `src/query` is named as its `<dir>`.
+        self.assertIn("as the program `export_<system>` in `src/query`", eight)
 
     def test_graduation_already_copies_src_query(self):
         self.assertRegex(read(GRADUATION),

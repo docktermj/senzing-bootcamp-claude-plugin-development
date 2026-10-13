@@ -124,9 +124,10 @@ module states it, then add it to `completed` in one quiet write in place of that
 - **`register-sources`.** The new datastore knows none of the Bootcamper's codes, so register every
   `DATA_SOURCE` code `config/data_sources.yaml` lists before the next load (INV-089), by Data
   processing's [step 4a](../module-06-data-processing/phaseA-build-loading.md#4a-register-the-data-source-codes-before-loading)
-  items 2–4. Where `src/load/register_data_sources.[ext]` already exists, run it again as it is: it
-  is re-runnable by construction and now reaches the new datastore. Where it does not, generate it
-  by item 2 first.
+  items 2–4. Where the program `register_data_sources` in `src/load` already exists, at the path
+  `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, run it again as
+  it is, with that section's run command: it is re-runnable by construction and now reaches the new
+  datastore. Where it does not, items 2 and 3 create and build it first.
 
 For `sdk_repair`:
 
