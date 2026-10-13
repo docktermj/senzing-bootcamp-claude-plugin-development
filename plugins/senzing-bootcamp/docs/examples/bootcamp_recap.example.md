@@ -406,6 +406,7 @@
 - `src/scripts/generate_quality_viz.py` — the visualization generator
 
 **Why it matters:** Both sources go into loading unmodified, which means anything the resolution gets wrong is a real property of the data rather than something a mapping step introduced — and you now know in advance which matches to expect and which to be skeptical of.
+**You directed:** nothing this module. Both sources were fast-pathed past mapping, and no column went unrecognized by `mapping_workflow`, so there was no step to hand over.
 
 ---
 
@@ -426,6 +427,8 @@
     - **R:** Option 3 — medium production (>500,000 up to 10,000,000).
 - **Q:** Loading this data volume into SQLite may slow entity resolution as the database grows. How would you like to proceed?
     - **R:** Proceed on SQLite.
+- **Q:** Which of your records should I look up to check how Senzing resolved them? Name them in your own words, with what you expect Senzing to have done with them and why.
+    - **R:** You pick.
 
 ### Actions Taken
 
@@ -462,6 +465,7 @@
 - `config/license.json` — the measured license record
 
 **Why it matters:** The data is resolved and the results are trustworthy for a specific reason: the one signal that looked like a defect was chased down with evidence rather than accepted or dismissed, and the limits on person matching are understood as a property of the source data rather than a mystery.
+**You directed:** nothing this module. You asked me to choose ("you pick"), so the guide chose the sample: three cross-source merges checked against their raw records, and the largest entity (400304, `MIKE FIGLEY`) checked for over-matching.
 
 ---
 
@@ -490,12 +494,17 @@
     - **R:** Which customers show up in both Enformion and Equifax, and what one customer's whole record looks like across the two.
 - **Q:** Shall I build queries for this list, or would you like to drop or change any of it? (your two questions beside three requirements from the business problem, marked not asked for)
     - **R:** Keep all five.
+- **Q:** What would you ask the AI to change to fix this? Say it in your own words. (after the first search program found no entity for an organization name)
+    - **R:** It's a company, so search it as a business name, not a person's name.
 - **Q:** The quality indicators are marginal on their raw values. What would you like to do?
     - **R:** Proceed to visualization and the Discover phase.
 - **Q:** Would you like an interactive visualization of your resolved data?
     - **R:** Yes.
 - **Q:** Would you like to explore Senzing's advanced discover capabilities using examples from your own data?
     - **R:** Yes.
+- **Are these two records the same entity? (two ATLAS FOODS records from Enformion)** — same entity "same name, same address, same tax ID" → different entities (differed)
+- **Are these two records the same entity? (two MIKE FIGLEY records)** — same entity → same entity (agreed)
+- **Are these two records the same entity? (two AUGUSTUS INTERNATIONAL ENTERPRISES LLC records)** — skipped → same entity
 - **Q:** What would you like to do next? (after Why Analysis)
     - **R:** Continue to How Analysis.
 - **Q:** What would you like to do next? (after How Analysis)
@@ -506,6 +515,7 @@
 - Asked what you wanted to find out before showing anything derived, set your two questions beside three more requirements derived from the business problem's success criteria and desired output (a review queue, search, and a master-list export, each marked not asked for), and built a program for each of the five in `src/query/`.
 - Showed the headline entity, AUGMENTI CONSULTING LLC, as a first answer once the list was confirmed, retrieved by `src/query/show_entity.py` through the SDK.
 - Ran all five: 20 cross-source merges found, entity 360 with source provenance confirmed, a 128-pair review queue built, search verified on both an organization and a person, and a 4,971-entity master list exported to CSV and JSONL.
+- Worked steer shown: What went wrong: the first search program found no entity for an organization name — given away by `EMPTY: nothing matched AUGMENTI CONSULTING LLC on the attributes tried (NAME_FULL)`; What the AI was asked to change: search it as a business name, not a person's name, as you asked.
 - Evaluated quality using proxy indicators (no truth set available), reported the marginal 8.2% possible-match rate honestly, and explained why iteration would not help — showing three specific entities as evidence rather than asserting it.
 - Built the interactive visualization pointed at the bootcamper's own data, with dataset wording naming their sources rather than the Truth Set, and verified the snapshot offline with all six tabs.
 - Captured and visually verified one screenshot per tab; confirmed the graph's scale-aware defaults engaged correctly at 4,971 entities (labels auto-hidden, relationship-only mode on, with an on-screen explanation).
@@ -546,6 +556,7 @@
 - `src/query/` — twelve programs: `sz_common.py`, `show_entity.py`, `find_cross_source_merges.py`, `customer_360.py`, `review_queue.py`, `search_entities.py`, `export_master_list.py`, `discover_candidates.py`, `why_analysis.py`, `why_entities.py`, `how_analysis.py`, `relationship_network.py`, `probe_network_shape.py`
 
 **Why it matters:** You can now answer "who is who across these two systems?" with evidence for every claim — and just as importantly, explain precisely why 128 pairs *cannot* be answered yet, which is the difference between a result you can act on and a number you have to trust.
+**You directed:** which customers show up in both Enformion and Equifax, and what one customer's whole record looks like across the two. Nothing differed.
 
 ---
 
@@ -584,3 +595,50 @@ detail simply not in this response?
 4,971 entities from 5,241 records is a plausible number, not a verified one. Reconcile
 against the source system's own customer count before quoting it to anyone.
 <!-- BOOTCAMP-NOTES:END -->
+
+<!-- BOOTCAMP-HANDOVER:START -->
+## What You Take With You
+
+### Decisions you made
+
+- Entity Resolution Concepts: took the optional knowledge check.
+- Discover the Business Problem: looked at the gallery of common business problems first.
+- Discover the Business Problem: Customer 360 as the pattern that matches your situation.
+- Discover the Business Problem: a generated scenario as the business problem.
+- Discover the Business Problem: no other software to interface with.
+- Discover the Business Problem: a local, on-premises deployment.
+- SDK setup: SQLite as the database.
+- Data collection: 5,000 records, 2,500 per source.
+- Data collection: a free evaluation license, requested through the bootcamp.
+- Data Quality, Mapping, and Transformation: skip mapping for both CORD sources and load them as they are.
+- Data Quality, Mapping, and Transformation: a visual of the quality assessment.
+- Data processing: a medium production volume (more than 500,000 up to 10,000,000 records) for the loader.
+- Data processing: proceed on SQLite at this volume.
+- Query, Visualize and Discover: find out which customers show up in both Enformion and Equifax, and what one customer's whole record looks like across the two.
+- Query, Visualize and Discover: keep all five query requirements.
+- Query, Visualize and Discover: search a company as a business name, not a person's name.
+- Query, Visualize and Discover: proceed to visualization and the Discover phase on marginal quality indicators.
+- Query, Visualize and Discover: an interactive visualization of your resolved data.
+- Query, Visualize and Discover: explore the Discover capabilities on your own data.
+- Query, Visualize and Discover: continue to How Analysis, then to the relationship networks.
+
+### How you got it built
+
+- **Entity Resolution Concepts:** you asked for a short knowledge check; the AI built the concepts primer and a four-question check with the Senzing MCP server.
+- **Discover the Business Problem:** you asked for a generated Customer 360 scenario, deployed locally with no integrations; the AI built the business problem statement, the data architecture, the source registry and a stakeholder summary with the Senzing MCP server.
+- **SDK setup:** you asked for SQLite; the AI built the SQLite datastore, the engine configuration and the environment, verification and connection scripts with the Senzing MCP server.
+- **System verification:** you asked for nothing beyond a model switch; the AI built seven verification programs in `src/system_verification/` with the Senzing MCP server and proved the install end to end.
+- **Truth Set visualization:** you asked to continue after the guided tour and then to clean up; the AI built the Truth Set web app, its offline snapshot and six screenshots with the Senzing MCP server.
+- **Data collection:** you asked for 5,000 records and an evaluation license; the AI built 2,500-record samples per source with all 98 matched pairs kept whole, and sent the license request, with the Senzing MCP server.
+- **Data Quality, Mapping, and Transformation:** you asked to skip mapping and for a quality visual; the AI built the readiness check, the per-record-type quality scores, the fast-path lineage and the quality visualization with the Senzing MCP server.
+- **Data processing:** you asked for a loader sized for medium production on SQLite, and left the review sample to the AI; the AI built the threaded loader, the redo drain and the match-key audit with the Senzing MCP server.
+- **Query, Visualize and Discover:** you asked which customers show up in both sources and what one customer's whole record looks like, and how to search a company; the AI built five query programs, the interactive visualization and the Discover demonstrations with the Senzing MCP server.
+
+### Your takeaway
+
+Before I call a result wrong, I ask the engine why it decided.
+
+### Next time
+
+Map our CRM's customer export to Senzing, load it beside our billing system's customer file, and show me which customers appear in both.
+<!-- BOOTCAMP-HANDOVER:END -->

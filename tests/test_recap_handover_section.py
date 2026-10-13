@@ -106,7 +106,12 @@ def load_generator():
 
 
 GEN = load_generator()
-EXAMPLE = EXAMPLE_MD.read_text(encoding="utf-8")
+SHIPPED_EXAMPLE = EXAMPLE_MD.read_text(encoding="utf-8")
+# The shipped example carries its own handover block (#518). These tests add HANDOVER to a
+# modules-and-notes recap, so the fixture is the example with that block taken out; the
+# example's own block is guarded by test_example_recap_shows_every_recap_element.py.
+EXAMPLE = re.sub(r"\n*<!-- BOOTCAMP-HANDOVER:START -->.*?<!-- BOOTCAMP-HANDOVER:END -->\n?",
+                 "\n", SHIPPED_EXAMPLE, flags=re.S)
 WITH_HANDOVER = EXAMPLE + HANDOVER
 
 
@@ -178,7 +183,12 @@ class TheFixtureIsReal(unittest.TestCase):
         recap = GEN.parse_recap(EXAMPLE)
         self.assertGreaterEqual(len(recap.modules), 5)
         self.assertIsNotNone(recap.notes, "the example lost its notes fence")
-        self.assertIsNone(recap.handover, "the example already carries a handover block")
+        self.assertIsNone(recap.handover, "the fixture still carries the example's handover block")
+
+    def test_the_fixture_removed_exactly_the_examples_one_handover(self):
+        self.assertEqual(1, GEN.handover_block_count(SHIPPED_EXAMPLE))
+        self.assertEqual(module_titles(SHIPPED_EXAMPLE), module_titles(EXAMPLE))
+        self.assertEqual(GEN.parse_recap(SHIPPED_EXAMPLE).notes, GEN.parse_recap(EXAMPLE).notes)
 
 
 class TheHandoverIsParsedButIsNeverAModule(unittest.TestCase):
