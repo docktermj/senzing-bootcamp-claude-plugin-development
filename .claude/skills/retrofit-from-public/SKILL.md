@@ -1,7 +1,7 @@
 ---
 name: retrofit-from-public
 description: 'Retrofit changes made in the public access repo (Senzing/senzing-bootcamp-claude-plugin) by reporting them: it compares public against the last propagation and files GitHub issues in this development repo describing what diverged. Use when the maintainer wants to bring public-repo edits (PR fixes, typo/spelling corrections, direct changes) to development as issues. The inverse direction of propagate-to-public: it writes nothing into this repo, and the inverse slug rewrite is applied by whoever implements a filed issue. Maintainer tool — not part of the bootcamper experience.'
-argument-hint: "[path to the public repo] (omit for ~/senzing.git/senzing-bootcamp-claude-plugin)"
+argument-hint: "[path to the public repo] (omit for ~/senzing.git/senzing-bootcamp-claude-plugin) [--draft <run-dir> | --file <run-dir>]"
 ---
 
 # Retrofit ← Public access repo
@@ -158,6 +158,14 @@ GitHub issues, not a modified working tree.**
    ⛔ **Filing is outward-facing and immediate** — the same gate `/feedback-to-issues` and
    `/production-readiness-audit` apply, for the same reason: an issue can be edited or closed
    afterwards but never un-filed.
+
+   ⛔ **With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
+   nothing outside `<run-dir>`.** Each issue becomes a [`drafts.py`](../feedback-to-issues/drafts.py)
+   `add` record instead, and the run ends with `drafts.py list`. `--draft` is the release cycle's
+   interface (#573), and the caller records unresolved drafts (INV-317). **With `--file <run-dir>`**,
+   repeat step 3's search for each approved record, since the tracker may have changed, then file
+   what `drafts.py file-plan` prints, and get a yes for each first. Both stages, the manifest and
+   its statuses are stated once in `drafts.py` (INV-300).
 5. ⛔ **(INV-312) Files in this repository only.** Cross-repo filing belongs exclusively to
    `/escalate-to-parent` *(children only)*; this command never files anywhere but its own
    tracker, in the parent and in every child that inherits it.

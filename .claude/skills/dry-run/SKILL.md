@@ -1,7 +1,7 @@
 ---
 name: dry-run
 description: 'Dry-run the Senzing Bootcamp plugin to find defects that reading it cannot: phase 1 verifies every MCP call against the live Senzing MCP server, phase 2 executes the hooks and bundled scripts against a realistic scratch project, phase 3 walks the conversational layer with the maintainer answering as the Bootcamper, or with a simulated Bootcamper answering from a separate process. Use when the maintainer wants to dry-run, smoke-test, or exercise the plugin, verify it actually works rather than reads correctly, or asks what a fresh audit should look at next. Maintainer tool — not part of the bootcamper experience.'
-argument-hint: "[phases: 1, 2, 3 or all] [module phase 3's analysis starts at] [--simulated [persona]]"
+argument-hint: "[phases: 1, 2, 3 or all] [module phase 3's analysis starts at] [--simulated [persona]] [--draft <run-dir> | --file <run-dir>]"
 ---
 
 # Dry Run
@@ -282,6 +282,15 @@ keeping notes that might lead to improvements / specs?"* to surface it.
 ## The finding lifecycle
 
 Where a drafted finding goes, from step 1's ledger draft to its GitHub issue:
+
+⛔ **With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
+nothing outside `<run-dir>`** but its scratch project. Each finding and upstream message becomes a
+[`drafts.py`](../feedback-to-issues/drafts.py) `add` record as it is found, in place of steps 1, 3
+and 5 below; [What to do with a finding](#what-to-do-with-a-finding) steps 2–6 are not run, and the
+run ends with `drafts.py list`. `--draft` is the release cycle's interface (#573), and the caller records
+unresolved drafts (INV-317). **With `--file <run-dir>`**, file what `drafts.py file-plan` prints,
+and get a yes for each first, then report. Both stages, the manifest and its statuses are stated
+once in `drafts.py` (INV-300).
 
 1. **Draft — on sight.** The run's dated entry is a `## dry-run-<YYYY-MM-DD>` heading in
    `specs/IMPLEMENTED.md`, marked **Not a spec** as the `production-readiness-audit-<date>`

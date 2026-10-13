@@ -1,7 +1,7 @@
 ---
 name: feedback-to-issues
 description: 'Analyze a Senzing Bootcamp plugin feedback file and file it as GitHub issues in this repository, re-verifying every Senzing fact against the live Senzing MCP server first and reporting confirmed server-side defects upstream via submit_feedback. Use when the maintainer wants to process SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md, triage bootcamper feedback, or turn collected feedback into issues. Maintainer tool — not part of the bootcamper experience.'
-argument-hint: "[path to feedback file]"
+argument-hint: "[path to feedback file] [--draft <run-dir> | --file <run-dir>]"
 ---
 
 # Feedback → Issues
@@ -225,6 +225,14 @@ routing is owned exclusively by `/escalate-to-parent` *(children only)*; this is
 where parent-to-child change travels by **parity**, so the parent never files into children
 at all. A flag naming another repository is a violation of that rule, not a convenience.
 
+⛔ **With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
+nothing outside `<run-dir>`.** Each issue, Step 8 message and Step 9 disposition becomes a
+[`drafts.py`](drafts.py) `add` record instead, the candidate stays where it is, and the run ends
+with `drafts.py list`. `--draft` is the release cycle's interface (#573), and the caller records
+unresolved drafts (INV-317). **With `--file <run-dir>`**, file what `drafts.py file-plan` prints,
+and get a yes for each first. Both stages, the manifest and its statuses are stated once in
+`drafts.py` (INV-300).
+
 Rules for the issue itself:
 
 - **Write the title as the defect, not the symptom** — the shape the existing issues use, e.g. *"`/retrofit-from-public` should file issues, not apply changes directly"* rather than *"retrofit is wrong"*. It is what a reader scans in a list of thirty.
@@ -339,6 +347,8 @@ python3 .claude/skills/feedback-to-issues/feedback_ledger.py commit <candidate.m
   --disposition "<entry title>=already-tracked" \
   --disposition "<entry title>=needs-clarification"
 ```
+
+With `--file <run-dir>`, the dispositions are the lines `drafts.py after` prints.
 
 This moves the file to `feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK_<unixtime>.md` and
 appends one ledger line per **newly processed** entry. Entries this file carried that were
