@@ -979,19 +979,18 @@ existing-install path, which skips Phase 1 and Phase 2; INV-338, INV-339):**
      the `mvn install:install-file` command for it).
      <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt', language='java') — the reply carries no compatibility_notes and no source for the Java bindings, only the platform install and the Python gotcha — owner: search_docs IS the route that carries the Java SDK reference: search_docs(query='Java SDK sz-sdk.jar Maven Usage local Maven repository') returns its "Maven Usage" and "Installation in Local Maven Repository" sections, so the reader must go there rather than conclude the source is undocumented (routing negative) — server 1.37.16, 2026-09-30 -->
    - **C#:** call `sdk_guide(topic='install', platform='<platform>', language='csharp')` and follow
-     its `gotchas`: where the reply has a C# line, that line names the package source. On server
-     1.37.16 (2026-10-01) the **`windows`** reply's gotcha said "C# / .NET: the Senzing.Sdk NuGet
-     package is included in the SDK install (`sdk\dotnet\`), NOT published to nuget.org. Use:
-     `dotnet nuget add source "$env:SENZING_DIR\sdk\dotnet" --name SenzingLocal; dotnet add
-     package Senzing.Sdk --source SenzingLocal`". That is the `windows` reply's form, with the
-     Windows install variable in its path, so present it to a Windows bootcamper only (INV-283).
-     On the same date the `linux_apt`, `linux_yum` and `macos_arm` replies had no C# line, and
-     `docker` follows `linux_apt`. When the reply names no source, go down this list in order,
-     stop at the first step that gives an answer, and tell the bootcamper which step it was:
-     1. **The C# SDK reference:** `search_docs(query='C# .NET SDK Senzing.Sdk NuGet package')`.
-        On server 1.37.16 (2026-10-01) it said "After adding the `Senzing.Sdk` NuGet package to
-        your project dependencies" and did not say where that package comes from.
-     2. **What this machine's install holds:** look for a `Senzing.Sdk.*.nupkg` file in the
+     its `gotchas`: where the reply has a C# line, that line names the package source. Take the
+     command from the bootcamper's own platform reply (INV-080), and present that platform's form
+     to that platform's bootcamper only (INV-283). On server 1.37.28 (2026-10-13) every
+     platform's reply carried a C# line naming a local source inside the SDK install, "NOT
+     published to nuget.org", each with its own path: `/opt/senzing/er/sdk/dotnet` on `linux_apt`
+     and `linux_yum`, `${SENZING_ROOT}/sdk/dotnet` on `macos_arm`, and the
+     `$env:SENZING_DIR\sdk\dotnet` form on `windows`. `docker` follows `linux_apt`: its
+     plain-container route runs the `linux_apt` install inside the container, so a `docker`
+     bootcamper takes the Linux form from that reply. When the reply has no C# line, go down this
+     list in order, stop at the first step that gives an answer, and tell the bootcamper which
+     step it was:
+     1. **What this machine's install holds:** look for a `Senzing.Sdk.*.nupkg` file in the
         `dotnet/` directory of the install's `sdk/` directory. Locate that `sdk/` directory from
         this platform's own install reply (the directory its `PYTHONPATH` or `sz-sdk.jar` path
         sits in), never from another platform's reply. If the file is there, use that `dotnet/`
@@ -1000,11 +999,10 @@ existing-install path, which skips Phase 1 and Phase 2; INV-338, INV-339):**
         bootcamper the source was **observed in their install, not named by the MCP server**
         (INV-283). No directory, or a directory with no `Senzing.Sdk.*.nupkg`, means nothing
         was observed.
-     3. **Neither:** tell the bootcamper that no MCP route names the package source for their
-        platform, and that nothing in their install supplied one.
+     2. **Neither:** tell the bootcamper that their platform's install reply names no package
+        source, and that nothing in their install supplied one.
 
      ⛔ **Never add a public NuGet feed for `Senzing.Sdk` (nuget.org or any other) on your own (INV-222).**
-     <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt', language='csharp'), the same call with platform='linux_yum' and with platform='macos_arm', and search_docs(query='C# .NET SDK Senzing.Sdk NuGet package') — on linux_apt, linux_yum and macos_arm no reply says where the Senzing.Sdk NuGet package comes from: the install replies carry no C# line in their gotchas, and the reference says only "After adding the Senzing.Sdk NuGet package to your project dependencies" — owner: sdk_guide(topic='install', platform=<platform>) IS the route that carries the package source per platform, and its windows reply names it in its gotchas ("included in the SDK install (sdk\dotnet\), NOT published to nuget.org"), so the claim is scoped to the platforms asked and is not a claim that no platform's reply names it; search_docs carries the C# SDK reference ("Senzing.Sdk for C#", the top hit) and states no source (absence negative) — server 1.37.16, 2026-10-01 -->
    - **Rust:** call `sdk_guide(topic='install', platform='<platform>', language='rust')` and follow
      its `compatibility_notes`, taking the dependency line from that reply. On server 1.37.16
      (2026-09-30) it said "The Rust SDK (sz-rust-sdk) is NOT on crates.io. You MUST use a git
