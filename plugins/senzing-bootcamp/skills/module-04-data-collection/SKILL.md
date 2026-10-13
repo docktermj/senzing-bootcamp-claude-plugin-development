@@ -831,6 +831,17 @@ Then proceed with the appropriate option:
 - Store a sample API response in `data/raw/[datasource_name]_sample.json`.
 - Document the API call used.
 
+**Handling each answer (INV-284).** These answer the provision question above. Each then records
+the source in the registry (the **Data Source Registry** note below) and goes on to the next
+source, or to Step 3 once every source is collected.
+
+- **1, "Upload a file":** **Option A** above.
+- **2, "Provide a URL or file path":** **Option B** above.
+- **3, "Connect to a database":** **Option C** above.
+- **4, "Use an API endpoint":** **Option D** above.
+- **5, "I don't have my own data":** the CORD recommendation right after the question (**If the
+  bootcamper chose option 5**).
+
 **Handling different data formats:**
 
 Not all data arrives as CSV. Common formats and how to handle them:
@@ -1180,6 +1191,14 @@ training data.
    delivered *here*, against the option they just chose, is the worst location in the bootcamp for
    sourcing discipline to lapse. It happened on 2026-08-25.
 
+   **Handling each answer (INV-284).** One list serves both forms; option 4 is in the four-option
+   form only. Every path ends as the paragraph after sub-step 7 says: on to Step 8b.
+
+   - **1, "Yes — a license file":** sub-step 5, then sub-step 7.
+   - **2, "Yes — a Base64-encoded license key":** sub-step 5, then sub-step 7.
+   - **3, "No — I'll obtain one another way" or "No — I need to obtain one":** sub-step 6.
+   - **4, "No — request a free evaluation license now":** sub-step 6's in-flow request, sub-step 6a.
+
 5. **Apply a Senzing License Key (options 1–2).** 🚨 Never ask the bootcamper to paste a license key
    into chat. Decode/place it to `licenses/g2.lic`:
    - **Base64 string** — Linux/macOS: `echo '<BASE64_STRING>' | base64 --decode > licenses/g2.lic`;
@@ -1274,6 +1293,11 @@ training data.
       >
       > 1. **Yes, send it** — Senzing emails the license to that address.
       > 2. **No** — I'll get a license another way, or keep using the built-in evaluation license.
+
+      **Handling each answer (INV-284).** Both continue on to Step 8b.
+
+      - **1, "Yes, send it":** item 4 sends it (item 5 on a failure).
+      - **2, "No":** item 4's "on anything else": record `license: evaluation` and send nothing.
 
    4. **Send only on an explicit yes.** On anything else, record `license: evaluation`, continue,
       and do not re-ask (INV-006). Relay whatever the server returns verbatim. ⛔ **Do not write
@@ -1405,6 +1429,16 @@ about a roughly half-hour load, for a load of about two minutes.
    later is the INV-006 shape, and both remedies are the same action. Renumber the two remaining
    options (load it, or switch database) and say plainly that sampling is already in force under the
    license. When the license imposes no cap, present all three unchanged.
+
+   **Handling each answer (INV-284).** Sub-step 3 acts on each; with option 2 omitted, the other
+   two keep these entries under their new numbers.
+
+   - **1, "Load all records into SQLite":** sub-step 3's **Load all collected records on SQLite**,
+     then Step 9.
+   - **2, "Sample down to a smaller record count":** sub-step 3's **Sample down to a smaller record
+     count**, then Step 9.
+   - **3, "Switch to an alternative database":** sub-step 3's **Switch to an alternative
+     database**, a detour through SDK setup that resumes at Step 9.
 
 3. **Act on the choice.** Sampling is offered here as one option among proceeding and switching
    databases: not the only path.

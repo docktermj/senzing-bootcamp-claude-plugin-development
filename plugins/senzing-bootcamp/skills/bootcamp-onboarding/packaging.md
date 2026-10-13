@@ -58,6 +58,13 @@ on it:
 ⛔ **Option 3 writes nothing at all.** Acknowledge and return the bootcamper to exactly
 where they left off.
 
+**Handling each answer (INV-284).**
+
+- **1, "Results to share":** Step 4 with `--profile share`, then Step 5.
+- **2, "Everything to continue elsewhere":** Step 3 (the database backup), then Step 4 with
+  `--profile transfer`, then Step 5.
+- **3, "Cancel":** write nothing, as the rule above says, and return them to where they left off.
+
 ## Step 3: For option 2, make sure a database backup exists
 
 ⛔ **(INV-094, INV-048) If `backups/revisit/` does not exist, run the shared procedure — do NOT

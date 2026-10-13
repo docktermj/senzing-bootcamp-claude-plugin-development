@@ -114,6 +114,13 @@ pushed into naming one.
 `cloud_provider`; `kubernetes`/`docker_swarm`; `local`/`on_premises`; or `undecided` for option 4).
 One write for the whole step, per the batching rule above. **Checkpoint:** write step 10a.
 
+**Handling each answer (INV-284).** Each sets `deployment_target` in the write above; then Step 11.
+
+- **1, "A cloud hyperscaler":** `aws`, `azure` or `gcp`, also as `cloud_provider`.
+- **2, "A container platform":** `kubernetes` or `docker_swarm`.
+- **3, "Local / on-premises":** `local` or `on_premises`.
+- **4, "Not sure yet":** `undecided`.
+
 ## 11. Create the problem statement document
 
 Save to `docs/business_problem.md` using this template:

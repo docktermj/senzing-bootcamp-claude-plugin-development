@@ -619,6 +619,15 @@ Then resolve the `sdk_guide` platform value using the rules below. Do NOT assume
 install: several OS + language combinations require Docker. The MCP server is authoritative;
 if uncertain, call `sdk_guide(topic='install')` with no platform to get the live decision tree.
 
+**Handling each answer (INV-284).** The answer is the platform the routing rules below resolve;
+then checkpoint step 2 and continue to Step 3.
+
+- **1, "Linux (x86-64)":** rule 5.
+- **2, "Linux (ARM64)":** rule 5.
+- **3, "macOS (Apple Silicon)":** rule 1 for Python, otherwise rule 3.
+- **4, "macOS (Intel)":** rule 1 for Python, otherwise rule 2.
+- **5, "Windows (x86-64)":** rule 1 for Python, otherwise rule 4.
+
 **Platform options for `sdk_guide`:**
 
 - `platform='linux_apt'`: Debian/Ubuntu/Mint (apt/dpkg)
@@ -1845,6 +1854,12 @@ the last branch is skipped by a guide that follows the other one.
    step done before the database exists, and a resume would skip the setup; until it is written,
    a resumed session runs Step 7 again.
 
+**Handling each answer (INV-284).** Both run the two instructions above first.
+
+- **1, "SQLite":** **For SQLite** below; once its setup is finished, checkpoint step 7 and continue
+  to Step 8.
+- **2, "PostgreSQL":** **For PostgreSQL** below, which first asks how to run it.
+
 **For SQLite** (recommended for bootcamp):
 
 ⛔ **Before creating it, check whether the project sits on a mounted host filesystem — measure the
@@ -2069,6 +2084,15 @@ then proceed with the SQLite setup above.
 
 SQLite remains the default recommendation for pure evaluation; PostgreSQL (especially via Docker)
 is the production-style path. INV-037 is satisfied by any of these paths.
+
+**Handling each answer (INV-284).** Once the option's setup is finished, checkpoint step 7 and
+continue to Step 8.
+
+- **1, "In a Docker container":** **Option 1** above.
+- **2, "Install PostgreSQL locally":** **Option 2** above.
+- **3, "Use an existing PostgreSQL server":** **Option 3** above.
+- **4, "Switch to SQLite":** **Option 4** above, which rewrites `database_type` and runs the SQLite
+  setup.
 
 ## Step 8: Create Engine Configuration
 

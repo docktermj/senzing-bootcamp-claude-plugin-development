@@ -9183,7 +9183,7 @@ looks wrong.
 - `tests/test_first_source_is_chosen_by_step_fourteens_heuristics.py`: 18
 - `tests/test_fpdf2_dependency_is_declared.py`: 12
 - `tests/test_free_data_catalog_caveats.py`: 14
-- `tests/test_gate_options_have_handling_steps.py`: 14
+- `tests/test_gate_options_have_handling_steps.py`: 26
 - `tests/test_generated_data_supports_its_success_criteria.py`: 35
 - `tests/test_generated_dataset_size_is_a_license_decision.py`: 18
 - `tests/test_generated_gap_rates_reach_their_band.py`: 12
@@ -10947,3 +10947,11 @@ Senzing licensing, with no SPDX identifier.
   (Step 1 to Step 9, completing no module) and a fifth "Leaving Phase 3" exit
   that resumes at Phase 3 step 21 for the same source (both offers were prose
   with no handling, and nothing said where the flow came back)
+- #531: every bold 👉 question with numbered options in every skill file
+  carries a `Handling each answer (INV-284).` marker with one entry per
+  option, naming it by number and opening words and pointing to its handling
+  and resume point, and the INV-284 guard derives its gates from every skill
+  file and fails on a missing marker, a missing entry or an entry matching no
+  option, with a negative control per skill directory; an amendment to
+  INV-284 is queued (the guard covered only Module 5's iterate and improve
+  options)

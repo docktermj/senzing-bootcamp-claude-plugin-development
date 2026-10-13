@@ -81,6 +81,13 @@ context so you do not ask the bootcamper to repeat it):
    2. **Medium**
    3. **Low**
 
+   **Handling each answer (INV-284).** The answer is the entry's `**Priority:**` (Step 3); then
+   Step 2b.
+
+   - **1, "High":** recorded as High.
+   - **2, "Medium":** recorded as Medium.
+   - **3, "Low":** recorded as Low.
+
 ⛔ **Ask only the questions their message has not already answered (INV-006).** Anything it supplies
 — in whole or in part — is **captured, not re-asked**: confirm what you captured in one line, then
 ask only the gaps, one 👉 per turn. If it answers everything, ask nothing and proceed.
@@ -239,6 +246,12 @@ never automatic.
    State plainly, above the question, that submissions are **anonymous**: the server records no
    sender identity, so Senzing cannot reply about it. If they want a response, `support@senzing.com`
    is the channel with a return path. Saying no costs them nothing — the entry is already saved.
+
+   **Handling each answer (INV-284).** Both then go on to Step 4 (on resume, to *Unanswered offer
+   on resume* item 2 below).
+
+   - **1, "Yes, send it":** item 4 sends it, and item 5 records the outcome (item 6 on a failure).
+   - **2, "No, keep it local":** nothing is sent; item 5 records `offered, declined`.
 
 4. **On "yes":** call `submit_feedback` with `category` = `bug` for wrong/unusable output, `feature`
    for a missing capability, and `message` = the approved draft. Relay whatever the server returns

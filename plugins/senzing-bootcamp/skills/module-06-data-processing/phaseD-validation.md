@@ -719,6 +719,11 @@ lead included.
 
      The numbers they reply with are the sources. This chooses what to iterate on; it is not a
      second confirmation of "Iterate now", and it is asked only once.
+
+     **Handling each answer (INV-284).**
+
+     - **Each number:** that source is remapped and reloaded; continue to item 2.
+
   2. **Explain, as a statement:** name the sources, and say that their loaded data and query
      programs are kept, that their mapping is refined in Data Quality, Mapping, and Transformation
      and they are reloaded, and that validation then runs again here. It asks nothing.

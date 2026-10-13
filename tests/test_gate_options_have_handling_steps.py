@@ -1,4 +1,4 @@
-"""A gate option that proposes work must have a step that does the work.
+"""Every option of every pinned gate has a handler marker entry saying what happens next.
 
 Both Module 5 quality gates offered *"improve the data first"* and **no step in the plugin
 defined what the guide does when it is chosen** — no procedure, no loop-back, no re-score,
@@ -12,14 +12,36 @@ file — both govern the *ask*. Nothing governed what happens on the *answer*, s
 facing a chosen option with no procedure must improvise, and improvising against a pinned
 gate teaches that the surrounding ⛔ rules are advisory.
 
-⚠️ **The spec named two gates; the scan found five options across two files.** Phase 2's
-three iterate options were never mentioned in the finding and are covered here too — they
-were already discharged by `### 17. Iterate`, which is exactly why the guard derives its
-site set instead of hardcoding the two lines the spec listed (INV-246).
+**The wider check (#531, part of #504).** Until #531 this guard scanned one module
+(`module-05-data-quality-mapping`) and only options whose leading verb was *iterate* or
+*improve*, so five options in Modules 3, 5 and 6 shipped with no handler (#526–#530). It now
+scans **every skill file** and **every option** of every gate:
 
-The check is deliberately narrow and positive: an option proposing REMEDIATION must have a
-handling section whose heading names that action. Options that propose *proceeding* need no
-step — the module flow is their handler.
+- **A gate** is a bold 👉 question with a numbered list directly beneath it, outside a code
+  fence, in any `*.md` under `plugins/senzing-bootcamp/skills/` (INV-246: derived, no module
+  list and no verb list). The question may wrap, and may sit in a list item or a blockquote.
+- **Its marker** is the first `**Handling each answer (INV-284).**` below its options and above
+  the next heading, modeled on Module 7 step 3b's. Gates asked in place of one another (the
+  bands of one quality gate, or a question's alternative forms) share the marker below the
+  last of them.
+- **Each entry** is a bullet at the marker's indent whose bold label names the option by
+  number and by its opening words: `- **2, "Move forward":**`, `- **1, repair**`, or, where
+  two gates share the marker, `- **2, "Continue to mapping now" or "Proceed anyway":**`. The
+  entry then says what happens and where the flow resumes, or points to the step in the file
+  that already says it (INV-300). The opening words must match the option's text, so a marker
+  borrowed from a neighboring gate, a renumbered option or a stale entry fails.
+- **A runtime list** (options that are placeholders, such as `` `<DATA_SOURCE>` `` or
+  `{feature type}`) has no fixed options to name, so it carries one `- **Each number:**` entry.
+
+It fails when a gate has no marker, when the marker leaves an option out, when an entry names
+an option the gate does not have, and when the scan finds fewer gates than the floor (INV-265).
+Each module's negative control removes a real entry from that module's shipped text, and one
+of them removes Module 6 Phase D's "Iterate now" entry. The phrase checks read wrapped text
+(INV-346): a question, an option or an entry label may wrap without changing the result.
+
+⚠️ **What this establishes:** every gate's options are each named in a handler marker. It
+does **not** establish that the entry's handling is correct or that a live guide follows it;
+only `dry-run` phase 3 can observe that.
 
 Enforces **INV-284** — every option a pinned gate offers has a handling step (a section in the
 same skill file, or an inline branch at the gate) saying what the guide does when it is chosen and
@@ -40,127 +62,384 @@ blocks, keeps those questions verbatim with both options, and marks no ≥80% qu
 
 Source spec:
 `specs/the-quality-gates-improve-option-has-no-procedure-and-is-incoherent-on-a-generated-scenario.md`.
+Source issue: #531 (part of #504).
 
 Run:  python3 -m unittest discover -s tests
 """
 import re
 import unittest
+from collections import namedtuple
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-MODULE = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
-          / "module-05-data-quality-mapping")
+SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
+MODULE = SKILLS / "module-05-data-quality-mapping"
 
-#: A numbered option inside a gate's option list.
-#: ⛔ Scoped to lists that FOLLOW a 👉, not to every numbered line in the module. A first
-#: version matched any `1.` and flagged two things that are not gate options at all: an
-#: instruction step in `SKILL.md` (matched on the word "fix") and one of the improve
-#: path's own numbered steps (matched on "improved"). A guard that reports correct prose
-#: is one that gets relaxed.
-OPTION = re.compile(r"^\s*>?\s*(\d)\.\s+(.*\S)\s*$")
-POINTER = "👉"
-#: The remediation verbs a gate option offers in this corpus, matched on the option's
-#: LEADING verb — the action it proposes — not on any occurrence. "Iterate to improve the
-#: data" proposes *iterating*; improving is what iterating is for, and requiring an
-#: "improve" section for it sends an editor to write a second handler for a step that
-#: already exists. Each maps to the word its handling section's heading must contain, so
-#: the guard checks the claim rather than a list of sentences already seen (INV-282).
-REMEDIATION = (
-    (r"\biterat", "iterate"),
-    (r"\bimprov|\bwork on\b", "improve"),
-)
-#: The second, equally legitimate way an option is handled: an inline branch right below
-#: the gate that says what happens and where it goes. Phase 3 does this ("If rejected:
-#: … return to Phase 2 to adjust their mapping"), and requiring a heading there would flag
-#: a gate that is correctly handled — which is how a guard gets relaxed.
-INLINE_HANDLER = re.compile(
-    r"\*\*If (?:accepted|rejected|they|the)\b|return to Phase|go back to|"
-    r"\bre-enter\b|see \u00a7", re.I)
-#: How far below an option an inline handler may sit. Sized from the real gates: phase 3's
-#: sits ~200 chars below, phase 2's routing lands within its next section.
-INLINE_WINDOW = 1500
+#: The handler marker, verbatim (Module 7 step 3b's shape).
+MARKER = "**Handling each answer (INV-284).**"
+#: Where a bold 👉 question starts. A 👉 in running prose ("the pending 👉 question") is not one.
+QUESTION = "👉 **"
+#: Leading blockquote markers, each with the one optional space after it.
+_QUOTE = re.compile(r"^[ \t]*(?:>[ \t]?)+")
+_FENCE = re.compile(r"^[ \t]*(?:>[ \t]?)*[ \t]*(`{3,}|~{3,})")
+_HEADING = re.compile(r"^ {0,3}#{1,6}(?:[ \t]|$)")
+_OPTION = re.compile(r"^(?P<indent>[ \t]*)(?P<num>\d+)\.[ \t]+(?P<text>\S.*?)\s*$")
+_BULLET = re.compile(r"^(?P<indent>[ \t]*)-[ \t]+(?P<text>\S.*?)\s*$")
+_LABEL = re.compile(r"^\*\*(?P<label>.+?)\*\*")
+_NUMBERED = re.compile(r"^(?P<num>\d+),\s*(?P<rest>.*)$")
+_EACH = re.compile(r"^Each number\b")
+
+#: The scan's floors (INV-265). At #531 it found 51 gates with 141 options in 19 files across
+#: 10 skill directories; each floor sits a little under that so a gate retired on purpose does
+#: not fail it, while a parser that stops finding gates does.
+MIN_GATES = 45
+MIN_OPTIONS = 125
+MIN_FILES = 15
+MIN_MODULES = 9
+
+Gate = namedtuple("Gate", "line question options end")
+Entry = namedtuple("Entry", "num quotes start stop")
 
 
-def gate_files():
-    """Every module file carrying a 👉 gate — derived, not listed (INV-246)."""
-    return sorted(p for p in MODULE.glob("*.md")
-                  if "👉" in p.read_text(encoding="utf-8"))
+def _indent(line):
+    return len(line) - len(line.lstrip(" \t"))
 
 
-def headings(text):
-    return [m.group(1).lower() for m in re.finditer(r"^#{2,4}\s+(.*)$", text, re.M)]
+def norm(text):
+    """Lower case, emphasis and code marks dropped, whitespace collapsed (INV-346)."""
+    return re.sub(r"\s+", " ", text.replace("*", "").replace("`", "")).strip().lower()
 
 
-def gate_options(text):
-    """(option_text, end_offset) for every numbered option belonging to a 👉 question.
-
-    Line-scoped by design (#424): an option opens on its own numbered line, and what is
-    matched is its LEADING verb, which sits on that line however the option wraps.
-    """
-    options = []
-    offset = 0
-    in_list = False
-    seen_one = False
+def prose_lines(text):
+    """Each line with its blockquote markers stripped, or None inside (or on) a code fence."""
+    out, fence = [], None
     for line in text.split("\n"):
-        start = offset
-        offset += len(line) + 1
-        if POINTER in line:
-            in_list, seen_one = True, False
-            continue
-        if not in_list:
-            continue
+        m = _FENCE.match(line)
+        if fence is None and m:
+            fence = m.group(1)[0]
+            out.append(None)
+        elif fence is not None:
+            if m and m.group(1)[0] == fence:
+                fence = None
+            out.append(None)
+        else:
+            out.append(_QUOTE.sub("", line, count=1))
+    return out
+
+
+def _read_options(prose, k):
+    """[(number, text)] for the numbered list starting at line k, and the line after it."""
+    options, base, blank, last = [], None, False, k
+    while k < len(prose) and prose[k] is not None:
+        line = prose[k]
         if not line.strip():
-            continue                      # a blank line inside the list is fine
-        match = OPTION.match(line)
-        if match:
-            options.append((match.group(2), start + len(line)))
-            seen_one = True
-        elif seen_one or not line.lstrip().startswith(">"):
-            in_list = False               # the list ended
-    return options
+            blank = True
+            k += 1
+            continue
+        m = _OPTION.match(line)
+        if m and int(m.group("num")) == len(options) + 1 and base in (None, _indent(line)):
+            base = _indent(line)
+            options.append([int(m.group("num")), m.group("text")])
+        elif options and not blank and _indent(line) > base:
+            options[-1][1] += " " + line.strip()     # a wrapped option
+        else:
+            break
+        blank, last = False, k
+        k += 1
+    return [tuple(o) for o in options], last + 1
 
 
-def remediation_options(text):
-    """(option_text, required_word, end_offset) for every gate option proposing work."""
-    found = []
-    for option, end in gate_options(text):
-        for pattern, word in REMEDIATION:
-            if re.search(pattern, option, re.I):
-                found.append((option, word, end))
-                break
+def gates(text):
+    """Every bold 👉 question with a numbered list directly beneath it."""
+    prose = prose_lines(text)
+    found, i = [], 0
+    while i < len(prose):
+        line = prose[i]
+        if line is None or QUESTION not in line:
+            i += 1
+            continue
+        question, j = line[line.index(QUESTION):], i
+        while question.count("**") % 2 and j + 1 < len(prose) and (prose[j + 1] or "").strip():
+            j += 1
+            question += " " + prose[j].strip()   # a wrapped question
+        k = j + 1
+        while k < len(prose) and prose[k] is not None and not prose[k].strip():
+            k += 1
+        m = _OPTION.match(prose[k]) if k < len(prose) and prose[k] is not None else None
+        if m and m.group("num") == "1":
+            options, end = _read_options(prose, k)
+            found.append(Gate(i + 1, norm(question), options, end))
+            i = end
+        else:
+            i = j + 1
     return found
 
 
-def is_handled(text, word, end_offset):
-    """A heading naming the action, or an inline branch routing it — either discharges."""
-    if any(word in head for head in headings(text)):
-        return True
-    return bool(INLINE_HANDLER.search(text[end_offset:end_offset + INLINE_WINDOW]))
+def find_marker(prose, start):
+    """The index of the first marker line at or after ``start``, above the next heading."""
+    for k in range(start, len(prose)):
+        line = prose[k]
+        if line is None:
+            continue
+        if _HEADING.match(line):
+            return None
+        if MARKER in line:
+            return k
+    return None
 
 
-class EveryRemediationOptionHasAHandlingStep(unittest.TestCase):
-    def test_the_scan_finds_the_options(self):
+def marker_entries(text, m):
+    """Every entry in the marker block at line m: Entry(num | 'each', quotes, start, stop)."""
+    raw, prose = text.split("\n"), prose_lines(text)
+    ind = _indent(prose[m])
+    k = m + 1
+    while k < len(prose) and (prose[k] or "").strip() and not (
+            _BULLET.match(prose[k]) and _indent(prose[k]) == ind):
+        k += 1                                   # the marker's lead sentence, if it wraps
+    bullets = []
+    while k < len(prose):
+        line = prose[k]
+        if line is None:                         # a fence inside an entry belongs to it
+            if bullets and _indent(raw[k]) > ind:
+                bullets[-1][1] = k + 1
+                k += 1
+                continue
+            break
+        if not line.strip():
+            k += 1
+            continue
+        b = _BULLET.match(line)
+        if b and _indent(line) == ind:
+            bullets.append([k, k + 1])
+        elif bullets and _indent(line) > ind:
+            bullets[-1][1] = k + 1
+        else:
+            break
+        k += 1
+    entries = []
+    for start, stop in bullets:
+        body = " ".join((prose[n] or "").strip() for n in range(start, stop))
+        label = _LABEL.match(re.sub(r"^-\s+", "", body))
+        if not label:
+            continue
+        text_label = label.group("label").strip()
+        if _EACH.match(text_label):
+            entries.append(Entry("each", (), start, stop))
+            continue
+        n = _NUMBERED.match(text_label)
+        if not n:
+            continue                             # a bullet in the block that is not an entry
+        rest = n.group("rest").strip().rstrip(":").strip()
+        quotes = tuple(q for q in (re.findall(r'"([^"]+)"', rest) or [rest]) if q.strip())
+        entries.append(Entry(int(n.group("num")), quotes, start, stop))
+    return entries
+
+
+def is_runtime(gate):
+    """A list built at runtime: every option is a placeholder."""
+    return all(norm(t).startswith(("<", "{")) for _, t in gate.options)
+
+
+def _names(quote, gate, num):
+    return any(n == num and norm(t).startswith(norm(quote)) for n, t in gate.options)
+
+
+def marker_problems(text, name="text"):
+    """Every gate option with no entry in its marker, and every entry naming no option."""
+    prose = prose_lines(text)
+    problems, served = [], {}
+    for gate in gates(text):
+        m = find_marker(prose, gate.end)
+        if m is None:
+            problems.append("%s:%d: the gate %r has no %s below it, above the next heading"
+                            % (name, gate.line, gate.question[:60], MARKER))
+            continue
+        served.setdefault(m, []).append(gate)
+    for m, group in served.items():
+        entries = marker_entries(text, m)
+        if not entries:
+            problems.append("%s:%d: the marker carries no entry" % (name, m + 1))
+            continue
+        for gate in group:
+            for num, option in gate.options:
+                if is_runtime(gate):
+                    ok = any(e.num == "each" for e in entries)
+                else:
+                    ok = any(e.num == num and any(_names(q, gate, num) for q in e.quotes)
+                             for e in entries)
+                if not ok:
+                    problems.append("%s:%d: option %d (%r) of %r has no entry in the marker at "
+                                    "line %d" % (name, gate.line, num, option[:50],
+                                                 gate.question[:50], m + 1))
+        for e in entries:
+            if e.num == "each":
+                if not any(is_runtime(g) for g in group):
+                    problems.append("%s:%d: an 'Each number' entry serves a gate with fixed "
+                                    "options; name each option" % (name, e.start + 1))
+                continue
+            for q in e.quotes:
+                if not any(_names(q, g, e.num) for g in group if not is_runtime(g)):
+                    problems.append("%s:%d: the entry %d, %r names no option of the gate it "
+                                    "serves" % (name, e.start + 1, e.num, q))
+    return problems
+
+
+def skill_files():
+    """Every skill file carrying a gate — derived, not listed (INV-246)."""
+    return sorted(p for p in SKILLS.rglob("*.md") if gates(p.read_text(encoding="utf-8")))
+
+
+def without_entry(text, entry):
+    """``text`` with one entry's lines removed (a negative control)."""
+    lines = text.split("\n")
+    return "\n".join(lines[:entry.start] + lines[entry.stop:])
+
+
+def first_entry(text):
+    """The first numbered entry of the first gate's marker in ``text``."""
+    prose = prose_lines(text)
+    for gate in gates(text):
+        m = find_marker(prose, gate.end)
+        numbered = [e for e in marker_entries(text, m) if e.num != "each"] if m is not None else []
+        if numbered:
+            return numbered[0]
+    return None
+
+
+class EveryGateOptionHasAMarkerEntry(unittest.TestCase):
+    def test_the_scan_finds_the_gates(self):
         """⛔ INV-265 — a scan that matches nothing certifies nothing."""
-        total = sum(len(remediation_options(p.read_text(encoding="utf-8")))
-                    for p in gate_files())
-        self.assertGreaterEqual(
-            total, 4,
-            "fewer remediation options were found than this module is known to offer; the "
-            f"scan broke or the gates moved. Found {total}")
+        files = skill_files()
+        found = [g for p in files for g in gates(p.read_text(encoding="utf-8"))]
+        options = sum(len(g.options) for g in found)
+        modules = {p.relative_to(SKILLS).parts[0] for p in files}
+        for what, count, floor in (("gates", len(found), MIN_GATES),
+                                   ("options", options, MIN_OPTIONS),
+                                   ("files", len(files), MIN_FILES),
+                                   ("skill directories", len(modules), MIN_MODULES)):
+            with self.subTest(what=what):
+                self.assertGreaterEqual(
+                    count, floor, "the scan found %d %s, below its floor of %d: the parser broke "
+                    "or the gates moved" % (count, what, floor))
 
-    def test_each_one_has_a_section_that_handles_it(self):
+    def test_every_option_has_an_entry(self):
         bad = []
-        for path in gate_files():
-            text = path.read_text(encoding="utf-8")
-            for option, word, end in remediation_options(text):
-                if not is_handled(text, word, end):
-                    bad.append(f"{path.name}: {option!r} needs a '{word}' section or an "
-                               "inline branch saying what happens")
+        for path in skill_files():
+            bad += marker_problems(path.read_text(encoding="utf-8"),
+                                   str(path.relative_to(SKILLS)))
         self.assertEqual(
             [], bad,
-            "a pinned gate offers to do work and no section in the same file says what "
-            "that work is. The turn then ends on the question with nothing to run:\n  "
+            "a pinned gate offers an option no handler marker names, so nothing says what the "
+            "guide does when it is chosen or where the flow resumes (INV-284):\n  "
             + "\n  ".join(bad))
+
+
+class TheGuardBites(unittest.TestCase):
+    """Negative controls on the shipped text, and must-not-flag fixtures."""
+
+    def test_removing_an_entry_fails_in_every_module(self):
+        """One control per skill directory, derived from the scan rather than listed."""
+        by_module = {}
+        for path in skill_files():
+            by_module.setdefault(path.relative_to(SKILLS).parts[0], []).append(path)
+        self.assertGreaterEqual(len(by_module), MIN_MODULES)
+        for module, paths in sorted(by_module.items()):
+            with self.subTest(module=module):
+                text = paths[0].read_text(encoding="utf-8")
+                entry = first_entry(text)
+                self.assertIsNotNone(entry, "no numbered entry to remove in %s" % paths[0].name)
+                self.assertEqual([], marker_problems(text))
+                self.assertNotEqual([], marker_problems(without_entry(text, entry)))
+
+    def test_removing_phase_d_iterate_now_fails(self):
+        """Module 6 Phase D's iterate-vs-proceed gate: #526's site."""
+        text = (SKILLS / "module-06-data-processing" / "phaseD-validation.md").read_text(
+            encoding="utf-8")
+        gate = next(g for g in gates(text) if "most tests pass" in g.question)
+        entry = next(e for e in marker_entries(text, find_marker(prose_lines(text), gate.end))
+                     if e.num == 1)
+        self.assertIn('"Iterate now"', text.split("\n")[entry.start])
+        problems = marker_problems(without_entry(text, entry))
+        self.assertTrue(any("option 1" in p and "iterate now" in p.lower() for p in problems),
+                        problems)
+
+    def test_removing_a_whole_marker_fails(self):
+        text = (SKILLS / "module-06-data-processing" / "phaseD-validation.md").read_text(
+            encoding="utf-8")
+        mutant = text.replace(MARKER, "**Handling.**", 1)
+        self.assertNotEqual(text, mutant, "the mutation no longer applies")
+        self.assertNotEqual([], marker_problems(mutant))
+
+    def test_a_reworded_option_fails(self):
+        """The entry names the option by its opening words, so a renumber or rename is caught."""
+        text = (SKILLS / "module-06-data-processing" / "phaseD-validation.md").read_text(
+            encoding="utf-8")
+        mutant = text.replace("2. Move forward to the next module.",
+                              "2. Revisit the mapping first.", 1)
+        self.assertNotEqual(text, mutant, "the mutation no longer applies")
+        self.assertNotEqual([], marker_problems(mutant))
+
+    def test_a_stale_entry_fails(self):
+        text = (SKILLS / "module-03-system-verification" / "phase2-report-close.md").read_text(
+            encoding="utf-8")
+        old = '   - **2, "Move on":**'
+        mutant = text.replace(old, '   - **3, "Skip the report":** nothing.\n' + old, 1)
+        self.assertNotEqual(text, mutant, "the mutation no longer applies")
+        self.assertNotEqual([], marker_problems(mutant))
+
+    def test_a_borrowed_marker_fails(self):
+        """A band whose own marker is gone may not pass on its neighbor's entries."""
+        text = (MODULE / "phase2-data-mapping.md").read_text(encoding="utf-8")
+        start = text.index("**While one or more unmapped sources remain**")
+        at = text.index(MARKER, start)
+        mutant = text[:at] + "**Handling.**" + text[at + len(MARKER):]
+        self.assertNotEqual([], marker_problems(mutant))
+
+    def test_a_new_gate_with_no_marker_fails(self):
+        fixture = ("👉 **Which one? Reply with a number:**\n\n1. This one.\n2. That one.\n\n"
+                   "Then carry on.\n")
+        self.assertEqual(1, len(gates(fixture)))
+        self.assertNotEqual([], marker_problems(fixture))
+
+    def test_each_number_on_a_fixed_gate_fails(self):
+        fixture = ("👉 **Which one? Reply with a number:**\n\n1. This one.\n2. That one.\n\n"
+                   + MARKER + "\n\n- **Each number:** carry on.\n")
+        self.assertNotEqual([], marker_problems(fixture))
+
+    def test_a_complete_marker_passes(self):
+        """Must-not-flag (INV-282): the documented shape, one entry per option."""
+        fixture = ("> 👉 **Which one? Reply with a number:**\n>\n> 1. **This one** — first.\n"
+                   "> 2. That one, which wraps\n>    onto a second line.\n\n" + MARKER + "\n\n"
+                   '- **1, "This one":** step 2.\n- **2, that one** → step 3.\n')
+        self.assertEqual([], marker_problems(fixture))
+
+    def test_runtime_lists_take_one_each_number_entry(self):
+        fixture = ("👉 **Which sources? Reply with one or more numbers:**\n\n1. `<DATA_SOURCE>`\n"
+                   "2. `<DATA_SOURCE>`\n\n" + MARKER + "\n\n- **Each number:** that source.\n")
+        self.assertEqual([], marker_problems(fixture))
+
+    def test_what_is_not_a_gate(self):
+        """Must-not-flag: a 👉 in prose, a fenced example, and a yes/no question."""
+        for fixture in ("Re-present the pending 👉 question on the next turn.\n\n1. Do this.\n",
+                        "```text\n👉 **Which one? Reply with a number:**\n\n1. This one.\n```\n",
+                        "👉 **Shall we go on?** (respond yes or no)\n\n- **Yes:** go on.\n"):
+            with self.subTest(fixture=fixture[:30]):
+                self.assertEqual([], gates(fixture))
+
+    def test_a_rewrap_still_passes(self):
+        """INV-346: the question, an option and an entry label may each wrap."""
+        mutant = (MODULE / "phase2-data-mapping.md").read_text(encoding="utf-8")
+        for old, new in (
+                ("Ready to map the next source, {next}? Reply with a number:**",
+                 "Ready to map the next source,\n  {next}? Reply with a number:**"),
+                ('- **2, "No, I\'d like to iterate on {source} first" or',
+                 '- **2, "No, I\'d like to iterate on {source} first"\n  or'),
+                ("   2. **Try the mapping workflow once more** — it may",
+                 "   2. **Try the mapping workflow once more** —\n      it may")):
+            with self.subTest(wrap=old[:40]):
+                self.assertIn(old, mutant, "the re-wrap no longer applies")
+                mutant = mutant.replace(old, new, 1)
+        self.assertEqual([], marker_problems(mutant))
 
 
 class TheImprovePathIsUsable(unittest.TestCase):

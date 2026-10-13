@@ -137,6 +137,11 @@ This is a ⛔ gate: wait for the real choice, do not assume one (INV-007).
   never told a module had been skipped (INV-014 permits only *requested* skips).
 - **Customized** → go to Step 2.
 
+**Handling each answer (INV-284).**
+
+- **1, "Core bootcamp":** the **Core** item above, then Step 3.
+- **2, "Customized bootcamp":** the **Customized** item above, so Step 2, then Step 3.
+
 ## 2. Select modules (Customized only)
 
 Show the full module list above (as statements, so the bootcamper sees everything and what is
@@ -165,6 +170,13 @@ Apply the prerequisite rules when recording the selection:
 
 **Hold** `path: customized` and the resolved ordered `selected_modules` list for the consolidated
 write in Step 6. Keep the list in module order so the journey map and transitions follow it.
+
+**Handling each answer (INV-284).** Each number chosen adds its module to the held list, by the
+prerequisite rules above; then Step 3.
+
+- **1, "Entity Resolution Concepts":** added.
+- **2, "System verification":** added.
+- **3, "Truth Set visualization":** added, with System verification too when 2 was not chosen.
 
 ## 3. Level of detail (verbosity)
 
@@ -206,6 +218,13 @@ This is not a ⛔ gate, but it is still a 👉 question the bootcamper answers (
 reply. If they explicitly decline to choose (e.g. "no preference", "you pick", "skip"), treat that
 decline as choosing the recommended `standard` and say so — never assume a level before they have
 replied. (The can-change-it-any-time reassurance belongs **before** the question, above — not here.)
+
+**Handling each answer (INV-284).** Hold the preset as above, then Step 4 (Step 3a asks nothing).
+
+- **1, "minimal":** every category `0`.
+- **2, "concise":** every category `1`.
+- **3, "standard":** every category `2`.
+- **4, "detailed":** every category `3`.
 
 ## 3a. Model guidance — no question (retired)
 
@@ -254,6 +273,15 @@ questions.
   5. Windows (x86-64)
 
   *(Internal: end the turn on this single 👉 question and wait — INV-251.)*
+
+  **Handling each answer (INV-284).** Hold the answer as `os`/`arch` for the Step 6 write, as a
+  detected platform is held, then go on with the rest of this step.
+
+  - **1, "Linux (x86-64)":** held.
+  - **2, "Linux (ARM64)":** held.
+  - **3, "macOS (Apple Silicon)":** held.
+  - **4, "macOS (Intel)":** held.
+  - **5, "Windows (x86-64)":** held.
 
 - **Detect the bootcamper's name silently (do not ask).** Best-effort: read a display name from
   `git config user.name` (else the environment). If found, hold it as `name` for the Step 6

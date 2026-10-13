@@ -174,6 +174,14 @@ than a copy here (INV-300, INV-357).
    3. Just show me the engine's answer.
 
    *(Internal: end the turn on this question and wait.)*
+
+   **Handling each answer (INV-284).** Every answer gets item 3's reveal, in the same turn as the
+   next pair's question, or as step 4b's first question after the last pair.
+
+   - **1, "Same entity":** prediction `same`.
+   - **2, "Different entities":** prediction `different`.
+   - **3, "Just show me the engine's answer":** prediction `skipped`.
+
 3. **Reveal it in the same turn as the next 👉.** The engine's call is "same entity" when step 4a
    found both records in one entity, and "different entities" otherwise. The one line on what the
    engine used is the `WHY_KEY` from `why_records` on the pair. `why_records` answers for a pair
@@ -227,6 +235,11 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      2. {feature type}, and one line per remaining feature type
 
      *(Internal: end the turn on this question and wait.)*
+
+     **Handling each answer (INV-284).**
+
+     - **Each number:** a feature type they predict joined the records. The reveal follows on the
+       next turn, as the next item says; a "skip" reply gets the same reveal with no prediction.
    - **The reveal is items 2–5**, presented on the next turn. Open item 4 by putting the
      Bootcamper's picks beside the `+FEATURE` components of `WHY_KEY`: `agreed` when the two sets
      are the same, `differed` otherwise, naming the features they share.
@@ -380,6 +393,11 @@ teaches the bootcamper how Senzing explains its resolution decisions.
    offer) in `phase2b-discover.md`, and then return to `phase1-query-visualize.md` for the Query
    Completeness Gate.
 
+   **Handling each answer (INV-284).**
+
+   - **1, "Continue to the next demonstration":** step 4c.
+   - **2, "Proceed to module completion":** the exit above.
+
 **Checkpoint:** write step 4b under `module_7_query.steps.4b`, using
 `{"status": "completed", "entity_demonstrated": <entity_id>}` where `<entity_id>` is the numeric
 entity ID used in the Why Analysis demonstration. Also set top-level `current_step` to `"4b"`.
@@ -532,6 +550,11 @@ Demonstrate How Analysis using a concrete multi-record entity (3+ records) ident
    write `discover_phase: "skipped"` to `config/bootcamp_progress.json`, run step 4e (the export
    offer) in `phase2b-discover.md`, and then return to `phase1-query-visualize.md` for the Query
    Completeness Gate.
+
+   **Handling each answer (INV-284).**
+
+   - **1, "Continue to the next demonstration":** step 4d, in `phase2b-discover.md`.
+   - **2, "Proceed to module completion":** the exit above.
 
 **Checkpoint:** write step 4c under `module_7_query.steps.4c`, using
 `{"status": "completed", "entity_demonstrated": <entity_id>}` where `<entity_id>` is the numeric

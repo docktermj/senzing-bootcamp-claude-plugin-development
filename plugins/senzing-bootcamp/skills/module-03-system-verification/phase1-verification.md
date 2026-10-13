@@ -666,6 +666,14 @@ cannot be found, skip this step without asking (no result, no prediction), recor
    3. Just show me the engine's answer.
 
    *(Internal: end the turn on this question and wait.)*
+
+   **Handling each answer (INV-284).** Every answer runs items 3–5 below, which end at Step 8 in
+   the same turn.
+
+   - **1, "Yes, it joins Marisol's entity":** prediction `joins`.
+   - **2, "No, it stays a separate entity":** prediction `separate`.
+   - **3, "Just show me the engine's answer":** prediction `skipped`.
+
 3. **After the answer, load and look.** Load `mari_record.jsonl` with `verify_pipeline.[ext]`, as
    Step 6 loads its file, with the same 120-second timeout. Then, in generated SDK code (via
    `get_sdk_reference` + `sdk_guide`, never from memory), get the entity of the `Mari` record and of

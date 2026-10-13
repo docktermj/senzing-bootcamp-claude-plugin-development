@@ -1334,6 +1334,13 @@ If `production/` already exists, pin this 👉 question verbatim (neutral lead +
 
 Wait for the answer. On abort, skip to the graduation report noting the abort.
 
+**Handling each answer (INV-284).**
+
+- **1, "Overwrite":** replace the existing contents by the copy below, then Step 3.
+- **2, "Merge":** keep the existing files and add or update them by the copy below, then Step 3.
+- **3, "Abort":** leave `production/` untouched and skip to Step 5, the graduation report, noting
+  the abort.
+
 Create `production/` and copy production-relevant files (skip any source that
 does not exist; on a copy failure, log and continue):
 
@@ -1612,6 +1619,11 @@ overwriting it (neutral lead + numbered list, INV-051/INV-056); otherwise create
 
 1. **Overwrite** — replace the previous revisit bundle.
 2. **Keep** — leave the existing bundle untouched and skip this step.
+
+**Handling each answer (INV-284).**
+
+- **1, "Overwrite":** run 6a–6c into `backups/revisit/`, then Step 7.
+- **2, "Keep":** leave the bundle untouched, skip 6a–6c, and continue to Step 7.
 
 ### 6a. Database backup
 
