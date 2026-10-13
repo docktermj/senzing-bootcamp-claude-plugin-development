@@ -61,6 +61,21 @@ def step_1b():
     return text[start : text.index("\n## ", start + 10)]
 
 
+def unquote(text):
+    """Blockquote markers removed and whitespace collapsed, so a wrap cannot split a phrase."""
+    return re.sub(r"\s+", " ", re.sub(r"(?m)^\s*>\s?", "", text))
+
+
+def yum_ban_problems(prose):
+    """What the yum `direct_download` warning has lost, as a list (empty when intact)."""
+    required = {
+        "the ban": r"(?i)Do not use `direct_download` on yum",
+        "the rpm reason": r"(?i)wrong for an rpm system",
+        "the apt-only route": r"(?i)`direct_download` is the apt/firewalled route only",
+    }
+    return [name for name, pattern in required.items() if not re.search(pattern, prose)]
+
+
 class TheStepExistsAndIsReachable(unittest.TestCase):
 
     def test_step_1b_exists(self):
@@ -123,10 +138,37 @@ class EachPlatformFamilyHasItsOwnMechanism(unittest.TestCase):
         self.assertRegex(self.flat, r'(?i)`senzing_version` as the string `"current"`')
 
     def test_direct_download_is_not_offered_on_yum(self):
-        """`sdk_guide(platform='linux_yum')` returns .deb packages with apt commands."""
-        self.assertRegex(self.flat, r"(?i)Do not use `direct_download` on yum")
-        self.assertRegex(self.flat, r"(?i)wrong for an rpm system")
+        """`direct_download` is the apt route only; yum never takes it.
 
+        On 2026-07-31 (server 1.32.2) `sdk_guide(platform='linux_yum')` served `.deb`
+        packages with apt commands. On 1.37.28 (2026-10-13, #568) it carries no
+        `direct_download` at all, so the reason changed and the ban did not.
+        """
+        prose = unquote(self.section)
+        self.assertEqual([], yum_ban_problems(prose))
+        self.assertNotRegex(
+            prose, r"(?i)`sdk_guide\(platform='linux_yum'\)` returns a `direct_download`",
+            "Step 1b again says linux_yum returns a direct_download block (it carries none on "
+            "server 1.37.28, 2026-10-13)",
+        )
+
+    def test_the_yum_ban_check_catches_a_regression(self):
+        """Negative controls: each weakening of the ban must make the check report it."""
+        prose = unquote(self.section)
+        self.assertEqual([], yum_ban_problems(prose), "the check fails on the real text")
+        mutations = {
+            "ban lifted": prose.replace(
+                "Do not use `direct_download` on yum", "You may use `direct_download` on yum"
+            ),
+            "apt-only dropped": prose.replace(
+                "is the apt/firewalled route only", "is the firewalled route"
+            ),
+            "rpm reason dropped": prose.replace("wrong for an rpm system", "unusual"),
+        }
+        for name, mutated in mutations.items():
+            with self.subTest(mutation=name):
+                self.assertNotEqual(prose, mutated, "the mutation found nothing to change")
+                self.assertTrue(yum_ban_problems(mutated), "the check missed: " + name)
 
 class CommandOwnershipIsDistinguished(unittest.TestCase):
     """Half of Step 1b's commands are on loan from the server; half are not.

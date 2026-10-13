@@ -160,12 +160,18 @@ class TheRetiredSenz7426ClaimIsGone(unittest.TestCase):
         Step 4 scaffold count), which is no check at all. So it follows the stamp: Module 3
         must route to the owning block, and that block must carry a server version and date
         for its `explain_error_code('7426')` reading.
+
+        (Dated note, 2026-10-13, #568: the block's title changed from "Both tools agree on
+        the diagnosis and the fix — not on the macOS literal" to the one below, because on
+        server 1.37.28 `explain_error_code('7426')` no longer quotes the 4.4.x literal and
+        both tools say to test whether `SUPPORTPATH` resolves. The dated shape is unchanged,
+        and the retired title must not come back in either module.)
         """
         phase1 = PLUGIN / "skills" / "module-03-system-verification" / "phase1-verification.md"
         module_02 = PLUGIN / "skills" / "module-02-sdk-setup" / "SKILL.md"
         flat = re.sub(r"\s+", " ", phase1.read_text(encoding="utf-8"))
         self.assertRegex(flat, r"(?i)relay what `explain_error_code` returned")
-        owner = "Both tools agree on the diagnosis and the fix — not on the macOS literal"
+        owner = "Both tools agree on the diagnosis, the fix and the path test"
         self.assertRegex(
             flat, r"If the code is `SENZ7426`.{0,400}" + re.escape(owner),
             "Module 3's SENZ7426 relay no longer names the Module 2 block that dates it",
@@ -173,12 +179,21 @@ class TheRetiredSenz7426ClaimIsGone(unittest.TestCase):
         owner_text = re.sub(
             r"\s+", " ", re.sub(r"(?m)^\s*>\s?", "", module_02.read_text(encoding="utf-8"))
         )
-        self.assertRegex(
-            owner_text,
+        dated = (
             re.escape(owner) + r"\*\* \(INV-169\) — re-verified on \*\*MCP server "
-            r"\d+\.\d+\.\d+, \d{4}-\d{2}-\d{2}\*\*\. `explain_error_code\('7426'\)`",
+            r"\d+\.\d+\.\d+, \d{4}-\d{2}-\d{2}\*\*\. `explain_error_code\('7426'\)`"
+        )
+        self.assertRegex(
+            owner_text, dated,
             "the owning block no longer dates its explain_error_code('7426') reading",
         )
+        # Negative control: the same block with its stamp removed must not pass the shape.
+        undated = re.sub(r"re-verified on \*\*MCP server [^*]+\*\*", "re-verified", owner_text)
+        self.assertNotEqual(owner_text, undated, "the stamp to strip was not found")
+        self.assertNotRegex(undated, dated, "the dated-shape check passes an undated block")
+        retired = "not on the macOS literal"
+        self.assertNotIn(retired, owner_text, "Module 2 carries the retired block title")
+        self.assertNotIn(retired, flat, "Module 3 still names the retired block title")
 
 
 if __name__ == "__main__":

@@ -378,10 +378,10 @@ sudo apt install -y senzingsdk-runtime senzingsdk-setup   # takes the newest ava
 *Server-documented* — `sudo yum install -y senzingsdk-runtime senzingsdk-setup` to update
 (re-read it from `sdk_guide`; the form here is a dated illustration).
 
-> ⚠️ **Do not use `direct_download` on yum.** `sdk_guide(platform='linux_yum')` returns a
-> `direct_download` block, but its packages are **`.deb` files with `sudo apt install` commands**
-> (verified 2026-07-31, server 1.32.2). They are wrong for an rpm system. `direct_download` is the
-> apt/firewalled route only.
+> ⚠️ **Do not use `direct_download` on yum.** `sdk_guide(platform='linux_yum')` carries no
+> `direct_download` today (server 1.37.28, 2026-10-13). The `.deb` packages with `sudo apt install`
+> commands it once served there (server 1.32.2, 2026-07-31) were wrong for an rpm system.
+> `direct_download` is the apt/firewalled route only.
 
 **macOS, Homebrew cask (`macos_arm`):**
 
@@ -2182,23 +2182,23 @@ call for exactly this reason.
 > end-to-end on cask 4.4.0.26206 and **reported against 4.3.3.26191, which ships the same wrong
 > path** (verified on MCP server 1.32.3, 2026-07-31).
 >
-> ⛔ **Both tools agree on the diagnosis and the fix — not on the macOS literal** (INV-169) —
-> re-verified on **MCP server 1.37.14, 2026-09-28**. `explain_error_code('7426')` ranks
-> *"SUPPORTPATH points at a directory with no transliteration modules … This is a configuration
-> error, NOT a broken install"* as `common_causes[0]` with *"Check SUPPORTPATH FIRST"* as
-> `resolution_steps[0]`, naming this same macOS cask case and pointing back at
-> `sdk_guide topic='install'` for the platform detail. Both give the same fix: set `SUPPORTPATH` to
-> `$(brew --prefix)/opt/senzing/data`, and do not use the shipped `.ini` as-is. **They differ on
-> what the shipped ini says.** `explain_error_code`'s macOS cause still quotes the
-> `${INSTALLPATH}/senzing/er/data` literal, which holds for cask 4.4.x and earlier only.
-> `sdk_guide(topic='install', platform='macos_arm', language='java')` now says the literal "has
-> already drifted once" — cask 4.5.0.26245 ships a Linux path instead, and its `CONFIGPATH` and
-> `RESOURCEPATH` are Linux paths too — and tells the reader *"Do not pin the literal"*. So relay
-> either tool for the diagnosis and the fix, relay `sdk_guide` for the platform detail, and never
-> tell a Bootcamper that `explain_error_code`'s macOS literal is what their ini says. Keep
+> ⛔ **Both tools agree on the diagnosis, the fix and the path test** (INV-169) — re-verified on
+> **MCP server 1.37.28, 2026-10-13**. `explain_error_code('7426')` ranks *"SUPPORTPATH points at a
+> directory with no transliteration modules … This is a configuration error, NOT a broken
+> install"* as `common_causes[0]`, adds that `SzProduct` keeps working while engine calls fail, and
+> gives *"Check SUPPORTPATH FIRST"* as `resolution_steps[0]`, naming the macOS cask case and pointing
+> back at `sdk_guide topic='install'` for the platform detail. Both give the same fix: set
+> `SUPPORTPATH` to `$(brew --prefix)/opt/senzing/data`, and do not use the shipped `.ini` as-is.
+> Both say to test whether `SUPPORTPATH` resolves rather than compare it to a string:
+> `explain_error_code` says *"do not compare the value against any particular string, because the
+> shipped template's paths have changed across releases"*, and
+> `sdk_guide(topic='install', platform='macos_arm', language='csharp')` says *"Test whether the path
+> RESOLVES instead"*. So relay either tool for the diagnosis and the fix, relay `sdk_guide` for the
+> platform detail, and never tell a Bootcamper that any one literal is what their ini says. Keep
 > `sdk_guide` cited for what it still owns — the paths, env vars and EULA variable — and note that
-> the principle the earlier note rested on is unchanged: **ask the tool that owns the fact.** Only
-> its example is obsolete: the two coverages have converged on the diagnosis, not on the literal.
+> the principle the earlier note rested on is unchanged: **ask the tool that owns the fact.**
+> (Until this re-check the two differed: on server 1.37.14, 2026-09-28, `explain_error_code` still
+> quoted the cask 4.4.x literal; Senzing fixed that upstream after the 2026-09-28 report.)
 >
 > ⚠️ `sdk_guide` gates this response on `language`: asked with `language='python'` for this platform
 > it returns only the "Python is Linux-only" compatibility note and **no install detail at all**, so

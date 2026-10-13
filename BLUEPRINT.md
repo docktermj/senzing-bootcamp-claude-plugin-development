@@ -9327,7 +9327,7 @@ looks wrong.
 - `tests/test_encoding_self_check_is_stated_as_behavior.py`: 31
 - `tests/test_end_the_turn_questions_exist.py`: 18
 - `tests/test_enforcer_clause_survives_a_line_break.py`: 9
-- `tests/test_engine_verification_and_senz2027.py`: 33
+- `tests/test_engine_verification_and_senz2027.py`: 39
 - `tests/test_entity_specification_access_pattern.py`: 11
 - `tests/test_env_script_names_every_required_export.py`: 8
 - `tests/test_env_script_powershell.py`: 21
@@ -9557,7 +9557,7 @@ looks wrong.
 - `tests/test_screenshot_retention_and_order.py`: 19
 - `tests/test_sdk_parameter_shapes.py`: 39
 - `tests/test_sdk_setup_prerequisites.py`: 41
-- `tests/test_sdk_update_offer.py`: 56
+- `tests/test_sdk_update_offer.py`: 57
 - `tests/test_search_docs_calls_pass_a_query.py`: 10
 - `tests/test_secret_patterns_are_shared.py`: 12
 - `tests/test_server_launch_warns_about_protected_launchers.py`: 7
@@ -11259,6 +11259,14 @@ Senzing licensing, with no SPDX identifier.
   and no `MCP-NEGATIVE` marker; the `search_docs` C# query and its allowlist
   entry are gone, and INV-222's dated note is queued as an amendment (every
   platform's reply now names the source, so "no C# line" was false)
+- #568: Module 2 Step 8's SENZ7426 block is retitled "Both tools agree on
+  the diagnosis, the fix and the path test" and dated server 1.37.28, Module 3
+  step 3b names it and drops the clause that the tool quotes a 4.4.x literal,
+  and Module 2's yum warning keeps its ban and "apt route only" but says
+  `linux_yum` carries no `direct_download` today (on 1.37.28
+  `explain_error_code` no longer quotes the macOS literal and `linux_yum`
+  serves no `.deb` packages, so both warnings described a server that had
+  moved on)
 - #571: `/dry-run 3 --simulated [persona]` runs `/auto-test`'s two-process
   walk to the chosen module's banner (taken from the module's skill files by
   `dry-run/module_banners.py`) plus `--turns`, capped by `--max-turns` 150,
