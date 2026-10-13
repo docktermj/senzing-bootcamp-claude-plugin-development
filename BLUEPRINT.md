@@ -11054,3 +11054,12 @@ Senzing licensing, with no SPDX identifier.
   option, with a negative control per skill directory; an amendment to
   INV-284 is queued (the guard covered only Module 5's iterate and improve
   options)
+- #574: two `PROPOSED AMENDMENT` blocks are queued in the ledger for
+  `/review-invariants`, one letting a single yes cover several records shown
+  whole in one numbered message (INV-314, `submit_feedback` and unattended
+  runs unchanged) and one saying a label applied through
+  `/refine-github-issue` after the maintainer approved it is the maintainer
+  choosing, even when the same run filed the issue (INV-318), each listing
+  the sites #575 rewords (a per-record yes made a release cycle approve each
+  finding separately, and refine's label step read as a run labeling its own
+  issue)
