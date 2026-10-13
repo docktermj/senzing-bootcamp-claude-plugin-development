@@ -23,6 +23,9 @@ offering a `free_data` source a return, must each make it report a problem.
 
 Source issue: #337. Invariants: INV-006, INV-050, INV-056, INV-239, INV-243, INV-284, INV-300.
 
+Also enforces INV-366 (the cross-module return contract, registered 2026-10-13) for the `collection_return` route:
+it asserts the skill files *state* the contract and cannot establish that a live run follows it.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

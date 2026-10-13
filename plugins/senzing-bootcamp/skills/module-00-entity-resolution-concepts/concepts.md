@@ -259,7 +259,7 @@ On **accept** ("yes", "sure", "let's try"), run the knowledge check under these 
   numbered shape nor INV-008's single-meaning-answer requirement, and it makes "was that correct?"
   a judgment call instead of a fact. Keep the *thinking* conceptual and the *answer format*
   closed.
-- ⛔ **When the answer is wrong, say so — and re-teach.** This is the highest-value moment in the
+- ⛔ **(INV-362) When the answer is wrong, say so — and re-teach.** This is the highest-value moment in the
   knowledge check, and it is the one a guide optimizing for encouragement gets wrong. Do all three:
   1. **Name it as incorrect, plainly and kindly.** Never "good thinking!" over a wrong answer, and
      never let the correction be so soft the bootcamper cannot tell they missed it. False praise

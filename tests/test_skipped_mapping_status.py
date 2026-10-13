@@ -30,6 +30,9 @@ controls, and **cannot** establish that a live run follows them, which only `dry
 observe. Every phrase check reads whitespace-collapsed text with blockquote markers stripped, so
 a re-wrap neither hides a phrase nor fails a correct one (INV-346).
 
+This module enforces INV-363 (what a `skipped` source means, registered 2026-10-13) and INV-344's
+#527 note.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

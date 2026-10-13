@@ -312,7 +312,7 @@ hit, decide between:
   ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
   `DEFERRED INVARIANT` block in the run's `specs/IMPLEMENTED.md` entry, as
   [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
-  (INV-300), then tell the maintainer to run `/review-invariants`.
+  (INV-300), then tell the maintainer to run `/review-invariants` (INV-365).
 - **Missing citation** → the rule *is* registered; the text just does not say which
   invariant governs. Add the citation. This is not cosmetic: INV-183 requires a step
   that generates an artifact to name its governing rules **at that step**, and a rule
@@ -457,7 +457,7 @@ session end:
    ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
    `DEFERRED INVARIANT` block in the run's `specs/IMPLEMENTED.md` entry, as
    [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
-   (INV-300), then tell the maintainer to run `/review-invariants`. An audit that changes
+   (INV-300), then tell the maintainer to run `/review-invariants` (INV-365). An audit that changes
    shipped code and leaves no ledger entry is the failure adjacent to the one INV-182
    prevents — follow the `deep-dive-audit-*` precedent and record it as a dated
    `## production-readiness-audit-<date>` entry marked **Not a spec**.
@@ -466,7 +466,7 @@ session end:
    ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
    `PROPOSED AMENDMENT` block in the run's `specs/IMPLEMENTED.md` entry, as
    [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
-   (INV-300), then tell the maintainer to run `/review-invariants`.
+   (INV-300), then tell the maintainer to run `/review-invariants` (INV-365).
 
 ⛔ **Do not end a run with unrecorded findings.** Before reporting, list what you found
 and confirm each is **either a filed issue or a line in the dated ledger entry**. "I
@@ -511,7 +511,7 @@ durable.
   `DEFERRED INVARIANT` block for a new rule, or a `PROPOSED AMENDMENT` block for a correction,
   in the run's ledger entry, as
   [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
-  (INV-300), then tell the maintainer to run `/review-invariants`. An unattended run, which
+  (INV-300), then tell the maintainer to run `/review-invariants` (INV-365). An unattended run, which
   cannot get a sign-off, takes the same route.
 - **`.claude/` never ships.** `propagate.sh` mirrors `plugins/`, `.claude-plugin/`,
   `docs/` and `README.md` only, so this skill and its helper stay maintainer-side.

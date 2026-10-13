@@ -788,7 +788,7 @@ summary), then close the module:
 `module_6_processing.quality_iterations` (the iteration record whose shape step 3b's
 [quality-iteration route](../module-07-query-visualize-discover/phase1-query-visualize.md#the-quality-iteration-route)
 states once, INV-300), record which sources were remapped and reloaded, the band that sent them
-(`from_verdict`), and the indicators before and after. ⛔ **(INV-284) This section is the only record
+(`from_verdict`), and the indicators before and after. ⛔ **(INV-366) This section is the only record
 of it:** the return wrote no Module 5 recap section and added nothing to `modules_completed`, and
 Module 6 itself is completed once, here.
 

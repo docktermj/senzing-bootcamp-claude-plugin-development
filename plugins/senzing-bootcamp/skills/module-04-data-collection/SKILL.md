@@ -59,9 +59,9 @@ and the single-write checkpoint that follows from it; it is stated once, there, 
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work. Read `current_step` and
-resume at the right step. **When it carries a `collection_return`, none of this runs:** go straight
+resume at the right step. **(INV-366) When it carries a `collection_return`, none of this runs:** go straight
 to Step 2 → [Receiving a `collection_return`](#receiving-a-collection-return). A return runs only the
-steps it names, so the steps it leaves out are not skipped steps. **When it carries a
+steps it names, so the steps it leaves out are not skipped steps. **(INV-366) When it carries a
 `setup_detour`, none of this runs either:** Step 8b's database switch is part-way through, so go to
 SDK setup's [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour),
 which finishes it and returns here.
@@ -217,7 +217,7 @@ complete list.
 
 <a id="receiving-a-collection-return"></a>
 
-**Receiving a `collection_return` (from Data Quality, Mapping, and Transformation).** ⛔ **(INV-284)
+**Receiving a `collection_return` (from Data Quality, Mapping, and Transformation).** ⛔ **(INV-284, INV-366)
 Check for it before anything else in this step.** When `config/bootcamp_progress.json` carries a
 `collection_return`, the Bootcamper chose the return route at Module 5's no-progress gate, and this
 is not a run of this module: show no start banner, journey map or overview, write no Module 4
@@ -890,13 +890,13 @@ Module 5 can evaluate.
 > here and states only what it does with it.** A `skipped` source has no mapper and no
 > Senzing-ready file, and gets neither for the rest of the run:
 >
-> - **It is not an unmapped source.** Nothing maps it next, offers it as the next source, or waits
+> - **It is not an unmapped source.** (INV-363) Nothing maps it next, offers it as the next source, or waits
 >   for it before Module 5 completes.
-> - **It is not a mapped source.** Nothing loads it, and the production configuration leaves it
+> - **It is not a mapped source.** (INV-363) Nothing loads it, and the production configuration leaves it
 >   out.
 > - **It is named wherever it is left out:** in Module 5's recap, with why it was skipped, and in
 >   the production README, as not mapped.
-> - **Its `config/mapping_state_[datasource].json` is kept, and never resumed.** That file holds the
+> - **Its `config/mapping_state_[datasource].json` is kept, and never resumed.** (INV-363) That file holds the
 >   source's only copy of `validation_rejections`, the evidence the upstream fix needs.
 >
 > `sample` (optional) is written only when this module creates a working sample of the collected
@@ -1469,7 +1469,7 @@ about a roughly half-hour load, for a load of about two minutes.
        `"8b"` and add the `setup_detour` record that SDK setup's
        [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour)
        defines, with `purpose: "database_switch"` and `return_to: {"module": "data_collection",
-       "resume": "9", "reask": "8b"}`. ⛔ **(INV-284) `current_module` is not changed:** the
+       "resume": "9", "reask": "8b"}`. ⛔ **(INV-284, INV-366) `current_module` is not changed:** the
        Bootcamper stays in this module, and the key is what lets an interrupted detour resume.
        That branch is the one statement of which steps run and how the detour ends (INV-300).
      - **When it finishes,** `database_type` is `postgresql`: continue to Step 9.
@@ -1505,7 +1505,7 @@ apply the behavior directly for now.)_
 
 ### 9. Module completion and transition to Module 5
 
-**Not on a `collection_return`.** ⛔ **(INV-284) When `config/bootcamp_progress.json` carries one,
+**Not on a `collection_return`.** ⛔ **(INV-284, INV-366) When `config/bootcamp_progress.json` carries one,
 this step does not run at all:** no Module Completion, no second Module 4 recap section, no progress
 update and no transition question. The Bootcamper never left Module 5, so return there at the step
 Module 5's Step 7b names ([Step 2](#receiving-a-collection-return)).

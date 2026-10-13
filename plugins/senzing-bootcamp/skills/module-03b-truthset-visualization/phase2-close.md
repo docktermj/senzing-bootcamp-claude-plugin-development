@@ -79,7 +79,7 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 >   `id="tab-features"`, `id="tab-overlap"` and `id="tab-probe"`, each with a non-zero count. A
 >   zero count for any of them means the check did not run, not that it passed (INV-265): warn the
 >   bootcamper which tab the saved copy lacks. As with the comparison, this warns and never blocks
->   module completion (INV-130, INV-048).
+>   module completion (INV-130).
 > - **Show the snapshot before close.** On `unavailable`, tell the bootcamper there is no live
 >   server and give them the snapshot by its file path,
 >   `docs/visualizations/truthset_verification.html`, to open in a browser, before Step 5.

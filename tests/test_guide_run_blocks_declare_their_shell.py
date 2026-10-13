@@ -38,6 +38,10 @@ Prose is read wrap-aware (INV-346). Stdlib only (INV-108).
 Enforces **INV-001**, **INV-163**, **INV-167**, **INV-195**, **INV-200** and **INV-300** at these
 sites.
 
+INV-167's 2026-10-12 note (#508, applied 2026-10-13) names this module as its enforcer. It reads
+the skill text and runs the schema block against stub runtimes: it does not establish that a live
+guide runs a guide-run block in its POSIX shell on Windows, which no test here can observe.
+
 Run:  python3 -m unittest discover -s tests
 """
 import os

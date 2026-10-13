@@ -9,6 +9,13 @@ prediction (#514). The #465 sub-issues reused one sentence template, and nobody 
 a comment claiming a check that does not exist). The linter cannot grow those functions: its own
 docstring says every one is "a count or a regex over text the Bootcamper actually saw", with "no
 model, no judgment", and faithful rows, an honest comparison and the right entity are judgments.
+INV-251's credit is the true one: its runtime check is `check_one_pointer_per_turn`, and its
+2026-10-12 note (#514) names it so this guard can verify the credit; the guard does not establish
+that the function sees every multi-question turn a live run produces.
+
+This module enforces INV-361 (registered 2026-10-13), the rule that a linter credit names a
+function the linter runs. It reads sentences, not runs: it cannot establish that a named function
+really observes the behavior a sentence attributes to it.
 
 So the rule this file enforces is mechanical. **A claim** is one sentence that matches both
 ``LINTER`` (the linter's two-word name or its module's name, in any case) and ``VERB`` (observe,

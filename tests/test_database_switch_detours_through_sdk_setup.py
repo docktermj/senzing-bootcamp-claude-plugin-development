@@ -28,7 +28,11 @@ mutated copy** (INV-265). Prose is matched with whitespace collapsed (INV-346), 
 control re-flows every site to a narrow column and asserts the checks still pass.
 
 Source issue: #528 (part of #504). Invariants: INV-006, INV-089, INV-284, INV-296, INV-300,
-INV-349.
+INV-349, and INV-364 (registered 2026-10-13), whose switch-state rule these tests pin as stated
+in the skill files; they cannot establish that a live run follows it.
+
+Also enforces INV-366 (the cross-module return contract, registered 2026-10-13) for the `setup_detour` (the database switch):
+it asserts the skill files *state* the contract and cannot establish that a live run follows it.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -144,11 +148,11 @@ def receiving_problems(m2):
                                            "Data processing Phase A's SQLite volume pre-load "
                                            "check"), "the row's offering sites")
     problems += missing(block, (
-        "(INV-284) Check for it before anything else in this module.",
+        "(INV-284, INV-366) Check for it before anything else in this module.",
         "show no start banner, journey map or overview, write no Module 2 checkpoint",
         "leave `current_module` and `current_step` as the offering module set them",
         "run only the steps the record names",
-        "(INV-284) A detour completes no module: no Module Completion, no second Module 2 recap "
+        "(INV-284, INV-366) A detour completes no module: no Module Completion, no second Module 2 recap "
         "section, no progress update, no transition question, and `sdk_setup` is not added to "
         "`modules_completed` again",
         "This is the one statement of the detour (INV-300)",
@@ -168,7 +172,7 @@ def receiving_problems(m2):
         "Ask no question of your own here.",
         "never remove it",
         "say what failed in one line, then ask the `return_to.reask` step's question again",
-        "(INV-284) That is a new state, NOT an INV-006 repeat",
+        "(INV-284, INV-366) That is a new state, NOT an INV-006 repeat",
         "the new answer replaces that record",
         "Continue at the first step in `steps` not listed in `completed`",
         "do not ask the offering module's question again",
@@ -218,7 +222,7 @@ def sender_problems(bullet, where, module, resume, reask, resumes_at):
         "`purpose: \"database_switch\"`",
         "`return_to: {\"module\": \"%s\", \"resume\": \"%s\", \"reask\": \"%s\"}`"
         % (module, resume, reask),
-        "(INV-284) `current_module` is not changed",
+        "(INV-284, INV-366) `current_module` is not changed",
         "When it finishes, `database_type` is `postgresql`",
         "When it cannot finish, `database_type` is still `sqlite`: name the failure in one line",
     ), where)
@@ -361,7 +365,7 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
         self.assertTrue(receiving_problems(self.mutate(self.f["module-02"], block)))
 
     def test_a_detour_that_completes_module_2_fails(self):
-        mutated = self.mutate(self.f["module-02"], "⛔ **(INV-284) A detour completes no module:**",
+        mutated = self.mutate(self.f["module-02"], "⛔ **(INV-284, INV-366) A detour completes no module:**",
                               "**Then run Module Completion for SDK setup:**")
         self.assertTrue(receiving_problems(mutated))
 
@@ -403,7 +407,7 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
         for name in ("module-02", "module-04", "module-06"):
             skills = skills_of(self.f)
             clause = first_clause(skills[name])
-            start = loose("**When it carries a `setup_detour`").search(clause).start()
+            start = loose("**(INV-366) When it carries a `setup_detour`").search(clause).start()
             skills[name] = self.mutate(skills[name], clause[start:])
             self.assertTrue(first_clause_problems(skills), name)
 

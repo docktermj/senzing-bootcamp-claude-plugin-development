@@ -25,8 +25,9 @@ carries the public slug at the same sites, and `tests/test_propagate_publishes_t
 derived: a fourth install surface added later is not checked until it is added to `SURFACES`.
 Owner names are matched in the case written here; a differently cased public slug is not caught.
 
-Source issue: #522. The rule is drafted as a DEFERRED INVARIANT in the #522 entry of
-`specs/IMPLEMENTED.md` for `/review-invariants`; this module is its enforcer.
+Source issue: #522. This module enforces INV-360 (registered 2026-10-13). It asserts that the
+three surfaces *state* the dev slug; it does not establish that a surface added later is read,
+for the reason above.
 
 Stdlib only (INV-108); three files read as bytes, no network.
 

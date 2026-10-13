@@ -30,6 +30,9 @@ sentence or the one-write resume must each make it report a problem.
 Source issue: #392. Invariants: INV-006, INV-177, INV-284, INV-300, INV-327.
 Second return point: #526 (part of #504).
 
+Also enforces INV-366 (the cross-module return contract, registered 2026-10-13) for the `quality_iteration` route from Module 7 step 3b:
+it asserts the skill files *state* the contract and cannot establish that a live run follows it.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -121,7 +124,7 @@ def step_3b_problems(phase1):
             "NOT an INV-006 repeat",
             "The return may be offered again",
         ), "the resume")
-    interrupted = between(loop, "**An interrupted return**", "\n\n5. ")
+    interrupted = between(loop, "**(INV-366) An interrupted return**", "\n\n5. ")
     if interrupted is None:
         problems.append("the route does not say how an interrupted return resumes")
     else:
@@ -262,7 +265,7 @@ def recap_problems(phase1):
         "The Module 7 recap section records every quality iteration",
         "module_7_query.quality_iterations",
         "before and after",
-        "(INV-284) This section is the only record of it",
+        "(INV-366) This section is the only record of it",
     ), "Module 7's Module completion")
 
 
@@ -363,7 +366,7 @@ class EachCheckFailsWhenItsSiteIsRemoved(unittest.TestCase):
         for name in ("module-05", "module-06", "module-07"):
             skills = dict(self.f["skills"])
             skills[name] = self.mutate(skills[name],
-                                       "**When it carries a `quality_iteration`, none of this "
+                                       "**(INV-366) When it carries a `quality_iteration`, none of this "
                                        "runs:**", "")
             self.assertTrue(first_clause_problems(skills), name)
 

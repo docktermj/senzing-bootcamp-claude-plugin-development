@@ -656,7 +656,93 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # states what it does NOT establish -- that a live guide asks in that order or quotes faithfully.
 # Re-derived by running the extractor -- 215, the new pair present by name and none removed.
 # EXPECTED_PAIRS 214 -> 215.
-EXPECTED_PAIRS = 215
+# 216 on 2026-10-13: INV-360 (dev install surfaces name the dev repository; #522) names
+# test_dev_install_surfaces_name_the_dev_repo.py, which cites it back and states what it does NOT
+# establish -- that an install surface added later is read. Re-derived by running the extractor --
+# 216, the new pair present by name and none removed. EXPECTED_PAIRS 215 -> 216.
+# 217 on 2026-10-13: INV-065's #518 note names test_example_recap_shows_every_recap_element.py,
+# INV-065's first enforcer, which cites it back and states what it does NOT establish -- that a
+# recap a live run writes has these elements. Re-derived by running the extractor -- 217, the new
+# pair present by name and none removed. EXPECTED_PAIRS 216 -> 217.
+# 218 on 2026-10-13: INV-352's #514 note names test_linter_credits_name_a_function_it_runs.py,
+# which cites INV-352 back and states it cannot establish that a named function observes the
+# behavior. Re-derived by running the extractor -- 218, the new pair present by name and none
+# removed. EXPECTED_PAIRS 217 -> 218.
+# 219 on 2026-10-13: INV-353's #514 note names test_linter_credits_name_a_function_it_runs.py,
+# which cites INV-353 back and states it cannot establish that a named function observes the
+# behavior. Re-derived by running the extractor -- 219, the new pair present by name and none
+# removed. EXPECTED_PAIRS 218 -> 219.
+# 220 on 2026-10-13: INV-354's #514 note names test_linter_credits_name_a_function_it_runs.py,
+# which cites INV-354 back and states it cannot establish that a named function observes the
+# behavior. Re-derived by running the extractor -- 220, the new pair present by name and none
+# removed. EXPECTED_PAIRS 219 -> 220.
+# 221 on 2026-10-13: INV-355's #514 note names test_linter_credits_name_a_function_it_runs.py,
+# which cites INV-355 back and states it cannot establish that a named function observes the
+# behavior. Re-derived by running the extractor -- 221, the new pair present by name and none
+# removed. EXPECTED_PAIRS 220 -> 221.
+# 222 on 2026-10-13: INV-357's #514 note names test_linter_credits_name_a_function_it_runs.py,
+# which cites INV-357 back and states it cannot establish that a named function observes the
+# behavior. Re-derived by running the extractor -- 222, the new pair present by name and none
+# removed. EXPECTED_PAIRS 221 -> 222.
+# 223 on 2026-10-13: INV-359's #514 note names test_linter_credits_name_a_function_it_runs.py,
+# which cites INV-359 back and states it cannot establish that a named function observes the
+# behavior. Re-derived by running the extractor -- 223, the new pair present by name and none
+# removed. EXPECTED_PAIRS 222 -> 223.
+# 224 on 2026-10-13: INV-251's #514 note names test_linter_credits_name_a_function_it_runs.py,
+# which cites INV-251 back and states it cannot establish that a named function observes the
+# behavior. Re-derived by running the extractor -- 224, the new pair present by name and none
+# removed. EXPECTED_PAIRS 223 -> 224.
+# 225 on 2026-10-13: INV-361 (a linter credit names a function the linter runs; #514) names
+# test_linter_credits_name_a_function_it_runs.py, which cites it back and states it cannot
+# establish that a named function observes the behavior. Re-derived by running the extractor --
+# 225, the new pair present by name and none removed. EXPECTED_PAIRS 224 -> 225.
+# 226 on 2026-10-13: INV-167's #508 note names test_guide_run_blocks_declare_their_shell.py, which
+# cites INV-167 back and states it cannot establish that a live guide runs the block in its POSIX
+# shell. Re-derived by running the extractor -- 226, the new pair present by name and none removed.
+# EXPECTED_PAIRS 225 -> 226.
+# 227 on 2026-10-13: INV-344's #530 note names
+# test_module5_phase3_sdk_repair_detours_through_sdk_setup.py, which cites INV-344 back and states
+# it cannot establish that a live run follows the route. Re-derived by running the extractor --
+# 227, the new pair present by name and none removed. EXPECTED_PAIRS 226 -> 227.
+# 229 on 2026-10-13: INV-362 (a wrong answer is named and re-taught; #519) names
+# test_phase3_interaction_prose.py and test_module7_recall_question.py, which cite it back and
+# state they cannot establish that a live guide re-teaches. Re-derived by running the extractor --
+# 229, the new pair present by name and none removed. EXPECTED_PAIRS 227 -> 229.
+# 230 on 2026-10-13: INV-344's #527 note names test_skipped_mapping_status.py, which cites INV-344
+# back and states it cannot establish that a live run follows the rule. Re-derived by running the
+# extractor -- 230, the new pair present by name and none removed. EXPECTED_PAIRS 229 -> 230.
+# 231 on 2026-10-13: INV-363 (what a skipped source means; #527) names
+# test_skipped_mapping_status.py, which cites it back and states it cannot establish that a live
+# run follows the rule. Re-derived by running the extractor -- 231, the new pair present by name
+# and none removed. EXPECTED_PAIRS 230 -> 231.
+# 232 on 2026-10-13: INV-364 (a datastore switch commits only when it finishes; #528) names
+# test_database_switch_detours_through_sdk_setup.py, which cites it back and states it cannot
+# establish that a live run follows it. Re-derived by running the extractor -- 232, the new pair
+# present by name and none removed. EXPECTED_PAIRS 231 -> 232.
+# 233 on 2026-10-13: INV-365 (only /review-invariants changes the register; #520) names
+# test_invariant_changes_route_through_review_invariants.py, which cites it back and states it
+# cannot establish that a live run writes the block. Re-derived by running the extractor -- 233,
+# the new pair present by name and none removed. EXPECTED_PAIRS 232 -> 233.
+# 234 on 2026-10-13: INV-091's #525 note names test_container_route_reads_no_plugin_asset.py, which
+# cites INV-091 back and states it cannot establish that the code runs in the container. Re-derived
+# by running the extractor -- 234, the new pair present by name and none removed. EXPECTED_PAIRS
+# 233 -> 234.
+# 235 on 2026-10-13: INV-130's #512 note names test_truthset_viz_no_live_server_completes.py, which
+# cites INV-130 back and states it cannot establish that a live run performs the check. Re-derived
+# by running the extractor -- 235, the new pair present by name and none removed. EXPECTED_PAIRS
+# 234 -> 235.
+# 240 on 2026-10-13: INV-366 (the cross-module return contract; #506 with #526/#528/#530) names
+# five enforcers, each of which cites it back and states it cannot establish that a live run
+# follows it. Re-derived by running the extractor -- 240, the new pair present by name and none
+# removed. EXPECTED_PAIRS 235 -> 240.
+# 241 on 2026-10-13: INV-356's #517 note names test_confirmations_with_one_sensible_answer.py,
+# which cites INV-356 back and states it cannot establish that a live run follows the close.
+# Re-derived by running the extractor -- 241, the new pair present by name and none removed.
+# EXPECTED_PAIRS 240 -> 241.
+# 242 on 2026-10-13: INV-367 (corpus walks go through one helper; #515) names test_corpus.py, which
+# cites it back and states what its walk guard cannot see. Re-derived by running the extractor --
+# 242, the new pair present by name and none removed. EXPECTED_PAIRS 241 -> 242.
+EXPECTED_PAIRS = 242
 
 
 def pairs():

@@ -27,7 +27,7 @@ here (INV-300, INV-352).
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.
-**When it carries a `quality_iteration`, none of this runs:** the Bootcamper chose step 3b's return
+**(INV-366) When it carries a `quality_iteration`, none of this runs:** the Bootcamper chose step 3b's return
 and is part-way through it. Route by its `stage`, at the first source not listed in `completed`:
 `remap` goes to Module 5's
 [Receiving a `quality_iteration`](../module-05-data-quality-mapping/phase2-data-mapping.md#receiving-a-quality-iteration),

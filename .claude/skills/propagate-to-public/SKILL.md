@@ -75,7 +75,8 @@ deletes these): `.github/**`, `LICENSE`, `.claude/settings.json`,
 ## Transform applied during propagation
 
 This repo's **self-references are rewritten to the public slug** so the published
-files point users at the Senzing repo:
+files point users at the Senzing repo. In this repository those install surfaces name the dev
+slug (INV-360); the rewrite is what turns them public (INV-350):
 
 - `docktermj/senzing-bootcamp-claude-plugin-development` → `Senzing/senzing-bootcamp-claude-plugin`
   wherever it appears (README marketplace URL and raw-content PDF link,
