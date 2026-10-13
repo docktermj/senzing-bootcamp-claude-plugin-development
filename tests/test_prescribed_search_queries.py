@@ -135,11 +135,10 @@ VERIFIED_QUERIES = {
     },
     # ---------------------------------------------------------------------------------
     # Executed 2026-09-30 on server 1.37.16 (docs index 2026-09-29 22:00 UTC) for #287, Module 2
-    # Step 3 Phase 3's routes for the Java and C# bindings. The second is also the evidence slot
-    # of the C# MCP-NEGATIVE marker. Re-executed 2026-10-01 on server 1.37.16 (docs index
-    # 2026-09-29 22:00 UTC) for #320, which made the C# query step 1 of the fallback after
-    # `sdk_guide(..., language='csharp')`: same property. ⚠️ Record the PROPERTY, not ranks or
-    # scores.
+    # Step 3 Phase 3's route for the Java bindings. The C# query recorded beside it (#287, #320)
+    # was removed by #566 (2026-10-13): on server 1.37.28 every platform's install reply names
+    # the C# source, so the fallback no longer asks `search_docs` and no shipped file prescribes
+    # the query. ⚠️ Record the PROPERTY, not ranks or scores.
     ("Java SDK sz-sdk.jar Maven Usage local Maven repository", None): {
         "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
         "sections": ("Maven Usage", "Installation in Local Maven Repository"),
@@ -151,18 +150,6 @@ VERIFIED_QUERIES = {
             "('not provided via Maven Central'; system-scoped or local-repository dependency). "
             "Phase 3 names both sections, so the reader reads past the first hit",
         "server": "1.37.16", "docs_index": "2026-09-29 22:00 UTC", "measured": "2026-09-30",
-    },
-    ("C# .NET SDK Senzing.Sdk NuGet package", None): {
-        "band": "ON TARGET",
-        "sections": ("Senzing.Sdk for C#",),
-        "returned":
-            "ON TARGET, AND SILENT ON THE SOURCE: the top hit is 'Senzing.Sdk for C#', which says "
-            "'After adding the Senzing.Sdk NuGet package to your project dependencies' and does not "
-            "say where the package comes from; the next is 'v4 C# SDK Reference', a link list. "
-            "That silence is half the absence the C# marker records for linux_apt, linux_yum and "
-            "macos_arm; the other half is their sdk_guide install replies, which have no C# line, "
-            "while the windows reply names the source",
-        "server": "1.37.16", "docs_index": "2026-09-29 22:00 UTC", "measured": "2026-10-01",
     },
     # ---------------------------------------------------------------------------------
     # Executed 2026-09-28 on server 1.37.14 (docs index 2026-09-28 03:23 UTC) for #194, Module 2

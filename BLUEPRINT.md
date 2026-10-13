@@ -9325,7 +9325,7 @@ looks wrong.
 - `tests/test_no_absence_branch_asserts_a_licensing_finding.py`: 5
 - `tests/test_no_host_control_is_offered_as_a_question.py`: 24
 - `tests/test_no_instruction_writes_into_specs.py`: 7
-- `tests/test_no_pip_install_senzing.py`: 18
+- `tests/test_no_pip_install_senzing.py`: 20
 - `tests/test_no_progress_gate_returns_to_data_collection.py`: 20
 - `tests/test_no_stale_blocked_claim.py`: 9
 - `tests/test_non_yielding_steps.py`: 22
@@ -11072,6 +11072,12 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_build_and_run_statement.py` replaces
   `tests/test_module3_build_and_run_table.py` (the statement named only
   `src/system_verification`, so Modules 5 to 7 could not cite it)
+- #566: Module 2's C# bullet follows each platform's own `sdk_guide` install
+  reply for the `Senzing.Sdk` source, with one dated note giving each
+  platform's path, a two-step fallback (an observed `.nupkg`, then "Neither")
+  and no `MCP-NEGATIVE` marker; the `search_docs` C# query and its allowlist
+  entry are gone, and INV-222's dated note is queued as an amendment (every
+  platform's reply now names the source, so "no C# line" was false)
 - #574: two `PROPOSED AMENDMENT` blocks are queued in the ledger for
   `/review-invariants`, one letting a single yes cover several records shown
   whole in one numbered message (INV-314, `submit_feedback` and unattended

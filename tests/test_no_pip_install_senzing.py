@@ -224,8 +224,6 @@ class ModuleTwoSaysWhatToDoInstead(unittest.TestCase):
                     "Phase 3 does not route %s through sdk_guide" % language)
         self.assertIn("search_docs(query='Java SDK sz-sdk.jar Maven Usage local Maven "
                       "repository')", self.flat, "Java's route to its SDK reference is gone")
-        self.assertIn("search_docs(query='C# .NET SDK Senzing.Sdk NuGet package')", self.flat,
-                      "C#'s route to its SDK reference is gone")
         self.assertIn("sz-napi", self.text,
                       "the TypeScript build-from-source warning was lost")
 
@@ -244,8 +242,51 @@ PRE_320_CSHARP_BULLET = """   - **C#:** the route is the C# SDK reference: `sear
 #: reads `tests/`).
 MARKER_TOKEN = "MCP-NEGATIVE" + ":"
 
+#: The C# bullet as it stood before #566 (main at c9a39b42), its marker line included. It is the
+#: second whole-bullet negative control: every predicate #566 added must fail on it. Raw, because
+#: the `windows` quote carries backslashes.
+PRE_566_CSHARP_BULLET = (r"""   - **C#:** call `sdk_guide(topic='install', platform='<platform>', language='csharp')` and follow
+     its `gotchas`: where the reply has a C# line, that line names the package source. On server
+     1.37.16 (2026-10-01) the **`windows`** reply's gotcha said "C# / .NET: the Senzing.Sdk NuGet
+     package is included in the SDK install (`sdk\dotnet\`), NOT published to nuget.org. Use:
+     `dotnet nuget add source "$env:SENZING_DIR\sdk\dotnet" --name SenzingLocal; dotnet add
+     package Senzing.Sdk --source SenzingLocal`". That is the `windows` reply's form, with the
+     Windows install variable in its path, so present it to a Windows bootcamper only (INV-283).
+     On the same date the `linux_apt`, `linux_yum` and `macos_arm` replies had no C# line, and
+     `docker` follows `linux_apt`. When the reply names no source, go down this list in order,
+     stop at the first step that gives an answer, and tell the bootcamper which step it was:
+     1. **The C# SDK reference:** `search_docs(query='C# .NET SDK Senzing.Sdk NuGet package')`.
+        On server 1.37.16 (2026-10-01) it said "After adding the `Senzing.Sdk` NuGet package to
+        your project dependencies" and did not say where that package comes from.
+     2. **What this machine's install holds:** look for a `Senzing.Sdk.*.nupkg` file in the
+        `dotnet/` directory of the install's `sdk/` directory. Locate that `sdk/` directory from
+        this platform's own install reply (the directory its `PYTHONPATH` or `sz-sdk.jar` path
+        sits in), never from another platform's reply. If the file is there, use that `dotnet/`
+        directory as a local NuGet source (`dotnet nuget add source <that directory> --name
+        SenzingLocal`, then `dotnet add package Senzing.Sdk --source SenzingLocal`), and tell the
+        bootcamper the source was **observed in their install, not named by the MCP server**
+        (INV-283). No directory, or a directory with no `Senzing.Sdk.*.nupkg`, means nothing
+        was observed.
+     3. **Neither:** tell the bootcamper that no MCP route names the package source for their
+        platform, and that nothing in their install supplied one.
+
+     ⛔ **Never add a public NuGet feed for `Senzing.Sdk` (nuget.org or any other) on your own (INV-222).**
+""" + "     <!-- " + MARKER_TOKEN + " " + r"""sdk_guide(topic='install', platform='linux_apt', language='csharp'), the same call with platform='linux_yum' and with platform='macos_arm', and search_docs(query='C# .NET SDK Senzing.Sdk NuGet package') — on linux_apt, linux_yum and macos_arm no reply says where the Senzing.Sdk NuGet package comes from: the install replies carry no C# line in their gotchas, and the reference says only "After adding the Senzing.Sdk NuGet package to your project dependencies" — owner: sdk_guide(topic='install', platform=<platform>) IS the route that carries the package source per platform, and its windows reply names it in its gotchas ("included in the SDK install (sdk\dotnet\), NOT published to nuget.org"), so the claim is scoped to the platforms asked and is not a claim that no platform's reply names it; search_docs carries the C# SDK reference ("Senzing.Sdk for C#", the top hit) and states no source (absence negative) — server 1.37.16, 2026-10-01 -->
+""")
+
 CSHARP_INSTALL_CALL = "sdk_guide(topic='install', platform='<platform>', language='csharp')"
-CSHARP_REFERENCE = "search_docs(query='C# .NET SDK Senzing.Sdk NuGet package')"
+
+#: A platform's own `dotnet nuget add source` command: anything but the fallback's placeholder.
+PLATFORM_COMMAND = re.compile(r"dotnet nuget add source (?!<that directory>)")
+
+#: The stale claim #566 retired: a reply that had, or replies that have, no C# line. The
+#: fallback's conditional "When the reply has no C# line" is not a claim, so it is not matched.
+NO_CSHARP_LINE_CLAIM = re.compile(r"(?i)repl(?:y|ies) had no C# line|replies have no C# line")
+
+#: The source path each platform's reply named on server 1.37.28, 2026-10-13.
+PLATFORM_PATHS = ("`/opt/senzing/er/sdk/dotnet` on `linux_apt` and `linux_yum`",
+                  "`${SENZING_ROOT}/sdk/dotnet` on `macos_arm`",
+                  "the `$env:SENZING_DIR\\sdk\\dotnet` form on `windows`")
 
 
 def csharp_bullet(text):
@@ -256,30 +297,43 @@ def csharp_bullet(text):
 
 def routes_to_the_install_reply_first(bullet):
     flat = squash(bullet)
-    return (CSHARP_INSTALL_CALL in flat and CSHARP_REFERENCE in flat
-            and flat.index(CSHARP_INSTALL_CALL) < flat.index(CSHARP_REFERENCE)
-            and re.search(r"follow\s+its `gotchas`", flat) is not None)
+    return (CSHARP_INSTALL_CALL in flat
+            and re.search(r"follow\s+its `gotchas`", flat) is not None
+            and "search_docs(" not in flat)
 
 
-def quotes_the_windows_reply_dated_and_attributed(bullet):
+def dates_each_platforms_source(bullet):
     flat = squash(bullet)
-    return (re.search(r"On server 1\.37\.16 \(2026-10-01\) the \*\*`windows`\*\* reply's gotcha",
-                      flat) is not None
-            and "NOT published to nuget.org" in flat
-            and "present it to a Windows bootcamper only (INV-283)" in flat)
+    return (re.search(r"On server 1\.37\.28 \(2026-10-13\) every platform's reply carried a C# "
+                      r"line naming a local source", flat) is not None
+            and all(path in flat for path in PLATFORM_PATHS)
+            and "a `docker` bootcamper takes the Linux form from that reply" in flat)
 
 
-def falls_back_in_order(bullet):
+def presents_each_form_to_its_own_platform(bullet):
     flat = squash(bullet)
-    steps = ["1. **The C# SDK reference:** `" + CSHARP_REFERENCE + "`",
-             "2. **What this machine's install holds:**",
-             "3. **Neither:**"]
-    if not all(step in flat for step in steps):
+    return ("Take the command from the bootcamper's own platform reply (INV-080)" in flat
+            and "present that platform's form to that platform's bootcamper only (INV-283)" in flat
+            and PLATFORM_COMMAND.search(flat) is None)
+
+
+def falls_back_in_two_steps(bullet):
+    flat = squash(bullet)
+    steps = ["1. **What this machine's install holds:**", "2. **Neither:**"]
+    if not all(step in flat for step in steps) or "3. **" in flat:
         return False
     positions = [flat.index(step) for step in steps]
     return (positions == sorted(positions)
             and "tell the bootcamper which step it was" in flat
             and flat.index("tell the bootcamper which step it was") < positions[0])
+
+
+def states_no_stale_absence(bullet):
+    # Line-scoped for the marker, as INV-209 puts a marker on ONE line.
+    flat = squash(bullet)
+    return ("When the reply has no C# line, go down this list" in flat
+            and NO_CSHARP_LINE_CLAIM.search(flat) is None
+            and not any(MARKER_TOKEN in line for line in bullet.splitlines()))
 
 
 def labels_the_observation(bullet):
@@ -297,34 +351,29 @@ def forbids_a_public_feed(bullet):
                and "(INV-222)" in line for line in bullet.splitlines())
 
 
-def narrows_the_marker(bullet):
-    # Line-scoped by design (#424): INV-209 requires an MCP-NEGATIVE marker on ONE line.
-    lines = [line for line in bullet.splitlines() if MARKER_TOKEN in line]
-    if len(lines) != 1:
-        return False
-    claim, _, rest = lines[0].partition(" — owner: ")
-    return (all(p in claim for p in ("platform='linux_apt'", "platform='linux_yum'",
-                                     "platform='macos_arm'"))
-            and "platform='windows'" not in claim
-            and "its windows reply names it" in rest
-            and "not a claim that no platform's reply names it" in rest
-            and rest.rstrip().endswith("— server 1.37.16, 2026-10-01 -->"))
+#: The predicates #566 added. Each fails on both negative controls.
+NEW_CSHARP_PREDICATES = (routes_to_the_install_reply_first, dates_each_platforms_source,
+                         presents_each_form_to_its_own_platform, falls_back_in_two_steps,
+                         states_no_stale_absence)
+
+#: The predicates #320 added that #566 kept: they hold on the pre-#566 bullet by design, and
+#: fail on the pre-#320 one.
+KEPT_CSHARP_PREDICATES = (labels_the_observation, forbids_a_public_feed)
+
+CSHARP_PREDICATES = NEW_CSHARP_PREDICATES + KEPT_CSHARP_PREDICATES
 
 
-CSHARP_PREDICATES = (routes_to_the_install_reply_first, quotes_the_windows_reply_dated_and_attributed,
-                     falls_back_in_order, labels_the_observation, forbids_a_public_feed,
-                     narrows_the_marker)
+class TheCSharpBulletFollowsEachPlatformsOwnReply(unittest.TestCase):
+    """#566: every platform's install reply names the `Senzing.Sdk` source, so C# follows it.
 
-
-class TheCSharpBulletRoutesToTheInstallReplyFirst(unittest.TestCase):
-    """#320: the `windows` install reply names the `Senzing.Sdk` source, so C# asks it first.
-
-    Until #320 the bullet routed only to `search_docs` and said to "name no package source",
-    on a negative asked of `linux_apt` alone. On server 1.37.16 (2026-10-01)
-    `sdk_guide(topic='install', platform='windows', language='csharp')` names the local
-    `sdk\\dotnet` source in its `gotchas`, while the `linux_apt`, `linux_yum` and `macos_arm`
-    replies have no C# line. Each predicate is checked on the shipped bullet, on a mutant that
-    breaks only it, and on the pre-#320 bullet.
+    #320 (server 1.37.16, 2026-10-01) found the source in the `windows` reply only and built a
+    three-step fallback for the `linux_apt`, `linux_yum` and `macos_arm` replies, starting from
+    the `search_docs` C# reference. On server 1.37.28 (2026-10-13) each of those replies names
+    its own local `sdk/dotnet` source in its `gotchas`, and `docker` takes the `linux_apt` one.
+    The bullet now follows the reply's C# line, gives each platform's path in one dated note,
+    quotes no platform's command, and keeps a two-step fallback for a reply without the line.
+    Each predicate is checked on the shipped bullet, on a mutant that breaks only it, and on the
+    pre-#320 bullet; each predicate #566 added is also checked on the pre-#566 bullet.
     """
 
     def setUp(self):
@@ -343,10 +392,29 @@ class TheCSharpBulletRoutesToTheInstallReplyFirst(unittest.TestCase):
                                  "%s passes on the bullet #320 replaced, so it cannot fail"
                                  % predicate.__name__)
 
+    def test_every_new_predicate_fails_on_the_pre_566_bullet(self):
+        for predicate in NEW_CSHARP_PREDICATES:
+            with self.subTest(predicate=predicate.__name__):
+                self.assertFalse(predicate(PRE_566_CSHARP_BULLET),
+                                 "%s passes on the bullet #566 replaced, so it cannot fail"
+                                 % predicate.__name__)
+
+    def test_the_pre_566_control_is_the_bullet_it_claims_to_be(self):
+        flat = squash(PRE_566_CSHARP_BULLET)
+        self.assertRegex(flat, NO_CSHARP_LINE_CLAIM)
+        self.assertIn("1. **The C# SDK reference:**", flat)
+        self.assertEqual(1, sum(MARKER_TOKEN in line
+                                for line in PRE_566_CSHARP_BULLET.splitlines()))
+        for predicate in KEPT_CSHARP_PREDICATES:
+            with self.subTest(predicate=predicate.__name__):
+                self.assertTrue(predicate(PRE_566_CSHARP_BULLET),
+                                "%s was kept from #320 but fails on the pre-#566 bullet"
+                                % predicate.__name__)
+
     def test_the_old_instruction_is_gone(self):
         self.assertNotIn("name no package source", squash(self.bullet),
-                         "the bullet still says to name no package source, which the "
-                         "windows install reply contradicts")
+                         "the bullet still says to name no package source, which every "
+                         "platform's install reply contradicts")
 
     def mutants(self):
         b = self.bullet
@@ -354,14 +422,35 @@ class TheCSharpBulletRoutesToTheInstallReplyFirst(unittest.TestCase):
         yield routes_to_the_install_reply_first, b.replace(CSHARP_INSTALL_CALL, "sdk_guide()")
         yield routes_to_the_install_reply_first, b.replace("follow\n     its `gotchas`",
                                                            "read\n     its reply")
-        yield quotes_the_windows_reply_dated_and_attributed, b.replace(
-            "the **`windows`** reply's gotcha", "the reply's gotcha")
-        yield quotes_the_windows_reply_dated_and_attributed, b.replace(
-            "present it to a Windows bootcamper only (INV-283)", "present it")
-        yield falls_back_in_order, b.replace(
-            "1. **The C# SDK reference:**", "2. **The C# SDK reference:**").replace(
-            "2. **What this machine's install holds:**", "1. **What this machine's install holds:**")
-        yield falls_back_in_order, b.replace("tell the bootcamper which step it was", "go on")
+        yield routes_to_the_install_reply_first, b.replace(
+            "1. **What this machine's install holds:**",
+            "1. **What this machine's install holds:** after "
+            "`search_docs(query='C# .NET SDK Senzing.Sdk NuGet package')`,")
+        yield dates_each_platforms_source, b.replace("On server 1.37.28 (2026-10-13)",
+                                                     "On server 1.37.16 (2026-10-01)")
+        yield dates_each_platforms_source, b.replace("`${SENZING_ROOT}/sdk/dotnet` on `macos_arm`",
+                                                     "another path on `macos_arm`")
+        yield dates_each_platforms_source, b.replace(
+            "a `docker`\n     bootcamper takes the Linux form from that reply",
+            "a `docker`\n     bootcamper is on their own")
+        yield presents_each_form_to_its_own_platform, b.replace(
+            "present that platform's form\n     to that platform's bootcamper only (INV-283)",
+            "present every platform's form\n     to every bootcamper")
+        yield presents_each_form_to_its_own_platform, b.replace(
+            "form on `windows`.",
+            "form on `windows` (`dotnet nuget add source /opt/senzing/er/sdk/dotnet "
+            "--name SenzingLocal` on Linux).")
+        yield falls_back_in_two_steps, b.replace("2. **Neither:**", "3. **Neither:**")
+        yield falls_back_in_two_steps, b.replace("tell the bootcamper which\n     step it was",
+                                                 "go\n     on")
+        yield states_no_stale_absence, b.replace(
+            "`docker` follows `linux_apt`:",
+            "The `linux_yum` reply had no C# line, and `docker` follows `linux_apt`:")
+        yield states_no_stale_absence, b.replace(
+            "     ⛔ **Never add a public NuGet feed",
+            "     <!-- " + MARKER_TOKEN + " x -->\n     ⛔ **Never add a public NuGet feed")
+        yield states_no_stale_absence, b.replace("When the reply has no C# line, go down this",
+                                                 "When the reply names no source, go down this")
         yield labels_the_observation, b.replace(
             "**observed in their install, not named by the MCP server**", "available")
         yield labels_the_observation, b.replace("never from another platform's reply",
@@ -369,11 +458,6 @@ class TheCSharpBulletRoutesToTheInstallReplyFirst(unittest.TestCase):
         yield forbids_a_public_feed, "\n".join(
             line for line in b.splitlines() if "⛔ **Never add a public NuGet feed" not in line)
         yield forbids_a_public_feed, b.replace("on your own (INV-222).", "on your own.")
-        yield narrows_the_marker, b.replace(", the same call with platform='linux_yum' and with "
-                                            "platform='macos_arm'", "")
-        yield narrows_the_marker, b.replace("so the claim is scoped to the platforms asked and "
-                                            "is not a claim that no platform's reply names it",
-                                            "so no platform's reply names it")
 
     def test_each_mutant_fails_only_its_predicate(self):
         for predicate, mutant in self.mutants():
