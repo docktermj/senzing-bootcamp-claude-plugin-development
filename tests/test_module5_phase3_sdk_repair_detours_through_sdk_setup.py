@@ -237,8 +237,8 @@ def receiving_problems(m2):
         "For `sdk_repair`:",
         "A step its path moves past",
         "is added to `completed` without running",
-        "Step 1's \"Mark Module 2 as complete once verification passes\" does not apply: a detour "
-        "completes no module",
+        "Step 1's \"Mark Module 2 as complete only after Step 9's engine-class check passes\" does "
+        "not apply: a detour completes no module",
         "Step 7 runs as it states, from its database question",
         "Its instruction 1 waits for the finish",
         "\"Switch to SQLite\", is an answer here and not a stop",
@@ -481,9 +481,9 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
                                       "**Then run Module Completion for SDK setup:**"))
 
     def test_step_1_marks_module_2_complete(self):
-        self.assertCaught(self.mutate("module-02", 'Step 1\'s "Mark Module 2 as complete\n  once '
-                                      'verification passes" does not apply: a detour completes no '
-                                      "module.", "Step 1 marks Module 2 complete."))
+        self.assertCaught(self.mutate("module-02", 'Step 1\'s "Mark Module 2 as complete\n  only '
+                                      'after Step 9\'s engine-class check passes" does not apply: a '
+                                      "detour completes no module.", "Step 1 marks Module 2 complete."))
 
     def test_option_4_stops_a_repair(self):
         self.assertCaught(self.mutate("module-02", "or, on a `database_switch`, with Step 7's "

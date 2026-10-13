@@ -9169,7 +9169,7 @@ looks wrong.
 - `tests/test_every_line_reading_guard_gives_a_verdict.py`: 9
 - `tests/test_example_recap_sync.py`: 15
 - `tests/test_example_recap_uses_no_golden_record.py`: 5
-- `tests/test_existing_install_still_runs_the_env_script.py`: 16
+- `tests/test_existing_install_still_runs_the_env_script.py`: 22
 - `tests/test_expected_visualization_denominator.py`: 21
 - `tests/test_family_amendments_cite_real_rules.py`: 9
 - `tests/test_fastpath_gates_on_full_mapping.py`: 31
@@ -10832,6 +10832,13 @@ Senzing licensing, with no SPDX identifier.
   the DDL out of the SDK container into `database/` on that route (the route
   Windows users take ran bash-only commands with no disclosure, and the schema
   step read `/opt/senzing` on a host that has none)
+- #510: Module 2's existing-install path continues past Step 7 to Steps 8, 8a
+  and 9 and marks Module 2 complete only after Step 9's engine-class check, and
+  its "Required stops" block names Steps 6 to 9;
+  `tests/test_existing_install_still_runs_the_env_script.py` pins both sites
+  (the path stopped at Step 7 and completed Module 2 "once verification
+  passes", so a guide following it finished with no engine config and no
+  verified engine)
 - #513: inline `search_docs` routes in Modules 2, 3, 5 and 6 name a query
   measured on the current index with its section, band and stamp, a route used
   at several sites is stated once and the others point at it, and
