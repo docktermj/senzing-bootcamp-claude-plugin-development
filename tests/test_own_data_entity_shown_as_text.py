@@ -45,10 +45,10 @@ construction, and counting lines that *start* with `👉 **` keeps prose that me
 ("no 👉 of its own") from being counted as a question. Phrase checks collapse whitespace, so they
 match across a wrap.
 
-⛔ **What this cannot establish:** that a live guide shows the right entity, or retrieves it with
-SDK code. Those are properties of a run; `dry-run` phase 3 and `auto-test`'s transcript linter
-observe them. This pins that the skill files STATE them. INV-355 names this file as its enforcer;
-passing it is no evidence that a live run obeys it.
+⛔ **What this cannot establish:** that a live guide shows the right entity, or retrieves it with SDK
+code. Those are properties of a run; only `dry-run` phase 3 observes them. This pins that the skill
+files STATE them. INV-355 names this file as its enforcer; passing it is no evidence that a live run
+obeys it.
 
 Stdlib only; shipped markdown read as text (INV-108).
 
