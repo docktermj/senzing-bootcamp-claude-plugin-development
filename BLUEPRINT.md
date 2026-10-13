@@ -9074,7 +9074,7 @@ looks wrong.
 - `tests/test_acknowledge_precedes_the_loading_it_precedes.py`: 8
 - `tests/test_all_runs_every_argument_free_view.py`: 7
 - `tests/test_amendments_are_queued.py`: 12
-- `tests/test_analyzer_python_floor_is_cited.py`: 13
+- `tests/test_analyzer_python_floor_is_cited.py`: 23
 - `tests/test_answer_options_render_below_the_question.py`: 11
 - `tests/test_any_language_citations_name_the_right_rule.py`: 4
 - `tests/test_any_language_contract_complete.py`: 16
@@ -9692,7 +9692,10 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
     violations.
   - The analyzer gate states where the scripts run and checks the analyzer's
     Python 3.10 floor first; the floor entry after it keeps its evidence,
-    server version and date (`test_analyzer_python_floor_is_cited.py`).
+    server version and date. Its "Later analyzer runs" rule is stated once:
+    step 14, step 18's full-output check and Phase 3's Rules bullet each point
+    to it, and a census fails on any plugin file that mentions the analyzer
+    without being classified (`test_analyzer_python_floor_is_cited.py`).
   - Samples go to `data/mapping/`, and the full output to `data/senzing-ready/`
     at Step 18.
 - **Module 6.**
@@ -10832,6 +10835,15 @@ Senzing licensing, with no SPDX identifier.
   the DDL out of the SDK container into `database/` on that route (the route
   Windows users take ran bash-only commands with no disclosure, and the schema
   step read `/opt/senzing` on a host that has none)
+- #509: step 11's analyzer gate states once what a later analyzer run does
+  (run the Python check there when it has not run this session; otherwise its
+  outcome stands, with the installed interpreter in place of `python3` after
+  yes and the skip after no), and step 14, step 18's full-output check and
+  Phase 3's Rules bullet each point to it;
+  `tests/test_analyzer_python_floor_is_cited.py` pins the rule, the three
+  pointers and a file-level census of plugin files that mention the analyzer
+  (the check was stated only at step 11, so a skipped or resumed session ran
+  the analyzer at a later site with no floor check)
 - #510: Module 2's existing-install path continues past Step 7 to Steps 8, 8a
   and 9 and marks Module 2 complete only after Step 9's engine-class check, and
   its "Required stops" block names Steps 6 to 9;

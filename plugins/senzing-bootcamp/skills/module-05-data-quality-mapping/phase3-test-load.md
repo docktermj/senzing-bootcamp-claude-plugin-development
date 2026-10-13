@@ -310,7 +310,9 @@ has, after its Module Completion already ran: this module's `SKILL.md` → "Resu
   SDK methods (counts/stats via `reporting_guide`).
 - Always validate with `analyze_record` before loading, passing its **required**
   `workspace_dir='data/mapping'` — the call fails without it, and the parameter is what keeps the
-  analyzer script and its reports inside the project rather than in `/tmp`.
+  analyzer script and its reports inside the project rather than in `/tmp`. Before running the
+  command `analyze_record` returns, follow `phase2-data-mapping.md` step 11's analyzer Python
+  check → "Later analyzer runs" (INV-347, INV-300).
 
 ## Success criteria
 

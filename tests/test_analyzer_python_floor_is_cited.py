@@ -29,6 +29,24 @@ an edit to the entry AND to the constants below, together.
 ⛔ **(INV-346) Every phrase is matched on collapsed text**: blockquote markers stripped and every
 run of whitespace made one space, so a phrase wrapped across lines still matches.
 
+**Every later site that runs the analyzer reaches the check (#509).** The gate's "Later analyzer
+runs" paragraph states, once (INV-300), what a later run does: run the check there when it has not
+run this session; otherwise its outcome stands (at 3.10 or newer run the command `analyze_record`
+returns; after **yes** run it with `python3` replaced by the installed interpreter, named
+explicitly; after **no** the skip covers the site). The three later run sites, pinned by name, each
+carry a pointer to that paragraph citing INV-347 and INV-300 and restate none of it:
+
+* step 14 (`### 14. Test`);
+* step 18's full-output check (`**Validate the full output (INV-043).**`, added by #521);
+* Phase 3's Rules bullet "Always validate with `analyze_record` before loading"
+  (`phase3-test-load.md`).
+
+**A file-level census** closes the set: the files under `plugins/` (listed by `tests/_corpus.py`)
+that mention `analyze_record` or `sz_json_analyzer.py` are exactly `KNOWN_FILES`. A new file that
+starts mentioning the analyzer fails until it is classified here, as a run site with a pointer or as
+a mention that runs nothing (`ground-rules.md`'s tool-argument rule is one). The census is per file;
+inside the two Module 5 files the run sites are pinned by name, not counted.
+
 Each check is a function over the file's text, so the negative controls at the bottom run the
 same predicate against a copy with the pinned part removed or changed and confirm it fails.
 
@@ -38,7 +56,7 @@ the measured floor; below it, one install offer and a recorded, non-repeated ski
 live run checks before running, which only `dry-run` phase 3 can observe, or that the floor still
 holds on today's server, which only a re-measurement can.
 
-Source issue: #462.
+Source issues: #462 (the gate and the entry), #509 (the later sites and the census).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -46,9 +64,33 @@ import re
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
-PHASE2 = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
-          / "module-05-data-quality-mapping" / "phase2-data-mapping.md")
+MODULE5 = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills" / "module-05-data-quality-mapping"
+PHASE2 = MODULE5 / "phase2-data-mapping.md"
+PHASE3 = MODULE5 / "phase3-test-load.md"
+
+#: The plugin files that mention the analyzer, each classified (repo-relative, `/`-separated).
+#: A run site carries the pointer; the ground rules' mention is a tool-argument rule that runs nothing.
+KNOWN_FILES = {
+    "plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md":
+        "run sites: step 11's gate, step 14, step 18's full-output check",
+    "plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase3-test-load.md":
+        "run site: the Rules bullet 'Always validate with `analyze_record` before loading'",
+    "plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md":
+        "not a run site: the rule that a tool argument naming a writable directory is project-local",
+}
+MENTIONS = (b"analyze_record", b"sz_json_analyzer.py")
+
+#: What each later site carries (matched on collapsed text), and what it must not restate.
+POINTER = ("step 11's analyzer Python check → \"Later analyzer runs\" (INV-347, INV-300)")
+RESTATEMENTS = ("3.10", "python3 --version", "installed interpreter")
+
+STEP14_HEAD = "### 14. Test"
+STEP18_CHECK = "**Validate the full output (INV-043).**"
+STEP18_END = "**Checkpoint:** write step 18."
+PHASE3_RULE = "- Always validate with `analyze_record` before loading"
 
 #: The measured facts. Changing one means re-measuring, then editing the entry and this together.
 FLOOR = "3.10"
@@ -61,6 +103,12 @@ GATE_START = "> **Availability-aware mapping validation:**"
 ENTRY_START = "⛔ **(INV-080) `sz_json_analyzer.py` needs Python 3.10 or newer"
 NEXT_BLOCK = "⛔ **The verbatim check harvests source *values* only"
 GATE_CLOSING = "> In short: check the analyzer's Python first"
+
+
+def wrapped_sub(text, phrase, replacement):
+    """Replace the first ``phrase`` however it is wrapped, quote markers included (a mutation helper)."""
+    pattern = r"(?:\s|>)+".join(re.escape(word) for word in phrase.split(" "))
+    return re.sub(pattern, lambda _: replacement, text, count=1)
 
 
 def squash(text):
@@ -141,7 +189,7 @@ def gate_problems(text):
         (r"continue with items 2 and 3 below under their optional/best-effort handling",
          "the no path does not continue with the remaining checks"),
         (r"do not ask again \(INV-006\)", "the no path may re-ask the question"),
-        (r"step 14's `analyze_record` run", "the skip does not cover step 14's analyzer run"),
+        (r"every later analyzer run below", "the skip does not cover the later analyzer runs"),
         (r"names the analyzer as a check that did not run \(INV-163\)",
          "the closing summary does not name the skipped check"),
         (r"Once the check has passed, a `SyntaxError` from the analyzer is not the version floor",
@@ -150,7 +198,84 @@ def gate_problems(text):
     for pattern, message in no_path:
         if not re.search(pattern, gate):
             out.append(message)
+    return out + later_site_problems(gate)
+
+
+#: The gate's later-site rule (#509), each matched on the gate's collapsed text.
+LATER_SITE_RULE = [
+    (r"\*\*Later analyzer runs\.\*\*", "the gate has no 'Later analyzer runs' paragraph"),
+    (r"Step 14's test, step 18's full-output check and Phase 3's validation before loading "
+     r"\(`phase3-test-load\.md` → \"Rules\"\) each run the command `analyze_record` returns",
+     "the later-site rule does not name step 14, step 18 and Phase 3"),
+    (r"each points here rather than restating this check \(INV-300\)",
+     "the later-site rule does not say each site points here (INV-300)"),
+    (r"\*\*The check has not run this session\*\* \(this step was skipped, or the session "
+     r"resumed\): run it at that site, before the analyzer, with the same question",
+     "the later-site rule does not run the check at a site where it has not run this session"),
+    (r"\*\*The check already ran this session:\*\* its outcome stands, and nothing is asked "
+     r"again \(INV-006\)", "the later-site rule does not keep an earlier outcome"),
+    (r"At 3\.10 or newer, run the command as `analyze_record` returns it",
+     "the later-site rule does not say a passed check runs the command as returned"),
+    (r"After \*\*yes\*\*, run it with `python3` replaced by the installed interpreter, named "
+     r"explicitly", "the later-site rule does not name the installed interpreter on yes"),
+    (r"After \*\*no\*\*, the skip covers that site: do not run the analyzer there",
+     "the later-site rule does not carry the no path's skip to the site"),
+]
+
+
+def later_site_problems(gate):
+    """Every part of the later-site rule the (collapsed) gate lacks."""
+    return [message for pattern, message in LATER_SITE_RULE if not re.search(pattern, gate)]
+
+
+def sites(phase2, phase3):
+    """{site name: raw text} for the three later run sites; a missing locator gives ''."""
+    def cut(text, start, ends):
+        s = text.find(start)
+        if s < 0:
+            return ""
+        stops = [e for e in (text.find(end, s + len(start)) for end in ends) if e >= 0]
+        return text[s:min(stops) if stops else len(text)]
+    return {
+        "step 14": cut(phase2, STEP14_HEAD, ("\n### ",)),
+        "step 18's full-output check": cut(phase2, STEP18_CHECK, (STEP18_END, "\n### ")),
+        "Phase 3's Rules bullet": cut(phase3, PHASE3_RULE, ("\n- ", "\n\n")),
+    }
+
+
+def pointer_problems(phase2, phase3):
+    """Every later site that lacks the pointer, or restates the rule it points to."""
+    out = []
+    for name, raw in sites(phase2, phase3).items():
+        if not raw:
+            out.append("%s was not found" % name)
+            continue
+        text = squash(raw)
+        if POINTER not in text:
+            out.append("%s does not point to step 11's 'Later analyzer runs' (INV-347, INV-300)"
+                       % name)
+        elif not re.search(r"Before running the command `analyze_record` returns, follow "
+                           r"(`phase2-data-mapping\.md` )?" + re.escape(POINTER), text):
+            out.append("%s does not say the pointer is followed before the analyzer runs" % name)
+        for phrase in RESTATEMENTS:
+            if phrase in text:
+                out.append("%s restates the gate (%r) instead of pointing to it" % (name, phrase))
     return out
+
+
+def census_problems(files):
+    """``files`` maps repo-relative paths to bytes; every unclassified or stale mention."""
+    mentioning = {path for path, data in files.items() if any(m in data for m in MENTIONS)}
+    out = ["%s mentions the analyzer but is not classified in KNOWN_FILES" % path
+           for path in sorted(mentioning - set(KNOWN_FILES))]
+    out += ["%s is classified in KNOWN_FILES but no longer mentions the analyzer" % path
+            for path in sorted(set(KNOWN_FILES) - mentioning)]
+    return out
+
+
+def plugin_files():
+    return {path.relative_to(REPO_ROOT).as_posix(): path.read_bytes()
+            for path in corpus_files("plugins")}
 
 
 def entry_problems(text):
@@ -219,6 +344,17 @@ class TheFloorIsCitedDirectlyAfterTheGate(unittest.TestCase):
         self.assertEqual({FLOOR}, floors, "the gate and the entry disagree on the floor")
 
 
+class EveryLaterSitePointsToTheGate(unittest.TestCase):
+    def test_every_later_site_carries_the_pointer(self):
+        problems = pointer_problems(PHASE2.read_text(encoding="utf-8"),
+                                    PHASE3.read_text(encoding="utf-8"))
+        self.assertEqual([], problems, "; ".join(problems))
+
+    def test_every_plugin_file_mentioning_the_analyzer_is_classified(self):
+        problems = census_problems(plugin_files())
+        self.assertEqual([], problems, "; ".join(problems))
+
+
 class NegativeControls(unittest.TestCase):
     """The predicates fail on text that lacks what they pin."""
 
@@ -263,6 +399,79 @@ class NegativeControls(unittest.TestCase):
     def test_without_the_no_re_ask_rule_the_gate_fails(self):
         mutated = self.text.replace("do not ask again (INV-006)", "ask again next source", 1)
         self.assertIn("may re-ask", " ".join(gate_problems(mutated)))
+
+    def test_without_the_later_site_rule_the_gate_fails(self):
+        start = self.text.index("> **Later analyzer runs.**")
+        end = self.text.index("> Once the check has passed")
+        mutated = self.text[:start] + self.text[end:]
+        self.assertIn("'Later analyzer runs'", " ".join(gate_problems(mutated)))
+
+    def test_each_part_of_the_later_site_rule_is_pinned(self):
+        for old, new in (("run it at that site, before the analyzer", "skip that site"),
+                         ("its outcome stands", "it is asked again"),
+                         ("replaced by the installed interpreter", "as returned"),
+                         ("the skip covers that site", "run the analyzer anyway")):
+            with self.subTest(changed=old):
+                mutated = wrapped_sub(self.text, old, new)
+                self.assertNotEqual(mutated, self.text)
+                self.assertTrue(gate_problems(mutated))
+
+    def test_a_site_without_the_pointer_fails(self):
+        phase3 = PHASE3.read_text(encoding="utf-8")
+        pointer = re.compile(r"follow(\s+`phase2-data-mapping\.md`)?\s+step\s+11's\s+analyzer"
+                             r"\s+Python\s+check\s+→\s+\"Later\s+analyzer\s+runs\"\s+"
+                             r"\(INV-347,\s+INV-300\)\.")
+        cases = {"step 14": (STEP14_HEAD, self.text, phase3),
+                 "step 18's full-output check": (STEP18_CHECK, self.text, phase3),
+                 "Phase 3's Rules bullet": (PHASE3_RULE, self.text, phase3)}
+        for name, (anchor, phase2, p3) in cases.items():
+            with self.subTest(site=name):
+                if name.startswith("Phase 3"):
+                    s = p3.index(anchor)
+                    p3 = p3[:s] + pointer.sub("", p3[s:], count=1)
+                    self.assertNotEqual(p3, phase3)
+                else:
+                    s = phase2.index(anchor)
+                    phase2 = phase2[:s] + pointer.sub("", phase2[s:], count=1)
+                    self.assertNotEqual(phase2, self.text)
+                problems = " ".join(pointer_problems(phase2, p3))
+                self.assertIn("%s does not point" % name, problems)
+
+    def test_a_pointer_not_tied_to_the_run_fails(self):
+        s = self.text.index(STEP14_HEAD)
+        mutated = self.text[:s] + wrapped_sub(
+            self.text[s:], "Before running the command `analyze_record` returns, follow",
+            "After the run, see")
+        self.assertIn("step 14 does not say the pointer is followed before the analyzer runs",
+                      " ".join(pointer_problems(mutated, PHASE3.read_text(encoding="utf-8"))))
+
+    def test_a_site_restating_the_rule_fails(self):
+        s = self.text.index(STEP14_HEAD)
+        mutated = (self.text[:s + len(STEP14_HEAD)]
+                   + "\n\nRun `python3 --version` first; below 3.10, skip the analyzer.\n"
+                   + self.text[s + len(STEP14_HEAD):])
+        problems = " ".join(pointer_problems(mutated, PHASE3.read_text(encoding="utf-8")))
+        self.assertIn("step 14 restates the gate", problems)
+
+    def test_an_unclassified_file_mentioning_the_analyzer_fails(self):
+        files = plugin_files()
+        files["plugins/senzing-bootcamp/skills/module-06-load/new-step.md"] = (
+            b"Validate with `analyze_record(workspace_dir='data/mapping')` first.\n")
+        self.assertIn("new-step.md mentions the analyzer but is not classified",
+                      " ".join(census_problems(files)))
+
+    def test_a_classified_file_that_stops_mentioning_the_analyzer_fails(self):
+        files = plugin_files()
+        files["plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md"] = b"nothing"
+        self.assertIn("no longer mentions the analyzer", " ".join(census_problems(files)))
+
+    def test_the_census_sees_the_known_files(self):
+        """The census really reads the corpus: every known file is listed and mentions it."""
+        files = plugin_files()
+        for path in KNOWN_FILES:
+            with self.subTest(path=path):
+                self.assertIn(path, files)
+                self.assertTrue(any(m in files[path] for m in MENTIONS))
 
     def test_the_pre_change_gate_fails(self):
         """The gate as it shipped before #462: no placement, no floor, no check, no entry."""
