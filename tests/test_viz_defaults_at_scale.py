@@ -31,6 +31,10 @@ pixels at stated advances (0.60em and 0.62em) that are not the code's own value,
 the former sizing clipped the reported key, and checks the source for the measured
 advance and its 0.62em fallback.
 
+**Feature Scores (#523).** `drawFeatures` had the fixed-gutter defect #463 fixed for Match Keys:
+a 130px gutter with right-anchored, unfitted labels. `NoFeatureLabelIsClipped` holds it to the same
+technique, with the former 130px gutter as its negative control.
+
 Enforces **INV-154**'s uncapped note ("Showing the N entities that have relationships, of M
 total"), which its 2026-10-02 note (#327) keeps for an uncapped payload. The capped branch is
 `tests/test_viz_capped_graph_notes.py`'s. Transcribing the JS does **not** establish what a browser
@@ -311,6 +315,101 @@ class NoMatchKeyLabelIsClipped(unittest.TestCase):
         )
 
 
+def features_body():
+    """The text of `drawFeatures`, up to the next top-level function."""
+    text = source()
+    start = text.find("async function drawFeatures(")
+    assert start >= 0, "drawFeatures not found"
+    end = text.find("\nfunction ", start)
+    assert end > start, "end of drawFeatures not found"
+    return text[start:end]
+
+
+#: Feature-type codes as `FEATURE_SCORES` keys them. `REGISTRATION_COUNTRY` (20 characters) is
+#: the longest in the Entity Specification's "What features to map" list (`search_docs`, server
+#: 1.37.28, 2026-10-12, #523); a configuration can add custom feature types, so the last two
+#: stand for a longer custom code and a pair that collides after fitting.
+FEATURE_CODES = [
+    "NAME", "ADDRESS", "PHONE", "DOB", "NATIONAL_ID", "GROUP_ASSOCIATION",
+    "REGISTRATION_DATE", "REGISTRATION_COUNTRY",
+]
+CUSTOM_CODES = [
+    "CUSTOM_JURISDICTION_REGISTRATION_IDENTIFIER_ALPHA",
+    "CUSTOM_JURISDICTION_REGISTRATION_IDENTIFIER_BETA",
+]
+LONGEST_SPEC_CODE = "REGISTRATION_COUNTRY"
+#: The gutter `drawFeatures` used before #523: fixed, with right-anchored, unfitted labels.
+FORMER_FIXED_GUTTER = 130
+
+
+class NoFeatureLabelIsClipped(unittest.TestCase):
+    """#523 item 12: Feature Scores uses the #463 technique (INV-153 "wherever it appears").
+
+    `drawFeatures` is transcribed by the same `layout` / `rendered_labels` helpers as Match Keys:
+    the source assertions below pin that it uses the same expressions, so the transcription is
+    of the shipped code, not of a hope.
+    """
+
+    def cases(self):
+        for width in WIDTHS:
+            for render in STATED_ADVANCES:
+                yield width, render, render
+                yield width, ADVANCE_062, render
+
+    def assert_inside(self, codes):
+        checked = 0
+        for width, sizing, render in self.cases():
+            labels, left, _ = rendered_labels(codes, sizing, width)
+            for label in labels:
+                checked += 1
+                edge = left_edge(label, left, render)
+                with self.subTest(width=width, sizing=sizing, render=render, label=label):
+                    self.assertGreaterEqual(edge, 0, f"{label!r} starts at x = {edge:.1f}px")
+        self.assertGreater(checked, 0, "no label was checked")
+
+    def test_every_specification_code_starts_inside_the_chart(self):
+        self.assert_inside(FEATURE_CODES)
+
+    def test_the_longest_specification_code_is_not_truncated_at_full_width(self):
+        for advance in STATED_ADVANCES:
+            labels, _, _ = rendered_labels(FEATURE_CODES, advance, 720)
+            self.assertIn(LONGEST_SPEC_CODE, labels)
+
+    def test_a_longer_custom_code_is_fitted_not_clipped(self):
+        self.assert_inside(FEATURE_CODES + CUSTOM_CODES)
+        labels, _, _ = rendered_labels(FEATURE_CODES + CUSTOM_CODES, ADVANCE_062, 300)
+        self.assertIn("…", labels[-1], "the custom code was not fitted")
+        self.assertNotEqual(labels[-2], labels[-1], "fitted custom codes collide")
+
+    def test_control_the_former_fixed_gutter_clips(self):
+        """Negative control: the 130px gutter with unfitted labels fails the same check."""
+        edge = left_edge(LONGEST_SPEC_CODE, FORMER_FIXED_GUTTER, ADVANCE_060)
+        self.assertLess(edge, 0, "the former gutter no longer clips; the control is stale")
+
+    def test_the_code_sizes_from_the_measured_advance(self):
+        body = features_body()
+        self.assertNotRegex(body, r"\bl:130\b", "the fixed 130px gutter is back")
+        self.assertIn("measureText(", body, "drawFeatures must measure the advance")
+        self.assertRegex(body, r'\.font="600 11px __CODE_FONT__"',
+                         "the measurement must use the labels' own font")
+        self.assertRegex(body, r"11\*0\.62\b", "the 0.62em fallback is missing")
+        self.assertRegex(body, r"isFinite\(a\)&&a>0", "a bad measurement must fall back")
+        self.assertRegex(body, r"Math\.max\(150,Math\.min\(320,longest\*adv\+14\)\)",
+                         "the gutter must be clamped as Match Keys clamps it")
+        self.assertRegex(body, r"l:Math\.min\(gutter,W\*0\.55\)")
+        self.assertRegex(body, r"Math\.floor\(\(mm\.l-10\)/adv\)", "maxChars must use the advance")
+        self.assertRegex(body, r"fitCode\(rows\[i\]\.feature,maxChars-sfx\.length\)\+sfx",
+                         "the suffix must be fitted inside the budget")
+        self.assertRegex(body, r'attr\("font-family","__CODE_FONT__"\)\.text\(fitted\[i\]\)',
+                         "the label must render the fitted text in the measured font")
+
+    def test_the_full_code_is_reachable_on_hover(self):
+        self.assertRegex(features_body(), r'\.append\("title"\)\.text\(r\.feature\)')
+
+    def test_an_empty_list_keeps_the_none_sampled_message(self):
+        self.assertIn("none were sampled", features_body())
+
+
 class TheGraphDefaultIsScaleAware(unittest.TestCase):
 
     def threshold(self):
@@ -395,6 +494,16 @@ class TheContractCarriesBothForAnyLanguage(unittest.TestCase):
         self.assertRegex(rule, r"no less than 0\.62 em")
         self.assertRegex(rule, r"one advance for both the gutter and the truncation limit")
         self.assertRegex(rule, r"suffix counts inside the width budget")
+
+    def test_rule_2_reaches_the_feature_scores_labels(self):
+        """#523: a server in another language must size Feature Scores the same way."""
+        rule = re.search(
+            r"\*\*2\. Match-key labels must stay distinguishable\.\*\*(.*?)\*\*3\. ",
+            self.contract(),
+        ).group(1)
+        self.assertRegex(rule, r"Feature Scores tab's feature-code labels follow this rule too")
+        self.assertRegex(rule, r"measured advance")
+        self.assertRegex(rule, r"full code on\s+hover")
 
     def test_the_distinctness_property_is_the_stated_requirement(self):
         self.assertRegex(

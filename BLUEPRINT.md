@@ -1941,7 +1941,9 @@ transition, plus Step 9's retry-or-move-on on a failed run, so progress is
 written once per turn. Each check lands in `module_3_verification.checks`.
 
 - Opt-out ("skip verification"): write `module_3_verification` status
-  `skipped`, reason `bootcamper_opted_out`; warn; gate 3→4 `skipped`.
+  `skipped`, reason `bootcamper_opted_out`; warn; record nothing more
+  (`system_verification` is not added to `modules_completed`). A request to
+  run verification starts the module from its beginning.
 - 1 `mcp_connectivity`: `get_capabilities` (10 s, never `search_docs`), one
   retry, then troubleshooting; block until "retry" passes.
 - 1a `engine_initialization`: init and release an engine from the
@@ -1967,7 +1969,8 @@ written once per turn. Each check lands in `module_3_verification.checks`.
 - 6 `data_loading`: run the pipeline (120 s); counts must match.
 - 7 `results_validation`: entity count, cluster merged, distractor alone.
   On mismatch ask `why_records`/`why_entities`: explained gives
-  `expectation_mismatch` plus `engine_explanation`, else `failed`.
+  `expectation_mismatch` plus `engine_explanation` and continues (nothing is
+  fixed or re-run), else `failed`.
 - 7a, a prediction and not a check: copy a Marisol record with `NAME_FIRST`
   `Mari` and a new `RECORD_ID` (`DATA_SOURCE` `VERIFY`) to `mari_record.jsonl`,
   show it and ask "will it join Marisol's entity?" (joins / separate / just
@@ -1984,8 +1987,7 @@ written once per turn. Each check lands in `module_3_verification.checks`.
   `failed`); an unanswered question is re-presented on resume.
 - 10: purge `VERIFY` records via SDK code, 7a's `Mari` record included (its
   ID is in `mari_record.jsonl`); keep the files.
-- 11: add `system_verification` to `modules_completed`, gate 3→4
-  `completed`, append `## System verification — {timestamp}` to
+- 11: add `system_verification` to `modules_completed`, append `## System verification — {timestamp}` to
   `docs/bootcamp_recap.md`, B-roll, 👉 transition to `truthset_visualization`
   if selected, else Data collection.
 
@@ -2020,18 +2022,19 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   launch block, carry the `#guide-run-blocks` pointer line.
 - 2.2: snapshot first: `--records`, `--title`, `--dataset`, `--snapshot`
   set to `docs/visualizations/truthset_verification.html`, `--no-serve`.
-  Run the encoding self-check (legend combination rows must equal
-  `encoding_check.combination_keys`; fix before capture; report
-  `not_exercised` as such, a warning sign here). Screenshots: run
-  `scripts/capture_screenshots.py` with `--url` pointing at the bound
-  localhost port, `--name truthset_verification`, `--tabs all`, `--query`.
-  Non-blocking, skipped only on its exit code.
+  2.2 builds the snapshot only.
 - 2.3: source the env on its own line, background with plain `&` (no
   `nohup`), port 8080 or a free one; record pid and port. On the container
   route it follows the contract's "Serving from the SDK container" instead,
   states only its own server command and checkpoint fields, and without a
   published port has no live server (`reason: "recreate_declined"`).
-- 2.4: probe every endpoint (10 s); zero entities fails. 2.4b: any change
+- 2.4: probe every endpoint (10 s); zero entities fails. 2.4a, against the
+  running server: the encoding self-check (legend combination rows must equal
+  `encoding_check.combination_keys`; fix before capture; report
+  `not_exercised` as such, a warning sign here), then screenshots: run
+  `scripts/capture_screenshots.py` with `--url` pointing at the bound
+  localhost port, `--name truthset_verification`, `--tabs all`, `--query`.
+  Non-blocking; exit 2 takes `module-completion.md`'s skip path. 2.4b: any change
   means rebuilding the snapshot. 2.5: URL, snapshot path, tour, then 👉
   "ready to continue?", which never authorizes teardown. Writes
   `truthset_visualization.checks` `web_service` (status
@@ -2465,7 +2468,9 @@ Phase D (`phaseD-validation.md`, steps 21-28):
   match key or `why_records` as evidence. A missing record is a difference,
   never a re-ask; "you pick" (expected on CORD or generated data) runs the
   review as it stands. Otherwise steps 21-24 ask nothing.
-- Spot-check entities, UAT in `docs/uat_results.md`; with 2+ sources,
+- Spot-check entities, UAT in `docs/uat_results.md`, with the UAT % defined
+  once at step 22 (judged correct ÷ checked; none checked means no UAT %, and
+  the gate routes on match accuracy alone); with 2+ sources,
   cross-source and quality checks, UAT (self-directed for a generated business
   case, else asks about business users), and `docs/results_validation.md`.
   Module 6 offers no visualization.
@@ -3536,7 +3541,7 @@ Renumbering, only if authorized, is last, all at once, with a root
 `INV-NNN`, excluding `specs/INVARIANTS.md` itself, caches, and any file
 containing `IGNORE_MARKER`. Defined invariants are the `- **INV-NNN**` entry
 lines of `INVARIANTS.md`; spec names are `specs/*.md` stems minus
-`META_SPECS` (plus `specs/archive/*.md` if present); ledger headings are the
+`META_SPECS` (top level only, #523); ledger headings are the
 `##` lines of `IMPLEMENTED.md` (minus the `<spec-name>` template) and of
 `DECLINED.md`. `feedback_state` collapses `PROCESSED.jsonl` last-wins by
 `entry_id` and counts raw lines.
@@ -7379,13 +7384,42 @@ async function drawFeatures(){const d=await getJSON("/api/features");const box=d
   const order=["SAME","CLOSE","PLUS","LIKELY","PLAUSIBLE","UNLIKELY","NO_CHANCE"];
   const bcolor={SAME:"#137333",CLOSE:"#137333",PLUS:C_GREEN,LIKELY:"#8a6d00",PLAUSIBLE:"#a1440a",UNLIKELY:"#a50e0e",NO_CHANCE:"#a50e0e"};
   const rows=feats.map(function(f){const b=f.buckets||{};const total=Object.keys(b).reduce(function(s,k){return s+b[k];},0)||1;return {feature:f.feature,buckets:b,total:total};});
-  const W=Math.min(720,box.node().clientWidth),barh=32,mm={t:6,r:10,b:6,l:130},H=mm.t+mm.b+rows.length*barh;
+  // Gutter sized from the measured advance of the labels' own font, then labels
+  // fitted to it -- the technique drawMatchKeys uses (#463, INV-153). This chart had a
+  // fixed 130px gutter with right-anchored, unfitted labels, so a long feature code
+  // (REGISTRATION_COUNTRY is 20 characters, and a configuration can add longer custom
+  // ones) started left of the SVG and lost its head. One monospace font, so one
+  // measured advance serves every label; 0.62em when it cannot be measured.
+  const W=Math.min(720,box.node().clientWidth),barh=32;
+  const adv=(function(){const sample="REGISTRATION_COUNTRY_0123456789";
+    try{const ctx=document.createElement("canvas").getContext("2d");
+      if(ctx){ctx.font="600 11px __CODE_FONT__";const a=ctx.measureText(sample).width/sample.length;
+        if(isFinite(a)&&a>0)return a;}}catch(e){}
+    return 11*0.62;})();
+  const longest=d3.max(rows,function(z){return (z.feature||"").length;})||0;
+  const gutter=Math.max(150,Math.min(320,longest*adv+14));
+  const mm={t:6,r:10,b:6,l:Math.min(gutter,W*0.55)},H=mm.t+mm.b+rows.length*barh;
+  // Middle-ellipsis, then disambiguate any fitted pair that still collides; the
+  // full feature code stays on hover (the label's <title>).
+  const maxChars=Math.max(8,Math.floor((mm.l-10)/adv));
+  function fitCode(k,n){k=k||"";n=Math.max(1,n===undefined?maxChars:n);if(k.length<=n)return k;
+    const tail=Math.max(Math.min(6,n-2),Math.floor((n-1)*0.5)),head=n-1-tail;
+    return k.slice(0,head)+"…"+k.slice(k.length-tail);}
+  const fitted=rows.map(function(r){return fitCode(r.feature);});
+  const seen={};
+  fitted.forEach(function(label,i){
+    if(seen[label]===undefined){seen[label]=i;return;}
+    if(rows[seen[label]].feature===rows[i].feature)return;
+    const sfx=" ("+(i+1)+")";
+    fitted[i]=fitCode(rows[i].feature,maxChars-sfx.length)+sfx;
+  });
   const x=d3.scaleLinear().domain([0,1]).range([mm.l,W-mm.r]);
   const y=d3.scaleBand().domain(rows.map(function(z){return z.feature;})).range([mm.t,H-mm.b]).padding(0.25);
   const svg=box.append("svg").attr("width",W).attr("height",H);
-  rows.forEach(function(r){let acc=0;const keys=order.filter(function(k){return r.buckets[k];}).concat(Object.keys(r.buckets).filter(function(k){return order.indexOf(k)<0;}));
+  rows.forEach(function(r,i){let acc=0;const keys=order.filter(function(k){return r.buckets[k];}).concat(Object.keys(r.buckets).filter(function(k){return order.indexOf(k)<0;}));
     keys.forEach(function(k){const frac=r.buckets[k]/r.total;svg.append("rect").attr("x",x(acc)).attr("y",y(r.feature)).attr("width",Math.max(0,x(acc+frac)-x(acc))).attr("height",y.bandwidth()).attr("fill",bcolor[k]||C_MUTED).append("title").text(k+": "+r.buckets[k]);acc+=frac;});
-    svg.append("text").attr("x",mm.l-8).attr("y",y(r.feature)+y.bandwidth()/2).attr("text-anchor","end").attr("dominant-baseline","middle").attr("font-size",12).attr("font-weight",600).text(r.feature);});
+    svg.append("text").attr("x",mm.l-8).attr("y",y(r.feature)+y.bandwidth()/2).attr("text-anchor","end").attr("dominant-baseline","middle").attr("font-size",11).attr("font-weight",600).attr("font-family","__CODE_FONT__").text(fitted[i])
+      .append("title").text(r.feature);});
   box.append("p").attr("class","muted").text("Based on "+d.sampled+" of "+d.multi_record_total+" multi-record entities"+(d.capped?" (sampled to bound cost).":"."));
 }
 function esc(s){return (s||"").replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}
@@ -8565,7 +8599,8 @@ Used by:
 - `_NEW_LINE_LABELS`: `test_authored_shapes_are_stated.py`,
   `test_new_line_labels.py`
 - `_needs_item_gap`: `test_discoveries_pdf.py`
-- `_normalize`: `test_authored_shapes_are_stated.py`, `test_new_line_labels.py`
+- `_normalize`: `test_authored_shapes_are_stated.py`, `test_coherence_sweep_523.py`,
+  `test_new_line_labels.py`
 
 ### 7.6 `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`
 
@@ -9067,10 +9102,11 @@ looks wrong.
 - `tests/test_certificate_name_source.py`: 19
 - `tests/test_checklist_items_ship_their_exceptions.py`: 5
 - `tests/test_ci_workflow_guards_the_fpdf2_matrix.py`: 12
-- `tests/test_citation_census.py`: 24
+- `tests/test_citation_census.py`: 25
 - `tests/test_citations_verify_states_its_limit.py`: 5
 - `tests/test_claimed_hook_triggers_are_real.py`: 8
 - `tests/test_classpath_root_is_platform_qualified.py`: 6
+- `tests/test_coherence_sweep_523.py`: 29
 - `tests/test_comment_test_pointers_resolve.py`: 10
 - `tests/test_compact_dev_environment_leaves_specs_frozen.py`: 12
 - `tests/test_completeness_denominator.py`: 23
@@ -9392,7 +9428,7 @@ looks wrong.
 - `tests/test_the_seven_triaged_rules_keep_their_citations.py`: 3
 - `tests/test_todo_triage_is_recorded.py`: 9
 - `tests/test_tool_directives_do_not_override_interaction.py`: 30
-- `tests/test_truth_set_is_the_practice_run.py`: 9
+- `tests/test_truth_set_is_the_practice_run.py`: 10
 - `tests/test_truth_set_spelling.py`: 5
 - `tests/test_truthset_acquisition_call.py`: 14
 - `tests/test_truthset_container_route_runs_a_project_copy.py`: 16
@@ -9411,7 +9447,7 @@ looks wrong.
 - `tests/test_visualization_api_contract.py`: 19
 - `tests/test_visualization_model_build_scales.py`: 33
 - `tests/test_viz_capped_graph_notes.py`: 12
-- `tests/test_viz_defaults_at_scale.py`: 22
+- `tests/test_viz_defaults_at_scale.py`: 30
 - `tests/test_viz_endpoint_sync.py`: 7
 - `tests/test_viz_histogram_integer_ticks.py`: 6
 - `tests/test_viz_server_bind_and_identity.py`: 40
@@ -10880,6 +10916,15 @@ Senzing licensing, with no SPDX identifier.
   INVARIANT for Module 0's wrong-answer rule and Module 7's recall question
   is queued (the pointers named the single-statement rule but not the rule
   they point at, and the wrong-answer rule was registered nowhere)
+- #523: fourteen audit items fixed at their sites: restated rules (the
+  write-gate's scope, exit 2's skip, the INV-231 pointer, Phase D's UAT %,
+  color assignment) point to their one statement; Module 3 records
+  `modules_completed` instead of "gate 3→4" and never has a mismatch fixed or
+  re-run; 3b moves its self-check and capture after the server starts (2.4a);
+  the Feature Scores gutter is measured and its labels fitted as Match Keys'
+  are; six INV-048 citations name the rule that governs each site; and an
+  INV-275 amendment is queued (each site kept an old rule, pointed at the wrong
+  section, or used a fixed value that should be measured)
 - #529: System verification's Agent Rule 4 names its one exception, a Step 1a
   failure, which records Steps 2-8's checks as `skipped` and still writes the
   full report, and a failed run ends on a pinned retry-or-move-on question

@@ -7,7 +7,8 @@ practice. #486 changes three things, pinned here:
 1. **The curtain line.** The Truth Set close says, as a statement immediately before the
    transition 👉 and never as a second question, that it was practice data built to contain
    matches, and points to the Bootcamper's own problem, named in one clause from
-   `docs/business_problem.md` ("your own data" when that file is missing).
+   `docs/business_problem.md` ("your own data" when that file is missing). It names no module
+   number (INV-079, #523).
 2. **"Wow moment" moves.** None of the nine sites carries the phrase; Module 7's skill files do,
    for its results app.
 3. **The rendering contract's reason changes, not its requirements.** It covers both apps and
@@ -31,6 +32,7 @@ Source issue: #486.
 
 Run:  python3 -m unittest discover -s tests
 """
+import re
 import unittest
 from pathlib import Path
 
@@ -51,6 +53,9 @@ WOW_SITES = (
     SKILLS / "module-03-system-verification" / "phase1-verification.md",  # :43
     PLUGIN / "scripts" / "senzing_viz_server.py",  # :7 docstring, :1109 CSS comment
 )
+
+#: A module named by number in Bootcamper-facing text (INV-079), e.g. "Module 1".
+MODULE_NUMBER = re.compile(r"\b[Mm]odule\s+\d")
 
 TRANSITION_QUESTION = "👉 **Are you ready to move on to the next module: {next module name}?**"
 CURTAIN = "That was practice data, built to contain matches."
@@ -106,6 +111,10 @@ def curtain_problems(text):
     if item_4.count(CURTAIN) != 2:
         problems.append("item 4 should carry the curtain line in both forms (with and without "
                         "the problem); found %d" % item_4.count(CURTAIN))
+    # INV-079: the curtain is Bootcamper-facing, so it names no module number (#523 item 5).
+    for line in item_4.splitlines():
+        if line.strip().startswith(">") and MODULE_NUMBER.search(line):
+            problems.append("the curtain line names a module number (INV-079): %r" % line.strip())
     curtain_at = step.find(CURTAIN)
     question_at = step.find(TRANSITION_QUESTION)
     ask_at = step.find("Then ask the single transition question")
@@ -129,6 +138,12 @@ class TheCurtainLine(unittest.TestCase):
     def test_control_a_missing_fallback_is_reported(self):
         mutated = self.TEXT.replace("it says \"your own data\"", "it says nothing")
         self.assertTrue(curtain_problems(mutated))
+
+    def test_control_a_module_number_in_the_curtain_is_reported(self):
+        """#523 item 5: "the problem you brought in Module 1" breaks INV-079."""
+        mutated = self.TEXT.replace("you brought to the bootcamp:", "you brought in Module 1:")
+        self.assertNotEqual(self.TEXT, mutated, "the control's anchor text is gone")
+        self.assertTrue(any("INV-079" in p for p in curtain_problems(mutated)))
 
     def test_control_the_curtain_after_the_question_is_reported(self):
         step = module_close(self.TEXT)

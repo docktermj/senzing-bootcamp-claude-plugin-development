@@ -1071,9 +1071,10 @@ of the Truth Set. It MUST:
   snapshot is permanent, and a Truth Set label on their own data is a false claim in a keepsake
   (INV-172). The contract's "Snapshot" section is the statement of record.
   After generating it, capture screenshots for the recap per
-  `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" (skip
-  silently with no headless capability, otherwise embed **every** captured tab in this module's
-  recap, in the app's tab order — no count cap, INV-146).
+  `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" (on exit 2,
+  take the skip path that section states once, INV-300 — never a silent skip by default: say nothing
+  only at the `minimal` verbosity preset, and read the reason the helper gave; otherwise embed
+  **every** captured tab in this module's recap, in the app's tab order — no count cap, INV-146).
   `{name}` = `results_visualization`. Capture **one image per tab** from the running server
   (`--url http://localhost:<port>`, with `--query` so Search / Probe shows real results) — not
   several shots of one tab — and derive every caption from the opened image and its tab label.
@@ -1090,7 +1091,7 @@ of the Truth Set. It MUST:
   ```
 
   ⛔ **"No headless capability" is a conclusion the helper reaches and reports, never one you reach
-  first.** Enter the silent-skip path on its **exit code** — it distinguishes its reasons — and never
+  first.** Enter the skip path on its **exit code** — it distinguishes its reasons — and never
   on an assumption that browser automation is unavailable. A guide that skipped capture here on that
   assumption, without running this script, lost twelve recap images; the same script then captured
   6 of 6 tabs first try against plain headless Chrome. The procedure (backends, exit codes,

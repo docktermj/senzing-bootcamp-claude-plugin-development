@@ -95,6 +95,14 @@ mapped source, the original `data/raw/` file for a fast-pathed one) and take `DA
    Skip demonstrations that require unavailable patterns (e.g. skip relationship networks if no
    relationships exist) and note which steps are skipped and why.
 
+   ⛔ **(INV-239) When a loaded source records `provenance: synthesized`, the data is the
+   bootcamp's, not the Bootcamper's.** Say "the data the bootcamp generated", never "your data".
+   When that scenario also promised households or related parties (the condition in
+   `phase2b-discover.md` step 4d's INV-239 paragraph, stated once there, INV-300) and this fallback
+   skips the relationship network, say that what is missing is a defect in that generated data,
+   not anything about the Bootcamper's data, and suggest `/bootcamp-feedback`. Adapt the
+   demonstrations as above.
+
 **Checkpoint:** write step 4a to `config/bootcamp_progress.json` under
 `module_7_query.steps.4a`, using this structure:
 `{"status": "completed", "patterns_found": {"multi_record": N, "cross_source": M, "relationships": K}}`

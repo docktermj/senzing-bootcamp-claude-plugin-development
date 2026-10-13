@@ -1993,13 +1993,42 @@ async function drawFeatures(){const d=await getJSON("/api/features");const box=d
   const order=["SAME","CLOSE","PLUS","LIKELY","PLAUSIBLE","UNLIKELY","NO_CHANCE"];
   const bcolor={SAME:"#137333",CLOSE:"#137333",PLUS:C_GREEN,LIKELY:"#8a6d00",PLAUSIBLE:"#a1440a",UNLIKELY:"#a50e0e",NO_CHANCE:"#a50e0e"};
   const rows=feats.map(function(f){const b=f.buckets||{};const total=Object.keys(b).reduce(function(s,k){return s+b[k];},0)||1;return {feature:f.feature,buckets:b,total:total};});
-  const W=Math.min(720,box.node().clientWidth),barh=32,mm={t:6,r:10,b:6,l:130},H=mm.t+mm.b+rows.length*barh;
+  // Gutter sized from the measured advance of the labels' own font, then labels
+  // fitted to it -- the technique drawMatchKeys uses (#463, INV-153). This chart had a
+  // fixed 130px gutter with right-anchored, unfitted labels, so a long feature code
+  // (REGISTRATION_COUNTRY is 20 characters, and a configuration can add longer custom
+  // ones) started left of the SVG and lost its head. One monospace font, so one
+  // measured advance serves every label; 0.62em when it cannot be measured.
+  const W=Math.min(720,box.node().clientWidth),barh=32;
+  const adv=(function(){const sample="REGISTRATION_COUNTRY_0123456789";
+    try{const ctx=document.createElement("canvas").getContext("2d");
+      if(ctx){ctx.font="600 11px __CODE_FONT__";const a=ctx.measureText(sample).width/sample.length;
+        if(isFinite(a)&&a>0)return a;}}catch(e){}
+    return 11*0.62;})();
+  const longest=d3.max(rows,function(z){return (z.feature||"").length;})||0;
+  const gutter=Math.max(150,Math.min(320,longest*adv+14));
+  const mm={t:6,r:10,b:6,l:Math.min(gutter,W*0.55)},H=mm.t+mm.b+rows.length*barh;
+  // Middle-ellipsis, then disambiguate any fitted pair that still collides; the
+  // full feature code stays on hover (the label's <title>).
+  const maxChars=Math.max(8,Math.floor((mm.l-10)/adv));
+  function fitCode(k,n){k=k||"";n=Math.max(1,n===undefined?maxChars:n);if(k.length<=n)return k;
+    const tail=Math.max(Math.min(6,n-2),Math.floor((n-1)*0.5)),head=n-1-tail;
+    return k.slice(0,head)+"…"+k.slice(k.length-tail);}
+  const fitted=rows.map(function(r){return fitCode(r.feature);});
+  const seen={};
+  fitted.forEach(function(label,i){
+    if(seen[label]===undefined){seen[label]=i;return;}
+    if(rows[seen[label]].feature===rows[i].feature)return;
+    const sfx=" ("+(i+1)+")";
+    fitted[i]=fitCode(rows[i].feature,maxChars-sfx.length)+sfx;
+  });
   const x=d3.scaleLinear().domain([0,1]).range([mm.l,W-mm.r]);
   const y=d3.scaleBand().domain(rows.map(function(z){return z.feature;})).range([mm.t,H-mm.b]).padding(0.25);
   const svg=box.append("svg").attr("width",W).attr("height",H);
-  rows.forEach(function(r){let acc=0;const keys=order.filter(function(k){return r.buckets[k];}).concat(Object.keys(r.buckets).filter(function(k){return order.indexOf(k)<0;}));
+  rows.forEach(function(r,i){let acc=0;const keys=order.filter(function(k){return r.buckets[k];}).concat(Object.keys(r.buckets).filter(function(k){return order.indexOf(k)<0;}));
     keys.forEach(function(k){const frac=r.buckets[k]/r.total;svg.append("rect").attr("x",x(acc)).attr("y",y(r.feature)).attr("width",Math.max(0,x(acc+frac)-x(acc))).attr("height",y.bandwidth()).attr("fill",bcolor[k]||C_MUTED).append("title").text(k+": "+r.buckets[k]);acc+=frac;});
-    svg.append("text").attr("x",mm.l-8).attr("y",y(r.feature)+y.bandwidth()/2).attr("text-anchor","end").attr("dominant-baseline","middle").attr("font-size",12).attr("font-weight",600).text(r.feature);});
+    svg.append("text").attr("x",mm.l-8).attr("y",y(r.feature)+y.bandwidth()/2).attr("text-anchor","end").attr("dominant-baseline","middle").attr("font-size",11).attr("font-weight",600).attr("font-family","__CODE_FONT__").text(fitted[i])
+      .append("title").text(r.feature);});
   box.append("p").attr("class","muted").text("Based on "+d.sampled+" of "+d.multi_record_total+" multi-record entities"+(d.capped?" (sampled to bound cost).":"."));
 }
 function esc(s){return (s||"").replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}

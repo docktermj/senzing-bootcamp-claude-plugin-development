@@ -369,9 +369,10 @@ DISCOVERIES_GENERATOR = (
     REPO_ROOT / "plugins" / "senzing-bootcamp" / "scripts" / "generate_discoveries_pdf.py"
 )
 
-# A discoveries document needs all six findings sections to render (INV-110), so the
+# A discoveries document needs all seven required sections to render (INV-110), so the
 # fixture carries them; only one section holds the non-Latin-1 content under test.
 DISCOVERIES_SECTIONS = (
+    "Your question, answered",
     "Headline numbers",
     "Merges and match keys",
     "Review queue",

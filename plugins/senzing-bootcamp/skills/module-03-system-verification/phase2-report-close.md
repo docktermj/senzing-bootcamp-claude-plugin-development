@@ -195,8 +195,8 @@ visualization is a separate, standalone module that records itself at its own cl
 (INV-085/INV-086/INV-087):
 
 1. **Update progress state.** Add `system_verification` to `modules_completed` (a module name token,
-   not a number). Set gate 3→4 status to "completed", `current_module` to the next module in
-   `selected_modules`, and `current_step` to `null`. All idempotent (do not duplicate).
+   not a number). Set `current_module` to the next module in `selected_modules`, and
+   `current_step` to `null`. All idempotent (do not duplicate).
 2. **Append the recap section** to `docs/bootcamp_recap.md`, name-based and append-only (INV-085):
    `## System verification — {timestamp}` (Information Shared, Questions & Responses, Actions Taken,
    End-of-Module Summary) — capture **what each check actually returned** against the synthetic

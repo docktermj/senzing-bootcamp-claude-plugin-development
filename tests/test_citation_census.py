@@ -128,13 +128,25 @@ class VerifyCatchesWhatCompactionBreaks(unittest.TestCase):
             root = scratch(tmp, invariants="- **INV-001** — a rule. (Source: `gone`, 2026-07-30.)\n")
             self.assertEqual(2, self.run_verify(root))
 
-    def test_a_source_resolved_by_an_archived_spec_passes(self):
-        """Archiving is the sanctioned move; it must not read as a break."""
+    def test_a_source_resolved_by_a_spec_under_specs_passes(self):
+        """A spec file directly under `specs/` resolves its slug."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = scratch(tmp, invariants="- **INV-001** — a rule. (Source: `kept`, 2026-07-30.)\n")
+            (root / "specs" / "kept.md").write_text("x", encoding="utf-8")
+            self.assertEqual(0, self.run_verify(root))
+
+    def test_a_specs_archive_subdirectory_is_not_read(self):
+        """#523: `specs/` is the read-only archive (INV-307); there is no `specs/archive/`.
+
+        The census once read one, a dead branch since the freeze. A spec placed there must
+        not resolve a citation, or a moved spec would hide the break INV-307's deletion
+        direction exists to catch.
+        """
         with tempfile.TemporaryDirectory() as tmp:
             root = scratch(tmp, invariants="- **INV-001** — a rule. (Source: `kept`, 2026-07-30.)\n")
             (root / "specs" / "archive").mkdir()
             (root / "specs" / "archive" / "kept.md").write_text("x", encoding="utf-8")
-            self.assertEqual(0, self.run_verify(root))
+            self.assertEqual(2, self.run_verify(root))
 
     def test_a_source_resolved_by_a_ledger_entry_passes(self):
         """Some Sources name an audit recorded only in the ledger, never a spec file."""

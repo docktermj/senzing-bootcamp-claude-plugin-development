@@ -1,6 +1,6 @@
 ---
 name: module-03-system-verification
-description: 'Bootcamp Module 3: System Verification. Use when the bootcamper starts or resumes Module 3, or needs to verify the Senzing system works end-to-end and produce a verification report. (The Truth Set visualization is a separate, standalone module run next.)'
+description: 'Bootcamp Module 3: System Verification. Use when the bootcamper starts or resumes Module 3, asks to run verification (including after skipping it), or needs to verify the Senzing system works end-to-end and produce a verification report. (The Truth Set visualization is a separate, standalone module run next.)'
 ---
 
 # Module 3: System Verification
@@ -42,6 +42,10 @@ step — for all code generation and verification scripts. Never fall back to a 
 
 **Prerequisites:** Module 2 complete (SDK installed and configured).
 
+**"Run verification":** a request to run system verification — the phrase the opt-out warning in
+`phase1-verification.md` offers — starts this module from its beginning, whenever it comes,
+including after it was skipped.
+
 **Before/After:** Before, the SDK is installed but untested end to end. After, your entire
 system is verified against **synthetic records**: SDK initialization, code generation,
 compilation, data loading, entity resolution, and database operations all confirmed working. (The
@@ -55,7 +59,7 @@ registration (`data_source_registration`), loading (`data_loading`) and database
 (`results_validation`) and is the only one that is not a statement about the install, reports
 `passed` or `expectation_mismatch` and is never required to pass (INV-229); the Verification Report is persisted
 to `config/bootcamp_progress.json`; the synthetic `VERIFY` data is purged from the database; and
-gate 3→4 is marked completed (full criteria in `phase1-verification.md`). (The Truth Set visualization module — run next when selected — owns its
+`system_verification` is added to `modules_completed` (full criteria in `phase1-verification.md`). (The Truth Set visualization module — run next when selected — owns its
 own `web_service`/`web_page` checks, snapshot, and cleanup.)
 
 ⛔ **Results validation is kept separate on purpose: it compares the engine against a prediction the

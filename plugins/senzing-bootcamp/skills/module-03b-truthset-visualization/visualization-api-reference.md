@@ -703,6 +703,13 @@ labels useless, chart looking fine. Required behavior:
   stays reachable on hover regardless.
 - Expose the full, untruncated key on hover (`<title>` or equivalent), on both the bar and its label.
 
+**The Feature Scores tab's feature-code labels follow this rule too** (INV-153 binds every truncated
+label): size its gutter from the measured advance of the labels' font, clamped as above, fit a code
+that does not fit rather than letting it clip, keep fitted labels distinct, and put the full code on
+hover. A fixed gutter is not safe there either. The longest code in the Entity Specification's
+feature list is `REGISTRATION_COUNTRY`, 20 characters, and a configuration can add custom feature
+types, so no length is guaranteed (`search_docs`, server 1.37.28, 2026-10-12).
+
 **3. The entity graph must open on something readable.** Hiding labels does not thin 4,464 edges;
 at that density the graph conveys shape only, with no practical way to locate an entity. Required:
 **above 400 entities, Entity Graph opens on the relationship subgraph** rather than the full
@@ -1194,8 +1201,8 @@ $ nohup bash -c '...'                  -> (empty)
 - ⚠️ **The symptom points away from the cause.** It surfaces as
   `java.lang.UnsatisfiedLinkError: no Sz in java.library.path` from a **backgrounded** process whose
   parent shell has the variable set — so the obvious response is to add `-Djava.library.path=…`,
-  **which does not fix it**. `../module-02-sdk-setup/SKILL.md` → "MCP Java scaffolds may need a JSON
-  library the install does not provide" states why a JVM flag cannot repair a dynamic-linker search
+  **which does not fix it**. `../module-02-sdk-setup/SKILL.md` → "The launch environment (JVM
+  languages, and macOS generally)" states why a JVM flag cannot repair a dynamic-linker search
   path after the process has started; follow it there rather than re-deriving it (INV-183, INV-300).
 - ⚠️ **Foreground programs work throughout, which is what makes this confusing.** They are direct
   children of the shell that exported the variable, so nothing is stripped. The failure appears only

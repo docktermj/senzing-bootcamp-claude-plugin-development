@@ -170,8 +170,9 @@ ground-rules file-placement contract:
   warning rather than inventing a destination. If the plugin write-gate blocks a write, leave
   the file in the workspace and report it: do not retry against a different location.
 
-The plugin's PreToolUse write-gate enforces the temp-path and secret rules; file-type placement
-is your responsibility. (The Kiro `organize_mapping_files.py` and `generate_docs_index.py`
+The plugin's PreToolUse write-gate blocks every write outside the project (INV-200); the rule is
+stated once, in `../bootcamp-onboarding/ground-rules.md` → "File placement" (INV-300). File-type
+placement inside the project is your responsibility. (The Kiro `organize_mapping_files.py` and `generate_docs_index.py`
 scripts are a later porting phase: place files directly per the contract above for now.)
 
 ## Calling `mapping_workflow` correctly (⛔ read before step 8)

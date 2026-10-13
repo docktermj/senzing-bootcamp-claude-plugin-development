@@ -244,7 +244,9 @@ class AnUpdateWhoseEulaIsDeclinedContinues(unittest.TestCase):
     def test_step_1b_states_the_outcome(self):
         at = self.section.index("**(INV-338) If they decline the EULA here")
         outcome = self.section[at : at + 700]
-        for needle in ('"Keeping [installed]."', "`update-declined`", "INV-006", "INV-048",
+        # "(non-blocking)" without INV-048: INV-338, cited at the bullet's head, governs the
+        # decline, and INV-048 is the recap PDF's (#523 item 9).
+        for needle in ('"Keeping [installed]."', "`update-declined`", "INV-006", "(non-blocking)",
                        "continue on the existing-install path in Step 1",
                        "never recorded as a failure"):
             with self.subTest(needle=needle):
