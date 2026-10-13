@@ -9760,7 +9760,7 @@ looks wrong.
 - `tests/test_screenshot_retention_and_order.py`: 19
 - `tests/test_sdk_parameter_shapes.py`: 39
 - `tests/test_sdk_setup_prerequisites.py`: 41
-- `tests/test_sdk_update_offer.py`: 57
+- `tests/test_sdk_update_offer.py`: 59
 - `tests/test_search_docs_calls_pass_a_query.py`: 10
 - `tests/test_secret_patterns_are_shared.py`: 12
 - `tests/test_server_launch_warns_about_protected_launchers.py`: 7
@@ -11476,6 +11476,13 @@ Senzing licensing, with no SPDX identifier.
   and no `MCP-NEGATIVE` marker; the `search_docs` C# query and its allowlist
   entry are gone, and INV-222's dated note is queued as an amendment (every
   platform's reply now names the source, so "no C# line" was false)
+- #567: Module 2's Target 4.4.0 step selects *v4.4.0 Detailed Release
+  Notes* "Migration & Action Required" by title and section, names the
+  *What's New in v4* "Migration guides" near-miss and no rank, its record
+  moves to `ON TARGET`, and the `sz_dbtool` citation carries its own
+  read-past clause, all re-stamped server 1.37.29 (the two hits score within
+  0.2 and the re-index flipped them, so "read past the first hit" skipped the
+  release notes)
 - #568: Module 2 Step 8's SENZ7426 block is retitled "Both tools agree on
   the diagnosis, the fix and the path test" and dated server 1.37.28, Module 3
   step 3b names it and drops the clause that the tool quotes a 4.4.x literal,

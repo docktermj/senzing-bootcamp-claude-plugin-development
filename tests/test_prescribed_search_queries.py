@@ -177,19 +177,23 @@ VERIFIED_QUERIES = {
     },
     ("upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change required migration action required",
      "release_notes"): {
-        "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
+        "band": "ON TARGET",
         "sections": ("Migration & Action Required",),
         "returned":
-            "ON TARGET BELOW AN ADJACENT TOP HIT, with category='release_notes': the top hit is "
-            "What's New in v4 'Migration guides', a V3-to-V4 link list; the target, v4.4.0 Detailed "
-            "Release Notes 'Migration & Action Required' ('No schema change required when upgrading "
-            "from any v4 version', plus license and configuration actions), ranks just below it. "
-            "Step 1b says to read past the first hit. Quoted at two sites: the step and the "
+            "ON TARGET, with category='release_notes': the top hit is v4.4.0 Detailed Release "
+            "Notes 'Migration & Action Required' (130.59: 'No schema change required when "
+            "upgrading from any v4 version', plus license and configuration actions), in a "
+            "0.14-point near-tie with What's New in v4 'Migration guides' (130.45), a V3-to-V4 "
+            "link list. The order has flipped before (#567), so Step 1b selects the section by "
+            "title and section name and names no rank. Quoted at two sites: the step and the "
             "routing negative's owner clause",
-        "server": "1.37.14", "docs_index": "2026-09-28 03:23 UTC", "measured": "2026-09-28",
+        "server": "1.37.29", "docs_index": "2026-10-13 23:20 UTC", "measured": "2026-10-13",
     },
     # Executed 2026-09-28 on server 1.37.15 (docs index 2026-09-28 23:38 UTC) for #222: the
     # citation for Step 1b's migration tools, named by the V4 version doing the migration.
+    # Re-measured for #567 on server 1.37.29, docs index 2026-10-13 23:20 UTC, 2026-10-13, at the
+    # default max_results: 'Migration guides' 105.75, 'Command-line Tools & SDKs' 93.50,
+    # 'Infrastructure & tooling' 72.58. The citation carries its own read-past clause.
     ("sz_dbtool upgrade sz_dbupgrade sz_configupgrade replaced 4.4.0 native command-line tools",
      "release_notes"): {
         "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
@@ -200,8 +204,9 @@ VERIFIED_QUERIES = {
             "Detailed Release Notes 'Command-line Tools & SDKs' with the v4.0 - v4.3 | v4.4.0 and "
             "later table (sz_dbupgrade -> sz_dbtool upgrade; sz_configupgrade -> sz_configtool, "
             "configuration upgrades folded in) and What's New in v4 'Infrastructure & tooling' with "
-            "the same table. It is a citation, not a query the guide runs",
-        "server": "1.37.15", "docs_index": "2026-09-28 23:38 UTC", "measured": "2026-09-28",
+            "the same table. It is a citation, not a query the guide runs, and it says to read "
+            "past the first hit to 'Command-line Tools & SDKs'",
+        "server": "1.37.29", "docs_index": "2026-10-13 23:20 UTC", "measured": "2026-10-13",
     },
     ("homebrew-senzingsdk preview release unsupported tap install cask", None): {
         "band": "ON TARGET",

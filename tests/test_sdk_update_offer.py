@@ -61,6 +61,23 @@ def step_1b():
     return text[start : text.index("\n## ", start + 10)]
 
 
+def target_4_4_0_bullet():
+    """Step 1b's "Target 4.4.0" bullet, whitespace collapsed, up to the "Any other target" one."""
+    section = step_1b()
+    start = section.index("- **Target 4.4.0.**")
+    end = section.index("- **Any other target**", start)
+    return re.sub(r"\s+", " ", section[start:end])
+
+
+#: Rank wording the Target 4.4.0 step must not carry (#567): the hit order flips on a re-index.
+RANK_WORDING = re.compile(r"(?i)\b(?:first|top) hit\b|\branks? (?:just )?(?:below|above)\b")
+
+
+def rank_wording(text):
+    """Every rank phrase in `text`, as a list (empty when the text names no rank)."""
+    return RANK_WORDING.findall(text)
+
+
 def unquote(text):
     """Blockquote markers removed and whitespace collapsed, so a wrap cannot split a phrase."""
     return re.sub(r"\s+", " ", re.sub(r"(?m)^\s*>\s?", "", text))
@@ -573,13 +590,39 @@ class ItNeitherBlocksNorOverclaims(unittest.TestCase):
             "required migration action required', category='release_notes')",
             self.flat,
         )
-        self.assertRegex(self.flat, r"(?i)read past the first hit")
         self.assertRegex(self.flat, r"(?i)No schema change required\*\* when upgrading from any v4")
         self.assertRegex(
             self.flat,
             r"(?i)Only when the target's notes do not cover it is the step "
             r"\*\*undocumented, not known to be unnecessary",
         )
+
+    def test_the_4_4_0_step_selects_by_section_not_rank(self):
+        """#567: the target is named by title and section, and the step names no rank.
+
+        #194 wrote the order down as a rank ("the first hit is ... ranks just below it: read past
+        the first hit"), and the re-index on server 1.37.28 (2026-10-13) flipped it: the two hits
+        score within 0.2 of each other. Re-measured on server 1.37.29, docs index 2026-10-13
+        23:20 UTC, 2026-10-13: 'Migration & Action Required' 130.59, 'Migration guides' 130.45.
+        """
+        bullet = target_4_4_0_bullet()
+        self.assertIn("*v4.4.0 Detailed Release Notes*", bullet)
+        self.assertIn('"Migration & Action Required"', bullet)
+        self.assertIn('*What\'s New in v4* "Migration guides"', bullet)
+        self.assertRegex(bullet, r"(?i)is not\s+the target")
+        self.assertEqual([], rank_wording(bullet),
+                         "the Target 4.4.0 step names a rank again; select by section (INV-267)")
+
+    def test_the_rank_check_catches_the_pre_fix_wording(self):
+        """Negative control: the #194 wording must fail the rank check above."""
+        pre_fix = (
+            "⚠️ The first hit is *What's New in v4* \"Migration guides\", a V3→V4 link list. The "
+            "section you want, *v4.4.0 Detailed Release Notes* \"Migration & Action Required\", "
+            "ranks just below it: read past the first hit rather than concluding the notes are "
+            "missing."
+        )
+        self.assertNotEqual([], rank_wording(pre_fix))
+        self.assertNotEqual([], rank_wording("The target ranks above the link list."))
 
     def test_the_conditional_4_4_0_items_are_conditional(self):
         """SQL Server collation and the discontinued installers apply only in their cases."""
