@@ -70,7 +70,8 @@ receives the shippable plugin through `/propagate-to-public`.
   (section 9).
 - `MIGRATION.md`: migration notes from the Kiro Power predecessor to this Claude
   Code plugin.
-- `README.md`: repository README for maintainers.
+- `README.md`: user-facing overview and Claude Desktop install guide (propagated
+  with the slug rewrite; section 5.57).
 - `docs/.nojekyll`: empty marker that makes GitHub Pages serve `docs/` as-is,
   without Jekyll (section 5.56).
 - `docs/FAMILY_WORKFLOW.md`: the operations shared across the plugin family and
@@ -4324,12 +4325,16 @@ Mirrored to the public repo except two maintainer pages.
 
 Root `README.md` (user-facing, propagated with the slug rewrite): what the
 eleven modules cover, requirements (network access to the Senzing MCP
-server, a Claude Max 5x plan or several Pro windows, optionally a business
-problem and 5,000–20,000 records), the supported interfaces, a step-by-step
-Claude Desktop install (marketplace URL, Sync, Install, mode auto, Sonnet,
-medium effort, "Start the bootcamp"), what the bootcamper finishes with
-(working code and data, a recap PDF linking the shipped example PDF, a
-`production/` starter), and troubleshooting (Desktop needs `git`).
+server, Python 3 as `python3` on the `PATH` for the hooks and the recap, a
+Claude Max 5x plan or several Pro windows, optionally a business problem and
+5,000–20,000 records), the supported interfaces, a step-by-step Claude
+Desktop install ("+" > "Plugins" > "Manage plugins", the "Yours" tab, "Add
+Marketplace" with this repo's URL, "Sync", "install for project
+(personal)", mode auto, Sonnet, medium effort, "Start the bootcamp"), what
+the bootcamper finishes with (working code and data, a recap PDF linking the
+shipped example PDF by its raw-content URL, a `production/` starter), and
+troubleshooting (Desktop needs `git`). The marketplace URL and the PDF link
+carry this repo's slug, rewritten to the public one on propagation (#522).
 
 `MIGRATION.md` (maintainer, excluded): the plugin began as a port of the
 Kiro Power `docktermj/senzing-bootcamp-kiro-powers`. It gives the Kiro to
@@ -9144,6 +9149,7 @@ looks wrong.
 - `tests/test_delegate_files_issues_not_specs.py`: 18
 - `tests/test_dependency_reading_rules.py`: 13
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
+- `tests/test_dev_install_surfaces_name_the_dev_repo.py`: 7
 - `tests/test_directing_steps.py`: 48
 - `tests/test_discoveries_pdf.py`: 58
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
@@ -10057,6 +10063,12 @@ These are the scripts under `.claude/skills/`:
   to equal, as a set, those in `docs/README.md`'s `console` fences, indented or
   not. Either side yielding none fails and names its file; a changed page
   command is caught (#455).
+- **Dev install surfaces.** `tests/test_dev_install_surfaces_name_the_dev_repo.py`
+  requires `README.md`, `docs/README.md` and `docs/index.html` each to hold
+  `docktermj/senzing-bootcamp-claude-plugin-development` and not
+  `Senzing/senzing-bootcamp-claude-plugin`, and the root README's Desktop
+  marketplace URL and recap PDF link to carry the dev slug; a failure names
+  the file (#522).
 
 ## 9. Not embedded
 
@@ -10975,6 +10987,12 @@ Senzing licensing, with no SPDX identifier.
   INVARIANT for Module 0's wrong-answer rule and Module 7's recall question
   is queued (the pointers named the single-statement rule but not the rule
   they point at, and the wrong-answer rule was registered nowhere)
+- #522: the root `README.md`'s Claude Desktop marketplace URL and recap PDF
+  link name this repo again, `tests/test_dev_install_surfaces_name_the_dev_repo.py`
+  fails any of the three install surfaces that names the public repo or not
+  the dev one, and a DEFERRED INVARIANT for that rule is queued (#451 brought
+  the public slug across, so dev's Desktop route installed the published
+  plugin)
 - #523: fourteen audit items fixed at their sites: restated rules (the
   write-gate's scope, exit 2's skip, the INV-231 pointer, Phase D's UAT %,
   color assignment) point to their one statement; Module 3 records

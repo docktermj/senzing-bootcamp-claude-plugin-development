@@ -80,7 +80,7 @@ and starting the Bootcamp.
     1. In the *Add marketplace* pane, enter "**URL:**"
 
         ```console
-        https://github.com/Senzing/senzing-bootcamp-claude-plugin
+        https://github.com/docktermj/senzing-bootcamp-claude-plugin-development
         ```
 
     1. Click the "**Sync**" button.
@@ -117,7 +117,7 @@ the issue may be with an incomplete installation of Claude Desktop.
 - Claude Desktop requires `git` to be installed.
 
 [Bootcamp commands]: docs/README.md#bootcamp-commands
-[bootcamp_recap.pdf]: https://raw.githubusercontent.com/Senzing/senzing-bootcamp-claude-plugin/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
+[bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin-development/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
 [Claude Desktop]: https://claude.ai/download
 [Claude Max 5x]: https://claude.com/pricing
 [Claude Pro]: https://claude.com/pricing
