@@ -196,10 +196,17 @@ class NoSkillAdoptsAnUndeclaredScaffoldParameter(unittest.TestCase):
                     "the response is a listing with no source text — so a guide waits for code "
                     "that never arrives, or reconstructs it from memory (INV-080).",
                 )
+                # #565: the hosted `url` now leads `access_steps`, so a site names both URL
+                # fields and fetches by the response's own steps rather than by `raw_url`.
                 self.assertRegex(
                     text,
-                    r"(?i)raw_url",
-                    f"{path.name} should name raw_url as what to fetch",
+                    r"`url`, `raw_url`",
+                    f"{path.name} should name the hosted `url` beside `raw_url` in the listing",
+                )
+                self.assertRegex(
+                    text,
+                    r"(?i)by the response's own `access_steps`",
+                    f"{path.name} should fetch by the response's own access_steps (#565)",
                 )
 
 

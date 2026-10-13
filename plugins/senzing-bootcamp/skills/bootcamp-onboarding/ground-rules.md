@@ -454,23 +454,50 @@ copy (INV-300).
   path the bootcamp uses, and it returns real `code_snippet` content. **File retrieval does not
   return content at all — by design.** `find_examples(repo=…, file_path=…)` elides the body and says
   so: `content: ""` alongside a non-zero `content_length`, `truncated: false`, and
-  **`content_elided: true`**, with an `access_steps` array giving the route in order — fetch
-  `raw_url`, else `git clone`. Re-verified on MCP server 1.32.8, 2026-08-11, for a ~20 KB file and a
+  **`content_elided: true`**, with an ordered `access_steps` array giving the route to the file.
+  Re-verified on MCP server 1.32.8, 2026-08-11, for a ~20 KB file and a
   ~800-byte file, with and without `max_lines`: **the elision is unconditional, not a size
   threshold**, so there is no smaller request that returns the body. The same elision now applies to
-  `generate_scaffold`, whose `snippets[]` carry `raw_url`, `size_bytes` and `line_count` and no
-  inline code.
+  `generate_scaffold`, whose `snippets[]` carry `url`, `raw_url`, `hash`, `size_bytes` and
+  `line_count` and no inline code.
   ⛔ **An empty `content` is never evidence that the file is empty.** `content_elided: true` says the
-  body was withheld deliberately, so follow `access_steps` — `raw_url`, then clone — and never tell
-  the bootcamper an example file is empty on that basis.
-  ⛔ **Do not take the `inline` route the response's step 3 describes.** `inline` is still not
-  declared in the live `find_examples` schema, and only declared parameters may be passed (INV-136).
-  The server states this itself, identically in `find_examples` and `generate_scaffold` (re-verified
-  on MCP server 1.37.14, 2026-09-28): *"Clients that validate arguments against the declared schema
-  cannot send inline=true — the schema will reject it, and steps 1 and 2 (raw_url / git clone) have
-  already failed by the time this step applies, so retrying them will not help either. For such a
-  client there is no route to this GitHub-hosted file through this server; report the content as
-  unreachable rather than retrying."* What to do then is the terminal step stated below.
+  body was withheld deliberately, so follow `access_steps` as the next paragraph says, and never
+  tell the bootcamper an example file is empty on that basis.
+  ⛔ **Follow each response's own `access_steps`, in the order it gives them (INV-160).** This is
+  the route for `find_examples` file retrieval and for `generate_scaffold`, and module steps that
+  fetch either one cite this paragraph instead of naming a route of their own (INV-300). Take the
+  steps in turn: fetch the URL a step names, or run the `git clone` it gives, and run every check
+  that step's own note asks for. Go on to the next step only when that one fails. Never reorder,
+  skip or add a step from memory or from the example below: the order is the server's, and the
+  server has changed it before. A step whose action is not a route, such as `generate_scaffold`'s
+  leading `warning`, is read and heeded, not fetched.
+  **The `hash` check.** Where a step's note asks you to verify the saved file against `hash`,
+  the saved file's SHA-256 must equal `hash`. Compute it with `sha256sum <file>` on Linux,
+  `shasum -a 256 <file>` on macOS, or `Get-FileHash -Algorithm SHA256 <file>` in Windows
+  PowerShell, which prints the digest in uppercase, so compare without regard to case. This is
+  the check before use that INV-234 asks of a saved file. **A `hash` mismatch counts as that
+  step failing:** discard the saved file and go on to the next step. A file that failed its
+  check is never presented or used (INV-245); the mismatch is part of what was tried, which the
+  terminal step below reports. Check `hash` exactly where the response's own step asks for it,
+  and nowhere else. A file from a step whose note asks for no check gets none: upstream `main`
+  may have moved since the server indexed it, so a check there could reject a correct file.
+  **An example of the steps, dated: not the rule.** On MCP server 1.37.28, 2026-10-13,
+  `find_examples(repo=…, file_path=…)` gave four steps: fetch the hosted `url` (served by the
+  MCP server, under `mcp.senzing.com/examples/`) and check `hash`; fetch `raw_url`
+  (raw.githubusercontent.com), with no check asked; `git clone`; and the final `inline` step.
+  `generate_scaffold` gave a `warning`, then one fetch step (each item's hosted `url`, or its
+  `raw_url` if that fails, with the item's `hash` checked on whichever supplied the file), then
+  `git clone`, then the final `inline` step. So where `mcp.senzing.com` is allowed and GitHub is
+  blocked, the hosted `url` is the step that reaches the file. Where a live response gives
+  different steps, or a different order, follow the live response.
+  ⛔ **Do not take the final `inline` step the response describes (INV-136).** `inline` is still
+  not declared in the live `find_examples` schema, and only declared parameters may be passed (INV-136).
+  The server states this itself, identically in `find_examples` and `generate_scaffold` (MCP server
+  1.37.28, 2026-10-13): *"Clients that validate arguments against the declared schema cannot send
+  inline=true — the schema will reject it, and the earlier steps have already failed by the time
+  this step applies, so retrying them will not help either. For such a client there is no route to
+  this file through this server; report the content as unreachable rather than retrying."* What to
+  do then is the terminal step stated below.
   (This replaces the earlier reading — through 2026-07-30 on server 1.32.2 the same empty `content`
   arrived with no `content_elided` signal, so it was indistinguishable from a broken retrieval and
   was treated as one. The behavior was documented rather than reverted, so the guidance above is
@@ -482,13 +509,17 @@ copy (INV-300).
   is the escape hatch, and the rule that decides it is **only parameters the live schema declares may
   be passed**:
   - `find_examples` and `generate_scaffold` — `inline` is **not** declared by either, so passing it
-    is a call that cannot work, whatever the response prose advertises. Follow `access_steps`:
-    `raw_url`, then clone.
-    ⛔ **Once `raw_url` and `git clone` have both failed, report the example as unreachable (INV-160).**
-    This is the terminal step for both `find_examples` and `generate_scaffold` — for example when
-    `raw.githubusercontent.com` is blocked and `git` is unavailable or `github.com` is blocked. Tell
-    the bootcamper which example could not be reached (the file and its repo) and what was tried.
-    Do not retry either step, and do not pass `inline`, which neither schema declares (INV-136).
+    is a call that cannot work, whatever the response prose advertises. Follow the response's own
+    `access_steps`, as "Working examples" above says.
+    ⛔ **(INV-160) Once every fetch and clone step in the response's `access_steps` has failed,
+    report the example as unreachable.**
+    This is the terminal step for both `find_examples` and `generate_scaffold`, and it comes only
+    then: a step that fails, a failed `hash` check included, sends the guide to the next step, not
+    here. In the 2026-10-13 example above that means the hosted `url`, `raw_url` and `git clone`
+    have all failed, for example when `mcp.senzing.com` and `raw.githubusercontent.com` are both
+    blocked and `git` is unavailable or `github.com` is blocked. Tell the bootcamper which example
+    could not be reached (the file and its repo) and what was tried. Do not retry any of those
+    steps, and do not pass `inline`, which neither schema declares (INV-136).
     Never reconstruct the file's content from memory or training data (INV-080). The step that
     needed the example then continues on its own fallback: this adds no question and blocks
     nothing beyond what that step already does.

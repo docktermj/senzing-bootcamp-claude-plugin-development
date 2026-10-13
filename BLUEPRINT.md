@@ -1565,7 +1565,9 @@ Ground rules (`ground-rules.md`, every turn):
   `explain_error_code`, `search_docs`, `find_examples`, `get_sample_data`,
   `reporting_guide` (always with `language`; a `needs_input` reply is a gate
   to satisfy and re-call), `get_capabilities`. Elided example content is
-  fetched via `raw_url` then `git clone`, never `inline` (only
+  fetched by the response's own `access_steps`, in the order given (on
+  1.37.28 the hosted `url` checked against `hash`, then `raw_url`, then
+  `git clone`), never `inline` (only
   `download_resource` declares `inline`, chunked by `offset`). Retry a failed
   call once, then stop. Blank parsed fields suggest a wrong name or missing
   `*_MATCHING_INFO` flag; the SDK factory must outlive its engines.
@@ -1877,7 +1879,8 @@ branch.
   (unset with a notice while absent, refused if empty), and the platform and
   language variables from `sdk_guide` `env_vars` plus language `gotchas[]`.
 - Step 4, verify the binding (no engine): fetch the
-  `generate_scaffold(workflow='information')` snippets by `raw_url` (never
+  `generate_scaffold(workflow='information')` snippets by the response's own
+  `access_steps`, as the ground rules state them (never
   `inline=true`); print the version and the resolved binding path; write
   `sdk_version` and `sdk_version_measured_at`. `SENZ7426`/`SENZ7220` are
   expected here.
@@ -1974,8 +1977,8 @@ written once per turn. Each check lands in `module_3_verification.checks`.
   formatting varies) plus a singleton distractor. The cluster's person is
   `Marisol`. Records `synthetic_data` (`expected_entities`,
   `expected_merge_record_count`), never counting 7a's `Mari` record.
-- 3 `sdk_initialization`: fetch the scaffold's `raw_url` (`git clone`
-  fallback, never `inline=true`), save program `verify_init`, build it, run
+- 3 `sdk_initialization`: fetch the scaffold by its own `access_steps`, in
+  order (never `inline=true`), save program `verify_init`, build it, run
   (30 s).
 - 4 `code_generation`: from `full_pipeline` pick the loader that reads an
   input file, repoint it, save program `verify_pipeline`. A missing JSON
@@ -9233,7 +9236,7 @@ looks wrong.
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
 - `tests/test_a_single_statement_claim_names_its_authority.py`: 11
 - `tests/test_absent_field_suspects_flags_first.py`: 10
-- `tests/test_access_steps_terminal_step.py`: 10
+- `tests/test_access_steps_terminal_step.py`: 19
 - `tests/test_acknowledge_precedes_the_loading_it_precedes.py`: 8
 - `tests/test_all_runs_every_argument_free_view.py`: 7
 - `tests/test_amendments_are_queued.py`: 12
@@ -11232,6 +11235,15 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_build_and_run_statement.py` replaces
   `tests/test_module3_build_and_run_table.py` (the statement named only
   `src/system_verification`, so Modules 5 to 7 could not cite it)
+- #565: the ground rules state the fetch route for `find_examples` file
+  retrieval and `generate_scaffold` as each response's own `access_steps` in
+  the order given, with a `hash` check exactly where a step asks for it (a
+  mismatch is that step failing), today's steps only as a dated 1.37.28
+  example, "the final `inline` step" and the terminal step firing once every
+  fetch and clone step has failed; Modules 2 and 3 cite them instead of naming
+  a route, and INV-160's dated note is queued as an amendment (the server now
+  lists an MCP-hosted `url` first, so the plugin's `raw_url`-then-clone route
+  reported a reachable example unreachable)
 - #563: every program Modules 2, 5, 6 and 7, graduation and the ground rules'
   entity program save, build or run is named as the program `<name>` in
   `<dir>` at the point of use and cites the ground rules' "Building and

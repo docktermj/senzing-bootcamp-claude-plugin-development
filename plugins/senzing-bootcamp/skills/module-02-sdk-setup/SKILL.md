@@ -1597,22 +1597,23 @@ INV-080 forbids. (Step 8a already carries this warning for a different need, and
 snippets actually contain before citing it for a specific need.**)
 
 ⛔ **`generate_scaffold` returns a **listing**, not code — you must fetch each file.** Its response
-carries `file_path`, `source_url`, `raw_url`, `size_bytes` and `line_count` per snippet and **no
-source text**, so there is nothing to "save" until you fetch it: follow the response's own
-`access_steps` step 1 and fetch each `raw_url`
-(`raw.githubusercontent.com/senzing/code-snippets-v4/...`), or clone the repo per step 2 if the
-fetch is blocked. If both fail, take the terminal step in `../bootcamp-onboarding/ground-rules.md`
-→ "Once `raw_url` and `git clone` have both failed" (INV-160). This differs from `sdk_guide`, which
+carries `file_path`, `source_url`, `url`, `raw_url`, `size_bytes`, `line_count` and `hash` per
+snippet and **no source text**, so there is nothing to "save" until you fetch it. Fetch each file
+by the response's own `access_steps`, in the order the response gives them and with every check a
+step asks for, as `../bootcamp-onboarding/ground-rules.md` → "Follow each response's own
+`access_steps`" says (INV-160, INV-300). If every fetch and clone step fails, take the terminal
+step in `../bootcamp-onboarding/ground-rules.md` → "Once every fetch and clone step in the
+response's `access_steps` has failed" (INV-160). This differs from `sdk_guide`, which
 does inline a `code.code` string — do not carry that expectation across.
 
-⛔ **Never pass `inline=true` to `generate_scaffold`.** Its own `access_steps` step 3 advertises
-that parameter as a "last resort", but the tool's **declared schema has no `inline` parameter at
-all** — only `language`, `version` and `workflow` (both confirmed live, server 1.32.9,
-2026-08-13).
+⛔ **Never pass `inline=true` to `generate_scaffold`** (INV-136, INV-160). The final `inline` step
+of its own `access_steps` advertises that parameter, but the tool's **declared schema has no
+`inline` parameter at all** — only `language`, `version` and `workflow` (both confirmed live,
+server 1.32.9, 2026-08-13).
 <!-- MCP-NEGATIVE: generate_scaffold's declared schema — carries no inline parameter, only language, version and workflow, while the response's own access_steps step 3 advertises the undeclared inline=true — owner: the tool's declared schema as the server advertises it is the authority on what it accepts, and it was read directly rather than inferred from the response prose (routing negative — the schema is the route, the prose is not) — server 1.36.0, 2026-09-02 --> Passing it is not a fallback, it is a call that cannot work, and it teaches nothing
 about why. This is INV-160's rule applied to a sibling tool: **an undeclared parameter MUST NOT be
-adopted as the remedy even when the response's own prose advertises one.** Fetch the `raw_url`
-instead — that path is confirmed working.
+adopted as the remedy even when the response's own prose advertises one.** Follow the
+response's earlier steps instead, as the paragraph above says.
 
 If verification fails, use `explain_error_code` for any SENZ error codes and `search_docs` for
 troubleshooting.
@@ -1693,8 +1694,9 @@ still applies — but record it as provisional, per sub-step 3.
    **1.35.1**, 2026-08-31). The snippet ships in the **same** scaffold Step 4 already fetched:
    `generate_scaffold(language='<chosen_language>', workflow='information')` returns `GetLicense`
    beside the `GetVersion` this module ran one step ago (confirmed for Java on server **1.35.1**,
-   2026-08-31 — `java/snippets/information/GetLicense.java`). Fetch its `raw_url` like any other
-   scaffold snippet; the response is a listing, not source.
+   2026-08-31 — `java/snippets/information/GetLicense.java`). Fetch it like any other scaffold
+   snippet, by the response's own `access_steps` as Step 4 says; the response is a listing, not
+   source.
    - ⚠️ **No engine configuration is needed, and its absence is not a failure.** `SzProduct` needs no
      support data, which is exactly why Step 4's version call succeeds here while engine calls still
      raise `SENZ7426` with Steps 7–8a still ahead. If the license call itself raises `SENZ7426` or
@@ -2459,8 +2461,9 @@ returned **14** snippets with `content` absent — only `file_path`, `raw_url`, 
 - ⛔ **A count or a position in the listing is NOT the selector (INV-267)**, and neither is the
   filename. The snippet count moves as the server indexes more (Module 3's Step 4 documents the same hazard for
   `full_pipeline`, where it went 18 → 22 and a whole group appeared). Match on the **shape** — does
-  the body invoke an engine method? — and fetch a candidate's `raw_url` to check rather than
-  inferring from its name.
+  the body invoke an engine method? — and fetch a candidate to check rather than inferring from
+  its name, by the response's own `access_steps` as `../bootcamp-onboarding/ground-rules.md` →
+  "Follow each response's own `access_steps`" says (INV-160, INV-300).
 - Every language's set has the same pair, so apply the shape test in whichever language was chosen
   rather than transliterating the Python filenames (INV-090).
 

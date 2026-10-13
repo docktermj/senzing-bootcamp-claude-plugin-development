@@ -252,7 +252,7 @@ class ThePermissionIsScopedToOneTool(unittest.TestCase):
     def test_the_find_examples_prohibition_is_unchanged(self):
         self.assertRegex(
             flat(GROUND_RULES),
-            r"(?i)Do not take the `inline` route the response's step 3 describes",
+            r"(?i)Do not take the final `inline` step the response describes",
         )
         self.assertRegex(
             flat(GROUND_RULES),
