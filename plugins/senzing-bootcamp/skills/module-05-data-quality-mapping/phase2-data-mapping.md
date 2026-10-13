@@ -1075,9 +1075,21 @@ it produces silently suppressed merges that only the post-load match-key audit w
 > - **No:** tell the Bootcamper the analyzer is being skipped because the Python here is older
 >   than 3.10, record the skip and its reason in the source's mapping notes, and continue with
 >   items 2 and 3 below under their optional/best-effort handling. The skip stands for the rest of
->   the session (every later source, and step 14's `analyze_record` run): do not ask again (INV-006)
+>   the session (every later source, and every later analyzer run below): do not ask again (INV-006)
 >   unless the Bootcamper asks to install one. The module's closing summary names the analyzer as a
 >   check that did not run (INV-163).
+>
+> **Later analyzer runs.** Step 14's test, step 18's full-output check and Phase 3's validation
+> before loading (`phase3-test-load.md` → "Rules") each run the command `analyze_record` returns,
+> and each points here rather than restating this check (INV-300). At each of them:
+>
+> - **The check has not run this session** (this step was skipped, or the session resumed): run
+>   it at that site, before the analyzer, with the same question and the same **yes** and **no**
+>   paths.
+> - **The check already ran this session:** its outcome stands, and nothing is asked again
+>   (INV-006). At 3.10 or newer, run the command as `analyze_record` returns it. After **yes**, run
+>   it with `python3` replaced by the installed interpreter, named explicitly. After **no**, the
+>   skip covers that site: do not run the analyzer there.
 >
 > Once the check has passed, a `SyntaxError` from the analyzer is not the version floor (a partial
 > download is one cause): handle it as any other failed run.
@@ -1608,7 +1620,8 @@ takes the same project-local mapping directory as the workflow, which INV-200 re
 tool argument naming a writable directory. Re-confirmed on MCP server 1.33.0, 2026-08-21:
 `get_capabilities` describes `analyze_record` as taking a "REQUIRED parameter: `workspace_dir` (a
 writable directory where the analyzer script and any reports are saved); do NOT assume /tmp
-exists". Tell the user: pass/fail, output file path,
+exists". Before running the command `analyze_record` returns, follow step 11's analyzer Python
+check → "Later analyzer runs" (INV-347, INV-300). Tell the user: pass/fail, output file path,
 sample record, any observations.
 
 > **Presentation (conditional on `mapping_verbosity`):**
@@ -1844,8 +1857,9 @@ If issues are found, go back to the relevant step. Retest after changes.
   content is Phase 1 Step 6's "Type/name check", the canonical statement (INV-300).
 
 **Validate the full output (INV-043).** Step 15 analyzed a separate quality run, which for a source
-over 1000 records is not the file Data processing loads, so check the load-ready file itself. Run
-the MCP-delivered `sz_json_analyzer.py` that step 14 uses (same `analyze_record` route, same
+over 1000 records is not the file Data processing loads, so check the load-ready file itself.
+Before running the command `analyze_record` returns, follow step 11's analyzer Python check →
+"Later analyzer runs" (INV-347, INV-300). Run the MCP-delivered `sz_json_analyzer.py` that step 14 uses (same `analyze_record` route, same
 `data/mapping/` workspace) on `data/senzing-ready/[name].jsonl`, and compare the record count its
 report gives (`**Records:** N`) with the source's record count minus the records the
 transformation lineage above records as filtered on purpose. Read both checks from the report, not
