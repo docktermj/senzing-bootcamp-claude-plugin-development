@@ -1,8 +1,9 @@
 # Phase 3 — The conversational layer
 
-Walk the bootcamp with the **maintainer answering as the Bootcamper**. This is the
-only phase that tests what the plugin actually is: a conversation. Phases 1 and 2
-test its dependencies.
+Walk the bootcamp with the **maintainer answering as the Bootcamper**, the default, or
+with a simulated Bootcamper answering from a separate process ([A simulated
+Bootcamper](#a-simulated-bootcamper---simulated-persona)). This is the only phase that
+tests what the plugin actually is: a conversation. Phases 1 and 2 test its dependencies.
 
 ## Why this cannot be self-played
 
@@ -17,14 +18,25 @@ disqualifying:
    files produce that discipline*, which self-play cannot distinguish from the
    assistant simply being careful.
 
-If the maintainer is not available, report phase 3 as **untested**. Do not
-approximate it, and do not describe a self-played walkthrough as a dry run.
+⛔ **Self-play is answering as the Bootcamper inside the session that runs or grades the
+bootcamp, and it stays forbidden.** A simulated walk is not self-play: `auto-test`'s
+`walk.py` runs the bootcamp in one OS process and answers from a second one that has never
+seen the plugin, and the bootcamp process is never told it is under test. That answers the
+first reason outright, because no process fabricates the other's answers, and the second
+only by discipline, because grading happens afterwards on the saved transcript ([`auto-test`
+→ "What it is for, and what it cannot do"](../auto-test/SKILL.md#what-it-is-for-and-what-it-cannot-do)).
+This session never writes, edits or adds an answer to that walk.
+
+If the maintainer is not available and no simulated walk was chosen, report phase 3 as
+**untested**. Do not approximate it, and do not describe a self-played walkthrough as a dry
+run.
 
 ## Where the analysis starts — ask before scaffolding anything
 
 ⛔ **The first thing this phase does is ask the maintainer which module the analysis
-starts at.** List the modules in order, numbered, and ask for one number. Do not
-scaffold, do not begin the walk, and do not assume the top of the bootcamp.
+starts at**, and then who answers as the Bootcamper (the SKILL's "Before you start", step 1).
+List the modules in order, numbered, and ask for one number. Do not scaffold, do not begin
+the walk, and do not assume the top of the bootcamp.
 
 **Why.** The bootcamp is cheap to walk; the *analysis* is what fills the context
 window — the test-notes blocks, the pinned-wording comparisons, the invariant lookups,
@@ -70,8 +82,11 @@ Run the bootcamp exactly as a Bootcamper would see it, and nothing else.
 - **Follow the skill files as written.** The fast-forward is what puts the project into
   the state the chosen module reads, so improvising through it invalidates the analysis
   that follows. This is not a skim.
-- **The maintainer still answers.** ⛔ The no-fabrication rule above is not relaxed here.
-  Fast-forward is the same walk with the *notes* turned off, not a simulation.
+- **The Bootcamper still answers**: the maintainer, or in a simulated walk the separate
+  process.
+  ⛔ **The rule above is not relaxed here:** this session never answers for the Bootcamper,
+  not even to hurry the fast-forward. Fast-forward is the same walk with the
+  *notes* turned off, not a simulation by this session.
 - **No analysis.** No test-notes blocks, no invariant lookups, no character-for-character
   gate comparisons, no ledger drafts. If something looks off, let it go — those modules are what
   earlier runs covered and what a later run can start at.
@@ -167,6 +182,60 @@ findings in conversation alone is why this paragraph exists. **Drafting is mid-w
 is not.** The lifecycle asks its filing question only when the walk pauses or ends, so no
 bootcamp turn ever carries it.
 
+## A simulated Bootcamper (`--simulated [persona]`)
+
+The walk runs in other processes, and this session grades it afterwards from the saved
+transcript. The analysis therefore no longer competes with the walk for this session's
+context, which is what limits a maintainer-answered walk to the modules the window can hold.
+
+1. **The persona** is one of `walk.py`'s `PERSONAS`. If the argument names none, ask, and
+   recommend one the last simulated run did not use ([`auto-test` →
+   Scheduling](../auto-test/SKILL.md#scheduling)).
+2. **The start banner** comes from the module's own skill files:
+
+   ```bash
+   python3 .claude/skills/dry-run/module_banners.py banner <N>
+   ```
+
+   `<N>` is the module's number in the list above. No banner is written into this skill.
+3. **Run the walk.** It goes until the start banner shows, then `--turns` more (default 12),
+   and never past `--max-turns` (default 150). Pick `--seed` by [Setup](#setup)'s rule:
+   `fresh` at Bootcamp preparation, `seeded` later.
+
+   ```bash
+   python3 .claude/skills/auto-test/autotest.py --walk --persona <p> --seed <fresh|seeded> \
+       --stop-at-banner "<banner>" --turns 12 --max-turns 150
+   ```
+
+   The sandbox, the pinned commit and the blocked tools are `auto-test`'s ([The sandbox, and
+   why each layer is there](../auto-test/SKILL.md#the-sandbox-and-why-each-layer-is-there);
+   [Guardrails](../auto-test/SKILL.md#guardrails)). Do not hand-run `walk.py` around them,
+   and do not touch the walk while it runs.
+4. **Cut the transcript at the start module.** The report names it as `transcript_path`.
+
+   ```bash
+   python3 .claude/skills/dry-run/module_banners.py slice <transcript_path> <N> --out <slice>
+   ```
+
+   The slice starts at the module's banner (at the first turn for Bootcamp preparation). It
+   prints `walk_stop`, the walk's own record of where it stopped and why, and the modules it
+   reached.
+   ⛔ **Exit 3 means the walk stopped before the start module:** report the module it reached
+   and leave the rest untested. Never extrapolate.
+5. **Grade the slice, not the report.** Run `transcript_lint.py <slice> --phase
+   <lint_phase> --json`, with the `lint_phase` the slice printed (no `--phase` when it is
+   `null`). Do not count the report's own transcript findings: they also cover the
+   fast-forward. The report's MCP-probe findings are phase 1's kind of finding, and are
+   recorded like any other. Then read the slice for the rest of the [watch
+   list](#what-to-watch-for), which the linter cannot count.
+6. **Record each finding before fixing anything** (INV-317), in the run's ledger entry, as
+   the SKILL's "The finding lifecycle" says. The walk has ended, so the filing step comes
+   after the grading.
+
+⛔ **A clean simulated walk is reported only as "no regression detected (simulated
+Bootcamper, persona `<p>`)"**, never as "phase 3 passed" or "the bootcamp works". The report
+still lists phase 3 with the maintainer as not yet done (the SKILL's "Reporting").
+
 ## What to watch for
 
 Interaction invariants, in rough order of how often they break:
@@ -230,6 +299,9 @@ reads as broader coverage than it had.
   executes every hook entry directly instead.
 - **Anything past the SDK.** The walk stops where a real Senzing install is needed, so the
   loads, the live visualization server, and graduation's deliverables are out of reach.
+- **A simulated Bootcamper is more cooperative than a real one**, so a simulated walk adds
+  this limit to the ones above ([`auto-test` → "What it is for, and what it cannot
+  do"](../auto-test/SKILL.md#what-it-is-for-and-what-it-cannot-do)).
 - **The assistant's own compliance is not evidence.** A walk shows that following the files
   *can* produce correct behavior. It cannot show that a different assistant, or the same
   one without a maintainer watching, would land the same way. Findings are trustworthy;
@@ -271,7 +343,8 @@ Then:
 ## Stopping
 
 Stop wherever the maintainer stops — a partial walk is still evidence, and the
-findings do not depend on reaching graduation. Then clean up the project and report,
+findings do not depend on reaching graduation. A simulated walk stops itself, at the start
+banner plus `--turns` or at `--max-turns`, and its `walk_stop` event says which. Then clean up the project and report,
 naming **both ends of the analysis** — the module it started at and how far it got — so
 the untested remainder on either side is visible, and so the next run knows which module
 to start later than.

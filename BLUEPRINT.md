@@ -3433,7 +3433,8 @@ coverage limit), a per-run `mcp.json` naming only `MCP_URL`, then
 `mcp_probe.py check --json` (exit 2 or unparseable output adds a coverage
 limit; findings tagged `source: mcp`). With `--walk` it scaffolds a project
 via `dry-run`'s `scaffold_project.py` (`--seed fresh|seeded`; bare dirs on
-failure), runs `walk.py` (passing `--model`, `--isolate-config`), lints a
+failure), runs `walk.py` (passing `--max-turns`, default 150, and
+`--stop-at-banner`, `--model`, `--isolate-config`), lints a
 non-empty transcript with `transcript_lint.py --phase <phase> --json`
 (`source: transcript`), and lists project files as `artifacts`; coverage
 limits always state what a walk could not show or that none ran. The report
@@ -3510,7 +3511,12 @@ Bootcamper on Linux who knows SQL and Python, replies only what they would
 type) plus one of five `PERSONAS`, on `--bootcamper-model` (default a Haiku
 model). Each turn appends A's JSON events and a `bootcamper` event to the
 transcript. The loop stops when A exits non-zero (a `walk_error` event), when a
-turn shows no 👉, or when B returns nothing. If turn 1 shows "Unknown command"
+turn shows no 👉, when B returns nothing, or at the turn limit: `--turns`
+turns; with `--stop-at-banner`, until a turn shows that banner (`banner_seen`
+ignores case and runs of whitespace), then `--turns` more (#571). `--max-turns`
+(default 150) caps both. Every walk ends the transcript with a `walk_stop`
+event (`turn`, `reason`, `stop_at_banner`, `banner_turn`); a stop at the cap
+reads `--max-turns N reached`. If turn 1 shows "Unknown command"
 or under 200 characters, it writes the transcript and exits via `SystemExit`
 with a message (a silent non-start must not read as a clean run).
 `--isolate-config` sets `CLAUDE_CONFIG_DIR` to `<project>/.claude-config`
@@ -3690,19 +3696,26 @@ exit 2.
 
 Maintainer test-gate skill that finds defects reading the plugin cannot: where
 the plugin disagrees with the live MCP server, a real filesystem, or a human.
-Argument: `[phases: 1, 2, 3 or all] [module phase 3's analysis starts at]`.
+Argument: `[phases: 1, 2, 3 or all] [module phase 3's analysis starts at]
+[--simulated [persona]]`.
 
 Procedure (`SKILL.md`). Ask which phases to run when not given (INV-333);
 for phase 3 also ask the start module, marking the environment's reachable
-ceiling. Work in `$HOME/senzing-bootcamp-dryrun` (never the repo or `/tmp`),
-record environment limits (`senzing`, `libSz.so`, `fpdf2`, `docker`, a
+ceiling, then who answers as the Bootcamper: the maintainer (the default; a
+phase-3 argument without `--simulated` means it) or a simulated Bootcamper
+(INV-333, #571). Work in `$HOME/senzing-bootcamp-dryrun` (never the repo or
+`/tmp`), record environment limits (`senzing`, `libSz.so`, `fpdf2`, `docker`, a
 browser), and run `coverage_reports.py both`. Host Markdown-lint hooks are
 excluded for top-level `docs/*.md`, never fixed in the plugin. Only two
 outward acts, each approved out of character per record (INV-314): an issue
 or comment here, and `submit_feedback` for a re-verified `mcp-server` finding
-(INV-194, INV-213, INV-321; never `license_request`). Never fabricate a
-Bootcamper answer; commit or copy aside before mutating; clear `__pycache__`
-after same-size reverts; bracket `pgrep -f` patterns. Findings are drafted on
+(INV-194, INV-213, INV-321; never `license_request`); a yes from a simulated
+Bootcamper authorizes neither. Never answer as the Bootcamper in the session
+that runs or grades the bootcamp (self-play); a simulated walk, answered by a
+separate process that never saw the plugin, is not self-play, and this
+session never writes, edits or adds an answer to it. Commit or copy aside
+before mutating; clear `__pycache__` after same-size reverts; bracket
+`pgrep -f` patterns. Findings are drafted on
 sight into a `## dry-run-<YYYY-MM-DD>` **Not a spec** ledger entry (INV-317,
 INV-307) in the issue-template shape; then fix the class, add a stdlib test
 (INV-108), negative-control it, record the outcome and invariant answer: a new
@@ -3712,6 +3725,11 @@ Filing happens after a phase or walk pause, never mid-walk, after searching
 open and closed issues and per-issue approval; never `--repo` (INV-319) or
 `unattended-ok` (INV-318); no maintainer, nothing filed. The report names
 where each finding lives, states coverage limits and the run's own mistakes.
+A clean simulated phase 3 reads "no regression detected (simulated
+Bootcamper, persona `<p>`)", never "phase 3 passed", lists phase 3 with the
+maintainer as not yet done, quotes `walk_stop`, and a walk that stopped
+before its start module names the module reached and leaves the rest
+untested.
 
 `phase1-mcp-contracts.md`: check every MCP call literal in plugin skills
 against the live schemas (tool exists, required parameters named, values
@@ -3728,14 +3746,39 @@ silence and opt-outs, fold idempotency over three runs, INV-059); drive each
 bundled script and inspect the artifact (INV-129), including the viz
 server's distinct exit 2 (config pre-flight) and exit 1 (SDK gate).
 
-`phase3-conversational.md`: the maintainer answers; never self-played. Before
+`phase3-conversational.md`: the maintainer answers, or a simulated
+Bootcamper from a separate process; never self-played. Before
 the chosen module is a no-analysis fast-forward; scaffold `--fresh` plus a
 short `--seeded` walk when analysis starts at preparation (INV-133), else
 `--seeded`. Bootcamp output and a collapsed test-notes block stay separate.
 Watch list: INV-251/225, INV-133, INV-006, INV-058, apparatus exemptions
 (INV-075/078 vs INV-028–031/096), INV-079, INV-051, INV-112, pinned wording
 (INV-056). Graduation's upstream offer is presented, never sent, and
-recorded `submission blocked: dry run ...` (INV-281).
+recorded `submission blocked: dry run ...` (INV-281). Its "A simulated
+Bootcamper" section: pick a persona (ask when none is given, recommending one
+the last simulated run did not use), take the banner from
+`module_banners.py banner <N>`, run `autotest.py --walk --persona <p> --seed
+<fresh|seeded> --stop-at-banner "<banner>" --turns 12 --max-turns 150`, cut
+the transcript with `module_banners.py slice`, lint the slice with
+`transcript_lint.py --phase <lint_phase>` (never the report's own transcript
+findings, which cover the fast-forward), read it for the watch list, and
+record each finding before fixing (INV-317).
+
+`module_banners.py` (stdlib, offline, #571) reads the module table in
+`bootcamp-preparation/SKILL.md` (`TABLE_ROW`) and takes each module's banner
+from its files, writing no banner text itself: the first `BANNER_LINE` (three
+of one non-ASCII glyph, the text, the same three) in `SKILL.md`, else
+`MODULE: <TITLE>` from a `# Module <id>: <title>` heading, else the first
+banner line in its other `.md` files. `lint_phase` is `preparation` or
+`module0` for the two exempt modules, null for graduation, else `content`.
+Subcommands: `list` (JSON of every module), `banner N` (exit 2 when the
+files define none), and `slice TRANSCRIPT N --out F`, which matches banners
+with `walk.banner_seen` on `walk.visible_text`, starts at module N's banner
+(at the first event for Bootcamp preparation), ends an exempt module's slice
+at the next module's banner, writes the kept lines, and prints `module`,
+`banner`, `lint_phase`, `start_found`, `start_event`, `end_event`,
+`modules_reached`, `last_module_reached` and `walk_stop`. Exit 3 when the
+start banner never showed; an unknown module number exits with a message.
 
 `scaffold_project.py <directory> [--fresh|--seeded] [--explain]` builds a
 project (removing any existing directory): the `DIRS` tree, always
@@ -4700,10 +4743,12 @@ Rules:
 - Never mention that this is a test or a simulation."""
 def visible_text(stream_json_text):
     ...
+def banner_seen(banner, text):
+    ...
 def bootcamper_reply(prompt_text, persona, model, timeout=180):
     ...
 def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_model,
-             opening, isolate_config, timeout):
+             opening, isolate_config, timeout, max_turns=150, stop_at_banner=None):
     ...
 def main(argv=None):
     ...
@@ -7582,6 +7627,37 @@ def norm(path):
 
 <!-- markdownlint-enable MD013 -->
 
+#### 6.1.35 `.claude/skills/dry-run/module_banners.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `.claude/skills/dry-run/module_banners.py`:
+
+```python
+SKILL_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SKILL_DIR.parent.parent.parent
+SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
+PREPARATION = SKILLS / "bootcamp-preparation" / "SKILL.md"
+BANNER_LINE = re.compile(r"^\s*([^\x00-\x7f])\1\1\s+(.+?)\s+\1\1\1\s*$")
+MODULE_HEADING = re.compile(r"^# Module \w+: (.+?)\s*$")
+TABLE_ROW = re.compile(r"^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|[^|]*\|\s*`([a-z_]+)`\s*\|\s*([^|]+?)\s*\|")
+EXEMPT_PHASES = {"bootcamp_preparation": "preparation",
+                 "entity_resolution_concepts": "module0"}
+NO_PHASE = {"graduation"}
+def banner_from_skill(skill_dir):
+    ...
+def modules():
+    ...
+def module(number):
+    ...
+def slice_transcript(lines, number):
+    ...
+def main(argv=None):
+    ...
+```
+
+<!-- markdownlint-enable MD013 -->
+
 ### 6.2 CLI
 
 Every argparse declaration, verbatim (the statements that build each parser).
@@ -7599,6 +7675,10 @@ From `.claude/skills/auto-test/autotest.py`:
     ap.add_argument("--walk", action="store_true",
                     help="also run a simulated bootcamp walk and lint it")
     ap.add_argument("--turns", type=int, default=12)
+    ap.add_argument("--stop-at-banner", default=None,
+                    help="walk until this banner shows, then --turns more (walk.py)")
+    ap.add_argument("--max-turns", type=int, default=150,
+                    help="hard cap on the walk's turns (walk.py)")
     ap.add_argument("--persona", default="terse")
     ap.add_argument("--phase", default="preparation",
                     choices=("preparation", "module0", "content"))
@@ -7661,7 +7741,12 @@ From `.claude/skills/auto-test/walk.py`:
     ap.add_argument("--project", required=True, type=Path)
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--mcp-config", required=True, type=Path)
-    ap.add_argument("--turns", type=int, default=12)
+    ap.add_argument("--turns", type=int, default=12,
+                    help="turns to walk; with --stop-at-banner, turns after it")
+    ap.add_argument("--stop-at-banner", default=None,
+                    help="walk until a turn shows this banner, then --turns more")
+    ap.add_argument("--max-turns", type=int, default=150,
+                    help="hard cap on the walk's turns, banner or not")
     ap.add_argument("--persona", default="terse", choices=sorted(PERSONAS))
     ap.add_argument("--model", default=None)
     ap.add_argument("--bootcamper-model", default="claude-haiku-4-5-20251001",
@@ -8301,6 +8386,27 @@ From `scripts/sync-check.sh`:
 
 <!-- markdownlint-enable MD013 -->
 
+#### 6.2.26 `.claude/skills/dry-run/module_banners.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `.claude/skills/dry-run/module_banners.py`:
+
+```python
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("list")
+    one = sub.add_parser("banner")
+    one.add_argument("number", type=int)
+    cut = sub.add_parser("slice")
+    cut.add_argument("transcript", type=Path)
+    cut.add_argument("number", type=int)
+    cut.add_argument("--out", required=True, type=Path)
+```
+
+<!-- markdownlint-enable MD013 -->
+
 ### 6.3 Config and file formats
 
 The plugin's configuration files, verbatim. The manifests `plugin.json` and
@@ -8931,6 +9037,22 @@ Used by:
 - `_snapshot_probe_html`: `test_snapshot_and_capture_fidelity.py`,
   `test_tab_set_is_singular.py`
 
+### 7.10 `.claude/skills/auto-test/walk.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `.claude/skills/auto-test/walk.py`:
+
+```python
+def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
+    ...
+```
+
+<!-- markdownlint-enable MD013 -->
+
+- `_claude`: `test_dry_run_simulated_phase3.py` (patched with a stub, so the
+  walk's stop condition runs offline and spends no tokens)
+
 ## 8. Tests
 
 ### 8.1 Framework and tools
@@ -9196,6 +9318,7 @@ looks wrong.
 - `tests/test_dry_run_files_issues.py`: 15
 - `tests/test_dry_run_scaffold.py`: 15
 - `tests/test_dry_run_scaffold_paths_exist.py`: 10
+- `tests/test_dry_run_simulated_phase3.py`: 25
 - `tests/test_dry_run_states_no_hook_count.py`: 11
 - `tests/test_empty_input_checks_are_not_a_pass.py`: 9
 - `tests/test_encoding_self_check_is_stated_as_behavior.py`: 31
@@ -10054,6 +10177,23 @@ These are the scripts under `.claude/skills/`:
   - **Reports:** `invariants`, `shipped`, `affected`, `negatives`, `unmarked`
     and `both`.
   - `--server` splits stale negatives.
+- **`dry-run` phase 3 with a simulated Bootcamper.**
+  `tests/test_dry_run_simulated_phase3.py` (#571):
+  - the reworded rule at each site forbids answering as the Bootcamper in the
+    session that runs or grades the bootcamp and names the two-process walk
+    as not self-play; the clean-run line "no regression detected (simulated
+    Bootcamper, persona `<p>`)", the stall rule, the third question, the
+    argument hint and `--max-turns` defaulting to 150 are pinned;
+  - `module_banners.py` finds a banner for all 11 modules, each content
+    module's banner equals its table name, and no banner text is hard-coded;
+  - with `walk._claude` and `walk.bootcamper_reply` stubbed: banner at turn 3
+    plus `--turns 2` stops at turn 5; matching ignores case; `--max-turns`
+    stops a walk with no banner and caps the turns after one; no banner walks
+    `--turns` as before; `main()` passes `max_turns=150`; `FORBIDDEN_TOOLS`
+    is unchanged;
+  - `slice_transcript` starts a content module at its banner, starts Bootcamp
+    preparation at the first turn and ends it at the next banner, and a
+    stalled walk exits 3 naming the module reached.
 - **Other maintainer tools.**
   - **`dry-run/scaffold_project.py`** builds `fresh`, `seeded` and `mid`
     projects, never inside the repository or under `/tmp`.
@@ -11107,6 +11247,14 @@ Senzing licensing, with no SPDX identifier.
   and no `MCP-NEGATIVE` marker; the `search_docs` C# query and its allowlist
   entry are gone, and INV-222's dated note is queued as an amendment (every
   platform's reply now names the source, so "no C# line" was false)
+- #571: `/dry-run 3 --simulated [persona]` runs `/auto-test`'s two-process
+  walk to the chosen module's banner (taken from the module's skill files by
+  `dry-run/module_banners.py`) plus `--turns`, capped by `--max-turns` 150,
+  and grades only the slice from that module on; the no-fabrication rule now
+  forbids self-play by the session that runs or grades the walk, a clean
+  simulated run reads only "no regression detected", and the maintainer walk
+  stays the default (phase 3 could not run without the maintainer, though the
+  two-process walk is not self-play)
 - #574: two `PROPOSED AMENDMENT` blocks are queued in the ledger for
   `/review-invariants`, one letting a single yes cover several records shown
   whole in one numbered message (INV-314, `submit_feedback` and unattended

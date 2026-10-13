@@ -1,7 +1,7 @@
 ---
 name: dry-run
-description: 'Dry-run the Senzing Bootcamp plugin to find defects that reading it cannot: phase 1 verifies every MCP call against the live Senzing MCP server, phase 2 executes the hooks and bundled scripts against a realistic scratch project, phase 3 walks the conversational layer with the maintainer answering as the Bootcamper. Use when the maintainer wants to dry-run, smoke-test, or exercise the plugin, verify it actually works rather than reads correctly, or asks what a fresh audit should look at next. Maintainer tool — not part of the bootcamper experience.'
-argument-hint: "[phases: 1, 2, 3 or all] [module phase 3's analysis starts at]"
+description: 'Dry-run the Senzing Bootcamp plugin to find defects that reading it cannot: phase 1 verifies every MCP call against the live Senzing MCP server, phase 2 executes the hooks and bundled scripts against a realistic scratch project, phase 3 walks the conversational layer with the maintainer answering as the Bootcamper, or with a simulated Bootcamper answering from a separate process. Use when the maintainer wants to dry-run, smoke-test, or exercise the plugin, verify it actually works rather than reads correctly, or asks what a fresh audit should look at next. Maintainer tool — not part of the bootcamper experience.'
+argument-hint: "[phases: 1, 2, 3 or all] [module phase 3's analysis starts at] [--simulated [persona]]"
 ---
 
 # Dry Run
@@ -32,7 +32,7 @@ and each has found real defects.
 |---|---|---|
 | 1 — [MCP call contracts](phase1-mcp-contracts.md) | the live Senzing MCP server's schemas | MCP access |
 | 2 — [Hooks and scripts](phase2-hooks-and-scripts.md) | a real filesystem and real artifacts | `python3` |
-| 3 — [Conversational layer](phase3-conversational.md) | a human answering questions | **the maintainer** |
+| 3 — [Conversational layer](phase3-conversational.md) | a human answering questions | **the maintainer**, or a simulated Bootcamper (`--simulated`) |
 
 Phase 1 is the highest yield per minute — it targets the plugin's hard dependency
 and its entire factual foundation. Start there unless the maintainer says otherwise.
@@ -56,6 +56,15 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    every time, which is why no phase-3 run has ever reached the later modules. Full
    rules, including what the fast-forward may and may not do, in
    [phase3-conversational.md](phase3-conversational.md).
+
+   ⛔ **(INV-333) Then a third: who answers as the Bootcamper.** The maintainer-answered walk
+   is the default, so offer it first: (1) the maintainer, or (2) a simulated Bootcamper, with a
+   persona. `--simulated [persona]` in the argument answers it, and a phase-3 argument without
+   it answers it as the maintainer. With no argument every question is asked: whether to run
+   phase 3, the start module, and who answers; nothing is assumed. The
+   simulated walk spends tokens, and the human walk costs the maintainer's time, so neither is
+   inferred from silence. The procedure is [phase3-conversational.md → "A simulated
+   Bootcamper"](phase3-conversational.md#a-simulated-bootcamper---simulated-persona).
 2. **Work outside the repo.** Phase 2 and 3 create a bootcamp project. Put it in
    `$HOME/senzing-bootcamp-dryrun` (or `-phase3`), never inside the repo and never
    under `/tmp` — a maintainer hook blocks system-temp writes, and the plugin's own
@@ -156,14 +165,21 @@ the maintainer the exact text and get a yes, given out of character, one record 
    self-contained technical report, everything identifying stripped (INV-321),
    `category='bug'` or `'feature'`, and ⛔ never `category='license_request'`.
 
-A yes given in character, while answering as the Bootcamper, never authorizes either act.
+A yes given in character, while answering as the Bootcamper, never authorizes either act, and
+neither does a yes from a simulated Bootcamper: the walk blocks both tools by flag
+([`auto-test` → Guardrails](../auto-test/SKILL.md#guardrails)).
 A dry run must not file junk upstream or transmit a name and email. Verifying a tool's
 schema sends nothing; `download_resource` on anything large stays forbidden.
 
-⛔ **Never fabricate a Bootcamper answer.** This is what makes phase 3 impossible to
-self-play: the plugin forbids simulating the Bootcamper's response, and an assistant
-grading its own 👉 discipline proves nothing. If the maintainer is unavailable, say
-phase 3 is untested rather than approximating it.
+⛔ **Never answer as the Bootcamper in the session that runs or grades the bootcamp.**
+That is self-play, and phase 3 cannot be self-played: the plugin forbids simulating the
+Bootcamper's response (INV-007), and an assistant grading its own 👉 discipline proves
+nothing. **A simulated walk (`--simulated`) is not self-play and not
+fabrication:** a separate process that has never seen the plugin answers, the process
+running the bootcamp is never told it is under test, and this session grades only the saved
+transcript, afterwards. This session never writes, edits or adds an answer to that walk. If
+the maintainer is unavailable and no simulated walk was chosen, say phase 3 is untested
+rather than approximating it.
 
 ⛔ **Commit or copy aside before mutating the tree.** This one cost real work twice
 in the session that produced this skill. `git restore` cannot tell your fix from a
@@ -321,6 +337,13 @@ Report to the maintainer with the severity ordering the findings deserve, and:
 - **Lead with anything that breaks a documented path**, not with the longest list.
 - **If phase 3 ran, say which module the analysis started at**, and that everything
   before it was walked rather than tested.
+- ⛔ **If phase 3 ran with a simulated Bootcamper, a clean run reads "no regression detected
+  (simulated Bootcamper, persona `<p>`)"**, never "phase 3 passed" or "the bootcamp works",
+  and the report lists phase 3 with the maintainer as not yet done. Findings count; a clean
+  simulated run is weak evidence ([`auto-test` → "What it is for, and what it cannot
+  do"](../auto-test/SKILL.md#what-it-is-for-and-what-it-cannot-do)). Say where the walk
+  stopped and why, from its `walk_stop` event, and if it stopped before the start module,
+  name the module it reached and leave the rest untested.
 - **Say what you verified as correct**, briefly. "The routing table is right, the
   opaque-state contract is handled, no `add_data_source` confabulation" is
   information, and it stops the next audit re-checking the same ground.

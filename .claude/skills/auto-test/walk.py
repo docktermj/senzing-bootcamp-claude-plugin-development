@@ -26,6 +26,12 @@ clean walk is weak evidence.** Personas below are the partial mitigation.
 
 Usage:
     walk.py --project DIR --out transcript.jsonl [--turns 12] [--persona terse]
+            [--stop-at-banner "MODULE: SDK SETUP"] [--max-turns 150]
+
+With ``--stop-at-banner`` the walk runs until a turn shows that banner, then
+``--turns`` more turns; without it, ``--turns`` turns from the start. Either way
+``--max-turns`` caps the walk, and the transcript ends with a ``walk_stop`` event
+saying where it stopped and why (``/dry-run`` phase 3's simulated walk reads it).
 """
 import argparse
 import json
@@ -80,6 +86,11 @@ Rules:
 - Never mention that this is a test or a simulation."""
 
 
+def banner_seen(banner, text):
+    """Whether ``text`` shows ``banner``, ignoring case and runs of whitespace."""
+    return " ".join(banner.split()).casefold() in " ".join(text.split()).casefold()
+
+
 def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
     result = subprocess.run(
         ["claude", *args], cwd=str(cwd), input=stdin_text, timeout=timeout,
@@ -129,7 +140,7 @@ def bootcamper_reply(prompt_text, persona, model, timeout=180):
 
 
 def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_model,
-             opening, isolate_config, timeout):
+             opening, isolate_config, timeout, max_turns=150, stop_at_banner=None):
     session = str(uuid.uuid4())
     env = {}
     if isolate_config:
@@ -150,7 +161,16 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
 
     transcript = []
     message = opening
-    for turn in range(1, turns + 1):
+    # Without a banner the walk is `turns` long; with one, it is open-ended until the
+    # banner shows, then `turns` more. `max_turns` caps both.
+    limit = max_turns if stop_at_banner else turns
+    banner_turn, reason, turn = None, None, 0
+    for turn in range(1, max_turns + 1):
+        if turn > limit:
+            turn -= 1
+            reason = (f"start banner at turn {banner_turn}, then --turns {turns}"
+                      if banner_turn else f"--turns {turns} reached")
+            break
         args = ["-p", message, *base]
         args += ["--session-id", session] if turn == 1 else ["--resume", session]
         result = _claude(args, cwd=project, stdin_text="", timeout=timeout, env=env)
@@ -160,6 +180,7 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
                 "stderr": (result.stderr or "")[-2000:]}))
             print(f"  turn {turn}: claude exited {result.returncode} — "
                   f"{(result.stderr or '').strip()[:200]}", file=sys.stderr)
+            reason = f"claude exited {result.returncode}"
             break
 
         transcript.extend(
@@ -167,6 +188,9 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
         shown = visible_text(result.stdout)
         print(f"  turn {turn}: {len(shown)} chars"
               f"{' [asks]' if POINTER in shown else ''}")
+        if stop_at_banner and banner_turn is None and banner_seen(stop_at_banner, shown):
+            banner_turn, limit = turn, turn + turns
+            print(f"  turn {turn}: start banner seen; {turns} more turn(s)")
 
         # ⛔ A walk that never started must not read as a walk that found nothing.
         # `/start-bootcamp` unnamespaced returns "Unknown command", one 32-character
@@ -183,16 +207,24 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
             # Nothing was asked, so there is nothing for the Bootcamper to answer.
             # Stopping here is correct rather than inventing another prompt.
             print(f"  stopping: turn {turn} asked no question")
+            reason = "the turn asked no question"
             break
 
         message = bootcamper_reply(shown, persona, bootcamper_model)
         if not message:
             print("  stopping: the Bootcamper process returned nothing",
                   file=sys.stderr)
+            reason = "the Bootcamper process returned nothing"
             break
         transcript.append(json.dumps({"type": "bootcamper", "turn": turn,
                                       "persona": persona, "text": message}))
+    else:
+        reason = f"--max-turns {max_turns} reached"
 
+    print(f"  stopped after turn {turn}: {reason}")
+    transcript.append(json.dumps({"type": "walk_stop", "turn": turn, "reason": reason,
+                                  "stop_at_banner": stop_at_banner,
+                                  "banner_turn": banner_turn}))
     Path(out_path).write_text("\n".join(transcript) + "\n", encoding="utf-8")
     return len(transcript)
 
@@ -203,7 +235,12 @@ def main(argv=None):
     ap.add_argument("--project", required=True, type=Path)
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--mcp-config", required=True, type=Path)
-    ap.add_argument("--turns", type=int, default=12)
+    ap.add_argument("--turns", type=int, default=12,
+                    help="turns to walk; with --stop-at-banner, turns after it")
+    ap.add_argument("--stop-at-banner", default=None,
+                    help="walk until a turn shows this banner, then --turns more")
+    ap.add_argument("--max-turns", type=int, default=150,
+                    help="hard cap on the walk's turns, banner or not")
     ap.add_argument("--persona", default="terse", choices=sorted(PERSONAS))
     ap.add_argument("--model", default=None)
     ap.add_argument("--bootcamper-model", default="claude-haiku-4-5-20251001",
@@ -223,7 +260,8 @@ def main(argv=None):
         return 2
     lines = run_walk(args.project, args.out, args.turns, args.persona,
                      args.mcp_config, args.model, args.bootcamper_model,
-                     args.opening, args.isolate_config, args.timeout)
+                     args.opening, args.isolate_config, args.timeout,
+                     max_turns=args.max_turns, stop_at_banner=args.stop_at_banner)
     print(f"transcript: {args.out} ({lines} events)")
     return 0
 

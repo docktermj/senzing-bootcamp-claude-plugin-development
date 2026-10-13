@@ -25,6 +25,7 @@ Usage:
     autotest.py                      # MCP checks only (fast, free)
     autotest.py --walk               # + a simulated bootcamp walk
     autotest.py --walk --persona confused --turns 16
+    autotest.py --walk --stop-at-banner "MODULE: SDK SETUP"   # walk to a module, then --turns more
     autotest.py --keep               # do not delete the sandbox afterwards
 """
 import argparse
@@ -102,6 +103,10 @@ def main(argv=None):
     ap.add_argument("--walk", action="store_true",
                     help="also run a simulated bootcamp walk and lint it")
     ap.add_argument("--turns", type=int, default=12)
+    ap.add_argument("--stop-at-banner", default=None,
+                    help="walk until this banner shows, then --turns more (walk.py)")
+    ap.add_argument("--max-turns", type=int, default=150,
+                    help="hard cap on the walk's turns (walk.py)")
     ap.add_argument("--persona", default="terse")
     ap.add_argument("--phase", default="preparation",
                     choices=("preparation", "module0", "content"))
@@ -160,7 +165,9 @@ def main(argv=None):
             walk = _run([sys.executable, str(SKILL_DIR / "walk.py"),
                          "--project", str(project), "--out", str(transcript),
                          "--mcp-config", str(mcp_config), "--turns", str(args.turns),
-                         "--persona", args.persona]
+                         "--persona", args.persona, "--max-turns", str(args.max_turns)]
+                        + (["--stop-at-banner", args.stop_at_banner]
+                           if args.stop_at_banner else [])
                         + (["--model", args.model] if args.model else [])
                         + (["--isolate-config"] if args.isolate_config else []))
             print(walk.stdout.rstrip() or walk.stderr.rstrip()[:400])
