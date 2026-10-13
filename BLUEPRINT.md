@@ -1587,6 +1587,18 @@ Ground rules (`ground-rules.md`, every turn):
   `database/G2C.db`. Root whitelist: `.gitignore`, `.env`, `.env.example`,
   `README.md`, `requirements.txt`, `pom.xml`, `*.csproj`, `Cargo.toml`,
   `package.json`. Never `internal://` as the datastore.
+- Building and running a program (the one statement, INV-300, that Module 3's
+  steps cite): keyed on `<dir>` (`src/system_verification`, `src/load`,
+  `src/transform`, `src/query`) and `<name>`, it gives each of the five
+  languages its files, a build and a run command. Python and Java stay flat in
+  `<dir>` (Java `javac -d <dir>/classes -sourcepath <dir>`, run through Module
+  2's Java launch route); C#, Rust and TypeScript get `<dir>/<name>/` with a
+  manifest from `dotnet new console`, `cargo init` or `npm init` plus
+  `tsc --init`, the Senzing dependency from `generate_scaffold`'s
+  `dependency_note` or Module 2's C# route, never a public NuGet feed. Rust
+  shares `<dir>/target`; TypeScript emits to `dist/` and runs it with `node`.
+  Commands run from the project root; every build has a 120-second timeout;
+  a missing tool gets a Fix_Instruction naming it (#562).
 - Platform notes: Java standalone files use a package-private class;
   PowerShell 5.1 syntax and encodings; sourced env scripts work under zsh and
   never `exit`; on Docker a fresh parse error is retried once. Anchor
@@ -1965,18 +1977,14 @@ written once per turn. Each check lands in `module_3_verification.checks`.
   input file, repoint it, save program `verify_pipeline`. A missing JSON
   library (Java `javax.json`) is swapped, SDK calls untouched, noted in the
   header.
-- 5 `build_compilation`: build `verify_pipeline` (120 s, dependency
-  resolution included). Step 5's table is the one statement of how each
-  program (`verify_init`, `verify_pipeline`, `register_data_sources`,
-  `validate_results`, `mari_lookup`, `database_operations`) is built and run;
-  steps 3, 5a, 6, 7, 7a and 8 cite it. Python and Java stay flat in
-  `src/system_verification/` (Java `javac -d .../classes`, run through Module
-  2's Java launch route). C#, Rust and TypeScript get a folder and manifest
-  per program from `dotnet new console`, `cargo init` or `npm init` plus
-  `tsc --init`; the Senzing dependency comes from `generate_scaffold`'s
-  `dependency_note` or Module 2's C# route, never a public NuGet feed. Rust
-  shares one `--target-dir`; TypeScript emits to `dist/` and runs it with
-  `node` (#511).
+- 5 `build_compilation`: build `verify_pipeline`. Each program
+  (`verify_init`, `verify_pipeline`, `register_data_sources`,
+  `validate_results`, `mari_lookup`, `database_operations`) is created, built
+  and run as the ground rules' "Building and running a program" says, with
+  `<dir>` = `src/system_verification`; Step 5 keeps the program table (which
+  step creates which program), its build check and its checkpoint, and steps
+  3, 4, 5a, 6, 7, 7a and 8 cite the ground-rules section directly (#511,
+  #562).
 - 5a `data_source_registration`: `sdk_guide(topic='configure')` code
   `register_data_sources` registers the codes present and sets the
   default config, re-runnable (60 s); codes go to `config/data_sources.yaml`.
@@ -9107,6 +9115,7 @@ looks wrong.
 - `tests/test_bootcamp_notes_flow.py`: 33
 - `tests/test_brand_sync.py`: 31
 - `tests/test_broll_manifest.py`: 20
+- `tests/test_build_and_run_statement.py`: 30
 - `tests/test_build_version_provenance_is_per_platform.py`: 8
 - `tests/test_bundled_script_and_production_paths.py`: 23
 - `tests/test_business_problem_preserves_the_original_wording.py`: 17
@@ -9289,7 +9298,6 @@ looks wrong.
 - `tests/test_module06_orchestrator_guidance.py`: 20
 - `tests/test_module06_phase_ordering.py`: 15
 - `tests/test_module07_why_flags.py`: 17
-- `tests/test_module3_build_and_run_table.py`: 13
 - `tests/test_module3_check_lists_agree.py`: 24
 - `tests/test_module5_full_output_file_path_is_written_at_step_18.py`: 18
 - `tests/test_module5_phase1_gates_and_scoring.py`: 14
@@ -9691,9 +9699,11 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   - All five server languages, Rust included, are named.
 - **Module 3.** The eight installation checks must pass. Results validation is
   diagnostic and never required to pass. The liveness probe is
-  `get_capabilities`. Step 5's table gives all five languages a build and a
-  run command, every program is created by an earlier step that cites the
-  table, and TypeScript's build has no `--noEmit`.
+  `get_capabilities`. The ground rules' "Building and running a program"
+  gives all five languages a build and a run command generic over `<dir>`,
+  Module 3 restates none of them and every program is created by an earlier
+  step that cites the section, the commands for `src/system_verification`
+  match Module 3's at `db3dac7f`, and TypeScript's build has no `--noEmit`.
 - **Module 3b.**
   - The Truth Set is downloaded, not saved from the preview.
   - A CORD 403 or 429 is never retried blindly.
@@ -11054,6 +11064,14 @@ Senzing licensing, with no SPDX identifier.
   option, with a negative control per skill directory; an amendment to
   INV-284 is queued (the guard covered only Module 5's iterate and improve
   options)
+- #562: the build-and-run statement moves from Module 3 Step 5 to the ground
+  rules' "Building and running a program", generic over `<dir>` and `<name>`,
+  with the 120-second build timeout, the run-from-the-project-root rule and a
+  missing-tool Fix_Instruction; Module 3's steps cite it directly and keep
+  their program table and build check;
+  `tests/test_build_and_run_statement.py` replaces
+  `tests/test_module3_build_and_run_table.py` (the statement named only
+  `src/system_verification`, so Modules 5 to 7 could not cite it)
 - #574: two `PROPOSED AMENDMENT` blocks are queued in the ledger for
   `/review-invariants`, one letting a single yes cover several records shown
   whole in one numbered message (INV-314, `submit_feedback` and unattended

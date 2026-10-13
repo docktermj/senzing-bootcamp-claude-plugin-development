@@ -279,9 +279,9 @@ Verify the Senzing SDK initializes correctly and connects to the database.
 
 1. Generate an SDK initialization script using `generate_scaffold(workflow='initialize')` in the
    bootcamper's chosen language.
-2. **Fetch the snippet, then** save it as the program `verify_init`, at the path Step 5's table
-   gives for the chosen language: `src/system_verification/verify_init.[ext]` for Python and Java,
-   and its own project folder for C#, Rust and TypeScript, created first as Step 5 says.
+2. **Fetch the snippet, then** save it as the program `verify_init` in `src/system_verification`,
+   at the path `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives
+   for the chosen language, its project created first as that section says.
    <!-- MCP-NEGATIVE: generate_scaffold(language='python', workflow='initialize') — its snippets[] carry file_path, source_url, repo, raw_url, size_bytes and line_count with no content field at all — owner: generate_scaffold IS the route that would return source text, and it returns a listing plus an ordered access_steps (fetch raw_url, else git clone) instead, so fetching raw_url is the documented route (routing negative) — server 1.36.0, 2026-09-02 -->
    ⛔ (INV-234) `generate_scaffold` returns a **listing**, not code — `file_path`, `source_url`, `raw_url`,
    `size_bytes`, `line_count` per snippet, with no source text. Follow its own `access_steps` step
@@ -293,9 +293,9 @@ Verify the Senzing SDK initializes correctly and connects to the database.
    confirmed live for `generate_scaffold` on server 1.32.2, 2026-07-29). And never reconstruct the
    snippet from memory of "what a scaffold like this looks like" — that is the training-data
    fallback INV-080 forbids.
-3. **Build it, then run it**, with the build and run commands for `verify_init` in Step 5's table.
-   The build has Step 5's 120-second timeout, and in Python it is only the syntax check. The run has
-   a 30-second timeout. A failed build is a failed check: report fail with the first 50 lines of
+3. **Build it, then run it**, with that section's build and run commands. The build has that
+   section's build timeout, and in Python it is only the syntax check. The run has a 30-second
+   timeout. A failed build is a failed check: report fail with the first 50 lines of
    compiler output and Step 5 item 3's Fix_Instruction, and skip the run.
 4. **If the script exits with code 0 and produces no SENZ error codes:** report pass; the SDK
    connected to the database at `database/G2C.db`.
@@ -357,9 +357,9 @@ Verify the MCP server can generate a full pipeline script in the chosen language
    `src/system_verification/verification_data.jsonl`"**, which presupposes a script that takes a
    data path. Saving the hardcoded demo satisfies every check in this step and then makes Step 6
    impossible without rewriting the file — a failure that surfaces two steps away from its cause.
-3. Save it as the program `verify_pipeline`, at the path Step 5's table gives for the chosen
-   language: `src/system_verification/verify_pipeline.[ext]` for Python and Java, and its own
-   project folder for C#, Rust and TypeScript, created first as Step 5 says.
+3. Save it as the program `verify_pipeline` in `src/system_verification`, at the path
+   `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives for the chosen
+   language, its project created first as that section says.
 4. **Validate the generated file:**
    - Confirm it contains at least 1 line of non-whitespace content.
    - Confirm it includes at least one language-appropriate structural element: an import
@@ -411,12 +411,15 @@ Verify the MCP server can generate a full pipeline script in the chosen language
 
 ### Step 5: Build/Compile
 
-Verify the generated code compiles or passes syntax checking. Enforce a 120-second timeout for
-all build commands, dependency resolution included.
+Verify the generated code compiles or passes syntax checking.
 
-⛔ **This table is the one statement of how every Module 3 program is built and run (INV-300).**
-Steps 3, 5a, 6, 7, 7a and 8 cite it rather than restating a command. `<name>` is the program's
-base name, and each program is created by the step that generates it:
+⛔ **(INV-300) Every Module 3 program is created, built and run as
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program" says, with `<dir>` =
+`src/system_verification`.** That section holds the build and run commands for each language,
+the build timeout, the creation of a C#, Rust or TypeScript program's project, and the
+missing-tool Fix_Instruction. Steps 3, 4, 5a, 6, 7, 7a and 8 cite it rather than restating a
+command. `<name>` is the program's base name, and each program is created by the step that
+generates it:
 
 | Program (`<name>`) | Created by |
 |--------------------|-----------|
@@ -426,59 +429,6 @@ base name, and each program is created by the step that generates it:
 | `validate_results` | Step 7 |
 | `mari_lookup` | Step 7a |
 | `database_operations` | Step 8 |
-
-| Language | Program files | Build | Run |
-|----------|---------------|-------|-----|
-| Python | `src/system_verification/<name>.py` | `python3 -m py_compile src/system_verification/<name>.py` | `python3 src/system_verification/<name>.py` |
-| Java | `src/system_verification/<name>.java` | `javac -d src/system_verification/classes -sourcepath src/system_verification src/system_verification/<name>.java` | `java <ClassName>` through Module 2's Java launch route, with `src/system_verification/classes` added to the classpath that route sets |
-| C# | `src/system_verification/<name>/` holding `<name>.csproj` and `<name>.cs` | `dotnet build src/system_verification/<name>` | `dotnet run --no-build --project src/system_verification/<name>` |
-| Rust | `src/system_verification/<name>/` holding `Cargo.toml` and `src/main.rs` | `cargo build --manifest-path src/system_verification/<name>/Cargo.toml --target-dir src/system_verification/target` | `cargo run --manifest-path src/system_verification/<name>/Cargo.toml --target-dir src/system_verification/target` |
-| TypeScript | `src/system_verification/<name>/` holding `package.json`, `tsconfig.json` and `<name>.ts` | `tsc --project src/system_verification/<name> --outDir src/system_verification/<name>/dist` | `node src/system_verification/<name>/dist/<name>.js` |
-
-- **Run every command from the project root, in the shell where Module 2's env script is sourced**
-  (Module 2 Step 8 re-sources it), so the native library and the SDK bindings are on the paths the
-  program needs. The programs open `src/system_verification/...` paths relative to that root. The
-  paths use forward slashes and the commands use no shell-specific syntax, so they run unchanged in
-  a POSIX shell and in PowerShell (INV-002).
-- **Java:** `javac` finds the SDK jar on the classpath Module 2's env script exports, and every
-  program compiles into the one `classes` folder, so `-sourcepath` lets a shared helper such as
-  the JSON reader (Step 4 item 5) compile beside it. `<ClassName>` is the program's top-level
-  class. The run goes through Module 2's launch route (`../module-02-sdk-setup/SKILL.md` → "The
-  launch environment"): the project-local launcher on macOS, and the env-sourced shell elsewhere.
-  That route owns the SDK jar's path and the platform's classpath separator, so neither is written
-  here.
-- **Rust:** every program shares one `--target-dir`, so the Senzing SDK crate compiles once
-  rather than once per program. `cargo run` rebuilds only when the source changed since the build.
-- **TypeScript:** the build emits JavaScript into the program's `dist/` folder, and the run executes
-  that emitted file. Never add `--noEmit` to this build: the run depends on its output.
-
-**Creating a C#, Rust or TypeScript program's project.** These languages build a project, not a
-loose file, and a C# project holds only one top-level-statements program. So each program gets its
-own folder and manifest under `src/system_verification/`. The step that generates the program
-creates its project before saving the code. The MCP server returns source files only, never a
-manifest, so the manifest comes from the language's own init command, and the Senzing dependency
-line comes from the server or Module 2's route, never from memory (INV-080):
-<!-- MCP-NEGATIVE: generate_scaffold(workflow='full_pipeline') for language='csharp', 'rust' and 'typescript' — each listing names source files only, with no .csproj, Cargo.toml or package.json; rust and typescript carry a dependency_note with the one Senzing dependency line, csharp carries none — owner: generate_scaffold IS the route that returns a workflow's files, and find_examples, the corpus index, says it indexes no build files or project configuration, so no route serves a manifest (absence negative) — server 1.37.28, 2026-10-13 -->
-
-1. **The folder already has its manifest** (a re-run or a resume): reuse it. Skip the init command,
-   which fails or overwrites when the manifest exists, and only replace the code.
-2. **C#:** `dotnet new console --name <name> --output src/system_verification/<name>`. Save the
-   program as `<name>.cs` in that folder and delete the template's `Program.cs`, since two
-   top-level-statement files cannot build together. Then add `Senzing.Sdk` from the package source
-   Module 2's C# route found (`../module-02-sdk-setup/SKILL.md` → Phase 3, the **C#** bullet):
-   `dotnet add src/system_verification/<name> package Senzing.Sdk --source <that source>`. When that
-   route found no source, stop with the route's own outcome (INV-283). ⛔ **Never add a public NuGet
-   feed for `Senzing.Sdk` (INV-222).**
-3. **Rust:** `cargo init --name <name> --vcs none src/system_verification/<name>`. Save the program
-   as that folder's `src/main.rs`, the file Cargo builds the binary from. Add the dependency line
-   from the `dependency_note` of the `generate_scaffold` response the code came from under
-   `[dependencies]` in its `Cargo.toml`, exactly as the note gives it.
-4. **TypeScript:** change into `src/system_verification/<name>/` and run `npm init -y`, then the
-   install command from the `dependency_note` of the `generate_scaffold` response the code came
-   from, then `tsc --init`. Change back to the project root, and save the program as `<name>.ts`
-   in the folder.
-5. **A package the code imports beyond the Senzing SDK and the standard library** is a non-SDK
-   dependency: resolve it as Step 4 item 5 says.
 
 ⛔ **On Java, keep `verify_pipeline.java` and declare the top-level class package-private** — the
 filename is `snake_case` and the idiomatic class name is not, and only a `public` top-level class is
@@ -495,11 +445,10 @@ own tests pin.
    install problem in the module that just finished verifying the install, which sends the
    bootcamper to re-check a working install. Step 4 item 5 should have caught it before this
    point; if it reaches here, resolve it there rather than reporting an install fault. When the
-   cause is a missing build tool, name the one not found, such as `dotnet`, `cargo`, `tsc` or
-   `node`.
-4. **If the build does not complete within 120 seconds:** terminate the process. Report fail
-   with a timeout Fix_Instruction suggesting a check for dependency-resolution issues or
-   network-dependent build steps.
+   cause is a missing build tool, name it as the ground-rules section says.
+4. **If the build does not complete within that section's build timeout:** terminate the
+   process. Report fail with a timeout Fix_Instruction suggesting a check for dependency-resolution
+   issues or network-dependent build steps.
 
 **Checkpoint:** write to `config/bootcamp_progress.json`:
 
@@ -529,9 +478,11 @@ first — so without this step every Module 3 run hits SENZ2207 on the first loa
    hand-write it): call `sdk_guide(topic='configure')` (and `generate_scaffold` if
    it exposes a data-source registration workflow) in the language read from
    `programming_language` in `config/bootcamp_preferences.yaml` (never a hardcoded
-   default). Save the result as the program `register_data_sources`, at the path
-   Step 5's table gives for the chosen language, its project created first as Step 5
-   says (Agent Rule 5 — artifact isolation; INV-018). The generated code MUST:
+   default). Save the result as the program `register_data_sources` in
+   `src/system_verification`, at the path `../bootcamp-onboarding/ground-rules.md` →
+   "Building and running a program" gives for the chosen language, its project created
+   first as that section says (Agent Rule 5 — artifact isolation; INV-018). The
+   generated code MUST:
    - Load the current default Senzing configuration.
    - Register each data source code from step 1 in that configuration.
    - Set the updated configuration as the new default, so `verify_pipeline` and every
@@ -557,9 +508,9 @@ first — so without this step every Module 3 run hits SENZ2207 on the first loa
      your codes into it** — the parameter selects the snippet and fills in nothing, so
      the returned code still carries the sample tuple. Locate it by `source_path`. Same
      step 4a item 2 for the detail and the citation.
-3. **Build** `register_data_sources` with its build command in Step 5's table.
-   Enforce a 120-second build timeout.
-4. **Run** it with its run command in Step 5's table, with a 60-second timeout.
+3. **Build** `register_data_sources` with that section's build command, within its
+   build timeout.
+4. **Run** it with that section's run command, with a 60-second timeout.
 5. **If it completes with exit code 0:** report pass listing the source codes now
    registered, and record them in `config/data_sources.yaml` (INV-050).
 6. **If it fails:** capture the error output, call `explain_error_code` for any
@@ -587,8 +538,10 @@ Execute the verification script to load the synthetic verification data
 data source code was registered in Step 5a, so the load runs against a config that already
 knows it; the SENZ handling below remains as a fallback.
 
-1. Run `verify_pipeline`, built in Step 5, with its run command in Step 5's table and a
-   120-second timeout, pointing it at `src/system_verification/verification_data.jsonl`.
+1. Run `verify_pipeline`, built in Step 5, with its run command in
+   `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" (`<dir>` =
+   `src/system_verification`) and a 120-second timeout, pointing it at
+   `src/system_verification/verification_data.jsonl`.
 2. **While executing:** display a progress indicator updated at least every 5 seconds showing
    records processed out of total expected.
 3. **If the script completes with exit code 0:** confirm the number of records loaded exactly
@@ -624,8 +577,10 @@ Each validation check has a 30-second timeout.
    not from the MCP server.
 2. Query the resolved entities (generate the query/report SDK code via `get_sdk_reference` +
    `sdk_guide`, or use `reporting_guide` for counts; never direct SQL) and perform the following
-   validation checks. Save that code as the program `validate_results`, then build and run it
-   with its commands in Step 5's table. Execute ALL checks regardless of whether earlier checks
+   validation checks. Save that code as the program `validate_results` in
+   `src/system_verification`, at the path and with the project that
+   `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, then build
+   and run it with that section's commands. Execute ALL checks regardless of whether earlier checks
    pass or fail:
 
    **a) Entity count:**
@@ -744,9 +699,10 @@ cannot be found, skip this step without asking (no result, no prediction), recor
    Step 6 runs it, with the same 120-second timeout. Then, in generated SDK code (via
    `get_sdk_reference` + `sdk_guide`, never from memory), get the entity of the `Mari` record and of
    the Marisol record it was copied from, by record ID. Save that code, with item 4's
-   `why_records` call, as the program `mari_lookup`, then build and run it with its commands in
-   Step 5's table. Marisol's entity is the copied record's entity, whatever Step 7 concluded about
-   the cluster.
+   `why_records` call, as the program `mari_lookup` in `src/system_verification`, at the path and
+   with the project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a
+   program" gives, then build and run it with that section's commands. Marisol's entity is the
+   copied record's entity, whatever Step 7 concluded about the cluster.
 4. **Reveal the engine's live call beside the prediction:** joined when the two entity IDs are the
    same, separate when they differ. Add the one line on what the engine used: the `WHY_KEY` from
    `why_records` on the two records. When they stayed apart, `why_records` still answers, and the
@@ -773,7 +729,9 @@ report's verification checks), outside `checks`, so Step 9's check list and verd
 Verify read, write, and search operations against the Senzing database. Each operation has a
 30-second timeout. Perform all operations through generated Senzing SDK code (via
 `get_sdk_reference` + `sdk_guide`), never direct SQL against `database/G2C.db`. Save that code as
-the program `database_operations`, then build and run it with its commands in Step 5's table.
+the program `database_operations` in `src/system_verification`, at the path and with the project
+that `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, then build
+and run it with that section's commands.
 
 1. **Verify write count:**
    - Confirm the record count returned by the Senzing engine matches the synthetic record count
