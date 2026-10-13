@@ -2181,34 +2181,58 @@ call for exactly this reason.
 > why `explain_error_code` now ranks that cause last and conditions it on the engine having
 > initialized successfully.
 
-Use `sdk_guide` with `topic='configure'` to generate the correct engine configuration JSON for
-the user's platform and database choice. Save the MCP-returned JSON directly to
-`config/engine_config.json`; do not modify the paths.
+**Write `config/engine_config.json` from `environment.default_paths` — one procedure, every path
+absolute.** Take `config_path`, `resource_path` and `support_path` from the
+`sdk_guide(topic='configure', platform='<user_platform>', language='<chosen_language>', version='current')`
+response above as `CONFIGPATH`, `RESOURCEPATH` and `SUPPORTPATH`, and set `SQL.CONNECTION` as
+Step 7 and correction 2 above say (INV-200). **Expand every path value to an absolute path before
+writing it.** On Windows all three come back with a literal `%SENZING_DIR%` in them (re-checked on
+MCP server 1.37.28, 2026-10-12), and nothing expands a variable written into the file: never write
+a value that still contains `%SENZING_DIR%`, `$SENZING_DIR` or any other variable. Then run your
+platform's `SUPPORTPATH` check below before saving the file.
 
-**On Windows, verify SUPPORTPATH exists before saving the configuration:**
+**On Windows, verify the `SUPPORTPATH` the server returned before saving the configuration**
+(the same check the macOS one below makes; unverified on Windows PowerShell 5.1 here, INV-163):
 
-After receiving the MCP-returned JSON, check that the SUPPORTPATH directory actually exists on
-the filesystem. This is a targeted path verification, not manual JSON construction: the
-MCP-returned JSON remains the starting point.
+This is a check of the JSON built from `default_paths`, not manual JSON construction: the
+server's `support_path` stays the value, and the check only confirms it resolves to the support
+data.
 
-1. Extract the SUPPORTPATH value from the MCP-returned configuration JSON.
-2. Use `Test-Path` in PowerShell to confirm the SUPPORTPATH directory exists:
+1. Confirm `SENZING_DIR` is set in this shell. **If `$env:SENZING_DIR` is empty, stop** and tell
+   the Bootcamper that `SENZING_DIR` is not set; test and write no path. An unset variable resolves
+   against the current drive, so any check run without it tests the wrong directory.
 
    ```powershell
-   Test-Path -Path "$SENZING_DIR\data"
+   if (-not $env:SENZING_DIR) { Write-Output "SENZING_DIR is not set in this shell" }
    ```
 
-3. If `$SENZING_DIR\data` does not exist, check `$SENZING_DIR\..\data` (one level up from the
-   `er` directory):
+2. Expand the returned `support_path` with `$env:SENZING_DIR` to an absolute path. Put the value
+   exactly as `sdk_guide` returned it in single quotes, so PowerShell leaves it alone and .NET
+   expands `%SENZING_DIR%` from the same environment `$env:SENZING_DIR` reads:
 
    ```powershell
-   Test-Path -Path "$SENZING_DIR\..\data"
+   $supportPath = [System.IO.Path]::GetFullPath([System.Environment]::ExpandEnvironmentVariables('<support_path>'))
+   $supportPath
    ```
 
-4. If the parent-level path exists, update SUPPORTPATH in the configuration JSON to use
-   `$SENZING_DIR\..\data` before saving to `config/engine_config.json`.
-5. If neither path exists, report the error clearly: "SUPPORTPATH directory not found at either
-   `$SENZING_DIR\data` or `$SENZING_DIR\..\data`. Please verify your Senzing installation."
+   Expand `config_path` and `resource_path` the same way; the expanded values are what
+   `config/engine_config.json` gets.
+
+3. Test the directory **and** its content — the transliteration modules (`*TransRules.sz`), whose
+   absence is what `SENZ7426` "No transliteration rules found" reports on Windows/Scoop (above:
+   `sdk_guide(topic='install', platform='windows')` and `explain_error_code('7426')`). Both must
+   print `True`:
+
+   ```powershell
+   Test-Path -Path $supportPath -PathType Container
+   Test-Path -Path (Join-Path $supportPath "*TransRules.sz")
+   ```
+
+4. On failure, report the expanded path that was tested, and do not guess another one:
+   - **The directory does not exist:** "SUPPORTPATH directory not found: `<expanded path>`."
+   - **The directory exists but holds no `*TransRules.sz`:** report it as a wrong `SUPPORTPATH`
+     (`SENZ7426`), not as a broken install, and do not copy transliteration files around — the
+     resolution `sdk_guide` and `explain_error_code('7426')` give for this Windows/Scoop case.
 
 > **Why the Scoop layout differs:** The Windows Scoop package — Senzing's own bucket,
 > `github.com/Senzing/scoop-senzingsdk`, which `sdk_guide(topic='install', platform='windows')`
@@ -2217,8 +2241,11 @@ MCP-returned JSON remains the starting point.
 > at the `er` subdirectory within the Scoop app folder (e.g.,
 > `C:\Users\<user>\scoop\apps\senzingsdk\current\er`). The `data` directory containing
 > `g2SifterRules.ibm` and other GNR support files is at the Scoop app version root, one level
-> above `er`, rather than inside it. This is why the fallback to `$SENZING_DIR\..\data` is
-> needed for Scoop installs.
+> above `er`, a sibling of `er` rather than inside it. The server's `support_path` is that sibling
+> directory itself (`%SENZING_DIR%\..\data`), and its `env_vars.SENZING_DIR` note says
+> SUPPORTPATH "must NOT be built by appending to %SENZING_DIR%" (re-checked on MCP server
+> 1.37.28, 2026-10-12). So there is no second directory to fall back to: expand the returned value
+> and check it.
 
 **This verification is about a *layout*, not a platform — run it wherever the support data can be a
 sibling of `er` rather than a child.** That is currently **two** platforms, both documented by
@@ -2226,7 +2253,7 @@ sibling of `er` rather than a child.** That is currently **two** platforms, both
 
 **On macOS, the same check with the Homebrew paths:**
 
-1. Confirm the `SUPPORTPATH` in the MCP-returned configuration exists —
+1. Confirm the `SUPPORTPATH` in the JSON built from `default_paths` exists —
    `test -d "$(brew --prefix)/opt/senzing/data"`, and that it holds the transliteration modules:
    `ls "$(brew --prefix)/opt/senzing/data"/*TransRules.sz`.
 2. If it does not, the cask's own `etc/sz_engine_config.ini` is the likely source: its

@@ -1892,9 +1892,10 @@ branch.
 - Step 8, engine config: `sdk_guide(topic='configure', platform, language)`,
   built from `environment.default_paths` (not the brace-doubled
   `engine_config`), `SQL.CONNECTION` repointed, saved to
-  `config/engine_config.json`. `SUPPORTPATH` must hold data (Windows falls
-  back to sibling `..\data`; macOS needs `*TransRules.sz`). Re-source the
-  env script.
+  `config/engine_config.json`, every path expanded to an absolute path.
+  `SUPPORTPATH` must hold `*TransRules.sz` (Windows expands the returned
+  `support_path` from `$env:SENZING_DIR` and stops when it is unset; macOS
+  tests the Homebrew path). Re-source the env script.
 - Step 8a, seed: `sdk_guide(topic='configure')` without `data_sources` gives
   `init_default_config`, with them `register_data_sources` (chosen by
   `source_path`); confirm a default config id. 8a.1 re-measures the license
@@ -9412,6 +9413,7 @@ looks wrong.
 - `tests/test_step1_filesystem_fallback.py`: 10
 - `tests/test_step2_record_type_contradiction.py`: 9
 - `tests/test_step3_name_rejection_names_its_fix.py`: 10
+- `tests/test_step8_engine_config_one_procedure.py`: 11
 - `tests/test_step_8b_uses_module_6s_sqlite_threshold.py`: 23
 - `tests/test_steps_name_the_route_that_supplies_them.py`: 23
 - `tests/test_supersession_has_one_syntax.py`: 16
@@ -9463,7 +9465,7 @@ looks wrong.
 - `tests/test_why_side_match_family_is_renamed.py`: 7
 - `tests/test_windows_browser_discovery.py`: 23
 - `tests/test_windows_forms_at_hand_run_sites.py`: 40
-- `tests/test_windows_powershell_guidance.py`: 21
+- `tests/test_windows_powershell_guidance.py`: 27
 - `tests/test_worked_steers.py`: 33
 - `tests/test_wrapped_text.py`: 32
 - `tests/test_write_gate.py`: 23
@@ -10798,6 +10800,14 @@ Senzing licensing, with no SPDX identifier.
   `scripts/` is not mounted in the container, so the server and its D3 were
   unreachable there; a copy, not a mount, because `${CLAUDE_PLUGIN_ROOT}` is a
   versioned cache directory)
+- #505: Module 2 Step 8 writes `config/engine_config.json` from
+  `environment.default_paths` with every path expanded to an absolute path,
+  and its Windows check stops on an unset `$env:SENZING_DIR`, expands the
+  returned `support_path` and tests it and its `*TransRules.sz`;
+  `tests/test_windows_powershell_guidance.py` fails on a bare all-caps `$NAME`
+  in a shipped PowerShell fence (the check read `$SENZING_DIR`, an unset
+  PowerShell variable, so it tested `\data` on the current drive, and the step
+  also said to save the server's JSON with its paths unmodified)
 - #506: the cross-module return contract (`collection_return`,
   `quality_iteration`: the offering module records the key and stays current,
   the receiving module checks it first, shows no start apparatus, writes no

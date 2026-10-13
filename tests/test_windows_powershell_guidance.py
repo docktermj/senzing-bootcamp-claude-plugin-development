@@ -23,6 +23,13 @@ Enforces **INV-167** (a PowerShell counterpart carries no bash-shaped constructs
 and `||` chaining above all -- because each is a *parser* error on Windows PowerShell 5.1,
 so the message points at syntax rather than at the real cause), which names this file.
 
+`NoBareEnvironmentVariablesInPowerShellBlocks` (#505) adds one more bash-shaped construct:
+an environment variable read as `$NAME` instead of `$env:NAME`. In PowerShell `$SENZING_DIR`
+is an unset *PowerShell* variable, so `Test-Path -Path "$SENZING_DIR\\data"` tested `\\data` on
+the current drive and reported a false "not found". The guard flags any bare all-caps
+`$NAME` in a shipped PowerShell fence; the INV-167 amendment naming it is drafted in #505's
+`specs/IMPLEMENTED.md` entry, awaiting the maintainer's sign-off.
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
@@ -226,6 +233,104 @@ class NoBashChainingInPowerShellBlocks(unittest.TestCase):
             1 for path in PLUGIN.rglob("*.md") for _ in powershell_blocks(path)
         )
         self.assertGreater(seen, 0, "found no PowerShell block lines to check")
+
+
+# PowerShell automatic variables a reader may write in capitals. PowerShell variable names
+# are case-insensitive, so `$HOME` IS the automatic `$HOME` and reads no environment
+# variable by mistake. Only names that are automatic variables belong here.
+POWERSHELL_AUTOMATIC_VARIABLES = {
+    "ARGS", "ERROR", "FALSE", "HOME", "HOST", "INPUT", "LASTEXITCODE", "MATCHES", "NULL",
+    "PID", "PROFILE", "PSHOME", "PSVERSIONTABLE", "PWD", "TRUE",
+}
+
+# `$NAME` with NAME in capitals (two or more characters), braced or not, and not escaped
+# with a backtick. `$env:NAME`, `$Env:NAME` and `${env:NAME}` never match, because `env`
+# is not all capitals; `$ENV:NAME` matches `ENV` and is excluded below as the scope.
+BARE_CAPS_VARIABLE = re.compile(r"(?<![\w`])\$\{?([A-Z][A-Z0-9_]+)\b(:?)")
+
+
+def bare_caps_variables(line):
+    """The all-caps `$NAME`s in one PowerShell line that read no `env:` scope."""
+    found = []
+    for match in BARE_CAPS_VARIABLE.finditer(line):
+        name, colon = match.group(1), match.group(2)
+        if name == "ENV" and colon:
+            continue
+        if name in POWERSHELL_AUTOMATIC_VARIABLES:
+            continue
+        found.append(name)
+    return found
+
+
+def bare_caps_offenders(paths):
+    offenders = []
+    for path in paths:
+        for number, line in powershell_blocks(path):
+            for name in bare_caps_variables(line):
+                offenders.append("%s:%d: $%s in %s" % (path, number, name, line.strip()))
+    return offenders
+
+
+class NoBareEnvironmentVariablesInPowerShellBlocks(unittest.TestCase):
+    """INV-167, #505: an environment variable is read as `$env:NAME`, never `$NAME`."""
+
+    OLD_LINES = (
+        'Test-Path -Path "$SENZING_DIR\\data"',
+        'Test-Path -Path "$SENZING_DIR\\..\\data"',
+    )
+
+    def test_no_shipped_powershell_fence_reads_a_bare_caps_variable(self):
+        offenders = bare_caps_offenders(sorted(PLUGIN.rglob("*.md")))
+        self.assertEqual(
+            [],
+            offenders,
+            "In PowerShell `$NAME` is an unset PowerShell variable; read the environment "
+            "variable as `$env:NAME`:\n  " + "\n  ".join(offenders),
+        )
+
+    def test_negative_control_the_old_step_8_lines_are_caught(self):
+        for line in self.OLD_LINES:
+            with self.subTest(line=line):
+                self.assertEqual(["SENZING_DIR"], bare_caps_variables(line))
+
+    def test_negative_control_the_sweep_catches_the_old_line_in_a_fence(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            for lang in sorted(POWERSHELL_LANGS):
+                with self.subTest(lang=lang):
+                    doc = Path(tmp) / ("step8-%s.md" % lang)
+                    doc.write_text(
+                        "2. Check:\n\n   ```%s\n   %s\n   ```\n" % (lang, self.OLD_LINES[0]),
+                        encoding="utf-8",
+                    )
+                    self.assertEqual(1, len(bare_caps_offenders([doc])))
+
+    def test_a_bash_fence_is_not_swept(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            doc = Path(tmp) / "bash.md"
+            doc.write_text('```bash\ntest -d "$SENZING_DIR/data"\n```\n', encoding="utf-8")
+            self.assertEqual([], bare_caps_offenders([doc]))
+
+    def test_env_scoped_and_automatic_variables_pass(self):
+        for line in (
+            'Test-Path "$env:SENZING_DIR\\lib\\Sz.dll"',
+            'Test-Path "$Env:SENZING_DIR\\lib\\Sz.dll"',
+            'Test-Path "$ENV:SENZING_DIR\\lib\\Sz.dll"',
+            'Test-Path "${env:SENZING_DIR}\\lib\\Sz.dll"',
+            "if ($LASTEXITCODE -ne 0) { Write-Output $PWD }",
+            'Join-Path $HOME "x"; $PID',
+            "Write-Output \"`$SENZING_DIR is literal here\"",
+            "$supportPath = $SupportDir",
+        ):
+            with self.subTest(line=line):
+                self.assertEqual([], bare_caps_variables(line))
+
+    def test_a_caps_name_outside_the_allowlist_is_still_caught(self):
+        self.assertEqual(["SENZING_ROOT"], bare_caps_variables('Join-Path ${SENZING_ROOT} "data"'))
+        self.assertEqual(["PATH"], bare_caps_variables('Write-Output "$PATH"'))
 
 
 if __name__ == "__main__":
