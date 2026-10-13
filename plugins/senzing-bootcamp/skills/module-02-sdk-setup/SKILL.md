@@ -133,7 +133,7 @@ For `sdk_repair`:
 - **`1`.** Step 1 decides what is already in place, as it does on any run. A step its path moves
   past (Step 1b without a V4.0+ install, Step 2 with one) is added to `completed` without running,
   and Step 3 runs only the parts that path keeps (INV-339). Step 1's "Mark Module 2 as complete
-  once verification passes" does not apply: a detour completes no module.
+  only after Step 9's engine-class check passes" does not apply: a detour completes no module.
 - **`7`.** Step 7 runs as it states, from its database question. Its instruction 1 waits for the
   finish, as on every detour, and the engine it then records is the one Step 8 wrote into
   `config/engine_config.json`. Option 4 of its PostgreSQL branch, "Switch to SQLite", is an answer
@@ -250,8 +250,9 @@ bootcamper declines the update, or they decline the EULA for it, and an accepted
   jump to Step 4 (verify installation) to confirm it works with the chosen language.
 - If Step 4 passes, proceed to Step 5 (License), which confirms the built-in evaluation license
   without prompting (the License Key gate is in Module 4, per INV-093). After Step 5, proceed to
-  Step 6 (create the project directory structure), then Step 7 (database).
-- Mark Module 2 as complete once verification passes.
+  Step 6 (create the project directory structure), then Step 7 (database), then Step 8 (engine
+  configuration), Step 8a (seed the default configuration) and Step 9 (test database connection).
+- Mark Module 2 as complete only after Step 9's engine-class check passes (INV-037).
 
 > **Required stops (INV-339):** These steps are NEVER skipped, even when the SDK is already installed:
 >
@@ -275,6 +276,10 @@ bootcamper declines the update, or they decline the EULA for it, and an accepted
 > - **Step 4** (Verify Installation): confirms the SDK works with the chosen language.
 > - **Step 5** (License): a brief, no-prompt confirmation that the built-in evaluation license is
 >   active (the volume-gated License Key gate itself lives in Module 4, per INV-093).
+> - **Steps 6, 7, 8, 8a and 9** run unchanged on this path: the project directory structure, the
+>   database, the engine configuration (`config/engine_config.json`), the seeded default
+>   configuration, and the connection test that exercises an engine class. Module 2 completes only
+>   after Step 9 passes.
 
 **If the SDK is found but version is incompatible (<V4.0):**
 

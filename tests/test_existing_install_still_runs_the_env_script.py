@@ -26,6 +26,10 @@ entry, and the two update-offer routes back onto the existing-install path.
 text, after Step 1's existing-install announcement shipped "skipping straight to configuration
 verification" wrapped across two lines where the per-line, one-phrasing scan could not see it.
 
+#510 pinned the path's far end: its step list stopped at Step 7 and completed Module 2 "once
+verification passes", and its "Required stops" block named only Steps 3, 4 and 5, so neither
+reached Step 8's engine configuration or Step 9's engine-class check (INV-037).
+
 Enforces **INV-339** (an existing install skips only the installation: Phase 3 and the environment
 script still run before verification). It asserts that Module 2 *states* the rule at each site, and
 does **not** establish that a live run follows it, which only `dry-run` phase 3 can observe.
@@ -299,6 +303,132 @@ class TheRuleHoldsAtEverySiteTheDeferralNames(unittest.TestCase):
             '**On no:** one line — "Keeping [installed]." — then Step 1\'s existing-install path.',
             self.flat,
         )
+
+
+#: Where Step 1's existing-install path list begins and ends, and where its "Required stops"
+#: block ends (#510).
+PATH_START = "This is the **existing-install path** (INV-339)."
+STOPS_START = "**Required stops (INV-339):**"
+STOPS_END = "**If the SDK is found but version is incompatible"
+
+#: The steps after Step 7, in the order the path must name them. ``Step 8\b(?!a)`` keeps
+#: "Step 8a" from standing in for Step 8.
+LATER_STEPS = (("Step 8", r"\bStep 8\b(?!a)"), ("Step 8a", r"\bStep 8a\b"),
+               ("Step 9", r"\bStep 9\b"))
+
+
+def flatten(text):
+    """``text`` with blockquote markers dropped and whitespace collapsed, so a reflow is a no-op."""
+    return re.sub(r"\s+", " ", re.sub(r"(?m)^\s*>\s?", "", text)).strip()
+
+
+def existing_install_sites(text):
+    """Step 1's existing-install path list and its "Required stops" block, each flattened."""
+    start, stops = text.find(PATH_START), text.find(STOPS_START)
+    end = text.find(STOPS_END, stops)
+    if -1 in (start, stops, end) or not start < stops < end:
+        return None, None
+    return flatten(text[start:stops]), flatten(text[stops:end])
+
+
+def existing_install_path_problems(path, stops):
+    """Why the path list or the Required-stops block stops short of Step 9; empty when neither does."""
+    problems = []
+    at = path.find("Step 7")
+    if at == -1:
+        problems.append("the path list does not name Step 7")
+    else:
+        for name, pattern in LATER_STEPS:
+            found = re.compile(pattern).search(path, at + 1)
+            if not found:
+                problems.append("the path list does not name %s after the step before it" % name)
+                break
+            at = found.end()
+    completion = [s for s in sentences(path) if "Mark Module 2 as complete" in s]
+    if len(completion) != 1:
+        problems.append("the path list has no single 'Mark Module 2 as complete' sentence")
+    elif not re.search(r"\bStep 9\b", completion[0]):
+        problems.append("the completion sentence does not name Step 9: %s" % completion[0])
+    if "once verification passes" in path:
+        problems.append("the path list still says 'once verification passes', readable as Step 4")
+    bullet = [b for b in stops.split(" - ") if "Steps 6, 7, 8, 8a and 9" in b]
+    if len(bullet) != 1:
+        problems.append("the Required stops block has no bullet naming Steps 6, 7, 8, 8a and 9")
+    elif "Module 2 completes only after Step 9" not in bullet[0]:
+        problems.append("the Required stops bullet does not say Module 2 completes only after "
+                        "Step 9: %s" % bullet[0])
+    return problems
+
+
+class TheExistingInstallPathRunsThroughStep9(unittest.TestCase):
+    """#510: the path reaches Steps 8, 8a and 9 and completes Module 2 only after Step 9.
+
+    The list stopped at Step 7 and completed Module 2 "once verification passes", and the
+    "Required stops" block named only Steps 3, 4 and 5, so a guide following either one finished
+    Module 2 with no engine configuration and no engine-class check (INV-037, INV-339). Read over
+    whitespace-collapsed text, as the classes above are, so a reflowed line does not break it.
+    """
+
+    #: The path list's last two items as they shipped before #510.
+    HISTORICAL = ("  Step 6 (create the project directory structure), then Step 7 (database).\n"
+                  "- Mark Module 2 as complete once verification passes.\n")
+
+    def setUp(self):
+        self.text = (SKILLS / "module-02-sdk-setup" / "SKILL.md").read_text(encoding="utf-8")
+
+    def problems(self, text):
+        path, stops = existing_install_sites(text)
+        self.assertIsNotNone(path, "Step 1's existing-install path or its Required stops block "
+                                   "was not found.")
+        return existing_install_path_problems(path, stops)
+
+    def test_the_path_and_its_required_stops_reach_step_9(self):
+        self.assertEqual(
+            [], self.problems(self.text),
+            "Step 1's existing-install path must continue past Step 7 to Steps 8, 8a and 9, and "
+            "both its completion sentence and its Required stops block must name Step 9: "
+            "otherwise a guide completes Module 2 with no engine config and no verified engine.",
+        )
+
+    def test_the_text_before_510_is_caught(self):
+        """Negative control: today's text, spliced back in, fails the same check."""
+        at = self.text.index("  Step 6 (create the project directory structure), then Step 7")
+        end = self.text.index("\n\n", at)
+        regressed = self.text[:at] + self.HISTORICAL + self.text[end + 1:]
+        found = self.problems(regressed)
+        self.assertIn("the path list does not name Step 8 after the step before it", found)
+        self.assertTrue(any("does not name Step 9" in p for p in found), found)
+        self.assertIn(
+            "the path list still says 'once verification passes', readable as Step 4", found
+        )
+
+    def test_the_issue_quoted_text_is_caught_on_its_own(self):
+        """The sentence the issue quotes, checked with no file around it."""
+        old = flatten("After Step 5, proceed to Step 6 (create the project directory structure), "
+                      "then Step 7 (database).\n- Mark Module 2 as complete once verification "
+                      "passes.")
+        self.assertNotEqual([], existing_install_path_problems(old, ""))
+
+    def test_a_required_stops_block_without_the_bullet_is_caught(self):
+        path, stops = existing_install_sites(self.text)
+        cut = re.sub(r" - \*\*Steps 6, 7, 8, 8a and 9\*\*.*", "", stops)
+        self.assertIn(
+            "the Required stops block has no bullet naming Steps 6, 7, 8, 8a and 9",
+            existing_install_path_problems(path, cut),
+        )
+
+    def test_step_8a_alone_does_not_stand_in_for_step_8(self):
+        path, stops = existing_install_sites(self.text)
+        dropped = path.replace("then Step 8 (engine configuration), ", "then ")
+        self.assertNotEqual(path, dropped, "negative control is stale: Step 8's item is gone")
+        self.assertIn("the path list does not name Step 8 after the step before it",
+                      existing_install_path_problems(dropped, stops))
+
+    def test_a_reflowed_path_still_passes(self):
+        reflowed = self.text.replace("then Step 7 (database), then Step 8 (engine\n  configuration)",
+                                     "then Step 7\n  (database), then Step 8 (engine configuration)")
+        self.assertNotEqual(self.text, reflowed, "negative control is stale: the wrap moved")
+        self.assertEqual([], self.problems(reflowed))
 
 
 if __name__ == "__main__":
