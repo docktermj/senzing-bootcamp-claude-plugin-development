@@ -1,7 +1,7 @@
 ---
 name: delegate-to-mcp-server
 description: 'Sync the Senzing Bootcamp plugin with the live Senzing MCP server by finding Senzing facts the SBCP still holds that the server now serves itself, and filing GitHub issues to delegate them to a runtime call. Use when the maintainer wants to sync with the MCP server, retire redundant or stale Senzing content, check what the server now covers, or reduce the plugin''s Senzing-fact maintenance surface. Files GitHub issues in this repository — never edits the plugin, never writes under specs/. Maintainer tool — not part of the bootcamper experience.'
-argument-hint: "[area or category to bound this run to] (omit to take the full re-check list)"
+argument-hint: "[area or category to bound this run to] (omit to take the full re-check list) [--draft <run-dir> | --file <run-dir>]"
 ---
 
 # Delegate to the Senzing MCP server
@@ -309,6 +309,14 @@ not a convenience: whatever the finding, never pass `--repo`.
 **Record each issue number as you go** — Step 9's ledger rows and Step 10's report both
 need it.
 
+⛔ **With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
+nothing outside `<run-dir>`.** Each issue, Step 8 message and Step 9 row becomes a
+[`drafts.py`](../feedback-to-issues/drafts.py) `add` record instead, carrying its row's `record`
+arguments as `--after` and `--after-struck`, and the run ends with `drafts.py list`. `--draft` is
+the release cycle's interface (#573), and the caller records unresolved drafts (INV-317). **With
+`--file <run-dir>`**, file what `drafts.py file-plan` prints, and get a yes for each first. Both
+stages, the manifest and its statuses are stated once in `drafts.py` (INV-300).
+
 Rules beyond the template:
 
 - **Name the call that replaces the text** — tool, parameters, and what to extract from
@@ -369,6 +377,8 @@ python3 .claude/skills/delegate-to-mcp-server/coverage_ledger.py record \
   --tool "<the call that established it>" \
   --issue <the number filed in Step 7, e.g. 142>
 ```
+
+With `--file <run-dir>`, run `record` once per line `drafts.py after` prints.
 
 The ledger is `specs/mcp-coverage.jsonl`, append-only and read last-wins, so a verdict
 is revised by appending a new row with the same key — never by editing history.

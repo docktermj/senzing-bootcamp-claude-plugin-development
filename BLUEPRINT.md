@@ -46,7 +46,8 @@ receives the shippable plugin through `/propagate-to-public`.
 - `.claude/skills/dry-run/`: maintainer skill `/dry-run`: its three phase guides
   and helper scripts.
 - `.claude/skills/feedback-to-issues/`: maintainer skill `/feedback-to-issues`,
-  its feedback ledger script and issue template.
+  its feedback ledger script and issue template, and `drafts.py`, the two-stage
+  drafting helper the five finding skills share (section 5.46).
 - `.claude/skills/production-readiness-audit/`: maintainer skill
   `/production-readiness-audit` and its `conformance.py`.
 - `.claude/skills/propagate-to-public/`: maintainer skill `/propagate-to-public`
@@ -62,8 +63,9 @@ receives the shippable plugin through `/propagate-to-public`.
   pull requests (section 4.1).
 - `.github/workflows/test-suite.yaml`: CI: runs the unittest suite with fpdf2
   present and absent (section 4.2).
-- `.gitignore`: ignores bytecode, the pytest cache and the transient root
-  feedback file.
+- `.gitignore`: ignores bytecode, the pytest cache, the transient root
+  feedback file and `.claude/release-cycle/runs/` (the finding skills'
+  `--draft` run directories).
 - `.sync-state.json`: records the Kiro Power commit the plugin was first
   scaffolded from.
 - `CHANGELOG.md`: release notes, one entry per version, written by `/release`
@@ -3621,8 +3623,8 @@ no invariants parse.
 Maintainer skill that finds Senzing facts the plugin still holds that the live
 MCP server now serves (INV-080), and files GitHub issues proposing a runtime
 call instead. Goal: a smaller maintenance surface, not a smaller plugin.
-Argument: an area or category bounding the run (stated in the report).
-Distinct from `dry-run` phase 1 (do the calls work), `auto-test` (has the
+Argument: an area or category bounding the run (stated in the report), and
+`--draft <run-dir>` or `--file <run-dir>` (#572). Distinct from `dry-run` phase 1 (do the calls work), `auto-test` (has the
 server drifted) and `feedback-to-issues` (what did a Bootcamper hit). It never
 edits the plugin and writes nothing under `specs/` except its ledger
 `specs/mcp-coverage.jsonl`, a named live exception to the freeze (INV-307).
@@ -3650,6 +3652,10 @@ upstream per `feedback-to-issues` Step 8 (usually `feature`, anonymized,
 approved, never `license_request`, INV-135). Step 9 records every verdict.
 Step 10 reports both stamps, `contradicted` first, issues filed, new and
 remaining coverage, and sweep coverage, then offers `/implement-github-issue`.
+With `--draft`, Step 7 drafts each record with `feedback-to-issues/drafts.py`
+(5.46) and the run files, sends and records nothing; with `--file`, it files
+what `drafts.py file-plan` prints after a yes for each, and Step 9's
+`coverage_ledger.py record` calls are the lines `drafts.py after` prints.
 
 `issue-template.md` gives the issue body: no title heading (the body starts at
 `## Problem`; the title states the fact, not the file), then `## Problem`
@@ -3700,7 +3706,7 @@ exit 2.
 Maintainer test-gate skill that finds defects reading the plugin cannot: where
 the plugin disagrees with the live MCP server, a real filesystem, or a human.
 Argument: `[phases: 1, 2, 3 or all] [module phase 3's analysis starts at]
-[--simulated [persona]]`.
+[--simulated [persona]] [--draft <run-dir> | --file <run-dir>]`.
 
 Procedure (`SKILL.md`). Ask which phases to run when not given (INV-333);
 for phase 3 also ask the start module, marking the environment's reachable
@@ -3732,7 +3738,10 @@ A clean simulated phase 3 reads "no regression detected (simulated
 Bootcamper, persona `<p>`)", never "phase 3 passed", lists phase 3 with the
 maintainer as not yet done, quotes `walk_stop`, and a walk that stopped
 before its start module names the module reached and leaves the rest
-untested.
+untested. With `--draft <run-dir>` (#572), the finding lifecycle drafts each
+finding with `feedback-to-issues/drafts.py` (5.46) instead, and the run files,
+fixes and sends nothing and writes nothing outside `<run-dir>` but its scratch
+project; `--file <run-dir>` files the approved records.
 
 `phase1-mcp-contracts.md`: check every MCP call literal in plugin skills
 against the live schemas (tool exists, required parameters named, values
@@ -3840,7 +3849,8 @@ Maintainer skill that turns a bootcamp feedback file into deduplicated GitHub
 issues in this repository only (never `--repo`, INV-319; never into children,
 which receive change by parity), after re-verifying every Senzing fact against
 the live MCP server, and reports confirmed server defects upstream. Argument:
-a feedback file path. It writes only under `feedback/`, never into `specs/`
+a feedback file path, and `--draft <run-dir>` or `--file <run-dir>` (#572).
+It writes only under `feedback/`, never into `specs/`
 (INV-307), never edits a feedback file's content, and never implements.
 
 Procedure. Step 1 resolves the file: the given path, else root
@@ -3872,7 +3882,10 @@ drafts an anonymized report (INV-321), and sends `bug` or `feature` only on
 an explicit yes, never `license_request` (INV-135). Step 9, after filing,
 runs `commit` with a `--disposition` per entry. Step 10 reports a per-item
 table with the server version, skipped entries, archive path, issues and
-upstream outcomes.
+upstream outcomes. With `--draft`, Step 7 drafts each record with `drafts.py
+add` and the run files, renames, archives and sends nothing; with `--file`, it
+files what `drafts.py file-plan` prints after a yes for each, and Step 9's
+dispositions are the lines `drafts.py after` prints.
 
 `issue-template.md`: body starts at `## Problem` (no title heading), then
 `## Root cause` (with the live-server quote and conditions), `## Proposed
@@ -3908,6 +3921,53 @@ normalized entry. The ledger `feedback/PROCESSED.jsonl` is read last-wins by
 
 Argparse usage errors exit 2.
 
+`drafts.py` (stdlib, offline, #572) is the two-stage helper the five finding
+skills share. Its docstring is the one statement of the `--draft <run-dir>` /
+`--file <run-dir>` contract and of the manifest (INV-300). The manifest
+`<run-dir>/drafts/manifest.json` is `{"format": 1, "baseline_sha", "records"}`,
+written atomically (`os.replace`) under an `O_CREAT | O_EXCL` lock file,
+`manifest.lock` (exit 3 after 30 s). Each record is drafted to
+`drafts/<skill>-NN.md`: an HTML-comment header (id, skill, source, kind,
+baseline SHA, the sorted `path:line` dedupe key, labels), then `# <title>` and
+the exact body. `KINDS` are `issue`, `upstream` and `ledger`. `STATUSES` maps
+each status to the ones `set` may move it to: `pending`, `approved` and
+`struck` among themselves; `filed`, set only by `record-filed`, never changes;
+`upstream-pending` to `upstream-sent` or `upstream-declined`.
+
+- `add <run-dir> --skill --source [--kind] [--title] [--label ...] [--body-file
+  F|-] [--site path:line ...] [--category] [--after] [--after-struck] [--sha]`
+  appends a record (`pending`, or `upstream-pending`). It refuses
+  `unattended-ok` (exit 2, INV-318), a second baseline SHA (exit 4), an issue
+  with no title, an issue or upstream with no body, an upstream without
+  `--category bug|feature`, a ledger without `--after`, an `--after` naming
+  `{issue}` without `--after-struck`, and a malformed site (exit 1).
+- `list <run-dir> [--skill] [--status]` prints the records; when any is
+  unresolved, it ends with the not-yet-durable warning, the INV-317 caller
+  note and `/<skill> --file <run-dir>` for each skill.
+- `set <run-dir> <id> <status> [--note]` allows only the `STATUSES` moves
+  (else exit 3).
+- `file-plan <run-dir> --skill [--sha]` exits 4 on a baseline mismatch, naming
+  both SHAs. Otherwise it prints a `FILE` line with the exact `gh issue create`
+  command (never `--repo`, INV-319) for each approved, unfiled issue record,
+  writing the body alone to `drafts/<id>.body.md`, and `SKIP`, `STRUCK`,
+  `PENDING`, `LEDGER` and `UPSTREAM` lines for the rest. A draft whose `# `
+  title no longer matches the manifest's exits 3.
+- `record-filed <run-dir> <id> <number>` writes the number back and sets
+  `filed`. The same number again does nothing; a different number, or a
+  record that is not an approved issue record, exits 3.
+- `after <run-dir> --skill` exits 3 while any of the skill's records is
+  `pending` or an approved, unfiled issue record. Otherwise it prints each
+  record's `after` line with `{issue}` and `{outcome}` filled in (`#<n>`, or
+  "declined by the maintainer" for a struck record, which uses
+  `after_struck` when given); `upstream` records print nothing.
+- `check-sha <run-dir> [--sha]` exits 4 on a mismatch.
+
+`--sha` defaults to `git rev-parse HEAD`; bad input exits 1. Under `--draft` a
+skill writes nothing outside `<run-dir>` (by hand, under the gitignored
+`.claude/release-cycle/runs/`) except `/dry-run`'s scratch project, and the
+caller records unresolved drafts (INV-317); with neither argument each skill
+is unchanged.
+
 ### 5.47 `.claude/skills/production-readiness-audit`
 
 Maintainer skill: the last static gate before `dry-run`. It establishes four
@@ -3917,7 +3977,9 @@ request and not an invariant) and checks `specs/INVARIANTS.md` in both
 directions: forward (every site an invariant binds honors it; one wrong site
 means sweep the class) and reverse (every durable hard rule the plugin states
 is registered and cited at its line, INV-183). Argument: an area to sweep
-first. Conversational invariants (INV-251, INV-006, INV-014, INV-005/008/009,
+first, and `--draft <run-dir>` or `--file <run-dir>` (#572: Step 8 item 1
+drafts each finding with `feedback-to-issues/drafts.py`, 5.46, instead of
+filing it). Conversational invariants (INV-251, INV-006, INV-014, INV-005/008/009,
 gate ordering) are out of scope and must be reported as untested and routed
 to `dry-run` phase 3.
 
@@ -4079,7 +4141,10 @@ changed in the public access repo since the last propagation and files GitHub
 issues in this repository describing each coherent change. It writes nothing
 into the dev tree (INV-312) and never deletes, adds or pulls the public
 governance layer. Argument: the public repo path (default
-`~/senzing.git/senzing-bootcamp-claude-plugin`). Compared paths: `plugins/`
+`~/senzing.git/senzing-bootcamp-claude-plugin`), and `--draft <run-dir>` or
+`--file <run-dir>` (#572: filing step 4 drafts with
+`feedback-to-issues/drafts.py`, 5.46; `--file` repeats the step 3 tracker
+search first and strikes a change now tracked). Compared paths: `plugins/`
 (minus caches), `.claude-plugin/`, `docs/`, `README.md`. After the script:
 report its summary, group divergence into decisions (a dependency bump, a
 workflow, a prose fix), search open and closed issues by the public commit
@@ -7661,6 +7726,94 @@ def main(argv=None):
 
 <!-- markdownlint-enable MD013 -->
 
+#### 6.1.36 `.claude/skills/feedback-to-issues/drafts.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `.claude/skills/feedback-to-issues/drafts.py`:
+
+```python
+SKILLS = (
+    "feedback-to-issues",
+    "retrofit-from-public",
+    "delegate-to-mcp-server",
+    "production-readiness-audit",
+    "dry-run",
+)
+KINDS = ("issue", "upstream", "ledger")
+STATUSES = {
+    "pending": ("approved", "struck"),
+    "approved": ("pending", "struck"),
+    "struck": ("pending", "approved"),
+    "filed": (),
+    "upstream-pending": ("upstream-sent", "upstream-declined"),
+    "upstream-sent": (),
+    "upstream-declined": ("upstream-pending",),
+}
+FORBIDDEN_LABELS = ("unattended-ok",)
+DECLINED = "declined by the maintainer"
+SITE = re.compile(r"^(?P<path>[^\s:]+):(?P<start>\d+)(?:-(?P<end>\d+))?$")
+SHA = re.compile(r"^[0-9a-f]{7,40}$")
+class Refused(Exception):
+    def __init__(self, message: str, code: int = 1):
+        ...
+def drafts_dir(run_dir: Path) -> Path:
+    ...
+def manifest_path(run_dir: Path) -> Path:
+    ...
+class Locked:
+    def __init__(self, run_dir: Path, timeout: float = 30.0):
+        ...
+    def __enter__(self):
+        ...
+    def __exit__(self, *exc):
+        ...
+def load(run_dir: Path) -> dict:
+    ...
+def save(run_dir: Path, data: dict) -> None:
+    ...
+def find(data: dict, rid: str) -> dict:
+    ...
+def head_sha() -> str:
+    ...
+def resolve_sha(given) -> str:
+    ...
+def same_commit(a: str, b: str) -> bool:
+    ...
+def require_baseline(data: dict, sha: str) -> None:
+    ...
+def dedupe_key(sites) -> list:
+    ...
+def render(rec: dict, body: str) -> str:
+    ...
+def split_draft(text: str):
+    ...
+def fill(template: str, rec: dict) -> str:
+    ...
+def open_records(recs) -> list:
+    ...
+def cmd_add(args) -> int:
+    ...
+def warning(run_dir, skills) -> list:
+    ...
+def cmd_list(args) -> int:
+    ...
+def cmd_set(args) -> int:
+    ...
+def cmd_check_sha(args) -> int:
+    ...
+def cmd_file_plan(args) -> int:
+    ...
+def cmd_record_filed(args) -> int:
+    ...
+def cmd_after(args) -> int:
+    ...
+def main(argv=None) -> int:
+    ...
+```
+
+<!-- markdownlint-enable MD013 -->
+
 ### 6.2 CLI
 
 Every argparse declaration, verbatim (the statements that build each parser).
@@ -8406,6 +8559,55 @@ From `.claude/skills/dry-run/module_banners.py`:
     cut.add_argument("transcript", type=Path)
     cut.add_argument("number", type=int)
     cut.add_argument("--out", required=True, type=Path)
+```
+
+<!-- markdownlint-enable MD013 -->
+
+#### 6.2.27 `.claude/skills/feedback-to-issues/drafts.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `.claude/skills/feedback-to-issues/drafts.py`:
+
+```python
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    sub = parser.add_subparsers(dest="command", required=True)
+    add = sub.add_parser("add", help="append one record and write its draft")
+    add.add_argument("run_dir")
+    add.add_argument("--skill", required=True, choices=SKILLS)
+    add.add_argument("--source", required=True, help="the skill and its step")
+    add.add_argument("--kind", default="issue", choices=KINDS)
+    add.add_argument("--title")
+    add.add_argument("--label", action="append")
+    add.add_argument("--body-file", help="the exact body; - reads it from stdin")
+    add.add_argument("--site", action="append", help="a path:line the record cites (repeatable)")
+    add.add_argument("--category", choices=("bug", "feature"))
+    add.add_argument("--after", help="after-filing arguments; {issue} and {outcome} are filled in")
+    add.add_argument("--after-struck", help="after-filing arguments for a struck record")
+    add.add_argument("--sha", help="baseline SHA (default: git rev-parse HEAD)")
+    lst = sub.add_parser("list", help="the records, then the not-yet-durable warning")
+    lst.add_argument("run_dir")
+    lst.add_argument("--skill", choices=SKILLS)
+    lst.add_argument("--status", choices=tuple(STATUSES))
+    st = sub.add_parser("set", help="set a record's status at the checkpoint")
+    st.add_argument("run_dir")
+    st.add_argument("id")
+    st.add_argument("status", choices=tuple(s for s in STATUSES if s != "filed"))
+    st.add_argument("--note")
+    plan = sub.add_parser("file-plan", help="what --file files, skips and leaves alone")
+    plan.add_argument("run_dir")
+    plan.add_argument("--skill", required=True, choices=SKILLS)
+    plan.add_argument("--sha", help="this checkout's SHA (default: git rev-parse HEAD)")
+    rf = sub.add_parser("record-filed", help="write an issue number back")
+    rf.add_argument("run_dir")
+    rf.add_argument("id")
+    rf.add_argument("number")
+    af = sub.add_parser("after", help="the after-filing arguments, numbers filled in")
+    af.add_argument("run_dir")
+    af.add_argument("--skill", required=True, choices=SKILLS)
+    cs = sub.add_parser("check-sha", help="refuse a baseline-SHA mismatch")
+    cs.add_argument("run_dir")
+    cs.add_argument("--sha", help="this checkout's SHA (default: git rev-parse HEAD)")
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -9317,6 +9519,7 @@ looks wrong.
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
 - `tests/test_download_resource_is_a_listing.py`: 27
+- `tests/test_drafts.py`: 30
 - `tests/test_dropped_character_remedy_branches.py`: 10
 - `tests/test_dry_run_files_issues.py`: 15
 - `tests/test_dry_run_scaffold.py`: 15
@@ -10197,6 +10400,20 @@ These are the scripts under `.claude/skills/`:
   - `slice_transcript` starts a content module at its banner, starts Bootcamp
     preparation at the first turn and ends it at the next banner, and a
     stalled walk exits 3 naming the module reached.
+- **The finding skills' two stages.** `tests/test_drafts.py` (#572):
+  - `drafts.py`, run offline: ids per skill and the draft's header, the sorted
+    dedupe key, status changes, the number written back and a re-run that
+    files nothing twice, the baseline-SHA refusal naming both SHAs, `after`
+    waiting for a complete set and reading a struck record as declined by the
+    maintainer, a retitled draft refused and an edited body filed, the
+    `unattended-ok` refusal (INV-318), no `--repo` in any printed command
+    (INV-319), the hand-run warning and `--file` command, and a whole cycle
+    writing nothing outside `<run-dir>`;
+  - the docstring names every status, kind and skill; each of the five skills
+    states the stage-one rule at its filing step, names both arguments in its
+    argument hint, links to the helper, carries the INV-317 caller clause and
+    the INV-300 citation, and restates no part of the manifest format;
+    `.gitignore` ignores `.claude/release-cycle/runs/`.
 - **Other maintainer tools.**
   - **`dry-run/scaffold_project.py`** builds `fresh`, `seeded` and `mid`
     projects, never inside the repository or under `/tmp`.
@@ -11275,6 +11492,17 @@ Senzing licensing, with no SPDX identifier.
   simulated run reads only "no regression detected", and the maintainer walk
   stays the default (phase 3 could not run without the maintainer, though the
   two-process walk is not self-play)
+- #572: `/feedback-to-issues`, `/retrofit-from-public`,
+  `/delegate-to-mcp-server`, `/production-readiness-audit` and `/dry-run` take
+  `--draft <run-dir>`, which drafts every record into `<run-dir>/drafts/` and
+  its manifest and files, fixes and sends nothing, and `--file <run-dir>`,
+  which files only `approved` records against the same baseline SHA, writes
+  each number back and finishes Step 9 from `drafts.py after`; one helper,
+  `feedback-to-issues/drafts.py`, does the manifest work and its docstring
+  states the contract, and the caller records unresolved drafts (INV-317,
+  amendment queued) (each skill found and filed in one session, so a release
+  cycle could not collect their findings, merge duplicates and approve them
+  together)
 - #574: two `PROPOSED AMENDMENT` blocks are queued in the ledger for
   `/review-invariants`, one letting a single yes cover several records shown
   whole in one numbered message (INV-314, `submit_feedback` and unattended

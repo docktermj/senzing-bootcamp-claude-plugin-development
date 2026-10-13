@@ -15,3 +15,7 @@ __pycache__/
 # Root-anchored on purpose: the transient working copy is ignored, while the processed
 # archive under feedback/ IS tracked, so a raw report survives an overwrite.
 /SENZING_BOOTCAMP_PLUGIN_FEEDBACK*.md
+
+# /release-cycle run directories: the finding skills' --draft records (#572). Not a durable
+# record by design: the caller records every unresolved draft in its ledger entry (INV-317).
+.claude/release-cycle/runs/

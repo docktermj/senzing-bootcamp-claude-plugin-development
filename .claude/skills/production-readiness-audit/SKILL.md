@@ -1,7 +1,7 @@
 ---
 name: production-readiness-audit
 description: 'Audit the whole Senzing Bootcamp plugin for production readiness — the last static gate before dry-run. Verifies the plugin is consistent, coherent, complete and concise, and checks INVARIANTS.md against the plugin in BOTH directions: every invariant is honored, and every durable rule the plugin states is registered as an invariant. Use when the maintainer asks for a deep dive, a conformance or coherence audit, whether the plugin conforms to every invariant, whether it is consistent/coherent/complete, or whether it is ready to ship. Maintainer tool — never invoked during a bootcamp.'
-argument-hint: "[area to scope the invariant sweep to] (omit to let the lead generators choose)"
+argument-hint: "[area to scope the invariant sweep to] (omit to let the lead generators choose) [--draft <run-dir> | --file <run-dir>]"
 ---
 
 # Production-readiness audit
@@ -433,6 +433,14 @@ session end:
      (`.claude/skill-overlays/unattended-issue-loop.md`); a new issue is not one of them. A
      finding recorded in the ledger is durable and costs the maintainer one read; an issue
      filed by a run nobody watched cannot be un-filed.
+
+   ⛔ **With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
+   nothing outside `<run-dir>`.** In place of both paths, each finding becomes a
+   [`drafts.py`](../feedback-to-issues/drafts.py) `add` record, steps 2–6 are not run, and the run
+   ends with `drafts.py list`. `--draft` is the release cycle's interface (#573), and the caller records
+   unresolved drafts (INV-317). **With `--file <run-dir>`**, file what `drafts.py file-plan`
+   prints, and get a yes for each first, then report (Step 9). Both stages, the manifest and its
+   statuses are stated once in `drafts.py` (INV-300).
 
    ⛔ **(INV-318) Never apply the `unattended-ok` label to an issue you file.** An audit that labels its
    own findings lets `/unattended-issue-loop` *(user level)* work issues **it generated itself**, with no
