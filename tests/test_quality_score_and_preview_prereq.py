@@ -180,7 +180,8 @@ class PreviewPrerequisiteIsDocumented(unittest.TestCase):
     def test_the_check_is_optional_and_non_blocking(self):
         text = flat()
         self.assertRegex(text, r"(?i)Optional and non-blocking")
-        self.assertIn("INV-048", text)
+        # INV-163 governs a check that does not run; INV-048 is the recap PDF's (#523 item 9).
+        self.assertRegex(text, r"keep the structural check \(INV-163\)\. Say which check ran")
 
     def test_it_says_which_check_ran(self):
         """"Senzing-ready" must not imply a stronger test than was performed."""

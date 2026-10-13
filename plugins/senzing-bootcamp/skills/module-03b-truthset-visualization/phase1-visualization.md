@@ -373,84 +373,6 @@ proceed to the live server: fix the underlying cause (regenerate faulty code fro
 re-run SDK initialization from Module 2 / System Verification; check `config/engine_config.json`)
 and retry until the snapshot is written — the module does not complete without it.
 
-⛔ **Run the encoding self-check against the running server BEFORE capturing — and stop on a
-mismatch (INV-270, INV-259, INV-265).** Fetch the graph endpoint and compare the number of
-**combination rows** the source legend names against `len(encoding_check.combination_keys)` (the
-contract's "The encoding self-check" defines both; `encoding_check.distinct_source_set_keys` is the
-total those combinations are drawn from). They MUST be equal; fewer combination rows means nodes are
-colored by one member of their source set rather than the whole set (INV-259), which renders every
-cross-source entity as single-source under a legend saying otherwise. ⛔ Count the combination rows (INV-270)
-only — the per-source rows are not source-set keys, and counting them raises a false mismatch
-whenever a source appears in view only inside combinations. ⛔ Read the **source** legend (INV-270): uncheck
-"Show only entities with relationships" first, because above 400 nodes the graph opens in
-relationship mode, whose legend has no source colors. That changes only where the check is read;
-captures are taken as before. **On a mismatch, fix the encoding and re-render before capture** — the
-screenshots persist into the recap and the production project, so capturing first ships the wrong
-picture.
-
-⚠️ **Report `not exercised`, not `passed`, when `encoding_check.status` is `not_exercised`** — no
-combination key in view means the comparison could not have failed (INV-265). Say which of the two
-happened; do not report silence as agreement.
-
-⛔ **On the Truth Set, expect a real verdict — `not_exercised` here is a signal, not the norm (INV-270).** The
-Truth Set registers **three** data sources (CUSTOMERS, REFERENCE, WATCHLIST — 159 records;
-`get_sample_data(dataset='truthset', source='list')`, server 1.33.0, 2026-08-28) and resolves
-entities across them, so the check has teeth in **this** module, not only in Module 7 step 3c
-against the bootcamper's data. If it reports `not_exercised` here, fewer sources loaded than the
-Truth Set carries, or they resolved no shared entity — investigate that before moving on.
-
-**Capture screenshots for the recap (optional, non-blocking).** Defer this until the live server is
-running (2.3) and capture from **`--url http://localhost:<port>`** — substituting the port the
-server was **actually started on** in 2.3, which is `8080` only when that port was free (INV-172).
-Capturing from a port nothing is listening on exits 2 and loses every image for this module, and
-those images cannot be re-taken after teardown. One image per tab, so the
-Search / Probe tab shows real results — the standalone snapshot has no engine, so its search box is
-inert. `{name}` = `truthset_verification`. Follow
-`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", including its
-rule that every caption is derived from the opened image and its tab label, never from the plan.
-
-⛔ **The capture tool is bundled — run it, do not assess whether automation exists.**
-`${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py` (INV-185; skill-relative fallback
-`../../scripts/capture_screenshots.py`, INV-252). It tries several headless backends itself and
-writes both the PNGs and a `<name>-tabs.json` coverage manifest that graduation reads:
-
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" \
-  --url "http://localhost:<the port 2.3 actually bound>" \
-  --name truthset_verification --tabs all --query "<a name present in the Truth Set>"
-```
-
-⛔ **"No headless capability" is a conclusion the helper reaches and reports, never one you reach
-first.** Enter the silent-skip path on its **exit code**, never on an assumption that browser
-automation is unavailable — and here that assumption is **unrecoverable**: this module purges its
-records at close, so a live capture missed now cannot be re-taken by anyone, ever. Module 7's
-equivalent was recovered at graduation only because its server could be restarted; this one was
-permanently lost on the run that found this defect.
-
-⛔ **The reported reason is INV-122's requirement, not a courtesy.** The helper MUST distinguish
-"no headless capability" from "no requested tab exists" — which is why its exit code is the
-authority here and your own assessment is not.
-
-⛔ **Embed in the app's own tab order — never in capture or append order, and never in
-filename-discovery order.** The ordering authority is the tab table in
-`visualization-api-reference.md`, whose row order *is* the
-order the app presents its tabs; cite it rather than restating the list, or the two orders fork (INV-300).
-⛔ **A caption must never imply a result set the image does not show.** Where Search / Probe was
-captured empty or inactive, say so in the caption — an undisclosed empty panel reads as the data
-having nothing in it (INV-123).
-
-If the server could not be started, fall back to `--html docs/visualizations/truthset_verification.html`
-and caption the Search / Probe tab as the inactive state; omitting it is not an alternative (INV-123,
-INV-146; `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots"
-says why). If no headless capability
-is available it skips silently; otherwise **keep every captured tab and embed them all** in this
-module's recap `Actions Taken`, in the app's tab order — capture is one image per tab (INV-122), so
-there is nothing redundant to drop and a count cap can only delete unique content (INV-146). This is
-never a 👉 question and never blocks the visualization.
-
-⛔ Capture **before** the module's teardown and purge (`phase2-close.md` Step 4) — afterwards the
-server is gone and the Truth Set data cannot be re-served, so a missed capture is permanent.
-
 ### 2.3 Start the live web app
 
 Start the server as a background process you can stop later in Step 4 (Cleanup), serving the loaded
@@ -539,8 +461,8 @@ graph opens empty — say so plainly, name the likely cause, and do **not** move
 step passed. **The most common cause is a datastore connection that is not persistent and shareable
 across processes (INV-231):** the loader writes to one place and this server reads another, so every
 load reports success and nothing fails until this page comes up blank three modules later. The
-connection-string rule and the scheme it forbids are in `ground-rules.md` → "Mandatory gates and
-step order". Re-check the datastore before rebuilding the server.
+connection-string rule and the scheme it forbids are stated once, in `../bootcamp-onboarding/ground-rules.md`
+→ "File placement" (INV-300). Re-check the datastore before rebuilding the server.
 
 The live page is a **single consolidated, tabbed app** — the one visualization artifact (no
 separate static pages). All tabs are populated from these APIs; a tab whose data is absent is not
@@ -553,7 +475,9 @@ specified in `visualization-api-reference.md` → "Per-entity actions" and "Rend
 Build to that contract; the summaries below are the tab inventory, not the full requirements.
 
 1. **Entity Graph** (default): D3 v7 force-directed graph of the full entity population. Nodes
-   colored by data source (CUSTOMERS ember/orange, REFERENCE blue, WATCHLIST gold/amber), sized by
+   colored by data source, with colors assigned from the sources present in the data, never looked
+   up by source name (INV-127); the Truth Set's three codes only *prefer* their brand colors. The
+   rule is stated once, in `visualization-api-reference.md` → "Rendering contract" (INV-300). Sized by
    record count, hover tooltip, click-to-detail modal with the three actions, zoom/pan, and a
    click-to-filter source legend generated from the data. Independent node-label and edge-label
    toggles, defaulting off above ~150 nodes with an on-screen note saying why. This is also the
@@ -597,6 +521,91 @@ Do **not** add a tab whose content is derivable from another tab's endpoint. In 
 content (the largest resolved entities) is now `sample_entities`, rendered on Merge Statistics. The
 entity-size distribution is Merge Statistics, and the cross-source entity-relationship view is
 Entity Graph (per `visualization-api-reference.md` → "De-duplication").
+
+### 2.4a Check the encoding, then capture screenshots (against the running server)
+
+Both run here, after 2.3 started the server and 2.4 verified its endpoints, never in 2.2: the
+self-check fetches the graph endpoint and the capture loads the live app, and neither exists until
+the server is up. 2.2 builds the standalone snapshot only.
+
+⛔ **(INV-270, INV-259, INV-265) Run the encoding self-check against the running server BEFORE
+capturing — and stop on a mismatch.** Fetch the graph endpoint and compare the number of
+**combination rows** the source legend names against `len(encoding_check.combination_keys)` (the
+contract's "The encoding self-check" defines both; `encoding_check.distinct_source_set_keys` is the
+total those combinations are drawn from). They MUST be equal; fewer combination rows means nodes are
+colored by one member of their source set rather than the whole set (INV-259), which renders every
+cross-source entity as single-source under a legend saying otherwise. ⛔ Count the combination rows (INV-270)
+only — the per-source rows are not source-set keys, and counting them raises a false mismatch
+whenever a source appears in view only inside combinations. ⛔ Read the **source** legend (INV-270): uncheck
+"Show only entities with relationships" first, because above 400 nodes the graph opens in
+relationship mode, whose legend has no source colors. That changes only where the check is read;
+captures are taken as before. **On a mismatch, fix the encoding and re-render before capture** — the
+screenshots persist into the recap and the production project, so capturing first ships the wrong
+picture.
+
+⚠️ **Report `not exercised`, not `passed`, when `encoding_check.status` is `not_exercised`** — no
+combination key in view means the comparison could not have failed (INV-265). Say which of the two
+happened; do not report silence as agreement.
+
+⛔ **On the Truth Set, expect a real verdict — `not_exercised` here is a signal, not the norm (INV-270).** The
+Truth Set registers **three** data sources (CUSTOMERS, REFERENCE, WATCHLIST — 159 records;
+`get_sample_data(dataset='truthset', source='list')`, server 1.33.0, 2026-08-28) and resolves
+entities across them, so the check has teeth in **this** module, not only in Module 7 step 3c
+against the bootcamper's data. If it reports `not_exercised` here, fewer sources loaded than the
+Truth Set carries, or they resolved no shared entity — investigate that before moving on.
+
+**Capture screenshots for the recap (optional, non-blocking).** Capture from the running server,
+**`--url http://localhost:<port>`** — substituting the port the server was **actually started on**
+in 2.3, which is `8080` only when that port was free (INV-172).
+Capturing from a port nothing is listening on exits 2 and loses every image for this module, and
+those images cannot be re-taken after teardown. One image per tab, so the
+Search / Probe tab shows real results — the standalone snapshot has no engine, so its search box is
+inert. `{name}` = `truthset_verification`. Follow
+`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", including its
+rule that every caption is derived from the opened image and its tab label, never from the plan.
+
+⛔ **(INV-185) The capture tool is bundled — run it, do not assess whether automation exists.**
+`${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py` (skill-relative fallback
+`../../scripts/capture_screenshots.py`, INV-252). It tries several headless backends itself and
+writes both the PNGs and a `<name>-tabs.json` coverage manifest that graduation reads:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" \
+  --url "http://localhost:<the port 2.3 actually bound>" \
+  --name truthset_verification --tabs all --query "<a name present in the Truth Set>"
+```
+
+⛔ **(INV-122) "No headless capability" is a conclusion the helper reaches and reports, never one
+you reach first.** Enter the skip path on its **exit code**, never on an assumption that browser
+automation is unavailable — and here that assumption is **unrecoverable**: this module purges its
+records at close, so a live capture missed now cannot be re-taken by anyone, ever. Module 7's
+equivalent was recovered at graduation only because its server could be restarted; this one was
+permanently lost on the run that found this defect.
+
+⛔ **The reported reason is INV-122's requirement, not a courtesy.** The helper MUST distinguish
+"no headless capability" from "no requested tab exists" — which is why its exit code is the
+authority here and your own assessment is not.
+
+⛔ **(INV-147) Embed in the app's own tab order — never in capture or append order, and never in
+filename-discovery order.** The ordering authority is the tab table in
+`visualization-api-reference.md`, whose row order *is* the
+order the app presents its tabs; cite it rather than restating the list, or the two orders fork (INV-300).
+⛔ **(INV-123) A caption must never imply a result set the image does not show.** Where Search /
+Probe was captured empty or inactive, say so in the caption — an undisclosed empty panel reads as the data
+having nothing in it (INV-123).
+
+If the server could not be started, fall back to `--html docs/visualizations/truthset_verification.html`
+and caption the Search / Probe tab as the inactive state; omitting it is not an alternative (INV-123,
+INV-146; `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots"
+says why). If the helper exits 2, take the skip path that section states once (INV-300): silent
+only at the `minimal` verbosity preset, and the reason the helper gave is read, never assumed.
+Otherwise **keep every captured tab and embed them all** in this
+module's recap `Actions Taken`, in the app's tab order — capture is one image per tab (INV-122), so
+there is nothing redundant to drop and a count cap can only delete unique content (INV-146). This is
+never a 👉 question and never blocks the visualization.
+
+⛔ (INV-146) Capture **before** the module's teardown and purge (`phase2-close.md` Step 4) —
+afterwards the server is gone and the Truth Set data cannot be re-served, so a missed capture is permanent.
 
 ### 2.4b Any change to the visualization means rebuilding the snapshot
 

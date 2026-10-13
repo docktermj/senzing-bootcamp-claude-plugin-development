@@ -506,7 +506,9 @@ class ItNeitherBlocksNorOverclaims(unittest.TestCase):
         self.flat = re.sub(r"\s+", " ", self.section)
 
     def test_it_is_non_blocking(self):
-        self.assertIn("INV-048", self.section)
+        # INV-163 governs a check that cannot run; INV-048 is the recap PDF's (#523 item 9).
+        self.assertIn("INV-163", self.section)
+        self.assertNotIn("INV-048", self.section)
         self.assertRegex(self.flat, r"(?i)Non-blocking, start to finish")
 
     def test_an_undeterminable_version_reports_skipped(self):

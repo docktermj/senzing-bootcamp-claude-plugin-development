@@ -234,7 +234,7 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
    named in one clause taken from the "Problem Description" in `docs/business_problem.md`:
 
    > That was practice data, built to contain matches. Next comes your own data, and the problem
-   > you brought in Module 1: {one clause from `docs/business_problem.md`}.
+   > you brought to the bootcamp: {one clause from `docs/business_problem.md`}.
 
    When `docs/business_problem.md` is missing, it says "your own data" and names no problem:
 

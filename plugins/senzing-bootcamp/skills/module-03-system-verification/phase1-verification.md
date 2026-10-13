@@ -47,7 +47,8 @@ Before starting Module 3 steps, check whether the bootcamper has explicitly requ
    Say "run verification" at any time to come back.
    ```
 
-3. Update gate 3→4 to "skipped" and proceed to the next selected module.
+3. Record nothing more — `system_verification` is not added to `modules_completed` — and proceed
+   to the next selected module.
 
 > **The visualization is a separate module.** System Verification produces **no** visualization —
 > the guaranteed Truth Set web app (the practice run before the Bootcamper's own data) is
@@ -600,9 +601,12 @@ Each validation check has a 30-second timeout.
      wrong, and the install is fine.** Report it as an expectation mismatch: state the expected and
      actual counts, quote the engine's explanation, and say plainly that entity resolution behaved
      correctly. ⛔ **Do not report the system as having failed verification**, and do not tell the
-     bootcamper to re-run the load — nothing is wrong with it. Fix the records per Step 2's
-     constraints (the usual cause is a nickname, an initial, or an omitted feature that Step 2
-     forbids) and re-run this step if the module's other checks all passed.
+     bootcamper to re-run the load — nothing is wrong with it. Record `expectation_mismatch` with
+     the engine's explanation (checkpoint below) and continue: nothing is fixed or re-run, by you or
+     by the bootcamper (INV-229). How the mismatch is reported is stated once, in
+     `phase2-report-close.md` → "Step 9: Verification Report Generation" (INV-300). (The usual cause
+     is a nickname, an initial, or an omitted feature that Step 2 forbids; name it when the engine's
+     explanation shows it.)
    - **The engine's explanation does not account for the difference**, or `why_*` itself errors —
      then this is a real finding. Report fail with expected versus actual, include the `why_*` output,
      and suggest re-running the load or confirming the synthetic data file loaded completely.
@@ -744,7 +748,7 @@ System Verification is successfully complete when ALL of the following are true:
 - The Verification Report is persisted to `config/bootcamp_progress.json` with a valid ISO 8601
   timestamp.
 - The synthetic verification records are purged from the database (zero `VERIFY` entities remain).
-- The gate 3→4 status is updated to "completed".
+- `system_verification` is added to `modules_completed` (`phase2-report-close.md` Step 11).
 - The `## System verification` recap section is appended to `docs/bootcamp_recap.md` (the
   consolidated recap replaced the separate `docs/bootcamp_journal.md`; the narrative lives in the
   section's `### End-of-Module Summary` subsection).

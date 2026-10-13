@@ -91,6 +91,15 @@ Validate that the loaded data meets business expectations:
 - Document any issues found in `docs/uat_results.md`
 - If critical issues are found, fix and reload before proceeding
 
+<a id="uat-percent"></a>
+
+**The UAT %**, which the [iterate-vs-proceed gate](#iterate-vs-proceed-decision-gate) routes on,
+is computed here and nowhere else: **spot-checked entities judged correct ÷ entities checked**, as
+a whole percentage. Write it to `docs/uat_results.md` with both counts beside it (for example
+"UAT: 9 of 10 spot-checked entities correct (90%)"). If no entity could be spot-checked, write
+that instead, with the reason, and no percentage. Step 25 (2+ sources) replaces this figure with
+the cross-source spot-check's, computed the same way.
+
 **Checkpoint:** write step 22.
 
 ## Cross-source validation (conditional, 2+ sources loaded)
@@ -159,7 +168,8 @@ accepted in Module 1), or otherwise records no real stakeholders, take 25a. Othe
 There are no business users to involve, so **do not ask** the involvement question
 (INV-006/INV-012). State briefly that the scenario is bootcamp-generated and that you will
 self-direct the UAT, then spot-check 5–10 cross-source entities, document the findings in
-`docs/uat_results.md`, and proceed to step 26.
+`docs/uat_results.md` with the [UAT %](#uat-percent), and proceed to step 26. The UAT % is defined
+once, in step 22 (INV-300).
 
 ⛔ **This branch correctly ends with NO 👉 question, and must stay that way.** Do not borrow 25b's
 question to balance the two branches — manufacturing a question here breaches INV-006 in the
@@ -178,8 +188,11 @@ question verbatim (INV-056):
 *(Internal: end the turn on this question and wait.)*
 
 - **Yes:** share cross-source match examples, collect feedback, document in
-  `docs/uat_results.md`.
+  `docs/uat_results.md`, with the entities the business users judged as the ones checked.
 - **No:** spot-check 5–10 cross-source entities and document findings in `docs/uat_results.md`.
+
+On either answer, write the [UAT %](#uat-percent) to `docs/uat_results.md`, defined once, in
+step 22 (INV-300).
 
 **Checkpoint:** write step 25.
 
@@ -512,7 +525,8 @@ which is exactly the gap the UAT percentages below leave open.
    decision every static gate had passed. Filing it here rather than at graduation is the whole
    point — by then the reasoning may have been compacted away, leaving only the corrected mapping
    and no record of what was wrong with the original or how it was caught. No banner, no question,
-   never blocking (INV-012/INV-048).
+   never blocking (INV-012): how it is filed is stated once, in that rule, so follow it there
+   (INV-300).
 
 > **Worked example.** In one bootcamp, `EFX_YREST` ("year established") and `FilingDate`
 > (incorporation filing date) were both mapped to `REGISTRATION_DATE`. A business usually operates
@@ -620,7 +634,8 @@ This audit asks nothing, so continue in the same turn to the gate below (INV-225
 
 ## Iterate vs. proceed decision gate
 
-Route on the UAT / match-accuracy results, **and present the match-key audit outcome alongside
+Route on the UAT / match-accuracy results, reading the UAT % from `docs/uat_results.md` (step 22
+→ [the UAT %](#uat-percent)), **and present the match-key audit outcome alongside
 them** — the percentages alone cannot see a suppressor problem, so a bootcamper choosing between
 iterating and proceeding needs both. A high-share cross-source suppressor is the strongest reason
 to choose "iterate now" even when the numbers look acceptable.
@@ -654,6 +669,10 @@ no finding, nothing to check, or could not measure, with "checked N of M". A fin
 and says their record counts are unconfirmed; it is reported on every branch below and does not
 move the gate to a different branch (INV-117, INV-264), because no documented remedy exists to
 iterate toward.
+
+⚠️ **When `docs/uat_results.md` records that no entity could be spot-checked, there is no UAT %.**
+Say so, report none, and route on match accuracy alone, in the same bands below; never state a
+UAT % that was not computed.
 
 - **UAT ≥90% and match accuracy ≥90%:** state "Results look strong." and proceed to the module
   transition question. **If the audit produced a finding, say so in the same breath** — strong
@@ -738,8 +757,8 @@ it as a produced file in the end-of-module summary's "Files produced" list (INV-
 - ✅ Dependencies respected, cross-source matches reviewed
 - ✅ Orchestrator program saved in `src/load/orchestrator.[ext]`
 - ✅ Cross-source match accuracy validated
-- ✅ UAT executed, results in `docs/uat_results.md`
-- ✅ Stakeholder sign-off obtained
+- ✅ UAT executed, results and the UAT % in `docs/uat_results.md`
+- ✅ Stakeholder sign-off obtained (25b), or self-directed validation recorded (25a)
 
 ## Advanced reading
 

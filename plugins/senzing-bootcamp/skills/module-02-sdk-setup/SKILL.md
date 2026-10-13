@@ -294,8 +294,9 @@ Step 1 compares the installed version against the **V4.0 floor**. That answers "
 to work", not "is it the newest available" — two different questions. Ask the second one too,
 then **offer**. Never update silently, and never treat declining as a problem.
 
-⛔ **Non-blocking, start to finish (INV-048).** A check that cannot run, a repository that is
-unreachable, or an update that fails must warn and continue with the working install. This step
+⛔ **Non-blocking, start to finish.** A check that cannot run is reported as not run (INV-163); a
+repository that is unreachable, or an update that fails, must warn and continue with the working
+install. This step
 improves a working state; it is never a prerequisite for Module 2.
 
 ### The three platform families need three different mechanisms
@@ -571,8 +572,8 @@ Phase 1 rather than writing a second copy. An update is an install.
 wrong does not error — the install does nothing and reports success, which is why the
 verification below is required rather than advisory.
 
-**(INV-338) If they decline the EULA here, the working install is kept and Module 2 continues** (non-blocking,
-INV-048). Install nothing. Say one line, "Keeping [installed].", record `update-declined`, and do not
+**(INV-338) If they decline the EULA here, the working install is kept and Module 2 continues**
+(non-blocking). Install nothing. Say one line, "Keeping [installed].", record `update-declined`, and do not
 offer the update again (INV-006). Then continue on the existing-install path in Step 1: Step 3's
 Phase 3 and environment script, then Step 4. A declined EULA here is never recorded as a failure.
 Step 3 Phase 1's "Stop here" does not apply: that branch is for a fresh install or the upgrade from
@@ -1861,7 +1862,7 @@ slower, and a Bootcamper has no reason to suspect storage.
    `check_repository_performance` on `SzDiagnostic` reports an insert rate. Take the call and its
    argument from the server at the point of use rather than from this file (INV-080) — it is a
    diagnostic-hub call, not an engine one. Report the number to the Bootcamper. **Non-blocking:** if
-   it cannot run, say so in one line and continue (INV-048); an unavailable measurement is not a
+   it cannot run, say so in one line and continue (INV-163); an unavailable measurement is not a
    reason to stall setup.
 3. **Senzing owns the reason, so relay it rather than re-deriving it.**
    `search_docs(query='loading', category='anti_patterns')` returns *"Do Not Use Low-IOPS Storage"* —
@@ -2418,7 +2419,7 @@ call succeeds** (not merely a version query).
 
 ## Success Criteria
 
-- ✅ Senzing SDK installed natively.
+- ✅ Senzing SDK installed, natively or, on the `docker` route, inside the SDK container.
 - ✅ SDK imports/references work in the chosen language.
 - ✅ Engine initializes without errors, proven by an `SzEngine`/`SzDiagnostic` call rather than a version query (Step 9).
 - ✅ Database connection works.

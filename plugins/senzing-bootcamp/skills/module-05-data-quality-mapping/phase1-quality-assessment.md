@@ -280,7 +280,7 @@ obtained via the `get_sample_data` MCP tool in Module 4):
 
    **Optional and non-blocking.** If the engine is not available, or registration has not happened
    and you would rather not do it at this point, skip the preview and keep the structural check
-   (INV-048). Say which check ran, so `senzing_loadable` never implies a stronger test than was
+   (INV-163). Say which check ran, so `senzing_loadable` never implies a stronger test than was
    performed. The prerequisite applies wherever a preview-based check is used, not only to the CORD
    sources this step covers.
 
@@ -834,7 +834,7 @@ A source already checked in Step 5a sub-step 3a reuses that count and those name
 the check again. Its report and question belong here, because Step 5a routes such a source on to
 this step.
 
-⛔ (INV-048) **The check reports and asks; it never blocks the module.** If it cannot run, for
+⛔ (INV-163) **The check reports and asks; it never blocks the module.** If it cannot run, for
 example because no name attribute can be identified, say so in Step 7's report and continue.
 
 ⛔ (INV-173) **Never undo the Bootcamper's retype to turn a validation gate green.** If Phase 2's

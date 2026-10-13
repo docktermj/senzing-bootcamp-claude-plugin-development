@@ -121,13 +121,14 @@ def citations_by_area(repo: Path) -> dict:
 
 
 def spec_names(repo: Path) -> set:
+    """Spec slugs that resolve a `(Source: …)` citation: the files directly under `specs/`.
+
+    ⚠️ Only the top level of `specs/` is read. `specs/` is itself the read-only archive (INV-307)
+    and holds no spec in a subdirectory, so the branch that read one was dead (#523).
+    """
     out = set()
     for path in (repo / "specs").glob("*.md"):
         if path.stem not in META_SPECS:
-            out.add(path.stem)
-    archive = repo / "specs" / "archive"
-    if archive.is_dir():
-        for path in archive.glob("*.md"):
             out.add(path.stem)
     return out
 

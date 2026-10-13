@@ -753,8 +753,9 @@ The caller says which entity to pick. Everything below is the same for all three
 - Project root whitelist ONLY: `.gitignore`, `.env`, `.env.example`, `README.md`,
   `requirements.txt`, `pom.xml`, `*.csproj`, `Cargo.toml`, `package.json`. Never put `.py`,
   `.md` (except README), `.jsonl`, `.csv`, or non-config `.json` in the root.
-- The plugin's PreToolUse write-gate enforces the temp-path and secret rules; file-type
-  placement is your responsibility.
+- The plugin's PreToolUse write-gate blocks every write outside the project, as the first bullet
+  of this section states (INV-200); `../../hooks/README.md` lists everything it blocks. File-type
+  placement inside the project is your responsibility.
 - ⛔ **On Java, a prescribed `snake_case` filename collides with the class name — declare the class
   package-private rather than renaming either (INV-237).** Every `.[ext]` filename in this bootcamp
   is written in a `snake_case` idiom that is correct for Python and has no class/file coupling.

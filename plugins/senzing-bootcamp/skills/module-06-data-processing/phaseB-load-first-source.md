@@ -544,8 +544,10 @@ Discuss incremental loading as a production concern distinct from the initial bu
   numbers, change data capture).
 - **Upsert pattern:** use `add_record` with the same `RECORD_ID` to update existing records.
   Senzing re-evaluates entity resolution automatically.
-- Help the bootcamper understand when each strategy applies and document the choice in
-  `docs/loading_strategy.md`.
+- Explain when each strategy applies, then record in `docs/loading_strategy.md` the one that
+  applies to this project and why, from what is already known about its sources
+  (`config/data_sources.yaml`, `docs/business_problem.md`). Do not ask the bootcamper to choose:
+  steps 9–11 ask nothing, as step 9 states (INV-225).
 
 **Checkpoint:** write step 10.
 

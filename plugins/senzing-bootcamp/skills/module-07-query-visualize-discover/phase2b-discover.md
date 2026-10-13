@@ -361,6 +361,10 @@ supported systems.
    Say the export failed, give item 7's result (whether `RELATED_ENTITIES` appeared, and with
    which flags), and do not hand the file over as finished. Record `"status": "failed", "reason":
    "zero_edges"` for this system. When step 4a found no relationships in the data, say that too.
+   ⛔ **(INV-239) On a generated scenario that promised households** (the condition in step 4d's
+   INV-239 paragraph, stated once there, INV-300), never say the Bootcamper's data has no
+   relationships: say the data the bootcamp generated is missing the relationships its scenario
+   promised, that this is a defect in that generated data, and suggest `/bootcamp-feedback`.
    When the fields asked for are on no node, report the attribute count as zero and name item 7's
    `get_record` pass as the first cause to check.
 10. **Hand over.** When the edge count is above zero, give the path of each written file and of the
