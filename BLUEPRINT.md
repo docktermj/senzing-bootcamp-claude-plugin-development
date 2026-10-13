@@ -10984,6 +10984,13 @@ Senzing licensing, with no SPDX identifier.
   are; six INV-048 citations name the rule that governs each site; and an
   INV-275 amendment is queued (each site kept an old rule, pointed at the wrong
   section, or used a fixed value that should be measured)
+- #524: the example recap's System verification section shows Module 3's
+  current flow: 3 Marisol merge-cluster records and 1 distractor, the Step 7a
+  `Mari` prediction line ending `(differed)` with its `WHY_KEY`, the `Mari`
+  record in Actions Taken and `mari_record.jsonl` in Files produced, 5 `VERIFY`
+  records in the write count and purge, and results validation matching "the
+  expected outcome"; its PDF is regenerated (the section still described the
+  old Alex Quinn records and called the guide's expectation a prediction)
 - #529: System verification's Agent Rule 4 names its one exception, a Step 1a
   failure, which records Steps 2-8's checks as `skipped` and still writes the
   full report, and a failed run ends on a pinned retry-or-move-on question

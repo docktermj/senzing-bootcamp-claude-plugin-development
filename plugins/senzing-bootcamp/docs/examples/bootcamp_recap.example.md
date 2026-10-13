@@ -178,8 +178,10 @@
 
 - System Verification uses synthetic records designed to resolve deterministically, never the Senzing Truth Set (that belongs to the separate Truth Set visualization module).
 - A version query alone does not prove the engine works — the libraries and their support data can be present independently, so this module exercises real engine-class calls (`SzEngine.prime_engine()`, `SzDiagnostic.get_repository_info()`) before anything else.
+- The merge cluster is unambiguous by construction: its three records carry the same first name, last name, date of birth, address and phone, and vary only in formatting. A nickname, an initial in place of a first name, or a feature missing from one record would each reduce corroboration, so none of them belongs in a cluster the module expects to merge.
 - A freshly schema-created datastore has no registered data sources; the `VERIFY` source had to be registered before loading, or the load would fail with `SENZ2207`.
 - The correct loading snippet reads records from an input file line by line; the MCP server's own anti-pattern list flags the hardcoded-records alternative as an error.
+- What the engine used to join the `Mari` record: `WHY_KEY` `+NAME+DOB+ADDRESS+PHONE`, from `why_records` on the `Mari` record and the Marisol record it was copied from, which share every feature but the first name.
 - Database operations (write count, read by entity ID, search by attributes) are all verified through generated SDK code — never direct SQL against `database/G2C.db`.
 
 ### Questions & Responses
@@ -188,27 +190,31 @@
     - **R:** Yes (step down from Opus 5.5; effort stayed at high).
 - **Q:** Are you done modifying the model and effort?
     - **R:** Yes.
+- **Will this `Mari` record join Marisol's entity?** — No, it stays a separate entity → joined (differed)
 
 ### Actions Taken
 
-- Designed 4 synthetic `VERIFY` records: a 3-record merge cluster ("Alex Quinn Verify", same DOB/address with trivial variation) and 1 distractor singleton ("Jordan Sample").
-- Ran the System Verification checks: the installation checks — MCP connectivity, engine initialization, SDK initialization, code generation, build/compile, data source registration, data loading, and database operations — all passed, and results validation, reported separately, matched the prediction.
+- Composed 4 synthetic `VERIFY` records in `verification_data.jsonl`: a 3-record merge cluster for "Marisol Verifield" (the same first name, last name, date of birth, address and phone in every record, with only address and phone formatting varied) and 1 distractor singleton ("Rowan Fixture"), so the expected outcome by construction was 4 records resolving to 2 entities, one of them holding 3 records.
+- Ran the System Verification checks: the installation checks — MCP connectivity, engine initialization, SDK initialization, code generation, build/compile, data source registration, data loading, and database operations — all passed, and results validation, reported separately, matched the expected outcome.
 - Confirmed the merge cluster resolved to one entity (entity ID 1) and the distractor stayed its own entity (entity ID 4) — exactly as designed.
-- Verified write count, read-by-entity-ID, and search-by-attributes all through generated SDK code.
-- Purged all 4 synthetic `VERIFY` records via `SzEngine.delete_record` (not a full datastore purge, to preserve other state) and confirmed zero remain.
-- Created `src/system_verification/` with `verification_data.jsonl`, `verify_init.py`, `verify_pipeline.py`, `register_data_sources.py`, `validate_results.py`, `verify_database_operations.py`, and `cleanup_verification_data.py` — retained for reference.
+- Composed the `Mari` record in `mari_record.jsonl`, a copy of one Marisol record with only the first name and record ID changed, showed it beside that record before loading anything, and loaded it after your answer; the engine joined it to Marisol's entity (entity ID 1).
+- Verified write count (5 `VERIFY` records: the 4 from `verification_data.jsonl` plus the `Mari` record), read-by-entity-ID, and search-by-attributes, all through generated SDK code.
+- Purged all 5 synthetic `VERIFY` records via `SzEngine.delete_record` — the 4 in `verification_data.jsonl` and the `Mari` record by the record ID in `mari_record.jsonl` (not a full datastore purge, to preserve other state) — and confirmed zero remain.
+- Created `src/system_verification/` with `verification_data.jsonl`, `mari_record.jsonl`, `verify_init.py`, `verify_pipeline.py`, `register_data_sources.py`, `validate_results.py`, `verify_database_operations.py`, and `cleanup_verification_data.py` — retained for reference.
 
 ### End-of-Module Summary
 
 **What you accomplished:**
 
 - Proved your entire Senzing setup works end to end: initialization, code generation, compilation, loading, entity resolution, and database operations
-- Watched Senzing correctly merge near-duplicate records into one entity while keeping an unrelated record separate — the core behavior the rest of the bootcamp depends on
+- Watched Senzing merge the three Marisol records into one entity while keeping an unrelated record separate — the core behavior the rest of the bootcamp depends on
+- Predicted whether a `Mari` record would join Marisol's entity before the engine decided, then saw the engine's call beside your prediction: it joined, on `+NAME+DOB+ADDRESS+PHONE`
 - Confirmed the environment is clean again (synthetic data purged) before real project data arrives
 
 **Files produced:**
 
 - `src/system_verification/verification_data.jsonl` — the 4 synthetic test records
+- `src/system_verification/mari_record.jsonl` — the `Mari` record behind your prediction
 - `src/system_verification/verify_init.py` — SDK initialization check
 - `src/system_verification/verify_pipeline.py` — file-based record loader
 - `src/system_verification/register_data_sources.py` — idempotent data-source registration
