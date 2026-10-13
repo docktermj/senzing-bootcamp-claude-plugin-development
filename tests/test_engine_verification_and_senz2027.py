@@ -42,6 +42,37 @@ def flat(path):
     return re.sub(r"\s+", " ", text)
 
 
+def has_inv_169_warning(block):
+    """Step 3b's guard against restating the SUPPORTPATH link as an unconditioned rule."""
+    return bool(re.search(r"⛔ Never restate this as an unconditioned rule \(INV-169\)", block))
+
+
+def unconditioned_er_data(text, window):
+    """Offsets of each `er/data` with no 4.4.x condition within `window` characters."""
+    return [
+        match.start() for match in re.finditer(r"er/data", text)
+        if not re.search(r"4\.4\.x",
+                         text[max(0, match.start() - window):match.end() + window])
+    ]
+
+
+def owner_block():
+    """Module 2 Step 8's two-tool SENZ7426 block, from its title to the next ⚠️ paragraph."""
+    match = re.search(
+        re.escape(TheModule03Senz7426BranchIsAPointer.OWNER_TITLE) + r".*?(?=⚠️)",
+        flat(MODULE_02),
+    )
+    assert match, "Module 2 Step 8's two-tool SENZ7426 block was not found"
+    return match.group(0)
+
+
+def says_test_the_path(block):
+    """The block tells the reader to test whether SUPPORTPATH resolves, not match a string."""
+    return bool(re.search(
+        r"(?i)test whether `SUPPORTPATH` resolves rather than compare it to a string", block
+    ))
+
+
 class VerificationExercisesAnEngine(unittest.TestCase):
     def test_step_9_requires_an_engine_class_call(self):
         self.assertRegex(
@@ -369,6 +400,11 @@ class TheSupportpathCheckIsNotGatedToOnePlatform(unittest.TestCase):
         gone. Module 3 still conditions what it relays, in one clause about the macOS
         literal, and the two ranking facts are asserted where they now live: Module 2's
         "`SENZ7426` still fires at `getEngine()`" paragraph.
+
+        (Dated note, 2026-10-13, #568: on server 1.37.28 `explain_error_code('7426')` no
+        longer quotes the 4.4.x literal, and both tools say to test whether `SUPPORTPATH`
+        resolves, so the tools have converged. Step 3b's macOS-literal clause is gone; what
+        travels with the relay is Step 8's `*TransRules.sz` content test, asserted below.)
         """
         text = flat(PHASE1)
         self.assertRegex(
@@ -377,8 +413,9 @@ class TheSupportpathCheckIsNotGatedToOnePlatform(unittest.TestCase):
             "first (INV-080)",
         )
         self.assertRegex(
-            text, r"(?i)If the code is `SENZ7426`.{0,700}literal that holds for cask 4\.4\.x",
-            "Module 3 relays the tool's macOS cause without the 4.4.x condition on its literal",
+            text, r"(?i)If the code is `SENZ7426`.{0,700}Step 8's `\*TransRules\.sz` content test",
+            "Module 3's SENZ7426 relay no longer names Step 8's `*TransRules.sz` content test, "
+            "the check that holds whatever literal the ini carries",
         )
         module_02 = flat(MODULE_02)
         self.assertRegex(
@@ -408,9 +445,16 @@ class TheModule03Senz7426BranchIsAPointer(unittest.TestCase):
     The claim guarded is "the pointer carries no second copy of the comparison" (INV-300),
     so the checks come from that claim, not from the sentences removed: no agreement verb at
     all outside the quoted owner title, no ranking vocabulary, and no version stamp.
+
+    (Dated note, 2026-10-13, #568: re-checked on server 1.37.28, `explain_error_code('7426')`
+    no longer quotes the 4.4.x `er/data` literal, and `sdk_guide(topic='install',
+    platform='macos_arm', language='csharp')` says to test whether the path resolves. The
+    tools have converged, the owner block's title says so, and step 3b drops its clause
+    about the tool's literal. The claims above are unchanged, and step 3b keeps its INV-169
+    warning.)
     """
 
-    OWNER_TITLE = "Both tools agree on the diagnosis and the fix — not on the macOS literal"
+    OWNER_TITLE = "Both tools agree on the diagnosis, the fix and the path test"
 
     def step_3b(self):
         match = re.search(
@@ -436,9 +480,8 @@ class TheModule03Senz7426BranchIsAPointer(unittest.TestCase):
         remainder = self.step_3b().replace(self.OWNER_TITLE, "")
         self.assertNotRegex(
             remainder, r"(?i)\bagree",
-            "step 3b says the tools agree. They agree on the diagnosis and the fix, not on "
-            "the macOS literal (server 1.37.14, 2026-09-28); Module 2 Step 8 owns that "
-            "comparison, so name it rather than summarize it",
+            "step 3b says the tools agree. Module 2 Step 8 owns that comparison (re-verified "
+            "on server 1.37.28, 2026-10-13), so name it rather than summarize it",
         )
         self.assertNotRegex(
             flat(PHASE1), r"(?i)corroboration rather than a correction|agrees with Step 8",
@@ -455,6 +498,27 @@ class TheModule03Senz7426BranchIsAPointer(unittest.TestCase):
                     "step 3b carries part of Module 2 Step 8's tool-content analysis again; "
                     "a second copy is how it drifted (INV-300)",
                 )
+
+    def test_step_3b_no_longer_says_the_tool_quotes_a_literal(self):
+        """Server 1.37.28 (2026-10-13): `explain_error_code('7426')` quotes no literal."""
+        self.assertNotRegex(
+            self.step_3b(), r"(?i)cask cause quotes|literal that holds for cask 4\.4\.x",
+            "step 3b says explain_error_code quotes a 4.4.x literal; it no longer does",
+        )
+
+    def test_step_3b_keeps_the_inv_169_warning(self):
+        self.assertTrue(has_inv_169_warning(self.step_3b()),
+                        "step 3b lost its INV-169 'never restate this as an unconditioned "
+                        "rule' warning")
+
+    def test_the_inv_169_warning_check_catches_its_removal(self):
+        """Negative control: step 3b with the warning cut out must fail the check."""
+        block = self.step_3b()
+        stripped = re.sub(r"⛔ Never restate this as an unconditioned rule \(INV-169\)[^⛔]*",
+                          "", block)
+        self.assertNotEqual(block, stripped, "the warning to strip was not found")
+        self.assertFalse(has_inv_169_warning(stripped),
+                         "the check passes step 3b with its INV-169 warning removed")
 
     def test_module_03_quotes_no_er_data_literal(self):
         folder = PHASE1.parent
@@ -481,23 +545,52 @@ class TheMacosSupportpathLiteralIsVersionScoped(unittest.TestCase):
     two tools agree on the diagnosis and the fix but not on the literal. The guard below
     keeps every surviving `er/data` inside a 4.4.x condition (INV-169: record the version an
     observation holds for) and keeps the tool that owns the platform detail named.
+
+    (Dated note, 2026-10-13, #568: on server 1.37.28 `explain_error_code('7426')` no longer
+    quotes the 4.4.x literal; both tools say to test whether `SUPPORTPATH` resolves rather
+    than compare it to a string, so the tools have converged. The guard is unchanged: the
+    literal is still never pinned, and the owner block now says so in both tools' words.)
     """
 
     WINDOW = 300
 
     def test_er_data_appears_only_under_a_4_4_x_condition(self):
         text = flat(MODULE_02)
-        matches = list(re.finditer(r"er/data", text))
-        self.assertTrue(matches, "Module 2 no longer mentions er/data; retire this test")
-        for match in matches:
-            window = text[max(0, match.start() - self.WINDOW):match.end() + self.WINDOW]
-            with self.subTest(at=match.start()):
-                self.assertRegex(
-                    window, r"4\.4\.x",
-                    "`er/data` appears without a 4.4.x condition in the same window. The "
-                    "literal holds for cask 4.4.x and earlier only; sdk_guide(topic='install', "
-                    "platform='macos_arm') says it has drifted (server 1.37.14, 2026-09-28)",
-                )
+        self.assertTrue(re.search(r"er/data", text),
+                        "Module 2 no longer mentions er/data; retire this test")
+        self.assertEqual(
+            [], unconditioned_er_data(text, self.WINDOW),
+            "`er/data` appears without a 4.4.x condition in the same window. The "
+            "literal holds for cask 4.4.x and earlier only; sdk_guide(topic='install', "
+            "platform='macos_arm') says it has drifted (server 1.37.14, 2026-09-28)",
+        )
+
+    def test_the_owner_block_says_to_test_the_path_not_the_string(self):
+        self.assertTrue(says_test_the_path(owner_block()),
+                        "the owner block no longer says to test whether SUPPORTPATH resolves "
+                        "rather than compare it to a string")
+
+    def test_the_pinned_literal_checks_catch_a_regression(self):
+        """Negative controls: pinning the macOS literal must make a check report it."""
+        text = flat(MODULE_02)
+        pinned = text + (" Tell the Bootcamper their ini says "
+                         "`SUPPORTPATH=${INSTALLPATH}/senzing/er/data`.")
+        self.assertTrue(unconditioned_er_data(pinned, self.WINDOW),
+                        "the er/data check passes a literal pinned without a 4.4.x condition")
+        block = owner_block()
+        unpinned = block.replace("rather than compare it to a string", "and compare it")
+        self.assertNotEqual(block, unpinned, "the path-test phrase to strip was not found")
+        self.assertFalse(says_test_the_path(unpinned),
+                         "the path-test check passes an owner block that no longer forbids "
+                         "comparing SUPPORTPATH to a string")
+
+    def test_module_02_no_longer_says_the_tool_quotes_the_literal(self):
+        self.assertNotRegex(
+            flat(MODULE_02),
+            r"(?i)macOS cause still quotes|differ on what the shipped ini says",
+            "Module 2 says explain_error_code quotes the macOS literal; on server 1.37.28 "
+            "(2026-10-13) it does not",
+        )
 
     def test_sdk_guide_is_not_said_to_carry_the_gotcha_verbatim(self):
         text = flat(MODULE_02)
@@ -514,7 +607,7 @@ class TheMacosSupportpathLiteralIsVersionScoped(unittest.TestCase):
         text = flat(MODULE_02)
         self.assertNotRegex(
             text, r"(?i)So relay either one\.",
-            "relaying either tool hands a 4.5.0 Bootcamper explain_error_code's 4.4.x literal",
+            "sdk_guide owns the platform detail, so name it rather than either tool",
         )
         self.assertRegex(
             text, r"(?i)relay `sdk_guide` for the platform detail",

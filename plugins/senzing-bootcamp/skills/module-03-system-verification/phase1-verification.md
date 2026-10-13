@@ -180,11 +180,9 @@ INV-080), create an engine, and release it.
 3b. **If the code is `SENZ7426`**, relay what `explain_error_code` returned (step 2 already says to)
    and send them to the *same* Step 8 check. How the tool compares with
    `sdk_guide(topic='install', …)` on this code is stated once, in Module 2 Step 8's *"Both tools
-   agree on the diagnosis and the fix — not on the macOS literal"* block
-   (`../module-02-sdk-setup/SKILL.md`); follow it there rather than a copy here (INV-300). One
-   clause travels with the relay: on **macOS**, the tool's cask cause quotes a `SUPPORTPATH` literal
-   that holds for cask 4.4.x and earlier only, so never tell the Bootcamper that literal is what
-   their ini says. Step 8's `*TransRules.sz` content test applies whatever the literal.
+   agree on the diagnosis, the fix and the path test"* block (`../module-02-sdk-setup/SKILL.md`);
+   follow it there rather than a copy here (INV-300). Step 8's `*TransRules.sz` content test is
+   the check to run, whatever literal the Bootcamper's ini holds.
    ⛔ Never restate this as an unconditioned rule (INV-169): stripped of the platform condition and
    of the record-level exception that block names, it becomes the over-generalization it forbids.
 4. Do not diagnose from the code alone beyond that: any other code goes through `explain_error_code`
