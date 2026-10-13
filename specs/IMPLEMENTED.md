@@ -43,6 +43,18 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-10-13b
+
+- **Implemented:** 2026-10-13 (**Not a spec** — a dated record of a second review session that day)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md`
+- **MCP re-check:** n/a (no Senzing fact is introduced)
+- **Summary:** 1 block was pending at the start, from the 2026-10-13 `/implement-github-issue` run (#511). It was decided. None is left pending; the held set grows from 6 to 7.
+  - **Held (1):** `module3-build-and-run-table` (#511). The drafted wording names only System verification, and #511 left Modules 5 and 6 to a follow-up that is not filed yet, so registering now would mean a dated correction to widen a fresh invariant. The reason and the revisit condition are recorded inside the block as `**HELD 2026-10-13:**`: revisit when #561, the Module 5–7 build-and-run follow-up to #511, is implemented.
+  - **Registered:** none. **Amended:** none.
+- **Verification:** `pending_invariants.py list` reports 0 pending and 7 held, with the new hold's revisit condition read from the block; `pending_invariants.py check` 0 mismatched, 0 unresolved; `citations.py verify` clean at 366 invariants.
+- **Establishes no invariant of its own.** It mints no id and adds no citation.
+
 ## module3-build-and-run-table
 
 - **Implemented:** 2026-10-13 (**Not a spec**: a dated record of one issue-driven run, #511, spec revision 1; `Source:` self-observed (audit), production-readiness audit 2026-10-12, sweep C (M4)). Implemented directly (Phase 5a) by `/implement-github-issue` on branch `511-docktermj-1`, from `origin/main` at `ceae083a`. The 2026-10-12 `/unattended-issue-loop` block (the Java launcher has no compile mode) was settled by the maintainer in the issue's Clarifications comment.
@@ -68,6 +80,12 @@ entries at once. Two things a reader should know about the hashes now recorded:
   **INV-NNN** — Every program System verification builds MUST be created by an earlier step and MUST be built and run by the commands in Phase 1 Step 5's one build-and-run table, which every other step cites rather than restates (INV-300). The table gives a build and a run command for each of the five languages (INV-002), and each run executes what its build produced. In C#, Rust and TypeScript each program has its own folder and manifest, made by the toolchain's init command; the Senzing dependency comes from the server's `dependency_note` or Module 2's package-source route, never from memory (INV-080) or a public registry the route does not name (INV-222). Enforced by `tests/test_module3_build_and_run_table.py`, which reads the module's text; it **cannot** establish that a real `dotnet`, `cargo`, `tsc` or `javac` build succeeds on a Bootcamper's machine.
 
   *(written as NNN deliberately: a literal id here would cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a number written here.)*
+
+  **HELD 2026-10-13:** the wording names only System verification, and #511 left Modules 5 and 6
+  to a follow-up (Module 6 still builds with "the same per-language build command as the
+  loader"), so registering now would mean a dated correction to widen a fresh invariant.
+  Revisit when #561, the Module 5–7 build-and-run follow-up to #511, is implemented, so the
+  wording can cover every module that builds programs.
 
 ## invariant-review-2026-10-13
 
