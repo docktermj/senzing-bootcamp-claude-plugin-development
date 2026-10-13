@@ -620,7 +620,7 @@ against the source system's own customer count before quoting it to anyone.
 - Query, Visualize and Discover: proceed to visualization and the Discover phase on marginal quality indicators.
 - Query, Visualize and Discover: an interactive visualization of your resolved data.
 - Query, Visualize and Discover: explore the Discover capabilities on your own data.
-- Query, Visualize and Discover: continue to How Analysis, then to Relationship Networks.
+- Query, Visualize and Discover: continue to How Analysis, then to the relationship networks.
 
 ### How you got it built
 

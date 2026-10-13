@@ -24,6 +24,10 @@ others. This guard reads the example and fails, naming the element, unless it ca
 Every check is negative-controlled: each element is removed from a copy of the example, and the
 guard must name that element.
 
+Line-scoped by design (#518): every element is a recap line whose shape is fixed by its producing
+step, a `**Label:**` line, a bullet, a `###` heading or a fence marker, each written on one line,
+so the guard reads lines rather than wrapped phrases.
+
 Source issue: #518.
 
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
