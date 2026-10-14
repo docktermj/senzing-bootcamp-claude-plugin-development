@@ -434,7 +434,7 @@ session end:
      finding recorded in the ledger is durable and costs the maintainer one read; an issue
      filed by a run nobody watched cannot be un-filed.
 
-   ⛔ **With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
+   ⛔ **(INV-368) With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
    nothing outside `<run-dir>`.** In place of both paths, each finding becomes a
    [`drafts.py`](../feedback-to-issues/drafts.py) `add` record, steps 2–6 are not run, and the run
    ends with `drafts.py list`. `--draft` is the release cycle's interface (#573), and the caller records

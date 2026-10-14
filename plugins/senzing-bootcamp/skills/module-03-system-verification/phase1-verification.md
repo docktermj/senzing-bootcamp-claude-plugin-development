@@ -415,7 +415,7 @@ Verify the MCP server can generate a full pipeline script in the chosen language
 
 Verify the generated code compiles or passes syntax checking.
 
-⛔ **(INV-300) Every Module 3 program is created, built and run as
+⛔ **(INV-370) (INV-300) Every Module 3 program is created, built and run as
 `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" says, with `<dir>` =
 `src/system_verification`.** That section holds the build and run commands for each language,
 the build timeout, the creation of a C#, Rust or TypeScript program's project, and the

@@ -225,7 +225,7 @@ routing is owned exclusively by `/escalate-to-parent` *(children only)*; this is
 where parent-to-child change travels by **parity**, so the parent never files into children
 at all. A flag naming another repository is a violation of that rule, not a convenience.
 
-⛔ **With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
+⛔ **(INV-368) With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
 nothing outside `<run-dir>`.** Each issue, Step 8 message and Step 9 disposition becomes a
 [`drafts.py`](drafts.py) `add` record instead, the candidate stays where it is, and the run ends
 with `drafts.py list`. `--draft` is the release cycle's interface (#573), and the caller records

@@ -831,7 +831,7 @@ The caller says which entity to pick. Everything below is the same for all three
 
 ## Building and running a program
 
-⛔ **This section is the one statement of how a Bootcamper program is created, built and run
+⛔ **(INV-370) This section is the one statement of how a Bootcamper program is created, built and run
 (INV-300).** A step that saves, builds or runs a program names its `<dir>` and `<name>` and cites
 this section; it never restates a command. Two placeholders key every line below:
 

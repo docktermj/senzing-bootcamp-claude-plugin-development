@@ -61,6 +61,9 @@ Bootcamper's program. The comparison with the earlier Module 3 needs the full gi
 the suite's CI checkout fetches (`fetch-depth: 0`); in a shallow clone it fails rather than
 skipping, because a skipped comparison would certify nothing.
 
+This module enforces INV-370 (registered 2026-10-13). It pins the text; it cannot establish that
+a real `dotnet`, `cargo`, `tsc` or `javac` build succeeds on a Bootcamper's machine.
+
 Source issues: #511, #562, #563.
 
 Run:  python3 -m unittest discover -s tests

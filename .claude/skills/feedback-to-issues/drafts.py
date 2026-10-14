@@ -16,7 +16,7 @@ Stage one: `--draft <run-dir>`
 ==============================
 
 The skill runs up to its filing step, then runs `add` once per record instead of filing it, and
-stops. ⛔ **Stage one files nothing, fixes nothing and sends nothing, and writes nothing outside
+stops. ⛔ **(INV-368) Stage one files nothing, fixes nothing and sends nothing, and writes nothing outside
 `<run-dir>`:** no `gh issue create`, no comment, no `submit_feedback`, no fix, and every ledger
 and archive the skill keeps is left untouched (`feedback/`, `specs/mcp-coverage.jsonl`,
 `specs/IMPLEMENTED.md`). The one write outside `<run-dir>` is the disposable scratch project a
