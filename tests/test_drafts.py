@@ -20,6 +20,9 @@ What this pins, each with a negative control where it is a predicate over text:
    rule (files nothing, fixes nothing, sends nothing, writes nothing outside `<run-dir>`), says
    `--draft` is the release cycle's interface (#573) and the caller records unresolved drafts (INV-317),
    ends a draft run with `drafts.py list`, and restates no part of the manifest format (INV-300).
+   Its `--file` stage takes a yes for each record or INV-314's batch clause, and the three skills
+   that draft upstream messages say `--file` never sends one, which keeps its own yes (#573
+   retired #572's "get a yes for each first", written before INV-314's 2026-10-13 note).
 3. **`.gitignore`** ignores `.claude/release-cycle/runs/`.
 
 ⚠️ **What this does NOT establish:** that a live run stops at its filing step, files only after a
@@ -300,9 +303,25 @@ class TheDocstringIsTheContract(unittest.TestCase):
                        "`<run-dir>/drafts/manifest.json`", "dedupe_key", "baseline SHA",
                        "`/release-cycle`'s interface", "The caller records unresolved drafts "
                        "(INV-317)", "get a yes for each", "(INV-314)", "(INV-318)", "(INV-319)",
-                       "declined by the maintainer", "never filed twice"):
+                       "declined by the maintainer", "never filed twice", BATCH_CLAUSE,
+                       "`--file` never sends an `upstream` record", "which only its own yes moves",
+                       "`submit_feedback` stays one message, one yes"):
             self.assertIn(phrase.lower(), self.doc.lower())
 
+    def test_the_stale_per_record_lines_are_gone(self):
+        """#573: the filing step no longer waits on #570, which PR #586 and PR #588 closed."""
+        self.assertEqual([], stale(self.doc))
+
+
+#: INV-314's 2026-10-13 note, in the one form `tests/test_filing_is_gated.py` finds (#575).
+BATCH_CLAUSE = "one yes for the whole list shown in one message (INV-314, 2026-10-13 note)"
+
+#: #572's per-record lines, written before #570's amendments were registered (#573 retired them).
+STALE = ("get a yes for each first", "Until #570's amendments are registered")
+
+#: The skills that draft upstream messages, whose `--file` stage says it never sends one.
+UPSTREAM_SKILLS = ("feedback-to-issues", "delegate-to-mcp-server", "dry-run")
+UPSTREAM_KEPT = "an upstream draft is never sent by `--file` and keeps its own yes"
 
 #: What each skill must state. The rule sentence is the same in all five.
 REQUIRED = (
@@ -314,7 +333,7 @@ REQUIRED = (
     "(INV-317)",
     "ends with `drafts.py list`",
     "file what `drafts.py file-plan` prints",
-    "get a yes for each first",
+    "after a yes for each record or " + BATCH_CLAUSE,
     "stated once in `drafts.py` (INV-300)",
 )
 
@@ -329,6 +348,11 @@ def missing(text):
 
 def restated(text):
     return RESTATED.findall(text)
+
+
+def stale(text):
+    t = flat(text)
+    return [p for p in STALE if p in t]
 
 
 def skill_text(name):
@@ -371,6 +395,17 @@ class EachSkillCitesTheContract(unittest.TestCase):
                 step9 = text[text.index("## Step 9"):text.index("## Step 10")]
                 self.assertIn(sentence, flat(step9))
 
+    def test_no_skill_keeps_the_stale_per_record_line(self):
+        for name in SKILLS:
+            with self.subTest(skill=name):
+                self.assertEqual([], stale(skill_text(name)))
+
+    def test_an_upstream_draft_keeps_its_own_yes(self):
+        """`submit_feedback` stays one message, one yes; the batch clause never reaches it."""
+        for name in UPSTREAM_SKILLS:
+            with self.subTest(skill=name):
+                self.assertIn(UPSTREAM_KEPT, flat(skill_text(name)))
+
     def test_retrofit_repeats_its_tracker_search_before_filing(self):
         self.assertIn("repeat step 3's search for each approved record, since the tracker may have "
                       "changed", flat(skill_text("retrofit-from-public")))
@@ -395,6 +430,14 @@ class NegativeControls(unittest.TestCase):
         self.assertIn(REQUIRED[2], missing(text.replace("fixes nothing and sends", "sends")))
         self.assertIn(REQUIRED[8], missing(text.replace("stated once in `drafts.py` (INV-300)", "")))
         self.assertIn(REQUIRED[4], missing(re.sub(r"\(INV-317\)", "", text)))
+
+    def test_the_stale_line_or_a_dropped_clause_is_reported(self):
+        text = flat(skill_text("feedback-to-issues"))
+        self.assertTrue(stale(text.replace("after a yes for each record or",
+                                           "and get a yes for each first or")))
+        self.assertTrue(stale("2. Until #570's amendments are registered, show each record"))
+        self.assertIn(REQUIRED[7], missing(text.replace(BATCH_CLAUSE, "")))
+        self.assertNotIn(UPSTREAM_KEPT, text.replace(UPSTREAM_KEPT, "an upstream draft is sent"))
 
     def test_a_restated_status_is_reported(self):
         self.assertTrue(restated("Each record starts with status `approved`."))

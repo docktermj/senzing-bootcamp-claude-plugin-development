@@ -316,8 +316,9 @@ nothing outside `<run-dir>`.** Each issue, Step 8 message and Step 9 row becomes
 [`drafts.py`](../feedback-to-issues/drafts.py) `add` record instead, carrying its row's `record`
 arguments as `--after` and `--after-struck`, and the run ends with `drafts.py list`. `--draft` is
 the release cycle's interface (#573), and the caller records unresolved drafts (INV-317). **With
-`--file <run-dir>`**, file what `drafts.py file-plan` prints, and get a yes for each first. Both
-stages, the manifest and its statuses are stated once in `drafts.py` (INV-300).
+`--file <run-dir>`**, file what `drafts.py file-plan` prints, after a yes for each record or one yes
+for the whole list shown in one message (INV-314, 2026-10-13 note); an upstream draft is never sent
+by `--file` and keeps its own yes. Both stages, the manifest and its statuses are stated once in `drafts.py` (INV-300).
 
 Rules beyond the template:
 

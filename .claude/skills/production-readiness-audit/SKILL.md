@@ -440,7 +440,8 @@ session end:
    [`drafts.py`](../feedback-to-issues/drafts.py) `add` record, steps 2–6 are not run, and the run
    ends with `drafts.py list`. `--draft` is the release cycle's interface (#573), and the caller records
    unresolved drafts (INV-317). **With `--file <run-dir>`**, file what `drafts.py file-plan`
-   prints, and get a yes for each first, then report (Step 9). Both stages, the manifest and its
+   prints, after a yes for each record or one yes for the whole list shown in one message
+   (INV-314, 2026-10-13 note), then report (Step 9). Both stages, the manifest and its
    statuses are stated once in `drafts.py` (INV-300).
 
    ⛔ **(INV-318) Never apply the `unattended-ok` label to an issue you file.** An audit that labels its

@@ -68,6 +68,7 @@ mechanisms, not maintainer-facing phases; they keep their names.
 | `release` | 4 | required | required | **Development repository only** (R8) |
 | `propagate-to-public` | 4 | required | required | **Public working tree only** (R8) |
 | `unattended-issue-loop` | drives 2 | required *(user level)* | *not mandated* | `unattended-ok`-labeled issues only: no label, no work, and it never adds the label itself. **Merges** each PR whose checks pass, by default, overriding `implement-github-issue` *(user level)*'s never-merge inside a run, since invoking the loop is the maintainer's consent; `--no-merge` leaves every PR open |
+| `release-cycle` | drives 1–4 | required | *not mandated* | Runs the phases' operations in order, with two build passes, and stops only at a kickoff and five checkpoints. Each record it creates is created by the operation that owns it, under that operation's gate; it does not sign off an invariant, choose the version bump, or commit or push the public repository |
 | `delegate-to-mcp-server` | maintenance | required | — | Parent only |
 | `compact-dev-environment` | maintenance | required | — | Parent only |
 | `review-invariants` | maintenance | required | *open question* | See §8 |
@@ -99,11 +100,21 @@ flowchart TB
     LOOP["<b>unattended-issue-loop</b> <i>(user level)</i><br/>drives phase 2,<br/>on <i>unattended-ok</i> issues only"]
     LOOP -.-> P2
 
+    CYCLE["<b>release-cycle</b> <i>(parent)</i><br/>drives phases 1 to 4 as one run,<br/>stopping at five checkpoints"]
+    CYCLE -.-> P1
+    CYCLE -.-> P4
+
     classDef phase fill:#eaf2fb,stroke:#3a6ea5,color:#1b3a57
     classDef driver fill:#f3f0fa,stroke:#6a5a9a,color:#2e2350
     class P1,P2,P3,P4 phase
-    class LOOP driver
+    class LOOP,CYCLE driver
 ```
+
+`release-cycle` runs the four phases in that order as one resumable run in the parent. It runs
+the operations that find issues (phase 1's, `delegate-to-mcp-server` and
+`production-readiness-audit`) together in draft mode, files what the maintainer approves, builds,
+then does the same with `dry-run`, and stops only at its checkpoints. It changes no operation's
+behavior when that operation runs alone.
 
 The four phases run in order and **only one edge goes backwards**: a test failure needing a
 code change returns to development, never to maintenance. Maintenance is where you go when
