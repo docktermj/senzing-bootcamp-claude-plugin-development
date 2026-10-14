@@ -14,18 +14,26 @@ calls throughout -- so the how call was never in its blast radius and kept the p
 set. The lesson this guard encodes: sweep over the **claim** (which flags a breakdown needs), never
 over the method that happened to surface it.
 
-⚠️ **The server says three things about where this field lands and they do not agree** -- and this
-guard requires all three to be recorded with none presented as governing (INV-169):
+⚠️ **The server says four things about where this field lands, and one still disagrees with the
+rest** -- and this guard requires all four to be recorded with none presented as governing
+(INV-169):
 
   * `SZ_INCLUDE_MATCH_KEY_DETAILS.applies_to` **includes** `how_entity_by_entity_id`;
-  * that same entry's `response_paths` are `RELATED_ENTITIES[]` / `RESOLVED_ENTITY.*`, and its
-    description attributes the object to *related entities* -- a shape `how_entity` never returns;
   * the how `response_schemas` document
-    `HOW_RESULTS.RESOLUTION_STEPS[].MATCH_INFO.MATCH_KEY_DETAILS.CONFIRMATIONS[]` in full.
+    `HOW_RESULTS.RESOLUTION_STEPS[].MATCH_INFO.MATCH_KEY_DETAILS.CONFIRMATIONS[]` in full;
+  * that same schema marks those paths `requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]` -- the
+    documented requirement, added as the fourth statement by #591 (server 1.38.2, 2026-10-14);
+  * the flag entry's `response_paths` are `RELATED_ENTITIES[].MATCH_KEY_DETAILS` only, and its
+    description attributes the object to *related entities* -- a shape `how_entity` never returns.
 
-That is a coverage gap on the server's side, so the plugin must treat the breakdown as CONDITIONAL
-rather than promised. A guard that demanded the plugin pick a side would be requiring it to invent
-a Senzing fact (INV-080).
+⚠️ **Corrected 2026-10-14 (#591).** Through server 1.33.0 this docstring quoted the flag entry's
+`response_paths` as `RELATED_ENTITIES[]` and `RESOLVED_ENTITY.*`, and its relations dependency as
+a `depends_on` field. On 1.38.2 the entry has neither: the paths narrowed to the related-entity
+object, and the dependency is stated only in its description. The rules above still bind.
+
+The last statement is a coverage gap on the server's side, so the plugin must treat the breakdown
+as CONDITIONAL rather than promised. A guard that demanded the plugin pick a side would be
+requiring it to invent a Senzing fact (INV-080).
 
 ⛔ **The field spellings must NOT be harmonized.** `why_*` returns `WHY_KEY_DETAILS`; `how_entity`
 returns `MATCH_KEY_DETAILS`. Both are correct on their own method, and merging them would
@@ -118,7 +126,7 @@ class NoHowCallRequestsScoresAloneWhileNamingTheBreakdown(Base):
                          "default and renders nothing")
 
     def test_every_prescribing_site_pairs_it_with_a_relations_flag(self):
-        """Its documented depends_on holds regardless of the response_paths tension.
+        """Its documented relations dependency holds regardless of the response_paths tension.
 
         ⛔ Scoped to the 300 characters following the flag's FIRST mention, not the whole
         window. "relations flag" occurs all over these files, so a window-wide search stayed
@@ -195,8 +203,12 @@ class TheStepTreatsTheBreakdownAsConditional(Base):
                  "step 4c no longer tells the guide to dump MATCH_INFO's keys before parsing")
 
 
-class TheServersThreeStatementsAreAllRecorded(Base):
-    """INV-169 — record all three, reconcile none. Checked wherever the tension is discussed."""
+class TheServersFourStatementsAreAllRecorded(Base):
+    """INV-169 — record all four, reconcile none. Checked wherever the tension is discussed.
+
+    Was `TheServersThreeStatementsAreAllRecorded`; #591 added the how schema's
+    `requires_flags` as the fourth, documented statement (server 1.38.2, 2026-10-14).
+    """
 
     def _tension_sites(self):
         out = []
@@ -214,22 +226,25 @@ class TheServersThreeStatementsAreAllRecorded(Base):
             "flag came to be excluded from how calls",
         )
 
-    def test_each_site_records_all_three_statements(self):
+    def test_each_site_records_all_four_statements(self):
         for path, text in self._tension_sites():
             with self.subTest(path=path.relative_to(REPO_ROOT)):
                 self.has(text, r"`applies_to` \*\*includes\*\* `how_entity_by_entity_id`",
                          f"{path.name}: the applies_to statement is missing")
-                self.has(text, r"RELATED_ENTITIES\[\]",
+                self.has(text, r"RELATED_ENTITIES\[\]\.MATCH_KEY_DETAILS",
                          f"{path.name}: the response_paths statement is missing")
                 self.has(text,
                          r"HOW_RESULTS\.RESOLUTION_STEPS\[\]\.MATCH_INFO\.MATCH_KEY_DETAILS",
                          f"{path.name}: the how response_schemas path is missing")
+                self.has(text, r'requires_flags: \["SZ_INCLUDE_MATCH_KEY_DETAILS"\]',
+                         f"{path.name}: the how schema's requires_flags is missing -- the one "
+                         "statement that documents the requirement")
 
     def test_each_site_refuses_to_reconcile_them(self):
         for path, text in self._tension_sites():
             with self.subTest(path=path.relative_to(REPO_ROOT)):
-                self.has(text, r"(?i)[Rr]ecord all three.{0,40}reconcile none",
-                         f"{path.name} records the three statements without saying none governs "
+                self.has(text, r"(?i)[Rr]ecord all four.{0,40}reconcile none",
+                         f"{path.name} records the four statements without saying none governs "
                          "the others, which invites the next reader to resolve it by choosing")
 
     def test_each_site_carries_route_version_and_date(self):
@@ -238,9 +253,58 @@ class TheServersThreeStatementsAreAllRecorded(Base):
             with self.subTest(path=path.relative_to(REPO_ROOT)):
                 self.has(text, r"get_sdk_reference\(topic='flags'",
                          f"{path.name}: no route named")
-                self.has(text, r"server \*\*1\.33\.0\*\*|server 1\.33\.0",
+                self.has(text, r"topic='response_schemas', filter='how_entity'",
+                         f"{path.name}: the requires_flags route is not named")
+                self.has(text, r"server \*\*1\.\d+\.\d+\*\*|server 1\.\d+\.\d+",
                          f"{path.name}: no server version")
-                self.has(text, r"2026-08-26", f"{path.name}: no verification date")
+                self.has(text, r"\d{4}-\d{2}-\d{2}", f"{path.name}: no verification date")
+
+
+class TheFlagEntryIsDescribedAsTheServerReturnsIt(Base):
+    """#591 — `SZ_INCLUDE_MATCH_KEY_DETAILS`'s entry, as served on 1.38.2 (2026-10-14).
+
+    `get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')` returns no
+    `depends_on` field (the dependency is in its description), `response_paths` is
+    `RELATED_ENTITIES[].MATCH_KEY_DETAILS` alone, and the `SZ_ENTITY_INCLUDE_ALL_RELATIONS`
+    filter no longer returns the flag. A shipped sentence saying otherwise sends a maintainer
+    to look for something the server does not return.
+
+    ⚠️ `depends_on` stays legitimate as a generic flag-entry field: the
+    `SZ_ENTITY_INCLUDE_RELATED_*` flags carry one. So this checks the SENTENCE that names
+    this flag, never the bare word.
+    """
+
+    @staticmethod
+    def sentences(text):
+        return re.split(r"(?<=[.;])\s+", text)
+
+    def test_no_sentence_gives_the_flag_a_depends_on_field(self):
+        for path in shipped():
+            for sentence in self.sentences(flat(path.read_text(encoding="utf-8"))):
+                if DETAILS_FLAG in sentence and "depends_on" in sentence:
+                    self.fail(f"{path.relative_to(REPO_ROOT)} writes `depends_on` as a field of "
+                              f"{DETAILS_FLAG}'s entry, which has none on 1.38.2: {sentence[:200]}")
+
+    def test_no_site_quotes_the_retired_response_paths(self):
+        for path in shipped():
+            text = flat(path.read_text(encoding="utf-8"))
+            self.lacks(text, r"`RELATED_ENTITIES\[\]` and `RESOLVED_ENTITY\.\*`",
+                       f"{path.relative_to(REPO_ROOT)} quotes {DETAILS_FLAG}'s response_paths as "
+                       "`RELATED_ENTITIES[]` and `RESOLVED_ENTITY.*`; it is "
+                       "`RELATED_ENTITIES[].MATCH_KEY_DETAILS` alone")
+
+    def test_no_site_says_the_relations_filter_returns_it(self):
+        for path in shipped():
+            text = flat(path.read_text(encoding="utf-8"))
+            self.lacks(text, r"(?i)exception in that same reply|returned by the "
+                             r"`SZ_ENTITY_INCLUDE_ALL_RELATIONS` filter",
+                       f"{path.relative_to(REPO_ROOT)} says the relations filter returns "
+                       f"{DETAILS_FLAG}; on 1.38.2 it does not")
+
+    def test_the_sentence_scan_is_not_vacuous(self):
+        bad = f"`{DETAILS_FLAG}` `depends_on` a relations flag, so pass it."
+        self.assertTrue(any(DETAILS_FLAG in x and "depends_on" in x
+                            for x in self.sentences(bad)))
 
 
 class TheTwoFieldSpellingsStayApart(Base):

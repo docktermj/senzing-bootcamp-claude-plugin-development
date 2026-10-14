@@ -12,6 +12,10 @@ confirmed on MCP server 1.32.9 (2026-08-14) via
 The flag names a different surface. `topic='flags'` reports `SZ_INCLUDE_MATCH_KEY_DETAILS`
 with `response_paths: RELATED_ENTITIES[]` and `depends_on` one of the five relations flags, so
 what it *documentedly* populates is a `MATCH_KEY_DETAILS` object on each *related entity*.
+(⚠️ **Dated note, 2026-10-14 (#591): on server 1.38.2 the entry has no `depends_on` field** —
+the relations dependency is stated only in its description — and `response_paths` reads
+`RELATED_ENTITIES[].MATCH_KEY_DETAILS`. The related-entity surface is unchanged, so the
+reasoning below still binds; the guards ask for the dependency in prose, not as a field name.)
 
 That is the silent-blank failure `ground-rules.md` → "Defensive parsing" exists for: a parser
 written for the wrong field name yields None and renders as empty text, with no error raised.
@@ -148,10 +152,15 @@ class TheFlagIsPrescribedWithItsConditions(unittest.TestCase):
                       guidance)
 
     def test_the_dependency_that_makes_it_checkable_survives(self):
-        """The half of the old ban that was always true, and still is."""
+        """The half of the old ban that was always true, and still is.
+
+        ⚠️ Asked for `depends_on` until #591: on server 1.38.2 the flag's entry has no such
+        field, so the dependency is required as the entry's description states it.
+        """
         guidance = squash(flag_guidance(read()))
-        self.assertIn("depends_on", guidance)
+        self.assertIn("relations dependency", guidance)
         self.assertIn("relations flag", guidance)
+        self.assertNotIn("`depends_on`", guidance)
 
     def test_the_flags_documented_surface_is_still_named(self):
         """It populates MATCH_KEY_DETAILS on RELATED_ENTITIES[] — also still true."""
@@ -201,7 +210,7 @@ class NoOtherSiteInTheModulePrescribesIt(unittest.TestCase):
     #: on a why call" was false, so that qualifier is replaced by the two that are true: the
     #: relations dependency, and the conditioned observation about when the field appears.
     QUALIFIERS = (
-        "depends_on",                  # the documented dependency
+        "relations dependency",        # the documented dependency (its description, #591)
         "relations flag",              # the same, in prose
         "RELATED_ENTITIES[]",          # the surface the flag documentedly populates
         "no flag is documented as populating it",   # the server's silence, stated

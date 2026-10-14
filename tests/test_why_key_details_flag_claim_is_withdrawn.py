@@ -123,8 +123,11 @@ class TheStepTellsTheGuideToPassTheFlag(unittest.TestCase):
         self.assertIn("pass `SZ_INCLUDE_MATCH_KEY_DETAILS` together with a relations flag",
                       self.text)
 
-    def test_the_depends_on_requirement_survives(self):
-        self.assertIn("its documented `depends_on` still holds", self.text)
+    def test_the_relations_dependency_survives(self):
+        """Was `test_the_depends_on_requirement_survives`, pinning "its documented `depends_on`
+        still holds". On server 1.38.2 the flag's entry has no `depends_on` field; the
+        dependency is in its description, so the step states it that way (#591)."""
+        self.assertIn("the relations dependency its own row documents still holds", self.text)
 
     def test_the_java_composite_caution_survives(self):
         """A composite constant may not belong to a Set<SzFlag> element type."""

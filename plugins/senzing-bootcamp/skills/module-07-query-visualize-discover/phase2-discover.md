@@ -320,8 +320,9 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      the evidence is equally consistent with "the flag is required on both" and says nothing about
      a boundary. Do not write one.
 
-     **So: pass `SZ_INCLUDE_MATCH_KEY_DETAILS` together with a relations flag** — its documented
-     `depends_on` still holds — and treat the breakdown as conditional rather than guaranteed.
+     **So: pass `SZ_INCLUDE_MATCH_KEY_DETAILS` together with a relations flag** — the relations
+     dependency its own row documents still holds — and treat the breakdown as conditional rather
+     than guaranteed.
 
      ⚠️ **This corrects a directive that used to forbid the flag here**, on the grounds that the
      breakdown was "already there without it". That claim came from a measurement whose **two arms
@@ -429,35 +430,42 @@ Demonstrate How Analysis using a concrete multi-record entity (3+ records) ident
    intend to show it (INV-115, INV-169).** This step used to name feature scores alone while
    step 4b's `CONFIRMATIONS[]` caution pointed at `how_entity`'s
    `MATCH_KEY_DETAILS.CONFIRMATIONS[]` as the reason the how side is worth reaching for — an
-   instruction and a cross-reference that did not meet. **What the server says, three routes,
-   all re-verified on server 1.33.0, 2026-08-26:**
+   instruction and a cross-reference that did not meet. **What the server says, four
+   statements, each dated:**
 
-   - `get_sdk_reference(topic='response_schemas', filter='how_entity', language='python')`
+   - `get_sdk_reference(topic='response_schemas', filter='how_entity', language='<chosen_language>')`
      documents the path — `HOW_RESULTS.RESOLUTION_STEPS[].MATCH_INFO.MATCH_KEY_DETAILS`, with
      `CONFIRMATIONS[]` carrying `FTYPE_CODE`, `TOKEN`, `SOURCE`, `SCORE`, `SCORE_BUCKET` and
      the `INBOUND_`/`CANDIDATE_FEAT_*` members. The same response's Python signature reads
      `how_entity_by_entity_id(entity_id: int, flags: int = <SzEngineFlags.SZ_INCLUDE_FEATURE_SCORES: 67108864>)`,
-     so feature scores alone **is** the default flag set.
+     so feature scores alone **is** the default flag set (server **1.38.2**, 2026-10-14,
+     `language='python'`).
+   - **The same schema documents the requirement:** every
+     `HOW_RESULTS.RESOLUTION_STEPS[].MATCH_INFO.MATCH_KEY_DETAILS` path carries
+     `requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]` (server **1.38.2**, 2026-10-14) — the
+     marker step 4b.3 relays for `WHY_KEY_DETAILS` on the why side. When it first appeared is not
+     known: this block was last checked on 1.33.0.
    - `get_sdk_reference(topic='flags', filter='SZ_INCLUDE_FEATURE_SCORES', language='python')`
      returns `SZ_HOW_ENTITY_DEFAULT_FLAGS` as that one flag, `response_paths`
-     `HOW_RESULTS.RESOLUTION_STEPS[]`; the bare flag's own `response_paths` are
-     `RESOLVED_ENTITIES[]` and `SEARCH_STATISTICS[]`. Neither reaches the
-     `MATCH_KEY_DETAILS` subtree, so the breakdown is a separate opt-in.
+     `HOW_RESULTS.RESOLUTION_STEPS[]`, which does not reach the `MATCH_KEY_DETAILS` subtree, so
+     the breakdown is a separate opt-in (server **1.38.2**, 2026-10-14).
    - `get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')` lists
-     `how_entity_by_entity_id` in `applies_to` and `depends_on` one of the five relations
-     flags — which is why the relations flag travels with it.
+     `how_entity_by_entity_id` in `applies_to`, and that flag's own row documents the relations
+     dependency in its description — which is why the relations flag travels with it (server
+     **1.38.2**, 2026-10-14).
 
-   ⚠️ **Those three do not fully agree, and none of them governs the others (INV-169).** The
-   flag's `applies_to` names `how_entity_by_entity_id` and the how schema documents the path,
-   yet that same flag entry's `response_paths` are `RELATED_ENTITIES[]` and
-   `RESOLVED_ENTITY.*`, and its description reads *"each related entity includes a
-   MATCH_KEY_DETAILS object"* — a shape `how_entity` does not return at all. **Record all
-   three; reconcile none.** This is a gap on the server's side, not something the plugin can
-   settle, and it is why the breakdown is **conditional** below rather than promised.
+   ⚠️ **One tension remains, and none of the four governs the others (INV-169).** The flag's
+   `applies_to` names `how_entity_by_entity_id` and the how schema documents the path and its
+   `requires_flags`, yet that same flag entry's `response_paths` are
+   `RELATED_ENTITIES[].MATCH_KEY_DETAILS` only, and its description reads *"each related entity
+   includes a MATCH_KEY_DETAILS object"* — a shape `how_entity` does not return at all.
+   **Record all four; reconcile none.** The flag entry's side of this is a gap on the server's
+   side, not something the plugin can settle, and it is why the breakdown is **conditional**
+   below rather than promised.
 
    ⚠️ **Two engine observations, side by side — both observation-only (INV-080/INV-149), and
-   neither governs the other (INV-169).** No MCP route reports which flag set populated a
-   given engine response.
+   neither governs the other (INV-169).** What the schema documents is a requirement, not a
+   report of which flag set populated a given engine response.
 
    | Date | Method | Flags in force (a relations flag travels with the details flag) | Result — **observation-only**, INV-080/INV-149 |
    |---|---|---|---|

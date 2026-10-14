@@ -491,9 +491,11 @@ which is exactly the gap the UAT percentages below leave open.
    `RELATED_ENTITIES[].IS_AMBIGUOUS` is documented as *"1 if ambiguous relationship, 0 otherwise"*,
    and `RELATED_ENTITIES[].MATCH_KEY_DETAILS` carries a `DENIALS[]` array beside its
    `CONFIRMATIONS[]` — the structured form of detracted-versus-contributed. `MATCH_KEY_DETAILS`
-   `requires_flags: [SZ_INCLUDE_MATCH_KEY_DETAILS]`, which itself `depends_on` a relations flag, so
-   treat the breakdown as conditional and fall back to parsing the key when it is absent (same
-   lookup, server **1.36.0**, 2026-09-02).
+   `requires_flags: [SZ_INCLUDE_MATCH_KEY_DETAILS]` (same lookup, server **1.36.0**, 2026-09-02),
+   and that flag's own row documents the relations dependency in its description
+   (`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')`, server **1.38.2**,
+   2026-10-14), so treat the breakdown as conditional and fall back to parsing the key when it is
+   absent.
 3. ⛔ **An empty cross-source suppressor list is a plumbing failure until proven otherwise.**
    "No suppressors found" and "this reader cannot answer the question" render identically — a
    clean result — so never report the first without ruling out the second. Before making any
