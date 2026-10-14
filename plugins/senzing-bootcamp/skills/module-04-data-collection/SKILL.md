@@ -1199,26 +1199,46 @@ training data.
    - **3, "No — I'll obtain one another way" or "No — I need to obtain one":** sub-step 6.
    - **4, "No — request a free evaluation license now":** sub-step 6's in-flow request, sub-step 6a.
 
-5. **Apply a Senzing License Key (options 1–2).** 🚨 Never ask the bootcamper to paste a license key
-   into chat. Decode/place it to `licenses/g2.lic`:
-   - **Base64 string** — Linux/macOS: `echo '<BASE64_STRING>' | base64 --decode > licenses/g2.lic`;
-     Windows (PowerShell 5.1 and 7):
-     `[System.IO.File]::WriteAllBytes((Join-Path (Get-Location) 'licenses\g2.lic'), [System.Convert]::FromBase64String('<BASE64_STRING>'))`.
-     The path must be absolute: `WriteAllBytes` resolves a relative path against .NET's working
-     directory, not PowerShell's current location.
-   - **`.lic` file** — Linux/macOS: `cp <path-to>/g2.lic licenses/g2.lic`; Windows:
-     `Copy-Item <path-to>\g2.lic licenses\g2.lic`.
-   - **Check that it is binary.** Linux/macOS: `file licenses/g2.lic`; Windows:
+5. **Apply a Senzing License Key (options 1–2).** This sub-step is the one statement of how the
+   bootcamp wires a license; Module 2's license note, Data processing Phase B and graduation point
+   here rather than restating it (INV-300). 🚨 Never ask the bootcamper to paste a license key into
+   chat, and never echo it back: the bootcamper runs the command that carries the key, with theirs in
+   place of `<BASE64_STRING>`. Each form goes into the `PIPELINE` section of
+   `config/engine_config.json`, beside `CONFIGPATH`, `RESOURCEPATH` and `SUPPORTPATH`, under the key
+   the MCP server names for it (`sdk_guide(topic='load', record_count=<above the limit>)`'s license
+   remedy; MCP server 1.38.1, 2026-10-14):
+   - **Base64 key → `LICENSESTRINGBASE64`, inline.** It is not decoded to a file. Add
+     `"LICENSESTRINGBASE64": "__SENZING_LICENSE_BASE64__"` to the `PIPELINE` section yourself, then
+     have the bootcamper put their key in place of that placeholder — Linux/macOS:
+     `sed -i.bak 's|__SENZING_LICENSE_BASE64__|<BASE64_STRING>|' config/engine_config.json`, then
+     `rm config/engine_config.json.bak`; Windows (PowerShell 5.1 and 7):
+     `$p = Join-Path (Get-Location) 'config\engine_config.json'; [System.IO.File]::WriteAllText($p, [System.IO.File]::ReadAllText($p).Replace('__SENZING_LICENSE_BASE64__', '<BASE64_STRING>'))`.
+     The path must be absolute: `ReadAllText` and `WriteAllText` resolve a relative path against
+     .NET's working directory, not PowerShell's current location. From here on the file holds the
+     key: never print or quote its `LICENSESTRINGBASE64` value.
+   - **`.lic` file → `LICENSEFILE`, with an absolute path.** Linux/macOS:
+     `cp <path-to>/g2.lic licenses/g2.lic`; Windows: `Copy-Item <path-to>\g2.lic licenses\g2.lic`.
+     **Check that it is binary.** Linux/macOS: `file licenses/g2.lic`; Windows:
      `Format-Hex licenses\g2.lic | Select-Object -First 1`. Either shows only that the file exists,
      is non-empty and is not Base64 text; it says nothing about the license itself. Sub-step 7's
-     limit detection is the authoritative check on every platform.
+     limit detection is the authoritative check on every platform. Then add `LICENSEFILE` to the
+     `PIPELINE` section with the absolute path of `licenses/g2.lic` under the project root, never
+     the relative `"licenses/g2.lic"`: SDK setup's (Module 2) Step 8 requires every path value in
+     `config/engine_config.json` to be absolute.
 
    ⚠️ The Windows forms above are written for PowerShell 5.1 and 7 but are unverified on Windows:
    no test runs them there.
 
-   Then add `LICENSEFILE` to the engine config PIPELINE section
-   (`"PIPELINE": { "LICENSEFILE": "licenses/g2.lic" }`) and record `license: custom` in
-   `config/bootcamp_preferences.yaml`. Continue to sub-step 7 to detect the limit.
+   Then, for either form, record `license: custom` in `config/bootcamp_preferences.yaml` and
+   **re-source Module 2's env script** in the shell that runs the Bootcamper's programs:
+   `source src/scripts/senzing-env.sh` on Linux/macOS, `. .\src\scripts\senzing-env.ps1` on Windows
+   (unverified on Windows PowerShell 5.1 here, INV-163). ⛔ **Sub-step 7 runs only after this
+   re-source.** The script exports `SENZING_ENGINE_CONFIGURATION_JSON` from
+   `config/engine_config.json` only when it is sourced (SDK setup's (Module 2) Step 3, "Create the
+   project-local environment script"), so a program run without it measures the configuration from
+   before the key, and sub-step 7 would record the built-in figure as measured with the key in
+   force: the measured-but-incomplete case INV-295 forbids. Continue to sub-step 7 to detect the
+   limit.
 
 6. **Obtain a Senzing License Key (option 3, or option 4's in-flow request).** Consult the Senzing
    MCP server first: `search_docs(query='temporary evaluation license for a dataset larger than the
@@ -1229,7 +1249,7 @@ training data.
    capacity/validity figures from MCP at runtime rather than this file (they have changed before, and
    the eval and production channels differ), never a remembered figure. The bootcamp **continues on
    the built-in evaluation license** meanwhile, so the bootcamper is never blocked waiting for the
-   email; the emailed Base64 key can be decoded and applied via sub-step 5 whenever it arrives, even
+   email; the emailed Base64 key can be applied via sub-step 5 whenever it arrives, even
    in a later session. Record `license: evaluation` when no custom key is applied.
 
    ⛔ **When a request is actually SENT, record it as an event — `license: evaluation` cannot carry
@@ -1310,7 +1330,8 @@ training data.
    Declining costs the Bootcamper nothing: option 3's external channel and sub-step 5 remain open,
    and the bootcamp proceeds either way.
 
-7. **Detect the active license's record limit (after a custom key is applied in sub-step 5).**
+7. **Detect the active license's record limit (after sub-step 5 applies a custom key and
+   re-sources the env script).**
    Confirm the SDK facts via `sdk_guide(topic='configure', platform='<user_platform>',
 language='<chosen_language>', version='current')` (`recordLimit`: `0` = unlimited, positive = the
    cap). Confirm the response shape via `get_sdk_reference(topic='response_schemas',
