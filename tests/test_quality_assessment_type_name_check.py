@@ -11,7 +11,10 @@ What this pins:
 
 * **The check, stated once** in Step 6 (INV-300): PERSON-typed records, the name's final whole
   token, case-insensitive, trailing punctuation removed, against a list that includes the four
-  observed suffixes and is labeled at its site as the plugin's own heuristic (INV-080).
+  observed suffixes and is labeled at its site as the plugin's own heuristic (INV-080). The
+  label's reason is the case the check tests (records already typed `PERSON`), and it cites
+  `mapping_workflow` step 2's corporate-suffix list, dated, for the no-type-field case; the
+  retracted "No MCP route serves one" may not come back (#590).
 * **The Step 5a gate**: the check runs after the coverage check and before the fast-path offer,
   one or more candidates means no offer, and the routing statement names the count. A CORD source
   otherwise skips the step where the retype is applied (INV-198).
@@ -43,7 +46,7 @@ Enforces **INV-343** (Phase 2 emits no `type_discriminator` by default, only for
 rejection): it asserts that step 10 states the rule and does not cite INV-136 for it, and does **not**
 establish that a live run follows it.
 
-Source issues: #158, #220, #283.
+Source issues: #158, #220, #283, #590.
 
 Run:  python3 -m unittest discover -s tests
 
@@ -156,12 +159,30 @@ def problems_in_the_label(text):
     if not suffixes:
         return ["no suffix list to label"]
     at = check.find("`" + "`, `".join(suffixes) + "`")
-    near = squash(check[max(0, at - 200):at + 900])
+    # The label is the rest of sub-step 3, up to sub-step 4 (#590 lengthened it past the old
+    # 900-character window).
+    end = check.find("\n4. **Report it", at)
+    near = squash(check[max(0, at - 200):end if end > at else at + 900])
     out = []
     if not re.search(r"plugin's own heuristic, not a Senzing fact \(INV-080\)", near):
         out.append("the suffix list is not labeled at its site as the plugin's own heuristic")
-    if "No MCP route serves one" not in near:
+    # #590: the reason is the case the check tests, not an absence. `mapping_workflow` step 2
+    # serves a corporate-suffix list for sources with no type field, so "No MCP route serves one"
+    # was false, and the label must not say it again.
+    if not re.search(r"keeps its own list because this check tests records the source already "
+                     r"typed `PERSON`", near):
         out.append("the label does not say why the plugin writes the list itself")
+    if not re.search(r"`mapping_workflow` step 2's inline \*?SENZING MAPPING REFERENCE\*? says "
+                     r"\"Corporate suffix tokens signal ORG\"", near):
+        out.append("the label does not cite mapping_workflow step 2's corporate-suffix list")
+    if not re.search(r"\(MCP server \d+\.\d+\.\d+, docs index \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC, "
+                     r"\d{4}-\d{2}-\d{2}\)", near):
+        out.append("the server's list is not dated with server version and docs index")
+    if not re.search(r"No server token joins it", near):
+        out.append("the label does not record that no server token joins the list")
+    for retracted in ("No MCP route serves one", "switch to it"):
+        if retracted in near:
+            out.append("the label restores the retracted absence claim: " + retracted)
     return out
 
 
@@ -494,6 +515,43 @@ class NegativeControls(unittest.TestCase):
         mutant = self.text.replace("plugin's own heuristic, not a Senzing fact", "suffix list")
         self.assertNotEqual(mutant, self.text)
         self.assertTrue(problems_in_the_label(mutant))
+
+    def test_restoring_the_absence_claim_fails(self):
+        """#590: the old reason, put back beside the new one, is still caught."""
+        mutant = self.text.replace(
+            "No server token joins it.",
+            "No server token joins it. No MCP route serves one. If a route serves one later, "
+            "switch to it.")
+        self.assertNotEqual(mutant, self.text)
+        problems = problems_in_the_label(mutant)
+        self.assertIn("the label restores the retracted absence claim: No MCP route serves one",
+                      problems)
+        self.assertIn("the label restores the retracted absence claim: switch to it", problems)
+
+    def test_dropping_the_reason_fails(self):
+        mutant = self.text.replace("because this check tests records the source already typed",
+                                   "because it prefers records typed")
+        self.assertNotEqual(mutant, self.text)
+        self.assertIn("the label does not say why the plugin writes the list itself",
+                      problems_in_the_label(mutant))
+
+    def test_dropping_the_server_citation_fails(self):
+        mutant = self.text.replace('says "Corporate suffix tokens signal ORG"', "has a list")
+        self.assertNotEqual(mutant, self.text)
+        self.assertIn("the label does not cite mapping_workflow step 2's corporate-suffix list",
+                      problems_in_the_label(mutant))
+
+    def test_dropping_the_server_stamp_fails(self):
+        mutant = re.sub(r"\(MCP server [\d.]+, docs index [^)]*\)", "", self.text, count=1)
+        self.assertNotEqual(mutant, self.text)
+        self.assertIn("the server's list is not dated with server version and docs index",
+                      problems_in_the_label(mutant))
+
+    def test_dropping_the_no_server_token_decision_fails(self):
+        mutant = self.text.replace("No server token joins it.", "")
+        self.assertNotEqual(mutant, self.text)
+        self.assertIn("the label does not record that no server token joins the list",
+                      problems_in_the_label(mutant))
 
     def test_removing_the_keep_option_fails(self):
         mutant = self.text.replace("2. Keep them as PERSON.", "")

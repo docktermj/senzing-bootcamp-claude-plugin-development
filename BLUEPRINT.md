@@ -10078,7 +10078,7 @@ looks wrong.
 - `tests/test_propagate_publishes_the_pages_site.py`: 8
 - `tests/test_propagate_publishes_the_published_marketplace_name.py`: 11
 - `tests/test_python_sources_compile_cleanly.py`: 7
-- `tests/test_quality_assessment_type_name_check.py`: 35
+- `tests/test_quality_assessment_type_name_check.py`: 40
 - `tests/test_quality_iteration_returns_to_step_3b.py`: 25
 - `tests/test_quality_presence_test.py`: 18
 - `tests/test_quality_score_and_preview_prereq.py`: 27
@@ -11955,3 +11955,8 @@ Senzing licensing, with no SPDX identifier.
   the phrase on one unsplit line and the card shrunk in 4 px steps only to
   fit it, with an INV-340 `PROPOSED AMENDMENT` queued (the card left out
   "Bootcamp", and its line breaks depended on the font the renderer found)
+- #590: Module 5's type/name check label cites `mapping_workflow` step 2's
+  corporate-suffix list, dated, and says the plugin keeps its own ten tokens
+  because the check tests records already typed `PERSON`, with no server
+  token added (the label said no MCP route served a suffix list; step 2 does,
+  for sources with no type field)
