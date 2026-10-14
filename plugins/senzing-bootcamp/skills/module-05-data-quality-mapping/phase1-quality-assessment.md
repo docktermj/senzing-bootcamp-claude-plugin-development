@@ -778,13 +778,18 @@ Run it over **every record** of each source, not a sample: the count is the sour
 
    `LLP`, `LP`, `PLC`, `LIMITED`, `LTD`, `LLC`, `INC`, `CORP`, `CORPORATION`, `GMBH`
 
-   ⚠️ **This suffix list is the plugin's own heuristic, not a Senzing fact (INV-080).** No MCP route
-   serves one: `search_docs(query='organization name suffix tokens LLC LTD INC person or
-   organization name classification')` returns name and entity-type FAQs, the Entity
-   Specification's *Feature: NAME* and the v4.4.0 release notes' organization-name matching
-   changes, none of them a suffix list (MCP server 1.37.27, docs index 2026-10-11 18:43 UTC,
-   2026-10-12). If a route
-   serves one later, switch to it. The list is short on purpose. It leaves out tokens that are also
+   ⚠️ **This suffix list is the plugin's own heuristic, not a Senzing fact (INV-080).** The server
+   serves a corporate-suffix list for a different case. `mapping_workflow` step 2's inline *SENZING
+   MAPPING REFERENCE* says "Corporate suffix tokens signal ORG" and lists INC, LLC, LLP, LTD, CORP,
+   CORPORATION, COMPANY, GMBH, PLC, BANK, FOUNDATION, TRUST, HOLDINGS, S.A., S.p.A., N.V., SPA, SRL,
+   OOO, OAO, PJSC, JSC and AG, as a signal for `RECORD_TYPE` when a source lacks a type field. The
+   same reference says "Only if there is NO type field, infer from the name": an explicit type field
+   takes precedence (MCP server 1.38.1, docs index 2026-10-14 15:57 UTC, 2026-10-14). **The plugin
+   keeps its own list because this check tests records the source already typed `PERSON`**, the case
+   the server's rule leaves to the type field. No server token joins it. The list stays the ten
+   tokens above, including `LP` and `LIMITED`, which the 2026-09-25 source used and the server's
+   list lacks. The server's other tokens (`COMPANY`, `BANK`, `TRUST`, `HOLDINGS`, `FOUNDATION` and
+   the rest) are left out on purpose: the list is short, and leaves out tokens that are also
    surnames or name particles, because a false candidate costs the Bootcamper a question and a
    wrong retype costs a real person their matches.
 4. **Report it for every source, as candidates.** Put the count in the assessment above, zero

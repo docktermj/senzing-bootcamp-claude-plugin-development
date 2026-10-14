@@ -238,9 +238,7 @@ VERIFIED_QUERIES = {
 
     # ---------------------------------------------------------------------------------
     # Executed 2026-09-28 on server 1.37.14 (docs index 2026-09-28 03:23 UTC) for #158, the
-    # type/name check in Module 5 Phase 1 Step 6. The first backs the "keep" option's cost;
-    # the second backs the absence the suffix list's heuristic label rests on, and its
-    # emptiness of a suffix list is the evidence.
+    # type/name check in Module 5 Phase 1 Step 6. It backs the "keep" option's cost.
     ("RECORD_TYPE PERSON ORGANIZATION prevent records of different types from resolving",
      "data_mapping"): {
         "band": "ON TARGET",
@@ -252,25 +250,14 @@ VERIFIED_QUERIES = {
             "whose RECORD_TYPE row reads 'Include when known to prevent cross-type resolution'",
         "server": "1.37.14", "docs_index": "2026-09-28 03:23 UTC", "measured": "2026-09-28",
     },
-    # Re-executed for #513 on server 1.37.27, docs index 2026-10-11 18:43 UTC, 2026-10-12, at the
-    # default max_results. The 2026-09-28 record put 'Feature: NAME' second and three libpostal
-    # scripts below it; neither holds, so it was replaced, not re-dated. Phase 1 Step 6's
-    # retype-rule line used to cite this query for 'Feature: NAME' positively, which the band
-    # never supported; it now points at Module 5 step 11's NAME route instead.
-    ("organization name suffix tokens LLC LTD INC person or organization name classification",
-     None): {
-        "band": "EMPTY OF A SUFFIX LIST",
-        "sections": (),
-        "returned":
-            "EMPTY OF A SUFFIX LIST, WHICH IS THE POINT. The set opens with FAQs (product and other "
-            "non-person entity matching; sending a search name as both NAME_FULL and NAME_ORG; not "
-            "splitting a single full-name field) and the MCP server article 'Adding Non-Person "
-            "Entity Types to Senzing'; the Entity Specification's 'Name > Feature: NAME' comes only "
-            "after those four, so this query is not that section's route. The rest is an error "
-            "code, the v4.4.0 release notes' 'Organization names' matching changes and unrelated "
-            "code files. No hit is a list of organization suffixes",
-        "server": "1.37.27", "docs_index": "2026-10-11 18:43 UTC", "measured": "2026-10-12",
-    },
+    # "organization name suffix tokens LLC LTD INC person or organization name classification"
+    # was listed here as EMPTY OF A SUFFIX LIST (server 1.37.27, docs index 2026-10-11 18:43 UTC,
+    # 2026-10-12) and is gone: it backed the suffix-list label's "No MCP route serves one", which
+    # #590 retracted. The query still returns no list (re-run on server 1.38.1, docs index
+    # 2026-10-14 15:57 UTC, 2026-10-14), but it was the wrong route: `mapping_workflow` step 2's
+    # inline SENZING MAPPING REFERENCE carries "Corporate suffix tokens signal ORG", and the label
+    # now cites that. Left as a comment rather than deleted, so the phrasing is not reintroduced
+    # as the owner check for a suffix list.
 
     # ---------------------------------------------------------------------------------
     # Executed 2026-09-26 on server 1.37.13 (docs index 2026-09-24 18:45 UTC) for #160, the
