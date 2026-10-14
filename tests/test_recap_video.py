@@ -34,6 +34,11 @@ writes at graduation into `docs/bootcamp_recap.mp4`. These tests pin its contrac
   keys the ducking or reaches `loudnorm`. Step 1c's worked two-minute storyboard, voiced by a
   speech-like stand-in (`FAKE_SPEECH`), measures in the band, and the same render with the
   graph from before #372 misses it (the negative control).
+* **The closing card** (#580) reads "Resolved: <name>, Senzing Bootcamp graduate." by default
+  and is set as "Resolved:", the name up to the last comma, and the rest on one line of its
+  own, centered, in one size shrunk in 4 px steps only to keep that phrase whole. The layout
+  is measured with a stub font of fixed widths (both CI legs, any machine) and again with the
+  font this machine loads, so no assertion depends on which TrueType font is installed.
 
 ⚠️ Pillow and imageio-ffmpeg are optional dependencies of the *renderer under test*, declared in
 `requirements-dev.txt` (INV-306). The tests themselves are standard library only (INV-108):
@@ -45,7 +50,7 @@ video on failure, burns captions in, never truncates narration, accepts only pro
 images, works offline, and draws the certificate from the recap PDF's fields). It does **not**
 establish the macOS and Windows speech paths, which it covers only by the commands it builds.
 
-Source issues: #299, #339, #341, #372.
+Source issues: #299, #339, #341, #372, #580.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -1206,6 +1211,187 @@ class FramesAreDrawn(unittest.TestCase):
 
 
 # --------------------------------------------------------------------------- #
+# The closing card's layout (#580)
+# --------------------------------------------------------------------------- #
+TAG_LINE = "Resolved: Ada Lovelace, Senzing Bootcamp graduate."
+PHRASE = "Senzing Bootcamp graduate."
+
+
+class StubFont:
+    """A font whose every character is `factor` x its size wide, so a layout is the same on
+    every machine, whatever TrueType fonts it has (or none)."""
+
+    def __init__(self, size, factor):
+        self.size, self.factor = size, factor
+
+    def getlength(self, text):
+        return len(text) * self.size * self.factor
+
+
+class StubContext:
+    """The one thing the layout asks of a render context: a font of a style and size."""
+
+    def __init__(self, factor=0.6):
+        self.factor, self.sizes = factor, []
+
+    def font(self, style, size):
+        self.sizes.append((style, size))
+        return StubFont(size, self.factor)
+
+
+def tag_lines(text, factor=0.6):
+    font, lines = VIDEO.tag_line_layout(StubContext(factor), text)
+    return font, [line for line, _color, _start in lines]
+
+
+class TheTagLineBreaksAfterTheLastComma(unittest.TestCase):
+    """The closing card puts "Resolved:", the name and the phrase on lines of their own, set
+    with a stub font of fixed widths, so these run in both CI legs and on any machine."""
+
+    def test_the_docstring_and_schema_help_state_the_default(self):
+        self.assertIn("``Resolved: <bootcamper>, Senzing Bootcamp graduate.``", VIDEO.__doc__)
+        help_text = {f.name: f.help for f in VIDEO.SCENE_TYPES["tag_line"].fields}["text"]
+        self.assertEqual("defaults to 'Resolved: <bootcamper>, Senzing Bootcamp graduate.'",
+                         help_text)
+
+    def test_the_worked_case_is_three_lines(self):
+        """At 0.6 x size per character the old greedy wrap broke "Ada Lovelace, Senzing" /
+        "Bootcamp graduate."; the break now falls after the comma, at 96 px."""
+        self.assertEqual(["Ada Lovelace, Senzing", "Bootcamp graduate."],
+                         VIDEO.wrap_text(StubFont(96, 0.6), "Ada Lovelace, " + PHRASE, 1600))
+        font, lines = tag_lines(TAG_LINE)
+        self.assertEqual(["Resolved:", "Ada Lovelace,", PHRASE], lines)
+        self.assertEqual(96, font.size)
+
+    def test_it_is_three_lines_whatever_the_old_wrap_did(self):
+        """A narrow font (0.35, the Liberation Sans case) let the old wrap keep the whole tag
+        on one line, and a middling one (0.55) split the phrase after "Bootcamp"; both are
+        now the same three lines."""
+        for factor, old in ((0.35, ["Ada Lovelace, " + PHRASE]),
+                            (0.55, ["Ada Lovelace, Senzing Bootcamp", "graduate."])):
+            with self.subTest(factor=factor):
+                self.assertEqual(old, VIDEO.wrap_text(StubFont(96, factor),
+                                                      "Ada Lovelace, " + PHRASE, 1600))
+                font, lines = tag_lines(TAG_LINE, factor)
+                self.assertEqual(["Resolved:", "Ada Lovelace,", PHRASE], lines)
+                self.assertEqual(96, font.size)
+
+    def test_the_colors_and_fade_in_times_are_unchanged(self):
+        _font, lines = VIDEO.tag_line_layout(StubContext(), TAG_LINE)
+        self.assertEqual([(VIDEO.P["EMBER_HOT"], 0.2), (VIDEO.P["WHITE"], 0.6),
+                          (VIDEO.P["WHITE"], 0.6)], [(c, s) for _l, c, s in lines])
+
+    def test_a_phrase_too_wide_shrinks_the_whole_card_in_4px_steps(self):
+        """At 0.7 x size the phrase (26 characters) is 1747 px at 96, 1674 at 92, 1601.6 at 88
+        and 1528.8 at 84: the card is set at 84, every line, and the phrase stays whole."""
+        ctx = StubContext(0.7)
+        font, lines = VIDEO.tag_line_layout(ctx, TAG_LINE)
+        self.assertEqual(84, font.size)
+        self.assertEqual(["Resolved:", "Ada Lovelace,", PHRASE], [l for l, _c, _s in lines])
+        self.assertEqual([96, 92, 88, 84], list(dict.fromkeys(size for _s, size in ctx.sizes)))
+        self.assertEqual({"bold"}, {style for style, _size in ctx.sizes})
+
+    def test_a_long_name_wraps_over_its_own_lines_and_never_shrinks_the_font(self):
+        name = "Augusta Ada King Byron Lovelace Countess of Lovelace"
+        self.assertGreater(len(name + ",") * 96 * 0.6, 1600)
+        font, lines = tag_lines("Resolved: %s, %s" % (name, PHRASE))
+        self.assertEqual(96, font.size, "the font shrank to fit the name")
+        self.assertEqual("Resolved:", lines[0])
+        self.assertEqual(PHRASE, lines[-1])
+        self.assertGreater(len(lines), 3)
+        self.assertEqual(name + ",", " ".join(lines[1:-1]))
+        for line in lines:
+            self.assertLessEqual(len(line) * 96 * 0.6, 1600, line)
+
+    def test_the_line_cap_keeps_the_phrase(self):
+        name = " ".join(["Bartholomew-Montgomery"] * 12)
+        _font, lines = tag_lines("Resolved: %s, %s" % (name, PHRASE))
+        self.assertEqual(VIDEO.TAG_LINE_MAX_LINES, len(lines))
+        self.assertEqual(["Resolved:", PHRASE], [lines[0], lines[-1]])
+
+    def test_only_the_last_comma_breaks(self):
+        _font, lines = tag_lines("Resolved: Lovelace, Ada, " + PHRASE)
+        self.assertEqual(["Resolved:", "Lovelace, Ada,", PHRASE], lines)
+
+    def test_storyboard_text_is_broken_by_the_same_rule(self):
+        """A storyboard's own `text` (one written before #580 included) is not rewritten; it
+        is only laid out by the comma rule."""
+        _font, lines = tag_lines("Resolved: Grace Hopper, entity resolution pioneer.")
+        self.assertEqual(["Resolved:", "Grace Hopper,", "entity resolution pioneer."], lines)
+
+    def test_no_comma_wraps_greedily_as_before(self):
+        font, lines = VIDEO.tag_line_layout(StubContext(), "Resolved: Ada Lovelace graduated "
+                                                           "from the Senzing Bootcamp today.")
+        words = [l for l, _c, _s in lines]
+        self.assertEqual("Resolved:", words[0])
+        self.assertEqual(VIDEO.wrap_text(font, "Ada Lovelace graduated from the Senzing "
+                                               "Bootcamp today.", 1600), words[1:])
+        self.assertEqual(96, font.size)
+
+    def test_no_prefix_wraps_greedily_in_white(self):
+        text = "Ada Lovelace, " + PHRASE
+        font, lines = VIDEO.tag_line_layout(StubContext(), text)
+        self.assertEqual(VIDEO.wrap_text(font, text, 1600), [l for l, _c, _s in lines])
+        self.assertEqual({(VIDEO.P["WHITE"], 0.3)}, {(c, s) for _l, c, s in lines})
+
+
+@requires_pillow
+class TheTagLineIsDrawnCenteredWithTheLoadedFont(unittest.TestCase):
+    """The same layout through the font this machine actually loads: its widths are measured,
+    not assumed, so the result holds for DejaVu, Liberation or Pillow's built-in font."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._err = contextlib.redirect_stderr(io.StringIO())
+        cls._err.__enter__()
+        cls.project = Project(a_storyboard())
+        cls.ctx = VIDEO.RenderContext(VIDEO.load_pillow(), a_storyboard()["video"],
+                                      cls.project.root)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._err.__exit__(None, None, None)
+        cls.project.close()
+
+    def test_with_no_text_the_card_names_the_bootcamp(self):
+        board = a_storyboard()
+        index = index_of(board, "tag_line")
+        self.assertNotIn("text", board["scenes"][index])
+        plan = VIDEO.plan_timeline(board, self.ctx, None, None, None)
+        self.assertEqual("Resolved: Ada Lovelace, Senzing Bootcamp graduate.",
+                         plan[index].data["text"])
+
+    def test_three_lines_at_the_largest_size_the_phrase_fits(self):
+        font, lines = VIDEO.tag_line_layout(self.ctx, TAG_LINE)
+        self.assertEqual(["Resolved:", "Ada Lovelace,", PHRASE], [l for l, _c, _s in lines])
+        expected = 96
+        while expected > 24 and VIDEO._text_width(self.ctx.font("bold", expected),
+                                                  PHRASE) > 1600:
+            expected -= 4
+        self.assertEqual(self.ctx.font("bold", expected), font)
+        for line, _c, _s in lines:
+            self.assertLessEqual(VIDEO._text_width(font, line), 1600, line)
+
+    def test_every_line_is_drawn_centered_in_one_font(self):
+        board = a_storyboard()
+        index = index_of(board, "tag_line")
+        board["scenes"][index]["text"] = TAG_LINE
+        calls = []
+        real = VIDEO._draw_text
+
+        def record(draw, x, y, text, font, fill, align="left"):
+            calls.append((x, text, font, align))
+            return real(draw, x, y, text, font, fill, align)
+
+        with mock.patch.object(VIDEO, "_draw_text", record):
+            VIDEO.render_scene_frame(board, index, 1.5, self.project.root)
+        card = [c for c in calls if c[1] in ("Resolved:", "Ada Lovelace,", PHRASE)]
+        self.assertEqual(["Resolved:", "Ada Lovelace,", PHRASE], [c[1] for c in card])
+        self.assertEqual({(VIDEO.WIDTH / 2, "center")}, {(c[0], c[3]) for c in card})
+        self.assertEqual(1, len({id(c[2]) for c in card}), "the lines differ in size")
+
+
+# --------------------------------------------------------------------------- #
 # End to end: Pillow and ffmpeg
 # --------------------------------------------------------------------------- #
 FAKE_ESPEAK = """#!{python}
@@ -1616,8 +1802,8 @@ class NumbersAreSpelledForPiper(unittest.TestCase):
                 self.assertEqual(text, VIDEO.spell_numbers(text))
 
     def test_text_without_numbers_is_unchanged(self):
-        self.assertEqual("Resolved: Ada Lovelace, Senzing graduate.",
-                         VIDEO.spell_numbers("Resolved: Ada Lovelace, Senzing graduate."))
+        self.assertEqual("Resolved: Ada Lovelace, Senzing Bootcamp graduate.",
+                         VIDEO.spell_numbers("Resolved: Ada Lovelace, Senzing Bootcamp graduate."))
 
     def test_it_is_standard_library_only(self):
         if not hasattr(sys, "stdlib_module_names"):

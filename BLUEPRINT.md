@@ -2711,8 +2711,8 @@ and continues; the recap PDF is guaranteed.
   verification skipped for a missing tool.
 - Step 1c, optional video: on yes, `docs/video/storyboard.json` (Intro,
   preparation, modules from `docs/video/broll.json` or the recap,
-  certificate, "Resolved: [Name], Senzing graduate."), per-module shares of
-  120 s rescaled over modules taken, aggregates and only the
+  certificate, "Resolved: [Name], Senzing Bootcamp graduate."), per-module
+  shares of 120 s rescaled over modules taken, aggregates and only the
   `match-keys`/`feature-scores`/`cross-source` screenshots. It offers Piper,
   runs `generate_recap_video.py --check` and the render, handling exit 1
   (fix), 2 (offer `imageio-ffmpeg`/Pillow), 3 (skip, keep storyboard), and
@@ -3127,6 +3127,13 @@ offline (`NETWORK_MODULES` are never imported).
   narration time is estimated at `WORDS_PER_MINUTE`. Each extension prints
   `OVERRUN:`. Captions (the narration by default) are always burned in,
   two lines per screen, paced by word count.
+- `tag_line_layout`: the closing card's text defaults to "Resolved:
+  <bootcamper>, Senzing Bootcamp graduate.". "Resolved:" gets its own line,
+  then the name up to the last comma (word-wrapped), then the rest on one
+  line that is never split. All lines share one size, which `_fit_font`
+  shrinks from `TAG_LINE_SIZE` only until that last line fits
+  `TAG_LINE_WIDTH`. At most `TAG_LINE_MAX_LINES`; text without the prefix
+  or a comma wraps greedily.
 - `certificate_fields` reuses `generate_recap_pdf`'s parser and `_cert_*`
   helpers, so its name, date and modules match the PDF's. With no readable
   recap it uses the storyboard's name, date and `modules`, and says so.
@@ -6270,6 +6277,10 @@ class RenderContext:
         ...
 def wrap_text(font, text: str, max_width: float) -> List[str]:
     ...
+TAG_LINE_SIZE, TAG_LINE_WIDTH, TAG_LINE_MAX_LINES = 96, 1600, 5
+def tag_line_layout(ctx, text: str, max_width: float = TAG_LINE_WIDTH,
+                    size: int = TAG_LINE_SIZE):
+    ...
 SCENE_TYPES: Dict[str, SceneType] = {t.name: t for t in (
     SceneType("title_card", "a module name plus its highlight, for a module with nothing on "
               "screen",
@@ -6308,7 +6319,7 @@ SCENE_TYPES: Dict[str, SceneType] = {t.name: t for t in (
               _draw_certificate),
     SceneType("tag_line", "the closing card",
               (F("text", "text", False,
-                 help="defaults to 'Resolved: <bootcamper>, Senzing graduate.'"),),
+                 help="defaults to 'Resolved: <bootcamper>, Senzing Bootcamp graduate.'"),),
               _draw_tag_line),
 )}
 @dataclass
@@ -9150,6 +9161,10 @@ def _find_spec(name: str):
     ...
 def _imageio_ffmpeg() -> Tuple[Optional[str], str]:
     ...
+def _text_width(font, text: str) -> float:
+    ...
+def _draw_text(draw, x: float, y: float, text: str, font, fill, align: str = "left") -> None:
+    ...
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -9159,8 +9174,10 @@ Used by:
 - `_BRAND`: `test_brand_sync.py`
 - `_FALLBACK_RGB`: `test_brand_sync.py`
 - `_TOKEN_NAMES`: `test_brand_sync.py`
+- `_draw_text`: `test_recap_video.py`
 - `_find_spec`: `test_recap_video.py`
 - `_imageio_ffmpeg`: `test_recap_video.py`
+- `_text_width`: `test_recap_video.py`
 
 ### 7.8 `plugins/senzing-bootcamp/scripts/normalize_docs_markdown.py`
 
@@ -9571,7 +9588,7 @@ looks wrong.
 - `tests/test_graduation_hands_over_the_ability.py`: 30
 - `tests/test_graduation_no_voice_guidance.py`: 20
 - `tests/test_graduation_reads_persisted_answers.py`: 15
-- `tests/test_graduation_video_step.py`: 74
+- `tests/test_graduation_video_step.py`: 75
 - `tests/test_graph_colors_by_source_combination.py`: 25
 - `tests/test_graph_label_distinctness.py`: 18
 - `tests/test_graph_labels_paint_after_circles.py`: 13
@@ -9731,7 +9748,7 @@ looks wrong.
 - `tests/test_recap_structure_checked_per_module.py`: 12
 - `tests/test_recap_summary_blocks.py`: 30
 - `tests/test_recap_tab_coverage.py`: 19
-- `tests/test_recap_video.py`: 131
+- `tests/test_recap_video.py`: 145
 - `tests/test_record_limit_negative_is_rescoped.py`: 13
 - `tests/test_registration_idempotency_is_constructed.py`: 12
 - `tests/test_related_entities_guidance.py`: 20
@@ -10254,7 +10271,7 @@ tests a rebuild can pass from behavior alone.
     answered", matched case-insensitively. A recap-shaped or headingless
     document is refused, and an empty `--require-sections` is an error.
   - **`generate_document_pdf.py`** only delegates to this script.
-- **`generate_recap_video.py`** (`tests/test_recap_video.py`, 131 tests).
+- **`generate_recap_video.py`** (`tests/test_recap_video.py`, 145 tests).
   - **Exit codes:** 0 rendered, 1 invalid storyboard, 2 missing capability, 3
     encode failed. Nothing is written unless the code is 0.
   - **Errors** name the field at fault.
@@ -10273,6 +10290,10 @@ tests a rebuild can pass from behavior alone.
     1,310 entities." becomes "All one thousand five hundred forty records loaded
     into one thousand three hundred ten entities.". `CORD2`, `v4` and `4th` stay
     unchanged.
+  - **The closing card** is "Resolved:", the name and "Senzing Bootcamp
+    graduate." on three centered lines in one size, measured with a stub font
+    of fixed widths and with the loaded font. A phrase too wide shrinks the
+    card in 4 px steps, and a long name wraps above it.
 - **`capture_screenshots.py`** (13 files).
   - **Output.** One PNG per tab, named after the tab, in the order given, with
     duplicate tabs dropped.
@@ -11519,3 +11540,8 @@ Senzing licensing, with no SPDX identifier.
   the sites #575 rewords (a per-record yes made a release cycle approve each
   finding separately, and refine's label step read as a run labeling its own
   issue)
+- #580: the graduation video's tag line reads "Resolved: [Name], Senzing
+  Bootcamp graduate." and `tag_line_layout` breaks it after the last comma,
+  the phrase on one unsplit line and the card shrunk in 4 px steps only to
+  fit it, with an INV-340 `PROPOSED AMENDMENT` queued (the card left out
+  "Bootcamp", and its line breaks depended on the font the renderer found)

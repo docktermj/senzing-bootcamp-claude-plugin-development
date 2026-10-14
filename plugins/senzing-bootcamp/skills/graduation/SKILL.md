@@ -1015,7 +1015,8 @@ when its file name is `<name>-<slug>.png` with `<slug>` one of the three name-fr
 - **Nothing is cropped or edited.** A left-out image stays on disk and in the recap PDF.
 
 **The ending (INV-340).** The last two scenes are always the `certificate`, then the `tag_line` with the text
-**"Resolved: [Name], Senzing graduate."**, where `[Name]` is `video.bootcamper`.
+**"Resolved: [Name], Senzing Bootcamp graduate."**, where `[Name]` is `video.bootcamper`. The renderer
+sets it centered, "Resolved:" above the name and "Senzing Bootcamp graduate." on a line of its own.
 
 **The time budget (INV-340).** The planned length is **2:00**. Each module gets this share of it:
 
@@ -1088,7 +1089,7 @@ A storyboard for a Core bootcamp, with every module taken:
     {"_module": "query_visualize_discover", "type": "counter", "duration": 12, "title": "What Senzing found", "items": [{"label": "Entities in both sources", "value": 118}, {"label": "Entities with several records", "value": 190}], "narration": "One hundred eighteen entities appear in both sources, the overlap nobody could see before."},
     {"_module": "query_visualize_discover", "type": "image", "duration": 12, "image": "docs/visualizations/results_visualization-cross-source.png", "heading": "Your sources, side by side", "narration": "Every one of them is in Ada's own results app."},
     {"_module": "graduation", "type": "certificate", "duration": 2.0, "narration": "Congratulations, Ada."},
-    {"_module": "graduation", "type": "tag_line", "duration": 2.8, "text": "Resolved: Ada Lovelace, Senzing graduate.", "narration": "Resolved: Ada Lovelace, Senzing graduate."}
+    {"_module": "graduation", "type": "tag_line", "duration": 2.8, "text": "Resolved: Ada Lovelace, Senzing Bootcamp graduate.", "narration": "Resolved: Ada Lovelace, Senzing Bootcamp graduate."}
   ]
 }
 ```
@@ -1231,7 +1232,7 @@ ffmpeg the render used: `ffmpeg` on `PATH`, or the `imageio-ffmpeg` binary, whos
    `ffmpeg -ss <seconds> -i docs/bootcamp_recap.mp4 -frames:v 1 data/temp/video-check/scene-<n>.png`.
    Work the midpoints out from the planned durations, lengthened as the renderer's `OVERRUN:` lines
    report. Confirm that each frame shows its scene, that the certificate carries the right name and
-   that the tag line reads "Resolved: [Name], Senzing graduate.".
+   that the tag line reads "Resolved: [Name], Senzing Bootcamp graduate.".
 3. **Audio.** Read the renderer's `Voice:` and `Music:` lines. There is an audio stream whenever
    either one is present: a `Voice:` line naming an engine (`Voice: <engine> (<n> of <m> scenes
    narrated)`), or `Music: yes`. Then the file carries an audio stream (`ffprobe`, or the `Audio:`
