@@ -113,10 +113,10 @@ against the bootcamper's actual setting).
 
 ## Module-start commands (the nudge)
 
-`ground-rules.md` → "Module start banners and transitions" surfaces this per-stage recommendation
-at the start of each module (and `graduation/SKILL.md` at the graduation banner). Switching is
-optional; the session-level model/effort persists for the session (unlike per-skill frontmatter),
-and the guide never changes it — only the bootcamper can.
+`../skills/bootcamp-onboarding/ground-rules.md` → "Module start banners and transitions" surfaces
+this per-stage recommendation at the start of each module (and `graduation/SKILL.md` at the
+graduation banner). Switching is optional; the session-level model/effort persists for the session
+(unlike per-skill frontmatter), and the guide never changes it — only the bootcamper can.
 
 **How it is surfaced is not configurable** (INV-137). The bootcamper is never asked, there is no
 `model_guidance` preference, and the behavior depends only on whether the recommendation differs

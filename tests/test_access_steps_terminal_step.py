@@ -64,12 +64,14 @@ EXAMPLE_LEAD = "**An example of the steps, dated: not the rule.**"
 TERMINAL_LEAD = re.compile(r"⛔ \*\*[^*]*\bunreachable\b[^*]*\*\*")
 PARAGRAPH_END = re.compile(r"⛔|\n\s*- ")
 
-#: A module's pointer to each statement: the owning file, and the statement's lead.
+#: A module's pointer to each statement: the owning file, and the statement's lead, named whole
+#: since #615 (`tests/test_section_pointers_resolve.py`), not by its opening words.
 ROUTE_POINTER = re.compile(
-    r"ground-rules\.md` → \"Follow each response's own `access_steps`\"")
+    r"ground-rules\.md` → \"Follow each response's own `access_steps`, in the order it gives "
+    r"them\"")
 TERMINAL_POINTER = re.compile(
     r"ground-rules\.md` → \"Once every fetch and clone step in the response's `access_steps` "
-    r"has failed\"")
+    r"has failed, report the example as unreachable\"")
 
 #: A fixed route written into a module site: a `raw_url`-then-clone list, a URL named as the
 #: thing to fetch, or a step named by its number.
@@ -417,7 +419,7 @@ class TheGuardsFireOnMutants(unittest.TestCase):
         mutant = _replace(text, "fetch each\n     file by the response's own `access_steps`,",
                           "fetch each\n     `raw_url` (or `git clone` per `access_steps` step 2),")
         self.assertTrue(module_problems(MODULE_03, mutant))
-        uncited = _replace(text, "→ \"Once every\n     fetch", "→ \"Once\n     fetch")
+        uncited = _replace(text, "→ \"Once every fetch", "→ \"Once fetch")
         self.assertTrue(module_problems(MODULE_03, uncited))
         copied = _replace(text, "**Fetch before saving.**",
                           "**Fetch before saving.** The saved file's SHA-256 must equal `hash`.")

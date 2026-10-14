@@ -291,7 +291,10 @@ def step7_reports_a_defect(t):
                 and re.search(r"(?i)bootcamp defect rather than a property of the Bootcamper's "
                               r"data", t)
                 and "`/bootcamp-feedback`" in t
-                and re.search(r"(?i)the condition in step 4's generated-scenario paragraph", t))
+                # #615 points it at step 4d's INV-239 paragraph, as its siblings say; the fixture
+                # below keeps the wording it was written with.
+                and re.search(r"(?i)the condition in step 4d?'s (?:INV-239|generated-scenario) "
+                              r"paragraph", t))
 
 
 def step7_covers_the_criteria(t):

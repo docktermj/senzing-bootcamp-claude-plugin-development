@@ -1251,7 +1251,10 @@ def owner_section(text, anchor):
         line = match.group(0)
         heading = re.match(r"#{1,6}\s+(.*)$", line)
         if heading:
-            hit = heading.group(1).replace("*", "").replace("`", "").strip() == anchor
+            # The anchor may keep the heading's code spans, as test_section_pointers_resolve.py
+            # requires (#615); both sides drop them here.
+            hit = (heading.group(1).replace("*", "").replace("`", "").strip()
+                   == anchor.replace("`", ""))
         else:
             hit = re.match(r"\s*(?:[-*+]\s+)?\*\*" + re.escape(anchor), line) is not None
         if hit:

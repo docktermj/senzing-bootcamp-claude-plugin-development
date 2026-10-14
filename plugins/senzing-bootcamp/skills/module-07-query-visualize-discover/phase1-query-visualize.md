@@ -517,8 +517,8 @@ Senzing record's identity is the pair the loader supplied —
 to Senzing that matches a record already loaded, the new record replaces the current one in Senzing
 and doesn't contribute to the DSR count"* ("Data Source Records (DSRs) Explained" → *Uniquely
 Identifying Records in Senzing*: the `search_docs` route to it is stated once, in
-`../module-06-data-processing/phaseB-load-first-source.md` → "Receiving a quality_iteration (from
-Query, Visualize and Discover, or Phase D)", INV-300; signature via
+`../module-06-data-processing/phaseB-load-first-source.md` → "Receiving a `quality_iteration`
+(from Query, Visualize and Discover, or Phase D)", INV-300; signature via
 `get_sdk_reference(topic='parameters', filter='add_record', language='python')`).
 
 So a mapped file may legitimately hold **more rows than distinct keys** — that is the normal
@@ -645,9 +645,9 @@ same turn, up to its next 👉.
 
 ⛔ (INV-225) **Steps 2–3a ask nothing unless step 3a's recall question is due; when it is not,
 this turn does not end here** — the business answers this step presents are a results
-presentation, which reads as an ending and is not one (`ground-rules.md` → "A results
-presentation is not a turn ending", INV-225). Continue into 3b/3c in the same turn, up to the
-next 👉. The one question these steps can put is step 3a's [recall question](#recall-question),
+presentation, which reads as an ending and is not one (`../bootcamp-onboarding/ground-rules.md` → "A
+results presentation is not a turn ending", INV-225). Continue into 3b/3c in the same turn, up to
+the next 👉. The one question these steps can put is step 3a's [recall question](#recall-question),
 due whenever the zero-or-very-few-matches branch did not run. That turn ends on it; 3b starts
 on the next turn, after the answer.
 
@@ -747,8 +747,8 @@ Based on the assessment — evidence first, wording second:
 
 ⛔ **The Poor band has THREE outcomes, and only one of them reaches Module 5 (INV-264).** This mirrors the
 match-key audit's shape one module earlier (`../module-06-data-processing/phaseD-validation.md` →
-"Report a high-share suppressor as a FINDING, never a pass/fail", whose buckets decide **which**
-question the finding earns), and for the same
+"Report a high-share suppressor as a FINDING, never a pass/fail (INV-264) — and ask the question
+that fits the bucket", whose buckets decide **which** question the finding earns), and for the same
 reason: the possible-match rate is driven mostly by things a remap cannot change — how populated each
 field is in the source, how common the names are, and how large the dataset is. On the
 generated-scenario path the plugin **creates** those characteristics itself: INV-239 requires a source
@@ -938,8 +938,8 @@ why/how/network demonstrations — it is not gated on, or bundled with, the visu
 
 **This app is the bootcamp's "wow moment":** the Bootcamper's own data, resolved. The Truth Set app
 was the practice run on data built to contain matches. The rendering contract's quality bar
-(`visualization-api-reference.md` → "Rendering contract") holds for both apps, and this is the one
-it is there for.
+(`../module-03b-truthset-visualization/visualization-api-reference.md` → "Rendering contract") holds
+for both apps, and this is the one it is there for.
 
 Pin the offer verbatim:
 
@@ -1074,11 +1074,12 @@ every language, Python included, and build and run it with that section's comman
     `../../scripts/vendor/d3.v7.min.js`, INV-252) to `src/server/vendor/d3.v7.min.js`, on every
     route, and have the server resolve it from beside its own file there. That path is inside the
     project, so the server finds it inside the SDK container too, and the live app keeps working
-    after a plugin update moves or replaces the cached plugin directory — Step 6c tells the
-    Bootcamper they can return to this visualization, and that promise is only as durable as the
-    asset it needs. The token values and this copy are fixed at first build; a later plugin update
-    does not reach an existing server. ⚠️ **The standalone snapshot is unaffected**: D3 is inlined
-    into it at build time, so only the **live server** is at risk.
+    after a plugin update moves or replaces the cached plugin directory — graduation Step 6c
+    (`../graduation/SKILL.md` → "6c. Return guide") tells the Bootcamper they can return to this
+    visualization, and that promise is only as durable as the asset it needs. The token values and
+    this copy are fixed at first build; a later plugin update does not reach an existing server.
+    ⚠️ **The standalone snapshot is unaffected**: D3 is inlined into it at build time, so only the
+    **live server** is at risk.
   - ⛔ **(INV-091) Keep the refusal-to-render when no asset is found.** Failing visibly is correct,
     and a CDN fallback would break the offline guarantee that is the reason for vendoring D3 at all.
     If the first-build copy failed, or `src/server/vendor/d3.v7.min.js` is later missing, the server
@@ -1088,7 +1089,9 @@ every language, Python included, and build and run it with that section's comman
   REFERENCE data", built from `config/data_sources.yaml`. ⛔ Never let it default to neutral wording
   here, and never pass "the Senzing Truth Set": this app points at the Bootcamper's data, the
   snapshot is permanent, and a Truth Set label on their own data is a false claim in a keepsake
-  (INV-172). The contract's "Snapshot" section is the statement of record.
+  (INV-172). The contract's snapshot rule, in
+  `../module-03b-truthset-visualization/visualization-api-reference.md` → "Tab identifiers and
+  deep-linking (required)", is the statement of record.
   After generating it, capture screenshots for the recap per
   `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" (on exit 2,
   take the skip path that section states once, INV-300 — never a silent skip by default: say nothing
@@ -1193,8 +1196,9 @@ say so, keep the snapshot as the deliverable, and continue to "Next: Discover ph
 The server the bootcamper writes here MUST bind the loopback interface explicitly (the container's
 own interface address on the container route, never the wildcard) and MUST confirm,
 before the URL is handed over, that the process answering `/api/stats` is the one just started —
-both required by the any-language contract (`visualization-api-reference.md` → "Binding the port"
-and "Confirming the server that answers is yours"). ⚠️ **A wildcard bind coexists with an existing
+both required by the any-language contract
+(`../module-03b-truthset-visualization/visualization-api-reference.md` → "Binding the port" and
+"Confirming the server that answers is yours"). ⚠️ **A wildcard bind coexists with an existing
 loopback listener on the same port:** both succeed, two processes listen, and either may answer.
 Observed 2026-08-17 — a three-week-old server from an unrelated project held the port, this
 module's server bound alongside it, and only luck decided which one the browser reached. The other

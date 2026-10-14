@@ -1120,7 +1120,8 @@ it produces silently suppressed merges that only the post-load match-key audit w
 
 ⛔ **(INV-080) `sz_json_analyzer.py` needs Python 3.10 or newer: measured on server 1.37.26,
 2026-10-09.** `download_resource(filenames=['sz_json_analyzer.py'])` answers with a listing, not the
-script (`ground-rules.md` → "Three tools answer with a listing"), naming
+script (`../bootcamp-onboarding/ground-rules.md` → "Three tools answer with a listing instead of
+content, and exactly one of them accepts `inline`"), naming
 `https://mcp.senzing.com/resources/sz_json_analyzer.py` (72,786 bytes); fetched from that `url`,
 the script's **line 370 is a `match` statement** (`match family:`), syntax Python added in 3.10.
 `py_compile` fails under Python 3.9.25 with `SyntaxError: invalid syntax` at that line and passes
@@ -1199,7 +1200,8 @@ observed 2026-07-27 on SDK 4.3.3.26191, across four sources mapped end to end (`
 Limitations 1 and 3 were re-confirmed on **MCP server 1.32.9, 2026-08-14**, by reading the scripts
 the server itself delivers — `download_resource(filenames=['sz_verbatim_check.py',
 'sz_routing_report.py'])`, whose response is a **listing of URLs, not the scripts**, so reading them
-means fetching each `url` first (`ground-rules.md` → "Three tools answer with a listing") — and the live
+means fetching each `url` first (`../bootcamp-onboarding/ground-rules.md` → "Three tools answer with
+a listing instead of content, and exactly one of them accepts `inline`") — and the live
 `mapping_workflow` step-3 schema. That is a check of the
 **mechanism**, which is what these entries assert, and it does not depend on re-running a mapping.
 Limitation **2** was confirmed end to end on **2026-08-18** by a run that finally had a source with
@@ -1420,8 +1422,10 @@ sentence above as its top hit, verified server 1.37.19, docs index 2026-10-02 18
 2026-10-04; `query` is the tool's only
 required parameter, so the vocabulary is part of the instruction (INV-212) — or
 `download_resource(filename='senzing_entity_specification.md')`
-— that second call returns a **listing**, so fetch its `url` before reading, per `ground-rules.md` →
-"Three tools answer with a listing") — INV-080 applies to this claim as much as to any attribute name.
+— that second call returns a **listing**, so fetch its `url` before reading, per
+`../bootcamp-onboarding/ground-rules.md` → "Three tools answer with a listing instead of content,
+and exactly one of them accepts `inline`") — INV-080 applies to this claim as much as to any
+attribute name.
 
 **Do not assume a source's shape from its provenance.** CORD ships both forms: verified against the
 MCP server, London/`GLOBALDATA` returns a `FEATURES` array while Las Vegas/`PPP_LOANS` returns flat
@@ -1691,8 +1695,9 @@ every data-sourced string escaped for the context it lands in, including `<`/`>`
 inside any inline `<script>` payload (INV-106); and verify the rendered page rather than the exit
 status (INV-129). The mapping summary carries **more** bootcamper-authored text than the phase 1
 page — source field names, target attributes, sample values — so the escaping rule matters most here.
-`ground-rules.md` → "Visual deliverables (Senzing brand)" and the visualization contract's
-"Rendering contract" are the statements of record. Where this page is generated is stated once, at
+`../bootcamp-onboarding/ground-rules.md` → "Visual deliverables (Senzing brand)" and the
+visualization contract's "Rendering contract" are the statements of record. Where this page is
+generated is stated once, at
 [`phase1-quality-assessment.md` → step 6's quality page](phase1-quality-assessment.md#quality-page-runs-on-the-host),
 and binds this page too (INV-300).
 

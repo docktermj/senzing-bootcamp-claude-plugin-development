@@ -4634,6 +4634,20 @@ each whose sentence lacks the invariant as a whole token; and
 `without_citation(texts, path, line, invariant)` removes the first citation on
 or after that line, for negative controls.
 
+Its second half checks section pointers (#615). `SECTION_POINTER` matches a
+backticked `<file>.md`, `→` and a double-quoted name. `section_pointers(path,
+text)` returns `(line, target, name)` for each, on wrap-collapsed blocks.
+`section_names_by_kind(text)` returns `{"heading": names, "bold label": names}`:
+ATX headings outside a code fence, and bold spans opening a line (after any
+indent, `>`, list marker or ⛔/⚠️) with a closing `.` or `:` dropped; each name
+is lower-cased, whitespace-collapsed and stripped of leading numbering (`2.`,
+`6c.`), and is also kept with one parenthetical at either end dropped.
+`section_names(text)` is their union, `section_kind(text, name)` returns
+`"heading"`, `"bold label"` (a name that is both counts as a heading) or None,
+and `names_a_section(text, name)` is whether it is not None.
+`section_pointer_problems(path, text, read=...)` reports each pointer whose file
+does not resolve from `path.parent`, or whose name is no section there.
+
 ### 5.63 `.claude/skills/release-cycle`
 
 Maintainer skill `/release-cycle` (#573) that runs the release cycle of
@@ -9735,14 +9749,16 @@ collected as tests:
   spec files minus the `specs/IMPLEMENTED.md` and `specs/DECLINED.md` headings.
   It reports any spec found in both. Listing exits 0, and `--check` exits 2 when
   a spec is in both.
-- `tests/_corpus.py`: the shared corpus listing (#515), used by 18 files.
+- `tests/_corpus.py`: the shared corpus listing (#515), used by 19 files.
   `corpus_files(*subtrees, root=REPO_ROOT, suffixes=None)` lists tracked and
   untracked, non-ignored files from `git ls-files -z`, and always prunes Claude
   Code's runtime directories (section 5.62).
-- `tests/_pointer_sites.py`: the derived pointer scan (#519), used by 4 files.
+- `tests/_pointer_sites.py`: the derived pointer scan (#519), used by 5 files.
   `uncited_pointers(texts, name, anchor, invariant)` reports every shipped
   sentence that points at a `ground-rules.md` section, by quoted name or
-  anchor, without citing the invariant (section 5.62).
+  anchor, without citing the invariant; `section_pointer_problems(path, text)`
+  reports each `<file>.md` → "<name>" pointer that names no heading or bold
+  label in its file (#615) (section 5.62).
 
 Skip conventions. Every reason names its cause and states no count.
 
@@ -10172,6 +10188,7 @@ looks wrong.
 - `tests/test_sdk_update_offer.py`: 59
 - `tests/test_search_docs_calls_pass_a_query.py`: 10
 - `tests/test_secret_patterns_are_shared.py`: 12
+- `tests/test_section_pointers_resolve.py`: 20
 - `tests/test_server_launch_warns_about_protected_launchers.py`: 7
 - `tests/test_settle_signal_is_reported.py`: 11
 - `tests/test_shape_claims_precede_mapping_claims.py`: 25
@@ -12059,3 +12076,11 @@ Senzing licensing, with no SPDX identifier.
   counts as recorded at the end-of-run checks under `--draft` (stage 5 writes
   under `specs/` before the stop, a walk wrote reports outside `<run-dir>`,
   and those checks demanded a ledger line `--draft` forbids)
+- #615: every backticked `<file>.md` → "<name>" pointer in shipped Markdown
+  resolves from its own file and names a heading or line-opening bold label
+  there (case, leading numbering and an end parenthetical ignored), checked by
+  `tests/test_section_pointers_resolve.py` through `tests/_pointer_sites.py`
+  with per-kind floors; the issue's five references and 26 failing pointers are
+  fixed, with an INV-366 `PROPOSED AMENDMENT` naming its excluded lines by text
+  (pointers named sections that did not exist, a bare filename or a sentence's
+  opening words, and INV-366's line citations had moved)

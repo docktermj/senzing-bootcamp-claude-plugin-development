@@ -304,7 +304,8 @@ gate (internal - do not render the `⛔`/`🛑` glyphs). Do not advance until th
   **verify the answer with a second confirming MCP call** (see "Verify substantive answers"
   above) before presenting it, then re-present the pinned gate question. Do NOT advance.
 - **Readiness signal** ("ready", "let's go", "continue", "next", "yes"): hand off to Module 1
-  (`SKILL.md`, "Hand off to Module 1"). Do not re-present the primer or the gate.
+  (`SKILL.md`, "Record the recap, then hand off to Module 1"). Do not re-present the primer or the
+  gate.
 - **Not ready** ("no", "not yet", "wait"): acknowledge, invite another entity-resolution question
   or topic, and re-present the pinned gate question. Do NOT advance.
 - **Ambiguous:** treat as a follow-up.
