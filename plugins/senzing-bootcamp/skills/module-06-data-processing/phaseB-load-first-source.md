@@ -2,7 +2,8 @@
 
 Continues from Phase A. Follow the ground rules; `🛑`/`⛔` are internal control directives.
 Loading and redo code comes from the MCP tools (`generate_scaffold` / `sdk_guide`), never
-hand-written. Back up `database/G2C.db` before loading. The `DATA_SOURCE` codes in this data
+hand-written. Back up [the repository](SKILL.md#the-repository) to `data/backups/` before loading,
+on SQLite (`database/G2C.db`) or PostgreSQL alike. The `DATA_SOURCE` codes in this data
 were registered in Phase A (step 4a), so the load runs against a config that already knows them
 (the loader's generic `SENZ2207` handling remains a fallback).
 
@@ -70,7 +71,8 @@ For each source in `sources` not yet listed in `completed`, in order:
 4. **Reload the source with the existing loading program:** `phaseB-load-first-source.md` Step 7
    (below) on a single-source run, or `phaseC-multi-source.md` Step 19 for this source alone on a
    multi-source run. Step 7's license check, its two-stage reconciliation (INV-243) and its `load_status` update in
-   `config/data_sources.yaml` apply as written. Back up `database/G2C.db` first, as for any load.
+   `config/data_sources.yaml` apply as written. Back up [the repository](SKILL.md#the-repository) first, as for any load, on
+   SQLite (`database/G2C.db`) or PostgreSQL.
 5. **Add the source to `completed`** in one quiet write, and delete its
    `{source_name}_loaded_record_ids.txt`.
 
@@ -323,7 +325,8 @@ definition says, adding only their own values, and the two-stage reconciliation 
   - ⛔ **(INV-324) That count is measured through the SDK at this step, never summed from the registry.**
     Route the code through the Senzing MCP server, exactly as Module 5 Step 24a counts
     `record_count` (`module-05-data-quality-mapping/phase3-test-load.md`), and never count with
-    direct SQL against `database/G2C.db`. Records a test load left in the repository count
+    direct SQL against [the repository](SKILL.md#the-repository) (`database/G2C.db` on SQLite, the
+    Senzing database on PostgreSQL). Records a test load left in the repository count
     against the cap whatever `config/data_sources.yaml` says.
   - **The count cannot be measured:** the remaining cap is indeterminate. Offer no subset size,
     say the figure is currently unavailable, and never substitute a remembered or estimated one,
@@ -491,12 +494,15 @@ After loading completes, drain the redo queue. Redo records are deferred re-eval
 refine the entity resolution graph, without processing them, results are incomplete.
 
 Use `generate_scaffold(language='<chosen_language>', workflow='redo', version='current')` for the
-redo processing pattern. The loading program, or a separate program saved as the program
+redo processing pattern, fetching each file by the response's own `access_steps`, as
+`../bootcamp-onboarding/ground-rules.md` → "Follow each response's own `access_steps`, in the
+order it gives them" says (INV-160, INV-300). The loading program, or a separate program saved as the program
 `process_redo` in `src/load` at the path and with the project that
 `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, and built and run
 with that section's commands, should sequentially process all pending redos until the queue is
 empty. If the generated redo scaffold uses `/tmp/`, `ExampleEnvironment`, or any path outside the
-working directory, override the database path to `database/G2C.db`.
+working directory, override it to [the repository](SKILL.md#the-repository) (`database/G2C.db` on
+SQLite, the connection in `config/engine_config.json` on PostgreSQL).
 
 ⛔ **The bootcamp needs a batch drain that terminates. Check the returned snippet before running
 it.** The MCP redo templates target *streaming ingest*, where never stopping is the point: the
@@ -548,10 +554,11 @@ records, is stated once in [`ground-rules.md`](../bootcamp-onboarding/ground-rul
   [Receiving a `quality_iteration`](#receiving-a-quality-iteration)); it shows no midpoint entity,
   because Module 7 step 3b is where its results are read.
 
-**Checkpoint:** write step 9 (record `midpoint_record` in `config/bootcamp_progress.json`: the
-`"<DATA_SOURCE>:<RECORD_ID>"` of the midpoint entity's record with the lowest `RECORD_ID`, or
-`"none"` when this step showed no entity). A record identifies the entity across later loads, and an
-entity ID does not. Module 7's Discover phase reads it to keep its predictions off this entity
+**Checkpoint:** write step 9 (record `midpoint_record` in `config/bootcamp_progress.json`, at the
+key path `module_6_processing.midpoint_record`: the `"<DATA_SOURCE>:<RECORD_ID>"` of the midpoint
+entity's record with the lowest `RECORD_ID`, or `"none"` when this step showed no entity). A record
+identifies the entity across later loads, and an entity ID does not. Module 7's Discover phase
+reads it to keep its predictions off this entity
 ([`phase2-discover.md`](../module-07-query-visualize-discover/phase2-discover.md#already-shown-entities)).
 
 ## 10. Incremental loading strategy

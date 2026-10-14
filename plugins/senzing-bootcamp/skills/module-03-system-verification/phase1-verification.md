@@ -151,8 +151,10 @@ query and fail only at the first real engine call — and if that call is the sy
 failure lands several steps from its cause, mid-load, where it reads as a data problem.
 
 Use the initialization code already generated in Module 2 (or re-obtain it via
-`generate_scaffold(language='<chosen_language>', workflow='initialize')` — never hand-write it,
-INV-080), create an engine, and release it.
+`generate_scaffold(language='<chosen_language>', workflow='initialize')`, fetching each file by the
+response's own `access_steps`, as `../bootcamp-onboarding/ground-rules.md` → "Follow each
+response's own `access_steps`, in the order it gives them" says (INV-160, INV-300) — never
+hand-write it, INV-080), create an engine, and release it.
 
 **If it fails, report the error and stop here rather than proceeding to generation or loading:**
 
@@ -280,7 +282,7 @@ Verify the Senzing SDK initializes correctly and connects to the database.
 2. **Fetch the snippet, then** save it as the program `verify_init` in `src/system_verification`,
    at the path `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives
    for the chosen language, its project created first as that section says.
-   <!-- MCP-NEGATIVE: generate_scaffold(language='python', workflow='initialize') — its snippets[] carry file_path, source_url, repo, raw_url, size_bytes and line_count with no content field at all — owner: generate_scaffold IS the route that would return source text, and it returns a listing plus an ordered access_steps (fetch raw_url, else git clone) instead, so fetching raw_url is the documented route (routing negative) — server 1.36.0, 2026-09-02 -->
+   <!-- MCP-NEGATIVE: generate_scaffold(language='python', workflow='initialize') — its snippets[] carry each file's location and hash with no content field at all — owner: generate_scaffold IS the route that would return source text, and it returns a listing plus an ordered access_steps instead: a fetch step (each item's url, served by the MCP server, or its raw_url if that fails, then sha256sum of the saved file must print the item's hash), then git_clone, then the final inline step, so the response's own access_steps are the documented route (routing negative) — server 1.38.2, 2026-10-14 -->
    ⛔ (INV-234) `generate_scaffold` returns a **listing**, not code — `file_path`, `source_url`, `url`,
    `raw_url`, `size_bytes`, `line_count` and `hash` per snippet, with no source text. Fetch each
    file by the response's own `access_steps`, in the order the response gives them and with every

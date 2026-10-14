@@ -72,17 +72,33 @@ When the bootcamper hits an error during this module:
 
 ## Loading code and safety (applies to every load step)
 
+<a id="the-repository"></a>
+**The repository, on either engine.** This is the one statement of what "the repository" means in
+this module; every Module 6 step that names it names both engines in a clause and points here
+rather than restating it (INV-300). Read `database_type` from `config/bootcamp_preferences.yaml`
+(SDK setup's Step 7 writes it). On SQLite the repository is the file `database/G2C.db`; on
+PostgreSQL it is the Senzing database named by the connection in `config/engine_config.json`. When
+`database_type` is absent or indeterminate, determine the engine from that connection string and
+never guess, as `../graduation/database-backup.md` says. Backup and restore go through
+`../graduation/database-backup.md`, the ONE implementation of both, with this module's
+destination `data/backups/`: the copy `data/backups/G2C.db.pre-load` on SQLite, the dump
+`data/backups/senzing.dump.pre-load` on PostgreSQL. That file's "If the backup cannot be produced"
+path (warn and continue) applies here as it does to its other callers.
+
 - **Loading, redo, and query code come from the MCP tools, never hand-written.** Use
   `generate_scaffold` (workflows `add_records`, `redo`, `query`) and `sdk_guide` for
   version-correct SDK code. Inline examples may use outdated SDK patterns. The rule covers
   the Senzing SDK calls; code that only orchestrates them is ordinary code (see the
   Phase C header, `phaseC-multi-source.md`).
 - **Override MCP-suggested paths.** If a generated scaffold uses `/tmp/`, `ExampleEnvironment`,
-  or any path outside the working directory, override the database path to `database/G2C.db`
+  or any path outside the working directory, override it to [the repository](#the-repository)
+  (`database/G2C.db` on SQLite, the connection in `config/engine_config.json` on PostgreSQL)
   and keep all output files project-relative.
-- **Back up before loading.** Ensure a backup of `database/G2C.db` exists before a load so a
-  failed load can be recovered (see Phase D → Recovery from Failed Load).
-- **No direct SQL.** Never generate SQL against `database/G2C.db` or its internal tables. All
+- **Back up before loading.** Ensure a backup of [the repository](#the-repository) exists in
+  `data/backups/` before a load, on SQLite (`database/G2C.db`) or PostgreSQL alike, so a failed
+  load can be recovered (see Phase D → Recovery from Failed Load).
+- **No direct SQL.** Never generate SQL against [the repository](#the-repository) (`database/G2C.db`
+  on SQLite, the Senzing database on PostgreSQL) or its internal tables. All
   entity access goes through generated SDK code. Counts, stats, and reporting come from
   `reporting_guide` — **with a topic named**:
   `reporting_guide(topic='evaluation', language='<chosen_language>')` for this module's statistics,

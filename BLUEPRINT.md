@@ -1593,7 +1593,8 @@ Ground rules (`ground-rules.md`, every turn):
   `data/temp/`, `data/mapping/`, `src/resources/`, `config/`,
   `database/G2C.db`. Root whitelist: `.gitignore`, `.env`, `.env.example`,
   `README.md`, `requirements.txt`, `pom.xml`, `*.csproj`, `Cargo.toml`,
-  `package.json`. Never `internal://` as the datastore.
+  `package.json`, and C#'s `nuget.config` (#618). Never `internal://` as the
+  datastore.
 - Building and running a program (the one statement, INV-300, that every step
   saving, building or running a program cites by `<dir>` and `<name>`: Modules
   2, 3, 3b, 5, 6 and 7, graduation and the ground rules' entity program, #563,
@@ -1872,7 +1873,9 @@ branch.
   Phase 3 binds by the MCP-named route only: Python
   installs nothing (`pip install senzing` forbidden; shadowing detected via
   `senzing.__file__`); Java the product `sz-sdk.jar`; C# a local `Senzing.Sdk`
-  NuGet source; Rust a git dependency; TypeScript from GitHub, with a
+  NuGet source, added with `--configfile nuget.config` to the project's
+  `nuget.config` (`dotnet new nugetconfig` when absent, its `<clear/>` said;
+  never the user-level file, INV-199, #618); Rust a git dependency; TypeScript from GitHub, with a
   build-from-source recovery branch (name the cause, offer fix, retry or
   fallback language).
 - Step 3, env script (every path): `src/scripts/senzing-env.sh`, sourced
@@ -2416,8 +2419,12 @@ by `stage`: `reload` runs only Phase B's receiving branch, `remap` goes to
 Module 5's, and Phase D's gate is not re-presented. A `setup_detour` goes to
 SDK setup's receiving branch. Rules: SENZ errors go to `explain_error_code`;
 loader, redo and query code comes only from `generate_scaffold` (`add_records`,
-`redo`, `query`) and `sdk_guide`; paths under `/tmp/` or `ExampleEnvironment`
-become `database/G2C.db`; back up before each load; no SQL against the database;
+`redo`, `query`; its files fetched by the response's own `access_steps`) and
+`sdk_guide`; paths under `/tmp/` or `ExampleEnvironment` become the repository, stated once in
+"The repository, on either engine" (`#the-repository`, #618): `database/G2C.db`
+on SQLite, `config/engine_config.json`'s connection on PostgreSQL; back up
+before each load by `graduation/database-backup.md` to `data/backups/`
+(`G2C.db.pre-load` or `senzing.dump.pre-load`); no SQL against the database;
 statistics come from `reporting_guide` `evaluation` or `export`, never
 `reports`.
 
@@ -2482,7 +2489,7 @@ Phase B (`phaseB-load-first-source.md`, steps 5-11):
   then shows the midpoint entity (`#midpoint-entity`): the first source's
   entity with the most records, ties broken by the lowest `ENTITY_ID`, as text
   with no visualization and no 👉, and none on a quality-iteration reload. Its
-  checkpoint records `midpoint_record`: the `"<DATA_SOURCE>:<RECORD_ID>"` of
+  checkpoint records `module_6_processing.midpoint_record`: the `"<DATA_SOURCE>:<RECORD_ID>"` of
   that entity's record with the lowest `RECORD_ID`, or `"none"` when the step
   showed no entity (a record identifies the entity across later loads; an
   entity ID does not). Step
@@ -2695,7 +2702,8 @@ fallback is reported as a bootcamp generation defect with `/bootcamp-feedback`.
 ### 5.16 `plugins/senzing-bootcamp/skills/graduation/`
 
 Terminal module (`graduation`). `database-backup.md` is the one backup
-procedure, shared with `bootcamp-onboarding/packaging.md`. Every step warns
+procedure, shared with `bootcamp-onboarding/packaging.md` and Module 6, each
+caller naming its destination ("The destination", #618). Every step warns
 and continues; the recap PDF is guaranteed.
 
 - Opens with the BOOTCAMP GRADUATION banner, a terminal preface and the
@@ -2742,12 +2750,12 @@ and continues; the recap PDF is guaranteed.
   output: `classes/`, `target/`, `dist/`, `node_modules/`, `bin/`, `obj/`),
   `data/senzing-ready/` and the root dependency manifest (only Python's sits
   at the root; C#, Rust and TypeScript manifests travel in their program
-  folders); writes
+  folders), and C#'s `nuget.config` (#618); writes
   `production/config/data_sources.yaml` keeping only `version` and each
   source's `name`, `file_path`, `format` (a `skipped` source is left out,
   and Step 4's README names it as not mapped); never copies progress,
   preferences, recap, notes, `data/raw`, `data/samples`, `data/subsets`,
-  `logs`, `backups`, `docs/feedback`.
+  `data/backups`, `logs`, `backups`, `docs/feedback`.
 - Step 3: `.env.example` (`SENZING_ENGINE_CONFIGURATION_JSON`,
   `SENZING_LICENSE_FILE`, `DATABASE_URL`, `LOG_LEVEL`),
   `docker-compose.yml` by `database_type`, `.gitignore` (listing each build
@@ -10075,6 +10083,7 @@ looks wrong.
   5
 - `tests/test_module5_step18_validates_the_full_output.py`: 6
 - `tests/test_module6_data_dirs_are_copied_or_excluded.py`: 5
+- `tests/test_module6_repository_follows_database_type.py`: 27
 - `tests/test_module7_asks_the_bootcampers_question_first.py`: 12
 - `tests/test_module7_discover_instructions.py`: 17
 - `tests/test_module7_exports_for_integration_targets.py`: 50
@@ -12084,3 +12093,14 @@ Senzing licensing, with no SPDX identifier.
   fixed, with an INV-366 `PROPOSED AMENDMENT` naming its excluded lines by text
   (pointers named sections that did not exist, a bare filename or a sentence's
   opening words, and INV-366's line citations had moved)
+- #618: Module 6 states the repository once (`#the-repository`): `database/G2C.db`
+  on SQLite, the `config/engine_config.json` connection on PostgreSQL, backed up
+  before each load by `graduation/database-backup.md` to `data/backups/`, and
+  every site naming `G2C.db` names both engines and links it, checked by
+  `tests/test_module6_repository_follows_database_type.py`; Module 6's and
+  Module 3's `generate_scaffold` steps cite the `access_steps` route, Module 3's
+  marker is restamped, `midpoint_record` gets its key path, Module 2 adds the
+  C# NuGet source to a project-local `nuget.config`, and an INV-050
+  `PROPOSED AMENDMENT` is queued (Module 6 hardcoded the SQLite file on a
+  PostgreSQL run, and `dotnet nuget add source` wrote the user-level
+  `NuGet.Config`)

@@ -998,12 +998,24 @@ existing-install path, which skips Phase 1 and Phase 2; INV-338, INV-339):**
         this platform's own install reply (the directory its `PYTHONPATH` or `sz-sdk.jar` path
         sits in), never from another platform's reply. If the file is there, use that `dotnet/`
         directory as a local NuGet source (`dotnet nuget add source <that directory> --name
-        SenzingLocal`, then `dotnet add package Senzing.Sdk --source SenzingLocal`), and tell the
+        SenzingLocal --configfile nuget.config`, then
+        `dotnet add package Senzing.Sdk --source SenzingLocal`), and tell the
         bootcamper the source was **observed in their install, not named by the MCP server**
         (INV-283). No directory, or a directory with no `Senzing.Sdk.*.nupkg`, means nothing
         was observed.
      2. **Neither:** tell the bootcamper that their platform's install reply names no package
         source, and that nothing in their install supplied one.
+
+     ⛔ **(INV-199) The source goes into the project's `nuget.config`, never the user-level
+     `NuGet.Config`.** With no `--configfile`, `dotnet nuget add source` writes the user-level file
+     when the project has no config of its own (measured with dotnet 9.0.110 on Linux, 2026-10-14:
+     it wrote `$HOME/.nuget/NuGet/NuGet.Config`). So, at the project root, run
+     `dotnet new nugetconfig` when `nuget.config` is absent, and tell the bootcamper that the new
+     file starts with `<clear/>` and re-adds nuget.org, so feeds from their user or machine NuGet
+     config are not used for this project. When `nuget.config` already exists, leave it and add
+     the source to it. Either way, give whichever command adds the source, the reply's own or the
+     one above, `--configfile nuget.config`. NuGet reads that file for every program folder below
+     the project root.
 
      ⛔ **Never add a public NuGet feed for `Senzing.Sdk` (nuget.org or any other) on your own (INV-222).**
    - **Rust:** call `sdk_guide(topic='install', platform='<platform>', language='rust')` and follow

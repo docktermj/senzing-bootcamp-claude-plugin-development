@@ -253,8 +253,10 @@ LOOSE_PROGRAM_PATH = re.compile(
 #: Commands a file states as its own route, which the statement cites rather than holds: Module
 #: 2's C# package-source route, `../module-02-sdk-setup/SKILL.md` → Phase 3, the C# bullet, and
 #: the command its Java route says `java -jar sz-sdk.jar` prints, which installs the SDK jar and
-#: builds no Bootcamper program.
+#: builds no Bootcamper program. `dotnet new nugetconfig` is the same C# route's project-local
+#: package-source file (#618, INV-199), which builds no program either.
 ROUTE_COMMANDS = {M2: ("`dotnet add package Senzing.Sdk --source SenzingLocal`",
+                       "`dotnet new nugetconfig`",
                        "`mvn install:install-file`")}
 IMPLEMENTED = REPO_ROOT / "specs" / "IMPLEMENTED.md"
 HELD_BLOCK = "## module3-build-and-run-table"

@@ -784,7 +784,8 @@ The caller says which entity to pick. Everything below is the same for all three
   `config/`; temp -> `data/temp/`; downloaded Senzing resources -> `src/resources/`; mapping
   working data -> `data/mapping/`.
 - Project root whitelist ONLY: `.gitignore`, `.env`, `.env.example`, `README.md`,
-  `requirements.txt`, `pom.xml`, `*.csproj`, `Cargo.toml`, `package.json`. Never put `.py`,
+  `requirements.txt`, `pom.xml`, `*.csproj`, `Cargo.toml`, `package.json`, and C#'s
+  `nuget.config` (SDK setup's project-local package source). Never put `.py`,
   `.md` (except README), `.jsonl`, `.csv`, or non-config `.json` in the root.
 - The plugin's PreToolUse write-gate blocks every write outside the project, as the first bullet
   of this section states (INV-200); `../../hooks/README.md` lists everything it blocks. File-type

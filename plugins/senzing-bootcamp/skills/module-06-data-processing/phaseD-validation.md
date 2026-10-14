@@ -2,7 +2,9 @@
 
 Continues from Phase B (single source) or Phase C (multi-source). Follow the ground rules;
 `🛑`/`⛔` are internal control directives. Entity queries use SDK code generated via
-`generate_scaffold` / `get_sdk_reference`, never direct SQL against `database/G2C.db`. Counts
+`generate_scaffold` / `get_sdk_reference`, never direct SQL against
+[the repository](SKILL.md#the-repository) (`database/G2C.db` on SQLite, the Senzing database on
+PostgreSQL). Counts
 and stats come from `reporting_guide` — **name the topic**:
 `reporting_guide(topic='evaluation', language='<chosen_language>')` for the single-pass export
 statistics this phase needs, `reporting_guide(topic='export', language='<chosen_language>')` for
@@ -74,7 +76,9 @@ Review the entity resolution results:
   and back to this phase; nothing is remapped before the gate is asked
 
 Use `generate_scaffold(language='<chosen_language>', workflow='query', version='current')` to
-generate SDK code that retrieves sample entities for review, and save it as the program
+generate SDK code that retrieves sample entities for review, fetching each file by the response's
+own `access_steps`, as `../bootcamp-onboarding/ground-rules.md` → "Follow each response's own
+`access_steps`, in the order it gives them" says (INV-160, INV-300), and save it as the program
 `review_entities` in `src/query`, at the path and with the project that
 `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives; build and run
 it with that section's commands. Use
@@ -274,14 +278,22 @@ If loading fails partway through:
    `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, and built
    and run with that section's commands) to see if they exist.
 2. **Decide, wipe and restart vs. resume:**
-   - **Wipe and restart:** restore from the `database/G2C.db` backup, fix the issue, re-run.
+   - **Wipe and restart:** restore [the repository](SKILL.md#the-repository) from its
+     `data/backups/` backup by `../graduation/database-backup.md` → "Restore"
+     (`data/backups/G2C.db.pre-load` back to `database/G2C.db` on SQLite,
+     `data/backups/senzing.dump.pre-load` into a fresh database on PostgreSQL), fix the issue,
+     re-run.
    - **Resume:** modify the loading program to skip already-loaded records.
-3. **If the database is corrupted**, restore from backup. If no backup, delete
-   `database/G2C.db` and re-run the Module 2 config.
+3. **If the database is corrupted**, restore [the repository](SKILL.md#the-repository) from that
+   backup the same way. If there is no backup, branch on `database_type`: on SQLite, delete
+   `database/G2C.db` and re-run the Module 2 config; on PostgreSQL, recreate the Senzing database,
+   apply the schema again by SDK setup's PostgreSQL schema step (`../module-02-sdk-setup/SKILL.md`
+   Step 7, Option 1 steps 3–4, or the same step of the option the bootcamper took), and re-run the
+   Module 2 config.
 4. **Common causes:** disk full, out of memory, invalid records, network timeout.
 
-(The Kiro backup/restore helper `scripts/restore_project.py` is a later porting phase; restore
-from your own `database/G2C.db` backup for now.)
+(The Kiro backup/restore helper `scripts/restore_project.py` is a later porting phase; until then,
+restore by `../graduation/database-backup.md` → "Restore", as above.)
 
 ### Multi-source recovery (Phase C)
 
@@ -316,7 +328,8 @@ quality … Aggregate stats hide errors. Always sample and manually review speci
 which is exactly the gap the UAT percentages below leave open.
 
 1. **Read the match keys** from the loaded results using generated SDK code (never direct SQL
-   against `database/G2C.db`), saved as the program `match_key_audit` in `src/query`, at the path
+   against [the repository](SKILL.md#the-repository), `database/G2C.db` on SQLite or the Senzing
+   database on PostgreSQL), saved as the program `match_key_audit` in `src/query`, at the path
    and with the project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a
    program" gives, and built and run with that section's commands. Per `get_sdk_reference(topic='response_schemas')` there are
    **two reads, and they need two different methods** — confirm both via MCP rather than from
@@ -568,7 +581,8 @@ what one run returned, not what the flag means.
 1. **Take every entity with 2 or more records from the export already read** in the match-key
    audit's step 1 — an entity whose `RESOLVED_ENTITY.RECORDS[]` has two or more elements. **No
    sampling.** Call that total **M**. One `how_entity` call per entity, through generated SDK code
-   (never direct SQL against `database/G2C.db`), saved as the program `how_state_audit` in
+   (never direct SQL against [the repository](SKILL.md#the-repository), `database/G2C.db` on SQLite
+   or the Senzing database on PostgreSQL), saved as the program `how_state_audit` in
    `src/query`, at the path and with the project that `../bootcamp-onboarding/ground-rules.md` →
    "Building and running a program" gives, and built and run with that section's commands.
 2. **Take the method name, argument type and flag spelling from `get_sdk_reference` for the
