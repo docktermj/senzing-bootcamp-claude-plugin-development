@@ -32,6 +32,10 @@ Checks, each negative-controlled when written (#571):
 asks the three questions, or that it never answers for the Bootcamper. Those are properties of
 a real run. This pins what the instructions say and what the stop and slice code does.
 
+This module enforces INV-369 (registered 2026-10-13). It asserts the sentences and drives the
+walk's stop condition offline; it cannot establish that a live session never answers for the
+Bootcamper or that a live walk reaches its start module.
+
 Stdlib only, offline (INV-108).
 """
 import io
@@ -74,7 +78,7 @@ class TheRewordedRuleForbidsSelfPlay(unittest.TestCase):
 
     def test_the_skill_forbids_answering_inside_the_session(self):
         body = read(SKILL)
-        for pat in (r"⛔ \*\*Never answer as the Bootcamper in the session that runs or grades "
+        for pat in (r"⛔ \*\*\(INV-369\) Never answer as the Bootcamper in the session that runs or grades "
                     r"the bootcamp\.\*\* That is self-play",
                     r"\*\*A simulated walk \(`--simulated`\) is not self-play and not "
                     r"fabrication:\*\* a separate process that has never seen the plugin answers",
@@ -88,7 +92,7 @@ class TheRewordedRuleForbidsSelfPlay(unittest.TestCase):
 
     def test_the_phase3_file_distinguishes_the_two(self):
         body = read(PHASE3)
-        for pat in (r"⛔ \*\*Self-play is answering as the Bootcamper inside the session that "
+        for pat in (r"⛔ \*\*\(INV-369\) Self-play is answering as the Bootcamper inside the session that "
                     r"runs or grades the bootcamp, and it stays forbidden\.\*\* A simulated "
                     r"walk is not self-play",
                     r"a second one that has never seen the plugin, and the bootcamp process "
@@ -100,7 +104,7 @@ class TheRewordedRuleForbidsSelfPlay(unittest.TestCase):
 
     def test_the_fast_forward_keeps_the_rule(self):
         self.assertRegex(read(PHASE3),
-                         r"⛔ \*\*The rule above is not relaxed here:\*\* this session never "
+                         r"⛔ \*\*\(INV-369\) The rule above is not relaxed here:\*\* this session never "
                          r"answers for the Bootcamper, not even to hurry the fast-forward\.")
 
     def test_no_site_lets_the_session_answer(self):
@@ -124,7 +128,7 @@ class ACleanSimulatedRunIsNotAPass(unittest.TestCase):
 
     def test_the_phase3_file_reports_it(self):
         body = read(PHASE3)
-        self.assertRegex(body, r"⛔ \*\*A clean simulated walk is reported only as "
+        self.assertRegex(body, r"⛔ \*\*\(INV-369\) A clean simulated walk is reported only as "
                          + self.LINE + r"\*\*, never as \"phase 3 passed\"")
         self.assertRegex(body, r"The report still lists phase 3 with the maintainer as not "
                                r"yet done")

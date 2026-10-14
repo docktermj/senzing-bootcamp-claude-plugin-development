@@ -742,7 +742,22 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 242 on 2026-10-13: INV-367 (corpus walks go through one helper; #515) names test_corpus.py, which
 # cites it back and states what its walk guard cannot see. Re-derived by running the extractor --
 # 242, the new pair present by name and none removed. EXPECTED_PAIRS 241 -> 242.
-EXPECTED_PAIRS = 242
+# 243 on 2026-10-13: INV-368 (the finding skills' two stages; #572) names test_drafts.py, which
+# cites it back and states it cannot establish that a live run stops at its filing step.
+# Re-derived by running the extractor -- 243, the new pair present by name and none removed.
+# EXPECTED_PAIRS 242 -> 243.
+# 244 on 2026-10-13: INV-317's #572 note names test_drafts.py, which cites INV-317 back and
+# states it cannot establish that a caller records the drafts. Re-derived by running the
+# extractor -- 244, the new pair present by name and none removed. EXPECTED_PAIRS 243 -> 244.
+# 245 on 2026-10-13: INV-369 (who may answer dry-run phase 3; #571) names
+# test_dry_run_simulated_phase3.py, which cites it back and states it cannot establish that a
+# live session never answers for the Bootcamper. Re-derived by running the extractor -- 245,
+# the new pair present by name and none removed. EXPECTED_PAIRS 244 -> 245.
+# 246 on 2026-10-13: INV-370 (every Bootcamper program is built and run through the ground-rules
+# statement; #511, widened by #563) names test_build_and_run_statement.py, which cites it back and
+# states it cannot observe a real build. Re-derived by running the extractor -- 246, the new pair
+# present by name and none removed. EXPECTED_PAIRS 245 -> 246.
+EXPECTED_PAIRS = 246
 
 
 def pairs():

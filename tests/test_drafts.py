@@ -26,6 +26,12 @@ What this pins, each with a negative control where it is a predicate over text:
 yes, or leaves its ledgers untouched. Those are properties of a session; this pins that the
 helper behaves and that the instructions a runner reads say so.
 
+This module enforces INV-368 (registered 2026-10-13). It pins that the helper behaves and that
+each skill states the rule; it cannot establish that a live run stops at its filing step or
+leaves its ledgers untouched. It also enforces INV-317's 2026-10-13 (#572) note, by pinning the
+citation in each skill and the helper's not-yet-durable warning; it cannot establish that a
+caller records the drafts.
+
 Stdlib only; no network, no `gh`, no git write (INV-108).
 
 Run:  python3 -m unittest discover -s tests

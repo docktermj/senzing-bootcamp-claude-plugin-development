@@ -171,7 +171,7 @@ neither does a yes from a simulated Bootcamper: the walk blocks both tools by fl
 A dry run must not file junk upstream or transmit a name and email. Verifying a tool's
 schema sends nothing; `download_resource` on anything large stays forbidden.
 
-⛔ **Never answer as the Bootcamper in the session that runs or grades the bootcamp.**
+⛔ **(INV-369) Never answer as the Bootcamper in the session that runs or grades the bootcamp.**
 That is self-play, and phase 3 cannot be self-played: the plugin forbids simulating the
 Bootcamper's response (INV-007), and an assistant grading its own 👉 discipline proves
 nothing. **A simulated walk (`--simulated`) is not self-play and not
@@ -283,7 +283,7 @@ keeping notes that might lead to improvements / specs?"* to surface it.
 
 Where a drafted finding goes, from step 1's ledger draft to its GitHub issue:
 
-⛔ **With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
+⛔ **(INV-368) With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
 nothing outside `<run-dir>`** but its scratch project. Each finding and upstream message becomes a
 [`drafts.py`](../feedback-to-issues/drafts.py) `add` record as it is found, in place of steps 1, 3
 and 5 below; [What to do with a finding](#what-to-do-with-a-finding) steps 2–6 are not run, and the
@@ -346,7 +346,7 @@ Report to the maintainer with the severity ordering the findings deserve, and:
 - **Lead with anything that breaks a documented path**, not with the longest list.
 - **If phase 3 ran, say which module the analysis started at**, and that everything
   before it was walked rather than tested.
-- ⛔ **If phase 3 ran with a simulated Bootcamper, a clean run reads "no regression detected
+- ⛔ **(INV-369) If phase 3 ran with a simulated Bootcamper, a clean run reads "no regression detected
   (simulated Bootcamper, persona `<p>`)"**, never "phase 3 passed" or "the bootcamp works",
   and the report lists phase 3 with the maintainer as not yet done. Findings count; a clean
   simulated run is weak evidence ([`auto-test` → "What it is for, and what it cannot

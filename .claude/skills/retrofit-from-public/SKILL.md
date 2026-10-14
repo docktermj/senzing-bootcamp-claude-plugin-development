@@ -159,7 +159,7 @@ GitHub issues, not a modified working tree.**
    `/production-readiness-audit` apply, for the same reason: an issue can be edited or closed
    afterwards but never un-filed.
 
-   ⛔ **With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
+   ⛔ **(INV-368) With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
    nothing outside `<run-dir>`.** Each issue becomes a [`drafts.py`](../feedback-to-issues/drafts.py)
    `add` record instead, and the run ends with `drafts.py list`. `--draft` is the release cycle's
    interface (#573), and the caller records unresolved drafts (INV-317). **With `--file <run-dir>`**,

@@ -309,7 +309,7 @@ not a convenience: whatever the finding, never pass `--repo`.
 **Record each issue number as you go** — Step 9's ledger rows and Step 10's report both
 need it.
 
-⛔ **With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
+⛔ **(INV-368) With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
 nothing outside `<run-dir>`.** Each issue, Step 8 message and Step 9 row becomes a
 [`drafts.py`](../feedback-to-issues/drafts.py) `add` record instead, carrying its row's `record`
 arguments as `--after` and `--after-struck`, and the run ends with `drafts.py list`. `--draft` is

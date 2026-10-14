@@ -18,7 +18,7 @@ disqualifying:
    files produce that discipline*, which self-play cannot distinguish from the
    assistant simply being careful.
 
-⛔ **Self-play is answering as the Bootcamper inside the session that runs or grades the
+⛔ **(INV-369) Self-play is answering as the Bootcamper inside the session that runs or grades the
 bootcamp, and it stays forbidden.** A simulated walk is not self-play: `auto-test`'s
 `walk.py` runs the bootcamp in one OS process and answers from a second one that has never
 seen the plugin, and the bootcamp process is never told it is under test. That answers the
@@ -84,7 +84,7 @@ Run the bootcamp exactly as a Bootcamper would see it, and nothing else.
   that follows. This is not a skim.
 - **The Bootcamper still answers**: the maintainer, or in a simulated walk the separate
   process.
-  ⛔ **The rule above is not relaxed here:** this session never answers for the Bootcamper,
+  ⛔ **(INV-369) The rule above is not relaxed here:** this session never answers for the Bootcamper,
   not even to hurry the fast-forward. Fast-forward is the same walk with the
   *notes* turned off, not a simulation by this session.
 - **No analysis.** No test-notes blocks, no invariant lookups, no character-for-character
@@ -220,7 +220,7 @@ context, which is what limits a maintainer-answered walk to the modules the wind
    The slice starts at the module's banner (at the first turn for Bootcamp preparation). It
    prints `walk_stop`, the walk's own record of where it stopped and why, and the modules it
    reached.
-   ⛔ **Exit 3 means the walk stopped before the start module:** report the module it reached
+   ⛔ **(INV-369) Exit 3 means the walk stopped before the start module:** report the module it reached
    and leave the rest untested. Never extrapolate.
 5. **Grade the slice, not the report.** Run `transcript_lint.py <slice> --phase
    <lint_phase> --json`, with the `lint_phase` the slice printed (no `--phase` when it is
@@ -232,7 +232,7 @@ context, which is what limits a maintainer-answered walk to the modules the wind
    the SKILL's "The finding lifecycle" says. The walk has ended, so the filing step comes
    after the grading.
 
-⛔ **A clean simulated walk is reported only as "no regression detected (simulated
+⛔ **(INV-369) A clean simulated walk is reported only as "no regression detected (simulated
 Bootcamper, persona `<p>`)"**, never as "phase 3 passed" or "the bootcamp works". The report
 still lists phase 3 with the maintainer as not yet done (the SKILL's "Reporting").
 
