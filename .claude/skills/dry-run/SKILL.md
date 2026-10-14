@@ -280,13 +280,17 @@ lifecycle below. "I described it in the report" is not recorded — the report i
 and messages are not durable. This rule exists because a phase-3 walk reached eight turns
 with four findings held only in conversation, and it took the maintainer asking *"are you
 keeping notes that might lead to improvements / specs?"* to surface it.
+Under `--draft`, a finding's `drafts.py` record counts as recorded, and the caller writes the
+ledger (INV-317's 2026-10-13 note).
 
 ## The finding lifecycle
 
 Where a drafted finding goes, from step 1's ledger draft to its GitHub issue:
 
 ⛔ **(INV-368) With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
-nothing outside `<run-dir>`** but its scratch project. Each finding and upstream message becomes a
+nothing outside `<run-dir>`** but its scratch project. A simulated walk's is `autotest.py`'s
+sandbox, and its reports go to `<run-dir>/walk/` ([phase 3](phase3-conversational.md), "A
+simulated Bootcamper" step 3). Each finding and upstream message becomes a
 [`drafts.py`](../feedback-to-issues/drafts.py) `add` record as it is found, in place of steps 1, 3
 and 5 below; [What to do with a finding](#what-to-do-with-a-finding) steps 2–6 are not run, and the
 run ends with `drafts.py list`. `--draft` is the release cycle's interface (#573), and the caller records
@@ -377,7 +381,8 @@ new file under `specs/`, and nothing else.
 ⛔ **(INV-317) The scratch project is disposable; the issues and the ledger entry are the run's actual
 output.** Deleting the project is cleanup. Deleting or never writing the ledger drafts loses
 the run. If a run produced no issue and no ledger entry, it produced nothing durable, however
-good the conversation was.
+good the conversation was. Under `--draft`, a finding's `drafts.py` record counts as recorded,
+and the caller writes the ledger (INV-317's 2026-10-13 note). `git status` then shows no entry.
 
 ## Scope note
 

@@ -103,9 +103,9 @@ never sees it again.
 5. **Filing.** `cycle.py file-next <run-dir>` names the next skill and prints its `/<skill>
    --file <run-dir>`; run it in the main session, since the skill asks for its yes; then
    `cycle.py filed <run-dir> <skill>`. Repeat until `file-next` says every skill has filed.
-   ⛔ **Hold each skill's after-filing step until stage 5.** `/feedback-to-issues` Step 9 archives
-   under `feedback/` and `/delegate-to-mcp-server` Step 9 appends to `specs/mcp-coverage.jsonl`:
-   both write tracked files, and stage 3 needs a clean tree. `drafts.py after` prints the same
+   ⛔ **Hold each skill's after-filing step until stage 5.** `/feedback-to-issues` Step 9 and
+   `/delegate-to-mcp-server` Step 9 write tracked files ("Stopping, and the ledger entry" says
+   which), and stage 3 needs a clean tree. `drafts.py after` prints the same
    lines then as now. `file-next` prints a `HOLD` line for each such skill and records the hold,
    so file that skill's records and stop before its after-filing step.
    A merged draft rides on its record: `file-next` writes the record's issue number onto it,
@@ -165,10 +165,27 @@ clean and skips its build pass.
 
 ## Stopping, and the ledger entry
 
-⛔ **Nothing under `specs/` changes until the run stops.** While it runs, every outcome and
-draft lives in the gitignored run directory, so the tree stays clean for
-`unattended-issue-loop`'s preflight. When the run stops (the maintainer ends it, or a step is
-marked stopped) or finishes, write its one entry: `cycle.py ledger <run-dir> --write
+⛔ **This skill writes nothing under `specs/` before stage 5 (the held after-filing steps and
+checkpoint D), and its own entry only at a stop.** This is the one statement of where a run
+writes; every other site cites it (INV-300).
+
+- **The kickoff and stages 1, 2 and 4** write only the gitignored run directory, which holds every outcome and
+  draft, and `/dry-run`'s disposable scratch project, the one write outside it that INV-368
+  allows. A simulated walk's sandbox is that scratch project, removed when the walk ends, and
+  its reports go to the run directory.
+- **Stage 3**, and its second pass after stage 4, starts on a clean tree, for
+  `unattended-issue-loop`'s preflight. Each issue's
+  commits, its own ledger entry among them, are on its issue branch, written by the skill
+  that builds it under that skill's file.
+- **Stage 5** runs the held after-filing steps (`/feedback-to-issues` Step 9 archives under
+  `feedback/`; `/delegate-to-mcp-server` Step 9 appends to `specs/mcp-coverage.jsonl`), then
+  checkpoint D's `/review-invariants`, which edits `specs/INVARIANTS.md` and the ledger, and
+  `update-blueprint` if it runs. Stage 6's skills write what their
+  own files say.
+- **At a stop**, this skill writes its one entry, as below.
+
+When the run stops (the maintainer ends it, or a step is marked stopped) or finishes, write its
+one entry: `cycle.py ledger <run-dir> --write
 specs/IMPLEMENTED.md`. It records each step's outcome and every unresolved draft, marked **not
 filed** (INV-317's 2026-10-13 note), replaces the run's entry if one is there, and is left
 uncommitted for the maintainer (INV-310). On a resumed run, `next` first prints `ledger --withdraw`:

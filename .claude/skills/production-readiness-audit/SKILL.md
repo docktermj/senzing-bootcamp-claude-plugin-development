@@ -481,7 +481,8 @@ session end:
 ⛔ **Do not end a run with unrecorded findings.** Before reporting, list what you found
 and confirm each is **either a filed issue or a line in the dated ledger entry**. "I
 described it in the report" is not recorded; a report is a message, and messages are not
-durable.
+durable. Under `--draft`, a finding's `drafts.py` record counts as recorded, and the caller
+writes the ledger (INV-317's 2026-10-13 note).
 
 ## Step 9: Report
 
@@ -490,7 +491,8 @@ durable.
 - ⛔ **(INV-317) Record every finding before fixing anything, as a filed issue or in the run's
   dated `specs/IMPLEMENTED.md` entry marked not filed — never a new file under `specs/`, which
   is a read-only archive (INV-307)**, as Step 8 says, so every finding the report names is
-  already written down.
+  already written down. Under `--draft`, a finding's `drafts.py` record counts as recorded,
+  and the caller writes the ledger (INV-317's 2026-10-13 note).
 - **Name the issue number or ledger entry each finding was recorded in**, and say which are
   fixed and which are recorded-but-open.
 - **State the verdict on each of the four properties separately.** "Consistent and

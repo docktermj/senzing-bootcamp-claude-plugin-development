@@ -154,5 +154,77 @@ class TestSandboxLocation(unittest.TestCase):
         self.assertTrue(root.startswith(str(Path.home())))
 
 
+class TestReportDirectory(unittest.TestCase):
+    """`--report-dir DIR` takes the report, the transcript copy and `latest.json` (#609).
+
+    `/dry-run --draft <run-dir>` passes `<run-dir>/walk/`, so a simulated walk keeps nothing
+    outside its run directory but the sandbox, which is removed when the run ends (INV-368).
+    Without the option the reports go to `~/senzing-autotest/reports` as before.
+
+    Offline: `autotest._run` is replaced, so no git worktree, no MCP probe and no walk run;
+    the fake walk writes a one-line transcript where `walk.py --out` would. `SANDBOX_ROOT` and
+    `REPORT_DIR` point into a temporary directory, so the real `~/senzing-autotest` is untouched.
+    """
+
+    def setUp(self):
+        import tempfile
+        import autotest
+        self.autotest = autotest
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(__import__("shutil").rmtree, self.tmp, True)
+        saved = (autotest._run, autotest.SANDBOX_ROOT, autotest.REPORT_DIR)
+        self.default = autotest.REPORT_DIR
+
+        def restore():
+            autotest._run, autotest.SANDBOX_ROOT, autotest.REPORT_DIR = saved
+        self.addCleanup(restore)
+        autotest.SANDBOX_ROOT = self.tmp / "senzing-autotest"
+        autotest.REPORT_DIR = autotest.SANDBOX_ROOT / "reports"
+        autotest._run = self.fake_run
+
+    @staticmethod
+    def fake_run(cmd, **kw):
+        if cmd[:1] == ["git"]:
+            return subprocess.CompletedProcess(cmd, 1, "", "no worktree offline")
+        if any(str(c).endswith("walk.py") for c in cmd):
+            Path(cmd[cmd.index("--out") + 1]).write_text('{"turn": 1}\n', encoding="utf-8")
+        return subprocess.CompletedProcess(cmd, 0, "[]", "")
+
+    def main(self, *argv):
+        import contextlib
+        import io
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            return self.autotest.main(["--walk", *argv])
+
+    def files(self, root):
+        return sorted(p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file())
+
+    def test_the_option_takes_all_three_files_and_creates_the_directory(self):
+        target = self.tmp / "run-dir" / "walk"
+        self.assertEqual(0, self.main("--report-dir", str(target)))
+        names = self.files(target)
+        self.assertIn("latest.json", names)
+        self.assertEqual(1, sum(n.endswith(".transcript.jsonl") for n in names), names)
+        self.assertEqual(2, sum(n.endswith(".json") for n in names), names)
+        latest = json.loads((target / "latest.json").read_text(encoding="utf-8"))
+        self.assertTrue(latest["transcript_path"].startswith(str(target)))
+        self.assertTrue(latest["report_path"].startswith(str(target)))
+
+    def test_with_the_option_nothing_is_left_outside_it(self):
+        """Only the sandbox is written elsewhere, and it is removed (no `--keep`)."""
+        self.main("--report-dir", str(self.tmp / "run-dir" / "walk"))
+        self.assertEqual([], self.files(self.autotest.SANDBOX_ROOT))
+        self.assertFalse(self.autotest.REPORT_DIR.exists())
+
+    def test_without_the_option_the_default_is_unchanged(self):
+        self.main()
+        names = self.files(self.autotest.REPORT_DIR)
+        self.assertIn("latest.json", names)
+        self.assertEqual(1, sum(n.endswith(".transcript.jsonl") for n in names), names)
+
+    def test_the_default_is_the_reports_directory(self):
+        """The unpatched default is `~/senzing-autotest/reports`, the path before #609."""
+        self.assertEqual(Path.home() / "senzing-autotest" / "reports", self.default)
+
 if __name__ == "__main__":
     unittest.main()

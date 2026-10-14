@@ -14,8 +14,9 @@ the run's one `specs/IMPLEMENTED.md` entry. `tests/test_release_cycle.py` exerci
 The run directory
 =================
 
-`.claude/release-cycle/runs/<run>/`, gitignored, so nothing tracked changes while the run is in
-progress. It holds `state.json` (this helper's), the stage-1 drafts (`drafts/`, the finding
+`.claude/release-cycle/runs/<run>/`, gitignored, so the run's own state never dirties the tree.
+Where a run writes, stage by stage, is stated once, in `SKILL.md` ("Stopping, and the ledger
+entry"), and this helper restates none of it (INV-300). It holds `state.json` (this helper's), the stage-1 drafts (`drafts/`, the finding
 skills' `--draft <run-dir>`), and the stage-4 drafts in `exercise/drafts/`: `/dry-run` drafts
 against a fresh baseline SHA, and a manifest has one baseline, so stage 4 has its own.
 
