@@ -291,7 +291,8 @@ nothing outside `<run-dir>`** but its scratch project. Each finding and upstream
 and 5 below; [What to do with a finding](#what-to-do-with-a-finding) steps 2–6 are not run, and the
 run ends with `drafts.py list`. `--draft` is the release cycle's interface (#573), and the caller records
 unresolved drafts (INV-317). **With `--file <run-dir>`**, file what `drafts.py file-plan` prints,
-and get a yes for each first, then report. Both stages, the manifest and its statuses are stated
+after a yes for each record or one yes for the whole list shown in one message (INV-314, 2026-10-13 note), then report; an
+upstream draft is never sent by `--file` and keeps its own yes. Both stages, the manifest and its statuses are stated
 once in `drafts.py` (INV-300).
 
 1. **Draft — on sight.** The run's dated entry is a `## dry-run-<YYYY-MM-DD>` heading in

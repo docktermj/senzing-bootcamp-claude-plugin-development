@@ -47,7 +47,7 @@ Between the stages: the checkpoint
 The caller (or the maintainer) reads the drafts, may edit a draft's body, and sets each record's
 status with ``set``: `approved` or `struck` for an `issue` or `ledger` record;
 `upstream-sent` or `upstream-declined` for an `upstream` record, which only its own yes moves
-(#570 keeps upstream messages per record).
+(`submit_feedback` stays one message, one yes: INV-314, 2026-10-13 note).
 
 Stage two: `--file <run-dir>`
 =============================
@@ -57,8 +57,8 @@ Stage two: `--file <run-dir>`
    wrong line. Otherwise it prints one ``FILE`` line per `approved` issue record not yet filed,
    each carrying the exact `gh issue create` command, and ``SKIP`` (already filed), ``STRUCK``,
    ``PENDING`` and ``UPSTREAM`` lines for the rest, which it leaves alone.
-2. ⛔ **(INV-314) Until #570's amendments are registered, show the maintainer each record's title,
-   labels and body and get a yes for each before running its command.** `/retrofit-from-public`
+2. ⛔ **(INV-314) Show the maintainer each record's title, labels and body, and get a yes for each
+   before running its command, or one yes for the whole list shown in one message (INV-314, 2026-10-13 note).** `/retrofit-from-public`
    first repeats its tracker search, because the tracker may have changed since the draft, and
    strikes a record already tracked (``set <id> struck --note "tracked as #<n>"``).
 3. After each issue is created: ``record-filed <run-dir> <id> <number>``. A record already

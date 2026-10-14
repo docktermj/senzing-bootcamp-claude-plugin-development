@@ -53,6 +53,8 @@ receives the shippable plugin through `/propagate-to-public`.
 - `.claude/skills/propagate-to-public/`: maintainer skill `/propagate-to-public`
   and `propagate.sh`.
 - `.claude/skills/release/`: maintainer skill `/release` and `release.py`.
+- `.claude/skills/release-cycle/`: maintainer skill `/release-cycle` and
+  `cycle.py`, its run-state helper (section 5.63).
 - `.claude/skills/retrofit-from-public/`: maintainer skill
   `/retrofit-from-public` and `retrofit.sh`.
 - `.claude/skills/review-invariants/`: maintainer skill `/review-invariants`,
@@ -3661,8 +3663,10 @@ Step 10 reports both stamps, `contradicted` first, issues filed, new and
 remaining coverage, and sweep coverage, then offers `/implement-github-issue`.
 With `--draft`, Step 7 drafts each record with `feedback-to-issues/drafts.py`
 (5.46) and the run files, sends and records nothing; with `--file`, it files
-what `drafts.py file-plan` prints after a yes for each, and Step 9's
-`coverage_ledger.py record` calls are the lines `drafts.py after` prints.
+what `drafts.py file-plan` prints after a yes for each record or one yes for
+the whole list shown in one message (INV-314, 2026-10-13 note), never sends
+an upstream draft, and Step 9's `coverage_ledger.py record` calls are the
+lines `drafts.py after` prints.
 
 `issue-template.md` gives the issue body: no title heading (the body starts at
 `## Problem`; the title states the fact, not the file), then `## Problem`
@@ -3749,7 +3753,9 @@ before its start module names the module reached and leaves the rest
 untested. With `--draft <run-dir>` (#572), the finding lifecycle drafts each
 finding with `feedback-to-issues/drafts.py` (5.46) instead, and the run files,
 fixes and sends nothing and writes nothing outside `<run-dir>` but its scratch
-project; `--file <run-dir>` files the approved records.
+project; `--file <run-dir>` files the approved records after a yes for each
+or one yes for the whole list shown in one message (INV-314, 2026-10-13
+note).
 
 `phase1-mcp-contracts.md`: check every MCP call literal in plugin skills
 against the live schemas (tool exists, required parameters named, values
@@ -3892,8 +3898,10 @@ runs `commit` with a `--disposition` per entry. Step 10 reports a per-item
 table with the server version, skipped entries, archive path, issues and
 upstream outcomes. With `--draft`, Step 7 drafts each record with `drafts.py
 add` and the run files, renames, archives and sends nothing; with `--file`, it
-files what `drafts.py file-plan` prints after a yes for each, and Step 9's
-dispositions are the lines `drafts.py after` prints.
+files what `drafts.py file-plan` prints after a yes for each record or one
+yes for the whole list shown in one message (INV-314, 2026-10-13 note), never
+sends an upstream draft, and Step 9's dispositions are the lines `drafts.py
+after` prints.
 
 `issue-template.md`: body starts at `## Problem` (no title heading), then
 `## Root cause` (with the live-server quote and conditions), `## Proposed
@@ -3974,7 +3982,10 @@ each status to the ones `set` may move it to: `pending`, `approved` and
 skill writes nothing outside `<run-dir>` (by hand, under the gitignored
 `.claude/release-cycle/runs/`) except `/dry-run`'s scratch project, and the
 caller records unresolved drafts (INV-317); with neither argument each skill
-is unchanged.
+is unchanged. Filing step 2 takes a yes for each record or one yes for the
+whole list shown in one message (INV-314, 2026-10-13 note), and
+`submit_feedback` stays one message, one yes. `/release-cycle` (5.63) is the
+caller that drives both stages.
 
 ### 5.47 `.claude/skills/production-readiness-audit`
 
@@ -4597,6 +4608,98 @@ pointing sentence; `uncited_pointers(texts, name, anchor, invariant)` reports
 each whose sentence lacks the invariant as a whole token; and
 `without_citation(texts, path, line, invariant)` removes the first citation on
 or after that line, for negative controls.
+
+### 5.63 `.claude/skills/release-cycle`
+
+Maintainer skill `/release-cycle` (#573) that runs the release cycle of
+`docs/FAMILY_WORKFLOW.md` §3, phases 1 to 4, as one resumable run with two
+build passes, stopping only at a kickoff and five checkpoints or where a skill
+it runs stops by its own rules. It is `disable-model-invocation: true`, with
+an optional argument naming a run to resume; with none it runs `cycle.py
+kickoff` and asks whether to resume or start (INV-333). Each skill's own file
+governs it and this one restates none of their rules (INV-300).
+
+Stages: 0 kickoff (in one batch: whether to run the simulated walk, its
+persona and start module, merge or `--no-merge`, and the refine threshold,
+showing the standing 0.7 to confirm or change); 1 find (the four finding
+skills with `--draft <run-dir>` in subagents against one baseline SHA, the
+merge, checkpoint A, then each skill's `--file <run-dir>` in the main session,
+holding the after-filing steps); 2 refine (`refine-github-issue` batch mode,
+checkpoint B); 3 build (`unattended-issue-loop`, then `implement-github-issue`
+for each leftover, after a clean-tree check); 4 exercise (`/dry-run all
+<module> --simulated <persona> --draft` into the run's `exercise`
+subdirectory, against a fresh baseline, or `/dry-run 1,2` without a walk;
+checkpoint C; stages 2 and 3 again for what it filed); 5 settle (the held
+after-filing steps, `/review-invariants` as checkpoint D, then
+`update-blueprint` only when BLUEPRINT.md's header SHA is behind `main`); 6
+ship (`/release` with no argument, the manual test, `/propagate-to-public`;
+checkpoint E). The three slash-only skills are read and followed from
+`~/.claude/skills/<name>/SKILL.md` in the main session, never invoked, and
+every gate inside them applies; the model-invocable ones are invoked.
+Guardrails: it never signs off an invariant (INV-365), never chooses the bump
+(INV-333), never commits or pushes the public repo, never sends
+`submit_feedback`, never applies `unattended-ok` outside refine's approved
+batch (INV-318), never merges unless the kickoff says to, and never answers
+a gate for the maintainer. Nothing under `specs/` changes until the run stops.
+
+`cycle.py` (stdlib, offline, no `gh`) owns the mechanics and reads and moves
+the manifest only through `drafts.py` (`load`, `open_records`, `Locked`,
+`split_draft`, `render`, and its `set` and `record-filed` commands). A run
+directory must be `.claude/release-cycle/runs/<run>/` (gitignored); it holds
+`state.json` (`format` 1, `run`, `started`, `baseline_sha` per stage,
+`kickoff`, `steps` with each step's outcome, time, note and history,
+`merges`, `listings`, `filing`, `held`, `ledger`), the stage-1 drafts and the
+stage-4 drafts under `exercise/`. `STEPS` fixes the order; a step is finished
+when `done`, `clean` or `skipped`.
+
+- `kickoff <runs-root>` prints the standing threshold, each run as finished or
+  unfinished with its next step, and the last run's walk.
+- `init <run-dir>` takes every kickoff answer (a simulated walk needs persona
+  and module; a threshold above 0.5 and at most 1.0, `70%` or `0.7`) and the
+  baseline (HEAD, or `--sha`); it refuses a second run in the directory
+  (exit 3) and a directory outside the runs root (exit 1).
+- `next` names the first unfinished step (with a started or stopped note) and
+  prints what it runs, first a `WITHDRAW` line when an entry written at a stop
+  is still in the ledger; `status` lists every step; `args <step>` prints a
+  step's invocation (`SUBAGENT`, `FOLLOW`, `INVOKE`, `RUN`, `SKIP`).
+- `mark <step> started|done|clean|stopped` refuses a finished step or one out
+  of turn (exit 3), a step its own command finishes, and a held after-filing
+  step left unrun; a draft step with no drafts is `clean` and skips its stage's
+  checkpoint, filing and build pass; `exercise-draft` needs `--sha`, and a
+  manifest made at another baseline exits 4.
+- `merge-drafts` groups pending issue records with the same dedupe key: the
+  first skill in `drafts.SKILLS` order is the primary, its body gains one
+  "Found by" line, and the rest ride on it; groups persist, so a re-run merges
+  nothing twice. It numbers the list with a hash of each draft and prints
+  `OVERLAP` for keys that share a line and `UPSTREAM` for messages the cycle
+  never sends.
+- `verdicts --strike N,M|none` approves every listed item but those, strikes a
+  struck primary's riders, and refuses (exit 3) a draft changed or added after
+  the list was shown.
+- `file-next` syncs riders of filed primaries (approved, then the primary's
+  number), names the next skill whose riders' primaries have filed, prints
+  `FILE /<skill> --file <dir>`, a `HOLD` line for `/feedback-to-issues` and
+  `/delegate-to-mcp-server` (`AFTER_FILING`: their Step 9 writes `feedback/`
+  and `specs/mcp-coverage.jsonl`) and records the hold, and, when that skill's
+  `--file` was started before, a `gh issue list` search per approved record
+  still without a number. `filed <skill>` refuses while the skill has an open
+  record and finishes the file step when every skill has filed.
+- `after-filed <skill>`, at stage 5's `after-filing` step (before checkpoint
+  D, where `next` prints `drafts.py after <dir> --skill <skill>` and the
+  skill's step for each held one), records that held step as run, refuses it
+  a second time (exit 3), and finishes the step when none is left.
+- `redraft --sha` sets the stage-1 drafts aside as
+  `drafts.superseded-<sha12>` and restarts stage 1, refused once anything is
+  filed.
+- `ledger` renders the run's `## release-cycle-<run>` entry (each step's
+  outcome, filed and struck records, every unresolved draft with its body
+  quoted, marked not filed or not sent, every held after-filing step with its
+  lines, and "Establishes no invariant"); `--write <ledger>` puts it below the
+  format comment or replaces it in place, uncommitted; `--withdraw` removes it
+  only when it is byte-identical to what was written and absent from `HEAD`.
+
+Exit codes: 0 success, 1 bad input, 2 an argparse usage error, 3 a refused
+step or transition, 4 a baseline-SHA mismatch.
 
 ## 6. Exact contracts
 
@@ -7827,6 +7930,186 @@ def main(argv=None) -> int:
 
 <!-- markdownlint-enable MD013 -->
 
+#### 6.1.37 `.claude/skills/release-cycle/cycle.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `.claude/skills/release-cycle/cycle.py`:
+
+```python
+HERE = Path(__file__).resolve().parent
+DRAFTS_PY = HERE.parent / "feedback-to-issues" / "drafts.py"
+drafts = _load_drafts()
+STANDING_THRESHOLD = 0.7
+RUNS_PARENT = (".claude", "release-cycle", "runs")
+STAGES = ("Kickoff", "Find", "Refine", "Build", "Exercise", "Settle", "Ship")
+STEPS = (
+    ("kickoff", 0, None),
+    ("find-draft", 1, None),
+    ("find-merge", 1, None),
+    ("checkpoint-a", 1, "A"),
+    ("find-file", 1, None),
+    ("refine", 2, "B"),
+    ("build-loop", 3, None),
+    ("build-leftovers", 3, None),
+    ("exercise-draft", 4, None),
+    ("exercise-merge", 4, None),
+    ("checkpoint-c", 4, "C"),
+    ("exercise-file", 4, None),
+    ("exercise-refine", 4, "B"),
+    ("exercise-build-loop", 4, None),
+    ("exercise-build-leftovers", 4, None),
+    ("after-filing", 5, None),
+    ("checkpoint-d", 5, "D"),
+    ("blueprint", 5, None),
+    ("release", 6, "E"),
+    ("manual-test", 6, "E"),
+    ("propagate", 6, "E"),
+)
+STEP_NAMES = tuple(s for s, _, _ in STEPS)
+FINISHED = ("done", "clean", "skipped")
+OUTCOMES = ("started", "done", "clean", "stopped")
+CLEAN_SKIPS = {
+    "find-draft": ("find-merge", "checkpoint-a", "find-file", "refine", "build-loop",
+                   "build-leftovers"),
+    "exercise-draft": ("exercise-merge", "checkpoint-c", "exercise-file", "exercise-refine",
+                       "exercise-build-loop", "exercise-build-leftovers"),
+}
+OWNED = {
+    "find-merge": "merge-drafts", "exercise-merge": "merge-drafts --stage exercise",
+    "checkpoint-a": "verdicts", "checkpoint-c": "verdicts --stage exercise",
+    "find-file": "filed", "exercise-file": "filed --stage exercise",
+}
+DRAFT_STAGES = {
+    "find": ("", "find-draft", "find-merge", "checkpoint-a", "find-file"),
+    "exercise": ("exercise", "exercise-draft", "exercise-merge", "checkpoint-c", "exercise-file"),
+}
+FIND_SKILLS = tuple(s for s in drafts.SKILLS if s != "dry-run")
+AFTER_FILING = {
+    "feedback-to-issues": "Step 9, `feedback_ledger.py commit` with these lines as its "
+                          "`--disposition` arguments, which archives under `feedback/`",
+    "delegate-to-mcp-server": "Step 9, `record` once per line, which appends to "
+                              "`specs/mcp-coverage.jsonl`",
+}
+FOLLOWED = {
+    "refine": "refine-github-issue",
+    "loop": "unattended-issue-loop",
+    "implement": "implement-github-issue",
+}
+MERGED_MARK = "<!-- release-cycle merged: %s -->"
+BLUEPRINT_HEADER = re.compile(r"<!-- blueprint: sha=([0-9a-f]{7,40})\b")
+class Refused(Exception):
+    def __init__(self, message, code=1):
+        ...
+def state_path(run_dir):
+    ...
+def load_state(run_dir):
+    ...
+def save_state(run_dir, data):
+    ...
+def now():
+    ...
+def outcome(state, step):
+    ...
+def first_unfinished(state):
+    ...
+def stage_of(step):
+    ...
+def label(step):
+    ...
+def set_step(state, step, result, note=None, **extra):
+    ...
+def require_turn(state, step):
+    ...
+def git_head():
+    ...
+def check_run_dir(run_dir):
+    ...
+def stage_dir(run_dir, stage):
+    ...
+def manifest(run_dir, stage):
+    ...
+def run_drafts(*args):
+    ...
+def draft_hash(directory, rec):
+    ...
+def parse_site(site):
+    ...
+def shared_lines(key_a, key_b):
+    ...
+def skill_rank(rec):
+    ...
+def groups_of(state, stage):
+    ...
+def rider_ids(state, stage):
+    ...
+STAGE_TITLES = {"find": "stage 1", "exercise": "stage 4"}
+def held_of(state, stage):
+    ...
+def pending_holds(state):
+    ...
+def add_found_by(directory, primary_id, members):
+    ...
+def listing(state, data, stage):
+    ...
+def cmd_kickoff(args):
+    ...
+def cmd_init(args):
+    ...
+def cmd_next(args):
+    ...
+def cmd_status(args):
+    ...
+def follow(key, arguments):
+    ...
+def filed_numbers(run_dir, stage):
+    ...
+def blueprint_line(head, blueprint):
+    ...
+def step_args(state, run_dir, step, head=None, blueprint="BLUEPRINT.md"):
+    ...
+def cmd_args(args):
+    ...
+def cmd_mark(args):
+    ...
+def cmd_merge_drafts(args):
+    ...
+def parse_numbers(text, count):
+    ...
+def cmd_verdicts(args):
+    ...
+def sync_riders(state, directory, stage):
+    ...
+def cmd_file_next(args):
+    ...
+def cmd_filed(args):
+    ...
+def cmd_after_filed(args):
+    ...
+def cmd_redraft(args):
+    ...
+def entry_heading(state):
+    ...
+def quote_body(body):
+    ...
+def unresolved(run_dir, stage, state):
+    ...
+def render_entry(state, run_dir):
+    ...
+def find_entry(text, heading):
+    ...
+def insert_entry(text, entry, heading):
+    ...
+def committed(ledger, heading):
+    ...
+def cmd_ledger(args):
+    ...
+def main(argv=None):
+    ...
+```
+
+<!-- markdownlint-enable MD013 -->
+
 ### 6.2 CLI
 
 Every argparse declaration, verbatim (the statements that build each parser).
@@ -8621,6 +8904,76 @@ From `.claude/skills/feedback-to-issues/drafts.py`:
     cs = sub.add_parser("check-sha", help="refuse a baseline-SHA mismatch")
     cs.add_argument("run_dir")
     cs.add_argument("--sha", help="this checkout's SHA (default: git rev-parse HEAD)")
+```
+
+<!-- markdownlint-enable MD013 -->
+
+#### 6.2.28 `.claude/skills/release-cycle/cycle.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `.claude/skills/release-cycle/cycle.py`:
+
+```python
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    sub = parser.add_subparsers(dest="command", required=True)
+    p = sub.add_parser("kickoff", help="earlier runs, the last walk and the standing threshold")
+    p.add_argument("runs_root")
+    p.set_defaults(func=cmd_kickoff)
+    p = sub.add_parser("init", help="start a run from the kickoff answers")
+    p.add_argument("run_dir")
+    p.add_argument("--simulated", required=True, choices=("yes", "no"))
+    p.add_argument("--persona")
+    p.add_argument("--module")
+    p.add_argument("--merge", required=True, choices=("yes", "no"))
+    p.add_argument("--threshold", required=True)
+    p.add_argument("--sha")
+    p.set_defaults(func=cmd_init)
+    for name, func in (("next", cmd_next), ("status", cmd_status)):
+        p = sub.add_parser(name)
+        p.add_argument("run_dir")
+        p.set_defaults(func=func)
+    p = sub.add_parser("args", help="what a step runs")
+    p.add_argument("run_dir")
+    p.add_argument("step", choices=STEP_NAMES)
+    p.add_argument("--head")
+    p.add_argument("--blueprint", default="BLUEPRINT.md")
+    p.set_defaults(func=cmd_args)
+    p = sub.add_parser("mark", help="record a step's outcome")
+    p.add_argument("run_dir")
+    p.add_argument("step", choices=STEP_NAMES)
+    p.add_argument("outcome", choices=OUTCOMES)
+    p.add_argument("--note")
+    p.add_argument("--sha")
+    p.set_defaults(func=cmd_mark)
+    for name, func in (("merge-drafts", cmd_merge_drafts), ("verdicts", cmd_verdicts),
+                       ("file-next", cmd_file_next)):
+        p = sub.add_parser(name)
+        p.add_argument("run_dir")
+        p.add_argument("--stage", choices=tuple(DRAFT_STAGES), default="find")
+        if name == "verdicts":
+            p.add_argument("--strike", required=True)
+        p.set_defaults(func=func)
+    p = sub.add_parser("filed", help="a skill's --file is finished")
+    p.add_argument("run_dir")
+    p.add_argument("skill", choices=drafts.SKILLS)
+    p.add_argument("--stage", choices=tuple(DRAFT_STAGES), default="find")
+    p.set_defaults(func=cmd_filed)
+    p = sub.add_parser("after-filed", help="a held after-filing step has run, at stage 5")
+    p.add_argument("run_dir")
+    p.add_argument("skill", choices=tuple(AFTER_FILING))
+    p.add_argument("--stage", choices=tuple(DRAFT_STAGES), default="find")
+    p.set_defaults(func=cmd_after_filed)
+    p = sub.add_parser("redraft", help="main moved before stage 1 filed: draft again")
+    p.add_argument("run_dir")
+    p.add_argument("--sha", required=True)
+    p.set_defaults(func=cmd_redraft)
+    p = sub.add_parser("ledger", help="render, write or withdraw the run's ledger entry")
+    p.add_argument("run_dir")
+    g = p.add_mutually_exclusive_group()
+    g.add_argument("--write")
+    g.add_argument("--withdraw")
+    p.set_defaults(func=cmd_ledger)
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -9538,7 +9891,7 @@ looks wrong.
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
 - `tests/test_download_resource_is_a_listing.py`: 27
-- `tests/test_drafts.py`: 30
+- `tests/test_drafts.py`: 34
 - `tests/test_dropped_character_remedy_branches.py`: 10
 - `tests/test_dry_run_files_issues.py`: 15
 - `tests/test_dry_run_scaffold.py`: 15
@@ -9756,6 +10109,7 @@ looks wrong.
 - `tests/test_related_entities_guidance.py`: 20
 - `tests/test_release_bumps_version_changelog_and_tag_together.py`: 32
 - `tests/test_release_covers_every_version_site.py`: 8
+- `tests/test_release_cycle.py`: 61
 - `tests/test_results_validation_is_diagnostic.py`: 35
 - `tests/test_resume_requires_a_recorded_module.py`: 12
 - `tests/test_retired_vocabulary.py`: 5
@@ -10436,7 +10790,45 @@ These are the scripts under `.claude/skills/`:
     states the stage-one rule at its filing step, names both arguments in its
     argument hint, links to the helper, carries the INV-317 caller clause and
     the INV-300 citation, and restates no part of the manifest format;
-    `.gitignore` ignores `.claude/release-cycle/runs/`.
+    `.gitignore` ignores `.claude/release-cycle/runs/`;
+  - the five `--file` sentences and `drafts.py` filing step 2 carry the batch
+    clause and neither "get a yes for each first" nor "Until #570's
+    amendments are registered", and `submit_feedback` keeps one yes each,
+    each with a negative control (#573).
+- **The release cycle.** `tests/test_release_cycle.py` (#573) drives
+  `cycle.py` offline:
+  - the kickoff answers are required, the threshold is refine's range, a run
+    outside the runs root and a second `init` are refused, and `kickoff`
+    shows the standing threshold and the last walk;
+  - `next` names the first unfinished step, a finished step is never marked
+    again, a step cannot be skipped, a stopped step is where the run resumes,
+    a draft step with no drafts is `clean` and skips its build pass, and
+    stage 4 needs a fresh baseline;
+  - same-site drafts merge into one record listing every source, once, with
+    no duplicate key on the list, `OVERLAP` and `UPSTREAM` lines, and a
+    second merge that changes nothing;
+  - `verdicts` strikes the numbered items and their riders and refuses a
+    draft edited or added after the list was shown, or a second answer;
+  - a rider takes its record's number and is never filed, `filed` refuses an
+    open record, a stopped `--file` prints a tracker search, a finished
+    filing is never run again, and `redraft` is refused once anything is
+    filed;
+  - `file-next` holds `/feedback-to-issues` and `/delegate-to-mcp-server`'s
+    after-filing steps, no step before stage 5 prints them, stage 5's
+    `after-filing` prints `drafts.py after` for each before
+    `/review-invariants`, `after-filed` refuses a step already run, `mark`
+    refuses to finish the step while one is held, and a stop lists each held
+    step with its lines in the entry;
+  - the steps follow the three slash-only skills' files, the loop gets
+    `--no-merge` unless the kickoff says to merge, and no step prints
+    `unattended-ok`, `submit_feedback`, a push, a commit or a bump flag;
+  - the ledger entry records every step and unresolved draft, passes the
+    ledger's checks, is written once below the format comment, and is
+    withdrawn only when unedited;
+  - `SKILL.md` states each checkpoint and guardrail (with negative
+    controls), is slash-only, invokes none of the three slash-only skills,
+    and restates no part of the manifest format; `docs/FAMILY_WORKFLOW.md`
+    §2 has its row and §3 names it.
 - **Other maintainer tools.**
   - **`dry-run/scaffold_project.py`** builds `fresh`, `seeded` and `mid`
     projects, never inside the repository or under `/tmp`.
@@ -11533,6 +11925,15 @@ Senzing licensing, with no SPDX identifier.
   amendment queued) (each skill found and filed in one session, so a release
   cycle could not collect their findings, merge duplicates and approve them
   together)
+- #573: `/release-cycle` runs the release cycle as stages 0 to 6 with a
+  kickoff and checkpoints A to E, following the three slash-only skills'
+  files; `cycle.py` keeps its state in the gitignored run directory,
+  resumes at the first unfinished step without repeating a step, filing or
+  merge, merges stage-1 drafts by dedupe key, holds the after-filing steps
+  that write tracked files until stage 5, and writes the run's one ledger
+  entry only when it stops; the finding skills' `--file` and `drafts.py`
+  take INV-314's batch clause (the maintainer drove 13 steps and four build
+  passes by hand, carrying each skill's output into the next)
 - #574: two `PROPOSED AMENDMENT` blocks are queued in the ledger for
   `/review-invariants`, one letting a single yes cover several records shown
   whole in one numbered message (INV-314, `submit_feedback` and unattended

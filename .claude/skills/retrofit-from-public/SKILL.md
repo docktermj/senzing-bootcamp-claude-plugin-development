@@ -165,7 +165,8 @@ GitHub issues, not a modified working tree.**
    `add` record instead, and the run ends with `drafts.py list`. `--draft` is the release cycle's
    interface (#573), and the caller records unresolved drafts (INV-317). **With `--file <run-dir>`**,
    repeat step 3's search for each approved record, since the tracker may have changed, then file
-   what `drafts.py file-plan` prints, and get a yes for each first. Both stages, the manifest and
+   what `drafts.py file-plan` prints, after a yes for each record or one yes for the whole list
+   shown in one message (INV-314, 2026-10-13 note). Both stages, the manifest and
    its statuses are stated once in `drafts.py` (INV-300).
 5. ⛔ **(INV-312) Files in this repository only.** Cross-repo filing belongs exclusively to
    `/escalate-to-parent` *(children only)*; this command never files anywhere but its own

@@ -257,3 +257,4 @@ not a file the guard fails to reach: the guard checks every file in `specs/`.
 1. `/retrofit-from-public` - Report what changed in the public repo and file issues describing it; writes nothing here.
 1. `/release` - Bump the version, write the CHANGELOG entry and create the git tag as one unit.
 1. `/propagate-to-public` - Mirror the shippable plugin into the public access repo.
+1. `/release-cycle` - Run the whole cycle, from finding issues to publishing, as one resumable run that stops only at its checkpoints.

@@ -54,7 +54,9 @@ gated `gh issue create` or `gh issue comment` instruction carries `BATCH_CLAUSE`
 beside its yes, and no `submit_feedback` call does: an upstream message stays one message, one
 yes. The clause is one fixed form so that a site added later without it fails here, and the
 note in `specs/INVARIANTS.md` stays the one statement of its conditions (INV-300). Five prose
-sites state the gate with no fenced instruction beside it; `PROSE_SITES` pins those by name.
+sites state the gate with no fenced instruction beside it; `PROSE_SITES` pins those by name. The
+five finding skills' `--file` stages are prose sites too since #573 retired #572's per-record
+lines, and `PROSE_SITES` counts them with the rest.
 
 ⛔ **The unattended surfaces instruct only acts from the list.** They are discovered, not
 listed: the loop's overlay, the Step 8.1 mapping row for a finding with no entry, and every
@@ -80,7 +82,7 @@ was *obeyed*.
 presents the exact text and gets the maintainer's assent first, each record separately, or
 one yes for the whole list shown in one message (INV-314, 2026-10-13 note); unattended, it creates nothing and writes the drafted text where the maintainer will find it.
 
-Source issues: #106, #216, #575.
+Source issues: #106, #216, #575, #573.
 
 Stdlib only; the surfaces are discovered rather than listed (INV-246).
 
@@ -142,13 +144,18 @@ BATCHABLE = (FILING, "gh issue comment")
 
 #: The files holding the five sites that state the gate in prose, with no fenced instruction for
 #: the finders above to reach, and how many times each file carries the clause in all (dry-run's
-#: and delegate's second is at their fenced site). Re-located on `2bc257da` (#575).
+#: and delegate's second is at their fenced site). Re-located on `2bc257da` (#575). #573 adds the
+#: clause at each finding skill's `--file` stage, a prose site, so each of the five counts one
+#: more, and the three with no other prose site are listed for it.
 PROSE_SITES = {
-    "skills/dry-run/SKILL.md": 2,
-    "skills/delegate-to-mcp-server/SKILL.md": 2,
+    "skills/dry-run/SKILL.md": 3,
+    "skills/delegate-to-mcp-server/SKILL.md": 3,
     "skills/auto-test/SKILL.md": 1,
     "skills/compact-dev-environment/SKILL.md": 1,
     "skill-overlays/implement-github-issue.md": 1,
+    "skills/feedback-to-issues/SKILL.md": 2,
+    "skills/retrofit-from-public/SKILL.md": 2,
+    "skills/production-readiness-audit/SKILL.md": 2,
 }
 
 #: How far from the instruction the gate may sit. Measured 2026-09-29: at most 7 lines. The
