@@ -585,8 +585,10 @@ verbatim (INV-051), never joining the choices with "or":
 
 _(Internal: end the turn on this question and wait.)_
 
-**If the bootcamper chose option 5** — or otherwise doesn't have their own data, or wants free
-data to practice with — recommend CORD data as the primary alternative:
+**If the bootcamper did not choose option 5, but says in their own words that they have no data
+or asks for free data to practice with** — recommend CORD data as the primary alternative. Option 5
+is not this case: it asked for generated data, and its entry under **Handling each answer** below
+generates it. For the Bootcamper who did not choose it:
 
 > "Senzing provides **CORD (Collections Of Relatable Data)**: curated collections of **real**
 > public and commercial records, assembled specifically for entity resolution evaluation.
@@ -754,7 +756,8 @@ reconciled against that source's own input before it is shown, and this registry
 that reconciliation stays checkable — Module 6 Phase B compares its loaded count against the
 `record_count` written here.)
 
-**If the bootcamper declines CORD data** or needs something different, offer secondary options:
+**If the bootcamper declines CORD data** or needs something different, offer secondary options
+(each has its entry under **Handling each answer** below):
 
 > "If CORD doesn't meet your needs, there are other options:
 >
@@ -830,16 +833,42 @@ Then proceed with the appropriate option:
 - Store a sample API response in `data/raw/[datasource_name]_sample.json`.
 - Document the API call used.
 
-**Handling each answer (INV-284).** These answer the provision question above. Each then records
-the source in the registry (the **Data Source Registry** note below) and goes on to the next
-source, or to Step 3 once every source is collected.
+**Handling each answer (INV-284).** These answer the provision question above, and the last two
+answer the secondary offer (**If the bootcamper declines CORD data**), which only a Bootcamper who
+did not choose option 5 reaches. Each then records the source in the registry (the **Data Source
+Registry** note below) and goes on to the next source, or to Step 3 once every source is collected.
 
 - **1, "Upload a file":** **Option A** above.
 - **2, "Provide a URL or file path":** **Option B** above.
 - **3, "Connect to a database":** **Option C** above.
 - **4, "Use an API endpoint":** **Option D** above.
-- **5, "I don't have my own data":** the CORD recommendation right after the question (**If the
-  bootcamper chose option 5**).
+- **5, "I don't have my own data":** generate it, in two steps with no question between them.
+  ⛔ **(INV-284) Recommend no CORD alternative, ask nothing more, and do not enter the free-data
+  hierarchy:** the Bootcamper chose generation, and the CORD recommendation after the question is
+  for one who did not choose a number.
+  1. **Write the source's registry entry first.** Module 1 records no scenario on the own-data
+     path, so the generation block has nothing to read until this step writes it. From
+     `docs/business_problem.md`, take the record types, data sources and key attributes Module 1
+     confirmed (`../module-01-business-problem/phase1-discovery.md` → "6a. Present summary and
+     confirm"), and write this source's entry in `config/data_sources.yaml` with
+     `provenance: synthesized` and a `quality_intent`, shaped as *Record the intended band per
+     source* above shows.
+  2. **Then run the generation block of the marker check above** — the one labeled
+     **`provenance: synthesized`** → **generate the source files.** — unchanged. It sizes the
+     data by *License limit and dataset size (canonical framing)* (INV-244), so this step chooses
+     no record count of its own.
+- **Secondary offer, "Synthesized test data":** take option 5's entry above
+  (**5, "I don't have my own data"**) and carry it out as written; its two steps are this answer's
+  route too. Ask nothing more: declining CORD and the catalog is what made this the last resort,
+  and choosing it settles the question.
+- **Secondary offer, "Free raw data":** fetch the file the Bootcamper picks from the
+  `senzing-bootcamp-free-data` catalog the offer links into `data/temp/<source>.<ext>`, and count
+  its records. Record that count and the figure the catalog states for the file (none, when it
+  states none) as the **Data Source Registry** note below defines, reconciling the two before the
+  count is shown (INV-243), and move the file to `data/raw/<source>.<ext>` only once the count is
+  above zero and matches any stated figure; a failed check goes to **Data File Validation**'s
+  remediation below. Then record the source with `provenance: free_data` (*CORD Provenance
+  Recording* below). If the pick is ICIJ Offshore Leaks, give its caveat above before mapping.
 
 **Handling different data formats:**
 
@@ -1551,9 +1580,10 @@ if it's already in the right format for Senzing."
 - Verify files are accessible before proceeding.
 - Document everything in `docs/data_source_locations.md`.
 - **If the bootcamper doesn't have data or asks about free data sources** — and has **no
-  bootcamp-generated scenario** (see the marker check in Step 2) — follow the data
-  recommendation hierarchy: (1) recommend CORD data first via the `get_sample_data` MCP tool
-  (Las Vegas, London, Moscow datasets) with reference to
+  bootcamp-generated scenario** (see the marker check in Step 2), and did not choose option 5 at
+  Step 2's provision question — follow the data recommendation hierarchy: (1) recommend CORD
+  data first via the `get_sample_data` MCP tool (Las Vegas, London, Moscow datasets) with
+  reference to
   <https://senzing.com/senzing-ready-data-collections-cord/>; (2) if CORD is declined, recommend
   <https://github.com/docktermj/senzing-bootcamp-free-data> for raw samples and additional
   sources; (3) offer synthesized test data generation only as a last resort after CORD and
@@ -1564,6 +1594,8 @@ if it's already in the right format for Senzing."
   design whenever no CORD collection fits the chosen category, and which Step 2 handles by generating
   the files without asking. Applying "last resort" there would re-open a settled decision and push
   CORD at a category Module 1 already ruled it out for.
+  Nor is it a judgment on option 5: a Bootcamper who chose it asked for generated data, and Step 2's
+  entry for option 5 under **Handling each answer** generates it without recommending CORD.
 - **If they pick ICIJ Offshore Leaks from the free-data catalog, give the dated caveat:** as of
   **2026-08-11** its four sample files do not join —
   not one of the 10 rows in `relationships-sample.csv` has an endpoint present in the node files —

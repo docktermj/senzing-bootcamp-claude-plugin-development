@@ -9987,7 +9987,7 @@ looks wrong.
 - `tests/test_first_source_is_chosen_by_step_fourteens_heuristics.py`: 18
 - `tests/test_fpdf2_dependency_is_declared.py`: 12
 - `tests/test_free_data_catalog_caveats.py`: 14
-- `tests/test_gate_options_have_handling_steps.py`: 26
+- `tests/test_gate_options_have_handling_steps.py`: 30
 - `tests/test_generated_data_supports_its_success_criteria.py`: 35
 - `tests/test_generated_dataset_size_is_a_license_decision.py`: 18
 - `tests/test_generated_gap_rates_reach_their_band.py`: 12
@@ -12104,3 +12104,12 @@ Senzing licensing, with no SPDX identifier.
   `PROPOSED AMENDMENT` is queued (Module 6 hardcoded the SQLite file on a
   PostgreSQL run, and `dotnet nuget add source` wrote the user-level
   `NuGet.Config`)
+- #619: Module 4 Step 2's option 5 generates: its INV-284 handling entry writes
+  the source's registry entry from `docs/business_problem.md` (`provenance:
+  synthesized`, a `quality_intent`), then runs the generation block unchanged;
+  the secondary offer's "Synthesized test data" points at that entry and "Free
+  raw data" stages, counts (INV-243) and records `provenance: free_data`; CORD
+  and "last resort" are scoped to a Bootcamper who did not choose option 5,
+  checked by `tests/test_gate_options_have_handling_steps.py`, and an INV-284
+  `PROPOSED AMENDMENT` is queued (option 5's handler recommended CORD against
+  the answer, and the secondary offer's entries had no procedure)

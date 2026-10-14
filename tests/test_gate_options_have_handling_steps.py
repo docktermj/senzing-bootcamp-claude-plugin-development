@@ -60,6 +60,17 @@ the maintainer's sign-off): `Step16DisclosesOnASynthesizedSource` asserts that s
 Phase 1's one statement of the wording (INV-300) before the 70-79% and <70% questions of both
 blocks, keeps those questions verbatim with both options, and marks no ≥80% question.
 
+#619 (part of #602) applies the answer side to Module 4 Step 2's provision path:
+`Module4ProvisionPathCarriesOutEachAnswer` asserts that option 5's entry writes the source's
+registry entry from `docs/business_problem.md` with `provenance: synthesized` and a
+`quality_intent`, then points at Step 2's `provenance: synthesized` generation block, and names
+no CORD route and no new 👉; that each entry of the secondary offer (read from its quote, not
+listed) has its own entry under the marker, "Synthesized test data" pointing at option 5's entry
+rather than restating its two steps (INV-300) and "Free raw data" recording
+`provenance: free_data` after a count; and that the CORD recommendation, the free-data hierarchy and "last resort" are
+scoped to a Bootcamper who did not choose option 5. Negative controls mutate the shipped text. It
+asserts the file *states* the routes, and cannot establish that a live guide follows them.
+
 Source spec:
 `specs/the-quality-gates-improve-option-has-no-procedure-and-is-incoherent-on-a-generated-scenario.md`.
 Source issue: #531 (part of #504).
@@ -188,8 +199,8 @@ def find_marker(prose, start):
     return None
 
 
-def marker_entries(text, m):
-    """Every entry in the marker block at line m: Entry(num | 'each', quotes, start, stop)."""
+def marker_bullets(text, m):
+    """[(start, stop)] for every bullet at the marker's indent in the block at line m."""
     raw, prose = text.split("\n"), prose_lines(text)
     ind = _indent(prose[m])
     k = m + 1
@@ -216,8 +227,14 @@ def marker_entries(text, m):
         else:
             break
         k += 1
+    return [tuple(b) for b in bullets]
+
+
+def marker_entries(text, m):
+    """Every entry in the marker block at line m: Entry(num | 'each', quotes, start, stop)."""
+    prose = prose_lines(text)
     entries = []
-    for start, stop in bullets:
+    for start, stop in marker_bullets(text, m):
         body = " ".join((prose[n] or "").strip() for n in range(start, stop))
         label = _LABEL.match(re.sub(r"^-\s+", "", body))
         if not label:
@@ -692,6 +709,202 @@ class Step16DisclosesOnASynthesizedSource(unittest.TestCase):
         m2 = self.phase2.replace("say it\nas written there", "say it as\nwritten there", 1)
         self.assertNotEqual(self.phase2, m2, "the re-wrap no longer applies")
         self.assertEqual([], step16_disclosure_problems(m2, self.phase1))
+
+
+MODULE_04 = SKILLS / "module-04-data-collection" / "SKILL.md"
+#: Module 4 Step 2's provision question, normalized as `gates` reports it.
+PROVISION = "how would you like to provide the data for this source?"
+#: The generation block's bold label in Step 2's marker check, which the entries point at.
+GENERATION_LABEL = "**`provenance: synthesized`** → **generate the source files.**"
+SECONDARY_LEAD = "**If the bootcamper declines CORD data**"
+CORD_QUOTE = '"Senzing provides **CORD'
+#: The catalog is named, not linked, in the entry: the offer above is the recommendation site
+#: (`tests/test_free_data_catalog_caveats.py` counts the sites by URL).
+FREE_DATA = "senzing-bootcamp-free-data"
+_OFFER = re.compile(r"^[ \t]*>[ \t]*-[ \t]+\*\*(?P<name>[^*]+?):\*\*")
+_SECONDARY = re.compile(r'^Secondary offer,\s*"(?P<name>[^"]+)"\s*:?$')
+#: What each answer's entry must say, and must not (#619). Option 5 writes the registry entry
+#: from the business problem, then points at the generation block; the secondary offer's
+#: synthesized entry points at option 5's entry and restates none of it (INV-300, a graft from
+#: the race's approach B); the free-data entry fetches, counts and records its provenance.
+GENERATES = ("docs/business_problem.md", "provenance: synthesized", "quality_intent",
+             norm(GENERATION_LABEL))
+NEVER_CORD = ("get_sample_data", "if the bootcamper chose option 5", "👉")
+#: The synthesized entry's pointer at option 5's entry, by that entry's bold label.
+TO_OPTION_5 = ("take option 5's entry", '5, "i don\'t have my own data"', "ask nothing more")
+SECONDARY_NEEDS = {
+    "synthesized test data": TO_OPTION_5,
+    "free raw data": (FREE_DATA, "count its records", "data source registry", "inv-243",
+                      "provenance: free_data"),
+}
+
+
+def secondary_options(text):
+    """The secondary offer's entries, read from its quote (derived, not listed: INV-246)."""
+    start = text.find(SECONDARY_LEAD)
+    if start < 0:
+        return []
+    names = []
+    for line in text[start:].split("\n")[1:]:
+        if line.strip() and not line.lstrip().startswith((">", "(")):
+            break
+        m = _OFFER.match(line)
+        if m:
+            names.append(norm(m.group("name")))
+    return names
+
+
+def provision_path_problems(text):
+    """Module 4 Step 2's provision path: every answer carries out what it says (#619)."""
+    flat = norm(text)
+    gate = next((g for g in gates(text) if PROVISION in g.question), None)
+    if gate is None:
+        return ["Module 4 Step 2's provision question moved"]
+    if not any(n == 5 and norm(o).startswith("i don't have my own data") for n, o in gate.options):
+        return ["the provision question has no option 5, \"I don't have my own data\""]
+    prose = prose_lines(text)
+    m = find_marker(prose, gate.end)
+    if m is None:
+        return ["the provision question has no %s" % MARKER]
+    bodies, secondary = {}, {}
+    for start, stop in marker_bullets(text, m):
+        body = norm(" ".join((prose[n] or "").strip() for n in range(start, stop)))
+        label = _LABEL.match(re.sub(r"^-\s+", "", " ".join(
+            (prose[n] or "").strip() for n in range(start, stop))))
+        if not label:
+            continue
+        n = _NUMBERED.match(label.group("label").strip())
+        s = _SECONDARY.match(label.group("label").strip())
+        if n:
+            bodies[int(n.group("num"))] = body
+        elif s:
+            secondary[norm(s.group("name"))] = body
+    problems = []
+    if text.count("- " + GENERATION_LABEL) != 1:
+        problems.append("Step 2 has no single generation branch labeled %s for the entries to "
+                        "point at" % GENERATION_LABEL)
+    five = bodies.get(5, "")
+    for needle in GENERATES + ("license limit and dataset size (canonical framing)",
+                               "recommend no cord alternative"):
+        if needle not in five:
+            problems.append("option 5's entry does not say %r" % needle)
+    for needle in NEVER_CORD:
+        if needle in five:
+            problems.append("option 5's entry still routes to CORD or asks again (%r)" % needle)
+    if GENERATES[0] in five and GENERATES[-1] in five and not (
+            five.index(GENERATES[0]) < five.index(GENERATES[-1])):
+        problems.append("option 5's entry generates before it writes the registry entry")
+    offered = secondary_options(text)
+    if len(offered) < 2:
+        problems.append("the secondary offer lists %d entries; the parser broke" % len(offered))
+    for name in offered:
+        body = secondary.get(name)
+        if body is None:
+            problems.append("the secondary offer's %r has no entry under the marker" % name)
+            continue
+        for needle in SECONDARY_NEEDS.get(name, ()):
+            if needle not in body:
+                problems.append("the secondary offer's %r entry does not say %r" % (name, needle))
+        if name != "synthesized test data":
+            continue
+        for needle in NEVER_CORD:
+            if needle in body:
+                problems.append("the %r entry routes to CORD or asks again (%r)" % (name, needle))
+        for needle in GENERATES:
+            if needle in body:
+                problems.append("the %r entry restates option 5's steps (%r) instead of pointing "
+                                "at its entry (INV-300)" % (name, needle))
+    for name in secondary:
+        if name not in offered:
+            problems.append("the entry %r names no entry of the secondary offer" % name)
+    q, c = flat.find(PROVISION), flat.find(norm(CORD_QUOTE))
+    lead = flat[q:c] if 0 <= q < c else ""
+    if "did not choose option 5" not in lead or "if the bootcamper chose option 5" in lead:
+        problems.append("the CORD recommendation is not scoped to a Bootcamper who did not "
+                        "choose option 5")
+    h = flat.find("follow the data recommendation hierarchy")
+    if h < 0 or "did not choose option 5" not in flat[max(0, h - 300):h]:
+        problems.append("the free-data hierarchy is not scoped to a Bootcamper who did not "
+                        "choose option 5")
+    if "nor is it a judgment on option 5" not in flat:
+        problems.append('"last resort" is not scoped away from option 5')
+    return problems
+
+
+class Module4ProvisionPathCarriesOutEachAnswer(unittest.TestCase):
+    """#619: option 5 generates, and the secondary offer's entries each have a procedure."""
+
+    def setUp(self):
+        self.text = MODULE_04.read_text(encoding="utf-8")
+
+    def test_every_answer_carries_out_what_it_says(self):
+        self.assertEqual([], provision_path_problems(self.text))
+
+    def test_the_secondary_offer_is_read_not_listed(self):
+        self.assertEqual(["free raw data", "synthesized test data"],
+                         secondary_options(self.text))
+
+    def _entry(self, label):
+        start = self.text.index(label)
+        end = self.text.index("\n- **", start + 1)
+        return start, end
+
+    def test_negative_controls(self):
+        t = self.text
+        s5, e5 = self._entry('- **5, "I don\'t have my own data":**')
+        sf, ef = self._entry('- **Secondary offer, "Free raw data":**')
+        ss, es = self._entry('- **Secondary offer, "Synthesized test data":**')
+        step1 = t.index("  1. **Write the source's registry entry first.**", s5)
+        step2 = t.index("  2. **Then run the generation block", s5)
+        old_five = ('- **5, "I don\'t have my own data":** the CORD recommendation right after '
+                    "the question (**If the\n  bootcamper chose option 5**).\n")
+        offer_end = t.index('scenario."', t.index(SECONDARY_LEAD)) + len('scenario."')
+        mutants = {
+            "option 5 routes to CORD again": t[:s5] + old_five + t[e5 + 1:],
+            "option 5 skips the registry entry": t[:step1] + t[step2:],
+            "option 5 generates first": (t[:step1] + t[step2:e5] + "\n" + t[step1:step2]
+                                         .rstrip("\n") + t[e5:]),
+            "option 5 asks again": t.replace(
+                "for one who did not choose a number.",
+                "for one who did not choose a number. 👉 **Use CORD instead?**", 1),
+            "the free-data entry is gone": t[:sf] + t[ef + 1:],
+            "the synthesized entry is gone": t[:ss] + t[es + 1:],
+            "the free-data entry records no provenance": t[:sf] + t[sf:ef].replace(
+                "`provenance: free_data`", "the provenance") + t[ef:],
+            "the synthesized entry restates option 5's steps": t[:ss] + t[ss:es].replace(
+                "and carry it out as written;",
+                "and carry it out as written: write the source's entry from "
+                "`docs/business_problem.md` with `provenance: synthesized` and a "
+                "`quality_intent`, then run the generation block;", 1) + t[es:],
+            "the synthesized entry drops its pointer": t[:ss] + t[ss:es].replace(
+                "take option 5's entry above\n  (**5, \"I don't have my own data\"**)",
+                "generate the data", 1) + t[es:],
+            "a new secondary option with no entry": (
+                t[:offer_end - 1] + '\n> - **Paid data:** a vendor sample."' + t[offer_end:]),
+            "the generation label is renamed": t.replace(
+                "- " + GENERATION_LABEL, "- **`provenance: synthesized`** → **generate files.**",
+                1),
+            "the CORD recommendation is unscoped": t.replace(
+                "**If the bootcamper did not choose option 5, but says",
+                "**If the bootcamper chose option 5, or says", 1),
+            "the hierarchy is unscoped": t.replace(
+                ", and did not choose option 5 at\n  Step 2's provision question", "", 1),
+            "last resort reaches option 5": t.replace("Nor is it a judgment on option 5",
+                                                      "It also applies to option 5", 1),
+        }
+        for name, mutant in mutants.items():
+            with self.subTest(mutant=name):
+                self.assertNotEqual(t, mutant, "the mutation no longer applies")
+                self.assertNotEqual([], provision_path_problems(mutant))
+
+    def test_a_rewrap_still_passes(self):
+        """INV-346: an entry's label and its phrases may wrap."""
+        mutant = self.text.replace('- **Secondary offer, "Free raw data":** fetch the file',
+                                   '- **Secondary offer, "Free raw data":**\n  fetch the file', 1)
+        mutant = mutant.replace("recommend no CORD alternative, ask nothing more",
+                                "recommend no CORD\n  alternative, ask nothing more", 1)
+        self.assertNotEqual(self.text, mutant, "the re-wrap no longer applies")
+        self.assertEqual([], provision_path_problems(mutant))
 
 
 if __name__ == "__main__":
