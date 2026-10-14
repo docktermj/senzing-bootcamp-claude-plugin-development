@@ -9987,7 +9987,7 @@ looks wrong.
 - `tests/test_first_source_is_chosen_by_step_fourteens_heuristics.py`: 18
 - `tests/test_fpdf2_dependency_is_declared.py`: 12
 - `tests/test_free_data_catalog_caveats.py`: 14
-- `tests/test_gate_options_have_handling_steps.py`: 30
+- `tests/test_gate_options_have_handling_steps.py`: 35
 - `tests/test_generated_data_supports_its_success_criteria.py`: 35
 - `tests/test_generated_dataset_size_is_a_license_decision.py`: 18
 - `tests/test_generated_gap_rates_reach_their_band.py`: 12
@@ -12113,3 +12113,14 @@ Senzing licensing, with no SPDX identifier.
   checked by `tests/test_gate_options_have_handling_steps.py`, and an INV-284
   `PROPOSED AMENDMENT` is queued (option 5's handler recommended CORD against
   the answer, and the secondary offer's entries had no procedure)
+- #620: Module 4 Step 8a sub-step 6 gives guidance for the chosen path only and
+  Step 8b's "Load all" asks nothing more (INV-006); Module 1 Steps 6a and 15
+  revise and re-present on a no, Step 4 option 2 shows the pattern gallery when
+  none was picked, and Step 4a's unreachable "Declined" branch is gone; Module 7
+  gate item 6 has a handling step; the INV-284 gate scan in
+  `tests/test_gate_options_have_handling_steps.py` now counts every "Reply with
+  a number" question, list or not, which put the marker on Bootcamp
+  preparation's language gate and Module 7's recall question, and an INV-284
+  `PROPOSED AMENDMENT` is queued (pinned answers were re-asked, two
+  confirmation gates had no "no" branch, and two numbered-reply gates had no
+  marker)

@@ -542,7 +542,8 @@ class Module1AsksForDemonstrableCriteria(unittest.TestCase):
 
     def test_step_4a_states_it_in_the_accepted_branch(self):
         text = step_4a()
-        accepted = text[text.index("**Accepted:**"):text.index("**Declined:**")]
+        # Up to the next outcome branch; #620 removed the unreachable "Declined" one.
+        accepted = text[text.index("**Accepted:**"):text.index("**Generation failed")]
         self.assertIn(self.SENTENCE, accepted)
 
     def test_negative_control_without_it(self):

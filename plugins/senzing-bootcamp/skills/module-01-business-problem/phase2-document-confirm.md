@@ -361,6 +361,9 @@ different route, and on this path this branch is the only thing standing in fron
 
 *(Internal: end the turn and wait.)* The question wording above is pinned verbatim (INV-056) and is
 **unchanged** by this — what changed is what the Bootcamper is looking at when they answer it.
+**On a yes,** continue to Step 16. **On a no,** ask what to change, revise
+`docs/business_problem.md` by Step 11's rules, and present this question again: the revised
+document is a new state, not an INV-006 repeat (INV-284).
 **Checkpoint:** write step 15.
 
 ## 16. Generate the stakeholder summary

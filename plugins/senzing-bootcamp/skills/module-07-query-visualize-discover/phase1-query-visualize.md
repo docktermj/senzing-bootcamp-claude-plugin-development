@@ -630,6 +630,10 @@ branch above ran.
 
 *(Internal: end the turn on this question and wait.)*
 
+**Handling each answer (INV-284).** The options come from this entity's result at runtime.
+
+- **Each number:** the answer handling below, then step 3b.
+
 **On the answer, the next turn.** A correct answer is confirmed in one line, naming the field
 that shows it.
 ⛔ (INV-300, INV-362) **A wrong answer follows Module 0's wrong-answer rule, stated once in
@@ -1377,7 +1381,9 @@ Before wrapping up the module, confirm:
    - This item asks the Bootcamper nothing and adds no 👉 (INV-251). A section that still cannot be
      fixed is reported like the deliverable above (**Non-blocking**) and never blocks the gate or
      graduation.
-6. **Ready to proceed?**
+6. **Ready to proceed?** On a yes, continue to the Visualization server teardown below. Any
+   other answer returns to the Discover phase for what they asked, then presents this gate again:
+   a new state, not an INV-006 repeat (INV-284).
 
 ## Visualization server teardown (its own turn)
 

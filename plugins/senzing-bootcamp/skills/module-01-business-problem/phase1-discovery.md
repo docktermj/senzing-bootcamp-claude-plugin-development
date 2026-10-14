@@ -194,7 +194,8 @@ bootcamper explicitly accepts option 3.)*
 
 - **1, "Describe a real business case":** they describe it; continue at Step 5, which infers the
   details from their response.
-- **2, "Adopt a design pattern":** as 1, for the pattern picked in Step 3.
+- **2, "Adopt a design pattern":** as 1, for the pattern picked in Step 3. When none was picked,
+  show Step 3's pattern gallery first, then continue as 2 for the pattern they choose.
 - **3, "I don't have my own data":** Step 4a's **Accepted** branch, which continues at Step 5.
 
 **Checkpoint:** write step 4.
@@ -243,7 +244,6 @@ bootcamper explicitly accepts option 3.)*
   - ⛔ **Do not tie the ceiling to the license limit at this step.** Nothing has measured the
     license yet and INV-093 forbids a license prompt here, so the ceiling is about how long the
     bootcamp takes — which is knowable now — never about capacity, which is not.
-- **Declined:** continue with their own description (Path 1/2); do not generate a scenario.
 - **Generation failed / invariants violated:** tell the bootcamper it couldn't complete, fall
   back to their own description, no generated `docs/business_problem.md`.
 
@@ -407,6 +407,9 @@ what they already covered.
 👉 **Does that summary capture your situation accurately?**
 
 *(Internal: end the turn and wait.)* **Checkpoint:** write step 6a.
+
+**On a yes,** continue to 6b–6d. **On a no,** ask what to change, revise the summary, and present
+this question again: the revised summary is a new state, not an INV-006 repeat (INV-284).
 
 ### 6b–6d. Ask only about "not yet determined" items, one per turn
 
