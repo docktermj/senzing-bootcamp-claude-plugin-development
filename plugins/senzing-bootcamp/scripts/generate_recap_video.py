@@ -84,7 +84,8 @@ table. Keys beginning with ``_`` are comments and are ignored. The scene types:
   preferences name outranking it exactly as it does there. It is drawn, never rasterized from
   the PDF.
 * ``tag_line`` -- the closing card. ``text`` defaults to
-  ``Resolved: <bootcamper>, Senzing graduate.``
+  ``Resolved: <bootcamper>, Senzing Bootcamp graduate.``, set centered as "Resolved:", then
+  the name (up to the last comma), then the rest on one line of its own, whatever the font.
 
 Fallbacks, each stated on stderr (INV-111)
 ------------------------------------------
@@ -1349,18 +1350,45 @@ def _certificate_face(ctx, cert: "CertificateFields"):
     return img
 
 
+#: The closing card's text box and its line cap.
+TAG_LINE_SIZE, TAG_LINE_WIDTH, TAG_LINE_MAX_LINES = 96, 1600, 5
+
+
+def tag_line_layout(ctx, text: str, max_width: float = TAG_LINE_WIDTH,
+                    size: int = TAG_LINE_SIZE):
+    """The closing card's font and its lines, as ``(font, [(line, color, start)])`` (#580).
+
+    "Resolved:" goes on its own line. The text after it breaks after its LAST comma: the part
+    up to and including that comma (the name) wraps by words over its own lines, and the rest
+    ("Senzing Bootcamp graduate.") goes on one line of its own, never split. When that phrase
+    is wider than `max_width`, the whole card's font shrinks in 4 px steps (`_fit_font`) until
+    it fits; every line uses that one size, and it never shrinks to fit the name. Text after
+    "Resolved:" with no comma, and text with no "Resolved:" prefix, wrap greedily as before.
+    The line cap keeps the phrase: a long name loses its own last lines first.
+    """
+    prefix, sep, rest = text.partition(":")
+    body = rest.strip()
+    if not (sep and body):
+        font = ctx.font("bold", size)
+        lines = [(line, P["WHITE"], 0.3) for line in wrap_text(font, text, max_width)]
+        return font, lines[:TAG_LINE_MAX_LINES]
+    head = [(prefix + sep, P["EMBER_HOT"], 0.2)]
+    name, comma, phrase = body.rpartition(",")
+    phrase = phrase.strip()
+    if not (comma and name.strip() and phrase):
+        font = ctx.font("bold", size)
+        lines = head + [(line, P["WHITE"], 0.6) for line in wrap_text(font, body, max_width)]
+        return font, lines[:TAG_LINE_MAX_LINES]
+    font = _fit_font(ctx, "bold", phrase, size, max_width)
+    names = wrap_text(font, name.strip() + comma, max_width)[:TAG_LINE_MAX_LINES - 2]
+    return font, head + [(line, P["WHITE"], 0.6) for line in names] + [
+        (phrase, P["WHITE"], 0.6)]
+
+
 def _draw_tag_line(ctx, ps, t):
     img = _dark_background(ctx)
     draw = ctx.ImageDraw.Draw(img)
-    text = ps.data["text"]
-    font = ctx.font("bold", 96)
-    prefix, sep, rest = text.partition(":")
-    if sep and rest.strip():
-        lines = [(prefix + sep, P["EMBER_HOT"], 0.2)]
-        lines += [(line, P["WHITE"], 0.6) for line in wrap_text(font, rest.strip(), 1600)]
-    else:
-        lines = [(line, P["WHITE"], 0.3) for line in wrap_text(font, text, 1600)]
-    lines = lines[:5]
+    font, lines = tag_line_layout(ctx, ps.data["text"])
     y = (860 - _line_height(font) * len(lines)) / 2
     for line, color, start in lines:
         _draw_text(draw, WIDTH / 2, y, line, font, _mix(P["OBSIDIAN"], color,
@@ -1413,7 +1441,7 @@ SCENE_TYPES: Dict[str, SceneType] = {t.name: t for t in (
               _draw_certificate),
     SceneType("tag_line", "the closing card",
               (F("text", "text", False,
-                 help="defaults to 'Resolved: <bootcamper>, Senzing graduate.'"),),
+                 help="defaults to 'Resolved: <bootcamper>, Senzing Bootcamp graduate.'"),),
               _draw_tag_line),
 )}
 
@@ -1583,7 +1611,7 @@ def plan_timeline(storyboard: dict, ctx: RenderContext, engine: Optional[SpeechE
         elif kind == "certificate":
             data["certificate"] = certificate_fields(scene, video, ctx.root, ctx.note)
         elif kind == "tag_line" and not scene.get("text"):
-            data["text"] = f"Resolved: {video['bootcamper']}, Senzing graduate."
+            data["text"] = f"Resolved: {video['bootcamper']}, Senzing Bootcamp graduate."
         narration = scene["narration"]
         caption = scene.get("caption") or narration
         pcm, voiced = b"", False

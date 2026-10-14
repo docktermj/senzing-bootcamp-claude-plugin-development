@@ -23,7 +23,7 @@ with the bundled renderer (`generate_recap_video.py`, #299). These tests pin:
   drop or move the Intro, alter its narration, and slip in a second non-module token.
 * **The storyboard**: the documented example validates through the renderer's own
   `validate_storyboard`, runs exactly 2:00, carries the five animated scenes, and ends on the
-  certificate and then "Resolved: [Name], Senzing graduate.".
+  certificate and then "Resolved: [Name], Senzing Bootcamp graduate.".
 * ⛔ **No raw record values**, and the fallbacks never block graduation: exit 1, 2 and 3, a
   declined or failed install, the storyboard kept.
 * ⛔ **Only name-free screenshots** (#326): Step 1c's allow-list is exactly the `match-keys`,
@@ -78,7 +78,7 @@ OFFER = ("> 👉 **Would you like a narrated 2-minute graduation video of your b
 INSTALL = ("> 👉 **Rendering the video needs ffmpeg. May I install `imageio-ffmpeg` into this "
            "project's virtualenv?** (Reply no to skip the video; its storyboard is kept so you "
            "can render it later.)")
-TAG_LINE = "Resolved: [Name], Senzing graduate."
+TAG_LINE = "Resolved: [Name], Senzing Bootcamp graduate."
 PIPER_OFFER = ("> 👉 **May I install the Piper neural voice so the narration sounds natural?** It "
                "downloads about 200 MB into this project: `piper-tts` (GPL-3.0, runs on your "
                "machine) into `data/temp/recap-venv/`, and the public-domain `en_US-ljspeech-high` "
@@ -547,6 +547,16 @@ class TheStoryboard(unittest.TestCase):
         self.assertIn("The last two scenes are always the `certificate`, then the `tag_line` "
                       "with the text **\"%s\"**" % TAG_LINE, text)
         self.assertIn("where `[Name]` is `video.bootcamper`", text)
+
+    def test_the_tag_line_is_narrated_and_checked_in_the_same_words(self):
+        """#580: the card, its narration (and so its caption) and the frame check all carry
+        "Senzing Bootcamp graduate."; the old wording without "Bootcamp" is gone from Step 1c."""
+        scene = example_storyboard()["scenes"][-1]
+        name = example_storyboard()["video"]["bootcamper"]
+        self.assertEqual(TAG_LINE.replace("[Name]", name), scene["narration"])
+        self.assertNotIn("caption", scene, "the caption must default to the narration")
+        self.assertIn("that the tag line reads \"%s\"" % TAG_LINE, squash(step_1c()))
+        self.assertIsNone(re.search(r"Senzing\s+graduate", step_1c()))
 
     def test_it_is_personalized_with_the_certificate_name(self):
         text = squash(step_1c())
