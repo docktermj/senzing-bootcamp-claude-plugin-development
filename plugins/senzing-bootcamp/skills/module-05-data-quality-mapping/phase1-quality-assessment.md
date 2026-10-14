@@ -329,12 +329,10 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    `POSTAL_CODE`, while the specification's catalog names the attributes `NAME_ORG` and
    `ADDR_LINE1`/`ADDR_CITY`/… (Entity Specification, *Feature: NAME*; and *Usage types and payload
    (optional attributes)*, which defines a usage type as "a short label that distinguishes multiple
-   instances of the same feature on one entity" — both confirmed via
+   instances of the same feature on one entity" — the usage-type half via
    `search_docs(query='usage type distinguishes multiple instances payload optional attributes',
-   category='data_mapping')` for the usage-type half and
-   `search_docs(query='NAME_FULL NAME_ORG parsed person name single field', category='data_mapping')` for
-   *Feature: NAME*, MCP server 1.32.8, docs index 2026-08-11; both queries re-verified as top hits
-   on 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-04). Resolve each
+   category='data_mapping')`, whose top hit is that section; the route to *Feature: NAME* is stated
+   once, in `phase2-data-mapping.md` → "11. Map", INV-300). Resolve each
    key against the specification you hold, and where a key is a catalog attribute carrying such a
    label, count it as a specification attribute. ⛔ The label **encoding** on a flat attribute name
    is an observed shape, not something the indexed specification states — so where you cannot

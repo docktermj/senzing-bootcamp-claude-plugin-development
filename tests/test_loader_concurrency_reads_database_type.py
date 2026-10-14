@@ -125,13 +125,18 @@ class LoaderGenerationReadsDatabaseType(unittest.TestCase):
     def test_the_server_wording_is_quoted_with_its_version(self):
         self.assertIn("tune based on your database and storage", self.text)
         self.assertIn("does not support concurrent\n  writes", self.text)
+        # #600: the paragraph points at the one statement of the loading anti-patterns route, and
+        # the route's record carries the tool, version and date (was a prose stamp: **1.36.0**,
+        # then **1.37.19**). test_prescribed_search_queries.py follows the pointer.
         self.assertRegex(
-            self.text,
-            # Re-measured for #383 (was **1.36.0**, 2026-09-02): the prose stamp follows the
-            # VERIFIED_QUERIES record in tests/test_prescribed_search_queries.py.
-            r"server\s+\*\*1\.37\.19\*\*, docs index 2026-10-02 18:46 UTC, 2026-10-02",
-            "a Senzing fact written into the plugin carries the tool, version and date",
+            re.sub(r"\s+", " ", self.text),
+            r"route is stated once, in `phaseA-build-loading\.md` → \"Anti-pattern check\"",
+            "a Senzing fact written into the plugin names the route that serves it",
         )
+        from test_prescribed_search_queries import VERIFIED_QUERIES
+        record = VERIFIED_QUERIES[("search_docs", "loading", "anti_patterns")]
+        self.assertRegex(record["server"], r"^\d+\.\d+\.\d+$")
+        self.assertIn("Do Not Use SQLite in Production", record["sections"])
 
     def test_the_comment_names_the_graduation_consumer(self):
         """The comment is the only explanation the Bootcamper ever gets — it ships verbatim."""

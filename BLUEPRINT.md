@@ -10107,7 +10107,7 @@ looks wrong.
 - `tests/test_post_yes_switch_reads_the_dial.py`: 19
 - `tests/test_predictions_before_results.py`: 49
 - `tests/test_preparation_recap_template.py`: 9
-- `tests/test_prescribed_search_queries.py`: 43
+- `tests/test_prescribed_search_queries.py`: 56
 - `tests/test_profile_report_relocation_covers_both_filenames.py`: 15
 - `tests/test_project_local_visualization_finds_its_d3.py`: 8
 - `tests/test_project_readme_is_created.py`: 13
@@ -12044,6 +12044,14 @@ Senzing licensing, with no SPDX identifier.
   the 21 sites its hand-written guard listed, so Truth Set visualization and
   later steps gave a C#, Rust or TypeScript Bootcamper no folder, manifest or
   build command)
+- #600: each measured search route is stated in full once and every other
+  site points at it, the route's record in `tests/test_prescribed_search_queries.py`
+  is its only stamp, records are keyed `(tool, query, category-or-language)`,
+  `find_examples(query=` is scanned and recorded too, three off-target
+  `find_examples` phrasings are removed, and the guard fails a second full
+  statement and a new prose stamp, with an INV-291 `PROPOSED AMENDMENT`
+  queued (copies of a route had drifted to older queries and stamps, and the
+  prescribed `find_examples` queries carried no measurement)
 - #609: `/release-cycle` writes nothing under `specs/` before stage 5 and its
   own entry only at a stop, stated once with every write and matched by the
   pending #573 block, corrected in place; `autotest.py --report-dir` keeps a

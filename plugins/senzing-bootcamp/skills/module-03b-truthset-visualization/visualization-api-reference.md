@@ -715,7 +715,9 @@ label): size its gutter from the measured advance of the labels' font, clamped a
 that does not fit rather than letting it clip, keep fitted labels distinct, and put the full code on
 hover. A fixed gutter is not safe there either. The longest code in the Entity Specification's
 feature list is `REGISTRATION_COUNTRY`, 20 characters, and a configuration can add custom feature
-types, so no length is guaranteed (`search_docs`, server 1.37.28, 2026-10-12).
+types, so no length is guaranteed (`search_docs(query='Feature: REGISTRATION_COUNTRY
+organizations', category='data_mapping')` returns the specification's *Feature:
+REGISTRATION_COUNTRY (organizations)* first and its *What features to map* rows next).
 
 **3. The entity graph must open on something readable.** Hiding labels does not thin 4,464 edges;
 at that density the graph conveys shape only, with no practical way to locate an entity. Required:

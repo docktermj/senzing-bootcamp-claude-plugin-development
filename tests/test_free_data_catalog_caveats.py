@@ -178,9 +178,22 @@ class TheSenzingFactCarriesItsProvenance(unittest.TestCase):
                 self.assertIn(attribute, chunk)
 
     def test_the_lookup_that_established_it_is_named_with_its_server_version(self):
+        """The claim names its route, and the route's record carries the server version.
+
+        #513 turned this claim's route into a pointer at Module 5 step 11, and this test went on
+        passing on an unrelated `category='data_mapping'` call elsewhere in the file and an
+        unrelated stamp. #600 removed that call, so it now asserts what it meant: the claim's own
+        sentence points at the one statement of its route, whose record in
+        `test_prescribed_search_queries.py` holds the server version and docs index (INV-291).
+        """
         chunk = flat(text())
-        self.assertRegex(chunk, ROUTE_DATA_MAPPING)
-        self.assertRegex(chunk, r"MCP server 1\.\d+\.\d+")
+        self.assertRegex(
+            chunk,
+            r"\*Feature: REL_POINTER\*; the `search_docs` route that returns both is stated once, "
+            r"in `\.\./module-05-data-quality-mapping/phase2-data-mapping\.md` → \"11\. Map\"")
+        owner = flat((MODULE_04.parent.parent / "module-05-data-quality-mapping"
+                      / "phase2-data-mapping.md").read_text(encoding="utf-8"))
+        self.assertRegex(owner, ROUTE_DATA_MAPPING)
 
 
 class ThePluginNeverRepairsTheData(unittest.TestCase):

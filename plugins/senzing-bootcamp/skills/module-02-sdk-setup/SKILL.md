@@ -339,8 +339,7 @@ MCP server. `get_capabilities` reports `senzing_version` as the string `"current
 
 **The update command.** ⚠️ **On macOS and Windows the update command is server-documented through
 `search_docs`, not through `sdk_guide`.** `sdk_guide(topic='install')` gives the install command;
-the update command is in the official tap and bucket READMEs, which `search_docs` serves (server
-1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28):
+the update command is in the official tap and bucket READMEs, which `search_docs` serves:
 
 - **macOS:** `search_docs(query='homebrew-senzingsdk upgrade cask brew upgrade senzingsdk')`
   returns `senzing/homebrew-senzingsdk`, section "Upgrade": `brew update`, then
@@ -650,9 +649,9 @@ then checkpoint step 2 and continue to Step 3.
 Each README opens with "**Preview Release — Unsupported** … provided as-is with no warranty and is
 **not supported**". For `macos_arm`,
 `search_docs(query='homebrew-senzingsdk preview release unsupported tap install cask')` returns it
-as the `senzing/homebrew-senzingsdk` section "homebrew-senzingsdk". For `windows`,
-`search_docs(query='scoop-senzingsdk update scoop update senzingsdk')` returns it at the top of the
-`senzing/scoop-senzingsdk` README (server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28).
+as the `senzing/homebrew-senzingsdk` section "homebrew-senzingsdk". For `windows`, the
+`senzing/scoop-senzingsdk` README opens with it, above its *Update* section: that route is stated
+once, in `SKILL.md` → "The update command." (Step 1b, INV-300).
 When you name either route, say this once, as a fact about the tap or the bucket, not as advice
 against it: they remain the native routes in rules 3 and 4 below.
 
@@ -1265,9 +1264,10 @@ Four things in that block are the point, not decoration:
 - **Refuse to export an empty value rather than exporting one.** Senzing's own official code snippets
   guard initialization with `if (settings == null)` — they test for **unset**, not empty — so an
   `export SENZING_ENGINE_CONFIGURATION_JSON=""` sails straight past that check and fails later,
-  deeper, and less legibly than no export at all. (Verified against the MCP server: `search_docs` returns
-  `senzing/code-snippets-v4` `java/snippets/information/GetVersion.java` and the C# equivalents doing
-  exactly this; MCP server 1.32.1, 2026-07-28.)
+  deeper, and less legibly than no export at all. (The `find_examples` route that returns those
+  snippets is stated once, in `../module-03-system-verification/phase1-verification.md` → "Step 1a:
+  Engine Initialization Check" (INV-300): its top hit,
+  `java/snippets/information/GetRepositoryInfo.java`, throws when the variable is `null`.)
 
 <a id="env-script-windows"></a>
 
@@ -1888,15 +1888,13 @@ slower, and a Bootcamper has no reason to suspect storage.
    diagnostic-hub call, not an engine one. Report the number to the Bootcamper. **Non-blocking:** if
    it cannot run, say so in one line and continue (INV-163); an unavailable measurement is not a
    reason to stall setup.
-3. **Senzing owns the reason, so relay it rather than re-deriving it.**
-   `search_docs(query='loading', category='anti_patterns')` returns *"Do Not Use Low-IOPS Storage"* —
+3. **Senzing owns the reason, so relay it rather than re-deriving it.** The loading anti-patterns
+   route is stated once, in `../module-06-data-processing/phaseA-build-loading.md` → "Anti-pattern
+   check" (INV-300). It returns *"Do Not Use Low-IOPS Storage"* —
    *"Senzing entity resolution is I/O intensive … Avoid network-attached storage (NAS/NFS) for the
    database data directory … Run `check_repository_performance()` to validate your storage meets
    requirements"* — and *"Do Not Skip check_repository_performance() Before Production"*, which says
-   to run it **before** a large load (re-verified server **1.37.19**, docs index 2026-10-02 18:46
-   UTC, **2026-10-02**). The second is in the top hit, *Senzing Anti-Patterns: Configuration and
-   Initialization*; the first is in the next, *Architecture and Performance*, so read past the
-   first hit. A mount crossed by a translation layer is that case.
+   to run it **before** a large load. A mount crossed by a translation layer is that case.
 
 ⚠️ **Observation-only, one workstation, recorded with its conditions rather than asserted as a rule:**
 on Windows 11 + WSL2 Ubuntu with Senzing SDK 4.3.4 and SQLite, `check_repository_performance(5)`
@@ -2547,7 +2545,9 @@ call succeeds** (not merely a version query).
   variable unset, so re-source it now. Then check that it resolved its own path
   under the shell in use — see [the env script's path resolution](#env-script-path-resolution). Under
   zsh, a `${BASH_SOURCE[0]}`-based script computes the wrong root and exports nothing.
-  (Snippet guard verified via `search_docs`; MCP server 1.32.1, 2026-07-28.)
+  (The snippet guard's `find_examples` route is stated once, in
+  `../module-03-system-verification/phase1-verification.md` → "Step 1a: Engine Initialization Check"
+  (INV-300); its top hit is `java/snippets/information/GetRepositoryInfo.java`.)
 - Platform not supported? Use `search_docs` for alternative installation methods.
 - Database errors? Confirm path requirements against the file placement rules in ground-rules
   (the Kiro `FILE_STORAGE_POLICY.md` reference is a later porting phase).

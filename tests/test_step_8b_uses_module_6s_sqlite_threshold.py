@@ -69,8 +69,10 @@ QUESTION = "👉 **Loading all collected records into SQLite"
 SUMMARY_BULLET = "- **Step 8b** says nothing"
 PHASE_A_SECTION = "## SQLite volume pre-load check"
 ITEM_3 = "3. **Prompt only when it matters.**"
-ROUTE_QUERY = 'search_docs(query="loading",'
-ROUTE_CATEGORY = 'category="anti_patterns")'
+#: #600: the route is stated once, in Phase A's "Anti-pattern check"; both sites point there.
+ROUTE_POINTER = re.compile(
+    r"route\s+is\s+stated\s+once,\s+in\s+`(?:\.\./module-06-data-processing/)?"
+    r"phaseA-build-loading\.md`\s+→\s+\"Anti-pattern\s+check\"")
 ROUTE_ARTICLE = '"Do Not Use SQLite in Production"'
 SDK_GUIDE = "`sdk_guide(topic='load',"
 #: The end of the `sdk_guide` sentence's own stamp, which ends the passage check 3 reads (#439).
@@ -174,9 +176,10 @@ def threshold_problems(step, phase_a_text):
     problems += link_problems(body, phase_a_text)
     if not re.search(r"\bitem 3\b", text):
         problems.append("sub-step 2 does not name item 3, the check whose threshold it uses")
-    for needle in (ROUTE_QUERY, ROUTE_CATEGORY, ROUTE_ARTICLE):
-        if needle not in text:
-            problems.append(f"sub-step 2 does not name item 3's route: {needle} is missing")
+    if not ROUTE_POINTER.search(text):
+        problems.append("sub-step 2 does not point at the one statement of item 3's route")
+    if ROUTE_ARTICLE not in text:
+        problems.append(f"sub-step 2 does not name item 3's route: {ROUTE_ARTICLE} is missing")
     if not re.search(r"(?i)one threshold for both SQLite heads-ups", text):
         problems.append("sub-step 2 does not say both heads-ups compare against one threshold")
     if not re.search(r"(?i)does not return the threshold", text):
@@ -288,9 +291,10 @@ def item_3_problems(phase_a_text):
         return ["the SQLite volume pre-load check has no item 3"]
     item = flat(section(part, ITEM_3, "\n4. "))
     problems = []
-    for needle in (ROUTE_QUERY, ROUTE_CATEGORY, ROUTE_ARTICLE):
-        if needle not in item:
-            problems.append(f"item 3 no longer names {needle}")
+    if not ROUTE_POINTER.search(item):
+        problems.append("item 3 no longer points at the one statement of its route")
+    if ROUTE_ARTICLE not in item:
+        problems.append(f"item 3 no longer names {ROUTE_ARTICLE}")
     if not re.search(r"(?i)source that threshold from MCP", item):
         problems.append("item 3 no longer sources its threshold from MCP")
     return problems

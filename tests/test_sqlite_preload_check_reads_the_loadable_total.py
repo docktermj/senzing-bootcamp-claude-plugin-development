@@ -106,7 +106,11 @@ class TheTriggerIsTheLoadableTotal(PreLoadCheck):
         )
 
     def test_the_threshold_stays_mcp_sourced(self):
-        self.assertIn('search_docs(query="loading", category="anti_patterns")', self.item3)
+        # #600: item 3 points at the one statement of the loading anti-patterns route, the
+        # "Anti-pattern check" heading of this file, rather than restating the call.
+        self.assertRegex(re.sub(r"\s+", " ", self.item3),
+                         r"route is stated once, in `phaseA-build-loading\.md` → "
+                         r"\"Anti-pattern check\"")
         self.assertIn("Do Not Use SQLite in Production", self.item3)
         self.assertIn("never substitute a remembered figure (INV-080)", self.item3)
 

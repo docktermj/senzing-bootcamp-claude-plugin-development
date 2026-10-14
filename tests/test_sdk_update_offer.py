@@ -544,13 +544,16 @@ class StepTwoRelaysThePreviewStatus(unittest.TestCase):
 
     def test_the_warning_is_relayed_for_both_platforms(self):
         self.assertIn("Preview Release — Unsupported", self.section)
-        for query in (
-            "homebrew-senzingsdk preview release unsupported tap install cask",
-            "scoop-senzingsdk update scoop update senzingsdk",
-        ):
-            with self.subTest(query=query):
-                self.assertIn("search_docs(query='%s')" % query, self.flat)
-        self.assertRegex(self.flat, r"(?i)docs index 2026-09-28 03:23 UTC")
+        self.assertIn("search_docs(query='homebrew-senzingsdk preview release unsupported tap "
+                      "install cask')", self.flat)
+        # #600: the bucket's route is Step 1b's update-command route, stated once there, so Step 2
+        # points at it rather than restating it; the stamp is the route's record in
+        # test_prescribed_search_queries.py, which follows the pointer (was "docs index
+        # 2026-09-28 03:23 UTC" in this section).
+        self.assertIn("that route is stated once, in `SKILL.md` → \"The update command.\"",
+                      self.flat)
+        self.assertNotIn("search_docs(query='scoop-senzingsdk update scoop update senzingsdk')",
+                         self.flat, "Step 2 restates Step 1b's route (INV-300)")
 
     def test_the_routing_rules_still_resolve_natively_and_point_at_the_relay(self):
         self.assertRegex(self.flat, r"(?i)not as advice\s+against it")
