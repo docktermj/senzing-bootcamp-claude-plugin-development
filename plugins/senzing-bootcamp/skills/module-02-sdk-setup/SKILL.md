@@ -493,18 +493,21 @@ migration tools, and which of them a migration uses depends on the V4 version do
 (configuration upgrades folded in) for 4.4.0 and later. A 4.x → 4.y update needs none of them.
 (The tool table is in *v4.4.0 Detailed Release Notes*, "Command-line Tools & SDKs", from
 `search_docs(query='sz_dbtool upgrade sz_dbupgrade sz_configupgrade replaced 4.4.0 native command-line tools', category='release_notes')`;
-server 1.37.15, docs index 2026-09-28 23:38 UTC, 2026-09-28.) What a point release needs is in the
-*target* version's "Migration & Action Required" notes, which `search_docs` serves under
-`category='release_notes'` (server 1.37.14, docs index 2026-09-28 03:23 UTC, 2026-09-28). Relay
-what applies in the offer turn, above its question.
+server 1.37.29, docs index 2026-10-13 23:20 UTC, 2026-10-13; read past that query's first hit,
+*What's New in v4* "Migration guides", a V3→V4 link list, to "Command-line Tools & SDKs".) What a
+point release needs is in the *target* version's "Migration & Action Required" notes, which
+`search_docs` serves under `category='release_notes'`
+(server 1.37.29, docs index 2026-10-13 23:20 UTC, 2026-10-13). Relay what applies in the offer
+turn, above its question.
 <!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y procedure for that phrasing; the corpus serves V3-to-V4 migration material for it, and the topic list carries no upgrade entry — owner: search_docs(query='upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change required migration action required', category='release_notes') IS the route that carries the point-release notes, and it returns the v4.4.0 Detailed Release Notes' Migration & Action Required section, so the reader must go there rather than conclude that no procedure is documented (routing negative) — server 1.37.14, 2026-09-28 -->
 
 - **Target 4.4.0.** Run
   `search_docs(query='upgrading to 4.4.0 from v4.0.0 through v4.3.x no schema change required migration action required', category='release_notes')`.
-  ⚠️ The first hit is *What's New in v4* "Migration guides", a V3→V4 link list. The section you
-  want, *v4.4.0 Detailed Release Notes* "Migration & Action Required", ranks just below it: read
-  past the first hit rather than concluding the notes are missing. It covers upgrading from
-  v4.0.0 through v4.3.x. Relay the items that apply:
+  The section you want is the hit titled *v4.4.0 Detailed Release Notes* with section
+  "Migration & Action Required": select it by that title and section, wherever it falls in the
+  results. ⚠️ *What's New in v4* "Migration guides", a V3→V4 link list, scores within a point of
+  it and is not the target; do not take it for the notes, and do not conclude the notes are
+  missing. The section covers upgrading from v4.0.0 through v4.3.x. Relay the items that apply:
   - **No schema change required** when upgrading from any v4 version.
   - **License:** confirm the license string is valid. A corrupt value now fails startup instead
     of silently falling back to the evaluation license.

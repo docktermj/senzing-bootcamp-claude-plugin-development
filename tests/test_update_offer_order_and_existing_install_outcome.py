@@ -19,7 +19,8 @@ neighbors, which left four defects:
    Re-verified on server 1.37.15, docs index 2026-09-28 23:38 UTC, 2026-09-28:
    `search_docs(query='sz_dbtool upgrade sz_dbupgrade sz_configupgrade replaced 4.4.0 native
    command-line tools', category='release_notes')` returns the *v4.4.0 Detailed Release Notes*
-   "Command-line Tools & SDKs" table (v4.0 - v4.3 | v4.4.0 and later).
+   "Command-line Tools & SDKs" table (v4.0 - v4.3 | v4.4.0 and later). Re-stamped for #567 on
+   server 1.37.29, docs index 2026-10-13 23:20 UTC, 2026-10-13, where it still does.
 
 What these tests pin:
 
@@ -294,7 +295,7 @@ class TheMigrationToolsAreNamedByVersion(unittest.TestCase):
             "native command-line tools', category='release_notes')",
             self.section,
         )
-        self.assertIn("server 1.37.15, docs index 2026-09-28 23:38 UTC, 2026-09-28", self.section)
+        self.assertIn("server 1.37.29, docs index 2026-10-13 23:20 UTC, 2026-10-13", self.section)
 
 
 class TheChecksCatchThePreFixShape(unittest.TestCase):
