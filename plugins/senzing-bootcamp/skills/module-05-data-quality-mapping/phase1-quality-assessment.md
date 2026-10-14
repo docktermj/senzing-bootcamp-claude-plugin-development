@@ -782,7 +782,7 @@ Run it over **every record** of each source, not a sample: the count is the sour
    serves a corporate-suffix list for a different case. `mapping_workflow` step 2's inline *SENZING
    MAPPING REFERENCE* says "Corporate suffix tokens signal ORG" and lists INC, LLC, LLP, LTD, CORP,
    CORPORATION, COMPANY, GMBH, PLC, BANK, FOUNDATION, TRUST, HOLDINGS, S.A., S.p.A., N.V., SPA, SRL,
-   OOO, OAO, PJSC, JSC and AG, as a signal for `RECORD_TYPE` when a source has no type field. The
+   OOO, OAO, PJSC, JSC and AG, as a signal for `RECORD_TYPE` when a source lacks a type field. The
    same reference says "Only if there is NO type field, infer from the name": an explicit type field
    takes precedence (MCP server 1.38.1, docs index 2026-10-14 15:57 UTC, 2026-10-14). **The plugin
    keeps its own list because this check tests records the source already typed `PERSON`**, the case
