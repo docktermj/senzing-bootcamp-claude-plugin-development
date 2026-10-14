@@ -25,7 +25,10 @@ What this pins, each predicate over text with a negative control:
    unless the kickoff says to merge.
 2. **The skill** states each checkpoint and every guardrail, says it follows the three
    slash-only skills' files rather than invoking them, is slash-only itself, cites both
-   helpers, and restates no part of the manifest format.
+   helpers, and restates no part of the manifest format. Where a run writes is stated once, in
+   "Stopping, and the ledger entry", naming every write; `cycle.py` cites it, the pending block
+   quotes it and drafts the same rule, and no site keeps the retired "nothing under `specs/`
+   until the run stops" (#609).
 3. **The register**: `docs/FAMILY_WORKFLOW.md` §2 lists `release-cycle` (drives 1–4, parent
    required, children not mandated) and §3 names it. That the name resolves both ways is
    `tests/test_canonical_operations_resolve.py` and
@@ -61,6 +64,7 @@ SKILL = SKILL_DIR / "SKILL.md"
 CYCLE = SKILL_DIR / "cycle.py"
 DRAFTS = REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "drafts.py"
 FAMILY = REPO_ROOT / "docs" / "FAMILY_WORKFLOW.md"
+BLUEPRINT = REPO_ROOT / "BLUEPRINT.md"
 SHA = "4c932af5" + "0" * 32
 FRESH = "e91b9f13" + "1" * 32
 
@@ -685,7 +689,8 @@ STATED = (
     "Each record it creates is created by the skill that owns it, under that skill's gate (INV-314).",
     "⛔ **A finished step is never run again, and a record that carries an issue number is never "
     "filed again.**",
-    "⛔ **Nothing under `specs/` changes until the run stops.**",
+    "⛔ **This skill writes nothing under `specs/` before stage 5 (the held after-filing steps and "
+    "checkpoint D), and its own entry only at a stop.**",
     "⛔ **Hold each skill's after-filing step until stage 5.**",
     "`cycle.py after-filed <run-dir> <skill>`, which refuses a step already run",
     "`cycle.py ledger <run-dir> --write specs/IMPLEMENTED.md`",
@@ -732,7 +737,104 @@ class TheSkillStatesItsRules(unittest.TestCase):
         self.assertEqual([], restated.findall(SKILL.read_text(encoding="utf-8")))
 
 
+#: The one statement of where a run writes (#609), in "Stopping, and the ledger entry".
+BOUNDARY = ("⛔ **This skill writes nothing under `specs/` before stage 5 (the held after-filing "
+            "steps and checkpoint D), and its own entry only at a stop.**")
+#: The rule's words, shared by the statement and the pending block's drafted wording.
+BOUNDARY_RULE = ("nothing under `specs/` before stage 5 (the held after-filing steps and "
+                 "checkpoint D), and its own entry only at a stop")
+#: Each write the statement must name, so a later edit cannot drop one silently.
+NAMED_WRITES = (
+    "the gitignored run directory", "`/dry-run`'s disposable scratch project",
+    "A simulated walk's sandbox is that scratch project, removed when the walk ends",
+    "its own ledger entry among them, are on its issue branch", "the held after-filing steps",
+    "`specs/mcp-coverage.jsonl`", "checkpoint D's `/review-invariants`, which edits "
+    "`specs/INVARIANTS.md` and the ledger", "**At a stop**, this skill writes its one entry",
+)
+#: The rule #609 retired, in any of the forms it shipped in (#573).
+CONTRADICTS = re.compile(r"(?i)nothing under `specs/` (?:changes )?(?:until|before) (?:the run|it) "
+                         r"stops|nothing tracked changes while the run")
+LEDGER = REPO_ROOT / "specs" / "IMPLEMENTED.md"
+PENDING = "## release-cycle-runs-the-cycle-with-five-checkpoints"
+
+
+def boundary_section():
+    text = SKILL.read_text(encoding="utf-8")
+    start = text.index("## Stopping, and the ledger entry")
+    return flat(text[start:text.index("When the run stops", start)])
+
+
+def pending_entry():
+    text = LEDGER.read_text(encoding="utf-8")
+    start = text.index(PENDING)
+    return flat(text[start:text.index("\n## ", start + len(PENDING))])
+
+
+def boundary_sites():
+    """Every site that says where a run writes."""
+    return {"SKILL.md": skill_text(), "cycle.py": flat(CYCLE.read_text(encoding="utf-8")),
+            "drafts.py": flat(DRAFTS.read_text(encoding="utf-8")),
+            "FAMILY_WORKFLOW.md": flat(FAMILY.read_text(encoding="utf-8")),
+            "BLUEPRINT.md": flat(BLUEPRINT.read_text(encoding="utf-8")),
+            "the pending block": pending_entry()}
+
+
+def unnamed(section):
+    return [w for w in NAMED_WRITES if w not in section]
+
+
+class TheWriteBoundaryIsStatedOnce(unittest.TestCase):
+    """#609: stage 5 writes under `specs/` before the stop, so the rule says so, once (INV-300).
+
+    The statement lives in `SKILL.md`'s "Stopping, and the ledger entry"; `cycle.py`'s docstring
+    cites it, and the pending `DEFERRED INVARIANT` block quotes it and drafts the same rule, so
+    `/review-invariants` registers what the skill states. No site may keep the retired wording.
+    """
+
+    def test_the_skill_states_it_once_and_names_every_write(self):
+        self.assertEqual(1, skill_text().count(BOUNDARY))
+        self.assertTrue(boundary_section().startswith("## Stopping, and the ledger entry " + BOUNDARY))
+        self.assertEqual([], unnamed(boundary_section()))
+
+    def test_no_site_contradicts_it(self):
+        for name, text in boundary_sites().items():
+            with self.subTest(site=name):
+                self.assertEqual([], CONTRADICTS.findall(text))
+
+    def test_no_other_site_restates_it(self):
+        for name, text in boundary_sites().items():
+            if name not in ("SKILL.md", "the pending block"):
+                with self.subTest(site=name):
+                    self.assertNotIn(BOUNDARY_RULE, text)
+
+    def test_cycle_py_cites_it(self):
+        self.assertIn('stated once, in `SKILL.md` ("Stopping, and the ledger entry"), and this helper '
+                      "restates none of it (INV-300)", flat(CYCLE.read_text(encoding="utf-8")))
+
+    def test_the_pending_block_quotes_it_and_drafts_the_same_rule(self):
+        entry = pending_entry()
+        self.assertIn(BOUNDARY + " — in `.claude/skills/release-cycle/SKILL.md` (\"Stopping, and the "
+                      "ledger entry\")", entry)
+        drafted = entry[entry.index("**INV-NNN** — `/release-cycle`"):]
+        self.assertIn("It MUST write " + BOUNDARY_RULE, drafted)
+        self.assertIn("Dated note, 2026-10-14 (#609)", entry)
+
+
 class NegativeControls(unittest.TestCase):
+    def test_the_retired_rule_or_a_dropped_write_is_reported(self):
+        """#609's controls: each form of the old line is caught, and so is a dropped write."""
+        for old in ("⛔ **Nothing under `specs/` changes until the run stops.**",
+                    "It MUST write nothing under `specs/` before it stops, holding",
+                    "gitignored, so nothing tracked changes while the run is in progress"):
+            with self.subTest(old=old):
+                self.assertTrue(CONTRADICTS.findall(old))
+        section = boundary_section()
+        for write in NAMED_WRITES:
+            with self.subTest(write=write):
+                self.assertIn(write, unnamed(section.replace(write, "")))
+        self.assertIn(BOUNDARY, unstated(skill_text().replace(BOUNDARY, "⛔ **Nothing under `specs/` "
+                                                                       "changes until the run stops.**")))
+
     def test_dropping_a_guardrail_or_a_checkpoint_is_reported(self):
         text = skill_text()
         for phrase in ("It never sends `submit_feedback`.", "**D**: the invariant verdicts",

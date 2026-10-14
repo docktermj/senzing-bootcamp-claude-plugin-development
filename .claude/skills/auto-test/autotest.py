@@ -27,6 +27,11 @@ Usage:
     autotest.py --walk --persona confused --turns 16
     autotest.py --walk --stop-at-banner "MODULE: SDK SETUP"   # walk to a module, then --turns more
     autotest.py --keep               # do not delete the sandbox afterwards
+    autotest.py --walk --report-dir DIR   # write the report, transcript and latest.json to DIR
+
+``--report-dir`` defaults to ``~/senzing-autotest/reports``. ``/dry-run --draft <run-dir>``
+passes ``<run-dir>/walk/`` so a simulated walk keeps nothing outside its run directory but
+this sandbox, which it never keeps (INV-368).
 """
 import argparse
 import datetime as _dt
@@ -114,6 +119,9 @@ def main(argv=None):
     ap.add_argument("--ref", default="HEAD", help="commit to pin the plugin at")
     ap.add_argument("--model", default=None)
     ap.add_argument("--keep", action="store_true", help="keep the sandbox")
+    ap.add_argument("--report-dir", type=Path, default=REPORT_DIR,
+                    help="where the report, the transcript copy and latest.json go "
+                         "(default: %(default)s)")
     ap.add_argument("--isolate-config", action="store_true")
     ap.add_argument("--json", action="store_true", help="machine-readable report")
     args = ap.parse_args(argv)
@@ -198,19 +206,20 @@ def main(argv=None):
             report["coverage_limits"].append(
                 "no walk was run, so no interaction invariant was checked")
 
-        REPORT_DIR.mkdir(parents=True, exist_ok=True)
-        report_path = REPORT_DIR / f"{stamp}-{args.persona}.json"
+        report_dir = args.report_dir
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_path = report_dir / f"{stamp}-{args.persona}.json"
         report["report_path"] = str(report_path)
         report_path.write_text(json.dumps(report, indent=2))
         # The transcript is the record/replay artifact: it lets a linter change be
         # re-scored against a real walk without paying for the walk again.
         walk_transcript = root / "transcript.jsonl"
         if walk_transcript.is_file():
-            kept = REPORT_DIR / f"{stamp}-{args.persona}.transcript.jsonl"
+            kept = report_dir / f"{stamp}-{args.persona}.transcript.jsonl"
             shutil.copy2(walk_transcript, kept)
             report["transcript_path"] = str(kept)
             report_path.write_text(json.dumps(report, indent=2))
-        (REPORT_DIR / "latest.json").write_text(json.dumps(report, indent=2))
+        (report_dir / "latest.json").write_text(json.dumps(report, indent=2))
 
         print("\n=== Report ===")
         if args.json:

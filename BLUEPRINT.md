@@ -3454,9 +3454,10 @@ non-empty transcript with `transcript_lint.py --phase <phase> --json`
 limits always state what a walk could not show or that none ran. The report
 (`run`, `sandbox`, `persona`, `plugin_sha`, `findings`, `coverage_limits`,
 `report_path`, `transcript_path`, `artifacts`) goes outside the sandbox to
-`~/senzing-autotest/reports/<stamp>-<persona>.json` with the transcript
-copied beside it and a `latest.json` copy; `--json` prints it, else a
-BREAKING/WATCH summary. The worktree and (unless `--keep`) the sandbox are
+`--report-dir` (default `REPORT_DIR`, `~/senzing-autotest/reports/`; created
+if missing) as `<stamp>-<persona>.json`, with the transcript copied beside it
+and a `latest.json` copy; `/dry-run --draft` passes `<run-dir>/walk/` (#609).
+`--json` prints it, else a BREAKING/WATCH summary. The worktree and (unless `--keep`) the sandbox are
 removed in `finally`. Exit 1 if any finding is BREAKING, else 0.
 
 `mcp_probe.py` talks JSON-RPC (stdlib `urllib`, no Claude process) to
@@ -3753,7 +3754,10 @@ before its start module names the module reached and leaves the rest
 untested. With `--draft <run-dir>` (#572), the finding lifecycle drafts each
 finding with `feedback-to-issues/drafts.py` (5.46) instead, and the run files,
 fixes and sends nothing and writes nothing outside `<run-dir>` but its scratch
-project; `--file <run-dir>` files the approved records after a yes for each
+project; a simulated walk's scratch project is `autotest.py`'s sandbox, never
+kept, and its reports and slice go to `<run-dir>/walk/` (#609). There, a
+finding's `drafts.py` record counts as recorded at both end-of-run checks, and
+the caller writes the ledger. `--file <run-dir>` files the approved records after a yes for each
 or one yes for the whole list shown in one message (INV-314, 2026-10-13
 note).
 
@@ -3998,7 +4002,8 @@ means sweep the class) and reverse (every durable hard rule the plugin states
 is registered and cited at its line, INV-183). Argument: an area to sweep
 first, and `--draft <run-dir>` or `--file <run-dir>` (#572: Step 8 item 1
 drafts each finding with `feedback-to-issues/drafts.py`, 5.46, instead of
-filing it). Conversational invariants (INV-251, INV-006, INV-014, INV-005/008/009,
+filing it; there, a `drafts.py` record counts as recorded at both end-of-run
+checks, and the caller writes the ledger, #609). Conversational invariants (INV-251, INV-006, INV-014, INV-005/008/009,
 gate ordering) are out of scope and must be reported as untested and routed
 to `dry-run` phase 3.
 
@@ -4640,7 +4645,14 @@ Guardrails: it never signs off an invariant (INV-365), never chooses the bump
 (INV-333), never commits or pushes the public repo, never sends
 `submit_feedback`, never applies `unattended-ok` outside refine's approved
 batch (INV-318), never merges unless the kickoff says to, and never answers
-a gate for the maintainer. Nothing under `specs/` changes until the run stops.
+a gate for the maintainer. Until stage 5 the run writes only its run
+directory and `/dry-run`'s disposable scratch project, and each issue's
+commits at stage 3, its ledger entry among them, are on its issue branch.
+Stage 5 writes under `specs/`: the held `/delegate-to-mcp-server` Step 9
+appends to `specs/mcp-coverage.jsonl`, and checkpoint D's `/review-invariants`
+edits `specs/INVARIANTS.md` and the ledger; the run's own entry is written
+only at a stop. `SKILL.md`'s "Stopping, and the ledger entry" is the one
+statement of every write, which `cycle.py`'s docstring cites (#609).
 
 `cycle.py` (stdlib, offline, no `gh`) owns the mechanics and reads and moves
 the manifest only through `drafts.py` (`load`, `open_records`, `Locked`,
@@ -8138,6 +8150,9 @@ From `.claude/skills/auto-test/autotest.py`:
     ap.add_argument("--ref", default="HEAD", help="commit to pin the plugin at")
     ap.add_argument("--model", default=None)
     ap.add_argument("--keep", action="store_true", help="keep the sandbox")
+    ap.add_argument("--report-dir", type=Path, default=REPORT_DIR,
+                    help="where the report, the transcript copy and latest.json go "
+                         "(default: %(default)s)")
     ap.add_argument("--isolate-config", action="store_true")
     ap.add_argument("--json", action="store_true", help="machine-readable report")
 ```
@@ -9823,7 +9838,7 @@ looks wrong.
 - `tests/test_audit_skill_reads_the_newest_entries.py`: 4
 - `tests/test_audit_skill_states_no_stale_count.py`: 9
 - `tests/test_authored_shapes_are_stated.py`: 8
-- `tests/test_auto_test_harness.py`: 11
+- `tests/test_auto_test_harness.py`: 15
 - `tests/test_backgrounded_launch_records_the_server_pid.py`: 12
 - `tests/test_blocked_submission_has_a_vocabulary_value.py`: 29
 - `tests/test_bootcamp_notes_flow.py`: 33
@@ -9891,7 +9906,7 @@ looks wrong.
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
 - `tests/test_download_resource_is_a_listing.py`: 27
-- `tests/test_drafts.py`: 34
+- `tests/test_drafts.py`: 37
 - `tests/test_dropped_character_remedy_branches.py`: 10
 - `tests/test_dry_run_files_issues.py`: 15
 - `tests/test_dry_run_scaffold.py`: 15
@@ -10109,7 +10124,7 @@ looks wrong.
 - `tests/test_related_entities_guidance.py`: 20
 - `tests/test_release_bumps_version_changelog_and_tag_together.py`: 32
 - `tests/test_release_covers_every_version_site.py`: 8
-- `tests/test_release_cycle.py`: 61
+- `tests/test_release_cycle.py`: 67
 - `tests/test_results_validation_is_diagnostic.py`: 35
 - `tests/test_resume_requires_a_recorded_module.py`: 12
 - `tests/test_retired_vocabulary.py`: 5
@@ -10530,6 +10545,10 @@ Related guards:
 - `tests/test_auto_test_harness.py` checks the plugin against
   `.claude/skills/auto-test/baseline/mcp-snapshot.json`: no breaking conformance
   findings, no forbidden tool probed, and the linter's self-test passing.
+  `TestReportDirectory` (#609) runs `autotest.main` offline: `--report-dir`
+  takes the report, the transcript copy and `latest.json` and creates the
+  directory, nothing is left outside it, and without it they go to the
+  unchanged `~/senzing-autotest/reports`.
 
 #### 8.4.7 Script behavior
 
@@ -10794,7 +10813,11 @@ These are the scripts under `.claude/skills/`:
   - the five `--file` sentences and `drafts.py` filing step 2 carry the batch
     clause and neither "get a yes for each first" nor "Until #570's
     amendments are registered", and `submit_feedback` keeps one yes each,
-    each with a negative control (#573).
+    each with a negative control (#573);
+  - one fixed `--draft` carve-out sentence sits in the paragraph of each
+    end-of-run check (`dry-run`'s two and phase 3's step 6,
+    `production-readiness-audit`'s two), and phase 3 passes `--report-dir
+    <run-dir>/walk/`, never `--keep`, with negative controls (#609).
 - **The release cycle.** `tests/test_release_cycle.py` (#573) drives
   `cycle.py` offline:
   - the kickoff answers are required, the threshold is refine's range, a run
@@ -10828,7 +10851,13 @@ These are the scripts under `.claude/skills/`:
   - `SKILL.md` states each checkpoint and guardrail (with negative
     controls), is slash-only, invokes none of the three slash-only skills,
     and restates no part of the manifest format; `docs/FAMILY_WORKFLOW.md`
-    §2 has its row and §3 names it.
+    §2 has its row and §3 names it;
+  - `SKILL.md` states the write boundary once and names every write, no site
+    (`SKILL.md`, `cycle.py`, `drafts.py`, `docs/FAMILY_WORKFLOW.md`,
+    `BLUEPRINT.md`, the pending ledger block) keeps the retired rule that
+    `specs/` stays untouched until the stop, none but the skill and the block
+    restates it, `cycle.py` cites it, and the block drafts the same rule
+    (#609).
 - **Other maintainer tools.**
   - **`dry-run/scaffold_project.py`** builds `fresh`, `seeded` and `mid`
     projects, never inside the repository or under `/tmp`.
@@ -11960,3 +11989,10 @@ Senzing licensing, with no SPDX identifier.
   because the check tests records already typed `PERSON`, with no server
   token added (the label said no MCP route served a suffix list; step 2 does,
   for sources with no type field)
+- #609: `/release-cycle` writes nothing under `specs/` before stage 5 and its
+  own entry only at a stop, stated once with every write and matched by the
+  pending #573 block, corrected in place; `autotest.py --report-dir` keeps a
+  `--draft` walk's reports in `<run-dir>/walk/`; and a `drafts.py` record
+  counts as recorded at the end-of-run checks under `--draft` (stage 5 writes
+  under `specs/` before the stop, a walk wrote reports outside `<run-dir>`,
+  and those checks demanded a ledger line `--draft` forbids)

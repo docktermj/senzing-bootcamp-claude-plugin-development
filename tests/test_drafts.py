@@ -23,6 +23,11 @@ What this pins, each with a negative control where it is a predicate over text:
    Its `--file` stage takes a yes for each record or INV-314's batch clause, and the three skills
    that draft upstream messages say `--file` never sends one, which keeps its own yes (#573
    retired #572's "get a yes for each first", written before INV-314's 2026-10-13 note).
+   Each end-of-run check in `/dry-run` (two, and phase 3's step 6) and `/production-readiness-audit`
+   (two) carries one carve-out sentence in its own paragraph: under `--draft`, a `drafts.py`
+   record counts as recorded and the caller writes the ledger. Phase 3's simulated walk passes
+   `autotest.py --report-dir <run-dir>/walk/` and never `--keep`, so its sandbox is the one
+   outside write (#609).
 3. **`.gitignore`** ignores `.claude/release-cycle/runs/`.
 
 ⚠️ **What this does NOT establish:** that a live run stops at its filing step, files only after a
@@ -424,7 +429,74 @@ class EachSkillCitesTheContract(unittest.TestCase):
                               flat(text[start:end if end > 0 else None]))
 
 
+#: The carve-out at each end-of-run check (#609): under `--draft`, the caller writes the ledger.
+CARVE_OUT = ("Under `--draft`, a finding's `drafts.py` record counts as recorded, and the caller "
+             "writes the ledger (INV-317's 2026-10-13 note).")
+
+#: (file under `.claude/skills/`, the sentence that opens the check the carve-out qualifies).
+END_OF_RUN_CHECKS = (
+    ("dry-run/SKILL.md", "⛔ **Do not end a run with unwritten findings.**"),
+    ("dry-run/SKILL.md", "If a run produced no issue and no ledger entry, it produced nothing durable"),
+    ("dry-run/phase3-conversational.md", "**Record each finding before fixing anything** (INV-317)"),
+    ("production-readiness-audit/SKILL.md", "⛔ **Do not end a run with unrecorded findings.**"),
+    ("production-readiness-audit/SKILL.md", "⛔ **(INV-317) Record every finding before fixing anything"),
+)
+
+#: Phase 3's simulated walk under `--draft`: its reports in `<run-dir>/walk/`, its sandbox not kept.
+WALK_STAYS = (
+    "**With `--draft <run-dir>`**, add `--report-dir <run-dir>/walk/`",
+    "never pass `--keep`",
+    "the one write outside `<run-dir>` that INV-368 allows, and `autotest.py` removes it when the "
+    "walk ends",
+    "With `--draft <run-dir>`, `<slice>` is a file in `<run-dir>/walk/`.",
+)
+
+
+def paragraph(text, anchor):
+    """The paragraph or list item `anchor` opens, whitespace collapsed (INV-346)."""
+    start = text.index(anchor)
+    ends = [i for i in (text.find("\n\n", start), text.find("\n- ", start),
+                        re.search(r"\n\d+\. |$", text[start:]).start() + start) if i > 0]
+    return flat(text[start:min(ends)])
+
+
+def uncarved(path, anchor, text=None):
+    text = text if text is not None else (SKILLS_DIR / path).read_text(encoding="utf-8")
+    return CARVE_OUT not in paragraph(text, anchor)
+
+
+class TheEndOfRunChecksAcceptADraft(unittest.TestCase):
+    """#609: under `--draft` the ledger is the caller's (INV-368; INV-317's 2026-10-13 note).
+
+    Each end-of-run check that asks for "a filed issue or a ledger line" carries the one
+    carve-out sentence in its own paragraph, so a `--draft` run never writes the entry its
+    caller is meant to write.
+    """
+
+    def test_each_check_carries_the_carve_out(self):
+        for path, anchor in END_OF_RUN_CHECKS:
+            with self.subTest(site=path, anchor=anchor):
+                self.assertFalse(uncarved(path, anchor))
+
+    def test_the_simulated_walk_keeps_its_reports_in_the_run_dir(self):
+        text = flat((SKILLS_DIR / "dry-run" / "phase3-conversational.md").read_text(encoding="utf-8"))
+        self.assertEqual([], [p for p in WALK_STAYS if p not in text])
+        self.assertIn('ap.add_argument("--report-dir"',
+                      (SKILLS_DIR / "auto-test" / "autotest.py").read_text(encoding="utf-8"))
+
+
 class NegativeControls(unittest.TestCase):
+    def test_a_dropped_or_reworded_carve_out_is_reported(self):
+        path, anchor = END_OF_RUN_CHECKS[3]
+        text = (SKILLS_DIR / path).read_text(encoding="utf-8")
+        self.assertFalse(uncarved(path, anchor, text))
+        reworded = text.replace(CARVE_OUT.split(", and")[0], "Under `--draft`, a draft")
+        moved = re.sub(r"durable\. Under `--draft`", "durable.\n\nUnder `--draft`", text)
+        for name, broken in (("reworded", reworded), ("moved out of the paragraph", moved)):
+            with self.subTest(control=name):
+                self.assertNotEqual(text, broken)
+                self.assertTrue(uncarved(path, anchor, broken))
+
     def test_dropping_the_rule_or_the_citation_is_reported(self):
         text = flat(skill_text("dry-run"))
         self.assertIn(REQUIRED[2], missing(text.replace("fixes nothing and sends", "sends")))

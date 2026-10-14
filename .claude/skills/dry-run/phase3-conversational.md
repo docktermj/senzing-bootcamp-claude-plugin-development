@@ -211,11 +211,19 @@ context, which is what limits a maintainer-answered walk to the modules the wind
    why each layer is there](../auto-test/SKILL.md#the-sandbox-and-why-each-layer-is-there);
    [Guardrails](../auto-test/SKILL.md#guardrails)). Do not hand-run `walk.py` around them,
    and do not touch the walk while it runs.
+
+   **With `--draft <run-dir>`**, add `--report-dir <run-dir>/walk/`, so the report, the
+   transcript copy and `latest.json` stay in the run directory, and never pass `--keep`. The
+   walk's sandbox under `~/senzing-autotest/runs/` is then this run's disposable scratch
+   project, the one write outside `<run-dir>` that INV-368 allows, and `autotest.py` removes it
+   when the walk ends.
 4. **Cut the transcript at the start module.** The report names it as `transcript_path`.
 
    ```bash
    python3 .claude/skills/dry-run/module_banners.py slice <transcript_path> <N> --out <slice>
    ```
+
+   With `--draft <run-dir>`, `<slice>` is a file in `<run-dir>/walk/`.
 
    The slice starts at the module's banner (at the first turn for Bootcamp preparation). It
    prints `walk_stop`, the walk's own record of where it stopped and why, and the modules it
@@ -230,7 +238,8 @@ context, which is what limits a maintainer-answered walk to the modules the wind
    list](#what-to-watch-for), which the linter cannot count.
 6. **Record each finding before fixing anything** (INV-317), in the run's ledger entry, as
    the SKILL's "The finding lifecycle" says. The walk has ended, so the filing step comes
-   after the grading.
+   after the grading. Under `--draft`, a finding's `drafts.py` record counts as recorded, and
+   the caller writes the ledger (INV-317's 2026-10-13 note).
 
 ⛔ **(INV-369) A clean simulated walk is reported only as "no regression detected (simulated
 Bootcamper, persona `<p>`)"**, never as "phase 3 passed" or "the bootcamp works". The report
