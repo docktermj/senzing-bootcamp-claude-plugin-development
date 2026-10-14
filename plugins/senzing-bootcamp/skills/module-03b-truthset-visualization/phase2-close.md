@@ -132,8 +132,11 @@ uninformed yes here is the costliest kind.
 
 *(Internal: end the turn on this question and wait.)*
 
-**On "no" or "not yet":** leave the server running and the data in place, tell the bootcamper it is
-still at its URL, and wait for their go-ahead. Do not re-ask on a loop.
+**On "no" or "not yet":** leave the data in place, and the server running when one ran. When
+`web_service.status` is `"passed"`, tell the bootcamper the server is still at its URL; when it is
+`"unavailable"`, no server ran, so tell them the snapshot at
+`docs/visualizations/truthset_verification.html` is still there instead. Then wait for their
+go-ahead. Do not re-ask on a loop.
 
 ⛔ **The Step 2.5 tour question does not authorize this.** "Are you ready to continue?" asks whether
 the bootcamper is done with the guided tour; this asks whether an irreversible teardown may proceed.

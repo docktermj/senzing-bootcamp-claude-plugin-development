@@ -324,12 +324,16 @@ loader. Every tier that represents a real production system gets the threaded pa
   and that the production pattern was chosen by default.
 
 Use `generate_scaffold(language='<chosen_language>', workflow='add_records', version='current')` to
-see the full set of loading snippets alongside the selected one when it helps to compare.
+see the full set of loading snippets alongside the selected one when it helps to compare. It
+returns a listing, not code: fetch each file by the response's own `access_steps`, as
+`../bootcamp-onboarding/ground-rules.md` → "Follow each response's own `access_steps`, in the
+order it gives them" says (INV-160, INV-300).
 
 Do not use inline examples, they may use outdated SDK patterns. Customize the scaffold with
 the bootcamper's file path, data source name, and progress reporting. If the scaffold uses
-`/tmp/`, `ExampleEnvironment`, or any path outside the working directory, override the database
-path to `database/G2C.db` and keep all output files project-relative.
+`/tmp/`, `ExampleEnvironment`, or any path outside the working directory, override it to
+[the repository](SKILL.md#the-repository) (`database/G2C.db` on SQLite, the connection in
+`config/engine_config.json` on PostgreSQL) and keep all output files project-relative.
 
 ⛔ **Check the scaffold's imports before compiling, not after.** A scaffold may import a package
 outside the language's standard library that the environment does not provide — the Java snippets,
@@ -365,7 +369,9 @@ language, then build it with that section's build command. Each source gets its 
 ## 4. Use MCP tools for code generation
 
 Call `generate_scaffold` with workflow `add_records` and the chosen language for version-correct
-SDK code. Call `sdk_guide(topic='load', language='<chosen_language>', record_count=<raw_value>)`
+SDK code, fetching each file by the response's own `access_steps`, as
+`../bootcamp-onboarding/ground-rules.md` → "Follow each response's own `access_steps`, in the
+order it gives them" says (INV-160, INV-300). Call `sdk_guide(topic='load', language='<chosen_language>', record_count=<raw_value>)`
 for platform-specific loading
 patterns — as in step 3, `record_count` belongs to `sdk_guide` and is what selects the threaded
 versus single-threaded template. **When `raw_value` is null**, use step 3's null branch for the

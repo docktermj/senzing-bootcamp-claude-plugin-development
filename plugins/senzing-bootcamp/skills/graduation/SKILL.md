@@ -1354,6 +1354,7 @@ does not exist; on a copy failure, log and continue):
 | `data/senzing-ready/**` | `production/data/senzing-ready/` | Senzing-ready data |
 | `config/data_sources.yaml` | `production/config/data_sources.yaml` | Data-source registry, written as a projection (below), not copied whole |
 | `requirements.txt` / `pom.xml` / `Cargo.toml` / `package.json` / `*.csproj` | `production/` | Root dependency manifest. Only Python's `requirements.txt` sits at the root: C#, Rust and TypeScript manifests travel inside their program folders, which the `src/**` rows copy unchanged |
+| `nuget.config` | `production/nuget.config` | C#'s project-local package source (SDK setup), so the copied programs restore `Senzing.Sdk` as they did here |
 
 **The `src/**` rows copy source, never build output.** Skip every `classes/`, `target/`, `dist/`,
 `node_modules/`, `bin/` and `obj/` folder under them, wherever it sits: those are what the build
@@ -1399,10 +1400,12 @@ eval database itself).
 
 **Exclude (never copy):** `config/bootcamp_progress.json`,
 `config/bootcamp_preferences.yaml`, `docs/bootcamp_recap.md`, `docs/bootcamp_notes.md`,
-`data/samples/`, `data/raw/`, `data/subsets/`, `logs/`, `backups/`, and `docs/feedback/`.
+`data/samples/`, `data/raw/`, `data/subsets/`, `data/backups/`, `logs/`, `backups/`, and
+`docs/feedback/`.
 
 `data/subsets/` is excluded because a subset is the evaluation's license-capped or volume-capped
-slice (Module 6), not the data production loads.
+slice (Module 6), not the data production loads. `data/backups/` is excluded because it holds
+Module 6's pre-load copies of the evaluation repository, which production does not restore.
 
 ⛔ **`docs/bootcamp_notes.md` is a bootcamp artifact, not production content** — exactly as
 `docs/bootcamp_recap.md` and `docs/feedback/` are. It holds the bootcamper's own ideas and

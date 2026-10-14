@@ -129,7 +129,7 @@ step 4a's calls and before step 4a-pairs:
    step 1. When it is `"none"` (no entity had two or more records) or absent, there is no headline
    exclusion.
 2. **The entity that now holds `midpoint_record`:** the `"<DATA_SOURCE>:<RECORD_ID>"` Module 6 step 9
-   recorded in `config/bootcamp_progress.json`. Locate its entity with `get_entity_by_record_id` on
+   recorded as `module_6_processing.midpoint_record` in `config/bootcamp_progress.json`. Locate its entity with `get_entity_by_record_id` on
    that data source and record ID, with the program `discover_patterns` in `src/query` that step
    4a saved, run with its run command in `../bootcamp-onboarding/ground-rules.md` → "Building and
    running a program". A record identifies

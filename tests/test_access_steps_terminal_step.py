@@ -50,8 +50,9 @@ MODULE_03 = PLUGIN / "skills" / "module-03-system-verification" / "phase1-verifi
 
 #: The module sites that fetch `generate_scaffold` output, with the number of route pointers
 #: and terminal-step pointers each holds. A floor, so a pointer dropped by a rewrite is noticed.
-#: Module 2: Step 4 (both) and Step 9 (route). Module 3: Steps 3 and 4 (both).
-ROUTE_FILES = {MODULE_02: (2, 1), MODULE_03: (2, 2)}
+#: Module 2: Step 4 (both) and Step 9 (route). Module 3: Steps 3 and 4 (both), and Step 1a's
+#: re-obtained initialization code (route; #618).
+ROUTE_FILES = {MODULE_02: (2, 1), MODULE_03: (3, 2)}
 
 #: The route's ⛔ lead, by its words.
 ROUTE_LEAD = re.compile(

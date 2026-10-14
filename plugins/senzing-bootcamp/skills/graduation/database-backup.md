@@ -1,17 +1,28 @@
-# Database backup procedure (shared by two callers)
+# Database backup procedure (shared by three callers)
 
-⛔ **This file is the ONE implementation of "back up the resolved repository". Two callers cite it;
-neither reimplements it.**
+⛔ **(INV-094, INV-300) This file is the ONE implementation of "back up the resolved repository".
+Three callers cite it; none reimplements it.**
 
 - `SKILL.md` Step 6a, writing the INV-094 revisit bundle at graduation.
 - `../bootcamp-onboarding/packaging.md`, when the `transfer` profile is asked for and
   `backups/revisit/` does not exist yet — the flow runs at any point in the bootcamp, so it can be
   reached before graduation has ever run.
+- `../module-06-data-processing/SKILL.md` → "The repository, on either engine", before each load in
+  Data Processing, whose Phase D recovery restores from that backup.
 
 ⚠️ **Why it was factored out rather than copied.** The indeterminate-`database_type` branch below is
 subtle, and getting it wrong means either no backup at all or `pg_dump` aimed at a SQLite file. A
 second copy is precisely the drift this repo writes tests to prevent, and the backup is the whole
 point of the bundle: INV-094 requires exactly one of the two branches to have run.
+
+## The destination
+
+The caller names where the backup goes. Graduation and packaging write `backups/revisit/database/`,
+the paths the commands below show. Module 6 writes `data/backups/` (INV-050), under pre-load names:
+`data/backups/G2C.db.pre-load` on SQLite, `data/backups/senzing.dump.pre-load` on PostgreSQL. A
+Module 6 backup puts its path in place of `backups/revisit/database/G2C.db` or
+`backups/revisit/database/senzing.dump` in each command below, the existence check included, and
+changes nothing else.
 
 ## The procedure
 
@@ -44,15 +55,18 @@ Picking the wrong branch here means either no backup or `pg_dump` against a SQLi
 **If the backup cannot be produced** (tool missing, database unreachable), warn and continue — the
 rest of the bundle still saves, and graduation is non-blocking (INV-048). The packaging flow reports
 the same way: it says the archive carries no database and why, rather than refusing to package.
+Module 6 says the load will run with no backup, and why, and continues; its Phase D recovery then
+takes the no-backup route.
 
 ## Restore
 
 Record the exact **restore** command wherever this backup is described — `SKILL.md` Step 6c's return
 guide (`docs/REVISIT_BOOTCAMP.md`), which a `transfer` archive carries, and its `OPEN_ME_FIRST.md`
 points at, only when the guide was packaged; a backup packaged without it gets the step below
-in `OPEN_ME_FIRST.md` itself:
+in `OPEN_ME_FIRST.md` itself. Module 6's Phase D recovery restores from its own destination by the
+same steps:
 
-- **SQLite** — copy the file back to `database/`.
+- **SQLite** — copy the file back to `database/`, as `database/G2C.db`.
 - **PostgreSQL** — into a fresh database, with the file named by an argument, never a `<`
   redirection (Windows PowerShell 5.1 rejects `<`): `pg_restore -U <user> -d <db> <file>` for this
   custom-format dump, or `psql -U <user> -d <db> -f <file>` for a plain dump. When the database runs

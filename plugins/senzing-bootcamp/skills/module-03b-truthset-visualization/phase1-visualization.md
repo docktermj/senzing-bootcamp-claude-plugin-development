@@ -731,7 +731,8 @@ search-enrichment specification are in `visualization-api-reference.md`.
 
 **Close the fallback by recording the no-live-server state:** `web_service` and `web_page` as
 `"unavailable"`, with `reason: "server_failed"`, or `reason: "recreate_declined"` when 2.3's
-declined recreate sent you here. A `"failed"` status left in place does not complete the module.
+declined recreate sent you here. The record carries one `reason`, on `web_service` alone;
+`web_page` takes none. A `"failed"` status left in place does not complete the module.
 The record's shape and what follows it are the
 [no-live-server completion rule](phase2-close.md#no-live-server-completion), stated once in
 `phase2-close.md` (INV-300).

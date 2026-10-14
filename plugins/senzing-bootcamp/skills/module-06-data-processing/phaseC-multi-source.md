@@ -175,7 +175,8 @@ already-Senzing-ready sources, which skipped mapping in Module 5) and is non-emp
 each source's DATA_SOURCE code is registered in the engine config (register any not yet
 registered, idempotently — per Phase A step 4a; do not rely on Module 2's default config, which
 predates data collection); RECORD_IDs unique within each source; a
-database backup of `database/G2C.db` exists; sufficient disk space (~2x per source); the
+backup of [the repository](SKILL.md#the-repository) exists in `data/backups/` (`database/G2C.db` on
+SQLite, the PostgreSQL database on PostgreSQL); sufficient disk space (~2x per source); the
 Module 6 loading program works as a template. Fix failures before proceeding.
 
 **Checkpoint:** write step 16.
@@ -184,8 +185,12 @@ Module 6 loading program works as a template. Fix failures before proceeding.
 
 The orchestrator's Senzing calls come from the Step 3 loader (Phase A, "Create the production
 loading program"), run once per source; its SDK code is
-`generate_scaffold(language='<chosen_language>', workflow='add_records', version='current')`.
-Override any `/tmp/` or `ExampleEnvironment` paths to `database/G2C.db`. Save it as the program
+`generate_scaffold(language='<chosen_language>', workflow='add_records', version='current')`,
+its files fetched by the response's own `access_steps`, as
+`../bootcamp-onboarding/ground-rules.md` → "Follow each response's own `access_steps`, in the
+order it gives them" says (INV-160, INV-300). Override any `/tmp/` or `ExampleEnvironment` paths to
+[the repository](SKILL.md#the-repository) (`database/G2C.db` on SQLite, the connection in
+`config/engine_config.json` on PostgreSQL). Save it as the program
 `orchestrator` in `src/load`, at the path and with the project that
 `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, then build it
 with that section's build command. In C#, Rust and TypeScript a program cannot use another program's
@@ -365,10 +370,14 @@ not loaded because license capacity ran out.
 
 Drain the redo queue, critical after multi-source loading for cross-source match refinement.
 Run the drain Phase B step 9 saved from
-`generate_scaffold(language='<chosen_language>', workflow='redo', version='current')`: the
-program `process_redo` in `src/load`, with its run command in
+`generate_scaffold(language='<chosen_language>', workflow='redo', version='current')`, its files
+fetched by the response's own `access_steps`, as `../bootcamp-onboarding/ground-rules.md` →
+"Follow each response's own `access_steps`, in the order it gives them" says
+(INV-160, INV-300): the program `process_redo` in `src/load`, with its run command in
 `../bootcamp-onboarding/ground-rules.md` → "Building and running a program", or the loading
-program when step 9 put the drain there. Its paths already point at `database/G2C.db`.
+program when step 9 put the drain there. Its paths already point at
+[the repository](SKILL.md#the-repository) (`database/G2C.db` on SQLite, the connection in
+`config/engine_config.json` on PostgreSQL).
 
 ⛔ **Same batch-drain requirement as Phase B, step 9** (INV-151, INV-300) — read it there rather than
 re-deriving it.
