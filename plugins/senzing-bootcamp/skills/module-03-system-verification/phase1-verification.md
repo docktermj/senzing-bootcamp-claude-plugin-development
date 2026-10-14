@@ -168,8 +168,8 @@ INV-080), create an engine, and release it.
    (The snippet guard is what `find_examples(query='Unable to get settings')` returns first:
    `senzing/code-snippets-v4` `java/snippets/information/GetRepositoryInfo.java`, which throws
    `IllegalArgumentException("Unable to get settings")` when the variable is `null`; with
-   `language='csharp'` it returns the C# twin, which throws `ArgumentException`. On target, MCP
-   server 1.37.27, 2026-10-12.)
+   `language='csharp'` it returns the C# twin, which throws `ArgumentException`. This is the one
+   statement of that route; Module 2 points here, INV-300.)
 2. Call `explain_error_code(error_code="<code>", version="current")` and present what it returns.
 3. **If the code is `SENZ2027`**, add the cause its own resolution steps do not name: the libraries
    loaded but their support data did not — the runtime **data directory** is not where the

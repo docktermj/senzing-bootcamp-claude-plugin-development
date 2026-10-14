@@ -315,9 +315,8 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   or only a full name is provided"*, and its `NAME` rule reads *"Prefer parsed person names
   (`NAME_FIRST`/`NAME_LAST`/…) when available; use `NAME_ORG` for organizations; use `NAME_FULL` only
   when the type is unknown or only a single field exists"*
-  (`search_docs(query='NAME_FULL NAME_ORG parsed person name single field', category='data_mapping')`
-  → *Name > Feature: NAME*, top hit; server 1.32.9, 2026-08-17, query re-verified on
-  1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-04). So a
+  (*Name > Feature: NAME*; the route to it is stated once, in
+  `../module-05-data-quality-mapping/phase2-data-mapping.md` → "11. Map", INV-300). So a
   source carrying **one** name field maps to `NAME_FULL` — a direct field-to-attribute mapping. ⛔ **A
   joined name is therefore NOT a transformation waiting to happen**, and generating one on the
   assumption that the next module will split it builds the scenario on a plan the specification does
@@ -850,8 +849,8 @@ Not all data arrives as CSV. Common formats and how to handle them:
   `openpyxl` for Python, Apache POI for Java). Save the CSV to `data/raw/`.
 - **Parquet / Avro:** Use language-appropriate libraries to read and convert to CSV or JSON.
   These formats are common in data lake exports.
-- **XML:** Parse and flatten to JSON or CSV. Use `find_examples(query='XML data loading')` for
-  patterns.
+- **XML:** Parse and flatten to JSON or CSV with the chosen language's XML library; this is
+  ordinary data handling, not Senzing SDK code.
 - **Database exports (SQL dump):** Extract the relevant tables to CSV using the database's
   export tools.
 - **API pagination:** If the API returns paginated results, document the pagination strategy
@@ -1399,9 +1398,9 @@ about a roughly half-hour load, for a load of about two minutes.
 2. **Decide whether to warn.** Warn only when the database is SQLite **and the LOADABLE total** is
    above **the SQLite threshold of Module 6 Phase A's pre-load check** — item 3 of the
    [SQLite volume pre-load check](../module-06-data-processing/phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate),
-   which sources it from the Senzing MCP server through `search_docs(query="loading",
-   category="anti_patterns")` → "Do Not Use SQLite in Production", in its second hit, *Senzing
-   Anti-Patterns: Architecture and Performance* (read past the first hit).
+   which sources it from the Senzing MCP server's "Do Not Use SQLite in Production". That
+   article's route is stated once, in `../module-06-data-processing/phaseA-build-loading.md` →
+   "Anti-pattern check" (INV-300).
    Ask that route at request time and compare against what it returns. Item 3 is the one statement of this threshold, so no
    figure for it is written here (INV-300). Otherwise (loadable at or below the threshold, any
    non-SQLite engine, or indeterminate inputs) say nothing about load time and continue to the

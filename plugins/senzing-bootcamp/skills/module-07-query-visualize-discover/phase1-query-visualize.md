@@ -515,9 +515,11 @@ Senzing record's identity is the pair the loader supplied —
 `add_record(data_source_code, record_id, record_definition, flags)` — and re-sending the same pair
 **replaces** the record rather than adding a second one: *"When a record with a unique key is sent
 to Senzing that matches a record already loaded, the new record replaces the current one in Senzing
-and doesn't contribute to the DSR count"* (`search_docs`, "Data Source Records (DSRs) Explained";
-signature via `get_sdk_reference(topic='parameters', filter='add_record', language='python')`;
-server 1.32.2, verified 2026-07-29).
+and doesn't contribute to the DSR count"* ("Data Source Records (DSRs) Explained" → *Uniquely
+Identifying Records in Senzing*: the `search_docs` route to it is stated once, in
+`../module-06-data-processing/phaseB-load-first-source.md` → "Receiving a quality_iteration (from
+Query, Visualize and Discover, or Phase D)", INV-300; signature via
+`get_sdk_reference(topic='parameters', filter='add_record', language='python')`).
 
 So a mapped file may legitimately hold **more rows than distinct keys** — that is the normal
 outcome when Module 5's mapping decision was to keep a source's verified duplicate rows rather
@@ -1470,10 +1472,9 @@ Present these common integration patterns and help them choose:
 | Duplicate Detection | No | Low | Data quality initiatives, stewardship, cleanup projects |
 | Watchlist Screening | Yes | Medium | Compliance (KYC/AML), risk management |
 
-When the bootcamper asks about integration, use `find_examples(query='REST API')` or
-`find_examples(query='batch report')` for implementation patterns, and `generate_scaffold` for
-code generation. Always iterate over known record IDs (from loaded data) rather than guessing
-entity IDs.
+When the bootcamper asks about integration, point them at `generate_scaffold` for code
+generation and at `reporting_guide`'s `export` topic for batch extraction. Always iterate over
+known record IDs (from loaded data) rather than guessing entity IDs.
 
 **Key implementation principle:** query programs iterate over loaded records using
 `get_entity_by_record_id(data_source, record_id)`: never over a guessed range of entity IDs.

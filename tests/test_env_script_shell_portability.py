@@ -532,14 +532,21 @@ class TheSymptomIsNamedWhereItLands(unittest.TestCase):
 
     def test_the_snippet_finding_carries_its_provenance(self):
         """INV-080: server version and date, and the tool that established it."""
-        self.assertRegex(
-            flat(MODULE_02), r"(?i)`search_docs`.{0,60}1\.32\.1, 2026-07-28|1\.32\.1, 2026-07-28"
-        )
         # #513: Module 3's stamp named `search_docs` and no query. The route that returns the
         # snippet guard is `find_examples`, re-measured and named with its query.
         text = flat(PHASE_1)
         self.assertIn("find_examples(query='Unable to get settings')", text)
-        self.assertRegex(text, r"MCP server 1\.37\.27, 2026-10-12")
+        # #600: Module 2 named `search_docs` and no query (stamped 1.32.1, 2026-07-28); both of
+        # its notes now point at Module 3's statement of the route. The server version and date
+        # are the route's record, which test_prescribed_search_queries.py checks (INV-291).
+        self.assertGreaterEqual(len(re.findall(
+            r"route[^.;]{0,40} is stated once, in `\.\./module-03-system-verification/"
+            r"phase1-verification\.md` → \"Step 1a: Engine Initialization Check\"",
+            flat(MODULE_02))), 2)
+        from test_prescribed_search_queries import VERIFIED_QUERIES
+        record = VERIFIED_QUERIES[("find_examples", "Unable to get settings", None)]
+        self.assertRegex(record["server"], r"^\d+\.\d+\.\d+$")
+        self.assertRegex(record["measured"], r"^\d{4}-\d{2}-\d{2}$")
 
     def test_verification_checks_it_before_reaching_for_explain_error_code(self):
         text = PHASE_1.read_text(encoding="utf-8")

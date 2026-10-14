@@ -206,7 +206,8 @@ class TheAllowlistEntryIsRescoped(unittest.TestCase):
 
     def setUp(self):
         # #513: the allowlist is keyed on (query, category); Step 5's call passes no category.
-        record = verified_queries().get((QUERY, None))
+        # #600 added the tool, so the key is (tool, query, category).
+        record = verified_queries().get(("search_docs", QUERY, None))
         # #383: each entry is a record; the property text is its "returned" field.
         self.entry = record.get("returned") if isinstance(record, dict) else record
 

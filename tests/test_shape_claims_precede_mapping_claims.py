@@ -37,15 +37,6 @@ import re
 import unittest
 from pathlib import Path
 
-# ⚠️ **Matches the ROUTE, not the exact argument string.** These assertions pinned the literal
-# `search_docs(category='data_mapping')`, which stopped matching when
-# `specs/search-docs-instructions-omit-the-required-query-parameter.md` gave every shipped
-# reference the `query` the tool actually requires -- so the guards failed on the correction they
-# should have welcomed, the pattern `specs/guards-pinning-a-dated-negative-outlive-it.md`
-# describes. What they exist to assert is that the claim names its route; the route is still named.
-ROUTE_DATA_MAPPING = re.compile(
-    r"search_docs\([^)]*?category='data_mapping'\)")
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
 MODULE1 = SKILLS / "module-01-business-problem" / "phase1-discovery.md"
@@ -142,9 +133,21 @@ class TheNameFullRuleIsStatedWhereItChangesGeneration(unittest.TestCase):
                       self.branch)
 
     def test_the_rule_carries_its_route_version_and_date(self):
-        """INV-080 — quoted from the specification, not adopted."""
-        self.assertRegex(self.branch, ROUTE_DATA_MAPPING)
-        self.assertIn("server 1.32.9, 2026-08-17", self.branch)
+        """INV-080 — quoted from the specification, not adopted.
+
+        #600: the route is stated once, at Module 5 step 11, and this branch points there; the
+        version and date are the route's record, which test_prescribed_search_queries.py
+        follows from the pointer (was a prose stamp, "server 1.32.9, 2026-08-17").
+        """
+        self.assertRegex(
+            self.branch,
+            r"the route to it is stated once, in `\.\./module-05-data-quality-mapping/"
+            r"phase2-data-mapping\.md` → \"11\. Map\"")
+        from test_prescribed_search_queries import VERIFIED_QUERIES
+        record = VERIFIED_QUERIES[("search_docs", "NAME_FULL NAME_ORG parsed person name single "
+                                   "field", "data_mapping")]
+        self.assertRegex(record["server"], r"^\d+\.\d+\.\d+$")
+        self.assertIn("Name > Feature: NAME", record["sections"])
 
     def test_the_quoted_rule_is_the_one_the_corpus_returns(self):
         """⚠️ The wording matters: this is what was verified, not a stronger paraphrase."""
@@ -191,7 +194,11 @@ class ModuleFiveHoldsTheAuthority(unittest.TestCase):
     def test_it_carries_the_specification_wording_and_provenance(self):
         self.assertIn("Single-field name when type (person vs org) is unknown or only a "
                       "full name is provided", self.text)
-        self.assertIn("server 1.32.9, 2026-08-17", self.text)
+        # #600: the provenance is the route, named in full here, the one statement of it; its
+        # version and date are the record in test_prescribed_search_queries.py.
+        self.assertIn("search_docs(query='NAME_FULL NAME_ORG parsed person name single field', "
+                      "category='data_mapping')", self.text)
+        self.assertIn("This is the canonical statement of the *Feature: NAME* route", self.text)
 
     def test_it_explains_what_when_available_means(self):
         """The clause that decides the case — a single column is not "available" parts."""

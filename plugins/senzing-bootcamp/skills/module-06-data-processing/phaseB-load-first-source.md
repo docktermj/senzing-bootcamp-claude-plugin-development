@@ -66,8 +66,7 @@ For each source in `sources` not yet listed in `completed`, in order:
    a record whose data source code and RECORD_ID match a loaded record replaces it
    (`search_docs(query='Data Source Records DSRs Explained same DATA_SOURCE RECORD_ID replaces')` →
    "Data Source Records (DSRs) Explained" → "Uniquely Identifying Records in Senzing", its second
-   hit: read past the first, the same document's "Important Nuances > Expanding Data Sources";
-   server 1.37.19, docs index 2026-10-02 18:46 UTC, 2026-10-02).
+   hit: read past the first, the same document's "Important Nuances > Expanding Data Sources").
 4. **Reload the source with the existing loading program:** `phaseB-load-first-source.md` Step 7
    (below) on a single-source run, or `phaseC-multi-source.md` Step 19 for this source alone on a
    multi-source run. Step 7's license check, its two-stage reconciliation (INV-243) and its `load_status` update in

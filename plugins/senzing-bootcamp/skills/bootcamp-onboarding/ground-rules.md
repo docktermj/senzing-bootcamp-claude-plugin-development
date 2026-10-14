@@ -450,7 +450,7 @@ copy (INV-300).
   re-call rather than proceeding on what came back. Never report a topic as having no guidance on
   the strength of a gated response: the payload of a gate is empty by design, not because the
   topic is undocumented.
-- **Working examples: search mode is the reliable route (INV-160).** `find_examples(query='...')` is the
+- **Working examples: search mode is the reliable route (INV-160).** `find_examples(query=…)` is the
   path the bootcamp uses, and it returns real `code_snippet` content. **File retrieval does not
   return content at all — by design.** `find_examples(repo=…, file_path=…)` elides the body and says
   so: `content: ""` alongside a non-zero `content_length`, `truncated: false`, and
@@ -1041,9 +1041,10 @@ through query programs. Propagation across that mount is not instantaneous.
 ## Naming Senzing datasets (INV-230)
 
 Write a Senzing dataset the way **Senzing's own documentation** writes it, and confirm the spelling
-against the MCP server rather than choosing one (INV-080). The **Truth Set** is two words in prose;
-`search_docs` returns the documentation page titled "Truth Set Setup", whose text reads "the Senzing
-truth set demo data" (server 1.32.9, 2026-08-14).
+against the MCP server rather than choosing one (INV-080). The **Truth Set** is two words in prose:
+`search_docs(query='truth set demo data customers reference watchlist quickstart')` returns the
+documentation page titled "Truth Set Setup" first, whose text reads "the Senzing truth set demo
+data".
 
 ⛔ **The closed-up form belongs to identifiers only** — `truthset_visualization`,
 `truthset_data.jsonl`, the `module-03b-truthset-visualization` directory, and

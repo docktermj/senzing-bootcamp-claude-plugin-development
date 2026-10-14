@@ -633,10 +633,8 @@ suffix has no such field, so it takes the message's first route, as step 11 decl
   declarations*, which is what the `FIX:` clause says (the 1.33.0 message had no `FIX:`). A run that
   stops at the first sentence spends its first attempt re-checking data that is correct. The rule's authoritative scope is narrower still: the Entity Specification's `Feature:
   NAME` section says *"do not mix `NAME_ORG` with parsed person fields **in the same object**"*
-  (`search_docs(query='entity specification attribute names feature tables NAME_ORG ADDR_LINE1
-  PHONE_NUMBER', category='data_mapping')`, server **1.37.19**, docs index 2026-10-02 18:46 UTC,
-  2026-10-02; read past the first hit) — one NAME object, not one record, and certainly not one
-  declaration.
+  (the route to *Feature: NAME* is stated once, in `phase2-data-mapping.md` → "11. Map", INV-300)
+  — one NAME object, not one record, and certainly not one declaration.
 - ⚠️ **Expect the coverage count to drop after you apply it.** Fields moved into `field_overrides`
   are counted by nothing, so the mapping reports fewer covered fields than it dispositions. That is
   the known field-count warning described below — **not** unmapped data. Do not chase it.
@@ -719,7 +717,8 @@ Map fields to Senzing attributes, then advance workflow step 3 with `action='adv
 `disposition` — `feature`, `payload`, `ignore`, `derived`, or `extract`). NEVER guess
 attribute names. For non-Latin data:
 `search_docs(query='data quality practices multi-language non-Latin', category='globalization')`
-(the Globalization Guide's *CJK+English cross-script matching* section) — the other query terms, the sections to ask for, and the phrasings that return wrong content
+(the Globalization Guide's *Address matching examples* section, which carries the cross-script
+practice) — the other query terms, the sections to ask for, and the phrasings that return wrong content
 are in this module's `SKILL.md` → "Multi-language data" (INV-212); do not re-derive them here.
 Tell the user: show
 the mapping table with reasoning for each decision and a confidence score.
@@ -731,10 +730,9 @@ name is provided"*, and its `NAME` rule reads *"Prefer parsed person names
 (`NAME_FIRST`/`NAME_LAST`/…) when available; use `NAME_ORG` for organizations; use `NAME_FULL` only
 when the type is unknown or only a single field exists"*
 (`search_docs(query='NAME_FULL NAME_ORG parsed person name single field', category='data_mapping')` →
-*Name > Feature: NAME*, top hit, on target; server 1.32.9, 2026-08-17, query re-verified on
-1.37.27, docs index 2026-10-11 18:43 UTC, 2026-10-12). This is the canonical statement of the
-*Feature: NAME* route, and Phase 1's type/name check points here for it rather than restating it
-(INV-300). "When available" means **the source provides
+*Name > Feature: NAME*, top hit, on target). This is the canonical statement of the
+*Feature: NAME* route, and Module 4, Phase 1 and the step-3 rejection note above point here for it
+rather than restating it (INV-300). "When available" means **the source provides
 separate fields** — so one `full_name` column is a direct mapping to `NAME_FULL`, and a
 `"Last, First"` column is too, however parseable it looks.
 

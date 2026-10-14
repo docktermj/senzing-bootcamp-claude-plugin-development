@@ -38,11 +38,13 @@ loading. If they are using their own data, skip silently. (The Kiro CORD-freshne
 
 ### Anti-pattern check
 
-Call `search_docs(query="loading", category="anti_patterns", version="current")`. Key pitfalls:
+Call `search_docs(query="loading", category="anti_patterns")`. Key pitfalls:
 bulk-loading issues, threading problems, redo processing, load-order dependencies. The top hit is
-*Senzing Anti-Patterns: Configuration and Initialization*; read past the first hit to *Senzing
+*Senzing Anti-Patterns: Configuration and Initialization*, which carries "Do Not Skip
+check_repository_performance() Before Production"; read past the first hit to *Senzing
 Anti-Patterns: Architecture and Performance*, which carries "Do Not Use Single-Threaded Loading",
-"Do Not Use SQLite in Production" and the redo anti-patterns.
+"Do Not Use SQLite in Production", "Do Not Use Low-IOPS Storage" and the redo anti-patterns. This
+is the one statement of this route; every other site points here (INV-300).
 
 ## 1. Assess production record volume
 
@@ -197,8 +199,8 @@ contract for `record_count` states that at or below 500 it returns the single-th
 above 500 (or when the count is omitted) it returns the threaded production pattern. A call at a
 few thousand records returns the thread-pool template and labels the single-threaded alternative
 "demo-only, single-threaded — do not use for production volumes (>500)". This matches
-`search_docs(query="loading", category="anti_patterns")` → "Senzing Anti-Patterns: Architecture and
-Performance" (its second hit: read past the first) → **"Do Not Use Single-Threaded Loading"**, whose remedy is a thread pool of 2–8
+**"Do Not Use Single-Threaded Loading"** (the loading anti-patterns route is stated once, in
+`phaseA-build-loading.md` → "Anti-pattern check", INV-300), whose remedy is a thread pool of 2–8
 workers per CPU core. Re-confirm the threshold from MCP at implementation time; do not carry this
 number forward as a remembered fact.
 
@@ -275,13 +277,12 @@ loader. Every tier that represents a real production system gets the threaded pa
   datastore tolerates", and taking the worker count from the tier alone is how a
   production-tier loader ends up pointed at a datastore that cannot take it.
 
-  **The server makes this a database question, in its own words.**
-  `search_docs(query='loading', category='anti_patterns')` → *"Do Not Use Single-Threaded Loading"*
-  (in its second hit, *Senzing Anti-Patterns: Architecture and Performance*: read past the first
-  hit) says *"Start with 2-8 workers per CPU core and **tune based on your database and storage
-  throughput**"*, and *"Do Not Use SQLite in Production"* says SQLite *"does not support concurrent
-  writes"*, listing *"Database locked errors under concurrent access"* among its symptoms (server
-  **1.37.19**, docs index 2026-10-02 18:46 UTC, 2026-10-02). So:
+  **The server makes this a database question, in its own words.** The loading anti-patterns
+  route is stated once, in `phaseA-build-loading.md` → "Anti-pattern check" (INV-300). Its
+  *"Do Not Use Single-Threaded Loading"* says *"Start with 2-8 workers per CPU core and
+  **tune based on your database and storage throughput**"*, and *"Do Not Use SQLite in
+  Production"* says SQLite *"does not support concurrent
+  writes"*, listing *"Database locked errors under concurrent access"* among its symptoms. So:
 
   - **`postgresql`** (or any supported RDBMS) — take the tier's full concurrency. This is the case
     the 2-8-per-core figure is written for; nothing is capped.
@@ -471,7 +472,7 @@ Truth Set visualization module already run.
    a lower repository count, which was settled by a call rather than by argument
    (`find_examples(query='add record engine initialization', language='typescript')` returned
    `brianmacy/sz-napi` → `code-snippets/initialization/engine-priming/index.ts`, so `.ts` **was**
-   indexed) and reported upstream 2026-08-27. **Re-checked on server 1.36.0, 2026-09-02: the server
+   indexed; today its top hit is another `.ts` file, `bindings/node/ts/options.ts`) and reported upstream 2026-08-27. **Re-checked on server 1.36.0, 2026-09-02: the server
    aligned the two.** The declared description now gives the **same** repository count as
    `get_capabilities`, lists `.py, .java, .cs, .rs, .ts, .js`, and names TypeScript/Node.js. ⚠️ **The
    count is deliberately not written here** — the rule below forbids quoting it, and a note that
@@ -558,9 +559,9 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
    not already decided AND the **loadable total** exceeds the SQLite guidance threshold. (INV-331) The
    production tier does not trigger this prompt: it describes the take-home system, not the load
    about to run (the production line below covers it). Source that threshold from MCP rather than
-   from this file (a sourcing floor); `search_docs(query="loading",
-   category="anti_patterns")` → "Do Not Use SQLite in Production", in its second hit (read past
-   the first hit), gives it as roughly 100,000 records ("use SQLite only for quick local testing with small datasets"). If MCP does not return
+   from this file (a sourcing floor): "Do Not Use SQLite in Production" (the loading anti-patterns
+   route is stated once, in `phaseA-build-loading.md` → "Anti-pattern check", INV-300) gives it as
+   roughly 100,000 records ("use SQLite only for quick local testing with small datasets"). If MCP does not return
    it, the threshold is indeterminate — never substitute a remembered figure (INV-080). For a
    loadable total at or below that threshold, any non-SQLite engine, indeterminate inputs, or an
    already-recorded choice: say nothing new about volume/SQLite beyond the production line and

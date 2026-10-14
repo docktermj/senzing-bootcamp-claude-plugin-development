@@ -111,13 +111,20 @@ class TheMeasurementIsNamedAndNonBlocking(unittest.TestCase):
             "a measurement that cannot run would stall setup (INV-048)")
 
     def test_senzings_own_anti_patterns_are_cited_with_version_and_date(self):
-        self.assertIn("category='anti_patterns'", self.branch,
-                      "the anti-pattern route is not named")
-        # Re-measured for #383 (was 1.33.0, 2026-08-21): the prose stamp follows the
-        # VERIFIED_QUERIES record in tests/test_prescribed_search_queries.py.
-        self.assertRegex(self.branch,
-                         r"1\.37\.19\*\*, docs index 2026-10-02 18:46\s+UTC, \*\*2026-10-02",
-                         "the anti-pattern citation carries no server version and date")
+        # #600: the loading anti-patterns route is stated once, in Module 6 Phase A, and this
+        # branch points there. Its server version and date are the route's record in
+        # tests/test_prescribed_search_queries.py, which follows the pointer and checks that
+        # this branch names a section the route returns (was a prose stamp: 1.33.0, then 1.37.19).
+        self.assertRegex(
+            re.sub(r"\s+", " ", self.branch),
+            r"route is stated once, in `\.\./module-06-data-processing/phaseA-build-loading\.md` "
+            r"→ \"Anti-pattern check\"",
+            "the anti-pattern route is not named")
+        from test_prescribed_search_queries import VERIFIED_QUERIES
+        record = VERIFIED_QUERIES[("search_docs", "loading", "anti_patterns")]
+        self.assertRegex(record["server"], r"^\d+\.\d+\.\d+$",
+                         "the anti-pattern route's record carries no server version")
+        self.assertIn("Do Not Use Low-IOPS Storage", record["sections"])
 
 
 class TheFiguresAreObservationOnly(unittest.TestCase):
