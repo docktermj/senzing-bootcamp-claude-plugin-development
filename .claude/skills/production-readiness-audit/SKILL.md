@@ -420,7 +420,8 @@ session end:
      ```bash
      gh issue create --title "<the defect, not the symptom>" --body-file <file>
      ```
-     ⛔ **(INV-314) Show the maintainer the title and body and get a yes first.** Filing is
+     ⛔ **(INV-314) Show the maintainer the title and body and get a yes first, or
+     one yes for the whole list shown in one message (INV-314, 2026-10-13 note).** Filing is
      outward-facing and immediate: the issue is visible to anyone watching the repository the
      moment it exists, and its notifications have already gone out. An issue can be edited or
      closed afterwards but never un-filed — the same gate, for the same reason,

@@ -20,7 +20,9 @@ no other record** (INV-314, as amended by its 2026-09-30 scope note, #216): its 
 comments (Started, Clarifications, Approach, Result), and the escape-hatch comment it posts
 when the issue proves invalid, a duplicate, or already fixed. Their exact text is still shown,
 but they need no separate yes. Every other outward record keeps INV-314's per-record yes: a
-new issue, `submit_feedback`, and an ad-hoc comment. Push and PR stay behind Gate 2's yes.
+new issue, `submit_feedback`, and an ad-hoc comment, though an issue or a comment may instead take
+one yes for the whole list shown in one message (INV-314, 2026-10-13 note). Push and PR stay
+behind Gate 2's yes.
 
 ## The local CI mirror in this repository
 

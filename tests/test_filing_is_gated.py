@@ -49,6 +49,13 @@ overlays under `.claude/skill-overlays/` state the list and cite the note. So a 
 comment` or `gh pr create` instruction may sit beside that citation instead of a yes. A new
 issue and `submit_feedback` are never on the list, and only a yes vouches for them.
 
+⛔ **Which yes may cover a list is INV-314's 2026-10-13 note (#574), applied by #575.** Every
+gated `gh issue create` or `gh issue comment` instruction carries `BATCH_CLAUSE`, verbatim,
+beside its yes, and no `submit_feedback` call does: an upstream message stays one message, one
+yes. The clause is one fixed form so that a site added later without it fails here, and the
+note in `specs/INVARIANTS.md` stays the one statement of its conditions (INV-300). Five prose
+sites state the gate with no fenced instruction beside it; `PROSE_SITES` pins those by name.
+
 ⛔ **The unattended surfaces instruct only acts from the list.** They are discovered, not
 listed: the loop's overlay, the Step 8.1 mapping row for a finding with no entry, and every
 branch opened by a bold *Unattended* or *No maintainer present* label. None may instruct a new
@@ -70,10 +77,10 @@ of the four acts. A green run means the rule is *written* everywhere it should b
 was *obeyed*.
 
 ⛔ **Enforces INV-314** — a maintainer command creating a record outside this repository
-presents the exact text and gets the maintainer's assent first, each record separately;
-unattended, it creates nothing and writes the drafted text where the maintainer will find it.
+presents the exact text and gets the maintainer's assent first, each record separately, or
+one yes for the whole list shown in one message (INV-314, 2026-10-13 note); unattended, it creates nothing and writes the drafted text where the maintainer will find it.
 
-Source issues: #106, #216.
+Source issues: #106, #216, #575.
 
 Stdlib only; the surfaces are discovered rather than listed (INV-246).
 
@@ -119,6 +126,29 @@ ACCEPTED = {
     "gh issue comment": (GATE, SCOPE_NOTE),
     "gh pr create": (GATE, SCOPE_NOTE),
     SUBMIT: (GATE,),
+}
+
+#: INV-314's 2026-10-13 note, as every gated issue or comment states it (#575). One fixed form,
+#: matched across line wraps, so a later guard -- and this one -- can find every site.
+BATCH_CLAUSE = "one yes for the whole list shown in one message (INV-314, 2026-10-13 note)"
+BATCH = re.compile(r"\s+".join(re.escape(w) for w in BATCH_CLAUSE.split()))
+
+#: Anything that starts the clause, so a variant wording or citation is caught (INV-282).
+BATCH_START = re.compile(r"(?i)\bone\s+yes\s+for\s+the\s+whole\s+list\b")
+
+#: The acts the note lets one yes cover: issues and comments in this repository. Not
+#: `gh pr create`, which stays behind Gate 2's yes, and never `submit_feedback`.
+BATCHABLE = (FILING, "gh issue comment")
+
+#: The files holding the five sites that state the gate in prose, with no fenced instruction for
+#: the finders above to reach, and how many times each file carries the clause in all (dry-run's
+#: and delegate's second is at their fenced site). Re-located on `2bc257da` (#575).
+PROSE_SITES = {
+    "skills/dry-run/SKILL.md": 2,
+    "skills/delegate-to-mcp-server/SKILL.md": 2,
+    "skills/auto-test/SKILL.md": 1,
+    "skills/compact-dev-environment/SKILL.md": 1,
+    "skill-overlays/implement-github-issue.md": 1,
 }
 
 #: How far from the instruction the gate may sit. Measured 2026-09-29: at most 7 lines. The
@@ -169,6 +199,34 @@ def ungated_lines(text, act):
     marks = [line_of(text, m.start()) for p in ACCEPTED[act] for m in p.finditer(text)]
     return [n for n in instruction_lines(text, act)
             if not any(abs(g - n) <= GATE_WINDOW for g in marks)]
+
+
+def _near(n, lines):
+    return any(abs(g - n) <= GATE_WINDOW for g in lines)
+
+
+def unbatched_lines(text, act):
+    """Instructions of `act` gated by a yes with no `BATCH_CLAUSE` within `GATE_WINDOW` lines.
+
+    A comment vouched for by the scope-note citation needs no yes, so it needs no clause.
+    """
+    gates = [line_of(text, m.start()) for m in GATE.finditer(text)]
+    notes = [line_of(text, m.start()) for m in SCOPE_NOTE.finditer(text)]
+    batch = [line_of(text, m.start()) for m in BATCH.finditer(text)]
+    return [n for n in instruction_lines(text, act)
+            if _near(n, gates) and not _near(n, notes) and not _near(n, batch)]
+
+
+def batched_submit_lines(text):
+    """`submit_feedback` calls with `BATCH_CLAUSE` within `GATE_WINDOW` lines."""
+    batch = [line_of(text, m.start()) for m in BATCH.finditer(text)]
+    return [n for n in instruction_lines(text, SUBMIT) if _near(n, batch)]
+
+
+def variant_clauses(text):
+    """Line numbers where the clause starts in any form but the fixed one."""
+    exact = {m.start() for m in BATCH.finditer(text)}
+    return [line_of(text, m.start()) for m in BATCH_START.finditer(text) if m.start() not in exact]
 
 
 def off_list_acts(text):
@@ -279,6 +337,52 @@ class EveryInstructionCarriesTheGate(unittest.TestCase):
             "INV-314, as amended by its 2026-09-30 scope note (#216)" % (GATE_WINDOW, ", ".join(ungated)))
 
 
+class OneYesMayCoverAListOfIssuesOrComments(unittest.TestCase):
+    """⛔ INV-314's 2026-10-13 note (#574) at every gated site, and never at `submit_feedback`."""
+
+    def test_there_are_gated_issue_instructions_to_check(self):
+        found = sum(len(instruction_lines(read(p), FILING)) for p in surfaces())
+        self.assertGreaterEqual(found, 5, "fewer than five fenced `%s` instructions (%d); the "
+                                "batch-clause check below is near vacuous" % (FILING, found))
+
+    def test_each_gated_issue_or_comment_carries_the_clause(self):
+        missing = []
+        for p in surfaces():
+            text = read(p)
+            for act in BATCHABLE:
+                missing += ["%s:%d (%s)" % (p.relative_to(REPO_ROOT), n, act)
+                            for n in unbatched_lines(text, act)]
+        self.assertEqual(
+            [], missing,
+            "gated instruction(s) with no batch clause within %d lines: %s. Splice %r into the "
+            "gate sentence beside the per-record yes, so one yes may cover the list shown in one "
+            "message" % (GATE_WINDOW, ", ".join(missing), BATCH_CLAUSE))
+
+    def test_no_submit_feedback_gate_carries_the_clause(self):
+        batched = []
+        for p in surfaces():
+            batched += ["%s:%d" % (p.relative_to(REPO_ROOT), n)
+                        for n in batched_submit_lines(read(p))]
+        self.assertEqual(
+            [], batched,
+            "`submit_feedback` call(s) with the batch clause within %d lines: %s. An upstream "
+            "message leaves the organization, so it keeps one message, one yes (INV-314, "
+            "2026-10-13 note)" % (GATE_WINDOW, ", ".join(batched)))
+
+    def test_each_prose_site_carries_the_clause(self):
+        for rel, count in PROSE_SITES.items():
+            with self.subTest(surface=rel):
+                self.assertEqual(count, len(BATCH.findall(read(CLAUDE / rel))),
+                                 "%s should carry %r %d time(s)" % (rel, BATCH_CLAUSE, count))
+
+    def test_the_clause_has_one_form(self):
+        variants = []
+        for p in surfaces():
+            variants += ["%s:%d" % (p.relative_to(REPO_ROOT), n) for n in variant_clauses(read(p))]
+        self.assertEqual([], variants, "the batch clause is reworded at %s; write it as %r so "
+                         "every site stays findable" % (", ".join(variants), BATCH_CLAUSE))
+
+
 class UnattendedSurfacesInstructOnlyListedActs(unittest.TestCase):
     """⛔ An unattended run creates only the scope note's list, on the issue it works."""
 
@@ -308,7 +412,7 @@ class EachOverlayStatesItsPartOfTheList(unittest.TestCase):
         LOOP_OVERLAY: ("four `/implement-github-issue` *(user level)* log comments", "one blocked comment",
                        "opening its PR", "`--no-merge`", "no new issue"),
         "skill-overlays/implement-github-issue.md": ("five comments", "escape-hatch comment",
-                                                     "per-record yes"),
+                                                     "per-record yes", BATCH_CLAUSE),
     }
 
     def test_each_overlay_cites_the_scope_note_and_states_its_acts(self):
@@ -408,6 +512,39 @@ class TheCheckersAreNotVacuous(unittest.TestCase):
         text = ("(INV-314, as amended by its 2026-09-30 scope note, #216)\n"
                 + self.SYNTHETIC % FILING)
         self.assertEqual([4], ungated_lines(text, FILING))
+
+    def test_removing_the_clause_at_a_real_filing_site_fails(self):
+        text = self._site("skills/feedback-to-issues/SKILL.md", FILING)
+        self.assertEqual([], unbatched_lines(text, FILING), "the clause is missing as shipped")
+        self.assertTrue(unbatched_lines(BATCH.sub("", text), FILING))
+
+    def test_the_clause_at_a_real_submit_feedback_gate_fails(self):
+        """The negative control #575 asks for: the batch exception reaching `submit_feedback`."""
+        for rel, gate in (("skills/feedback-to-issues/SKILL.md",
+                           "get an explicit yes before sending."),
+                          ("skills/delegate-to-mcp-server/SKILL.md",
+                           "get an explicit yes before sending.**")):
+            with self.subTest(surface=rel):
+                text = self._site(rel, SUBMIT)
+                self.assertEqual([], batched_submit_lines(text), "batched as shipped")
+                self.assertEqual(1, text.count(gate), "%s's gate has moved" % rel)
+                mutated = text.replace(gate, gate + " Or " + BATCH_CLAUSE + ".")
+                self.assertTrue(batched_submit_lines(mutated))
+
+    def test_a_gated_comment_needs_the_clause_and_a_cited_one_does_not(self):
+        bare = "Get a yes first.\n" + self.SYNTHETIC % "gh issue comment"
+        self.assertEqual([4], unbatched_lines(bare, "gh issue comment"))
+        self.assertEqual([], unbatched_lines(
+            "Get a yes, or %s.\n" % BATCH_CLAUSE + self.SYNTHETIC % "gh issue comment",
+            "gh issue comment"))
+        self.assertEqual([], unbatched_lines(
+            "(INV-314, as amended by its 2026-09-30 scope note, #216)\n" + bare, "gh issue comment"))
+
+    def test_the_clause_matches_across_a_line_wrap_and_a_variant_fails(self):
+        wrapped = BATCH_CLAUSE.replace(" in one message", "\n   in one message")
+        self.assertTrue(BATCH.search(wrapped))
+        self.assertEqual([], variant_clauses(wrapped))
+        self.assertEqual([1], variant_clauses("or one yes for the whole list (INV-314)"))
 
     def test_an_off_list_act_in_any_unattended_surface_fails(self):
         injected = ("\n```bash\n%s --title x\n```\n" % FILING,

@@ -149,7 +149,8 @@ GitHub issues, not a modified working tree.**
    A change already absorbed, or already filed, must not get a second issue. The tracker is the
    record; this command keeps no ledger of its own, because a second list of the same fact is how
    two records come to disagree.
-4. **(INV-314) Show the maintainer each title and body and get a yes**, then file:
+4. **(INV-314) Show the maintainer each title and body and get a yes**, or
+   one yes for the whole list shown in one message (INV-314, 2026-10-13 note), then file:
 
    ```bash
    gh issue create --title "<what diverged, not the symptom>" --body-file <file>

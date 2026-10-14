@@ -175,7 +175,8 @@ order: the finding is recorded first and fixed after.
 
 ⛔ **(INV-317) Record each finding as you find it, before fixing anything:** in the run's
 dated `specs/IMPLEMENTED.md` entry, marked not yet filed, or as a GitHub issue filed after
-the maintainer's yes (INV-314). Never put it in a new file under `specs/` (INV-307). A fixed
+the maintainer's yes (INV-314), or one yes for the whole list shown in one message (INV-314,
+2026-10-13 note). Never put it in a new file under `specs/` (INV-307). A fixed
 finding no longer reproduces, so a run that fixes first leaves no evidence the finding existed.
 
 Only after the record, in dry-run's order (its steps 2 to 6): fix the class
