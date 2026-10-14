@@ -33,7 +33,8 @@ are properties of a live session; only a real `/dry-run` shows them. This pins t
 instructions a runner reads say so.
 
 Enforces **INV-307** (nothing new lands in `specs/`) and **INV-314** (each outward record is shown
-and approved on its own) at the `/dry-run` surfaces.
+and approved on its own, or an issue or comment in one list shown whole, per its 2026-10-13 note,
+#575) at the `/dry-run` surfaces.
 
 Enforces **INV-317** (a finding is recorded durably as it is found, before it is fixed, and never
 held only in conversation) through `SAME_WORDS`, which pins those lifecycle words in `/dry-run`'s
@@ -112,7 +113,9 @@ SAME_WORDS = (
     "search open and closed issues before filing",
     "a finding already tracked points at that issue instead of opening a duplicate",
     "file at the end of phase 1 or 2, and when a phase 3 walk pauses or ends",
-    "show the maintainer each title and body and get a yes, one issue at a time",
+    "show the maintainer each title and body and get a yes, one issue at a time, or one yes for "
+    "the whole list shown in one message (inv-314, 2026-10-13 note). any other \"yes to all\" is "
+    "not assent to each",
     "replace the draft's marker with the issue number",
     "no maintainer present: file nothing",
     "not filed — needs the maintainer to file it",
@@ -274,8 +277,12 @@ class UpstreamIsMcpServerOnlyAndGated(unittest.TestCase):
             with self.subTest(surface=str(path.relative_to(REPO_ROOT))):
                 rule = outbound_rule(path)
                 self.assertIsNotNone(rule, "%s does not state the outbound rule" % path.name)
+                # The batch clause is scoped to issues and comments, so it never reaches the
+                # `submit_feedback` act this rule also gates (INV-314, 2026-10-13 note, #575).
                 self.assertIn("each under inv-314's gate: show the maintainer the exact text "
-                              "and get a yes, given out of character, one record at a time",
+                              "and get a yes, given out of character, one record at a time. for "
+                              "issues and comments it may instead be one yes for the whole list "
+                              "shown in one message (inv-314, 2026-10-13 note)",
                               rule, "the outbound rule is not gated on the maintainer's yes "
                               "for each record")
                 self.assertIn("a github issue, or a comment on an existing one, in this "

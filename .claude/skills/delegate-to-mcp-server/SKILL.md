@@ -55,10 +55,11 @@ systematic version of both, and it is the only one of the four that reads the pl
 - **Never modify plugin code, hooks, scripts or skills.** Filing the issues is the
   deliverable; implementing them is the job of `/implement-github-issue` *(user level)*.
 - ⛔ **(INV-314) Filing is outward-facing and immediate. Show the maintainer every title and body and
-  get an explicit yes first** (Step 7). An issue is visible to anyone watching the
+  get an explicit yes first** (Step 7), or one yes for the whole list shown in one message
+  (INV-314, 2026-10-13 note). An issue is visible to anyone watching the
   repository the moment it is created; it can be edited or closed, never un-filed, and its
   notifications have already gone out. This is the same gate Step 8 applies to
-  `submit_feedback`, for the same reason.
+  `submit_feedback`, for the same reason, except that there each message takes its own yes.
 - **"The server can answer it" is not by itself a reason to delete anything.** It is
   the entry ticket to Step 6, where delegation has to earn its place. A large fraction
   of legitimate findings end in *keep* — record those too, or the next run re-litigates
@@ -294,7 +295,8 @@ convert it *into* when full delegation fails Step 6.
 One issue per coherent change, using `issue-template.md` in this skill's directory.
 Group sites that share one fix; keep unrelated ones apart.
 
-⛔ **(INV-314) Show the maintainer every title and body, and get a yes, before filing.**
+⛔ **(INV-314) Show the maintainer every title and body, and get a yes, or
+one yes for the whole list shown in one message (INV-314, 2026-10-13 note), before filing.**
 Then, for each approved item:
 
 ```bash

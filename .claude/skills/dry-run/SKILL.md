@@ -153,7 +153,9 @@ and its entire factual foundation. Start there unless the maintainer says otherw
 ## Absolute rules
 
 ⛔ **Nothing leaves the machine except two outward acts, each under INV-314's gate: show
-the maintainer the exact text and get a yes, given out of character, one record at a time.**
+the maintainer the exact text and get a yes, given out of character, one record at a time. For
+issues and comments it may instead be one yes for the whole list shown in one message (INV-314,
+2026-10-13 note).**
 
 1. **A GitHub issue, or a comment on an existing one, in this repository.**
 2. **`submit_feedback`, only for a finding whose verdict is `mcp-server`**: certain that the
@@ -308,7 +310,8 @@ once in `drafts.py` (INV-300).
    being tested. Then, one issue at a time:
 
    ⛔ **(INV-314) Show the maintainer each title and body and get a yes, one issue at a
-   time.** "Yes to all" is not assent to each. Filing is outward-facing and immediate: the
+   time, or one yes for the whole list shown in one message (INV-314, 2026-10-13 note).** Any
+   other "yes to all" is not assent to each. Filing is outward-facing and immediate: the
    issue is visible the moment it exists and its notifications have gone out; it can be
    edited or closed but never un-filed.
 

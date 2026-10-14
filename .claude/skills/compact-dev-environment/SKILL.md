@@ -377,7 +377,8 @@ Then:
   which cannot mint either.
 - **Other semantic changes go through a GitHub issue** — deleting a test, or the
   `ground-rules.md` wording a demotion needs. File it once the maintainer has said yes
-  to that issue's exact text (INV-314), and let `/implement-github-issue` *(user level)*
+  to that issue's exact text (INV-314), or one yes for the whole list shown in one message
+  (INV-314, 2026-10-13 note), and let `/implement-github-issue` *(user level)*
   execute it. The issue is where the reasoning survives.
 - **Mechanical changes may be executed here**, one class at a time, each with the
   maintainer's explicit yes: merging test traversals, pruning feedback files. After

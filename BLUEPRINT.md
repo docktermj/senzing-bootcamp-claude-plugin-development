@@ -3724,7 +3724,8 @@ phase-3 argument without `--simulated` means it) or a simulated Bootcamper
 browser), and run `coverage_reports.py both`. Host Markdown-lint hooks are
 excluded for top-level `docs/*.md`, never fixed in the plugin. Only two
 outward acts, each approved out of character per record (INV-314): an issue
-or comment here, and `submit_feedback` for a re-verified `mcp-server` finding
+or comment here (or one yes for the whole list shown in one message, INV-314's
+2026-10-13 note), and `submit_feedback` for a re-verified `mcp-server` finding
 (INV-194, INV-213, INV-321; never `license_request`); a yes from a simulated
 Bootcamper authorizes neither. Never answer as the Bootcamper in the session
 that runs or grades the bootcamp (self-play); a simulated walk, answered by a
@@ -4155,7 +4156,8 @@ search first and strikes a change now tracked). Compared paths: `plugins/`
 (minus caches), `.claude-plugin/`, `docs/`, `README.md`. After the script:
 report its summary, group divergence into decisions (a dependency bump, a
 workflow, a prose fix), search open and closed issues by the public commit
-subject or SHA, show each title and body and get a yes (INV-314), file with
+subject or SHA, show each title and body and get a yes, or one yes for the
+whole list shown in one message (INV-314, 2026-10-13 note), file with
 `gh issue create` in this repository only. Each issue carries the public
 commit, the affected paths and, as work still owed, the narrow inverse
 rewrite (`Senzing/senzing-bootcamp-claude-plugin` back to
@@ -9568,7 +9570,7 @@ looks wrong.
 - `tests/test_feedback_ledger.py`: 25
 - `tests/test_feedback_routing.py`: 47
 - `tests/test_feedback_to_issues_files_in_its_own_repo.py`: 13
-- `tests/test_filing_is_gated.py`: 20
+- `tests/test_filing_is_gated.py`: 29
 - `tests/test_find_examples_coverage_is_uncitable.py`: 12
 - `tests/test_first_source_is_chosen_by_step_fourteens_heuristics.py`: 18
 - `tests/test_fpdf2_dependency_is_declared.py`: 12
@@ -11540,6 +11542,13 @@ Senzing licensing, with no SPDX identifier.
   the sites #575 rewords (a per-record yes made a release cycle approve each
   finding separately, and refine's label step read as a run labeling its own
   issue)
+- #575: every site that states INV-314's per-record yes for a new issue or a
+  comment keeps it and adds one fixed clause, "one yes for the whole list
+  shown in one message (INV-314, 2026-10-13 note)", which
+  `tests/test_filing_is_gated.py` requires beside each gated `gh issue create`
+  or `gh issue comment` and forbids near any `submit_feedback` call, whose
+  gates keep one message, one yes (the registered note let one yes cover a
+  list shown whole, but every site still demanded a yes per record)
 - #580: the graduation video's tag line reads "Resolved: [Name], Senzing
   Bootcamp graduate." and `tag_line_layout` breaks it after the last comma,
   the phrase on one unsplit line and the card shrunk in 4 px steps only to

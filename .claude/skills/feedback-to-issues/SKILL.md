@@ -209,12 +209,13 @@ For every parsed item:
 For each item that warrants one, file **one GitHub issue in this repository**, using
 `issue-template.md` (in this skill's directory) as the body.
 
-⛔ **(INV-314) Show the maintainer the title and body, and get a yes, before filing.** Filing is
+⛔ **(INV-314) Show the maintainer the title and body, and get a yes, before filing. Or get one
+yes for the whole list shown in one message (INV-314, 2026-10-13 note).** Filing is
 **outward-facing and immediate** — the issue is visible to anyone watching the repository
 the moment it is created, and it carries the Bootcamper's report into a public record.
 An issue can be edited or closed afterwards, but it cannot be un-filed, and its
 notifications have already gone out. ⚠️ This is the same gate Step 8 applies to
-`submit_feedback`, for the same reason.
+`submit_feedback`, for the same reason, except that there each message takes its own yes.
 
 ```bash
 gh issue create --title "<title>" --body-file <file>
