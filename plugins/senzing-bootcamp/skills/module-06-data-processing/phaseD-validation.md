@@ -74,7 +74,10 @@ Review the entity resolution results:
   and back to this phase; nothing is remapped before the gate is asked
 
 Use `generate_scaffold(language='<chosen_language>', workflow='query', version='current')` to
-generate SDK code that retrieves sample entities for review. Use
+generate SDK code that retrieves sample entities for review, and save it as the program
+`review_entities` in `src/query`, at the path and with the project that
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives; build and run
+it with that section's commands. Use
 `get_sdk_reference(topic='parameters', filter='why_entities', version='current')` to explain why
 records matched. (There is no direct entity-query MCP tool, entity lookup and why-matched are
 done through generated SDK code.)
@@ -87,7 +90,11 @@ Validate that the loaded data meets business expectations:
 
 - Verify record counts, does the number of loaded records match expectations? (Use
   `reporting_guide(topic='evaluation', language='<chosen_language>')` for counts — not `topic='reports'`; see the header note.)
-- Spot-check entity resolution, pick 5–10 known entities and confirm they resolved correctly
+  Save the count code as the program `record_counts` in `src/query`, at the path and with the
+  project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives,
+  and build and run it with that section's commands.
+- Spot-check entity resolution, pick 5–10 known entities and confirm they resolved correctly,
+  with the program `review_entities` in `src/query` from step 21
 - Document any issues found in `docs/uat_results.md`
 - If critical issues are found, fix and reload before proceeding
 
@@ -111,7 +118,10 @@ single-source bootcampers, skip directly to step 28 (Document results).
 
 Validate: record counts match expectations, cross-source entities exist, no unexpected data
 loss, error logs clean. Use `reporting_guide(topic='graph', language='<chosen_language>', version='current')` for
-network-graph patterns.
+network-graph patterns. Save the code that samples and checks the cross-source entities below as the
+program `cross_source_review` in `src/query`, at the path and with the project that
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, and build and
+run it with that section's commands.
 
 ⛔ **Before treating a low or zero cross-source entity count as a finding about the data, read how
 the data was selected.** If Module 4 reduced any source, `config/data_sources.yaml` records the
@@ -140,8 +150,9 @@ Use `reporting_guide(topic='evaluation', language='<chosen_language>', version='
 framework and `reporting_guide(topic='quality', language='<chosen_language>', version='current')` for precision/recall
 metrics.
 
-Validate: match accuracy (query known records via the generated SDK code / SDK method
-`get_entity_by_record_id`), false positives (incorrect merges), false negatives (missed
+Validate: match accuracy (query known records with the program `review_entities` in `src/query`
+from step 21, SDK method `get_entity_by_record_id`, run with its run command in
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program"), false positives (incorrect merges), false negatives (missed
 matches), data completeness. If accuracy is poor, say so and carry it into the
 [iterate-vs-proceed gate](#iterate-vs-proceed-decision-gate), whose "Iterate now" enters
 [the quality-iteration route](../module-07-query-visualize-discover/phase1-query-visualize.md#the-quality-iteration-route).
@@ -258,7 +269,10 @@ tab (including its "Show only entities with relationships" mode) and its **Cross
 
 If loading fails partway through:
 
-1. **Check what loaded**, query known RECORD_IDs (via generated SDK code) to see if they exist.
+1. **Check what loaded**, query known RECORD_IDs (via generated SDK code, saved as the program
+   `check_loaded_records` in `src/load` at the path and with the project that
+   `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, and built
+   and run with that section's commands) to see if they exist.
 2. **Decide, wipe and restart vs. resume:**
    - **Wipe and restart:** restore from the `database/G2C.db` backup, fix the issue, re-run.
    - **Resume:** modify the loading program to skip already-loaded records.
@@ -302,7 +316,9 @@ quality … Aggregate stats hide errors. Always sample and manually review speci
 which is exactly the gap the UAT percentages below leave open.
 
 1. **Read the match keys** from the loaded results using generated SDK code (never direct SQL
-   against `database/G2C.db`). Per `get_sdk_reference(topic='response_schemas')` there are
+   against `database/G2C.db`), saved as the program `match_key_audit` in `src/query`, at the path
+   and with the project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a
+   program" gives, and built and run with that section's commands. Per `get_sdk_reference(topic='response_schemas')` there are
    **two reads, and they need two different methods** — confirm both via MCP rather than from
    this file (a sourcing floor):
 
@@ -550,7 +566,9 @@ what one run returned, not what the flag means.
 1. **Take every entity with 2 or more records from the export already read** in the match-key
    audit's step 1 — an entity whose `RESOLVED_ENTITY.RECORDS[]` has two or more elements. **No
    sampling.** Call that total **M**. One `how_entity` call per entity, through generated SDK code
-   (never direct SQL against `database/G2C.db`).
+   (never direct SQL against `database/G2C.db`), saved as the program `how_state_audit` in
+   `src/query`, at the path and with the project that `../bootcamp-onboarding/ground-rules.md` →
+   "Building and running a program" gives, and built and run with that section's commands.
 2. **Take the method name, argument type and flag spelling from `get_sdk_reference` for the
    Bootcamper's binding** — `get_sdk_reference(topic='parameters', filter='how_entity',
    language='<chosen_language>')`. The name differs per binding (the response's own `warnings`

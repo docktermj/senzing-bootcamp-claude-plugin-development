@@ -1596,11 +1596,12 @@ Ground rules (`ground-rules.md`, every turn):
   `package.json`. Never `internal://` as the datastore.
 - Building and running a program (the one statement, INV-300, that every step
   saving, building or running a program cites by `<dir>` and `<name>`: Modules
-  2, 3, 5, 6 and 7, graduation and the ground rules' entity program, #563):
-  keyed on `<dir>` (`src/system_verification`, `src/load`, `src/transform`,
-  `src/query`) and `<name>`, it gives each of the five languages its files, a
-  build and a run command. Python and Java stay flat in `<dir>` (Java `javac -d
-  <dir>/classes -sourcepath <dir>`, run through Module 2's Java launch route);
+  2, 3, 3b, 5, 6 and 7, graduation and the ground rules' entity program, #563,
+  #594): keyed on `<dir>` (`src/system_verification`, `src/load`,
+  `src/transform`, `src/query`, `src/server`) and `<name>`, it gives each of
+  the five languages its files, a build and a run command. Python and Java
+  stay flat in `<dir>` (Java `javac -d <dir>/classes -sourcepath <dir>`, run
+  through Module 2's Java launch route);
   C#, Rust and TypeScript get `<dir>/<name>/` with a manifest from `dotnet new
   console`, `cargo init` or `npm init` plus `tsc --init`, the Senzing dependency
   from `generate_scaffold`'s `dependency_note`, the `DEPENDENCY:` entry of
@@ -2019,8 +2020,9 @@ written once per turn. Each check lands in `module_3_verification.checks`.
   `timestamp`, `status`, `checks`, `fix_instructions`. A failure ends on 👉
   retry (back to Step 1, uncapped) or move on (10 and 11, `status` stays
   `failed`); an unanswered question is re-presented on resume.
-- 10: purge `VERIFY` records via SDK code, 7a's `Mari` record included (its
-  ID is in `mari_record.jsonl`); keep the files.
+- 10: purge `VERIFY` records with the program `cleanup_verification_data`,
+  7a's `Mari` record included (its ID is in `mari_record.jsonl`); keep the
+  files.
 - 11: add `system_verification` to `modules_completed`, append `## System verification — {timestamp}` to
   `docs/bootcamp_recap.md`, B-roll, 👉 transition to `truthset_visualization`
   if selected, else Data collection.
@@ -2045,9 +2047,12 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   `src/system_verification/truthset_data.jsonl` (`mcp_primary`). Fallback
   `senzing_truthset_demo` in `config/fallback_sources.yaml`
   (`github_fallback`); else a 👉 offer of CORD (`cord_substitute`).
-- 1.2: register the codes present, then load with generated code.
+- 1.2: register the codes present, then load with generated code: the
+  programs `register_truthset_sources` and `load_truthset` in
+  `src/system_verification` (#594).
 - 2.1: Python runs `scripts/senzing_viz_server.py`; other languages
-  generate a server in `src/server/` and never run the reference. On the
+  generate the program `truthset_server` in `src/server` and never run the
+  reference. On the
   container route (anchor `#container-route-server-copy`, the one statement
   2.2, 2.3, the Python fallback and the contract link) the host copies the
   server, `brand_tokens.py` and `vendor/d3.v7.min.js` into
@@ -2091,9 +2096,9 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   stale snapshot, capture missing screenshots, kill by pid (never
   `pkill -f`; port lookup fallback; in Docker `sh -c 'kill'` and a
   `python3` probe of the bound address), confirm the port free in 5 s, then
-  purge last. On `unavailable` Step 4 says itself that it skips the
-  screenshots and the kill, and still asks the question with a no-live-server
-  disclosure.
+  purge last with the program `cleanup_truthset`. On `unavailable` Step 4
+  says itself that it skips the screenshots and the kill, and still asks the
+  question with a no-live-server disclosure.
 - 5: record after `system_verification`, recap section with
   `visualizations/…` images, B-roll, then the curtain line as a statement
   immediately before the one 👉 transition: the Truth Set was practice data,
@@ -2485,8 +2490,9 @@ Phase B (`phaseB-load-first-source.md`, steps 5-11):
   marks the source loaded; 2+ sources with `mapping_status: complete` go to
   Phase C, else Phase D.
 - Receiving a `quality_iteration`: per named source, rerun Phase A only if its
-  path changed, delete records missing from
-  `{source_name}_loaded_record_ids.txt` via `sdk_guide(topic='delete')`, reload,
+  path changed (else reuse `load_[name]`), delete records missing from
+  `{source_name}_loaded_record_ids.txt` with the program `delete_records` in
+  `src/load` from `sdk_guide(topic='delete')`, reload,
   add to `completed`; drain redo once, hand back to the key's `return_to`
   (Module 7 step 3b, or Phase D from step 21). No Phase D in the branch, no
   completion, no checkpoint.
@@ -2498,7 +2504,8 @@ sources are asked, then choose Sequential, Parallel or Hybrid); load order
 the program `orchestrator` in `src/load` with a per-source budget table,
 per-source counters, backoff retry and error isolation; sample test; every
 `load_subset:` block written before the run, not-loaded sources skipped with
-`load_status` unchanged; one redo drain.
+`load_status` unchanged; one redo drain, step 20 running Phase B's
+`process_redo` (#594).
 
 Phase D (`phaseD-validation.md`, steps 21-28):
 
@@ -2506,7 +2513,10 @@ Phase D (`phaseD-validation.md`, steps 21-28):
   "Directing steps", `directing_steps.data_processing`): one pinned open 👉
   asks which records to look up and what they expect Senzing did and why; the
   next turn finds them by ID or by their details, looks each up with
-  `get_entity_by_record_id` in generated code, and shows as text, beside their
+  `get_entity_by_record_id` in the program `review_entities` in `src/query`
+  (steps 22 and 24 reuse it; 22 adds `record_counts`, 23
+  `cross_source_review`, the recovery `check_loaded_records` in `src/load`),
+  and shows as text, beside their
   words, each record's entity and each named pair's shared-or-not, with the
   match key or `why_records` as evidence. A missing record is a difference,
   never a re-ask; "you pick" (expected on CORD or generated data) runs the
@@ -2517,11 +2527,13 @@ Phase D (`phaseD-validation.md`, steps 21-28):
   cross-source and quality checks, UAT (self-directed for a generated business
   case, else asks about business users), and `docs/results_validation.md`.
   Module 6 offers no visualization.
-- Match-key audit on a `SZ_EXPORT_DEFAULT_FLAGS` export: `-` suppressors in
+- Match-key audit (the program `match_key_audit` in `src/query`) on a
+  `SZ_EXPORT_DEFAULT_FLAGS` export: `-` suppressors in
   single-source, cross-source and relationship buckets, reported as finding, no
   finding or could not measure, each bucket against its own denominator; a
   changed mapping is filed silently as feedback.
-- How-state audit: `how_entity` on every multi-record entity, flagging
+- How-state audit (the program `how_state_audit` in `src/query`):
+  `how_entity` on every multi-record entity, flagging
   `NEED_REEVALUATION` or several virtual entities, "checked N of M", appended as
   `## How-state audit`.
 - Gate on per-record results (never the relationship bucket): 90% or better
@@ -2597,8 +2609,9 @@ Phase 1 (`phase1-query-visualize.md`):
   records `after`. The route is the one statement for both return points
   (step 3b and Module 6 Phase D's gate), including the iteration record's
   shape and which list each return point appends to.
-- Step 3c asks once for an interactive app. Accepted, it builds a server in
-  `src/server/` modeled on `senzing_viz_server.py`: six tabs (Entity Graph,
+- Step 3c asks once for an interactive app. Accepted, it builds the program
+  `results_server` in `src/server`, in every language, modeled on
+  `senzing_viz_server.py`: six tabs (Entity Graph,
   Merge Statistics, Match Keys, Feature Scores, Cross-Source, Search / Probe),
   colored by whole source set with the encoding self-check, `NAME_ORG` search
   fallback, built from the export stream, the brand-token values copied into
@@ -2634,6 +2647,7 @@ Phase 1 (`phase1-query-visualize.md`):
 Phase 2a (`phase2-discover.md`): an opt-in, separate from 3c, sets
 `discover_phase` to `skipped` or `in_progress`; declining never skips the
 discoveries file. 4a finds multi-record, cross-source and related entities
+with the program `discover_patterns` in `src/query`
 (`steps.4a.patterns_found`). 4a-pairs then shows 3 record pairs from 4a's
 entities (at least one resolved together and one not; fewer when the data is
 short, none said in one line), one per turn, each a same-or-different
@@ -2724,7 +2738,8 @@ and continues; the recap PDF is guaranteed.
   (fix), 2 (offer `imageio-ffmpeg`/Pillow), 3 (skip, keep storyboard), and
   checks 2:00 plus or minus 10 s.
 - Step 2 builds `production/` (asks overwrite, merge or abort): copies
-  `src/transform`, `src/load`, `src/query`, `src/utils`,
+  `src/transform`, `src/load`, `src/query`, `src/utils` (never their build
+  output: `classes/`, `target/`, `dist/`, `node_modules/`, `bin/`, `obj/`),
   `data/senzing-ready/` and the root dependency manifest (only Python's sits
   at the root; C#, Rust and TypeScript manifests travel in their program
   folders); writes
@@ -2735,7 +2750,8 @@ and continues; the recap PDF is guaranteed.
   `logs`, `backups`, `docs/feedback`.
 - Step 3: `.env.example` (`SENZING_ENGINE_CONFIGURATION_JSON`,
   `SENZING_LICENSE_FILE`, `DATABASE_URL`, `LOG_LEVEL`),
-  `docker-compose.yml` by `database_type`, `.gitignore`. Step 4:
+  `docker-compose.yml` by `database_type`, `.gitignore` (listing each build
+  output folder, `classes/` included). Step 4:
   `production/README.md`, whose Usage gives each program's build and run
   commands from the ground rules' statement (#563), and
   `production/MIGRATION_CHECKLIST.md` (six sections; DEFAULT-flags item with
@@ -9848,7 +9864,7 @@ looks wrong.
 - `tests/test_bootcamp_notes_flow.py`: 33
 - `tests/test_brand_sync.py`: 31
 - `tests/test_broll_manifest.py`: 20
-- `tests/test_build_and_run_statement.py`: 51
+- `tests/test_build_and_run_statement.py`: 64
 - `tests/test_build_version_provenance_is_per_platform.py`: 8
 - `tests/test_bundled_script_and_production_paths.py`: 23
 - `tests/test_business_problem_preserves_the_original_wording.py`: 17
@@ -10441,11 +10457,21 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   Module 3 restates none of them and every program is created by an earlier
   step that cites the section, the commands for `src/system_verification`
   match Module 3's at `db3dac7f`, and TypeScript's build has no `--noEmit`.
-  Twenty-one pinned sites in Modules 2, 5, 6 and 7 and the ground rules name
-  their program by `<dir>` and `<name>` and cite the section, no program is
-  built or run before a site creates it, no shipped file restates a command
-  of the statement's shape, and the held deferral's widened wording, drafted
-  in #563's ledger entry, covers every module that builds programs (#563).
+  The sites are derived, not listed (#594): every step of a shipped skill
+  file naming a `<dir>` from the section's own list beside a save, generate,
+  write, build or run verb, and, in Modules 3, 3b, 5, 6 and 7, every step
+  carrying `generate_scaffold(`, `sdk_guide(topic=`, `reporting_guide(` or
+  "generated SDK code"; `EXEMPT` names 14 steps that write no program, each
+  with a reason, and a stale or reasonless entry fails. Each site names its
+  program by `<dir>` and `<name>` and cites the section; walking the files in
+  `WALK` order, no program is built or run before a site creates it; no
+  shipped file restates a build or run command, in a code span or a fenced
+  block, `node` on a `.js`, `python3` on a `.py` and `mvn` included (the
+  plugin's own scripts and Module 2's routes excepted); a placeholder file
+  path such as `src/query/<file>` is a loose program path; graduation copies
+  no build output and its `.gitignore` lists `classes/`; and the held
+  deferral's widened wording, drafted in #563's ledger entry, covers every
+  module that builds programs (#563).
 - **Module 3b.**
   - The Truth Set is downloaded, not saved from the preview.
   - A CORD 403 or 429 is never retried blindly.
@@ -12000,6 +12026,16 @@ Senzing licensing, with no SPDX identifier.
   every other site naming either key points to it, found by a scan (the
   measurement could read the config from before the key, the path was
   relative, and Module 2 named a key Step 8a did not wire)
+- #594: every step in Modules 3, 3b, 5, 6 and 7 that writes a program names
+  the program `<name>` in `<dir>` and cites the ground rules' "Building and
+  running a program", `src/server` joins its `<dir>` list, Module 7 step 4e
+  records `src/query/export_<system>`, graduation copies no build output and
+  its `.gitignore` lists `classes/`, and `test_build_and_run_statement.py`
+  derives its sites by scanning and catches a restated command in a fenced
+  block, with an INV-370 `PROPOSED AMENDMENT` queued (the rule reached only
+  the 21 sites its hand-written guard listed, so Truth Set visualization and
+  later steps gave a C#, Rust or TypeScript Bootcamper no folder, manifest or
+  build command)
 - #609: `/release-cycle` writes nothing under `specs/` before stage 5 and its
   own entry only at a stop, stated once with every write and matched by the
   pending #573 block, corrected in place; `autotest.py --report-dir` keeps a

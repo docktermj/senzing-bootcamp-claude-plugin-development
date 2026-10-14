@@ -395,7 +395,7 @@ question.
   `{"system": "<name>", "status": "skipped", "reason": "format_unknown"}`, `{"system": "<name>",
   "status": "failed", "reason": "zero_edges", "entities": <n>, "edges": 0, "attribute_nodes":
   <n>}`, or `{"system": "<name>", "status": "exported", "format": "<format>", "program":
-  "src/query/<file>", "outputs": [...], "entities": <n>, "edges": <n>, "attribute_nodes": <n>}`.
+  "src/query/export_<system>", "outputs": [...], "entities": <n>, "edges": <n>, "attribute_nodes": <n>}`.
 
 Also set top-level `current_step` to `"4e"`.
 
@@ -424,7 +424,7 @@ The full checkpoint structure in `config/bootcamp_progress.json` is:
       "4b": {"status": "completed", "entity_demonstrated": 1234},
       "4c": {"status": "completed", "entity_demonstrated": 5678},
       "4d": {"status": "completed"},
-      "4e": {"status": "completed", "targets": [{"system": "<as named>", "status": "exported", "format": "<format named in item 4>", "program": "src/query/<program file>", "outputs": ["data/temp/exports/<system>/<file>"], "entities": 1200, "edges": 340, "attribute_nodes": 1150}]}
+      "4e": {"status": "completed", "targets": [{"system": "<as named>", "status": "exported", "format": "<format named in item 4>", "program": "src/query/export_<system>", "outputs": ["data/temp/exports/<system>/<file>"], "entities": 1200, "edges": 340, "attribute_nodes": 1150}]}
     },
     "discover_phase": "completed"
   }

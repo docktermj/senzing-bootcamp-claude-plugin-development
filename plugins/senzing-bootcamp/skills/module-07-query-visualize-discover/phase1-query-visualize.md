@@ -949,7 +949,9 @@ Pin the offer verbatim:
 Build it modeled on the shipped Truth Set visualization server (`scripts/senzing_viz_server.py`)
 and the `../module-03b-truthset-visualization/visualization-api-reference.md` contract, in the
 bootcamper's chosen programming language (INV-090), pointed at the bootcamper's loaded data instead
-of the Truth Set. It MUST:
+of the Truth Set. Save it as the program `results_server` in `src/server`, at the path and with the
+project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, in
+every language, Python included, and build and run it with that section's commands. It MUST:
 
 - ⛔ **Color each graph node by the entity's whole source SET, not by its first source** — see the
   contract's "Coloring graph nodes". ⚠️ **This is the rule the Truth Set cannot test.** Most Truth

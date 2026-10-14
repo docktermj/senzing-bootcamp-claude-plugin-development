@@ -540,9 +540,9 @@ Execute the verification script to load the synthetic verification data
 data source code was registered in Step 5a, so the load runs against a config that already
 knows it; the SENZ handling below remains as a fallback.
 
-1. Run `verify_pipeline`, built in Step 5, with its run command in
-   `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" (`<dir>` =
-   `src/system_verification`) and a 120-second timeout, pointing it at
+1. Run the program `verify_pipeline` in `src/system_verification`, built in Step 5, with its run
+   command in `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" and a
+   120-second timeout, pointing it at
    `src/system_verification/verification_data.jsonl`.
 2. **While executing:** display a progress indicator updated at least every 5 seconds showing
    records processed out of total expected.

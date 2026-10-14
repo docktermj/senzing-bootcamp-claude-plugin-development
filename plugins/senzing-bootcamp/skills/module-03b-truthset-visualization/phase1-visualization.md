@@ -188,6 +188,11 @@ expected record count for the report.
    pipeline pattern; never direct SQL). Registering **before** the load upholds the "register
    before load" guarantee so the load never fails with `SENZ2207`.
 
+Save the registration code as the program `register_truthset_sources` in `src/system_verification`
+and the loader as the program `load_truthset` in `src/system_verification`, at the path and with the
+project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, and
+build and run each with that section's commands, the registration first.
+
 Save the load artifacts under `src/system_verification/` — that is where INV-050's project layout
 places them, and they are **this** module's artifacts even though they sit in a directory named for
 another (INV-087 keeps the two modules separate). System Verification's own re-run cleanup is
@@ -265,7 +270,10 @@ Whatever the language, the server MUST reproduce the reference's behavior:
   **before** `forceLink().links(...)`, preserving node `id`/`entity_id` — omitting this renders an
   empty graph.
 
-Save the generated server and its assets under `src/server/` (INV-050). The Senzing native library
+When the chosen language is not Python, save the generated server as the program `truthset_server`
+in `src/server` (INV-050), at the path and with the project that
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, keep its assets
+beside it, and build and run it with that section's commands. The Senzing native library
 must be importable, so run everything with the project env sourced (the `src/scripts/senzing-env.sh`
 / `src\scripts\senzing-env.ps1` created in Module 2): `source src/scripts/senzing-env.sh` on
 Linux/macOS, or `. .\src\scripts\senzing-env.ps1` on Windows first, dot-sourced in the PowerShell
@@ -325,7 +333,9 @@ Read `programming_language` from `config/bootcamp_preferences.yaml`:
   - `data/temp/` is the project's temp location (INV-050); the copy is not removed at module close.
     Native routes run the resolved plugin path with no copy.
 - **Any other language** → generate the server in that language per the contract above, modeled on
-  `senzing_viz_server.py` + `visualization-api-reference.md`, saved under `src/server/`. Do **not**
+  `senzing_viz_server.py` + `visualization-api-reference.md`, saved as the program `truthset_server`
+  in `src/server` at the path that `../bootcamp-onboarding/ground-rules.md` → "Building and running
+  a program" gives, and built and run with that section's commands. Do **not**
   run `senzing_viz_server.py`. Generate code via the MCP tools and a generator per your language's
   conventions; never hand-write SDK calls or HTML+JS with file-write tooling.
 

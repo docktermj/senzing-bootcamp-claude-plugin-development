@@ -61,7 +61,10 @@ mapped source, the original `data/raw/` file for a fast-pathed one) and take `DA
 `RECORD_ID` from its records.
 
 1. **Identify multi-record entities (3+ records):** iterate over the loaded record IDs and, via
-   generated SDK code, call `get_entity_by_record_id(data_source, record_id)` for each. Collect
+   generated SDK code saved as the program `discover_patterns` in `src/query`, at the path and with
+   the project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a program"
+   gives and built and run with that section's commands, call
+   `get_entity_by_record_id(data_source, record_id)` for each. Collect
    entities where `record_count >= 3`. These are candidates for the How Analysis demonstration
    (step 4c). Track the entity IDs and record counts.
 2. **Identify cross-source entities:** from the multi-record entities in step 1, filter for
@@ -127,7 +130,9 @@ step 4a's calls and before step 4a-pairs:
    exclusion.
 2. **The entity that now holds `midpoint_record`:** the `"<DATA_SOURCE>:<RECORD_ID>"` Module 6 step 9
    recorded in `config/bootcamp_progress.json`. Locate its entity with `get_entity_by_record_id` on
-   that data source and record ID, in the same generated SDK code step 4a uses. A record identifies
+   that data source and record ID, with the program `discover_patterns` in `src/query` that step
+   4a saved, run with its run command in `../bootcamp-onboarding/ground-rules.md` → "Building and
+   running a program". A record identifies
    the entity across later loads, and an entity ID does not, so look it up rather than reuse an ID.
    When `midpoint_record` is `"none"` or absent (a progress file written before Module 6 recorded it,
    or a quality-iteration reload, which shows no midpoint entity), there is no midpoint exclusion.

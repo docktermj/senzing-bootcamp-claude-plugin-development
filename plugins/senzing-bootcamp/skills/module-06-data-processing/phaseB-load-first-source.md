@@ -45,8 +45,8 @@ route" (INV-300); this block says only how the reload is done.
 For each source in `sources` not yet listed in `completed`, in order:
 
 1. **Phase A runs only when the source's input path changed.** When the remap left the registry
-   `file_path` the loading program reads unchanged, reuse the existing program in `src/load/` as it
-   is. When it changed, run Phase A for this source only before the reload.
+   `file_path` the loading program reads unchanged, reuse the existing program `load_[name]` in
+   `src/load` as it is. When it changed, run Phase A for this source only before the reload.
 2. **Compare the RECORD_ID sets before the reload.** The previous set is the one Module 5's
    [receiving branch](../module-05-data-quality-mapping/phase2-data-mapping.md#receiving-a-quality-iteration)
    recorded in `{source_name}_loaded_record_ids.txt` before the remap. The new set is the
@@ -58,8 +58,11 @@ For each source in `sources` not yet listed in `completed`, in order:
    MCP server documents for the chosen language, never one from memory (INV-080):
    `sdk_guide(topic='delete', language='<chosen_language>')` returns the delete loop, and
    `get_sdk_reference(topic='parameters', filter='delete_record', language='<chosen_language>')`
-   returns that binding's signature, whose name and arguments differ by binding. Report how many
-   were deleted. When the sets are equal, nothing is deleted. The remaining records need no delete:
+   returns that binding's signature, whose name and arguments differ by binding. Save the loop as
+   the program `delete_records` in `src/load`, at the path and with the project that
+   `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, and build and
+   run it with that section's commands. Report how many were deleted. When the sets are equal,
+   nothing is deleted. The remaining records need no delete:
    a record whose data source code and RECORD_ID match a loaded record replaces it
    (`search_docs(query='Data Source Records DSRs Explained same DATA_SOURCE RECORD_ID replaces')` →
    "Data Source Records (DSRs) Explained" → "Uniquely Identifying Records in Senzing", its second

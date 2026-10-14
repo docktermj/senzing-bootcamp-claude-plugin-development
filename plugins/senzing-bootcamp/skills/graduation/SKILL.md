@@ -1355,6 +1355,13 @@ does not exist; on a copy failure, log and continue):
 | `config/data_sources.yaml` | `production/config/data_sources.yaml` | Data-source registry, written as a projection (below), not copied whole |
 | `requirements.txt` / `pom.xml` / `Cargo.toml` / `package.json` / `*.csproj` | `production/` | Root dependency manifest. Only Python's `requirements.txt` sits at the root: C#, Rust and TypeScript manifests travel inside their program folders, which the `src/**` rows copy unchanged |
 
+**The `src/**` rows copy source, never build output.** Skip every `classes/`, `target/`, `dist/`,
+`node_modules/`, `bin/` and `obj/` folder under them, wherever it sits: those are what the build
+and init commands in `../bootcamp-onboarding/ground-rules.md` → "Building and running a program"
+write (Java's `<dir>/classes`, Rust's shared `<dir>/target`, TypeScript's `<dir>/<name>/dist` and
+`node_modules/`, C#'s `bin/` and `obj/`). Each program folder keeps its manifest and source, and the
+copied project rebuilds them from `production/` with that section's commands.
+
 ⛔ **Every destination above keeps the source's path relative to the project root, and
 `data/senzing-ready/` in particular.** (INV-186) The code in `src/load/**` is copied **verbatim** and reads its
 input from `data/senzing-ready/` (INV-084 — `../module-06-data-processing/phaseA-build-loading.md`
@@ -1440,7 +1447,7 @@ credentials, ARNs, or account identifiers — placeholder values only, as above,
 infrastructure guess in a handed-over project is worse than a generic one. When the value is absent
 the files are exactly as they were before this paragraph.
 
-- **`.gitignore`:** language-appropriate, always including `.env`, `.env.production`, `*.db`, `*.sqlite`, `__pycache__/`, `node_modules/`, `target/`, `bin/`, `obj/`, `build/`, `dist/`, `*.log`.
+- **`.gitignore`:** language-appropriate, always including `.env`, `.env.production`, `*.db`, `*.sqlite`, `__pycache__/`, `node_modules/`, `target/`, `classes/`, `bin/`, `obj/`, `build/`, `dist/`, `*.log`.
 
 ## Step 4: Production README and migration checklist
 
