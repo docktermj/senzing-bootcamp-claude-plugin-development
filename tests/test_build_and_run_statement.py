@@ -30,31 +30,47 @@ Module 3 cites it and keeps no copy:
   Step 5 says"; Module 3 restates no command of the statement's shape; and no shipped file other
   than the ground rules restates one of Module 3's commands or the build timeout.
 
-#563 moved every other program onto the statement, so the guard also pins those sites (`SITES`):
+#563 moved every other program onto the statement, and #594 made the guard find those sites rather
+than list them (INV-246):
 
-* every site in Modules 2, 5, 6 and 7, and the ground rules' "Showing one resolved entity as text",
-  that saves, builds or runs a program names it as "the program `<name>` in `<dir>`" and cites the
-  section by file and section name;
+* **the sites are derived from the statement.** The scan reads the `<dir>` list from the section's
+  own bullet, then takes every step of every shipped skill file (a heading's text, outside code
+  fences) with a paragraph naming one of those directories beside a verb that saves, builds or
+  runs. In Modules 3, 3b, 5, 6 and 7 it also takes every step carrying a marker of the SDK code a
+  step writes (`generate_scaffold(`, `sdk_guide(topic=`, `reporting_guide(`, "generated SDK
+  code"), though it names no directory. `EXEMPT` names the steps it finds that write no program,
+  each with its reason, and an exemption whose step is gone fails;
+* every site names each program as "the program `<name>` in `<dir>`", in every `<dir>` it names,
+  and cites the section by file and section name;
 * **every program is created before it is built or run:** walked in the order a Bootcamper meets
-  the sites, a site that builds or runs a program must come at or after a site that saves it at the
-  path the section gives, including `register_data_sources` and `er_stats` from Module 5;
-* no shipped file restates a command of the statement's shape in any directory (Module 2's own C#
-  package-source route excepted, which the statement cites), and none names a loose program file
-  such as `src/load/orchestrator.[ext]`, which C#, Rust and TypeScript cannot build;
+  the files (`WALK`, which every file with a site must be in), a site that builds or runs a program
+  must come at or after a site that saves it at the path the section gives, including
+  `register_data_sources` and `er_stats` from Module 5;
+* no shipped file restates a build or run command in any directory, in a code span or on a line
+  of a fenced block, including `node` on a `.js`, `python3` on a `.py` and `mvn` (the plugin's own
+  scripts, and Module 2's own C# package-source and Java jar routes, which the statement cites,
+  excepted), and none names a loose program file such as `src/load/orchestrator.[ext]`, which C#,
+  Rust and TypeScript cannot build;
 * the two undefined references ("the same per-language build command as the loader", "the run
   command for the chosen language") are gone; Module 5 builds one program per source, the
   transform; Module 7 step 2 says each C#, Rust or TypeScript program carries its own engine setup;
-* graduation's root-manifest row says only Python's `requirements.txt` sits at the root, and
-  `production/README.md`'s Usage gives each program's commands from the section;
+* graduation's root-manifest row says only Python's `requirements.txt` sits at the root, its
+  `src/**` copy leaves out the build output the section's commands write, its production
+  `.gitignore` lists each of those folders, and `production/README.md`'s Usage gives each program's
+  commands from the section;
 * the held `module3-build-and-run-table` block is still held, and the widened drafted wording
   #563 proposes for it covers every module that builds programs and names the section. That
   wording sits in #563's own ledger entry, as its "Correction to the #511 entry": a run writes
   nothing under `specs/` but its own entry (INV-307), so the #511 block is left as it was.
 
 Each check is a function returning its problems, and a negative control mutates the real text and
-sees the check report it: a drifted command, a command restated in Module 3 or at a #563 site, a
-missing citation, a program built before any step creates it, a loose program path, and the
-retired phrases come back.
+sees the check report it: a drifted command, a command restated in Module 3 or at a #563 site
+(in a fenced block too, and `node` on a `.js`, `python3` on a `.py` or `mvn`), a missing citation
+or program name at a found site, a new step that saves a program or writes SDK code with neither,
+a `<dir>` the statement adds, a stale exemption, a file with no place in the walk, a program built
+before any step creates it, a loose program path (with a placeholder extension, or a placeholder
+alone, such as `src/query/<file>`), and the retired phrases come back. A positive control shows a
+run of the plugin's own script is not reported.
 
 ⚠️ It pins the text. It cannot observe a real `dotnet`, `cargo`, `tsc` or `javac` build of a
 Bootcamper's program. The comparison with the earlier Module 3 needs the full git history, which
@@ -64,13 +80,14 @@ skipping, because a skipped comparison would certify nothing.
 This module enforces INV-370 (registered 2026-10-13). It pins the text; it cannot establish that
 a real `dotnet`, `cargo`, `tsc` or `javac` build succeeds on a Bootcamper's machine.
 
-Source issues: #511, #562, #563.
+Source issues: #511, #562, #563, #594.
 
 Run:  python3 -m unittest discover -s tests
 """
 import re
 import subprocess
 import unittest
+from collections import namedtuple
 from pathlib import Path
 
 from _corpus import corpus_files
@@ -112,12 +129,18 @@ CITING_STEPS = {
     "### Step 8:": "database_operations",
 }
 RETIRED_PHRASES = ("Step 5's table", "as Step 5 says")
-#: A command of the statement's shape, in any directory.
-COMMAND_SHAPE = re.compile(
-    r"`(?:python3 -m py_compile|python3? src/|javac |dotnet (?:build|run|new|add)"
-    r"|cargo (?:build|run|init)"
-    r"|tsc |npm init|node \S+/dist/)"
-)
+#: A build or run command, in any directory: the shapes the statement's commands take, and the
+#: other ways to build or run a program file (#594): `node` on any `.js`, `python3` on any `.py`,
+#: and `mvn`. `COMMAND_SHAPE` reads an inline code span; `FENCED_COMMAND` a line of a fenced block.
+_COMMANDS = (r"(?:python3? -m py_compile|python3? src/|python3? \S+\.py\b|javac "
+             r"|dotnet (?:build|run|new|add)|cargo (?:build|run|init)|tsc |npm init"
+             r"|node \S+\.js\b|mvn )")
+COMMAND_SHAPE = re.compile(r"`" + _COMMANDS)
+FENCED_COMMAND = re.compile(r"(?m)^[ \t]*" + _COMMANDS)
+#: A run of one of the plugin's own scripts, which the plugin ships and runs for the guide: not a
+#: Bootcamper program, so not a command of the statement's shape.
+PLUGIN_SCRIPT_RUN = re.compile(
+    r'python3? (?:\\?"\$\{CLAUDE_PLUGIN_ROOT\}/scripts/|<this-skill-dir>/\.\./\.\./scripts/)')
 #: The build timeout said again outside the section.
 BUILD_TIMEOUT_RESTATED = re.compile(
     r"120-second build|120-second timeout for all build|Step 5's 120-second"
@@ -137,48 +160,102 @@ GROUND_RULES_REL = "bootcamp-onboarding/ground-rules.md"
 GRADUATION_REL = "graduation/SKILL.md"
 #: How the ground rules' own "Showing one resolved entity as text" cites the section in its file.
 CITATION_HERE = '"Building and running a program" below'
-CREATES, RUNS = "creates", "runs"
-#: Every site outside Module 3 that saves, builds or runs a program (#563), in the order a
-#: Bootcamper meets them: (file under skills/, where the site starts, `<name>`, `<dir>`, kind).
-#: A `creates` site saves the program at the section's path, and builds it; a `runs` site builds
-#: or runs a program an earlier site created. The ground rules' entity section is first followed
-#: at Module 6 step 9, so it sits there. Module 2's `register-sources` detour sits after Module 6
-#: step 4a; offered from Data collection, before Module 5, it finds no program and has items 2
-#: and 3 create it, which `test_module_2_creates_it_when_it_is_missing` pins.
-SITES = (
-    (M5_MAPPING, "### 13. ", "transform_[name]", "src/transform", CREATES),
-    (M5_MAPPING, "### 14. ", "transform_[name]", "src/transform", RUNS),
-    (M5_MAPPING, "### 15. ", "transform_[name]", "src/transform", RUNS),
-    (M5_MAPPING, "### 18. ", "transform_[name]", "src/transform", RUNS),
-    (M5_TEST_LOAD, "### 21a. ", "register_data_sources", "src/load", CREATES),
-    (M5_TEST_LOAD, "#### 24a. ", "er_stats", "src/query", CREATES),
-    (M6_A, "## 3. ", "load_[name]", "src/load", CREATES),
-    (M6_A, "## 4a. ", "register_data_sources", "src/load", CREATES),
-    (M2, "- **`register-sources`.**", "register_data_sources", "src/load", RUNS),
-    (M6_B, "## 5. ", "load_[name]", "src/load", RUNS),
-    (M6_B, "## 7. ", "load_[name]", "src/load", RUNS),
-    (M6_B, "## 8. ", "load_[name]", "src/load", RUNS),
-    (M6_B, "## 9. ", "process_redo", "src/load", CREATES),
-    (GROUND_RULES_REL, "## Showing one resolved entity as text", "show_entity", "src/query",
-     CREATES),
-    (M6_C, "## 17. ", "orchestrator", "src/load", CREATES),
-    (M6_C, "## 18. ", "orchestrator", "src/load", RUNS),
-    (M6_C, "## 19. ", "orchestrator", "src/load", RUNS),
-    (M7_QUERY, "## 2. ", "[query_name]", "src/query", CREATES),
-    (M7_QUERY, "## 3. ", "[query_name]", "src/query", RUNS),
-    (M7_DISCOVER, "7. **Check one export row", "export_row_<system>", "src/query", CREATES),
-    (M7_DISCOVER, "8. **Write and run the export program.**", "export_<system>", "src/query",
-     CREATES),
+#: The statement's own bullet that lists every `<dir>`. The scan reads its directories from here.
+DIR_BULLET = "- **`<dir>`** is the program's directory"
+#: Where a step mentions a `<dir>` it saves, builds or runs a program in, such as `src/load` or
+#: `src/load/`; a file under one, such as `src/load/records.jsonl`, is data, not a program.
+DIR_MENTION = r"`(%s)/?`"
+#: A paragraph that names a `<dir>` and one of these verbs saves, builds or runs a program there.
+PROGRAM_VERB = re.compile(
+    r"(?i)\b(?:sav(?:e|es|ed|ing)|generat(?:e|es|ed|ing)|writ(?:e|es|ten|ing)"
+    r"|build(?:s|ing)?|built|run(?:s|ning)?)\b")
+#: The modules #594 scans for the markers of SDK code a step writes, though it names no `<dir>`.
+MARKER_MODULES = ("module-03-system-verification/", "module-03b-truthset-visualization/",
+                  "module-05-data-quality-mapping/", "module-06-data-processing/",
+                  "module-07-query-visualize-discover/")
+CODE_MARKERS = re.compile(
+    r"generate_scaffold\(|sdk_guide\(topic=|reporting_guide\(|generated SDK code")
+#: Steps the scan finds that write no program of their own, each with the reason (#594). A step
+#: here is still read by every other check; only the program-site check skips it.
+EXEMPT = {
+    (GROUND_RULES_REL, "## Building and running a program"):
+        "the statement itself: it defines `<dir>` and `<name>` for the steps that cite it",
+    ("module-03-system-verification/phase1-verification.md", "## Agent Rules"):
+        "rules on where Module 3's artifacts live and what a re-run overwrites; Steps 3 to 8 save "
+        "the programs",
+    ("module-03-system-verification/phase1-verification.md",
+     "### Step 1a: Engine Initialization Check"):
+        "re-runs Module 2 Step 9's engine check from the code Module 2 already generated; it "
+        "saves no program in a `<dir>`",
+    ("module-03-system-verification/phase1-verification.md", "### Step 5: Build/Compile"):
+        "builds every Module 3 program over its program table, citing the section with `<dir>` "
+        "named; `ModuleThreeCitesTheSectionAndKeepsNoCopy` pins it",
+    ("module-03b-truthset-visualization/visualization-api-reference.md", "## API Endpoints"):
+        "the server's response contract, which cites `reporting_guide` for one export's shape; "
+        "the program is `truthset_server`, saved at Step 2",
+    ("module-06-data-processing/SKILL.md",
+     "## Loading code and safety (applies to every load step)"):
+        "a rule for every load step on where code and counts come from; the phases save the "
+        "programs",
+    ("module-06-data-processing/phaseA-build-loading.md", "## 1. Assess production record volume"):
+        "picks the loading pattern that step 3's `load_[name]` is built from",
+    ("module-06-data-processing/phaseA-build-loading.md",
+     "## 4. Use MCP tools for code generation"):
+        "names the MCP calls for step 3's `load_[name]`; it saves no program of its own",
+    ("module-06-data-processing/phaseD-validation.md",
+     "# Module 6, Phase D: Validation (steps 21–28)"):
+        "the file's header note on which `reporting_guide` topics the phase uses",
+    ("module-07-query-visualize-discover/phase1-query-visualize.md",
+     "# Module 7, Phase 1: Query and Visualize (steps 1–3c)"):
+        "the file's header note that every entity query is generated SDK code",
+    ("module-07-query-visualize-discover/phase1-query-visualize.md", "### 3b. Quality evaluation"):
+        "reads two `reporting_guide` topics for method and interpretation; the figures it judges "
+        "come from step 3's query programs",
+    ("module-07-query-visualize-discover/phase1-query-visualize.md",
+     "## Data-discoveries deliverable (produced on every path)"):
+        "says where the document's figures come from; the programs that produce them are saved "
+        "at earlier steps",
+    ("module-07-query-visualize-discover/phase2-discover.md",
+     "# Module 7, Phase 2a: Discover, Part A (steps 4a–4c)"):
+        "the file's header note on which routes give the SDK methods",
+    ("module-07-query-visualize-discover/phase2b-discover.md",
+     "# Module 7, Phase 2b: Discover, Part B (steps 4d–4e)"):
+        "the file's header note on which routes give the SDK methods",
+}
+#: The order a Bootcamper first follows each file with program sites, so a program is built only
+#: after the step that creates it. The ground rules' entity section is first followed at Module 6
+#: step 9, so it sits there. Module 2's `register-sources` detour sits after Module 6 step 4a;
+#: offered from Data collection, before Module 5, it finds no program and has items 2 and 3 create
+#: it, which `test_module_2_creates_it_when_it_is_missing` pins. A file with a program site and no
+#: place here fails the walk, so a new file cannot be skipped.
+WALK = (
+    "module-03-system-verification/phase1-verification.md",
+    "module-03-system-verification/phase2-report-close.md",
+    "module-03b-truthset-visualization/phase1-visualization.md",
+    "module-03b-truthset-visualization/phase2-close.md",
+    "module-05-data-quality-mapping/phase1-quality-assessment.md",
+    M5_MAPPING, M5_TEST_LOAD, M6_A, M2, M6_B, GROUND_RULES_REL, M6_C,
+    "module-06-data-processing/phaseD-validation.md",
+    M7_QUERY,
+    "module-07-query-visualize-discover/phase2-discover.md",
+    M7_DISCOVER,
 )
 #: The undefined references #563 replaced, and the loose save path it retired.
 RETIRED_563 = ("same per-language build command", "the run command for the chosen language",
                "Save to `src/")
-#: A program file named with a placeholder extension: a loose file, which the C#, Rust and
-#: TypeScript rows of the statement cannot build, since each of them builds a folder.
-LOOSE_PROGRAM_PATH = re.compile(r"src/[\w/\[\]<>{}-]*\.(?:\[ext\]|<ext>|\{ext\})")
+#: A program file named with a placeholder extension, or a path whose last part is a placeholder
+#: alone, such as `src/query/<file>` (#594): a loose file, which the C#, Rust and TypeScript rows of
+#: the statement cannot build, since each of them builds a folder. `<name>` is the statement's own
+#: placeholder for that folder, so it is not a loose file.
+LOOSE_PROGRAM_PATH = re.compile(
+    r"src/[\w/\[\]<>{}-]*\.(?:\[ext\]|<ext>|\{ext\})"
+    r"|src/[\w/\[\]<>{}-]*/(?!<name>)(?:<[^<>/`\"]+>|\[[^\]/`\"]+\]|\{[^}/`\"]+\})(?![\w/.<\[{])")
 #: Commands a file states as its own route, which the statement cites rather than holds: Module
-#: 2's C# package-source route, `../module-02-sdk-setup/SKILL.md` → Phase 3, the C# bullet.
-ROUTE_COMMANDS = {M2: ("`dotnet add package Senzing.Sdk --source SenzingLocal`",)}
+#: 2's C# package-source route, `../module-02-sdk-setup/SKILL.md` → Phase 3, the C# bullet, and
+#: the command its Java route says `java -jar sz-sdk.jar` prints, which installs the SDK jar and
+#: builds no Bootcamper program.
+ROUTE_COMMANDS = {M2: ("`dotnet add package Senzing.Sdk --source SenzingLocal`",
+                       "`mvn install:install-file`")}
 IMPLEMENTED = REPO_ROOT / "specs" / "IMPLEMENTED.md"
 HELD_BLOCK = "## module3-build-and-run-table"
 #: #563's own ledger entry, and the correction in it that drafts the held block's widened wording.
@@ -188,6 +265,15 @@ WIDENING_CORRECTION = "- **Correction to the #511 entry (dated 2026-10-13, #563)
 MODULES_THAT_BUILD = ("System verification", "Data Quality, Mapping, and Transformation",
                       "Data processing", "Query, Visualize and Discover", "SDK setup",
                       "graduation")
+#: What the statement's build and init commands write under a `<dir>`: Java's `classes`, Rust's
+#: shared `target`, TypeScript's `dist` and `node_modules`, and C#'s `bin` and `obj`. Graduation's
+#: copy leaves each out, and its production `.gitignore` lists each (#594).
+BUILD_OUTPUT = ("classes/", "target/", "dist/", "node_modules/", "bin/", "obj/")
+#: Where the statement's commands write the first three, so the list above follows the statement.
+BUILD_OUTPUT_IN_THE_STATEMENT = ("-d <dir>/classes", "--target-dir <dir>/target",
+                                 "--outDir <dir>/<name>/dist")
+NO_BUILD_OUTPUT = "**The `src/**` rows copy source, never build output.**"
+GITIGNORE_BULLET = "- **`.gitignore`:**"
 STATEMENT_PATH = ('`plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md` → '
                   '"Building and running a program"')
 
@@ -308,8 +394,12 @@ def restatements(path, text, ground_rules, any_directory=True):
     for command in commands:
         if "`%s`" % command in flat:
             problems.append("%s restates `%s`" % (path, command))
-    for m in COMMAND_SHAPE.finditer(text if any_directory else ""):
-        problems.append("%s restates a command: %s" % (path, text[m.start():m.start() + 40]))
+    for shape, skip in ((COMMAND_SHAPE, 1), (FENCED_COMMAND, 0)):
+        for m in shape.finditer(text if any_directory else ""):
+            command = text[m.start() + skip:].lstrip(" \t")
+            if not PLUGIN_SCRIPT_RUN.match(command):
+                problems.append("%s restates a command: %s" % (path, text[m.start():m.start() + 40]
+                                                                .strip()))
     for m in BUILD_TIMEOUT_RESTATED.finditer(flat):
         problems.append("%s restates the build timeout: %s" % (path, m.group(0)))
     return problems
@@ -356,13 +446,71 @@ def site_body(text, start):
     return rest if e is None else rest[:e.start()]
 
 
-def site_texts():
-    return {rel: read(SKILLS / rel) for rel in {s[0] for s in SITES} | {GRADUATION_REL}}
+def skill_texts():
+    """Every shipped skill file's text, keyed by its path under `skills/`."""
+    return {path.relative_to(SKILLS).as_posix(): read(path)
+            for path in corpus_files("plugins/senzing-bootcamp/skills", suffixes={".md"})}
 
 
-def names_program(body, name, directory):
-    return re.search(r"program,? `%s` in `%s`" % (re.escape(name), re.escape(directory)),
-                     body) is not None
+def statement_dirs(ground_rules):
+    """The `<dir>` list, read from the statement's own bullet, so the scan follows the statement.
+
+    Empty when the bullet is missing, which the callers assert against (INV-265).
+    """
+    bullet = block(section(ground_rules), DIR_BULLET, r"\n- |\n\n")
+    return tuple(s for s in spans(squash(bullet)) if s.startswith("src/"))
+
+
+def steps_of(text):
+    """Each heading line and its text, up to the next heading of any level outside a code fence."""
+    heads, fenced, offset = [], False, 0
+    for line in text.splitlines(keepends=True):
+        if line.lstrip().startswith(("```", "~~~")):
+            fenced = not fenced
+        elif not fenced and re.match(r"#{1,6} ", line):
+            heads.append((offset, line.rstrip("\n")))
+        offset += len(line)
+    for i, (start, heading) in enumerate(heads):
+        end = heads[i + 1][0] if i + 1 < len(heads) else len(text)
+        yield heading, text[start + len(heading):end]
+
+
+Site = namedtuple("Site", "rel heading body dirs marked")
+
+
+def program_sites(texts, dirs, exempt=EXEMPT):
+    """Every step that saves, builds or runs a program, found by scanning, never listed (INV-246).
+
+    A step is a program site when a paragraph of it names one of the statement's `<dir>`s with a
+    verb that saves, builds or runs, or, in Modules 3, 3b, 5, 6 and 7, when it carries a marker of
+    the SDK code it writes. Steps in `exempt` are skipped. In walk order within each file.
+    """
+    mention = re.compile(DIR_MENTION % "|".join(map(re.escape, dirs)))
+    sites = []
+    for rel in sorted(texts):
+        for heading, body in steps_of(texts[rel]):
+            if (rel, heading) in exempt:
+                continue
+            found = set()
+            for paragraph in re.split(r"\n\s*\n", body):
+                paragraph = squash(paragraph)
+                if PROGRAM_VERB.search(paragraph):
+                    found |= {m.group(1) for m in mention.finditer(paragraph)}
+            flat = squash(body)
+            marked = rel.startswith(MARKER_MODULES) and CODE_MARKERS.search(flat) is not None
+            if found or marked:
+                sites.append(Site(rel, heading, flat, frozenset(found), marked))
+    return sites
+
+
+def named_programs(body, dirs):
+    """Every (`<name>`, `<dir>`) a step names, as "the program `<name>` in `<dir>`"."""
+    alt = "|".join(map(re.escape, dirs))
+    named = {(m.group(1), m.group(2))
+             for m in re.finditer(r"program,? `([^`]+)` in `(%s)`" % alt, body)}
+    named |= {(m.group(2), m.group(1))
+              for m in re.finditer(r"`<dir>` = `(%s)` and `<name>` = `([^`]+)`" % alt, body)}
+    return named
 
 
 def creates_program(body, name, directory):
@@ -371,34 +519,72 @@ def creates_program(body, name, directory):
             and "gives" in body and re.search(r"(?i)\bsav(e|es|ed)\b", body) is not None)
 
 
-def uncited_sites(texts, sites=SITES):
-    """#563 sites that do not name their program and directory, or do not cite the section."""
+def site_name(site):
+    return "%s %s" % (site.rel, site.heading)
+
+
+def uncited_sites(sites, dirs):
+    """Program sites that do not cite the section, or do not name each program and its `<dir>`."""
     problems = []
-    for rel, start, name, directory, _ in sites:
-        body = squash(site_body(texts[rel], start))
-        where = "%s %s" % (rel, start.strip())
-        if not body:
-            problems.append("%s is gone" % where)
-            continue
-        citation = CITATION_HERE if rel == GROUND_RULES_REL else CITATION
-        if citation not in body:
-            problems.append("%s does not cite %s" % (where, citation))
-        if not names_program(body, name, directory):
-            problems.append("%s does not name the program `%s` in `%s`" % (where, name, directory))
+    for site in sites:
+        citation = CITATION_HERE if site.rel == GROUND_RULES_REL else CITATION
+        if citation not in site.body:
+            problems.append("%s does not cite %s" % (site_name(site), citation))
+        named = named_programs(site.body, dirs)
+        if not named:
+            problems.append("%s names no program `<name>` in a `<dir>`" % site_name(site))
+        for directory in sorted(site.dirs - {d for _, d in named}):
+            problems.append("%s does not name its program in `%s`" % (site_name(site), directory))
     return problems
 
 
-def built_before_created(texts, sites=SITES):
+def walked(sites):
+    """The sites in the order a Bootcamper meets them, and the files `WALK` does not place."""
+    order = {rel: i for i, rel in enumerate(WALK)}
+    unplaced = sorted({s.rel for s in sites} - set(order))
+    return sorted((s for s in sites if s.rel in order), key=lambda s: order[s.rel]), unplaced
+
+
+def built_before_created(sites, dirs):
     """Sites that build or run a program before any site saves it at the section's path."""
-    problems, created = [], set()
-    for rel, start, name, directory, kind in sites:
-        body = squash(site_body(texts[rel], start))
-        where = "%s %s" % (rel, start.strip())
-        if kind == CREATES and creates_program(body, name, directory):
-            created.add((name, directory))
-        elif (name, directory) not in created:
+    ordered, unplaced = walked(sites)
+    problems = ["%s has a program site and no place in WALK" % rel for rel in unplaced]
+    created = set()
+    for site in ordered:
+        named = named_programs(site.body, dirs)
+        created |= {program for program in named if creates_program(site.body, *program)}
+        for name, directory in sorted(named - created):
             problems.append("%s builds or runs `%s` in `%s` before any step creates it"
-                            % (where, name, directory))
+                            % (site_name(site), name, directory))
+    return problems
+
+
+def build_output_problems(graduation):
+    """Graduation's copy that carries build output, or a production `.gitignore` that misses it."""
+    problems = []
+    rule = squash(block(graduation, NO_BUILD_OUTPUT, r"\n\n"))
+    if not rule:
+        problems.append("graduation has no %r" % NO_BUILD_OUTPUT)
+    gitignore = next((line for line in graduation.splitlines()
+                      if line.startswith(GITIGNORE_BULLET)), "")
+    if not gitignore:
+        problems.append("graduation has no production `.gitignore` bullet")
+    for folder in BUILD_OUTPUT:
+        if rule and "`%s`" % folder not in rule:
+            problems.append("graduation's copy does not skip `%s`" % folder)
+        if gitignore and "`%s`" % folder not in gitignore:
+            problems.append("the production `.gitignore` does not list `%s`" % folder)
+    return problems
+
+
+def stale_exemptions(texts, exempt=EXEMPT):
+    """Exempt steps that are gone, or that give no reason."""
+    problems = []
+    for (rel, heading), reason in exempt.items():
+        if heading not in {h for h, _ in steps_of(texts.get(rel, ""))}:
+            problems.append("the exempt step %s %s is gone" % (rel, heading))
+        if not reason.strip():
+            problems.append("the exempt step %s %s gives no reason" % (rel, heading))
     return problems
 
 
@@ -464,7 +650,8 @@ class TheSectionIsTheOneStatement(unittest.TestCase):
 
     def test_a_citing_step_names_its_dir_and_name(self):
         self.assertIn("names its `<dir>` and `<name>` and cites this section", self.statement)
-        for directory in ("src/system_verification", "src/load", "src/transform", "src/query"):
+        for directory in ("src/system_verification", "src/load", "src/transform", "src/query",
+                          "src/server"):
             with self.subTest(directory=directory):
                 self.assertIn("`%s`" % directory, self.statement)
 
@@ -683,22 +870,63 @@ class ModuleThreeCitesTheSectionAndKeepsNoCopy(unittest.TestCase):
 
 
 class EveryOtherProgramCitesTheSection(unittest.TestCase):
-    """#563: Modules 2, 5, 6 and 7 and the ground rules' entity section build through it."""
+    """#563, #594: every step found to save, build or run a program builds through the section."""
 
     def setUp(self):
-        self.texts = site_texts()
+        self.texts = skill_texts()
+        self.dirs = statement_dirs(read(GROUND_RULES))
+        self.sites = program_sites(self.texts, self.dirs)
+
+    def test_the_scan_reads_every_dir_the_statement_lists(self):
+        self.assertEqual(("src/system_verification", "src/load", "src/transform", "src/query",
+                          "src/server"), self.dirs)
+
+    def test_the_scan_reaches_every_module_that_builds_programs(self):
+        """A floor, not the list: the sites #563 and #594 named are among those found (INV-265)."""
+        found = {(s.rel, s.heading.split(":")[0].split(". ")[0]) for s in self.sites}
+        for rel, heading in (
+                ("module-03-system-verification/phase1-verification.md", "### Step 3"),
+                ("module-03-system-verification/phase2-report-close.md", "## Step 10"),
+                ("module-03b-truthset-visualization/phase1-visualization.md", "### 1.2 Register"
+                 " the Truth Set data source codes and load"),
+                ("module-03b-truthset-visualization/phase1-visualization.md", "## Step 2"),
+                ("module-03b-truthset-visualization/phase2-close.md", "## Step 4"),
+                ("module-05-data-quality-mapping/phase1-quality-assessment.md", "## 5a"),
+                (M5_MAPPING, "### 13"), (M5_TEST_LOAD, "#### 24a"), (M6_A, "## 3"),
+                (M2, "## Receiving a `setup_detour` (from a later module)"), (M6_B, "## 9"),
+                (M6_B, "## Receiving a `quality_iteration` (from Query, Visualize and Discover, or "
+                       "Phase D)"),
+                (GROUND_RULES_REL, "## Showing one resolved entity as text"), (M6_C, "## 20"),
+                ("module-06-data-processing/phaseD-validation.md", "## 21"),
+                ("module-06-data-processing/phaseD-validation.md",
+                 "## Match-key audit (run before the iterate-vs-proceed gate)"),
+                (M7_QUERY, "## 2"), (M7_QUERY, "### 3c"),
+                ("module-07-query-visualize-discover/phase2-discover.md", "### Step 4a"),
+                (M7_DISCOVER, "### Step 4e")):
+            with self.subTest(site=(rel, heading)):
+                self.assertIn((rel, heading), found)
 
     def test_each_site_names_its_program_and_cites_the_section(self):
-        self.assertEqual([], uncited_sites(self.texts))
+        self.assertEqual([], uncited_sites(self.sites, self.dirs))
 
     def test_every_program_is_created_before_it_is_built_or_run(self):
-        self.assertEqual([], built_before_created(self.texts))
+        self.assertEqual([], built_before_created(self.sites, self.dirs))
+
+    def test_every_exemption_names_a_step_and_gives_a_reason(self):
+        self.assertEqual([], stale_exemptions(self.texts))
 
     def test_module_5_creates_register_data_sources_and_er_stats(self):
-        created = {(s[2], s[3]) for s in SITES
-                   if s[0] == M5_TEST_LOAD and s[4] == CREATES}
+        created = {program for s in self.sites if s.rel == M5_TEST_LOAD
+                   for program in named_programs(s.body, self.dirs)
+                   if creates_program(s.body, *program)}
         self.assertEqual({("register_data_sources", "src/load"), ("er_stats", "src/query")},
                          created)
+
+    def test_phase_c_reuses_phase_bs_process_redo(self):
+        """Where a program already exists, the site names it rather than a new one (#594)."""
+        body = squash(site_body(self.texts[M6_C], "## 20. "))
+        self.assertIn("the program `process_redo` in `src/load`", body)
+        self.assertNotIn("as the program", body)
 
     def test_module_2_creates_it_when_it_is_missing(self):
         body = squash(site_body(self.texts[M2], "- **`register-sources`.**"))
@@ -734,30 +962,100 @@ class EveryOtherProgramCitesTheSection(unittest.TestCase):
         self.assertIn("The load's own timeout is this step's; the build, at Phase A step 3, keeps "
                       "that section's build timeout.", body)
 
+    def sites_with(self, rel, text, dirs=None):
+        dirs = dirs or self.dirs
+        return program_sites(dict(self.texts, **{rel: text}), dirs), dirs
+
     def test_a_missing_citation_is_reported(self):
-        text = self.texts[M7_QUERY]
-        body = site_body(text, "## 3. ")
-        broken = dict(self.texts, **{M7_QUERY: text.replace(
-            body, body.replace("ground-rules.md", "ground-rule.md"))})
-        self.assertIn("%s ## 3. does not cite %s" % (M7_QUERY, CITATION), uncited_sites(broken))
+        for rel, start in ((M7_QUERY, "## 3. "),
+                           ("module-06-data-processing/phaseD-validation.md", "## 21. "),
+                           ("module-03b-truthset-visualization/phase1-visualization.md",
+                            "### 1.2 ")):
+            with self.subTest(site=(rel, start)):
+                text = self.texts[rel]
+                body = site_body(text, start)
+                self.assertIn("ground-rules.md", body)
+                sites, dirs = self.sites_with(rel, text.replace(
+                    body, body.replace("ground-rules.md", "ground-rule.md")))
+                heading = next(s.heading for s in sites if s.rel == rel
+                               and s.heading.startswith(start.strip()))
+                self.assertIn("%s %s does not cite %s" % (rel, heading, CITATION),
+                              uncited_sites(sites, dirs))
+
+    def test_a_dropped_program_name_is_reported(self):
+        rel = "module-03b-truthset-visualization/phase1-visualization.md"
+        text = self.texts[rel]
+        broken = re.sub(r"the program `truthset_server`\s+in `src/server`",
+                        "it under `src/server/`", text)
+        self.assertNotEqual(text, broken)
+        problems = uncited_sites(*self.sites_with(rel, broken))
+        self.assertTrue(any(p.startswith(rel + " ### 2.1 Choose the path")
+                            and "src/server" in p for p in problems), problems)
+
+    def test_a_new_step_that_saves_a_program_in_a_dir_is_found(self):
+        """A site added next month is found without anyone adding it to this file."""
+        rel = "module-06-data-processing/phaseD-validation.md"
+        added = self.texts[rel] + ("\n## 29. Report the matches\n\nGenerate a short program and "
+                                   "save it in `src/query/`, then run it.\n")
+        problems = uncited_sites(*self.sites_with(rel, added))
+        self.assertIn("%s ## 29. Report the matches does not cite %s" % (rel, CITATION), problems)
+        self.assertIn("%s ## 29. Report the matches does not name its program in `src/query`"
+                      % rel, problems)
+
+    def test_a_new_step_that_writes_sdk_code_with_no_dir_is_found(self):
+        rel = M7_DISCOVER
+        added = self.texts[rel] + ("\n### Step 4f: Count the merges\n\nUse `reporting_guide("
+                                   "topic='evaluation', language='<chosen_language>')` and count "
+                                   "them.\n")
+        problems = uncited_sites(*self.sites_with(rel, added))
+        self.assertIn("%s ### Step 4f: Count the merges names no program `<name>` in a `<dir>`"
+                      % rel, problems)
+
+    def test_a_dir_the_statement_adds_is_scanned(self):
+        """The `<dir>` list is read from the statement, so a new directory is scanned at once."""
+        ground_rules = read(GROUND_RULES)
+        widened = ground_rules.replace("`src/query` or `src/server`",
+                                       "`src/query`, `src/server` or `src/reports`", 1)
+        self.assertNotEqual(ground_rules, widened)
+        dirs = statement_dirs(widened)
+        self.assertIn("src/reports", dirs)
+        rel = M7_DISCOVER
+        added = (self.texts[rel]
+                 + "\n### Step 4f: Report\n\nSave the report program in `src/reports`.\n")
+        problems = uncited_sites(*self.sites_with(rel, added, dirs))
+        self.assertIn("%s ### Step 4f: Report does not name its program in `src/reports`" % rel,
+                      problems)
+
+    def test_an_exemption_whose_step_is_gone_is_reported(self):
+        rel, heading = GROUND_RULES_REL, "## Building and running a program"
+        renamed = dict(self.texts, **{rel: self.texts[rel].replace(heading, "## Building", 1)})
+        self.assertIn("the exempt step %s %s is gone" % (rel, heading), stale_exemptions(renamed))
+        self.assertIn("the exempt step a.md # A gives no reason",
+                      stale_exemptions({"a.md": "# A\n"}, {("a.md", "# A"): " "}))
 
     def test_a_program_built_before_any_step_creates_it_is_reported(self):
         text = self.texts[M5_MAPPING]
-        broken = dict(self.texts, **{M5_MAPPING: re.sub(
-            r"Save it as\s+the program `transform_\[name\]` in `src/transform`",
-            "Save it in `src/transform`", text, count=1)})
-        self.assertNotEqual(text, broken[M5_MAPPING])
-        problems = built_before_created(broken)
-        self.assertIn("%s ### 13. builds or runs `transform_[name]` in `src/transform` before any "
-                      "step creates it" % M5_MAPPING, problems)
-        self.assertIn("%s ### 14. builds or runs `transform_[name]` in `src/transform` before any "
-                      "step creates it" % M5_MAPPING, problems)
+        broken = re.sub(r"Save it as\s+the program `transform_\[name\]` in `src/transform`",
+                        "Save it in `src/transform`", text, count=1)
+        self.assertNotEqual(text, broken)
+        problems = built_before_created(*self.sites_with(M5_MAPPING, broken))
+        self.assertIn("%s ### 14. Test builds or runs `transform_[name]` in `src/transform` before "
+                      "any step creates it" % M5_MAPPING, problems)
 
     def test_a_run_moved_ahead_of_its_creator_is_reported(self):
-        i = next(n for n, s in enumerate(SITES) if s[:2] == (M6_C, "## 17. "))
-        reordered = SITES[:i] + (SITES[i + 1], SITES[i]) + SITES[i + 2:]
-        self.assertIn("%s ## 18. builds or runs `orchestrator` in `src/load` before any step "
-                      "creates it" % M6_C, built_before_created(self.texts, reordered))
+        i = next(n for n, s in enumerate(self.sites)
+                 if s.rel == M6_C and s.heading.startswith("## 17. "))
+        reordered = self.sites[:i] + [self.sites[i + 1], self.sites[i]] + self.sites[i + 2:]
+        self.assertTrue(self.sites[i + 1].heading.startswith("## 18. "))
+        self.assertIn("%s %s builds or runs `orchestrator` in `src/load` before any step "
+                      "creates it" % (M6_C, self.sites[i + 1].heading),
+                      built_before_created(reordered, self.dirs))
+
+    def test_a_file_with_no_place_in_the_walk_is_reported(self):
+        texts = dict(self.texts, **{"module-08-new/SKILL.md":
+                                    "# New\n\nSave the program `x` in `src/load`.\n"})
+        self.assertIn("module-08-new/SKILL.md has a program site and no place in WALK",
+                      built_before_created(program_sites(texts, self.dirs), self.dirs))
 
     def test_a_restated_command_at_a_site_is_reported(self):
         ground_rules = read(GROUND_RULES)
@@ -768,11 +1066,25 @@ class EveryOtherProgramCitesTheSection(unittest.TestCase):
                 ("Run it with `python3 src/load/register_data_sources.py`.",
                  "restates a command: `python3 src/"),
                 ("Add it with `dotnet add package Senzing.Sdk --source SenzingLocal`.",
-                 "restates a command: `dotnet add")):
+                 "restates a command: `dotnet add"),
+                ("\n```bash\ncargo run --manifest-path src/query/review_entities/Cargo.toml\n```",
+                 "restates a command: cargo run"),
+                ("Run it with `node src/server/results_server/dist/results_server.js`.",
+                 "restates a command: `node src/server"),
+                ("Build it with `mvn package`.", "restates a command: `mvn package"),
+                ("Run it with `python3 tools/check_load.py`.",
+                 "restates a command: `python3 tools")):
             with self.subTest(line=line):
                 restated = text.replace("## 4a. ", "## 4a. " + line + "\n", 1)
                 problems = restatements(M6_A, restated, ground_rules)
                 self.assertTrue(any(expect in p for p in problems), problems)
+
+    def test_a_run_of_the_plugins_own_script_is_not_a_restated_command(self):
+        """The positive control: the plugin's scripts are the guide's tools, not programs."""
+        text = ('Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py"`.\n\n'
+                '```bash\npython3 "${CLAUDE_PLUGIN_ROOT}/scripts/package_bootcamp.py" --check\n'
+                'python3 <this-skill-dir>/../../scripts/generate_recap_pdf.py\n```\n')
+        self.assertEqual([], restatements(M6_A, text, read(GROUND_RULES)))
 
     def test_the_retired_references_coming_back_are_reported(self):
         for line, expect in (
@@ -780,7 +1092,8 @@ class EveryOtherProgramCitesTheSection(unittest.TestCase):
                  "same per-language build command"),
                 ("using the run command for the chosen language",
                  "the run command for the chosen language"),
-                ("Save to `src/load/orchestrator.[ext]`.", "loose program file")):
+                ("Save to `src/load/orchestrator.[ext]`.", "loose program file"),
+                ('"program": "src/query/<file>"', "loose program file")):
             with self.subTest(line=line):
                 problems = retired_references(M6_A, self.texts[M6_A] + "\n" + line + "\n")
                 self.assertTrue(any(expect in p for p in problems), problems)
@@ -801,6 +1114,26 @@ class GraduationCarriesTheManifests(unittest.TestCase):
         for tree in ("transform", "load", "query"):
             with self.subTest(tree=tree):
                 self.assertIn("| `src/%s/**` | `production/src/%s/` |" % (tree, tree), self.text)
+
+    def test_the_copy_carries_no_build_output_and_the_gitignore_lists_it(self):
+        self.assertEqual([], build_output_problems(self.text))
+        statement = section(read(GROUND_RULES))
+        for written in BUILD_OUTPUT_IN_THE_STATEMENT:
+            with self.subTest(written=written):
+                self.assertIn(written, statement)
+
+    def test_build_output_in_the_copy_or_out_of_the_gitignore_is_reported(self):
+        no_classes = self.text.replace("`target/`, `classes/`, `bin/`", "`target/`, `bin/`", 1)
+        self.assertNotEqual(self.text, no_classes)
+        self.assertIn("the production `.gitignore` does not list `classes/`",
+                      build_output_problems(no_classes))
+        whole = self.text.replace(NO_BUILD_OUTPUT, "**The `src/**` rows copy everything.**", 1)
+        self.assertIn("graduation has no %r" % NO_BUILD_OUTPUT, build_output_problems(whole))
+        rule = block(self.text, NO_BUILD_OUTPUT, r"\n\n")
+        kept = self.text.replace(rule, rule.replace("`node_modules/`", "the packages"), 1)
+        self.assertNotEqual(self.text, kept)
+        self.assertIn("graduation's copy does not skip `node_modules/`",
+                      build_output_problems(kept))
 
     def test_usage_gives_each_programs_commands_from_the_section(self):
         body = squash(block(self.text, "**Usage gives each copied program's build and run "

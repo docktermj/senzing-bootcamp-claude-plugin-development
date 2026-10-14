@@ -272,6 +272,11 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    *method*, not a second overload.) So the order is: register the source code(s) — taking the
    registration code from `sdk_guide(topic='configure')`, never hand-written (INV-080) — then preview.
    Registration is idempotent and the loading phase needs it anyway, so doing it here costs nothing.
+   Save the registration as the program `register_data_sources` in `src/load`, the one Phase 3
+   step 21a and Data processing step 4a regenerate, and the preview as the program
+   `preview_record` in `src/transform`, each at the path and with the project that
+   `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives; build and
+   run each with that section's commands, the registration first.
 
    On `SENZ2207`, call `explain_error_code('SENZ2207')` first as always (INV-080): unlike some codes,
    its own resolution steps *do* name the fix — register the code, confirm the registered list, mind

@@ -364,8 +364,11 @@ not loaded because license capacity ran out.
 ## 20. Coordinated redo queue processing
 
 Drain the redo queue, critical after multi-source loading for cross-source match refinement.
-Use `generate_scaffold(language='<chosen_language>', workflow='redo', version='current')` and
-override paths to `database/G2C.db`.
+Run the drain Phase B step 9 saved from
+`generate_scaffold(language='<chosen_language>', workflow='redo', version='current')`: the
+program `process_redo` in `src/load`, with its run command in
+`../bootcamp-onboarding/ground-rules.md` → "Building and running a program", or the loading
+program when step 9 put the drain there. Its paths already point at `database/G2C.db`.
 
 ⛔ **Same batch-drain requirement as Phase B, step 9** (INV-151, INV-300) — read it there rather than
 re-deriving it.

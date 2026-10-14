@@ -191,15 +191,20 @@ permanent. Work through 1–4 in order; do not hoist the purge.
 4. **Purge the Truth Set data from the database** (the module's final action):
    - Remove the Truth Set records loaded in Phase 1 (CUSTOMERS/REFERENCE/WATCHLIST, or the CORD
      substitute's codes) from the Senzing database, using generated Senzing SDK code (via
-     `get_sdk_reference` + `sdk_guide`); never direct SQL against `database/G2C.db`.
+     `get_sdk_reference` + `sdk_guide`); never direct SQL against `database/G2C.db`. Save it as
+     the program `cleanup_truthset` in `src/system_verification`, at the path and with the project
+     that `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, and
+     build and run it with that section's commands.
    - After purge, verify zero Truth Set entities remain while preserving any other database state.
    - If the purge fails: report a fail status identifying which records could not be removed, with a
      Fix_Instruction advising the bootcamper to re-run cleanup or manually reset the database.
 
 5. **Retain visualization artifacts:** the standalone snapshot
-   (`docs/visualizations/truthset_verification.html`), the generated visualization server under
-   `src/server/` (when the chosen language is not Python), and any generated load/registration code
-   under `src/system_verification/` remain in place for reference.
+   (`docs/visualizations/truthset_verification.html`), the program `truthset_server` in
+   `src/server` (when the chosen language is not Python), and the program
+   `register_truthset_sources` in `src/system_verification`, the program `load_truthset` in
+   `src/system_verification` and the program `cleanup_truthset` in `src/system_verification` remain
+   in place for reference.
 
 **Checkpoint:** write to `config/bootcamp_progress.json`.
 

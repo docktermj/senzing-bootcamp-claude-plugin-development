@@ -836,7 +836,8 @@ The caller says which entity to pick. Everything below is the same for all three
 this section; it never restates a command. Two placeholders key every line below:
 
 - **`<dir>`** is the program's directory, project-relative: `src/system_verification`,
-  `src/load`, `src/transform` or `src/query`. The step that saves the program names it.
+  `src/load`, `src/transform`, `src/query` or `src/server`. The step that saves the program names
+  it.
 - **`<name>`** is the program's base name, such as `verify_pipeline`. The step that saves the
   program names it too, and that step is the one that creates the program.
 
