@@ -197,7 +197,8 @@ every record Phases B and C load into the same repository.
   `license_key_requested` → no reminder; say nothing about email.
 
   **The apply procedure already exists — point at it, do not restate it (INV-300).** Module 4 Step 8a
-  **sub-step 5** decodes a Base64 key or copies a `.lic` to `licenses/g2.lic`, adds `LICENSEFILE` to
+  **sub-step 5** wires a Base64 key as `LICENSESTRINGBASE64`, or a `.lic` copied to `licenses/g2.lic`
+  as `LICENSEFILE` with an absolute path, re-sources the env script after adding the key to
   the engine-config PIPELINE section, and records `license: custom`. ⛔ **Do not write a second copy
   of it here, and do not substitute a different mechanism.** A platform-specific procedure duplicated
   is a procedure that drifts, and the MCP server describes a *different* route

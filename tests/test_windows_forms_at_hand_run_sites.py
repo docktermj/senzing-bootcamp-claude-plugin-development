@@ -11,7 +11,9 @@ Windows and that had no correct Windows form:
    absolute path built from `Get-Location`: `WriteAllBytes` resolves a relative path against
    .NET's working directory, not PowerShell's current location. The binary check `file` does not
    exist on Windows; the Windows check is `Format-Hex`, and sub-step 7's limit detection is the
-   authoritative check on every platform.
+   authoritative check on every platform. #592 retired the decode: a Base64 key now goes into
+   the engine config inline as `LICENSESTRINGBASE64`, and the Windows form that puts it there
+   (`ReadAllText`/`WriteAllText` over an absolute path) keeps the same absolute-path rule.
 2. **Graduation Step 1b (render the recap PDF).** The venv render line and the venv creation
    line had no Windows form, while the pip line between them did.
 3. **Graduation Step 6c (the return guide).** It said to re-source `senzing-env.sh` "(if
@@ -59,8 +61,10 @@ GRADUATION = SKILLS / "graduation" / "SKILL.md"
 DATABASE_BACKUP = SKILLS / "graduation" / "database-backup.md"
 PACKAGER = PLUGIN / "scripts" / "package_bootcamp.py"
 
-DECODE = ("[System.IO.File]::WriteAllBytes((Join-Path (Get-Location) 'licenses\\g2.lic'), "
-          "[System.Convert]::FromBase64String('<BASE64_STRING>'))")
+#: The Windows form that puts a Base64 key into the engine config inline (#592).
+DECODE = ("$p = Join-Path (Get-Location) 'config\\engine_config.json'; "
+          "[System.IO.File]::WriteAllText($p, [System.IO.File]::ReadAllText($p)"
+          ".Replace('__SENZING_LICENSE_BASE64__', '<BASE64_STRING>'))")
 WINDOWS_RENDER = ('data\\temp\\recap-venv\\Scripts\\python '
                   '"${CLAUDE_PLUGIN_ROOT}\\scripts\\generate_recap_pdf.py"')
 WINDOWS_VENV = "py -3 -m venv data\\temp\\recap-venv"
@@ -228,7 +232,7 @@ class TheLicenseDecodeWorksOnPowerShell5And7(unittest.TestCase):
     def test_no_encoding_byte_form_either(self):
         self.assertNotIn("-Encoding Byte", self.module, "PowerShell 7 rejects `-Encoding Byte`")
 
-    def test_the_decode_uses_write_all_bytes_with_an_absolute_path(self):
+    def test_the_base64_form_uses_write_all_text_with_an_absolute_path(self):
         self.assertIn(DECODE, self.step)
         self.assertRegex(self.step, r"(?i)path must be absolute.*\.NET's working directory")
 

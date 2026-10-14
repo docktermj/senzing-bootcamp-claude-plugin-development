@@ -131,12 +131,12 @@ class TheApplyRouteIsPointedAtNotRestated(unittest.TestCase):
         offenders = []
         for path in sorted(SKILLS.rglob("*.md")):
             body = path.read_text(encoding="utf-8")
-            if "base64 --decode > licenses/g2.lic" in body:
+            if "sed -i.bak 's|__SENZING_LICENSE_BASE64__|<BASE64_STRING>|'" in body:
                 offenders.append(str(path.relative_to(REPO_ROOT)))
         self.assertEqual(
             ["plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md"],
             offenders,
-            "the decode-and-place commands appear somewhere other than Step 8a")
+            "the license-wiring commands appear somewhere other than Step 8a")
 
     def test_the_servers_different_mechanism_is_not_adopted(self):
         """⚠️ SENZING_LICENSE_FILE is real and is NOT the one wired into this layout."""

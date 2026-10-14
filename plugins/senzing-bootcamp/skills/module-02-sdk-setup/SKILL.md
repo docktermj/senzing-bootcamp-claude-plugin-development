@@ -1657,7 +1657,7 @@ troubleshooting.
 > tool's empty field is not evidence the server lacks the fact. Ask the tool that owns it.
 >
 > A `PIPELINE` license key remains the other supported route — `LICENSEFILE` for a `.lic` path,
-> `LICENSESTRINGBASE64` for an inline Base64 key — which is what Module 4 Step 8a wires.
+> `LICENSESTRINGBASE64` for an inline Base64 key — which is what Module 4 Step 8a sub-step 5 wires.
 > The record capacity **is** looked up, not written here (INV-080) — see below.
 
 > **"Senzing License Key" vs. the EULA:** the **Senzing License Key** configured in this step is a
@@ -1788,7 +1788,7 @@ set up a Senzing License Key in the Data collection module, where your data volu
 to do here."
 
 > **Where the License Key is handled now:** the interactive License-Key **setup** (asking whether the
-> bootcamper has a key, decoding/placing a `.lic` or Base64 key, wiring `LICENSEFILE`, and requesting
+> bootcamper has a key, wiring a `.lic` or Base64 key into the engine config (sub-step 5), and requesting
 > an evaluation license via the MCP server or Senzing support) is the single, volume-gated gate at the
 > start of Data collection (Module 4, Step 8a), per INV-093. SDK setup does not perform it. ⚠️ **Reading
 > the installed license is not setting one up** — this step measures the capacity that is already

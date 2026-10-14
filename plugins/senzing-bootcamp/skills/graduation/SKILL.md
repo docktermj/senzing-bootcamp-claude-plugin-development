@@ -1683,8 +1683,9 @@ Cover:
   dot-sourced in the PowerShell window that runs the programs; the Windows form is unverified on
   Windows PowerShell 5.1 here, INV-163) and re-init the engine, then re-run the loader, queries, and
   visualization.
-- **License** — where the license lives (`licenses/g2.lic` when custom, else the built-in
-  evaluation license) and any expiry.
+- **License** — where the license lives, as Data collection Step 8a sub-step 5 wired it: a Base64
+  key inline in `config/engine_config.json` (`LICENSESTRINGBASE64`), a `.lic` file at
+  `licenses/g2.lic` (`LICENSEFILE`), else the built-in evaluation license; and any expiry.
 - **Where things are** — point at `backups/revisit/` (state + database backup), the recap PDF, and
   `docs/visualizations/`. Name `docs/bootcamp_recap.mp4` too when Step 1c produced it (INV-340). When Step 1c
   wrote a storyboard but skipped the video, say that `docs/video/storyboard.json` is kept so the

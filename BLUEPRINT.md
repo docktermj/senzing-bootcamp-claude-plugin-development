@@ -2211,8 +2211,12 @@ receiving branch, and a `setup_detour` goes to SDK setup's.
   Otherwise `get_capabilities` chooses between a pinned four-option form
   and a three-option form; the fourth option is an in-flow request through
   `submit_feedback`.
-  - A key is written to `licenses/g2.lic` and added as
-    `PIPELINE.LICENSEFILE`, with `license: custom` recorded.
+  - Sub-step 5 is the one statement of the license wiring. A Base64 key goes
+    inline as `PIPELINE.LICENSESTRINGBASE64`, through a placeholder the
+    Bootcamper's own command replaces; a `.lic` is copied to
+    `licenses/g2.lic` and added as `PIPELINE.LICENSEFILE` with an absolute
+    path. `license: custom` is recorded, and the env script is re-sourced
+    before the limit is measured.
   - An in-flow request asks for first name, work email and `how_heard`, one
     per turn, then asks a pinned consent question. Only a send writes
     `license_key_requested {channel, date}`. Otherwise
@@ -9697,7 +9701,7 @@ collected as tests:
     non-empty `SBCP_QUIET_FPDF2_NOTICE` silences it.
   - It exports the decorator `requires_fpdf2`.
   - It is a module rather than a `conftest.py`, which `unittest` never loads.
-- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 66
+- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 67
   files. `blocks(text)` splits Markdown into blocks, and
   `match_lines(text, pattern)` returns the 1-based start line of each match. The
   rules are in 8.4.1.
@@ -9715,7 +9719,7 @@ collected as tests:
   spec files minus the `specs/IMPLEMENTED.md` and `specs/DECLINED.md` headings.
   It reports any spec found in both. Listing exits 0, and `--check` exits 2 when
   a spec is in both.
-- `tests/_corpus.py`: the shared corpus listing (#515), used by 15 files.
+- `tests/_corpus.py`: the shared corpus listing (#515), used by 18 files.
   `corpus_files(*subtrees, root=REPO_ROOT, suffixes=None)` lists tracked and
   untracked, non-ignored files from `git ls-files -z`, and always prunes Claude
   Code's runtime directories (section 5.62).
@@ -9998,6 +10002,7 @@ looks wrong.
 - `tests/test_license_limit_is_written_only_from_a_measurement.py`: 14
 - `tests/test_license_limit_reading_is_complete.py`: 16
 - `tests/test_license_record_limit_is_measured_only.py`: 6
+- `tests/test_license_wiring_lives_in_step_8a.py`: 30
 - `tests/test_linter_credits_name_a_function_it_runs.py`: 24
 - `tests/test_list_specs.py`: 10
 - `tests/test_listing_selection_is_by_shape.py`: 12
@@ -11989,6 +11994,12 @@ Senzing licensing, with no SPDX identifier.
   because the check tests records already typed `PERSON`, with no server
   token added (the label said no MCP route served a suffix list; step 2 does,
   for sources with no type field)
+- #592: Data collection Step 8a sub-step 5 wires a Base64 key inline as
+  `LICENSESTRINGBASE64` and a `.lic` as `LICENSEFILE` with an absolute path,
+  then re-sources the env script before sub-step 7 measures the limit, and
+  every other site naming either key points to it, found by a scan (the
+  measurement could read the config from before the key, the path was
+  relative, and Module 2 named a key Step 8a did not wire)
 - #609: `/release-cycle` writes nothing under `specs/` before stage 5 and its
   own entry only at a stop, stated once with every write and matched by the
   pending #573 block, corrected in place; `autotest.py --report-dir` keeps a
