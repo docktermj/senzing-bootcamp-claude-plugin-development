@@ -161,11 +161,11 @@ matches), data completeness. If accuracy is poor, say so and carry it into the
 
 ⛔ (INV-225) **Steps 21–24 ask nothing unless step 21's directing question is due; when it is not,
 this turn does not end here** — validation results and evidence tables are the output most likely
-to be mistaken for a turn ending, because they conclude something (`ground-rules.md` → "A results
-presentation is not a turn ending", INV-225). Continue in the same turn to the next step that
-actually asks. The one question these steps can put is step 21's directing question, and only the
-first time Phase D reaches it. That turn ends on it; the next turn shows the comparison and runs
-steps 21–24 through, asking nothing.
+to be mistaken for a turn ending, because they conclude something
+(`../bootcamp-onboarding/ground-rules.md` → "A results presentation is not a turn ending", INV-225).
+Continue in the same turn to the next step that actually asks. The one question these steps can put
+is step 21's directing question, and only the first time Phase D reaches it. That turn ends on it;
+the next turn shows the comparison and runs steps 21–24 through, asking nothing.
 
 ## 25. Execute UAT with business users
 
@@ -185,8 +185,8 @@ once, in step 22 (INV-300).
 ⛔ **This branch correctly ends with NO 👉 question, and must stay that way.** Do not borrow 25b's
 question to balance the two branches — manufacturing a question here breaches INV-006 in the
 opposite direction. This step is not a turn ending on this path: continue in the same turn to the
-next step that actually asks (`ground-rules.md` → "A results presentation is not a turn ending",
-INV-225).
+next step that actually asks (`../bootcamp-onboarding/ground-rules.md` → "A results presentation is
+not a turn ending", INV-225).
 
 ### 25b. Real business problem with real stakeholders
 

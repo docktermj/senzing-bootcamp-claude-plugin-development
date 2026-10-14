@@ -34,9 +34,16 @@ How a pointer is found:
   site restates the rule instead of pointing at it (INV-300's "no second copy");
 - a sentence the splitter cuts early, at an abbreviation such as "e.g." before the name.
 
+**Section pointers (#615).** The second half of this module checks every
+`<file>.md` → "<name>" pointer in shipped Markdown against the file it names:
+``section_pointers`` finds them wrap-aware, ``section_names`` says what a section name is (a
+heading or a bold label opening a line, ignoring case, leading numbering and a parenthetical
+qualifier at either end), ``section_kind`` says which of the two a name lands on, and
+``section_pointer_problems`` resolves the file from the pointer's own file. `tests/test_section_pointers_resolve.py` is its guard.
+
 Stdlib only; shipped files are read as text, never imported (INV-108).
 
-Source issue: #519.
+Source issues: #519, #615.
 """
 import re
 from pathlib import Path
@@ -139,3 +146,108 @@ def without_citation(texts, path, line, invariant):
     out = dict(texts)
     out[path] = "\n".join(lines)
     return out
+
+
+# --- Section pointers: `<file>.md` → "<name>" (#615) ------------------------------------------
+#
+# The quoted-name pointers above are found for one section. These are every pointer of the form
+# `<file>.md` → "<name>" in shipped Markdown, and they are checked against what the target file
+# actually holds. This is the one place that says what a section name is.
+
+#: A backticked Markdown file, an arrow and a double-quoted name, on one collapsed block.
+SECTION_POINTER = re.compile(r'`([^`\s]+\.md)` ?→ ?"([^"]+)"')
+
+_FENCE = re.compile(r"^[ \t]*(`{3,}|~{3,})")
+_HEADING = re.compile(r"^ {0,3}#{1,6}[ \t]+(.+?)(?:[ \t]+#+)?[ \t]*$")
+#: A bold label: a bold span that opens a line, after any indent, blockquote, list marker or ⛔/⚠️.
+_BOLD_LABEL = re.compile(
+    r"^[ \t]*(?:>[ \t]*)*(?:(?:[-*+]|\d+[.)])[ \t]+)?(?:(?:⛔|⚠️)[ \t]*)?\*\*(.+?)\*\*", re.M | re.S)
+_NUMBERING = re.compile(r"^\d+[a-z]?\.\s+", re.I)
+#: A parenthetical qualifier at either end: "(required)", "(INV-160)", "(silent)".
+_QUALIFIER = re.compile(r"^\([^()]*\)\s*|\s*\([^()]*\)$")
+
+
+def _normalized(name):
+    """``name`` lower-cased, whitespace collapsed, leading numbering (``2.``, ``6c.``) dropped."""
+    return _NUMBERING.sub("", " ".join(name.split())).lower()
+
+
+def section_names_by_kind(text):
+    """``{"heading": names, "bold label": names}``: every name a pointer may use for a section.
+
+    A heading outside a code fence, or a bold label opening a line (``**Name.**``,
+    ``**Name:**``), names a section. Each is matched as its whole text, ignoring case and leading
+    numbering, and also with a parenthetical qualifier at either end dropped, so "Server lifetime"
+    names "## Server lifetime (required in every module that starts one)". Nothing shorter: a
+    sentence's opening words are not a name.
+    """
+    headings, fence, prose = [], None, []
+    for line in text.split("\n"):
+        opener = _FENCE.match(line)
+        if opener and (fence is None or opener.group(1)[0] == fence):
+            fence = None if fence else opener.group(1)[0]
+            prose.append("")
+            continue
+        heading = None if fence else _HEADING.match(line)
+        if heading:
+            headings.append(heading.group(1))
+        prose.append("" if fence else line)
+    labels = [m.group(1).rstrip(".:") for m in _BOLD_LABEL.finditer("\n".join(prose))]
+    kinds = {}
+    for kind, found in (("heading", headings), ("bold label", labels)):
+        names = kinds[kind] = set()
+        for name in map(_normalized, found):
+            names.add(name)
+            names.add(_QUALIFIER.sub("", name))
+    return kinds
+
+
+def section_names(text):
+    """Every name a pointer may use for a section of ``text``: a heading or a bold label."""
+    kinds = section_names_by_kind(text)
+    return kinds["heading"] | kinds["bold label"]
+
+
+def section_kind(text, name):
+    """``"heading"`` or ``"bold label"`` when ``name`` names a section of ``text``, else None.
+
+    A name that is both counts as a heading.
+    """
+    kinds, key = section_names_by_kind(text), _normalized(name)
+    return next((kind for kind in ("heading", "bold label") if key in kinds[kind]), None)
+
+
+def names_a_section(text, name):
+    """True when name is one of section_names(text), read the same way."""
+    return section_kind(text, name) is not None
+
+
+def section_pointers(path, text):
+    """``(line, target, name)`` for every `<file>.md` → "<name>" pointer in ``text``, wrap-aware."""
+    found = []
+    for block in _wrapped_text.blocks(text):
+        flat, origin = _collapse(block)
+        for m in SECTION_POINTER.finditer(flat):
+            found.append((origin[m.start()], m.group(1), m.group(2)))
+    return found
+
+
+def section_pointer_problems(path, text, read=lambda p: p.read_text(encoding="utf-8")):
+    """Each pointer in ``text`` whose file does not resolve from ``path``, or names no section."""
+    problems = []
+    for line, target, name in section_pointers(path, text):
+        where = "%s:%d" % (_shown(path), line)
+        resolved = path.parent / target
+        if not resolved.is_file():
+            problems.append('%s: `%s` does not resolve from %s' % (where, target, path.name))
+        elif not names_a_section(read(resolved), name):
+            problems.append('%s: `%s` → "%s" names no heading or bold label there'
+                            % (where, target, name))
+    return problems
+
+
+def _shown(path):
+    try:
+        return path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return str(path)

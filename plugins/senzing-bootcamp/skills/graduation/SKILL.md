@@ -263,10 +263,10 @@ Go and look at what the project now contains:
 3. **Abandoned proposals** — a change you recommended and then dropped after checking the Entity
    Specification or the MCP reference. Cheap when it happens, invisible afterwards.
 
-**Do not re-file what is already there.** `ground-rules.md` → "Reversed decisions: file them when
-they happen" means some of these are already in the file from during the run. Read the existing
-entries first and skip any finding already recorded; add to an entry only if you now have evidence
-it lacked.
+**Do not re-file what is already there.** `../bootcamp-onboarding/ground-rules.md` → "Reversed
+decisions: file them when they happen" means some of these are already in the file from during the
+run. Read the existing entries first and skip any finding already recorded; add to an entry only if
+you now have evidence it lacked.
 
 For each finding, append a `## Improvement:` entry to
 `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` using the **exact template** in

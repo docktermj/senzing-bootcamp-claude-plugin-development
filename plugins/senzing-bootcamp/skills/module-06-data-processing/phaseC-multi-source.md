@@ -143,7 +143,7 @@ below. Read the recorded answer, state the strategy in one line, and continue to
 ago is the pair of back-to-back rubber stamps this branch was merged to remove — and it is worse
 the second time, because nothing has happened in between that could change the answer. This step is
 not a turn ending on this path: continue in the same turn to the next step that actually asks
-(`ground-rules.md` → "A results presentation is not a turn ending", INV-225).
+(`../bootcamp-onboarding/ground-rules.md` → "A results presentation is not a turn ending", INV-225).
 
 **Only when some source being loaded is bootcamper-supplied** — `provenance: own`/`free_data`/`unknown`
 in `config/data_sources.yaml`, and no generated marker in `docs/business_problem.md` — present the
@@ -262,8 +262,8 @@ records, the summary read 10, then 20, then 28 — plausible, monotonic, and sum
 total, with the load itself entirely correct. A bootcamper reads it as "Summit Billing has 28
 records". The same arithmetic conceals a real per-source failure: a source that loaded **0 of 8**
 still shows a rising success count inherited from its predecessors. This is the silent-wrong-value
-class `ground-rules.md` → "Defensive parsing" covers (INV-115), except that a wrong number is
-worse than a blank, because nothing about it invites a second look.
+class `../bootcamp-onboarding/ground-rules.md` → "Defensive parsing" covers (INV-115), except that a
+wrong number is worse than a blank, because nothing about it invites a second look.
 
 Resolve it one of two ways, whichever suits the bootcamper's language (INV-002):
 
@@ -394,10 +394,10 @@ Without it, some matches between your sources would be incomplete."
 ⛔ (INV-225) **Steps 17–20 ask nothing unless the license-cap question is due; when it is not,
 this turn does not end here** — the orchestration summary and its record counts conclude something
 and read like an ending, which is precisely the trap
-(`ground-rules.md` → "A results presentation is not a turn ending", INV-225). Continue into Phase D in the
-same turn, up to its first 👉. The one question these steps can put is Step 17's license-cap
-question, and only when the budget table needs it and no marker records it — at Step 19 instead, if
-Step 18's test load is what tips the remaining sources over the cap. That turn ends on it; the next
-continues from the table.
+(`../bootcamp-onboarding/ground-rules.md` → "A results presentation is not a turn ending", INV-225).
+Continue into Phase D in the same turn, up to its first 👉. The one question these steps can put is
+Step 17's license-cap question, and only when the budget table needs it and no marker records it —
+at Step 19 instead, if Step 18's test load is what tips the remaining sources over the cap. That
+turn ends on it; the next continues from the table.
 
 Proceed to Phase D (`phaseD-validation.md`).

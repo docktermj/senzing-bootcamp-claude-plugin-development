@@ -220,11 +220,11 @@ connections between entities using `find_network` and `find_path`.
 7. **Graceful fallback (no relationships in data):** if the bootcamper's data contains no entity
    relationships or disclosed connections (as determined in step 4a), do NOT attempt the live
    demonstration. Instead:
-   - ⛔ **(INV-239) On a generated scenario that promised households** (the condition in step 4's
-     generated-scenario paragraph, including a scenario whose success criteria name households or
-     related parties), first say that the bootcamp's generated data is missing the
-     relationships its scenario promised, that this is a bootcamp defect rather than a property of
-     the Bootcamper's data, and suggest `/bootcamp-feedback`. Then continue below.
+   - ⛔ **(INV-239) On a generated scenario that promised households** (the condition in step 4d's
+     INV-239 paragraph, including a scenario whose success criteria name households or related
+     parties), first say that the bootcamp's generated data is missing the relationships its
+     scenario promised, that this is a bootcamp defect rather than a property of the Bootcamper's
+     data, and suggest `/bootcamp-feedback`. Then continue below.
    - State: "Your data doesn't contain disclosed relationships, so I'll explain what this would
      look like with connected data."
    - Describe what `find_network` returns when entities are connected: a graph structure with

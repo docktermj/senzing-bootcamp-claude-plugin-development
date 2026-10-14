@@ -285,14 +285,14 @@ Verify the Senzing SDK initializes correctly and connects to the database.
    `raw_url`, `size_bytes`, `line_count` and `hash` per snippet, with no source text. Fetch each
    file by the response's own `access_steps`, in the order the response gives them and with every
    check a step asks for, as `../bootcamp-onboarding/ground-rules.md` → "Follow each response's
-   own `access_steps`" says (INV-160, INV-300). If every fetch and clone step fails, take the
-   terminal step in `../bootcamp-onboarding/ground-rules.md` → "Once every fetch and clone step in
-   the response's `access_steps` has failed" (INV-160). **Never pass
-   `inline=true`** — the tool's `access_steps` advertises it but its declared schema has no such
-   parameter (only `language`, `version`, `workflow`), so the call cannot work (INV-160's rule,
-   confirmed live for `generate_scaffold` on server 1.32.2, 2026-07-29). And never reconstruct the
-   snippet from memory of "what a scaffold like this looks like" — that is the training-data
-   fallback INV-080 forbids.
+   own `access_steps`, in the order it gives them" says (INV-160, INV-300). If every fetch and clone
+   step fails, take the terminal step in `../bootcamp-onboarding/ground-rules.md` → "Once every
+   fetch and clone step in the response's `access_steps` has failed, report the example as
+   unreachable" (INV-160). **Never pass `inline=true`** — the tool's `access_steps` advertises it
+   but its declared schema has no such parameter (only `language`, `version`, `workflow`), so the
+   call cannot work (INV-160's rule, confirmed live for `generate_scaffold` on server 1.32.2,
+   2026-07-29). And never reconstruct the snippet from memory of "what a scaffold like this looks
+   like" — that is the training-data fallback INV-080 forbids.
 3. **Build it, then run it**, with that section's build and run commands. The build has that
    section's build timeout, and in Python it is only the syntax check. The run has a 30-second
    timeout. A failed build is a failed check: report fail with the first 50 lines of
@@ -350,10 +350,11 @@ Verify the MCP server can generate a full pipeline script in the chosen language
      project, so leaving it crashes Step 6.
    - **Fetch before saving.** As in Step 3: the listing carries no source text, so fetch each
      file by the response's own `access_steps`, as `../bootcamp-onboarding/ground-rules.md` →
-     "Follow each response's own `access_steps`" says (INV-160, INV-300). If every fetch and clone
-     step fails, take the terminal step in `../bootcamp-onboarding/ground-rules.md` → "Once every
-     fetch and clone step in the response's `access_steps` has failed" (INV-160).
-     **Never pass `inline=true`** — undeclared in the schema (INV-160).
+     "Follow each response's own `access_steps`, in the order it gives them" says (INV-160,
+     INV-300). If every fetch and clone step fails, take the terminal step in
+     `../bootcamp-onboarding/ground-rules.md` → "Once every fetch and clone step in the response's
+     `access_steps` has failed, report the example as unreachable" (INV-160). **Never pass
+     `inline=true`** — undeclared in the schema (INV-160).
 
    Why this is a ⛔ and not a preference: **Step 6 executes this file "pointing it at
    `src/system_verification/verification_data.jsonl`"**, which presupposes a script that takes a

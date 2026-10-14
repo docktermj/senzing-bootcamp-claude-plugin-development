@@ -550,7 +550,7 @@ class StepTwoRelaysThePreviewStatus(unittest.TestCase):
         # points at it rather than restating it; the stamp is the route's record in
         # test_prescribed_search_queries.py, which follows the pointer (was "docs index
         # 2026-09-28 03:23 UTC" in this section).
-        self.assertIn("that route is stated once, in `SKILL.md` → \"The update command.\"",
+        self.assertIn("that route is stated once, in `SKILL.md` → \"The update command\"",
                       self.flat)
         self.assertNotIn("search_docs(query='scoop-senzingsdk update scoop update senzingsdk')",
                          self.flat, "Step 2 restates Step 1b's route (INV-300)")

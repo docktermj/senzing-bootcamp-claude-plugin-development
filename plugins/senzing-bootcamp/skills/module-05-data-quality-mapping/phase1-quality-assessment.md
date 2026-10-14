@@ -63,8 +63,9 @@ call returns `mode: "url"` and a `resources` array whose entry carries `filename
 a `url` — and **no content**. There is nothing in the response to "save", so a guide that writes the
 response itself to the canonical path leaves Steps 4, 5, 5a and 6 reading attribute names out of a
 file that has none — and because a file still exists at the expected path, the failure is silent.
-`download_resource` is the third MCP tool with this shape; `ground-rules.md` → "Three tools answer
-with a listing" states the rule once for all three (INV-234).
+`download_resource` is the third MCP tool with this shape; `../bootcamp-onboarding/ground-rules.md`
+→ "Three tools answer with a listing instead of content, and exactly one of them accepts `inline`"
+states the rule once for all three (INV-234).
 
 **Retrieve it in two steps:**
 
@@ -109,8 +110,9 @@ so passing it there is a call that cannot work. The difference is not about the 
 about what each tool's schema declares (INV-136).
 
 ⛔ **(INV-234) The inline reply carries the file in bounded chunks, not in one response, so put it back together before Step 4 reads it.**
-The reply's shape is stated once in `ground-rules.md` → "Three tools answer with a listing"
-(INV-300); this is the one step that assembles a file from it:
+The reply's shape is stated once in `../bootcamp-onboarding/ground-rules.md` → "Three tools answer
+with a listing instead of content, and exactly one of them accepts `inline`" (INV-300); this is the
+one step that assembles a file from it:
 
 1. Call `download_resource(filename="senzing_entity_specification.md", inline=true)`. Request the
    file on its own, with `filename`: a batch (`filenames`) leaves out a file too large for one

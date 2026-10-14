@@ -651,7 +651,7 @@ Each README opens with "**Preview Release — Unsupported** … provided as-is w
 `search_docs(query='homebrew-senzingsdk preview release unsupported tap install cask')` returns it
 as the `senzing/homebrew-senzingsdk` section "homebrew-senzingsdk". For `windows`, the
 `senzing/scoop-senzingsdk` README opens with it, above its *Update* section: that route is stated
-once, in `SKILL.md` → "The update command." (Step 1b, INV-300).
+once, in `SKILL.md` → "The update command" (Step 1b, INV-300).
 When you name either route, say this once, as a fact about the tap or the bucket, not as advice
 against it: they remain the native routes in rules 3 and 4 below.
 
@@ -1604,10 +1604,11 @@ carries `file_path`, `source_url`, `url`, `raw_url`, `size_bytes`, `line_count` 
 snippet and **no source text**, so there is nothing to "save" until you fetch it. Fetch each file
 by the response's own `access_steps`, in the order the response gives them and with every check a
 step asks for, as `../bootcamp-onboarding/ground-rules.md` → "Follow each response's own
-`access_steps`" says (INV-160, INV-300). If every fetch and clone step fails, take the terminal
-step in `../bootcamp-onboarding/ground-rules.md` → "Once every fetch and clone step in the
-response's `access_steps` has failed" (INV-160). This differs from `sdk_guide`, which
-does inline a `code.code` string — do not carry that expectation across.
+`access_steps`, in the order it gives them" says (INV-160, INV-300). If every fetch and clone step
+fails, take the terminal step in `../bootcamp-onboarding/ground-rules.md` → "Once every fetch and
+clone step in the response's `access_steps` has failed, report the example as unreachable"
+(INV-160). This differs from `sdk_guide`, which does inline a `code.code` string — do not carry that
+expectation across.
 
 ⛔ **Never pass `inline=true` to `generate_scaffold`** (INV-136, INV-160). The final `inline` step
 of its own `access_steps` advertises that parameter, but the tool's **declared schema has no
@@ -2464,7 +2465,7 @@ returned **14** snippets with `content` absent — only `file_path`, `raw_url`, 
   `full_pipeline`, where it went 18 → 22 and a whole group appeared). Match on the **shape** — does
   the body invoke an engine method? — and fetch a candidate to check rather than inferring from
   its name, by the response's own `access_steps` as `../bootcamp-onboarding/ground-rules.md` →
-  "Follow each response's own `access_steps`" says (INV-160, INV-300).
+  "Follow each response's own `access_steps`, in the order it gives them" says (INV-160, INV-300).
 - Every language's set has the same pair, so apply the shape test in whichever language was chosen
   rather than transliterating the Python filenames (INV-090).
 
