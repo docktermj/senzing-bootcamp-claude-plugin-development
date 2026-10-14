@@ -123,9 +123,18 @@ class TestMatchKeyDetailsIsNotGroupedWithTheRelationsFlags(unittest.TestCase):
     `SZ_INCLUDE_MATCH_KEY_DETAILS` with `export_json_entity_report` and
     `export_csv_entity_report` in its `applies_to`, while the six relations flags omit both.
 
-    It is returned by that filter *because* it `depends_on` those flags, so the adjacency is
-    what makes the longer `applies_to` easy to miss — which is why this is pinned rather
+    It was returned by that filter *because* it depends on those flags, so the adjacency is
+    what made the longer `applies_to` easy to miss — which is why this is pinned rather
     than left to the next reader to re-derive.
+
+    ⚠️ **Re-verified 2026-10-14 (#591), server 1.38.2: the reply changed shape.** That filter
+    no longer returns `SZ_INCLUDE_MATCH_KEY_DETAILS`, and the flag's own entry
+    (`filter='SZ_INCLUDE_MATCH_KEY_DETAILS'`) carries no `depends_on` field: the relations
+    dependency is stated only in its description (*"dependent on using one of the following
+    flags: …"*). Its `applies_to` still names both export methods. So the paragraph now sends
+    the reader to the flag's own filter and quotes the described dependency; the rule pinned
+    here — not grouped with the relations flags, applies to export, the dependency stated —
+    is unchanged.
 
     Not required by the spec's acceptance criteria; added because nothing else guards the
     correction and the grouped form is the natural way to write the sentence again.
@@ -144,26 +153,45 @@ class TestMatchKeyDetailsIsNotGroupedWithTheRelationsFlags(unittest.TestCase):
             "the export methods — its applies_to names both export methods",
         )
 
-    def test_the_viz_reference_states_that_it_does_apply_to_export(self):
+    #: The paragraph's anchor. It was "`SZ_INCLUDE_MATCH_KEY_DETAILS` is the exception" — in
+    #: "that same reply" — until #591 found the relations filter no longer returns the flag.
+    ANCHOR = "`SZ_INCLUDE_MATCH_KEY_DETAILS` is not one of that family"
+
+    def paragraph(self):
         text = read(VIZ_REF)
-        self.assertIn("`SZ_INCLUDE_MATCH_KEY_DETAILS` is the exception", text)
-        self.assertIn("export_json_entity_report", text)
-        self.assertIn("export_csv_entity_report", text)
+        start = text.index(self.ANCHOR)
+        return " ".join(text[start:text.index("\n\n", start)].split())
+
+    def test_the_viz_reference_states_that_it_does_apply_to_export(self):
+        para = self.paragraph()
+        self.assertIn("export_json_entity_report", para)
+        self.assertIn("export_csv_entity_report", para)
+
+    def test_it_is_confirmed_with_its_own_filter(self):
+        """#591: the relations filter's reply no longer contains it (server 1.38.2)."""
+        para = self.paragraph()
+        self.assertIn("get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')",
+                      para)
+        for stale in ("in that same reply", "returned by the `SZ_ENTITY_INCLUDE_ALL_RELATIONS` filter"):
+            with self.subTest(stale=stale):
+                self.assertNotIn(stale, para)
 
     def test_the_dependency_is_stated_so_it_is_not_read_as_unconditional(self):
-        """It only produces output when relationships are already included."""
-        text = read(VIZ_REF)
-        self.assertIn("depends_on", text)
-        self.assertRegex(text, r"(?i)a dependency, not an\s+exclusion")
+        """It only produces output when relationships are already included.
+
+        Stated as the entry's description states it: on server 1.38.2 the entry has no
+        `depends_on` field, so the paragraph must not present one (#591).
+        """
+        para = self.paragraph()
+        self.assertIn("is dependent on using one of the following flags", para)
+        self.assertRegex(para, r"(?i)a dependency, not an exclusion")
+        self.assertNotIn("depends_on", para)
 
     def test_the_claim_carries_its_provenance(self):
         """Scoped to this paragraph: the page carries other stamps, so a whole-file regex
         matches them and passes even when THIS claim loses its provenance."""
-        text = read(VIZ_REF)
-        start = text.index("`SZ_INCLUDE_MATCH_KEY_DETAILS` is the exception")
-        para = text[start:text.index("\n\n", start)]
         self.assertRegex(
-            para, r"verified on MCP server 1\.\d+\.\d+, docs indexed [^,]+, \d{4}-\d{2}-\d{2}",
+            self.paragraph(), r"verified on MCP server 1\.\d+\.\d+, \d{4}-\d{2}-\d{2}",
             "the export applies_to claim must name the server version and date it was asked",
         )
 
@@ -177,7 +205,7 @@ class TestMatchKeyDetailsIsNotGroupedWithTheRelationsFlags(unittest.TestCase):
         not to mention the flag — and the flag is named freely in five other shipped files
         (`visualization-api-reference.md`, `module-07`'s two phase files, `ground-rules.md`),
         so the ban was never policy. Phase D's match-key audit now cites it correctly, stating
-        that `MATCH_KEY_DETAILS` `requires_flags` it and that it `depends_on` a relations flag,
+        that `MATCH_KEY_DETAILS` `requires_flags` it and that it depends on a relations flag,
         which is the documented relationship and the opposite of the grouped error. So this now
         pins the grouped form, the same way the sibling test above does for the viz reference.
         """

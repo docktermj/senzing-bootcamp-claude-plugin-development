@@ -9990,7 +9990,7 @@ looks wrong.
 - `tests/test_hold_reason_lives_in_the_ledger.py`: 11
 - `tests/test_hook_entries_name_a_script.py`: 5
 - `tests/test_how_analysis_names_the_confusable_keys.py`: 20
-- `tests/test_how_call_requests_the_breakdown_it_promises.py`: 20
+- `tests/test_how_call_requests_the_breakdown_it_promises.py`: 24
 - `tests/test_how_tab_names_an_unsettled_final_state.py`: 21
 - `tests/test_install_verification_citation.py`: 8
 - `tests/test_interface_naming.py`: 12
@@ -10142,7 +10142,7 @@ looks wrong.
 - `tests/test_recap_video.py`: 145
 - `tests/test_record_limit_negative_is_rescoped.py`: 13
 - `tests/test_registration_idempotency_is_constructed.py`: 12
-- `tests/test_related_entities_guidance.py`: 20
+- `tests/test_related_entities_guidance.py`: 21
 - `tests/test_release_bumps_version_changelog_and_tag_together.py`: 32
 - `tests/test_release_covers_every_version_site.py`: 8
 - `tests/test_release_cycle.py`: 67
@@ -12020,6 +12020,14 @@ Senzing licensing, with no SPDX identifier.
   because the check tests records already typed `PERSON`, with no server
   token added (the label said no MCP route served a suffix list; step 2 does,
   for sources with no type field)
+- #591: Module 3b and Module 7 describe `SZ_INCLUDE_MATCH_KEY_DETAILS`'s
+  flag entry as the server returns it, read from its own filter, with the
+  relations dependency stated as its description states it, and Module 7's
+  how side relays the how schema's `requires_flags` as a fourth server
+  statement, keeping the flag entry's related-entity-only `response_paths`
+  unreconciled (the text said the relations filter returned the flag, gave
+  its entry a `depends_on` field and quoted `response_paths` the server no
+  longer returns)
 - #592: Data collection Step 8a sub-step 5 wires a Base64 key inline as
   `LICENSESTRINGBASE64` and a `.lic` as `LICENSEFILE` with an absolute path,
   then re-sources the env script before sub-step 7 measures the limit, and

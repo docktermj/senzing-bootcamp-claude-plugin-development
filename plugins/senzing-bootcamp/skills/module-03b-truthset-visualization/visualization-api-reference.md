@@ -118,16 +118,19 @@ yields an empty `edges` array and no error.**
   is the case that loses relationships. Confirm with
   `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`, which returns the
   whole family in one reply.
-- ⚠️ **`SZ_INCLUDE_MATCH_KEY_DETAILS` is the exception in that same reply — it *does* apply to
-  export.** Its `applies_to` names `export_json_entity_report` and `export_csv_entity_report`
-  alongside the entity, `why_*`, `how_entity_by_entity_id`, `find_path_*` and `find_network_*`
-  methods (verified on MCP server 1.32.8, docs indexed 2026-08-11 13:35 UTC, 2026-08-11). So
-  match-key detail **is** available on an export. It also carries `depends_on`
-  (`SZ_ENTITY_INCLUDE_ALL_RELATIONS`, or one of the individual relations flags), so it produces
-  output only when the export's flag set already includes relationships — a dependency, not an
+- ⚠️ **`SZ_INCLUDE_MATCH_KEY_DETAILS` is not one of that family — it *does* apply to export.**
+  Confirm it with its own filter, `get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')`,
+  and read `applies_to` there: it names `export_json_entity_report` and `export_csv_entity_report`
+  alongside the entity, `search_by_attributes`, `why_*`, `how_entity_by_entity_id`, `find_path_*`
+  and `find_network_*` methods (verified on MCP server 1.38.2, 2026-10-14; first verified on
+  1.32.8, docs indexed 2026-08-11 13:35 UTC, 2026-08-11). So match-key detail **is** available on
+  an export. Its description states the relations dependency: *"The SZ_INCLUDE_MATCH_KEY_DETAILS
+  flag is dependent on using one of the following flags: SZ_ENTITY_INCLUDE_ALL_RELATIONS,
+  SZ_ENTITY_INCLUDE_POSSIBLY_SAME_RELATIONS, …"* — so it produces output only when the export's
+  flag set already includes relationships — a dependency, not an
   exclusion. ⛔ **Read each row's own `applies_to`, never the response as one group.** This flag is
-  returned by the `SZ_ENTITY_INCLUDE_ALL_RELATIONS` filter *because* it depends on those flags, and
-  that adjacency is precisely what makes its longer `applies_to` easy to miss.
+  absent from the relations filter's reply, so a reader who checks only that reply never sees its
+  longer `applies_to`.
 
 So an export **is** a legitimate edge source when its rows carry the key, and the per-entity and
 network methods below remain correct and are the fallback when they do not.
@@ -479,10 +482,14 @@ match-key breakdown — add `SZ_INCLUDE_MATCH_KEY_DETAILS` with a relations flag
 it** (the same addition the `/api/why` entry above already makes on the why side). The server is
 explicit that the default is not enough: `SZ_HOW_ENTITY_DEFAULT_FLAGS` is `SZ_INCLUDE_FEATURE_SCORES`
 alone, `response_paths` `HOW_RESULTS.RESOLUTION_STEPS[]`, and `SZ_INCLUDE_MATCH_KEY_DETAILS` lists
-`how_entity_by_entity_id` in `applies_to` with `depends_on` one of the five relations flags
-(`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_FEATURE_SCORES', language='python')` and
-`filter='SZ_INCLUDE_MATCH_KEY_DETAILS'`, server **1.33.0**, 2026-08-26). Confirm both, and the
-response structure, via the MCP server. ⚠️ **Treat the breakdown as conditional and fall back to
+`how_entity_by_entity_id` in `applies_to`, and that flag's own row documents the relations
+dependency in its description (`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_FEATURE_SCORES',
+language='python')` and `filter='SZ_INCLUDE_MATCH_KEY_DETAILS'`, server **1.38.2**, 2026-10-14).
+The how schema marks the field as requiring the flag:
+`get_sdk_reference(topic='response_schemas', filter='how_entity', language='<chosen_language>')`
+lists `HOW_RESULTS.RESOLUTION_STEPS[].MATCH_INFO.MATCH_KEY_DETAILS` with `requires_flags:
+["SZ_INCLUDE_MATCH_KEY_DETAILS"]` (same server and date). Confirm all three, and the response
+structure, via the MCP server. ⚠️ **Treat the breakdown as conditional and fall back to
 `FEATURE_SCORES`** — see the asymmetry note above for what the server does and does not attribute to
 this flag on a how response, and never render an empty section.
 

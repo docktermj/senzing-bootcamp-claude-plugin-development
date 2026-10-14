@@ -223,35 +223,42 @@ language='<lang>', version='current')`.
 `get_sdk_reference(topic='flags', filter='<method>')` and select the flags matching the
 bootcamper's query intent. Explain the choice in one sentence: "I'm using [flag] so we can see
 [what it provides]." For visualization-bound queries, include `SZ_INCLUDE_FEATURE_SCORES`
-and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`. ⚠️ **`SZ_INCLUDE_MATCH_KEY_DETAILS` `depends_on` a relations
-flag, so pass it only alongside one** — `SZ_ENTITY_INCLUDE_ALL_RELATIONS` or one of its four members.
+and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`. ⚠️ **`SZ_INCLUDE_MATCH_KEY_DETAILS` is dependent on a
+relations flag, so pass it only alongside one** — `SZ_ENTITY_INCLUDE_ALL_RELATIONS` or one of its four
+members; that flag's own row documents the relations dependency in its description.
 Passed on its own it is accepted and adds nothing, which reads as "no relationships in this data"
 rather than as a missing flag (INV-179). It is **not** how a why response explains its match: see
 step 3a.
 
 ⛔ **(INV-169) Do NOT restrict this flag to "methods that return related entities" — the server does not, and
-that restriction excludes the one method whose own schema documents the field (INV-169).** Three
-statements from the server, re-verified on **1.33.0, 2026-08-26**, and they do not fully agree:
+that restriction excludes the one method whose own schema documents the field (INV-169).** Four
+statements from the server, re-verified on **1.38.2, 2026-10-14**. Three of them now agree, and
+one still does not:
 
 - `applies_to` **includes** `how_entity_by_entity_id`, alongside the entity, `search`, `why_*`,
   `find_path_*`, `find_network_*` and export methods.
-- The flag's own `response_paths` are `RELATED_ENTITIES[]` and `RESOLVED_ENTITY.*`, and its
+- `get_sdk_reference(topic='response_schemas', filter='how_entity', language='<chosen_language>')`
+  documents `HOW_RESULTS.RESOLUTION_STEPS[].MATCH_INFO.MATCH_KEY_DETAILS.CONFIRMATIONS[]` in full.
+- That same schema marks every `HOW_RESULTS.RESOLUTION_STEPS[].MATCH_INFO.MATCH_KEY_DETAILS` path
+  `requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]` — **the server documents that the how-side
+  breakdown requires this flag**, the same marker it carries for `WHY_KEY_DETAILS` on the why side
+  (step 3a). When that marker first appeared is not known: the how side was last checked on 1.33.0.
+- The flag's own `response_paths` are `RELATED_ENTITIES[].MATCH_KEY_DETAILS` only, and its
   description says *"each related entity includes a MATCH_KEY_DETAILS object"* — a shape
   `how_entity` does not return at all.
-- `get_sdk_reference(topic='response_schemas', filter='how_entity', language='python')`
-  nevertheless documents `HOW_RESULTS.RESOLUTION_STEPS[].MATCH_INFO.MATCH_KEY_DETAILS.CONFIRMATIONS[]`
-  in full.
 
-**Record all three and reconcile none.** This is a coverage gap on the server's side, not a fact the
-plugin can settle — so pass the flag **with its relations flag** wherever a breakdown is wanted,
-treat the breakdown as **conditional**, and fall back to `FEATURE_SCORES` when it is absent. Whether
-the flag is what makes the field appear is **observation-only** on both methods (INV-080/INV-149): no
-MCP route reports which flag set populated a given engine response. An earlier version of this
+**Record all four and reconcile none.** The flag entry still names only the related-entity object,
+so the remaining tension is a coverage gap on the server's side, not a fact the plugin can settle —
+so pass the flag **with its relations flag** wherever a breakdown is wanted, treat the breakdown as
+**conditional**, and fall back to `FEATURE_SCORES` when it is absent. The `requires_flags` marker is
+what the server documents; whether a given engine response carried the field is still
+**observation-only** on both methods (INV-080/INV-149). An earlier version of this
 clause read the `response_paths` line as governing and told the guide to skip the flag on methods
 without related entities, while step 4c's own cross-reference promised `how_entity`'s
 `MATCH_KEY_DETAILS.CONFIRMATIONS[]`; the instruction and the promise did not meet.
 (`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')` and
-`topic='response_schemas', filter='how_entity'`, server **1.33.0**, 2026-08-26.)
+`topic='response_schemas', filter='how_entity', language='python'`, server **1.38.2**, 2026-10-14;
+first recorded on server **1.33.0**, 2026-08-26.)
 
 ⚠️ **The server cautions that DEFAULT composites are not for production code — relay this when you
 teach them.** Returned verbatim as the top-level `caution` field of
