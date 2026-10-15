@@ -792,6 +792,46 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
   recorded containers on exit (`<runtime> stop`, not remove) and `SessionStart` surfaces them on
   resume so they can be restarted or regenerated. (The list key stays `docker_containers` for
   compatibility with in-flight bootcamps, whatever runtime its entries name.)
+- **Install the chosen language's toolchain in the container.** Every program on this path is
+  built and run inside the container, in the container-route form that
+  `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives; do not restate
+  it here (INV-300). The SDK install adds no language runtime: on server 1.39.0 (2026-10-15)
+  `sdk_guide(topic='install', platform='docker', language='<chosen_language>')` said the container
+  "must also already contain your language runtime (python3, a JDK, .NET or Node.js) — the slim
+  images do not", and gave no command to install one. So, after the SDK package:
+  1. **The server's command, when it gives one.** If that `sdk_guide` reply carries a command that
+     installs the chosen language's runtime or compiler in the container, run it there instead of
+     the row below, and tell the Bootcamper it came from the server.
+  2. **Otherwise, the chosen language's row below**, as `<install>`, run as root in the container
+     you recorded, with `<runtime>` and `<container>` from its `docker_containers` entry, and
+     `DEBIAN_FRONTEND=noninteractive` passed in so `apt-get` never waits on a prompt. The rows
+     are for this path's `debian:bookworm-slim` image; on another image, say that the row does not
+     apply and use that image's own package route. For TypeScript, when the build-from-source
+     warning below applies, run the Rust row too.
+  3. **Check the version the row prints against the server's minimum.** For Python, Java and C#
+     the minimum is in `search_docs(query='v4 System Requirements languages supported')`; for
+     Rust and TypeScript, the community SDKs, it is in the SDK's own README or CONTRIBUTING through
+     `search_docs`. Below the minimum, stop and name both versions; never pick another version
+     from memory (INV-080).
+
+  ```bash
+  <runtime> exec -e DEBIAN_FRONTEND=noninteractive <container> bash -c '<install>'
+  ```
+
+  Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
+  | Language | `<install>` |
+  |----------|-------------|
+  | Python | `apt-get update && apt-get install -y python3 && python3 --version` |
+  | Java | `apt-get update && apt-get install -y default-jdk-headless && javac -version` |
+  | C# | `apt-get update && apt-get install -y wget ca-certificates && wget -qO /tmp/packages-microsoft-prod.deb https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb && dpkg -i /tmp/packages-microsoft-prod.deb && apt-get update && apt-get install -y dotnet-sdk-10.0 && dotnet --version` |
+  | Rust | `apt-get update && apt-get install -y curl ca-certificates build-essential && curl --proto =https --tlsv1.2 -sSfo /tmp/rustup-init.sh https://sh.rustup.rs && sh /tmp/rustup-init.sh -y --profile minimal && ln -sf "$HOME/.cargo/bin/cargo" "$HOME/.cargo/bin/rustc" /usr/local/bin/ && cargo --version` |
+  | TypeScript | `apt-get update && apt-get install -y nodejs npm && npm install -g typescript && node --version && tsc --version` |
+  <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='docker', language='csharp' and 'typescript'), sdk_guide(topic='install', platform='linux_apt', language='java'), and find_examples(query='dockerfile') — no reply gives a command that installs a language runtime or compiler in a plain container: the docker install says the container must already hold one, the Dockerfiles start from an image that has it, and the linux_apt install's first command adds only wget, ca-certificates and sqlite3 — owner: sdk_guide(topic='install', platform='docker', language=<lang>) IS the route that would carry an in-container install step, and it carries the requirement without the command, so the rows above are the plugin's own until it does; the minimums the rows meet are served: search_docs "v4 System Requirements" (Python >= 3.10, Java >= 17, C# >= .NET Standard 2.0) and the sz-napi CONTRIBUTING and README (Node.js 18 or later, Rust MSRV 1.88 via rustup) (absence negative) — server 1.39.0, 2026-10-15 -->
+
+  A row that fails leaves the container without the tool, and the first build then fails with the
+  section's "tool is not found" Fix_Instruction; a container created before this step existed is
+  in the same state, and running its row now installs the tool.
 
 <a id="container-naming"></a>
 

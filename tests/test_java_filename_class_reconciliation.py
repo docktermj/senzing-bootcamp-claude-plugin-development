@@ -313,7 +313,7 @@ class TheSharedClassCaseIsDistinguished(unittest.TestCase):
         self.assertRegex(
             plain(GROUND_RULES),
             r"(?i)Verified for a single mapper class on javac/java 21\.0\.11, 2026-08-14: "
-            r".{0,120}package-private form compiles clean under `javac -Xlint:all`",
+            r".{0,120}package-private form compiles clean under `-Xlint:all`",
             "the -Xlint:all claim lost its scope; it was verified on one standalone class only",
         )
 

@@ -28,7 +28,9 @@ Module 3 cites it and keeps no copy:
 * Module 3 Step 5 cites the section by file and section name, with `<dir>` named; Steps 3, 4, 5a,
   6, 7, 7a and 8 cite it directly and name their program; no step says "Step 5's table" or "as
   Step 5 says"; Module 3 restates no command of the statement's shape; and no shipped file other
-  than the ground rules restates one of Module 3's commands or the build timeout.
+  than the ground rules restates one of Module 3's commands or the build timeout. Since #595 only
+  the section itself is exempt: the rest of `ground-rules.md` is held to the same scan, which keeps
+  out the in-container syntax-check list it used to carry.
 
 #563 moved every other program onto the statement, and #594 made the guard find those sites rather
 than list them (INV-246):
@@ -304,6 +306,17 @@ def block(text, heading, stop):
 
 def section(text):
     return block(text, SECTION, r"\n## ")
+
+
+def outside_the_section(text):
+    """The ground rules with "Building and running a program" cut out (#595).
+
+    The section is the one statement, so only it may hold the commands; the rest of the file is
+    held to the restatement guard like every other shipped file. Unchanged when the heading is
+    missing, so a renamed section exempts nothing rather than everything (INV-265).
+    """
+    body = section(text)
+    return text.replace(SECTION + body, "", 1) if body else text
 
 
 def step(text, heading):
@@ -848,14 +861,44 @@ class ModuleThreeCitesTheSectionAndKeepsNoCopy(unittest.TestCase):
                         body.find("The run has a 30-second timeout"))
 
     def test_no_shipped_file_but_the_ground_rules_restates_a_command(self):
+        """Only the section is exempt: the rest of `ground-rules.md` is scanned too (#595)."""
         files = corpus_files("plugins", suffixes={".md"})
         self.assertIn(PHASE1, files, "the scan does not reach Module 3 (INV-265)")
+        self.assertIn(GROUND_RULES, files, "the scan does not reach the ground rules (INV-265)")
         problems = []
         for path in files:
-            if path != GROUND_RULES:
-                rel = path.relative_to(REPO_ROOT).as_posix()
-                problems += restatements(rel, read(path), self.ground_rules)
+            rel = path.relative_to(REPO_ROOT).as_posix()
+            text = read(path)
+            if path == GROUND_RULES:
+                text = outside_the_section(text)
+            problems += restatements(rel, text, self.ground_rules)
         self.assertEqual([], problems)
+
+    def test_a_restated_command_elsewhere_in_the_ground_rules_is_reported(self):
+        """Negative control: the syntax-check list #595 removed, put back, fails the scan."""
+        anchor = "- **Confirm it with a compile, not by re-reading the source.**"
+        self.assertIn(anchor, self.ground_rules)
+        for line, expect in (
+                ("Syntax-check it with `python3 -m py_compile <file>` or `tsc --noEmit`.",
+                 "restates a command: `python3 -m py_compile"),
+                ("Build it with `dotnet build src/system_verification/verify_pipeline`.",
+                 "restates a command: `dotnet build")):
+            with self.subTest(line=line):
+                restated = self.ground_rules.replace(anchor, line + "\n" + anchor, 1)
+                problems = restatements("ground-rules", outside_the_section(restated),
+                                        self.ground_rules)
+                self.assertTrue(any(expect in p for p in problems), problems)
+
+    def test_the_section_itself_stays_exempt(self):
+        body = section(self.ground_rules)
+        self.assertIn("`dotnet build <dir>/<name>`", body)
+        self.assertNotIn("`dotnet build <dir>/<name>`", outside_the_section(self.ground_rules))
+        self.assertEqual(
+            [], restatements("ground-rules", outside_the_section(self.ground_rules),
+                             self.ground_rules))
+        renamed = self.ground_rules.replace(SECTION, "## Building a program", 1)
+        self.assertEqual(renamed, outside_the_section(renamed),
+                         "a renamed section must exempt nothing (INV-265)")
 
     def test_a_restated_command_in_module_3_is_reported(self):
         body = step(self.text, "### Step 6:")
