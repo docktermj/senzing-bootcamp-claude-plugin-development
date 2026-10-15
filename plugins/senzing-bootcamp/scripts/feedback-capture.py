@@ -2,9 +2,16 @@
 """UserPromptSubmit hook: "to capture bootcamp feedback, notes and verbosity changes".
 
 Only active during a bootcamp (a config/bootcamp_progress.json file exists in the
-working directory). If the bootcamper's message asks to give feedback, to jot a note
-down, or to change verbosity, inject guidance so those "at any time" requests are
-handled the same way anywhere in the bootcamp. Emits nothing otherwise, so the plugin
+working directory). The gate tests the file's EXISTENCE on purpose, not
+recap_checkpoint.bootcamp_active(): existence answers "is this a bootcamp project", not
+"is a bootcamp in progress" (INV-227). The onboarding preface creates the file empty and
+nothing records a module until Bootcamp preparation's final write, yet feedback, notes
+and verbosity changes are taken at any time from onboarding on (INV-010), so the hook
+must run in that window too (hooks/README.md, Gate column).
+
+If the bootcamper's message asks to give feedback, to jot a note down, or to change
+verbosity, inject guidance so those "at any time" requests are handled the same way
+anywhere in the bootcamp. Emits nothing otherwise, so the plugin
 never alters unrelated Claude Code sessions.
 
 Cross-platform: invoked as a ``type: command`` hook whose ``command`` names the

@@ -8,19 +8,31 @@ hooks wired to small **Python** scripts under `../scripts/`, each invoked by a
 `command` string naming the interpreter and the script, quoted
 (`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/<script>.py"`).
 
-Every hook is gated on an active bootcamp. Each script no-ops unless a
-`config/bootcamp_progress.json` file exists in the working directory, so the
-plugin never alters unrelated Claude Code sessions.
+Every hook is gated, so the plugin never alters unrelated Claude Code sessions: each
+script no-ops unless a `config/bootcamp_progress.json` file exists in the working
+directory. The Gate column below says what each one tests beyond that, and the two gates
+answer different questions:
 
-| Event | Script | Purpose |
-|-------|--------|---------|
-| `SessionStart` | `scripts/session-start.py` | to resume an in-progress bootcamp (offers to continue from the last recorded module, and folds any in-progress recap checkpoint into the recap). |
-| `UserPromptSubmit` | `scripts/feedback-capture.py` | to capture bootcamp feedback, bootcamper notes and verbosity changes at any time (routes "bootcamp feedback", "make a note" and "change verbosity" requests to the right workflow). |
-| `UserPromptSubmit` | `scripts/checkpoint-tick.py` | to keep the in-progress recap checkpoint durable (creates `docs/progress/recap_checkpoint.md` as an empty scaffold within a turn of the bootcamp starting, and reminds the guide once to keep it current). Runs per turn because a bootcamp becomes active *after* `SessionStart` has already run; silent on every turn after the file exists. |
-| `PreToolUse` (Write, Edit) | `scripts/write-gate.py` | to keep your files in the project (blocks writes whose resolved target is outside the project — system temp and Downloads get a more specific message — and obvious hardcoded secrets, during a bootcamp). |
-| `Stop` | `scripts/stop-nudge.py` | to review what you said and end each turn with one leading question (a loop-safe safety net for the closing 👉 question). |
-| `PreCompact` | `scripts/precompact-recap.py` | to preserve your in-progress recap before the conversation is compacted (folds the module recap checkpoint into the recap). |
-| `SessionEnd` | `scripts/session-end.py` | to preserve your in-progress recap when the session ends (folds the module recap checkpoint into the recap). |
+- **`bootcamp_active()`** (in `scripts/recap_checkpoint.py`) asks *is a bootcamp in
+  progress?* It is true only when the progress file **records a module**, the same rule
+  session start uses (`../skills/bootcamp-onboarding/SKILL.md` → "Fresh start vs. resume —
+  decided by the progress file's CONTENT, not its existence", INV-227). The four recap hooks
+  use it, so they stay silent while the file exists but records no module.
+- **Existence** asks *is this a bootcamp project?* The onboarding preface creates the file
+  empty, and nothing records a module until Bootcamp preparation's final consolidated write.
+  The preface and every preparation gate still ask pinned 👉 questions, write project files
+  and take feedback, so the three hooks that serve them gate on existence on purpose, not on
+  `bootcamp_active()` (INV-227, INV-010).
+
+| Event | Script | Purpose | Gate |
+|-------|--------|---------|------|
+| `SessionStart` | `scripts/session-start.py` | to resume an in-progress bootcamp (offers to continue from the last recorded module, and folds any in-progress recap checkpoint into the recap). | `bootcamp_active()`: a resume needs a recorded module. |
+| `UserPromptSubmit` | `scripts/feedback-capture.py` | to capture bootcamp feedback, bootcamper notes and verbosity changes at any time (routes "bootcamp feedback", "make a note" and "change verbosity" requests to the right workflow). | Existence: feedback, notes and verbosity changes are taken from onboarding on, before any module is recorded (INV-010). |
+| `UserPromptSubmit` | `scripts/checkpoint-tick.py` | to keep the in-progress recap checkpoint durable (creates `docs/progress/recap_checkpoint.md` as an empty scaffold within a turn of the bootcamp starting, and reminds the guide once to keep it current). Runs per turn because a bootcamp becomes active *after* `SessionStart` has already run; silent on every turn after the file exists. | `bootcamp_active()`: there is no module recap to keep before a module is recorded. |
+| `PreToolUse` (Write, Edit) | `scripts/write-gate.py` | to keep your files in the project (blocks writes whose resolved target is outside the project — system temp and Downloads get a more specific message — and obvious hardcoded secrets, during a bootcamp). | Existence: the onboarding preface and Bootcamp preparation write project files before any module is recorded, and those writes must stay in the project too. |
+| `Stop` | `scripts/stop-nudge.py` | to review what you said and end each turn with one leading question (a loop-safe safety net for the closing 👉 question). | Existence: the preface and every Bootcamp preparation gate end on a pinned 👉 question before any module is recorded. |
+| `PreCompact` | `scripts/precompact-recap.py` | to preserve your in-progress recap before the conversation is compacted (folds the module recap checkpoint into the recap). | `bootcamp_active()`: there is no module recap to fold before a module is recorded. |
+| `SessionEnd` | `scripts/session-end.py` | to preserve your in-progress recap when the session ends (folds the module recap checkpoint into the recap). | `bootcamp_active()`: there is no module recap to fold before a module is recorded. |
 
 **Convention (INV-016 interpretation):** the "begin with the word 'to'" rule applies
 to each hook's **documented purpose** — the Purpose column above — not to the runtime
@@ -64,8 +76,8 @@ the expanded path can contain a space, and unquoted it would split into two argu
 ## Design notes
 
 - **Deterministic gates, not model judgment.** The `Stop` and `PreToolUse` hooks
-  are `command` scripts that decide behavior from the on-disk bootcamp-active
-  signal, so they never fire in non-bootcamp sessions.
+  are `command` scripts that decide behavior from the on-disk progress file's
+  existence (the Gate column above), so they never fire in non-bootcamp sessions.
 - **Non-blocking by default.** The write-gate can block a tool call (exit 2), and only
   for a target outside the project or an obvious secret, during a bootcamp. The `Stop` hook can block a turn
   from ending (`decision: block`) to request the one forgotten closing 👉 question, but

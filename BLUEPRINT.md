@@ -1470,14 +1470,19 @@ containing a space working. No hook has a timeout or other options.
 - `PreCompact` (no matcher) runs `precompact-recap.py`.
 - `SessionEnd` (no matcher) runs `session-end.py`.
 
-Every script is gated on an active bootcamp: it does nothing unless
-`config/bootcamp_progress.json` exists in the project directory, so the plugin
-never changes unrelated sessions. Only `write-gate.py` (exit 2) and
+Every script does nothing unless `config/bootcamp_progress.json` exists in the
+project directory, so the plugin never changes unrelated sessions. The four
+recap hooks (`session-start.py`, `checkpoint-tick.py`, `precompact-recap.py`,
+`session-end.py`) also need `recap_checkpoint.bootcamp_active()`, a recorded
+module. `write-gate.py`, `stop-nudge.py` and `feedback-capture.py` gate on
+existence alone on purpose: it answers "is this a bootcamp project", and
+onboarding and Bootcamp preparation need them before any module is recorded
+(INV-227); each docstring says why. Only `write-gate.py` (exit 2) and
 `stop-nudge.py` (a `decision: block` reply, at most once per stop chain) can
 block; `feedback-capture.py`, `checkpoint-tick.py` and `session-start.py`
 inject context; the others emit nothing. The sibling `hooks/README.md`
 documents each hook's purpose phrased from the Bootcamper's view beginning with
-"to" (the INV-016 convention), the `python3`-on-`PATH` prerequisite on Linux,
+"to" (the INV-016 convention) and, in a Gate column, its gate and why, the `python3`-on-`PATH` prerequisite on Linux,
 macOS and Windows, the recap-checkpoint durability design shared by
 `PreCompact`, `SessionEnd` and `SessionStart`, the two Stop-nudge opt-outs
 (the `SENZING_BOOTCAMP_DISABLE_STOP_NUDGE` environment variable and the
@@ -1493,7 +1498,10 @@ then decides fresh vs resume from the CONTENT of
 blank `current_module` is a silent fresh start; a recorded `current_module`
 offers resume at `current_module`/`current_step`, after re-offering any
 feedback entry still marked `offer pending`. It never announces a resume it
-cannot perform (`recap_checkpoint.bootcamp_active()` applies the same rule).
+cannot perform (`recap_checkpoint.bootcamp_active()` applies the same rule,
+for the recap hooks). Step 2 is where the rule is stated: `ground-rules.md`'s
+"Session start" and `/graduate` point at its bold label rather than restating
+it (INV-227, INV-300).
 
 `onboarding-flow.md` (fresh start):
 
@@ -2853,8 +2861,9 @@ once, as the final output (INV-057); never while exploration continues, and
 graduation never ends on the closing question once the Bootcamper says they are
 done. It tells the skill to pass
 `${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py` as the PDF generator.
-When `config/bootcamp_progress.json` is missing it says there is no bootcamp to
-graduate and offers `/start-bootcamp`.
+First, by the onboarding skill's step 2 rule it points at (INV-227), when
+`config/bootcamp_progress.json` is missing or records no module it says there
+is no bootcamp to graduate and offers `/start-bootcamp`, instead of graduating.
 
 ### 5.20 `plugins/senzing-bootcamp/commands/package-bootcamp.md`
 
@@ -10203,7 +10212,7 @@ looks wrong.
 - `tests/test_release_covers_every_version_site.py`: 8
 - `tests/test_release_cycle.py`: 67
 - `tests/test_results_validation_is_diagnostic.py`: 35
-- `tests/test_resume_requires_a_recorded_module.py`: 12
+- `tests/test_resume_requires_a_recorded_module.py`: 27
 - `tests/test_retired_vocabulary.py`: 5
 - `tests/test_retrofit_files_issues.py`: 40
 - `tests/test_reverse_check_counts_what_it_cannot_test.py`: 16
@@ -12181,6 +12190,15 @@ Senzing licensing, with no SPDX identifier.
   it and Step 2 reads the fields by name, checked by
   `tests/test_scenario_registry_fields_agree.py` (Module 1 wrote the registry
   with no named fields, so what Module 4 read depended on what the guide wrote)
+- #605: session start (`ground-rules.md`) and `/graduate` point at
+  `bootcamp-onboarding/SKILL.md` step 2's content rule instead of testing the
+  progress file's existence, so `/graduate` refuses a file recording no
+  module; the hooks README's Gate column and the three existence-gated
+  scripts' docstrings say why those hooks keep the existence gate, checked
+  against each script's code by `tests/test_resume_requires_a_recorded_module.py`,
+  with an INV-227 `PROPOSED AMENDMENT` queued (session start resumed, and
+  `/graduate` graduated, a bootcamp that recorded no module, and the README
+  said every hook gated on existence)
 - #609: `/release-cycle` writes nothing under `specs/` before stage 5 and its
   own entry only at a stop, stated once with every write and matched by the
   pending #573 block, corrected in place; `autotest.py --report-dir` keeps a
