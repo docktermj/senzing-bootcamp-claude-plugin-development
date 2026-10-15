@@ -4,6 +4,13 @@ description: 'Graduate the Senzing bootcamp: generate the recap PDF and a produc
 
 The bootcamper wants to graduate the Senzing bootcamp.
 
+First, decide whether there is a bootcamp to graduate by what
+`config/bootcamp_progress.json` in the working directory records, never by whether it
+exists: follow `../skills/bootcamp-onboarding/SKILL.md` → "Fresh start vs. resume — decided
+by the progress file's CONTENT, not its existence" (INV-227, INV-300). Where that rule reads a
+fresh start, whether the file is missing or records no module, tell the bootcamper there is no
+bootcamp to graduate and offer to start one with `/start-bootcamp`, instead of graduating.
+
 Invoke the `graduation` skill and follow it: show the GRADUATION banner, present the
 graduation preface (journey map, before/after, step overview, estimated time), show the
 decisions the bootcamper made and how they got it built, ask for their one-line takeaway and their
@@ -21,7 +28,3 @@ question when the bootcamper has said they are done.
 The bundled recap PDF generator is available at
 `${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py`; pass that path when the
 graduation skill renders the PDF.
-
-If no `config/bootcamp_progress.json` exists in the working directory, tell the
-bootcamper there is no bootcamp to graduate and offer to start one with
-`/start-bootcamp`.

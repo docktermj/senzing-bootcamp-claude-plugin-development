@@ -7,7 +7,10 @@ steering files.)
 
 ## Session start
 
-- Check `config/bootcamp_progress.json`. If present, resume; if not, run onboarding.
+- Decide whether to resume or run onboarding by what `config/bootcamp_progress.json`
+  records, never by whether it exists. Follow `SKILL.md` → "Fresh start vs. resume —
+  decided by the progress file's CONTENT, not its existence", which states the rule
+  (INV-227, INV-300).
 - Call the Senzing MCP `get_capabilities` tool once at session start, before other Senzing
   MCP calls.
 - **A value you measured on this machine governs over generic guidance about that same value.**
