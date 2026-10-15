@@ -297,6 +297,15 @@ PER_FILE_WAIVERS = {
         "correcting it here would misquote the source AND desync the spec from the "
         "ledger. The spec's own prose, and its filename, use `coloring`.",
     ),
+    ".claude/skills/auto-test/baseline/mcp-snapshot.json": (
+        {"summarise": 1},
+        "A machine-captured snapshot of the live Senzing MCP server, written only by "
+        "`mcp_probe.py update` (#659). The word is the server's own `get_sample_data` "
+        "description (1.39.0) quoted verbatim, and the probe's drift diff compares that "
+        "text by digest, so correcting it would misquote the server and report drift "
+        "that is not there. When a later `update` drops the word, this waiver fails as "
+        "stale and is removed.",
+    ),
     "tests/test_windows_browser_discovery.py": (
         {"programme": 3},
         "A GERMAN localized `%ProgramFiles%` fixture (`D:\\Programme`) proving "

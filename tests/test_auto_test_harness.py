@@ -149,6 +149,145 @@ class TestPluginConformsToTheCapturedContract(unittest.TestCase):
             "the hand-written contract and the captured snapshot disagree about "
             "mapping_workflow's actions; one of them is wrong")
 
+    def test_both_language_value_lists_are_captured(self):
+        """#659: an `update` taken while the language regexes missed stored `[]`.
+
+        `diff_baseline` reports `prose-unextractable` only when the baseline list is
+        non-empty, so an empty list here would silence that check for good.
+        """
+        for tool in ("generate_scaffold", "sdk_guide"):
+            values = self.live["tools"][tool]["prose_values"].get("language") or []
+            self.assertEqual(
+                {"python", "java", "csharp", "rust", "typescript"},
+                self.probe._canon_set(values),
+                f"{tool}.language prose_values in the baseline are {values}")
+
+    def test_no_correct_name_org_use_is_flagged(self):
+        """#659: NAME_ORG is the correct attribute; the server warns about EMPLOYER_NAME."""
+        flagged = [f["message"] for f in self.probe.conformance(self.live, url=None)
+                   if f["code"] == "confabulation" and "`NAME_ORG`" in f["message"]]
+        self.assertEqual([], flagged)
+
+
+class TestTheProbeTablesMatchServer1390(unittest.TestCase):
+    """#659: CONFABULATIONS, PROSE_VALUES and declared enums against server 1.39.0.
+
+    The description strings are quoted from `tools/list` on sz-mcp-coworker 1.39.0
+    (2026-10-15), trimmed to the sentences the regexes read.
+    """
+
+    GENERATE_SCAFFOLD = (
+        "Generate SDK scaffold code for common workflows. Languages: python, java, "
+        "csharp (official V4 SDKs); rust, typescript (community-maintained wrappers, "
+        "not official). Workflows: initialize, configure, add_records, delete, query, "
+        "redo, stewardship, information, error_handling, full_pipeline.")
+    SDK_GUIDE = (
+        "If `platform` is omitted for install and this server runs on the install host "
+        "itself, it detects the platform from that host's os-release. Languages: 5 "
+        "(Python, Java, C#, Rust, TypeScript). Returns real, compilable code snippets.")
+    # The patterns that missed both strings, kept for the negative control.
+    OLD_LANGUAGE_PATTERNS = {
+        ("generate_scaffold", "language"): r"Languages:\s*([a-z#,\s]+?)\.",
+        ("sdk_guide", "language"): r"\d+\s+languages\s*\(([^)]+)\)",
+    }
+    LANGUAGES = {"python", "java", "csharp", "rust", "typescript"}
+    FIXTURE = REPO_ROOT / "plugins" / "probe-fixture.md"
+
+    def setUp(self):
+        import mcp_probe
+        self.probe = mcp_probe
+
+    def languages(self, tool, description):
+        return self.probe.extract_prose_values(tool, description)["language"]
+
+    def test_generate_scaffold_languages_parse(self):
+        self.assertEqual(["python", "java", "csharp", "rust", "typescript"],
+                         self.languages("generate_scaffold", self.GENERATE_SCAFFOLD))
+
+    def test_sdk_guide_languages_parse(self):
+        values = self.languages("sdk_guide", self.SDK_GUIDE)
+        self.assertEqual(["python", "java", "c#", "rust", "typescript"], values)
+        self.assertEqual(self.LANGUAGES, self.probe._canon_set(values))
+
+    def test_the_older_wording_still_parses(self):
+        self.assertEqual(
+            ["python", "java", "csharp", "rust"],
+            self.languages("generate_scaffold", "Languages: python, java, csharp, rust."))
+        self.assertEqual(
+            self.LANGUAGES,
+            self.probe._canon_set(self.languages(
+                "sdk_guide", "and 5 languages (Python, Java, C#, Rust, TypeScript).")))
+
+    def test_the_old_patterns_miss_the_1390_wording(self):
+        """Negative control: the strings above are the ones that broke the old regexes."""
+        from unittest import mock
+        with mock.patch.dict(self.probe.PROSE_VALUES, self.OLD_LANGUAGE_PATTERNS):
+            self.assertEqual([], self.languages("generate_scaffold", self.GENERATE_SCAFFOLD))
+            self.assertEqual([], self.languages("sdk_guide", self.SDK_GUIDE))
+
+    def confabulations(self, text, pairs=None):
+        """Run the conformance check over one fixture file, offline."""
+        from unittest import mock
+        live = {"tools": {"get_capabilities": {"required": []}}}
+        with mock.patch.object(self.probe, "_skill_files",
+                               lambda: iter([(self.FIXTURE, text)])):
+            if pairs is None:
+                found = self.probe.conformance(live, url=None)
+            else:
+                with mock.patch.object(self.probe, "CONFABULATIONS", pairs):
+                    found = self.probe.conformance(live, url=None)
+        return [f["message"] for f in found if f["code"] == "confabulation"]
+
+    UNCUED_EMPLOYER = "Map the employer column to EMPLOYER_NAME.\n"
+    CORRECT_NAME_ORG = "Map the company name column to NAME_ORG.\n"
+
+    def test_an_uncued_employer_name_is_flagged(self):
+        flagged = self.confabulations(self.UNCUED_EMPLOYER)
+        self.assertEqual(1, len(flagged), flagged)
+        self.assertIn("`EMPLOYER_NAME`", flagged[0])
+        self.assertIn("`NAME_ORG`", flagged[0])
+
+    def test_a_correct_name_org_is_not_flagged(self):
+        self.assertEqual([], self.confabulations(self.CORRECT_NAME_ORG))
+
+    def test_a_cued_employer_name_is_not_flagged(self):
+        self.assertEqual([], self.confabulations("Use NAME_ORG, never EMPLOYER_NAME.\n"))
+
+    def test_the_inverted_pair_gets_both_wrong(self):
+        """Negative control: restoring the pre-#659 pair flips both verdicts."""
+        inverted = tuple(p for p in self.probe.CONFABULATIONS
+                         if p != ("EMPLOYER_NAME", "NAME_ORG")) + (
+            ("NAME_ORG", "BUSINESS_NAME_ORG"),)
+        self.assertEqual([], self.confabulations(self.UNCUED_EMPLOYER, inverted))
+        self.assertEqual(1, len(self.confabulations(self.CORRECT_NAME_ORG, inverted)))
+
+    # mapping_workflow.action's declared enum on 1.39.0, as the snapshot stores it.
+    ACTION_ENUM = [None, "advance", "back", "reset", "start", "status"]
+
+    def test_a_declared_enum_joins_the_accepted_set_without_null(self):
+        accepted = self.probe.accepted_values({"enums": {"action": self.ACTION_ENUM}},
+                                              "action")
+        self.assertEqual({"advance", "back", "reset", "start", "status"}, accepted)
+        self.assertNotIn(None, accepted)
+
+    def test_a_declared_enum_is_unioned_with_the_probed_set(self):
+        meta = {"enums": {"topic": ["install", "setup"]},
+                "probed_values": {"topic": {"mode": self.probe.ENUMERATED,
+                                            "values": ["install", "load"]}}}
+        self.assertEqual({"install", "setup", "load"},
+                         self.probe.accepted_values(meta, "topic"))
+
+    def test_a_declared_enum_never_adds_a_rejection(self):
+        """Without a probed enumeration, a value outside the enum is not accused."""
+        from unittest import mock
+        live = {"tools": {"mapping_workflow": {"required": [],
+                                               "enums": {"action": self.ACTION_ENUM}}}}
+        text = "Call `mapping_workflow(action='zzz_not_a_value')`.\n"
+        with mock.patch.object(self.probe, "_skill_files",
+                               lambda: iter([(self.FIXTURE, text)])):
+            found = self.probe.conformance(live, url=None)
+        self.assertEqual([], [f for f in found if f["code"] == "invalid-value"])
+
 
 class TestTheHarnessRefusesDangerousCalls(unittest.TestCase):
     """Enforced by flag, not by instruction — an unattended run forgets rules."""
