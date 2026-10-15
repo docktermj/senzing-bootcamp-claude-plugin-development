@@ -44,10 +44,10 @@ each is correct in its own right:
   Problem exceeds the built-in evaluation license's limit, so on this path expect that question
   rather than treat it as the exception. Step 8a's volume-skip passes without a question only when
   the collected total is at or below the effective limit, or the limit is `0`.
-- **Step 8b asks its question when the database is SQLite and the loadable total is above the SQLite
-  threshold** that item 3 of Module 6 Phase A's [SQLite volume pre-load check](../module-06-data-processing/phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate)
-  sources from the Senzing MCP server. It says nothing at or below that threshold, or when the
-  server does not return it.
+- **Step 8b** says nothing when the loadable total is at or below the SQLite threshold that
+  item 3 of Module 6 Phase A's [SQLite volume pre-load check](../module-06-data-processing/phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate)
+  sources from the Senzing MCP server, or when the server does not return that threshold. **It asks
+  its question when the database is SQLite and the loadable total is above that threshold.**
 
 ⛔ **This is path-dependent, not fixed — and that is the half most likely to catch you out.** On the
 **bring-your-own-data** path, Step 2 *does* ask (the pinned "How would you like to provide the data

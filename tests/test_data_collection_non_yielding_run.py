@@ -82,8 +82,8 @@ def header_problems(block):
          r"effective limit", "it does not say when Step 8a's gate asks"),
         (r"(?i)A default-sized scenario from Discover the Business Problem exceeds the built-in "
          r"evaluation license's limit", "it does not say the default scenario trips Step 8a"),
-        (r"(?i)Step 8b asks its question when the database is SQLite and the loadable total is "
-         r"above the SQLite threshold", "it does not say when Step 8b asks"),
+        (r"(?i)\*\*It asks its question when the database is SQLite and the loadable total is "
+         r"above that threshold", "it does not say when Step 8b asks"),
     )
     for pattern, problem in required:
         if not re.search(pattern, block):
@@ -132,7 +132,8 @@ class TheModuleMarksItsSingleQuestion(unittest.TestCase):
         self.assertRegex(block, r"(?i)Step 2's marker/provenance guard")
         self.assertRegex(block, r"(?i)Step 8a's volume-skip passes without a question only when")
         self.assertRegex(block, r"(?i)or the limit is `0`")
-        self.assertRegex(block, r"(?i)It says nothing at or below that threshold")
+        self.assertRegex(block, r"(?i)\*\*Step 8b\*\* says nothing when the loadable total is at or "
+                                r"below the SQLite threshold")
 
     def test_it_says_the_run_is_steps_1_to_8_and_silent_gates(self):
         block = header()
