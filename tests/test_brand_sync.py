@@ -1,10 +1,12 @@
 """Guard against silent drift between brand_tokens.py and the inlined fallback
-palettes in senzing_viz_server.py, generate_recap_pdf.py and generate_discoveries_pdf.py.
+palettes in four generators: senzing_viz_server.py, generate_recap_pdf.py,
+generate_discoveries_pdf.py and generate_recap_video.py.
 
 This file discharges **INV-184** — "every shipped generator that inlines a fallback copy
 of the brand palette" — not only **INV-107**, which enumerates the first two. INV-107 is
 the narrower, older statement and remains binding; INV-184 is the one that puts the third
-generator in scope, so a new generator with an inlined palette belongs here on sight.
+and fourth generators in scope, so a new generator with an inlined palette belongs here
+on sight.
 
 Each script keeps a hardcoded copy of the brand palette so it still renders if
 brand_tokens.py is unavailable. The runtime prefers the imported values whenever
@@ -35,6 +37,7 @@ FALLBACK_CONSTANT = re.compile(r"^_?FALLBACK_[A-Z_]+\s*=", re.M)
 #: the scan decides what must be covered, this only stops the scan degrading to silence.
 KNOWN_CARRIERS = frozenset({
     "brand_tokens", "senzing_viz_server", "generate_recap_pdf", "generate_discoveries_pdf",
+    "generate_recap_video",
 })
 
 

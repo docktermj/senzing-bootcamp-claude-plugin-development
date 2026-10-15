@@ -60,7 +60,11 @@ truncation is visible without extracting the PDF's text.
 Usage:
     python3 generate_recap_pdf.py [--input docs/bootcamp_recap.md]
                                   [--output docs/bootcamp_recap.pdf]
+                                  [--preferences config/bootcamp_preferences.yaml]
                                   [--check]
+                                  [--expect-modules "A;B;C"]
+                                  [--progress config/bootcamp_progress.json]
+                                  [--expect-visualizations A,B,C]
 
 ``--check`` verifies, without rendering, that every module section in the
 recap carries the required labeled sub-sections and exits non-zero if any are

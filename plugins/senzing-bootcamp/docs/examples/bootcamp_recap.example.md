@@ -502,6 +502,8 @@
     - **R:** Keep all five.
 - **Q:** What would you ask the AI to change to fix this? Say it in your own words. (after the first search program found no entity for an organization name)
     - **R:** It's a company, so search it as a business name, not a person's name.
+- **Q:** What does that tell you about entity 200021? (its match key, `+NAME+ADDRESS`)
+    - **R:** Option 1 — its name and its address both contributed to the match (correct).
 - **Q:** The quality indicators are marginal on their raw values. What would you like to do?
     - **R:** Proceed to visualization and the Discover phase.
 - **Q:** Would you like an interactive visualization of your resolved data?
@@ -515,6 +517,10 @@
     - **R:** Continue to How Analysis.
 - **Q:** What would you like to do next? (after How Analysis)
     - **R:** Continue to Relationship Networks (exploring how entities connect to each other).
+- **Q:** Is there a system you'd like your resolved results exported for? If so, name it.
+    - **R:** No, not for now.
+- **Q:** Ready for me to stop the visualization server?
+    - **R:** Yes.
 
 ### Actions Taken
 
@@ -529,6 +535,8 @@
 - Dumped a raw `find_network` link element before writing the parser, which caught the `MIN_ENTITY_ID`/`MAX_ENTITY_ID` naming — under the assumed names both endpoints would have rendered blank while the match key rendered fine.
 - **Found the ATLAS FOODS ambiguity:** four distinct Enformion entities sharing one name, one address, and one encrypted tax ID, unable to merge because their differing `BID` values map to the exclusive `TRUSTED_ID` feature — and therefore all four flagged ambiguous against the single Equifax record.
 - Produced and verified the data-discoveries deliverable, extracting PDF text to confirm the findings are present rather than trusting the generator's success line.
+- Offered an export for another system, since Discover the Business Problem named none; you declined, so no export was written.
+- Stopped the visualization server by its recorded pid and confirmed its port was free; the saved snapshot keeps every tab except the live Why, How and Search.
 
 ![Entity Graph — 1,394 of 4,971 entities shown in relationship-only mode with labels auto-hidden and an on-screen note explaining why, Enformion in purple and Equifax in pink, relationship legend showing 406 possibly-same, 254 disclosed and 2,617 possibly-related](visualizations/results_visualization-entity-graph.png)
 
@@ -559,7 +567,7 @@
 - `docs/visualizations/results_visualization-*.png` — six screenshots, one per tab
 - `docs/master_list.csv` and `.jsonl` — the 4,971-entity master list
 - `docs/er_statistics.json`, `docs/discover_candidates.json` — the underlying measurements
-- `src/query/` — twelve programs: `sz_common.py`, `show_entity.py`, `find_cross_source_merges.py`, `customer_360.py`, `review_queue.py`, `search_entities.py`, `export_master_list.py`, `discover_candidates.py`, `why_analysis.py`, `why_entities.py`, `how_analysis.py`, `relationship_network.py`, `probe_network_shape.py`
+- `src/query/` — thirteen programs: `sz_common.py`, `show_entity.py`, `find_cross_source_merges.py`, `customer_360.py`, `review_queue.py`, `search_entities.py`, `export_master_list.py`, `discover_candidates.py`, `why_analysis.py`, `why_entities.py`, `how_analysis.py`, `relationship_network.py`, `probe_network_shape.py`
 
 **Why it matters:** You can now answer "who is who across these two systems?" with evidence for every claim — and just as importantly, explain precisely why 128 pairs *cannot* be answered yet, which is the difference between a result you can act on and a number you have to trust.
 **You directed:** which customers show up in both Enformion and Equifax, and what one customer's whole record looks like across the two. Nothing differed.
@@ -598,7 +606,7 @@ detail simply not in this response?
 **Module:** Query, Visualize and Discover
 **Type:** reminder
 
-4,971 entities from 5,241 records is a plausible number, not a verified one. Reconcile
+4,971 entities from 5,000 records is a plausible number, not a verified one. Reconcile
 against the source system's own customer count before quoting it to anyone.
 <!-- BOOTCAMP-NOTES:END -->
 
@@ -627,6 +635,7 @@ against the source system's own customer count before quoting it to anyone.
 - Query, Visualize and Discover: an interactive visualization of your resolved data.
 - Query, Visualize and Discover: explore the Discover capabilities on your own data.
 - Query, Visualize and Discover: continue to How Analysis, then to the relationship networks.
+- Query, Visualize and Discover: no export of your results for another system.
 
 ### How you got it built
 

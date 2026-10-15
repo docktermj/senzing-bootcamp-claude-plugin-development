@@ -8724,8 +8724,9 @@ From `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`:
         metavar="A;B;C",
         help="semicolon-separated section names this document must carry, replacing the "
         "discoveries defaults. Semicolons rather than commas because section names "
-        "contain commas ('merges and match keys', 'why and how'). Matched the same way "
-        "as the defaults: case- and punctuation-insensitively against H2 headings.",
+        "contain commas ('Your question, answered', 'What was not found, and why'). "
+        "Matched the same way as the defaults: case- and punctuation-insensitively "
+        "against H2 headings.",
     )
     parser.add_argument(
         "--subtitle",
@@ -10262,6 +10263,7 @@ looks wrong.
 - `tests/test_scenario_registry_fields_agree.py`: 13
 - `tests/test_screenshot_embed_timing_is_satisfiable.py`: 10
 - `tests/test_screenshot_retention_and_order.py`: 19
+- `tests/test_script_usage_names_every_flag.py`: 3
 - `tests/test_sdk_parameter_shapes.py`: 39
 - `tests/test_sdk_setup_prerequisites.py`: 41
 - `tests/test_sdk_update_offer.py`: 59
@@ -12355,3 +12357,13 @@ Senzing licensing, with no SPDX identifier.
   no recorded pid or port, and `tests/test_coherence_sweep_614.py` pins these
   with negative controls (sibling statements in Module 7 and graduation
   disagreed)
+- #616: both PDF generators' Usage blocks name every parser flag and the
+  `--require-sections` help cites section names that contain commas, pinned by
+  `tests/test_script_usage_names_every_flag.py`; Module 7's dropped-character
+  sentence says the warning names the first few, then "and N more";
+  `tests/test_brand_sync.py` names four palette carriers, adding
+  `generate_recap_video.py` to `KNOWN_CARRIERS`; the example storyboard says
+  11 Core modules; the example recap gains Module 7's recall, export and
+  teardown questions and the right program and record counts, re-rendered;
+  INV-107 and INV-050 `PROPOSED AMENDMENT`s are queued (docstrings, help text,
+  counts and examples no longer matched what ships)
