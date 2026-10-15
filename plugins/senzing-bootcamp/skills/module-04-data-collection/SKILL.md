@@ -29,19 +29,25 @@ most one per module, minimal verbosity and the checkpoint note are stated once i
 `../bootcamp-onboarding/ground-rules.md` → "Worked steers"; follow them there rather than a copy
 here (INV-300, INV-352).
 
-⚠️ **On the generated-scenario path this module has exactly one 👉 question** — Step 9's module
-transition. Steps 1-8b are all **non-yielding** there, so they run in order inside the turn that ends
-on that question: "one at a time" is a rule about order and completeness, not about turns. Three
-branches produce the run, and each is correct in its own right:
+⚠️ **On the generated-scenario path this module has one 👉 question that always fires** — Step 9's
+module transition — **and two conditional gates, Step 8a's and Step 8b's, that ask only when their
+condition holds.** Steps 1-8 are all **non-yielding** there, and so are Steps 8a and 8b whenever their
+gate stays silent, so they run in order inside the turn that ends on the next 👉 question: "one at a
+time" is a rule about order and completeness, not about turns. Three branches decide the run, and
+each is correct in its own right:
 
 - **Step 2's marker/provenance guard** skips the provision question entirely and generates the files
   — the Bootcamper already chose this in Discover the Business Problem, so asking again re-litigates
   a settled decision.
-- **Step 8a's volume-skip** passes without a question when the collected total is inside the license
-  limit, which that step calls the common case.
-- **Step 8b** says nothing when the loadable total is at or below the SQLite threshold that
-  item 3 of Module 6 Phase A's [SQLite volume pre-load check](../module-06-data-processing/phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate)
-  sources from the Senzing MCP server, or when the server does not return that threshold.
+- **Step 8a's License Key gate asks its question when the collected total exceeds the effective
+  limit** and no custom license is configured. ⚠️ A default-sized scenario from Discover the Business
+  Problem exceeds the built-in evaluation license's limit, so on this path expect that question
+  rather than treat it as the exception. Step 8a's volume-skip passes without a question only when
+  the collected total is at or below the effective limit, or the limit is `0`.
+- **Step 8b asks its question when the database is SQLite and the loadable total is above the SQLite
+  threshold** that item 3 of Module 6 Phase A's [SQLite volume pre-load check](../module-06-data-processing/phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate)
+  sources from the Senzing MCP server. It says nothing at or below that threshold, or when the
+  server does not return it.
 
 ⛔ **This is path-dependent, not fixed — and that is the half most likely to catch you out.** On the
 **bring-your-own-data** path, Step 2 *does* ask (the pinned "How would you like to provide the data
@@ -563,6 +569,16 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   cap. Say so plainly rather than leaving the branch as a warning: with no cap there is nothing to
   size against except the teaching goal, and under-generating here is what leaves Modules 6 and 7
   with too little overlap to demonstrate cross-source resolution (INV-150).
+
+  **When the effective limit is below the record count the scenario calls for, generate the full
+  count anyway, and ask nothing here.** The scenario's size is a default the Bootcamper may exceed,
+  never a gate, and it is not tied to license capacity (INV-277), so do not shrink the generation to
+  fit the limit and do not ask whether to. Capacity is decided after collection, from the real total:
+  Step 8a's License Key gate asks when the collected total exceeds the effective limit, and Step 8b
+  warns when the loadable total is above the SQLite threshold. An **absent** `license_record_limit`
+  means never measured (INV-244), so it is no reason to downsize either; Step 8a measures. If the
+  Bootcamper then obtains no key, Module 6 Phase B's step 7 (*License capacity before loading*) loads
+  a license-capped subset of the files generated here, and nothing is regenerated.
 
 ⚠️ **Both are bootcamp-generated, so both skip the question.** Reading `cord` as the only generated
 provenance is what produced a provision question per source on a synthetic scenario — four

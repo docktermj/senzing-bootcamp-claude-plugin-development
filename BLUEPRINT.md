@@ -2153,6 +2153,9 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
   - Only a failed measurement falls back to the evaluation license, whose
     size comes from MCP and is stated as an assumption.
   - Oversize is a choice between expanding capacity and sampling.
+  - A generated scenario larger than the effective limit is generated in
+    full with no question; Steps 8a and 8b handle capacity. An absent value
+    is no reason to downsize.
   - With two or more sources, samples keep whole cross-source overlap
     groups first. Never take a random slice.
 - **Step 2 guard.** The `🤖 Bootcamp-generated business case` marker in
@@ -2253,8 +2256,11 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
   finished, it continues to Step 9; unfinished, it names the failure and asks
   the question again.
 - **Close.** Each step writes `current_step`; steps with no question share
-  one write at the end of the turn. Step 9 runs Module Completion and asks
-  the pinned transition question, but not on a return. A return
+  one write at the end of the turn. On the generated-scenario path only Step
+  9 always asks; Steps 8a and 8b ask when their gates fire, and a
+  default-sized scenario trips 8a under the built-in license. Step 9 runs
+  Module Completion and asks the pinned transition question, but not on a
+  return. A return
   regenerates a `synthesized` source to `>=80` as
   `<source>-regenerated.<ext>`, keeping its `RECORD_ID`s, or asks the
   provision question for `own` or `unknown`.
@@ -9942,7 +9948,7 @@ looks wrong.
 - `tests/test_coverage_ledger.py`: 36
 - `tests/test_coverage_reports.py`: 48
 - `tests/test_data_collection_generated_scenarios.py`: 22
-- `tests/test_data_collection_non_yielding_run.py`: 20
+- `tests/test_data_collection_non_yielding_run.py`: 28
 - `tests/test_database_backup_has_one_implementation.py`: 12
 - `tests/test_database_switch_detours_through_sdk_setup.py`: 35
 - `tests/test_database_type_write_precedes_the_step7_branches.py`: 14
@@ -12147,6 +12153,13 @@ Senzing licensing, with no SPDX identifier.
   (the non-Python Truth Set server read D3 from the plugin path, which the SDK
   container on the `docker` route does not have, and the guard credited it with
   the Python path's copy)
+- #603: a generated scenario larger than the effective limit is generated in
+  full with no question at generation, leaving capacity to Step 8a's License
+  Key gate and Step 8b, and Module 4's header and the ground-rules run list
+  name Step 9 as the one question that always fires and Steps 8a and 8b as
+  conditional gates, pinned by `test_data_collection_non_yielding_run.py`
+  (the default scenario exceeds the built-in limit, so 8a's gate fires where
+  the text said no question was asked, and the over-limit case had no rule)
 - #609: `/release-cycle` writes nothing under `specs/` before stage 5 and its
   own entry only at a stop, stated once with every write and matched by the
   pending #573 block, corrected in place; `autotest.py --report-dir` keeps a
