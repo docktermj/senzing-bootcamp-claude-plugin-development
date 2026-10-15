@@ -9931,7 +9931,7 @@ looks wrong.
 - `tests/test_conformance_sees_a_rule_beside_a_citation.py`: 8
 - `tests/test_container_lifecycle_runtimes.py`: 18
 - `tests/test_container_names_are_project_derived.py`: 36
-- `tests/test_container_route_reads_no_plugin_asset.py`: 19
+- `tests/test_container_route_reads_no_plugin_asset.py`: 29
 - `tests/test_container_viz_port_is_published_and_checked.py`: 28
 - `tests/test_container_teardown_has_a_route_and_a_failure_report.py`: 8
 - `tests/test_cord_fetch_has_a_403_remedy.py`: 17
@@ -12139,6 +12139,14 @@ Senzing licensing, with no SPDX identifier.
   statement and a new prose stamp, with an INV-291 `PROPOSED AMENDMENT`
   queued (copies of a route had drifted to older queries and stamps, and the
   prescribed `find_examples` queries carried no measurement)
+- #601: the host-side D3 copy into `src/server/vendor/d3.v7.min.js` is stated
+  once, in Truth Set visualization 2.1's "Any other language" bullet
+  (`#server-d3-project-copy`), for every server in `src/server/`, and Module 7
+  step 3c links it; `test_container_route_reads_no_plugin_asset.py` reads a
+  section's path branches, so a copy in one branch credits that branch alone
+  (the non-Python Truth Set server read D3 from the plugin path, which the SDK
+  container on the `docker` route does not have, and the guard credited it with
+  the Python path's copy)
 - #609: `/release-cycle` writes nothing under `specs/` before stage 5 and its
   own entry only at a stop, stated once with every write and matched by the
   pending #573 block, corrected in place; `autotest.py --report-dir` keeps a

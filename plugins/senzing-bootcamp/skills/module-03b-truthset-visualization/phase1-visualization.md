@@ -249,7 +249,8 @@ Whatever the language, the server MUST reproduce the reference's behavior:
   `${CLAUDE_PLUGIN_ROOT}/scripts/vendor/d3.v7.min.js` (skill-relative fallback:
   `../../scripts/vendor/d3.v7.min.js`, INV-252) into both
   the live page and the standalone snapshot; never fetch from a CDN. (D3 runs in the browser, so
-  this holds regardless of the server's language.)
+  this holds regardless of the server's language.) 2.1 says where each path's server reads it
+  from.
   - ⛔ **(INV-091) Refuse to render when the vendored D3 is missing or unreadable.** The server
     MUST fail visibly, with an error that names the missing asset (`d3.v7.min.js`), and MUST
     write no page or snapshot. It MUST NOT fall back to the `d3js.org` CDN or any other network
@@ -328,8 +329,8 @@ Read `programming_language` from `config/bootcamp_preferences.yaml`:
   - **A copy, not a mount.** `${CLAUDE_PLUGIN_ROOT}` is a versioned cache directory, so a mount of
     it pins the container to the plugin version it was created under, and finds nothing once that
     version's directory is removed. A mount would also mean recreating every existing container;
-    the copy works on them unchanged. Module 7 step 3c copies D3 into the project for the same
-    reason.
+    the copy works on them unchanged. The [D3 copy](#server-d3-project-copy) for a server in any
+    other language is a copy for the same reason.
   - `data/temp/` is the project's temp location (INV-050); the copy is not removed at module close.
     Native routes run the resolved plugin path with no copy.
 - **Any other language** → generate the server in that language per the contract above, modeled on
@@ -338,6 +339,22 @@ Read `programming_language` from `config/bootcamp_preferences.yaml`:
   a program" gives, and built and run with that section's commands. Do **not**
   run `senzing_viz_server.py`. Generate code via the MCP tools and a generator per your language's
   conventions; never hand-write SDK calls or HTML+JS with file-write tooling.
+
+  <a id="server-d3-project-copy"></a>
+
+  ⛔ **(INV-091, INV-300) Copy the vendored D3 into `src/server/vendor/` on the host, and have the
+  server resolve it from there.** This is the one statement of the copy for every server written
+  into `src/server/`: this one, and Query, Visualize and Discover's results server in every
+  language, Python included, whose step 3c links here rather than restating it. At each such
+  server's first build, copy `${CLAUDE_PLUGIN_ROOT}/scripts/vendor/d3.v7.min.js` (skill-relative
+  fallback `../../scripts/vendor/d3.v7.min.js`, INV-252) on the host to
+  `src/server/vendor/d3.v7.min.js`, on every route, overwriting any earlier copy, and have the
+  server resolve it from beside its own file there. The plugin's `scripts/` resolves only on the
+  host: on SDK setup's `docker` route the server runs inside the SDK container (INV-260), which
+  mounts only the project, and a plugin update moves or replaces the cached plugin directory.
+  `src/server/vendor/` is inside the project, so the server finds the asset on every route and
+  after an update. If the copy failed or the file is later missing, the server refuses to render
+  as "Render offline" above states; copy it again from the plugin on the host.
 
 ### 2.2 Always produce the standalone snapshot first (the guarantee)
 
