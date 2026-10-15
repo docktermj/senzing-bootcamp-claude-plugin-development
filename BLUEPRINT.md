@@ -12085,7 +12085,7 @@ Senzing licensing, with no SPDX identifier.
   `# Windows` comment in every fence (no unquoted backslash outside a
   PowerShell fence, no bare `$NAME` in one), with an INV-167 `PROPOSED
   AMENDMENT` queued (the Windows lines sat in bash fences with backslash paths
-  and `${CLAUDE_PLUGIN_ROOT}`, labelled for PowerShell, so they broke in both
+  and `${CLAUDE_PLUGIN_ROOT}`, marked as PowerShell, so they broke in both
   PowerShell and Git Bash, and the guard read only PowerShell fences)
 - #600: each measured search route is stated in full once and every other
   site points at it, the route's record in `tests/test_prescribed_search_queries.py`

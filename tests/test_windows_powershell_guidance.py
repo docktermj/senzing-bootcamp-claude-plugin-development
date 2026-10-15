@@ -438,7 +438,7 @@ class WindowsLinesInAnyFenceSuitTheirShell(unittest.TestCase):
                     self.assertEqual(1, len(problems), problems)
                     self.assertIn("$CLAUDE_PLUGIN_ROOT", problems[0])
 
-    def test_negative_control_an_unlabelled_fence_is_read_as_posix(self):
+    def test_negative_control_an_unlabeled_fence_is_read_as_posix(self):
         import tempfile
 
         with tempfile.TemporaryDirectory() as tmp:
