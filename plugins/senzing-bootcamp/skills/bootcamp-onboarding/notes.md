@@ -184,7 +184,7 @@ questions with the resumed bootcamp question into one turn.
 
 ## Non-blocking throughout
 
-⛔ **A note is never a gate (INV-048).** A failed write, a failed re-read, or an
+⛔ **A note is never a gate (INV-256).** A failed write, a failed re-read, or an
 unreachable notes file warns in **one line** and returns the bootcamper to the bootcamp.
 It must not interrupt a pending question, delay a step, or become a to-do for them.
 

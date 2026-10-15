@@ -8,7 +8,7 @@ Two invariants bind this skill, and until #386 its own text contradicted both:
   lands, moves or changes; it cannot catch prose telling a maintainer to do it, and the person
   who follows that prose is the one who gets the red suite. The same gap was closed for the
   renumbering map by #142, at one site only.
-- **INV-309** makes minting an id the maintainer's alone, through `/review-invariants`. The
+- **INV-365** makes minting an id the maintainer's alone, through `/review-invariants`. The
   skill defined a merge as "one new invariant at the next free ID", had its `superseded`
   verdict "mark superseded" in `INVARIANTS.md` itself, and sent merges and demotions through
   a spec for `/implement-github-issue` to execute, a command that cannot mint either.
@@ -19,7 +19,8 @@ So this file pins three things, all scoped to `.claude/skills/compact-dev-enviro
    Writing to the live records `specs/IMPLEMENTED.md` and `specs/DECLINED.md` is allowed.
 
 2. Step 2 and Step 6 route merges, supersessions and demotions to `/review-invariants` as
-   `DEFERRED INVARIANT` / `PROPOSED AMENDMENT` blocks in `specs/IMPLEMENTED.md`, citing INV-309.
+   `DEFERRED INVARIANT` / `PROPOSED AMENDMENT` blocks in `specs/IMPLEMENTED.md` (INV-365). Each
+   step still cites INV-309 where it says `/implement-github-issue` cannot mint either.
 
 3. Neither step edits `INVARIANTS.md`, mints an id, or sends either to `/implement-github-issue`.
 
@@ -106,7 +107,7 @@ NOUN_BEFORE = {"a", "an", "the", "this", "that", "its", "frozen", "read-only", "
 #: A clause ends at sentence punctuation, a table cell, or a dash.
 CLAUSE_END = re.compile(r"[.;:!?](?=\s|$)|\||\s—\s")
 
-#: An instruction to change the invariant register in place (INV-309: it changes only through
+#: An instruction to change the invariant register in place (INV-365: it changes only through
 #: `/review-invariants`).
 EDITS_REGISTER = re.compile(r"\b(?:edit|rewrit|append|mark|chang|updat)\w*\b[^.;|]{0,40}?"
                             r"INVARIANTS\.md", re.I)
@@ -334,7 +335,7 @@ class NoFileInTheSkillActsOnASpec(unittest.TestCase):
 
 
 class InvariantChangesGoToReviewInvariants(unittest.TestCase):
-    """INV-309: minting is the maintainer's alone, through `/review-invariants`."""
+    """INV-365: minting is the maintainer's alone, through `/review-invariants`."""
 
     @classmethod
     def setUpClass(cls):
@@ -380,7 +381,7 @@ class InvariantChangesGoToReviewInvariants(unittest.TestCase):
                     m = pattern.search(clause)
                     if m and not NEGATION.search(clause[:m.end()]):
                         found.append("%s %s: %s" % (name, label, clause.strip()[:120]))
-        self.assertEqual([], found, "INV-309: %s" % "\n  ".join(found))
+        self.assertEqual([], found, "INV-365: %s" % "\n  ".join(found))
 
     def test_the_register_check_is_not_vacuous(self):
         planted = self.step6 + "\nThen mark both originals superseded in INVARIANTS.md.\n"

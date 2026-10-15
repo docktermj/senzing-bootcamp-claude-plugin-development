@@ -1086,7 +1086,7 @@ def _capture_one(url: str, out: Path, backend=None, tab: str = ""):
     # having found an unsettled layout, which would blame the artifact for the instrument.
     _record_settled(SETTLED_UNKNOWN if _settle_expected(tab) else SETTLED_NA)
     if _CAPTURE_IN_FLIGHT:
-        # Warn, never raise: a capture step must not block the module (INV-052/INV-048).
+        # Warn, never raise: a capture step must not block the module.
         sys.stderr.write(
             "capture_screenshots: a capture started while another was still in flight. "
             "`_CURRENT_TAB` is a single module global, so the virtual-time budget may be "

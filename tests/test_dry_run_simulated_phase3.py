@@ -144,7 +144,7 @@ class TheHumanWalkIsTheDefault(unittest.TestCase):
 
     def test_the_third_question_is_asked(self):
         body = read(SKILL)
-        for pat in (r"⛔ \*\*\(INV-333\) Then a third: who answers as the Bootcamper\.\*\* "
+        for pat in (r"⛔ \*\*\(INV-369, INV-333\) Then a third: who answers as the Bootcamper\.\*\* "
                     r"The maintainer-answered walk is the default",
                     r"a phase-3 argument without it answers it as the maintainer",
                     r"With no argument every question is asked: whether to run phase 3, the "

@@ -10059,7 +10059,7 @@ looks wrong.
 - `tests/test_interface_naming.py`: 12
 - `tests/test_internal_connection_string_rejected.py`: 2
 - `tests/test_inv174_per_record_applicability.py`: 12
-- `tests/test_invariant_changes_route_through_review_invariants.py`: 19
+- `tests/test_invariant_changes_route_through_review_invariants.py`: 26
 - `tests/test_invariant_crossreferences.py`: 32
 - `tests/test_invariant_enforcer_citations.py`: 4
 - `tests/test_invariant_layout_tree.py`: 19
@@ -10992,7 +10992,9 @@ These are the scripts under `.claude/skills/`:
     a floor, names `/review-invariants` and links the heading over
     `review-invariants`' block template ("Writing one");
   - every `(INV-309)` citation sits in a sentence about
-    `/implement-github-issue`.
+    `/implement-github-issue`, the unattended loop or a skill overlay; since
+    #607 this also reads the comments and strings of `.py` files under
+    `.claude/skills/` and the comments and docstrings of `tests/*.py`.
 
 #### 8.4.10 CI and release hygiene
 
@@ -12206,6 +12208,14 @@ Senzing licensing, with no SPDX identifier.
   sweeps every skill file so "(INV-284, INV-366)" stays only on INV-284's
   re-present clause (the citations borrowed INV-284 for INV-366's and INV-364's
   rules, so a reader looked up the wrong invariant)
+- #607: each citation the 2026-10-14 audit listed names the invariant that
+  governs its clause (INV-131, INV-122 with INV-185 on the path line,
+  INV-335 with INV-163, INV-077 with INV-250, INV-173, INV-256, INV-369 with
+  INV-333, INV-365), or is dropped where none states it; the INV-365 guard's
+  INV-309 check reads Python too, and a DEFERRED block for `feedback.md`'s
+  "Never blocks." ⛔ and INV-335 and INV-122 `PROPOSED AMENDMENT`s are queued
+  (sites cited INV-048 for a generic never-blocks, and a release-cycle string
+  and a test credited INV-309 with INV-365's rule)
 - #609: `/release-cycle` writes nothing under `specs/` before stage 5 and its
   own entry only at a stop, stated once with every write and matched by the
   pending #573 block, corrected in place; `autotest.py --report-dir` keeps a

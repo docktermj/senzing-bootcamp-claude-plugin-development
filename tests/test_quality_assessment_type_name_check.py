@@ -234,9 +234,10 @@ def problems_in_the_report_and_decision(text):
         ("the retype rule", r"Rule \(retype\):"),
         ("the keep cost", r"Cost \(keep\): these \[N\] records stay `PERSON`, so they cannot merge"),
         ("retyped names are not parsed person fields", r"never as parsed person fields"),
-        # INV-163, not INV-048: a check that cannot run is reported, and INV-048 governs only
-        # the recap PDF (#523 item 9).
-        ("non-blocking", r"\(INV-163\) The check reports and asks; it never blocks"),
+        # INV-335 and INV-163, not INV-048: INV-335 states "reports and asks, and never
+        # blocks", INV-163 says a check that cannot run is reported, and INV-048 governs only
+        # the recap PDF (#523 item 9, #607).
+        ("non-blocking", r"\(INV-335, INV-163\) The check reports and asks; it never blocks"),
         ("never undo the retype for a gate", r"\(INV-173\) Never undo the Bootcamper's retype"),
         ("a retyped name is NAME_ORG only", r"mapped as `NAME_ORG` only"),
         ("a retyped name is never NAME_FULL", r"never as `NAME_FULL`"),

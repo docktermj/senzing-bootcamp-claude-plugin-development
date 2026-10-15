@@ -326,14 +326,14 @@ class Item9Inv048IsNotAGenericNonBlockingRule(unittest.TestCase):
         m2 = flat(read(MODULE_2))
         self.assertIn("A check that cannot run is reported as not run (INV-163)", m2)
         self.assertIn("say so in one line and continue (INV-163)", m2)
-        self.assertIn("⛔ (INV-163) **The check reports and asks; it never blocks the module.**",
+        self.assertIn("⛔ (INV-335, INV-163) **The check reports and asks; it never blocks the module.**",
                       flat(read(MODULE_5_P1)))
         self.assertIn("never blocking (INV-012): how it is filed is stated once, in that rule",
                       flat(read(PHASE_D)))
 
     def test_control_a_restored_citation_is_reported(self):
         text = read(MODULE_5_P1)
-        mutated = mutate(self, text, "⛔ (INV-163) **The check reports and asks",
+        mutated = mutate(self, text, "⛔ (INV-335, INV-163) **The check reports and asks",
                          "⛔ (INV-048) **The check reports and asks")
         self.assertTrue(inv_048_problems(mutated))
 

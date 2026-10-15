@@ -854,7 +854,7 @@ A source already checked in Step 5a sub-step 3a reuses that count and those name
 the check again. Its report and question belong here, because Step 5a routes such a source on to
 this step.
 
-⛔ (INV-163) **The check reports and asks; it never blocks the module.** If it cannot run, for
+⛔ (INV-335, INV-163) **The check reports and asks; it never blocks the module.** If it cannot run, for
 example because no name attribute can be identified, say so in Step 7's report and continue.
 
 ⛔ (INV-173) **Never undo the Bootcamper's retype to turn a validation gate green.** If Phase 2's

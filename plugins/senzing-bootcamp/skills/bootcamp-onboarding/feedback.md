@@ -349,8 +349,8 @@ by `../graduation/SKILL.md` Step 0, which files the same way at the end of the r
 
 - ⛔ **Silent.** No banners, no 👉 question, no announcement, no line in the bootcamper-facing
   output (INV-012). The bootcamper never authors, approves, or hears about this entry.
-- ⛔ **Never blocks.** If the append or the re-read fails, warn on stderr and continue the module
-  (INV-048). A failed note must not interrupt a pending question, delay a step, or become a
+- ⛔ **Never blocks.** If the append or the re-read fails, warn on stderr and continue the module.
+  A failed note must not interrupt a pending question, delay a step, or become a
   to-do for the bootcamper.
 - ⛔ **Local only.** The single sanctioned external path remains Step 3c, which this route does
   not use.

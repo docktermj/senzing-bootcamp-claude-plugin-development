@@ -194,7 +194,7 @@ class TheNoteStaysTheBootcampersOwnWords(unittest.TestCase):
 
 
 class TheNoteIsDurableAndNonBlocking(unittest.TestCase):
-    """INV-256/INV-048."""
+    """INV-256, whose own text says a note is never a gate (#607: not INV-048)."""
 
     def setUp(self):
         self.text = read(NOTES)
@@ -214,8 +214,8 @@ class TheNoteIsDurableAndNonBlocking(unittest.TestCase):
 
     def test_a_failed_write_warns_and_never_blocks(self):
         flat = squash(self.text)
-        self.assertIn("INV-048", flat)
-        self.assertIn("never a gate", flat.lower())
+        self.assertIn("A note is never a gate (INV-256).", flat)
+        self.assertNotIn("INV-048", flat)
 
 
 class TheControlIsTaught(unittest.TestCase):

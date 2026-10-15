@@ -11,7 +11,7 @@ Bootcamper"). Two jobs, both offline and zero-token:
   module onward and never the fast-forward before it. It prints where the slice starts and
   ends, the modules the walk reached, and the walk's own ``walk_stop`` event.
 
-⛔ **No banner text is written here.** The module list is the table in
+**No banner text is written here.** The module list is the table in
 ``bootcamp-preparation/SKILL.md`` (INV-079), and each banner comes from that module's skill
 files: the first banner line in its ``SKILL.md``; else ``MODULE: <TITLE>`` from a
 ``# Module <id>: <title>`` heading (INV-028 as superseded by INV-079); else the first banner

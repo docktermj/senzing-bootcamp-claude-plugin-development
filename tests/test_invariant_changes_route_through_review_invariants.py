@@ -29,6 +29,15 @@ So this guard asserts the condition, not the wording (INV-219):
 4. **INV-309 is cited for what it states.** Every parenthesized citation of INV-309 under
    `.claude/skills/` sits in a sentence about `/implement-github-issue` or the issue-driven path,
    and that sentence does not also govern `specs/INVARIANTS.md`, which is the broader rule.
+   Since #607 this reads Python too, because `release-cycle/cycle.py` wrote "Establishes no
+   invariant (INV-309)" into a ledger entry, and tests credited INV-309 with INV-365's rule:
+   every `.py` file under `.claude/skills/` (its comments and every string, since a script's
+   strings are the text it writes) and every `.py` file under `tests/` (its comments and
+   docstrings only: a test's other strings are fixtures, needles and messages that quote other
+   files, such as the overlay heading `tests/test_hard_rule_detector_sees_mid_line_stop_signs.py`
+   quotes). A sentence naming the unattended loop or a skill overlay is about the issue-driven
+   path: the overlays carry that path's obligations, and
+   `tests/test_unattended_loop_is_label_gated.py` credits INV-309 to "the overlay" correctly.
 
 ⚠️ **The matcher is derived from the claim, not from the sentences #520 replaced** (INV-282).
 The claim is *"an instruction to change the invariant register in place"*. So the verbs are a
@@ -47,15 +56,19 @@ which already route through `/review-invariants` under INV-309.
 
 Enforces INV-365 (registered 2026-10-13 from the
 `maintainer-skills-route-invariant-changes-through-review-invariants` block). It reads skill
-text only: it cannot establish that a live run writes the block rather than editing the file.
+text, and for rule 4 Python text too: it cannot establish that a live run writes the block
+rather than editing the file.
 
-Source issue: #520.
+Source issues: #520; rule 4's Python reading, #607.
 
 Stdlib only; every file is read as text (INV-108).
 
 Run:  python3 -m unittest discover -s tests
 """
+import ast
+import io
 import re
+import tokenize
 import unittest
 from pathlib import Path
 
@@ -107,8 +120,10 @@ ROUTE = "/review-invariants"
 POINTER = re.compile(r"\]\(([^)\s#]*review-invariants/SKILL\.md)#([^)\s]+)\)")
 #: A parenthesized citation list that includes INV-309.
 CITES_309 = re.compile(r"\((?:[^()]*?\s|)INV-309\b[^()]*\)")
-#: What an INV-309 sentence must be about.
-ISSUE_PATH = re.compile(r"implement-github-issue|issue-driven", re.I)
+#: What an INV-309 sentence must be about: the issue command, the path, the loop that drives
+#: it, or the skill overlays that carry its obligations (#607).
+ISSUE_PATH = re.compile(r"implement-github-issue|issue-driven|unattended-issue-loop"
+                        r"|\boverlays?\b", re.I)
 #: What it must not also govern: the register itself is the broader, unminted rule. Before #520
 #: compact-dev-environment's Step 6 hung one INV-309 on "never edit `specs/INVARIANTS.md` here,
 #: and never send an invariant change to `/implement-github-issue`".
@@ -134,6 +149,21 @@ MUST_FLAG = [
     "Amend the invariant so its wording matches the server.",
     "Then add it to INVARIANTS.md with an index entry.",
     "Update **`specs/INVARIANTS.md`** with the corrected wording.",
+]
+
+#: The sentence `release-cycle/cycle.py` wrote into a ledger entry before #607. ⛔ Restoring it
+#: must fail the guard: it credits INV-309 with the record a maintainer run owes, INV-365's rule.
+CYCLE_BEFORE_607 = '"- **Establishes no invariant** (INV-309): it records a run. The invariants the "'
+CYCLE_AFTER_607 = '"- **Establishes no invariant** (INV-365): it records a run. The invariants the "'
+
+#: ⛔ Must pass rule 4: correct INV-309 credits that a too-narrow reading of "the issue-driven
+#: path" would flag (#607).
+MUST_PASS_309 = [
+    # tests/test_unattended_loop_is_label_gated.py: the loop overlay's invariant capture.
+    "* the repository-only obligations (INV-309, INV-307, no `submit_feedback`, no declining) "
+    "against\n  the overlay, where they moved;",
+    "Sending one to `/implement-github-issue` *(user level)* does not help: that command cannot "
+    "mint either (INV-309).",
 ]
 
 #: ⛔ Must pass: correct prose a too-wide matcher would flag (INV-282).
@@ -265,6 +295,62 @@ def misscoped_309(text):
     return found
 
 
+def _comment_text(source):
+    """The comments of Python ``source``, each run of comment lines joined as one paragraph.
+
+    A comment wraps like prose (INV-346), so a citation opened on one comment line and closed on
+    the next is one citation. A line that is not a comment, or a bare ``#``, ends the paragraph.
+    """
+    paragraphs, current, last = [], [], None
+    for tok in tokenize.generate_tokens(io.StringIO(source).readline):
+        if tok.type != tokenize.COMMENT:
+            continue
+        line = re.sub(r"^#:?\s?", "", tok.string).rstrip()
+        if current and (last is None or tok.start[0] != last + 1 or not line.strip()):
+            paragraphs.append("\n".join(current))
+            current = []
+        if line.strip():
+            current.append(line)
+        last = tok.start[0]
+    if current:
+        paragraphs.append("\n".join(current))
+    return paragraphs
+
+
+def _docstrings(tree):
+    """The module, class and function docstrings of a parsed Python file."""
+    nodes = [tree] + [n for n in ast.walk(tree)
+                      if isinstance(n, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))]
+    return [d for d in (ast.get_docstring(n, clean=True) for n in nodes) if d]
+
+
+def python_prose(source, every_string):
+    """The prose of Python ``source``: its comments and docstrings, and with ``every_string``
+    every string constant too (adjacent literals are one constant, as Python joins them)."""
+    tree = ast.parse(source)
+    if every_string:
+        strings = [n.value for n in ast.walk(tree)
+                   if isinstance(n, ast.Constant) and isinstance(n.value, str)]
+    else:
+        strings = _docstrings(tree)
+    return _comment_text(source) + strings
+
+
+def misscoped_309_python(source, every_string):
+    """``misscoped_309`` over each piece of the prose of Python ``source``."""
+    found = []
+    for piece in python_prose(source, every_string):
+        found.extend(misscoped_309(piece))
+    return found
+
+
+def python_files():
+    """Each `.py` file rule 4 reads, with whether every string is its prose (scripts) or only
+    its docstrings (tests, whose other strings quote other files)."""
+    return ([(Path(p), True) for p in corpus_files(".claude/skills", suffixes=(".py",))]
+            + [(Path(p), False) for p in corpus_files("tests", suffixes=(".py",))])
+
+
 def skill_markdown():
     """Every Markdown file under `.claude/skills/` except the owner skill's own."""
     owner_dir = OWNER.parent.resolve()
@@ -357,6 +443,33 @@ class Inv309IsCitedForWhatItStates(unittest.TestCase):
             "INV-309 binds only the issue-driven development path (/implement-github-issue); "
             "these cite it for more:\n  " + "\n  ".join(found))
 
+    def test_every_inv_309_citation_in_python_is_about_the_issue_driven_path(self):
+        found = []
+        for path, every_string in python_files():
+            for sentence in misscoped_309_python(read(path), every_string):
+                found.append("%s: %s" % (path.relative_to(REPO_ROOT).as_posix(), sentence))
+        self.assertEqual(
+            [], found,
+            "INV-309 binds only the issue-driven development path (/implement-github-issue); "
+            "the record a maintainer run owes is INV-365's. These cite INV-309 for more:\n  "
+            + "\n  ".join(found))
+
+    def test_the_python_reading_reaches_both_trees(self):
+        files = python_files()
+        names = {p.relative_to(REPO_ROOT).as_posix() for p, _every in files}
+        for floor in (".claude/skills/release-cycle/cycle.py",
+                      "tests/test_unattended_loop_is_label_gated.py",
+                      "tests/test_compact_dev_environment_leaves_specs_frozen.py"):
+            with self.subTest(file=floor):
+                self.assertIn(floor, names)
+        self.assertFalse(any(every for p, every in files if p.parts[-2] == "tests"),
+                         "a test's fixture strings must not be read as its own credits")
+
+    def test_correct_credits_pass(self):
+        for line in MUST_PASS_309:
+            with self.subTest(line=line):
+                self.assertEqual([], misscoped_309(line))
+
 
 class NegativeControls(unittest.TestCase):
     """Each mutation of the live text must turn its check red."""
@@ -431,6 +544,39 @@ class NegativeControls(unittest.TestCase):
             "invariant change to", 1)
         self.assertTrue(misscoped_309(mutated),
                         "one INV-309 over the register and /implement-github-issue passes")
+
+    def test_restoring_cycles_pre_607_credit_fails(self):
+        cycle = read(SKILLS / "release-cycle" / "cycle.py")
+        self.assertIn(CYCLE_AFTER_607, cycle, "the control's target is gone")
+        self.assertEqual([], misscoped_309_python(cycle, True))
+        mutated = cycle.replace(CYCLE_AFTER_607, CYCLE_BEFORE_607, 1)
+        self.assertTrue(misscoped_309_python(mutated, True),
+                        "cycle.py's pre-#607 'Establishes no invariant (INV-309)' passes")
+
+    def test_restoring_a_wrapped_comment_credit_in_a_test_fails(self):
+        path = REPO_ROOT / "tests" / "test_compact_dev_environment_leaves_specs_frozen.py"
+        live = read(path)
+        old = "in place (INV-365: it changes only through\n#: `/review-invariants`)."
+        self.assertIn(old, live, "the control's target is gone")
+        self.assertEqual([], misscoped_309_python(live, False))
+        mutated = live.replace(old, old.replace("INV-365", "INV-309"), 1)
+        self.assertTrue(misscoped_309_python(mutated, False),
+                        "an INV-309 credit wrapped across two comment lines passes")
+
+    def test_restoring_a_docstring_credit_in_a_test_fails(self):
+        path = REPO_ROOT / "tests" / "test_compact_dev_environment_leaves_specs_frozen.py"
+        live = read(path)
+        old = "blocks in `specs/IMPLEMENTED.md` (INV-365)."
+        self.assertIn(old, live, "the control's target is gone")
+        mutated = live.replace(old, "blocks in `specs/IMPLEMENTED.md` (INV-309).", 1)
+        self.assertTrue(misscoped_309_python(mutated, False),
+                        "an INV-309 credit in a test's docstring passes")
+
+    def test_a_tests_fixture_string_is_not_its_credit(self):
+        source = 'FIXTURE = "## ⛔ (INV-309) Invariant capture is a gate on closing"\n'
+        self.assertEqual([], misscoped_309_python(source, False))
+        self.assertTrue(misscoped_309_python(source, True),
+                        "a script's string is the text it writes, so it is read")
 
     def test_a_renamed_format_heading_fails_the_pointers(self):
         heading = format_heading(read(OWNER))
