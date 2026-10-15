@@ -239,6 +239,14 @@ would, plus:
   writing a dead link. This is a supplementary pointer, not a dependency: the statement still reads
   completely on its own, per the self-containment rule below.
 - Record each distinct scenario source into `config/data_sources.yaml` (one entry per source).
+  Create the file, if it is missing, with `version: "1"` and a `sources:` mapping keyed by
+  DATA_SOURCE, and write each entry's fields as
+  [Scenario source fields](../module-04-data-collection/SKILL.md#scenario-source-fields) defines
+  them, the one definition (INV-300): `name`, `provenance`, `cord_dataset` and `cord_source` (a
+  `cord` source), `entity_type`, `shape_quirks`, and `scenario_record_count` (a `synthesized`
+  source). Data collection reads these to choose its action and to generate the files. Write no
+  `record_count`: it is the count Data collection measures (INV-243), null until then.
+  `quality_intent` is Data collection's to write when it generates the source.
 - Keep `docs/business_problem.md` self-contained (problem, category, sources, success), not
   dependent on the registry.
 - Never embed CORD names/counts from training data: retrieve via MCP (`get_sample_data`,

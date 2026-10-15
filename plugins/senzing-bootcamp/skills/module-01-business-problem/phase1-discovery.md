@@ -224,7 +224,9 @@ bootcamper explicitly accepts option 3.)*
   what makes the quality gate reachable (INV-239); category is in the recognized set; problem and
   success are non-empty. On
   success, record artifacts in Phase 2 Step 11 (write `docs/business_problem.md` with the
-  generated marker, and each source into `config/data_sources.yaml`), then continue at Step 5.
+  generated marker, and each source into `config/data_sources.yaml` with the fields
+  [Scenario source fields](../module-04-data-collection/SKILL.md#scenario-source-fields) defines),
+  then continue at Step 5.
 - ⛔ **(INV-277) Size the generated scenario to about 10,000 records unless the Bootcamper asks for
   more,
   and if they do, say what it costs BEFORE generating it.** The step above validates the

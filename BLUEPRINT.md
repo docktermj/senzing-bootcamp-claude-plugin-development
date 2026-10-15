@@ -1806,7 +1806,9 @@ steps 9 to 17. Every step checkpoints to `config/bootcamp_progress.json`.
 - 11: `docs/business_problem.md` from a fixed template, with verbatim
   bootcamper quote lines on prose sections only. Generated scenarios add
   the `> 🤖 Bootcamp-generated business case` marker, the diagram link and
-  one `config/data_sources.yaml` entry per source.
+  one `config/data_sources.yaml` entry per source, with the fields Module 4's
+  `#scenario-source-fields` defines (both writers link it) and no
+  `record_count`.
 - 12 fills `## Overview` and `## Business Problem` in `README.md`. 13
   proposes the approach; 14 restates value from
   `search_docs(query='entity resolution business value')`.
@@ -2160,8 +2162,13 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
     groups first. Never take a random slice.
 - **Step 2 guard.** The `🤖 Bootcamp-generated business case` marker in
   `docs/business_problem.md` means nothing is asked.
-  - `cord` sources are fetched.
-  - `synthesized` sources are generated from the recorded scenario. They
+  - `cord` sources are fetched from the entry's `cord_dataset` and
+    `cord_source`.
+  - `synthesized` sources are generated from the recorded scenario: the
+    entry's `scenario_record_count` (else the count in
+    `docs/business_problem.md`), `entity_type` and `shape_quirks`. The
+    measured count goes back as `record_count`, beside the unchanged
+    `scenario_record_count`. They
     carry the promised shape differences and describe shape only. Quality
     gaps: one source in the 70-79 band (30-43% of slots empty), off-pattern
     values in each source, one source at 80 or above. Keys are never
@@ -2217,8 +2224,13 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
   config, named in the Module 5 recap and production README, and its mapping
   checkpoint is kept, never resumed. The optional top-level `scenario_intent`
   block sits beside `version` and `sources:`, only for a generated scenario,
-  and graduation's projection drops it. A CORD snapshot goes to
-  `config/cord_metadata.yaml`.
+  and graduation's projection drops it. One anchored note
+  (`#scenario-source-fields`) defines what Module 1 Step 11 writes for a
+  generated scenario: `name`, `provenance`, `cord_dataset` and `cord_source`
+  (`cord` only), `entity_type`, `shape_quirks`, and `scenario_record_count`
+  (`synthesized` only, never overwritten). Module 1 never writes
+  `record_count`, and `quality_intent` is Step 2's to write. A CORD snapshot
+  goes to `config/cord_metadata.yaml`.
 - **Steps 3-8.** Verify the files. Write `docs/data_collection_checklist.md`
   and `docs/data_source_locations.md`. Give a privacy note, make
   `.gitignore` cover `data/raw/*`, and write `docs/security_compliance.md`.
@@ -10209,6 +10221,7 @@ looks wrong.
 - `tests/test_scaffold_banner_matches_build.py`: 25
 - `tests/test_scaffold_citations_and_database_type.py`: 23
 - `tests/test_scaffold_engine_config_reaches_the_sdk.py`: 8
+- `tests/test_scenario_registry_fields_agree.py`: 13
 - `tests/test_screenshot_embed_timing_is_satisfiable.py`: 10
 - `tests/test_screenshot_retention_and_order.py`: 19
 - `tests/test_sdk_parameter_shapes.py`: 39
@@ -12160,6 +12173,14 @@ Senzing licensing, with no SPDX identifier.
   conditional gates, pinned by `test_data_collection_non_yielding_run.py`
   (the default scenario exceeds the built-in limit, so 8a's gate fires where
   the text said no question was asked, and the over-limit case had no rule)
+- #604: Module 4's Data Source Registry note defines once
+  (`#scenario-source-fields`) the fields a generated scenario's entry carries:
+  `provenance`, `cord_dataset` and `cord_source`, `entity_type`,
+  `shape_quirks` and the new `scenario_record_count`, with `record_count` kept
+  the measured count Module 1 never writes; Module 1 Step 11 and Step 4a link
+  it and Step 2 reads the fields by name, checked by
+  `tests/test_scenario_registry_fields_agree.py` (Module 1 wrote the registry
+  with no named fields, so what Module 4 read depended on what the guide wrote)
 - #609: `/release-cycle` writes nothing under `specs/` before stage 5 and its
   own entry only at a stop, stated once with every write and matched by the
   pending #573 block, corrected in place; `autotest.py --report-dir` keeps a
