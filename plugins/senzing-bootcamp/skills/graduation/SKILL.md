@@ -363,7 +363,8 @@ no takeaway ("skip", a pass, or nothing usable), the line is left out, never wri
 `docs/REVISIT_BOOTCAMP.md` and in the closing announcement.
 
 Then continue to Step 1 in the same turn. Step 1a folds both lists, the takeaway and the "Next time"
-request into the recap, and Step 6c and the closing announcement repeat them.
+request into the recap, and Step 6c carries all four into `docs/REVISIT_BOOTCAMP.md`. The closing
+announcement repeats only the "Next time" request (INV-358).
 
 **On a re-run of graduation**, a takeaway or "Next time" request the recap's handover block already
 records is not asked again (INV-006); the two lists are rebuilt from the recap as it now stands.
@@ -712,6 +713,16 @@ If the normalizer reports a file left as written, that is a normalizer bug — s
 the file unformatted; never hand-edit the prose to make formatting pass. Like every graduation step
 this is non-blocking: if it fails or is unavailable, warn, leave the content as written, and continue
 — a formatting issue is never a reason to skip the PDF.
+
+⛔ **(INV-166) Relay the normalizer's mojibake warning; never repair it.** For a file whose lines
+look like UTF-8 text read as Windows-1252 and written back, the normalizer writes
+`<path>: WARNING: N line(s) look like Windows-1252 mojibake …` to stderr and still exits 0, so a
+zero exit is not a clean result. Read its stderr. For each such line, tell the Bootcamper in one
+plain sentence which file and lines look double-encoded, and that rewriting them from the UTF-8
+source fixes them
+(`../bootcamp-onboarding/ground-rules.md` → "Windows and PowerShell"). Do not edit the file to
+repair it: a repair is a content change, and the pass changes formatting only (INV-110). The
+warning is a statement, not a 👉 question, and the step continues (INV-048).
 
 ### 1b. Render the PDF
 
@@ -1340,7 +1351,7 @@ If `production/` already exists, pin this 👉 question verbatim (neutral lead +
 
 1. **Overwrite** — replace the existing `production/` contents.
 2. **Merge** — keep existing files and add or update the generated ones.
-3. **Abort** — leave `production/` untouched and skip to the graduation report.
+3. **Abort** — leave `production/` untouched and write the graduation report to `docs/` instead.
 
 Wait for the answer. On abort, skip to the graduation report noting the abort.
 
@@ -1349,7 +1360,8 @@ Wait for the answer. On abort, skip to the graduation report noting the abort.
 - **1, "Overwrite":** replace the existing contents by the copy below, then Step 3.
 - **2, "Merge":** keep the existing files and add or update them by the copy below, then Step 3.
 - **3, "Abort":** leave `production/` untouched and skip to Step 5, the graduation report, noting
-  the abort.
+  the abort. Nothing under `production/` is written or normalized after an Abort: Step 5 writes
+  the report to `docs/GRADUATION_REPORT.md`, and Step 5a is skipped.
 
 Create `production/` and copy production-relevant files (skip any source that
 does not exist; on a copy failure, log and continue):
@@ -1395,7 +1407,7 @@ The projection describes what production loads, not what the evaluation loaded:
   `data/raw/` input is disclosed as the paragraph on fast-pathed sources below says). Omit a source
   whose `file_path` is null, such as a documented-location-only source. Omit a source whose
   `mapping_status` is `skipped` too: it has no mapper, so production has nothing to load it with,
-  and Step 4's README names it ([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)).
+  and Step 4's README names it (INV-363; [what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)).
 - **Why `load_subset:` goes:** it is the evaluation's limit. An `overlap_preserving` block names a
   subset file under the excluded `data/subsets/` (below), and a `first_n` block's `limit` is the
   evaluation's license or SQLite cap. A source with no block loads its whole registry `file_path`
@@ -1514,7 +1526,16 @@ above, the `- [ ]` checkboxes, and the tables are content, not formatting.
 ## Step 5: Graduation report
 
 Always generate `production/GRADUATION_REPORT.md`, even if earlier steps had
-errors. Include: completion timestamp, bootcamp path (Core/Customized) and the modules completed,
+errors, except after Step 2's Abort, when it goes to `docs/GRADUATION_REPORT.md` instead.
+
+**After an Abort.** Step 2 promised to leave `production/` untouched, so write the report to
+`docs/GRADUATION_REPORT.md`, record the abort in it, and skip Step 5a. Leave an earlier
+`production/GRADUATION_REPORT.md` as it is. Step 1a's pass over `docs/*.md` has already run and
+Step 5a does not run, so hand-format this report to the house rules as Step 6c's
+`docs/REVISIT_BOOTCAMP.md` is (MD022/MD031/MD032 blank lines, MD040 fenced-block languages,
+`**Label:**` colon spacing). Its files-generated table lists only what this run wrote.
+
+Include: completion timestamp, bootcamp path (Core/Customized) and the modules completed,
 `programming_language`, `database_type`, a files-generated table (it lists
 `production/config/data_sources.yaml`, the Step 2 registry projection, with the other generated
 files), a files-excluded table, and
@@ -1526,6 +1547,9 @@ If any step failed, add a
 "⚠️ Issues Encountered" section naming what failed and what was skipped.
 
 ## Step 5a: Normalize the production Markdown (once, after the files exist)
+
+**Skip this step after Step 2's Abort.** Nothing under `production/` was written, and Step 5 put
+the report in `docs/`, so there is nothing here to normalize and `production/` stays untouched.
 
 `production/` now holds its Markdown deliverables, written plain. Make the same single
 best-effort CommonMark pass over them that Step 1a made over `docs/*.md` — INV-060 requires the
@@ -1681,12 +1705,13 @@ command, the recap PDF (`docs/bootcamp_recap.pdf`), and any visualization snapsh
 ### 6c. Return guide
 
 Write `docs/REVISIT_BOOTCAMP.md` (Markdown under `docs/`, per INV-017). ⛔ **This is the one
-deliverable you do hand-format** to the house rules (MD022/MD031/MD032 blank lines, MD040 fenced-block
+deliverable you always hand-format** to the house rules (MD022/MD031/MD032 blank lines, MD040 fenced-block
 languages, `**Label:**` colon spacing): it is written *after* both normalization passes — Step 1a's
 over `docs/*.md` and Step 5a's over `production/*.md` — so no pass will reach it. Re-running Step 1a
 here is deliberately **not** the answer: it would re-touch `docs/bootcamp_recap.md`, which the recap
 PDF was already rendered from in Step 1b, leaving the keepsake and its source subtly out of step.
-Cover:
+(After Step 2's Abort, Step 5's `docs/GRADUATION_REPORT.md` is hand-formatted too, for the same
+reason.) Cover:
 
 - **Quick start when you return** — a short command list at the very top (re-source the env, restore
   the database, re-init the engine, re-run a query and the visualization).
@@ -1694,6 +1719,8 @@ Cover:
 - **Decisions you made** and **How you got it built** — the two lists from Step 0b, exactly as
   Step 1a folded them into the recap's handover block. A list with no entries is left out here
   too.
+- **Your takeaway** — the one line from Step 0b, in the Bootcamper's words, as Step 1a folded it.
+  A passed takeaway is left out, never written as "N/A".
 - **Next time** — the request from Step 0b, in the Bootcamper's words, or labeled as the guide's
   draft when it is one: the place to start when they come back with a new source, with no script.
 - **Your business problem and data sources** — from `docs/business_problem.md` /
@@ -1729,7 +1756,7 @@ line: "Say \"bootcamp feedback\" anytime if you'd like to share your experience.
 This runs exactly once, after the report, before graduation is reported finished.
 
 1. **Guarantee the recap PDF exists.** Confirm `docs/bootcamp_recap.pdf` exists and is non-empty. If it is missing, re-run Step 1b (or the inline fallback) once so a valid PDF exists before you announce it. Never announce an artifact you have not confirmed exists at its path.
-2. **Emit one closing announcement** naming only the artifacts confirmed to exist. State that the recap PDF at `docs/bootcamp_recap.pdf` opens with a summary page and then walks through every completed module, capturing that module's Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary, and that the source lives at `docs/bootcamp_recap.md`. Name the `production/` project and its `GRADUATION_REPORT.md` and `MIGRATION_CHECKLIST.md`. Frame the PDF as a keepsake to revisit and share with their team.
+2. **Emit one closing announcement** naming only the artifacts confirmed to exist. State that the recap PDF at `docs/bootcamp_recap.pdf` opens with a summary page and then walks through every completed module, capturing that module's Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary, and that the source lives at `docs/bootcamp_recap.md`. Name the `production/` project and its `GRADUATION_REPORT.md` and `MIGRATION_CHECKLIST.md`; after Step 2's Abort, name `docs/GRADUATION_REPORT.md` instead and none of `production/`'s files, since this run wrote none. Frame the PDF as a keepsake to revisit and share with their team.
 
    **Add exactly one line** offering `/package-bootcamp`, which gathers the recap, the keepsake
    documents, the visualizations and `production/` into a single zip under `backups/packages/` they

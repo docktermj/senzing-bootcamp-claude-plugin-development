@@ -5,8 +5,8 @@ on the decisions the Bootcamper recorded, and it never named how to start the ne
 AI assistant and the Senzing MCP server, without the bootcamp's script. #481 adds a step right
 after the Step 0 retrospective that shows "Decisions you made" and "How you got it built", asks for
 a one-line takeaway and then a "Next time" request in turns of their own, folds all four into the
-recap inside a `BOOTCAMP-HANDOVER` fence, carries them into `docs/REVISIT_BOOTCAMP.md`, and closes
-by stating there is no script from here and repeating the request.
+recap inside a `BOOTCAMP-HANDOVER` fence, carries all four into `docs/REVISIT_BOOTCAMP.md` (Step
+6c), and closes by stating there is no script from here and repeating only the request (#614).
 
 These are **static** checks on shipped prose, plus one cross-check that the fence the skill
 tells the guide to write is the fence the generator lifts. Whether a live turn draws the lists
@@ -240,11 +240,30 @@ class StepOneAFoldsItBehindItsOwnFence(unittest.TestCase):
 
 class TheReturnGuideCarriesThem(unittest.TestCase):
 
-    def test_revisit_carries_both_lists_and_the_request(self):
+    def test_revisit_carries_both_lists_the_takeaway_and_the_request(self):
         flat = squash(STEP_6C)
         self.assertIn("**Decisions you made** and **How you got it built**", flat)
+        self.assertIn("**Your takeaway**", flat)
         self.assertIn("**Next time**", flat)
         self.assertIn("labeled as the guide's draft when it is one", flat)
+
+    def test_the_takeaway_sits_between_the_lists_and_the_request(self):
+        flat = squash(STEP_6C)
+        self.assertLess(flat.index("**How you got it built**"), flat.index("**Your takeaway**"))
+        self.assertLess(flat.index("**Your takeaway**"), flat.index("**Next time**"))
+
+    def test_a_passed_takeaway_is_left_out_of_the_guide(self):
+        line = squash(STEP_6C)
+        line = line[line.index("**Your takeaway**"):line.index("**Next time**")]
+        self.assertIn("in the Bootcamper's words", line)
+        self.assertIn('A passed takeaway is left out, never written as "N/A".', line)
+
+    def test_step_0b_promises_what_step_6c_and_the_closing_carry(self):
+        """#614: Step 0b promised the closing repeated all four; it repeats only the request."""
+        self.assertIn("Step 6c carries all four into `docs/REVISIT_BOOTCAMP.md`", FLAT_0B)
+        self.assertIn('The closing announcement repeats only the "Next time" request (INV-358).',
+                      FLAT_0B)
+        self.assertNotIn("Step 6c and the closing announcement repeat them", FLAT_0B)
 
 
 class TheClosingHandsItOver(unittest.TestCase):
