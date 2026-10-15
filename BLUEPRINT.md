@@ -12216,6 +12216,13 @@ Senzing licensing, with no SPDX identifier.
   "Never blocks." ⛔ and INV-335 and INV-122 `PROPOSED AMENDMENT`s are queued
   (sites cited INV-048 for a generic never-blocks, and a release-cycle string
   and a test credited INV-309 with INV-365's rule)
+- #608: System verification's failed-status ⛔ on the move-on path cites no
+  INV-229 and gives its real reason (the step-9 resume check reads the status
+  to re-present the pending question, and the report records the failed run
+  honestly), pinned by `tests/test_module3_failed_run_ends_on_a_question.py`;
+  DEFERRED blocks are queued for it and for SDK setup's "Non-blocking, start
+  to finish." update step (INV-229 governs expectation mismatch, no graduation
+  file reads Module 3's status, and neither rule had a governing invariant)
 - #609: `/release-cycle` writes nothing under `specs/` before stage 5 and its
   own entry only at a stop, stated once with every write and matched by the
   pending #573 block, corrected in place; `autotest.py --report-dir` keeps a

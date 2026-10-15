@@ -15,7 +15,10 @@ from the beginning", which offered nothing to answer and named no step to run ne
 * Step 9 item 7 ends a failed run on a pinned 👉 question (INV-051, INV-056) with two numbered
   options, and a handler for each answer that names where the flow resumes (INV-284): retry
   resumes at Phase 1 Step 1, uncapped, as a new state rather than an INV-006 repeat; moving on
-  runs Step 10 then Step 11, with the report's module-level `status` left `failed` (INV-229);
+  runs Step 10 then Step 11, with the report's module-level `status` left `failed`, because the
+  step-9 resume check reads it to re-present the pending question and the report records the
+  failed run honestly (#608: the reason was "graduation reads it from there", which no
+  graduation file does, and the INV-229 citation named the rule on expectation mismatch);
 * an interruption before the answer resumes at the question;
 * `SKILL.md` and Phase 1's header say a failed run asks this question too.
 
@@ -24,7 +27,8 @@ mutated copy** (INV-265). Prose is matched with whitespace collapsed, and every 
 on a re-wrapped copy (INV-346). These tests assert that the skill files *state* the rules and
 **cannot** establish that a live run follows them, which only `dry-run` phase 3 can observe.
 
-Source issue: #529 (part of #504). Invariants: INV-006, INV-051, INV-056, INV-229, INV-284.
+Source issues: #529 (part of #504), #608. Invariants: INV-006, INV-051, INV-056, INV-284. The
+failed-status rule is queued as a DEFERRED INVARIANT in #608's ledger entry.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -45,6 +49,8 @@ OPTION_1 = "1. Retry System verification from the beginning, once the issues abo
 OPTION_2 = "2. Move on to the next module, with System verification recorded as failed."
 #: The prose #529 replaces.
 RETIRED = "Advise the bootcamper to fix the issues and re-run System verification"
+#: The reason #608 replaces: no graduation file reads Module 3's status.
+RETIRED_REASON = "graduation reads it from there"
 
 
 def read_all():
@@ -141,8 +147,10 @@ def item_7_problems(p2):
         # Option 2: where it resumes, and the status it leaves.
         "2, \"Move on\":",
         "run Step 10 (Cleanup), then Step 11 (Module Close)",
-        "(INV-229) The report's module-level `status` stays `failed`:",
-        "graduation reads it from there",
+        "⛔ **The report's module-level `status` stays `failed`:** do not rewrite it on the way "
+        "out.",
+        "The step-9 resume check below reads it to re-present the pending question",
+        "the report must record honestly that the run failed",
         # An interruption.
         "An interruption that leaves this question unanswered resumes at it.",
         "re-present it verbatim",
@@ -161,6 +169,8 @@ def retired_problems(p2):
         problems.append("Step 9 still only advises a re-run instead of asking")
     if flat("Please resolve the issues above and re-run system verification.") in flat(p2):
         problems.append("the failure banner still tells the bootcamper only to re-run")
+    if flat(RETIRED_REASON) in flat(p2):
+        problems.append("the failed-status rule still says graduation reads the status")
     return problems
 
 
@@ -292,6 +302,22 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
         self.assertCaught(self.mutate(
             "phase2", "The report's module-level `status` stays `failed`:",
             "Set the report's module-level `status` to `passed`:"))
+
+    def test_the_status_rule_cites_inv_229_again(self):
+        """#608: INV-229 governs expectation mismatch, not the status surviving move-on."""
+        self.assertCaught(self.mutate(
+            "phase2", "⛔ **The report's module-level `status` stays `failed`:**",
+            "⛔ **(INV-229) The report's module-level `status` stays `failed`:**"))
+
+    def test_the_graduation_reason_restored(self):
+        self.assertCaught(self.mutate(
+            "phase2", "the run failed.\n",
+            "the run failed. On the way out, graduation reads it from there.\n"))
+
+    def test_the_resume_reason_dropped(self):
+        self.assertCaught(self.mutate(
+            "phase2", "The step-9 resume check below reads it to re-present the pending question,",
+            "The guide reads it later,"))
 
     def test_the_interruption_rule_removed(self):
         self.assertCaught(self.mutate("phase2",
