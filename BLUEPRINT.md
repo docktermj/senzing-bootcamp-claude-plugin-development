@@ -3624,8 +3624,19 @@ no tools, run from `$HOME`, the `BOOTCAMPER_BRIEF` (an insurance-company
 Bootcamper on Linux who knows SQL and Python, replies only what they would
 type) plus one of five `PERSONAS`, on `--bootcamper-model` (default a Haiku
 model). Each turn appends A's JSON events and a `bootcamper` event to the
-transcript. The loop stops when A exits non-zero (a `walk_error` event), when a
-turn shows no 👉, when B returns nothing, or at the turn limit: `--turns`
+transcript. B's reply goes to A as typed, except a leading `/` (#656): each
+leading line that is exactly `/effort <level>` or `/model <name>`
+(`SLASH_FLAGS`, parsed by `split_reply`) becomes a sticky `--effort` or
+`--model` flag on that turn's call and every later one, the latest value
+winning and replacing `--model`, and is logged as a `bootcamper_flag` event
+(`turn`, `command`, `flag`, `value`) while the `bootcamper` event keeps the
+whole reply; the rest is the turn. Any other text that starts with `/` is sent
+with one leading space (`as_turn`), so the CLI does not run it as a command;
+the opening is sent as given. A reply of only slash lines is re-asked once
+with the same guide turn, and a second one stops the walk. The loop stops when
+A exits non-zero (a `walk_error` event), when a turn shows no 👉, when B
+returns nothing, when B twice replies only with slash commands, or at the turn
+limit: `--turns`
 turns; with `--stop-at-banner`, until a turn shows that banner, then `--turns`
 more (#571). `banner_seen` matches only a line of its own that equals the
 banner, ignoring case and runs of whitespace, as it stands or with one
@@ -5078,11 +5089,19 @@ Rules:
 - If you are asked to choose from a numbered list, reply with the number or the
   option text.
 - Keep it to a couple of sentences at most.
+- If you type a slash command such as /effort or /model, put it on its own line,
+  before your answer.
 - Never mention that this is a test or a simulation."""
 BANNER_FRAME = re.compile(r"^([^\x00-\x7f])\1\1 (.+?) \1\1\1$")
+SLASH_FLAGS = {"/effort": "--effort", "/model": "--model"}
+SLASH_LINE = re.compile(r"(\S+) (\S+)")
 def visible_text(stream_json_text):
     ...
 def banner_seen(banner, text):
+    ...
+def split_reply(reply):
+    ...
+def as_turn(text):
     ...
 def bootcamper_reply(prompt_text, persona, model, timeout=180):
     ...
@@ -9796,7 +9815,8 @@ def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
 <!-- markdownlint-enable MD013 -->
 
 - `_claude`: `test_dry_run_simulated_phase3.py` (patched with a stub, so the
-  walk's stop condition runs offline and spends no tokens)
+  walk's stop condition runs offline and spends no tokens) and
+  `test_walk_slash_replies.py` (the stub records each call's argv)
 
 ### 7.11 `.claude/skills/auto-test/mcp_probe.py`
 
@@ -9979,10 +9999,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 7135 test methods in 405 files, matching `inventory.test_count_total`.
+There are 7148 test methods in 406 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6607.
+sum to 6620.
 
 Two files run more tests than they define, so discovery collects 6496:
 
@@ -10406,6 +10426,7 @@ looks wrong.
 - `tests/test_viz_tab_consolidation.py`: 38
 - `tests/test_volume_option_reply_has_no_count.py`: 14
 - `tests/test_walk_hook_conflict_is_documented.py`: 10
+- `tests/test_walk_slash_replies.py`: 13
 - `tests/test_welcome_licensing_names_data_collection.py`: 6
 - `tests/test_why_key_details_flag_claim_is_withdrawn.py`: 26
 - `tests/test_why_key_details_flag_is_cited_not_guessed.py`: 12
@@ -11020,6 +11041,22 @@ These are the scripts under `.claude/skills/`:
     starts at its banner and not the question before it, Entity Resolution
     Concepts runs from its banner to the next, and Bootcamp preparation ends
     at the next banner when its own showed only in a tool result (#657).
+- **A Bootcamper reply that starts with `/`.**
+  `tests/test_walk_slash_replies.py` (#656), with `walk._claude` recording each
+  call's argv and `walk.bootcamper_reply` scripted:
+  - `/effort high`, blank line, `yes` sends `-p yes … --effort high --resume`,
+    and every later call still carries `--effort high`; a later
+    `/effort low` and `/model …` replace the earlier value and the
+    command-line `--model`; `split_reply` takes only exact leading lines;
+  - the `bootcamper` event keeps the reply verbatim and a `bootcamper_flag`
+    event records the flag; `transcript_lint.load` and
+    `module_banners.slice_transcript` do not read it as a guide turn;
+  - a path reply (`/data/claims.csv`), `/help me pick` and a path after a flag
+    line go out with one leading space and set no flag;
+  - a slash-only reply is re-asked once with the same guide turn, and a second
+    one stops the walk with "the Bootcamper replied only with slash
+    commands"; turn 1 sends `/senzing-bootcamp:start-bootcamp` unchanged; the
+    brief carries the own-line rule.
 - **The finding skills' two stages.** `tests/test_drafts.py` (#572):
   - `drafts.py`, run offline: ids per skill and the draft's header, the sorted
     dedupe key, status changes, the number written back and a re-run that
@@ -12508,6 +12545,13 @@ Senzing licensing, with no SPDX identifier.
   prose stamp are restamped to server 1.39.0, 2026-10-15 (server 1.39.0 no
   longer returns the nested path, and the figure held only for one query
   wording)
+- #656: a simulated Bootcamper's leading `/effort <level>` or `/model <name>`
+  reply line becomes a sticky `--effort` or `--model` flag on every later
+  `claude -p … --resume` call, logged as a `bootcamper_flag` event beside the
+  verbatim `bootcamper` reply; a slash-only reply is re-asked once, then stops
+  the walk; any other leading `/` is sent with one leading space (`claude -p`
+  ran the reply as a slash command, so the walk stalled at the first effort
+  gate, and `/effort` under `-p --resume` does not persist)
 - #657: a walk banner matches only a line of its own (`walk.banner_seen`
   compares each whole line, ignoring case and whitespace, with one tripled-glyph
   frame stripped), and `module_banners.py slice` ends Bootcamp preparation at
