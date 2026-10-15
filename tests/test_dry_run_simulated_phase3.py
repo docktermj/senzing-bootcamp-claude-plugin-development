@@ -23,10 +23,13 @@ Checks, each negative-controlled when written (#571):
 5. **The stop condition, offline.** `walk.run_walk` is driven with its two `claude` calls
    stubbed, so no token is spent: it stops `--turns` turns after the banner, at `--max-turns`
    when no banner shows, and after `--turns` turns with no banner given, as before. Each run
-   ends on a `walk_stop` event naming the reason.
+   ends on a `walk_stop` event naming the reason. A banner counts only on a line of its own,
+   optionally framed by a tripled glyph (#657): a transition question or a journey map's
+   `⬜ Bootcamp graduation` is not a banner.
 6. **The slice**: `module_banners.py slice` starts at the chosen module's banner, starts at the
    first turn for Bootcamp preparation, ends an exempt module at the next banner, and exits 3,
-   naming the module reached, when the walk never showed the start banner.
+   naming the module reached, when the walk never showed the start banner. Bootcamp
+   preparation ends at the next banner even when its own never displayed (#657).
 
 ⚠️ **What this does NOT establish:** that a live walk reaches a module, that a live session
 asks the three questions, or that it never answers for the Bootcamper. Those are properties of
@@ -205,10 +208,12 @@ def _assistant(text):
                        "message": {"content": [{"type": "text", "text": text}]}})
 
 
-def _turn_text(turn, banner_at, banner):
+def _turn_text(turn, banner_at, banner, question_at=None):
     body = f"Turn {turn} of the bootcamp. " + "x" * 220
     if turn == banner_at:
         body = f"━━━\n🚀🚀🚀  {banner}  🚀🚀🚀\n━━━\n" + body
+    if turn == question_at:
+        return body + f"\n{POINTER} **Are you ready to move on to the next module: SDK setup?**"
     return body + f"\n{POINTER} What would you like to do next?"
 
 
@@ -217,12 +222,13 @@ class TheWalkStopsOffline(unittest.TestCase):
 
     BANNER = "MODULE: SDK SETUP"
 
-    def walk(self, turns, max_turns=150, banner_at=None, stop_at_banner=None):
+    def walk(self, turns, max_turns=150, banner_at=None, stop_at_banner=None,
+             question_at=None):
         calls = []
 
         def fake_claude(args, cwd, stdin_text=None, timeout=600, env=None):
             calls.append(args)
-            text = _turn_text(len(calls), banner_at, self.BANNER)
+            text = _turn_text(len(calls), banner_at, self.BANNER, question_at)
             return subprocess.CompletedProcess(args, 0, stdout=_assistant(text) + "\n",
                                                stderr="")
 
@@ -248,6 +254,35 @@ class TheWalkStopsOffline(unittest.TestCase):
     def test_the_banner_matches_regardless_of_case(self):
         count, stop = self.walk(turns=1, banner_at=2, stop_at_banner="module: sdk setup")
         self.assertEqual((count, stop["banner_turn"]), (3, 2))
+
+    def test_the_transition_question_is_not_the_banner(self):
+        # #657: "next module: SDK setup?" fired the stop one guide turn early.
+        count, stop = self.walk(turns=1, banner_at=3, question_at=2,
+                                stop_at_banner=self.BANNER)
+        self.assertEqual((count, stop["banner_turn"]), (4, 3))
+
+    def test_a_banner_counts_only_on_a_line_of_its_own(self):
+        # #657: each pair is (banner, text, shown?), from the 2026-10-14 walk transcript.
+        cases = [
+            ("BOOTCAMP GRADUATION", "✅ Bootcamp preparation\n⬜ Bootcamp graduation", False),
+            ("BOOTCAMP GRADUATION", "Done.\n\n🎓🎓🎓  BOOTCAMP GRADUATION  🎓🎓🎓\n\nWell done.",
+             True),
+            ("MODULE: SDK SETUP",
+             f"{POINTER} **Are you ready to move on to the next module: SDK setup?**", False),
+            ("MODULE: SDK SETUP", "🚀🚀🚀  MODULE: SDK SETUP  🚀🚀🚀", True),
+            ("module: sdk setup", "🚀🚀🚀  MODULE: SDK SETUP  🚀🚀🚀", True),
+            ("MODULE: SDK SETUP", "🚀🚀🚀\tMODULE:  SDK SETUP 🚀🚀🚀\r\n", True),
+            ("MODULE: SDK SETUP", "MODULE: SDK SETUP", True),
+            ("ENTITY RESOLUTION CONCEPTS",
+             "The modules: **Bootcamp preparation**, *Entity Resolution Concepts* (optional)",
+             False),
+            ("BOOTCAMP GRADUATION", "🔄 Bootcamp graduation", False),
+            ("BOOTCAMP GRADUATION", "🎓🎓 BOOTCAMP GRADUATION 🎓🎓", False),
+            ("MODULE: SDK SETUP", "🚀🚀🚀  MODULE: SDK SETUP  🚀🚀🚀 Let's begin.", False),
+        ]
+        for banner, text, shown in cases:
+            with self.subTest(banner=banner, text=text):
+                self.assertIs(walk.banner_seen(banner, text), shown)
 
     def test_it_stops_at_max_turns_when_no_banner_shows(self):
         count, stop = self.walk(turns=2, max_turns=4, stop_at_banner=self.BANNER)
@@ -306,6 +341,70 @@ class TheSliceStartsAtTheChosenModule(unittest.TestCase):
     def test_preparation_starts_at_the_first_turn_and_ends_at_the_next_banner(self):
         lines = self.transcript(1, 3)
         kept, summary = module_banners.slice_transcript(lines, 1)
+        self.assertEqual((summary["start_event"], summary["end_event"]), (0, 4))
+        self.assertEqual(kept, lines[:4])
+
+    def walk_like_2026_10_14(self):
+        """The 2026-10-14 walk's shape (#657): banners as lines of their own, and the same
+        names in prose, journey maps, transition questions and a tool result."""
+        gate = POINTER + " **Are you ready to move on to the next module: {}?**"
+        journey = "\n✅ Bootcamp preparation\n{}\n⬜ Bootcamp graduation"
+        framed = {n: f"{g * 3}  {self.banner[n]}  {g * 3}"
+                  for n, g in ((1, "🧰"), (2, "🧭"), (3, "🚀"), (4, "🚀"))}
+        tool_result = json.dumps({"type": "user", "message": {"content": [
+            {"type": "tool_result", "content": framed[1]}]}})
+        events = [
+            _assistant("The modules: **Bootcamp preparation**, *Entity Resolution Concepts* "
+                       "(optional), **Discover the Business Problem**, ... **Bootcamp "
+                       "graduation**.\n" + POINTER + " Any questions?"),
+            tool_result,
+            _assistant(framed[2] + journey.format("🔄 **Entity Resolution Concepts**")
+                       + "\n" + POINTER + " Ready?"),
+            _assistant(gate.format("Discover the Business Problem")),
+            _assistant(framed[3] + journey.format("🔄 **Discover the Business Problem**")
+                       + "\n" + POINTER + " Ready?"),
+            _assistant(gate.format("SDK setup")),
+            _assistant(framed[4] + journey.format("🔄 **SDK setup**") + "\n" + POINTER
+                       + " Ready?"),
+        ]
+        lines = []
+        for turn, event in enumerate(events, 1):
+            lines += [event, json.dumps({"type": "bootcamper", "turn": turn, "text": "ok"})]
+        lines.append(json.dumps({"type": "walk_stop", "turn": 7, "reason": "--turns 1 reached",
+                                 "stop_at_banner": None, "banner_turn": None}))
+        return lines
+
+    def test_journey_maps_and_prose_are_not_banners(self):
+        # #657: graduation was "reached" from every journey map's "⬜ Bootcamp graduation",
+        # and Bootcamp preparation from the welcome prose.
+        _, summary = module_banners.slice_transcript(self.walk_like_2026_10_14(), 4)
+        self.assertEqual(summary["modules_reached"], ["Entity Resolution Concepts",
+                                                      "Discover the Business Problem",
+                                                      "SDK setup"])
+        self.assertEqual(summary["last_module_reached"], "SDK setup")
+        _, summary = module_banners.slice_transcript(self.walk_like_2026_10_14(), 11)
+        self.assertFalse(summary["start_found"])
+
+    def test_a_module_starts_at_its_banner_not_the_question_before_it(self):
+        # #657: SDK setup started at the transition question, one guide turn early.
+        lines = self.walk_like_2026_10_14()
+        kept, summary = module_banners.slice_transcript(lines, 4)
+        self.assertEqual((summary["start_event"], summary["end_event"]), (12, None))
+        self.assertEqual(kept, lines[12:])
+
+    def test_entity_resolution_concepts_runs_from_its_banner_to_the_next(self):
+        # #657: the welcome prose matched first, so the slice was the empty 0:0.
+        lines = self.walk_like_2026_10_14()
+        kept, summary = module_banners.slice_transcript(lines, 2)
+        self.assertEqual((summary["start_event"], summary["end_event"]), (4, 8))
+        self.assertEqual(kept, lines[4:8])
+
+    def test_preparation_ends_at_the_next_banner_when_its_own_never_showed(self):
+        # #657: the preparation banner showed only in a tool result; the slice must still
+        # end at the next module's banner, or check_apparatus lints the whole walk as exempt.
+        lines = self.walk_like_2026_10_14()
+        kept, summary = module_banners.slice_transcript(lines, 1)
+        self.assertNotIn("Bootcamp preparation", summary["modules_reached"])
         self.assertEqual((summary["start_event"], summary["end_event"]), (0, 4))
         self.assertEqual(kept, lines[:4])
 

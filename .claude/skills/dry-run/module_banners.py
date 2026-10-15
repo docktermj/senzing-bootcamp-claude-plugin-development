@@ -21,7 +21,9 @@ the walk would then run to ``--max-turns`` looking for a banner no turn shows.
 The analysis for Bootcamp preparation begins at the first turn, so it includes the onboarding
 preface. The apparatus-exempt modules (Bootcamp preparation, Entity Resolution Concepts) end
 their slice at the next module's banner, because ``transcript_lint.py``'s ``check_apparatus``
-reads its whole input as one phase. Graduation is linted with no phase: it is not a numbered
+reads its whole input as one phase; Bootcamp preparation's ends there even when its own banner
+never displayed. A banner counts only on a line of its own (``walk.banner_seen``), so a
+journey map's ``⬜ Bootcamp graduation`` or a transition question is not a banner. Graduation is linted with no phase: it is not a numbered
 content module, so the content apparatus check does not apply to it.
 
 Usage:
@@ -112,6 +114,11 @@ def slice_transcript(lines, number):
     chosen, table = module(number), modules()
     shown = [visible_text(line) for line in lines]
     reached, start, end = [], None, None
+    if chosen["token"] == "bootcamp_preparation":
+        # Analysis from the first turn, onboarding preface included. Set before the scan,
+        # so the slice ends at the next module's banner even when the preparation banner
+        # never displayed (it can show only inside a tool result) (#657).
+        start = 0
     for index, text in enumerate(shown):
         for entry in table:
             if entry["banner"] and banner_seen(entry["banner"], text):
@@ -119,11 +126,10 @@ def slice_transcript(lines, number):
                     reached.append(entry["name"])
                 if start is None and entry["number"] == number:
                     start = index
-                elif (start is not None and end is None and entry["number"] != number
+                elif (start is not None and end is None and index > start
+                      and entry["number"] != number
                       and chosen["lint_phase"] in ("preparation", "module0")):
                     end = index
-    if chosen["token"] == "bootcamp_preparation":
-        start = 0  # analysis from the first turn, onboarding preface included
     stop = None
     for line in reversed(lines):
         try:

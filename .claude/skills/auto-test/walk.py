@@ -28,14 +28,15 @@ Usage:
     walk.py --project DIR --out transcript.jsonl [--turns 12] [--persona terse]
             [--stop-at-banner "MODULE: SDK SETUP"] [--max-turns 150]
 
-With ``--stop-at-banner`` the walk runs until a turn shows that banner, then
-``--turns`` more turns; without it, ``--turns`` turns from the start. Either way
+With ``--stop-at-banner`` the walk runs until a turn shows that banner on a line of its
+own (``banner_seen``), then ``--turns`` more turns; without it, ``--turns`` turns from the start. Either way
 ``--max-turns`` caps the walk, and the transcript ends with a ``walk_stop`` event
 saying where it stopped and why (``/dry-run`` phase 3's simulated walk reads it).
 """
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import uuid
@@ -86,9 +87,28 @@ Rules:
 - Never mention that this is a test or a simulation."""
 
 
+# A displayed banner's frame: three of one non-ASCII glyph on each side of the text,
+# "🚀🚀🚀  MODULE: SDK SETUP  🚀🚀🚀" (the shape of module_banners.py's BANNER_LINE).
+BANNER_FRAME = re.compile(r"^([^\x00-\x7f])\1\1 (.+?) \1\1\1$")
+
+
 def banner_seen(banner, text):
-    """Whether ``text`` shows ``banner``, ignoring case and runs of whitespace."""
-    return " ".join(banner.split()).casefold() in " ".join(text.split()).casefold()
+    """Whether ``text`` shows ``banner`` on a line of its own (#657).
+
+    A line matches when it equals the banner, ignoring case and runs of whitespace, either
+    as it stands or once one tripled-glyph frame is stripped. A substring test matched
+    prose: "⬜ Bootcamp graduation" in every journey map, and "move on to the next
+    module: SDK setup?" one turn before the SDK setup banner. A single leading glyph such
+    as ``⬜``, ``✅`` or ``🔄`` is not a frame, and a banner with other words on its line
+    does not match.
+    """
+    wanted = " ".join(banner.split()).casefold()
+    for line in text.splitlines():
+        line = " ".join(line.split()).casefold()
+        framed = BANNER_FRAME.match(line)
+        if wanted in (line, framed.group(2) if framed else None):
+            return True
+    return False
 
 
 def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
