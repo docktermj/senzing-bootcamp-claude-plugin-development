@@ -12442,3 +12442,12 @@ Senzing licensing, with no SPDX identifier.
   maintainer templates' worked example moves to the evaluation limit, and
   amendments to INV-208 and INV-209 are queued (the variable lost its only
   source; a lost source is not an absence)
+- #655: Module 5's globalization "best practices" marker states its owner
+  result by the deciding property (the category boost ranks Globalization
+  Guide sections first) instead of the nested section path, the trap drops its
+  "~89 against ~9–13" score figure for the relation (several times the Guide
+  rows', so never rank by score), the cross-script address row names "Address
+  matching examples" and "Enhanced address comparisons", and the marker and
+  prose stamp are restamped to server 1.39.0, 2026-10-15 (server 1.39.0 no
+  longer returns the nested path, and the figure held only for one query
+  wording)
