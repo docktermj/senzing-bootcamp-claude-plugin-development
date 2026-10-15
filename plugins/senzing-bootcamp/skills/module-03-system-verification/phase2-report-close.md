@@ -142,8 +142,10 @@ Generate a structured summary of the System Verification checks.
      state, so asking this question again after another failed run is NOT an INV-006 repeat and
      MUST NOT be suppressed as one.**
    - **2, "Move on":** run Step 10 (Cleanup), then Step 11 (Module Close), which ends on the
-     transition question. ⛔ **(INV-229) The report's module-level `status` stays `failed`:** do not
-     rewrite it on the way out, because graduation reads it from there.
+     transition question.
+     ⛔ **The report's module-level `status` stays `failed`:** do not rewrite it on the way out.
+     The step-9 resume check below reads it to re-present the pending question, and the report
+     must record honestly that the run failed.
    - **An interruption that leaves this question unanswered resumes at it.** A session that
      resumes with step 9 as the last checkpoint and the report's module-level `status` `failed`
      has this question pending: re-present it verbatim (the ground rules' Ask-once rule on a pending,

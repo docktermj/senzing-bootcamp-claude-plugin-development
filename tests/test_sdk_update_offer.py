@@ -33,7 +33,9 @@ What these tests pin, all verified against server 1.32.2 on 2026-07-31:
 * that a 4.x→4.y update is routed to the target version's release notes (the 4.4.0
   "Migration & Action Required" section, via `category='release_notes'`), and "undocumented"
   survives only for a target whose notes do not cover the installed version (#194)
-* nothing blocks (INV-048), and an undeterminable version reports skipped (INV-163)
+* nothing blocks (no registered invariant states it: queued as a DEFERRED INVARIANT in #608's
+  ledger entry; INV-048 is the recap PDF's), and an undeterminable version reports skipped
+  (INV-163)
 
 Run:  python3 -m unittest discover -s tests
 """
