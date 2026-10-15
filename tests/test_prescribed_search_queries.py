@@ -135,6 +135,21 @@ DOCS_INDEX_FORMAT = "%Y-%m-%d %H:%M UTC"
 #: guard exists to stop.
 VERIFIED_QUERIES = {
     # ---------------------------------------------------------------------------------
+    # Executed 2026-10-15 on server 1.39.0 (docs index 2026-10-15 10:47 UTC), at the default
+    # max_results, for #595, Module 2's container-route toolchain step: the minimum language
+    # versions a toolchain row is checked against. ⚠️ Record the PROPERTY, not ranks or scores.
+    ("search_docs", "v4 System Requirements languages supported", None): {
+        "band": "ON TARGET",
+        "sections": ("v4 System Requirements",),
+        "returned":
+            "ON TARGET: the top hit is the 'v4 System Requirements' release note "
+            "(senzing.com/docs/release/4/4_0_hw_sw), whose 'Languages supported' table gives "
+            "C# >= .NET Standard 2.0, Java >= 17 and Python >= 3.10 (Python SDK Linux only); "
+            "the next hit is the v4 hardware and software breaking changes. Rust and TypeScript "
+            "are not in the table: they are community SDKs",
+        "server": "1.39.0", "docs_index": "2026-10-15 10:47 UTC", "measured": "2026-10-15",
+    },
+    # ---------------------------------------------------------------------------------
     # Executed 2026-09-30 on server 1.37.16 (docs index 2026-09-29 22:00 UTC) for #289, Module 6
     # Phase D's per-binding flag-availability route. ⚠️ Record the PROPERTY, not ranks or scores.
     ("search_docs", "senzing.szengineflags SzEngineFlags SZ_EXPORT_DEFAULT_FLAGS", None): {
@@ -968,6 +983,21 @@ VERIFIED_QUERIES = {
             "language='python' or 'java' the same kinds. No example loads several sources in "
             "order with per-source isolation",
         "server": "1.38.2", "docs_index": "2026-10-14 20:27 UTC", "measured": "2026-10-14",
+    },
+    # The evidence slot of Module 2's container-route toolchain MCP-NEGATIVE marker (#595),
+    # measured at the default.
+    ("find_examples", "dockerfile", None): {
+        "band": "EMPTY OF A TOOLCHAIN INSTALL INTO A PLAIN CONTAINER",
+        "sections": (),
+        "returned":
+            "EMPTY OF A TOOLCHAIN INSTALL INTO A PLAIN CONTAINER: one Dockerfile per repository, "
+            "each starting from an image that already holds the language or adds only python3: "
+            "code-snippets-v3 on senzingapi-runtime plus apt-get install python3, elasticsearch-v4 "
+            "on senzingsdk-runtime with a maven eclipse-temurin-25 builder, senzingsdk-runtime on "
+            "debian:13-slim, sz_rabbit_publisher on rust:1.88, sz-napi's deployment guide on "
+            "ubuntu:24.04, and senzingsdk-runtime-based queue consumers that apt-get install "
+            "python3. None installs a JDK, .NET or Node.js into a plain Debian container",
+        "server": "1.39.0", "docs_index": "2026-10-15 10:47 UTC", "measured": "2026-10-15",
     },
     # Three `find_examples` phrasings are gone, removed by #600 rather than recorded: Module 7's
     # integration patterns prescribed 'REST API' and 'batch report', and Module 4's XML note

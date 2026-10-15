@@ -807,7 +807,7 @@ The caller says which entity to pick. Everything below is the same for all three
   `java -cp <dir> <ClassName>` still launches it unchanged — `main` stays `public static`. This
   form is for **prescribed standalone program files** (mappers, loaders, verification programs).
   Verified for a single mapper class on **javac/java 21.0.11, 2026-08-14**: the public form
-  reproduces the error above, the package-private form compiles clean under `javac -Xlint:all`,
+  reproduces the error above, the package-private form compiles clean under `-Xlint:all`,
   and the launcher runs.
   - **Do not rename the file, and do not rename the class.** The prescribed filenames are read by
     other machinery (graduation maps artifacts by base name; Module 5 source-qualifies exactly three
@@ -867,11 +867,31 @@ For example, System verification's `verify_pipeline` is `<dir>` = `src/system_ve
   program needs. A program opens its `<dir>/...` paths relative to that root. The paths use
   forward slashes and the commands use no shell-specific syntax, so they run unchanged in a POSIX
   shell and in PowerShell (INV-002).
+- **On SDK setup's `docker` route, every Build and Run command runs inside the SDK container**,
+  wrapped as:
+
+  ```bash
+  <runtime> exec -w /app <container> bash -c '. src/scripts/senzing-env.sh && <command>'
+  ```
+
+  Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
+  `<command>` is the table's Build or Run command unchanged. `<runtime>` and `<container>` are the
+  `runtime` and `name` of the SDK container's entry in `config/bootcamp_progress.json` →
+  `docker_containers`; an entry with no `runtime` is `docker`. The project is mounted at `/app`,
+  so `-w /app` is the project root and every `<dir>` path resolves as it does on the host. It is
+  `bash -c`, not `sh -c`: the env script finds itself through `${BASH_SOURCE[0]}`, which a Debian
+  image's `sh` (dash) rejects with "Bad substitution". The toolchain is the one SDK setup's
+  container route installs (`../module-02-sdk-setup/SKILL.md` → Phase 2, "Install the chosen
+  language's toolchain in the container"). With no `docker_containers` entry there is no container
+  to run in: SDK setup's container route did not finish, so return to it rather than treat it as a
+  build failure.
 - **Every build has a 120-second timeout, dependency resolution included.** A build that does not
   finish in time is terminated and fails with the timeout Fix_Instruction of the step that ran it.
   A program's run timeout belongs to that step.
 - **A build that fails because a tool is not found** gets a Fix_Instruction naming that tool:
-  `dotnet`, `cargo`, `tsc`, `node` or `javac`.
+  `dotnet`, `cargo`, `tsc`, `node` or `javac`. On the `docker` route the tool is missing from the
+  container, so the Fix_Instruction points to SDK setup's toolchain step.
 
 **Per language:**
 
@@ -1022,11 +1042,11 @@ through query programs. Propagation across that mount is not instantaneous.
   container can read a partially-synced file and report an error at a line that is well-formed.
   Re-run the identical command: **if it succeeds, it was propagation lag, not the code** — say so
   and move on. If it fails identically, it is a real error. One retry, not a backoff loop.
-- **Confirm it with a compile, not by re-reading the source.** Syntax-check the file *inside* the
-  container in the bootcamper's chosen language (INV-090) — `python3 -m py_compile <file>`,
-  `node --check <file>`, `javac`, `tsc --noEmit`. That separates "the container cannot see the whole
-  file yet" from "the code is wrong" in one cheap step, and re-reading the source on the host cannot:
-  the host's copy was always complete.
+- **Confirm it with a compile, not by re-reading the source.** Run the chosen language's Build
+  command from "Building and running a program" *inside* the container, in that section's
+  container-route form (INV-090). That separates "the container cannot see the whole file yet" from
+  "the code is wrong" in one cheap step, and re-reading the source on the host cannot: the host's
+  copy was always complete.
 - ⚠️ **A host/container language-version split is normal here and is NOT the first explanation.**
   The container runs whatever its install steps put there and the host runs its own version, so a
   version story is always available and more satisfying — and usually wrong. A genuine

@@ -1618,10 +1618,16 @@ Ground rules (`ground-rules.md`, every turn):
   `reporting_guide` (#563), or Module 2's C# route, never a public NuGet feed.
   Rust shares `<dir>/target`; TypeScript emits to `dist/` and runs it with
   `node`. Commands run from the project root; every build has a 120-second
-  timeout; a missing tool gets a Fix_Instruction naming it (#562).
+  timeout; a missing tool gets a Fix_Instruction naming it (#562). On SDK
+  setup's `docker` route every Build and Run command is wrapped as
+  `<runtime> exec -w /app <container> bash -c '. src/scripts/senzing-env.sh
+  && <command>'`, runtime and name from the SDK container's
+  `docker_containers` entry, a guide-run block (`bash`, since dash rejects the
+  env script's `${BASH_SOURCE[0]}`; #595).
 - Platform notes: Java standalone files use a package-private class;
   PowerShell 5.1 syntax and encodings; sourced env scripts work under zsh and
-  never `exit`; on Docker a fresh parse error is retried once. Anchor
+  never `exit`; on Docker a fresh parse error is retried once, and confirmed
+  by the section's Build command in the container-route form (#595). Anchor
   `#guide-run-blocks` is the one statement of which blocks owe a PowerShell
   form: a guide-run block (run by the guide's Bash tool) runs in its POSIX
   shell, Git Bash on Windows, and is followed by one fixed pointer line that
@@ -1884,6 +1890,15 @@ branch.
   👉 question: `<runtime> commit --help` decides whether the SDK is kept in a
   committed `<name>-sdk` image or reinstalled (Step 3 Phases 1-3, EULA asked
   again); on no there is no live server, and no relay or proxy is offered.
+  The path's last bullet installs the chosen language's toolchain in the
+  container (#595): the `sdk_guide(topic='install', platform='docker')`
+  reply's command when it gives one, else a pinned per-language row for
+  `debian:bookworm-slim` (`python3`, `default-jdk-headless`, Microsoft's feed
+  and `dotnet-sdk-10.0`, `rustup` linked into `/usr/local/bin`, `nodejs npm`
+  plus `typescript`), run as `<runtime> exec -e
+  DEBIAN_FRONTEND=noninteractive <container> bash -c '<install>'` and ending
+  in a version command checked against the server's minimum; an
+  `MCP-NEGATIVE` marker records that no route serves the command.
   Phase 3 binds by the MCP-named route only: Python
   installs nothing (`pip install senzing` forbidden; shadowing detected via
   `senzing.__file__`); Java the product `sz-sdk.jar`; C# a local `Senzing.Sdk`
@@ -9827,7 +9842,7 @@ collected as tests:
   spec files minus the `specs/IMPLEMENTED.md` and `specs/DECLINED.md` headings.
   It reports any spec found in both. Listing exits 0, and `--check` exits 2 when
   a spec is in both.
-- `tests/_corpus.py`: the shared corpus listing (#515), used by 19 files.
+- `tests/_corpus.py`: the shared corpus listing (#515), used by 22 files.
   `corpus_files(*subtrees, root=REPO_ROOT, suffixes=None)` lists tracked and
   untracked, non-ignored files from `git ls-files -z`, and always prunes Claude
   Code's runtime directories (section 5.62).
@@ -9958,7 +9973,7 @@ looks wrong.
 - `tests/test_bootcamp_notes_flow.py`: 33
 - `tests/test_brand_sync.py`: 31
 - `tests/test_broll_manifest.py`: 20
-- `tests/test_build_and_run_statement.py`: 64
+- `tests/test_build_and_run_statement.py`: 66
 - `tests/test_build_version_provenance_is_per_platform.py`: 8
 - `tests/test_bundled_script_and_production_paths.py`: 23
 - `tests/test_business_problem_preserves_the_original_wording.py`: 17
@@ -9990,6 +10005,7 @@ looks wrong.
 - `tests/test_conformance_sees_a_rule_beside_a_citation.py`: 8
 - `tests/test_container_lifecycle_runtimes.py`: 18
 - `tests/test_container_names_are_project_derived.py`: 36
+- `tests/test_container_route_build_and_run.py`: 20
 - `tests/test_container_route_reads_no_plugin_asset.py`: 29
 - `tests/test_container_viz_port_is_published_and_checked.py`: 28
 - `tests/test_container_teardown_has_a_route_and_a_failure_report.py`: 8
@@ -10581,7 +10597,9 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   block, `node` on a `.js`, `python3` on a `.py` and `mvn` included (the
   plugin's own scripts and Module 2's routes excepted); a placeholder file
   path such as `src/query/<file>` is a loose program path; graduation copies
-  no build output and its `.gitignore` lists `classes/`; and the held
+  no build output and its `.gitignore` lists `classes/`; the ground rules
+  themselves are scanned with only that section exempt, a renamed heading
+  exempting nothing (#595); and the held
   deferral's widened wording, drafted in #563's ledger entry, covers every
   module that builds programs (#563).
 - **Module 3b.**
@@ -12382,3 +12400,15 @@ Senzing licensing, with no SPDX identifier.
   the hardcoded CORD dataset names; `tests/test_sibling_statements_agree.py`
   pins all six (sibling statements in Modules 0, 1 and 4 and onboarding
   disagreed)
+- #595: on SDK setup's `docker` route the ground rules' "Building and running
+  a program" wraps every Build and Run command as `<runtime> exec -w /app
+  <container> bash -c '. src/scripts/senzing-env.sh && <command>'` (`bash`,
+  since dash rejects the env script's `${BASH_SOURCE[0]}`); Module 2's docker
+  path installs the chosen language's toolchain, the server's command first,
+  else a pinned Debian 12 row run noninteractively and checked against the
+  server-served minimum; the in-container compile check uses the section's
+  Build command, the restatement guard exempts only that section of
+  `ground-rules.md`, and `tests/test_container_route_build_and_run.py` pins
+  it all, with an INV-370 `PROPOSED AMENDMENT` queued (the container route
+  had no exec form and no toolchain, and the server serves no install
+  command)
