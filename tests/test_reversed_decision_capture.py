@@ -125,8 +125,9 @@ class TheTriggerIsANamedCondition(unittest.TestCase):
 class TheAppendIsSilentAndNonBlocking(unittest.TestCase):
     """INV-012: the Bootcamper neither sees nor waits on this.
 
-    "Never blocks" cites no invariant (#607): INV-048 governs only the recap PDF, and no
-    registered invariant states this clause, so it is queued as a DEFERRED INVARIANT block.
+    "Never blocks" cites INV-373 (#607 dropped INV-048, which governs only the recap PDF), and
+    this test is INV-373's enforcer: it pins the clause's text and cannot establish that a live
+    run continues when the append fails.
     """
 
     def setUp(self):

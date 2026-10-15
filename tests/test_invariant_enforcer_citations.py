@@ -757,7 +757,17 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # statement; #511, widened by #563) names test_build_and_run_statement.py, which cites it back and
 # states it cannot observe a real build. Re-derived by running the extractor -- 246, the new pair
 # present by name and none removed. EXPECTED_PAIRS 245 -> 246.
-EXPECTED_PAIRS = 246
+# 258 on 2026-10-15: /review-invariants (release cycle 2026-10-14, checkpoint D) registered
+# INV-371 to INV-375 and applied 19 amendments. Twelve new pairs, each test citing its invariant
+# back: INV-050 test_module6_repository_follows_database_type.py, INV-122
+# test_capture_exit_codes_are_not_conflated.py, INV-195
+# test_recorded_container_commands_use_the_recorded_runtime.py, INV-333 test_release_cycle.py,
+# INV-340 test_recap_video.py, INV-366 and INV-374 test_section_pointers_resolve.py, INV-370
+# test_container_route_build_and_run.py, INV-371 test_module3_failed_run_ends_on_a_question.py,
+# INV-372 test_sdk_update_offer.py, INV-373 test_reversed_decision_capture.py, INV-375
+# test_release_cycle.py. Re-derived by running the extractor -- 258, the twelve present by name
+# and none removed. EXPECTED_PAIRS 246 -> 258.
+EXPECTED_PAIRS = 258
 
 
 def pairs():

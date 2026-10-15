@@ -106,7 +106,9 @@ TWO_STATE_ADDITIONS = {
 #   * the root line (`senzing-bootcamp/`) is EXCLUDED -- it is the tree's root, not an entry
 #   * continuation lines (comment-only, no name) are EXCLUDED from both, counted separately
 #   * the placeholder entry `stakeholder_summary_module{n}.md` IS counted, as one file
-EXPECTED_FILE_ENTRIES = 24
+#: 24 -> 25 on 2026-10-15: `docs/bootcamp_recap.mp4` was added when `/review-invariants` applied
+#: #616's INV-050 clarification. Graduation already wrote it on a yes to the video offer.
+EXPECTED_FILE_ENTRIES = 25
 #: 30 -> 31 on 2026-08-26: `backups/packages/` was added as its own leaf when
 #: `/package-bootcamp` began writing transferable archives there
 #: (`specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md`). Given its own entry rather
@@ -114,7 +116,9 @@ EXPECTED_FILE_ENTRIES = 24
 #: is a real directory the plugin writes to -- which is also what keeps INV-202 satisfiable for it.
 #: 31 -> 32 on 2026-09-30: `data/subsets/` was added when `/review-invariants` applied #286's
 #: INV-050 amendment. Module 6 already wrote subset files there; only the tree omitted it.
-EXPECTED_DIR_ENTRIES = 32
+#: 32 -> 33 on 2026-10-15: `docs/video/` was added when `/review-invariants` applied #616's
+#: INV-050 clarification. Graduation already wrote the video's storyboard and b-roll there.
+EXPECTED_DIR_ENTRIES = 33
 EXPECTED_CONTINUATION_LINES = 1
 
 

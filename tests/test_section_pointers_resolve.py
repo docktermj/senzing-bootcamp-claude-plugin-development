@@ -9,7 +9,7 @@ this form that failed: 16 named a file that does not resolve from the pointer's 
 span ("Receiving a quality_iteration …") and a bold label with its closing period ("The update
 command.").
 
-**The rule, in one sentence:** the backticked file resolves from the file holding the pointer, and
+**The rule, in one sentence (INV-374, which this file enforces):** the backticked file resolves from the file holding the pointer, and
 the quoted name is a heading or a bold label opening a line in it, ignoring case, leading
 numbering (``2.``, ``6c.``) and a parenthetical qualifier at either end ("(required)",
 "(INV-160)"). Nothing shorter matches: a sentence's opening words are not a name.

@@ -6,6 +6,9 @@ step, what each step runs, the stage-1 merge by dedupe key, the checkpoint verdi
 order, and the run's one `specs/IMPLEMENTED.md` entry. It reads and changes the drafts manifest
 only through `drafts.py` (INV-300, INV-368).
 
+This file enforces INV-375, the release cycle's resume, write-boundary and hold rules: it drives
+`cycle.py` offline and pins the skill's text, and cannot establish that a live run follows them.
+
 What this pins, each predicate over text with a negative control:
 
 1. **The helper, offline.** The kickoff answers are required, never defaulted (INV-333). A
@@ -781,11 +784,11 @@ STATED = (
     "It never applies `unattended-ok` outside refine's approved batch (INV-318, 2026-10-13 note).",
     "It never merges unless the kickoff answer says to",
     "Each record it creates is created by the skill that owns it, under that skill's gate (INV-314).",
-    "⛔ **A finished step is never run again, and a record that carries an issue number is never "
+    "⛔ **(INV-375) A finished step is never run again, and a record that carries an issue number is never "
     "filed again.**",
-    "⛔ **This skill writes nothing under `specs/` before stage 5 (the held after-filing steps and "
+    "⛔ **(INV-375) This skill writes nothing under `specs/` before stage 5 (the held after-filing steps and "
     "checkpoint D), and its own entry only at a stop.**",
-    "⛔ **Hold each skill's after-filing step until stage 5.**",
+    "⛔ **(INV-375) Hold each skill's after-filing step until stage 5.**",
     "`cycle.py after-filed <run-dir> <skill>`, which refuses a step already run",
     "`cycle.py ledger <run-dir> --write specs/IMPLEMENTED.md`",
     "marked **not filed** (INV-317's 2026-10-13 note)",
@@ -832,7 +835,7 @@ class TheSkillStatesItsRules(unittest.TestCase):
 
 
 #: The one statement of where a run writes (#609), in "Stopping, and the ledger entry".
-BOUNDARY = ("⛔ **This skill writes nothing under `specs/` before stage 5 (the held after-filing "
+BOUNDARY = ("⛔ **(INV-375) This skill writes nothing under `specs/` before stage 5 (the held after-filing "
             "steps and checkpoint D), and its own entry only at a stop.**")
 #: The rule's words, shared by the statement and the pending block's drafted wording.
 BOUNDARY_RULE = ("nothing under `specs/` before stage 5 (the held after-filing steps and "
@@ -907,8 +910,9 @@ class TheWriteBoundaryIsStatedOnce(unittest.TestCase):
 
     def test_the_pending_block_quotes_it_and_drafts_the_same_rule(self):
         entry = pending_entry()
-        self.assertIn(BOUNDARY + " — in `.claude/skills/release-cycle/SKILL.md` (\"Stopping, and the "
-                      "ledger entry\")", entry)
+        # The block quotes the line as it shipped before INV-375 was cited there (resolved 2026-10-15).
+        self.assertIn(BOUNDARY.replace("(INV-375) ", "") + " — in `.claude/skills/release-cycle/SKILL.md` "
+                      "(\"Stopping, and the ledger entry\")", entry)
         drafted = entry[entry.index("**INV-NNN** — `/release-cycle`"):]
         self.assertIn("It MUST write " + BOUNDARY_RULE, drafted)
         self.assertIn("Dated note, 2026-10-14 (#609)", entry)
@@ -933,7 +937,7 @@ class NegativeControls(unittest.TestCase):
         text = skill_text()
         for phrase in ("It never sends `submit_feedback`.", "**D**: the invariant verdicts",
                        "It never merges unless the kickoff answer says to",
-                       "⛔ **Hold each skill's after-filing step until stage 5.**"):
+                       "⛔ **(INV-375) Hold each skill's after-filing step until stage 5.**"):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, unstated(text.replace(phrase, "")))
 

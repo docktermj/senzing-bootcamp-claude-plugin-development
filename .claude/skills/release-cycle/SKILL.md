@@ -78,7 +78,7 @@ through [`drafts.py`](../feedback-to-issues/drafts.py), whose docstring is the o
    <step> done` (or the command `next` names for it). On a resumed run, `next` says which step
    it resumes at; say so to the maintainer.
 
-⛔ **A finished step is never run again, and a record that carries an issue number is never filed again.** `cycle.py mark` refuses a step already `done`, `clean` or `skipped`, and refuses
+⛔ **(INV-375) A finished step is never run again, and a record that carries an issue number is never filed again.** `cycle.py mark` refuses a step already `done`, `clean` or `skipped`, and refuses
 one whose earlier steps are unfinished. `drafts.py` skips a record already filed. When a
 skill's `--file` was started and not finished, `cycle.py file-next` prints a tracker search for
 each approved record still without a number: run it, and `drafts.py record-filed` any match
@@ -106,7 +106,7 @@ never sees it again.
 5. **Filing.** `cycle.py file-next <run-dir>` names the next skill and prints its `/<skill>
    --file <run-dir>`; run it in the main session, since the skill asks for its yes; then
    `cycle.py filed <run-dir> <skill>`. Repeat until `file-next` says every skill has filed.
-   ⛔ **Hold each skill's after-filing step until stage 5.** `/feedback-to-issues` Step 9 and
+   ⛔ **(INV-375) Hold each skill's after-filing step until stage 5.** `/feedback-to-issues` Step 9 and
    `/delegate-to-mcp-server` Step 9 write tracked files ("Stopping, and the ledger entry" says
    which), and stage 3 needs a clean tree. `drafts.py after` prints the same
    lines then as now. `file-next` prints a `HOLD` line for each such skill and records the hold,
@@ -171,7 +171,7 @@ clean and skips its build pass.
 
 ## Stopping, and the ledger entry
 
-⛔ **This skill writes nothing under `specs/` before stage 5 (the held after-filing steps and
+⛔ **(INV-375) This skill writes nothing under `specs/` before stage 5 (the held after-filing steps and
 checkpoint D), and its own entry only at a stop.** This is the one statement of where a run
 writes; every other site cites it (INV-300).
 

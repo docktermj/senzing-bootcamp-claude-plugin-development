@@ -27,8 +27,9 @@ mutated copy** (INV-265). Prose is matched with whitespace collapsed, and every 
 on a re-wrapped copy (INV-346). These tests assert that the skill files *state* the rules and
 **cannot** establish that a live run follows them, which only `dry-run` phase 3 can observe.
 
-Source issues: #529 (part of #504), #608. Invariants: INV-006, INV-051, INV-056, INV-284. The
-failed-status rule is queued as a DEFERRED INVARIANT in #608's ledger entry.
+Source issues: #529 (part of #504), #608. Invariants: INV-006, INV-051, INV-056, INV-284, and
+INV-371 (the failed status survives moving on), which this file enforces: it pins the rule's text
+and its two reasons, and cannot establish that a live run leaves the status alone.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -147,7 +148,8 @@ def item_7_problems(p2):
         # Option 2: where it resumes, and the status it leaves.
         "2, \"Move on\":",
         "run Step 10 (Cleanup), then Step 11 (Module Close)",
-        "⛔ **The report's module-level `status` stays `failed`:** do not rewrite it on the way "
+        "⛔ **(INV-371) The report's module-level `status` stays `failed`:** do not rewrite it on "
+        "the way "
         "out.",
         "The step-9 resume check below reads it to re-present the pending question",
         "the report must record honestly that the run failed",
@@ -306,7 +308,7 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
     def test_the_status_rule_cites_inv_229_again(self):
         """#608: INV-229 governs expectation mismatch, not the status surviving move-on."""
         self.assertCaught(self.mutate(
-            "phase2", "⛔ **The report's module-level `status` stays `failed`:**",
+            "phase2", "⛔ **(INV-371) The report's module-level `status` stays `failed`:**",
             "⛔ **(INV-229) The report's module-level `status` stays `failed`:**"))
 
     def test_the_graduation_reason_restored(self):

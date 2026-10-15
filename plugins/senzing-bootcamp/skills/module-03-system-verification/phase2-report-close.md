@@ -143,7 +143,7 @@ Generate a structured summary of the System Verification checks.
      MUST NOT be suppressed as one.**
    - **2, "Move on":** run Step 10 (Cleanup), then Step 11 (Module Close), which ends on the
      transition question.
-     ⛔ **The report's module-level `status` stays `failed`:** do not rewrite it on the way out.
+     ⛔ **(INV-371) The report's module-level `status` stays `failed`:** do not rewrite it on the way out.
      The step-9 resume check below reads it to re-present the pending question, and the report
      must record honestly that the run failed.
    - **An interruption that leaves this question unanswered resumes at it.** A session that

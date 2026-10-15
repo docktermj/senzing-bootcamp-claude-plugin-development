@@ -300,7 +300,7 @@ Step 1 compares the installed version against the **V4.0 floor**. That answers "
 to work", not "is it the newest available" — two different questions. Ask the second one too,
 then **offer**. Never update silently, and never treat declining as a problem.
 
-⛔ **Non-blocking, start to finish.** A check that cannot run is reported as not run (INV-163); a
+⛔ **(INV-372) Non-blocking, start to finish.** A check that cannot run is reported as not run (INV-163); a
 repository that is unreachable, or an update that fails, must warn and continue with the working
 install. This step
 improves a working state; it is never a prerequisite for Module 2.
