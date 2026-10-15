@@ -1460,10 +1460,9 @@ about a roughly half-hour load, for a load of about two minutes.
 1. **Read the persisted inputs.** Read the registry from `config/data_sources.yaml` and
    `database_type` from `config/bootcamp_preferences.yaml` — the key Module 2 Step 7 writes when
    the engine is chosen, with the value `sqlite` or `postgresql`. Compute the collected total
-   record count from the registry, with the definition sub-step 4 records as `collected_total`:
-   each source's `sample:` `record_count` where it has a `sample:` block, otherwise its
-   `record_count`. If the registry cannot be read or parsed, treat the total as
-   indeterminate: do not fail.
+   record count from the registry, by the sample-aware definition sub-step 4 gives for
+   `collected_total` (the one Module 6 recomputes). If the registry cannot be read or parsed,
+   treat the total as indeterminate: do not fail.
    - ⛔ **Also read Step 8a's outcome, which this step ran seconds after:** `license` in
      `config/bootcamp_preferences.yaml` and `license_record_limit` in
      `config/bootcamp_progress.json`. Then compute

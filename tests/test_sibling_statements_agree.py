@@ -12,8 +12,8 @@ drifts back:
    the "Are you done modifying the model and effort?" gate only when the dial is not yet set.
 4. The onboarding preface detects OS/architecture; it persists nothing (Bootcamp preparation's
    consolidated write does).
-5. Module 4 Step 8b sub-step 1 computes the collected total with sub-step 4's sample-aware
-   definition, the one Module 6 recomputes.
+5. Module 4 Step 8b sub-step 1 computes the collected total by pointing to sub-step 4's
+   sample-aware definition, the one Module 6 recomputes.
 6. Module 4 names no CORD dataset in its own text; the names come from `get_sample_data`.
 
 Run:  python3 -m unittest discover -s tests
@@ -116,8 +116,11 @@ class ModuleFourHasOneCollectedTotal(unittest.TestCase):
     def test_sub_step_1_uses_sub_step_4_definition(self):
         step = _section(_read(MODULE_4), r"^1\. \*\*Read the persisted inputs\.\*\*", r"^   - ")
         flat = _flat(step)
-        self.assertIn("sub-step 4 records as `collected_total`", flat)
-        self.assertIn(self.DEFINITION, flat)
+        # A pointer, not a restatement: sub-step 1 only reads the registry, and naming the
+        # `record_count` field here would make it look like a registry write to
+        # test_per_source_figures_are_reconciled.py.
+        self.assertIn("sample-aware definition sub-step 4 gives for `collected_total`", flat)
+        self.assertNotIn("from the registry.", flat)
 
     def test_sub_step_4_still_states_it(self):
         self.assertIn(self.DEFINITION, _flat(_read(MODULE_4)))
