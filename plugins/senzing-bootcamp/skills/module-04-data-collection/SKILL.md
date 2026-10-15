@@ -294,7 +294,8 @@ don't have my own data — generate a scenario for me"*) and the provision decis
 made** for every source in it. Then read the source's entry in `config/data_sources.yaml` for its
 `provenance`, which decides only *what you do next*:
 
-- **`provenance: cord`** → go straight to downloading that source, saying which source you are
+- **`provenance: cord`** → go straight to downloading that source, the entry's `cord_dataset` and
+  `cord_source` ([Scenario source fields](#scenario-source-fields)), saying which source you are
   fetching and where it came from. A generated scenario is the multi-source case, so fetch under
   [CORD fetch integrity](#cord-fetch-integrity) — back-to-back source fetches are exactly what the
   download endpoint throttles, and a throttled response arrives looking like a very small file.
@@ -302,8 +303,12 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   Business Case Offer reaches this provenance precisely when **no CORD collection fits the chosen
   category**, which for the customer-facing categories is the normal outcome rather than the rare
   one. Write one file per source into `data/raw/` from the scenario already recorded in
-  `docs/business_problem.md` and `config/data_sources.yaml` — the record counts, entity types and
-  per-source quirks are all written there — and record the actual counts back into the registry.
+  `docs/business_problem.md` and the source's entry in `config/data_sources.yaml`, which carries
+  its `scenario_record_count`, `entity_type` and `shape_quirks`
+  ([Scenario source fields](#scenario-source-fields)). An entry with no `scenario_record_count` was
+  written before that field existed: take the count from `docs/business_problem.md`. Then record
+  the actual counts back into the registry, as each source's measured `record_count`, and leave
+  `scenario_record_count` as Module 1 wrote it, so the two can be compared.
   ⛔ **Ask nothing, recommend no CORD alternative, and do not enter the free-data hierarchy.** That
   hierarchy is for a Bootcamper who has *not* already decided; recommending CORD here recommends the
   option Module 1 evaluated and rejected for this category.
@@ -968,6 +973,36 @@ Module 5 can evaluate.
 > [the name-sharing budget](#name-sharing-budget); `measured_entities` and `measured_share` are
 > written by Step 2's self-check, never by hand. A registry without it is a scenario generated
 > before the block existed, or not generated at all.
+>
+> <a id="scenario-source-fields"></a>**Scenario source fields** (a generated scenario only).
+> Module 1 writes each scenario source's entry before anything is collected, at Step 11 of
+> `../module-01-business-problem/phase2-document-confirm.md`, and this note is the one definition
+> of what that entry carries (INV-300). Under the source's DATA_SOURCE key in `sources:`,
+> Module 1 writes:
+>
+> - `name`: the DATA_SOURCE, as above.
+> - `provenance`: `cord` or `synthesized`, as Module 1 Step 4b decided it
+>   (*CORD Provenance Recording* below defines the values). Step 2's marker guard reads it to
+>   choose its action.
+> - `cord_dataset` and `cord_source`: a `cord` source only, the dataset and the source as
+>   `get_sample_data` names them in its `dataset` and `source` arguments. Step 2 downloads from
+>   them. A `synthesized` source has neither.
+> - `entity_type`: `person`, `organization` or `both`, what the source's records describe.
+> - `shape_quirks`: a list of the shape differences the scenario promised for this source (one
+>   name field, a name in two parts, a free-text address, per-campaign duplicates), stated as
+>   shape only, never as a mapping, as Step 2's `provenance: synthesized` branch requires.
+> - `scenario_record_count`: a `synthesized` source only, the number of records the scenario
+>   calls for (Module 1's sizing, INV-277). Step 2's generation generates that many and never
+>   overwrites it, so it can be compared with the measured `record_count`. A `cord` source has
+>   none: the server states its count at collection, recorded as `expected_record_count`, which
+>   [the truncated-source rule](#truncated-cord-source) qualifies.
+>
+> Module 1 writes no other field. ⛔ (INV-243) **`record_count` stays the measured count:**
+> Module 1 never writes it, and it stays null until this module collects or generates the file
+> and counts it. `quality_intent` belongs to a `synthesized` entry too, written by Step 2's
+> generation as *Record the intended band per source* shows, never by Module 1. An entry with no
+> `scenario_record_count` was written before the field existed, and Step 2's generation takes the
+> count from `docs/business_problem.md` instead.
 
 > **Data File Validation:** After each file is saved to `data/raw/`, sanity-check it (readable,
 > non-empty, expected format/encoding, and — wherever an independent expected count exists — a record
