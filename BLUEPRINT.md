@@ -12423,3 +12423,11 @@ Senzing licensing, with no SPDX identifier.
   reply, and it and the owner query's `VERIFIED_QUERIES` record are
   restamped to server 1.39.0, 2026-10-15 (the marker's census of the reply,
   "no compatibility_notes" and "only the Python gotcha", had gone false)
+- #653: Module 6 Phase C's orchestrator `MCP-NEGATIVE` marker states its
+  deciding property, no indexed example or scaffold is code that loads
+  several sources in order with per-source error isolation and
+  reconciliation, names the `senzing/recipes` prompt recipe and
+  `full_pipeline`'s truth-set loaders as the nearest hits, and it and both
+  its `VERIFIED_QUERIES` evidence slots are restamped to server 1.39.0,
+  2026-10-15 (its "only single-source loaders" census and its
+  "`full_pipeline` returns single-source snippets" clause had gone false)
