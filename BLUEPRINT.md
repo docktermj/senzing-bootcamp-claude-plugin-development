@@ -10075,6 +10075,7 @@ looks wrong.
 - `tests/test_module06_phase_ordering.py`: 15
 - `tests/test_module07_why_flags.py`: 17
 - `tests/test_module3_check_lists_agree.py`: 24
+- `tests/test_module4_absent_limit_is_measured_before_any_fallback.py`: 6
 - `tests/test_module5_full_output_file_path_is_written_at_step_18.py`: 18
 - `tests/test_module5_phase1_gates_and_scoring.py`: 14
 - `tests/test_module5_phase3_exits_return_to_the_per_source_loop.py`: 9
@@ -12060,6 +12061,13 @@ Senzing licensing, with no SPDX identifier.
   every other site naming either key points to it, found by a scan (the
   measurement could read the config from before the key, the path was
   relative, and Module 2 named a key Step 8a did not wire)
+- #593: Data collection Step 6 points to the canonical license framing and
+  restates none of its branches, the framing says every step that writes
+  `license_record_limit` writes only a measured value and names no writer,
+  and `test_module4_absent_limit_is_measured_before_any_fallback.py` fails a
+  Module 4 sentence that falls back on an absent value without measuring (Step
+  6 said an absent limit falls back to the built-in capacity, the opposite of
+  the framing it cited, and the framing named Step 8a as the writer)
 - #594: every step in Modules 3, 3b, 5, 6 and 7 that writes a program names
   the program `<name>` in `<dir>` and cites the ground rules' "Building and
   running a program", `src/server` joins its `<dir>` list, Module 7 step 4e
