@@ -3624,9 +3624,12 @@ type) plus one of five `PERSONAS`, on `--bootcamper-model` (default a Haiku
 model). Each turn appends A's JSON events and a `bootcamper` event to the
 transcript. The loop stops when A exits non-zero (a `walk_error` event), when a
 turn shows no 👉, when B returns nothing, or at the turn limit: `--turns`
-turns; with `--stop-at-banner`, until a turn shows that banner (`banner_seen`
-ignores case and runs of whitespace), then `--turns` more (#571). `--max-turns`
-(default 150) caps both. Every walk ends the transcript with a `walk_stop`
+turns; with `--stop-at-banner`, until a turn shows that banner, then `--turns`
+more (#571). `banner_seen` matches only a line of its own that equals the
+banner, ignoring case and runs of whitespace, as it stands or with one
+`BANNER_FRAME` (three of one non-ASCII glyph each side) stripped, so a journey
+map's `⬜ Bootcamp graduation` or a transition question does not match (#657).
+`--max-turns` (default 150) caps both. Every walk ends the transcript with a `walk_stop`
 event (`turn`, `reason`, `stop_at_banner`, `banner_turn`); a stop at the cap
 reads `--max-turns N reached`. If turn 1 shows "Unknown command"
 or under 200 characters, it writes the transcript and exits via `SystemExit`
@@ -3902,7 +3905,8 @@ Subcommands: `list` (JSON of every module), `banner N` (exit 2 when the
 files define none), and `slice TRANSCRIPT N --out F`, which matches banners
 with `walk.banner_seen` on `walk.visible_text`, starts at module N's banner
 (at the first event for Bootcamp preparation), ends an exempt module's slice
-at the next module's banner, writes the kept lines, and prints `module`,
+at the next module's banner after its start (Bootcamp preparation's even when
+its own banner never showed, #657), writes the kept lines, and prints `module`,
 `banner`, `lint_phase`, `start_found`, `start_event`, `end_event`,
 `modules_reached`, `last_module_reached` and `walk_stop`. Exit 3 when the
 start banner never showed; an unknown module number exits with a message.
@@ -5055,6 +5059,7 @@ Rules:
   option text.
 - Keep it to a couple of sentences at most.
 - Never mention that this is a test or a simulation."""
+BANNER_FRAME = re.compile(r"^([^\x00-\x7f])\1\1 (.+?) \1\1\1$")
 def visible_text(stream_json_text):
     ...
 def banner_seen(banner, text):
@@ -9935,7 +9940,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 7129 test methods in 405 files, matching `inventory.test_count_total`.
+There are 7135 test methods in 405 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 6607.
@@ -10043,7 +10048,7 @@ looks wrong.
 - `tests/test_dry_run_files_issues.py`: 15
 - `tests/test_dry_run_scaffold.py`: 15
 - `tests/test_dry_run_scaffold_paths_exist.py`: 10
-- `tests/test_dry_run_simulated_phase3.py`: 25
+- `tests/test_dry_run_simulated_phase3.py`: 31
 - `tests/test_dry_run_states_no_hook_count.py`: 11
 - `tests/test_empty_input_checks_are_not_a_pass.py`: 9
 - `tests/test_encoding_self_check_is_stated_as_behavior.py`: 31
@@ -10959,10 +10964,17 @@ These are the scripts under `.claude/skills/`:
     plus `--turns 2` stops at turn 5; matching ignores case; `--max-turns`
     stops a walk with no banner and caps the turns after one; no banner walks
     `--turns` as before; `main()` passes `max_turns=150`; `FORBIDDEN_TOOLS`
-    is unchanged;
+    is unchanged; a transition question the turn before the banner does not
+    stop the walk, and `banner_seen` matches a framed or bare banner line
+    and not a journey-map entry, prose, a two-glyph frame or a banner with
+    words after it (#657);
   - `slice_transcript` starts a content module at its banner, starts Bootcamp
     preparation at the first turn and ends it at the next banner, and a
-    stalled walk exits 3 naming the module reached.
+    stalled walk exits 3 naming the module reached; on a fixture shaped like
+    the 2026-10-14 walk, journey maps and prose reach no module, SDK setup
+    starts at its banner and not the question before it, Entity Resolution
+    Concepts runs from its banner to the next, and Bootcamp preparation ends
+    at the next banner when its own showed only in a tool result (#657).
 - **The finding skills' two stages.** `tests/test_drafts.py` (#572):
   - `drafts.py`, run offline: ids per skill and the draft's header, the sorted
     dedupe key, status changes, the number written back and a re-run that
@@ -12451,3 +12463,9 @@ Senzing licensing, with no SPDX identifier.
   prose stamp are restamped to server 1.39.0, 2026-10-15 (server 1.39.0 no
   longer returns the nested path, and the figure held only for one query
   wording)
+- #657: a walk banner matches only a line of its own (`walk.banner_seen`
+  compares each whole line, ignoring case and whitespace, with one tripled-glyph
+  frame stripped), and `module_banners.py slice` ends Bootcamp preparation at
+  the next module's banner even when its own never showed (a substring match
+  read journey maps, the welcome prose and transition questions as banners, so
+  graduation was "reached" and slices started early or came out empty)
