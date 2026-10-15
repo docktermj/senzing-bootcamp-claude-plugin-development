@@ -9906,10 +9906,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 7121 test methods in 405 files, matching `inventory.test_count_total`.
+There are 7129 test methods in 405 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6599.
+sum to 6607.
 
 Two files run more tests than they define, so discovery collects 6496:
 
@@ -9949,7 +9949,7 @@ looks wrong.
 - `tests/test_build_version_provenance_is_per_platform.py`: 8
 - `tests/test_bundled_script_and_production_paths.py`: 23
 - `tests/test_business_problem_preserves_the_original_wording.py`: 17
-- `tests/test_canonical_module_names.py`: 7
+- `tests/test_canonical_module_names.py`: 15
 - `tests/test_canonical_operations_resolve.py`: 56
 - `tests/test_capture_exit_codes_are_not_conflated.py`: 7
 - `tests/test_capture_render_is_settled_and_fitted.py`: 14
@@ -12281,6 +12281,13 @@ Senzing licensing, with no SPDX identifier.
   stamp each (1.38.2 from a live re-check, and 1.33.0), and step 2 and step 3a
   point at it (INV-300) (step 2's constraints sat about 270 lines below its
   action, and the rule had three full copies whose stamps had drifted)
+- #612: Bootcamper-facing text names modules by their module-table names: the
+  CORD quote, Module 1's software-integration statement and the example recap
+  name no module by number, the recap says "System verification", and Module 0's
+  sentence says Optional instead of "mandatory Modules 1–7";
+  `tests/test_canonical_module_names.py` bans `Modules? \d` and "System
+  Verification" in the recap and in two spans located by their opening words
+  (Bootcamper-facing text named "Module 5" and "Module 7", against INV-079)
 - #615: every backticked `<file>.md` → "<name>" pointer in shipped Markdown
   resolves from its own file and names a heading or line-opening bold label
   there (case, leading numbering and an end parenthetical ignored), checked by

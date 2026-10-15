@@ -23,8 +23,9 @@ always includes it; Customized includes it only if the bootcamper chose it. When
 invoked, the bootcamper has already opted in — so **run the primer directly**; do NOT ask a
 skip/keep question (that gate has been retired to avoid asking the same decision twice — INV-078).
 
-Module 0 is a **preamble, not a numbered module**: it is not counted among the mandatory
-Modules 1–7 (INV-076/INV-078), skipping it (by not selecting it) is a permitted, requested skip (INV-014).
+Module 0 is a **preamble, not a numbered module**: the module table in Bootcamp preparation marks
+it Optional, one of the three optional modules with System verification and Truth Set visualization
+(INV-076/INV-078), so skipping it (by not selecting it) is a permitted, requested skip (INV-014).
 Keep it lightweight — no module-start banner beyond its ENTITY RESOLUTION CONCEPTS banner, no journey
 map of its own, no before/after framing, no step overview, and no bootcamper-facing end-of-module
 summary. **But it IS captured in the recap** (INV-092): at its close it adds

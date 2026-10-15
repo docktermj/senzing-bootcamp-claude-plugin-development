@@ -176,7 +176,7 @@
 
 ### Information Shared
 
-- System Verification uses synthetic records designed to resolve deterministically, never the Senzing Truth Set (that belongs to the separate Truth Set visualization module).
+- System verification uses synthetic records designed to resolve deterministically, never the Senzing Truth Set (that belongs to the separate Truth Set visualization module).
 - A version query alone does not prove the engine works — the libraries and their support data can be present independently, so this module exercises real engine-class calls (`SzEngine.prime_engine()`, `SzDiagnostic.get_repository_info()`) before anything else.
 - The merge cluster is unambiguous by construction: its three records carry the same first name, last name, date of birth, address and phone, and vary only in formatting. A nickname, an initial in place of a first name, or a feature missing from one record would each reduce corroboration, so none of them belongs in a cluster the module expects to merge.
 - A freshly schema-created datastore has no registered data sources; the `VERIFY` source had to be registered before loading, or the load would fail with `SENZ2207`.
@@ -195,7 +195,7 @@
 ### Actions Taken
 
 - Composed 4 synthetic `VERIFY` records in `verification_data.jsonl`: a 3-record merge cluster for "Marisol Verifield" (the same first name, last name, date of birth, address and phone in every record, with only address and phone formatting varied) and 1 distractor singleton ("Rowan Fixture"), so the expected outcome by construction was 4 records resolving to 2 entities, one of them holding 3 records.
-- Ran the System Verification checks: the installation checks — MCP connectivity, engine initialization, SDK initialization, code generation, build/compile, data source registration, data loading, and database operations — all passed, and results validation, reported separately, matched the expected outcome.
+- Ran the System verification checks: the installation checks — MCP connectivity, engine initialization, SDK initialization, code generation, build/compile, data source registration, data loading, and database operations — all passed, and results validation, reported separately, matched the expected outcome.
 - Confirmed the merge cluster resolved to one entity (entity ID 1) and the distractor stayed its own entity (entity ID 4) — exactly as designed.
 - Composed the `Mari` record in `mari_record.jsonl`, a copy of one Marisol record with only the first name and record ID changed, showed it beside that record before loading anything, and loaded it after your answer; the engine joined it to Marisol's entity (entity ID 1).
 - Verified write count (5 `VERIFY` records: the 4 from `verification_data.jsonl` plus the `Mari` record), read-by-entity-ID, and search-by-attributes, all through generated SDK code.
@@ -302,7 +302,7 @@
 
 ### Questions & Responses
 
-- {initial pass: none — both sources already had `provenance: cord` recorded in Module 1, so the "how would you like to provide the data" question was correctly skipped per INV-006}
+- {initial pass: none — both sources already had `provenance: cord` recorded in Discover the Business Problem, so the "how would you like to provide the data" question was correctly skipped per INV-006}
 - **Q:** (Bootcamper request) I'd like to have 5000 records.
     - **R:** Reopened Data collection; expanded to 2,500 records per source (5,000 total).
 - **Q:** Which best describes your Senzing License Key situation?
@@ -327,7 +327,7 @@
 - Updated `config/data_sources.yaml` and `config/cord_metadata.yaml` (new SHA-256 hashes) to reflect the expanded samples.
 - Ran the License Key gate: 5,000 records exceeds the 500-record evaluation limit, so submitted an in-flow evaluation-license request via the Senzing MCP server (`submit_feedback`, category `license_request`) after explicit bootcamper consent to send name and work email — continuing on the built-in evaluation license while the emailed key is pending.
 - Created `.gitignore` excluding `data/raw/`, `database/`, and `licenses/` before any commit.
-- Ran the SQLite load-time check: no MCP-confirmed timing threshold applies at this volume, so no warning was presented; Module 6 will use the threaded loading pattern automatically (record count > 500).
+- Ran the SQLite load-time check: no MCP-confirmed timing threshold applies at this volume, so no warning was presented; Data processing will use the threaded loading pattern automatically (record count > 500).
 
 ### End-of-Module Summary
 
@@ -438,7 +438,7 @@
 
 ### Actions Taken
 
-- Verified CORD data freshness by SHA-256 against the Module 4 snapshot (both sources unchanged) and backed up the database to `data/backups/G2C.db.pre-load`.
+- Verified CORD data freshness by SHA-256 against the Data collection snapshot (both sources unchanged) and backed up the database to `data/backups/G2C.db.pre-load`.
 - Built `src/load/load_senzing.py` from the MCP threaded pattern, adding input shuffling, per-record error logging, throughput reporting, checkpoint/resume, and one shared factory.
 - Built `src/load/process_redo.py` as a drain variant of the MCP continuous-daemon pattern, with the count used for monitoring only.
 - Test-loaded 50 records, then loaded 2,500 Enformion (2.4s) and 2,500 Equifax (4.3s) — 5,000 total, **zero errors**.
