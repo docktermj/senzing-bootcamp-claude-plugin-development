@@ -20,6 +20,16 @@ entry"), and this helper restates none of it (INV-300). It holds `state.json` (t
 skills' `--draft <run-dir>`), and the stage-4 drafts in `exercise/drafts/`: `/dry-run` drafts
 against a fresh baseline SHA, and a manifest has one baseline, so stage 4 has its own.
 
+The feedback file
+=================
+
+A subagent never asks the maintainer anything, so the kickoff asks the one question
+`/feedback-to-issues` Step 1 would: which feedback file to triage, when more than one of its
+candidates (`FEEDBACK_CANDIDATES`) exists. ``kickoff`` lists them, ``init`` refuses several with
+no ``--feedback`` (INV-333), and stage 1 passes the chosen path as `/feedback-to-issues`' first
+argument. With one candidate it passes that one, which Step 1 would choose on its own, and with
+none it passes no path; neither asks anything (#610).
+
 The steps
 =========
 
@@ -81,7 +91,7 @@ Usage::
 
     cycle.py kickoff <runs-root>
     cycle.py init <run-dir> --simulated yes|no [--persona P --module M] --merge yes|no
-                  --threshold P [--sha SHA]
+                  --threshold P [--feedback PATH] [--sha SHA]
     cycle.py next <run-dir>
     cycle.py status <run-dir>
     cycle.py args <run-dir> <step> [--head SHA] [--blueprint PATH]
@@ -131,6 +141,11 @@ STANDING_THRESHOLD = 0.7
 
 #: Where a run directory must sit, so it is gitignored (`.gitignore`, #572).
 RUNS_PARENT = (".claude", "release-cycle", "runs")
+
+#: `/feedback-to-issues` Step 1's candidates, after an explicit path, repo-relative and in its
+#: order. The kickoff asks which one when more than one exists (#610).
+FEEDBACK_CANDIDATES = ("SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md",
+                       "docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md")
 
 STAGES = ("Kickoff", "Find", "Refine", "Build", "Exercise", "Settle", "Ship")
 
@@ -294,6 +309,11 @@ def git_head():
     return out.stdout.strip()
 
 
+def feedback_candidates(root):
+    """The `FEEDBACK_CANDIDATES` that exist under the repository root `root`, in Step 1's order."""
+    return [c for c in FEEDBACK_CANDIDATES if (Path(root) / c).is_file()]
+
+
 def check_run_dir(run_dir):
     parts = Path(os.path.abspath(run_dir)).parts
     if len(parts) < 4 or tuple(parts[-4:-1]) != RUNS_PARENT:
@@ -406,6 +426,14 @@ def cmd_kickoff(args):
         turn = first_unfinished(state)
         print("run %s: %s" % (path.parent.name, "finished" if turn is None else "unfinished, next " + label(turn)))
         last = state
+    found = feedback_candidates(Path(os.path.abspath(args.runs_root)).parents[2])
+    if len(found) > 1:
+        print("ASK which feedback file /feedback-to-issues triages: %s; pass it to init as "
+              "--feedback PATH" % ", ".join(found))
+    elif found:
+        print("feedback file: %s, the only candidate; nothing to ask" % found[0])
+    else:
+        print("no feedback file; /feedback-to-issues finds none to triage")
     if last is None:
         print("no earlier run; no start module to recommend past")
     else:
@@ -428,6 +456,16 @@ def cmd_init(args):
     p = float(text[:-1]) / 100 if text.endswith("%") else float(text)
     if not 0.5 < p <= 1.0:
         raise Refused("the refine threshold is above 0.5 and at most 1.0; got %s" % args.threshold)
+    root = Path(os.path.abspath(args.run_dir)).parents[3]
+    found = feedback_candidates(root)
+    feedback = args.feedback
+    if feedback is None and len(found) > 1:
+        raise Refused("several feedback files: %s; --feedback names the one /feedback-to-issues "
+                      "triages, the maintainer's answer at kickoff (INV-333)" % ", ".join(found))
+    if feedback is None and found:
+        feedback = found[0]
+    if feedback is not None and not (root / feedback).is_file():
+        raise Refused("no feedback file at %s" % feedback)
     sha = (args.sha or git_head()).strip().lower()
     if not drafts.SHA.match(sha):
         raise Refused("not a commit SHA: %r" % sha)
@@ -438,7 +476,7 @@ def cmd_init(args):
         "started": now(),
         "baseline_sha": {"find": sha},
         "kickoff": {"simulated": simulated, "persona": args.persona, "module": args.module,
-                    "merge": args.merge == "yes", "threshold": p},
+                    "merge": args.merge == "yes", "threshold": p, "feedback": feedback},
         "steps": {},
         "merges": {},
         "listings": {},
@@ -519,7 +557,9 @@ def step_args(state, run_dir, step, head=None, blueprint="BLUEPRINT.md"):
     if step == "kickoff":
         return ["DONE at init: the kickoff answers are in state.json"]
     if step == "find-draft":
-        return ["SUBAGENT /%s --draft %s" % (s, rd) for s in FIND_SKILLS] + [
+        feedback = k.get("feedback")
+        path = {"feedback-to-issues": shlex.quote(feedback) + " "} if feedback else {}
+        return ["SUBAGENT /%s %s--draft %s" % (s, path.get(s, ""), rd) for s in FIND_SKILLS] + [
             "then: %s mark %s find-draft done" % (me, rd)]
     if step in ("find-merge", "exercise-merge"):
         return ["RUN %s merge-drafts %s%s" % (me, rd, "" if step == "find-merge" else " --stage exercise")]
@@ -1086,6 +1126,7 @@ def main(argv=None):
     p.add_argument("--module")
     p.add_argument("--merge", required=True, choices=("yes", "no"))
     p.add_argument("--threshold", required=True)
+    p.add_argument("--feedback", help="the feedback file the maintainer chose, repo-relative")
     p.add_argument("--sha")
     p.set_defaults(func=cmd_init)
 

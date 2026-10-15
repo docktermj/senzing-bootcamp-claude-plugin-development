@@ -30,7 +30,13 @@ What this pins, each predicate over text with a negative control:
    quotes it and drafts the same rule, and no site keeps the retired "nothing under `specs/`
    until the run stops" (#609).
 3. **The register**: `docs/FAMILY_WORKFLOW.md` §2 lists `release-cycle` (drives 1–4, parent
-   required, children not mandated) and §3 names it. That the name resolves both ways is
+   required, children not mandated) and §3 names it. §2 also lists the `refine-github-issue` it
+   runs at stage 2 (phase 2, required *(user level)*, children not mandated), with no row for
+   `order-github-issues`, and the maintenance track names the cycle as its one exception (#610).
+4. **The kickoff's feedback-file question (#610).** With more than one of `/feedback-to-issues`
+   Step 1's candidates, `kickoff` asks which, `init` refuses no answer, and stage 1 passes the
+   chosen path; with one it passes that one, with none no path, and nothing is asked. With no
+   simulated walk, stage 4 runs `/dry-run 1,2`, and the skill says so. That the name resolves both ways is
    `tests/test_canonical_operations_resolve.py` and
    `tests/test_documented_dev_commands_match_the_shipped_set.py`.
 
@@ -148,7 +154,7 @@ class Kickoff(RunCase):
         state = self.state()
         self.assertEqual(SHA, state["baseline_sha"]["find"])
         self.assertEqual({"simulated": True, "persona": "terse", "module": "5", "merge": False,
-                          "threshold": 0.7}, state["kickoff"])
+                          "threshold": 0.7, "feedback": None}, state["kickoff"])
         self.assertEqual("done", state["steps"]["kickoff"]["outcome"])
 
     def test_a_costly_choice_is_never_defaulted(self):
@@ -190,6 +196,84 @@ class Kickoff(RunCase):
         self.assertIn("standing refine threshold: 0.7", out)
         self.assertIn("run 2026-10-14: unfinished, next stage 1 Find, step find-draft", out)
         self.assertIn("persona terse, from module 5", out)
+
+
+class FeedbackFile(RunCase):
+    """#610: a subagent never asks, so the kickoff asks which feedback file when there are several."""
+
+    ROOT_FILE = "SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md"
+    DOCS_FILE = "docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md"
+
+    def plant(self, *names):
+        for name in names:
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("# Feedback\n", encoding="utf-8")
+
+    def init_no_walk(self, *extra):
+        return cycle("init", self.rd, "--simulated", "no", "--merge", "yes", "--threshold", "0.7",
+                     *extra, "--sha", SHA)
+
+    def find_line(self):
+        out = self.ok(cycle("args", self.rd, "find-draft"))
+        return next(line for line in out.splitlines() if "/feedback-to-issues" in line)
+
+    def test_with_none_nothing_is_asked_and_no_path_is_passed(self):
+        self.assertNotIn("ASK", self.ok(cycle("kickoff", self.rd.parent)))
+        self.ok(self.init_no_walk())
+        self.assertIsNone(self.state()["kickoff"]["feedback"])
+        self.assertEqual("SUBAGENT /feedback-to-issues --draft %s" % self.rd, self.find_line())
+
+    def test_with_one_nothing_is_asked_and_that_one_is_passed(self):
+        self.plant(self.DOCS_FILE)
+        out = self.ok(cycle("kickoff", self.rd.parent))
+        self.assertNotIn("ASK", out)
+        self.assertIn("feedback file: %s, the only candidate; nothing to ask" % self.DOCS_FILE, out)
+        self.ok(self.init_no_walk())
+        self.assertEqual(self.DOCS_FILE, self.state()["kickoff"]["feedback"])
+        self.assertEqual("SUBAGENT /feedback-to-issues %s --draft %s" % (self.DOCS_FILE, self.rd),
+                         self.find_line())
+
+    def test_with_several_the_kickoff_asks_and_init_refuses_no_answer(self):
+        """INV-333: the choice is the maintainer's, never defaulted to Step 1's first candidate."""
+        self.plant(self.ROOT_FILE, self.DOCS_FILE)
+        out = self.ok(cycle("kickoff", self.rd.parent))
+        self.assertIn("ASK which feedback file /feedback-to-issues triages: %s, %s"
+                      % (self.ROOT_FILE, self.DOCS_FILE), out)
+        refused = self.init_no_walk()
+        self.assertEqual(1, refused.returncode)
+        self.assertIn("several feedback files", refused.stderr)
+        self.assertFalse((self.rd / "state.json").exists())
+
+    def test_with_several_the_chosen_path_is_passed(self):
+        self.plant(self.ROOT_FILE, self.DOCS_FILE)
+        self.ok(self.init_no_walk("--feedback", self.DOCS_FILE))
+        self.assertEqual(self.DOCS_FILE, self.state()["kickoff"]["feedback"])
+        self.assertEqual("SUBAGENT /feedback-to-issues %s --draft %s" % (self.DOCS_FILE, self.rd),
+                         self.find_line())
+
+    def test_a_named_file_that_does_not_exist_is_refused(self):
+        result = self.init_no_walk("--feedback", "nowhere.md")
+        self.assertEqual(1, result.returncode)
+        self.assertFalse((self.rd / "state.json").exists())
+
+    def test_only_feedback_to_issues_takes_the_path(self):
+        self.plant(self.ROOT_FILE)
+        self.ok(self.init_no_walk())
+        out = self.ok(cycle("args", self.rd, "find-draft"))
+        for skill in ("retrofit-from-public", "delegate-to-mcp-server", "production-readiness-audit"):
+            self.assertIn("SUBAGENT /%s --draft %s" % (skill, self.rd), out)
+
+    def test_the_candidates_are_step_1_s(self):
+        """`FEEDBACK_CANDIDATES` names feedback-to-issues Step 1's paths, in its order."""
+        text = (REPO_ROOT / ".claude" / "skills" / "feedback-to-issues" / "SKILL.md").read_text(
+            encoding="utf-8")
+        step1 = text[text.index("## Step 1"):text.index("## Step 2")]
+        named = re.findall(r"^\d\. `([^`]+\.md)`", step1, re.M)
+        source = flat(CYCLE.read_text(encoding="utf-8"))
+        self.assertEqual(["SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md",
+                          "docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md"], named)
+        self.assertIn('FEEDBACK_CANDIDATES = ("%s", "%s")' % tuple(named), source)
 
 
 class Resume(RunCase):
@@ -533,6 +617,13 @@ class Steps(RunCase):
         self.assertIn("SUBAGENT /dry-run all 5 --simulated terse --draft %s" % (self.rd / "exercise"),
                       self.args("exercise-draft"))
 
+    def test_with_no_walk_dry_run_runs_phases_1_and_2(self):
+        """#610: the branch the skill now states, as the helper prints it."""
+        self.init("--simulated", "no")
+        out = self.args("exercise-draft")
+        self.assertIn("SUBAGENT /dry-run 1,2 --draft %s" % (self.rd / "exercise"), out)
+        self.assertNotIn("--simulated", out)
+
     def test_the_three_slash_only_skills_are_followed_not_invoked(self):
         self.init()
         for step, name in (("refine", "refine-github-issue"), ("build-loop", "unattended-issue-loop"),
@@ -676,6 +767,9 @@ STATED = (
     "**E**: the version bump, the manual test, and the public repo's commit and push",
     "`--draft <run-dir>`", "`--file <run-dir>`",
     "`/dry-run all <module> --simulated <persona> --draft <exercise-dir>`",
+    "`/dry-run 1,2 --draft <exercise-dir>` (phases 1 and 2) when the kickoff declined the simulated walk",
+    "`/feedback-to-issues` gets the feedback file as its path argument",
+    "which one `/feedback-to-issues` triages. With one feedback file or none, nothing is asked about it.",
     "This skill reads and follows each one's `~/.claude/skills/<name>/SKILL.md` in the main session",
     "The maintainer's `/release-cycle` invocation is the explicit invocation each of them requires",
     "every gate inside each of them still applies",
@@ -857,6 +951,30 @@ class TheRegisterListsIt(unittest.TestCase):
         self.assertIsNotNone(row)
         self.assertEqual(("drives 1–4", "required", "*not mandated*"),
                          tuple(c.strip() for c in row.groups()))
+
+    def test_section_2_has_a_row_for_the_refine_it_runs_and_none_for_order(self):
+        """#610: stage 2's `refine-github-issue` is registered; `order-github-issues` keeps no row (R8)."""
+        text = FAMILY.read_text(encoding="utf-8")
+        section = text[text.index("## 2. Canonical operations"):text.index("## 3. The per-change flow")]
+        row = re.search(r"^\| `refine-github-issue` \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \|$",
+                        section, re.M)
+        self.assertIsNotNone(row)
+        self.assertEqual(("2", "required *(user level)*", "*not mandated*"),
+                         tuple(c.strip() for c in row.groups()[:3]))
+        self.assertIn("`release-cycle` stage 2 runs it in batch mode", row.group(4))
+        self.assertNotRegex(section, r"(?m)^\| `order-github-issues` \|")
+        self.assertTrue((REPO_ROOT / ".claude" / "skill-overlays" / "refine-github-issue.md").is_file())
+
+    def test_the_maintenance_track_names_the_cycle_as_its_exception(self):
+        """#610: the release cycle runs two maintenance operations, so they no longer "wait on nothing"."""
+        text = FAMILY.read_text(encoding="utf-8")
+        start = text.index("### Maintenance")
+        section = flat(text[start:text.index("\n## ", start)])
+        self.assertNotRegex(section, r"(?i)wait on nothing")
+        self.assertIn("with one exception: `release-cycle` runs `delegate-to-mcp-server` in stage 1",
+                      section)
+        self.assertIn("gates stage 6 on `review-invariants`' verdicts at checkpoint D", section)
+        self.assertTrue(re.search(r"(?i)wait on nothing", "and they wait on nothing."))
 
     def test_section_3_names_it(self):
         text = FAMILY.read_text(encoding="utf-8")

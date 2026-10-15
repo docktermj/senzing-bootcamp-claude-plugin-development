@@ -10,7 +10,9 @@ now takes its files from `corpus_files()`. Two guards hold that in place:
   staged, so git itself reports it), and asserts the listing returns none of them while it still
   returns a tracked file and an untracked, non-ignored one. It runs the git route and the
   fallback walk, and pins the edge cases #515 names: a tracked file deleted from the working
-  tree, an ignored file, and a name with spaces and non-ASCII characters.
+  tree, an ignored file, and a name with spaces and non-ASCII characters. The fallback also
+  prunes `/release-cycle`'s run scratch, `.claude/release-cycle/runs/`, by its root path (#610),
+  and keeps a directory named `runs` anywhere else.
 - **The hand-rolled walk guard** scans `tests/*.py` (except `_corpus.py` and this file) for a
   walk rooted at the repository root or `.claude/` in its known forms: `REPO_ROOT.rglob`,
   `REPO_ROOT.glob("**…`, `(REPO_ROOT / ".claude").rglob`, `CLAUDE.rglob`, `os.walk(REPO_ROOT`
@@ -152,6 +154,13 @@ class TheGitListingKeepsTheCanariesOut(unittest.TestCase):
         self.assertEqual(set(), rel(corpus_files(".claude", root=self.root), self.root))
 
 
+#: `/release-cycle`'s run scratch, `.gitignore`d at the root (#572); the fallback prunes it (#610).
+RUN_SCRATCH = ".claude/release-cycle/runs/2026-10-14/state.json"
+#: A directory named `runs` elsewhere, and the same path one level down: both are corpus.
+OTHER_RUNS = "docs/runs/x.md"
+NESTED_RUN_PATH = "plugins/x/.claude/release-cycle/runs/x.md"
+
+
 class TheFallbackWalkKeepsTheCanariesOut(unittest.TestCase):
     """git missing, or exiting non-zero: the listing falls back to a pruned walk and never fails."""
 
@@ -163,6 +172,9 @@ class TheFallbackWalkKeepsTheCanariesOut(unittest.TestCase):
         write(self.root / "tests" / "__pycache__" / "x.md")
         write(self.root / ".pytest_cache" / "x.md")
         write(self.root / ".history" / "x.md")
+        write(self.root / RUN_SCRATCH)
+        write(self.root / OTHER_RUNS)
+        write(self.root / NESTED_RUN_PATH)
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -176,8 +188,11 @@ class TheFallbackWalkKeepsTheCanariesOut(unittest.TestCase):
         for name in Fixture.CANARIES + Fixture.NESTED_CANARIES:
             self.assertNotIn(name, found)
         for name in (".git/config", "tests/__pycache__/x.md", ".pytest_cache/x.md",
-                     ".history/x.md"):
+                     ".history/x.md", RUN_SCRATCH):
             self.assertNotIn(name, found)
+        # #610: pruned by path, not by name, so `runs` elsewhere is still the repository's.
+        self.assertIn(OTHER_RUNS, found)
+        self.assertIn(NESTED_RUN_PATH, found)
 
     def test_git_not_found(self):
         with mock.patch.object(_corpus.subprocess, "run", side_effect=FileNotFoundError("git")):
@@ -187,6 +202,14 @@ class TheFallbackWalkKeepsTheCanariesOut(unittest.TestCase):
         failed = subprocess.CompletedProcess(["git"], 128, b"", b"fatal: not a git repository")
         with mock.patch.object(_corpus.subprocess, "run", return_value=failed):
             self.check(corpus_files(root=self.root))
+
+    def test_the_run_scratch_is_pruned_by_path_not_by_name(self):
+        """Negative control: with the path entry gone, the walk reads the run scratch again."""
+        self.assertIn((".claude", "release-cycle", "runs"), _corpus.FALLBACK_PRUNED_PATHS)
+        self.assertNotIn("runs", _corpus.FALLBACK_PRUNED)
+        with mock.patch.object(_corpus, "FALLBACK_PRUNED_PATHS", ()):
+            self.assertIn(RUN_SCRATCH, _corpus._walk_listing(self.root))
+        self.assertNotIn(RUN_SCRATCH, _corpus._walk_listing(self.root))
 
 
 class ThisRepositorysListing(unittest.TestCase):

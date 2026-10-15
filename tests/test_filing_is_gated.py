@@ -64,6 +64,12 @@ branch opened by a bold *Unattended* or *No maintainer present* label. None may 
 issue, a `submit_feedback` call or adding `unattended-ok`. No `.claude/` or `tests/` file may
 say that nothing leaves the machine unattended, or that the loop files an issue itself.
 
+⛔ **Every skill that files issues states INV-318** (#610): it never applies `unattended-ok` to
+an issue it files. `LABEL_RULE_SKILLS` names the eight, and the list is checked against the
+filing surfaces this module discovers (every skill with a fenced `gh issue create` or a
+`PROSE_SITES` entry), so a skill that starts filing without the rule fails here. Until #610
+only `/dry-run`, `/production-readiness-audit` and `/release-cycle` stated it.
+
 ⚠️ **`gh issue comment` and `gh pr create` have no fenced site in this repository today.** Both
 live only in the governing copies under `~/.claude/skills/`, which this module cannot read and
 CI never has (INV-308). For those two the check runs over the whole corpus, and the synthetic
@@ -82,7 +88,7 @@ was *obeyed*.
 presents the exact text and gets the maintainer's assent first, each record separately, or
 one yes for the whole list shown in one message (INV-314, 2026-10-13 note); unattended, it creates nothing and writes the drafted text where the maintainer will find it.
 
-Source issues: #106, #216, #575, #573.
+Source issues: #106, #216, #575, #573, #610.
 
 Stdlib only; the surfaces are discovered rather than listed (INV-246).
 
@@ -179,6 +185,23 @@ ADDS_THE_LABEL = re.compile(r"--add-label[\s=]+[\"']?unattended-ok")
 STALE_CLAIM = re.compile(
     r"(?i)nothing leaves the machine unattended|\bfiles itself\b"
     r"|\bunattended (?:loop|run) files (?:an? |its own )?issues?\b")
+
+
+#: The skills that file issues, each of which must state INV-318 (#610). Stated rather than
+#: derived, because `/release-cycle` files through the skills it runs and has no filing site of
+#: its own; `test_every_filing_skill_is_listed` derives the rest and holds the list to them.
+LABEL_RULE_SKILLS = ("dry-run", "production-readiness-audit", "release-cycle",
+                     "feedback-to-issues", "retrofit-from-public", "delegate-to-mcp-server",
+                     "auto-test", "compact-dev-environment")
+
+#: INV-318 stated: the citation and the label in one sentence, in either order. Matched on
+#: whitespace-flattened text, so a wrap does not hide it.
+STATES_INV318 = re.compile(r"\(INV-318\b[^)]*\)[^.]{0,120}?`unattended-ok`"
+                           r"|`unattended-ok`[^.]{0,120}?\(INV-318\b")
+
+
+def states_inv318(text):
+    return bool(STATES_INV318.search(re.sub(r"\s+", " ", text)))
 
 
 def line_of(text, offset):
@@ -487,6 +510,23 @@ class TheFenceIsWhatDistinguishes(unittest.TestCase):
         self.assertEqual([], instruction_lines("⛔ Never call `submit_feedback`.", SUBMIT))
 
 
+class EveryFilingSkillStatesTheLabelRule(unittest.TestCase):
+    """#610: INV-318 at every skill that files issues, not three of the eight."""
+
+    def test_each_listed_skill_states_it(self):
+        missing = [name for name in LABEL_RULE_SKILLS
+                   if not states_inv318(read(CLAUDE / "skills" / name / "SKILL.md"))]
+        self.assertEqual([], missing, "these issue-filing skills do not state INV-318: never "
+                                      "apply `unattended-ok` to an issue the run files")
+
+    def test_every_filing_skill_is_listed(self):
+        filers = {p.parent.name for p in surfaces()
+                  if p.name == "SKILL.md" and instruction_lines(read(p))}
+        filers |= {rel.split("/")[1] for rel in PROSE_SITES if rel.startswith("skills/")}
+        self.assertTrue(filers, "no filing skill was discovered; the finders are wrong")
+        self.assertEqual([], sorted(filers - set(LABEL_RULE_SKILLS)))
+
+
 class TheCheckersAreNotVacuous(unittest.TestCase):
     """Negative controls, run on every suite: each mutation must fail the check it targets."""
 
@@ -563,6 +603,17 @@ class TheCheckersAreNotVacuous(unittest.TestCase):
             for extra in injected:
                 with self.subTest(surface=label, act=extra.strip()[:30]):
                     self.assertTrue(off_list_acts(text + extra))
+
+    def test_dropping_inv318_from_a_filing_skill_fails(self):
+        """#610's negative control: each skill's statement, removed, is reported missing."""
+        for name in LABEL_RULE_SKILLS:
+            with self.subTest(skill=name):
+                text = read(CLAUDE / "skills" / name / "SKILL.md")
+                self.assertTrue(states_inv318(text), "%s does not state it as shipped" % name)
+                self.assertFalse(states_inv318(text.replace("INV-318", "the label rule")))
+        self.assertTrue(states_inv318("It never applies `unattended-ok` outside refine's\n"
+                                      "approved batch (INV-318, 2026-10-13 note)."))
+        self.assertFalse(states_inv318("Apply `unattended-ok`. Unrelated (INV-318)."))
 
     def test_listed_acts_in_an_unattended_surface_pass(self):
         text = "```bash\ngh issue comment 12 --body-file f\ngh pr create --fill\n" \

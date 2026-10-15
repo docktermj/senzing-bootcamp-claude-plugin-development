@@ -20,7 +20,8 @@ six rules that had been invisible to every view.
 ⛔ **The fix is not "drop the anchor".** That would add real rules and real noise together, and
 a count nobody trusts is the defect `rules` already had. The discriminator is what FOLLOWS the
 stop sign: a bolded span, a capitalized word, an imperative, or (#516) a parenthesized
-invariant citation such as `⛔ (INV-NNN)`. A stop sign used as a noun
+invariant citation such as `⛔ (INV-NNN)`, or (#610) a parenthesized issue number such as
+`⛔ (#NNN)`. A stop sign used as a noun
 ("a `⛔` gate", "the old ⛔"), one that survives only inside a code span, and one at end-of-line
 are all excluded.
 
@@ -68,6 +69,12 @@ MISSED_SHAPES = {
         "that this project's",
     "a heading led by a cited stop sign":
         "## ⛔ (INV-309) Invariant capture is a gate on closing, not a step to remember",
+    # #610: a rule that cites the issue that made it. #516 widened the lead-in to `(INV-` only,
+    # so six such lines in `conformance.py` and `pending_invariants.py` stayed invisible.
+    "an issue number after a commented stop sign":
+        "    # ⛔ (#108) The corpus, stated on EVERY report including a zero. Until this landed, `0`",
+    "an issue number after a doc-comment stop sign":
+        "#: ⛔ (#110) Its text is a DESCRIPTION of the rule at that location, never a quote of it.",
 }
 
 # Prose ABOUT the convention, which must stay out. Each is a real corpus line.
@@ -88,6 +95,14 @@ NOUN_USES = {
         "Module 7 carries a ⛔ (INV-091) bullet for each export target.",
     "a cited stop sign inside a code span":
         "Write the lead-in as `⛔ (INV-091)` when the rule cites its invariant.",
+    # #610's negative controls: the issue-number lead-in must not reach past NOUN_USE or the
+    # code-span strip, and needs a digit after the `#`.
+    "the glyph as a noun before an issue number":
+        "Module 7 carries a ⛔ (#91) bullet for each export target.",
+    "an issue-cited stop sign inside a code span":
+        "Write the lead-in as `⛔ (#91)` when the rule cites its issue.",
+    "a parenthesis that is not an issue number":
+        "the stop signs counted ⛔ (# of lines) in the table",
 }
 
 

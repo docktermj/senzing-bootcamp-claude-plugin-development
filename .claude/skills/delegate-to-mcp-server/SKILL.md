@@ -308,6 +308,10 @@ parent-to-child change travels by **parity**, from a tagged release, so the pare
 files into a child at all. A flag naming another repository is a violation of that rule,
 not a convenience: whatever the finding, never pass `--repo`.
 
+⛔ **(INV-318) Never apply the `unattended-ok` label to an issue this run files.** A sync that
+labels its own findings lets `/unattended-issue-loop` *(user level)* retire plugin content with
+nobody choosing to. Choosing what runs unattended is the maintainer's decision alone.
+
 **Record each issue number as you go** — Step 9's ledger rows and Step 10's report both
 need it.
 

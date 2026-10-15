@@ -14,14 +14,20 @@ the skills. This guard keeps them there:
   paragraph or bullet of a shipping command that names `$ARGUMENTS` must be matched by a row**,
   so a rule added to a command cannot pass unnoticed by being absent from the table, and a row
   whose command pattern matches nothing fails as stale.
-* **The invocation.** No skill sets `disable-model-invocation` (the ten skills stay
-  model-invocable), and none says it is "invoked explicitly rather than inferred", a sentence
-  the `dry-run` command file carried that would be false in a model-invocable skill.
+* **The invocation.** None of the ten skills in `ARGUMENT_RULES` sets
+  `disable-model-invocation` (the ten stay model-invocable), and none says it is "invoked
+  explicitly rather than inferred", a sentence the `dry-run` command file carried that would be
+  false in a model-invocable skill. Other skills may set it: `/release-cycle` does, because it
+  follows three slash-only skills (#573), and it is not one of the ten (#610).
 
 **INV-333** is the invariant this enforces for the costly choices: `/dry-run`'s phase 3,
 `/auto-test`'s simulated walk and `/release`'s bump are asked about, never defaulted from an
 empty argument. The rows pinning those three sentences are its checks; like the rest of this
-guard they establish that the rule is stated, not that a live run asks.
+guard they establish that the rule is stated, not that a live run asks. `/release-cycle`'s
+kickoff, which asks the costly choices before a run starts, is pinned elsewhere, in
+`tests/test_release_cycle.py` (`test_a_costly_choice_is_never_defaulted`, and the stated
+"never start or resume costly work from silence (INV-333)"); a dated note naming that module
+is a `PROPOSED AMENDMENT` to INV-333 awaiting the maintainer's sign-off (#610).
 
 `TheChecksAreNotVacuous` is the negative control, run on every suite: removing one skill's
 `argument-hint`, or one moved rule's sentence, fails the check that covers it (INV-265).
