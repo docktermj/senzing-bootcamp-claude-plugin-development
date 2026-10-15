@@ -94,13 +94,14 @@ cover", "no MCP tool answers this" — MUST name, on the `MCP evidence` line, th
 would **carry** that fact and what it returned:
 
 ```text
-owner-checked: sdk_guide(topic='load', language=…, record_count=<above the limit>) — returns it
+owner-checked: sdk_guide(topic='load', language=…, record_count=<above the limit>) — compatibility_notes state the default license limit
 ```
 
 **The tools you asked and found empty are not evidence for the negative.** They are true
-statements about those tools. "`sdk_guide(topic='configure')` returns no license variable" is
-correct and worthless as support for "no license variable exists" — the variable lives in
-`sdk_guide(topic='load', record_count=<above the limit>)`. This is **INV-194** applied to the
+statements about those tools. "`sdk_guide(topic='load', record_count=100)` returns no license limit" is
+correct and worthless as support for "Senzing has no record limit" — the limit lives in
+`sdk_guide(topic='load', record_count=<above the limit>)`, whose `compatibility_notes`
+state it only when the count exceeds the limit. This is **INV-194** applied to the
 issue format, and it is required because an issue is the *input* to implementation: an absence
 concluded from the wrong route has already, once, become an invariant plus a guard enforcing
 it, with the offline suite certifying both (see

@@ -206,9 +206,10 @@ every record Phases B and C load into the same repository.
   as `LICENSEFILE` with an absolute path, re-sources the env script after adding the key to
   the engine-config PIPELINE section, and records `license: custom`. ⛔ **Do not write a second copy
   of it here, and do not substitute a different mechanism.** A platform-specific procedure duplicated
-  is a procedure that drifts, and the MCP server describes a *different* route
-  (`SENZING_LICENSE_FILE`, or a license file in `etc/`) which is real but is **not** the one wired
-  into this bootcamp's file layout — using it here would leave the engine config pointing at nothing.
+  is a procedure that drifts. The route the MCP server names, `LICENSESTRINGBASE64` or `LICENSEFILE`
+  in the engine config's `PIPELINE` section, is the one sub-step 5 already wires into this
+  bootcamp's file layout; a license placed anywhere else would leave the engine config pointing at
+  nothing.
 
   **Then re-measure and re-enter these branches.** After applying, re-read the license by Module 4
   Step 8a sub-step 7, which calls `SzProduct.get_license()`, refreshes `config/license.json` and

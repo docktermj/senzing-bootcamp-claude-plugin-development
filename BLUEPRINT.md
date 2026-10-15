@@ -2822,8 +2822,8 @@ and continues; the recap PDF is guaranteed.
   and Step 4's README names it as not mapped); never copies progress,
   preferences, recap, notes, `data/raw`, `data/samples`, `data/subsets`,
   `data/backups`, `logs`, `backups`, `docs/feedback`.
-- Step 3: `.env.example` (`SENZING_ENGINE_CONFIGURATION_JSON`,
-  `SENZING_LICENSE_FILE`, `DATABASE_URL`, `LOG_LEVEL`),
+- Step 3: `.env.example` (`SENZING_ENGINE_CONFIGURATION_JSON`, whose
+  `PIPELINE` section carries the license, `DATABASE_URL`, `LOG_LEVEL`),
   `docker-compose.yml` by `database_type`, `.gitignore` (listing each build
   output folder, `classes/` included). Step 4:
   `production/README.md`, whose Usage gives each program's build and run
@@ -10125,7 +10125,7 @@ looks wrong.
 - `tests/test_legacy_sublist_format_is_supported.py`: 14
 - `tests/test_legend_labels_its_actual_denominator.py`: 21
 - `tests/test_license_cap_branch_offers_the_apply_route.py`: 27
-- `tests/test_license_env_var_absent.py`: 5
+- `tests/test_license_env_var_absent.py`: 8
 - `tests/test_license_framing_consults_the_measured_limit.py`: 5
 - `tests/test_license_limit_is_written_only_from_a_measurement.py`: 14
 - `tests/test_license_limit_reading_is_complete.py`: 16
@@ -10576,7 +10576,10 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   - Updates are offered per platform: apt, yum or dnf, brew and scoop, with no
     in-place update for Docker.
   - `LD_LIBRARY_PATH` is required on `linux_apt`.
-  - The license variable is `SENZING_LICENSE_FILE`, not `SENZING_LICENSE_PATH`.
+  - The license goes in the engine config's `PIPELINE` keys,
+    `LICENSESTRINGBASE64` before `LICENSEFILE`; `SENZING_LICENSE_FILE`
+    appears only in the marker that records its lapsed source, and
+    `SENZING_LICENSE_PATH` never.
   - The SENZ7221, SENZ2027 and SENZ7426 diagnostics are covered.
   - All five server languages, Rust included, are named.
 - **Module 3.** The eight installation checks must pass. Results validation is
@@ -12431,3 +12434,11 @@ Senzing licensing, with no SPDX identifier.
   its `VERIFIED_QUERIES` evidence slots are restamped to server 1.39.0,
   2026-10-15 (its "only single-source loaders" census and its
   "`full_pipeline` returns single-source snippets" clause had gone false)
+- #654: `sdk_guide(topic='load')` stopped naming `SENZING_LICENSE_FILE`, so
+  Module 2's license check order and graduation's `.env.example` route the
+  license to the `PIPELINE` keys (`LICENSESTRINGBASE64` preferred, then
+  `LICENSEFILE`), Module 2's marker records the lapse on server 1.39.0,
+  2026-10-15, Phase B stops calling the server's route a different one, the
+  maintainer templates' worked example moves to the evaluation limit, and
+  amendments to INV-208 and INV-209 are queued (the variable lost its only
+  source; a lost source is not an absence)

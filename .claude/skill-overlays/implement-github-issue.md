@@ -84,9 +84,10 @@ Where the diagnosis rests on the server *lacking* something — "returns no X", 
 cover", "no MCP tool answers this" — the `MCP re-check` line MUST also carry
 `owner-checked: <the route that would CARRY this fact> — <what it returned>`. **The tools you
 asked and found empty are evidence about those tools, never about the negative:**
-"`sdk_guide(topic='configure')` returns no license variable" is true and worthless as support
-for "no license variable exists", because the variable lives in
-`sdk_guide(topic='load', record_count=<above the limit>)`. Treat a missing clause as a
+"`sdk_guide(topic='load', record_count=100)` returns no license limit" is true and worthless as
+support for "Senzing has no record limit", because the limit lives in
+`sdk_guide(topic='load', record_count=<above the limit>)`, whose `compatibility_notes` state it
+only when the count exceeds the limit. Treat a missing clause as a
 **blocker** and re-diagnose rather than implement — an absence concluded from the wrong route
 has already, once, become a registered invariant plus a guard enforcing it, with the offline
 suite certifying both.
