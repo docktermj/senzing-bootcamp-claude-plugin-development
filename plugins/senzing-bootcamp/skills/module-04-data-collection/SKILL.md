@@ -625,7 +625,7 @@ generates it. For the Bootcamper who did not choose it:
 >
 > I can pull CORD datasets (Las Vegas, London, Moscow) using the `get_sample_data` tool: these
 > are Senzing JSONL files the engine can load, though some sources may still need mapping, which
-> Module 5 checks for you.
+> the Data Quality, Mapping, and Transformation module checks for you.
 >
 > Learn more about CORD: <https://senzing.com/senzing-ready-data-collections-cord/>"
 

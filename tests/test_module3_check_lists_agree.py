@@ -62,11 +62,11 @@ KEY = re.compile(r"`([a-z]+(?:_[a-z]+)+)`")
 NOT_M3_KEYS = {"web_service", "web_page", "expectation_mismatch"}
 
 #: A numeral or number word directly before "installation checks", "install checks" or
-#: "System Verification checks": a stated count.
+#: "System verification checks": a stated count.
 COUNTED = re.compile(
     r"(?i)\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\*{0,2}\s+"
-    r"(?:installation|install|System Verification)\s+check")
-#: "all 8 ... checks passed" / "All 8 System Verification checks passed".
+    r"(?:installation|install|System verification)\s+check")
+#: "all 8 ... checks passed" / "All 8 System verification checks passed".
 ALL_N_PASSED = re.compile(r"(?i)\ball\s+\d+\b[^.;\n]*?\bchecks?\b[^.;\n]*?\bpassed")
 WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
          "eight": 8, "nine": 9, "ten": 10}
@@ -139,14 +139,14 @@ def step9_json_keys(phase2_text):
 
 
 def recap_verification_line(recap_text):
-    """The example recap's System Verification bullet.
+    """The example recap's System verification bullet.
 
     Line-scoped by design (#424): the example recap writes each bullet as one unwrapped line,
     as a generated recap does, and the checks below split that line at "all passed"; a bullet
     that wrapped there would fail them rather than pass.
     """
     lines = [ln for ln in recap_text.splitlines()
-             if ln.startswith("- ") and "System Verification checks" in ln]
+             if ln.startswith("- ") and "System verification checks" in ln]
     return lines
 
 
@@ -278,7 +278,7 @@ class TheExampleRecapReportsResultsValidationApart(unittest.TestCase):
 
     def test_the_line_is_found(self):
         self.assertEqual(len(self.lines), 1,
-                         "the example recap's System Verification line was not located")
+                         "the example recap's System verification line was not located")
 
     def test_results_validation_is_outside_the_all_passed_clause(self):
         line = self.lines[0]
@@ -335,8 +335,8 @@ class TheGuardCatchesDivergence(unittest.TestCase):
 
     def test_a_restored_count_is_seen(self):
         self.assertTrue(COUNTED.search("for the **seven installation checks**;"))
-        self.assertTrue(ALL_N_PASSED.search("All 8 System Verification checks passed"))
-        self.assertTrue(ALL_N_PASSED.search("Ran all 8 System Verification checks: a, b — all passed"))
+        self.assertTrue(ALL_N_PASSED.search("All 8 System verification checks passed"))
+        self.assertTrue(ALL_N_PASSED.search("Ran all 8 System verification checks: a, b — all passed"))
 
 
 if __name__ == "__main__":
