@@ -20,6 +20,10 @@ scans **every skill file** and **every option** of every gate:
 - **A gate** is a bold 👉 question with a numbered list directly beneath it, outside a code
   fence, in any `*.md` under `plugins/senzing-bootcamp/skills/` (INV-246: derived, no module
   list and no verb list). The question may wrap, and may sit in a list item or a blockquote.
+  **Every bold 👉 question saying `Reply with a number` or `Reply with one or more numbers` is a
+  gate too (#620)**, list or not: one whose options are built in prose at runtime has no list
+  beneath it, and until #620 two such gates (Bootcamp preparation's programming-language gate
+  and Module 7 step 3a's recall question) shipped with no marker.
 - **Its marker** is the first `**Handling each answer (INV-284).**` below its options and above
   the next heading, modeled on Module 7 step 3b's. Gates asked in place of one another (the
   bands of one quality gate, or a question's alternative forms) share the marker below the
@@ -73,7 +77,10 @@ asserts the file *states* the routes, and cannot establish that a live guide fol
 
 Source spec:
 `specs/the-quality-gates-improve-option-has-no-procedure-and-is-incoherent-on-a-generated-scenario.md`.
-Source issue: #531 (part of #504).
+Source issue: #531 (part of #504). Widened by #620 (part of #602), which also pins the gate
+answers `Issue620AnswersAreCarriedOut` checks: Module 4 Step 8a sub-step 6 and Step 8b sub-step 3
+ask nothing the gate already answered, and Module 1's two confirmation gates revise and re-present
+on a no.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -99,6 +106,8 @@ _BULLET = re.compile(r"^(?P<indent>[ \t]*)-[ \t]+(?P<text>\S.*?)\s*$")
 _LABEL = re.compile(r"^\*\*(?P<label>.+?)\*\*")
 _NUMBERED = re.compile(r"^(?P<num>\d+),\s*(?P<rest>.*)$")
 _EACH = re.compile(r"^Each number\b")
+#: A numbered-reply question, on normalized text (#620): a gate whether or not a list follows.
+REPLY = re.compile(r"reply with (?:a|one or more) number")
 
 #: The scan's floors (INV-265). At #531 it found 51 gates with 141 options in 19 files across
 #: 10 skill directories; each floor sits a little under that so a gate retired on purpose does
@@ -107,6 +116,8 @@ MIN_GATES = 45
 MIN_OPTIONS = 125
 MIN_FILES = 15
 MIN_MODULES = 9
+#: #620 found 49 `Reply with (a|one or more) number` questions; the floor sits under that.
+MIN_REPLIES = 45
 
 Gate = namedtuple("Gate", "line question options end")
 Entry = namedtuple("Entry", "num quotes start stop")
@@ -181,9 +192,20 @@ def gates(text):
             options, end = _read_options(prose, k)
             found.append(Gate(i + 1, norm(question), options, end))
             i = end
+        elif REPLY.search(norm(question)):
+            found.append(Gate(i + 1, norm(question), (), j + 1))   # options built in prose
+            i = j + 1
         else:
             i = j + 1
     return found
+
+
+def reply_questions_missed(text, name="text"):
+    """Every numbered-reply question line no gate covers (#620)."""
+    spans = [range(g.line, g.end + 1) for g in gates(text)]
+    return ["%s:%d" % (name, n + 1) for n, line in enumerate(prose_lines(text))
+            if line is not None and REPLY.search(norm(line)) and QUESTION in line
+            and not any(n + 1 in s for s in spans)]
 
 
 def find_marker(prose, start):
@@ -350,6 +372,17 @@ class EveryGateOptionHasAMarkerEntry(unittest.TestCase):
             "guide does when it is chosen or where the flow resumes (INV-284):\n  "
             + "\n  ".join(bad))
 
+    def test_every_numbered_reply_question_is_a_gate(self):
+        """#620: the scan sees every `Reply with (a|one or more) number` question."""
+        missed, count = [], 0
+        for path in sorted(SKILLS.rglob("*.md")):
+            text = path.read_text(encoding="utf-8")
+            count += sum(1 for line in prose_lines(text)
+                         if line is not None and QUESTION in line and REPLY.search(norm(line)))
+            missed += reply_questions_missed(text, str(path.relative_to(SKILLS)))
+        self.assertGreaterEqual(count, MIN_REPLIES, "the reply scan found %d questions" % count)
+        self.assertEqual([], missed, "a numbered-reply question the gate scan does not see")
+
 
 class TheGuardBites(unittest.TestCase):
     """Negative controls on the shipped text, and must-not-flag fixtures."""
@@ -362,9 +395,12 @@ class TheGuardBites(unittest.TestCase):
         self.assertGreaterEqual(len(by_module), MIN_MODULES)
         for module, paths in sorted(by_module.items()):
             with self.subTest(module=module):
-                text = paths[0].read_text(encoding="utf-8")
+                # The module's first file with a fixed-option gate: a runtime list's one
+                # "Each number" entry is not a numbered entry to remove (#620).
+                texts = [p.read_text(encoding="utf-8") for p in paths]
+                text = next((x for x in texts if first_entry(x)), texts[0])
                 entry = first_entry(text)
-                self.assertIsNotNone(entry, "no numbered entry to remove in %s" % paths[0].name)
+                self.assertIsNotNone(entry, "no numbered entry to remove in %s" % module)
                 self.assertEqual([], marker_problems(text))
                 self.assertNotEqual([], marker_problems(without_entry(text, entry)))
 
@@ -418,6 +454,30 @@ class TheGuardBites(unittest.TestCase):
         self.assertEqual(1, len(gates(fixture)))
         self.assertNotEqual([], marker_problems(fixture))
 
+    def test_a_reply_question_with_no_list_is_a_gate(self):
+        """#620: options built in prose leave no list beneath; the question still needs a marker."""
+        fixture = "👉 **Which one? Reply with a number:**\n\nThe options come from the server.\n"
+        self.assertEqual(1, len(gates(fixture)))
+        self.assertEqual([], reply_questions_missed(fixture))
+        self.assertNotEqual([], marker_problems(fixture))
+        self.assertEqual([], marker_problems(fixture + "\n" + MARKER + "\n\n- **Each number:** go.\n"))
+
+    def test_removing_a_runtime_gates_marker_fails(self):
+        """#620's two gates, each with its marker gone, as they shipped before #620."""
+        for path, question in (
+                (SKILLS / "bootcamp-preparation" / "SKILL.md", "which programming language"),
+                (SKILLS / "module-07-query-visualize-discover" / "phase1-query-visualize.md",
+                 "what does that tell you about entity")):
+            with self.subTest(file=path.name):
+                text = path.read_text(encoding="utf-8")
+                gate = next(g for g in gates(text) if question in g.question)
+                m = find_marker(prose_lines(text), gate.end)
+                self.assertIsNotNone(m, "the gate has no marker")
+                lines = text.split("\n")
+                lines[m] = lines[m].replace(MARKER, "**Handling.**")
+                problems = marker_problems("\n".join(lines))
+                self.assertTrue(any(question in p for p in problems), problems)
+
     def test_each_number_on_a_fixed_gate_fails(self):
         fixture = ("👉 **Which one? Reply with a number:**\n\n1. This one.\n2. That one.\n\n"
                    + MARKER + "\n\n- **Each number:** carry on.\n")
@@ -457,6 +517,112 @@ class TheGuardBites(unittest.TestCase):
                 self.assertIn(old, mutant, "the re-wrap no longer applies")
                 mutant = mutant.replace(old, new, 1)
         self.assertEqual([], marker_problems(mutant))
+
+
+M1_DISCOVERY = SKILLS / "module-01-business-problem" / "phase1-discovery.md"
+M1_CONFIRM = SKILLS / "module-01-business-problem" / "phase2-document-confirm.md"
+M4 = SKILLS / "module-04-data-collection" / "SKILL.md"
+M7_PHASE1 = SKILLS / "module-07-query-visualize-discover" / "phase1-query-visualize.md"
+
+#: #620's answer pins: (what, file, section start, section end, must state, must not state).
+#: Phrases are matched on normalized text, so they may wrap (INV-346).
+ANSWER_PINS = (
+    ("8a sub-step 6 gives the chosen path only", M4, "6. **Obtain a Senzing License Key",
+     "### 6a.", ("guidance for the chosen path only", "never re-offer the paths",
+                 "option 4 goes to sub-step 6a", "sub-step 5 whenever it arrives"),
+     ("individually selectable",)),
+    ("8a option 4 goes to sub-step 6a only", M4,
+     '- **4, "No — request a free evaluation license now":**', "\n", ("sub-step 6a.",),
+     ("sub-step 6's",)),
+    ("8b's load-all branch asks nothing more", M4, "- **Load all collected records on SQLite:**",
+     "- **Sample down", ("the choice is the confirmation, so ask nothing more",),
+     ("explicit confirmation",)),
+    ("6a's no branch revises and re-presents", M1_DISCOVERY, "### 6a. Present summary and confirm",
+     "### 6b", ("on a no, ask what to change, revise the summary, and present this question again",
+                "not an inv-006 repeat"), ()),
+    ("Step 15's no branch revises and re-presents", M1_CONFIRM, "## 15. Get confirmation",
+     "## 16.", ("on a no, ask what to change, revise docs/business_problem.md",
+                "present this question again", "not an inv-006 repeat"), ()),
+    ("Step 4 option 2 shows the gallery when none was picked", M1_DISCOVERY,
+     '- **2, "Adopt a design pattern":**', '- **3, "',
+     ("when none was picked, show step 3's pattern gallery first",), ()),
+    ("4a carries no unreachable Declined branch", M1_DISCOVERY, "### 4a.", "### 4b.", (),
+     ("declined: continue",)),
+    ("Module 7 gate item 6 is handled", M7_PHASE1, "6. **Ready to proceed?**",
+     "## Visualization server teardown",
+     ("on a yes, continue to the visualization server teardown",
+      "returns to the discover phase", "not an inv-006 repeat"), ()),
+)
+
+
+def _between(text, start, end):
+    i = text.find(start)
+    if i < 0:
+        return None
+    j = text.find(end, i + len(start))
+    return text[i:j if j > 0 else len(text)]
+
+
+def answer_pin_problems(texts):
+    """Each #620 pin, read from ``texts`` ({path: text}); a problem names its pin."""
+    problems = []
+    for what, path, start, end, must, must_not in ANSWER_PINS:
+        part = _between(texts[path], start, end)
+        if part is None:
+            problems.append("%s: the section moved" % what)
+            continue
+        flat = norm(part)
+        problems += ["%s: does not state %r" % (what, s) for s in must if s not in flat]
+        problems += ["%s: still states %r" % (what, s) for s in must_not if s in flat]
+    return problems
+
+
+#: Negative controls: each puts back the text that shipped before #620 (new, old).
+BEFORE_620 = {
+    "8a sub-step 6 gives the chosen path only": (M4, (
+        "Give guidance for\n   the chosen path only: the gate already chose, so never re-offer the "
+        "paths (INV-006). **Option\n   4** goes to sub-step 6a. **Option 3:** consult",
+        "Present the available paths as distinct,\n   individually selectable options. Consult")),
+    "8a option 4 goes to sub-step 6a only": (M4, (
+        'evaluation license now":** sub-step 6a.',
+        'evaluation license now":** sub-step 6\'s in-flow request, sub-step 6a.')),
+    "8b's load-all branch asks nothing more": (M4, (
+        "the choice is the confirmation, so ask nothing\n     more (INV-006)",
+        "first obtain an **explicit confirmation** that\n     the bootcamper accepts the expected "
+        "load time")),
+    "6a's no branch revises and re-presents": (M1_DISCOVERY, (
+        "**On a no,** ask what to change, revise the summary, and present", "")),
+    "Step 15's no branch revises and re-presents": (M1_CONFIRM, (
+        "**On a no,** ask what to change, revise\n`docs/business_problem.md`", "")),
+    "Step 4 option 2 shows the gallery when none was picked": (M1_DISCOVERY, (
+        "When none was picked,\n  show Step 3's pattern gallery first", "")),
+    "4a carries no unreachable Declined branch": (M1_DISCOVERY, (
+        "- **Generation failed",
+        "- **Declined:** continue with their own description (Path 1/2); do not generate a "
+        "scenario.\n- **Generation failed")),
+    "Module 7 gate item 6 is handled": (M7_PHASE1, (
+        "6. **Ready to proceed?** On a yes,", "6. **Ready to proceed?**\n\nOn a")),
+}
+
+
+class Issue620AnswersAreCarriedOut(unittest.TestCase):
+    """#620: no pinned answer is re-asked, and each confirmation gate has a no branch."""
+
+    def setUp(self):
+        self.texts = {p: p.read_text(encoding="utf-8")
+                      for p in (M1_DISCOVERY, M1_CONFIRM, M4, M7_PHASE1)}
+
+    def test_each_answer_is_carried_out(self):
+        self.assertEqual([], answer_pin_problems(self.texts))
+
+    def test_the_text_before_620_fails_each_pin(self):
+        self.assertEqual({w for w, *_ in ANSWER_PINS}, set(BEFORE_620))
+        for what, (path, (new, old)) in BEFORE_620.items():
+            with self.subTest(pin=what):
+                self.assertEqual(1, self.texts[path].count(new), "the mutation no longer applies")
+                mutant = {**self.texts, path: self.texts[path].replace(new, old, 1)}
+                problems = answer_pin_problems(mutant)
+                self.assertTrue(any(p.startswith(what + ":") for p in problems), problems)
 
 
 class TheImprovePathIsUsable(unittest.TestCase):

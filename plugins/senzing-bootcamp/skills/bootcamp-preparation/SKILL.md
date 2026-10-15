@@ -378,6 +378,10 @@ questions.
 
   👉 **Which programming language would you like to use for the bootcamp? Reply with a number:**
 
+  **Handling each answer (INV-284).** The options come from `get_capabilities` at runtime.
+
+  - **Each number:** that programming language; hold it as below, then Step 5.
+
 - This is a ⛔ gate whose wording is pinned — present the 👉 question above verbatim (INV-056); wait for the bootcamper's real choice. Do NOT assume or say "I'll go with X."
 - **Hold** the chosen programming language for the Step 6 consolidated write (do not write it now).
 

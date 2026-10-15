@@ -1225,7 +1225,7 @@ training data.
    - **1, "Yes — a license file":** sub-step 5, then sub-step 7.
    - **2, "Yes — a Base64-encoded license key":** sub-step 5, then sub-step 7.
    - **3, "No — I'll obtain one another way" or "No — I need to obtain one":** sub-step 6.
-   - **4, "No — request a free evaluation license now":** sub-step 6's in-flow request, sub-step 6a.
+   - **4, "No — request a free evaluation license now":** sub-step 6a.
 
 5. **Apply a Senzing License Key (options 1–2).** This sub-step is the one statement of how the
    bootcamp wires a license; Module 2's license note, Data processing Phase B and graduation point
@@ -1268,12 +1268,12 @@ training data.
    force: the measured-but-incomplete case INV-295 forbids. Continue to sub-step 7 to detect the
    limit.
 
-6. **Obtain a Senzing License Key (option 3, or option 4's in-flow request).** Consult the Senzing
-   MCP server first: `search_docs(query='temporary evaluation license for a dataset larger than the
-   default limit')`, whose top hit is the EULA's *Senzing Non-Production License* section, and
-   present the returned guidance. Present the available paths as distinct,
-   individually selectable options — the in-flow MCP request (sub-step 6a below), the external
-   channel, and apply-an-existing-key (sub-step 5). Source the request channel's address and any
+6. **Obtain a Senzing License Key (option 3, or option 4's in-flow request).** Give guidance for
+   the chosen path only: the gate already chose, so never re-offer the paths (INV-006). **Option
+   4** goes to sub-step 6a. **Option 3:** consult the Senzing MCP server first:
+   `search_docs(query='temporary evaluation license for a dataset larger than the default limit')`,
+   whose top hit is the EULA's *Senzing Non-Production License* section, and present the returned
+   guidance on the external channel. Source the request channel's address and any
    capacity/validity figures from MCP at runtime rather than this file (they have changed before, and
    the eval and production channels differ), never a remembered figure. The bootcamp **continues on
    the built-in evaluation license** meanwhile, so the bootcamper is never blocked waiting for the
@@ -1491,9 +1491,9 @@ about a roughly half-hour load, for a load of about two minutes.
 
 3. **Act on the choice.** Sampling is offered here as one option among proceeding and switching
    databases: not the only path.
-   - **Load all collected records on SQLite:** first obtain an **explicit confirmation** that
-     the bootcamper accepts the expected load time before continuing with the full dataset. Then
-     record the decision (sub-step 4) and continue to Step 9.
+   - **Load all collected records on SQLite:** the choice is the confirmation, so ask nothing
+     more (INV-006), as Module 6 Phase A's proceed branch does. Record the decision (sub-step 4)
+     and continue to Step 9.
    - **Sample down to a smaller record count:** ask which sampling strategy to use **before**
      creating the sample: offer first-N records, random-N records, and an
      entity-resolution-demonstrating strategy that preserves cross-source overlaps and known
