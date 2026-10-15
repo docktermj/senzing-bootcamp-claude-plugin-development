@@ -100,9 +100,9 @@ that applies when no custom license is configured. Treat it as the default the s
 has, presented as a choice rather than a wall. Before any license-based capacity or sampling
 decision — ⛔ **and "choosing how many records to GENERATE" is one of them, not only "sampling an
 existing dataset down"** — **read `license_record_limit` from `config/bootcamp_progress.json`**
-(Step 8a writes it
-after a custom license is configured — but that gate is **volume-gated**, so an absent value means
-it has not run, never that no custom license exists) and drive the decision from that effective
+(every step that writes it
+writes only a **measured** value, so an absent value means no measurement has been taken yet,
+never that no custom license exists) and drive the decision from that effective
 limit: never from a remembered or hardcoded figure:
 
 - **Present and greater than 0** (custom license with a finite record cap): the effective limit
@@ -1087,16 +1087,19 @@ A smaller working file can be useful in two situations: a very large dataset (e.
 is unwieldy to handle, or a dataset larger than the effective record limit allows. In **both**
 cases sampling is one option, not a requirement.
 
-If the dataset may exceed the effective record limit, apply the canonical framing at the top of
-this module: **read `license_record_limit` from `config/bootcamp_progress.json`** and drive the
-decision from that effective limit. When it is `0` (no cap) or greater than or equal to the
-dataset size, do **not** recommend sampling for license reasons: support loading the full
-dataset. When it is absent or null, fall back to the built-in evaluation capacity confirmed via
-the Senzing MCP server. When the dataset genuinely exceeds the effective limit, the bootcamper
-can keep their full dataset and expand capacity via the single License Key gate at Step 8a, or
-work with a smaller slice. Do not steer them to a smaller substitute as the only path. The
-License Key setup, its tool-availability checks, and any capacity figure all live in the Step 8a
-gate (INV-093) and the Senzing MCP server.
+⛔ **(INV-244) Whether to sample for license reasons is a LICENSE-CAPACITY decision.** Make it
+only by *"License limit and dataset size (canonical framing)"* at the top of this module. That
+block reads `license_record_limit`, re-measures a provisional reading (INV-295), and says
+what each value of the field means and what to do when it is missing. ⚠️ **Do not restate any
+of its branches at this step** — route to it, exactly as the generation-sizing directive in
+Step 2 does (INV-300). A copy here once stated the missing-value branch backwards, which is the
+inference INV-244 forbids, at the step where the sampling decision is made.
+
+When that block finds the dataset genuinely exceeds the effective limit, the bootcamper can keep
+their full dataset and expand capacity via the single License Key gate at Step 8a, or work with
+a smaller slice. Do not steer them to a smaller substitute as the only path. The License Key
+setup, its tool-availability checks, and any capacity figure all live in the Step 8a gate
+(INV-093) and the Senzing MCP server.
 
 **If the bootcamper chooses to work with a smaller slice:**
 
