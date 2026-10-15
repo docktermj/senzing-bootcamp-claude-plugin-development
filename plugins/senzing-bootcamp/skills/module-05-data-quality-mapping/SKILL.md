@@ -83,7 +83,7 @@ transformation programs tested + output validated; quality score reported at ste
   | UTF-8 encoding, and what "supported language" means | "What languages does Senzing support?" |
   | Cross-script name matching | "Advanced personal name comparisons > Supported cultural groups" |
   | Which scripts are actually covered | "Advanced personal name comparisons > Additional Cultural Support" — a transliteration table (Indian, Indonesian, Japanese, Polish, Portuguese, East Slavic, Turkish, Yoruban, Generic). It also states Japanese **Kanji is treated as Chinese Hanzi** — a limitation worth telling the Bootcamper. |
-  | Cross-script addresses, and the data-quality practice | "Enhanced address comparisons" and "Address matching examples > CJK+English cross-script matching" — native-to-native beats native-to-Romanized, and for non-CJK cross-script, Romanize via an address-hygiene product and supply **both** the native and Romanized forms. |
+  | Cross-script addresses, and the data-quality practice | "Address matching examples", which carries the practice, and "Enhanced address comparisons" — native-to-native beats native-to-Romanized, and for non-CJK cross-script, Romanize via an address-hygiene product and supply **both** the native and Romanized forms. |
 
   ⚠️ **The bare call is not the route, even though its Guide hits are usable.** Unfiltered,
   `search_docs(query='globalization')` does return Senzing Globalization Guide sections with
@@ -103,12 +103,12 @@ transformation programs tested + output validated; quality score reported at ste
   `senzingapi-tools`, `senzingsdk-runtime`, `homebrew-senzingsdk`, `scoop-senzingsdk`) about
   Markdown lint and Dockerfiles — **no globalization content at all**, two of them title-only
   stubs. With `category='globalization'` the on-topic rows come back first, but those same files
-  remain in the set carrying the **highest** `relevance_score` (~89 against ~9–13), so never rank
-  by score here. Seeing any of this
-  is evidence you mis-queried, never that the documentation is thin. (The sections above and
-  this trap verified live via `search_docs`, server 1.37.19, docs indexed 2026-10-02 18:46 UTC,
-  2026-10-04.)
-  <!-- MCP-NEGATIVE: search_docs(query='multi-language data quality best practices') — returns no globalization content at all — the hits are repo template docs/best-practices.md files about Markdown lint and Dockerfiles, none carrying non-Latin or cross-script guidance — owner: search_docs(query='data quality practices multi-language non-Latin', category='globalization') returns it, as "Address matching examples > CJK+English cross-script matching" (routing negative — the category filter is what recovers it) — server 1.36.0, 2026-09-02 -->
+  remain in the set carrying a `relevance_score` **several times** the Guide rows', so never rank
+  by score here. Seeing any of this is evidence you mis-queried, never that the documentation is
+  thin. (The sections above and this trap verified live via `search_docs`, server 1.39.0, docs
+  indexed 2026-10-15 10:47 UTC, 2026-10-15, except the third row's Kanji note, last verified on
+  server 1.37.19, docs indexed 2026-10-02 18:46 UTC, 2026-10-04.)
+  <!-- MCP-NEGATIVE: search_docs(query='multi-language data quality best practices') — returns no globalization content at all — the hits are repo template docs/best-practices.md files about Markdown lint and Dockerfiles, none carrying non-Latin or cross-script guidance — owner: search_docs(query='data quality practices multi-language non-Latin', category='globalization') returns it — the category boost ranks Globalization Guide sections, including the CJK+English cross-script matching example, first (routing negative — the category filter is what recovers it) — server 1.39.0, 2026-10-15 -->
 
 ## Error handling
 
