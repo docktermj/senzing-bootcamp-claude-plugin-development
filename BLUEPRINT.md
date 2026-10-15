@@ -1922,7 +1922,9 @@ branch.
   from `free-port 5432` recorded as `host_port` and used in `SQL.CONNECTION`,
   absent meaning 5432; a busy port on resume is reported and asked about;
   generated password, volume `database/postgres`, `pg_isready`, schema DDL,
-  `docker_containers` entry), local, existing server, or switch to SQLite.
+  `docker_containers` entry; created with `docker run`, then resumed, polled
+  and loaded through the entry's recorded runtime, `<pg-runtime>`), local,
+  existing server, or switch to SQLite.
   The DDL path comes from MCP at runtime. On SDK setup's container route the
   host has no `/opt/senzing`, so the DDL is copied out of the SDK container
   into `database/` with the recorded runtime's `cp` and that copy is applied
@@ -2112,8 +2114,9 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
 - 4: after stating consequences, ask 👉 "Ready for me to stop the
   visualization server and clean up the Truth Set data?" On yes: rebuild a
   stale snapshot, capture missing screenshots, kill by pid (never
-  `pkill -f`; port lookup fallback; in Docker `sh -c 'kill'` and a
-  `python3` probe of the bound address), confirm the port free in 5 s, then
+  `pkill -f`; port lookup fallback; in the SDK container, through its
+  recorded runtime, `sh -c 'kill'` and a `python3` probe of the bound
+  address), confirm the port free in 5 s, then
   purge last with the program `cleanup_truthset`. On `unavailable` Step 4
   says itself that it skips the screenshots and the kill, and still asks the
   question with a no-live-server disclosure.
@@ -2809,7 +2812,8 @@ and continues; the recap PDF is guaranteed.
   `docs/data_source_evaluation.pdf` via `generate_document_pdf.py` with
   `--subtitle` and `--require-sections`.
 - Step 6 writes `backups/revisit/`: the database backup (SQLite copy or
-  `pg_dump -Fc -f`, never redirection), state snapshot, `RESUME_STATE.json`
+  `pg_dump -Fc -f`, never redirection; in a container, through its recorded
+  runtime after a `cp --help` probe), state snapshot, `RESUME_STATE.json`
   and `docs/REVISIT_BOOTCAMP.md`, which carries both Step 0b lists and the
   "Next time" request.
 - Close: confirm the PDF, announce only existing artifacts plus a
@@ -10225,6 +10229,7 @@ looks wrong.
 - `tests/test_recap_tab_coverage.py`: 19
 - `tests/test_recap_video.py`: 145
 - `tests/test_record_limit_negative_is_rescoped.py`: 13
+- `tests/test_recorded_container_commands_use_the_recorded_runtime.py`: 17
 - `tests/test_registration_idempotency_is_constructed.py`: 12
 - `tests/test_related_entities_guidance.py`: 21
 - `tests/test_release_bumps_version_changelog_and_tag_together.py`: 32
@@ -12327,3 +12332,13 @@ Senzing licensing, with no SPDX identifier.
   `PROPOSED AMENDMENT` is queued (pinned answers were re-asked, two
   confirmation gates had no "no" branch, and two numbered-reply gates had no
   marker)
+- #613: every guide-run command on a recorded container dispatches on its
+  recorded `runtime` from `docker_containers` (INV-195): the database backup's
+  dump, copy and restore (after a `<runtime> cp --help` probe whose failure
+  takes "If the backup cannot be produced"), Module 2 Option 1's resume, ready
+  check and schema loads as `<pg-runtime>`, and Module 3b's container-route
+  kill and probe; Option 1's `docker run` creation stays, and
+  `tests/test_recorded_container_commands_use_the_recorded_runtime.py` fails
+  on `docker (exec|cp|start)` in the shipped skills, with an INV-195
+  `PROPOSED AMENDMENT` queued (those commands hardcoded `docker`, so podman
+  and Apple `container` Bootcampers got commands that fail)

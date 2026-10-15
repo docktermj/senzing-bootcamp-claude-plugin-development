@@ -173,8 +173,10 @@ permanent. Work through 1–4 in order; do not hoist the purge.
      PowerShell.
    - ⛔ **On the `docker` path both of those are host-shell routes and the container has neither
      tool (INV-223 still governs: terminate by pid, confirm the port)** — no `procps`, no `lsof`. Signal through the shell builtin
-     (`docker exec <container> sh -c 'kill <pid>'`) using the pid INV-223 required the launch to
-     record, and probe the port with `python3`, never with `lsof`, at the address the server bound
+     (`<runtime> exec <container> sh -c 'kill <pid>'`, with `<runtime>` and `<container>` the SDK
+     container's recorded `runtime` and `name` in `docker_containers`, INV-195) using the pid
+     INV-223 required the launch to record, and probe the port with `python3`, never with `lsof`,
+     at the address the server bound
      (`visualization-api-reference.md` → "Serving from the SDK container", item 4). **The kill's exit status is not evidence the server stopped; the port is.** Full rule
      and the reason, stated once (INV-300):
      `visualization-api-reference.md` → "Server lifetime" → "Identifying the server process".

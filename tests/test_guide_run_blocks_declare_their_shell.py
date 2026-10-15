@@ -679,11 +679,11 @@ def _stub(path, body):
 @unittest.skipUnless(shutil.which("sh") and os.name == "posix",
                      "needs a POSIX sh to run the container-route block against stub runtimes")
 class TheContainerRouteBlockRuns(unittest.TestCase):
-    """Run step 4's own container-route block, with stub `<runtime>` and `docker`, in a temp project.
+    """Run step 4's own container-route block, with stub `<runtime>` and `<pg-runtime>`, in a temp project.
 
     The stub runtime's `cp` reads `<container>:<path>` from a fake container root, so the test
-    sees the copy come from the container and land in the project; the stub `docker` records
-    what `psql` receives on stdin.
+    sees the copy come from the container and land in the project; the stub `<pg-runtime>`, the
+    PostgreSQL container's recorded runtime (INV-195, #613), records what `psql` receives on stdin.
     """
 
     DDL = "CREATE TABLE sys_cfg (x INT);\n"
@@ -705,7 +705,7 @@ class TheContainerRouteBlockRuns(unittest.TestCase):
               'test "$1" = cp || exit 9\n'
               'src="${2#*:}"\n'
               f'cp "{self.container_root}$src" "$3"\n')
-        _stub(self.bin / "docker", f'cat > "{self.stdin_log}"\n')
+        _stub(self.bin / "stubpgrt", f'test "$1" = exec || exit 9\ncat > "{self.stdin_log}"\n')
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -714,7 +714,8 @@ class TheContainerRouteBlockRuns(unittest.TestCase):
         step = between(read(MODULE_2), STEP_4, STEP_5)
         lines, _ = fenced_block_after(between(step, CONTAINER_ROUTE, NATIVE_ROUTE), "psql")
         code = "\n".join(line.strip() for line in lines)
-        return (code.replace("<runtime>", "stubrt")
+        return (code.replace("<pg-runtime>", "stubpgrt")
+                    .replace("<runtime>", "stubrt")
                     .replace("<sdk-container>", "senzing-bootcamp-demo-1a2b3c")
                     .replace("<schema path from MCP>", self.IN_CONTAINER)
                     .replace("<pg-container>", "bootcamp-postgres-demo-1a2b3c"))

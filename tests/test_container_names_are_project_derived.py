@@ -499,9 +499,9 @@ class Module2CreatesOnlyHelperNamedContainers(unittest.TestCase):
                 r'docker_lifecycle\.py" free-port 5432',
                 r"docker run -d --name <pg-container>",
                 r"-p 127\.0\.0\.1:<host_port>:5432",
-                r"docker start <pg-container>",
-                r"docker exec <pg-container> pg_isready",
-                r"docker exec -i <pg-container> psql"):
+                r"<pg-runtime> start <pg-container>",
+                r"<pg-runtime> exec <pg-container> pg_isready",
+                r"<pg-runtime> exec -i <pg-container> psql"):
             with self.subTest(pattern=pattern):
                 self.assertTrue(match_lines(self.option_1, pattern), pattern)
 

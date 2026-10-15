@@ -2058,17 +2058,20 @@ config with `sdk_guide(topic='configure', ...)` — never hand-construct
 
    Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
-   On a later resume, restart the recorded container with `docker start <pg-container>` (which
-   preserves the baked-in password) rather than a fresh `docker run`. If that start fails because
-   the recorded `host_port` is now in use, say so and ask the Bootcamper: a published port cannot
-   be changed on an existing container, and recreating it is their call, never a silent fix.
+   On a later resume, restart the recorded container with `<pg-runtime> start <pg-container>`
+   (which preserves the baked-in password) rather than a fresh `docker run`, where `<pg-runtime>`
+   is the `runtime` its `docker_containers` entry records (INV-195; an entry with no `runtime`
+   means `docker`). If that start fails because the recorded `host_port` is now in use, say so
+   and ask the Bootcamper: a published port cannot be changed on an existing container, and
+   recreating it is their call, never a silent fix.
 
 2. Record the container for lifecycle tracking (INV-101): append it to `docker_containers` in
    `config/bootcamp_progress.json` — its `name` (`<pg-container>`), the `runtime` you actually used
    (`docker`, or `podman` / `container` if that is what started it), and `host_port`
    (`<host_port>`) — so the SessionEnd hook stops it on exit and SessionStart offers to restart it.
-   An entry with no `host_port` means `5432`, the only port earlier projects used.
-3. Wait until the server is ready (poll `docker exec <pg-container> pg_isready`).
+   An entry with no `host_port` means `5432`, the only port earlier projects used. From here on,
+   `<pg-runtime>` is that recorded `runtime` (INV-195).
+3. Wait until the server is ready (poll `<pg-runtime> exec <pg-container> pg_isready`).
 4. Apply the Senzing PostgreSQL schema DDL **before any SDK use** — the SDK does NOT auto-create it
    (unlike SQLite). The DDL ships with the SDK install. Take `<schema path from MCP>` for the
    platform the SDK is installed on from the anti-patterns search above, at runtime (INV-080). On
@@ -2082,7 +2085,7 @@ config with `sdk_guide(topic='configure', ...)` — never hand-construct
 
      ```bash
      <runtime> cp "<sdk-container>:<schema path from MCP>" database/szcore-schema-postgresql-create.sql &&
-       docker exec -i <pg-container> psql -U senzing -d G2 < database/szcore-schema-postgresql-create.sql
+       <pg-runtime> exec -i <pg-container> psql -U senzing -d G2 < database/szcore-schema-postgresql-create.sql
      ```
 
      Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
@@ -2094,7 +2097,7 @@ config with `sdk_guide(topic='configure', ...)` — never hand-construct
    - **On a native route**, where the SDK is installed on the host, apply the host file directly:
 
      ```bash
-     docker exec -i <pg-container> psql -U senzing -d G2 < "<schema path from MCP>"
+     <pg-runtime> exec -i <pg-container> psql -U senzing -d G2 < "<schema path from MCP>"
      ```
 
      Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
