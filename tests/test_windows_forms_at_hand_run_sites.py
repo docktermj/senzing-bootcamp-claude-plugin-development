@@ -24,8 +24,8 @@ Windows and that had no correct Windows form:
    binary dump with `>`, which PowerShell 5.1 re-encodes as text, silently until a restore; the
    restore used `psql <`, which PowerShell 5.1 rejects as a parser error. The commands now name
    their files by argument (`pg_dump -f`, `pg_restore -d <db> <file>`, `psql -f`), and the
-   container form copies the dump out with `docker cp`, because `-f` inside `docker exec` writes
-   into the container's filesystem. The packaged `OPEN_ME_FIRST.md` restore step
+   container form copies the dump out with `<runtime> cp`, because `-f` inside `<runtime> exec`
+   writes into the container's filesystem (#613: the container's recorded runtime, INV-195). The packaged `OPEN_ME_FIRST.md` restore step
    (`package_bootcamp.py`'s `PG_RESTORE`) is the same step and is held to the same rule.
 
 5. **Graduation Step 1c (the Piper voice and the `imageio-ffmpeg` install), #420.** Step 1c
@@ -379,9 +379,9 @@ class ThePostgresBackupAndRestoreUseNoRedirection(unittest.TestCase):
 
     def test_the_container_backup_copies_the_dump_out(self):
         flat_text = flat(self.text)
-        dump = "`docker exec <container> pg_dump -U <user> -d <db> -Fc -f /tmp/senzing.dump`"
-        copy = "`docker cp <container>:/tmp/senzing.dump backups/revisit/database/senzing.dump`"
-        cleanup = "`docker exec <container> rm /tmp/senzing.dump`"
+        dump = "`<runtime> exec <container> pg_dump -U <user> -d <db> -Fc -f /tmp/senzing.dump`"
+        copy = "`<runtime> cp <container>:/tmp/senzing.dump backups/revisit/database/senzing.dump`"
+        cleanup = "`<runtime> exec <container> rm /tmp/senzing.dump`"
         for piece in (dump, copy, cleanup):
             with self.subTest(piece=piece):
                 self.assertIn(piece, flat_text)
@@ -389,14 +389,14 @@ class ThePostgresBackupAndRestoreUseNoRedirection(unittest.TestCase):
         self.assertLess(flat_text.index(copy), flat_text.index(cleanup))
 
     def test_a_backup_that_never_reached_the_host_is_not_a_backup(self):
-        self.assertIn("a failed `docker cp`, or a missing or empty file, means the backup could "
+        self.assertIn("a failed `<runtime> cp`, or a missing or empty file, means the backup could "
                       "not be produced", flat(self.text))
 
     def test_the_restore_names_its_file_by_argument(self):
         restore = flat(self.text[self.text.index("## Restore"):])
         self.assertIn("`pg_restore -U <user> -d <db> <file>`", restore)
         self.assertIn("`psql -U <user> -d <db> -f <file>`", restore)
-        self.assertIn("`docker cp <file> <container>:/tmp/senzing.dump`", restore)
+        self.assertIn("`<runtime> cp <file> <container>:/tmp/senzing.dump`", restore)
         self.assertNotIn("psql <", restore)
 
     def test_the_forms_are_disclosed_as_unverified(self):

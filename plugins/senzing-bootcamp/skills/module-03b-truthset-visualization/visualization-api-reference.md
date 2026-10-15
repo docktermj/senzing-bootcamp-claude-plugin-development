@@ -1525,20 +1525,22 @@ answered 200. Two faults are live at once: the wrong identification route, and n
 with. Fixing only the second would leave a working command that signals the invoking shell.
 
 Use the two things a Debian slim container is guaranteed to have — a POSIX shell, and the `python3`
-the SDK install brings in:
+the SDK install brings in. `<runtime>` and `<container>` below are the SDK container's recorded
+`runtime` and `name` in `docker_containers`, the same record "Serving from the SDK container"
+launches with (INV-195); an entry with no `runtime` means `docker`:
 
 - **Record the pid from inside the container, and know which namespace it belongs to.** A server
-  started with `docker exec <container> …` yields a **container-namespace** pid, which is the only
-  kind `docker exec … kill` can signal; a host pid from `docker run` identifies the *container*, not
+  started with `<runtime> exec <container> …` yields a **container-namespace** pid, which is the only
+  kind `<runtime> exec … kill` can signal; a host pid from `<runtime> run` identifies the *container*, not
   the server inside it, and signaling it stops the whole container. Capture the pid in the same
   namespace the teardown will signal in, and record which one it is beside the port (INV-223 requires
   the pid and port in one checkpoint object; this says the pid needs its namespace to be usable).
 - **Signal the recorded pid through the shell's builtin**, not through a `kill` binary:
-  `docker exec <container> sh -c 'kill <pid>'`. `kill` is a shell builtin, so this needs no
+  `<runtime> exec <container> sh -c 'kill <pid>'`. `kill` is a shell builtin, so this needs no
   `procps`; `/bin/kill` is a `procps` binary and is not there. The pid is the one INV-223 requires
   the launch to have recorded.
 - **Probe the port with `python3`**, since `lsof` is absent: a short `socket` connect against the
-  port, run with `docker exec <container> python3 -c …`, at the address the server bound (the
+  port, run with `<runtime> exec <container> python3 -c …`, at the address the server bound (the
   container's interface address, per "Serving from the SDK container" item 4). `python3` is present because the SDK
   install put it there, and this is the same probe the host path makes with `lsof` — the same
   question asked by the only tool available.
@@ -1550,7 +1552,7 @@ that can fail during Module 2's install phase, which is the module with the most
 already. If a later change needs `ps` output for its own reasons, that is the change that should
 argue for the package.
 
-**Never treat the kill's own exit status as evidence the server stopped.** `docker exec … kill`
+**Never treat the kill's own exit status as evidence the server stopped.** `<runtime> exec … kill`
 reports whether the *signal was delivered*, not whether the process died and released the port — a
 server mid-request can take the signal and keep the socket briefly, and a wrong pid exits non-zero
 for a reason that looks identical to a server that was never running. This is the same
@@ -1569,7 +1571,7 @@ something is still listening on it, and that the records may still be loaded —
 the purge rather than purging on an unverified stop. ⛔ **A teardown that reports success while the
 port answers is worse than one that reports failure (INV-223).** the Bootcamper walks away believing their
 machine is clean, and INV-131 makes teardown the last action of the module, so nothing downstream
-will notice. Where the container is the host for the server, name the `docker exec` form that was
+will notice. Where the container is the host for the server, name the `<runtime> exec` form that was
 tried, so the Bootcamper can see what was attempted rather than only that it failed (INV-111).
 
 **The teardown gate.** Before stopping the server — and before any data purge that accompanies it —

@@ -38,11 +38,15 @@ Picking the wrong branch here means either no backup or `pg_dump` against a SQLi
 - **PostgreSQL:** run `pg_dump` of the Senzing database to
   `backups/revisit/database/senzing.dump`, writing the file with `-f`:
   `pg_dump -U <user> -d <db> -Fc -f backups/revisit/database/senzing.dump`.
-  When the database runs in a Docker container, dump inside the container and copy the file out,
-  because `-f` there writes into the container's filesystem:
-  1. `docker exec <container> pg_dump -U <user> -d <db> -Fc -f /tmp/senzing.dump`
-  2. `docker cp <container>:/tmp/senzing.dump backups/revisit/database/senzing.dump`
-  3. `docker exec <container> rm /tmp/senzing.dump`
+  When the database runs in a container, dump inside the container and copy the file out,
+  because `-f` there writes into the container's filesystem. `<container>` and `<runtime>` are
+  the PostgreSQL container's recorded `name` and `runtime` in `docker_containers` in
+  `config/bootcamp_progress.json` (INV-195); an entry with no `runtime` means `docker`. First
+  check that the runtime has a `cp` with `<runtime> cp --help`: if it fails, the backup cannot be
+  produced (below), and no dump is started.
+  1. `<runtime> exec <container> pg_dump -U <user> -d <db> -Fc -f /tmp/senzing.dump`
+  2. `<runtime> cp <container>:/tmp/senzing.dump backups/revisit/database/senzing.dump`
+  3. `<runtime> exec <container> rm /tmp/senzing.dump`
 
   Confirm the exact user / database / container from `config/engine_config.json` (and the recorded
   container, when container-lifecycle tracking is present); **never invent credentials.**
@@ -50,10 +54,11 @@ Picking the wrong branch here means either no backup or `pg_dump` against a SQLi
   Windows PowerShell 5.1 `>` re-encodes the binary dump as text, and the damage stays silent until
   a restore. The backup
   exists only once `backups/revisit/database/senzing.dump` is on the host and non-empty; a failed
-  `docker cp`, or a missing or empty file, means the backup could not be produced (below).
+  `<runtime> cp`, or a missing or empty file, means the backup could not be produced (below).
 
-**If the backup cannot be produced** (tool missing, database unreachable), warn and continue — the
-rest of the bundle still saves, and graduation is non-blocking (INV-048). The packaging flow reports
+**If the backup cannot be produced** (tool missing, a container runtime with no `cp`, database
+unreachable), warn and continue — the rest of the bundle still saves, and graduation is
+non-blocking (INV-048). The packaging flow reports
 the same way: it says the archive carries no database and why, rather than refusing to package.
 Module 6 says the load will run with no backup, and why, and continues; its Phase D recovery then
 takes the no-backup route.
@@ -70,9 +75,11 @@ same steps:
 - **PostgreSQL** — into a fresh database, with the file named by an argument, never a `<`
   redirection (Windows PowerShell 5.1 rejects `<`): `pg_restore -U <user> -d <db> <file>` for this
   custom-format dump, or `psql -U <user> -d <db> -f <file>` for a plain dump. When the database runs
-  in a Docker container, copy the file in first and restore it from the path inside the container:
-  `docker cp <file> <container>:/tmp/senzing.dump`, then
-  `docker exec <container> pg_restore -U <user> -d <db> /tmp/senzing.dump` (or
-  `docker exec <container> psql -U <user> -d <db> -f /tmp/senzing.dump` for a plain dump).
+  in a container, copy the file in first and restore it from the path inside the container, with
+  `<runtime>` and `<container>` from the PostgreSQL container's `docker_containers` entry, as in
+  the backup (INV-195):
+  `<runtime> cp <file> <container>:/tmp/senzing.dump`, then
+  `<runtime> exec <container> pg_restore -U <user> -d <db> /tmp/senzing.dump` (or
+  `<runtime> exec <container> psql -U <user> -d <db> -f /tmp/senzing.dump` for a plain dump).
 
 These commands are written for every shell but are unverified on Windows: no test runs them there.
