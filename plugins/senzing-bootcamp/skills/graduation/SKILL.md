@@ -1092,7 +1092,7 @@ A storyboard for a Core bootcamp, with every module taken:
   "video": {"bootcamper": "Ada Lovelace", "graduation_date": "2026-09-30", "title": "Senzing Agentic AI Bootcamp"},
   "scenes": [
     {"_module": "intro", "type": "title_card", "duration": 3.6, "module": "Senzing Agentic AI Bootcamp", "highlight": "Ada Lovelace · September 30, 2026", "narration": "This is Ada Lovelace's Senzing Agentic AI Bootcamp, September 30, 2026."},
-    {"_module": "bootcamp_preparation", "type": "title_card", "duration": 3.6, "module": "Bootcamp preparation", "highlight": "Core path, 10 modules, Python", "narration": "Ada chose Core: ten modules, in Python."},
+    {"_module": "bootcamp_preparation", "type": "title_card", "duration": 3.6, "module": "Bootcamp preparation", "highlight": "Core path, 11 modules, Python", "narration": "Ada chose Core: eleven modules, in Python."},
     {"_module": "entity_resolution_concepts", "type": "title_card", "duration": 4.8, "module": "Entity Resolution Concepts", "highlight": "How records become entities", "narration": "First: records that describe one thing become one entity."},
     {"_module": "business_problem", "type": "title_card", "duration": 18, "module": "Discover the Business Problem", "highlight": "One customer view across two systems", "narration": "Then Ada's own problem. The same customers sat in two systems, under different spellings and addresses, and nobody could say how many customers there really were. That was the question to answer."},
     {"_module": "sdk_setup", "type": "title_card", "duration": 3.6, "module": "SDK setup", "narration": "The Senzing SDK went in."},

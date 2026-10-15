@@ -1304,8 +1304,8 @@ is non-Latin, write the **verified** Latin-script name or alias the loaded data 
 it (GLEIF/OFAC/OPEN-SANCTIONS records routinely hold both) and say which you used; and draw ASCII
 diagrams with `|` and `v`. ⛔ **(INV-323) Never transliterate or invent a name you have not confirmed
 in the data** — a wrong name in a shared report is worse than an awkward one. The generator now
-reports every character it had to drop, naming them
-and the first affected passage on stderr, so a slip is visible rather than silent — but it reports
+reports on stderr how many characters it had to drop, names the first few, then says "and N
+more", and quotes the first affected passage, so a slip is visible rather than silent — but it reports
 the loss, it cannot undo it: the characters are gone from that PDF. The rule covers
 `## Your question, answered` too, including a requirement that quotes the Bootcamper's own words:
 when those words are not in Latin script, write the requirement in Latin script and mark it as

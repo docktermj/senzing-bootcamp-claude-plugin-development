@@ -44,6 +44,9 @@ Usage:
     python3 generate_discoveries_pdf.py [--input docs/bootcamp_data_discoveries.md]
                                         [--output docs/bootcamp_data_discoveries.pdf]
                                         [--check]
+                                        [--require-sections "A;B;C"]
+                                        [--subtitle TEXT]
+                                        [--no-section-check]
 
 ``--check`` audits without rendering and exits non-zero if the document would
 not render usefully.
@@ -879,8 +882,9 @@ def main(argv: Optional[List[str]] = None, description: Optional[str] = None) ->
         metavar="A;B;C",
         help="semicolon-separated section names this document must carry, replacing the "
         "discoveries defaults. Semicolons rather than commas because section names "
-        "contain commas ('merges and match keys', 'why and how'). Matched the same way "
-        "as the defaults: case- and punctuation-insensitively against H2 headings.",
+        "contain commas ('Your question, answered', 'What was not found, and why'). "
+        "Matched the same way as the defaults: case- and punctuation-insensitively "
+        "against H2 headings.",
     )
     parser.add_argument(
         "--subtitle",
