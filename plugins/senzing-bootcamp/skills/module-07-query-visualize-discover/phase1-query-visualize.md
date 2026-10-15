@@ -1073,15 +1073,14 @@ every language, Python included, and build and run it with that section's comman
     lookup is
     position-dependent and does not travel.** `senzing_viz_server.py` finds `vendor/d3.v7.min.js`
     beside **its own file**, which is correct in the plugin's layout and finds nothing for a server
-    written into `src/server/`. At first build, copy it on the host from
-    `${CLAUDE_PLUGIN_ROOT}/scripts/vendor/d3.v7.min.js` (skill-relative fallback
-    `../../scripts/vendor/d3.v7.min.js`, INV-252) to `src/server/vendor/d3.v7.min.js`, on every
-    route, and have the server resolve it from beside its own file there. That path is inside the
-    project, so the server finds it inside the SDK container too, and the live app keeps working
-    after a plugin update moves or replaces the cached plugin directory — graduation Step 6c
-    (`../graduation/SKILL.md` → "6c. Return guide") tells the Bootcamper they can return to this
-    visualization, and that promise is only as durable as the asset it needs. The token values and
-    this copy are fixed at first build; a later plugin update does not reach an existing server.
+    written into `src/server/`. Make the host-side copy into `src/server/vendor/` that
+    [Truth Set visualization states once](../module-03b-truthset-visualization/phase1-visualization.md#server-d3-project-copy)
+    (INV-300), at this server's first build: it lives in `src/server/` too, so the one copy serves
+    both. The live app keeps working after a plugin update moves or replaces the cached plugin
+    directory — graduation Step 6c (`../graduation/SKILL.md` → "6c. Return guide") tells the
+    Bootcamper they can return to this visualization, and that promise is only as durable as the
+    asset it needs. The token values and this copy are fixed at first build; a later plugin update
+    does not reach an existing server.
     ⚠️ **The standalone snapshot is unaffected**: D3 is inlined into it at build time, so only the
     **live server** is at risk.
   - ⛔ **(INV-091) Keep the refusal-to-render when no asset is found.** Failing visibly is correct,
