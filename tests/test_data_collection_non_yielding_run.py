@@ -24,6 +24,15 @@ No new invariant: INV-225 already requires the behavior, the single write and th
 fallback. This adds the local marking that makes it followable from inside the module, and the
 fourth instance to the run list in `ground-rules.md`.
 
+#603 corrected the count. The 2026-08-14 walk sat inside the limit, but Discover the Business
+Problem sizes a generated scenario by default well above the built-in evaluation license's limit
+(INV-277 forbids tying that size to the license), so on the default scenario Step 8a's License Key
+gate fires. The header and the ground-rules list said "exactly one 👉" and "Steps 1-8b ask nothing";
+they now name Step 9 as the one question that always fires and Steps 8a and 8b as the two
+conditional gates. #603 also states, once, beside the `recordLimit: 0` rule in the generation block,
+what to generate when the effective limit is below the scenario's count: the full count, with no
+question, leaving capacity to Steps 8a and 8b.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -41,6 +50,50 @@ def squash(path):
     return re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
 
 
+def generation_block():
+    """The `provenance: synthesized` generation block, from its capacity directive to the
+    paragraph that follows the block."""
+    body = squash(COLLECTION)
+    start = body.index("How many records to generate is a LICENSE-CAPACITY decision")
+    end = body.index("Both are bootcamp-generated, so both skip the question", start)
+    return body[start:end]
+
+
+OLD_CLAIMS = (
+    "exactly one 👉 question",
+    "Steps 1-8b are all **non-yielding**",
+    "which that step calls the common case",
+)
+
+
+def header_problems(block):
+    """What is wrong with a header's account of which questions this path asks.
+
+    A function rather than inline assertions so the negative control can run the same check on
+    the old wording and watch it fail.
+    """
+    problems = []
+    required = (
+        (r"(?i)generated-scenario path this module has one 👉 question that always fires",
+         "it does not say Step 9's question is the one that always fires"),
+        (r"(?i)two conditional gates, Step 8a's and Step 8b's, that ask only when their condition "
+         r"holds", "it does not name Steps 8a and 8b as conditional gates"),
+        (r"(?i)Step 8a's License Key gate asks its question when the collected total exceeds the "
+         r"effective limit", "it does not say when Step 8a's gate asks"),
+        (r"(?i)A default-sized scenario from Discover the Business Problem exceeds the built-in "
+         r"evaluation license's limit", "it does not say the default scenario trips Step 8a"),
+        (r"(?i)\*\*It asks its question when the database is SQLite and the loadable total is "
+         r"above that threshold", "it does not say when Step 8b asks"),
+    )
+    for pattern, problem in required:
+        if not re.search(pattern, block):
+            problems.append(problem)
+    for old in OLD_CLAIMS:
+        if old in block:
+            problems.append("it still carries the old claim %r" % old)
+    return problems
+
+
 def header():
     """The module header, down to its first numbered step.
 
@@ -55,12 +108,21 @@ def header():
 class TheModuleMarksItsSingleQuestion(unittest.TestCase):
     """Criterion 1 — one 👉, the three branches, and the other path."""
 
-    def test_it_states_there_is_exactly_one_question(self):
-        self.assertRegex(
-            header(),
-            r"(?i)generated-scenario path this module has exactly one 👉 question",
-            "the module still has nothing local saying its steps do not end turns",
-        )
+    def test_it_names_the_one_question_that_always_fires_and_the_two_gates(self):
+        self.assertEqual(header_problems(header()), [])
+
+    def test_the_old_exactly_one_question_claim_fails_the_check(self):
+        """Negative control: the wording before #603 must not satisfy the check."""
+        old = header().replace(
+            "has one 👉 question that always fires", "has exactly one 👉 question")
+        self.assertIn("it still carries the old claim 'exactly one 👉 question'",
+                      header_problems(old))
+        old_8a = header().replace(
+            "Step 8a's License Key gate asks its question when the collected total exceeds the "
+            "effective limit",
+            "Step 8a's volume-skip passes without a question when the collected total is inside "
+            "the license limit, which that step calls the common case")
+        self.assertIn("it does not say when Step 8a's gate asks", header_problems(old_8a))
 
     def test_it_names_step_9_as_that_question(self):
         self.assertRegex(header(), r"(?i)Step 9's module\s+transition")
@@ -68,11 +130,16 @@ class TheModuleMarksItsSingleQuestion(unittest.TestCase):
     def test_it_names_all_three_branches_that_produce_the_run(self):
         block = header()
         self.assertRegex(block, r"(?i)Step 2's marker/provenance guard")
-        self.assertRegex(block, r"(?i)Step 8a's volume-skip")
-        self.assertRegex(block, r"(?i)Step 8b says nothing|\*\*Step 8b\*\* says nothing")
+        self.assertRegex(block, r"(?i)Step 8a's volume-skip passes without a question only when")
+        self.assertRegex(block, r"(?i)or the limit is `0`")
+        self.assertRegex(block, r"(?i)\*\*Step 8b\*\* says nothing when the loadable total is at or "
+                                r"below the SQLite threshold")
 
-    def test_it_says_the_run_is_steps_1_to_8b(self):
-        self.assertRegex(header(), r"(?i)Steps 1-8b are all \*\*non-yielding\*\*")
+    def test_it_says_the_run_is_steps_1_to_8_and_silent_gates(self):
+        block = header()
+        self.assertRegex(block, r"(?i)Steps 1-8 are all \*\*non-yielding\*\*")
+        self.assertRegex(block, r"(?i)and so are Steps 8a and 8b whenever their gate stays silent")
+        self.assertRegex(block, r"(?i)inside the turn that ends on the next 👉 question")
 
     def test_it_says_the_other_path_does_ask(self):
         """The path-dependence is the half a reader is most likely to be caught by."""
@@ -125,10 +192,26 @@ class TheGroundRulesListNamesTheFourthInstance(unittest.TestCase):
     def test_the_run_list_names_data_collection(self):
         self.assertRegex(
             squash(GROUND_RULES),
-            r"(?i)Data collection's generated-scenario path, whose Steps 1-8b ask nothing",
+            r"(?i)Data collection's generated-scenario path, whose Steps 1-8 ask nothing",
             "the instance list enumerates three runs and this is a fourth, so the list is "
             "stale by one",
         )
+
+    def test_the_run_list_names_both_conditional_gates(self):
+        block = squash(GROUND_RULES)
+        self.assertRegex(block, r"(?i)and whose Steps 8a and 8b ask only when their gates fire")
+        self.assertRegex(
+            block,
+            r"(?i)Step 8a's License Key question when the collected total exceeds the effective "
+            r"limit, which a default-sized scenario does under the built-in evaluation license",
+        )
+        self.assertRegex(
+            block,
+            r"(?i)Step 8b's SQLite question when the loadable total is above the SQLite threshold",
+        )
+
+    def test_the_run_list_drops_the_old_claim(self):
+        self.assertNotIn("whose Steps 1-8b ask nothing", squash(GROUND_RULES))
 
     def test_the_run_list_says_this_one_is_path_dependent(self):
         # The other three are unconditional; recording that difference is what stops a
@@ -159,6 +242,41 @@ class TheGroundRulesListNamesTheFourthInstance(unittest.TestCase):
             r"⚠️ \*\*This module has exactly two 👉 questions\*\* — the Mari prediction at Step 7a "
             r"of `phase1-verification\.md`, and the module-transition question",
         )
+
+
+class TheOverLimitGenerationRuleIsStatedOnce(unittest.TestCase):
+    """#603 — one rule for a generated scenario larger than the effective limit."""
+
+    RULE = ("When the effective limit is below the record count the scenario calls for, "
+            "generate the full count anyway, and ask nothing here.")
+
+    def test_the_rule_is_in_the_generation_block(self):
+        self.assertIn(self.RULE, generation_block())
+
+    def test_the_rule_is_stated_once(self):
+        self.assertEqual(squash(COLLECTION).count(self.RULE), 1)
+
+    def test_it_sits_beside_the_record_limit_zero_rule(self):
+        block = generation_block()
+        self.assertLess(block.index("On a measured `recordLimit: 0`, size the generated data"),
+                        block.index(self.RULE))
+
+    def test_it_leaves_capacity_to_steps_8a_and_8b(self):
+        block = generation_block()
+        rule = block[block.index(self.RULE):]
+        self.assertRegex(rule, r"never a gate, and it is not tied to license capacity \(INV-277\)")
+        self.assertRegex(rule, r"Step 8a's License Key gate asks when the collected total exceeds")
+        self.assertRegex(rule, r"Step 8b warns when the loadable total is above the SQLite")
+        self.assertRegex(rule, r"means never measured \(INV-244\), so it is no reason to downsize")
+        self.assertRegex(rule, r"loads a license-capped subset of the files generated here, and "
+                               r"nothing is regenerated")
+
+    def test_it_states_no_license_figure(self):
+        """The built-in limit is sourced at request time; a figure here would go stale."""
+        block = generation_block()
+        rule = block[block.index(self.RULE):]
+        rule = re.sub(r"INV-\d+", "", rule)
+        self.assertIsNone(re.search(r"\d[\d,]{2,}", rule), "the over-limit rule states a figure")
 
 
 class NoStepBehaviorChanged(unittest.TestCase):

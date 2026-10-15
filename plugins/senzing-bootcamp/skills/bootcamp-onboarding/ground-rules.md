@@ -53,10 +53,13 @@ steering files.)
     question — so Steps 1–7 run inside the turn that ends on the prediction, and the reveal, Step 8
     and the close run inside the turn that ends on the transition. The prediction is the second 👉
     because a prediction asked after its result predicts nothing (see "Predictions before results"
-    below), and **Data collection's generated-scenario path, whose Steps 1-8b ask nothing** (that
-    one is path-dependent: the bring-your-own-data path does ask, at Step 2). A faithful turn there
-    generates code, runs it, and loads data before it may legally end. That is correct: the turn ends
-    where the bootcamper is actually asked something.
+    below), and **Data collection's generated-scenario path, whose Steps 1-8 ask nothing** (that
+    one is path-dependent: the bring-your-own-data path does ask, at Step 2) **and whose Steps 8a and
+    8b ask only when their gates fire**: Step 8a's License Key question when the collected total
+    exceeds the effective limit, which a default-sized scenario does under the built-in evaluation
+    license, and Step 8b's SQLite question when the loadable total is above the SQLite threshold. A
+    faithful turn there generates code, runs it, and loads data before it may legally end. That is
+    correct: the turn ends where the bootcamper is actually asked something.
   - ⛔ **A results presentation is not a turn ending.** A non-yielding step that produces a summary,
     an evidence table, or a set of answers still does not end the turn — and it is the step most
     likely to be mistaken for one, because its output *concludes* something and so has the shape of
