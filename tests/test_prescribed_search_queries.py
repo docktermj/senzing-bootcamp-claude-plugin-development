@@ -937,6 +937,20 @@ VERIFIED_QUERIES = {
             "REGISTRATION_DATE and GROUP_ASSOCIATION",
         "server": "1.38.2", "docs_index": "2026-10-14 20:27 UTC", "measured": "2026-10-14",
     },
+    # The two below are the evidence slots of Module 2's license MCP-NEGATIVE marker (#654), the
+    # marker that records `SENZING_LICENSE_FILE`'s lapse. Executed 2026-10-15 on server 1.39.0
+    # (docs index 2026-10-15 10:47 UTC) at the default, with the marker, which carries the same
+    # stamp. The owner is sdk_guide(topic='load', record_count above the limit), not these.
+    ("search_docs", "SENZING_LICENSE_FILE environment variable license file path", None): {
+        "band": "EMPTY OF SENZING_LICENSE_FILE",
+        "sections": (),
+        "returned":
+            "EMPTY OF SENZING_LICENSE_FILE: the End User License Agreement's 'GRANT OF LICENSE' "
+            "sections (Production and Non-Production licenses, Term, Senzing License), the "
+            "Subscription Pricing page, and 'Project License Agreement' stubs from repository "
+            "CONTRIBUTING.md files. No hit names the variable",
+        "server": "1.39.0", "docs_index": "2026-10-15 10:47 UTC", "measured": "2026-10-15",
+    },
     # `find_examples` (#600). Its search returns one example per repository, official
     # repositories first, so the set is bounded by the repositories the query matches and a
     # repository's place in it is that order, not a relevance rank. A route is a query whose
@@ -996,6 +1010,15 @@ VERIFIED_QUERIES = {
     },
     # The evidence slot of Module 2's container-route toolchain MCP-NEGATIVE marker (#595),
     # measured at the default.
+    # The find_examples evidence slot of Module 2's license marker (#654), measured with it.
+    ("find_examples", "SENZING_LICENSE_FILE", None): {
+        "band": "EMPTY OF SENZING_LICENSE_FILE",
+        "sections": (),
+        "returned":
+            "EMPTY OF SENZING_LICENSE_FILE: examples: [] and a hint to try single SDK method "
+            "names, generate_scaffold or search_docs",
+        "server": "1.39.0", "docs_index": "2026-10-15 10:47 UTC", "measured": "2026-10-15",
+    },
     ("find_examples", "dockerfile", None): {
         "band": "EMPTY OF A TOOLCHAIN INSTALL INTO A PLAIN CONTAINER",
         "sections": (),

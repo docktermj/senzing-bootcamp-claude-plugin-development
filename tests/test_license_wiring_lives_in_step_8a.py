@@ -35,6 +35,12 @@ names a key without describing the wiring is registered apart, with its reason, 
 "wire". So a new block that restates the wiring somewhere else fails until it is reduced to a
 pointer and registered. The discovery is carried over from the competing approach in #592's race.
 
+⚠️ **Re-registered 2026-10-15 (#654).** Module 2's license note and graduation's `.env.example`
+bullet were rewritten when `sdk_guide(topic='load')` stopped naming `SENZING_LICENSE_FILE`: the
+`PIPELINE` keys are now the route the server names, not "the other supported route". The rows
+below follow the new text; no row's role changed, and the check order and INV-208's sourcing
+note, which now name the keys, are registered as not the wiring.
+
 ⚠️ What the scan cannot see: a site outside `plugins/` or in a file that is not Markdown, and a
 registered pointer that restates the wiring beside its pointer phrase.
 
@@ -69,20 +75,22 @@ STATEMENT = (MODULE_4, "5. **Apply a Senzing License Key (options 1–2).**")
 
 #: Registered pointers: (file, a phrase inside the block, the phrase that points to sub-step 5).
 POINTERS = (
-    (MODULE_2, "A `PIPELINE` license key remains the other supported route",
+    (MODULE_2, "The `PIPELINE` keys are the route the bootcamp uses",
      "which is what Module 4 Step 8a sub-step 5 wires"),
     (PHASE_B, "**The apply procedure already exists — point at it, do not restate it (INV-300).**",
      "Module 4 Step 8a **sub-step 5**"),
     (GRADUATION, "- **License** — where the license lives",
      "as Data collection Step 8a sub-step 5 wired it"),
-    (GRADUATION, "Also show the `PIPELINE` alternative as a comment",
+    (GRADUATION, "show both as a comment there",
      "matching Data collection's wiring"),
 )
 
 #: Blocks that name a key without describing the bootcamp's wiring: (file, phrase, reason).
 NOT_THE_WIRING = (
-    (MODULE_2, "shows license only as the `PIPELINE` keys",
-     "INV-194's note on which server route answers: it quotes what one `sdk_guide` topic shows"),
+    (MODULE_2, "**License check order:**",
+     "the precedence in which a license is found; it names the keys, not how they are set"),
+    (MODULE_2, "because that is the route the server names",
+     "INV-208's sourcing note: it quotes what `sdk_guide(topic='load')` names"),
 )
 
 
@@ -116,7 +124,7 @@ def graduation_license_line(text):
 
 
 def module_2_note(text):
-    return flat(between(text, "A `PIPELINE` license key remains the other supported route",
+    return flat(between(text, "The `PIPELINE` keys are the route the bootcamp uses",
                         "The record capacity **is** looked up"))
 
 
@@ -362,8 +370,8 @@ class NegativeControls(unittest.TestCase):
     def test_a_not_the_wiring_block_that_describes_it_is_caught(self):
         texts = plugin_markdown()
         texts[MODULE_2] = texts[MODULE_2].replace(
-            "shows license only as the `PIPELINE` keys",
-            "shows license only as the `PIPELINE` keys, which you wire as", 1)
+            "because that is the route the server names",
+            "because that is the route the server names, which you wire as", 1)
         self.assertTrue(any("registered as not the wiring" in p for p in site_problems(texts)))
 
 

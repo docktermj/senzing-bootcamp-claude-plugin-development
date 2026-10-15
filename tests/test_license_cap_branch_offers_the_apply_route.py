@@ -33,10 +33,14 @@ what was missing is a *procedure* and a *status readout*, which are not a gate.
 
 Verified on MCP server **1.32.9, 2026-08-17**: `sdk_guide(topic='load', language='python',
 record_count=1000)` returns `compatibility_notes` listing three remedies, of which remedy 2 is
-*"Provide a license they already have"* — the option the plugin omitted. ⚠️ The server names
-`SENZING_LICENSE_FILE` / `etc/`; the plugin wires `LICENSEFILE` into the engine-config
-PIPELINE. Both are real, and the plugin's own procedure is the one tested in this file layout,
-so the branch reuses Step 8a rather than adopting the server's wording.
+*"Provide a license they already have"* — the option the plugin omitted. ⚠️ **Rescoped
+2026-10-15 (#654).** The server then named `SENZING_LICENSE_FILE` / `etc/` for that remedy, and
+this file pinned Phase B's contrast between that route and the `LICENSEFILE` the plugin wires. On
+server 1.39.0, 2026-10-15 the same remedy reads *"add it as LICENSESTRINGBASE64 (inline base64
+string, preferred for containers and automation) or LICENSEFILE (path to a .lic file) in the
+PIPELINE section of the engine config"* — the mechanism Step 8a sub-step 5 already wires — and no
+route names `SENZING_LICENSE_FILE`. So Phase B no longer describes the server's route as a
+different one; it still reuses Step 8a rather than restating it.
 
 Source spec: `specs/license-cap-branch-offers-no-way-to-apply-the-license-that-may-have-arrived.md`.
 
@@ -138,11 +142,17 @@ class TheApplyRouteIsPointedAtNotRestated(unittest.TestCase):
             offenders,
             "the license-wiring commands appear somewhere other than Step 8a")
 
-    def test_the_servers_different_mechanism_is_not_adopted(self):
-        """⚠️ SENZING_LICENSE_FILE is real and is NOT the one wired into this layout."""
+    def test_the_servers_route_is_the_one_sub_step_5_wires(self):
+        """#654: the server's PIPELINE route is the bootcamp's own, not a different mechanism."""
         self.assertIn("do not substitute a different mechanism", self.branch)
         self.assertIn("would leave the engine config pointing at nothing", self.branch)
         self.assertIn("LICENSEFILE", self.branch)
+        self.assertIn("LICENSESTRINGBASE64", self.branch)
+        self.assertIn("is the one sub-step 5 already wires", self.branch)
+        self.assertNotIn("SENZING_LICENSE_FILE", self.branch,
+                         "no route names SENZING_LICENSE_FILE on server 1.39.0, 2026-10-15")
+        self.assertNotRegex(self.branch, r"(?i)a \*?different\*? route",
+                            "Phase B still calls the server's route a different one")
 
 
 class ItReMeasuresAndReEntersTheBranches(unittest.TestCase):

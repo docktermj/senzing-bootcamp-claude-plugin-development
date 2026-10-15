@@ -1698,32 +1698,33 @@ troubleshooting.
 > per INV-093. SDK setup **measures** the active license's record capacity and records it;
 > the "License Key" reference notes below are kept for context.
 
-> **License check order:** project-local `licenses/g2.lic` → the `SENZING_LICENSE_FILE` path → system
-> CONFIGPATH → the built-in evaluation license.
+> **License check order:** project-local `licenses/g2.lic` → the engine config's `PIPELINE` keys,
+> `LICENSESTRINGBASE64` (preferred) then `LICENSEFILE` → system CONFIGPATH → the built-in evaluation
+> license.
 >
-> <!-- MCP-NEGATIVE: search_docs and sdk_guide(topic='install'|'configure') — neither names a license environment variable; exactly one route returns it — owner: sdk_guide(topic='load', language='python', record_count=1000) compatibility_notes name it verbatim, "place the license file at the path specified by SENZING_LICENSE_FILE or in the etc/ directory", re-asked and confirmed (routing negative — the name exists, go there) — server 1.36.0, 2026-09-02 -->
-> ⛔ **The license environment variable is `SENZING_LICENSE_FILE`, and only ONE tool route returns
-> it — do not go looking for it anywhere else.** (INV-208) It appears in the `compatibility_notes` of
-> `sdk_guide(topic='load', language=…, record_count=<above the default limit>)`, which says a
-> bootcamper with a license should "place the license file at the path specified by
-> `SENZING_LICENSE_FILE` or in the `etc/` directory". Verified on server **1.32.9, 2026-08-13**, for
+> <!-- MCP-NEGATIVE: search_docs(query='SENZING_LICENSE_FILE environment variable license file path'), find_examples(query='SENZING_LICENSE_FILE') and sdk_guide(topic='install'|'configure') — none names a license environment variable; sdk_guide(topic='load', record_count=<above the default limit>) named SENZING_LICENSE_FILE through server 1.36.0, 2026-09-02, and on this server no route names it (a lapse of sourcing, not evidence the engine ignores the variable) — owner: sdk_guide(topic='load', language='python', record_count=1000) compatibility_notes route the license to the engine config instead, "add it as LICENSESTRINGBASE64 (inline base64 string, preferred for containers and automation) or LICENSEFILE (path to a .lic file) in the PIPELINE section of the engine config", re-asked and confirmed (routing negative — the license setting exists, go there) — server 1.39.0, 2026-10-15 -->
+> ⛔ **(INV-208) The license goes in the engine config's `PIPELINE` section — `LICENSESTRINGBASE64`
+> (preferred), then `LICENSEFILE` — because that is the route the server names.** It appears in the
+> `compatibility_notes` of `sdk_guide(topic='load', language=…, record_count=<above the default
+> limit>)`, which tell a bootcamper with a license to "add it as LICENSESTRINGBASE64 (inline base64
+> string, preferred for containers and automation) or LICENSEFILE (path to a .lic file) in the
+> PIPELINE section of the engine config". Verified on server **1.39.0, 2026-10-15**, for
 > `language='python', record_count=1000` and `language='java', record_count=600` — the note is
-> language-independent and appears only when the count exceeds the limit.
+> language-independent and appears only when the count exceeds the limit. Do not offer the
+> bootcamper a license environment variable in its place: no route names one.
 >
 > ⛔ **`SENZING_LICENSE_PATH` is a confabulation — never use that spelling.** No tool returns it, and
 > it shipped in graduation's `.env.example` for a time. Wrong environment-variable names are on the
 > MCP server's own `common_confabulations` list, so the spelling matters more than it looks.
 >
-> ⚠️ **Do not conclude from the wrong route that the variable does not exist.** The topics you would
-> naturally try return nothing: `sdk_guide(topic='configure', language='python',
-> platform='linux_apt')` returns exactly two env vars (`LD_LIBRARY_PATH`, `PYTHONPATH`),
-> `sdk_guide(topic='install', platform='macos_arm')` shows license only as the `PIPELINE` keys
-> `LICENSEFILE`/`LICENSESTRINGBASE64`, and `search_docs` returns no variable name at all (all three
-> re-checked on 1.32.9, 2026-08-13). An earlier pass took that silence as proof of absence and wrote
-> "there is no license-path environment variable" into this note — the INV-194 failure mode: one
-> tool's empty field is not evidence the server lacks the fact. Ask the tool that owns it.
+> ⚠️ **Do not conclude from that silence that no license environment variable exists.** A route
+> that names no variable is evidence about that route, not about the engine. An earlier pass took the
+> silence of `sdk_guide(topic='configure')`, `sdk_guide(topic='install')` and `search_docs` as proof
+> of absence and wrote "there is no license-path environment variable" into this note — the INV-194
+> failure mode: one tool's empty field is not evidence the server lacks the fact. Say only that the
+> bootcamp routes the license through the `PIPELINE` keys.
 >
-> A `PIPELINE` license key remains the other supported route — `LICENSEFILE` for a `.lic` path,
+> The `PIPELINE` keys are the route the bootcamp uses — `LICENSEFILE` for a `.lic` path,
 > `LICENSESTRINGBASE64` for an inline Base64 key — which is what Module 4 Step 8a sub-step 5 wires.
 > The record capacity **is** looked up, not written here (INV-080) — see below.
 

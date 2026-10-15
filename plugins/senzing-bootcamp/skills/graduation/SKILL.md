@@ -1449,17 +1449,16 @@ automatically. Do not gate this behind a 👉 question (one fewer low-stakes con
 Generate these in `production/`, parameterized by `programming_language` and `database_type` from
 pre-checks. Use placeholder values only, never real secrets:
 
-- **`.env.example`:** `SENZING_ENGINE_CONFIGURATION_JSON`, `SENZING_LICENSE_FILE`, `DATABASE_URL`,
-  `LOG_LEVEL` with safe example values and comments. ⛔ **The license variable is
-  `SENZING_LICENSE_FILE`, never `SENZING_LICENSE_PATH`** (INV-208) — the latter is a confabulation that shipped
-  here for a time and no MCP tool returns it. The correct spelling comes from
-  `sdk_guide(topic='load', language=…, record_count=<above the default limit>)`, whose
-  `compatibility_notes` name it; confirm it there rather than from memory (INV-080; a sourcing floor),
-  since wrong environment-variable names are on the server's own confabulation list and this file is
-  one the bootcamper carries into production, where an unread variable fails as a capacity error far
-  from its cause. Also show the `PIPELINE` alternative as a comment — `LICENSEFILE` (a `.lic` path) or
-  `LICENSESTRINGBASE64` (an inline key) inside the `SENZING_ENGINE_CONFIGURATION_JSON` value, matching
-  Data collection's wiring — so both supported routes are visible.
+- **`.env.example`:** `SENZING_ENGINE_CONFIGURATION_JSON`, `DATABASE_URL`,
+  `LOG_LEVEL` with safe example values and comments. ⛔ **(INV-208) The license goes in the engine
+  config's `PIPELINE` section, inside the `SENZING_ENGINE_CONFIGURATION_JSON` value —
+  `LICENSESTRINGBASE64` (an inline Base64 key, preferred) or `LICENSEFILE` (the path to an
+  existing `.lic`) — matching Data collection's wiring; show both as a comment there.** That is the route
+  `sdk_guide(topic='load', language=…, record_count=<above the default limit>)` names in its
+  `compatibility_notes` (INV-080). Add no license environment variable to the key list, and never
+  `SENZING_LICENSE_PATH` — a confabulation that shipped here for a time and no MCP tool
+  returns. This file is one the bootcamper carries into production, where an unread variable
+  licenses nothing and fails as a capacity error far from its cause.
 - **`docker-compose.yml`:** SQLite (single service + volume mount) or PostgreSQL (app + db service with a health check), per `database_type`.
 
 **Where `deployment_target`/`cloud_provider` is known, say so in both files** (INV-097): a header
