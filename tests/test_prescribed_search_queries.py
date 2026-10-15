@@ -965,6 +965,9 @@ VERIFIED_QUERIES = {
         "server": "1.38.2", "docs_index": "2026-10-14 20:27 UTC", "measured": "2026-10-14",
     },
     # The two below are the evidence slots of Module 6 Phase C's orchestrator MCP-NEGATIVE marker.
+    # Re-measured 2026-10-15 on server 1.39.0 (docs index 2026-10-15 10:47 UTC) at the default for
+    # #653, with the marker, which carries the same stamp: 'multi-source' reproduces; the second
+    # query's result changed, but no hit is code with per-source error isolation.
     ("find_examples", "multi-source", None): {
         "band": "EMPTY OF A MULTI-SOURCE ORCHESTRATOR",
         "sections": (),
@@ -973,19 +976,23 @@ VERIFIED_QUERIES = {
             "CHANGELOG.md files of senzing/senzing-bootcamp-claude-plugin and senzing/"
             "senzing-bootcamp-kiro-power; with language='java' it returns examples: [] and a hint "
             "to try single SDK method names, generate_scaffold or search_docs",
-        "server": "1.38.2", "docs_index": "2026-10-14 20:27 UTC", "measured": "2026-10-14",
+        "server": "1.39.0", "docs_index": "2026-10-15 10:47 UTC", "measured": "2026-10-15",
     },
     ("find_examples", "orchestrator load multiple data sources", None): {
         "band": "EMPTY OF A MULTI-SOURCE ORCHESTRATOR",
         "sections": (),
         "returned":
-            "EMPTY OF A MULTI-SOURCE ORCHESTRATOR: code-snippets-v4 "
-            "java/snippets/configuration/RegisterDataSources.java first, then single-source "
-            "loaders (code-snippets-v3 Add10KQueue.py), CHANGELOGs, queue consumers and redoers, "
-            "a Spark tutorial and config-tool data-source code, one per repository; with "
-            "language='python' or 'java' the same kinds. No example loads several sources in "
-            "order with per-source isolation",
-        "server": "1.38.2", "docs_index": "2026-10-14 20:27 UTC", "measured": "2026-10-14",
+            "EMPTY OF A MULTI-SOURCE ORCHESTRATOR: one example per repository, led by "
+            "code-snippets-v4 java/snippets/configuration/RegisterDataSources.java: single-source "
+            "loaders (code-snippets-v3 Add10KQueue.py), CHANGELOGs, copies of the bootcamp "
+            "plugins' capture_screenshots.py, performance-guidance repositories, elasticsearch-v4, "
+            "queue consumers and redoers, sz_spark's Databricks tutorial, config-tool data-source "
+            "code, and the senzing/recipes recipe recipes/clair-data-ingestion-starter.md, which "
+            "loads two sources and folds in a third as prompts for an AI assistant, not code. With "
+            "language='python' or 'java', registration snippets, single-source loaders, queue "
+            "consumers and test code between them, and no recipe. No hit is code that loads several "
+            "sources in order with per-source error isolation and reconciliation",
+        "server": "1.39.0", "docs_index": "2026-10-15 10:47 UTC", "measured": "2026-10-15",
     },
     # The evidence slot of Module 2's container-route toolchain MCP-NEGATIVE marker (#595),
     # measured at the default.
