@@ -1765,7 +1765,9 @@ has no module-start apparatus or bootcamper-facing summary.
 
 Close, in one write to `config/bootcamp_progress.json`: append
 `entity_resolution_concepts` to `modules_completed`, set `current_module` to
-the next `selected_modules` entry and `current_step` to null, and record
+the next `selected_modules` entry and `current_step` to null, set
+`step_history["entity_resolution_concepts"]` (`last_completed_step`,
+`updated_at`), and record
 `module_0_concepts.quiz_offered` / `quiz_taken` (presenting the offer first
 if it was missed). It then runs module-completion Step 2 in full, including
 2a (creates the recap header, being first on Core), the
@@ -2267,7 +2269,9 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
     its marker.
   - Afterwards, clear `license_guidance_deferred`.
 - **Step 8b SQLite heads-up.**
-  `loadable = min(collected, effective_limit)`. Warn only for
+  `loadable = min(collected, effective_limit)`, where the collected total
+  takes each source's `sample:` `record_count` when it has one, else its
+  `record_count`. Warn only for
   `database_type: sqlite` above the MCP threshold from Module 6 Phase A
   item 3, with timing from
   `search_docs(query='hardware sizing capacity planning')`. The pinned
@@ -10275,6 +10279,7 @@ looks wrong.
 - `tests/test_shape_claims_precede_mapping_claims.py`: 25
 - `tests/test_shared_feature_collision_trigger_is_narrowed.py`: 13
 - `tests/test_shipped_negative_markers_are_html_comments.py`: 14
+- `tests/test_sibling_statements_agree.py`: 9
 - `tests/test_since_last_audit_widens_past_a_work_commit.py`: 7
 - `tests/test_since_states_its_corpus.py`: 11
 - `tests/test_since_view_sees_the_maintainer_surface.py`: 7
@@ -12367,3 +12372,13 @@ Senzing licensing, with no SPDX identifier.
   teardown questions and the right program and record counts, re-rendered;
   INV-107 and INV-050 `PROPOSED AMENDMENT`s are queued (docstrings, help text,
   counts and examples no longer matched what ships)
+- #617: Module 0's close-out write sets
+  `step_history["entity_resolution_concepts"]`; Module 1's Desired Output
+  Format lists the 6d options, ending in the Bootcamper's words for
+  "Something else", and 6c is not an option reply; the transition summary
+  defers to the three post-yes shapes (INV-236); the preface detects
+  OS/architecture and Bootcamp preparation persists it; Module 4 Step 8b
+  sub-step 1 uses sub-step 4's sample-aware collected total; Module 4 drops
+  the hardcoded CORD dataset names; `tests/test_sibling_statements_agree.py`
+  pins all six (sibling statements in Modules 0, 1 and 4 and onboarding
+  disagreed)

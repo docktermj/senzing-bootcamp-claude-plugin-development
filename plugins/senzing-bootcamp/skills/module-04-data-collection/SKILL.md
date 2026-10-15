@@ -623,7 +623,7 @@ generates it. For the Bootcamper who did not choose it:
 > published for evaluation, **not for operational use**. They are the best option for
 > learning, because the matching problems in them are the ones real data actually has.
 >
-> I can pull CORD datasets (Las Vegas, London, Moscow) using the `get_sample_data` tool: these
+> I can pull CORD datasets using the `get_sample_data` tool: these
 > are Senzing JSONL files the engine can load, though some sources may still need mapping, which
 > the Data Quality, Mapping, and Transformation module checks for you.
 >
@@ -1460,8 +1460,9 @@ about a roughly half-hour load, for a load of about two minutes.
 1. **Read the persisted inputs.** Read the registry from `config/data_sources.yaml` and
    `database_type` from `config/bootcamp_preferences.yaml` — the key Module 2 Step 7 writes when
    the engine is chosen, with the value `sqlite` or `postgresql`. Compute the collected total
-   record count from the registry. If the registry cannot be read or parsed, treat the total as
-   indeterminate: do not fail.
+   record count from the registry, by the sample-aware definition sub-step 4 gives for
+   `collected_total` (the one Module 6 recomputes). If the registry cannot be read or parsed,
+   treat the total as indeterminate: do not fail.
    - ⛔ **Also read Step 8a's outcome, which this step ran seconds after:** `license` in
      `config/bootcamp_preferences.yaml` and `license_record_limit` in
      `config/bootcamp_progress.json`. Then compute
@@ -1635,7 +1636,7 @@ if it's already in the right format for Senzing."
 - **If the bootcamper doesn't have data or asks about free data sources** — and has **no
   bootcamp-generated scenario** (see the marker check in Step 2), and did not choose option 5 at
   Step 2's provision question — follow the data recommendation hierarchy: (1) recommend CORD
-  data first via the `get_sample_data` MCP tool (Las Vegas, London, Moscow datasets) with
+  data first via the `get_sample_data` MCP tool with
   reference to
   <https://senzing.com/senzing-ready-data-collections-cord/>; (2) if CORD is declined, recommend
   <https://github.com/docktermj/senzing-bootcamp-free-data> for raw samples and additional

@@ -1586,9 +1586,11 @@ the 👉 protocol above).
   model/effort prompt. When that
   prompt is a 👉 switch question (the recommendation differs from what they are running), the turn
   ends there. On the reply:
-  **no** produces Step 1 the same (reply) turn; **yes** produces the one-line run-commands
-  statement and ends on the pinned "👉 Are you done modifying the model and effort?" gate, with
-  Step 1 on the turn after the bootcamper confirms. When the recommendation already matches (no
+  **no** produces Step 1 the same (reply) turn; **yes** takes one of the three shapes above, read
+  from the live setting (INV-236): when the dial is not yet set, the one-line run-commands
+  statement and the pinned "👉 Are you done modifying the model and effort?" gate, with Step 1 on
+  the turn after the bootcamper confirms; when the dial is already set, at the recommended value or
+  another, no gate, and Step 1 the same turn. When the recommendation already matches (no
   switch question), continue straight into Step 1 the same turn. In every one of those cases the
   turn ends on **the next single 👉 question** — Step 1's own if it has one, otherwise the next
   asking step's, with the non-yielding steps in between executed in that same turn. Never reply

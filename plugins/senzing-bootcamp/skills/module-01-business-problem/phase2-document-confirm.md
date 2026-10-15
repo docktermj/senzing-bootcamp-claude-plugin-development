@@ -161,7 +161,7 @@ Save to `docs/business_problem.md` using this template:
 > "[Their own words, verbatim]"
 
 ## Desired Output
-**Format**: [every option they chose, comma-separated — Master list / API / Reports / Export]
+**Format**: [every option they chose, comma-separated — Master list / API / Reports / <the Bootcamper's words for "Something else">]
 **Use case**: [One-time / Ongoing / Real-time]  **Integration**: [Standalone / Integrated with
 [systems]]
 
@@ -356,8 +356,8 @@ Present the document beside both:
   where they approved the scenario's content, rather than approving the offer to generate it.
 - **The recorded answers behind the derived fields**, where drift is checkable rather than
   remembered: `integration_targets` in `config/bootcamp_preferences.yaml` (INV-097, INV-275) for
-  Integration Requirements, and the option replies at Steps 6b–6d for record types, source count and
-  Desired Output.
+  Integration Requirements, the option replies at Steps 6b and 6d for record types and Desired
+  Output, and the Step 6c answer for source count.
 
 ⚠️ **Give those fields the attention the quote lines would have earned.** A bare option reply leaves
 no prose to drift from, so the rendering is the only text there is — and it is the rendering that

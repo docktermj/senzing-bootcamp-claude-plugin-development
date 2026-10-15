@@ -59,7 +59,8 @@ Bootcamp preparation module, not the preface.**
 - **MCP health check** - confirm the Senzing MCP server is reachable. It is required; the
   bootcamp cannot proceed without it.
 - **Project setup** - create the working directory structure and `config/` files silently.
-- **Prerequisite check** - detect and persist OS/architecture and required tooling for later reuse.
+- **Prerequisite check** - detect OS/architecture and required tooling. The preface writes no
+  preferences; Bootcamp preparation persists `os`/`arch` in its consolidated write.
 - **Welcome + overview** - show the WELCOME banner and give the overview: the named module
   sequence and the Core-vs-Customized choice the first module will offer.
 - **Any questions** - invite final questions before continuing.
