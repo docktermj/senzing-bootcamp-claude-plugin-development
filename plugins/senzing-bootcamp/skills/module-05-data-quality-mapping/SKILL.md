@@ -36,6 +36,11 @@ through, so go to SDK setup's
 [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour), which
 finishes it and returns to Phase 3
 [step 21](phase3-test-load.md#21-sdk-environment-detection) for the same source.
+**(INV-366) When it carries a `collection_return`, none of this runs either:** Step 7b's return to
+Data collection is part-way through, so go to Phase 1 →
+[The return route](phase1-quality-assessment.md#the-return-route) item 4, which continues it for the
+named source and does not re-present the gate, whose answer is already recorded. Module 4's own
+**First:** never sees it: `current_module` stays this module throughout the return.
 
 **Before/After:** You have raw data files but don't know if Senzing can use them directly.
 After this module, each source is scored for quality, categorized, and transformed into

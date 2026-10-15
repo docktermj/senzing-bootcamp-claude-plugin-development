@@ -26,17 +26,38 @@ Source issue: #337. Invariants: INV-006, INV-050, INV-056, INV-239, INV-243, INV
 Also enforces INV-366 (the cross-module return contract, registered 2026-10-13) for the `collection_return` route:
 it asserts the skill files *state* the contract and cannot establish that a live run follows it.
 
+#598 adds what an interrupted return needs to resume as INV-366 says:
+
+* every offering module's **First:** routes every return it offers, Module 5's `collection_return`
+  among them, to the step that continues it. The offers are derived from the files (the record each
+  module writes), never listed, so a new offer without a route fails here;
+* the `collection_return` record carries `completed`, Module 4's receiving branch adds each finished
+  step to it in place of the step's checkpoint, and Step 7b item 4 resumes at the first step not
+  listed there, reading a record without the key as empty.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
 import unittest
 from pathlib import Path
 
+import _corpus
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
 MODULE5 = SKILLS / "module-05-data-quality-mapping"
 PHASE1 = MODULE5 / "phase1-quality-assessment.md"
 MODULE4 = SKILLS / "module-04-data-collection" / "SKILL.md"
+MODULE5_SKILL = MODULE5 / "SKILL.md"
+ROUTE_ANCHOR = '<a id="the-return-route"></a>'
+ROUTE_LINK = "phase1-quality-assessment.md#the-return-route"
+#: How a module's files start each return, so the offers are derived rather than listed. Matched
+#: with whitespace collapsed and bold markers dropped (`flat`), so a wrap never hides an offer.
+OFFERS = {
+    "collection_return": re.compile(r'"collection_return": \{'),
+    "setup_detour": re.compile(r"add the `setup_detour` record"),
+    "quality_iteration": re.compile(r'"quality_iteration": \{|Enter \[the quality-iteration route\]'),
+}
 
 STEP_7B = "### 7b."
 GATE = "### Quality gate"
@@ -315,6 +336,97 @@ def step9_problems(module4):
     return problems
 
 
+def offered_returns(module_texts):
+    """{module dir: the return keys its files start}, from each module's own files."""
+    return {module: {key for key, pattern in OFFERS.items()
+                     if any(pattern.search(flat(text)) for text in texts)}
+            for module, texts in module_texts.items()}
+
+
+def first_clause(skill):
+    """The **First:** paragraph of a module's SKILL.md, or None."""
+    return between(skill, "**First:**", "\n\n")
+
+
+def routing_problems(module_texts, skills):
+    """#598: every offering module's First: routes every return it offers (INV-366)."""
+    problems = []
+    for module, keys in sorted(offered_returns(module_texts).items()):
+        for key in sorted(keys):
+            clause = first_clause(skills.get(module, ""))
+            if clause is None or ("When it carries a `%s`, none of this runs" % key) not in flat(
+                    clause):
+                problems.append("%s offers a %s but its First: does not route it"
+                                % (module, key))
+    return problems
+
+
+def module5_first_problems(m5):
+    """#598: Module 5's First: sends a collection_return to Step 7b item 4, before any apparatus."""
+    clause = first_clause(m5)
+    if clause is None:
+        return ["Module 5 has no First: paragraph"]
+    problems = []
+    for needle in ("(INV-366) When it carries a `collection_return`, none of this runs",
+                   "item 4", "does not re-present the gate",
+                   "`current_module` stays this module"):
+        if flat(needle) not in flat(clause):
+            problems.append("Module 5's First: does not say %r" % needle)
+    if ROUTE_LINK not in clause:
+        problems.append("Module 5's First: does not link Step 7b's return route")
+    return problems
+
+
+def progress_problems(phase1, module4):
+    """#598: the return records which Module 4 steps finished, and the resume reads it."""
+    step = between(phase1, STEP_7B, END_OF_PHASE)
+    if step is None:
+        return ["Step 7b is missing"]
+    problems = []
+    if ROUTE_ANCHOR + "\n\n**The return route" not in step:
+        problems.append("the return route has no anchor for Module 5's First: to link")
+    record = re.search(r'```json\n\s*"collection_return": \{(.*?)\n\s*\}\n\s*```', step, re.S)
+    if not record or '"completed": []' not in record.group(1):
+        problems.append("the collection_return record has no completed list")
+    four = between(step, "4. **(INV-366) An interrupted return", END_OF_PHASE)
+    if four is None:
+        problems.append("Step 7b has no item 4 for an interrupted return")
+    else:
+        f = flat(four)
+        for needle in ("that is not listed in `completed`", "reads as `completed: []`",
+                       "restarts at the row's first step", "do not re-present the gate"):
+            if needle not in f:
+                problems.append("Step 7b item 4 does not say %r" % needle)
+        if "not yet done" in f:
+            problems.append("Step 7b item 4 resumes from an unrecorded 'not yet done'")
+    block = between(module4, ANCHOR, MARKER_GUARD)
+    if block is None:
+        return problems + ["Module 4 Step 2 has no receiving branch"]
+    f = flat(block)
+    for needle in ("(INV-366) In place of each step's Checkpoint:, add that step's number to the "
+                   "record's `completed` in one quiet write",
+                   '"Running it"', "Step 8a is added without running",
+                   "resumes at the first step not listed there"):
+        if needle not in f:
+            problems.append("Module 4's receiving branch does not say %r" % needle)
+    return problems
+
+
+def module_texts():
+    """{module dir: [text of each .md under it]} for every module, from the corpus (#598)."""
+    out = {}
+    for path in _corpus.corpus_files("plugins", suffixes={".md"}):
+        parts = path.relative_to(SKILLS).parts if SKILLS in path.parents else ()
+        if parts and parts[0].startswith("module-"):
+            out.setdefault(parts[0], []).append(path.read_text(encoding="utf-8"))
+    return out
+
+
+def module_skills():
+    return {d: (SKILLS / d / "SKILL.md").read_text(encoding="utf-8")
+            for d in module_texts() if (SKILLS / d / "SKILL.md").is_file()}
+
+
 # ----------------------------------------------------------------------------------- tests
 
 
@@ -356,6 +468,21 @@ class TheLiveFilesMeetEveryCriterion(unittest.TestCase):
                 hits.append((path.name, count))
         self.assertEqual([("phase1-quality-assessment.md", 2)], hits,
                          "the variant's return option is stated outside Step 7b, or not in it")
+
+    def test_every_offered_return_is_routed_by_its_offering_module(self):
+        """#598: an offer is found from the files, and each offering module's First: routes it."""
+        offers = offered_returns(module_texts())
+        self.assertIn("collection_return", offers.get("module-05-data-quality-mapping", set()),
+                      "the offer scan found no collection_return; it certifies nothing")
+        self.assertGreaterEqual(sum(1 for keys in offers.values() if keys), 4,
+                                "the offer scan found too few offering modules")
+        self.assertEqual([], routing_problems(module_texts(), module_skills()))
+
+    def test_module_5_first_sends_a_collection_return_to_item_4(self):
+        self.assertEqual([], module5_first_problems(MODULE5_SKILL.read_text(encoding="utf-8")))
+
+    def test_the_return_records_its_progress_and_resumes_from_it(self):
+        self.assertEqual([], progress_problems(self.phase1, self.module4))
 
     def test_the_bands_original_questions_are_unchanged(self):
         """Blast radius: where mechanical work remains, the band's question stands as it was."""
@@ -437,6 +564,44 @@ class EachCheckFailsWhenItsSiteIsRemoved(unittest.TestCase):
                               "never over it (INV-050),", "Save the new export over the original,",
                               self.module4)
         self.assertTrue(receiving_problems(mutated))
+
+    def test_dropping_module_5s_collection_return_route_fails(self):
+        m5 = MODULE5_SKILL.read_text(encoding="utf-8")
+        clause = first_clause(m5)
+        start = clause.index("**(INV-366) When it carries a `collection_return`")
+        mutated = m5.replace(clause[start:], "", 1)
+        self.assertTrue(module5_first_problems(mutated))
+        skills = dict(module_skills(), **{"module-05-data-quality-mapping": mutated})
+        self.assertTrue(routing_problems(module_texts(), skills))
+
+    def test_an_offer_without_a_route_fails(self):
+        """A module that starts a return its First: does not route is caught (derived offers)."""
+        texts = module_texts()
+        texts["module-07-query-visualize-discover"].append(
+            '```json\n"collection_return": {\n}\n```')
+        self.assertTrue(any("module-07" in p and "collection_return" in p
+                            for p in routing_problems(texts, module_skills())))
+
+    def test_a_record_without_completed_fails(self):
+        mutated = self.mutate('     "completed": [],\n', "")
+        self.assertTrue(progress_problems(mutated, self.module4))
+
+    def test_the_old_resume_clause_fails(self):
+        four = between(self.phase1, "4. **(INV-366) An interrupted return", END_OF_PHASE)
+        old = ('4. **(INV-366) An interrupted return** resumes from `current_step: "7b"` with '
+               "`collection_return` present:\n   continue the return for the named source from "
+               "the first Module 4 step not yet done, and do not\n   re-present the gate, whose "
+               "answer is already recorded.\n\n")
+        self.assertTrue(progress_problems(self.mutate(four, old), self.module4))
+
+    def test_a_receiving_branch_that_records_no_progress_fails(self):
+        sentence = between(self.module4, "⛔ **(INV-366) In place of each step's",
+                           "Which steps run and where Module 5")
+        mutated = self.mutate(sentence, "", self.module4)
+        self.assertTrue(progress_problems(self.phase1, mutated))
+
+    def test_removing_the_route_anchor_fails(self):
+        self.assertTrue(progress_problems(self.mutate(ROUTE_ANCHOR + "\n\n", ""), self.module4))
 
     def test_removing_the_step_9_opener_fails(self):
         opener = between(self.module4, "**Not on a `collection_return`.**", "Run the standard")

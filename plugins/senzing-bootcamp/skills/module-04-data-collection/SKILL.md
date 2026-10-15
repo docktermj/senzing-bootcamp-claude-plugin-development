@@ -222,10 +222,15 @@ Check for it before anything else in this step.** When `config/bootcamp_progress
 `collection_return`, the Bootcamper chose the return route at Module 5's no-progress gate, and this
 is not a run of this module: show no start banner, journey map or overview, write no Module 4
 checkpoint (leave `current_module` and `current_step` as Module 5 set them, so its progress is not
-overwritten), and collect only the one source the key names. Which steps run and where Module 5
-resumes are stated once, in
+overwritten), and collect only the one source the key names. ⛔ **(INV-366) In place of each step's
+Checkpoint:, add that step's number to the record's `completed` in one quiet write**, as SDK setup's
+[Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour) → "Running
+it" does: `"2"` when this step's collection for the source is done, then, for an `own` or
+`unknown` source, `"3"`, `"8"` and `"8a"` as each finishes. Step 8a is added without running when
+the record count is unchanged and its volume check does not run. An interrupted return resumes at
+the first step not listed there. Which steps run and where Module 5 resumes are stated once, in
 `../module-05-data-quality-mapping/phase1-quality-assessment.md` Step 7b (INV-300); this block says
-only how the source is collected.
+only how the source is collected and how its progress is recorded.
 
 - **`provenance: synthesized` → regenerate this source only, targeting `>=80`.** The marker guard
   below would regenerate from the recorded `quality_intent` and land back in the same band, so this

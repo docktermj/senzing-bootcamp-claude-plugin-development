@@ -597,19 +597,22 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
    - **Migrate to PostgreSQL:** record `sqlite_volume_prompt` = `{decided: true, choice:
      "migrate", loadable, tier, raw_value}` in preferences, then run the switch as a detour through
      SDK setup: Module 2 Step 7's PostgreSQL branch, then Steps 8, 8a and 9, then every source's
-     `DATA_SOURCE` code registered in the new datastore. The flow resumes at Phase B. Nothing is
-     loaded yet, so nothing moves, and no load starts until the detour ends.
+     `DATA_SOURCE` code registered in the new datastore. The flow resumes at this check's finish, the
+     **When it finishes** bullet below, which retunes the loader and then continues to Phase B.
+     Nothing is loaded yet, so nothing moves, and no load starts until the detour ends.
      - **Start it in one quiet write** to `config/bootcamp_progress.json`: add the `setup_detour`
        record that SDK setup's
        [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour)
        defines, with `purpose: "database_switch"` and `return_to: {"module": "data_processing",
-       "resume": "phase-b", "reask": "sqlite-volume-check"}`. ⛔ **(INV-284, INV-366) `current_module` is
-       not changed:** the Bootcamper stays in this module, and the key is what lets an interrupted
-       detour resume. That branch is the one statement of which steps run and how the detour ends
-       (INV-300).
+       "resume": "sqlite-volume-check-finish", "reask": "sqlite-volume-check"}`.
+       ⛔ **(INV-284, INV-366) `current_module` is not changed:** the Bootcamper stays in this
+       module, and the key is what lets an interrupted detour resume. That branch is the one
+       statement of which steps run and how the detour ends (INV-300).
      - **When it finishes,** `database_type` is `postgresql`, so this check asks nothing more and
-       the production line says nothing. ⛔ **(INV-296) Before the Phase B load, give the loader
-       its PostgreSQL worker count.** Step 3 serialized the writes for SQLite; its `postgresql`
+       the production line says nothing. This bullet is `sqlite-volume-check-finish`, where SDK
+       setup returns the detour, finished or resumed, so the retune below always runs before
+       Phase B. ⛔ **(INV-296) Before the Phase B load, give the loader its PostgreSQL worker
+       count.** Step 3 serialized the writes for SQLite; its `postgresql`
        bullet now governs, so take the tier's full concurrency, rewrite the code comment that
        explained the reduction to say the loader now runs on PostgreSQL, and rebuild the loader if
        the language is compiled. A `demo`-tier loader is single-threaded by its tier and is left

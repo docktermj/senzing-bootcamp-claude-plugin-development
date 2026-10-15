@@ -40,7 +40,10 @@ leaves out are not skipped steps.
 part-way through, so go to SDK setup's
 [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour), which
 finishes it and returns to Phase A's
-[SQLite volume pre-load check](phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate).
+[SQLite volume pre-load check](phaseA-build-loading.md#sqlite-volume-pre-load-check-stop-and-confirm-heads-up-not-a-mandatory-gate)
+at its finish, the record's `return_to.resume` of `sqlite-volume-check-finish`: its "Migrate to
+PostgreSQL" option's **When it finishes** bullet, which gives the loader its PostgreSQL worker count
+(INV-296) and then continues to Phase B.
 
 **Purpose:** Guide the Data Processing workflow: build a production-quality loading program,
 load all data sources into Senzing, process redo records, and validate entity resolution

@@ -31,7 +31,10 @@ The checks:
 * the places a reader passes on the way to the repair point to it by link and restate nothing
   (INV-300): Phase 3's entry note, "Phase 3 session resume", and Phase 2's step 18a and its step
   map's Phase 3 row (grafted from strategy A);
-* the retired prose offers are gone.
+* the retired prose offers are gone;
+* (#598, INV-364) Module 2 Step 7's Option 4, "Switch to SQLite", waits for the finish on a
+  `setup_detour`: an `sdk_repair` continues to SQLite through it, and before #598 it rewrote
+  `database_type` at once, so a repair that then failed had already changed it.
 
 ⛔ **Each check is a function of the file text, so the negative controls run the SAME check on a
 mutated copy** (INV-265). Prose is matched with whitespace collapsed (INV-346), and a re-wrap
@@ -330,11 +333,31 @@ def retired_problems(p3):
     return ["Phase 3 still carries the retired offer %r" % m.group(0)] if m else []
 
 
+def option_4(m2):
+    return between(m2, "**Option 4 — Switch to SQLite:**", "**Handling each answer (INV-284).**")
+
+
+def option_4_problems(m2):
+    """#598: Option 4's rewrite of `database_type` waits for a detour's finish (INV-364)."""
+    block = option_4(m2)
+    if block is None:
+        return ["Module 2 Step 7 has no Option 4"]
+    problems = missing(block, (
+        "(INV-364) On a `setup_detour`, this waits for the finish",
+        "writes `database_type` only when every step is done",
+        "An `sdk_repair` that continues to SQLite and then cannot finish leaves `database_type` "
+        "as it was",
+    ), "Step 7's Option 4")
+    if "(#receiving-a-setup-detour)" not in block:
+        problems.append("Step 7's Option 4 does not link the receiving section")
+    return problems
+
+
 def all_problems(f):
     return (statement_problems(f["phase3"]) + step_21_problems(f["phase3"])
             + leaving_problems(f["phase3"]) + receiving_problems(f["module-02"])
             + first_clause_problems(f["module-05"]) + retired_problems(f["phase3"])
-            + pointer_problems(f["phase3"], f["phase2"]))
+            + pointer_problems(f["phase3"], f["phase2"]) + option_4_problems(f["module-02"]))
 
 
 def read_all():
@@ -381,6 +404,10 @@ class TheLiveFilesMeetEveryCriterion(unittest.TestCase):
 
     def test_the_ways_to_the_repair_point_to_it(self):
         self.assertEqual([], pointer_problems(self.f["phase3"], self.f["phase2"]))
+
+    def test_option_4_waits_for_the_finish_on_a_detour(self):
+        self.assertIsNotNone(option_4(self.f["module-02"]))
+        self.assertEqual([], option_4_problems(self.f["module-02"]))
 
     def test_the_prose_offers_are_retired(self):
         self.assertEqual([], retired_problems(self.f["phase3"]))
@@ -491,6 +518,16 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
     def test_option_4_stops_a_repair(self):
         self.assertCaught(self.mutate("module-02", "or, on a `database_switch`, with Step 7's "
                                       "option 4.", "or with Step 7's option 4."))
+
+    def test_option_4_rewrites_at_once_on_a_repair(self):
+        """#598: the pre-fix Option 4, with no detour carve-out."""
+        block = option_4(self.f["module-02"])
+        start = block.index(" ⛔ **(INV-364) On a `setup_detour`")
+        self.assertCaught(self.mutate("module-02", block[start:], "\n\n"))
+
+    def test_option_4_carve_out_without_the_failure_clause(self):
+        self.assertCaught(self.mutate("module-02", "An `sdk_repair` that continues to SQLite and "
+                                      "then cannot finish leaves\n`database_type` as it was.", ""))
 
     def test_the_entry_note_pointer_dropped(self):
         self.assertCaught(self.mutate("phase3", ", or, for an SDK\n> repair, to step 21 for this "
