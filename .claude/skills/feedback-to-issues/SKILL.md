@@ -226,6 +226,10 @@ routing is owned exclusively by `/escalate-to-parent` *(children only)*; this is
 where parent-to-child change travels by **parity**, so the parent never files into children
 at all. A flag naming another repository is a violation of that rule, not a convenience.
 
+⛔ **(INV-318) Never apply the `unattended-ok` label to an issue this run files.** A triage that
+labels the issues it files lets `/unattended-issue-loop` *(user level)* work them with nobody
+between the report and the work. Choosing what runs unattended is the maintainer's decision alone.
+
 ⛔ **(INV-368) With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
 nothing outside `<run-dir>`.** Each issue, Step 8 message and Step 9 disposition becomes a
 [`drafts.py`](drafts.py) `add` record instead, the candidate stays where it is, and the run ends

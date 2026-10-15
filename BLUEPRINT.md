@@ -36,7 +36,7 @@ receives the shippable plugin through `/propagate-to-public`.
   repository.
 - `.claude/skill-overlays/`: repo overlays: obligations this repository adds to
   user-level skills (implement-github-issue, order-github-issues,
-  unattended-issue-loop).
+  refine-github-issue, unattended-issue-loop).
 - `.claude/skills/auto-test/`: maintainer skill `/auto-test`: sandboxed MCP
   drift probe, simulated walk and transcript lint, with its baseline snapshot.
 - `.claude/skills/compact-dev-environment/`: maintainer skill
@@ -4666,7 +4666,9 @@ sorted. `RUNTIME_DIRS` (`.claude/worktrees`, `.claude/checkpoints`,
 pruned at any depth whatever git reports (`is_runtime(parts)`). When git is
 missing or exits non-zero, `_walk_listing` walks the root, pruning `.git`,
 `RUNTIME_DIRS` and `FALLBACK_PRUNED` (`__pycache__`, `.pytest_cache`,
-`.history`).
+`.history`) at any depth, and `FALLBACK_PRUNED_PATHS`
+(`.claude/release-cycle/runs`) from the root only, so a `runs` directory
+elsewhere stays (#610).
 
 `_pointer_sites.py` derives every shipped pointer to one `ground-rules.md`
 section (#519, INV-246). `shipped_texts()` reads every `.md` under `plugins/`
@@ -4706,15 +4708,18 @@ kickoff` and asks whether to resume or start (INV-333). Each skill's own file
 governs it and this one restates none of their rules (INV-300).
 
 Stages: 0 kickoff (in one batch: whether to run the simulated walk, its
-persona and start module, merge or `--no-merge`, and the refine threshold,
-showing the standing 0.7 to confirm or change); 1 find (the four finding
-skills with `--draft <run-dir>` in subagents against one baseline SHA, the
+persona and start module, merge or `--no-merge`, the refine threshold,
+showing the standing 0.7 to confirm or change, and, only when more than one
+feedback file exists, which one `/feedback-to-issues` triages); 1 find (the
+four finding skills with `--draft <run-dir>` in subagents against one
+baseline SHA, `/feedback-to-issues` with the feedback file as its path, the
 merge, checkpoint A, then each skill's `--file <run-dir>` in the main session,
 holding the after-filing steps); 2 refine (`refine-github-issue` batch mode,
 checkpoint B); 3 build (`unattended-issue-loop`, then `implement-github-issue`
 for each leftover, after a clean-tree check); 4 exercise (`/dry-run all
 <module> --simulated <persona> --draft` into the run's `exercise`
-subdirectory, against a fresh baseline, or `/dry-run 1,2` without a walk;
+subdirectory, against a fresh baseline, or `/dry-run 1,2 --draft` (phases 1
+and 2) without a walk, as the skill states (#610);
 checkpoint C; stages 2 and 3 again for what it filed); 5 settle (the held
 after-filing steps, `/review-invariants` as checkpoint D, then
 `update-blueprint` only when BLUEPRINT.md's header SHA is behind `main`); 6
@@ -4745,12 +4750,18 @@ directory must be `.claude/release-cycle/runs/<run>/` (gitignored); it holds
 stage-4 drafts under `exercise/`. `STEPS` fixes the order; a step is finished
 when `done`, `clean` or `skipped`.
 
-- `kickoff <runs-root>` prints the standing threshold, each run as finished or
-  unfinished with its next step, and the last run's walk.
+- `kickoff <runs-root>` prints the standing threshold, an `ASK` line naming
+  the `FEEDBACK_CANDIDATES` (`/feedback-to-issues` Step 1's two paths) that
+  exist when there are several, or the one candidate, or none, each run as
+  finished or unfinished with its next step, and the last run's walk.
 - `init <run-dir>` takes every kickoff answer (a simulated walk needs persona
-  and module; a threshold above 0.5 and at most 1.0, `70%` or `0.7`) and the
-  baseline (HEAD, or `--sha`); it refuses a second run in the directory
-  (exit 3) and a directory outside the runs root (exit 1).
+  and module; a threshold above 0.5 and at most 1.0, `70%` or `0.7`;
+  `--feedback PATH` when several feedback files exist, refused when missing
+  then or when the file does not exist, else the one candidate or none, kept
+  as `kickoff.feedback`) and the baseline (HEAD, or `--sha`); it refuses a
+  second run in the directory (exit 3) and a directory outside the runs root
+  (exit 1). `find-draft` passes the recorded file as `/feedback-to-issues`'
+  first argument (#610).
 - `next` names the first unfinished step (with a started or stopped note) and
   prints what it runs, first a `WITHDRAW` line when an entry written at a stop
   is still in the ledger; `status` lists every step; `args <step>` prints a
@@ -5618,7 +5629,7 @@ HARD_RULE = ANCHORED_RULE
 CODE_SPAN = re.compile(r"`[^`]*`")
 IMPERATIVE = (r"never|always|do not|don't|use|keep|prefer|treat|stop|ask|read|write|check"
               r"|state|name|strip|report|verify|cite|record|leave|derive|scope")
-MID_LINE_RULE = re.compile(r"⛔\s*(?:\*\*|[A-Z]|\(INV-|(?:%s)\b)" % IMPERATIVE, re.IGNORECASE)
+MID_LINE_RULE = re.compile(r"⛔\s*(?:\*\*|[A-Z]|\(INV-|\(#\d|(?:%s)\b)" % IMPERATIVE, re.IGNORECASE)
 NOUN_USE = re.compile(
     r"(?:\b(?:a|an|the|its|any|each|every|marked|old|same)\s+(?:\w+\s+)?)⛔"
     r"|⛔\s*(?:gates?|convention|marker|lead-in|sign|glyphs?)\b",
@@ -8035,6 +8046,8 @@ DRAFTS_PY = HERE.parent / "feedback-to-issues" / "drafts.py"
 drafts = _load_drafts()
 STANDING_THRESHOLD = 0.7
 RUNS_PARENT = (".claude", "release-cycle", "runs")
+FEEDBACK_CANDIDATES = ("SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md",
+                       "docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md")
 STAGES = ("Kickoff", "Find", "Refine", "Build", "Exercise", "Settle", "Ship")
 STEPS = (
     ("kickoff", 0, None),
@@ -8115,6 +8128,8 @@ def set_step(state, step, result, note=None, **extra):
 def require_turn(state, step):
     ...
 def git_head():
+    ...
+def feedback_candidates(root):
     ...
 def check_run_dir(run_dir):
     ...
@@ -9023,6 +9038,7 @@ From `.claude/skills/release-cycle/cycle.py`:
     p.add_argument("--module")
     p.add_argument("--merge", required=True, choices=("yes", "no"))
     p.add_argument("--threshold", required=True)
+    p.add_argument("--feedback", help="the feedback file the maintainer chose, repo-relative")
     p.add_argument("--sha")
     p.set_defaults(func=cmd_init)
     for name, func in (("next", cmd_next), ("status", cmd_status)):
@@ -9964,7 +9980,7 @@ looks wrong.
 - `tests/test_cord_fetch_has_a_403_remedy.py`: 17
 - `tests/test_cord_fetch_integrity.py`: 50
 - `tests/test_cord_is_disclosed_as_real_data.py`: 10
-- `tests/test_corpus.py`: 15
+- `tests/test_corpus.py`: 16
 - `tests/test_coverage_check_looks_inside_root_arrays.py`: 6
 - `tests/test_coverage_ledger.py`: 36
 - `tests/test_coverage_reports.py`: 48
@@ -9983,7 +9999,7 @@ looks wrong.
 - `tests/test_delegate_files_issues_not_specs.py`: 18
 - `tests/test_dependency_reading_rules.py`: 13
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
-- `tests/test_dev_install_surfaces_name_the_dev_repo.py`: 7
+- `tests/test_dev_install_surfaces_name_the_dev_repo.py`: 9
 - `tests/test_directing_steps.py`: 48
 - `tests/test_discoveries_pdf.py`: 58
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
@@ -10021,7 +10037,7 @@ looks wrong.
 - `tests/test_feedback_ledger.py`: 25
 - `tests/test_feedback_routing.py`: 47
 - `tests/test_feedback_to_issues_files_in_its_own_repo.py`: 13
-- `tests/test_filing_is_gated.py`: 29
+- `tests/test_filing_is_gated.py`: 32
 - `tests/test_find_examples_coverage_is_uncitable.py`: 12
 - `tests/test_first_source_is_chosen_by_step_fourteens_heuristics.py`: 18
 - `tests/test_fpdf2_dependency_is_declared.py`: 12
@@ -10210,7 +10226,7 @@ looks wrong.
 - `tests/test_related_entities_guidance.py`: 21
 - `tests/test_release_bumps_version_changelog_and_tag_together.py`: 32
 - `tests/test_release_covers_every_version_site.py`: 8
-- `tests/test_release_cycle.py`: 67
+- `tests/test_release_cycle.py`: 77
 - `tests/test_results_validation_is_diagnostic.py`: 35
 - `tests/test_resume_requires_a_recorded_module.py`: 27
 - `tests/test_retired_vocabulary.py`: 5
@@ -10363,11 +10379,13 @@ need the original text. These are heuristic estimates, accurate to about 10%:
     backtick lines. Inside a fence, `#`, `|` and `---` lines are content, and
     only a blank line ends a block.
   - The lines of one list, with no blank line between them, form one block.
-- **Corpus listing.** `tests/test_corpus.py` (15 tests) plants a canary under
+- **Corpus listing.** `tests/test_corpus.py` (16 tests) plants a canary under
   every runtime directory of a throwaway git repository and asserts
   `corpus_files()` returns none of them, while it still returns a tracked file,
   an untracked one and an oddly named one, and drops a deleted tracked file and
-  an ignored one, by git and by the fallback walk. It also fails on a
+  an ignored one, by git and by the fallback walk. The fallback also drops
+  `.claude/release-cycle/runs/` by its root path and keeps `docs/runs/` and a
+  nested `.../.claude/release-cycle/runs/`, with a negative control (#610). It also fails on a
   hand-rolled `REPO_ROOT.rglob`, `REPO_ROOT.glob("**…`,
   `(REPO_ROOT / ".claude").rglob`, `CLAUDE.rglob`, `os.walk(REPO_ROOT` or
   `os.walk(CLAUDE` in `tests/*.py`; a walk through a variable is not caught.
@@ -10447,7 +10465,10 @@ These read `specs/INVARIANTS.md`:
   instruction creates a file under `specs/` or pins a spec count.
 - **Issues, not specs.** The audit, `/delegate-to-mcp-server`, `/dry-run` and
   `/feedback-to-issues` file GitHub issues in this repository, gated on the
-  maintainer's yes. They never write specs.
+  maintainer's yes. They never write specs. `tests/test_filing_is_gated.py`
+  also requires each of the eight issue-filing skills (`LABEL_RULE_SKILLS`,
+  held to the filing skills it discovers) to state INV-318 beside
+  `unattended-ok`, with a negative control (#610).
 - **Well-formed ledgers.**
   - No literal `\n` appears in prose.
   - Entry headings start a line, and two independent parses agree on the entry
@@ -10927,6 +10948,11 @@ These are the scripts under `.claude/skills/`:
   - the kickoff answers are required, the threshold is refine's range, a run
     outside the runs root and a second `init` are refused, and `kickoff`
     shows the standing threshold and the last walk;
+  - with several feedback files `kickoff` asks and `init` refuses no
+    `--feedback`; with one it passes that file and with none no path, asking
+    nothing; only `/feedback-to-issues` takes it; `FEEDBACK_CANDIDATES`
+    equals `/feedback-to-issues` Step 1's list; a run with no walk prints
+    `/dry-run 1,2` (#610);
   - `next` names the first unfinished step, a finished step is never marked
     again, a step cannot be skipped, a stopped step is where the run resumes,
     a draft step with no drafts is `clean` and skips its build pass, and
@@ -10955,7 +10981,10 @@ These are the scripts under `.claude/skills/`:
   - `SKILL.md` states each checkpoint and guardrail (with negative
     controls), is slash-only, invokes none of the three slash-only skills,
     and restates no part of the manifest format; `docs/FAMILY_WORKFLOW.md`
-    §2 has its row and §3 names it;
+    §2 has its row and §3 names it, §2 has a `refine-github-issue` row
+    (phase 2, required *(user level)*, children not mandated) and none for
+    `order-github-issues`, and the maintenance track names the cycle as its
+    one exception (#610);
   - `SKILL.md` states the write boundary once and names every write, no site
     (`SKILL.md`, `cycle.py`, `drafts.py`, `docs/FAMILY_WORKFLOW.md`,
     `BLUEPRINT.md`, the pending ledger block) keeps the retired rule that
@@ -11020,11 +11049,12 @@ These are the scripts under `.claude/skills/`:
   not. Either side yielding none fails and names its file; a changed page
   command is caught (#455).
 - **Dev install surfaces.** `tests/test_dev_install_surfaces_name_the_dev_repo.py`
-  requires `README.md`, `docs/README.md` and `docs/index.html` each to hold
-  `docktermj/senzing-bootcamp-claude-plugin-development` and not
+  requires `README.md`, `docs/README.md`, `docs/index.html` and the
+  "Installing the development plugin" section of `docs/development.md` (#610)
+  each to hold `docktermj/senzing-bootcamp-claude-plugin-development` and not
   `Senzing/senzing-bootcamp-claude-plugin`, and the root README's Desktop
   marketplace URL and recap PDF link to carry the dev slug; a failure names
-  the file (#522).
+  the file and line (#522).
 
 ## 9. Not embedded
 
@@ -12230,6 +12260,17 @@ Senzing licensing, with no SPDX identifier.
   counts as recorded at the end-of-run checks under `--draft` (stage 5 writes
   under `specs/` before the stop, a walk wrote reports outside `<run-dir>`,
   and those checks demanded a ledger line `--draft` forbids)
+- #610: `/release-cycle`'s kickoff asks which feedback file when several
+  exist and passes it to `/feedback-to-issues`, and the skill states stage 4's
+  `/dry-run 1,2` branch; `docs/FAMILY_WORKFLOW.md` §2 registers
+  `refine-github-issue` *(user level)* with an overlay and a
+  `docs/development.md` entry, and the maintenance track names the cycle as
+  its exception; all eight issue-filing skills state INV-318, checked by
+  `tests/test_filing_is_gated.py`; `_corpus.py`'s fallback prunes
+  `.claude/release-cycle/runs/` by path, `MID_LINE_RULE` sees `⛔ (#NNN)`, and
+  the INV-360 test reads `docs/development.md`'s install section, with INV-360
+  and INV-333 `PROPOSED AMENDMENT`s queued (a subagent could have had to ask,
+  and skills, the register and guards said less than what shipped)
 - #615: every backticked `<file>.md` → "<name>" pointer in shipped Markdown
   resolves from its own file and names a heading or line-opening bold label
   there (case, leading numbering and an end parenthetical ignored), checked by

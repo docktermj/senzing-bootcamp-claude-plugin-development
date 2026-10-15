@@ -28,8 +28,10 @@ How the list is made:
   them is still safe. Like the ``**/.claude/worktrees/`` entries in that file, they are matched
   at any depth.
 - **Fallback.** When git is not found, or exits non-zero (the root is not a work tree), the list
-  comes from a filesystem walk of the root that prunes ``.git/``, ``RUNTIME_DIRS`` and the
-  ``.gitignore``d directories in ``FALLBACK_PRUNED``. It never fails.
+  comes from a filesystem walk of the root that prunes ``.git/``, ``RUNTIME_DIRS``, the
+  ``.gitignore``d directory names in ``FALLBACK_PRUNED`` (matched at any depth) and the
+  ``.gitignore``d paths in ``FALLBACK_PRUNED_PATHS`` (matched from the root only, as
+  ``.gitignore`` anchors them, so a directory of the same name elsewhere stays). It never fails.
 
 ⚠️ A guard that walks a subtree through an intermediate variable, or with a recursive
 ``iterdir``, is invisible to ``test_corpus.py``'s hand-rolled walk guard. Route it through here.
@@ -55,6 +57,12 @@ RUNTIME_DIRS = (
 
 #: Directory names the fallback walk prunes at any depth: git's own, and the `.gitignore`d ones.
 FALLBACK_PRUNED = frozenset((".git", "__pycache__", ".pytest_cache", ".history"))
+
+#: Root-anchored `.gitignore`d directories the fallback walk prunes by path, never by bare name:
+#: `/release-cycle`'s run scratch (#572, #610). A directory named `runs` anywhere else is corpus.
+FALLBACK_PRUNED_PATHS = (
+    (".claude", "release-cycle", "runs"),
+)
 
 
 def is_runtime(parts):
@@ -88,7 +96,8 @@ def _walk_listing(root):
     for directory, dirs, files in os.walk(root):
         rel = Path(directory).relative_to(root).parts
         dirs[:] = [d for d in dirs
-                   if d not in FALLBACK_PRUNED and not is_runtime(rel + (d,))]
+                   if d not in FALLBACK_PRUNED and not is_runtime(rel + (d,))
+                   and rel + (d,) not in FALLBACK_PRUNED_PATHS]
         names.update(PurePosixPath(*rel, f).as_posix() for f in files)
     return names
 

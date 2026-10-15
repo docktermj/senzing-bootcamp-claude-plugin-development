@@ -380,6 +380,9 @@ Then:
   to that issue's exact text (INV-314), or one yes for the whole list shown in one message
   (INV-314, 2026-10-13 note), and let `/implement-github-issue` *(user level)*
   execute it. The issue is where the reasoning survives.
+  ⛔ **(INV-318) Never apply the `unattended-ok` label to an issue this run files.** Choosing
+  what `/unattended-issue-loop` *(user level)* works with nobody watching is the maintainer's
+  decision alone.
 - **Mechanical changes may be executed here**, one class at a time, each with the
   maintainer's explicit yes: merging test traversals, pruning feedback files. After
   each, run `citations.py verify` and the full suite, and report both.

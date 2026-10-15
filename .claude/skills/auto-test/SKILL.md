@@ -179,6 +179,10 @@ the maintainer's yes (INV-314), or one yes for the whole list shown in one messa
 2026-10-13 note). Never put it in a new file under `specs/` (INV-307). A fixed
 finding no longer reproduces, so a run that fixes first leaves no evidence the finding existed.
 
+⛔ **(INV-318) Never apply the `unattended-ok` label to an issue this run files.** A probe that
+labels its own findings lets `/unattended-issue-loop` *(user level)* work them with nobody in
+between. Choosing what runs unattended is the maintainer's decision alone.
+
 Only after the record, in dry-run's order (its steps 2 to 6): fix the class
 not the instance, write a repo-level test, ⛔ **negative-control it**, record it in
 the same `specs/IMPLEMENTED.md` entry (what was done, and the issue the finding became),

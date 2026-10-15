@@ -31,7 +31,7 @@ through [`drafts.py`](../feedback-to-issues/drafts.py), whose docstring is the o
 | 1 Find | `/feedback-to-issues`, `/retrofit-from-public`, `/delegate-to-mcp-server` and `/production-readiness-audit`, each with `--draft <run-dir>`, against one baseline SHA; duplicates merged | **A**: approve the drafts as one list, then each skill runs with `--file <run-dir>` |
 | 2 Refine | `refine-github-issue` *(user level)* in batch mode, on every open issue | **B**: the pooled questions, then the edits and labels as one list |
 | 3 Build | `/unattended-issue-loop` *(user level)*, then `/implement-github-issue` *(user level)* for each leftover | only for the leftovers |
-| 4 Exercise | `/dry-run all <module> --simulated <persona> --draft <exercise-dir>`, where `<exercise-dir>` is the run directory's `exercise` subdirectory, against a fresh baseline SHA; then stages 2 and 3 again for what it filed | **C**: approve the drafts as one list |
+| 4 Exercise | `/dry-run all <module> --simulated <persona> --draft <exercise-dir>`, or `/dry-run 1,2 --draft <exercise-dir>` (phases 1 and 2) when the kickoff declined the simulated walk, where `<exercise-dir>` is the run directory's `exercise` subdirectory, against a fresh baseline SHA; then stages 2 and 3 again for what it filed | **C**: approve the drafts as one list |
 | 5 Settle | the held after-filing steps; `/review-invariants`; then the user-level `update-blueprint` only if the BLUEPRINT.md header SHA is behind `main` | **D**: the invariant verdicts |
 | 6 Ship | `/release`, the maintainer's manual test, `/propagate-to-public` | **E**: the version bump, the manual test, and the public repo's commit and push |
 
@@ -51,7 +51,8 @@ through [`drafts.py`](../feedback-to-issues/drafts.py), whose docstring is the o
   this skill is slash-only too, and every gate inside each of them still applies.
 - **In a subagent:** the four finding skills and `/dry-run`. Each is given arguments that answer
   every question it would otherwise ask, from the kickoff answers, and returns when its
-  `--draft` run ends. A subagent never asks the maintainer anything.
+  `--draft` run ends: `/feedback-to-issues` gets the feedback file as its path argument. A
+  subagent never asks the maintainer anything.
 - **In the main session:** the kickoff, every checkpoint, and every skill that asks a question:
   `refine-github-issue`, the leftovers' `implement-github-issue`, `/review-invariants`,
   `/release` and `/propagate-to-public`. `/unattended-issue-loop` *(user level)* starts its own
@@ -64,12 +65,14 @@ through [`drafts.py`](../feedback-to-issues/drafts.py), whose docstring is the o
    one; never start or resume costly work from silence (INV-333).
 2. **The kickoff (stage 0)**, asked in one message: whether to run the simulated walk, and
    if so which persona and which start module (`kickoff` prints the last run's; recommend a
-   later one); whether `unattended-issue-loop` merges or runs with `--no-merge`; and the refine
+   later one); whether `unattended-issue-loop` merges or runs with `--no-merge`; the refine
    threshold, showing the standing 0.7 the maintainer chose on 2026-10-13 for them to confirm
-   or change, which is the threshold "given in this session" refine requires. Then record the
-   answers, and the baseline SHA, which is HEAD:
+   or change, which is the threshold "given in this session" refine requires; and, only when
+   `kickoff` prints an `ASK` line because more than one feedback file exists, which one
+   `/feedback-to-issues` triages. With one feedback file or none, nothing is asked about it.
+   Then record the answers, and the baseline SHA, which is HEAD:
    `cycle.py init .claude/release-cycle/runs/<YYYY-MM-DD> --simulated yes|no [--persona P
-   --module M] --merge yes|no --threshold P`. `init` refuses a missing answer.
+   --module M] --merge yes|no --threshold P [--feedback PATH]`. `init` refuses a missing answer.
 3. **Then repeat until the run finishes or stops:** `cycle.py next <run-dir>` names the first
    unfinished step and prints what it runs; run that; record it with `cycle.py mark <run-dir>
    <step> done` (or the command `next` names for it). On a resumed run, `next` says which step
@@ -130,6 +133,9 @@ the new HEAD; once something is filed, finish filing at the baseline instead.
 
 Run the `SUBAGENT` line `cycle.py next` prints, then `cycle.py mark <run-dir> exercise-draft
 done --sha <HEAD>`; the fresh baseline's drafts go to `<exercise-dir>`, a manifest of its own.
+With a simulated walk the line is `/dry-run all <module> --simulated <persona> --draft
+<exercise-dir>`; when the kickoff declined the walk it is `/dry-run 1,2 --draft <exercise-dir>`,
+`/dry-run`'s phases 1 and 2 with no walk.
 Report the walk as `/dry-run` reports it (INV-369), including the module a stalled walk reached.
 Then `merge-drafts`, checkpoint C, `verdicts` and the filing as in stage 1, each with `--stage
 exercise`, and stages 2 and 3 again for the issues stage 4 filed (`exercise-refine`,

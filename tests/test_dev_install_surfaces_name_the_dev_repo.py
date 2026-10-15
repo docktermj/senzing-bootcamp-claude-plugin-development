@@ -1,8 +1,9 @@
 """The dev repository's install surfaces name the dev repository, never the public one (#522).
 
-This repository has three install surfaces: the root `README.md` (the Claude Desktop route and
-the example recap PDF link), `docs/README.md` (the Claude Code CLI route) and `docs/index.html`
-(the GitHub Pages quick-start site). In this tree each MUST name the development repository,
+This repository has four install surfaces: the root `README.md` (the Claude Desktop route and
+the example recap PDF link), `docs/README.md` (the Claude Code CLI route), `docs/index.html`
+(the GitHub Pages quick-start site) and the "Installing the development plugin" section of
+`docs/development.md` (#610). In this tree each MUST name the development repository,
 `docktermj/senzing-bootcamp-claude-plugin-development`; `propagate.sh` rewrites that slug to the
 public one, `Senzing/senzing-bootcamp-claude-plugin`, on the way out.
 
@@ -14,7 +15,10 @@ rather than the one under development. Only `docs/index.html` was checked
 
 What it asserts, for each surface: the dev slug is present, the public slug is absent, and a
 failure names the file. For `README.md` it also asserts the dev slug at the two sites #522
-restored, the Desktop marketplace URL and the raw-content recap PDF link. Matching is on bytes:
+restored, the Desktop marketplace URL and the raw-content recap PDF link. `docs/development.md`
+is read only from its "Installing the development plugin" heading to the next `## ` heading
+(`SECTIONS`), with the lines above it kept as empty lines so a failure names the file's own
+line; the rest of that page may discuss the public repository. Matching is on bytes:
 the public slug is not a substring of the dev slug, so the two checks never overlap. Negative
 controls put the public slug back at each README site and drop the dev slug from a surface,
 and show each fails naming the file.
@@ -26,13 +30,16 @@ derived: a fourth install surface added later is not checked until it is added t
 Owner names are matched in the case written here; a differently cased public slug is not caught.
 
 Source issue: #522. This module enforces INV-360 (registered 2026-10-13). It asserts that the
-three surfaces *state* the dev slug; it does not establish that a surface added later is read,
-for the reason above.
+surfaces *state* the dev slug; it does not establish that a surface added later is read, for
+the reason above. The fourth surface, `docs/development.md`, was added by #610; INV-360 names
+three, and the dated note that widens it to four is a `PROPOSED AMENDMENT` awaiting the
+maintainer's sign-off in #610's `specs/IMPLEMENTED.md` entry.
 
-Stdlib only (INV-108); three files read as bytes, no network.
+Stdlib only (INV-108); four files read as bytes, no network.
 
 Run:  python3 -m unittest discover -s tests
 """
+import re
 import unittest
 from pathlib import Path
 
@@ -42,7 +49,10 @@ DEV_SLUG = b"docktermj/senzing-bootcamp-claude-plugin-development"
 PUBLIC_SLUG = b"Senzing/senzing-bootcamp-claude-plugin"
 
 #: The install surfaces, stated rather than derived: the set is the subject.
-SURFACES = ("README.md", "docs/README.md", "docs/index.html")
+SURFACES = ("README.md", "docs/README.md", "docs/index.html", "docs/development.md")
+
+#: A surface that is one section of a longer page: read from this heading to the next `## `.
+SECTIONS = {"docs/development.md": b"## Installing the development plugin"}
 
 #: The two root-README sites #522 restored, each as its dev form and its public form.
 README_SITES = (
@@ -55,8 +65,21 @@ README_SITES = (
 )
 
 
+def section(data, heading):
+    """The bytes from `heading` to the next `## ` heading, the lines above kept as empty lines.
+
+    Keeping the earlier newlines keeps a failure's line number the file's own.
+    """
+    start = data.index(b"\n" + heading + b"\n") + 1
+    end = data.find(b"\n## ", start + len(heading))
+    end = len(data) if end == -1 else end + 1
+    return re.sub(rb"[^\n]", b"", data[:start]) + data[start:end]
+
+
 def _read(rel):
-    return (REPO_ROOT / rel).read_bytes()
+    data = (REPO_ROOT / rel).read_bytes()
+    heading = SECTIONS.get(rel)
+    return data if heading is None else section(data, heading)
 
 
 def surface_problems(rel, data):
@@ -131,6 +154,24 @@ class TheCheckCatchesThePublicSlug(unittest.TestCase):
                 self.assertEqual(len(problems), 1, problems)
                 self.assertIn(rel, problems[0])
                 self.assertIn("does not name the dev repository", problems[0])
+
+    def test_the_public_slug_in_the_development_install_section_fails_naming_the_file(self):
+        """#610: the fourth surface is read, and a public slug in its section is caught."""
+        rel = "docs/development.md"
+        data = (REPO_ROOT / rel).read_bytes()
+        add = b"claude plugin marketplace add " + DEV_SLUG
+        self.assertIn(add, data, "the control has nothing to mutate in %s" % rel)
+        mutated = data.replace(add, b"claude plugin marketplace add " + PUBLIC_SLUG, 1)
+        problems = surface_problems(rel, section(mutated, SECTIONS[rel]))
+        self.assertEqual(1, len(problems), problems)
+        line = data[:data.index(add)].count(b"\n") + 1
+        self.assertTrue(problems[0].startswith("%s:%d names the public repository" % (rel, line)),
+                        problems)
+
+    def test_the_public_slug_outside_the_development_install_section_is_not_read(self):
+        rel = "docs/development.md"
+        mutated = (REPO_ROOT / rel).read_bytes() + b"\nMirrors into " + PUBLIC_SLUG + b".\n"
+        self.assertEqual([], surface_problems(rel, section(mutated, SECTIONS[rel])))
 
     def test_the_public_slug_on_the_page_fails_naming_the_page(self):
         rel = "docs/index.html"

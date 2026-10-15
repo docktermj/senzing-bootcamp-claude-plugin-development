@@ -61,6 +61,7 @@ mechanisms, not maintainer-facing phases; they keep their names.
 | `retrofit-from-public` | 1 | required | required | Files issues. **Writes nothing into any working tree** |
 | `parity-check` | 1 | — | required | Reads a parent **tag**. Never writes to the parent |
 | `implement-github-issue` | 2 | required *(user level)* | required | Never merges. In a child, advances `PARENT_VERSION` on a parity close |
+| `refine-github-issue` | 2 | required *(user level)* | *not mandated* | Refines an issue into a complete spec, or breaks it into sub-issues. `release-cycle` stage 2 runs it in batch mode |
 | `escalate-to-parent` | 2 | — | required | **The only command in a child that writes outside its own repository** |
 | `production-readiness-audit` | 3 | required | required | Consistency, coherency, completeness |
 | `dry-run` | 3 | required | required | Runtime review |
@@ -136,9 +137,12 @@ flowchart LR
     class M1,M2,M3 cmd
 ```
 
-Nothing in the four phases waits on these and they wait on nothing. An "optional" per-change
-step gets skipped every time, and a step skipped every time never runs at all; giving these
-their own cadence is what stops them becoming ceremony.
+No operation in the four phases waits on these, and they wait on none of them, with one
+exception: `release-cycle` runs `delegate-to-mcp-server` in stage 1 among the operations that
+find issues, and gates stage 6 on `review-invariants`' verdicts at checkpoint D. Run alone,
+each keeps its own cadence. An "optional" per-change step gets skipped every time, and a step
+skipped every time never runs at all; giving these their own cadence is what stops them
+becoming ceremony.
 
 ---
 

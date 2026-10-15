@@ -160,6 +160,11 @@ GitHub issues, not a modified working tree.**
    `/production-readiness-audit` apply, for the same reason: an issue can be edited or closed
    afterwards but never un-filed.
 
+   ⛔ **(INV-318) Never apply the `unattended-ok` label to an issue this run files.** A
+   divergence report that labels its own issues lets `/unattended-issue-loop` *(user level)*
+   bring public-repo changes in with nobody deciding to. Choosing what runs unattended is the
+   maintainer's decision alone.
+
    ⛔ **(INV-368) With `--draft <run-dir>`, this run files nothing, fixes nothing and sends nothing, and writes
    nothing outside `<run-dir>`.** Each issue becomes a [`drafts.py`](../feedback-to-issues/drafts.py)
    `add` record instead, and the run ends with `drafts.py list`. `--draft` is the release cycle's

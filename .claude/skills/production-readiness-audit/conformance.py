@@ -114,9 +114,13 @@ CODE_SPAN = re.compile(r"`[^`]*`")
 # pattern is searched, not anchored, so a `**` before the stop sign needs no alternative of its
 # own. Measured 2026-10-12 across `SCAN_ROOTS` and `docs/`: 32 lines had been invisible to every
 # view (12 `.md`, 20 `.py`/`.sh`); the anchored count stayed at 701.
+#
+# The issue-number lead-in (#610) does the same for `⛔ (#NNN) …`, a rule that cites the issue
+# that made it rather than an invariant: six such lines in this file and `pending_invariants.py`
+# were invisible to every view after #516, which widened only `(INV-`.
 IMPERATIVE = (r"never|always|do not|don't|use|keep|prefer|treat|stop|ask|read|write|check"
               r"|state|name|strip|report|verify|cite|record|leave|derive|scope")
-MID_LINE_RULE = re.compile(r"⛔\s*(?:\*\*|[A-Z]|\(INV-|(?:%s)\b)" % IMPERATIVE, re.IGNORECASE)
+MID_LINE_RULE = re.compile(r"⛔\s*(?:\*\*|[A-Z]|\(INV-|\(#\d|(?:%s)\b)" % IMPERATIVE, re.IGNORECASE)
 
 # The stop sign used as a NOUN is prose about the convention, not a rule: "a ⛔ gate", "the old
 # ⛔", "Steps marked `⛔`". 32 such lines, correctly excluded.
