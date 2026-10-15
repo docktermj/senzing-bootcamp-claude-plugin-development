@@ -32,6 +32,21 @@ With ``--stop-at-banner`` the walk runs until a turn shows that banner on a line
 own (``banner_seen``), then ``--turns`` more turns; without it, ``--turns`` turns from the start. Either way
 ``--max-turns`` caps the walk, and the transcript ends with a ``walk_stop`` event
 saying where it stopped and why (``/dry-run`` phase 3's simulated walk reads it).
+
+Slash lines in a Bootcamper reply (#656)
+----------------------------------------
+``claude -p`` parses a prompt that starts with ``/`` as a slash command, so a reply of
+``/effort high`` then ``yes`` never reached the guide. A leading reply line that is exactly
+``/effort <level>`` or ``/model <name>`` (``SLASH_FLAGS``) becomes a sticky ``--effort`` or
+``--model`` flag on that turn's ``claude -p … --resume`` call and every later one; the
+latest value wins. ``/effort`` itself does not persist under ``-p --resume``, which is why
+the flag is re-sent on every call. The rest of the reply is the turn. The ``bootcamper``
+event keeps the reply exactly as the Bootcamper process returned it, and a
+``bootcamper_flag`` event, which is not a turn, records each flag applied. A reply that is
+only slash lines asks the Bootcamper once more with the same guide turn; a second one stops
+the walk. Any other reply that starts with ``/``, such as a path, is sent with one leading
+space (``as_turn``), which the CLI does not parse as a command. The opening message is
+sent as given.
 """
 import argparse
 import json
@@ -84,6 +99,8 @@ Rules:
 - If you are asked to choose from a numbered list, reply with the number or the
   option text.
 - Keep it to a couple of sentences at most.
+- If you type a slash command such as /effort or /model, put it on its own line,
+  before your answer.
 - Never mention that this is a test or a simulation."""
 
 
@@ -109,6 +126,47 @@ def banner_seen(banner, text):
         if wanted in (line, framed.group(2) if framed else None):
             return True
     return False
+
+
+# #656: the slash commands a Bootcamper reply line may carry, each mapped to the CLI flag
+# that carries it from then on. Extend here; any other leading `/` is sent as text.
+SLASH_FLAGS = {"/effort": "--effort", "/model": "--model"}
+SLASH_LINE = re.compile(r"(\S+) (\S+)")
+
+
+def split_reply(reply):
+    """The reply's leading allowlisted slash lines, and the rest of it (#656).
+
+    Returns ``(flags, rest)``: ``flags`` lists ``(line, flag, value)`` for each leading line
+    that is exactly ``/effort <level>`` or ``/model <name>``, in order; blank lines between
+    them are skipped. ``rest`` is what follows, or the whole reply when it has no such line,
+    and is empty for a reply that is only slash lines.
+    """
+    lines = reply.splitlines()
+    flags, index = [], 0
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        match = SLASH_LINE.fullmatch(stripped)
+        if not match or match.group(1) not in SLASH_FLAGS:
+            break
+        flags.append((stripped, SLASH_FLAGS[match.group(1)], match.group(2)))
+    else:
+        index = len(lines)
+    if not flags:
+        return [], reply
+    return flags, "\n".join(lines[index:]).strip()
+
+
+def as_turn(text):
+    """``text`` in a form ``claude -p`` reads as a prompt, not as a slash command (#656).
+
+    The CLI parses a prompt that starts with ``/`` as a command (``/help me pick`` never
+    reaches the model). One leading space keeps every character of the reply and makes
+    the CLI send it as text; checked against CLI 2.1.300.
+    """
+    return " " + text if text.startswith("/") else text
 
 
 def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
@@ -176,8 +234,9 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
             "--permission-mode", "bypassPermissions",
             "--output-format", "stream-json", "--verbose",
             "--add-dir", str(project)]
-    if model:
-        base += ["--model", model]
+    # The CLI flags every call carries: --model from the command line, then each sticky
+    # flag a Bootcamper slash line set (#656). The latest value of a flag wins.
+    flags = {"--model": model} if model else {}
 
     transcript = []
     message = opening
@@ -192,6 +251,8 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
                       if banner_turn else f"--turns {turns} reached")
             break
         args = ["-p", message, *base]
+        for flag, value in flags.items():
+            args += [flag, value]
         args += ["--session-id", session] if turn == 1 else ["--resume", session]
         result = _claude(args, cwd=project, stdin_text="", timeout=timeout, env=env)
         if result.returncode != 0:
@@ -230,14 +291,39 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
             reason = "the turn asked no question"
             break
 
-        message = bootcamper_reply(shown, persona, bootcamper_model)
+        prompt, message = shown, None
+        for _attempt in range(2):
+            reply = bootcamper_reply(prompt, persona, bootcamper_model)
+            if not reply:
+                break
+            # The reply as the Bootcamper process returned it, slash lines included.
+            transcript.append(json.dumps({"type": "bootcamper", "turn": turn,
+                                          "persona": persona, "text": reply}))
+            applied, rest = split_reply(reply)
+            for line, flag, value in applied:
+                flags[flag] = value
+                transcript.append(json.dumps({"type": "bootcamper_flag", "turn": turn,
+                                              "command": line, "flag": flag,
+                                              "value": value}))
+                print(f"  turn {turn}: {line} -> {flag} {value} on every later call")
+            if rest:
+                message = as_turn(rest)
+                break
+            # Only slash lines: nothing to send. Ask once more with the guide's same
+            # turn; the Bootcamper process still authors the answer (INV-369).
+            entered = "\n".join(line for line, _flag, _value in applied)
+            prompt = (f"{shown}\n\n(You entered:\n{entered}\nIt is applied. The guide "
+                      "is still waiting for your answer to the message above.)")
+        else:
+            print("  stopping: the Bootcamper replied only with slash commands",
+                  file=sys.stderr)
+            reason = "the Bootcamper replied only with slash commands"
+            break
         if not message:
             print("  stopping: the Bootcamper process returned nothing",
                   file=sys.stderr)
             reason = "the Bootcamper process returned nothing"
             break
-        transcript.append(json.dumps({"type": "bootcamper", "turn": turn,
-                                      "persona": persona, "text": message}))
     else:
         reason = f"--max-turns {max_turns} reached"
 
