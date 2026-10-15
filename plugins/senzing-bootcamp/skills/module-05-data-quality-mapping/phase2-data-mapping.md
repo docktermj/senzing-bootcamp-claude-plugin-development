@@ -1186,7 +1186,7 @@ no MCP server version, so every bootcamper is on the current server and this is 
    checker cannot harvest it (a boolean source value, a value derived from a field name, or a
    `NAME_ORG` joined from parsed name fields, which equals no single source value), and that the
    value is faithful — then **proceed**. A checker limitation MUST NOT become an iterate-forever
-   loop or a blocked module (INV-048).
+   loop or a blocked module (INV-173).
 4. ⛔ **Never change a source value to satisfy the tool.** For a value the harvester cannot reach it
    would not even work — the allowed set was built without it, under either emission — and distorting
    data to turn a gate green is the one outcome worse than the gate being wrong.
@@ -1383,7 +1383,7 @@ category='data_mapping')`, Entity Specification, *Identifiers > Feature: ACCOUNT
    would loop. Advance with `verdict='approve'`.
 3. **Record the exemption and its reason** in the source's mapping notes — which attribute, that its
    value is derived from the source field name, and that the checker harvests values only — then
-   proceed, exactly as for the boolean case above (INV-048: a checker limitation MUST NOT become an
+   proceed, exactly as for the boolean case above (INV-173: a checker limitation MUST NOT become an
    iterate-forever loop or a blocked module).
 
 ⛔ **Separate structural invalidity from conformance-to-recommendation before acting on the

@@ -57,7 +57,7 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    rules, including what the fast-forward may and may not do, in
    [phase3-conversational.md](phase3-conversational.md).
 
-   ⛔ **(INV-333) Then a third: who answers as the Bootcamper.** The maintainer-answered walk
+   ⛔ **(INV-369, INV-333) Then a third: who answers as the Bootcamper.** The maintainer-answered walk
    is the default, so offer it first: (1) the maintainer, or (2) a simulated Bootcamper, with a
    persona. `--simulated [persona]` in the argument answers it, and a phase-3 argument without
    it answers it as the maintainer. With no argument every question is asked: whether to run

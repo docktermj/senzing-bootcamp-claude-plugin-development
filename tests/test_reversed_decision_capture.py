@@ -123,7 +123,11 @@ class TheTriggerIsANamedCondition(unittest.TestCase):
 
 
 class TheAppendIsSilentAndNonBlocking(unittest.TestCase):
-    """INV-012 and INV-048: the Bootcamper neither sees nor waits on this."""
+    """INV-012: the Bootcamper neither sees nor waits on this.
+
+    "Never blocks" cites no invariant (#607): INV-048 governs only the recap PDF, and no
+    registered invariant states this clause, so it is queued as a DEFERRED INVARIANT block.
+    """
 
     def setUp(self):
         self.feedback = read(FEEDBACK)
@@ -144,7 +148,7 @@ class TheAppendIsSilentAndNonBlocking(unittest.TestCase):
 
     def test_it_never_blocks(self):
         self.assertRegex(re.sub(r"\s+", " ", self.entry), r"(?i)Never blocks")
-        self.assertIn("INV-048", self.entry)
+        self.assertNotIn("INV-048", self.entry)
 
     def test_it_does_not_offer_the_upstream_forward(self):
         """That offer needs a 👉 question, which this path must not ask."""

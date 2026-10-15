@@ -595,8 +595,8 @@ inert. `{name}` = `truthset_verification`. Follow
 `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", including its
 rule that every caption is derived from the opened image and its tab label, never from the plan.
 
-⛔ **(INV-185) The capture tool is bundled — run it, do not assess whether automation exists.**
-`${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py` (skill-relative fallback
+⛔ **(INV-122) The capture tool is bundled — run it, do not assess whether automation exists.**
+`${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py` (INV-185; skill-relative fallback
 `../../scripts/capture_screenshots.py`, INV-252). It tries several headless backends itself and
 writes both the PNGs and a `<name>-tabs.json` coverage manifest that graduation reads:
 
@@ -637,7 +637,7 @@ module's recap `Actions Taken`, in the app's tab order — capture is one image 
 there is nothing redundant to drop and a count cap can only delete unique content (INV-146). This is
 never a 👉 question and never blocks the visualization.
 
-⛔ (INV-146) Capture **before** the module's teardown and purge (`phase2-close.md` Step 4) —
+⛔ (INV-131) Capture **before** the module's teardown and purge (`phase2-close.md` Step 4) —
 afterwards the server is gone and the Truth Set data cannot be re-served, so a missed capture is permanent.
 
 ### 2.4b Any change to the visualization means rebuilding the snapshot

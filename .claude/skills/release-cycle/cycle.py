@@ -993,7 +993,7 @@ def render_entry(state, run_dir):
             " still refuses, because a record of the skill is unresolved" if after is None else ""))
         if after and after.strip():
             lines.append(quote_body(after))
-    lines.append("- **Establishes no invariant** (INV-309): it records a run. The invariants the "
+    lines.append("- **Establishes no invariant** (INV-365): it records a run. The invariants the "
                  "run's work raised are decided by `/review-invariants` at checkpoint D and recorded "
                  "in that skill's own entry.")
     return "\n".join(lines) + "\n"

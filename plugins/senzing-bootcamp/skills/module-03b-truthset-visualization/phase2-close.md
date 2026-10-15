@@ -66,7 +66,7 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 > - **The gate accepts** `web_service.status` = `"passed"`, or `"unavailable"` with one of the
 >   two reasons, **and**, on either, the snapshot conditions above: present, non-empty, and built
 >   from `records_total > 0`.
-> - ⛔ **A missing, empty or zero-record snapshot blocks on every status (INV-077).** `unavailable`
+> - ⛔ **A missing, empty or zero-record snapshot blocks on every status (INV-077, INV-250).** `unavailable`
 >   excuses the server, never the snapshot: the STOP paragraph above applies unchanged, and routes
 >   back to Phase 1.
 > - **`failed` is not accepted.** It means the fallback has not finished: load

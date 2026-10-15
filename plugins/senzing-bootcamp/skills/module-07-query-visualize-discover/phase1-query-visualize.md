@@ -952,8 +952,8 @@ Pin the offer verbatim:
 *(Internal: end the turn on this question and wait.)*
 
 - **Declines:** skip the visualization and continue to "Next: Discover phase (step 4)". This
-  question is itself the visualization offer for the Query Completeness Gate (one offer covers
-  the entity graph and the results summary INV-046 asks for; both live inside the single app) —
+  question is itself the one visualization offer INV-046 requires, for the Query Completeness
+  Gate; it covers the entity graph and the results summary, both inside the single app —
   checkpoint `m7_visualizations` as `{"offered": true, "accepted": false}` under
   `module_7_query`.
 - **Accepts:** build and present the app (below), then checkpoint `m7_visualizations` as
