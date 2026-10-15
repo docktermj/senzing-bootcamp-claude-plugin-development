@@ -683,6 +683,38 @@ class NarrationIsNeverTruncated(unittest.TestCase):
         self.assertNotIn("OVERRUN: scenes[1]", err)
         self.assertTrue(plan[0].voiced and plan[1].voiced)
 
+    def test_a_small_overrun_prints_figures_above_the_planned_length(self):
+        # #651: an overrun under 0.05 s printed "needs 2.0 s, more than the planned 2 s;
+        # extended to 2.0 s". Both figures now round UP to the next 0.1 s.
+        planned = 2
+        spoken = planned - VIDEO.NARRATION_LEAD - VIDEO.NARRATION_TAIL + 0.01
+        board = a_storyboard([
+            {"type": "title_card", "duration": planned, "narration": "x", "module": "A"}])
+        plan, err = self.plan(board, FAKE_ENGINE, lambda text: pcm_seconds(spoken))
+        needed = VIDEO.NARRATION_LEAD + plan[0].narration_seconds + VIDEO.NARRATION_TAIL
+        self.assertGreater(needed, planned)
+        # Negative control: the old one-decimal format shows no overrun for this scene,
+        # so the case really is the one #651 reported.
+        self.assertFalse(float(f"{needed:.1f}") > planned)
+        self.assertFalse(float(f"{plan[0].duration:.1f}") > planned)
+        line = re.search(r"^OVERRUN: scenes\[0\] \(title_card\): the narration needs "
+                         r"([\d.]+) s .*more than the planned ([\d.]+) s; the scene is "
+                         r"extended to ([\d.]+) s", err, re.M)
+        self.assertIsNotNone(line, err)
+        shown_needs, shown_planned, shown_extended = (float(g) for g in line.groups())
+        self.assertEqual(planned, shown_planned)
+        self.assertGreater(shown_needs, shown_planned, line.group(0))
+        self.assertGreater(shown_extended, shown_planned, line.group(0))
+        for figure in line.group(1), line.group(3):
+            self.assertRegex(figure, r"^\d+\.\d$", "both figures print with one decimal")
+
+    def test_a_fitting_narration_prints_no_overrun(self):
+        board = a_storyboard([
+            {"type": "title_card", "duration": 2, "narration": "x", "module": "A"}])
+        _plan, err = self.plan(board, FAKE_ENGINE, lambda text: pcm_seconds(
+            2 - VIDEO.NARRATION_LEAD - VIDEO.NARRATION_TAIL))
+        self.assertNotIn("OVERRUN", err)
+
     def test_without_a_voice_the_estimate_extends_the_scene(self):
         words = " ".join(["word"] * 80)
         board = a_storyboard([

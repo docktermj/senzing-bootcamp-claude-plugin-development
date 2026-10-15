@@ -3223,7 +3223,8 @@ offline (`NETWORK_MODULES` are never imported).
 - `plan_timeline`: a missing or unreadable image becomes a title card. A
   scene lasts max(planned, narration plus lead and tail); without a voice,
   narration time is estimated at `WORDS_PER_MINUTE`. Each extension prints
-  `OVERRUN:`. Captions (the narration by default) are always burned in,
+  `OVERRUN:`, with the needed and extended lengths rounded up to the next
+  0.1 s so both show above the planned length. Captions (the narration by default) are always burned in,
   two lines per screen, paced by word count.
 - `tag_line_layout`: the closing card's text defaults to "Resolved:
   <bootcamper>, Senzing Bootcamp graduate.". "Resolved:" gets its own line,
@@ -10253,7 +10254,7 @@ looks wrong.
 - `tests/test_recap_structure_checked_per_module.py`: 12
 - `tests/test_recap_summary_blocks.py`: 30
 - `tests/test_recap_tab_coverage.py`: 19
-- `tests/test_recap_video.py`: 145
+- `tests/test_recap_video.py`: 147
 - `tests/test_record_limit_negative_is_rescoped.py`: 13
 - `tests/test_recorded_container_commands_use_the_recorded_runtime.py`: 17
 - `tests/test_registration_idempotency_is_constructed.py`: 12
@@ -10809,7 +10810,7 @@ tests a rebuild can pass from behavior alone.
     answered", matched case-insensitively. A recap-shaped or headingless
     document is refused, and an empty `--require-sections` is an error.
   - **`generate_document_pdf.py`** only delegates to this script.
-- **`generate_recap_video.py`** (`tests/test_recap_video.py`, 145 tests).
+- **`generate_recap_video.py`** (`tests/test_recap_video.py`, 147 tests).
   - **Exit codes:** 0 rendered, 1 invalid storyboard, 2 missing capability, 3
     encode failed. Nothing is written unless the code is 0.
   - **Errors** name the field at fault.
@@ -12412,3 +12413,8 @@ Senzing licensing, with no SPDX identifier.
   it all, with an INV-370 `PROPOSED AMENDMENT` queued (the container route
   had no exec form and no toolchain, and the server serves no install
   command)
+- #651: the recap-video renderer's `OVERRUN:` line rounds its needed and
+  extended-to figures up to the next 0.1 s (`math.ceil(x * 10) / 10`), and
+  `tests/test_recap_video.py` pins a small overrun printing both above the
+  planned length (an overrun under 0.05 s printed "needs 2.0 s, more than the
+  planned 2 s; extended to 2.0 s")
