@@ -10274,8 +10274,8 @@ looks wrong.
 - `tests/test_why_key_details_flag_is_cited_not_guessed.py`: 12
 - `tests/test_why_side_match_family_is_renamed.py`: 7
 - `tests/test_windows_browser_discovery.py`: 23
-- `tests/test_windows_forms_at_hand_run_sites.py`: 40
-- `tests/test_windows_powershell_guidance.py`: 27
+- `tests/test_windows_forms_at_hand_run_sites.py`: 43
+- `tests/test_windows_powershell_guidance.py`: 36
 - `tests/test_worked_steers.py`: 33
 - `tests/test_wrapped_text.py`: 32
 - `tests/test_write_gate.py`: 23
@@ -12078,6 +12078,15 @@ Senzing licensing, with no SPDX identifier.
   the 21 sites its hand-written guard listed, so Truth Set visualization and
   later steps gave a C#, Rust or TypeScript Bootcamper no folder, manifest or
   build command)
+- #596: graduation's four recap venv, install and render blocks are guide-run
+  with one POSIX form, their Windows lines written with `/` and each followed
+  by the `#guide-run-blocks` pointer line, and
+  `tests/test_windows_powershell_guidance.py` reads the lines under a
+  `# Windows` comment in every fence (no unquoted backslash outside a
+  PowerShell fence, no bare `$NAME` in one), with an INV-167 `PROPOSED
+  AMENDMENT` queued (the Windows lines sat in bash fences with backslash paths
+  and `${CLAUDE_PLUGIN_ROOT}`, labelled for PowerShell, so they broke in both
+  PowerShell and Git Bash, and the guard read only PowerShell fences)
 - #600: each measured search route is stated in full once and every other
   site points at it, the route's record in `tests/test_prescribed_search_queries.py`
   is its only stamp, records are keyed `(tool, query, category-or-language)`,
