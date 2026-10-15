@@ -21,7 +21,11 @@ The checks, one per acceptance criterion:
 * after a Module 6 switch the loader gets its PostgreSQL worker count before Phase B (INV-296);
 * a detour that cannot finish leaves `database_type: sqlite` and asks the original question
   again, naming the failure, as a new state (INV-284), never an INV-006 repeat;
-* neither file still points at migration guidance that does not exist.
+* neither file still points at migration guidance that does not exist;
+* (#598) Module 6's **First:** and the record's `return_to.resume` name the same point, the SQLite
+  volume check's finish (`sqlite-volume-check-finish`), and that point is the "When it finishes"
+  bullet, which gives the loader its PostgreSQL worker count before Phase B (INV-296). Before
+  #598 the record said `phase-b`, so a literal resume skipped the retune.
 
 ⛔ **Each check is a function of the file text, so the negative controls run the SAME check on a
 mutated copy** (INV-265). Prose is matched with whitespace collapsed (INV-346), and a re-wrap
@@ -251,10 +255,17 @@ def m4_problems(m4):
     return problems
 
 
+#: Module 6's resume point after a finished database switch (#598): the check's finish.
+M6_RESUME = "sqlite-volume-check-finish"
+
+
 def m6_problems(phase_a):
     bullet = m6_migrate_bullet(phase_a)
     problems = sender_problems(bullet, "Module 6 Phase A's migrate option", "data_processing",
-                               "phase-b", "sqlite-volume-check", "The flow resumes at Phase B.")
+                               M6_RESUME, "sqlite-volume-check",
+                               "The flow resumes at this check's finish, the When it finishes "
+                               "bullet below, which retunes the loader and then continues to "
+                               "Phase B.")
     if bullet is None:
         return problems
     if '`{decided: true, choice: "migrate", loadable, tier, raw_value}`' not in flat(bullet):
@@ -269,6 +280,34 @@ def m6_problems(phase_a):
         "Item 2 does not skip it on the recorded `migrate`",
         "the answer replaces that marker",
     ), "Module 6 Phase A's migrate option")
+    return problems
+
+
+def m6_resume_problems(m6, phase_a):
+    """#598: Module 6's First: and the record name one resume point, where the retune runs."""
+    bullet = m6_migrate_bullet(phase_a)
+    if bullet is None:
+        return ["Module 6 Phase A has no migrate option"]
+    record = re.search(r'"resume":\s+"([^"]+)"', bullet)
+    if record is None:
+        return ["the migrate option's record has no resume value"]
+    resume = record.group(1)
+    problems = []
+    clause = first_clause(m6)
+    if clause is None or "`%s`" % resume not in flat(clause):
+        problems.append("Module 6's First: does not name the record's resume point %r" % resume)
+    elif "When it finishes bullet" not in flat(clause) or "(INV-296)" not in flat(clause):
+        problems.append("Module 6's First: does not say the resume point retunes the loader")
+    finish = between(bullet, "- **When it finishes,**", "- **When it cannot finish,**")
+    if finish is None or "This bullet is `%s`" % resume not in flat(finish):
+        problems.append("no When it finishes bullet is named %r, so the resume lands nowhere"
+                        % resume)
+    else:
+        f = flat(finish)
+        retune, phase_b = f.find("(INV-296) Before the Phase B load"), f.find(
+            "Then continue to Phase B.")
+        if retune == -1 or phase_b == -1 or retune > phase_b:
+            problems.append("the resume point does not retune the loader before Phase B")
     return problems
 
 
@@ -333,6 +372,9 @@ class TheLiveFilesMeetEveryCriterion(unittest.TestCase):
 
     def test_module_6_names_the_steps_and_tunes_the_loader_before_phase_b(self):
         self.assertEqual([], m6_problems(self.f["phaseA"]))
+
+    def test_module_6_resumes_where_its_record_says_and_retunes_first(self):
+        self.assertEqual([], m6_resume_problems(self.f["module-06"], self.f["phaseA"]))
 
     def test_no_stale_migration_hand_off_remains(self):
         self.assertEqual([], stale_problems(self.f))
@@ -447,6 +489,26 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
                        "Then continue to Phase B.")
         self.assertTrue(m6_problems(self.mutate(self.f["phaseA"], para)))
 
+    def test_a_module_6_record_that_resumes_at_phase_b_fails(self):
+        """#598: the pre-fix record skipped the retune on a literal resume."""
+        mutated = self.mutate(self.f["phaseA"], '"resume": "%s"' % M6_RESUME, '"resume": "phase-b"')
+        self.assertTrue(m6_problems(mutated))
+        self.assertTrue(m6_resume_problems(self.f["module-06"], mutated))
+
+    def test_a_module_6_first_that_names_another_point_fails(self):
+        mutated = self.mutate(self.f["module-06"], "`%s`" % M6_RESUME, "Phase B")
+        self.assertTrue(m6_resume_problems(mutated, self.f["phaseA"]))
+
+    def test_a_resume_point_without_the_retune_fails(self):
+        para = between(self.f["phaseA"], "⛔ **(INV-296) Before the Phase B load",
+                       "Then continue to Phase B.")
+        self.assertTrue(m6_resume_problems(self.f["module-06"], self.mutate(self.f["phaseA"], para)))
+
+    def test_an_unnamed_finish_bullet_fails(self):
+        mutated = self.mutate(self.f["phaseA"], "This bullet is `%s`" % M6_RESUME,
+                              "This bullet is the finish")
+        self.assertTrue(m6_resume_problems(self.f["module-06"], mutated))
+
     def test_a_module_6_reask_that_item_2_skips_fails(self):
         mutated = self.mutate(self.f["phaseA"], "Item 2 does not skip it on the recorded "
                               "`migrate`,", "Item 2 skips it on the recorded `migrate`,")
@@ -499,6 +561,7 @@ class TheChecksSurviveARewrap(unittest.TestCase):
         self.assertEqual([], first_clause_problems(skills_of(f)))
         self.assertEqual([], m4_problems(f["module-04"]))
         self.assertEqual([], m6_problems(f["phaseA"]))
+        self.assertEqual([], m6_resume_problems(f["module-06"], f["phaseA"]))
         self.assertEqual([], stale_problems(f))
 
     def test_a_rewrapped_regression_is_still_caught(self):

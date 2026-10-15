@@ -2100,7 +2100,11 @@ PostgreSQL typically requires SSL (`PGSSLMODE=require`) — confirm via MCP.
 
 **Option 4 — Switch to SQLite:** first rewrite `database_type` to `sqlite` by applying
 instruction 1 at the head of this step again (it replaces the `postgresql` value written there),
-then proceed with the SQLite setup above.
+then proceed with the SQLite setup above. ⛔ **(INV-364) On a `setup_detour`, this waits for the
+finish:** instruction 1 wrote no `postgresql` value there, so nothing is rewritten now, and
+[Receiving a `setup_detour`](#receiving-a-setup-detour) writes `database_type` only when every
+step is done. An `sdk_repair` that continues to SQLite and then cannot finish leaves
+`database_type` as it was. On a `database_switch`, Option 4 ends the detour instead.
 
 SQLite remains the default recommendation for pure evaluation; PostgreSQL (especially via Docker)
 is the production-style path. INV-037 is satisfied by any of these paths.
@@ -2112,7 +2116,7 @@ continue to Step 8.
 - **2, "Install PostgreSQL locally":** **Option 2** above.
 - **3, "Use an existing PostgreSQL server":** **Option 3** above.
 - **4, "Switch to SQLite":** **Option 4** above, which rewrites `database_type` and runs the SQLite
-  setup.
+  setup (on a `setup_detour`, as Option 4 says).
 
 ## Step 8: Create Engine Configuration
 

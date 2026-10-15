@@ -1951,7 +1951,8 @@ branch.
   added to `completed` unrun, and its "Mark Module 2 as complete" does not
   apply), Step 7 asks its database question and writes `database_type` at the
   finish, and its option 4 is an answer there, a stop only on a
-  `database_switch`. Nothing is restored when it cannot finish.
+  `database_switch`; Option 4's rewrite of `database_type` waits for the
+  finish too. Nothing is restored when it cannot finish.
 
 Completion runs `bootcamp-onboarding/module-completion.md` (Module 2 recap
 in `docs/bootcamp_recap.md`), asks the transition question naming the next
@@ -2135,7 +2136,9 @@ Contract:
 registers it in `config/data_sources.yaml`, and holds the single
 license-key gate. It starts from `config/bootcamp_progress.json` with the
 standard banner set. A `collection_return` instead runs only Step 2's
-receiving branch, and a `setup_detour` goes to SDK setup's.
+receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
+`"8a"`) to the record's `completed` in place of its checkpoint, and a
+`setup_detour` goes to SDK setup's.
 
 - **License framing.** Every capacity decision, including how many records
   to generate, reads `license_record_limit` and
@@ -2258,8 +2261,9 @@ receiving branch, and a `setup_detour` goes to SDK setup's.
 `phase1-quality-assessment.md` (steps 1-7), `phase2-data-mapping.md`
 (8-20) and the optional `phase3-test-load.md` (21-25). Non-Latin guidance
 uses `search_docs(..., category='globalization')`. A `quality_iteration`
-skips the banner and goes straight to Phase 2, and a `setup_detour` goes to
-SDK setup's receiving branch. A legacy `current_step` 26
+skips the banner and goes straight to Phase 2, a `setup_detour` goes to
+SDK setup's receiving branch, and a `collection_return` goes straight to
+Step 7b's return route item 4 (`#the-return-route`). A legacy `current_step` 26
 means the module is complete: only the transition question is asked.
 
 - **Steps 1-5.** Take the sources from the registry. Verify files and
@@ -2315,8 +2319,11 @@ means the module is complete: only the transition question is asked.
   - 7b applies when nothing is fixable. `cord` and `free_data` get a
     statement only. Other sources get a pinned "Return to Data collection"
     option, which writes `current_step` `"7b"` and `collection_return`
-    (`source`, `provenance`, `from_band`, `resume_step`, `started_at`),
-    and resumes at step 6 (`synthesized`) or step 4.
+    (`source`, `provenance`, `from_band`, `resume_step`, `completed`,
+    `started_at`), and resumes at step 6 (`synthesized`) or step 4. An
+    interrupted return resumes at the row's first Module 4 step not in
+    `completed` (a record without the key reads as empty) and does not
+    re-present the gate.
 - **Phase 2 setup.**
   - A `quality_iteration` with stage `remap` writes
     `data/mapping/{source}_loaded_record_ids.txt`, reruns steps 8-18 per
@@ -2458,8 +2465,9 @@ Phase A (`phaseA-build-loading.md`, steps 1-4a):
   no `sqlite_volume_prompt` or Module 4 `sqlite_load_time_prompt` marker covers
   the load, ask proceed or migrate to PostgreSQL and record
   `sqlite_volume_prompt` `{decided, choice, loadable, tier, raw_value}`.
-  Migrate runs SDK setup's `setup_detour` (`database_switch`, resume Phase B,
-  re-ask this check). Finished, the loader takes the tier's full PostgreSQL
+  Migrate runs SDK setup's `setup_detour` (`database_switch`, resume
+  `sqlite-volume-check-finish`, re-ask this check); Module 6's **First:**
+  names the same point, the "When it finishes" bullet. Finished, the loader takes the tier's full PostgreSQL
   concurrency before Phase B (comment rewritten, rebuilt if compiled; a
   `demo` loader is left as it is); unfinished, the failure is named and the
   question asked again, which the `migrate` marker does not skip. On
@@ -9932,7 +9940,7 @@ looks wrong.
 - `tests/test_data_collection_generated_scenarios.py`: 22
 - `tests/test_data_collection_non_yielding_run.py`: 20
 - `tests/test_database_backup_has_one_implementation.py`: 12
-- `tests/test_database_switch_detours_through_sdk_setup.py`: 30
+- `tests/test_database_switch_detours_through_sdk_setup.py`: 35
 - `tests/test_database_type_write_precedes_the_step7_branches.py`: 14
 - `tests/test_datastore_mount_crossing_is_measured.py`: 13
 - `tests/test_dated_negatives_are_marked.py`: 14
@@ -10079,7 +10087,7 @@ looks wrong.
 - `tests/test_module5_full_output_file_path_is_written_at_step_18.py`: 18
 - `tests/test_module5_phase1_gates_and_scoring.py`: 14
 - `tests/test_module5_phase3_exits_return_to_the_per_source_loop.py`: 9
-- `tests/test_module5_phase3_sdk_repair_detours_through_sdk_setup.py`: 39
+- `tests/test_module5_phase3_sdk_repair_detours_through_sdk_setup.py`: 42
 - `tests/test_module5_step16_asks_about_loading_only_after_the_last_source.py`:
   5
 - `tests/test_module5_step18_validates_the_full_output.py`: 6
@@ -10104,7 +10112,7 @@ looks wrong.
 - `tests/test_no_host_control_is_offered_as_a_question.py`: 24
 - `tests/test_no_instruction_writes_into_specs.py`: 7
 - `tests/test_no_pip_install_senzing.py`: 20
-- `tests/test_no_progress_gate_returns_to_data_collection.py`: 20
+- `tests/test_no_progress_gate_returns_to_data_collection.py`: 29
 - `tests/test_no_stale_blocked_claim.py`: 9
 - `tests/test_non_yielding_steps.py`: 22
 - `tests/test_normalize_docs_markdown.py`: 34
@@ -12087,6 +12095,15 @@ Senzing licensing, with no SPDX identifier.
   AMENDMENT` queued (the Windows lines sat in bash fences with backslash paths
   and `${CLAUDE_PLUGIN_ROOT}`, marked as PowerShell, so they broke in both
   PowerShell and Git Bash, and the guard read only PowerShell fences)
+- #598: Module 5's **First:** routes its own `collection_return` to Step 7b
+  item 4, the record gains `completed` (Module 4's receiving branch adds each
+  finished step, item 4 resumes at the first one not listed), Module 6's
+  `database_switch` record resumes at `sqlite-volume-check-finish`, which
+  its **First:** also names, and Module 2 Step 7's Option 4 waits for a
+  detour's finish, each asserted by the INV-366 and INV-364 enforcers (a
+  resumed return re-ran Module 5's start apparatus and could not tell which
+  steps had finished, a resumed switch skipped the INV-296 retune, and a
+  failed `sdk_repair` had already rewritten `database_type`)
 - #600: each measured search route is stated in full once and every other
   site points at it, the route's record in `tests/test_prescribed_search_queries.py`
   is its only stamp, records are keyed `(tool, query, category-or-language)`,

@@ -1198,6 +1198,8 @@ turn, letting Phase 2's first step supply that turn's 👉:
   no second confirmation.** The same route runs when the Bootcamper asks, in their own words, for a
   regeneration or a new export of this source.
 
+<a id="the-return-route"></a>
+
 **The return route, for this source only:**
 
 1. **Record the return in one quiet write** to `config/bootcamp_progress.json`: set `current_step`
@@ -1209,11 +1211,14 @@ turn, letting Phase 2's first step supply that turn's 👉:
      "provenance": "synthesized | own | unknown",
      "from_band": "70-79 | <70",
      "resume_step": 6,
+     "completed": [],
      "started_at": "<ISO 8601>"
    }
    ```
 
-   with `resume_step` from the table below. ⛔ **(INV-284, INV-366) `current_module` is not changed:** the
+   with `resume_step` from the table below. `completed` lists the Module 4 steps of this source's
+   row that have finished, by number (`"2"`, `"3"`, `"8"`, `"8a"`); Module 4's receiving branch adds
+   each one in place of that step's checkpoint. ⛔ **(INV-284, INV-366) `current_module` is not changed:** the
    Bootcamper stays in this module, and the key is what lets an interrupted return resume.
 
 2. **Run Module 4's receiving branch** —
@@ -1236,9 +1241,12 @@ turn, letting Phase 2's first step supply that turn's 👉:
    with the new score: ⛔ **(INV-284) that is a new state, NOT an INV-006 repeat**, so present
    whichever form the new score and this step's check select. At ≥80% there is no question.
 
-4. **(INV-366) An interrupted return** resumes from `current_step: "7b"` with `collection_return` present:
-   continue the return for the named source from the first Module 4 step not yet done, and do not
-   re-present the gate, whose answer is already recorded.
+4. **(INV-366) An interrupted return** resumes from `current_step: "7b"` with `collection_return` present
+   (this module's **First:** sends it here): continue the return for the named source at the first
+   Module 4 step in its provenance's row above that is not listed in `completed`, and do not
+   re-present the gate, whose answer is already recorded. A record with no `completed` key, written
+   before the key existed, reads as `completed: []`, so the return restarts at the row's first step.
+   When every step in the row is listed, the session stopped before item 3's write: make it now.
 
 **Success indicator:** ✅ All data sources categorized + `docs/data_source_evaluation.md`
 created.
