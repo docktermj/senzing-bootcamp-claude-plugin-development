@@ -280,8 +280,10 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      instead. So the rename is the whole `MATCH_*` family, not just the details object: a parser
      carried across from `get_entity` or from an export reads all three fields off the wrong names
      and each one renders blank rather than raising
-     (`get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')`,
-     server **1.33.0, 2026-08-21** — that enumeration is the complete member list it returned).
+     (`get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')`, the
+     document shared by `why_entities`, `why_records` and `why_record_in_entity`, server
+     **1.33.0, 2026-08-21** — that enumeration is the complete member list it returned).
+     <!-- MCP-NEGATIVE: get_sdk_reference(topic='response_schemas', filter='why_entities', language='python') — no MATCH_KEY, ERRULE_CODE or MATCH_KEY_DETAILS field appears under WHY_RESULTS[] at any depth — owner: get_sdk_reference(topic='response_schemas', filter='why_entities') IS the route that owns the why response document (shared by why_entities, why_records and why_record_in_entity), so its field list is the answer rather than a miss; the same document carries the renamed trio one level in, at WHY_RESULTS[].MATCH_INFO — WHY_KEY, WHY_ERRULE_CODE and WHY_KEY_DETAILS, of which only WHY_KEY_DETAILS is flag-gated (requires_flags SZ_INCLUDE_MATCH_KEY_DETAILS) — which is what makes the absence a rename rather than a gap (absence negative) — server 1.36.0, 2026-09-02 -->
    - ⚠️ **`CONFIRMATIONS[]` has a third state, and it is neither of the two above: present and
      empty.** Observed on every `why_records` call of a 2026-08-18 run — rules `SNAME_SSTAB` and
      `SF1_PNAME_CFF`, `SZ_INCLUDE_FEATURE_SCORES` in force — while `how_entity`'s
@@ -300,16 +302,18 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      with a relations flag.** Two separate things are known here and neither governs the other
      (INV-169); read both before choosing flags.
 
-     **What the server documents** (server **1.35.3**, 2026-09-01): the field's requirement is
-     in `response_schemas`, not in `flags`.
-     `get_sdk_reference(topic='response_schemas', filter='why_entities')` lists
-     `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` with
-     `requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]`, and that flag's row documents the
-     relations dependency in its description. ⚠️ **The `flags` topic alone still points elsewhere**:
-     `SZ_INCLUDE_MATCH_KEY_DETAILS`' own `response_paths` names only
-     `RELATED_ENTITIES[].MATCH_KEY_DETAILS`, the **related-entity** object — so checking only that
-     topic leaves the why-side field looking unattributed. Read both topics before concluding a
-     field is populated by nothing.
+     **What the server documents** (server **1.38.2**, 2026-10-15): the field's requirement is
+     in `response_schemas`, not in `flags`. Read it for the Bootcamper's binding:
+     `get_sdk_reference(topic='response_schemas', filter='why_entities',
+     language='<chosen_language>')` lists `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` with
+     `requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]`. That flag's own row,
+     `get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')`, documents the
+     relations dependency in its description: *"dependent on using one of the following flags:
+     SZ_ENTITY_INCLUDE_ALL_RELATIONS, SZ_ENTITY_INCLUDE_POSSIBLY_SAME_RELATIONS, …"*.
+     ⚠️ **The `flags` topic alone still points elsewhere**: `SZ_INCLUDE_MATCH_KEY_DETAILS`' own
+     `response_paths` names only `RELATED_ENTITIES[].MATCH_KEY_DETAILS`, the **related-entity**
+     object — so checking only that topic leaves the why-side field looking unattributed. Read
+     both topics before concluding a field is populated by nothing.
 
      ⚠️ **What was observed, engine-side — observation-only, not an MCP claim** (INV-080/INV-149):
      on **Senzing SDK 4.3.4**, `WHY_KEY_DETAILS` was **absent** from `WHY_RESULTS[].MATCH_INFO`
@@ -321,7 +325,8 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      were `CANDIDATE_KEYS, DISCLOSED_RELATIONS, FEATURE_SCORES, MATCH_LEVEL_CODE, WHY_ERRULE_CODE,
      WHY_KEY`). ⛔ **This is NOT a version floor:** the with-flag arm was never run on 4.3.2, so
      the evidence is equally consistent with "the flag is required on both" and says nothing about
-     a boundary. Do not write one.
+     a boundary. Do not write one. What was observed agrees with what the server now documents;
+     it is still an observation, held apart from the documentation (INV-169).
 
      **So: pass `SZ_INCLUDE_MATCH_KEY_DETAILS` together with a relations flag** — the relations
      dependency its own row documents still holds — and treat the breakdown as conditional rather

@@ -217,6 +217,57 @@ patterns (get/why/how), consult `reporting_guide(topic='entity_views', language=
 version='current')`. For network/path patterns, consult `reporting_guide(topic='graph',
 language='<lang>', version='current')`.
 
+**CRITICAL, file placement:** if the generated scaffold uses `/tmp/`, `ExampleEnvironment`, or
+any path outside the working directory, override the database path to `database/G2C.db` and
+ensure all output files use project-relative paths. No files outside the working directory.
+
+Example query programs (extension depends on chosen language):
+
+- `find_duplicates`: find entities with multiple records.
+- `search_entities`: search by name, email, phone.
+- `customer_360`: get the complete customer view.
+- `query_results`: retrieve and format resolved entities.
+
+**Iterate over records, not entity IDs.** The caller knows the record IDs and data source codes
+they loaded, they do NOT know entity IDs (those are internal to Senzing). Query programs
+iterate over loaded records (from the input JSONL file or a record manifest) and use
+`get_entity_by_record_id(data_source, record_id)` to look up each record's entity. Never
+iterate over a guessed range of entity IDs.
+
+⛔ **(INV-180) One file row is NOT one record: fold on `(data_source, record_id)` before you
+count.** A
+Senzing record's identity is the pair the loader supplied —
+`add_record(data_source_code, record_id, record_definition, flags)` — and re-sending the same pair
+**replaces** the record rather than adding a second one: *"When a record with a unique key is sent
+to Senzing that matches a record already loaded, the new record replaces the current one in Senzing
+and doesn't contribute to the DSR count"* ("Data Source Records (DSRs) Explained" → *Uniquely
+Identifying Records in Senzing*: the `search_docs` route to it is stated once, in
+`../module-06-data-processing/phaseB-load-first-source.md` → "Receiving a `quality_iteration`
+(from Query, Visualize and Discover, or Phase D)", INV-300; signature via
+`get_sdk_reference(topic='parameters', filter='add_record', language='python')`).
+
+So a mapped file may legitimately hold **more rows than distinct keys** — that is the normal
+outcome when Module 5's mapping decision was to keep a source's verified duplicate rows rather
+than pre-deduplicate them. Any program that walks a source's rows to associate them with resolved
+entities MUST deduplicate by `(data_source, record_id)` **before** counting or grouping. This is a
+key-fold, not a language idiom: use whatever set/map your chosen language provides.
+
+**Why it matters, from a real run:** without the fold, `find_duplicates` counted physical rows as
+constituent records and reported two entities as holding **23 and 15** records. Inspecting them
+with `get_entity_by_entity_id` showed **2 each** — `add_record` had upserted the duplicates all
+along. Both were flagged for manual over-matching review that was never warranted: a wasted review
+cycle, and in a KYC context a wrong signal about which entities need analyst attention.
+
+**Cross-check before you report.** Senzing's own resolved view is the authority on how many records
+an entity has; the file is not. When a per-record count looks surprising, confirm it against
+`get_entity_by_entity_id` (or `RECORD_SUMMARY[]`'s `RECORD_COUNT`) before presenting it as a
+finding.
+
+### Flags and response shapes for the query programs
+
+Part of step 2: read this before a query program passes flags to an SDK method or parses its
+response.
+
 **Flags:** when generated query code calls SDK methods that accept flags (`get_entity`,
 `get_entity_by_record_id`, `search_by_attributes`, `how_entity`, `why_entities`, `why_records`,
 `why_record_in_entity`, `find_network`, `find_path`), look up available flags via
@@ -310,21 +361,12 @@ than as a flags problem. OR the flag in explicitly:
 `SZ_WHY_ENTITIES_DEFAULT_FLAGS | SZ_ENTITY_INCLUDE_ENTITY_NAME`
 (`SZ_ENTITY_INCLUDE_ENTITY_NAME`'s `applies_to` includes `why_entities`, `why_records` and
 `why_record_in_entity` — verified 2026-07-31). ⛔ **Add `SZ_INCLUDE_MATCH_KEY_DETAILS` together
-with a relations flag when the match-key breakdown is wanted.** **The server documents the requirement — read it from
-`response_schemas`, not from `flags`.** `get_sdk_reference(topic='response_schemas',
-filter='why_entities')` lists `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` carrying
-`requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]`, and that flag's own row documents the relations
-dependency: *"dependent on using one of the following flags: SZ_ENTITY_INCLUDE_ALL_RELATIONS,
-SZ_ENTITY_INCLUDE_POSSIBLY_SAME_RELATIONS, …"* (server **1.35.3**, 2026-09-01). ⚠️ **The `flags`
-topic alone still attributes nothing to the why-side path** — `SZ_INCLUDE_MATCH_KEY_DETAILS`'
-`response_paths` names only `RELATED_ENTITIES[].MATCH_KEY_DETAILS` — so a reader who checks only
-that topic concludes the field is unattributed. Check `response_schemas` too. The earlier
-engine-side observation agrees with what is now documented: on **SDK 4.3.4** the field was
-**absent** without that flag and **present** with it plus `SZ_ENTITY_INCLUDE_ALL_RELATIONS`, and on
-**4.3.2** absent without it (observation-only, 2026-08-16; INV-080/INV-149).
+with a relations flag when the match-key breakdown is wanted.** That rule, the routes that
+document it and what was observed engine-side are stated once, in `phase2-discover.md` step
+4b.3; follow them there rather than a copy here (INV-300).
 
-⚠️ **A why call under its own default composite will not produce it, and that is documented rather
-than broken.** `SZ_WHY_RECORDS_DEFAULT_FLAGS` is `composite_members: ["SZ_INCLUDE_FEATURE_SCORES"]`
+⚠️ **A why call under its own default composite will not produce the breakdown, and that is
+documented rather than broken.** `SZ_WHY_RECORDS_DEFAULT_FLAGS` is `composite_members: ["SZ_INCLUDE_FEATURE_SCORES"]`
 — *"Equivalent to: SZ_INCLUDE_FEATURE_SCORES"* (server **1.35.3**, 2026-09-01) — so a
 `whyRecords(...)` called with the default plus a name flag returns `FEATURE_SCORES` and no
 `WHY_KEY_DETAILS`. Reported from a live Java run on 2026-08-26 and consistent with the
@@ -493,51 +535,6 @@ answer.** A bootcamper seeing no records concludes "the search found nothing use
 lacks that field", not "the flags I passed do not populate the field I read". So when a query's
 result is *empty rather than wrong*, re-check the three causes above before reporting the finding.
 
-**CRITICAL, file placement:** if the generated scaffold uses `/tmp/`, `ExampleEnvironment`, or
-any path outside the working directory, override the database path to `database/G2C.db` and
-ensure all output files use project-relative paths. No files outside the working directory.
-
-Example query programs (extension depends on chosen language):
-
-- `find_duplicates`: find entities with multiple records.
-- `search_entities`: search by name, email, phone.
-- `customer_360`: get the complete customer view.
-- `query_results`: retrieve and format resolved entities.
-
-**Iterate over records, not entity IDs.** The caller knows the record IDs and data source codes
-they loaded, they do NOT know entity IDs (those are internal to Senzing). Query programs
-iterate over loaded records (from the input JSONL file or a record manifest) and use
-`get_entity_by_record_id(data_source, record_id)` to look up each record's entity. Never
-iterate over a guessed range of entity IDs.
-
-⛔ **One file row is NOT one record: fold on `(data_source, record_id)` before you count.** A
-Senzing record's identity is the pair the loader supplied —
-`add_record(data_source_code, record_id, record_definition, flags)` — and re-sending the same pair
-**replaces** the record rather than adding a second one: *"When a record with a unique key is sent
-to Senzing that matches a record already loaded, the new record replaces the current one in Senzing
-and doesn't contribute to the DSR count"* ("Data Source Records (DSRs) Explained" → *Uniquely
-Identifying Records in Senzing*: the `search_docs` route to it is stated once, in
-`../module-06-data-processing/phaseB-load-first-source.md` → "Receiving a `quality_iteration`
-(from Query, Visualize and Discover, or Phase D)", INV-300; signature via
-`get_sdk_reference(topic='parameters', filter='add_record', language='python')`).
-
-So a mapped file may legitimately hold **more rows than distinct keys** — that is the normal
-outcome when Module 5's mapping decision was to keep a source's verified duplicate rows rather
-than pre-deduplicate them. Any program that walks a source's rows to associate them with resolved
-entities MUST deduplicate by `(data_source, record_id)` **before** counting or grouping. This is a
-key-fold, not a language idiom: use whatever set/map your chosen language provides.
-
-**Why it matters, from a real run:** without the fold, `find_duplicates` counted physical rows as
-constituent records and reported two entities as holding **23 and 15** records. Inspecting them
-with `get_entity_by_entity_id` showed **2 each** — `add_record` had upserted the duplicates all
-along. Both were flagged for manual over-matching review that was never warranted: a wasted review
-cycle, and in a KYC context a wrong signal about which entities need analyst attention.
-
-**Cross-check before you report.** Senzing's own resolved view is the authority on how many records
-an entity has; the file is not. When a per-record count looks surprising, confirm it against
-`get_entity_by_entity_id` (or `RECORD_SUMMARY[]`'s `RECORD_COUNT`) before presenting it as a
-finding.
-
 **Checkpoint:** write step 2.
 
 ## 3. Run exploratory queries
@@ -581,26 +578,11 @@ filter='why_records')`, server 1.32.9, 2026-08-14). If the query used default fl
 additional detail feature scores would add. ⛔ **For a why response the match-key breakdown is
 read from `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`, never from a `MATCH_KEY_DETAILS` field** —
 that field name is the one this module already corrected, and it is still wrong here.
-⛔ **And the rename is the whole `MATCH_*` family, not just that details object: its two sibling
-scalars are `WHY_RESULTS[].MATCH_INFO.WHY_KEY` and `WHY_RESULTS[].MATCH_INFO.WHY_ERRULE_CODE`.**
-`MATCH_KEY` and `ERRULE_CODE` are the **entity-side** names — real, but on
-`RESOLVED_ENTITY.RECORDS[]` and `RELATED_ENTITIES[]`. Carrying them across from a `get_entity` or
-export parser is the habit that produces the error, and all three fields render blank rather than
-raising (`get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')` —
-the document shared by `why_entities`, `why_records` and `why_record_in_entity` — server 1.33.0,
-2026-08-21).
-<!-- MCP-NEGATIVE: get_sdk_reference(topic='response_schemas', filter='why_entities', language='python') — no MATCH_KEY, ERRULE_CODE or MATCH_KEY_DETAILS field appears under WHY_RESULTS[] at any depth — owner: get_sdk_reference(topic='response_schemas', filter='why_entities') IS the route that owns the why response document (shared by why_entities, why_records and why_record_in_entity), so its field list is the answer rather than a miss; the same document carries the renamed trio one level in, at WHY_RESULTS[].MATCH_INFO — WHY_KEY, WHY_ERRULE_CODE and WHY_KEY_DETAILS, of which only WHY_KEY_DETAILS is flag-gated (requires_flags SZ_INCLUDE_MATCH_KEY_DETAILS) — which is what makes the absence a rename rather than a gap (absence negative) — server 1.36.0, 2026-09-02 -->
-⚠️ **`WHY_KEY_DETAILS` needs `SZ_INCLUDE_MATCH_KEY_DETAILS`, and that flag needs a relations
-flag — the server documents both.** Read the first from `response_schemas` for the Bootcamper's
-binding: `get_sdk_reference(topic='response_schemas', filter='why_entities',
-language='<chosen_language>')` marks `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` with
-`requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]`. Read the second from that flag's own row:
-`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')` says it is *"dependent on
-using one of the following flags: SZ_ENTITY_INCLUDE_ALL_RELATIONS,
-SZ_ENTITY_INCLUDE_POSSIBLY_SAME_RELATIONS, …"* (server **1.37.19**, 2026-10-02). If the field is
-missing for the flags in force, say so explicitly and fall back to `FEATURE_SCORES` rather than
-rendering an empty section — the full statement is in `phase2-discover.md` step 4b.3, which states
-it once (INV-179, INV-300).
+⛔ **(INV-115) And the rename is the whole `MATCH_*` family, not just that details object, and
+the details object needs a flag of its own.** Both rules, the renamed sibling scalars with their
+entity-side counterparts and the flag `WHY_KEY_DETAILS` needs with its relations dependency and
+fallback, are stated once, in `phase2-discover.md` step 4b.3, with their routes and stamps. Read
+them there before writing the parser, rather than a copy here (INV-300).
 
 <a id="recall-question"></a>
 
