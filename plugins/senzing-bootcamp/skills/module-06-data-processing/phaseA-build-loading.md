@@ -10,7 +10,10 @@ Complete these three checks before starting step 1.
 
 ### Conditional workflow, check Phase 3 status
 
-Read `config/data_sources.yaml` and check `test_load_status` per source:
+Read `config/data_sources.yaml` and check `test_load_status` per source. Leave out a source whose
+`mapping_status` is `skipped` (INV-363): it is not loaded, so this check neither acknowledges a
+test load for it nor says one is owed ([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)).
+Check every other source:
 
 - **`complete`**, Phase 3 was done in Module 5. Acknowledge: "You already test-loaded this
   source during Data Quality, Mapping, and Transformation (Phase 3) and saw [entity_count] entities. Data processing builds on that with

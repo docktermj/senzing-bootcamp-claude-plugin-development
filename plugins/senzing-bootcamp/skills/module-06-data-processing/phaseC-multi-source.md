@@ -17,7 +17,9 @@ load. A source whose `mapping_status` is `skipped` is not loaded: it is not coun
 
 Read `config/data_sources.yaml` for `quality_score`, `mapping_status`, and `load_status` per
 source. Enumerate every data source. For each: source name / DATA_SOURCE identifier, record
-count, quality score, mapping status, loaded status. Present a summary table so the bootcamper
+count, quality score, mapping status, loaded status. List a source whose `mapping_status` is
+`skipped` as skipped and not loaded, as the conditional gate says
+([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)). Present a summary table so the bootcamper
 can review and confirm the list is complete.
 
 ⛔ **A source whose `validation_checks.load_count_matches_source` is `expected_delta` is a

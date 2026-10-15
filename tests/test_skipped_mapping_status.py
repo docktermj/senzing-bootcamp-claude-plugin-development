@@ -24,14 +24,26 @@ all sources are mapped") never arrived, and Module 6's treatment of it was undef
   says what it will do in one line and asks nothing, with no 👉 (#488's settled rule). The
   question's wording is unchanged (INV-056).
 
+#599 closes two readers that still treated a `skipped` source as a normal one, and makes the
+pointer guard find its readers itself (INV-246):
+
+- **Module 6 Phase A's test-load check** leaves a `skipped` source out, so Phase B step 5 never
+  test-loads it, and **Module 7 Step 4a** reads only the files of sources whose `load_status` is
+  `loaded`, so it never reads a skipped source's raw file.
+- **The readers are derived.** A reader is a step (the text under one Markdown heading) of a
+  skill file that names `mapping_status`, because Module 4's definition says "every step that
+  reads `mapping_status` points here". The known writers, which set the value rather than act
+  on it, are listed explicitly in `WRITERS`. Every other such step must link the definition, so a
+  new step that names `mapping_status` fails until it does.
+
 Step 16's new condition is what INV-344's proposed #527 amendment states (queued for the
 maintainer's sign-off). These tests assert that the skill files *state* the rules, with negative
 controls, and **cannot** establish that a live run follows them, which only `dry-run` phase 3 can
 observe. Every phrase check reads whitespace-collapsed text with blockquote markers stripped, so
 a re-wrap neither hides a phrase nor fails a correct one (INV-346).
 
-This module enforces INV-363 (what a `skipped` source means, registered 2026-10-13) and INV-344's
-#527 note.
+This module enforces INV-363 (what a `skipped` source means, registered 2026-10-13), INV-344's
+#527 note, and INV-246 for INV-363's readers (#599).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -47,6 +59,7 @@ PHASE2 = SKILLS / "module-05-data-quality-mapping" / "phase2-data-mapping.md"
 PHASE_A = SKILLS / "module-06-data-processing" / "phaseA-build-loading.md"
 PHASE_C = SKILLS / "module-06-data-processing" / "phaseC-multi-source.md"
 GRADUATION = SKILLS / "graduation" / "SKILL.md"
+MODULE7_DISCOVER = SKILLS / "module-07-query-visualize-discover" / "phase2-discover.md"
 
 ANCHOR_ID = "mapping-status-values"
 ANCHOR = '<a id="%s"></a>' % ANCHOR_ID
@@ -328,6 +341,152 @@ def graduation_problems(graduation):
     return problems
 
 
+# --- No step offers, test-loads or reads the file of a skipped source (#599) -------------------
+
+def skipped_source_left_out_problems(phase_a, module7):
+    """Phase A's test-load check and Module 7's file list leave a `skipped` source out."""
+    problems = []
+    check = between(phase_a, "### Conditional workflow, check Phase 3 status",
+                    "**Phase 3 results integration:**")
+    problems += missing(check, (
+        "Leave out a source whose `mapping_status` is `skipped` (INV-363): it is not loaded, so "
+        "this check neither acknowledges a test load for it nor says one is owed",
+        POINTER,
+        "Check every other source:",
+    ), "Module 6 Phase A's test-load check")
+    f = flat(check) if check is not None else ""
+    if "Check every other source:" in f and "**`skipped` or missing**" in f:
+        if not f.index("Check every other source:") < f.index("**`skipped` or missing**"):
+            problems.append("Phase A's exclusion comes after the owed-test-load bullet")
+    files = between(module7, "### Step 4a: Data pattern analysis", "\n1. **Identify multi-record")
+    problems += missing(files, (
+        "for each source whose `load_status` is `loaded` in `config/data_sources.yaml`, read its "
+        "`file_path`",
+        "Leave out every other source, with any other `load_status` or none: Module 6 did not load "
+        "its file.",
+        "That includes a source whose `mapping_status` is `skipped` (INV-363), whose `file_path` "
+        "still names its raw, unloaded file",
+        POINTER,
+    ), "Module 7 Step 4a's file list")
+    if files is not None and "for each source, read its `file_path`" in flat(files):
+        problems.append("Module 7 Step 4a still reads every source's file")
+    problems += restatements(check, "Phase A's test-load check")
+    problems += restatements(files, "Module 7 Step 4a")
+    return problems
+
+
+# --- Every reader points to the definition, and the readers are derived (#599, INV-246) --------
+
+#: An ATX heading outside a code fence starts a new step. Headings are line-anchored by
+#: definition, so this one pattern reads single lines on purpose (INV-346); every phrase check
+#: in this module reads collapsed text through ``flat``.
+HEADING = re.compile(r"^ {0,3}#{1,6}(?:[ \t]|$)")
+FENCE = re.compile(r"^[ \t]*(`{3,}|~{3,})")
+
+#: The steps that WRITE `mapping_status`, listed explicitly (#599): (skill file, the heading's
+#: opening, the phrase that writes the value). Module 4 Step 2's schema holds the definition
+#: itself. Every other step that names `mapping_status` is a reader and must link the definition.
+WRITERS = (
+    ("module-04-data-collection/SKILL.md", "### 2. ", "`mapping_status: pending`"),
+    ("module-05-data-quality-mapping/phase1-quality-assessment.md", "## 5a. ",
+     "Set `mapping_status: complete` and `fast_pathed: true` in the registry."),
+    ("module-05-data-quality-mapping/phase2-data-mapping.md", "### 8. ",
+     "Update the source's `mapping_status` to `in_progress`"),
+    ("module-05-data-quality-mapping/phase2-data-mapping.md", "### 11. ",
+     "Set its `mapping_status` to `skipped`"),
+    ("module-05-data-quality-mapping/phase2-data-mapping.md", "### 17. ",
+     "Update the source's `mapping_status` to `complete`"),
+)
+
+#: Readers the derivation must find today: (skill file, the heading's opening). A floor, not the
+#: set; the set is whatever the scan finds.
+KNOWN_READERS = (
+    ("module-05-data-quality-mapping/phase2-data-mapping.md", "## Skip fast-pathed sources"),
+    ("module-05-data-quality-mapping/phase2-data-mapping.md", "### 16. "),
+    ("module-05-data-quality-mapping/phase2-data-mapping.md", "### 20. "),
+    ("module-06-data-processing/phaseA-build-loading.md", "### Conditional workflow"),
+    ("module-06-data-processing/phaseA-build-loading.md", "## 2. "),
+    ("module-06-data-processing/phaseB-load-first-source.md", "# Module 6, Phase B"),
+    ("module-06-data-processing/phaseB-load-first-source.md", "## 11. "),
+    ("module-06-data-processing/phaseC-multi-source.md", "# Module 6, Phase C"),
+    ("module-06-data-processing/phaseC-multi-source.md", "## 12. "),
+    ("module-07-query-visualize-discover/phase2-discover.md", "### Step 4a"),
+    ("graduation/SKILL.md", "## Step 2: "),
+    ("graduation/SKILL.md", "## Step 4: "),
+)
+
+
+def steps(text):
+    """``[(heading, first line, body)]``: the text cut at each heading outside a code fence.
+
+    The text before the first heading is a step too, under the file's title when it opens with
+    one, or under ``""``.
+    """
+    out, heading, start, body, fence = [], "", 1, [], None
+    for number, line in enumerate(text.split("\n"), 1):
+        opened = FENCE.match(line)
+        if fence is None and opened:
+            fence = opened.group(1)[0]
+        elif fence is not None and opened and opened.group(1)[0] == fence:
+            fence = None
+        elif fence is None and HEADING.match(line):
+            out.append((heading, start, "\n".join(body)))
+            heading, start, body = line.strip(), number, []
+        body.append(line)
+    out.append((heading, start, "\n".join(body)))
+    return out
+
+
+def points_to_definition(rel, body):
+    """True when ``body`` links the anchor and the link resolves to Module 4's SKILL.md."""
+    for target in re.findall(r"\(([^()\s]*#%s)\)" % ANCHOR_ID, body):
+        path = (SKILLS / rel).parent / target.split("#")[0]
+        if path.resolve() == MODULE4.resolve():
+            return True
+    return False
+
+
+def is_writer(rel, heading):
+    return any(rel == w and heading.startswith(h) for w, h, _ in WRITERS)
+
+
+def derived_readers(corpus):
+    """``[(rel, heading, line, points)]`` for every non-writer step that names `mapping_status`."""
+    readers = []
+    for rel, text in sorted(corpus.items()):
+        for heading, line, body in steps(text):
+            if "mapping_status" in body and not is_writer(rel, heading):
+                readers.append((rel, heading, line, points_to_definition(rel, body)))
+    return readers
+
+
+def reader_problems(corpus):
+    """One problem per derived reader with no link to the definition (INV-363, INV-300)."""
+    return ["%s:%d (%s) names `mapping_status` and does not link the definition %s"
+            % (rel, line, heading or "before the first heading", POINTER)
+            for rel, heading, line, points in derived_readers(corpus) if not points]
+
+
+def writer_problems(corpus):
+    """Each listed writer still exists and still writes `mapping_status`, so the list stays true."""
+    problems = []
+    for rel, opening, phrase in WRITERS:
+        found = [body for heading, _, body in steps(corpus.get(rel, ""))
+                 if heading.startswith(opening)]
+        if len(found) != 1:
+            problems.append("writer %s %r is not one step (found %d)" % (rel, opening, len(found)))
+        elif flat(phrase) not in flat(found[0]):
+            problems.append("writer %s %r no longer writes %r" % (rel, opening, phrase))
+    return problems
+
+
+def known_reader_problems(corpus):
+    """The derivation finds every reader known today (a floor on the scan, not its list)."""
+    found = {(rel, heading) for rel, heading, _, _ in derived_readers(corpus)}
+    return ["the scan does not find the reader %s %r" % known for known in KNOWN_READERS
+            if not any(rel == known[0] and heading.startswith(known[1]) for rel, heading in found)]
+
+
 def read(path):
     return path.read_text(encoding="utf-8")
 
@@ -511,6 +670,102 @@ class EveryConsumerPointsToTheDefinition(unittest.TestCase):
         self.assertNotEqual(self.phase_a, mutant, "the re-wrap no longer applies")
         self.assertEqual([], module6_problems(mutant, self.phase_c))
 
+
+class NoStepOffersASkippedSource(unittest.TestCase):
+    """#599: Phase A's test-load check and Module 7's file list leave a `skipped` source out."""
+
+    def setUp(self):
+        self.phase_a = read(PHASE_A)
+        self.module7 = read(MODULE7_DISCOVER)
+
+    def test_both_sites(self):
+        self.assertEqual([], skipped_source_left_out_problems(self.phase_a, self.module7))
+
+    def test_negative_controls(self):
+        a, m7 = self.phase_a, self.module7
+        cases = {
+            "Phase A owes it a test load": (a.replace(
+                "Leave out a source whose\n`mapping_status` is `skipped`",
+                "Include a source whose\n`mapping_status` is `skipped`", 1), m7),
+            "Phase A pointer dropped": (a.replace(
+                "nor says one is owed (" + LINK + ")", "nor says one is owed", 1), m7),
+            "Module 7 reads every source": (a, m7.replace(
+                "each source whose `load_status` is `loaded` in `config/data_sources.yaml`, read "
+                "its `file_path`\nthere", "each source, read its `file_path` from "
+                "`config/data_sources.yaml`", 1)),
+            "Module 7 pointer dropped": (a, m7.replace("unloaded file (" + LINK + ")",
+                                                       "unloaded file", 1)),
+        }
+        for name, (pa, mod7) in cases.items():
+            with self.subTest(mutant=name):
+                self.assertNotEqual((a, m7), (pa, mod7), "the mutation no longer applies")
+                self.assertNotEqual([], skipped_source_left_out_problems(pa, mod7))
+
+
+class EveryReaderIsDerivedAndPoints(unittest.TestCase):
+    """#599 (INV-246): the readers of `mapping_status` come from a scan, minus the listed writers."""
+
+    def setUp(self):
+        self.corpus = skill_corpus()
+
+    def test_every_reader_links_the_definition(self):
+        self.assertEqual([], reader_problems(self.corpus))
+
+    def test_the_writer_list_is_true(self):
+        self.assertEqual([], writer_problems(self.corpus))
+
+    def test_the_scan_finds_the_known_readers(self):
+        self.assertEqual([], known_reader_problems(self.corpus))
+
+    def test_a_new_reader_with_no_pointer_fails(self):
+        """The negative control: a skill file nobody listed, naming `mapping_status`."""
+        corpus = dict(self.corpus)
+        corpus["module-08-new/SKILL.md"] = ("# Module 8\n\n## 1. Pick a source\n\n"
+                                            "Offer each source whose `mapping_status` is "
+                                            "`complete`.\n")
+        problems = reader_problems(corpus)
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn("module-08-new/SKILL.md:3 (## 1. Pick a source)", problems[0])
+        corpus["module-08-new/SKILL.md"] += "\n(" + LINK + ")\n"
+        self.assertEqual([], reader_problems(corpus))
+
+    def test_each_fixed_reader_fails_without_its_pointer(self):
+        sites = {
+            "module-06-data-processing/phaseA-build-loading.md":
+                "nor says one is owed (" + LINK + ")",
+            "module-07-query-visualize-discover/phase2-discover.md":
+                "unloaded file (" + LINK + ")",
+            "module-06-data-processing/phaseC-multi-source.md":
+                "as the conditional gate says\n(" + LINK + ")",
+        }
+        for rel, text in sites.items():
+            with self.subTest(site=rel):
+                corpus = dict(self.corpus)
+                corpus[rel] = corpus[rel].replace(text, "", 1)
+                self.assertNotEqual(self.corpus[rel], corpus[rel], "the mutation no longer applies")
+                self.assertNotEqual([], reader_problems(corpus))
+        rel = "module-06-data-processing/phaseB-load-first-source.md"
+        for opening in ("**Choosing the first source", "**Next:** if the bootcamper"):
+            with self.subTest(site=rel, at=opening):
+                corpus = dict(self.corpus)
+                text = corpus[rel]
+                at = text.index(opening)
+                corpus[rel] = text[:at] + text[at:].replace(LINK, "", 1)
+                self.assertNotEqual(text, corpus[rel], "the mutation no longer applies")
+                self.assertNotEqual([], reader_problems(corpus))
+
+    def test_a_writer_is_not_a_reader_but_a_stale_writer_fails(self):
+        corpus = dict(self.corpus)
+        rel = "module-05-data-quality-mapping/phase2-data-mapping.md"
+        corpus[rel] = corpus[rel].replace("Update the source's `mapping_status` to `in_progress`",
+                                          "Update the source's `mapping_status` to `started`", 1)
+        self.assertNotEqual(self.corpus[rel], corpus[rel], "the mutation no longer applies")
+        self.assertNotEqual([], writer_problems(corpus))
+
+    def test_a_heading_inside_a_fence_does_not_split_a_step(self):
+        text = "## 1. Read\n\n```bash\n# not a heading\n```\n\nRead `mapping_status`.\n"
+        self.assertEqual(["", "## 1. Read"], [h for h, _, _ in steps(text)])
+        self.assertEqual(1, len(reader_problems({"x/SKILL.md": text})))
 
 if __name__ == "__main__":
     unittest.main()
