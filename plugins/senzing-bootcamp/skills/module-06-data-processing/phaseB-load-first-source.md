@@ -9,7 +9,8 @@ were registered in Phase A (step 4a), so the load runs against a config that alr
 
 **Choosing the first source (2 or more sources only).** Phase B loads one source, and with 2 or
 more sources with `mapping_status: complete` in `config/data_sources.yaml` (the count Phase C's
-conditional gate uses) that choice decides the entity baseline the rest load against. Choose it
+conditional gate uses, which leaves out a `skipped` source:
+[what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)) that choice decides the entity baseline the rest load against. Choose it
 by the ordering heuristics in Phase C step 14 (`phaseC-multi-source.md`, "Determine load order"),
 applied in that step's priority order (INV-327). Step 14 owns the list; cite it rather than restating it
 here, so the two cannot drift (INV-300). If a heuristic's input is missing for a source (for
@@ -586,6 +587,7 @@ Once loading and redo processing are complete, mark this data source as loaded i
 
 **Checkpoint:** write step 11.
 
-**Next:** if the bootcamper has 2 or more data sources with `mapping_status: complete`, proceed
+**Next:** if the bootcamper has 2 or more data sources with `mapping_status: complete` (a
+`skipped` source is not counted: [what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)), proceed
 to Phase C (`phaseC-multi-source.md`). If only ONE data source, skip Phase C and go directly to
 Phase D (`phaseD-validation.md`).

@@ -56,9 +56,12 @@ deliverable in INV-050's layout tree.
 
 Analyze the bootcamper's loaded data to identify interesting entities for the Discover
 demonstrations. Use the bootcamper's known record IDs, taken from the files Module 6 loaded: for
-each source, read its `file_path` from `config/data_sources.yaml` (in `data/senzing-ready/` for a
-mapped source, the original `data/raw/` file for a fast-pathed one) and take `DATA_SOURCE` and
-`RECORD_ID` from its records.
+each source whose `load_status` is `loaded` in `config/data_sources.yaml`, read its `file_path`
+there (in `data/senzing-ready/` for a mapped source, the original `data/raw/` file for a
+fast-pathed one) and take `DATA_SOURCE` and `RECORD_ID` from its records. Leave out every other
+source, with any other `load_status` or none: Module 6 did not load its file. That includes a
+source whose `mapping_status` is `skipped` (INV-363), whose `file_path` still names its raw,
+unloaded file ([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)).
 
 1. **Identify multi-record entities (3+ records):** iterate over the loaded record IDs and, via
    generated SDK code saved as the program `discover_patterns` in `src/query`, at the path and with

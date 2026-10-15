@@ -10221,7 +10221,7 @@ looks wrong.
 - `tests/test_since_view_sees_the_maintainer_surface.py`: 7
 - `tests/test_sites_states_the_corpus_it_scanned.py`: 14
 - `tests/test_skills_state_their_commands_argument_handling.py`: 14
-- `tests/test_skipped_mapping_status.py`: 17
+- `tests/test_skipped_mapping_status.py`: 26
 - `tests/test_snapshot_and_capture_fidelity.py`: 24
 - `tests/test_source_encoding_renders_distinctly.py`: 9
 - `tests/test_sourcing_reaches_beyond_technical_facts.py`: 18
@@ -10538,7 +10538,9 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
     question. Its retry and skip options have handlers, skip writes
     `mapping_status: skipped` and is offered only while another source is
     `complete`, and every reader links the one statement of `skipped`
-    (`test_skipped_mapping_status.py`). The malformed-advance budget is five
+    (`test_skipped_mapping_status.py`, which derives the readers: every skill
+    step that names `mapping_status`, minus its listed writers). The
+    malformed-advance budget is five
     violations.
   - The analyzer gate states where the scripts run and checks the analyzer's
     Python 3.10 floor first; the floor entry after it keeps its evidence,
@@ -12122,6 +12124,13 @@ Senzing licensing, with no SPDX identifier.
   resumed return re-ran Module 5's start apparatus and could not tell which
   steps had finished, a resumed switch skipped the INV-296 retune, and a
   failed `sdk_repair` had already rewritten `database_type`)
+- #599: Module 6 Phase A's test-load check leaves out a `skipped` source,
+  Module 7 Step 4a reads only the files of sources whose `load_status` is
+  `loaded`, Phase B's opening and step 11 and Phase C step 12 link the one
+  statement of `skipped`, and `test_skipped_mapping_status.py` derives its
+  readers (every skill step that names `mapping_status`, minus the listed
+  writers) (a skipped source was still owed a test load and its raw file was
+  read by Module 7, and the guard's readers were a fixed list)
 - #600: each measured search route is stated in full once and every other
   site points at it, the route's record in `tests/test_prescribed_search_queries.py`
   is its only stamp, records are keyed `(tool, query, category-or-language)`,
