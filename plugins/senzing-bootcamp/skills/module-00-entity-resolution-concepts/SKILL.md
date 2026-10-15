@@ -71,7 +71,10 @@ in the recap** (INV-092), quietly — no bootcamper-facing end-of-module summary
 1. In `config/bootcamp_progress.json` (a single batched write): add `entity_resolution_concepts`
    to `modules_completed` (idempotent; do not duplicate), set `current_module` to the next module
    in `selected_modules`, set `current_step` to `null` — so the next module's journey map
-   renders it as current, not Entity Resolution Concepts — and record the knowledge-check outcome
+   renders it as current, not Entity Resolution Concepts — set
+   `step_history["entity_resolution_concepts"]` to
+   `{ "last_completed_step": <step>, "updated_at": "<ISO 8601>" }` with this module's final step
+   (the shape `../bootcamp-onboarding/module-completion.md` Step 1 gives), and record the knowledge-check outcome
    under `module_0_concepts` as `quiz_offered` (`true` only if you actually presented the pinned
    offer question) and `quiz_taken` (`true` only if the bootcamper accepted and answered at least one
    question). These two fields make a silent skip visible instead of unrecoverable (INV-112).
