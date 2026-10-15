@@ -44,7 +44,7 @@ and points here rather than carrying a copy.
     [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour)
     defines, with `purpose: "sdk_repair"` and `return_to: {"module": "data_quality_mapping",
     "resume": "21:<DATA_SOURCE>", "reask": "the-sdk-repair-question"}`, where `<DATA_SOURCE>` is
-    this source's code. ⛔ **(INV-284, INV-366) `current_module` is not changed:** the Bootcamper stays in
+    this source's code. ⛔ **(INV-366) `current_module` is not changed:** the Bootcamper stays in
     this module, and the key is what lets an interrupted detour resume without asking this question
     again. That branch is the one statement of which steps run, that the detour completes no
     module, and how it ends (INV-300).

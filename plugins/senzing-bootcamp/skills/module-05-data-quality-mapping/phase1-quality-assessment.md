@@ -1218,7 +1218,7 @@ turn, letting Phase 2's first step supply that turn's 👉:
 
    with `resume_step` from the table below. `completed` lists the Module 4 steps of this source's
    row that have finished, by number (`"2"`, `"3"`, `"8"`, `"8a"`); Module 4's receiving branch adds
-   each one in place of that step's checkpoint. ⛔ **(INV-284, INV-366) `current_module` is not changed:** the
+   each one in place of that step's checkpoint. ⛔ **(INV-366) `current_module` is not changed:** the
    Bootcamper stays in this module, and the key is what lets an interrupted return resume.
 
 2. **Run Module 4's receiving branch** —
@@ -1232,7 +1232,7 @@ turn, letting Phase 2's first step supply that turn's 👉:
    | `own` | Step 2's provision question for this source, then Step 3 (verify) and Step 8 (tracking); Step 8a's volume check for this source only when the record count changed | **Step 4** (compare with the Entity Specification): a new export can change shape. Steps 5, 6 and the gate follow |
    | `unknown` | exactly as `own`; the answer sets `provenance` | **Step 4**, as `own` |
 
-   ⛔ **(INV-284, INV-366) Module 4's Step 9 does not run at all on a return:** no Module Completion, no
+   ⛔ **(INV-366) Module 4's Step 9 does not run at all on a return:** no Module Completion, no
    second Module 4 recap section, no progress update and no transition question. Module Completion
    would move `current_module` past this module, and there is no module transition to ask about.
 

@@ -18,7 +18,7 @@ never reuse mapping output from one source for another. Never guess SDK method s
 
 ## Receiving a `quality_iteration` (from Query, Visualize and Discover, or Data Processing)
 
-⛔ **(INV-284, INV-366) Check for it before anything else in this phase.** When
+⛔ **(INV-366) Check for it before anything else in this phase.** When
 `config/bootcamp_progress.json` carries a `quality_iteration` whose `stage` is `remap`, the
 Bootcamper chose the return at Module 7 step 3b or at Module 6 Phase D's gate (the key's
 `return_to` says which), and this is not a run of this module: show no start banner, journey map or
@@ -54,7 +54,7 @@ For each source in `sources` not yet listed in `completed`, in order:
    check also applies: `docs/mapping/{source_name}_mapper.md` exists before the source is done.
 4. **Add the source to `completed`** in one quiet write.
 
-**Phase 1, Phase 3 and Step 20 do not run.** ⛔ **(INV-284, INV-366) No re-scoring, no test load, and no
+**Phase 1, Phase 3 and Step 20 do not run.** ⛔ **(INV-366) No re-scoring, no test load, and no
 Module Completion:** no second Module 5 recap section, no progress update, no transition question,
 and `data_quality_mapping` is not added to `modules_completed` again.
 

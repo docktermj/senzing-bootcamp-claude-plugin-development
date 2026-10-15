@@ -22,6 +22,11 @@ The checks, one per acceptance criterion:
 * a detour that cannot finish leaves `database_type: sqlite` and asks the original question
   again, naming the failure, as a new state (INV-284), never an INV-006 repeat;
 * neither file still points at migration guidance that does not exist;
+* (#606) each return-contract clause cites the invariant that governs it: "(INV-366)" alone,
+  never "(INV-284, INV-366)", and the Step 7 ⛔ cites "(INV-364)" at its head and nowhere else in
+  its sentence. Every pinned clause carries its ⛔, so a clause reverted to the old co-citation
+  no longer matches, and a sweep of every skill file finds "(INV-284, INV-366)" only on SDK
+  setup's re-present clause, INV-284's own;
 * (#598) Module 6's **First:** and the record's `return_to.resume` name the same point, the SQLite
   volume check's finish (`sqlite-volume-check-finish`), and that point is the "When it finishes"
   bullet, which gives the loader its PostgreSQL worker count before Phase B (INV-296). Before
@@ -152,20 +157,20 @@ def receiving_problems(m2):
                                            "Data processing Phase A's SQLite volume pre-load "
                                            "check"), "the row's offering sites")
     problems += missing(block, (
-        "(INV-284, INV-366) Check for it before anything else in this module.",
+        "⛔ (INV-366) Check for it before anything else in this module.",
         "show no start banner, journey map or overview, write no Module 2 checkpoint",
         "leave `current_module` and `current_step` as the offering module set them",
         "run only the steps the record names",
-        "(INV-284, INV-366) A detour completes no module: no Module Completion, no second Module 2 recap "
+        "⛔ (INV-366) A detour completes no module: no Module Completion, no second Module 2 recap "
         "section, no progress update, no transition question, and `sdk_setup` is not added to "
         "`modules_completed` again",
         "This is the one statement of the detour (INV-300)",
         "A new detour adds a row to the table below, never a branch of its own",
         "add it to `completed` in one quiet write in place of that step's Checkpoint:",
         "The Step 7 database question is not asked",
-        "(INV-284) Step 7's instruction 1 is not applied here: `database_type` stays `sqlite` "
-        "until the "
-        "detour finishes",
+        "⛔ (INV-364) Step 7's instruction 1 is not applied here: `database_type` stays `sqlite` "
+        "until the detour finishes, so a detour that stops part-way leaves it as it was. A "
+        "container",
         "(INV-349)",
         "Option 4, \"Switch to SQLite\", ends the detour as one that cannot finish",
         "copy the SQLite one to `config/engine_config.sqlite.json`",
@@ -226,7 +231,7 @@ def sender_problems(bullet, where, module, resume, reask, resumes_at):
         "`purpose: \"database_switch\"`",
         "`return_to: {\"module\": \"%s\", \"resume\": \"%s\", \"reask\": \"%s\"}`"
         % (module, resume, reask),
-        "(INV-284, INV-366) `current_module` is not changed",
+        "⛔ (INV-366) `current_module` is not changed",
         "When it finishes, `database_type` is `postgresql`",
         "When it cannot finish, `database_type` is still `sqlite`: name the failure in one line",
     ), where)
@@ -326,6 +331,60 @@ def stale_problems(texts):
             for m in [pattern.search(flat(texts[name]))] if m]
 
 
+#: (#606) The one clause that keeps INV-284 beside INV-366: SDK setup's re-present clause, which
+#: is INV-284's own. Every other return-contract clause cites INV-366 alone.
+CO_CITED = "(INV-284, INV-366) That is a new state, NOT an INV-006 repeat"
+
+#: (#606) The 15 return-contract clauses that co-cited "(INV-284, INV-366)" before #606, by
+#: file under SKILLS, each as a fragment unique in its file. The negative control reverts each.
+RETURN_CONTRACT_SITES = (
+    ("module-02-sdk-setup/SKILL.md",
+     "⛔ **(INV-366) Check for it before anything else in this module.**"),
+    ("module-02-sdk-setup/SKILL.md", "⛔ **(INV-366) A detour completes no module:**"),
+    ("module-04-data-collection/SKILL.md", "Transformation).** ⛔ **(INV-366)"),
+    ("module-04-data-collection/SKILL.md", "⛔ **(INV-366) `current_module` is not changed:**"),
+    ("module-04-data-collection/SKILL.md",
+     "**Not on a `collection_return`.** ⛔ **(INV-366) When"),
+    ("module-05-data-quality-mapping/phase1-quality-assessment.md",
+     "⛔ **(INV-366) `current_module` is not changed:**"),
+    ("module-05-data-quality-mapping/phase1-quality-assessment.md",
+     "⛔ **(INV-366) Module 4's Step 9 does not run at all on a return:**"),
+    ("module-05-data-quality-mapping/phase2-data-mapping.md",
+     "⛔ **(INV-366) Check for it before anything else in this phase.**"),
+    ("module-05-data-quality-mapping/phase2-data-mapping.md",
+     "⛔ **(INV-366) No re-scoring, no test load"),
+    ("module-05-data-quality-mapping/phase3-test-load.md",
+     "⛔ **(INV-366) `current_module` is not changed:**"),
+    ("module-06-data-processing/phaseA-build-loading.md",
+     "⛔ **(INV-366) `current_module` is not changed:**"),
+    ("module-06-data-processing/phaseB-load-first-source.md",
+     "⛔ **(INV-366) Check for it before anything else in this module, Phase A included.**"),
+    ("module-06-data-processing/phaseB-load-first-source.md", "⛔ **(INV-366) No validation, no"),
+    ("module-07-query-visualize-discover/phase1-query-visualize.md", "has finished. ⛔ **(INV-366)"),
+    ("module-07-query-visualize-discover/phase1-query-visualize.md",
+     "⛔ **(INV-366) No module is completed on a return:**"),
+)
+
+
+def skill_texts():
+    """Every skill file's text, keyed by its path under SKILLS."""
+    return {p.relative_to(SKILLS).as_posix(): p.read_text(encoding="utf-8")
+            for p in sorted(SKILLS.rglob("*.md"))}
+
+
+def co_citation_problems(texts):
+    """(#606) "(INV-284, INV-366)" stands only on SDK setup's re-present clause."""
+    problems = []
+    for name, text in sorted(texts.items()):
+        f = flat(text)
+        allowed = f.count(CO_CITED) if name == "module-02-sdk-setup/SKILL.md" else 0
+        extra = f.count("(INV-284, INV-366)") - allowed
+        if extra:
+            problems.append("%s co-cites (INV-284, INV-366) on %d return-contract clause(s): "
+                            "cite (INV-366) alone" % (name, extra))
+    return problems
+
+
 def module_keys():
     """The module keys `modules_completed` uses, from Bootcamp preparation's module table."""
     return set(re.findall(r"^\| \d+ \| [^|]+ \| [^|]+ \| `([a-z_0-9]+)` \|",
@@ -379,6 +438,10 @@ class TheLiveFilesMeetEveryCriterion(unittest.TestCase):
     def test_no_stale_migration_hand_off_remains(self):
         self.assertEqual([], stale_problems(self.f))
 
+    def test_return_contract_clauses_cite_inv_366_alone(self):
+        """#606: only INV-284's re-present clause keeps the co-citation."""
+        self.assertEqual([], co_citation_problems(skill_texts()))
+
     def test_the_record_is_defined_once(self):
         """INV-300: the record's JSON shape appears in SDK setup and nowhere else."""
         hits = sorted(str(p.relative_to(SKILLS)) for p in SKILLS.rglob("*.md")
@@ -407,14 +470,48 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
         self.assertTrue(receiving_problems(self.mutate(self.f["module-02"], block)))
 
     def test_a_detour_that_completes_module_2_fails(self):
-        mutated = self.mutate(self.f["module-02"], "⛔ **(INV-284, INV-366) A detour completes no module:**",
+        mutated = self.mutate(self.f["module-02"], "⛔ **(INV-366) A detour completes no module:**",
                               "**Then run Module Completion for SDK setup:**")
         self.assertTrue(receiving_problems(mutated))
 
     def test_a_detour_that_writes_database_type_up_front_fails(self):
-        mutated = self.mutate(self.f["module-02"], "⛔ **(INV-284) Step 7's\n  instruction 1 is "
+        mutated = self.mutate(self.f["module-02"], "⛔ **(INV-364) Step 7's\n  instruction 1 is "
                               "not applied here:**", "**Step 7's instruction 1 is applied first:**")
         self.assertTrue(receiving_problems(mutated))
+
+    def test_a_pinned_clause_reverted_to_its_old_citation_fails(self):
+        """#606: each pin carries its ⛔, so the pre-#606 citation no longer matches."""
+        for name, old, new, check in (
+                ("module-02", "⛔ **(INV-366) Check for it", "⛔ **(INV-284, INV-366) Check for it",
+                 receiving_problems),
+                ("module-02", "⛔ **(INV-366) A detour completes",
+                 "⛔ **(INV-284, INV-366) A detour completes", receiving_problems),
+                ("module-02", "⛔ **(INV-364) Step 7's", "⛔ **(INV-284) Step 7's",
+                 receiving_problems),
+                ("module-04", "⛔ **(INV-366) `current_module` is not changed",
+                 "⛔ **(INV-284, INV-366) `current_module` is not changed", m4_problems),
+                ("phaseA", "⛔ **(INV-366) `current_module` is not changed",
+                 "⛔ **(INV-284, INV-366) `current_module` is not changed", m6_problems)):
+            with self.subTest(name=name, old=old):
+                self.assertTrue(check(self.mutate(self.f[name], old, new)))
+
+    def test_a_second_inv_364_in_the_step_7_sentence_fails(self):
+        """#606: the head cites INV-364, so the sentence carries no trailing copy."""
+        mutated = self.mutate(self.f["module-02"], "leaves it as it was. A container",
+                              "leaves it as it was (INV-364). A container")
+        self.assertTrue(receiving_problems(mutated))
+
+    def test_a_return_contract_site_reverted_to_the_co_citation_fails(self):
+        """#606: reverting any one of the 15 sites is caught by the sweep."""
+        texts = skill_texts()
+        self.assertEqual(15, len(RETURN_CONTRACT_SITES))
+        for name, site in RETURN_CONTRACT_SITES:
+            with self.subTest(name=name, site=site):
+                self.assertEqual(1, texts[name].count(site), "the site is not unique in its file")
+                mutated = dict(texts)
+                mutated[name] = texts[name].replace(
+                    site, site.replace("(INV-366)", "(INV-284, INV-366)", 1))
+                self.assertTrue(co_citation_problems(mutated))
 
     def test_a_record_missing_its_return_point_fails(self):
         mutated = self.mutate(self.f["module-02"], '    "reask": ')
@@ -563,6 +660,7 @@ class TheChecksSurviveARewrap(unittest.TestCase):
         self.assertEqual([], m6_problems(f["phaseA"]))
         self.assertEqual([], m6_resume_problems(f["module-06"], f["phaseA"]))
         self.assertEqual([], stale_problems(f))
+        self.assertEqual([], co_citation_problems({k: rewrap(v) for k, v in skill_texts().items()}))
 
     def test_a_rewrapped_regression_is_still_caught(self):
         f = read_all()

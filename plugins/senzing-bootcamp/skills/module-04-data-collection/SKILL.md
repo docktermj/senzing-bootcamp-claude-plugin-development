@@ -223,7 +223,7 @@ complete list.
 
 <a id="receiving-a-collection-return"></a>
 
-**Receiving a `collection_return` (from Data Quality, Mapping, and Transformation).** ⛔ **(INV-284, INV-366)
+**Receiving a `collection_return` (from Data Quality, Mapping, and Transformation).** ⛔ **(INV-366)
 Check for it before anything else in this step.** When `config/bootcamp_progress.json` carries a
 `collection_return`, the Bootcamper chose the return route at Module 5's no-progress gate, and this
 is not a run of this module: show no start banner, journey map or overview, write no Module 4
@@ -1571,7 +1571,7 @@ about a roughly half-hour load, for a load of about two minutes.
        `"8b"` and add the `setup_detour` record that SDK setup's
        [Receiving a `setup_detour`](../module-02-sdk-setup/SKILL.md#receiving-a-setup-detour)
        defines, with `purpose: "database_switch"` and `return_to: {"module": "data_collection",
-       "resume": "9", "reask": "8b"}`. ⛔ **(INV-284, INV-366) `current_module` is not changed:** the
+       "resume": "9", "reask": "8b"}`. ⛔ **(INV-366) `current_module` is not changed:** the
        Bootcamper stays in this module, and the key is what lets an interrupted detour resume.
        That branch is the one statement of which steps run and how the detour ends (INV-300).
      - **When it finishes,** `database_type` is `postgresql`: continue to Step 9.
@@ -1607,7 +1607,7 @@ apply the behavior directly for now.)_
 
 ### 9. Module completion and transition to Module 5
 
-**Not on a `collection_return`.** ⛔ **(INV-284, INV-366) When `config/bootcamp_progress.json` carries one,
+**Not on a `collection_return`.** ⛔ **(INV-366) When `config/bootcamp_progress.json` carries one,
 this step does not run at all:** no Module Completion, no second Module 4 recap section, no progress
 update and no transition question. The Bootcamper never left Module 5, so return there at the step
 Module 5's Step 7b names ([Step 2](#receiving-a-collection-return)).
