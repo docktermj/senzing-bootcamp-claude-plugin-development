@@ -360,6 +360,8 @@ python3 <viz-server-path> \
   --no-serve
 ```
 
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
 ⛔ **Title it after this module, never after System Verification.** The Truth Set belongs to this
 module alone — System Verification uses synthetic records and does not visualize it (INV-082/INV-087)
 — and the title ships permanently into the snapshot the Bootcamper keeps and the recap embeds. A
@@ -403,6 +405,8 @@ python3 <viz-server-path> \
   --port 8080 &
 VIZ_PID=$!
 ```
+
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 ⛔ **Source the env on its own line. If the launch is written `A && B &`, `$!` is the subshell, not
 the server.** `&` binds to the whole `&&` list, so the shell backgrounds a subshell and the server
@@ -584,6 +588,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" \
   --url "http://localhost:<the port 2.3 actually bound>" \
   --name truthset_verification --tabs all --query "<a name present in the Truth Set>"
 ```
+
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 ⛔ **(INV-122) "No headless capability" is a conclusion the helper reaches and reports, never one
 you reach first.** Enter the skip path on its **exit code**, never on an assumption that browser

@@ -61,7 +61,7 @@ import unittest
 from pathlib import Path
 
 from _wrapped_text import blocks
-from test_guide_run_blocks_declare_their_shell import POINTER
+from test_guide_run_blocks_declare_their_shell import POINTER, fences
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
@@ -466,7 +466,8 @@ class NegativeControls(unittest.TestCase):
     def test_a_step_1c_block_without_the_disclosure_is_caught(self):
         step = step_1c(GRADUATION.read_text(encoding="utf-8"))
         wrapped = re.compile(r"\s+".join(map(re.escape, POINTER.split())))
-        self.assertEqual(2, len(wrapped.findall(step)))
+        # Every block in Step 1c carries the pointer (#597 derives this count from the fences).
+        self.assertEqual(len(fences(GRADUATION, step)), len(wrapped.findall(step)))
         self.assertEqual(1, len(venv_blocks_without_disclosure(wrapped.sub("", step, count=1))))
 
     def test_the_old_powershell_disclosure_no_longer_counts(self):

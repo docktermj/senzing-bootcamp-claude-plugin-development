@@ -395,6 +395,8 @@ Windows; rely on the command's **exit status**, not a shell-specific stderr redi
 git rev-parse --is-inside-work-tree
 ```
 
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
 - **Already a repo** (command succeeds / prints `true`): **hold** `git_init: existing`.
 - **Not a repo** (command fails / non-zero exit): run `git init` automatically as a quiet
   administrative action and **hold** `git_init: true`. Do not ask.

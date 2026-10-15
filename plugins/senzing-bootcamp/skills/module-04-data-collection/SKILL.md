@@ -991,18 +991,12 @@ Module 5 can evaluate.
 ### 3. Verify data was received
 
 ```bash
-# Linux / macOS
 ls -lh data/raw/
 head -5 data/raw/customer_crm.csv
 head -5 data/raw/vendor_api.json
 ```
 
-```powershell
-# Windows (PowerShell)
-Get-ChildItem data\raw\ | Format-Table Name, Length
-Get-Content data\raw\customer_crm.csv -TotalCount 5
-Get-Content data\raw\vendor_api.json -TotalCount 5
-```
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 **Checkpoint:** write step 3 to `config/bootcamp_progress.json`.
 

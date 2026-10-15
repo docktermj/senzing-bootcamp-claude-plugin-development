@@ -29,6 +29,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/package_bootcamp.py" --profile share --dr
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/package_bootcamp.py" --profile transfer --dry-run
 ```
 
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
 (Skill-relative fallback `../../scripts/package_bootcamp.py` per INV-252, exactly as every
 other bundled script is invoked — INV-185.)
 
@@ -82,6 +84,8 @@ over it.
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/package_bootcamp.py" --profile <share|transfer>
 ```
+
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 The script does the rest, and its guarantees are worth knowing because they are what make
 the archive safe to hand over:
