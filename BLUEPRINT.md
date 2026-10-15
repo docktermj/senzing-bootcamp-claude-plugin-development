@@ -3651,9 +3651,16 @@ lines are ignored); BREAKING `INV-079-module-number` for `Module <n>`; WATCH
 `APPARATUS` check: in `preparation` or `module0` any journey map,
 before/after, step overview, time estimate or model nudge is BREAKING
 `INV-075-apparatus-in-exempt-phase`; in `content` each missing one is WATCH
-`INV-028-apparatus-missing`. `--selftest` is a negative control: each check
-must fire on built-to-break input and stay silent on good input, including a
-well-formed numbered-options question. Exit codes: selftest 0 or 1; missing
+`INV-028-apparatus-missing`. The patterns match the plugin's own renderings
+(#658): a journey map is the words "journey map", a "Your journey" heading
+line, or two consecutive lines starting ✅, 🔄 or ⬜ (one status line is not
+one); a time estimate is a line opening with ⏱, `roughly|about|takes|approx`
+before a single figure or a `-`, `–` or "to" range of minutes, or "hard to
+estimate"; before/after takes `/`, `and`, `→` or `->`. `--selftest` is a
+negative control: each check must fire on built-to-break input and stay
+silent on good input, including a well-formed numbered-options question, the
+plugin's renderings in `_APPARATUS_RENDERINGS`, and the preparation close in
+`_EXEMPT_PHASE_TEXT` (no INV-075). Exit codes: selftest 0 or 1; missing
 transcript argument is an argparse usage error (2); 2 when no assistant turns
 are found; otherwise 1 if any BREAKING finding, else 0. `--json` prints the
 findings list.
@@ -4983,11 +4990,18 @@ SKILL_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SKILL_DIR.parent.parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 BREAKING, WATCH, INFO = "BREAKING", "WATCH", "INFO"
+_STATUS = "[✅🔄⬜]"
 APPARATUS = {
-    "journey map": re.compile(r"(?i)journey map"),
-    "before/after": re.compile(r"(?i)\bbefore\s*(?:/|and)\s*after\b"),
+    "journey map": re.compile(
+        r"(?im)journey map"
+        r"|^[^\w\n]*your journey[^\w\n]*$"
+        rf"|^[ \t]*{_STATUS}[^\n]*\n[ \t]*{_STATUS}"),
+    "before/after": re.compile(r"(?i)\bbefore\s*(?:/|and|→|->)\s*after\b"),
     "step overview": re.compile(r"(?i)step overview|what we'?ll (?:do|cover)"),
-    "time estimate": re.compile(r"(?i)\b(?:takes|about|approx\w*)\s+\d+\s*(?:-|to)?\s*\d*\s*minutes?\b"),
+    "time estimate": re.compile(
+        r"(?im)^[^\w\n]*⏱"
+        r"|\b(?:roughly|about|takes|approx\w*)\s+\d+(?:\s*(?:-|–|to)\s*\d+)?\s*minutes?\b"
+        r"|\bhard to estimate\b"),
     "model nudge": re.compile(r"(?i)\b(?:opus|sonnet|haiku)\s*5?\b.*\beffort\b|switch (?:to|the) model"),
 }
 POINTER = "\U0001f449"  # 👉
@@ -9973,7 +9987,7 @@ looks wrong.
 - `tests/test_audit_skill_reads_the_newest_entries.py`: 4
 - `tests/test_audit_skill_states_no_stale_count.py`: 9
 - `tests/test_authored_shapes_are_stated.py`: 8
-- `tests/test_auto_test_harness.py`: 15
+- `tests/test_auto_test_harness.py`: 16
 - `tests/test_backgrounded_launch_records_the_server_pid.py`: 12
 - `tests/test_blocked_submission_has_a_vocabulary_value.py`: 29
 - `tests/test_bootcamp_notes_flow.py`: 33
@@ -10716,7 +10730,8 @@ Related guards:
   rules.
 - `tests/test_auto_test_harness.py` checks the plugin against
   `.claude/skills/auto-test/baseline/mcp-snapshot.json`: no breaking conformance
-  findings, no forbidden tool probed, and the linter's self-test passing.
+  findings, no forbidden tool probed, and the linter's self-test passing, and
+  failing when the pre-#658 apparatus patterns are restored.
   `TestReportDirectory` (#609) runs `autotest.main` offline: `--report-dir`
   takes the report, the transcript copy and `latest.json` and creates the
   directory, nothing is left outside it, and without it they go to the
@@ -12469,3 +12484,9 @@ Senzing licensing, with no SPDX identifier.
   the next module's banner even when its own never showed (a substring match
   read journey maps, the welcome prose and transition questions as banners, so
   graduation was "reached" and slices started early or came out empty)
+- #658: `transcript_lint.py`'s journey map, before/after and time estimate
+  patterns match the plugin's own renderings ("Your journey" or a run of
+  ✅/🔄/⬜ lines, "Before → After", a ⏱ line, an en-dash range, "hard to
+  estimate"), and `--selftest` holds them to those strings and to the
+  preparation close (the old patterns reported all three missing from a
+  content module that showed them, so the only grading signal was noise)
