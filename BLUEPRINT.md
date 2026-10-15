@@ -12418,3 +12418,8 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_recap_video.py` pins a small overrun printing both above the
   planned length (an overrun under 0.05 s printed "needs 2.0 s, more than the
   planned 2 s; extended to 2.0 s")
+- #652: Module 2 Step 3 Phase 3's Java-install `MCP-NEGATIVE` marker states
+  only the deciding absence, no Java-binding source in the `sdk_guide`
+  reply, and it and the owner query's `VERIFIED_QUERIES` record are
+  restamped to server 1.39.0, 2026-10-15 (the marker's census of the reply,
+  "no compatibility_notes" and "only the Python gotcha", had gone false)

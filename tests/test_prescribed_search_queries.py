@@ -170,7 +170,10 @@ VERIFIED_QUERIES = {
     # Step 3 Phase 3's route for the Java bindings. The C# query recorded beside it (#287, #320)
     # was removed by #566 (2026-10-13): on server 1.37.28 every platform's install reply names
     # the C# source, so the fallback no longer asks `search_docs` and no shipped file prescribes
-    # the query. ⚠️ Record the PROPERTY, not ranks or scores.
+    # the query. ⚠️ Record the PROPERTY, not ranks or scores. Re-measured 2026-10-15 on server
+    # 1.39.0 (docs index 2026-10-15 10:47 UTC) at the default max_results for #652, as the evidence
+    # slot of Phase 3's Java-install MCP-NEGATIVE marker, which carries the same stamp: the
+    # property still holds.
     ("search_docs", "Java SDK sz-sdk.jar Maven Usage local Maven repository", None): {
         "band": "ON TARGET BELOW AN ADJACENT TOP HIT",
         "sections": ("Maven Usage", "Installation in Local Maven Repository"),
@@ -181,7 +184,7 @@ VERIFIED_QUERIES = {
             "(java -jar sz-sdk.jar prints the mvn install:install-file command) and 'Maven Usage' "
             "('not provided via Maven Central'; system-scoped or local-repository dependency). "
             "Phase 3 names both sections, so the reader reads past the first hit",
-        "server": "1.37.16", "docs_index": "2026-09-29 22:00 UTC", "measured": "2026-09-30",
+        "server": "1.39.0", "docs_index": "2026-10-15 10:47 UTC", "measured": "2026-10-15",
     },
     # ---------------------------------------------------------------------------------
     # Executed 2026-09-28 on server 1.37.14 (docs index 2026-09-28 03:23 UTC) for #194, Module 2

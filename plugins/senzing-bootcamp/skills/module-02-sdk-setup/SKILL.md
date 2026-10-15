@@ -1034,7 +1034,7 @@ existing-install path, which skips Phase 1 and Phase 2; INV-338, INV-339):**
      Central" and is the one "provided with the Senzing product", used as a system-scoped
      dependency or installed into the **local** Maven repository (`java -jar sz-sdk.jar` prints
      the `mvn install:install-file` command for it).
-     <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt', language='java') — the reply carries no compatibility_notes and no source for the Java bindings, only the platform install and the Python gotcha — owner: search_docs IS the route that carries the Java SDK reference: search_docs(query='Java SDK sz-sdk.jar Maven Usage local Maven repository') returns its "Maven Usage" and "Installation in Local Maven Repository" sections, so the reader must go there rather than conclude the source is undocumented (routing negative) — server 1.37.16, 2026-09-30 -->
+     <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt', language='java') — no field of the reply names a source for the Java bindings (no sz-sdk.jar, no Maven coordinate) — owner: search_docs IS the route that carries the Java SDK reference: search_docs(query='Java SDK sz-sdk.jar Maven Usage local Maven repository') returns its "Maven Usage" and "Installation in Local Maven Repository" sections, so the reader must go there rather than conclude the source is undocumented (routing negative) — server 1.39.0, 2026-10-15 -->
    - **C#:** call `sdk_guide(topic='install', platform='<platform>', language='csharp')` and follow
      its `gotchas`: where the reply has a C# line, that line names the package source. Take the
      command from the bootcamper's own platform reply (INV-080), and present that platform's form
