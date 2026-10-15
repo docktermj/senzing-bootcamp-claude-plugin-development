@@ -1617,8 +1617,10 @@ Ground rules (`ground-rules.md`, every turn):
   `#guide-run-blocks` is the one statement of which blocks owe a PowerShell
   form: a guide-run block (run by the guide's Bash tool) runs in its POSIX
   shell, Git Bash on Windows, and is followed by one fixed pointer line that
-  links here and says it is unverified on Windows; a hand-run block (typed by
-  the Bootcamper) needs a PowerShell 5.1 form.
+  links here and says it is unverified on Windows; a PowerShell-only
+  guide-run block runs as one `powershell.exe -NoProfile -Command …` call,
+  blocks that share a variable in one call; a hand-run block (typed by the
+  Bootcamper) needs a PowerShell 5.1 form.
 - Visual deliverables use `brand_tokens.py`, render offline, escape data.
 - State: write rarely and batched, once per turn at step boundaries:
   `current_step` and `step_history[<module>]` (`last_completed_step`,
@@ -1915,15 +1917,16 @@ branch.
   host has no `/opt/senzing`, so the DDL is copied out of the SDK container
   into `database/` with the recorded runtime's `cp` and that copy is applied
   (a failed copy stops the step); a native route applies the host file. The
-  local-PostgreSQL option points at the same container-route copy. The
-  container-route blocks here carry the `#guide-run-blocks` pointer line.
+  local-PostgreSQL option points at the same container-route copy. Every
+  guide-run block here carries the `#guide-run-blocks` pointer line.
 - Step 8, engine config: `sdk_guide(topic='configure', platform, language)`,
   built from `environment.default_paths` (not the brace-doubled
   `engine_config`), `SQL.CONNECTION` repointed, saved to
   `config/engine_config.json`, every path expanded to an absolute path.
   `SUPPORTPATH` must hold `*TransRules.sz` (Windows expands the returned
-  `support_path` from `$env:SENZING_DIR` and stops when it is unset; macOS
-  tests the Homebrew path). Re-source the env script.
+  `support_path` from `$env:SENZING_DIR` and stops when it is unset, running
+  item 1's PowerShell block alone and items 2 and 3 in one call; macOS tests
+  the Homebrew path). Re-source the env script.
 - Step 8a, seed: `sdk_guide(topic='configure')` without `data_sources` gives
   `init_default_config`, with them `register_data_sources` (chosen by
   `source_path`); confirm a default config id. 8a.1 re-measures the license
@@ -2061,8 +2064,9 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   2.2, 2.3, the Python fallback and the contract link) the host copies the
   server, `brand_tokens.py` and `vendor/d3.v7.min.js` into
   `data/temp/truthset-viz/` before each in-container run and runs that copy;
-  a failed copy stops the step. The copy block, and the contract's in-container
-  launch block, carry the `#guide-run-blocks` pointer line.
+  a failed copy stops the step. Every guide-run block here, the copy block
+  and the contract's in-container launch block included, carries the
+  `#guide-run-blocks` pointer line.
 - 2.2: snapshot first: `--records`, `--title`, `--dataset`, `--snapshot`
   set to `docs/visualizations/truthset_verification.html`, `--no-serve`.
   2.2 builds the snapshot only.
@@ -10015,7 +10019,7 @@ looks wrong.
 - `tests/test_graph_label_distinctness.py`: 18
 - `tests/test_graph_labels_paint_after_circles.py`: 13
 - `tests/test_ground_rules_nonyielding_presentation.py`: 16
-- `tests/test_guide_run_blocks_declare_their_shell.py`: 27
+- `tests/test_guide_run_blocks_declare_their_shell.py`: 44
 - `tests/test_group_score_is_not_a_join_prediction.py`: 15
 - `tests/test_hard_rule_citations.py`: 6
 - `tests/test_hard_rule_detector_sees_mid_line_stop_signs.py`: 8
@@ -10340,11 +10344,15 @@ need the original text. These are heuristic estimates, accurate to about 10%:
   `(REPO_ROOT / ".claude").rglob`, `CLAUDE.rglob`, `os.walk(REPO_ROOT` or
   `os.walk(CLAUDE` in `tests/*.py`; a walk through a variable is not caught.
 - **Guide-run blocks.** `tests/test_guide_run_blocks_declare_their_shell.py`
-  (27 tests) finds each of six container-route blocks by a line of its own
-  block and requires the paragraph after its closing fence to be the one
-  pointer line to `ground-rules.md#guide-run-blocks`, with a sweep holding
-  every link to that anchor to the same wording; it checks the ground-rules
-  statement, that Module 2's PostgreSQL schema step never redirects from a
+  (44 tests) reads every `bash`, `sh` and PowerShell fence in every `.md` under
+  `plugins/` (a fence nested in a longer `markdown` fence is example text) and
+  requires the paragraph after each closing fence to be the one pointer line
+  to `ground-rules.md#guide-run-blocks`, unless `HAND_RUN` names the fence by
+  file, nearest heading and first non-comment line, with a reason (a stale or
+  reasonless entry fails, and no site or pointer count is asserted), with a
+  sweep holding every link to that anchor to the same wording; it pins
+  Module 2's PowerShell-only Scoop and `SUPPORTPATH` blocks and Module 4 Step
+  3's single POSIX block, checks the ground-rules statement, that Module 2's PostgreSQL schema step never redirects from a
   host `/opt/senzing` path and copies the DDL out of the SDK container into
   `database/` with `<runtime> cp`, that Option 2 says the same, and runs the
   container-route block with `sh` against stub runtimes (a failed copy never
@@ -12095,6 +12103,16 @@ Senzing licensing, with no SPDX identifier.
   AMENDMENT` queued (the Windows lines sat in bash fences with backslash paths
   and `${CLAUDE_PLUGIN_ROOT}`, marked as PowerShell, so they broke in both
   PowerShell and Git Bash, and the guard read only PowerShell fences)
+- #597: every guide-run block under `plugins/` is followed by the
+  `#guide-run-blocks` pointer line (33 more blocks), the anchor says a
+  PowerShell-only guide-run block runs as one `powershell.exe -NoProfile
+  -Command …` call with blocks that share a variable in one call, Module 4
+  Step 3 keeps only its POSIX block, and
+  `test_guide_run_blocks_declare_their_shell.py` reads every `bash`, `sh` and
+  PowerShell fence, exempting only its `HAND_RUN` list (each entry with a
+  reason) and asserting no count, with an INV-167 `PROPOSED AMENDMENT` queued
+  (the pointer reached only the six sites #508 named, and the guard's exact
+  count of six turned the suite red when a seventh was added)
 - #598: Module 5's **First:** routes its own `collection_return` to Step 7b
   item 4, the record gains `completed` (Module 4's receiving branch adds each
   finished step, item 4 resumes at the first one not listed), Module 6's

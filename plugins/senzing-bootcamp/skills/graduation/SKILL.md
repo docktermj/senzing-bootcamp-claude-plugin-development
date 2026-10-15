@@ -691,6 +691,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/normalize_docs_markdown.py"
 # or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/normalize_docs_markdown.py
 ```
 
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
 It applies blank lines around headings (MD022), fenced blocks (MD031) and lists (MD032); a language
 on every fenced block (MD040); and `**Label:**` colon spacing (a space after the colon, none
 before). It globs top-level `docs/*.md` only and never recurses, so the feedback file is
@@ -775,6 +777,8 @@ relative to this skill's directory instead (this skill lives at
 ```bash
 python3 <this-skill-dir>/../../scripts/generate_recap_pdf.py
 ```
+
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 
@@ -1174,6 +1178,8 @@ data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_vi
 data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
 ```
 
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
 The renderer reads `docs/video/storyboard.json` and writes `docs/bootcamp_recap.mp4`. Act on its exit
 code:
 
@@ -1530,6 +1536,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/normalize_docs_markdown.py" --docs-dir pr
 # or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/normalize_docs_markdown.py --docs-dir production
 ```
 
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
 It applies the same rules as in Step 1a and globs top-level `production/*.md` only, never
 recursing — so nothing under `production/src/`, `production/config/` or a copied `docs/` subtree is
 touched.
@@ -1569,6 +1577,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_document_pdf.py" \
     --subtitle "The problem this bootcamp set out to solve"
 # or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/generate_document_pdf.py …
 ```
+
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 ⛔ **Pass `--subtitle`.** The cover's subtitle defaults to the discoveries line, "What Senzing
 found in your data" — true of the discoveries document and wrong on either of these. It is the

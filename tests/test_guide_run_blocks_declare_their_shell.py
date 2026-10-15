@@ -1,21 +1,39 @@
-"""Guide-run container-route blocks declare their shell, and the schema DDL comes from the SDK container (#508).
+"""Every guide-run block declares its shell, and the schema DDL comes from the SDK container (#508, #597).
 
-INV-001 makes Windows a supported platform, and SDK setup's container route is the route Windows
-users take (Python on Windows, and Windows without Scoop). Six blocks on that route were written
-for a POSIX shell with no word on which shell runs them. All six are **guide-run**: the guide runs
-them with its Bash tool, which on Windows is Git Bash. None is **hand-run**, the case #391 gave
-PowerShell 5.1 forms.
+INV-001 makes Windows a supported platform. A **guide-run** block is one the guide runs itself with
+its Bash tool, which on Windows is Git Bash. A **hand-run** block is one the Bootcamper types into
+their own terminal, the case #391 gave PowerShell 5.1 forms (INV-167).
+
+#508 found six guide-run blocks on SDK setup's container route that said nothing about which shell
+runs them, and pinned those six in a fixed tuple with an exact count. #597 found the same gap at
+every other guide-run block in the plugin, and found that the count blocked closing it: adding the
+pointer anywhere else turned the suite red (INV-246). So the guard now derives its sites from the
+fences.
 
 The fix has three parts, and these tests pin each:
 
 1. **One statement.** `ground-rules.md` → "Windows and PowerShell" holds the policy once, under the
    anchor `guide-run-blocks` (INV-300): guide-run blocks run in the guide's POSIX shell (Git Bash
    on Windows) and need no PowerShell form; hand-run blocks need a PowerShell 5.1 form (INV-167).
-2. **One pointer line at each site.** Each of the six blocks is followed by the same line, which
-   links the anchor and carries the INV-163 "unverified on Windows" disclosure in the #391 wording
-   ("…unverified on Windows: no test runs them there."). Each site is found by a line of its own
-   block, never by a line number (INV-246). A sweep also holds every link to the anchor, anywhere
-   in the plugin, to that same wording.
+   Since #597 it also says how the guide runs a PowerShell-only guide-run block from that shell:
+   one `powershell.exe -NoProfile -Command …` call, and blocks that share a variable in one call.
+2. **One pointer line after every guide-run block.** Every ```` ```bash ````, ```` ```sh ```` and
+   PowerShell fence under `plugins/` is guide-run, and the paragraph after it must be the pointer,
+   unless `HAND_RUN` below names it as hand-run with a one-line reason. The pointer links the
+   anchor and carries the INV-163 "unverified on Windows" disclosure in the #391 wording
+   ("…unverified on Windows: no test runs it there."). A `HAND_RUN` entry is keyed on the file, the
+   nearest heading above the fence and the fence's first non-comment line, never on a line number
+   (INV-246). An entry that matches no fence fails, so the list cannot go stale, and a listed fence
+   that carries the pointer fails, so a block is never both. No site or pointer count is asserted.
+   - PowerShell fences are read too, because SDK setup's Scoop check and Step 8's `SUPPORTPATH`
+     check are PowerShell-only guide-run blocks (#597). Module 4 Step 3 keeps only its POSIX form.
+   - A fence nested in a longer ```` ````markdown ```` fence is the example's text, not a block
+     anyone runs: the fence reader closes a fence only on a run at least as long as its opener,
+     as #596's reader in `test_windows_powershell_guidance.py` does.
+   - The pointer's words are the same at every site. Its link is relative to its file, so a skill
+     links `../bootcamp-onboarding/ground-rules.md` and a command links
+     `../skills/bootcamp-onboarding/ground-rules.md`. A sweep holds every link to the anchor,
+     anywhere in the plugin, to that wording.
 3. **The schema DDL.** On the container route the host has no `/opt/senzing`, so Option 1 step 4
    copies the DDL out of the SDK container into the project's `database/` with the SDK container's
    recorded runtime (`<runtime> cp`, INV-195, INV-200) and applies the project copy. The path is a
@@ -30,8 +48,10 @@ Each check is a function returning its problems, and a negative control mutates 
 sees the check report it.
 
 It does **not** establish that any of these blocks runs under Git Bash on Windows (this repo's CI
-runs on Linux, which is what the disclosure says), or that a real `docker cp` / `podman cp` copies
-out of a real container: no container runs in this suite.
+runs on Linux, which is what the disclosure says), that `powershell.exe -NoProfile -Command`
+receives a block intact from Git Bash, or that a real `docker cp` / `podman cp` copies out of a
+real container: no Windows host and no container runs in this suite. Nor can it tell a guide-run
+block from a hand-run one by reading it: that is the judgment each `HAND_RUN` reason records.
 
 Prose is read wrap-aware (INV-346). Stdlib only (INV-108).
 
@@ -51,6 +71,7 @@ import stat
 import subprocess
 import tempfile
 import unittest
+from collections import Counter, namedtuple
 from pathlib import Path
 
 from _wrapped_text import match_lines as _match_lines
@@ -62,6 +83,7 @@ GROUND_RULES = SKILLS / "bootcamp-onboarding" / "ground-rules.md"
 MODULE_2 = SKILLS / "module-02-sdk-setup" / "SKILL.md"
 PHASE1 = SKILLS / "module-03b-truthset-visualization" / "phase1-visualization.md"
 CONTRACT = SKILLS / "module-03b-truthset-visualization" / "visualization-api-reference.md"
+MODULE_4 = SKILLS / "module-04-data-collection" / "SKILL.md"
 
 ANCHOR_ID = "guide-run-blocks"
 ANCHOR = f'<a id="{ANCHOR_ID}"></a>'
@@ -72,17 +94,48 @@ POINTER = ("Guide-run in the guide's POSIX shell (Git Bash on Windows); unverifi
 #: The #391 disclosure's wording (`graduation/database-backup.md`), which the pointer reuses.
 DISCLOSURE = "unverified on Windows: no test runs it there"
 
-#: The six guide-run sites, each found by one line of its own block (INV-246): (label, file, line).
-SITES = (
-    ("Truth Set 2.1 project copy", PHASE1, 'VIZ_SRC="${CLAUDE_PLUGIN_ROOT}/scripts"'),
-    ("viz server launch in the SDK container", CONTRACT, "VIZ_PID=$(<runtime> exec <container> sh -c '"),
-    ("SDK container creation", MODULE_2,
-     '<runtime> run -d -it --name <name> -p 127.0.0.1:<host_port>:8080 -v "$(pwd)":/app'),
-    ("SQLite schema through Python", MODULE_2, 'python3 -c "import sqlite3,sys;'),
-    ("PostgreSQL container run", MODULE_2, "docker run -d --name <pg-container> \\"),
-    ("PostgreSQL schema, container route", MODULE_2,
-     '<runtime> cp "<sdk-container>:<schema path from MCP>"'),
+#: A hand-run fence: the file (relative to the plugin), the nearest heading above the fence, the
+#: fence's first non-comment line, and why the Bootcamper runs it rather than the guide. It is
+#: never keyed on a line number (INV-246).
+HandRun = namedtuple("HandRun", "file heading first reason")
+
+ENV_SCRIPT = "### Create the project-local environment script"
+
+#: The hand-run fences under `plugins/` (#597). Every other bash, sh or PowerShell fence there is
+#: guide-run and is followed by the pointer. A hand-run block still owes its PowerShell 5.1 form on
+#: Windows (INV-167); this list does not relax that.
+HAND_RUN = (
+    HandRun("skills/module-02-sdk-setup/SKILL.md", ENV_SCRIPT, 'if [ -n "${ZSH_VERSION:-}" ]; then',
+            "the body of src/scripts/senzing-env.sh, which the Bootcamper sources into their own "
+            "bash or zsh; Windows gets senzing-env.ps1 instead (INV-166, INV-175)"),
+    HandRun("skills/module-02-sdk-setup/SKILL.md", ENV_SCRIPT,
+            "if ($MyInvocation.InvocationName -ne '.') {",
+            "the body of src/scripts/senzing-env.ps1, which the Bootcamper dot-sources into their own "
+            "PowerShell window: the env script's Windows form (INV-166, INV-167)"),
 )
+
+#: The fence languages a block is run in. PowerShell is read because some guide-run blocks exist
+#: only in PowerShell (#597).
+RUN_LANGS = {"bash", "sh", "powershell", "ps1", "pwsh"}
+#: A fence line: its run of backticks or tildes, then the info string.
+FENCE_MARK = re.compile(r"^[ \t]*(`{3,}|~{3,})(.*)$")
+#: An ATX heading line, outside any fence.
+HEADING = re.compile(r"^ {0,3}#{1,6}[ \t]")
+
+#: A fenced block a guard reads: where it is, how it is keyed, and the lines after it.
+Fence = namedtuple("Fence", "path lang heading first start close")
+
+#: The PowerShell-only guide-run blocks #597 names, each found by one line of its own block.
+POWERSHELL_GUIDE_RUN = (
+    ("Scoop update check", MODULE_2, "scoop info senzingsdk/senzingsdk"),
+    ("SUPPORTPATH: SENZING_DIR is set", MODULE_2, "if (-not $env:SENZING_DIR)"),
+    ("SUPPORTPATH: expand the returned path", MODULE_2,
+     "$supportPath = [System.IO.Path]::GetFullPath("),
+    ("SUPPORTPATH: test the directory and its content", MODULE_2,
+     "Test-Path -Path $supportPath -PathType Container"),
+)
+MODULE_4_STEP_3 = "### 3. Verify data was received"
+MODULE_4_STEP_4 = "### 4. Document data source locations"
 
 STEP_4 = "4. Apply the Senzing PostgreSQL schema DDL"
 OPTION_2 = "**Option 2 — Install PostgreSQL locally:**"
@@ -158,6 +211,10 @@ def ground_rules_problems(text):
                     r"A hand-run block\*\* is one the Bootcamper types",
                     r"needs a\s+PowerShell 5\.1 form that meets the rules above \(INV-167\)",
                     r"\(INV-163\)",
+                    r"A PowerShell-only guide-run block\*\* is a guide-run block written only in PowerShell",
+                    r"runs it from its POSIX shell as one call, `powershell\.exe -NoProfile -Command …`",
+                    r"blocks that share a variable\s+run in one call",
+                    r"followed by the same line as any other guide-run block",
                     r"There is\s+no PowerShell fallback"):
         if not match_lines(body, pattern):
             problems.append(f"statement lacks {pattern!r}")
@@ -177,12 +234,127 @@ def site_problems(text, marker):
     return []
 
 
+def pointer_for(path):
+    """The pointer as ``path`` writes it: the one wording, its link relative to that file."""
+    path = Path(path).resolve()
+    if SKILLS.resolve() in path.parents:
+        return POINTER
+    target = Path(os.path.relpath(GROUND_RULES.resolve(), path.parent)).as_posix()
+    return POINTER.replace(LINK, f"{target}#{ANCHOR_ID}")
+
+
+def plugin_files():
+    return sorted(PLUGIN.rglob("*.md"))
+
+
+def fences(path, text=None):
+    """Each bash, sh or PowerShell fence in ``path`` (or in ``text``, read as ``path``), in order.
+
+    A fence closes only on a run of its own character at least as long as its opener, with no
+    info string, so a ```` ```bash ```` inside a ```` ````markdown ```` example is that example's
+    text. ``heading`` is the nearest heading line above the fence, outside any fence; ``first``
+    is the fence's first line that is neither blank nor a ``#`` comment; ``start`` and ``close``
+    are the indexes of its opening and closing fence lines in ``text.split("\\n")``.
+    """
+    lines = (read(path) if text is None else text).split("\n")
+    out, heading, i = [], None, 0
+    while i < len(lines):
+        mark = FENCE_MARK.match(lines[i])
+        if not mark:
+            if HEADING.match(lines[i]):
+                heading = lines[i].strip()
+            i += 1
+            continue
+        opener = mark.group(1)
+        lang = (mark.group(2).split() or [""])[0].lower()
+        j = i + 1
+        while j < len(lines):
+            end = FENCE_MARK.match(lines[j])
+            if (end and end.group(1)[0] == opener[0] and len(end.group(1)) >= len(opener)
+                    and not end.group(2).strip()):
+                break
+            j += 1
+        if lang in RUN_LANGS:
+            body = [line.strip() for line in lines[i + 1:j]]
+            first = next((line for line in body if line and not line.startswith("#")), "")
+            out.append(Fence(Path(path), lang, heading, first, i, j))
+        i = j + 1
+    return out
+
+
+def fence_key(fence):
+    return (fence.path.resolve().relative_to(PLUGIN.resolve()).as_posix(), fence.heading, fence.first)
+
+
+def after(text, fence):
+    """The text after ``fence``'s closing line."""
+    return "\n".join(text.split("\n")[fence.close + 1:])
+
+
+def where(fence):
+    file, heading, first = fence_key(fence)
+    return f"{file} under {heading!r}, the block starting {first[:60]!r}"
+
+
+def guide_run_problems(path, text=None, hand_run=HAND_RUN):
+    """Each fence in ``path`` is followed by the pointer, unless ``hand_run`` names it."""
+    text = read(path) if text is None else text
+    listed = {(h.file, h.heading, h.first) for h in hand_run}
+    expected = pointer_for(path)
+    problems = []
+    for fence in fences(path, text):
+        following = paragraph_after(after(text, fence))
+        if fence_key(fence) in listed:
+            if following == expected:
+                problems.append(f"{where(fence)}: listed in HAND_RUN, but followed by the guide-run "
+                                "pointer")
+        elif following != expected:
+            problems.append(f"{where(fence)}: guide-run, so the line after it must be the pointer, not "
+                            f"{following[:100]!r}; or list it in HAND_RUN with its reason")
+    return problems
+
+
+def hand_run_problems(fence_list, hand_run=HAND_RUN):
+    """Each ``hand_run`` entry names exactly one fence in ``fence_list`` and gives one reason line."""
+    found = Counter(fence_key(fence) for fence in fence_list)
+    problems = []
+    for entry, n in Counter(hand_run).items():
+        if n > 1:
+            problems.append(f"HAND_RUN lists {entry.first!r} {n} times")
+    for entry in hand_run:
+        key = (entry.file, entry.heading, entry.first)
+        if not found[key]:
+            problems.append(f"stale HAND_RUN entry, it matches no fence: {key!r}")
+        elif found[key] > 1:
+            problems.append(f"HAND_RUN entry matches {found[key]} fences, so it names none: {key!r}")
+        if not entry.reason.strip() or "\n" in entry.reason:
+            problems.append(f"HAND_RUN entry {key!r} needs a one-line reason")
+    return problems
+
+
+def module_4_step_3_problems(text):
+    """Module 4 Step 3 keeps only its POSIX form, followed by the pointer (#597)."""
+    try:
+        step = between(text, MODULE_4_STEP_3, MODULE_4_STEP_4)
+    except ValueError:
+        return ["Module 4 Step 3 not found"]
+    found = fences(MODULE_4, step)
+    problems = [f"Step 3 keeps a {f.lang} twin: {f.first!r}" for f in found if f.lang != "bash"]
+    posix = [f for f in found if f.lang == "bash"]
+    if [f.first for f in posix] != ["ls -lh data/raw/"]:
+        problems.append(f"Step 3's POSIX block is not the one `ls -lh data/raw/` block: {posix!r}")
+    for fence in posix:
+        if paragraph_after(after(step, fence)) != POINTER:
+            problems.append("Step 3's POSIX block is not followed by the pointer")
+    return problems
+
+
 def pointer_sweep_problems(files):
     """Every paragraph in the plugin that links the anchor is the pointer, word for word."""
     problems = []
     for path in files:
         for para in re.split(r"\n[ \t]*\n", read(path)):
-            if f"#{ANCHOR_ID})" in para and flat(para) != POINTER:
+            if f"#{ANCHOR_ID})" in para and flat(para) != pointer_for(path):
                 problems.append(f"{path.name}: {flat(para)[:100]!r}")
     return problems
 
@@ -265,51 +437,127 @@ class GroundRulesHoldTheOneStatement(unittest.TestCase):
         text = read(GROUND_RULES).replace("which on Windows is Git Bash", "which varies")
         self.assertTrue(ground_rules_problems(text))
 
+    def test_negative_control_dropping_the_powershell_runner(self):
+        text = read(GROUND_RULES).replace("`powershell.exe -NoProfile -Command …`", "PowerShell")
+        self.assertTrue(ground_rules_problems(text))
+
     def test_negative_control_anchor_outside_the_section(self):
         text = read(GROUND_RULES).replace(ANCHOR, "")
         text = text.replace("## Markdown files", ANCHOR + "\n\n## Markdown files")
         self.assertTrue(ground_rules_problems(text))
 
 
-class EverySiteCarriesThePointer(unittest.TestCase):
+class EveryGuideRunBlockCarriesThePointer(unittest.TestCase):
+    """Every bash, sh and PowerShell fence under `plugins/` is guide-run unless HAND_RUN says (#597)."""
+
     def test_pointer_links_the_anchor_and_discloses(self):
         self.assertIn(f"]({LINK})", POINTER)
         self.assertIn(DISCLOSURE, POINTER)
 
-    def test_each_site_is_followed_by_the_pointer(self):
-        for label, path, marker in SITES:
-            with self.subTest(site=label):
-                self.assertEqual(site_problems(read(path), marker), [])
+    def test_every_fence_is_guide_run_with_the_pointer_or_listed_as_hand_run(self):
+        for path in plugin_files():
+            with self.subTest(file=path.relative_to(PLUGIN).as_posix()):
+                self.assertEqual(guide_run_problems(path), [])
+
+    def test_every_hand_run_entry_names_one_fence_with_a_reason(self):
+        every = [fence for path in plugin_files() for fence in fences(path)]
+        self.assertEqual(hand_run_problems(every), [])
+
+    def test_hand_run_entries_are_keyed_on_text_never_a_line_number(self):
+        self.assertEqual(HandRun._fields, ("file", "heading", "first", "reason"))
+        for entry in HAND_RUN:
+            with self.subTest(entry=entry.first):
+                self.assertTrue(all(isinstance(field, str) for field in entry))
+                self.assertTrue((PLUGIN / entry.file).is_file(), entry.file)
+                self.assertTrue(HEADING.match(entry.heading), entry.heading)
+
+    def test_the_scan_reads_both_shells_and_every_top_level_directory(self):
+        """A liveness check, not a count: an empty scan would pass every test above."""
+        every = [fence for path in plugin_files() for fence in fences(path)]
+        self.assertTrue({"bash", "powershell"} <= {fence.lang for fence in every})
+        self.assertTrue({"commands", "skills"} <= {fence_key(fence)[0].split("/")[0] for fence in every})
 
     def test_each_link_resolves_to_the_anchor(self):
-        for label, path, _ in SITES:
-            with self.subTest(site=label):
-                target = (path.parent / LINK.split("#")[0]).resolve()
-                self.assertEqual(target, GROUND_RULES.resolve())
-                self.assertIn(ANCHOR, read(target))
-
-    def test_six_sites(self):
-        self.assertEqual(len(SITES), 6)
-        self.assertEqual(sum(read(p).count(POINTER) for p in {PHASE1, CONTRACT, MODULE_2}), 7,
-                         "six sites, plus the native schema route beside the container one")
+        for path in plugin_files():
+            if not fences(path):
+                continue
+            with self.subTest(file=path.relative_to(PLUGIN).as_posix()):
+                link = re.search(r"\]\(([^)#]+)#", pointer_for(path)).group(1)
+                self.assertEqual((path.parent / link).resolve(), GROUND_RULES.resolve())
+                self.assertIn(ANCHOR, read(GROUND_RULES))
 
     def test_every_link_to_the_anchor_uses_the_one_wording(self):
-        self.assertEqual(pointer_sweep_problems(sorted(SKILLS.rglob("*.md"))), [])
+        self.assertEqual(pointer_sweep_problems(plugin_files()), [])
 
-    def test_negative_control_a_site_without_the_pointer(self):
-        for label, path, marker in SITES:
-            with self.subTest(site=label):
-                text = read(path)
-                _, rest = fenced_block_after(text, marker)
-                head = text[:len(text) - len(rest)]
-                stripped = head + rest.replace(POINTER, "", 1)
-                self.assertTrue(site_problems(stripped, marker))
+    def test_negative_control_a_removed_pointer(self):
+        for path in plugin_files():
+            text = read(path)
+            listed = {(h.file, h.heading, h.first) for h in HAND_RUN}
+            for fence in fences(path, text):
+                if fence_key(fence) in listed:
+                    continue
+                with self.subTest(site=where(fence)):
+                    lines = text.split("\n")
+                    k = fence.close + 1
+                    while k < len(lines) and not lines[k].strip():
+                        k += 1
+                    end = k
+                    while end < len(lines) and lines[end].strip():
+                        end += 1
+                    self.assertEqual(flat(" ".join(lines[k:end])), pointer_for(path))
+                    stripped = "\n".join(lines[:k] + lines[end:])
+                    self.assertTrue(guide_run_problems(path, stripped))
 
     def test_negative_control_a_reworded_pointer(self):
-        for label, path, marker in SITES:
-            with self.subTest(site=label):
-                text = read(path).replace("no test runs it there", "nobody checked")
-                self.assertTrue(site_problems(text, marker))
+        text = read(MODULE_2).replace("no test runs it there", "nobody checked")
+        self.assertTrue(guide_run_problems(MODULE_2, text))
+
+    def test_negative_control_a_new_unlisted_fence(self):
+        for lang in ("bash", "sh", "powershell"):
+            with self.subTest(lang=lang):
+                text = read(PHASE1) + f"\n## A new step\n\n```{lang}\necho new\n```\n\nIt prints.\n"
+                problems = guide_run_problems(PHASE1, text)
+                self.assertTrue(any("'echo new'" in p for p in problems), problems)
+
+    def test_negative_control_a_new_fence_with_the_pointer_passes(self):
+        text = read(PHASE1) + f"\n## A new step\n\n```bash\necho new\n```\n\n{POINTER}\n"
+        self.assertEqual(guide_run_problems(PHASE1, text), [])
+
+    def test_negative_control_a_stale_hand_run_entry(self):
+        every = [fence for path in plugin_files() for fence in fences(path)]
+        stale = HAND_RUN + (HandRun("skills/module-02-sdk-setup/SKILL.md", ENV_SCRIPT, "echo gone",
+                                    "a block that was deleted"),)
+        problems = hand_run_problems(every, stale)
+        self.assertTrue(any("stale" in p and "echo gone" in p for p in problems), problems)
+
+    def test_negative_control_a_hand_run_block_whose_first_line_changed(self):
+        """Its entry goes stale and the block becomes an unlisted guide-run block: both report."""
+        text = read(MODULE_2).replace('if [ -n "${ZSH_VERSION:-}" ]; then',
+                                      'if [ -n "${ZSH_VERSION-}" ]; then', 1)
+        self.assertTrue(hand_run_problems(fences(MODULE_2, text)))
+        self.assertTrue(guide_run_problems(MODULE_2, text))
+
+    def test_negative_control_an_entry_under_the_wrong_heading(self):
+        moved = tuple(entry._replace(heading="## Step 3: Install Senzing SDK") for entry in HAND_RUN)
+        self.assertTrue(hand_run_problems(fences(MODULE_2), moved))
+
+    def test_negative_control_a_hand_run_block_with_the_pointer(self):
+        text = read(MODULE_2)
+        fence = next(f for f in fences(MODULE_2, text) if f.first == HAND_RUN[0].first)
+        lines = text.split("\n")
+        lines[fence.close + 1:fence.close + 1] = ["", POINTER]
+        problems = guide_run_problems(MODULE_2, "\n".join(lines))
+        self.assertTrue(any("listed in HAND_RUN" in p for p in problems), problems)
+
+    def test_negative_control_a_hand_run_entry_with_no_reason(self):
+        blank = (HAND_RUN[0]._replace(reason=" "),) + HAND_RUN[1:]
+        self.assertTrue(hand_run_problems(fences(MODULE_2), blank))
+
+    def test_a_fence_nested_in_a_markdown_example_is_its_text(self):
+        text = ("## Doc\n\n````markdown\n## Inside\n\n```bash\necho example\n```\n````\n\n"
+                "```bash\necho real\n```\n\nIt prints.\n")
+        self.assertEqual([(f.heading, f.first) for f in fences(PHASE1, text)],
+                         [("## Doc", "echo real")])
 
     def test_negative_control_the_sweep_catches_a_drifted_copy(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -317,8 +565,54 @@ class EverySiteCarriesThePointer(unittest.TestCase):
             drifted.write_text(f"Runs in Git Bash ([guide-run blocks]({LINK})).\n", encoding="utf-8")
             self.assertTrue(pointer_sweep_problems([drifted]))
 
-    def test_negative_control_a_site_whose_block_is_gone(self):
-        self.assertTrue(site_problems(read(MODULE_2), "no such line anywhere in the file"))
+    def test_negative_control_a_command_using_the_skill_link(self):
+        command = PLUGIN / "commands" / "package-bootcamp.md"
+        self.assertNotEqual(pointer_for(command), POINTER)
+        text = read(command).replace(pointer_for(command), POINTER)
+        self.assertTrue(guide_run_problems(command, text))
+
+
+class PowerShellOnlyGuideRunBlocks(unittest.TestCase):
+    """SDK setup's Scoop and SUPPORTPATH checks are guide-run; Module 4 Step 3 has one POSIX form (#597)."""
+
+    def test_each_powershell_only_block_is_followed_by_the_pointer(self):
+        for label, path, marker in POWERSHELL_GUIDE_RUN:
+            with self.subTest(site=label):
+                self.assertEqual(site_problems(read(path), marker), [])
+
+    def test_none_of_them_is_listed_as_hand_run(self):
+        listed = {(h.file, h.heading, h.first) for h in HAND_RUN}
+        for label, path, marker in POWERSHELL_GUIDE_RUN:
+            with self.subTest(site=label):
+                lines = read(path).split("\n")
+                holding = [f for f in fences(path) if f.lang == "powershell"
+                           and any(marker in line for line in lines[f.start + 1:f.close])]
+                self.assertEqual(len(holding), 1, holding)
+                self.assertNotIn(fence_key(holding[0]), listed)
+
+    def test_step_8_runs_the_blocks_that_share_a_variable_in_one_call(self):
+        step = between(read(MODULE_2), "**On Windows, verify the `SUPPORTPATH`", "**On macOS, the same check")
+        for pattern in (r"Each block below is a PowerShell-only guide-run block",
+                        r"items 2 and 3's blocks in one call:\s+`\$supportPath` does not survive"):
+            with self.subTest(pattern=pattern):
+                self.assertTrue(match_lines(step, pattern))
+
+    def test_module_4_step_3_keeps_only_its_posix_form(self):
+        self.assertEqual(module_4_step_3_problems(read(MODULE_4)), [])
+
+    def test_negative_control_the_powershell_twin_restored(self):
+        text = read(MODULE_4).replace(
+            f"{POINTER}\n",
+            f"{POINTER}\n\n```powershell\nGet-ChildItem data\\raw\\ | Format-Table Name, Length\n```\n", 1)
+        self.assertNotEqual(text, read(MODULE_4))
+        self.assertTrue(module_4_step_3_problems(text))
+
+    def test_negative_control_a_powershell_only_block_without_the_pointer(self):
+        text = read(MODULE_2)
+        _, rest = fenced_block_after(text, "scoop info senzingsdk/senzingsdk")
+        stripped = text[:len(text) - len(rest)] + rest.replace(POINTER, "", 1)
+        self.assertTrue(site_problems(stripped, "scoop info senzingsdk/senzingsdk"))
+        self.assertTrue(guide_run_problems(MODULE_2, stripped))
 
 
 class SchemaDdlComesFromTheSdkContainer(unittest.TestCase):

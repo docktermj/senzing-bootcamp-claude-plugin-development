@@ -371,6 +371,8 @@ apt-cache policy senzingsdk-runtime                  # Candidate: is what the re
 sudo apt install -y senzingsdk-runtime senzingsdk-setup   # takes the newest available
 ```
 
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
 **Linux, yum/dnf (`linux_yum`):** *plugin-owned* —
 `rpm -q --qf '%{VERSION}-%{RELEASE}\n' senzingsdk-runtime` for installed, and
 `yum check-update senzingsdk-runtime` for available (**`dnf` on RHEL 8+/Fedora**).
@@ -396,6 +398,8 @@ brew update
 brew upgrade --cask senzingsdk     # takes the newest available
 ```
 
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
 ⛔ **A ZERO EXIT CODE FROM `brew` DOES NOT MEAN IT INSTALLED** (INV-218). If the EULA variable's name or
 value is wrong the cask prints "No interactive terminal detected", purges the download, then
 **still prints its Caveats block listing install paths** — so it reads as success while installing
@@ -404,6 +408,8 @@ nothing. After any macOS update, probe the artifact:
 ```bash
 test -f "$(brew --prefix)/opt/senzing/er/lib/libSz.dylib" && ls "$(brew --prefix)/opt/senzing/data"/*TransRules.sz
 ```
+
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 Also on macOS: the tap must be trusted on Homebrew 6+ (`brew trust senzing/senzingsdk`), and
 **`SENZING_ROOT` can move between versions** — re-export the env vars from
@@ -424,6 +430,8 @@ scoop update senzingsdk               # takes the newest available
 # server-documented — the presence probe sdk_guide gives under post_install
 Test-Path "$env:SENZING_DIR\lib\Sz.dll"   # verify it actually installed
 ```
+
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 **Docker (`docker`):** there is nothing to update in place — the **image tag is the version**.
 Offer to pull a newer tag and recreate the container instead, and do not run a package-manager
@@ -802,6 +810,8 @@ project's `SessionEnd` would stop, and its `SessionStart` would report, the othe
    # or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/docker_lifecycle.py container-name <base> --runtime <runtime>
    ```
 
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
    It prints `<base>-<project>-<hash6>`, derived from the project directory. Create the container
    with exactly that `--name`, and record exactly that name in `docker_containers`, with a
    `host_port` field when the step publishes a port. Every later command and module reads the
@@ -842,6 +852,8 @@ host reaches it only through a port published to host loopback.
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/docker_lifecycle.py" free-port 8080
    # or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/docker_lifecycle.py free-port 8080
    ```
+
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
    It prints `8080` when that host loopback port is free, else the first free port above it. When
    it prints another port, tell the Bootcamper, for example: "Port 8080 is in use on this machine,
@@ -953,6 +965,8 @@ existing-install path, which skips Phase 1 and Phase 2; INV-338, INV-339):**
    ```bash
    python3 -c "import senzing, sys; print(senzing.__file__)"
    ```
+
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
    If the path is **not** under the SDK's Python directory (`PYTHONPATH` as the server returned it),
    PyPI packages are shadowing the real ones. Remedy: uninstall them
@@ -2015,6 +2029,8 @@ config with `sdk_guide(topic='configure', ...)` — never hand-construct
    python3 -c "import secrets; print(secrets.token_hex(16))"
    ```
 
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
    Then take the container's name and its host port from the helper, from the project root. The
    name follows [the container-naming rule](#container-naming) in Step 3 with the base
    `bootcamp-postgres`, conflicts, a non-zero exit and the never-touch rule included. `free-port`
@@ -2025,6 +2041,8 @@ config with `sdk_guide(topic='configure', ...)` — never hand-construct
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/docker_lifecycle.py" free-port 5432
    # or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/docker_lifecycle.py <same arguments>
    ```
+
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
    Run an official `postgres` image with the printed name as `<pg-container>` and the printed port
    as `<host_port>`, a **project-local volume** (data persists in the working directory, not an
@@ -2246,6 +2264,10 @@ This is a check of the JSON built from `default_paths`, not manual JSON construc
 server's `support_path` stays the value, and the check only confirms it resolves to the support
 data.
 
+Each block below is a PowerShell-only guide-run block, run as the ground rules' "Windows and
+PowerShell" says. Run item 1's block on its own, and items 2 and 3's blocks in one call:
+`$supportPath` does not survive from one call to the next.
+
 1. Confirm `SENZING_DIR` is set in this shell. **If `$env:SENZING_DIR` is empty, stop** and tell
    the Bootcamper that `SENZING_DIR` is not set; test and write no path. An unset variable resolves
    against the current drive, so any check run without it tests the wrong directory.
@@ -2253,6 +2275,8 @@ data.
    ```powershell
    if (-not $env:SENZING_DIR) { Write-Output "SENZING_DIR is not set in this shell" }
    ```
+
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 2. Expand the returned `support_path` with `$env:SENZING_DIR` to an absolute path. Put the value
    exactly as `sdk_guide` returned it in single quotes, so PowerShell leaves it alone and .NET
@@ -2262,6 +2286,8 @@ data.
    $supportPath = [System.IO.Path]::GetFullPath([System.Environment]::ExpandEnvironmentVariables('<support_path>'))
    $supportPath
    ```
+
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
    Expand `config_path` and `resource_path` the same way; the expanded values are what
    `config/engine_config.json` gets.
@@ -2275,6 +2301,8 @@ data.
    Test-Path -Path $supportPath -PathType Container
    Test-Path -Path (Join-Path $supportPath "*TransRules.sz")
    ```
+
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 4. On failure, report the expanded path that was tested, and do not guess another one:
    - **The directory does not exist:** "SUPPORTPATH directory not found: `<expanded path>`."

@@ -1116,6 +1116,8 @@ every language, Python included, and build and run it with that section's comman
     --name results_visualization --tabs all --query "<a name present in the loaded data>"
   ```
 
+  Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
   ⛔ **"No headless capability" is a conclusion the helper reaches and reports, never one you reach
   first.** Enter the skip path on its **exit code** — it distinguishes its reasons — and never
   on an assumption that browser automation is unavailable. A guide that skipped capture here on that
@@ -1333,6 +1335,8 @@ bare `scripts/…` path, which resolves against the project working directory wh
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_discoveries_pdf.py"
 # or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/generate_discoveries_pdf.py
 ```
+
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 That script is the discoveries **sibling** of the recap generator — do not point
 `generate_recap_pdf.py` at this document, which parses recap-shaped module sections and would

@@ -971,6 +971,14 @@ PowerShell form; each guide-run site links here rather than restating it (INV-30
   it is followed by one line, in the same wording at every site, that links here and says so
   (INV-163): "Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows:
   no test runs it there."
+- **A PowerShell-only guide-run block** is a guide-run block written only in PowerShell, because
+  what it checks exists only on Windows (SDK setup's Scoop and `SUPPORTPATH` checks). The guide
+  runs it from its POSIX shell as one call, `powershell.exe -NoProfile -Command …`, with the block
+  as the command, single-quoted so that shell passes every `$` through unchanged (write a `'`
+  inside it as `'\''`). `-NoProfile` keeps the Bootcamper's PowerShell profile out of the result.
+  It runs in Windows PowerShell 5.1, so the rules above apply to it. Each call is a new
+  PowerShell, and a variable one call sets is gone in the next, so blocks that share a variable
+  run in one call. It is followed by the same line as any other guide-run block.
 - **A hand-run block** is one the Bootcamper types into their own terminal. On Windows it needs a
   PowerShell 5.1 form that meets the rules above (INV-167).
 - A guide-run block that fails in the guide's shell follows its own site's failure rule. There is
