@@ -40,11 +40,25 @@ BREAKING, WATCH, INFO = "BREAKING", "WATCH", "INFO"
 
 # Apparatus that content modules must show and the two apparatus-exempt stretches
 # must not (INV-075, INV-078 vs INV-028..031, INV-096).
+#
+# Each pattern matches the plugin's own renderings (#658): the guide heads the
+# journey map "Your journey" and marks modules ✅/🔄/⬜, writes "⏱️ Roughly 20–45
+# minutes" or "hard to estimate", and may render the label "Before → After". The
+# same patterns raise BREAKING INV-075 in the exempt phases, so the journey map
+# needs a heading line or a run of two or more status lines: a single status line
+# such as "✅ Bootcamp preparation complete" is not a journey map.
+_STATUS = "[✅🔄⬜]"
 APPARATUS = {
-    "journey map": re.compile(r"(?i)journey map"),
-    "before/after": re.compile(r"(?i)\bbefore\s*(?:/|and)\s*after\b"),
+    "journey map": re.compile(
+        r"(?im)journey map"
+        r"|^[^\w\n]*your journey[^\w\n]*$"
+        rf"|^[ \t]*{_STATUS}[^\n]*\n[ \t]*{_STATUS}"),
+    "before/after": re.compile(r"(?i)\bbefore\s*(?:/|and|→|->)\s*after\b"),
     "step overview": re.compile(r"(?i)step overview|what we'?ll (?:do|cover)"),
-    "time estimate": re.compile(r"(?i)\b(?:takes|about|approx\w*)\s+\d+\s*(?:-|to)?\s*\d*\s*minutes?\b"),
+    "time estimate": re.compile(
+        r"(?im)^[^\w\n]*⏱"
+        r"|\b(?:roughly|about|takes|approx\w*)\s+\d+(?:\s*(?:-|–|to)\s*\d+)?\s*minutes?\b"
+        r"|\bhard to estimate\b"),
     "model nudge": re.compile(r"(?i)\b(?:opus|sonnet|haiku)\s*5?\b.*\beffort\b|switch (?:to|the) model"),
 }
 
@@ -257,6 +271,26 @@ _BAD = [
     "\U0001f449 **Which data source would you like to start with?**",
 ]
 
+# The plugin's own wording for each apparatus item: ground-rules.md's estimate
+# example and its no-number form, graduation's en-dash range, the guide's heading,
+# status list and arrow label from the 2026-10-14 walk.
+_APPARATUS_RENDERINGS = (
+    ("time estimate", "⏱️ Roughly 15-30 minutes, depending on download/install speed."),
+    ("time estimate", "⏱️ Roughly 20–45 minutes. It varies with your machine."),
+    ("time estimate", "This is hard to estimate for this module."),
+    ("journey map", "**Your journey**"),
+    ("journey map", "✅ Bootcamp preparation\n🔄 **SDK setup**\n⬜ System verification"),
+    ("before/after", "**Before → After:** You have a project directory but no SDK."),
+)
+
+# Preparation-phase text that must not raise INV-075: the preparation close is one
+# status line, not a journey map (bootcamp-preparation/SKILL.md).
+_EXEMPT_PHASE_TEXT = (
+    "✅ Bootcamp preparation complete",
+    "✅ Bootcamp preparation complete — Path: Core (all 11 modules) — "
+    "Detail level: minimal → Next: Entity Resolution Concepts",
+)
+
 
 def selftest():
     """Negative control: every check must fire on a transcript built to break it.
@@ -279,6 +313,23 @@ def selftest():
     apparatus = lint(["This module takes about 20 minutes."], phase="preparation")
     if not any(f["code"] == "INV-075-apparatus-in-exempt-phase" for f in apparatus):
         failures.append("apparatus check did not fire in an exempt phase")
+
+    # The plugin's own renderings of the apparatus (#658). Each must be recognized,
+    # or a content module that shows it is reported as missing it.
+    for name, sample in _APPARATUS_RENDERINGS:
+        if not APPARATUS[name].search(sample):
+            failures.append(f"{name} pattern missed the plugin's rendering {sample!r}")
+    missing = {f["message"] for f in lint(["Starting the module now."], phase="content")
+               if f["code"] == "INV-028-apparatus-missing"}
+    for name in ("journey map", "before/after", "time estimate"):
+        if f"content module showed no {name}" not in missing:
+            failures.append(f"a content turn with no {name} was not flagged")
+    # A single status line is not a journey map, so the preparation close stays clean.
+    for line in _EXEMPT_PHASE_TEXT:
+        hits = [f for f in lint([line], phase="preparation")
+                if f["code"] == "INV-075-apparatus-in-exempt-phase"]
+        if hits:
+            failures.append(f"exempt-phase text raised INV-075: {hits[0]['message']}")
 
     # The turn-final rule was relaxed to let an options list follow the question,
     # because the strict version flagged every well-formed choice question in a real
@@ -303,7 +354,9 @@ def selftest():
         for line in failures:
             print(f"SELFTEST FAIL: {line}", file=sys.stderr)
         return 1
-    print(f"selftest: all {len(expected) + 4} checks behave — each fires on bad "
+    checks = (len(expected) + 4 + len(_APPARATUS_RENDERINGS) + 3
+              + len(_EXEMPT_PHASE_TEXT))
+    print(f"selftest: all {checks} checks behave — each fires on bad "
           "input and stays silent on good input")
     return 0
 

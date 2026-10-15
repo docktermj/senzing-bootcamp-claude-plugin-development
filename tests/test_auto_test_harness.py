@@ -75,6 +75,34 @@ class TestTranscriptLinterIsNegativeControlled(unittest.TestCase):
                 "1. Claims\n2. Policies\n\n(respond with a number)"]
         self.assertEqual([], lint.lint(good))
 
+    def test_selftest_fails_with_the_old_apparatus_patterns(self):
+        """#658: the selftest holds the patterns to the plugin's own renderings.
+
+        Restoring the patterns that missed "Your journey", "⏱️ Roughly 20–45
+        minutes" and "Before → After" must turn the selftest red; otherwise it
+        does not guard the widening.
+        """
+        import contextlib
+        import io
+        import re
+        from unittest import mock
+
+        import transcript_lint as lint
+        old = dict(lint.APPARATUS)
+        old.update({
+            "journey map": re.compile(r"(?i)journey map"),
+            "before/after": re.compile(r"(?i)\bbefore\s*(?:/|and)\s*after\b"),
+            "time estimate": re.compile(
+                r"(?i)\b(?:takes|about|approx\w*)\s+\d+\s*(?:-|to)?\s*\d*\s*minutes?\b"),
+        })
+        err = io.StringIO()
+        with mock.patch.dict(lint.APPARATUS, old), \
+                contextlib.redirect_stdout(io.StringIO()), \
+                contextlib.redirect_stderr(err):
+            self.assertEqual(1, lint.selftest())
+        for name in ("journey map", "before/after", "time estimate"):
+            self.assertIn(f"{name} pattern missed", err.getvalue())
+
 
 class TestPluginConformsToTheCapturedContract(unittest.TestCase):
     """The offline half of the MCP check, against the committed snapshot."""
