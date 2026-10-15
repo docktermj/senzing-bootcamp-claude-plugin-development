@@ -1632,10 +1632,14 @@ def plan_timeline(storyboard: dict, ctx: RenderContext, engine: Optional[SpeechE
         if needed > planned:
             how = ("" if voiced else
                    f", estimated at {WORDS_PER_MINUTE} words a minute with no voice")
-            _report("OVERRUN", f"{label}: the narration needs {needed:.1f} s ({spoken:.1f} s "
+            # Round both figures UP to the next 0.1 s: plain rounding printed an overrun
+            # under 0.05 s as "needs 2.0 s, more than the planned 2 s" (#651).
+            needs_shown = math.ceil(needed * 10) / 10
+            extended_shown = math.ceil(frames / FPS * 10) / 10
+            _report("OVERRUN", f"{label}: the narration needs {needs_shown:.1f} s ({spoken:.1f} s "
                     f"spoken{how}, plus {NARRATION_LEAD + NARRATION_TAIL:g} s of lead and "
                     f"tail), more than the planned {planned:g} s; the scene is extended to "
-                    f"{frames / FPS:.1f} s so nothing is cut.")
+                    f"{extended_shown:.1f} s so nothing is cut.")
         plan.append(PlannedScene(index, scene["type"], kind, data, planned, frames / FPS,
                                  frames, caption, spoken, voiced, pcm,
                                  caption_chunks(ctx, caption)))
