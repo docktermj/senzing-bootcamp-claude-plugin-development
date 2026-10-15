@@ -421,6 +421,7 @@ The full checkpoint structure in `config/bootcamp_progress.json` is:
   "module_7_query": {
     "steps": {
       "4a": {"status": "completed", "patterns_found": {"multi_record": 5, "cross_source": 3, "relationships": 2}},
+      "4a-pairs": {"status": "completed", "pairs": [{"records": ["<DS>:<ID>", "<DS>:<ID>"], "prediction": "same", "engine": "same", "agreement": "agreed"}]},
       "4b": {"status": "completed", "entity_demonstrated": 1234},
       "4c": {"status": "completed", "entity_demonstrated": 5678},
       "4d": {"status": "completed"},

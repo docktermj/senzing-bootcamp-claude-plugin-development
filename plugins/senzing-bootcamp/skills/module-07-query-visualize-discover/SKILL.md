@@ -52,7 +52,10 @@ data, resolved, shown first as the headline entity at the end of step 1 and then
 
 **Success indicator:** ✅ Query programs created and tested + queries answer the business
 problem + the single interactive visualization app offered (the entity graph and every results
-view are tabs within it) + Discover phase completed or explicitly skipped.
+view are tabs within it) + Discover phase completed or explicitly skipped + the data-discoveries
+deliverable (`docs/bootcamp_data_discoveries.md` and `.pdf`) produced on every path + every saved
+query requirement answered in its `## Your question, answered` section (the Query Completeness
+Gate's item 5).
 
 ## No direct SQL (module-critical)
 

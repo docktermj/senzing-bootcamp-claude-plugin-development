@@ -2686,13 +2686,14 @@ Phase 1 (`phase1-query-visualize.md`):
   reported, never blocking.
 - Query Completeness Gate (item 5 checks that every saved requirement appears
   in Your question, answered exactly once, adding a missing row and
-  re-rendering; it asks nothing and never blocks), then (only if a server started) a separate stop
+  re-rendering; it asks nothing and never blocks), then (only if a server started, by a recorded
+  pid or port) a separate stop
   question that stops by recorded pid. Completion runs `module-completion.md`,
   opens Module 7's recap section with the headline block (`#headline-block`,
   the first entry of `### Information Shared`, re-retrieved with step 1's rule
   and written whether or not 3c ran; screenshots stay in tab order),
-  recaps every quality iteration and offers graduation, invoking the
-  `graduation` skill on yes.
+  recaps every quality iteration and offers graduation, handling the reply
+  by `module-completion.md` → "Reaching graduation" (INV-272).
 
 Phase 2a (`phase2-discover.md`): an opt-in, separate from 3c, sets
 `discover_phase` to `skipped` or `in_progress`; declining never skips the
@@ -2775,7 +2776,8 @@ and continues; the recap PDF is guaranteed.
   tab order, capture-shortfall warnings from `<name>-tabs.json`, notes
   between `BOOTCAMP-NOTES:START/END`, Step 0b's handover between
   `BOOTCAMP-HANDOVER:START/END` (replaced on a re-run, absent when empty),
-  then `normalize_docs_markdown.py`.
+  then `normalize_docs_markdown.py`, whose mojibake warning is relayed, never
+  repaired (INV-166).
 - Step 1b offers `fpdf2` in `data/temp/recap-venv/`, runs
   `generate_recap_pdf.py` and `--check --expect-modules` (semicolons),
   trusts only `PDF generated:`, falls back inline, and reports any
@@ -2788,7 +2790,9 @@ and continues; the recap PDF is guaranteed.
   runs `generate_recap_video.py --check` and the render, handling exit 1
   (fix), 2 (offer `imageio-ffmpeg`/Pillow), 3 (skip, keep storyboard), and
   checks 2:00 plus or minus 10 s.
-- Step 2 builds `production/` (asks overwrite, merge or abort): copies
+- Step 2 builds `production/` (asks overwrite, merge or abort; abort writes
+  nothing there, so Step 5 writes `docs/GRADUATION_REPORT.md`, hand-formatted,
+  and 5a is skipped): copies
   `src/transform`, `src/load`, `src/query`, `src/utils` (never their build
   output: `classes/`, `target/`, `dist/`, `node_modules/`, `bin/`, `obj/`),
   `data/senzing-ready/` and the root dependency manifest (only Python's sits
@@ -2814,8 +2818,8 @@ and continues; the recap PDF is guaranteed.
 - Step 6 writes `backups/revisit/`: the database backup (SQLite copy or
   `pg_dump -Fc -f`, never redirection; in a container, through its recorded
   runtime after a `cp --help` probe), state snapshot, `RESUME_STATE.json`
-  and `docs/REVISIT_BOOTCAMP.md`, which carries both Step 0b lists and the
-  "Next time" request.
+  and `docs/REVISIT_BOOTCAMP.md`, which carries both Step 0b lists, the
+  takeaway and the "Next time" request.
 - Close: confirm the PDF, announce only existing artifacts plus a
   `/package-bootcamp` statement, state that there is no script from here and
   repeat the "Next time" request, ask "anything else you would like to
@@ -9969,6 +9973,7 @@ looks wrong.
 - `tests/test_claimed_hook_triggers_are_real.py`: 8
 - `tests/test_classpath_root_is_platform_qualified.py`: 6
 - `tests/test_coherence_sweep_523.py`: 29
+- `tests/test_coherence_sweep_614.py`: 17
 - `tests/test_comment_test_pointers_resolve.py`: 10
 - `tests/test_compact_dev_environment_leaves_specs_frozen.py`: 12
 - `tests/test_completeness_denominator.py`: 23
@@ -10060,7 +10065,7 @@ looks wrong.
 - `tests/test_globalization_retrieval_strategy.py`: 15
 - `tests/test_graduation_announces_what_it_produces.py`: 12
 - `tests/test_graduation_ending_surfaces.py`: 7
-- `tests/test_graduation_hands_over_the_ability.py`: 30
+- `tests/test_graduation_hands_over_the_ability.py`: 33
 - `tests/test_graduation_no_voice_guidance.py`: 20
 - `tests/test_graduation_reads_persisted_answers.py`: 15
 - `tests/test_graduation_video_step.py`: 75
@@ -12342,3 +12347,11 @@ Senzing licensing, with no SPDX identifier.
   on `docker (exec|cp|start)` in the shipped skills, with an INV-195
   `PROPOSED AMENDMENT` queued (those commands hardcoded `docker`, so podman
   and Apple `container` Bootcampers got commands that fail)
+- #614: graduation's Step 6c return guide carries the takeaway and the closing
+  repeats only the "Next time" request (INV-358); Step 2's Abort writes nothing
+  under `production/`, so Step 5 writes `docs/GRADUATION_REPORT.md`,
+  hand-formatted, and 5a is skipped; Module 7's graduation reply handling
+  points to "Reaching graduation" (INV-272, INV-300), its teardown skip keys on
+  no recorded pid or port, and `tests/test_coherence_sweep_614.py` pins these
+  with negative controls (sibling statements in Module 7 and graduation
+  disagreed)

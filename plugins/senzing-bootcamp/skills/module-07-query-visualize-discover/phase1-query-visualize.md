@@ -1224,6 +1224,10 @@ than Discover's findings. After it, return here for the Query Completeness Gate.
   tabbed app — entity graph with its relationship view, merge statistics, match keys, feature
   scores, cross-source overlap, and search/probe — was built when accepted).
 - ✅ Discover phase completed or explicitly skipped.
+- ✅ Data-discoveries deliverable produced on every path: `docs/bootcamp_data_discoveries.md` and
+  `.pdf`, or the Bootcamper told why they could not be (below).
+- ✅ Their question answered: every saved query requirement has its row in the discoveries
+  document's `## Your question, answered` section (the Query Completeness Gate's item 5).
 
 ## Data-discoveries deliverable (produced on every path)
 
@@ -1372,9 +1376,12 @@ Before wrapping up the module, confirm:
 
 ## Visualization server teardown (its own turn)
 
-**Skip this step silently if no server was started** — the Bootcamper declined the step-3c
-visualization (`m7_visualizations` records `"accepted": false`), so there is nothing to stop and
-nothing to say about it. Go straight to module completion below.
+**Skip this step silently if no server was started** — `m7_visualizations` records no `pid` and
+no `port` (step 3c's checkpoint records them only while the server is up), so there is nothing to
+stop and nothing to say about it. That covers a declined step-3c visualization (`"accepted":
+false`) and the two cases that leave `"accepted": true` with no server: a Bootcamper who declined
+to recreate the SDK container on the container route, and an identity check that disagreed, so
+the URL was never handed over. Go straight to module completion below.
 
 Otherwise, this is the one place the stop question is asked: after the Query Completeness Gate and
 before the Module Completion process, whether the Discover phase was completed, declined, or exited
@@ -1445,13 +1452,9 @@ rather than a next-module transition:
 `../bootcamp-onboarding/module-completion.md` → "Reaching graduation".)* On module completion, set
 `current_step` to `null` per the ground rules.
 
-- **Affirmative:** invoke the `graduation` skill (GRADUATION banner, recap PDF, and `production/`
-  project). See `../graduation/SKILL.md`.
-- **Wants to keep exploring first:** stay available for more queries, visualizations, or Discover
-  work, and offer graduation again whenever they are ready.
-- **Production-hardening:** graduation is the close-out for everyone. Production-hardening
-  (performance, security, monitoring, deployment) is delivered through the graduation production
-  project and migration checklist, not as separate numbered modules.
+Handle the reply as `../bootcamp-onboarding/module-completion.md` → "Reaching graduation" states
+it, including its acknowledge-first line before the `graduation` skill is invoked (INV-272); it is
+the one statement of that handling, so it is not restated here (INV-300).
 
 ## Integration patterns
 
