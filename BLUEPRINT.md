@@ -3573,7 +3573,9 @@ named valid values, harvested permissively from backticks or prose, minus
 gloss words), `opaque`, `silently-accepted` (no error) or `probe-error`.
 Tools in `NEVER_CALL` (`submit_feedback`, `download_resource`) are never
 called. `accepted_values` prefers probed values, else prose values, unioned
-with `verified_values`. Subcommands (default `check`):
+with `verified_values` and any declared enum (`declared_enum_values`, `null`
+dropped), so an enum can widen the set but never adds a rejection.
+Subcommands (default `check`):
 
 - `snapshot` prints the normalized snapshot.
 - `update` runs `record_verified_extras` (every plugin literal outside the
@@ -4899,9 +4901,11 @@ NEVER_CALL = frozenset({"submit_feedback", "download_resource"})
 CONTENT_PROBES = (("get_capabilities", {}),)
 PROSE_VALUES = {
     ("mapping_workflow", "action"): r"Actions:\s*([a-z_,\s]+?)\.",
-    ("generate_scaffold", "language"): r"Languages:\s*([a-z#,\s]+?)\.",
+    ("generate_scaffold", "language"):
+        r"Languages:\s*((?:[a-z#,;\s]|\([^)]*\))+?)\.",
     ("search_docs", "category"): r"'category' to filter:\s*([a-z_,\s]+?)(?:\.|\n|$)",
-    ("sdk_guide", "language"): r"\d+\s+languages\s*\(([^)]+)\)",
+    ("sdk_guide", "language"):
+        r"(?:\d+\s+languages\s*|Languages:\s*\d+\s*)\(([^)]+)\)",
     ("sdk_guide", "platform"): r"\d+\s+platforms\s*\(((?:[^()]|\([^)]*\))*)\)",
     ("get_sample_data", "dataset"): r"Available datasets:\s*((?:[^.()]|\([^)]*\))+)",
 }
@@ -4935,7 +4939,7 @@ CONFABULATIONS = (
     ("addDataSource", "registerDataSource"),
     ("close_export", "close_export_report"),
     ("G2Engine", "SzEngine"),
-    ("NAME_ORG", "BUSINESS_NAME_ORG"),
+    ("EMPLOYER_NAME", "NAME_ORG"),
 )
 NEGATION_CUES = re.compile(
     r"(?i)\b(never|not|non-|no\s|instead|wrong|incorrect|avoid|CLI command|"
@@ -4950,6 +4954,8 @@ def probe_values(url, timeout=30):
 def snapshot(url, timeout=30, probe_content=True, probe_values_too=True):
     ...
 def accepted_values(tool_meta, param):
+    ...
+def declared_enum_values(tool_meta, param):
     ...
 def record_verified_extras(live, url, timeout=30):
     ...
@@ -9792,6 +9798,25 @@ def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
 - `_claude`: `test_dry_run_simulated_phase3.py` (patched with a stub, so the
   walk's stop condition runs offline and spends no tokens)
 
+### 7.11 `.claude/skills/auto-test/mcp_probe.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `.claude/skills/auto-test/mcp_probe.py`:
+
+```python
+def _canon_set(values):
+    ...
+def _skill_files():
+    ...
+```
+
+<!-- markdownlint-enable MD013 -->
+
+- `_canon_set`: `test_auto_test_harness.py`
+- `_skill_files`: `test_auto_test_harness.py` (patched with one fixture file,
+  so the confabulation check runs offline)
+
 ## 8. Tests
 
 ### 8.1 Framework and tools
@@ -9987,7 +10012,7 @@ looks wrong.
 - `tests/test_audit_skill_reads_the_newest_entries.py`: 4
 - `tests/test_audit_skill_states_no_stale_count.py`: 9
 - `tests/test_authored_shapes_are_stated.py`: 8
-- `tests/test_auto_test_harness.py`: 16
+- `tests/test_auto_test_harness.py`: 29
 - `tests/test_backgrounded_launch_records_the_server_pid.py`: 12
 - `tests/test_blocked_submission_has_a_vocabulary_value.py`: 29
 - `tests/test_bootcamp_notes_flow.py`: 33
@@ -10731,7 +10756,12 @@ Related guards:
 - `tests/test_auto_test_harness.py` checks the plugin against
   `.claude/skills/auto-test/baseline/mcp-snapshot.json`: no breaking conformance
   findings, no forbidden tool probed, and the linter's self-test passing, and
-  failing when the pre-#658 apparatus patterns are restored.
+  failing when the pre-#658 apparatus patterns are restored. The baseline's
+  `language` value lists are non-empty and no correct `NAME_ORG` is flagged.
+  `TestTheProbeTablesMatchServer1390` (#659) parses the 1.39.0 `language`
+  descriptions (the pre-#659 patterns parse neither), flags an uncued
+  `EMPLOYER_NAME` but not `NAME_ORG` (the inverted pair gets both wrong), and
+  unions a declared enum without `null`, never accusing a value from it alone.
   `TestReportDirectory` (#609) runs `autotest.main` offline: `--report-dir`
   takes the report, the transcript copy and `latest.json` and creates the
   directory, nothing is left outside it, and without it they go to the
@@ -12490,3 +12520,9 @@ Senzing licensing, with no SPDX identifier.
   estimate"), and `--selftest` holds them to those strings and to the
   preparation close (the old patterns reported all three missing from a
   content module that showed them, so the only grading signal was noise)
+- #659: `mcp_probe.py`'s tables match server 1.39.0 (`CONFABULATIONS` holds
+  `EMPLOYER_NAME` -> `NAME_ORG`, both `language` value lists parse again, and a
+  declared enum is unioned into the accepted set with `null` dropped), and the
+  baseline was refreshed by `update` (the inverted pair flagged 29 correct
+  `NAME_ORG` uses, and the unparsed lists silenced the drift diff on both
+  `language` parameters)

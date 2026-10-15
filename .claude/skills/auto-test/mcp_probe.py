@@ -16,13 +16,17 @@ and fast (INV-108). Its own docstring names the cost of that trade —
 
 This script is the online half that closes exactly that gap.
 
-The load-bearing discovery: **the server declares no JSON-Schema enums at all.**
-All 13 tools have zero ``enum`` keys. Every closed set of valid values — the
-``mapping_workflow`` actions, the ``search_docs`` categories, the languages
-``generate_scaffold`` supports — lives only in the tool's *description prose*. So a
-checker that reads ``inputSchema.enum`` finds nothing and reports a clean run
-forever. ``PROSE_VALUES`` below parses those lists out of the prose instead, and
-they are what both the drift diff and the conformance check compare against.
+The load-bearing discovery: **most closed value sets live in the description
+prose, not in JSON-Schema enums.** When this probe was written (2026-07-27) all 13
+tools had zero ``enum`` keys. On server 1.39.0 (2026-10-15) four parameters declare
+one — ``sdk_guide.topic``, ``mapping_workflow.action``, ``reporting_guide.topic`` and
+``get_sdk_reference.topic`` — but the languages ``generate_scaffold`` and
+``sdk_guide`` support, the ``search_docs`` categories and the sample datasets still
+live only in the tool's *description prose*. So a checker that reads only
+``inputSchema.enum`` misses most of the contract. ``PROSE_VALUES`` below parses
+those lists out of the prose, ``PROBE_MATRIX`` discovers the accepted sets, and a
+declared enum is unioned into the accepted set (``accepted_values``): it can clear a
+suspicion, never add one.
 
 What it checks
 --------------
@@ -73,18 +77,27 @@ NEVER_CALL = frozenset({"submit_feedback", "download_resource"})
 # Read-only calls whose *content* is worth snapshotting, not just their schema.
 CONTENT_PROBES = (("get_capabilities", {}),)
 
-# Where each closed value set is stated in prose, since no tool declares an enum.
-# Each regex must capture ONE group holding the raw list. Verified against the
-# 2026-07-27 descriptions; a description change flips these to "no longer
+# Where each closed value set is stated in prose. Declared enums cover only four
+# parameters on 1.39.0, none of them listed here. Each regex must capture ONE group
+# holding the raw list. Verified against the 2026-07-27 descriptions; the two
+# `language` patterns were re-fitted to the 1.39.0 descriptions (2026-10-15, #659)
+# and still match the older wording. A description change flips these to "no longer
 # extractable", which is itself reported rather than silently skipped.
 #
 # These are the *documented* sets. PROBE_MATRIX below discovers the *accepted* sets,
 # and the two disagreeing is a finding in its own right — see `doc_mismatch`.
 PROSE_VALUES = {
     ("mapping_workflow", "action"): r"Actions:\s*([a-z_,\s]+?)\.",
-    ("generate_scaffold", "language"): r"Languages:\s*([a-z#,\s]+?)\.",
+    # "Languages: python, java, csharp (official V4 SDKs); rust, typescript
+    # (community-maintained wrappers, not official)." — the glosses are skipped by
+    # _split_values; the list ends at the first full stop outside parentheses.
+    ("generate_scaffold", "language"):
+        r"Languages:\s*((?:[a-z#,;\s]|\([^)]*\))+?)\.",
     ("search_docs", "category"): r"'category' to filter:\s*([a-z_,\s]+?)(?:\.|\n|$)",
-    ("sdk_guide", "language"): r"\d+\s+languages\s*\(([^)]+)\)",
+    # "Languages: 5 (Python, Java, C#, Rust, TypeScript)." on 1.39.0;
+    # "5 languages (Python, …)" before it.
+    ("sdk_guide", "language"):
+        r"(?:\d+\s+languages\s*|Languages:\s*\d+\s*)\(([^)]+)\)",
     ("sdk_guide", "platform"): r"\d+\s+platforms\s*\(((?:[^()]|\([^)]*\))*)\)",
     ("get_sample_data", "dataset"): r"Available datasets:\s*((?:[^.()]|\([^)]*\))+)",
 }
@@ -165,7 +178,9 @@ CONFABULATIONS = (
     ("addDataSource", "registerDataSource"),
     ("close_export", "close_export_report"),
     ("G2Engine", "SzEngine"),
-    ("NAME_ORG", "BUSINESS_NAME_ORG"),
+    # 1.39.0 (2026-10-15): "Wrong attribute names (EMPLOYER_NAME vs NAME_ORG)".
+    # NAME_ORG is the correct attribute; the pair was inverted until #659.
+    ("EMPLOYER_NAME", "NAME_ORG"),
 )
 # A line that warns *against* a confabulation contains one of these; it is the
 # opposite of a defect and must not be flagged.
@@ -375,8 +390,9 @@ def snapshot(url, timeout=30, probe_content=True, probe_values_too=True):
         snap["tools"][name] = {
             "required": sorted(schema.get("required", []) or []),
             "properties": sorted(props),
-            # Present for completeness and to notice the day the server starts
-            # declaring them; empty for all 13 tools as of 2026-07-27.
+            # Declared JSON-Schema enums. Empty for all 13 tools on 2026-07-27;
+            # four parameters declare one on 1.39.0. accepted_values unions them
+            # into the accepted set, with null dropped.
             "enums": {p: v["enum"] for p, v in props.items()
                       if isinstance(v, dict) and isinstance(v.get("enum"), list)},
             "prose_values": extract_prose_values(name, description),
@@ -416,6 +432,10 @@ def accepted_values(tool_meta, param):
     # unioned in rather than replacing: `get_sample_data` enumerates four datasets
     # and also honors `dataset='list'`, so neither source alone is the whole set.
     extra = set((tool_meta.get("verified_values") or {}).get(param) or [])
+    # A declared JSON-Schema enum joins the same way (#659). It only widens the
+    # set, so it can clear a suspicion but never add a rejection. `null` is how a
+    # nullable schema spells "may be omitted", not a value the plugin can send.
+    extra |= declared_enum_values(tool_meta, param)
     probed = (tool_meta.get("probed_values") or {}).get(param)
     if probed and probed.get("mode") == ENUMERATED and probed.get("values"):
         return set(probed["values"]) | extra
@@ -423,6 +443,12 @@ def accepted_values(tool_meta, param):
     if prose:
         return set(prose) | extra
     return extra or None
+
+
+def declared_enum_values(tool_meta, param):
+    """The parameter's declared JSON-Schema enum, lower-cased, with `null` dropped."""
+    declared = (tool_meta.get("enums") or {}).get(param) or []
+    return {v.lower() for v in declared if isinstance(v, str)}
 
 
 def record_verified_extras(live, url, timeout=30):
@@ -562,7 +588,7 @@ def diff_baseline(live, base):
         if not base_t.get("enums") and live_t.get("enums"):
             out.append(_finding(INFO, "enums-appeared",
                                 f"`{name}` now declares real JSON-Schema enums — "
-                                "prefer them over PROSE_VALUES parsing"))
+                                "accepted_values unions them into the accepted set"))
 
         if live_t["description_sha"] != base_t["description_sha"]:
             out.append(_finding(WATCH, "description",

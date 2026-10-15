@@ -105,10 +105,15 @@ The sandbox is removed at the end unless `--keep`.
 
 ## What made this hard, and what you must preserve
 
-**The server declares no JSON-Schema enums.** All 13 tools have zero `enum` keys.
-Every closed value set — `mapping_workflow`'s actions, `search_docs`'s categories,
-the languages `generate_scaffold` takes — lives only in description prose. A checker
-that reads `inputSchema.enum` finds nothing and reports clean forever.
+**Most closed value sets live in description prose, not in JSON-Schema enums.** When
+the harness was built (2026-07-27) all 13 tools had zero `enum` keys. On server 1.39.0
+(2026-10-15) four parameters declare one: `sdk_guide.topic`, `mapping_workflow.action`
+(whose enum includes `null`), `reporting_guide.topic` and `get_sdk_reference.topic`.
+The rest — the languages `generate_scaffold` and `sdk_guide` take, `search_docs`'s
+categories, the sample datasets — live only in description prose. A checker that reads
+only `inputSchema.enum` misses most of the contract. `accepted_values` unions a declared
+enum into the accepted set with `null` dropped, so an enum can clear a suspicion but
+never replaces the probed or prose sets and never adds a rejection.
 
 **So the accepted set is discovered by probing, not by reading.** Sending
 `sdk_guide(topic='zzz_probe_invalid')` comes back *"Valid topics: install, configure,
