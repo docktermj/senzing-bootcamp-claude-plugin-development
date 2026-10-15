@@ -30,6 +30,15 @@ the current drive and reported a false "not found". The guard flags any bare all
 `$NAME` in a shipped PowerShell fence; the INV-167 amendment naming it is drafted in #505's
 `specs/IMPLEMENTED.md` entry, awaiting the maintainer's sign-off.
 
+`WindowsLinesInAnyFenceSuitTheirShell` (#596) widens the reach from PowerShell fences to every
+line under a `# Windows` comment in any fence. Graduation's recap render line,
+`data\\temp\\recap-venv\\Scripts\\python "${CLAUDE_PLUGIN_ROOT}\\scripts\\generate_recap_pdf.py"`,
+sat in a bash fence after `# Windows:`, so the PowerShell-only sweep never read it, and it broke in
+both shells. A `# Windows` line in a PowerShell fence gets the `$NAME` check; in any other fence it
+runs in the guide's POSIX shell, Git Bash on Windows (INV-167's #508 note), so it may carry no
+unquoted backslash. A ````markdown```` fence holds an example document, not commands, and is not read.
+It reads the text: no test here runs a line on Windows.
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
@@ -269,6 +278,202 @@ def bare_caps_offenders(paths):
             for name in bare_caps_variables(line):
                 offenders.append("%s:%d: $%s in %s" % (path, number, name, line.strip()))
     return offenders
+
+
+#: Fences holding a document, not commands: a `# Windows` line in one is example text.
+DOCUMENT_LANGS = {"markdown", "md"}
+#: A fence opener or closer: its indent, its run of backticks or tildes, and its info string.
+FENCE_MARK = re.compile(r"^[ \t]*(`{3,}|~{3,})(.*)$")
+#: A full-line comment that heads a platform's lines (`# Windows:`, `# Windows (PowerShell)`).
+WINDOWS_HEADER = re.compile(r"^#\s*Windows\b")
+
+
+def fences(path):
+    """Yield ``(lang, [(line_number, line), ...])`` for each fenced block in ``path``.
+
+    A fence closes only on a run of the same character at least as long as its opener, with no
+    info string, so a ```` ```bash ```` inside a ```` ````markdown ```` example is the example's
+    text and not a fence of its own.
+    """
+    opener, lang, body = None, None, []
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        mark = FENCE_MARK.match(line)
+        if opener is None:
+            if mark:
+                opener, lang, body = mark.group(1), mark.group(2).strip().lower(), []
+            continue
+        if (mark and mark.group(1)[0] == opener[0] and len(mark.group(1)) >= len(opener)
+                and not mark.group(2).strip()):
+            yield lang, body
+            opener = None
+            continue
+        body.append((number, line))
+    if opener is not None:
+        yield lang, body
+
+
+def windows_lines(path):
+    """Yield ``(line_number, line, lang)`` for each line under a `# Windows` comment, in any fence.
+
+    The Windows lines run from the comment to the next full-line comment or the fence's end. This
+    is the #596 widening: the guard used to read only PowerShell fences, while the recap's Windows
+    lines sat in ```` ```bash ```` fences after `# Windows:`.
+    """
+    for lang, body in fences(path):
+        if lang in DOCUMENT_LANGS:
+            continue
+        under = False
+        for number, line in body:
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                under = bool(WINDOWS_HEADER.match(stripped))
+                continue
+            if under and stripped:
+                yield number, line, lang
+
+
+def unquoted_backslashes(line):
+    """The columns of each backslash a POSIX shell reads outside quotes, as an escape.
+
+    Single and double quotes are tracked; a trailing backslash (a line continuation) and anything
+    after an unquoted ` #` comment are ignored. In Git Bash, the guide's shell on Windows,
+    `data\\temp\\recap-venv` collapses to `datatemprecap-venv`.
+    """
+    found, quote, i = [], None, 0
+    text = line.rstrip()
+    while i < len(text):
+        char = text[i]
+        if quote == "'":
+            quote = None if char == "'" else quote
+        elif quote == '"':
+            if char == "\\":
+                i += 1
+            elif char == '"':
+                quote = None
+        elif char in "'\"":
+            quote = char
+        elif char == "#" and (i == 0 or text[i - 1].isspace()):
+            break
+        elif char == "\\":
+            if i < len(text) - 1:
+                found.append(i)
+            i += 1
+        i += 1
+    return found
+
+
+def windows_line_offenders(paths):
+    """Every `# Windows` line that its fence's shell would break.
+
+    In a PowerShell fence an environment variable read as a bare `$NAME` expands to nothing
+    (#505). In any other fence the line runs in the guide's POSIX shell, Git Bash on Windows
+    (INV-167's #508 note), where an unquoted backslash is an escape, so a path is written with `/`.
+    """
+    offenders = []
+    for path in paths:
+        for number, line, lang in windows_lines(path):
+            if lang in POWERSHELL_LANGS:
+                problems = ["$" + name for name in bare_caps_variables(line)]
+            elif unquoted_backslashes(line):
+                problems = ["unquoted backslash"]
+            else:
+                problems = []
+            for problem in problems:
+                offenders.append("%s:%d: %s in %s" % (path, number, problem, line.strip()))
+    return offenders
+
+
+class WindowsLinesInAnyFenceSuitTheirShell(unittest.TestCase):
+    """#596: the guard reads `# Windows` lines in every fence, not only PowerShell fences.
+
+    Graduation's recap render line was
+    `data\\temp\\recap-venv\\Scripts\\python "${CLAUDE_PLUGIN_ROOT}\\scripts\\generate_recap_pdf.py"`
+    in a ```` ```bash ```` fence after `# Windows:`. In PowerShell `${CLAUDE_PLUGIN_ROOT}` is an
+    unset PowerShell variable; in Git Bash, which runs a guide-run block, the unquoted backslashes
+    collapse. The PowerShell-only sweep above never read it.
+    """
+
+    OLD_RENDER = ('data\\temp\\recap-venv\\Scripts\\python '
+                  '"${CLAUDE_PLUGIN_ROOT}\\scripts\\generate_recap_pdf.py"')
+    NEW_RENDER = ('data/temp/recap-venv/Scripts/python '
+                  '"${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py"')
+
+    def doc(self, tmp, lang, line, name="doc.md"):
+        path = Path(tmp) / name
+        path.write_text("```%s\n# Linux/macOS:\nx\n# Windows:\n%s\n```\n" % (lang, line),
+                        encoding="utf-8")
+        return path
+
+    def test_no_shipped_windows_line_breaks_in_its_fence(self):
+        offenders = windows_line_offenders(sorted(PLUGIN.rglob("*.md")))
+        self.assertEqual(
+            [],
+            offenders,
+            "A `# Windows` line in a non-PowerShell fence runs in the guide's POSIX shell (Git Bash "
+            "on Windows): write its paths with `/`. In a PowerShell fence read an environment "
+            "variable as `$env:NAME`:\n  " + "\n  ".join(offenders),
+        )
+
+    def test_the_sweep_reads_windows_lines_in_bash_fences(self):
+        """Guard the guard: the recap's Windows lines are in bash fences, and the sweep sees them."""
+        graduation = PLUGIN / "skills" / "graduation" / "SKILL.md"
+        found = [(line.strip(), lang) for _, line, lang in windows_lines(graduation)]
+        self.assertIn((self.NEW_RENDER, "bash"), found)
+        self.assertGreaterEqual(sum(1 for _, lang in found if lang == "bash"), 4, found)
+
+    def test_negative_control_the_old_render_line_is_caught_in_a_bash_fence(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(1, len(windows_line_offenders([self.doc(tmp, "bash", self.OLD_RENDER)])))
+            self.assertEqual([], windows_line_offenders([self.doc(tmp, "bash", self.NEW_RENDER)]))
+
+    def test_negative_control_the_old_line_is_caught_in_a_powershell_fence(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            for lang in sorted(POWERSHELL_LANGS):
+                with self.subTest(lang=lang):
+                    problems = windows_line_offenders([self.doc(tmp, lang, self.OLD_RENDER)])
+                    self.assertEqual(1, len(problems), problems)
+                    self.assertIn("$CLAUDE_PLUGIN_ROOT", problems[0])
+
+    def test_negative_control_an_unlabeled_fence_is_read_as_posix(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(1, len(windows_line_offenders([self.doc(tmp, "", self.OLD_RENDER)])))
+
+    def test_lines_outside_the_windows_section_are_not_read(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "doc.md"
+            path.write_text("```bash\n# Windows:\nok/path\n# Linux/macOS:\nprintf 'a\\n' x\\y\n```\n",
+                            encoding="utf-8")
+            self.assertEqual([], windows_line_offenders([path]))
+
+    def test_a_nested_example_document_is_not_read_as_commands(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "doc.md"
+            path.write_text("````markdown\n```bash\n# Windows:\n%s\n```\n````\n" % self.OLD_RENDER,
+                            encoding="utf-8")
+            self.assertEqual([], windows_line_offenders([path]))
+
+    def test_quoted_and_continued_backslashes_pass(self):
+        for line in (
+            "printf 'a\\nb'",
+            'echo "a\\$b"',
+            "data/temp/recap-venv/Scripts/python -m pip install \\",
+            "py -3 -m venv data/temp/recap-venv    # not data\\temp",
+        ):
+            with self.subTest(line=line):
+                self.assertEqual([], unquoted_backslashes(line))
+
+    def test_unquoted_backslashes_are_caught(self):
+        self.assertEqual(3, len(unquoted_backslashes("py -3 -m venv data\\temp\\recap-venv x\\y")))
 
 
 class NoBareEnvironmentVariablesInPowerShellBlocks(unittest.TestCase):

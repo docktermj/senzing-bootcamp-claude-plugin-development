@@ -732,9 +732,12 @@ should look professional). Install it **robustly**, never with a bare `pip`:
   python3 -m venv data/temp/recap-venv
   data/temp/recap-venv/bin/python -m pip install fpdf2
   # Windows:
-  py -3 -m venv data\temp\recap-venv
-  data\temp\recap-venv\Scripts\python -m pip install fpdf2
+  py -3 -m venv data/temp/recap-venv
+  data/temp/recap-venv/Scripts/python -m pip install fpdf2
   ```
+
+  Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it
+  there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
   Then run the generator with **that venv's** Python (below) so it imports `fpdf2`.
 - **Never call bare `pip`** — a stale shim on PATH may point at a deleted
@@ -759,11 +762,11 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py"
 # Or, when you installed fpdf2 into the project-local venv above (Linux/macOS):
 data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py"
 # Windows:
-data\temp\recap-venv\Scripts\python "${CLAUDE_PLUGIN_ROOT}\scripts\generate_recap_pdf.py"
+data/temp/recap-venv/Scripts/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py"
 ```
 
-The Windows lines are written for PowerShell 5.1 and 7 but are unverified on Windows: no test
-runs them there.
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it
+there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 If `${CLAUDE_PLUGIN_ROOT}` is not set in the current context, resolve the script
 relative to this skill's directory instead (this skill lives at
@@ -1103,7 +1106,7 @@ computer's built-in voice. Piper is set up when both hold:
 - `data/temp/recap-venv/` exists and its Python can find `piper`:
   `<venv python> -c "import importlib.util, sys; sys.exit(importlib.util.find_spec('piper') is None)"`
   exits 0. Here `<venv python>` is `data/temp/recap-venv/bin/python` (Windows:
-  `data\temp\recap-venv\Scripts\python`).
+  `data/temp/recap-venv/Scripts/python`).
 - The voice is in `data/temp/piper-voices/`: `en_US-ljspeech-high.onnx` and its
   `en_US-ljspeech-high.onnx.json` both exist.
 
@@ -1123,7 +1126,7 @@ with `imageio-ffmpeg`, which rendering needs,"). Every other word stays the same
 **On yes,** install into the project only (INV-066), skipping each step that is already satisfied:
 
 1. Create `data/temp/recap-venv/` with `python3 -m venv data/temp/recap-venv` (Windows:
-   `py -3 -m venv data\temp\recap-venv`) if it does not exist.
+   `py -3 -m venv data/temp/recap-venv`) if it does not exist.
 2. Run **one** `python -m pip install` with the venv's Python, installing `piper-tts` when the venv
    cannot find `piper`, plus Pillow when the venv's Python cannot `import PIL`, plus
    `imageio-ffmpeg` when there is no ffmpeg on `PATH`.
@@ -1136,13 +1139,13 @@ python3 -m venv data/temp/recap-venv    # only if it does not exist yet
 data/temp/recap-venv/bin/python -m pip install piper-tts
 data/temp/recap-venv/bin/python -m piper.download_voices en_US-ljspeech-high --data-dir data/temp/piper-voices
 # Windows:
-py -3 -m venv data\temp\recap-venv    # only if it does not exist yet
-data\temp\recap-venv\Scripts\python -m pip install piper-tts
-data\temp\recap-venv\Scripts\python -m piper.download_voices en_US-ljspeech-high --data-dir data\temp\piper-voices
+py -3 -m venv data/temp/recap-venv    # only if it does not exist yet
+data/temp/recap-venv/Scripts/python -m pip install piper-tts
+data/temp/recap-venv/Scripts/python -m piper.download_voices en_US-ljspeech-high --data-dir data/temp/piper-voices
 ```
 
-The Windows lines are written for PowerShell 5.1 and 7 but are unverified on Windows: no test
-runs them there.
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it
+there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 When every step succeeds, **run `--check` and the render below with the venv's Python** from then on.
 The venv now has Pillow and, without an ffmpeg on `PATH`, `imageio-ffmpeg`, so the exit-2 install
@@ -1166,7 +1169,7 @@ otherwise `python3`). Pass no `--voice-model`: the renderer finds the voice at i
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py" --check
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
 # or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/generate_recap_video.py
-# With Piper set up (Linux/macOS; Windows: data\temp\recap-venv\Scripts\python):
+# With Piper set up (Linux/macOS; Windows: data/temp/recap-venv/Scripts/python):
 data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py" --check
 data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
 ```
@@ -1206,13 +1209,13 @@ python3 -m venv data/temp/recap-venv    # only if it does not exist yet
 data/temp/recap-venv/bin/python -m pip install imageio-ffmpeg
 data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
 # Windows:
-py -3 -m venv data\temp\recap-venv    # only if it does not exist yet
-data\temp\recap-venv\Scripts\python -m pip install imageio-ffmpeg
-data\temp\recap-venv\Scripts\python "${CLAUDE_PLUGIN_ROOT}\scripts\generate_recap_video.py"
+py -3 -m venv data/temp/recap-venv    # only if it does not exist yet
+data/temp/recap-venv/Scripts/python -m pip install imageio-ffmpeg
+data/temp/recap-venv/Scripts/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
 ```
 
-The Windows lines are written for PowerShell 5.1 and 7 but are unverified on Windows: no test
-runs them there.
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it
+there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
 
 On no, or when the venv or the install fails, skip the video and keep the storyboard.
 

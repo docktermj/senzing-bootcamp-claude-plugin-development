@@ -34,9 +34,18 @@ Windows and that had no correct Windows form:
    under `# Linux/macOS` and, as `py -3 -m venv data\\temp\\recap-venv`, under `# Windows:`;
    the list item names the Windows form in a parenthetical; and each block is followed by Step
    1b's "unverified on Windows" sentence. A scan of every `.md` under the plugin pairs each
-   `python3 -m venv <path>` with `py -3 -m venv <path, / as \\>` in the same fenced code block,
+   `python3 -m venv <path>` with `py -3 -m venv <path>` in the same fenced code block,
    or, outside code blocks, the same paragraph or list item (text between blank lines), so a
    new venv site is caught without a line number (INV-246).
+
+6. **Graduation's recap blocks are guide-run, #596.** Step 1b's two blocks and Step 1c's two
+   are run by the guide in its POSIX shell, Git Bash on Windows (INV-167's #508 note), so each
+   has one POSIX form: its `# Windows:` lines keep `/` (`py -3 -m venv data/temp/recap-venv`,
+   `data/temp/recap-venv/Scripts/python`), because Git Bash collapses an unquoted backslash.
+   Each block is followed by the #508 pointer, which replaced "The Windows lines are written for
+   PowerShell 5.1 and 7…". The venv pairing above takes `<path>` as written or with `/` as `\\`
+   (a hand-run PowerShell form); which shell a `# Windows:` line suits is
+   `test_windows_powershell_guidance.py`'s check.
 
 These tests pin the forms. They **cannot** establish that the Windows forms run on Windows: this
 repo's CI runs on Linux, so each site says on its own text that its Windows form is unverified
@@ -52,6 +61,7 @@ import unittest
 from pathlib import Path
 
 from _wrapped_text import blocks
+from test_guide_run_blocks_declare_their_shell import POINTER
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
@@ -65,15 +75,14 @@ PACKAGER = PLUGIN / "scripts" / "package_bootcamp.py"
 DECODE = ("$p = Join-Path (Get-Location) 'config\\engine_config.json'; "
           "[System.IO.File]::WriteAllText($p, [System.IO.File]::ReadAllText($p)"
           ".Replace('__SENZING_LICENSE_BASE64__', '<BASE64_STRING>'))")
-WINDOWS_RENDER = ('data\\temp\\recap-venv\\Scripts\\python '
-                  '"${CLAUDE_PLUGIN_ROOT}\\scripts\\generate_recap_pdf.py"')
-WINDOWS_VENV = "py -3 -m venv data\\temp\\recap-venv"
+WINDOWS_RENDER = ('data/temp/recap-venv/Scripts/python '
+                  '"${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py"')
+WINDOWS_VENV = "py -3 -m venv data/temp/recap-venv"
 UNVERIFIED = "unverified on Windows"
-#: Step 1b's whole disclosure sentence, which Step 1c repeats after each of its code blocks.
-DISCLOSURE = ("The Windows lines are written for PowerShell 5.1 and 7 but are unverified on "
-              "Windows: no test runs them there.")
+#: The #508 guide-run pointer (INV-167), which follows each recap venv block (#596).
+DISCLOSURE = POINTER
 POSIX_VENV_LINE = "python3 -m venv data/temp/recap-venv    # only if it does not exist yet"
-WINDOWS_VENV_LINE = "py -3 -m venv data\\temp\\recap-venv    # only if it does not exist yet"
+WINDOWS_VENV_LINE = "py -3 -m venv data/temp/recap-venv    # only if it does not exist yet"
 
 #: A POSIX venv creation and its path, which ends at whitespace or a closing backtick.
 POSIX_VENV = re.compile(r"python3 -m venv ([^\s`]+)")
@@ -148,15 +157,17 @@ def flat_unit(block):
 def venv_sites(text):
     """``(lineno, path, paired)`` for every `python3 -m venv <path>` in ``text``.
 
-    ``paired`` is whether `py -3 -m venv <path with / as \\>` is in the same unit (see `units`).
-    The conversion is literal: `/` becomes `\\` and nothing else changes.
+    ``paired`` is whether `py -3 -m venv <path>` is in the same unit (see `units`), with the path
+    as written (a guide-run POSIX form, #596) or with `/` as `\\` (a hand-run PowerShell form).
+    The match is literal: nothing else in the path may change.
     """
     sites = []
     for _, block in units(text):
         flat_text, origin = flat_unit(block)
         for match in POSIX_VENV.finditer(flat_text):
-            windows = "py -3 -m venv " + match.group(1).replace("/", "\\")
-            paired = re.search(re.escape(windows) + r"(?![^\s`])", flat_text) is not None
+            forms = {match.group(1), match.group(1).replace("/", "\\")}
+            paired = any(re.search(re.escape("py -3 -m venv " + form) + r"(?![^\s`])", flat_text)
+                         for form in forms)
             sites.append((origin[flat_text[:match.start()].count(" ")], match.group(1), paired))
     return sites
 
@@ -274,6 +285,13 @@ class TheRecapRenderHasAWindowsForm(unittest.TestCase):
     def test_the_windows_lines_are_disclosed_as_unverified(self):
         self.assertIn(UNVERIFIED, flat(self.step))
 
+    def test_the_render_block_is_followed_by_the_pointer(self):
+        """#596: the render block is guide-run, so the #508 pointer follows it."""
+        found = units(self.step)
+        at = next(i for i, (kind, block) in enumerate(found) if kind == "fence"
+                  and WINDOWS_RENDER in [line.strip() for _, line in block])
+        self.assertEqual(("prose", POINTER), (found[at + 1][0], flat_unit(found[at + 1][1])[0]))
+
 
 class EveryVenvCreationHasAWindowsForm(unittest.TestCase):
     """#420: every `python3 -m venv <path>` under the plugin has its `py -3` form beside it."""
@@ -299,7 +317,7 @@ class EveryVenvCreationHasAWindowsForm(unittest.TestCase):
         self.assertGreaterEqual(len(venv_sites(self.graduation)), 4)
 
     def test_the_step_1c_list_item_names_the_windows_form(self):
-        self.assertIn("(Windows: `py -3 -m venv data\\temp\\recap-venv`)",
+        self.assertIn("(Windows: `py -3 -m venv data/temp/recap-venv`)",
                       flat(step_1c(self.graduation)))
 
     def test_step_1c_blocks_split_the_venv_line_per_platform(self):
@@ -311,6 +329,13 @@ class EveryVenvCreationHasAWindowsForm(unittest.TestCase):
 
     def test_step_1c_blocks_are_disclosed_as_unverified(self):
         self.assertEqual([], venv_blocks_without_disclosure(step_1c(self.graduation)))
+
+    def test_every_graduation_venv_block_carries_the_pointer(self):
+        """#596: Step 1b's install block too, so all four recap venv blocks carry it."""
+        self.assertEqual([], venv_blocks_without_disclosure(self.graduation))
+        fenced = [b for kind, b in units(self.graduation)
+                  if kind == "fence" and POSIX_VENV.search(flat_unit(b)[0])]
+        self.assertEqual(3, len(fenced), "Step 1b's install block and Step 1c's two")
 
 
 class TheReturnGuideNamesBothEnvScripts(unittest.TestCase):
@@ -431,9 +456,7 @@ class NegativeControls(unittest.TestCase):
         self.assertEqual(1, len(venv_blocks_out_of_layout(self.OLD_1C_BLOCK)))
 
     def test_a_windows_line_above_the_posix_comment_is_out_of_layout(self):
-        shared = self.OLD_1C_BLOCK.replace(
-            "# Linux/macOS", "py -3 -m venv data\\temp\\recap-venv    # only if it does not "
-            "exist yet\n# Linux/macOS")
+        shared = self.OLD_1C_BLOCK.replace("# Linux/macOS", WINDOWS_VENV_LINE + "\n# Linux/macOS")
         self.assertEqual([], unpaired_venvs(shared))
         self.assertEqual(1, len(venv_blocks_out_of_layout(shared)))
 
@@ -442,10 +465,15 @@ class NegativeControls(unittest.TestCase):
 
     def test_a_step_1c_block_without_the_disclosure_is_caught(self):
         step = step_1c(GRADUATION.read_text(encoding="utf-8"))
-        wrapped = ("The Windows lines are written for PowerShell 5.1 and 7 but are unverified on "
-                   "Windows: no test\nruns them there.")
-        self.assertEqual(2, step.count(wrapped))
-        self.assertEqual(1, len(venv_blocks_without_disclosure(step.replace(wrapped, "", 1))))
+        wrapped = re.compile(r"\s+".join(map(re.escape, POINTER.split())))
+        self.assertEqual(2, len(wrapped.findall(step)))
+        self.assertEqual(1, len(venv_blocks_without_disclosure(wrapped.sub("", step, count=1))))
+
+    def test_the_old_powershell_disclosure_no_longer_counts(self):
+        old = ("```bash\n# Linux/macOS:\npython3 -m venv a/b\n# Windows:\npy -3 -m venv a/b\n```\n\n"
+               "The Windows lines are written for PowerShell 5.1 and 7 but are unverified on "
+               "Windows: no test runs them there.\n")
+        self.assertEqual(1, len(venv_blocks_without_disclosure(old)))
 
     def test_a_windows_form_in_another_block_is_not_paired(self):
         apart = self.OLD_1C_ITEM + "\nOn Windows, `py -3 -m venv data\\temp\\recap-venv`.\n"
@@ -453,9 +481,11 @@ class NegativeControls(unittest.TestCase):
         fenced = "```\npython3 -m venv a/b\n```\n```\npy -3 -m venv a\\b\n```\n"
         self.assertEqual(1, len(unpaired_venvs(fenced)))
 
-    def test_the_path_conversion_is_literal(self):
-        self.assertEqual(1, len(unpaired_venvs("`python3 -m venv a/b` or `py -3 -m venv a/b`")))
+    def test_the_path_match_is_literal(self):
+        self.assertEqual([], unpaired_venvs("`python3 -m venv a/b` or `py -3 -m venv a/b`"))
+        self.assertEqual(1, len(unpaired_venvs("`python3 -m venv a/b` or `py -3 -m venv a/bc`")))
         self.assertEqual(1, len(unpaired_venvs("`python3 -m venv a/b` or `py -3 -m venv a\\bc`")))
+        self.assertEqual(1, len(unpaired_venvs("`python3 -m venv a/b` or `py -3 -m venv a\\b/`")))
         self.assertEqual([], unpaired_venvs("`python3 -m venv a/b` or\n`py -3 -m venv a\\b`"))
 
     def test_a_blank_line_inside_a_fence_does_not_split_the_code_block(self):
