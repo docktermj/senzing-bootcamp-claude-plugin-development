@@ -9971,7 +9971,7 @@ looks wrong.
 - `tests/test_data_collection_generated_scenarios.py`: 22
 - `tests/test_data_collection_non_yielding_run.py`: 28
 - `tests/test_database_backup_has_one_implementation.py`: 12
-- `tests/test_database_switch_detours_through_sdk_setup.py`: 35
+- `tests/test_database_switch_detours_through_sdk_setup.py`: 39
 - `tests/test_database_type_write_precedes_the_step7_branches.py`: 14
 - `tests/test_datastore_mount_crossing_is_measured.py`: 13
 - `tests/test_dated_negatives_are_marked.py`: 14
@@ -10118,7 +10118,7 @@ looks wrong.
 - `tests/test_module5_full_output_file_path_is_written_at_step_18.py`: 18
 - `tests/test_module5_phase1_gates_and_scoring.py`: 14
 - `tests/test_module5_phase3_exits_return_to_the_per_source_loop.py`: 9
-- `tests/test_module5_phase3_sdk_repair_detours_through_sdk_setup.py`: 42
+- `tests/test_module5_phase3_sdk_repair_detours_through_sdk_setup.py`: 44
 - `tests/test_module5_step16_asks_about_loading_only_after_the_last_source.py`:
   5
 - `tests/test_module5_step18_validates_the_full_output.py`: 6
@@ -12199,6 +12199,13 @@ Senzing licensing, with no SPDX identifier.
   with an INV-227 `PROPOSED AMENDMENT` queued (session start resumed, and
   `/graduate` graduated, a bootcamp that recorded no module, and the README
   said every hook gated on existence)
+- #606: the 15 return-contract clauses that co-cited "(INV-284, INV-366)"
+  cite "(INV-366)" alone, and SDK setup's Step 7 detour ⛔ cites "(INV-364)" at
+  its head with no trailing copy; the two `setup_detour` enforcers pin each
+  clause with its ⛔, and `tests/test_database_switch_detours_through_sdk_setup.py`
+  sweeps every skill file so "(INV-284, INV-366)" stays only on INV-284's
+  re-present clause (the citations borrowed INV-284 for INV-366's and INV-364's
+  rules, so a reader looked up the wrong invariant)
 - #609: `/release-cycle` writes nothing under `specs/` before stage 5 and its
   own entry only at a stop, stated once with every write and matched by the
   pending #573 block, corrected in place; `autotest.py --report-dir` keeps a

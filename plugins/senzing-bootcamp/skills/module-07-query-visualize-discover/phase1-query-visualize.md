@@ -871,7 +871,7 @@ route is the same for both.
    | Module 6 Phase D's gate | `module_6_phase_d` | `module_6_processing.quality_iterations` | `uat_below_80` or `uat_80_89` | the UAT %, the per-record match accuracy, and the match-key and how-state audit outcomes the gate presented |
 
    `sources` lists the sources named in the offering step's explanation statement. `stage` starts at
-   `remap`. `completed` lists the sources whose current stage has finished. ⛔ **(INV-284, INV-366)
+   `remap`. `completed` lists the sources whose current stage has finished. ⛔ **(INV-366)
    `current_module` is not changed:** the Bootcamper stays in the offering module (Module 7, or
    Module 6 on a Phase D return), and the key is what lets an interrupted return resume.
 
@@ -884,7 +884,7 @@ route is the same for both.
 
    When every named source is remapped, set `stage` to `reload` and `completed` to `[]` in one write,
    then continue into Module 6's branch.
-   ⛔ **(INV-284, INV-366) No module is completed on a return:** no Module Completion for Module 5 or Module 6,
+   ⛔ **(INV-366) No module is completed on a return:** no Module Completion for Module 5 or Module 6,
    nothing added to `modules_completed` again, no recap section for either, no progress update and no
    transition question. Neither branch writes a checkpoint of its own module, so `current_module` and
    `current_step` stay as the offering step left them. On a Module 6 Phase D return, Module 6 is

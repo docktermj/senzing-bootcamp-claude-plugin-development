@@ -67,12 +67,12 @@ When the bootcamper hits an error during this module:
 
 ## Receiving a `setup_detour` (from a later module)
 
-⛔ **(INV-284, INV-366) Check for it before anything else in this module.** When
+⛔ **(INV-366) Check for it before anything else in this module.** When
 `config/bootcamp_progress.json` carries a `setup_detour`, a later module sent the Bootcamper here for
 some of this module's steps, and this is not a run of this module: show no start banner, journey map
 or overview, write no Module 2 checkpoint (leave `current_module` and `current_step` as the offering
 module set them, so its progress is not overwritten), and run only the steps the record names.
-⛔ **(INV-284, INV-366) A detour completes no module:** no Module Completion, no second Module 2 recap
+⛔ **(INV-366) A detour completes no module:** no Module Completion, no second Module 2 recap
 section, no progress update, no transition question, and `sdk_setup` is not added to
 `modules_completed` again.
 
@@ -113,9 +113,9 @@ module states it, then add it to `completed` in one quiet write in place of that
 **Checkpoint:**. For `database_switch`:
 
 - **`7-postgresql`.** Start at "How would you like to run PostgreSQL?". The Step 7 database question
-  is not asked: the offering module's option already chose PostgreSQL. ⛔ **(INV-284) Step 7's
+  is not asked: the offering module's option already chose PostgreSQL. ⛔ **(INV-364) Step 7's
   instruction 1 is not applied here:** `database_type` stays `sqlite` until the detour finishes,
-  so a detour that stops part-way leaves it as it was (INV-364). A container is named and recorded as Option 1 says (INV-349),
+  so a detour that stops part-way leaves it as it was. A container is named and recorded as Option 1 says (INV-349),
   never by a literal name. **Option 4, "Switch to SQLite", ends the detour as one that cannot
   finish:** the SQLite datastore is still in place, so there is nothing to set up.
 - **`8`.** Before Step 8 writes `config/engine_config.json`, copy the SQLite one to

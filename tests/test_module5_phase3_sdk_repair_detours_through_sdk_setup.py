@@ -32,6 +32,8 @@ The checks:
   (INV-300): Phase 3's entry note, "Phase 3 session resume", and Phase 2's step 18a and its step
   map's Phase 3 row (grafted from strategy A);
 * the retired prose offers are gone;
+* (#606) the two return-contract clauses it pins cite "(INV-366)" alone, each with its ⛔, so a
+  clause reverted to the old "(INV-284, INV-366)" co-citation no longer matches;
 * (#598, INV-364) Module 2 Step 7's Option 4, "Switch to SQLite", waits for the finish on a
   `setup_detour`: an `sdk_repair` continues to SQLite through it, and before #598 it rewrote
   `database_type` at once, so a repair that then failed had already changed it.
@@ -145,7 +147,7 @@ def statement_problems(p3):
         "`purpose: \"sdk_repair\"`",
         "`return_to: {\"module\": \"data_quality_mapping\", \"resume\": \"21:<DATA_SOURCE>\", "
         "\"reask\": \"the-sdk-repair-question\"}`",
-        "(INV-284, INV-366) `current_module` is not changed",
+        "⛔ (INV-366) `current_module` is not changed",
         "resume without asking this question again",
         "That branch is the one statement of which steps run, that the detour completes no "
         "module, and how it ends (INV-300)",
@@ -236,7 +238,7 @@ def receiving_problems(m2):
         return problems + ["SDK setup has no 'Receiving a setup_detour' section"]
     problems += missing(block, (
         "show no start banner, journey map or overview, write no Module 2 checkpoint",
-        "(INV-284, INV-366) A detour completes no module: no Module Completion, no second Module 2 recap "
+        "⛔ (INV-366) A detour completes no module: no Module Completion, no second Module 2 recap "
         "section, no progress update, no transition question, and `sdk_setup` is not added to "
         "`modules_completed` again",
         "A new detour adds a row to the table below, never a branch of its own",
@@ -473,8 +475,13 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
                                       "do not ask it again (INV-006)"))
 
     def test_the_repair_changes_current_module(self):
-        self.assertCaught(self.mutate("phase3", "⛔ **(INV-284, INV-366) `current_module` is not changed:**",
+        self.assertCaught(self.mutate("phase3", "⛔ **(INV-366) `current_module` is not changed:**",
                                       "Set `current_module` to `sdk_setup`:"))
+
+    def test_the_repair_clause_reverted_to_its_old_citation(self):
+        """#606: the pin carries its ⛔, so the pre-#606 co-citation no longer matches."""
+        self.assertCaught(self.mutate("phase3", "⛔ **(INV-366) `current_module` is not changed:**",
+                                      "⛔ **(INV-284, INV-366) `current_module` is not changed:**"))
 
     def test_the_record_restated_in_phase_3(self):
         self.assertCaught(self.mutate("phase3", "**Checkpoint:** write step 21 to",
@@ -507,8 +514,13 @@ class EachCheckFailsWhenItsSiteIsBroken(unittest.TestCase):
                                       "## Step 1: Check for Existing Installation"))
 
     def test_the_repair_completes_module_2(self):
-        self.assertCaught(self.mutate("module-02", "⛔ **(INV-284, INV-366) A detour completes no module:**",
+        self.assertCaught(self.mutate("module-02", "⛔ **(INV-366) A detour completes no module:**",
                                       "**Then run Module Completion for SDK setup:**"))
+
+    def test_the_no_completion_clause_reverted_to_its_old_citation(self):
+        """#606: the pin carries its ⛔, so the pre-#606 co-citation no longer matches."""
+        self.assertCaught(self.mutate("module-02", "⛔ **(INV-366) A detour completes no module:**",
+                                      "⛔ **(INV-284, INV-366) A detour completes no module:**"))
 
     def test_step_1_marks_module_2_complete(self):
         self.assertCaught(self.mutate("module-02", 'Step 1\'s "Mark Module 2 as complete\n  only '
