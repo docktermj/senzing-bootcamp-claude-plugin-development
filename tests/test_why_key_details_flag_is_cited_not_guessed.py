@@ -146,11 +146,14 @@ class EveryMentionCitesTheDocumentedRequirement(unittest.TestCase):
                 )
 
     def test_each_file_carries_a_current_server_version_and_date(self):
+        """⚠️ Pinned ``1.35.x`` until #611, when step 4b.3's one statement was re-stamped
+        from a live re-check on 1.38.2. Any version from 1.35, where the requirement was
+        first documented, onward is current for this claim."""
         for md in files_mentioning_the_field():
             with self.subTest(file=md.relative_to(REPO)):
                 text = md.read_text(encoding="utf-8")
                 self.assertRegex(
-                    text, r"1\.35\.\d",
+                    text, r"\b1\.(?:3[5-9]|[4-9]\d)\.\d+",
                     "the corrected claim must carry the server version it was verified "
                     "against (INV-080)")
                 self.assertRegex(text, r"20\d\d-\d\d-\d\d")

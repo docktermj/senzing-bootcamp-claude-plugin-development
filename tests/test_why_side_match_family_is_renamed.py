@@ -63,17 +63,25 @@ def region(path, start_marker, end_marker):
     return re.sub(r"\s+", " ", text[i:j])
 
 
-#: The ⛔ in Module 7's why-presentation step, and the step-4b.3 field enumeration.
+#: The step-4b.3 field enumeration: the one full statement of the rename (INV-300).
+#:
+#: ⚠️ Until #611 this also held Module 7 step 3a's ⛔ in `phase1-query-visualize.md`, which
+#: carried a second full copy with its own route and stamp. That copy is now a pointer to
+#: step 4b.3, and `ThePhase1SiteIsAPointer` below checks it as one.
 REGIONS = {
-    "phase1-query-visualize.md": lambda: region(
-        PHASE1,
-        "⛔ **And the rename is the whole `MATCH_*` family",
-        "**Checkpoint:** write step 3a."),
     "phase2-discover.md": lambda: region(
         PHASE2,
         "**The why-key breakdown is `WHY_KEY_DETAILS`.**",
         "⛔ **`WHY_KEY_DETAILS` may need"),
 }
+
+
+def phase1_pointer():
+    """Module 7 step 3a's ⛔ about the rename, which points at step 4b.3 (#611)."""
+    return region(
+        PHASE1,
+        "⛔ **(INV-115) And the rename is the whole `MATCH_*` family",
+        '<a id="recall-question"></a>')
 
 
 class TheScanIsNotVacuous(unittest.TestCase):
@@ -151,11 +159,49 @@ class BothWarningsNameTheSiblingScalars(unittest.TestCase):
                     "%s carries no server version and date for the field set" % name)
 
     def test_the_divergence_is_stated_as_the_whole_family(self):
-        """The defect was scope: one member documented, the family not."""
-        self.assertRegex(
-            REGIONS["phase1-query-visualize.md"](),
-            r"(?i)rename is the whole `MATCH_\*` family, not just that details object",
-            "phase1 still frames the rename as being about the details object alone")
+        """The defect was scope: one member documented, the family not.
+
+        The phase1 pointer still names the subject in these words, so a reader of step 3a
+        is not told the rename is about the details object alone (#611).
+        """
+        for name, text in (("phase2-discover.md", REGIONS["phase2-discover.md"]()),
+                           ("phase1-query-visualize.md", phase1_pointer())):
+            with self.subTest(file=name):
+                self.assertRegex(
+                    text,
+                    r"(?i)rename is the whole `MATCH_\*` family, not just th(?:at|e) details "
+                    r"object",
+                    "%s frames the rename as being about the details object alone" % name)
+
+
+class ThePhase1SiteIsAPointer(unittest.TestCase):
+    """#611: step 3a points at step 4b.3's one statement instead of carrying a copy (INV-300).
+
+    The copy it replaced carried its own route and stamp, and its WHY_KEY_DETAILS half had
+    drifted to a different stamp from step 4b.3's. A pointer that restates the field set
+    would start that drift again, so the field names and the stamp must not come back here.
+    """
+
+    def test_it_names_the_owning_step_and_the_invariant(self):
+        text = phase1_pointer()
+        self.assertIn("`phase2-discover.md` step 4b.3", text)
+        self.assertIn("INV-300", text)
+
+    def test_it_carries_no_second_copy(self):
+        text = phase1_pointer()
+        for token in ("`WHY_ERRULE_CODE`", "`ERRULE_CODE`", "`MATCH_KEY`", "requires_flags",
+                      "2026-08-21", "MCP-NEGATIVE"):
+            with self.subTest(token=token):
+                self.assertNotIn(token, text,
+                                 "the step 3a pointer restates %s, a part of the rule step "
+                                 "4b.3 states once" % token)
+
+    def test_the_moved_negative_marker_sits_with_the_statement(self):
+        """The MCP-NEGATIVE comment that explains the rename moved with it."""
+        self.assertIn("no MATCH_KEY, ERRULE_CODE or MATCH_KEY_DETAILS field appears under "
+                      "WHY_RESULTS[]", REGIONS["phase2-discover.md"]())
+        self.assertNotIn("no MATCH_KEY, ERRULE_CODE or MATCH_KEY_DETAILS field appears",
+                         squash(PHASE1))
 
 
 class NoThirdSiteRepeatsTheRule(unittest.TestCase):

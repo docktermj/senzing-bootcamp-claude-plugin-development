@@ -254,6 +254,56 @@ class NoOtherSiteInTheModulePrescribesIt(unittest.TestCase):
         self.assertIn("SZ_INCLUDE_FEATURE_SCORES", phase1)
 
 
+class Phase1PointsAtTheOneStatement(unittest.TestCase):
+    """#611: the WHY_KEY_DETAILS rule is stated in full once, in step 4b.3 (INV-300).
+
+    `phase1-query-visualize.md` carried two more full copies, in step 2's composite-flags
+    guidance and in step 3a, and each said it was stated once. Their stamps had drifted
+    apart (1.35.3 in one, 1.37.19 in the other). Both sites are now pointers; this checks
+    that each names the owner and the invariant, and that the parts of the rule which drift
+    (the routes, the stamps, the engine-side observation) are not copied back into them.
+    """
+
+    PHASE1 = PHASE2.parent / "phase1-query-visualize.md"
+
+    #: Each pointer site, from a marker at its head to the end of its block.
+    SITES = {
+        "step 2": "⛔ **Add `SZ_INCLUDE_MATCH_KEY_DETAILS` together",
+        "step 3a": "⛔ **(INV-115) And the rename is the whole `MATCH_*` family",
+    }
+
+    #: What the full statement carries and a pointer must not.
+    COPY_MARKERS = ("requires_flags", "4.3.4", "4.3.2", "1.35.3", "1.37.19",
+                    "dependent on using one of the following flags", "observation-only")
+
+    def pointer(self, marker):
+        text = self.PHASE1.read_text(encoding="utf-8")
+        start = text.index(marker)
+        end = text.find("\n\n", start)
+        return squash(text[start:end])
+
+    def test_each_site_names_step_4b3_and_inv_300(self):
+        for site, marker in self.SITES.items():
+            with self.subTest(site=site):
+                text = self.pointer(marker)
+                self.assertIn("`phase2-discover.md` step 4b.3", text)
+                self.assertIn("INV-300", text)
+                self.assertIn("stated once", text)
+
+    def test_no_site_carries_a_second_copy(self):
+        for site, marker in self.SITES.items():
+            for token in self.COPY_MARKERS:
+                with self.subTest(site=site, token=token):
+                    self.assertNotIn(token, self.pointer(marker))
+
+    def test_the_one_statement_carries_one_stamp(self):
+        """The server half of step 4b.3's rule carries exactly one server stamp."""
+        guidance = flag_guidance(read())
+        server_half = guidance[guidance.index("**What the server documents**"):
+                               guidance.index("⚠️ **What was observed, engine-side")]
+        self.assertEqual(1, len(re.findall(r"server \*\*\d+\.\d+\.\d+\*\*", server_half)))
+
+
 class FlagTypesAreConfirmedNotOnlyNames(unittest.TestCase):
     def test_the_composite_member_hazard_is_stated_in_the_flag_guidance(self):
         """A composite need not share the element type of a flag *collection* argument."""

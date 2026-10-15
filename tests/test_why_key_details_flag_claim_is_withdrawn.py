@@ -187,10 +187,18 @@ class TheServerPositionAndTheObservationAreSeparate(unittest.TestCase):
         position is stated, with the route that establishes it — is unchanged, and is what
         this asserts instead of the retired wording (INV-282: pin the claim, not the
         phrasing that happened to carry it).
+
+        ⚠️ Asked for a ``1.35.x`` version anywhere in the file until #611. Step 4b.3 is now
+        the one full statement of the rule (INV-300) and carries one stamp, from the live
+        re-check (1.38.2, 2026-10-15), so this asks for a dated server stamp on the
+        "What the server documents" line itself rather than for one version.
         """
         self.assertIn("requires_flags", self.text)
         self.assertIn("filter='why_entities'", self.text)
-        self.assertRegex(self.text, r"1\.35\.\d")
+        self.assertRegex(
+            self.text,
+            r"\*\*What the server documents\*\* \(server \*\*1\.\d+\.\d+\*\*, "
+            r"20\d\d-\d\d-\d\d\)")
 
     def test_the_flags_documented_effect_is_named_correctly(self):
         """The flags topic still attributes only the RELATED_ENTITIES path to this flag.

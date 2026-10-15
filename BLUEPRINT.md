@@ -2630,11 +2630,13 @@ Phase 1 (`phase1-query-visualize.md`):
   was confirmed, never changed after step 1.
 - Step 2 saves and builds one program `[query_name]` per query in `src/query`
   (each C#, Rust or TypeScript program carries its own engine setup) from
-  `generate_scaffold(workflow='query')`, with flags and response paths looked up
-  in `get_sdk_reference` (`flags`, `response_schemas`, `parameters`). Programs
-  iterate over loaded record IDs via `get_entity_by_record_id` and fold on
-  `(data_source, record_id)` before counting. Examples: `find_duplicates`,
-  `search_entities`, `customer_360`, `query_results`.
+  `generate_scaffold(workflow='query')`. Directly after the scaffold call come
+  file placement, the examples (`find_duplicates`, `search_entities`,
+  `customer_360`, `query_results`), iteration over loaded record IDs via
+  `get_entity_by_record_id`, and the fold on `(data_source, record_id)` before
+  counting. A sub-section after them, "Flags and response shapes for the query
+  programs", looks up flags and response paths in `get_sdk_reference`
+  (`flags`, `response_schemas`, `parameters`).
 - Step 3 runs them; 3a presents results and why output (`WHY_KEY`,
   `WHY_KEY_DETAILS`). It opens with their questions, each quoted ("You asked:
   '…'") beside its answer and marked `matches` or `differs`, every difference
@@ -10128,7 +10130,8 @@ looks wrong.
 - `tests/test_module06_license_reconciliation.py`: 19
 - `tests/test_module06_orchestrator_guidance.py`: 20
 - `tests/test_module06_phase_ordering.py`: 15
-- `tests/test_module07_why_flags.py`: 17
+- `tests/test_module07_step2_rules_beside_action.py`: 4
+- `tests/test_module07_why_flags.py`: 20
 - `tests/test_module3_check_lists_agree.py`: 24
 - `tests/test_module4_absent_limit_is_measured_before_any_fallback.py`: 6
 - `tests/test_module5_full_output_file_path_is_written_at_step_18.py`: 18
@@ -10328,7 +10331,7 @@ looks wrong.
 - `tests/test_welcome_licensing_names_data_collection.py`: 6
 - `tests/test_why_key_details_flag_claim_is_withdrawn.py`: 26
 - `tests/test_why_key_details_flag_is_cited_not_guessed.py`: 12
-- `tests/test_why_side_match_family_is_renamed.py`: 7
+- `tests/test_why_side_match_family_is_renamed.py`: 10
 - `tests/test_windows_browser_discovery.py`: 23
 - `tests/test_windows_forms_at_hand_run_sites.py`: 43
 - `tests/test_windows_powershell_guidance.py`: 36
@@ -12271,6 +12274,13 @@ Senzing licensing, with no SPDX identifier.
   the INV-360 test reads `docs/development.md`'s install section, with INV-360
   and INV-333 `PROPOSED AMENDMENT`s queued (a subagent could have had to ask,
   and skills, the register and guards said less than what shipped)
+- #611: Module 7 step 2's file placement, iteration and fold rules follow
+  the scaffold call, and its flag and response-shape guidance moves to a
+  sub-section after them; the `WHY_KEY_DETAILS` flag rule and the `MATCH_*`
+  rename are stated in full once, in `phase2-discover.md` step 4b.3, with one
+  stamp each (1.38.2 from a live re-check, and 1.33.0), and step 2 and step 3a
+  point at it (INV-300) (step 2's constraints sat about 270 lines below its
+  action, and the rule had three full copies whose stamps had drifted)
 - #615: every backticked `<file>.md` → "<name>" pointer in shipped Markdown
   resolves from its own file and names a heading or line-opening bold label
   there (case, leading numbering and an end parenthetical ignored), checked by
