@@ -18,6 +18,17 @@ who wants history silently gets a package that cannot give it.
 no database, no `data/raw/`, no credentials, and no `docs/mapping/` (which describes the
 bootcamper's own source schema).
 
+⛔ **The fixture puts the bootcamper's rows UNDER `production/`, and that is the point.** Until
+#672 every exclusion rule naming a directory under `data/` was anchored at the project root, while
+`production/` is packaged **recursively** and graduation copies `data/senzing-ready/**` into
+`production/data/senzing-ready/` (INV-186). So `share` excluded the mapped rows at
+`data/senzing-ready/` and packaged the identical rows one directory deeper, inside the generated
+tree it exists to carry -- with `OPEN_ME_FIRST.md` telling the recipient that no source data had
+traveled. A fixture whose only inputs sit at the root cannot see that: it is satisfied by the rule
+that was already there. The fast-path variant is here too (`production/data/raw/`), because a CORD
+fast-pathed source's loader reads straight from `data/raw/` with no mapping, so "the inputs" is not
+one directory.
+
 ⛔ **The secret-scan fixtures below include a `.pem` and an extensionless key file, and that is
 the point.** Until 2026-08-26 the scan was gated on an extension allowlist and this suite's only
 secret fixture was a `.py`, so it passed while `server.pem` and `id_rsa` were packaged. A guard
@@ -64,7 +75,9 @@ class Project:
     def __enter__(self):
         self.tmp = tempfile.TemporaryDirectory()
         root = Path(self.tmp.name)
-        for d in ("docs/visualizations", "docs/mapping", "production", "config", "data/raw",
+        for d in ("docs/visualizations", "docs/mapping", "production",
+                  "production/data/senzing-ready", "production/data/raw", "production/src/load",
+                  "config", "data/raw",
                   "data/temp", "logs", "licenses", "src", "backups/revisit/database",
                   "backups/revisit/state", ".git", "__pycache__", "database", ".venv"):
             (root / d).mkdir(parents=True, exist_ok=True)
@@ -77,6 +90,13 @@ class Project:
         write("docs/visualizations/results_visualization-entity-graph.png", "png")
         write("docs/mapping/customers.json", '{"map":1}')
         write("production/README.md", "prod")
+        # ⛔ The #672 regression fixtures: the bootcamper's own rows, nested inside the
+        # generated tree graduation copies them into. Synthetic -- no real personal data.
+        write("production/data/senzing-ready/people.jsonl",
+              '{"DATA_SOURCE":"PEOPLE","RECORD_ID":"1","NAME_FULL":"Ada Lovelace",'
+              '"ADDR_FULL":"12 Mapped Row Lane"}\n')
+        write("production/data/raw/customers.csv", "id,name\n1,Ada Lovelace\n")
+        write("production/src/load/load_records.py", "print('load')\n")
         write("config/bootcamp_progress.json",
               '{"modules_completed":["system_verification","query_visualize_discover"]}')
         write("config/engine_config.json", '{"connection":"sqlite3://na:na@/tmp/G2C.db"}')
@@ -207,8 +227,8 @@ class TheShareProfileCarriesNoInputs(unittest.TestCase):
                 self.assertFalse(name.endswith((".db", ".sqlite", ".sqlite3")))
 
     def test_it_carries_none_of_the_forbidden_paths(self):
-        forbidden = ("data/raw", "data/temp", ".env", "licenses/", "config/license.json",
-                     "logs/", ".git/", "__pycache__", ".venv", "backups/")
+        forbidden = ("data/raw", "data/temp", "data/senzing-ready", ".env", "licenses/",
+                     "config/license.json", "logs/", ".git/", "__pycache__", ".venv", "backups/")
         for name in self.names:
             for bad in forbidden:
                 with self.subTest(name=name, forbidden=bad):
@@ -224,6 +244,111 @@ class TheShareProfileCarriesNoInputs(unittest.TestCase):
         for expected in ("docs/bootcamp_recap.pdf", "docs/visualizations/", "production/"):
             with self.subTest(expected=expected):
                 self.assertIn(expected, joined)
+
+
+def root_anchored(relpath, rule):
+    """The pre-#672 matcher, kept as the control: a rule anchored at the project root.
+
+    ⛔ **It is here so the fixture cannot drift back into testing the rule that already
+    existed.** A nested-input case that this function also catches is a root case wearing a
+    longer path, and the guard below would pass without the change. Expressed as code rather
+    than asserted in prose, because the claim "a root-path check does not see this" is exactly
+    the claim the issue says a fixture must stop taking on trust.
+    """
+    parts, rule_parts = relpath.split("/"), rule.split("/")
+    return parts[:len(rule_parts)] == rule_parts
+
+
+class TheShareProfileCarriesNoLoaderInputsAtAnyDepth(unittest.TestCase):
+    """#672 — the no-source-data promise, kept rather than softened.
+
+    The share profile promises a recipient that no source data travels. `production/` is
+    packaged recursively and graduation copies the bootcamper's mapped rows into
+    `production/data/senzing-ready/`, so the promise was false for every graduated project.
+    These cases read the **ZIP's members**, not the collector's view and not a root-path
+    check: an archive is what was handed over.
+    """
+
+    MAPPED = "production/data/senzing-ready/people.jsonl"
+    RAW = "production/data/raw/customers.csv"
+
+    def setUp(self):
+        self.project = Project().__enter__()
+        _, self.path = self.project.write_archive("share")
+        self.names = members(self.path)
+        self.manifest = manifest_of(self.path)
+
+    def tearDown(self):
+        self.project.__exit__()
+
+    def test_the_fixture_really_holds_the_inputs_on_disk(self):
+        """Anti-vacuity: absent from the archive means nothing if it was never written."""
+        for rel in (self.MAPPED, self.RAW):
+            with self.subTest(path=rel):
+                self.assertTrue((self.project.root / rel).exists())
+
+    def test_the_fixture_is_nested_rather_than_at_the_root(self):
+        """The control: a root-anchored rule does NOT see these, so the guard has teeth."""
+        for rel, rule in ((self.MAPPED, "data/senzing-ready"), (self.RAW, "data/raw")):
+            with self.subTest(path=rel):
+                self.assertFalse(
+                    root_anchored(rel, rule),
+                    "%s is caught by a root-anchored `%s`, so this fixture re-tests the rule "
+                    "that was already there instead of the nested case #672 reported"
+                    % (rel, rule))
+
+    def test_the_mapped_input_is_absent_from_the_share_zip_members(self):
+        """⛔ The regression. Members of the written archive, not a root-path check."""
+        self.assertEqual(
+            [], [n for n in self.names if "data/senzing-ready" in n],
+            "the share archive carries the bootcamper's mapped loader inputs; the profile "
+            "promises a recipient that no source data travels")
+
+    def test_the_fast_pathed_raw_input_is_absent_too(self):
+        """A CORD fast-pathed source loads straight from `data/raw/`, mapping nothing."""
+        self.assertEqual([], [n for n in self.names if "data/raw" in n])
+
+    def test_the_manifest_names_each_exclusion_with_its_rule(self):
+        """⛔ Excluded is not enough: a recipient must be able to tell what is missing."""
+        reasons = {e["path"]: e["reason"] for e in self.manifest["excluded"]}
+        for prefix, rule in (("production/data/senzing-ready", "data/senzing-ready"),
+                             ("production/data/raw", "data/raw")):
+            with self.subTest(rule=rule):
+                named = [p for p in reasons if p.startswith(prefix)]
+                self.assertTrue(named, "%s is excluded but unnamed in the manifest" % prefix)
+                for path in named:
+                    self.assertIn(rule, reasons[path])
+
+    def test_the_rule_is_declared_among_the_share_only_rules(self):
+        self.assertIn("data/senzing-ready",
+                      self.manifest["exclusion_rules_applied"]["share_only"])
+
+    def test_the_promise_in_open_me_first_is_now_true(self):
+        """The issue's narrowed criterion: agree by EXCLUDING, never by disclosing."""
+        root = "senzing-bootcamp-share-%s" % DATE
+        with zipfile.ZipFile(self.path) as archive:
+            text = archive.read("%s/OPEN_ME_FIRST.md" % root).decode("utf-8")
+        self.assertIn("no database, no source data and no credentials", text)
+        self.assertIn("data/senzing-ready/", text,
+                      "the share package never names the mapped inputs among what it leaves "
+                      "out, so a recipient cannot tell they were withheld")
+        self.assertNotIn("data/senzing-ready",
+                         "\n".join(e["path"] for e in self.manifest["included"]))
+
+    def test_the_safe_production_artifacts_still_travel(self):
+        """Anti-vacuity: excluding the inputs must not empty the project it carries."""
+        joined = "\n".join(self.names)
+        for expected in ("production/README.md", "production/src/load/load_records.py",
+                         "docs/bootcamp_recap.pdf", "docs/visualizations/graph.png"):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, joined)
+
+    def test_the_transfer_profile_still_carries_the_mapped_input(self):
+        """Documented transfer behavior is preserved: the copied loader reads from there."""
+        _, path = self.project.write_archive("transfer")
+        self.assertTrue([n for n in members(path) if n.endswith(self.MAPPED)],
+                        "the transfer profile dropped the loader's input, so the project it "
+                        "hands to the next machine has nothing to load")
 
 
 class TheTransferProfileCanResumeElsewhere(unittest.TestCase):
@@ -252,6 +377,14 @@ class TheTransferProfileCanResumeElsewhere(unittest.TestCase):
             for bad in ("data/raw", ".env", "licenses/", "config/license.json", ".git/"):
                 with self.subTest(name=name, forbidden=bad):
                     self.assertNotIn(bad, name)
+
+    def test_its_open_me_first_keeps_the_raw_only_source_data_wording(self):
+        """`transfer` carries the mapped inputs on purpose, so its bullet names `data/raw/`."""
+        with zipfile.ZipFile(self.path) as archive:
+            root = archive.namelist()[0].split("/")[0]
+            text = archive.read("%s/OPEN_ME_FIRST.md" % root).decode("utf-8")
+        self.assertIn("\n".join(PKG.TRANSFER_SOURCE_DATA_BULLET), text)
+        self.assertNotIn("never packaged by this profile", text)
 
     def test_it_does_not_carry_the_live_database(self):
         """The backup travels; the working repository does not."""
@@ -492,6 +625,30 @@ class TheExclusionMatcherMatchesSegmentsNotSubstrings(unittest.TestCase):
     def test_share_only_rules_do_not_apply_to_transfer(self):
         self.assertIsNotNone(PKG.is_excluded("backups/revisit/db.db", "share"))
         self.assertIsNone(PKG.is_excluded("backups/revisit/state/x.yaml", "transfer"))
+
+    def test_a_rule_matches_wherever_its_segments_sit(self):
+        """#672 — a rule anchored at the root describes one copy of a tree, not the archive."""
+        self.assertEqual("data/senzing-ready",
+                         PKG.is_excluded("production/data/senzing-ready/people.jsonl", "share"))
+        self.assertEqual("data/raw",
+                         PKG.is_excluded("production/data/raw/customers.csv", "share"))
+        self.assertEqual("data/raw",
+                         PKG.is_excluded("production/data/raw/customers.csv", "transfer"))
+        self.assertEqual("config/license.json",
+                         PKG.is_excluded("production/config/license.json", "share"))
+
+    def test_the_mapped_inputs_are_a_share_rule_only(self):
+        """`transfer` carries them: `src/load/**` reads its input from that path (INV-084)."""
+        self.assertIsNone(
+            PKG.is_excluded("production/data/senzing-ready/people.jsonl", "transfer"))
+
+    def test_a_deeper_match_is_still_segment_wise(self):
+        """Wherever, not however: the segments must match whole, at any depth."""
+        for rel in ("production/data/senzing-readyX/people.jsonl",
+                    "docs/senzing-ready-notes.md",
+                    "production/metadata/raw_counts.md"):
+            with self.subTest(rel=rel):
+                self.assertIsNone(PKG.is_excluded(rel, "share"))
 
 
 if __name__ == "__main__":

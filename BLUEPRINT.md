@@ -3294,8 +3294,11 @@ CLI packaging the project into one zip; it never transmits it. Options:
   recorded as excluded.
 - `is_excluded` matches path segments against `ALWAYS_EXCLUDE` (credentials,
   licenses, raw and temp data, logs, `.git`, caches, virtualenvs,
-  `backups/packages`) and, for `share`, `SHARE_EXCLUDE` and
-  `DATABASE_SUFFIXES`.
+  `backups/packages`) and, for `share`, `SHARE_EXCLUDE` (backups,
+  `docs/mapping`, the mapped loader inputs in `data/senzing-ready`) and
+  `DATABASE_SUFFIXES`. `_matches` finds a rule's segments as a contiguous run
+  anywhere in the path, not only at its start, so a rule still covers a tree
+  copied under `production/`.
 - Files resolving outside the project are excluded. Every other file is
   scanned by `_scan` with `find_secret` (in overlapping blocks, any
   extension); a match excludes it with the class named, and an unreadable
@@ -3305,7 +3308,8 @@ CLI packaging the project into one zip; it never transmits it. Options:
   `modules_completed`, root directory (`ROOT_PREFIX`), each file's size and
   SHA-256, total size, rules applied and every exclusion with its reason.
   `open_me_first` writes `OPEN_ME_FIRST.md` built only from the manifest's
-  included list.
+  included list, with `SHARE_SOURCE_DATA_BULLET` or
+  `TRANSFER_SOURCE_DATA_BULLET` for the profile's source-data exclusion.
 - `--dry-run` prints the manifest on stdout and a size summary on stderr
   (warning above `SIZE_WARN_BYTES`) and writes nothing.
 - Otherwise it writes the manifest, `OPEN_ME_FIRST.md` and members under
@@ -6733,7 +6737,7 @@ ALWAYS_EXCLUDE = (
     "target",
     "backups/packages",
 )
-SHARE_EXCLUDE = ("backups", "docs/mapping")
+SHARE_EXCLUDE = ("backups", "docs/mapping", "data/senzing-ready")
 DATABASE_SUFFIXES = (".db", ".sqlite", ".sqlite3")
 SHARE_INCLUDE = (
     "docs",
@@ -6747,6 +6751,8 @@ TRANSFER_EXTRA = (
 SIZE_WARN_BYTES = 2 * 1024 * 1024 * 1024
 SCAN_BLOCK_BYTES = 1 << 20
 SCAN_OVERLAP_BYTES = 4096
+def _matches(parts, rule):
+    ...
 def is_excluded(relpath, profile):
     ...
 def candidate_roots(profile):
@@ -6772,6 +6778,16 @@ PG_RESTORE = ("a `pg_dump` file; restore it into a fresh database with "
               "plain dump), never with a `<` redirection")
 def included_parts(manifest):
     ...
+SHARE_SOURCE_DATA_BULLET = (
+    "- **Your own source data** — never packaged by this profile: neither the raw inputs",
+    "  (`data/raw/`) nor the mapped loader inputs (`data/senzing-ready/`), **wherever they sit**,",
+    "  including inside the generated `production/` project they are copied into. They are yours,",
+    "  they may be sensitive, and the resolved results do not require them.",
+)
+TRANSFER_SOURCE_DATA_BULLET = (
+    "- **Your own source data** (`data/raw/`) — never packaged. It is yours, it may be",
+    "  sensitive, and the resolved results do not require it.",
+)
 def open_me_first(manifest, project_root):
     ...
 def human(size):
@@ -10273,7 +10289,7 @@ looks wrong.
 - `tests/test_organization_search.py`: 23
 - `tests/test_own_data_entity_shown_as_text.py`: 28
 - `tests/test_overview_bullets_are_not_counted.py`: 8
-- `tests/test_package_bootcamp.py`: 35
+- `tests/test_package_bootcamp.py`: 48
 - `tests/test_packaging_consent_gate_ships.py`: 15
 - `tests/test_pages_site_commands_match_docs_readme.py`: 10
 - `tests/test_partial_row_and_schema_coverage.py`: 39
@@ -10847,10 +10863,14 @@ tests a rebuild can pass from behavior alone.
     `--dry-run`. A dry run reports a size and writes nothing.
   - **Layout.** The zip has one root directory, holding `OPEN_ME_FIRST.md` and
     `PACKAGE_MANIFEST.json`.
-  - **`share`** carries results only. It has no database, no `data/raw/`, no
-    credentials and no `docs/mapping/`.
+  - **`share`** carries results only. It has no database, no credentials, no
+    `docs/mapping/` and none of the Bootcamper's loader inputs — neither
+    `data/raw/` nor the mapped `data/senzing-ready/` — at any depth, including
+    nested under `production/`. Its `OPEN_ME_FIRST.md` names the mapped inputs
+    among what it withheld.
   - **`transfer`** adds config, mappings, the revisit state snapshot and a
-    database backup, but never the live database.
+    database backup, but never the live database. It keeps
+    `production/data/senzing-ready/`, which the loader it carries reads.
   - **Excluded and named in the manifest**, without echoing any secret:
     - `.git/`;
     - secret-bearing members, including `.pem` files, extensionless keys,
@@ -10860,7 +10880,9 @@ tests a rebuild can pass from behavior alone.
 
     A genuine PNG still travels.
   - **Safety.** A second archive never contains the first. A `.sha256` sidecar
-    is written. Exclusions match path segments.
+    is written. Exclusions match whole path segments, wherever in the path they
+    sit, so `changelogs.md` is not `logs` and `production/data/raw/` is
+    `data/raw`.
   - `OPEN_ME_FIRST.md` names only what the `included` list carries.
 - **`generate_recap_pdf.py`** (`tests/test_recap_pdf_guard.py` and 15 more
   files). Its arguments are `--input`, `--output` and `--check`.
@@ -12605,3 +12627,10 @@ Senzing licensing, with no SPDX identifier.
   Actions Taken at module close — and make the capture step and both calling
   modules defer to it (the capture step still demanded the embed "in the same
   turn", which no module can reach without creating its recap section early)
+- #672: keep the `share` package's no-source-data promise by excluding the
+  Bootcamper's loader inputs at any depth, matching an exclusion rule's
+  segments wherever they sit instead of only at the project root (`production/`
+  is packaged recursively and graduation copies `data/senzing-ready/**` into
+  it, so the mapped rows traveled inside the generated tree while
+  `OPEN_ME_FIRST.md` told the recipient none had); `transfer` keeps them,
+  because the loader it carries reads from that path
