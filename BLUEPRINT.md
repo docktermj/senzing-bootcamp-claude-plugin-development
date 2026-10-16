@@ -7532,10 +7532,18 @@ function drawLegend(nodes){d3.select("#graph-container .legend").remove();
     r.attr("title","Show only "+s+" (click again to restore)");
     r.on("click",function(){off[s]=!off[s];d3.select(this).classed("off",!!off[s]);
       const anyOff=srcs.some(function(x){return off[x];});
-      d3.selectAll("#graph-container .node").style("display",function(d){
-        if(!anyOff)return null;
-        const keep=(d.data_sources||[]).some(function(x){return !off[x];});
-        return keep?null:"none";});});});}
+      // ⛔ (#676) The legend says WHICH sources are off; `graphApplySourceFilter` says which
+      // marks that covers -- the nodes, their labels and their edges, together. This handler
+      // must NEVER select marks itself. Selecting the node layer is what it used to do, and
+      // that reached exactly one of the three sibling layers an entity draws into -- so the
+      // selector string is deliberately absent from this file now, and a guard asserts it
+      // stays absent. Participation semantics are unchanged: a node is kept while ANY of its
+      // sources is still on, so a cross-source entity survives until all of them are off.
+      // Toggling every row back on leaves no live `off` entry, `anyOff` goes false, and the
+      // predicate returns true for everything -- the reset, through the same one path.
+      graphApplySourceFilter(function(d){
+        if(!anyOff)return true;
+        return (d.data_sources||[]).some(function(x){return !off[x];});});});});}
 function openModal(d){const m=d3.select("#modal");document.getElementById("modal").className="modal";
   const body="<p><b>Data sources:</b> "+esc(d.data_sources.join(", "))+"<br><b>Records:</b> "+d.record_count+"</p>"+
     "<div id='node-actions'></div>";
@@ -9882,9 +9890,12 @@ Used by:
   `test_snapshot_and_capture_fidelity.py`
 - `_script_json`: `test_any_language_contract_complete.py`,
   `test_capture_single_page.py`,
+  `test_graph_source_filter_covers_labels_and_edges.py`,
   `test_how_tab_names_an_unsettled_final_state.py`,
   `test_source_encoding_renders_distinctly.py`, `test_viz_tab_consolidation.py`
-- `_snapshot_payload`: `test_snapshot_records_beyond_the_graph_cap.py`
+- `_snapshot_payload`:
+  `test_graph_source_filter_covers_labels_and_edges.py`,
+  `test_snapshot_records_beyond_the_graph_cap.py`
 - `_snapshot_probe_html`: `test_snapshot_and_capture_fidelity.py`,
   `test_tab_set_is_singular.py`
 - `_snapshot_reachable_entity_ids`:
@@ -10248,6 +10259,7 @@ looks wrong.
 - `tests/test_graph_colors_by_source_combination.py`: 25
 - `tests/test_graph_label_distinctness.py`: 18
 - `tests/test_graph_labels_paint_after_circles.py`: 13
+- `tests/test_graph_source_filter_covers_labels_and_edges.py`: 42
 - `tests/test_ground_rules_nonyielding_presentation.py`: 16
 - `tests/test_guide_run_blocks_declare_their_shell.py`: 44
 - `tests/test_group_score_is_not_a_join_prediction.py`: 15
@@ -12763,3 +12775,11 @@ Senzing licensing, with no SPDX identifier.
   as they are; the graph payload is capped at 1500 while `merges` is not,
   so an entity the page was still listing answered
   `not found: no such entity` once the cap dropped its node
+- #676: apply one source-filter visibility predicate to the Entity Graph's
+  node glyphs, their labels and their edges together, through a single
+  `graphApplySourceFilter` the legend hands a predicate to instead of
+  selecting marks itself; an edge is drawn only while both of its endpoints
+  are, and a mark is restored by clearing its inline style so the
+  scale-aware `hide-node-labels` default keeps governing it — the legend
+  had toggled the node groups alone, leaving the hidden entities' names
+  painted over empty space and their edges running to circles nobody draws
