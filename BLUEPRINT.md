@@ -11860,7 +11860,7 @@ Senzing licensing, with no SPDX identifier.
   budget, and test the left edge in pixels (an assumed 5.9 px per character
   clipped the head of any key of about 22 or more characters, and its test
   reused the same constant)
-- #465: make the bootcamp practise directing the AI through ten sub-issues
+- #465: make the bootcamp practice directing the AI through ten sub-issues
   (#478-#488), whose rules the 2026-10-12 invariant review registered as
   INV-352 to INV-359 (the guide collected choices and approvals and made the
   predictions itself, so the Bootcamper left with code but no practice in
