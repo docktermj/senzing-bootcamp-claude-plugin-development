@@ -391,12 +391,18 @@ a short `{name}`):
    (INV-298/INV-299), and the app's `activate()` no longer redraws an already-active tab, but this
    is the one image where "it rendered" and "it is right" come apart, and INV-123 requires the
    caption to come from the opened image anyway. A graph PNG far smaller than its siblings is the
-   tell. **Keep every captured tab** — and, **as a required step, in the
-   same turn** — embed them all in **this module's recap `Actions Taken`** as
+   tell. **Keep every captured tab** — and record each one in this step's checkpoint, in the
+   capture's own turn and before the turn yields: the PNG path and the tab label it shows.
+   ⛔ **(INV-146) The embed is the second moment, at module close — not this one.** Step 2b above
+   states the timeline once and it binds here (INV-300): every captured image is embedded in
+   **this module's recap `Actions Taken`** as
    `![caption](visualizations/{name}-<tab-slug>.png)` — relative to `docs/bootcamp_recap.md`, so
    **`visualizations/…`, never `docs/visualizations/…`** (INV-161; a `docs/`-prefixed path resolves
-   to `docs/docs/…` and embeds nothing). Writing the image lines is not
-   optional once a capture succeeded; record it at the step checkpoint. The graduation PDF embeds
+   to `docs/docs/…` and embeds nothing) — at module close, when Step 2b writes that section and it
+   first exists. ⛔ **Never create or finalize this module's recap section here to embed sooner (INV-146)**
+   — the deliberate 👉 gates between the two moments are the module's, not an obstacle to route
+   around. Writing the image lines is not optional once a capture succeeded; the checkpoint is what
+   carries them across those gates. The graduation PDF embeds
    these local images and reports any it drops (INV-162), and graduation backfills any that
    were captured but never embedded (see `../graduation/SKILL.md` Step 1).
 

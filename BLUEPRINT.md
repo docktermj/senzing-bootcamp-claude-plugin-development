@@ -1683,7 +1683,12 @@ Module completion (`module-completion.md`, before the transition question):
 - Step 2e: upsert `docs/video/broll.json[<token>]` (`module`, `images`,
   `facts`, `highlight`, `captured_at`); no raw record values; non-blocking.
 - Capture uses `capture_screenshots.py` (`--single` for one-page HTML); exit
-  1 means fix the tabs, exit 2 means skip.
+  1 means fix the tabs, exit 2 means skip. Two moments, never one: each
+  capture is recorded at that step's checkpoint in the capture's own turn,
+  before the turn yields, and every one is embedded at module close, when
+  Step 2b writes the section. The recap section is never created or
+  finalized at the capture step to embed sooner, and every module that
+  restates the embed names module close.
 - Step 3: `✅ Module complete: {Name}` summary with What's next.
 - Step 4: "Are you ready to move on to the next module: {name}?"; after Query,
   Visualize and Discover, "Would you like to graduate now…?", then
@@ -9999,12 +10004,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 7737 test methods in 421 files, matching `inventory.test_count_total`.
+There are 7748 test methods in 421 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 7737.
+sum to 7748.
 
-Two files run more tests than they define, so discovery collects 7744:
+Two files run more tests than they define, so discovery collects 7755:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -10347,7 +10352,7 @@ looks wrong.
 - `tests/test_scaffold_citations_and_database_type.py`: 23
 - `tests/test_scaffold_engine_config_reaches_the_sdk.py`: 8
 - `tests/test_scenario_registry_fields_agree.py`: 13
-- `tests/test_screenshot_embed_timing_is_satisfiable.py`: 10
+- `tests/test_screenshot_embed_timing_is_satisfiable.py`: 21
 - `tests/test_screenshot_retention_and_order.py`: 19
 - `tests/test_script_usage_names_every_flag.py`: 3
 - `tests/test_sdk_parameter_shapes.py`: 39
@@ -12595,3 +12600,8 @@ Senzing licensing, with no SPDX identifier.
   missing lines for #465, #504, #561 and #570, and refreshes section 8's test
   counts and two plugin-version references (the header SHA had fallen eleven
   days and 257 commits behind `main`)
+- #671: state the screenshot capture/embed timeline once — recorded at the
+  step checkpoint in the capture's own turn, embedded in the module recap's
+  Actions Taken at module close — and make the capture step and both calling
+  modules defer to it (the capture step still demanded the embed "in the same
+  turn", which no module can reach without creating its recap section early)
