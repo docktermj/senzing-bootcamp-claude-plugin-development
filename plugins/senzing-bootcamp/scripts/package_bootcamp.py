@@ -14,7 +14,11 @@ nothing decided what must **not** travel.
 Two profiles, because the two audiences need different contents:
 
 - ``share``    -- for someone looking at the results. Keepsakes, visualizations, ``production/``.
-                  Never a database, never source data, never a credential.
+                  Never a database, never source data, never a credential. ⛔ **Never source data
+                  means never, at any depth**: ``production/`` is packaged recursively and
+                  graduation copies ``data/senzing-ready/**`` into
+                  ``production/data/senzing-ready/`` (INV-186), so the Bootcamper's own mapped rows
+                  sit *inside* the generated tree this profile carries.
 - ``transfer`` -- for the bootcamper resuming elsewhere. Everything in ``share`` plus the INV-094
                   revisit bundle (state snapshot **and** database backup), ``config/``,
                   ``docs/mapping/`` and ``src/``.
@@ -83,11 +87,17 @@ ALWAYS_EXCLUDE = (
     "backups/packages",
 )
 
-#: `share` additionally drops every backup, every database file, and the mapping layer.
+#: `share` additionally drops every backup, every database file, the mapping layer, and the
+#: Bootcamper's mapped loader inputs.
 #: ⛔ `docs/mapping/` is transfer-only by design: it describes the Bootcamper's own source schema
 #: (field names, sample values), which the results audience does not need and which belongs with
 #: the data rather than with the findings.
-SHARE_EXCLUDE = ("backups", "docs/mapping")
+#: ⛔ `data/senzing-ready/` is the loader's input -- the Bootcamper's own records, mapped. It is
+#: source data by any reading, and `share` promises none travels. It is excluded here rather than
+#: disclosed, because the promise is the profile's reason to exist. `transfer` keeps it: the
+#: `src/load/**` copied into `production/` reads its input from exactly that path (INV-084/INV-186),
+#: so a transfer package without it cannot resume the bootcamp, which is what `transfer` is for.
+SHARE_EXCLUDE = ("backups", "docs/mapping", "data/senzing-ready")
 DATABASE_SUFFIXES = (".db", ".sqlite", ".sqlite3")
 
 #: What each profile reaches for. A missing entry is recorded as absent, never an error: the flow
@@ -134,23 +144,43 @@ def _rel(path, root):
     return path.relative_to(root).as_posix()
 
 
+def _matches(parts, rule):
+    """Whether `rule`'s segments sit as a contiguous run ANYWHERE in `parts`.
+
+    ⛔ **Anywhere, not only at the project root.** A multi-segment rule used to be anchored at the
+    root, which made every `data/...` rule describe one copy of a tree while the archive carried
+    another. ``production/`` is packaged recursively, and graduation copies ``data/senzing-ready/**``
+    to ``production/data/senzing-ready/`` and the registry beside it (INV-186) -- so ``data/raw``
+    excluded the Bootcamper's rows at the root and packaged the identical rows one directory
+    deeper, under a generated tree, while ``OPEN_ME_FIRST.md`` promised the recipient that no
+    source data traveled. The same anchoring would have packaged a `config/license.json` copied
+    anywhere but the root.
+
+    A rule keeps its meaning: a directory named ``logs`` still matches and ``changelogs.md`` still
+    does not, because the comparison is over whole segments. For a single-segment rule this is
+    exactly the "any segment" match it always had.
+    """
+    rule_parts = rule.split("/")
+    span = len(rule_parts)
+    return any(parts[start:start + span] == rule_parts
+               for start in range(len(parts) - span + 1))
+
+
 def is_excluded(relpath, profile):
     """Whether `relpath` (project-relative, posix) is excluded, and by which rule.
 
     Matches on path *segments* rather than substrings: a directory named ``logs`` is excluded and a
-    file named ``changelogs.md`` is not.
+    file named ``changelogs.md`` is not. Every rule matches wherever its segments sit in the path,
+    which is what keeps a rule about the Bootcamper's inputs true inside a generated tree that
+    copies them -- see `_matches`.
     """
     parts = relpath.split("/")
     for rule in ALWAYS_EXCLUDE:
-        rule_parts = rule.split("/")
-        if parts[: len(rule_parts)] == rule_parts:
-            return rule
-        if len(rule_parts) == 1 and rule in parts:
+        if _matches(parts, rule):
             return rule
     if profile == "share":
         for rule in SHARE_EXCLUDE:
-            rule_parts = rule.split("/")
-            if parts[: len(rule_parts)] == rule_parts:
+            if _matches(parts, rule):
                 return rule
         if Path(relpath).suffix.lower() in DATABASE_SUFFIXES:
             return "*%s (share profile carries no database)" % Path(relpath).suffix.lower()
@@ -493,6 +523,26 @@ def _transfer_block(parts):
         "machine you must redo SDK setup, the database and the load.")
 
 
+#: The "What is NOT here, and why" bullet about the Bootcamper's own data, per profile.
+#: ⛔ `share`'s promise is that **no source data travels**, and it is kept by excluding the inputs
+#: rather than softened by disclosing them here: a recipient who should see the results but not the
+#: inputs is the audience the profile exists for. So the mapped loader inputs are named beside the
+#: raw ones, and so is the depth the rule reaches -- the generated `production/` project graduation
+#: copies them into is exactly where they were found traveling.
+#: `transfer` carries those inputs on purpose (the copied loader reads them), so its bullet names
+#: only `data/raw/`, which neither profile packages at any depth.
+SHARE_SOURCE_DATA_BULLET = (
+    "- **Your own source data** — never packaged by this profile: neither the raw inputs",
+    "  (`data/raw/`) nor the mapped loader inputs (`data/senzing-ready/`), **wherever they sit**,",
+    "  including inside the generated `production/` project they are copied into. They are yours,",
+    "  they may be sensitive, and the resolved results do not require them.",
+)
+TRANSFER_SOURCE_DATA_BULLET = (
+    "- **Your own source data** (`data/raw/`) — never packaged. It is yours, it may be",
+    "  sensitive, and the resolved results do not require it.",
+)
+
+
 def open_me_first(manifest, project_root):
     """OPEN_ME_FIRST.md. Every statement about what the archive contains is built from the
     manifest's ``included`` list, so it can never contradict PACKAGE_MANIFEST.json (#321)."""
@@ -527,8 +577,10 @@ def open_me_first(manifest, project_root):
         "",
         "- **Credentials and licenses** (`.env`, `licenses/`, `config/license.json`) — never",
         "  packaged, in either profile.",
-        "- **Your own source data** (`data/raw/`) — never packaged. It is yours, it may be",
-        "  sensitive, and the resolved results do not require it.",
+    ]
+    lines += list(SHARE_SOURCE_DATA_BULLET if profile == "share"
+                  else TRANSFER_SOURCE_DATA_BULLET)
+    lines += [
         "- **Anything matching a secret pattern** — a PEM private key, an AWS access-key ID or a",
         "  Senzing license payload found in a file's contents excludes that file, and the",
         "  manifest names it.",

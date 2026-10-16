@@ -104,6 +104,15 @@ the archive safe to hand over:
 - **Never packaged, either profile:** `.env`, `licenses/`, `config/license.json`,
   `data/raw/` (the bootcamper's own source data), `data/temp/`, `logs/`, `.git/`, caches
   and virtualenvs, and `backups/packages/` itself.
+- **Never packaged on `share`, on top of that:** the mapped loader inputs
+  (`data/senzing-ready/`), `backups/`, every database file, and `docs/mapping/`.
+  ⛔ **Every exclusion rule matches a path's segments wherever they sit, not only at the
+  project root.** `production/` is packaged recursively and graduation copies
+  `data/senzing-ready/**` into `production/data/senzing-ready/` (INV-186), so a root-anchored
+  rule carried the bootcamper's own mapped rows inside the generated tree while
+  `OPEN_ME_FIRST.md` told the recipient no source data had traveled. ⚠️ `transfer` keeps
+  those inputs on purpose — the `src/load/**` copied into `production/` reads from exactly
+  that path (INV-084), so a transfer package without them cannot resume the bootcamp.
 - **Content-scanned, every member, regardless of extension:** a member whose bytes match an
   INV-109 secret pattern — a PEM private key, an AWS access-key ID, a Senzing license payload —
   is excluded and **named** in the manifest. ⛔ **There is no file-type allowlist**, and there was
