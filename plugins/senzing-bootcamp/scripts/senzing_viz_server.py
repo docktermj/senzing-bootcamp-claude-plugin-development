@@ -2401,21 +2401,93 @@ def _snapshot_probe_html(model, engine, flags, port=8080, dataset=""):
     return note + browse + '<div id="results">' + "".join(cards) + "</div>"
 
 
-def write_snapshot(model, engine, flags, title, out_path, port=8080, dataset=""):
-    """Write a fully self-contained HTML snapshot with D3 and data embedded, so it
-    renders with no server and no network access."""
+def _snapshot_entity_lists(payload):
+    """Every list of entities a **retained** snapshot surface puts a Records button on.
+
+    These are exactly the lists the offline page renders from the embedded payload:
+    `drawGraph()`'s node modal, `showAllMerges()`'s browse, and `renderEntityList()` for
+    the largest-entities list and all three aggregate drill-downs (histogram buckets,
+    cross-source cells, match-key rows). ``features`` is deliberately absent — it carries
+    bucket counts, never an entity id — and so is `search`, which a snapshot disables.
+
+    ⛔ **This census is the Records action's denominator** (#675). A surface added to the
+    snapshot and not added here keeps its Records button and loses its records.
+    """
+    stats = payload.get("stats") or {}
+    lists = [
+        (payload.get("graph") or {}).get("nodes") or [],
+        (payload.get("merges") or {}).get("entities") or [],
+        stats.get("sample_entities") or [],
+    ]
+    lists.extend((stats.get("bucket_entities") or {}).values())
+    lists.extend(((payload.get("overlap") or {}).get("cell_entities") or {}).values())
+    lists.extend(((payload.get("matchkeys") or {}).get("match_key_entities") or {}).values())
+    return lists
+
+
+def _snapshot_reachable_entity_ids(payload):
+    """The entity ids of every entity `_snapshot_entity_lists` offers, de-duplicated."""
+    ids = set()
+    for entities in _snapshot_entity_lists(payload):
+        for entity in entities or []:
+            eid = (entity or {}).get("entity_id")
+            if eid is not None:
+                ids.add(eid)
+    return ids
+
+
+def _snapshot_records_index(model, payload):
+    """Records for every reachable entity whose records no embedded surface already carries.
+
+    ⛔ **The graph payload is not the Records index.** `graph` is embedded capped at
+    ``GRAPH_NODE_CAP`` while `merges` and the drill-down lists are embedded on their own
+    terms, so indexing `graph.nodes` alone made an entity the snapshot still *offers* —
+    through the "Show all merged entities" browse, a histogram bucket, a cross-source cell
+    or a match-key row — answer "not found: no such entity" when the cap had dropped its
+    node. A valid entity could be browsed and then denied (#675). The cap stays: it bounds
+    what the graph *renders*, not what the page can look up.
+
+    Only the remainder is emitted. `graph.nodes` and `merges.entities` carry their own
+    `records` arrays, and the shim indexes those in place, so no record array is embedded
+    twice in a file whose size grows with the bootcamper's dataset.
+    """
+    inline = set()
+    for entities in (
+        (payload.get("graph") or {}).get("nodes") or [],
+        (payload.get("merges") or {}).get("entities") or [],
+    ):
+        for entity in entities:
+            inline.add(entity.get("entity_id"))
+    index = []
+    for eid in sorted(_snapshot_reachable_entity_ids(payload) - inline):
+        entry = model.records(eid)
+        if entry.get("error"):
+            continue  # not in the model at all; there is nothing to index
+        index.append(entry)
+    return index
+
+
+def _snapshot_payload(model):
+    """The data the standalone snapshot embeds, as `__DATA__`."""
     payload = {
         "stats": model.stats(),
         "graph": model.graph(cap=GRAPH_NODE_CAP),
         "merges": model.merges(),
-        # No "records" key: /api/records is per-entity, and graph.nodes already
-        # carries every entity with its constituent records, so the shim below
-        # indexes those instead. A second full copy would have embedded the same
-        # records twice in a file whose size grows with the bootcamper's dataset.
         "overlap": model.overlap(),
         "matchkeys": model.match_keys(),
         "features": model.feature_scores(),
     }
+    # /api/records is per-entity, so it is served from an index rather than embedded as a
+    # whole collection. The index completes the surfaces that already carry their own
+    # records; see _snapshot_records_index for why it is not keyed off the graph alone.
+    payload["records_index"] = _snapshot_records_index(model, payload)
+    return payload
+
+
+def write_snapshot(model, engine, flags, title, out_path, port=8080, dataset=""):
+    """Write a fully self-contained HTML snapshot with D3 and data embedded, so it
+    renders with no server and no network access."""
+    payload = _snapshot_payload(model)
     # The embedded-data shim runs after D3 and before the page bootstrap, replacing
     # the fetch-based bootstrap with the inlined data.
     #
@@ -2424,13 +2496,22 @@ def write_snapshot(model, engine, flags, title, out_path, port=8080, dataset="")
     # correctly do — hands showRecords() an object with no `records` array, so every
     # entity in a standalone snapshot reported "No records returned for this entity"
     # while the live server showed them. Resolve the entity_id here instead.
+    #
+    # ⛔ The lookup indexes EVERY surface the snapshot retains, not `graph.nodes` alone:
+    # the graph is capped at GRAPH_NODE_CAP and the other surfaces are not capped with
+    # it, so a graph-only index denied entities the page itself still offered (#675).
+    # Each of the three sources is built from the same model entities, so a repeated
+    # entity is written twice with identical records.
     shim = (
         "<script>const __DATA__=" + _script_json(payload) + ";"
         "var __RECS__=null;"
         "function __recordsFor(id){if(!__RECS__){__RECS__={};"
-        "(((__DATA__.graph||{}).nodes)||[]).forEach(function(n){"
-        "__RECS__[String(n.entity_id)]={entity_id:n.entity_id,entity_name:n.entity_name,"
-        "records:n.records||[]};});}"
+        "var add=function(n){if(!n||n.entity_id===undefined||n.entity_id===null)return;"
+        "__RECS__[String(n.entity_id)]={entity_id:n.entity_id,"
+        "entity_name:n.entity_name,records:n.records||[]};};"
+        "(((__DATA__.graph||{}).nodes)||[]).forEach(add);"
+        "(((__DATA__.merges||{}).entities)||[]).forEach(add);"
+        "((__DATA__.records_index)||[]).forEach(add);}"
         "return __RECS__[id]||{entity_id:id,error:'not found: no such entity'};}"
         "window.fetch=function(u){var p=u.split('?')[0].replace('/api/','');"
         "var q=(u.split('?')[1]||'');"

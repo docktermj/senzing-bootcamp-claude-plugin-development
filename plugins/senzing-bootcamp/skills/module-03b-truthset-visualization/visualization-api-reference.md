@@ -544,6 +544,19 @@ Unlike `why`/`how`, this endpoint's data MUST also be **embedded in the standalo
 the Records action works offline — it needs no engine call at view time, only the record data
 already gathered when the model was built.
 
+⛔ **The embedded records index MUST cover every entity the snapshot still offers** — every
+entity carried by an embedded graph node, by the merge browse, by the largest-entities list or
+by any aggregate drill-down list — and not only the entities the graph node cap kept. The graph
+payload bounds what is *rendered*, never what can be *looked up*: an index built from
+`graph.nodes` alone answers `not found: no such entity` for an entity the same page is still
+listing, so a bootcamper browses a valid entity and is then told it does not exist. Implementations
+MAY build the index however they like — the reference indexes the surfaces that already carry
+their own records and embeds the remainder once, so no record array ships twice — but the
+census MUST be the surfaces the snapshot retains. The node cap and the per-list caps stay
+exactly as they are: the repair is to the lookup's denominator, never to what is shown, and an
+entity **no** retained surface offers still answers `not found: no such entity` rather than
+being invented.
+
 **`GET /api/overlap`:** Cross-source overlap matrix — how many resolved entities each pair of data
 sources shares
 
@@ -1168,7 +1181,10 @@ not only in the live app. The snapshot's Search / Probe body MUST therefore incl
 render and the snapshot silently loses the capability. The example-query **chips** are live-only by
 design — they drive the search box, which a static file does not have — so they are suppressed
 there rather than shipped as dead controls. **The Records action works offline too**, because `records` is embedded: it needs no
-engine call at view time, unlike `why`/`how`. The Feature Scores tab shows whatever was computed
+engine call at view time, unlike `why`/`how`. It resolves against the whole retained index —
+every entity any embedded surface offers, including the ones the graph node cap dropped — so an
+entity reachable through the merge browse or an aggregate drill-down is never reported as
+missing because its node was not rendered (see `GET /api/records` above). The Feature Scores tab shows whatever was computed
 (capped) at build time. (`dashboard` is no longer embedded — the endpoint was removed and its
 content folded into `stats`.)
 

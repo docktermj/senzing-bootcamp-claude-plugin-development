@@ -3423,10 +3423,20 @@ needs the Senzing Python SDK (`senzing`, `senzing_core`).
 - Assets: `vendor/d3.v7.min.js` is inlined (`_d3_script`), with no network
   fallback; brand colors come from `brand_tokens` or the `_FALLBACK_*`
   copies.
-- Snapshot (`write_snapshot`): embeds the data via `_script_json` with a
-  `fetch` shim (search empty, Why/How point to the live server); Search /
-  Probe becomes `_snapshot_probe_html` (note, merged-entity browse, up to
-  five verified example cards).
+- Snapshot (`write_snapshot`, `_snapshot_payload`): embeds the data via
+  `_script_json` with a `fetch` shim (search empty, Why/How point to the
+  live server); Search / Probe becomes `_snapshot_probe_html` (note,
+  merged-entity browse, up to five verified example cards). Records
+  resolves offline against every entity a retained surface still offers,
+  never against the capped graph alone: `_snapshot_entity_lists` is the
+  census of those surfaces (graph nodes, merged entities, the list of
+  largest entities and the three aggregate drill-downs),
+  `_snapshot_records_index` embeds `records_index` for the entities whose
+  records no embedded surface already carries, and the shim folds
+  `graph.nodes`, `merges.entities` and `records_index` into one lookup
+  through a single adder. `GRAPH_NODE_CAP` and the per-list caps are
+  unchanged, and an entity no retained surface offers still answers
+  `not found: no such entity`.
 - Bind host (`check_bind_host`): `""`, `0.0.0.0`, `::`, `*`, any other
   unspecified address, a hostname and any IPv6 address are refused with a
   `ValueError`; a literal IPv4 address is returned stripped. The container
@@ -9848,6 +9858,10 @@ def _script_json(obj):
     ...
 def _snapshot_probe_html(model, engine, flags, port=8080, dataset=""):
     ...
+def _snapshot_reachable_entity_ids(payload):
+    ...
+def _snapshot_payload(model):
+    ...
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -9870,8 +9884,11 @@ Used by:
   `test_capture_single_page.py`,
   `test_how_tab_names_an_unsettled_final_state.py`,
   `test_source_encoding_renders_distinctly.py`, `test_viz_tab_consolidation.py`
+- `_snapshot_payload`: `test_snapshot_records_beyond_the_graph_cap.py`
 - `_snapshot_probe_html`: `test_snapshot_and_capture_fidelity.py`,
   `test_tab_set_is_singular.py`
+- `_snapshot_reachable_entity_ids`:
+  `test_snapshot_records_beyond_the_graph_cap.py`
 
 ### 7.10 `.claude/skills/auto-test/walk.py`
 
@@ -10071,21 +10088,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 7748 test methods in 421 files, matching `inventory.test_count_total`.
+There are 7841 test methods in 424 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 7748.
+sum to 7841.
 
-Two files run more tests than they define, so discovery collects 7755:
+Two files run more tests than they define, so discovery collects 7848:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 7737`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 7841`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 7744`. No other count
+run count. With `pwsh` installed, the run reports `Ran 7848`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -10442,6 +10459,7 @@ looks wrong.
 - `tests/test_skills_state_their_commands_argument_handling.py`: 14
 - `tests/test_skipped_mapping_status.py`: 26
 - `tests/test_snapshot_and_capture_fidelity.py`: 24
+- `tests/test_snapshot_records_beyond_the_graph_cap.py`: 23
 - `tests/test_source_encoding_renders_distinctly.py`: 9
 - `tests/test_sourcing_reaches_beyond_technical_facts.py`: 18
 - `tests/test_spec_absence_claims_name_their_owner.py`: 10
@@ -11024,7 +11042,7 @@ tests a rebuild can pass from behavior alone.
   - **Verification.** A server that ignores `?tab=` fails the capture. Identical
     captures are deleted. An unsettled animated tab is reported.
   - **The manifest** merges re-captures.
-- **`senzing_viz_server.py`** (20 files).
+- **`senzing_viz_server.py`** (21 files).
   - **Bind and identity.** The server binds loopback by default, never the
     wildcard. It serves a per-process `server_nonce` on `/api/stats`, and a
     foreign answer stops startup. `--bind-host` and `start_serving` refuse
@@ -11043,6 +11061,22 @@ tests a rebuild can pass from behavior alone.
     - A capped graph reports its true total.
     - Histogram ticks are integers.
   - **Payload.** The keys match the contract exactly.
+  - **Offline Records past the node cap**
+    (`tests/test_snapshot_records_beyond_the_graph_cap.py`, 23 tests). A model
+    of `GRAPH_NODE_CAP` + 5 entities, with each extra ranked out of the graph
+    and reachable through a different retained surface: the merge browse and
+    the largest-entities list, the 1-record bucket, a match-key row, a
+    cross-source diagonal cell and a cross-source pair cell. None of the five
+    is in `graph.nodes`, every one of them resolves, and so does every entity
+    any retained surface offers. Emptying `records_index` puts the four
+    aggregate-only entities back to `not found: no such entity`, so the
+    fixture cannot pass itself. The shipped shim's fold order is pinned
+    against the transcription the tests resolve with. The caps and their
+    flags are unchanged, `merges` still carries every multi-record entity,
+    the index duplicates no records another surface carries and is
+    deterministic, an entity no surface offers is still not found, and the
+    written file's `__DATA__` parses with the live-only Why/How and search
+    notes intact.
 - **`normalize_docs_markdown.py`** (`tests/test_normalize_docs_markdown.py`). It
   spaces headings and lists and gives fences a language, and it is idempotent.
   Any dropped, rewritten or reordered line is rejected, and the original file is
@@ -12722,3 +12756,10 @@ Senzing licensing, with no SPDX identifier.
   content-retention audit had counted the text, so identifiers, command
   tails and whole trailing columns left the page at 96-98% retention and
   exit 0, with nothing on stderr
+- #675: build the standalone snapshot's offline Records index from every
+  surface the snapshot retains — graph nodes, the merge browse, the
+  largest-entities list and the three aggregate drill-downs — instead of
+  from `graph.nodes` alone, keeping `GRAPH_NODE_CAP` and the per-list caps
+  as they are; the graph payload is capped at 1500 while `merges` is not,
+  so an entity the page was still listing answered
+  `not found: no such entity` once the cap dropped its node
