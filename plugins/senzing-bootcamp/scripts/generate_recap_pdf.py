@@ -609,6 +609,11 @@ def parse_table(text: str) -> Tuple[List[str], List[List[str]]]:
     kept deliberately — a blank header over a real row-label column is common,
     and dropping the column would delete the values beneath it.
 
+    ⚠️ Truncating an over-long row is a real content loss, so it is **recorded** rather
+    than performed in silence (#674): the grid has nowhere to put a cell with no column,
+    but the reader needs to know their row had one. The dropped cells reach stderr through
+    `content_loss_warning()` before the success line.
+
     Mirrors ``generate_discoveries_pdf.parse_table``; both are bound by INV-142,
     so they must behave the same on the same input.
     """
@@ -622,6 +627,11 @@ def parse_table(text: str) -> Tuple[List[str], List[List[str]]]:
         return [], []
     header, body = parsed[0], parsed[1:]
     width = len(header)
+    for row in body:
+        for extra in row[width:]:
+            record_content_loss(
+                "table row with more cells than the %d-column header" % width, extra
+            )
     body = [(row + [""] * width)[:width] for row in body]
     return header, body
 
@@ -1989,6 +1999,109 @@ def dropped_character_warning() -> Optional[str]:
     )
 
 
+# --------------------------------------------------------------------------- #
+# Content accounted for at RENDER time
+# --------------------------------------------------------------------------- #
+# ⛔ The content-retention figure is measured BEFORE rendering — source characters against
+# parsed characters — so it is structurally unable to see anything a renderer drops while
+# laying the page out. That blindness shipped: the stdlib writers clipped each code line to
+# 92 characters and each table cell to its column width, and a probe measured retention
+# 0.988 (discoveries) and 0.924 (recap) while every sentinel suffix past the clipping
+# boundary was absent from the extracted text, with no warning and exit 0 (#674).
+#
+# This ledger is the other half of the figure: the layout helpers compare what they were
+# handed with what they actually emitted, and anything that did not reach the page is
+# recorded here and written to stderr BEFORE the success line. The intent is that it stays
+# empty — the clipping it was written for is gone — but a future layout change that loses a
+# tail reports itself instead of passing as a 99% success.
+#
+# Deliberately non-blocking (INV-048/INV-052): graduation ships the PDF and says what is
+# missing. Refusing to render is not the fix; silence was the defect.
+_CONTENT_LOSSES: Dict[str, str] = {}
+
+#: Longest excerpt of lost text carried into the warning, and how many distinct losses it
+#: names before summarizing. Matches `_DROP_EXCERPT_CHARS` / `_DROP_NAMES_SHOWN` in spirit:
+#: a warning that dumps a whole table is a warning nobody reads.
+_LOSS_EXCERPT_CHARS = 60
+_LOSS_SITES_SHOWN = 4
+
+
+def record_content_loss(where: str, lost: str) -> None:
+    """Remember content a renderer could not place on the page, and where it came from.
+
+    ``where`` is the site in the document ("table cell", "code line", …), not the source
+    line: the caller knows the construct, and the excerpt locates it for a reader.
+    Keyed by site+excerpt so re-rendering the same document twice — the fpdf2 attempt
+    followed by the stdlib fallback — reports one loss, not two.
+    """
+    excerpt = re.sub(r"\s+", " ", lost).strip()
+    if not excerpt:
+        return
+    if len(excerpt) > _LOSS_EXCERPT_CHARS:
+        excerpt = excerpt[:_LOSS_EXCERPT_CHARS].rstrip() + "..."
+    _CONTENT_LOSSES.setdefault(f"{where}: {excerpt}", where)
+
+
+def reset_content_losses() -> None:
+    """Clear the collector. For tests and for callers that render more than one document."""
+    _CONTENT_LOSSES.clear()
+
+
+def account_emitted(where: str, source: str, emitted: Sequence[str]) -> None:
+    """Check that ``emitted`` carries every character of ``source``, and record what did not.
+
+    Whitespace is ignored on both sides: wrapping legitimately turns a space into a line
+    break, and a monospace table pads its columns out with spaces that were never in the
+    cell. Everything else must survive — this is the check the retention figure cannot make,
+    because it compares the parse against the source and never looks at the page.
+
+    ⚠️ ``source`` must already be sanitized by `_safe`, exactly as the emitted text is.
+    Comparing raw source against sanitized output would report every transliteration
+    ("∞" -> "infinity") as content loss and bury the real ones.
+    """
+    want = re.sub(r"\s+", "", source)
+    got = re.sub(r"\s+", "", "".join(emitted))
+    if want == got or not want:
+        return
+    # Report the tail that vanished rather than the whole cell: the common failure is a
+    # clip, so the useful half of the message is what came after the boundary.
+    keep = 0
+    while keep < len(want) and keep < len(got) and want[keep] == got[keep]:
+        keep += 1
+    record_content_loss(where, source[keep:] if keep < len(source) else source)
+
+
+def content_loss_warning() -> Optional[str]:
+    """One aggregated ``WARNING:`` line for everything a renderer dropped, else ``None``.
+
+    Written to stderr before the ``PDF generated:`` line, so a reader cannot take the
+    success signal as evidence the page is complete. Non-blocking by design: the PDF is
+    still produced and still shipped.
+
+    ⚠️ ASCII by construction, like `dropped_character_warning`: the excerpt is
+    backslash-escaped and the prose carries no dash or quote outside ASCII. A Windows
+    console in a legacy code page would otherwise corrupt the warning itself (see
+    `ground-rules.md` -> "Windows and PowerShell").
+    """
+    if not _CONTENT_LOSSES:
+        return None
+    sites = list(_CONTENT_LOSSES)
+    shown = "; ".join(
+        site.encode("ascii", "backslashreplace").decode("ascii")
+        for site in sites[:_LOSS_SITES_SHOWN]
+    )
+    if len(sites) > _LOSS_SITES_SHOWN:
+        shown += f"; and {len(sites) - _LOSS_SITES_SHOWN} more"
+    return (
+        f"WARNING: {len(sites)} passage(s) did not reach the page in full. The text below "
+        f"was laid out but part of it was not emitted: {shown}. The PDF was still written "
+        f"and the rest of the content is intact, but that text is MISSING from it, so the "
+        f"content-retention figure on the success line OVERSTATES what the page carries. "
+        f"Shorten the affected cell or line in the Markdown, or split the table, and "
+        f"re-run.\n"
+    )
+
+
 def _fold_to_latin1(s: str) -> str:
     """Best-effort ASCII fold of characters `_UNICODE_MAP` does not cover.
 
@@ -3312,23 +3425,153 @@ def _table_widths(header: List[str], rows: List[List[str]], epw: float) -> List[
     return [epw * (span / total) for span in spans]
 
 
+#: Widest a monospace column may grow before the layout starts wrapping inside it, and the
+#: narrowest it may be squeezed to while the row is being fitted to the line. Below the floor
+#: a column is shredded a syllable at a time and the table stops being readable, so the
+#: layout switches to the stacked-record form instead of squeezing further.
+_MONO_COL_MAX = 46
+_MONO_COL_MIN = 8
+
+#: Separator between monospace columns. Two spaces, so a column boundary is visible without
+#: a rule — the stdlib writer has no rule primitives.
+_MONO_GUTTER = "  "
+
+#: How far a value is indented under its column name in the stacked-record layout.
+_MONO_INDENT = 2
+
+
+def monospace_table_lines(
+    header: Sequence[str],
+    rows: Sequence[Sequence[str]],
+    line_chars: int,
+    where: str = "table",
+) -> List[str]:
+    """Lay a parsed table out as monospace lines that carry every character of every cell.
+
+    The one implementation of the "lesser rendering" INV-142 permits, shared by the recap's
+    stdlib writer, the recap's rich-to-monospace fallback and the discoveries stdlib writer
+    — three copies that each clipped differently before #674, which is why it is one
+    function now.
+
+    ⚠️ ``header`` and ``rows`` must already be sanitized (``_safe(_md_inline_to_text(c))``).
+    Widths are character counts, and transliteration changes the count.
+
+    Two layouts, chosen by whether the table fits:
+
+    * **Columns** — each cell wraps inside its own column, the widest column is narrowed
+      until the row fits ``line_chars``, and a rule follows the header. Nothing is cut: a
+      cell taller than its neighbors simply leaves them blank for those lines.
+    * **Stacked records** — when even the narrowest columns will not fit (a table with more
+      columns than the page has room for), each row is emitted as ``Header: value`` lines
+      wrapped to the full width. This is the page-break the issue asks for in the only
+      direction a fixed-width line allows, and it is lossless; clipping the row at the line
+      width, which is what it replaces, was not.
+
+    Returns the lines to draw, ``""`` meaning a blank line. Anything that still could not be
+    placed is recorded through `account_emitted`, so it reaches stderr before the success
+    line rather than vanishing behind a high retention figure.
+    """
+    line_chars = max(_MONO_COL_MIN, int(line_chars))
+    cols = [list(header)] + [list(r) for r in rows]
+    count = len(header)
+    if not count:
+        return []
+
+    widths = [
+        max(1, min(max(len(row[i]) for row in cols), _MONO_COL_MAX))
+        for i in range(count)
+    ]
+    gutters = len(_MONO_GUTTER) * (count - 1)
+    while sum(widths) + gutters > line_chars and max(widths) > _MONO_COL_MIN:
+        widths[widths.index(max(widths))] -= 1
+
+    if sum(widths) + gutters > line_chars:
+        return _monospace_table_records(header, rows, line_chars, where)
+
+    lines: List[str] = []
+    for row_index, row in enumerate(cols):
+        wrapped = [_wrap(cell, w) for cell, w in zip(row, widths)]
+        for cell, chunks in zip(row, wrapped):
+            account_emitted(where + " cell", cell, chunks)
+        for k in range(max(len(chunks) for chunks in wrapped)):
+            lines.append(
+                _MONO_GUTTER.join(
+                    (chunks[k] if k < len(chunks) else "").ljust(w)
+                    for chunks, w in zip(wrapped, widths)
+                ).rstrip()
+            )
+        if row_index == 0:
+            lines.append(_MONO_GUTTER.join("-" * w for w in widths))
+    return lines
+
+
+def _monospace_table_records(
+    header: Sequence[str],
+    rows: Sequence[Sequence[str]],
+    line_chars: int,
+    where: str,
+) -> List[str]:
+    """One ``Header: value`` block per row, for a table too wide to column-align.
+
+    Used when the columns cannot be squeezed into the line, which is the case the old code
+    met by clipping the row — losing whole trailing columns with no warning. A record block
+    is plainer than a grid and keeps every column's value, which is the trade INV-142's
+    "lesser rendering" sanctions.
+    """
+    labels = [c.strip() or "(unnamed column)" for c in header]
+    body_width = max(_MONO_COL_MIN, line_chars - _MONO_INDENT)
+    lines: List[str] = []
+
+    data_rows = [list(r) for r in rows]
+    if not data_rows:
+        # A header with no body row: there is nothing to label, so emit the column names
+        # themselves rather than labeling each one with itself.
+        for cell in header:
+            chunks = _wrap(cell, line_chars)
+            account_emitted(where + " cell", cell, chunks)
+            lines.extend(chunks)
+        return lines
+
+    for row in data_rows:
+        for label, cell in zip(labels, row):
+            # The label goes on its own line, so a long column name cannot push the value
+            # off the right edge — the failure this layout exists to avoid.
+            label_text = label + ":"
+            label_chunks = _wrap(label_text, line_chars)
+            account_emitted(where + " column name", label_text, label_chunks)
+            lines.extend(label_chunks)
+            chunks = _wrap(cell, body_width)
+            account_emitted(where + " cell", cell, chunks)
+            lines.extend(" " * _MONO_INDENT + chunk for chunk in chunks)
+        lines.append("")
+    if lines and lines[-1] == "":
+        lines.pop()
+    return lines
+
+
 def _render_table_monospace(pdf, epw: float, header, rows) -> None:
     """Last-resort table rendering: aligned monospace columns, never pipe source.
 
     Reached only if the grid path raises (an old fpdf2 without ``will_page_break``,
     for instance). INV-142 permits aligned columns as a lesser rendering; it does
     NOT permit falling back to the Markdown source text.
+
+    ⛔ It does not permit **clipping** them either, which is what this did: every cell was
+    cut at its column width (`c[:w]`), so the tail of any cell past 46 characters was gone
+    from the page while the success line still reported a high retention figure (#674). The
+    layout is shared with the stdlib writers now, and wraps.
     """
-    widths = [min(max(len(r[i]) for r in [header] + rows), 46) for i in range(len(header))]
     pdf.set_font("Courier", "", 8.5)
     pdf.set_text_color(*INK)
-    for row_index, row in enumerate([header] + rows):
+    # Measured rather than assumed: Courier is monospace, so one glyph's advance in the
+    # document's own units is the column unit, and `epw` divided by it is the honest
+    # character budget for this page width at this size.
+    per_char = _width(pdf, "0") or 1.0
+    for line in monospace_table_lines(
+        header, rows, int(epw / per_char), where="recap table"
+    ):
         pdf.set_x(pdf.l_margin)
-        text = "  ".join(c[:w].ljust(w) for c, w in zip(row, widths)).rstrip()
-        pdf.multi_cell(epw, 4.6, _safe(text) or " ")
-        if row_index == 0:
-            pdf.set_x(pdf.l_margin)
-            pdf.multi_cell(epw, 4.6, "  ".join("-" * w for w in widths))
+        pdf.multi_cell(epw, 4.6, _safe(line) or " ")
     pdf.set_font("Helvetica", "", 10.5)
 
 
@@ -3840,25 +4083,30 @@ def _stdlib_table(add, text: str) -> None:
     line up — and never the pipe source the parser was handed. A rule under the
     header keeps the header distinguishable, and a blank line after the block keeps
     two adjacent tables from reading as one.
+
+    The layout itself is `monospace_table_lines`, shared with the discoveries writer and
+    with the rich renderer's own monospace fallback — three copies that each clipped
+    differently is what #674 found.
     """
     header, rows = parse_table(text)
     if not header:
         return
-    cols = [[_md_inline_to_text(c) for c in header]] + [
-        [_md_inline_to_text(c) for c in r] for r in rows
-    ]
-    widths = [min(max(len(row[i]) for row in cols), 40) for i in range(len(header))]
-    # This writer does not wrap, so a row wider than the text column would run off
-    # the page — the off-page failure INV-121 names, reached from the other
-    # renderer. Clip to what fits: 8.5pt Courier is 5.1pt per character across a
-    # 487pt text column, minus the 6pt indent.
+    # Sanitized before the layout measures anything: widths are character counts and
+    # transliteration changes the count ("∞" -> "infinity"), exactly as in `add_wrapped`.
+    plain_header = [_safe(_md_inline_to_text(c)) for c in header]
+    plain_rows = [[_safe(_md_inline_to_text(c)) for c in r] for r in rows]
+    # A row wider than the text column would run off the page — the off-page failure
+    # INV-121 names, reached from the other renderer. ⛔ The answer is to WRAP it, not to
+    # clip it: this clipped every cell at 40 characters and every row at the line width,
+    # so a long match-key explanation or a wide table lost its tail and its right-hand
+    # columns silently, at exit 0 and a 92% retention figure (#674). 8.5pt Courier is
+    # 5.1pt per character across a 487pt text column, minus the 6pt indent.
     budget = int((595.0 - 2 * 54.0 - 6) / (8.5 * 0.6))
     add("", "F1", 3, 0)
-    for row_index, row in enumerate(cols):
-        line = "  ".join(c[:w].ljust(w) for c, w in zip(row, widths)).rstrip()
-        add(line[:budget], "F3", 8.5, 6)
-        if row_index == 0:
-            add("  ".join("-" * w for w in widths)[:budget], "F3", 8.5, 6)
+    for line in monospace_table_lines(
+        plain_header, plain_rows, budget, where="recap table"
+    ):
+        add(line, "F3", 8.5, 6)
     add("", "F1", 3, 0)
 
 
@@ -3962,6 +4210,39 @@ def _wrap(text: str, width: int) -> List[str]:
             cur = w
     if cur:
         out.append(cur)
+    return out
+
+
+def _wrap_verbatim(text: str, width: int) -> List[str]:
+    """Wrap text whose every character matters, so ``"".join(result) == text``.
+
+    ``_wrap`` is the wrong tool for a line of code: it splits on `" "`, which eats the
+    leading indentation (`"    foo".split(" ")` starts with four empty strings, and the
+    `if not cur` branch keeps overwriting them), and it rstrips. Both are fine for prose
+    and wrong for a command, a JSON fragment or a path.
+
+    This breaks at the last space inside the window when there is one, keeping that space
+    at the end of the chunk so a wrapped command still reads as a command, and breaks
+    mid-token when there is not — which is what an 80-character identifier needs. The join
+    identity is the point: it is what lets `account_emitted` prove nothing was lost, and
+    what replaced the `text[:92]` clip that silently dropped the tail of every long code
+    line on the stdlib path (#674).
+    """
+    width = max(1, int(width))
+    if not text:
+        return [""]
+    out: List[str] = []
+    pos = 0
+    while pos < len(text):
+        end = min(pos + width, len(text))
+        if end < len(text):
+            # `pos + 1`: a chunk must carry at least one character, or a line that starts
+            # with a space would never advance.
+            cut = text.rfind(" ", pos + 1, end)
+            if cut > pos:
+                end = cut + 1
+        out.append(text[pos:end])
+        pos = end
     return out
 
 
@@ -4292,6 +4573,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         dropped = dropped_character_warning()
         if dropped:
             sys.stderr.write(dropped)
+        # Content the LAYOUT could not place, which is a different failure from a character
+        # the FONT could not draw and is invisible to both the warning above and the
+        # retention figure below — retention is measured before rendering, against the
+        # parse. Written before the success line so no reader can take `PDF generated:`
+        # plus a high percentage as evidence the page is complete (#674).
+        truncated = content_loss_warning()
+        if truncated:
+            sys.stderr.write(truncated)
         # Recognizable but imperfect: warn and still ship the PDF (never blocks;
         # graduation is non-blocking). Distinct from the fatal class above.
         if audit.warnings:
