@@ -1565,14 +1565,40 @@ until nothing is listening, up to 5 seconds; then force-stop and re-check. Treat
 free* as the exit condition — a sleep asserts nothing, and any step that follows teardown (a data
 purge above all) then runs on an assumption instead of an observation.
 
-**When teardown cannot confirm, say so plainly and do not claim the server stopped.** If the port
-still answers after the force-stop and re-check, tell the Bootcamper exactly that — the port, that
-something is still listening on it, and that the records may still be loaded — then continue without
-the purge rather than purging on an unverified stop. ⛔ **A teardown that reports success while the
-port answers is worse than one that reports failure (INV-223).** the Bootcamper walks away believing their
-machine is clean, and INV-131 makes teardown the last action of the module, so nothing downstream
-will notice. Where the container is the host for the server, name the `<runtime> exec` form that was
-tried, so the Bootcamper can see what was attempted rather than only that it failed (INV-111).
+<a id="failed-stop"></a>
+**The failed-stop rule.** This is the canonical statement of what each teardown outcome allows, and
+every module's close instructions point here rather than restating it (INV-300). There are four
+outcomes, and only a **confirmed** stop lets anything irreversible follow it (INV-223, INV-131):
+
+1. **Graceful stop confirmed.** The port stops answering within the 5-second poll. The server
+   stopped: say so, and the irreversible step this teardown gates — Truth Set visualization's purge
+   of its loaded records — may run.
+2. **Force-stop confirmed.** The port was still bound after 5 seconds, the force-stop ran, and the
+   re-check finds nothing listening. The server stopped: the same as 1 in every respect, and the
+   purge may run.
+3. ⛔ **Still listening after the force-stop and the re-check — the stop is UNVERIFIED, and nothing
+   irreversible may follow it.** **When teardown cannot confirm, say so plainly and do not claim the
+   server stopped.** Tell the Bootcamper exactly what was observed — the port, that something is
+   still listening on it, the pid the port lookup names where it names one, and that the records are
+   still loaded — then continue without the purge rather than purging on an unverified stop, and say
+   what is left to do by hand: release the listener, then re-run the module's cleanup program.
+   ⛔ **A warning is not a substitute for the confirmation.** Telling the Bootcamper the port may
+   need manual release informs them; it does not make an unobserved stop observed, and it cannot
+   authorize deleting records that something may still be serving. An instruction offering "the port
+   is confirmed free **or** the Bootcamper has been warned" as alternatives has merged two different
+   acts, and the confirmation is the one the purge waits on.
+   ⛔ **A teardown that reports success while the port answers is worse than one that reports failure (INV-223).**
+   The Bootcamper walks away believing their machine is clean, and INV-131 makes teardown the last action of the module,
+   so nothing downstream will notice. Where the container is the host for the server, name the
+   `<runtime> exec` form that was tried, so the Bootcamper can see what was attempted rather than
+   only that it failed (INV-111). ⚠️ **This reports; it does not block.** The module still closes
+   and the handoff is unchanged — what changes is that the close records and says what was left
+   behind, instead of claiming a cleanup that did not happen.
+4. **No live server ran at all.** Nothing was started, so there is no stop to verify and no listener
+   to report: this rule governs a stop that was *attempted*, and never converts a module whose
+   server never ran into a failed teardown. Such a module still owes whatever data purge it owes.
+   What is recorded there, and which cleanup items run, is `phase2-close.md` →
+   "No-live-server completion", stated once there (INV-300).
 
 **The teardown gate.** Before stopping the server — and before any data purge that accompanies it —
 ask a pinned question (INV-056) and end the turn on it. The gate MUST name **exactly** what is

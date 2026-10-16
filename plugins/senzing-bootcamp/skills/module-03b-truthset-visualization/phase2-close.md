@@ -187,13 +187,22 @@ permanent. Work through 1–4 in order; do not hoist the purge.
      built in the bootcamper's chosen language (INV-090), so in general there is no script name to
      match.
    - **Confirm the port is free** rather than assuming it: poll it for up to 5 seconds and stop as
-     soon as nothing is listening. If it is still bound after 5 seconds, force-stop the process,
-     re-check, and if it is *still* bound warn the bootcamper that the port may need manual release.
-   - ⛔ Do not start step 4 until the port is confirmed free or the bootcamper has been warned — the
-     purge is irreversible, and running it on the assumption that teardown succeeded is how a failed
-     kill gets attributed to the purge.
+     soon as nothing is listening. If it is still bound after 5 seconds, force-stop the process and
+     re-check. What each outcome then allows — a graceful stop confirmed, a force-stop confirmed, a
+     port that is *still* answering, and the case where no server ran at all — is the
+     [failed-stop rule](visualization-api-reference.md#failed-stop), stated once in the
+     server-lifetime contract (INV-300, INV-223). Follow it there rather than deciding it here.
+   - ⛔ **Do not start step 4 until the port is confirmed free.** A warning is **not** a substitute
+     for that confirmation — the purge is irreversible, and running it on the assumption that
+     teardown succeeded is how a failed kill gets attributed to the purge. On an unverified stop
+     ([failed-stop rule](visualization-api-reference.md#failed-stop), outcome 3, INV-300) step 4
+     does not run at all: report what that rule requires, then go on to Step 5 — which records what
+     cleanup did and never claims the server stopped or the data was removed.
 
-4. **Purge the Truth Set data from the database** (the module's final action):
+4. **Purge the Truth Set data from the database** (the module's final action) — **only after a
+   confirmed stop, or where no server ran at all**, per the
+   [failed-stop rule](visualization-api-reference.md#failed-stop) (INV-300). On an unverified stop
+   this item does not run, and what is reported instead is that rule's outcome 3:
    - Remove the Truth Set records loaded in Phase 1 (CUSTOMERS/REFERENCE/WATCHLIST, or the CORD
      substitute's codes) from the Senzing database, using generated Senzing SDK code (via
      `get_sdk_reference` + `sdk_guide`); never direct SQL against `database/G2C.db`. Save it as
@@ -202,7 +211,8 @@ permanent. Work through 1–4 in order; do not hoist the purge.
      build and run it with that section's commands.
    - After purge, verify zero Truth Set entities remain while preserving any other database state.
    - If the purge fails: report a fail status identifying which records could not be removed, with a
-     Fix_Instruction advising the bootcamper to re-run cleanup or manually reset the database.
+     Fix_Instruction advising the bootcamper to re-run cleanup or manually reset the database, and
+     record the cleanup outcome as the Checkpoint below says.
 
 5. **Retain visualization artifacts:** the standalone snapshot
    (`docs/visualizations/truthset_verification.html`), the program `truthset_server` in
@@ -211,7 +221,15 @@ permanent. Work through 1–4 in order; do not hoist the purge.
    `src/system_verification` and the program `cleanup_truthset` in `src/system_verification` remain
    in place for reference.
 
-**Checkpoint:** write to `config/bootcamp_progress.json`.
+**Checkpoint:** write to `config/bootcamp_progress.json`. Record what cleanup actually did, under
+`truthset_visualization.checks.cleanup`, beside `web_service` and `web_page`:
+`{"status": "complete"}` once the purge has run and zero Truth Set entities remain, or
+`{"status": "incomplete", "reason": "stop_unverified|purge_failed", "port": <port>, "truthset_records": "retained"}`
+when the purge did not run or did not finish — `stop_unverified` for the
+[failed-stop rule](visualization-api-reference.md#failed-stop)'s outcome 3, and `purge_failed` for a
+purge that ran and reported a fail status (INV-300). ⚠️ **`cleanup` is a record, not a gate:** the
+pre-advancement check above reads `web_service` and `web_page` only, so an `incomplete` cleanup
+never blocks this module — it keeps the close from reporting a cleanup that did not happen.
 
 ## Step 5: Module Close
 
@@ -232,7 +250,10 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
    the recap already lives in `docs/`, so a `docs/`-prefixed path resolves to `docs/docs/…` and
    embeds nothing). Then save this module's B-roll entry under `truthset_visualization`, per
    `module-completion.md` 2e, listing the same screenshots by their project-relative
-   `docs/visualizations/…` paths.
+   `docs/visualizations/…` paths. ⛔ **The recap says what cleanup actually did (INV-223).**
+   When `truthset_visualization.checks.cleanup.status` is `"incomplete"`, Actions Taken names what
+   was left behind — the port still listening, the Truth Set records still loaded — and neither it
+   nor the End-of-Module Summary says the server was stopped or the data removed.
 3. **Present the completion line + end-of-module summary** (INV-032):
    `✅ Module complete: Truth Set visualization` and its four-part summary, per `module-completion.md`
    Step 3. (This module's module-start banner/journey/before-after/step-overview were already shown at
@@ -266,5 +287,7 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
 **Success indicator:** ✅ The standalone snapshot exists (built from a non-empty Truth Set) + the
 live app served its endpoints, **or** the no-live-server state is recorded with its reason
 ([no-live-server completion rule](#no-live-server-completion), INV-300) + the web service is
-terminated when one ran + the Truth Set data is purged + `truthset_visualization` is recorded in
-`modules_completed` with its own recap section.
+terminated when one ran + the Truth Set data is purged, **or** — where the stop could not be
+confirmed — the listening port and the retained records are reported and recorded instead of a
+cleanup being claimed ([failed-stop rule](visualization-api-reference.md#failed-stop), INV-223) +
+`truthset_visualization` is recorded in `modules_completed` with its own recap section.
