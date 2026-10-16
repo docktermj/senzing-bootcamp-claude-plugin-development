@@ -1,5 +1,5 @@
 # Blueprint: docktermj/senzing-bootcamp-claude-plugin-development
-<!-- blueprint: sha=542f8135b9e5b07ef49d041543bfdd494df57e6d date=2026-10-04 -->
+<!-- blueprint: sha=6fe6e69a7532b690baf953468a49bf0db80ab0a3 date=2026-10-15 -->
 
 ## 1. Purpose
 
@@ -1435,7 +1435,7 @@ name with two sources; `propagate.sh` rewrites it back on publish (#449).
 ### 5.2 `plugins/senzing-bootcamp/.claude-plugin/plugin.json`
 
 The plugin manifest. It declares the name `senzing-bootcamp`, the version
-`0.5.3` (the single version every other version assertion must match), the
+`0.6.1` (the single version every other version assertion must match), the
 same description as the marketplace entry, author `Senzing`, homepage and
 repository both set to the development repository on GitHub, and license
 `Apache-2.0`. It declares no components explicitly: Claude Code discovers the
@@ -3495,7 +3495,7 @@ Reference material shipped inside the plugin; nothing here is executed.
   Sonnet 5.5 switched up to Opus 5.5 for the heavy stretches, or Opus 5.5 with
   high effort throughout.
 - `examples/bootcamp_recap.example.md` is a sanitized finished recap (INV-065)
-  from a Python, Core-path, SQLite run on plugin version 0.5.3: the header
+  from a Python, Core-path, SQLite run on plugin version 0.6.1: the header
   fields (Bootcamper, Started, Completed, Programming language, Path, Plugin
   version, Operating system, Python version, Language runtime, Senzing SDK,
   Database), one `## {Module name} — {timestamp}` section per completed module
@@ -9999,21 +9999,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 7148 test methods in 406 files, matching `inventory.test_count_total`.
+There are 7737 test methods in 421 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 6620.
+sum to 7737.
 
-Two files run more tests than they define, so discovery collects 6496:
+Two files run more tests than they define, so discovery collects 7744:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 6489`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 7737`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 6496`. No other count
+run count. With `pwsh` installed, the run reports `Ran 7744`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -10228,6 +10228,7 @@ looks wrong.
 - `tests/test_module07_step2_rules_beside_action.py`: 4
 - `tests/test_module07_why_flags.py`: 20
 - `tests/test_module3_check_lists_agree.py`: 24
+- `tests/test_module3_failed_run_ends_on_a_question.py`: 25
 - `tests/test_module4_absent_limit_is_measured_before_any_fallback.py`: 6
 - `tests/test_module5_full_output_file_path_is_written_at_step_18.py`: 18
 - `tests/test_module5_phase1_gates_and_scoring.py`: 14
@@ -11859,6 +11860,11 @@ Senzing licensing, with no SPDX identifier.
   budget, and test the left edge in pixels (an assumed 5.9 px per character
   clipped the head of any key of about 22 or more characters, and its test
   reused the same constant)
+- #465: make the bootcamp practise directing the AI through ten sub-issues
+  (#478-#488), whose rules the 2026-10-12 invariant review registered as
+  INV-352 to INV-359 (the guide collected choices and approvals and made the
+  predictions itself, so the Bootcamper left with code but no practice in
+  directing an AI to build it)
 - #476: register INV-347 through INV-351 and apply the dated amendments to
   INV-153, INV-203 and INV-239, closing the 2026-10-10 review (nine deferred
   blocks from the 2026-10-09 issue runs awaited the maintainer's decision)
@@ -11950,6 +11956,11 @@ Senzing licensing, with no SPDX identifier.
   `scripts/` is not mounted in the container, so the server and its D3 were
   unreachable there; a copy, not a mount, because `${CLAUDE_PLUGIN_ROOT}` is a
   versioned cache directory)
+- #504: give every pinned gate option a handling step and resume point
+  through six sub-issues (#526-#531), recorded with the 2026-10-12
+  production-readiness audit that filed it and the 2026-10-13 invariant review
+  (five options in Modules 3, 5 and 6 led nowhere, and the INV-284 guard
+  scanned only Module 5)
 - #505: Module 2 Step 8 writes `config/engine_config.json` from
   `environment.default_paths` with every path expanded to an absolute path,
   and its Windows check stops on an unset `$env:SENZING_DIR`, expands the
@@ -12160,6 +12171,11 @@ Senzing licensing, with no SPDX identifier.
   option, with a negative control per skill directory; an amendment to
   INV-284 is queued (the guard covered only Module 5's iterate and improve
   options)
+- #561: build and run every Bootcamper program through one stated
+  per-language command, split into #562 and #563; the module-3 build-and-run
+  deferral was held until it landed (Modules 5, 6 and 7 built and ran
+  programs with no stated command, and no step created the C#, Rust or
+  TypeScript manifest)
 - #562: the build-and-run statement moves from Module 3 Step 5 to the ground
   rules' "Building and running a program", generic over `<dir>` and `<name>`,
   with the 120-second build timeout, the run-from-the-project-root rule and a
@@ -12207,6 +12223,10 @@ Senzing licensing, with no SPDX identifier.
   `explain_error_code` no longer quotes the macOS literal and `linux_yum`
   serves no `.deb` packages, so both warnings described a server that had
   moved on)
+- #570: let a filing skill take one yes for a list shown whole and let
+  refine apply `unattended-ok` from its approved batch, as INV-314 and INV-318
+  notes, through #574 and #575 (a yes per record made a release cycle's
+  twenty findings cost twenty approvals)
 - #571: `/dry-run 3 --simulated [persona]` runs `/auto-test`'s two-process
   walk to the chosen module's banner (taken from the module's skill files by
   `dry-run/module_banners.py`) plus `--turns`, capped by `--max-turns` 150,
@@ -12570,3 +12590,8 @@ Senzing licensing, with no SPDX identifier.
   baseline was refreshed by `update` (the inverted pair flagged 29 correct
   `NAME_ORG` uses, and the unparsed lists silenced the drift diff on both
   `language` parameters)
+- #669: the reusable tracking issue for `/update-blueprint` drift updates; the
+  2026-10-15 update moves the header from `542f8135` to `6fe6e69a`, adds the
+  missing lines for #465, #504, #561 and #570, and refreshes section 8's test
+  counts and two plugin-version references (the header SHA had fallen eleven
+  days and 257 commits behind `main`)
