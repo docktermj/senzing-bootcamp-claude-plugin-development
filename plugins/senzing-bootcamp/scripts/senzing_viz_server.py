@@ -1236,6 +1236,16 @@ let graphPayload={};
 // the previous simulation would otherwise keep ticking against DOM nodes that have been
 // removed — wasted work and a source of jank. Stopped before each redraw.
 let graphSim=null;
+// ⛔ (#676) The Entity Graph's ONE source-filter applier. `drawGraph` installs it once the
+// node, label and edge selections exist, and clears it on every redraw so a stale closure
+// over a removed layout can never be called. The source legend owns WHICH sources are off and
+// hands this function a visibility predicate; this function owns WHICH MARKS that covers --
+// an entity is drawn as a circle, a label and the edges reaching it, and those are three
+// SIBLING layers. A legend that reached for the node layer alone hid the circles and
+// left the names painted over empty space and the edges running to discs that are no longer
+// drawn. Top-level for the same reason `graphSim` and `graphPayload` are: the legend is drawn
+// by a function outside `drawGraph`'s closure.
+let graphApplySourceFilter=null;
 // ⛔ (INV-298) The settled signal, on the document element so any driver in any language can
 // wait on it -- `document.documentElement.getAttribute("data-graph-settled")==="1"`. An
 // attribute rather than a JS global on purpose: `graphSim` is a top-level `let`, which never
@@ -1284,6 +1294,9 @@ async function drawGraph(){
   d3.select("#graph-container .legend").remove();
   d3.select("#graph-container .empty-note").remove();
   if(graphSim){graphSim.stop();graphSim=null;}
+  // Cleared with the simulation: the applier closes over THIS render's selections, and a
+  // legend row clicked against the previous render's marks would style detached DOM.
+  graphApplySourceFilter=null;
   // ⛔ (INV-298) The capture waits on this signal instead of a time budget. Cleared as a
   // layout BEGINS and set when it reaches its final positions, so a screenshot is never a
   // picture of a still-moving graph. A deadline cannot express this: measured 2026-09-03 on
@@ -1415,6 +1428,31 @@ async function drawGraph(){
   const label=labelLayer.selectAll("text").data(nodes).join("text").attr("text-anchor","middle")
       .text(function(d){return nodeLabel[d.entity_id];});
   label.append("title").text(function(d){return d.entity_name||"";});
+  // ⛔ (#676) ONE visibility predicate, applied to every mark a filtered-out entity
+  // contributes. Filtering is a property of the ENTITY, not of one layer, and an entity's
+  // marks are spread over three siblings -- the `edge` group, the per-datum node group and the
+  // `node-labels` group the paint-order fix moved the text into. The legend passes the
+  // predicate; this applies it everywhere, so the three can never drift apart again.
+  // ⚠️ Restoring sets the inline style to `null` -- REMOVING it -- never to a display value.
+  // The scale-aware defaults hide labels by adding `hide-node-labels` / `hide-edge-labels` to
+  // the CONTAINER and letting CSS descend to the text; an inline `display` on a label would
+  // win over that rule and bring back every label LABEL_AUTO_OFF had hidden. Styling the edge
+  // GROUP rather than its children leaves `.hide-edge-labels .edge text` governing the match
+  // keys inside an edge that survives the filter, for the same reason.
+  // forceLink rewrites an edge's `source`/`target` from an id to the node datum; resolving
+  // either form keeps this independent of when it is called.
+  const nodeById={};nodes.forEach(function(n){nodeById[n.id]=n;});
+  function endpointOf(v){return (v&&typeof v==="object")?v:nodeById[v];}
+  graphApplySourceFilter=function(visible){
+    const vis=function(d){return !!d&&visible(d);};
+    const disp=function(d){return vis(d)?null:"none";};
+    node.style("display",disp);
+    label.style("display",disp);
+    // An edge is a connection BETWEEN two entities, so it survives only while BOTH of its
+    // endpoints do. Keeping it while one end is filtered out draws a relationship to nothing.
+    edge.style("display",function(d){
+      return (vis(endpointOf(d.source))&&vis(endpointOf(d.target)))?null:"none";});
+  };
   function place(){
     edge.select("line").attr("x1",function(d){return d.source.x;}).attr("y1",function(d){return d.source.y;})
       .attr("x2",function(d){return d.target.x;}).attr("y2",function(d){return d.target.y;});
@@ -1619,10 +1657,18 @@ function drawLegend(nodes){d3.select("#graph-container .legend").remove();
     r.attr("title","Show only "+s+" (click again to restore)");
     r.on("click",function(){off[s]=!off[s];d3.select(this).classed("off",!!off[s]);
       const anyOff=srcs.some(function(x){return off[x];});
-      d3.selectAll("#graph-container .node").style("display",function(d){
-        if(!anyOff)return null;
-        const keep=(d.data_sources||[]).some(function(x){return !off[x];});
-        return keep?null:"none";});});});}
+      // ⛔ (#676) The legend says WHICH sources are off; `graphApplySourceFilter` says which
+      // marks that covers -- the nodes, their labels and their edges, together. This handler
+      // must NEVER select marks itself. Selecting the node layer is what it used to do, and
+      // that reached exactly one of the three sibling layers an entity draws into -- so the
+      // selector string is deliberately absent from this file now, and a guard asserts it
+      // stays absent. Participation semantics are unchanged: a node is kept while ANY of its
+      // sources is still on, so a cross-source entity survives until all of them are off.
+      // Toggling every row back on leaves no live `off` entry, `anyOff` goes false, and the
+      // predicate returns true for everything -- the reset, through the same one path.
+      graphApplySourceFilter(function(d){
+        if(!anyOff)return true;
+        return (d.data_sources||[]).some(function(x){return !off[x];});});});});}
 function openModal(d){const m=d3.select("#modal");document.getElementById("modal").className="modal";
   const body="<p><b>Data sources:</b> "+esc(d.data_sources.join(", "))+"<br><b>Records:</b> "+d.record_count+"</p>"+
     "<div id='node-actions'></div>";

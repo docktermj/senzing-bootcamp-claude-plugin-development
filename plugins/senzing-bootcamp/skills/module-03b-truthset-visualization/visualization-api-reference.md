@@ -1090,6 +1090,21 @@ restate it (INV-300).
     heading sat inside the combinations branch, so it vanished on single-source runs — where the
     label is accidentally correct — and appeared only where participation and single-source diverge,
     which is exactly the run the module exists to demonstrate.
+  - ⛔ **A filter applies to every mark the filtered-out item contributes, not to one layer.**
+    An entity is drawn as a marker, a label and the edges reaching it — and once labels are painted
+    in a layer of their own (required above), those are **sibling** layers, not children of the
+    marker. A filter that reaches for the marker layer alone leaves **ghost labels**, the hidden
+    entities' names painted over empty space, and **dangling edges** running to markers that are no
+    longer drawn; the legend says the source is off and the view still shows it. Write the
+    visibility predicate **once** and apply it to the markers, their labels and their edges
+    together, and show an edge only while **both of its endpoints** are shown. The legend owns
+    *which values are off*; one applier owns *which marks that covers*. ⚠️ **Restore a mark by
+    clearing the per-mark visibility you set, never by writing a visible value** — the scale-aware
+    label default hides labels through a class on the container, and a per-mark "visible" beats
+    that rule and brings back every label the threshold had hidden. Turning every entry back on
+    MUST restore exactly the pre-filter view. Observed in the reference: the source legend selected
+    the node groups alone, and filtering out one of two sources left the removed entities' names
+    and connections on screen (#676).
 - **Data-source colors are ASSIGNED FROM the sources present, never from a name-keyed palette.**
   Build the source→color map at model-build time from the data-source codes actually loaded. A map
   keyed by source *name* is not acceptable: the shipped palette names the Truth Set's sources
