@@ -12,6 +12,143 @@ the version, this file and the tag are written together on purpose.
 > first created. They were not authored at release time, so they list commit subjects
 > rather than curated release notes.
 
+## [0.7.0] - 2026-10-15
+
+- docs(blueprint): spell the #465 line's "practice" the US way
+- docs(blueprint): move the header to 6fe6e69a and fill the drift gaps
+- docs(invariants): register INV-371 to INV-375 and apply 20 notes
+- Savepoint
+- fix(auto-test): carry a Bootcamper's slash line as a sticky CLI flag
+- fix(auto-test): match the probe's tables to server 1.39.0
+- fix(auto-test): match the plugin's own apparatus wording in transcript_lint
+- fix(auto-test): match a walk banner only on a line of its own
+- fix(module-05): state the globalization negative's owner result by property
+- fix(license): route the license to the PIPELINE keys after its variable lost its source
+- fix(module-06): state the deciding property in the orchestrator negative
+- fix(module-02): state only the deciding absence in the Java-install negative
+- fix(recap-video): round the overrun figures up so the overrun shows
+- fix(build): run builds in the sdk container on the docker route
+- fix(module-04): point Step 8b sub-step 1 at the collected-total definition
+- fix(skills): make sibling statements in Modules 0, 1, 4 and onboarding agree
+- fix(docs): correct stale help text, docstrings and example counts
+- fix(graduation): make module 7 and graduation sibling statements agree
+- fix(containers): run recorded-container commands on the recorded runtime
+- fix(examples): re-render the example recap PDF after the name fixes
+- fix(modules): name modules by their table names in Bootcamper text
+- fix(module-07): move step 2's rules up and state the why rule once
+- fix(release-cycle): close the maintainer-surface gaps after the cycle shipped
+- fix(skills): give Module 3's failed-status rule its real reason
+- fix(skills): cite the invariant that governs each listed clause
+- fix(skills): cite INV-366 alone on return-contract clauses
+- fix(onboarding): decide "in progress" by recorded module at session start and /graduate
+- fix(module-1): write the registry fields Data collection reads
+- fix(module-4): keep Step 8b's summary bullet lead for its guard
+- fix(module-4): generate an over-limit scenario whole and name 8a's gate
+- fix(truthset-viz): copy D3 into src/server for the non-Python server
+- fix(module-6): keep a skipped source out of the test load and Module 7
+- fix(skills): put the guide-run pointer after every guide-run block
+- fix(skills): resume an interrupted return where INV-366 says
+- fix(skills): keep the #596 ledger entry and blueprint line well formed
+- fix(skills): make graduation's recap blocks guide-run with POSIX paths
+- fix(skills): route module 4 step 6's license decision to the framing
+- fix(skills): carry out each gate answer and widen the gate scan
+- fix(skills): make Module 4 option 5 generate data, and handle the secondary offer
+- fix(skills): make Module 6 name the repository for both engines
+- fix(skills): make every section pointer name a real heading or label
+- fix(skills): state each measured search route once with one stamp
+- fix(module-07): describe the match-key details flag as the server returns it
+- fix(build-and-run): reach every program site and derive the guard's sites
+- fix(module-04): wire the license key by its form and re-source before measuring
+- fix(release-cycle): state what each stage writes under specs/
+- fix(module-05): say a source lacks a type field, not has no type field
+- fix(module-05): cite mapping_workflow step 2's suffix list in the type/name check
+- feat(release-cycle): run the release cycle with five checkpoints
+- docs(skills): let one yes cover a list of issues or comments
+- fix(graduation): name the Bootcamp on the video's closing card
+- docs(invariants): record the third 2026-10-13 invariant review
+- fix(module-02): select the 4.4.0 release notes by section, not rank
+- feat(finding-skills): draft and file in two stages
+- fix(module-02): retire the SENZ7426 divergence and yum .deb warnings
+- fix(ground-rules): follow each response's own access_steps order
+- feat(dry-run): let phase 3 run with a simulated Bootcamper
+- fix(modules-5-6-7): build and run every program through the ground rules
+- fix(module-02): take the C# source from every platform's install reply
+- refactor(ground-rules): move the build-and-run statement out of module 3
+- docs(ledger): queue the INV-314 and INV-318 batched-assent amendments
+- fix(ledger): use US spelling in a 2026-10-13 sweep row
+- chore(ledger): record the 2026-10-13 MCP delegation sweep
+- docs(invariants): hold the #511 build-and-run deferral until #561
+- docs(ledger): queue the #511 deferred invariant for review
+- fix(module-03): build and run every program from one per-language table
+- docs(invariants): record the 2026-10-13 invariant review
+- fix(readme): point dev's Claude Desktop route at the dev repository
+- docs(examples): show Module 3's current flow in the example recap
+- fix(examples): keep the example recap clear of two suite guards
+- docs(examples): show every #465 recap element in the example recap
+- test(guards): require every transcript-linter credit to name a function it runs
+- fix(skills): point every module 5 analyzer run at step 11's python check
+- fix(skills): route module 2's existing-install path through step 9
+- test(skills): give every pinned gate a handler marker and widen the INV-284 guard
+- fix(skills): state one engine-config procedure and check Windows SUPPORTPATH via $env:SENZING_DIR
+- fix(skills): resolve fourteen coherence items from the 2026-10-12 audit
+- fix(skills): end a failed system verification run on a retry-or-move-on question
+- fix(skills): pin module 5 phase 3's sdk repair as a detour question
+- docs(skills): cite each ground-rules pointer's own invariant
+- fix(skills): handle module 5's retry and skip options with a skipped status
+- fix(skills): route the postgresql switch through module 2 as a detour
+- fix(skills): route phase d's iterate now through the quality-iteration route
+- fix(skills): route every invariant change through review-invariants
+- fix(skills): keep plugin asset reads out of the sdk container
+- fix(module-03b): let the no-live-server path complete the module
+- fix(module-05): close six small gaps in Module 5
+- docs(specs): queue the cross-module return contract as a deferred invariant
+- fix(module-05): name Module 7 as a reader and say where iterate goes
+- fix(module-7): keep Discover predictions off their answers
+- fix(search-routes): measure inline routes and key the guard on category
+- fix(audit): count a stop sign followed by an invariant citation
+- fix(module-02): declare container-route shells, copy the DDL out
+- test(corpus): walk the repository through one listing that skips scratch
+- chore(ledger): record the 2026-10-12 audit commit hash
+- docs(specs): record the 2026-10-12 production-readiness audit
+- docs(invariants): record the 2026-10-12 invariant review
+- feat(bootcamp): drop confirmations that have only one sensible answer
+- feat(ground-rules): show one worked steer per act 2 hands-on module
+- feat(module-7): ask one recall question instead of a concepts reminder
+- fix(discoveries-pdf): wrap stdlib table cells instead of cutting them
+- feat(module-7): answer the Module 1 question first in the discoveries document
+- feat(module-7): show the Bootcamper's Module 1 words at the requirements gate
+- feat(bootcamp): hand one step per hands-on module to the bootcamper
+- feat(bootcamp): stage the truth set as practice and module 7 as the peak
+- feat(bootcamp): export results for the systems named in module 1
+- feat(bootcamp): ask for a prediction before three engine results
+- fix(visualization): run a project copy of the Truth Set server in the SDK container
+- feat(graduation): hand over the decisions, how it got built and next time
+- fix(module-7): cite INV-251 for step 1's single opening question
+- feat(module-7): ask the Bootcamper's question before derived requirements
+- docs(invariants): apply inv-260's container-namespace bind note
+- fix(visualization): publish the container route's port to host loopback
+- docs(ledger): record the 2026-10-10 invariant review
+- docs(invariants): register inv-351, the dev marketplace name rewrite
+- docs(invariants): register inv-350, no dev slug in published files
+- docs(invariants): apply inv-203's truncated-source correction
+- docs(invariants): register inv-349, project-derived container names
+- docs(invariants): register inv-348, pages-site command parity
+- docs(invariants): apply inv-153's rendered-width gutter note
+- docs(invariants): apply inv-239's success-criterion coverage note
+- docs(invariants): apply inv-239's name-sharing budget note
+- docs(invariants): register inv-347, the analyzer's python floor check
+- fix(module-05): check the analyzer's python floor before its first run
+- feat(module-4): generate a scenario's data against its success criteria
+- fix(viz): size the match keys gutter from the rendered label width
+- feat(module-4): keep a generated scenario's name sharing inside one budget
+- test(docs): give the pages-site command check its line-scoped verdict
+- test(docs): check the pages site's plugin commands against docs/README.md
+- fix(module-02): derive container names from the project
+- fix(module-04): read the download_url cap and floor truncated sources
+- docs(ledger): record #466 and its blueprint decision-log line
+- docs(readme): name Claude Desktop instead of the retired "Claude App"
+- chore(ledger): archive the 2026-10-05 feedback and record its triage
+
 ## [0.6.1] - 2026-10-05
 
 - #456 Savepoint
