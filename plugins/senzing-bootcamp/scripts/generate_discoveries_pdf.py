@@ -76,8 +76,13 @@ try:
         _pdf_escape,
         _safe,
         _wrap,
+        _wrap_verbatim,
         _write_pdf,
+        account_emitted,
+        content_loss_warning,
         dropped_character_warning,
+        monospace_table_lines,
+        record_content_loss,
     )
 except ImportError as exc:  # pragma: no cover - a broken install, not a data case
     sys.stderr.write(
@@ -540,6 +545,14 @@ def parse_table(text: str) -> Tuple[List[str], List[List[str]]]:
         return [], []
     header, body = parsed[0], parsed[1:]
     width = len(header)
+    # Truncating an over-long row is a real content loss, so it is recorded rather than
+    # performed in silence (#674): the grid has nowhere to put a cell with no column, but
+    # the reader needs to know their row had one. Mirrors the recap parser.
+    for row in body:
+        for extra in row[width:]:
+            record_content_loss(
+                "table row with more cells than the %d-column header" % width, extra
+            )
     body = [(row + [""] * width)[:width] for row in body]
     return header, body
 
@@ -772,7 +785,18 @@ def render_with_stdlib(doc: Discoveries, output: Path) -> bool:
                 add_wrapped(_md_inline_to_text(block.text), "F2", 11.5, 0)
                 continue
             if block.kind == "code":
-                add(block.text[:max_width_chars], "F1", 9, 12)
+                # ⛔ Wrapped, never clipped. `block.text[:max_width_chars]` cut every code
+                # line at 92 characters, so the tail of a long match key, a JSON fragment,
+                # a path or a `--flag` vanished from the page while the success line still
+                # reported ~99% retention — retention is measured on the parse, before any
+                # of this runs, and cannot see it (#674). `_wrap_verbatim` keeps every
+                # character, including the leading indentation `_wrap` would eat.
+                code = _safe(block.text)
+                # The 12 pt indent, in characters, exactly as `add_wrapped` computes it.
+                chunks = _wrap_verbatim(code, max(20, max_width_chars - int(12 / 6)))
+                account_emitted("code line", code, chunks)
+                for chunk in chunks:
+                    add(chunk, "F1", 9, 12)
                 continue
             if block.kind == "table":
                 # No grid primitives in the stdlib writer, so lay the table out
@@ -782,12 +806,9 @@ def render_with_stdlib(doc: Discoveries, output: Path) -> bool:
                 if not header:
                     continue
                 # Sanitized first, as in `add_wrapped`: the widths count characters.
-                cols = [[_safe(_md_inline_to_text(c)) for c in header]] + [
+                plain_header = [_safe(_md_inline_to_text(c)) for c in header]
+                plain_rows = [
                     [_safe(_md_inline_to_text(c)) for c in r] for r in rows
-                ]
-                widths = [
-                    max(1, min(max(len(row[i]) for row in cols), 46))
-                    for i in range(len(header))
                 ]
                 # Fit the whole row inside the line, then WRAP each cell within its
                 # column rather than cutting it. Cutting cells at the column width and
@@ -795,25 +816,19 @@ def render_with_stdlib(doc: Discoveries, output: Path) -> bool:
                 # every column past the line, so a three-column "Your question,
                 # answered" table (#480) lost its answers' reasons and its third
                 # column on the fallback path, while the fpdf2 grid wrapped them.
-                while (
-                    sum(widths) + 2 * (len(widths) - 1) > table_chars
-                    and max(widths) > 8
+                #
+                # ⛔ The final `add(line[:max_width_chars], …)` was the SAME defect one
+                # level up: a table too wide to squeeze into `table_chars` fell through
+                # the shrink loop and had its right-hand columns cut off the row, in
+                # silence, at exit 0 (#674). `monospace_table_lines` stacks such a table
+                # as records instead, and reports anything it still cannot place.
+                # F3 is monospace. Space-padding a PROPORTIONAL face produces ragged
+                # pseudo-columns, which is not the aligned monospace rendering INV-142
+                # permits as the lesser path.
+                for line in monospace_table_lines(
+                    plain_header, plain_rows, table_chars, where="discoveries table"
                 ):
-                    widths[widths.index(max(widths))] -= 1
-                for row_index, row in enumerate(cols):
-                    wrapped = [_wrap(cell, w) for cell, w in zip(row, widths)]
-                    for k in range(max(len(lines) for lines in wrapped)):
-                        line = "  ".join(
-                            (lines[k] if k < len(lines) else "").ljust(w)
-                            for lines, w in zip(wrapped, widths)
-                        ).rstrip()
-                        # F3 is monospace. Space-padding a PROPORTIONAL face produces
-                        # ragged pseudo-columns, which is not the aligned monospace
-                        # rendering INV-142 permits as the lesser path.
-                        add(line[:max_width_chars], "F3", 9, 12)
-                    if row_index == 0:
-                        rule = "  ".join("-" * w for w in widths)
-                        add(rule[:max_width_chars], "F3", 9, 12)
+                    add(line, "F3", 9, 12)
                 continue
             indent = 12.0 if block.kind == "bullet" else 24.0 if block.kind == "subbullet" else 0.0
             body = _md_inline_to_text(block.text)
@@ -972,6 +987,14 @@ def main(argv: Optional[List[str]] = None, description: Optional[str] = None) ->
             dropped = dropped_character_warning()
             if dropped:
                 sys.stderr.write(dropped)
+            # Content the LAYOUT could not place — a different failure from a character the
+            # FONT could not draw, and equally invisible to `content retained`, which is
+            # measured on the parse before any renderer runs. Before the success line so
+            # `PDF generated:` plus a percentage can never read as "the page is complete"
+            # (#674).
+            truncated = content_loss_warning()
+            if truncated:
+                sys.stderr.write(truncated)
             sys.stdout.write(
                 f"PDF generated: {output} (renderer: {name}, "
                 f"content retained: {audit.retention:.0%})\n"

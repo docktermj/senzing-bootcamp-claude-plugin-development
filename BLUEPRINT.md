@@ -3122,10 +3122,15 @@ falling back to `_FALLBACK_RGB` with a stderr note.
 - Renders with fpdf2 (cover, ember headings, real table grids with the
   header repeated on page breaks, `_NEW_LINE_LABELS` on their own line,
   gaps per `_needs_item_gap`), falling back to a stdlib writer with
-  monospace tables when fpdf2 is absent or fails; it fits a table's columns
-  inside the line and wraps each cell within its column, never cutting it.
+  monospace tables when fpdf2 is absent or fails. The stdlib writer never
+  clips: tables go through the shared `monospace_table_lines`, which fits
+  the columns inside the line and wraps each cell within its column, and
+  falls back to one `Column name:` record per row when even the narrowest
+  columns will not fit; code lines are wrapped by `_wrap_verbatim`, which
+  keeps every character including the indentation.
 - Exit codes: 0 after printing `PDF generated:` with renderer and retention
-  (dropped-character warning first, on stderr), or an `OK:` line with
+  (dropped-character warning first, then `content_loss_warning()` for
+  anything the layout could not place, both on stderr), or an `OK:` line with
   `--check`. 1 when `--require-sections` names nothing, the input is missing
   or not UTF-8, the audit is fatal (no PDF written), or both renderers
   fail. 2 when the shared helpers cannot be imported.
@@ -3190,10 +3195,23 @@ Pillow) and `brand_tokens`.
   to `_CERT_MODULE_LINES`. A plugin-version colophon appears only when one
   is recorded (`_cert_attribution`).
 - Fallback `render_with_stdlib`: a hand-written PDF with the same content
-  and certificate, no images, tables as monospace columns.
+  and certificate, no images, tables as monospace columns through the shared
+  `monospace_table_lines` (also used by `_render_table_monospace`, the rich
+  renderer's own last resort). Neither clips: a cell wraps inside its
+  column, and a table too wide for the line becomes one `Column name:`
+  record per row.
 - `_safe` maps `_UNICODE_MAP`, then `_fold_to_latin1`; anything else is
   dropped, never `?`. `dropped_character_warning` reports the drops, except
   `_EXPECTED_DROP_PASSAGE`.
+- Content the layout could not place is a separate ledger, because the
+  retention figure is measured on the parse before any renderer runs and
+  cannot see it: `account_emitted` compares what a layout helper was handed
+  with what it emitted (whitespace ignored), `record_content_loss` keys each
+  loss by site and excerpt so two render attempts report it once,
+  `reset_content_losses` clears it, and `content_loss_warning` returns one
+  ASCII `WARNING:` line saying the retention figure overstates the page.
+  `parse_table` records the cells it drops from a row with more cells than
+  the header. Reporting never blocks: the PDF is still written.
 - Palette from `brand_tokens`, else `_FALLBACK_RGB`; stderr names the
   failure.
 
@@ -3204,7 +3222,8 @@ unprintable. Exit codes:
 - 0: `--check` passed (`Recap complete: ...`; a visualization with no
   manifest is `SKIPPED:` and withholds the coverage figure), or the PDF was
   written, printing a `PDF generated:` line with the path, renderer,
-  retention, embedded image count and tab coverage.
+  retention, embedded image count and tab coverage — after the
+  dropped-character and content-loss warnings on stderr.
 - 1: input missing or not UTF-8; `--check` problems (`INCOMPLETE:`
   lines); a fatal audit (`ERROR: refusing to render`, no PDF); or both
   renderers failed.
@@ -6429,6 +6448,14 @@ def reset_dropped_characters() -> None:
     ...
 def dropped_character_warning() -> Optional[str]:
     ...
+def record_content_loss(where: str, lost: str) -> None:
+    ...
+def reset_content_losses() -> None:
+    ...
+def account_emitted(where: str, source: str, emitted: Sequence[str]) -> None:
+    ...
+def content_loss_warning() -> Optional[str]:
+    ...
 def render_with_fpdf2(recap: Recap, output: Path) -> bool:
     ...
 DEFAULT_PREFERENCES = Path("config") / "bootcamp_preferences.yaml"
@@ -6443,6 +6470,13 @@ def recap_missing_certificate_name(recap: Recap) -> bool:
 def recap_certificate_name(recap: Recap) -> str:
     ...
 def recap_certificate_name_unprintable(recap: Recap) -> Tuple[str, List[str]]:
+    ...
+def monospace_table_lines(
+    header: Sequence[str],
+    rows: Sequence[Sequence[str]],
+    line_chars: int,
+    where: str = "table",
+) -> List[str]:
     ...
 def render_with_stdlib(recap: Recap, output: Path) -> bool:
     ...
@@ -9641,12 +9675,18 @@ _CERT_MODULE_LINES = 3     # module list is capped, so it cannot reach the seal
 _CERT_Y_SEAL = 147.5       # top edge of the seal, not a baseline
 def _cert_citation(labels: List[str]) -> str:
     ...
+def _render_table_monospace(pdf, epw: float, header, rows) -> None:
+    ...
 def _clip(s: str, n: int) -> str:
     ...
 def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
     ...
 def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]],
                        missing_blocks: Tuple[str, ...] = ()) -> None:
+    ...
+def _wrap(text: str, width: int) -> List[str]:
+    ...
+def _wrap_verbatim(text: str, width: int) -> List[str]:
     ...
 def _pdf_escape(s: str) -> str:
     ...
@@ -9689,6 +9729,7 @@ Used by:
   `test_new_line_labels.py`, `test_recap_pdf_guard.py`
 - `_partition_meta`: `test_recap_pdf_guard.py`
 - `_pdf_escape`: `test_stdlib_writer_character_safety.py`
+- `_render_table_monospace`: `test_stdlib_pdf_keeps_code_and_table_tails.py`
 - `_rendered_content_chars`: `test_recap_handover_section.py`,
   `test_recap_notes_section.py`
 - `_safe`: `test_dropped_character_remedy_branches.py`,
@@ -9705,6 +9746,8 @@ Used by:
 - `_unrepresentable`: `test_recap_pdf_font_safety.py`
 - `_width`: `test_recap_measure_font_safety.py`
 - `_wordmark_on_light`: `test_recap_pdf_certificate.py`
+- `_wrap`: `test_stdlib_pdf_keeps_code_and_table_tails.py`
+- `_wrap_verbatim`: `test_stdlib_pdf_keeps_code_and_table_tails.py`
 
 ### 7.7 `plugins/senzing-bootcamp/scripts/generate_recap_video.py`
 
@@ -10407,6 +10450,7 @@ looks wrong.
 - `tests/test_sqlite_load_time_prompt_is_defined_and_matched.py`: 18
 - `tests/test_sqlite_preload_check_reads_the_loadable_total.py`: 16
 - `tests/test_sqlite_subset_notes_read_the_recorded_decision.py`: 11
+- `tests/test_stdlib_pdf_keeps_code_and_table_tails.py`: 30
 - `tests/test_stdlib_writer_character_safety.py`: 14
 - `tests/test_step1_filesystem_fallback.py`: 10
 - `tests/test_step2_record_type_contradiction.py`: 9
@@ -10921,6 +10965,27 @@ tests a rebuild can pass from behavior alone.
     answered", matched case-insensitively. A recap-shaped or headingless
     document is refused, and an empty `--require-sections` is an error.
   - **`generate_document_pdf.py`** only delegates to this script.
+- **Both PDF generators, the no-fpdf2 path**
+  (`tests/test_stdlib_pdf_keeps_code_and_table_tails.py`, 30 tests). `fpdf` is
+  shadowed on `PYTHONPATH` so the fallback runs whether or not the package is
+  installed, and the assertions read the `(…) Tj` strings out of the written
+  PDF rather than any figure the generator prints.
+  - **Nothing is clipped.** A long table cell's tail, a last column's tail, a
+    long code line's tail and the last column of a table too wide to
+    column-align all reach the page. A space-free identifier longer than any
+    line budget survives, checked against the text with whitespace removed
+    because it must break mid-token.
+  - **No line exceeds its budget**, and `_wrap_verbatim` satisfies
+    `"".join(chunks) == text` and keeps leading indentation, where `_wrap`
+    does not.
+  - **A loss is never silent.** `content_loss_warning()` is `None` when
+    nothing was lost; a recorded loss names the site and the text, is ASCII,
+    reports one line per distinct loss, and says the retention figure
+    overstates the page. `main` writes it before the `PDF generated:` line.
+  - **Still non-blocking.** A row with more cells than its header is reported
+    on stderr and the PDF is still written at exit 0.
+  - **The clipping idioms stay gone**, by a source scan that allows them only
+    in a comment recording what was removed.
 - **`generate_recap_video.py`** (`tests/test_recap_video.py`, 147 tests).
   - **Exit codes:** 0 rendered, 1 invalid storyboard, 2 missing capability, 3
     encode failed. Nothing is written unless the code is 0.
@@ -12651,3 +12716,9 @@ Senzing licensing, with no SPDX identifier.
   `checks.cleanup` instead of claiming a cleanup it did not do (Step 4 let
   the purge start once "the bootcamper has been warned", which the contract
   forbade in the same condition)
+- #674: wrap code lines and table cells in the stdlib PDF renderers and
+  in the rich renderer's monospace fallback, and report before the success
+  line anything a renderer still could not place — the clips ran after the
+  content-retention audit had counted the text, so identifiers, command
+  tails and whole trailing columns left the page at 96-98% retention and
+  exit 0, with nothing on stderr
