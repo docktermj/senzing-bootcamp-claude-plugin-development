@@ -2138,10 +2138,18 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   stale snapshot, capture missing screenshots, kill by pid (never
   `pkill -f`; port lookup fallback; in the SDK container, through its
   recorded runtime, `sh -c 'kill'` and a `python3` probe of the bound
-  address), confirm the port free in 5 s, then
-  purge last with the program `cleanup_truthset`. On `unavailable` Step 4
-  says itself that it skips the screenshots and the kill, and still asks the
-  question with a no-live-server disclosure.
+  address), then the anchored failed-stop rule
+  (`visualization-api-reference.md#failed-stop`, the one statement Step 4's
+  gate, the purge item, the checkpoint and both success indicators link,
+  INV-300, INV-223): on a stop confirmed by the port — inside the 5 s poll,
+  or after the force-stop and re-check — purge last with the program
+  `cleanup_truthset`; on a port still answering the stop is unverified, so
+  report it and run no purge, a warning being no substitute for the
+  confirmation. Step 4's checkpoint records `checks.cleanup` as
+  `complete`, or `incomplete` with `stop_unverified|purge_failed`, the port
+  and `truthset_records: retained`; it is a record, not a gate. On
+  `unavailable` Step 4 says itself that it skips the screenshots and the
+  kill, and still asks the question with a no-live-server disclosure.
 - 5: record after `system_verification`, recap section with
   `visualizations/…` images, B-roll, then the curtain line as a statement
   immediately before the one 👉 transition: the Truth Set was practice data,
@@ -9910,7 +9918,7 @@ collected as tests:
     non-empty `SBCP_QUIET_FPDF2_NOTICE` silences it.
   - It exports the decorator `requires_fpdf2`.
   - It is a module rather than a `conftest.py`, which `unittest` never loads.
-- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 67
+- `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 68
   files. `blocks(text)` splits Markdown into blocks, and
   `match_lines(text, pattern)` returns the 1-based start line of each match. The
   rules are in 8.4.1.
@@ -9928,7 +9936,7 @@ collected as tests:
   spec files minus the `specs/IMPLEMENTED.md` and `specs/DECLINED.md` headings.
   It reports any spec found in both. Listing exits 0, and `--check` exits 2 when
   a spec is in both.
-- `tests/_corpus.py`: the shared corpus listing (#515), used by 22 files.
+- `tests/_corpus.py`: the shared corpus listing (#515), used by 23 files.
   `corpus_files(*subtrees, root=REPO_ROOT, suffixes=None)` lists tracked and
   untracked, non-ignored files from `git ls-files -z`, and always prunes Claude
   Code's runtime directories (section 5.62).
@@ -9970,7 +9978,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 400 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 401 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10148,6 +10156,7 @@ looks wrong.
 - `tests/test_example_recap_uses_no_golden_record.py`: 5
 - `tests/test_existing_install_still_runs_the_env_script.py`: 22
 - `tests/test_expected_visualization_denominator.py`: 21
+- `tests/test_failed_stop_does_not_purge.py`: 27
 - `tests/test_family_amendments_cite_real_rules.py`: 9
 - `tests/test_fastpath_gates_on_full_mapping.py`: 31
 - `tests/test_feedback_asks_only_the_unanswered_questions.py`: 5
@@ -12634,3 +12643,11 @@ Senzing licensing, with no SPDX identifier.
   it, so the mapped rows traveled inside the generated tree while
   `OPEN_ME_FIRST.md` told the recipient none had); `transfer` keeps them,
   because the loader it carries reads from that path
+- #673: state the failed-stop rule once, in the server-lifetime contract
+  (`#failed-stop`, four outcomes: a graceful stop, a force-stop, a port that
+  still answers, and no server at all), and have Truth Set visualization's
+  close defer to it — an unverified stop now neither claims the server
+  stopped nor runs the irreversible purge, and the close records
+  `checks.cleanup` instead of claiming a cleanup it did not do (Step 4 let
+  the purge start once "the bootcamper has been warned", which the contract
+  forbade in the same condition)

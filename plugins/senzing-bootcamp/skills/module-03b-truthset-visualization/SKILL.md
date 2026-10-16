@@ -131,6 +131,8 @@ Read `current_step` from `config/bootcamp_progress.json` and resume at the right
 served its endpoints, **or** the no-live-server state is recorded with its reason
 ([no-live-server completion rule](phase2-close.md#no-live-server-completion), stated once in
 `phase2-close.md`, INV-300); a live app serves the entity-graph page among its endpoints; the web
-service, when one ran, is terminated and the Truth Set data purged at close;
+service, when one ran, is terminated and the Truth Set data purged at close — or, where the stop
+could not be confirmed, the listening port and the retained records are reported rather than a
+cleanup claimed ([failed-stop rule](visualization-api-reference.md#failed-stop), INV-223);
 `truthset_visualization` is recorded in `modules_completed` with its own recap section
 (INV-085/INV-086/INV-087).
