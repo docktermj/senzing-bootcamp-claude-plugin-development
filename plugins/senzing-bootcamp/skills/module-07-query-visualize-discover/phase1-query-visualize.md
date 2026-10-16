@@ -1080,8 +1080,10 @@ every language, Python included, and build and run it with that section's comman
   After generating it, capture screenshots for the recap per
   `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" (on exit 2,
   take the skip path that section states once, INV-300 — never a silent skip by default: say nothing
-  only at the `minimal` verbosity preset, and read the reason the helper gave; otherwise embed
-  **every** captured tab in this module's recap, in the app's tab order — no count cap, INV-146).
+  only at the `minimal` verbosity preset, and read the reason the helper gave; otherwise record every
+  capture's PNG path and tab label in this step's checkpoint before the turn yields, and embed
+  **every** captured tab in this module's recap `Actions Taken` **at module close**, in the app's tab
+  order — no count cap, and the recap section is never created early to embed sooner, INV-146).
   `{name}` = `results_visualization`. Capture **one image per tab** from the running server
   (`--url http://localhost:<port>`, with `--query` so Search / Probe shows real results) — not
   several shots of one tab — and derive every caption from the opened image and its tab label.

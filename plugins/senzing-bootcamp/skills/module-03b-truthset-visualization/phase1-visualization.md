@@ -632,8 +632,11 @@ and caption the Search / Probe tab as the inactive state; omitting it is not an 
 INV-146; `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots"
 says why). If the helper exits 2, take the skip path that section states once (INV-300): silent
 only at the `minimal` verbosity preset, and the reason the helper gave is read, never assumed.
-Otherwise **keep every captured tab and embed them all** in this
-module's recap `Actions Taken`, in the app's tab order — capture is one image per tab (INV-122), so
+Otherwise **keep every captured tab**: record each one's PNG path and tab label in this step's
+checkpoint before the turn yields, and **embed them all** in this module's recap `Actions Taken`
+**at module close** — the two moments `../bootcamp-onboarding/module-completion.md` → Step 2b states
+once, and this step never creates or finalizes the recap section early (INV-146, INV-300).
+Embed in the app's tab order — capture is one image per tab (INV-122), so
 there is nothing redundant to drop and a count cap can only delete unique content (INV-146). This is
 never a 👉 question and never blocks the visualization.
 
