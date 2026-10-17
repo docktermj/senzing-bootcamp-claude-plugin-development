@@ -13,7 +13,8 @@ is still its only statement (INV-300). It now names two return points, records t
 points at it and restates neither. The checks:
 
 * the gate: one pinned question (INV-056), a neutral lead and a numbered list (INV-051), asked on
-  the 80–89% branch and on the <80% branch, where option 1 is marked recommended. ⛔ The 👉 line is
+  the 80–89% branch, on the <80% branch and on the accuracy-shortfall branch (#678), where option 1
+  is marked recommended on the last two. ⛔ The 👉 line is
   matched word for word, its lead "Most tests pass but there are gaps." included: "asks the same
   pinned question" (#526) leaves the pinned wording as it was, and rewording it is the
   maintainer's call, so a moved or reworded lead fails;
@@ -115,7 +116,7 @@ def present(block, needles, where):
 
 
 def gate_problems(phase_d):
-    """The 80–89% and <80% branches ask one pinned question; <80% marks option 1 recommended."""
+    """The three asking branches share one pinned question; two of them mark option 1 recommended."""
     gate = span(phase_d, GATE_HEADING, "## Stakeholder summary")
     if gate is None:
         return ["Phase D has no iterate-vs-proceed gate"]
@@ -143,9 +144,17 @@ def gate_problems(phase_d):
             "(INV-284) This branch asks",
         ), "the <80% branch")
         problems += present(low, ("proceed to the transition question",), "the <80% branch")
+    shortfall = span(gate, "- UAT ≥90% but match accuracy <90%", "- UAT 80–89%:")
+    if shortfall is None:
+        problems.append("the gate has no accuracy-shortfall branch")
+    else:
+        problems += missing(shortfall, (
+            "the gate question below, option 1 marked *(recommended)*",
+        ), "the accuracy-shortfall branch")
     problems += missing(gate, (
-        "asked word for word on both of those branches",
-        "On the <80% branch, option 1 ends with *(recommended)*",
+        "asked word for word on all three branches that ask it",
+        "On the <80% branch and on the accuracy-shortfall branch, option 1 ends with "
+        "*(recommended)*",
         "nothing else in the question changes, the lead included",
     ), "the gate")
     return problems
@@ -171,7 +180,8 @@ def handling_problems(phase_d):
         "It asks nothing",
         ROUTE_LINK,
         '`return_to: "module_6_phase_d"`',
-        "(`uat_80_89` or `uat_below_80`)",
+        "(`uat_80_89`, `uat_below_80`, or `uat_90_accuracy_below_90` on the accuracy-shortfall "
+        "branch)",
         "`module_6_processing.quality_iterations`",
         "step 3b → \"The quality-iteration route\" (INV-300)",
         "Phase D runs again in full, from step 21",
@@ -223,7 +233,8 @@ def route_problems(phase1):
     problems = []
     if '"return_to": "module_7_step_3b | module_6_phase_d"' not in loop:
         problems.append("the key does not record return_to with both return points")
-    if '"from_verdict": "poor | marginal | uat_below_80 | uat_80_89"' not in loop:
+    if ('"from_verdict": "poor | marginal | uat_below_80 | uat_80_89 | '
+            'uat_90_accuracy_below_90"') not in loop:
         problems.append("the key's from_verdict does not carry the Phase D bands")
     problems += missing(loop, (
         "Two steps offer it, and each is a return point",

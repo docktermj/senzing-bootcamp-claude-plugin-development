@@ -10049,7 +10049,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 401 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 402 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10102,18 +10102,18 @@ How scripts are loaded:
 There are 7841 test methods in 424 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 7841.
+sum to 7866.
 
-Two files run more tests than they define, so discovery collects 7848:
+Two files run more tests than they define, so discovery collects 7873:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 7841`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 7866`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 7848`. No other count
+run count. With `pwsh` installed, the run reports `Ran 7873`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -10381,6 +10381,7 @@ looks wrong.
 - `tests/test_phase3_interaction_prose.py`: 36
 - `tests/test_phase3_names_every_server_language.py`: 8
 - `tests/test_phase_c_loads_each_source_from_its_subset_record.py`: 26
+- `tests/test_phase_d_gate_routes_on_both_metrics.py`: 25
 - `tests/test_phase_d_how_state_audit.py`: 36
 - `tests/test_phase_d_iterate_now_enters_the_quality_iteration_route.py`: 31
 - `tests/test_phasec_generated_path_asks_once.py`: 12
@@ -12795,3 +12796,14 @@ Senzing licensing, with no SPDX identifier.
   declared, and the guard recomputes every worked chain from the file's
   own weights so a later mismatch cannot be squared by editing the
   specification instead of the example
+- #678: give Module 6 Phase D's iterate-vs-proceed gate a decision table over
+  the UAT % and the per-record match accuracy, and a branch of its own for the
+  combination that had none — UAT ≥90% with accuracy below 90%, which the
+  strong branch's own conjunction excluded and neither low-UAT route covered,
+  so UAT 95% with accuracy 70% matched nothing; the new branch reports the
+  accuracy shortfall as the blocking evidence, recommends tuning the match keys
+  before the sign-off stands, asks the existing pinned question with option 1
+  marked recommended, and hands the quality-iteration route a
+  `uat_90_accuracy_below_90` band of its own — and a result is never called
+  strong where a metric the strong branch requires falls short or was never
+  established

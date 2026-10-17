@@ -705,8 +705,32 @@ move the gate to a different branch (INV-117, INV-264), because no documented re
 iterate toward.
 
 ⚠️ **When `docs/uat_results.md` records that no entity could be spot-checked, there is no UAT %.**
-Say so, report none, and route on match accuracy alone, in the same bands below; never state a
-UAT % that was not computed.
+Say so, report none, and route on match accuracy alone, by the `none` rows of the table below;
+never state a UAT % that was not computed.
+
+**The table below is the whole of the routing: every pair of readings lands in exactly one branch,
+and no pair lands in two.** The accuracy column is the **per-record** figure (the INV-264 rule
+above), never a relationship-bucket share. `any` means any reading, including none; `none` means
+the figure does not exist — no entity could be spot-checked (UAT %), or no per-record accuracy was
+established (accuracy). A band runs up to the next band's floor, so `80–89%` is 80% up to but not
+including 90% and no reading can fall between two rows.
+
+| UAT % | Per-record match accuracy | Branch |
+|---|---|---|
+| ≥90% | ≥90% | Results look strong |
+| ≥90% | <90% | Accuracy shortfall |
+| ≥90% | none | Accuracy shortfall |
+| 80–89% | any | Results are mixed |
+| <80% | any | Results need improvement |
+| none | ≥90% | Results look strong |
+| none | 80–89% | Results are mixed |
+| none | <80% | Results need improvement |
+| none | none | Accuracy shortfall |
+
+⛔ **Never call a result strong when a metric the strong branch explicitly requires falls short or
+was never established** — that outcome takes a branch of its own, with its own evidence,
+recommendation, question and return routes, and is never folded into the strong branch or into a
+branch that routes on the other metric alone.
 
 - **UAT ≥90% and match accuracy ≥90%:** state "Results look strong." and proceed to the module
   transition question. **If the audit produced a finding, say so in the same breath** — strong
@@ -714,6 +738,30 @@ UAT % that was not computed.
   bootcamper should hear it before moving on. ⚠️ **A zero per-record bucket with a large
   relationship bucket lands here**, and that is the intended routing, not a leak: the numbers are
   strong *and* the finding stands.
+- **UAT ≥90% but match accuracy <90% — the accuracy shortfall:** a branch of its own. It is not the
+  strong branch, whose statement requires both figures and has only one of them, and it is not
+  either low-UAT route, which routes on a UAT % that is fine here. Say "UAT is <N>%, but match
+  accuracy is <M>% — below the 90% this gate requires. I recommend tuning the match keys before the
+  sign-off stands: refining the mapping in Data Quality, Mapping, and Transformation, then
+  reloading." Then put the gate question below, option 1 marked *(recommended)*. What the branch
+  states, as every branch does:
+  - **Evidence — the accuracy shortfall, and on this branch it is what blocks the sign-off.** Name
+    the per-record figure, the 90% threshold it misses and the sample it was computed from, beside
+    the UAT % that did pass. A figure that was never established is named as exactly that, with
+    what prevented it, and is never read as one that met the threshold. The match-key and how-state
+    audit outcomes are reported here in full, as on every other branch, and neither moves this
+    branch nor blocks it (INV-117, INV-264) — what holds the sign-off is the accuracy figure.
+  - **Recommendation — tune the match keys before the sign-off stands.** The per-record suppressors
+    the match-key audit named are where to start; where it named none, the false positives and
+    false negatives from steps 21 and 24 are.
+  - **Next question — the gate question below**, word for word, with option 1 marked
+    *(recommended)*. No other question belongs to this branch.
+  - **Accepted and declined — the handling step below, unchanged.** "Iterate now" is the accepted
+    route: it enters the quality-iteration route with `from_verdict: "uat_90_accuracy_below_90"`,
+    the band this branch hands it, and the route's resume runs Phase D again in full, so this gate
+    is asked again on the new readings. "Move forward" is the declined route: Module 6 completes
+    there, and `docs/results_validation.md` records that the results were accepted with match
+    accuracy below 90% and the tuning not done, so the sign-off record does not read clean.
 - **UAT 80–89%:** results are mixed, so ask the gate question below.
 - **UAT <80%:** say "Results need improvement — I recommend iterating now: refining the mapping in
   Data Quality, Mapping, and Transformation, then reloading." and ask the same gate question below,
@@ -721,8 +769,8 @@ UAT % that was not computed.
   recommendation and then offer only moving on**, which left the recommended work with no step to
   run.
 
-The gate question, asked word for word on both of those branches, pinned (INV-056) as a neutral
-lead and a numbered list (INV-051):
+The gate question, asked word for word on all three branches that ask it — the accuracy
+shortfall, 80–89% and <80% — pinned (INV-056) as a neutral lead and a numbered list (INV-051):
 
 👉 **Most tests pass but there are gaps. What would you like to do? Reply with a number:**
 
@@ -731,8 +779,8 @@ lead and a numbered list (INV-051):
 
 *(Internal: end the turn on this question and wait.)*
 
-On the <80% branch, option 1 ends with *(recommended)*; nothing else in the question changes, the
-lead included.
+On the <80% branch and on the accuracy-shortfall branch, option 1 ends with *(recommended)*;
+nothing else in the question changes, the lead included.
 
 **Handling each answer (INV-284).**
 
@@ -763,7 +811,8 @@ lead included.
      and they are reloaded, and that validation then runs again here. It asks nothing.
   3. **Enter [the quality-iteration route](../module-07-query-visualize-discover/phase1-query-visualize.md#the-quality-iteration-route)**
      with `return_to: "module_6_phase_d"` and `from_verdict` set to this gate's band
-     (`uat_80_89` or `uat_below_80`). The route, the key it writes and the iteration record it
+     (`uat_80_89`, `uat_below_80`, or `uat_90_accuracy_below_90` on the accuracy-shortfall
+     branch). The route, the key it writes and the iteration record it
      appends to `module_6_processing.quality_iterations` are stated once, in
      `../module-07-query-visualize-discover/phase1-query-visualize.md` step 3b → "The
      quality-iteration route" (INV-300); this gate says only what it hands the route. The route's
