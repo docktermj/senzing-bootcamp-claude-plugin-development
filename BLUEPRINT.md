@@ -10229,21 +10229,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8257 test methods in 441 files, matching `inventory.test_count_total`.
+There are 8264 test methods in 441 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8257.
+sum to 8264.
 
-Two files run more tests than they define, so discovery collects 8264:
+Two files run more tests than they define, so discovery collects 8271:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8257`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8264`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8264`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8271`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -10268,7 +10268,7 @@ looks wrong.
 - `tests/test_backgrounded_launch_records_the_server_pid.py`: 12
 - `tests/test_blocked_submission_has_a_vocabulary_value.py`: 29
 - `tests/test_bootcamp_notes_flow.py`: 33
-- `tests/test_brand_sync.py`: 37
+- `tests/test_brand_sync.py`: 44
 - `tests/test_broll_manifest.py`: 20
 - `tests/test_build_and_run_statement.py`: 66
 - `tests/test_build_version_provenance_is_per_platform.py`: 8
@@ -13312,3 +13312,20 @@ Senzing licensing, with no SPDX identifier.
   set by scanning rather than listing paths, and reads the HTML surface in its
   own format, since a Markdown-shaped reader would leave it unchecked while the
   guard went green
+- #700: state the property, never the count, wherever a guard derives the set it
+  describes — `secret_patterns.py`'s model sentence, its twin in
+  `tests/test_secret_patterns_are_shared.py`, `brand_tokens.py`'s own docstring
+  and two docstrings inside `tests/test_brand_sync.py` all named how many
+  generators carry an inlined fallback copy of the palette, and every one of
+  them was already wrong or about to be. Running the discovery at `81faa319`
+  returns six modules, of which four carry a copy of the palette, so no number
+  is written down at all: `fallback_carriers()` keeps the sweep's set,
+  `palette_carriers()` derives the copying subset, and
+  `NoProseStatesHowManyCarriersThereAre` scans the shipped tree and the guards
+  for any carrier count, with `generate_recap_pdf.py`'s correct INV-142 pair
+  pinned as a standing negative control so a widened predicate fails rather than
+  reporting correct prose. `TheBrandTokensDocstringNamesEveryCarrierOrNone`
+  covers the half a count guard cannot see, a docstring that names some carriers
+  and not others. An INV-107 `PROPOSED AMENDMENT` is queued, withdrawing that
+  invariant's count in favor of the property (the issue itself was filed with a
+  count that went stale before it was built, which is the case for the rule)

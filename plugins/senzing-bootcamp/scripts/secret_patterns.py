@@ -7,9 +7,10 @@ available to the other, and neither can quietly protect less than the other.
 ⚠️ **`write-gate.py` keeps its own inline copy on purpose, and a test pins the two equal.** It is a
 `PreToolUse` security control: an ImportError there does not degrade to "no secret scan", it
 degrades to a hook that cannot run at all, on every write in the bootcamp. The plugin already has
-this exact shape for `brand_tokens.py`, whose palette is inlined into two generators with
-`tests/test_brand_sync.py` asserting the copies stay equal; `tests/test_secret_patterns_are_shared.py`
-does the same job here. Import this module from anything that is *not* the write gate.
+this exact shape for `brand_tokens.py`, whose palette is inlined into every generator that carries
+a fallback copy, with `tests/test_brand_sync.py` discovering the carriers and asserting the copies
+stay equal; `tests/test_secret_patterns_are_shared.py` does the same job here. Import this module
+from anything that is *not* the write gate.
 
 The three patterns, and why each is written the way it is:
 

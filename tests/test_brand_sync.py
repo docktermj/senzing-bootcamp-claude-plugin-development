@@ -1,6 +1,10 @@
-"""Guard against silent drift between brand_tokens.py and the inlined fallback
-palettes in four generators: senzing_viz_server.py, generate_recap_pdf.py,
-generate_discoveries_pdf.py and generate_recap_video.py.
+"""Guard against silent drift between brand_tokens.py and the fallback palettes
+inlined into the shipped generators that carry a copy of one.
+
+⛔ **No prose states how many carriers exist (INV-246).** Which generators those are is
+discovered below rather than written down, and `NoProseStatesHowManyCarriersThereAre`
+holds the shipped tree and these guards to the same rule: a number that is right the day
+it is written is exactly the thing that goes stale unread (#700).
 
 This file discharges **INV-184** — "every shipped generator that inlines a fallback copy
 of the brand palette" — not only **INV-107**, which enumerates the first two. INV-107 is
@@ -21,6 +25,7 @@ words, and that one drifted precisely because the sweep's name pattern could not
 
 Run:  python3 -m unittest discover -s tests
 """
+import ast
 import glob
 import importlib.util
 import os
@@ -28,6 +33,9 @@ import re
 import sys
 import types
 import unittest
+
+from _corpus import corpus_files
+from _wrapped_text import collapsed_blocks, line_of
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp", "scripts")
@@ -60,6 +68,80 @@ def fallback_carriers():
             if FALLBACK_CONSTANT.search(fh.read()):
                 found.add(os.path.splitext(os.path.basename(path))[0])
     return found
+
+
+#: Whether a module imports `brand_tokens`, which is what makes its inlined fallback a COPY
+#: of the palette rather than a default of its own.
+IMPORTS_BRAND_TOKENS = re.compile(r"^\s*(?:import brand_tokens\b|from brand_tokens import)", re.M)
+
+
+def palette_carriers():
+    """The discovered carriers whose inlined constants copy the brand palette.
+
+    Narrower than `fallback_carriers()`, which finds every module holding a FALLBACK-named
+    constant whether or not the palette is what it carries — and narrower by a margin that
+    MOVES: #693 widened the name pattern, `docker_lifecycle` joined the scan, and the two
+    sets stopped agreeing. Both are computed here precisely so that nothing anywhere has to
+    know which of their sizes is current (#700).
+    """
+    found = set()
+    for name in fallback_carriers():
+        if name == "brand_tokens":
+            continue  # the source of truth, not a copy of it
+        with open(os.path.join(SCRIPTS, name + ".py"), encoding="utf-8") as fh:
+            if IMPORTS_BRAND_TOKENS.search(fh.read()):
+                found.add(name)
+    return found
+
+
+#: A count attached to a carrier noun — "two generators", "both consumers", "four shipped
+#: scripts". The count may be a word or a bare number; `INV-184`, `#693` and `3.8` are not
+#: bare numbers, which is what the lookbehind and lookahead are for.
+_COUNT_WORD = "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|both"
+_COUNT = r"(?:\b(?:%s)\b|(?<![\w#.\u00a7-])\d{1,3}(?![\w.]))" % _COUNT_WORD
+_ADJECTIVE = r"(?:shipped|bundled|other|further|remaining|known|more|new|additional)"
+_CARRIER_NOUN = r"(?:generators?|carriers?|scripts?|modules?|consumers?)"
+STATED_COUNT = re.compile(r"%s\s+(?:%s\s+)?%s" % (_COUNT, _ADJECTIVE, _CARRIER_NOUN), re.I)
+
+#: What makes a counted noun a count of THIS set rather than of some other group of scripts.
+#: ⛔ **Narrowing measured before it was chosen (#700).** Over every tracked file, a count word
+#: or digit within 40 characters of a file-ish noun matches 7515 lines; carrier-shaped nouns
+#: alone leave 3641; requiring this subject in the same block leaves 19, of which 15 are in
+#: `specs/` or in `invariant-manifest.json` (both regenerated records of history, never edited
+#: by a run) and one is the audit skill narrating the original defect. The four that remain are
+#: the findings this issue fixed. Bare `fallback` was dropped from this pattern because it also
+#: matches a persisted-answers docstring whose own count is of unrelated consumers of a key.
+PALETTE_SUBJECT = re.compile(r"palette|brand_tokens|inlined cop(?:y|ies)", re.I)
+
+#: The prose this rule binds: the shipped plugin tree, and the guards that describe it.
+#: `specs/` is the frozen archive and the register (INV-307), `invariant-manifest.json` is
+#: regenerated from it, and `BLUEPRINT.md` and `CHANGELOG.md` are dated records of what each
+#: issue changed — a count in any of those is a fact about a date and stays true. ⚠️ **What
+#: this therefore does NOT cover (INV-308):** `.claude/`, where the audit skill's "One
+#: generator's comment claimed ..." is correct prose about the original defect and where a
+#: stale count would go unreported.
+PROSE_SUBTREES = ("plugins/senzing-bootcamp", "tests")
+PROSE_SUFFIXES = (".py", ".md", ".json", ".js")
+
+
+def stated_carrier_counts():
+    """Every place the shipped tree or its guards says how many carriers there are.
+
+    Read wrap-aware (INV-346): the sentence that started this wrapped across two lines in one
+    file and three in another, so a line-at-a-time read would have found neither.
+    """
+    found = []
+    for path in corpus_files(*PROSE_SUBTREES, suffixes=PROSE_SUFFIXES):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for flat, origin in collapsed_blocks(text):
+            if not PALETTE_SUBJECT.search(flat):
+                continue
+            for hit in STATED_COUNT.finditer(flat):
+                where = os.path.relpath(str(path), REPO_ROOT).replace(os.sep, "/")
+                found.append("%s:%d: %r in %r" % (
+                    where, line_of(origin, hit.start()), hit.group(0),
+                    flat[max(0, hit.start() - 70):hit.end() + 70]))
+    return sorted(found)
 
 
 def load_viz_with_brand_tokens_unavailable():
@@ -257,12 +339,15 @@ class TheCertificateTextIsOneSourceOfTruth(unittest.TestCase):
 class TheOtherConstantsTheWidenedSweepFinds(unittest.TestCase):
     """What the widened pattern newly discovered, and what holds for each (#693).
 
-    Widening the name pattern added three constants to the sweep:
-    `generate_recap_video._CERT_TEXT_FALLBACK`, `generate_discoveries_pdf.COVER_TITLE_FALLBACK`
-    and `docker_lifecycle.SLUG_FALLBACK`. Only the certificate strings are COPIES of a value
-    another module owns, so only they can drift from a source of truth; the class above holds
-    them. The other two are defaults with no twin anywhere — `doc.title or COVER_TITLE_FALLBACK`
-    and `slug or SLUG_FALLBACK` — so there is nothing for them to diverge from, and what has to
+    Widening the name pattern brought the recap video's certificate strings
+    (`_CERT_TEXT_FALLBACK` and `_CERT_CITATION_FALLBACK`),
+    `generate_discoveries_pdf.COVER_TITLE_FALLBACK` and `docker_lifecycle.SLUG_FALLBACK` into
+    the sweep. ⚠️ **This sentence used to say how many constants that was, and it said three
+    where the scan finds four** — it had dropped `_CERT_CITATION_FALLBACK`, the one copy that
+    had actually drifted (#700). Only the certificate strings are COPIES of a value another
+    module owns, so only they can drift from a source of truth; the class above holds them.
+    The rest are defaults with no twin anywhere — `doc.title or COVER_TITLE_FALLBACK` and
+    `slug or SLUG_FALLBACK` — so there is nothing for them to diverge from, and what has to
     hold instead is that the default is itself usable.
 
     `docker_lifecycle` is a carrier this file would otherwise never mention, so the property
@@ -285,6 +370,140 @@ class TheOtherConstantsTheWidenedSweepFinds(unittest.TestCase):
                          docker_lifecycle.project_slug(nothing_survives),
                          "the fallback constant is not what project_slug actually falls "
                          "back to, so asserting on it proves nothing")
+
+
+def module_docstring(path):
+    """A script's module docstring, parsed rather than imported (INV-108 keeps this cheap)."""
+    with open(path, encoding="utf-8") as fh:
+        return ast.get_docstring(ast.parse(fh.read())) or ""
+
+
+class NoProseStatesHowManyCarriersThereAre(unittest.TestCase):
+    """#700: the carrier set is discovered, so no shipped comment may state its size.
+
+    `secret_patterns.py` held `brand_tokens.py` up as the model for an inlined fallback and
+    said the palette was inlined into a named number of generators. That number was right when
+    it was written and wrong by the time it was read, in the file whose whole point is to be
+    the model for the pattern. Its twin docstring in `tests/test_secret_patterns_are_shared.py`
+    carried the same sentence; this guard's own docstring carried a later number for the same
+    set; and `brand_tokens.py` named a pair of importers where the scan now finds more.
+
+    ⚠️ **The issue reporting this demonstrated its own thesis.** It was filed naming one number
+    and built on a day the discovery returned another, because #693 widened the name pattern in
+    between — an argument for stating the property rather than the count, carrying a count that
+    went stale between its filing and its build. So nothing is written down here: the carriers
+    are scanned out of the corpus, the claims are scanned out of the prose (INV-246).
+
+    ⛔ This proves no count is stated. It cannot prove that a sentence naming some carriers and
+    not others is complete — `TheBrandTokensDocstringNamesEveryCarrierOrNone` covers the one
+    place that defect actually occurred.
+    """
+
+    def test_no_shipped_prose_states_a_carrier_count(self):
+        self.assertEqual(
+            [], stated_carrier_counts(),
+            "a comment says how many generators carry the palette, where this file discovers "
+            "them instead. The sentence goes stale the day a carrier is added or the sweep is "
+            "widened, and it reached the shipped tree twice that way (#700). State the "
+            "property — every generator that carries a fallback copy, discovered here — "
+            "rather than a number.")
+
+    def test_the_scan_reports_a_count_when_one_is_there(self):
+        """The anti-vacuity floor: a predicate that matches nothing passes in silence.
+
+        ⛔ The control sentence is ASSEMBLED rather than spelled out, so this file does not
+        carry the very shape it reports. Scanning this file out instead would leave the
+        docstrings above unchecked, and an exemption is where the next stale count would hide.
+        """
+        planted = " ".join(("whose", "palette", "is", "inlined", "into", "four", "generators"))
+        self.assertTrue(STATED_COUNT.search(planted),
+                        "the count pattern no longer sees a stated count")
+        self.assertTrue(PALETTE_SUBJECT.search(planted),
+                        "the subject pattern no longer sees what the count is about")
+        property_wording = " ".join(("whose", "palette", "is", "inlined", "into", "every",
+                                     "generator", "that", "carries", "a", "copy"))
+        self.assertIsNone(STATED_COUNT.search(property_wording),
+                          "the wording this rule asks for would itself be reported")
+
+    def test_the_table_classification_pair_is_not_reported(self):
+        """`generate_recap_pdf.py`'s INV-142 comment is about a different and correct pair.
+
+        It says the recap writer and the discoveries writer classify a table identically, which
+        is true and has nothing to do with the brand colors. The count pattern DOES fire on it;
+        the subject test is what keeps it out. Asserting both is what shows the narrowing is
+        doing the work, rather than the pattern happening to miss.
+        """
+        with open(os.path.join(SCRIPTS, "generate_recap_pdf.py"), encoding="utf-8") as fh:
+            source = fh.read()
+        matched = [flat for flat, _ in collapsed_blocks(source)
+                   if "classify a table identically" in flat]
+        self.assertEqual(1, len(matched),
+                         "the INV-142 comment this control reads has moved or changed")
+        self.assertTrue(STATED_COUNT.search(matched[0]),
+                        "the control is vacuous: the count pattern does not fire here at all, "
+                        "so excluding it proves nothing about the narrowing")
+        self.assertIsNone(PALETTE_SUBJECT.search(matched[0]),
+                          "the subject pattern now matches a comment about table layout, so it "
+                          "is too wide and will report correct prose")
+        self.assertEqual([], [h for h in stated_carrier_counts()
+                              if "generate_recap_pdf.py" in h])
+
+    def test_the_corpus_reaches_the_files_this_rule_is_about(self):
+        """A corpus that missed them would report clean for the wrong reason.
+
+        A floor, not the site set: the scan decides what is reported, and these are the files
+        the defect was found in, so a corpus that stops reaching them is a regression.
+        """
+        scanned = {os.path.relpath(str(path), REPO_ROOT).replace(os.sep, "/")
+                   for path in corpus_files(*PROSE_SUBTREES, suffixes=PROSE_SUFFIXES)}
+        here = os.path.relpath(os.path.abspath(__file__), REPO_ROOT).replace(os.sep, "/")
+        for name in ("plugins/senzing-bootcamp/scripts/secret_patterns.py",
+                     "plugins/senzing-bootcamp/scripts/brand_tokens.py",
+                     "tests/test_secret_patterns_are_shared.py", here):
+            self.assertIn(name, scanned, "%s is outside the scanned corpus" % name)
+
+    def test_the_derived_sets_are_not_assumed_to_agree(self):
+        """The narrower set is genuinely narrower, and neither is empty.
+
+        Nothing here asserts a size. What it asserts is that the sweep's set and the
+        palette-copying set are distinct, because the moment they coincide a reader is tempted
+        to write a single number down for the pair — the sentence this class deletes.
+        """
+        wide, narrow = fallback_carriers(), palette_carriers()
+        self.assertTrue(narrow, "no shipped module both imports brand_tokens and inlines a "
+                                "fallback constant, so the palette-copy set is empty")
+        self.assertLess(narrow, wide,
+                        "the sweep's set and the palette-copying set are no longer distinct "
+                        "(%s vs %s)" % (sorted(narrow), sorted(wide)))
+
+
+class TheBrandTokensDocstringNamesEveryCarrierOrNone(unittest.TestCase):
+    """`brand_tokens.py` must not name some of the modules that copy its palette and not others.
+
+    Its docstring named the visualization server and the recap PDF, written when those were all
+    there was, and the discoveries PDF and the recap video arrived without reaching it. A count
+    guard alone would never have seen it: the sentence named them, it did not number them. So
+    the rule here is all or nothing, and "all" is derived.
+    """
+
+    def test_it_names_every_palette_carrier_or_none_of_them(self):
+        doc = module_docstring(os.path.join(SCRIPTS, "brand_tokens.py"))
+        carriers = palette_carriers()
+        named = {name for name in carriers
+                 if re.search(r"\b%s\b" % re.escape(name), doc)}
+        self.assertTrue(
+            not named or named == carriers,
+            "brand_tokens.py's docstring names %s and leaves out %s, so a reader is told which "
+            "generators copy the palette by a list that is already short. Name every one the "
+            "scan finds, or state the property and name none." % (sorted(named),
+                                                                  sorted(carriers - named)))
+
+    def test_the_check_would_see_a_short_list(self):
+        """The anti-vacuity floor: an empty carrier set would make the check unfailable."""
+        carriers = palette_carriers()
+        self.assertGreater(len(carriers), 1,
+                           "fewer than a pair of palette carriers exist, so 'names some and "
+                           "not others' has no referent and this guard cannot fail")
 
 
 class SourceColorsComeFromTheData(unittest.TestCase):
