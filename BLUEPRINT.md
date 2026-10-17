@@ -10402,6 +10402,7 @@ looks wrong.
 - `tests/test_quality_score_and_preview_prereq.py`: 27
 - `tests/test_quality_score_inputs_are_checked_before_scoring.py`: 11
 - `tests/test_quality_verdict_needs_evidence.py`: 13
+- `tests/test_quality_worked_scores_follow_the_formula.py`: 18
 - `tests/test_question_options_render_beneath.py`: 12
 - `tests/test_readme_does_not_undercount_claude_interfaces.py`: 7
 - `tests/test_reassurance_precedes_question.py`: 18
@@ -10792,6 +10793,8 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
     stays bounded.
 - **Module 5.**
   - A quality-score formula with three bands.
+  - Each worked quality score is the declared formula applied to its own
+    printed operands, and its status label comes from that total's band.
   - The presence test: `False` and `0` count as present.
   - Completeness is measured per record type (INV-174).
   - The fast path is gated on full mapping (INV-198).
@@ -12783,3 +12786,12 @@ Senzing licensing, with no SPDX identifier.
   scale-aware `hide-node-labels` default keeps governing it — the legend
   had toggled the node groups alone, leaving the hidden entities' names
   painted over empty space and their edges running to circles nobody draws
+- #677: make Module 5 Phase 1's two worked quality scores the declared
+  formula applied to their own printed operands — 82/90/3 is 84.8, not
+  78, and 45/55/12 is 49.7, not 42 — and take each status label from the
+  band its corrected total lands in, so the ≥80% example stops
+  illustrating the 70-79 warning gate that ends a turn on a question;
+  the formula, the three bands and the three labels stay exactly as
+  declared, and the guard recomputes every worked chain from the file's
+  own weights so a later mismatch cannot be squared by editing the
+  specification instead of the example

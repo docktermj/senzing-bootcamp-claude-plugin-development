@@ -1,0 +1,456 @@
+"""Module 5 Phase 1: every worked quality score is its own operands run through the declared formula.
+
+Step 6 of `phase1-quality-assessment.md` declares the score that routes a gate banded to the
+percentage point:
+
+    quality_score = 0.70 x completeness + 0.25 x format_consistency + 0.05 x (100 - duplicate_rate)
+
+and then presents a worked assessment block printing each source's three inputs beside its total.
+Two of those totals were not the formula applied to the inputs printed next to them (#677, from a
+static production-readiness audit of the pinned child release):
+
+* `CUSTOMERS_CRM` printed **82 / 90 / 3** and a total of **78%**, labeled
+  `⚠ Acceptable — some gaps`. The formula gives `57.4 + 22.5 + 4.85` = **84.75 → 84.8** — the
+  **≥80%** band, whose gate is a statement that continues into Phase 2 in the same turn and asks
+  no 👉 question. The example therefore illustrated the non-yielding branch as the 70-79 warning
+  gate that ends a turn on a choice.
+* `VENDORS_LEGACY` printed **45 / 55 / 12** and a total of **42%**. The formula gives
+  `31.5 + 13.75 + 4.4` = **49.65 → 49.7**. Its band — below 70 — and so its label were right by
+  luck; the number was not.
+
+⚠️ **Why a prose read does not catch this.** Each line is individually plausible: a quality score,
+a band label, a gate. The defect is only visible by *doing the arithmetic the same file declares
+two paragraphs earlier*, which is exactly the work a guide copying the example skips. The fix
+keeps the formula and the bands as declared (no specification change was requested) and corrects
+the worked outputs and the labels derived from them.
+
+**What this file asserts**, all of it read off the shipped file rather than pinned here:
+
+1. Every `w x operand + w x operand + w x (100 - operand) = ... = total` chain in the file uses the
+   **declared** weights, multiplies correctly, sums correctly, and rounds half-up to one decimal
+   where it shows a rounded figure.
+2. Every source in the presented assessment block has a total equal to the formula applied to the
+   three inputs printed beside it, rounded to one decimal.
+3. Every such total carries the status label the file's own band declaration gives for the band
+   that total lands in — and carries no other band's label.
+4. A source in the ≥80% band is illustrated as the non-yielding branch: it is not labeled with a
+   gating band's label, and the gate's ≥80% branch still carries no 👉 question.
+
+Each check returns its problems, so the negative controls below can run the same code over a
+mutated copy of the file and see the defect reported. Standard library only (INV-108).
+
+Run:  python3 -m unittest discover -s tests
+"""
+import re
+import unittest
+from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+PHASE1 = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
+          / "module-05-data-quality-mapping" / "phase1-quality-assessment.md")
+
+#: The declared formula, read for its weights rather than for its wording. The subtraction is
+#: written with a true minus sign (U+2212) in the file; a hyphen is accepted so a later edit that
+#: normalizes the glyph does not read as a missing formula.
+FORMULA = re.compile(
+    r"quality_score\s*=\s*([\d.]+)\s*×\s*completeness"
+    r"\s*\+\s*([\d.]+)\s*×\s*format_consistency"
+    r"\s*\+\s*([\d.]+)\s*×\s*\(\s*100\s*[−-]\s*duplicate_rate\s*\)")
+
+#: One line of worked arithmetic, after backticks and bold markers are stripped: the three
+#: weighted terms, their products, the raw total, and optionally the rounded total after an arrow.
+CHAIN = re.compile(
+    r"([\d.]+)\s*×\s*([\d.]+)\s*\+\s*([\d.]+)\s*×\s*([\d.]+)"
+    r"\s*\+\s*([\d.]+)\s*×\s*\(\s*100\s*[−-]\s*([\d.]+)\s*\)"
+    r"\s*=\s*([\d.]+)\s*\+\s*([\d.]+)\s*\+\s*([\d.]+)"
+    r"\s*=\s*([\d.]+)(?:\s*→\s*([\d.]+))?")
+
+#: The gate's three bands, as Step 6's threshold list states them.
+BAND_PROCEED = re.compile(r"\*\*≥(\d+)% quality score\*\*")
+BAND_WARN = re.compile(r"\*\*(\d+)-(\d+)% quality score\*\*")
+BAND_FIX = re.compile(r"\*\*<(\d+)% quality score\*\*")
+
+#: The status-label declaration: which label belongs to which band.
+LABEL_PROCEED = re.compile(r"`([^`]+)` only at ≥(\d+)%")
+LABEL_WARN = re.compile(r"`([^`]+)` *\n? *at (\d+)-(\d+)%")
+LABEL_FIX = re.compile(r"`([^`]+)` below (\d+)%")
+
+#: One source stanza inside the presented assessment block.
+SOURCE = re.compile(r"^Source: (\S+)\s*$", re.M)
+COMPLETENESS = re.compile(r"Field completeness:\s*([\d.]+)%")
+CONSISTENCY = re.compile(r"Format consistency:\s*([\d.]+)%")
+DUPLICATES = re.compile(r"Duplicate rate:\s*([\d.]+)%")
+TOTAL = re.compile(r"Overall quality:\s*([\d.]+)%\s{2}(.+?)\s*$", re.M)
+
+ONE_DP = Decimal("0.1")
+
+
+def body():
+    return PHASE1.read_text(encoding="utf-8")
+
+
+def rounded(value):
+    """One decimal, half-up — the rounding convention the file states beside the formula."""
+    return Decimal(value).quantize(ONE_DP, rounding=ROUND_HALF_UP)
+
+
+def plain(line):
+    """A line with Markdown emphasis removed, so arithmetic reads the same in prose and in code."""
+    return line.replace("`", "").replace("**", "").replace("*", "")
+
+
+def weights(text):
+    found = FORMULA.search(text)
+    if not found:
+        return None
+    return tuple(Decimal(group) for group in found.groups())
+
+
+def bands(text):
+    """(proceed_floor, warn_low, warn_high) as the threshold list declares them, or None."""
+    proceed, warn, fix = (BAND_PROCEED.search(text), BAND_WARN.search(text),
+                          BAND_FIX.search(text))
+    if not (proceed and warn and fix):
+        return None
+    return (Decimal(proceed.group(1)), Decimal(warn.group(1)), Decimal(warn.group(2)),
+            Decimal(fix.group(1)))
+
+
+def labels(text):
+    """{band key: declared status label}, read off the file's own label declaration."""
+    proceed, warn, fix = (LABEL_PROCEED.search(text), LABEL_WARN.search(text),
+                          LABEL_FIX.search(text))
+    if not (proceed and warn and fix):
+        return None
+    return {"proceed": proceed.group(1), "warn": warn.group(1), "fix": fix.group(1)}
+
+
+def band_of(score, floors):
+    """Which band a score lands in: 'proceed', 'warn' or 'fix'."""
+    proceed_floor, warn_low, _warn_high, _fix_ceiling = floors
+    if score >= proceed_floor:
+        return "proceed"
+    if score >= warn_low:
+        return "warn"
+    return "fix"
+
+
+def assessment_block(text):
+    """The presented assessment block — the fenced example the guide prints to the Bootcamper."""
+    marker = "Data Quality Assessment:"
+    if marker not in text:
+        return None
+    start = text.index(marker)
+    end = text.find("```", start)
+    return text[start:end if end != -1 else len(text)]
+
+
+def presented_sources(text):
+    """Each source stanza in the presented block, with its operands, total and label."""
+    block = assessment_block(text)
+    if block is None:
+        return None
+    out = []
+    starts = [(m.start(), m.group(1)) for m in SOURCE.finditer(block)]
+    for index, (offset, name) in enumerate(starts):
+        stop = starts[index + 1][0] if index + 1 < len(starts) else len(block)
+        stanza = block[offset:stop]
+        operands = [pattern.search(stanza)
+                    for pattern in (COMPLETENESS, CONSISTENCY, DUPLICATES)]
+        total = TOTAL.search(stanza)
+        if not all(operands) or not total:
+            out.append({"name": name, "broken": True})
+            continue
+        out.append({
+            "name": name,
+            "completeness": Decimal(operands[0].group(1)),
+            "consistency": Decimal(operands[1].group(1)),
+            "duplicates": Decimal(operands[2].group(1)),
+            "total": Decimal(total.group(1)),
+            "printed_total": total.group(1),
+            "label": total.group(2).strip(),
+        })
+    return out
+
+
+def score(operands, weight):
+    """The declared formula, applied."""
+    completeness, consistency, duplicates = operands
+    return (weight[0] * completeness + weight[1] * consistency
+            + weight[2] * (Decimal(100) - duplicates))
+
+
+def strong_branch(text):
+    """The gate's ≥80% bullet, which must stay a statement rather than a question."""
+    opening = "**Quality ≥80%:**"
+    if opening not in text:
+        return None
+    start = text.index(opening)
+    end = text.find("**Quality 70-79%", start)
+    return text[start:end if end != -1 else len(text)]
+
+
+# --- the checks, each returning its problems so a negative control can run them on a mutant ---
+
+
+def problems_with_the_arithmetic(text):
+    """Every worked chain in the file uses the declared weights and computes correctly."""
+    weight = weights(text)
+    if weight is None:
+        return ["the declared quality_score formula is gone — re-point this guard"]
+    out = []
+    chains = 0
+    for line in text.splitlines():
+        found = CHAIN.search(plain(line))
+        if not found:
+            continue
+        chains += 1
+        parts = found.groups()
+        used = (Decimal(parts[0]), Decimal(parts[2]), Decimal(parts[4]))
+        operands = (Decimal(parts[1]), Decimal(parts[3]), Decimal(parts[5]))
+        products = (Decimal(parts[6]), Decimal(parts[7]), Decimal(parts[8]))
+        raw, shown = Decimal(parts[9]), parts[10]
+        if used != weight:
+            out.append("a worked chain uses weights %s where the formula declares %s: %r"
+                       % (used, weight, line.strip()))
+            continue
+        expected = (used[0] * operands[0], used[1] * operands[1],
+                    used[2] * (Decimal(100) - operands[2]))
+        for index, (got, want) in enumerate(zip(products, expected)):
+            if got != want:
+                out.append("term %d of a worked chain is %s, not %s: %r"
+                           % (index + 1, got, want, line.strip()))
+        total = sum(expected, Decimal(0))
+        if raw != total:
+            out.append("a worked chain totals %s where its own terms sum to %s: %r"
+                       % (raw, total, line.strip()))
+        if shown is None:
+            if raw != rounded(total):
+                out.append("a worked chain shows %s, which is not %s rounded to one decimal: %r"
+                           % (raw, total, line.strip()))
+        elif Decimal(shown) != rounded(total):
+            out.append("a worked chain rounds %s to %s, not to %s: %r"
+                       % (total, shown, rounded(total), line.strip()))
+    if not chains:
+        out.append("no worked arithmetic chain was found in the file — re-point this guard")
+    return out
+
+
+def problems_with_the_presented_scores(text):
+    """Every presented total is the formula applied to the operands printed beside it."""
+    weight = weights(text)
+    if weight is None:
+        return ["the declared quality_score formula is gone — re-point this guard"]
+    sources = presented_sources(text)
+    if sources is None:
+        return ["the presented assessment block is gone — re-point this guard"]
+    if len(sources) < 2:
+        return ["the presented assessment block shows fewer than two sources — re-point "
+                "this guard; the example exists to exercise more than one band"]
+    out = []
+    for source in sources:
+        if source.get("broken"):
+            out.append("source %s does not print all three inputs and a total" % source["name"])
+            continue
+        operands = (source["completeness"], source["consistency"], source["duplicates"])
+        expected = rounded(score(operands, weight))
+        if source["total"] != expected:
+            out.append(
+                "source %s prints %s%% from %s / %s / %s, where the declared formula gives %s%%"
+                % (source["name"], source["printed_total"], operands[0], operands[1],
+                   operands[2], expected))
+        if Decimal(source["printed_total"]) != rounded(source["printed_total"]):
+            out.append("source %s prints %s%%, which is not stated to one decimal"
+                       % (source["name"], source["printed_total"]))
+    return out
+
+
+def problems_with_the_presented_labels(text):
+    """Every presented label is the one the file declares for that total's band."""
+    weight, floors, declared = weights(text), bands(text), labels(text)
+    if weight is None or floors is None or declared is None:
+        return ["the formula, the band list or the label declaration is gone — re-point "
+                "this guard"]
+    sources = presented_sources(text)
+    if not sources:
+        return ["the presented assessment block is gone — re-point this guard"]
+    out = []
+    for source in sources:
+        if source.get("broken"):
+            continue
+        operands = (source["completeness"], source["consistency"], source["duplicates"])
+        computed = rounded(score(operands, weight))
+        band = band_of(computed, floors)
+        want = declared[band]
+        if want not in source["label"]:
+            out.append("source %s scores %s%% (%s band) and is labeled %r, which does not "
+                       "carry the declared label %r"
+                       % (source["name"], computed, band, source["label"], want))
+        for other, label in declared.items():
+            if other != band and label in source["label"]:
+                out.append("source %s scores %s%% (%s band) and carries the %s band's label %r"
+                           % (source["name"], computed, band, other, label))
+    return out
+
+
+def problems_with_the_strong_branch(text):
+    """A ≥80% example is the non-yielding branch, not the 70-79 warning gate."""
+    weight, floors, declared = weights(text), bands(text), labels(text)
+    if weight is None or floors is None or declared is None:
+        return ["the formula, the band list or the label declaration is gone — re-point "
+                "this guard"]
+    out = []
+    branch = strong_branch(text)
+    if branch is None:
+        out.append("the gate's ≥80% branch is gone — re-point this guard")
+    elif re.search(r"\U0001f449\s*\*\*", branch):
+        out.append("the gate's ≥80% branch now carries a 👉 question; a ≥80% example cannot "
+                   "illustrate a branch that ends the turn on a choice")
+    strong = [s for s in presented_sources(text) or []
+              if not s.get("broken")
+              and band_of(rounded(score((s["completeness"], s["consistency"], s["duplicates"]),
+                                        weight)), floors) == "proceed"]
+    if not strong:
+        out.append("no presented source lands in the ≥80% band — the band most runs take is "
+                   "no longer illustrated")
+    for source in strong:
+        if declared["warn"] in source["label"] or declared["fix"] in source["label"]:
+            out.append("source %s is in the ≥80%% band and carries a gating band's label %r"
+                       % (source["name"], source["label"]))
+        if "?" in source["label"]:
+            out.append("source %s is in the ≥80%% band and its label poses a question: %r"
+                       % (source["name"], source["label"]))
+    return out
+
+
+ALL_CHECKS = (problems_with_the_arithmetic, problems_with_the_presented_scores,
+              problems_with_the_presented_labels, problems_with_the_strong_branch)
+
+
+class TheScanIsNotVacuous(unittest.TestCase):
+    def test_the_file_is_there(self):
+        self.assertTrue(PHASE1.is_file(), "phase1-quality-assessment.md moved")
+
+    def test_the_declared_formula_is_found(self):
+        self.assertIsNotNone(weights(body()),
+                             "the quality_score formula no longer parses; every check here "
+                             "reads its weights off the file rather than pinning them")
+
+    def test_the_bands_and_their_labels_are_found(self):
+        self.assertIsNotNone(bands(body()), "the ≥80 / 70-79 / <70 threshold list is gone")
+        self.assertIsNotNone(labels(body()), "the status-label declaration is gone")
+
+    def test_the_rounding_convention_is_stated(self):
+        flat = re.sub(r"\s+", " ", body())
+        self.assertRegex(flat, r"(?i)round to one decimal",
+                         "the rounding convention the worked totals follow is no longer "
+                         "stated, so 84.75 and 49.65 have no declared presentation")
+
+    def test_the_presented_block_is_found_with_its_sources(self):
+        sources = presented_sources(body())
+        self.assertIsNotNone(sources, "the presented assessment block is gone")
+        self.assertGreaterEqual(len(sources), 2, "the presented block lost a source")
+
+
+class TheWorkedScoresFollowTheDeclaredFormula(unittest.TestCase):
+    def test_every_worked_chain_computes(self):
+        self.assertEqual([], problems_with_the_arithmetic(body()))
+
+    def test_every_presented_total_is_its_own_operands(self):
+        self.assertEqual([], problems_with_the_presented_scores(body()))
+
+    def test_the_two_reported_examples_are_the_ones_fixed(self):
+        """#677's two cases, named, so a later edit cannot silently drop them."""
+        found = {s["name"]: s for s in presented_sources(body()) if not s.get("broken")}
+        for name, operands, total in (
+                ("CUSTOMERS_CRM", (82, 90, 3), "84.8"),
+                ("VENDORS_LEGACY", (45, 55, 12), "49.7")):
+            with self.subTest(source=name):
+                self.assertIn(name, found, "the %s example is gone — if it was renamed, "
+                                           "re-point this guard" % name)
+                source = found[name]
+                self.assertEqual(
+                    [Decimal(x) for x in operands],
+                    [source["completeness"], source["consistency"], source["duplicates"]],
+                    "%s's operands changed; the issue settles that the operands stay and "
+                    "the outputs follow them" % name)
+                self.assertEqual(total, source["printed_total"])
+
+
+class TheLabelsFollowTheBands(unittest.TestCase):
+    def test_every_presented_label_matches_its_band(self):
+        self.assertEqual([], problems_with_the_presented_labels(body()))
+
+    def test_the_strong_example_illustrates_the_non_yielding_branch(self):
+        self.assertEqual([], problems_with_the_strong_branch(body()))
+
+    def test_the_canonical_formula_and_bands_are_unchanged(self):
+        """The issue fixes the examples; the specification stays exactly as declared."""
+        self.assertEqual((Decimal("0.70"), Decimal("0.25"), Decimal("0.05")), weights(body()),
+                         "the declared weights changed. Correcting the worked examples was "
+                         "the whole scope (#677); changing the weights is a specification "
+                         "change nobody requested")
+        self.assertEqual((Decimal(80), Decimal(70), Decimal(79), Decimal(70)), bands(body()),
+                         "the gate boundaries changed; they are fixed as declared (#677)")
+
+
+class TheGuardsSeeTheDefectTheyWereWrittenFor(unittest.TestCase):
+    """Negative controls — each mutation is the shipped defect, or its neighbor."""
+
+    def mutated(self, old, new):
+        text = body()
+        self.assertIn(old, text, "the text this control mutates is gone: %r" % old)
+        return text.replace(old, new, 1)
+
+    def reported(self, text):
+        return [problem for check in ALL_CHECKS for problem in check(text)]
+
+    def test_the_original_total_is_reported(self):
+        """The shipped defect: 82 / 90 / 3 printed as 78%."""
+        problems = self.reported(self.mutated("     84.8%", "       78%"))
+        self.assertTrue(any("CUSTOMERS_CRM" in p and "84.8" in p for p in problems),
+                        "a total that is not its own operands was not reported: %s" % problems)
+
+    def test_the_second_original_total_is_reported(self):
+        problems = self.reported(self.mutated("     49.7%", "       42%"))
+        self.assertTrue(any("VENDORS_LEGACY" in p for p in problems),
+                        "a total that is not its own operands was not reported: %s" % problems)
+
+    def test_the_mislabeled_band_is_reported(self):
+        """The other half of the defect: a ≥80% score wearing the 70-79 warning label."""
+        problems = self.reported(
+            self.mutated("✅ Strong — continue to mapping",
+                         "⚠ Acceptable — some gaps"))
+        self.assertTrue(any("CUSTOMERS_CRM" in p for p in problems),
+                        "a ≥80%% source labeled with the 70-79 gate was not reported: %s"
+                        % problems)
+
+    def test_a_rounding_slip_is_reported(self):
+        """84.75 truncated rather than rounded half-up."""
+        problems = self.reported(self.mutated("     84.8%", "     84.7%"))
+        self.assertTrue(any("CUSTOMERS_CRM" in p for p in problems),
+                        "a total rounded the wrong way was not reported: %s" % problems)
+
+    def test_a_weight_that_drifts_from_the_formula_is_reported(self):
+        """A worked chain that stops using the declared weights."""
+        problems = self.reported(self.mutated("`0.70 × 82", "`0.60 × 82"))
+        self.assertTrue(any("weights" in p for p in problems),
+                        "a chain using undeclared weights was not reported: %s" % problems)
+
+    def test_an_arithmetic_slip_inside_a_chain_is_reported(self):
+        problems = self.reported(self.mutated("`57.4 + 22.5 + 4.85`", "`57.4 + 22.5 + 4.95`"))
+        self.assertTrue(problems, "a mis-multiplied term was not reported")
+
+    def test_a_question_in_the_strong_branch_is_reported(self):
+        branch = strong_branch(body())
+        self.assertIsNotNone(branch, "the gate's ≥80% branch is gone — re-point this guard")
+        problems = problems_with_the_strong_branch(
+            body().replace(branch, branch + "\n\n  \U0001f449 **Shall we continue?**\n"))
+        self.assertTrue(any("👉" in p for p in problems),
+                        "a 👉 question added to the ≥80%% branch was not reported: %s"
+                        % problems)
+
+
+if __name__ == "__main__":
+    unittest.main()
