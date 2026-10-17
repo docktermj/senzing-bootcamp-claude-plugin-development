@@ -44,6 +44,14 @@ Usage::
 ``--dry-run`` prints the manifest and the total uncompressed size and writes **nothing**. The
 conversation layer (`skills/bootcamp-onboarding/packaging.md`) runs it first so the consent question
 can quote a real size rather than an estimate.
+
+⚠️ **A measured size still has to say what it did not measure.** ``--dry-run`` also names, on an
+``absent:`` line, every candidate root that was not in the project when the walk ran. The one that
+matters most is ``backups/revisit``: Step 3 of the packaging flow creates the database backup
+*after* the Bootcamper has answered, so on any pre-graduation run the ``transfer`` figure is
+measured over a tree without the component this script's own 2 GB warning calls the reason the
+profile is large. The figure was always honest about having been measured; until #692 it said
+nothing about what it measured.
 """
 import argparse
 import hashlib
@@ -122,6 +130,22 @@ TRANSFER_EXTRA = (
     "config",
     "src",
 )
+
+#: The reason recorded for a candidate root that is not in the project at all. ⚠️ Written once and
+#: matched against, never re-spelled: the dry-run report reads the absent set back out of
+#: `skipped` by this exact string, so a second copy of the wording would silently empty that report
+#: rather than fail.
+NOT_PRESENT = "not present in this project"
+
+#: The revisit bundle, which holds the database backup. ⚠️ Spelled again here rather than referenced
+#: out of `TRANSFER_EXTRA`: `tests/test_handed_over_paths_can_travel.py` reads that tuple with
+#: `ast.literal_eval`, and a name inside it would make every packaging rule unreadable to the guard
+#: that checks them. `tests/test_package_bootcamp.py` pins the two together.
+#: ⚠️ It is the one absent candidate root a Bootcamper is about to CREATE rather than simply not
+#: have: `/package-bootcamp` writes it, after this measurement, for whoever answers "everything to
+#: continue elsewhere". So a `transfer` size measured without it is a size measured without the
+#: largest thing that profile exists to carry, and the report below says so in as many words.
+DATABASE_BACKUP_ROOT = "backups/revisit"
 
 #: Above this, moving the file is awkward enough to be worth saying so.
 SIZE_WARN_BYTES = 2 * 1024 * 1024 * 1024
@@ -215,7 +239,7 @@ def collect(project_root, profile):
     for top in candidate_roots(profile):
         base = project_root / top
         if not base.exists():
-            skipped.append({"path": top, "reason": "not present in this project"})
+            skipped.append({"path": top, "reason": NOT_PRESENT})
             continue
         for dirpath, dirnames, filenames in os.walk(base):
             here = Path(dirpath)
@@ -271,6 +295,19 @@ def collect(project_root, profile):
                 seen.add(rel)
                 members.append((resolved, rel))
     return members, skipped
+
+
+def absent_roots(skipped):
+    """The candidate roots that were not in the project, in the order the profile reaches them.
+
+    ⛔ **Every absent root, never ``backups/revisit`` alone.** ``config`` and ``src`` are missing
+    on an early run too, and a report naming one of the three would be the same partial
+    measurement one level down -- a figure quoted as if it covered a tree the walk never saw.
+
+    A missing candidate root is not an error (``collect`` records it and carries on), but it IS
+    missing from the total the caller is about to quote, and only this script knows which ones.
+    """
+    return [entry["path"] for entry in skipped if entry["reason"] == NOT_PRESENT]
 
 
 #: Sentinel for the third outcome. `None` means "read it all and found nothing"; this means
@@ -666,6 +703,22 @@ def run(argv=None):
         print("size:    %s uncompressed (%d bytes)" % (human(total), total), file=sys.stderr)
         print("excluded: %d path(s) — see `excluded` in the manifest above" % len(skipped),
               file=sys.stderr)
+        absent = absent_roots(skipped)
+        if absent:
+            # ⚠️ What the size above did NOT measure, said by the only thing that knows. The flow
+            # runs at any point in the bootcamp, so a candidate root that does not exist yet is
+            # ordinary -- but the caller quotes the figure to the Bootcamper, and a figure that
+            # does not say what it missed is honest about being measured and wrong about what it
+            # measured.
+            print("absent:  %s — not in the project at measurement time, so the size above does "
+                  "NOT include %s" % (", ".join(absent),
+                                      "it" if len(absent) == 1 else "them"),
+                  file=sys.stderr)
+            if DATABASE_BACKUP_ROOT in absent:
+                print("         `%s` is the database backup, the largest part of a transfer "
+                      "package. It is written only if the Bootcamper asks to continue elsewhere "
+                      "— after this measurement, never before it." % DATABASE_BACKUP_ROOT,
+                      file=sys.stderr)
         if total > SIZE_WARN_BYTES:
             print(
                 "WARNING: %s is large enough to be awkward to move. Consider the 'share' "

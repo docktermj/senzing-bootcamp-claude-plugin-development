@@ -1711,9 +1711,13 @@ Any-time flows:
   separate `**Context:**`/`**Elaboration:**` labels; re-read; exit banner.
   Never sent anywhere.
 - Packaging (`packaging.md`; `/package-bootcamp`): dry-run
-  `package_bootcamp.py` for `share` and `transfer` sizes; ask results,
-  everything, or cancel; for transfer ensure `backups/revisit/` via
-  `../graduation/database-backup.md`; run it and report path, size, digest.
+  `package_bootcamp.py` for `share` and `transfer` sizes and read its `absent:`
+  line; ask results, everything, or cancel; for transfer ensure
+  `backups/revisit/` via `../graduation/database-backup.md`; run it and report
+  path, size, digest. Option 2's figure carries a `{…}` clause saying it
+  excludes the database backup, kept only when the dry run reported
+  `backups/revisit` absent and dropped otherwise, because after graduation the
+  bundle exists and the figure is complete (#692).
 
 ### 5.6 `plugins/senzing-bootcamp/skills/bootcamp-preparation/`
 
@@ -6814,6 +6818,8 @@ TRANSFER_EXTRA = (
     "config",
     "src",
 )
+NOT_PRESENT = "not present in this project"
+DATABASE_BACKUP_ROOT = "backups/revisit"
 SIZE_WARN_BYTES = 2 * 1024 * 1024 * 1024
 SCAN_BLOCK_BYTES = 1 << 20
 SCAN_OVERLAP_BYTES = 4096
@@ -6824,6 +6830,8 @@ def is_excluded(relpath, profile):
 def candidate_roots(profile):
     ...
 def collect(project_root, profile):
+    ...
+def absent_roots(skipped):
     ...
 UNEXAMINED = "unexamined"
 def sha256_of(path):
@@ -10114,10 +10122,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8117 test methods in 437 files, matching `inventory.test_count_total`.
+There are 8143 test methods in 438 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8117.
+sum to 8143.
 
 Two files run more tests than they define, so discovery collects 8110:
 
@@ -10390,7 +10398,7 @@ looks wrong.
 - `tests/test_organization_search.py`: 23
 - `tests/test_own_data_entity_shown_as_text.py`: 28
 - `tests/test_overview_bullets_are_not_counted.py`: 8
-- `tests/test_package_bootcamp.py`: 50
+- `tests/test_package_bootcamp.py`: 58
 - `tests/test_packaging_consent_gate_ships.py`: 15
 - `tests/test_pages_site_commands_match_docs_readme.py`: 10
 - `tests/test_partial_row_and_schema_coverage.py`: 39
@@ -10425,6 +10433,7 @@ looks wrong.
 - `tests/test_quality_verdict_needs_evidence.py`: 13
 - `tests/test_quality_worked_scores_follow_the_formula.py`: 18
 - `tests/test_question_options_render_beneath.py`: 12
+- `tests/test_quoted_sizes_say_what_they_missed.py`: 18
 - `tests/test_readme_does_not_undercount_claude_interfaces.py`: 7
 - `tests/test_reassurance_precedes_question.py`: 18
 - `tests/test_recap_checkpoint_is_lifted_before_module_parsing.py`: 15
@@ -11015,9 +11024,14 @@ tests a rebuild can pass from behavior alone.
   `Senzing license payload`, and returns `None` for clean text. It never echoes
   the secret and never filters by file extension.
 - **`package_bootcamp.py`** (`tests/test_package_bootcamp.py`,
-  `tests/test_open_me_first_matches_the_manifest.py`).
+  `tests/test_open_me_first_matches_the_manifest.py`,
+  `tests/test_quoted_sizes_say_what_they_missed.py`).
   - **Arguments:** `--project-root`, `--profile share|transfer`, `--date` and
-    `--dry-run`. A dry run reports a size and writes nothing.
+    `--dry-run`. A dry run reports a size and writes nothing. It also prints an
+    `absent:` line naming every candidate root that was not in the project —
+    all of them, not `backups/revisit` alone — so the figure says what it did
+    not measure; when `backups/revisit` is among them a second line names it as
+    the database backup, written only after this measurement (#692).
   - **Layout.** The zip has one root directory, holding `OPEN_ME_FIRST.md` and
     `PACKAGE_MANIFEST.json`.
   - **`share`** carries results only. It has no database, no credentials, no
@@ -13027,3 +13041,19 @@ Senzing licensing, with no SPDX identifier.
   measured wide first (287 blocks, 11 in `tests/` naming a registered pair,
   three of them correct prose) and narrowed to the sign-off claim rather than
   the block's name, since a block keeps that name after it is applied (INV-282)
+- #692: `/package-bootcamp` Step 2's option 2 quoted a `transfer` size Step 1
+  measured before Step 3 created `backups/revisit/`, the database backup the
+  same file calls the reason that option is large — the figure was honest about
+  having been measured and silent about what it measured; the figure is made
+  honest rather than the backup moved, since measuring first would write a
+  backup the Bootcamper may then cancel, so option 2 gains a `{…}` clause
+  saying the figure excludes it and the ⛔ beside the question makes that
+  clause conditional on the dry run having reported `backups/revisit` absent —
+  an unconditional line would be false on every post-graduation run and would
+  teach the reader to skip it; `package_bootcamp.py --dry-run` now prints an
+  `absent:` line naming every candidate root the walk did not find, not
+  `backups/revisit` alone, and
+  `tests/test_quoted_sizes_say_what_they_missed.py` derives its sites by
+  pairing a size-quoting option with a later same-option step and reads the
+  measured roots out of the script with `ast` (INV-246, INV-346), with the
+  pre-fix text as a negative control

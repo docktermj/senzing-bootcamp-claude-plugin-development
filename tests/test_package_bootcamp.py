@@ -37,12 +37,18 @@ travel, because the fix must not exclude the visualizations `share` exists to ca
 
 Offline; stdlib only; no network and no Senzing engine.
 
+No phrase-level pattern (#692): the line-at-a-time reads here are of the packager's own
+stderr report and of archive member names, never of shipped prose. A line IS the unit
+there -- `size:`, `excluded:` and `absent:` are lines the conversation layer reads back
+one at a time -- so there is no phrase for a wrap-aware read to find (INV-346).
+
 Source spec: `specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md`.
 
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
 import json
+import shutil
 import struct
 import subprocess
 import sys
@@ -678,6 +684,115 @@ class TheExclusionMatcherMatchesSegmentsNotSubstrings(unittest.TestCase):
                     "production/metadata/raw_counts.md"):
             with self.subTest(rel=rel):
                 self.assertIsNone(PKG.is_excluded(rel, "share"))
+
+
+class TheDryRunNamesWhatItCouldNotMeasure(unittest.TestCase):
+    """#692 — a measured size has to say what the walk never saw.
+
+    ⛔ **The packaging flow's Step 3 creates `backups/revisit/` AFTER the question that quotes
+    the transfer size.** So on any pre-graduation run -- which is the whole point of an any-time
+    flow -- the figure is measured over a tree with no database backup in it, the component this
+    script's own 2 GB warning calls the reason the profile is large. The figure was honest about
+    having been measured and silent about what it measured.
+
+    ⚠️ **Every absent root, never `backups/revisit` alone.** `config` and `src` are missing on an
+    early run too, and a report naming one of the three would be the same partial measurement one
+    level down. The conversation layer then has the fact to relay rather than having to infer it.
+
+    Each case runs the real script as a subprocess over a fixture tree, so the report is checked
+    as a Bootcamper's guide would read it, not as a function's return value.
+    """
+
+    def drop(self, project, *relatives):
+        for rel in relatives:
+            shutil.rmtree(project.root / rel)
+            self.assertFalse((project.root / rel).exists(),
+                             "the fixture still holds %s, so this case measures nothing" % rel)
+
+    def absent_line(self, stderr):
+        lines = [line for line in stderr.splitlines() if line.startswith("absent:")]
+        self.assertEqual(1, len(lines),
+                         "expected exactly one `absent:` line; stderr was:\n%s" % stderr)
+        return lines[0]
+
+    def test_a_complete_project_prints_no_absent_line(self):
+        """⛔ Conditional, not standing text: after graduation there is nothing to disclose.
+
+        The fixture holds every candidate root, which is the post-graduation state. A report
+        that announced an omission here would train its reader to skip the line on the runs
+        where it is true.
+        """
+        with Project() as p:
+            result, _ = p.dry_run("transfer")
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertNotIn("absent:", result.stderr,
+                             "a complete project is told something was missing from the "
+                             "measurement, which is false")
+
+    def test_a_pre_graduation_project_names_the_missing_revisit_bundle(self):
+        with Project() as p:
+            self.drop(p, "backups/revisit")
+            result, _ = p.dry_run("transfer")
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn("backups/revisit", self.absent_line(result.stderr))
+
+    def test_it_names_every_absent_root_and_not_only_the_backup(self):
+        """An early run is missing `config` and `src` as well, and the report says all three."""
+        with Project() as p:
+            self.drop(p, "backups/revisit", "config", "src")
+            result, _ = p.dry_run("transfer")
+            line = self.absent_line(result.stderr)
+            for root in ("backups/revisit", "config", "src"):
+                with self.subTest(root=root):
+                    self.assertIn(root, line)
+
+    def test_the_backup_absence_carries_the_fact_the_guide_relays(self):
+        """⛔ The guide must not have to infer which absence matters; the script says so."""
+        with Project() as p:
+            self.drop(p, "backups/revisit")
+            result, _ = p.dry_run("transfer")
+        self.assertIn("largest part of a transfer package", result.stderr)
+        self.assertIn("after this measurement", result.stderr)
+
+    def test_the_share_profile_reports_its_own_absences_only(self):
+        """`share` never walks `TRANSFER_EXTRA`, so naming it absent there would be noise."""
+        with Project() as p:
+            self.drop(p, "backups/revisit", "config", "src", "data/exports")
+            result, _ = p.dry_run("share")
+            line = self.absent_line(result.stderr)
+            self.assertIn("data/exports", line)
+            for root in ("backups/revisit", "config", "src"):
+                with self.subTest(root=root):
+                    self.assertNotIn(root, line)
+
+    def test_the_helper_reads_the_collectors_own_record(self):
+        """The absent set comes out of `skipped`, so it cannot disagree with the manifest."""
+        with Project() as p:
+            self.drop(p, "backups/revisit", "config")
+            _members, skipped = PKG.collect(p.root, "transfer")
+            self.assertEqual(["backups/revisit", "config"], PKG.absent_roots(skipped))
+
+    def test_the_manifest_records_the_same_absences(self):
+        with Project() as p:
+            self.drop(p, "backups/revisit")
+            _result, manifest = p.dry_run("transfer")
+        named = [e["path"] for e in manifest["excluded"] if e["reason"] == PKG.NOT_PRESENT]
+        self.assertEqual(["backups/revisit"], named)
+
+    def test_the_quoted_figure_really_grows_once_the_backup_exists(self):
+        """⛔ (INV-265) Anti-vacuity: the line claims a real omission, so measure it.
+
+        Without this the report could name an absence that costs nothing, and the disclosure
+        the conversation layer builds on it would be ceremony.
+        """
+        with Project() as p:
+            _result, complete = p.dry_run("transfer")
+            self.drop(p, "backups/revisit")
+            _result, without = p.dry_run("transfer")
+        self.assertLess(
+            without["total_uncompressed_bytes"], complete["total_uncompressed_bytes"],
+            "the transfer figure is the same with and without the revisit bundle, so the "
+            "absence the report names changes nothing the Bootcamper was told")
 
 
 if __name__ == "__main__":
