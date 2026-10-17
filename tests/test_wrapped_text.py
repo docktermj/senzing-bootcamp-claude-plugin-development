@@ -10,6 +10,11 @@ own lines, in order.
 ⚠️ Each "not matched across a boundary" test has a positive twin with the boundary removed, so a
 matcher that matched nothing at all would fail here rather than pass every negative.
 
+`collapsed_blocks(text)` is the same read one step earlier, for a guard that needs the matched
+text and not only its line (#683). It is pinned here as what `match_lines` is built from: the
+blocks it yields are the blocks `match_lines` matches on, and `line_of` maps an index in one back
+to its line.
+
 Enforces **INV-346** (a guard whose rule is about a phrase or a sentence matches it across a line
 wrap): it pins the block rules of the shared reader every such guard uses. It does **not** establish
 that every guard in `tests/` uses that reader, or says why it reads single lines; #424 and #425
@@ -24,7 +29,7 @@ Run:  python3 -m unittest discover -s tests
 import re
 import unittest
 
-from _wrapped_text import match_lines
+from _wrapped_text import collapsed_blocks, line_of, match_lines
 
 PHRASE = re.compile(r"no flag is documented")
 
@@ -165,6 +170,35 @@ class ListItemsJoinIntoOneBlock(unittest.TestCase):
         """Accepted (#426 edge case): a phrase across two items can match."""
         self.assertEqual([1], match_lines("- no flag\n- is documented", re.compile(
             r"no flag - is documented")))
+
+
+class CollapsedBlocksIsWhatMatchLinesMatchesOn(unittest.TestCase):
+    """#683: a guard that reports the matched text reads the same blocks, not its own."""
+
+    def test_each_block_is_collapsed_and_trimmed(self):
+        text = "  no flag\n  is documented  \n\nsecond\nblock"
+        self.assertEqual(["no flag is documented", "second block"],
+                         [flat for flat, _ in collapsed_blocks(text)])
+
+    def test_a_blank_block_is_skipped(self):
+        self.assertEqual(["a", "b"], [flat for flat, _ in collapsed_blocks("a\n\n   \n\nb")])
+
+    def test_origin_maps_each_character_back_to_its_line(self):
+        (flat, origin), = collapsed_blocks("no flag\nis documented")
+        self.assertEqual(1, line_of(origin, flat.index("no")))
+        self.assertEqual(2, line_of(origin, flat.index("documented")))
+
+    def test_line_of_clamps_an_index_at_the_end(self):
+        (flat, origin), = collapsed_blocks("no flag\nis documented")
+        self.assertEqual(2, line_of(origin, len(flat) + 5))
+
+    def test_match_lines_agrees_with_it(self):
+        text = "intro\n\n> no flag\n> is documented\n\n- no flag is documented"
+        self.assertEqual(
+            match_lines(text, PHRASE),
+            [line_of(origin, m.start())
+             for flat, origin in collapsed_blocks(text)
+             for m in PHRASE.finditer(flat)])
 
 
 if __name__ == "__main__":

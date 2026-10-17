@@ -4742,9 +4742,14 @@ tildes, possibly indented; closed only by the same character), each table
 row, each ATX heading and the leading front matter are boundaries or blocks
 of their own; inside a fence only a blank line ends a block; outside a fence
 leading `>` markers are stripped; consecutive list lines stay one block.
-`match_lines(text, pattern)` collapses each block's whitespace to single
-spaces, trims it, runs the compiled pattern per block, and returns the
-1-based line where each match starts.
+`collapsed_blocks(text)` yields `(flat, origin)` for each non-empty block,
+where `flat` is that block collapsed to single spaces and trimmed and
+`origin[i]` is the line `flat[i]` came from; `line_of(origin, i)` reads a
+line off it, clamping at the end. `match_lines(text, pattern)` is written on
+`collapsed_blocks`: it runs the compiled pattern per block and returns the
+1-based line where each match starts. A guard that needs the matched text as
+well as its line reads `collapsed_blocks` rather than growing a second
+collapse rule (#683).
 
 `_maintainer_surface.py` derives the maintainer operation set once
 (INV-300): `skills()` (directories under `.claude/skills/` holding a
@@ -9990,9 +9995,10 @@ collected as tests:
   - It exports the decorator `requires_fpdf2`.
   - It is a module rather than a `conftest.py`, which `unittest` never loads.
 - `tests/_wrapped_text.py`: the shared wrap-aware matcher (INV-346), used by 68
-  files. `blocks(text)` splits Markdown into blocks, and
-  `match_lines(text, pattern)` returns the 1-based start line of each match. The
-  rules are in 8.4.1.
+  files. `blocks(text)` splits Markdown into blocks,
+  `collapsed_blocks(text)` yields each block collapsed with its line origins,
+  and `match_lines(text, pattern)` returns the 1-based start line of each
+  match. The rules are in 8.4.1.
 - `tests/_maintainer_surface.py`: the maintainer operation set, used by 9 files:
   - `skills()`: directories under `.claude/skills/` that contain a `SKILL.md`;
   - `commands()` and `command_files()`: `.claude/commands/*.md`, empty when the
@@ -10142,7 +10148,7 @@ looks wrong.
 - `tests/test_build_version_provenance_is_per_platform.py`: 8
 - `tests/test_bundled_script_and_production_paths.py`: 23
 - `tests/test_business_problem_preserves_the_original_wording.py`: 17
-- `tests/test_canonical_module_names.py`: 15
+- `tests/test_canonical_module_names.py`: 31
 - `tests/test_canonical_operations_resolve.py`: 56
 - `tests/test_capture_exit_codes_are_not_conflated.py`: 7
 - `tests/test_capture_render_is_settled_and_fitted.py`: 14
@@ -10545,7 +10551,7 @@ looks wrong.
 - `tests/test_windows_forms_at_hand_run_sites.py`: 43
 - `tests/test_windows_powershell_guidance.py`: 36
 - `tests/test_worked_steers.py`: 33
-- `tests/test_wrapped_text.py`: 32
+- `tests/test_wrapped_text.py`: 37
 - `tests/test_write_gate.py`: 23
 
 ### 8.4 Key cases
@@ -10572,7 +10578,7 @@ need the original text. These are heuristic estimates, accurate to about 10%:
   found and that a known site matched ("the scan is not vacuous").
 - **Negative controls.** Guards run their own matcher on a copy with the old
   wording pasted back, and assert that it fails.
-- **Wrap-aware matching.** `tests/test_wrapped_text.py` (32 tests) pins the
+- **Wrap-aware matching.** `tests/test_wrapped_text.py` (37 tests) pins the
   block rules of `tests/_wrapped_text.py`.
   - A match is reported at its start line. CR counts as whitespace.
   - These lines end a block:
@@ -10591,6 +10597,18 @@ need the original text. These are heuristic estimates, accurate to about 10%:
     backtick lines. Inside a fence, `#`, `|` and `---` lines are content, and
     only a blank line ends a block.
   - The lines of one list, with no blank line between them, form one block.
+  - `collapsed_blocks(text)` yields `(flat, origin)` per non-empty block and
+    `match_lines` is written on it, so a guard that reports the matched TEXT
+    reads the same blocks; `line_of(origin, i)` gives the line for an index.
+- **Module names, not numbers.** `tests/test_canonical_module_names.py`
+  (31 tests) parses the module table in `bootcamp-preparation/SKILL.md` as the
+  source of truth, bans the off-canon spellings, and sweeps every `.md` under
+  `plugins/` for `Modules? \d` in text the Bootcamper reads (#683): a quoted
+  or backticked span of prose, any part of a 👉 block, and any fenced
+  template. Guidance prose outside such a span may name a module by number
+  (INV-079). The sites are derived, not listed (INV-246); `EXEMPT_SPANS` keys
+  the eleven internal spans by their own text with a reason each, and a span
+  no file carries any more fails by name.
 - **Corpus listing.** `tests/test_corpus.py` (16 tests) plants a canary under
   every runtime directory of a throwaway git repository and asserts
   `corpus_files()` returns none of them, while it still returns a tracked file,
@@ -12848,5 +12866,13 @@ Senzing licensing, with no SPDX identifier.
   rule 340 lines above it say one thing; the richer object stayed out of
   scope because it would need the record-feature flags that rule names, and
   a new guard sweeps every `json` example in the file against the field list
+- #683: Bootcamper-facing text names no module by number anywhere, not only at
+  the three surfaces INV-079 enumerates: Query, Visualize and Discover's quote
+  label, its no-system-named statement and the line it writes into
+  `docs/bootcamp_data_discoveries.md` name the module, and so do the two
+  mapping-specification template lines the sweep found in Data Quality,
+  Mapping, and Transformation; `tests/test_canonical_module_names.py` derives
+  its sites by scanning every shipped Markdown file (INV-246) instead of
+  naming them, so the class stays fixed rather than the instances
   the file itself states for that kind of object, deriving both the field
   sets and the sites from the text so a fence added later is checked too

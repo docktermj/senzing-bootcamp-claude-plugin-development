@@ -149,8 +149,8 @@ def deliverable_problems(text):
         "the table's header row": "| Requirement | Answer | Where in this document |",
         "an unanswered requirement says why": "`not answered, because <reason>`",
         "a partial answer says why": "`not fully answered, because <reason>`",
-        "an empty list writes one line": "No query requirements were confirmed in Module 7 "
-                                         "step 1.",
+        "an empty list writes one line": "No query requirements were confirmed in Query, "
+                                         "Visualize and Discover step 1.",
         "no saved list falls back to the conversation": "write the rows from the requirements "
                                                         "in the conversation, or else from "
                                                         "`docs/business_problem.md`",

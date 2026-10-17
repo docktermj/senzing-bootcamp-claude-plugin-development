@@ -12,6 +12,12 @@ a guard that reads single lines on purpose MUST say why.**
 ``match_lines(text, pattern)`` returns the 1-based line on which each match of ``pattern``
 starts, in order of appearance, so a guard can keep reporting ``file:line``.
 
+``collapsed_blocks(text)`` is the same read one step earlier: it yields ``(flat, origin)`` for
+each non-empty block, where ``flat`` is the collapsed block and ``origin[i]`` is the line
+``flat[i]`` came from. A guard that needs the matched TEXT as well as its line — one that
+reports which quoted span offended, say — reads through this rather than growing its own
+collapse rule. ``match_lines`` is written on top of it, so the two never disagree.
+
 How the text is read:
 
 - **Blocks.** The text is cut into Markdown blocks, and ``pattern`` runs on each block on its
@@ -135,6 +141,23 @@ def _collapse(block):
     return "".join(chars), origin
 
 
+def collapsed_blocks(text):
+    """``(flat, origin)`` for each non-empty collapsed, trimmed block of ``text``, in order.
+
+    ``origin[i]`` is the 1-based line ``flat[i]`` came from, so a guard that matches on ``flat``
+    reports ``origin[match.start()]`` and keeps its ``file:line``.
+    """
+    for block in blocks(text):
+        flat, origin = _collapse(block)
+        if flat:
+            yield flat, origin
+
+
+def line_of(origin, index):
+    """The 1-based line for ``index`` into the ``flat`` that ``origin`` came with."""
+    return origin[min(index, len(origin) - 1)]
+
+
 def match_lines(text, pattern):
     """1-based line numbers where each match of the compiled ``pattern`` starts, in order.
 
@@ -142,10 +165,7 @@ def match_lines(text, pattern):
     docstring), so a phrase wrapped across lines is one match and no match spans two blocks.
     """
     found = []
-    for block in blocks(text):
-        flat, origin = _collapse(block)
-        if not flat:
-            continue
+    for flat, origin in collapsed_blocks(text):
         for m in pattern.finditer(flat):
-            found.append(origin[min(m.start(), len(origin) - 1)])
+            found.append(line_of(origin, m.start()))
     return found

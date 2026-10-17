@@ -846,15 +846,16 @@ Run it over **every record** of each source, not a sample: the count is the sour
    ```markdown
    ## Record Type Check
 
-   - **Candidates:** [N] of [M] PERSON-typed records (suffix heuristic, Module 5 Phase 1 step 6)
+   - **Candidates:** [N] of [M] PERSON-typed records (suffix heuristic, from Phase 1 step 6 of
+     the Data Quality, Mapping, and Transformation module)
    - **Decision:** Retype / Keep as-is
    - **Rule (retype):** a record whose `RECORD_TYPE` is `PERSON` and whose name's final whole
      token (trailing punctuation removed, case-insensitive) is one of [the list above] is emitted
      with `RECORD_TYPE` `ORGANIZATION`, and its name is mapped as `NAME_ORG` only, never as parsed
      person fields and never as `NAME_FULL`. The `NAME_ORG` value is the single name field's value
-     as-is, or the parsed person fields joined with single spaces, in the order Module 5 Phase 1
-     Step 6 sub-step 2 reads them. Exceptions, kept `PERSON`: [the names or RECORD_IDs given, or
-     none]
+     as-is, or the parsed person fields joined with single spaces, in the order Phase 1 Step 6
+     sub-step 2 of the Data Quality, Mapping, and Transformation module reads them. Exceptions,
+     kept `PERSON`: [the names or RECORD_IDs given, or none]
    - **Cost (keep):** these [N] records stay `PERSON`, so they cannot merge with organization
      records in other sources. Such pairs stay possible matches, held apart by the record type.
    ```
