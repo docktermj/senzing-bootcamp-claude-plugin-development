@@ -71,6 +71,9 @@ CHANGELOG_NAME = "CHANGELOG.md"
 SEMVER = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 
 MANIFEST_REL = "plugins/senzing-bootcamp/.claude-plugin/plugin.json"
+EXAMPLE_MD_REL = "plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md"
+EXAMPLE_PDF_REL = "plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf"
+GENERATOR_REL = "plugins/senzing-bootcamp/scripts/generate_recap_pdf.py"
 
 #: Every place in the repo that ASSERTS the plugin version, with the pattern that finds
 #: it. ``tests/test_release_covers_every_version_site.py`` compares this table against
@@ -87,7 +90,7 @@ VERSION_SITES = (
         "why": "the plugin manifest -- the version Claude Code reports for the install",
     },
     {
-        "path": "plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md",
+        "path": EXAMPLE_MD_REL,
         "pattern": re.compile(r'^(\*\*Plugin version:\*\*[ \t]*)(\d+\.\d+\.\d+)([ \t]*)$', re.M),
         "why": ("the shipped reference recap's meta row -- "
                 "tests/test_example_recap_sync.py pins it to the manifest"),
@@ -97,6 +100,21 @@ VERSION_SITES = (
         "pattern": re.compile(r'^(\s*"version":\s*")(\d+\.\d+\.\d+)(")', re.M),
         "why": ("BLUEPRINT.md's verbatim copy of the plugin manifest (section 3) -- "
                 "/update-blueprint compares it with plugin.json line by line"),
+    },
+    {
+        "path": "BLUEPRINT.md",
+        "pattern": re.compile(
+            r'(the version\s+`)(\d+\.\d+\.\d+)'
+            r'(` \(the single version every other version assertion must match\))'),
+        "why": ("BLUEPRINT.md section 5.2's prose, which asserts authority over every "
+                "other version site while being one itself (#697) -- the whitespace "
+                "class spans the line wrap the number sits after"),
+    },
+    {
+        "path": "BLUEPRINT.md",
+        "pattern": re.compile(r'(run on plugin version )(\d+\.\d+\.\d+)(:)'),
+        "why": ("BLUEPRINT.md's description of the shipped example recap, which names "
+                "the plugin version that recap was produced on (#697)"),
     },
 )
 
@@ -204,8 +222,18 @@ def rewrite_sites(repo, old, new):
 
     Everything is planned before anything is written, so a site that would fail cannot
     leave an earlier site already bumped.
+
+    ⛔ ONE FILE MAY CARRY SEVERAL SITES, so the edits are ACCUMULATED per path.
+    ``BLUEPRINT.md`` carries three: the verbatim manifest copy and the two prose
+    sentences (#697). Planned against the original text each time, every entry's
+    ``new_text`` would hold its own edit and none of the others -- and the caller writes
+    them in order, so the last entry for a file would overwrite the earlier ones and
+    release that file with one site bumped and the rest stale. That is precisely the
+    half-release this script exists to prevent, reintroduced inside it.
     """
-    planned = []
+    originals = {}
+    edited = {}
+    order = []
     for site, text, matches in read_sites(repo):
         stale = sorted({match.group(2) for match in matches if match.group(2) != old})
         if stale:
@@ -214,11 +242,68 @@ def rewrite_sites(repo, old, new):
                 "have already diverged; reconcile them before releasing, or the release "
                 "records a version that was never consistent."
                 % (site["path"], ", ".join(stale), old))
-        new_text = site["pattern"].sub(lambda m: m.group(1) + new + m.group(3), text)
-        if new_text == text:
-            raise Refusal("rewriting %s changed nothing" % site["path"])
-        planned.append((site["path"], text, new_text))
-    return planned
+        relpath = site["path"]
+        if relpath not in originals:
+            originals[relpath] = text
+            edited[relpath] = text
+            order.append(relpath)
+        new_text = site["pattern"].sub(
+            lambda m: m.group(1) + new + m.group(3), edited[relpath])
+        if new_text == edited[relpath]:
+            raise Refusal("rewriting %s changed nothing" % relpath)
+        edited[relpath] = new_text
+    return [(relpath, originals[relpath], edited[relpath]) for relpath in order]
+
+
+# --------------------------------------------------------------------------- #
+# the rendered version site
+# --------------------------------------------------------------------------- #
+def render_example_pdf(repo):
+    """Re-render the shipped example recap PDF from the ``.md`` this release just bumped.
+
+    ⛔ THE PDF IS A VERSION SITE NO TEXT SUBSTITUTION CAN REACH. The example recap's
+    ``**Plugin version:**`` row is drawn onto the cover card, and the same number is drawn
+    again as the certificate colophon (``Senzing Bootcamp Claude plugin vX.Y.Z``). The
+    0.7.0 release moved the ``.md`` and left the committed PDF reading 0.6.1 -- a shipped
+    artifact the README offers as the sample deliverable, disagreeing with the manifest
+    about which version the Bootcamper has (#697). Re-rendering is the only way to move
+    it, and it belongs here because this is where the version moves.
+
+    ⛔ THE RICH RENDERER IS REQUIRED, not merely a successful exit. The generator always
+    produces a valid PDF: with fpdf2 absent it falls back to the stdlib writer, which
+    embeds no images at all and draws no branded certificate. Releasing that would swap
+    the shipped keepsake for a plainer one at exit 0, so a stdlib render is refused rather
+    than committed.
+
+    Returns the relpath to stage, or ``None`` when this repository ships no example PDF --
+    which the caller reports rather than passing over in silence.
+    """
+    pdf = repo / EXAMPLE_PDF_REL
+    if not pdf.is_file():
+        return None
+    script = repo / GENERATOR_REL
+    if not script.is_file():
+        raise Refusal(
+            "%s ships an example recap PDF but %s is missing, so the release cannot "
+            "re-render it. The PDF would ship stating the previous version."
+            % (EXAMPLE_PDF_REL, GENERATOR_REL))
+    done = subprocess.run(
+        [sys.executable, str(script),
+         "--input", str(repo / EXAMPLE_MD_REL), "--output", str(pdf)],
+        capture_output=True, text=True, cwd=str(repo))
+    if done.returncode != 0 or "PDF generated:" not in done.stdout:
+        raise Refusal(
+            "re-rendering %s failed (exit %d). A release that cannot refresh the shipped "
+            "example would ship it stating the previous version.\n%s"
+            % (EXAMPLE_PDF_REL, done.returncode,
+               (done.stdout + done.stderr).strip()[:2000]))
+    if "renderer: fpdf2" not in done.stdout:
+        raise Refusal(
+            "%s re-rendered with the stdlib fallback rather than fpdf2, which embeds no "
+            "images and draws no branded certificate. Install fpdf2 for %s and release "
+            "again rather than shipping a degraded keepsake.\n%s"
+            % (EXAMPLE_PDF_REL, sys.executable, done.stdout.strip()[:2000]))
+    return EXAMPLE_PDF_REL
 
 
 # --------------------------------------------------------------------------- #
@@ -432,6 +517,7 @@ def main(argv=None):
             print("WARNING (--allow-divergent-base): %s\n" % refusal)
 
         planned = rewrite_sites(repo, fmt(old), fmt(new))
+        renders_pdf = (repo / EXAMPLE_PDF_REL).is_file()
         today = datetime.date.today().isoformat()
         changelog_old, changelog_new, block = plan_changelog(repo, fmt(new), today, tags)
         subject = args.message or "chore(release): %s" % fmt(new)
@@ -449,10 +535,23 @@ def main(argv=None):
     print()
     for relpath, old_text, new_text in planned:
         show_diff(relpath, old_text, new_text)
+    if renders_pdf:
+        print("--- rendered version site ---")
+        print("re-render %s from %s (fpdf2 required; the drawn version row and the "
+              "certificate colophon are not reachable by a text substitution)"
+              % (EXAMPLE_PDF_REL, EXAMPLE_MD_REL))
+    else:
+        print("--- rendered version site ---")
+        print("%s is not present in this repository; nothing to re-render"
+              % EXAMPLE_PDF_REL)
+    print()
     print("--- %s entry ---" % CHANGELOG_NAME)
     print(block)
+    staged = [path for path, _, _ in planned] + [CHANGELOG_NAME]
+    if renders_pdf:
+        staged.append(EXAMPLE_PDF_REL)
     print("Then, as one unit:")
-    print("  git add %s %s" % (" ".join(path for path, _, _ in planned), CHANGELOG_NAME))
+    print("  git add %s" % " ".join(staged))
     print("  git commit -m %r" % subject)
     print("  git tag -a %s -m %r   <- what a downstream repo ports from"
           % (fmt(new), subject))
@@ -467,7 +566,11 @@ def main(argv=None):
         for relpath, _, new_text in planned:
             (repo / relpath).write_text(new_text, encoding="utf-8")
         (repo / CHANGELOG_NAME).write_text(changelog_new, encoding="utf-8")
-        git(repo, "add", "--", *[path for path, _, _ in planned], CHANGELOG_NAME)
+        # After the .md is on disk, because the PDF is rendered FROM it.
+        rendered = render_example_pdf(repo)
+        git(repo, "add", "--",
+            *([path for path, _, _ in planned] + [CHANGELOG_NAME]
+              + ([rendered] if rendered else [])))
         git(repo, "commit", "--quiet", "-m", subject)
         # Annotated, unlike the seven lightweight tags already here: an annotated tag
         # records when the tag was made, independently of the commit date, so a tag

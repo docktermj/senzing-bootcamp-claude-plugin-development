@@ -72,9 +72,42 @@ RELEASE_PY = REPO_ROOT / ".claude" / "skills" / "release" / "release.py"
 
 MANIFEST_REL = "plugins/senzing-bootcamp/.claude-plugin/plugin.json"
 EXAMPLE_REL = "plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md"
-#: BLUEPRINT.md copies plugin.json verbatim in its section 3, so it is a version site too (#446).
+#: BLUEPRINT.md copies plugin.json verbatim in its section 3, so it is a version site too
+#: (#446) -- and carries two prose assertions besides, which is why the fixture below
+#: writes all three of them into one file (#697).
 BLUEPRINT_REL = "BLUEPRINT.md"
 CHANGELOG_REL = "CHANGELOG.md"
+#: The rendered version site: a shipped artifact whose version is DRAWN, so no text
+#: substitution can reach it and `/release` re-renders it instead (#697).
+EXAMPLE_PDF_REL = "plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf"
+GENERATOR_REL = "plugins/senzing-bootcamp/scripts/generate_recap_pdf.py"
+
+#: A stand-in for the recap generator, written into every fixture repo. It reproduces only
+#: the contract `release.py` depends on: read ``--input``, write ``--output``, print
+#: ``PDF generated: <out> (renderer: <name>, ...)`` on stdout, exit 0. Rendering a real
+#: PDF here would pull in fpdf2 and about ten seconds per fixture, and would be testing
+#: the renderer rather than the release step. `TheGeneratorContractReleasePyReads` below
+#: runs the REAL generator once, so the stand-in cannot drift away from the line it
+#: imitates without that failing.
+STUB_GENERATOR = "\n".join((
+    "import argparse",
+    "import re",
+    "",
+    "parser = argparse.ArgumentParser()",
+    'parser.add_argument("--input", required=True)',
+    'parser.add_argument("--output", required=True)',
+    "args = parser.parse_args()",
+    'with open(args.input, encoding="utf-8") as handle:',
+    "    source = handle.read()",
+    'found = re.search(r"[*][*]Plugin version:[*][*]\\s*(\\S+)", source)',
+    'stated = found.group(1) if found else "none"',
+    'with open(args.output, "wb") as handle:',
+    '    handle.write(b"%PDF-1.4\\n% rendered from a source stating ")',
+    "    handle.write(stated.encode())",
+    '    handle.write(b"\\n%%EOF\\n")',
+    'print("PDF generated: %s (renderer: RENDERER, rendered 1 of 1)" % args.output)',
+    "",
+))
 
 
 def git(repo, *args, check=True):
@@ -103,13 +136,42 @@ def write_sites(repo, version):
     example.parent.mkdir(parents=True, exist_ok=True)
     example.write_text("# Senzing Bootcamp Recap\n\n**Plugin version:** %s\n" % version,
                        encoding="utf-8")
+    # Three sites in ONE file, as BLUEPRINT.md really carries: the verbatim manifest copy
+    # and the two prose sentences. Planned independently and written in order, the last
+    # one would overwrite the other two and release this file one-third bumped (#697) --
+    # `test_every_version_site_advanced` is what notices.
     (Path(repo) / BLUEPRINT_REL).write_text(
         "# Blueprint\n\n```json\n{\n  \"name\": \"senzing-bootcamp\",\n"
-        "  \"version\": \"%s\",\n}\n```\n" % version, encoding="utf-8")
+        "  \"version\": \"%s\",\n}\n```\n\n"
+        "The plugin manifest. It declares the name `senzing-bootcamp`, the version\n"
+        "`%s` (the single version every other version assertion must match), the\n"
+        "same description as the marketplace entry.\n\n"
+        "`examples/bootcamp_recap.example.md` is a sanitized finished recap\n"
+        "from a Python, Core-path, SQLite run on plugin version %s: the header\n"
+        "fields, one section per module.\n" % (version, version, version),
+        encoding="utf-8")
+    # The rendered site. Real bytes are a PDF; what matters to `release.py` is that the
+    # file EXISTS -- that is what makes the re-render a step rather than a no-op -- and
+    # what matters here is that the version it carries came from the `.md`.
+    pdf = Path(repo) / EXAMPLE_PDF_REL
+    pdf.parent.mkdir(parents=True, exist_ok=True)
+    pdf.write_bytes(b"%PDF-1.4\n% rendered from a source stating "
+                    + version.encode("ascii") + b"\n%%EOF\n")
+
+
+def write_generator(repo, renderer="fpdf2"):
+    """The stand-in generator, reporting `renderer` on its success line."""
+    script = Path(repo) / GENERATOR_REL
+    script.parent.mkdir(parents=True, exist_ok=True)
+    script.write_text(STUB_GENERATOR.replace("RENDERER", renderer), encoding="utf-8")
 
 
 def build_fixture(prefix):
-    """A repo shaped like this one: three version sites, two lightweight tags, no CHANGELOG.
+    """A repo shaped like this one: five version sites, two lightweight tags, no CHANGELOG.
+
+    Five, not three: BLUEPRINT.md carries the verbatim manifest copy and two prose
+    sentences, and the shipped example recap carries its version twice over -- once as
+    text in the ``.md`` and once DRAWN into the ``.pdf`` beside it (#697).
 
     The tags are LIGHTWEIGHT on purpose -- all seven tags this repo already carries are,
     so the changelog seeder has to read dates off the commit rather than off a tag object.
@@ -124,6 +186,7 @@ def build_fixture(prefix):
     git(repo, "config", "tag.gpgsign", "false")
 
     write_sites(repo, "0.3.5")
+    write_generator(repo)
     git(repo, "add", "-A")
     git(repo, "commit", "--quiet", "-m", "feat(fixture): the first release")
     git(repo, "tag", "0.3.5")
@@ -178,11 +241,15 @@ class ADryRunChangesNothing(unittest.TestCase):
                          "be taken back from anyone who has fetched them")
         self.assertFalse((self.repo / CHANGELOG_REL).exists(),
                          "a dry run created CHANGELOG.md")
+        self.assertIn(b"0.4.1", (self.repo / EXAMPLE_PDF_REL).read_bytes(),
+                      "a dry run re-rendered the example recap PDF; the preview must "
+                      "write nothing at all, and a rendered artifact is still a write")
 
     def test_the_dry_run_states_what_it_would_change(self):
         """A preview that shows nothing is not a preview; the maintainer approves on it."""
         _, out, _ = release(self.repo, "--minor", "--dry-run")
-        for expected in (MANIFEST_REL, EXAMPLE_REL, BLUEPRINT_REL, CHANGELOG_REL, "0.4.1", "0.5.0"):
+        for expected in (MANIFEST_REL, EXAMPLE_REL, BLUEPRINT_REL, CHANGELOG_REL,
+                         EXAMPLE_PDF_REL, "0.4.1", "0.5.0"):
             self.assertIn(expected, out,
                           "the dry run did not mention %r, so it does not show what the "
                           "release would do" % expected)
@@ -214,9 +281,36 @@ class AReleaseMovesAllThreeTogether(unittest.TestCase):
                       (self.repo / EXAMPLE_REL).read_text(encoding="utf-8"),
                       "the manifest advanced and the shipped example recap did not -- the "
                       "split tests/test_example_recap_sync.py already fails on")
-        self.assertIn('"version": "0.5.0"',
-                      (self.repo / BLUEPRINT_REL).read_text(encoding="utf-8"),
+        blueprint = (self.repo / BLUEPRINT_REL).read_text(encoding="utf-8")
+        self.assertIn('"version": "0.5.0"', blueprint,
                       "the manifest advanced and BLUEPRINT.md's verbatim copy of it did not")
+        # ⛔ The other two sites in the SAME file. A release that planned each entry
+        # against the original text would write them in order and keep only the last, so
+        # exactly one of these three assertions would pass and the file would ship
+        # part-bumped -- the half-release defect, reintroduced inside the tool (#697).
+        self.assertIn("the version\n`0.5.0` (the single version", blueprint,
+                      "BLUEPRINT.md's section 5.2 prose did not advance; another site in "
+                      "the same file overwrote it")
+        self.assertIn("run on plugin version 0.5.0:", blueprint,
+                      "BLUEPRINT.md's example-recap prose did not advance; another site "
+                      "in the same file overwrote it")
+        self.assertNotIn("0.4.1", blueprint,
+                         "BLUEPRINT.md still states the previous version somewhere")
+
+    def test_the_rendered_version_site_was_re_rendered_from_the_bumped_markdown(self):
+        """⛔ A drawn version is a version site no text substitution can reach (#697).
+
+        The 0.7.0 release of this repository moved the manifest, the `.md` and
+        BLUEPRINT.md's copy, and left the committed example PDF drawing 0.6.1 -- the
+        artifact `README.md` offers as the sample deliverable. Ordering is the whole of
+        it: the PDF is rendered FROM the `.md`, so it has to be rendered after the `.md`
+        is rewritten. Re-rendered first, it would carry the previous version and every
+        other assertion here would still pass.
+        """
+        rendered = (self.repo / EXAMPLE_PDF_REL).read_bytes()
+        self.assertIn(b"0.5.0", rendered,
+                      "the committed example PDF was not re-rendered from the bumped "
+                      "Markdown; it still carries %r" % rendered[:120])
 
     def test_the_changelog_was_created_and_seeded_from_the_existing_tags(self):
         text = (self.repo / CHANGELOG_REL).read_text(encoding="utf-8")
@@ -295,7 +389,8 @@ class AReleaseMovesAllThreeTogether(unittest.TestCase):
     def test_the_release_commit_carries_the_release_and_nothing_else(self):
         touched = sorted(git(self.repo, "show", "--name-only", "--format=", "HEAD").split())
         self.assertEqual(
-            sorted([CHANGELOG_REL, MANIFEST_REL, EXAMPLE_REL, BLUEPRINT_REL]), touched,
+            sorted([CHANGELOG_REL, MANIFEST_REL, EXAMPLE_REL, BLUEPRINT_REL,
+                    EXAMPLE_PDF_REL]), touched,
             "the release commit touched %s; a release commit that sweeps in other work "
             "cannot be reverted as a unit" % touched)
 
@@ -410,6 +505,30 @@ class ItRefusesRatherThanReleasingHalfOfIt(unittest.TestCase):
         git(self.repo, "commit", "--quiet", "-m", "chore(fixture): desync the example")
         self.assertRefused(["--minor", "--apply"], "diverged")
 
+    def test_a_render_that_falls_back_to_the_stdlib_writer_is_refused(self):
+        """⛔ Exit 0 is not the contract; the RICH renderer is (#697).
+
+        The generator always produces a valid PDF: with fpdf2 absent it falls back to a
+        stdlib writer that embeds no images and draws no branded certificate. Accepting
+        that would swap the shipped keepsake for a plainer one at exit 0 -- a silent
+        degradation of the artifact `README.md` offers as the sample deliverable.
+        """
+        write_generator(self.repo, renderer="stdlib")
+        git(self.repo, "add", "-A")
+        git(self.repo, "commit", "--quiet", "-m", "chore(fixture): lose fpdf2")
+        self.assertRefused(["--minor", "--apply"], "stdlib")
+        self.assertEqual(
+            "", git(self.repo, "diff", "--name-only"),
+            "the refusal left edited files behind; a release that cannot finish must roll "
+            "all the way back rather than leave a part-bumped tree")
+
+    def test_a_missing_generator_is_refused_when_a_rendered_site_ships(self):
+        """A shipped PDF with no way to re-render it would ship stating the old version."""
+        (self.repo / GENERATOR_REL).unlink()
+        git(self.repo, "add", "-A")
+        git(self.repo, "commit", "--quiet", "-m", "chore(fixture): drop the generator")
+        self.assertRefused(["--minor", "--apply"], "generate_recap_pdf.py")
+
     def test_a_directory_that_is_not_the_plugin_repo_is_refused(self):
         other = Path(self.tmp) / "elsewhere"
         other.mkdir()
@@ -461,6 +580,68 @@ class TagsAreOrderedNumerically(unittest.TestCase):
             "0.9.1 was accepted while 0.10.0 already exists; tags are being compared as "
             "text, so every release after 0.9.x would be mis-ordered:\n%s" % out)
         self.assertIn("0.10.0", out + err)
+
+
+@unittest.skipUnless(shutil.which("git"), "git is required to build the fixture repository")
+class TheRenderedSiteIsDrivenByTheArtifactItself(unittest.TestCase):
+    """Which repositories get a re-render, and how a repository without one is reported."""
+
+    def setUp(self):
+        self.tmp, self.repo = build_fixture("release-render-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+
+    def test_a_repo_with_no_rendered_site_releases_without_one(self):
+        """⚠️ Not a silent skip, which is the shape every other rule here forbids.
+
+        A repository that ships no example PDF has nothing to re-render. The run says so
+        in as many words, so a reader can tell "there was nothing to do" from "the step
+        was passed over", which are the same output otherwise.
+        """
+        (self.repo / EXAMPLE_PDF_REL).unlink()
+        git(self.repo, "add", "-A")
+        git(self.repo, "commit", "--quiet", "-m", "chore(fixture): drop the example PDF")
+        code, out, err = release(self.repo, "--minor", "--apply")
+        self.assertEqual(0, code, out + err)
+        self.assertIn("nothing to re-render", out,
+                      "the run passed over the rendered site without saying so")
+        touched = sorted(git(self.repo, "show", "--name-only", "--format=", "HEAD").split())
+        self.assertEqual(
+            sorted([CHANGELOG_REL, MANIFEST_REL, EXAMPLE_REL, BLUEPRINT_REL]), touched,
+            "a repository with no rendered site still staged one")
+
+
+class TheGeneratorContractReleasePyReads(unittest.TestCase):
+    """⛔ The stand-in generator above imitates a line; this is the line itself.
+
+    `release.py` reads two things out of the real generator's stdout -- the
+    ``PDF generated:`` prefix, which is also the graduation skill's success signal, and
+    the ``renderer: <name>`` field it refuses a stdlib fallback on. Both are a contract
+    between two files that no other test relates, and the fixtures above would keep
+    passing against a stand-in that had drifted away from it.
+
+    ⚠️ Runs in BOTH legs: the fallback writer prints the same line with a different
+    renderer name, which is exactly the distinction being pinned, so this carries no
+    fpdf2 requirement.
+    """
+
+    def test_the_generator_prints_the_line_release_py_parses(self):
+        generator = REPO_ROOT / GENERATOR_REL
+        self.assertTrue(generator.is_file(),
+                        "%s is gone; release.py has nothing to call" % GENERATOR_REL)
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "recap.pdf"
+            done = subprocess.run(
+                [sys.executable, str(generator),
+                 "--input", str(REPO_ROOT / EXAMPLE_REL), "--output", str(out)],
+                capture_output=True, text=True, cwd=tmp)
+            self.assertEqual(0, done.returncode,
+                             "the generator failed on the shipped example:\n%s"
+                             % done.stderr[-2000:])
+            self.assertRegex(
+                done.stdout, r"PDF generated: .*\(renderer: (fpdf2|stdlib),",
+                "the generator's success line no longer carries the prefix and the "
+                "renderer name release.py keys on, so a stdlib render would be committed "
+                "as though it were the designed one:\n%s" % done.stdout)
 
 
 if __name__ == "__main__":
