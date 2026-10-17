@@ -26,14 +26,14 @@ and show each fails naming the file.
 ⚠️ **What a green run does not establish.** It reads the dev tree only. The published tree
 carries the public slug at the same sites, and `tests/test_propagate_publishes_the_pages_site.py`
 (INV-350) checks that no published file holds the dev slug. The surfaces are stated rather than
-derived: a fourth install surface added later is not checked until it is added to `SURFACES`.
+derived: an install surface added later is not checked until it is added to `SURFACES`.
 Owner names are matched in the case written here; a differently cased public slug is not caught.
 
 Source issue: #522. This module enforces INV-360 (registered 2026-10-13). It asserts that the
 surfaces *state* the dev slug; it does not establish that a surface added later is read, for
-the reason above. The fourth surface, `docs/development.md`, was added by #610; INV-360 names
-three, and the dated note that widens it to four is a `PROPOSED AMENDMENT` awaiting the
-maintainer's sign-off in #610's `specs/IMPLEMENTED.md` entry.
+the reason above. The fourth surface, `docs/development.md`, was added by #610 and is binding:
+INV-360's base text names three, and its registered 2026-10-15 note (#610) widens it to four.
+`SURFACES` below lists all four, which is the count this docstring and INV-360 both state.
 
 Stdlib only (INV-108); four files read as bytes, no network.
 
@@ -179,6 +179,36 @@ class TheCheckCatchesThePublicSlug(unittest.TestCase):
         problems = surface_problems(rel, mutated)
         self.assertEqual(len(problems), 1, problems)
         self.assertTrue(problems[0].startswith(rel + ":"), problems)
+
+
+class TheDocstringAgreesWithTheSurfacesConstant(unittest.TestCase):
+    """⛔ The prose and the constant are one claim, and they drifted apart once (#691).
+
+    Until #691 this docstring opened "four install surfaces" and then described the fourth as
+    an amendment the maintainer had yet to rule on, while `SURFACES` already listed four and
+    INV-360's 2026-10-15 note (#610) had made it binding. The constant was right. These checks
+    keep the count and the paths in one place, so a fifth surface cannot be added to `SURFACES`
+    while the prose keeps saying four.
+    """
+
+    #: The count words this docstring may use, by the number they spell.
+    SPELLED = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
+
+    def test_every_surface_is_named_in_the_docstring(self):
+        for rel in SURFACES:
+            with self.subTest(surface=rel):
+                self.assertIn(rel, __doc__,
+                              "%s is in SURFACES but the docstring does not name it" % rel)
+
+    def test_the_docstring_states_the_number_of_surfaces_it_has(self):
+        spelled = self.SPELLED[len(SURFACES)]
+        self.assertIn("%s install surfaces" % spelled, __doc__,
+                      "SURFACES lists %d entries; the docstring must say \"%s install "
+                      "surfaces\"" % (len(SURFACES), spelled))
+        for count, word in self.SPELLED.items():
+            if count != len(SURFACES):
+                with self.subTest(stale=word):
+                    self.assertNotIn("%s install surfaces" % word, __doc__)
 
 
 if __name__ == "__main__":

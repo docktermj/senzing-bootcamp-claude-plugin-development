@@ -334,6 +334,25 @@ Change the wording in the block first, show the maintainer the changed text, and
 second yes on **that**. Then register it. An amendment approved in passing is a wording
 nobody read.
 
+Then **resolve the prose, not only the block.** Applying one marks the bullet
+`applied YYYY-MM-DD` ("Writing one", above), the way Register's step 6 resolves a deferral's block.
+⛔ **The block is not the only place that called the amendment pending.** The guard enforcing
+the amended rule says so in its own docstring, and that sentence survives the registration — so
+its next reader concludes the rule the guard asserts is not yet binding, which is INV-308's
+failure shape pointed inward. Rewrite each such sentence to state the note as registered, with
+its date.
+
+⛔ **Derive those sites by scanning, never from the block's own bullet list** (INV-246),
+exactly as step 3 above derives a new id's citation sites: the pair that decides is the
+invariant's id and the note's issue marker, and `specs/INVARIANTS.md` is what says whether the
+registry already carries it. `tests/test_registered_amendments_are_not_called_pending.py`
+scans `tests/` and `.claude/` for it and fails on a site left behind; it found **nine** where
+#691's list of five had been written by hand.
+
+⚠️ **Leave a legitimately pending amendment alone.** A block still queued, and a
+`DEFERRED INVARIANT`, say "awaiting the maintainer's sign-off" correctly. What changed is the
+registry, so the registry is what to read — never the words.
+
 ## Step 4: Next, and the session record
 
 Move to the next pending block and repeat from Step 2. When the maintainer stops — whether

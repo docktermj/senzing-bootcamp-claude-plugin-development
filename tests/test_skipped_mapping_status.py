@@ -36,10 +36,9 @@ pointer guard find its readers itself (INV-246):
   on it, are listed explicitly in `WRITERS`. Every other such step must link the definition, so a
   new step that names `mapping_status` fails until it does.
 
-Step 16's new condition is what INV-344's proposed #527 amendment states (queued for the
-maintainer's sign-off). These tests assert that the skill files *state* the rules, with negative
-controls, and **cannot** establish that a live run follows them, which only `dry-run` phase 3 can
-observe. Every phrase check reads whitespace-collapsed text with blockquote markers stripped, so
+Step 16's new condition is what INV-344's registered 2026-10-12 note (#527) states. These tests
+assert that the skill files *state* the rules, with negative controls, and **cannot** establish
+that a live run follows them, which only `dry-run` phase 3 can observe. Every phrase check reads whitespace-collapsed text with blockquote markers stripped, so
 a re-wrap neither hides a phrase nor fails a correct one (INV-346).
 
 This module enforces INV-363 (what a `skipped` source means, registered 2026-10-13), INV-344's
