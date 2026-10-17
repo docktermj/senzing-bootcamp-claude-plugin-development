@@ -14,10 +14,39 @@ the version, this file and the tag are written together on purpose.
 
 ## [0.7.0] - 2026-10-15
 
+### docs
+
 - docs(blueprint): spell the #465 line's "practice" the US way
 - docs(blueprint): move the header to 6fe6e69a and fill the drift gaps
 - docs(invariants): register INV-371 to INV-375 and apply 20 notes
-- Savepoint
+- docs(skills): let one yes cover a list of issues or comments
+- docs(invariants): record the third 2026-10-13 invariant review
+- docs(ledger): queue the INV-314 and INV-318 batched-assent amendments
+- docs(invariants): hold the #511 build-and-run deferral until #561
+- docs(ledger): queue the #511 deferred invariant for review
+- docs(invariants): record the 2026-10-13 invariant review
+- docs(examples): show Module 3's current flow in the example recap
+- docs(examples): show every #465 recap element in the example recap
+- docs(skills): cite each ground-rules pointer's own invariant
+- docs(specs): queue the cross-module return contract as a deferred invariant
+- docs(specs): record the 2026-10-12 production-readiness audit
+- docs(invariants): record the 2026-10-12 invariant review
+- docs(invariants): apply inv-260's container-namespace bind note
+- docs(ledger): record the 2026-10-10 invariant review
+- docs(invariants): register inv-351, the dev marketplace name rewrite
+- docs(invariants): register inv-350, no dev slug in published files
+- docs(invariants): apply inv-203's truncated-source correction
+- docs(invariants): register inv-349, project-derived container names
+- docs(invariants): register inv-348, pages-site command parity
+- docs(invariants): apply inv-153's rendered-width gutter note
+- docs(invariants): apply inv-239's success-criterion coverage note
+- docs(invariants): apply inv-239's name-sharing budget note
+- docs(invariants): register inv-347, the analyzer's python floor check
+- docs(ledger): record #466 and its blueprint decision-log line
+- docs(readme): name Claude Desktop instead of the retired "Claude App"
+
+### fix
+
 - fix(auto-test): carry a Bootcamper's slash line as a sticky CLI flag
 - fix(auto-test): match the probe's tables to server 1.39.0
 - fix(auto-test): match the plugin's own apparatus wording in transcript_lint
@@ -62,38 +91,22 @@ the version, this file and the tag are written together on purpose.
 - fix(release-cycle): state what each stage writes under specs/
 - fix(module-05): say a source lacks a type field, not has no type field
 - fix(module-05): cite mapping_workflow step 2's suffix list in the type/name check
-- feat(release-cycle): run the release cycle with five checkpoints
-- docs(skills): let one yes cover a list of issues or comments
 - fix(graduation): name the Bootcamp on the video's closing card
-- docs(invariants): record the third 2026-10-13 invariant review
 - fix(module-02): select the 4.4.0 release notes by section, not rank
-- feat(finding-skills): draft and file in two stages
 - fix(module-02): retire the SENZ7426 divergence and yum .deb warnings
 - fix(ground-rules): follow each response's own access_steps order
-- feat(dry-run): let phase 3 run with a simulated Bootcamper
 - fix(modules-5-6-7): build and run every program through the ground rules
 - fix(module-02): take the C# source from every platform's install reply
-- refactor(ground-rules): move the build-and-run statement out of module 3
-- docs(ledger): queue the INV-314 and INV-318 batched-assent amendments
 - fix(ledger): use US spelling in a 2026-10-13 sweep row
-- chore(ledger): record the 2026-10-13 MCP delegation sweep
-- docs(invariants): hold the #511 build-and-run deferral until #561
-- docs(ledger): queue the #511 deferred invariant for review
 - fix(module-03): build and run every program from one per-language table
-- docs(invariants): record the 2026-10-13 invariant review
 - fix(readme): point dev's Claude Desktop route at the dev repository
-- docs(examples): show Module 3's current flow in the example recap
 - fix(examples): keep the example recap clear of two suite guards
-- docs(examples): show every #465 recap element in the example recap
-- test(guards): require every transcript-linter credit to name a function it runs
 - fix(skills): point every module 5 analyzer run at step 11's python check
 - fix(skills): route module 2's existing-install path through step 9
-- test(skills): give every pinned gate a handler marker and widen the INV-284 guard
 - fix(skills): state one engine-config procedure and check Windows SUPPORTPATH via $env:SENZING_DIR
 - fix(skills): resolve fourteen coherence items from the 2026-10-12 audit
 - fix(skills): end a failed system verification run on a retry-or-move-on question
 - fix(skills): pin module 5 phase 3's sdk repair as a detour question
-- docs(skills): cite each ground-rules pointer's own invariant
 - fix(skills): handle module 5's retry and skip options with a skipped status
 - fix(skills): route the postgresql switch through module 2 as a detour
 - fix(skills): route phase d's iterate now through the quality-iteration route
@@ -101,118 +114,94 @@ the version, this file and the tag are written together on purpose.
 - fix(skills): keep plugin asset reads out of the sdk container
 - fix(module-03b): let the no-live-server path complete the module
 - fix(module-05): close six small gaps in Module 5
-- docs(specs): queue the cross-module return contract as a deferred invariant
 - fix(module-05): name Module 7 as a reader and say where iterate goes
 - fix(module-7): keep Discover predictions off their answers
 - fix(search-routes): measure inline routes and key the guard on category
 - fix(audit): count a stop sign followed by an invariant citation
 - fix(module-02): declare container-route shells, copy the DDL out
-- test(corpus): walk the repository through one listing that skips scratch
-- chore(ledger): record the 2026-10-12 audit commit hash
-- docs(specs): record the 2026-10-12 production-readiness audit
-- docs(invariants): record the 2026-10-12 invariant review
+- fix(discoveries-pdf): wrap stdlib table cells instead of cutting them
+- fix(visualization): run a project copy of the Truth Set server in the SDK container
+- fix(module-7): cite INV-251 for step 1's single opening question
+- fix(visualization): publish the container route's port to host loopback
+- fix(module-05): check the analyzer's python floor before its first run
+- fix(viz): size the match keys gutter from the rendered label width
+- fix(module-02): derive container names from the project
+- fix(module-04): read the download_url cap and floor truncated sources
+
+### feat
+
+- feat(release-cycle): run the release cycle with five checkpoints
+- feat(finding-skills): draft and file in two stages
+- feat(dry-run): let phase 3 run with a simulated Bootcamper
 - feat(bootcamp): drop confirmations that have only one sensible answer
 - feat(ground-rules): show one worked steer per act 2 hands-on module
 - feat(module-7): ask one recall question instead of a concepts reminder
-- fix(discoveries-pdf): wrap stdlib table cells instead of cutting them
 - feat(module-7): answer the Module 1 question first in the discoveries document
 - feat(module-7): show the Bootcamper's Module 1 words at the requirements gate
 - feat(bootcamp): hand one step per hands-on module to the bootcamper
 - feat(bootcamp): stage the truth set as practice and module 7 as the peak
 - feat(bootcamp): export results for the systems named in module 1
 - feat(bootcamp): ask for a prediction before three engine results
-- fix(visualization): run a project copy of the Truth Set server in the SDK container
 - feat(graduation): hand over the decisions, how it got built and next time
-- fix(module-7): cite INV-251 for step 1's single opening question
 - feat(module-7): ask the Bootcamper's question before derived requirements
-- docs(invariants): apply inv-260's container-namespace bind note
-- fix(visualization): publish the container route's port to host loopback
-- docs(ledger): record the 2026-10-10 invariant review
-- docs(invariants): register inv-351, the dev marketplace name rewrite
-- docs(invariants): register inv-350, no dev slug in published files
-- docs(invariants): apply inv-203's truncated-source correction
-- docs(invariants): register inv-349, project-derived container names
-- docs(invariants): register inv-348, pages-site command parity
-- docs(invariants): apply inv-153's rendered-width gutter note
-- docs(invariants): apply inv-239's success-criterion coverage note
-- docs(invariants): apply inv-239's name-sharing budget note
-- docs(invariants): register inv-347, the analyzer's python floor check
-- fix(module-05): check the analyzer's python floor before its first run
 - feat(module-4): generate a scenario's data against its success criteria
-- fix(viz): size the match keys gutter from the rendered label width
 - feat(module-4): keep a generated scenario's name sharing inside one budget
+
+### refactor
+
+- refactor(ground-rules): move the build-and-run statement out of module 3
+
+### chore
+
+- chore(ledger): record the 2026-10-13 MCP delegation sweep
+- chore(ledger): record the 2026-10-12 audit commit hash
+- chore(ledger): archive the 2026-10-05 feedback and record its triage
+
+### test
+
+- test(guards): require every transcript-linter credit to name a function it runs
+- test(skills): give every pinned gate a handler marker and widen the INV-284 guard
+- test(corpus): walk the repository through one listing that skips scratch
 - test(docs): give the pages-site command check its line-scoped verdict
 - test(docs): check the pages site's plugin commands against docs/README.md
-- fix(module-02): derive container names from the project
-- fix(module-04): read the download_url cap and floor truncated sources
-- docs(ledger): record #466 and its blueprint decision-log line
-- docs(readme): name Claude Desktop instead of the retired "Claude App"
-- chore(ledger): archive the 2026-10-05 feedback and record its triage
 
 ## [0.6.1] - 2026-10-05
 
-- #456 Savepoint
-- #452 Savepoint
-- #452 Savepoint
-- #452 Savepoint
+### feat
+
 - feat(docs): own the github pages quick-start site in dev
+
+### other
+
 - #451 Update instructions
+
+### test
+
 - test(spelling): waive the changelog's verbatim commit subjects
+
+### fix
+
 - fix(retrofit): drop a slash-command token and a british spelling
 - fix(propagate): give the dev marketplace its own name
 
 ## [0.6.0] - 2026-10-04
 
+### docs
+
 - docs: fix BLUEPRINT.md spelling and its VERSION_SITES copy
-- fix(release): move BLUEPRINT.md's manifest copy with the version
 - docs: add BLUEPRINT.md
 - docs(ledger): record the entity specification report sent upstream
 - docs(invariants): apply the inv-346 verdict-coverage correction
 - docs(module-05): correct three descriptions of the Entity Specification
 - docs(module-04): replace step 8b's stale nearby-wordings warning
-- test(guards): fail when a line-reading test gives no inv-346 verdict
-- test(guards): give the last two line-reading guards their verdicts
 - docs(invariants): register inv-346 and apply the 2026-10-04 review
-- fix(module-05): state the full output's file_path write once, at step 18
 - docs(invariants): draft an INV-207 note naming the Phase 6 section
-- fix(graduation): give step 1c's recap venv a windows form
-- test(windows): fix the pwsh negative control and the exit rationale
-- fix(windows): replace senzing-env.bat with a dot-sourced senzing-env.ps1
-- test(search-routes): re-measure the 15 records stamped before the rebuild
-- test(guards): match maintainer and docs guard phrases across line wraps
-- test(guards): match plugins/ guard phrases across line wraps
-- test: re-point two guards at the rules that ship now
-- test: add shared wrap-aware matcher and move #387's guard onto it
 - docs(invariants): register inv-345 and apply the 2026-10-03 review
 - docs: fix eight small coherence and concision drifts
-- fix(module-5): send test runs to data/mapping and write the full output
-- fix(maintainer): make auto-test record findings first and name Phase 6
 - docs(module-5): defer the synthesized-source disclosure rule
-- fix(graduation): apply INV-340 at three graduation-video sites
-- fix(graduation): give hand-run commands a PowerShell 5.1 form
-- fix(graduation): resolve the screenshot remedy's capture tool
-- fix(onboarding): name Data collection in the welcome's licensing bullet
-- fix(module-07): point three references at the step and state that own them
-- chore(ledger): record the #387 commit hash
-- fix(module-07): state the documented WHY_KEY_DETAILS requirement in step 3a
-- fix(compact-dev-environment): leave specs frozen and route invariant changes to review-invariants
-- chore(ledger): record the #385 commit hash
-- fix(module-04): write license_record_limit with its INV-295 marker
-- chore(ledger): record the #384 commit hash
-- fix(module-05): return every phase 3 exit to the per-source loop
-- chore(ledger): record the #392 commit hash
-- fix(module-07): give the return to data quality mapping a receiving route
-- chore(ledger): record the #383 commit hash
-- test(search-routes): stamp and band every inline search_docs route
-- chore(ledger): record the #382 commit hash
-- fix(module-03b): state INV-091's full refusal and caption the inert tab
-- chore(ledger): record the #381 commit hash
-- fix(module-02): narrow the existing-install announcement to the install
-- chore(ledger): record the 2026-10-02 audit commit hash
 - docs(specs): record the 2026-10-02 production-readiness audit
 - docs(module-0): restamp the primer's routes on the 2026-10-02 index
 - docs: fix four stale lines noticed during the 2026-10-01 runs
-- chore(ledger): record that #320's upstream note was sent
 - docs(ledger): record the 2026-10-02 invariant review
 - docs(ledger): hold #321's open-me-first deferral with packaging
 - docs(invariants): fold the production registry projection into inv-186
@@ -235,6 +224,76 @@ the version, this file and the tag are written together on purpose.
 - docs(invariants): add the recap video's audio contract to inv-342
 - docs(invariants): inv-239 note: post-gate regeneration is exempt
 - docs(invariants): inv-239 note: invented entities own their identifiers
+- docs(invariants): note that inv-317's command sites no longer exist
+- docs(audit): record findings where inv-317 allows, not "never into specs"
+- docs(specs): record the 2026-10-01 invariant review
+- docs(invariants): correct inv-229's count of the installation checks
+- docs(invariants): register inv-343, no default type_discriminator
+- docs(invariants): register inv-342, the recap-video renderer contract
+- docs(invariants): register inv-341, the aggregates-only b-roll entry
+- docs(invariants): register inv-340, the graduation video step
+- docs(invariants): register inv-339, existing install skips only install
+- docs(invariants): register inv-338, the eula before every install
+- docs(invariants): add data/subsets/ to inv-050's project tree
+- docs(invariants): narrow inv-222 to the route the server names
+- docs(invariants): note that inv-330's held #154 rule is now inv-334
+- docs(specs): point every live-record list at the README table
+- docs(invariants): cite the governing invariant at seven hard rules
+- docs(invariants): retire pending wording for applied amendments
+- docs(inv-316): mark /order-github-issues and /escalate-to-parent
+- docs(specs): record the 2026-09-30 production-readiness audit
+- docs(invariants): apply INV-307's dated correction
+- docs(invariants): record the second 2026-09-30 invariant review
+- docs(invariants): record the 2026-09-30 invariant review
+- docs(maintainer): demote four local instructions to plain prose
+- docs(inv-314): name what a run may create without a per-record yes
+- docs(invariants): record the 2026-09-29 invariant review
+- docs(dry-run): cite or defer the maintainer-surface hard rules
+- docs(specs): record the 2026-09-28 production-readiness audit
+- docs(specs): record the 2026-09-24 invariant review
+- docs(invariants): register INV-316
+- docs(invariants): register INV-315
+- docs(invariants): register INV-314
+- docs(invariants): register INV-313
+- docs(specs): record the 2026-09-24 production-readiness audit
+- docs(dry-run): warn that a host Markdown hook fights the walk
+- docs(module-07): point step 2 at the factory-lifetime rule (INV-152)
+- docs(specs): record the todo.md triage and drop the stale pointer
+- docs(ledger): repair an entry corrupted by a wrapped-phrase match
+- docs(family): record the R8 and R12 amendments in the page itself
+- docs(family): adopt FAMILY_WORKFLOW.md as the normative workflow
+- docs(development): diagram the repository and per-change flow
+- docs(invariants): register INV-312
+- docs(invariants): register INV-311
+- docs(memory): adopt one commit convention repo-wide
+- docs(tests): correct the INV-308 disclosure to the coverage it actually has
+- docs(specs): record the 2026-09-21 production-readiness audit
+- docs(invariants): register INV-310
+- docs(specs): record the 2026-09-17 production-readiness audit
+- docs(loop): cite #69 as the issue blocking the audit half
+- docs(specs): record the 2026-09-16 invariant review
+- docs(specs): record the two 2026-09-14 audit findings
+
+### fix
+
+- fix(release): move BLUEPRINT.md's manifest copy with the version
+- fix(module-05): state the full output's file_path write once, at step 18
+- fix(graduation): give step 1c's recap venv a windows form
+- fix(windows): replace senzing-env.bat with a dot-sourced senzing-env.ps1
+- fix(module-5): send test runs to data/mapping and write the full output
+- fix(maintainer): make auto-test record findings first and name Phase 6
+- fix(graduation): apply INV-340 at three graduation-video sites
+- fix(graduation): give hand-run commands a PowerShell 5.1 form
+- fix(graduation): resolve the screenshot remedy's capture tool
+- fix(onboarding): name Data collection in the welcome's licensing bullet
+- fix(module-07): point three references at the step and state that own them
+- fix(module-07): state the documented WHY_KEY_DETAILS requirement in step 3a
+- fix(compact-dev-environment): leave specs frozen and route invariant changes to review-invariants
+- fix(module-04): write license_record_limit with its INV-295 marker
+- fix(module-05): return every phase 3 exit to the per-source loop
+- fix(module-07): give the return to data quality mapping a receiving route
+- fix(module-03b): state INV-091's full refusal and caption the inert tab
+- fix(module-02): narrow the existing-install announcement to the install
 - fix(module-05): offer a return to data collection when nothing is left to fix
 - fix(recap-video): level the voice before the mix so it reaches -16 LUFS
 - fix(module-05): save each source's sample to data/mapping/
@@ -247,7 +306,6 @@ the version, this file and the tag are written together on purpose.
 - fix(viz): refuse to render when the vendored d3 asset is missing
 - fix(data-collection): use module 6's sqlite threshold in step 8b
 - fix(sdk-setup): record database_type before step 7's branches
-- feat(graduation): open the graduation video on an intro scene
 - fix(graduation): keep name-bearing screenshots out of the video
 - fix(graduation): write the registry the copied orchestrator reads
 - fix(scripts): give the document pdf alias its own help and subtitle
@@ -256,386 +314,375 @@ the version, this file and the tag are written together on purpose.
 - fix(module-04): give each generated entity its own identifiers
 - fix(module-02): load the env script before step 8 writes the config
 - fix(viz): state the cap in the entity graph notes on a capped payload
-- feat(graduation): narrate the recap video with a local Piper voice
-- feat(graduation): explain a voiceless recap video and how to fix it
-- feat(graduation): add a ducked, normalized music bed to the recap video
 - fix(plugin): wrap the two bare MCP-NEGATIVE markers in HTML comments
 - fix(module-05): cite mapping_workflow step 2 for the payload key rule
-- chore(ledger): record that P1-3 was sent upstream after the 2026-10-01 dry run
 - fix(ledger): use the US spelling "honored" in the 2026-10-01 dry-run entry
+- fix(graduation): point to ground-rules for the model-switch rule
+- fix(module-05): align modules 5 and 6 with the rules they restate
+- fix(guides): apply inv-132 at the module 6 and module 7 sites
+- fix(module-02): give phase 3 a route for every server language
+- fix(graduation): exclude data/subsets/ and queue its tree entry
+- fix(module-5): map a retyped name as NAME_ORG and cite INV-336
+- fix(module-3): use one check list and one success rule
+- fix(module-06): load each source's load_subset block in Phase C Step 19
+- fix(skills): state each same-name command's rules in its skill
+- fix(invariants): align inv-132, inv-157 and inv-204 sites with server
+- fix(citations): name the governing invariant at the #227 mis-cited sites
+- fix(download-resource): describe the chunked inline reply and stop pinning sizes
+- fix(module-06): report an empty how-state population as nothing to check
+- fix(module-05): apply a retype decision at mapping steps 10 and 11
+- fix(module-02): read release notes before the update offer
+- fix(plugin): correct stale text flagged by the 2026-09-28 audit
+- fix(retrofit): describe the report, not the retired copy
+- fix(module-03): point the SENZ7426 relay at Module 2 Step 8
+- fix(skills): make every license reading an owner or an INV-300 pointer
+- fix(module-06): give step 8b's sample one chain role in load reconciliation
+- fix(citations): restamp three mcp citations re-read at 1.37.14
+- fix(schemas): make get_stats the empty response_schemas example
+- fix(retrofit): compare public against the last-propagated tag
+- fix(retrofit): report every path instead of stopping at the first diff
+- fix(ground-rules): describe a gated reporting_guide reply as no content
+- fix(ground-rules): report an unreachable access_steps example
+- fix(module-02): route update commands and 4.x upgrades to search_docs
+- fix(module-02): scope the macos supportpath literal to cask 4.4.x
+- fix(module-02): ask the eula question before installing anything
+- fix(module-07): replace the fixed why_* defect as the worked example
+- fix(visualization): state RECORD_FEATURES' response path positively
+- fix(visualization): state JSON_DATA's flag requirement, not get_record-only
+- fix(feedback): record an unanswered upstream offer as offer pending
+- fix(module-05): check PERSON-typed records for organization names
+- fix(module-06): reconcile the load count in two stages
+- fix(java): name a shared class's file after the class
+- fix(module-07): pin the teardown step, entity count and 2-degree method
+- fix(module-06): put the volume question's framing before its pointer
+- fix(module-06): state how to split a match key before counting suppressors
+- fix(module-06): choose the first source by step 14's heuristics
+- fix(module-06): store no record count for a volume option reply
+- fix(module-06): stop phase c re-opening the settled sqlite load size
+- fix(dry-run): draft findings into the ledger and file issues, not specs
+- fix(dry-run): stop the scaffold banner claiming an unreachable chip clip
+- fix(graduation): read the installed SDK version from SDK setup's record
+- fix(viz): name an unsettled final state on the How tab
+- fix(module-06): key the SQLite pre-load heads-up on the loadable total
+- fix(module-02): stop saying search_docs has no record-limit figure
+- fix(module-05): stop calling bare-globalization guide hits a stub
+- fix(dry-run): flag positive universals over results as a census
+- fix(module-06): scope phase c's no-hand-written rule to sdk calls
+- fix(viz): compare legend combination rows in the encoding self-check
+- fix(specs): stop documenting writes into the frozen archive
+- fix(invariants): name the partial-supersession marker and publish it
+- fix(family): retire R12's stale premise and re-arm the guard behind it
+- fix(family): bind the canonical-operation table in both directions
+- fix(invariants): one supersession syntax, and status from a bullet
+- fix(conformance): state the corpus and count what ships outside it
+- fix(skills): state the blind spots even when nothing was compared
+- fix(skills): bring the in-repo implement-github-issue up to R8
+- fix(invariants): stop one word flipping INV-216 to status unclear
+- fix(review-invariants): read every rule bullet or report it unparsed
+- fix(review-invariants): read an Enforced by clause that wrapped
+- fix(review-invariants): separate ineligible files from merely unscanned
+- fix(docs): stop saying the audit half is blocked five days after it was not
+- fix(review-invariants): record a hold in the ledger block, not the spec file
+- fix(review-invariants): stop at the working tree instead of committing
+- fix(review-invariants): state the scanned corpus on every sites run
+- fix(conformance): stop the INV-282 check reporting clean over lines it cannot reach
+- fix(conformance): stop the reverse-contract gate discarding rules outside plugins/
+- fix(specs): suffix the duplicate 2026-09-16 review heading
+- fix(audit): record findings as issues or in the ledger, never in specs/
+- fix(invariants): widen INV-213's subject and close the review
+- fix(invariants): amend four invariants naming a retiring command
+- fix(specs): restore the Commit field lost in the merge resolution
+- fix(review-invariants): report what check could not verify
+
+### test
+
+- test(guards): fail when a line-reading test gives no inv-346 verdict
+- test(guards): give the last two line-reading guards their verdicts
+- test(windows): fix the pwsh negative control and the exit rationale
+- test(search-routes): re-measure the 15 records stamped before the rebuild
+- test(guards): match maintainer and docs guard phrases across line wraps
+- test(guards): match plugins/ guard phrases across line wraps
+- test: re-point two guards at the rules that ship now
+- test: add shared wrap-aware matcher and move #387's guard onto it
+- test(search-routes): stamp and band every inline search_docs route
+- test(guards): resolve every slash command in the skills and overlays
+- test(module-02): queue the EULA and existing-install rules for review
+- test(specs): parse the live-record list from the README table
+- test(conformance): check the maintainer surface in the reverse contract
+- test(specs): widen the freeze to every file and probe the layout tree by path
+- test(invariants): record INV-302's dated amendment as no supersession
+- test(review-invariants): read deferral quotes through parse()
+- test(queries): record the #158 search_docs queries as verified
+- test(filing): hold every filing instruction to the gate beside it
+- test(pointers): widen the pointer guard to every root and fold in the second
+- test(citations): pin the statement of what verify does not check
+- test(deps): declare fpdf2 and skip rather than fail without it
+
+### chore
+
+- chore(ledger): record the #387 commit hash
+- chore(ledger): record the #385 commit hash
+- chore(ledger): record the #384 commit hash
+- chore(ledger): record the #392 commit hash
+- chore(ledger): record the #383 commit hash
+- chore(ledger): record the #382 commit hash
+- chore(ledger): record the #381 commit hash
+- chore(ledger): record the 2026-10-02 audit commit hash
+- chore(ledger): record that #320's upstream note was sent
+- chore(ledger): record that P1-3 was sent upstream after the 2026-10-01 dry run
 - chore(ledger): record the 2026-10-01 dry run and archive its feedback
 - chore(ledger): record the 2026-10-01b invariant review's commit hash
-- docs(invariants): note that inv-317's command sites no longer exist
 - chore(ledger): record the #296 implementation commit hash
-- test(guards): resolve every slash command in the skills and overlays
 - chore(ledger): record the #285 implementation commit hash
-- docs(audit): record findings where inv-317 allows, not "never into specs"
 - chore(ledger): record the 2026-10-01 invariant review's commit hash
-- docs(specs): record the 2026-10-01 invariant review
-- docs(invariants): correct inv-229's count of the installation checks
-- docs(invariants): register inv-343, no default type_discriminator
-- docs(invariants): register inv-342, the recap-video renderer contract
-- docs(invariants): register inv-341, the aggregates-only b-roll entry
-- docs(invariants): register inv-340, the graduation video step
-- docs(invariants): register inv-339, existing install skips only install
-- docs(invariants): register inv-338, the eula before every install
-- docs(invariants): add data/subsets/ to inv-050's project tree
-- docs(invariants): narrow inv-222 to the route the server names
-- docs(invariants): note that inv-330's held #154 rule is now inv-334
 - chore(ledger): record the #293 implementation commit hash
-- fix(graduation): point to ground-rules for the model-switch rule
 - chore(ledger): record the #292 implementation commit hash
-- fix(module-05): align modules 5 and 6 with the rules they restate
 - chore(ledger): record the #291 implementation commit hash
-- docs(specs): point every live-record list at the README table
 - chore(ledger): record the #290 implementation commit hash
-- docs(invariants): cite the governing invariant at seven hard rules
 - chore(ledger): record the #289 implementation commit hash
-- fix(guides): apply inv-132 at the module 6 and module 7 sites
 - chore(ledger): record the #288 implementation commit hash
-- docs(invariants): retire pending wording for applied amendments
 - chore(ledger): record the #287 implementation commit hash
-- fix(module-02): give phase 3 a route for every server language
 - chore(ledger): record the #286 implementation commit hash
-- fix(graduation): exclude data/subsets/ and queue its tree entry
 - chore(ledger): record the #284 implementation commit hash
-- test(module-02): queue the EULA and existing-install rules for review
 - chore(ledger): record the #300 implementation commit hash
-- feat(graduation): offer, script and render the graduation video
 - chore(ledger): record the #298 implementation commit hash
-- feat(module-completion): save each module's graduation-video b-roll
 - chore(ledger): record the #299 implementation commit hash
-- feat(scripts): add the bundled recap-video renderer
 - chore(ledger): record the #283 implementation commit hash
-- fix(module-5): map a retyped name as NAME_ORG and cite INV-336
 - chore(ledger): record the #282 implementation commit hash
-- fix(module-3): use one check list and one success rule
 - chore(ledger): record the #294 implementation commit hash
-- docs(inv-316): mark /order-github-issues and /escalate-to-parent
 - chore(ledger): record the 2026-09-30 audit commit hash
-- docs(specs): record the 2026-09-30 production-readiness audit
 - chore(state): record the invariant-review commit hash
-- docs(invariants): apply INV-307's dated correction
 - chore(ledger): record the #258 implementation commit hash
-- test(specs): parse the live-record list from the README table
 - chore(state): record the invariant-review commit hash
-- docs(invariants): record the second 2026-09-30 invariant review
 - chore(ledger): record the #259 implementation commit hash
-- fix(module-06): load each source's load_subset block in Phase C Step 19
 - chore(ledger): record the #262 implementation commit hash
-- refactor(maintainer): delete the ten same-name command files
 - chore(state): record the invariant-review commit hash
-- docs(invariants): record the 2026-09-30 invariant review
 - chore(ledger): record the #233 implementation commit hash
-- test(conformance): check the maintainer surface in the reverse contract
-- docs(maintainer): demote four local instructions to plain prose
 - chore(ledger): record the #257 implementation commit hash
-- test(specs): widen the freeze to every file and probe the layout tree by path
 - chore(ledger): record the #241 implementation commit hash
-- fix(skills): state each same-name command's rules in its skill
 - chore(ledger): record the #235 implementation commit hash
-- fix(invariants): align inv-132, inv-157 and inv-204 sites with server
 - chore(ledger): record the #227 implementation commit hash
-- fix(citations): name the governing invariant at the #227 mis-cited sites
 - chore(ledger): record the #225 implementation commit hash
-- fix(download-resource): describe the chunked inline reply and stop pinning sizes
 - chore(ledger): record the #216 implementation commit hash
-- docs(inv-314): name what a run may create without a per-record yes
 - chore(ledger): record the #232 implementation commit hash
-- fix(module-06): report an empty how-state population as nothing to check
 - chore(ledger): record the #220 implementation commit hash
-- fix(module-05): apply a retype decision at mapping steps 10 and 11
 - chore(state): record the invariant-review commit hash
-- docs(invariants): record the 2026-09-29 invariant review
 - chore(state): note the #239 supersession-guard fix in the ledger
-- test(invariants): record INV-302's dated amendment as no supersession
 - chore(state): record the #239 commit hash
-- refactor(skills): define the two user-level skills only at user level
 - chore(state): record the #240 commit hash
 - chore(skills): retire /check-skill-drift
 - chore(state): record the #236 commit hash
-- test(review-invariants): read deferral quotes through parse()
 - chore(state): record the #228 commit hash
-- docs(dry-run): cite or defer the maintainer-surface hard rules
 - chore(state): record the #222 commit hash
-- fix(module-02): read release notes before the update offer
 - chore(state): record the #234 commit hash
-- fix(plugin): correct stale text flagged by the 2026-09-28 audit
 - chore(state): record the #238 commit hash
-- feat(module-06): load each phase c source from its subset record
 - chore(state): record the #231 commit hash
-- refactor(citations): re-cite INV-065 sites to the rules that own them
 - chore(state): record the #224 commit hash
-- fix(retrofit): describe the report, not the retired copy
 - chore(state): record the #223 commit hash
-- feat(feedback-to-issues): state both closed upstream sets and their mapping
 - chore(state): record the #237 commit hash
-- feat(module-06): record every phase b subset choice in load_subset
 - chore(state): record the #219 commit hash
-- fix(module-03): point the SENZ7426 relay at Module 2 Step 8
 - chore(state): record the #218 commit hash
-- fix(skills): make every license reading an owner or an INV-300 pointer
 - chore(state): record the #221 commit hash
-- fix(module-06): give step 8b's sample one chain role in load reconciliation
 - chore(state): record the #215 commit hash
-- refactor(skills): let the user-level copies govern both skills
 - chore(state): record the 2026-09-28 audit commit hash
-- docs(specs): record the 2026-09-28 production-readiness audit
 - chore(state): record the #200 commit hash
-- fix(citations): restamp three mcp citations re-read at 1.37.14
 - chore(state): record the #198 commit hash
-- fix(schemas): make get_stats the empty response_schemas example
 - chore(state): record the #202 commit hash
-- fix(retrofit): compare public against the last-propagated tag
 - chore(state): record the #191 commit hash
-- fix(retrofit): report every path instead of stopping at the first diff
 - chore(state): record the #195 commit hash
-- fix(ground-rules): describe a gated reporting_guide reply as no content
 - chore(state): record the #197 commit hash
-- fix(ground-rules): report an unreachable access_steps example
 - chore(state): record the #194 commit hash
-- fix(module-02): route update commands and 4.x upgrades to search_docs
 - chore(state): record the #199 commit hash
-- fix(module-02): scope the macos supportpath literal to cask 4.4.x
 - chore(state): record the #192 commit hash
-- fix(module-02): ask the eula question before installing anything
 - chore(state): record the #196 commit hash
-- fix(module-07): replace the fixed why_* defect as the worked example
-- fix(visualization): state RECORD_FEATURES' response path positively
 - chore(state): record the #193 commit hash
-- fix(visualization): state JSON_DATA's flag requirement, not get_record-only
 - chore(ledger): record the 2026-09-28 MCP delegation sweep
 - chore(state): record the #167 commit hash
-- fix(feedback): record an unanswered upstream offer as offer pending
-- test(queries): record the #158 search_docs queries as verified
 - chore(state): record the #158 commit hash
-- fix(module-05): check PERSON-typed records for organization names
 - chore(state): record the #157 commit hash
-- fix(module-06): reconcile the load count in two stages
 - chore(state): record the #161 commit hash
-- fix(java): name a shared class's file after the class
 - chore(state): record the #154 commit hash
-- feat(module-06): audit every multi-record entity's how state in Phase D
 - chore(state): record the #166 commit hash
-- fix(module-07): pin the teardown step, entity count and 2-degree method
 - chore(state): record the #162 commit hash
-- fix(module-06): put the volume question's framing before its pointer
 - chore(state): record the #160 commit hash
-- fix(module-06): state how to split a match key before counting suppressors
 - chore(state): record the #165 commit hash
-- fix(module-06): choose the first source by step 14's heuristics
 - chore(state): record the #155 commit hash
-- fix(module-06): store no record count for a volume option reply
 - chore(state): record the #164 commit hash
-- fix(module-06): stop phase c re-opening the settled sqlite load size
 - chore(state): record the #153 commit hash
-- fix(dry-run): draft findings into the ledger and file issues, not specs
 - chore(state): record the #152 commit hash
-- fix(dry-run): stop the scaffold banner claiming an unreachable chip clip
 - chore(state): record the #168 commit hash
-- fix(graduation): read the installed SDK version from SDK setup's record
 - chore(state): record the #169 commit hash
-- fix(viz): name an unsettled final state on the How tab
 - chore(state): record the #163 commit hash
-- fix(module-06): key the SQLite pre-load heads-up on the loadable total
 - chore(state): record the #150 commit hash
-- fix(module-02): stop saying search_docs has no record-limit figure
 - chore(state): record the #149 commit hash
-- fix(module-05): stop calling bare-globalization guide hits a stub
 - chore(state): record the #151 commit hash
-- fix(dry-run): flag positive universals over results as a census
 - chore(state): record the #156 commit hash
-- fix(module-06): scope phase c's no-hand-written rule to sdk calls
-- Update
 - chore(state): record the #159 commit hash
-- fix(viz): compare legend combination rows in the encoding self-check
-- docs(specs): record the 2026-09-24 invariant review
-- docs(invariants): register INV-316
-- docs(invariants): register INV-315
-- docs(invariants): register INV-314
-- docs(invariants): register INV-313
 - chore(state): advance the #142 run state to pr-open
 - chore(state): record the #142 commit hash
-- fix(specs): stop documenting writes into the frozen archive
 - chore(state): advance the #143 run state to pr-open
 - chore(state): record the #143 commit hash
-- fix(invariants): name the partial-supersession marker and publish it
 - chore(state): correct the #141 comment log
 - chore(state): advance the #141 run state to pr-open
 - chore(state): record the #141 commit hash
-- fix(family): retire R12's stale premise and re-arm the guard behind it
 - chore(state): record the #140 commit hash
-- fix(family): bind the canonical-operation table in both directions
 - chore(state): record that #135 reached pr-open
 - chore(specs): record the audit record commit hash
-- docs(specs): record the 2026-09-24 production-readiness audit
-- docs(dry-run): warn that a host Markdown hook fights the walk
 - chore(state): record that #114 reached pr-open
-- feat(delegate-to-mcp-server): file GitHub issues instead of spec files
 - chore(state): record that #134 reached pr-open
-- docs(module-07): point step 2 at the factory-lifetime rule (INV-152)
 - chore(state): record that #53 reached pr-open
-- docs(specs): record the todo.md triage and drop the stale pointer
 - chore(state): record the #112 commit hash
-- fix(invariants): one supersession syntax, and status from a bullet
 - chore(state): record the #79 commit hash
-- feat(review-invariants): queue amendments to registered invariants
 - chore(state): record the #108 commit hash
-- fix(conformance): state the corpus and count what ships outside it
 - chore(state): record the #106 commit hash
-- test(filing): hold every filing instruction to the gate beside it
-- fix(skills): state the blind spots even when nothing was compared
 - chore(state): record the #128 commit hash
-- feat(skills): share a rules block between both skill copies and detect drift
 - chore(state): record the #126 commit hash
-- fix(skills): bring the in-repo implement-github-issue up to R8
 - chore(state): record the #124 commit hash
-- feat(family): R8 names the issue it suggests and stops
 - chore(state): record the #122 commit hash
-- fix(invariants): stop one word flipping INV-216 to status unclear
 - chore(state): record the #113 commit hash
-- refactor(specs): move list_specs.py beside the tests that consume it
 - chore(state): record the #119 commit hash
-- docs(ledger): repair an entry corrupted by a wrapped-phrase match
-- feat(family): R8 requires a dependency report before the choice
 - chore(state): record the #117 commit hash
-- docs(family): record the R8 and R12 amendments in the page itself
 - chore(state): record the #111 commit hash
-- docs(family): adopt FAMILY_WORKFLOW.md as the normative workflow
 - chore(state): record the #110 commit hash
-- fix(review-invariants): read every rule bullet or report it unparsed
 - chore(state): record the #105 commit hash
-- fix(review-invariants): read an Enforced by clause that wrapped
 - chore(state): record the #55 commit hash
-- docs(development): diagram the repository and per-change flow
-- docs(invariants): register INV-312
-- docs(invariants): register INV-311
 - chore(state): record the #88 commit hash
-- feat(invariants): publish a machine-readable manifest for downstream ports
 - chore(state): record the #54 commit hash
-- feat(retrofit): file issues instead of writing into the dev tree
 - chore(state): record the #92 commit hash
-- fix(review-invariants): separate ineligible files from merely unscanned
 - chore(state): record the #96 commit hash
-- test(pointers): widen the pointer guard to every root and fold in the second
 - chore(state): record the #56 commit hash
-- docs(memory): adopt one commit convention repo-wide
 - chore(state): record the #97 commit hash
-- test(citations): pin the statement of what verify does not check
 - chore(state): advance the #91 run state to pr-open
 - chore(state): record the #91 commit hash
-- docs(tests): correct the INV-308 disclosure to the coverage it actually has
 - chore(state): advance the #90 run state to pr-open
 - chore(state): record the #90 commit hash
-- fix(docs): stop saying the audit half is blocked five days after it was not
 - chore(state): record the audit record commit hash
-- docs(specs): record the 2026-09-21 production-readiness audit
 - chore(state): advance the #58 run state to pr-open
 - chore(state): record the #58 commit hash
-- fix(review-invariants): record a hold in the ledger block, not the spec file
 - chore(state): record the invariant-review-2026-09-21 commit hash
-- docs(invariants): register INV-310
 - chore(state): advance the #78 run state to pr-open
 - chore(state): record the #78 commit hash
-- fix(review-invariants): stop at the working tree instead of committing
 - chore(state): advance the #83 run state to pr-open
 - chore(state): record the #83 commit hash
-- feat(conformance): report the untested span's citation rate
 - chore(state): advance the #77 run state to pr-open
 - chore(state): record the #77 commit hash
-- fix(review-invariants): state the scanned corpus on every sites run
 - chore(state): advance the #80 run state to pr-open
 - chore(state): record the #80 commit hash
-- fix(conformance): stop the INV-282 check reporting clean over lines it cannot reach
 - chore(state): advance the #76 run state to pr-open
 - chore(state): record the #76 commit hash
-- feat(conformance): report what an audit record retires from the range
 - chore(state): advance the #74 run state to pr-open
 - chore(state): record the #74 commit hash
-- fix(conformance): stop the reverse-contract gate discarding rules outside plugins/
 - chore(state): advance the #72 run state to pr-open
 - chore(state): record the audit record commit hash
-- docs(specs): record the 2026-09-17 production-readiness audit
 - chore(state): record the #72 commit hash
-- fix(specs): suffix the duplicate 2026-09-16 review heading
 - chore(state): advance the #69 run state to pr-open
 - chore(state): record the #69 implement-github-issue run
-- fix(audit): record findings as issues or in the ledger, never in specs/
 - chore(state): advance the #51 run state to pr-open
-- docs(loop): cite #69 as the issue blocking the audit half
 - chore(state): record the #51 implement-github-issue run
-- feat(commands)!: rename the loop to /unattended-issue-loop, label-gated
 - chore(state): record the #60 retirement PR
 - chore(state): advance the #60 run state to pr-open
-- feat(commands)!: retire /implement-spec, keeping list_specs.py
-- fix(invariants): widen INV-213's subject and close the review
-- fix(invariants): amend four invariants naming a retiring command
 - chore(state): advance the #60 run state to pr-open
 - chore(state): record the #60 implement-github-issue run
-- feat(commands): re-verify Senzing facts on the issue-driven path
-- fix(specs): restore the Commit field lost in the merge resolution
 - chore(state): advance the #49 run state to pr-open
 - chore(state): record the #49 implement-github-issue run
-- feat(commands)!: rename /feedback-to-specs and file issues instead of specs
-- docs(specs): record the 2026-09-16 invariant review
-- feat(invariants): register INV-309, the issue path accounts for its rules
-- feat(invariants): register INV-308, report what could not be verified
 - chore(state): advance the #59 run state to pr-open
 - chore(state): record the #59 implement-github-issue run
-- fix(review-invariants): report what check could not verify
 - chore(state): advance the #50 run state to pr-open
 - chore(state): record the #50 implement-github-issue run
-- feat(commands): add /implement-github-issue and gate invariant capture
-- feat(invariants): register INV-307, specs/ is a read-only archive
 - chore(state): advance the #52 run state to pr-open
 - chore(state): record the #52 implement-github-issue run
-- feat(specs): freeze specs/ and record the 2026-09-15 cutover
 - chore(state): advance the #47 run state to pr-open
 - chore(state): record the #47 implement-github-issue run
+- chore(state): advance the #27 run state to pr-open
+- chore(state): advance the #39 run state to pr-open
+- chore(state): record the #39 implement-github-issue run
+- chore(state): advance the #38 run state to pr-open
+- chore(state): advance the #26 run state to pr-open
+- chore(state): record the #26 implement-github-issue run
+- chore(state): advance the #25 run state to pr-open
+- chore(state): record the #25 implement-github-issue run
+- chore(state): advance the #24 run state to pr-open
+- chore(state): record the #24 implement-github-issue run
+- chore(state): advance the #23 run state to pr-open
+- chore(state): record the #23 implement-github-issue run
+- chore(state): advance the #22 run state to pr-open
+- chore(state): record the #22 implement-github-issue run
+- chore(state): record the #21 implement-github-issue run
+- chore(state): advance the #20 run state to pr-open
+- chore(state): record the #20 implement-github-issue run
+
+### feat
+
+- feat(graduation): open the graduation video on an intro scene
+- feat(graduation): narrate the recap video with a local Piper voice
+- feat(graduation): explain a voiceless recap video and how to fix it
+- feat(graduation): add a ducked, normalized music bed to the recap video
+- feat(graduation): offer, script and render the graduation video
+- feat(module-completion): save each module's graduation-video b-roll
+- feat(scripts): add the bundled recap-video renderer
+- feat(module-06): load each phase c source from its subset record
+- feat(feedback-to-issues): state both closed upstream sets and their mapping
+- feat(module-06): record every phase b subset choice in load_subset
+- feat(module-06): audit every multi-record entity's how state in Phase D
+- feat(delegate-to-mcp-server): file GitHub issues instead of spec files
+- feat(review-invariants): queue amendments to registered invariants
+- feat(skills): share a rules block between both skill copies and detect drift
+- feat(family): R8 names the issue it suggests and stops
+- feat(family): R8 requires a dependency report before the choice
+- feat(invariants): publish a machine-readable manifest for downstream ports
+- feat(retrofit): file issues instead of writing into the dev tree
+- feat(conformance): report the untested span's citation rate
+- feat(conformance): report what an audit record retires from the range
+- feat(commands)!: rename the loop to /unattended-issue-loop, label-gated
+- feat(commands)!: retire /implement-spec, keeping list_specs.py
+- feat(commands): re-verify Senzing facts on the issue-driven path
+- feat(commands)!: rename /feedback-to-specs and file issues instead of specs
+- feat(invariants): register INV-309, the issue path accounts for its rules
+- feat(invariants): register INV-308, report what could not be verified
+- feat(commands): add /implement-github-issue and gate invariant capture
+- feat(invariants): register INV-307, specs/ is a read-only archive
+- feat(specs): freeze specs/ and record the 2026-09-15 cutover
 - feat(invariants): register INV-306 and close the 2026-09-14 review
 - feat(invariants): register INV-305, the fpdf2 CI matrix runs both cells
 - feat(invariants): register INV-304, the propagate mirror never publishes .claude/
 - feat(invariants): register INV-303, every command names a skill that resolves
 - feat(invariants): register INV-302, the maintainer command surface agrees both ways
 - feat(invariants): register INV-301, releases move every version record or none
-- chore(state): advance the #27 run state to pr-open
 - feat(release): add the /release skill and command
-- chore(state): advance the #39 run state to pr-open
-- chore(state): record the #39 implement-github-issue run
 - feat(tests): pin the maintainer command set in both directions
-- chore(state): advance the #38 run state to pr-open
 - feat(conformance): see new hard rules on the maintainer surface, and defer four invariants
-- docs(specs): record the two 2026-09-14 audit findings
-- chore(state): advance the #26 run state to pr-open
-- chore(state): record the #26 implement-github-issue run
 - feat(commands): add /unattended-spec-loop slash command
-- chore(state): advance the #25 run state to pr-open
-- chore(state): record the #25 implement-github-issue run
 - feat(commands): add /review-invariants slash command
-- chore(state): advance the #24 run state to pr-open
-- chore(state): record the #24 implement-github-issue run
 - feat(commands): add /compact-dev-environment slash command
-- chore(state): advance the #23 run state to pr-open
-- chore(state): record the #23 implement-github-issue run
 - feat(commands): add /delegate-to-mcp-server slash command
-- chore(state): advance the #22 run state to pr-open
-- chore(state): record the #22 implement-github-issue run
 - feat(commands): add /production-readiness-audit slash command
-- chore(state): record the #21 implement-github-issue run
 - feat(commands): add /auto-test slash command
-- chore(state): advance the #20 run state to pr-open
-- chore(state): record the #20 implement-github-issue run
 - feat(commands): add /dry-run slash command
+- feat(commands): add /retrofit-from-public slash command
+- feat(commands): add /propagate-to-public slash command
+
+### refactor
+
+- refactor(maintainer): delete the ten same-name command files
+- refactor(skills): define the two user-level skills only at user level
+- refactor(citations): re-cite INV-065 sites to the rules that own them
+- refactor(skills): let the user-level copies govern both skills
+- refactor(specs): move list_specs.py beside the tests that consume it
+
+### style
+
 - style: use prettier's emphasis delimiter in the linters README
+
+### ci
+
 - ci: fetch full history, and configure the linters the org template configures
 - ci: run the suite with and without fpdf2 on every pull request
+
+### other
+
 - #30 Add state
-- test(deps): declare fpdf2 and skip rather than fail without it
 - #19 Add state
-- feat(commands): add /retrofit-from-public slash command
 - #18 Add skill
-- feat(commands): add /propagate-to-public slash command
-- #17 Rename
 
 ## [0.5.3] - 2026-09-03
 

@@ -4347,14 +4347,28 @@ as the certificate colophon, so no substitution reaches it — and returns `None
 when the repository ships no such PDF; it refuses a missing
 `generate_recap_pdf.py`, a non-zero render, and a render that reports
 `renderer: stdlib`, whose fallback embeds no images and draws no certificate. `plan_changelog` builds an entry
-`## [X.Y.Z] - <today>` listing non-merge commit subjects since the newest tag;
-if `CHANGELOG.md` is absent it is created from `CHANGELOG_HEADER`, a
-`SEED_NOTE` naming the newest seeded version, and one reconstructed entry per
-existing tag (newest first, dated by the tagged commit, the earliest not
-itemized); the new entry is prepended before the first `##`. Output: repo,
+`## [X.Y.Z] - <today>` from the non-merge commit subjects since the newest tag
+and **curates** it (#698), because the `SEED_NOTE` tells a downstream porter
+that entries newer than its boundary are curated release notes rather than
+commit subjects. `curate` performs three mechanical operations and no others:
+`describes_no_change` drops a subject that names no action and no object
+(fewer than two words once a leading `#456` issue reference and a
+`COMMIT_TYPE` prefix are stripped, or a `MERGE_SUBJECT`); every kept subject
+stays verbatim; and `commit_group` files each under its own conventional-commit
+type as a `### <type>` heading (`UNTYPED_GROUP`, `other`, for a subject with
+none), in the order the types first appear. Nothing writes a description for a
+subject that carried none. `report_dropped` prints every dropped subject with
+its reason under `--- subjects carrying no change description ---`, so a badly
+named commit reaches the maintainer rather than being filtered in silence. If
+`CHANGELOG.md` is absent it is created from `CHANGELOG_HEADER`, a `SEED_NOTE`
+naming the newest seeded version, and one reconstructed entry per existing tag
+(newest first, dated by the tagged commit, the earliest not itemized) — those
+stay flat subject lists, which is what the note says they are; the new entry is
+prepended before the first `##`. Output: repo,
 branch, version change, newest tag, changelog action, mode, unified diffs of
 the sites (capped at `DIFF_LINE_BUDGET` lines), whether the example PDF would
-be re-rendered or is absent, the entry, and the three git commands. With
+be re-rendered or is absent, the entry, the subjects dropped from it, and the
+three git commands. With
 `--apply` it writes the files, re-renders the example PDF, `git add` of exactly
 those files and the PDF, commits with the subject (default `chore(release): <version>`) and
 creates an annotated tag; on any git failure it deletes the tag, hard-resets
@@ -5901,6 +5915,10 @@ SEED_NOTE = (
     "> Entries **%s and earlier** were reconstructed from git history when this file was\n"
     "> first created. They were not authored at release time, so they list commit subjects\n"
     "> rather than curated release notes.\n")
+COMMIT_TYPE = re.compile(r"^(?P<type>[a-z][a-z0-9]*)(?:\([^)]*\))?!?:\s*")
+ISSUE_PREFIX = re.compile(r"^(?:#\d+[\s:,.-]*)+")
+MERGE_SUBJECT = re.compile(r"^Merge\b")
+UNTYPED_GROUP = "other"
 class Refusal(Exception):
     ...
 def git(repo, *args, check=True):
@@ -5927,6 +5945,16 @@ def tag_date(repo, ref):
     ...
 def entry(version, date, bullets):
     ...
+def subject_body(subject):
+    ...
+def describes_no_change(subject):
+    ...
+def commit_group(subject):
+    ...
+def curate(bullets):
+    ...
+def curated_entry(version, date, bullets):
+    ...
 def seed_changelog(repo, tags):
     ...
 def plan_changelog(repo, new, today, tags):
@@ -5937,6 +5965,8 @@ def check_target(repo, old, new, tags):
     ...
 DIFF_LINE_BUDGET = 60
 def show_diff(relpath, old_text, new_text):
+    ...
+def report_dropped(dropped):
     ...
 def parse_args(argv):
     ...
@@ -10199,21 +10229,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8201 test methods in 439 files, matching `inventory.test_count_total`.
+There are 8234 test methods in 440 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8201.
+sum to 8234.
 
-Two files run more tests than they define, so discovery collects 8208:
+Two files run more tests than they define, so discovery collects 8241:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8201`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8234`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8208`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8241`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -10252,6 +10282,7 @@ looks wrong.
 - `tests/test_capture_tabs.py`: 47
 - `tests/test_capture_verifies_tab_activation.py`: 11
 - `tests/test_certificate_name_source.py`: 19
+- `tests/test_changelog_entries_are_what_the_note_says.py`: 29
 - `tests/test_checklist_items_ship_their_exceptions.py`: 5
 - `tests/test_ci_workflow_guards_the_fpdf2_matrix.py`: 12
 - `tests/test_citation_census.py`: 25
@@ -10537,7 +10568,7 @@ looks wrong.
 - `tests/test_registration_idempotency_is_constructed.py`: 12
 - `tests/test_registry_status_values_are_handled.py`: 12
 - `tests/test_related_entities_guidance.py`: 21
-- `tests/test_release_bumps_version_changelog_and_tag_together.py`: 37
+- `tests/test_release_bumps_version_changelog_and_tag_together.py`: 41
 - `tests/test_release_covers_every_version_site.py`: 12
 - `tests/test_release_cycle.py`: 77
 - `tests/test_results_validation_is_diagnostic.py`: 35
@@ -11516,6 +11547,18 @@ These are the scripts under `.claude/skills/`:
   one handover block after the notes with its four subsections, and a
   `Worked steer shown:` line in an Act 2 module's Actions Taken, and names the
   one missing (#518).
+- **The changelog says what its entries are.**
+  `tests/test_changelog_entries_are_what_the_note_says.py` derives the seed
+  note's boundary and the entry set by scanning `CHANGELOG.md`, then requires
+  that the note is present and version-anchored at a version the file has, that
+  no entry newer than that boundary carries a bullet describing no change, and
+  that every such bullet sits under its own conventional-commit type, while an
+  entry at or below the boundary keeps its flat list of commit subjects. The
+  predicate is imported from `release.py`, so the writer and the guard cannot
+  disagree; the controls put the pre-#698 shape back, move the boundary, and
+  rewrap the note. `tests/test_release_bumps_version_changelog_and_tag_together.py`
+  holds a release end to end to the same rule and to its report of what it
+  dropped (#698).
 - **The Pages site.** `tests/test_pages_site_commands_match_docs_readme.py`
   requires the `claude plugin …` commands inside `<code>` in `docs/index.html`
   to equal, as a set, those in `docs/README.md`'s `console` fences, indented or
@@ -13228,3 +13271,21 @@ Senzing licensing, with no SPDX identifier.
   extracted text and not its bytes, because fpdf2 writes a `/CreationDate` and
   an `/ID` that differ on every render, so a byte comparison would fail
   forever
+- #698: `CHANGELOG.md`'s seed note told a downstream porter that entries
+  newer than `0.5.3` are curated release notes rather than commit subjects,
+  while every entry in the file was raw commit subjects — the newest release
+  carrying the bare bullet `- Savepoint` and the one before it four more — at
+  the one place a porter looks, since the Kiro, ChatGPT and Copilot
+  repositories port from these tagged entries. The entries were curated up to
+  the note rather than the note rewritten down to the entries, because the
+  curation is what those repositories port from. Curation is three mechanical
+  operations and no others: drop the subjects that name no action and no
+  object, keep every remaining subject verbatim, and group them under their own
+  conventional-commit types — so no bullet's description is invented. `[0.7.0]`,
+  `[0.6.1]` and `[0.6.0]` lost seven such bullets between them and `[0.5.3]`
+  and earlier were left alone, which is what the note says of them. `release.py`
+  now curates each entry it writes and reports every subject it dropped, rather
+  than filtering silently, so a badly named commit reaches the maintainer who
+  can name the next one better; the guard derives the boundary and the entry set
+  by scanning the file, because a list of version numbers in a guard would go
+  stale on the next release in exactly the way the note did

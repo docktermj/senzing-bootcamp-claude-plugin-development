@@ -431,6 +431,62 @@ class ASecondReleasePrependsRatherThanReseeds(unittest.TestCase):
 
 
 @unittest.skipUnless(shutil.which("git"), "git is required to build the fixture repository")
+class TheEntryAReleaseWritesIsCurated(unittest.TestCase):
+    """The entry is what `CHANGELOG.md`'s seed note promises a downstream porter it is (#698).
+
+    The note says entries newer than its boundary are curated release notes rather than
+    commit subjects, and the Kiro, ChatGPT and Copilot repositories port from exactly those
+    entries. So the entry a release writes is curated: subjects that describe no change are
+    dropped, the rest keep their own wording verbatim, and they are grouped under their own
+    conventional-commit types. ⛔ **What is dropped is REPORTED**, never silently filtered --
+    a commit named `Savepoint` is a commit that was badly named, and the only person who can
+    name the next one better is the maintainer reading the dry run.
+
+    `tests/test_changelog_entries_are_what_the_note_says.py` holds the shipped file to the
+    same rule and owns the predicate's measurement; this class is the end-to-end half.
+    """
+
+    def setUp(self):
+        self.tmp, self.repo = build_fixture("release-curated-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        (self.repo / "savepoint.txt").write_text("a\n", encoding="utf-8")
+        git(self.repo, "add", "-A")
+        git(self.repo, "commit", "--quiet", "-m", "Savepoint")
+        (self.repo / "docs.txt").write_text("b\n", encoding="utf-8")
+        git(self.repo, "add", "-A")
+        git(self.repo, "commit", "--quiet", "-m", "docs(fixture): say what changed")
+        self.code, self.out, self.err = release(self.repo, "--minor", "--apply")
+        self.assertEqual(0, self.code, self.out + self.err)
+        self.text = (self.repo / CHANGELOG_REL).read_text(encoding="utf-8")
+
+    def test_the_entry_groups_its_bullets_by_the_subjects_own_types(self):
+        entry = self.text[self.text.index("## [0.5.0]"):self.text.index("## [0.4.1]")]
+        self.assertIn("### feat", entry)
+        self.assertIn("### docs", entry)
+        self.assertIn("- docs(fixture): say what changed", entry,
+                      "a kept subject lost its own wording; curation drops and groups, it "
+                      "never rewrites")
+
+    def test_a_subject_describing_no_change_is_not_in_the_entry(self):
+        entry = self.text[self.text.index("## [0.5.0]"):self.text.index("## [0.4.1]")]
+        self.assertNotIn("Savepoint", entry,
+                         "`- Savepoint` is a release-note bullet a reader learns nothing "
+                         "from, and the seed note promises this entry is curated")
+
+    def test_the_dropped_subject_is_reported_to_the_maintainer(self):
+        """⛔ Flagged, never silently filtered: a silent drop teaches nobody anything."""
+        self.assertIn("subjects carrying no change description", self.out)
+        self.assertIn("Savepoint", self.out)
+
+    def test_the_seeded_entries_are_left_as_commit_subjects(self):
+        """⚠️ The other half of the note: a reconstructed entry IS a list of subjects."""
+        seeded = self.text[self.text.index("## [0.4.1]"):]
+        self.assertNotIn("### ", seeded,
+                         "a seeded entry was grouped, so the seed note's claim that those "
+                         "entries list commit subjects is no longer true of them")
+
+
+@unittest.skipUnless(shutil.which("git"), "git is required to build the fixture repository")
 class ItRefusesRatherThanReleasingHalfOfIt(unittest.TestCase):
     def setUp(self):
         self.tmp, self.repo = build_fixture("release-refuse-")
