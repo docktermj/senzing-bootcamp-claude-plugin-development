@@ -10129,6 +10129,7 @@ looks wrong.
 - `tests/test_acknowledge_precedes_the_loading_it_precedes.py`: 8
 - `tests/test_all_runs_every_argument_free_view.py`: 7
 - `tests/test_amendments_are_queued.py`: 12
+- `tests/test_an_existing_datastore_is_a_stated_branch.py`: 16
 - `tests/test_analyzer_python_floor_is_cited.py`: 23
 - `tests/test_answer_options_render_below_the_question.py`: 11
 - `tests/test_any_language_citations_name_the_right_rule.py`: 4
@@ -12876,3 +12877,13 @@ Senzing licensing, with no SPDX identifier.
   naming them, so the class stays fixed rather than the instances
   the file itself states for that kind of object, deriving both the field
   sets and the sites from the text so a fence added later is checked too
+- #684: SDK setup's Step 7 and Step 8a state what they do on a datastore an
+  earlier run already created, which a resume and the `sdk_repair` detour both
+  re-enter: Step 7's new instruction 3 asks whether the Senzing schema is
+  applied — the `sys_cfg` test the server's own routes make — before applying
+  it, skips it and says so when it is, and both schema steps point there;
+  Step 8a reads the default config id first, never re-seeds when one is
+  registered, and names the interactive prompt the fetched
+  `init_default_config` snippet raises, which the guide must not answer blind;
+  the `sdk_repair` detour cites both branches and states why it needs no
+  `register-sources` step of its own
