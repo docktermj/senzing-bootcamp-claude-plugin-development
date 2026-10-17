@@ -1435,7 +1435,7 @@ name with two sources; `propagate.sh` rewrites it back on publish (#449).
 ### 5.2 `plugins/senzing-bootcamp/.claude-plugin/plugin.json`
 
 The plugin manifest. It declares the name `senzing-bootcamp`, the version
-`0.6.1` (the single version every other version assertion must match), the
+`0.7.0` (the single version every other version assertion must match), the
 same description as the marketplace entry, author `Senzing`, homepage and
 repository both set to the development repository on GitHub, and license
 `Apache-2.0`. It declares no components explicitly: Claude Code discovers the
@@ -3565,7 +3565,7 @@ Reference material shipped inside the plugin; nothing here is executed.
   Sonnet 5.5 switched up to Opus 5.5 for the heavy stretches, or Opus 5.5 with
   high effort throughout.
 - `examples/bootcamp_recap.example.md` is a sanitized finished recap (INV-065)
-  from a Python, Core-path, SQLite run on plugin version 0.6.1: the header
+  from a Python, Core-path, SQLite run on plugin version 0.7.0: the header
   fields (Bootcamper, Started, Completed, Programming language, Path, Plugin
   version, Operating system, Python version, Language runtime, Senzing SDK,
   Database), one `## {Module name} — {timestamp}` section per completed module
@@ -4317,7 +4317,8 @@ and never invokes `/propagate-to-public`; afterwards it names the next steps
 version site or changelog heading. A signing `tag.gpgsign` setting may prompt;
 the script does not override it. A new file asserting the version is added to
 `VERSION_SITES` (`tests/test_release_covers_every_version_site.py` fails
-otherwise).
+otherwise); that guard scans both directions, so a file left behind at a version
+already released past fails it too (#697).
 
 `release.py [version] [--major|--minor|--patch] [--apply|--dry-run] [--repo]
 [--allow-branch] [--allow-divergent-base] [--message]`. Dry run is the
@@ -4331,19 +4332,31 @@ the manifest, an existing tag, a target not newer than the newest semver tag
 (sorted numerically), and a manifest that differs from the newest tag (unless
 `--allow-divergent-base`, which downgrades only that refusal to a warning).
 `rewrite_sites` plans every `VERSION_SITES` edit in memory (the manifest's
-`"version"` line, the example recap's `**Plugin version:**` row, and the
-manifest's verbatim copy in `BLUEPRINT.md` section 3), refusing
-a missing file, a pattern that no longer matches, a site already stating a
-different version, or a no-op rewrite. `plan_changelog` builds an entry
+`"version"` line, the example recap's `**Plugin version:**` row, the
+manifest's verbatim copy in `BLUEPRINT.md` section 3, and two `BLUEPRINT.md`
+prose sentences — section 5.2's "the single version every other version
+assertion must match" and the example recap's "run on plugin version"),
+refusing a missing file, a pattern that no longer matches, a site already
+stating a different version, or a no-op rewrite. Edits are accumulated per
+path, not planned against the original text each time, because `BLUEPRINT.md`
+carries three sites and writing them in order would otherwise keep only the
+last (#697). `render_example_pdf` re-renders
+`plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf` from the
+`.md` after it is rewritten — the version is drawn on the cover card and again
+as the certificate colophon, so no substitution reaches it — and returns `None`
+when the repository ships no such PDF; it refuses a missing
+`generate_recap_pdf.py`, a non-zero render, and a render that reports
+`renderer: stdlib`, whose fallback embeds no images and draws no certificate. `plan_changelog` builds an entry
 `## [X.Y.Z] - <today>` listing non-merge commit subjects since the newest tag;
 if `CHANGELOG.md` is absent it is created from `CHANGELOG_HEADER`, a
 `SEED_NOTE` naming the newest seeded version, and one reconstructed entry per
 existing tag (newest first, dated by the tagged commit, the earliest not
 itemized); the new entry is prepended before the first `##`. Output: repo,
 branch, version change, newest tag, changelog action, mode, unified diffs of
-the sites (capped at `DIFF_LINE_BUDGET` lines), the entry, and the three git
-commands. With `--apply` it writes the files, `git add` of exactly those
-files, commits with the subject (default `chore(release): <version>`) and
+the sites (capped at `DIFF_LINE_BUDGET` lines), whether the example PDF would
+be re-rendered or is absent, the entry, and the three git commands. With
+`--apply` it writes the files, re-renders the example PDF, `git add` of exactly
+those files and the PDF, commits with the subject (default `chore(release): <version>`) and
 creates an annotated tag; on any git failure it deletes the tag, hard-resets
 to the recorded HEAD and refuses. Exit codes: 2 when `--apply` and
 `--dry-run` are both given or argparse rejects the arguments; 1 on any
@@ -5836,6 +5849,9 @@ RELEASE_BRANCH = "main"
 CHANGELOG_NAME = "CHANGELOG.md"
 SEMVER = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 MANIFEST_REL = "plugins/senzing-bootcamp/.claude-plugin/plugin.json"
+EXAMPLE_MD_REL = "plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md"
+EXAMPLE_PDF_REL = "plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf"
+GENERATOR_REL = "plugins/senzing-bootcamp/scripts/generate_recap_pdf.py"
 VERSION_SITES = (
     {
         "path": MANIFEST_REL,
@@ -5843,7 +5859,7 @@ VERSION_SITES = (
         "why": "the plugin manifest -- the version Claude Code reports for the install",
     },
     {
-        "path": "plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md",
+        "path": EXAMPLE_MD_REL,
         "pattern": re.compile(r'^(\*\*Plugin version:\*\*[ \t]*)(\d+\.\d+\.\d+)([ \t]*)$', re.M),
         "why": ("the shipped reference recap's meta row -- "
                 "tests/test_example_recap_sync.py pins it to the manifest"),
@@ -5853,6 +5869,21 @@ VERSION_SITES = (
         "pattern": re.compile(r'^(\s*"version":\s*")(\d+\.\d+\.\d+)(")', re.M),
         "why": ("BLUEPRINT.md's verbatim copy of the plugin manifest (section 3) -- "
                 "/update-blueprint compares it with plugin.json line by line"),
+    },
+    {
+        "path": "BLUEPRINT.md",
+        "pattern": re.compile(
+            r'(the version\s+`)(\d+\.\d+\.\d+)'
+            r'(` \(the single version every other version assertion must match\))'),
+        "why": ("BLUEPRINT.md section 5.2's prose, which asserts authority over every "
+                "other version site while being one itself (#697) -- the whitespace "
+                "class spans the line wrap the number sits after"),
+    },
+    {
+        "path": "BLUEPRINT.md",
+        "pattern": re.compile(r'(run on plugin version )(\d+\.\d+\.\d+)(:)'),
+        "why": ("BLUEPRINT.md's description of the shipped example recap, which names "
+                "the plugin version that recap was produced on (#697)"),
     },
 )
 CHANGELOG_HEADER = """\
@@ -5887,6 +5918,8 @@ def read_sites(repo):
 def current_version(repo):
     ...
 def rewrite_sites(repo, old, new):
+    ...
+def render_example_pdf(repo):
     ...
 def subjects_between(repo, start, end):
     ...
@@ -10166,21 +10199,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8189 test methods in 439 files, matching `inventory.test_count_total`.
+There are 8201 test methods in 439 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8189.
+sum to 8201.
 
-Two files run more tests than they define, so discovery collects 8179:
+Two files run more tests than they define, so discovery collects 8208:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8172`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8201`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8179`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8208`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -10293,7 +10326,7 @@ looks wrong.
 - `tests/test_every_invariant_is_cited_in_shipped_text.py`: 4
 - `tests/test_every_line_reading_guard_gives_a_verdict.py`: 9
 - `tests/test_example_recap_shows_every_recap_element.py`: 12
-- `tests/test_example_recap_sync.py`: 15
+- `tests/test_example_recap_sync.py`: 18
 - `tests/test_example_recap_uses_no_golden_record.py`: 5
 - `tests/test_existing_install_still_runs_the_env_script.py`: 22
 - `tests/test_expected_visualization_denominator.py`: 21
@@ -10504,8 +10537,8 @@ looks wrong.
 - `tests/test_registration_idempotency_is_constructed.py`: 12
 - `tests/test_registry_status_values_are_handled.py`: 12
 - `tests/test_related_entities_guidance.py`: 21
-- `tests/test_release_bumps_version_changelog_and_tag_together.py`: 32
-- `tests/test_release_covers_every_version_site.py`: 8
+- `tests/test_release_bumps_version_changelog_and_tag_together.py`: 37
+- `tests/test_release_covers_every_version_site.py`: 12
 - `tests/test_release_cycle.py`: 77
 - `tests/test_results_validation_is_diagnostic.py`: 35
 - `tests/test_resume_requires_a_recorded_module.py`: 27
@@ -13174,3 +13207,24 @@ Senzing licensing, with no SPDX identifier.
   `invariant_manifest.py`'s own `MANIFEST`, and every exemption is held to
   naming a file the repository has, because re-pointing the literal would
   have repaired the instance and left the class open
+- #697: the 0.7.0 release left three version assertions at 0.6.1 — two
+  `BLUEPRINT.md` prose sentences and the shipped example recap PDF, which
+  `README.md` links as the sample deliverable — and the version-site guard
+  could see none of them, because it kept only assertions equal to the current
+  version, so a site left behind is filtered out before it can be reported and
+  the same finding would return at the next release; the three sites were
+  brought to the manifest's version, both prose sentences joined
+  `VERSION_SITES` — which made `rewrite_sites` accumulate its edits per path,
+  since `BLUEPRINT.md` now carries three sites and writing them in order would
+  keep only the last — `release.py` re-renders the example PDF from the `.md`
+  it has just rewritten and refuses a stdlib-fallback render rather than
+  shipping a keepsake with no images or certificate, and the guard gained the
+  opposite direction: a plugin-version assertion at any version other than the
+  current one, outside `tests/`, matched by a pattern that names the plugin.
+  The narrowing was measured rather than guessed — inverting the existing
+  filter reported 27 lines of which 26 were correct prose (other products'
+  versions, test fixtures, a dry-run sentinel), while the narrowed pattern
+  reports the one real site. The PDF's version is compared out of its
+  extracted text and not its bytes, because fpdf2 writes a `/CreationDate` and
+  an `/ID` that differ on every render, so a byte comparison would fail
+  forever

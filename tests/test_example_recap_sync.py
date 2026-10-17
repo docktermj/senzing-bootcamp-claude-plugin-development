@@ -520,3 +520,102 @@ class TestExampleClaimsAreTrueOfTheExample(unittest.TestCase):
             "the example's Plugin version does not match .claude-plugin/plugin.json — refresh "
             "the example (and re-render its PDF) rather than leaving a stale figure",
         )
+
+
+#: The version as the PDF DRAWS it, in the two places it is drawn. Both come from the
+#: ``.md``'s ``**Plugin version:**`` row by way of `_cert_fields`, so a re-render moves
+#: both and nothing else can.
+PDF_VERSION_PROBES = (
+    ("the cover card's meta row", re.compile(r"(?i)plugin\s+version\s+(\d+\.\d+\.\d+)")),
+    ("the certificate colophon",
+     re.compile(r"Senzing Bootcamp Claude plugin v(\d+\.\d+\.\d+)")),
+)
+
+
+class TestPdfStatesTheManifestVersion(unittest.TestCase):
+    """⛔ The committed PDF's version row, which no other check in this repo could see.
+
+    The 0.7.0 release moved `plugin.json` and the example `.md` and left the committed
+    PDF drawing 0.6.1 -- the artifact `README.md` offers as the sample deliverable,
+    disagreeing with the manifest about which version the Bootcamper has. Three guards
+    were each blind to it by construction (#697):
+
+    * `sampled_lines` above keeps only source lines of 60 characters or more, so every
+      short meta row -- the version row included -- is never compared against the PDF.
+    * `test_the_plugin_version_matches_the_manifest` compares the **`.md`** to the
+      manifest and never reaches the PDF.
+    * `tests/test_release_covers_every_version_site.py` scans text and skips `.pdf`
+      outright, and named this very file as a site it cannot reach.
+
+    So the version is probed here positively, out of the PDF's own extracted text
+    (INV-129: verify the rendered artifact, not the exit status).
+
+    ⚠️ **Text, not bytes, and that is a finding rather than a convenience.** Rendering
+    the example twice in the same minute produces two files that differ: fpdf2 writes a
+    ``/CreationDate`` of the moment and an ``/ID`` derived from it. A byte comparison
+    against a committed artifact would therefore fail on every render forever, which is
+    worse than the stale row it would catch. Extracted text is stable across renders and
+    is also what a reader of the PDF actually sees.
+
+    ⚠️ **Both legs run this.** `pdf_text` is `re` and `zlib` -- an extractor, not a
+    renderer -- so reading the committed PDF needs no fpdf2 and this class carries no
+    `@requires_fpdf2`. It would be worth little otherwise: the fpdf2-absent leg is
+    exactly where a stale shipped artifact has no other check at all.
+    """
+
+    def setUp(self):
+        with open(PLUGIN_JSON, encoding="utf-8") as handle:
+            self.manifest_version = json.load(handle)["version"]
+        self.text = pdf_text(EXAMPLE_PDF)
+
+    def test_the_pdf_draws_a_version_at_all(self):
+        """⛔ INV-265: every assertion below is satisfied trivially by an empty match.
+
+        Separate from the comparison on purpose. A renamed label, a cover redesign or a
+        broken extractor would otherwise present as "the version agrees" -- the exact
+        silence that let this defect ship.
+        """
+        for what, probe in PDF_VERSION_PROBES:
+            with self.subTest(probe=what):
+                self.assertTrue(
+                    probe.findall(self.text),
+                    "no version was found in %s of the example PDF's extracted text. "
+                    "Either the PDF no longer draws it, or the label changed and this "
+                    "probe is now reading nothing -- in which case fix the probe rather "
+                    "than deleting it, because an assertion that cannot fail is not "
+                    "coverage." % what)
+
+    def test_every_drawn_version_matches_the_manifest(self):
+        disagreeing = []
+        for what, probe in PDF_VERSION_PROBES:
+            for stated in probe.findall(self.text):
+                if stated != self.manifest_version:
+                    disagreeing.append("%s states %s" % (what, stated))
+        self.assertEqual(
+            [],
+            disagreeing,
+            "the committed example recap PDF disagrees with %s (%s): %s. The PDF is a "
+            "version site no text substitution can reach, so it has to be re-rendered:\n"
+            "    python3 plugins/senzing-bootcamp/scripts/generate_recap_pdf.py \\\n"
+            "        --input plugins/senzing-bootcamp/docs/examples/"
+            "bootcamp_recap.example.md \\\n"
+            "        --output plugins/senzing-bootcamp/docs/examples/"
+            "bootcamp_recap.example.pdf\n"
+            "`/release` does this itself; a hand-edit of the `.md` has to do it by hand."
+            % (os.path.relpath(PLUGIN_JSON, REPO_ROOT), self.manifest_version,
+               "; ".join(disagreeing)),
+        )
+
+    def test_the_pdf_agrees_with_its_own_markdown_source(self):
+        """The pair, independently of the manifest: INV-065's regenerable reference."""
+        source = re.search(r"^\*\*Plugin version:\*\*\s*(\S+)", example_md_text(), re.M)
+        self.assertIsNotNone(
+            source, "the example lost its Plugin version meta row (INV-105/INV-126)")
+        for what, probe in PDF_VERSION_PROBES:
+            for stated in probe.findall(self.text):
+                with self.subTest(probe=what):
+                    self.assertEqual(
+                        source.group(1), stated,
+                        "%s of the committed PDF states %s while its own Markdown source "
+                        "states %s; the pair has drifted (INV-065)"
+                        % (what, stated, source.group(1)))

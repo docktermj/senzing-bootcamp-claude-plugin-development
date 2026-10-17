@@ -42,12 +42,22 @@ is the kiro-power shape, and it is what `release.py` and
 
 ## What it does, in one unit
 
-1. Rewrites every entry in `VERSION_SITES`: the two files above, and the verbatim copy
-   of the manifest in `BLUEPRINT.md`'s section 3.
-2. Creates `CHANGELOG.md` if absent — **seeded from the tags that already exist**,
+1. Rewrites every entry in `VERSION_SITES`: the two files above, the verbatim copy of the
+   manifest in `BLUEPRINT.md`'s section 3, and the two `BLUEPRINT.md` prose sentences that
+   state the version in words (section 5.2's "the single version every other version
+   assertion must match", and the example recap's "run on plugin version ...").
+2. **Re-renders the shipped example recap PDF** from the `.md` it just rewrote, because
+   that version is *drawn* — onto the cover card and again as the certificate colophon —
+   and no text substitution can reach it.
+
+   ⛔ **(INV-301) A rendered artifact is a record that asserts the version, and a drawn
+   version moves only by rendering.** This is not optional tidying: the 0.7.0 release
+   moved every text site and left the committed PDF reading 0.6.1 — the artifact
+   `README.md` offers as the sample deliverable (#697).
+3. Creates `CHANGELOG.md` if absent — **seeded from the tags that already exist**,
    one entry each, newest first — and prepends the new entry thereafter.
-3. Commits those files, and **only** those files.
-4. Tags **that commit**, annotated — annotated because `git push --follow-tags` silently skips lightweight tags (INV-301).
+4. Commits those files, and **only** those files.
+5. Tags **that commit**, annotated — annotated because `git push --follow-tags` silently skips lightweight tags (INV-301).
 
 ⛔ **(INV-301) The commit comes before the tag, and that ordering is load-bearing.** Edit the
 files and then run `git tag` and you tag **HEAD** — the commit *before* the bump. The
@@ -94,6 +104,8 @@ The script exits non-zero and changes nothing when:
 | the tag already exists | re-pointing a tag rewrites what a downstream repo may already have fetched |
 | the manifest and the newest tag disagree | the kiro-power split as a *starting* state — releasing from it buries the inconsistency one version deeper. `--allow-divergent-base` exists but only after you have decided which of the two is right |
 | a version site is missing, or stops matching | releasing now would advance the other site and leave this one stale — the exact split the tool exists to prevent |
+| the example recap PDF cannot be re-rendered | a shipped artifact whose version is *drawn* can only be moved by rendering it, so releasing without that ships it stating the previous version |
+| the re-render fell back to the stdlib writer | the fallback embeds no images and draws no branded certificate, so accepting it would swap the shipped keepsake for a plainer one at exit 0. Install `fpdf2` and release again |
 | the branch is not `main` | a tag made on a feature branch survives a squash-merge as a pointer to a commit that never lands on `main`, so a downstream repo porting from it gets a tree `main` does not contain. `--allow-branch` if you mean it |
 
 ⚠️ **The dirty-tree refusal has no override, deliberately.** The acceptance criterion
@@ -152,7 +164,13 @@ asked.
 - If a **new** file starts asserting the version, add it to `VERSION_SITES` in
   `release.py`. `tests/test_release_covers_every_version_site.py` scans the tracked
   files and fails on the commit that introduces an unlisted one, so this is caught
-  before a release ships it stale rather than after.
+  before a release ships it stale rather than after. That guard scans in **both**
+  directions (#697): a file stating the version about to move, and a file left behind at
+  a version already moved past — the second being how three sites survived the 0.7.0
+  release unnoticed.
+- **Never hand-edit the example recap `.md` without re-rendering its `.pdf`.** The guard
+  compares the PDF's extracted text to the manifest, so the pair cannot drift silently;
+  the command sits in the docstring of `tests/test_example_recap_sync.py`.
 
 ⚠️ **If `tag.gpgsign` is set in the maintainer's git config, the tag is signed** and
 git may prompt for a passphrase. The script does not override that setting — a
