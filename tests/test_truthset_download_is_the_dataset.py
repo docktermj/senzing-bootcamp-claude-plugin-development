@@ -146,7 +146,9 @@ def denied_branch_problems(region):
     if not re.search(r"(?i)\(INV-125\) The branch fires on the `Denied\.` string by itself",
                      region):
         problems.append("the branch does not fire when `get_capabilities()` is unreachable")
-    if not re.search(r"(?i)\(INV-048\) It never blocks the module", region):
+    # No citation: INV-048 governs the recap PDF, and the module carrying on past a denied
+    # reply is this branch's own clause (#607's ruling, finished by #685).
+    if not re.search(r"(?i)\u26d4 \*\*It never blocks the module", region):
         problems.append("the branch may become a dead end that blocks the module")
     return problems
 
@@ -398,8 +400,8 @@ class EachCheckSeesTheTextItWasWrittenFor(unittest.TestCase):
 
     def test_letting_the_branch_block_the_module_is_reported(self):
         region = self.mutate(
-            classification(), "(INV-048) It never blocks the module",
-            "(INV-048) Stop the module here")
+            classification(), "\u26d4 **It never blocks the module",
+            "\u26d4 **Stop the module here")
         self.assertTrue(any("dead end" in p for p in denied_branch_problems(region)))
 
     def test_a_second_copy_on_the_primary_path_is_reported(self):

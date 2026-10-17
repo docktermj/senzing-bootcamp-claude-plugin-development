@@ -474,7 +474,10 @@ class TestGraduationVerifiesScreenshots(unittest.TestCase):
         start = self.text.index("Verify the screenshots the recap actually carries")
         section = self.text[start : start + 1400]
         self.assertIn("non-blocking", section)
-        self.assertIn("INV-048", section)
+        # INV-129: every check on a rendered deliverable is best-effort and non-blocking.
+        # INV-048 is the recap PDF's own invariant (#607, finished by #685).
+        self.assertIn("INV-129", section)
+        self.assertNotIn("INV-048", section)
 
     def test_backfill_derives_captions_from_the_tab_slug(self):
         self.assertRegex(self.text, r"(?s)tab slug gives the caption")

@@ -108,7 +108,7 @@ class TheMeasurementIsNamedAndNonBlocking(unittest.TestCase):
     def test_a_failed_measurement_does_not_block(self):
         self.assertRegex(
             self.branch, r"(?i)Non-blocking",
-            "a measurement that cannot run would stall setup (INV-048)")
+            "a measurement that cannot run would stall setup (INV-163)")
 
     def test_senzings_own_anti_patterns_are_cited_with_version_and_date(self):
         # #600: the loading anti-patterns route is stated once, in Module 6 Phase A, and this

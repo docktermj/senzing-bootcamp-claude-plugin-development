@@ -313,7 +313,10 @@ class GraduationDocumentsTheDiscipline(unittest.TestCase):
         start = self.text.index("Verify the artifact, not the exit code")
         section = self.text[start : start + 2600]
         self.assertIn("non-blocking", section)
-        self.assertIn("INV-048", section)
+        # INV-129 states that every artifact-verification check is best-effort and
+        # non-blocking; INV-048 is the recap PDF's (#607, finished by #685).
+        self.assertIn("INV-129", section)
+        self.assertNotIn("INV-048", section)
         # The prose legitimately *mentions* the marker ("None of these is a 👉 question"),
         # so assert no line actually POSES one rather than banning the character. Line-scoped
         # by design (#424): a 👉 that opens a line opens a question.

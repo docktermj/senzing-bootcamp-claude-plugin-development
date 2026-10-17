@@ -140,7 +140,7 @@ class TheCaptureReportsWhatItActuallySaw(unittest.TestCase):
         )
 
     def test_the_image_is_still_written_when_unsettled(self):
-        """⛔ Reporting must not become refusing — capture is best-effort (INV-122/INV-048)."""
+        """⛔ Reporting must not become refusing — capture is best-effort (INV-122)."""
         stderr, manifest = run_capture(_PAGE.replace("__SETTLE__", ""), "graph")
         self.assertEqual(
             1, len(manifest.get("captured", [])),

@@ -155,8 +155,13 @@ class TheAnnouncementStaysConditional(unittest.TestCase):
         self.assertRegex(closing, r"(?i)each only if it exists|only if it exists")
         self.assertRegex(closing, r"(?i)absent or refused .{0,40}not\s+named|simply not\s*named")
 
-    def test_it_cites_the_non_blocking_invariant(self):
-        self.assertIn("INV-048", closing_step())
+    def test_it_names_the_rule_the_conditional_rests_on(self):
+        """Item 1's own rule, not INV-048: INV-048 governs the recap PDF, and these two
+        keepsakes are not it (#607, finished by #685)."""
+        self.assertRegex(closing_step(),
+                         r"(?i)item 1's rule that you never announce an artifact you have "
+                         r"not confirmed exists")
+        self.assertNotIn("INV-048", closing_step())
 
     def test_the_example_is_captioned_as_conditional(self):
         self.assertIn("list only what exists", closing_step())

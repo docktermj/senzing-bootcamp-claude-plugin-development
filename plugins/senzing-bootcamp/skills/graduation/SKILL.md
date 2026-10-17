@@ -160,7 +160,7 @@ Gather context before any step. Do this silently.
      value indeterminate. `integration_targets` and `deployment_target` are the exception: absent is
      **normal** and silent (see 1a).
 
-   Either way graduation continues — nothing here blocks (INV-048).
+   Either way graduation continues — nothing here blocks.
 4. **Check the name is certificate-quality (INV-113).** `name` is auto-detected during Bootcamp
    preparation and never asked (INV-134), so it can be absent or unsuitable. **The governing test is
    the whole test:** treat it as **unusable** when it is missing, empty/whitespace, or **clearly not
@@ -180,7 +180,7 @@ Gather context before any step. Do this silently.
      it used to). Do **not** transliterate the name yourself — how it should be spelled in Latin
      script is the bootcamper's decision, which is exactly what the question below asks. Ask it, and
      record their answer; if they decline, the certificate reads "Bootcamper" and graduation
-     continues (INV-048).
+     continues (INV-113).
 
    Be conservative in the other direction: a plausible real name must **never** trigger the
    question, because asking someone their name right after correctly detecting it is its own defect
@@ -498,7 +498,7 @@ is a **safety net** for captures whose embed step was skipped mid-bootcamp
 (`../bootcamp-onboarding/module-completion.md` makes the embed a required step, but this guarantees
 the recap PDF still shows captured screenshots if one was missed). Append-only and **idempotent** —
 never rewrite a completed section's prose (INV-085), never add a reference that already exists, and
-skip any image that is missing or unreadable (INV-048). Like every graduation step it is
+skip any image that is missing or unreadable. Like every graduation step it is
 non-blocking: if it is uncertain, warn and continue — never block the PDF on a screenshot.
 
 Captures are named `<name>-<tab-slug>.png` (see
@@ -521,7 +521,7 @@ image lines within a section is not a prose rewrite: the append-only rule (INV-0
 section's **narrative**, and these lines are the backfill's own output.
 
 **Verify the screenshots the recap actually carries (warn, never block).** Three checks, each
-best-effort and each non-blocking (INV-048) — the backfill above only maps PNGs that *exist*, so
+best-effort and each non-blocking (INV-129) — the backfill above only maps PNGs that *exist*, so
 none of these are covered by it:
 
 1. **A visualization section carrying fewer images than were captured.** For each completed module
@@ -583,7 +583,7 @@ none of these are covered by it:
    Bootcamper's cross-source entities and fraud leads appeared only as prose. The sentence was true
    of the manifests that existed and false of the bootcamp.
 
-   ⛔ **(INV-048, INV-193) Offer the remedy — it is cheap while the artifacts are still on disk.** Re-start the app and
+   ⛔ **(INV-193) Offer the remedy — it is cheap while the artifacts are still on disk.** Re-start the app and
    re-run the capture against it with the bundled tool,
    `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" --url http://localhost:<port> --name <name>`
    (INV-185; skill-relative fallback `../../scripts/capture_screenshots.py`, INV-252), then
@@ -722,7 +722,7 @@ plain sentence which file and lines look double-encoded, and that rewriting them
 source fixes them
 (`../bootcamp-onboarding/ground-rules.md` → "Windows and PowerShell"). Do not edit the file to
 repair it: a repair is a content change, and the pass changes formatting only (INV-110). The
-warning is a statement, not a 👉 question, and the step continues (INV-048).
+warning is a statement, not a 👉 question, and the step continues.
 
 ### 1b. Render the PDF
 
@@ -819,7 +819,7 @@ because the text is in the content stream and merely positioned outside the page
 
 So inspect the rendered artifact. Each check below is **best-effort and non-blocking** — run what the
 toolchain supports, warn on what it finds, and never block graduation on a verification step
-(INV-048, INV-052/INV-066). None of these is a 👉 question; this is agent-side apparatus, not
+(INV-129, INV-052/INV-066). None of these is a 👉 question; this is agent-side apparatus, not
 bootcamper-facing output (INV-012).
 
 - **Rasterize before trusting text extraction.** `pdftoppm -r 100 -png -f N -l N <pdf> <prefix>` the
@@ -909,7 +909,7 @@ naming the check and the tool, and the closing announcement MUST state which ver
 not run. "Verified" that silently means "verified except for the two strongest checks" is the same
 class of overstatement this section exists to prevent: a keepsake whose layout nobody could inspect is
 acceptable, one described as verified when its layout was never inspected is not. A skipped check
-still never blocks graduation (INV-048, INV-052/INV-066), and this stays agent-side apparatus rather
+still never blocks graduation (INV-163, INV-052/INV-066), and this stays agent-side apparatus rather
 than bootcamper-facing output (INV-012).
 
 ⚠️ **Spend a reduced check set on what only it can catch.** When tools are missing, prioritize: the
@@ -925,7 +925,7 @@ optional. It is built from the B-roll each module saved (`../bootcamp-onboarding
 Step 2e) and rendered by the bundled renderer, `scripts/generate_recap_video.py`, which writes
 `docs/bootcamp_recap.mp4`.
 
-⛔ **(INV-340) The video never blocks graduation (INV-048).** Every failure below, whether a declined install, a
+⛔ **(INV-340) The video never blocks graduation.** Every failure below, whether a declined install, a
 failed install, an invalid storyboard or a failed render, skips the video with a one-line message
 naming what failed, and graduation continues to Step 2.
 
@@ -1168,7 +1168,7 @@ offer cannot follow a successful install.
 
 **On no, or on any failure** (creating the venv, the `pip` install or the download), render with
 the interpreter Step 1b used, as before, and the renderer narrates with the computer's built-in voice.
-Graduation continues (INV-048, INV-340), and the exit-2 install offer still applies to that render.
+Graduation continues (INV-340), and the exit-2 install offer still applies to that render.
 
 ⛔ **(INV-066, INV-340) Never run `sudo`, a bare `pip`, or an install outside `data/temp/recap-venv/` and
 `data/temp/piper-voices/`.**
@@ -1339,7 +1339,7 @@ syntax:
 - **Windows** (PowerShell, double-quoted, through the `&` call operator):
   `& "<interpreter>" "<renderer>" --storyboard "<project>\docs\video\storyboard.json" --output "<project>\docs\bootcamp_recap.mp4" --project-root "<project>"`
 
-⛔ **(INV-048, INV-340) This guidance is a statement, never a question, and it never blocks graduation.**
+⛔ **(INV-340) This guidance is a statement, never a question, and it never blocks graduation.**
 It changes nothing about Step 1c's outcome: the video was produced, and graduation continues to
 Step 2.
 
@@ -1570,7 +1570,7 @@ file's non-whitespace content before and after and **restores the original** if 
 would be lost, so a cosmetic pass can never silently shorten a handover document. If it reports a
 file left as written, that is a normalizer bug — say so and continue with the file unformatted;
 never hand-edit prose to make formatting pass. If the script fails or is unavailable, warn, leave
-the content as written, and continue (INV-048).
+the content as written, and continue.
 
 ⛔ **Run it after Step 5, not before.** `production/` does not exist at Step 1a and its Markdown is
 not finished until `GRADUATION_REPORT.md` is written, so an earlier pass would normalize nothing —
@@ -1631,7 +1631,7 @@ file, both required:
 
 A zero exit and a plausibly-sized file are both necessary and neither is sufficient.
 
-**Non-blocking, like every graduation step** (INV-048): if a document is absent, refused, or fails
+**Non-blocking, like every graduation step**: if a document is absent, refused, or fails
 verification, warn on stderr, say which PDF was not produced, and continue. Name the ones that
 succeeded in the closing summary alongside the recap PDF; never turn a failure into a 👉 question
 or a to-do for the bootcamper.
@@ -1781,9 +1781,9 @@ This runs exactly once, after the report, before graduation is reported finished
    stakeholder is most likely to be shown) and `docs/data_source_evaluation.pdf` (how ready each
    source was and what was left unmapped — the reference for "why wasn't field X mapped?"). Step 5b
    is **non-blocking**, so either can legitimately be absent: an absent or refused PDF is simply not
-   named, by item 1's rule that you never announce an artifact you have not confirmed exists
-   (INV-048). This step is the **only** place these two reach the bootcamper — graduation is
-   terminal, so a PDF unnamed here is one they never learn they have.
+   named, by item 1's rule that you never announce an artifact you have not confirmed exists. This
+   step is the **only** place these two reach the bootcamper — graduation is terminal, so a PDF
+   unnamed here is one they never learn they have.
 
    **(INV-340) Also name the graduation video, `docs/bootcamp_recap.mp4`, only if Step 1c produced it:** a
    2-minute video of their bootcamp, to keep and share. When its duration stayed outside
@@ -1796,7 +1796,7 @@ This runs exactly once, after the report, before graduation is reported finished
    sentence then carries, once, what Step 1c's "When the video has no voice" gives for its case:
    for `no speech engine found`, the platform's speech engine, its install hint and the re-render
    command; for `<engine> voiced no scene`, the engine that could not voice the narration, with no
-   install hint; for `--no-voice`, nothing more. It is a statement, not a question (INV-048).
+   install hint; for `--no-voice`, nothing more. It is a statement, not a question (INV-340).
 
    **If any Step 1b verification check was skipped for a missing tool, say so here in one plain sentence** — name what was not checked, not the tool names. On Windows this is the common case (poppler is typically absent, so the page raster could not run). One sentence is enough: *"One note: I verified the PDF's contents but couldn't check its page layout on this machine, so if anything looks visually off, tell me and I'll re-render."* Never describe the keepsake as verified when a check did not run — and never turn this into a 👉 question or a to-do for the bootcamper.
 
