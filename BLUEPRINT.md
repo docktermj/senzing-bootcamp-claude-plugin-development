@@ -10174,6 +10174,7 @@ looks wrong.
 - `tests/test_container_route_reads_no_plugin_asset.py`: 29
 - `tests/test_container_viz_port_is_published_and_checked.py`: 28
 - `tests/test_container_teardown_has_a_route_and_a_failure_report.py`: 8
+- `tests/test_contract_examples_match_their_field_lists.py`: 12
 - `tests/test_cord_fetch_has_a_403_remedy.py`: 17
 - `tests/test_cord_fetch_integrity.py`: 50
 - `tests/test_cord_is_disclosed_as_real_data.py`: 10
@@ -12841,3 +12842,11 @@ Senzing licensing, with no SPDX identifier.
   or into INV-292's 403 remedy, still fires on the `Denied.` string when
   `get_capabilities()` cannot be reached, and never blocks the module, with
   the remedy stated once and cited from the primary path
+- #682: replace the `/api/records` contract example's record object with the
+  three fields the same entry states — `data_source`, `record_id`,
+  `match_key` — so the example, the prose beneath it and the record-field
+  rule 340 lines above it say one thing; the richer object stayed out of
+  scope because it would need the record-feature flags that rule names, and
+  a new guard sweeps every `json` example in the file against the field list
+  the file itself states for that kind of object, deriving both the field
+  sets and the sites from the text so a fence added later is checked too

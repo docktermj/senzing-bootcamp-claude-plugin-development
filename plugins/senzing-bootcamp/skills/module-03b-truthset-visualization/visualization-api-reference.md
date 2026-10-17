@@ -527,7 +527,8 @@ unique content. Do NOT implement it, and do not add a separate "Results Dashboar
   "entity_id": 1,
   "entity_name": "Robert Smith",
   "records": [
-    {"data_source": "CUSTOMERS", "record_id": "1001", "name": "Robert Smith", "address": "123 Main St", "phone": "555-0100", "identifiers": {"SSN": "123-45-6789"}}
+    {"data_source": "CUSTOMERS", "record_id": "1001", "match_key": ""},
+    {"data_source": "REFERENCE", "record_id": "2001", "match_key": "+NAME+ADDRESS"}
   ]
 }
 ```
