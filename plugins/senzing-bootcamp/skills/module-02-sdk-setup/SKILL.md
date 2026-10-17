@@ -138,7 +138,21 @@ For `sdk_repair`:
 - **`7`.** Step 7 runs as it states, from its database question. Its instruction 1 waits for the
   finish, as on every detour, and the engine it then records is the one Step 8 wrote into
   `config/engine_config.json`. Option 4 of its PostgreSQL branch, "Switch to SQLite", is an answer
-  here and not a stop: it continues to Step 7's SQLite branch.
+  here and not a stop: it continues to Step 7's SQLite branch. **The datastore this detour enters
+  usually already exists**, because the offering module set it up: Step 7's instruction 3 states
+  what the step does then, for both engines, and this row does not restate it (INV-300).
+- **`8a`.** Likewise for the configuration: Step 8a's already-seeded branch is the one statement
+  of what that step does when a default config id is already registered (INV-300), including the
+  prompt the `init_default_config` snippet raises there. Expect the skip; it is the normal outcome
+  on this detour, not a failed step.
+- **No `register-sources` step, and that is a decision rather than an omission.**
+  `database_switch` carries one because it moves to a **new** datastore, which knows none of the
+  Bootcamper's codes. An `sdk_repair` repairs the SDK against the datastore that is already there,
+  Step 8a's branch above leaves its registered configuration in place, and the module this detour
+  returns to registers before it loads anyway: Data Quality, Mapping, and Transformation
+  [step 21a](../module-05-data-quality-mapping/phase3-test-load.md#21a-register-the-data-source-code-before-the-test-load)
+  registers the source's `DATA_SOURCE` code(s) before the step 22 test load (INV-089). So a
+  re-seed on this path, if one ever does happen, is covered where the load happens.
 
 **When every step is done,** apply the row's "When every step is done", then clear `setup_detour` in
 one write and return to `return_to.module` at `return_to.resume`, where the offering module says
@@ -1913,9 +1927,9 @@ Ask: 👉 **Which database would you like to use? Reply with a number:**
 
 *(Internal: end the turn on this question and wait.)*
 
-**Once the Bootcamper answers, before either branch below.** Both instructions sit here, ahead of
-the branches, because every path through this step passes this point; an instruction placed after
-the last branch is skipped by a guide that follows the other one.
+**Once the Bootcamper answers, before either branch below.** All three instructions sit here,
+ahead of the branches, because every path through this step passes this point; an instruction
+placed after the last branch is skipped by a guide that follows the other one.
 
 1. ⛔ **Record the choice where later modules read it.** Write the engine chosen to
    `config/bootcamp_preferences.yaml` under the key **`database_type`**, with the value **`sqlite`**
@@ -1957,7 +1971,46 @@ the last branch is skipped by a guide that follows the other one.
    step done before the database exists, and a resume would skip the setup; until it is written,
    a resumed session runs Step 7 again.
 
-**Handling each answer (INV-284).** Both run the two instructions above first.
+3. ⛔ **When the datastore already exists, check before applying the schema — and when the schema
+   is already applied, skip it and say so.** Two documented paths re-enter this step on a
+   datastore that is already there: a **resume**, because instruction 2 holds the checkpoint back
+   until the chosen branch's setup is finished, and the **`sdk_repair` detour**, which is offered
+   after another module has already set the datastore up. This is the canonical statement of that
+   branch for **both** engines (INV-300); the SQLite branch's rung 2 and the PostgreSQL branch's
+   DDL step point here rather than restating it.
+
+   **Ask whether the Senzing schema is applied — not whether a file or a database exists.** A
+   `sys_cfg` table is the question the server's own routes ask, on every engine (re-verified on
+   MCP server 1.39.1, 2026-10-17): the *Senzing Anti-Patterns: Database Initialization and
+   Container Setup* article's init helper applies its DDL only when
+   `SELECT EXISTS(SELECT FROM pg_tables WHERE tablename = 'sys_cfg')` comes back false, and the
+   indexed `brianmacy/sz_spark` `SchemaApplier` example is "idempotent: skip if `sys_cfg` already
+   exists".
+
+   ```bash
+   # SQLite — prints False when database/G2C.db is absent as well as when the schema is not in it.
+   python3 -c "import os,sqlite3,sys; p=sys.argv[1]; print(bool(os.path.exists(p) and sqlite3.connect(p).execute(\"SELECT 1 FROM sqlite_master WHERE type='table' AND name='sys_cfg'\").fetchone()))" database/G2C.db
+   # PostgreSQL — the same question, through the psql route this branch's DDL step already uses.
+   <pg-runtime> exec -i <pg-container> psql -U senzing -d G2 -tAc "SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = 'sys_cfg')"
+   ```
+
+   Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
+   - **Already applied:** do not run the DDL again. Say which way it went, in one line — "this
+     datastore already has the Senzing schema, so I am leaving it as it is" — and carry on with
+     the rest of the branch, whose remaining work is what a resume or a repair came back for.
+   - **Not applied:** apply it, as the branch says.
+   - **The check could not be run:** say so in one line and apply the schema, which is the state
+     the branch is written for; if applying then fails, report that failure rather than reading it
+     as the already-applied case (INV-163).
+
+   ⚠️ **Why a check and not a blind re-run.** Senzing's own routes guard the DDL rather than
+   re-applying it, and whether re-running `szcore-schema-*-create.sql` over the objects it
+   already created is harmless is not something this module has established on either engine — so
+   it is not attempted (INV-080). The seeded configuration has its own branch, one step later, in
+   Step 8a.
+
+**Handling each answer (INV-284).** Both run the three instructions above first.
 
 - **1, "SQLite":** **For SQLite** below; once its setup is finished, checkpoint step 7 and continue
   to Step 8.
@@ -2012,7 +2065,9 @@ Step 8a's:
 
 1. **Create the database directory:** `mkdir -p database` (Linux/macOS) or
    `New-Item -ItemType Directory -Force -Path database` (PowerShell).
-2. **Apply the Senzing schema** to `database/G2C.db`. Get the schema file's path from
+2. **Apply the Senzing schema** to `database/G2C.db` — **unless it is already applied**, which
+   instruction 3 at the head of Step 7 decides, for both engines (INV-300); this rung is its
+   "not applied" path. Get the schema file's path from
    `sdk_guide(topic='install', platform='<platform>')` rather than hardcoding it (INV-080) — it is
    returned in `install.platform.post_install[]`, and `install.engine_config_notes[]` states the
    requirement in words: the DB file is **not** auto-created, and the schema step is **required**
@@ -2140,7 +2195,9 @@ config with `sdk_guide(topic='configure', ...)` — never hand-construct
    `<pg-runtime>` is that recorded `runtime` (INV-195).
 3. Wait until the server is ready (poll `<pg-runtime> exec <pg-container> pg_isready`).
 4. Apply the Senzing PostgreSQL schema DDL **before any SDK use** — the SDK does NOT auto-create it
-   (unlike SQLite). The DDL ships with the SDK install. Take `<schema path from MCP>` for the
+   (unlike SQLite). ⛔ **When this database already carries the schema, this step is a skip** (INV-300):
+   instruction 3 at the head of Step 7 decides that, for both engines, and it is not restated
+   here. The DDL ships with the SDK install. Take `<schema path from MCP>` for the
    platform the SDK is installed on from the anti-patterns search above, at runtime (INV-080). On
    server 1.37.27 (2026-10-12) it named `szcore-schema-postgresql-create.sql` under
    `/opt/senzing/er/resources/schema/` for Linux and Docker, and other paths for Windows and macOS.
@@ -2439,6 +2496,36 @@ SQLite branch without having applied the schema, this step cannot help — go ba
 `create_engine()` fails with `SENZ1001 (14: unable to open database file)` rather than the
 `SENZ7220`/`SENZ7221` this step exists to fix.
 
+⛔ **When a default configuration is already registered, do not re-seed it — read the default
+config id first, say which way it went, and continue.** This step is re-entered on a datastore
+that is already seeded by the same two paths Step 7's instruction 3 names: a **resume**, and the
+**`sdk_repair` detour**, which is offered after another module has already set the datastore up.
+This is the canonical statement of that branch (INV-300); the detour points here rather than
+restating it.
+
+1. **Read the default config id before anything else.** `get_default_config_id()` on the config
+   manager, from the snippet this step fetches below rather than hand-written (INV-080).
+2. **An id that is present and non-zero means the datastore is already seeded.** Say so in one
+   line — "this datastore already has a registered default configuration, so I am keeping it" —
+   and continue to 8a.1 without seeding. ⛔ **Never replace it** (INV-089): seeding writes a
+   **template** configuration and makes it the default, which drops every `DATA_SOURCE` code
+   registered in the configuration it replaced — and on this path those registrations are an
+   earlier module's work, not this step's.
+3. **`0`, or no id at all, is the unseeded datastore** this step was written for: seed it, as the
+   rest of the step says.
+
+⛔ **The `init_default_config` snippet asks this same question interactively, and the guide must
+not answer it blind.** Run as it ships against an already-seeded datastore, it reads the default
+config id and then prompts `A configuration exists in the repository, replace it with a template
+configuration? (y/n)`, exiting `1` on any answer but `y` or `yes` (confirmed on MCP server 1.39.1,
+2026-10-17: `sdk_guide(topic='configure', language='python')`'s primary `code` block,
+`python/configuration/init_default_config.py`). In an agent-driven run neither answer is the
+guide's to give: `y` destroys the registered configuration, and the `n` path is a non-zero exit
+that reads as a failed step rather than as the snippet declining to overwrite — and with nothing
+on the snippet's stdin, the `input()` call hangs instead of either. ⚠️ So decide by item 1 above
+**before** running the snippet, and run the snippet only on the unseeded branch, where the prompt
+cannot fire.
+
 `sdk_guide(topic='configure')`'s primary `RegisterDataSources` snippet opens by reading the default
 config id and building a config **from** it. On an unseeded datastore there is nothing to read, and
 the attempt fails with
@@ -2509,7 +2596,8 @@ does not. Step 9's connection test uses the factory-lifecycle snippets from the 
 
 **Verify the seed before moving on:** confirm a default config id is now present. If it is not, stop
 here and report it — a missing config surfaces at this step as one clear failure, or later as
-`SENZ7221` several steps from its cause.
+`SENZ7221` several steps from its cause. On the already-seeded branch above, the id read in its
+first item is that confirmation: nothing was written, so there is nothing further to verify.
 
 ### 8a.1 Re-measure the license — the reading is only complete now
 
