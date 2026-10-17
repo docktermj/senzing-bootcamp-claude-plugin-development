@@ -2,10 +2,12 @@
 <!--
   Claude quick-start page for the Senzing Bootcamp.
   The install steps, commands, URLs, UI labels, model names and plan minimum
-  come from this repo's README.md ("Requirements", "Using Claude Desktop" and
-  "Troubleshooting") and docs/README.md ("Using the Claude Code CLI",
-  "Bootcamp commands" and "Uninstall plugin"). When those change, update this
-  page too; its `claude plugin` commands must match docs/README.md's (INV-348).
+  come from this repo's README.md ("Requirements", "Using Claude Desktop",
+  "What you finish with" and "Troubleshooting") and docs/README.md ("Using the
+  Claude Code CLI", "What you finish with", "Bootcamp commands" and "Uninstall
+  plugin"). When those change, update this page too; its `claude plugin`
+  commands must match docs/README.md's (INV-348), and the deliverables it names
+  must agree with both READMEs' (#699).
   Differences from them are deliberate: README blocks that hold several
   commands are split into one step and one command block per command, and the
   model tip names no modules (the bootcamp says when to switch to Opus 5.5).
@@ -195,7 +197,21 @@
         </div>
       </section>
 
-      <section class="light offwhite" id="tips" aria-labelledby="tips-title">
+      <section class="light offwhite" id="finish" aria-labelledby="finish-title">
+        <div class="wrap">
+          <p class="label">When you graduate</p>
+          <h2 id="finish-title">What you finish with</h2>
+          <ul class="checklist">
+            <li><strong>Working Senzing code and data</strong> in your project (<code>src/</code>, <code>data/</code>, <code>database/</code>).</li>
+            <li><strong>A professional recap PDF</strong> you can keep and share (<code>docs/bootcamp_recap.pdf</code>).</li>
+            <li><strong>A write-up of what Senzing found in your data</strong> (<code>docs/bootcamp_data_discoveries.md</code>, also rendered as a PDF).</li>
+            <li><strong>A <code>production/</code> starter project.</strong></li>
+            <li><span class="tag">Optional</span> <strong>A narrated 2-minute graduation video</strong> (<code>docs/bootcamp_recap.mp4</code>). Graduation offers it once; say no and nothing is rendered.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="light white" id="tips" aria-labelledby="tips-title">
         <div class="wrap">
           <p class="label">Good to know</p>
           <h2 id="tips-title">Tips</h2>
@@ -235,7 +251,7 @@
         </div>
       </section>
 
-      <section class="light white" id="troubleshooting" aria-labelledby="troubleshooting-title">
+      <section class="light offwhite" id="troubleshooting" aria-labelledby="troubleshooting-title">
         <div class="wrap">
           <p class="label">If something goes wrong</p>
           <h2 id="troubleshooting-title">Troubleshooting</h2>
