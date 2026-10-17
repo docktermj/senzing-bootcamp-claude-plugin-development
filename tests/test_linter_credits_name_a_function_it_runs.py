@@ -33,8 +33,39 @@ module, imported the way ``tests/test_auto_test_harness.py`` imports it, never f
 ``tests/_corpus.py``, and ``specs/INVARIANTS.md``. In a Python file only string literals and
 comments are read, so code that imports or runs the linter is not prose. Out of scope, as #514
 sets it: ``specs/IMPLEMENTED.md`` (its historical drafts are a dated record), the generated
-``invariant-manifest.json``, ``BLUEPRINT.md``, the other frozen files under ``specs/``, and scratch
-under ``.claude/worktrees/`` (which ``_corpus`` never lists).
+``invariant-manifest.json`` at the repository root, ``BLUEPRINT.md``, the other frozen files under
+``specs/``, and scratch under ``.claude/worktrees/`` (which ``_corpus`` never lists).
+
+⛔ **Every path exemption is derived, and an entry that matches nothing fails this guard (#696).**
+The site set is derived (``corpus_files``) and the exemptions were not: one literal path, written
+once, naming a file that has never been there. ``GENERATED`` read
+``.claude/skills/review-invariants/invariant-manifest.json`` from #514 until #696, while the
+manifest sits at the repository root, where INV-307 puts it — so the exemption matched nothing and
+was dead. It is now read from ``invariant_manifest.py``'s own ``MANIFEST``, and ``EXEMPT`` is the
+one registry the scan takes its exemptions from, so ``TheExemptionsAreDerivedAndAlive`` can walk
+every one of them rather than the one someone remembered.
+
+⚠️ **Why a dead exemption is worth fixing while it is still harmless.** Nothing is exempted
+incorrectly today, because the repository root is outside the scanned subtrees. But the manifest
+carries every ``INVARIANTS.md`` statement verbatim, so the day the scan widens the exemption
+silently fails to apply and the manifest's copies of the credits are reported as prose someone
+wrote. A dead exemption fails at the moment its subject first comes into scope, which is the
+moment nobody is looking at it.
+
+⚠️ **The predicate is "names a file the repository has", not "is inside this scan" (INV-282).**
+The exemption is forward-looking — it excuses a file the scan does not reach today — so requiring
+it to match something *scanned* would fail on the correct derived value, which is the opposite of
+what the check is for.
+
+⚠️ **Scope, measured before it was narrowed (INV-246, INV-282).** A sweep of every module-level
+upper-case string collection under ``tests/`` reads **282 collections and 1,362 entries**; narrowed
+to path-shaped entries it reads **28 collections and 72 entries**, of which **60 name no file in the
+corpus listing and 59 of those are correct** — prose fixtures that merely contain a path, paths
+resolved against a root other than the repository (``plugins/senzing-bootcamp/skills/``, the
+Bootcamper's own project directory), and two synthetic fixture paths that must *not* exist. One is
+the defect. So the check is scoped to the exemptions this module applies to its own scan, where
+every entry is a repo-relative path compared against the same listing the scan reads; swept across
+``tests/`` it would be 59 false accusations to one finding.
 
 **`INVARIANTS.md` is append-only**, so its false sentences stay for good, and the guard never asks
 them to disappear. An entry with a failing claim passes while either holds:
@@ -70,12 +101,57 @@ from _corpus import corpus_files
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HARNESS = REPO_ROOT / ".claude" / "skills" / "auto-test"
 INVARIANTS = REPO_ROOT / "specs" / "INVARIANTS.md"
-PENDING_HELPER = REPO_ROOT / ".claude" / "skills" / "review-invariants" / "pending_invariants.py"
+REVIEW_INVARIANTS = REPO_ROOT / ".claude" / "skills" / "review-invariants"
+PENDING_HELPER = REVIEW_INVARIANTS / "pending_invariants.py"
+MANIFEST_TOOL = REVIEW_INVARIANTS / "invariant_manifest.py"
 
 sys.path.insert(0, str(HARNESS))
 
+
+def _load_by_path(path, name):
+    """A helper module under ``.claude/skills/``, loaded by path as the rest of the suite does."""
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def generated_files():
+    """Repo-relative paths of the generated files, read from the generator that writes each one.
+
+    ⛔ **(INV-246) Derived, never written down.** The one generated file in scope is the
+    invariant manifest, and the module that writes it already states where it goes, in its own
+    ``MANIFEST``. Reading that constant is what keeps the exemption and the artifact in one
+    place; a second spelling of the path here is a copy that goes stale the day the generator
+    moves its output, which is exactly how this exemption came to name
+    ``.claude/skills/review-invariants/invariant-manifest.json`` while the file sat at the
+    repository root (#696).
+
+    ⛔ **(INV-308) ``None`` when the generator cannot be read**, never a fallback literal: a
+    private copy that silently disagrees with the producer is the defect this derivation exists
+    to remove. ``TheExemptionsAreDerivedAndAlive`` says so rather than letting the scan widen
+    quietly.
+    """
+    try:
+        manifest = _load_by_path(MANIFEST_TOOL, "invariant_manifest_for_the_exemption").MANIFEST
+        return frozenset({Path(manifest).resolve().relative_to(REPO_ROOT).as_posix()})
+    except Exception:
+        return None
+
+
 #: Generated files inside the scanned subtrees (#514's out-of-scope list), repo-relative.
-GENERATED = frozenset({".claude/skills/review-invariants/invariant-manifest.json"})
+GENERATED = generated_files()
+
+#: ⛔ **Every path exemption this guard applies to its scan, in ONE registry.** An exemption is
+#: the one way a file inside the scanned subtrees is excused, so routing them all through here
+#: is what lets ``TheExemptionsAreDerivedAndAlive`` check every one rather than the one someone
+#: remembered. A new exemption that is not in this dict does not apply at all.
+#:
+#: ⚠️ ``scanned_files``' other filter — non-``.py`` files under ``tests/`` — is deliberately NOT
+#: here. It is a predicate over the corpus rather than a list of paths, so no entry in it can
+#: come to name a file that has moved, which is the failure this registry is checked for.
+EXEMPT = {"GENERATED": GENERATED or frozenset()}
 
 #: The linter's name. ``\s+`` because a sentence may wrap between the two words.
 LINTER = re.compile(r"(?i)\btranscript\s+linter\b|transcript_lint")
@@ -233,11 +309,47 @@ def invariants_problems(text, run, pending_ids, where="specs/INVARIANTS.md"):
     return problems
 
 
-def scanned_files():
+def exempted():
+    """Every repo-relative path the registry excuses, flattened."""
+    return {rel for paths in EXEMPT.values() for rel in paths}
+
+
+def repo_paths():
+    """The repository's own files, repo-relative, through the one listing (`tests/_corpus.py`)."""
+    return {path.relative_to(REPO_ROOT).as_posix() for path in corpus_files()}
+
+
+def dead_exemptions(exemptions, corpus=None):
+    """Each exemption entry naming no file the repository has, with the near miss named.
+
+    An entry that matches nothing is a typo or a file that has moved, and both are silent: the
+    scan simply excuses one path fewer than its author believed. The near miss — a file of the
+    same name elsewhere — is reported because a move is the likelier of the two and naming the
+    new location is what makes the failure actionable.
+    """
+    corpus = repo_paths() if corpus is None else corpus
+    by_name = {}
+    for rel in corpus:
+        by_name.setdefault(rel.rsplit("/", 1)[-1], []).append(rel)
+    problems = []
+    for name, paths in sorted(exemptions.items()):
+        for entry in sorted(paths):
+            if entry in corpus:
+                continue
+            near = sorted(by_name.get(entry.rsplit("/", 1)[-1], []))
+            where = ("; a file of that name is at " + ", ".join("`%s`" % n for n in near)
+                     if near else "; no file of that name exists anywhere in the repository")
+            problems.append("%s exempts `%s`, which matches no file the repository has%s"
+                            % (name, entry, where))
+    return problems
+
+
+def scanned_files(exempt=None):
+    exempt = exempted() if exempt is None else {rel for paths in exempt.values() for rel in paths}
     files = []
     for path in corpus_files("tests", ".claude/skills"):
         rel = path.relative_to(REPO_ROOT).as_posix()
-        if rel in GENERATED:
+        if rel in exempt:
             continue
         if rel.startswith("tests/") and path.suffix != ".py":
             continue
@@ -270,6 +382,65 @@ class TheRunSetIsReadFromTheLinter(unittest.TestCase):
     def test_a_function_the_linter_does_not_run_is_not_in_the_set(self):
         self.assertNotIn("_prose_after_question", runs())
         self.assertNotIn("check_grading", runs())
+
+
+#: A dead exemption, as this guard shipped it from #514 until #696, kept as a control.
+MOVED = {"GENERATED": frozenset({".claude/skills/review-invariants/invariant-manifest.json"})}
+
+
+class TheExemptionsAreDerivedAndAlive(unittest.TestCase):
+    """Every path this guard excuses is derived, and names a file the repository still has.
+
+    The scan's site set is derived (`corpus_files`), and its exemptions were not: one literal
+    path, written once, naming a file that has never been there. It was harmless only because
+    the root manifest sits outside the scanned subtrees — and the manifest carries every
+    `INVARIANTS.md` statement verbatim, so the day the scan widens the exemption fails to apply
+    and the manifest's copies of the credits are reported as if they were prose someone wrote.
+    """
+
+    def test_the_registry_is_not_empty(self):
+        """A vacuous registry would make every assertion below pass while checking nothing."""
+        self.assertTrue(EXEMPT, "the exemption registry is empty; the checks below are vacuous")
+        self.assertTrue(exempted(), "no exemption holds any path; the checks below are vacuous")
+
+    def test_the_generated_exemption_is_derived_from_the_generator(self):
+        """⛔ (INV-308) Read from `invariant_manifest.py`'s own `MANIFEST`, or said to be unread."""
+        self.assertIsNotNone(
+            GENERATED,
+            "the generated-file exemption could not be derived: %s was not readable, or names "
+            "no MANIFEST. The exemption is deliberately left empty rather than guessed, so the "
+            "scan is wider than intended until this is fixed." % MANIFEST_TOOL)
+        manifest = _load_by_path(MANIFEST_TOOL, "invariant_manifest_for_the_control").MANIFEST
+        self.assertEqual(
+            frozenset({Path(manifest).resolve().relative_to(REPO_ROOT).as_posix()}), GENERATED)
+
+    def test_every_exemption_entry_names_a_file_the_repository_has(self):
+        problems = dead_exemptions(EXEMPT)
+        self.assertEqual([], problems, "\n" + "\n".join(problems))
+
+    def test_an_exemption_naming_a_moved_file_is_reported(self):
+        """The control: the literal this guard carried until #696, against the live listing."""
+        problems = dead_exemptions(MOVED)
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn(".claude/skills/review-invariants/invariant-manifest.json", problems[0])
+        self.assertIn("`invariant-manifest.json`", problems[0])
+
+    def test_an_exemption_naming_a_file_that_exists_is_not_reported(self):
+        here = Path(__file__).resolve().relative_to(REPO_ROOT).as_posix()
+        self.assertEqual([], dead_exemptions({"FIXTURE": frozenset({here})}))
+
+    def test_an_exemption_matching_nothing_anywhere_says_so(self):
+        problems = dead_exemptions({"FIXTURE": frozenset({"tests/no_such_guard_file.py"})})
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn("no file of that name exists anywhere", problems[0])
+
+    def test_the_scan_takes_its_exemptions_from_the_registry(self):
+        """An exemption only applies through `EXEMPT`, which is what makes the check complete."""
+        scanned = {rel for rel, _ in scanned_files()}
+        self.assertIn("tests/_corpus.py", scanned)
+        thinned = {rel for rel, _ in scanned_files({"FIXTURE": frozenset({"tests/_corpus.py"})})}
+        self.assertNotIn("tests/_corpus.py", thinned)
+        self.assertEqual(len(scanned) - 1, len(thinned))
 
 
 class EveryClaimNamesARunFunction(unittest.TestCase):

@@ -42,6 +42,13 @@ inherits phase 3's asymmetry rather than fixing it:
 Report a clean auto-test as "no regression detected", never as "the bootcamp works".
 Phase 3 with a human still has to happen.
 
+⛔ **(INV-369) A clean run that included the walk is reported only as "no regression detected
+(simulated Bootcamper, persona `<p>`)"**, never as "phase 3 passed" or "the bootcamp works",
+and the report lists phase 3 with the maintainer as not yet done. The persona is the part the
+disclosure exists to carry: a clean run under `confused` and a clean run under `offscript` are
+different evidence, and a reader handed "no regression detected" alone cannot tell which one
+they have. A probe-only run names no persona, because no walk ran.
+
 ## Running it
 
 ```console
@@ -151,7 +158,8 @@ Severities mean specific things:
 - **INFO** — context, not action.
 
 Report the findings in that order — BREAKING, WATCH, INFO — naming the sandbox the run used
-and whether the walk was included.
+and whether the walk was included, and, where it was, the persona the clean-run line above
+requires (INV-369).
 
 Two WATCH findings were live as of 2026-07-27 and are about the **server**, not the
 plugin: `generate_scaffold.language` accepts `typescript` while documenting four

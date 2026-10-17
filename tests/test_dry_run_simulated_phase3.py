@@ -31,6 +31,13 @@ Checks, each negative-controlled when written (#571):
    naming the module reached, when the walk never showed the start banner. Bootcamp
    preparation ends at the next banner even when its own never displayed (#657).
 
+7. **The persona, wherever a walk is reported (#696).** Check 2 pins the two `/dry-run` sites by
+   name; `/auto-test` drives the same `walk.py` with the same persona vocabulary and reported a
+   clean run as "no regression detected" with no persona in it. The sites are now **derived by
+   scanning** `.claude/skills/` for the walk's own vocabulary (INV-246), and each one either
+   states the clean-run line with the persona or sends the reader to `/dry-run`'s rule, which is
+   the shape INV-300 asks for and the route `release-cycle` takes.
+
 ⚠️ **What this does NOT establish:** that a live walk reaches a module, that a live session
 asks the three questions, or that it never answers for the Bootcamper. Those are properties of
 a real run. This pins what the instructions say and what the stop and slice code does.
@@ -38,6 +45,12 @@ a real run. This pins what the instructions say and what the stop and slice code
 This module enforces INV-369 (registered 2026-10-13). It asserts the sentences and drives the
 walk's stop condition offline; it cannot establish that a live session never answers for the
 Bootcamper or that a live walk reaches its start module.
+
+⚠️ **Check 7 enforces a widening of INV-369 that is queued and not yet registered.** The
+registered subject sentence names `/dry-run` phase 3; the amendment that makes the disclosure
+bind every report of a simulated walk is a block in this run's `specs/IMPLEMENTED.md` entry, for
+the maintainer to rule on through `/review-invariants` (INV-307, INV-365). The shipped behavior
+changes first and the registered text follows, which is the order this repository works in.
 
 Stdlib only, offline (INV-108).
 """
@@ -65,7 +78,27 @@ sys.path.insert(0, str(DRY_RUN))
 import module_banners  # noqa: E402
 import walk  # noqa: E402
 
+from _corpus import corpus_files  # noqa: E402
+from _wrapped_text import collapsed_blocks, line_of  # noqa: E402
+
 POINTER = "\U0001f449"
+
+#: A file that drives or reports the simulated walk. ⛔ **Derived from the CLAIM, not from the
+#: skills already known to run one (INV-282), and measured before it was narrowed.** Of the 23
+#: `.md` files under `.claude/`, 5 name a persona and **4** name the walk; the fifth is
+#: `feedback-to-issues/SKILL.md`, whose only hit is the word "personal" in a rule about personal
+#: details. So the trigger is the walk's own vocabulary rather than "persona", which is a
+#: substring of a common word and reads a file that has nothing to do with a walk.
+WALK_VOCAB = re.compile(r"(?i)\bwalk\.py\b|\bsimulated walk\b|\bsimulated Bootcamper\b")
+#: A quoted clean-run report line, whatever it carries inside the quotes.
+REPORT_LINE = re.compile(r'"no regression detected[^"]*"')
+#: The disclosure INV-369 makes load-bearing: the persona the walk ran under.
+PERSONA = re.compile(r"\(simulated Bootcamper, persona `<p>`\)")
+#: A site that states no report line of its own must send the reader to the rule's owner. ⛔ One
+#: block naming INV-369 and `dry-run` together, never a phrasing: INV-300 wants one home for the
+#: rule, so pointing at it is the correct shape and must not be read as an omission.
+OWNER = re.compile(r"(?i)INV-369")
+OWNED_BY = re.compile(r"(?i)`?/?dry-run`?")
 
 
 def squash(text):
@@ -74,6 +107,42 @@ def squash(text):
 
 def read(path):
     return squash(path.read_text(encoding="utf-8"))
+
+
+def report_lines(text):
+    """``(line, quotation)`` for each quoted clean-run report line, read wrap-aware (INV-346)."""
+    out = []
+    for flat, origin in collapsed_blocks(text):
+        for m in REPORT_LINE.finditer(flat):
+            out.append((line_of(origin, m.start()), m.group(0)))
+    return out
+
+
+def points_at_the_owner(text):
+    """True when one block sends the reader to `/dry-run`'s rule instead of restating it."""
+    return any(OWNER.search(flat) and OWNED_BY.search(flat) for flat, _ in collapsed_blocks(text))
+
+
+def persona_problems(where, text):
+    """Problems at one walk-reporting site: a clean-run line, and no persona and no pointer."""
+    lines = report_lines(text)
+    if any(PERSONA.search(quote) for _line, quote in lines):
+        return []
+    if points_at_the_owner(text):
+        return []
+    bare = ", ".join("%s:%d %s" % (where, line, quote) for line, quote in lines)
+    return ["%s reports a clean walk without the persona INV-369 makes load-bearing, and "
+            "points at no owner for the rule%s" % (where, (": " + bare) if bare else "")]
+
+
+def walk_reporting_sites():
+    """``(repo-relative path, text)`` for each `.claude/skills/` file that names the walk."""
+    out = []
+    for path in corpus_files(".claude/skills", suffixes={".md"}):
+        text = path.read_text(encoding="utf-8")
+        if WALK_VOCAB.search(squash(text)):
+            out.append((path.relative_to(REPO_ROOT).as_posix(), text))
+    return out
 
 
 class TheRewordedRuleForbidsSelfPlay(unittest.TestCase):
@@ -140,6 +209,106 @@ class ACleanSimulatedRunIsNotAPass(unittest.TestCase):
         self.assertRegex(read(PHASE3), r"Exit 3 means the walk stopped before the start "
                                        r"module:\*\* report the module it reached and leave "
                                        r"the rest untested\. Never extrapolate\.")
+
+
+#: The `/auto-test` report rule as it shipped from #395 until #696: a clean run with no persona.
+PRE_696 = ('> **Findings are trustworthy. A clean run is weak evidence.**\n\n'
+           'Report a clean auto-test as "no regression detected", never as "the bootcamp works".\n'
+           'Phase 3 with a human still has to happen. The walk drives `walk.py`.\n')
+
+
+class EveryWalkReportNamesThePersona(unittest.TestCase):
+    """Check 7 (#696): a clean walk is reported with its persona wherever the walk is reported.
+
+    INV-369's subject sentence names `/dry-run` phase 3, and the reason the persona is
+    load-bearing is a property of the **walk**, not of the skill that launched it: a clean run
+    under `confused` and a clean run under `offscript` are different evidence, and a reader given
+    "no regression detected" alone cannot tell which one they have. `/auto-test` drives the same
+    `walk.py` with the same persona vocabulary and reported a clean run without it.
+
+    ⛔ **The sites are derived by scanning `.claude/skills/`, never listed (INV-246).** A fourth
+    skill that grows a walk report is covered the day it is written, which a list of the three
+    that have one today cannot be.
+
+    ⚠️ **Two ways to pass, because INV-300 wants one home for a rule.** A site either states the
+    clean-run line with the persona in it, or sends the reader to `/dry-run`'s rule. Today
+    `.claude/skills/release-cycle/SKILL.md` takes the second route and is correct as written.
+
+    ⛔ **What this cannot establish:** that a live `/auto-test` run prints the persona. It reads
+    the instruction, as the rest of this module does.
+
+    ⚠️ **The widening is queued, not registered.** `specs/IMPLEMENTED.md` carries this run's
+    amendment block for INV-369; `specs/INVARIANTS.md` is written only by `/review-invariants`
+    (INV-307, INV-365), so the shipped behavior changes first and the registered text follows.
+    """
+
+    def test_the_scan_finds_the_sites(self):
+        """A scan matching nothing would make the assertion below vacuous (INV-308)."""
+        found = {rel for rel, _ in walk_reporting_sites()}
+        self.assertGreaterEqual(len(found), 3, found)
+        for rel in (".claude/skills/auto-test/SKILL.md",
+                    ".claude/skills/dry-run/SKILL.md",
+                    ".claude/skills/dry-run/phase3-conversational.md"):
+            self.assertIn(rel, found)
+
+    def test_every_site_names_the_persona_or_points_at_the_rule(self):
+        problems = []
+        for rel, text in walk_reporting_sites():
+            problems.extend(persona_problems(rel, text))
+        self.assertEqual([], problems, "\n" + "\n".join(problems))
+
+    def test_the_auto_test_skill_states_it(self):
+        body = read(AUTO_TEST / "SKILL.md")
+        self.assertRegex(body, r"⛔ \*\*\(INV-369\) A clean run that included the walk is "
+                               r"reported only as " + ACleanSimulatedRunIsNotAPass.LINE +
+                         r"\*\*, never as \"phase 3 passed\" or \"the bootcamp works\", and the "
+                         r"report lists phase 3 with the maintainer as not yet done\.")
+        self.assertRegex(body, r"A probe-only run names no persona, because no walk ran\.")
+
+    def test_the_auto_test_report_step_asks_for_the_persona(self):
+        self.assertRegex(read(AUTO_TEST / "SKILL.md"),
+                         r"naming the sandbox the run used and whether the walk was included, "
+                         r"and, where it was, the persona the clean-run line above requires "
+                         r"\(INV-369\)")
+
+    def test_the_pre_696_auto_test_wording_is_reported(self):
+        """The control, run before the fix: the shipped rule with no persona and no pointer."""
+        problems = persona_problems(".claude/skills/auto-test/SKILL.md", PRE_696)
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn('"no regression detected"', problems[0])
+        self.assertIn("points at no owner", problems[0])
+
+    def test_a_site_that_points_at_the_owner_passes(self):
+        text = ("Report the walk as `/dry-run` reports it (INV-369), including the module a "
+                "stalled walk reached.\n")
+        self.assertEqual([], persona_problems("x.md", text))
+
+    def test_a_pointer_split_across_two_blocks_does_not_count(self):
+        text = "A simulated walk runs here. INV-369 governs it.\n\nSee `/dry-run` for more.\n"
+        self.assertEqual(1, len(persona_problems("x.md", text)))
+
+    def test_a_site_with_no_report_line_and_no_pointer_is_reported(self):
+        problems = persona_problems("x.md", "This skill drives `walk.py` and reports nothing.\n")
+        self.assertEqual(1, len(problems), problems)
+        self.assertNotIn('"no regression', problems[0])
+
+    def test_a_report_line_wrapped_across_two_lines_is_read_as_one(self):
+        """⚠️ (INV-346) Markdown wraps a sentence wherever the column runs out."""
+        text = ('A clean simulated walk is reported only as "no regression detected (simulated\n'
+                'Bootcamper, persona `<p>`)", never as "phase 3 passed".\n')
+        self.assertEqual([], persona_problems("x.md", text))
+        self.assertEqual(1, len(report_lines(text)))
+
+    def test_the_live_sites_each_state_or_point(self):
+        """Which route each shipped site takes today, so a change of route is visible."""
+        routes = {}
+        for rel, text in walk_reporting_sites():
+            states = any(PERSONA.search(q) for _line, q in report_lines(text))
+            routes[rel] = "states" if states else ("points" if points_at_the_owner(text) else "")
+        self.assertEqual("states", routes[".claude/skills/auto-test/SKILL.md"])
+        self.assertEqual("states", routes[".claude/skills/dry-run/SKILL.md"])
+        self.assertEqual("states", routes[".claude/skills/dry-run/phase3-conversational.md"])
+        self.assertEqual("points", routes[".claude/skills/release-cycle/SKILL.md"])
 
 
 class TheHumanWalkIsTheDefault(unittest.TestCase):
