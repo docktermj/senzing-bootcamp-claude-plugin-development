@@ -727,25 +727,40 @@ Present the assessment clearly:
 Data Quality Assessment:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Source: CUSTOMERS_CRM
-  Field completeness:  82%  (name: 99%, phone: 75%, email: 68%)
-  Format consistency:  90%
-  Duplicate rate:       3%
-  Overall quality:     78%  ⚠ Acceptable — some gaps (see below)
+  Field completeness:    82%  (name: 99%, phone: 75%, email: 68%)
+  Format consistency:    90%
+  Duplicate rate:         3%
+  Overall quality:     84.8%  ✅ Strong — continue to mapping
   Type/name check:     0 of 4,210 PERSON-typed records are candidates
 
 Source: VENDORS_LEGACY
-  Field completeness:  45%  (name: 90%, phone: 20%, email: 15%)
-  Format consistency:  55%
-  Duplicate rate:      12%
-  Overall quality:     42%  ⚠ Recommend fixing before mapping
+  Field completeness:    45%  (name: 90%, phone: 20%, email: 15%)
+  Format consistency:    55%
+  Duplicate rate:        12%
+  Overall quality:     49.7%  ⚠ Recommend fixing before mapping
   Type/name check:     3 of 12 PERSON-typed records are candidates (see below)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
+**Both totals are the formula above applied to the three inputs printed beside them** —
+`0.70 × 82 + 0.25 × 90 + 0.05 × (100 − 3)` = `57.4 + 22.5 + 4.85` = **84.75 → 84.8**, and
+`0.70 × 45 + 0.25 × 55 + 0.05 × (100 − 12)` = `31.5 + 13.75 + 4.4` = **49.65 → 49.7**, each
+rounded to one decimal as the formula's own worked example is.
+
+⛔ **Recompute every total from the source's own three inputs; never transcribe one from this
+example.** A worked total that is not its own operands run through the formula beside it teaches
+the figure instead of the arithmetic, and the figure it teaches is the wrong one.
+
 ⛔ **The status label MUST match the band above** — `✅` only at ≥80%, `⚠ Acceptable — some gaps`
 at 70-79%, `⚠ Recommend fixing before mapping` below 70%. Derive the label from the computed score
-rather than copying one from this example; a `✅` beside a 78% tells the bootcamper the gate said
-"proceed" when it is about to ask them to choose.
+rather than copying one from this example; a `✅` beside a 78% would tell the bootcamper the gate
+said "proceed" when it is about to ask them to choose.
+
+⚠️ **A ≥80% source is the non-yielding branch — do not illustrate it with the 70-79 gate.** At
+**84.8** `CUSTOMERS_CRM` is in the ≥80% band, whose gate below is a *statement* that continues
+into Phase 2 in the same turn and asks no 👉 question (INV-225). Printing the 70-79 warning label
+beside it would stage a decision the gate never puts, which is the mismatch this example used to
+carry.
 
 > **Data source registry:** After computing the quality score, update the source's
 > `quality_score` field in `config/data_sources.yaml` and set `updated_at`. If the score is
