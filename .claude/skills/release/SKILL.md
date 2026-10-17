@@ -55,7 +55,9 @@ is the kiro-power shape, and it is what `release.py` and
    moved every text site and left the committed PDF reading 0.6.1 — the artifact
    `README.md` offers as the sample deliverable (#697).
 3. Creates `CHANGELOG.md` if absent — **seeded from the tags that already exist**,
-   one entry each, newest first — and prepends the new entry thereafter.
+   one entry each, newest first — and prepends the new entry thereafter. The entry it
+   writes is **curated**, and what it leaves out it reports; see
+   [CHANGELOG.md](#changelogmd) below.
 4. Commits those files, and **only** those files.
 5. Tags **that commit**, annotated — annotated because `git push --follow-tags` silently skips lightweight tags (INV-301).
 
@@ -91,7 +93,8 @@ staying what it is.
 
 **Always show the maintainer the dry run and let them approve it before `--apply`.**
 The dry run prints the exact diff of both version sites, the changelog entry it would
-write, and the three git commands — that is what approval is given on.
+write, every commit subject it kept out of that entry and why, and the three git
+commands — that is what approval is given on.
 
 ### The refusals
 
@@ -124,10 +127,43 @@ between tags. Two things about that seed are deliberate:
 - The **earliest** tag is not itemized. Everything before the first release would
   otherwise land in it, which is noise rather than history.
 
-⚠️ **Seeded entries are commit subjects, not release notes.** They are honest about
-what happened and say nothing about why. Curating them is a fine thing to do by hand;
-just never edit an entry's `## [version] - date` heading, because the version, the
-file and the tag were written together on purpose.
+⚠️ **Seeded entries are commit subjects, not release notes**, and the seed note says so
+of exactly the versions it names. They are honest about what happened and say nothing about
+why. Curating them by hand is a fine thing to do; just never edit an entry's
+`## [version] - date` heading, because the version, the file and the tag were written
+together on purpose.
+
+⛔ **A standing note about what a file's entries are is a promise the writer owes, not a
+label on the past (#698).** The seed note's boundary is the newest tag at seed time, so
+every entry above it was written by a release — and read either way round the note tells the
+downstream porter, at the one place they look, that those entries are curated release notes
+rather than commit subjects. So `release.py` curates each entry it writes, in three
+mechanical operations and no others:
+
+1. **Drop the subjects that describe no change** — a bare word such as `Savepoint`, with or
+   without a leading `#456`, and a merge subject. Nothing else is dropped.
+2. **Keep every remaining subject's own wording verbatim.**
+3. **Group the kept bullets under their own conventional-commit type** — `### fix`,
+   `### docs`, and `### other` for a subject carrying no type — in the order the types first
+   appear in the range.
+
+⛔ **No bullet's description is ever written here.** A subject whose meaning cannot be read
+out of its own text is kept exactly as the commit wrote it: dropping it would lose a real
+change, and rewriting it would put words in the maintainer's mouth about a release they cut.
+Curation here is mechanical, or it is fabrication.
+
+⛔ **What it drops, it reports: the dry run prints every subject it kept out of the entry,
+with the reason, under `--- subjects carrying no change description ---`.** A badly named
+commit is something only the maintainer can fix, and only for the next one; a silent filter
+would make the next `Savepoint`-shaped subject vanish without anyone learning the commit was
+named that way.
+
+⚠️ **The entries this repository already carries were curated to match the note** when the
+rule landed: `[0.7.0]`, `[0.6.1]` and `[0.6.0]` lost seven contentless bullets between them
+and their remaining subjects were grouped. `[0.5.3]` and earlier were deliberately left as
+they are — the note says they are reconstructed commit subjects, which is true and is what a
+reader should be told about them. `tests/test_changelog_entries_are_what_the_note_says.py`
+holds the file to both halves and derives the boundary from the note itself.
 
 ⚠️ **Tag dates are read off the commit, not off the tag object.** The seven tags this
 repo already carries are lightweight and have no date of their own. New tags are

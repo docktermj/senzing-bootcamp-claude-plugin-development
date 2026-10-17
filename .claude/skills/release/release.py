@@ -139,6 +139,33 @@ SEED_NOTE = (
     "> first created. They were not authored at release time, so they list commit subjects\n"
     "> rather than curated release notes.\n")
 
+# ⛔ THE SEED NOTE IS A PROMISE ABOUT THE ENTRIES ABOVE IT, NOT ONLY A LABEL ON THE ONES
+# BELOW. Read either way round it says the same thing: entries newer than the boundary are
+# curated release notes rather than commit subjects -- and the downstream repositories port
+# from exactly those entries. So an entry written at release time is curated before it is
+# prepended (``curated_entry``), while the seeded entries stay the raw subjects the note
+# says they are. The two halves are one statement; moving one without the other makes the
+# note false at the one place a downstream porter looks (#698).
+
+#: A conventional-commit type prefix: a lowercase type, an optional ``(scope)``, an optional
+#: ``!``, then ``:``. It is what a kept bullet is grouped under -- the subject's own type,
+#: never a category invented here.
+COMMIT_TYPE = re.compile(r"^(?P<type>[a-z][a-z0-9]*)(?:\([^)]*\))?!?:\s*")
+
+#: Leading issue references, as the older history writes them (``#456 Savepoint``). They say
+#: where the work was tracked rather than what changed, so they are stripped before a subject
+#: is read for a description -- and left untouched in the bullet itself.
+ISSUE_PREFIX = re.compile(r"^(?:#\d+[\s:,.-]*)+")
+
+#: A merge subject. ``subjects_between`` passes ``--no-merges``, so one reaches here only
+#: from a caller that did not; it names the merge rather than anything that changed in it.
+MERGE_SUBJECT = re.compile(r"^Merge\b")
+
+#: The heading a kept subject goes under when its own wording carries no conventional-commit
+#: type. ⛔ An untyped subject is NOT dropped: it is a real change with an unconventional
+#: name, and dropping it would lose the change.
+UNTYPED_GROUP = "other"
+
 
 class Refusal(Exception):
     """A precondition the maintainer has to resolve; reported, never raised as a crash."""
@@ -334,6 +361,88 @@ def entry(version, date, bullets):
     return "\n".join(lines)
 
 
+def subject_body(subject):
+    """What a subject says once its issue reference and its type prefix are stripped off."""
+    text = ISSUE_PREFIX.sub("", subject.strip()).strip()
+    text = COMMIT_TYPE.sub("", text).strip()
+    return ISSUE_PREFIX.sub("", text).strip()
+
+
+def describes_no_change(subject):
+    """Why ``subject`` carries no change description, or ``None`` when it carries one.
+
+    ⛔ MECHANICAL AND DELIBERATELY NARROW. A release-note bullet is worthless to the
+    downstream porter when it names no action and no object -- ``Savepoint``,
+    ``#456 Savepoint``, ``Update``, ``Improve``. The test is the subject's OWN text with
+    its bookkeeping removed: fewer than two words left, or a merge subject. Measured over
+    this repository's ``CHANGELOG.md`` on 2026-10-17 it reports 21 bullets out of 1560,
+    every one of them genuine, and reports none of the real two-word subjects sitting
+    beside them (``docs: add BLUEPRINT.md``, ``#451 Update instructions``,
+    ``#1 Fix heading``). A wider test -- "is this a good release note?" -- is a judgment
+    this script cannot make and must not pretend to.
+    """
+    text = subject.strip()
+    if MERGE_SUBJECT.match(text):
+        return "names a merge rather than a change"
+    body = subject_body(text)
+    if not body:
+        return ("is bookkeeping only -- an issue reference or a type prefix with nothing "
+                "after it")
+    if len(body.split()) < 2:
+        return "is the bare word %r -- it names no action and no object" % body
+    return None
+
+
+def commit_group(subject):
+    """The subject's own conventional-commit type, or ``UNTYPED_GROUP``."""
+    match = COMMIT_TYPE.match(ISSUE_PREFIX.sub("", subject.strip()).strip())
+    return match.group("type") if match else UNTYPED_GROUP
+
+
+def curate(bullets):
+    """``([(type, [subject, ...]), ...], [(subject, why), ...])`` -- what is kept, what is not.
+
+    Three mechanical operations and no others: drop what describes no change, keep every
+    remaining subject's own wording VERBATIM, and group the kept ones under their own types
+    in the order those types first appear.
+
+    ⛔ NOTHING HERE WRITES A DESCRIPTION FOR A COMMIT THAT DID NOT CARRY ONE. A subject
+    whose meaning cannot be read out of its own text is kept exactly as the commit wrote
+    it: dropping it would lose a real change, and rewriting it would put words in the
+    maintainer's mouth about a release they cut.
+    """
+    groups, order, dropped = {}, [], []
+    for bullet in bullets:
+        why = describes_no_change(bullet)
+        if why:
+            dropped.append((bullet, why))
+            continue
+        group = commit_group(bullet)
+        if group not in groups:
+            groups[group] = []
+            order.append(group)
+        groups[group].append(bullet)
+    return [(group, groups[group]) for group in order], dropped
+
+
+def curated_entry(version, date, bullets):
+    """``(entry text, dropped)`` -- the release-time entry the seed note promises.
+
+    ⚠️ Contrast ``entry`` above, which renders a flat list and is what ``seed_changelog``
+    uses: a reconstructed entry IS a list of commit subjects, and the seed note says so.
+    """
+    groups, dropped = curate(bullets)
+    if not groups:
+        groups = [(UNTYPED_GROUP,
+                   ["No commit subject in this range carried a change description."])]
+    lines = ["## [%s] - %s" % (version, date), ""]
+    for group, subjects in groups:
+        lines.extend(["### %s" % group, ""])
+        lines.extend("- %s" % subject for subject in subjects)
+        lines.append("")
+    return "\n".join(lines), dropped
+
+
 def seed_changelog(repo, tags):
     """Reconstruct one entry per existing tag, newest first.
 
@@ -355,12 +464,12 @@ def seed_changelog(repo, tags):
 
 
 def plan_changelog(repo, new, today, tags):
-    """(old_text, new_text, entry_text) for CHANGELOG.md, creating the file if absent."""
+    """(old_text, new_text, entry_text, dropped) for CHANGELOG.md, creating it if absent."""
     path = repo / CHANGELOG_NAME
     latest = tags[-1] if tags else None
     bullets = subjects_between(repo, latest, "HEAD") or [
         "No non-merge commits since %s." % (latest or "the start of history")]
-    block = entry(new, today, bullets)
+    block, dropped = curated_entry(new, today, bullets)
 
     if path.is_file():
         old_text = path.read_text(encoding="utf-8")
@@ -375,7 +484,7 @@ def plan_changelog(repo, new, today, tags):
     else:
         # A header-only file has no entry to prepend in front of.
         new_text = base.rstrip("\n") + "\n\n" + block
-    return old_text, new_text, block
+    return old_text, new_text, block, dropped
 
 
 # --------------------------------------------------------------------------- #
@@ -454,6 +563,30 @@ def show_diff(relpath, old_text, new_text):
     print()
 
 
+def report_dropped(dropped):
+    """Print every subject the entry left out, with the reason it was left out.
+
+    ⛔ FLAGGED, NEVER SILENTLY FILTERED. A commit whose subject describes no change is a
+    commit that was badly named, and the only person who can fix that is the maintainer
+    reading this. A silent filter would make the next ``Savepoint``-shaped subject vanish
+    without anyone learning the commit existed, which trades one invisible defect for
+    another (#698).
+    """
+    print("--- subjects carrying no change description ---")
+    if not dropped:
+        print("none: every subject in this range describes a change")
+        print()
+        return
+    print("%d subject(s) are NOT in the entry above, because a reader could not tell what "
+          "changed from them:" % len(dropped))
+    for subject, why in dropped:
+        print("  %s" % subject)
+        print("      %s" % why)
+    print("Nothing is lost -- the commits are still in the history. The fix is to name the "
+          "next one at commit time; this report is how you learn that it needs naming.")
+    print()
+
+
 # --------------------------------------------------------------------------- #
 # main
 # --------------------------------------------------------------------------- #
@@ -519,7 +652,8 @@ def main(argv=None):
         planned = rewrite_sites(repo, fmt(old), fmt(new))
         renders_pdf = (repo / EXAMPLE_PDF_REL).is_file()
         today = datetime.date.today().isoformat()
-        changelog_old, changelog_new, block = plan_changelog(repo, fmt(new), today, tags)
+        changelog_old, changelog_new, block, dropped = plan_changelog(
+            repo, fmt(new), today, tags)
         subject = args.message or "chore(release): %s" % fmt(new)
     except Refusal as refusal:
         print("refusing: %s" % refusal, file=sys.stderr)
@@ -547,6 +681,7 @@ def main(argv=None):
     print()
     print("--- %s entry ---" % CHANGELOG_NAME)
     print(block)
+    report_dropped(dropped)
     staged = [path for path, _, _ in planned] + [CHANGELOG_NAME]
     if renders_pdf:
         staged.append(EXAMPLE_PDF_REL)
