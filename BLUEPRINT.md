@@ -2765,7 +2765,8 @@ keys read first (relation flags added when `RELATED_ENTITIES` is absent);
 business attributes take a per-record `get_record` pass, re-asked at the step,
 skipped when the dumped row already carries `JSON_DATA`. The program
 `export_<system>` in `src/query`, in the chosen language, writes
-`data/temp/exports/<system>/`;
+`data/exports/<system>/`, a durable path both packaging profiles reach and
+graduation copies to `production/data/exports/` (#686);
 entity, edge and attribute counts come from the written files, and zero edges
 is a failure, never handed over. Each system lands in `steps.4e.targets`. No
 transition question follows the offers: the turn that settles the last one sets
@@ -2827,7 +2828,9 @@ and continues; the recap PDF is guaranteed.
   and 5a is skipped): copies
   `src/transform`, `src/load`, `src/query`, `src/utils` (never their build
   output: `classes/`, `target/`, `dist/`, `node_modules/`, `bin/`, `obj/`),
-  `data/senzing-ready/` and the root dependency manifest (only Python's sits
+  `data/senzing-ready/`, `data/exports/` (Module 7 step 4e's exports, to
+  `production/data/exports/` at the same project-relative path, since the
+  copied export program writes there) and the root dependency manifest (only Python's sits
   at the root; C#, Rust and TypeScript manifests travel in their program
   folders), and C#'s `nuget.config` (#618); writes
   `production/config/data_sources.yaml` keeping only `version` and each
@@ -2851,7 +2854,9 @@ and continues; the recap PDF is guaranteed.
   `pg_dump -Fc -f`, never redirection; in a container, through its recorded
   runtime after a `cp --help` probe), state snapshot, `RESUME_STATE.json`
   and `docs/REVISIT_BOOTCAMP.md`, which carries both Step 0b lists, the
-  takeaway and the "Next time" request.
+  takeaway and the "Next time" request. Its "Where things are" names
+  `data/exports/` when step 4e exported for a system, with
+  `production/data/exports/` beside it.
 - Close: confirm the PDF, announce only existing artifacts plus a
   `/package-bootcamp` statement, state that there is no script from here and
   repeat the "Next time" request, ask "anything else you would like to
@@ -3316,7 +3321,7 @@ CLI packaging the project into one zip; it never transmits it. Options:
 `.`), `--date` (YYYYMMDD, default today UTC), `--dry-run`, `--output`
 (default `backups/packages/senzing-bootcamp-<profile>-<date>.zip`).
 
-- Roots: `SHARE_INCLUDE` (`docs`, `production`), plus `TRANSFER_EXTRA`
+- Roots: `SHARE_INCLUDE` (`data/exports`, `docs`, `production`), plus `TRANSFER_EXTRA`
   (`backups/revisit`, `config`, `src`) for `transfer`. Missing roots are
   recorded as excluded.
 - `is_excluded` matches path segments against `ALWAYS_EXCLUDE` (credentials,
@@ -6797,6 +6802,7 @@ ALWAYS_EXCLUDE = (
 SHARE_EXCLUDE = ("backups", "docs/mapping", "data/senzing-ready")
 DATABASE_SUFFIXES = (".db", ".sqlite", ".sqlite3")
 SHARE_INCLUDE = (
+    "data/exports",
     "docs",
     "production",
 )
@@ -10272,6 +10278,7 @@ looks wrong.
 - `tests/test_ground_rules_nonyielding_presentation.py`: 16
 - `tests/test_guide_run_blocks_declare_their_shell.py`: 44
 - `tests/test_group_score_is_not_a_join_prediction.py`: 15
+- `tests/test_handed_over_paths_can_travel.py`: 19
 - `tests/test_hard_rule_citations.py`: 6
 - `tests/test_hard_rule_detector_sees_mid_line_stop_signs.py`: 8
 - `tests/test_hold_reason_lives_in_the_ledger.py`: 11
@@ -10380,7 +10387,7 @@ looks wrong.
 - `tests/test_organization_search.py`: 23
 - `tests/test_own_data_entity_shown_as_text.py`: 28
 - `tests/test_overview_bullets_are_not_counted.py`: 8
-- `tests/test_package_bootcamp.py`: 48
+- `tests/test_package_bootcamp.py`: 50
 - `tests/test_packaging_consent_gate_ships.py`: 15
 - `tests/test_pages_site_commands_match_docs_readme.py`: 10
 - `tests/test_partial_row_and_schema_coverage.py`: 39
@@ -10611,6 +10618,19 @@ need the original text. These are heuristic estimates, accurate to about 10%:
   (INV-079). The sites are derived, not listed (INV-246); `EXEMPT_SPANS` keys
   the eleven internal spans by their own text with a reason each, and a span
   no file carries any more fails by name.
+- **Handed-over deliverables.**
+  `tests/test_handed_over_paths_can_travel.py` (19 tests) reads
+  `package_bootcamp.py`'s `ALWAYS_EXCLUDE`, `SHARE_EXCLUDE`, `SHARE_INCLUDE`,
+  `TRANSFER_EXTRA` and `DATABASE_SUFFIXES` with `ast` — never a copy — and
+  INV-050's top-level trees out of its layout tree, then walks `plugins/`
+  through `corpus_files` (INV-246) and `collapsed_blocks` (INV-346). In a step
+  that hands something over (the verb `hand … over`, never the noun and never
+  the word "deliverable"), a project-relative path the same sentence says the
+  step writes must be reachable by `share` or `transfer`, or carry a non-travel
+  statement beside it. Controls put step 4e's pre-#686 wording back, re-wrap
+  it, accept the declaration arm, and leave Module 4's staging path alone;
+  floors on files, hand-over steps and written paths keep a clean result from
+  meaning an empty scan.
 - **Corpus listing.** `tests/test_corpus.py` (16 tests) plants a canary under
   every runtime directory of a throwaway git repository and asserts
   `corpus_files()` returns none of them, while it still returns a tracked file,
@@ -10977,7 +10997,9 @@ tests a rebuild can pass from behavior alone.
     `docs/mapping/` and none of the Bootcamper's loader inputs — neither
     `data/raw/` nor the mapped `data/senzing-ready/` — at any depth, including
     nested under `production/`. Its `OPEN_ME_FIRST.md` names the mapped inputs
-    among what it withheld.
+    among what it withheld. It does carry `data/exports/` and
+    `production/data/exports/`, Module 7 step 4e's exports, which that step
+    hands over as its deliverable (#686).
   - **`transfer`** adds config, mappings, the revisit state snapshot and a
     database backup, but never the live database. It keeps
     `production/data/senzing-ready/`, which the loader it carries reads.
@@ -12898,3 +12920,14 @@ Senzing licensing, with no SPDX identifier.
   site set by scanning the shipped subtree (INV-246) and reads wrap-aware
   (INV-346), so a site nobody listed is still checked — completing #607, whose
   ruling had been applied at two of the sites it binds
+- #686: Module 7 step 4e's export is written to `data/exports/<system>/`
+  instead of the scratch directory, because the step hands it over as its
+  deliverable and `data/temp/` is excluded from both packaging profiles, so the
+  one artifact the step named was the one thing `/package-bootcamp` could not
+  carry; `SHARE_INCLUDE` gains `data/exports` (one entry, since `TRANSFER`
+  composes from it), graduation copies `data/exports/**` to
+  `production/data/exports/` at the same project-relative path because the
+  verbatim-copied export program writes there (INV-186), and
+  `tests/test_handed_over_paths_can_travel.py` reads the profile rules with
+  `ast` rather than copying them, so prose and packaging cannot drift apart
+  again
