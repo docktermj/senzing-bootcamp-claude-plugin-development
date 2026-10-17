@@ -2276,7 +2276,9 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
   and `docs/data_source_locations.md`. Give a privacy note, make
   `.gitignore` cover `data/raw/*`, and write `docs/security_compliance.md`.
   Sample on request into `data/samples/`, then require
-  `validation_status: passed`.
+  `validation_status: passed` of every source that produced a file; `pending`
+  means none was collected, which a documented-location-only source is
+  expected to carry, and does not block (#687).
 - **Step 8a license gate.** Skipped when `license: custom` is set
   (`config/bootcamp_preferences.yaml`) or the total fits the limit.
   Otherwise `get_capabilities` chooses between a pinned four-option form
@@ -10444,6 +10446,7 @@ looks wrong.
 - `tests/test_record_limit_negative_is_rescoped.py`: 13
 - `tests/test_recorded_container_commands_use_the_recorded_runtime.py`: 17
 - `tests/test_registration_idempotency_is_constructed.py`: 12
+- `tests/test_registry_status_values_are_handled.py`: 12
 - `tests/test_related_entities_guidance.py`: 21
 - `tests/test_release_bumps_version_changelog_and_tag_together.py`: 32
 - `tests/test_release_covers_every_version_site.py`: 8
@@ -10835,6 +10838,14 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   - CORD is disclosed as real data.
   - A synthesized scenario carries quality gaps, has unique identifiers, and
     stays bounded.
+  - Every value the registry's `validation_status` documents has a branch at
+    Step 7, the step the schema names as its reader: `pending` means no file
+    was collected, which a documented-location-only source is expected to
+    carry, and does not block (#687).
+    `tests/test_registry_status_values_are_handled.py` derives the status
+    fields, their value sets and the reading step from the schema block
+    itself, and leaves out `mapping_status` and `load_status`, whose readers
+    are in later modules, with the reason stated in the test.
 - **Module 5.**
   - A quality-score formula with three bands.
   - Each worked quality score is the declared formula applied to its own
@@ -12931,3 +12942,13 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_handed_over_paths_can_travel.py` reads the profile rules with
   `ast` rather than copying them, so prose and packaging cannot drift apart
   again
+- #687: Module 4 Step 7 gains the `pending` branch, because the registry
+  schema documents `validation_status` as `pending` | `passed` | `failed` and
+  writes `pending` at creation while a documented-location-only source
+  collects no file, so it reached neither of the two values Step 7 handled and
+  the step contradicted its own Success indicator and `record_count` note; the
+  documented value set is deliberately unchanged, since `not_applicable` would
+  move every other reader of the field, and
+  `tests/test_registry_status_values_are_handled.py` derives the status
+  fields, their value sets and the reading step from the schema block itself
+  (INV-246), so a documented value with no branch fails rather than ships
