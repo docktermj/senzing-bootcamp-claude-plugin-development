@@ -86,7 +86,10 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    and tells you nothing about availability (INV-136). Inspect `available_datasets` for a Truth Set
    entry. Classify:
    `available` = an entry whose name matches "truthset" (or `type: truthset`) with `available: true`;
-   `unavailable` = no such entry — only the non-deterministic CORD collections are listed.
+   `unavailable` = no such entry — only the non-deterministic CORD collections are listed;
+   `denied` = the reply is the bare string `Denied.` instead of a dataset listing, a preview, or an
+   error from the server — its own outcome, handled below and never folded into either of the
+   other two.
 
    Then **retrieve it with `dataset='truthset'`**: `source='list'` first for the data source codes and
    per-source record counts you will need in 1.2 and in the report, then the records themselves. Take
@@ -97,6 +100,40 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    > returns the Truth Set's sources with their record counts. So the primary path normally succeeds;
    > treat the fallback below as genuinely exceptional rather than expected. Re-check rather than
    > trusting this note: the server ships independently of the plugin.
+
+   **A `Denied.` reply is a platform-layer filter, not an unavailable Truth Set.** This is the
+   canonical statement of its remedy, and the branches below point here instead of keeping a copy
+   (INV-300).
+
+   ⛔ **(INV-080) Relay the server's own sentence; do not reason about connector topology here.**
+   Read it at runtime from `get_capabilities()` → the `tools[]` entry whose `name` is
+   `get_sample_data` → that entry's `description`, whose closing note carries it; `dataset=` stays
+   required on every call of it (INV-136). As read on **MCP server 1.39.1, 2026-10-16**:
+
+   > When called via the Anthropic public Connectors Directory, record retrieval may be filtered at
+   > the platform layer with a 'Denied.' response. For full record access, call this MCP server's
+   > own endpoint directly (not through the Connectors Directory) or use the private deployment.
+
+   A `Denied.` reply — to the `dataset='list'` call above, or to any `dataset='truthset'` retrieval
+   — therefore came from the platform sitting in front of this server, not from the server: the
+   Truth Set is there and the request never reached it. Report the reply and the call that drew it,
+   name the Anthropic public Connectors Directory as the cause, give the two routes the quoted note
+   names, and resume acquisition on whichever route the Bootcamper opens.
+
+   - ⛔ **Do not retry it, and do not classify it as `unavailable`.** A second attempt down the
+     same route is filtered the same way, and the exceptional fallback at 3 below is for a server
+     that does not carry the Truth Set, which is not the case here.
+   - ⛔ **This is not the refusal INV-292's 403 branch answers.** That remedy switches back to
+     `citation.download_url`, and a denied reply handed over no `citation` to switch within, so
+     those clauses do not reach it.
+   - ⚠️ **(INV-125) The branch fires on the `Denied.` string by itself.** Where
+     `get_capabilities()` cannot be reached, take it anyway: report what was seen and what was
+     tried verbatim, name the Connectors Directory as the likely cause, and state the remedy as
+     the two routes above.
+   - ⛔ **(INV-048) It never blocks the module.** Where neither route is open in this session, go
+     on to 3 and then 4 below and record the provenance each of them sets, so the mandatory
+     visualization is still produced.
+
 2. **Available (primary path):** ⛔ **`get_sample_data(dataset='truthset', source='<CODE>')` returns
    a PREVIEW plus URLs — not the
    dataset.** Its `records` array is a sample (the response's `citation.note` says how many of how
@@ -110,6 +147,10 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    records per request and needs only mcp.senzing.com allowed; source_download_url is the complete
    uncapped file but requires egress to raw.githubusercontent.com."* The cap in it is the server's
    figure on that date: read `download_url_max_records` from the response rather than from this note.
+
+   ⛔ **A `Denied.` reply here belongs to the `denied` outcome in 1 above, not this one** (INV-300).
+   Its remedy is stated once at sub-step 1.1 → "A `Denied.` reply is a platform-layer filter"; read
+   it there rather than restating it here.
 
    So **download the records**, then verify the count:
 
@@ -128,6 +169,11 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
         reach the Bootcamper first; the remedy is stated here rather than assumed.
       - ⛔ **(INV-292) Never set a misleading User-Agent to get around it** — beyond being the
         wrong habit to teach, it was measured not to work.
+      - ⛔ **A `Denied.` body is neither that refusal nor the 429 throttle under 3** (INV-300).
+        Nothing is refusing the URL and nothing is rate-limiting it — the filter sits in front of
+        the server, so neither switching routes nor backing off reaches it. Take the `denied`
+        outcome at sub-step 1.1 → "A `Denied.` reply is a platform-layer filter", where the remedy
+        is stated once.
    2. ⛔ **Name the egress host from the URL you chose, per dataset.** `mcp.senzing.com` for the
       MCP-hosted download; for `source_download_url`, whatever host it carries — for the Truth Set
       that is **`raw.githubusercontent.com`**, *not* `senzing.com`. The MCP server's own instructions
