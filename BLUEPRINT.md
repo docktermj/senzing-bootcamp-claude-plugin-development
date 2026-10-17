@@ -2714,7 +2714,10 @@ Phase 1 (`phase1-query-visualize.md`):
   `m7_visualizations` records `offered`, `accepted`, `artifact`, `port` and
   `pid`. On the container route it launches by the contract's "Serving from
   the SDK container", and without a published port continues with no live
-  server. Module 7's `SKILL.md` and step 3c name this app, not the Truth Set's,
+  server; that rule stands above the step's requirements list, so the URL it
+  hands over and captures against -- the one `confirm-viz` printed, built from
+  the recorded `host_port` -- is read before the capture block and the handover
+  line that use it (#695). Module 7's `SKILL.md` and step 3c name this app, not the Truth Set's,
   as the bootcamp's peak; the rendering contract's requirements cover both.
 - On every path it writes `docs/bootcamp_data_discoveries.md` (seven named
   sections: first Your question, answered, a *Requirement* / *Answer* / *Where
@@ -2770,7 +2773,11 @@ the step from `reporting_guide` `graph` and `data_mart` and the export's
 type and match key, never per shared feature. One export row is dumped and its
 keys read first (relation flags added when `RELATED_ENTITIES` is absent);
 business attributes take a per-record `get_record` pass, re-asked at the step,
-skipped when the dumped row already carries `JSON_DATA`. The program
+skipped when the dumped row already carries `JSON_DATA`. `<system>` is a short
+snake_case name of the system, stated where the first program name is derived
+and governing every program name, project directory and output path the step
+builds, while the name as recorded stays in what the Bootcamper reads and in
+the checkpoint's `"system"` value (#695). The program
 `export_<system>` in `src/query`, in the chosen language, writes
 `data/exports/<system>/`, a durable path both packaging profiles reach and
 graduation copies to `production/data/exports/` (#686);
@@ -10109,7 +10116,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 402 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 439 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10159,21 +10166,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8149 test methods in 438 files, matching `inventory.test_count_total`.
+There are 8172 test methods in 439 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8149.
+sum to 8172.
 
-Two files run more tests than they define, so discovery collects 8156:
+Two files run more tests than they define, so discovery collects 8179:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8149`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8172`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8156`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8179`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -10450,6 +10457,7 @@ looks wrong.
 - `tests/test_phase_d_how_state_audit.py`: 36
 - `tests/test_phase_d_iterate_now_enters_the_quality_iteration_route.py`: 31
 - `tests/test_phasec_generated_path_asks_once.py`: 12
+- `tests/test_placeholder_rules_precede_their_use.py`: 23
 - `tests/test_plugin_manifest_reads_resolve_inside_the_plugin.py`: 13
 - `tests/test_poor_band_requires_a_mapping_cause.py`: 15
 - `tests/test_post_yes_switch_reads_the_dial.py`: 19
@@ -10945,6 +10953,14 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   - Step 1's confirming gate shows each derived requirement beside its Module 1
     quote, says a mismatch is what it asks about, and invents no quote.
   - The visualization model is built from the export stream.
+  - A placeholder a step hands the guide to substitute states its rule at or
+    above the place the step reads it: step 4e names `<system>`'s snake_case
+    form where it derives the first program name, and step 3c's container-route
+    override stands above the capture block and the handover line it corrects.
+    `tests/test_placeholder_rules_precede_their_use.py` derives both site sets
+    by scanning `plugins/` and reads wrap-aware (INV-246, INV-346), holds
+    Module 7 alone to naming the form with that narrowing measured, and runs
+    each negative control over the pre-#695 wording and the pre-#695 position.
 - **Graduation.**
   - Step 1c, the video, has pinned offers, a two-minute budget, the Intro first,
     and ends on the certificate and then the tag line. It uses name-free
@@ -13120,3 +13136,20 @@ Senzing licensing, with no SPDX identifier.
   fix, the widening found three further constants and only the certificate
   strings were a copy of anything, so the class is closed rather than the
   instance repaired
+- #695: Module 7 step 4e derived a program name, a project directory and an
+  export directory from `<system>`, the system name as the Bootcamper recorded
+  it in free text, with no rule to shorten it, while the ground rules take
+  `<name>` as a base name such as `verify_pipeline` and Java reads it as a
+  filename; step 4e now states the rule where it derives the first name, in the
+  wording step 2 already uses for `[query_name]` so the module carries one
+  idiom, and keeps the recorded name in the prose and the checkpoint's
+  `"system"` value. Step 3c's capture block read a port placeholder that the
+  container-route override corrected 80 lines below it, which on that route
+  captures nothing, so the override moved above the requirements list rather
+  than being folded into the placeholder, where it would have made the literal
+  command harder to read at the moment it is run (Truth Set visualization's
+  step 2.3 already states it above its own capture block).
+  `tests/test_placeholder_rules_precede_their_use.py` enforces one rule for
+  both -- a placeholder's substitution rule is readable at or above the place
+  the step reads it -- deriving its sites by scanning rather than from the
+  issue's line numbers, which #686, #689 and #692 had already moved
