@@ -260,9 +260,13 @@ questions.
 - **Detect the platform first (do not ask).** Determine the OS and architecture from the
   environment/system context (else run `uname`/`systeminfo`), and state it in one line
   ("Detected macOS on Apple Silicon"). Hold the detected `os`/`arch` for the Step 6 consolidated
-  write so Module 2 can reuse it instead of re-asking (INV-061). **Only if detection is genuinely
-  unavailable or ambiguous**, ask this pinned fallback question, verbatim (INV-056), and hold the
-  answer:
+  write so Module 2 can reuse it instead of re-asking (INV-061). ⚠️ **The Linux distribution is
+  neither of those, and nothing here detects or holds one.** `os`/`arch` is all this step persists;
+  the choice between `linux_apt` and `linux_yum` belongs to rule 5 of the numbered list under
+  "Routing rules (apply in order)" in `../module-02-sdk-setup/SKILL.md`, which reads
+  `/etc/os-release` on the Linux branch when it needs the answer — cite it rather than restating
+  its criterion here (INV-300). **Only if detection is genuinely unavailable or ambiguous**, ask
+  this pinned fallback question, verbatim (INV-056), and hold the answer:
 
   👉 **Which operating system and processor architecture are you using? Reply with a number:**
 

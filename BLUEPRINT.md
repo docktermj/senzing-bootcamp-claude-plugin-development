@@ -10443,6 +10443,7 @@ looks wrong.
 - `tests/test_review_invariants_stops_at_the_working_tree.py`: 9
 - `tests/test_root_readme_exception.py`: 12
 - `tests/test_routing_report_payload_limitation_is_relayed.py`: 10
+- `tests/test_rule5_takes_the_distro_criterion_from_the_server.py`: 30
 - `tests/test_rule_bullets_are_read_or_reported.py`: 17
 - `tests/test_rule_citations_name_their_file.py`: 7
 - `tests/test_sample_data_source_codes_are_scoped.py`: 7
@@ -12819,3 +12820,13 @@ Senzing licensing, with no SPDX identifier.
   request, and falls back to the top hit alone when the call fails or the
   field is absent, saying which path produced what it presents and never
   reporting a missing advisory field as an unavailable license route
+- #680: take Module 2 routing rule 5's choice between `linux_apt` and
+  `linux_yum` from the install decision tree rather than from a criterion
+  the plugin owned — `sdk_guide(topic='install')` with no `platform`
+  returns the `/etc/os-release` `ID`/`ID_LIKE` mapping and states that
+  `uname` cannot show the distribution, which is what Step 2's detection
+  sends the guide to, so Step 2 now says so and rule 5 makes its own read
+  on the Linux branch; Bootcamp preparation cites rule 5 instead of
+  restating it and persists no distribution value, and the host's package
+  manager survives only as the fallback, which names the route that
+  decided the platform
