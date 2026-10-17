@@ -103,7 +103,10 @@ and starting the Bootcamp.
 The bootcamp is a guided, module-by-module tutorial.
 You end with working Senzing code and data in your project (`src/`, `data/`, `database/`),
 a professional recap PDF you can keep and share (e.g. [bootcamp_recap.pdf], but yours will differ),
+a write-up of what Senzing found in your data (`docs/bootcamp_data_discoveries.md`, also rendered as a PDF),
 and a `production/` starter project.
+At graduation you are also offered a narrated 2-minute graduation video
+(`docs/bootcamp_recap.mp4`); say no and nothing is rendered.
 
 ## Troubleshooting
 

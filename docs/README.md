@@ -72,6 +72,15 @@ For the desktop application instead, see
     Start the bootcamp
     ```
 
+## What you finish with
+
+You end with working Senzing code and data in your project (`src/`, `data/`, `database/`),
+a professional recap PDF you can keep and share (`docs/bootcamp_recap.pdf`),
+a write-up of what Senzing found in your data (`docs/bootcamp_data_discoveries.md`, also rendered as a PDF),
+and a `production/` starter project.
+At graduation you are also offered a narrated 2-minute graduation video
+(`docs/bootcamp_recap.mp4`); say no and nothing is rendered.
+
 ## Bootcamp commands
 
 The plugin ships these slash commands. Each also works as plain English, so you never

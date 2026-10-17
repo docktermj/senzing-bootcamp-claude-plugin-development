@@ -10179,7 +10179,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 439 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 441 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10229,21 +10229,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8234 test methods in 440 files, matching `inventory.test_count_total`.
+There are 8257 test methods in 441 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8234.
+sum to 8257.
 
-Two files run more tests than they define, so discovery collects 8241:
+Two files run more tests than they define, so discovery collects 8264:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8234`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8257`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8241`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8264`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -10252,6 +10252,7 @@ looks wrong.
 - `tests/test_access_steps_terminal_step.py`: 19
 - `tests/test_acknowledge_precedes_the_loading_it_precedes.py`: 8
 - `tests/test_all_runs_every_argument_free_view.py`: 7
+- `tests/test_always_produced_deliverables_are_named.py`: 23
 - `tests/test_amendments_are_queued.py`: 12
 - `tests/test_an_existing_datastore_is_a_stated_branch.py`: 16
 - `tests/test_analyzer_python_floor_is_cited.py`: 23
@@ -11571,6 +11572,16 @@ These are the scripts under `.claude/skills/`:
   `Senzing/senzing-bootcamp-claude-plugin`, and the root README's Desktop
   marketplace URL and recap PDF link to carry the dev slug; a failure names
   the file and line (#522).
+- **What you finish with.** `tests/test_always_produced_deliverables_are_named.py`
+  requires every deliverable INV-050's layout tree annotates as always produced
+  to be named on at least one user-facing surface, and one it annotates as
+  rendered only on a yes to be named there as an offer. Both sets are derived:
+  the deliverables from the tree's own comment column, the surfaces from the
+  `.md` and `.html` pages sitting directly in a root `propagate.sh` publishes,
+  minus the maintainer pages it withholds. `docs/index.html` is read through
+  `html.parser` into the same collapsed blocks the Markdown surfaces are read
+  into, so the HTML surface is not silently unchecked. Controls strike each
+  deliverable from every surface and strike the offer wording (#699).
 
 ## 9. Not embedded
 
@@ -13289,3 +13300,15 @@ Senzing licensing, with no SPDX identifier.
   can name the next one better; the guard derives the boundary and the entry set
   by scanning the file, because a list of version numbers in a guard would go
   stale on the next release in exactly the way the note did
+- #699: name the data-discoveries document and the offered graduation video on
+  all three user-facing surfaces, and add the guard that keeps them there
+  (INV-050's tree annotates the first "Always produced in Module 7" and the
+  second "rendered only on a yes", and neither was named where a prospective
+  Bootcamper reads, under a heading that reads as the full set). The video is
+  stated as offered rather than guaranteed, because INV-340 gives graduation a
+  real "no" path, so a flat promise would be false for every Bootcamper who
+  declines; the discoveries document is stated flatly, because Module 7 writes
+  it on every path. The guard derives both the deliverable set and the surface
+  set by scanning rather than listing paths, and reads the HTML surface in its
+  own format, since a Markdown-shaped reader would leave it unchecked while the
+  guard went green
