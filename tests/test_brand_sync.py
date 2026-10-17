@@ -15,6 +15,10 @@ drift undetected. Here brand_tokens IS importable, so the live module globals ar
 the brand_tokens-derived values; asserting they equal the named fallback copies
 proves the fallbacks are in sync with the source of truth.
 
+The same shape, and the same sweep, cover the recap video's inlined copies of the recap
+PDF's **certificate strings** (#693): a fallback is a fallback whether it carries colors or
+words, and that one drifted precisely because the sweep's name pattern could not see it.
+
 Run:  python3 -m unittest discover -s tests
 """
 import glob
@@ -29,9 +33,16 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp", "scripts")
 sys.path.insert(0, SCRIPTS)
 
-#: A module-level inlined fallback copy of the brand palette. INV-184 binds "every shipped
-#: generator" that has one, so the set is DISCOVERED here rather than listed (INV-246).
-FALLBACK_CONSTANT = re.compile(r"^_?FALLBACK_[A-Z_]+\s*=", re.M)
+#: A module-level inlined fallback constant. INV-184 binds "every shipped generator" that
+#: inlines the brand palette, so the set is DISCOVERED here rather than listed (INV-246).
+#:
+#: ⛔ **(INV-246)** The word FALLBACK is matched ANYWHERE in the name, not only as a prefix. The earlier
+#: `^_?FALLBACK_[A-Z_]+` matched a prefix-named constant only, so `_CERT_TEXT_FALLBACK` in
+#: `generate_recap_video.py` was invisible to this sweep while its citation copy drifted from
+#: the recap PDF's wording (#693). INV-246 asks for the PATTERN to be widened, never for the
+#: missed name to be added: a name added by hand is the author's belief about where the rule
+#: applies, which is the belief that was wrong.
+FALLBACK_CONSTANT = re.compile(r"^[A-Z0-9_]*FALLBACK[A-Z0-9_]*\s*=", re.M)
 
 #: Carriers known to be covered when this sweep was written. A floor, not the site set:
 #: the scan decides what must be covered, this only stops the scan degrading to silence.
@@ -42,7 +53,7 @@ KNOWN_CARRIERS = frozenset({
 
 
 def fallback_carriers():
-    """Every shipped script inlining a brand-palette fallback, by module name."""
+    """Every shipped script inlining a fallback constant, by module name."""
     found = set()
     for path in sorted(glob.glob(os.path.join(SCRIPTS, "*.py"))):
         with open(path, encoding="utf-8") as fh:
@@ -112,9 +123,10 @@ class TheCarrierSetIsDerived(unittest.TestCase):
                            if not re.search(r"\b%s\b" % re.escape(m), source))
         self.assertEqual(
             [], uncovered,
-            "a shipped script inlines a brand-palette fallback and this file never "
-            "mentions it, so its copy can drift from brand_tokens.py undetected — the "
-            "failure INV-184 was written from. Add its sync assertions here: %s"
+            "a shipped script inlines a fallback constant and this file never mentions "
+            "it, so its copy can drift from its source of truth undetected — the failure "
+            "INV-184 was written from, and the one that hid the recap video's certificate "
+            "strings for weeks (#693). Add its assertions here: %s"
             % uncovered)
 
 
@@ -176,6 +188,103 @@ class BrandTokenSync(unittest.TestCase):
         for name, rgb in video._FALLBACK_RGB.items():
             self.assertEqual(video.PALETTE[name], rgb,
                              f"{name} fallback diverged from brand_tokens.py")
+
+
+class TheCertificateTextIsOneSourceOfTruth(unittest.TestCase):
+    """The recap video's inlined certificate strings must equal the recap PDF's (#693).
+
+    `generate_recap_video.py` draws its Certificate of Completion frame from
+    `generate_recap_pdf`'s own constants, "so the two certificates cannot disagree", and
+    falls back to inlined copies only when that module cannot be imported. Nothing held the
+    copies equal, and one had already drifted: the video printed "for successfully completing
+    the Senzing Bootcamp." where the recap PDF prints the full no-modules citation naming
+    Senzing's guided path.
+
+    The fallback is kept rather than deleted — it is what renders when `generate_recap_pdf`
+    is unimportable, and removing it would turn that case into a blank certificate — so the
+    copies are held equal here, the way the palette is held to `brand_tokens.py` above.
+
+    ⛔ **(INV-265) This comparison is meaningful only with `generate_recap_pdf` IMPORTABLE.**
+    Skipping the import would compare nothing and pass. `generate_recap_pdf` imports its fpdf2
+    dependency inside the renderer, not at module scope, so it imports in BOTH suite legs —
+    fpdf2 present and absent — and these tests therefore FAIL rather than skip when the module
+    they compare against cannot be loaded. Nothing here is conditional on fpdf2.
+    """
+
+    def setUp(self):
+        import generate_recap_pdf
+        import generate_recap_video
+        self.pdf = generate_recap_pdf
+        self.video = generate_recap_video
+
+    def test_the_comparison_has_two_non_empty_sides(self):
+        """The anti-vacuity floor: an emptied constant must not read as agreement."""
+        self.assertTrue(self.video._CERT_TEXT_FALLBACK, "the video's label copies are empty")
+        self.assertTrue(self.video._CERT_CITATION_FALLBACK, "the citation copy is empty")
+        self.assertTrue(self.pdf._CERT_CITATION_NO_MODULES, "the recap PDF's citation is empty")
+
+    def test_every_inlined_label_has_a_named_source(self):
+        """A key with no source could never be compared, so it could never be caught."""
+        self.assertEqual(set(self.video._CERT_TEXT_SOURCES),
+                         set(self.video._CERT_TEXT_FALLBACK),
+                         "a fallback label and the recap PDF constant it copies disagree on "
+                         "which keys exist, so one of them is unchecked")
+
+    def test_the_inlined_labels_equal_the_recap_pdfs(self):
+        for key, attr in sorted(self.video._CERT_TEXT_SOURCES.items()):
+            with self.subTest(label=key):
+                self.assertEqual(getattr(self.pdf, attr),
+                                 self.video._CERT_TEXT_FALLBACK[key],
+                                 f"the video's {key!r} fallback diverged from the recap "
+                                 f"PDF's {attr}; the recap PDF is the source of truth")
+
+    def test_the_inlined_citation_equals_the_recap_pdfs(self):
+        """The copy that had actually drifted, and the one acceptance criterion 2 names."""
+        self.assertEqual(self.pdf._CERT_CITATION_NO_MODULES,
+                         self.video._CERT_CITATION_FALLBACK,
+                         "the video's fallback citation diverged from the recap PDF's "
+                         "_CERT_CITATION_NO_MODULES; the recap PDF is the source of truth")
+
+    def test_the_citation_copied_is_the_one_the_recap_pdf_actually_prints(self):
+        """Equality with the constant is worth nothing if the renderer prints another one.
+
+        The fallback path has no module list, so `_cert_citation([])` is what the recap PDF
+        prints in the same situation — that is the string the video must match.
+        """
+        self.assertEqual(self.pdf._cert_citation([]), self.video._CERT_CITATION_FALLBACK)
+
+
+class TheOtherConstantsTheWidenedSweepFinds(unittest.TestCase):
+    """What the widened pattern newly discovered, and what holds for each (#693).
+
+    Widening the name pattern added three constants to the sweep:
+    `generate_recap_video._CERT_TEXT_FALLBACK`, `generate_discoveries_pdf.COVER_TITLE_FALLBACK`
+    and `docker_lifecycle.SLUG_FALLBACK`. Only the certificate strings are COPIES of a value
+    another module owns, so only they can drift from a source of truth; the class above holds
+    them. The other two are defaults with no twin anywhere — `doc.title or COVER_TITLE_FALLBACK`
+    and `slug or SLUG_FALLBACK` — so there is nothing for them to diverge from, and what has to
+    hold instead is that the default is itself usable.
+
+    `docker_lifecycle` is a carrier this file would otherwise never mention, so the property
+    its fallback must keep is asserted here rather than left to the coverage sweep to demand
+    and nobody to supply.
+    """
+
+    def test_the_slug_fallback_is_a_legal_container_name_component(self):
+        """It is substituted into a derived container name, so it must be inside the charset
+        docker and podman enforce: an empty or punctuation-led default would build a name the
+        runtime rejects, on the path where the project directory has no usable basename."""
+        import docker_lifecycle
+        self.assertTrue(docker_lifecycle.SLUG_FALLBACK, "the slug fallback is empty")
+        self.assertTrue(
+            docker_lifecycle.NAME_CHARSET.match(docker_lifecycle.SLUG_FALLBACK),
+            "the slug fallback is outside the container-name charset, so a project whose "
+            "basename sanitizes to nothing would build an unusable container name")
+        nothing_survives = os.path.join(os.path.dirname(os.path.abspath(__file__)), "!!!")
+        self.assertEqual(docker_lifecycle.SLUG_FALLBACK,
+                         docker_lifecycle.project_slug(nothing_survives),
+                         "the fallback constant is not what project_slug actually falls "
+                         "back to, so asserting on it proves nothing")
 
 
 class SourceColorsComeFromTheData(unittest.TestCase):

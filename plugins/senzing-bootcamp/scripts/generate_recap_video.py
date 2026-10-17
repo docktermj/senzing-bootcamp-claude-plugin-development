@@ -1455,6 +1455,26 @@ _CERT_TEXT_FALLBACK = {
     "date_label": "DATE COMPLETED", "issuer_label": "ISSUED BY",
 }
 
+#: The recap PDF constant behind each inlined label above, so the runtime below and
+#: `tests/test_brand_sync.py` read ONE mapping instead of two copies of it — the
+#: `_TOKEN_NAMES` idiom this module already uses for the palette.
+_CERT_TEXT_SOURCES = {
+    "eyebrow": "_CERT_EYEBROW", "headline": "_CERT_HEADLINE",
+    "presented": "_CERT_PRESENTED", "date_label": "_CERT_DATE_LABEL",
+    "issuer_label": "_CERT_ISSUER_LABEL",
+}
+
+#: The citation drawn when `generate_recap_pdf` cannot be imported: a copy of its
+#: `_CERT_CITATION_NO_MODULES`. Named at module scope rather than written inline at its one
+#: call site so the sweep in `tests/test_brand_sync.py` can find it — INV-184 asks a fallback
+#: to live in a single named constant, INV-246 asks the sweep to derive its sites. As a bare
+#: literal it was invisible to both, and it had drifted to a shorter sentence than the recap
+#: PDF prints, so the two certificates disagreed on the one path nobody watches (#693).
+_CERT_CITATION_FALLBACK = (
+    "for successfully completing the Senzing Bootcamp — Senzing's guided path from "
+    "defining the business problem to a working entity-resolution pipeline."
+)
+
 
 @dataclass
 class CertificateFields:
@@ -1486,11 +1506,7 @@ def certificate_fields(scene: dict, video: dict, root: Path,
     rp, import_error = _recap_module()
     text = dict(_CERT_TEXT_FALLBACK)
     if rp is not None:
-        text.update({
-            "eyebrow": rp._CERT_EYEBROW, "headline": rp._CERT_HEADLINE,
-            "presented": rp._CERT_PRESENTED, "date_label": rp._CERT_DATE_LABEL,
-            "issuer_label": rp._CERT_ISSUER_LABEL,
-        })
+        text.update({k: getattr(rp, v) for k, v in _CERT_TEXT_SOURCES.items()})
     recap_rel = scene.get("recap", DEFAULT_RECAP)
     prefs_rel = scene.get("preferences", DEFAULT_PREFERENCES)
     recap_path = root / recap_rel
@@ -1532,7 +1548,7 @@ def certificate_fields(scene: dict, video: dict, root: Path,
     if rp is not None:
         citation = rp._cert_citation(labels)
     else:
-        citation = "for successfully completing the Senzing Bootcamp."
+        citation = _CERT_CITATION_FALLBACK
     return CertificateFields(video.get("bootcamper", ""), date, labels, citation,
                              "Senzing Bootcamp", "", text, "from the storyboard")
 
