@@ -328,8 +328,12 @@ class Item9Inv048IsNotAGenericNonBlockingRule(unittest.TestCase):
         self.assertIn("say so in one line and continue (INV-163)", m2)
         self.assertIn("⛔ (INV-335, INV-163) **The check reports and asks; it never blocks the module.**",
                       flat(read(MODULE_5_P1)))
-        self.assertIn("never blocking (INV-012): how it is filed is stated once, in that rule",
-                      flat(read(PHASE_D)))
+        # #690 split the two halves this clause was carrying on one id: INV-012 is the silence
+        # (point of view, output suppression) and INV-373 is the append's non-blocking rule.
+        # Pinning both is what keeps item 9's point — INV-048 was never the generic never-blocks
+        # rule, and neither is INV-012.
+        self.assertIn("no question (INV-012), never blocking (INV-373): how it is filed is "
+                      "stated once, in that rule", flat(read(PHASE_D)))
 
     def test_control_a_restored_citation_is_reported(self):
         text = read(MODULE_5_P1)

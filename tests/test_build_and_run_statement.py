@@ -738,7 +738,11 @@ class TheRulesForEveryLanguage(unittest.TestCase):
     def test_every_command_runs_from_the_project_root_in_the_sourced_shell(self):
         self.assertIn("Run every command from the project root, in the shell where Module 2's "
                       "env script is sourced", self.statement)
-        self.assertIn("run unchanged in a POSIX shell and in PowerShell (INV-002)", self.statement)
+        # ⛔ INV-001, not INV-002 (#690): one spelling surviving a POSIX shell and PowerShell is
+        # a PLATFORM claim. INV-002 is language agnosticism and governs the per-language rows of
+        # the table above, not this sentence; `graduation/database-backup.md:52` already reads
+        # the PowerShell hazard the same way, as "(INV-166, INV-001)".
+        self.assertIn("run unchanged in a POSIX shell and in PowerShell (INV-001)", self.statement)
 
     def test_a_missing_tool_is_named_in_the_fix_instruction(self):
         self.assertIn("A build that fails because a tool is not found gets a Fix_Instruction "

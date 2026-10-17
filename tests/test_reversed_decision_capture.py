@@ -238,7 +238,11 @@ class TheAuditStepFiresTheTrigger(unittest.TestCase):
         self.assertRegex(self.flat, r"(?i)by then the reasoning may have been compacted away")
 
     def test_it_is_silent_and_non_blocking_at_the_step_too(self):
-        self.assertRegex(self.flat, r"(?i)No banner, no question, never blocking")
+        # Each half carries its own invariant since #690: INV-012 is the silence, INV-373 is the
+        # non-blocking rule this file enforces. The two owning sites, `feedback.md` and
+        # `ground-rules.md`, already split them; this step was the one that did not.
+        self.assertRegex(
+            self.flat, r"(?i)No banner, no question \(INV-012\), never blocking \(INV-373\)")
 
     def test_the_audits_three_outcomes_are_unchanged(self):
         """This added a sixth step; it must not have disturbed the audit itself."""
