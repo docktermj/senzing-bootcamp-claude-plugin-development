@@ -1861,7 +1861,8 @@ If issues are found, go back to the relevant step. Retest after changes.
 
   ## Record Type Check
 
-  - **Candidates:** [N] of [M] PERSON-typed records (suffix heuristic, Module 5 Phase 1 step 6)
+  - **Candidates:** [N] of [M] PERSON-typed records (suffix heuristic, from Phase 1 step 6 of the
+    Data Quality, Mapping, and Transformation module)
   - [Decision, and its rule or cost, as Phase 1 wrote them]
   ```
 

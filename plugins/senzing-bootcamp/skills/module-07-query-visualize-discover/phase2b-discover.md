@@ -270,8 +270,9 @@ supported systems.
 
 1. **Read the targets.** Read `integration_targets` from `config/bootcamp_preferences.yaml`. A
    missing key or an empty list means no system was named.
-2. **No system named.** Say so as a statement first: "In Module 1 you didn't name a system your
-   results need to feed, so there's nothing set up to export for." Then offer once (INV-006):
+2. **No system named.** Say so as a statement first: "In Discover the Business Problem you didn't
+   name a system your results need to feed, so there's nothing set up to export for." Then offer
+   once (INV-006):
 
    👉 **Is there a system you'd like your resolved results exported for? If so, name it.**
 

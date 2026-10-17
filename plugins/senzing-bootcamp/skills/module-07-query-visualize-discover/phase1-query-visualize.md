@@ -79,10 +79,11 @@ questions alone reach 10, add no derived requirement and keep all of theirs.
 ⛔ **(INV-275) Show both versions: beside each derived requirement, the Bootcamper's own Module 1
 words for its source.** Under each requirement in part 2, show the `> "…"` line that
 `docs/business_problem.md` carries under the section the requirement came from (Success Criteria
-or Desired Output), labeled as theirs: "Your words in Module 1:" and then the quote, exactly as
-the file has it. Take it from the file, never from memory of the conversation: it is the line
-they confirmed in Module 1, it can be checked against the document, and it survives a resumed
-session. When several requirements come from one section, its quote goes beside each of them.
+or Desired Output), labeled as theirs: "Your words in Discover the Business Problem:" and then
+the quote, exactly as the file has it. Take it from the file, never from memory of the conversation:
+it is the line they confirmed in Module 1, it can be checked against the document, and it survives
+a resumed session. When several requirements come from one section, its quote goes beside each of
+them.
 
 - **No quote in the document, none shown.** Where that section carries no `> "…"` line, show the
   requirement without one and never invent one. That covers a desired output picked from Step
@@ -91,11 +92,11 @@ session. When several requirements come from one section, its quote goes beside 
 - **Their questions need no second version.** Part 1 already quotes their own words, so it carries
   no Module 1 quote, and neither does a derived requirement listed there under their question.
 
-**Say which is which, before the question.** State plainly that each "Your words in Module 1"
-line is what they said, as `docs/business_problem.md` saved it, that the requirement above it is
-your rendering of it, and that a mismatch between a requirement and the quote beside it is
-exactly what the confirming question is asking about. This is part of the list, not a question:
-it adds no 👉 (INV-251).
+**Say which is which, before the question.** State plainly that each "Your words in Discover the
+Business Problem" line is what they said, as `docs/business_problem.md` saved it, that the
+requirement above it is your rendering of it, and that a mismatch between a requirement and the
+quote beside it is exactly what the confirming question is asking about. This is part of the
+list, not a question: it adds no 👉 (INV-251).
 
 Then end the turn on the confirming question, the only 👉 in this turn:
 
@@ -1267,7 +1268,7 @@ lines that each start and end with `|`, so keep each row on one line and put no 
 - **Where in this document:** the heading of the section that carries the evidence, such as
   `Review queue`; `none` for a requirement that is not answered.
 - **No requirement confirmed** (the saved list is empty): no table. Write one line instead:
-  `No query requirements were confirmed in Module 7 step 1.`
+  `No query requirements were confirmed in Query, Visualize and Discover step 1.`
 - **No saved list** (a Module 7 checkpointed at step 1 before the list was saved): write the rows
   from the requirements in the conversation, or else from `docs/business_problem.md`.
 - **A question raised after step 1** may be added as a further row after the saved ones; the gate

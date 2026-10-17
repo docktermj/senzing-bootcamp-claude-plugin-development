@@ -71,7 +71,8 @@ QUOTE_RULES = {
     "it is the `> \"…\"` line from docs/business_problem.md": r"show the `> \"…\"` line that "
                                                              r"`docs/business_problem.md` carries",
     "it names the source sections": r"\(Success Criteria or Desired Output\)",
-    "it is labeled as theirs": r"labeled as theirs: \"Your words in Module 1:\"",
+    "it is labeled as theirs": r"labeled as theirs: \"Your words in Discover the Business "
+                               r"Problem:\"",
     "it is copied exactly": r"exactly as the file has it",
     "it comes from the file, never the conversation": r"Take it from the file, never from memory "
                                                       r"of the conversation",
@@ -79,7 +80,8 @@ QUOTE_RULES = {
 }
 MISMATCH_RULES = {
     "it says which is which": r"Say which is which, before the question",
-    "the quote is named as theirs": r"each \"Your words in Module 1\" line is what they said",
+    "the quote is named as theirs": r"each \"Your words in Discover the Business Problem\" line "
+                                    r"is what they said",
     "the requirement is named as the guide's": r"the requirement above it is your rendering of it",
     "a mismatch is what the question asks about": r"a mismatch between a requirement and the quote "
                                                   r"beside it is exactly what the confirming "
@@ -225,8 +227,8 @@ class TheChecksCatchARegression(Base):
         self.assertCaught(mutated, "never the conversation")
 
     def test_the_label_dropped(self):
-        mutated = self.step.replace('labeled as theirs: "Your words in Module 1:" and then the '
-                                    "quote", "and then the quote", 1)
+        mutated = self.step.replace('labeled as theirs: "Your words in Discover the Business '
+                                    'Problem:" and then\nthe quote', "and then\nthe quote", 1)
         self.assertCaught(mutated, "labeled as theirs")
 
     def test_the_mismatch_statement_dropped(self):
