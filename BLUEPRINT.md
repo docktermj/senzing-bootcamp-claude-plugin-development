@@ -1816,7 +1816,8 @@ steps 9 to 17. Every step checkpoints to `config/bootcamp_progress.json`.
   `license_guidance_deferred: true` in `config/bootcamp_preferences.yaml`.
   A stated entitlement goes to `license_stated_limit`; no license prompt.
 - 6a confirms a summary; 6b to 6d fill gaps one per turn: record types,
-  source count, desired outcome (multi-select, every choice kept).
+  source count, desired outcome (multi-select, every choice kept; option 4
+  "Something else" asks what it looks like and records their words).
 - 9: generated scenario writes Mermaid diagrams to
   `docs/data_architecture.md`; otherwise it asks for diagrams.
 - 10a: integration question (and systems), then deployment target (cloud,
@@ -10518,6 +10519,7 @@ looks wrong.
 - `tests/test_synthesized_scenario_has_quality_gaps.py`: 21
 - `tests/test_tab_manifest_survives_recapture.py`: 14
 - `tests/test_tab_set_is_singular.py`: 25
+- `tests/test_template_word_placeholders_have_a_capturing_step.py`: 8
 - `tests/test_the_2026_09_30_audit_rules_cite_their_invariants.py`: 4
 - `tests/test_the_227_mis_citations_do_not_return.py`: 5
 - `tests/test_the_gate_sees_every_scanned_root.py`: 7
@@ -10785,6 +10787,13 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   - `docs/business_problem.md` keeps verbatim quote slots.
   - Step 15 shows both versions. On the generated path, zero quotes is correct.
   - The project `README.md` is created before it is filled.
+  - Step 6d's option 4 asks what the something else looks like and its
+    handling records the Bootcamper's words, which is what Step 11's
+    **Desired Output** `**Format**` placeholder renders (#688).
+    `tests/test_template_word_placeholders_have_a_capturing_step.py` derives
+    the placeholders from the shipped templates and the producing option from
+    the shipped option prose, and leaves out a placeholder that quotes no
+    option, with the reason stated in the test.
 - **Module 2.**
   - The pinned EULA question comes before every install.
   - The env script finds its root under bash and zsh, and returns rather than
@@ -12952,3 +12961,18 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_registry_status_values_are_handled.py` derives the status
   fields, their value sets and the reading step from the schema block itself
   (INV-246), so a documented value with no branch fails rather than ships
+- #688: Discover the Business Problem Step 6d's option 4 reads
+  `**Something else** — tell me what that looks like.` and its handling
+  records the words they give, because Step 11's **Desired Output**
+  `**Format**` line renders the Bootcamper's words for that option and no
+  step collected them, so a guide filling the template could only leave the
+  literal placeholder in `docs/business_problem.md` or invent a phrase; the
+  ask rides inside the option, as the sibling gate in Module 5 already does
+  it, so no 👉 is added and the module's turn count is unchanged (INV-251);
+  the placeholder names Phase 1 Step 6d, Module 7's "leaves no prose to
+  quote" clause is scoped to options 1-3, and
+  `tests/test_template_word_placeholders_have_a_capturing_step.py` derives
+  the placeholders from the shipped templates and the capture from the
+  shipped option prose (INV-246), scoped to a placeholder that quotes the
+  option whose words it wants because the wider reading reported 7 sites,
+  6 of them correct prose
