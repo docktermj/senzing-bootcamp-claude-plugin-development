@@ -618,6 +618,12 @@ detected platform in one line and proceed — e.g. "Detected macOS on Apple Sili
 wrong." For macOS, also establish whether it is Apple Silicon (M1/M2/M3/M4) or Intel from the same
 source.
 
+⚠️ **On Linux that gives the OS and the architecture, not the distribution.** `uname` does not
+carry it, `os`/`arch` does not hold it, and neither Linux option in the fallback question below
+names one — so none of them decides between `linux_apt` and `linux_yum`. Rule 5 below makes its own
+read for that, at the moment it needs the answer. It is a detection, so nothing is added to this
+gate (INV-012) and the pinned question below is unchanged and still asked once (INV-006, INV-056).
+
 **Fallback only** — when detection is genuinely unavailable or ambiguous, ask this pinned question
 and wait:
 
@@ -684,8 +690,28 @@ against it: they remain the native routes in rules 3 and 4 below.
    able to launch against it.
 4. Windows without Scoop (non-Python) → **`platform='docker'`**. With Scoop available →
    **`platform='windows'`**, and relay the bucket's preview status above.
-5. Linux → **`platform='linux_apt'`** or **`platform='linux_yum'`** based on the package
-   manager.
+5. Linux → **`platform='linux_apt'`** or **`platform='linux_yum'`**, and the install decision tree
+   decides which, not this file. Call **`sdk_guide(topic='install')` with no `platform`** — the
+   live decision tree the paragraph above already names — and read
+   `needs_input.decision_tree.question` for the criterion and
+   `needs_input.decision_tree.options[].value` for the platform tokens to use. The criterion it
+   gives is `/etc/os-release` on the **target** host — a plain file, and reading it installs
+   nothing. Take `ID`, then `ID_LIKE`:
+   - `rhel`, `centos`, `rocky`, `almalinux`, `ol`, `fedora` or `amzn` → **`platform='linux_yum'`**
+   - `debian` or `ubuntu` → **`platform='linux_apt'`**
+
+   ⚠️ **`uname` does not show the distribution**, so its output cannot decide this. The server
+   says so in that same `question`, and again as the first `compatibility_notes` entry of
+   `sdk_guide(topic='install', platform='linux_apt')` — take the criterion from the call at
+   runtime, not from this file (INV-080); quoted here from server **1.39.1, 2026-10-16**.
+
+   **Fallback (INV-125)** — when the call cannot be reached, or `/etc/os-release` is absent or
+   carries no `ID`/`ID_LIKE` in the lists above: fall back to the package manager actually present
+   on the host (`apt`/`dpkg` → `linux_apt`; `yum`/`dnf`/`rpm` → `linux_yum`), which is what this
+   rule did before the server carried the criterion. Say in one line which route decided it — "from
+   /etc/os-release on this host", or "from the package manager, because the install decision tree
+   was unreachable". Ask the bootcamper nothing new either way: a wrong choice surfaces at once as
+   an install command the host rejects, not silently.
 
 When a learner lands on Docker because of these rules, briefly explain why (e.g., "The Senzing
 Python SDK is Linux-only, so on macOS we'll run it in a container") so the redirect doesn't
