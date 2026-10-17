@@ -10510,7 +10510,7 @@ looks wrong.
 - `tests/test_truth_set_spelling.py`: 5
 - `tests/test_truthset_acquisition_call.py`: 14
 - `tests/test_truthset_container_route_runs_a_project_copy.py`: 16
-- `tests/test_truthset_download_is_the_dataset.py`: 20
+- `tests/test_truthset_download_is_the_dataset.py`: 36
 - `tests/test_truthset_is_not_called_single_source.py`: 6
 - `tests/test_truthset_visualization_reports_empty_as_failure.py`: 9
 - `tests/test_truthset_viz_no_live_server_completes.py`: 37
@@ -12830,3 +12830,14 @@ Senzing licensing, with no SPDX identifier.
   restating it and persists no distribution value, and the host's package
   manager survives only as the fallback, which names the route that
   decided the platform
+- #681: give Module 3b Step 1.1's Truth Set retrieval taxonomy a third outcome
+  for a `Denied.` reply, which the server documents and the plugin had no
+  branch for — called through the Anthropic public Connectors Directory,
+  record retrieval may be filtered at the platform layer, so the reply comes
+  from in front of the server rather than from it; the branch relays the
+  server's own remedy, read from `get_capabilities()`' `get_sample_data`
+  entry (reach this MCP server's endpoint directly, or use the private
+  deployment), never retries the reply and never folds it into `unavailable`
+  or into INV-292's 403 remedy, still fires on the `Denied.` string when
+  `get_capabilities()` cannot be reached, and never blocks the module, with
+  the remedy stated once and cited from the primary path
