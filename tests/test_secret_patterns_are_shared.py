@@ -7,9 +7,10 @@ quietly protects less than the gate, in the one artifact the Bootcamper hands to
 ⚠️ **The gate keeps its own inline copy on purpose, and this test is the reason that is safe.**
 `write-gate.py` is a `PreToolUse` control: an ImportError there does not degrade to "no secret
 scan", it degrades to a hook that cannot run at all, on every write in the bootcamp. The plugin
-already uses exactly this shape for `brand_tokens.py`, whose palette is inlined into two generators
-with `tests/test_brand_sync.py` asserting the copies stay equal. This test does that job for the
-secret patterns, so the duplication cannot become drift.
+already uses exactly this shape for `brand_tokens.py`, whose palette is inlined into every generator
+that carries a fallback copy, with `tests/test_brand_sync.py` discovering the carriers and asserting
+the copies stay equal. This test does that job for the secret patterns, so the duplication cannot
+become drift.
 
 ⛔ The comparison is on the pattern **string**, not on behavior sampled from a few examples: a
 sampled comparison passes while a fourth alternation branch exists on one side only.

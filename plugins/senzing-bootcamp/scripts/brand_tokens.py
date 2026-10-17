@@ -2,16 +2,18 @@
 
 Extracted from the Senzing "Obsidian & Ember" style reference
 (`resources/senzing-style-reference.pdf`, a maintainer asset that is NOT shipped
-with the plugin). The generators that produce bootcamper-facing visual
-deliverables — the Truth-Set visualization web app / snapshot
-(`senzing_viz_server.py`) and the recap PDF (`generate_recap_pdf.py`) —
-consume these tokens so every artifact shares one look and feel, rather than each
-hardcoding its own ad hoc palette.
+with the plugin). Every generator that produces a bootcamper-facing visual
+deliverable consumes these tokens, so every artifact shares one look and feel
+rather than each hardcoding its own ad hoc palette.
 
-Both consumers import this module from their own directory (it ships alongside
-them in `scripts/`) and fall back to an inlined copy of these same values if the
-import ever fails, so they never depend on the PDF at runtime and keep working
-even in isolation (mirrors the vendored-D3 offline fallback).
+Each of those generators imports this module from its own directory (it ships
+alongside them in `scripts/`) and falls back to an inlined copy of these same
+values if the import ever fails, so none of them depends on the PDF at runtime
+and each keeps working in isolation (mirrors the vendored-D3 offline fallback).
+`tests/test_brand_sync.py` discovers which generators carry such a copy and
+asserts the copies stay equal to the values derived here (INV-184, INV-246),
+which is why neither a count of them nor a list of them is written down in this
+docstring: both went stale here once already (#700).
 
 Style-guide key rules encoded here:
 - Dark backgrounds are Obsidian/Deep, never pure black.
