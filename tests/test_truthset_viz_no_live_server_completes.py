@@ -51,7 +51,7 @@ depends on it points there.
 
 Stdlib only; shipped files are read as text, never imported (INV-108).
 
-Source issue: #512. Enforces the PROPOSED AMENDMENT to INV-130 queued in `specs/IMPLEMENTED.md`.
+Source issue: #512. Enforces INV-130's registered 2026-10-12 note (#512).
 
 Run:  python3 -m unittest discover -s tests
 """

@@ -10114,10 +10114,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8103 test methods in 436 files, matching `inventory.test_count_total`.
+There are 8117 test methods in 437 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8103.
+sum to 8117.
 
 Two files run more tests than they define, so discovery collects 8110:
 
@@ -10213,7 +10213,7 @@ looks wrong.
 - `tests/test_delegate_files_issues_not_specs.py`: 18
 - `tests/test_dependency_reading_rules.py`: 13
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
-- `tests/test_dev_install_surfaces_name_the_dev_repo.py`: 9
+- `tests/test_dev_install_surfaces_name_the_dev_repo.py`: 11
 - `tests/test_directing_steps.py`: 48
 - `tests/test_discoveries_pdf.py`: 58
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
@@ -10446,6 +10446,7 @@ looks wrong.
 - `tests/test_recap_video.py`: 147
 - `tests/test_record_limit_negative_is_rescoped.py`: 13
 - `tests/test_recorded_container_commands_use_the_recorded_runtime.py`: 17
+- `tests/test_registered_amendments_are_not_called_pending.py`: 12
 - `tests/test_registration_idempotency_is_constructed.py`: 12
 - `tests/test_registry_status_values_are_handled.py`: 12
 - `tests/test_related_entities_guidance.py`: 21
@@ -13011,3 +13012,18 @@ Senzing licensing, with no SPDX identifier.
   defect, so it was NOT built and
   `tests/test_the_690_recitations_name_the_governing_rule.py` pins the five
   corrected clauses and the ten sibling sites instead (INV-246)
+- #691: stop nine guard docstrings describing an amendment as awaiting the
+  maintainer's sign-off when `specs/INVARIANTS.md` already carries it as a
+  dated note — the reader of such a guard concludes the rule it enforces is not
+  yet binding, INV-308's failure shape pointed inward; `/review-invariants`'
+  Register path resolves the block it registers and applying an amendment marks
+  its bullet `applied`, but both act on the ledger only and nothing swept the
+  prose elsewhere, so the Amend path gains the resolve-the-prose step modeled on
+  Register's step 6 (INV-300) and
+  `tests/test_registered_amendments_are_not_called_pending.py` derives the
+  (invariant id, note marker) pairs from the registry and scans `tests/` and
+  `.claude/` for prose that calls one pending (INV-246, INV-346), which found
+  nine sites where the issue's hand-written list had five; the vocabulary was
+  measured wide first (287 blocks, 11 in `tests/` naming a registered pair,
+  three of them correct prose) and narrowed to the sign-off claim rather than
+  the block's name, since a block keeps that name after it is applied (INV-282)

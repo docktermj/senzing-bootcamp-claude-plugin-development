@@ -34,7 +34,7 @@ The lesson is why the ban is a single exact spelling rather than a family: a pre
 sound when every member really is wrong, and establishing *that* requires the same
 ask-the-owning-tool discipline the original version skipped.
 
-Enforces **INV-208** (as amended by the 2026-10-15 note queued in #654). Complements INV-080
+Enforces **INV-208**, as amended by its registered 2026-10-15 note (#654). Complements INV-080
 (Senzing facts route through the MCP server) and INV-194 (one tool's silence is not absence).
 
 Run:  python3 -m unittest discover -s tests

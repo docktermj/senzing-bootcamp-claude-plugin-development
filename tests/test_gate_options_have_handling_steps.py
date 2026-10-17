@@ -59,8 +59,8 @@ before the gate's 👉, and never regenerate the Bootcamper's data silently):
 **not** establish that a live turn discloses before it asks or never regenerates silently, which
 only `dry-run` phase 3 can observe.
 
-#521 extends the disclosure to Phase 2 step 16's quality gate (INV-345's 2026-10-12 note, queued for
-the maintainer's sign-off): `Step16DisclosesOnASynthesizedSource` asserts that step 16 points at
+#521 extends the disclosure to Phase 2 step 16's quality gate (INV-345's registered 2026-10-12
+note): `Step16DisclosesOnASynthesizedSource` asserts that step 16 points at
 Phase 1's one statement of the wording (INV-300) before the 70-79% and <70% questions of both
 blocks, keeps those questions verbatim with both options, and marks no ≥80% question.
 

@@ -26,8 +26,8 @@ empty argument. The rows pinning those three sentences are its checks; like the 
 guard they establish that the rule is stated, not that a live run asks. `/release-cycle`'s
 kickoff, which asks the costly choices before a run starts, is pinned elsewhere, in
 `tests/test_release_cycle.py` (`test_a_costly_choice_is_never_defaulted`, and the stated
-"never start or resume costly work from silence (INV-333)"); a dated note naming that module
-is a `PROPOSED AMENDMENT` to INV-333 awaiting the maintainer's sign-off (#610).
+"never start or resume costly work from silence (INV-333)"); INV-333 names that module in its
+registered 2026-10-15 note (#610).
 
 `TheChecksAreNotVacuous` is the negative control, run on every suite: removing one skill's
 `argument-hint`, or one moved rule's sentence, fails the check that covers it (INV-265).

@@ -40,8 +40,8 @@ Each predicate is negative-controlled against the text with its clause removed. 
 run on whitespace-collapsed text or on ``_wrapped_text.blocks`` (INV-346), so a wrapped phrase
 still matches.
 
-Extends **INV-239** (generated data carries the flaws it should and none it should not); the
-amendment is drafted, not applied, in the `specs/IMPLEMENTED.md` entry for #459.
+Extends **INV-239** (generated data carries the flaws it should and none it should not), as
+INV-239's registered 2026-10-09 note (#459) states.
 
 Source issue: #459.
 

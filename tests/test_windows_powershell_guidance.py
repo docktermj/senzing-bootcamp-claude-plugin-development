@@ -27,8 +27,8 @@ so the message points at syntax rather than at the real cause), which names this
 an environment variable read as `$NAME` instead of `$env:NAME`. In PowerShell `$SENZING_DIR`
 is an unset *PowerShell* variable, so `Test-Path -Path "$SENZING_DIR\\data"` tested `\\data` on
 the current drive and reported a false "not found". The guard flags any bare all-caps
-`$NAME` in a shipped PowerShell fence; the INV-167 amendment naming it is drafted in #505's
-`specs/IMPLEMENTED.md` entry, awaiting the maintainer's sign-off.
+`$NAME` in a shipped PowerShell fence, which INV-167 carries as its registered 2026-10-12
+note (#505).
 
 `WindowsLinesInAnyFenceSuitTheirShell` (#596) widens the reach from PowerShell fences to every
 line under a `# Windows` comment in any fence. Graduation's recap render line,
