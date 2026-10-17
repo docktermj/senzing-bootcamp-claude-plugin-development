@@ -39,13 +39,18 @@ Read the two `size:` figures; they are what the question needs. If either run ex
 non-zero saying nothing is packageable yet, say so plainly — the bootcamp has not produced
 artifacts yet — and do not ask the question.
 
+⚠️ **Read the `transfer` run's `absent:` line too, where it prints one.** It names every path
+that profile reaches for and did not find: `backups/revisit` on any run before graduation, and
+`config` or `src` on an early one. A path named there is a path the `size:` figure above it did
+**not** measure, and Step 2's option 2 has to say so.
+
 ⚠️ **If a dry run reports a size above 2 GB it prints a warning naming that.** Relay it:
 recommend option 1, or note that the database backup is what makes option 2 large.
 
 ## Step 2: Ask what should travel
 
-Pin this verbatim (INV-051/INV-056), substituting the two measured sizes, and end the turn
-on it:
+Pin this verbatim (INV-051/INV-056), substituting the two measured sizes, keeping or dropping
+option 2's `{…}` clause as the rule below the question says, and end the turn on it:
 
 👉 **What should the package contain? Reply with a number:**
 
@@ -53,10 +58,21 @@ on it:
    written for the systems you named (`data/exports/`) and your `production/` project
    (~<n> MB). No database, no source data, no credentials.
 2. **Everything to continue elsewhere** — the above plus your database backup, config
-   and mappings, so you can pick the bootcamp back up on another machine (~<n> MB).
+   and mappings, so you can pick the bootcamp back up on another machine (~<n> MB{, which
+   excludes your database backup — choosing this creates it, and it is the largest part}).
 3. **Cancel.**
 
 *(Internal: end the turn on this question and wait.)*
+
+⛔ **Option 2's `{…}` clause goes in exactly when the `transfer` dry run's `absent:` line named `backups/revisit`, and is dropped when it did not.** Drop the braces themselves either way — they mark the choice, and the bootcamper never sees them.
+
+⚠️ **Why it is conditional rather than standing text.** Before graduation `backups/revisit/` does
+not exist; Step 3 creates it *after* this answer; so the figure beside the clause was measured
+over a tree with no database backup in it — the very component the 2 GB warning above says makes
+option 2 large. The figure was always honest about having been measured and said nothing about
+what it measured. After graduation the bundle is already there, Step 1's dry run walks it, and the
+figure is complete: a clause printed anyway would be false on every one of those runs, and a
+disclosure that is always present is one the reader learns to skip past.
 
 ⛔ **Option 3 writes nothing at all.** Acknowledge and return the bootcamper to exactly
 where they left off.
