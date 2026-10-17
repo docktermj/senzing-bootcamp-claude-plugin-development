@@ -3278,8 +3278,13 @@ offline (`NETWORK_MODULES` are never imported).
   `TAG_LINE_WIDTH`. At most `TAG_LINE_MAX_LINES`; text without the prefix
   or a comma wraps greedily.
 - `certificate_fields` reuses `generate_recap_pdf`'s parser and `_cert_*`
-  helpers, so its name, date and modules match the PDF's. With no readable
-  recap it uses the storyboard's name, date and `modules`, and says so.
+  helpers, so its name, date and modules match the PDF's. Its labels and
+  citation come from that module's constants too, through
+  `_CERT_TEXT_SOURCES`; only when it cannot be imported do the inlined
+  `_CERT_TEXT_FALLBACK` and `_CERT_CITATION_FALLBACK` copies render, and
+  `tests/test_brand_sync.py` holds them equal to their source. With no
+  readable recap it uses the storyboard's name, date and `modules`, and
+  says so.
 - Audio: narration WAV and the `synthesize_music_bed` bed (unless
   `video.music` is false), mixed by `audio_filter_graph`: `LEVELER` on the
   voice, then `DUCKING`, then `LOUDNORM`. Fonts come from
@@ -9713,6 +9718,15 @@ _CERT_CARD_H = 158.0
 _CERT_BORDER = 1.3         # ember card border stroke
 _CERT_MODULE_LINES = 3     # module list is capped, so it cannot reach the seal
 _CERT_Y_SEAL = 147.5       # top edge of the seal, not a baseline
+_CERT_HEADLINE = "Certificate of Completion"
+_CERT_EYEBROW = "SENZING BOOTCAMP"
+_CERT_PRESENTED = "THIS CERTIFICATE IS PROUDLY PRESENTED TO"
+_CERT_DATE_LABEL = "DATE COMPLETED"
+_CERT_ISSUER_LABEL = "ISSUED BY"
+_CERT_CITATION_NO_MODULES = (
+    "for successfully completing the Senzing Bootcamp — Senzing's guided path from "
+    "defining the business problem to a working entity-resolution pipeline."
+)
 def _cert_citation(labels: List[str]) -> str:
     ...
 def _render_table_monospace(pdf, epw: float, header, rows) -> None:
@@ -9741,7 +9755,13 @@ Used by:
 - `_CERT_CARD_H`: `test_recap_pdf_certificate.py`, `test_recap_pdf_guard.py`
 - `_CERT_CARD_X`: `test_recap_pdf_certificate.py`
 - `_CERT_CARD_Y`: `test_recap_pdf_certificate.py`, `test_recap_pdf_guard.py`
+- `_CERT_CITATION_NO_MODULES`: `test_brand_sync.py`
+- `_CERT_DATE_LABEL`: `test_brand_sync.py`
+- `_CERT_EYEBROW`: `test_brand_sync.py`
+- `_CERT_HEADLINE`: `test_brand_sync.py`
+- `_CERT_ISSUER_LABEL`: `test_brand_sync.py`
 - `_CERT_MODULE_LINES`: `test_recap_pdf_certificate.py`
+- `_CERT_PRESENTED`: `test_brand_sync.py`
 - `_CERT_Y_SEAL`: `test_recap_pdf_certificate.py`
 - `_EXPECTED_DROP_CHAR`: `test_generated_scenario_marker_drop_is_exempt.py`
 - `_EXPECTED_DROP_PASSAGE`: `test_generated_scenario_marker_drop_is_exempt.py`
@@ -9754,7 +9774,7 @@ Used by:
 - `_UNSPACED_SUBSECTIONS`: `test_recap_pdf_guard.py`
 - `_block_label`: `test_recap_pdf_guard.py`
 - `_cert_attribution`: `test_recap_pdf_guard.py`
-- `_cert_citation`: `test_recap_pdf_certificate.py`
+- `_cert_citation`: `test_brand_sync.py`, `test_recap_pdf_certificate.py`
 - `_cert_fields`: `test_certificate_name_source.py`,
   `test_recap_handover_section.py`, `test_recap_notes_section.py`,
   `test_recap_pdf_font_safety.py`, `test_recap_video.py`
@@ -9810,6 +9830,20 @@ _TOKEN_NAMES = {
     "WARM_OFF_WHITE": "WARM_OFF_WHITE", "DARK_INK": "DARK_INK", "BODY_INK": "BODY_INK",
     "WARM_LINE": "WARM_LINE",
 }
+_CERT_TEXT_FALLBACK = {
+    "eyebrow": "SENZING BOOTCAMP", "headline": "Certificate of Completion",
+    "presented": "THIS CERTIFICATE IS PROUDLY PRESENTED TO",
+    "date_label": "DATE COMPLETED", "issuer_label": "ISSUED BY",
+}
+_CERT_TEXT_SOURCES = {
+    "eyebrow": "_CERT_EYEBROW", "headline": "_CERT_HEADLINE",
+    "presented": "_CERT_PRESENTED", "date_label": "_CERT_DATE_LABEL",
+    "issuer_label": "_CERT_ISSUER_LABEL",
+}
+_CERT_CITATION_FALLBACK = (
+    "for successfully completing the Senzing Bootcamp — Senzing's guided path from "
+    "defining the business problem to a working entity-resolution pipeline."
+)
 PALETTE, _BRAND, PALETTE_NOTE = _load_palette()
 def _find_spec(name: str):
     ...
@@ -9826,6 +9860,9 @@ def _draw_text(draw, x: float, y: float, text: str, font, fill, align: str = "le
 Used by:
 
 - `_BRAND`: `test_brand_sync.py`
+- `_CERT_CITATION_FALLBACK`: `test_brand_sync.py`
+- `_CERT_TEXT_FALLBACK`: `test_brand_sync.py`
+- `_CERT_TEXT_SOURCES`: `test_brand_sync.py`
 - `_FALLBACK_RGB`: `test_brand_sync.py`
 - `_TOKEN_NAMES`: `test_brand_sync.py`
 - `_draw_text`: `test_recap_video.py`
@@ -10122,21 +10159,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8143 test methods in 438 files, matching `inventory.test_count_total`.
+There are 8149 test methods in 438 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8143.
+sum to 8149.
 
-Two files run more tests than they define, so discovery collects 8110:
+Two files run more tests than they define, so discovery collects 8156:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8103`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8149`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8110`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8156`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -10160,7 +10197,7 @@ looks wrong.
 - `tests/test_backgrounded_launch_records_the_server_pid.py`: 12
 - `tests/test_blocked_submission_has_a_vocabulary_value.py`: 29
 - `tests/test_bootcamp_notes_flow.py`: 33
-- `tests/test_brand_sync.py`: 31
+- `tests/test_brand_sync.py`: 37
 - `tests/test_broll_manifest.py`: 20
 - `tests/test_build_and_run_statement.py`: 66
 - `tests/test_build_version_provenance_is_per_platform.py`: 8
@@ -11209,7 +11246,13 @@ tests a rebuild can pass from behavior alone.
     control: an unqualified form is caught).
 - **`brand_tokens.py`** (`tests/test_brand_sync.py`). Every inlined fallback
   palette equals `brand_tokens.py`. Source colors are deterministic and never
-  signal green, and exceeding capacity triggers a warning.
+  signal green, and exceeding capacity triggers a warning. The carrier sweep
+  matches `FALLBACK` anywhere in a constant's name, so the recap video's
+  certificate copies are in scope: each inlined label and the citation must
+  equal the recap PDF's constant, with both modules imported, and the
+  citation must equal what `_cert_citation([])` prints. `docker_lifecycle`'s
+  `SLUG_FALLBACK`, which the widened sweep also reaches, must be a legal
+  container-name component and the value `project_slug` falls back to.
 
 #### 8.4.8 Hooks
 
@@ -13057,3 +13100,23 @@ Senzing licensing, with no SPDX identifier.
   pairing a size-quoting option with a later same-option step and reads the
   measured roots out of the script with `ast` (INV-246, INV-346), with the
   pre-fix text as a negative control
+- #693: `generate_recap_video.py` drew its Certificate of Completion from
+  `generate_recap_pdf`'s constants "so the two certificates cannot disagree",
+  but the fallback copies it uses when that module cannot be imported were
+  held equal by nothing, and the citation had drifted to a shorter sentence
+  than the recap PDF prints; the recap PDF is the source of truth, so the
+  video's copy moved to match it, the fallback was kept rather than deleted
+  because removing it would make an unimportable module print a blank
+  certificate, and the drifted literal was given a name
+  (`_CERT_CITATION_FALLBACK`) because being written inline at its one call
+  site is what hid it from every sweep over constant names;
+  `tests/test_brand_sync.py` now imports both modules and asserts each copy
+  equals its source with `generate_recap_pdf` importable — which it is in
+  both suite legs, since fpdf2 is imported inside the renderer, so the check
+  fails rather than skips (INV-265) — and its discovery pattern widened from
+  `^_?FALLBACK_[A-Z_]+` to the word `FALLBACK` anywhere in the name
+  (INV-246), the pattern and not the list, which also brought
+  `docker_lifecycle`'s `SLUG_FALLBACK` into the sweep; measured before the
+  fix, the widening found three further constants and only the certificate
+  strings were a copy of anything, so the class is closed rather than the
+  instance repaired
