@@ -1324,14 +1324,30 @@ training data.
 6. **Obtain a Senzing License Key (option 3, or option 4's in-flow request).** Give guidance for
    the chosen path only: the gate already chose, so never re-offer the paths (INV-006). **Option
    4** goes to sub-step 6a. **Option 3:** consult the Senzing MCP server first:
-   `search_docs(query='temporary evaluation license for a dataset larger than the default limit')`,
-   whose top hit is the EULA's *Senzing Non-Production License* section, and present the returned
-   guidance on the external channel. Source the request channel's address and any
-   capacity/validity figures from MCP at runtime rather than this file (they have changed before, and
-   the eval and production channels differ), never a remembered figure. The bootcamp **continues on
-   the built-in evaluation license** meanwhile, so the bootcamper is never blocked waiting for the
-   email; the emailed Base64 key can be applied via sub-step 5 whenever it arrives, even
-   in a later session. Record `license: evaluation` when no custom key is applied.
+   `search_docs(query='temporary evaluation license for a dataset larger than the default limit')`.
+
+   ⛔ **Read `eval_license.message` and `eval_license.url` from that response BEFORE `results[]`.**
+   `eval_license` is a **top-level field**, a sibling of `metadata` and `results` — not a search
+   hit — so a guide that reads only the top hit never sees it. When it is present, **relay its
+   `message` verbatim** as the external channel, together with its `url`, and keep the top hit —
+   the EULA's *Senzing Non-Production License* section — as the **terms that accompany that
+   channel** (the license period, the DSR cap, the "time bomb" and the buffer clauses). ⚠️ **This
+   route asks the bootcamper for nothing.** Unlike option 4's in-flow request (sub-step 6a), it
+   transmits no name, no work email address and nothing else about them off their machine
+   (INV-135, INV-321) — it is the no-personal-details counterpart to that path.
+
+   ⛔ **When the call fails, or the response carries no `eval_license`, fall back to the top hit
+   alone** — present its guidance and take the external channel from it, exactly as this step did
+   before the field existed — and say which of the two produced what is presented (INV-125). The
+   field is advisory: its absence means an older or differently-shaped response, never an error,
+   and a license route MUST NOT be reported as unavailable because `eval_license` was missing.
+
+   Source the request channel's address and any capacity/validity figures from MCP at runtime
+   rather than this file (they have changed before, and the eval and production channels differ),
+   never a remembered figure. The bootcamp **continues on the built-in evaluation license**
+   meanwhile, so the bootcamper is never blocked waiting for the email; the emailed Base64 key can
+   be applied via sub-step 5 whenever it arrives, even in a later session. Record
+   `license: evaluation` when no custom key is applied.
 
    ⛔ **When a request is actually SENT, record it as an event — `license: evaluation` cannot carry
    this.** Persist `license_key_requested` in `config/bootcamp_progress.json` with the channel and

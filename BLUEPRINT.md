@@ -10219,6 +10219,7 @@ looks wrong.
 - `tests/test_env_script_powershell.py`: 21
 - `tests/test_env_script_shell_portability.py`: 45
 - `tests/test_eula_question_precedes_every_install.py`: 19
+- `tests/test_eval_license_field_names_the_channel.py`: 22
 - `tests/test_every_capture_path_requests_the_render.py`: 8
 - `tests/test_every_invariant_is_cited_in_shipped_text.py`: 4
 - `tests/test_every_line_reading_guard_gives_a_verdict.py`: 9
@@ -12807,3 +12808,14 @@ Senzing licensing, with no SPDX identifier.
   `uat_90_accuracy_below_90` band of its own — and a result is never called
   strong where a metric the strong branch requires falls short or was never
   established
+- #679: name the Senzing MCP server's `eval_license` field as what Module 4
+  sub-step 6 option 3 reads for the external evaluation-license channel —
+  `eval_license.message` and `eval_license.url`, a top-level sibling of
+  `results` that a guide told to read "the top hit" never sees — relaying the
+  message verbatim with its URL and keeping the EULA's Senzing
+  Non-Production License section as the terms that accompany it, since that
+  section states terms and names no route; the step also states that this
+  route transmits nothing about the Bootcamper, unlike option 4's in-flow
+  request, and falls back to the top hit alone when the call fails or the
+  field is absent, saying which path produced what it presents and never
+  reporting a missing advisory field as an unavailable license route
