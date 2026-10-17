@@ -39,10 +39,11 @@ Then say in one line that you created it and what it shows.
 **Format: Mermaid fenced blocks in Markdown**, never binary images. That keeps the artifact
 diffable, offline (INV-091), viewable without a headless browser, and identical on every platform.
 
-⛔ **Do not embed the Mermaid source into `docs/bootcamp_recap.md`.** `scripts/generate_recap_pdf.py`
-renders headings, bullets, `**Label:**` lines, plain text, and `![alt](path)` images — it has **no**
-fenced-code handling, so a Mermaid block would reach the PDF as literal backticked text. Reference
-the file by path in the recap instead (see below).
+⛔ **Do not embed the Mermaid source into `docs/bootcamp_recap.md`.** The bundled recap generator
+(`generate_recap_pdf.py`, resolved where it is run — `../bootcamp-onboarding/module-completion.md`
+Step 2c's structural check) renders headings, bullets, `**Label:**` lines, plain text, and
+`![alt](path)` images — it has **no** fenced-code handling, so a Mermaid block would reach the PDF
+as literal backticked text. Reference the file by path in the recap instead (see below).
 
 Name the real generated sources, but keep the engine and datastore generic — the programming
 language and database are not chosen until later modules, so do not assume either here. Never
