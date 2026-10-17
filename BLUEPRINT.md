@@ -10114,21 +10114,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 7841 test methods in 424 files, matching `inventory.test_count_total`.
+There are 8103 test methods in 436 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 7866.
+sum to 8103.
 
-Two files run more tests than they define, so discovery collects 7873:
+Two files run more tests than they define, so discovery collects 8110:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 7866`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8103`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 7873`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8110`. No other count
 looks wrong.
 
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
@@ -10522,6 +10522,7 @@ looks wrong.
 - `tests/test_template_word_placeholders_have_a_capturing_step.py`: 8
 - `tests/test_the_2026_09_30_audit_rules_cite_their_invariants.py`: 4
 - `tests/test_the_227_mis_citations_do_not_return.py`: 5
+- `tests/test_the_690_recitations_name_the_governing_rule.py`: 6
 - `tests/test_the_gate_sees_every_scanned_root.py`: 7
 - `tests/test_the_range_boundary_reports_what_it_retires.py`: 10
 - `tests/test_the_seven_triaged_rules_keep_their_citations.py`: 3
@@ -10708,6 +10709,11 @@ These read `specs/INVARIANTS.md`:
   - INV-251 covers two or more 👉 questions in a turn;
   - INV-017 allows exactly two root-Markdown exceptions;
   - INV-218 governs install verification, and INV-129 does not.
+  - the five clauses #690 re-cited keep their governing invariant, and the
+    sibling sites that were already right keep theirs; the pin says in its
+    own docstring that it is a regression pin and not coverage of the
+    class, and records the measurement that rules a derived subject-word
+    scan out (INV-246).
 - **Linter credits.** A sentence in `tests/`, `.claude/skills/` or the register
   that credits `auto-test`'s transcript linter must name a `check_*` function
   the linter runs, read from its `CHECKS` and `lint()`; a register entry may
@@ -12989,3 +12995,19 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_bundled_script_and_production_paths.py` gains a sixth span that
   reads every `scripts/<name>.py` path in guide-facing prose and derives its
   exemption from the tree per skill (INV-246), never from a list of paths
+- #690: re-cite four clauses to the invariant that governs them — the
+  `owner-checked:` requirement in `.claude/skills/feedback-to-issues/SKILL.md`
+  cites INV-213, with INV-194 kept on the reasoning sentence beside it; the two
+  sites that enumerate feedback, notes and verbosity cite INV-010, INV-254 and
+  INV-011 one per noun; Phase D's reversed-decision append splits INV-012
+  (silent) from INV-373 (non-blocking); and the build-and-run section's
+  POSIX-shell-and-PowerShell sentence cites INV-001 rather than INV-002, since
+  that claim is platform and not language — each id resolves, so
+  `citations.py verify` and `conformance.py rules` read a mis-citation as
+  covered and only the registered text shows it is wrong; the subject-word
+  guard the issue proposed was derived with no id list and measured over the
+  252 citing sentences under `plugins/`, where it flags 196 and 192 of those
+  are correct prose, and every narrowing either keeps the noise or loses a real
+  defect, so it was NOT built and
+  `tests/test_the_690_recitations_name_the_governing_rule.py` pins the five
+  corrected clauses and the ten sibling sites instead (INV-246)

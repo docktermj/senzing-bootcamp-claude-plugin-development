@@ -868,7 +868,7 @@ For example, System verification's `verify_pipeline` is `<dir>` = `src/system_ve
   (Module 2 Step 8 re-sources it), so the native library and the SDK bindings are on the paths the
   program needs. A program opens its `<dir>/...` paths relative to that root. The paths use
   forward slashes and the commands use no shell-specific syntax, so they run unchanged in a POSIX
-  shell and in PowerShell (INV-002).
+  shell and in PowerShell (INV-001).
 - **On SDK setup's `docker` route, every Build and Run command runs inside the SDK container**,
   wrapped as:
 

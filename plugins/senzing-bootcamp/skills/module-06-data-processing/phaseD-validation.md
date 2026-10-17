@@ -555,9 +555,9 @@ which is exactly the gap the UAT percentages below leave open.
    and this is the step that fires it: the audit read the engine's own output and overturned a
    decision every static gate had passed. Filing it here rather than at graduation is the whole
    point — by then the reasoning may have been compacted away, leaving only the corrected mapping
-   and no record of what was wrong with the original or how it was caught. No banner, no question,
-   never blocking (INV-012): how it is filed is stated once, in that rule, so follow it there
-   (INV-300).
+   and no record of what was wrong with the original or how it was caught. No banner, no question
+   (INV-012), never blocking (INV-373): how it is filed is stated once, in that rule, so follow it
+   there (INV-300).
 
 > **Worked example.** In one bootcamp, `EFX_YREST` ("year established") and `FilingDate`
 > (incorporation filing date) were both mapped to `REGISTRATION_DATE`. A business usually operates
