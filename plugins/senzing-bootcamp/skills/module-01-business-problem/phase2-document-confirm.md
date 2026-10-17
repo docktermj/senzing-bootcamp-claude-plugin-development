@@ -161,7 +161,7 @@ Save to `docs/business_problem.md` using this template:
 > "[Their own words, verbatim]"
 
 ## Desired Output
-**Format**: [every option they chose, comma-separated — Master list / API / Reports / <the Bootcamper's words for "Something else">]
+**Format**: [every option they chose, comma-separated — Master list / API / Reports / <the Bootcamper's own words for "Something else", as Phase 1 Step 6d recorded them>]
 **Use case**: [One-time / Ongoing / Real-time]  **Integration**: [Standalone / Integrated with
 [systems]]
 
@@ -211,6 +211,14 @@ and it does not stop here: Module 7 step 1 derives its query requirements from t
 narrowed version becomes the requirements they are shown at Module 7 and approve there too. On the
 generated-scenario path Step 15b names this field specifically, because a bare option reply leaves
 no `> "…"` line to catch the drift.
+
+⚠️ **Option 4's element of that list is the Bootcamper's own phrase, and Step 6d is where it comes
+from.** The option is pinned as `4. **Something else** — tell me what that looks like.`, and its
+handling records the words they give rather than the label, so this template reads a value that
+exists instead of asking for one nothing produced. Write that phrase as they said it; never
+substitute "Something else", and never compose a phrase for them — an invented one is the Step 15
+adjective failure with no quote line able to catch it. Where they chose option 4 and the list is
+otherwise empty, their phrase is the whole `**Format**` value.
 
 ⚠️ **For Integration Requirements the answer is already on disk — quote from there, do not
 reconstruct it.** INV-097 persists `integration_targets` to `config/bootcamp_preferences.yaml` at

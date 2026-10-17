@@ -79,8 +79,11 @@ class ModuleOneFormatMatchesTheOptions(unittest.TestCase):
         )
         fmt = re.search(r"^\*\*Format\*\*: \[(.+)\]$", _read(PHASE2_CONFIRM), re.M)
         self.assertIsNotNone(fmt, "the Desired Output template has no **Format** line")
+        # #688: option 4's element is the Bootcamper's own phrase, and the placeholder names the
+        # step that collects it, so a reader of the template can find the producing step.
         self.assertIn(
-            "Master list / API / Reports / <the Bootcamper's words for \"Something else\">", fmt.group(1)
+            "Master list / API / Reports / <the Bootcamper's own words for \"Something else\", "
+            "as Phase 1 Step 6d recorded them>", fmt.group(1)
         )
         self.assertNotIn("Export", fmt.group(1))
 

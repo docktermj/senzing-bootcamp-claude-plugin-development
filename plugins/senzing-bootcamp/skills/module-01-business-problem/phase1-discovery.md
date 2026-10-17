@@ -444,7 +444,7 @@ this question again: the revised summary is a new state, not an INV-006 repeat (
   > 1. **A clean master list**
   > 2. **An API**
   > 3. **Reports**
-  > 4. **Something else**
+  > 4. **Something else** — tell me what that looks like.
 
   ⛔ **(INV-286) Record every option they choose, not the first.** The answer travels: Step 11's **Desired
   Output** section carries it into `docs/business_problem.md`, and Module 7 step 1 derives query
@@ -460,7 +460,18 @@ this question again: the revised summary is a new state, not an INV-006 repeat (
   - **1, "A clean master list":** recorded.
   - **2, "An API":** recorded.
   - **3, "Reports":** recorded.
-  - **4, "Something else":** recorded.
+  - **4, "Something else":** recorded **in the words they give for it** — their own phrase is this
+    option's recorded value, never the label "Something else" and never a phrase composed for
+    them. Step 11's **Desired Output** `**Format**` line renders that phrase in the
+    comma-separated list, beside every other option they chose
+    (`phase2-document-confirm.md` → Step 11).
+
+  ⛔ **(INV-251) Option 4's ask rides inside the option, which is why no fifth question is added.** The
+  clause after the label is what makes the words collectable in the turn that already exists —
+  Step 6d has its one 👉 (INV-251), and a follow-up question would cost the module a turn. Same
+  shape as the plugin's other open option, the entity-plan gate in
+  `../module-05-data-quality-mapping/phase2-data-mapping.md` — `4. **Something else** — tell me
+  what to adjust.`, whose handling likewise acts on what they said rather than on the label.
 
 *(Internal: end each turn on its question and wait; checkpoint after each.)* When no
 undetermined items remain, Phase 1 is complete — proceed to Phase 2 (load

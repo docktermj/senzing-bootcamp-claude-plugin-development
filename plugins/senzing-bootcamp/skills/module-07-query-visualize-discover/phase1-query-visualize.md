@@ -87,8 +87,11 @@ them.
 
 - **No quote in the document, none shown.** Where that section carries no `> "…"` line, show the
   requirement without one and never invent one. That covers a desired output picked from Step
-  6d's options, which leaves no prose to quote, and the generated scenario, whose document carries
-  no quotes at all. An invented "verbatim" line is worse than none, because it looks like evidence.
+  6d's options 1–3, which are selections and leave no prose to quote, and the generated scenario,
+  whose document carries no quotes at all. An invented "verbatim" line is worse than none, because
+  it looks like evidence. (Step 6d's option 4 **does** produce prose — it asks what the something
+  else looks like and its handling records the words given — so a Desired Output built from it is
+  the ordinary prose case above, not this one.)
 - **Their questions need no second version.** Part 1 already quotes their own words, so it carries
   no Module 1 quote, and neither does a derived requirement listed there under their question.
 
