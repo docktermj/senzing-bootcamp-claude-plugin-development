@@ -6,7 +6,7 @@ Best-effort and dependency-optional (INV-052/INV-066): this helper renders a
 to one PNG **per tab**, so the graduation recap PDF can show what the bootcamper
 actually built. It tries several headless backends in order and uses the first
 that works; if none is available it exits with code 2 so the caller degrades
-gracefully — keeping the HTML link and never blocking graduation (INV-048).
+gracefully — keeping the HTML link and never blocking graduation (INV-122).
 
 ⛔ **One capture per tab, never per viewport.** This script used to vary the
 browser window size across a single page load — ``(1280,800)``, ``(1280,1600)``,

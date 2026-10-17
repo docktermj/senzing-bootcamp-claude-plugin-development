@@ -15,7 +15,8 @@ graduation handles each (#340):
 Step 1c's status line notes only that the video has no voice, the closing announcement never
 calls a voiceless video "narrated" (its "Also name the graduation video" paragraph leaves the word
 to the ⛔ rule after it, #393), the guide never runs `sudo` or a system package manager
-(INV-066), and the guidance is a statement that never blocks graduation (INV-048, INV-340).
+(INV-066), and the guidance is a statement that never blocks graduation (INV-340; #685 dropped
+the INV-048 credit, which governs the recap PDF).
 
 Each property is a function that returns its problems for a given text, so the negative
 controls below run the same check over a copy of the skill with one piece removed and confirm
@@ -340,7 +341,7 @@ def problems_with_blocking(text):
                           ("the no-voice example", no_voice_example(text))):
         if "👉" in region:
             problems.append("%s asks a 👉 question" % where)
-    if ("⛔ **(INV-048, INV-340) This guidance is a statement, never a question, and it never "
+    if ("⛔ **(INV-340) This guidance is a statement, never a question, and it never "
             "blocks graduation.**" not in squash(no_voice_section(text))):
         problems.append("the statement-and-never-blocking rule is not stated")
     return problems

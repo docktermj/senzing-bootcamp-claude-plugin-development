@@ -69,7 +69,7 @@ def bootcamp_active():
     start looks like.
 
     Never raises — `current_module()` absorbs a missing, empty, malformed or
-    non-object file (INV-048), and a hook must not break on one.
+    non-object file (INV-227), and a hook must not break on one.
     """
     return current_module() is not None
 
@@ -84,7 +84,7 @@ def current_module():
     """The module name recorded in the progress file, or None if unavailable.
 
     Never raises: a malformed or partly-written progress file must not break a
-    hook (INV-048)."""
+    hook (INV-227)."""
     try:
         with open(PROGRESS, encoding="utf-8") as fh:
             data = json.load(fh)
@@ -116,7 +116,7 @@ def _read(path):
     it escaped the original handler and crashed every hook that folds the recap — the
     PreCompact durability hook among them, which fails precisely when the recap is about
     to be needed. ``current_module()`` above already catches ``(OSError, ValueError)`` for
-    this reason (INV-048); this function is the other half of that rule.
+    this reason (INV-227); this function is the other half of that rule.
     """
     try:
         with open(path, encoding="utf-8") as fh:
@@ -197,7 +197,7 @@ def ensure_checkpoint(module=None):
 
     This is the deterministic half: the guide authors the narrative, but it is no
     longer also responsible for the file existing. Never raises — a hook must not
-    fail a turn over a scratch file (INV-048).
+    fail a turn over a scratch file.
     """
     if os.path.exists(CHECKPOINT):
         return False

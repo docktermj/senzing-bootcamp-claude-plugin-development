@@ -136,7 +136,9 @@ class StepTwoCRunsTheCheck(unittest.TestCase):
     def test_it_is_non_blocking_and_invisible_to_the_bootcamper(self):
         flat = " ".join(self.step.split())
         self.assertIn("INV-012", flat)
-        self.assertIn("INV-048", flat)
+        # INV-012 governs the suppression AND the non-blocking here; INV-048 is the recap
+        # PDF's and never stated a generic never-blocks (#607, finished by #685).
+        self.assertNotIn("INV-048", flat)
         self.assertIn("continue silently", flat)
         self.assertIn("Recap updated: {Name}.", flat,
                       "the Bootcamper-facing line must be unchanged either way")

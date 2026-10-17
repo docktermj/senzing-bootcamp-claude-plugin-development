@@ -130,7 +130,7 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
      `get_capabilities()` cannot be reached, take it anyway: report what was seen and what was
      tried verbatim, name the Connectors Directory as the likely cause, and state the remedy as
      the two routes above.
-   - ⛔ **(INV-048) It never blocks the module.** Where neither route is open in this session, go
+   - ⛔ **It never blocks the module.** Where neither route is open in this session, go
      on to 3 and then 4 below and record the provenance each of them sets, so the mandatory
      visualization is still produced.
 

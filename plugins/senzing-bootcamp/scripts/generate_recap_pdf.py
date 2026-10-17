@@ -1472,10 +1472,10 @@ def missing_visualization_reports(
     """One report per expected visualization that has no manifest.
 
     Phrased as an UNRUN check, not a failure: nothing here is evidence the tabs were
-    never captured, only that coverage for them cannot be measured. Graduation is
-    non-blocking (INV-048), so the requirement is that the shortfall is stated -- by
-    name, with the module that owed it, and with the remedy -- never that graduation
-    refuses (INV-163, INV-193, INV-265).
+    never captured, only that coverage for them cannot be measured. The recap PDF is
+    produced either way and graduation is non-blocking (INV-048), so the requirement is
+    that the shortfall is stated -- by name, with the module that owed it, and with the
+    remedy -- never that graduation refuses (INV-163, INV-193, INV-265).
     """
     present = manifest_names(manifests)
     owed = {name: module for module, name in MODULE_VISUALIZATIONS.items()}
@@ -1970,8 +1970,9 @@ def dropped_character_warning() -> Optional[str]:
     -> "Windows and PowerShell"), so printing them would corrupt the warning itself and
     reproduce the defect it exists to report.
 
-    Non-blocking by design: the caller writes this to stderr and still ships the PDF
-    (INV-048/INV-052/INV-066). Silent loss is the defect; refusing to render is not the fix.
+    Non-blocking by design: the caller writes this to stderr and still ships the recap
+    PDF (INV-048/INV-052/INV-066). Silent loss is the defect; refusing to render is not
+    the fix.
     """
     if not _DROPPED_CHARACTERS:
         return None
@@ -2015,8 +2016,8 @@ def dropped_character_warning() -> Optional[str]:
 # empty — the clipping it was written for is gone — but a future layout change that loses a
 # tail reports itself instead of passing as a 99% success.
 #
-# Deliberately non-blocking (INV-048/INV-052): graduation ships the PDF and says what is
-# missing. Refusing to render is not the fix; silence was the defect.
+# Deliberately non-blocking (INV-048/INV-052): graduation ships the recap PDF and says
+# what is missing. Refusing to render is not the fix; silence was the defect.
 _CONTENT_LOSSES: Dict[str, str] = {}
 
 #: Longest excerpt of lost text carried into the warning, and how many distinct losses it

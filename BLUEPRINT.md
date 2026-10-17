@@ -10282,6 +10282,7 @@ looks wrong.
 - `tests/test_install_verification_citation.py`: 8
 - `tests/test_interface_naming.py`: 12
 - `tests/test_internal_connection_string_rejected.py`: 2
+- `tests/test_inv048_is_cited_only_for_the_recap_pdf.py`: 8
 - `tests/test_inv174_per_record_applicability.py`: 12
 - `tests/test_invariant_changes_route_through_review_invariants.py`: 26
 - `tests/test_invariant_crossreferences.py`: 32
@@ -12887,3 +12888,13 @@ Senzing licensing, with no SPDX identifier.
   `init_default_config` snippet raises, which the guide must not answer blind;
   the `sdk_repair` detour cites both branches and states why it needs no
   `register-sources` step of its own
+- #685: INV-048 is cited only for the recap PDF, which is what it governs: the
+  remaining shipped sites that credited it for a never-blocks clause about a
+  capture, a formatting pass, a database backup, a video render, a checkpoint
+  read or a keepsake PDF either drop the credit, where the property is the
+  enclosing rule's own clause, or cite the invariant that states it for that
+  artifact (INV-094, INV-113, INV-122, INV-129, INV-163, INV-173, INV-227,
+  INV-340); `tests/test_inv048_is_cited_only_for_the_recap_pdf.py` derives its
+  site set by scanning the shipped subtree (INV-246) and reads wrap-aware
+  (INV-346), so a site nobody listed is still checked — completing #607, whose
+  ruling had been applied at two of the sites it binds

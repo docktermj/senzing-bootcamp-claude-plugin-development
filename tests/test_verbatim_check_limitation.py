@@ -184,7 +184,10 @@ class TheFlowIsNotBlocked(unittest.TestCase):
         )
 
     def test_it_cites_the_non_blocking_invariant(self):
-        self.assertIn("INV-048", flat(PHASE2))
+        """INV-173 states it: a gate that cannot represent the input MUST NOT block the
+        flow. INV-048 is the recap PDF's (#607, finished by #685)."""
+        self.assertIn("INV-173", flat(PHASE2))
+        self.assertNotIn("INV-048", flat(PHASE2))
 
 
 def no_fork_problems(text):

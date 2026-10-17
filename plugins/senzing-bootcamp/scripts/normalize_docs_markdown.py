@@ -35,7 +35,7 @@ Usage::
 
 Exit codes: 0 = finished (including "nothing to change", and including files skipped by
 the content guard, which warn but never fail the run — a formatting issue must never
-block graduation, INV-048); 1 = the docs directory does not exist.
+block graduation); 1 = the docs directory does not exist.
 """
 
 from __future__ import annotations
@@ -243,7 +243,7 @@ def normalize_file(path: Path, dry_run: bool = False) -> str:
         return "error"
 
     # Reported before the formatting decision, so a file that needs no formatting change
-    # still gets its encoding checked. Never fatal and never repaired here (INV-048): the
+    # still gets its encoding checked. Never fatal and never repaired here: the
     # remedy is to rewrite the source correctly, per ground-rules → "Windows and
     # PowerShell", not to mutate content in a cosmetic pass.
     suspect = mojibake_lines(original)
@@ -318,7 +318,7 @@ def main(argv=None) -> int:
             f"{counts['skipped']} file(s) left as written by the content guard.",
             file=sys.stderr,
         )
-    # Always 0: a formatting pass must never block graduation (INV-048).
+    # Always 0: a formatting pass must never block graduation.
     return 0
 
 

@@ -192,7 +192,7 @@ moved to where a finding still costs one correction instead of eleven.
 - **On a finding:** rewrite the just-appended section to the Step 2b template's shape — H3
   subsection headings, the three labeled summary blocks — and re-run until it is clean. The
   module's own work is still in context, which is the whole reason this runs here.
-- ⛔ **Non-blocking and Bootcamper-invisible (INV-012/INV-048).** A finding is a correction you make
+- ⛔ **Non-blocking and Bootcamper-invisible (INV-012).** A finding is a correction you make
   to the recap you just wrote, not a gate and not output. The Bootcamper sees the same
   `Recap updated: {Name}.` line either way, and the module completes whether or not the check can
   run. If the script is missing or fails to execute, continue silently.

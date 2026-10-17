@@ -69,7 +69,7 @@ where they left off.
 
 ## Step 3: For option 2, make sure a database backup exists
 
-⛔ **(INV-094, INV-048) If `backups/revisit/` does not exist, run the shared procedure — do NOT
+⛔ **(INV-094) If `backups/revisit/` does not exist, run the shared procedure — do NOT
 write a second SQLite-vs-PostgreSQL branch.** Follow `../graduation/database-backup.md`, the one
 implementation, into `backups/revisit/database/`. That file carries the `database_type`
 lookup, the do-not-guess rule for an indeterminate value, both engine branches and the

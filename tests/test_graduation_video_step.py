@@ -717,7 +717,8 @@ class TheFallbacksNeverBlockGraduation(unittest.TestCase):
 
     def test_the_video_never_blocks(self):
         text = squash(step_1c())
-        self.assertIn("⛔ **(INV-340) The video never blocks graduation (INV-048).**", text)
+        # INV-340 states it; the INV-048 credit went with #607's ruling (#685).
+        self.assertIn("⛔ **(INV-340) The video never blocks graduation.**", text)
         self.assertIn("a declined install, a failed install, an invalid storyboard or a failed "
                       "render, skips the video with a one-line message naming what failed, and "
                       "graduation continues to Step 2", text)
@@ -883,7 +884,7 @@ class ThePiperOfferIsPinned(unittest.TestCase):
         flat = squash(self.piper())
         self.assertIn("**On no, or on any failure** (creating the venv, the `pip` install or "
                       "the download), render with the interpreter Step 1b used", flat)
-        self.assertIn("Graduation continues (INV-048, INV-340), and the exit-2 install offer "
+        self.assertIn("Graduation continues (INV-340), and the exit-2 install offer "
                       "still applies to that render", flat)
 
     def test_the_render_passes_no_voice_model(self):

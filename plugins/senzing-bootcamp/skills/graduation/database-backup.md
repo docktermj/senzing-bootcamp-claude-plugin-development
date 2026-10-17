@@ -58,7 +58,7 @@ Picking the wrong branch here means either no backup or `pg_dump` against a SQLi
 
 **If the backup cannot be produced** (tool missing, a container runtime with no `cp`, database
 unreachable), warn and continue — the rest of the bundle still saves, and graduation is
-non-blocking (INV-048). The packaging flow reports
+non-blocking (INV-094). The packaging flow reports
 the same way: it says the archive carries no database and why, rather than refusing to package.
 Module 6 says the load will run with no backup, and why, and continues; its Phase D recovery then
 takes the no-backup route.

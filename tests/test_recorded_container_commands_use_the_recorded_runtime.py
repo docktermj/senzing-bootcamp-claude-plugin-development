@@ -17,7 +17,7 @@ What these tests pin:
    `graduation/database-backup.md`'s dump and restore, Module 2 Option 1, and both Module 3b
    teardown statements.
 3. **The backup probes for `cp` first**: `<runtime> cp --help` comes before the dump, and a runtime
-   with no `cp` takes the existing "If the backup cannot be produced" path (INV-048).
+   with no `cp` takes the existing "If the backup cannot be produced" path (INV-094).
 4. **Option 1's creation is unchanged**: it still runs `docker run` and names its container with
    `--runtime docker`, since no runtime is recorded before the container exists.
 
@@ -111,7 +111,9 @@ def backup_problems(text):
     if not re.search(r"cp --help`: if it fails, the backup cannot be produced \(below\)", body):
         problems.append("backup: no cp sends nowhere")
     cannot = flat(between(text, "**If the backup cannot be produced**", "## Restore"))
-    if "a container runtime with no `cp`" not in cannot or "(INV-048)" not in cannot:
+    # INV-094 states that every part of the revisit bundle warns-and-continues; INV-048 is
+    # the recap PDF's (#607, finished by #685).
+    if "a container runtime with no `cp`" not in cannot or "(INV-094)" not in cannot:
         problems.append("backup: the cannot-be-produced path does not name the no-cp case")
     restore = flat(restore)
     for what, needle in (

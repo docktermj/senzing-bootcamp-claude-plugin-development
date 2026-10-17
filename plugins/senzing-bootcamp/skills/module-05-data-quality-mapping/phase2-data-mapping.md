@@ -643,7 +643,7 @@ suffix has no such field, so it takes the message's first route, as step 11 decl
   same coverage-count surprise for nothing.
 
 ⚠️ **If a warning like that reaches you, it is not your error and not a mapping defect** — record it
-as expected and proceed (INV-048/INV-173). This is **one** known-bad interaction, and it does not
+as expected and proceed (INV-173). This is **one** known-bad interaction, and it does not
 license ignoring step-2 warnings generally: the others are real. And note the prose's *"must be PERSON or
 ORGANIZATION"* is wrong against its own enum — `VESSEL` and `AIRCRAFT` are valid, which a watchlist
 source can genuinely need. **Retire this note once step 2's prose and its `advance_schema` agree.**
@@ -916,7 +916,7 @@ something must check the behavior was actually obtained.
 > The gate's own wording ("a code bug: fix the mapper … Do NOT proceed until it passes") points you
 > at your own correct code. Confirm the value is faithful to the source, **record the exemption and
 > its reason** in the source's mapping notes, and **proceed** — a checker limitation must not become
-> an iterate-forever loop or a blocked module (INV-048/INV-173). The four numbered steps under
+> an iterate-forever loop or a blocked module (INV-173). The four numbered steps under
 > "Four further limitations" are the full procedure; this pointer exists because that block sits
 > below the step where the collision happens.
 
@@ -1344,7 +1344,7 @@ numeric source value emitted as a string now passes, so numbers are no longer a 
 Any value the mapper computes rather than copies will be absent from the allowed set, whatever
 produced it. If you meet a fifth route, the resolution is the same four steps — confirm
 faithfulness on the Entity Specification's terms, record the exemption and its reason, proceed, and
-never alter a source value to satisfy the tool (INV-048/INV-173).
+never alter a source value to satisfy the tool (INV-173).
 
 ⛔ **A value derived from a source *field name* is a second, distinct cause of the same failure —
 and unlike the cases above it has no correct alternative emission.** The allowed set is built from

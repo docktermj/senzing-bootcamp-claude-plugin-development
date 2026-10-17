@@ -1177,7 +1177,9 @@ class TestTheRendererIsFindable(unittest.TestCase):
         text = open(GRADUATION, encoding="utf-8").read()
         start = text.index("## Step 5b:")
         section = text[start : text.index("## Step 6:", start)]
-        self.assertIn("INV-048", section)
+        # The step's non-blocking clause is its own (these are not the recap PDF), so it
+        # cites nothing; INV-129 still governs verifying what it rendered (#685).
+        self.assertNotIn("INV-048", section)
         self.assertIn("INV-129", section)
         self.assertRegex(
             re.sub(r"\s+", " ", section), r"(?i)Extract text from the written file"
