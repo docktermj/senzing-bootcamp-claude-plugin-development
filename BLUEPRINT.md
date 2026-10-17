@@ -10166,10 +10166,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8172 test methods in 439 files, matching `inventory.test_count_total`.
+There are 8189 test methods in 439 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8172.
+sum to 8189.
 
 Two files run more tests than they define, so discovery collects 8179:
 
@@ -10276,7 +10276,7 @@ looks wrong.
 - `tests/test_dry_run_files_issues.py`: 15
 - `tests/test_dry_run_scaffold.py`: 15
 - `tests/test_dry_run_scaffold_paths_exist.py`: 10
-- `tests/test_dry_run_simulated_phase3.py`: 31
+- `tests/test_dry_run_simulated_phase3.py`: 41
 - `tests/test_dry_run_states_no_hook_count.py`: 11
 - `tests/test_empty_input_checks_are_not_a_pass.py`: 9
 - `tests/test_encoding_self_check_is_stated_as_behavior.py`: 31
@@ -10369,7 +10369,7 @@ looks wrong.
 - `tests/test_license_limit_reading_is_complete.py`: 16
 - `tests/test_license_record_limit_is_measured_only.py`: 6
 - `tests/test_license_wiring_lives_in_step_8a.py`: 30
-- `tests/test_linter_credits_name_a_function_it_runs.py`: 24
+- `tests/test_linter_credits_name_a_function_it_runs.py`: 31
 - `tests/test_list_specs.py`: 10
 - `tests/test_listing_selection_is_by_shape.py`: 12
 - `tests/test_liveness_probe_is_not_a_document_search.py`: 7
@@ -10773,7 +10773,9 @@ These read `specs/INVARIANTS.md`:
   that credits `auto-test`'s transcript linter must name a `check_*` function
   the linter runs, read from its `CHECKS` and `lint()`; a register entry may
   instead carry a later dated note, or a pending `PROPOSED AMENDMENT` for its id
-  (#514).
+  (#514). Its path exemptions live in one registry and are read from the
+  generator that writes the file; an entry naming no file the repository has
+  fails the guard, which names any file of that name elsewhere (#696).
 
 #### 8.4.3 Ledger and specs-archive guards
 
@@ -11338,6 +11340,11 @@ These are the scripts under `.claude/skills/`:
     starts at its banner and not the question before it, Entity Resolution
     Concepts runs from its banner to the next, and Bootcamp preparation ends
     at the next banner when its own showed only in a tool result (#657).
+  - every `.claude/skills/` file that names the walk, found by scanning rather
+    than listed, either states the clean-run line with the persona in it or
+    points at `/dry-run`'s rule — `release-cycle` points — and the pre-#696
+    `/auto-test` wording, which did neither, is kept as a control; the line is
+    read wrap-aware and a pointer split across two blocks does not count (#696).
 - **A Bootcamper reply that starts with `/`.**
   `tests/test_walk_slash_replies.py` (#656), with `walk._claude` recording each
   call's argv and `walk.bootcamper_reply` scripted:
@@ -13153,3 +13160,17 @@ Senzing licensing, with no SPDX identifier.
   both -- a placeholder's substitution rule is readable at or above the place
   the step reads it -- deriving its sites by scanning rather than from the
   issue's line numbers, which #686, #689 and #692 had already moved
+- #696: `/auto-test`'s clean-run report carries the persona when the run
+  included the walk, because the reason INV-369 makes it load-bearing -- a
+  clean run under `confused` and one under `offscript` are different evidence
+  -- is a property of the walk and not of the skill that launched it; the
+  widening of INV-369 is queued as a dated note for `/review-invariants`
+  rather than written into the register (INV-307, INV-365), and the guard
+  derives its sites by scanning `.claude/skills/`, which found
+  `release-cycle` pointing at `/dry-run`'s rule, a fourth site no list
+  carried. `tests/test_linter_credits_name_a_function_it_runs.py`'s
+  `GENERATED` exemption named a path that has never existed, harmless only
+  while the manifest's root lay outside the scan; it is now read from
+  `invariant_manifest.py`'s own `MANIFEST`, and every exemption is held to
+  naming a file the repository has, because re-pointing the literal would
+  have repaired the instance and left the class open
