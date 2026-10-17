@@ -678,9 +678,11 @@ copy (INV-300).
   and it surfaces at the first call, far from the line that caused it. Hold the factory for the
   process lifetime, or return it alongside whatever it created. The framing is ownership, not a
   Python idiom (INV-002): however your language expresses it, the factory's lifetime must enclose
-  every engine's. Worked example in the bundled reference server: `scripts/senzing_viz_server.py`
-  returns `factory` next to `engine` for exactly this reason. Confirm the error text against the
-  installed SDK rather than trusting this note (INV-080).
+  every engine's. Worked example in the bundled reference server
+  (`${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py`, INV-185; skill-relative fallback
+  `../../scripts/senzing_viz_server.py`, INV-252): it returns `factory` next to `engine` for
+  exactly this reason. Confirm the error text against the installed SDK rather than trusting
+  this note (INV-080).
 - **Make grounding visible (attribution).** When you present MCP-sourced Senzing content to the
   bootcamper (e.g. the business-problem pattern gallery, concept explanations, generated
   examples), add a brief, unobtrusive attribution so the grounding is traceable — e.g. "via

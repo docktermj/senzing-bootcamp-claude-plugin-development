@@ -10156,7 +10156,7 @@ looks wrong.
 - `tests/test_broll_manifest.py`: 20
 - `tests/test_build_and_run_statement.py`: 66
 - `tests/test_build_version_provenance_is_per_platform.py`: 8
-- `tests/test_bundled_script_and_production_paths.py`: 23
+- `tests/test_bundled_script_and_production_paths.py`: 28
 - `tests/test_business_problem_preserves_the_original_wording.py`: 17
 - `tests/test_canonical_module_names.py`: 31
 - `tests/test_canonical_operations_resolve.py`: 56
@@ -12976,3 +12976,16 @@ Senzing licensing, with no SPDX identifier.
   shipped option prose (INV-246), scoped to a placeholder that quotes the
   option whose words it wants because the wider reading reported 7 sites,
   6 of them correct prose
+- #689: resolve the bundled Truth Set visualization server where the guide is
+  told to read it — Module 7's build instruction and the factory-lifetime
+  worked example in `bootcamp-onboarding/ground-rules.md` carry
+  `${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py` with the skill-relative
+  fallback, while Module 7's later mention and Module 1's recap-renderer
+  mention point at the resolution instead of repeating it (INV-300) and Module
+  3b's five mentions stay as they are, since its Step 2.1 already resolves the
+  path once in-skill; a bare `scripts/…` path resolves against the bootcamp
+  project, where INV-050 puts no top-level `scripts/`, and INV-185's guard
+  swept only invocations, so INV-252's read half was unguarded —
+  `tests/test_bundled_script_and_production_paths.py` gains a sixth span that
+  reads every `scripts/<name>.py` path in guide-facing prose and derives its
+  exemption from the tree per skill (INV-246), never from a list of paths

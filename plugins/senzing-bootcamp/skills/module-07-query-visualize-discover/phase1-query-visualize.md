@@ -945,8 +945,10 @@ Pin the offer verbatim:
 - **Accepts:** build and present the app (below), then checkpoint `m7_visualizations` as
   `{"offered": true, "accepted": true, "artifact": "docs/visualizations/<file>.html"}`.
 
-Build it modeled on the shipped Truth Set visualization server (`scripts/senzing_viz_server.py`)
-and the `../module-03b-truthset-visualization/visualization-api-reference.md` contract, in the
+Build it modeled on the shipped Truth Set visualization server
+(`${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py`, INV-185; skill-relative fallback
+`../../scripts/senzing_viz_server.py`, INV-252) and the
+`../module-03b-truthset-visualization/visualization-api-reference.md` contract, in the
 bootcamper's chosen programming language (INV-090), pointed at the bootcamper's loaded data instead
 of the Truth Set. Save it as the program `results_server` in `src/server`, at the path and with the
 project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, in
@@ -1031,8 +1033,8 @@ every language, Python included, and build and run it with that section's comman
     methods in their `applies_to`, while `SZ_ENTITY_DEFAULT_FLAGS` does, and its `response_paths`
     cover `RELATED_ENTITIES[]` and `RESOLVED_ENTITY.ENTITY_ID`/`.ENTITY_NAME`/`.RECORDS[]`
     (`get_sdk_reference(topic='flags', filter='SZ_ENTITY_DEFAULT_FLAGS')`, server **1.35.4**,
-    2026-09-01). `scripts/senzing_viz_server.py` does exactly this, so a server modeled on it
-    inherits the right choice.
+    2026-09-01). `senzing_viz_server.py` — the reference server this step resolves above —
+    does exactly this, so a server modeled on it inherits the right choice.
     ⚠️ **The DEFAULT-composite caution is not waived — it is relocated.** Membership can still
     shift between versions with no error, which matters for the code that *leaves* with the
     Bootcamper: `production/MIGRATION_CHECKLIST.md` carries it as a Performance item, and that
