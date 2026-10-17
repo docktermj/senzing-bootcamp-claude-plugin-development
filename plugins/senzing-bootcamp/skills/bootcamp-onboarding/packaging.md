@@ -49,8 +49,9 @@ on it:
 
 👉 **What should the package contain? Reply with a number:**
 
-1. **Results to share** — your recap PDF, keepsake documents, visualizations and
-   `production/` project (~<n> MB). No database, no source data, no credentials.
+1. **Results to share** — your recap PDF, keepsake documents, visualizations, the exports
+   written for the systems you named (`data/exports/`) and your `production/` project
+   (~<n> MB). No database, no source data, no credentials.
 2. **Everything to continue elsewhere** — the above plus your database backup, config
    and mappings, so you can pick the bootcamp back up on another machine (~<n> MB).
 3. **Cancel.**
@@ -101,6 +102,15 @@ the archive safe to hand over:
   included path with SHA-256 and size, the exclusion rules applied, and every path skipped.
   ⚠️ A recipient must be able to tell what is **missing** without guessing; that is what
   the exclusion half is for.
+- **Packaged on both profiles:** `docs/` (the recap, the keepsake documents and
+  `docs/visualizations/`), `production/`, and `data/exports/` — Module 7 step 4e's export of
+  the resolved results in each named system's import format.
+  ⛔ **A path a step hands the bootcamper over as that step's deliverable must be one a packaging profile carries, or the step must say, where it names the path, that it does not travel.**
+  `data/exports/` is the one tree under `data/` that `share` reaches, because step 4e hands its
+  contents over and they are the bootcamp's own output written for another system to read rather
+  than the bootcamper's source data. Graduation copies it to `production/data/exports/` at the
+  same project-relative path (INV-186), so a graduated project carries it in both places and
+  both travel.
 - **Never packaged, either profile:** `.env`, `licenses/`, `config/license.json`,
   `data/raw/` (the bootcamper's own source data), `data/temp/`, `logs/`, `.git/`, caches
   and virtualenvs, and `backups/packages/` itself.

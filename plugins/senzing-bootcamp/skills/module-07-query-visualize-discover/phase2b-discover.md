@@ -353,8 +353,15 @@ supported systems.
    and with the project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a
    program" gives, so graduation's existing `src/query/**` copy carries it, with its manifest, into
    `production/` unchanged. It writes its files under
-   `data/temp/exports/<system>/`, which it recreates on every run. Build and run it with that
+   `data/exports/<system>/`, which it recreates on every run. Build and run it with that
    section's commands.
+   ⛔ **The export is this step's deliverable, so it is written to a durable path a packaging profile reaches, never to the scratch directory.**
+   `data/exports/` is a sibling of `data/senzing-ready/`: `/package-bootcamp` carries it on
+   **both** profiles, and graduation copies it to `production/data/exports/` at the same path
+   relative to the project root, which is what keeps this program's own output path true once it
+   is copied there verbatim (INV-186). `data/temp/` is the scratch directory **both** packaging
+   profiles exclude, so a file handed over from there cannot travel in the archive the Bootcamper
+   gives a colleague.
 9. **Count what was written, then report it.** ⛔ (INV-129) Count from the written files, never from the exit status or the program's own log:
    - the **entity count**: nodes written;
    - the **edge count**: edges written;
@@ -426,7 +433,7 @@ The full checkpoint structure in `config/bootcamp_progress.json` is:
       "4b": {"status": "completed", "entity_demonstrated": 1234},
       "4c": {"status": "completed", "entity_demonstrated": 5678},
       "4d": {"status": "completed"},
-      "4e": {"status": "completed", "targets": [{"system": "<as named>", "status": "exported", "format": "<format named in item 4>", "program": "src/query/export_<system>", "outputs": ["data/temp/exports/<system>/<file>"], "entities": 1200, "edges": 340, "attribute_nodes": 1150}]}
+      "4e": {"status": "completed", "targets": [{"system": "<as named>", "status": "exported", "format": "<format named in item 4>", "program": "src/query/export_<system>", "outputs": ["data/exports/<system>/<file>"], "entities": 1200, "edges": 340, "attribute_nodes": 1150}]}
     },
     "discover_phase": "completed"
   }

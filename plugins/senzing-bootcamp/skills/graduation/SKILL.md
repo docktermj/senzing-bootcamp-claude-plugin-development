@@ -1373,6 +1373,7 @@ does not exist; on a copy failure, log and continue):
 | `src/query/**` | `production/src/query/` | Query/discovery code |
 | `src/utils/**` | `production/src/utils/` | Shared helpers |
 | `data/senzing-ready/**` | `production/data/senzing-ready/` | Senzing-ready data |
+| `data/exports/**` | `production/data/exports/` | Module 7 step 4e's exports for the named systems |
 | `config/data_sources.yaml` | `production/config/data_sources.yaml` | Data-source registry, written as a projection (below), not copied whole |
 | `requirements.txt` / `pom.xml` / `Cargo.toml` / `package.json` / `*.csproj` | `production/` | Root dependency manifest. Only Python's `requirements.txt` sits at the root: C#, Rust and TypeScript manifests travel inside their program folders, which the `src/**` rows copy unchanged |
 | `nuget.config` | `production/nuget.config` | C#'s project-local package source (SDK setup), so the copied programs restore `Senzing.Sdk` as they did here |
@@ -1385,11 +1386,15 @@ write (Java's `<dir>/classes`, Rust's shared `<dir>/target`, TypeScript's `<dir>
 copied project rebuilds them from `production/` with that section's commands.
 
 ⛔ **Every destination above keeps the source's path relative to the project root, and
-`data/senzing-ready/` in particular.** (INV-186) The code in `src/load/**` is copied **verbatim** and reads its
+`data/senzing-ready/` and `data/exports/` in particular.** (INV-186) The code in `src/load/**` is copied **verbatim** and reads its
 input from `data/senzing-ready/` (INV-084 — `../module-06-data-processing/phaseA-build-loading.md`
 step "Mapped sources"), so flattening the data to `production/data/` hands the bootcamper a project
 whose loader points at a directory that does not exist. Copy the tree, do not rewrite the code: the
 loader is theirs, and a path edited by graduation is a change they never saw made.
+`data/exports/` is the same rule in the other direction: the `src/query/**` row above carries
+Module 7 step 4e's export program unchanged (`../module-07-query-visualize-discover/phase2b-discover.md`,
+step 4e item 8), and that program **writes** to `data/exports/<system>/`, so its output tree has to
+arrive at the same project-relative path or the copied program writes where nothing expects it.
 
 ⛔ **(INV-186) `config/data_sources.yaml` is written to `production/config/data_sources.yaml` as a
 projection, never copied whole, and never left out.** The multi-source orchestrator in `src/load/**`
@@ -1736,7 +1741,9 @@ reason.) Cover:
   key inline in `config/engine_config.json` (`LICENSESTRINGBASE64`), a `.lic` file at
   `licenses/g2.lic` (`LICENSEFILE`), else the built-in evaluation license; and any expiry.
 - **Where things are** — point at `backups/revisit/` (state + database backup), the recap PDF, and
-  `docs/visualizations/`. Name `docs/bootcamp_recap.mp4` too when Step 1c produced it (INV-340). When Step 1c
+  `docs/visualizations/`. Name `data/exports/` too when Module 7 step 4e exported for a system, and
+  say that `production/data/exports/` holds the same tree, since the copied export program writes
+  there (INV-186). Name `docs/bootcamp_recap.mp4` too when Step 1c produced it (INV-340). When Step 1c
   wrote a storyboard but skipped the video, say that `docs/video/storyboard.json` is kept so the
   video can be rendered later with the bundled renderer, `generate_recap_video.py`.
 

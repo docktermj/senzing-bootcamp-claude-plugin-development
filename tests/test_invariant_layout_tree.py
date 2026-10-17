@@ -98,6 +98,13 @@ DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 TWO_STATE_ADDITIONS = {
     "data/subsets/": "  │   ├── subsets/                       # License- or volume-capped "
                      "load subsets (Module 6; not copied at graduation)",
+    #: #686: Module 7 step 4e writes each named system's export under `data/exports/`, which the
+    #: tree does not name. Added here on the same footing as `data/subsets/` was for #286, so the
+    #: `PROPOSED AMENDMENT to INV-050` in this run's ledger entry is checked byte for byte rather
+    #: than read. ⚠️ When `/review-invariants` applies it, `EXPECTED_DIR_ENTRIES` goes 33 -> 34 in
+    #: the same edit, exactly as #286's application did.
+    "data/exports/": "  │   ├── exports/                       # Module 7 step 4e's exports, "
+                     "one directory per named system (INV-186)",
 }
 
 # Derived 2026-08-11 by running extract_tree() against the tree as it then stood, NOT
@@ -557,7 +564,12 @@ class TheOmittedEntriesArePinnedInTwoStates(unittest.TestCase):
                 "pending block, exact line": (self.fixture(line, awaiting), True),
                 "(a) block removed": ("## fixture\n", False),
                 "(a) block marked applied": (self.fixture(line, "applied 2026-10-01"), False),
-                "(b) line changed": (self.fixture(line.replace("Module 6", "Module 5"),
+                # ⚠️ #686: the mutation is derived from the line, not written for one entry.
+                # It was `line.replace("Module 6", "Module 5")`, which is a no-op on any entry
+                # whose comment does not say "Module 6" -- so a second entry added to
+                # TWO_STATE_ADDITIONS was checked against its own unchanged line and the arm
+                # passed for the wrong reason until it did not.
+                "(b) line changed": (self.fixture(line.replace("# ", "# edited: ", 1),
                                                   awaiting), False),
             }
             for case, (ledger, expected) in cases.items():

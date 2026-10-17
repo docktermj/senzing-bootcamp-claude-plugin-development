@@ -77,6 +77,7 @@ class Project:
         root = Path(self.tmp.name)
         for d in ("docs/visualizations", "docs/mapping", "production",
                   "production/data/senzing-ready", "production/data/raw", "production/src/load",
+                  "data/exports/neo4j", "production/data/exports/neo4j",
                   "config", "data/raw",
                   "data/temp", "logs", "licenses", "src", "backups/revisit/database",
                   "backups/revisit/state", ".git", "__pycache__", "database", ".venv"):
@@ -105,6 +106,13 @@ class Project:
         write("licenses/g2.lic", "AQAAAD" + "A" * 30)
         write("data/raw/customers.csv", "raw,data")
         write("data/temp/scratch.txt", "tmp")
+        # ⛔ #686: Module 7 step 4e's export, the one tree under `data/` that `share` reaches.
+        # The step hands these files over as its deliverable, and graduation copies the tree to
+        # `production/data/exports/` at the same project-relative path (INV-186), so BOTH copies
+        # must travel. Synthetic rows -- the export is the bootcamp's own output, not source data.
+        write("data/exports/neo4j/nodes.csv", "id:ID,name\n1,Entity One\n")
+        write("data/exports/neo4j/edges.csv", ":START_ID,:END_ID,matchKey\n1,2,+NAME+ADDRESS\n")
+        write("production/data/exports/neo4j/nodes.csv", "id:ID,name\n1,Entity One\n")
         write("logs/run.log", "log")
         write("database/G2C.db", "live-db")
         write("backups/revisit/database/G2C.db", "db-backup")
@@ -245,6 +253,20 @@ class TheShareProfileCarriesNoInputs(unittest.TestCase):
             with self.subTest(expected=expected):
                 self.assertIn(expected, joined)
 
+    def test_it_carries_the_module_7_exports(self):
+        """⛔ #686: step 4e hands these over as its deliverable, so `share` must reach them.
+
+        Both copies: the one the export program writes under `data/exports/`, and the one
+        graduation copies to `production/data/exports/` at the same project-relative path, which
+        is what keeps the verbatim-copied program's own output path true (INV-186). Before #686
+        the step wrote into `data/temp/`, so the archive carried neither.
+        """
+        joined = "\n".join(self.names)
+        for expected in ("data/exports/neo4j/nodes.csv", "data/exports/neo4j/edges.csv",
+                         "production/data/exports/neo4j/nodes.csv"):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, joined)
+
 
 def root_anchored(relpath, rule):
     """The pre-#672 matcher, kept as the control: a rule anchored at the project root.
@@ -371,6 +393,13 @@ class TheTransferProfileCanResumeElsewhere(unittest.TestCase):
         joined = "\n".join(self.names)
         self.assertIn("config/bootcamp_progress.json", joined)
         self.assertIn("docs/mapping/customers.json", joined)
+
+    def test_it_carries_the_module_7_exports_too(self):
+        """⛔ #686: one `SHARE_INCLUDE` entry covers both profiles, because `TRANSFER` composes
+        from `SHARE_INCLUDE` plus `TRANSFER_EXTRA` -- asserted rather than reasoned about."""
+        joined = "\n".join(self.names)
+        self.assertIn("data/exports/neo4j/nodes.csv", joined)
+        self.assertIn("production/data/exports/neo4j/nodes.csv", joined)
 
     def test_it_still_carries_no_credentials_or_source_data(self):
         for name in self.names:

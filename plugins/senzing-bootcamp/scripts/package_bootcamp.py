@@ -13,7 +13,8 @@ nothing decided what must **not** travel.
 
 Two profiles, because the two audiences need different contents:
 
-- ``share``    -- for someone looking at the results. Keepsakes, visualizations, ``production/``.
+- ``share``    -- for someone looking at the results. Keepsakes, visualizations, Module 7's
+                  exports in ``data/exports/``, ``production/``.
                   Never a database, never source data, never a credential. ⛔ **Never source data
                   means never, at any depth**: ``production/`` is packaged recursively and
                   graduation copies ``data/senzing-ready/**`` into
@@ -102,7 +103,17 @@ DATABASE_SUFFIXES = (".db", ".sqlite", ".sqlite3")
 
 #: What each profile reaches for. A missing entry is recorded as absent, never an error: the flow
 #: runs at any point in the bootcamp, so most of this legitimately does not exist yet.
+#: ⛔ `data/exports/` is the one tree under `data/` that `share` reaches, and it
+#: is here because Module 7 step 4e **hands its contents over as that step's deliverable**: the
+#: resolved results in each named system's import format, plus the program that writes them. It is
+#: the bootcamp's own output written for another system to read, not the Bootcamper's source data,
+#: so the `share` promise is intact. Until #686 the step wrote them under `data/temp/`, which is
+#: never packaged on either profile -- so the one artifact the step called the deliverable was the
+#: one thing the archive could not carry, and the exclusion list was the only place it was named.
+#: ⚠️ One entry covers both profiles: `TRANSFER` composes from `SHARE_INCLUDE` plus
+#: `TRANSFER_EXTRA`, so nothing is added there.
 SHARE_INCLUDE = (
+    "data/exports",
     "docs",
     "production",
 )
