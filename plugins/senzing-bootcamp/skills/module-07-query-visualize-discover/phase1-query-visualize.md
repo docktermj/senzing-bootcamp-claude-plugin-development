@@ -952,7 +952,21 @@ Build it modeled on the shipped Truth Set visualization server
 bootcamper's chosen programming language (INV-090), pointed at the bootcamper's loaded data instead
 of the Truth Set. Save it as the program `results_server` in `src/server`, at the path and with the
 project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, in
-every language, Python included, and build and run it with that section's commands. It MUST:
+every language, Python included, and build and run it with that section's commands.
+
+⛔ **On SDK setup's container route, start it inside the SDK container (INV-260).** A server started
+on the host, or bound to the container's loopback, does not reach the Bootcamper's browser.
+`../module-03b-truthset-visualization/visualization-api-reference.md` → "Serving from the SDK
+container" is the canonical statement of the launch, the host-side check and the URL; follow it
+there rather than from a copy (INV-300). Here `<server command>` is this step's server, pointed at
+the Bootcamper's own data, with paths as the container sees them. Hand over, and capture against,
+the URL `confirm-viz` printed: `http://localhost:<host_port>`, never `<port>` from the server's own
+line. Record the container-namespace pid, `port` `8080`, the `host_port` and the container's
+`name` in `m7_visualizations`, and probe the bound address at teardown as its item 4 says. If the
+Bootcamper declines to recreate a container that has no published port, there is no live server:
+say so, keep the snapshot as the deliverable, and continue to "Next: Discover phase (step 4)".
+
+The server MUST:
 
 - ⛔ **Color each graph node by the entity's whole source SET, not by its first source** — see the
   contract's "Coloring graph nodes". ⚠️ **This is the rule the Truth Set cannot test.** Most Truth
@@ -1174,18 +1188,6 @@ shell builtin using the pid INV-223 required the launch to record, and probe the
 rather than the kill's exit status. Full rule:
 `../module-03b-truthset-visualization/visualization-api-reference.md` → "Server lifetime" →
 "Identifying the server process".
-
-⛔ **On SDK setup's container route, start it inside the SDK container (INV-260).** A server started
-on the host, or bound to the container's loopback, does not reach the Bootcamper's browser.
-`../module-03b-truthset-visualization/visualization-api-reference.md` → "Serving from the SDK
-container" is the canonical statement of the launch, the host-side check and the URL; follow it
-there rather than from a copy (INV-300). Here `<server command>` is this step's server, pointed at
-the Bootcamper's own data, with paths as the container sees them. Hand over, and capture against,
-the URL `confirm-viz` printed: `http://localhost:<host_port>`, never `<port>` from the server's own
-line. Record the container-namespace pid, `port` `8080`, the `host_port` and the container's
-`name` in `m7_visualizations`, and probe the bound address at teardown as its item 4 says. If the
-Bootcamper declines to recreate a container that has no published port, there is no live server:
-say so, keep the snapshot as the deliverable, and continue to "Next: Discover phase (step 4)".
 
 ⛔ **A port that binds is not a port that was free, so never read a successful start as proof.**
 The server the bootcamper writes here MUST bind the loopback interface explicitly (the container's

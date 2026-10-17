@@ -326,9 +326,17 @@ supported systems.
    That is the `graph` topic's own anti-pattern (server 1.37.27, 2026-10-11): feature-level edges
    bloat the graph with noise.
 7. **Check one export row before writing the reader.** ⛔ (INV-115) Dump one row and read its top-level keys before any code parses the export.
-   Generate a short program, saved as the program `export_row_<system>` in `src/query` at the path
+   Generate a short program, saved as the program `export_row_<system>` in `src/query`, where
+   `<system>` is a short snake_case name for the system (for example `aws_neptune` for a system
+   recorded as "AWS Neptune"), at the path
    and with the project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a
-   program" gives, and built and run with that section's commands. It opens the export with the
+   program" gives, and built and run with that section's commands. That section takes `<name>` as
+   a program's base name such as `verify_pipeline`, and on Java as the filename its class rules
+   are read against (INV-237), so the name as recorded — the Bootcamper's own free text, "AWS
+   Neptune" or "Microsoft Dynamics 365" — is written in that snake_case form here rather than
+   used as it stands. `<system>` is that name wherever this step builds a program name, a project
+   directory or an output path; `[system]`, the name as recorded at item 3, stays in what you say
+   to the Bootcamper and in the checkpoint's `"system"` value. The program opens the export with the
    flags chosen in item 6, fetches one row, prints its top-level keys, and prints whether one of its
    records carries that record's source JSON (`JSON_DATA`). Show the Bootcamper the keys. Then:
    - **`RELATED_ENTITIES` is absent:** the flags did not ask for relationships. Find the
@@ -349,7 +357,8 @@ supported systems.
      <!-- MCP-NEGATIVE: get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_JSON_DATA') — its applies_to names get_record and the entity, search, why, path and network calls, and neither export_json_entity_report nor export_csv_entity_report — owner: the flag's own applies_to IS the route that carries which methods accept it; search_docs returns the Java SzFlag javadoc listing SZ_EXPORT_FLAGS among its usage groups, which is why the dumped row decides (absence negative) — server 1.37.27, 2026-10-11 -->
 8. **Write and run the export program.** Write it in the Bootcamper's chosen language
    (`programming_language` in `config/bootcamp_preferences.yaml`, INV-002), with the SDK code
-   sourced as item 6 says, and save it as the program `export_<system>` in `src/query`, at the path
+   sourced as item 6 says, and save it as the program `export_<system>` in `src/query` — `<system>`
+   is item 7's snake_case name, here and in the export directory below — at the path
    and with the project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a
    program" gives, so graduation's existing `src/query/**` copy carries it, with its manifest, into
    `production/` unchanged. It writes its files under
@@ -404,6 +413,8 @@ question.
   "status": "failed", "reason": "zero_edges", "entities": <n>, "edges": 0, "attribute_nodes":
   <n>}`, or `{"system": "<name>", "status": "exported", "format": "<format>", "program":
   "src/query/export_<system>", "outputs": [...], "entities": <n>, "edges": <n>, "attribute_nodes": <n>}`.
+- `"system"` holds the name as recorded, as item 3 reads it; `<system>` in the `program` and
+  `outputs` paths is item 7's snake_case name, which is what those paths were written with.
 
 Also set top-level `current_step` to `"4e"`.
 
