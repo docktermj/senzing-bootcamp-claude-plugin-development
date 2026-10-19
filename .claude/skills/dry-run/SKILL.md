@@ -150,6 +150,26 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    `docs/REVISIT_BOOTCAMP.md` is **in** scope because it is a top-level `docs/*.md`.
    A hand-kept list drifts the moment the normalizer's scope changes; this one cannot.
 
+   **The same goes for your `~/.claude/CLAUDE.md`.** A user-level instruction file is read
+   by every `claude` process this machine starts, the bootcamp's included, so a rule such as
+   "end every response with a 👉 **Suggested next step:** line" is obeyed by the guide
+   and then scored against the plugin. One walk filed **13 BREAKING
+   `INV-251-multi-question` findings** that way, every one of them the host's rule rather
+   than the plugin's text, and whether a given run was contaminated was not visible in its
+   report (#733).
+
+   ⛔ **A host response rule is never a plugin defect, and never a plugin change.** The
+   shipped plugin contains "Suggested next step" nowhere; the rule is your configuration and
+   no Bootcamper carries it, so writing the host's response style into the plugin would push
+   one maintainer's environment into every bootcamp to solve a problem none of them has.
+   Neither side is wrong here, any more than it is for the hook above. A **simulated** walk
+   now keeps it out for you — `walk.py` runs both of its
+   processes with `--setting-sources project,local`, and `autotest.py` names any host
+   instruction file the run could still read as a `coverage_limits` line
+   ([`auto-test` → the sandbox](../auto-test/SKILL.md#the-sandbox-and-why-each-layer-is-there)).
+   A **maintainer-answered** phase 3 walk runs in your own session, where your `CLAUDE.md`
+   still applies: read a two-👉 turn there as your own rule until you have ruled it out.
+
 ## Absolute rules
 
 ⛔ **Nothing leaves the machine except two outward acts, each under INV-314's gate: show

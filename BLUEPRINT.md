@@ -3627,7 +3627,11 @@ and a `latest.json` copy; `/dry-run --draft` passes `<run-dir>/walk/` (#609).
 `--json` prints it, else a BREAKING/WATCH summary. A non-zero exit from
 `walk.py` is a BREAKING `walk-failed` finding carrying the walk's last stderr
 line, never a coverage limit, and the walk's whole stderr is printed whenever
-the walk failed, whatever its stdout held (#732). The worktree and (unless
+the walk failed, whatever its stdout held (#732). `instruction_disclosure`
+reads the transcript's `walk_isolation` event and, when its
+`host_instruction_files` list is not empty, adds a `coverage_limits` line
+naming each path, so a run that could read a host instruction file never reads
+as a clean one (#733). The worktree and (unless
 `--keep`) the sandbox are removed in `finally`. Exit 1 if any finding is
 BREAKING, else 0.
 
@@ -3727,8 +3731,19 @@ reads `--max-turns N reached`. `run_walk` returns the number of events written
 and that reason when the end was abnormal, else `None`. If turn 1 shows
 "Unknown command" or under 200 characters, it exits via `SystemExit`
 with a message (a silent non-start must not read as a clean run).
-`--isolate-config` sets `CLAUDE_CONFIG_DIR` to `<project>/.claude-config`
-(needs `ANTHROPIC_API_KEY`). Exit codes: 2 if `--project` is not a directory,
+Both `claude` calls carry `INSTRUCTION_SOURCES` (`--setting-sources
+project,local`) when the installed CLI takes the flag, probed once from
+`claude --help`, so the host's user-level instruction files are not loaded and
+a host response rule is not scored as the plugin's behavior; a CLI without it
+walks anyway and the run discloses what it could read. The transcript's first
+event, `walk_isolation`, records `instructions_isolated`, the `mechanism`, and
+`host_instruction_files` — the `USER_INSTRUCTION_FILES` under
+`user_config_dir()` when isolation is off, plus any of those three names in a
+directory above the project either way (#733). `--isolate-config` sets
+`CLAUDE_CONFIG_DIR` to `<project>/.claude-config` (needs `ANTHROPIC_API_KEY`)
+and is not what isolates instructions: the user instruction file is
+`$CLAUDE_CONFIG_DIR/CLAUDE.md`, so moving that directory takes the credentials
+with it. Exit codes: 2 if `--project` is not a directory,
 1 from the non-start `SystemExit` or after any abnormal end, else 0.
 
 `transcript_lint.py` lints a stream-json transcript offline: it keeps the text
@@ -5000,6 +5015,8 @@ def build_sandbox(root, seed):
     ...
 def write_mcp_config(root):
     ...
+def instruction_disclosure(transcript):
+    ...
 def main(argv=None):
     ...
 ```
@@ -5174,6 +5191,8 @@ REPO_ROOT = SKILL_DIR.parent.parent.parent
 PLUGIN_DIR = REPO_ROOT / "plugins" / "senzing-bootcamp"
 POINTER = "\U0001f449"
 FORBIDDEN_TOOLS = ("mcp__senzing__submit_feedback", "mcp__senzing__download_resource")
+INSTRUCTION_SOURCES = ("--setting-sources", "project,local")
+USER_INSTRUCTION_FILES = ("CLAUDE.md", "CLAUDE.local.md", "AGENTS.md")
 PERSONAS = {
     "terse": "You answer in as few words as possible — often a single word or "
              "number. You never elaborate and never ask questions.",
@@ -5225,6 +5244,16 @@ def banner_seen(banner, text):
 def split_reply(reply):
     ...
 def as_turn(text):
+    ...
+def user_config_dir():
+    ...
+def supports_instruction_isolation(timeout=60):
+    ...
+def instructions_isolated():
+    ...
+def instruction_sources():
+    ...
+def readable_host_instructions(project, isolated):
     ...
 def bootcamper_reply(prompt_text, persona, model, timeout=180):
     ...
@@ -8591,7 +8620,8 @@ From `.claude/skills/auto-test/walk.py`:
 ...
     ap.add_argument("--opening", default="/senzing-bootcamp:start-bootcamp")
     ap.add_argument("--isolate-config", action="store_true",
-                    help="per-run CLAUDE_CONFIG_DIR (needs ANTHROPIC_API_KEY)")
+                    help="per-run CLAUDE_CONFIG_DIR for session state "
+                         "(needs ANTHROPIC_API_KEY; instructions are isolated anyway)")
     ap.add_argument("--timeout", type=int, default=600)
 ```
 
@@ -10058,18 +10088,23 @@ Used by:
 From `.claude/skills/auto-test/walk.py`:
 
 ```python
+_SUPPORTS_SETTING_SOURCES = None
 def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
     ...
 ```
 
 <!-- markdownlint-enable MD013 -->
 
+- `_SUPPORTS_SETTING_SOURCES`: `test_walk_instruction_isolation.py` (set directly
+  to `True` or `False`, and restored in `addCleanup`, so both the isolated and
+  the unisolated branch run without a `claude --help` probe)
 - `_claude`: `test_dry_run_simulated_phase3.py` (patched with a stub, so the
   walk's stop condition runs offline and spends no tokens),
-  `test_walk_slash_replies.py` (the stub records each call's argv) and
+  `test_walk_slash_replies.py` (the stub records each call's argv),
   `test_a_crashed_walk_keeps_its_transcript.py` (the stub raises
   `subprocess.TimeoutExpired` at a chosen turn, and reads the transcript file
-  between turns)
+  between turns) and `test_walk_instruction_isolation.py` (one stub stands in for
+  both processes, told apart by `--output-format`, and records each call's argv)
 
 ### 7.11 `.claude/skills/auto-test/mcp_probe.py`
 
@@ -10203,7 +10238,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 443 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 444 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10253,21 +10288,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8279 test methods in 443 files, matching `inventory.test_count_total`.
+There are 8291 test methods in 444 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8279.
+sum to 8291.
 
-Two files run more tests than they define, so discovery collects 8286:
+Two files run more tests than they define, so discovery collects 8298:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8279`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8291`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8286`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8298`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10703,6 +10738,7 @@ looks wrong.
 - `tests/test_viz_tab_consolidation.py`: 38
 - `tests/test_volume_option_reply_has_no_count.py`: 14
 - `tests/test_walk_hook_conflict_is_documented.py`: 10
+- `tests/test_walk_instruction_isolation.py`: 12
 - `tests/test_walk_slash_replies.py`: 13
 - `tests/test_welcome_licensing_names_data_collection.py`: 6
 - `tests/test_why_key_details_flag_claim_is_withdrawn.py`: 26
@@ -13412,3 +13448,17 @@ Senzing licensing, with no SPDX identifier.
   `walk-failed` finding for it, and prints the walk's stderr whenever the walk
   failed, since `stdout or stderr` short-circuited on 68 turn lines and dropped
   the traceback that would have named the cause
+- #733: a simulated walk no longer inherits the host's `~/.claude/CLAUDE.md`, and
+  says so when it still could (a `/dry-run --simulated confused` walk filed 13
+  BREAKING `INV-251-multi-question` findings carrying the host's own response rule
+  as the second 👉, against plugin text that is correct) — `walk.py` sends
+  `--setting-sources project,local` on both of its `claude` calls, probes the
+  installed CLI for the flag so one without it degrades to a disclosed run rather
+  than dying at turn 1, and writes a `walk_isolation` event before its first turn;
+  `autotest.py` turns that event into a `coverage_limits` line naming every host
+  instruction file the run could read, with its path. `--isolate-config` stays
+  opt-in because the user instruction file is `$CLAUDE_CONFIG_DIR/CLAUDE.md`, so
+  moving that directory takes the credentials with it and the walk that found the
+  defect ran without `ANTHROPIC_API_KEY`. The negative control shows the host file
+  reaching the guide before and not after, and the findings persisting either way,
+  so an `INV-251-multi-question` finding of that shape has a second source
