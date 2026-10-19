@@ -513,7 +513,7 @@ and nothing documents whether the two always go together. Observed 2026-09-25 on
 with the redo queue empty. The How rendering below says so rather than presenting such an entity as
 built into one. Attach no meaning to `NEED_REEVALUATION` and offer no fix for it: the server gives the
 field a type and no definition (INV-080/INV-149).
-<!-- MCP-NEGATIVE: search_docs(query='NEED_REEVALUATION how entity final state') — no indexed document defines NEED_REEVALUATION or says what sets or clears it; the only hits are the how flags page's example payload, which shows "NEED_REEVALUATION": 0 — owner: get_sdk_reference(topic='response_schemas', filter='how_entity_by_entity_id') IS the route that owns the how response's fields, and it lists HOW_RESULTS.FINAL_STATE.NEED_REEVALUATION as an integer with no description (absence negative) — server 1.37.13, 2026-09-26 -->
+<!-- MCP-NEGATIVE: search_docs(query='NEED_REEVALUATION how entity final state') — no indexed document defines NEED_REEVALUATION or says what sets or clears it; the only hits are the how flags page's example payload, which shows "NEED_REEVALUATION": 0 — owner: get_sdk_reference(topic='response_schemas', filter='how_entity_by_entity_id') IS the route that owns the how response's fields, and it lists HOW_RESULTS.FINAL_STATE.NEED_REEVALUATION as an integer with no description (absence negative) — server 1.39.1, 2026-10-18 -->
 
 **`GET /api/dashboard`: REMOVED.** Its content is served by `/api/stats`, which carries the same
 `histogram` and headline counts plus the `sample_entities` list that was this endpoint's only

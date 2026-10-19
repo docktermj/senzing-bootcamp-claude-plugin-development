@@ -375,7 +375,7 @@ are still absent.
 
 **Linux, apt (`linux_apt`):**
 
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — install_commands, gotchas and post_install carry no dpkg-query and no apt-cache policy; it verifies with ls /opt/senzing/er/lib/libSz.so, an existence probe — owner: sdk_guide(topic='install', platform='linux_apt') IS the route that would carry an installed-version query for apt, and it documents installing and existence-verification only (absence negative) — server 1.36.0, 2026-09-02 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — install_commands, gotchas and post_install carry no dpkg-query and no apt-cache policy; it verifies with ls /opt/senzing/er/lib/libSz.so, an existence probe — owner: sdk_guide(topic='install', platform='linux_apt') IS the route that would carry an installed-version query for apt, and it documents installing and existence-verification only (absence negative) — server 1.39.1, 2026-10-18 -->
 
 ```bash
 # plugin-owned — sdk_guide documents neither of these

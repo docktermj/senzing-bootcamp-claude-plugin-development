@@ -301,7 +301,7 @@ questions.
   decision tree rather than a language one — `needs_input.parameter` is `platform`, offering five
   operating systems (both halves re-checked live, same server and date, `platform='linux_apt'` and
   no-platform).
-  <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform=…) — returns no language list at all — owner: get_capabilities carries the language set (routing negative — the fact exists, go there) — server 1.36.0, 2026-09-02 -->
+  <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform=…) — returns no language list at all — owner: get_capabilities carries the language set (routing negative — the fact exists, go there) — server 1.39.1, 2026-10-18 -->
   The one
   genuine platform↔language constraint the server does state — the Python SDK is supported on Linux
   only, with Docker or WSL2 as the route on macOS/Windows — is carried in the annotation rules
