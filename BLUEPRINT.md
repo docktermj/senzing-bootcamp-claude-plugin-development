@@ -10229,12 +10229,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8264 test methods in 441 files, matching `inventory.test_count_total`.
+There are 8269 test methods in 442 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8264.
+sum to 8269.
 
-Two files run more tests than they define, so discovery collects 8271:
+Two files run more tests than they define, so discovery collects 8276:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -10632,6 +10632,7 @@ looks wrong.
 - `tests/test_step8_engine_config_one_procedure.py`: 11
 - `tests/test_step_8b_uses_module_6s_sqlite_threshold.py`: 23
 - `tests/test_steps_name_the_route_that_supplies_them.py`: 23
+- `tests/test_stop_nudge_silence_and_opt_outs.py`: 5
 - `tests/test_supersession_has_one_syntax.py`: 16
 - `tests/test_suppressed_branch_has_no_pinned_question.py`: 9
 - `tests/test_synthesized_entities_have_their_own_identifiers.py`: 16
@@ -11143,6 +11144,25 @@ tests a rebuild can pass from behavior alone.
   `find_secret` returns `PEM private key`, `AWS access-key ID` or
   `Senzing license payload`, and returns `None` for clean text. It never echoes
   the secret and never filters by file extension.
+- **`stop-nudge.py`** (`tests/test_stop_nudge_silence_and_opt_outs.py`).
+  - **Harness.** The script runs as a subprocess whose working directory is the
+    project, which holds `config/bootcamp_progress.json`. Its stdin is the Stop
+    payload and the transcript is a JSONL file in that project. Every case exits
+    0, so what is asserted is whether stdout is empty.
+  - **It blocks** on a settled turn whose final assistant message carries no
+    pointer: stdout parses as `decision: block` with a non-empty reason. That is
+    the positive control, and it runs inside each silence case below rather than
+    standing alone, because a hook that is silent through being broken satisfies
+    every silence case on its own (INV-054).
+  - **It stays silent** when `transcript_path` names no file, and when
+    `stop_hook_active` is true over the transcript that otherwise blocks.
+  - **Both opt-outs** silence that same blocking payload (INV-055): the
+    `SENZING_BOOTCAMP_DISABLE_STOP_NUDGE` environment variable, and a top-level
+    `disable_stop_nudge: true` in `config/bootcamp_preferences.yaml` written
+    beside an unrelated key.
+  - **Environment.** The opt-out variable is removed from the inherited
+    environment, so a runner that exports it cannot silence the whole file, and
+    `PYTHONIOENCODING=utf-8` pins how the pointer crosses the pipe.
 - **`package_bootcamp.py`** (`tests/test_package_bootcamp.py`,
   `tests/test_open_me_first_matches_the_manifest.py`,
   `tests/test_quoted_sizes_say_what_they_missed.py`).
@@ -13344,3 +13364,15 @@ Senzing licensing, with no SPDX identifier.
   data rather than a rule, and `coverage_reports.py negatives` already derives
   staleness from the server version, so a guard pinning these three stamps would
   pin the value the next legitimate re-ask has to move
+- #731: guard the Stop hook's silence rules and its two opt-outs with one test
+  (INV-054 and INV-055 shipped with `stop-nudge.py` and no test cited either, by
+  ID or by behavior) — `tests/test_stop_nudge_silence_and_opt_outs.py` runs the
+  hook as a subprocess and asserts that an unreadable `transcript_path` and
+  `stop_hook_active: true` stay silent, that a settled turn whose last assistant
+  message has no pointer blocks, and that each documented opt-out silences that
+  same blocking payload. The block case runs inside every silence case instead
+  of being a test of its own, because a hook that is silent through being broken
+  passes the silence cases alone. The file names the third uncited rule from the
+  same source spec in words rather than by ID: writing the number would have
+  retired it from `coverage_reports.py invariants` while nothing asserted it. No
+  shipped file changed, and the change establishes no invariant
