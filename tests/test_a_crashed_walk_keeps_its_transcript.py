@@ -185,7 +185,11 @@ class ACrashedWalkKeepsEveryTurnItCompleted(unittest.TestCase):
                               OPENING, False, 600)
 
         self.assertEqual(3, len(snapshots))
-        self.assertEqual([], snapshots[0], "turn 1 cannot have a predecessor on disk")
+        # The walk writes one `walk_isolation` preamble before turn 1 (#733). No *turn* may
+        # precede turn 1, which is what this assertion is about, so it is stated that way
+        # rather than relaxed to "whatever happens to be there".
+        self.assertEqual(["walk_isolation"], [e["type"] for e in snapshots[0]],
+                         "turn 1 cannot have a predecessor on disk beyond the preamble")
         for turn, seen in enumerate(snapshots[1:], start=2):
             with self.subTest(turn=turn):
                 kinds = [e["type"] for e in seen]
@@ -195,6 +199,7 @@ class ACrashedWalkKeepsEveryTurnItCompleted(unittest.TestCase):
                                  "there")
                 self.assertEqual(turn - 1, kinds.count("bootcamper"))
                 self.assertNotIn("walk_stop", kinds)
+                self.assertEqual(1, kinds.count("walk_isolation"))
 
     def test_main_exits_non_zero_after_an_abnormal_end_and_zero_otherwise(self):
         def run(dies_at):

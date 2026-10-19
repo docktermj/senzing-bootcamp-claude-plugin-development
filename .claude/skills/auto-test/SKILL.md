@@ -96,7 +96,8 @@ Each run builds `~/senzing-autotest/runs/<timestamp>-<persona>/`.
 | **git worktree pinned to a SHA** | you will edit the repo while runs execute; an unpinned run tests half-saved files and its findings are unattributable |
 | Per-run `mcp.json` + `--strict-mcp-config` | the run sees Senzing and nothing else — none of your authenticated claude.ai connectors |
 | Distinct `--session-id` | concurrent runs never share history |
-| `--isolate-config` (opt-in) | own `CLAUDE_CONFIG_DIR`; isolates state but **not credentials**, so it needs `ANTHROPIC_API_KEY` |
+| **Instruction isolation** (always) | `--setting-sources project,local` on every `claude` call, so the walk reads the sandbox's instruction files and none of the host user's — a `~/.claude/CLAUDE.md` rule is otherwise obeyed by the guide and then scored as the plugin's behavior (#733). It leaves `CLAUDE_CONFIG_DIR` alone, so it costs no credentials; where the CLI cannot take the flag, the report names every host instruction file the run could read |
+| `--isolate-config` (opt-in) | own `CLAUDE_CONFIG_DIR` for session state; isolates state but **not credentials**, so it needs `ANTHROPIC_API_KEY`. ⚠️ Not what isolates instructions: the user instruction file is `$CLAUDE_CONFIG_DIR/CLAUDE.md`, so moving that directory takes the credentials with it |
 
 The sandbox is removed at the end unless `--keep`.
 

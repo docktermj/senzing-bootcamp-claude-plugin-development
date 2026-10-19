@@ -48,6 +48,23 @@ the walk. Any other reply that starts with ``/``, such as a path, is sent with o
 space (``as_turn``), which the CLI does not parse as a command. The opening message is
 sent as given.
 
+The host's instruction files stay out (#733)
+-------------------------------------------
+⛔ **The bootcamp process MUST run under instruction files belonging to the run, never the
+host's, or the report MUST name the host instruction files it could read.** Phase 3 measures
+the guide's literal output, so a host ``~/.claude/CLAUDE.md`` rule such as "end every response
+with a 👉 **Suggested next step:** line" is obeyed by the guide and then scored as the
+plugin's behavior: one walk filed 13 BREAKING ``INV-251-multi-question`` findings against
+plugin text that is correct, and whether a given run was contaminated was not visible in its
+report. MCP servers were isolated and instructions were not, one step short of the thing
+phase 3 measures.
+
+``INSTRUCTION_SOURCES`` is what keeps them out, on every call and by default. ⛔ **Do not
+isolate instructions by moving ``CLAUDE_CONFIG_DIR`` (what ``--isolate-config`` does):** the
+user-level instruction file is ``$CLAUDE_CONFIG_DIR/CLAUDE.md``, so relocating that directory
+takes the credentials with it and the child exits "Not logged in" without
+``ANTHROPIC_API_KEY`` — and the walk that found this defect ran without one.
+
 A crashed walk keeps its transcript (#732)
 ------------------------------------------
 ⛔ **A walk's transcript MUST hold every turn the walk completed, whatever ended the walk:
@@ -83,6 +100,22 @@ POINTER = "\U0001f449"
 # files noise upstream under a real name and work email, `download_resource` pulls
 # arbitrary payloads.
 FORBIDDEN_TOOLS = ("mcp__senzing__submit_feedback", "mcp__senzing__download_resource")
+
+# ⛔ Instruction isolation, applied to both processes of every walk (#733). The host's
+# user-level instruction files are dropped by naming the setting sources the run keeps;
+# `CLAUDE_CONFIG_DIR` is left alone, so the host's credentials still resolve and a walk still
+# runs with no `ANTHROPIC_API_KEY`. The sandbox project's own instruction files are kept on
+# purpose: they are part of what the walk is testing.
+INSTRUCTION_SOURCES = ("--setting-sources", "project,local")
+
+# The user-level instruction files a `claude` child reads out of its config directory. A
+# contaminated run names the ones that exist rather than claiming the whole set.
+USER_INSTRUCTION_FILES = ("CLAUDE.md", "CLAUDE.local.md", "AGENTS.md")
+
+# Probed once per process, because the answer cannot change inside one walk and the probe
+# costs a `claude --help`. Tests set it directly.
+_SUPPORTS_SETTING_SOURCES = None
+
 
 # Different Bootcampers break different things. A single cooperative persona is the
 # main reason an automated walk is weaker than a human one, so rotate them.
@@ -220,6 +253,58 @@ class EventLog:
         self._handle.close()
 
 
+def user_config_dir():
+    """The directory a ``claude`` child reads its user-level instruction files from."""
+    override = os.environ.get("CLAUDE_CONFIG_DIR")
+    return Path(override) if override else Path.home() / ".claude"
+
+
+def supports_instruction_isolation(timeout=60):
+    """Whether the installed CLI takes ``--setting-sources`` (checked against 2.1.303).
+
+    A CLI that does not would reject the flag and end the walk at turn 1. Walking anyway and
+    disclosing the contamination is the better failure: refusing to run at all is exactly
+    what ruled ``--isolate-config`` out as a default (#733).
+    """
+    try:
+        result = subprocess.run(["claude", "--help"], capture_output=True, text=True,
+                                timeout=timeout)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return INSTRUCTION_SOURCES[0] in (result.stdout or "")
+
+
+def instructions_isolated():
+    """Whether this process can keep the host's instruction files out of a child."""
+    global _SUPPORTS_SETTING_SOURCES
+    if _SUPPORTS_SETTING_SOURCES is None:
+        _SUPPORTS_SETTING_SOURCES = supports_instruction_isolation()
+    return _SUPPORTS_SETTING_SOURCES
+
+
+def instruction_sources():
+    """The isolation flags one ``claude`` call carries, or nothing when it cannot."""
+    return list(INSTRUCTION_SOURCES) if instructions_isolated() else []
+
+
+def readable_host_instructions(project, isolated):
+    """Host instruction files the bootcamp process can still read, as paths (#733).
+
+    Two layers reach a child. The **user** layer is the config directory's own instruction
+    files, which isolation drops. The **project** layer is every directory above the sandbox,
+    which isolation keeps and must — the project's own files are part of what the walk tests
+    — so a host file in one of those parents is read either way and belongs in the report
+    whichever mode the walk ran in.
+    """
+    found = []
+    if not isolated:
+        config = user_config_dir()
+        found += [config / name for name in USER_INSTRUCTION_FILES]
+    for parent in Path(project).resolve().parents:
+        found += [parent / name for name in USER_INSTRUCTION_FILES]
+    return [str(path) for path in found if path.is_file()]
+
+
 def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
     result = subprocess.run(
         ["claude", *args], cwd=str(cwd), input=stdin_text, timeout=timeout,
@@ -254,7 +339,10 @@ def bootcamper_reply(prompt_text, persona, model, timeout=180):
                   "Reply as yourself, with only what you would type.",
             "--append-system-prompt", brief,
             "--output-format", "text",
-            # No tools and no MCP: this process only produces text.
+            # No tools and no MCP: this process only produces text. Its instruction files
+            # are isolated as well: a host rule shapes what the Bootcamper types back, and
+            # what the Bootcamper types is what the next guide turn answers (#733).
+            *instruction_sources(),
             "--strict-mcp-config",
             "--disallowedTools", "Bash", "Read", "Write", "Edit", "Glob", "Grep",
             "WebFetch", "WebSearch", "Task", "NotebookEdit"]
@@ -279,8 +367,10 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
         # ANTHROPIC_API_KEY in the environment the child exits "Not logged in".
         env["CLAUDE_CONFIG_DIR"] = str(config_dir)
 
+    isolated = instructions_isolated()
     base = ["--plugin-dir", str(PLUGIN_DIR),
             "--mcp-config", str(mcp_config), "--strict-mcp-config",
+            *instruction_sources(),
             "--disallowedTools", *FORBIDDEN_TOOLS,
             "--permission-mode", "bypassPermissions",
             "--output-format", "stream-json", "--verbose",
@@ -290,6 +380,17 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
     flags = {"--model": model} if model else {}
 
     log = EventLog(out_path)
+    # Written before the first turn, so a walk that dies mid-turn still says what it ran
+    # under. `autotest.py` reads it and discloses any file named here in the report.
+    host_instructions = readable_host_instructions(project, isolated)
+    log.event(type="walk_isolation", instructions_isolated=isolated,
+              mechanism=" ".join(INSTRUCTION_SOURCES) if isolated else None,
+              host_instruction_files=host_instructions)
+    print("  instructions: "
+          + (f"isolated ({' '.join(INSTRUCTION_SOURCES)})" if isolated
+             else "NOT isolated; this CLI has no " + INSTRUCTION_SOURCES[0])
+          + (f"; readable host instruction files: {', '.join(host_instructions)}"
+             if host_instructions else ""))
     message = opening
     # Without a banner the walk is `turns` long; with one, it is open-ended until the
     # banner shows, then `turns` more. `max_turns` caps both.
@@ -431,8 +532,12 @@ def main(argv=None):
     # back "Unknown command", which the walk would otherwise record as a zero-finding
     # clean run — a false pass rather than an error.
     ap.add_argument("--opening", default="/senzing-bootcamp:start-bootcamp")
+    # ⛔ Not what keeps the host's instruction files out: that is on by default and costs
+    # no credentials (INSTRUCTION_SOURCES). This isolates session state, and the price of
+    # moving CLAUDE_CONFIG_DIR is an API key (#733).
     ap.add_argument("--isolate-config", action="store_true",
-                    help="per-run CLAUDE_CONFIG_DIR (needs ANTHROPIC_API_KEY)")
+                    help="per-run CLAUDE_CONFIG_DIR for session state "
+                         "(needs ANTHROPIC_API_KEY; instructions are isolated anyway)")
     ap.add_argument("--timeout", type=int, default=600)
     args = ap.parse_args(argv)
 

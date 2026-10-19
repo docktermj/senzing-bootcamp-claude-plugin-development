@@ -17,9 +17,17 @@ Isolation, and why each layer is here
 * **A per-run MCP config** with ``--strict-mcp-config``, so the run sees the Senzing
   server and nothing else — none of your authenticated claude.ai connectors.
 * **A distinct session id** per walk, so concurrent runs never share history.
+* **The host's instruction files, by default** (``walk.py``'s
+  ``INSTRUCTION_SOURCES``). The bootcamp process reads the sandbox's instruction
+  files and none of the host user's, so a rule in ``~/.claude/CLAUDE.md`` is not
+  obeyed by the guide and then scored as the plugin's behavior. It leaves
+  ``CLAUDE_CONFIG_DIR`` alone, so this costs no credentials.
+  ⛔ **A walk that could read a host instruction file MUST say so in its report,
+  naming the file and its path** -- a contaminated run must never read as a clean
+  one (#733).
 * **Optional ``CLAUDE_CONFIG_DIR``** (``--isolate-config``). Isolates session state
   but NOT credentials — it needs ``ANTHROPIC_API_KEY`` or the child exits
-  "Not logged in".
+  "Not logged in". It is not what isolates instructions.
 
 When the walk fails
 -------------------
@@ -109,6 +117,38 @@ def write_mcp_config(root):
     path.write_text(json.dumps(
         {"mcpServers": {"senzing": {"type": "http", "url": MCP_URL}}}, indent=2))
     return path
+
+
+def instruction_disclosure(transcript):
+    """The coverage limit a walk owes the report when a host rule could have shaped it.
+
+    ``walk.py`` records what the bootcamp process could read as the transcript's first
+    event. Naming the files is the whole point: a host instruction file is obeyed by the
+    guide and then scored against the plugin, so a run that could read one must never read
+    as a clean one (#733). Returns ``None`` when there is nothing to disclose.
+    """
+    try:
+        with transcript.open(encoding="utf-8", errors="replace") as handle:
+            for index, line in enumerate(handle):
+                # The event is the transcript's first line; a few more are read so a future
+                # preamble cannot silently drop the disclosure.
+                if index > 10:
+                    break
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if event.get("type") != "walk_isolation":
+                    continue
+                files = event.get("host_instruction_files") or []
+                if not files:
+                    return None
+                return ("the bootcamp process could read host instruction files, so a rule "
+                        "of the host's is scored as the plugin's behavior: "
+                        + ", ".join(files))
+    except OSError:
+        return None
+    return None
 
 
 def main(argv=None):
@@ -225,6 +265,10 @@ def main(argv=None):
                 report["coverage_limits"].append(
                     "the walk produced no transcript, so no interaction invariant "
                     "was checked")
+
+            disclosure = instruction_disclosure(transcript)
+            if disclosure:
+                report["coverage_limits"].append(disclosure)
 
             report["coverage_limits"].append(
                 "the Bootcamper was simulated, so a clean walk is weak evidence — "
