@@ -3624,8 +3624,12 @@ limits always state what a walk could not show or that none ran. The report
 `--report-dir` (default `REPORT_DIR`, `~/senzing-autotest/reports/`; created
 if missing) as `<stamp>-<persona>.json`, with the transcript copied beside it
 and a `latest.json` copy; `/dry-run --draft` passes `<run-dir>/walk/` (#609).
-`--json` prints it, else a BREAKING/WATCH summary. The worktree and (unless `--keep`) the sandbox are
-removed in `finally`. Exit 1 if any finding is BREAKING, else 0.
+`--json` prints it, else a BREAKING/WATCH summary. A non-zero exit from
+`walk.py` is a BREAKING `walk-failed` finding carrying the walk's last stderr
+line, never a coverage limit, and the walk's whole stderr is printed whenever
+the walk failed, whatever its stdout held (#732). The worktree and (unless
+`--keep`) the sandbox are removed in `finally`. Exit 1 if any finding is
+BREAKING, else 0.
 
 `mcp_probe.py` talks JSON-RPC (stdlib `urllib`, no Claude process) to
 `DEFAULT_URL`. Replies may be plain JSON or SSE `data:` frames; an RPC `error`
@@ -3694,7 +3698,8 @@ no tools, run from `$HOME`, the `BOOTCAMPER_BRIEF` (an insurance-company
 Bootcamper on Linux who knows SQL and Python, replies only what they would
 type) plus one of five `PERSONAS`, on `--bootcamper-model` (default a Haiku
 model). Each turn appends A's JSON events and a `bootcamper` event to the
-transcript. B's reply goes to A as typed, except a leading `/` (#656): each
+transcript file through `EventLog`, flushed as they are produced, so a walk
+that dies at turn 68 of 150 leaves 68 turns on disk (#732). B's reply goes to A as typed, except a leading `/` (#656): each
 leading line that is exactly `/effort <level>` or `/model <name>`
 (`SLASH_FLAGS`, parsed by `split_reply`) becomes a sticky `--effort` or
 `--model` flag on that turn's call and every later one, the latest value
@@ -3705,7 +3710,9 @@ with one leading space (`as_turn`), so the CLI does not run it as a command;
 the opening is sent as given. A reply of only slash lines is re-asked once
 with the same guide turn, and a second one stops the walk. The loop stops when
 A exits non-zero (a `walk_error` event), when a turn shows no 👉, when B
-returns nothing, when B twice replies only with slash commands, or at the turn
+returns nothing, when B twice replies only with slash commands, when either
+`claude` call raises `subprocess.TimeoutExpired` (caught at both call sites,
+never propagated), or at the turn
 limit: `--turns`
 turns; with `--stop-at-banner`, until a turn shows that banner, then `--turns`
 more (#571). `banner_seen` matches only a line of its own that equals the
@@ -3713,13 +3720,16 @@ banner, ignoring case and runs of whitespace, as it stands or with one
 `BANNER_FRAME` (three of one non-ASCII glyph each side) stripped, so a journey
 map's `⬜ Bootcamp graduation` or a transition question does not match (#657).
 `--max-turns` (default 150) caps both. Every walk ends the transcript with a `walk_stop`
-event (`turn`, `reason`, `stop_at_banner`, `banner_turn`); a stop at the cap
-reads `--max-turns N reached`. If turn 1 shows "Unknown command"
-or under 200 characters, it writes the transcript and exits via `SystemExit`
+event (`turn`, `reason`, `stop_at_banner`, `banner_turn`), written from a
+`try/finally` around the turn loop, so an abnormal end is recorded as well as
+survived and its `reason` names the exception; a stop at the cap
+reads `--max-turns N reached`. `run_walk` returns the number of events written
+and that reason when the end was abnormal, else `None`. If turn 1 shows
+"Unknown command" or under 200 characters, it exits via `SystemExit`
 with a message (a silent non-start must not read as a clean run).
 `--isolate-config` sets `CLAUDE_CONFIG_DIR` to `<project>/.claude-config`
 (needs `ANTHROPIC_API_KEY`). Exit codes: 2 if `--project` is not a directory,
-1 from the non-start `SystemExit`, else 0.
+1 from the non-start `SystemExit` or after any abnormal end, else 0.
 
 `transcript_lint.py` lints a stream-json transcript offline: it keeps the text
 blocks of each `assistant` event as one turn and runs `CHECKS`. BREAKING
@@ -5197,6 +5207,17 @@ Rules:
 BANNER_FRAME = re.compile(r"^([^\x00-\x7f])\1\1 (.+?) \1\1\1$")
 SLASH_FLAGS = {"/effort": "--effort", "/model": "--model"}
 SLASH_LINE = re.compile(r"(\S+) (\S+)")
+class EventLog:
+    def __init__(self, path):
+        ...
+    def write(self, line):
+        ...
+    def extend(self, lines):
+        ...
+    def event(self, **fields):
+        ...
+    def close(self):
+        ...
 def visible_text(stream_json_text):
     ...
 def banner_seen(banner, text):
@@ -10044,8 +10065,11 @@ def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
 <!-- markdownlint-enable MD013 -->
 
 - `_claude`: `test_dry_run_simulated_phase3.py` (patched with a stub, so the
-  walk's stop condition runs offline and spends no tokens) and
-  `test_walk_slash_replies.py` (the stub records each call's argv)
+  walk's stop condition runs offline and spends no tokens),
+  `test_walk_slash_replies.py` (the stub records each call's argv) and
+  `test_a_crashed_walk_keeps_its_transcript.py` (the stub raises
+  `subprocess.TimeoutExpired` at a chosen turn, and reads the transcript file
+  between turns)
 
 ### 7.11 `.claude/skills/auto-test/mcp_probe.py`
 
@@ -10179,7 +10203,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 441 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 443 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10229,23 +10253,24 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8269 test methods in 442 files, matching `inventory.test_count_total`.
+There are 8279 test methods in 443 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8269.
+sum to 8279.
 
-Two files run more tests than they define, so discovery collects 8276:
+Two files run more tests than they define, so discovery collects 8286:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8264`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8279`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8271`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8286`. No other count
 looks wrong.
 
+- `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
 - `tests/test_a_single_statement_claim_names_its_authority.py`: 11
 - `tests/test_absent_field_suspects_flags_first.py`: 10
@@ -13376,3 +13401,14 @@ Senzing licensing, with no SPDX identifier.
   same source spec in words rather than by ID: writing the number would have
   retired it from `coverage_reports.py invariants` while nothing asserted it. No
   shipped file changed, and the change establishes no invariant
+- #732: a crashed simulated walk keeps its transcript, and a walk that ended
+  abnormally is a finding rather than a coverage limit (a 68-turn, 37-minute
+  walk died mid-turn, left nothing on disk, and the run reported "the walk
+  produced no transcript" and exited 0) — `walk.py` appends each event to
+  `--out` and flushes it as it is produced, closes the transcript with a
+  `walk_stop` event written from a `try/finally` around the turn loop, catches
+  `subprocess.TimeoutExpired` from both `claude` calls, and exits non-zero
+  after an abnormal end; `autotest.py` reads that exit code, files a BREAKING
+  `walk-failed` finding for it, and prints the walk's stderr whenever the walk
+  failed, since `stdout or stderr` short-circuited on 68 turn lines and dropped
+  the traceback that would have named the cause

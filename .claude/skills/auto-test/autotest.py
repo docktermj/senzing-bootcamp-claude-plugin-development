@@ -21,6 +21,15 @@ Isolation, and why each layer is here
   but NOT credentials — it needs ``ANTHROPIC_API_KEY`` or the child exits
   "Not logged in".
 
+When the walk fails
+-------------------
+⛔ **A walk that ended abnormally MUST be reported as a failure of the run rather than as a
+coverage limit: the run exits non-zero for it, and the walk's stderr is printed whenever the
+walk failed, whatever its stdout held.** A 68-turn walk died mid-turn, and this file filed it
+as "the walk produced no transcript" and exited 0 -- while ``walk.stdout or walk.stderr``
+short-circuited on 68 turn lines and dropped the traceback that would have named the cause,
+which is why that cause is still unknown (#732).
+
 Usage:
     autotest.py                      # MCP checks only (fast, free)
     autotest.py --walk               # + a simulated bootcamp walk
@@ -178,7 +187,28 @@ def main(argv=None):
                            if args.stop_at_banner else [])
                         + (["--model", args.model] if args.model else [])
                         + (["--isolate-config"] if args.isolate_config else []))
-            print(walk.stdout.rstrip() or walk.stderr.rstrip()[:400])
+            if walk.stdout.strip():
+                print(walk.stdout.rstrip())
+            # A traceback goes to stderr, and `stdout or stderr` never reached it: the turn
+            # lines had already filled stdout. On a failure the whole of stderr is printed,
+            # because a traceback names its exception on the LAST line, so a head-trimmed
+            # copy keeps the frames and loses the cause (#732).
+            if walk.stderr.strip() and (walk.returncode != 0 or not walk.stdout.strip()):
+                print(walk.stderr.rstrip() if walk.returncode != 0
+                      else walk.stderr.rstrip()[:400])
+
+            if walk.returncode != 0:
+                # A finding of its own, at BREAKING, so the run exits non-zero: a documented
+                # path is broken now, and the turns after the stop were never walked (#732).
+                tail = walk.stderr.strip().splitlines()
+                report["findings"].append({
+                    "severity": "BREAKING", "code": "walk-failed", "source": "walk",
+                    "message": (
+                        f"the walk exited {walk.returncode}, so it stopped before it had "
+                        "walked the turns asked of it and everything past that point is "
+                        "untested: "
+                        + (tail[-1].strip()[:200] if tail else "nothing on stderr")),
+                })
 
             if transcript.is_file() and transcript.stat().st_size > 0:
                 lint = _run([sys.executable, str(SKILL_DIR / "transcript_lint.py"),

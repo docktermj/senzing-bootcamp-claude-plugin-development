@@ -470,8 +470,9 @@ class TheWalkStopsOffline(unittest.TestCase):
         self.assertEqual(stop["reason"], "--turns 3 reached")
 
     def test_main_defaults_max_turns_to_150(self):
+        # `run_walk` returns (events written, the abnormal-end reason or None) since #732.
         with tempfile.TemporaryDirectory() as tmp, \
-                mock.patch.object(walk, "run_walk", return_value=0) as run, \
+                mock.patch.object(walk, "run_walk", return_value=(0, None)) as run, \
                 redirect_stdout(io.StringIO()):
             walk.main(["--project", tmp, "--out", str(Path(tmp) / "t.jsonl"),
                        "--mcp-config", str(Path(tmp) / "m.json")])
