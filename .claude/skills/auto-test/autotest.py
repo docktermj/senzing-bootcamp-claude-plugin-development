@@ -251,8 +251,14 @@ def main(argv=None):
                 })
 
             if transcript.is_file() and transcript.stat().st_size > 0:
+                # --project: the apparatus check reads the sandbox's verbosity
+                # preset, because INV-096 suppresses the time estimate under
+                # `minimal` and a check with no notion of the preset reported the
+                # guide's conformance as a finding (#734). The sandbox still
+                # exists here; it is removed in the `finally` below.
                 lint = _run([sys.executable, str(SKILL_DIR / "transcript_lint.py"),
-                             str(transcript), "--phase", args.phase, "--json"])
+                             str(transcript), "--phase", args.phase,
+                             "--project", str(project), "--json"])
                 try:
                     lint_findings = json.loads(lint.stdout or "[]")
                 except json.JSONDecodeError:

@@ -3615,9 +3615,11 @@ coverage limit), a per-run `mcp.json` naming only `MCP_URL`, then
 limit; findings tagged `source: mcp`). With `--walk` it scaffolds a project
 via `dry-run`'s `scaffold_project.py` (`--seed fresh|seeded`; bare dirs on
 failure), runs `walk.py` (passing `--max-turns`, default 150, and
-`--stop-at-banner`, `--model`, `--isolate-config`), lints a
-non-empty transcript with `transcript_lint.py --phase <phase> --json`
-(`source: transcript`), and lists project files as `artifacts`; coverage
+`--stop-at-banner`, `--model`, `--isolate-config`), lints a non-empty
+transcript with
+`transcript_lint.py --phase <phase> --project <project> --json`
+(`source: transcript`; the sandbox still exists there, so the apparatus
+check can read its verbosity preset), and lists project files as `artifacts`; coverage
 limits always state what a walk could not show or that none ran. The report
 (`run`, `sandbox`, `persona`, `plugin_sha`, `findings`, `coverage_limits`,
 `report_path`, `transcript_path`, `artifacts`) goes outside the sandbox to
@@ -3764,11 +3766,26 @@ before/after, step overview, time estimate or model nudge is BREAKING
 line, or two consecutive lines starting ✅, 🔄 or ⬜ (one status line is not
 one); a time estimate is a line opening with ⏱, `roughly|about|takes|approx`
 before a single figure or a `-`, `–` or "to" range of minutes, or "hard to
-estimate"; before/after takes `/`, `and`, `→` or `->`. `--selftest` is a
-negative control: each check must fire on built-to-break input and stay
-silent on good input, including a well-formed numbered-options question, the
-plugin's renderings in `_APPARATUS_RENDERINGS`, and the preparation close in
-`_EXEMPT_PHASE_TEXT` (no INV-075). Exit codes: selftest 0 or 1; missing
+estimate". Three carry a structural alternative beside the name-based one,
+because the apparatus is specified by what it conveys rather than pinned as
+wording (#734): before/after takes `/`, `and`, `→` or `->` **or** a
+present-state/end-state pair of run-in bold labels inside one paragraph, and
+a step overview takes "step overview", "what we'll do|cover" **or** a short
+label line standing directly over three consecutive numbered items. Both
+structural forms are narrow deliberately, since the same patterns raise
+INV-075 in the exempt phases and a loose one would invent a breach against a
+conforming module. The time estimate is graded against the project's
+verbosity preset, which `verbosity_preset` reads from
+`<project>/config/bootcamp_preferences.yaml`: INV-096 suppresses it entirely
+under `minimal`, so its absence there is silent; under any other readable
+preset it is the WATCH finding above; and where no preset can be read the
+absence is INFO `INV-096-estimate-ungraded`, naming the file it looked in,
+because an unreadable preset is a coverage limit rather than a pass or a
+finding. `--selftest` is a negative control: each check must fire on
+built-to-break input and stay silent on good input, including a well-formed
+numbered-options question, the plugin's renderings in
+`_APPARATUS_RENDERINGS`, the three preset outcomes for the estimate, and the
+exempt-phase text in `_EXEMPT_PHASE_TEXT` (no INV-075). Exit codes: selftest 0 or 1; missing
 transcript argument is an argparse usage error (2); 2 when no assistant turns
 are found; otherwise 1 if any BREAKING finding, else 0. `--json` prints the
 findings list.
@@ -5137,19 +5154,36 @@ REPO_ROOT = SKILL_DIR.parent.parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 BREAKING, WATCH, INFO = "BREAKING", "WATCH", "INFO"
 _STATUS = "[✅🔄⬜]"
+_LABEL = r"\*\*[^*\n]{{0,44}}\b(?:{words})\b[^*\n]{{0,44}}\*\*"
+_SAME_PARAGRAPH = r"(?:[^\n]|\n(?!\s*\n)){0,600}?"
+_PRESENT_STATE = (r"where you are|where you'?re starting|right now|currently|today"
+                  r"|starting point|before")
+_END_STATE = (r"by the end|by the time|at the end|end state|after"
+              r"|(?:when|once) (?:you|we)(?:'re| are) done")
+_LABELED_LIST = (r"^[ \t]*(?:\*\*|\#{1,6}[ \t]*)[A-Za-z][\w' \t-]{0,22}\**:?[ \t]*\n"
+                 r"[ \t]*1[.)][ \t]+\S[^\n]*\n[ \t]*2[.)][ \t]+\S[^\n]*\n[ \t]*3[.)][ \t]+\S")
 APPARATUS = {
     "journey map": re.compile(
         r"(?im)journey map"
         r"|^[^\w\n]*your journey[^\w\n]*$"
         rf"|^[ \t]*{_STATUS}[^\n]*\n[ \t]*{_STATUS}"),
-    "before/after": re.compile(r"(?i)\bbefore\s*(?:/|and|→|->)\s*after\b"),
-    "step overview": re.compile(r"(?i)step overview|what we'?ll (?:do|cover)"),
+    "before/after": re.compile(
+        r"(?i)\bbefore\s*(?:/|and|→|->)\s*after\b"
+        "|" + _LABEL.format(words=_PRESENT_STATE)
+        + _SAME_PARAGRAPH + _LABEL.format(words=_END_STATE)),
+    "step overview": re.compile(
+        r"(?im)step overview|what we'?ll (?:do|cover)"
+        rf"|{_LABELED_LIST}"),
     "time estimate": re.compile(
         r"(?im)^[^\w\n]*⏱"
         r"|\b(?:roughly|about|takes|approx\w*)\s+\d+(?:\s*(?:-|–|to)\s*\d+)?\s*minutes?\b"
         r"|\bhard to estimate\b"),
     "model nudge": re.compile(r"(?i)\b(?:opus|sonnet|haiku)\s*5?\b.*\beffort\b|switch (?:to|the) model"),
 }
+PREFERENCES = Path("config") / "bootcamp_preferences.yaml"
+_PRESET = re.compile(
+    r"(?m)^verbosity:[ \t]*(?:([A-Za-z]+)[ \t]*$"
+    r"|\n(?:[ \t]+[^\n]*\n)*?[ \t]+preset:[ \t]*([A-Za-z]+))")
 POINTER = "\U0001f449"  # 👉
 def load(path):
     ...
@@ -5159,7 +5193,9 @@ def check_module_numbers(turns):
     ...
 def check_or_joined_choices(turns):
     ...
-def check_apparatus(turns, phase):
+def verbosity_preset(project):
+    ...
+def check_apparatus(turns, phase, project=None):
     ...
 def check_internal_markers(turns):
     ...
@@ -5167,7 +5203,7 @@ def check_repeat_questions(turns):
     ...
 CHECKS = (check_one_pointer_per_turn, check_module_numbers, check_or_joined_choices,
           check_internal_markers, check_repeat_questions)
-def lint(turns, phase=None):
+def lint(turns, phase=None, project=None):
     ...
 def render(findings, turn_count):
     ...
@@ -8588,6 +8624,10 @@ From `.claude/skills/auto-test/transcript_lint.py`:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("transcript", nargs="?")
     ap.add_argument("--phase", choices=("preparation", "module0", "content"))
+    ap.add_argument("--project", default=None,
+                    help="the walked project directory, whose "
+                         "config/bootcamp_preferences.yaml holds the verbosity "
+                         "preset INV-096 grades the time estimate against")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--selftest", action="store_true")
 ```
@@ -10238,7 +10278,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 444 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 445 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10288,21 +10328,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8291 test methods in 444 files, matching `inventory.test_count_total`.
+There are 8305 test methods in 445 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8291.
+sum to 8305.
 
-Two files run more tests than they define, so discovery collects 8298:
+Two files run more tests than they define, so discovery collects 8312:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8291`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8305`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8298`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8312`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10319,6 +10359,7 @@ looks wrong.
 - `tests/test_answer_options_render_below_the_question.py`: 11
 - `tests/test_any_language_citations_name_the_right_rule.py`: 4
 - `tests/test_any_language_contract_complete.py`: 16
+- `tests/test_apparatus_check_reads_the_rendering.py`: 14
 - `tests/test_apparatus_exempt_carve_out_is_recorded.py`: 7
 - `tests/test_audit_files_issues_not_specs.py`: 11
 - `tests/test_audit_skill_reads_the_newest_entries.py`: 4
@@ -13462,3 +13503,18 @@ Senzing licensing, with no SPDX identifier.
   defect ran without `ANTHROPIC_API_KEY`. The negative control shows the host file
   reaching the guide before and not after, and the findings persisting either way,
   so an `INV-251-multi-question` finding of that shape has a second source
+- #734: `check_apparatus` grades the apparatus as the guide renders it and reads
+  the project's verbosity preset (a conforming Truth Set visualization opening
+  was reported as missing its before/after framing, its step overview and its
+  time estimate) — `before/after` and `step overview` gain a structural
+  alternative beside their name-based patterns, the way `journey map` already
+  had one, since the apparatus is specified by what it conveys and its wording
+  is not pinned; and the time estimate is read against
+  `config/bootcamp_preferences.yaml`, silent under `minimal`, which INV-096
+  requires it suppressed by, WATCH under any other readable preset, and INFO
+  `INV-096-estimate-ungraded` where no preset can be read, because an
+  unreadable preset is a coverage limit rather than a pass or a finding.
+  `autotest.py` passes `--project` while the sandbox still exists, and
+  `tests/test_apparatus_check_reads_the_rendering.py` runs the check over the
+  real walk turn the findings were raised against and over the same turn with
+  one item cut out of it

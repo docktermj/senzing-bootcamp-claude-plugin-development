@@ -24,12 +24,18 @@ regression net for changes that break a rule outright, not an audit.
 
 Usage:
     transcript_lint.py TRANSCRIPT.jsonl [--phase preparation|module0|content]
+                                        [--project PROJECT_DIR]
     transcript_lint.py --selftest
+
+``--project`` is the walked project directory. Only the apparatus check reads it,
+for the verbosity preset INV-096 grades the time estimate against; without it that
+one item is reported as ungraded rather than missing.
 """
 import argparse
 import json
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 SKILL_DIR = Path(__file__).resolve().parent
@@ -47,20 +53,65 @@ BREAKING, WATCH, INFO = "BREAKING", "WATCH", "INFO"
 # same patterns raise BREAKING INV-075 in the exempt phases, so the journey map
 # needs a heading line or a run of two or more status lines: a single status line
 # such as "✅ Bootcamp preparation complete" is not a journey map.
+#
+# ⛔ (INV-030, INV-031) A pattern here matches the RENDERED form, never the
+# maintainer's name for it. Three of the five carry a structural alternative
+# beside the name-based ones, and a name-based pattern alone is what #734 is:
+# "before/after framing" and "step overview" are the names ground-rules.md gives
+# the apparatus, not wording the guide is required to reproduce. Unlike a ⛔ gate
+# question, which INV-056 pins verbatim, this apparatus is specified by what it
+# must convey. A conforming module rendered it as a present-state/end-state pair
+# of run-in labels and as a short label line over a numbered list, and both
+# name-based patterns reported it missing. The journey map escaped that only
+# because it already carried a structural alternative, so the other two are given
+# the same kind rather than more synonyms for the name.
+#
+# ⚠️ The structural forms are deliberately narrow, because every pattern here
+# reads in BOTH directions. A loose one does not merely over-pass a content
+# module: it manufactures a BREAKING INV-075 against an exempt module whose
+# teaching prose happens to be a numbered list — Module 0's "**How it works, step
+# by step**" over five numbered stages, in the 2026-10-18 walk. So the pair must
+# sit in one paragraph, and the list must follow a short LABEL line (no comma, no
+# sentence), not any line at all.
 _STATUS = "[✅🔄⬜]"
+#: A run-in bold label holding one of ``words``, as the guide writes "**Where you are:**".
+_LABEL = r"\*\*[^*\n]{{0,44}}\b(?:{words})\b[^*\n]{{0,44}}\*\*"
+#: Text that never crosses a blank line, so a label pair is read within one paragraph.
+_SAME_PARAGRAPH = r"(?:[^\n]|\n(?!\s*\n)){0,600}?"
+_PRESENT_STATE = (r"where you are|where you'?re starting|right now|currently|today"
+                  r"|starting point|before")
+_END_STATE = (r"by the end|by the time|at the end|end state|after"
+              r"|(?:when|once) (?:you|we)(?:'re| are) done")
+#: A short label line — "**Steps**", "## Steps" — directly over three numbered items.
+_LABELED_LIST = (r"^[ \t]*(?:\*\*|\#{1,6}[ \t]*)[A-Za-z][\w' \t-]{0,22}\**:?[ \t]*\n"
+                 r"[ \t]*1[.)][ \t]+\S[^\n]*\n[ \t]*2[.)][ \t]+\S[^\n]*\n[ \t]*3[.)][ \t]+\S")
 APPARATUS = {
     "journey map": re.compile(
         r"(?im)journey map"
         r"|^[^\w\n]*your journey[^\w\n]*$"
         rf"|^[ \t]*{_STATUS}[^\n]*\n[ \t]*{_STATUS}"),
-    "before/after": re.compile(r"(?i)\bbefore\s*(?:/|and|→|->)\s*after\b"),
-    "step overview": re.compile(r"(?i)step overview|what we'?ll (?:do|cover)"),
+    "before/after": re.compile(
+        r"(?i)\bbefore\s*(?:/|and|→|->)\s*after\b"
+        "|" + _LABEL.format(words=_PRESENT_STATE)
+        + _SAME_PARAGRAPH + _LABEL.format(words=_END_STATE)),
+    "step overview": re.compile(
+        r"(?im)step overview|what we'?ll (?:do|cover)"
+        rf"|{_LABELED_LIST}"),
     "time estimate": re.compile(
         r"(?im)^[^\w\n]*⏱"
         r"|\b(?:roughly|about|takes|approx\w*)\s+\d+(?:\s*(?:-|–|to)\s*\d+)?\s*minutes?\b"
         r"|\bhard to estimate\b"),
     "model nudge": re.compile(r"(?i)\b(?:opus|sonnet|haiku)\s*5?\b.*\beffort\b|switch (?:to|the) model"),
 }
+
+#: Where the bootcamp keeps the preferences the guide writes, under the project directory.
+PREFERENCES = Path("config") / "bootcamp_preferences.yaml"
+#: ``verbosity: minimal`` or a ``verbosity:`` block with a ``preset:`` line. Read with a
+#: regex rather than a YAML parser: this harness is stdlib-only, and the one value needed
+#: here does not justify making PyYAML a dependency of the lint (INV-108's spirit).
+_PRESET = re.compile(
+    r"(?m)^verbosity:[ \t]*(?:([A-Za-z]+)[ \t]*$"
+    r"|\n(?:[ \t]+[^\n]*\n)*?[ \t]+preset:[ \t]*([A-Za-z]+))")
 
 POINTER = "\U0001f449"  # 👉
 
@@ -172,8 +223,47 @@ def check_or_joined_choices(turns):
     return out
 
 
-def check_apparatus(turns, phase):
-    """INV-075/078 exempt preparation and Module 0; content modules require it."""
+def verbosity_preset(project):
+    """The project's verbosity preset, lowercased, or None when it cannot be read.
+
+    None is "unknown", never "standard": a caller that cannot tell which preset was
+    in force must say so rather than grade against a guess.
+    """
+    if not project:
+        return None
+    try:
+        text = (Path(project) / PREFERENCES).read_text(encoding="utf-8",
+                                                       errors="replace")
+    except OSError:
+        return None
+    match = _PRESET.search(text)
+    if not match:
+        return None
+    return (match.group(1) or match.group(2)).lower()
+
+
+def check_apparatus(turns, phase, project=None):
+    """INV-075/078 exempt preparation and Module 0; content modules require it.
+
+    ``project`` is the bootcamper's project directory, whose
+    ``config/bootcamp_preferences.yaml`` carries the verbosity preset. The time
+    estimate is the one apparatus item a preset can switch off: INV-096 requires it
+    **suppressed entirely under ``minimal``** and kept to one line under ``concise``
+    (INV-011/INV-012). Grading it without reading the preset reported a breach
+    against a rule the guide was following — the seeded dry-run fixture sets
+    ``minimal``, the guide suppressed the estimate, and this check called it missing
+    (#734).
+
+    ⚠️ **An unreadable preset is a coverage limit, not a pass and not a finding.**
+    With no project directory the estimate's absence is reported at INFO, saying it
+    was not graded and why. Three states, not two: required and absent (WATCH),
+    suppressed by ``minimal`` (silent), ungraded (INFO).
+
+    ⛔ **What this does NOT check (INV-096):** that an estimate shown under
+    ``minimal`` is a breach of the same rule, which it is, nor the estimate's line
+    count under ``concise``. Both are gaps, stated so that a clean content lint is
+    not read as "INV-096 holds".
+    """
     out = []
     joined = "\n".join(turns)
     if phase in ("preparation", "module0"):
@@ -185,10 +275,25 @@ def check_apparatus(turns, phase):
                     f"{name} shown during {phase}, which is apparatus-exempt: "
                     f"{match.group(0)[:60]!r}"))
     elif phase == "content":
+        preset = verbosity_preset(project)
         for name, pattern in APPARATUS.items():
-            if not pattern.search(joined):
-                out.append(_finding(WATCH, "INV-028-apparatus-missing", 0,
-                                    f"content module showed no {name}"))
+            if pattern.search(joined):
+                continue
+            if name == "time estimate":
+                if preset == "minimal":
+                    continue          # INV-096 requires its absence here.
+                if preset is None:
+                    where = (f"{Path(project) / PREFERENCES}" if project
+                             else "no project directory was given (--project)")
+                    out.append(_finding(
+                        INFO, "INV-096-estimate-ungraded", 0,
+                        "content module showed no time estimate and the verbosity "
+                        f"preset could not be read from {where}; INV-096 suppresses "
+                        "the estimate under `minimal`, so this is ungraded rather "
+                        "than missing"))
+                    continue
+            out.append(_finding(WATCH, "INV-028-apparatus-missing", 0,
+                                f"content module showed no {name}"))
     return out
 
 
@@ -233,12 +338,12 @@ CHECKS = (check_one_pointer_per_turn, check_module_numbers, check_or_joined_choi
           check_internal_markers, check_repeat_questions)
 
 
-def lint(turns, phase=None):
+def lint(turns, phase=None, project=None):
     findings = []
     for check in CHECKS:
         findings.extend(check(turns))
     if phase:
-        findings.extend(check_apparatus(turns, phase))
+        findings.extend(check_apparatus(turns, phase, project))
     return findings
 
 
@@ -273,7 +378,9 @@ _BAD = [
 
 # The plugin's own wording for each apparatus item: ground-rules.md's estimate
 # example and its no-number form, graduation's en-dash range, the guide's heading,
-# status list and arrow label from the 2026-10-14 walk.
+# status list and arrow label from the 2026-10-14 walk, and — carrying no apparatus
+# name at all — the present-state/end-state pair and the "Steps" list the guide
+# rendered at two module openings in the 2026-10-18 walk (#734).
 _APPARATUS_RENDERINGS = (
     ("time estimate", "⏱️ Roughly 15-30 minutes, depending on download/install speed."),
     ("time estimate", "⏱️ Roughly 20–45 minutes. It varies with your machine."),
@@ -281,14 +388,43 @@ _APPARATUS_RENDERINGS = (
     ("journey map", "**Your journey**"),
     ("journey map", "✅ Bootcamp preparation\n🔄 **SDK setup**\n⬜ System verification"),
     ("before/after", "**Before → After:** You have a project directory but no SDK."),
+    ("before/after",
+     "**Where you are:** entity resolution is proven on a few synthetic records, but "
+     "you haven't seen it work visually. **By the end:** you'll have watched Senzing's "
+     "Truth Set resolve in an interactive web app on your machine."),
+    ("step overview",
+     "**Steps**\n1. Get the Truth Set from the Senzing server.\n"
+     "2. Register its data sources and load it.\n"
+     "3. Build and run the visualization in Java.\n"
+     "4. Explore it with a guided tour.\n"
+     "5. Clean up: stop the web service and remove the Truth Set data."),
+    ("step overview", "**What we'll do:**\n1. A quick data-privacy reminder."),
 )
 
-# Preparation-phase text that must not raise INV-075: the preparation close is one
-# status line, not a journey map (bootcamp-preparation/SKILL.md).
+#: Apparatus a content module must show whatever the verbosity preset says. The time
+#: estimate is not here: INV-096 suppresses it under `minimal`, so it is graded
+#: against the project's preset instead.
+_ALWAYS_REQUIRED = ("journey map", "before/after", "step overview", "model nudge")
+
+# Text from the apparatus-exempt stretches that must NOT raise INV-075. The
+# preparation close is one status line, not a journey map
+# (bootcamp-preparation/SKILL.md). The last two are the shapes #734's structural
+# fallbacks must not reach, both taken from the exempt stretch of the 2026-10-18
+# walk: Module 0's teaching list under a sentence heading, and a 👉 question's
+# numbered options. A fallback loose enough to match either would not merely
+# over-pass a content module — it would report a breach against a conforming one.
 _EXEMPT_PHASE_TEXT = (
     "✅ Bootcamp preparation complete",
     "✅ Bootcamp preparation complete — Path: Core (all 11 modules) — "
     "Detail level: minimal → Next: Entity Resolution Concepts",
+    "**How it works, step by step**\n1. Ingestion and standardization\n"
+    "2. Candidate selection (blocking or indexing)\n3. Comparison and scoring\n"
+    "4. Classification: match, no match, or possible match\n5. Entity clustering",
+    "\U0001f449 **What does a well-designed entity resolution system do with this "
+    "record? Reply with a number:**\n\n"
+    "1. Attach it to whichever of the three people looks most similar.\n"
+    "2. Create a new, fourth entity for it.\n"
+    "3. Mark it as ambiguous and hold it as a possible match.",
 )
 
 
@@ -314,17 +450,39 @@ def selftest():
     if not any(f["code"] == "INV-075-apparatus-in-exempt-phase" for f in apparatus):
         failures.append("apparatus check did not fire in an exempt phase")
 
-    # The plugin's own renderings of the apparatus (#658). Each must be recognized,
-    # or a content module that shows it is reported as missing it.
+    # The plugin's own renderings of the apparatus (#658, #734). Each must be
+    # recognized, or a content module that shows it is reported as missing it.
     for name, sample in _APPARATUS_RENDERINGS:
         if not APPARATUS[name].search(sample):
             failures.append(f"{name} pattern missed the plugin's rendering {sample!r}")
-    missing = {f["message"] for f in lint(["Starting the module now."], phase="content")
+    bare = ["Starting the module now."]
+    missing = {f["message"] for f in lint(bare, phase="content")
                if f["code"] == "INV-028-apparatus-missing"}
-    for name in ("journey map", "before/after", "time estimate"):
+    for name in _ALWAYS_REQUIRED:
         if f"content module showed no {name}" not in missing:
             failures.append(f"a content turn with no {name} was not flagged")
-    # A single status line is not a journey map, so the preparation close stays clean.
+    # The time estimate is graded against the project's verbosity preset (#734):
+    # required under `standard`, suppressed by INV-096 under `minimal`, and ungraded
+    # — neither a pass nor a finding — where no preset can be read.
+    with tempfile.TemporaryDirectory() as scratch:
+        for preset, code in (("standard", "INV-028-apparatus-missing"),
+                             ("minimal", None),
+                             (None, "INV-096-estimate-ungraded")):
+            project = None
+            if preset:
+                project = Path(scratch) / preset
+                (project / PREFERENCES.parent).mkdir(parents=True, exist_ok=True)
+                (project / PREFERENCES).write_text(
+                    f"path: core\nverbosity:\n  preset: {preset}\n", encoding="utf-8")
+            got = sorted({f["code"] for f in check_apparatus(bare, "content", project)
+                          if "time estimate" in f["message"]})
+            if got != ([code] if code else []):
+                failures.append(
+                    f"a content turn with no time estimate, under preset {preset!r}, "
+                    f"produced {got} rather than {[code] if code else []}")
+
+    # A single status line is not a journey map, and an ordinary numbered list is not
+    # a step overview, so the exempt stretches stay clean.
     for line in _EXEMPT_PHASE_TEXT:
         hits = [f for f in lint([line], phase="preparation")
                 if f["code"] == "INV-075-apparatus-in-exempt-phase"]
@@ -354,8 +512,8 @@ def selftest():
         for line in failures:
             print(f"SELFTEST FAIL: {line}", file=sys.stderr)
         return 1
-    checks = (len(expected) + 4 + len(_APPARATUS_RENDERINGS) + 3
-              + len(_EXEMPT_PHASE_TEXT))
+    checks = (len(expected) + 4 + len(_APPARATUS_RENDERINGS) + len(_ALWAYS_REQUIRED)
+              + 3 + len(_EXEMPT_PHASE_TEXT))
     print(f"selftest: all {checks} checks behave — each fires on bad "
           "input and stays silent on good input")
     return 0
@@ -366,6 +524,10 @@ def main(argv=None):
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("transcript", nargs="?")
     ap.add_argument("--phase", choices=("preparation", "module0", "content"))
+    ap.add_argument("--project", default=None,
+                    help="the walked project directory, whose "
+                         "config/bootcamp_preferences.yaml holds the verbosity "
+                         "preset INV-096 grades the time estimate against")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args(argv)
@@ -380,7 +542,7 @@ def main(argv=None):
         print(f"no assistant turns found in {args.transcript} — did the walk run?",
               file=sys.stderr)
         return 2
-    findings = lint(turns, args.phase)
+    findings = lint(turns, args.phase, args.project)
     if args.json:
         print(json.dumps(findings, indent=2))
     else:
