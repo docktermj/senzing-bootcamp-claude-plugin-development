@@ -13329,3 +13329,18 @@ Senzing licensing, with no SPDX identifier.
   and not others. An INV-107 `PROPOSED AMENDMENT` is queued, withdrawing that
   invariant's count in favor of the property (the issue itself was filed with a
   count that went stale before it was built, which is the case for the rule)
+- #730: restamp three dated `MCP-NEGATIVE` markers to `server 1.39.1,
+  2026-10-18` and nothing else —
+  `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md:304`,
+  `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md:378` and
+  `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md:516`
+  were re-asked live on 1.39.1 and both halves of each, the claim and the
+  `owner:` rationale, still hold, which is the restamp-only outcome. The other
+  37 dated negatives went DUE on the 1.39.0 to 1.39.1 server bump rather than on
+  evidence of drift and are deliberately left DUE, as are the two markers whose
+  claim half and rationale half were asked on different days: the date certifies
+  the whole marker, so restamping one nobody re-read would certify text nobody
+  read. The change establishes no invariant and adds no guard — a restamp is
+  data rather than a rule, and `coverage_reports.py negatives` already derives
+  staleness from the server version, so a guard pinning these three stamps would
+  pin the value the next legitimate re-ask has to move
