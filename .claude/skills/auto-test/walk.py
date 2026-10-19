@@ -47,6 +47,21 @@ only slash lines asks the Bootcamper once more with the same guide turn; a secon
 the walk. Any other reply that starts with ``/``, such as a path, is sent with one leading
 space (``as_turn``), which the CLI does not parse as a command. The opening message is
 sent as given.
+
+A crashed walk keeps its transcript (#732)
+------------------------------------------
+⛔ **A walk's transcript MUST hold every turn the walk completed, whatever ended the walk:
+each event is appended to the output file and flushed as it is produced, never held in
+memory for one write on the way out.** A ``try/finally`` that writes the whole transcript on
+the way out still loses every turn to a ``SIGKILL``, an out-of-memory kill or a pulled plug,
+and the walk that produced this rule ran 68 turns over 37 minutes and left nothing at all on
+disk.
+
+The closing ``walk_stop`` event is written from a ``try/finally`` around the turn loop, so an
+abnormal end is recorded as well as survived; a ``subprocess.TimeoutExpired`` from either
+``claude`` call ends the walk with a reason naming the timeout rather than propagating; and
+``main`` exits non-zero afterwards, because a walk that ended abnormally is a failure of the
+run rather than a run that found nothing.
 """
 import argparse
 import json
@@ -169,6 +184,42 @@ def as_turn(text):
     return " " + text if text.startswith("/") else text
 
 
+class EventLog:
+    """The transcript, appended event by event and flushed before the next one (#732).
+
+    ``run_walk`` used to hold every event in a list and write the file once, at the end, so
+    the two expensive processes could run for 37 minutes and leave an empty directory. The
+    flush is the part that matters: it puts each event in the operating system's hands before
+    the turn that follows it begins, so an abnormal end costs the turn in flight and nothing
+    earlier -- including an end that runs no Python at all, which is the case a ``finally``
+    cannot reach.
+
+    ``count`` is the number of events written, which is what ``main`` reports.
+    """
+
+    def __init__(self, path):
+        self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._handle = self.path.open("w", encoding="utf-8")
+        self.count = 0
+
+    def write(self, line):
+        """Append one already-serialized JSON event, and flush it."""
+        self._handle.write(line + "\n")
+        self._handle.flush()
+        self.count += 1
+
+    def extend(self, lines):
+        for line in lines:
+            self.write(line)
+
+    def event(self, **fields):
+        self.write(json.dumps(fields))
+
+    def close(self):
+        self._handle.close()
+
+
 def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
     result = subprocess.run(
         ["claude", *args], cwd=str(cwd), input=stdin_text, timeout=timeout,
@@ -238,101 +289,125 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
     # flag a Bootcamper slash line set (#656). The latest value of a flag wins.
     flags = {"--model": model} if model else {}
 
-    transcript = []
+    log = EventLog(out_path)
     message = opening
     # Without a banner the walk is `turns` long; with one, it is open-ended until the
     # banner shows, then `turns` more. `max_turns` caps both.
     limit = max_turns if stop_at_banner else turns
-    banner_turn, reason, turn = None, None, 0
-    for turn in range(1, max_turns + 1):
-        if turn > limit:
-            turn -= 1
-            reason = (f"start banner at turn {banner_turn}, then --turns {turns}"
-                      if banner_turn else f"--turns {turns} reached")
-            break
-        args = ["-p", message, *base]
-        for flag, value in flags.items():
-            args += [flag, value]
-        args += ["--session-id", session] if turn == 1 else ["--resume", session]
-        result = _claude(args, cwd=project, stdin_text="", timeout=timeout, env=env)
-        if result.returncode != 0:
-            transcript.append(json.dumps({
-                "type": "walk_error", "turn": turn,
-                "stderr": (result.stderr or "")[-2000:]}))
-            print(f"  turn {turn}: claude exited {result.returncode} — "
-                  f"{(result.stderr or '').strip()[:200]}", file=sys.stderr)
-            reason = f"claude exited {result.returncode}"
-            break
-
-        transcript.extend(
-            line for line in result.stdout.splitlines() if line.strip().startswith("{"))
-        shown = visible_text(result.stdout)
-        print(f"  turn {turn}: {len(shown)} chars"
-              f"{' [asks]' if POINTER in shown else ''}")
-        if stop_at_banner and banner_turn is None and banner_seen(stop_at_banner, shown):
-            banner_turn, limit = turn, turn + turns
-            print(f"  turn {turn}: start banner seen; {turns} more turn(s)")
-
-        # ⛔ A walk that never started must not read as a walk that found nothing.
-        # `/start-bootcamp` unnamespaced returns "Unknown command", one 32-character
-        # turn, no 👉 — which the loop below exits on and the linter then scores as
-        # a clean run. Fail loudly instead.
-        if turn == 1 and ("Unknown command" in shown or len(shown) < 200):
-            Path(out_path).write_text("\n".join(transcript) + "\n", encoding="utf-8")
-            raise SystemExit(
-                f"walk did not start: turn 1 returned {len(shown)} characters "
-                f"({shown.strip()[:120]!r}). Check --opening and --plugin-dir; a "
-                "silent non-start would otherwise be reported as a clean run.")
-
-        if POINTER not in shown:
-            # Nothing was asked, so there is nothing for the Bootcamper to answer.
-            # Stopping here is correct rather than inventing another prompt.
-            print(f"  stopping: turn {turn} asked no question")
-            reason = "the turn asked no question"
-            break
-
-        prompt, message = shown, None
-        for _attempt in range(2):
-            reply = bootcamper_reply(prompt, persona, bootcamper_model)
-            if not reply:
+    banner_turn, reason, turn, failure = None, None, 0, None
+    try:
+        for turn in range(1, max_turns + 1):
+            if turn > limit:
+                turn -= 1
+                reason = (f"start banner at turn {banner_turn}, then --turns {turns}"
+                          if banner_turn else f"--turns {turns} reached")
                 break
-            # The reply as the Bootcamper process returned it, slash lines included.
-            transcript.append(json.dumps({"type": "bootcamper", "turn": turn,
-                                          "persona": persona, "text": reply}))
-            applied, rest = split_reply(reply)
-            for line, flag, value in applied:
-                flags[flag] = value
-                transcript.append(json.dumps({"type": "bootcamper_flag", "turn": turn,
-                                              "command": line, "flag": flag,
-                                              "value": value}))
-                print(f"  turn {turn}: {line} -> {flag} {value} on every later call")
-            if rest:
-                message = as_turn(rest)
+            args = ["-p", message, *base]
+            for flag, value in flags.items():
+                args += [flag, value]
+            args += ["--session-id", session] if turn == 1 else ["--resume", session]
+            try:
+                result = _claude(args, cwd=project, stdin_text="", timeout=timeout,
+                                 env=env)
+            except subprocess.TimeoutExpired as expiry:
+                # `subprocess.run` raises this on expiry and nothing used to catch it, so
+                # the walk died mid-turn with its whole record in memory (#732). Ending
+                # here keeps the transcript and names the cause; `main` exits non-zero.
+                failure = reason = f"the guide timed out after {expiry.timeout}s"
+                print(f"  stopping: {reason}", file=sys.stderr)
                 break
-            # Only slash lines: nothing to send. Ask once more with the guide's same
-            # turn; the Bootcamper process still authors the answer (INV-369).
-            entered = "\n".join(line for line, _flag, _value in applied)
-            prompt = (f"{shown}\n\n(You entered:\n{entered}\nIt is applied. The guide "
-                      "is still waiting for your answer to the message above.)")
+            if result.returncode != 0:
+                log.event(type="walk_error", turn=turn,
+                          stderr=(result.stderr or "")[-2000:])
+                print(f"  turn {turn}: claude exited {result.returncode} — "
+                      f"{(result.stderr or '').strip()[:200]}", file=sys.stderr)
+                reason = f"claude exited {result.returncode}"
+                break
+
+            log.extend(line for line in result.stdout.splitlines()
+                       if line.strip().startswith("{"))
+            shown = visible_text(result.stdout)
+            print(f"  turn {turn}: {len(shown)} chars"
+                  f"{' [asks]' if POINTER in shown else ''}")
+            if stop_at_banner and banner_turn is None and banner_seen(stop_at_banner, shown):
+                banner_turn, limit = turn, turn + turns
+                print(f"  turn {turn}: start banner seen; {turns} more turn(s)")
+
+            # ⛔ A walk that never started must not read as a walk that found nothing.
+            # `/start-bootcamp` unnamespaced returns "Unknown command", one 32-character
+            # turn, no 👉 — which the loop below exits on and the linter then scores as
+            # a clean run. Fail loudly instead.
+            if turn == 1 and ("Unknown command" in shown or len(shown) < 200):
+                failure = reason = (f"walk did not start: turn 1 returned {len(shown)} "
+                                    "characters")
+                raise SystemExit(
+                    f"{reason} ({shown.strip()[:120]!r}). Check --opening and "
+                    "--plugin-dir; a silent non-start would otherwise be reported as a "
+                    "clean run.")
+
+            if POINTER not in shown:
+                # Nothing was asked, so there is nothing for the Bootcamper to answer.
+                # Stopping here is correct rather than inventing another prompt.
+                print(f"  stopping: turn {turn} asked no question")
+                reason = "the turn asked no question"
+                break
+
+            prompt, message = shown, None
+            for _attempt in range(2):
+                try:
+                    reply = bootcamper_reply(prompt, persona, bootcamper_model)
+                except subprocess.TimeoutExpired as expiry:
+                    failure = reason = ("the Bootcamper process timed out after "
+                                        f"{expiry.timeout}s")
+                    print(f"  stopping: {reason}", file=sys.stderr)
+                    break
+                if not reply:
+                    break
+                # The reply as the Bootcamper process returned it, slash lines included.
+                log.event(type="bootcamper", turn=turn, persona=persona, text=reply)
+                applied, rest = split_reply(reply)
+                for line, flag, value in applied:
+                    flags[flag] = value
+                    log.event(type="bootcamper_flag", turn=turn, command=line,
+                              flag=flag, value=value)
+                    print(f"  turn {turn}: {line} -> {flag} {value} on every later call")
+                if rest:
+                    message = as_turn(rest)
+                    break
+                # Only slash lines: nothing to send. Ask once more with the guide's same
+                # turn; the Bootcamper process still authors the answer (INV-369).
+                entered = "\n".join(line for line, _flag, _value in applied)
+                prompt = (f"{shown}\n\n(You entered:\n{entered}\nIt is applied. The guide "
+                          "is still waiting for your answer to the message above.)")
+            else:
+                print("  stopping: the Bootcamper replied only with slash commands",
+                      file=sys.stderr)
+                reason = "the Bootcamper replied only with slash commands"
+                break
+            # The Bootcamper call timed out: its own reason is already set, and the
+            # "returned nothing" branch below would overwrite it.
+            if failure:
+                break
+            if not message:
+                print("  stopping: the Bootcamper process returned nothing",
+                      file=sys.stderr)
+                reason = "the Bootcamper process returned nothing"
+                break
         else:
-            print("  stopping: the Bootcamper replied only with slash commands",
-                  file=sys.stderr)
-            reason = "the Bootcamper replied only with slash commands"
-            break
-        if not message:
-            print("  stopping: the Bootcamper process returned nothing",
-                  file=sys.stderr)
-            reason = "the Bootcamper process returned nothing"
-            break
-    else:
-        reason = f"--max-turns {max_turns} reached"
-
-    print(f"  stopped after turn {turn}: {reason}")
-    transcript.append(json.dumps({"type": "walk_stop", "turn": turn, "reason": reason,
-                                  "stop_at_banner": stop_at_banner,
-                                  "banner_turn": banner_turn}))
-    Path(out_path).write_text("\n".join(transcript) + "\n", encoding="utf-8")
-    return len(transcript)
+            reason = f"--max-turns {max_turns} reached"
+    except BaseException as ending:
+        # Recorded here and re-raised: the `finally` below writes the `walk_stop`, so an
+        # end nothing anticipated reaches the transcript as well as stderr (#732).
+        if reason is None:
+            reason = f"{type(ending).__name__}: {ending}"
+        failure = reason
+        raise
+    finally:
+        print(f"  stopped after turn {turn}: {reason}")
+        log.event(type="walk_stop", turn=turn, reason=reason,
+                  stop_at_banner=stop_at_banner, banner_turn=banner_turn)
+        log.close()
+    return log.count, failure
 
 
 def main(argv=None):
@@ -364,11 +439,17 @@ def main(argv=None):
     if not args.project.is_dir():
         print(f"no such project directory: {args.project}", file=sys.stderr)
         return 2
-    lines = run_walk(args.project, args.out, args.turns, args.persona,
-                     args.mcp_config, args.model, args.bootcamper_model,
-                     args.opening, args.isolate_config, args.timeout,
-                     max_turns=args.max_turns, stop_at_banner=args.stop_at_banner)
-    print(f"transcript: {args.out} ({lines} events)")
+    events, failure = run_walk(args.project, args.out, args.turns, args.persona,
+                               args.mcp_config, args.model, args.bootcamper_model,
+                               args.opening, args.isolate_config, args.timeout,
+                               max_turns=args.max_turns,
+                               stop_at_banner=args.stop_at_banner)
+    print(f"transcript: {args.out} ({events} events)")
+    if failure:
+        # Exiting 0 here is what let a crashed 68-turn walk be filed as a coverage
+        # limit by `autotest.py`, which reads this exit code (#732).
+        print(f"walk ended abnormally: {failure}", file=sys.stderr)
+        return 1
     return 0
 
 
