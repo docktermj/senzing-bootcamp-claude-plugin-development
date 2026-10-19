@@ -232,9 +232,16 @@ context, which is what limits a maintainer-answered walk to the modules the wind
    and leave the rest untested. Never extrapolate.
 5. **Grade the slice, not the report.** Run `transcript_lint.py <slice> --phase
    <lint_phase> --json`, with the `lint_phase` the slice printed (no `--phase` when it is
-   `null`). Do not count the report's own transcript findings: they also cover the
-   fast-forward. The report's MCP-probe findings are phase 1's kind of finding, and are
-   recorded like any other. Then read the slice for the rest of the [watch
+   `null`), and `--project <project>` where the walked project directory still exists.
+   Without it the time estimate comes back as `INV-096-estimate-ungraded` at INFO rather
+   than graded: INV-096 suppresses the estimate under the `minimal` verbosity preset, the
+   `seeded` fixture sets that preset, and `check_apparatus` reports a preset it cannot
+   read as a coverage limit rather than assuming the estimate was owed (#734). The
+   sandbox is removed when the walk ends, so a slice graded afterwards carries that limit;
+   `autotest.py`'s own lint, which runs while the sandbox is still there, does not. Do not
+   count the report's own transcript findings: they also cover the fast-forward. The
+   report's MCP-probe findings are phase 1's kind of finding, and are recorded like any
+   other. Then read the slice for the rest of the [watch
    list](#what-to-watch-for), which the linter cannot count.
 6. **Record each finding before fixing anything** (INV-317), in the run's ledger entry, as
    the SKILL's "The finding lifecycle" says. The walk has ended, so the filing step comes
@@ -262,7 +269,9 @@ Interaction invariants, in rough order of how often they break:
   **one** config diff, not one per gate. Count the diffs.
 - **Apparatus exemptions.** Bootcamp preparation and Module 0 must show *no* journey
   map, before/after, step overview, time estimate, or model/effort nudge (INV-075,
-  INV-078). Content modules must show all of them (INV-028–031, INV-096).
+  INV-078). Content modules must show all of them (INV-028–031, INV-096) — except the
+  time estimate under the `minimal` verbosity preset, which INV-096 requires suppressed,
+  so its absence there is conformance and not a finding.
 - **INV-079 / names not numbers.** No "Module 4" in anything the Bootcamper reads,
   including casual acknowledgments.
 - **INV-051 / no "or" joining choices.** Numbered lists, neutral lead question. The
