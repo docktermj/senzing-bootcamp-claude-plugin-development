@@ -1,5 +1,10 @@
 """Every value a data-source registry status field documents is handled by the step that reads it.
 
+Enforces **INV-391**, registered by the maintainer 2026-10-20: a step reading a registry status
+field states what it does with every documented value, including the one the schema writes at
+creation. ⚠️ It reads the shipped step prose; it **cannot** establish that a live run takes the
+branch it states.
+
 Module 4's registry schema documents `validation_status` as `pending` | `passed` | `failed`, and
 writes `pending` at creation. Step 7 — the step the schema itself names as the field's reader —
 said only *"Confirm every source shows `validation_status: passed`. If any source shows

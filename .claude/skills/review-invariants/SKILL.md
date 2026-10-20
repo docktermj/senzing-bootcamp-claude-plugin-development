@@ -336,7 +336,7 @@ nobody read.
 
 Then **resolve the prose, not only the block.** Applying one marks the bullet
 `applied YYYY-MM-DD` ("Writing one", above), the way Register's step 6 resolves a deferral's block.
-⛔ **The block is not the only place that called the amendment pending.** The guard enforcing
+⛔ **(INV-386) The block is not the only place that called the amendment pending.** The guard enforcing
 the amended rule says so in its own docstring, and that sentence survives the registration — so
 its next reader concludes the rule the guard asserts is not yet binding, which is INV-308's
 failure shape pointed inward. Rewrite each such sentence to state the note as registered, with

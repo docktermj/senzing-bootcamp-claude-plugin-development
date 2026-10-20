@@ -1,5 +1,11 @@
 """Module 2's routing rule 5 takes the linux_apt / linux_yum criterion from the server.
 
+Enforces **INV-398**, registered by the maintainer 2026-10-20: where an MCP tool publishes the
+criterion for choosing among a parameter it defines, shipped guidance states no criterion of
+its own. ⚠️ It asserts the shipped steps STATE each clause and **cannot** establish that a live
+guide makes the call or reads the file -- `dry-run` phase 3 observes that -- and asserts
+nothing about the server, the suite being offline (INV-108).
+
 Rule 5 of **Routing rules (apply in order)** in `module-02-sdk-setup/SKILL.md` resolved the one
 branch that needs a distribution with a criterion the plugin owned and never named a method for:
 

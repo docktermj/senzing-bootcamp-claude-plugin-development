@@ -1,5 +1,8 @@
 """`CHANGELOG.md`'s entries are what its own seed note tells a reader they are.
 
+Enforces **INV-381**, registered by the maintainer 2026-10-20. ⚠️ It **cannot** establish that a kept entry's wording is a *good* release note, nor that a future entry was written by the generator rather than by hand.
+Enforces **INV-382**, registered by the maintainer 2026-10-20. ⚠️ It **cannot** establish that the maintainer read the report, nor that the drop was the right call for a given subject.
+
 The note at the top of the file says:
 
     Entries **0.5.3 and earlier** were reconstructed from git history when this file was

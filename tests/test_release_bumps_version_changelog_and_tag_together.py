@@ -1,5 +1,8 @@
 """`/release` moves the version, the changelog and the git tag, or moves none of them.
 
+Enforces **INV-381**, registered by the maintainer 2026-10-20. ⚠️ It **cannot** establish that a kept entry's wording is a *good* release note, nor that a future entry was written by the generator rather than by hand.
+Enforces **INV-382**, registered by the maintainer 2026-10-20. ⚠️ It **cannot** establish that the maintainer read the report, nor that the drop was the right call for a given subject.
+
 The defect this guards is live in a sibling repo. `Senzing/senzing-bootcamp-kiro-power`
 carries a CHANGELOG entry reading ``[0.5.3] - 2026-09-10`` while its newest git tag is
 still ``0.5.1``. The changelog moved; the tag did not.

@@ -1,5 +1,11 @@
 """The seven sites #227 re-cited keep the invariant that governs them, and two correct ones stay.
 
+Enforces **INV-396**, registered by the maintainer 2026-10-20: a clause's citation names the
+invariant whose registered statement makes the claim, and a clause making more than one claim
+cites each. ⚠️ This file is a SITE PIN, not class coverage: it holds the clauses one run
+corrected and **cannot** establish that no other clause in the repository cites the wrong rule.
+A corpus-wide guard was built and abandoned on measurement (#690); see INV-396's own text.
+
 `/production-readiness-audit` (2026-09-28, forward invariant sweep) found rules citing an
 invariant whose subject is not the claim beside it. Each ID resolves, so `citations.py verify`
 and `conformance.py rules` both read the line as covered; only reading the invariant shows the

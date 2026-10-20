@@ -1,5 +1,7 @@
 """Every deliverable INV-050's tree says a Bootcamper gets is named where they read it (#699).
 
+Enforces **INV-380**, registered by the maintainer 2026-10-20. ⚠️ It **cannot** establish that all three surfaces agree, only that each deliverable reaches one of them; nor can it see an artifact that is produced unconditionally while the tree annotates no promise for it.
+
 INV-050's layout tree is the one place that records, per artifact, whether the Bootcamper
 always gets it. Two entries carry such a statement today:
 

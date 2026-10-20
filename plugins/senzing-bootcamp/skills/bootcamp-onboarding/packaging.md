@@ -64,7 +64,7 @@ option 2's `{…}` clause as the rule below the question says, and end the turn 
 
 *(Internal: end the turn on this question and wait.)*
 
-⛔ **Option 2's `{…}` clause goes in exactly when the `transfer` dry run's `absent:` line named `backups/revisit`, and is dropped when it did not.** Drop the braces themselves either way — they mark the choice, and the bootcamper never sees them.
+⛔ **(INV-388) Option 2's `{…}` clause goes in exactly when the `transfer` dry run's `absent:` line named `backups/revisit`, and is dropped when it did not.** Drop the braces themselves either way — they mark the choice, and the bootcamper never sees them.
 
 ⚠️ **Why it is conditional rather than standing text.** Before graduation `backups/revisit/` does
 not exist; Step 3 creates it *after* this answer; so the figure beside the clause was measured
@@ -121,7 +121,7 @@ the archive safe to hand over:
 - **Packaged on both profiles:** `docs/` (the recap, the keepsake documents and
   `docs/visualizations/`), `production/`, and `data/exports/` — Module 7 step 4e's export of
   the resolved results in each named system's import format.
-  ⛔ **A path a step hands the bootcamper over as that step's deliverable must be one a packaging profile carries, or the step must say, where it names the path, that it does not travel.**
+  ⛔ **(INV-392) A path a step hands the bootcamper over as that step's deliverable must be one a packaging profile carries, or the step must say, where it names the path, that it does not travel.**
   `data/exports/` is the one tree under `data/` that `share` reaches, because step 4e hands its
   contents over and they are the bootcamp's own output written for another system to read rather
   than the bootcamper's source data. Graduation copies it to `production/data/exports/` at the

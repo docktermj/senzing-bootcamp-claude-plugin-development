@@ -192,7 +192,7 @@ permanent. Work through 1–4 in order; do not hoist the purge.
      port that is *still* answering, and the case where no server ran at all — is the
      [failed-stop rule](visualization-api-reference.md#failed-stop), stated once in the
      server-lifetime contract (INV-300, INV-223). Follow it there rather than deciding it here.
-   - ⛔ **Do not start step 4 until the port is confirmed free.** A warning is **not** a substitute
+   - ⛔ **(INV-394) Do not start step 4 until the port is confirmed free.** A warning is **not** a substitute
      for that confirmation — the purge is irreversible, and running it on the assumption that
      teardown succeeded is how a failed kill gets attributed to the purge. On an unverified stop
      ([failed-stop rule](visualization-api-reference.md#failed-stop), outcome 3, INV-300) step 4

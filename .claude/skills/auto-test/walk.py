@@ -67,7 +67,7 @@ takes the credentials with it and the child exits "Not logged in" without
 
 A crashed walk keeps its transcript (#732)
 ------------------------------------------
-⛔ **A walk's transcript MUST hold every turn the walk completed, whatever ended the walk:
+⛔ **(INV-376) A walk's transcript MUST hold every turn the walk completed, whatever ended the walk:
 each event is appended to the output file and flushed as it is produced, never held in
 memory for one write on the way out.** A ``try/finally`` that writes the whole transcript on
 the way out still loses every turn to a ``SIGKILL``, an out-of-memory kill or a pulled plug,

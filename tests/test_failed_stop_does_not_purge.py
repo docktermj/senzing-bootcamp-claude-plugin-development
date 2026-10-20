@@ -1,5 +1,9 @@
 """An unverified server stop never purges the Truth Set, and one rule says so (#673).
 
+Enforces **INV-394**, registered by the maintainer 2026-10-20: an irreversible cleanup waits on
+a confirmed stop rather than an unverified one. ⚠️ It reads the shipped prose and drives the
+scripted half; it **cannot** establish that a live run actually confirmed the stop before purging.
+
 Two shipped statements of one rule disagreed about what a *warned but unconfirmed* stop
 authorizes. `phase2-close.md` Step 4 said "Do not start step 4 until the port is confirmed free
 **or the bootcamper has been warned**", and step 4 is the irreversible purge; the server-lifetime

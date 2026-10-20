@@ -1188,7 +1188,7 @@ Confirm every source shows `validation_status: passed`. If any source shows
 `validation_status: failed`, revisit that data source and resolve the failing checks before
 proceeding.
 
-⛔ **`validation_status: pending` is the third value the schema documents, and it does not block
+⛔ **(INV-391) `validation_status: pending` is the third value the schema documents, and it does not block
 this step.** `pending` is what the registry schema writes at creation, and the Data File Validation
 step above overwrites it only after a file is saved to `data/raw/` — so a source still showing
 `pending` here is one where **no file was collected, so there is nothing to validate**. A
@@ -1198,7 +1198,7 @@ documents the access method instead of downloading, and that entry carries `file
 Confirm its location is recorded in `docs/data_source_locations.md` and move on — this module's
 Success indicator accepts "files in `data/raw/` **OR** documented locations", so
 `validation_status: passed` is asked of the sources that produced a file.
-⛔ **Never hand-edit a `pending` to `passed` or `failed` to clear this check:** `passed` would
+⛔ **(INV-391) Never hand-edit a `pending` to `passed` or `failed` to clear this check:** `passed` would
 claim checks that never ran, and `failed` would send the bootcamper to repair a collection that was
 never meant to happen.
 ⚠️ **One `pending` is not expected:** a source that was meant to produce a file and has none.

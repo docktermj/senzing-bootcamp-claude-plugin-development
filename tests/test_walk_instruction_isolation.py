@@ -1,5 +1,7 @@
 """A simulated walk runs under the run's instruction files, not the host's (#733).
 
+Enforces **INV-379**, registered by the maintainer 2026-10-20. ⚠️ It **cannot** establish what the live CLI loads, only what the walk asks it to load; that was probed once against a stub Messages API and is recorded in this entry.
+
 A `/dry-run --simulated confused` walk filed 13 BREAKING `INV-251-multi-question` findings
 in its graded slice. Every one of them was the maintainer's own `~/.claude/CLAUDE.md`
 ("end every response with a 👉 **Suggested next step:** line") reaching the bootcamp

@@ -1,5 +1,10 @@
 """A path a step tells the guide to run must resolve where that step actually runs.
 
+Enforces **INV-389**, registered by the maintainer 2026-10-20: a bundled script named in shipped
+guide-facing prose resolves inside the plugin unless the skill containing the mention resolves
+it somewhere, with the exemption computed from the tree rather than listed. ⚠️ It cannot
+establish that a resolved path is the right script, only that it resolves.
+
 `deep-dive-audit-2026-07-30b`. Three path defects of one shape (a fourth, #325, is item 4),
 none of which any existing test could see, because each is a *string in prose* that is only
 wrong relative to a working directory no test had modeled.

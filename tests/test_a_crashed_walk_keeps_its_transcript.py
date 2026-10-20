@@ -1,5 +1,13 @@
 """A simulated walk that dies keeps its turns, and the run says so (#732).
 
+Enforces **INV-376**, registered by the maintainer 2026-10-19. ⚠️ This file **cannot**
+establish that a live walk survives a real `SIGKILL`, an out-of-memory kill or a pulled
+plug -- only that each event reaches the file before the next turn begins, which is the
+property that makes surviving one possible. Nor can it establish that the cause a failed
+walk reports is the true one; only that the stream carrying the cause is printed rather
+than short-circuited away. An `Enforced by` clause naming this file is therefore not a
+claim that a real crash was ever survived in the field.
+
 A `/dry-run --simulated confused` walk ran 68 turns over 37 minutes, drove the bootcamp from
 the onboarding preface through System verification, died mid-turn-68, and left nothing on
 disk. `autotest.py` filed that as a line in `coverage_limits` -- "the walk produced no

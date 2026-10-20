@@ -36,7 +36,7 @@ sets it: ``specs/IMPLEMENTED.md`` (its historical drafts are a dated record), th
 ``invariant-manifest.json`` at the repository root, ``BLUEPRINT.md``, the other frozen files under
 ``specs/``, and scratch under ``.claude/worktrees/`` (which ``_corpus`` never lists).
 
-⛔ **Every path exemption is derived, and an entry that matches nothing fails this guard (#696).**
+⛔ **(INV-384) Every path exemption is derived, and an entry that matches nothing fails this guard (#696).**
 The site set is derived (``corpus_files``) and the exemptions were not: one literal path, written
 once, naming a file that has never been there. ``GENERATED`` read
 ``.claude/skills/review-invariants/invariant-manifest.json`` from #514 until #696, while the

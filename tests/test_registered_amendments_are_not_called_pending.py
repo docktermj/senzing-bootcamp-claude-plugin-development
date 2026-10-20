@@ -1,5 +1,7 @@
 """Prose must not call an amendment pending once `INVARIANTS.md` carries the note.
 
+Enforces **INV-386**, registered by the maintainer 2026-10-20. ⚠️ It **cannot** establish that a docstring left alone describes its amendment correctly, only that it does not call a registered one pending. (**Complements INV-308**, which binds a tool's report of what it could not verify rather than a docstring's account of a rule's status; **complements INV-365**, which binds who may write the registry and is satisfied either way; **complements INV-300**, which binds where a rule is stated rather than whether a statement of its status has gone stale.
+
 `/review-invariants`' Register path resolves the deferral block it registers
 (`.claude/skills/review-invariants/SKILL.md`, step 6), and applying a `PROPOSED AMENDMENT`
 marks its bullet `applied YYYY-MM-DD` so it leaves the queue. Both act on the **ledger**.
@@ -240,17 +242,27 @@ PRE_691 = (
 DEFERRAL_FIXTURE = """- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.**
   **INV-NNN** — the drafted wording, in full; it extends INV-246 and INV-308 (#691)."""
 
-#: A genuinely queued `PROPOSED AMENDMENT`: INV-050 is registered and carries dated notes, but
-#: none for #686, so this prose is true today. MUST NOT be flagged. ⚠️ If `/review-invariants`
-#: applies that block, `test_a_queued_amendment_is_not_flagged` fails and the fixture moves to
-#: another queued one — the failure is the guard working, not breaking.
+#: Prose about an amendment the registry does NOT carry. MUST NOT be flagged.
+#:
+#: ⚠️ **This marker is synthetic, and that is a deliberate change made 2026-10-19.** It named
+#: #686 until then, a genuinely queued `PROPOSED AMENDMENT to INV-050`. The 2026-10-19
+#: `/review-invariants` session applied every queued amendment in the ledger — twelve of them —
+#: so no real queued pair was left to point at, and the previous design's own failure message
+#: ("move the fixture to a block that is still queued") had nowhere to send it. Re-pointing it at
+#: the next queued amendment would only restart that clock. A marker no issue will carry keeps
+#: the property under test — *the registry decides whether prose is stale, not the phrasing* —
+#: without the fixture expiring every time the maintainer clears the queue.
+#:
+#: `test_a_queued_amendment_is_not_flagged` asserts the pair really is absent before relying on
+#: it, so if #999686 ever becomes real the guard says so rather than passing vacuously.
+QUEUED_MARKER = "#999686"
 QUEUED_FIXTURE = (
-    "Enforces the `PROPOSED AMENDMENT to INV-050` drafted in #686's `specs/IMPLEMENTED.md`\n"
-    "entry, which is awaiting the maintainer's sign-off.")
+    "Enforces the `PROPOSED AMENDMENT to INV-050` drafted in %s's `specs/IMPLEMENTED.md`\n"
+    "entry, which is awaiting the maintainer's sign-off." % QUEUED_MARKER)
 
 #: The same sentence with the marker swapped for one INV-050 already carries. MUST be flagged:
 #: the registry decides, not the phrasing.
-APPLIED_FIXTURE = QUEUED_FIXTURE.replace("#686", "#286")
+APPLIED_FIXTURE = QUEUED_FIXTURE.replace(QUEUED_MARKER, "#286")
 
 
 class NoScannedFileCallsARegisteredAmendmentPending(unittest.TestCase):
@@ -342,9 +354,9 @@ class LegitimatelyPendingProseIsNotFlagged(unittest.TestCase):
         self.assertEqual([], pending_claims(DEFERRAL_FIXTURE, self.notes))
 
     def test_a_queued_amendment_is_not_flagged(self):
-        self.assertNotIn(("INV-050", "#686"), self.notes,
-                         "#686's INV-050 amendment has been applied; move the fixture to a "
-                         "block that is still queued")
+        self.assertNotIn(("INV-050", QUEUED_MARKER), self.notes,
+                         "%s has become a real INV-050 note; the fixture's premise is gone, so "
+                         "pick a marker the registry does not carry" % QUEUED_MARKER)
         self.assertEqual([], pending_claims(QUEUED_FIXTURE, self.notes))
 
     def test_the_same_block_with_a_registered_marker_is_flagged(self):

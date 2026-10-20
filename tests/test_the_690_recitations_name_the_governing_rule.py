@@ -1,5 +1,11 @@
 """The four clauses #690 re-cited keep the invariant that governs them, and the siblings stay.
 
+Enforces **INV-396**, registered by the maintainer 2026-10-20: a clause's citation names the
+invariant whose registered statement makes the claim, and a clause making more than one claim
+cites each. ⚠️ This file is a SITE PIN, not class coverage: it holds the clauses one run
+corrected and **cannot** establish that no other clause in the repository cites the wrong rule.
+A corpus-wide guard was built and abandoned on measurement (#690); see INV-396's own text.
+
 `/production-readiness-audit` (2026-10-16, sweep A — reverse invariant contract) found four
 clauses citing a neighboring invariant where the governing one is registered and is cited at
 every sibling site. Each id resolves, so `citations.py verify` and `conformance.py rules` both

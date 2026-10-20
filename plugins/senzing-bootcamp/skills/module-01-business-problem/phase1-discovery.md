@@ -466,7 +466,7 @@ this question again: the revised summary is a new state, not an INV-006 repeat (
     comma-separated list, beside every other option they chose
     (`phase2-document-confirm.md` → Step 11).
 
-  ⛔ **(INV-251) Option 4's ask rides inside the option, which is why no fifth question is added.** The
+  ⛔ **(INV-390, INV-251) Option 4's ask rides inside the option, which is why no fifth question is added.** The
   clause after the label is what makes the words collectable in the turn that already exists —
   Step 6d has its one 👉 (INV-251), and a follow-up question would cost the module a turn. Same
   shape as the plugin's other open option, the entity-plan gate in

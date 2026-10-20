@@ -705,7 +705,7 @@ against it: they remain the native routes in rules 3 and 4 below.
 4. Windows without Scoop (non-Python) → **`platform='docker'`**. With Scoop available →
    **`platform='windows'`**, and relay the bucket's preview status above.
 5. Linux → **`platform='linux_apt'`** or **`platform='linux_yum'`**, and the install decision tree
-   decides which, not this file. Call **`sdk_guide(topic='install')` with no `platform`** — the
+   decides which, not this file (INV-398). Call **`sdk_guide(topic='install')` with no `platform`** — the
    live decision tree the paragraph above already names — and read
    `needs_input.decision_tree.question` for the criterion and
    `needs_input.decision_tree.options[].value` for the platform tokens to use. The criterion it
@@ -1971,7 +1971,7 @@ placed after the last branch is skipped by a guide that follows the other one.
    step done before the database exists, and a resume would skip the setup; until it is written,
    a resumed session runs Step 7 again.
 
-3. ⛔ **When the datastore already exists, check before applying the schema — and when the schema
+3. ⛔ **(INV-393) When the datastore already exists, check before applying the schema — and when the schema
    is already applied, skip it and say so.** Two documented paths re-enter this step on a
    datastore that is already there: a **resume**, because instruction 2 holds the checkpoint back
    until the chosen branch's setup is finished, and the **`sdk_repair` detour**, which is offered
@@ -2496,7 +2496,7 @@ SQLite branch without having applied the schema, this step cannot help — go ba
 `create_engine()` fails with `SENZ1001 (14: unable to open database file)` rather than the
 `SENZ7220`/`SENZ7221` this step exists to fix.
 
-⛔ **When a default configuration is already registered, do not re-seed it — read the default
+⛔ **(INV-393) When a default configuration is already registered, do not re-seed it — read the default
 config id first, say which way it went, and continue.** This step is re-entered on a datastore
 that is already seeded by the same two paths Step 7's instruction 3 names: a **resume**, and the
 **`sdk_repair` detour**, which is offered after another module has already set the datastore up.
@@ -2514,7 +2514,7 @@ restating it.
 3. **`0`, or no id at all, is the unseeded datastore** this step was written for: seed it, as the
    rest of the step says.
 
-⛔ **The `init_default_config` snippet asks this same question interactively, and the guide must
+⛔ **(INV-393) The `init_default_config` snippet asks this same question interactively, and the guide must
 not answer it blind.** Run as it ships against an already-seeded datastore, it reads the default
 config id and then prompts `A configuration exists in the repository, replace it with a template
 configuration? (y/n)`, exiting `1` on any answer but `y` or `yes` (confirmed on MCP server 1.39.1,

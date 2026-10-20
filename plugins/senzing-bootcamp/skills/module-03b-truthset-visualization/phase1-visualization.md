@@ -120,7 +120,7 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    name the Anthropic public Connectors Directory as the cause, give the two routes the quoted note
    names, and resume acquisition on whichever route the Bootcamper opens.
 
-   - ⛔ **Do not retry it, and do not classify it as `unavailable`.** A second attempt down the
+   - ⛔ **(INV-378) Do not retry it, and do not classify it as `unavailable`.** A second attempt down the
      same route is filtered the same way, and the exceptional fallback at 3 below is for a server
      that does not carry the Truth Set, which is not the case here.
    - ⛔ **This is not the refusal INV-292's 403 branch answers.** That remedy switches back to
@@ -130,7 +130,7 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
      `get_capabilities()` cannot be reached, take it anyway: report what was seen and what was
      tried verbatim, name the Connectors Directory as the likely cause, and state the remedy as
      the two routes above.
-   - ⛔ **It never blocks the module.** Where neither route is open in this session, go
+   - ⛔ **(INV-378) It never blocks the module.** Where neither route is open in this session, go
      on to 3 and then 4 below and record the provenance each of them sets, so the mandatory
      visualization is still produced.
 

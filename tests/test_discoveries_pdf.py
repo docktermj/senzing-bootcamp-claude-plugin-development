@@ -1,5 +1,11 @@
 """Tests for the data-discoveries PDF generator and its wiring.
 
+Named by **INV-050**'s 2026-10-19 (#685) note, which this file enforces only in the narrow
+sense the note claims: it pins that Step 5b's non-blocking clause cites no INV-048. ⚠️ It
+**cannot** establish the rest of INV-050 -- the layout tree is enforced by
+`tests/test_invariant_layout_tree.py` -- so an `Enforced by` clause naming this file is a
+claim about that one clause and nothing wider.
+
 `docs/bootcamp_data_discoveries.md` + `.pdf` are the payoff for every preceding
 module, and they used to exist only if the bootcamper opted into the Discover
 tutorial. `generate_discoveries_pdf.py` is the sibling renderer that produces the

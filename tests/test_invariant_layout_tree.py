@@ -125,7 +125,9 @@ EXPECTED_FILE_ENTRIES = 25
 #: INV-050 amendment. Module 6 already wrote subset files there; only the tree omitted it.
 #: 32 -> 33 on 2026-10-15: `docs/video/` was added when `/review-invariants` applied #616's
 #: INV-050 clarification. Graduation already wrote the video's storyboard and b-roll there.
-EXPECTED_DIR_ENTRIES = 33
+#: 33 -> 34 on 2026-10-19: `data/exports/` was added when `/review-invariants` applied #686's
+#: INV-050 amendment. Module 7 step 4e already wrote each named system's export there.
+EXPECTED_DIR_ENTRIES = 34
 EXPECTED_CONTINUATION_LINES = 1
 
 

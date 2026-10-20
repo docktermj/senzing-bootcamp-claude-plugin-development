@@ -300,7 +300,7 @@ def collect(project_root, profile):
 def absent_roots(skipped):
     """The candidate roots that were not in the project, in the order the profile reaches them.
 
-    ⛔ **Every absent root, never ``backups/revisit`` alone.** ``config`` and ``src`` are missing
+    ⛔ **(INV-388) Every absent root, never ``backups/revisit`` alone.** ``config`` and ``src`` are missing
     on an early run too, and a report naming one of the three would be the same partial
     measurement one level down -- a figure quoted as if it covered a tree the walk never saw.
 

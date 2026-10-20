@@ -1,5 +1,10 @@
 """`/package-bootcamp` produces an archive that is safe to hand to someone else.
 
+Also enforces **INV-388**, registered by the maintainer 2026-10-20, in its scripted half:
+`--dry-run` names every candidate root absent from the project, so the conversation layer can
+say what the quoted size did not measure. ⚠️ It drives the packager over fixtures; it
+**cannot** establish that a live flow substitutes the disclosure clause.
+
 A bootcamper who finished the bootcamp had no way to archive the work or hand it on. Graduation
 frames the recap PDF as "a keepsake to revisit and share with their team", and INV-094's revisit
 bundle was built for the resume story -- but written **in place**, so it only helped on the machine

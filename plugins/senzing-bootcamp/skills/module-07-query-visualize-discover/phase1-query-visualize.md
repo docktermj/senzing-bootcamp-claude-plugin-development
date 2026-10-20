@@ -960,7 +960,7 @@ on the host, or bound to the container's loopback, does not reach the Bootcamper
 container" is the canonical statement of the launch, the host-side check and the URL; follow it
 there rather than from a copy (INV-300). Here `<server command>` is this step's server, pointed at
 the Bootcamper's own data, with paths as the container sees them. Hand over, and capture against,
-the URL `confirm-viz` printed: `http://localhost:<host_port>`, never `<port>` from the server's own
+the URL `confirm-viz` printed: `http://localhost:<host_port>` (INV-387), never `<port>` from the server's own
 line. Record the container-namespace pid, `port` `8080`, the `host_port` and the container's
 `name` in `m7_visualizations`, and probe the bound address at teardown as its item 4 says. If the
 Bootcamper declines to recreate a container that has no published port, there is no live server:

@@ -327,7 +327,7 @@ supported systems.
    bloat the graph with noise.
 7. **Check one export row before writing the reader.** ⛔ (INV-115) Dump one row and read its top-level keys before any code parses the export.
    Generate a short program, saved as the program `export_row_<system>` in `src/query`, where
-   `<system>` is a short snake_case name for the system (for example `aws_neptune` for a system
+   `<system>` is a short snake_case name for the system (INV-387; for example `aws_neptune` for a system
    recorded as "AWS Neptune"), at the path
    and with the project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a
    program" gives, and built and run with that section's commands. That section takes `<name>` as
@@ -364,7 +364,7 @@ supported systems.
    `production/` unchanged. It writes its files under
    `data/exports/<system>/`, which it recreates on every run. Build and run it with that
    section's commands.
-   ⛔ **The export is this step's deliverable, so it is written to a durable path a packaging profile reaches, never to the scratch directory.**
+   ⛔ **(INV-392) The export is this step's deliverable, so it is written to a durable path a packaging profile reaches, never to the scratch directory.**
    `data/exports/` is a sibling of `data/senzing-ready/`: `/package-bootcamp` carries it on
    **both** profiles, and graduation copies it to `production/data/exports/` at the same path
    relative to the project root, which is what keeps this program's own output path true once it
