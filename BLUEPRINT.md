@@ -1,5 +1,5 @@
 # Blueprint: docktermj/senzing-bootcamp-claude-plugin-development
-<!-- blueprint: sha=6fe6e69a7532b690baf953468a49bf0db80ab0a3 date=2026-10-15 -->
+<!-- blueprint: sha=e2d1b1d5ca32eae8cdb31a7115a0bcd78d942e45 date=2026-10-20 -->
 
 ## 1. Purpose
 
@@ -13103,10 +13103,12 @@ Senzing licensing, with no SPDX identifier.
   `NAME_ORG` uses, and the unparsed lists silenced the drift diff on both
   `language` parameters)
 - #669: the reusable tracking issue for `/update-blueprint` drift updates; the
-  2026-10-15 update moves the header from `542f8135` to `6fe6e69a`, adds the
-  missing lines for #465, #504, #561 and #570, and refreshes section 8's test
-  counts and two plugin-version references (the header SHA had fallen eleven
-  days and 257 commits behind `main`)
+  2026-10-20 update moves the header from `6fe6e69a` to `e2d1b1d5`, adds #740's
+  line for the invariant review and the one missing section 8 count, and leaves
+  the rest untouched (79 commits had landed since the header SHA and only seven
+  were drift — the 0.7.0 release and the review's six commits — because every
+  issue in the `2026-10-16` release cycle had already been folded in issue mode
+  as it was built)
 - #671: state the screenshot capture/embed timeline once — recorded at the
   step checkpoint in the capture's own turn, embedded in the module recap's
   Actions Taken at module close — and make the capture step and both calling
@@ -13518,3 +13520,9 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_apparatus_check_reads_the_rendering.py` runs the check over the
   real walk turn the findings were raised against and over the same turn with
   one item cut out of it
+- #740: record the 2026-10-20 invariant review — 22 invariants registered
+  (INV-376 to INV-384, INV-386 to INV-398), twelve dated notes applied and six
+  blocks held (the review at checkpoint D of `/release-cycle` run `2026-10-16`,
+  whose 33 issues queued the largest deferral backlog the cycle has carried; the
+  verdicts are the maintainer's under INV-365, and #685's Module 3b rule folded
+  into INV-378 rather than minting a second id, as its own block asked)
