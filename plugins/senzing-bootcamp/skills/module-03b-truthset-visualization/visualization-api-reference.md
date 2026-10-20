@@ -536,7 +536,7 @@ unique content. Do NOT implement it, and do not add a separate "Results Dashboar
 Backs the **Records** action everywhere an entity is shown (see "Per-entity actions" below),
 including single-record entities — unlike `/api/merges`, which returns only multi-record entities.
 Each record carries the same fields `/api/merges` uses — `data_source`, `record_id`, `match_key` —
-and the two endpoints MUST return **the same record objects**, not merely the same field names: they
+and the two endpoints MUST return **the same record objects**, not merely the same field names (INV-397, which also binds every example payload in this file to the field set stated for it): they
 read one model, so a divergence between them is a bug in the server rather than a choice. On failure
 return `{"entity_id": <id>, "error": "<type>: <message>"}`
 with HTTP 200, so one entity's failure never breaks the tab.
@@ -1608,13 +1608,13 @@ outcomes, and only a **confirmed** stop lets anything irreversible follow it (IN
 2. **Force-stop confirmed.** The port was still bound after 5 seconds, the force-stop ran, and the
    re-check finds nothing listening. The server stopped: the same as 1 in every respect, and the
    purge may run.
-3. ⛔ **Still listening after the force-stop and the re-check — the stop is UNVERIFIED, and nothing
+3. ⛔ **(INV-394) Still listening after the force-stop and the re-check — the stop is UNVERIFIED, and nothing
    irreversible may follow it.** **When teardown cannot confirm, say so plainly and do not claim the
    server stopped.** Tell the Bootcamper exactly what was observed — the port, that something is
    still listening on it, the pid the port lookup names where it names one, and that the records are
    still loaded — then continue without the purge rather than purging on an unverified stop, and say
    what is left to do by hand: release the listener, then re-run the module's cleanup program.
-   ⛔ **A warning is not a substitute for the confirmation.** Telling the Bootcamper the port may
+   ⛔ **(INV-394) A warning is not a substitute for the confirmation.** Telling the Bootcamper the port may
    need manual release informs them; it does not make an unobserved stop observed, and it cannot
    authorize deleting records that something may still be serving. An instruction offering "the port
    is confirmed free **or** the Bootcamper has been warned" as alternatives has merged two different

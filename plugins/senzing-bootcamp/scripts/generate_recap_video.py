@@ -1449,6 +1449,7 @@ SCENE_TYPES: Dict[str, SceneType] = {t.name: t for t in (
 # --------------------------------------------------------------------------- #
 # The certificate's fields: the recap PDF's, read by the recap PDF's own code (INV-100)
 # --------------------------------------------------------------------------- #
+# (INV-395) Held equal to generate_recap_pdf's constants by tests/test_brand_sync.py.
 _CERT_TEXT_FALLBACK = {
     "eyebrow": "SENZING BOOTCAMP", "headline": "Certificate of Completion",
     "presented": "THIS CERTIFICATE IS PROUDLY PRESENTED TO",
