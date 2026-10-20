@@ -10328,12 +10328,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8305 test methods in 445 files, matching `inventory.test_count_total`.
+There are 8310 test methods in 446 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8305.
+sum to 8310.
 
-Two files run more tests than they define, so discovery collects 8312:
+Two files run more tests than they define, so discovery collects 8317:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -10342,7 +10342,7 @@ Two files run more tests than they define, so discovery collects 8312:
 
 Without `pwsh`, the run reports `Ran 8305`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8312`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8317`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10722,6 +10722,7 @@ looks wrong.
 - `tests/test_spec_absence_claims_name_their_owner.py`: 10
 - `tests/test_spec_ledger_invariants.py`: 17
 - `tests/test_specs_are_frozen.py`: 25
+- `tests/test_sqlite_is_not_an_auto_create_exception.py`: 5
 - `tests/test_sqlite_load_time_prompt_is_defined_and_matched.py`: 18
 - `tests/test_sqlite_preload_check_reads_the_loadable_total.py`: 16
 - `tests/test_sqlite_subset_notes_read_the_recorded_decision.py`: 11
@@ -13526,3 +13527,11 @@ Senzing licensing, with no SPDX identifier.
   whose 33 issues queued the largest deferral backlog the cycle has carried; the
   verdicts are the maintainer's under INV-365, and #685's Module 3b rule folded
   into INV-378 rather than minting a second id, as its own block asked)
+- #743: Module 2 Step 7 no longer exempts SQLite from the schema rule — the
+  PostgreSQL branch said the SDK does not auto-create the schema "(unlike SQLite)"
+  while Step 7's own SQLite branch, 138 lines earlier, said the opposite, and the
+  live server retracts the exemption in so many words (1.39.1, re-asked 2026-10-20);
+  the correction points at that branch rather than restating the rule (INV-300), and
+  `tests/test_sqlite_is_not_an_auto_create_exception.py` reports a block that exempts
+  SQLite while allowing the server's one named exception, `senzingsdk-poc`'s
+  `sz_create_project`
