@@ -135,7 +135,7 @@ PRE_685 = (
      "**Non-blocking and Bootcamper-invisible (INV-012).**",
      "**Non-blocking and Bootcamper-invisible (INV-012/INV-048).**"),
     ("plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md",
-     "⛔ **It never blocks the module.**",
+     "⛔ **(INV-378) It never blocks the module.**",
      "⛔ **(INV-048) It never blocks the module.**"),
     ("plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md",
      "an iterate-forever loop or a blocked module (INV-173).",

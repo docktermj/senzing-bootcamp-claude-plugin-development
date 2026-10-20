@@ -1,5 +1,10 @@
 """A placeholder a step tells the guide to substitute states its rule at or above the first use.
 
+Enforces **INV-387**, registered by the maintainer 2026-10-20: a placeholder's substitution
+rule is readable at or above the place a step reads it. ⚠️ It derives both site sets by
+scanning and reads wrap-aware, but it **cannot** establish that a live guide substitutes the
+placeholder correctly -- only `dry-run` phase 3 observes that.
+
 Module 7 shipped both halves of this failure at once (#695), which is why one file holds both:
 
 - **The rule was missing.** Step 4e derived the program `export_row_<system>`, the program
@@ -25,7 +30,7 @@ use is the Goldilocks failure `tests/test_module07_step2_rules_beside_action.py`
 step 2 (#611); this file is the scanning form of the same rule, for the two placeholder kinds
 #695 found.
 
-⛔ **(INV-246) Both site sets are derived by SCANNING the shipped subtree**, never from the issue's
+⛔ **(INV-387, INV-246) Both site sets are derived by SCANNING the shipped subtree**, never from the issue's
 list of line numbers, which was already stale when it was filed: #686, #689 and #692 had moved
 every line it quoted. `corpus_files("plugins")` supplies the files.
 
@@ -85,7 +90,7 @@ about what a guide reads while running a step for a Bootcamper. A test's or a ma
 prose discusses these placeholders rather than handing them to anyone, and sweeping it would
 report correct content.
 
-⛔ **Every negative control runs the SAME check over a mutated copy of the shipped text
+⛔ **(INV-387) Every negative control runs the SAME check over a mutated copy of the shipped text
 (INV-265)**, restoring the exact pre-#695 wording and the pre-#695 position, and the scan asserts
 it read something: an empty corpus would otherwise pass silently.
 
@@ -273,7 +278,7 @@ def mutate(test, text, old, new):
 #: behind anywhere in it would answer for the site the control is trying to expose.
 PRE_695 = (
     ("the program `export_row_<system>` in `src/query`, where\n"
-     "   `<system>` is a short snake_case name for the system (for example `aws_neptune` for a "
+     "   `<system>` is a short snake_case name for the system (INV-387; for example `aws_neptune` for a "
      "system\n   recorded as \"AWS Neptune\"), at the path",
      "the program `export_row_<system>` in `src/query` at the path"),
     ("with that section's commands. That section takes `<name>` as\n"

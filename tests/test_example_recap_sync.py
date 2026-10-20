@@ -1,5 +1,11 @@
 """Tests that the shipped example recap PDF matches its source Markdown.
 
+Named by **INV-301**'s 2026-10-19 (#697) note, whose rendered-record clause this file
+enforces: it probes the committed PDF's drawn version in both suite legs, comparing
+extracted text rather than bytes, because two renders seconds apart differ in
+``/CreationDate``. ⚠️ It **cannot** establish that the committed artifact was rendered by
+``/release`` rather than by hand, only that what ships asserts the current version.
+
 INV-065 ships a sanitized reference pair inside the plugin:
 ``docs/examples/bootcamp_recap.example.md`` and its rendered ``.pdf``. The
 invariant says the PDF must remain *regenerable* from the ``.md`` — but nothing

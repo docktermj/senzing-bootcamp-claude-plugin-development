@@ -1,4 +1,8 @@
 """A template placeholder that asks for the Bootcamper's words for a pinned option has a step
+
+Enforces **INV-390**, registered by the maintainer 2026-10-20: a template placeholder asking
+for the Bootcamper's own words has a step that captures them. ⚠️ It reads the shipped templates and
+option handling; it **cannot** establish that a live turn records what they actually said.
 that captures them.
 
 Discover the Business Problem Step 11 writes `docs/business_problem.md` from a template whose

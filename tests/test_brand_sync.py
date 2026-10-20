@@ -1,10 +1,23 @@
 """Guard against silent drift between brand_tokens.py and the fallback palettes
+
+Enforces **INV-395**, registered by the maintainer 2026-10-20: a shipped script's inlined
+fallback copy of a value another module owns stays equal to its source, lives in one named
+constant, and is asserted with the source importable. ⚠️ It **cannot** establish that a fallback
+is ever reached at runtime, only that the copy equals its source when the source imports.
 inlined into the shipped generators that carry a copy of one.
 
-⛔ **No prose states how many carriers exist (INV-246).** Which generators those are is
+⛔ **(INV-377) No prose states how many carriers exist (INV-246).** Which generators those are is
 discovered below rather than written down, and `NoProseStatesHowManyCarriersThereAre`
 holds the shipped tree and these guards to the same rule: a number that is right the day
 it is written is exactly the thing that goes stale unread (#700).
+
+Enforces **INV-377**, registered by the maintainer 2026-10-19. ⚠️ INV-377 binds **every**
+derived set; this file reaches only the brand-palette carriers and the prose about them, so
+it **cannot** establish that any other derived set's prose states a property rather than a
+size. The maintainer registered the broader wording knowing that, so a later guard over
+another derived set discharges more of the invariant rather than widening it. It also
+cannot establish that a sentence naming some carriers and not others is complete --
+`TheBrandTokensDocstringNamesEveryCarrierOrNone` covers the one place that defect occurred.
 
 This file discharges **INV-184** — "every shipped generator that inlines a fallback copy
 of the brand palette" — not only **INV-107**, which enumerates the first two. INV-107 is
@@ -44,7 +57,7 @@ sys.path.insert(0, SCRIPTS)
 #: A module-level inlined fallback constant. INV-184 binds "every shipped generator" that
 #: inlines the brand palette, so the set is DISCOVERED here rather than listed (INV-246).
 #:
-#: ⛔ **(INV-246)** The word FALLBACK is matched ANYWHERE in the name, not only as a prefix. The earlier
+#: ⛔ **(INV-395, INV-246)** The word FALLBACK is matched ANYWHERE in the name, not only as a prefix. The earlier
 #: `^_?FALLBACK_[A-Z_]+` matched a prefix-named constant only, so `_CERT_TEXT_FALLBACK` in
 #: `generate_recap_video.py` was invisible to this sweep while its citation copy drifted from
 #: the recap PDF's wording (#693). INV-246 asks for the PATTERN to be widened, never for the
@@ -286,7 +299,7 @@ class TheCertificateTextIsOneSourceOfTruth(unittest.TestCase):
     is unimportable, and removing it would turn that case into a blank certificate — so the
     copies are held equal here, the way the palette is held to `brand_tokens.py` above.
 
-    ⛔ **(INV-265) This comparison is meaningful only with `generate_recap_pdf` IMPORTABLE.**
+    ⛔ **(INV-395, INV-265) This comparison is meaningful only with `generate_recap_pdf` IMPORTABLE.**
     Skipping the import would compare nothing and pass. `generate_recap_pdf` imports its fpdf2
     dependency inside the renderer, not at module scope, so it imports in BOTH suite legs —
     fpdf2 present and absent — and these tests therefore FAIL rather than skip when the module

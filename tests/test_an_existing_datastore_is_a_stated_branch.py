@@ -1,5 +1,9 @@
 """SDK setup Step 7 and Step 8a state what they do on a datastore that already exists (#684).
 
+Enforces **INV-393**, registered by the maintainer 2026-10-20: a step whose precondition can
+already be satisfied states the branch for that case rather than leaving it to the guide. ⚠️ It
+reads the shipped step prose; it **cannot** establish that a live run takes the stated branch.
+
 Both steps were written for a datastore that does not yet exist, and the module documents two
 paths that re-enter them on one that does:
 
@@ -57,7 +61,7 @@ MODULE_02 = SKILLS / "module-02-sdk-setup" / "SKILL.md"
 PHASE3 = SKILLS / "module-05-data-quality-mapping" / "phase3-test-load.md"
 
 #: Step 7's instruction 3 and the sites that point at it.
-INSTRUCTION_3 = "3. ⛔ **When the datastore already exists"
+INSTRUCTION_3 = "3. ⛔ **(INV-393) When the datastore already exists"
 HANDLING = "**Handling each answer (INV-284).**"
 SQLITE_BRANCH = "**For SQLite**"
 RUNG_2 = "2. **Apply the Senzing schema**"
@@ -65,7 +69,7 @@ RUNG_3 = "3. **Seed the Senzing configuration**"
 PG_DDL = "4. Apply the Senzing PostgreSQL schema DDL"
 PG_WIRE = "5. Wire the connection into the engine config"
 #: Step 8a's already-seeded branch and the paragraph it sits in front of.
-SEED_BRANCH = "⛔ **When a default configuration is already registered"
+SEED_BRANCH = "⛔ **(INV-393) When a default configuration is already registered"
 SEED_FETCH = "`sdk_guide(topic='configure')`'s primary `RegisterDataSources` snippet"
 #: The detour section and the `sdk_repair` running notes inside it.
 DETOUR_ANCHOR = '<a id="receiving-a-setup-detour"></a>'

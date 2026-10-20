@@ -767,7 +767,7 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # INV-372 test_sdk_update_offer.py, INV-373 test_reversed_decision_capture.py, INV-375
 # test_release_cycle.py. Re-derived by running the extractor -- 258, the twelve present by name
 # and none removed. EXPECTED_PAIRS 246 -> 258.
-EXPECTED_PAIRS = 258
+EXPECTED_PAIRS = 290
 
 
 def pairs():

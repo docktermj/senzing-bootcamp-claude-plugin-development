@@ -1,5 +1,7 @@
 """`/release` edits every file in the repo that asserts the plugin version.
 
+Enforces **INV-383**, registered by the maintainer 2026-10-20. ⚠️ It **cannot** establish that a version asserted in a shape no text scan reads — a rendered artifact, a value computed at run time — has been found; those are covered by their own guards.
+
 `.claude/skills/release/release.py` carries a table, `VERSION_SITES`, naming each file
 whose text states the plugin's version, and rewrites all of them in one pass. A table is
 only as good as the day it was written: a third assertion site added later is released

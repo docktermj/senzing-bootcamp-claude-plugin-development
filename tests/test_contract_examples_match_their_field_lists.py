@@ -1,5 +1,10 @@
 """Every example payload in the visualization contract obeys the field list stated beside it.
 
+Enforces **INV-397**, registered by the maintainer 2026-10-20: an example payload in a contract the
+plugin itself defines carries only fields that contract states. ⚠️ It **cannot** establish that a
+stated field list is the right one -- that is a Senzing measurement (INV-080) -- or that any
+implementation returns what the contract says.
+
 ``visualization-api-reference.md`` is the normative contract every Truth Set visualization
 server is generated from, in any language (INV-090, INV-002). Its ``/api/records`` entry showed
 a record object carrying ``name``, ``address``, ``phone`` and ``identifiers.SSN``. Eight lines

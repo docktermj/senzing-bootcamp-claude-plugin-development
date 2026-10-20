@@ -1,5 +1,10 @@
 """A path a shipped step hands over as its deliverable must be one a packaging profile reaches.
 
+Enforces **INV-392**, registered by the maintainer 2026-10-20: a path a step hands over as a
+deliverable is reachable by a packaging profile or declared non-traveling at the step. ⚠️ It
+reads the shipped prose and the packager's own constants; it **cannot** establish that a real
+archive contains the file, only that the rules say it would.
+
 Module 7 step 4e tells the Bootcamper that "the deliverable is the written file (or files) and the
 program that writes them", hands each written file over by path, and records them as `outputs` in
 its checkpoint. Until #686 it wrote them under `data/temp/exports/<system>/`, and `data/temp` sits

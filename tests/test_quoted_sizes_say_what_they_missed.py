@@ -1,5 +1,10 @@
 """A quoted measured size says what the measurement missed, and says it conditionally.
 
+Enforces **INV-388**, registered by the maintainer 2026-10-20: an option quoting a measured
+size discloses what the measurement missed, and discloses it only where it was missed. ⚠️ It
+reads the shipped prose and drives the packager over fixtures; it **cannot** establish that a
+live run substitutes the clause correctly, which only `dry-run` phase 3 observes.
+
 `/package-bootcamp` Step 1 pins "⛔ **Run the dry run first. The question below quotes a measured
 size, never an estimate.**" Step 2 then quotes a `transfer` figure. Step 3 -- which creates the
 database backup when `backups/revisit/` does not yet exist -- runs *after* the answer. So on any
@@ -454,7 +459,7 @@ class TheControlsRunTheSameCheck(unittest.TestCase):
     def test_a_clause_with_no_stated_condition_is_reported(self):
         """The clause is only conditional if the flow says when it goes in and when it does not."""
         text = shipped(FLOW)
-        start = text.index("⛔ **Option 2's `{…}` clause")
+        start = text.index("⛔ **(INV-388) Option 2's `{…}` clause")
         end = text.index("⚠️ **Why it is conditional")
         reported = self.check(text[:start] + text[end:])
         self.assertTrue(

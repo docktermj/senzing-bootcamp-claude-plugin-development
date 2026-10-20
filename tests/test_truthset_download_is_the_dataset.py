@@ -1,5 +1,13 @@
 """Step 1.1 must download the Truth Set, not save the preview `get_sample_data` returns.
 
+Enforces **INV-378**, registered by the maintainer 2026-10-20: a platform-injected reply a
+tool's own manifest documents is an outcome of its own in a taxonomy, and the branch for it
+neither retries nor falls through to `unavailable`, and does not block the module. ⚠️ This
+file asserts that the shipped branch **states** each clause; it **cannot** establish that a
+live run classifies a real `Denied.` reply correctly -- only a Bootcamper reaching the server
+through the Connectors Directory observes that -- and it asserts nothing about the server,
+the suite being offline (INV-108).
+
 The step said "save the MCP records to `src/system_verification/truthset_data.jsonl`".
 `get_sample_data` does not return the records — it returns a **preview plus URLs**. Following the
 step as written saved **15 of 159** records and built the module's mandatory artifact (INV-077),
@@ -148,7 +156,7 @@ def denied_branch_problems(region):
         problems.append("the branch does not fire when `get_capabilities()` is unreachable")
     # No citation: INV-048 governs the recap PDF, and the module carrying on past a denied
     # reply is this branch's own clause (#607's ruling, finished by #685).
-    if not re.search(r"(?i)\u26d4 \*\*It never blocks the module", region):
+    if not re.search(r"(?i)\u26d4 \*\*(?:\(INV-\d+\) )?It never blocks the module", region):
         problems.append("the branch may become a dead end that blocks the module")
     return problems
 
@@ -400,7 +408,7 @@ class EachCheckSeesTheTextItWasWrittenFor(unittest.TestCase):
 
     def test_letting_the_branch_block_the_module_is_reported(self):
         region = self.mutate(
-            classification(), "\u26d4 **It never blocks the module",
+            classification(), "\u26d4 **(INV-378) It never blocks the module",
             "\u26d4 **Stop the module here")
         self.assertTrue(any("dead end" in p for p in denied_branch_problems(region)))
 
