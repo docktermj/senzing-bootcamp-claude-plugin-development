@@ -1,5 +1,12 @@
 """Guidance that attributes loaded data names synthesized data the bootcamp's (#694).
 
+Enforces **INV-399**, registered by the maintainer 2026-10-20. ⚠️ It asserts what the shipped
+text SAYS: that every block attributing loaded data names synthesized data the bootcamp's. It
+**cannot** establish that a live turn uses the wording -- only ``dry-run`` phase 3 observes
+that -- nor that the guide actually read ``provenance`` from ``config/data_sources.yaml``,
+which is a runtime act no offline suite can see. An ``Enforced by`` clause naming this file is
+therefore not a claim that any bootcamper was ever addressed correctly.
+
 ``module-07-query-visualize-discover/phase2-discover.md`` states a general rule: when a
 loaded source records ``provenance: synthesized``, the data is the bootcamp's, not the
 Bootcamper's -- say "the data the bootcamp generated", never "your data". It ships today

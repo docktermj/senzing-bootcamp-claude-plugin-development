@@ -1,5 +1,5 @@
 {
-  "count": 396,
+  "count": 397,
   "generator": ".claude/skills/review-invariants/invariant_manifest.py",
   "invariants": [
     {
@@ -3960,6 +3960,16 @@
       "statement": "Where an MCP tool publishes, in its own response, the criterion for choosing among the values of a parameter **that tool defines** — a `needs_input.decision_tree`, an enum's selection note, or an equivalent — shipped guidance MUST NOT state a selection criterion of its own for that choice. The step MUST name the call that returns the criterion (with the arguments that return it rather than an answer), MUST name the response fields that carry the criterion and the permitted values, MUST relay the criterion as the server states it together with the **server version and date** it was read at (INV-080), and MUST keep any criterion the plugin used before only as an explicit fallback that names which route decided the outcome (INV-125). ⛔ **A criterion the plugin owns is not wrong merely because the server has one** — INV-169's distinction holds, and a delegation is not a correction — **but it MUST NOT survive as the stated rule once the owning tool publishes one**, because the two drift apart with nothing to notice. Where the step that feeds the choice sends the guide to a route the server names as insufficient, that step MUST say so at the point it names the route, as a detection rather than a new question (INV-012, INV-006). Observed 2026-10-16 on server 1.39.1: `sdk_guide(topic='install')` with no `platform` returns a `needs_input.decision_tree.question` choosing `linux_yum` from `linux_apt` by `/etc/os-release` `ID`/`ID_LIKE` and stating that *\"`uname` does NOT show the distribution\"*, while Module 2's routing rule 5 chose *\"based on the package manager\"* and Step 2 sent the guide to `uname` (#680). Enforced by `tests/test_rule5_takes_the_distro_criterion_from_the_server.py`, which asserts that the shipped steps *state* each clause and **cannot** establish that a live guide makes the call or reads the file — `dry-run` phase 3 observes that — and asserts nothing about the server, the suite being offline (INV-108). ⚠️ **Registered 2026-10-20 with no ⛔ in the product**: the rule binds what shipped guidance may STATE, so its presence is its guard rather than a hard-rule line a conformance sweep would count. (Source: `linux-distro-choice-now-served`, 2026-10-20.)",
       "status": "active",
       "summary": "Where an MCP tool publishes, in its own response, the criterion for choosing among the values of a parameter **that tool defines** — a `needs_input.decision_tree`, an enum's selection note, or an equivalent — shipped guidance MUST NOT state a selection criterion of its own for that choice.",
+      "superseded_by": null
+    },
+    {
+      "id": "INV-399",
+      "index_group": "Questions, gates and bootcamper-facing conversation",
+      "partly_superseded_by": null,
+      "section": "Invariants added from implemented specs",
+      "statement": "Where bootcamper-facing wording attributes loaded data to the Bootcamper, the guide MUST read each loaded source's `provenance` from `config/data_sources.yaml`, and for a source recorded `synthesized` MUST name it \"the data the bootcamp generated\" rather than \"your data\" or any other possessive naming the Bootcamper. This binds every finding, fallback, caption and report line that says whose data it is, not only the relationship-network fallback INV-239's 2026-10-09 note covers. Enforced by `tests/test_synthesized_data_is_attributed_to_the_bootcamp.py`, which scans the shipped blocks that branch on `provenance: synthesized` **and** attribute the data, and asserts each names the data the bootcamp's; it **cannot** establish that a live turn uses the wording, which only `dry-run` phase 3 can observe. ⚠️ **Why it is not INV-239, so the question is not re-derived:** INV-239 is a data-**generation** rule — what bootcamp-generated source data must contain, extended by its 2026-10-09 (#459) note to covering the success criteria — and says nothing about how the guide names whose data it is. **INV-080** governs where a Senzing fact comes from and this is not one; **INV-149** governs reading a tool response; **INV-300** governs how one statement and its pointers relate once the rule exists, not whether it exists. (Source: `the-synthesized-data-attribution-rule-is-registered-nowhere`, 2026-10-20.)",
+      "status": "active",
+      "summary": null,
       "superseded_by": null
     }
   ],
