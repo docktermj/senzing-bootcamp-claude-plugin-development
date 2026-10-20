@@ -10328,12 +10328,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8310 test methods in 446 files, matching `inventory.test_count_total`.
+There are 8315 test methods in 447 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8310.
+sum to 8315.
 
-Two files run more tests than they define, so discovery collects 8317:
+Two files run more tests than they define, so discovery collects 8322:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -10342,7 +10342,7 @@ Two files run more tests than they define, so discovery collects 8317:
 
 Without `pwsh`, the run reports `Ran 8305`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8317`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8322`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10737,6 +10737,7 @@ looks wrong.
 - `tests/test_stop_nudge_silence_and_opt_outs.py`: 5
 - `tests/test_supersession_has_one_syntax.py`: 16
 - `tests/test_suppressed_branch_has_no_pinned_question.py`: 9
+- `tests/test_synthesized_data_is_attributed_to_the_bootcamp.py`: 5
 - `tests/test_synthesized_entities_have_their_own_identifiers.py`: 16
 - `tests/test_synthesized_name_sharing_has_a_budget.py`: 34
 - `tests/test_synthesized_scenario_has_quality_gaps.py`: 21
@@ -13535,3 +13536,11 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_sqlite_is_not_an_auto_create_exception.py` reports a block that exempts
   SQLite while allowing the server's one named exception, `senzingsdk-poc`'s
   `sz_create_project`
+- #694: the synthesized-data attribution rule is recorded as a deferred invariant and
+  guarded — it ships at `phase2-discover.md` crediting INV-239, which governs what
+  generated data must contain rather than how the guide names whose data it is, and its
+  deferral block had only ever existed in the issue body, so `/review-invariants` (which
+  reads `specs/IMPLEMENTED.md`) could never offer it and the citation could never be
+  written; `tests/test_synthesized_data_is_attributed_to_the_bootcamp.py` reports a block
+  that branches on `provenance: synthesized` and attributes the data without naming it the
+  bootcamp's, scoped to the 2 attributing blocks rather than all 13 branching ones
