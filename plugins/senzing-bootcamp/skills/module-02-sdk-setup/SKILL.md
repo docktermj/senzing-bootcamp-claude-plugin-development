@@ -2194,8 +2194,10 @@ config with `sdk_guide(topic='configure', ...)` — never hand-construct
    An entry with no `host_port` means `5432`, the only port earlier projects used. From here on,
    `<pg-runtime>` is that recorded `runtime` (INV-195).
 3. Wait until the server is ready (poll `<pg-runtime> exec <pg-container> pg_isready`).
-4. Apply the Senzing PostgreSQL schema DDL **before any SDK use** — the SDK does NOT auto-create it
-   (unlike SQLite). ⛔ **When this database already carries the schema, this step is a skip** (INV-300):
+4. Apply the Senzing PostgreSQL schema DDL **before any SDK use** — the SDK does NOT auto-create it.
+   ⛔ **(INV-080, INV-300) SQLite is no exception.** This step does not restate why: Step 7's
+   SQLite branch above carries that rule and its three rungs once.
+   ⛔ **When this database already carries the schema, this step is a skip** (INV-300):
    instruction 3 at the head of Step 7 decides that, for both engines, and it is not restated
    here. The DDL ships with the SDK install. Take `<schema path from MCP>` for the
    platform the SDK is installed on from the anti-patterns search above, at runtime (INV-080). On
