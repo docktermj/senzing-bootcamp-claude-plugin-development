@@ -147,7 +147,7 @@ mechanical operations and no others:
    `### docs`, and `### other` for a subject carrying no type — in the order the types first
    appear in the range.
 
-⛔ **No bullet's description is ever written here.** A subject whose meaning cannot be read
+⛔ **(INV-381) No bullet's description is ever written here.** A subject whose meaning cannot be read
 out of its own text is kept exactly as the commit wrote it: dropping it would lose a real
 change, and rewriting it would put words in the maintainer's mouth about a release they cut.
 Curation here is mechanical, or it is fabrication.

@@ -31,7 +31,7 @@ Isolation, and why each layer is here
 
 When the walk fails
 -------------------
-⛔ **A walk that ended abnormally MUST be reported as a failure of the run rather than as a
+⛔ **(INV-376) A walk that ended abnormally MUST be reported as a failure of the run rather than as a
 coverage limit: the run exits non-zero for it, and the walk's stderr is printed whenever the
 walk failed, whatever its stdout held.** A 68-turn walk died mid-turn, and this file filed it
 as "the walk produced no transcript" and exited 0 -- while ``walk.stdout or walk.stderr``
