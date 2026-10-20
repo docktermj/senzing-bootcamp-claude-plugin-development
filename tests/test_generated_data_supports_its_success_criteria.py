@@ -71,7 +71,7 @@ CHECK_HEAD = "⛔ **In the same pass, check criterion coverage (INV-239)**"
 NAME_CHECK_HEAD = "⛔ **In the same pass, count name sharing (INV-239)**"
 RETURN_HEAD = "⛔ **(INV-239) Both self-checks in this step apply to the regeneration:**"
 BUDGET_HEAD = "⛔ **Keep name sharing inside one budget (INV-239).**"
-M7_HEAD = ("⛔ **(INV-239) On a generated scenario that promised households, this fallback is a "
+M7_HEAD = ("⛔ **(INV-239, INV-399) On a generated scenario that promised households, this fallback is a "
            "bootcamp defect.**")
 M7_STEP7_HEAD = "- ⛔ **(INV-239) On a generated scenario that promised households**"
 LANGUAGE = (r"(?i)\b(?:python|java|csharp|rust|typescript|node|pandas|faker|bash|powershell|"

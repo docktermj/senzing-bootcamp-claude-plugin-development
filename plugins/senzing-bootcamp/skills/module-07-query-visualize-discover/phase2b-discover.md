@@ -174,7 +174,7 @@ connections between entities using `find_network` and `find_path`.
    more degrees to show. Here is `find_path` on a direct connection instead." In that case, leave
    out the "these aren't directly connected" line below.
 
-   ⛔ **(INV-239) On a generated scenario that promised households, this fallback is a bootcamp
+   ⛔ **(INV-239, INV-399) On a generated scenario that promised households, this fallback is a bootcamp
    defect.** The scenario promised them when a loaded source's entry in `config/data_sources.yaml`
    records `provenance: synthesized` and its `quality_intent` carries a `relationship_intent`, or
    when a loaded source records `provenance: synthesized` and the scenario's success criteria in
