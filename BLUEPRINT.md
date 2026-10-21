@@ -2708,8 +2708,10 @@ Phase 1 (`phase1-query-visualize.md`):
   headline entity is not compared.
 - Step 3b uses `reporting_guide` `quality` and `evaluation`, shows sampled
   entities as evidence, grades Acceptable (possible matches under 5%), Marginal
-  (5-15%) or Poor on the raw rate; only a mapping-actionable Poor asks whether
-  to go back to Module 5. On an all-synthesized scenario with
+  (5-15%) or Poor on the raw rate; Marginal and Poor both run one cause check
+  (`#the-cause-check`) whose mapping-actionable outcome alone asks: Poor
+  whether to go back to Module 5, Marginal its pinned proceed-or-iterate
+  question (`#the-marginal-question`). On an all-synthesized scenario with
   `scenario_intent.name_collisions`, a Marginal or Poor verdict also reports
   the measured name-sharing figure beside the possible-match count, as a
   separate lower-bound figure (`#measured-name-sharing`), and outcome 2 cites
@@ -10418,10 +10420,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8421 test methods in 452 files, matching `inventory.test_count_total`.
+There are 8428 test methods in 452 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8421.
+sum to 8428.
 
 Two files run more tests than they define, so discovery collects 8428:
 
@@ -10718,7 +10720,7 @@ looks wrong.
 - `tests/test_phasec_generated_path_asks_once.py`: 12
 - `tests/test_placeholder_rules_precede_their_use.py`: 23
 - `tests/test_plugin_manifest_reads_resolve_inside_the_plugin.py`: 13
-- `tests/test_poor_band_requires_a_mapping_cause.py`: 15
+- `tests/test_poor_band_requires_a_mapping_cause.py`: 19
 - `tests/test_post_yes_switch_reads_the_dial.py`: 19
 - `tests/test_predictions_before_results.py`: 55
 - `tests/test_preparation_recap_template.py`: 9
@@ -10730,7 +10732,7 @@ looks wrong.
 - `tests/test_propagate_publishes_the_published_marketplace_name.py`: 11
 - `tests/test_python_sources_compile_cleanly.py`: 7
 - `tests/test_quality_assessment_type_name_check.py`: 40
-- `tests/test_quality_iteration_returns_to_step_3b.py`: 25
+- `tests/test_quality_iteration_returns_to_step_3b.py`: 28
 - `tests/test_quality_presence_test.py`: 18
 - `tests/test_quality_score_and_preview_prereq.py`: 27
 - `tests/test_quality_score_inputs_are_checked_before_scoring.py`: 11
@@ -13688,6 +13690,15 @@ Senzing licensing, with no SPDX identifier.
   clean run to the accuracy shortfall);
   `tests/test_phase_d_gate_routes_on_both_metrics.py` pins the definition and
   its links, and the rule is queued as a new invariant for `/review-invariants`
+- #751: Module 7 step 3b's Marginal band runs the same cause check as Poor,
+  stated once (`#the-cause-check`: the sanity comparison, the actionability
+  test and three outcomes), and asks its proceed-or-iterate question only on
+  the mapping-actionable outcome, as a pinned numbered gate with a handling
+  block (a Marginal verdict whose near-misses were 452 of 453 name-only still
+  asked, while Poor on the same finding continued);
+  `tests/test_poor_band_requires_a_mapping_cause.py` is widened to Marginal and
+  `tests/test_quality_iteration_returns_to_step_3b.py` requires "iterate" only
+  on that outcome; it establishes no new invariant (INV-264 applied)
 - #752: under the graph cap, `rank_for_graph_cap` keeps entities with a
   relationship first, then source span, degree, record count and id, the
   full-population note names that ranking and the Module 3b contract states it

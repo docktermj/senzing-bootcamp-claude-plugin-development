@@ -10,7 +10,9 @@ The fix follows the `collection_return` precedent (#346). The route is stated **
 3b → "The quality-iteration route" (INV-300), and the other sites receive or cite it:
 
 * step 3b's accepted branch writes the key and `current_step: "3b"`, leaves `current_module`
-  alone and asks no second confirmation (INV-006); Marginal's "iterate" enters the same route;
+  alone and asks no second confirmation (INV-006); Marginal's "iterate" enters the same route,
+  and since #751 "iterate" is offered only on the cause check's mapping-actionable outcome, as
+  option 2 of the pinned Marginal question;
 * Module 7's, Module 5's and Module 6's `SKILL.md` **First:** clauses say what happens when the
   key is present (Module 7 routes by `stage`);
 * Module 5 Phase 2 and Module 6 Phase B each carry a "Receiving a `quality_iteration`" branch;
@@ -139,14 +141,51 @@ def step_3b_problems(phase1):
     return problems
 
 
+MARGINAL_ANCHOR = '<a id="the-marginal-question"></a>'
+
+
 def marginal_problems(phase1):
-    """Criterion 2: the Marginal bullet hands "iterate" to the route."""
+    """Criterion 2: Marginal's "iterate" enters the route, and only on the actionable outcome.
+
+    #751: the Marginal bullet used to ask proceed-or-iterate on every Marginal verdict. It now
+    runs the shared cause check first, and "iterate" exists only as option 2 of the Marginal
+    question, which is asked on the mapping-actionable outcome alone (INV-264).
+    """
     bullet = between(phase1, "- **Marginal:**", "- **Poor:**")
     if bullet is None:
         return ["the Marginal bullet moved"]
+    problems = []
     if "#the-quality-iteration-route" not in bullet:
-        return ["the Marginal bullet does not send \"iterate\" to the quality-iteration route"]
-    return []
+        problems.append("the Marginal bullet does not send \"iterate\" to the quality-iteration "
+                        "route")
+    if "#the-cause-check" not in bullet:
+        problems.append("the Marginal bullet does not run the shared cause check first")
+    if "#the-marginal-question" not in bullet:
+        problems.append("the Marginal bullet does not point at the Marginal question")
+    if re.search(r"(?i)then ask whether to proceed or iterate", flat(bullet)):
+        problems.append("the Marginal bullet still asks proceed-or-iterate on every verdict")
+    problems += missing(bullet, ("Only its mapping-actionable outcome asks",
+                                 "continue to 3c with no question"), "the Marginal bullet")
+    question = between(phase1, MARGINAL_ANCHOR, ROUTE_ANCHOR)
+    if question is None:
+        return problems + ["step 3b has no Marginal question"]
+    problems += missing(question, (
+        "asked on a Marginal verdict only, and only when [the cause check](#the-cause-check) "
+        "above found it mapping-actionable (outcome 1)",
+        "Reply with a number:",
+        "1. Proceed",
+        "2. Iterate",
+        "Handling each answer (INV-284).",
+        "- 1, \"Proceed\": record the finding for the module recap and continue to 3c",
+        "- 2, \"Iterate\":",
+    ), "the Marginal question")
+    outcome_1 = between(phase1, "1. **Mapping-actionable**", "2. **Not mapping-actionable**")
+    if outcome_1 is None or "#the-marginal-question" not in outcome_1:
+        problems.append("outcome 1 of the cause check does not ask the Marginal question")
+    rest = between(phase1, "2. **Not mapping-actionable**", "**Module 5 feedback loop")
+    if rest is not None and "#the-marginal-question" in rest:
+        problems.append("outcome 2 or 3 of the cause check reaches the Marginal question")
+    return problems
 
 
 def first_clause_problems(skills):
@@ -360,6 +399,30 @@ class EachCheckFailsWhenItsSiteIsRemoved(unittest.TestCase):
         mutated = self.mutate(self.f["phase1"], "[the quality-iteration route]"
                               "(#the-quality-iteration-route) below",
                               "the Module 5 question below")
+        self.assertTrue(marginal_problems(mutated))
+
+    def test_restoring_the_unconditional_marginal_ask_fails(self):
+        """#751: the old bullet asked proceed-or-iterate before any cause was established."""
+        bullet = between(self.f["phase1"], "- **Marginal:**", "- **Poor:**")
+        mutated = self.mutate(self.f["phase1"], bullet,
+                              '- **Marginal:** "I see some potential issues. Here are the specific '
+                              'entities to review." (Show the\n  sampled entities and pairs with '
+                              'their match keys, then ask whether to proceed or iterate.) On\n  '
+                              '"proceed", continue to **3c**. On "iterate", enter\n  [the '
+                              'quality-iteration route](#the-quality-iteration-route) below, as its '
+                              'Marginal clause says.\n')
+        self.assertTrue(marginal_problems(mutated))
+
+    def test_a_marginal_question_asked_on_every_outcome_fails(self):
+        mutated = self.mutate(self.f["phase1"], "asked on a Marginal verdict only, and only when\n"
+                              "[the cause check](#the-cause-check) above found it mapping-actionable "
+                              "(outcome 1)", "asked on every Marginal verdict")
+        self.assertTrue(marginal_problems(mutated))
+
+    def test_a_non_actionable_outcome_that_asks_the_marginal_question_fails(self):
+        mutated = self.mutate(self.f["phase1"], "record the finding, and continue to **3c**.",
+                              "record the finding, then ask [the Marginal question]"
+                              "(#the-marginal-question).")
         self.assertTrue(marginal_problems(mutated))
 
     def test_removing_a_first_clause_fails(self):

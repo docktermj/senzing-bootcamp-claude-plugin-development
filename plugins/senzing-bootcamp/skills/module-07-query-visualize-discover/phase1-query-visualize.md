@@ -728,15 +728,24 @@ Based on the assessment — evidence first, wording second:
   merged on [match keys], and each is the same [person/organization]. Possible matches are [x]% of
   entities. Quality looks good — let's proceed to visualizations."
 - **Marginal:** "I see some potential issues. Here are the specific entities to review." (Show the
-  sampled entities and pairs with their match keys, then ask whether to proceed or iterate.) On
-  "proceed", continue to **3c**. On "iterate", enter
-  [the quality-iteration route](#the-quality-iteration-route) below, as its Marginal clause says.
+  sampled entities and pairs with their match keys, and name the match-key pattern they share.) Then
+  run [the cause check](#the-cause-check) below before asking anything. ⛔ **(INV-264) Only its
+  mapping-actionable outcome asks**, with [the Marginal question](#the-marginal-question) below,
+  whose "iterate" enters [the quality-iteration route](#the-quality-iteration-route) below, as its
+  Marginal clause says. Its other two outcomes state the finding, record it and continue to **3c**
+  with no question.
 - **Poor:** a high possible-match rate is a **finding, not a verdict on the mapping.** Show the
-  possible-match pairs and name the match-key pattern they share, then run the test below before
-  saying anything about mapping. ⛔ **The band says to look hard; it does not say what you will
-  find.**
+  possible-match pairs and name the match-key pattern they share, then run
+  [the cause check](#the-cause-check) below before saying anything about mapping.
+  ⛔ **(INV-264) The band says to look hard; it does not say what you will find.**
 
-⛔ **The Poor band has THREE outcomes, and only one of them reaches Module 5 (INV-264).** This mirrors the
+<a id="the-cause-check"></a>
+
+⛔ **(INV-264, INV-300) The cause check: the Marginal and Poor bands both run it, and it has THREE
+outcomes, of which only the first asks a question.** This is the one statement of the check, its
+sanity comparison, its actionability test and its outcomes; each band cites it rather than restating
+it. Only outcome 1 reaches Module 5, and only outcome 1 asks: the Module 5 feedback loop below on a
+Poor verdict, [the Marginal question](#the-marginal-question) below on a Marginal one. This mirrors the
 match-key audit's shape one module earlier (`../module-06-data-processing/phaseD-validation.md` →
 "Report a high-share suppressor as a FINDING, never a pass/fail (INV-264) — and ask the question
 that fits the bucket", whose buckets decide **which** question the finding earns), and for the same
@@ -770,7 +779,9 @@ A dataset that genuinely contains many similar people is not a mapping defect.
 Then route on what the evidence shows:
 
 1. **Mapping-actionable** — near-misses concentrated on one match-key pattern that a mapping change
-   would affect. Report it, give recommendations, and offer the Module 5 feedback loop below.
+   would affect. Report it and give recommendations. Then, on a **Poor** verdict, offer the Module 5
+   feedback loop below; on a **Marginal** verdict, ask [the Marginal question](#the-marginal-question)
+   below instead.
 2. **Not mapping-actionable** — the cause is a data characteristic. **Say plainly that remapping
    would not change it**, record the finding, and continue to **3c**. Two causes are common enough to
    name so they are recognized rather than rediscovered:
@@ -788,16 +799,21 @@ Then route on what the evidence shows:
 3. **Could not determine** — say so, record it, and continue to **3c**. Do not guess in either
    direction; an unsupported "mapping looks fine" is the same defect as an unsupported remap.
 
-⛔ **Outcomes 2 and 3 do NOT ask the Module 5 question** — they end by continuing into 3c, whose
-pinned visualization offer closes the turn, exactly as the **Acceptable** branch already does. Do not
+⛔ **(INV-264) Outcomes 2 and 3 do NOT ask the Module 5 question, and on a Marginal verdict they do
+NOT ask the Marginal question either** — on either band they end by continuing into 3c, whose pinned
+visualization offer closes the turn, exactly as the **Acceptable** branch already does. Do not
 invent a question for a branch that has none (the unsatisfiable-instruction class
-`module5-quality-gate-demands-a-question-its-best-branch-lacks` records).
+`module5-quality-gate-demands-a-question-its-best-branch-lacks` records). A question the evidence has
+already answered is the same defect: on a Marginal verdict whose near-misses are name-only, asking
+whether to proceed or iterate offers a remap that cannot change the result.
 
-⛔ **A non-actionable Poor finding still goes in the module recap.** It is a real result about the
-Bootcamper's data — "48.9% possible matches, driven by 46% phone population in one source, not by the
-mapping" is worth keeping — and a finding that routed nowhere must not be silently discarded.
+⛔ **(INV-264) A non-actionable Marginal or Poor finding still goes in the module recap.** It is a
+real result about the Bootcamper's data — "48.9% possible matches, driven by 46% phone population in
+one source, not by the mapping" is worth keeping — and a finding that routed nowhere must not be
+silently discarded.
 
-**Module 5 feedback loop (when quality is poor or the bootcamper requests iteration):**
+**Module 5 feedback loop (the Poor band's outcome 1; Marginal's "iterate" uses only its explanation
+statement):**
 
 Explain first, as a statement: name the sources the finding implicates, and say that their loaded
 data and query programs will be preserved; after remapping, they'll reload the affected sources and
@@ -813,9 +829,28 @@ re-evaluate here. Then end the turn on this single question:
   visualization offer closes the turn.
 - **Accepted:** run the quality-iteration route below. ⛔ **(INV-006) The pinned question's yes IS the
   route's go-ahead, so ask no second confirmation.**
-- **Marginal's "iterate":** give the explanation statement above, then enter the route directly with
-  `from_verdict: "marginal"`. ⛔ **(INV-006) The Module 5 question above is not asked as well:** the
-  "iterate" answer is already the go-ahead.
+
+<a id="the-marginal-question"></a>
+
+**The Marginal question — asked on a Marginal verdict only, and only when
+[the cause check](#the-cause-check) above found it mapping-actionable (outcome 1).** State the
+finding and the recommendations as outcome 1 says, then end the turn on this single question, pinned
+(INV-056) as a neutral lead and a numbered list (INV-051):
+
+👉 **Some of these near-misses point at the mapping. What would you like to do? Reply with a number:**
+
+1. Proceed to the visualizations with the results as they are.
+2. Iterate: refine the mapping in Data Quality, Mapping, and Transformation, then reload.
+
+*(Internal: end the turn on this question and wait.)*
+
+**Handling each answer (INV-284).**
+
+- **1, "Proceed":** record the finding for the module recap and continue to **3c**, whose pinned
+  visualization offer closes the turn.
+- **2, "Iterate":** Marginal's "iterate" gives the explanation statement above, then enters the route
+  directly with `from_verdict: "marginal"`. ⛔ **(INV-006) The Module 5 question above is not asked as
+  well:** the "iterate" answer is already the go-ahead.
 
 <a id="the-quality-iteration-route"></a>
 
@@ -903,7 +938,8 @@ route is the same for both.
    "Module completion" at the end of this file says, and Module 6's, as Phase D's "Module completion
    and transition to Module 7" says.
 
-Outcomes 2 and 3 of the Poor band never reach this route (INV-264, above).
+Outcomes 2 and 3 of [the cause check](#the-cause-check) never reach this route, on either band
+(INV-264, above).
 
 **Checkpoint:** write step 3b.
 

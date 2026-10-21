@@ -31,7 +31,16 @@ profiler-uniqueness sanity comparison.
 ⚠️ **The thresholds are deliberately untouched.** `< 5%` / `5-15%` / `> 15%` still decide whether to
 look hard; this spec changed only what may follow from looking. `TheThresholdsAreUnchanged` pins them.
 
+**Widened to Marginal (#751).** The Marginal band (5-15%) asked proceed-or-iterate on every
+verdict, with no cause established, while the stricter Poor band continued with no question on the
+same not-mapping-actionable finding: a run with 452 of 453 near-misses name-only was still asked.
+The sanity comparison, the actionability test and the three outcomes are now one statement, "the
+cause check", that both bands cite (INV-300); only its mapping-actionable outcome asks, the Module 5
+feedback loop on Poor and the pinned Marginal question on Marginal. `TheMarginalBandRunsTheCauseCheck`
+asserts it, with negative controls on mutated copies (INV-265).
+
 Source spec: `specs/poor-band-offers-the-remap-loop-before-anything-establishes-a-mapping-cause.md`.
+Widened by GitHub issue #751.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -42,6 +51,14 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PHASE1 = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
           / "module-07-query-visualize-discover" / "phase1-query-visualize.md")
+
+
+CAUSE_ANCHOR = '<a id="the-cause-check"></a>'
+
+
+def squash(text):
+    """Blockquote markers stripped, whitespace collapsed."""
+    return re.sub(r"\s+", " ", re.sub(r"^[ \t]*>[ \t]?", "", text, flags=re.M))
 
 
 def step_3b():
@@ -163,10 +180,76 @@ class TheSanityComparisonIsPrescribed(unittest.TestCase):
         self.assertIn("source profiler", s, "the server's own wording is not quoted")
 
 
+def cause_check_problems(text):
+    """#751: both bands cite one cause check; only its first outcome asks, on either band."""
+    if text.count(CAUSE_ANCHOR) != 1:
+        return ["the cause check's anchor is missing or stated twice"]
+    flat = squash(text)
+    problems = []
+    for band, start, end in (("Marginal", "- **Marginal:**", "- **Poor:**"),
+                             ("Poor", "- **Poor:**", CAUSE_ANCHOR)):
+        i = text.find(start)
+        j = text.find(end, i + 1) if i != -1 else -1
+        if i == -1 or j == -1:
+            problems.append("the %s bullet moved" % band)
+            continue
+        if "[the cause check](#the-cause-check)" not in text[i:j]:
+            problems.append("the %s bullet does not cite the cause check" % band)
+    if "then ask whether to proceed or iterate" in flat:
+        problems.append("the Marginal band still asks proceed-or-iterate before any cause is "
+                        "established")
+    for phrase in ("The cause check: the Marginal and Poor bands both run it, and it has THREE "
+                   "outcomes, of which only the first asks a question",
+                   "This is the one statement of the check",
+                   "Outcomes 2 and 3 do NOT ask the Module 5 question, and on a Marginal verdict "
+                   "they do NOT ask the Marginal question either",
+                   "on either band they end by continuing into 3c"):
+        if phrase not in flat.replace("**", ""):
+            problems.append("the cause check does not say %r" % phrase)
+    for once in ("Run the sanity comparison first", "Then route on what the evidence shows",
+                 "1. **Mapping-actionable**", "2. **Not mapping-actionable**",
+                 "3. **Could not determine**"):
+        if flat.count(once) != 1:
+            problems.append("%r is stated %d times, not once (INV-300)" % (once, flat.count(once)))
+    i = flat.find("1. **Mapping-actionable**")
+    j = flat.find("2. **Not mapping-actionable**")
+    if i == -1 or j == -1 or not ("Poor" in flat[i:j] and "#the-marginal-question" in flat[i:j]):
+        problems.append("outcome 1 does not name each band's question")
+    return problems
+
+
+class TheMarginalBandRunsTheCauseCheck(unittest.TestCase):
+    """#751: Marginal and Poor share one cause check, and only the actionable outcome asks."""
+
+    def setUp(self):
+        self.text = PHASE1.read_text(encoding="utf-8")
+
+    def test_both_bands_cite_one_cause_check(self):
+        self.assertEqual([], cause_check_problems(self.text))
+
+    def mutate(self, old, new=""):
+        self.assertIn(old, self.text, "negative control is stale: %r is gone" % old[:60])
+        return self.text.replace(old, new, 1)
+
+    def test_a_marginal_bullet_that_skips_the_check_fails(self):
+        mutated = self.mutate("Then\n  run [the cause check](#the-cause-check) below before asking "
+                              "anything.", "Then ask whether to proceed or iterate.")
+        self.assertTrue(cause_check_problems(mutated))
+
+    def test_a_second_copy_of_the_outcomes_fails(self):
+        mutated = self.mutate("- **Poor:**", "  Then route on what the evidence shows.\n- **Poor:**")
+        self.assertTrue(cause_check_problems(mutated))
+
+    def test_a_non_actionable_marginal_outcome_that_asks_fails(self):
+        mutated = self.mutate("and on a Marginal verdict they do\nNOT ask the Marginal question "
+                              "either", "and on a Marginal verdict they ask the Marginal question")
+        self.assertTrue(cause_check_problems(mutated))
+
+
 class TheFindingSurvives(unittest.TestCase):
     def test_a_non_actionable_finding_reaches_the_recap(self):
         self.assertRegex(
-            step_3b(), r"(?i)non-actionable Poor finding still goes in the module recap",
+            step_3b(), r"(?i)non-actionable Marginal or Poor finding still goes in the module recap",
             "a finding that routed nowhere is silently discarded")
 
 
