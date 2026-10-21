@@ -194,6 +194,34 @@ SOURCE_KEY_SEP = "|"
 #: above GRAPH_SUBGRAPH_DEFAULT_ABOVE.
 GRAPH_NODE_CAP = 1500
 
+
+def rank_for_graph_cap(nodes, edges):
+    """``nodes`` in the order the graph cap keeps them, best first.
+
+    The ranking is the one the any-language contract states in "The graph payload is
+    bounded, and says so"; the sort key below is that rule, not a second copy of it.
+    ``edges`` is an iterable of ``(a, b)`` entity-id pairs over the whole datastore, never
+    a capped subset.
+
+    ⚠️ Span alone used to lead. On one run 2,098 cross-source singletons outnumbered the
+    cap, so relationship mode, the default above 400 entities, showed 2 of 914 related
+    entities and 1 of 476 edges (#752).
+    """
+    degree = {}
+    for a, b in edges:
+        degree[a] = degree.get(a, 0) + 1
+        degree[b] = degree.get(b, 0) + 1
+    return sorted(
+        nodes,
+        key=lambda e: (
+            0 if degree.get(e["entity_id"]) else 1,
+            -len(set(e.get("data_sources") or [])),
+            -degree.get(e["entity_id"], 0),
+            -e.get("record_count", 0),
+            e["entity_id"],
+        ),
+    )
+
 #: Unique to this process, exposed on /api/stats so a caller can confirm the server that
 #: answered is the one it started. See `confirm_server_identity` below.
 SERVER_NONCE = uuid.uuid4().hex
@@ -787,24 +815,7 @@ class Model:
         related_total = len({end for pair in self.edges for end in pair})
         capped = False
         if cap is not None and total > cap:
-            # Rank by SOURCE SPAN first: an entity spanning several sources is the one
-            # worth seeing, and it is precisely what a truncation ordered by id or by
-            # insertion would drop at random. Connectivity breaks ties, then record
-            # count, then entity_id so the selection is deterministic across rebuilds
-            # (a re-rendered snapshot must not disagree with the recap describing it).
-            degree = {}
-            for a, b in self.edges:
-                degree[a] = degree.get(a, 0) + 1
-                degree[b] = degree.get(b, 0) + 1
-            nodes = sorted(
-                nodes,
-                key=lambda e: (
-                    -len(set(e.get("data_sources") or [])),
-                    -degree.get(e["entity_id"], 0),
-                    -e.get("record_count", 0),
-                    e["entity_id"],
-                ),
-            )[:cap]
+            nodes = rank_for_graph_cap(nodes, self.edges)[:cap]
             node_ids = {e["entity_id"] for e in nodes}
             capped = True
         edges = []
@@ -1595,7 +1606,8 @@ function addGraphControls(containerId,nodeCount,forceLabelsOff){
   if(graphMode!=="network"&&capped)
     box.append("div").attr("class","why")
       .text("Showing "+graphPayload.nodes.length+" of "+graphPayload.total+" entities — the graph "+
-            "is capped; entities spanning the most sources are kept first.");}
+            "is capped; entities with relationships are kept first, then those spanning the "+
+            "most sources.");}
 // Built FROM the rendered nodes, never from a static color config: a legend
 // entry then cannot exist without matching marks on screen, which is what makes
 // "the legend shows colors that appear nowhere in the graph" impossible.

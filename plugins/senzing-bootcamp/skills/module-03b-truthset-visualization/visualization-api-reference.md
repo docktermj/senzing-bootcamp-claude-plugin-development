@@ -750,8 +750,10 @@ datastore, so every Entity Graph note says so with exact counts and none offers 
 - **Relationship mode, none shown:** when no shown entity has a relationship, "None of the R
   entities with relationships are among the C shown." — never "No relationships between entities
   were found in this data.", which is true only of an uncapped payload.
-- **Full population:** "Showing C of M entities — the graph is capped; entities spanning the most
-  sources are kept first." Shown whenever `capped` is true, independent of the 400-entity threshold.
+- **Full population:** "Showing C of M entities — the graph is capped; entities with relationships
+  are kept first, then those spanning the most sources." Shown whenever `capped` is true, independent
+  of the 400-entity threshold. Its last clause quotes the ranking in "The graph payload is bounded,
+  and says so" below; that section is where the ranking is defined.
 
 When `capped` is false the notes are the uncapped wording above, unchanged.
 
@@ -1340,13 +1342,21 @@ wrong picture and discovering it afterwards, which is what happened.
 The graph endpoint MUST cap the nodes it emits and carry **`total`**, whether a cap was applied
 (**`capped`**), and **`related_total`** — the distinct endpoints of every edge in the whole datastore,
 counted before the cap — so the UI can state what it is showing rather than implying it is
-everything. The capped note wording is in "Defaults at production scale" item 3. Rank candidates by
-**source span first** — entities spanning most sources are the ones worth seeing — then by
-connectivity, then deterministically, so a re-rendered snapshot does not disagree with the recap
-prose describing it. ⚠️ This is about the **size and portability** of the payload and the
-self-contained snapshot, which embeds it whole; the *legibility* half is already handled by the
-scale-aware subgraph default below, and the client filtering what it draws does not bound what the
-server ships.
+everything. The capped note wording is in "Defaults at production scale" item 3.
+
+**The ranking under the cap**, the one rule the note quotes: rank candidates **with relationships
+first** — an entity that is an endpoint of any edge in the datastore ranks ahead of every entity
+that is not — then, within each group, by **source span** (entities spanning most sources are the
+ones worth seeing), then by connectivity, then by record count, then by entity id, so a re-rendered
+snapshot does not disagree with the recap prose describing it. Relationship mode, the default above
+400 entities, then shows the whole related population whenever it fits under the cap. An edge with
+an endpoint outside the kept set is still dropped, and with no relationships the order is source
+span first. ⚠️ Span first let 2,098 cross-source entities fill a 1,500 cap and left relationship
+mode showing 2 of 914 related entities (#752).
+
+⚠️ This is about the **size and portability** of the payload and the self-contained snapshot, which
+embeds it whole; the *legibility* half is already handled by the scale-aware subgraph default below,
+and the client filtering what it draws does not bound what the server ships.
 
 ### Binding the port (required — behavior, in every language, INV-260)
 

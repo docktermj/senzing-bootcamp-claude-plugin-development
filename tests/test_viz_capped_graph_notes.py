@@ -66,13 +66,19 @@ def model_with(entities, edges=()):
     return model
 
 
-#: Entities 1-5 span two sources, so a cap of 5 keeps exactly them. One relationship falls
-#: inside the kept set; four fall wholly outside it, so a count taken after the cap is wrong.
+#: Nine entities have a relationship, more than a cap of 5, so the related population alone
+#: overflows the cap and some of it is dropped: a count taken after the cap is wrong.
 WIDE = [{"entity_id": i, "data_sources": ["A", "B"]} for i in range(1, 6)]
 NARROW = [{"entity_id": i, "data_sources": ["A"]} for i in range(6, 13)]
 EDGES = [(1, 2), (6, 7), (8, 9), (10, 11), (7, 12)]
 RELATED = 9   # {1, 2, 6, 7, 8, 9, 10, 11, 12}
 CAP = 5
+#: Each relationship joins a two-source entity to a one-source one. Related entities are kept
+#: first and the five two-source ends fill the cap, so no shown entity keeps an edge.
+LONELY_EDGES = [(1, 6), (2, 7), (3, 8), (4, 9), (5, 10)]
+LONELY_RELATED = 10
+#: The full-population note's ranking clause (the contract's "The ranking under the cap").
+RANKING_CLAUSE = "entities with relationships are kept first, then those spanning the most sources"
 
 
 # --- transcription of the shipped JS -------------------------------------------------------
@@ -152,7 +158,9 @@ def problems(src):
     found = []
     try:
         capped = model_with(WIDE + NARROW, EDGES).graph(cap=CAP)
-        lonely = model_with(WIDE + NARROW, EDGES[1:]).graph(cap=CAP)
+        lonely = model_with(WIDE + NARROW, LONELY_EDGES).graph(cap=CAP)
+        if relationship_count(lonely) != 0:
+            found.append("the lonely fixture shows a relationship, so its empty note proves nothing")
         c = notes(src, capped, capped["total"])
         e = notes(src, lonely, lonely["total"])
         shown = relationship_count(capped)
@@ -162,10 +170,9 @@ def problems(src):
                          f"related_total: {c['relationship']!r}")
         if f"capped at {CAP} of {total} entities" not in c["relationship"]:
             found.append(f"capped relationship note does not state the cap: {c['relationship']!r}")
-        if f"Showing {CAP} of {total} entities" not in c["full"] or \
-                "entities spanning the most sources are kept first" not in c["full"]:
+        if f"Showing {CAP} of {total} entities" not in c["full"] or RANKING_CLAUSE not in c["full"]:
             found.append(f"capped full note does not state the cap and ranking: {c['full']!r}")
-        if f"None of the {RELATED - 2} entities with relationships are among the {CAP} shown." \
+        if f"None of the {LONELY_RELATED} entities with relationships are among the {CAP} shown." \
                 != e["empty"]:
             found.append(f"capped empty note does not place the related entities outside the "
                          f"cap: {e['empty']!r}")
@@ -244,9 +251,15 @@ class TheChecksFailWhenTheyShould(unittest.TestCase):
                            "the capped note may not name the capped subset as the population")
 
     def test_offering_all_when_capped_is_caught(self):
-        self.assert_caught('"is capped; entities spanning the most sources are kept first."',
-                           '"is capped. Uncheck the toggle to show them all."',
+        self.assert_caught('"is capped; entities with relationships are kept first, then those spanning the "+',
+                           '"is capped. Uncheck the toggle to show them all."+',
                            "a capped note may not claim 'all'")
+
+    def test_naming_the_old_span_first_ranking_is_caught(self):
+        self.assert_caught('"is capped; entities with relationships are kept first, then those spanning the "+\n'
+                           '            "most sources."',
+                           '"is capped; entities spanning the most sources are kept first."',
+                           "the capped full note must name the ranking graph() applies (#752)")
 
     def test_dropping_the_cap_from_the_relationship_note_is_caught(self):
         self.assert_caught('"relationships — the graph is capped at "',

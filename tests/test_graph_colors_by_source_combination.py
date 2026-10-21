@@ -242,10 +242,16 @@ class TheGraphPayloadIsBoundedAndSaysSo(unittest.TestCase):
                          "the total must be the real population, not the capped count")
         self.assertEqual(10, len(graph["nodes"]))
 
-    def test_the_cap_keeps_the_widest_spanning_entities_first(self):
+    def test_with_no_relationships_the_cap_keeps_the_widest_spanning_entities_first(self):
         """⛔ Ranking by id or insertion would drop exactly the interesting entities."""
         kept = [n["entity_id"] for n in self.many.graph(cap=2)["nodes"]]
         self.assertEqual([101, 100], kept)
+
+    def test_a_related_entity_is_kept_before_a_wider_unrelated_one(self):
+        """#752: span first let cross-source singletons crowd every relationship out."""
+        related = model_with(self.many.entities.values(), edges=[(1, 2)])
+        kept = [n["entity_id"] for n in related.graph(cap=3)["nodes"]]
+        self.assertEqual([1, 2, 101], kept)
 
     def test_the_selection_is_deterministic(self):
         first = [n["entity_id"] for n in self.many.graph(cap=8)["nodes"]]
