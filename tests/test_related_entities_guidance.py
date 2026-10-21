@@ -239,7 +239,9 @@ class TestEmptyResultIsTreatedAsPlumbingFailure(unittest.TestCase):
         """'Could not measure' must not collapse into 'no finding'."""
         text = read(PHASE_D)
         start = text.index("## Iterate vs. proceed decision gate")
-        section = text[start : start + 2000]
+        # The gate section up to the decision table, not a fixed character window: #750's
+        # link to the per-record match accuracy pushed "Could not measure" past 2000 chars.
+        section = text[start : text.index("**The table below is the whole of the routing", start)]
         for outcome in ("A finding", "No finding", "Could not measure"):
             with self.subTest(outcome=outcome):
                 self.assertIn(outcome, section)

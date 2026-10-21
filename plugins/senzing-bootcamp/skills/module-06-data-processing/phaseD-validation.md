@@ -111,6 +111,29 @@ a whole percentage. Write it to `docs/uat_results.md` with both counts beside it
 that instead, with the reason, and no percentage. Step 25 (2+ sources) replaces this figure with
 the cross-source spot-check's, computed the same way.
 
+<a id="per-record-match-accuracy"></a>
+
+**Per-record match accuracy**, the gate's other reading, is computed here and nowhere else
+(INV-300), on Phase D's reviewed sample: **reviewed records whose resolution is judged correct
+÷ records reviewed**, as a whole percentage. The sample is the records step 21's review looked up,
+each counted once; with 2+ sources, the records step 24 reviews join it. A record's resolution is
+correct when it shares an entity with every record the review expected it to match and with none
+the review expected kept apart. A record that could not be found counts as reviewed and not
+correct. Write it to `docs/uat_results.md` beside the UAT %, with both counts and the sample named
+(for example "Per-record match accuracy: 8 of 10 reviewed records correct (80%), step 21's
+sample"), and rewrite that line when step 24 adds records. If no record was reviewed, write that
+instead, with the reason, and no percentage: the gate reads it as `none`. This figure counts
+records and the UAT % counts entities, so keep the two apart even when a sample has the same
+shape.
+
+⛔ **Only this figure routes the gate's accuracy column.** When a ground truth exists for the
+scenario (known correct entity assignments), also compute pairwise precision and recall the way
+`reporting_guide(topic='quality', language='<chosen_language>', version='current')` describes, and
+report both beside this figure as findings, naming the ground truth they were computed against.
+They never route, and never replace or adjust this figure, including when they disagree with it.
+With no ground truth, leave them out; never estimate them. The Bootcamper's own data and generated
+data are computed the same way.
+
 **Checkpoint:** write step 22.
 
 ## Cross-source validation (conditional, 2+ sources loaded)
@@ -669,8 +692,9 @@ This audit asks nothing, so continue in the same turn to the gate below (INV-225
 ## Iterate vs. proceed decision gate
 
 Route on the UAT / match-accuracy results, reading the UAT % from `docs/uat_results.md` (step 22
-→ [the UAT %](#uat-percent)), **and present the match-key audit outcome alongside
-them** — the percentages alone cannot see a suppressor problem, so a bootcamper choosing between
+→ [the UAT %](#uat-percent)) and the per-record match accuracy from the same file (step 22 →
+[per-record match accuracy](#per-record-match-accuracy)), **and present the match-key audit
+outcome alongside them** — the percentages alone cannot see a suppressor problem, so a bootcamper choosing between
 iterating and proceeding needs both. A high-share cross-source suppressor is the strongest reason
 to choose "iterate now" even when the numbers look acceptable.
 
@@ -710,12 +734,13 @@ never state a UAT % that was not computed.
 
 **The table below is the whole of the routing: every pair of readings lands in exactly one branch,
 and no pair lands in two.** The accuracy column is the **per-record** figure (the INV-264 rule
-above), never a relationship-bucket share. `any` means any reading, including none; `none` means
+above), never a relationship-bucket share: the [per-record match accuracy](#per-record-match-accuracy)
+step 22 defines, never precision or recall. `any` means any reading, including none; `none` means
 the figure does not exist — no entity could be spot-checked (UAT %), or no per-record accuracy was
 established (accuracy). A band runs up to the next band's floor, so `80–89%` is 80% up to but not
 including 90% and no reading can fall between two rows.
 
-| UAT % | Per-record match accuracy | Branch |
+| UAT % | [Per-record match accuracy](#per-record-match-accuracy) | Branch |
 |---|---|---|
 | ≥90% | ≥90% | Results look strong |
 | ≥90% | <90% | Accuracy shortfall |

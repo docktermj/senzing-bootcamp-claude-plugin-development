@@ -2626,7 +2626,12 @@ Phase D (`phaseD-validation.md`, steps 21-28):
   review as it stands. Otherwise steps 21-24 ask nothing.
 - Spot-check entities, UAT in `docs/uat_results.md`, with the UAT % defined
   once at step 22 (judged correct ÷ checked; none checked means no UAT %, and
-  the gate routes on match accuracy alone); with 2+ sources,
+  the gate routes on match accuracy alone), and the per-record match accuracy
+  defined beside it (reviewed records judged correct ÷ records reviewed, over
+  step 21's sample, joined by step 24's with 2+ sources; none reviewed is
+  `none`); only that figure routes the gate's accuracy column, and pairwise
+  precision and recall from `reporting_guide(topic='quality')` are reported
+  beside it when a ground truth exists, never estimated; with 2+ sources,
   cross-source and quality checks, UAT (self-directed for a generated business
   case, else asks about business users), and `docs/results_validation.md`.
   Module 6 offers no visualization.
@@ -10413,21 +10418,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8406 test methods in 452 files, matching `inventory.test_count_total`.
+There are 8421 test methods in 452 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8406.
+sum to 8421.
 
-Two files run more tests than they define, so discovery collects 8413:
+Two files run more tests than they define, so discovery collects 8428:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8406`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8421`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8413`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8428`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10707,7 +10712,7 @@ looks wrong.
 - `tests/test_phase3_interaction_prose.py`: 36
 - `tests/test_phase3_names_every_server_language.py`: 8
 - `tests/test_phase_c_loads_each_source_from_its_subset_record.py`: 26
-- `tests/test_phase_d_gate_routes_on_both_metrics.py`: 25
+- `tests/test_phase_d_gate_routes_on_both_metrics.py`: 40
 - `tests/test_phase_d_how_state_audit.py`: 36
 - `tests/test_phase_d_iterate_now_enters_the_quality_iteration_route.py`: 31
 - `tests/test_phasec_generated_path_asks_once.py`: 12
@@ -13673,6 +13678,16 @@ Senzing licensing, with no SPDX identifier.
   entry's `name`, `provenance` and `entity_type` without overwriting an existing
   one; `tests/test_module1_registry_write_is_checked.py` pins the three sites,
   and the rule is queued as a new invariant for `/review-invariants`
+- #750: Module 6 Phase D's gate routes its accuracy column on one figure,
+  defined once at step 22 (`#per-record-match-accuracy`: reviewed records
+  judged correct ÷ records reviewed, with both counts and the sample named)
+  and linked from the gate prose and table header; precision and recall from
+  `reporting_guide(topic='quality')` are reported beside it only when a ground
+  truth exists and never route (the term was defined nowhere, so a generated
+  scenario's answer key gave three readings, two of which would have routed a
+  clean run to the accuracy shortfall);
+  `tests/test_phase_d_gate_routes_on_both_metrics.py` pins the definition and
+  its links, and the rule is queued as a new invariant for `/review-invariants`
 - #752: under the graph cap, `rank_for_graph_cap` keeps entities with a
   relationship first, then source span, degree, record count and id, the
   full-population note names that ranking and the Module 3b contract states it

@@ -42,10 +42,29 @@ mutated copy** (INV-265). ⛔ **Every phrase is matched across line wraps (INV-3
 are flattened before matching, and `ReWrapping` re-flows the prose to one word per line and
 asserts the checks still pass.
 
+**The accuracy figure the table routes on is defined once (#750).** The gate routed on "per-record
+match accuracy" and no plugin text said how to compute it, so on a generated scenario with an
+answer key a guide had three defensible readings (100% of merged records, 87.3% recall, 8 of 10
+in the step-21 sample), and either of the two it did not route on would have sent the Bootcamper
+to the accuracy-shortfall branch. Step 22 now anchors one definition, `#per-record-match-accuracy`,
+beside `#uat-percent`:
+
+* **the figure** — reviewed records whose resolution is judged correct ÷ records reviewed, a whole
+  percentage written to `docs/uat_results.md` with both counts and the sample named; no record
+  reviewed is `none`, which the table's `none` cells route;
+* **what routes** — only this figure. Pairwise precision and recall, computed the way
+  `reporting_guide(topic='quality')` describes, are reported beside it when a ground truth exists,
+  never route, and are never estimated without one;
+* **stated once** — the formula appears in no other shipped Markdown file, and nowhere else in
+  this one (INV-300);
+* **the links** — the gate prose, the accuracy column's legend and the table header link the
+  anchor.
+
 The checks assert that the skill files *state* these rules; they **cannot** establish that a live
 guide follows them. `dry-run` phase 3 observes that.
 
-Source issue: #678. Invariants: INV-056, INV-117, INV-264, INV-265, INV-284, INV-300, INV-346.
+Source issues: #678, #750. Invariants: INV-056, INV-117, INV-264, INV-265, INV-284, INV-300,
+INV-346.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -53,6 +72,8 @@ import itertools
 import re
 import unittest
 from pathlib import Path
+
+from _corpus import corpus_files
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
@@ -63,6 +84,15 @@ GATE_HEADING = "## Iterate vs. proceed decision gate"
 GATE_END = "## Stakeholder summary"
 SHORTFALL_BULLET = "- **UAT ≥90% but match accuracy <90% — the accuracy shortfall:**"
 BAND = "uat_90_accuracy_below_90"
+
+#: #750: the one definition of the accuracy figure, its anchor, and the link every routing site uses.
+ACCURACY_ANCHOR = '<a id="per-record-match-accuracy"></a>'
+ACCURACY_LINK = "(#per-record-match-accuracy)"
+TABLE_HEADER = "| UAT % | [Per-record match accuracy](#per-record-match-accuracy) | Branch |"
+STEP_22 = "## 22. "
+STEP_22_END = "**Checkpoint:** write step 22."
+#: The formula, matched across wraps; it must appear once in the shipped Markdown (INV-300).
+FORMULA = "reviewed records whose resolution is judged correct ÷ records reviewed"
 
 STRONG = "Results look strong"
 SHORTFALL = "Accuracy shortfall"
@@ -142,11 +172,10 @@ def table_rows(text):
     section = gate(text)
     if section is None:
         return []
-    header = "| UAT % | Per-record match accuracy | Branch |"
-    if header not in section:
+    if TABLE_HEADER not in section:
         return []
     rows = []
-    for line in section[section.index(header):].split("\n")[1:]:
+    for line in section[section.index(TABLE_HEADER):].split("\n")[1:]:
         line = line.strip()
         if not line.startswith("|"):
             break
@@ -307,7 +336,100 @@ def resume_problems(phase_d):
     ) if flat(phrase) not in section]
 
 
+def accuracy_definition(text):
+    """Step 22's text from the accuracy anchor to the step's checkpoint, or None (#750)."""
+    if STEP_22 not in text:
+        return None
+    start = text.index(STEP_22)
+    # Matched across wraps on the raw text, so the slice keeps its offsets (INV-346).
+    end = re.compile(r"\s+".join(map(re.escape, STEP_22_END.split()))).search(text, start)
+    if end is None:
+        return None
+    step = text[start:end.start()]
+    if ACCURACY_ANCHOR not in step:
+        return None
+    return step[step.index(ACCURACY_ANCHOR):]
+
+
+def definition_problems(text):
+    """Step 22 defines the figure: numerator, denominator, sample, `none`, and what routes."""
+    if text.count(ACCURACY_ANCHOR) != 1:
+        return ["Phase D anchors the per-record match accuracy %d times, not once"
+                % text.count(ACCURACY_ANCHOR)]
+    definition = accuracy_definition(text)
+    if definition is None:
+        return ["step 22 does not anchor the per-record match accuracy definition"]
+    if '<a id="uat-percent"></a>' not in text[:text.index(ACCURACY_ANCHOR)]:
+        problems = ["the per-record match accuracy is not defined beside the UAT %"]
+    else:
+        problems = []
+    body = flat(definition)
+    needed = (
+        # the figure: numerator, denominator, unit, sample
+        "**Per-record match accuracy**",
+        FORMULA,
+        "as a whole percentage",
+        "The sample is the records step 21's review looked up, each counted once",
+        "with 2+ sources, the records step 24 reviews join it",
+        "A record that could not be found counts as reviewed and not correct",
+        # where it is written, and with what
+        "Write it to `docs/uat_results.md` beside the UAT %, with both counts and the sample named",
+        # no record reviewed: no figure, routed as none
+        "If no record was reviewed, write that instead, with the reason, and no percentage",
+        "the gate reads it as `none`",
+        "keep the two apart",
+        # only this figure routes; precision and recall are findings beside it
+        "⛔ **Only this figure routes the gate's accuracy column.**",
+        "When a ground truth exists for the scenario",
+        "pairwise precision and recall the way "
+        "`reporting_guide(topic='quality', language='<chosen_language>', version='current')` "
+        "describes",
+        "report both beside this figure as findings",
+        "They never route, and never replace or adjust this figure, including when they "
+        "disagree with it",
+        "With no ground truth, leave them out; never estimate them",
+        "The Bootcamper's own data and generated data are computed the same way",
+    )
+    problems += ["the per-record match accuracy definition does not say %r" % phrase
+                 for phrase in needed if flat(phrase) not in body]
+    return problems
+
+
+def link_problems(text):
+    """The gate prose, the accuracy column's legend and the table header link the definition."""
+    section = gate(text)
+    if section is None:
+        return ["Phase D has no iterate-vs-proceed gate"]
+    problems = []
+    if TABLE_HEADER not in section:
+        problems.append("the decision table's accuracy header does not link the definition")
+    rule = find(section, "⛔ **(INV-264) Route match accuracy")
+    if rule is None:
+        return problems + ["the gate's INV-264 rule moved, so its routing sentence is not found"]
+    lead = flat(plain(section)[:rule.start()])
+    if flat("the per-record match accuracy from the same file (step 22 → "
+            "[per-record match accuracy]%s)" % ACCURACY_LINK) not in lead:
+        problems.append("the gate's routing sentence does not read the linked figure")
+    if flat("never a relationship-bucket share: the [per-record match accuracy]%s step 22 "
+            "defines, never precision or recall" % ACCURACY_LINK) not in flat(section):
+        problems.append("the accuracy column's legend does not link the definition")
+    return problems
+
+
+def stated_once_problems(corpus):
+    """INV-300: the formula is written in one place across the shipped Markdown."""
+    hits = ["%s (%d)" % (name, flat(text).count(flat(FORMULA)))
+            for name, text in sorted(corpus.items()) if flat(FORMULA) in flat(text)]
+    total = sum(flat(text).count(flat(FORMULA)) for text in corpus.values())
+    if total != 1:
+        return ["the per-record match accuracy formula is stated %d times: %s"
+                % (total, ", ".join(hits) or "nowhere")]
+    return []
+
+
 CHECKS = {
+    "definition": (definition_problems, ("phase_d",)),
+    "links": (link_problems, ("phase_d",)),
     "table": (table_problems, ("phase_d",)),
     "shortfall": (shortfall_problems, ("phase_d",)),
     "strong": (strong_label_problems, ("phase_d",)),
@@ -324,6 +446,12 @@ def run(name, texts):
 
 def read_all():
     return {"phase_d": read(PHASE_D), "phase_1": read(PHASE_1)}
+
+
+def shipped_markdown():
+    """`{relative path: text}` for every shipped Markdown file under `plugins/`."""
+    return {path.relative_to(REPO_ROOT).as_posix(): read(path)
+            for path in corpus_files("plugins", suffixes={".md"})}
 
 
 def rewrap(text):
@@ -393,6 +521,31 @@ class TheShippedGateRoutesEveryPairOfReadings(unittest.TestCase):
         """One branch states "Results look strong." — the one with both figures."""
         section = gate(self.texts["phase_d"])
         self.assertEqual(1, flat(section).count('state "Results look strong."'))
+
+
+class TheAccuracyFigureIsDefinedOnce(unittest.TestCase):
+    """#750: the figure the accuracy column routes on is defined once, and every site links it."""
+
+    def setUp(self):
+        self.texts = read_all()
+
+    def test_the_definition_is_found(self):
+        """⛔ INV-265: a scan of a moved definition certifies nothing."""
+        self.assertIsNotNone(accuracy_definition(self.texts["phase_d"]))
+
+    def test_step_22_defines_the_figure_and_what_routes(self):
+        self.assertEqual([], run("definition", self.texts))
+
+    def test_the_gate_and_the_table_header_link_it(self):
+        self.assertEqual([], run("links", self.texts))
+
+    def test_the_formula_is_stated_once_in_the_shipped_markdown(self):
+        self.assertEqual([], stated_once_problems(shipped_markdown()))
+
+    def test_the_link_resolves_to_the_anchor(self):
+        text = self.texts["phase_d"]
+        self.assertGreaterEqual(text.count(ACCURACY_LINK), 3)
+        self.assertEqual(1, text.count(ACCURACY_ANCHOR))
 
 
 class EachCheckSeesTheDefectItWasWrittenFor(unittest.TestCase):
@@ -482,6 +635,69 @@ class EachCheckSeesTheDefectItWasWrittenFor(unittest.TestCase):
         texts = self.mutated("phase_d", "Phase D runs again in full, from step 21",
                              "Phase D is skipped")
         self.assertTrue(run("resume", texts))
+
+    # --- #750: the accuracy figure's definition and its links
+
+    def test_the_gate_before_the_definition_fails(self):
+        """The shape #750 reported: the term used, routed on, and defined nowhere."""
+        texts = dict(self.texts)
+        definition = accuracy_definition(texts["phase_d"])
+        texts["phase_d"] = texts["phase_d"].replace(definition, "", 1)
+        problems = run("definition", texts)
+        self.assertTrue(any("does not anchor" in p or "0 times" in p for p in problems), problems)
+
+    def test_a_definition_without_its_denominator_is_reported(self):
+        texts = self.mutated("phase_d", "\n÷ records reviewed**", "**")
+        self.assertTrue(run("definition", texts))
+
+    def test_a_definition_that_lets_recall_route_is_reported(self):
+        """The reading the #750 guide nearly took: recall at 87.3% sending a clean run to the
+        shortfall branch."""
+        texts = self.mutated("phase_d", "They never route, and never replace or adjust this "
+                             "figure,", "When recall is lower, route on recall instead,")
+        self.assertTrue(run("definition", texts))
+
+    def test_a_definition_that_estimates_without_ground_truth_is_reported(self):
+        texts = self.mutated("phase_d", "With no ground truth, leave them out; never estimate "
+                             "them.", "With no ground truth, estimate them from the sample.")
+        self.assertTrue(run("definition", texts))
+
+    def test_a_definition_with_no_none_case_is_reported(self):
+        texts = self.mutated("phase_d", "If no record was reviewed, write that\ninstead",
+                             "Always write a percentage")
+        self.assertTrue(run("definition", texts))
+
+    def test_an_unlinked_table_header_is_reported(self):
+        texts = self.mutated("phase_d", TABLE_HEADER,
+                             "| UAT % | Per-record match accuracy | Branch |")
+        self.assertTrue(run("links", texts))
+
+    def test_a_routing_sentence_without_the_link_is_reported(self):
+        texts = self.mutated("phase_d", " and the per-record match accuracy from the same file "
+                             "(step 22 →\n[per-record match accuracy](#per-record-match-accuracy))",
+                             "")
+        self.assertTrue(run("links", texts))
+
+    def test_a_legend_without_the_link_is_reported(self):
+        texts = self.mutated("phase_d", ": the [per-record match accuracy]"
+                             "(#per-record-match-accuracy)\nstep 22 defines, never precision or "
+                             "recall", "")
+        self.assertTrue(run("links", texts))
+
+    def test_a_restated_formula_is_reported(self):
+        """INV-300: a second copy of the formula, anywhere in the shipped Markdown, fails."""
+        corpus = shipped_markdown()
+        name = PHASE_1.relative_to(REPO_ROOT).as_posix()
+        corpus[name] += "\n\nMatch accuracy is %s.\n" % FORMULA
+        problems = stated_once_problems(corpus)
+        self.assertTrue(problems)
+        self.assertIn(name, problems[0])
+
+    def test_a_missing_formula_is_reported(self):
+        corpus = shipped_markdown()
+        name = PHASE_D.relative_to(REPO_ROOT).as_posix()
+        corpus[name] = corpus[name].replace("÷ records reviewed", "÷ entities", 1)
+        self.assertTrue(stated_once_problems(corpus))
 
 
 class ReWrapping(unittest.TestCase):
