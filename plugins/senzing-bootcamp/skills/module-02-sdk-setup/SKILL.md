@@ -1987,9 +1987,14 @@ placed after the last branch is skipped by a guide that follows the other one.
    indexed `brianmacy/sz_spark` `SchemaApplier` example is "idempotent: skip if `sys_cfg` already
    exists".
 
+   The SQLite form compares the name with `COLLATE NOCASE` because SQLite keeps a table name in
+   the case its DDL declares, and the shipped `szcore-schema-sqlite-create.sql` declares `SYS_CFG`
+   (SDK 4.4.2.26272, observed 2026-10-21), while PostgreSQL folds an unquoted name to lower case,
+   so its `'sys_cfg'` is right as written.
+
    ```bash
    # SQLite — prints False when database/G2C.db is absent as well as when the schema is not in it.
-   python3 -c "import os,sqlite3,sys; p=sys.argv[1]; print(bool(os.path.exists(p) and sqlite3.connect(p).execute(\"SELECT 1 FROM sqlite_master WHERE type='table' AND name='sys_cfg'\").fetchone()))" database/G2C.db
+   python3 -c "import os,sqlite3,sys; p=sys.argv[1]; print(bool(os.path.exists(p) and sqlite3.connect(p).execute(\"SELECT 1 FROM sqlite_master WHERE type='table' AND name='SYS_CFG' COLLATE NOCASE\").fetchone()))" database/G2C.db
    # PostgreSQL — the same question, through the psql route this branch's DDL step already uses.
    <pg-runtime> exec -i <pg-container> psql -U senzing -d G2 -tAc "SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = 'sys_cfg')"
    ```
