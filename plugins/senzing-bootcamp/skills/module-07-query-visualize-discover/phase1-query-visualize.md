@@ -200,7 +200,8 @@ For each query type, create a program in the bootcamper's chosen language: save 
 `[query_name]` in `src/query`, where `[query_name]` is a short snake_case name for the query (for
 example `find_duplicates`), at the path and with the project that
 `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, then build it
-with that section's build command.
+with that section's build command. Graduation copies these programs too, so none reads at runtime a
+path graduation leaves behind ([the rule](../module-06-data-processing/phaseA-build-loading.md#no-runtime-reads-of-uncopied-paths)).
 
 ⛔ **(INV-152) Before factoring engine setup into a shared helper, read the factory-lifetime
 rule.** Writing several query programs is exactly when that helper gets written, and getting
