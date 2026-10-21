@@ -1249,8 +1249,9 @@ each branch.
 The opt-in governs **the tutorial** — whether the bootcamper is walked through why/how/networks
 interactively. It must not govern **the findings**, which are the payoff for every preceding module:
 collection, mapping, loading, resolution. A bootcamper who declines a walkthrough at the end of a
-long session should still leave knowing what Senzing found in *their* data. Generate and announce it
-in one line (no yes/no gate).
+long session should still leave knowing what Senzing found in the data they loaded, named on the
+cover by its provenance ([the subtitle table below](#discoveries-cover-subtitle)). Generate and
+announce it in one line (no yes/no gate).
 
 Source every figure through generated SDK code and `reporting_guide` — never direct SQL against
 `database/G2C.db`. Write these seven sections, in this order; the generator checks for them by
@@ -1326,9 +1327,21 @@ bootcamp project** — resolve it the same way every other bundled script is res
 bare `scripts/…` path, which resolves against the project working directory where no top-level
 `scripts/` exists (INV-050 puts the project's own utilities under `src/scripts/`):
 
+<a id="discoveries-cover-subtitle"></a>
+
+⛔ **(INV-399) Pass the cover subtitle that every loaded source's `provenance` in
+`config/data_sources.yaml` picks.** A source with no recorded `provenance` counts as not
+synthesized, and a single source is all of them:
+
+| Loaded sources | Pass |
+|---|---|
+| All `synthesized` | `--subtitle "What Senzing found in the data the bootcamp generated"` |
+| Some `synthesized`, some not | `--subtitle "What Senzing found in the loaded data"` |
+| None `synthesized` | no `--subtitle`: the default, "What Senzing found in your data" |
+
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_discoveries_pdf.py"
-# or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/generate_discoveries_pdf.py
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_discoveries_pdf.py" --subtitle "<the table's subtitle>"
+# or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/generate_discoveries_pdf.py …
 ```
 
 Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).

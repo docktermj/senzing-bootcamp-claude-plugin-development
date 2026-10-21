@@ -2734,8 +2734,9 @@ Phase 1 (`phase1-query-visualize.md`):
   in this document* table with one row per saved requirement, answered or "not
   answered, because …", then Headline numbers through What was not found, with
   `**Measurement:**` and near-miss labels, Latin-script text) and its PDF via
-  `generate_discoveries_pdf.py`, whose extracted text is checked; failure is
-  reported, never blocking.
+  `generate_discoveries_pdf.py`, passing the cover `--subtitle` that every loaded
+  source's `provenance` picks from the `#discoveries-cover-subtitle` table, whose
+  extracted text is checked; failure is reported, never blocking.
 - Query Completeness Gate (item 5 checks that every saved requirement appears
   in Your question, answered exactly once, adding a missing row and
   re-rendering; it asks nothing and never blocks), then (only if a server started, by a recorded
@@ -8027,7 +8028,7 @@ function showOverlapCell(o,i,j,si,sj){const box=d3.select("#overlap-list");if(bo
 // Match Keys: which feature combinations drove the most resolutions.
 async function drawMatchKeys(){const d=await getJSON("/api/matchkeys");const box=d3.select("#matchkeys");box.html("");
   const items=d.match_keys||[];
-  box.append("p").html("Which feature combinations (match keys) drove the most resolutions across your data.");
+  box.append("p").html("Which feature combinations (match keys) drove the most resolutions across the loaded data.");
   if(!items.length){box.append("p").attr("class","muted").text("No match keys were recorded for the resolved records.");return;}
   // Gutter sized from the data, then labels fitted to it. Real match keys run to
   // 70+ chars ("+NAME+ADDRESS+NATIONAL_ID+OTHER_ID+REGISTRATION_DATE+..."), and a
@@ -10753,7 +10754,7 @@ looks wrong.
 - `tests/test_stop_nudge_silence_and_opt_outs.py`: 5
 - `tests/test_supersession_has_one_syntax.py`: 16
 - `tests/test_suppressed_branch_has_no_pinned_question.py`: 9
-- `tests/test_synthesized_data_is_attributed_to_the_bootcamp.py`: 5
+- `tests/test_synthesized_data_is_attributed_to_the_bootcamp.py`: 19
 - `tests/test_synthesized_entities_have_their_own_identifiers.py`: 16
 - `tests/test_synthesized_name_sharing_has_a_budget.py`: 34
 - `tests/test_synthesized_scenario_has_quality_gaps.py`: 21
@@ -13593,4 +13594,15 @@ Senzing licensing, with no SPDX identifier.
   relationship mode showed 2 of 914 related entities and 1 of 476 edges);
   `tests/test_graph_cap_ranks_related_entities_first.py` pins the reported case
   at the real cap, and the INV-154 note amendment is queued for
+  `/review-invariants`
+- #753: Module 7 passes the discoveries PDF's cover `--subtitle` from a
+  three-row table directly before the invocation, picked by every loaded
+  source's `provenance` (all synthesized: "the data the bootcamp generated"; a
+  mix: "the loaded data"; none: the default "your data"), and the results
+  app's Match Keys copy says "across the loaded data" — the flagless call put
+  "your data" on a generated scenario's cover while its body said otherwise
+  (INV-399); `tests/test_synthesized_data_is_attributed_to_the_bootcamp.py`
+  now pins the table at the fence, renders each row's cover, fails a
+  generated-case subtitle restated elsewhere (INV-300) and "your data" on any
+  non-comment viz-server line, and the INV-399 amendment is queued for
   `/review-invariants`
