@@ -1539,7 +1539,10 @@ Ground rules (`ground-rules.md`, every turn):
 - Predictions before results (`#predictions-before-results`, the one statement
   System verification Step 7a, Discover Step 4a-pairs and step 4b item 1a
   cite): ⛔ the prediction is asked before its result exists, an already-run
-  result held back; a numbered choice whose skip is the last option ("Just
+  result held back; introduced once per site, before its first 👉, in the
+  guide's words (why it is asked, that agreeing confirms their read, that
+  differing is not a mistake), with no grading word and never repeated on
+  resume; a numbered choice whose skip is the last option ("Just
   show me the engine's answer.") or, on a multi-select, a `— reply "skip"`
   clause; the reveal is non-yielding and goes with the next 👉, showing the
   prediction, the engine's call, `agreed` or `differed` and one line from the
@@ -10328,21 +10331,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8315 test methods in 447 files, matching `inventory.test_count_total`.
+There are 8321 test methods in 447 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8315.
+sum to 8321.
 
-Two files run more tests than they define, so discovery collects 8322:
+Two files run more tests than they define, so discovery collects 8328:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8305`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8321`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8322`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8328`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10627,7 +10630,7 @@ looks wrong.
 - `tests/test_plugin_manifest_reads_resolve_inside_the_plugin.py`: 13
 - `tests/test_poor_band_requires_a_mapping_cause.py`: 15
 - `tests/test_post_yes_switch_reads_the_dial.py`: 19
-- `tests/test_predictions_before_results.py`: 49
+- `tests/test_predictions_before_results.py`: 55
 - `tests/test_preparation_recap_template.py`: 9
 - `tests/test_prescribed_search_queries.py`: 56
 - `tests/test_profile_report_relocation_covers_both_filenames.py`: 15
@@ -13544,3 +13547,11 @@ Senzing licensing, with no SPDX identifier.
   written; `tests/test_synthesized_data_is_attributed_to_the_bootcamp.py` reports a block
   that branches on `provenance: synthesized` and attributes the data without naming it the
   bootcamp's, scoped to the 2 attributing blocks rather than all 13 branching ones
+- #747: "Predictions before results" requires a one-time introduction before each
+  prediction site's first 👉 — the Discover questions arrived with no purpose and no
+  word on what agreeing or differing with the engine means, so a live guide
+  improvised one; the rule states what the introduction covers and the guide words
+  it, every site reaches it through its existing pointer (INV-300), and
+  `tests/test_predictions_before_results.py` requires each clause, fails a grading
+  word in the bullet and reports a site-local copy; the dated note on INV-357 is
+  queued as an amendment for `/review-invariants`

@@ -24,6 +24,14 @@ So the clauses are checked where they live:
   grading guard and the skip recording it defers to.
 - **In the shared section** (`rule_problems`): the rule-only clauses, among them the grading guard
   and the skipped line format.
+- **The introduction (#747)**, also in the shared section: before a site's first 👉 the guide says
+  once, in its own words, why the Bootcamper is asked, what agreeing means and what differing
+  means. The rule states what it covers and fixes no wording, so `rule_problems` requires each of
+  the three, the once-per-site clause and the no-repeat-on-resume clause, and `intro_problems`
+  fails the bullet if it carries a grading word (`GRADING_WORDS`: "correct", a score, a tally, a
+  grade). Its lead phrase and its agreement clause are `RULE_ONLY`, so a site that carries its own
+  copy of the introduction is reported as restating the rule (INV-300); each site reaches it
+  through its existing "This is a prediction point:" pointer.
 - **At every pointer, derived** (`pointer_citation_problems`, #519): every shipped sentence that
   points at "Predictions before results", found by scan rather than from the three sites above
   (INV-246), cites INV-357, so a reader at the pointer can name the rule as well as the
@@ -53,10 +61,10 @@ resolved on screen has had its answer shown. So two more checks:
   records `midpoint_record`.
 
 The checks are pure functions over a file's text, so each one also runs on a mutated copy as its
-negative control. `TheChecksCatchARegression` runs eight regressions against every site: the reveal
+negative control. `TheChecksCatchARegression` runs nine regressions against every site: the reveal
 stated before the 👉, the skip removed, a second 👉 added, the options unnumbered, the grading
-guard deleted, the skip recording deleted, the citation dropped, and an app route added before the
-👉 (each marker alone, and two together). The grading guard and the skip recording also run against the shared section.
+guard deleted, the skip recording deleted, the citation dropped, an app route added before the
+👉 (each marker alone, and two together), and a copy of the introduction put before the 👉 (#747). The grading guard and the skip recording also run against the shared section.
 `TheAlreadyShownEntities` drops each exclusion, case, pointer and site consequence in turn.
 Each must make the check report the problem it targets, not merely some problem.
 
@@ -80,7 +88,7 @@ requires its citation, and passing it is no evidence that a live run obeys it.
 Stdlib only; shipped markdown read as text (INV-108).
 
 Source issues: #479 (part of #465); #507 (the app route and the already-shown entities); #519
-(the citation at every pointer).
+(the citation at every pointer); #747 (the introduction before a site's first 👉).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -188,7 +196,14 @@ SELECTION_EXCLUSION = {
 
 #: Phrases only the shared rule may carry; a site that holds one has forked it (INV-300).
 RULE_ONLY = (r"(?i)never say \"correct\"", r"(?i)keep a score", r"\(agreed\)`, or `\(differed\)",
-             r"skipped → \{engine's call\}")
+             r"skipped → \{engine's call\}", r"(?i)Introduce it once", r"(?i)agreeing confirms their read")
+
+#: The introduction's bullet in the shared rule (#747), from its bold lead to the next bullet.
+INTRO_LEAD = "- **Introduce it once, before the site's first 👉.**"
+
+#: Words that grade a prediction; the introduction carries none of them (#747, INV-357).
+GRADING_WORDS = re.compile(r"(?i)\b(?:in)?correct\w*|\bscor(?:e|es|ed|ing)\b|\btall(?:y|ies)\b|"
+                           r"\bgrad(?:e|es|ed|ing)\b")
 
 
 def read(path):
@@ -305,6 +320,19 @@ def point_problems(where, step, question, reveal, multi_select=False):
 # The shared rule
 # --------------------------------------------------------------------------------------------
 
+def intro_bullet(rule):
+    """The introduction's bullet in the shared rule ('' when absent), up to the next bullet."""
+    return section(rule, INTRO_LEAD, ("\n- ", "\n\n"))
+
+
+def intro_problems(rule):
+    """The introduction says nothing that grades a prediction (#747)."""
+    found = sorted({m.group(0) for m in GRADING_WORDS.finditer(intro_bullet(rule))}, key=str.lower)
+    if found:
+        return ["the introduction uses a grading word (%s)" % ", ".join(found)]
+    return []
+
+
 def rule_problems(ground_rules):
     rule = section(ground_rules, RULE_HEADING, ("\n## ",))
     if not rule:
@@ -333,6 +361,22 @@ def rule_problems(ground_rules):
         "the Q&R line format": r"`- \*\*\{the 👉 question\}\*\* — \{prediction\} → "
                                r"\{engine's call\}\s*\(agreed\)`, or `\(differed\)`",
         "the skipped line format": r"`- \*\*\{the 👉 question\}\*\* — skipped → \{engine's call\}`",
+        "a site is introduced once, before its first 👉": r"\*\*Introduce it once, before the "
+                                                          r"site's first 👉\.\*\*",
+        "the introduction says why it is asked": r"to commit to an expectation, then compare it "
+                                                 r"with the engine's call",
+        "the introduction says what agreeing means": r"that agreeing confirms their read",
+        "the introduction says what differing means": r"that differing is not a mistake but is "
+                                                      r"where the engine's\s+one-line reason is "
+                                                      r"most worth reading",
+        "the introduction goes ahead of the first 👉": r"It sits ahead of the site's first "
+                                                      r"prediction 👉",
+        "the introduction is said once per site": r"Say it once per site, not before each pair "
+                                                  r"or item",
+        "the introduction is not repeated on resume": r"a\s+site resumed after one of its "
+                                                      r"predictions is recorded does not repeat it",
+        "the introduction hints at no answer": r"it hints at no answer, never says how many "
+                                               r"pairs resolved together",
     }
     if '<a id="predictions-before-results"></a>' not in ground_rules:
         problems.append("the ground rules do not anchor the section")
@@ -344,6 +388,7 @@ def rule_problems(ground_rules):
             problems.append("the rule's site table does not list %s" % site)
     if questions(rule):
         problems.append("the rule itself asks a 👉 question")
+    problems += intro_problems(rule)
     return problems
 
 
@@ -878,7 +923,7 @@ def _loose(phrase):
 
 
 class TheChecksCatchARegression(unittest.TestCase):
-    """Eight regressions, each run against every site; each must report the problem it targets.
+    """Nine regressions, each run against every site; each must report the problem it targets.
 
     Carried over from #479's approach A, adapted to the shared rule: the per-site clauses (one
     👉, numbered options with a skip, the reveal after the 👉) are mutated at each site, and the
@@ -981,6 +1026,66 @@ class TheChecksCatchARegression(unittest.TestCase):
     def test_the_skip_recording_removed_from_the_shared_rule(self):
         self._rule_check(r";\s+a skip is `- \*\*\{the 👉 question\}\*\* — skipped → [^`]*`",
                          "the rule does not state that the skipped line format")
+
+    def test_a_site_carries_its_own_copy_of_the_introduction(self):
+        """#747: the introduction is stated once; a site-local copy is a fork (INV-300)."""
+        rule = section(read(GROUND_RULES), RULE_HEADING, ("\n## ",))
+        copy = intro_bullet(rule).strip()
+        self.assertTrue(copy, "the shared rule has no introduction, so the control would be vacuous")
+        self.check(lambda s, q, r: s.replace(q, "%s\n\n%s" % (copy, q), 1),
+                   " restates the shared rule (")
+
+
+class TheIntroduction(unittest.TestCase):
+    """#747: the shared rule requires a one-time introduction before a site's first 👉."""
+
+    def setUp(self):
+        self.text = read(GROUND_RULES)
+        self.rule = section(self.text, RULE_HEADING, ("\n## ",))
+
+    def test_the_rule_carries_the_introduction(self):
+        self.assertTrue(intro_bullet(self.rule), "the shared rule has no introduction bullet")
+        self.assertEqual(intro_problems(self.rule), [])
+
+    def test_the_bullet_stops_at_the_next_one(self):
+        """Anti-vacuity: the cut holds the whole bullet and none of the grading guard after it."""
+        bullet = intro_bullet(self.rule)
+        self.assertIn("next bullet", squash(bullet))
+        self.assertNotIn("A numbered choice", bullet)
+        self.assertNotIn('never say "correct"', bullet)
+
+    def test_the_grading_words_are_caught(self):
+        """Each grading word the introduction must not carry is reported, not merely some."""
+        for word in ("correct", "incorrect", "score", "scored", "tally", "graded"):
+            with self.subTest(word=word):
+                mutated = self.text.replace(
+                    "that agreeing confirms their read",
+                    "that agreeing means they are %s" % word, 1)
+                self.assertNotEqual(mutated, self.text)
+                problems = rule_problems(mutated)
+                self.assertTrue(any(p.startswith("the introduction uses a grading word (%s"
+                                                 % word) for p in problems),
+                                "%r went unnoticed: %r" % (word, problems))
+
+    def test_negative_control_the_introduction_removed(self):
+        mutated = self.text.replace(intro_bullet(self.rule), "", 1)
+        self.assertNotEqual(mutated, self.text)
+        self.assertIn("the rule does not state that a site is introduced once, before its first 👉",
+                      rule_problems(mutated))
+
+    def test_negative_control_each_clause_removed(self):
+        for phrase, wanted in (
+                ("to commit to an expectation, then compare it with the engine's call",
+                 "the introduction says why it is asked"),
+                ("that agreeing confirms their read", "the introduction says what agreeing means"),
+                ("that differing is not a mistake", "the introduction says what differing means"),
+                ("Say it once per site, not before each pair or item",
+                 "the introduction is said once per site"),
+                ("does not repeat it", "the introduction is not repeated on resume")):
+            with self.subTest(clause=wanted):
+                mutated = re.sub(_loose(phrase), "something", self.text, count=1)
+                self.assertNotEqual(mutated, self.text)
+                self.assertIn("the rule does not state that %s" % wanted, rule_problems(mutated))
 
 
 if __name__ == "__main__":

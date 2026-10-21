@@ -197,6 +197,15 @@ works; each site states only what is predicted and which engine call answers it,
   or hint at the result before the Bootcamper answers: where the engine call has not run yet, run it
   only after the answer; where it already has (step 4a's entity IDs), hold its outcome back. The
   turn ends on the prediction's 👉, and the result arrives in the next turn.
+- **Introduce it once, before the site's first 👉.** In one or two lines of your own words, say why
+  the Bootcamper is asked (to commit to an expectation, then compare it with the engine's call),
+  that agreeing confirms their read, and that differing is not a mistake but is where the engine's
+  one-line reason is most worth reading. It sits ahead of the site's first prediction 👉, in that
+  turn, because it informs the answer. Say it once per site, not before each pair or item, and a
+  site resumed after one of its predictions is recorded does not repeat it. The introduction obeys
+  the rest of this section: it hints at no answer, never says how many pairs resolved together,
+  and never calls a prediction right or wrong. The skip is offered exactly as the next bullet
+  states.
 - **A numbered choice (INV-051).** A neutral lead question and a numbered list, as the knowledge
   check asks its items (`../module-00-entity-resolution-concepts/concepts.md`). The skip is always
   available: on a single-choice prediction it is the last numbered option, "Just show me the
