@@ -280,6 +280,19 @@ loader. Every tier that represents a real production system gets the threaded pa
   datastore tolerates", and taking the worker count from the tier alone is how a
   production-tier loader ends up pointed at a datastore that cannot take it.
 
+  <a id="no-runtime-reads-of-uncopied-paths"></a>
+  ⛔ **The worker count is fixed in the generated code, and no generated program reads at runtime
+  a path graduation leaves behind.** The guide reads `database_type` here, while generating; the
+  program never does. Write the count into the code as a constant, with the code comment below. No
+  program this bootcamp generates reads, at runtime, a path that `../graduation/SKILL.md` → "Step
+  2: Build the production project" does not copy into `production/`: its **Exclude** list, and
+  anything it neither copies nor excludes. Graduation copies the code verbatim, so such a read finds
+  nothing there and the handed-over program falls back without an error. An input file a program
+  takes from its `config/data_sources.yaml` entry is not such a read: Step 2's projection of the
+  registry decides what production loads. A program that must choose by database at runtime
+  derives it from the scheme of `SQL.CONNECTION` in `SENZING_ENGINE_CONFIGURATION_JSON`
+  (`sqlite3://`, `postgresql://`, …), which graduation's `.env.example` carries into production.
+
   **The server makes this a database question, in its own words.** The loading anti-patterns
   route is stated once, in `phaseA-build-loading.md` → "Anti-pattern check" (INV-300). Its
   *"Do Not Use Single-Threaded Loading"* says *"Start with 2-8 workers per CPU core and

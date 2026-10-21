@@ -89,6 +89,20 @@ class LoaderGenerationReadsDatabaseType(unittest.TestCase):
             "explicit, since conflating them is the defect",
         )
 
+    def test_the_worker_count_is_a_constant_the_program_never_reads(self):
+        """#755: the guide reads `database_type` while generating; the loader never does.
+
+        A loader that read it at runtime fell back to one worker in `production/`, where
+        graduation leaves `config/bootcamp_preferences.yaml` behind. The rest of the rule is
+        pinned in `test_generated_programs_read_no_uncopied_path.py`.
+        """
+        start = self.text.index("- **`small`, `medium`, or `large`:**")
+        end = self.text.index("- **`demo`:**", start)
+        section = re.sub(r"\s+", " ", self.text[start:end])
+        self.assertIn("The worker count is fixed in the generated code", section)
+        self.assertIn("The guide reads `database_type` here, while generating; the program "
+                      "never does. Write the count into the code as a constant", section)
+
     def test_sqlite_serializes_and_postgresql_is_uncapped(self):
         start = self.text.index("- **`small`, `medium`, or `large`:**")
         end = self.text.index("- **`demo`:**", start)

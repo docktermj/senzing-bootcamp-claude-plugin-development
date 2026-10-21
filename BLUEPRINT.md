@@ -134,6 +134,8 @@ receives the shippable plugin through `/propagate-to-public`.
   preserves recap state before context compaction.
 - `plugins/senzing-bootcamp/scripts/recap_checkpoint.py`: shared logic for recap
   checkpoints used by the hooks.
+- `plugins/senzing-bootcamp/scripts/scan_uncopied_paths.py`: graduation Step
+  2's scan of the copied code for paths graduation left behind (section 5.64).
 - `plugins/senzing-bootcamp/scripts/secret_patterns.py`: shared secret-detection
   patterns used by the write gate and packager.
 - `plugins/senzing-bootcamp/scripts/senzing_logo_light.png`:
@@ -2535,7 +2537,11 @@ Phase A (`phaseA-build-loading.md`, steps 1-4a):
   `topic='load'` and `record_count=<raw_value>` (threaded above 500 or when
   omitted); SQLite
   (`database_type`, absent treated as SQLite) serializes writes, and a header
-  comment records tier and concurrency. Non-stdlib scaffold imports are fixed
+  comment records tier and concurrency. The worker count is a constant in the
+  code: no generated program reads, at runtime, a path graduation Step 2 does
+  not copy (`#no-runtime-reads-of-uncopied-paths`, cited by pointer to Step 2;
+  an input taken from the registry entry is exempt), and a runtime choice by
+  database reads `SQL.CONNECTION`'s scheme. Non-stdlib scaffold imports are fixed
   before compiling by swapping only the JSON library. The loader logs failures
   to `logs/loading_errors.json` and reports throughput.
 - Step 4a registers each `DATA_SOURCE` code in the data via
@@ -2862,7 +2868,11 @@ and continues; the recap PDF is guaranteed.
   source's `name`, `file_path`, `format` (a `skipped` source is left out,
   and Step 4's README names it as not mapped); never copies progress,
   preferences, recap, notes, `data/raw`, `data/samples`, `data/subsets`,
-  `data/backups`, `logs`, `backups`, `docs/feedback`.
+  `data/backups`, `logs`, `backups`, `docs/feedback`. After the copy, on
+  Overwrite and Merge, it runs `scan_uncopied_paths.py` (section 5.64,
+  `#scan-the-copied-code`); each `<file>: <path>` line it prints becomes one
+  `- [ ]` item in the migration checklist's Data section, no line adds no item,
+  and a scanner that cannot run adds none and graduation continues.
 - Step 3: `.env.example` (`SENZING_ENGINE_CONFIGURATION_JSON`, whose
   `PIPELINE` section carries the license, `DATABASE_URL`, `LOG_LEVEL`),
   `docker-compose.yml` by `database_type`, `.gitignore` (listing each build
@@ -2870,7 +2880,7 @@ and continues; the recap PDF is guaranteed.
   `production/README.md`, whose Usage gives each program's build and run
   commands from the ground rules' statement (#563), and
   `production/MIGRATION_CHECKLIST.md` (six sections; DEFAULT-flags item with
-  its export exception). Step 5:
+  its export exception; the Data section carries Step 2's scan items). Step 5:
   `production/GRADUATION_REPORT.md`; 5a normalizes with
   `--docs-dir production`; 5b renders `docs/business_problem.pdf` and
   `docs/data_source_evaluation.pdf` via `generate_document_pdf.py` with
@@ -5013,6 +5023,29 @@ when `done`, `clean` or `skipped`.
 
 Exit codes: 0 success, 1 bad input, 2 an argparse usage error, 3 a refused
 step or transition, 4 a baseline-SHA mismatch.
+
+### 5.64 `plugins/senzing-bootcamp/scripts/scan_uncopied_paths.py`
+
+Stdlib-only CLI graduation Step 2 runs from the project root after the copy.
+Options: `--project-dir` (default `.`) and `--production-dir` (default
+`<project-dir>/production`).
+
+- `scan` reads the text of every file under `<production>/src/` (`code_files`
+  skips `BUILD_OUTPUT` directories; `read_text` skips a file holding a NUL
+  byte) and takes each `PATH_TOKEN` match through `candidates`: a relative
+  path of two or more segments, `\` and repeated separators normalized to
+  `/`, a leading `./` dropped, a `..` segment, an absolute path or a URL's
+  path left out.
+- A token is a hit when it exists under the project and not under
+  `production/`, and does not start with the production directory's name. The
+  uncopied set is read off the two trees, never listed, so it follows Step 2.
+- Prints one `<file>: <path>` line per hit on stdout (the file relative to
+  `production/`, forward slashes, sorted, de-duplicated) and
+  `scan_uncopied_paths: N hit(s) under …` on stderr.
+- A text search: it cannot tell a read from a write or a comment, and misses a
+  path assembled from pieces or one the project never created.
+- Exit codes: 0 when finished, with or without hits; 1 when the production
+  directory does not exist.
 
 ## 6. Exact contracts
 
@@ -8570,6 +8603,29 @@ def main(argv=None):
 
 <!-- markdownlint-enable MD013 -->
 
+#### 6.1.38 `plugins/senzing-bootcamp/scripts/scan_uncopied_paths.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `plugins/senzing-bootcamp/scripts/scan_uncopied_paths.py`:
+
+```python
+BUILD_OUTPUT = {"classes", "target", "dist", "node_modules", "bin", "obj", "__pycache__"}
+PATH_TOKEN = re.compile(r"(?<![\w./\\:-])[\w.-]+(?:[/\\]+[\w.-]+)+[/\\]?")
+def candidates(text):
+    ...
+def code_files(src):
+    ...
+def read_text(path):
+    ...
+def scan(project, production):
+    ...
+def main(argv=None):
+    ...
+```
+
+<!-- markdownlint-enable MD013 -->
+
 ### 6.2 CLI
 
 Every argparse declaration, verbatim (the statements that build each parser).
@@ -9448,6 +9504,21 @@ From `.claude/skills/release-cycle/cycle.py`:
 
 <!-- markdownlint-enable MD013 -->
 
+#### 6.2.29 `plugins/senzing-bootcamp/scripts/scan_uncopied_paths.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `plugins/senzing-bootcamp/scripts/scan_uncopied_paths.py`:
+
+```python
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--project-dir", default=".", help="the bootcamp project root")
+    parser.add_argument("--production-dir", default=None,
+                        help="the production project (default: <project-dir>/production)")
+```
+
+<!-- markdownlint-enable MD013 -->
+
 ### 6.3 Config and file formats
 
 The plugin's configuration files, verbatim. The manifests `plugin.json` and
@@ -10292,7 +10363,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 450 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 452 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10342,21 +10413,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8360 test methods in 450 files, matching `inventory.test_count_total`.
+There are 8406 test methods in 452 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8360.
+sum to 8406.
 
-Two files run more tests than they define, so discovery collects 8346:
+Two files run more tests than they define, so discovery collects 8413:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8339`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8406`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8346`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8413`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10495,6 +10566,7 @@ looks wrong.
 - `tests/test_generated_dataset_size_is_a_license_decision.py`: 18
 - `tests/test_generated_gap_rates_reach_their_band.py`: 12
 - `tests/test_generated_html_deliverables.py`: 9
+- `tests/test_generated_programs_read_no_uncopied_path.py`: 22
 - `tests/test_generated_scenario_dataset_eligibility.py`: 20
 - `tests/test_generated_scenario_is_bounded.py`: 8
 - `tests/test_generated_scenario_marker_drop_is_exempt.py`: 18
@@ -10556,7 +10628,7 @@ looks wrong.
 - `tests/test_liveness_probe_is_not_a_document_search.py`: 7
 - `tests/test_load_count_reconciliation_has_three_outcomes.py`: 21
 - `tests/test_load_reconciliation_has_two_stages.py`: 54
-- `tests/test_loader_concurrency_reads_database_type.py`: 15
+- `tests/test_loader_concurrency_reads_database_type.py`: 16
 - `tests/test_maintainer_docs_stay_out_of_public.py`: 8
 - `tests/test_maintainer_tooling_stays_out_of_public.py`: 9
 - `tests/test_manifest_status_does_not_regress.py`: 5
@@ -10709,6 +10781,7 @@ looks wrong.
 - `tests/test_scaffold_banner_matches_build.py`: 25
 - `tests/test_scaffold_citations_and_database_type.py`: 23
 - `tests/test_scaffold_engine_config_reaches_the_sdk.py`: 8
+- `tests/test_scan_uncopied_paths.py`: 9
 - `tests/test_scenario_registry_fields_agree.py`: 13
 - `tests/test_screenshot_embed_timing_is_satisfiable.py`: 21
 - `tests/test_screenshot_retention_and_order.py`: 19
@@ -11448,6 +11521,19 @@ tests a rebuild can pass from behavior alone.
   Any dropped, rewritten or reordered line is rejected, and the original file is
   restored. It reads only the top-level `docs/*.md` files. `--dry-run` writes
   nothing.
+- **`scan_uncopied_paths.py`** (`tests/test_scan_uncopied_paths.py`). In a
+  temporary project after the copy, a loader naming
+  `config/bootcamp_preferences.yaml` and a Java query naming
+  `data/truth/scenario_truth.json` are the only two lines; the registry, the
+  `data/senzing-ready/` input and a URL's path are not hits. Copying both
+  leaves stdout empty. A path the project lacks, build output and a binary file
+  are skipped; `\` separators and `./` read the same; a missing production
+  directory exits 1; the default is `./production`; it imports only
+  `argparse`, `re`, `sys` and `pathlib`.
+  `tests/test_generated_programs_read_no_uncopied_path.py` pins Module 6's
+  rule, its pointers and Step 2's statement of the scan, and fails a Module 6
+  or 7 sentence directing a program to read an uncopied path, which it
+  computes from Step 2's copy table and Exclude list.
 - **`recap_checkpoint.py` and `checkpoint-tick.py`.**
   - The hook creates `docs/progress/recap_checkpoint.md` without overwriting a
     narrative.
@@ -13606,3 +13692,13 @@ Senzing licensing, with no SPDX identifier.
   generated-case subtitle restated elsewhere (INV-300) and "your data" on any
   non-comment viz-server line, and the INV-399 amendment is queued for
   `/review-invariants`
+- #755: no program the bootcamp generates reads at runtime a path graduation
+  Step 2 does not copy (Module 6 Phase A's rule, cited by pointer to Step 2,
+  a registry input exempt), the worker count is a constant in the code and a
+  runtime choice by database reads `SQL.CONNECTION`'s scheme, and Step 2 runs
+  the bundled `scan_uncopied_paths.py`, each hit one Data-section checklist
+  item (a loader that read `database_type` from the excluded preferences file
+  ran on one worker in `production/`);
+  `tests/test_generated_programs_read_no_uncopied_path.py` guards Module 6's
+  and 7's instructions, `tests/test_scan_uncopied_paths.py` runs the scanner,
+  and the rule is queued as a new invariant for `/review-invariants`

@@ -1445,6 +1445,28 @@ report's **files-excluded** table and in `production/README.md` → Configuratio
 input has to be supplied (INV-187). An excluded input the handover never mentions is indistinguishable from a
 broken project.
 
+<a id="scan-the-copied-code"></a>
+**Scan the copied code for paths this step left behind.** Generated programs never read such a
+path at runtime ([the rule](../module-06-data-processing/phaseA-build-loading.md#no-runtime-reads-of-uncopied-paths)),
+and this scan names any read that slipped through. After the copy, on Overwrite and Merge alike,
+run the bundled scanner from the project root:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/scan_uncopied_paths.py"
+# or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/scan_uncopied_paths.py
+```
+
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
+It searches the text of every file under `production/src/`, in any language, for a
+project-relative path that exists in the project but not in `production/`, which is everything
+above leaves behind, and prints one `<file>: <path>` line per hit. **Each line becomes one `- [ ]`
+item in the Data section of Step 4's `production/MIGRATION_CHECKLIST.md`**, naming the file and the
+path it reads, and saying that `production/` has no such path, so the program needs it supplied or
+rewritten to take it from the environment. No line, no item. A text search cannot tell a read from
+a write or a comment, so the item says the file names the path and leaves the Bootcamper to check
+which. If the scanner cannot run, log it, add no item, and continue: the scan only adds items.
+
 Present a short, one-line statement of what was copied, what was excluded, and the directories
 created, then continue directly to Step 3 — generate the production configuration files
 automatically. Do not gate this behind a 👉 question (one fewer low-stakes confirmation).
@@ -1518,6 +1540,7 @@ the files are exactly as they were before this paragraph.
     becomes their shipped code. The bootcamp is right to teach the composites
     (`../module-07-query-visualize-discover/phase1-query-visualize.md` relays the same caution) —
     this checklist is where the production correction belongs.
+  - **The Data section carries Step 2's scan items**, one per line [the scan](#scan-the-copied-code) printed.
   - **The Deployment section is where `deployment_target`/`cloud_provider` lands** (INV-097): name the stated target in its heading or first item, and make its checkboxes the ones that target actually needs (a cloud target → managed database, secret storage, image registry, network egress to nothing external; Kubernetes → manifests/Helm, resource limits, liveness probes; on-premises → host provisioning, backup schedule). ⛔ Still ⚠️-marked and still not covered in depth by the bootcamp — naming the target makes the list *relevant*, not authoritative, and it must not read as a deployment guide the bootcamp did not give. Absent → the generic six-section list exactly as before.
 
 Write every `production/*.md` deliverable — this README, the migration checklist, and the
