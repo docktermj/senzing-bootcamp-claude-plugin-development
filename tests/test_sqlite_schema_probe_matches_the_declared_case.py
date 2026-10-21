@@ -70,7 +70,9 @@ def instruction_3(m2):
 
 def sqlite_probe(m2):
     """The shipped SQLite probe's argv, or a problem string when there is not exactly one."""
-    lines = [line.strip() for line in instruction_3(m2).splitlines()
+    # Line-scoped by design (#748): the probe is one shell command on one fenced line, which the
+    # test runs as written; it is not a prose phrase that could wrap (INV-346).
+    lines =[line.strip() for line in instruction_3(m2).splitlines()
              if line.strip().startswith("python3 -c") and "sqlite_master" in line]
     if len(lines) != 1:
         return f"Step 7's instruction 3 carries {len(lines)} SQLite probes; it needs one"
