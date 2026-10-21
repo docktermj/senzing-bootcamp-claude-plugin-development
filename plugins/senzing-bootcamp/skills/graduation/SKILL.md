@@ -351,7 +351,7 @@ no takeaway ("skip", a pass, or nothing usable), the line is left out, never wri
 **The "Next time" turn.** In the next turn, end on exactly one 👉 question (INV-251), pinned verbatim
 (INV-056):
 
-> 👉 **Next time there is no bootcamp script: what one request would you give an AI assistant with the Senzing MCP server to start a build on a new source of your own data?** (Name the data or domain. Reply "skip" and I'll draft one from your data.)
+> 👉 **What's the first thing you'd ask an AI assistant with the Senzing MCP server to build next, on your own data?** (Name the data or domain. Reply "skip" and I'll draft one from your data.)
 
 - **They state it:** record it in their words, as given.
 - **They pass:** offer **one** draft request drawn from their data, their business problem in

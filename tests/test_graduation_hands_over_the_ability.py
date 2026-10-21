@@ -38,9 +38,9 @@ TAKEAWAY_QUESTION = (
     '👉 **In one line, what will you take away from this bootcamp?** '
     '(Reply "skip" to leave it out.)')
 NEXT_TIME_QUESTION = (
-    "👉 **Next time there is no bootcamp script: what one request would you give an AI "
-    "assistant with the Senzing MCP server to start a build on a new source of your own "
-    "data?**")
+    "👉 **What's the first thing you'd ask an AI assistant with the Senzing MCP server to "
+    "build next, on your own data?** "
+    '(Name the data or domain. Reply "skip" and I\'ll draft one from your data.)')
 CLOSING_QUESTION = "👉 **Is there anything else you would like to explore?**"
 PINNED_QUESTION = re.compile(r"(?m)^> 👉 \*\*.*$")
 
@@ -148,7 +148,7 @@ class EachQuestionHasATurnOfItsOwn(unittest.TestCase):
         pinned = PINNED_QUESTION.findall(STEP_0B)
         self.assertEqual(2, len(pinned), pinned)
         self.assertEqual("> " + TAKEAWAY_QUESTION, pinned[0])
-        self.assertTrue(pinned[1].startswith("> " + NEXT_TIME_QUESTION), pinned[1])
+        self.assertEqual("> " + NEXT_TIME_QUESTION, pinned[1])
 
     def test_the_takeaway_ends_the_turn_that_shows_the_lists(self):
         turn = FLAT_0B[FLAT_0B.index("**The takeaway turn.**"):
@@ -163,8 +163,15 @@ class EachQuestionHasATurnOfItsOwn(unittest.TestCase):
         self.assertEqual(1, turn.count("> 👉"))
 
     def test_the_next_time_question_asks_for_their_own_data(self):
-        self.assertIn("a new source of your own data", NEXT_TIME_QUESTION)
+        self.assertIn("build next, on your own data?", NEXT_TIME_QUESTION)
         self.assertIn("(Name the data or domain.", FLAT_0B)
+
+    def test_the_next_time_question_states_one_idea(self):
+        # #754: the old lead-in packed "no bootcamp script", "one request" and "a new source" into
+        # the question. The closing announcement already states there is no script from here.
+        pinned = PINNED_QUESTION.findall(STEP_0B)[1]
+        for packed in ("no bootcamp script", "one request", "a new source"):
+            self.assertNotIn(packed, pinned)
 
     def test_the_draft_is_a_statement_and_the_step_continues(self):
         self.assertIn("Offering it is a statement, not a question", FLAT_0B)
