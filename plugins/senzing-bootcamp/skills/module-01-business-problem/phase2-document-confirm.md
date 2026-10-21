@@ -248,19 +248,21 @@ would, plus:
   files live in `docs/`.) If Step 9b did not run or the file is missing, omit the line rather than
   writing a dead link. This is a supplementary pointer, not a dependency: the statement still reads
   completely on its own, per the self-containment rule below.
-- Record each distinct scenario source into `config/data_sources.yaml` (one entry per source).
-  Create the file, if it is missing, with `version: "1"` and a `sources:` mapping keyed by
-  DATA_SOURCE, and write each entry's fields as
-  [Scenario source fields](../module-04-data-collection/SKILL.md#scenario-source-fields) defines
-  them, the one definition (INV-300): `name`, `provenance`, `cord_dataset` and `cord_source` (a
-  `cord` source), `entity_type`, `shape_quirks`, and `scenario_record_count` (a `synthesized`
-  source). Data collection reads these to choose its action and to generate the files. Write no
-  `record_count`: it is the count Data collection measures (INV-243), null until then.
-  `quality_intent` is Data collection's to write when it generates the source.
 - Keep `docs/business_problem.md` self-contained (problem, category, sources, success), not
   dependent on the registry.
 - Never embed CORD names/counts from training data: retrieve via MCP (`get_sample_data`,
   `search_docs`) at runtime.
+
+**Registry write (generated scenario):** record each distinct scenario source into
+`config/data_sources.yaml` (one entry per source). Create the file, if it is missing, with
+`version: "1"` and a `sources:` mapping keyed by DATA_SOURCE, and write each entry's fields as
+[Scenario source fields](../module-04-data-collection/SKILL.md#scenario-source-fields) defines
+them, the one definition (INV-300): `name`, `provenance`, `cord_dataset` and `cord_source` (a
+`cord` source), `entity_type`, `shape_quirks`, and `scenario_record_count` (a `synthesized`
+source). Data collection reads these to choose its action and to generate the files. Write no
+`record_count`: it is the count Data collection measures (INV-243), null until then.
+`quality_intent` is Data collection's to write when it generates the source. Step 17's
+**Registry check** confirms this write before Module Completion.
 
 **If writing an artifact fails:** say WHICH artifact failed; do not report Module 1 complete
 until the bootcamper is told. **If artifacts are later missing/unreadable:** tell the
@@ -395,6 +397,12 @@ find it — via the module-completion "Files produced" list. **Checkpoint:** wri
 
 ## 17. Module completion and transition to Module 2
 
+**Registry check (generated-scenario path only), before Module Completion:**
+`config/data_sources.yaml` must exist with one entry under `sources:` for each scenario source
+`docs/business_problem.md` lists. For each source with no entry, say in one line which source was
+missing, write its entry by Step 11's **Registry write**, and only then continue. The
+bootcamper-described case has no such check.
+
 Run the standard **Module Completion** process in
 `../bootcamp-onboarding/module-completion.md` (update progress, append the Module 1 recap
 section to `docs/bootcamp_recap.md`, and present the end-of-module summary), then ask the single
@@ -409,4 +417,5 @@ bootcamp:
 
 **Success indicator:** ✅ Clear problem statement + identified data sources + defined success
 metrics + bootcamper confirmation + `docs/business_problem.md` created + Module 1 recap section
-appended.
+appended + on the generated-scenario path only, `config/data_sources.yaml` with one entry per
+scenario source (the **Registry check** above).

@@ -55,7 +55,8 @@ DISCOVERY = SKILLS / "module-01-business-problem" / "phase1-discovery.md"
 
 ANCHOR = '<a id="scenario-source-fields"></a>'
 SCHEMA_LINK = "../module-04-data-collection/SKILL.md#scenario-source-fields"
-STEP_11_HEAD = "- Record each distinct scenario source into `config/data_sources.yaml`"
+STEP_11_HEAD = ("**Registry write (generated scenario):** record each distinct scenario source "
+                "into `config/data_sources.yaml`")
 
 #: What Module 4 Step 2 reads from a Module 1 scenario entry, each with the passage it reads in.
 #: `guard` is the marker guard's lead, `cord` its `provenance: cord` branch and `generate` its
@@ -122,10 +123,10 @@ def passages(body=None):
 
 
 def step_11(text=None):
-    """Step 11's registry bullet, to the next bullet."""
+    """Step 11's **Registry write** line, to the failure clause that follows it (#749)."""
     text = squash(STEP_11_FILE.read_text(encoding="utf-8")) if text is None else text
     i = text.index(STEP_11_HEAD)
-    return text[i:text.index("- Keep `docs/business_problem.md` self-contained", i)]
+    return text[i:text.index("**If writing an artifact fails:**", i)]
 
 
 def discovery_writer(text=None):
