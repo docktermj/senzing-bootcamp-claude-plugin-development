@@ -43,6 +43,83 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## release-cycle-2026-10-14
+
+- **Implemented:** 2026-10-14 (**Not a spec**: a dated record of one `/release-cycle` run, `2026-10-14`, from `main` at `9345bdf1`; written when the run stopped at stage 6 Ship, step manual-test (checkpoint E).)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md` (this entry). Each record the run created was created by the skill that owns it, under that skill's gate, and is recorded there.
+- **MCP re-check:** n/a (no Senzing fact): this entry records a run's stages; each skill the run invoked re-asks its own Senzing facts.
+- **Kickoff:** a simulated walk, persona `confused`, from module SDK setup; the loop merges; refine threshold 0.7.
+- **Stages:**
+  - 0 Kickoff: kickoff: done (answers given at kickoff).
+  - 1 Find: find-draft: done; find-merge: done (0 merged group(s)); checkpoint-a [A]: done (approved 85, struck 0); find-file: done (filed #590, #591, #592, #593, #594, #595, #596, #597, #598, #599, #600, #601, #602, #603, #604, #605, #606, #607, #608, #609, #610, #611, #612, #613, #614, #615, #616, #617, #618).
+  - 2 Refine: refine [B]: done.
+  - 3 Build: build-loop: done (29 of 30 labeled issues merged, PRs #621-#649. #595 blocked: the server serves no toolchain install commands, and sh -c fails with the env script; unattended-ok removed, question on the issue. Deviation from implement-github-issue Phase 4, maintainer's decision at preflight: only the 10 with open design were raced (592 594 595 597 600 609 615 618 619 620); the other 20 were built directly.); build-leftovers: done (#595: maintainer chose A (pinned per-language rows behind a server-first lookup, bash -c); Gate 1 and Gate 2 approved; PR #650 open, left for the maintainer to merge.).
+  - 4 Exercise: exercise-draft: done; exercise-merge: done (0 merged group(s)); checkpoint-c [C]: done (approved 9, struck 0); exercise-file: done (filed #651, #652, #653, #654, #655, #656, #657, #658, #659); exercise-refine [B]: done (9 issues (#651-#659) refined in batch: 15 auto-selected at 0.7, 6 answered by the maintainer in 2 rounds; all 28 changes approved and applied; all 9 labeled refined and unattended-ok.); exercise-build-loop: done (8 of 9 merged (PRs #660-#667). #656 blocked at its own verification gate (/effort under claude -p --resume does not persist); maintainer chose sticky --effort/--model flags; handled in exercise-build-leftovers. All 9 built directly (maintainer's stage-3 policy: race only open designs; none were open after checkpoint B pass 2).); exercise-build-leftovers: done (#656: maintainer chose sticky --effort/--model flags; Gate 1 and Gate 2 approved; PR #668 open, left for the maintainer to merge.).
+  - 5 Settle: after-filing: done (ran the held after-filing step of /delegate-to-mcp-server (stage 1)); checkpoint-d [D]: done (invariant-review-2026-10-15: 25 decided, none held; INV-371 to INV-375 registered, 20 notes applied; committed 6fe6e69a (rebased onto #668), not pushed.); blueprint: done (drift update 542f8135->6fe6e69a on 669-docktermj-1 for tracking issue #669 (created); uncommitted for the maintainer).
+  - 6 Ship: release [E]: done (0.6.1 -> 0.7.0 (minor, maintainer's choice); commit a9c433b1, annotated tag 0.7.0; suite on the release commit: 7737 OK (skipped=13); not pushed); manual-test [E]: stopped (Run stopped by the maintainer 2026-10-21 before the manual test: main moved 84 commits past the 0.7.0 release commit (a9c433b1) and the 2026-10-16 run ships the next release from current main. 0.7.0 is tagged, never propagated to the public repo.); propagate [E]: not reached.
+- **Filed in stage 1:** #590 (`delegate-to-mcp-server-01`), #591 (`delegate-to-mcp-server-02`), #592 (`production-readiness-audit-01`), #593 (`production-readiness-audit-02`), #594 (`production-readiness-audit-03`), #595 (`production-readiness-audit-04`), #596 (`production-readiness-audit-05`), #597 (`production-readiness-audit-06`), #598 (`production-readiness-audit-07`), #599 (`production-readiness-audit-08`), #600 (`production-readiness-audit-09`), #601 (`production-readiness-audit-10`), #602 (`production-readiness-audit-11`), #603 (`production-readiness-audit-12`), #604 (`production-readiness-audit-13`), #605 (`production-readiness-audit-14`), #606 (`production-readiness-audit-15`), #607 (`production-readiness-audit-16`), #608 (`production-readiness-audit-17`), #609 (`production-readiness-audit-18`), #610 (`production-readiness-audit-19`), #611 (`production-readiness-audit-20`), #612 (`production-readiness-audit-21`), #613 (`production-readiness-audit-22`), #614 (`production-readiness-audit-23`), #615 (`production-readiness-audit-24`), #616 (`production-readiness-audit-25`), #617 (`production-readiness-audit-26`), #618 (`production-readiness-audit-27`). **Struck at the checkpoint:** none.
+- **Filed in stage 4:** #651 (`dry-run-01`), #652 (`dry-run-02`), #653 (`dry-run-03`), #654 (`dry-run-04`), #655 (`dry-run-05`), #656 (`dry-run-07`), #657 (`dry-run-08`), #658 (`dry-run-09`), #659 (`dry-run-10`). **Struck at the checkpoint:** none.
+- **Drafts still unresolved** (INV-317's 2026-10-13 note): 5, each below, its draft kept in the gitignored `.claude/release-cycle/runs/2026-10-14`.
+  - `delegate-to-mcp-server-03` (upstream, from delegate-to-mcp-server Step 8 (gap: generate-scaffold-full-pipeline-returns-no-manifest)): delegate-to-mcp-server Step 8 (gap: generate-scaffold-full-pipeline-returns-no-manifest) — **not sent** — needs maintainer approval. Sites: plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md:886-889.
+    > Feature request: generate_scaffold returns the source files for a workflow but no project manifest, so a client cannot build the code without writing one itself.
+    >
+    > What was asked: generate_scaffold(language='csharp', workflow='full_pipeline'), and the same for language='rust' and language='typescript' (server 1.38.1 for rust; csharp and typescript last checked on 1.37.28).
+    >
+    > What came back: snippets[] with source files only (.cs, .rs, .ts), each with url, raw_url and hash. No .csproj, Cargo.toml or package.json. For rust and typescript a dependency_note gives the one Senzing dependency line (for example the git dependency for the Rust SDK). For csharp there is no dependency_note, so the reply does not say how the code gets the Senzing.Sdk package, although sdk_guide(topic='install') does name the local NuGet source. find_examples says it indexes no build files, so no tool returns a manifest.
+    >
+    > What was needed: either a minimal manifest per language for the workflow, or at least a dependency_note for every language (C# and Java included) that names the Senzing package and where it comes from, so the generated code can be built as returned.
+  - `delegate-to-mcp-server-04` (upstream, from delegate-to-mcp-server Step 8 (gap: sdk-guide-configure-without-platform-has-no-environment)): delegate-to-mcp-server Step 8 (gap: sdk-guide-configure-without-platform-has-no-environment) — **not sent** — needs maintainer approval. Sites: plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md:2123.
+    > Feature request: sdk_guide(topic='configure') without a platform succeeds but silently leaves out the environment block, with no notice that platform is needed for it.
+    >
+    > What was asked: sdk_guide(topic='configure', language='python') with no platform argument (server 1.38.1, 2026-10-14). The tool's schema declares platform as optional ("Omit to get the platform decision tree").
+    >
+    > What came back: the seeding code snippet, its alternatives, anti_patterns, one compatibility note and next steps. No environment block, so no engine_config and no default_paths, and no decision tree or field saying that platform is required for them. The same call with platform='linux_apt' returns environment.default_paths and environment.engine_config.
+    >
+    > What was needed: when platform is omitted on configure, either return the platform decision tree (as the schema description says) or a short notice that the engine configuration and default paths need a platform. Today a client that omits it gets a reply that looks complete.
+  - `delegate-to-mcp-server-05` (upstream, from delegate-to-mcp-server Step 8 (gap: payload-key-named-as-feature-attribute-consequence-undocumented)): delegate-to-mcp-server Step 8 (gap: payload-key-named-as-feature-attribute-consequence-undocumented) — **not sent** — needs maintainer approval. Sites: plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md:872-881.
+    > Feature request: the mapping guidance says a root-level payload attribute must not be a registered feature attribute, but nothing says what happens if one is.
+    >
+    > What was asked: mapping_workflow step 2 instructions (server 1.38.1, docs index 2026-10-14 15:57 UTC), and search_docs(query='payload attribute versus registered feature attribute record root extracted as feature precedence', category='data_mapping').
+    >
+    > What came back: step 2 says "Optional scalar payload attributes may sit at root (must NOT be a registered feature attribute; must be scalar)" and "If a source field name collides with a reserved feature attribute but means something different, rename it (e.g. account-signup 'registration_date' -> 'signup_date')". The Entity Specification's payload section describes payload as not used in matching. Separately, a scaffold note says feature attributes at the record root are a supported flat shape. No section states the consequence of a payload key that is spelled like a feature attribute.
+    >
+    > What was needed: one sentence on the consequence, for example whether such a key is read as that feature and used in matching. That is what tells a mapper why the rename matters.
+  - `delegate-to-mcp-server-06` (upstream, from delegate-to-mcp-server Step 8 (match-key-details-flag-entry-misdescribed)): delegate-to-mcp-server Step 8 (match-key-details-flag-entry-misdescribed) — **not sent** — needs maintainer approval. Sites: plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2-discover.md:445-452.
+    > Bug report: the SZ_INCLUDE_MATCH_KEY_DETAILS flag entry describes only the related-entity object, while two response schemas say the flag populates fields elsewhere.
+    >
+    > What was asked (server 1.38.1, 2026-10-14):
+    > 1. get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')
+    > 2. get_sdk_reference(topic='response_schemas', filter='how_entity', language='python')
+    > 3. get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')
+    >
+    > What came back:
+    > 1. applies_to includes how_entity_by_entity_id and the why_* methods. response_paths is only ["RELATED_ENTITIES[].MATCH_KEY_DETAILS"], and the description says "each related entity includes a MATCH_KEY_DETAILS object". The dependency on a relations flag is stated only in the description. Sibling flags such as SZ_ENTITY_INCLUDE_RELATED_ENTITY_NAME carry it as a depends_on field; this one does not.
+    > 2. HOW_RESULTS.RESOLUTION_STEPS[].MATCH_INFO.MATCH_KEY_DETAILS and its CONFIRMATIONS[] fields are marked "requires_flags": ["SZ_INCLUDE_MATCH_KEY_DETAILS"].
+    > 3. WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS and its CONFIRMATIONS[] fields carry the same requires_flags marker.
+    >
+    > What was needed: the flag entry's response_paths (and description) to include the how and why paths the schemas attribute to it, and a depends_on field for the relations dependency like its siblings. A client that reads only the flags topic concludes the flag does nothing on how_entity or why_* responses.
+  - `dry-run-06` (upstream, from dry-run phase 1 step 6): download_resource: workspace_dir is honored and documented but missing from the declared input schema — **not sent** — needs maintainer approval. Sites: plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md:542.
+    > download_resource: the `workspace_dir` parameter is honored by the server and documented in its own guidance, but is missing from the tool's declared input schema (server sz-mcp-coworker 1.39.0, Senzing 4.4.2, checked 2026-10-15).
+    >
+    > What the schema declares: download_resource's inputSchema lists only `filename`, `filenames`, `inline`, `offset` and `version`.
+    >
+    > What the server says and does:
+    > - get_capabilities, tools[download_resource].description: "Set `inline` only when a `fetch` cannot reach the server (over HTTP); pass `workspace_dir` so each `dest` matches the workflow's." Its example_use: download_resource(filenames=['sz_json_analyzer.py'], inline: true, workspace_dir='~/sz-workspace').
+    > - Every download_resource response's on_failure text tells the caller to "call download_resource with filenames=[...], inline=true, workspace_dir=\"...\"".
+    > - The parameter works: download_resource(filename='sz_verbatim_check.py', workspace_dir='~/sz-workspace') returns dest '~/sz-workspace/sz_verbatim_check.py'; the same call without it returns dest './sz_verbatim_check.py'.
+    >
+    > Minimal reproduction:
+    > 1. List tools; read download_resource's inputSchema: no workspace_dir property.
+    > 2. Call get_capabilities; read the download_resource entry: it says to pass workspace_dir.
+    > 3. Call download_resource(filename='sz_verbatim_check.py', workspace_dir='/some/dir'): dest reflects it.
+    >
+    > Expected: the inputSchema declares `workspace_dir` (type string or null, with the description the capabilities text gives), as mapping_workflow and analyze_record declare theirs.
+    >
+    > Impact: a client that builds calls only from declared schemas (or enforces them, e.g. constrained decoding or strict argument validation) cannot follow the server's own on_failure instruction, so the inline fallback writes resources to the current directory instead of the mapping workflow's workspace, and the hash check the instructions prescribe runs against a different path than the workflow expects.
+- **After-filing steps held for stage 5, not yet run:** none.
+- **Establishes no invariant** (INV-365): it records a run. The invariants the run's work raised are decided by `/review-invariants` at checkpoint D and recorded in that skill's own entry.
+
 ## invariant-review-2026-10-20b
 
 - **Implemented:** 2026-10-20 (**Not a spec**: a dated record of one `/review-invariants` session, the second of this date. ⛔ **It establishes no invariant of its own** — the rule it registers was established by #694's implementation, which shipped the guard and wrote the block.)
