@@ -1834,17 +1834,20 @@ steps 9 to 17. Every step checkpoints to `config/bootcamp_progress.json`.
   system, and names Module 7's step 4e as where the answer is acted on.
 - 11: `docs/business_problem.md` from a fixed template, with verbatim
   bootcamper quote lines on prose sections only. Generated scenarios add
-  the `> 🤖 Bootcamp-generated business case` marker, the diagram link and
-  one `config/data_sources.yaml` entry per source, with the fields Module 4's
-  `#scenario-source-fields` defines (both writers link it) and no
-  `record_count`.
+  the `> 🤖 Bootcamp-generated business case` marker and the diagram link,
+  and a named **Registry write** line records one `config/data_sources.yaml`
+  entry per source, with the fields Module 4's `#scenario-source-fields`
+  defines (both writers link it) and no `record_count`.
 - 12 fills `## Overview` and `## Business Problem` in `README.md`. 13
   proposes the approach; 14 restates value from
   `search_docs(query='entity resolution business value')`.
 - 15: pinned confirmation, quotes shown beside the rendering (generated
   path: against the 6a summary). 16 writes
   `docs/stakeholder_summary_module1.md`. 17 runs module completion and the
-  transition question; `current_step` becomes null.
+  transition question; `current_step` becomes null. On the generated path a
+  **Registry check** first requires one registry entry per scenario source,
+  naming and writing any missing one by Step 11's **Registry write**; the
+  success indicator points at it.
 
 ### 5.9 `plugins/senzing-bootcamp/skills/module-02-sdk-setup/`
 
@@ -2211,6 +2214,10 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
     groups first. Never take a random slice.
 - **Step 2 guard.** The `🤖 Bootcamp-generated business case` marker in
   `docs/business_problem.md` means nothing is asked.
+  - A source with no registry entry (Module 1's write skipped) has its
+    `name`, `provenance` and `entity_type` rebuilt from
+    `docs/business_problem.md` first, said in one line; an existing entry is
+    never overwritten.
   - `cord` sources are fetched from the entry's `cord_dataset` and
     `cord_source`.
   - `synthesized` sources are generated from the recorded scenario: the
@@ -10281,7 +10288,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 448 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 449 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10331,21 +10338,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8327 test methods in 448 files, matching `inventory.test_count_total`.
+There are 8339 test methods in 449 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8327.
+sum to 8339.
 
-Two files run more tests than they define, so discovery collects 8334:
+Two files run more tests than they define, so discovery collects 8346:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8327`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8339`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8334`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8346`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10570,6 +10577,7 @@ looks wrong.
 - `tests/test_module06_phase_ordering.py`: 15
 - `tests/test_module07_step2_rules_beside_action.py`: 4
 - `tests/test_module07_why_flags.py`: 20
+- `tests/test_module1_registry_write_is_checked.py`: 12
 - `tests/test_module3_check_lists_agree.py`: 24
 - `tests/test_module3_failed_run_ends_on_a_question.py`: 25
 - `tests/test_module4_absent_limit_is_measured_before_any_fallback.py`: 6
@@ -13563,3 +13571,11 @@ Senzing licensing, with no SPDX identifier.
   so it printed False on an applied schema; the PostgreSQL probe is unchanged, and
   `tests/test_sqlite_schema_probe_matches_the_declared_case.py` runs the shipped
   probe against an upper-case stand-in DDL (and the installed DDL when present)
+- #749: on a generated scenario, Module 1 Step 11's `config/data_sources.yaml`
+  write is its own named **Registry write** line (it was one bullet in a long
+  list, and a walk closed Module 1 with no registry), Step 17's **Registry
+  check** requires one entry per scenario source before Module Completion,
+  naming and writing a missing one, and Module 4 Step 2 rebuilds a missing
+  entry's `name`, `provenance` and `entity_type` without overwriting an existing
+  one; `tests/test_module1_registry_write_is_checked.py` pins the three sites,
+  and the rule is queued as a new invariant for `/review-invariants`

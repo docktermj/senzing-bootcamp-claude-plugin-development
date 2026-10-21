@@ -292,7 +292,11 @@ and conflating them is what broke this guard. Read `docs/business_problem.md` fo
 generated the scenario (`../module-01-business-problem/phase1-discovery.md` Step 4, option 3: *"I
 don't have my own data — generate a scenario for me"*) and the provision decision is **already
 made** for every source in it. Then read the source's entry in `config/data_sources.yaml` for its
-`provenance`, which decides only *what you do next*:
+`provenance`, which decides only *what you do next*. **If the source has no entry** (or the file is
+missing), Module 1 Step 11's registry write was skipped: rebuild the entry's `name`, `provenance`
+and `entity_type` from that source in `docs/business_problem.md`, treat its missing
+`scenario_record_count` as the `provenance: synthesized` branch below does, and say in one line
+that you rebuilt it. Only a missing entry is rebuilt; an existing one is never overwritten.
 
 - **`provenance: cord`** → go straight to downloading that source, the entry's `cord_dataset` and
   `cord_source` ([Scenario source fields](#scenario-source-fields)), saying which source you are
