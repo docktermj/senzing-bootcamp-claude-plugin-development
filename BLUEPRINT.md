@@ -10281,7 +10281,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 445 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 448 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10331,21 +10331,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8321 test methods in 447 files, matching `inventory.test_count_total`.
+There are 8327 test methods in 448 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8321.
+sum to 8327.
 
-Two files run more tests than they define, so discovery collects 8328:
+Two files run more tests than they define, so discovery collects 8334:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8321`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8327`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8328`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8334`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10728,6 +10728,7 @@ looks wrong.
 - `tests/test_sqlite_is_not_an_auto_create_exception.py`: 5
 - `tests/test_sqlite_load_time_prompt_is_defined_and_matched.py`: 18
 - `tests/test_sqlite_preload_check_reads_the_loadable_total.py`: 16
+- `tests/test_sqlite_schema_probe_matches_the_declared_case.py`: 6
 - `tests/test_sqlite_subset_notes_read_the_recorded_decision.py`: 11
 - `tests/test_stdlib_pdf_keeps_code_and_table_tails.py`: 30
 - `tests/test_stdlib_writer_character_safety.py`: 14
@@ -13555,3 +13556,10 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_predictions_before_results.py` requires each clause, fails a grading
   word in the bullet and reports a site-local copy; the dated note on INV-357 is
   queued as an amendment for `/review-invariants`
+- #748: SDK setup Step 7's SQLite "is the schema already applied?" probe matches
+  `name='SYS_CFG' COLLATE NOCASE` — it compared `name='sys_cfg'` case-sensitively,
+  carried over from the PostgreSQL query, while SQLite keeps the case its DDL
+  declares and the shipped `szcore-schema-sqlite-create.sql` declares `SYS_CFG`,
+  so it printed False on an applied schema; the PostgreSQL probe is unchanged, and
+  `tests/test_sqlite_schema_probe_matches_the_declared_case.py` runs the shipped
+  probe against an upper-case stand-in DDL (and the installed DDL when present)
