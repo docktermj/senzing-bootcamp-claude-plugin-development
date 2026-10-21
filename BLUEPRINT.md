@@ -3442,8 +3442,8 @@ needs the Senzing Python SDK (`senzing`, `senzing_core`).
 - Routes (`make_handler`, GET; unknown path 404, exception 500, both JSON
   with `error`): `/` and `/index.html` (page); `/api/stats` (totals,
   histogram, bucket lists, `data_sources_total`, `server_nonce`);
-  `/api/graph` (capped at `GRAPH_NODE_CAP`, with `encoding_check` from
-  `_encoding_check`); `/api/merges`; `/api/overlap`; `/api/matchkeys`
+  `/api/graph` (capped at `GRAPH_NODE_CAP` in `rank_for_graph_cap`'s order,
+  with `encoding_check` from `_encoding_check`); `/api/merges`; `/api/overlap`; `/api/matchkeys`
   (top 20); `/api/features`; `/api/records?entity_id=`;
   `/api/search?q=` (`NAME_FULL`, then `NAME_ORG`, up to 10 results);
   `/api/why?entity_id=` (`why_records` or `why_record_in_entity`);
@@ -7111,6 +7111,8 @@ def check_bind_host(host):
     ...
 SOURCE_KEY_SEP = "|"
 GRAPH_NODE_CAP = 1500
+def rank_for_graph_cap(nodes, edges):
+    ...
 SERVER_NONCE = uuid.uuid4().hex
 def confirm_server_identity(port, host=BIND_HOST, timeout=5.0):
     ...
@@ -7663,7 +7665,8 @@ function addGraphControls(containerId,nodeCount,forceLabelsOff){
   if(graphMode!=="network"&&capped)
     box.append("div").attr("class","why")
       .text("Showing "+graphPayload.nodes.length+" of "+graphPayload.total+" entities — the graph "+
-            "is capped; entities spanning the most sources are kept first.");}
+            "is capped; entities with relationships are kept first, then those spanning the "+
+            "most sources.");}
 // Built FROM the rendered nodes, never from a static color config: a legend
 // entry then cannot exist without matching marks on screen, which is what makes
 // "the legend shows colors that appear nowhere in the graph" impossible.
@@ -10288,7 +10291,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 449 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 450 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10338,10 +10341,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8339 test methods in 449 files, matching `inventory.test_count_total`.
+There are 8360 test methods in 450 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8339.
+sum to 8360.
 
 Two files run more tests than they define, so discovery collects 8346:
 
@@ -10502,7 +10505,8 @@ looks wrong.
 - `tests/test_graduation_no_voice_guidance.py`: 20
 - `tests/test_graduation_reads_persisted_answers.py`: 15
 - `tests/test_graduation_video_step.py`: 75
-- `tests/test_graph_colors_by_source_combination.py`: 25
+- `tests/test_graph_cap_ranks_related_entities_first.py`: 19
+- `tests/test_graph_colors_by_source_combination.py`: 26
 - `tests/test_graph_label_distinctness.py`: 18
 - `tests/test_graph_labels_paint_after_circles.py`: 13
 - `tests/test_graph_source_filter_covers_labels_and_edges.py`: 42
@@ -10782,7 +10786,7 @@ looks wrong.
 - `tests/test_version_precedence_handles_an_unmanaged_install.py`: 10
 - `tests/test_visualization_api_contract.py`: 19
 - `tests/test_visualization_model_build_scales.py`: 33
-- `tests/test_viz_capped_graph_notes.py`: 12
+- `tests/test_viz_capped_graph_notes.py`: 13
 - `tests/test_viz_defaults_at_scale.py`: 30
 - `tests/test_viz_endpoint_sync.py`: 7
 - `tests/test_viz_histogram_integer_ticks.py`: 6
@@ -11417,6 +11421,9 @@ tests a rebuild can pass from behavior alone.
     - Node color comes from the whole sorted source set.
     - Labels stay distinct when truncated.
     - A capped graph reports its true total.
+    - The cap keeps entities with relationships first
+      (`tests/test_graph_cap_ranks_related_entities_first.py`), on the reported
+      counts at the real cap, with span first as the negative control.
     - Histogram ticks are integers.
   - **Payload.** The keys match the contract exactly.
   - **Offline Records past the node cap**
@@ -13579,3 +13586,11 @@ Senzing licensing, with no SPDX identifier.
   entry's `name`, `provenance` and `entity_type` without overwriting an existing
   one; `tests/test_module1_registry_write_is_checked.py` pins the three sites,
   and the rule is queued as a new invariant for `/review-invariants`
+- #752: under the graph cap, `rank_for_graph_cap` keeps entities with a
+  relationship first, then source span, degree, record count and id, the
+  full-population note names that ranking and the Module 3b contract states it
+  once (span first let 2,098 cross-source entities fill the 1,500 cap, so
+  relationship mode showed 2 of 914 related entities and 1 of 476 edges);
+  `tests/test_graph_cap_ranks_related_entities_first.py` pins the reported case
+  at the real cap, and the INV-154 note amendment is queued for
+  `/review-invariants`

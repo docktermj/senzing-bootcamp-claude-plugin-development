@@ -92,8 +92,8 @@ def model_past_the_cap():
     """A model with ``GRAPH_NODE_CAP`` + 5 entities, the five ranked out of the graph."""
     model = VIZ.Model()
     for i in range(1, VIZ.GRAPH_NODE_CAP + 1):
-        # Two sources and two records, so these fill the cap: graph() ranks by source span
-        # first, then connectivity, then record count.
+        # Two sources and two records, so these fill the cap: no entity here has a
+        # relationship, so graph()'s cap ranking reduces to source span, then record count.
         model.entities[i] = entity(
             i, ["A", "B"], [record("A", "a%d" % i), record("B", "b%d" % i, "+NAME+ADDRESS")]
         )
