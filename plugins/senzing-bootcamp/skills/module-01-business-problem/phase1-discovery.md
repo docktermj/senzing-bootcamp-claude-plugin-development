@@ -200,7 +200,15 @@ bootcamper explicitly accepts option 3.)*
 
 **Checkpoint:** write step 4.
 
-### 4a. Business Case Offer: acceptance handling (branch)
+### 4a. Business Case Offer: acceptance handling (branch — NON-YIELDING)
+
+⛔ **On the Accepted path, Steps 4a, 4b, 5 and 5a are one non-yielding run: none of them gets a turn
+of its own.** None of them asks a 👉 question, so all four run in order and in full inside the turn
+that carries the bootcamper's option 3, and that turn continues to Step 6a. ⛔ **Do not end the turn
+on the generated scenario.** Step 6a's summary is where it is presented, and Step 6a's 👉 ends this
+turn (INV-225): a turn ending on the scenario ends with **zero** 👉. A generated scenario is a
+results presentation, and a results presentation is not a turn ending
+(`../bootcamp-onboarding/ground-rules.md` → the 👉 protocol).
 
 - **Accepted:** generate a complete scenario in-session: a non-empty problem description,
   exactly one use-case category from the recognized set (Customer 360, Fraud Detection, Data
@@ -252,9 +260,13 @@ bootcamper explicitly accepts option 3.)*
 *(The Kiro helper `business_case_offer.py` encodes these invariants; the script port is a later
 phase: validate them directly for now.)*
 
-**Checkpoint:** write step 4a.
+**Checkpoint:** write step 4a — but as part of the turn's one write with Step 6a's at the end of
+the shared turn, not a write of its own.
 
-### 4b. CORD sourcing for the generated scenario (via MCP)
+### 4b. CORD sourcing for the generated scenario (via MCP — NON-YIELDING)
+
+⛔ **This step is non-yielding: it is part of Step 4a's run and does not get a turn of its own.**
+It shares the turn that Step 6a's 👉 ends (INV-225).
 
 Treat the Senzing MCP server as the ONLY source of CORD facts: never training data. Call
 `get_sample_data` and/or `search_docs(query='CORD datasets: names, contents, and availability
@@ -312,18 +324,27 @@ collection to cover a customer-360 problem in order to reach the `cord` branch.
 
 Either way the data must satisfy the Step 4a invariants.
 
-**Checkpoint:** write step 4b.
+**Checkpoint:** write step 4b — but as part of the turn's one write with Step 6a's at the end of
+the shared turn, not a write of its own.
 
-## 5. Infer details from their response
+## 5. Infer details from their response (NON-YIELDING)
+
+⛔ **This step is non-yielding: it does not get a turn of its own.** It runs in the turn that carries
+the bootcamper's description (option 1 or 2) or Step 4a's run (option 3), continues through Step 5a,
+and lets Step 6a's 👉 end that turn (INV-225).
 
 Extract six categories: **A. Record types** (people/orgs/both); **B. Source count and names**;
 **C. Problem category** (map to the recognized set); **D. Matching criteria** (attributes,
 quality concerns); **E. Desired outcome** (format, frequency, integration); **F. Integration
 targets** (specific software, pipeline mentions). Use "not yet determined" when unclear.
 
-**Checkpoint:** write step 5.
+**Checkpoint:** write step 5 — but as part of the turn's one write with Step 6a's at the end of
+the shared turn, not a write of its own.
 
-### 5a. Record-count threshold check (compute-only — no license prompt here)
+### 5a. Record-count threshold check (compute-only, no license prompt here — NON-YIELDING)
+
+⛔ **This step is non-yielding: it computes and records, asks nothing, and does not get a turn of its
+own.** Proceed to Step 6a in the same turn, and let Step 6a's 👉 end it (INV-225).
 
 Compute the total record count across the mentioned sources and read `license_record_limit` from
 `config/bootcamp_progress.json` (normally absent at this point):
@@ -394,7 +415,8 @@ Key prompt is presented once — at the start of Data collection (Module 4), aft
 volume is known and before any load — per INV-093. This step only records whether the anticipated
 volume looks likely to exceed the limit, so Module 4's gate can pick it up (`license_guidance_deferred`).
 
-**Checkpoint:** write step 5a to `config/bootcamp_progress.json`.
+**Checkpoint:** write step 5a to `config/bootcamp_progress.json` — but as part of the turn's one
+write with Step 6a's at the end of the shared turn, not a write of its own.
 
 ## 6. Confirm inferred details and fill gaps
 
@@ -408,7 +430,9 @@ what they already covered.
 
 👉 **Does that summary capture your situation accurately?**
 
-*(Internal: end the turn and wait.)* **Checkpoint:** write step 6a.
+*(Internal: end the turn and wait.)* **Checkpoint:** write step 6a — the turn's one write, carrying
+every step the turn ran (4a, 4b, 5 and 5a on the generated path; 5 and 5a otherwise), each still
+its own `step_history` entry.
 
 **On a yes,** continue to 6b–6d. **On a no,** ask what to change, revise the summary, and present
 this question again: the revised summary is a new state, not an INV-006 repeat (INV-284).
