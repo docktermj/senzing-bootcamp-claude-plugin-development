@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "ask": [
+      "Bash(gh issue create *)",
+      "mcp__senzing__submit_feedback",
+      "mcp__plugin_senzing-bootcamp_senzing__submit_feedback"
+    ]
+  }
+}
