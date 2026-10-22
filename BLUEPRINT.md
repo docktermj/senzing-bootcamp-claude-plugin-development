@@ -1,5 +1,5 @@
 # Blueprint: docktermj/senzing-bootcamp-claude-plugin-development
-<!-- blueprint: sha=e2d1b1d5ca32eae8cdb31a7115a0bcd78d942e45 date=2026-10-20 -->
+<!-- blueprint: sha=2d3441b0cfaad5d8a646c20fae6f37ae79593736 date=2026-10-22 -->
 
 ## 1. Purpose
 
@@ -32,8 +32,15 @@ receives the shippable plugin through `/propagate-to-public`.
 
 - `.claude-plugin/marketplace.json`: the `senzing-bootcamp-dev` marketplace
   this repository serves; lists the one plugin (section 6.3).
+- `.claude/CLAUDE.md`: maintainer context for Claude Code sessions here, which
+  the auto mode classifier also reads: the repository is public, issue filing
+  and upstream feedback need an explicit yes, and which files handle
+  credentials.
 - `.claude/memory/`: project memory notes loaded by Claude Code sessions in this
   repository.
+- `.claude/settings.json`: project settings; `permissions.ask` rules that
+  always prompt for `gh issue create` and the Senzing MCP server's
+  `submit_feedback`, auto mode included.
 - `.claude/skill-overlays/`: repo overlays: obligations this repository adds to
   user-level skills (implement-github-issue, order-github-issues,
   refine-github-issue, unattended-issue-loop).
@@ -13762,3 +13769,8 @@ Senzing licensing, with no SPDX identifier.
   `pending: 0`); `tests/test_review_invariants_queue.py` drives the helper
   over unfamiliar headers and counts undecided headers by a flat scan; the
   rule is queued as a new invariant for `/review-invariants`
+- #772: the repository's auto mode rules move out of the global settings
+  into `.claude/settings.json` `permissions.ask` rules and a
+  `.claude/CLAUDE.md` the classifier reads (Claude Code does not read
+  `autoMode` from a repository's settings, and the global block applied to
+  every project)
