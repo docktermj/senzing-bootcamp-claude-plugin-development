@@ -10420,21 +10420,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8428 test methods in 452 files, matching `inventory.test_count_total`.
+There are 8429 test methods in 452 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8428.
+sum to 8429.
 
-Two files run more tests than they define, so discovery collects 8428:
+Two files run more tests than they define, so discovery collects 8429:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8421`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8422`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8428`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8429`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10581,7 +10581,7 @@ looks wrong.
 - `tests/test_globalization_retrieval_strategy.py`: 15
 - `tests/test_graduation_announces_what_it_produces.py`: 12
 - `tests/test_graduation_ending_surfaces.py`: 7
-- `tests/test_graduation_hands_over_the_ability.py`: 33
+- `tests/test_graduation_hands_over_the_ability.py`: 34
 - `tests/test_graduation_no_voice_guidance.py`: 20
 - `tests/test_graduation_reads_persisted_answers.py`: 15
 - `tests/test_graduation_video_step.py`: 75
@@ -13718,6 +13718,14 @@ Senzing licensing, with no SPDX identifier.
   generated-case subtitle restated elsewhere (INV-300) and "your data" on any
   non-comment viz-server line, and the INV-399 amendment is queued for
   `/review-invariants`
+- #754: graduation Step 0b's "Next time" turn pins "What's the first thing
+  you'd ask an AI assistant with the Senzing MCP server to build next, on your
+  own data?" with its parenthetical unchanged (the old question packed four
+  ideas into one sentence, and its "no bootcamp script" lead-in repeated what
+  the closing announcement states);
+  `tests/test_graduation_hands_over_the_ability.py` pins the whole line and
+  fails if the old lead-in's ideas return; it establishes no new invariant
+  (INV-056 and INV-358 applied)
 - #755: no program the bootcamp generates reads at runtime a path graduation
   Step 2 does not copy (Module 6 Phase A's rule, cited by pointer to Step 2,
   a registry input exempt), the worker count is a constant in the code and a
