@@ -34,6 +34,11 @@ Phrase checks run on whitespace-collapsed text, so a wrapped phrase still matche
 Source issue: #749. Invariants applied: INV-300 (one statement, pointers name it), INV-243
 (`record_count` stays measured, unchanged here).
 
+INV-402 (registered by the maintainer 2026-10-22: the generated-scenario registry entry exists
+before Module 1 completes, and Module 4 rebuilds a missing one without overwriting) names this
+file as its enforcer. It pins the write, the check, its place and the repair as text; it does not
+establish that a live walk performs them, which only `dry-run` phase 3 observes.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 
 Run:  python3 -m unittest discover -s tests

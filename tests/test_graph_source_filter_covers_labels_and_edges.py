@@ -41,6 +41,11 @@ the shipped ``Model.graph()`` built -- the same technique
 cannot drift apart silently. That a real browser agrees is a ``dry-run`` phase-2/3 observation,
 not something this file can establish.
 
+INV-406 (a filter applies one visibility predicate to every mark a filtered-out item contributes)
+names this file as its enforcer. Where Chrome is absent the browser class skips, so on a bare
+runner only the transcription and the structural pins establish it; neither establishes that a
+Bootcamper's own implementation of the contract obeys it.
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

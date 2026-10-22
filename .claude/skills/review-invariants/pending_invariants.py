@@ -33,6 +33,8 @@ INVARIANTS = REPO / "specs" / "INVARIANTS.md"
 SPECS = REPO / "specs"
 PLUGIN = REPO / "plugins" / "senzing-bootcamp"
 
+#: The header wording the skill documents for a block still waiting. ⚠️ Since #770 it is a
+#: convention for writers, not what admits a block to the queue -- `DECIDED_IN_HEADER` below is.
 AWAITING = "awaiting the maintainer's sign-off; NOT minted"
 HELD_IN_BLOCK = "must be approved before implementation"
 
@@ -48,8 +50,8 @@ HELD_IN_BLOCK = "must be approved before implementation"
 #: **moved** to another file, and the content it pins was never written there. A test caught it
 #: days later; review did not, because nothing scanned the claim. So an amendment carries the
 #: same three things a deferral does -- the exact proposed text, the sites it affects, and why --
-#: and `sites` scans it like any other block.
-AMENDMENT = "PROPOSED AMENDMENT"
+#: and `sites` scans it like any other block. ⚠️ Since #770 the wording below is, like `AWAITING`,
+#: a convention for writers: `BLOCK_HEADER` admits an amendment and `DECIDED_IN_HEADER` decides it.
 AMENDMENT_AWAITING = "awaiting the maintainer's sign-off; NOT applied"
 
 #: The registered invariant an amendment proposes to change.
@@ -110,12 +112,29 @@ def flat(s):
     return re.sub(r"\s+", " ", s).strip()
 
 
-#: Every deferral block's own header, whatever became of it. ⚠️ Anchored to the header's opening,
-#: never found anywhere on the line, for the same reason membership below is decided by a marker:
-#: ledger prose ABOUT deferrals quotes the phrase too (an audit summary's `(resolved INV-NNN, …)`).
-#: A block the maintainer has decided keeps this header and loses its marker: registered
-#: (`(resolved INV-NNN, …)`), resolved by amending other invariants, or superseded.
-DEFERRAL_HEADER = re.compile(r"^- \*\*DEFERRED INVARIANT\b")
+#: Every block's own header, whatever became of it: a deferral, an amendment, or the older
+#: `- ⛔ **DEFERRED INVARIANT` form one held block still carries. ⚠️ Anchored to the header's
+#: opening, never found anywhere on the line: ledger prose ABOUT deferrals quotes both phrases
+#: (a `- **Queues one new invariant**` bullet naming "the `DEFERRED INVARIANT` above", a
+#: `- **Summary:**` that wrote a PROPOSED AMENDMENT), and counting those is the 25-against-9
+#: overcount this module's docstring records.
+BLOCK_HEADER = re.compile(r"^- (?:⛔ )?\*\*(?:DEFERRED INVARIANT|PROPOSED AMENDMENT)\b")
+
+#: The header's bold text -- the only part of a block that states what became of it.
+HEADER_TEXT = re.compile(r"^- (?:⛔ )?\*\*(.+?)\*\*", re.S)
+
+#: ⛔ (#770) What makes a block DECIDED, read off its bold header and nothing else: registered
+#: (`(resolved INV-NNN, …)`, `resolved as an amendment`), an amendment `— applied <date>`, or
+#: `superseded`. **Every other block is in the queue**, held or pending.
+#:
+#: ⚠️ Until #770 the rule ran the other way: a block was queued only when its body carried one of
+#: three exact markers (`AWAITING`, `HELD_IN_BLOCK`, `AMENDMENT_AWAITING`), so a run that worded
+#: its header differently -- seven blocks written 2026-10-15/16 said "a new id is owed …; NOT
+#: minted" -- dropped out of the queue, and `list` reported `pending: 0` over undecided rules
+#: for at least one full review. A marker list fails silent on any wording nobody listed; a
+#: decision list fails loud, because a decided block worded unfamiliarly reappears as pending
+#: and the maintainer corrects its header.
+DECIDED_IN_HEADER = re.compile(r"\bresolved\b|— applied \d{4}-\d{2}-\d{2}|\bsuperseded\b")
 
 
 def blocks(include_resolved=False):
@@ -135,36 +154,24 @@ def blocks(include_resolved=False):
         line = lines[i]
         if line.startswith("## "):
             spec = line[3:].strip()
-        is_decided = include_resolved and bool(DEFERRAL_HEADER.match(line))
-        is_deferral = ("DEFERRED INVARIANT" in line and "resolved INV-" not in line)
-        # ⚠️ No `applied` test here, deliberately: the MARKER filter below is the sole arbiter,
-        # and an applied amendment loses `AMENDMENT_AWAITING` exactly as a registered deferral
-        # loses `AWAITING`. A second exclusion at this line looked prudent and was **dead** --
-        # a negative control deleted it with nothing failing (#79, the same finding #108 made
-        # about a redundant clause). One arbiter, or the next reader trusts the wrong one.
-        is_amendment = AMENDMENT in line
-        if (is_deferral or is_amendment or is_decided) and line.lstrip().startswith("- "):
+        # ⛔ A block is found by its HEADER, never by the phrase appearing in prose. The first
+        # version of this filter kept any bullet containing "DEFERRED INVARIANT" and reported
+        # 25 pending against a true 9: audit summaries and "INVARIANT REGISTERED" entries
+        # quoting the term matched too, and `PROPOSED AMENDMENT` prose would do the same.
+        if BLOCK_HEADER.match(line):
             buf, j = [line], i + 1
             while j < len(lines) and not (
                     lines[j].startswith("## ") or re.match(r"^- \*\*", lines[j])):
                 buf.append(lines[j])
                 j += 1
             body = "\n".join(buf).rstrip()
-            # ⛔ Membership is decided by the block's own MARKER, never by the phrase
-            # appearing on the line. The first version of this filter kept any bullet
-            # containing "DEFERRED INVARIANT" and reported 25 pending against a true 9:
-            # ledger prose ABOUT deferrals -- audit summaries, "INVARIANT REGISTERED"
-            # entries quoting the term -- matched too. That is the same overcount this
-            # module's docstring was written to prevent, reproduced inside the fix for it.
-            # ⛔ Membership is still decided by the MARKER, never by the phrase appearing
-            # in prose -- the overcount this function's comment above records applies to
-            # `PROPOSED AMENDMENT` exactly as it did to `DEFERRED INVARIANT`.
-            queued = (is_deferral or is_amendment) and (
-                AWAITING in body or HELD_IN_BLOCK in body or AMENDMENT_AWAITING in body)
-            # A decided block has lost its marker by definition, so only its header admits it.
-            if queued or is_decided:
+            # ⛔ (#770) One arbiter: the header's own decision words. No marker list beside
+            # it -- a second test here is how the next reader trusts the wrong one (#79, #108).
+            header = HEADER_TEXT.match(body)
+            decided = bool(header and DECIDED_IN_HEADER.search(header.group(1)))
+            if include_resolved or not decided:
                 out.append({"spec": spec, "line": i + 1, "text": body,
-                            "resolved": not queued})
+                            "resolved": decided})
             i = j
             continue
         i += 1

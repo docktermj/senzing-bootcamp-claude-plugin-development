@@ -1446,7 +1446,7 @@ input has to be supplied (INV-187). An excluded input the handover never mention
 broken project.
 
 <a id="scan-the-copied-code"></a>
-**Scan the copied code for paths this step left behind.** Generated programs never read such a
+**(INV-401) Scan the copied code for paths this step left behind.** Generated programs never read such a
 path at runtime ([the rule](../module-06-data-processing/phaseA-build-loading.md#no-runtime-reads-of-uncopied-paths)),
 and this scan names any read that slipped through. After the copy, on Overwrite and Merge alike,
 run the bundled scanner from the project root:

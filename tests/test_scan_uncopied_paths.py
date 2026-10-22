@@ -20,6 +20,10 @@ No phrase-level pattern (#755): the only lines read are the scanner's stdout, on
 `<file>: <path>` record per line, and the script's Python source, parsed with `ast`; no
 Markdown prose is matched here.
 
+INV-401 names this file as an enforcer of graduation Step 2's scan. It establishes what the
+bundled scanner reports on built fixtures; it does not establish that a live graduation runs it
+or turns each hit into a checklist item, which only `dry-run` phase 3 observes.
+
 Run:  python3 -m unittest discover -s tests
 """
 import ast

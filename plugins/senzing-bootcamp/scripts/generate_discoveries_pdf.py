@@ -785,7 +785,7 @@ def render_with_stdlib(doc: Discoveries, output: Path) -> bool:
                 add_wrapped(_md_inline_to_text(block.text), "F2", 11.5, 0)
                 continue
             if block.kind == "code":
-                # ⛔ Wrapped, never clipped. `block.text[:max_width_chars]` cut every code
+                # ⛔ (INV-408) Wrapped, never clipped. `block.text[:max_width_chars]` cut every code
                 # line at 92 characters, so the tail of a long match key, a JSON fragment,
                 # a path or a `--flag` vanished from the page while the success line still
                 # reported ~99% retention — retention is measured on the parse, before any
@@ -817,7 +817,7 @@ def render_with_stdlib(doc: Discoveries, output: Path) -> bool:
                 # answered" table (#480) lost its answers' reasons and its third
                 # column on the fallback path, while the fpdf2 grid wrapped them.
                 #
-                # ⛔ The final `add(line[:max_width_chars], …)` was the SAME defect one
+                # ⛔ (INV-408) The final `add(line[:max_width_chars], …)` was the SAME defect one
                 # level up: a table too wide to squeeze into `table_chars` fell through
                 # the shrink loop and had its right-hand columns cut off the row, in
                 # silence, at exit 0 (#674). `monospace_table_lines` stacks such a table

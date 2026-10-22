@@ -30,6 +30,12 @@ Three things are pinned here:
 path written without backticks, and a read the guide improvises with no instruction behind it.
 The last is the case #755 found; graduation's scan is the net for it.
 
+INV-401 (no generated program reads at runtime a path graduation leaves behind, and graduation
+Step 2 scans for one) names this file as an enforcer: it establishes that the skill files state the
+rule, point at it and direct no such read, and that Step 2 states the scan. It does not establish
+that a live guide never improvises such a read, which only `dry-run` phase 3 observes; the scan is
+the net for that, and `tests/test_scan_uncopied_paths.py` tests the scanner itself.
+
 Stdlib-only and no `plugins/` import (INV-108): the files are read as text.
 
 Run:  python3 -m unittest discover -s tests
@@ -50,9 +56,9 @@ QUERY_STEP = MODULE7 / "phase1-query-visualize.md"
 GRADUATION = SKILLS / "graduation" / "SKILL.md"
 
 ANCHOR = "no-runtime-reads-of-uncopied-paths"
-RULE_LEAD = ("⛔ **The worker count is fixed in the generated code, and no generated program "
+RULE_LEAD = ("⛔ **(INV-401) The worker count is fixed in the generated code, and no generated program "
              "reads at runtime a path graduation leaves behind.**")
-SCAN_LEAD = "**Scan the copied code for paths this step left behind.**"
+SCAN_LEAD = "**(INV-401) Scan the copied code for paths this step left behind.**"
 
 BACKTICKED = re.compile(r"`([^`]+)`")
 #: A generated program as the subject, then a read verb; what it reads follows, up to `;` or a

@@ -747,7 +747,7 @@ Source: VENDORS_LEGACY
 `0.70 × 45 + 0.25 × 55 + 0.05 × (100 − 12)` = `31.5 + 13.75 + 4.4` = **49.65 → 49.7**, each
 rounded to one decimal as the formula's own worked example is.
 
-⛔ **Recompute every total from the source's own three inputs; never transcribe one from this
+⛔ **(INV-405) Recompute every total from the source's own three inputs; never transcribe one from this
 example.** A worked total that is not its own operands run through the formula beside it teaches
 the figure instead of the arithmetic, and the figure it teaches is the wrong one.
 
@@ -756,7 +756,7 @@ at 70-79%, `⚠ Recommend fixing before mapping` below 70%. Derive the label fro
 rather than copying one from this example; a `✅` beside a 78% would tell the bootcamper the gate
 said "proceed" when it is about to ask them to choose.
 
-⚠️ **A ≥80% source is the non-yielding branch — do not illustrate it with the 70-79 gate.** At
+⚠️ **(INV-405) A ≥80% source is the non-yielding branch — do not illustrate it with the 70-79 gate.** At
 **84.8** `CUSTOMERS_CRM` is in the ≥80% band, whose gate below is a *statement* that continues
 into Phase 2 in the same turn and asks no 👉 question (INV-225). Printing the 70-79 warning label
 beside it would stage a decision the gate never puts, which is the mismatch this example used to

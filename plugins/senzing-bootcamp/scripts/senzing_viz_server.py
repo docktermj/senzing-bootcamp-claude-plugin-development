@@ -1247,7 +1247,7 @@ let graphPayload={};
 // the previous simulation would otherwise keep ticking against DOM nodes that have been
 // removed — wasted work and a source of jank. Stopped before each redraw.
 let graphSim=null;
-// ⛔ (#676) The Entity Graph's ONE source-filter applier. `drawGraph` installs it once the
+// ⛔ (#676, INV-406) The Entity Graph's ONE source-filter applier. `drawGraph` installs it once the
 // node, label and edge selections exist, and clears it on every redraw so a stale closure
 // over a removed layout can never be called. The source legend owns WHICH sources are off and
 // hands this function a visibility predicate; this function owns WHICH MARKS that covers --
@@ -1439,7 +1439,7 @@ async function drawGraph(){
   const label=labelLayer.selectAll("text").data(nodes).join("text").attr("text-anchor","middle")
       .text(function(d){return nodeLabel[d.entity_id];});
   label.append("title").text(function(d){return d.entity_name||"";});
-  // ⛔ (#676) ONE visibility predicate, applied to every mark a filtered-out entity
+  // ⛔ (#676, INV-406) ONE visibility predicate, applied to every mark a filtered-out entity
   // contributes. Filtering is a property of the ENTITY, not of one layer, and an entity's
   // marks are spread over three siblings -- the `edge` group, the per-datum node group and the
   // `node-labels` group the paint-order fix moved the text into. The legend passes the
@@ -1669,7 +1669,7 @@ function drawLegend(nodes){d3.select("#graph-container .legend").remove();
     r.attr("title","Show only "+s+" (click again to restore)");
     r.on("click",function(){off[s]=!off[s];d3.select(this).classed("off",!!off[s]);
       const anyOff=srcs.some(function(x){return off[x];});
-      // ⛔ (#676) The legend says WHICH sources are off; `graphApplySourceFilter` says which
+      // ⛔ (#676, INV-406) The legend says WHICH sources are off; `graphApplySourceFilter` says which
       // marks that covers -- the nodes, their labels and their edges, together. This handler
       // must NEVER select marks itself. Selecting the node layer is what it used to do, and
       // that reached exactly one of the three sibling layers an entity draws into -- so the
@@ -2468,7 +2468,7 @@ def _snapshot_entity_lists(payload):
     cross-source cells, match-key rows). ``features`` is deliberately absent — it carries
     bucket counts, never an entity id — and so is `search`, which a snapshot disables.
 
-    ⛔ **This census is the Records action's denominator** (#675). A surface added to the
+    ⛔ **This census is the Records action's denominator** (#675, INV-407). A surface added to the
     snapshot and not added here keeps its Records button and loses its records.
     """
     stats = payload.get("stats") or {}
@@ -2497,7 +2497,7 @@ def _snapshot_reachable_entity_ids(payload):
 def _snapshot_records_index(model, payload):
     """Records for every reachable entity whose records no embedded surface already carries.
 
-    ⛔ **The graph payload is not the Records index.** `graph` is embedded capped at
+    ⛔ **(INV-407) The graph payload is not the Records index.** `graph` is embedded capped at
     ``GRAPH_NODE_CAP`` while `merges` and the drill-down lists are embedded on their own
     terms, so indexing `graph.nodes` alone made an entity the snapshot still *offers* —
     through the "Show all merged entities" browse, a histogram bucket, a cross-source cell
@@ -2555,7 +2555,7 @@ def write_snapshot(model, engine, flags, title, out_path, port=8080, dataset="")
     # entity in a standalone snapshot reported "No records returned for this entity"
     # while the live server showed them. Resolve the entity_id here instead.
     #
-    # ⛔ The lookup indexes EVERY surface the snapshot retains, not `graph.nodes` alone:
+    # ⛔ (INV-407) The lookup indexes EVERY surface the snapshot retains, not `graph.nodes` alone:
     # the graph is capped at GRAPH_NODE_CAP and the other surfaces are not capped with
     # it, so a graph-only index denied entities the page itself still offered (#675).
     # Each of the three sources is built from the same model entities, so a repeated

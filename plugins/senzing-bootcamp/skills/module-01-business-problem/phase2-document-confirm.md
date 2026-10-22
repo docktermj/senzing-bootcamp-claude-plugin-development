@@ -262,7 +262,7 @@ them, the one definition (INV-300): `name`, `provenance`, `cord_dataset` and `co
 source). Data collection reads these to choose its action and to generate the files. Write no
 `record_count`: it is the count Data collection measures (INV-243), null until then.
 `quality_intent` is Data collection's to write when it generates the source. Step 17's
-**Registry check** confirms this write before Module Completion.
+**Registry check** confirms this write before Module Completion (INV-402).
 
 **If writing an artifact fails:** say WHICH artifact failed; do not report Module 1 complete
 until the bootcamper is told. **If artifacts are later missing/unreadable:** tell the
@@ -400,7 +400,7 @@ find it — via the module-completion "Files produced" list. **Checkpoint:** wri
 **Registry check (generated-scenario path only), before Module Completion:**
 `config/data_sources.yaml` must exist with one entry under `sources:` for each scenario source
 `docs/business_problem.md` lists. For each source with no entry, say in one line which source was
-missing, write its entry by Step 11's **Registry write**, and only then continue. The
+missing, write its entry by Step 11's **Registry write**, and only then continue (INV-402). The
 bootcamper-described case has no such check.
 
 Run the standard **Module Completion** process in

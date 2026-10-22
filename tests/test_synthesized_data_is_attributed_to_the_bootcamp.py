@@ -9,11 +9,11 @@ therefore not a claim that any bootcamper was ever addressed correctly.
 
 ``module-07-query-visualize-discover/phase2-discover.md`` states a general rule: when a
 loaded source records ``provenance: synthesized``, the data is the bootcamp's, not the
-Bootcamper's -- say "the data the bootcamp generated", never "your data". It ships today
-and no registered invariant states it; it cites **INV-239**, which governs what
+Bootcamper's -- say "the data the bootcamp generated", never "your data". When it shipped no
+registered invariant stated it, and it cited **INV-239**, which governs what
 bootcamp-generated source data must CONTAIN and says nothing about how the guide names
-whose data it is. The rule's own `DEFERRED INVARIANT` block is in this run's
-``specs/IMPLEMENTED.md`` entry, awaiting the maintainer's sign-off.
+whose data it is. Its `DEFERRED INVARIANT` block was registered as INV-399 by the maintainer
+2026-10-20.
 
 ⚠️ **Scope, measured rather than taken from the issue's wording.** Acceptance criterion 4
 asks for a guard over "steps that branch on ``provenance: synthesized``". Measured over the
@@ -29,8 +29,9 @@ the loaded data to someone. Each such block must name the data the bootcamp's.
 ⚠️ This asserts what the shipped text SAYS. It **cannot** establish that a live turn uses
 the wording -- only ``dry-run`` phase 3 observes that (INV-308).
 
-**Widened by #753 to three sites the sweep above cannot see.** The sweep reads ``.md`` blocks
-that name ``provenance: synthesized`` and an attribution phrase, so it saw none of these:
+**Widened by #753 to three sites the sweep above cannot see** -- registered as INV-399's dated
+note of 2026-10-21, applied by the maintainer 2026-10-22. The sweep reads ``.md`` blocks that
+name ``provenance: synthesized`` and an attribution phrase, so it saw none of these:
 
 - **The Module 7 invocation of ``generate_discoveries_pdf.py``.** The script's cover subtitle
   defaults to ``COVER_SUBTITLE``, "What Senzing found in your data", and Module 7 called it with

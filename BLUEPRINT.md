@@ -6171,7 +6171,6 @@ SPECS = REPO / "specs"
 PLUGIN = REPO / "plugins" / "senzing-bootcamp"
 AWAITING = "awaiting the maintainer's sign-off; NOT minted"
 HELD_IN_BLOCK = "must be approved before implementation"
-AMENDMENT = "PROPOSED AMENDMENT"
 AMENDMENT_AWAITING = "awaiting the maintainer's sign-off; NOT applied"
 AMENDMENT_TARGET = re.compile(r"PROPOSED AMENDMENT to (INV-\d{3})")
 HELD_IN_LEDGER = re.compile(r"\*\*HELD\s+(\d{4}-\d{2}-\d{2}):\*\*\s*(.+?)(?=\n\s*\n|\Z)", re.S)
@@ -6185,7 +6184,9 @@ DESCRIBED = re.compile(r"^\s+- `([^`]+)`[^—]*—\s*⛔\s*(.+?)(?:\s*\*\(.*)?$"
 CITED = re.compile(r"\(INV-\d{3}\)")
 def flat(s):
     ...
-DEFERRAL_HEADER = re.compile(r"^- \*\*DEFERRED INVARIANT\b")
+BLOCK_HEADER = re.compile(r"^- (?:⛔ )?\*\*(?:DEFERRED INVARIANT|PROPOSED AMENDMENT)\b")
+HEADER_TEXT = re.compile(r"^- (?:⛔ )?\*\*(.+?)\*\*", re.S)
+DECIDED_IN_HEADER = re.compile(r"\bresolved\b|— applied \d{4}-\d{2}-\d{2}|\bsuperseded\b")
 def blocks(include_resolved=False):
     ...
 def hold_reason(block_text):
@@ -7774,7 +7775,7 @@ function drawLegend(nodes){d3.select("#graph-container .legend").remove();
     r.attr("title","Show only "+s+" (click again to restore)");
     r.on("click",function(){off[s]=!off[s];d3.select(this).classed("off",!!off[s]);
       const anyOff=srcs.some(function(x){return off[x];});
-      // ⛔ (#676) The legend says WHICH sources are off; `graphApplySourceFilter` says which
+      // ⛔ (#676, INV-406) The legend says WHICH sources are off; `graphApplySourceFilter` says which
       // marks that covers -- the nodes, their labels and their edges, together. This handler
       // must NEVER select marks itself. Selecting the node layer is what it used to do, and
       // that reached exactly one of the three sibling layers an entity draws into -- so the
@@ -10780,7 +10781,7 @@ looks wrong.
 - `tests/test_reverse_check_counts_what_it_cannot_test.py`: 16
 - `tests/test_reverse_contract_flags_the_maintainer_surface.py`: 7
 - `tests/test_reversed_decision_capture.py`: 35
-- `tests/test_review_invariants_queue.py`: 5
+- `tests/test_review_invariants_queue.py`: 12
 - `tests/test_review_invariants_stops_at_the_working_tree.py`: 9
 - `tests/test_root_readme_exception.py`: 12
 - `tests/test_routing_report_payload_limitation_is_relayed.py`: 10
@@ -13754,3 +13755,10 @@ Senzing licensing, with no SPDX identifier.
   the 70-79 band); `tests/test_generated_gap_rates_reach_their_band.py`
   derives `n` from the stated non-key count plus the key and fails a sample
   that reaches the band only without it; no new invariant (INV-174, INV-239)
+- #770: `pending_invariants.py` admits a ledger block by its header and
+  treats it as decided only when that header says `resolved`, `— applied
+  <date>` or `superseded`; every other block is held or pending (seven
+  blocks headed "a new id is owed" were missing from a queue that read
+  `pending: 0`); `tests/test_review_invariants_queue.py` drives the helper
+  over unfamiliar headers and counts undecided headers by a flat scan; the
+  rule is queued as a new invariant for `/review-invariants`

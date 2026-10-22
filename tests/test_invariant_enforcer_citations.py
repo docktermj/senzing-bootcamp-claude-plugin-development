@@ -767,7 +767,45 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # INV-372 test_sdk_update_offer.py, INV-373 test_reversed_decision_capture.py, INV-375
 # test_release_cycle.py. Re-derived by running the extractor -- 258, the twelve present by name
 # and none removed. EXPECTED_PAIRS 246 -> 258.
-EXPECTED_PAIRS = 291
+# 292 on 2026-10-22: /review-invariants registered INV-400 (Phase D's gate routes on the
+# per-record match accuracy step 22 defines; #750), which names
+# test_phase_d_gate_routes_on_both_metrics.py. Re-derived by running the extractor -- 292,
+# INV-400's pair present and none removed.
+# 294 on 2026-10-22: the same review registered INV-401 (no generated program reads at runtime a
+# path graduation leaves behind; #755), which names TWO enforcers --
+# test_generated_programs_read_no_uncopied_path.py and test_scan_uncopied_paths.py -- so it adds
+# two pairs. Re-derived by running the extractor -- 294, both present and none removed.
+# 295 on 2026-10-22: the same review applied INV-154's 2026-10-21 (#752) dated note, which names
+# test_graph_cap_ranks_related_entities_first.py as a new enforcer. Re-derived by running the
+# extractor -- 295, the new pair present and none removed.
+# 296 on 2026-10-22: the same review registered INV-402 (the generated-scenario registry entry
+# exists before Module 1 completes; #749), which names test_module1_registry_write_is_checked.py.
+# Re-derived by running the extractor -- 296, the new pair present and none removed.
+# 297 on 2026-10-22: the same review registered INV-403 (a structured response field that answers
+# the step is named and read before `results[]`; #679), from a block the queue had not shown, which
+# names test_eval_license_field_names_the_channel.py. Re-derived by running the extractor -- 297,
+# the new pair present and none removed.
+# 298 on 2026-10-22: the same review registered INV-404 (a conjunctive gate's branch set is total and
+# non-overlapping; #678), from a block the queue had not shown, which names
+# test_phase_d_gate_routes_on_both_metrics.py. Re-derived by running the extractor -- 298, the new
+# pair present and none removed.
+# 299 on 2026-10-22: the same review registered INV-405 (a worked example follows the computation
+# it illustrates; #677), from a block the queue had not shown, which names
+# test_quality_worked_scores_follow_the_formula.py. Re-derived by running the extractor -- 299, the
+# new pair present and none removed.
+# 300 on 2026-10-22: the same review registered INV-406 (a filter reaches every mark a filtered-out
+# item contributes; #676), from a block the queue had not shown, which names
+# test_graph_source_filter_covers_labels_and_edges.py. Re-derived by running the extractor -- 300,
+# the new pair present and none removed.
+# 301 on 2026-10-22: the same review registered INV-407 (a rendering cap is never a lookup's
+# denominator; #675), from a block the queue had not shown, which names
+# test_snapshot_records_beyond_the_graph_cap.py. Re-derived by running the extractor -- 301, the new
+# pair present and none removed.
+# 302 on 2026-10-22: the same review registered INV-408 (a bundled generator never clips content to
+# fit, and reports what it cannot place), from a block the queue had not shown, which names
+# test_stdlib_pdf_keeps_code_and_table_tails.py. Re-derived by running the extractor -- 302, the
+# new pair present and none removed.
+EXPECTED_PAIRS = 302
 
 
 def pairs():
