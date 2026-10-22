@@ -144,7 +144,7 @@ python3 .claude/skills/review-invariants/pending_invariants.py list
 It prints the pending blocks numbered, the count, the next free ID, and — separately —
 any block that is **held**, with the recorded reason.
 
-⚠️ **A block is pending unless its own header records a decision** — `resolved`, `— applied
+⚠️ **(INV-409) A block is pending unless its own header records a decision** — `resolved`, `— applied
 <date>` or `superseded` in the bold header — or it carries a hold (#770). The header's other
 wording does not matter: until #770 the queue admitted only blocks carrying the exact
 "awaiting the maintainer's sign-off" marker, and seven blocks worded "a new id is owed" were

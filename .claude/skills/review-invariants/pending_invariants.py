@@ -123,7 +123,7 @@ BLOCK_HEADER = re.compile(r"^- (?:⛔ )?\*\*(?:DEFERRED INVARIANT|PROPOSED AMEND
 #: The header's bold text -- the only part of a block that states what became of it.
 HEADER_TEXT = re.compile(r"^- (?:⛔ )?\*\*(.+?)\*\*", re.S)
 
-#: ⛔ (#770) What makes a block DECIDED, read off its bold header and nothing else: registered
+#: ⛔ (#770, INV-409) What makes a block DECIDED, read off its bold header and nothing else: registered
 #: (`(resolved INV-NNN, …)`, `resolved as an amendment`), an amendment `— applied <date>`, or
 #: `superseded`. **Every other block is in the queue**, held or pending.
 #:

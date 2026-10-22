@@ -23,6 +23,11 @@ Two mechanisms are evidence only where they could differ: both now find a block 
 but the helper splits blocks and reads each header's bold text while this scans line by line, and
 `AnUnfamiliarHeaderIsNeverDropped` drives the helper over headers nobody has written yet.
 
+INV-409 (the queue admits every block by its header and treats it as decided only when the header
+records the decision) names this file as its enforcer. It establishes how the helper classifies
+fixture headers and the live ledger; it does not establish that a writer puts its decision in
+the header, which the skill's Step 1 asks of the maintainer.
+
 No phrase-level pattern (#438): its line reads are of `specs/IMPLEMENTED.md`, the ledger, which is
 outside the in-scope corpora, as #425 recorded (INV-346).
 """
