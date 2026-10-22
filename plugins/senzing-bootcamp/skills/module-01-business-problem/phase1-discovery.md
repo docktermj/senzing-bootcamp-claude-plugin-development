@@ -202,12 +202,12 @@ bootcamper explicitly accepts option 3.)*
 
 ### 4a. Business Case Offer: acceptance handling (branch — NON-YIELDING)
 
-⛔ **On the Accepted path, Steps 4a, 4b, 5 and 5a are one non-yielding run: none of them gets a turn
-of its own.** None of them asks a 👉 question, so all four run in order and in full inside the turn
-that carries the bootcamper's option 3, and that turn continues to Step 6a. ⛔ **Do not end the turn
-on the generated scenario.** Step 6a's summary is where it is presented, and Step 6a's 👉 ends this
-turn (INV-225): a turn ending on the scenario ends with **zero** 👉. A generated scenario is a
-results presentation, and a results presentation is not a turn ending
+⛔ **(INV-225) On the Accepted path, Steps 4a, 4b, 5 and 5a are one non-yielding run: none of them
+gets a turn of its own.** None of them asks a 👉 question, so all four run in order and in full
+inside the turn that carries the bootcamper's option 3, and that turn continues to Step 6a.
+⛔ **(INV-225) Do not end the turn on the generated scenario.** Step 6a's summary is where it is
+presented, and Step 6a's 👉 ends this turn: a turn ending on the scenario ends with **zero** 👉. A
+generated scenario is a results presentation, and a results presentation is not a turn ending
 (`../bootcamp-onboarding/ground-rules.md` → the 👉 protocol).
 
 - **Accepted:** generate a complete scenario in-session: a non-empty problem description,
@@ -265,8 +265,8 @@ the shared turn, not a write of its own.
 
 ### 4b. CORD sourcing for the generated scenario (via MCP — NON-YIELDING)
 
-⛔ **This step is non-yielding: it is part of Step 4a's run and does not get a turn of its own.**
-It shares the turn that Step 6a's 👉 ends (INV-225).
+⛔ **(INV-225) This step is non-yielding: it is part of Step 4a's run and does not get a turn of its
+own.** It shares the turn that Step 6a's 👉 ends.
 
 Treat the Senzing MCP server as the ONLY source of CORD facts: never training data. Call
 `get_sample_data` and/or `search_docs(query='CORD datasets: names, contents, and availability
@@ -329,9 +329,9 @@ the shared turn, not a write of its own.
 
 ## 5. Infer details from their response (NON-YIELDING)
 
-⛔ **This step is non-yielding: it does not get a turn of its own.** It runs in the turn that carries
-the bootcamper's description (option 1 or 2) or Step 4a's run (option 3), continues through Step 5a,
-and lets Step 6a's 👉 end that turn (INV-225).
+⛔ **(INV-225) This step is non-yielding: it does not get a turn of its own.** It runs in the turn
+that carries the bootcamper's description (option 1 or 2) or Step 4a's run (option 3), continues
+through Step 5a, and lets Step 6a's 👉 end that turn.
 
 Extract six categories: **A. Record types** (people/orgs/both); **B. Source count and names**;
 **C. Problem category** (map to the recognized set); **D. Matching criteria** (attributes,
@@ -343,8 +343,8 @@ the shared turn, not a write of its own.
 
 ### 5a. Record-count threshold check (compute-only, no license prompt here — NON-YIELDING)
 
-⛔ **This step is non-yielding: it computes and records, asks nothing, and does not get a turn of its
-own.** Proceed to Step 6a in the same turn, and let Step 6a's 👉 end it (INV-225).
+⛔ **(INV-225) This step is non-yielding: it computes and records, asks nothing, and does not get a
+turn of its own.** Proceed to Step 6a in the same turn, and let Step 6a's 👉 end it.
 
 Compute the total record count across the mentioned sources and read `license_record_limit` from
 `config/bootcamp_progress.json` (normally absent at this point):

@@ -221,9 +221,9 @@ def run_problems(text):
         if re.search(r"\*\*Checkpoint:\*\* write step %s(?: to `[^`]+`)?\." % re.escape(step),
                      flat):
             problems.append("step %s's checkpoint reads as a write of its own" % step)
-    if not re.search(r"⛔ \*\*Do not end the turn on the generated scenario\.\*\* Step 6a's "
-                     r"summary is where it is presented, and Step 6a's 👉 ends this turn "
-                     r"\(INV-225\)", squash(step_section(text, "### 4a. "))):
+    if not re.search(r"⛔ \*\*\(INV-225\) Do not end the turn on the generated scenario\.\*\* "
+                     r"Step 6a's summary is where it is presented, and Step 6a's 👉 ends this "
+                     r"turn", squash(step_section(text, "### 4a. "))):
         problems.append("step 4a does not forbid ending the turn on the scenario")
     return problems
 
@@ -264,7 +264,8 @@ class ModuleOneStepsFourAToFiveAAreOneNonYieldingRun(unittest.TestCase):
                 "write step 5 — but as part of the turn's one write with Step 6a's at the end "
                 "of\nthe shared turn, not a write of its own.", "write step 5."),
             "turn may end on the scenario": (
-                "⛔ **Do not end the turn\non the generated scenario.**", "Present the scenario."),
+                "⛔ **(INV-225) Do not end the turn on the generated scenario.**",
+                "Present the scenario."),
             "question inside the run": (
                 "## 5. Infer details from their response (NON-YIELDING)\n",
                 "## 5. Infer details from their response (NON-YIELDING)\n\n"
