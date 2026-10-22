@@ -64,7 +64,19 @@ The checks assert that the skill files *state* these rules; they **cannot** esta
 guide follows them. `dry-run` phase 3 observes that.
 
 Source issues: #678, #750. Invariants: INV-056, INV-117, INV-264, INV-265, INV-284, INV-300,
-INV-346.
+INV-346, INV-400, INV-404.
+
+INV-404 (a gate whose outcome states a conjunction of conditions routes every combination of its
+readings to exactly one branch, and a failed required condition gets a branch of its own) names
+this file as its enforcer: the router built from the shipped table and its negative controls are
+what it relies on. They establish that the table is total and non-overlapping as written; they do
+not establish that a live guide routes a reading by it, which only `dry-run` phase 3 observes.
+
+INV-400 (the gate routes on the per-record match accuracy step 22 defines, never on precision or
+recall) names this file as its enforcer: `TheAccuracyFigureIsDefinedOnce` and its negative
+controls are what it relies on. They establish that the skill file states the rule; they do not
+establish that a live guide computes the figure or keeps recall out of the routing, which only
+`dry-run` phase 3 observes.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -379,7 +391,7 @@ def definition_problems(text):
         "the gate reads it as `none`",
         "keep the two apart",
         # only this figure routes; precision and recall are findings beside it
-        "⛔ **Only this figure routes the gate's accuracy column.**",
+        "⛔ **(INV-400) Only this figure routes the gate's accuracy column.**",
         "When a ground truth exists for the scenario",
         "pairwise precision and recall the way "
         "`reporting_guide(topic='quality', language='<chosen_language>', version='current')` "

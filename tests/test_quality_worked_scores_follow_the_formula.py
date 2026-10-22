@@ -39,6 +39,12 @@ the worked outputs and the labels derived from them.
 Each check returns its problems, so the negative controls below can run the same code over a
 mutated copy of the file and see the defect reported. Standard library only (INV-108).
 
+INV-405 (a worked example of a computation the guidance declares is that computation applied to
+its own printed operands, labeled by the band its value selects) names this file as its enforcer.
+It covers Module 5 Step 6 only: it does not establish that worked figures elsewhere in the plugin
+follow their formulas, nor that a live guide recomputes a Bootcamper's totals, which only
+`dry-run` phase 3 observes.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

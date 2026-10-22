@@ -26,6 +26,12 @@ What is pinned:
 Each guarantee has a negative control: the span-first ranking, put back in place of the
 helper, reproduces the reported 2 of 914 and 1 of 476.
 
+INV-154's dated note of 2026-10-21 (#752), applied by the maintainer 2026-10-22, names this file
+as an enforcer of the relationship-first ranking and the note that quotes it. It establishes what
+`rank_for_graph_cap` returns on built fixtures and what the contract and the note say; it does
+not establish that a live results app was opened on the ranked graph, which only `dry-run`
+phase 3 observes.
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

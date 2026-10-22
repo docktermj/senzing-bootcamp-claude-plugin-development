@@ -2003,7 +2003,7 @@ def dropped_character_warning() -> Optional[str]:
 # --------------------------------------------------------------------------- #
 # Content accounted for at RENDER time
 # --------------------------------------------------------------------------- #
-# ⛔ The content-retention figure is measured BEFORE rendering — source characters against
+# ⛔ (INV-408) The content-retention figure is measured BEFORE rendering — source characters against
 # parsed characters — so it is structurally unable to see anything a renderer drops while
 # laying the page out. That blindness shipped: the stdlib writers clipped each code line to
 # 92 characters and each table cell to its column width, and a probe measured retention
@@ -3557,7 +3557,7 @@ def _render_table_monospace(pdf, epw: float, header, rows) -> None:
     for instance). INV-142 permits aligned columns as a lesser rendering; it does
     NOT permit falling back to the Markdown source text.
 
-    ⛔ It does not permit **clipping** them either, which is what this did: every cell was
+    ⛔ (INV-408) It does not permit **clipping** them either, which is what this did: every cell was
     cut at its column width (`c[:w]`), so the tail of any cell past 46 characters was gone
     from the page while the success line still reported a high retention figure (#674). The
     layout is shared with the stdlib writers now, and wraps.
@@ -4097,7 +4097,7 @@ def _stdlib_table(add, text: str) -> None:
     plain_header = [_safe(_md_inline_to_text(c)) for c in header]
     plain_rows = [[_safe(_md_inline_to_text(c)) for c in r] for r in rows]
     # A row wider than the text column would run off the page — the off-page failure
-    # INV-121 names, reached from the other renderer. ⛔ The answer is to WRAP it, not to
+    # INV-121 names, reached from the other renderer. ⛔ (INV-408) The answer is to WRAP it, not to
     # clip it: this clipped every cell at 40 characters and every row at the line width,
     # so a long match-key explanation or a wide table lost its tail and its right-hand
     # columns silently, at exit 0 and a 92% retention figure (#674). 8.5pt Courier is

@@ -29,6 +29,11 @@ whether or not the package is installed.
 Graduation stays non-blocking (INV-048/INV-052): a document whose content cannot all be
 placed still produces a PDF and exits 0 — it just says so on stderr first.
 
+INV-408 (a bundled generator wraps or re-lays content and never clips it, and reports what it
+cannot place before its success line) names this file as its enforcer. It extracts the text the
+PDF carries; it does not establish that the page is legible to a human reader, which is a visual
+inspection.
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

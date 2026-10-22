@@ -296,7 +296,7 @@ made** for every source in it. Then read the source's entry in `config/data_sour
 missing), Module 1 Step 11's registry write was skipped: rebuild the entry's `name`, `provenance`
 and `entity_type` from that source in `docs/business_problem.md`, treat its missing
 `scenario_record_count` as the `provenance: synthesized` branch below does, and say in one line
-that you rebuilt it. Only a missing entry is rebuilt; an existing one is never overwritten.
+that you rebuilt it. Only a missing entry is rebuilt; an existing one is never overwritten (INV-402).
 
 - **`provenance: cord`** → go straight to downloading that source, the entry's `cord_dataset` and
   `cord_source` ([Scenario source fields](#scenario-source-fields)), saying which source you are
@@ -1362,7 +1362,7 @@ training data.
    4** goes to sub-step 6a. **Option 3:** consult the Senzing MCP server first:
    `search_docs(query='temporary evaluation license for a dataset larger than the default limit')`.
 
-   ⛔ **Read `eval_license.message` and `eval_license.url` from that response BEFORE `results[]`.**
+   ⛔ **(INV-403) Read `eval_license.message` and `eval_license.url` from that response BEFORE `results[]`.**
    `eval_license` is a **top-level field**, a sibling of `metadata` and `results` — not a search
    hit — so a guide that reads only the top hit never sees it. When it is present, **relay its
    `message` verbatim** as the external channel, together with its `url`, and keep the top hit —
@@ -1372,7 +1372,7 @@ training data.
    transmits no name, no work email address and nothing else about them off their machine
    (INV-135, INV-321) — it is the no-personal-details counterpart to that path.
 
-   ⛔ **When the call fails, or the response carries no `eval_license`, fall back to the top hit
+   ⛔ **(INV-403) When the call fails, or the response carries no `eval_license`, fall back to the top hit
    alone** — present its guidance and take the external channel from it, exactly as this step did
    before the field existed — and say which of the two produced what is presented (INV-125). The
    field is advisory: its absence means an older or differently-shaped response, never an error,

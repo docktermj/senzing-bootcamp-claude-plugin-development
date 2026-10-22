@@ -126,7 +126,7 @@ instead, with the reason, and no percentage: the gate reads it as `none`. This f
 records and the UAT % counts entities, so keep the two apart even when a sample has the same
 shape.
 
-⛔ **Only this figure routes the gate's accuracy column.** When a ground truth exists for the
+⛔ **(INV-400) Only this figure routes the gate's accuracy column.** When a ground truth exists for the
 scenario (known correct entity assignments), also compute pairwise precision and recall the way
 `reporting_guide(topic='quality', language='<chosen_language>', version='current')` describes, and
 report both beside this figure as findings, naming the ground truth they were computed against.
@@ -733,7 +733,7 @@ Say so, report none, and route on match accuracy alone, by the `none` rows of th
 never state a UAT % that was not computed.
 
 **The table below is the whole of the routing: every pair of readings lands in exactly one branch,
-and no pair lands in two.** The accuracy column is the **per-record** figure (the INV-264 rule
+and no pair lands in two.** (INV-404) The accuracy column is the **per-record** figure (the INV-264 rule
 above), never a relationship-bucket share: the [per-record match accuracy](#per-record-match-accuracy)
 step 22 defines, never precision or recall. `any` means any reading, including none; `none` means
 the figure does not exist — no entity could be spot-checked (UAT %), or no per-record accuracy was
@@ -755,7 +755,7 @@ including 90% and no reading can fall between two rows.
 ⛔ **Never call a result strong when a metric the strong branch explicitly requires falls short or
 was never established** — that outcome takes a branch of its own, with its own evidence,
 recommendation, question and return routes, and is never folded into the strong branch or into a
-branch that routes on the other metric alone.
+branch that routes on the other metric alone (INV-404).
 
 - **UAT ≥90% and match accuracy ≥90%:** state "Results look strong." and proceed to the module
   transition question. **If the audit produced a finding, say so in the same breath** — strong
