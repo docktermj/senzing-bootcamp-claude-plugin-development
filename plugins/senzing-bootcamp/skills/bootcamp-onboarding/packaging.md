@@ -132,7 +132,7 @@ the archive safe to hand over:
   and virtualenvs, and `backups/packages/` itself.
 - **Never packaged on `share`, on top of that:** the mapped loader inputs
   (`data/senzing-ready/`), `backups/`, every database file, and `docs/mapping/`.
-  ⛔ **Every exclusion rule matches a path's segments wherever they sit, not only at the
+  ⛔ **(INV-410) Every exclusion rule matches a path's segments wherever they sit, not only at the
   project root.** `production/` is packaged recursively and graduation copies
   `data/senzing-ready/**` into `production/data/senzing-ready/` (INV-186), so a root-anchored
   rule carried the bootcamper's own mapped rows inside the generated tree while

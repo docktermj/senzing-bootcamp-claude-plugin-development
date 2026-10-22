@@ -105,6 +105,8 @@ REVIEWED_NOT_A_SUPERSESSION = {
                "it supersedes nothing and is superseded by nothing",
     "INV-281": "its 2026-09-29 dated correction (#223) says one RATIONALE SENTENCE is superseded; "
                "the invariant supersedes nothing and is superseded by nothing",
+    "INV-409": "names `superseded` as one of the header words that mark a ledger block "
+               "decided; it supersedes nothing and is superseded by nothing",
 }
 
 

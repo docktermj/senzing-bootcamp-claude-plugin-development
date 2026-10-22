@@ -49,6 +49,12 @@ one at a time -- so there is no phrase for a wrap-aware read to find (INV-346).
 
 Source spec: `specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md`.
 
+INV-410 (the `share` profile carries none of the Bootcamper's loader inputs at any depth, and an
+exclusion rule matches its segments anywhere in a path) names this file as its enforcer, through
+`TheShareProfileCarriesNoLoaderInputsAtAnyDepth` and `TheExclusionMatcherMatchesSegmentsNotSubstrings`.
+They read the members of archives built from fixtures; they do not establish that a live
+`/package-bootcamp` run on a Bootcamper's project excludes them, which only `dry-run` observes.
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
