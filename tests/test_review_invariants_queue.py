@@ -15,13 +15,23 @@ is evidence; re-running the helper's own logic would not be.
 
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 
+⛔ **(#770) The scan counts HEADERS that are not decided, never the sign-off marker.** It
+counted blocks carrying the "awaiting the maintainer's sign-off" marker, the same definition the
+helper used, so when seven blocks were written with a header reading "a new id is owed …; NOT
+minted" both mechanisms dropped them together and agreed on a queue that was missing them.
+Two mechanisms are evidence only where they could differ: both now find a block by its header,
+but the helper splits blocks and reads each header's bold text while this scans line by line, and
+`AnUnfamiliarHeaderIsNeverDropped` drives the helper over headers nobody has written yet.
+
 No phrase-level pattern (#438): its line reads are of `specs/IMPLEMENTED.md`, the ledger, which is
 outside the in-scope corpora, as #425 recorded (INV-346).
 """
 
+import importlib.util
 import re
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -30,13 +40,22 @@ HELPER = REPO / ".claude" / "skills" / "review-invariants" / "pending_invariants
 LEDGER = REPO / "specs" / "IMPLEMENTED.md"
 SPECS = REPO / "specs"
 
-AWAITING = "awaiting the maintainer's sign-off; NOT minted"
-# ⚠️ A deferral carries ONE of two markers, not always the first. A block whose spec
-# required approval before implementation never says "awaiting sign-off" -- it says this.
-# Scanning for only the first found 0 held where 1 is held, and the disagreement with the
-# helper is what surfaced it: two mechanisms are evidence precisely when they differ.
+# ⚠️ A block whose spec required approval before implementation never records a `HELD` paragraph
+# -- its header says this. Scanning without it found 0 held where 1 is held, and the
+# disagreement with the helper is what surfaced it: two mechanisms are evidence precisely when
+# they differ.
 HELD_IN_BLOCK = "must be approved before implementation"
 HELD_IN_SPEC = "Held, not merely unapproved"
+
+#: A block's header line: a deferral, an amendment, or the older `- ⛔ **` form (#770).
+HEADER = re.compile(r"^- (?:⛔ )?\*\*(?:DEFERRED INVARIANT|PROPOSED AMENDMENT)\b")
+#: The words a header uses once the maintainer has decided the block (#770).
+DECIDED = re.compile(r"\bresolved\b|— applied \d{4}-\d{2}-\d{2}|\bsuperseded\b")
+
+
+def undecided_header(line):
+    """True when `line` opens a block whose header records no decision."""
+    return bool(HEADER.match(line)) and not DECIDED.search(line.split("**")[1])
 
 
 def helper(*args):
@@ -65,12 +84,12 @@ def counted_by_scanning():
     for line in text.splitlines():
         if line.startswith("## "):
             spec, open_pending = line[3:].strip(), False
-        elif line.startswith("- **") and AWAITING not in line and HELD_IN_BLOCK not in line:
+        elif re.match(r"^- (?:⛔ )?\*\*", line) and not undecided_header(line):
             open_pending = False
         if open_pending and HELD_PARAGRAPH.search(line):
             pending, held, open_pending = pending - 1, held + 1, False
             continue
-        if AWAITING not in line and HELD_IN_BLOCK not in line:
+        if not undecided_header(line):
             continue
         f = SPECS / f"{spec}.md"
         is_held = (HELD_IN_BLOCK in line
@@ -88,13 +107,14 @@ class TheQueueCountsBlocksNotMentions(unittest.TestCase):
         self.assertIsNotNone(m, f"`list` printed no counts:\n{self.out[:400]}")
         self.reported = (int(m.group(1)), int(m.group(2)))
 
-    def test_the_pending_count_agrees_with_a_flat_marker_scan(self):
+    def test_the_pending_count_agrees_with_a_flat_header_scan(self):
         pending, _ = counted_by_scanning()
         self.assertEqual(
             pending, self.reported[0],
-            f"the helper reports {self.reported[0]} pending; scanning for the sign-off "
-            f"marker finds {pending}. A gap this way round means prose that merely "
-            "mentions a deferral is being counted as one.",
+            f"the helper reports {self.reported[0]} pending; scanning for undecided block "
+            f"headers finds {pending}. More reported means prose that merely mentions a "
+            "deferral is being counted as one; fewer means a block the helper cannot see "
+            "(#770).",
         )
 
     def test_a_held_block_is_never_listed_as_pending(self):
@@ -128,8 +148,8 @@ class TheQueueCountsBlocksNotMentions(unittest.TestCase):
         # a broken scan.
         quotable, inside = 0, False
         for line in LEDGER.read_text(encoding="utf-8").splitlines():
-            if line.startswith("- **") or line.startswith("## "):
-                inside = ("DEFERRED INVARIANT" in line and "resolved INV-" not in line)
+            if re.match(r"^- (?:⛔ )?\*\*", line) or line.startswith("## "):
+                inside = undecided_header(line)
             elif inside and line.lstrip().startswith("- ") and "⛔ **" in line and "— in `" in line:
                 quotable += 1
         if quotable:
@@ -208,6 +228,86 @@ class TheQueueCountsBlocksNotMentions(unittest.TestCase):
         inv = (REPO / "specs" / "INVARIANTS.md").read_text(encoding="utf-8")
         highest = max(int(x) for x in re.findall(r"\*\*INV-(\d{3})\*\*", inv))
         self.assertEqual(f"INV-{highest + 1:03d}", helper("next-id").strip())
+
+
+def module(ledger_text, tmp):
+    """The helper loaded by path, reading `ledger_text` as its ledger."""
+    spec = importlib.util.spec_from_file_location("pending_invariants", HELPER)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    ledger = Path(tmp) / "IMPLEMENTED.md"
+    ledger.write_text("# Implemented\n\n## a-spec\n\n%s\n" % ledger_text, encoding="utf-8")
+    mod.LEDGER = ledger
+    return mod
+
+
+#: A block's body below its header, the same for every fixture.
+BODY = """
+    - ⛔ **A rule that ships with no id.** — in `docs/development.md`
+
+  **INV-NNN** — the drafted wording."""
+
+
+class AnUnfamiliarHeaderIsNeverDropped(unittest.TestCase):
+    """⛔ (#770) A block is in the queue unless its header records a decision.
+
+    The helper used to admit a block only when it carried an exact marker, and seven blocks
+    worded "a new id is owed …; NOT minted" were left out while `list` reported
+    `pending: 0`. These fixtures run the helper itself over headers in both directions.
+    """
+
+    def queued(self, header):
+        with tempfile.TemporaryDirectory() as tmp:
+            pending, held = module("- **%s**%s" % (header, BODY), tmp).queue()
+            return len(pending), len(held)
+
+    def test_the_wording_that_was_dropped_is_pending(self):
+        self.assertEqual((1, 0), self.queued(
+            # The live wording, its INV citation split so it is not read as one here.
+            "DEFERRED INVARIANT — a new id is owed (INV-" "309); NOT minted."))
+
+    def test_a_wording_nobody_has_used_is_pending(self):
+        self.assertEqual((1, 0), self.queued("DEFERRED INVARIANT — to be decided."))
+
+    def test_an_undecided_amendment_in_new_words_is_pending(self):
+        self.assertEqual((1, 0), self.queued("PROPOSED AMENDMENT to INV-216 — draft."))
+
+    def test_each_decision_leaves_the_queue(self):
+        for header in (
+                "DEFERRED INVARIANT (resolved INV-400, registered by the maintainer 2026-10-22).",
+                "DEFERRED INVARIANT — resolved as an amendment, not a new id — PROPOSED "
+                "AMENDMENT to INV-399 — applied 2026-10-22 by the maintainer.",
+                "DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED "
+                "AMENDMENT to INV-107 — applied 2026-10-19.",
+                "DEFERRED INVARIANT — NOT minted — superseded by the #239 block."):
+            with self.subTest(header=header[:60]):
+                self.assertEqual((0, 0), self.queued(header))
+
+    def test_a_decision_word_below_the_header_decides_nothing(self):
+        """Only the header records the decision; the body may quote anything."""
+        with tempfile.TemporaryDirectory() as tmp:
+            text = ("- **DEFERRED INVARIANT — a new id is owed.**%s\n\n"
+                    "  Unlike #239's block, this was not superseded or resolved.") % BODY
+            pending, _held = module(text, tmp).queue()
+            self.assertEqual(1, len(pending))
+
+    def test_prose_about_a_deferral_is_not_a_block(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            text = ("- **Queues one new invariant**: the `DEFERRED INVARIANT` above, "
+                    "a new id is owed.")
+            self.assertEqual([], module(text, tmp).blocks(include_resolved=True))
+
+    def test_the_live_ledger_drops_no_header(self):
+        """Every header the flat scan finds is a block the helper splits, decided or not."""
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = module("", tmp)
+        mod.LEDGER = LEDGER
+        split = {b["line"] for b in mod.blocks(include_resolved=True)}
+        headers = {n for n, line in enumerate(LEDGER.read_text(encoding="utf-8").splitlines(), 1)
+                   if HEADER.match(line)}
+        self.assertGreater(len(headers), 0, "the scan found no block headers at all (INV-265)")
+        self.assertEqual(set(), headers - split,
+                         "a block header the helper never split, so no view can show it")
 
 
 if __name__ == "__main__":
