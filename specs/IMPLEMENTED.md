@@ -153,7 +153,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
   **INV-317** — (⚠️ **Dated note, 2026-10-22 (production-readiness-audit-2026-10-22): the sites are every maintainer run that produces findings; the rule is unchanged.** The list above is a sample taken when the rule was registered; the rule binds every maintainer run that produces findings, which today also includes `/auto-test`, `/feedback-to-issues`, `/retrofit-from-public`, `/delegate-to-mcp-server` and `/release-cycle`. The rules above still bind.)
 - **Establishes no invariant of its own.** This audit modifies no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. It queues 4 new invariants and 6 amendments above for `/review-invariants` (INV-365); the maintainer runs it to decide them.
-- **Commit:** uncommitted
+- **Commit:** ee4788d
 
 ## invariant-review-2026-10-22b
 
