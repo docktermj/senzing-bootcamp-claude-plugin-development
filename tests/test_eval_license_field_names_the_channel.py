@@ -47,7 +47,12 @@ runtime fact, re-verified against the live server when this change was made and 
 `specs/IMPLEMENTED.md`, never asserted offline (INV-108).
 
 Source issue: #679. Invariants: INV-006, INV-056, INV-080, INV-108, INV-125, INV-135, INV-213,
-INV-265, INV-291, INV-300, INV-321, INV-346.
+INV-265, INV-291, INV-300, INV-321, INV-346, INV-403.
+
+INV-403 (a structured field that answers the step's question is named and read before the results
+list, with an explicit absent-field fallback) names this file as its enforcer. It asserts that the
+step states each clause; it does not establish that a live guide reads the field, which only
+`dry-run` phase 3 observes, and asserts nothing about the server.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -334,7 +339,7 @@ class EachCheckSeesTheTextItWasWrittenFor(unittest.TestCase):
 
     def test_dropping_the_fallback_is_reported(self):
         passage = step(self.text)
-        start = passage.index("⛔ **When the call fails")
+        start = passage.index("⛔ **(INV-403) When the call fails")
         end = passage.index("Source the request channel's address")
         text = self.text.replace(passage[start:end], "", 1)
         self.assertTrue(run("fallback", text))

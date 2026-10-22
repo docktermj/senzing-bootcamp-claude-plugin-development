@@ -281,7 +281,7 @@ loader. Every tier that represents a real production system gets the threaded pa
   production-tier loader ends up pointed at a datastore that cannot take it.
 
   <a id="no-runtime-reads-of-uncopied-paths"></a>
-  ⛔ **The worker count is fixed in the generated code, and no generated program reads at runtime
+  ⛔ **(INV-401) The worker count is fixed in the generated code, and no generated program reads at runtime
   a path graduation leaves behind.** The guide reads `database_type` here, while generating; the
   program never does. Write the count into the code as a constant, with the code comment below. No
   program this bootcamp generates reads, at runtime, a path that `../graduation/SKILL.md` → "Step

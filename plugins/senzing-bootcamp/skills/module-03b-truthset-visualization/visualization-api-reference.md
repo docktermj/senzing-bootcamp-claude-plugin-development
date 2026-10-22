@@ -545,7 +545,7 @@ Unlike `why`/`how`, this endpoint's data MUST also be **embedded in the standalo
 the Records action works offline — it needs no engine call at view time, only the record data
 already gathered when the model was built.
 
-⛔ **The embedded records index MUST cover every entity the snapshot still offers** — every
+⛔ **(INV-407) The embedded records index MUST cover every entity the snapshot still offers** — every
 entity carried by an embedded graph node, by the merge browse, by the largest-entities list or
 by any aggregate drill-down list — and not only the entities the graph node cap kept. The graph
 payload bounds what is *rendered*, never what can be *looked up*: an index built from
@@ -1093,7 +1093,7 @@ restate it (INV-300).
     heading sat inside the combinations branch, so it vanished on single-source runs — where the
     label is accidentally correct — and appeared only where participation and single-source diverge,
     which is exactly the run the module exists to demonstrate.
-  - ⛔ **A filter applies to every mark the filtered-out item contributes, not to one layer.**
+  - ⛔ **(INV-406) A filter applies to every mark the filtered-out item contributes, not to one layer.**
     An entity is drawn as a marker, a label and the edges reaching it — and once labels are painted
     in a layer of their own (required above), those are **sibling** layers, not children of the
     marker. A filter that reaches for the marker layer alone leaves **ghost labels**, the hidden

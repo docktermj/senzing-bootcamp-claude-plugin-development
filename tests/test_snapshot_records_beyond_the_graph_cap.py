@@ -30,6 +30,11 @@ and neither is available on every machine that runs this suite (INV-052/INV-066)
 ``TheShimIndexesEveryRetainedSurface`` pins the transcription against the shipped source, so the
 two cannot drift apart silently.
 
+INV-407 (a rendering cap never becomes the denominator of a lookup the same artifact offers) names
+this file as its enforcer. It resolves every reachable entity through a transcription of the
+shipped shim; it does not establish that a browser running the real shim agrees, which is a
+`dry-run` observation.
+
 Run:  python3 -m unittest discover -s tests
 """
 import contextlib

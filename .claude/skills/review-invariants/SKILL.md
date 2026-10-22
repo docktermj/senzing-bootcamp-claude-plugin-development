@@ -144,6 +144,14 @@ python3 .claude/skills/review-invariants/pending_invariants.py list
 It prints the pending blocks numbered, the count, the next free ID, and — separately —
 any block that is **held**, with the recorded reason.
 
+⚠️ **A block is pending unless its own header records a decision** — `resolved`, `— applied
+<date>` or `superseded` in the bold header — or it carries a hold (#770). The header's other
+wording does not matter: until #770 the queue admitted only blocks carrying the exact
+"awaiting the maintainer's sign-off" marker, and seven blocks worded "a new id is owed" were
+missing from a list that read `pending: 0`. So when you resolve or apply a block, put the
+decision **in its header**, as Step 3 shows; a decision recorded only below it leaves the
+block in the queue.
+
 ⛔ **Never present a held block as awaiting a decision.** It has one. Re-offering it asks
 the maintainer to re-derive a decision they already made and recorded, and the reason is
 in the spec, not in the ledger, which is why the helper reads both. Mention held blocks
