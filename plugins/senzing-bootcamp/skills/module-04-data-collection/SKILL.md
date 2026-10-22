@@ -365,19 +365,29 @@ that you rebuilt it. Only a missing entry is rebuilt; an existing one is never o
     applicable field slots empty** across that source — mean per-record completeness of roughly
     **57-70%**. That band opens the remediation conversation, so it has to be reachable.
 
+    ⛔ **`n` counts every field Module 5 counts, the record key included (INV-174, INV-239).**
+    Module 5 Step 6's completeness denominator takes each **structural key** the file carries (the
+    `RECORD_ID` counterpart, and a `DATA_SOURCE` column where the file has one) beside the fields
+    with a counterpart, so a source with seven non-key fields and a record key scores on **eight**
+    applicable fields. A key is
+    **never gapped** (the record-key rule below), so it is present on every record and lifts
+    completeness: leave it out of `n` and the self-check reports a lower score than Module 5 then
+    measures on the same file.
+
     ⛔ **No single field can get you there, at any rate.** On `n` applicable fields, a field absent
-    from **every** record moves the score by at most `0.70 × 100/n` — 10 points on a seven-field
-    source, when the band starts 21 points below 100. Reaching it means gapping most non-key fields
-    substantially, not one field heavily. Worked, for seven applicable fields with clean formatting
-    and distinct keys (so the score reduces to `100 − 10m`, where `m` is the summed per-field absence
+    from **every** record moves the score by at most `0.70 × 100/n` — 8.75 points on an eight-field
+    source (seven non-key fields plus the record key), when the band starts 21 points below 100.
+    Reaching it means gapping most non-key fields substantially, not one field heavily. Worked, for
+    seven non-key fields plus the record key, eight applicable fields, with clean formatting and
+    distinct keys (so the score reduces to `100 − 8.75m`, where `m` is the summed per-field absence
     expressed in whole fields — a field missing on 30% of records contributes 0.30):
 
     | Gapping | `m` | completeness | score |
     |---|---|---|---|
-    | phone 30%, address 5% | 0.35 | 95.0% | **96.5** |
-    | one field missing on every record | 1.00 | 85.7% | **90.0** |
-    | five of seven fields, each 30% | 1.50 | 78.6% | **85.0** |
-    | **the 70-79 band** | **2.1 – 3.0** | **70.0% – 57.1%** | **79 – 70** |
+    | phone 30%, address 5% | 0.35 | 95.6% | **96.9** |
+    | one field missing on every record | 1.00 | 87.5% | **91.25** |
+    | five of seven non-key fields, each 30% | 1.50 | 81.25% | **86.9** |
+    | **the 70-79 band** | **2.4 – 3.43** | **70.0% – 57.1%** | **79 – 70** |
 
     ⚠️ **The arithmetic is Module 5's, not this step's — read it there rather than trusting this
     table.** The composite formula and the per-`RECORD_TYPE` completeness denominator are stated once
@@ -521,14 +531,15 @@ that you rebuilt it. Only a missing entry is rebuilt; an existing one is never o
     provenance: synthesized
     quality_intent:
       target_band: "70-79"        # one of: ">=80", "70-79", "<70"
-      # Gaps must be able to REACH target_band. 30-43% of applicable slots empty; on a
-      # seven-field source that is a summed absence of 2.1-3.0 fields, not one gappy field.
+      # Gaps must be able to REACH target_band. 30-43% of applicable slots empty; on seven
+      # non-key fields plus the record key (eight applicable fields, the key never gapped) that
+      # is a summed absence of 2.4-3.4 fields, not one gappy field.
       gaps:
-        - "phone missing ~60% of records"
-        - "address_line1 missing ~50%"
-        - "city missing ~45%"
-        - "postal_code missing ~35%"
-        - "state missing ~30%"
+        - "phone missing ~70% of records"
+        - "address_line1 missing ~60%"
+        - "city missing ~55%"
+        - "postal_code missing ~50%"
+        - "state missing ~45%"
         - "created_date in two formats"   # lowers format_consistency, not completeness
       shared_features:              # deliberate sharing only; an unlisted share is a collision
         - feature: phone
@@ -541,15 +552,18 @@ that you rebuilt it. Only a missing entry is rebuilt; an existing one is never o
         chains: 6                   # intended; at least 5
         measured_households: 120    # written by the self-check, never by hand
         measured_chains: 6          # written by the self-check, never by hand
-      measured_score: 78.0          # written by the self-check, never by hand
+      measured_score: 75.5          # written by the self-check, never by hand
   ```
 
-  ⚠️ **Check a sample like this before copying it.** Those five absence rates sum to **2.20** of seven
-  applicable fields → completeness **68.6%** → score **78.0**, inside the recorded band. The previous
-  version of this sample paired `target_band: "70-79"` with `gaps: ["phone missing ~30% of records"]`
-  — a summed absence of about 0.35, arithmetically incapable of that band by roughly a factor of six
-  — so the file shipped the inconsistency twice, once as an instruction and once as a sample of a
-  recorded result. **Record the rates you actually generated, and let the self-check above write
+  ⚠️ **Check a sample like this before copying it.** Those five absence rates sum to **2.80** of eight
+  applicable fields (the seven non-key fields plus the record key) → completeness **65.0%** → score
+  **75.5**, inside the recorded band (taking formatting as clean; the `created_date` drift lowers
+  `format_consistency` a little, and the self-check measures that too). The version before this one
+  summed **2.20** and claimed **78.0** by dividing by seven fields; counting the key as Module 5
+  does, the same rates score **80.75**, outside the band. An earlier version paired
+  `target_band: "70-79"` with `gaps: ["phone missing ~30% of records"]` — a summed absence of about
+  0.35, arithmetically incapable of that band by roughly a factor of seven — so the file shipped the
+  inconsistency twice, once as an instruction and once as a sample of a recorded result. **Record the rates you actually generated, and let the self-check above write
   `measured_score`.** A `quality_intent` whose gaps could not have produced its `target_band` is
   exactly what makes a generation fault indistinguishable from a scoring fault later.
 

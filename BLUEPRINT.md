@@ -2246,7 +2246,8 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
     address) and chains (one person linking two households by a declared
     shared phone), at least 100 and 5 on the default ~10,000-record scenario,
     scaled for a smaller one; households stay outside the name-sharing budget.
-  - The generated data is self-scored with Module 5's formula and
+  - The generated data is self-scored with Module 5's formula, the record
+    key counted in the completeness denominator as Module 5 counts it, and
     regenerated on a band miss, an identifier collision, or a name-sharing
     share of 0.05 or more or fewer pairs than declared. The result goes
     to `quality_intent` (`target_band`, `gaps`, `shared_features`,
@@ -10575,7 +10576,7 @@ looks wrong.
 - `tests/test_gate_options_have_handling_steps.py`: 35
 - `tests/test_generated_data_supports_its_success_criteria.py`: 35
 - `tests/test_generated_dataset_size_is_a_license_decision.py`: 18
-- `tests/test_generated_gap_rates_reach_their_band.py`: 12
+- `tests/test_generated_gap_rates_reach_their_band.py`: 18
 - `tests/test_generated_html_deliverables.py`: 9
 - `tests/test_generated_programs_read_no_uncopied_path.py`: 22
 - `tests/test_generated_scenario_dataset_eligibility.py`: 20
@@ -13746,3 +13747,10 @@ Senzing licensing, with no SPDX identifier.
   (a generated scenario was presented alone and the turn ended with no 👉);
   `tests/test_non_yielding_steps.py` scans the run with a negative control;
   it establishes no new invariant (INV-225 applied)
+- #757: Data collection's quality self-check counts the record key in the
+  completeness denominator, as Module 5 Phase 1 step 6 does, and its band
+  table and worked `quality_intent` sample are recomputed for eight fields
+  (`100 − 8.75m`; the old sample's 78.0 scored 80.75 in Module 5, outside
+  the 70-79 band); `tests/test_generated_gap_rates_reach_their_band.py`
+  derives `n` from the stated non-key count plus the key and fails a sample
+  that reaches the band only without it; no new invariant (INV-174, INV-239)
