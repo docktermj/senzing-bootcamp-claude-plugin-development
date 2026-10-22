@@ -173,8 +173,16 @@ fields against the specification's attribute names. For each data source provide
   specification's expected structure).
 - Identify fields with non-standard names that correspond to attributes in the Entity
   Specification.
-- Note any missing critical fields defined in the Entity Specification.
 - Check if `DATA_SOURCE` and `RECORD_ID` are present or can be derived.
+- **Record the source's critical fields.** A critical attribute is an attribute of a feature that
+  the specification's *What features to map* table ranks **High** or higher in its Importance
+  column. Read that ranking from the saved copy at `docs/reference/senzing_entity_specification.md`
+  (Step 3) on every run, never from a list kept in this file (INV-080). Write the source fields
+  that correspond to a critical attribute as the source's `critical_fields` in
+  `config/data_sources.yaml`, with `updated_at`, in one quiet write: an empty list when the source
+  carries none. The field is defined once, at
+  [`critical_fields`](../module-04-data-collection/SKILL.md#critical-fields) (INV-300), and
+  Phase 2 step 16 routes on it. Note any critical attribute the source lacks entirely.
 
 **Checkpoint:** write step 4.
 

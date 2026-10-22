@@ -984,6 +984,15 @@ Module 5 can evaluate.
 > is reconciled against. A smaller **substitute dataset** is a new collection, not a sample: record
 > it as its own collected file with its own measured `record_count`, and write no `sample:` block.
 >
+> <a id="critical-fields"></a>`critical_fields` (optional) is a list of this source's field names:
+> the fields that correspond to the Entity Specification's critical attributes, an empty list when
+> the source carries none. Module 5 writes it for every source it compares, at Step 4 of
+> `../module-05-data-quality-mapping/phase1-quality-assessment.md`, which says which attributes are
+> critical, and Phase 2 step 16 of `../module-05-data-quality-mapping/phase2-data-mapping.md`
+> routes on it. This note is the one definition of the field (INV-300). An entry with no
+> `critical_fields` key was written before the field existed, or before Step 4 ran: its critical
+> fields are **not recorded**, which is not the same as an empty list.
+>
 > `scenario_intent` (optional, top level beside `version` and `sources:`, never inside a source
 > entry) is written only for a generated scenario:
 > `scenario_intent: {name_collisions: {declared_pairs, reason, measured_entities, measured_share}}`.

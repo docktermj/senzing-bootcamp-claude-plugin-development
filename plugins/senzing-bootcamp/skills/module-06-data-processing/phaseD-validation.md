@@ -729,8 +729,9 @@ move the gate to a different branch (INV-117, INV-264), because no documented re
 iterate toward.
 
 ⚠️ **When `docs/uat_results.md` records that no entity could be spot-checked, there is no UAT %.**
-Say so, report none, and route on match accuracy alone, by the `none` rows of the table below;
-never state a UAT % that was not computed.
+Say so, report none, and take the UAT-not-established branch, by the `none` rows of the table below,
+whatever the per-record match accuracy reads; never state a UAT % that was not computed, and never
+route on match accuracy alone.
 
 **The table below is the whole of the routing: every pair of readings lands in exactly one branch,
 and no pair lands in two.** (INV-404) The accuracy column is the **per-record** figure (the INV-264 rule
@@ -747,10 +748,10 @@ including 90% and no reading can fall between two rows.
 | ≥90% | none | Accuracy shortfall |
 | 80–89% | any | Results are mixed |
 | <80% | any | Results need improvement |
-| none | ≥90% | Results look strong |
-| none | 80–89% | Results are mixed |
-| none | <80% | Results need improvement |
-| none | none | Accuracy shortfall |
+| none | ≥90% | UAT not established |
+| none | 80–89% | UAT not established |
+| none | <80% | UAT not established |
+| none | none | UAT not established |
 
 ⛔ **Never call a result strong when a metric the strong branch explicitly requires falls short or
 was never established** — that outcome takes a branch of its own, with its own evidence,
@@ -793,6 +794,34 @@ branch that routes on the other metric alone (INV-404).
   with option 1 marked *(recommended)*. ⛔ **(INV-284) This branch asks; it does not state a
   recommendation and then offer only moving on**, which left the recommended work with no step to
   run.
+- **No UAT % — UAT not established:** a branch of its own, whatever the per-record match accuracy
+  reads. It is not the strong branch, which requires a UAT % of ≥90%, and it is not a branch named
+  for a UAT band, which would read a UAT % that was never computed as one that was. Say "No entity
+  could be spot-checked, so there is no UAT % — <the reason `docs/uat_results.md` records>. Match
+  accuracy is <M>%. I recommend establishing the UAT % before treating these results as strong."
+  Then ask this branch's question below. What the branch states, as every branch does:
+  - **Evidence — the missing UAT %, and why.** No entity could be spot-checked, with the reason
+    `docs/uat_results.md` records. The per-record match accuracy is reported as a finding, with its
+    counts and sample; it does not route here. When it was never established either, name both as
+    not established, each with what prevented it. The match-key and how-state audit outcomes are
+    reported here in full, as on every other branch, and neither moves this branch nor blocks it
+    (INV-117, INV-264).
+  - **Recommendation — establish the UAT % before treating the results as strong.**
+  - **Next question — this branch's own**, pinned (INV-056) as a neutral lead and a numbered list
+    (INV-051). No other question belongs to this branch:
+
+    👉 **No entity could be spot-checked, so these results have no UAT %. What would you like to do? Reply with a number:**
+
+    1. Iterate now to establish the UAT % before moving on. *(recommended)*
+    2. Move forward to the next module without it.
+
+    *(Internal: end the turn on this question and wait.)*
+
+  - **Accepted and declined — the handling step below.** "Iterate now" is the accepted route: it
+    enters the quality-iteration route with `from_verdict: "uat_not_established"`, and the route's
+    resume runs Phase D again in full, so step 22 spot-checks again and this gate is asked again on
+    the new readings. "Move forward" is the declined route: Module 6 completes there, and
+    `docs/results_validation.md` records that the results were accepted with no UAT % established.
 
 The gate question, asked word for word on all three branches that ask it — the accuracy
 shortfall, 80–89% and <80% — pinned (INV-056) as a neutral lead and a numbered list (INV-051):
@@ -807,7 +836,8 @@ shortfall, 80–89% and <80% — pinned (INV-056) as a neutral lead and a number
 On the <80% branch and on the accuracy-shortfall branch, option 1 ends with *(recommended)*;
 nothing else in the question changes, the lead included.
 
-**Handling each answer (INV-284).**
+**Handling each answer (INV-284).** These entries serve the gate question and the
+UAT-not-established question alike.
 
 - **2, "Move forward":** run "Module completion and transition to Module 7" below. Module 6 is
   completed once, there, however many iterations came before it.
@@ -836,8 +866,8 @@ nothing else in the question changes, the lead included.
      and they are reloaded, and that validation then runs again here. It asks nothing.
   3. **Enter [the quality-iteration route](../module-07-query-visualize-discover/phase1-query-visualize.md#the-quality-iteration-route)**
      with `return_to: "module_6_phase_d"` and `from_verdict` set to this gate's band
-     (`uat_80_89`, `uat_below_80`, or `uat_90_accuracy_below_90` on the accuracy-shortfall
-     branch). The route, the key it writes and the iteration record it
+     (`uat_80_89`, `uat_below_80`, `uat_90_accuracy_below_90` on the accuracy-shortfall branch, or
+     `uat_not_established` on the UAT-not-established branch). The route, the key it writes and the iteration record it
      appends to `module_6_processing.quality_iterations` are stated once, in
      `../module-07-query-visualize-discover/phase1-query-visualize.md` step 3b → "The
      quality-iteration route" (INV-300); this gate says only what it hands the route. The route's
