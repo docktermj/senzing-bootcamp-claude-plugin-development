@@ -808,7 +808,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 303 on 2026-10-22: a second review that day registered INV-409 (the review queue admits every
 # block whose header records no decision; #770), which names test_review_invariants_queue.py.
 # Re-derived by running the extractor -- 303, the new pair present and none removed.
-EXPECTED_PAIRS = 303
+# 304 on 2026-10-22: the same review registered INV-410 (the share profile carries no loader
+# input at any depth; #672), which names test_package_bootcamp.py. Re-derived by running the
+# extractor -- 304, the new pair present and none removed.
+EXPECTED_PAIRS = 304
 
 
 def pairs():

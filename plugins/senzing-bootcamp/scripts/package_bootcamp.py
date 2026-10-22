@@ -15,7 +15,7 @@ Two profiles, because the two audiences need different contents:
 
 - ``share``    -- for someone looking at the results. Keepsakes, visualizations, Module 7's
                   exports in ``data/exports/``, ``production/``.
-                  Never a database, never source data, never a credential. ⛔ **Never source data
+                  Never a database, never source data, never a credential. ⛔ **(INV-410) Never source data
                   means never, at any depth**: ``production/`` is packaged recursively and
                   graduation copies ``data/senzing-ready/**`` into
                   ``production/data/senzing-ready/`` (INV-186), so the Bootcamper's own mapped rows
@@ -101,7 +101,7 @@ ALWAYS_EXCLUDE = (
 #: ⛔ `docs/mapping/` is transfer-only by design: it describes the Bootcamper's own source schema
 #: (field names, sample values), which the results audience does not need and which belongs with
 #: the data rather than with the findings.
-#: ⛔ `data/senzing-ready/` is the loader's input -- the Bootcamper's own records, mapped. It is
+#: ⛔ (INV-410) `data/senzing-ready/` is the loader's input -- the Bootcamper's own records, mapped. It is
 #: source data by any reading, and `share` promises none travels. It is excluded here rather than
 #: disclosed, because the promise is the profile's reason to exist. `transfer` keeps it: the
 #: `src/load/**` copied into `production/` reads its input from exactly that path (INV-084/INV-186),
@@ -182,7 +182,7 @@ def _rel(path, root):
 def _matches(parts, rule):
     """Whether `rule`'s segments sit as a contiguous run ANYWHERE in `parts`.
 
-    ⛔ **Anywhere, not only at the project root.** A multi-segment rule used to be anchored at the
+    ⛔ **(INV-410) Anywhere, not only at the project root.** A multi-segment rule used to be anchored at the
     root, which made every `data/...` rule describe one copy of a tree while the archive carried
     another. ``production/`` is packaged recursively, and graduation copies ``data/senzing-ready/**``
     to ``production/data/senzing-ready/`` and the registry beside it (INV-186) -- so ``data/raw``
