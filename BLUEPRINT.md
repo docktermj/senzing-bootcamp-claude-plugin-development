@@ -1824,6 +1824,10 @@ steps 9 to 17. Every step checkpoints to `config/bootcamp_progress.json`.
   `sdk_guide(topic='load', record_count=<above limit>)`; over it, set
   `license_guidance_deferred: true` in `config/bootcamp_preferences.yaml`.
   A stated entitlement goes to `license_stated_limit`; no license prompt.
+- 4a, 4b, 5 and 5a are non-yielding (INV-225): they share the turn that
+  6a's question ends, never ending one on the generated scenario, and their
+  checkpoints collapse into 6a's one write, each its own `step_history`
+  entry.
 - 6a confirms a summary; 6b to 6d fill gaps one per turn: record types,
   source count, desired outcome (multi-select, every choice kept; option 4
   "Something else" asks what it looks like and records their words).
@@ -10420,21 +10424,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8429 test methods in 452 files, matching `inventory.test_count_total`.
+There are 8433 test methods in 452 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8429.
+sum to 8433.
 
-Two files run more tests than they define, so discovery collects 8429:
+Two files run more tests than they define, so discovery collects 8433:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8422`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8426`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8429`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8433`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10695,7 +10699,7 @@ looks wrong.
 - `tests/test_no_pip_install_senzing.py`: 20
 - `tests/test_no_progress_gate_returns_to_data_collection.py`: 29
 - `tests/test_no_stale_blocked_claim.py`: 9
-- `tests/test_non_yielding_steps.py`: 22
+- `tests/test_non_yielding_steps.py`: 26
 - `tests/test_normalize_docs_markdown.py`: 34
 - `tests/test_one_commit_convention.py`: 8
 - `tests/test_one_question_per_turn_is_registered.py`: 12
@@ -13736,3 +13740,9 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_generated_programs_read_no_uncopied_path.py` guards Module 6's
   and 7's instructions, `tests/test_scan_uncopied_paths.py` runs the scanner,
   and the rule is queued as a new invariant for `/review-invariants`
+- #756: Module 1 Phase 1's Steps 4a, 4b, 5 and 5a are marked non-yielding,
+  Step 4a forbids ending the turn on the generated scenario (Step 6a's 👉
+  ends it), and their four checkpoints collapse into Step 6a's one write
+  (a generated scenario was presented alone and the turn ended with no 👉);
+  `tests/test_non_yielding_steps.py` scans the run with a negative control;
+  it establishes no new invariant (INV-225 applied)

@@ -24,6 +24,10 @@ all three.
 The fix names the concept once in the ground rules and decouples checkpoint boundaries from
 turn boundaries. This file pins that, and pins the module that made it urgent.
 
+Module 1 Phase 1's 4a/4b/5/5a run was named in the ground rules and unmarked at its own steps,
+whose four per-step checkpoints read as four turn endings: a generated scenario ended a turn
+with no 👉 (#756). The steps are now marked, and their checkpoints collapse into Step 6a's write.
+
 Enforces **INV-225** — a step with no 👉 is non-yielding: it shares the next asking step's turn and never ends one.
 
 Source spec: `specs/statement-only-step-cannot-satisfy-one-question-per-turn.md`.
@@ -181,6 +185,96 @@ class ModuleOneStepOneIsMarkedNonYielding(unittest.TestCase):
             "👉 **Would you like to see examples of common business problems that entity "
             "resolution can solve?**", self.text,
             "the question the shared turn ends on is gone")
+
+
+RUN_STEPS = (("4a", "### 4a. "), ("4b", "### 4b. "), ("5", "## 5. "), ("5a", "### 5a. "))
+SHARED_WRITE = (r"— but as part of the turn's one write with Step 6a's at the end of the shared "
+                r"turn, not a write of its own")
+
+
+def step_section(text, prefix):
+    """The step from the heading starting with ``prefix`` to the next h1-h3 heading."""
+    lines = text.split("\n")
+    start = next(i for i, line in enumerate(lines) if line.startswith(prefix))
+    end = next((i for i in range(start + 1, len(lines)) if re.match(r"#{1,3} ", lines[i])),
+               len(lines))
+    return "\n".join(lines[start:end])
+
+
+def run_problems(text):
+    """What keeps Module 1 Phase 1's 4a/4b/5/5a from reading as one non-yielding run (#756)."""
+    problems = []
+    for step, prefix in RUN_STEPS:
+        section = step_section(text, prefix)
+        heading, flat = section.split("\n", 1)[0], squash(section)
+        if not heading.endswith("NON-YIELDING)"):
+            problems.append("step %s's heading is not marked NON-YIELDING" % step)
+        if not re.search(r"(?i)(?:does not get|none of them gets) a\s*turn\s*of its own", flat):
+            problems.append("step %s does not say it shares a turn" % step)
+        if "Step 6a's 👉" not in flat or "INV-225" not in flat:
+            problems.append("step %s does not name Step 6a's 👉 as the turn's end" % step)
+        if "👉 **" in section:
+            problems.append("step %s asks a 👉 question inside the run" % step)
+        if not re.search(r"\*\*Checkpoint:\*\* write step %s(?: to `[^`]+`)? %s"
+                         % (re.escape(step), SHARED_WRITE), flat):
+            problems.append("step %s's checkpoint does not collapse into Step 6a's write" % step)
+        if re.search(r"\*\*Checkpoint:\*\* write step %s(?: to `[^`]+`)?\." % re.escape(step),
+                     flat):
+            problems.append("step %s's checkpoint reads as a write of its own" % step)
+    if not re.search(r"⛔ \*\*\(INV-225\) Do not end the turn on the generated scenario\.\*\* "
+                     r"Step 6a's summary is where it is presented, and Step 6a's 👉 ends this "
+                     r"turn", squash(step_section(text, "### 4a. "))):
+        problems.append("step 4a does not forbid ending the turn on the scenario")
+    return problems
+
+
+class ModuleOneStepsFourAToFiveAAreOneNonYieldingRun(unittest.TestCase):
+    """The generated-scenario run 4a/4b/5/5a never ends a turn on its own (#756, INV-225).
+
+    A Bootcamper took option 3, the scenario was presented alone, and the turn ended with no 👉.
+    The ground rules already named this run; the steps were unmarked, and four per-step
+    checkpoints read as four turn endings.
+    """
+
+    def setUp(self):
+        self.text = read(DISCOVERY)
+
+    def test_the_run_is_marked_and_its_checkpoints_collapse(self):
+        self.assertEqual(run_problems(self.text), [])
+
+    def test_step_6a_carries_the_run_s_one_write(self):
+        section = squash(step_section(self.text, "### 6a. "))
+        self.assertRegex(
+            section,
+            r"\*\*Checkpoint:\*\* write step 6a — the turn's one write, carrying every step "
+            r"the turn ran \(4a, 4b, 5 and 5a on the generated path; 5 and 5a otherwise\), "
+            r"each still its own `step_history` entry",
+            "collapsing the writes must not drop the intermediate steps from step_history")
+        self.assertIn("👉 **Does that summary capture your situation accurately?**", section,
+                      "the question the run's turn ends on is gone")
+
+    def test_the_ground_rules_still_name_the_run(self):
+        self.assertIn("Module 1 Phase 1's 4a/4b/5/5a", squash(read(GROUND_RULES)))
+
+    def test_negative_control(self):
+        """Each defect the scan exists to catch, put back into a copy, is reported."""
+        mutations = {
+            "heading unmarked": ("(via MCP — NON-YIELDING)", "(via MCP)"),
+            "checkpoint of its own": (
+                "write step 5 — but as part of the turn's one write with Step 6a's at the end "
+                "of\nthe shared turn, not a write of its own.", "write step 5."),
+            "turn may end on the scenario": (
+                "⛔ **(INV-225) Do not end the turn on the generated scenario.**",
+                "Present the scenario."),
+            "question inside the run": (
+                "## 5. Infer details from their response (NON-YIELDING)\n",
+                "## 5. Infer details from their response (NON-YIELDING)\n\n"
+                "👉 **Does this scenario work for you?**\n"),
+        }
+        for name, (old, new) in mutations.items():
+            with self.subTest(mutation=name):
+                self.assertIn(old, self.text, "the mutation's anchor moved")
+                self.assertNotEqual(run_problems(self.text.replace(old, new, 1)), [])
 
 
 class SystemVerificationSaysItHasTwoQuestions(unittest.TestCase):
