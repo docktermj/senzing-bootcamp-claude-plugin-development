@@ -875,7 +875,7 @@ route is the same for both.
    "quality_iteration": {
      "return_to": "module_7_step_3b | module_6_phase_d",
      "sources": ["<DATA_SOURCE>", "..."],
-     "from_verdict": "poor | marginal | uat_below_80 | uat_80_89 | uat_90_accuracy_below_90",
+     "from_verdict": "poor | marginal | uat_below_80 | uat_80_89 | uat_90_accuracy_below_90 | uat_not_established",
      "stage": "remap | reload",
      "completed": [],
      "started_at": "<ISO 8601>"
@@ -890,7 +890,7 @@ route is the same for both.
    | Offered by | `return_to` | List | `from_verdict` | `before` and `after` hold |
    |---|---|---|---|---|
    | Module 7 step 3b (this step) | `module_7_step_3b` | `module_7_query.quality_iterations` | `poor` or `marginal` | the three indicators of the quality summary above |
-   | Module 6 Phase D's gate | `module_6_phase_d` | `module_6_processing.quality_iterations` | `uat_below_80`, `uat_80_89` or `uat_90_accuracy_below_90` | the UAT %, the per-record match accuracy, and the match-key and how-state audit outcomes the gate presented |
+   | Module 6 Phase D's gate | `module_6_phase_d` | `module_6_processing.quality_iterations` | `uat_below_80`, `uat_80_89`, `uat_90_accuracy_below_90` or `uat_not_established` | the UAT %, the per-record match accuracy, and the match-key and how-state audit outcomes the gate presented |
 
    `sources` lists the sources named in the offering step's explanation statement. `stage` starts at
    `remap`. `completed` lists the sources whose current stage has finished. ⛔ **(INV-366)

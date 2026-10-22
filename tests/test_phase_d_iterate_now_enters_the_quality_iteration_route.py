@@ -180,8 +180,8 @@ def handling_problems(phase_d):
         "It asks nothing",
         ROUTE_LINK,
         '`return_to: "module_6_phase_d"`',
-        "(`uat_80_89`, `uat_below_80`, or `uat_90_accuracy_below_90` on the accuracy-shortfall "
-        "branch)",
+        "(`uat_80_89`, `uat_below_80`, `uat_90_accuracy_below_90` on the accuracy-shortfall "
+        "branch, or `uat_not_established` on the UAT-not-established branch)",
         "`module_6_processing.quality_iterations`",
         "step 3b → \"The quality-iteration route\" (INV-300)",
         "Phase D runs again in full, from step 21",
@@ -234,7 +234,7 @@ def route_problems(phase1):
     if '"return_to": "module_7_step_3b | module_6_phase_d"' not in loop:
         problems.append("the key does not record return_to with both return points")
     if ('"from_verdict": "poor | marginal | uat_below_80 | uat_80_89 | '
-            'uat_90_accuracy_below_90"') not in loop:
+            'uat_90_accuracy_below_90 | uat_not_established"') not in loop:
         problems.append("the key's from_verdict does not carry the Phase D bands")
     problems += missing(loop, (
         "Two steps offer it, and each is a return point",

@@ -1736,6 +1736,29 @@ with both options live (INV-056). Say it even when the Bootcamper heard it at Ph
 gate and this one are separate decisions, and the disclosure is a statement, not a question. The
 ≥80% band gets no disclosure.
 
+**Route on the quality score and the critical fields (INV-404).** The ≥80% branch requires two
+conditions, so the table below is the whole of the routing, for both blocks: every pair of readings
+lands in exactly one branch, and each block asks that branch's own question. The quality score is
+the overall score step 15 reported; `none` means step 15 produced no score, which is said as
+exactly that and never given a band. The critical fields are this source's
+[`critical_fields`](../module-04-data-collection/SKILL.md#critical-fields), read with the registry
+read above and checked against step 11's mapping: a field is mapped when that mapping gives it a
+Senzing attribute, and unmapped when it is left as payload or ignored. **Critical fields** is one of
+three states: `all critical fields mapped`, `a critical field unmapped` or `not recorded`. An empty
+list is `all critical fields mapped`. A registry entry with no `critical_fields` key is
+`not recorded`: say so in one line and route on the quality score alone, never as a critical field
+unmapped. `any` means any reading, including none. A band runs up to the next band's floor, so
+`70–79%` is 70 up to but not including 80.
+
+| Quality score | Critical fields | Branch |
+|---|---|---|
+| ≥80% | all critical fields mapped | Quality ≥80% and all critical fields mapped |
+| ≥80% | not recorded | Quality ≥80%, critical fields not recorded |
+| ≥80% | a critical field unmapped | Quality ≥80% with a critical field unmapped |
+| 70–79% | any | Quality 70-79% |
+| <70% | any | Quality <70% |
+| none | any | No quality score |
+
 **While one or more unmapped sources remain** (INV-344), ask about the next source, not about loading.
 `{source}` is this source's name, and `{next}` is the next unmapped source, the one step 19 maps next:
 
@@ -1745,6 +1768,17 @@ gate and this one are separate decisions, and the disclosure is a statement, not
 
   1. Yes, map {next}.
   2. No, I'd like to iterate on {source} first.
+
+- **Quality ≥80%, critical fields not recorded:** say in one line that this source's critical fields
+  were not recorded, so this gate routes on its quality score alone, then ask the question above
+  word for word.
+
+- **Quality ≥80% with a critical field unmapped:** name the unmapped critical fields, then ask:
+
+  👉 **{source} scores [score], but these critical fields are not mapped: [unmapped critical fields]. What would you like to do? Reply with a number:**
+
+  1. Iterate to map them first.
+  2. Move on to {next} without them.
 
 - **Quality 70-79%** *(on a synthesized source, the disclosure above first)*:
 
@@ -1760,13 +1794,22 @@ gate and this one are separate decisions, and the disclosure is a statement, not
   1. Iterate to improve the data.
   2. Move on to {next} anyway, knowing results may be limited.
 
+- **No quality score:** say that step 15 produced no quality score for this source, and state no
+  band, then ask:
+
+  👉 **The quality analysis produced no score for {source}, so I can't say how ready it is. What would you like to do? Reply with a number:**
+
+  1. Iterate on {source} to get a quality score first.
+  2. Move on to {next} without one.
+
 **Handling each answer (INV-284).** A move-on answer continues through steps 17–18a, where 18a's
 multi-source rule recommends `skip`, to step 19, which starts {next}'s own `mapping_workflow` run.
 Every iterate option goes to step 17.
 
 - **1, "Yes, map {next}" or "Move on to the next source, {next}":** move on.
-- **2, "Move on to {next} anyway":** move on.
-- **1, "Iterate to improve the data":** iterate.
+- **2, "Move on to {next} anyway" or "Move on to {next} without":** move on.
+- **1, "Iterate to improve the data" or "Iterate to map them first" or "Iterate on {source} to get
+  a quality score first":** iterate.
 - **2, "No, I'd like to iterate on {source} first" or "Iterate to improve":** iterate.
 
 **When no unmapped source remains** (INV-344; this is the last source, or the only one), ask the loading
@@ -1778,6 +1821,17 @@ question:
 
   1. Yes, proceed to loading.
   2. No, I'd like to iterate on something first.
+
+- **Quality ≥80%, critical fields not recorded:** say in one line that this source's critical fields
+  were not recorded, so this gate routes on its quality score alone, then ask the question above
+  word for word.
+
+- **Quality ≥80% with a critical field unmapped:** name the unmapped critical fields, then ask:
+
+  👉 **The quality score is [score], but these critical fields are not mapped: [unmapped critical fields]. What would you like to do? Reply with a number:**
+
+  1. Iterate to map them first.
+  2. Proceed to loading without them.
 
 - **Quality 70-79%** *(on a synthesized source, the disclosure above first)*:
 
@@ -1793,13 +1847,22 @@ question:
   1. Iterate to improve the data.
   2. Proceed anyway, knowing results may be limited.
 
+- **No quality score:** say that step 15 produced no quality score for this source, and state no
+  band, then ask:
+
+  👉 **The quality analysis produced no score, so I can't say how ready the mapping is. What would you like to do? Reply with a number:**
+
+  1. Iterate to get a quality score first.
+  2. Proceed to loading without one.
+
 **Handling each answer (INV-284).** A proceed answer continues through steps 17–18a, where it
 settles the sandbox menu as `skip` (see 18a's last-source rule), then to steps 19 and 20. Every
 iterate option goes to step 17.
 
 - **1, "Yes, proceed to loading" or "Proceed to loading now":** proceed.
-- **2, "Proceed anyway":** proceed.
-- **1, "Iterate to improve the data":** iterate.
+- **2, "Proceed anyway" or "Proceed to loading without":** proceed.
+- **1, "Iterate to improve the data" or "Iterate to map them first" or "Iterate to get a quality
+  score first":** iterate.
 - **2, "No, I'd like to iterate on something first" or "Iterate to improve":** iterate.
 
 *(Internal: end the turn on the applicable question and wait.)*
@@ -1932,8 +1995,8 @@ you still have sources to map and the real load happens in Data processing, I'll
 test load and move on to the next unmapped source."
 
 **Last source (no unmapped source remains):** (INV-344) a step-16 answer that proceeds to loading (≥80%
-option 1, 70-79% option 1, or <70% option 2) settles this decision as **skip**. Tell the bootcamper
-so in one line, for example "You chose to proceed to loading, so I'll skip the optional sandbox test
+option 1, 70-79% option 1, <70% option 2, or option 2 of the critical-field or no-score question)
+settles this decision as **skip**. Tell the bootcamper so in one line, for example "You chose to proceed to loading, so I'll skip the optional sandbox test
 load; the real load happens in Data processing.", advance with `skip`, ask no 👉 question here, and
 continue to step 19.
 

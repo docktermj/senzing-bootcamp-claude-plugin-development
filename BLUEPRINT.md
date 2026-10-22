@@ -2371,6 +2371,10 @@ means the module is complete: only the transition question is asked.
     file.
   - Compare the fields with the spec, then sort each source as compliant,
     needs mapping or needs enrichment.
+  - Step 4 writes each source's `critical_fields`: its fields that match an
+    attribute of a feature the saved spec's *What features to map* table
+    ranks High or higher, read on every run (empty when none; a missing key
+    is "not recorded"). Module 4's registry note defines the field once.
 - **Step 5a (CORD only).**
   - Loadable means a `FEATURES` array or legacy flat attributes, checked on
     up to 100 records.
@@ -2484,8 +2488,11 @@ means the module is complete: only the transition question is asked.
     `analyze_record(workspace_dir='data/mapping')`.
   - Step 15 writes `{source}_quality.jsonl`, advances with the verdict and
     offers a visual.
-  - Step 16 asks a pinned next-source or loading question per band; an
-    unmapped source is one neither `complete` nor `skipped`.
+  - Step 16 routes by one decision table over the quality band (`none`
+    included) and the critical-field state (all mapped, one unmapped, not
+    recorded), and each block, next source or loading, asks that branch's
+    pinned question; an unmapped source is one neither `complete` nor
+    `skipped`.
   - Step 17 sets `mapping_status: complete`.
   - Step 18 writes `data/senzing-ready/<name>.jsonl` (now `file_path`) and
     `transformation_lineage_<name>.md`.
@@ -2638,7 +2645,8 @@ Phase D (`phaseD-validation.md`, steps 21-28):
   review as it stands. Otherwise steps 21-24 ask nothing.
 - Spot-check entities, UAT in `docs/uat_results.md`, with the UAT % defined
   once at step 22 (judged correct ÷ checked; none checked means no UAT %, and
-  the gate routes on match accuracy alone), and the per-record match accuracy
+  the gate takes its "UAT not established" branch, whose iterate option hands
+  the route `from_verdict: "uat_not_established"`), and the per-record match accuracy
   defined beside it (reviewed records judged correct ÷ records reviewed, over
   step 21's sample, joined by step 24's with 2+ sources; none reviewed is
   `none`); only that figure routes the gate's accuracy column, and pairwise
@@ -10727,7 +10735,7 @@ looks wrong.
 - `tests/test_phase3_interaction_prose.py`: 36
 - `tests/test_phase3_names_every_server_language.py`: 8
 - `tests/test_phase_c_loads_each_source_from_its_subset_record.py`: 26
-- `tests/test_phase_d_gate_routes_on_both_metrics.py`: 40
+- `tests/test_phase_d_gate_routes_on_both_metrics.py`: 73
 - `tests/test_phase_d_how_state_audit.py`: 36
 - `tests/test_phase_d_iterate_now_enters_the_quality_iteration_route.py`: 31
 - `tests/test_phasec_generated_path_asks_once.py`: 12
@@ -11911,6 +11919,8 @@ in `tests/` are fixtures for the secret scanners and are not reproduced here.
 - `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`:
   large skill file, described in section 5, not embedded.
 - `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`:
+  large skill file, described in section 5, not embedded.
+- `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`:
   large skill file, described in section 5, not embedded.
 - `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`:
   large skill file, described in section 5, not embedded.
@@ -13774,3 +13784,11 @@ Senzing licensing, with no SPDX identifier.
   `.claude/CLAUDE.md` the classifier reads (Claude Code does not read
   `autoMode` from a repository's settings, and the global block applied to
   every project)
+- #776: two conjunctive gates route every combination of their readings:
+  Module 6 Phase D's four `none` UAT rows go to a new "UAT not established"
+  branch (`from_verdict: "uat_not_established"`), and Module 5 step 16 gets
+  one table over the quality band (`none` included) and the critical-field
+  state, read from a new `critical_fields` registry field (the spec has no
+  "critical" set, so features its Importance column ranks High or higher);
+  `tests/test_phase_d_gate_routes_on_both_metrics.py` finds such gates by
+  scanning; an INV-404 amendment is queued for `/review-invariants`
