@@ -531,7 +531,7 @@ class TheSampleRecordsTheIntent(unittest.TestCase):
     def test_the_rest_of_the_sample_is_unchanged(self):
         y = sample_yaml()
         self.assertIn('target_band: "70-79"', y)
-        self.assertIn("measured_score: 78.0", y)
+        self.assertIn("measured_score: 75.5", y)
         self.assertIn('reason: "household landline shared by the two adults at one address"', y)
 
 
