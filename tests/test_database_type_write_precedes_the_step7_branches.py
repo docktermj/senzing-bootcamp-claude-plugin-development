@@ -131,9 +131,11 @@ def rationale_problems(step):
         problems.append(f"the rationale counts its readers: {READER_COUNT.search(flat).group(0)!r}")
     if LINE_NUMBER.search(text):
         problems.append(f"the rationale cites a line number: {LINE_NUMBER.search(text).group(0)!r}")
-    if re.search(r"(?i)nothing reads it from there", flat):
-        problems.append("the rationale still says nothing reads bootcamp_progress.json, but two "
-                        "readers fall back to it")
+    if re.search(r"(?i)readers look there|falls? back to (?:the engine recorded in )?"
+                 r"`config/bootcamp_progress\.json`", flat):
+        problems.append("the rationale says a reader falls back to bootcamp_progress.json, but "
+                        "nothing writes an engine there: the fallback is the scheme of "
+                        "SQL.CONNECTION in config/engine_config.json (#810)")
     for path, label, _ in READERS:
         if f"`{path}`" not in text:
             problems.append(f"the rationale does not name {path}")
@@ -229,11 +231,13 @@ class NegativeControls(unittest.TestCase):
         self.assertNotEqual(broken, self.step, "control did not apply")
         self.assertTrue(any("line number" in p for p in rationale_problems(broken)))
 
-    def test_the_stale_nothing_reads_it_claim_fails(self):
-        broken = self.step.replace("the readers look there only after\n",
-                                   "nothing reads it from there, and\n", 1)
+    def test_the_stale_progress_file_fallback_claim_fails(self):
+        """#810: the pre-fix rationale said the readers fall back to the progress file."""
+        broken = self.step.replace("no reader looks there, and a\n",
+                                   "the readers look there only after this key is missing, and a\n",
+                                   1)
         self.assertNotEqual(broken, self.step, "control did not apply")
-        self.assertTrue(any("nothing reads" in p for p in rationale_problems(broken)))
+        self.assertTrue(any("bootcamp_progress.json" in p for p in rationale_problems(broken)))
 
     def test_a_dropped_reader_fails(self):
         broken = self.step.replace("`../graduation/database-backup.md`", "the backup", 1)

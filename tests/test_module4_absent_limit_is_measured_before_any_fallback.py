@@ -20,6 +20,13 @@ Every sentence of every Module 4 markdown file that names the field's absence (`
 before the fallback. Calibrated 2026-10-14 against the pre-fix text: exactly one hit, the Step
 6 sentence above, and none after the fix.
 
+#810: Step 8b's other fallback, for an absent `database_type`, read "the engine recorded by
+Module 2 in `config/bootcamp_progress.json`", which nothing writes. It now reads the scheme of
+`SQL.CONNECTION` in `config/engine_config.json`, by Data processing Phase A's engine fallback.
+That fallback is not a license one and this scan never matched it, so it is pinned below with a
+negative control that restores the old fallback, by the checks
+`test_module4_6_7_steps_act_on_real_files.py` owns.
+
 ⚠️ What this does NOT establish: that a live run measures before falling back. That is
 turn-level behavior no offline suite can assert (INV-108).
 
@@ -30,6 +37,9 @@ Run:  python3 -m unittest discover -s tests
 import re
 import unittest
 from pathlib import Path
+
+from test_module4_6_7_steps_act_on_real_files import (
+    MODULE_02, PHASE_A, engine_fallback_problems, progress_file_engine_reads)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MODULE_04 = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills" / "module-04-data-collection"
@@ -146,13 +156,42 @@ class TheMatcherIsNotVacuous(unittest.TestCase):
             "fails fall back to the built-in evaluation license.",
             "- **Only if the measurement fails** (no engine yet, SDK error) fall back to the "
             "**built-in evaluation license** the bootcamper already has by default.",
-            "Note it internally, and fall back to the engine recorded by Module 2.",
+            "Note it internally, and fall back to the scheme of `SQL.CONNECTION` in "
+            "`config/engine_config.json`.",
             "That block says what to do when it is missing.",
         ):
             with self.subTest(ok=ok[:46]):
                 self.assertEqual([], unmeasured_fallbacks(ok),
                                  "the matcher flags a sentence that measures first or names "
                                  "no absence, which would push an editor to delete correct text")
+
+
+class TheEngineFallbackReadsTheConnectionScheme(unittest.TestCase):
+    """#810: Step 8b's `database_type` fallback reads a value Module 2 actually writes."""
+
+    NEW = ("fall back to the scheme of `SQL.CONNECTION` in `config/engine_config.json` before "
+           "giving up on\n     the check,")
+    OLD = ("fall back to the engine recorded by Module 2 in `config/bootcamp_progress.json` "
+           "before giving\n     up on the check,")
+
+    def setUp(self):
+        self.module_02 = MODULE_02.read_text(encoding="utf-8")
+        self.module_04 = MODULE_04_SKILL.read_text(encoding="utf-8")
+        self.phase_a = PHASE_A.read_text(encoding="utf-8")
+
+    def test_step_8b_falls_back_to_the_connection_scheme(self):
+        self.assertIn(self.NEW, self.module_04)
+        self.assertEqual(
+            [], engine_fallback_problems(self.module_02, self.module_04, self.phase_a))
+        self.assertEqual([], progress_file_engine_reads([("module-04", self.module_04)]))
+
+    def test_restoring_the_old_fallback_fails(self):
+        broken = self.module_04.replace(self.NEW, self.OLD, 1)
+        self.assertNotEqual(broken, self.module_04, "control did not apply")
+        problems = engine_fallback_problems(self.module_02, broken, self.phase_a)
+        self.assertTrue(any("progress file" in p for p in problems), problems)
+        self.assertTrue(progress_file_engine_reads([("module-04", broken)]),
+                        "the old fallback reads an engine nothing writes, and must fail")
 
 
 if __name__ == "__main__":

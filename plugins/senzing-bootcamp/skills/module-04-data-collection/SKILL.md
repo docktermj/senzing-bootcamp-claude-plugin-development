@@ -1087,10 +1087,13 @@ Module 5 can evaluate.
 
 ### 3. Verify data was received
 
+List `data/raw/`, then run the `head -5` line once per source in `config/data_sources.yaml`, with
+`<file_path>` replaced by that entry's `file_path`. An entry whose `file_path` is null has no file
+to show: it is a documented-location-only source, which Step 7 describes.
+
 ```bash
 ls -lh data/raw/
-head -5 data/raw/customer_crm.csv
-head -5 data/raw/vendor_api.json
+head -5 "<file_path>"
 ```
 
 Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
@@ -1099,11 +1102,17 @@ Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Window
 
 ### 4. Document data source locations
 
-**Data Collection Checklist:** Always create a structured checklist in the project — no question
-(INV-012). Create `docs/data_collection_checklist.md` with a Data Inventory Table (one row per
-data source) and a Validation Checklist, and guide the bootcamper to fill in one row per source
-and complete the checklist before Module 5. Announce it as a produced file in the Step 9
-end-of-module summary's "Files produced" list (INV-032). _(The Kiro
+**Data Collection Checklist:** Always create a structured checklist in the project, and fill it
+in yourself — no question (INV-012). Create `docs/data_collection_checklist.md` with:
+
+- a **Data Inventory Table**, one row per source in `config/data_sources.yaml`, filled from that
+  source's registry entry: its `name`, `file_path`, `format` and `record_count`;
+- a **Validation Checklist**, one item per source, filled from Step 3 (the file is listed in
+  `data/raw/` and its first lines were shown) and from the entry's `validation_status` and
+  `validation_checks`.
+
+The Bootcamper fills in nothing and is asked nothing about it. Announce it as a produced file in
+the Step 9 end-of-module summary's "Files produced" list (INV-032). _(The Kiro
 `templates/data_collection_checklist.md` port is a later porting phase; compose the checklist
 directly for now.)_
 
@@ -1555,8 +1564,10 @@ about a roughly half-hour load, for a load of about two minutes.
      non-SQLite — and because step 2 below treats indeterminate inputs as "say nothing", an absent
      key makes this warning unable to fire **at all**, for any database or dataset size. That is a
      plugin defect, not a bootcamper outcome: note it internally so it surfaces in the recap, and
-     fall back to the engine recorded by Module 2 in `config/bootcamp_progress.json` before giving
-     up on the check.
+     fall back to the scheme of `SQL.CONNECTION` in `config/engine_config.json` before giving up on
+     the check, by
+     [Data processing Phase A's engine fallback](../module-06-data-processing/phaseA-build-loading.md#engine-fallback-from-the-connection-scheme),
+     which is stated once there (INV-300).
 
 2. **Decide whether to warn.** Warn only when the database is SQLite **and the LOADABLE total** is
    above **the SQLite threshold of Module 6 Phase A's pre-load check** — item 3 of the
