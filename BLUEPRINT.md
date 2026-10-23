@@ -2229,9 +2229,9 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
 `"8a"`) to the record's `completed` in place of its checkpoint, and a
 `setup_detour` goes to SDK setup's.
 
-- **License framing.** Every capacity decision, including how many records
-  to generate, reads `license_record_limit` and
-  `license_record_limit_measured_at`.
+- **License framing.** Every capacity decision reads `license_record_limit`
+  and `license_record_limit_measured_at`. How many records to generate is not
+  one: it follows the scenario (the Step 2 guard's count rule below).
   - A provisional, unmarked or absent value is re-measured by Step 8a
     sub-step 7. Absent means "never measured", not "no custom license".
   - `0` means there is no cap.
@@ -2252,8 +2252,12 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
   - `cord` sources are fetched from the entry's `cord_dataset` and
     `cord_source`.
   - `synthesized` sources are generated from the recorded scenario: the
-    entry's `scenario_record_count` (else the count in
-    `docs/business_problem.md`), `entity_type` and `shape_quirks`. The
+    entry's `entity_type` and `shape_quirks`, and as many records as the
+    count rule at the branch head (`#generated-record-count`) gives: the
+    entry's `scenario_record_count`, else the count in
+    `docs/business_problem.md`, else INV-277's default of about 10,000,
+    never the license limit (option 5 points at it and takes the default).
+    The
     measured count goes back as `record_count`, beside the unchanged
     `scenario_record_count`. They
     carry the promised shape differences and describe shape only. Quality
@@ -10656,7 +10660,7 @@ looks wrong.
 - `tests/test_free_data_catalog_caveats.py`: 14
 - `tests/test_gate_options_have_handling_steps.py`: 35
 - `tests/test_generated_data_supports_its_success_criteria.py`: 35
-- `tests/test_generated_dataset_size_is_a_license_decision.py`: 18
+- `tests/test_generated_dataset_size_follows_the_scenario.py`: 13
 - `tests/test_generated_gap_rates_reach_their_band.py`: 18
 - `tests/test_generated_html_deliverables.py`: 9
 - `tests/test_generated_programs_read_no_uncopied_path.py`: 29
@@ -13886,6 +13890,17 @@ Senzing licensing, with no SPDX identifier.
   holds from the ledger only, the literal-next-id guard reads blocks through
   `pending_invariants.blocks()`, and no invariant is added (INV-409 as
   registered)
+- #779: how many records Module 4 generates follows one count rule at the head
+  of Step 2's `provenance: synthesized` branch (`#generated-record-count`): the
+  source's `scenario_record_count`, else the count `docs/business_problem.md`
+  records, else INV-277's default of about 10,000 records, never the license
+  limit; the framing, the old LICENSE-CAPACITY directive, the over-limit rule,
+  option 5 and the Scenario source fields note point at it, and
+  `tests/test_generated_dataset_size_follows_the_scenario.py` replaces
+  `tests/test_generated_dataset_size_is_a_license_decision.py` (Module 4 called
+  the count a license-capacity decision and also not one, and option 5 had no
+  count once the license framing went; an INV-277 amendment is queued for
+  `/review-invariants`)
 - #780: Module 4 Step 8a sub-step 1 computes the collected total by Step 8b
   sub-step 4's sample-aware `collected_total`, as Step 8b does; Module 1 Step
   5a calls `license_guidance_deferred` a record of its expectation that does

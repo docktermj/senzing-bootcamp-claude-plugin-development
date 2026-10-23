@@ -103,9 +103,11 @@ When the bootcamper hits an error during this module:
 
 By default, the bootcamper already has Senzing's **built-in evaluation license**: the capacity
 that applies when no custom license is configured. Treat it as the default the session already
-has, presented as a choice rather than a wall. Before any license-based capacity or sampling
-decision — ⛔ **and "choosing how many records to GENERATE" is one of them, not only "sampling an
-existing dataset down"** — **read `license_record_limit` from `config/bootcamp_progress.json`**
+has, presented as a choice rather than a wall. ⛔ **(INV-277) How many records to GENERATE is not
+one of these decisions:** the count follows the scenario, by
+[the generated record count](#generated-record-count), and capacity is decided after collection,
+at Step 8a, from the real total. Before any license-based capacity or sampling
+decision — **read `license_record_limit` from `config/bootcamp_progress.json`**
 (every step that writes it
 writes only a **measured** value, so an absent value means no measurement has been taken yet,
 never that no custom license exists) and drive the decision from that effective
@@ -310,10 +312,24 @@ that you rebuilt it. Only a missing entry is rebuilt; an existing one is never o
   one. Write one file per source into `data/raw/` from the scenario already recorded in
   `docs/business_problem.md` and the source's entry in `config/data_sources.yaml`, which carries
   its `scenario_record_count`, `entity_type` and `shape_quirks`
-  ([Scenario source fields](#scenario-source-fields)). An entry with no `scenario_record_count` was
-  written before that field existed: take the count from `docs/business_problem.md`. Then record
-  the actual counts back into the registry, as each source's measured `record_count`, and leave
-  `scenario_record_count` as Module 1 wrote it, so the two can be compared.
+  ([Scenario source fields](#scenario-source-fields)).
+  <a id="generated-record-count"></a>⛔ **(INV-277) The generated record count follows the
+  scenario, never the license limit.** Before any file is written, generate this many records for
+  the source, taking the first that applies:
+
+  1. the source's `scenario_record_count`;
+  2. otherwise the count `docs/business_problem.md` records for the source (an entry with no
+     `scenario_record_count` was written before that field existed, or rebuilt by the guard above);
+  3. otherwise INV-277's default of about 10,000 records, the bound Module 1 states
+     (`../module-01-business-problem/phase1-discovery.md` → "4a. Business Case Offer: acceptance
+     handling"). A count in `docs/business_problem.md` that cannot be read falls through to here.
+
+  This rule reads no license field, `license_record_limit` included: an absent value means never
+  measured (INV-244) and is no reason to downsize, and a measured one, `recordLimit: 0` or a
+  finite cap, changes nothing here either. Capacity is decided after collection, at Step 8a, from
+  the real total. Then record the actual counts back into the registry, as each source's measured
+  `record_count`, and leave `scenario_record_count` as Module 1 wrote it, so the two can be
+  compared.
   ⛔ **Ask nothing, recommend no CORD alternative, and do not enter the free-data hierarchy.** That
   hierarchy is for a Bootcamper who has *not* already decided; recommending CORD here recommends the
   option Module 1 evaluated and rejected for this category.
@@ -572,30 +588,24 @@ that you rebuilt it. Only a missing entry is rebuilt; an existing one is never o
   tell a **generation** fault from a **scoring** fault — without it, a source that scores 100 is
   indistinguishable from a source that was meant to.
 
-  ⛔ **How many records to generate is a LICENSE-CAPACITY decision — do not choose it before the
-  limit is measured.** (INV-244) Follow *"License limit and dataset size (canonical framing)"* above
-  before fixing any record count here. ⚠️ **Do not re-derive or restate its measurement procedure at
-  this step** — route to it, exactly as that block routes to Step 8a. A copy here would be the third,
-  and a rule stated three times drifts in two of them.
+  ⛔ **(INV-277) The record count is not a license decision: generate the count
+  [the generated record count](#generated-record-count) gives, and leave capacity to Step 8a.**
+  Nothing is measured before generation, and nothing needs to be: that rule reads no license field,
+  and Step 8a measures the limit against the collected total.
 
-  ⚠️ **Sizing a dataset into existence does not feel like a capacity decision, which is why this
-  directive exists.** Nothing is being cut, so the framing's "sampling" language does not obviously
-  apply — and the measurement is several steps downstream of the point the counts are chosen. One run
-  sized a generated dataset **down from 538 records to 466** to stay under the built-in 500-record
-  evaluation limit, reasoning that an absent `license_record_limit` meant no custom license was
-  configured. It then reached Step 8a, measured as instructed, and found the workstation carried a
-  custom EVAL license with **`recordLimit: 0` — no record cap at all**. The downsizing was
-  unnecessary and was withdrawn. ⛔ That is exactly the inference INV-244 forbids: an absent
-  `license_record_limit` means **never measured**, never "no custom license".
-
-  **On a measured `recordLimit: 0`, size the generated data by what the SCENARIO needs** — the
-  cross-source overlap, the quality bands and the mapping complexity required above — and not by any
-  cap. Say so plainly rather than leaving the branch as a warning: with no cap there is nothing to
-  size against except the teaching goal, and under-generating here is what leaves Modules 6 and 7
-  with too little overlap to demonstrate cross-source resolution (INV-150).
+  ⚠️ **Why INV-277 forbids tying the size to the limit.** One run sized a generated dataset **down
+  from 538 records to 466** to stay under the built-in evaluation license's limit, reasoning that an
+  absent `license_record_limit` meant no custom license was configured. It then reached Step 8a,
+  measured as instructed, and found the workstation carried a custom EVAL license with
+  **`recordLimit: 0` — no record cap at all**. The downsizing was unnecessary and was withdrawn. The
+  inference was the one INV-244 forbids: an absent `license_record_limit` means **never measured**,
+  never "no custom license". And under-generating is what leaves Modules 6 and 7 with too little
+  overlap to demonstrate cross-source resolution (INV-150), so the count follows the scenario
+  whatever the limit turns out to be.
 
   **When the effective limit is below the record count the scenario calls for, generate the full
-  count anyway, and ask nothing here.** The scenario's size is a default the Bootcamper may exceed,
+  count anyway, and ask nothing here.** The scenario's size, set by
+  [the generated record count](#generated-record-count), is a default the Bootcamper may exceed,
   never a gate, and it is not tied to license capacity (INV-277), so do not shrink the generation to
   fit the limit and do not ask whether to. Capacity is decided after collection, from the real total:
   Step 8a's License Key gate asks when the collected total exceeds the effective limit, and Step 8b
@@ -917,9 +927,10 @@ Registry** note below) and goes on to the next source, or to Step 3 once every s
      `provenance: synthesized` and a `quality_intent`, shaped as *Record the intended band per
      source* above shows.
   2. **Then run the generation block of the marker check above** — the one labeled
-     **`provenance: synthesized`** → **generate the source files.** — unchanged. It sizes the
-     data by *License limit and dataset size (canonical framing)* (INV-244), so this step chooses
-     no record count of its own.
+     **`provenance: synthesized`** → **generate the source files.** — unchanged. Its count comes
+     from [the generated record count](#generated-record-count), at that rule's third step,
+     since step 1 writes no `scenario_record_count` and `docs/business_problem.md` records no
+     scenario on this path; so this step states no record count of its own.
 - **Secondary offer, "Synthesized test data":** take option 5's entry above
   (**5, "I don't have my own data"**) and carry it out as written; its two steps are this answer's
   route too. Ask nothing more: declining CORD and the catalog is what made this the last resort,
@@ -1057,7 +1068,8 @@ writes no program.
 > and counts it. `quality_intent` belongs to a `synthesized` entry too, written by Step 2's
 > generation as *Record the intended band per source* shows, never by Module 1. An entry with no
 > `scenario_record_count` was written before the field existed, and Step 2's generation takes the
-> count from `docs/business_problem.md` instead.
+> count from `docs/business_problem.md` instead, by
+> [the generated record count](#generated-record-count).
 
 > **Data File Validation:** After each file is saved to `data/raw/`, sanity-check it (readable,
 > non-empty, expected format/encoding, and — wherever an independent expected count exists — a record
