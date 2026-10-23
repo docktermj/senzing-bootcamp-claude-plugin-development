@@ -85,7 +85,7 @@ scans it like any other block.
 ⚠️ **Write the real id, not `INV-NNN`.** The invariant exists; writing NNN would be false rather
 than deliberate, and `check` resolves the quote against the file the bullet names either way.
 
-⛔ **Applying one resolves it** — rewrite the end of its bold header so it leaves the queue,
+⛔ **(INV-409) Applying one resolves it** — rewrite the end of its bold header so it leaves the queue,
 exactly as `(resolved INV-nnn, …)` does for a deferral. The helper reads `— applied <date>`
 inside the bold header and nowhere else:
 
