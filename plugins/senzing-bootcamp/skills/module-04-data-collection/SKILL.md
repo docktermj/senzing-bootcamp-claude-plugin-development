@@ -300,7 +300,8 @@ that you rebuilt it. Only a missing entry is rebuilt; an existing one is never o
 
 - **`provenance: cord`** → go straight to downloading that source, the entry's `cord_dataset` and
   `cord_source` ([Scenario source fields](#scenario-source-fields)), saying which source you are
-  fetching and where it came from. A generated scenario is the multi-source case, so fetch under
+  fetching and where it came from. A `Denied.` reply to the `get_sample_data` call for it is
+  [a denied reply](#cord-denied-reply). A generated scenario is the multi-source case, so fetch under
   [CORD fetch integrity](#cord-fetch-integrity) — back-to-back source fetches are exactly what the
   download endpoint throttles, and a throttled response arrives looking like a very small file.
 - **`provenance: synthesized`** → **generate the source files.** There is nothing to download: the
@@ -657,8 +658,8 @@ through Module 7's screenshots and out again in the keepsake PDF they are encour
 ⛔ **(INV-247) Do not turn this into a gate** — the bootcamp does not specify one here, they have
 already chosen sample data, and a 👉 would ask a question with no action behind it (INV-012).
 
-Use `get_sample_data(dataset='list')` to show available CORD datasets. Present the fetch URL from
-the response exactly as the tool gives it, and say **which** of the two you are presenting — they
+Use `get_sample_data(dataset='list')` to show available CORD datasets; a `Denied.` reply to it is
+[a denied reply](#cord-denied-reply), not an empty catalog. Present the fetch URL from the response exactly as the tool gives it, and say **which** of the two you are presenting — they
 are not interchangeable (both fields verified live, `get_sample_data(dataset='las-vegas',
 source='GLEIF', limit=1)`, MCP server 1.32.9, 2026-08-12):
 
@@ -684,6 +685,23 @@ this file. When the Bootcamper needs a whole source, present `source_download_ur
 restricted to the MCP host, present `download_url` and say plainly that it is a slice of at most
 `download_url_max_records` records, quoting the figure the response gave. A source listed with
 `truncated: true` is presented as [the truncated-source rule](#truncated-cord-source) says.
+
+<a id="cord-denied-reply"></a>
+
+**⛔ (INV-378) A denied reply: a `Denied.` reply to a CORD `get_sample_data` call is an outcome of
+its own.** The reply is the bare string `Denied.` in place of a dataset listing, a source listing,
+a preview or an error from the server. It is not an empty catalog, a missing source or a failed
+fetch, and it does not mean CORD is unavailable. This step states the outcome once, here: the
+`dataset='list'` call above, check 2's `source='list'` call and the `provenance: cord` download
+each link here rather than restating it (INV-300).
+
+- ⛔ **(INV-378) Do not retry it.** As a statement, report the reply and the call that drew it, and
+  give the remedy by pointer to `../module-03b-truthset-visualization/phase1-visualization.md` →
+  "A `Denied.` reply is a platform-layer filter, not an unavailable Truth Set", which states it;
+  it is not restated here (INV-300).
+- ⛔ **(INV-247) Ask no new question about it.** The bootcamp specifies no gate here.
+- **Then continue down the data recommendation hierarchy** in [Agent behavior](#agent-behavior),
+  to its next path after CORD, and resume CORD on whichever route the Bootcamper opens.
 
 <a id="truncated-cord-source"></a>
 
@@ -771,7 +789,8 @@ elsewhere (INV-300).**
 
 2. **Compare the record count against the count the server already gave you.** The authoritative
    figure is already in hand — `get_sample_data(dataset=…, source='list')` returns `record_count` per
-   source. Count the records in the fetched file (a count, in whatever language the Bootcamper chose;
+   source, and a `Denied.` reply to that call carries no count: it is
+   [a denied reply](#cord-denied-reply). Count the records in the fetched file (a count, in whatever language the Bootcamper chose;
    this is not a shell idiom) and compare against the expected count **for the URL you used**:
 
    - fetched via **`source_download_url`** → expect exactly `record_count`, unless the source is

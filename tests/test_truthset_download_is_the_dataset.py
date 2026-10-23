@@ -60,13 +60,28 @@ does anything here read the server: the suite is offline (INV-108), so the versi
 the quoted sentence are a dated record carried in prose, re-asked at implementation time and
 re-askable later, never asserted by a test.
 
+⚠️ **Widened 2026-10-23 (#805) from Module 3b to every step that classifies the reply.** The
+guard read Step 1.1 alone, while Module 1 Step 4b sorted the same tool's replies into fit / none
+fit / timeout and Module 4 called it with no outcome at all. It now finds its sites by scanning
+every `get_sample_data` mention in shipped Markdown (INV-246). The unit is the step: a mention
+whose section names no `denied` outcome, and links none, is reported, and every mention that
+classifies nothing is on ``EXEMPT``, keyed by file, section heading and a quote from its own
+paragraph, each with a reason. A file that states the outcome once at an anchor (Module 4) is
+held tighter: each of its classifying mentions links that anchor, so a second call added to
+the same long step is caught too. Module 1 and Module 4 point at Module 3b's remedy and never
+carry a copy of the server's sentence (INV-300). The same limit holds: these are statements
+about the text, not about a live run.
+
 Source spec: `specs/truthset-step-saves-a-five-record-preview-not-the-truth-set.md`.
 
 Run:  python3 -m unittest discover -s tests
 """
 import re
 import unittest
+from collections import namedtuple
 from pathlib import Path
+
+from _corpus import corpus_files
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
@@ -466,6 +481,477 @@ class ModuleFourNoLongerStatesOneEgressHost(unittest.TestCase):
         self.assertRegex(
             self.flat, r"(?i)serves at most `download_url_max_records` records per request",
             "the capped-download rule was lost")
+
+
+# ---------------------------------------------------------------------------------------------
+# #805 — every step that classifies a `get_sample_data` reply carries the `denied` outcome.
+# ---------------------------------------------------------------------------------------------
+
+#: Shipped Markdown, repo-relative with ``/`` separators so the keys below read the same on
+#: Linux, macOS and Windows.
+def shipped_corpus():
+    return {path.relative_to(REPO_ROOT).as_posix(): path.read_text(encoding="utf-8")
+            for path in corpus_files("plugins", suffixes={".md"})}
+
+
+M01_DISCOVERY = "plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md"
+M03B_PHASE1 = "plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md"
+M03B_SKILL = "plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/SKILL.md"
+M04_SKILL = "plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md"
+M05_PHASE1 = "plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md"
+
+STEP_4B = "4b. CORD sourcing for the generated scenario (via MCP — NON-YIELDING)"
+M04_STEP_2 = "2. For each data source, collect the data"
+
+#: A block STATES the outcome when it names the bare reply and calls it an outcome of its own.
+STATEMENT = re.compile(r"(?i)\bits own outcome\b|\boutcome of its own\b")
+
+#: The pointer to Module 3b's remedy, the one statement INV-378's remedy has (INV-300).
+REMEDY_POINTER = re.compile(
+    r'→ "A `Denied\.` reply is a platform-layer filter, not an unavailable Truth Set"')
+
+#: Words a step uses when it sorts a reply into outcomes. An exempted mention whose block
+#: carries one of them is classifying after all, and may not be exempted.
+OUTCOME_WORDS = re.compile(
+    r"(?i)`Denied\.`|\bunavailable\b|\bnone fit\b|\bno fit\b|\btime(?:d )?out\b|\bClassify\b")
+
+#: The sections every scan must find classifying (INV-265 floor), as (file, heading).
+REQUIRED_SITES = (
+    (M01_DISCOVERY, STEP_4B),
+    (M03B_PHASE1, "1.1 Acquire the Truth Set (MCP-first, sanctioned fallback)"),
+    (M03B_SKILL, "Truth Set source"),
+    (M04_SKILL, M04_STEP_2),
+)
+
+#: Every mention that does not classify a reply, keyed (file, section heading, a quote from
+#: the mention's own paragraph) — text, never a line number, so an edit above it moves
+#: nothing — each with the reason it classifies nothing. A mention in a section that carries
+#: the outcome needs no entry, except in a file that states it once at an anchor, where every
+#: mention either links that anchor or is listed here.
+EXEMPT = {
+    ("plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md",
+     "MCP-first invariant (absolute precedence)",
+     "sample data -> `get_sample_data`"):
+        "a tool-routing list: names which tool answers which question, makes no call",
+    ("plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md",
+     "Naming Senzing datasets (INV-230)",
+     "`get_sample_data`'s dataset key `truthset`"):
+        "an identifier note: the spelling of a dataset key, not a call",
+    ("plugins/senzing-bootcamp/skills/module-01-business-problem/phase2-document-confirm.md",
+     "11. Create the problem statement document",
+     "retrieve via MCP (`get_sample_data`,"):
+        "a rule about where CORD facts come from; Step 4b makes and classifies the call",
+    (M03B_PHASE1, "2.2 Always produce the standalone snapshot first (the guarantee)",
+     "acquired here via `get_sample_data(dataset='truthset')` (server 1.32.2"):
+        "a dated illustration of where the Truth Set came from, for the snapshot's wording",
+    (M03B_PHASE1, "2.4a Check the encoding, then capture screenshots (against the running server)",
+     "`get_sample_data(dataset='truthset', source='list')`, server 1.33.0"):
+        "a dated illustration of the Truth Set's sources, for the encoding verdict",
+    ("plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/"
+     "visualization-api-reference.md",
+     "The encoding self-check (required — behavior, in every language)",
+     "(`get_sample_data(dataset='truthset', source='list')` → CUSTOMERS, REFERENCE, WATCHLIST"):
+        "a dated illustration of the Truth Set's sources, for the encoding verdict",
+    (M04_SKILL, M04_STEP_2, "I can pull CORD datasets using the `get_sample_data` tool"):
+        "a recommendation that names the tool without calling it",
+    (M04_SKILL, M04_STEP_2, "`get_sample_data`'s own contract requires it of every caller"):
+        "quotes the tool's real-data disclosure contract; no reply is read",
+    (M04_SKILL, M04_STEP_2, "**What `truncated: true` means.**"):
+        "reads a field of a listing that arrived; check 2's call, which draws it, links the "
+        "outcome",
+    (M04_SKILL, M04_STEP_2, "Illustration only, dated, never a constant"):
+        "a dated illustration of a truncated source",
+    (M04_SKILL, M04_STEP_2, "the dataset and the source as `get_sample_data` names them"):
+        "a registry note: the meaning of `cord_dataset` and `cord_source`",
+    (M04_SKILL, M04_STEP_2, "after CORD data has been downloaded via `get_sample_data`"):
+        "a provenance note: runs after a download that succeeded",
+    (M04_SKILL, M04_STEP_2, "`cord`: source obtained via the `get_sample_data` MCP tool"):
+        "a provenance value's definition",
+    (M04_SKILL, "Agent behavior", "recommend CORD data first via the `get_sample_data` MCP tool"):
+        "a recommendation that names the tool without calling it; it is the order the "
+        "outcome continues down",
+    (M05_PHASE1, "5a. Senzing-readiness check and fast-path offer (CORD sources only)",
+     "a source obtained via the `get_sample_data` MCP tool in Module 4"):
+        "a provenance note: which sources the step reads",
+    (M05_PHASE1, "5a. Senzing-readiness check and fast-path offer (CORD sources only)",
+     "**CORD ships both, so neither may be assumed.** Verified live"):
+        "a dated illustration of two CORD record shapes",
+    (M05_PHASE1, "5a. Senzing-readiness check and fast-path offer (CORD sources only)",
+     "**The worked case, measured live.**"):
+        "a dated illustration of one CORD source's arrays",
+    (M05_PHASE1, "5a. Senzing-readiness check and fast-path offer (CORD sources only)",
+     "This is not hypothetical: `get_sample_data(dataset='las-vegas',"):
+        "a dated illustration of one CORD source's arrays",
+    (M05_PHASE1, "7b. Return to Data collection — when nothing mechanical is left to fix",
+     "one from `get_sample_data` and one from the free-data catalog"):
+        "a provenance note: why a fixed dataset offers no return",
+    ("plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md",
+     "Pre-load data freshness check (advisory only)",
+     "(downloaded via `get_sample_data`)"):
+        "a provenance note: runs after a download that succeeded",
+}
+
+BlockAt = namedtuple("BlockAt", "file section heading line raw flat")
+
+
+def blocks_of(relpath, text):
+    """Every paragraph-level block of a Markdown file, with the heading of its section.
+
+    A heading starts a section; a blank line (a bare ``>`` counts as blank) ends a block, and
+    so does a list item, which starts the next one: a long list is one Markdown paragraph, and
+    read whole it would let one item's outcome words speak for another. Lines inside a fenced
+    code block are never headings and never end a block.
+    """
+    out, heading, section, current, start, fenced = [], "", 0, [], 0, False
+
+    def flush():
+        if current:
+            raw = "\n".join(current)
+            out.append(BlockAt(relpath, section, heading, start, raw, squash(raw)))
+
+    for number, line in enumerate(text.split("\n"), 1):
+        bare = re.sub(r"^[ \t]*(?:>[ \t]?)*", "", line)
+        if bare.lstrip().startswith(("```", "~~~")):
+            fenced = not fenced
+        if not fenced and re.match(r"#{1,6}\s", line):
+            flush()
+            current, heading, section = [], line.lstrip("#").strip(), section + 1
+            continue
+        if not fenced and not bare.strip():
+            flush()
+            current = []
+            continue
+        if not fenced and re.match(r"\s*(?:[-*+]|\d+\.)\s", bare):
+            flush()
+            current = []
+        if not current:
+            start = number
+        current.append(line)
+    flush()
+    return out
+
+
+def is_statement(block):
+    return "`Denied.`" in block.flat and bool(STATEMENT.search(block.flat))
+
+
+def statement_anchors(blocks):
+    """Anchors (``<a id>`` blocks) placed directly above a block that states the outcome."""
+    anchors = set()
+    for before, after in zip(blocks, blocks[1:]):
+        found = re.fullmatch(r'<a id="([a-z0-9-]+)"></a>', before.flat)
+        if found and is_statement(after):
+            anchors.add(found.group(1))
+    return anchors
+
+
+def links_anchor(block, anchors):
+    return any(re.search(r"\]\([^)\s#]*#%s\)" % re.escape(a), block.flat) for a in anchors)
+
+
+def exemption_for(block, exempt):
+    for (file, heading, quote), reason in exempt.items():
+        if block.file == file and block.heading == heading and quote in block.flat:
+            return (file, heading, quote)
+    return None
+
+
+def scan(corpus, exempt=None):
+    """Read every `get_sample_data` mention; return (problems, classifying sections, mentions)."""
+    exempt = EXEMPT if exempt is None else exempt
+    problems, classifying, mentions, used = [], set(), 0, set()
+    all_anchors = set()
+    per_file = {}
+    for relpath in sorted(corpus):
+        blocks = blocks_of(relpath, corpus[relpath])
+        per_file[relpath] = blocks
+        all_anchors |= statement_anchors(blocks)
+    for relpath, blocks in per_file.items():
+        own_anchors = statement_anchors(blocks)
+        carried = {b.section for b in blocks
+                   if is_statement(b) or links_anchor(b, all_anchors)
+                   or REMEDY_POINTER.search(b.flat)}
+        for block in blocks:
+            if "get_sample_data" not in block.raw:
+                continue
+            mentions += 1
+            where = "%s › %s › %r" % (relpath, block.heading, block.flat[:70])
+            key = exemption_for(block, exempt)
+            if key is not None:
+                used.add(key)
+                if OUTCOME_WORDS.search(block.flat):
+                    problems.append("a classifying mention is exempted: %s" % where)
+                continue
+            classifying.add((relpath, block.heading))
+            if block.section not in carried:
+                problems.append("a classifying mention whose step carries no `denied` "
+                                "outcome and no pointer to one: %s" % where)
+            elif own_anchors and not is_statement(block) and not links_anchor(block, own_anchors):
+                problems.append("a mention in a file that states the outcome once does not "
+                                "link that statement: %s" % where)
+    for key in sorted(set(exempt) - used):
+        problems.append("an exemption matches no mention (stale): %s › %s › %r" % key)
+    return problems, classifying, mentions
+
+
+def restatements(corpus):
+    """Files that point at Module 3b's remedy and carry a copy of the server's sentence."""
+    return sorted((relpath, piece[:30])
+                  for relpath in (M01_DISCOVERY, M04_SKILL, M03B_SKILL)
+                  for piece in SERVER_REMEDY if piece in squash(corpus[relpath]))
+
+
+def section_text(text, heading):
+    """The raw text of the section under ``heading`` (to the next heading of any level)."""
+    blocks = [b for b in blocks_of("", text) if b.heading == heading]
+    return "\n\n".join(b.raw for b in blocks)
+
+
+def step_4b_problems(text):
+    """Module 1 Step 4b's `denied` outcome, clause by clause (criterion 1)."""
+    section = section_text(text, STEP_4B)
+    if "**Timeout/unreachable after one retry:**" not in section:
+        return ["the region is not Step 4b's outcome list"]
+    found = re.search(r"(?ms)^- \*\*`Denied\.` reply\*\*.*?(?=^- \*\*|^\s*$|\Z)", section)
+    if not found:
+        return ["Step 4b has no `denied` outcome beside fit / none fit / timeout"]
+    bullet = squash(found.group(0))
+    problems = []
+    for needle, why in (
+            ("the bare string `Denied.`", "the reply is not named"),
+            ("its own outcome", "the outcome is not its own"),
+            ("the listing included", "the listing call is not covered"),
+            ("report the reply and the call that drew it", "the reply and its call are not stated"),
+            ("Do not retry it", "the reply is retried"),
+            ("do not report it as a timeout or as CORD being unavailable",
+             "the reply may be reported as a timeout or as CORD unavailable"),
+            ("In this same turn", "the outcome is not handled in the same turn"),
+            ("never a 👉", "the outcome may ask a question"),
+            ("provenance `synthesized`", "the outcome does not continue to `synthesized`"),
+            ("say that the denied reply is why", "the reason for `synthesized` is not given"),
+            ("`../module-03b-truthset-visualization/phase1-visualization.md` → \"A `Denied.` "
+             "reply is a platform-layer filter, not an unavailable Truth Set\"",
+             "the remedy is not pointed at"),
+            ("(INV-300)", "the pointer cites no single-statement authority")):
+        if needle not in bullet:
+            problems.append(why)
+    if "retry once on a timeout, never on a `Denied.` reply" not in squash(section):
+        problems.append("the call's retry clause reaches a `Denied.` reply")
+    if "👉" in bullet.replace("never a 👉", ""):
+        problems.append("the outcome asks a question")
+    if re.search(r"(?m)^[ \t>]*👉", section):
+        problems.append("the non-yielding step asks a question")
+    return problems
+
+
+def module_4_problems(text):
+    """Module 4's one `denied` statement and the calls that link it (criterion 2)."""
+    start = text.find('<a id="cord-denied-reply"></a>')
+    if start < 0:
+        return ["Module 4 states no `denied` outcome at an anchor"]
+    end = text.find("<a id=", start + 1)
+    region = squash(text[start:end])
+    problems = []
+    for needle, why in (
+            ("is an outcome of its own", "the outcome is not its own"),
+            ("does not mean CORD is unavailable", "the reply may read as CORD unavailable"),
+            ("Do not retry it", "the reply is retried"),
+            ("report the reply and the call that drew it", "the reply and its call are not stated"),
+            ("`../module-03b-truthset-visualization/phase1-visualization.md` → \"A `Denied.` "
+             "reply is a platform-layer filter, not an unavailable Truth Set\"",
+             "the remedy is not pointed at"),
+            ("(INV-247) Ask no new question about it", "the outcome may add a question"),
+            ("continue down the data recommendation hierarchy** in [Agent behavior]"
+             "(#agent-behavior), to its next path after CORD",
+             "the outcome does not continue down the recommendation order"),
+            ("resume CORD on whichever route the Bootcamper opens",
+             "CORD is not resumed on the route the Bootcamper opens")):
+        if needle not in region:
+            problems.append(why)
+    if "👉" in region:
+        problems.append("the outcome asks a question")
+    if "follow the data recommendation hierarchy" not in squash(section_text(text, "Agent behavior")):
+        problems.append("the recommendation order the outcome points at is gone")
+    flat = squash(text)
+    for call in ("Use `get_sample_data(dataset='list')` to show available CORD datasets; a `Denied.` "
+                 "reply to it is [a denied reply](#cord-denied-reply)",
+                 "source='list')` returns `record_count` per source, and a `Denied.` reply to "
+                 "that call carries no count: it is [a denied reply](#cord-denied-reply)",
+                 "A `Denied.` reply to the `get_sample_data` call for it is "
+                 "[a denied reply](#cord-denied-reply)"):
+        if call not in flat:
+            problems.append("a classifying call does not link the statement: %r" % call[:50])
+    return problems
+
+
+class EveryClassifyingSampleDataCallCarriesTheDeniedOutcome(unittest.TestCase):
+    """#805 — the sites are found by scanning, not read from a list (INV-246, INV-378)."""
+
+    def setUp(self):
+        self.corpus = shipped_corpus()
+
+    def test_the_scan_is_clean(self):
+        problems, _, _ = scan(self.corpus)
+        self.assertEqual([], problems, "\n".join(problems))
+
+    def test_the_scan_finds_the_known_sites(self):
+        """⛔ Anti-vacuity (INV-265): the known classifying steps are a floor."""
+        _, classifying, mentions = scan(self.corpus)
+        self.assertGreaterEqual(mentions, 25, "the scan reads almost nothing")
+        for site in REQUIRED_SITES:
+            with self.subTest(site=site[1]):
+                self.assertIn(site, classifying)
+
+    def test_every_exemption_carries_a_reason(self):
+        for key, reason in EXEMPT.items():
+            with self.subTest(key=key[2][:40]):
+                self.assertGreater(len(reason.split()), 3, "an exemption with no reason")
+
+    def test_module_1_step_4b_has_the_outcome(self):
+        self.assertEqual([], step_4b_problems(self.corpus[M01_DISCOVERY]))
+
+    def test_module_4_has_the_outcome(self):
+        self.assertEqual([], module_4_problems(self.corpus[M04_SKILL]))
+
+    def test_no_pointing_site_restates_the_remedy(self):
+        """INV-300 — Module 3b's sentence is pointed at from Modules 1 and 4, never copied."""
+        self.assertEqual([], restatements(self.corpus))
+
+    def test_module_4_states_the_outcome_once(self):
+        blocks = blocks_of(M04_SKILL, self.corpus[M04_SKILL])
+        self.assertEqual(1, sum(1 for b in blocks if is_statement(b)))
+
+
+class TheScanSeesWhatItWasWrittenFor(unittest.TestCase):
+    """⛔ Negative controls (INV-282), each on a mutated in-memory copy of the corpus."""
+
+    def setUp(self):
+        self.corpus = shipped_corpus()
+
+    def mutated(self, relpath, old, new):
+        corpus = dict(self.corpus)
+        self.assertIn(old, corpus[relpath], "the control's anchor text is gone; update it")
+        corpus[relpath] = corpus[relpath].replace(old, new, 1)
+        return corpus
+
+    def assertReported(self, corpus, fragment, exempt=None):
+        problems, _, _ = scan(corpus, exempt)
+        self.assertTrue(any(fragment in p for p in problems), "\n".join(problems) or "clean")
+
+    def test_removing_the_outcome_from_module_1_is_reported(self):
+        text = self.corpus[M01_DISCOVERY]
+        bullet = re.search(r"(?ms)^- \*\*`Denied\.` reply\*\*.*?(?=^\s*$)", text).group(0)
+        corpus = self.mutated(M01_DISCOVERY, bullet, "")
+        self.assertReported(corpus, "carries no `denied` outcome and no pointer to one: "
+                            + M01_DISCOVERY)
+        self.assertTrue(step_4b_problems(corpus[M01_DISCOVERY]))
+
+    def test_removing_the_outcome_from_module_4_is_reported(self):
+        text = self.corpus[M04_SKILL]
+        start = text.index('<a id="cord-denied-reply"></a>')
+        end = text.index('<a id="truncated-cord-source"></a>')
+        corpus = self.mutated(M04_SKILL, text[start:end], "")
+        self.assertReported(corpus, "carries no `denied` outcome and no pointer to one: "
+                            + M04_SKILL)
+        self.assertTrue(module_4_problems(corpus[M04_SKILL]))
+
+    def test_a_module_4_call_that_stops_linking_is_reported(self):
+        corpus = self.mutated(
+            M04_SKILL, "; a `Denied.` reply to it is\n[a denied reply](#cord-denied-reply), "
+            "not an empty catalog.", ".")
+        self.assertReported(corpus, "does not link that statement: " + M04_SKILL)
+
+    def test_a_new_classifying_call_in_a_new_step_is_reported(self):
+        corpus = self.mutated(
+            M05_PHASE1, "\n## 5a. ",
+            "\n## 4z. Check a second dataset\n\nCall `get_sample_data(dataset='london', "
+            "source='list')` and classify the reply: available, or unavailable.\n\n## 5a. ")
+        self.assertReported(corpus, "carries no `denied` outcome and no pointer to one: "
+                            + M05_PHASE1 + " › 4z.")
+
+    def test_a_new_classifying_call_in_module_4_step_2_is_reported(self):
+        corpus = self.mutated(
+            M04_SKILL, "\n<a id=\"truncated-cord-source\"></a>",
+            "\nRetry `get_sample_data(dataset='london', source='list')` once; if it still "
+            "returns nothing, CORD is unavailable.\n\n<a id=\"truncated-cord-source\"></a>")
+        self.assertReported(corpus, "does not link that statement: " + M04_SKILL)
+
+    def test_exempting_a_classifying_mention_is_reported(self):
+        exempt = dict(EXEMPT)
+        exempt[(M01_DISCOVERY, STEP_4B, "Wait up to 30s")] = "a deliberately wrong exemption"
+        self.assertReported(self.corpus, "a classifying mention is exempted", exempt)
+
+    def test_an_exemption_that_drifted_is_reported(self):
+        corpus = self.mutated(
+            M04_SKILL, "Illustration only, dated, never a constant",
+            "Illustration only, dated, and never a constant")
+        self.assertReported(corpus, "stale")
+        self.assertReported(corpus, "does not link that statement")
+
+    def test_module_1_clauses_are_each_checked(self):
+        for old, new, why in (
+                ("Do not retry it, and do not report", "Retry it once, and do not report",
+                 "retried"),
+                ("Then back the\n  scenario with synthetic data", "Then ask 👉 whether to back "
+                 "the\n  scenario with synthetic data", "asks a question"),
+                ("provenance `synthesized`, and say", "provenance `cord`, and say",
+                 "`synthesized`"),
+                ("give the remedy by pointer to\n  `../module-03b",
+                 "give the remedy by pointer to\n  `../module-03c", "not pointed at"),
+                ("retry once on a timeout, never on a `Denied.` reply", "retry once",
+                 "retry clause")):
+            with self.subTest(why=why):
+                corpus = self.mutated(M01_DISCOVERY, old, new)
+                self.assertTrue(any(why in p for p in step_4b_problems(corpus[M01_DISCOVERY])),
+                                step_4b_problems(corpus[M01_DISCOVERY]))
+
+    def test_module_4_clauses_are_each_checked(self):
+        for old, new, why in (
+                ("⛔ **(INV-378) Do not retry it.**", "⛔ **(INV-378) Retry it once.**", "retried"),
+                ("⛔ **(INV-247) Ask no new question about it.**",
+                 "👉 **Ask whether to try the free-data catalog.**", "question"),
+                ("**Then continue down the data recommendation hierarchy**",
+                 "**Then stop the module**", "recommendation order")):
+            with self.subTest(why=why):
+                corpus = self.mutated(M04_SKILL, old, new)
+                self.assertTrue(any(why in p for p in module_4_problems(corpus[M04_SKILL])),
+                                module_4_problems(corpus[M04_SKILL]))
+
+    def test_a_restated_remedy_is_reported(self):
+        corpus = self.mutated(M01_DISCOVERY, "which states it; it is not restated\n  here",
+                              "which says: " + SERVER_REMEDY[2])
+        self.assertIn((M01_DISCOVERY, SERVER_REMEDY[2][:30]), restatements(corpus))
+
+    def test_an_empty_corpus_finds_no_site(self):
+        _, classifying, mentions = scan({})
+        self.assertEqual(0, mentions)
+        self.assertFalse(set(REQUIRED_SITES) <= classifying)
+
+    def test_the_scan_survives_a_reflow(self):
+        """INV-346 — one word per line inside every block changes no verdict.
+
+        A list marker keeps its first word, as any re-wrap of Markdown does: alone on a line
+        it would no longer be a list item.
+        """
+        corpus = {}
+        for relpath, text in self.corpus.items():
+            lines, fenced = [], False
+            for line in text.split("\n"):
+                bare = re.sub(r"^[ \t]*(?:>[ \t]?)*", "", line)
+                if bare.lstrip().startswith(("```", "~~~")):
+                    fenced = not fenced
+                if fenced or not bare.strip() or re.match(r"#{1,6}\s|[ \t]*<", line):
+                    lines.append(line)
+                    continue
+                prefix = line[:len(line) - len(bare)]
+                words = bare.split()
+                if re.match(r"\s*(?:[-*+]|\d+\.)\s", bare) and len(words) > 1:
+                    words[:2] = [" ".join(words[:2])]
+                lines.extend(prefix + word for word in words)
+            corpus[relpath] = "\n".join(lines)
+        problems, classifying, mentions = scan(corpus)
+        self.assertEqual([], problems, "\n".join(problems))
+        self.assertEqual(scan(self.corpus)[2], mentions)
 
 
 if __name__ == "__main__":

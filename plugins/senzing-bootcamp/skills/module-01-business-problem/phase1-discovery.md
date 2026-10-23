@@ -272,7 +272,8 @@ Treat the Senzing MCP server as the ONLY source of CORD facts: never training da
 `get_sample_data` and/or `search_docs(query='CORD datasets: names, contents, and availability
 for entity resolution scenarios')` (its top hit is *Collections Of Relatable Data (CORDs)* →
 "What Is a CORD?") to learn which datasets exist and what they contain. Present
-values exactly as returned. Wait up to 30s; retry once.
+values exactly as returned. Wait up to 30s; retry once on a timeout, never on a `Denied.` reply
+(below).
 
 ⛔ **`truthset` is NOT eligible to back a generated scenario, for two independent reasons.**
 It is the most inviting choice — smallest, already used elsewhere in the bootcamp, and its
@@ -321,6 +322,16 @@ collection to cover a customer-360 problem in order to reach the `cord` branch.
   deferred.
 - **Timeout/unreachable after one retry:** omit CORD facts, tell the bootcamper they're
   unavailable, use synthetic data (`synthesized`).
+- **`Denied.` reply** — the reply to a `get_sample_data` call this step makes, the listing
+  included, is the bare string `Denied.` instead of a dataset listing, a preview or an error from
+  the server: its own outcome, never folded into none fit or the timeout above.
+  ⛔ **(INV-378) Do not retry it, and do not report it as a timeout or as CORD being unavailable.**
+  In this same turn, as a statement and never a 👉 (this step asks nothing, INV-225), report the
+  reply and the call that drew it, and give the remedy by pointer to
+  `../module-03b-truthset-visualization/phase1-visualization.md` → "A `Denied.` reply is a
+  platform-layer filter, not an unavailable Truth Set", which states it; it is not restated
+  here (INV-300). Then back the
+  scenario with synthetic data, provenance `synthesized`, and say that the denied reply is why.
 
 Either way the data must satisfy the Step 4a invariants.
 
