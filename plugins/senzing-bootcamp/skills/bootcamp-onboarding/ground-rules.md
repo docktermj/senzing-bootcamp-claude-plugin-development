@@ -875,9 +875,30 @@ For example, System verification's `verify_pipeline` is `<dir>` = `src/system_ve
 
 - **Run every command from the project root, in the shell where Module 2's env script is sourced**
   (Module 2 Step 8 re-sources it), so the native library and the SDK bindings are on the paths the
-  program needs. A program opens its `<dir>/...` paths relative to that root. The paths use
-  forward slashes and the commands use no shell-specific syntax, so they run unchanged in a POSIX
-  shell and in PowerShell (INV-001).
+  program needs. On native Windows that shell is the PowerShell call the next bullet gives. A
+  program opens its `<dir>/...` paths relative to that root. The paths use forward slashes and the
+  commands use no shell-specific syntax, so they run unchanged in a POSIX shell and in PowerShell
+  (INV-001).
+- **On native Windows (not SDK setup's `docker` route), the guide runs every Build and Run command
+  itself, one call per command**, from its POSIX shell:
+
+  ```bash
+  powershell.exe -NoProfile -Command '. .\src\scripts\senzing-env.ps1; <command>'
+  ```
+
+  Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
+  `<command>` is the table's Build or Run command unchanged. The guide's shell cannot hold the
+  `.ps1` script's environment, so each call dot-sources it again. The call is quoted and run as
+  "Windows and PowerShell" below states for a PowerShell-only guide-run block: its quoting rule
+  applies to a `'` in `<command>`, and each call is a new PowerShell. When dot-sourcing is refused
+  with "running scripts is disabled on this system", stop the build or run, and never add
+  `-ExecutionPolicy Bypass` to the call. Give the Bootcamper Module 2's remedy
+  ([the Windows script](../module-02-sdk-setup/SKILL.md#env-script-windows) → "When PowerShell
+  refuses to run the script"), with one more step: restart Claude Code from that same PowerShell
+  window, because the guide's calls inherit a Process-scope policy only from the window Claude
+  Code was started in. Then re-run the same call. Never suggest a persistent scope instead
+  (INV-199).
 - **On SDK setup's `docker` route, every Build and Run command runs inside the SDK container**,
   wrapped as:
 

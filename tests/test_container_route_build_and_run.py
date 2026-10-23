@@ -26,6 +26,18 @@ these tests pin each:
    syntax-check commands (`python3 -m py_compile <file>`, `node --check <file>`, `javac`,
    `tsc --noEmit`); it runs the section's Build command in the container-route form.
 
+4. **The native-Windows route, #786.** Off the `docker` route on native Windows, the guide's own
+   shell is Git Bash, which cannot hold the environment the `.ps1` env script sets. The section
+   gives one more form, stated once,
+   `powershell.exe -NoProfile -Command '. .\\src\\scripts\\senzing-env.ps1; <command>'`: one call
+   per Build or Run command, single-quoted so Git Bash passes every `$` through, followed by the #508
+   pointer. The first "Every language" bullet points at it rather than restating it. Its quoting
+   and "each call is a new PowerShell" are pointed at in "Windows and PowerShell", and the
+   execution-policy refusal at Module 2's Process-scope remedy, never copied (INV-300); the only
+   new text is the stop, the ban on `-ExecutionPolicy Bypass`, the restart of Claude Code from
+   that window, and no persistent scope (INV-199). `TheWindowsFormPassesItsCommandThrough` runs
+   the form in `bash` against a stub `powershell.exe` that records its arguments.
+
 `tests/test_build_and_run_statement.py` narrows its exemption of `ground-rules.md` to the section
 (#594's decision 594-4), so a restatement elsewhere in that file fails there.
 
@@ -65,6 +77,34 @@ WRAPPING = re.compile(r"exec -w /app \S+ (?:ba)?sh -c '\. src/scripts/senzing-en
 POINTER = ("Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no "
            "test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md"
            "#guide-run-blocks)).")
+#: The native-Windows form (#786), which the guide runs from Git Bash, one call per command.
+WINDOWS_FORM = "powershell.exe -NoProfile -Command '. .\\src\\scripts\\senzing-env.ps1; <command>'"
+WINDOWS_BULLET = "- **On native Windows (not SDK setup's `docker` route)"
+#: The first "Every language" bullet's pointer at the native-Windows call (INV-300).
+POINTS_AT_WINDOWS = "On native Windows that shell is the PowerShell call the next bullet gives"
+#: Any statement of the native-Windows wrapping: what no other file may restate (INV-300).
+WINDOWS_WRAPPING = re.compile(
+    r"powershell(?:\.exe)? [^\n`]*-Command ['\"]\. \.\\src\\scripts\\senzing-env\.ps1")
+#: The phrases the native-Windows bullet states, and what each one is.
+WINDOWS_PHRASES = (
+    ("the guide runs every Build and Run command itself, one call per command",
+     "who runs it, one call per command"),
+    ("`<command>` is the table's Build or Run command unchanged. The guide's shell cannot hold the "
+     "`.ps1` script's environment, so each call dot-sources it again", "why the call dot-sources"),
+    ("\"Windows and PowerShell\" below states for a PowerShell-only guide-run block: its quoting "
+     "rule applies to a `'` in `<command>`, and each call is a new PowerShell",
+     "the pointer to the quoting rule and the new-PowerShell rule"),
+    ("When dot-sourcing is refused with \"running scripts is disabled on this system\", stop the "
+     "build or run, and never add `-ExecutionPolicy Bypass` to the call", "the stop and the ban"),
+    ("Give the Bootcamper Module 2's remedy ([the Windows script]"
+     "(../module-02-sdk-setup/SKILL.md#env-script-windows) → \"When PowerShell refuses to run "
+     "the script\")", "the pointer to Module 2's remedy"),
+    ("restart Claude Code from that same PowerShell window", "the restart"),
+    ("Then re-run the same call", "the re-run"),
+    ("Never suggest a persistent scope instead (INV-199)", "no persistent scope"),
+)
+#: What the bullet must not say: Module 2's remedy copied, or a persistent scope (INV-199, INV-300).
+WINDOWS_FORBIDDEN = re.compile(r"Set-ExecutionPolicy|-Scope\s+(?:CurrentUser|LocalMachine|Process)")
 TOOLCHAIN = "- **Install the chosen language's toolchain in the container.**"
 INSTALL_LINE = "<runtime> exec -e DEBIAN_FRONTEND=noninteractive <container> bash -c '<install>'"
 LANGUAGES = ("Python", "Java", "C#", "Rust", "TypeScript")
@@ -163,6 +203,41 @@ def form_problems(ground_rules):
     return problems
 
 
+def windows_route_problems(ground_rules):
+    """The native-Windows bullet (#786): its form once, the pointer, and what it says."""
+    section = between(ground_rules, SECTION, r"\n## ")
+    bullet = between(section, WINDOWS_BULLET, r"\n- \*\*")
+    if not bullet:
+        return ["the section has no native-Windows bullet"]
+    problems = []
+    if [b.strip() for b in fenced_blocks(bullet)] != [WINDOWS_FORM]:
+        problems.append(f"the native-Windows bullet does not give its one form: {WINDOWS_FORM}")
+    elif flat(bullet.split("```", 2)[2].lstrip("\n").split("\n\n", 1)[0]) != POINTER:
+        problems.append("the native-Windows form is not followed by the guide-run pointer line")
+    text = flat(bullet)
+    for phrase, what in WINDOWS_PHRASES:
+        if phrase not in text:
+            problems.append(f"the native-Windows bullet does not state {what}: {phrase!r}")
+    for m in WINDOWS_FORBIDDEN.finditer(bullet):
+        problems.append(f"the native-Windows bullet says {m.group(0)!r}: point at Module 2's "
+                        "remedy, and never a persistent scope")
+    first = between(section, "- **Run every command from the project root", r"\n- \*\*")
+    if POINTS_AT_WINDOWS not in flat(first):
+        problems.append("the first bullet does not point at the native-Windows call")
+    order = [section.index(first), section.index(WINDOWS_BULLET),
+             section.index("- **On SDK setup's")]
+    if order != sorted(order):
+        problems.append("the native-Windows bullet is not the one after the first bullet")
+    return problems
+
+
+def restated_windows_wrapping(files):
+    """Shipped files other than the ground rules that state the native-Windows wrapping."""
+    return [f"{p.name}: {m.group(0)}"
+            for p in files if p != GROUND_RULES
+            for m in WINDOWS_WRAPPING.finditer(read(p))]
+
+
 def restated_wrapping(files):
     """Shipped files other than the ground rules that state the wrapping (INV-300)."""
     return [f"{p.name}: {m.group(0)}"
@@ -259,6 +334,25 @@ def env_template(module_2):
     raise LookupError("Module 2's env-script template")
 
 
+STUB_POWERSHELL = """#!/bin/sh
+# A stand-in powershell.exe: writes each argument it was given on its own NUL-ended record.
+for a in "$@"; do printf '%s\\0' "$a"; done
+"""
+
+
+def run_windows_form(form, scratch, command):
+    """Run `form` as the guide would from Git Bash, against a stub `powershell.exe`."""
+    bin_dir = scratch / "bin"
+    bin_dir.mkdir(exist_ok=True)
+    stub = bin_dir / "powershell.exe"
+    stub.write_text(STUB_POWERSHELL, encoding="utf-8")
+    stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
+    env = dict(os.environ, PATH=f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}")
+    proc = subprocess.run(["bash", "-c", form.replace("<command>", command)], cwd=str(scratch),
+                          env=env, capture_output=True, text=True, timeout=60)
+    return proc, proc.stdout.split("\0")[:-1]
+
+
 STUB_RUNTIME = """#!/bin/sh
 # A stand-in runtime: `exec -w /app <container> <cmd...>` runs <cmd...> in $STUB_APP, the mount.
 [ "$1" = exec ] && [ "$2" = -w ] && [ "$3" = /app ] || { echo "stub: unexpected $*" >&2; exit 97; }
@@ -327,6 +421,101 @@ class TheSectionStatesTheContainerForm(unittest.TestCase):
             copy.write_text(read(MODULE_2) + "\nRun `docker exec -w /app box bash -c '. "
                             "src/scripts/senzing-env.sh && make'`.\n", encoding="utf-8")
             self.assertTrue(restated_wrapping([copy]))
+
+
+class TheSectionStatesTheNativeWindowsForm(unittest.TestCase):
+    """#786: the native-Windows route, stated once, with each negative control biting."""
+
+    def setUp(self):
+        self.text = read(GROUND_RULES)
+
+    def bites(self, old, new):
+        broken = self.text.replace(old, new, 1)
+        self.assertNotEqual(broken, self.text, old)
+        self.assertTrue(windows_route_problems(broken), old)
+
+    def test_the_form(self):
+        self.assertEqual(windows_route_problems(self.text), [])
+
+    def test_negative_control_double_quotes(self):
+        self.bites(WINDOWS_FORM, WINDOWS_FORM.replace("'", '"'))
+
+    def test_negative_control_bypass_added_to_the_call(self):
+        self.bites(WINDOWS_FORM,
+                   WINDOWS_FORM.replace("-NoProfile", "-NoProfile -ExecutionPolicy Bypass"))
+
+    def test_negative_control_no_profile_dropped(self):
+        self.bites(WINDOWS_FORM, WINDOWS_FORM.replace(" -NoProfile", ""))
+
+    def test_negative_control_the_pointer_dropped(self):
+        self.bites(WINDOWS_FORM + "\n  ```\n\n  " + POINTER, WINDOWS_FORM + "\n  ```\n\n  Runs.")
+
+    def test_negative_control_the_restart_dropped(self):
+        self.bites("restart Claude Code from that same PowerShell\n  window", "open a new window")
+
+    def test_negative_control_the_remedy_copied_instead_of_pointed_at(self):
+        self.bites("Then re-run the same call.",
+                   "Run `Set-ExecutionPolicy -Scope Process Bypass`. Then re-run the same call.")
+
+    def test_negative_control_a_persistent_scope(self):
+        self.bites("Then re-run the same call.",
+                   "Or use `-Scope CurrentUser RemoteSigned`. Then re-run the same call.")
+
+    def test_negative_control_the_bypass_ban_dropped(self):
+        self.bites("and never add\n  `-ExecutionPolicy Bypass` to the call", "and retry")
+
+    def test_negative_control_the_first_bullet_no_longer_points(self):
+        self.bites(" " + POINTS_AT_WINDOWS + ".", "")
+
+    def test_no_other_shipped_file_restates_the_windows_wrapping(self):
+        files = corpus_files("plugins", suffixes={".md"})
+        self.assertIn(MODULE_2, files, "the scan does not reach Module 2 (INV-265)")
+        self.assertEqual(restated_windows_wrapping(files), [])
+
+    def test_negative_control_a_restated_windows_wrapping(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            copy = Path(tmp) / "SKILL.md"
+            for form in (WINDOWS_FORM, WINDOWS_FORM.replace("'", '"'),
+                         WINDOWS_FORM.replace("powershell.exe", "powershell")):
+                with self.subTest(form=form):
+                    copy.write_text(read(MODULE_2) + f"\nRun `{form}`.\n", encoding="utf-8")
+                    self.assertTrue(restated_windows_wrapping([copy]))
+
+
+@unittest.skipIf(shutil.which("bash") is None, "bash is not installed")
+class TheWindowsFormPassesItsCommandThrough(unittest.TestCase):
+    """The form in `bash`, as Git Bash runs it, against a stub `powershell.exe` (#786).
+
+    It shows what the guide's shell hands PowerShell; it cannot show PowerShell running it.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.scratch = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_the_build_command_reaches_powershell_unchanged(self):
+        build = "python3 -m py_compile src/system_verification/verify_pipeline.py"
+        proc, argv = run_windows_form(WINDOWS_FORM, self.scratch, build)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(argv, ["-NoProfile", "-Command",
+                                ". .\\src\\scripts\\senzing-env.ps1; " + build])
+
+    def test_a_dollar_and_an_escaped_quote_pass_through(self):
+        """The ground rules' quoting rule: every `$` unchanged, a `'` written as `'\\''`."""
+        proc, argv = run_windows_form(WINDOWS_FORM, self.scratch,
+                                      "Write-Output $env:SENZING_DIR '\\''x'\\''")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(argv[2], ". .\\src\\scripts\\senzing-env.ps1; "
+                                  "Write-Output $env:SENZING_DIR 'x'")
+
+    def test_negative_control_double_quotes_lose_the_dollar(self):
+        proc, argv = run_windows_form(WINDOWS_FORM.replace("'", '"'), self.scratch,
+                                      "Write-Output $env:SENZING_DIR")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertNotIn("$env:SENZING_DIR", argv[2])
 
 
 class TheCompileCheckUsesTheBuildCommand(unittest.TestCase):

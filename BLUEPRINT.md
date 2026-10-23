@@ -1635,7 +1635,12 @@ Ground rules (`ground-rules.md`, every turn):
   `<runtime> exec -w /app <container> bash -c '. src/scripts/senzing-env.sh
   && <command>'`, runtime and name from the SDK container's
   `docker_containers` entry, a guide-run block (`bash`, since dash rejects the
-  env script's `${BASH_SOURCE[0]}`; #595).
+  env script's `${BASH_SOURCE[0]}`; #595). On native Windows off that route,
+  the guide runs each one itself as a single-quoted `powershell.exe -NoProfile
+  -Command` call that dot-sources `senzing-env.ps1` first, a guide-run block;
+  on "running scripts is disabled" it stops, never adds `-ExecutionPolicy
+  Bypass`, and points at Module 2's Process-scope remedy plus a restart of
+  Claude Code from that window (#786).
 - Platform notes: Java standalone files use a package-private class;
   PowerShell 5.1 syntax and encodings; sourced env scripts work under zsh and
   never `exit`; on Docker a fresh parse error is retried once, and confirmed
@@ -10481,21 +10486,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8633 test methods in 456 files, matching `inventory.test_count_total`.
+There are 8654 test methods in 456 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8633.
+sum to 8654.
 
-Two files run more tests than they define, so discovery collects 8640:
+Two files run more tests than they define, so discovery collects 8661:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8633`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8654`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8640`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8661`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10558,7 +10563,7 @@ looks wrong.
 - `tests/test_conformance_sees_a_rule_beside_a_citation.py`: 8
 - `tests/test_container_lifecycle_runtimes.py`: 18
 - `tests/test_container_names_are_project_derived.py`: 36
-- `tests/test_container_route_build_and_run.py`: 20
+- `tests/test_container_route_build_and_run.py`: 35
 - `tests/test_container_route_reads_no_plugin_asset.py`: 29
 - `tests/test_container_viz_port_is_published_and_checked.py`: 28
 - `tests/test_container_teardown_has_a_route_and_a_failure_report.py`: 8
@@ -10950,7 +10955,7 @@ looks wrong.
 - `tests/test_why_key_details_flag_is_cited_not_guessed.py`: 12
 - `tests/test_why_side_match_family_is_renamed.py`: 10
 - `tests/test_windows_browser_discovery.py`: 23
-- `tests/test_windows_forms_at_hand_run_sites.py`: 43
+- `tests/test_windows_forms_at_hand_run_sites.py`: 49
 - `tests/test_windows_powershell_guidance.py`: 36
 - `tests/test_worked_steers.py`: 33
 - `tests/test_wrapped_text.py`: 37
@@ -13880,6 +13885,18 @@ Senzing licensing, with no SPDX identifier.
   invent a provider that graduation stamped into production files); a new
   guard pins the mapping and the rendering with negative controls, and an
   INV-097 amendment is queued for `/review-invariants`
+- #786: on native Windows off the `docker` route, the ground rules' build
+  section has the guide run each Build and Run command itself as one
+  single-quoted `powershell.exe -NoProfile -Command` call that dot-sources
+  `senzing-env.ps1` first, with the guide-run pointer, and on an
+  execution-policy refusal stop,
+  never add `-ExecutionPolicy Bypass`, point at Module 2's Process-scope remedy
+  and restart Claude Code from that window (INV-199); graduation's five
+  `py -3` sites become `python3`, and no Markdown `propagate-to-public` ships
+  may say `py -3` (Git Bash cannot hold the `.ps1` environment, so Windows had
+  no working route, and `README.md` already requires `python3` there); the
+  #420 venv pairing now asks for `python3` in a block's `# Windows` part, and
+  an INV-370 amendment is queued for `/review-invariants`
 - #787: shipped hard rules cite, on the ⛔ line itself, the invariant whose
   registered statement makes each claim (INV-396): INV-394, INV-378, INV-160,
   INV-393, INV-295 and INV-300 replace or join the ids Module 3b, ground
