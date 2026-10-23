@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read the pending `DEFERRED INVARIANT` blocks out of `specs/IMPLEMENTED.md`.
+"""Read the pending `DEFERRED INVARIANT` and `PROPOSED AMENDMENT` blocks out of `specs/IMPLEMENTED.md`.
 
 This exists because the by-hand version failed twice on 2026-09-01, in both directions:
 
@@ -123,9 +123,20 @@ BLOCK_HEADER = re.compile(r"^- (?:⛔ )?\*\*(?:DEFERRED INVARIANT|PROPOSED AMEND
 #: The header's bold text -- the only part of a block that states what became of it.
 HEADER_TEXT = re.compile(r"^- (?:⛔ )?\*\*(.+?)\*\*", re.S)
 
-#: ⛔ (#770, INV-409) What makes a block DECIDED, read off its bold header and nothing else: registered
-#: (`(resolved INV-NNN, …)`, `resolved as an amendment`), an amendment `— applied <date>`, or
-#: `superseded`. **Every other block is in the queue**, held or pending.
+#: ⛔ (#770, INV-409) What makes a block DECIDED, read off its bold header and nothing else. **Every
+#: other block is in the queue**, held or pending. The six forms the ledger writes a decision in:
+#:
+#: * `(resolved INV-NNN, …)` -- registered under a new id;
+#: * `resolved as an amendment` / `(resolved by amendment, …)` -- decided as a change to an existing id;
+#: * `(resolved <date> — …)` -- decided with no id minted;
+#: * `— applied <date>` -- an amendment written into `specs/INVARIANTS.md`;
+#: * `— superseded by …` -- replaced by a later block.
+#:
+#: ⚠️ (#778) **A form, never a bare word.** #770 matched `resolved` and `superseded` anywhere in the
+#: header, so an undecided block headed "not yet resolved" or "would be superseded if …" read as
+#: decided and silently left the queue -- the very failure the decision list exists to prevent.
+#: A decided header in a seventh form now shows as pending, which is the loud direction: the
+#: maintainer rewrites the header in one of the six.
 #:
 #: ⚠️ Until #770 the rule ran the other way: a block was queued only when its body carried one of
 #: three exact markers (`AWAITING`, `HELD_IN_BLOCK`, `AMENDMENT_AWAITING`), so a run that worded
@@ -134,11 +145,17 @@ HEADER_TEXT = re.compile(r"^- (?:⛔ )?\*\*(.+?)\*\*", re.S)
 #: for at least one full review. A marker list fails silent on any wording nobody listed; a
 #: decision list fails loud, because a decided block worded unfamiliarly reappears as pending
 #: and the maintainer corrects its header.
-DECIDED_IN_HEADER = re.compile(r"\bresolved\b|— applied \d{4}-\d{2}-\d{2}|\bsuperseded\b")
+DECIDED_IN_HEADER = re.compile(
+    r"\(resolved INV-\d{3}"
+    r"|resolved as an amendment"
+    r"|resolved by amendment"
+    r"|\(resolved \d{4}-"
+    r"|— applied \d{4}-\d{2}-\d{2}"
+    r"|— superseded by")
 
 
 def blocks(include_resolved=False):
-    """Every DEFERRED INVARIANT block that is not already resolved.
+    """Every DEFERRED INVARIANT or PROPOSED AMENDMENT block whose header records no decision.
 
     ``include_resolved=True`` also returns every block already decided, each with
     ``resolved: True``. The review queue never shows them, but their quotes still name shipping

@@ -4536,7 +4536,8 @@ invariant in one edit with `(Source: ...)`; cite `(INV-NNN)` at every site,
 derived from `sites` plus a repository grep (INV-246); back-cite from the
 enforcer and re-derive `EXPECTED_PAIRS` in
 `tests/test_invariant_enforcer_citations.py`; mark the block `resolved
-INV-NNN, registered by the maintainer <date>` (amendments `applied <date>`);
+INV-NNN, registered by the maintainer <date>` (amendments end the bold header
+`— applied <date> by the maintainer.`);
 verify (`citations.py verify`, `coverage_reports.py shipped`, the suite);
 regenerate the manifest; then stop at the working tree, no commit or push
 (INV-310), listing touched files. Hold: a `**HELD <date>:**` paragraph inside
@@ -4545,11 +4546,12 @@ write a `## invariant-review-<date>` **Not a spec** ledger entry.
 
 `pending_invariants.py <subcommand>` (read-only, exit 0 always, including
 for unknown subcommands, which print the docstring; no argument or
-`-h`/`--help`/`help` prints it too). `blocks` scans the ledger for bullets
-starting `-` that contain `DEFERRED INVARIANT` (not `resolved INV-`) or
-`PROPOSED AMENDMENT`, running to the next `##` or top-level `- **`, and
-keeps a block only when its body carries a marker (`AWAITING`,
-`HELD_IN_BLOCK` or `AMENDMENT_AWAITING`). `parse` extracts rule bullets
+`-h`/`--help`/`help` prints it too). `blocks` finds a block by its header
+(`BLOCK_HEADER`: a top-level `- **` or `- ⛔ **` bullet opening `DEFERRED
+INVARIANT` or `PROPOSED AMENDMENT`), running to the next `##` or top-level
+`- **`, and treats it as decided only when its bold header matches one of the
+six forms in `DECIDED_IN_HEADER`; a decision word in any other form, such as
+"not yet resolved", leaves it in the queue (#770, #778). `parse` extracts rule bullets
 (indented items with ⛔) as `described` (`DESCRIBED`, path first, never
 verified) or `quoted` (`QUOTE` with an optional `— in <path>` location), or
 records them as unparsed; the drafted wording after `**INV-NNN**` or
@@ -6201,7 +6203,13 @@ def flat(s):
     ...
 BLOCK_HEADER = re.compile(r"^- (?:⛔ )?\*\*(?:DEFERRED INVARIANT|PROPOSED AMENDMENT)\b")
 HEADER_TEXT = re.compile(r"^- (?:⛔ )?\*\*(.+?)\*\*", re.S)
-DECIDED_IN_HEADER = re.compile(r"\bresolved\b|— applied \d{4}-\d{2}-\d{2}|\bsuperseded\b")
+DECIDED_IN_HEADER = re.compile(
+    r"\(resolved INV-\d{3}"
+    r"|resolved as an amendment"
+    r"|resolved by amendment"
+    r"|\(resolved \d{4}-"
+    r"|— applied \d{4}-\d{2}-\d{2}"
+    r"|— superseded by")
 def blocks(include_resolved=False):
     ...
 def hold_reason(block_text):
@@ -10441,7 +10449,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8479 test methods in 453 files, matching `inventory.test_count_total`.
+There are 8489 test methods in 453 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 8433.
@@ -10541,7 +10549,7 @@ looks wrong.
 - `tests/test_default_flags_production_caution.py`: 12
 - `tests/test_deferral_freshness.py`: 5
 - `tests/test_deferral_quotes_match_their_source.py`: 11
-- `tests/test_deferrals_do_not_name_a_literal_next_id.py`: 5
+- `tests/test_deferrals_do_not_name_a_literal_next_id.py`: 6
 - `tests/test_delegate_files_issues_not_specs.py`: 18
 - `tests/test_dependency_reading_rules.py`: 13
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
@@ -10797,7 +10805,7 @@ looks wrong.
 - `tests/test_reverse_check_counts_what_it_cannot_test.py`: 16
 - `tests/test_reverse_contract_flags_the_maintainer_surface.py`: 7
 - `tests/test_reversed_decision_capture.py`: 35
-- `tests/test_review_invariants_queue.py`: 12
+- `tests/test_review_invariants_queue.py`: 13
 - `tests/test_review_invariants_stops_at_the_working_tree.py`: 9
 - `tests/test_root_readme_exception.py`: 12
 - `tests/test_routing_report_payload_limitation_is_relayed.py`: 10
@@ -13800,3 +13808,12 @@ Senzing licensing, with no SPDX identifier.
   pending, `tests/test_applied_amendments_are_registered.py` checks each
   applied header's marker against the invariant's whole entry, and the rule
   is queued as a new invariant for `/review-invariants`
+- #778: the review queue decides a block only on one of the six header forms
+  the ledger writes (`(resolved INV-nnn`, `resolved as an amendment`,
+  `resolved by amendment`, `(resolved <date>`, `— applied <date>`, `— superseded
+  by`), not on a bare `resolved` or `superseded` (a header reading "not yet
+  resolved" silently left the queue); `tests/test_review_invariants_queue.py`
+  gets its own decision pattern, a negated-word negative control and reads
+  holds from the ledger only, the literal-next-id guard reads blocks through
+  `pending_invariants.blocks()`, and no invariant is added (INV-409 as
+  registered)

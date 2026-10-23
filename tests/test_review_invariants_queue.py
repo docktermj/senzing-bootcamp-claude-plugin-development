@@ -23,6 +23,13 @@ Two mechanisms are evidence only where they could differ: both now find a block 
 but the helper splits blocks and reads each header's bold text while this scans line by line, and
 `AnUnfamiliarHeaderIsNeverDropped` drives the helper over headers nobody has written yet.
 
+⛔ **(#778, INV-409) The decision pattern here is this file's own, never a copy of the helper's.** Until
+#778 this file's `DECIDED` pattern was the helper's `DECIDED_IN_HEADER` pasted in, so when that pattern matched a
+bare `resolved` or `superseded` -- and an undecided header reading "not yet resolved" left the
+queue -- both mechanisms dropped it together and agreed. `records_a_decision` is written as string
+tests over the six forms, the helper as one regex; the negated-word fixtures are the negative
+control that fails if the helper's pattern widens again.
+
 INV-409 (the queue admits every block by its header and treats it as decided only when the header
 records the decision) names this file as its enforcer. It establishes how the helper classifies
 fixture headers and the live ledger; it does not establish that a writer puts its decision in
@@ -43,24 +50,44 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 HELPER = REPO / ".claude" / "skills" / "review-invariants" / "pending_invariants.py"
 LEDGER = REPO / "specs" / "IMPLEMENTED.md"
-SPECS = REPO / "specs"
 
 # ⚠️ A block whose spec required approval before implementation never records a `HELD` paragraph
 # -- its header says this. Scanning without it found 0 held where 1 is held, and the
 # disagreement with the helper is what surfaced it: two mechanisms are evidence precisely when
 # they differ.
 HELD_IN_BLOCK = "must be approved before implementation"
-HELD_IN_SPEC = "Held, not merely unapproved"
 
 #: A block's header line: a deferral, an amendment, or the older `- ⛔ **` form (#770).
 HEADER = re.compile(r"^- (?:⛔ )?\*\*(?:DEFERRED INVARIANT|PROPOSED AMENDMENT)\b")
-#: The words a header uses once the maintainer has decided the block (#770).
-DECIDED = re.compile(r"\bresolved\b|— applied \d{4}-\d{2}-\d{2}|\bsuperseded\b")
+#: How a header records the maintainer's decision (#770, #778): an opening that only a decision
+#: writes, never a decision WORD -- "not yet resolved" and "would be superseded" decide nothing.
+DECISION_PHRASES = ("(resolved INV-", "resolved as an amendment", "resolved by amendment",
+                    "— superseded by ")
+#: `(resolved <date>` and `— applied <date>` carry an ISO date, read by `iso_date_follows`.
+DATED_DECISIONS = ("(resolved ", "— applied ")
+
+
+def iso_date_follows(text, opener):
+    """True when some `opener` in `text` is followed directly by a YYYY-MM-DD date."""
+    start = text.find(opener)
+    while start != -1:
+        date = text[start + len(opener): start + len(opener) + 10]
+        if len(date) == 10 and date[4] == date[7] == "-" and (date[:4] + date[5:7]
+                                                              + date[8:]).isdigit():
+            return True
+        start = text.find(opener, start + 1)
+    return False
+
+
+def records_a_decision(header):
+    """True when a block's bold header text records a decision in one of the ledger's forms."""
+    return (any(phrase in header for phrase in DECISION_PHRASES)
+            or any(iso_date_follows(header, opener) for opener in DATED_DECISIONS))
 
 
 def undecided_header(line):
     """True when `line` opens a block whose header records no decision."""
-    return bool(HEADER.match(line)) and not DECIDED.search(line.split("**")[1])
+    return bool(HEADER.match(line)) and not records_a_decision(line.split("**")[1])
 
 
 def helper(*args):
@@ -76,19 +103,21 @@ HELD_PARAGRAPH = re.compile(r"\*\*HELD \d{4}-\d{2}-\d{2}:\*\*")
 
 
 def counted_by_scanning():
-    """(pending, held) derived by a flat marker scan -- not by splitting blocks.
+    """(pending, held) derived by a flat header scan -- not by splitting blocks.
 
-    ⚠️ A hold is found two ways, and this scan must see both. The older one lives in the spec
-    file (`HELD_IN_SPEC`). The one the skill now writes is a `**HELD <date>:**` paragraph inside
-    the block, which the scan reads line by line: a paragraph seen after a pending block's marker
-    line, and before the next block or section starts, moves that block from pending to held.
-    The first issue-driven hold (2026-09-29) is what showed the scan could not see it.
+    ⚠️ A hold is read from the ledger only, as the helper reads it: a `**HELD <date>:**` paragraph
+    inside the block, or `HELD_IN_BLOCK` on its header line. The scan reads line by line: a
+    paragraph seen after a pending block's header line, and before the next block or section
+    starts, moves that block from pending to held. The first issue-driven hold (2026-09-29) is
+    what showed the scan could not see it. (#778) The spec-file route this scan also read is gone:
+    the helper dropped it in #58, the one block that used it carries its `HELD` paragraph in the
+    ledger, and a second route here could only agree with a hold the helper cannot see.
     """
     text = LEDGER.read_text(encoding="utf-8")
-    spec, pending, held, open_pending = None, 0, 0, False
+    pending, held, open_pending = 0, 0, False
     for line in text.splitlines():
         if line.startswith("## "):
-            spec, open_pending = line[3:].strip(), False
+            open_pending = False
         elif re.match(r"^- (?:⛔ )?\*\*", line) and not undecided_header(line):
             open_pending = False
         if open_pending and HELD_PARAGRAPH.search(line):
@@ -96,9 +125,7 @@ def counted_by_scanning():
             continue
         if not undecided_header(line):
             continue
-        f = SPECS / f"{spec}.md"
-        is_held = (HELD_IN_BLOCK in line
-                   or (f.is_file() and HELD_IN_SPEC in f.read_text(encoding="utf-8")))
+        is_held = HELD_IN_BLOCK in line
         held += is_held
         pending += not is_held
         open_pending = not is_held
@@ -127,9 +154,9 @@ class TheQueueCountsBlocksNotMentions(unittest.TestCase):
         _, held = counted_by_scanning()
         self.assertEqual(
             held, self.reported[1],
-            "the helper's held count disagrees with the spec files' recorded holds. A "
-            "block whose spec says 'Held, not merely unapproved' has been decided, and "
-            "presenting it as awaiting review asks for a decision that already exists.",
+            "the helper's held count disagrees with the holds the ledger records. A block "
+            "carrying a `**HELD <date>:**` paragraph has been decided, and presenting it as "
+            "awaiting review asks for a decision that already exists.",
         )
         self.assertIn("HELD: already decided, NOT for review", self.out)
 
@@ -266,6 +293,21 @@ class AnUnfamiliarHeaderIsNeverDropped(unittest.TestCase):
             pending, held = module("- **%s**%s" % (header, BODY), tmp).queue()
             return len(pending), len(held)
 
+    def test_a_negated_decision_word_is_pending(self):
+        """⛔ (#778) The negative control: a decision WORD in an undecided header decides nothing.
+
+        #770's pattern matched `resolved` and `superseded` anywhere in the header, so each of
+        these left the queue while undecided. This fails if the helper's pattern widens again.
+        """
+        for header in (
+                "DEFERRED INVARIANT — not yet resolved; NOT minted.",
+                "DEFERRED INVARIANT — would be superseded if a later block replaces it; NOT minted.",
+                "PROPOSED AMENDMENT to INV-216 — awaiting the maintainer's sign-off; NOT applied."):
+            with self.subTest(header=header[:60]):
+                self.assertEqual((1, 0), self.queued(header))
+                self.assertFalse(records_a_decision(header),
+                                 "this file's own decision pattern reads the fixture as decided")
+
     def test_the_wording_that_was_dropped_is_pending(self):
         self.assertEqual((1, 0), self.queued(
             # The live wording, its INV citation split so it is not read as one here.
@@ -284,9 +326,14 @@ class AnUnfamiliarHeaderIsNeverDropped(unittest.TestCase):
                 "AMENDMENT to INV-399 — applied 2026-10-22 by the maintainer.",
                 "DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED "
                 "AMENDMENT to INV-107 — applied 2026-10-19.",
-                "DEFERRED INVARIANT — NOT minted — superseded by the #239 block."):
+                "DEFERRED INVARIANT — NOT minted — superseded by the #239 block.",
+                "DEFERRED INVARIANT (resolved by amendment, decided by the maintainer "
+                "2026-09-16 — NO id minted).",
+                "DEFERRED INVARIANT (resolved 2026-10-20 — NOT minted as its own id)."):
             with self.subTest(header=header[:60]):
                 self.assertEqual((0, 0), self.queued(header))
+                self.assertTrue(records_a_decision(header),
+                                "this file's own decision pattern misses a decision form")
 
     def test_a_decision_word_below_the_header_decides_nothing(self):
         """Only the header records the decision; the body may quote anything."""

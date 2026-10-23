@@ -85,9 +85,15 @@ scans it like any other block.
 ⚠️ **Write the real id, not `INV-NNN`.** The invariant exists; writing NNN would be false rather
 than deliberate, and `check` resolves the quote against the file the bullet names either way.
 
-⛔ **Applying one resolves it** — mark the bullet `applied YYYY-MM-DD` so it leaves the queue,
-exactly as `resolved INV-nnn` does for a deferral. Re-offering a decision already made asks the
-maintainer to re-derive it.
+⛔ **Applying one resolves it** — rewrite the end of its bold header so it leaves the queue,
+exactly as `(resolved INV-nnn, …)` does for a deferral. The helper reads `— applied <date>`
+inside the bold header and nowhere else:
+
+```markdown
+- **PROPOSED AMENDMENT to INV-nnn — applied YYYY-MM-DD by the maintainer.**
+```
+
+Re-offering a decision already made asks the maintainer to re-derive it.
 
 ## The three verdicts
 
@@ -144,17 +150,21 @@ python3 .claude/skills/review-invariants/pending_invariants.py list
 It prints the pending blocks numbered, the count, the next free ID, and — separately —
 any block that is **held**, with the recorded reason.
 
-⚠️ **(INV-409) A block is pending unless its own header records a decision** — `resolved`, `— applied
-<date>` or `superseded` in the bold header — or it carries a hold (#770). The header's other
-wording does not matter: until #770 the queue admitted only blocks carrying the exact
+⚠️ **(INV-409) A block is pending unless its own header records a decision** — in one of the six
+forms `DECIDED_IN_HEADER` in `pending_invariants.py` matches: `(resolved INV-nnn`, `resolved as an
+amendment`, `resolved by amendment`, `(resolved YYYY-MM-DD`, `— applied YYYY-MM-DD` or
+`— superseded by` in the bold header — or it carries a hold (#770). A decision word in any other
+form decides nothing: "not yet resolved" and "would be superseded" stay pending (#778). The
+header's other wording does not matter: until #770 the queue admitted only blocks carrying the exact
 "awaiting the maintainer's sign-off" marker, and seven blocks worded "a new id is owed" were
 missing from a list that read `pending: 0`. So when you resolve or apply a block, put the
 decision **in its header**, as Step 3 shows; a decision recorded only below it leaves the
 block in the queue.
 
 ⛔ **Never present a held block as awaiting a decision.** It has one. Re-offering it asks
-the maintainer to re-derive a decision they already made and recorded, and the reason is
-in the spec, not in the ledger, which is why the helper reads both. Mention held blocks
+the maintainer to re-derive a decision they already made and recorded. The helper reads the
+hold, and its reason, from the ledger only: the block's `**HELD <date>:**` paragraph ("Hold",
+below). Mention held blocks
 once, as context, and move on. Bring one back only when its revisit condition is **met** —
 and say which condition, and what met it.
 
@@ -342,8 +352,9 @@ Change the wording in the block first, show the maintainer the changed text, and
 second yes on **that**. Then register it. An amendment approved in passing is a wording
 nobody read.
 
-Then **resolve the prose, not only the block.** Applying one marks the bullet
-`applied YYYY-MM-DD` ("Writing one", above), the way Register's step 6 resolves a deferral's block.
+Then **resolve the prose, not only the block.** Applying one ends its bold header
+`— applied YYYY-MM-DD by the maintainer.` ("Writing one", above), the way Register's step 6
+resolves a deferral's block.
 ⛔ **(INV-386) The block is not the only place that called the amendment pending.** The guard enforcing
 the amended rule says so in its own docstring, and that sentence survives the registration — so
 its next reader concludes the rule the guard asserts is not yet binding, which is INV-308's
