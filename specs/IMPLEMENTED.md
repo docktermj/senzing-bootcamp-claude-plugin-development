@@ -128,7 +128,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   **INV-NNN** — When graduation's coverage check reports an expected visualization with no capture manifest, graduation MUST offer to re-start that module's app and re-run the bundled capture, then backfill the recap, before rendering it; declining MUST NOT block graduation.
 
   *(written as NNN deliberately: this command cannot mint an id, and a literal id here would cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a number written here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Module Completion's recap structural check never blocks completion, and a check that cannot run is recorded. The rule already shipping, quoted:
+- **DEFERRED INVARIANT (resolved INV-411, registered by the maintainer 2026-10-22, after an amendment).** Module Completion's recap structural check never blocks completion, and a check that cannot run is recorded. The rule already shipping, quoted:
     - ⛔ **Non-blocking and Bootcamper-invisible (INV-012).** — in `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`
 
   **Why it is not an existing invariant:** INV-012 covers invisibility only; the non-blocking clause lost its INV-048 credit in `589a18d0` (#685), and no invariant states that the per-module `--check` never blocks. The same line says "If the script is missing or fails to execute, continue silently", which sits uneasily with INV-163 ("a verification check that cannot run … MUST be recorded as skipped").
