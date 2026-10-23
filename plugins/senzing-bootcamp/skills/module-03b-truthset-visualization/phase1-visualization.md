@@ -105,7 +105,7 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    canonical statement of its remedy, and the branches below point here instead of keeping a copy
    (INV-300).
 
-   ⛔ **(INV-080) Relay the server's own sentence; do not reason about connector topology here.**
+   ⛔ **(INV-378) Relay the server's own sentence; do not reason about connector topology here.**
    Read it at runtime from `get_capabilities()` → the `tools[]` entry whose `name` is
    `get_sample_data` → that entry's `description`, whose closing note carries it; `dataset=` stays
    required on every call of it (INV-136). As read on **MCP server 1.39.1, 2026-10-16**:
@@ -123,7 +123,7 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    - ⛔ **(INV-378) Do not retry it, and do not classify it as `unavailable`.** A second attempt down the
      same route is filtered the same way, and the exceptional fallback at 3 below is for a server
      that does not carry the Truth Set, which is not the case here.
-   - ⛔ **This is not the refusal INV-292's 403 branch answers.** That remedy switches back to
+   - ⛔ **(INV-378) This is not the refusal INV-292's 403 branch answers.** That remedy switches back to
      `citation.download_url`, and a denied reply handed over no `citation` to switch within, so
      those clauses do not reach it.
    - ⚠️ **(INV-125) The branch fires on the `Denied.` string by itself.** Where
@@ -148,7 +148,7 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    uncapped file but requires egress to raw.githubusercontent.com."* The cap in it is the server's
    figure on that date: read `download_url_max_records` from the response rather than from this note.
 
-   ⛔ **A `Denied.` reply here belongs to the `denied` outcome in 1 above, not this one** (INV-300).
+   ⛔ **(INV-378) A `Denied.` reply here belongs to the `denied` outcome in 1 above, not this one** (INV-300).
    Its remedy is stated once at sub-step 1.1 → "A `Denied.` reply is a platform-layer filter"; read
    it there rather than restating it here.
 
@@ -169,7 +169,7 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
         reach the Bootcamper first; the remedy is stated here rather than assumed.
       - ⛔ **(INV-292) Never set a misleading User-Agent to get around it** — beyond being the
         wrong habit to teach, it was measured not to work.
-      - ⛔ **A `Denied.` body is neither that refusal nor the 429 throttle under 3** (INV-300).
+      - ⛔ **(INV-378) A `Denied.` body is neither that refusal nor the 429 throttle under 3** (INV-300).
         Nothing is refusing the URL and nothing is rate-limiting it — the filter sits in front of
         the server, so neither switching routes nor backing off reaches it. Take the `denied`
         outcome at sub-step 1.1 → "A `Denied.` reply is a platform-layer filter", where the remedy

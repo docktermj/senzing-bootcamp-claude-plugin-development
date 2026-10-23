@@ -658,8 +658,8 @@ def strong_label_problems(text):
     if section is None:
         return ["Phase D has no iterate-vs-proceed gate"]
     problems = []
-    rule = ("⛔ **Never call a result strong when a metric the strong branch explicitly requires "
-            "falls short or was never established**")
+    rule = ("⛔ **(INV-404) Never call a result strong when a metric the strong branch explicitly "
+            "requires falls short or was never established**")
     if flat(rule) not in flat(section):
         problems.append("the gate does not forbid the strong label where a required metric fails")
     g = phase_d_gate(text)
@@ -1258,8 +1258,8 @@ class EachCheckSeesTheDefectItWasWrittenFor(unittest.TestCase):
         self.assertTrue(any("cannot be read as a band" in p for p in problems), problems)
 
     def test_dropping_the_never_strong_rule_is_reported(self):
-        texts = self.mutated("phase_d", "⛔ **Never call a result strong when a metric the "
-                             "strong branch explicitly requires falls short or\nwas never "
+        texts = self.mutated("phase_d", "⛔ **(INV-404) Never call a result strong when a metric "
+                             "the strong branch explicitly requires falls\nshort or was never "
                              "established**", "The strong branch is for strong results.")
         self.assertTrue(run("strong", texts))
 

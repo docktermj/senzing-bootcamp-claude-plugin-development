@@ -309,10 +309,10 @@ hit, decide between:
 - **Unregistered rule** → the plugin guarantees something the ruleset does not record.
   Draft the invariant: its wording, its enforcer and every site it ships at. The
   maintainer's sign-off on the wording and the id come later, through `/review-invariants`.
-  ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
+  ⛔ **(INV-365) Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
   `DEFERRED INVARIANT` block in the run's `specs/IMPLEMENTED.md` entry, as
   [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
-  (INV-300), then tell the maintainer to run `/review-invariants` (INV-365).
+  (INV-300), then tell the maintainer to run `/review-invariants`.
 - **Missing citation** → the rule *is* registered; the text just does not say which
   invariant governs. Add the citation. This is not cosmetic: INV-183 requires a step
   that generates an artifact to name its governing rules **at that step**, and a rule
@@ -464,19 +464,19 @@ session end:
    unattended run writes the findings themselves here. Then either queue the invariant it
    establishes or state that it establishes none (`tests/test_spec_ledger_invariants.py`
    enforces this).
-   ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
+   ⛔ **(INV-365) Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
    `DEFERRED INVARIANT` block in the run's `specs/IMPLEMENTED.md` entry, as
    [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
-   (INV-300), then tell the maintainer to run `/review-invariants` (INV-365). An audit that changes
+   (INV-300), then tell the maintainer to run `/review-invariants`. An audit that changes
    shipped code and leaves no ledger entry is the failure adjacent to the one INV-182
    prevents — follow the `deep-dive-audit-*` precedent and record it as a dated
    `## production-readiness-audit-<date>` entry marked **Not a spec**.
 6. **Propose a correction when the invariant is what is wrong** — a dated note saying what
    was verified and when. Never delete or renumber it.
-   ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
+   ⛔ **(INV-365) Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
    `PROPOSED AMENDMENT` block in the run's `specs/IMPLEMENTED.md` entry, as
    [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
-   (INV-300), then tell the maintainer to run `/review-invariants` (INV-365).
+   (INV-300), then tell the maintainer to run `/review-invariants`.
 
 ⛔ **Do not end a run with unrecorded findings.** Before reporting, list what you found
 and confirm each is **either a filed issue or a line in the dated ledger entry**. "I
@@ -519,11 +519,11 @@ writes the ledger (INV-317's 2026-10-13 note).
   Senzing fact — say so explicitly rather than implying a re-check happened.
 - **`INVARIANTS.md` is append-only, and only `/review-invariants` writes to it.** A new
   invariant needs the maintainer's sign-off on the wording, and so does a correction.
-  ⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
+  ⛔ **(INV-365) Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
   `DEFERRED INVARIANT` block for a new rule, or a `PROPOSED AMENDMENT` block for a correction,
   in the run's ledger entry, as
   [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
-  (INV-300), then tell the maintainer to run `/review-invariants` (INV-365). An unattended run, which
+  (INV-300), then tell the maintainer to run `/review-invariants`. An unattended run, which
   cannot get a sign-off, takes the same route.
 - **`.claude/` never ships.** `propagate.sh` mirrors `plugins/`, `.claude-plugin/`,
   `docs/` and `README.md` only, so this skill and its helper stay maintainer-side.

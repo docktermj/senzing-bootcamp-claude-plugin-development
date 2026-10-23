@@ -168,8 +168,8 @@ MUST_PASS_309 = [
 
 #: ⛔ Must pass: correct prose a too-wide matcher would flag (INV-282).
 MUST_PASS = [
-    "⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a "
-    "`DEFERRED INVARIANT` block in the run's `specs/IMPLEMENTED.md` entry.",
+    "⛔ **(INV-365) Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** "
+    "write a `DEFERRED INVARIANT` block in the run's `specs/IMPLEMENTED.md` entry.",
     "⛔ **This skill never edits `specs/INVARIANTS.md` and never mints an id.**",
     "`INVARIANTS.md` is append-only; a superseded invariant is *marked* superseded.",
     "Per `INVARIANTS.md`'s own rules, propose appending a superseding note.",
@@ -489,8 +489,7 @@ class NegativeControls(unittest.TestCase):
     def test_restoring_auto_tests_pre_520_sentence_fails(self):
         live_tail = "and either queue the invariant it establishes"
         start = self.live.index(live_tail)
-        end = self.live.index("(INV-300), then tell the maintainer to run `/review-invariants` "
-                              "(INV-365).",
+        end = self.live.index("(INV-300), then tell the maintainer to run `/review-invariants`.",
                               start)
         end = self.live.index("\n", end)
         restored = self.live[:start] + AUTO_TEST_BEFORE_520 + self.live[end:]

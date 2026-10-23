@@ -154,7 +154,7 @@ class TheBlanketCaveatIsReplacedByPerLimitationFreshness(unittest.TestCase):
         `embedded_master`, which is the disposition that produces REL_* scaffolding at all —
         the key is a derived hash and both KEY attributes fail with the others. A reader
         following the old text would read their failure as a mapping defect and iterate on
-        correct code, which is what INV-048/INV-173 exist to prevent.
+        correct code, which is what INV-173 exists to prevent.
         """
         self.assertRegex(
             self.block,

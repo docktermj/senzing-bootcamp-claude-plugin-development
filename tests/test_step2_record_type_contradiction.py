@@ -76,7 +76,7 @@ class TheContradictionIsPreEmptedAtTheStepThatHitsIt(unittest.TestCase):
         self.assertRegex(
             self.plan, r"(?i)not your error and not a mapping defect",
             "a guide meeting the warning has nothing telling them it is expected, so they "
-            "will iterate on a correct mapping (INV-048/INV-173)")
+            "will iterate on a correct mapping (INV-173)")
 
     def test_it_does_not_license_ignoring_step_2_warnings_generally(self):
         """The step's other warnings are real; one known-bad interaction is not a blanket."""

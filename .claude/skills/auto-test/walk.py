@@ -50,8 +50,8 @@ sent as given.
 
 The host's instruction files stay out (#733)
 -------------------------------------------
-⛔ **The bootcamp process MUST run under instruction files belonging to the run, never the
-host's, or the report MUST name the host instruction files it could read.** Phase 3 measures
+⛔ **(INV-379) The bootcamp process MUST run under instruction files belonging to the run,
+never the host's, or the report MUST name the host instruction files it could read.** Phase 3 measures
 the guide's literal output, so a host ``~/.claude/CLAUDE.md`` rule such as "end every response
 with a 👉 **Suggested next step:** line" is obeyed by the guide and then scored as the
 plugin's behavior: one walk filed 13 BREAKING ``INV-251-multi-question`` findings against

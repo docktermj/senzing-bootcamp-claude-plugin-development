@@ -1377,12 +1377,12 @@ training data.
    Then, for either form, record `license: custom` in `config/bootcamp_preferences.yaml` and
    **re-source Module 2's env script** in the shell that runs the Bootcamper's programs:
    `source src/scripts/senzing-env.sh` on Linux/macOS, `. .\src\scripts\senzing-env.ps1` on Windows
-   (unverified on Windows PowerShell 5.1 here, INV-163). ⛔ **Sub-step 7 runs only after this
-   re-source.** The script exports `SENZING_ENGINE_CONFIGURATION_JSON` from
+   (unverified on Windows PowerShell 5.1 here, INV-163). ⛔ **(INV-295) Sub-step 7 runs only after
+   this re-source.** The script exports `SENZING_ENGINE_CONFIGURATION_JSON` from
    `config/engine_config.json` only when it is sourced (SDK setup's (Module 2) Step 3, "Create the
    project-local environment script"), so a program run without it measures the configuration from
    before the key, and sub-step 7 would record the built-in figure as measured with the key in
-   force: the measured-but-incomplete case INV-295 forbids. Continue to sub-step 7 to detect the
+   force: the measured-but-incomplete case this rule forbids. Continue to sub-step 7 to detect the
    limit.
 
 6. **Obtain a Senzing License Key (option 3, or option 4's in-flow request).** Give guidance for

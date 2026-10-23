@@ -753,10 +753,10 @@ including 90% and no reading can fall between two rows.
 | none | <80% | UAT not established |
 | none | none | UAT not established |
 
-⛔ **Never call a result strong when a metric the strong branch explicitly requires falls short or
-was never established** — that outcome takes a branch of its own, with its own evidence,
+⛔ **(INV-404) Never call a result strong when a metric the strong branch explicitly requires falls
+short or was never established** — that outcome takes a branch of its own, with its own evidence,
 recommendation, question and return routes, and is never folded into the strong branch or into a
-branch that routes on the other metric alone (INV-404).
+branch that routes on the other metric alone.
 
 - **UAT ≥90% and match accuracy ≥90%:** state "Results look strong." and proceed to the module
   transition question. **If the audit produced a finding, say so in the same breath** — strong

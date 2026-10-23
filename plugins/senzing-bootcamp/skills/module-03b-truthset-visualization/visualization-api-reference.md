@@ -1629,7 +1629,7 @@ outcomes, and only a **confirmed** stop lets anything irreversible follow it (IN
    authorize deleting records that something may still be serving. An instruction offering "the port
    is confirmed free **or** the Bootcamper has been warned" as alternatives has merged two different
    acts, and the confirmation is the one the purge waits on.
-   ⛔ **A teardown that reports success while the port answers is worse than one that reports failure (INV-223).**
+   ⛔ **A teardown that reports success while the port answers is worse than one that reports failure (INV-394).**
    The Bootcamper walks away believing their machine is clean, and INV-131 makes teardown the last action of the module,
    so nothing downstream will notice. Where the container is the host for the server, name the
    `<runtime> exec` form that was tried, so the Bootcamper can see what was attempted rather than

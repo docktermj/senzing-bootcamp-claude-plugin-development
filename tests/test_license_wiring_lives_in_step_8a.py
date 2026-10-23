@@ -246,7 +246,9 @@ class SubStep5ReSourcesBeforeSubStep7Measures(unittest.TestCase):
                       "script\")", flat(self.step))
 
     def test_it_names_the_failure_it_prevents(self):
-        self.assertIn("the measured-but-incomplete case INV-295 forbids", flat(self.step))
+        # #787: INV-295 is cited on the rule's own line, so the failure is named once.
+        self.assertIn("**(INV-295) Sub-step 7 runs only after this re-source.**", flat(self.step))
+        self.assertIn("the measured-but-incomplete case this rule forbids", flat(self.step))
 
     def test_sub_step_7_says_it_follows_the_re_source(self):
         self.assertIn("7. **Detect the active license's record limit (after sub-step 5 applies a "
