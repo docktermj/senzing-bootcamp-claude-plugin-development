@@ -2602,9 +2602,12 @@ Python, `init_default_config.py`, `register_data_sources.py`, `get_config_regist
 `get_data_source_registry.py` (re-verified 1.32.9, 2026-08-12). The set is
 **language-dependent** — Java returns `InitDefaultConfig.java` and `RegisterDataSources.java` and
 not the two registry readers (same server and date) — so read what your language's response
-actually lists rather than expecting these four. Either route is fine; `sdk_guide` is
-preferred here because it also carries the `compatibility_notes` above, which `generate_scaffold`
-does not. Step 9's connection test uses the factory-lifecycle snippets from the same response.
+actually lists rather than expecting these four. Either route is fine, a `generate_scaffold`
+file fetched by the response's own `access_steps`, as `../bootcamp-onboarding/ground-rules.md` →
+"Follow each response's own `access_steps`, in the order it gives them" says (INV-160, INV-300);
+`sdk_guide` is preferred here because it also carries the `compatibility_notes` above, which
+`generate_scaffold` does not. Step 9's connection test uses the factory-lifecycle snippets from
+the same response.
 
 **Verify the seed before moving on:** confirm a default config id is now present. If it is not, stop
 here and report it — a missing config surfaces at this step as one clear failure, or later as

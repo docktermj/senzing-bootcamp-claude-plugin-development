@@ -134,8 +134,11 @@ rate suggests about data quality, and whether the mapping is producing good resu
 After evaluating entity resolution results, capture the current statistics to a JSON file for
 comparison tracking. Query the following counts through the Senzing SDK: never with direct SQL
 against `database/G2C.db`. Per the ground-rules MCP routing, get counts/stats via `reporting_guide`,
-or generate SDK code with `generate_scaffold` / `find_examples`. Either way the counts come from a
-program: save it as the program `er_stats` in `src/query`, at the path and with the project that
+or generate SDK code with `generate_scaffold` / `find_examples`, fetching each file by the
+response's own `access_steps`, as `../bootcamp-onboarding/ground-rules.md` → "Follow each
+response's own `access_steps`, in the order it gives them" says (INV-160, INV-300). Either way
+the counts come from a program: save it as the program `er_stats` in `src/query`, at the path
+and with the project that
 `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives, then build and
 run it with that section's commands:
 

@@ -481,7 +481,9 @@ first — so without this step every Module 3 run hits SENZ2207 on the first loa
    **VERIFY**. Never register a code that is not present in the data.
 2. **Generate the registration code from the MCP server** (Agent Rule 7 — never
    hand-write it): call `sdk_guide(topic='configure')` (and `generate_scaffold` if
-   it exposes a data-source registration workflow) in the language read from
+   it exposes a data-source registration workflow, its files fetched by the response's own
+   `access_steps`, as `../bootcamp-onboarding/ground-rules.md` → "Follow each response's own
+   `access_steps`, in the order it gives them" says (INV-160, INV-300)) in the language read from
    `programming_language` in `config/bootcamp_preferences.yaml` (never a hardcoded
    default). Save the result as the program `register_data_sources` in
    `src/system_verification`, at the path `../bootcamp-onboarding/ground-rules.md` →

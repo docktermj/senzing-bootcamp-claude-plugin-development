@@ -1575,7 +1575,10 @@ docs index is a later porting phase: skip it for now.
 
 ### 13. Build the transformation program
 
-Use `generate_scaffold` or the mapping workflow output as the foundation. Handle: input reading,
+Use `generate_scaffold` or the mapping workflow output as the foundation, fetching each
+`generate_scaffold` file by the response's own `access_steps`, as
+`../bootcamp-onboarding/ground-rules.md` → "Follow each response's own `access_steps`, in the
+order it gives them" says (INV-160, INV-300). Handle: input reading,
 field mapping, type conversion, cleansing, `DATA_SOURCE`/`RECORD_ID`, and error handling. Save it as
 the program `transform_[name]` in `src/transform`, where `[name]` is this source's name, at the path
 and with the project that `../bootcamp-onboarding/ground-rules.md` → "Building and running a
