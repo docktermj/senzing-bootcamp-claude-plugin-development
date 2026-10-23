@@ -52,7 +52,10 @@ WRITE = re.compile(r"\b(update|Record|record it|write|set)\b")
 #: Coverage is the invariant ID, not prose: the ID is what a later editor can look up
 #: (INV-183). INV-228 counts too — it is the acquisition-stage statement of the same
 #: discipline, and Module 4's registry entry predates INV-243 while implementing it.
-COVERAGE = re.compile(r"INV-243|INV-245|INV-228")
+#: INV-412 counts for the same reason: it keeps the top-level `record_count` the measured count
+#: only Data collection writes, the baseline reconciliation compares against. It replaced INV-243
+#: at the two sites that state who writes the field (2026-10-23), one of which this scan matches.
+COVERAGE = re.compile(r"INV-243|INV-245|INV-228|INV-412")
 
 
 def squash(text):

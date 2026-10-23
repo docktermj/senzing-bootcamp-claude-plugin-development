@@ -260,7 +260,7 @@ would, plus:
 them, the one definition (INV-300): `name`, `provenance`, `cord_dataset` and `cord_source` (a
 `cord` source), `entity_type`, `shape_quirks`, and `scenario_record_count` (a `synthesized`
 source). Data collection reads these to choose its action and to generate the files. Write no
-`record_count`: it is the count Data collection measures (INV-243), null until then.
+`record_count`: it is the count Data collection measures (INV-412), null until then.
 `quality_intent` is Data collection's to write when it generates the source. Step 17's
 **Registry check** confirms this write before Module Completion (INV-402).
 

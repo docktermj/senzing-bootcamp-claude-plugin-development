@@ -583,7 +583,7 @@ none of these are covered by it:
    Bootcamper's cross-source entities and fraud leads appeared only as prose. The sentence was true
    of the manifests that existed and false of the bootcamp.
 
-   ⛔ **(INV-193) Offer the remedy — it is cheap while the artifacts are still on disk.** Re-start the app and
+   ⛔ **(INV-271) Offer the remedy — it is cheap while the artifacts are still on disk.** Re-start the app and
    re-run the capture against it with the bundled tool,
    `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" --url http://localhost:<port> --name <name>`
    (INV-185; skill-relative fallback `../../scripts/capture_screenshots.py`, INV-252), then
