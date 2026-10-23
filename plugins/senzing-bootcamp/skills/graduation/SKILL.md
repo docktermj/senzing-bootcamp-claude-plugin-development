@@ -122,7 +122,7 @@ Gather context before any step. Do this silently.
    | `path` | Bootcamp preparation | `core`/`customized`; older sessions may store this as `track` |
    | `selected_modules` | Bootcamp preparation | drives the journey map (INV-076) |
    | `integration_targets` | Module 1 Phase 2 Step 10a (INV-097) | absent is normal — see pre-check 1a |
-   | `deployment_target` / `cloud_provider` | Module 1 Phase 2 Step 10a (INV-097) | absent is normal — see pre-check 1a |
+   | `deployment_target` / `cloud_provider` | Module 1 Phase 2 Step 10a (INV-097) | absent is normal; `cloud`/`container`/`local` name no platform — see pre-check 1a |
 
    The data-source registry is **`config/data_sources.yaml`**, its own file (INV-050) — not a
    preferences key.
@@ -141,6 +141,16 @@ Gather context before any step. Do this silently.
    `production/` project **is** the thing being deployed: Step 3 stamps them into the container and
    environment templates, Step 4 into the README and the migration checklist's Deployment section,
    Step 5 into the graduation report.
+
+   <a id="generic-deployment-target"></a>
+   **A generic `deployment_target` names a category, not a platform.** `cloud`, `container` and
+   `local` are what Step 10a records when the Bootcamper chose an option without naming a provider
+   or platform; Step 10a's handling owns which answer records which value (INV-097, INV-300). Every
+   step below that renders `deployment_target` renders a generic value as its category and says the
+   platform was not stated: `cloud` → "cloud (provider not stated)", or the `cloud_provider` as
+   stated when one is present; `container` → "container platform (not stated)"; `local` → "local or
+   on-premises (not stated)". It never guesses a provider or platform (Step 3's "Stay declarative"
+   rule). Every other value renders as that step already says.
 
    ⛔ **Never ask for them here.** They are asked once, in Module 1 (INV-006/INV-097), so **absent
    is normal, silent, and changes nothing**: every step below states its no-value behavior, and each
@@ -1490,8 +1500,10 @@ pre-checks. Use placeholder values only, never real secrets:
 
 **Where `deployment_target`/`cloud_provider` is known, say so in both files** (INV-097): a header
 comment naming the intended target — e.g. `# Target: AWS (ECS/Fargate)`, `# Target: Kubernetes`,
-`# Target: on-premises` — and, in `.env.example`, a comment on the values that platform will supply
-differently (a managed-database `DATABASE_URL`, a secret-manager reference instead of a literal).
+`# Target: on-premises`, or for a generic value `# Target: ` and its
+[pre-check 1a rendering](#generic-deployment-target) — and, in `.env.example`, a comment on the
+values that platform will supply differently (a managed-database `DATABASE_URL`, a secret-manager
+reference instead of a literal).
 ⛔ Stay declarative: name the target and stop. Do **not** invent provider-specific resources,
 credentials, ARNs, or account identifiers — placeholder values only, as above, and a wrong
 infrastructure guess in a handed-over project is worse than a generic one. When the value is absent
@@ -1542,6 +1554,10 @@ the files are exactly as they were before this paragraph.
     this checklist is where the production correction belongs.
   - **The Data section carries Step 2's scan items**, one per line [the scan](#scan-the-copied-code) printed.
   - **The Deployment section is where `deployment_target`/`cloud_provider` lands** (INV-097): name the stated target in its heading or first item, and make its checkboxes the ones that target actually needs (a cloud target → managed database, secret storage, image registry, network egress to nothing external; Kubernetes → manifests/Helm, resource limits, liveness probes; on-premises → host provisioning, backup schedule). ⛔ Still ⚠️-marked and still not covered in depth by the bootcamp — naming the target makes the list *relevant*, not authoritative, and it must not read as a deployment guide the bootcamp did not give. Absent → the generic six-section list exactly as before.
+    - **A generic value** is named by its [pre-check 1a rendering](#generic-deployment-target)
+      and takes its category's checkboxes: `cloud` the cloud list, `container` a container list
+      naming no orchestrator-specific tooling (image build and registry, resource limits, health
+      checks), `local` the on-premises list.
 
 Write every `production/*.md` deliverable — this README, the migration checklist, and the
 Step 5 `GRADUATION_REPORT.md` — as **plain, functional Markdown**, exactly as the bootcamp's own
@@ -1570,6 +1586,8 @@ next steps (fill in secrets, obtain a production license, work through the
 checklist, configure CI/CD, test with production data). Record the Module 1 answers too when
 present — the intended `deployment_target`/`cloud_provider` and the `integration_targets`
 (INV-097) — so the handover states what the project was aimed at; omit either line when absent.
+Record the value as stored; for a generic value, add its
+[pre-check 1a rendering](#generic-deployment-target), which says the platform was not stated.
 If any step failed, add a
 "⚠️ Issues Encountered" section naming what failed and what was skipped.
 

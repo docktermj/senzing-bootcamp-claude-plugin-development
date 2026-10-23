@@ -112,15 +112,25 @@ pushed into naming one.
 *(Internal: end the turn and wait.)*
 
 **Now write both answers together**, in one update to `config/bootcamp_preferences.yaml`:
-`integration_targets` (held above) and `deployment_target` (`aws`/`azure`/`gcp` — also
-`cloud_provider`; `kubernetes`/`docker_swarm`; `local`/`on_premises`; or `undecided` for option 4).
+`integration_targets` (held above) and `deployment_target` (`cloud` or `aws`/`azure`/`gcp` — also
+`cloud_provider` when a provider is named; `container` or `kubernetes`/`docker_swarm`; `local` or
+`on_premises`; or `undecided` for option 4). `cloud`, `container` and `local` are the generic values:
+the category with no platform named. Which value each answer records is stated once, below (INV-300).
 One write for the whole step, per the batching rule above. **Checkpoint:** write step 10a.
 
 **Handling each answer (INV-284).** Each sets `deployment_target` in the write above; then Step 11.
+A specific value is recorded only when the Bootcamper names it in their answer; otherwise the
+option's generic value. ⛔ **(INV-097, INV-251) A bare number never records a specific provider or
+platform, and nothing further is asked to get one.**
 
-- **1, "A cloud hyperscaler":** `aws`, `azure` or `gcp`, also as `cloud_provider`.
-- **2, "A container platform":** `kubernetes` or `docker_swarm`.
-- **3, "Local / on-premises":** `local` or `on_premises`.
+- **1, "A cloud hyperscaler":** `aws`, `azure` or `gcp`, also as `cloud_provider`, when the
+  Bootcamper names that provider ("1, AWS"). Named another provider ("1, Oracle Cloud") → `cloud`,
+  with `cloud_provider` as they named it, lowercased. Named none (a bare "1") → `cloud`, and no
+  `cloud_provider`.
+- **2, "A container platform":** `kubernetes` or `docker_swarm` when the Bootcamper names it.
+  Named none (a bare "2"), or another platform → `container`.
+- **3, "Local / on-premises":** `on_premises` when the Bootcamper names on-premises. Otherwise
+  (a bare "3", or "3, my laptop") → `local`, meaning local or not specified.
 - **4, "Not sure yet":** `undecided`.
 
 ## 11. Create the problem statement document
@@ -178,7 +188,8 @@ Save to `docs/business_problem.md` using this template:
 Undecided) / Note "development proceeds locally first; infrastructure is a production follow-up
 covered by the graduation production project and migration checklist". If "not sure yet":
 Platform "To be determined", Category "Undecided". If absent: "Not applicable: deployment target
-not captured for this bootcamp."]
+not captured for this bootcamp." If a generic value (`cloud`, `container`, `local` — Step 10a):
+Platform "Not stated" (or the `cloud_provider` as stated), Category Cloud, Container or Local.]
 
 ## Timeline
 **Target completion** / **Key milestones**
