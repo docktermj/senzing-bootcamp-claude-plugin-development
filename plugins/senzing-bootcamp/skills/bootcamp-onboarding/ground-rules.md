@@ -505,7 +505,7 @@ copy (INV-300).
   `git clone`, then the final `inline` step. So where `mcp.senzing.com` is allowed and GitHub is
   blocked, the hosted `url` is the step that reaches the file. Where a live response gives
   different steps, or a different order, follow the live response.
-  ⛔ **Do not take the final `inline` step the response describes (INV-136).** `inline` is still
+  ⛔ **(INV-160) Do not take the final `inline` step the response describes.** `inline` is still
   not declared in the live `find_examples` schema, and only declared parameters may be passed (INV-136).
   The server states this itself, identically in `find_examples` and `generate_scaffold` (MCP server
   1.37.28, 2026-10-13): *"Clients that validate arguments against the declared schema cannot send

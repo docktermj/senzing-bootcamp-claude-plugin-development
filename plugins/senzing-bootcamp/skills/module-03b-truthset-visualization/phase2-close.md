@@ -250,7 +250,7 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
    the recap already lives in `docs/`, so a `docs/`-prefixed path resolves to `docs/docs/…` and
    embeds nothing). Then save this module's B-roll entry under `truthset_visualization`, per
    `module-completion.md` 2e, listing the same screenshots by their project-relative
-   `docs/visualizations/…` paths. ⛔ **The recap says what cleanup actually did (INV-223).**
+   `docs/visualizations/…` paths. ⛔ **The recap says what cleanup actually did (INV-394).**
    When `truthset_visualization.checks.cleanup.status` is `"incomplete"`, Actions Taken names what
    was left behind — the port still listening, the Truth Set records still loaded — and neither it
    nor the End-of-Module Summary says the server was stopped or the data removed.
@@ -289,5 +289,5 @@ live app served its endpoints, **or** the no-live-server state is recorded with 
 ([no-live-server completion rule](#no-live-server-completion), INV-300) + the web service is
 terminated when one ran + the Truth Set data is purged, **or** — where the stop could not be
 confirmed — the listening port and the retained records are reported and recorded instead of a
-cleanup being claimed ([failed-stop rule](visualization-api-reference.md#failed-stop), INV-223) +
+cleanup being claimed ([failed-stop rule](visualization-api-reference.md#failed-stop), INV-394) +
 `truthset_visualization` is recorded in `modules_completed` with its own recap section.

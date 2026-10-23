@@ -133,7 +133,7 @@ class TheFileIsCreatedWithoutModelCompliance(unittest.TestCase):
             self.assertIn("Data Quality", project.read(CHECKPOINT))
 
     def test_a_malformed_progress_file_does_not_break_the_hook(self):
-        """A hook must not fail a turn over a half-written scratch file (INV-048)."""
+        """A hook must not fail a turn over a half-written scratch file (INV-227)."""
         with CheckpointProject() as project:
             with open(project.path(os.path.join("config", "bootcamp_progress.json")),
                       "w", encoding="utf-8") as fh:

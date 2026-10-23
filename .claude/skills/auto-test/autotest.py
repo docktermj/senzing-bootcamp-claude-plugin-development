@@ -22,8 +22,8 @@ Isolation, and why each layer is here
   files and none of the host user's, so a rule in ``~/.claude/CLAUDE.md`` is not
   obeyed by the guide and then scored as the plugin's behavior. It leaves
   ``CLAUDE_CONFIG_DIR`` alone, so this costs no credentials.
-  ⛔ **A walk that could read a host instruction file MUST say so in its report,
-  naming the file and its path** -- a contaminated run must never read as a clean
+  ⛔ **(INV-379) A walk that could read a host instruction file MUST say so in its
+  report, naming the file and its path** -- a contaminated run must never read as a clean
   one (#733).
 * **Optional ``CLAUDE_CONFIG_DIR``** (``--isolate-config``). Isolates session state
   but NOT credentials — it needs ``ANTHROPIC_API_KEY`` or the child exits

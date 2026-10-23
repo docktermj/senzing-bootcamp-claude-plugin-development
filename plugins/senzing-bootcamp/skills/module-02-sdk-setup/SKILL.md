@@ -2514,9 +2514,9 @@ restating it.
    manager, from the snippet this step fetches below rather than hand-written (INV-080).
 2. **An id that is present and non-zero means the datastore is already seeded.** Say so in one
    line — "this datastore already has a registered default configuration, so I am keeping it" —
-   and continue to 8a.1 without seeding. ⛔ **Never replace it** (INV-089): seeding writes a
+   and continue to 8a.1 without seeding. ⛔ **(INV-393) Never replace it**: seeding writes a
    **template** configuration and makes it the default, which drops every `DATA_SOURCE` code
-   registered in the configuration it replaced — and on this path those registrations are an
+   registered in the configuration it replaced (INV-089) — and on this path those registrations are an
    earlier module's work, not this step's.
 3. **`0`, or no id at all, is the unseeded datastore** this step was written for: seed it, as the
    rest of the step says.

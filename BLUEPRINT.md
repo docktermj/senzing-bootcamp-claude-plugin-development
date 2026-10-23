@@ -2167,7 +2167,7 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   address), then the anchored failed-stop rule
   (`visualization-api-reference.md#failed-stop`, the one statement Step 4's
   gate, the purge item, the checkpoint and both success indicators link,
-  INV-300, INV-223): on a stop confirmed by the port — inside the 5 s poll,
+  INV-300, INV-223, INV-394): on a stop confirmed by the port — inside the 5 s poll,
   or after the force-stop and re-check — purge last with the program
   `cleanup_truthset`; on a port still answering the stop is unverified, so
   report it and run no purge, a warning being no substitute for the
@@ -13832,6 +13832,15 @@ Senzing licensing, with no SPDX identifier.
   holds from the ledger only, the literal-next-id guard reads blocks through
   `pending_invariants.blocks()`, and no invariant is added (INV-409 as
   registered)
+- #787: shipped hard rules cite, on the ⛔ line itself, the invariant whose
+  registered statement makes each claim (INV-396): INV-394, INV-378, INV-160,
+  INV-393, INV-295 and INV-300 replace or join the ids Module 3b, ground
+  rules, packaging and Modules 2 and 4 borrowed; INV-381, INV-382 and INV-379
+  are added at the release and auto-test rules; INV-404 and the seven INV-365
+  "Route it through `/review-invariants`" citations move off the sentence end
+  (`conformance.py reverse-check --ref aecbc38` still found one uncited line);
+  six test credits move from INV-048 to INV-227 or INV-173; dry-run's "never a
+  plugin change" is queued as a new invariant for `/review-invariants`
 - #805: a `get_sample_data` reply that is the bare string `Denied.` is its own
   outcome in Module 1 Step 4b and Module 4 Step 2 (stated once under
   `#cord-denied-reply`), pointing at Module 3b's remedy, never retried and

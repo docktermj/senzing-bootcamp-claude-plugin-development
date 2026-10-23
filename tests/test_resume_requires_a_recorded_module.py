@@ -67,7 +67,7 @@ RULE_LABEL = ("Fresh start vs. resume — decided by the progress file's CONTENT
               "existence")
 
 #: Progress-file contents that record NO module. Each must read as a fresh start, and none
-#: may raise (INV-048).
+#: may raise (INV-227).
 CONTENTLESS = (
     ("empty object", "{}"),
     ("empty file", ""),
@@ -153,7 +153,7 @@ class AContentlessProgressFileIsNotAnActiveBootcamp(unittest.TestCase):
                 with ProjectDir(contents) as root:
                     code, out, err = predicate_in(root)
                     self.assertEqual(0, code,
-                                     "bootcamp_active() raised on %s (INV-048): %s"
+                                     "bootcamp_active() raised on %s (INV-227): %s"
                                      % (label, err))
                     self.assertEqual("INACTIVE", out,
                                      "%s reads as an active bootcamp, so the guide is "
@@ -212,7 +212,7 @@ class ThePredicateReadsContentNotExistence(unittest.TestCase):
         self.assertIsNotNone(module.current_module.__doc__,
                              "current_module() lost its docstring")
         self.assertIn("Never raises", module.current_module.__doc__,
-                      "current_module()'s never-raises contract (INV-048) is undocumented, "
+                      "current_module()'s never-raises contract (INV-227) is undocumented, "
                       "and bootcamp_active() now depends on it")
 
 

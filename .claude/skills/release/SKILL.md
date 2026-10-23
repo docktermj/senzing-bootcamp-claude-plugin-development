@@ -133,8 +133,8 @@ why. Curating them by hand is a fine thing to do; just never edit an entry's
 `## [version] - date` heading, because the version, the file and the tag were written
 together on purpose.
 
-⛔ **A standing note about what a file's entries are is a promise the writer owes, not a
-label on the past (#698).** The seed note's boundary is the newest tag at seed time, so
+⛔ **(INV-381) A standing note about what a file's entries are is a promise the writer owes,
+not a label on the past (#698).** The seed note's boundary is the newest tag at seed time, so
 every entry above it was written by a release — and read either way round the note tells the
 downstream porter, at the one place they look, that those entries are curated release notes
 rather than commit subjects. So `release.py` curates each entry it writes, in three
@@ -152,7 +152,7 @@ out of its own text is kept exactly as the commit wrote it: dropping it would lo
 change, and rewriting it would put words in the maintainer's mouth about a release they cut.
 Curation here is mechanical, or it is fabrication.
 
-⛔ **What it drops, it reports: the dry run prints every subject it kept out of the entry,
+⛔ **(INV-382) What it drops, it reports: the dry run prints every subject it kept out of the entry,
 with the reason, under `--- subjects carrying no change description ---`.** A badly named
 commit is something only the maintainer can fix, and only for the next one; a silent filter
 would make the next `Savepoint`-shaped subject vanish without anyone learning the commit was

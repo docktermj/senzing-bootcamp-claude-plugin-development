@@ -201,11 +201,11 @@ Only after the record, in dry-run's order (its steps 2 to 6): fix the class
 not the instance, write a repo-level test, ⛔ **negative-control it**, record it in
 the same `specs/IMPLEMENTED.md` entry (what was done, and the issue the finding became),
 and either queue the invariant it establishes or explicitly state that it establishes none.
-⛔ **Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
+⛔ **(INV-365) Route it through `/review-invariants`; never edit `specs/INVARIANTS.md` here:** write a
 `DEFERRED INVARIANT` block for a new rule, or a `PROPOSED AMENDMENT` block for a correction,
 in the run's `specs/IMPLEMENTED.md` entry, as
 [`review-invariants` → "Writing one"](../review-invariants/SKILL.md#writing-one) shows
-(INV-300), then tell the maintainer to run `/review-invariants` (INV-365).
+(INV-300), then tell the maintainer to run `/review-invariants`.
 
 ⛔ **(INV-317) A scheduled run's `report.json` or log is raw output, not a recorded finding.**
 An `autotest.py` run on a schedule writes its report and nothing else. Its lines become

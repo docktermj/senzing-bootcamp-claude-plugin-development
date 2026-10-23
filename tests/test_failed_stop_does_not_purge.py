@@ -180,8 +180,9 @@ def rule_problems(text):
 # --------------------------------------------------------------------------------------------
 
 #: The invariant each site may defer under. INV-300 is the single-statement discipline; INV-223 is
-#: the rule the success indicators summarize.
-DEFERRAL_INVARIANTS = ("INV-300", "INV-223")
+#: the pid-and-port rule the teardown steps rest on; INV-394 is the failed-stop rule the success
+#: indicators summarize (#787).
+DEFERRAL_INVARIANTS = ("INV-300", "INV-223", "INV-394")
 
 
 def sites():
@@ -512,7 +513,7 @@ class TheChecksCatchARegression(unittest.TestCase):
         broken = dict(sites())
         label = "phase2 success indicator"
         broken[label] = re.sub(r"INV-\d+", "the rule", broken[label])
-        self.assertIn("%s: the deferral cites neither INV-300 nor INV-223" % label,
+        self.assertIn("%s: the deferral cites neither INV-300 nor INV-223 nor INV-394" % label,
                       deferral_problems(broken))
 
     def test_a_close_site_that_starts_a_second_copy(self):
