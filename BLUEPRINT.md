@@ -2781,7 +2781,12 @@ Phase 1 (`phase1-query-visualize.md`):
   in Your question, answered exactly once, adding a missing row and
   re-rendering; it asks nothing and never blocks), then (only if a server started, by a recorded
   pid or port) a separate stop
-  question that stops by recorded pid. Completion runs `module-completion.md`,
+  question that stops by recorded pid. Step 3c and its "Yes" link the
+  failed-stop rule (`#failed-stop`, INV-394, INV-300), whose no-purge case
+  applies: a port still answering after the force-stop is said to be an
+  unverified stop, never a stopped server, the "No" branch's still-running
+  statement follows, and nothing new is recorded in `m7_visualizations`
+  (#803). Completion runs `module-completion.md`,
   opens Module 7's recap section with the headline block (`#headline-block`,
   the first entry of `### Information Shared`, re-retrieved with step 1's rule
   and written whether or not 3c ran; screenshots stay in tab order),
@@ -10456,10 +10461,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8532 test methods in 454 files, matching `inventory.test_count_total`.
+There are 8550 test methods in 454 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8532.
+sum to 8550.
 
 Two files run more tests than they define, so discovery collects 8539:
 
@@ -10468,9 +10473,9 @@ Two files run more tests than they define, so discovery collects 8539:
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8532`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8550`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8539`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8557`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10592,7 +10597,7 @@ looks wrong.
 - `tests/test_example_recap_uses_no_golden_record.py`: 5
 - `tests/test_existing_install_still_runs_the_env_script.py`: 22
 - `tests/test_expected_visualization_denominator.py`: 21
-- `tests/test_failed_stop_does_not_purge.py`: 27
+- `tests/test_failed_stop_does_not_purge.py`: 45
 - `tests/test_family_amendments_cite_real_rules.py`: 9
 - `tests/test_fastpath_gates_on_full_mapping.py`: 31
 - `tests/test_feedback_asks_only_the_unanswered_questions.py`: 5
@@ -13842,6 +13847,15 @@ Senzing licensing, with no SPDX identifier.
   (`conformance.py reverse-check --ref aecbc38` still found one uncited line);
   six test credits move from INV-048 to INV-227 or INV-173; dry-run's "never a
   plugin change" is queued as a new invariant for `/review-invariants`
+- #803: Module 7's step 3c and teardown "Yes" link the failed-stop rule
+  (`#failed-stop`, INV-394, INV-300) and, on a port still answering, say the
+  stop is unverified and the server still running, never that it stopped,
+  recording nothing new; outcome 3 states a purge case (every Module 3b
+  clause) and a no-purge case that reports and continues; the guard finds
+  every "stop it by the pid" passage and teardown gate by scanning shipped
+  Markdown (Module 7 claimed a stop the port check had not confirmed, and the
+  rule's outcome 3 read only for a purge); an INV-394 amendment is queued for
+  `/review-invariants`
 - #805: a `get_sample_data` reply that is the bare string `Denied.` is its own
   outcome in Module 1 Step 4b and Module 4 Step 2 (stated once under
   `#cord-denied-reply`), pointing at Module 3b's remedy, never retried and

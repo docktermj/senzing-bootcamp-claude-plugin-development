@@ -1621,9 +1621,14 @@ outcomes, and only a **confirmed** stop lets anything irreversible follow it (IN
 3. ⛔ **(INV-394) Still listening after the force-stop and the re-check — the stop is UNVERIFIED, and nothing
    irreversible may follow it.** **When teardown cannot confirm, say so plainly and do not claim the
    server stopped.** Tell the Bootcamper exactly what was observed — the port, that something is
-   still listening on it, the pid the port lookup names where it names one, and that the records are
-   still loaded — then continue without the purge rather than purging on an unverified stop, and say
-   what is left to do by hand: release the listener, then re-run the module's cleanup program.
+   still listening on it, and the pid the port lookup names where it names one — and then follow
+   the case that matches what the module's teardown gates. **Where the module's teardown gates a
+   purge** (Truth Set visualization): say too that the records are still loaded, then
+   continue without the purge rather than purging on an unverified stop, and say what is left to
+   do by hand: release the listener, then re-run the module's cleanup program.
+   **Where it gates none** (a module whose gate stops only the server, such as Query, Visualize and
+   Discover): there is no purge to withhold, so say that the server is still running and that
+   releasing the listener is left to do by hand, then continue to the module's completion.
    ⛔ **(INV-394) A warning is not a substitute for the confirmation.** Telling the Bootcamper the port may
    need manual release informs them; it does not make an unobserved stop observed, and it cannot
    authorize deleting records that something may still be serving. An instruction offering "the port
@@ -1634,8 +1639,9 @@ outcomes, and only a **confirmed** stop lets anything irreversible follow it (IN
    so nothing downstream will notice. Where the container is the host for the server, name the
    `<runtime> exec` form that was tried, so the Bootcamper can see what was attempted rather than
    only that it failed (INV-111). ⚠️ **This reports; it does not block.** The module still closes
-   and the handoff is unchanged — what changes is that the close records and says what was left
-   behind, instead of claiming a cleanup that did not happen.
+   and the handoff is unchanged — what changes is that the close says what was left behind, and
+   records it where the module keeps a cleanup record, instead of claiming a cleanup that did not
+   happen.
 4. **No live server ran at all.** Nothing was started, so there is no stop to verify and no listener
    to report: this rule governs a stop that was *attempted*, and never converts a module whose
    server never ran into a failed teardown. Such a module still owes whatever data purge it owes.
