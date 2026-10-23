@@ -755,7 +755,7 @@ should look professional). Install it **robustly**, never with a bare `pip`:
   python3 -m venv data/temp/recap-venv
   data/temp/recap-venv/bin/python -m pip install fpdf2
   # Windows:
-  py -3 -m venv data/temp/recap-venv
+  python3 -m venv data/temp/recap-venv
   data/temp/recap-venv/Scripts/python -m pip install fpdf2
   ```
 
@@ -764,8 +764,8 @@ should look professional). Install it **robustly**, never with a bare `pip`:
 
   Then run the generator with **that venv's** Python (below) so it imports `fpdf2`.
 - **Never call bare `pip`** — a stale shim on PATH may point at a deleted
-  interpreter. Always go through an explicit interpreter: `python3 -m pip` (or
-  `py -3 -m pip` on Windows). `--user` / `--break-system-packages` are last-resort
+  interpreter. Always go through an explicit interpreter: `python3 -m pip`, on
+  Windows too. `--user` / `--break-system-packages` are last-resort
   opt-ins only, never the default.
 - **Degrade gracefully.** If the bootcamper declines, or venv creation / the install
   fails (offline, no `ensurepip`, etc.), proceed with the stdlib fallback — it still
@@ -1150,8 +1150,8 @@ with `imageio-ffmpeg`, which rendering needs,"). Every other word stays the same
 
 **On yes,** install into the project only (INV-066), skipping each step that is already satisfied:
 
-1. Create `data/temp/recap-venv/` with `python3 -m venv data/temp/recap-venv` (Windows:
-   `py -3 -m venv data/temp/recap-venv`) if it does not exist.
+1. Create `data/temp/recap-venv/` with `python3 -m venv data/temp/recap-venv`, on Windows too, if
+   it does not exist.
 2. Run **one** `python -m pip install` with the venv's Python, installing `piper-tts` when the venv
    cannot find `piper`, plus Pillow when the venv's Python cannot `import PIL`, plus
    `imageio-ffmpeg` when there is no ffmpeg on `PATH`.
@@ -1164,7 +1164,7 @@ python3 -m venv data/temp/recap-venv    # only if it does not exist yet
 data/temp/recap-venv/bin/python -m pip install piper-tts
 data/temp/recap-venv/bin/python -m piper.download_voices en_US-ljspeech-high --data-dir data/temp/piper-voices
 # Windows:
-py -3 -m venv data/temp/recap-venv    # only if it does not exist yet
+python3 -m venv data/temp/recap-venv    # only if it does not exist yet
 data/temp/recap-venv/Scripts/python -m pip install piper-tts
 data/temp/recap-venv/Scripts/python -m piper.download_voices en_US-ljspeech-high --data-dir data/temp/piper-voices
 ```
@@ -1236,7 +1236,7 @@ python3 -m venv data/temp/recap-venv    # only if it does not exist yet
 data/temp/recap-venv/bin/python -m pip install imageio-ffmpeg
 data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
 # Windows:
-py -3 -m venv data/temp/recap-venv    # only if it does not exist yet
+python3 -m venv data/temp/recap-venv    # only if it does not exist yet
 data/temp/recap-venv/Scripts/python -m pip install imageio-ffmpeg
 data/temp/recap-venv/Scripts/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_video.py"
 ```
