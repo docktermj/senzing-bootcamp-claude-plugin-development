@@ -1991,8 +1991,10 @@ branch.
   the Homebrew path). Re-source the env script.
 - Step 8a, seed: `sdk_guide(topic='configure')` without `data_sources` gives
   `init_default_config`, with them `register_data_sources` (chosen by
-  `source_path`); confirm a default config id. 8a.1 re-measures the license
-  as authoritative, saying any change aloud.
+  `source_path`); confirm a default config id. The already-seeded block
+  (`#already-seeded`, INV-393) reads the id first and keeps a present one;
+  Data processing step 4a and Module 5 step 21a link it (#804). 8a.1
+  re-measures the license as authoritative, saying any change aloud.
 - Step 9: from `generate_scaffold(workflow='initialize')`, run the snippet
   that calls an engine method (chosen by shape, not count or name).
 - Receiving a `setup_detour` (`#receiving-a-setup-detour`), the one statement
@@ -2578,6 +2580,8 @@ Phase A (`phaseA-build-loading.md`, steps 1-4a):
   to `logs/loading_errors.json` and reports throughput.
 - Step 4a registers each `DATA_SOURCE` code in the data via
   `sdk_guide(topic='configure', data_sources=[...])`, codes substituted by hand,
+  seeding first only where SDK setup's `#already-seeded` block finds no default
+  config id (INV-393),
   as the re-runnable program `register_data_sources` in `src/load`, over
   Module 5's, built and run before any load; the codes are recorded in the
   registry.
@@ -10471,21 +10475,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8584 test methods in 455 files, matching `inventory.test_count_total`.
+There are 8605 test methods in 455 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8584.
+sum to 8605.
 
-Two files run more tests than they define, so discovery collects 8591:
+Two files run more tests than they define, so discovery collects 8612:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8584`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8605`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8591`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8612`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10497,7 +10501,7 @@ looks wrong.
 - `tests/test_all_runs_every_argument_free_view.py`: 7
 - `tests/test_always_produced_deliverables_are_named.py`: 23
 - `tests/test_amendments_are_queued.py`: 12
-- `tests/test_an_existing_datastore_is_a_stated_branch.py`: 16
+- `tests/test_an_existing_datastore_is_a_stated_branch.py`: 37
 - `tests/test_analyzer_python_floor_is_cited.py`: 23
 - `tests/test_answer_options_render_below_the_question.py`: 11
 - `tests/test_any_language_citations_name_the_right_rule.py`: 4
@@ -13889,6 +13893,15 @@ Senzing licensing, with no SPDX identifier.
   every "stop it by the pid" passage and teardown gate by scanning shipped
   Markdown (Module 7 claimed a stop the port check had not confirmed, and the
   rule's outcome 3 read only for a purge); an INV-394 amendment is queued for
+  `/review-invariants`
+- #804: Data processing step 4a and Module 5 step 21a decide seeding by the
+  default config id, pointing at Module 2 Step 8a's already-seeded block
+  (anchor `already-seeded`, INV-393, INV-300) instead of seeding on a freshly
+  created datastore (both steps are re-entered on a resume and on a
+  `database_switch` or `quality_iteration` return, so the `init_default_config`
+  prompt could be answered blind); the existing-datastore guard finds every
+  seeding-snippet fetch by scanning shipped Markdown, with a reasoned
+  text-keyed exemption list, and an INV-393 amendment is queued for
   `/review-invariants`
 - #805: a `get_sample_data` reply that is the bare string `Denied.` is its own
   outcome in Module 1 Step 4b and Module 4 Step 2 (stated once under

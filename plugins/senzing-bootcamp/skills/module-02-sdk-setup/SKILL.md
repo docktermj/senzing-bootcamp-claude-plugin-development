@@ -2506,6 +2506,8 @@ SQLite branch without having applied the schema, this step cannot help — go ba
 `create_engine()` fails with `SENZ1001 (14: unable to open database file)` rather than the
 `SENZ7220`/`SENZ7221` this step exists to fix.
 
+<a id="already-seeded"></a>
+
 ⛔ **(INV-393) When a default configuration is already registered, do not re-seed it — read the default
 config id first, say which way it went, and continue.** This step is re-entered on a datastore
 that is already seeded by the same two paths Step 7's instruction 3 names: a **resume**, and the
