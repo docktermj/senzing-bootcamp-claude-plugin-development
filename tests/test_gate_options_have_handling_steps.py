@@ -670,6 +670,14 @@ class TheImprovePathIsUsable(unittest.TestCase):
             disclosure, question,
             "the synthesized-source disclosure comes after the gate question it exists to "
             "inform; anything meant to inform an answer goes before the question")
+        # #790: a synthesized source is asked the band's `synthesized` variant, so the
+        # disclosure must precede that question too.
+        synthesized = self.text.index(
+            "👉 **The generated data's quality is acceptable but has some gaps.")
+        self.assertLess(
+            disclosure, synthesized,
+            "the synthesized-source disclosure comes after the synthesized variant of the "
+            "gate question, the one a synthesized source is actually asked")
 
     def test_it_updates_every_registry_field_the_new_file_changes(self):
         """⛔ INV-243 — the entry is a set of claims about the file it points at.

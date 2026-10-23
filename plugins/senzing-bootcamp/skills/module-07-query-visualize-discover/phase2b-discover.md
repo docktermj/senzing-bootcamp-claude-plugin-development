@@ -170,9 +170,11 @@ connections between entities using `find_network` and `find_path`.
 
    **If no 2+ degree pair is found after three hubs,** demonstrate `find_path` on a directly
    linked (1-degree) pair instead, and say plainly that this data has no path of 2+ degrees to
-   show: "In your data, every pair I checked is directly connected, so there's no path of 2 or
-   more degrees to show. Here is `find_path` on a direct connection instead." In that case, leave
-   out the "these aren't directly connected" line below.
+   show: "In [the data], every pair I checked is directly connected, so there's no path of 2 or
+   more degrees to show. Here is `find_path` on a direct connection instead." For [the data], use
+   the words after "found in" in the subtitle that the loaded sources' `provenance` picks in the
+   [cover subtitle table](phase1-query-visualize.md#discoveries-cover-subtitle) (INV-399). In that
+   case, leave out the "these aren't directly connected" line below.
 
    ⛔ **(INV-239, INV-399) On a generated scenario that promised households, this fallback is a bootcamp
    defect.** The scenario promised them when a loaded source's entry in `config/data_sources.yaml`
@@ -187,8 +189,9 @@ connections between entities using `find_network` and `find_path`.
    should be a path of 2 or more degrees here. It's missing because of a defect in the data the
    bootcamp generated, not anything about your data. You can report it with `/bootcamp-feedback`."
    On a CORD source, the Bootcamper's own data, or a generated scenario with no `relationship_intent`
-   and no success criterion naming households or related parties, the fallback's wording stands as
-   written.
+   and no success criterion naming households or related parties, there is no defect to report: say
+   the fallback alone, with [the data] named as above, so a generated scenario's data is still named
+   the bootcamp's (INV-399).
 
    Show the shortest path of relationships:
    - State which two entities and why: "Let's find the shortest path between Entity [ID1] and
@@ -225,8 +228,10 @@ connections between entities using `find_network` and `find_path`.
      parties), first say that the bootcamp's generated data is missing the relationships its
      scenario promised, that this is a bootcamp defect rather than a property of the Bootcamper's
      data, and suggest `/bootcamp-feedback`. Then continue below.
-   - State: "Your data doesn't contain disclosed relationships, so I'll explain what this would
-     look like with connected data."
+   - State: "[The data] doesn't contain disclosed relationships, so I'll explain what this would
+     look like with connected data." For [The data], use the words after "found in" in the
+     subtitle that the loaded sources' `provenance` picks in the
+     [cover subtitle table](phase1-query-visualize.md#discoveries-cover-subtitle) (INV-399).
    - Describe what `find_network` returns when entities are connected: a graph structure with
      entity nodes, relationship edges, shared attributes at each connection, and degrees of
      separation.

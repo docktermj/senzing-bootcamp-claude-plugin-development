@@ -30,8 +30,10 @@ scenario must carry:
    `relationship_intent`, **or** whose scenario's success criteria in `docs/business_problem.md`
    name households or related parties (a scenario generated before the key existed), step 4d's
    "no 2+ degree pair" fallback and step 7's "no relationships" fallback are reported as a
-   bootcamp generation defect, pointing to `/bootcamp-feedback`; the CORD and own-data wording is
-   unchanged. The criteria trigger was carried over from the losing race approach by the judging
+   bootcamp generation defect, pointing to `/bootcamp-feedback`; elsewhere no defect is reported,
+   and since #790 both fallbacks name the data by the row of Module 7's cover subtitle table that
+   the loaded sources' `provenance` picks (INV-399), so a generated scenario's data is never "your
+   data". The criteria trigger was carried over from the losing race approach by the judging
    (issue comment 3) and has its own negative control against the record-only trigger.
 7. **Every reader is scoped** (INV-246): each shipped Markdown block naming
    `relationship_intent` outside Module 4 names `provenance: synthesized` too.
@@ -145,7 +147,7 @@ def m7_paragraph(text):
 
 def m7_step7_bullet(text):
     i = text.index(M7_STEP7_HEAD)
-    return text[i:text.index("- State: \"Your data doesn't contain", i)]
+    return text[i:text.index("- State: \"[The data] doesn't contain", i)]
 
 
 # --- Predicates on the criterion-coverage lead. ---
@@ -279,10 +281,17 @@ def m7_conditions_on_the_criteria(t):
 
 
 def m7_keeps_other_wording(t):
+    """Elsewhere no defect is reported, and the data is still named by provenance (#790).
+
+    Before #790 this read "the fallback's wording stands as written", which kept "your data" for
+    a generated scenario with no households promised, against INV-399.
+    """
     return bool(re.search(r"(?i)On a CORD source, the Bootcamper's own data, or a generated "
                           r"scenario with no `relationship_intent` and no success criterion naming "
-                          r"households or related parties, the fallback's wording stands as "
-                          r"written", t))
+                          r"households or related parties, there is no defect to report: say the "
+                          r"fallback alone, with \[the data\] named as above, so a generated "
+                          r"scenario's data is still named the bootcamp's \(INV-399\)", t)
+                and "stands as written" not in t)
 
 
 def step7_reports_a_defect(t):
@@ -561,7 +570,7 @@ class Module7ReportsAGenerationDefect(unittest.TestCase):
         ("a bootcamp defect, not the Bootcamper's data", m7_reports_a_bootcamp_defect),
         ("points to /bootcamp-feedback", m7_points_to_feedback),
         ("covers step 4d's and step 7's fallbacks", m7_covers_both_fallbacks),
-        ("CORD and own-data wording unchanged", m7_keeps_other_wording),
+        ("no defect elsewhere, the data still named by provenance", m7_keeps_other_wording),
     )
 
     def test_it_follows_the_step_4d_fallback(self):
@@ -612,13 +621,16 @@ class Module7ReportsAGenerationDefect(unittest.TestCase):
         self.assertTrue(step7_reports_a_defect(RECORD_ONLY_STEP7_BULLET))
         self.assertFalse(step7_covers_the_criteria(RECORD_ONLY_STEP7_BULLET))
 
-    def test_the_existing_fallback_wording_is_unchanged(self):
+    def test_the_fallback_wording_names_the_data_by_provenance(self):
+        """#790: both fallbacks keep their wording, with the owner named by the subtitle table."""
         text = discover()
-        self.assertIn("\"In your data, every pair I checked is directly connected, so there's no "
+        self.assertIn("\"In [the data], every pair I checked is directly connected, so there's no "
                       "path of 2 or more degrees to show. Here is `find_path` on a direct "
                       "connection instead.\"", text)
-        self.assertIn("State: \"Your data doesn't contain disclosed relationships, so I'll explain "
+        self.assertIn("State: \"[The data] doesn't contain disclosed relationships, so I'll explain "
                       "what this would look like with connected data.\"", text)
+        self.assertNotIn("In your data, every pair", text)
+        self.assertNotIn("Your data doesn't contain", text)
         self.assertIn("{\"status\": \"skipped\", \"reason\": \"no_relationships\"}", text)
 
 

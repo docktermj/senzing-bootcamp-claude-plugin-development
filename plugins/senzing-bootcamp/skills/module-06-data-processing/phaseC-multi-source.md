@@ -92,9 +92,20 @@ confirm added to Phase C against the ones already on the same path, not only aga
 
 **Only when some source being loaded is bootcamper-supplied** — `provenance: own`/`free_data`/`unknown`
 in `config/data_sources.yaml`, and no generated marker in `docs/business_problem.md` — ask a single
-pinned 👉 question (INV-056) exactly as today and end the turn on it:
+pinned 👉 question (INV-056) and end the turn on it. **The `provenance` of the sources being loaded
+selects its wording (INV-399).** With none `synthesized`, ask it as it stands below; a source with
+no recorded `provenance`, or an unreadable `config/data_sources.yaml`, counts as not `synthesized`.
 
 👉 **Are there load-order dependencies between your data sources?**
+
+Only when some sources being loaded are `synthesized` and some are not, ask its pinned variant
+instead:
+
+👉 **Are there load-order dependencies between the loaded data sources?**
+
+Only when every source being loaded is `synthesized`, ask this one instead:
+
+👉 **Are there load-order dependencies between the data sources the bootcamp generated?**
 
 *(Internal: end the turn on this question and wait.)* On **yes**, capture the dependency map; on
 **no**, record that there are none.

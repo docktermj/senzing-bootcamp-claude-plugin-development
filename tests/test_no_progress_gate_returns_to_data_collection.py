@@ -74,6 +74,14 @@ BANDS = {
     "<70": "👉 **Your data quality needs attention before mapping will produce good results. "
            "What would you like to do? Reply with a number:**",
 }
+#: The same lines on a `synthesized` source (#790): "Your data quality" becomes "The generated
+#: data's quality" and nothing else changes, pinned verbatim (INV-056, INV-399).
+SYNTHESIZED_BANDS = {
+    "70-79": "👉 **The generated data's quality is acceptable but has some gaps. What would you "
+             "like to do? Reply with a number:**",
+    "<70": "👉 **The generated data's quality needs attention before mapping will produce good "
+           "results. What would you like to do? Reply with a number:**",
+}
 VARIANT_OPTIONS = {
     "70-79": ["Return to Data collection for this source.", "Continue to mapping now."],
     "<70": ["Return to Data collection for this source.",
@@ -128,11 +136,11 @@ def variant_problems(phase1):
     if step is None:
         return ["Step 7b is missing"]
     problems = []
-    for band, question in BANDS.items():
+    for band, question in list(BANDS.items()) + list(SYNTHESIZED_BANDS.items()):
         lists = options_after(step, question)
         if VARIANT_OPTIONS[band] not in lists:
-            problems.append("the %s no-progress variant (its band's 👉 line with options %r) "
-                            "is not in Step 7b" % (band, VARIANT_OPTIONS[band]))
+            problems.append("the %s no-progress variant (%r with options %r) "
+                            "is not in Step 7b" % (band, question, VARIANT_OPTIONS[band]))
         for opts in lists:
             dead = [o for o in opts if IMPROVE.search(o)]
             if dead:
@@ -459,15 +467,22 @@ class TheLiveFilesMeetEveryCriterion(unittest.TestCase):
         self.assertEqual([], step9_problems(self.module4))
 
     def test_the_variant_is_stated_once(self):
-        """INV-300: the pinned return option appears in Step 7b and nowhere else."""
+        """INV-300: the pinned return option appears in Step 7b and nowhere else.
+
+        Four times there since #790: each band's question in its existing form and in its
+        `synthesized` form, each carrying its own options.
+        """
+        option = "Return to Data collection for this source."
         hits = []
         for path in sorted(SKILLS.rglob("*.md")):
             text = path.read_text(encoding="utf-8")
-            count = text.count("Return to Data collection for this source.")
+            count = text.count(option)
             if count:
                 hits.append((path.name, count))
-        self.assertEqual([("phase1-quality-assessment.md", 2)], hits,
+        self.assertEqual([("phase1-quality-assessment.md", 4)], hits,
                          "the variant's return option is stated outside Step 7b, or not in it")
+        self.assertEqual(4, between(self.phase1, STEP_7B, END_OF_PHASE).count(option),
+                         "the return option is stated in Module 5 outside Step 7b")
 
     def test_every_offered_return_is_routed_by_its_offering_module(self):
         """#598: an offer is found from the files, and each offering module's First: routes it."""

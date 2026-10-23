@@ -90,8 +90,10 @@ unloaded file ([what `skipped` means](../module-04-data-collection/SKILL.md#mapp
    `get_entity_by_record_id` with relationship flags so we can see which entities connect to
    others. This helps me find good candidates for the relationship network demonstration."
 5. **Present a summary:** "I found N large entities (3+ records), M cross-source matches
-   (records from multiple data sources), and K entities with relationships in your data." List
-   the most interesting candidates by entity ID with a brief reason (e.g. "Entity 1234 has 5
+   (records from multiple data sources), and K entities with relationships in [the data]." For
+   [the data], use the words after "found in" in the subtitle that the loaded sources'
+   `provenance` picks in the [cover subtitle table](phase1-query-visualize.md#discoveries-cover-subtitle)
+   (INV-399). List the most interesting candidates by entity ID with a brief reason (e.g. "Entity 1234 has 5
    records from 2 sources" or "Entity 5678 has 3 relationships, 1 disclosed and 2 discovered").
 6. **Graceful fallback for limited data:** if fewer than 2 multi-record entities exist,
    explain: "Your data has limited resolution results, most records resolved as singletons

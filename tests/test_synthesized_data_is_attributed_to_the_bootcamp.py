@@ -53,6 +53,24 @@ shipped Markdown block, so a second copy cannot drift from the mapping. A prose 
 needs the mapping links ``#discoveries-cover-subtitle`` instead. The default is not in that
 scan: it is the script's own ``COVER_SUBTITLE``, and graduation quotes it, correctly, as
 ``generate_document_pdf.py``'s default.
+
+**Widened by #790 to every quoted or pinned "your data".** The sweep above sees a line only when
+its block already branches on ``provenance: synthesized``, so Module 7 step 5's summary, step
+7's fallback, Module 5's quality gate and Module 6 Phase C's dependency question said "your
+data" on every provenance with nothing to report it. ``attribution_problems`` reads every
+"your data" in shipped Markdown (``_corpus.corpus_files``) that is inside double quotes, on a
+``>`` line, inside a 👉 question's bold text, or anywhere in sample output under
+``docs/examples/``. Each passes only if its step reads ``provenance`` **and** names the
+generated case (INV-399's names, Module 5's "The generated data's quality", or a link to
+``#discoveries-cover-subtitle``), or if it is on ``EXEMPT``, keyed by file and phrase with a
+reason. Reading ``provenance`` alone is not enough: Module 5 read it for the INV-345 disclosure
+and still said "Your data quality" on every band, which is the defect. "Its step" is decided by
+``step_of``: the nearest enclosing numbered step, else the nearest ``**Step N`` label, else the
+heading-delimited section, and never a sibling's read.
+
+Module 5's and Phase C's ``synthesized`` variants are pinned verbatim here (INV-056). ⚠️ As
+above, this asserts what the shipped text says; that a live guide reads ``provenance`` before
+choosing the wording is observable only in ``dry-run`` phase 3 (INV-308).
 """
 
 import re
@@ -416,6 +434,445 @@ class TheCoverControlsRunTheSameCheck(unittest.TestCase):
         self.assertEqual(
             ["the Match Keys copy does not say \"across the loaded data\""],
             viz_copy_problems('# nothing in your data has that name\n  // your data\n'))
+
+
+# --- #790: every quoted or pinned "your data" line in shipped Markdown -----------------------
+
+#: The phrase INV-399 forbids for synthesized data.
+_YOUR_DATA = re.compile(r"(?i)\byour data\b")
+#: A double-quoted span inside one collapsed block, straight or curly.
+_QUOTED = re.compile(r'"[^"]*"|“[^”]*”')
+#: A pinned question: the bold text after a 👉.
+_PINNED = re.compile(r"👉\s*\*\*.*?\*\*")
+#: Sample output under ``docs/examples/``: every line of it is text a Bootcamper reads.
+_SAMPLE_OUTPUT = "docs/examples/"
+#: The unit reads the registry field the wording turns on ...
+_READS_PROVENANCE = re.compile(r"`provenance\b")
+#: ... and names the generated case: one of INV-399's names for it, Module 5's pinned "The
+#: generated data's quality", or a link to the table that maps the three cases.
+_NAMES_THE_GENERATED_CASE = re.compile(
+    r"(?i)\bthe bootcamp generated\b|\bthe generated data's\b|\bthe data is the bootcamp|"
+    r"#discoveries-cover-subtitle")
+
+_NUMBERED_STEP = re.compile(r"^([ \t]*)\d+[.)][ \t]")
+_STEP_LABEL = re.compile(r"^\*\*Step \d+[a-z]?\b")
+_HEADING_LINE = re.compile(r"^ {0,3}#{1,6}(?:[ \t]|$)")
+_FENCE_LINE = re.compile(r"^[ \t]*(`{3,}|~{3,})")
+
+#: ⛔ (INV-399) The reviewed exemptions: ``(file under the plugin root, phrase, reason)``. A
+#: phrase exempts a "your data" only in its own file and only where the phrase covers it, so a
+#: key is text, never a line number, and a copy elsewhere is still reported.
+EXEMPT = (
+    ("skills/module-01-business-problem/phase2-document-confirm.md",
+     "diagrams of your data architecture",
+     "the Bootcamper's own systems: their architecture, not the loaded data"),
+    ("skills/graduation/SKILL.md", "I'll draft one from your data",
+     "future data: the Next-time question asks what they build next on their own data"),
+    ("skills/module-02-sdk-setup/SKILL.md", "where your data volume is known",
+     "future data: the sentence opens \"If your own data later exceeds the evaluation limit\"; "
+     "#790 leaves this line out of scope, and it sits inside a quoted statement, so the scan "
+     "sees it"),
+    ("skills/module-05-data-quality-mapping/phase1-quality-assessment.md",
+     '"Your data is fine, shall we continue?"',
+     "a quoted counter-example: the question the ≥80% branch must not invent"),
+    ("skills/module-05-data-quality-mapping/phase2-data-mapping.md", '"your data is wrong"',
+     "a quoted counter-example: the reading the step rejects"),
+    ("skills/module-07-query-visualize-discover/phase1-query-visualize.md",
+     'never as "not in your data"', "a quoted counter-example: the report the step forbids"),
+    ("skills/graduation/SKILL.md", 'the discoveries line, "What Senzing found in your data"',
+     "a quoted counter-example: the default subtitle that is wrong on these documents"),
+    ("skills/module-07-query-visualize-discover/phase1-query-visualize.md",
+     "refine your data mapping",
+     "the Bootcamper's own mapping work, theirs even on a generated scenario"),
+    ("skills/module-07-query-visualize-discover/phase1-query-visualize.md",
+     'the default, "What Senzing found in your data"',
+     "the cover table's default cell: a run with no synthesized source"),
+    ("docs/examples/bootcamp_recap.example.md", "No entity in your data spans more sources",
+     "a run with no synthesized source: sample output of a CORD-backed run"),
+    ("docs/examples/bootcamp_recap.example.md",
+     "the offline interactive app pointed at your data",
+     "a run with no synthesized source: sample output of a CORD-backed run"),
+    ("skills/module-07-query-visualize-discover/phase1-query-visualize.md",
+     "What do you want to find out about your data?", "the pinned Discover question"),
+    ("docs/examples/bootcamp_recap.example.md",
+     "What do you want to find out about your data?",
+     "the pinned Discover question, quoted in the sample recap"),
+)
+
+
+def _content_lines(lines):
+    """A flag per line: True for a line inside a fenced code block, the fence lines excluded."""
+    out, opener = [], None
+    for line in lines:
+        fence = _FENCE_LINE.match(line)
+        if opener is None:
+            out.append(False)
+            if fence:
+                opener = fence.group(1)[0]
+        elif fence and fence.group(1)[0] == opener:
+            out.append(False)
+            opener = None
+        else:
+            out.append(True)
+    return out
+
+
+def _indent(line):
+    return len(line) - len(line.lstrip())
+
+
+def step_of(lines, index):
+    """``(first, last)``, 0-based and inclusive: the unit that decides whether the line at
+    ``index`` sits in a step that reads ``provenance``.
+
+    1. **The nearest enclosing numbered step**: the ``N.`` list item that holds the line, from
+       its marker to the next line at its indent or less (a sibling, a dedent) or a heading.
+       Its sub-items and indented paragraphs are inside it; a sibling step is not.
+    2. Otherwise, **the nearest bold step label** above it in its section (a line opening with
+       ``**Step N``), up to the next label or heading.
+    3. Otherwise, **its heading-delimited section**: the nearest heading above it (any level)
+       to the line before the next heading.
+
+    ⚠️ The nearest unit is decided strictly: a step that does not read ``provenance`` never
+    borrows the read of its sibling or of the section around it. That is what makes the
+    restored "your data" at Module 7 step 5 a failure while step 6 reads ``provenance``.
+    """
+    fenced = _content_lines(lines)
+
+    def heading(i):
+        return not fenced[i] and _HEADING_LINE.match(lines[i])
+
+    def item_end(start):
+        last, ind = start, _indent(lines[start])
+        for j in range(start + 1, len(lines)):
+            if not lines[j].strip():
+                continue
+            if not fenced[j] and (heading(j) or _indent(lines[j]) <= ind):
+                break
+            last = j
+        return last
+
+    at = index
+    while at > 0 and fenced[at]:
+        at -= 1  # a line of a fenced block is placed by its opening fence
+    limit = None
+    for i in range(at, -1, -1):
+        if not lines[i].strip() or fenced[i]:
+            continue
+        if heading(i):
+            break
+        ind = _indent(lines[i])
+        if limit is None or ind < limit:
+            if _NUMBERED_STEP.match(lines[i]):
+                return i, item_end(i)
+            limit = ind
+            if limit == 0 and i != at:
+                break
+    top = next((i for i in range(at, -1, -1) if heading(i)), -1)
+    bottom = next((i for i in range(at + 1, len(lines)) if heading(i)), len(lines))
+    label = next((i for i in range(at, top, -1)
+                  if not fenced[i] and _STEP_LABEL.match(lines[i])), None)
+    if label is not None:
+        end = next((i for i in range(label + 1, bottom)
+                    if not fenced[i] and _STEP_LABEL.match(lines[i])), bottom)
+        return label, end - 1
+    return max(top, 0), bottom - 1
+
+
+def _inside(pattern, flat, at):
+    return any(m.start() <= at < m.end() for m in pattern.finditer(flat))
+
+
+def candidates(rel, text):
+    """``(line, flat, at)`` for each quoted or pinned "your data" in one shipped file.
+
+    Quoted or pinned means: inside a double-quoted span, on a ``>`` blockquote line, inside a
+    👉 question's bold text, or anywhere in sample output under ``docs/examples/``. Read
+    through ``collapsed_blocks``, so a phrase or a quote wrapped across lines is still seen
+    (INV-346).
+    """
+    raw = text.splitlines()
+    sample = rel.startswith(_SAMPLE_OUTPUT)
+    found = []
+    for flat, origin in collapsed_blocks(text):
+        for m in _YOUR_DATA.finditer(flat):
+            line = line_of(origin, m.start())
+            if (sample or _inside(_QUOTED, flat, m.start()) or _inside(_PINNED, flat, m.start())
+                    or raw[line - 1].lstrip().startswith(">")):
+                found.append((line, flat, m.start()))
+    return found
+
+
+def exemption_for(rel, flat, at, exempt=EXEMPT):
+    """The ``EXEMPT`` entry whose phrase covers ``flat[at]`` in file ``rel``, or None."""
+    for entry in exempt:
+        path, phrase, _ = entry
+        if path != rel:
+            continue
+        i = flat.find(phrase)
+        while i >= 0:
+            if i <= at < i + len(phrase):
+                return entry
+            i = flat.find(phrase, i + 1)
+    return None
+
+
+def attribution_problems(paths, root=_PLUGIN, exempt=EXEMPT):
+    """``(problems, used)``: each ``(rel, line)`` whose quoted or pinned "your data" is neither
+    exempt nor in a step that reads ``provenance`` and names the generated case; and the
+    exemptions that matched something."""
+    problems, used = [], set()
+    for path in paths:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if not _YOUR_DATA.search(text):
+            continue
+        rel = path.relative_to(root).as_posix()
+        lines = text.splitlines()
+        for line, flat, at in candidates(rel, text):
+            entry = exemption_for(rel, flat, at, exempt)
+            if entry is not None:
+                used.add(entry)
+                continue
+            first, last = step_of(lines, line - 1)
+            unit = " ".join(" ".join(lines[first:last + 1]).split())
+            if _READS_PROVENANCE.search(unit) and _NAMES_THE_GENERATED_CASE.search(unit):
+                continue
+            problems.append((rel, line))
+    return problems, used
+
+
+def _shipped():
+    return corpus_files("plugins/senzing-bootcamp", suffixes=(".md",))
+
+
+MODULE5 = _PLUGIN / "skills" / "module-05-data-quality-mapping" / "phase1-quality-assessment.md"
+PHASE_C = _PLUGIN / "skills" / "module-06-data-processing" / "phaseC-multi-source.md"
+DISCOVER = _PLUGIN / "skills" / "module-07-query-visualize-discover" / "phase2-discover.md"
+DISCOVER_B = _PLUGIN / "skills" / "module-07-query-visualize-discover" / "phase2b-discover.md"
+
+
+class EveryQuotedYourDataFollowsProvenance(unittest.TestCase):
+    """#790: the guard reads every quoted or pinned "your data", not only branched blocks."""
+
+    def test_the_shipped_tree_passes_with_only_the_reviewed_exemptions(self):
+        problems, _ = attribution_problems(_shipped())
+        self.assertEqual(
+            [], problems,
+            "a quoted or pinned \"your data\" sits in a step that does not read `provenance` "
+            "and name the generated case (INV-399); give it the subtitle table's row or a "
+            "provenance-selected variant, or, if the data really is the Bootcamper's, add it to "
+            "EXEMPT with a reason:\n" + "\n".join("  %s:%d" % p for p in problems))
+
+    def test_every_exemption_still_matches_a_line(self):
+        """A stale exemption is reported, so the list cannot outlive the text it reviewed."""
+        _, used = attribution_problems(_shipped())
+        self.assertEqual([], [e[:2] for e in EXEMPT if e not in used])
+
+    def test_every_exemption_names_a_phrase_and_a_reason(self):
+        for path, phrase, reason in EXEMPT:
+            with self.subTest(path=path, phrase=phrase):
+                self.assertRegex(phrase, _YOUR_DATA)
+                self.assertTrue(reason.strip())
+                self.assertTrue((_PLUGIN / path).is_file(), path)
+
+    def test_the_scan_reaches_the_steps_it_is_written_for(self):
+        """⛔ (INV-265) A floor: the provenance-reading steps are among the candidates."""
+        seen = set()
+        for path in (MODULE5, PHASE_C, DISCOVER, DISCOVER_B):
+            rel = path.relative_to(_PLUGIN).as_posix()
+            if candidates(rel, path.read_text(encoding="utf-8")):
+                seen.add(path.name)
+        self.assertEqual({MODULE5.name, PHASE_C.name, DISCOVER.name, DISCOVER_B.name}, seen)
+        total = sum(len(candidates(p.relative_to(_PLUGIN).as_posix(),
+                                   p.read_text(encoding="utf-8"))) for p in _shipped())
+        self.assertGreaterEqual(total, 25, "the scan found %d candidates; it broke" % total)
+
+
+class TheWidenedGuardsControls(unittest.TestCase):
+    """⛔ (INV-265) Each control runs ``attribution_problems`` over mutated shipped text."""
+
+    def _problems(self, path, text):
+        import tempfile
+        rel = path.relative_to(_PLUGIN)
+        with tempfile.TemporaryDirectory() as d:
+            copy = Path(d).joinpath(*rel.parts)
+            copy.parent.mkdir(parents=True)
+            copy.write_text(text, encoding="utf-8")
+            return attribution_problems([copy], root=Path(d))[0]
+
+    def _cut(self, path, start, end):
+        text = path.read_text(encoding="utf-8")
+        i = text.index(start)
+        return text[:i] + text[text.index(end, i):]
+
+    def test_the_shipped_files_are_not_reported(self):
+        for path in (MODULE5, PHASE_C, DISCOVER, DISCOVER_B):
+            with self.subTest(path=path.name):
+                self.assertEqual([], self._problems(path, path.read_text(encoding="utf-8")))
+
+    def test_your_data_restored_at_module_7_step_5_is_reported(self):
+        """Step 6 reads `provenance`; step 5 does not, and must not borrow its sibling's read."""
+        text = DISCOVER.read_text(encoding="utf-8")
+        restored = re.sub(r'relationships in \[the data\]\."[\s\S]*?\(INV-399\)\. List',
+                          'relationships in your data." List', text, count=1)
+        self.assertNotEqual(text, restored, "step 5's summary was not found to mutate")
+        line = restored[:restored.index('in your data." List')].count("\n") + 1
+        self.assertEqual([(DISCOVER.relative_to(_PLUGIN).as_posix(), line)],
+                         self._problems(DISCOVER, restored))
+
+    def test_removing_module_5_step_7s_variant_is_reported(self):
+        mutated = self._cut(MODULE5, "**`provenance` selects each band's wording",
+                            "*(Internal: in the two gating branches")
+        lines = mutated.splitlines()
+        gate = next(i for i, l in enumerate(lines) if l.startswith("### Quality gate")) + 1
+        step7a = next(i for i, l in enumerate(lines) if l.startswith("### 7a.")) + 1
+        found = self._problems(MODULE5, mutated)
+        self.assertTrue(found, "removing Step 7's synthesized variant is not reported")
+        self.assertTrue(all(gate < n < step7a for _, n in found), found)
+
+    def test_removing_module_5_step_7bs_variant_is_reported(self):
+        mutated = self._cut(MODULE5, "**On a `synthesized` source, the band's form is its",
+                            "*(Internal: end the turn on the applicable question and wait.)*")
+        lines = mutated.splitlines()
+        step7b = next(i for i, l in enumerate(lines) if l.startswith("### 7b.")) + 1
+        found = self._problems(MODULE5, mutated)
+        self.assertTrue(found, "removing Step 7b's synthesized variant is not reported")
+        self.assertTrue(all(n > step7b for _, n in found), found)
+
+    def test_removing_phase_cs_variants_is_reported(self):
+        mutated = self._cut(PHASE_C, "Only when some sources being loaded are `synthesized`",
+                            "*(Internal: end the turn on this question and wait.)* On **yes**")
+        self.assertTrue(self._problems(PHASE_C, mutated))
+
+    def test_a_new_quoted_line_is_reported_and_an_exemption_is_keyed_by_file(self):
+        import tempfile
+        fixture = ("# A step\n\nSay: \"Senzing found 3 matches in your\ndata.\"\n\n"
+                   "> What do you want to find out about your data?\n\n"
+                   "👉 **Shall we look at your data?**\n\n"
+                   "Prose that says your data, unquoted, is not read.\n")
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "skills" / "elsewhere.md"
+            path.parent.mkdir()
+            path.write_text(fixture, encoding="utf-8")
+            problems, used = attribution_problems([path], root=Path(d))
+        self.assertEqual([("skills/elsewhere.md", 3), ("skills/elsewhere.md", 6),
+                          ("skills/elsewhere.md", 8)], problems)
+        self.assertEqual(set(), used, "an exemption leaked to a file it does not name")
+
+    def test_the_unit_is_the_nearest_step_then_the_section(self):
+        lines = ("# Section\n\nIntro reads `provenance`.\n\n"
+                 "1. **First:** \"in your data\"\n"
+                 "   continued.\n\n"
+                 "   - a sub-bullet\n\n"
+                 "     indented under it.\n"
+                 "2. **Second** reads `provenance`.\n\n"
+                 "After the list.\n\n"
+                 "**Step 3:** a bold label\n\nits text.\n\n"
+                 "**Step 4:** the next label\n\n"
+                 "## Next\n").splitlines()
+        self.assertEqual((4, 9), step_of(lines, 4))
+        self.assertEqual((4, 9), step_of(lines, 9))
+        self.assertEqual((10, 10), step_of(lines, 10))
+        self.assertEqual((0, 19), step_of(lines, 12))
+        self.assertEqual((14, 17), step_of(lines, 16))
+        self.assertEqual((18, 19), step_of(lines, 18))
+
+
+class TheGeneratedDataVariantsArePinned(unittest.TestCase):
+    """#790: Module 5's `synthesized` variants and Module 6 Phase C's, verbatim (INV-056)."""
+
+    STEP7 = (
+        '"The generated data\'s quality is strong. Let\'s continue to mapping."',
+        '"The generated data\'s quality is acceptable but has some gaps. You can continue to '
+        'mapping now, or improve the weakest fields first."',
+        "👉 **The generated data's quality is acceptable but has some gaps. What would you like "
+        "to do? Reply with a number:**",
+        '"The generated data\'s quality needs attention before mapping will produce good '
+        "results. I'd recommend focusing on [specific issues: e.g., filling missing phone "
+        'numbers, standardizing address formats]."',
+        "👉 **The generated data's quality needs attention before mapping will produce good "
+        "results. What would you like to do? Reply with a number:**",
+    )
+    STEP7B = (
+        '"The generated data\'s quality is acceptable but has some gaps. What is left is '
+        "missing values, which this module cannot fill; a better export, or a regeneration of "
+        'generated data, can."',
+        "👉 **The generated data's quality is acceptable but has some gaps. What would you like "
+        "to do? Reply with a number:**",
+        '"The generated data\'s quality needs attention before mapping will produce good '
+        "results. What is left is missing values, which this module cannot fill; a better "
+        'export, or a regeneration of generated data, can."',
+        "👉 **The generated data's quality needs attention before mapping will produce good "
+        "results. What would you like to do? Reply with a number:**",
+    )
+    PHASE_C = (
+        "👉 **Are there load-order dependencies between your data sources?**",
+        "👉 **Are there load-order dependencies between the loaded data sources?**",
+        "👉 **Are there load-order dependencies between the data sources the bootcamp "
+        "generated?**",
+    )
+
+    def setUp(self):
+        text = MODULE5.read_text(encoding="utf-8")
+        gate = text.index("### Quality gate")
+        step7b = text.index("### 7b.")
+        self.step7 = text[gate:text.index("### 7a.", gate)]
+        self.step7b = text[step7b:text.index("<a id=\"the-return-route\"></a>", step7b)]
+        phase_c = PHASE_C.read_text(encoding="utf-8")
+        i = phase_c.index("## 13. ")
+        self.step13 = phase_c[i:phase_c.index("## 14. ", i)]
+
+    @staticmethod
+    def _flat(text):
+        return " ".join(text.split())
+
+    def test_each_variant_is_pinned_where_its_band_is(self):
+        for name, block, variants in (("Step 7", self.step7, self.STEP7),
+                                      ("Step 7b", self.step7b, self.STEP7B),
+                                      ("Phase C step 13", self.step13, self.PHASE_C)):
+            for variant in variants:
+                with self.subTest(block=name, variant=variant[:60]):
+                    self.assertIn(variant, self._flat(block))
+
+    def test_each_variant_is_its_band_with_only_the_owner_changed(self):
+        """The existing pinned text stays, for every other provenance."""
+        for block, variants in ((self.step7, self.STEP7), (self.step7b, self.STEP7B)):
+            for variant in variants:
+                with self.subTest(variant=variant[:60]):
+                    existing = variant.replace("The generated data's quality", "Your data quality")
+                    self.assertIn(existing, self._flat(block))
+                    self.assertLess(self._flat(block).index(existing),
+                                    self._flat(block).index(variant),
+                                    "the existing pinned text no longer stands first")
+
+    def test_each_synthesized_question_keeps_its_bands_options(self):
+        from test_no_progress_gate_returns_to_data_collection import options_after
+        for block in (self.step7, self.step7b):
+            for variant in (v for v in self.STEP7 if v.startswith("👉")):
+                existing = variant.replace("The generated data's quality", "Your data quality")
+                with self.subTest(variant=variant[:60]):
+                    mine = options_after(block, variant)
+                    theirs = options_after(block, existing)
+                    self.assertEqual(1, len(mine))
+                    self.assertEqual(theirs, mine)
+
+    def test_each_selection_states_its_default(self):
+        """A missing `provenance` or an unreadable registry counts as not synthesized."""
+        for name, block in (("Step 7", self.step7), ("Step 7b", self.step7b),
+                            ("Phase C step 13", self.step13)):
+            with self.subTest(block=name):
+                flat = self._flat(block)
+                self.assertIn("no recorded `provenance`", flat)
+                self.assertIn("an unreadable `config/data_sources.yaml`", flat)
+                self.assertIn("INV-399", flat)
+
+    def test_a_drifted_variant_fails_the_pin(self):
+        """⛔ (INV-265) The pin reads the same flat text a one-word drift changes."""
+        drifted = self._flat(self.step7).replace("is strong. Let's", "is great. Let's")
+        self.assertNotIn(self.STEP7[0], drifted)
 
 
 if __name__ == "__main__":
