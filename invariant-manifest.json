@@ -1,5 +1,5 @@
 {
-  "count": 409,
+  "count": 410,
   "generator": ".claude/skills/review-invariants/invariant_manifest.py",
   "invariants": [
     {
@@ -4090,6 +4090,16 @@
       "statement": "Module Completion's recap structural check MUST NOT block module completion: a finding is corrected in the just-appended recap section, and the module completes whether or not the check finds anything or can run. How an unrunnable check is reported is INV-163's to govern, not this invariant's. No test enforces it today. ⚠️ **Why it is not an existing invariant, so the question is not re-derived:** **INV-012** covers invisibility only; the non-blocking clause lost its INV-048 credit in `589a18d0` (#685), since INV-048 governs the recap PDF; **INV-163** governs reporting a check that cannot run, and was deliberately left to govern that half (the audit's draft also required recording it, which contradicted the shipped \"continue silently\" line, and was amended at review to the non-blocking half). (Source: `production-readiness-audit-2026-10-22`, 2026-10-22.)",
       "status": "active",
       "summary": "Module Completion's recap structural check MUST NOT block module completion: a finding is corrected in the just-appended recap section, and the module completes whether or not the check finds anything or can run.",
+      "superseded_by": null
+    },
+    {
+      "id": "INV-412",
+      "index_group": "Module flow, selection and progress",
+      "partly_superseded_by": null,
+      "section": "Invariants added from implemented specs",
+      "statement": "A source's top-level `record_count` in `config/data_sources.yaml` MUST be written only by the module that collects or generates the source file and counts it (Data collection), as the measured count; no earlier module writes it, and it stays null until measured. A sample's or subset's own `record_count` is INV-326's, not this invariant's. No test enforces it today. ⚠️ **Why it is not an existing invariant, so the question is not re-derived:** **INV-243** governs reconciling a per-source figure before it is shown to the Bootcamper, not who writes the field, though both sites cited it until 2026-10-23; **INV-326** governs a sample's own `record_count` and forbids it overwriting the top-level one; **INV-402** governs whether the registry entry exists. (Source: `production-readiness-audit-2026-10-22`, 2026-10-22.)",
+      "status": "active",
+      "summary": "A source's top-level `record_count` in `config/data_sources.yaml` MUST be written only by the module that collects or generates the source file and counts it (Data collection), as the measured count; no earlier module writes it, and it stays null until measured.",
       "superseded_by": null
     }
   ],

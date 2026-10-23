@@ -1024,7 +1024,7 @@ Module 5 can evaluate.
 >   none: the server states its count at collection, recorded as `expected_record_count`, which
 >   [the truncated-source rule](#truncated-cord-source) qualifies.
 >
-> Module 1 writes no other field. ⛔ (INV-243) **`record_count` stays the measured count:**
+> Module 1 writes no other field. ⛔ (INV-412) **`record_count` stays the measured count:**
 > Module 1 never writes it, and it stays null until this module collects or generates the file
 > and counts it. `quality_intent` belongs to a `synthesized` entry too, written by Step 2's
 > generation as *Record the intended band per source* shows, never by Module 1. An entry with no

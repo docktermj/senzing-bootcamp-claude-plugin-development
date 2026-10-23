@@ -12,7 +12,7 @@ The fix is one definition, Module 4's **Scenario source fields** note
 (`#scenario-source-fields`, INV-300). Both Module 1 writers point at it, Step 11 names the
 fields and the registry shape, and Module 4 Step 2 reads the fields by name. The intended count
 is a new field, `scenario_record_count`; `record_count` stays the count measured in the
-collected file, null before collection, and Module 1 never writes it (INV-243).
+collected file, null before collection, and Module 1 never writes it (INV-412).
 
 What this file pins:
 
@@ -36,8 +36,8 @@ issue's own control: a field Module 4 reads, dropped from Step 11's list, fails.
 
 Phrase checks run on whitespace-collapsed text, so a wrapped phrase still matches (INV-346).
 
-Source issue: #604. Invariants applied: INV-300 (one definition, pointers name it), INV-243
-(`record_count` is the measured baseline), INV-239 and INV-293 (what the scenario promised).
+Source issue: #604. Invariants applied: INV-300 (one definition, pointers name it), INV-412
+(`record_count` is the measured baseline, written only by Data collection; registered 2026-10-23), INV-239 and INV-293 (what the scenario promised).
 
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 
@@ -158,7 +158,7 @@ def schema_problems(text):
     if not re.search(r"never overwrites it, so it can be compared with the measured `record_count`",
                      text):
         problems.append("`scenario_record_count` is not kept beside the measured count")
-    if not re.search(r"⛔ \(INV-243\) \*\*`record_count` stays the measured count:\*\* Module 1 "
+    if not re.search(r"⛔ \(INV-412\) \*\*`record_count` stays the measured count:\*\* Module 1 "
                      r"never writes it, and it stays null until", text):
         problems.append("the schema does not keep `record_count` measured and unwritten by Module 1")
     if not re.search(r"`quality_intent` belongs to a `synthesized` entry too, written by Step 2's "
@@ -234,7 +234,7 @@ class TheSchemaDefinesTheScenarioFields(unittest.TestCase):
         for mutant, why in (
             (text.replace("- `entity_type`:", "- entity type:"), "a field dropped"),
             (text.replace("A `synthesized` source has neither.", ""), "CORD key unscoped"),
-            (text.replace("⛔ (INV-243) **`record_count` stays the measured count:**", ""),
+            (text.replace("⛔ (INV-412) **`record_count` stays the measured count:**", ""),
              "record_count rule dropped"),
             (text.replace("written before the field existed", "old"), "fallback dropped"),
             (text.replace("(INV-300)", ""), "INV-300 dropped"),
