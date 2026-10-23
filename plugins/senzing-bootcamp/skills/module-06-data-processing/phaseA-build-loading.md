@@ -532,11 +532,15 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
    database across Phases B and C. If any value is missing/unreadable, or the loadable total
    cannot be computed, treat it as indeterminate, do not fail; fall back to the existing advisory
    behavior and continue to the load.
-   - ⛔ **An absent `database_type` is a recording failure, not a non-SQLite answer.** Because
+   - <a id="engine-fallback-from-the-connection-scheme"></a>
+     ⛔ **An absent `database_type` is a recording failure, not a non-SQLite answer.** Because
      step 3 prompts only when the database *is* SQLite, a missing key silently disables this
-     heads-up entirely. Before treating it as indeterminate, fall back to the engine Module 2
-     recorded in `config/bootcamp_progress.json`, and note the gap internally so it reaches the
-     recap rather than vanishing.
+     heads-up entirely. Before treating it as indeterminate, take the engine from the scheme of
+     `SQL.CONNECTION` in `config/engine_config.json`, which `../module-02-sdk-setup/SKILL.md`
+     Step 8 writes: `sqlite3://` is SQLite and `postgresql://` is PostgreSQL. Treat a missing file
+     or any other scheme as indeterminate. Note the gap internally so it reaches the recap rather
+     than vanishing. This fallback is stated once, here, and Module 4 Step 8b points to it
+     (INV-300).
 2. **Decide whether it was already decided.** If a `sqlite_volume_prompt` marker in preferences
    is `decided: true` and its `loadable` matches the current loadable total for this same load (or
    a `sqlite_load_time_prompt` marker covers this same load, as the sub-items below say), skip the

@@ -980,7 +980,7 @@ Pin the offer verbatim:
   checkpoint `m7_visualizations` as `{"offered": true, "accepted": false}` under
   `module_7_query`.
 - **Accepts:** build and present the app (below), then checkpoint `m7_visualizations` as
-  `{"offered": true, "accepted": true, "artifact": "docs/visualizations/<file>.html"}`.
+  `{"offered": true, "accepted": true, "artifact": "docs/visualizations/results_visualization.html"}`.
 
 Build it modeled on the shipped Truth Set visualization server
 (`${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py`, INV-185; skill-relative fallback
@@ -1001,7 +1001,8 @@ the URL `confirm-viz` printed: `http://localhost:<host_port>` (INV-387), never `
 line. Record the container-namespace pid, `port` `8080`, the `host_port` and the container's
 `name` in `m7_visualizations`, and probe the bound address at teardown as its item 4 says. If the
 Bootcamper declines to recreate a container that has no published port, there is no live server:
-say so, keep the snapshot as the deliverable, and continue to "Next: Discover phase (step 4)".
+say so, keep the snapshot as the deliverable once it passes [the snapshot check](#snapshot-check)
+below, and continue to "Next: Discover phase (step 4)".
 
 The server MUST:
 
@@ -1126,7 +1127,8 @@ The server MUST:
     and a CDN fallback would break the offline guarantee that is the reason for vendoring D3 at all.
     If the first-build copy failed, or `src/server/vendor/d3.v7.min.js` is later missing, the server
     names `d3.v7.min.js` and writes no page; copy it again from the plugin on the host.
-- Write a self-contained standalone HTML snapshot under `docs/visualizations/` (INV-070), passing
+- Write a self-contained standalone HTML snapshot to
+  `docs/visualizations/results_visualization.html` (INV-070), passing
   the app **dataset wording that names the Bootcamper's own sources** — e.g. "your CUSTOMERS and
   REFERENCE data", built from `config/data_sources.yaml`. ⛔ Never let it default to neutral wording
   here, and never pass "the Senzing Truth Set": this app points at the Bootcamper's data, the
@@ -1170,7 +1172,7 @@ The server MUST:
   "no headless capability" from "no requested tab exists" — which is exactly why its exit code is
   the authority here and your own assessment is not.
 
-  ⛔ **Embed in the app's own tab order — never in capture or append order, and never in
+  ⛔ **(INV-147) Embed in the app's own tab order — never in capture or append order, and never in
   filename-discovery order.** The ordering authority is the tab table in
   `../module-03b-truthset-visualization/visualization-api-reference.md`, whose row order *is* the
   order the app presents its tabs; cite it rather than restating the list, or the two orders fork (INV-300).
@@ -1184,6 +1186,16 @@ The server MUST:
   the recap prose that describes the change (see
   `../module-03b-truthset-visualization/phase1-visualization.md` → 2.4b, where the same omission
   shipped an eight-tab snapshot beside six-tab prose).
+
+<a id="snapshot-check"></a>
+⛔ **(INV-129) Check the snapshot before handing it over.** The check is Truth Set
+visualization's, stated once in `../module-03b-truthset-visualization/phase2-close.md` →
+"Pre-advancement verification" (INV-300): its **"The visualization artifact actually exists on
+disk"** and **"The snapshot reflects the loaded Truth Set, not an empty template"** items. Only two
+things differ here: the file is `docs/visualizations/results_visualization.html`, and the record
+set is the Bootcamper's loaded data, not the Truth Set. If either fails, rebuild the snapshot and
+check it again before the hand-over below; never hand over a missing or blank keepsake. The check
+is agent-side and asks the Bootcamper nothing (INV-012).
 
 ⛔ **The server stays running — screenshot capture must not stop it.** The API probes and the
 screenshot pass above are agent-side verification, not the end of the interaction. Follow the

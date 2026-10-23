@@ -10456,21 +10456,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8489 test methods in 453 files, matching `inventory.test_count_total`.
+There are 8532 test methods in 454 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8433.
+sum to 8532.
 
-Two files run more tests than they define, so discovery collects 8433:
+Two files run more tests than they define, so discovery collects 8539:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8426`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8532`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8433`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8539`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10701,7 +10701,8 @@ looks wrong.
 - `tests/test_module1_registry_write_is_checked.py`: 12
 - `tests/test_module3_check_lists_agree.py`: 24
 - `tests/test_module3_failed_run_ends_on_a_question.py`: 25
-- `tests/test_module4_absent_limit_is_measured_before_any_fallback.py`: 6
+- `tests/test_module4_6_7_steps_act_on_real_files.py`: 22
+- `tests/test_module4_absent_limit_is_measured_before_any_fallback.py`: 8
 - `tests/test_module5_full_output_file_path_is_written_at_step_18.py`: 18
 - `tests/test_module5_phase1_gates_and_scoring.py`: 14
 - `tests/test_module5_phase3_exits_return_to_the_per_source_loop.py`: 9
@@ -13849,3 +13850,14 @@ Senzing licensing, with no SPDX identifier.
   INV-378 binds every step that classifies the reply); the truthset guard
   finds its sites by scanning every mention with a reasoned `EXEMPT` list, and
   an INV-378 amendment is queued for `/review-invariants`
+- #810: Module 4 Step 3 runs `head -5` on each registry `file_path` and Step 4
+  has the guide fill `docs/data_collection_checklist.md` from the registry and
+  validation results, asking nothing; an absent `database_type` falls back to
+  the scheme of `SQL.CONNECTION` in `config/engine_config.json`, stated once
+  at Phase A's `#engine-fallback-from-the-connection-scheme` and linked from
+  Step 8b; Module 7 names `docs/visualizations/results_visualization.html` and
+  checks it before hand-over by Module 3b's check (INV-129), and its tab-order
+  rule cites INV-147 (the steps read example filenames, asked a no-question
+  step to collect input, and read an engine from `config/bootcamp_progress.json`,
+  which nothing writes); the engine fallback is queued as a new invariant for
+  `/review-invariants`

@@ -1948,13 +1948,14 @@ placed after the last branch is skipped by a guide that follows the other one.
    own:
 
    - **Module 4** (`../module-04-data-collection/SKILL.md`) **Step 8b**, the SQLite load-time
-     warning — notes the defect and falls back to the engine recorded in
-     `config/bootcamp_progress.json`.
+     warning — notes the defect and falls back to the scheme of `SQL.CONNECTION` in
+     `config/engine_config.json`, by Module 6's engine fallback below.
    - **Module 6** (`../module-06-data-processing/phaseA-build-loading.md`) **§3**, the loader's
      worker count — treats the engine as SQLite and serializes the writes, which on PostgreSQL is
      merely slower.
-   - **Module 6**, the same file's **SQLite volume pre-load check** — falls back to
-     `config/bootcamp_progress.json` and notes the gap.
+   - **Module 6**, the same file's **SQLite volume pre-load check** — falls back to the scheme of
+     `SQL.CONNECTION` in `config/engine_config.json`, the engine fallback stated there, and notes
+     the gap.
    - **Graduation** (`../graduation/SKILL.md`) **`## Pre-checks`** — notes the defect and carries
      on with the value indeterminate; **Step 3**'s production configuration files take the value
      from there.
@@ -1963,8 +1964,8 @@ placed after the last branch is skipped by a guide that follows the other one.
 
    A fallback is a guess about what this write would have said, and a wrong guess hands a
    PostgreSQL Bootcamper a serialized loader and SQLite warnings with no reason given. Do not
-   record the choice only in `config/bootcamp_progress.json`: the readers look there only after
-   this key is missing, and a different key name is the same failure as no key at all.
+   record the choice only in `config/bootcamp_progress.json`: no reader looks there, and a
+   different key name is the same failure as no key at all.
 
 2. **Checkpoint:** write step 7 to `config/bootcamp_progress.json` **when the chosen branch's
    setup is finished, before Step 8** — not now. A checkpoint written as Step 7 starts marks the
