@@ -86,17 +86,21 @@ the new default, idempotently — then build and run it first with that section'
 processing step 4a regenerates this same program, in the same place, with every code it loads. Never
 rely on Module 2's default config, which predates data collection.
 
-⚠️ **If this phase's sandbox database was created fresh, seed its default configuration first.** The
-registration snippet reads the current default config and builds from it, so against a
-just-schema-created datastore it fails with `SENZ7221
+⛔ **(INV-393) Before seeding this phase's datastore, test whether a default configuration is already
+registered, not whether the datastore is new: [Module 2 Step 8a's already-seeded
+block](../module-02-sdk-setup/SKILL.md#already-seeded) decides it (INV-300) — read the default
+config id; keep a present, non-zero id; seed only on `0` or no id — and its paragraph on the
+`init_default_config` prompt is why that prompt is never answered blind.** The registration snippet
+reads the current default config and builds from it, so against a just-schema-created datastore it
+fails with `SENZ7221
 EAS_ERR_NO_CONFIG_REGISTERED_FOR_DATA_ID` — a different failure from the `SENZ2207` above, and one
 whose own `explain_error_code` guidance **does** now name the cause and the remedy — call it
 (re-verified on MCP server 1.32.8, 2026-08-11: its first cause is *"No default config has EVER been
 registered on this datastore"* and its first resolution step names `create_config_from_template()` →
 `set_default_config(...)`, adding that `sdk_guide` `topic='configure'` "called WITHOUT `data_sources`
-… returns the seeding snippet"). Seed by calling `sdk_guide(topic='configure', language=…)` **without
-`data_sources`** — that call's **primary** `code` block is `init_default_config` — then call it again
-**with** `data_sources` to register (see `../module-02-sdk-setup/SKILL.md` → Step 8a). Where `mapping_workflow` step 6 creates
+… returns the seeding snippet"). On the seed branch, seed by calling `sdk_guide(topic='configure',
+language=…)` **without `data_sources`** — that call's **primary** `code` block is `init_default_config`
+— then call it again **with** `data_sources` to register. Where `mapping_workflow` step 6 creates
 and initializes the sandbox database itself, this is already handled — confirm rather than assume.
 
 **Checkpoint:** write step 21a.

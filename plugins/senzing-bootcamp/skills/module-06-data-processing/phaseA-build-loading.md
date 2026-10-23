@@ -451,11 +451,15 @@ Truth Set visualization module already run.
    not (server **1.36.0, 2026-09-02**). The substitution rule is unaffected either way: keep every
    Senzing method, signature and flag exactly as the snippet has them, and change only the codes.
 
-   ⚠️ **On a freshly schema-created datastore, call it WITHOUT `data_sources` first.** The
-   registration snippet reads the *current* default config, so it assumes one is already registered;
-   the same response's `compatibility_notes` say that on a fresh datastore
-   `get_default_config_id()` returns 0 and `create_config_from_config_id(0)` raises SENZ7221. The
-   no-`data_sources` call returns the seeding snippet that creates one.
+   ⛔ **(INV-393) Before seeding, test whether a default configuration is already registered, not
+   whether the datastore is new: [Module 2 Step 8a's already-seeded
+   block](../module-02-sdk-setup/SKILL.md#already-seeded) decides it (INV-300) — read the default
+   config id; keep a present, non-zero id; seed only on `0` or no id — and its paragraph on the
+   `init_default_config` prompt is why that prompt is never answered blind.** The registration
+   snippet reads the *current* default config, so it assumes one is already registered; the same
+   response's `compatibility_notes` say that on a fresh datastore `get_default_config_id()` returns
+   0 and `create_config_from_config_id(0)` raises SENZ7221. On the seed branch, call it WITHOUT
+   `data_sources` first: that call returns the seeding snippet that creates one.
 
    The generated code MUST load the current default config, register each code from step 1, export
    it, register the new config, and replace the default config ID — and the **whole sequence must be
