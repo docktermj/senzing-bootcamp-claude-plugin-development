@@ -1234,7 +1234,10 @@ chosen language (INV-090), so there is no script name to match on anyway. When t
 find the listener by port (`lsof -ti:<port>`, or `Get-NetTCPConnection -LocalPort <port>`). ⛔ **On
 the `docker` path neither `lsof` nor a `kill` binary exists in the container (INV-223)** — signal through the
 shell builtin using the pid INV-223 required the launch to record, and probe the port with `python3`, and treat the port's answer as the observation
-rather than the kill's exit status. Full rule:
+rather than the kill's exit status. What each teardown outcome then allows, a port that still
+answers after the force-stop and the re-check included, is the
+[failed-stop rule](../module-03b-truthset-visualization/visualization-api-reference.md#failed-stop),
+stated once there (INV-394, INV-300); the teardown below follows it. Full rule:
 `../module-03b-truthset-visualization/visualization-api-reference.md` → "Server lifetime" →
 "Identifying the server process".
 
@@ -1473,8 +1476,14 @@ except the live `why`/`how`/`search`. Then ask the teardown gate, pinned verbati
 *(Internal: end the turn on this question and wait.)*
 
 - **Yes:** stop it by the pid recorded in the `m7_visualizations` checkpoint and confirm the port is
-  free, as step 3c's "Stop it by the pid captured when it was started" requires, then continue to
-  module completion below.
+  free, as step 3c's "Stop it by the pid captured when it was started" requires. What each outcome
+  allows is the
+  [failed-stop rule](../module-03b-truthset-visualization/visualization-api-reference.md#failed-stop)
+  (INV-394, INV-300); this teardown gates no purge, so the rule's no-purge case applies. On its
+  outcome 3 the stop is unverified: say so plainly, and what was observed (the port, that something
+  still answers on it, and the listener's pid where the port lookup gives one), never that the
+  server stopped. The server is then still up, so make the "No" branch's closing statement below:
+  that it is still running, and how to stop it. Then continue to module completion below.
 - **No or not yet:** leave it running, say so, and wait for their go-ahead; do not re-ask on a loop
   (INV-006). Never leave the bootcamper having to request a restart for a server they never agreed
   to stop. Continue to module completion below with the server up. No second teardown question is

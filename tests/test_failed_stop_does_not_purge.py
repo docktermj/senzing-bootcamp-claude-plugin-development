@@ -36,6 +36,29 @@ So the checks are:
 - `record_problems`: the close records what cleanup actually did and claims nothing more — the
   `cleanup` checkpoint and its two reasons, the recap clause, and both success indicators.
 
+**Every module that stops a server, not only the Truth Set's (#803).** Module 7 stops its own
+visualization server and gates no purge, so outcome 3 states two cases: where the module's teardown
+gates a purge, every clause above (no purge, the records still loaded, re-run the cleanup program);
+where it gates none, report the unverified stop, say the server is still running, and continue.
+"A warning is not a substitute" and "This reports; it does not block" sit after both cases, so they
+hold for every module. Three more checks follow from that:
+
+- `case_problems`: outcome 3 carries both cases in order, each purge clause inside the purge case,
+  the no-purge disposition inside the other, and the every-module clauses outside both;
+- `scanned_site_problems`: the stop sites are found by **scanning** every shipped Markdown file
+  (INV-246), never from a list. A site is every passage that stops a server by its pid ("stop it by
+  the pid") and every teardown gate (👉 "Ready for me to stop the visualization server…"). A pid
+  passage must link `visualization-api-reference.md#failed-stop` and cite INV-394 in the passage
+  itself; a list item is its own passage, so a link on a neighboring item does not count. A gate
+  is a pinned question that ends the turn and can carry no link, so its unit is the gate and its
+  answers, up to the next heading. The contract's own gate lines are the gate's definition, beside
+  the rule, and are not sites;
+- `module7_problems`: Module 7's teardown "Yes" says, on outcome 3, that the stop is unverified and
+  what was observed, never that the server stopped, and makes the "No" branch's still-running
+  statement rather than a second one; Module 7 records no new outcome (no `stop_unverified`).
+
+`copy_problems` reads Module 7's file too, since it now defers to the same rule.
+
 Each check is a pure function over the shipped text, so each runs on a mutated copy as its negative
 control and must report the clause it targets. Phrases are matched with `_wrapped_text.match_lines`
 (INV-346), so a re-flow cannot turn the guard red and a wrapped regression cannot turn it green.
@@ -51,7 +74,7 @@ teardown last; it does not say the purge is skipped. This file asserts the rule 
 
 Stdlib only; shipped files are read as text, never imported (INV-108).
 
-Source issue: #673.
+Source issues: #673; #803 (Module 7's stop sites, outcome 3 for a module with no purge, the scan).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -60,7 +83,7 @@ import unittest
 from pathlib import Path
 
 import _corpus
-from _wrapped_text import match_lines
+from _wrapped_text import blocks, match_lines
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MODULE = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
@@ -68,6 +91,8 @@ MODULE = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
 CONTRACT = MODULE / "visualization-api-reference.md"
 PHASE2 = MODULE / "phase2-close.md"
 SKILL = MODULE / "SKILL.md"
+MODULE7 = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
+           / "module-07-query-visualize-discover" / "phase1-query-visualize.md")
 
 ANCHOR = '<a id="failed-stop"></a>'
 #: The link every close site uses to reach the canonical passage from another file.
@@ -119,11 +144,16 @@ RULE_CLAUSES = (
      r"When teardown cannot confirm, say so plainly and do not claim the server stopped"),
     ("outcome 3: the port and its listener are reported",
      r"the port, that something is still listening on it"),
+    ("outcome 3: the purge case", r"\*\*Where the module's teardown gates a purge\*\*"),
+    ("outcome 3: the no-purge case", r"\*\*Where it gates none\*\*"),
     ("outcome 3: the retained records are reported", r"the records are still loaded"),
     ("outcome 3: no purge",
      r"continue without the purge rather than purging on an unverified stop"),
     ("outcome 3: what is left to do by hand",
      r"release the listener, then re-run the module's cleanup program"),
+    ("outcome 3: with no purge, the server is still running",
+     r"there is no purge to withhold, so say that the server is still running"),
+    ("outcome 3: with no purge, the module continues", r"then continue to the module's completion"),
     ("outcome 3: a warning is not authorization",
      r"A warning is not a substitute for the confirmation"),
     ("outcome 3: the retired alternatives are named",
@@ -172,6 +202,66 @@ def rule_problems(text):
     for label, pattern in OUTCOME_DISPOSITIONS:
         if not has(region, pattern):
             problems.append("the canonical passage does not say what follows: %s" % label)
+    return problems
+
+
+def flat(text):
+    """``text`` with every run of whitespace made one space, so a wrapped phrase is one string."""
+    return re.sub(r"\s+", " ", text)
+
+
+#: The labels that open outcome 3's two cases, in the order they appear (#803).
+PURGE_CASE = "**Where the module's teardown gates a purge**"
+NO_PURGE_CASE = "**Where it gates none**"
+#: The first clause stated for every module; both cases end where it begins.
+EVERY_MODULE = "A warning is not a substitute for the confirmation"
+
+#: (case, label, phrase): the clauses each case must carry. The purge case keeps every clause
+#: #673 wrote for Module 3b; the no-purge case reports and continues.
+CASE_CLAUSES = (
+    ("purge", "the retained records", "the records are still loaded"),
+    ("purge", "no purge on an unverified stop",
+     "continue without the purge rather than purging on an unverified stop"),
+    ("purge", "what is left to do by hand",
+     "release the listener, then re-run the module's cleanup program"),
+    ("no-purge", "the server is still running", "say that the server is still running"),
+    ("no-purge", "the module continues", "then continue to the module's completion"),
+)
+
+#: Clauses that hold for every module, so neither case may own them.
+EVERY_MODULE_CLAUSES = (
+    "When teardown cannot confirm, say so plainly and do not claim the server stopped",
+    "the pid the port lookup names where it names one",
+    EVERY_MODULE,
+    "This reports; it does not block",
+)
+
+
+def case_problems(text):
+    """Problems with outcome 3's two cases in ``text`` (all of the contract file)."""
+    region = rule_region(text)
+    if region is None:
+        return ["the canonical passage's anchor %s is gone" % ANCHOR]
+    region = flat(region)
+    start = region.find("the stop is UNVERIFIED")
+    purge, none, every = (region.find(PURGE_CASE), region.find(NO_PURGE_CASE),
+                          region.find(EVERY_MODULE))
+    if not 0 <= start < purge < none < every:
+        return ["outcome 3 does not state its two cases in order: the purge case, the no-purge "
+                "case, then what holds for every module"]
+    spans = {"purge": region[purge:none], "no-purge": region[none:every]}
+    problems = []
+    for case, label, phrase in CASE_CLAUSES:
+        if phrase not in spans[case]:
+            problems.append("outcome 3's %s case is missing: %s" % (case, label))
+    for phrase in EVERY_MODULE_CLAUSES:
+        at = region.find(phrase)
+        if at < 0:
+            problems.append("outcome 3 is missing a clause for every module: %s" % phrase)
+        elif purge <= at < every:
+            problems.append("outcome 3 scopes a clause for every module to one case: %s" % phrase)
+    if "purge may run" in spans["no-purge"] or "cleanup program" in spans["no-purge"]:
+        problems.append("outcome 3's no-purge case speaks of a purge it does not gate")
     return problems
 
 
@@ -230,10 +320,119 @@ CONTRACT_ONLY = (
 
 def copy_problems(texts=None):
     """Each close file that restates a clause the canonical passage owns."""
-    texts = texts if texts is not None else {p.name: read(p) for p in (PHASE2, SKILL)}
+    texts = texts if texts is not None else {p.name: read(p) for p in (PHASE2, SKILL, MODULE7)}
     return ["%s restates the rule (%s)" % (name, phrase)
             for name, text in sorted(texts.items())
             for phrase in CONTRACT_ONLY if has(text, phrase)]
+
+
+# --------------------------------------------------------------------------------------------
+# Every stop site, found by scanning (#803)
+# --------------------------------------------------------------------------------------------
+
+#: A passage that stops a server by its recorded pid. Case-insensitive: a sentence may open with it.
+PID_STOP = re.compile(r"(?i)\bstop (?:it|the (?:visualization )?server) by the pid\b")
+#: A teardown gate: the pinned question that asks to stop a visualization server.
+TEARDOWN_GATE = re.compile(r"👉 \*\*Ready for me to stop the visualization server")
+#: What every site must carry: the link to the rule and the invariant it applies.
+SITE_LINK = "visualization-api-reference.md#failed-stop"
+SITE_INVARIANT = "INV-394"
+#: A line that starts a list item; each item is its own passage.
+LIST_ITEM = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s")
+HEADING = re.compile(r"^ {0,3}#{1,6}(?:\s|$)")
+
+
+def passages(text):
+    """(first line, flat text, is heading) for each passage of ``text``, in order.
+
+    A passage is a Markdown block (``_wrapped_text.blocks``: blank lines, headings, fences,
+    blockquote markers stripped), cut again at each list item, so a link on one answer of a gate
+    does not count for the answer beside it.
+    """
+    out = []
+    for block in blocks(text):
+        current = []
+        for lineno, line in block:
+            if current and LIST_ITEM.match(line):
+                out.append(current)
+                current = []
+            current.append((lineno, line))
+        out.append(current)
+    return [(lines[0][0], flat(" ".join(line for _, line in lines)).strip(),
+             bool(HEADING.match(lines[0][1])))
+            for lines in out if lines]
+
+
+def scanned_sites(texts=None):
+    """[(path, line, kind, region)] for every stop site in ``texts``, found by scanning."""
+    texts = texts if texts is not None else shipped_markdown()
+    found = []
+    for path, text in sorted(texts.items(), key=lambda kv: str(kv[0])):
+        ps = passages(text)
+        for i, (line, body, _) in enumerate(ps):
+            if PID_STOP.search(body):
+                found.append((path, line, "pid stop", body))
+            if TEARDOWN_GATE.search(body) and path != CONTRACT:
+                end = next((j for j in range(i + 1, len(ps)) if ps[j][2]), len(ps))
+                found.append((path, line, "teardown gate",
+                              " ".join(b for _, b, _ in ps[i:end])))
+    return found
+
+
+def shown(path):
+    return path.relative_to(REPO_ROOT).as_posix() if isinstance(path, Path) else str(path)
+
+
+def scanned_site_problems(texts=None):
+    """Each scanned stop site that does not link the failed-stop rule or cite INV-394."""
+    problems = []
+    for path, line, kind, region in scanned_sites(texts):
+        if SITE_LINK not in region.replace(" ", ""):
+            problems.append("%s:%d: the %s does not link %s" % (shown(path), line, kind, SITE_LINK))
+        if SITE_INVARIANT not in region:
+            problems.append("%s:%d: the %s does not cite %s"
+                            % (shown(path), line, kind, SITE_INVARIANT))
+    return problems
+
+
+def teardown_answers(text):
+    """{"yes": passage, "no": passage} for Module 7's teardown gate; a missing one is None."""
+    section = between(text, "## Visualization server teardown", "\n## Module completion") or ""
+    found = {"yes": None, "no": None}
+    for _, body, _ in passages(section):
+        if body.startswith("- **Yes:**"):
+            found["yes"] = body
+        elif body.startswith("- **No or not yet:**"):
+            found["no"] = body
+    return found
+
+
+#: (label, answer, pattern) for what Module 7 says on an unverified stop.
+MODULE7_CLAUSES = (
+    ("the unverified stop is said plainly", "yes",
+     r"On its outcome 3 the stop is unverified: say so plainly"),
+    ("what was observed", "yes",
+     r"what was observed \(the port, that something still answers on it"),
+    ("never that the server stopped", "yes", r"never that the server stopped"),
+    ("the No branch's statement is reused", "yes",
+     r"make the \"No\" branch's closing statement below: that it is still running"),
+    ("then the module completes", "yes", r"Then continue to module completion below"),
+    ("the statement it reuses", "no", r"say plainly that it is still running and how to stop it"),
+)
+
+
+def module7_problems(text):
+    """Problems with what Module 7's teardown says on an unverified stop, in ``text``."""
+    answers = teardown_answers(text)
+    problems = []
+    for label, answer, pattern in MODULE7_CLAUSES:
+        if answers[answer] is None:
+            problems.append("Module 7's teardown %s answer is gone" % answer)
+        elif not re.search(pattern, answers[answer]):
+            problems.append("Module 7's teardown is missing: %s" % label)
+    if "stop_unverified" in text:
+        problems.append("Module 7 records a stop outcome; it says so and records nothing new")
+    return problems
 
 
 # --------------------------------------------------------------------------------------------
@@ -429,6 +628,41 @@ class TheCloseDefersRatherThanRestates(unittest.TestCase):
             "the purge item does not say it is skipped on an unverified stop")
 
 
+class OutcomeThreeReadsForEveryModule(unittest.TestCase):
+    """#803: the purge case keeps Module 3b's clauses; the no-purge case reports and continues."""
+
+    def test_both_cases_are_stated(self):
+        self.assertEqual([], case_problems(read(CONTRACT)))
+
+
+class EveryStopSiteIsFoundAndDefers(unittest.TestCase):
+    """#803: the sites come from a scan of shipped Markdown, never from a list of files."""
+
+    def test_every_scanned_site_links_the_rule_and_cites_inv_394(self):
+        self.assertEqual([], scanned_site_problems())
+
+    def test_the_scan_finds_the_known_sites(self):
+        """⛔ INV-265: the floor. A scan that finds nothing passes by inspecting nothing."""
+        found = [(path, kind, region) for path, _, kind, region in scanned_sites()]
+        expected = (
+            (MODULE7, "pid stop", "captured when it was started, never by a command-line pattern"),
+            (MODULE7, "pid stop", "Yes:** stop it by the pid recorded in the `m7_visualizations`"),
+            (MODULE7, "teardown gate", "Ready for me to stop the visualization server?**"),
+            (PHASE2, "teardown gate", "and clean up the Truth Set data?**"),
+        )
+        for path, kind, quote in expected:
+            with self.subTest(site=quote):
+                self.assertTrue(any(p == path and k == kind and quote in r for p, k, r in found),
+                                "the scan no longer finds %s's %s" % (path.name, kind))
+
+    def test_the_contracts_own_gate_lines_are_not_sites(self):
+        self.assertFalse([s for s in scanned_sites({CONTRACT: read(CONTRACT)})
+                          if s[2] == "teardown gate"])
+
+    def test_module7_says_so_and_never_that_it_stopped(self):
+        self.assertEqual([], module7_problems(read(MODULE7)))
+
+
 class NoSiteOffersAWarningAsAnAlternative(unittest.TestCase):
     def test_the_retired_wording_is_gone_or_quoted_as_forbidden(self):
         self.assertEqual([], warned_shape_problems())
@@ -537,6 +771,124 @@ class TheChecksCatchARegression(unittest.TestCase):
     def test_the_contracts_own_quotation_is_not_an_offense(self):
         """The rule quotes the retired wording to forbid it; that must stay legal."""
         self.assertEqual([], warned_shape_problems({CONTRACT: self.contract}))
+
+    # ---- #803: outcome 3's two cases -----------------------------------------------------
+
+    def test_a_purge_clause_moved_into_the_no_purge_case(self):
+        moved = self.contract.replace(
+            "say too that the records are still loaded, then", "then").replace(
+            "there is no\n   purge to withhold,", "the records are still loaded; there is no\n   "
+            "purge to withhold,")
+        self.assertIn("outcome 3's purge case is missing: the retained records",
+                      case_problems(moved))
+
+    def test_the_no_purge_case_removed(self):
+        region = rule_region(self.contract)
+        broken = self.contract.replace(region, without(region, re.escape(NO_PURGE_CASE)))
+        self.assertIn("outcome 3 does not state its two cases in order: the purge case, the "
+                      "no-purge case, then what holds for every module", case_problems(broken))
+
+    def test_an_every_module_clause_scoped_to_one_case(self):
+        broken = self.contract.replace(
+            "release the listener, then re-run the module's cleanup program.",
+            "release the listener, then re-run the module's cleanup program. This reports; it "
+            "does not block.").replace("⚠️ **This reports; it does not block.**", "⚠️")
+        self.assertIn("outcome 3 scopes a clause for every module to one case: "
+                      "This reports; it does not block", case_problems(broken))
+
+    # ---- #803: the scanned sites ----------------------------------------------------------
+
+    def mutate_module7(self, old, new):
+        text = read(MODULE7)
+        self.assertEqual(1, text.count(old), "the mutation no longer applies: %r" % old)
+        return {MODULE7: text.replace(old, new)}
+
+    STEP_3C_LINK = ("[failed-stop rule](../module-03b-truthset-visualization/"
+                    "visualization-api-reference.md#failed-stop),\nstated once there")
+    YES_LINK = ("  [failed-stop rule](../module-03b-truthset-visualization/"
+                "visualization-api-reference.md#failed-stop)\n  (INV-394, INV-300); this teardown")
+
+    def test_step_3c_drops_the_link(self):
+        broken = self.mutate_module7(self.STEP_3C_LINK, "the failed-stop rule,\nstated once there")
+        problems = scanned_site_problems(broken)
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn("the pid stop does not link %s" % SITE_LINK, problems[0])
+
+    def test_the_teardown_yes_drops_the_link(self):
+        broken = self.mutate_module7(self.YES_LINK, "  the failed-stop rule\n  (INV-394, INV-300); "
+                                                    "this teardown")
+        problems = scanned_site_problems(broken)
+        self.assertTrue(any("the pid stop does not link" in p for p in problems), problems)
+        self.assertTrue(any("the teardown gate does not link" in p for p in problems), problems)
+
+    def test_the_teardown_yes_drops_inv_394(self):
+        broken = self.mutate_module7("(INV-394, INV-300); this teardown", "(INV-300); this teardown")
+        self.assertTrue(any("the pid stop does not cite INV-394" in p
+                            for p in scanned_site_problems(broken)))
+
+    def test_a_link_on_the_neighboring_answer_does_not_count(self):
+        """A list item is its own passage: the link moved to "No" leaves "Yes" unlinked."""
+        broken = self.mutate_module7(self.YES_LINK, "  the failed-stop rule\n  (INV-394, INV-300); "
+                                                    "this teardown")
+        text = broken[MODULE7].replace(
+            "- **No or not yet:** leave it running,",
+            "- **No or not yet:** ([failed-stop rule](../module-03b-truthset-visualization/"
+            "visualization-api-reference.md#failed-stop)) leave it running,")
+        problems = scanned_site_problems({MODULE7: text})
+        self.assertTrue(any("the pid stop does not link" in p for p in problems), problems)
+        self.assertFalse(any("the teardown gate" in p for p in problems), problems)
+
+    def test_a_new_unlinked_pid_stop_anywhere(self):
+        path = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
+                / "module-06-data-processing" / "new-server.md")
+        text = ("# A new server\n\nOn teardown, stop it\nby the pid recorded at launch and confirm "
+                "the port is free (INV-223).\n")
+        self.assertEqual(["plugins/senzing-bootcamp/skills/module-06-data-processing/new-server.md"
+                          ":3: the pid stop does not link %s" % SITE_LINK,
+                          "plugins/senzing-bootcamp/skills/module-06-data-processing/new-server.md"
+                          ":3: the pid stop does not cite INV-394"],
+                         scanned_site_problems({path: text}))
+
+    def test_a_new_unlinked_teardown_gate_anywhere(self):
+        path = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
+                / "module-06-data-processing" / "new-gate.md")
+        text = ("## Teardown\n\n> 👉 **Ready for me to stop the visualization server?**\n\n"
+                "- **Yes:** stop the process and continue.\n\n## Next\n\nSee "
+                "[the rule](visualization-api-reference.md#failed-stop) (INV-394).\n")
+        problems = scanned_site_problems({path: text})
+        self.assertEqual(2, len(problems), problems)
+        self.assertTrue(all(":3: the teardown gate does not" in p for p in problems), problems)
+
+    def test_module7_claims_the_stop(self):
+        broken = self.mutate_module7("never that the\n  server stopped.",
+                                     "then say the\n  server stopped.")
+        self.assertIn("Module 7's teardown is missing: never that the server stopped",
+                      module7_problems(broken[MODULE7]))
+
+    def test_each_module7_clause_removed_is_reported(self):
+        text = read(MODULE7)
+        answers = teardown_answers(text)
+        for label, answer, pattern in MODULE7_CLAUSES:
+            with self.subTest(clause=label):
+                lines = [n for n in match_lines(text, re.compile(pattern))]
+                self.assertEqual(1, len(lines), "%s is not matched exactly once" % label)
+                broken = without(text, pattern)
+                self.assertIn("Module 7's teardown is missing: %s" % label,
+                              module7_problems(broken))
+        self.assertIsNotNone(answers["yes"])
+
+    def test_module7_adds_a_checkpoint_field(self):
+        broken = read(MODULE7).replace(
+            "Then continue to module completion below.",
+            'Record `"stop_unverified"` in `m7_visualizations`. Then continue to module completion '
+            "below.")
+        self.assertIn("Module 7 records a stop outcome; it says so and records nothing new",
+                      module7_problems(broken))
+
+    def test_module7_restating_the_rule_is_a_copy(self):
+        broken = {"phase1-query-visualize.md": read(MODULE7) + "\nThis reports; it does not block.\n"}
+        self.assertIn("phase1-query-visualize.md restates the rule (This reports; it does not "
+                      "block)", copy_problems(broken))
 
     def test_each_record_clause_removed_is_reported(self):
         regions = record_regions()
