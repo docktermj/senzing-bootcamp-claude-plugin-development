@@ -1285,9 +1285,10 @@ training data.
 1. **Read state and compute the total.** Read `license_record_limit` **and
    `license_record_limit_measured_at`** from `config/bootcamp_progress.json`, and the `license` /
    `license_guidance_deferred` markers from
-   `config/bootcamp_preferences.yaml`. Compute the collected total record count from
-   `config/data_sources.yaml` (per the canonical framing at the top of this module). If the total
-   cannot be computed, note the warning and proceed to Step 8b (non-blocking).
+   `config/bootcamp_preferences.yaml`. Compute the collected total record count from the registry
+   in `config/data_sources.yaml`, by the sample-aware definition Step 8b sub-step 4 gives for
+   `collected_total` (the one Module 6 recomputes). If the total cannot be computed, note the
+   warning and proceed to Step 8b (non-blocking).
 
    ⛔ **(INV-295) A figure whose `_measured_at` marker says provisional, or which carries no marker, is
    re-measured here before any branch below reads it** — per the canonical framing's

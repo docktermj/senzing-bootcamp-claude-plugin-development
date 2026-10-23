@@ -1831,8 +1831,10 @@ steps 9 to 17. Every step checkpoints to `config/bootcamp_progress.json`.
   integration. 5a compares the record total with a measured
   `license_record_limit`, else the built-in capacity from
   `sdk_guide(topic='load', record_count=<above limit>)`; over it, set
-  `license_guidance_deferred: true` in `config/bootcamp_preferences.yaml`.
-  A stated entitlement goes to `license_stated_limit`; no license prompt.
+  `license_guidance_deferred: true` in `config/bootcamp_preferences.yaml`,
+  a record that does not decide whether Module 4 Step 8a fires. A stated
+  entitlement goes to `license_stated_limit`, which no gate reads; no
+  license prompt.
 - 4a, 4b, 5 and 5a are non-yielding (INV-225): they share the turn that
   6a's question ends, never ending one on the generated scenario, and their
   checkpoints collapse into 6a's one write, each its own `step_history`
@@ -2316,7 +2318,8 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
   means none was collected, which a documented-location-only source is
   expected to carry, and does not block (#687).
 - **Step 8a license gate.** Skipped when `license: custom` is set
-  (`config/bootcamp_preferences.yaml`) or the total fits the limit.
+  (`config/bootcamp_preferences.yaml`) or the collected total, by Step 8b's
+  sample-aware definition, fits the limit.
   Otherwise `get_capabilities` chooses between a pinned four-option form
   and a three-option form; the fourth option is an in-flow request through
   `submit_feedback`.
@@ -10411,7 +10414,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 452 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 455 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10461,21 +10464,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8550 test methods in 454 files, matching `inventory.test_count_total`.
+There are 8568 test methods in 455 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8550.
+sum to 8568.
 
-Two files run more tests than they define, so discovery collects 8539:
+Two files run more tests than they define, so discovery collects 8575:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8550`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8568`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8557`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8575`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10667,6 +10670,7 @@ looks wrong.
 - `tests/test_license_cap_branch_offers_the_apply_route.py`: 27
 - `tests/test_license_env_var_absent.py`: 8
 - `tests/test_license_framing_consults_the_measured_limit.py`: 5
+- `tests/test_license_gate_is_described_as_it_runs.py`: 17
 - `tests/test_license_limit_is_written_only_from_a_measurement.py`: 14
 - `tests/test_license_limit_reading_is_complete.py`: 16
 - `tests/test_license_record_limit_is_measured_only.py`: 6
@@ -10847,7 +10851,7 @@ looks wrong.
 - `tests/test_shape_claims_precede_mapping_claims.py`: 25
 - `tests/test_shared_feature_collision_trigger_is_narrowed.py`: 13
 - `tests/test_shipped_negative_markers_are_html_comments.py`: 14
-- `tests/test_sibling_statements_agree.py`: 9
+- `tests/test_sibling_statements_agree.py`: 10
 - `tests/test_since_last_audit_widens_past_a_work_commit.py`: 7
 - `tests/test_since_states_its_corpus.py`: 11
 - `tests/test_since_view_sees_the_maintainer_surface.py`: 7
@@ -13838,6 +13842,16 @@ Senzing licensing, with no SPDX identifier.
   holds from the ledger only, the literal-next-id guard reads blocks through
   `pending_invariants.blocks()`, and no invariant is added (INV-409 as
   registered)
+- #780: Module 4 Step 8a sub-step 1 computes the collected total by Step 8b
+  sub-step 4's sample-aware `collected_total`, as Step 8b does; Module 1 Step
+  5a calls `license_guidance_deferred` a record of its expectation that does
+  not decide whether Step 8a fires, drops the promise that Module 4
+  reconciles `license_stated_limit`, and with Module 2 Step 5 places the
+  License Key prompt at Data collection's Step 8a (Step 8a pointed at a
+  framing that defines no total, so it could count an unsampled source, and
+  Module 1 claimed effects Step 8a does not have);
+  `tests/test_license_gate_is_described_as_it_runs.py` guards each claim with
+  negative controls, and no invariant is added (INV-093, INV-278, INV-300)
 - #787: shipped hard rules cite, on the ⛔ line itself, the invariant whose
   registered statement makes each claim (INV-396): INV-394, INV-378, INV-160,
   INV-393, INV-295 and INV-300 replace or join the ids Module 3b, ground

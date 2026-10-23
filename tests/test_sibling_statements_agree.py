@@ -13,7 +13,8 @@ drifts back:
 4. The onboarding preface detects OS/architecture; it persists nothing (Bootcamp preparation's
    consolidated write does).
 5. Module 4 Step 8b sub-step 1 computes the collected total by pointing to sub-step 4's
-   sample-aware definition, the one Module 6 recomputes.
+   sample-aware definition, the one Module 6 recomputes. Step 8a sub-step 1 points at the same
+   definition (#780), so the License Key gate counts a sample, not the unsampled source.
 6. Module 4 names no CORD dataset in its own text; the names come from `get_sample_data`.
 
 Run:  python3 -m unittest discover -s tests
@@ -124,6 +125,17 @@ class ModuleFourHasOneCollectedTotal(unittest.TestCase):
         # test_per_source_figures_are_reconciled.py.
         self.assertIn("sample-aware definition sub-step 4 gives for `collected_total`", flat)
         self.assertNotIn("from the registry.", flat)
+        self.assertNotIn("canonical framing", flat)
+
+    def test_step_8a_sub_step_1_uses_the_same_definition(self):
+        """#780: Step 8a counts the same sample-aware total, by the same kind of pointer."""
+        step = _section(_read(MODULE_4), r"^1\. \*\*Read state and compute the total\.\*\*",
+                        r"^   ⛔|^2\. ")
+        flat = _flat(step)
+        self.assertIn("sample-aware definition Step 8b sub-step 4 gives for `collected_total`",
+                      flat)
+        self.assertNotIn("canonical framing", flat)
+        self.assertNotIn("record_count", flat)
 
     def test_sub_step_4_still_states_it(self):
         self.assertIn(self.DEFINITION, _flat(_read(MODULE_4)))

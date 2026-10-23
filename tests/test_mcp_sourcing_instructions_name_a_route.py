@@ -12,6 +12,11 @@ License Key prompt in the bootcamp, and the only thing that would have warned th
 they met the cap mid-load -- never fired. **Getting this comparison wrong removes a warning rather
 than producing a wrong one.**
 
+(Dated note, 2026-10-23, #780: the paragraph above describes the step as it was then. Step 8a
+reads and clears `license_guidance_deferred` but never branches on it; it decides from the
+measured collected total. So a wrong comparison records a wrong expectation, and the step now
+says so. The route this file guards is unchanged and still matters for that record.)
+
 Module 2 Step 5a asks for the same fact correctly, naming
 `sdk_guide(topic='load', language=..., record_count=<above the limit>)` outright. The asymmetry was
 the defect: two steps, one fact, one of them runnable.
@@ -88,11 +93,18 @@ class TheInstructionNamesItsRoute(unittest.TestCase):
             "in context")
 
     def test_it_states_what_the_comparison_decides(self):
+        """#780: the flag is Module 1's recorded expectation; Step 8a never branches on it."""
         self.assertRegex(
-            self.step, r"(?i)suppresses\*?\*? Module 4's Step 8a",
-            "the step does not say that leaving license_guidance_deferred unset suppresses "
-            "Module 4's gate, so the cost of a wrong comparison is invisible where the "
-            "comparison happens")
+            self.step, r"(?i)records Module 1's expectation in `license_guidance_deferred`",
+            "the step does not say what the comparison decides: it records Module 1's "
+            "expectation, so the cost of a wrong comparison is invisible where it happens")
+        self.assertRegex(
+            self.step, r"(?i)does not decide whether Module 4's Step 8a License Key gate fires",
+            "the step does not say that Step 8a decides from the measured total, not the flag")
+        self.assertNotRegex(
+            self.step, r"(?i)unset \*?\*?suppresses\*?\*? Module 4's Step 8a",
+            "the step again says leaving license_guidance_deferred unset suppresses Module 4's "
+            "Step 8a gate. Step 8a reads and clears the flag but never branches on it")
 
     def test_the_absent_branch_distinguishes_itself_from_the_inv244_error(self):
         """Assuming the built-in figure here is correct; presenting it as measured is not."""
