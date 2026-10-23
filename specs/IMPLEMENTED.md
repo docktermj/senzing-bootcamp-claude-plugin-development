@@ -58,7 +58,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   6. **Platforms and language (criterion 6).** Plugin prose and stdlib `unittest`; no path, command or SDK language is introduced.
 - **Verification:** run against `origin/main`'s five plugin files, the scan reports "the gate has no decision table" for step 16 and "UAT % None is routed to 'Results look strong'" for Phase D, and the `uat_not`, `route`, `resume`, `step16_blocks` and `critical_fields` checks each report. Negative controls, each running the same check on a mutated copy: an empty corpus and a corpus whose labels lost their "and" (no gate found); step 16's label reworded (the pinned gate lost); a third conjunctive gate with no table (reported, not exempted); a `none` UAT row routed to the strong branch; all four `none` rows restored as #678 wrote them; a deleted critical-field row and a deleted no-score row (0 matching rows); the critical-field and no-score bullets deleted from a block; `not recorded` and `none` routed to step 16's strong branch; the legend's declaration removed; an undeclared state in a cell; a block's new option removed; the not-recorded branch reading the fields as unmapped; the UAT-not-established branch's bullet, question option, band and finding clause each removed; the route's record shape and band table each losing `uat_not_established`; the handling step dropping it; the `critical_fields` anchor removed, Step 4 restating attributes, Step 4 not recording, and a second definition. Each is reported. The #678 and #750 controls are kept. `ReWrapping` runs every check, the scan included, on one-word-per-line text (INV-346).
 - **What the issue left to the implementer, and what was chosen:** (1) **Which attributes are critical**: the server names none (MCP re-check), so High-or-higher on the specification's own Importance ranking, read at run time. (2) **Where the field is defined**: the issue names Module 4's "Scenario source fields"; that note is scoped to fields Module 1 writes for a generated scenario and says "Module 1 writes no other field", while `critical_fields` is written by Module 5 for every source. It is defined in the same Data Source Registry note, beside `sample`, which is the registry's one field definition for fields a later step writes. (3) **`not recorded` at ≥80%** gets a key of its own that asks the strong question, rather than the strong key itself, so the label "all critical fields mapped" is never reached by a state never established (INV-404) while the band still routes on the score alone, as edge case 2 requires. (4) **The new questions' wording** follows the neighboring bands: a neutral lead and two numbered options; "Iterate" first, as on the <70% band. (5) **"Mapped"** is a field the step-11 mapping gives a Senzing attribute; payload and ignore are unmapped.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-404 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+- **DEFERRED INVARIANT — resolved as an amendment, not a new id — PROPOSED AMENDMENT to INV-404 — applied 2026-10-22 by the maintainer, amended at review.** The clause the note bears on, as registered:
     - "Enforced by `tests/test_phase_d_gate_routes_on_both_metrics.py`, which parses the shipped decision table into predicates and asserts exactly one matching row for every pair of readings over both axes" — in `specs/INVARIANTS.md`
 
   ⚠️ **Why the wording needs to change.** As registered, INV-404 names one gate's guard, and the guard read one hand-named section. The 2026-10-22 audit found a second gate with the same untotal shape (Module 5 step 16), which no guard read. The guard now finds its gates by scanning, and a gate whose second axis is a state rather than a band needs its states declared somewhere the router can read that is not the rows. **What breaks if it does not change:** a third conjunctive gate is added with no table and the register still reads as if one file were covered; or a categorical gate takes its domain from its rows, and a deleted row deletes its own combinations from the check.
@@ -67,7 +67,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
   The drafted wording, to append after INV-404's `(Source: …)` clause:
 
-  **INV-404** — … (⚠️ **Dated note, 2026-10-22 (#776): the guard finds every such gate by scanning, and a state never established is a reading of its own; the rule above is unchanged.** A pinned gate falls under this rule when a bold branch label joins two or more conditions with "and" and at least one is a percentage threshold; its guard MUST find such gates by scanning the shipped Markdown (INV-246), pin the known gates as a floor, and fail when the scan finds none (INV-265). Each gate MUST carry its decision table in the same section; a column whose readings are states rather than bands MUST have those states declared in the gate's legend, and the router MUST probe the declared states, never only those the rows name. A `none` reading or an undeclared state that would reach the branch the conjunction names is a failure on every axis, not only the one that last went wrong. Observed 2026-10-22: Phase D routed a UAT % never computed to "Results look strong" by its `none` rows, and Module 5 step 16's "Quality ≥80% and all critical fields mapped" had no branch for ≥80% with a critical field unmapped and none for a source with no quality score. Enforced by `tests/test_phase_d_gate_routes_on_both_metrics.py`.)
+  **INV-404** — … (⚠️ **Dated note, 2026-10-22 (#776): the guard finds every such gate by scanning, and a state never established is a reading of its own; the rule above is unchanged.** A pinned gate falls under this rule when a bold branch label joins two or more conditions with "and" and at least one is a percentage threshold; its guard MUST find such gates by scanning the shipped Markdown (INV-246), pin the known gates as a floor, and fail when the scan finds none (INV-265). Each gate MUST carry its decision table in the same section; a column whose readings are states rather than bands MUST have those states declared in the gate's legend, and the router MUST probe the declared states, never only those the rows name. The guard MUST check every axis for a `none` reading or an undeclared state that would reach the branch the conjunction names, not only the axis where the defect was first found. Observed 2026-10-22: Phase D routed a UAT % never computed to "Results look strong" by its `none` rows, and Module 5 step 16's "Quality ≥80% and all critical fields mapped" had no branch for ≥80% with a critical field unmapped and none for a source with no quality score. Enforced by `tests/test_phase_d_gate_routes_on_both_metrics.py`.)
 
   *(written as NNN deliberately: no new id is drafted, because this appends a note to INV-404. If the maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
 - **Queues one amendment** (INV-309, INV-365): the PROPOSED AMENDMENT to INV-404 above; this run establishes no new invariant. The `critical_fields` field is governed by INV-300 (defined once) and INV-080 (the critical attributes read from the server's specification), the new questions by INV-056, INV-051 and INV-284, and the routing by INV-404 as registered. No ⛔ line is added to the plugin and none is demoted; no citation is dropped. `specs/INVARIANTS.md` is not edited (INV-307); the maintainer runs `/review-invariants` to decide the amendment.
@@ -116,7 +116,9 @@ entries at once. Two things a reader should know about the hashes now recorded:
   **INV-NNN** — Content written into `docs/bootcamp_recap.md` MUST stay within the Markdown subset the bundled recap renderer draws (headings, bullets, `**Label:**` lines, plain text, `![alt](path)` images); a diagram or other fenced block MUST be referenced from the recap by path, never embedded, because a construct the renderer does not handle reaches the PDF as literal source text. Enforced by no test today; `conformance.py reverse-check` counted the line as cited because INV-091 sits in the sentence before it.
 
   *(written as NNN deliberately: this command cannot mint an id, and a literal id here would cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a number written here.)*
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Graduation offers to re-capture a missing visualization before rendering the recap. The rule already shipping, quoted:
+
+  **HELD 2026-10-22:** the maintainer held it at review: no test enforces the rule, and the drafted wording lists the renderer's Markdown subset, which can go stale. Revisit when a test enforces the rule and `generate_recap_pdf.py` states its supported subset in one place the invariant can point to.
+- **DEFERRED INVARIANT (resolved INV-271, folded in at review 2026-10-22 as a dated note on the invariant it extends rather than minted as a new id).** Graduation offers to re-capture a missing visualization before rendering the recap. The rule already shipping, quoted:
     - ⛔ **(INV-193) Offer the remedy — it is cheap while the artifacts are still on disk.** — in `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
 
   **Why it is not an existing invariant:** INV-193 governs where an external denominator comes from; INV-271 governs reporting a missing manifest. Neither says to offer a re-capture (#787 re-cites the line).
@@ -133,7 +135,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
   The drafted wording:
 
-  **INV-NNN** — Module Completion's recap structural check MUST NOT block module completion: a finding is corrected in the just-appended recap section, and a check that cannot run is recorded as not run (INV-163) rather than passed over silently.
+  **INV-NNN** — Module Completion's recap structural check MUST NOT block module completion: a finding is corrected in the just-appended recap section, and the module completes whether or not the check finds anything or can run. How an unrunnable check is reported is INV-163's to govern, not this invariant's. No test enforces it today.
 
   *(written as NNN deliberately: this command cannot mint an id, and a literal id here would cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a number written here.)*
 - **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Which module may write a source's `record_count`. The rule already shipping, quoted:
@@ -143,45 +145,45 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
   The drafted wording:
 
-  **INV-NNN** — A source's `record_count` in `config/data_sources.yaml` MUST be written only by the module that collects or generates the source file and counts it (Data collection), as the measured count; no earlier module writes it, and it stays null until measured.
+  **INV-NNN** — A source's top-level `record_count` in `config/data_sources.yaml` MUST be written only by the module that collects or generates the source file and counts it (Data collection), as the measured count; no earlier module writes it, and it stays null until measured. A sample's or subset's own `record_count` is INV-326's, not this invariant's. No test enforces it today.
 
   *(written as NNN deliberately: this command cannot mint an id, and a literal id here would cite an invariant that does not exist and turn `citations.py verify` red. If the maintainer registers it, mint at the next free id — read it off `INVARIANTS.md` rather than trusting a number written here.)*
-- **PROPOSED AMENDMENT to INV-094 — awaiting the maintainer's sign-off; NOT applied.**
+- **PROPOSED AMENDMENT to INV-094 — applied 2026-10-23 by the maintainer.**
     - (a) a database backup under the reserved top-level `backups/` directory (a `pg_dump` for PostgreSQL — via `docker exec` when the database runs in a container — or a file copy of the SQLite repository) — in `specs/INVARIANTS.md`
 
   The shipped backup runs `<runtime> exec` (`graduation/database-backup.md:47-49`), as INV-195's 2026-10-15 (#613) note requires, and that note forbids `docker exec` in shipped skills; INV-050's 2026-07-26 clarification removed "reserved" from `backups/`. **What breaks if it does not change:** a later edit can restore `docker exec` and cite INV-094 as permission.
 
   **INV-094** — (⚠️ **Dated note, 2026-10-22 (production-readiness-audit-2026-10-22): the container command and the directory's status; the bundle's contents are unchanged.** A PostgreSQL backup in a container runs through the recorded container runtime (`<runtime> exec`, INV-195), never a hard-coded `docker exec`, and `backups/` is a top-level directory without the "reserved" status INV-050's 2026-07-26 clarification removed. The rules above still bind.)
-- **PROPOSED AMENDMENT to INV-059 — awaiting the maintainer's sign-off; NOT applied.**
+- **PROPOSED AMENDMENT to INV-059 — applied 2026-10-23 by the maintainer.**
     - never rewriting a completed `## Module N:` section — in `specs/INVARIANTS.md`
 
   Recap sections are now name-based, `## {Name} — {timestamp}` (`module-completion.md:78`; the example recap), and `recap_checkpoint.py` protects `## {module}` sections. The property holds; the literal heading is stale.
 
   **INV-059** — (⚠️ **Dated note, 2026-10-22 (production-readiness-audit-2026-10-22): the protected heading is the module's named section; the property is unchanged.** "A completed `## Module N:` section" reads as a completed module section, headed `## {Name} — {timestamp}` since module numbers left bootcamper-facing text (INV-079). The rules above still bind.)
-- **PROPOSED AMENDMENT to INV-093 — awaiting the maintainer's sign-off; NOT applied.**
+- **PROPOSED AMENDMENT to INV-093 — applied 2026-10-23 by the maintainer.**
     - at the start of Data collection (Module 4), after the Bootcamper's data volume is known and before any load — in `specs/INVARIANTS.md`
 
   The prompt runs at Data collection Step 8a, after all sources are collected (`module-04-data-collection/SKILL.md:1241-1242`; `onboarding-flow.md:185-187`), not at the start of the module. `module-01-business-problem/phase1-discovery.md:414` and `module-02-sdk-setup/SKILL.md:1737` repeat "at the start".
 
   **INV-093** — (⚠️ **Dated note, 2026-10-22 (production-readiness-audit-2026-10-22): where in Data collection the prompt runs; the once-only rule and its conditions are unchanged.** "At the start of Data collection" reads as Data collection Step 8a, after every source is collected and its volume measured, and before any load. The rules above still bind.)
-- **PROPOSED AMENDMENT to INV-047 — awaiting the maintainer's sign-off; NOT applied.**
+- **PROPOSED AMENDMENT to INV-047 — applied 2026-10-23 by the maintainer.**
     - A banner is presented, "GRADUATION". — in `specs/INVARIANTS.md`
 
   Graduation ships "BOOTCAMP GRADUATION" (`graduation/SKILL.md:47`, renamed 2026-08-12 in `3017e0e2`); no invariant records the rename.
 
   **INV-047** — (⚠️ **Dated note, 2026-10-22 (production-readiness-audit-2026-10-22): the banner's text.** The banner reads "BOOTCAMP GRADUATION" since 2026-08-12 (`3017e0e2`). The rule above still binds.)
-- **PROPOSED AMENDMENT to INV-102 — awaiting the maintainer's sign-off; NOT applied.**
+- **PROPOSED AMENDMENT to INV-102 — applied 2026-10-23 by the maintainer.**
     - after the GRADUATION banner and before the model/effort prompt it presents a journey map (all selected modules shown ✅ experienced, Graduation 🔄 as the current/final stage — in `specs/INVARIANTS.md`
 
   The shipped banner and journey-map label are "BOOTCAMP GRADUATION" and "Bootcamp graduation 🔄" (`graduation/SKILL.md:47`).
 
   **INV-102** — (⚠️ **Dated note, 2026-10-22 (production-readiness-audit-2026-10-22): the banner and stage names.** "The GRADUATION banner" reads as the BOOTCAMP GRADUATION banner, and "Graduation 🔄" as "Bootcamp graduation 🔄", since 2026-08-12 (`3017e0e2`). The rules above still bind.)
-- **PROPOSED AMENDMENT to INV-317 — awaiting the maintainer's sign-off; NOT applied.**
+- **PROPOSED AMENDMENT to INV-317 — applied 2026-10-23 by the maintainer, amended at review.**
     - It ships today in `/dry-run` (its command, skill and phase 3) and in `/production-readiness-audit` (its command and Step 8, which says to follow dry-run's discipline). — in `specs/INVARIANTS.md`
 
   The rule also ships in `/auto-test`, `/feedback-to-issues`, `/retrofit-from-public`, `/delegate-to-mcp-server` and `/release-cycle`, so the enumeration is stale.
 
-  **INV-317** — (⚠️ **Dated note, 2026-10-22 (production-readiness-audit-2026-10-22): the sites are every maintainer run that produces findings; the rule is unchanged.** The list above is a sample taken when the rule was registered; the rule binds every maintainer run that produces findings, which today also includes `/auto-test`, `/feedback-to-issues`, `/retrofit-from-public`, `/delegate-to-mcp-server` and `/release-cycle`. The rules above still bind.)
+  **INV-317** — (⚠️ **Dated note, 2026-10-22 (production-readiness-audit-2026-10-22): the sites are every maintainer run that produces findings; the rule is unchanged.** The list above is a sample taken when the rule was registered; the rule binds every maintainer run that produces findings, whatever skill runs it. The rules above still bind.)
 - **Establishes no invariant of its own.** This audit modifies no shipped or maintainer-surface file beyond this record, so it adds no hard-rule line. It queues 4 new invariants and 6 amendments above for `/review-invariants` (INV-365); the maintainer runs it to decide them.
 - **Commit:** ee4788d
 
