@@ -231,8 +231,11 @@ expected record count for the report.
    `programming_language` in `config/bootcamp_preferences.yaml` — register each code and set the
    updated config as the new default, **idempotently** — then load `truthset_data.jsonl` into the
    Senzing database (generate the loader via `generate_scaffold` / reuse the Module 3 Phase 1
-   pipeline pattern; never direct SQL). Registering **before** the load upholds the "register
-   before load" guarantee so the load never fails with `SENZ2207`.
+   pipeline pattern; never direct SQL), fetching each file a `generate_scaffold` response lists by
+   the response's own `access_steps`, as `../bootcamp-onboarding/ground-rules.md` → "Follow
+   each response's own `access_steps`, in the order it gives them" says (INV-160, INV-300).
+   Registering **before** the load upholds the "register before load" guarantee so the load
+   never fails with `SENZ2207`.
 
 Save the registration code as the program `register_truthset_sources` in `src/system_verification`
 and the loader as the program `load_truthset` in `src/system_verification`, at the path and with the

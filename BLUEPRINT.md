@@ -10475,28 +10475,28 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8605 test methods in 455 files, matching `inventory.test_count_total`.
+There are 8618 test methods in 455 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8605.
+sum to 8618.
 
-Two files run more tests than they define, so discovery collects 8612:
+Two files run more tests than they define, so discovery collects 8625:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8605`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8618`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8612`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8625`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
 - `tests/test_a_single_statement_claim_names_its_authority.py`: 11
 - `tests/test_absent_field_suspects_flags_first.py`: 10
-- `tests/test_access_steps_terminal_step.py`: 19
+- `tests/test_access_steps_terminal_step.py`: 32
 - `tests/test_acknowledge_precedes_the_loading_it_precedes.py`: 8
 - `tests/test_all_runs_every_argument_free_view.py`: 7
 - `tests/test_always_produced_deliverables_are_named.py`: 23
@@ -13911,6 +13911,14 @@ Senzing licensing, with no SPDX identifier.
   INV-378 binds every step that classifies the reply); the truthset guard
   finds its sites by scanning every mention with a reasoned `EXEMPT` list, and
   an INV-378 amendment is queued for `/review-invariants`
+- #806: every shipped instruction to obtain code from `generate_scaffold`
+  carries the ground-rules route pointer (INV-160, INV-300): Module 7's query
+  scaffold, Module 5 steps 13 and 24a, Module 3b 1.2, Module 3 Step 1a,
+  Module 6 Phase A step 4a and Module 2 Step 8's alternative route (they
+  named the tool with no route, and the guard checked only a hand-listed
+  `ROUTE_FILES`); the access-steps guard finds the sites by scanning every
+  paragraph naming the tool for an instruction verb, with reasoned text-keyed
+  exemption lists and negative controls, and no invariant is added
 - #810: Module 4 Step 3 runs `head -5` on each registry `file_path` and Step 4
   has the guide fill `docs/data_collection_checklist.md` from the registry and
   validation results, asking nothing; an absent `database_type` falls back to

@@ -414,8 +414,11 @@ Truth Set visualization module already run.
    `config/data_sources.yaml`. Never register a code that is not present in the data.
 2. **Generate the registration code from the MCP server** (never hand-write it): call
    `sdk_guide(topic='configure', language=<from `programming_language`>, data_sources=[<the codes
-   from step 1>])` (and `generate_scaffold` if it exposes a data-source registration workflow),
-   reading the language from `config/bootcamp_preferences.yaml` (never a hardcoded default). Save it
+   from step 1>])` (and `generate_scaffold` if it exposes a data-source registration workflow, its
+   files fetched by the response's own `access_steps`, as `../bootcamp-onboarding/ground-rules.md` →
+   "Follow each response's own `access_steps`, in the order it gives them" says (INV-160,
+   INV-300)), reading the language from `config/bootcamp_preferences.yaml` (never a hardcoded
+   default). Save it
    as the program `register_data_sources` in `src/load` (INV-018), at the path and with the project
    that `../bootcamp-onboarding/ground-rules.md` → "Building and running a program" gives. When Data
    Quality, Mapping, and Transformation's step 21a already wrote it there, this replaces its code

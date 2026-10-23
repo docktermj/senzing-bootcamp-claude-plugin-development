@@ -217,8 +217,10 @@ On Java, a shared helper is a shared class, whose filename rule is in
 [`ground-rules.md`](../bootcamp-onboarding/ground-rules.md) → "File placement" (INV-237); do not
 restate it here (INV-300).
 
-Use `generate_scaffold` with `workflow='query'` and the chosen language. For entity-view
-patterns (get/why/how), consult `reporting_guide(topic='entity_views', language='<lang>',
+Use `generate_scaffold` with `workflow='query'` and the chosen language, fetching each file by
+the response's own `access_steps`, as `../bootcamp-onboarding/ground-rules.md` → "Follow
+each response's own `access_steps`, in the order it gives them" says (INV-160, INV-300). For
+entity-view patterns (get/why/how), consult `reporting_guide(topic='entity_views', language='<lang>',
 version='current')`. For network/path patterns, consult `reporting_guide(topic='graph',
 language='<lang>', version='current')`.
 
