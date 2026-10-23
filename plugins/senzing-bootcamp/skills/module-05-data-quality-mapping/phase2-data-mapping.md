@@ -1585,6 +1585,13 @@ and with the project that `../bootcamp-onboarding/ground-rules.md` → "Building
 program" gives for the chosen language, then build it with that section's build command. Tell the
 user: the file path, what it reads/writes, and what it handles.
 
+**The input and the output are run arguments.** `transform_[name]` takes two, in this order: the
+file it transforms and the file it writes, passed as that section says a program's arguments are.
+Its code fixes no input path: steps 14, 15 and 18 each run it on a different input and name both
+files. Graduation copies this program too, so its code reads at runtime no path graduation leaves
+behind (INV-401; [the rule](../module-06-data-processing/phaseA-build-loading.md#no-runtime-reads-of-uncopied-paths)),
+and graduation names the raw input as one the reader supplies.
+
 **One program per source, the transform.** The `<name>_mapper.<ext>` that `mapping_workflow` step 4
 asks for is this program's foundation, not a separate program to build. Each mapped source gets its
 own `transform_[name]`; a `skipped` source has no mapper, so it gets none.
@@ -1625,8 +1632,9 @@ gate green (INV-173). With **Keep as-is**, or no such section, change nothing.
 
 Run the transformation program, `transform_[name]` in `src/transform`, built at step 13, with its
 run command in `../bootcamp-onboarding/ground-rules.md` → "Building and running a program", on
-10-100 records from `data/samples/` and write its output to
-`data/mapping/{source}_sample.jsonl`, the sample step 18 records. Validate with
+10-100 records: pass the source's sample file under `data/samples/` as its input argument, and
+write its output to
+`data/mapping/{source}_sample.jsonl`, its output argument, the sample step 18 records. Validate with
 `analyze_record(workspace_dir='data/mapping')` — ⛔ `workspace_dir` is a **required** parameter on
 this tool as well (INV-136), and it is where the analyzer script and its reports are written, so it
 takes the same project-local mapping directory as the workflow, which INV-200 requires of every
@@ -1650,8 +1658,8 @@ sample record, any observations.
 
 Run the transformation program, `transform_[name]` in `src/transform`, with its run command in
 `../bootcamp-onboarding/ground-rules.md` → "Building and running a program", on 1000+ records, or
-on every record when the source has 1000 or fewer, and write its output to
-`data/mapping/{source}_quality.jsonl`. The output stays there even when the run covers every
+on every record when the source has 1000 or fewer: pass the source's file in `data/raw/` as its
+input argument, and write its output to `data/mapping/{source}_quality.jsonl`, its output argument. The output stays there even when the run covers every
 record: this is a test run, and the load-ready file is step 18's alone.
 Its name differs from step 14's, so this run never overwrites the sample. Evaluate feature
 distribution, coverage, quality scores. This is workflow
@@ -1889,6 +1897,9 @@ If issues are found, go back to the relevant step. Retest after changes.
 - Full output: run the transformation program on the whole source and write
   `data/senzing-ready/[name].jsonl`, the load-ready file Data processing loads. Point the source's
   `file_path` in `config/data_sources.yaml` at it.
+  Pass the source's file in `data/raw/` as its input argument and `data/senzing-ready/[name].jsonl`
+  as its output argument: the input is never that `file_path`, which then names the output, as it
+  already does when Query, Visualize and Discover sends the source back to be remapped.
 - Docs in `docs/mapping/mapping_[name].md` (field mappings, logic, quality, how to run).
 - Sample output in `data/mapping/[name]_sample.jsonl`.
 - **Transformation lineage:** Create `docs/mapping/transformation_lineage_[name].md` for this

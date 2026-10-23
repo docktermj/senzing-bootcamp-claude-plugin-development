@@ -937,22 +937,31 @@ Registry** note below) and goes on to the next source, or to Step 3 once every s
 
 Not all data arrives as CSV. Common formats and how to handle them:
 
-- **Excel (.xlsx):** Convert to CSV first. Most languages have libraries for this (e.g.,
-  `openpyxl` for Python, Apache POI for Java). Save the CSV to `data/raw/`.
-- **Parquet / Avro:** Use language-appropriate libraries to read and convert to CSV or JSON.
-  These formats are common in data lake exports.
-- **XML:** Parse and flatten to JSON or CSV with the chosen language's XML library; this is
-  ordinary data handling, not Senzing SDK code.
+- **Excel (.xlsx):** Convert to CSV first, with a converter program (below). Most languages have
+  libraries for this (e.g., `openpyxl` for Python, Apache POI for Java). Save the CSV to
+  `data/raw/`.
+- **Parquet / Avro:** Convert to CSV or JSON with a converter program (below) that uses the chosen
+  language's library for the format. These formats are common in data lake exports.
+- **XML:** Parse and flatten to JSON or CSV with a converter program (below) that uses the chosen
+  language's XML library; this is ordinary data handling, not Senzing SDK code.
 - **Database exports (SQL dump):** Extract the relevant tables to CSV using the database's
   export tools.
 - **API pagination:** If the API returns paginated results, document the pagination strategy
-  and write a collection script in `src/scripts/` that fetches all pages and saves to
-  `data/raw/`.
+  and write a collection program (below) that fetches all pages and saves to `data/raw/`.
 - **Real-time streams (Kafka, etc.):** For the bootcamp, capture a snapshot to a file. Document
   the stream details for production use (a production follow-up; see the graduation migration checklist).
 
 For any non-CSV/JSON format, the goal is to get the data into a flat file in `data/raw/` that
 Module 5 can evaluate.
+
+**Converter and collection programs.** Each program the list above has the Bootcamper write is
+created, built and run as `../bootcamp-onboarding/ground-rules.md` → "Building and running a
+program" says (INV-370, INV-300). Save a converter as the program `convert_[name]` in `src/collect`,
+and a collection program as the program `collect_[name]` in `src/collect`, where `[name]` is the
+source's name, at the path and with the project that section gives for the chosen language. Build it
+with that section's build command, then run it with its run command, passing its arguments as that
+section says. A conversion done in a spreadsheet application or with a database's own export tool
+writes no program.
 
 > **Data Source Registry:** After collecting each data source file, record it in a registry at
 > `config/data_sources.yaml` so later modules can track it. If the file doesn't exist, create

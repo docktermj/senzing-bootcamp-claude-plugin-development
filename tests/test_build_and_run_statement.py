@@ -65,6 +65,21 @@ than list them (INV-246):
   wording sits in #563's own ledger entry, as its "Correction to the #511 entry": a run writes
   nothing under `specs/` but its own entry (INV-307), so the #511 block is left as it was.
 
+#793 put Data collection's programs on the statement and said how a run passes arguments:
+
+* the section states once, in its own "Every language" bullet, that a program's arguments follow
+  its Run command, after a `--` for `cargo run` and `dotnet run`, and that on native Windows and
+  on the `docker` route the Run command and its arguments together are the `<command>` the call
+  carries;
+* `src/collect` is on the `<dir>` list, so the scan finds Data collection's converters
+  (`convert_[name]`) and paginated-API collection program (`collect_[name]`), which its step saves
+  at the section's path and builds and runs by citing it; its file has its place in `WALK`, after
+  Truth Set visualization and before Module 5;
+* Module 5's `transform_[name]` takes its input and output as run arguments (step 13), and steps
+  14, 15 and 18 each name the input and the output they pass, the input in `data/samples/` or
+  `data/raw/` and never the registry's `file_path`; Module 4 and Module 5 point at the section for
+  how, and neither restates the `--`.
+
 Each check is a function returning its problems, and a negative control mutates the real text and
 sees the check report it: a drifted command, a command restated in Module 3 or at a #563 site
 (in a fenced block too, and `node` on a `.js`, `python3` on a `.py` or `mvn`), a missing citation
@@ -82,7 +97,7 @@ skipping, because a skipped comparison would certify nothing.
 This module enforces INV-370 (registered 2026-10-13). It pins the text; it cannot establish that
 a real `dotnet`, `cargo`, `tsc` or `javac` build succeeds on a Bootcamper's machine.
 
-Source issues: #511, #562, #563, #594.
+Source issues: #511, #562, #563, #594, #793.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -151,6 +166,7 @@ MISSING_TOOLS = ("`dotnet`", "`cargo`", "`tsc`", "`node`", "`javac`")
 
 SKILLS = PLUGIN / "skills"
 M2 = "module-02-sdk-setup/SKILL.md"
+M4 = "module-04-data-collection/SKILL.md"
 M5_MAPPING = "module-05-data-quality-mapping/phase2-data-mapping.md"
 M5_TEST_LOAD = "module-05-data-quality-mapping/phase3-test-load.md"
 M6_A = "module-06-data-processing/phaseA-build-loading.md"
@@ -235,6 +251,7 @@ WALK = (
     "module-03-system-verification/phase2-report-close.md",
     "module-03b-truthset-visualization/phase1-visualization.md",
     "module-03b-truthset-visualization/phase2-close.md",
+    M4,
     "module-05-data-quality-mapping/phase1-quality-assessment.md",
     M5_MAPPING, M5_TEST_LOAD, M6_A, M2, M6_B, GROUND_RULES_REL, M6_C,
     "module-06-data-processing/phaseD-validation.md",
@@ -260,6 +277,21 @@ LOOSE_PROGRAM_PATH = re.compile(
 ROUTE_COMMANDS = {M2: ("`dotnet add package Senzing.Sdk --source SenzingLocal`",
                        "`dotnet new nugetconfig`",
                        "`mvn install:install-file`")}
+#: #793: the section's one statement of how a run passes a program's arguments.
+ARGUMENTS_BULLET = "- **A program's arguments follow its Run command**"
+#: The Run commands that need a `--` before the program's arguments, so the tool passes them on.
+DASH_DASH_RUNS = ("cargo run", "dotnet run")
+#: How Module 4 and Module 5 point at it, rather than restating it.
+ARGUMENTS_POINTER = "as that section says"
+#: Module 5's transform: each run step, and the input and output arguments it names (#793).
+TRANSFORM_RUNS = {
+    "### 14. ": ("the source's sample file under `data/samples/`",
+                 "`data/mapping/{source}_sample.jsonl`"),
+    "### 15. ": ("the source's file in `data/raw/`", "`data/mapping/{source}_quality.jsonl`"),
+    "### 18. ": ("the source's file in `data/raw/`", "`data/senzing-ready/[name].jsonl`"),
+}
+#: Module 4's programs, saved in `src/collect` (#793).
+COLLECT_PROGRAMS = {("convert_[name]", "src/collect"), ("collect_[name]", "src/collect")}
 IMPLEMENTED = REPO_ROOT / "specs" / "IMPLEMENTED.md"
 HELD_BLOCK = "## module3-build-and-run-table"
 #: #563's own ledger entry, and the correction in it that drafts the held block's widened wording.
@@ -574,6 +606,68 @@ def built_before_created(sites, dirs):
     return problems
 
 
+def arguments_bullet(ground_rules):
+    """The section's arguments bullet, squashed, or "" when it is missing (INV-265)."""
+    return squash(block(section(ground_rules), ARGUMENTS_BULLET, r"\n- |\n\n"))
+
+
+def argument_problems(ground_rules):
+    """The arguments bullet, checked against the table: which Run commands take a `--` first."""
+    bullet = arguments_bullet(ground_rules)
+    if not bullet:
+        return ["the section has no %r" % ARGUMENTS_BULLET]
+    problems = []
+    for lang, (_files, _build, run) in sorted(table_rows(section(ground_rules)).items()):
+        command = (spans(run) or [""])[0]
+        needs = command.startswith(DASH_DASH_RUNS)
+        named = any(command.startswith(r) and "`%s`" % r in bullet for r in DASH_DASH_RUNS)
+        if needs and not named:
+            problems.append("%s's Run command `%s` needs a `--` the bullet does not give"
+                            % (lang, command))
+    if "`cargo run` and `dotnet run` take a `--` first" not in bullet:
+        problems.append("the bullet does not say `cargo run` and `dotnet run` take a `--` first")
+    if "the Run command, then `--`, then the arguments" not in bullet:
+        problems.append("the bullet does not say where the `--` goes")
+    if "Every other Run command takes them directly after it" not in bullet:
+        problems.append("the bullet does not say the other Run commands take them directly")
+    if "after `<ClassName>`" not in bullet:
+        problems.append("the bullet does not say where Java's arguments go")
+    if "the Run command and its arguments together are the `<command>`" not in bullet:
+        problems.append("the bullet does not say how the `docker` route wraps a run with arguments")
+    if "On native Windows and on the `docker` route" not in bullet:
+        problems.append("the bullet does not say native Windows' call carries the arguments too")
+    return problems
+
+
+def restated_argument_rule(path, text):
+    """A paragraph outside the section that says again where a run's `--` goes (INV-300)."""
+    problems = []
+    for paragraph in re.split(r"\n\s*\n", text):
+        flat = squash(paragraph)
+        if "`--`" in flat and re.search(r"argument|cargo run|dotnet run", flat):
+            problems.append("%s restates the arguments rule: %s" % (path, flat[:80]))
+    return problems
+
+
+def transform_run_problems(text):
+    """Module 5's transform: the argument contract at step 13, and each run's input and output."""
+    problems = []
+    body = squash(site_body(text, "### 13. "))
+    for phrase in ("`transform_[name]` takes two, in this order: the file it transforms and the "
+                   "file it writes, passed %s a program's arguments are." % ARGUMENTS_POINTER,
+                   "Its code fixes no input path"):
+        if phrase not in body:
+            problems.append("step 13 does not say %r" % phrase)
+    for start, (given, written) in TRANSFORM_RUNS.items():
+        body = squash(site_body(text, start))
+        if "%s as its input argument" % given not in body:
+            problems.append("%s does not pass %s as its input" % (start.strip(), given))
+        if not any(form % written in body for form in ("%s, its output argument",
+                                                         "%s as its output argument")):
+            problems.append("%s does not pass %s as its output" % (start.strip(), written))
+    return problems
+
+
 def build_output_problems(graduation):
     """Graduation's copy that carries build output, or a production `.gitignore` that misses it."""
     problems = []
@@ -665,8 +759,8 @@ class TheSectionIsTheOneStatement(unittest.TestCase):
 
     def test_a_citing_step_names_its_dir_and_name(self):
         self.assertIn("names its `<dir>` and `<name>` and cites this section", self.statement)
-        for directory in ("src/system_verification", "src/load", "src/transform", "src/query",
-                          "src/server"):
+        for directory in ("src/system_verification", "src/collect", "src/load", "src/transform",
+                          "src/query", "src/server"):
             with self.subTest(directory=directory):
                 self.assertIn("`%s`" % directory, self.statement)
 
@@ -927,8 +1021,8 @@ class EveryOtherProgramCitesTheSection(unittest.TestCase):
         self.sites = program_sites(self.texts, self.dirs)
 
     def test_the_scan_reads_every_dir_the_statement_lists(self):
-        self.assertEqual(("src/system_verification", "src/load", "src/transform", "src/query",
-                          "src/server"), self.dirs)
+        self.assertEqual(("src/system_verification", "src/collect", "src/load", "src/transform",
+                          "src/query", "src/server"), self.dirs)
 
     def test_the_scan_reaches_every_module_that_builds_programs(self):
         """A floor, not the list: the sites #563 and #594 named are among those found (INV-265)."""
@@ -940,6 +1034,7 @@ class EveryOtherProgramCitesTheSection(unittest.TestCase):
                  " the Truth Set data source codes and load"),
                 ("module-03b-truthset-visualization/phase1-visualization.md", "## Step 2"),
                 ("module-03b-truthset-visualization/phase2-close.md", "## Step 4"),
+                (M4, "### 2"),
                 ("module-05-data-quality-mapping/phase1-quality-assessment.md", "## 5a"),
                 (M5_MAPPING, "### 13"), (M5_TEST_LOAD, "#### 24a"), (M6_A, "## 3"),
                 (M2, "## Receiving a `setup_detour` (from a later module)"), (M6_B, "## 9"),
@@ -1146,6 +1241,113 @@ class EveryOtherProgramCitesTheSection(unittest.TestCase):
             with self.subTest(line=line):
                 problems = retired_references(M6_A, self.texts[M6_A] + "\n" + line + "\n")
                 self.assertTrue(any(expect in p for p in problems), problems)
+
+
+class ArgumentsFollowTheRunCommand(unittest.TestCase):
+    """#793: argument passing is stated once, and Module 4 and Module 5 build through the section."""
+
+    def setUp(self):
+        self.ground_rules = read(GROUND_RULES)
+        self.texts = skill_texts()
+        self.dirs = statement_dirs(self.ground_rules)
+
+    def test_the_section_says_how_a_run_passes_arguments(self):
+        self.assertEqual([], argument_problems(self.ground_rules))
+
+    def test_it_is_an_every_language_bullet(self):
+        every = block(section(self.ground_rules), "**Every language:**", r"\n\*\*Per language")
+        self.assertIn(ARGUMENTS_BULLET, every)
+
+    def test_a_dropped_dash_dash_is_reported(self):
+        for old, new, expect in (
+                ("`cargo run` and `dotnet run` take a `--` first", "`cargo run` takes a `--` first",
+                 "C#'s Run command `dotnet run"),
+                ("the Run command, then `--`, then the arguments", "the Run command, then them",
+                 "where the `--` goes"),
+                ("On native Windows and on the `docker` route", "On the `docker` route",
+                 "native Windows' call")):
+            with self.subTest(old=old):
+                self.assertIn(old, self.ground_rules)
+                problems = argument_problems(self.ground_rules.replace(old, new, 1))
+                self.assertTrue(any(expect in p for p in problems), problems)
+        gone = self.ground_rules.replace(ARGUMENTS_BULLET, "- **Arguments**", 1)
+        self.assertEqual(["the section has no %r" % ARGUMENTS_BULLET], argument_problems(gone))
+
+    def test_no_shipped_file_but_the_section_restates_it(self):
+        problems = []
+        for path in corpus_files("plugins", suffixes={".md"}):
+            text = read(path)
+            if path == GROUND_RULES:
+                text = outside_the_section(text)
+            problems += restated_argument_rule(path.relative_to(REPO_ROOT).as_posix(), text)
+        self.assertEqual([], problems)
+
+    def test_a_restated_arguments_rule_is_reported(self):
+        text = self.texts[M5_MAPPING]
+        restated = text.replace("### 14. Test\n", "### 14. Test\n\nFor Rust, put `--` before the "
+                                "two arguments.\n", 1)
+        self.assertNotEqual(text, restated)
+        self.assertTrue(restated_argument_rule(M5_MAPPING, restated))
+        self.assertEqual([], restated_argument_rule(M5_MAPPING, text))
+
+    def test_module_5s_transform_takes_its_input_and_output_as_arguments(self):
+        self.assertEqual([], transform_run_problems(self.texts[M5_MAPPING]))
+
+    def test_module_5_steps_18_input_is_never_the_registry_file_path(self):
+        body = squash(site_body(self.texts[M5_MAPPING], "### 18. "))
+        self.assertIn("the input is never that `file_path`, which then names the output", body)
+
+    def test_a_transform_run_that_names_no_input_is_reported(self):
+        text = self.texts[M5_MAPPING]
+        for old, new, expect in (
+                ("Pass the source's file in `data/raw/` as its input argument",
+                 "Pass the source's `file_path` as its input argument", "### 18. does not pass"),
+                ("pass the source's sample file under `data/samples/` as its input argument",
+                 "pass a sample", "### 14. does not pass"),
+                ("Its code fixes no input path", "Its code reads its input", "step 13 does not say")):
+            with self.subTest(old=old):
+                self.assertIn(old, text)
+                problems = transform_run_problems(text.replace(old, new, 1))
+                self.assertTrue(any(p.startswith(expect) for p in problems), problems)
+
+    def test_module_4_creates_its_programs_in_src_collect_and_cites_the_section(self):
+        sites = [s for s in program_sites(self.texts, self.dirs) if s.rel == M4]
+        self.assertEqual(["### 2. For each data source, collect the data"],
+                         [s.heading for s in sites])
+        created = {program for s in sites for program in named_programs(s.body, self.dirs)
+                   if creates_program(s.body, *program)}
+        self.assertEqual(COLLECT_PROGRAMS, created)
+        self.assertEqual([], uncited_sites(sites, self.dirs))
+        self.assertIn("passing its arguments %s" % ARGUMENTS_POINTER, sites[0].body)
+        self.assertNotIn("`src/scripts/` that fetches", sites[0].body,
+                         "the collection program left `src/scripts/`, the env script's folder")
+
+    def test_a_restated_command_at_module_4s_site_is_reported(self):
+        text = self.texts[M4]
+        anchor = "**Converter and collection programs.**"
+        self.assertIn(anchor, text)
+        self.assertEqual([], restatements(M4, text, self.ground_rules))
+        for line, expect in (
+                ("Run it with `python3 src/collect/convert_customers.py in.xlsx data/raw/c.csv`.",
+                 "restates a command: `python3 src/"),
+                ("Run it with `cargo run --manifest-path src/collect/collect_api/Cargo.toml -- x`.",
+                 "restates a command: `cargo run")):
+            with self.subTest(line=line):
+                restated = text.replace(anchor, line + "\n\n" + anchor, 1)
+                problems = restatements(M4, restated, self.ground_rules)
+                self.assertTrue(any(expect in p for p in problems), problems)
+
+    def test_a_dropped_citation_at_module_4s_site_is_reported(self):
+        text = self.texts[M4]
+        anchor = "**Converter and collection programs.**"
+        start = text.index(anchor)
+        end = text.index("\n\n", start)
+        para = text[start:end]
+        broken = text.replace(para, para.replace("ground-rules.md", "ground-rule.md"), 1)
+        sites = [s for s in program_sites(dict(self.texts, **{M4: broken}), self.dirs)
+                 if s.rel == M4]
+        self.assertIn("%s %s does not cite %s" % (M4, sites[0].heading, CITATION),
+                      uncited_sites(sites, self.dirs))
 
 
 class GraduationCarriesTheManifests(unittest.TestCase):

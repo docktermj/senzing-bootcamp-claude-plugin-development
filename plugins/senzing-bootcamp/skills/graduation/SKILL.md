@@ -1455,6 +1455,17 @@ report's **files-excluded** table and in `production/README.md` → Configuratio
 input has to be supplied (INV-187). An excluded input the handover never mentions is indistinguishable from a
 broken project.
 
+<a id="mapped-source-raw-input"></a>
+**A mapped source's raw input is not carried over either.** Each mapped source's `transform_[name]`
+arrives in `production/src/transform/` and takes the file it transforms as a run argument
+(`../module-05-data-quality-mapping/phase2-data-mapping.md` step 13), and that file is the source's
+file in the excluded `data/raw/`, as the source's lineage document,
+`docs/mapping/transformation_lineage_[name].md`, names it. Name each such source in the Step 5
+graduation report's **files-excluded** table and in `production/README.md` → Configuration, saying
+that the reader supplies that input as the transform's argument (INV-187). A source Module 5
+fast-pathed has no transform, so the paragraph above is its only disclosure; a `skipped` source has
+no transform either, and gets no line.
+
 <a id="scan-the-copied-code"></a>
 **(INV-401) Scan the copied code for paths this step left behind.** Generated programs never read such a
 path at runtime ([the rule](../module-06-data-processing/phaseA-build-loading.md#no-runtime-reads-of-uncopied-paths)),
@@ -1530,6 +1541,10 @@ the files are exactly as they were before this paragraph.
     ([what `skipped` means](../module-04-data-collection/SKILL.md#mapping-status-values)), say that it is not mapped, so
     the registry does not list it and the loader does not load it, and that its mapping was stopped
     after the mapping validator rejected it without a usable reason. No such source → omit that
+    sentence.
+  - **Configuration names each transform's raw input.** (INV-187) For each mapped source, name its
+    file in `data/raw/` as the input the reader supplies as `transform_[name]`'s input argument, as
+    Step 2's [mapped-source paragraph](#mapped-source-raw-input) says. No mapped source → omit that
     sentence.
   - **Where `integration_targets` is known** (INV-097), name those systems in **Project Overview** as what the resolved entities are meant to feed, and in **Configuration** as the integration points a reader will need to wire up — the resolved data exists to reach them, so a README that never mentions them describes half the job. Absent → omit; never write "none" or a placeholder.
 - **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the bootcamp does not include dedicated performance/security/monitoring/deployment modules, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) are not covered in depth during the bootcamp: complete these items before deploying," and mark those items with ⚠️.
