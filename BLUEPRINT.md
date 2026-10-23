@@ -10441,7 +10441,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8433 test methods in 452 files, matching `inventory.test_count_total`.
+There are 8479 test methods in 453 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 8433.
@@ -10474,6 +10474,7 @@ looks wrong.
 - `tests/test_any_language_contract_complete.py`: 16
 - `tests/test_apparatus_check_reads_the_rendering.py`: 14
 - `tests/test_apparatus_exempt_carve_out_is_recorded.py`: 7
+- `tests/test_applied_amendments_are_registered.py`: 8
 - `tests/test_audit_files_issues_not_specs.py`: 11
 - `tests/test_audit_skill_reads_the_newest_entries.py`: 4
 - `tests/test_audit_skill_states_no_stale_count.py`: 9
@@ -13792,3 +13793,10 @@ Senzing licensing, with no SPDX identifier.
   "critical" set, so features its Importance column ranks High or higher);
   `tests/test_phase_d_gate_routes_on_both_metrics.py` finds such gates by
   scanning; an INV-404 amendment is queued for `/review-invariants`
+- #777: an amendment block's header says applied only when
+  `specs/INVARIANTS.md` carries its note (the #671 and #683 blocks read
+  "applied" from their own implementing commits and the registry carried
+  neither, so the queue could never offer them); both headers return to
+  pending, `tests/test_applied_amendments_are_registered.py` checks each
+  applied header's marker against the invariant's whole entry, and the rule
+  is queued as a new invariant for `/review-invariants`
