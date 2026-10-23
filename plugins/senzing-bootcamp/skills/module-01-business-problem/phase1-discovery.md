@@ -375,9 +375,8 @@ have fired. This is INV-244's rule reached from the other side — that invarian
 
 ⛔ **(INV-278) Record a stated entitlement as `license_stated_limit` in
 `config/bootcamp_preferences.yaml`, and say plainly that no gate reads it.** It is the Bootcamper's claim, worth keeping — it is why they
-sized the scenario the way they did, and Module 4 can reconcile it against the measurement later —
-but it is a *statement*, and it lives with the other stated preferences, in a different file from the
-measured field so the two cannot be confused by proximity.
+sized the scenario the way they did — but it is a *statement*, and it lives with the other stated
+preferences, in a different file from the measured field so the two cannot be confused by proximity.
 
 - **Present and > 0:** if the total exceeds it, the bootcamper will likely need a Senzing License
   Key — record `license_guidance_deferred: true` in `config/bootcamp_preferences.yaml`. Otherwise
@@ -398,8 +397,9 @@ measured field so the two cannot be confused by proximity.
   `submit_feedback(category='license_request')`, is far larger and is described in that tool's own
   description, which you may well have read earlier in the session for another reason. On
   2026-08-18 the larger figure was attributed to the built-in license here, the comparison passed
-  when it should have failed, `license_guidance_deferred` was left unset, and Module 4's gate — the
-  one thing that would have warned the Bootcamper before they hit the cap mid-load — never fired.
+  when it should have failed, and `license_guidance_deferred` was left unset: Module 1 recorded
+  that the volume fit when it did not. A wrong comparison records a wrong expectation. It does not
+  suppress Module 4's Step 8a gate, which decides from the measured collected total.
   ⛔ **Ask the route above; do not reason from the other license's number.**
 
   ⚠️ **This branch assumes the built-in capacity because nothing has measured the installed
@@ -416,15 +416,17 @@ measured field so the two cannot be confused by proximity.
   built-in figure is the correct conservative reading. Say so if it matters to the Bootcamper;
   never present it as a detected value.
 
-⛔ **What this comparison decides.** Leaving `license_guidance_deferred` unset **suppresses**
-Module 4's Step 8a License Key gate — the single volume-gated prompt in the whole bootcamp. Getting
-this comparison wrong therefore removes the warning rather than producing a wrong one, which is why
-the figure has to come from the route above and not from recall.
+⛔ **(INV-093) What this comparison decides: only what Module 1 records, never whether Module 4's
+gate fires.** The comparison records Module 1's expectation in `license_guidance_deferred`. It does
+not decide whether Module 4's Step 8a License Key gate fires: Step 8a decides from the measured
+collected total, whatever the flag says. Getting this comparison wrong therefore records a wrong
+expectation, which is still why the figure has to come from the route above and not from recall.
 
 **The bootcamp does not ask about a Senzing License Key here.** The single, volume-gated License
-Key prompt is presented once — at the start of Data collection (Module 4), after the actual data
-volume is known and before any load — per INV-093. This step only records whether the anticipated
-volume looks likely to exceed the limit, so Module 4's gate can pick it up (`license_guidance_deferred`).
+Key prompt is presented once — at Data collection's Step 8a (Module 4), after every source is
+collected and its volume measured, and before any load — per INV-093. This step only records
+whether the anticipated volume looks likely to exceed the limit (`license_guidance_deferred`), as
+Module 1's expectation; Step 8a reads that record and decides from the measured total.
 
 **Checkpoint:** write step 5a to `config/bootcamp_progress.json` — but as part of the turn's one
 write with Step 6a's at the end of the shared turn, not a write of its own.

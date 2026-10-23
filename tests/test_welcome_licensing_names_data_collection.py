@@ -9,6 +9,10 @@ moved the License Key prompt out of SDK setup:
     prompt ... at the start of Data collection (Module 4) ... and only when that volume
     exceeds the active license's record limit.
 
+(INV-093's 2026-10-22 note reads "at the start of Data collection" as Data collection's Step 8a,
+after every source is collected and its volume measured, and before any load. The shipped lines
+name Step 8a since #780.)
+
 So the bootcamper's first mention of licensing pointed at a module that, by design, asks
 nothing about it. The prompt is also volume-gated (Module 4 Step 8a asks only when the
 collected total exceeds the active limit, and in the common case asks nothing), so the bullet

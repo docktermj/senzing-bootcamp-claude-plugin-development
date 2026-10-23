@@ -1734,9 +1734,10 @@ troubleshooting.
 ## Step 5: License (record capacity)
 
 > **Internal note:** this step does NOT prompt for a License Key. The single, volume-gated
-> Senzing License Key prompt is presented once, at the start of Data collection (Module 4),
-> per INV-093. SDK setup **measures** the active license's record capacity and records it;
-> the "License Key" reference notes below are kept for context.
+> Senzing License Key prompt is presented once, at Data collection's Step 8a (Module 4), after
+> every source is collected and its volume measured and before any load, per INV-093. SDK setup
+> **measures** the active license's record capacity and records it; the "License Key" reference
+> notes below are kept for context.
 
 > **License check order:** project-local `licenses/g2.lic` → the engine config's `PIPELINE` keys,
 > `LICENSESTRINGBASE64` (preferred) then `LICENSEFILE` → system CONFIGPATH → the built-in evaluation
@@ -1897,8 +1898,9 @@ to do here."
 
 > **Where the License Key is handled now:** the interactive License-Key **setup** (asking whether the
 > bootcamper has a key, wiring a `.lic` or Base64 key into the engine config (sub-step 5), and requesting
-> an evaluation license via the MCP server or Senzing support) is the single, volume-gated gate at the
-> start of Data collection (Module 4, Step 8a), per INV-093. SDK setup does not perform it. ⚠️ **Reading
+> an evaluation license via the MCP server or Senzing support) is the single, volume-gated gate at
+> Data collection's Step 8a (Module 4), after every source is collected and its volume measured and
+> before any load, per INV-093. SDK setup does not perform it. ⚠️ **Reading
 > the installed license is not setting one up** — this step measures the capacity that is already
 > there, which needs no prompt and no volume, and Module 4's gate is what asks for a key when the
 > collected volume actually exceeds it.
