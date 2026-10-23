@@ -1824,7 +1824,9 @@ steps 9 to 17. Every step checkpoints to `config/bootcamp_progress.json`.
   collection generates against the criteria.
 - 4b: `get_sample_data` decides CORD backing (`las-vegas`, `london`,
   `moscow` when the domain fits, provenance `cord`, stated as real data;
-  never `truthset`) or `synthesized`.
+  never `truthset`) or `synthesized`. A `Denied.` reply is its own outcome:
+  stated with a pointer to Module 3b's remedy, never retried, then
+  `synthesized` in the same turn (INV-378).
 - 5: infer record types, sources, category, criteria, outcome and
   integration. 5a compares the record total with a measured
   `license_record_limit`, else the built-in capacity from
@@ -2280,6 +2282,11 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
     (`#truncated-cord-source`) states this; every reader of
     `expected_record_count` links it.
   - Stage in `data/temp/`, then move to `data/raw/`.
+  - A `Denied.` reply to a CORD `get_sample_data` call is its own outcome,
+    stated once (`#cord-denied-reply`): no retry, a pointer to Module 3b's
+    remedy, no new question, then the next path in the recommendation order.
+    The listing, check 2's `source='list'` call and the `provenance: cord`
+    download link it (INV-378).
 - **Registry fields.** `name`, `file_path`, `format`, `record_count`
   (measured), `expected_record_count`, `truncated` (only for a truncated
   CORD source), `file_size_bytes`, `quality_score`,
@@ -10883,7 +10890,7 @@ looks wrong.
 - `tests/test_truth_set_spelling.py`: 5
 - `tests/test_truthset_acquisition_call.py`: 14
 - `tests/test_truthset_container_route_runs_a_project_copy.py`: 16
-- `tests/test_truthset_download_is_the_dataset.py`: 36
+- `tests/test_truthset_download_is_the_dataset.py`: 55
 - `tests/test_truthset_is_not_called_single_source.py`: 6
 - `tests/test_truthset_visualization_reports_empty_as_failure.py`: 9
 - `tests/test_truthset_viz_no_live_server_completes.py`: 37
@@ -11215,6 +11222,14 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
     fields, their value sets and the reading step from the schema block
     itself, and leaves out `mapping_status` and `load_status`, whose readers
     are in later modules, with the reason stated in the test.
+  - A `Denied.` sample-data reply is its own outcome wherever a step
+    classifies the reply (#805). `tests/test_truthset_download_is_the_dataset.py`
+    scans every `get_sample_data` mention in shipped Markdown by section: a
+    mention's section states the outcome or links it, and in a file with an
+    anchored statement each mention links the anchor. `EXEMPT` keys the
+    mentions that classify nothing by file, heading and quote, each with a
+    reason. Controls remove each statement, add unlinked classifying calls and
+    exempt a classifying mention.
 - **Module 5.**
   - A quality-score formula with three bands.
   - Each worked quality score is the declared formula applied to its own
@@ -13817,3 +13832,11 @@ Senzing licensing, with no SPDX identifier.
   holds from the ledger only, the literal-next-id guard reads blocks through
   `pending_invariants.blocks()`, and no invariant is added (INV-409 as
   registered)
+- #805: a `get_sample_data` reply that is the bare string `Denied.` is its own
+  outcome in Module 1 Step 4b and Module 4 Step 2 (stated once under
+  `#cord-denied-reply`), pointing at Module 3b's remedy, never retried and
+  asking nothing, then `synthesized` or the next recommended path (Module 1
+  reported it as no fit or a timeout, and Module 4 had no outcome, while
+  INV-378 binds every step that classifies the reply); the truthset guard
+  finds its sites by scanning every mention with a reasoned `EXEMPT` list, and
+  an INV-378 amendment is queued for `/review-invariants`

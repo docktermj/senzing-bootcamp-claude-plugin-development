@@ -77,6 +77,9 @@ bare `get_sample_data()` call fails rather than reporting availability (INV-136)
 available with `dataset='list'` and read `available_datasets`. Only when that listing exposes **no**
 `truthset` entry does this module (Step 1) fall back to a sanctioned external source for the demo
 Truth Set DATA.
+A `Denied.` reply to either call is not that case: it is Step 1's `denied` outcome, whose remedy
+`phase1-visualization.md` → "A `Denied.` reply is a platform-layer filter, not an unavailable
+Truth Set" states (INV-300).
 
 > Verified on MCP server 1.37.14, 2026-09-28: `truthset` is listed with `available: true` alongside the
 > three CORD collections, so the fallback is exceptional, not routine. Re-verify rather than trusting
