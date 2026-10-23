@@ -854,8 +854,8 @@ The caller says which entity to pick. Everything below is the same for all three
 this section; it never restates a command. Two placeholders key every line below:
 
 - **`<dir>`** is the program's directory, project-relative: `src/system_verification`,
-  `src/load`, `src/transform`, `src/query` or `src/server`. The step that saves the program names
-  it.
+  `src/collect`, `src/load`, `src/transform`, `src/query` or `src/server`. The step that saves the
+  program names it.
 - **`<name>`** is the program's base name, such as `verify_pipeline`. The step that saves the
   program names it too, and that step is the one that creates the program.
 
@@ -918,6 +918,13 @@ For example, System verification's `verify_pipeline` is `<dir>` = `src/system_ve
   language's toolchain in the container"). With no `docker_containers` entry there is no container
   to run in: SDK setup's container route did not finish, so return to it rather than treat it as a
   build failure.
+- **A program's arguments follow its Run command**, separated by spaces, in the order the step
+  that runs it names them. `cargo run` and `dotnet run` take a `--` first, so that the arguments
+  reach the program rather than the tool: the Run command, then `--`, then the arguments. Every
+  other Run command takes them directly after it; for Java that is after `<ClassName>`. An argument
+  that names a file is a project-relative path with forward slashes, so it runs unchanged in both
+  shells like the commands above. On native Windows and on the `docker` route, the Run command and
+  its arguments together are the `<command>` the calls above carry.
 - **Every build has a 120-second timeout, dependency resolution included.** A build that does not
   finish in time is terminated and fails with the timeout Fix_Instruction of the step that ran it.
   A program's run timeout belongs to that step.

@@ -1617,9 +1617,9 @@ Ground rules (`ground-rules.md`, every turn):
   datastore.
 - Building and running a program (the one statement, INV-300, that every step
   saving, building or running a program cites by `<dir>` and `<name>`: Modules
-  2, 3, 3b, 5, 6 and 7, graduation and the ground rules' entity program, #563,
-  #594): keyed on `<dir>` (`src/system_verification`, `src/load`,
-  `src/transform`, `src/query`, `src/server`) and `<name>`, it gives each of
+  2, 3, 3b, 4, 5, 6 and 7, graduation and the ground rules' entity program, #563,
+  #594, #793): keyed on `<dir>` (`src/system_verification`, `src/collect`,
+  `src/load`, `src/transform`, `src/query`, `src/server`) and `<name>`, it gives each of
   the five languages its files, a build and a run command. Python and Java
   stay flat in `<dir>` (Java `javac -d <dir>/classes -sourcepath <dir>`, run
   through Module 2's Java launch route);
@@ -1640,7 +1640,11 @@ Ground rules (`ground-rules.md`, every turn):
   -Command` call that dot-sources `senzing-env.ps1` first, a guide-run block;
   on "running scripts is disabled" it stops, never adds `-ExecutionPolicy
   Bypass`, and points at Module 2's Process-scope remedy plus a restart of
-  Claude Code from that window (#786).
+  Claude Code from that window (#786). A program's arguments follow its Run
+  command, after a `--` for `cargo run` and `dotnet run` and after
+  `<ClassName>` for Java, as forward-slash project-relative paths; on native
+  Windows and the `docker` route the Run command with its arguments is the
+  wrapped `<command>` (#793).
 - Platform notes: Java standalone files use a package-private class;
   PowerShell 5.1 syntax and encodings; sourced env scripts work under zsh and
   never `exit`; on Docker a fresh parse error is retried once, and confirmed
@@ -2370,6 +2374,11 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
   regenerates a `synthesized` source to `>=80` as
   `<source>-regenerated.<ext>`, keeping its `RECORD_ID`s, or asks the
   provision question for `own` or `unknown`.
+- **Converter and collection programs.** An Excel, Parquet/Avro or XML
+  converter and a paginated-API collection program are the programs
+  `convert_[name]` and `collect_[name]` in `src/collect`, created, built and
+  run by the ground rules' statement (INV-370, INV-300); a spreadsheet or
+  database export tool writes no program (#793).
 
 ### 5.13 `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/`
 
@@ -2507,18 +2516,22 @@ means the module is complete: only the transition question is asked.
 - **Steps 12-20.**
   - Step 13 saves and builds the program `transform_<name>` in
     `src/transform`, one per source, by the ground rules' statement (#563).
-  - Step 14 writes `{source}_sample.jsonl` and checks it with
+    It takes its input and output files as run arguments and fixes no input
+    path, pointing at the INV-401 rule (#793).
+  - Step 14 passes the source's `data/samples/` file, writes
+    `{source}_sample.jsonl` and checks it with
     `analyze_record(workspace_dir='data/mapping')`.
-  - Step 15 writes `{source}_quality.jsonl`, advances with the verdict and
-    offers a visual.
+  - Step 15 passes the source's `data/raw/` file, writes
+    `{source}_quality.jsonl`, advances with the verdict and offers a visual.
   - Step 16 routes by one decision table over the quality band (`none`
     included) and the critical-field state (all mapped, one unmapped, not
     recorded), and each block, next source or loading, asks that branch's
     pinned question; an unmapped source is one neither `complete` nor
     `skipped`.
   - Step 17 sets `mapping_status: complete`.
-  - Step 18 writes `data/senzing-ready/<name>.jsonl` (now `file_path`) and
-    `transformation_lineage_<name>.md`.
+  - Step 18 writes `data/senzing-ready/<name>.jsonl` (now `file_path`) from
+    the source's `data/raw/` file, never from `file_path` (a Module 7 remap
+    too), and `transformation_lineage_<name>.md`.
   - Step 18a answers `detect_environment` with `skip` or `test_load`.
   - Step 19 moves the reports to `docs/mapping/` under source-qualified
     names and requires a mapper doc for every ready file (not for a
@@ -2936,7 +2949,12 @@ and continues; the recap PDF is guaranteed.
   Overwrite and Merge, it runs `scan_uncopied_paths.py` (section 5.64,
   `#scan-the-copied-code`); each `<file>: <path>` line it prints becomes one
   `- [ ]` item in the migration checklist's Data section, no line adds no item,
-  and a scanner that cannot run adds none and graduation continues.
+  and a scanner that cannot run adds none and graduation continues. Each
+  mapped source's raw `data/raw/` transform input (`#mapped-source-raw-input`)
+  is named in the Step 5 files-excluded table and README → Configuration as
+  the transform's reader-supplied argument (INV-187), and Step 4's
+  Configuration bullet links it; fast-pathed and `skipped` sources get no
+  such line (#793).
 - Step 3: `.env.example` (`SENZING_ENGINE_CONFIGURATION_JSON`, whose
   `PIPELINE` section carries the license, `DATABASE_URL`, `LOG_LEVEL`),
   `docker-compose.yml` by `database_type`, `.gitignore` (listing each build
@@ -10486,21 +10504,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8654 test methods in 456 files, matching `inventory.test_count_total`.
+There are 8672 test methods in 456 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8654.
+sum to 8672.
 
-Two files run more tests than they define, so discovery collects 8661:
+Two files run more tests than they define, so discovery collects 8679:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8654`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8672`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8661`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8679`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10530,7 +10548,7 @@ looks wrong.
 - `tests/test_bootcamp_notes_flow.py`: 33
 - `tests/test_brand_sync.py`: 44
 - `tests/test_broll_manifest.py`: 20
-- `tests/test_build_and_run_statement.py`: 66
+- `tests/test_build_and_run_statement.py`: 77
 - `tests/test_build_version_provenance_is_per_platform.py`: 8
 - `tests/test_bundled_script_and_production_paths.py`: 28
 - `tests/test_business_problem_preserves_the_original_wording.py`: 17
@@ -10641,7 +10659,7 @@ looks wrong.
 - `tests/test_generated_dataset_size_is_a_license_decision.py`: 18
 - `tests/test_generated_gap_rates_reach_their_band.py`: 18
 - `tests/test_generated_html_deliverables.py`: 9
-- `tests/test_generated_programs_read_no_uncopied_path.py`: 22
+- `tests/test_generated_programs_read_no_uncopied_path.py`: 29
 - `tests/test_generated_scenario_dataset_eligibility.py`: 20
 - `tests/test_generated_scenario_is_bounded.py`: 8
 - `tests/test_generated_scenario_marker_drop_is_exempt.py`: 18
@@ -11616,9 +11634,12 @@ tests a rebuild can pass from behavior alone.
   directory exits 1; the default is `./production`; it imports only
   `argparse`, `re`, `sys` and `pathlib`.
   `tests/test_generated_programs_read_no_uncopied_path.py` pins Module 6's
-  rule, its pointers and Step 2's statement of the scan, and fails a Module 6
-  or 7 sentence directing a program to read an uncopied path, which it
-  computes from Step 2's copy table and Exclude list.
+  rule, its pointers (Module 5 step 13's too) and Step 2's statement of the
+  scan, and fails a sentence directing a program to read an uncopied path,
+  which it computes from Step 2's copy table and Exclude list, in every file
+  of every skill that names a Step 2 `src/**` directory as a program's home
+  (#793); it also pins Step 2's raw-input paragraph and Step 4's README
+  bullet.
 - **`recap_checkpoint.py` and `checkpoint-tick.py`.**
   - The hook creates `docs/progress/recap_checkpoint.md` without overwriting a
     narrative.
@@ -13919,6 +13940,17 @@ Senzing licensing, with no SPDX identifier.
   only in a step that reads `provenance` and names the generated case or on a
   reviewed exemption list, with negative controls, and the INV-399 amendment
   is queued for `/review-invariants`
+- #793: Module 5's `transform_[name]` takes its input and output files as run
+  arguments with no fixed input path, steps 14, 15 and 18 name both (the raw
+  input is a `data/raw/` file, never the registry `file_path` step 18 points at
+  the output), and graduation Step 2 and Step 4 name that raw input as
+  reader-supplied (INV-187); Module 4's converters and collection program
+  become `convert_[name]` and `collect_[name]` in `src/collect`, built and run
+  by the ground rules' statement, which gains `src/collect` and one bullet on
+  passing arguments (`--` for `cargo run` and `dotnet run`); the INV-401 guard
+  derives its files from Step 2's `src/**` rows (Module 5's transform was
+  unguarded and Module 4's programs had no route); INV-370 and INV-401
+  amendments are queued for `/review-invariants`
 - #803: Module 7's step 3c and teardown "Yes" link the failed-stop rule
   (`#failed-stop`, INV-394, INV-300) and, on a port still answering, say the
   stop is unverified and the server still running, never that it stopped,

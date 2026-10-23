@@ -13,16 +13,27 @@ Three things are pinned here:
    constant in the generated code; no generated program reads, at runtime, a path graduation
    Step 2 does not copy, which is cited by pointer to Step 2 and never restated (INV-300); an
    input taken from the registry entry is not such a read; a runtime choice by database comes
-   from `SQL.CONNECTION`'s scheme. Module 7's query step points at it.
-2. **The guard over the program-generation instructions.** No Module 6 or Module 7 skill file
-   directs a generated program to read an uncopied path. The uncopied set is computed from
-   Step 2 (INV-246): a project path that no Source cell of its copy table covers, which takes in
-   its **Exclude** list and anything it neither copies nor excludes. A directive is a sentence in
+   from `SQL.CONNECTION`'s scheme. Module 7's query step and Module 5's transform step point at
+   it, and Module 5's transform takes its input and output as run arguments (#793).
+2. **The guard over the program-generation instructions.** No program-generation instruction
+   directs a generated program to read an uncopied path. Which files those are is derived from
+   Step 2 too (#793, INV-246), never listed: each `src/**` copy row gives a directory, such as
+   `src/transform`, and every file of every skill that names one of them as a program's home (a
+   backticked `src/transform` or `src/transform/`, not a file under it) is scanned. That brings in
+   Module 5's transform, Modules 6 and 7, and the producer of any `src/**` row added later. The
+   uncopied set is computed from Step 2 (INV-246): a project path that no Source cell of its copy
+   table covers, which takes in its **Exclude** list and anything it neither copies nor excludes. A directive is a sentence in
    which a program, loader, orchestrator, exporter, script or code reads, loads, opens or parses
    a backticked path, or reads one "at runtime" / "when it runs". A sentence tied to the
    registry (`config/data_sources.yaml`, `file_path`, "registry") is the rule's own exception, and
    a negated one ("no program reads …") is a prohibition, not a directive.
-3. **Graduation Step 2 states the scan**: it runs the bundled `scan_uncopied_paths.py`, and each
+3. **Graduation Step 2 names each mapped source's raw transform input** (#793, INV-187): the
+   transform takes it as a run argument from the excluded `data/raw/`, so the Step 5 report's
+   files-excluded table and `production/README.md` → Configuration say the reader supplies it.
+   A fast-pathed source keeps its own paragraph and gets no second line; a `skipped` one gets none.
+   The paragraph carries the `#mapped-source-raw-input` anchor, and Step 4, which writes the
+   README, has a Configuration bullet naming each transform's raw input that links to it.
+4. **Graduation Step 2 states the scan**: it runs the bundled `scan_uncopied_paths.py`, and each
    line it prints becomes a migration-checklist item naming the file and the path. The script's
    behavior is tested in `tests/test_scan_uncopied_paths.py`.
 
@@ -44,21 +55,49 @@ import re
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
 from _wrapped_text import collapsed_blocks
 from test_module6_data_dirs_are_copied_or_excluded import EXCLUDE, excluded, step2
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
+MODULE5 = SKILLS / "module-05-data-quality-mapping"
 MODULE6 = SKILLS / "module-06-data-processing"
 MODULE7 = SKILLS / "module-07-query-visualize-discover"
 PHASE_A = MODULE6 / "phaseA-build-loading.md"
 QUERY_STEP = MODULE7 / "phase1-query-visualize.md"
+TRANSFORM_STEP = MODULE5 / "phase2-data-mapping.md"
 GRADUATION = SKILLS / "graduation" / "SKILL.md"
 
 ANCHOR = "no-runtime-reads-of-uncopied-paths"
 RULE_LEAD = ("⛔ **(INV-401) The worker count is fixed in the generated code, and no generated program "
              "reads at runtime a path graduation leaves behind.**")
 SCAN_LEAD = "**(INV-401) Scan the copied code for paths this step left behind.**"
+FAST_PATH_LEAD = "⛔ **`data/raw/` is excluded, so a CORD fast-pathed source's input is not carried over.**"
+RAW_INPUT_LEAD = "**A mapped source's raw input is not carried over either.**"
+#: What the raw-input paragraph must say (#793, INV-187).
+RAW_INPUT_PHRASES = (
+    "takes the file it transforms as a run argument",
+    "`../module-05-data-quality-mapping/phase2-data-mapping.md` step 13",
+    "the source's file in the excluded `data/raw/`",
+    "`docs/mapping/transformation_lineage_[name].md`",
+    "Step 5 graduation report's **files-excluded** table",
+    "`production/README.md` → Configuration",
+    "the reader supplies that input as the transform's argument (INV-187)",
+    "A source Module 5 fast-pathed has no transform, so the paragraph above is its only disclosure",
+    "a `skipped` source has no transform either, and gets no line",
+)
+#: The anchor Step 4's README bullet links to, directly before the paragraph's lead.
+RAW_INPUT_ANCHOR = '<a id="mapped-source-raw-input"></a>'
+STEP4 = "## Step 4: Production README and migration checklist"
+#: Step 4's README → Configuration bullet that names each transform's raw input (#793, INV-187).
+README_BULLET_LEAD = "- **Configuration names each transform's raw input.** (INV-187)"
+README_BULLET_PHRASES = (
+    "For each mapped source, name its file in `data/raw/`",
+    "as the input the reader supplies as `transform_[name]`'s input argument",
+    "Step 2's [mapped-source paragraph](#mapped-source-raw-input) says",
+    "No mapped source → omit that sentence.",
+)
 
 BACKTICKED = re.compile(r"`([^`]+)`")
 #: A generated program as the subject, then a read verb; what it reads follows, up to `;` or a
@@ -132,14 +171,93 @@ def directives(text, graduation):
     return found
 
 
-def generation_instructions():
-    return sorted(MODULE6.glob("*.md")) + sorted(MODULE7.glob("*.md"))
+def copied_program_dirs(graduation):
+    """Each directory a `src/**` row of Step 2's copy table carries, such as `src/transform`."""
+    return sorted({s.rstrip("/") for s in copy_sources(graduation) if s.startswith("src/")})
+
+
+def names_a_home(text, dirs):
+    """True when `text` names one of `dirs` as a program's home: `src/load` or `src/load/`.
+
+    A file under it, such as `src/load/records.jsonl`, is not a home, and graduation's own
+    `src/load/**` Source cell and `production/src/load/` destination do not match either.
+    """
+    return bool(dirs) and re.search(r"`(?:%s)/?`" % "|".join(map(re.escape, dirs)), text) is not None
+
+
+def skill_texts():
+    """Every shipped skill file's text, keyed by its path."""
+    return {p: p.read_text(encoding="utf-8")
+            for p in corpus_files("plugins/senzing-bootcamp/skills", suffixes={".md"})}
+
+
+def generation_instructions(graduation, texts=None):
+    """Every file of every skill that names a directory Step 2 copies as a program's home (#793).
+
+    Derived from Step 2's `src/**` rows, never a module list (INV-246): a skill whose files save a
+    program in `src/transform` is a producer of what graduation copies, so all of its files are
+    read, including the ones that name no directory themselves.
+    """
+    texts = skill_texts() if texts is None else texts
+    dirs = copied_program_dirs(graduation)
+    producers = {p.parent for p, text in texts.items() if names_a_home(text, dirs)}
+    return sorted(p for p in texts if p.parent in producers)
+
+
+def uncopied_reads(graduation, texts=None):
+    """Every directive, in every generation instruction, to read a path Step 2 does not copy."""
+    texts = skill_texts() if texts is None else texts
+    found = []
+    for path in generation_instructions(graduation, texts):
+        for p, sentence in directives(texts[path], graduation):
+            found.append("%s: `%s` in: %s" % (path.relative_to(SKILLS).as_posix(), p, sentence))
+    return found
 
 
 def rule_paragraph(text):
     start = text.index('<a id="%s"></a>' % ANCHOR)
     end = text.index("\n\n", start)
     return flat(text[start:end])
+
+
+def raw_input_problems(graduation):
+    """Step 2's paragraph naming each mapped source's raw transform input, checked (#793)."""
+    section = step2(graduation)
+    if RAW_INPUT_LEAD not in section:
+        return ["Step 2 has no %r" % RAW_INPUT_LEAD]
+    start = section.index(RAW_INPUT_LEAD)
+    paragraph = flat(section[start:section.index("\n\n", start)])
+    problems = ["the raw-input paragraph does not say %r" % p for p in RAW_INPUT_PHRASES
+                if p not in paragraph]
+    if FAST_PATH_LEAD not in section or section.index(FAST_PATH_LEAD) > start:
+        problems.append("the raw-input paragraph does not follow the fast-pathed one")
+    if not section[:start].endswith(RAW_INPUT_ANCHOR + "\n"):
+        problems.append("the raw-input paragraph does not carry %r directly before its lead"
+                        % RAW_INPUT_ANCHOR)
+    return problems
+
+
+def step4(graduation):
+    """Graduation's Step 4, up to the next `## ` heading."""
+    start = graduation.index(STEP4)
+    end = graduation.find("\n## ", start + len(STEP4))
+    return graduation[start:] if end == -1 else graduation[start:end]
+
+
+def readme_bullet_problems(graduation):
+    """Step 4's README → Configuration bullet naming each transform's raw input (#793, INV-187)."""
+    section = step4(graduation)
+    if README_BULLET_LEAD not in section:
+        return ["Step 4 has no %r" % README_BULLET_LEAD]
+    start = section.index(README_BULLET_LEAD)
+    end = section.find("\n  - ", start + 1)
+    bullet = flat(section[start:] if end == -1 else section[start:end])
+    problems = ["the README bullet does not say %r" % p for p in README_BULLET_PHRASES
+                if p not in bullet]
+    if RAW_INPUT_ANCHOR not in step2(graduation):
+        problems.append("the README bullet links #mapped-source-raw-input, which Step 2 does "
+                        "not define")
+    return problems
 
 
 def scan_paragraphs(graduation):
@@ -198,8 +316,8 @@ class TheRuleIsStatedOnceInModule6(unittest.TestCase):
                       "is not such a read", self.rule)
 
     def test_the_rule_is_stated_once(self):
-        """Module 6 and Module 7 carry the lead once, in Phase A, and nowhere else."""
-        carriers = [p.name for p in generation_instructions()
+        """The generation instructions carry the lead once, in Phase A, and nowhere else."""
+        carriers = [p.name for p in generation_instructions(self.graduation)
                     if RULE_LEAD in flat(p.read_text(encoding="utf-8"))]
         self.assertEqual(["phaseA-build-loading.md"], carriers)
 
@@ -209,6 +327,13 @@ class TheRuleIsStatedOnceInModule6(unittest.TestCase):
         end = text.index("⛔ **(INV-152)", start)
         self.assertIn("(../module-06-data-processing/phaseA-build-loading.md#%s)" % ANCHOR,
                       text[start:end])
+
+    def test_module_5s_transform_step_points_at_it(self):
+        text = flat(TRANSFORM_STEP.read_text(encoding="utf-8"))
+        start = text.index("### 13. Build the transformation program")
+        end = text.index("### 14. Test", start)
+        self.assertIn("(INV-401; [the rule](../module-06-data-processing/phaseA-build-loading.md#%s))"
+                      % ANCHOR, text[start:end])
 
     def test_graduation_step_2_points_at_it(self):
         self.assertIn("(../module-06-data-processing/phaseA-build-loading.md#%s)" % ANCHOR,
@@ -233,21 +358,59 @@ class NoGenerationInstructionDirectsAnUncopiedRead(unittest.TestCase):
         self.assertFalse(is_uncopied("src/load", g))
         self.assertFalse(is_uncopied("../graduation/SKILL.md", g), "not a project path")
 
-    def test_no_module_6_or_7_file_directs_an_uncopied_read(self):
-        found = []
-        for path in generation_instructions():
-            for p, sentence in directives(path.read_text(encoding="utf-8"), self.graduation):
-                found.append("%s: `%s` in: %s" % (path.name, p, sentence))
+    def test_no_generation_instruction_directs_an_uncopied_read(self):
+        found = uncopied_reads(self.graduation)
         self.assertEqual(
             [], found,
             "a program-generation instruction directs a runtime read of a path graduation "
             "Step 2 does not copy, so the handed-over program finds nothing there; see "
             "phaseA-build-loading.md#%s:\n  " % ANCHOR + "\n  ".join(found))
 
-    def test_the_scan_reads_every_module_6_and_7_file(self):
-        names = {p.parent.name for p in generation_instructions()}
-        self.assertEqual({MODULE6.name, MODULE7.name}, names)
-        self.assertGreaterEqual(len(generation_instructions()), 9)
+    def test_the_scanned_files_are_derived_from_step_2s_src_rows(self):
+        """#793: the directories come from the copy table, and the files from the directories."""
+        self.assertEqual(["src/load", "src/query", "src/transform", "src/utils"],
+                         copied_program_dirs(self.graduation))
+        scanned = generation_instructions(self.graduation)
+        # A floor, not the list (INV-265): Module 5's transform step and every Module 6 and
+        # Module 7 file, the ones the guard read before it was derived, are among those found.
+        self.assertIn(TRANSFORM_STEP, scanned)
+        for module in (MODULE6, MODULE7):
+            with self.subTest(module=module.name):
+                self.assertTrue(set(module.glob("*.md")) <= set(scanned))
+        self.assertNotIn(GRADUATION, scanned, "graduation copies the programs; it writes none")
+
+    def test_a_new_src_row_brings_in_its_producer(self):
+        """A copy row added to Step 2 scans the skill that saves programs there, unlisted."""
+        g = self.graduation
+        texts = {SKILLS / "module-08-reports" / "SKILL.md":
+                 "Save it as the program `weekly` in `src/reports`.\n\n"
+                 "Have the program open `config/bootcamp_progress.json` when it runs.\n"}
+        self.assertEqual([], generation_instructions(g, texts))
+        row = "| `src/utils/**` | `production/src/utils/` | Shared helpers |"
+        self.assertIn(row, g)
+        widened = g.replace(row, row + "\n| `src/reports/**` | `production/src/reports/` | Reports |")
+        self.assertIn("src/reports", copied_program_dirs(widened))
+        self.assertEqual(list(texts), generation_instructions(widened, texts))
+        self.assertTrue(any("config/bootcamp_progress.json" in f
+                            for f in uncopied_reads(widened, texts)))
+
+    def test_negative_control_a_module_5_program_reads_data_raw(self):
+        """#793: the transform told to read its source from `data/raw/` turns the guard red."""
+        g = self.graduation
+        texts = skill_texts()
+        self.assertEqual([], uncopied_reads(g, texts))
+        shipped = texts[TRANSFORM_STEP]
+        anchor = "**The input and the output are run arguments.**"
+        self.assertIn(anchor, shipped)
+        for line, path in (
+                ("Its code reads `data/raw/[name].csv`, the source's file.", "data/raw/[name].csv"),
+                ("Have the program open `data/raw/` when it runs.", "data/raw/")):
+            with self.subTest(line=line):
+                mutated = dict(texts)
+                mutated[TRANSFORM_STEP] = shipped.replace(anchor, line + "\n\n" + anchor, 1)
+                self.assertTrue(any("phase2-data-mapping.md: `%s`" % path in f
+                                    for f in uncopied_reads(g, mutated)),
+                                uncopied_reads(g, mutated))
 
     def test_negative_controls(self):
         """The #755 reads, written as instructions, each turn the guard red."""
@@ -261,7 +424,7 @@ class NoGenerationInstructionDirectsAnUncopiedRead(unittest.TestCase):
                  "config/bootcamp_progress.json"),
                 ("The exporter loads `data/samples/` at runtime.", "data/samples/")):
             with self.subTest(text=text):
-                for target in (PHASE_A, QUERY_STEP):
+                for target in (PHASE_A, QUERY_STEP, TRANSFORM_STEP):
                     shipped = target.read_text(encoding="utf-8")
                     self.assertEqual([], directives(shipped, g))
                     mutated = shipped + "\n\n" + text + "\n"
@@ -276,6 +439,54 @@ class NoGenerationInstructionDirectsAnUncopiedRead(unittest.TestCase):
                 "The loader reads its registry `file_path` under `data/subsets/`."):
             with self.subTest(text=text):
                 self.assertEqual([], directives(text, g))
+
+
+class GraduationNamesTheTransformsRawInput(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.graduation = GRADUATION.read_text(encoding="utf-8")
+
+    def test_step_2_names_it_for_the_report_and_the_readme(self):
+        self.assertEqual([], raw_input_problems(self.graduation))
+
+    def test_negative_controls(self):
+        g = self.graduation
+        for old, new, expect in (
+                ("`production/README.md` → Configuration, saying\nthat the reader",
+                 "the README, saying\nthat the reader", "`production/README.md` → Configuration"),
+                ("a run argument", "a fixed path", "as a run argument"),
+                ("no transform either, and gets no line", "a line too", "gets no line"),
+                (RAW_INPUT_LEAD, "**Raw input.**", "Step 2 has no"),
+                (RAW_INPUT_ANCHOR + "\n", "", "directly before its lead")):
+            with self.subTest(old=old):
+                self.assertIn(old, g)
+                problems = raw_input_problems(g.replace(old, new, 1))
+                self.assertTrue(any(expect in p for p in problems), problems)
+
+    def test_step_4s_readme_configuration_names_it(self):
+        """Step 4 writes the README, so its Configuration list names the input too (#793)."""
+        self.assertEqual([], readme_bullet_problems(self.graduation))
+
+    def test_readme_bullet_negative_controls(self):
+        g = self.graduation
+        lead = README_BULLET_LEAD
+        start = g.index(lead)
+        bullet = g[start:g.index("\n  - ", start)] + "\n"
+        self.assertIn(bullet, g)
+        self.assertEqual(["Step 4 has no %r" % lead], readme_bullet_problems(g.replace(bullet, "", 1)))
+        for old, new, expect in (
+                ("(#mapped-source-raw-input)", "(#scan-the-copied-code)", "mapped-source paragraph"),
+                ("`transform_[name]`'s input argument", "the transform's input",
+                 "input argument"),
+                ("No mapped source → omit that\n    sentence.", "", "omit that sentence")):
+            with self.subTest(old=old):
+                self.assertIn(old, bullet)
+                mutated = g.replace(bullet, bullet.replace(old, new, 1), 1)
+                problems = readme_bullet_problems(mutated)
+                self.assertTrue(any(expect in p for p in problems), problems)
+        unanchored = g.replace(RAW_INPUT_ANCHOR + "\n", "", 1)
+        self.assertTrue(any("does not define" in p for p in readme_bullet_problems(unanchored)))
 
 
 class GraduationStep2StatesTheScan(unittest.TestCase):
