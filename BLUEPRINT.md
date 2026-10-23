@@ -2422,7 +2422,10 @@ means the module is complete: only the transition question is asked.
   (stated once at step 6's `#quality-page-runs-on-the-host`; Phase 2's
   step 15 page links it, INV-300).
   - 80+ asks nothing. 70-79 and below 70 ask a pinned improve-or-continue
-    question, with a disclosure first for `synthesized` data.
+    question, with a disclosure first for `synthesized` data. `provenance`
+    selects each band's wording: a `synthesized` source gets pinned variants
+    that say "The generated data's quality", in Step 7 and in 7b; every
+    other source keeps "Your data quality".
   - 7a improves format and duplicates only, writing
     `data/raw/<source>-improved.<ext>`, re-counting, re-scoring and asking
     again.
@@ -2631,7 +2634,8 @@ Phase B (`phaseB-load-first-source.md`, steps 5-11):
 
 Phase C (`phaseC-multi-source.md`, steps 12-20, 2+ sources): inventory;
 dependencies (generated sources get one yes/no for "none, Sequential"; real
-sources are asked, then choose Sequential, Parallel or Hybrid); load order
+sources are asked, by a pinned question whose owner noun `provenance` picks,
+then choose Sequential, Parallel or Hybrid); load order
 (reference first, quality, density, volume); checklist;
 the program `orchestrator` in `src/load` with a per-source budget table,
 per-source counters, backoff retry and error isolation; sample test; every
@@ -2848,6 +2852,9 @@ teardown 👉, or on the graduation offer when no server ran. On a synthesized
 source whose `quality_intent` carries `relationship_intent`, or whose scenario's
 success criteria name households or related parties, reaching the 4d or step 7
 fallback is reported as a bootcamp generation defect with `/bootcamp-feedback`.
+Step 5's summary and the 4d and step 7 fallbacks name the data by the row of
+the cover subtitle table (`#discoveries-cover-subtitle`) that the loaded
+sources' `provenance` picks, never "your data" on a generated scenario.
 
 ### 5.16 `plugins/senzing-bootcamp/skills/graduation/`
 
@@ -10464,21 +10471,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8568 test methods in 455 files, matching `inventory.test_count_total`.
+There are 8584 test methods in 455 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8568.
+sum to 8584.
 
-Two files run more tests than they define, so discovery collects 8575:
+Two files run more tests than they define, so discovery collects 8591:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8568`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8584`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8575`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8591`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10881,7 +10888,7 @@ looks wrong.
 - `tests/test_stop_nudge_silence_and_opt_outs.py`: 5
 - `tests/test_supersession_has_one_syntax.py`: 16
 - `tests/test_suppressed_branch_has_no_pinned_question.py`: 9
-- `tests/test_synthesized_data_is_attributed_to_the_bootcamp.py`: 19
+- `tests/test_synthesized_data_is_attributed_to_the_bootcamp.py`: 35
 - `tests/test_synthesized_entities_have_their_own_identifiers.py`: 16
 - `tests/test_synthesized_name_sharing_has_a_budget.py`: 34
 - `tests/test_synthesized_scenario_has_quality_gaps.py`: 21
@@ -13861,6 +13868,19 @@ Senzing licensing, with no SPDX identifier.
   (`conformance.py reverse-check --ref aecbc38` still found one uncited line);
   six test credits move from INV-048 to INV-227 or INV-173; dry-run's "never a
   plugin change" is queued as a new invariant for `/review-invariants`
+- #790: no quoted or pinned line calls a `synthesized` source's data "your
+  data": Module 7's step 5 summary and the 4d and step 7 fallbacks name the
+  data by the `#discoveries-cover-subtitle` row that `provenance` picks, and
+  the "stands as written" exception for a generated scenario is gone; Module 5
+  Step 7 and 7b gain pinned "The generated data's quality …" variants, the
+  maintainer's wording, and Module 6 Phase C's load-order question gains two
+  pinned provenance variants (the guard read only blocks that already branched
+  on `provenance: synthesized`, so an unbranched "your data" passed);
+  `tests/test_synthesized_data_is_attributed_to_the_bootcamp.py` now scans
+  every quoted, blockquoted or 👉 "your data" in shipped Markdown, passing one
+  only in a step that reads `provenance` and names the generated case or on a
+  reviewed exemption list, with negative controls, and the INV-399 amendment
+  is queued for `/review-invariants`
 - #803: Module 7's step 3c and teardown "Yes" link the failed-stop rule
   (`#failed-stop`, INV-394, INV-300) and, on a port still answering, say the
   stop is unverified and the server still running, never that it stopped,

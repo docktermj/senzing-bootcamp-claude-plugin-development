@@ -1064,6 +1064,31 @@ were not told meant that is the failure this disclosure exists to prevent.
   1. Work on improving the data first.
   2. Proceed anyway, knowing the results may be limited.
 
+**`provenance` selects each band's wording (INV-056, INV-399).** Read it for this source as the
+disclosure above does. `synthesized` selects the band's generated-data variant below in place of
+its text above; `own`, `unknown`, `cord` and `free_data` keep the text above, and so does a source
+with no recorded `provenance` or an unreadable `config/data_sources.yaml`. Each variant changes
+only the owner: the band's condition, its options and their handling are the band's own.
+
+- **Quality ≥80%, `synthesized`:** "The generated data's quality is strong. Let's continue to mapping."
+  **(statement, no 👉; continue into Phase 2 this turn)**
+- **Quality 70-79%, `synthesized`:** "The generated data's quality is acceptable but has some gaps.
+  You can continue to mapping now, or improve the weakest fields first."
+
+  👉 **The generated data's quality is acceptable but has some gaps. What would you like to do? Reply with a number:**
+
+  1. Improve the weakest fields first.
+  2. Continue to mapping now.
+
+- **Quality <70%, `synthesized`:** "The generated data's quality needs attention before mapping will
+  produce good results. I'd recommend focusing on [specific issues: e.g., filling missing phone
+  numbers, standardizing address formats]."
+
+  👉 **The generated data's quality needs attention before mapping will produce good results. What would you like to do? Reply with a number:**
+
+  1. Work on improving the data first.
+  2. Proceed anyway, knowing the results may be limited.
+
 *(Internal: in the two gating branches, end the turn on the applicable question and wait — Step 7b's
 fixed-dataset statement excepted, which continues into Phase 2. In the
 ≥80% branch no question applies — do not manufacture one; continue into Phase 2 this same turn and
@@ -1194,6 +1219,29 @@ disclosure above still precedes it on a `synthesized` source. The question line 
   regeneration of generated data, can."
 
   👉 **Your data quality needs attention before mapping will produce good results. What would you like to do? Reply with a number:**
+
+  1. Return to Data collection for this source.
+  2. Proceed anyway, knowing the results may be limited.
+
+**On a `synthesized` source, the band's form is its generated-data variant (INV-056, INV-399).**
+Only `synthesized` selects it; `own` and `unknown` keep the text above, and so does a source with
+no recorded `provenance` or an unreadable `config/data_sources.yaml`. It changes only the owner:
+the options and their handling are the band's own.
+
+- **Quality 70-79%, `synthesized`:** "The generated data's quality is acceptable but has some gaps.
+  What is left is missing values, which this module cannot fill; a better export, or a
+  regeneration of generated data, can."
+
+  👉 **The generated data's quality is acceptable but has some gaps. What would you like to do? Reply with a number:**
+
+  1. Return to Data collection for this source.
+  2. Continue to mapping now.
+
+- **Quality <70%, `synthesized`:** "The generated data's quality needs attention before mapping will
+  produce good results. What is left is missing values, which this module cannot fill; a better
+  export, or a regeneration of generated data, can."
+
+  👉 **The generated data's quality needs attention before mapping will produce good results. What would you like to do? Reply with a number:**
 
   1. Return to Data collection for this source.
   2. Proceed anyway, knowing the results may be limited.
