@@ -1846,7 +1846,10 @@ steps 9 to 17. Every step checkpoints to `config/bootcamp_progress.json`.
   `docs/data_architecture.md`; otherwise it asks for diagrams.
 - 10a: integration question (and systems), then deployment target (cloud,
   container, local, not sure); one write of `integration_targets`,
-  `deployment_target`, `cloud_provider` to preferences. A statement before the
+  `deployment_target`, `cloud_provider` to preferences. A specific provider
+  or platform (and `cloud_provider`) is recorded only when the Bootcamper
+  names it; a bare number records the generic `cloud`, `container` or
+  `local`, and nothing further is asked. A statement before the
   pinned integration question says Module 7 offers an export for a named
   system, and names Module 7's step 4e as where the answer is acted on.
 - 11: `docs/business_problem.md` from a fixed template, with verbatim
@@ -2871,7 +2874,10 @@ and continues; the recap PDF is guaranteed.
   model/effort nudge.
 - Pre-checks read `name`, `programming_language`, `database_type`, `path`,
   `selected_modules`, `integration_targets`, `deployment_target`,
-  `cloud_provider` and `modules_completed`. A missing file means asking
+  `cloud_provider` and `modules_completed`. Pre-check 1a's
+  `#generic-deployment-target` states once how Steps 3, 4 and 5 render a
+  generic `cloud`, `container` or `local`: its category, platform not
+  stated, never a guess. A missing file means asking
   language and database; a missing key is noted silently. A name unfit for
   the certificate (system account, handle, email, non-Latin-1) triggers a
   pinned question; the answer goes to `name` and the recap's
@@ -10425,7 +10431,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 455 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 456 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -10475,21 +10481,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8618 test methods in 455 files, matching `inventory.test_count_total`.
+There are 8633 test methods in 456 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8618.
+sum to 8633.
 
-Two files run more tests than they define, so discovery collects 8625:
+Two files run more tests than they define, so discovery collects 8640:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8618`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8633`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8625`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8640`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10578,6 +10584,7 @@ looks wrong.
 - `tests/test_deferrals_do_not_name_a_literal_next_id.py`: 6
 - `tests/test_delegate_files_issues_not_specs.py`: 18
 - `tests/test_dependency_reading_rules.py`: 13
+- `tests/test_deployment_target_records_only_what_is_named.py`: 15
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
 - `tests/test_dev_install_surfaces_name_the_dev_repo.py`: 11
 - `tests/test_directing_steps.py`: 48
@@ -13863,6 +13870,16 @@ Senzing licensing, with no SPDX identifier.
   Module 1 claimed effects Step 8a does not have);
   `tests/test_license_gate_is_described_as_it_runs.py` guards each claim with
   negative controls, and no invariant is added (INV-093, INV-278, INV-300)
+- #785: Module 1 Step 10a records a specific `deployment_target`
+  (`aws`/`azure`/`gcp`, `kubernetes`/`docker_swarm`, `on_premises`) and
+  `cloud_provider` only when the Bootcamper names it, else the generic
+  `cloud`, `container` or `local`, asking nothing further; Step 11's template
+  and graduation's header comments, Deployment checklist and report render a
+  generic value as its category with the platform not stated, stated once at
+  pre-check 1a's `#generic-deployment-target` (a bare "1" made the guide
+  invent a provider that graduation stamped into production files); a new
+  guard pins the mapping and the rendering with negative controls, and an
+  INV-097 amendment is queued for `/review-invariants`
 - #787: shipped hard rules cite, on the ⛔ line itself, the invariant whose
   registered statement makes each claim (INV-396): INV-394, INV-378, INV-160,
   INV-393, INV-295 and INV-300 replace or join the ids Module 3b, ground
