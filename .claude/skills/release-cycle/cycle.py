@@ -3,8 +3,8 @@
 
 `SKILL.md` beside this file is the procedure; this helper owns everything a session would
 otherwise do by hand and could do twice: which step comes next, what each step runs, which
-drafts are one finding, which record a "yes except 3, 7" strikes, which skill files next, and
-the run's one `specs/IMPLEMENTED.md` entry. `tests/test_release_cycle.py` exercises it offline.
+drafts are one finding, which records the maintainer's checkpoint reply strikes, which skill
+files next, and the run's one `specs/IMPLEMENTED.md` entry. `tests/test_release_cycle.py` exercises it offline.
 
 ⛔ **(INV-300) The drafts manifest belongs to `drafts.py`.** This helper reads it through
 `drafts.py`'s own `load()` and `open_records()`, rewrites a draft only through its `Locked`,
@@ -58,8 +58,9 @@ maintainer to settle; same-skill records with one key are merged like any other.
 
 The checkpoint list is numbered once, in `drafts.SKILLS` order then id, and stored with a hash of
 each draft. ``verdicts --strike 3,7`` (or ``--strike none``) approves every listed item but
-those, and refuses when a draft changed after it was listed or a pending record was not listed:
-one yes covers only the records shown in that message (INV-314, 2026-10-13 note).
+those, and refuses when a draft changed after it was listed or a pending record was not listed,
+which the batch yes's third condition rules out (INV-314, 2026-10-13 note; the conditions are in
+`.claude/skills/feedback-to-issues/drafts.py` → "The batch yes").
 
 The held after-filing steps
 ===========================
@@ -106,7 +107,9 @@ Usage::
 
 Exit codes: 0 success, 1 bad input, 3 a refused step or transition, 4 a baseline-SHA mismatch.
 
-Stdlib only; no network and no `gh`. The one git call is ``git show HEAD:`` in ``--withdraw``.
+Stdlib only; no network and no `gh`. It makes three git calls, all reads: ``git rev-parse HEAD``
+in ``init`` when ``--sha`` is not given, ``git rev-parse main`` in ``args`` for the `blueprint`
+step when ``--head`` is not given, and ``git show HEAD:`` in ``--withdraw``.
 """
 
 from __future__ import annotations

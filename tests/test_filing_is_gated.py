@@ -52,8 +52,15 @@ issue and `submit_feedback` are never on the list, and only a yes vouches for th
 ⛔ **Which yes may cover a list is INV-314's 2026-10-13 note (#574), applied by #575.** Every
 gated `gh issue create` or `gh issue comment` instruction carries `BATCH_CLAUSE`, verbatim,
 beside its yes, and no `submit_feedback` call does: an upstream message stays one message, one
-yes. The clause is one fixed form so that a site added later without it fails here, and the
-note in `specs/INVARIANTS.md` stays the one statement of its conditions (INV-300). Five prose
+yes. The clause is one fixed form so that a site added later without it fails here.
+⛔ **Since #808 the fixed form ends with its pointer** — `, under the conditions in
+`.claude/skills/feedback-to-issues/drafts.py` → "The batch yes"` — and that docstring section is
+the one statement of the note's four conditions (INV-300): every record shown in one numbered
+message with its exact title, body and labels; struck by number; the yes covers only the records
+shown; GitHub issues and comments in this repository only. Until #808 they were stated in full only
+in the note and at `/release-cycle`'s checkpoint A. No `.claude/skills/` or
+`.claude/skill-overlays/` file outside that section restates a condition (`RESTATED_CONDITION`),
+and the section must hold all four (`TheBatchYesIsStatedOnce`). Five prose
 sites state the gate with no fenced instruction beside it; `PROSE_SITES` pins those by name. The
 five finding skills' `--file` stages are prose sites too since #573 retired #572's per-record
 lines, and `PROSE_SITES` counts them with the rest.
@@ -137,12 +144,30 @@ ACCEPTED = {
 }
 
 #: INV-314's 2026-10-13 note, as every gated issue or comment states it (#575). One fixed form,
-#: matched across line wraps, so a later guard -- and this one -- can find every site.
-BATCH_CLAUSE = "one yes for the whole list shown in one message (INV-314, 2026-10-13 note)"
+#: matched across line wraps, so a later guard -- and this one -- can find every site. Since #808
+#: it ends with the pointer to the one statement of the note's conditions.
+BATCH_NOTE = "one yes for the whole list shown in one message (INV-314, 2026-10-13 note)"
+BATCH_POINTER = ', under the conditions in `.claude/skills/feedback-to-issues/drafts.py` → "The batch yes"'
+BATCH_CLAUSE = BATCH_NOTE + BATCH_POINTER
 BATCH = re.compile(r"\s+".join(re.escape(w) for w in BATCH_CLAUSE.split()))
 
 #: Anything that starts the clause, so a variant wording or citation is caught (INV-282).
 BATCH_START = re.compile(r"(?i)\bone\s+yes\s+for\s+the\s+whole\s+list\b")
+
+#: The one statement of the note's conditions (#808): a docstring section of this file.
+CONDITIONS_FILE = CLAUDE / "skills" / "feedback-to-issues" / "drafts.py"
+CONDITIONS_HEADING = "The batch yes"
+
+#: Each of the note's four conditions, as a site would restate it (#808). Matched on
+#: whitespace-flattened text, so a wrap does not hide one.
+RESTATED_CONDITION = (
+    ("1: shown whole", re.compile(r"(?i)\bexact title, body,? and labels\b")),
+    ("2: struck by number", re.compile(r"(?i)\bstrikes?\b[^.]{0,40}?\bby number\b"
+                                       r"|\byes except \d")),
+    ("3: only the records shown", re.compile(r"(?i)\bcovers only the records\b"
+                                             r"|\badded or edited after\b")),
+    ("4: issues and comments here", re.compile(r"(?i)\bissues and comments in this repository\b")),
+)
 
 #: The acts the note lets one yes cover: issues and comments in this repository. Not
 #: `gh pr create`, which stays behind Gate 2's yes, and never `submit_feedback`.
@@ -162,6 +187,7 @@ PROSE_SITES = {
     "skills/feedback-to-issues/SKILL.md": 2,
     "skills/retrofit-from-public/SKILL.md": 2,
     "skills/production-readiness-audit/SKILL.md": 2,
+    "skills/release-cycle/SKILL.md": 1,
 }
 
 #: How far from the instruction the gate may sit. Measured 2026-09-29: at most 7 lines. The
@@ -257,6 +283,25 @@ def variant_clauses(text):
     """Line numbers where the clause starts in any form but the fixed one."""
     exact = {m.start() for m in BATCH.finditer(text)}
     return [line_of(text, m.start()) for m in BATCH_START.finditer(text) if m.start() not in exact]
+
+
+def conditions_section(text):
+    """The `The batch yes` section of ``CONDITIONS_FILE``'s docstring, or None."""
+    m = re.search(r"^%s\n=+\n(.*?)(?=^\S[^\n]*\n=+\n)" % re.escape(CONDITIONS_HEADING),
+                  text, re.M | re.S)
+    return m.group(1) if m else None
+
+
+def restated_conditions(text):
+    """Each condition of INV-314's 2026-10-13 note that ``text`` states in its own words."""
+    flat = re.sub(r"\s+", " ", text)
+    return ["%s: %r" % (name, m.group(0)) for name, pattern in RESTATED_CONDITION
+            for m in pattern.finditer(flat)]
+
+
+def condition_sites():
+    """Every `.md` and `.py` file under `.claude/skills/` and `.claude/skill-overlays/`."""
+    return corpus_files(".claude/skills", ".claude/skill-overlays", suffixes={".md", ".py"})
 
 
 def off_list_acts(text):
@@ -411,6 +456,75 @@ class OneYesMayCoverAListOfIssuesOrComments(unittest.TestCase):
             variants += ["%s:%d" % (p.relative_to(REPO_ROOT), n) for n in variant_clauses(read(p))]
         self.assertEqual([], variants, "the batch clause is reworded at %s; write it as %r so "
                          "every site stays findable" % (", ".join(variants), BATCH_CLAUSE))
+
+
+class TheBatchYesIsStatedOnce(unittest.TestCase):
+    """⛔ #808: the note's four conditions live in `drafts.py` → "The batch yes" alone (INV-300)."""
+
+    def test_the_section_states_all_four_conditions(self):
+        section = conditions_section(read(CONDITIONS_FILE))
+        self.assertIsNotNone(section, "drafts.py has no %r docstring section" % CONDITIONS_HEADING)
+        found = {r.split(":")[0] for r in restated_conditions(section)}
+        self.assertEqual({"1", "2", "3", "4"}, found,
+                         "the section does not state every condition of INV-314's 2026-10-13 note")
+        self.assertIn("(INV-300)", section)
+
+    def test_no_other_site_restates_a_condition(self):
+        found = []
+        for p in condition_sites():
+            text = read(p)
+            if p.resolve() == CONDITIONS_FILE.resolve():
+                text = text.replace(conditions_section(text) or "", "")
+            found += ["%s: %s" % (p.relative_to(REPO_ROOT).as_posix(), hit)
+                      for hit in restated_conditions(text)]
+        self.assertEqual(
+            [], found,
+            "a site restates a condition of INV-314's 2026-10-13 note; point at "
+            "`.claude/skills/feedback-to-issues/drafts.py` → \"The batch yes\" instead (INV-300): "
+            + "; ".join(found))
+
+    def test_the_corpus_reaches_every_pointing_file(self):
+        names = {p.relative_to(CLAUDE).as_posix() for p in condition_sites()}
+        for rel in list(PROSE_SITES) + ["skills/release-cycle/cycle.py",
+                                        "skills/feedback-to-issues/drafts.py"]:
+            with self.subTest(file=rel):
+                self.assertIn(rel, names)
+
+    def test_every_clause_carries_the_pointer(self):
+        """The fixed form ends with the pointer, so the bare note is a variant (#808)."""
+        bare = []
+        for p in surfaces():
+            text = read(p)
+            bare += ["%s:%d" % (p.relative_to(REPO_ROOT), n) for n in variant_clauses(text)]
+        self.assertEqual([], bare)
+        target = BATCH_POINTER.split(" in ", 1)[1]
+        self.assertIn(target, re.sub(r"\s+", " ", read(CLAUDE / "skills/release-cycle/cycle.py")),
+                      "cycle.py's checkpoint sentence does not point at the conditions")
+
+    def test_restating_a_condition_at_a_site_fails(self):
+        """The negative control #808 asks for: each condition spliced into a real site."""
+        text = read(CLAUDE / "skills" / "dry-run" / "SKILL.md")
+        self.assertEqual([], restated_conditions(text), "dry-run restates one as shipped")
+        for splice in ("Show every record numbered, with its exact title, body\nand labels.",
+                       "The maintainer may strike records by number.",
+                       'Reply "yes except 3, 7".',
+                       "One yes covers only the records in that message.",
+                       "A draft added or edited after the list was shown needs its own yes.",
+                       "It applies to GitHub issues and comments in this repository."):
+            with self.subTest(splice=splice):
+                mutated = BATCH.sub(lambda m: m.group(0) + ". " + splice, text, count=1)
+                self.assertNotEqual(text, mutated, "the control's target is gone")
+                self.assertTrue(restated_conditions(mutated))
+
+    def test_dropping_a_condition_from_the_section_fails(self):
+        section = conditions_section(read(CONDITIONS_FILE))
+        mutated = re.sub(r"(?m)^4\. .*$", "4. (dropped)", section)
+        self.assertNotEqual(section, mutated)
+        self.assertNotIn("4", {r.split(":")[0] for r in restated_conditions(mutated)})
+
+    def test_a_clause_without_its_pointer_is_a_variant(self):
+        self.assertEqual([1], variant_clauses("or " + BATCH_NOTE + "."))
+        self.assertEqual([], variant_clauses("or " + BATCH_CLAUSE + "."))
 
 
 class UnattendedSurfacesInstructOnlyListedActs(unittest.TestCase):

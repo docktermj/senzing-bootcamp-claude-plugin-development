@@ -23,11 +23,11 @@ exists.
 
 The four asset classes look similar and behave completely differently, because
 each is either an **address** other things point at, or a **record** that stands
-alone. Measured in this repo on 2026-07-31:
+alone. Measured in this repo on 2026-10-24 (#808; the 2026-07-31 figures were 4,981 and 813):
 
 | Asset | What it is | Citations | Safe operation |
 |---|---|---|---|
-| Invariant `INV-NNN` | an **address**: 4,981 live citations across plugin text, specs, tests and skills — **plus 813 in commit messages, which cannot be edited** | very high | propose a merge, supersession or demotion as a block for `/review-invariants` — **never renumber casually** |
+| Invariant `INV-NNN` | an **address**: 27,660 live citations across plugin text, specs, tests and skills (`citations.py census`) — **plus 3,246 in commit messages, which cannot be edited** | very high | propose a merge, supersession or demotion as a block for `/review-invariants` — **never renumber casually** |
 | Spec file | a **record** in the frozen archive (INV-307); its address is the `## <name>` heading in `IMPLEMENTED.md` | moderate | read only: never moved, annotated or deleted |
 | Test | **enforcement**; deleting one silently removes a guarantee | n/a | merge traversals, never merge assertions |
 | Feedback archive | a **record**; its address is the `entry_id` hash in `feedback/PROCESSED.jsonl` | low | prune files, **never prune ledger lines** |
@@ -378,8 +378,9 @@ Then:
 - **Other semantic changes go through a GitHub issue** — deleting a test, or the
   `ground-rules.md` wording a demotion needs. File it once the maintainer has said yes
   to that issue's exact text (INV-314), or one yes for the whole list shown in one message
-  (INV-314, 2026-10-13 note), and let `/implement-github-issue` *(user level)*
-  execute it. The issue is where the reasoning survives.
+  (INV-314, 2026-10-13 note), under the conditions in
+  `.claude/skills/feedback-to-issues/drafts.py` → "The batch yes", and let
+  `/implement-github-issue` *(user level)* execute it. The issue is where the reasoning survives.
   ⛔ **(INV-318) Never apply the `unattended-ok` label to an issue this run files.** Choosing
   what `/unattended-issue-loop` *(user level)* works with nobody watching is the maintainer's
   decision alone.

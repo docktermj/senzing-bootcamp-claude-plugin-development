@@ -150,7 +150,8 @@ GitHub issues, not a modified working tree.**
    record; this command keeps no ledger of its own, because a second list of the same fact is how
    two records come to disagree.
 4. **(INV-314) Show the maintainer each title and body and get a yes**, or
-   one yes for the whole list shown in one message (INV-314, 2026-10-13 note), then file:
+   one yes for the whole list shown in one message (INV-314, 2026-10-13 note), under the
+   conditions in `.claude/skills/feedback-to-issues/drafts.py` → "The batch yes", then file:
 
    ```bash
    gh issue create --title "<what diverged, not the symptom>" --body-file <file>
@@ -171,8 +172,9 @@ GitHub issues, not a modified working tree.**
    interface (#573), and the caller records unresolved drafts (INV-317). **With `--file <run-dir>`**,
    repeat step 3's search for each approved record, since the tracker may have changed, then file
    what `drafts.py file-plan` prints, after a yes for each record or one yes for the whole list
-   shown in one message (INV-314, 2026-10-13 note). Both stages, the manifest and
-   its statuses are stated once in `drafts.py` (INV-300).
+   shown in one message (INV-314, 2026-10-13 note), under the conditions in
+   `.claude/skills/feedback-to-issues/drafts.py` → "The batch yes". Both stages, the manifest
+   and its statuses are stated once in `drafts.py` (INV-300).
 5. ⛔ **(INV-312) Files in this repository only.** Cross-repo filing belongs exclusively to
    `/escalate-to-parent` *(children only)*; this command never files anywhere but its own
    tracker, in the parent and in every child that inherits it.

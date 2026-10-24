@@ -1,6 +1,6 @@
 ---
 name: release-cycle
-description: 'Run the whole Senzing Bootcamp plugin release cycle, from open issues to a published release, as one resumable run: find (the four finding skills in draft mode, duplicates merged), refine, build, exercise (/dry-run, optionally with a simulated Bootcamper), settle (/review-invariants) and ship (/release, the manual test, /propagate-to-public). It stops only at the kickoff and five checkpoints, or where a skill it runs stops by its own rules, and records the run in one specs/IMPLEMENTED.md entry when it stops. Use when the maintainer wants to run the release cycle, do a full cycle, or go from issues to a release in one pass. Slash-only, because it follows three slash-only skills. Maintainer tool — not part of the bootcamper experience.'
+description: 'Run the whole Senzing Bootcamp plugin release cycle, from open issues to a published release, as one resumable run: find (the four finding skills other than /dry-run in draft mode, duplicates merged), refine, build, exercise (/dry-run, optionally with a simulated Bootcamper), settle (/review-invariants) and ship (/release, the manual test, /propagate-to-public). It stops only at the kickoff and five checkpoints, or where a skill it runs stops by its own rules, and records the run in one specs/IMPLEMENTED.md entry when it stops. Use when the maintainer wants to run the release cycle, do a full cycle, or go from issues to a release in one pass. Slash-only, because it follows three slash-only skills. Maintainer tool — not part of the bootcamper experience.'
 argument-hint: "[run to resume, e.g. 2026-10-14] (omit to choose: resume an unfinished run, or start one)"
 disable-model-invocation: true
 ---
@@ -40,8 +40,8 @@ through [`drafts.py`](../feedback-to-issues/drafts.py), whose docstring is the o
 
 ## How each skill runs
 
-- **Invoked as a skill:** `/dry-run`, the four finding skills, `/release`, `/propagate-to-public`,
-  `/review-invariants` and the user-level `update-blueprint`.
+- **Invoked as a skill:** `/dry-run`, the four finding skills other than `/dry-run`, `/release`,
+  `/propagate-to-public`, `/review-invariants` and the user-level `update-blueprint`.
 - **Followed from its file.** `refine-github-issue`, `unattended-issue-loop` and
   `implement-github-issue` *(user level, all three)* set `disable-model-invocation: true`, so a
   skill cannot invoke them. This skill reads and follows each one's
@@ -49,10 +49,10 @@ through [`drafts.py`](../feedback-to-issues/drafts.py), whose docstring is the o
   prints, as `unattended-issue-loop` already does for `implement-github-issue`. The maintainer's
   `/release-cycle` invocation is the explicit invocation each of them requires, which is why
   this skill is slash-only too, and every gate inside each of them still applies.
-- **In a subagent:** the four finding skills and `/dry-run`. Each is given arguments that answer
-  every question it would otherwise ask, from the kickoff answers, and returns when its
-  `--draft` run ends: `/feedback-to-issues` gets the feedback file as its path argument. A
-  subagent never asks the maintainer anything.
+- **In a subagent:** the four finding skills other than `/dry-run`, and `/dry-run` itself. Each
+  is given arguments that answer every question it would otherwise ask, from the kickoff
+  answers, and returns when its `--draft` run ends: `/feedback-to-issues` gets the feedback file
+  as its path argument. A subagent never asks the maintainer anything.
 - **In the main session:** the kickoff, every checkpoint, and every skill that asks a question:
   `refine-github-issue`, the leftovers' `implement-github-issue`, `/review-invariants`,
   `/release` and `/propagate-to-public`. `/unattended-issue-loop` *(user level)* starts its own
@@ -95,11 +95,11 @@ never sees it again.
 2. `cycle.py merge-drafts <run-dir>` merges the drafts that cite the same sites into one record
    that lists every source skill, and prints the numbered list, each item with the skills that
    found it, and an `OVERLAP` line for each pair whose sites overlap but differ.
-3. **Checkpoint A.** Show the whole list in one message, each item with its exact title, body
-   and labels (each draft is at the path the list prints), the `OVERLAP` pairs side by side for
-   the maintainer to settle, and the reply format: "yes", or "yes except 3, 7". One yes covers
-   only the records in that message (INV-314, 2026-10-13 note). An `UPSTREAM` draft is not on
-   the list: show it apart, and say this cycle never sends it.
+3. **Checkpoint A.** Ask for one yes for the whole list shown in one message (INV-314,
+   2026-10-13 note), under the conditions in `.claude/skills/feedback-to-issues/drafts.py` →
+   "The batch yes". Each draft is at the path the list prints, and the `OVERLAP` pairs are
+   shown side by side for the maintainer to settle. An `UPSTREAM` draft is not on the list:
+   show it apart, and say this cycle never sends it.
 4. `cycle.py verdicts <run-dir> --strike <numbers|none>` sets each item's status with
    `drafts.py set`. It refuses when a draft changed after the list was shown, or a draft was
    added that the list did not show: show the list again.

@@ -190,7 +190,8 @@ order: the finding is recorded first and fixed after.
 ⛔ **(INV-317) Record each finding as you find it, before fixing anything:** in the run's
 dated `specs/IMPLEMENTED.md` entry, marked not yet filed, or as a GitHub issue filed after
 the maintainer's yes (INV-314), or one yes for the whole list shown in one message (INV-314,
-2026-10-13 note). Never put it in a new file under `specs/` (INV-307). A fixed
+2026-10-13 note), under the conditions in `.claude/skills/feedback-to-issues/drafts.py` →
+"The batch yes". Never put it in a new file under `specs/` (INV-307). A fixed
 finding no longer reproduces, so a run that fixes first leaves no evidence the finding existed.
 
 ⛔ **(INV-318) Never apply the `unattended-ok` label to an issue this run files.** A probe that

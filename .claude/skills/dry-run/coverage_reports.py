@@ -42,9 +42,10 @@ is not buried under legitimate entries:
     also written into the guards, so correcting the prose *failed* the suite.
 
     Scanned under ``NEGATIVE_ROOTS`` — plus the single file ``specs/DECLINED.md``, which is
-    the one record with no re-verification path at all: a declined spec never reaches
-    ``implement-spec`` Step 3.3, so a dated negative in a ``Revisit if:`` clause is re-read
-    as authority and never re-asked. Adding that one file does not open the rest of
+    the one record with no re-verification path at all. The rest of ``specs/`` is a frozen
+    archive (INV-307), whose negatives are history rather than claims; ``DECLINED.md`` stays
+    live, so a dated negative in a ``Revisit if:`` clause is re-read as authority whenever the
+    decline is revisited, and never re-asked. Adding that one file does not open the rest of
     ``specs/``.
 
 ``unmarked``
@@ -120,23 +121,25 @@ MCP_NEGATIVE_TOKEN = re.compile(r"MCP-NEGATIVE:")
 #: its test, the spec that defines the format) opts out with this line.
 NEGATIVE_OPT_OUT = "MCP-NEGATIVE-SCAN: ignore-file"
 #: Where a live claim can live. `specs/` and `feedback/` are records, not shipped claims — a
-#: spec's Senzing facts are re-verified by `implement-spec` Step 3.3 on the way in, and an
-#: `IMPLEMENTED.md` entry's `MCP re-check:` field is a point-in-time record of that check.
+#: spec body is in the frozen archive (INV-307) and is never re-verified, so its negatives are
+#: history, and an `IMPLEMENTED.md` entry's `MCP re-check:` field is a point-in-time record of
+#: the check its run made.
 NEGATIVE_ROOTS = ("plugins", "tests", os.path.join(".claude", "skills"), "docs")
 #: `specs/DECLINED.md` is the one exception, and it is a file rather than a root so that
-#: including it does not open the rest of `specs/`. A declined spec is never implemented, so
-#: Step 3.3 never runs on it — the re-verification path that justifies excluding `specs/` does
-#: not exist here. That makes a negative in a `Revisit if:` clause or a dated revisit note the
-#: only Senzing claim in the repo with neither a scanner nor any re-verification path, while
-#: `implement-spec` positions this file as the HIGHER authority ("re-verify the condition rather
-#: than trusting the spec's original citations"). A `Revisit if:` exists precisely to be
+#: including it does not open the rest of `specs/`. A declined spec is never implemented, and
+#: the frozen archive (INV-307) is what justifies excluding the rest of `specs/`: its spec
+#: bodies are history. `DECLINED.md` is not frozen, and its `Revisit if:` clauses are read as
+#: live conditions. That makes a negative in a `Revisit if:` clause or a dated revisit note the
+#: only Senzing claim in the repo with neither a scanner nor any re-verification path, while a
+#: revisit reads this file as the HIGHER authority, re-verifying the condition rather than
+#: trusting the spec's original citations. A `Revisit if:` exists precisely to be
 #: re-checked later, so a stale negative inside one sends that recheck to the wrong answer while
 #: looking evidenced — which is what happened on 2026-08-13 (`specs/DECLINED.md`'s
 #: `no-route-for-bootcampers-who-cannot-add-an-mcp-server` note).
 NEGATIVE_EXTRA_FILES = (os.path.join("specs", "DECLINED.md"),)
 #: Where shipped prose lives, for the `unmarked` report. Only the plugin: a spec or a test may
-#: discuss an absence freely, and both have their own mechanisms (Step 3.3, INV-217, the
-#: assertion-line guard).
+#: discuss an absence freely, and both have their own mechanisms (the INV-307 freeze, INV-217,
+#: the assertion-line guard).
 PROSE_ROOT = os.path.join("plugins", "senzing-bootcamp")
 #: The 13 MCP tools. Restated here rather than imported from a test, because this script is the
 #: dependency and not the dependent — `tests/test_declined_ledger.py` imports its grammar FROM here.
@@ -157,7 +160,8 @@ PROSE_ABSENCE = re.compile(
 )
 #: What turns prose about a tool into a CLAIM that can expire.
 PROSE_DATED = re.compile(r"\b20\d\d-\d\d-\d\d\b|\bserver\s+\d+\.\d+")
-#: Block-level escape for prose quoting a retracted claim (same token `implement-spec` documents).
+#: Block-level escape for prose quoting a retracted claim (the same token the
+#: `implement-github-issue` overlay documents for `specs/DECLINED.md`).
 PROSE_QUOTED_HISTORY = "MCP-NEGATIVE-SCAN: quoted-history"
 #: Block-level escape for an absence that is NOT about a tool's content. The vocabulary cannot tell
 #: "the datastore has no default configuration" — a fact about the Bootcamper's environment — from

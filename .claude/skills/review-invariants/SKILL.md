@@ -1,6 +1,6 @@
 ---
 name: review-invariants
-description: 'Walk the maintainer through every DEFERRED INVARIANT block in specs/IMPLEMENTED.md one at a time — showing the rules already shipping, the drafted wording, and every site a citation must reach — then ask for a verdict (register / hold / amend) and carry out the mechanical registration for the ones approved. Never signs off an invariant itself. Maintainer tool for developing the Senzing Bootcamp Claude Plugin (SBCP); the counterpart to implement-spec, which produces the deferrals this skill resolves.'
+description: 'Walk the maintainer through every DEFERRED INVARIANT block in specs/IMPLEMENTED.md one at a time — showing the rules already shipping, the drafted wording, and every site a citation must reach — then ask for a verdict (register / hold / amend) and carry out the mechanical registration for the ones approved. Never signs off an invariant itself. Maintainer tool for developing the Senzing Bootcamp Claude Plugin (SBCP). The blocks it resolves are written by any maintainer command or run that ships or finds an invariant change, since none of them may edit specs/INVARIANTS.md itself (INV-365).'
 argument-hint: "[block number to start from] (omit to start at the top of the pending queue)"
 ---
 

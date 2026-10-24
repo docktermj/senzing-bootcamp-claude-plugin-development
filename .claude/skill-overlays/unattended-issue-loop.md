@@ -46,9 +46,11 @@ instead, marked **not filed**; an upstream message carries the `Upstream:` value
 
 - ⛔ **(INV-309) Never sign off an invariant — and declining to mint one is NOT declining to ship the
   rule.** That distinction is the 2026-08-17 defect exactly. When an implementation ships a
-  hard rule, ship it **and** write an explicit `DEFERRED INVARIANT` block in the ledger entry
-  naming the rule, the site, and the drafted `INV-NNN — <statement>` wording, so the
-  maintainer's return costs one yes. ⛔ **(INV-309) Never `_None yet._`, never silence.**
+  hard rule, ship it **and** write an explicit `DEFERRED INVARIANT` block in the ledger entry,
+  or a `PROPOSED AMENDMENT` block when the change is to an invariant already in force, in the
+  shape [`review-invariants` → "Writing one"](../skills/review-invariants/SKILL.md#writing-one)
+  states (INV-365, INV-300), so the maintainer's return to `/review-invariants` costs one yes.
+  ⛔ **(INV-309) Never `_None yet._`, never silence.**
 - ⛔ **(INV-314) Never call `submit_feedback`.** An `mcp-server`-routed finding goes in the handoff with
   the message drafted and its `Upstream:` line reading *"not yet sent — needs maintainer
   approval"*.
@@ -60,5 +62,5 @@ instead, marked **not filed**; an upstream message carries the `Upstream:` value
   command (`specs/INVARIANTS.md` only through `/review-invariants`). The "What stays live"
   table in [`specs/README.md`](../../specs/README.md) names the live records.
 
-⚠️ **The handoff leads with what needs a yes**: every `DEFERRED INVARIANT` with its drafted
-wording, and every drafted upstream message.
+⚠️ **The handoff leads with what needs a yes**: every `DEFERRED INVARIANT` and
+`PROPOSED AMENDMENT` block with its drafted wording, and every drafted upstream message.

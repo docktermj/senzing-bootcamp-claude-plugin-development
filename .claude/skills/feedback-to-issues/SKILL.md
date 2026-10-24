@@ -210,7 +210,8 @@ For each item that warrants one, file **one GitHub issue in this repository**, u
 `issue-template.md` (in this skill's directory) as the body.
 
 ⛔ **(INV-314) Show the maintainer the title and body, and get a yes, before filing. Or get one
-yes for the whole list shown in one message (INV-314, 2026-10-13 note).** Filing is
+yes for the whole list shown in one message (INV-314, 2026-10-13 note), under the conditions in
+`.claude/skills/feedback-to-issues/drafts.py` → "The batch yes".** Filing is
 **outward-facing and immediate** — the issue is visible to anyone watching the repository
 the moment it is created, and it carries the Bootcamper's report into a public record.
 An issue can be edited or closed afterwards, but it cannot be un-filed, and its
@@ -235,9 +236,10 @@ nothing outside `<run-dir>`.** Each issue, Step 8 message and Step 9 disposition
 [`drafts.py`](drafts.py) `add` record instead, the candidate stays where it is, and the run ends
 with `drafts.py list`. `--draft` is the release cycle's interface (#573), and the caller records
 unresolved drafts (INV-317). **With `--file <run-dir>`**, file what `drafts.py file-plan` prints,
-after a yes for each record or one yes for the whole list shown in one message (INV-314, 2026-10-13 note); an upstream draft is never sent by `--file`
-and keeps its own yes. Both stages, the manifest and its statuses are stated once in
-`drafts.py` (INV-300).
+after a yes for each record or one yes for the whole list shown in one message (INV-314,
+2026-10-13 note), under the conditions in `.claude/skills/feedback-to-issues/drafts.py` →
+"The batch yes"; an upstream draft is never sent by `--file` and keeps its own yes. Both
+stages, the manifest and its statuses are stated once in `drafts.py` (INV-300).
 
 Rules for the issue itself:
 

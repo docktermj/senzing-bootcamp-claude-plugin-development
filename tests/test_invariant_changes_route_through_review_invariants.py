@@ -11,15 +11,16 @@ INV-309 binds only the issue-driven development path, `/implement-github-issue`.
 
 So this guard asserts the condition, not the wording (INV-219):
 
-1. **No direct edit.** No `.claude/skills/*/*.md` except `review-invariants`' own tells the
-   reader to register or mint an invariant, to edit or append to `specs/INVARIANTS.md`, or to
+1. **No direct edit.** No `.claude/skills/*/*.md` except `review-invariants`' own, and no
+   `.claude/skill-overlays/*.md`, tells the reader to register or mint an invariant, to edit or append to `specs/INVARIANTS.md`, or to
    correct an invariant in place. A prohibition ("never edit `specs/INVARIANTS.md` here") is not
    an instruction, and neither is a question to the maintainer ("ask whether to register").
-2. **The route.** Every skill that tells its reader to account for an invariant (it names the
+2. **The route.** Every skill or overlay that tells its reader to account for an invariant (it names the
    invariant a run establishes, a `DEFERRED INVARIANT` or `PROPOSED AMENDMENT` block, or
    disclaiming one) names `/review-invariants` and points to the section that owns the block
    formats. The set is derived by scanning (INV-246), and the four skills #520 names are a floor
-   the derivation must reach, so a scan that silently matched nothing cannot pass.
+   the derivation must reach, so a scan that silently matched nothing cannot pass. Both
+   overlays #808 names are a floor too.
 3. **The pointer lands.** Every link into `review-invariants/SKILL.md` with an anchor resolves
    to that file and to the heading whose section holds the block template, which is "Writing
    one" today. The heading is derived from where the template is, not hardcoded, so a renamed
@@ -38,6 +39,14 @@ So this guard asserts the condition, not the wording (INV-219):
    quotes). A sentence naming the unattended loop or a skill overlay is about the issue-driven
    path: the overlays carry that path's obligations, and
    `tests/test_unattended_loop_is_label_gated.py` credits INV-309 to "the overlay" correctly.
+5. **No overlay restates the block shape** (#808, INV-300). An overlay names the block it owes,
+   `DEFERRED INVARIANT` or `PROPOSED AMENDMENT`, and points at "Writing one" for its shape. A
+   unit that names a block and lists two or more of its parts (the rule, the site, the drafted
+   wording, the enforcer), or quotes a block header's status words, is a second copy of the
+   shape. Until #808 both overlays carried one in their own words, and neither named
+   `PROPOSED AMENDMENT`. Their obligations stay in the overlays: the INV-309 gate on closing,
+   the `INV-NNN` placeholder that keeps `citations.py verify` green, and the warning about
+   `pending_invariants.py check`.
 
 ⚠️ **The matcher is derived from the claim, not from the sentences #520 replaced** (INV-282).
 The claim is *"an instruction to change the invariant register in place"*. So the verbs are a
@@ -50,16 +59,18 @@ of the old `/auto-test` sentence is one of the negative controls.
 
 ⚠️ **What this does NOT establish.** That a live run writes the block rather than editing
 `specs/INVARIANTS.md`; only a real run shows that. Nor does it reach an instruction that names
-neither the file, an invariant nor an id ("update the register"). It does not read
-`review-invariants`, the one skill that does edit `specs/INVARIANTS.md`, or the skill overlays,
-which already route through `/review-invariants` under INV-309.
+neither the file, an invariant nor an id ("update the register"), or a restated shape worded
+outside rule 5's vocabulary. It does not read `review-invariants`, the one skill that does edit
+`specs/INVARIANTS.md`. Since #808 it reads the skill overlays under `.claude/skill-overlays/`
+for rules 1, 2, 3 and 5; rule 4 reads only `.claude/skills/`, because an overlay's INV-309
+citations are about the issue-driven path by construction.
 
 Enforces INV-365 (registered 2026-10-13 from the
 `maintainer-skills-route-invariant-changes-through-review-invariants` block). It reads skill
 text, and for rule 4 Python text too: it cannot establish that a live run writes the block
 rather than editing the file.
 
-Source issues: #520; rule 4's Python reading, #607.
+Source issues: #520; rule 4's Python reading, #607; the overlays and rule 5, #808.
 
 Stdlib only; every file is read as text (INV-108).
 
@@ -78,10 +89,14 @@ from _wrapped_text import blocks
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / ".claude" / "skills"
 OWNER = SKILLS / "review-invariants" / "SKILL.md"
+OVERLAYS = REPO_ROOT / ".claude" / "skill-overlays"
 
 #: The four skills #520 names. ⛔ A floor for the derived set, never the set itself (INV-246):
 #: the guard reads every skill, and this only proves the derivation reached the ones known.
 NAMED_BY_520 = ("dry-run", "production-readiness-audit", "auto-test", "compact-dev-environment")
+
+#: The two overlays #808 names, a floor for the derived set the same way (INV-246).
+NAMED_BY_808 = ("implement-github-issue.md", "unattended-issue-loop.md")
 
 #: The acts that change the register, base form only: an instruction is an imperative.
 ACT = (r"register|mint|append|add|edit|rewrite|amend|correct|mark|update|change|renumber"
@@ -104,6 +119,10 @@ DIRECT = (("edits specs/INVARIANTS.md", EDITS_FILE), ("registers or mints", MINT
 #: A prohibition, or a question to the maintainer, names the act without instructing it.
 NEGATION = re.compile(r"\b(?:never|not|no|nor|neither|cannot|without|instead of|rather than"
                       r"|whether)\b|n't\b", re.I)
+
+#: An act word right after a determiner is a noun, never an imperative: "a live record written
+#: only by its own command" names a file (#808, the loop overlay's INV-307 item).
+NOUN_BEFORE = re.compile(r"\b(?:a|an|the|its|their|this|that|each|every|live)\s+$", re.I)
 
 #: A clause ends at sentence punctuation, a table cell, or a spaced dash.
 CLAUSE_END = re.compile(r"[.;:!?](?=\s|$)|\||\s—\s")
@@ -128,6 +147,33 @@ ISSUE_PATH = re.compile(r"implement-github-issue|issue-driven|unattended-issue-l
 #: compact-dev-environment's Step 6 hung one INV-309 on "never edit `specs/INVARIANTS.md` here,
 #: and never send an invariant change to `/implement-github-issue`".
 BROADER = re.compile(r"INVARIANTS\.md")
+
+#: Rule 5: what makes a unit a description of a block (#808).
+BLOCK_KIND = re.compile(r"DEFERRED INVARIANT|PROPOSED AMENDMENT|\bblocks?\b")
+#: Rule 5: the parts of a block, each worded as the overlays and "Writing one" word it.
+SHAPE_PARTS = (
+    ("the rule", re.compile(r"(?i)\bnam(?:e|es|ing) the rule\b|\bthe rule it shipped\b"
+                            r"|\bthe rule as it ships\b|\bquoted verbatim\b")),
+    ("the site", re.compile(r"(?i)\bthe sites?\b(?! a citation)")),
+    ("the drafted wording", re.compile(r"(?i)\bdrafted\b[^.;]{0,40}?\bwording\b"
+                                       r"|INV-NNN — <")),
+    ("the enforcer", re.compile(r"(?i)\bthe enforcer\b(?!'s)|\bits enforcer\b")),
+)
+#: Rule 5: a block header's status words, which only "Writing one" may spell out.
+SHAPE_HEADER = re.compile(r"(?i)awaiting the maintainer's sign-off|\bNOT minted\b|\bNOT applied\b")
+
+#: The deferral-shape sentence each overlay carried before #808. ⛔ Restoring either must fail
+#: rule 5.
+OVERLAY_SHAPES_BEFORE_808 = {
+    "implement-github-issue.md": (
+        "Minting an ID is the maintainer's alone, so\nthe run's obligation is to write the block — "
+        "the rule it shipped, its drafted wording, and the\nenforcer — and leave the verdict to "
+        "`/review-invariants`."),
+    "unattended-issue-loop.md": (
+        "When an implementation ships a\n  hard rule, ship it **and** write an explicit "
+        "`DEFERRED INVARIANT` block in the ledger entry\n  naming the rule, the site, and the "
+        "drafted `INV-NNN — <statement>` wording, so the\n  maintainer's return costs one yes."),
+}
 
 #: The sentence `/auto-test` carried before #520. ⛔ Restoring it must fail the guard (#520).
 AUTO_TEST_BEFORE_520 = ("and register or explicitly disclaim the invariant in "
@@ -179,6 +225,9 @@ MUST_PASS = [
     "every durable rule the plugin states is registered as an invariant",
     "Minting an id is the maintainer's alone, through `/review-invariants`.",
     "Record the outcome in `specs/IMPLEMENTED.md`, naming the issue each finding became.",
+    # The loop overlay's INV-307 item (#808): "record" is a noun here.
+    "Every other file there is either frozen or a live record written only by its own command "
+    "(`specs/INVARIANTS.md` only through `/review-invariants`).",
 ]
 
 
@@ -235,6 +284,8 @@ def direct_edits(text):
                 # Every act is tried, overlapping ones too: a prohibited act ("never record
                 # one") must not hide the instructed act that follows it in the same span.
                 for start in (v.start() for v in ACT_WORD.finditer(clause)):
+                    if NOUN_BEFORE.search(clause[:start]):
+                        continue
                     m = pattern.match(clause, start)
                     if m and not _negated(clause, m):
                         found.append("%s: %s" % (label, clause.strip()[:140]))
@@ -363,6 +414,31 @@ def skill_files():
     return [Path(p) for p in skill_markdown() if Path(p).name == "SKILL.md"]
 
 
+def overlay_files():
+    """Each `.claude/skill-overlays/*.md` (#808): a repo overlay is read like a skill."""
+    return [Path(p) for p in corpus_files(".claude/skill-overlays", suffixes=(".md",))]
+
+
+def maintainer_markdown():
+    """Rules 1 and 3's corpus: every skill Markdown file but the owner's, and every overlay."""
+    return [Path(p) for p in skill_markdown()] + overlay_files()
+
+
+def restated_shape(text):
+    """Rule 5: each unit of ``text`` that restates a block's shape instead of pointing at it."""
+    found = []
+    for unit in units(text):
+        plain = _prose(_plain(unit))
+        if not BLOCK_KIND.search(plain):
+            continue
+        parts = [name for name, pattern in SHAPE_PARTS if pattern.search(plain)]
+        header = SHAPE_HEADER.search(plain)
+        if len(parts) >= 2 or header:
+            found.append("%s: %s" % (", ".join(parts) or "header %r" % header.group(),
+                                     unit[:140]))
+    return found
+
+
 class TheMatcherReadsTheClaim(unittest.TestCase):
     """INV-282: fixtures beyond the sentences #520 replaced."""
 
@@ -385,9 +461,15 @@ class NoSkillEditsTheRegisterDirectly(unittest.TestCase):
         self.assertEqual([], missing, "skills #520 names were not found under .claude/skills/")
         self.assertNotIn(OWNER.parent.name, names, "the owner skill must be left out")
 
+    def test_the_overlays_were_read(self):
+        names = {p.name for p in overlay_files()}
+        missing = [n for n in NAMED_BY_808 if n not in names]
+        self.assertEqual([], missing, "overlays #808 names were not found under "
+                         ".claude/skill-overlays/")
+
     def test_no_skill_tells_the_reader_to_edit_specs_invariants_md(self):
         found = []
-        for path in skill_markdown():
+        for path in maintainer_markdown():
             for hit in direct_edits(read(Path(path))):
                 found.append("%s: %s" % (Path(path).relative_to(REPO_ROOT).as_posix(), hit))
         self.assertEqual(
@@ -403,7 +485,8 @@ class EverySkillThatAccountsForAnInvariantNamesTheRoute(unittest.TestCase):
     def setUpClass(cls):
         cls.heading = format_heading(read(OWNER))
         cls.anchor = slug(cls.heading or "")
-        cls.derived = [p for p in skill_files() if DUTY.search(" ".join(units(read(p))))]
+        cls.derived = [p for p in skill_files() + overlay_files()
+                       if DUTY.search(" ".join(units(read(p))))]
 
     def test_the_format_section_was_found(self):
         self.assertIsNotNone(
@@ -411,9 +494,19 @@ class EverySkillThatAccountsForAnInvariantNamesTheRoute(unittest.TestCase):
             "so no pointer can be checked against it")
 
     def test_the_derived_set_reaches_every_site_520_names(self):
-        names = {p.parent.name for p in self.derived}
-        missing = [n for n in NAMED_BY_520 if n not in names]
-        self.assertEqual([], missing, "the derivation missed skills #520 names: %s" % missing)
+        names = {p.parent.name for p in self.derived} | {p.name for p in self.derived}
+        missing = [n for n in NAMED_BY_520 + NAMED_BY_808 if n not in names]
+        self.assertEqual([], missing, "the derivation missed sites #520 or #808 names: %s"
+                         % missing)
+
+    def test_each_overlay_names_both_block_kinds(self):
+        for path in overlay_files():
+            if path.name not in NAMED_BY_808:
+                continue
+            with self.subTest(overlay=path.name):
+                text = " ".join(units(read(path)))
+                for kind in ("DEFERRED INVARIANT", "PROPOSED AMENDMENT"):
+                    self.assertIn(kind, text, "%s does not name %s (#808)" % (path.name, kind))
 
     def test_each_names_review_invariants_and_points_to_the_formats(self):
         found = []
@@ -424,11 +517,31 @@ class EverySkillThatAccountsForAnInvariantNamesTheRoute(unittest.TestCase):
 
     def test_every_pointer_in_any_skill_lands_on_the_format_heading(self):
         found = []
-        for path in skill_markdown():
-            path = Path(path)
+        for path in maintainer_markdown():
             for problem in pointer_problems(path, read(path), self.anchor):
                 found.append("%s: %s" % (path.relative_to(REPO_ROOT).as_posix(), problem))
         self.assertEqual([], found, "\n  ".join(found))
+
+
+class NoOverlayRestatesTheBlockShape(unittest.TestCase):
+    """Rule 5 (#808): an overlay points at "Writing one" and restates no part of the shape."""
+
+    def test_no_overlay_restates_the_shape(self):
+        found = []
+        for path in overlay_files():
+            for hit in restated_shape(read(path)):
+                found.append("%s: %s" % (path.relative_to(REPO_ROOT).as_posix(), hit))
+        self.assertEqual(
+            [], found,
+            "an overlay restates the DEFERRED INVARIANT / PROPOSED AMENDMENT block shape; "
+            "point at review-invariants → \"Writing one\" instead (INV-365, INV-300):\n  "
+            + "\n  ".join(found))
+
+    def test_the_owner_s_template_is_what_rule_5_detects(self):
+        """Not vacuous: the shape "Writing one" states trips the detector."""
+        owner = read(OWNER)
+        start = owner.index("### Writing one")
+        self.assertTrue(restated_shape(owner[start:owner.index("\n## ", start)]))
 
 
 class Inv309IsCitedForWhatItStates(unittest.TestCase):
@@ -576,6 +689,37 @@ class NegativeControls(unittest.TestCase):
         self.assertEqual([], misscoped_309_python(source, False))
         self.assertTrue(misscoped_309_python(source, True),
                         "a script's string is the text it writes, so it is read")
+
+    def test_restoring_an_overlay_s_pre_808_shape_fails(self):
+        for name, before in OVERLAY_SHAPES_BEFORE_808.items():
+            with self.subTest(overlay=name):
+                live = read(OVERLAYS / name)
+                self.assertEqual([], restated_shape(live), "the overlay restates it as shipped")
+                mutated = live + "\n\n" + before + "\n"
+                self.assertTrue(restated_shape(mutated),
+                                "%s's pre-#808 deferral-shape sentence passes rule 5" % name)
+
+    def test_an_overlay_quoting_a_block_header_fails(self):
+        live = read(OVERLAYS / "unattended-issue-loop.md")
+        mutated = live + ("\n\nHead the block `DEFERRED INVARIANT — awaiting the maintainer's "
+                          "sign-off; NOT minted.`\n")
+        self.assertTrue(restated_shape(mutated))
+
+    def test_an_overlay_without_its_pointer_fails(self):
+        for name in NAMED_BY_808:
+            with self.subTest(overlay=name):
+                path = OVERLAYS / name
+                live = read(path)
+                mutated = re.sub(r"\[([^\]]*)\]\([^)]*review-invariants/SKILL\.md#[^)]*\)",
+                                 r"\1", live)
+                self.assertNotEqual(live, mutated, "the control changed nothing")
+                self.assertTrue(route_problems(path, mutated, self.anchor))
+
+    def test_an_overlay_instructing_a_direct_edit_fails(self):
+        live = read(OVERLAYS / "implement-github-issue.md")
+        self.assertEqual([], direct_edits(live))
+        mutated = live + "\n\nThen register the invariant it establishes in `specs/INVARIANTS.md`.\n"
+        self.assertTrue(direct_edits(mutated))
 
     def test_a_renamed_format_heading_fails_the_pointers(self):
         heading = format_heading(read(OWNER))

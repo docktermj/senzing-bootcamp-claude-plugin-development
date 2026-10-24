@@ -231,9 +231,9 @@ removing it silently breaks every citation that resolved to it.
 
    ⚠️ **The newest entry matters most after an unattended run**, which is the case this
    instruction exists for. On 2026-08-17 the newest entry recorded a reverse-contract defect
-   produced *specifically* by an unattended implement run and added the `implement-spec`
-   guardrail a later run is supposed to follow. A reading list fixed at the oldest six routed
-   around exactly that.
+   produced *specifically* by an unattended implement run and added a guardrail, then in the
+   since-retired `implement-spec`, that a later run is supposed to follow. A reading list fixed
+   at the oldest six routed around exactly that.
 
    The `deep-dive-audit-*` entries stay worth reading as the **origin** of the Step 7 classes.
    Their value is historical: they describe a much smaller ruleset and no
@@ -421,7 +421,8 @@ session end:
      gh issue create --title "<the defect, not the symptom>" --body-file <file>
      ```
      ⛔ **(INV-314) Show the maintainer the title and body and get a yes first, or
-     one yes for the whole list shown in one message (INV-314, 2026-10-13 note).** Filing is
+     one yes for the whole list shown in one message (INV-314, 2026-10-13 note), under the
+     conditions in `.claude/skills/feedback-to-issues/drafts.py` → "The batch yes".** Filing is
      outward-facing and immediate: the issue is visible to anyone watching the repository the
      moment it exists, and its notifications have already gone out. An issue can be edited or
      closed afterwards but never un-filed — the same gate, for the same reason,
@@ -441,8 +442,9 @@ session end:
    ends with `drafts.py list`. `--draft` is the release cycle's interface (#573), and the caller records
    unresolved drafts (INV-317). **With `--file <run-dir>`**, file what `drafts.py file-plan`
    prints, after a yes for each record or one yes for the whole list shown in one message
-   (INV-314, 2026-10-13 note), then report (Step 9). Both stages, the manifest and its
-   statuses are stated once in `drafts.py` (INV-300).
+   (INV-314, 2026-10-13 note), under the conditions in
+   `.claude/skills/feedback-to-issues/drafts.py` → "The batch yes", then report (Step 9). Both
+   stages, the manifest and its statuses are stated once in `drafts.py` (INV-300).
 
    ⛔ **(INV-318) Never apply the `unattended-ok` label to an issue you file.** An audit that labels its
    own findings lets `/unattended-issue-loop` *(user level)* work issues **it generated itself**, with no

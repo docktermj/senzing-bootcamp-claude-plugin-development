@@ -121,10 +121,11 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    is to correct the prose, not to certify it.
 
    `negatives` also reads **`specs/DECLINED.md`** — the only file under `specs/` it scans,
-   added 2026-08-13. A spec body's Senzing facts are re-asked by `implement-spec` Step 3.3 on
-   the way in, but a *declined* spec is never implemented, so a negative in a `Revisit if:`
-   clause is re-read as authority and never re-verified. Give those markers the same weight as
-   a shipped claim: a wrong one sends the next revisit check to the wrong answer, which is
+   added 2026-08-13. The rest of `specs/` is a frozen archive (INV-307): a spec body there is a
+   record that is never re-verified, so its negatives are history, not claims. `DECLINED.md`
+   stays live, and a negative in a `Revisit if:` clause is re-read as authority whenever the
+   decline is revisited, with nothing else re-verifying it. Give those markers the same weight
+   as a shipped claim: a wrong one sends the next revisit check to the wrong answer, which is
    exactly what a phase 1 sweep found there.
 5. **Exclude the walk's own docs from any Markdown-lint hook you run**, if your
    `~/.claude/settings.json` has one. A `PostToolUse` hook matching `Write|Edit` that
@@ -175,7 +176,8 @@ and its entire factual foundation. Start there unless the maintainer says otherw
 ⛔ **Nothing leaves the machine except two outward acts, each under INV-314's gate: show
 the maintainer the exact text and get a yes, given out of character, one record at a time. For
 issues and comments it may instead be one yes for the whole list shown in one message (INV-314,
-2026-10-13 note).**
+2026-10-13 note), under the conditions in
+`.claude/skills/feedback-to-issues/drafts.py` → "The batch yes".**
 
 1. **A GitHub issue, or a comment on an existing one, in this repository.**
 2. **`submit_feedback`, only for a finding whose verdict is `mcp-server`**: certain that the
@@ -315,9 +317,10 @@ simulated Bootcamper" step 3). Each finding and upstream message becomes a
 and 5 below; [What to do with a finding](#what-to-do-with-a-finding) steps 2–6 are not run, and the
 run ends with `drafts.py list`. `--draft` is the release cycle's interface (#573), and the caller records
 unresolved drafts (INV-317). **With `--file <run-dir>`**, file what `drafts.py file-plan` prints,
-after a yes for each record or one yes for the whole list shown in one message (INV-314, 2026-10-13 note), then report; an
-upstream draft is never sent by `--file` and keeps its own yes. Both stages, the manifest and its statuses are stated
-once in `drafts.py` (INV-300).
+after a yes for each record or one yes for the whole list shown in one message (INV-314,
+2026-10-13 note), under the conditions in `.claude/skills/feedback-to-issues/drafts.py` → "The batch yes",
+then report; an upstream draft is never sent by `--file` and keeps its own yes. Both stages, the
+manifest and its statuses are stated once in `drafts.py` (INV-300).
 
 1. **Draft — on sight.** The run's dated entry is a `## dry-run-<YYYY-MM-DD>` heading in
    `specs/IMPLEMENTED.md`, marked **Not a spec** as the `production-readiness-audit-<date>`
@@ -335,7 +338,8 @@ once in `drafts.py` (INV-300).
    being tested. Then, one issue at a time:
 
    ⛔ **(INV-314) Show the maintainer each title and body and get a yes, one issue at a
-   time, or one yes for the whole list shown in one message (INV-314, 2026-10-13 note).** Any
+   time, or one yes for the whole list shown in one message (INV-314, 2026-10-13 note), under
+   the conditions in `.claude/skills/feedback-to-issues/drafts.py` → "The batch yes".** Any
    other "yes to all" is not assent to each. Filing is outward-facing and immediate: the
    issue is visible the moment it exists and its notifications have gone out; it can be
    edited or closed but never un-filed.
