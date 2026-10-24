@@ -3846,7 +3846,7 @@ whole reply; the rest is the turn. Any other text that starts with `/` is sent
 with one leading space (`as_turn`), so the CLI does not run it as a command;
 the opening is sent as given. A reply of only slash lines is re-asked once
 with the same guide turn, and a second one stops the walk. The loop stops when
-A exits non-zero (a `walk_error` event), when a turn shows no 👉, when B
+A or B exits non-zero, when a turn shows no 👉, when B
 returns nothing, when B twice replies only with slash commands, when either
 `claude` call raises `subprocess.TimeoutExpired` (caught at both call sites,
 never propagated), or at the turn
@@ -3878,6 +3878,13 @@ and is not what isolates instructions: the user instruction file is
 `$CLAUDE_CONFIG_DIR/CLAUDE.md`, so moving that directory takes the credentials
 with it. Exit codes: 2 if `--project` is not a directory,
 1 from the non-start `SystemExit` or after any abnormal end, else 0.
+A non-zero exit at either child is an abnormal end (#794): `report_child_failure`
+writes a `walk_error` event (`turn`, `process` = `guide` or `Bootcamper`,
+`returncode`, `stderr`) holding the child's whole stderr, prints that stderr
+whole to the console, and returns the reason `the guide process exited N` or
+`the Bootcamper process exited N`. `bootcamper_reply` raises `BootcamperFailed`
+on a non-zero exit before reading stdout, so that stdout never reaches A, and
+the raise ends the walk even inside the slash-only re-ask.
 
 `transcript_lint.py` lints a stream-json transcript offline: it keeps the text
 blocks of each `assistant` event as one turn and runs `CHECKS`. BREAKING
@@ -5446,6 +5453,11 @@ def instructions_isolated():
 def instruction_sources():
     ...
 def readable_host_instructions(project, isolated):
+    ...
+class BootcamperFailed(Exception):
+    def __init__(self, returncode, stderr):
+        ...
+def report_child_failure(log, turn, process, returncode, stderr):
     ...
 def bootcamper_reply(prompt_text, persona, model, timeout=180):
     ...
@@ -10357,13 +10369,16 @@ def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
 
 - `_SUPPORTS_SETTING_SOURCES`: `test_walk_instruction_isolation.py` (set directly
   to `True` or `False`, and restored in `addCleanup`, so both the isolated and
-  the unisolated branch run without a `claude --help` probe)
+  the unisolated branch run without a `claude --help` probe) and
+  `test_a_crashed_walk_keeps_its_transcript.py` (set to `True` and restored, so
+  its non-zero-exit walks make no probe)
 - `_claude`: `test_dry_run_simulated_phase3.py` (patched with a stub, so the
   walk's stop condition runs offline and spends no tokens),
   `test_walk_slash_replies.py` (the stub records each call's argv),
   `test_a_crashed_walk_keeps_its_transcript.py` (the stub raises
   `subprocess.TimeoutExpired` at a chosen turn, and reads the transcript file
-  between turns) and `test_walk_instruction_isolation.py` (one stub stands in for
+  between turns; another stub stands in for both processes and exits 1 at a
+  chosen call of either, so the real `bootcamper_reply` runs) and `test_walk_instruction_isolation.py` (one stub stands in for
   both processes, told apart by `--output-format`, and records each call's argv)
 
 ### 7.11 `.claude/skills/auto-test/mcp_probe.py`
@@ -10548,12 +10563,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8775 test methods in 459 files, matching `inventory.test_count_total`.
+There are 8780 test methods in 459 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8775.
+sum to 8780.
 
-Two files run more tests than they define, so discovery collects 8782:
+Two files run more tests than they define, so discovery collects 8787:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -10565,7 +10580,7 @@ are skipped in `setUpClass`, which counts as one skip and adds nothing to the
 run count. With `pwsh` installed, the run reports `Ran 8782`. No other count
 looks wrong.
 
-- `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
+- `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
 - `tests/test_a_single_statement_claim_names_its_authority.py`: 11
 - `tests/test_absent_field_suspects_flags_first.py`: 10
@@ -14078,6 +14093,15 @@ Senzing licensing, with no SPDX identifier.
   derives its files from Step 2's `src/**` rows (Module 5's transform was
   unguarded and Module 4's programs had no route); INV-370 and INV-401
   amendments are queued for `/review-invariants`
+- #794: a guide or Bootcamper child that exits non-zero now ends the walk as a
+  failure (`walk.py` exits 1, so `autotest.py` files `walk-failed`), with the
+  child's whole stderr in a `walk_error` event and on the console, where the
+  guide's was cut to 2,000 and 200 characters and the Bootcamper's dropped
+  (INV-376); a stub Messages API probe on CLI 2.1.310 showed every ancestor's
+  `.claude/CLAUDE.md` loading under `--setting-sources project,local`, so a
+  walk under `~/senzing-autotest` reads `~/.claude/CLAUDE.md`, and by the
+  issue's stop-and-report rule the isolation half (the Bootcamper's cwd, the
+  wider disclosure) is left to the maintainer's decision on the sandbox root
 - #795: Module 4 Step 2 re-derives a rebuilt `cord` entry's `cord_dataset`
   and `cord_source` from `get_sample_data`'s dataset and source lists by the
   one dataset holding every rebuilt `cord` source, and on no match, several,
