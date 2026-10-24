@@ -10517,7 +10517,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8724 test methods in 458 files, matching `inventory.test_count_total`.
+There are 8738 test methods in 458 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 8724.
@@ -10646,7 +10646,7 @@ looks wrong.
 - `tests/test_env_script_powershell.py`: 21
 - `tests/test_env_script_shell_portability.py`: 45
 - `tests/test_eula_question_precedes_every_install.py`: 19
-- `tests/test_eval_license_field_names_the_channel.py`: 22
+- `tests/test_eval_license_field_names_the_channel.py`: 36
 - `tests/test_every_capture_path_requests_the_render.py`: 8
 - `tests/test_every_invariant_is_cited_in_shipped_text.py`: 4
 - `tests/test_every_line_reading_guard_gives_a_verdict.py`: 9
@@ -13972,6 +13972,15 @@ Senzing licensing, with no SPDX identifier.
   (`conformance.py reverse-check --ref aecbc38` still found one uncited line);
   six test credits move from INV-048 to INV-227 or INV-173; dry-run's "never a
   plugin change" is queued as a new invariant for `/review-invariants`
+- #789: Module 6 Phase A's expansion paths and Module 2 Step 5's license note
+  name no license request channel of their own and point at Module 4
+  → "Obtain a Senzing License Key" (Step 8a sub-step 6), which reads the
+  channel from the server's `eval_license` field (INV-403, INV-300); Module 4's
+  pre-gate "Keep the full dataset" bullet points at sub-step 6 too; the INV-403
+  guard now scans every license-route paragraph under `skills/` for an address
+  or URL and the pointer (Phase A wrote `support@senzing.com` while the server
+  names Ask Senzing on docs.senzing.com); an INV-403 amendment is queued for
+  `/review-invariants`
 - #790: no quoted or pinned line calls a `synthesized` source's data "your
   data": Module 7's step 5 summary and the 4d and step 7 fallbacks name the
   data by the `#discoveries-cover-subtitle` row that `provenance` picks, and
