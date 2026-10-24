@@ -51,6 +51,8 @@ NEXT_SECTION = "## Headline numbers, interpreted"
 #: (and the ⛔ rule on the sixth) is untouched.
 FIRST = "**(INV-353) First, `%s`**" % SECTION
 FINDINGS_START = "1. **`%s`**" % NEXT_SECTION
+#: The gate's last item. Since #781 it routes on and asks nothing, as item 5 asks nothing.
+LAST_ITEM = "6. **Route on in the same turn.**"
 
 
 def load_generator():
@@ -170,9 +172,9 @@ def gate_problems(text):
     problems = []
     item = section(part, "5. **Their question answered?**", ("\n6. ",))
     if not item:
-        return ["the gate has no 'Their question answered?' item before 'Ready to proceed?'"]
-    if "6. **Ready to proceed?**" not in part:
-        problems.append("'Ready to proceed?' is not the gate's last item")
+        return ["the gate has no 'Their question answered?' item before %r" % LAST_ITEM]
+    if LAST_ITEM not in part or "\n7. " in part[part.find(LAST_ITEM):]:
+        problems.append("%r is not the gate's last item" % LAST_ITEM)
     flat = squash(item)
     for what, phrase in {
         "every saved requirement appears exactly once": "Every requirement in `%s` appears in "
@@ -247,8 +249,7 @@ class TheGateChecksIt(Base):
         self.assertTrue(gate_problems(broken))
 
     def test_negative_control_gate_asks_a_question(self):
-        broken = self.text.replace("6. **Ready to proceed?**",
-                                   "👉 **Shall I fix the table?**\n6. **Ready to proceed?**", 1)
+        broken = self.text.replace(LAST_ITEM, "👉 **Shall I fix the table?**\n" + LAST_ITEM, 1)
         self.assertTrue(any("asks a 👉" in p for p in gate_problems(broken)))
 
 

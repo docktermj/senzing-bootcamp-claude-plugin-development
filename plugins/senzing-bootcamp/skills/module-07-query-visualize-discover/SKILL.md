@@ -106,7 +106,8 @@ already checkpointed.
 
 Module 7 is the last content module before graduation, and it is **required in every path**
 (INV-076). The Query Completeness Gate at the end of Phase 1 is this module's transition: once it is
-satisfied, run module completion and offer graduation. Preserve that gate exactly.
+satisfied, the visualization server teardown runs as its own turn when a server was started, then
+module completion and the graduation offer. Preserve that gate exactly.
 
 ⛔ **Bootcamp graduation always follows — there is no path that ends here.** It is a Required module
 in both Core and Customized (`../bootcamp-preparation/SKILL.md` → module list), so never tell the

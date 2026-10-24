@@ -80,7 +80,8 @@ Source spec:
 Source issue: #531 (part of #504). Widened by #620 (part of #602), which also pins the gate
 answers `Issue620AnswersAreCarriedOut` checks: Module 4 Step 8a sub-step 6 and Step 8b sub-step 3
 ask nothing the gate already answered, and Module 1's two confirmation gates revise and re-present
-on a no.
+on a no. #781 made Module 7's Query Completeness Gate item 6 a routing item that asks nothing
+(INV-251); its pin asserts that the item states both destinations and carries no question.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -548,10 +549,15 @@ ANSWER_PINS = (
      ("when none was picked, show step 3's pattern gallery first",), ()),
     ("4a carries no unreachable Declined branch", M1_DISCOVERY, "### 4a.", "### 4b.", (),
      ("declined: continue",)),
-    ("Module 7 gate item 6 is handled", M7_PHASE1, "6. **Ready to proceed?**",
+    # #781: item 6 no longer asks. It routes on in the same turn, so the pin is that it asks
+    # nothing, names both destinations, and keeps the Bootcamper-raised return to Discover.
+    ("Module 7 gate item 6 routes on unasked", M7_PHASE1, "6. **Route on in the same turn.**",
      "## Visualization server teardown",
-     ("on a yes, continue to the visualization server teardown",
-      "returns to the discover phase", "not an inv-006 repeat"), ()),
+     ("asks the bootcamper nothing and adds no question of its own (inv-251)",
+      'continue to "visualization server teardown" below',
+      "when no server was started, straight to module completion and its graduation offer",
+      "go back to a discover step raised that request themselves", "not an inv-006 repeat"),
+     ("ready to proceed", "on a yes", "👉", "?")),
 )
 
 
@@ -600,8 +606,10 @@ BEFORE_620 = {
         "- **Generation failed",
         "- **Declined:** continue with their own description (Path 1/2); do not generate a "
         "scenario.\n- **Generation failed")),
-    "Module 7 gate item 6 is handled": (M7_PHASE1, (
-        "6. **Ready to proceed?** On a yes,", "6. **Ready to proceed?**\n\nOn a")),
+    # #781's control: the question #781 removed from item 6, put back inside it.
+    "Module 7 gate item 6 routes on unasked": (M7_PHASE1, (
+        "6. **Route on in the same turn.** This item",
+        "6. **Route on in the same turn.** Ready to proceed? On a yes, continue. This item")),
 }
 
 

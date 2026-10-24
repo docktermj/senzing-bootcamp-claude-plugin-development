@@ -38,7 +38,8 @@ Then ask whether to proceed.
 
 - **Declines:** write `discover_phase: "skipped"` to `config/bootcamp_progress.json` under
   `module_7_query`, run step 4e (the export offer) in `phase2b-discover.md`, which runs on every
-  path, and then return to `phase1-query-visualize.md` for the Query Completeness Gate.
+  path, and then return to `phase1-query-visualize.md` → "Data-discoveries deliverable", then
+  its Query Completeness Gate.
 - **Agrees:** write `discover_phase: "in_progress"` under `module_7_query` and continue to
   step 4a.
 
@@ -402,17 +403,17 @@ teaches the bootcamper how Senzing explains its resolution decisions.
    👉 **What would you like to do next? Reply with a number:**
 
    1. Continue to the next demonstration — How Analysis (seeing how this entity was built step by step).
-   2. Proceed to module completion.
+   2. Wrap up: the export offer, your discoveries document, then module completion.
 
    *(Internal: end the turn on this question and wait.)* If the bootcamper chooses to exit,
    write `discover_phase: "skipped"` to `config/bootcamp_progress.json`, run step 4e (the export
-   offer) in `phase2b-discover.md`, and then return to `phase1-query-visualize.md` for the Query
-   Completeness Gate.
+   offer) in `phase2b-discover.md`, and then return to `phase1-query-visualize.md` →
+   "Data-discoveries deliverable", then its Query Completeness Gate.
 
    **Handling each answer (INV-284).**
 
    - **1, "Continue to the next demonstration":** step 4c.
-   - **2, "Proceed to module completion":** the exit above.
+   - **2, "Wrap up":** the exit above.
 
 **Checkpoint:** write step 4b under `module_7_query.steps.4b`, using
 `{"status": "completed", "entity_demonstrated": <entity_id>}` where `<entity_id>` is the numeric
@@ -568,17 +569,17 @@ Demonstrate How Analysis using a concrete multi-record entity (3+ records) ident
    👉 **What would you like to do next? Reply with a number:**
 
    1. Continue to the next demonstration — Relationship Networks (exploring how entities connect to each other).
-   2. Proceed to module completion.
+   2. Wrap up: the export offer, your discoveries document, then module completion.
 
    *(Internal: end the turn on this question and wait.)* If the bootcamper chooses to exit,
    write `discover_phase: "skipped"` to `config/bootcamp_progress.json`, run step 4e (the export
-   offer) in `phase2b-discover.md`, and then return to `phase1-query-visualize.md` for the Query
-   Completeness Gate.
+   offer) in `phase2b-discover.md`, and then return to `phase1-query-visualize.md` →
+   "Data-discoveries deliverable", then its Query Completeness Gate.
 
    **Handling each answer (INV-284).**
 
    - **1, "Continue to the next demonstration":** step 4d, in `phase2b-discover.md`.
-   - **2, "Proceed to module completion":** the exit above.
+   - **2, "Wrap up":** the exit above.
 
 **Checkpoint:** write step 4c under `module_7_query.steps.4c`, using
 `{"status": "completed", "entity_demonstrated": <entity_id>}` where `<entity_id>` is the numeric

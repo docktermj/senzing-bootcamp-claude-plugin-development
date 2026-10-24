@@ -8,7 +8,8 @@ demonstrations.
 
 Load this file after completing steps 4a–4c in `phase2-discover.md`, or for step 4e alone from any
 Discover exit (the opt-in decline and the two early exits in `phase2-discover.md`). When complete,
-return to `phase1-query-visualize.md` for the Query Completeness Gate.
+return to `phase1-query-visualize.md` → "Data-discoveries deliverable", then its Query
+Completeness Gate.
 
 **No direct SQL and no fabricated methods (see SKILL.md):** `find_network` and `find_path` are
 SDK methods, not MCP tools. Generate the SDK code, sourcing flags and signatures from
@@ -400,8 +401,8 @@ supported systems.
 **Close: no transition question.** When every named system has been offered (or the single offer
 in item 2 was answered), ask no question about moving on. Both answers to one would take the same
 route, so a "yes" there would carry no decision (#488). In the same turn that settles the last
-offer, continue to Discover phase completion below, then to the Query Completeness Gate in
-`phase1-query-visualize.md`. End that turn on the next 👉 the flow already has, never on a new one
+offer, continue to Discover phase completion below, then to `phase1-query-visualize.md` →
+"Data-discoveries deliverable" and its Query Completeness Gate. End that turn on the next 👉 the flow already has, never on a new one
 (INV-251): the visualization server teardown question (`phase1-query-visualize.md` → "Visualization
 server teardown"), or, when no server was started, the graduation offer at the end of Module
 Completion. Each offer above still ends its own turn. This close is the same on every path: entered
@@ -456,8 +457,8 @@ The full checkpoint structure in `config/bootcamp_progress.json` is:
 }
 ```
 
-After updating the `discover_phase` status, return to `phase1-query-visualize.md` for the Query
-Completeness Gate.
+After updating the `discover_phase` status, return to `phase1-query-visualize.md` →
+"Data-discoveries deliverable", then its Query Completeness Gate.
 
 **Success:** Discover phase completed (or explicitly skipped), data patterns analyzed, why/how
 analysis demonstrated, relationship networks explored, and an export offered for each system named

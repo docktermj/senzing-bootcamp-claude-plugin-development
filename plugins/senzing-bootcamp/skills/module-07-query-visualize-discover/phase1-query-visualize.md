@@ -1279,7 +1279,8 @@ or exit early at any demonstration point.
 
 Steps 4a–4e each checkpoint individually to `config/bootcamp_progress.json`. Step 4e runs on every
 path, including a declined or shortened Discover phase, because it reads the loaded data rather
-than Discover's findings. After it, return here for the Query Completeness Gate.
+than Discover's findings. After it, return here for "Data-discoveries deliverable" below, then the
+Query Completeness Gate.
 
 ## Success criteria
 
@@ -1447,9 +1448,12 @@ Before wrapping up the module, confirm:
    - This item asks the Bootcamper nothing and adds no 👉 (INV-251). A section that still cannot be
      fixed is reported like the deliverable above (**Non-blocking**) and never blocks the gate or
      graduation.
-6. **Ready to proceed?** On a yes, continue to the Visualization server teardown below. Any
-   other answer returns to the Discover phase for what they asked, then presents this gate again:
-   a new state, not an INV-006 repeat (INV-284).
+6. **Route on in the same turn.** This item asks the Bootcamper nothing and adds no question of
+   its own (INV-251): once items 1-5 are settled, including item 5's repair, continue to
+   "Visualization server teardown" below, whose stop question ends the turn, or, when no server
+   was started, straight to module completion and its graduation offer. A Bootcamper who asks to
+   go back to a Discover step raised that request themselves: serve it, then run this gate again
+   (a new state, not an INV-006 repeat).
 
 ## Visualization server teardown (its own turn)
 
