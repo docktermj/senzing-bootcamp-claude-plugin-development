@@ -1685,7 +1685,10 @@ Ground rules (`ground-rules.md`, every turn):
 Module completion (`module-completion.md`, before the transition question):
 
 - Step 1, one write: add the name token to `modules_completed`, advance
-  `current_module`, null `current_step`, final `step_history`.
+  `current_module` to the next selected module unconditionally (it runs
+  before the transition question), null `current_step`, final
+  `step_history`, and in Modules 5, 6 and 7 an unset `directing_steps` entry
+  becomes `none`.
 - Step 2a: create `docs/bootcamp_recap.md`'s header if missing (name,
   started, programming language, path, plugin version).
 - Step 2b: append `## {Name} — {timestamp}` with H3 Information Shared,
@@ -10517,21 +10520,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8745 test methods in 458 files, matching `inventory.test_count_total`.
+There are 8756 test methods in 459 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8724.
+sum to 8756.
 
-Two files run more tests than they define, so discovery collects 8723:
+Two files run more tests than they define, so discovery collects 8763:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8716`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8756`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8723`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8763`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10785,6 +10788,7 @@ looks wrong.
 - `tests/test_module_0_suggested_queries_are_measured.py`: 18
 - `tests/test_module_5_describes_the_entity_specification_as_served.py`: 9
 - `tests/test_module_7_points_at_the_factory_lifetime_rule.py`: 9
+- `tests/test_module_completion_step1_lists_every_write.py`: 11
 - `tests/test_module_instructions_do_not_hardcode_the_port.py`: 6
 - `tests/test_module_selection_sync.py`: 9
 - `tests/test_negatives_report_labels_stale_markers.py`: 9
@@ -13934,6 +13938,14 @@ Senzing licensing, with no SPDX identifier.
   negative controls, and no invariant is added (INV-251, INV-356) (item 6
   still asked "Ready to proceed?" after step 4e's no-question close, and the
   exits skipped the deliverable)
+- #782: module completion's Step 1 sets `current_module` to the next module
+  in `selected_modules` unconditionally, as Modules 0, 3 and 3b do, and lists
+  `directing_steps`, set to `none` only when unset and only in Modules 5, 6
+  and 7; `tests/test_module_completion_step1_lists_every_write.py` guards
+  both with negative controls (Step 1 waited on a transition answer not yet
+  asked, so a finished module stayed current, and Step 2b recorded
+  `directing_steps` in a write Step 1 never listed; a new invariant is queued
+  for `/review-invariants`)
 - #783: graduation Step 7 is a reminder with no offer and no question: it
   names the feedback file's path, says it stays on this machine and that
   moving it is the Bootcamper's own action, and says MCP-server findings were
