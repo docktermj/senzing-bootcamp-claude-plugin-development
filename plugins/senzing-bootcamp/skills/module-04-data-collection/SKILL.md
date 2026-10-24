@@ -300,6 +300,44 @@ and `entity_type` from that source in `docs/business_problem.md`, treat its miss
 `scenario_record_count` as the `provenance: synthesized` branch below does, and say in one line
 that you rebuilt it. Only a missing entry is rebuilt; an existing one is never overwritten (INV-402).
 
+<a id="rebuilt-cord-entry"></a>**A rebuilt `cord` entry: re-derive `cord_dataset` and `cord_source`
+before the `provenance: cord` branch runs.** `docs/business_problem.md` records neither field, so
+the rebuild above cannot supply them, and the download below reads both. Only an entry this guard
+has just rebuilt with `provenance: cord` is re-derived; a rebuilt `synthesized` entry is unchanged.
+Neither call below retrieves records, so the real-data disclosure (INV-293) stays with the download
+that follows.
+
+1. Call `get_sample_data(dataset='list')` and take the datasets it names, leaving out `truthset`,
+   which cannot back a generated scenario (`../module-01-business-problem/phase1-discovery.md` →
+   "4b. CORD sourcing for the generated scenario (via MCP — NON-YIELDING)"). A `Denied.` reply to
+   it is [a denied reply](#cord-denied-reply), never an empty catalog, and takes the fallback below.
+2. For each remaining dataset, call `get_sample_data(dataset='<name>', source='list')` and read the
+   `name` of each of its `available_sources`. A `Denied.` reply to it is
+   [a denied reply](#cord-denied-reply), never a dataset with no sources, and takes the fallback
+   below.
+3. **The unique-dataset match:** choose the one dataset whose sources contain every `cord` source
+   this guard rebuilt for the scenario. Match each rebuilt `name` against a source `name` ignoring
+   case, with `-` and `_` treated as the same. Set `cord_dataset` to that dataset and `cord_source`
+   to the matched source `name`, exactly as the server spells them.
+
+**Fallback to Module 1 Step 4b, when the server names no one dataset.** It applies to each rebuilt
+`cord` source when no dataset matches (a `name` renamed for the scenario matches nothing), when
+more than one does (a source several datasets carry matches each of them on its own), when the
+server is still unreachable after one retry, and on a `Denied.` reply to either call above. That
+reply is [a denied reply](#cord-denied-reply) (INV-378), never read as "no match": do not retry it,
+and report it and give its remedy as that statement says, but here it takes this fallback in place
+of that statement's continuing down the recommendation hierarchy. Run
+`../module-01-business-problem/phase1-discovery.md` → "4b. CORD sourcing for the generated scenario
+(via MCP — NON-YIELDING)" for that source, as a statement that asks nothing and writes no Module 1
+checkpoint. Write what it decides into the entry by Module 1 Step 11's one statement of the write,
+`../module-01-business-problem/phase2-document-confirm.md` → "Registry write (generated
+scenario)": the dataset and source it chose, or, where its own outcomes back the source with
+synthetic data, the `synthesized` entry that write defines. Then resume this step at that source.
+A rebuilt `cord` source never reaches the download with `cord_dataset` or `cord_source` unset.
+
+**Say what was rebuilt.** The one line that says you rebuilt the entry also names the dataset and
+source you re-derived, or says that you are returning to Module 1 Step 4b to choose them.
+
 - **`provenance: cord`** → go straight to downloading that source, the entry's `cord_dataset` and
   `cord_source` ([Scenario source fields](#scenario-source-fields)), saying which source you are
   fetching and where it came from. A `Denied.` reply to the `get_sample_data` call for it is

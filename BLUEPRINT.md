@@ -2249,6 +2249,13 @@ receiving branch, which adds each finished step (`"2"`, `"3"`, `"8"`,
     `name`, `provenance` and `entity_type` rebuilt from
     `docs/business_problem.md` first, said in one line; an existing entry is
     never overwritten.
+  - A rebuilt `cord` entry (`#rebuilt-cord-entry`) gets `cord_dataset` and
+    `cord_source` from `get_sample_data(dataset='list')`, without `truthset`,
+    and each dataset's `source='list'`: the one dataset holding every rebuilt
+    `cord` source, names compared ignoring case and `-`/`_`. No match,
+    several, an unreachable server or a `Denied.` reply (linked to
+    `#cord-denied-reply`) return the source to Module 1 Step 4b, whose
+    decision Step 11's write records before Step 2 resumes.
   - `cord` sources are fetched from the entry's `cord_dataset` and
     `cord_source`.
   - `synthesized` sources are generated from the recorded scenario: the
@@ -10508,21 +10515,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8680 test methods in 457 files, matching `inventory.test_count_total`.
+There are 8688 test methods in 457 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8680.
+sum to 8688.
 
-Two files run more tests than they define, so discovery collects 8679:
+Two files run more tests than they define, so discovery collects 8687:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8672`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8680`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8679`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8687`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10752,7 +10759,7 @@ looks wrong.
 - `tests/test_module06_phase_ordering.py`: 15
 - `tests/test_module07_step2_rules_beside_action.py`: 4
 - `tests/test_module07_why_flags.py`: 20
-- `tests/test_module1_registry_write_is_checked.py`: 12
+- `tests/test_module1_registry_write_is_checked.py`: 20
 - `tests/test_module3_check_lists_agree.py`: 24
 - `tests/test_module3_failed_run_ends_on_a_question.py`: 25
 - `tests/test_module4_6_7_steps_act_on_real_files.py`: 22
@@ -13976,6 +13983,17 @@ Senzing licensing, with no SPDX identifier.
   derives its files from Step 2's `src/**` rows (Module 5's transform was
   unguarded and Module 4's programs had no route); INV-370 and INV-401
   amendments are queued for `/review-invariants`
+- #795: Module 4 Step 2 re-derives a rebuilt `cord` entry's `cord_dataset`
+  and `cord_source` from `get_sample_data`'s dataset and source lists by the
+  one dataset holding every rebuilt `cord` source, and on no match, several,
+  an unreachable server or a `Denied.` reply (linked to
+  `#cord-denied-reply`, taking this fallback instead of the next recommended
+  path) returns the source to Module 1 Step 4b and Step 11's write before
+  resuming (the rebuild supplied three fields, and the `cord` branch
+  downloads by two that `docs/business_problem.md` never records);
+  `tests/test_module1_registry_write_is_checked.py` pins each clause with a
+  negative control, and an INV-402 amendment is queued for
+  `/review-invariants`
 - #803: Module 7's step 3c and teardown "Yes" link the failed-stop rule
   (`#failed-stop`, INV-394, INV-300) and, on a port still answering, say the
   stop is unverified and the server still running, never that it stopped,
