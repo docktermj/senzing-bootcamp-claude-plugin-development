@@ -161,8 +161,8 @@ with a smaller slice, and downsizing is only ever one option among several, neve
 forward.
 
 - **Keep the full dataset and expand:** the single Senzing License Key gate (Step 8a below)
-  handles this — apply an existing license, request one through the external channel, or (when
-  available) request one in-flow via the Senzing MCP server (INV-093). The tool-availability
+  handles this — apply an existing license, request one through the external channel (its
+  sub-step 6), or (when available) request one in-flow via the Senzing MCP server (INV-093). The tool-availability
   checks, branching, and setup mechanics all live in Step 8a; do not duplicate that logic here.
 - **Work with a smaller slice (optional):** sampling, a CORD subset, or a smaller substitute
   dataset — but **not a random slice** when more than one source is involved. See the sampling

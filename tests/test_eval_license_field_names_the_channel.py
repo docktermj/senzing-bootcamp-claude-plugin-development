@@ -46,8 +46,23 @@ observes that. It also establishes nothing about the server: that `eval_license`
 runtime fact, re-verified against the live server when this change was made and recorded in
 `specs/IMPLEMENTED.md`, never asserted offline (INV-108).
 
-Source issue: #679. Invariants: INV-006, INV-056, INV-080, INV-108, INV-125, INV-135, INV-213,
-INV-265, INV-291, INV-300, INV-321, INV-346, INV-403.
+**Every other license route points here (#789).** Module 6 Phase A still wrote a support address
+into its expansion paths, and Module 2's license note named "the MCP server or Senzing support",
+while the server's route field names neither. `EveryLicenseRouteReachesSubStep6` scans every
+paragraph and list item under `plugins/senzing-bootcamp/skills/` that offers a way to obtain or
+request a license: each names no email address or URL as the channel, and each points at this
+sub-step — by `../module-04-data-collection/SKILL.md` → "Obtain a Senzing License Key", citing
+INV-403 and INV-300, from outside Module 4, or by "sub-step 6" inside it — unless it sits in Step
+8a itself (the gate, sub-step 6, and sub-step 6a's in-flow request), is the in-flow
+`submit_feedback(category='license_request')` route alone, or is on `EXEMPT` with its reason.
+The Step 8a exemption covers the pointer only; the channel check runs there too.
+`ground-rules.md`'s MCP-failure fallback and `feedback.md`'s reply path name the support address
+for other purposes and are asserted not to be route units. Negative controls restore Phase A's
+address, drop each pointer, restore Module 2's own channel and add a new route paragraph that
+names one; `ReWrapping` re-runs the scan one word per line (INV-346).
+
+Source issues: #679, #789. Invariants: INV-006, INV-056, INV-080, INV-108, INV-125, INV-135,
+INV-213, INV-265, INV-291, INV-300, INV-321, INV-346, INV-403.
 
 INV-403 (a structured field that answers the step's question is named and read before the results
 list, with an explicit absent-field fallback) names this file as its enforcer. It asserts that the
@@ -59,6 +74,8 @@ Run:  python3 -m unittest discover -s tests
 import re
 import unittest
 from pathlib import Path
+
+import _corpus
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
@@ -220,20 +237,31 @@ def run(name, text):
     return CHECKS[name](text)
 
 
+#: A line's lead: indentation and blockquote markers, then an optional list marker (#789).
+LEAD = re.compile(r"^(\s*(?:>\s?)*)((?:[-*+]|\d+[.)])\s+)?")
+
+
 def rewrap(text):
-    """One word per line for every prose line; headings, tables and fences are kept."""
+    """One word per line for every prose line; headings, tables and fences are kept.
+
+    A blockquote's `>` and a list item's marker stay with the first word, and every continuation
+    line keeps the `>` (#789): split off on its own line, a `>` reads as a blank quote line and a
+    bare `-` as no list item, which would merge or split the paragraphs the route scan reads.
+    """
     out = []
     fenced = False
     for line in text.split("\n"):
         stripped = line.lstrip()
         if stripped.startswith("```"):
             fenced = not fenced
-        if fenced or stripped.startswith(("#", "|", "<a ", "```")) or not stripped:
+        match = LEAD.match(line)
+        lead, rest = match.group(1), line[match.end():]
+        if (fenced or stripped.startswith(("#", "|", "<a ", "```")) or not rest.strip()
+                or rest.lstrip().startswith(("#", "|", "<a "))):
             out.append(line)
             continue
-        indent = line[:len(line) - len(stripped)]
-        words = stripped.split(" ")
-        out.append(("\n" + indent).join([indent + words[0]] + words[1:]))
+        words = rest.split()
+        out.append(("\n" + lead).join([line[:match.end()] + words[0]] + words[1:]))
     return "\n".join(out)
 
 
@@ -377,6 +405,277 @@ class ReWrapping(unittest.TestCase):
         for name in CHECKS:
             with self.subTest(check=name):
                 self.assertEqual([], run(name, self.text))
+
+    def test_the_route_scan_is_unchanged_on_rewrapped_text(self):
+        """INV-346: one word per line finds the same route units and the same (empty) problems."""
+        for path, text in skill_texts().items():
+            wrapped = rewrap(text)
+            with self.subTest(path=str(path.relative_to(REPO_ROOT))):
+                self.assertEqual(len(route_units(path, text)), len(route_units(path, wrapped)))
+                self.assertEqual([], route_problems(path, wrapped))
+
+
+# ------------------------------------------------------ every license-route paragraph (#789)
+#
+# #679 fixed sub-step 6, the one step that reads the channel from the server. Module 6 Phase A
+# kept its own copy of the channel — a support address written into the file — and Module 2's
+# license note named "the MCP server or Senzing support". Live, 2026-10-22 and 2026-10-23 (server
+# 1.39.1), the server's route field names neither. So every paragraph under `skills/` that offers
+# a way to obtain or request a license is found by scanning, and each one:
+#
+# * names no email address or URL as the channel (the channel is a Senzing fact sourced at runtime,
+#   INV-080, and sub-step 6 is where it is read, INV-403);
+# * points at Module 4 Step 8a sub-step 6 (INV-300) — unless it sits in Step 8a itself (the gate
+#   whose option 3 leads to sub-step 6, sub-step 6, and sub-step 6a's in-flow request), or it is
+#   the in-flow `submit_feedback(category='license_request')` route alone, or it is on `EXEMPT`.
+#
+# ⚠️ Out of scope by the issue, and checked below rather than assumed: `ground-rules.md`'s
+# MCP-failure fallback and `feedback.md`'s reply path both name `support@senzing.com`, and neither
+# offers a license, so neither is a route unit.
+
+#: Words that make a paragraph offer a way to obtain or request a license.
+ROUTE = re.compile(
+    r"\b(?:request|obtain)\w*\s+(?:[\w'()-]+\s+){0,6}?licen[cs]e"
+    r"|\blicen[cs]e\s+(?:key\s+)?request|license_request"
+    r"|\b(?:request|obtain)\w*\s+one\b|\bexternal channel\b", re.I)
+
+#: A route unit must mention a license at all; "request one" alone is about anything.
+LICENSE = re.compile(r"licen[cs]e", re.I)
+
+#: An email address or a URL written into the file as the channel.
+CHANNEL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]*\w|https?://|\b[\w-]+\.senzing\.com\b", re.I)
+
+#: The pointer a file outside Module 4 writes (INV-300), as `flat()` renders it.
+POINTER = '../module-04-data-collection/SKILL.md → "Obtain a Senzing License Key"'
+
+#: Inside Module 4, the pointer is the sub-step's number (never 6a, which is the in-flow route).
+LOCAL_POINTER = re.compile(r"\bsub-step 6(?![a-z0-9.])", re.I)
+
+#: The in-flow route names its tool category; it offers no external channel of its own.
+IN_FLOW = re.compile(r"license_request|\bin-flow\b|sub-step 6a|8a\.6a", re.I)
+EXTERNAL = re.compile(r"external channel|another way|elsewhere|\bsupport\b", re.I)
+
+STEP_8A = ("### 8a. Senzing License Key gate", "### 8b.")
+
+#: (file under skills/, a phrase from the unit, why it is not a license route to point).
+EXEMPT = (
+    ("bootcamp-onboarding/ground-rules.md",
+     "Recorded because it happened at the worst possible place (2026-08-25)",
+     "an incident record quoting the option a bootcamper chose; it offers no route"),
+    ("graduation/SKILL.md",
+     "obtain a production license",
+     "a production license in the graduation report's next steps; sub-step 6 serves the "
+     "evaluation channel, and it says the eval and production channels differ"),
+)
+
+ITEM = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+\S")
+HEADING = re.compile(r"#{1,6}\s")
+
+
+def skill_texts():
+    return {p: p.read_text(encoding="utf-8")
+            for p in _corpus.corpus_files("plugins/senzing-bootcamp/skills", suffixes={".md"})}
+
+
+def units(text):
+    """(first line, text) of each paragraph or list item, blockquote markers dropped."""
+    out, current, first, fenced = [], [], 0, False
+    for number, line in enumerate(text.split("\n"), 1):
+        body = re.sub(r"^\s*>\s?", "", line) if line.lstrip().startswith(">") else line
+        stripped = body.strip()
+        if stripped.startswith(("```", "~~~")):
+            fenced = not fenced
+        breaks = not stripped or (not fenced and (ITEM.match(body) or HEADING.match(stripped)))
+        if breaks and current:
+            out.append((first, " ".join(current)))
+            current = []
+        if not stripped:
+            continue
+        if not current:
+            first = number
+        current.append(stripped)
+    if current:
+        out.append((first, " ".join(current)))
+    return out
+
+
+def step_8a_lines(path, text):
+    """The line range of Module 4's Step 8a, or None for any other file."""
+    if path.resolve() != MODULE_4.resolve():
+        return None
+    lines = text.split("\n")
+    start = next((i for i, l in enumerate(lines, 1) if l.startswith(STEP_8A[0])), None)
+    end = next((i for i, l in enumerate(lines, 1) if l.startswith(STEP_8A[1])), None)
+    return (start, end) if start and end else None
+
+
+def route_units(path, text):
+    """Every unit that offers a way to obtain or request a license, found by scanning."""
+    found = []
+    for first, unit in units(text):
+        body = flat(unit)
+        if LICENSE.search(body) and ROUTE.search(body):
+            found.append((first, body))
+    return found
+
+
+def exempt(path, body):
+    rel = path.relative_to(SKILLS).as_posix()
+    return any(rel == f and flat(phrase) in body for f, phrase, _ in EXEMPT)
+
+
+def route_problems(path, text):
+    """Each route unit that names a channel, or reaches the channel without the pointer."""
+    rel = path.relative_to(REPO_ROOT).as_posix()
+    owner = step_8a_lines(path, text)
+    problems = []
+    for first, body in route_units(path, text):
+        where = "%s:%d" % (rel, first)
+        named = CHANNEL.search(body)
+        if named:
+            problems.append("%s names %r as a license request channel" % (where, named.group()))
+        if owner and owner[0] <= first < owner[1]:
+            continue  # Step 8a is the gate, sub-step 6 itself and the in-flow request (6a)
+        if IN_FLOW.search(body) and not EXTERNAL.search(body):
+            continue  # the in-flow submit_feedback(category='license_request') route alone
+        if exempt(path, body):
+            continue
+        if path.resolve() == MODULE_4.resolve():
+            if not LOCAL_POINTER.search(body):
+                problems.append("%s offers a license route without pointing at sub-step 6" % where)
+        elif flat(POINTER) not in body:
+            problems.append("%s offers a license route without the pointer %s" % (where, POINTER))
+        elif not ("INV-403" in body and "INV-300" in body):
+            problems.append("%s points at sub-step 6 without citing INV-403 and INV-300" % where)
+    return problems
+
+
+def all_route_problems(texts):
+    return [p for path, text in sorted(texts.items()) for p in route_problems(path, text)]
+
+
+PHASE_A = SKILLS / "module-06-data-processing" / "phaseA-build-loading.md"
+MODULE_2 = SKILLS / "module-02-sdk-setup" / "SKILL.md"
+GROUND_RULES = SKILLS / "bootcamp-onboarding" / "ground-rules.md"
+FEEDBACK = SKILLS / "bootcamp-onboarding" / "feedback.md"
+
+
+class EveryLicenseRouteReachesSubStep6(unittest.TestCase):
+    """#789: no shipped license-route paragraph names a channel; each points at sub-step 6."""
+
+    def setUp(self):
+        self.texts = skill_texts()
+
+    def units_of(self, path):
+        return route_units(path, self.texts[path])
+
+    def test_the_scan_is_not_vacuous(self):
+        """⛔ INV-265: the scan finds the sites the issue names, so a pass is not a missed scan."""
+        self.assertTrue(self.units_of(PHASE_A), "Phase A's expansion paths are not a route unit")
+        self.assertTrue(any("Where the License Key is handled now" in body
+                            for _, body in self.units_of(MODULE_2)),
+                        "Module 2's license note is not a route unit")
+        self.assertTrue(any("Obtain a Senzing License Key" in body
+                            for _, body in self.units_of(MODULE_4)),
+                        "Module 4's sub-step 6 is not a route unit")
+        self.assertGreaterEqual(sum(len(route_units(p, t)) for p, t in self.texts.items()), 8)
+
+    def test_no_route_names_a_channel_and_each_points_at_sub_step_6(self):
+        self.assertEqual([], all_route_problems(self.texts))
+
+    def test_phase_a_and_module_2_carry_the_cited_pointer(self):
+        for path in (PHASE_A, MODULE_2):
+            with self.subTest(path=path.name):
+                cited = [body for _, body in self.units_of(path)
+                         if flat(POINTER) in body and "INV-403" in body and "INV-300" in body]
+                self.assertTrue(cited, "%s has no cited pointer to sub-step 6" % path.name)
+
+    def test_phase_a_keeps_its_other_paths_in_order(self):
+        """The other expansion paths and their order are unchanged (#789's scope)."""
+        body = flat(self.texts[PHASE_A])
+        order = [body.find(flat(p)) for p in (
+            "apply an existing license", "request one through the external channel",
+            "request one in-flow via the Senzing MCP server", "before any mention of downsizing")]
+        self.assertNotIn(-1, order, order)
+        self.assertEqual(sorted(order), order)
+
+    def test_the_two_non_license_addresses_are_not_flagged(self):
+        """`ground-rules.md`'s MCP-failure fallback and `feedback.md`'s reply path stay."""
+        for path in (GROUND_RULES, FEEDBACK):
+            with self.subTest(path=path.name):
+                self.assertIn("support@senzing.com", self.texts[path],
+                              "the address moved; this check would pass vacuously")
+                self.assertEqual([], [b for _, b in self.units_of(path)
+                                      if "support@senzing.com" in b])
+                self.assertEqual([], route_problems(path, self.texts[path]))
+
+    def test_each_exemption_still_matches_a_route_unit(self):
+        """A stale exemption hides nothing and should be deleted."""
+        for rel, phrase, _ in EXEMPT:
+            path = SKILLS / rel
+            with self.subTest(path=rel):
+                self.assertTrue(any(flat(phrase) in body for _, body in self.units_of(path)),
+                                "exemption %r no longer matches a route unit" % phrase)
+
+
+class TheRouteScanSeesWhatItWasWrittenFor(unittest.TestCase):
+    """Negative controls: the same scan, on copies mutated toward what #789 removed."""
+
+    def setUp(self):
+        self.texts = skill_texts()
+
+    def mutated(self, path, old, new):
+        text = self.texts[path]
+        self.assertIn(old, text, "negative control is stale: %r is gone" % old[:60])
+        return {**self.texts, path: text.replace(old, new, 1)}
+
+    def test_restoring_the_address_in_phase_a_is_reported(self):
+        texts = self.mutated(PHASE_A, "request one through the external channel, and",
+                             "request one through the external channel\n  "
+                             "(<support@senzing.com>), and")
+        problems = all_route_problems(texts)
+        self.assertTrue(any("support@senzing.com" in p and "phaseA" in p for p in problems),
+                        problems)
+
+    def test_dropping_phase_a_s_pointer_is_reported(self):
+        texts = self.mutated(PHASE_A, '`../module-04-data-collection/SKILL.md` → "Obtain a '
+                             'Senzing\n  License Key"', "Module 4")
+        self.assertTrue(any("phaseA" in p for p in all_route_problems(texts)))
+
+    def test_dropping_phase_a_s_citations_is_reported(self):
+        texts = self.mutated(PHASE_A, "(INV-403, INV-300)", "")
+        self.assertTrue(any("without citing" in p for p in all_route_problems(texts)))
+
+    def test_restoring_module_2_s_own_channel_is_reported(self):
+        text = self.texts[MODULE_2]
+        start = text.index("The request channel is the one")
+        end = text.index("names no channel of its own.", start) + len("names no channel of its own.")
+        texts = {**self.texts, MODULE_2: text[:start] + text[end:]}
+        texts[MODULE_2] = texts[MODULE_2].replace(
+            "requesting\n> an evaluation license (sub-step 6))",
+            "requesting\n> an evaluation license via the MCP server or Senzing support)", 1)
+        self.assertNotEqual(texts[MODULE_2], self.texts[MODULE_2])
+        self.assertTrue(any("module-02" in p for p in all_route_problems(texts)))
+
+    def test_a_new_route_paragraph_naming_a_channel_is_reported(self):
+        texts = {**self.texts, PHASE_A: self.texts[PHASE_A] + (
+            "\n\nTo obtain an evaluation license, email <licensing@example.com> or visit "
+            "<https://example.com/license>.\n")}
+        problems = all_route_problems(texts)
+        self.assertTrue(any("licensing@example.com" in p for p in problems), problems)
+        self.assertTrue(any("without the pointer" in p for p in problems), problems)
+
+    def test_a_channel_inside_step_8a_is_still_reported(self):
+        """The Step 8a exemption covers the pointer, never the channel check."""
+        texts = self.mutated(MODULE_4, "together with its `url`",
+                             "together with its `url` (or <support@senzing.com>)")
+        self.assertTrue(any("module-04" in p and "support@senzing.com" in p
+                            for p in all_route_problems(texts)))
+
+    def test_dropping_module_4_s_local_pointer_is_reported(self):
+        texts = self.mutated(MODULE_4, "external channel (its\n  sub-step 6)", "external channel")
+        self.assertTrue(any("without pointing at sub-step 6" in p
+                            for p in all_route_problems(texts)))
 
 
 if __name__ == "__main__":

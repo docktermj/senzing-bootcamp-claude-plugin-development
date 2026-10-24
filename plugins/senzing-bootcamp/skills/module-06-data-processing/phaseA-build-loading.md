@@ -146,10 +146,14 @@ licensing as a default the bootcamper already has, never as a hard cap:
   state: a value measured on this machine outranks generic guidance about that value).
 - **When the limit does bind:** frame the built-in evaluation license as the default they already
   have. Present the expansion
-  paths — apply an existing license, request one through the external channel
-  (<support@senzing.com>), and, when available, request one in-flow via the Senzing MCP server —
-  before any mention of downsizing. Downsizing (sampling or a smaller subset) is one option
-  among these, not the only path.
+  paths — apply an existing license, request one through the external channel, and, when
+  available, request one in-flow via the Senzing MCP server — before any mention of downsizing.
+  Downsizing (sampling or a smaller subset) is one option among these, not the only path.
+  **The external channel is the one `../module-04-data-collection/SKILL.md` → "Obtain a Senzing
+  License Key" (Step 8a sub-step 6) obtains from the Senzing MCP server at runtime, with that
+  step's fallback when the response carries no route field (INV-403, INV-300).** Follow that step
+  for it and do not restate it: name no address or URL of your own, and never call the route
+  unavailable because the field was missing (INV-125).
 - Source the record capacity and validity period from a Senzing MCP tool — **from the server,
   not from this file** (a sourcing floor) — and present exactly what it returns. If a value is unavailable or the MCP server can't be reached,
   omit the figure and say it is currently unavailable, never substitute a remembered figure.
