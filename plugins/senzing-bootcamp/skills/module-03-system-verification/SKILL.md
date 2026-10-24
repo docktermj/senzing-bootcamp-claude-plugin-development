@@ -79,7 +79,7 @@ When the bootcamper hits an error during this module:
 
 1. **SENZ error code** (message contains `SENZ` + digits, e.g. `SENZ2027`): call
    `explain_error_code(error_code="<code>", version="current")` and include the explanation in
-   the Fix_Instruction.
+   the Fix_Instruction. If it returns nothing, continue to step 2.
 2. **Known pitfalls** (database lock contention, missing language
    toolchains, MCP proxy connectivity): the full `common-pitfalls` reference is a later porting
    phase; for now use `search_docs` to look up the symptom.

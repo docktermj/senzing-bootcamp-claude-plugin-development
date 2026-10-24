@@ -253,8 +253,8 @@ Once the Truth Set is loaded, continue to Step 2 below to visualize it.
 
 The Truth Set visualization is delivered by a web server **written in the Bootcamper's chosen
 programming language** (`programming_language` in `config/bootcamp_preferences.yaml`) — like every
-other deliverable in this bootcamp. The shipped `scripts/senzing_viz_server.py` is the **reference
-model** for what to build, and `visualization-api-reference.md` (this skill directory) is the
+other deliverable in this bootcamp. The shipped `senzing_viz_server.py` (resolved at 2.1 below) is
+the **reference model** for what to build, and `visualization-api-reference.md` (this skill directory) is the
 authoritative API/response contract to implement. `senzing_viz_server.py` is **run directly only
 when the chosen language is Python**; for any other language it is a model to read, never run.
 

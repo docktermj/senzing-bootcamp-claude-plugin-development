@@ -134,7 +134,7 @@ class TheOfferHandlingIsAPointer(unittest.TestCase):
         text = read(MODULE_7_P1)
         mutant = text.replace(
             "Handle the reply as",
-            "- **Affirmative:** invoke the `graduation` skill (GRADUATION banner).\n\nHandle the "
+            "- **Affirmative:** invoke the `graduation` skill (BOOTCAMP GRADUATION banner).\n\nHandle the "
             "reply as", 1)
         self.assertNotEqual(text, mutant, "the mutation no longer applies")
         self.assertEqual(1, len(offer_problems(mutant)), offer_problems(mutant))

@@ -30,9 +30,9 @@ before any module work. (The module-start apparatus block is specified in `phase
 **Language:** Read `programming_language` from `config/bootcamp_preferences.yaml` (persisted in
 Bootcamp preparation) at each code-generation step (data-source registration, loader, **and the
 visualization server itself**). Never fall back to a hardcoded language. The visualization server is
-built in the chosen language, modeled on the shipped reference `scripts/senzing_viz_server.py`; that
-Python reference is run directly **only** when the chosen language is Python (Step 2 in
-`phase1-visualization.md`).
+built in the chosen language, modeled on the shipped reference `senzing_viz_server.py` (resolved at
+`phase1-visualization.md` → "2.1 Choose the path"); that Python reference is run directly **only**
+when the chosen language is Python.
 
 ## Execution requirement (internal directive)
 
@@ -62,7 +62,7 @@ When the bootcamper hits an error during this module:
 
 1. **SENZ error code** (message contains `SENZ` + digits, e.g. `SENZ2027`): call
    `explain_error_code(error_code="<code>", version="current")` and include the explanation in the
-   fix guidance.
+   fix guidance. If it returns nothing, continue to step 2.
 2. **Known pitfalls** (port conflicts on 8080, database lock contention, MCP proxy connectivity):
    use `search_docs` to look up the symptom.
 3. **Timeouts:** Truth Set acquisition 30s, SDK/load per `phase1-visualization.md`, web service 10s
@@ -112,7 +112,8 @@ Truth Set" states (INV-300).
 - Kiro process control (`controlBashProcess`) maps here to running the web service as a background
   process and stopping it later at this module's close.
 - **Visualization (Step 2) is built in the Bootcamper's chosen programming language,** modeled on the
-  shipped reference `scripts/senzing_viz_server.py` and the `visualization-api-reference.md` contract;
+  shipped reference `senzing_viz_server.py` (resolved at `phase1-visualization.md` → "2.1 Choose the
+  path") and the `visualization-api-reference.md` contract;
   the Python reference is run directly only when the chosen language is Python. The visualization is
   guaranteed by the snapshot-first build and the completion gate (INV-077), not by a bundled runtime.
   This supersedes the Kiro `generate_standalone_demo.py` / `write_html.py` / builder-module approach.
@@ -122,8 +123,8 @@ Truth Set" states (INV-300).
 - **Phase 1: Visualization** (Steps 1–2), including the module-start apparatus:
   `phase1-visualization.md`. Acquires and loads the Truth Set itself, then builds and runs the
   interactive web app **in the chosen programming language** (modeled on the shipped
-  `scripts/senzing_viz_server.py`; run directly only for Python) plus the guaranteed standalone
-  snapshot.
+  `senzing_viz_server.py`, resolved at Step 2.1; run directly only for Python) plus the guaranteed
+  standalone snapshot.
 - **Phase 2: Report and Close** (self-check + cleanup + module completion): `phase2-close.md`.
 - **Visualization API reference** (loaded on demand from Phase 1): `visualization-api-reference.md`
 

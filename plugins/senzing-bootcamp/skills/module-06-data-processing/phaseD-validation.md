@@ -71,7 +71,8 @@ Review the entity resolution results:
 - Look for false positives, are unrelated records being incorrectly merged?
 - Look for false negatives, are records that should match resolving to separate entities?
 - If match accuracy is poor, say so and carry it into the
-  [iterate-vs-proceed gate](#iterate-vs-proceed-decision-gate) below. Its "Iterate now" takes the
+  [iterate-vs-proceed gate](#iterate-vs-proceed-decision-gate) below. The accuracy judged here is
+  the [per-record match accuracy](#per-record-match-accuracy) step 22 computes on this sample. Its "Iterate now" takes the
   sources through [the quality-iteration route](../module-07-query-visualize-discover/phase1-query-visualize.md#the-quality-iteration-route)
   and back to this phase; nothing is remapped before the gate is asked
 
@@ -174,15 +175,20 @@ cross-source visualization, to avoid a duplicate/misplaced offer.
 ## 24. Validate cross-source results quality
 
 Use `reporting_guide(topic='evaluation', language='<chosen_language>', version='current')` for the 4-point ER evaluation
-framework and `reporting_guide(topic='quality', language='<chosen_language>', version='current')` for precision/recall
-metrics.
+framework.
 
-Validate: match accuracy (query known records with the program `review_entities` in `src/query`
+Validate: match accuracy, which is the [per-record match accuracy](#per-record-match-accuracy)
+step 22 defines, with the records reviewed here joining its sample (query known records with the program `review_entities` in `src/query`
 from step 21, SDK method `get_entity_by_record_id`, run with its run command in
 `../bootcamp-onboarding/ground-rules.md` → "Building and running a program"), false positives (incorrect merges), false negatives (missed
 matches), data completeness. If accuracy is poor, say so and carry it into the
 [iterate-vs-proceed gate](#iterate-vs-proceed-decision-gate), whose "Iterate now" enters
 [the quality-iteration route](../module-07-query-visualize-discover/phase1-query-visualize.md#the-quality-iteration-route).
+
+Pairwise precision and recall, from
+`reporting_guide(topic='quality', language='<chosen_language>', version='current')`, are supporting
+reading only: when a ground truth exists, report them beside that figure as step 22's INV-400 rule
+says. They are never the accuracy this step validates.
 
 **Checkpoint:** write step 24.
 

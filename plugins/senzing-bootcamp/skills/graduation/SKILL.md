@@ -166,7 +166,7 @@ Gather context before any step. Do this silently.
      absent `database_type` means SDK setup Step 7 did not record the choice — a **plugin defect**,
      not a bootcamper outcome — so note it internally so it surfaces in the Step 0 retrospective,
      exactly as Data collection does for the same key
-     (`../module-04-data-collection/SKILL.md` → the SQLite volume warning), and carry on with the
+     (`../module-04-data-collection/SKILL.md` → "8b. SQLite load-time warning"), and carry on with the
      value indeterminate. `integration_targets` and `deployment_target` are the exception: absent is
      **normal** and silent (see 1a).
 
@@ -333,7 +333,7 @@ Read `docs/bootcamp_recap.md` first, and the checkpoint narrative Step 1a folds 
 holds content, so nothing recorded is missed. Build two lists:
 
 - **Decisions you made:** from each module's **Questions & Responses** (the record
-  `../bootcamp-onboarding/module-completion.md` Step 2a writes). One line per answer that **chose
+  `../bootcamp-onboarding/module-completion.md` Step 2b writes). One line per answer that **chose
   something**: a menu choice, such as the record-volume range for the loading program, or an open
   answer that set a direction, such as the business problem or which sources to load. Prefix each
   line with the module's name.
@@ -414,8 +414,12 @@ all, reconstruct it from `config/bootcamp_progress.json` and the files each modu
 `**Files produced:**`, `**Why it matters:**` (INV-103; the "Bootcamper's takeaway" line stays
 optional). Check each section and add any that is absent, drawn from that module's own recorded
 content: **Actions Taken** and the section's own prose say what was accomplished, the paths it names
-(plus the files the module actually produced) give **Files produced**, and the module's purpose in
-`../bootcamp-onboarding/onboarding-flow.md` gives **Why it matters**. Where the summary is already
+(plus the files the module actually produced) give **Files produced**, and the module's own
+**Before/After** line gives **Why it matters**, taken from its own `SKILL.md` (for example
+`../module-04-data-collection/SKILL.md`), or, for Truth Set visualization, the one at its module
+start in `../module-03b-truthset-visualization/phase1-visualization.md`. Entity Resolution Concepts
+has no Before/After line, so its **Why it matters** comes from what the primer covered, as
+`../bootcamp-onboarding/module-completion.md` Step 2c composes it. Where the summary is already
 there as an unlabeled paragraph, keep the paragraph and add the labeled blocks — adding the labels a
 subsection was always required to carry is not a prose rewrite (INV-085), and the run this was
 found in had summaries whose three blocks were simply absent.
@@ -807,7 +811,7 @@ The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 - **Image paths in the recap are relative to `docs/bootcamp_recap.md`, and the generator resolves them that way.** Write them exactly as Step 1a says — `![alt](visualizations/<file>.png)` — which is what a Markdown reader of the recap needs, and what the PDF now needs too. Do **not** "fix" a path to `docs/visualizations/...` to suit the PDF: that breaks the Markdown recap (it resolves to `docs/docs/...`) and is no longer necessary. Equally, do not `cd docs` before rendering to make images appear; if images are missing, the path or the file is wrong, not the working directory.
 - **`WARNING: … some sections are incomplete` with exit 0** means the recap was recognizable but a section is missing a subsection. The PDF was still written and is still valid — backfill per 1a and re-render if you can, but this never blocks graduation.
 - **`ERROR: refusing to render …` with a non-zero exit means NO PDF was written.** The generator refuses when the input is not a bootcamp recap (no `## {Module name}` sections, or no section carrying its `### ` subsections) or when most of the content would be dropped — because an empty-looking-but-valid PDF is worse than none. Do **not** announce a PDF. Say plainly that the recap PDF could not be generated and why, then fix the cause: confirm `docs/bootcamp_recap.md` really is the recap (not some other Markdown file) and that its sections carry the four subsections, then re-render. If it cannot be fixed, fall back to the inline render below — never leave graduation with the bootcamper believing a PDF exists when it does not.
-- **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections, that every **End-of-Module Summary** carries its three labeled blocks (What you accomplished / Files produced / Why it matters — backfill per 1a if it reports any missing), flags any `![](…)` image target that resolves to no file (reported as `embedded image not found: …`, so a lost screenshot surfaces here rather than in the finished PDF), **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain commas (e.g. "Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation" — the latter contains two). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
+- **Content check (required after every render, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections, that every **End-of-Module Summary** carries its three labeled blocks (What you accomplished / Files produced / Why it matters — backfill per 1a if it reports any missing), flags any `![](…)` image target that resolves to no file (reported as `embedded image not found: …`, so a lost screenshot surfaces here rather than in the finished PDF), **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain commas (e.g. "Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation" — the latter contains two). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
 
   ⚠️ **This is no longer the first time `--check` runs, and its findings should normally be empty.**
   `../bootcamp-onboarding/module-completion.md` Step 2c runs the same check after every module's
@@ -932,8 +936,8 @@ genuinely tool-gated check; its absence is the thing to announce.
 
 The recap PDF now exists, so the video can reuse its certificate's name and date. The video is
 optional. It is built from the B-roll each module saved (`../bootcamp-onboarding/module-completion.md`
-Step 2e) and rendered by the bundled renderer, `scripts/generate_recap_video.py`, which writes
-`docs/bootcamp_recap.mp4`.
+Step 2e) and rendered by the bundled renderer, `generate_recap_video.py` (resolved under **Render it**
+below), which writes `docs/bootcamp_recap.mp4`.
 
 ⛔ **(INV-340) The video never blocks graduation.** Every failure below, whether a declined install, a
 failed install, an invalid storyboard or a failed render, skips the video with a one-line message
@@ -1883,7 +1887,7 @@ Then stop and wait. This is the single closing question for the whole bootcamp.
    - **Wants to keep exploring** (asks a question, names a topic, or otherwise continues): help them, then offer the closing question again when they are ready. Do **not** show the terminal banner yet — it must never pre-empt continued exploration.
    - **Declines** ("no", "I'm done", "that's all", "nothing else"): the bootcamp is complete. Do these two things, in order:
      1. **Stand down the Stop-hook nudge, silently.** Set a top-level `bootcamp_complete: true` key in `config/bootcamp_preferences.yaml` (a single minimal edit; do not narrate it). The `Stop` hook (`../../scripts/stop-nudge.py`) reads this key and will not nudge for a closing 👉 question once the bootcamp is over — so the terminal banner, which ends the turn with no 👉, is not re-opened.
-     2. **Render the terminal banner, verbatim, exactly once** as the final output. It bookends the WELCOME banner that opened the bootcamp (start) and the GRADUATION banner (finish) with a clear end-of-bootcamp marker. No 👉 question follows it; the turn simply ends.
+     2. **Render the terminal banner, verbatim, exactly once** as the final output. It bookends the WELCOME banner that opened the bootcamp (start) and the BOOTCAMP GRADUATION banner (finish) with a clear end-of-bootcamp marker. No 👉 question follows it; the turn simply ends.
 
      ```text
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

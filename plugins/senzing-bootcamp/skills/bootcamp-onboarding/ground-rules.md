@@ -1248,8 +1248,8 @@ How to file it: `feedback.md` → "Silent in-run append", with
 
 - **Silent.** No banners, no 👉 question, no announcement (INV-012). This is not the
   bootcamper-initiated feedback flow, and the bootcamper is never asked to author or approve it.
-- **(INV-373) Non-blocking.** If the append fails, warn on stderr and carry on with the module.
-  Never let it interrupt a pending question or delay a step.
+- **(INV-373) Non-blocking.** `feedback.md` → "Silent in-run append" states what a failed append
+  does, under its **Constraints**; do not restate it here (INV-300).
 - **Once.** Note that you filed it, so graduation's retrospective does not file it again.
 - **The same reversal can also be the module's worked steer** (see "Worked steers" above): the
   filing stays silent, and the steer is shown.
