@@ -79,6 +79,16 @@ abnormal end is recorded as well as survived; a ``subprocess.TimeoutExpired`` fr
 ``claude`` call ends the walk with a reason naming the timeout rather than propagating; and
 ``main`` exits non-zero afterwards, because a walk that ended abnormally is a failure of the
 run rather than a run that found nothing.
+
+A ``claude`` child that exits non-zero is the same kind of end (#794). The guide's exit code
+used to set a stop reason and no failure, so ``main`` exited 0 and the run read as clean,
+and the Bootcamper's exit code was not read at all. Either child's non-zero exit now ends
+the walk as a failure, with a ``walk_error`` event (``turn``, ``process``, ``returncode``,
+``stderr``) that keeps the child's whole stderr, and the same stderr printed whole to the
+console: a cause is usually on the last line, so a cut copy keeps the noise and loses it.
+A Bootcamper that exits non-zero is a failure whatever its stdout held, and that stdout is
+never sent to the guide; a failure while a slash-only reply is being re-asked ends the walk
+at once rather than being re-asked again.
 """
 import argparse
 import json
@@ -332,8 +342,36 @@ def visible_text(stream_json_text):
     return "\n".join(p for p in parts if p.strip())
 
 
+class BootcamperFailed(Exception):
+    """The Bootcamper process exited non-zero (#794); carries its exit code and stderr."""
+
+    def __init__(self, returncode, stderr):
+        super().__init__(f"the Bootcamper process exited {returncode}")
+        self.returncode = returncode
+        self.stderr = stderr or ""
+
+
+def report_child_failure(log, turn, process, returncode, stderr):
+    """Record a ``claude`` child's non-zero exit and print its stderr whole (#794).
+
+    Returns the walk's stop reason. Nothing is cut: the transcript's ``walk_error`` event and
+    the console both get every character the child wrote to stderr.
+    """
+    stderr = stderr or ""
+    log.event(type="walk_error", turn=turn, process=process, returncode=returncode,
+              stderr=stderr)
+    reason = f"the {process} process exited {returncode}"
+    print(f"  turn {turn}: {reason}; its stderr follows", file=sys.stderr)
+    print(stderr.rstrip() if stderr.strip() else "  (nothing on stderr)", file=sys.stderr)
+    return reason
+
+
 def bootcamper_reply(prompt_text, persona, model, timeout=180):
-    """One Bootcamper answer, from a process that has never seen the plugin."""
+    """One Bootcamper answer, from a process that has never seen the plugin.
+
+    Raises ``BootcamperFailed`` when the process exits non-zero, whatever its stdout held:
+    that stdout is never a reply the guide should answer (#794).
+    """
     brief = BOOTCAMPER_BRIEF.format(persona=PERSONAS[persona])
     args = ["-p", f"The guide just said:\n\n---\n{prompt_text}\n---\n\n"
                   "Reply as yourself, with only what you would type.",
@@ -349,6 +387,8 @@ def bootcamper_reply(prompt_text, persona, model, timeout=180):
     if model:
         args += ["--model", model]
     result = _claude(args, cwd=Path.home(), stdin_text="", timeout=timeout)
+    if result.returncode != 0:
+        raise BootcamperFailed(result.returncode, result.stderr)
     reply = (result.stdout or "").strip()
     if not reply:
         return None
@@ -418,11 +458,10 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
                 print(f"  stopping: {reason}", file=sys.stderr)
                 break
             if result.returncode != 0:
-                log.event(type="walk_error", turn=turn,
-                          stderr=(result.stderr or "")[-2000:])
-                print(f"  turn {turn}: claude exited {result.returncode} — "
-                      f"{(result.stderr or '').strip()[:200]}", file=sys.stderr)
-                reason = f"claude exited {result.returncode}"
+                # A failure, not just a stop: a crashed guide used to end the walk with
+                # `main` exiting 0, so the run read as clean (#794).
+                failure = reason = report_child_failure(
+                    log, turn, "guide", result.returncode, result.stderr)
                 break
 
             log.extend(line for line in result.stdout.splitlines()
@@ -462,6 +501,12 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
                                         f"{expiry.timeout}s")
                     print(f"  stopping: {reason}", file=sys.stderr)
                     break
+                except BootcamperFailed as crash:
+                    # Ends the walk at once, even mid-retry, and its stdout is never
+                    # sent to the guide (#794).
+                    failure = reason = report_child_failure(
+                        log, turn, "Bootcamper", crash.returncode, crash.stderr)
+                    break
                 if not reply:
                     break
                 # The reply as the Bootcamper process returned it, slash lines included.
@@ -485,8 +530,8 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
                       file=sys.stderr)
                 reason = "the Bootcamper replied only with slash commands"
                 break
-            # The Bootcamper call timed out: its own reason is already set, and the
-            # "returned nothing" branch below would overwrite it.
+            # The Bootcamper call timed out or exited non-zero: its own reason is already
+            # set, and the "returned nothing" branch below would overwrite it.
             if failure:
                 break
             if not message:

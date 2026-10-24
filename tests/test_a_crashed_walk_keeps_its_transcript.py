@@ -28,6 +28,14 @@ Two halves, both guarded here:
    traceback that would have named what killed that 68-turn walk, which is why the cause is
    still unknown.
 
+A `claude` child that **exits non-zero** is an abnormal end too (#794), and before #794 this file
+never stubbed one: the guide's non-zero exit set a stop reason and no failure, so `main`
+exited 0, and the Bootcamper's exit code was never read. `AChildThatExitsNonZeroIsAFailure`
+stubs a non-zero exit at each child, through the real `bootcamper_reply`, with stderr over
+2,000 characters marked at both ends, and requires the whole of it in the `walk_error` event
+and on the console; each case runs beside the same stub exiting 0, which keeps today's
+verdict.
+
 ⚠️ **Why a `try/finally` write would pass most of these and still be wrong.** It survives an
 exception and loses everything to a `SIGKILL`, an out-of-memory kill or a pulled plug.
 `test_every_turn_is_on_disk_before_the_next_one_starts` is the assertion that tells the two
@@ -48,7 +56,8 @@ no phrase for a wrap-aware collapse to find and nothing a line boundary can spli
 Stdlib only; nothing under `plugins/` is imported (INV-108).
 
 Source issue: #732 (a crashed simulated walk loses its whole transcript and is reported as a
-coverage limit with exit 0).
+coverage limit with exit 0); #794 (a child that exits non-zero is reported as clean, with its
+stderr cut).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -232,6 +241,149 @@ class ACrashedWalkKeepsEveryTurnItCompleted(unittest.TestCase):
         self.assertEqual(0, run(dies_at=None))
 
 
+#: Over 2,000 characters, marked at both ends: the old guide path kept the last 2,000 in the
+#: transcript and the first 200 on the console, so each cut loses one marker (#794).
+LONG_STDERR = ("STDERR-HEAD-794 the first line\n" + "frame line\n" * 300
+               + "RuntimeError: STDERR-TAIL-794 the cause\n")
+BOOTCAMPER_STDOUT = "BOOTCAMPER-STDOUT-794 I would type 1"
+
+
+def _is_guide(argv):
+    """A guide call asks for stream-json; the Bootcamper call asks for text."""
+    return "stream-json" in argv
+
+
+class AChildThatExitsNonZeroIsAFailure(unittest.TestCase):
+    """#794: a non-zero exit at either `claude` child ends the walk as a failure.
+
+    One stub stands in for both children, so the Bootcamper path runs through the real
+    `bootcamper_reply`. Every failing case is paired with the identical stub exiting 0.
+    """
+
+    def setUp(self):
+        self.assertGreater(len(LONG_STDERR), 2000)
+        previous = walk._SUPPORTS_SETTING_SOURCES
+        self.addCleanup(setattr, walk, "_SUPPORTS_SETTING_SOURCES", previous)
+        walk._SUPPORTS_SETTING_SOURCES = True
+
+    def walk(self, guide_exit_at=None, bootcamper_exit_at=None, code=1,
+             bootcamper_replies=None, turns=3, via_main=False):
+        """Run a stubbed walk; return (result, events, guide argvs, console stderr).
+
+        `guide_exit_at` / `bootcamper_exit_at` name the 1-based call of that child that
+        exits `code` with `LONG_STDERR` (the Bootcamper's also prints `BOOTCAMPER_STDOUT`).
+        `bootcamper_replies` scripts the Bootcamper's stdout per call (default "1").
+        `result` is `main`'s exit code with `via_main`, else `run_walk`'s failure.
+        """
+        guide, bootcamper = [], []
+
+        def fake_claude(args, cwd, stdin_text=None, timeout=600, env=None):
+            if _is_guide(args):
+                guide.append(list(args))
+                turn = _assistant(_guide_turn(len(guide))) + "\n"
+                if len(guide) == guide_exit_at:
+                    return subprocess.CompletedProcess(args, code, stdout=turn,
+                                                       stderr=LONG_STDERR)
+                return subprocess.CompletedProcess(args, 0, stdout=turn, stderr="")
+            bootcamper.append(list(args))
+            if len(bootcamper) == bootcamper_exit_at:
+                return subprocess.CompletedProcess(args, code, stdout=BOOTCAMPER_STDOUT,
+                                                   stderr=LONG_STDERR)
+            scripted = bootcamper_replies or []
+            text = scripted[len(bootcamper) - 1] if len(bootcamper) <= len(scripted) else "1"
+            return subprocess.CompletedProcess(args, 0, stdout=text + "\n", stderr="")
+
+        console = io.StringIO()
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(walk, "_claude", fake_claude), \
+                redirect_stdout(io.StringIO()), mock.patch("sys.stderr", console):
+            out = Path(tmp) / "t.jsonl"
+            if via_main:
+                result = walk.main(["--project", tmp, "--out", str(out),
+                                    "--mcp-config", str(Path(tmp) / "m.json"),
+                                    "--turns", str(turns)])
+            else:
+                _count, result = walk.run_walk(tmp, out, turns, "terse",
+                                               Path(tmp) / "mcp.json", None, None,
+                                               OPENING, False, 600)
+            written = _events(out)
+        return result, written, guide, console.getvalue()
+
+    def assert_whole_stderr_kept(self, written, console, process):
+        errors = [e for e in written if e["type"] == "walk_error"]
+        self.assertEqual(1, len(errors), "exactly one walk_error event")
+        self.assertEqual(process, errors[0]["process"])
+        self.assertEqual(1, errors[0]["returncode"])
+        self.assertEqual(LONG_STDERR, errors[0]["stderr"],
+                         "the walk_error event must keep the child's whole stderr")
+        self.assertIn(LONG_STDERR.rstrip(), console,
+                      "the console must print the child's whole stderr")
+
+    def test_a_guide_that_exits_non_zero_is_a_failure_with_its_whole_stderr(self):
+        failure, written, _guide, console = self.walk(guide_exit_at=2)
+        self.assertEqual("the guide process exited 1", failure)
+        self.assert_whole_stderr_kept(written, console, "guide")
+        self.assertEqual("walk_stop", written[-1]["type"])
+        self.assertEqual(failure, written[-1]["reason"])
+        self.assertEqual(2, written[-1]["turn"])
+        # Turn 1 completed before the crash, so it is kept.
+        self.assertEqual(1, sum(e["type"] == "assistant" for e in written))
+
+        # Control: the same stub exiting 0 keeps today's verdict -- no failure, no error.
+        failure, written, _guide, console = self.walk(guide_exit_at=2, code=0)
+        self.assertIsNone(failure)
+        self.assertEqual("--turns 3 reached", written[-1]["reason"])
+        self.assertNotIn("walk_error", [e["type"] for e in written])
+
+    def test_a_bootcamper_that_exits_non_zero_is_a_failure_and_its_stdout_is_not_sent(self):
+        failure, written, guide, console = self.walk(bootcamper_exit_at=2)
+        self.assertEqual("the Bootcamper process exited 1", failure)
+        self.assert_whole_stderr_kept(written, console, "Bootcamper")
+        self.assertEqual(failure, written[-1]["reason"])
+        self.assertEqual(2, written[-1]["turn"])
+        # The walk ended there: no third guide call, and the failed reply reached nobody.
+        self.assertEqual(2, len(guide))
+        self.assertFalse([argv for argv in guide if any(BOOTCAMPER_STDOUT in a for a in argv)],
+                         "a failed Bootcamper's stdout was sent to the guide")
+        self.assertFalse([e for e in written if e["type"] == "bootcamper"
+                          and BOOTCAMPER_STDOUT in e["text"]])
+
+        # Control: the same stub exiting 0 is an ordinary reply, and the walk runs on.
+        failure, written, guide, _console = self.walk(bootcamper_exit_at=2, code=0)
+        self.assertIsNone(failure)
+        self.assertEqual("--turns 3 reached", written[-1]["reason"])
+        self.assertEqual(3, len(guide))
+        self.assertTrue(any(BOOTCAMPER_STDOUT in a for argv in guide for a in argv),
+                        "the control's reply should have reached the guide")
+
+    def test_a_failure_while_a_slash_only_reply_is_re_asked_ends_the_walk_at_once(self):
+        # Call 1 is only a slash line, so the Bootcamper is asked again; call 2 fails.
+        failure, written, guide, console = self.walk(
+            bootcamper_exit_at=2, bootcamper_replies=["/effort high"])
+        self.assertEqual("the Bootcamper process exited 1", failure)
+        self.assert_whole_stderr_kept(written, console, "Bootcamper")
+        self.assertEqual(1, len(guide), "the walk went on after the failed re-ask")
+        self.assertEqual(1, written[-1]["turn"])
+
+        # Control: the re-ask answers normally and the walk runs on.
+        failure, written, guide, _console = self.walk(
+            bootcamper_exit_at=2, code=0, bootcamper_replies=["/effort high"])
+        self.assertIsNone(failure)
+        self.assertEqual("--turns 3 reached", written[-1]["reason"])
+
+    def test_main_exits_one_for_a_non_zero_exit_at_either_child(self):
+        for child in ("guide", "bootcamper"):
+            with self.subTest(child=child):
+                where = ({"guide_exit_at": 2} if child == "guide"
+                         else {"bootcamper_exit_at": 2})
+                code, _written, _guide, console = self.walk(via_main=True, **where)
+                self.assertEqual(1, code)
+                self.assertIn("walk ended abnormally", console)
+                # Control: the same stub exiting 0.
+                code, _written, _guide, _console = self.walk(via_main=True, code=0, **where)
+                self.assertEqual(0, code)
+
+
 #: 68 turn lines, then a traceback: the shape that defeated `walk.stdout or walk.stderr`.
 TURN_LINES = 68
 TRACEBACK = (
@@ -337,6 +489,21 @@ class ACrashedWalkIsBreakingNotACoverageLimit(unittest.TestCase):
         code, clean, report = self.run_autotest(exit_code=0, stderr_text="")
         self.assertEqual(0, code)
         self.assertIn(f"turn {TURN_LINES}: 234 chars", clean)
+        self.assertEqual([], self._codes(report))
+
+    def test_a_long_child_stderr_reaches_the_console_whole(self):
+        """#794: the walk's stderr now carries a child's whole stderr; none of it is cut."""
+        long_stderr = LONG_STDERR + "walk ended abnormally: the guide process exited 1\n"
+        code, printed, report = self.run_autotest(exit_code=1, stderr_text=long_stderr)
+        self.assertEqual(1, code)
+        self.assertIn(long_stderr.rstrip(), printed)
+        self.assertIn("walk-failed", self._codes(report))
+        failed = [f for f in report["findings"] if f["code"] == "walk-failed"]
+        self.assertIn("the guide process exited 1", failed[0]["message"])
+
+        # Control: the same stderr from a walk that exited 0 files nothing.
+        code, _printed, report = self.run_autotest(exit_code=0, stderr_text=long_stderr)
+        self.assertEqual(0, code)
         self.assertEqual([], self._codes(report))
 
     def test_the_old_short_circuit_cannot_reach_the_traceback(self):
