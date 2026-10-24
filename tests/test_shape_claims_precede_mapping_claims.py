@@ -226,9 +226,16 @@ class TheOtherGenerationRequirementsSurvive(unittest.TestCase):
     def test_the_quality_intent_record_survives(self):
         self.assertIn("quality_intent", self.branch)
 
-    def test_the_license_sizing_directive_survives(self):
-        """Added earlier the same day, in the same branch — it must not have been lost."""
-        self.assertIn("LICENSE-CAPACITY decision", self.branch)
+    def test_the_generated_count_directive_survives(self):
+        """Added earlier the same day, in the same branch — it must not have been lost.
+
+        #779 inverted it: the count is no longer a LICENSE-CAPACITY decision but follows the
+        scenario, by the count rule at the head of the branch (INV-277), so what must survive
+        here is the pointer at that rule, and the old framing must not come back.
+        """
+        self.assertIn("The record count is not a license decision", self.branch)
+        self.assertIn("(#generated-record-count)", self.branch)
+        self.assertNotIn("LICENSE-CAPACITY decision", self.branch)
 
 
 if __name__ == "__main__":

@@ -52,9 +52,10 @@ def squash(path):
 
 def generation_block():
     """The `provenance: synthesized` generation block, from its capacity directive to the
-    paragraph that follows the block."""
+    paragraph that follows the block. #779 replaced the directive's old LICENSE-CAPACITY
+    wording with a pointer at the count rule, so the block opens at that pointer."""
     body = squash(COLLECTION)
-    start = body.index("How many records to generate is a LICENSE-CAPACITY decision")
+    start = body.index("The record count is not a license decision")
     end = body.index("Both are bootcamp-generated, so both skip the question", start)
     return body[start:end]
 
@@ -256,10 +257,17 @@ class TheOverLimitGenerationRuleIsStatedOnce(unittest.TestCase):
     def test_the_rule_is_stated_once(self):
         self.assertEqual(squash(COLLECTION).count(self.RULE), 1)
 
-    def test_it_sits_beside_the_record_limit_zero_rule(self):
+    def test_it_points_at_the_count_rule(self):
+        """#603 placed the rule beside the `recordLimit: 0` rule. #779 folded that rule into
+        the count rule at the head of the branch, which reads no limit at all, so the over-limit
+        rule now follows the directive that points there, and points there itself."""
         block = generation_block()
-        self.assertLess(block.index("On a measured `recordLimit: 0`, size the generated data"),
+        self.assertLess(block.index("The record count is not a license decision"),
                         block.index(self.RULE))
+        rule = block[block.index(self.RULE):]
+        self.assertRegex(rule, r"The scenario's size, set by \[the generated record count\]"
+                               r"\(#generated-record-count\), is a default")
+        self.assertNotIn("On a measured `recordLimit: 0`, size the generated data", block)
 
     def test_it_leaves_capacity_to_steps_8a_and_8b(self):
         block = generation_block()

@@ -204,8 +204,9 @@ def reads_problems(by_passage, defined, step_11_text):
         if "(#scenario-source-fields)" not in by_passage[where]:
             problems.append("Module 4 Step 2 (%s) does not link the schema" % where)
     gen = by_passage["generate"]
-    if not re.search(r"An entry with no `scenario_record_count` was written before that field "
-                     r"existed: take the count from `docs/business_problem.md`", gen):
+    if not re.search(r"otherwise the count `docs/business_problem.md` records for the source "
+                     r"\(an entry with no `scenario_record_count` was written before that field "
+                     r"existed", gen):
         problems.append("the generation step has no fallback for an entry without the field")
     if not re.search(r"record the actual counts back into the registry, as each source's measured "
                      r"`record_count`, and leave `scenario_record_count` as Module 1 wrote it",

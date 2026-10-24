@@ -958,7 +958,8 @@ def provision_path_problems(text):
         problems.append("Step 2 has no single generation branch labeled %s for the entries to "
                         "point at" % GENERATION_LABEL)
     five = bodies.get(5, "")
-    for needle in GENERATES + ("license limit and dataset size (canonical framing)",
+    for needle in GENERATES + ("the generated record count](#generated-record-count)",
+                               "states no record count of its own",
                                "recommend no cord alternative"):
         if needle not in five:
             problems.append("option 5's entry does not say %r" % needle)
