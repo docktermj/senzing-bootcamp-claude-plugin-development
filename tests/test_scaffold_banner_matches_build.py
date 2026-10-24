@@ -317,8 +317,11 @@ class TheCheckpointFixtureSaysWhatFoldingCannotReach(unittest.TestCase):
         """The widths the banner states are derived here from the shipped sources."""
         generator = load(GENERATOR, "_banner_recap_gen")
         source = GENERATOR.read_text(encoding="utf-8")
+        # Since #788 the label is built into `full` first, so the chip can report what
+        # the clip cut (INV-408); the width is the `_clip(full, n)` that follows it.
         chip = re.findall(
-            r'_clip\(\s*_safe\(\s*f"\{mod\.number\}\. \{mod\.title\}"[^)]*\)\s*,\s*(\d+)',
+            r'full = _safe\(\s*f"\{mod\.number\}\. \{mod\.title\}"[^)]*\)\s*'
+            r"label = _clip\(\s*full\s*,\s*(\d+)",
             source,
         )
         self.assertEqual(1, len(chip), "the cover-chip _clip call site no longer parses")

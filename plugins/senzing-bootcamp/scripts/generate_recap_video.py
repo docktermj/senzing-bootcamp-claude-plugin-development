@@ -234,7 +234,7 @@ def _report(prefix: str, message: str) -> None:
 # `WARNING:` line, BEFORE `Video generated:`, in the shape `generate_recap_pdf.py`'s
 # `content_loss_warning()` writes. Its own collector rather than that module's: the video
 # imports `generate_recap_pdf` only for the certificate, and renders without it (#788).
-# Deliberately non-blocking (INV-048/INV-052): the video is still written and exits 0.
+# Deliberately non-blocking, as INV-408 requires: the video is still written and exits 0.
 _CONTENT_LOSSES: Dict[str, str] = {}
 
 #: Longest excerpt of lost text carried into the warning, and how many distinct losses it
