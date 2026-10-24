@@ -126,7 +126,8 @@ def cut(text, part):
 def sample_yaml():
     """The `quality_intent` sample for MERIDIAN_CRM, raw (indentation kept)."""
     text = COLLECTION.read_text(encoding="utf-8")
-    i = text.index("- name: MERIDIAN_CRM")
+    # The `sources:` mapping keyed by DATA_SOURCE (#784), not a `- name:` list item.
+    i = re.search(r"(?m)^[ \t]*sources:\n[ \t]+MERIDIAN_CRM:\n", text).start()
     return text[i:text.index("```", i)]
 
 

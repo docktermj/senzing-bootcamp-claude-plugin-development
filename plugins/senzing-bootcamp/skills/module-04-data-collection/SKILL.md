@@ -530,8 +530,7 @@ that you rebuilt it. Only a missing entry is rebuilt; an existing one is never o
         reason: "different people who share a common name, to show Senzing does not merge on name alone"
         measured_entities: 112        # written by the self-check, never by hand
         measured_share: 0.019         # measured_entities / invented entities (112 of 5,900); must be < 0.05
-    sources:
-      # one entry per source, each with its own quality_intent (below)
+    sources: {}   # one entry per source, each with its own quality_intent (below)
     ```
 
   ⚠️ **The anti-pattern to avoid:** a name pool sized for a demo, not for the population. Observed
@@ -544,32 +543,34 @@ that you rebuilt it. Only a missing entry is rebuilt; an existing one is never o
   the source's other fields:
 
   ```yaml
-  - name: MERIDIAN_CRM
-    provenance: synthesized
-    quality_intent:
-      target_band: "70-79"        # one of: ">=80", "70-79", "<70"
-      # Gaps must be able to REACH target_band. 30-43% of applicable slots empty; on seven
-      # non-key fields plus the record key (eight applicable fields, the key never gapped) that
-      # is a summed absence of 2.4-3.4 fields, not one gappy field.
-      gaps:
-        - "phone missing ~70% of records"
-        - "address_line1 missing ~60%"
-        - "city missing ~55%"
-        - "postal_code missing ~50%"
-        - "state missing ~45%"
-        - "created_date in two formats"   # lowers format_consistency, not completeness
-      shared_features:              # deliberate sharing only; an unlisted share is a collision
-        - feature: phone
-          reason: "household landline shared by the two adults at one address"
-        - feature: phone
-          reason: "chain: one household member shares a mobile with a member of a second household"
-      relationship_intent:          # only when a success criterion names households or related parties
-        criterion: "group customers who live together into households"
-        households: 120             # intended; at least 100 on the default ~10,000-record scenario
-        chains: 6                   # intended; at least 5
-        measured_households: 120    # written by the self-check, never by hand
-        measured_chains: 6          # written by the self-check, never by hand
-      measured_score: 75.5          # written by the self-check, never by hand
+  sources:
+    MERIDIAN_CRM:
+      name: MERIDIAN_CRM
+      provenance: synthesized
+      quality_intent:
+        target_band: "70-79"        # one of: ">=80", "70-79", "<70"
+        # Gaps must be able to REACH target_band. 30-43% of applicable slots empty; on seven
+        # non-key fields plus the record key (eight applicable fields, the key never gapped) that
+        # is a summed absence of 2.4-3.4 fields, not one gappy field.
+        gaps:
+          - "phone missing ~70% of records"
+          - "address_line1 missing ~60%"
+          - "city missing ~55%"
+          - "postal_code missing ~50%"
+          - "state missing ~45%"
+          - "created_date in two formats"   # lowers format_consistency, not completeness
+        shared_features:              # deliberate sharing only; an unlisted share is a collision
+          - feature: phone
+            reason: "household landline shared by the two adults at one address"
+          - feature: phone
+            reason: "chain: one household member shares a mobile with a member of a second household"
+        relationship_intent:          # only when a success criterion names households or related parties
+          criterion: "group customers who live together into households"
+          households: 120             # intended; at least 100 on the default ~10,000-record scenario
+          chains: 6                   # intended; at least 5
+          measured_households: 120    # written by the self-check, never by hand
+          measured_chains: 6          # written by the self-check, never by hand
+        measured_score: 75.5          # written by the self-check, never by hand
   ```
 
   ⚠️ **Check a sample like this before copying it.** Those five absence rates sum to **2.80** of eight
