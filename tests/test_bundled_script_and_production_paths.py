@@ -57,6 +57,15 @@ wrong relative to a working directory no test had modeled.
    invocation or not, and exempts a site only when the **skill that contains it** resolves that
    script somewhere -- computed from the tree, never from a list of paths (INV-246).
 
+7. **A bare `scripts/<name>.py` spelling in a skill that does resolve the script (#809).** The
+   skill exemption in item 6 let six mentions keep the bare path because their skill resolves
+   the script elsewhere -- Module 3b's `SKILL.md` (three), its `phase1-visualization.md` Step 2,
+   `module-completion.md` Step 2c's closing note and graduation Step 1c. INV-389 says such a
+   mention names the script **by bare name** and points at the resolution, so
+   `bare_paths_outside_their_resolution()` reports a bare path unless the same block resolves
+   that script (the resolution sentence itself, such as Module 3b Step 2.1's "Resolve
+   `scripts/senzing_viz_server.py` (`${CLAUDE_PLUGIN_ROOT}/…`").
+
 Written as sweeps, not as three assertions about three lines, so the next one is caught too.
 
 Enforces **INV-185** (a command run against a bundled script resolves it inside the plugin
@@ -479,6 +488,32 @@ def unresolved_bundled_references():
     return out
 
 
+def bare_paths_in(text):
+    """(lineno, token) for each bare `scripts/<name>.py` outside a block that resolves it (#809).
+
+    A block that resolves the script is its resolution sentence, which may spell the bare path
+    as the thing it resolves. Anywhere else the mention names the script by bare name and points
+    at that resolution (INV-389, INV-300), whether or not its skill resolves the script.
+    """
+    out = []
+    for flat, origin in collapsed_blocks(text):
+        refs = []
+        for m in _BUNDLED_PATH.finditer(flat):
+            token = m.group(0)
+            refs.append((line_of(origin, m.start()), token, re.split(r"[\\/]", token)[-1],
+                         reference_is_resolved(token)))
+        resolved_here = {name for _, _, name, resolved in refs if resolved}
+        out += [(lineno, token) for lineno, token, name, resolved in refs
+                if not resolved and name not in resolved_here]
+    return out
+
+
+def bare_paths_outside_their_resolution():
+    """(path, lineno, token) for every bare spelling `bare_paths_in` reports, over prose_files()."""
+    return [(path, lineno, token) for path in prose_files()
+            for lineno, token in bare_paths_in(path.read_text(encoding="utf-8"))]
+
+
 class AReferenceToABundledScriptResolvesToo(unittest.TestCase):
     """#689: INV-252's READ half of INV-185 -- a bundled file named by a bare `scripts/...` path.
 
@@ -538,6 +573,50 @@ class AReferenceToABundledScriptResolvesToo(unittest.TestCase):
             "skill ${CLAUDE_PLUGIN_ROOT}/scripts/<name>.py with the skill-relative fallback "
             "../../scripts/<name>.py (INV-185, INV-252), and have the later mentions point at it "
             "by bare name instead of a second copy (INV-300):\n  " + "\n  ".join(problems))
+
+    def test_a_bare_path_appears_only_in_its_resolution(self):
+        """#809: INV-389's bare-name half, which the skill exemption above does not reach."""
+        problems = ["%s:%d  %s" % (p.relative_to(REPO_ROOT), i, token)
+                    for p, i, token in bare_paths_outside_their_resolution()]
+        self.assertEqual(
+            [], problems,
+            "a shipped mention spells a bundled script as a bare `scripts/<name>.py` path outside "
+            "the sentence that resolves it. Name it by bare name (`<name>.py`) and point at the "
+            "skill's resolution instead (INV-389, INV-300):\n  " + "\n  ".join(problems))
+
+    def test_the_bare_path_check_sees_the_809_sites(self):
+        """Negative controls: each #809 spelling, put back, is reported; the resolution is not."""
+        m3b = SKILLS / "module-03b-truthset-visualization"
+        sites = (
+            (m3b / "SKILL.md",
+             "modeled on the shipped reference `senzing_viz_server.py` (resolved at",
+             "modeled on the shipped reference `scripts/senzing_viz_server.py` (resolved at"),
+            (m3b / "phase1-visualization.md",
+             "The shipped `senzing_viz_server.py` (resolved at 2.1 below)",
+             "The shipped `scripts/senzing_viz_server.py`"),
+            (SKILLS / "bootcamp-onboarding" / "module-completion.md",
+             "with the\n`generate_recap_pdf.py` that the structural check above resolves",
+             "with the\n`scripts/generate_recap_pdf.py`"),
+            (SKILLS / "graduation" / "SKILL.md",
+             "the bundled renderer, `generate_recap_video.py` (resolved under",
+             "the bundled renderer, `scripts/generate_recap_video.py` (resolved under"),
+        )
+        for path, fixed, defect in sites:
+            with self.subTest(path=path.name):
+                text = path.read_text(encoding="utf-8")
+                self.assertIn(fixed, text, "negative control is stale: %r is gone" % fixed)
+                self.assertEqual([], bare_paths_in(text))
+                reported = bare_paths_in(text.replace(fixed, defect, 1))
+                self.assertEqual(1, len(reported), reported)
+        # The resolution sentence spells the bare path as what it resolves, and is not reported.
+        resolution = ("Resolve `scripts/senzing_viz_server.py`\n"
+                      "(`${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py` in a command/hook "
+                      "context, else\n`../../scripts/senzing_viz_server.py` relative to this skill)")
+        self.assertEqual([], bare_paths_in(resolution))
+        # A different script resolved in the same block does not excuse this one.
+        self.assertEqual(
+            1, len(bare_paths_in("`scripts/brand_tokens.py` beside "
+                                 "`${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py`")))
 
     def test_module_7_resolves_the_server_it_sends_the_guide_to_read(self):
         """The sharpest site, named explicitly so a regression is unambiguous."""

@@ -10515,21 +10515,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8688 test methods in 457 files, matching `inventory.test_count_total`.
+There are 8718 test methods in 458 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8688.
+sum to 8718.
 
-Two files run more tests than they define, so discovery collects 8687:
+Two files run more tests than they define, so discovery collects 8717:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8680`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8710`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8687`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8717`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10561,7 +10561,7 @@ looks wrong.
 - `tests/test_broll_manifest.py`: 20
 - `tests/test_build_and_run_statement.py`: 77
 - `tests/test_build_version_provenance_is_per_platform.py`: 8
-- `tests/test_bundled_script_and_production_paths.py`: 28
+- `tests/test_bundled_script_and_production_paths.py`: 30
 - `tests/test_business_problem_preserves_the_original_wording.py`: 17
 - `tests/test_canonical_module_names.py`: 31
 - `tests/test_canonical_operations_resolve.py`: 56
@@ -10581,6 +10581,7 @@ looks wrong.
 - `tests/test_classpath_root_is_platform_qualified.py`: 6
 - `tests/test_coherence_sweep_523.py`: 29
 - `tests/test_coherence_sweep_614.py`: 17
+- `tests/test_coherence_sweep_809.py`: 19
 - `tests/test_comment_test_pointers_resolve.py`: 10
 - `tests/test_compact_dev_environment_leaves_specs_frozen.py`: 12
 - `tests/test_completeness_denominator.py`: 23
@@ -10813,7 +10814,7 @@ looks wrong.
 - `tests/test_phase3_interaction_prose.py`: 36
 - `tests/test_phase3_names_every_server_language.py`: 8
 - `tests/test_phase_c_loads_each_source_from_its_subset_record.py`: 26
-- `tests/test_phase_d_gate_routes_on_both_metrics.py`: 73
+- `tests/test_phase_d_gate_routes_on_both_metrics.py`: 77
 - `tests/test_phase_d_how_state_audit.py`: 36
 - `tests/test_phase_d_iterate_now_enters_the_quality_iteration_route.py`: 31
 - `tests/test_phasec_generated_path_asks_once.py`: 12
@@ -10869,12 +10870,12 @@ looks wrong.
 - `tests/test_release_covers_every_version_site.py`: 12
 - `tests/test_release_cycle.py`: 77
 - `tests/test_results_validation_is_diagnostic.py`: 35
-- `tests/test_resume_requires_a_recorded_module.py`: 27
+- `tests/test_resume_requires_a_recorded_module.py`: 29
 - `tests/test_retired_vocabulary.py`: 5
 - `tests/test_retrofit_files_issues.py`: 40
 - `tests/test_reverse_check_counts_what_it_cannot_test.py`: 16
 - `tests/test_reverse_contract_flags_the_maintainer_surface.py`: 7
-- `tests/test_reversed_decision_capture.py`: 35
+- `tests/test_reversed_decision_capture.py`: 38
 - `tests/test_review_invariants_queue.py`: 13
 - `tests/test_review_invariants_stops_at_the_working_tree.py`: 9
 - `tests/test_root_readme_exception.py`: 12
@@ -14028,6 +14029,19 @@ Senzing licensing, with no SPDX identifier.
   `ROUTE_FILES`); the access-steps guard finds the sites by scanning every
   paragraph naming the tool for an instruction verb, with reasoned text-keyed
   exemption lists and negative controls, and no invariant is added
+- #809: pointer and wording fixes from the 2026-10-22 audit: graduation names
+  module-completion Step 2b for Questions & Responses, Module 4's "8b. SQLite
+  load-time warning", each module's Before/After line for Why it matters, a
+  content check required after every render, and the BOOTCAMP GRADUATION
+  banner (with `/graduate`); Module 0 names both departures (Step 3 skipped,
+  Step 4's question replaced by its readiness gate); Modules 3 and 3b fall
+  through to step 2; six bare `scripts/<name>.py` mentions name the script by
+  bare name (INV-389); ground-rules points at the one INV-373 statement;
+  `/start-bootcamp` lists "not a JSON object" (INV-227); Phase D steps 21 and
+  24 link the per-record match accuracy (INV-400). The three porting notes stay,
+  being honest deferrals. Each guard reading a site gains a negative control,
+  and one new invariant (the error-block fall-through) is queued for
+  `/review-invariants`
 - #810: Module 4 Step 3 runs `head -5` on each registry `file_path` and Step 4
   has the guide fill `docs/data_collection_checklist.md` from the registry and
   validation results, asking nothing; an absent `database_type` falls back to

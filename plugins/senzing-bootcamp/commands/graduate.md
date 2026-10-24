@@ -11,8 +11,8 @@ by the progress file's CONTENT, not its existence" (INV-227, INV-300). Where tha
 fresh start, whether the file is missing or records no module, tell the bootcamper there is no
 bootcamp to graduate and offer to start one with `/start-bootcamp`, instead of graduating.
 
-Invoke the `graduation` skill and follow it: show the GRADUATION banner, present the
-graduation preface (journey map, before/after, step overview, estimated time), show the
+Invoke the `graduation` skill and follow it: show the BOOTCAMP GRADUATION banner, present
+the graduation preface (journey map, before/after, step overview, estimated time), show the
 decisions the bootcamper made and how they got it built, ask for their one-line takeaway and their
 "Next time" request, finalize
 `docs/bootcamp_recap.md` and render `docs/bootcamp_recap.pdf`, offer the optional graduation

@@ -208,8 +208,8 @@ proves useful, consider moving it here rather than adding it there.
 
 Only then display the one-line confirmation: `Recap updated: {Name}.`
 
-(The recap PDF is not rendered per-module: it is rendered once at graduation by
-`scripts/generate_recap_pdf.py`, which reads this file. See `../graduation/SKILL.md`.)
+(The recap PDF is not rendered per-module. Graduation renders it once from this file, with the
+`generate_recap_pdf.py` that the structural check above resolves. See `../graduation/SKILL.md`.)
 
 ### 2d. Finalize the in-progress checkpoint
 

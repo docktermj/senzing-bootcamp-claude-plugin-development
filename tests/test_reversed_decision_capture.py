@@ -353,6 +353,63 @@ meaning, not just for shared type.
         self.assertIn(SOURCE_VALUE, triage)
 
 
+#: #809: the clauses of INV-373 that `feedback.md` → "Silent in-run append" states, each of which
+#: the ground-rules bullet once restated (and two of which it dropped).
+INV_373_CLAUSES = ("warn on stderr", "interrupt a pending question", "delay a step", "to-do")
+NON_BLOCKING = "- **(INV-373) Non-blocking.**"
+
+
+def non_blocking_bullet(rules):
+    """The ground-rules Reversed-decisions "Non-blocking" bullet, whitespace collapsed, or None."""
+    section_text = section(rules, "## Reversed decisions", "\n## Verbosity")
+    if NON_BLOCKING not in section_text:
+        return None
+    start = section_text.index(NON_BLOCKING)
+    end = section_text.find("\n- ", start + 1)
+    return re.sub(r"\s+", " ", section_text[start:end if end != -1 else None])
+
+
+def restatement_problems(rules):
+    """The bullet points at the one statement and restates none of its clauses (INV-300)."""
+    bullet = non_blocking_bullet(rules)
+    if bullet is None:
+        return ["the ground-rules Non-blocking bullet moved"]
+    problems = []
+    if '`feedback.md` → "Silent in-run append"' not in bullet:
+        problems.append("the bullet does not point at feedback.md → \"Silent in-run append\"")
+    problems += ["the bullet restates %r" % clause for clause in INV_373_CLAUSES
+                 if clause.lower() in bullet.lower()]
+    return problems
+
+
+class TheGroundRulesPointAtTheOneStatement(unittest.TestCase):
+    """#809: INV-373 is stated once, in `feedback.md`; ground-rules points at it (INV-300).
+
+    The bullet restated the rule and dropped two clauses -- a failed re-read, and never
+    becoming a to-do -- so a guide reading ground-rules read a weaker rule than the one that binds.
+    """
+
+    def test_the_bullet_is_a_pointer(self):
+        self.assertEqual([], restatement_problems(read(GROUND_RULES)))
+
+    def test_every_clause_is_still_stated_at_the_one_statement(self):
+        entry = re.sub(r"\s+", " ", section(read(FEEDBACK), "## Silent in-run append", "\n## "))
+        for clause in INV_373_CLAUSES + ("the append or the re-read fails",):
+            with self.subTest(clause=clause):
+                self.assertIn(clause, entry)
+
+    def test_negative_control_the_restatement_is_reported(self):
+        rules = read(GROUND_RULES)
+        bullet_start = rules.index(NON_BLOCKING)
+        bullet_end = rules.index("\n- ", bullet_start)
+        restored = (rules[:bullet_start]
+                    + "- **(INV-373) Non-blocking.** If the append fails, warn on stderr and carry "
+                      "on with the module.\n  Never let it interrupt a pending question or delay a "
+                      "step."
+                    + rules[bullet_end:])
+        self.assertEqual(4, len(restatement_problems(restored)), restatement_problems(restored))
+
+
 class TheIllustrativeSenzingFactsAreNotPromoted(unittest.TestCase):
     """INV-080: the entry's Senzing specifics are one run's observations.
 

@@ -253,9 +253,49 @@ class TheProseStatesTheThreeWayBranch(unittest.TestCase):
             with self.subTest(case=case):
                 self.assertRegex(flat, case, "the command omits a case")
 
+    def test_the_start_command_lists_every_no_module_case(self):
+        """#809: the command dropped "not a JSON object", which the skill lists (#605's note)."""
+        skill, command = ONBOARDING_SKILL.read_text(encoding="utf-8"), \
+            START_COMMAND.read_text(encoding="utf-8")
+        self.assertIn("not a JSON object", no_module_cases(skill))
+        self.assertGreaterEqual(len(no_module_cases(skill)), 5)
+        self.assertEqual([], start_command_case_problems(skill, command))
+
+    def test_negative_control_a_dropped_case_is_reported(self):
+        skill, command = ONBOARDING_SKILL.read_text(encoding="utf-8"), \
+            START_COMMAND.read_text(encoding="utf-8")
+        mutant = command.replace("malformed, not a JSON object, or", "malformed, or", 1)
+        self.assertNotEqual(command, mutant, "the mutation no longer applies")
+        self.assertEqual(["the start command omits 'not a JSON object'"],
+                         start_command_case_problems(skill, mutant))
+
 
 def flat(text):
     return re.sub(r"\s+", " ", text)
+
+
+def no_module_cases(skill_text):
+    """The no-module cases `bootcamp-onboarding/SKILL.md` lists, in order (#809).
+
+    Read from the skill's own list -- "**Present but recording no module** — empty, `{}`, ...
+    -> " -- so a case added there is required of the start command too.
+    """
+    m = re.search(r"\*\*Present but recording no module\*\* — (.+?) ->", flat(skill_text))
+    if m is None:
+        return None
+    return [c.strip() for c in re.split(r",\s*(?:or\s+)?", m.group(1)) if c.strip()]
+
+
+def start_command_case_problems(skill_text, command_text):
+    """Each no-module case the skill lists that the start command's list leaves out (INV-227)."""
+    cases = no_module_cases(skill_text)
+    if not cases:
+        return ["the skill's no-module case list moved"]
+    m = re.search(r"\*\*A file recording no module\*\* \((.+?)\) ->", flat(command_text))
+    if m is None:
+        return ["the start command's no-module case list moved"]
+    listed = m.group(1)
+    return ["the start command omits %r" % case for case in cases if case not in listed]
 
 
 def section(text, heading):

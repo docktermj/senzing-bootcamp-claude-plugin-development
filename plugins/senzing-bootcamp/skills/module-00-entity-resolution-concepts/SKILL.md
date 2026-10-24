@@ -96,8 +96,10 @@ in the recap** (INV-092), quietly — no bootcamper-facing end-of-module summary
    gate, each with the bootcamper's answer — or `- {none this module}`), **Actions Taken** (that
    the primer and optional knowledge check were presented; this preamble creates no project files),
    and **End-of-Module Summary**. Re-read to confirm the section landed
-   (2c). This is the ONLY module-completion **Step** Module 0 skips out of — it runs Step 2 whole
-   and does **not** present the bootcamper-facing end-of-module summary (Step 3).
+   (2c). Module 0 runs module-completion Step 2 whole and departs from it at two **Steps** only:
+   it **skips** Step 3, so it does **not** present the bootcamper-facing end-of-module summary,
+   and it **replaces** Step 4's transition question with its own readiness gate (Step 1, item 5
+   above).
 
    ⛔ **On a Core run this is the FIRST module to append a recap section, so 2a applies and creates
    the header.** Bootcamp preparation is recap-exempt (INV-092) and the onboarding preface writes no

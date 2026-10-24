@@ -962,6 +962,54 @@ def link_problems(text):
     return problems
 
 
+#: #809: the steps that judge match accuracy before the gate, by heading and end marker.
+STEP_21 = ("## 21. ", "## 22. ")
+STEP_24 = ("## 24. ", "**Checkpoint:** write step 24.")
+
+
+def step_span(text, bounds):
+    """The text from a step's heading to its end marker, or None when either moved.
+
+    The end marker is matched across wraps (INV-346), as `accuracy_definition` matches its own.
+    """
+    start, end = bounds
+    if start not in text:
+        return None
+    i = text.index(start)
+    j = re.compile(r"\s+".join(map(re.escape, end.split()))).search(text, i + len(start))
+    return None if j is None else text[i:j.start()]
+
+
+def step_link_problems(text):
+    """Steps 21 and 24 link the figure they judge; step 24 reads precision/recall as support only.
+
+    INV-400: step 22 defines the one accuracy figure. Steps 21 and 24 judged "match accuracy"
+    without linking it, and step 24 sent the guide to `reporting_guide(topic='quality')` "for
+    precision/recall metrics" beside it, which reads as a second accuracy measure.
+    """
+    problems = []
+    step21 = step_span(text, STEP_21)
+    if step21 is None:
+        problems.append("step 21 moved")
+    else:
+        bullet = find(step21, "- If match accuracy is poor")
+        tail = plain(step21)[bullet.start():] if bullet else ""
+        if bullet is None or ACCURACY_LINK not in tail.split("\n\n")[0]:
+            problems.append("step 21's accuracy bullet does not link the per-record figure")
+    step24 = step_span(text, STEP_24)
+    if step24 is None:
+        return problems + ["step 24 moved"]
+    body = flat(step24)
+    if flat("Validate: match accuracy, which is the [per-record match accuracy]%s step 22 "
+            "defines" % ACCURACY_LINK) not in body:
+        problems.append("step 24 does not name the per-record figure as the accuracy it validates")
+    if "for precision/recall metrics" in body:
+        problems.append("step 24 still offers precision/recall as accuracy metrics")
+    if "Pairwise precision and recall" not in body or "supporting reading only" not in body:
+        problems.append("step 24 does not read precision and recall as supporting reading only")
+    return problems
+
+
 def stated_once_problems(corpus):
     """INV-300: the formula is written in one place across the shipped Markdown."""
     hits = ["%s (%d)" % (name, flat(text).count(flat(FORMULA)))
@@ -981,6 +1029,7 @@ def gates_corpus(texts):
 CHECKS = {
     "definition": (definition_problems, ("phase_d",)),
     "links": (link_problems, ("phase_d",)),
+    "step_links": (step_link_problems, ("phase_d",)),
     "table": (table_problems, ("phase_d",)),
     "shortfall": (shortfall_problems, ("phase_d",)),
     "uat_not": (uat_not_problems, ("phase_d",)),
@@ -1150,6 +1199,10 @@ class TheAccuracyFigureIsDefinedOnce(unittest.TestCase):
 
     def test_the_formula_is_stated_once_in_the_shipped_markdown(self):
         self.assertEqual([], stated_once_problems(shipped_markdown()))
+
+    def test_steps_21_and_24_link_the_figure_they_judge(self):
+        """#809: each step that judges accuracy names the one figure, by link."""
+        self.assertEqual([], run("step_links", self.texts))
 
     def test_the_link_resolves_to_the_anchor(self):
         text = self.texts["phase_d"]
@@ -1463,6 +1516,31 @@ class EachCheckSeesTheDefectItWasWrittenFor(unittest.TestCase):
                              "(#per-record-match-accuracy)\nstep 22 defines, never precision or "
                              "recall", "")
         self.assertTrue(run("links", texts))
+
+    def test_a_step_21_bullet_without_the_link_is_reported(self):
+        texts = self.mutated("phase_d", " The accuracy judged here is\n  the [per-record match "
+                             "accuracy](#per-record-match-accuracy) step 22 computes on this "
+                             "sample.", "")
+        self.assertEqual(["step 21's accuracy bullet does not link the per-record figure"],
+                         run("step_links", texts))
+
+    def test_the_shipped_step_24_is_reported(self):
+        """The #809 defect, put back: no link, and precision/recall offered beside accuracy."""
+        texts = self.mutated(
+            "phase_d", "Validate: match accuracy, which is the [per-record match accuracy]"
+            "(#per-record-match-accuracy)\nstep 22 defines, with the records reviewed here "
+            "joining its sample (query", "Validate: match accuracy (query")
+        texts["phase_d"] = texts["phase_d"].replace(
+            "evaluation\nframework.\n", "evaluation\nframework and `reporting_guide(topic="
+            "'quality', language='<chosen_language>', version='current')` for precision/recall\n"
+            "metrics.\n", 1)
+        self.assertEqual(2, len(run("step_links", texts)), run("step_links", texts))
+
+    def test_precision_and_recall_read_as_accuracy_are_reported(self):
+        texts = self.mutated("phase_d", "are supporting\nreading only:", "are the accuracy:")
+        self.assertEqual(
+            ["step 24 does not read precision and recall as supporting reading only"],
+            run("step_links", texts))
 
     def test_a_restated_formula_is_reported(self):
         """INV-300: a second copy of the formula, anywhere in the shipped Markdown, fails."""
