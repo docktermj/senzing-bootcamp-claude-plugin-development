@@ -47,6 +47,17 @@ a mutated copy (INV-265): restoring either removed question, or dropping candida
 must make it report a problem. For #517 the controls also run re-wrapped copies, which must
 report the same thing as the text they re-wrap.
 
+#781 carries candidate 1's close through to its end. The Query Completeness Gate's item 6 still
+asked "Ready to proceed?" after step 4e's no-question close, and the Discover exits named the gate
+but not the deliverable before it. ``Issue781GateRoutesOnUnasked`` pins that item 6, the gate's last
+item, asks nothing (no 👉, no question mark) and routes to the visualization server teardown or,
+when no server was started, to module completion; that every sentence in a Discover file naming
+the Query Completeness Gate names "Data-discoveries deliverable" before it (the exits in
+`phase2-discover.md` and `phase2b-discover.md`, and Phase 1's step-4e convergence pointer); that
+the exit option no longer says "Proceed to module completion"; and that the module overview names
+the teardown turn. Its negative controls put back a question in item 6, an exit that names the
+gate without the deliverable, the retired label, and an overview without the teardown.
+
 These assert that the skill files STATE the rules; they cannot establish that a live run follows
 them, which only `dry-run` phase 3 can observe. Stdlib only; nothing under ``plugins/`` is
 imported (INV-108).
@@ -68,6 +79,8 @@ PHASE2B = M7 / "phase2b-discover.md"
 M7_PHASE1 = M7 / "phase1-query-visualize.md"
 M5_PHASE2 = M5 / "phase2-data-mapping.md"
 M5_PHASE3 = M5 / "phase3-test-load.md"
+PHASE2A = M7 / "phase2-discover.md"
+M7_SKILL = M7 / "SKILL.md"
 
 RETIRED_DISCOVER = "Would you like to continue to module completion now?"
 RETIRED_PAYLOAD = "Shall I store it as `{KEY}_PAYLOAD` instead"
@@ -132,7 +145,8 @@ def discover_problems(text):
         "ask no question about moving on",
         "Both answers to one would take the same route",
         "In the same turn that settles the last offer, continue to Discover phase completion below",
-        "then to the Query Completeness Gate in `phase1-query-visualize.md`",
+        "then to `phase1-query-visualize.md` → \"Data-discoveries deliverable\" and its Query "
+        "Completeness Gate",
         "End that turn on the next 👉 the flow already has, never on a new one (INV-251)",
         "the visualization server teardown question",
         "when no server was started, the graduation offer",
@@ -279,6 +293,98 @@ def resume_problems(text):
     return problems
 
 
+#: #781: the Discover exit option's retired label, which skipped step 4e, the deliverable,
+#: the gate and the teardown.
+RETIRED_EXIT_LABEL = "Proceed to module completion"
+EXIT_LABEL = "2. Wrap up: the export offer, your discoveries document, then module completion."
+GATE_NAME = "Query Completeness Gate"
+DELIVERABLE = "Data-discoveries deliverable"
+#: Every Discover exit plus Phase 1's step-4e convergence pointer: three in each Discover file,
+#: one in Phase 1 (INV-265: a scan that finds fewer has stopped reading the files).
+MIN_EXIT_SENTENCES = 7
+
+
+def gate_item6_problems(text):
+    """#781: the gate's item 6 asks nothing and routes on, found by its number, not its label."""
+    gate = between(text, "## Query Completeness Gate", TEARDOWN)
+    if gate is None:
+        return ["the Query Completeness Gate or the teardown section moved"]
+    found = re.search(r"^6\. ", gate, re.M)
+    if found is None:
+        return ["the gate has no item 6"]
+    item = gate[found.start():]
+    problems = []
+    if re.search(r"^\d+\. ", item[3:], re.M):
+        problems.append("item 6 is not the gate's last item")
+    if "👉" in item:
+        problems.append("item 6 carries a 👉")
+    if "?" in item:
+        problems.append("item 6 asks a question")
+    problems += need(item, (
+        "asks the Bootcamper nothing and adds no question of its own (INV-251)",
+        'continue to "Visualization server teardown" below',
+        "when no server was started, straight to module completion and its graduation offer",
+    ), "item 6")
+    return problems
+
+
+def sentences(text):
+    """Each sentence of each blank-line-separated block, whitespace collapsed (wrap-proof)."""
+    out = []
+    for block in re.split(r"\n\s*\n", text):
+        out += re.split(r"(?<=[.!?])\s+(?=[A-Z(*⛔👉\"])", flat(block).strip())
+    return out
+
+
+def discover_exit_problems(texts):
+    """#781: every sentence naming the gate in a Discover file names the deliverable first.
+
+    ``texts`` maps a name to the text scanned: the two Discover files whole, and Phase 1's
+    "Next: Discover phase (step 4)" section, which holds the step-4e convergence pointer.
+    """
+    problems, seen = [], 0
+    for name, text in texts.items():
+        if text is None:
+            problems.append("%s: the section moved" % name)
+            continue
+        for sentence in sentences(text):
+            if GATE_NAME not in sentence:
+                continue
+            seen += 1
+            at = sentence.find(DELIVERABLE)
+            if at < 0 or at > sentence.find(GATE_NAME):
+                problems.append("%s: names the gate without the deliverable before it: %r"
+                                % (name, sentence[:120]))
+    if seen < MIN_EXIT_SENTENCES:
+        problems.append("found %d exit sentences naming the gate, fewer than %d"
+                        % (seen, MIN_EXIT_SENTENCES))
+    return problems
+
+
+def discover_texts(phase2a, phase2b, phase1):
+    return {"phase2-discover.md": phase2a, "phase2b-discover.md": phase2b,
+            "phase1-query-visualize.md step 4": between(
+                phase1, "## Next: Discover phase (step 4)", "## Success criteria")}
+
+
+def exit_label_problems(phase2a, skill):
+    """#781: the exit option and the module overview name the steps that actually follow."""
+    problems = []
+    if RETIRED_EXIT_LABEL.lower() in flat(phase2a).lower():
+        problems.append("the retired %r label is back" % RETIRED_EXIT_LABEL)
+    if phase2a.count(EXIT_LABEL) != 2:
+        problems.append("the two Discover exits do not both offer %r" % EXIT_LABEL)
+    if phase2a.count('- **2, "Wrap up":** the exit above.') != 2:
+        problems.append("the two exits' handling lines do not both name option 2 \"Wrap up\"")
+    position = between(skill, "## Module position", "⛔ **Bootcamp graduation always follows")
+    if position is None:
+        return problems + ["SKILL.md's Module position moved"]
+    problems += need(position, (
+        "the visualization server teardown runs as its own turn when a server was started, then "
+        "module completion and the graduation offer",), "SKILL.md's Module position")
+    return problems
+
+
 # -------------------------------------------------------------------------------------- tests
 
 
@@ -312,12 +418,95 @@ class Candidate1DiscoverClosesWithoutAQuestion(unittest.TestCase):
                 "### Step 4e:", "👉 **%s**\n\n### Step 4e:" % RETIRED_DISCOVER, 1),
             "close dropped": text.replace(close, "**Transition.**", 1),
             "close stops before the gate": text.replace(
-                "then to the Query Completeness Gate in", "then wait before", 1),
+                "and its Query Completeness Gate. End that turn", "and wait. End that turn", 1),
         }
         for name, mutant in mutants.items():
             with self.subTest(mutant=name):
                 self.assertNotEqual(text, mutant, "the mutation no longer applies")
                 self.assertNotEqual([], discover_problems(mutant))
+
+
+class Issue781GateRoutesOnUnasked(unittest.TestCase):
+    """#781: after step 4e's close, the turn runs through the deliverable and the gate unasked."""
+
+    def setUp(self):
+        self.phase1 = read(M7_PHASE1)
+        self.phase2a = read(PHASE2A)
+        self.phase2b = read(PHASE2B)
+        self.skill = read(M7_SKILL)
+
+    def test_item_6_asks_nothing_and_routes_on(self):
+        self.assertEqual([], gate_item6_problems(self.phase1))
+
+    def test_every_exit_returns_to_the_deliverable_first(self):
+        self.assertEqual([], discover_exit_problems(
+            discover_texts(self.phase2a, self.phase2b, self.phase1)))
+
+    def test_the_exit_label_and_overview_name_what_follows(self):
+        self.assertEqual([], exit_label_problems(self.phase2a, self.skill))
+
+    def mutate(self, text, old, new):
+        mutant = text.replace(old, new, 1)
+        self.assertNotEqual(text, mutant, "the mutation no longer applies: %r" % old)
+        return mutant
+
+    def test_negative_controls_item_6(self):
+        label = "6. **Route on in the same turn.**"
+        mutants = {
+            "the retired question restored": (label, "6. **Ready to proceed?** On a yes, continue."),
+            "a 👉 added to item 6": (label, label + "\n\n   👉 **Shall I stop the server now**\n"),
+            "the teardown route dropped": ('continue to\n   "Visualization server teardown" below',
+                                           "continue"),
+            "an item 7 after it": ("\n## Visualization server teardown",
+                                   "7. **Anything else.**\n\n## Visualization server teardown"),
+        }
+        for name, (old, new) in mutants.items():
+            with self.subTest(mutant=name):
+                self.assertNotEqual([], gate_item6_problems(self.mutate(self.phase1, old, new)))
+
+    def test_negative_controls_exits(self):
+        old_exit = "and then return to `phase1-query-visualize.md` for the Query Completeness Gate."
+        mutants = {
+            "phase2-discover.md opt-in decline": ("phase2a", (
+                'and then return to `phase1-query-visualize.md` → "Data-discoveries deliverable", '
+                "then\n  its Query Completeness Gate.", old_exit)),
+            "phase2-discover.md early exit, re-wrapped": ("phase2a", (
+                'return to `phase1-query-visualize.md` →\n   "Data-discoveries deliverable", then '
+                "its Query Completeness Gate.",
+                "return to `phase1-query-visualize.md` for\n   the Query Completeness Gate.")),
+            "phase2b-discover.md load note": ("phase2b", (
+                'return to `phase1-query-visualize.md` → "Data-discoveries deliverable", then its '
+                "Query\nCompleteness Gate.",
+                "return to `phase1-query-visualize.md` for the Query\nCompleteness Gate.")),
+            "phase2b-discover.md close": ("phase2b", (
+                '`phase1-query-visualize.md` →\n"Data-discoveries deliverable" and its Query '
+                "Completeness Gate.", "the Query Completeness Gate.")),
+            "phase1 step-4e pointer": ("phase1", (
+                'return here for "Data-discoveries deliverable" below, then the\nQuery '
+                "Completeness Gate.", "return here for the Query Completeness Gate.")),
+            "deliverable named after the gate": ("phase2b", (
+                'After updating the `discover_phase` status, return to `phase1-query-visualize.md` '
+                '→\n"Data-discoveries deliverable", then its Query Completeness Gate.',
+                "After updating the `discover_phase` status, return to the Query Completeness "
+                'Gate, then "Data-discoveries deliverable".')),
+        }
+        for name, (which, (old, new)) in mutants.items():
+            with self.subTest(mutant=name):
+                texts = {"phase1": self.phase1, "phase2a": self.phase2a, "phase2b": self.phase2b}
+                texts[which] = self.mutate(texts[which], old, new)
+                self.assertNotEqual([], discover_exit_problems(
+                    discover_texts(texts["phase2a"], texts["phase2b"], texts["phase1"])))
+
+    def test_negative_controls_label_and_overview(self):
+        with self.subTest(mutant="the retired label restored"):
+            mutant = self.mutate(self.phase2a, EXIT_LABEL, "2. %s." % RETIRED_EXIT_LABEL)
+            self.assertNotEqual([], exit_label_problems(mutant, self.skill))
+        with self.subTest(mutant="the overview drops the teardown"):
+            mutant = self.mutate(
+                self.skill, "the visualization server teardown runs as its own turn when a "
+                "server was started, then\nmodule completion and the graduation offer",
+                "run module completion and offer graduation")
+            self.assertNotEqual([], exit_label_problems(self.phase2a, mutant))
 
 
 class Candidate2RenamesThePayloadKey(unittest.TestCase):

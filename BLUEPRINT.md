@@ -2822,7 +2822,8 @@ Phase 1 (`phase1-query-visualize.md`):
   extracted text is checked; failure is reported, never blocking.
 - Query Completeness Gate (item 5 checks that every saved requirement appears
   in Your question, answered exactly once, adding a missing row and
-  re-rendering; it asks nothing and never blocks), then (only if a server started, by a recorded
+  re-rendering; it asks nothing and never blocks; item 6, the last, asks
+  nothing either and routes on in the same turn), then (only if a server started, by a recorded
   pid or port) a separate stop
   question that stops by recorded pid. Step 3c and its "Yes" link the
   failed-stop rule (`#failed-stop`, INV-394, INV-300), whose no-purge case
@@ -2883,7 +2884,8 @@ graduation copies to `production/data/exports/` (#686);
 entity, edge and attribute counts come from the written files, and zero edges
 is a failure, never handed over. Each system lands in `steps.4e.targets`. No
 transition question follows the offers: the turn that settles the last one sets
-`discover_phase` to `"completed"` and returns to the gate, ending on the
+`discover_phase` to `"completed"` and returns to the data-discoveries
+deliverable, then the gate, ending on the
 teardown 👉, or on the graduation offer when no server ran. On a synthesized
 source whose `quality_intent` carries `relationship_intent`, or whose scenario's
 success criteria name households or related parties, reaching the 4d or step 7
@@ -10515,21 +10517,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8718 test methods in 458 files, matching `inventory.test_count_total`.
+There are 8724 test methods in 458 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8718.
+sum to 8724.
 
-Two files run more tests than they define, so discovery collects 8717:
+Two files run more tests than they define, so discovery collects 8723:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8710`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8716`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8717`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8723`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10588,7 +10590,7 @@ looks wrong.
 - `tests/test_concepts_teaching_section_claims_no_exemption.py`: 12
 - `tests/test_config_seeding_guidance.py`: 16
 - `tests/test_confirmation_gate_is_satisfiable_on_a_generated_scenario.py`: 9
-- `tests/test_confirmations_with_one_sensible_answer.py`: 18
+- `tests/test_confirmations_with_one_sensible_answer.py`: 24
 - `tests/test_conformance_scans.py`: 27
 - `tests/test_conformance_sees_a_rule_beside_a_citation.py`: 8
 - `tests/test_container_lifecycle_runtimes.py`: 18
@@ -13920,6 +13922,16 @@ Senzing licensing, with no SPDX identifier.
   Module 1 claimed effects Step 8a does not have);
   `tests/test_license_gate_is_described_as_it_runs.py` guards each claim with
   negative controls, and no invariant is added (INV-093, INV-278, INV-300)
+- #781: Module 7's Query Completeness Gate item 6 asks nothing and routes on
+  in the same turn to the visualization server teardown, or to module
+  completion when no server was started; every Discover exit and the step-4e
+  pointer return to "Data-discoveries deliverable" before the gate; the exit
+  option reads "Wrap up: the export offer, your discoveries document, then
+  module completion." and the module overview names the teardown turn;
+  `tests/test_confirmations_with_one_sensible_answer.py` guards each with
+  negative controls, and no invariant is added (INV-251, INV-356) (item 6
+  still asked "Ready to proceed?" after step 4e's no-question close, and the
+  exits skipped the deliverable)
 - #784: Module 4 Step 2's band sample of `config/data_sources.yaml` is
   `sources:` -> `MERIDIAN_CRM:` -> its fields, and the `scenario_intent`
   sample's empty registry is `sources: {}`; the new
