@@ -10508,10 +10508,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8672 test methods in 456 files, matching `inventory.test_count_total`.
+There are 8680 test methods in 457 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8672.
+sum to 8680.
 
 Two files run more tests than they define, so discovery collects 8679:
 
@@ -10855,6 +10855,7 @@ looks wrong.
 - `tests/test_recorded_container_commands_use_the_recorded_runtime.py`: 17
 - `tests/test_registered_amendments_are_not_called_pending.py`: 12
 - `tests/test_registration_idempotency_is_constructed.py`: 12
+- `tests/test_registry_samples_are_keyed_by_data_source.py`: 13
 - `tests/test_registry_status_values_are_handled.py`: 12
 - `tests/test_related_entities_guidance.py`: 21
 - `tests/test_release_bumps_version_changelog_and_tag_together.py`: 41
@@ -13911,6 +13912,15 @@ Senzing licensing, with no SPDX identifier.
   Module 1 claimed effects Step 8a does not have);
   `tests/test_license_gate_is_described_as_it_runs.py` guards each claim with
   negative controls, and no invariant is added (INV-093, INV-278, INV-300)
+- #784: Module 4 Step 2's band sample of `config/data_sources.yaml` is
+  `sources:` -> `MERIDIAN_CRM:` -> its fields, and the `scenario_intent`
+  sample's empty registry is `sources: {}`; the new
+  `tests/test_registry_samples_are_keyed_by_data_source.py` checks every fenced
+  `yaml` block in shipped Markdown that has a `sources:` key or a `name:` with a
+  registry field, with negative controls (the sample was a `- name:` list item
+  with no `sources:` key while every other site says `sources:` is a mapping
+  keyed by DATA_SOURCE, and option 5 tells the guide to copy its shape; a new
+  invariant is queued for `/review-invariants`)
 - #785: Module 1 Step 10a records a specific `deployment_target`
   (`aws`/`azure`/`gcp`, `kubernetes`/`docker_swarm`, `on_premises`) and
   `cloud_provider` only when the Bootcamper names it, else the generic
