@@ -2521,14 +2521,17 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
         y = yh + 12
         pdf.set_font("Helvetica", "", 10)
         for mod in recap.modules:
-            label = _clip(
-                _safe(
-                    f"{mod.number}. {mod.title}"
-                    if mod.number is not None
-                    else mod.title
-                ),
-                46,
+            full = _safe(
+                f"{mod.number}. {mod.title}"
+                if mod.number is not None
+                else mod.title
             )
+            label = _clip(full, 46)
+            if label != full:
+                # ⛔ (INV-408) A chip is fixed geometry, so the clip stays, but what it cut
+                # is reported before the success line. The whole title is still on the
+                # module's own page and in the contents, both of which wrap.
+                record_content_loss("cover module chip", full[len(label) - 3:])
             w = _width(pdf, label) + 8
             if x + w > pdf.l_margin + epw:
                 x = pdf.l_margin
@@ -2753,6 +2756,10 @@ _CERT_SEAL_W = 21.7        # award seal, ribbon tails included
 _CERT_SEAL_H = 28.0        # a shade under the template's 29.2, to clear the colophon
 _CERT_MODULE_LINES = 3     # module list is capped, so it cannot reach the seal
 
+#: The site each clipped certificate line is reported under (INV-408), by `_CERT_FONT` key.
+#: Only the lines drawn with a `max_w` can be clipped: the name and the two signature blocks.
+_CERT_CLIP_SITES = {"name": "certificate name", "sig": "certificate signature block"}
+
 # Baselines, in mm from the page top. Cap tops — not baselines — were measured from the
 # template, so each value is that cap top plus 0.717 em of its own font size, which is
 # where fpdf2's `text()` and the fallback's `Tm` both want the pen.
@@ -2922,6 +2929,10 @@ def _cert_line(pdf, key: str, text: str, y: float, color, cx: float = _CERT_CX,
             width = _cert_text_width(pdf, text, size, style, spacing)
             if width <= max_w:
                 break
+        if text != full:
+            # ⛔ (INV-408) The certificate is one fixed page, so the clip stays, but what
+            # it cut is reported on stderr before the success line instead of vanishing.
+            record_content_loss(_CERT_CLIP_SITES.get(key, f"certificate {key}"), full[keep:])
     pdf.set_font("Helvetica", style, size)
     setter = getattr(pdf, "set_char_spacing", None)
     if setter and spacing:
@@ -2955,8 +2966,10 @@ def _cert_module_layout(labels: List[str], measure) -> Tuple[List[str], float]:
     full size, which is what a normal bootcamp needs. Then the card's full usable width —
     less like the template, but it costs nothing that matters. Only then the type size.
     Truncation is last and effectively unreachable, because the modules completed are
-    required content on this page (INV-100). `measure(text, size)` is the caller's, so
-    both renderers fit the list identically (INV-066).
+    required content on this page (INV-100); when it is reached, the lines it drops are
+    recorded and reported on stderr before the success line (INV-408).
+    `measure(text, size)` is the caller's, so both renderers fit the list identically
+    (INV-066).
     """
     joined = " · ".join(labels)
     base = _CERT_FONT["modules"][0]
@@ -2970,6 +2983,7 @@ def _cert_module_layout(labels: List[str], measure) -> Tuple[List[str], float]:
         lines = _wrap_to_width(joined, width, lambda s: measure(s, size))
         if len(lines) <= _CERT_MODULE_LINES:
             return lines, size
+    record_content_loss("certificate module list", " ".join(lines[_CERT_MODULE_LINES:]))
     lines = lines[:_CERT_MODULE_LINES]
     lines[-1] = lines[-1].rstrip(" ·") + " ..."
     return lines, size
@@ -3137,59 +3151,80 @@ def _render_toc(pdf, epw: float, recap: Recap, starts: Optional[List[int]],
             if mod.number is not None
             else mod.title
         )
-        pdf.set_x(pdf.l_margin)
-        pdf.set_text_color(*INK)
-        pdf.set_font("Helvetica", "", 11)
-        pdf.cell(epw - 16, 8, _clip(_safe(label), 66))
-        pdf.set_text_color(*BLUE)
-        pdf.set_font("Helvetica", "B", 11)
-        pdf.cell(16, 8, "" if starts is None else str(starts[i]), align="R")
-        pdf.ln(8)
+        _render_toc_row(pdf, epw, label, "" if starts is None else str(starts[i]))
 
     # The notes row goes AFTER the module rows, mirroring where the page itself sits
     # (INV-258). It is a row in the contents, never a module: nothing else in this file
     # reads the TOC, so listing it here cannot leak it into the certificate or the cover.
     if recap.notes:
-        pdf.set_x(pdf.l_margin)
-        pdf.set_text_color(*INK)
-        pdf.set_font("Helvetica", "", 11)
-        pdf.cell(epw - 16, 8, _clip(_safe(recap.notes.title), 66))
-        pdf.set_text_color(*BLUE)
-        pdf.set_font("Helvetica", "B", 11)
-        pdf.cell(16, 8, "" if notes_start is None else str(notes_start), align="R")
-        pdf.ln(8)
+        _render_toc_row(pdf, epw, recap.notes.title,
+                        "" if notes_start is None else str(notes_start))
 
     # The handover row goes last, after the notes row, mirroring where its page sits
     # (#481). A row in the contents, never a module.
     if recap.handover:
+        _render_toc_row(pdf, epw, recap.handover.title,
+                        "" if handover_start is None else str(handover_start))
+
+
+def _render_toc_row(pdf, epw: float, label: str, page: str) -> None:
+    """One contents row: the label wrapped to its column, the page number on its last line.
+
+    ⛔ (INV-408) Wrapped, never clipped: the contents can grow down the page, so a long
+    module name or notes title takes a second line instead of losing its tail. Both render
+    passes wrap identically, so the page numbers the measure pass records still hold.
+    """
+    pdf.set_font("Helvetica", "", 11)
+    text = _safe(label)
+    lines = _wrap_to_fit(pdf, text, epw - 16)
+    for i, line in enumerate(lines):
         pdf.set_x(pdf.l_margin)
         pdf.set_text_color(*INK)
         pdf.set_font("Helvetica", "", 11)
-        pdf.cell(epw - 16, 8, _clip(_safe(recap.handover.title), 66))
-        pdf.set_text_color(*BLUE)
-        pdf.set_font("Helvetica", "B", 11)
-        pdf.cell(16, 8, "" if handover_start is None else str(handover_start), align="R")
+        pdf.cell(epw - 16, 8, line)
+        if i == len(lines) - 1:
+            pdf.set_text_color(*BLUE)
+            pdf.set_font("Helvetica", "B", 11)
+            pdf.cell(16, 8, page, align="R")
         pdf.ln(8)
+    account_emitted("contents row", text, lines)
+
+
+def _render_title_band(pdf, epw: float, color, title: str,
+                       subtitle: Optional[str] = None) -> None:
+    """A page's colored header band and its title, wrapped rather than clipped (INV-408).
+
+    The band grows by one 9 mm title line for each line past the first, so a long module
+    name, notes title or handover title reaches the page whole. A one-line title draws
+    exactly as before: a 24 mm band, the title at 6 mm, the subtitle at 15 mm.
+    """
+    pdf.set_font("Helvetica", "B", 16)
+    text = _safe(title)
+    lines = _wrap_to_fit(pdf, text, epw)
+    extra = 9.0 * (len(lines) - 1)
+    pdf.set_fill_color(*color)
+    pdf.rect(0, 0, pdf.w, 24 + extra, style="F")
+    pdf.set_text_color(255, 255, 255)
+    for i, line in enumerate(lines):
+        pdf.set_xy(pdf.l_margin, 6 + 9.0 * i)
+        pdf.cell(epw, 9, line)
+    account_emitted("page heading", text, lines)
+    if subtitle:
+        pdf.set_xy(pdf.l_margin, 15 + extra)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.cell(epw, 5, _safe(subtitle))
+    pdf.ln(24)
 
 
 def _render_module_page(pdf, epw: float, mod) -> int:
     """Render one module onto a fresh page; return the page number it starts on."""
     pdf.add_page()
     start = pdf.page_no()
-    pdf.set_fill_color(*BLUE)
-    pdf.rect(0, 0, pdf.w, 24, style="F")
-    pdf.set_xy(pdf.l_margin, 6)
-    pdf.set_text_color(255, 255, 255)
-    pdf.set_font("Helvetica", "B", 16)
     heading = (
         f"Module {mod.number}: {mod.title}" if mod.number is not None else mod.title
     )
-    pdf.cell(epw, 9, _clip(_safe(heading), 62))
-    if mod.date:
-        pdf.set_xy(pdf.l_margin, 15)
-        pdf.set_font("Helvetica", "", 9)
-        pdf.cell(epw, 5, _safe(f"Completed {_format_date(mod.date)}"))
-    pdf.ln(24)
+    _render_title_band(pdf, epw, BLUE, heading,
+                       f"Completed {_format_date(mod.date)}" if mod.date else None)
 
     gaps = tuple(mod.missing_summary_blocks())
     for name in REQUIRED_SECTIONS:
@@ -3216,19 +3251,11 @@ def _render_notes_page(pdf, epw: float, notes: NotesSection) -> int:
     """
     pdf.add_page()
     start = pdf.page_no()
-    pdf.set_fill_color(*ACCENT)
-    pdf.rect(0, 0, pdf.w, 24, style="F")
-    pdf.set_xy(pdf.l_margin, 6)
-    pdf.set_text_color(255, 255, 255)
-    pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(epw, 9, _clip(_safe(notes.title), 62))
-    pdf.set_xy(pdf.l_margin, 15)
-    pdf.set_font("Helvetica", "", 9)
     count = len(notes.entries)
-    pdf.cell(epw, 5, _safe(
+    _render_title_band(
+        pdf, epw, ACCENT, notes.title,
         "In your own words — %d note%s captured during the bootcamp"
-        % (count, "" if count == 1 else "s")))
-    pdf.ln(24)
+        % (count, "" if count == 1 else "s"))
 
     for note in notes.entries:
         pdf.ln(3)
@@ -3288,16 +3315,7 @@ def _render_handover_page(pdf, epw: float, handover: HandoverSection) -> int:
     """
     pdf.add_page()
     start = pdf.page_no()
-    pdf.set_fill_color(*NAVY)
-    pdf.rect(0, 0, pdf.w, 24, style="F")
-    pdf.set_xy(pdf.l_margin, 6)
-    pdf.set_text_color(255, 255, 255)
-    pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(epw, 9, _clip(_safe(handover.title), 62))
-    pdf.set_xy(pdf.l_margin, 15)
-    pdf.set_font("Helvetica", "", 9)
-    pdf.cell(epw, 5, _safe(BOOTCAMP_HANDOVER_SUBTITLE))
-    pdf.ln(24)
+    _render_title_band(pdf, epw, NAVY, handover.title, BOOTCAMP_HANDOVER_SUBTITLE)
     for heading, lines in handover.parts:
         _render_subsection(pdf, epw, heading, lines)
     return start
@@ -3726,7 +3744,13 @@ def _render_line(pdf, epw, line: str) -> None:
 def _clip(s: str, n: int) -> str:
     """Truncate to ``n`` characters with an ASCII ellipsis.
 
-    ⛔ **The ellipsis must stay ASCII.** Every call site is ``_clip(_safe(x), n)`` —
+    ⛔ (INV-408) **Its one call site is the cover's module chip**, fixed geometry where the
+    clip stays, and that site records what it cut with `record_content_loss`. The contents
+    rows and page headings it used to clip now wrap (#788), and
+    ``tests/test_stdlib_pdf_keeps_code_and_table_tails.py`` fails on a call in any function
+    that does not record its loss.
+
+    ⛔ **The ellipsis must stay ASCII.** The call site passes ``_safe`` output —
     ``_safe`` runs *first*, so anything ``_clip`` appends afterwards is never sanitized.
     A U+2026 "…" here therefore reached fpdf2's Latin-1 core font unescaped and raised
     ``Character "…" … outside the range of characters supported``, which
@@ -3740,7 +3764,7 @@ def _clip(s: str, n: int) -> str:
     even a two-digit number prefix makes only 45 — so a realistic recap cannot exercise
     the path, and a unit test does. ``_UNICODE_MAP`` maps "…" to "..." already; the
     defect was purely the order of operations, which is why the fix is here rather than
-    at the three call sites — an ASCII suffix cannot be got wrong.
+    at the call sites — an ASCII suffix cannot be got wrong.
     ``tests/test_recap_pdf_font_safety.py`` pins this.
     """
     return s if len(s) <= n else s[: n - 1] + "..."
@@ -4185,6 +4209,25 @@ def _wrap_to_width(text: str, max_w: float, measure) -> List[str]:
             current = word
     lines.append(current)
     return lines
+
+
+def _wrap_to_fit(pdf, text: str, max_w: float) -> List[str]:
+    """`text` word-wrapped to `max_w` mm in the pdf's current font, every character kept.
+
+    `_wrap_to_width` leaves a single word wider than the line on a line of its own, where
+    it would run off the page (INV-121); such a word is broken by characters here, so the
+    chunks rejoin into the input and nothing is cut (INV-408).
+    """
+    out: List[str] = []
+    for line in _wrap_to_width(text, max_w, lambda s: _width(pdf, s)):
+        while len(line) > 1 and _width(pdf, line) > max_w:
+            cut = len(line) - 1
+            while cut > 1 and _width(pdf, line[:cut]) > max_w:
+                cut -= 1
+            out.append(line[:cut])
+            line = line[cut:]
+        out.append(line)
+    return out
 
 
 def _wrap(text: str, width: int) -> List[str]:
