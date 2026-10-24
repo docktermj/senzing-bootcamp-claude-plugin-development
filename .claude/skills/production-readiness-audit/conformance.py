@@ -563,7 +563,8 @@ def cmd_since(args):
 
     A corpus-wide count answers "how many rules exist", and what a run needs to know is
     "which rules did I just add". Those differ by exactly the amount that makes the
-    section-scoped count useless for the job `implement-spec` Step 5 gives it: on
+    section-scoped count useless for the job an `/implement-github-issue` run gives it, finding
+    the hard rules it shipped before it writes its ledger entry's invariant answer: on
     2026-08-21 the count did not move at all while 26 hard-rule lines were added.
     """
     repo, plugin, _ = paths(args)

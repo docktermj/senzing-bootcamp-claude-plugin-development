@@ -21,7 +21,8 @@ comments (Started, Clarifications, Approach, Result), and the escape-hatch comme
 when the issue proves invalid, a duplicate, or already fixed. Their exact text is still shown,
 but they need no separate yes. Every other outward record keeps INV-314's per-record yes: a
 new issue, `submit_feedback`, and an ad-hoc comment, though an issue or a comment may instead take
-one yes for the whole list shown in one message (INV-314, 2026-10-13 note). Push and PR stay
+one yes for the whole list shown in one message (INV-314, 2026-10-13 note), under the conditions
+in `.claude/skills/feedback-to-issues/drafts.py` → "The batch yes". Push and PR stay
 behind Gate 2's yes.
 
 ## The local CI mirror in this repository
@@ -56,9 +57,12 @@ this command raises the volume passing through that gap, so the omission is made
 here rather than left for `/review-invariants` to notice later.
 
 ⛔ **This command cannot register an invariant.** Minting an ID is the maintainer's alone, so
-the run's obligation is to write the block — the rule it shipped, its drafted wording, and the
-enforcer — and leave the verdict to `/review-invariants`. Write the ID as `INV-NNN`: a literal
-number would cite an invariant that does not exist and turn `citations.py verify` red.
+the run's obligation is to write the block in its `specs/IMPLEMENTED.md` entry and leave the
+verdict to `/review-invariants`: a `DEFERRED INVARIANT` block for a rule it shipped, or a
+`PROPOSED AMENDMENT` block for a change to an invariant already in force, in the shape
+[`review-invariants` → "Writing one"](../skills/review-invariants/SKILL.md#writing-one) states
+(INV-365, INV-300). Write a new rule's ID as `INV-NNN`: a literal number would cite an
+invariant that does not exist and turn `citations.py verify` red.
 
 ⚠️ **`pending_invariants.py check` may report `0 rule quotes checked` for a block written
 here, and that zero is not a clean check** — it resolves a rule's location only under

@@ -248,8 +248,8 @@ def cmd_census(args) -> int:
         headings = ledger_headings(repo)
         declined = declined_headings(repo)
         # A spec has TWO terminal states. Counting a declined spec as unimplemented
-        # reports settled work as outstanding, which is the same misreport `implement-spec`
-        # Step 1 avoids by subtracting both ledgers.
+        # reports settled work as outstanding, which is the same misreport the retired
+        # `implement-spec` Step 1 avoided by subtracting both ledgers.
         outstanding = specs - headings - declined
         print("== specs: %d files, %d ledger headings" % (len(specs), len(headings)))
         print("   headings with no spec file : %d" % len(headings - specs))

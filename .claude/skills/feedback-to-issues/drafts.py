@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Two-stage drafting for the five finding skills: the manifest, its statuses and the contract.
+"""Two-stage drafting for the five drafting skills: the manifest, its statuses and the contract.
 
 ⛔ **(INV-300) This docstring is the one statement of the `--draft <run-dir>` / `--file <run-dir>`
 contract and of the manifest format.** `/feedback-to-issues`, `/retrofit-from-public`,
 `/delegate-to-mcp-server`, `/production-readiness-audit` and `/dry-run` cite it and restate none
 of it. Run without either argument, each of them behaves exactly as it did before (#572).
-`tests/test_drafts.py` exercises this helper offline and holds the five skills to their pointer.
+`tests/test_drafts.py` exercises this helper offline and holds the five drafting skills to their
+pointer. It is also the one statement of the batch yes ("The batch yes", below).
 
 Why two stages: a skill that finds and files in one session leaves no point at which a caller can
 collect several skills' findings, merge duplicates and get one checkpoint's approval. `--draft` is
@@ -49,6 +50,27 @@ status with ``set``: `approved` or `struck` for an `issue` or `ledger` record;
 `upstream-sent` or `upstream-declined` for an `upstream` record, which only its own yes moves
 (`submit_feedback` stays one message, one yes: INV-314, 2026-10-13 note).
 
+The batch yes
+=============
+
+⛔ **(INV-300) This section is the one statement of when one yes may cover several records
+(INV-314, 2026-10-13 note, #574).** Every filing site in the five drafting skills,
+`/release-cycle`, `/auto-test`, `/compact-dev-environment` and the `implement-github-issue`
+overlay writes "one yes for the whole list shown in one message (INV-314, 2026-10-13 note)" and
+points here, and restates none of it. ⛔ **(INV-314) One yes covers several records only when all
+four conditions hold:**
+
+1. every record is shown in one message, numbered, with its exact title, body and labels;
+2. the reply may strike records by number ("yes except 3, 7"), and a struck record is not
+   created;
+3. the yes covers only the records shown in that message, so a record added or edited after
+   it was shown needs its own yes;
+4. the records are GitHub issues and comments in this repository.
+
+`submit_feedback` is never batched: it leaves the organization, so it stays one message, one yes,
+and INV-321 governs its content. Where no maintainer is present nothing changes: a run creates
+nothing outside INV-314's 2026-09-30 scope note's list.
+
 Stage two: `--file <run-dir>`
 =============================
 
@@ -58,7 +80,8 @@ Stage two: `--file <run-dir>`
    each carrying the exact `gh issue create` command, and ``SKIP`` (already filed), ``STRUCK``,
    ``PENDING`` and ``UPSTREAM`` lines for the rest, which it leaves alone.
 2. ⛔ **(INV-314) Show the maintainer each record's title, labels and body, and get a yes for each
-   before running its command, or one yes for the whole list shown in one message (INV-314, 2026-10-13 note).** `/retrofit-from-public`
+   before running its command, or one yes for the whole list shown in one message (INV-314,
+   2026-10-13 note), under the conditions in "The batch yes" above.** `/retrofit-from-public`
    first repeats its tracker search, because the tracker may have changed since the draft, and
    strikes a record already tracked (``set <id> struck --note "tracked as #<n>"``).
 3. After each issue is created: ``record-filed <run-dir> <id> <number>``. A record already

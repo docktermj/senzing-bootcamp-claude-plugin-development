@@ -56,8 +56,9 @@ systematic version of both, and it is the only one of the four that reads the pl
   deliverable; implementing them is the job of `/implement-github-issue` *(user level)*.
 - ⛔ **(INV-314) Filing is outward-facing and immediate. Show the maintainer every title and body and
   get an explicit yes first** (Step 7), or one yes for the whole list shown in one message
-  (INV-314, 2026-10-13 note). An issue is visible to anyone watching the
-  repository the moment it is created; it can be edited or closed, never un-filed, and its
+  (INV-314, 2026-10-13 note), under the conditions in
+  `.claude/skills/feedback-to-issues/drafts.py` → "The batch yes". An issue is visible to anyone
+  watching the repository the moment it is created; it can be edited or closed, never un-filed, and its
   notifications have already gone out. This is the same gate Step 8 applies to
   `submit_feedback`, for the same reason, except that there each message takes its own yes.
 - **"The server can answer it" is not by itself a reason to delete anything.** It is
@@ -296,7 +297,8 @@ One issue per coherent change, using `issue-template.md` in this skill's directo
 Group sites that share one fix; keep unrelated ones apart.
 
 ⛔ **(INV-314) Show the maintainer every title and body, and get a yes, or
-one yes for the whole list shown in one message (INV-314, 2026-10-13 note), before filing.**
+one yes for the whole list shown in one message (INV-314, 2026-10-13 note), under the conditions
+in `.claude/skills/feedback-to-issues/drafts.py` → "The batch yes", before filing.**
 Then, for each approved item:
 
 ```bash
@@ -321,7 +323,8 @@ nothing outside `<run-dir>`.** Each issue, Step 8 message and Step 9 row becomes
 arguments as `--after` and `--after-struck`, and the run ends with `drafts.py list`. `--draft` is
 the release cycle's interface (#573), and the caller records unresolved drafts (INV-317). **With
 `--file <run-dir>`**, file what `drafts.py file-plan` prints, after a yes for each record or one yes
-for the whole list shown in one message (INV-314, 2026-10-13 note); an upstream draft is never sent
+for the whole list shown in one message (INV-314, 2026-10-13 note), under the conditions in
+`.claude/skills/feedback-to-issues/drafts.py` → "The batch yes"; an upstream draft is never sent
 by `--file` and keeps its own yes. Both stages, the manifest and its statuses are stated once in `drafts.py` (INV-300).
 
 Rules beyond the template:

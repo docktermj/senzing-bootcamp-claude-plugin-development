@@ -114,8 +114,9 @@ SAME_WORDS = (
     "a finding already tracked points at that issue instead of opening a duplicate",
     "file at the end of phase 1 or 2, and when a phase 3 walk pauses or ends",
     "show the maintainer each title and body and get a yes, one issue at a time, or one yes for "
-    "the whole list shown in one message (inv-314, 2026-10-13 note). any other \"yes to all\" is "
-    "not assent to each",
+    "the whole list shown in one message (inv-314, 2026-10-13 note), under the conditions in "
+    "`.claude/skills/feedback-to-issues/drafts.py` → \"the batch yes\". any other \"yes to all\" "
+    "is not assent to each",
     "replace the draft's marker with the issue number",
     "no maintainer present: file nothing",
     "not filed — needs the maintainer to file it",

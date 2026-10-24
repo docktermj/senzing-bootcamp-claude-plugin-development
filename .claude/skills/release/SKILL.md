@@ -141,7 +141,9 @@ rather than commit subjects. So `release.py` curates each entry it writes, in th
 mechanical operations and no others:
 
 1. **Drop the subjects that describe no change** — a bare word such as `Savepoint`, with or
-   without a leading `#456`, and a merge subject. Nothing else is dropped.
+   without a leading `#456`; a subject that is bookkeeping only, an issue reference or a type
+   prefix with nothing after it, such as `#456` or `fix:`; and a merge subject. Nothing else is
+   dropped.
 2. **Keep every remaining subject's own wording verbatim.**
 3. **Group the kept bullets under their own conventional-commit type** — `### fix`,
    `### docs`, and `### other` for a subject carrying no type — in the order the types first

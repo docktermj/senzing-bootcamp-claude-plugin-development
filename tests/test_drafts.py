@@ -1,4 +1,4 @@
-"""The five finding skills run in two stages through one helper, `drafts.py` (#572).
+"""The five drafting skills run in two stages through one helper, `drafts.py` (#572).
 
 `/feedback-to-issues`, `/retrofit-from-public`, `/delegate-to-mcp-server`,
 `/production-readiness-audit` and `/dry-run` each found and filed in one session, so no caller
@@ -20,7 +20,9 @@ What this pins, each with a negative control where it is a predicate over text:
    rule (files nothing, fixes nothing, sends nothing, writes nothing outside `<run-dir>`), says
    `--draft` is the release cycle's interface (#573) and the caller records unresolved drafts (INV-317),
    ends a draft run with `drafts.py list`, and restates no part of the manifest format (INV-300).
-   Its `--file` stage takes a yes for each record or INV-314's batch clause, and the three skills
+   Its `--file` stage takes a yes for each record or INV-314's batch clause, which ends with the
+   pointer to `drafts.py` → "The batch yes", the one statement of the note's four conditions
+   (#808; `tests/test_filing_is_gated.py` holds every other site to it), and the three skills
    that draft upstream messages say `--file` never sends one, which keeps its own yes (#573
    retired #572's "get a yes for each first", written before INV-314's 2026-10-13 note).
    Each end-of-run check in `/dry-run` (two, and phase 3's step 6) and `/production-readiness-audit`
@@ -308,7 +310,9 @@ class TheDocstringIsTheContract(unittest.TestCase):
                        "`<run-dir>/drafts/manifest.json`", "dedupe_key", "baseline SHA",
                        "`/release-cycle`'s interface", "The caller records unresolved drafts "
                        "(INV-317)", "get a yes for each", "(INV-314)", "(INV-318)", "(INV-319)",
-                       "declined by the maintainer", "never filed twice", BATCH_CLAUSE,
+                       "declined by the maintainer", "never filed twice", BATCH_NOTE,
+                       'under the conditions in "the batch yes" above', "the batch yes =============",
+                       "this section is the one statement of when one yes may cover several records",
                        "`--file` never sends an `upstream` record", "which only its own yes moves",
                        "`submit_feedback` stays one message, one yes"):
             self.assertIn(phrase.lower(), self.doc.lower())
@@ -318,8 +322,12 @@ class TheDocstringIsTheContract(unittest.TestCase):
         self.assertEqual([], stale(self.doc))
 
 
-#: INV-314's 2026-10-13 note, in the one form `tests/test_filing_is_gated.py` finds (#575).
-BATCH_CLAUSE = "one yes for the whole list shown in one message (INV-314, 2026-10-13 note)"
+#: INV-314's 2026-10-13 note, in the one form `tests/test_filing_is_gated.py` finds (#575), with
+#: the pointer to its conditions that #808 added. The helper's own docstring states them, so it
+#: carries the note and points at its section instead.
+BATCH_NOTE = "one yes for the whole list shown in one message (INV-314, 2026-10-13 note)"
+BATCH_CLAUSE = (BATCH_NOTE + ', under the conditions in '
+                '`.claude/skills/feedback-to-issues/drafts.py` → "The batch yes"')
 
 #: #572's per-record lines, written before #570's amendments were registered (#573 retired them).
 STALE = ("get a yes for each first", "Until #570's amendments are registered")
@@ -509,7 +517,21 @@ class NegativeControls(unittest.TestCase):
                                            "and get a yes for each first or")))
         self.assertTrue(stale("2. Until #570's amendments are registered, show each record"))
         self.assertIn(REQUIRED[7], missing(text.replace(BATCH_CLAUSE, "")))
+        # #808: the bare note, its pointer to the conditions dropped, is missing too.
+        self.assertIn(REQUIRED[7], missing(text.replace(BATCH_CLAUSE, BATCH_NOTE)))
         self.assertNotIn(UPSTREAM_KEPT, text.replace(UPSTREAM_KEPT, "an upstream draft is sent"))
+
+    def test_a_restated_batch_condition_is_reported(self):
+        """#808: a skill restating a condition of the batch yes, instead of pointing, fails."""
+        from test_filing_is_gated import restated_conditions
+        for name in SKILLS:
+            with self.subTest(skill=name):
+                text = flat(skill_text(name))
+                self.assertEqual([], restated_conditions(text), "restated as shipped")
+                mutated = text.replace(BATCH_CLAUSE, BATCH_CLAUSE + ", each record numbered with "
+                                       "its exact title, body and labels", 1)
+                self.assertNotEqual(text, mutated, "the control's target is gone")
+                self.assertTrue(restated_conditions(mutated))
 
     def test_a_restated_status_is_reported(self):
         self.assertTrue(restated("Each record starts with status `approved`."))

@@ -54,7 +54,7 @@ receives the shippable plugin through `/propagate-to-public`.
   and helper scripts.
 - `.claude/skills/feedback-to-issues/`: maintainer skill `/feedback-to-issues`,
   its feedback ledger script and issue template, and `drafts.py`, the two-stage
-  drafting helper the five finding skills share (section 5.46).
+  drafting helper the five drafting skills share (section 5.46).
 - `.claude/skills/production-readiness-audit/`: maintainer skill
   `/production-readiness-audit` and its `conformance.py`.
 - `.claude/skills/propagate-to-public/`: maintainer skill `/propagate-to-public`
@@ -4312,9 +4312,12 @@ normalized entry. The ledger `feedback/PROCESSED.jsonl` is read last-wins by
 
 Argparse usage errors exit 2.
 
-`drafts.py` (stdlib, offline, #572) is the two-stage helper the five finding
+`drafts.py` (stdlib, offline, #572) is the two-stage helper the five drafting
 skills share. Its docstring is the one statement of the `--draft <run-dir>` /
-`--file <run-dir>` contract and of the manifest (INV-300). The manifest
+`--file <run-dir>` contract and of the manifest (INV-300), and its "The batch
+yes" section is the one statement of INV-314's 2026-10-13 conditions for one
+yes over several records, which every filing site's batch clause points at
+(#808). The manifest
 `<run-dir>/drafts/manifest.json` is `{"format": 1, "baseline_sha", "records"}`,
 written atomically (`os.replace`) under an `O_CREAT | O_EXCL` lock file,
 `manifest.lock` (exit 3 after 30 s). Each record is drafted to
@@ -5049,7 +5052,7 @@ Stages: 0 kickoff (in one batch: whether to run the simulated walk, its
 persona and start module, merge or `--no-merge`, the refine threshold,
 showing the standing 0.7 to confirm or change, and, only when more than one
 feedback file exists, which one `/feedback-to-issues` triages); 1 find (the
-four finding skills with `--draft <run-dir>` in subagents against one
+four finding skills other than `/dry-run` with `--draft <run-dir>` in subagents against one
 baseline SHA, `/feedback-to-issues` with the feedback file as its path, the
 merge, checkpoint A, then each skill's `--file <run-dir>` in the main session,
 holding the after-filing steps); 2 refine (`refine-github-issue` batch mode,
@@ -10563,12 +10566,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8780 test methods in 459 files, matching `inventory.test_count_total`.
+There are 8796 test methods in 459 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8780.
+sum to 8796.
 
-Two files run more tests than they define, so discovery collects 8787:
+Two files run more tests than they define, so discovery collects 8803:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -10675,7 +10678,7 @@ looks wrong.
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
 - `tests/test_download_resource_is_a_listing.py`: 27
-- `tests/test_drafts.py`: 37
+- `tests/test_drafts.py`: 38
 - `tests/test_dropped_character_remedy_branches.py`: 10
 - `tests/test_dry_run_files_issues.py`: 15
 - `tests/test_dry_run_scaffold.py`: 15
@@ -10709,7 +10712,7 @@ looks wrong.
 - `tests/test_feedback_ledger.py`: 25
 - `tests/test_feedback_routing.py`: 54
 - `tests/test_feedback_to_issues_files_in_its_own_repo.py`: 13
-- `tests/test_filing_is_gated.py`: 32
+- `tests/test_filing_is_gated.py`: 39
 - `tests/test_find_examples_coverage_is_uncitable.py`: 12
 - `tests/test_first_source_is_chosen_by_step_fourteens_heuristics.py`: 18
 - `tests/test_fpdf2_dependency_is_declared.py`: 12
@@ -10752,7 +10755,7 @@ looks wrong.
 - `tests/test_internal_connection_string_rejected.py`: 2
 - `tests/test_inv048_is_cited_only_for_the_recap_pdf.py`: 8
 - `tests/test_inv174_per_record_applicability.py`: 12
-- `tests/test_invariant_changes_route_through_review_invariants.py`: 26
+- `tests/test_invariant_changes_route_through_review_invariants.py`: 34
 - `tests/test_invariant_crossreferences.py`: 32
 - `tests/test_invariant_enforcer_citations.py`: 4
 - `tests/test_invariant_layout_tree.py`: 19
@@ -11205,7 +11208,11 @@ These read `specs/INVARIANTS.md`:
   maintainer's yes. They never write specs. `tests/test_filing_is_gated.py`
   also requires each of the eight issue-filing skills (`LABEL_RULE_SKILLS`,
   held to the filing skills it discovers) to state INV-318 beside
-  `unattended-ok`, with a negative control (#610).
+  `unattended-ok`, with a negative control (#610). Since #808 every batch
+  clause ends with its pointer to `drafts.py` → "The batch yes", which must
+  state all four of INV-314's 2026-10-13 conditions, and no `.md` or `.py`
+  file under `.claude/skills/` or `.claude/skill-overlays/` outside it may
+  restate one, with negative controls.
 - **Well-formed ledgers.**
   - No literal `\n` appears in prose.
   - Entry headings start a line, and two independent parses agree on the entry
@@ -11854,7 +11861,8 @@ These are the scripts under `.claude/skills/`:
     the INV-300 citation, and restates no part of the manifest format;
     `.gitignore` ignores `.claude/release-cycle/runs/`;
   - the five `--file` sentences and `drafts.py` filing step 2 carry the batch
-    clause and neither "get a yes for each first" nor "Until #570's
+    clause (in the skills with its pointer to `drafts.py` → "The batch yes",
+    #808; a condition spliced into a skill fails) and neither "get a yes for each first" nor "Until #570's
     amendments are registered", and `submit_feedback` keeps one yes each,
     each with a negative control (#573);
   - one fixed `--draft` carve-out sentence sits in the paragraph of each
@@ -11931,13 +11939,20 @@ These are the scripts under `.claude/skills/`:
   - Every outward act states its gate.
 - **Invariant routing.**
   `tests/test_invariant_changes_route_through_review_invariants.py` (#520):
-  - no skill under `.claude/skills/` except `review-invariants` tells its
-    reader to register, mint, append to or correct in place an invariant in
-    `specs/INVARIANTS.md`; prohibitions and questions pass;
-  - every skill that accounts for an invariant, a derived set with `dry-run`,
-    `production-readiness-audit`, `auto-test` and `compact-dev-environment` as
-    a floor, names `/review-invariants` and links the heading over
-    `review-invariants`' block template ("Writing one");
+  - no skill under `.claude/skills/` except `review-invariants`, and no
+    overlay under `.claude/skill-overlays/` (#808), tells its reader to
+    register, mint, append to or correct in place an invariant in
+    `specs/INVARIANTS.md`; prohibitions, questions and an act word used as a
+    noun after a determiner pass;
+  - every skill or overlay that accounts for an invariant, a derived set with
+    `dry-run`, `production-readiness-audit`, `auto-test`,
+    `compact-dev-environment` and both overlays as a floor, names
+    `/review-invariants` and links the heading over `review-invariants`' block
+    template ("Writing one"); each overlay names `DEFERRED INVARIANT` and
+    `PROPOSED AMENDMENT` and restates no part of the block's shape (two or more
+    of the rule, the site, the drafted wording and the enforcer, or a header's
+    status words), with each overlay's pre-#808 sentence as a negative
+    control (#808);
   - every `(INV-309)` citation sits in a sentence about
     `/implement-github-issue`, the unattended loop or a skill overlay; since
     #607 this also reads the comments and strings of `.py` files under
@@ -14147,6 +14162,17 @@ Senzing licensing, with no SPDX identifier.
   `ROUTE_FILES`); the access-steps guard finds the sites by scanning every
   paragraph naming the tool for an instruction verb, with reasoned text-keyed
   exemption lists and negative controls, and no invariant is added
+- #808: `implement-spec` is described only in the past tense; both overlays
+  name `DEFERRED INVARIANT` and `PROPOSED AMENDMENT` and point at
+  `review-invariants` → "Writing one" for the shape, which the INV-365 guard
+  now checks in `.claude/skill-overlays/`; INV-314's batch-yes conditions are
+  stated once, in `drafts.py`'s "The batch yes", and every batch clause points
+  there; `cycle.py`'s git calls, the drafting/finding-skill counts, the
+  compact-dev-environment citation counts (re-measured 2026-10-24), the
+  release curation's bookkeeping-only drop and the hooks README's `SessionEnd`
+  container stop are corrected (each restated or stale claim had drifted from
+  the code or from its one owner, and two overlays paraphrased a shape that
+  omitted amendments); no invariant is added
 - #809: pointer and wording fixes from the 2026-10-22 audit: graduation names
   module-completion Step 2b for Questions & Responses, Module 4's "8b. SQLite
   load-time warning", each module's Before/After line for Why it matters, a

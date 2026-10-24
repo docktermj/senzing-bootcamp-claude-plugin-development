@@ -793,7 +793,8 @@ STATED = (
     "`cycle.py ledger <run-dir> --write specs/IMPLEMENTED.md`",
     "marked **not filed** (INV-317's 2026-10-13 note)",
     "left uncommitted for the maintainer (INV-310)",
-    "One yes covers only the records in that message (INV-314, 2026-10-13 note).",
+    # #808: the batch yes's conditions are stated once, in `drafts.py`; checkpoint A points there.
+    "**Checkpoint A.** Ask for one yes for the whole list shown in one message",
     "⛔ **(INV-300) Each skill's own file governs it, and this one restates none of their rules.**",
     "never start or resume costly work from silence (INV-333)",
 )

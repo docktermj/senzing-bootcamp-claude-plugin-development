@@ -32,8 +32,9 @@ telling the two apart requires reading the sentence.
 
 Its standing use is the revisit trigger for the stop-marker held on 2026-08-12 (see
 `specs/generalized-invariants-leave-no-pointer-on-the-narrower-rule.md`): at a **third**
-genuine instance, the candidate rule should become an invariant. Run it after any
-`implement-spec` that supersedes or generalizes an invariant.
+genuine instance, the candidate rule should become an invariant. Run it after
+`/review-invariants` registers or amends an invariant that supersedes or generalizes another,
+since that skill is the only writer of `specs/INVARIANTS.md` (INV-365).
 
 Usage::
 

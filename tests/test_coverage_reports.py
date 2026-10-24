@@ -544,10 +544,12 @@ class TestAffectedClassification(unittest.TestCase):
 class TestNegativesScanSurface(unittest.TestCase):
     """`specs/DECLINED.md` is in the negatives scan; the rest of `specs/` stays out.
 
-    The exclusion of `specs/` is right for a spec body — `implement-spec` Step 3.3 re-verifies
-    a spec's Senzing facts at implementation time — and wrong for `DECLINED.md`, which no
-    implementation ever reaches. So it is added as a named FILE rather than by opening the
-    directory, and both halves are asserted: one file in, everything else still out.
+    The exclusion of `specs/` is right for a spec body — the archive is frozen (INV-307), so a
+    spec body's negatives are history rather than claims — and wrong for `DECLINED.md`, which
+    stays live and whose `Revisit if:` clauses are re-read as authority. (#808: this reason
+    named the retired `implement-spec` Step 3.3 until then.) So it is added as a named FILE
+    rather than by opening the directory, and both halves are asserted: one file in,
+    everything else still out.
     """
 
     def scanned(self):
@@ -562,9 +564,9 @@ class TestNegativesScanSurface(unittest.TestCase):
                         if p.parent == specs and p.name != "DECLINED.md")
         self.assertEqual(
             [], leaked,
-            "adding one file must not open specs/ — a spec body's negatives are re-verified "
-            "by implement-spec Step 3.3 and an IMPLEMENTED.md entry is a point-in-time "
-            "record, so both would be noise on the worklist: %s" % leaked,
+            "adding one file must not open specs/ — a spec body is in the frozen archive "
+            "(INV-307) and an IMPLEMENTED.md entry is a point-in-time record, so both would be "
+            "noise on the worklist: %s" % leaked,
         )
 
     def test_the_exclusion_it_asserts_is_not_vacuous(self):
@@ -585,7 +587,9 @@ class TestNegativesScanSurface(unittest.TestCase):
         m = re.search(r"((?:^#:.*\n)+)NEGATIVE_EXTRA_FILES", src, re.M)
         self.assertIsNotNone(m, "NEGATIVE_EXTRA_FILES carries no explanatory comment")
         why = m.group(1)
-        self.assertIn("Step 3.3", why, "the comment must say what does NOT re-verify this file")
+        self.assertIn("INV-307", why, "the comment must say why the rest of specs/ is excluded")
+        self.assertNotIn("implement-spec", why, "the comment names the retired implement-spec "
+                         "as live (#808)")
         self.assertRegex(why, r"(?i)never implemented|declined spec is never")
 
     def test_the_surface_distinguishes_declined_from_the_rest_of_specs(self):
