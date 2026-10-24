@@ -47,7 +47,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from _wrapped_text import match_lines
+import _corpus
+from _wrapped_text import collapsed_blocks, match_lines
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
@@ -620,6 +621,122 @@ class EveryEntryPointDescribesTheRouting(unittest.TestCase):
         section = retrospective_section(t)
         self.assertIn("Non-blocking", section)
         self.assertIn("INV-015", section)
+
+
+GROUND_RULES = PLUGIN / "skills" / "bootcamp-onboarding" / "ground-rules.md"
+STEP_3C = '"Step 3c: Offer to forward an MCP-server issue upstream"'
+
+#: A sentence that offers to move the feedback file off the machine, or permits it on request.
+#: Matched case-insensitively inside a whitespace-collapsed block that names feedback (#783).
+#: "forward" is deliberately not a channel verb: Step 3c's offer to forward an `mcp-server`/`both`
+#: entry is the one sanctioned upstream path, and its heading says so.
+EXTERNAL_OFFER = re.compile(
+    r"\boffer(?:s|ed|ing)?\s+to\s+(?:help\s+\w+(?:\s+\w+)?\s+)?"
+    r"(?:share|send|e-?mail|upload|attach|post|open|file|submit)\b"
+    r"|\bhelp\s+(?:them|the\s+bootcamper|you)\s+(?:share|send|e-?mail|upload|attach|post|submit)\b"
+    r"|\bexternally\s+unless\b",
+    re.I,
+)
+
+#: The Step 7 wording #783 removed, kept as the negative control.
+OLD_STEP_7 = (
+    "If `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` exists and contains at\n"
+    "least one real feedback entry, remind the bootcamper it is there and offer to\n"
+    "help them share it (see `../bootcamp-onboarding/feedback.md`). Do not send email\n"
+    "or open issues automatically: wait for explicit confirmation.\n"
+)
+
+#: The ground-rules wording #783 removed, kept as a second negative control.
+OLD_GROUND_RULES = (
+    "Then return them to exactly where they left off. Feedback\n"
+    "  is saved locally only, never submitted externally unless they explicitly ask.\n"
+)
+
+
+def external_offers_in(text):
+    """Each sentence of ``text`` that offers to send the feedback file anywhere (#783).
+
+    A block is read only when it names feedback, so an offer about another file (a note's
+    attachment, a packaged archive) is not this rule's subject. Sentences split at a stop.
+    """
+    hits = []
+    for flat, _origin in collapsed_blocks(text):
+        if "feedback" not in flat.lower():
+            continue
+        hits += [s for s in re.split(r"(?<=[.!?])\s+", flat) if EXTERNAL_OFFER.search(s)]
+    return hits
+
+
+def step_7(text):
+    return text[text.index("## Step 7: Feedback reminder") : text.index("## Mandatory closing step")]
+
+
+class TheFeedbackFileIsNeverOfferedOffTheMachine(unittest.TestCase):
+    """No shipped sentence offers to email, upload, attach or open an issue with the feedback
+    file, and the sites that remind the Bootcamper of it name Step 3c as the only upstream path.
+
+    Graduation Step 7 offered to "help them share it", and the ground rules said feedback was
+    "never submitted externally unless they explicitly ask", while `feedback.md` says the only
+    sanctioned external path is Step 3c and `packaging.md` says the plugin never uploads, emails,
+    attaches or opens an issue with a file (INV-135). Source issue: #783.
+
+    ⚠️ **What this guard cannot see:** an offer phrased without the verbs in ``EXTERNAL_OFFER``
+    ("I can get this to the team"), or one in a block that never says "feedback". A negated offer
+    ("do not offer to email it") also trips it; reword such a sentence rather than widening the
+    pattern, since "never submitted externally unless" was the defect and is negated too.
+    """
+
+    def test_no_shipped_sentence_offers_the_file_externally(self):
+        files = _corpus.corpus_files("plugins/senzing-bootcamp", suffixes={".md"})
+        self.assertGreater(len(files), 20, "the shipped Markdown scan found too few files")
+        for path in files:
+            with self.subTest(file=str(path.relative_to(PLUGIN))):
+                self.assertEqual([], external_offers_in(path.read_text(encoding="utf-8")))
+
+    def test_the_old_step_7_wording_fails_the_guard(self):
+        """Negative control: put the removed Step 7 text back into the shipped step."""
+        t = read(GRADUATION)
+        section = step_7(t)
+        reverted = t.replace(section, "## Step 7: Feedback reminder\n\n" + OLD_STEP_7 + "\n")
+        self.assertNotEqual(t, reverted)
+        self.assertEqual(1, len(external_offers_in(reverted)))
+        self.assertIn("offer to help them share it", external_offers_in(reverted)[0])
+
+    def test_the_old_ground_rules_wording_fails_the_guard(self):
+        """Negative control: the "unless they explicitly ask" permission is an offer too."""
+        self.assertEqual(1, len(external_offers_in(OLD_GROUND_RULES)))
+
+    def test_a_statement_that_the_plugin_never_sends_it_passes(self):
+        """Control the other way: packaging's prohibition names the same verbs and is correct."""
+        self.assertEqual([], external_offers_in(
+            "It never uploads, emails, attaches or opens an issue with it (INV-135), the same "
+            "rule the feedback flow follows.\n"))
+
+    def test_step_7_is_a_reminder_with_no_offer_and_no_question(self):
+        section = step_7(read(GRADUATION))
+        flat = plain(section)
+        self.assertNotIn("👉", section)
+        # The Step 3c pointer's heading says "Offer to forward"; it names a section, offers nothing.
+        self.assertNotIn("offer to", flat.replace(STEP_3C, "").lower())
+        self.assertIn("This step makes no offer and asks no question.", flat)
+        self.assertIn("`%s`" % FEEDBACK_PATH, flat)
+        self.assertIn("stays on this machine", flat)
+        self.assertIn("moving it anywhere is their own action", flat)
+
+    def test_step_7_says_mcp_server_findings_were_already_offered_through_step_3c(self):
+        flat = plain(step_7(read(GRADUATION)))
+        self.assertIn("any MCP-server finding in it was already offered upstream through", flat)
+        self.assertIn("`../bootcamp-onboarding/feedback.md` → %s" % STEP_3C, flat)
+        self.assertIn("the only upstream path", flat)
+
+    def test_ground_rules_names_step_3c_as_the_only_upstream_path(self):
+        flat = plain(read(GROUND_RULES))
+        self.assertNotIn("unless they explicitly ask", flat)
+        self.assertIn("Feedback is saved locally, in that file on this machine.", flat)
+        self.assertIn(
+            "The only upstream path is `feedback.md` → %s, offered only for an "
+            "`mcp-server`/`both` verdict" % STEP_3C, flat)
+
 
 
 if __name__ == "__main__":

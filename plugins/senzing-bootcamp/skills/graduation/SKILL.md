@@ -1812,10 +1812,22 @@ Then present a one-line summary of what the bundle saved and where, and continue
 ## Step 7: Feedback reminder
 
 If `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` exists and contains at
-least one real feedback entry, remind the bootcamper it is there and offer to
-help them share it (see `../bootcamp-onboarding/feedback.md`). Do not send email
-or open issues automatically: wait for explicit confirmation. Otherwise, add one
-line: "Say \"bootcamp feedback\" anytime if you'd like to share your experience."
+least one real feedback entry, remind the bootcamper it is there, as statements:
+
+- name its path, `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`;
+- say the file stays on this machine, and that moving it anywhere is their own action, as
+  `../bootcamp-onboarding/packaging.md` says of the archive (INV-135);
+- say that any MCP-server finding in it was already offered upstream through
+  `../bootcamp-onboarding/feedback.md` → "Step 3c: Offer to forward an MCP-server issue upstream",
+  the only upstream path (INV-249).
+
+This step makes no offer and asks no question. An entry still reading `offer pending` here gets no
+offer either: Step 0's batch replaces every such value in its own turn (INV-281), so a leftover one
+means that batch did not run, and the entry stays on this machine as it is. If they ask you to send
+a `plugin`, `host` or `unclear` entry somewhere, it stays on this machine too: name the path so
+they can move it themselves.
+
+Otherwise, add one line: "Say \"bootcamp feedback\" anytime if you'd like to share your experience."
 
 ## Mandatory closing step: guaranteed recap and announcement
 

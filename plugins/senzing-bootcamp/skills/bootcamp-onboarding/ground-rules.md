@@ -1292,8 +1292,10 @@ the 👉 protocol above).
   **BOOTCAMP FEEDBACK** entry banner and closes with a pinned **FEEDBACK SAVED — BACK TO THE
   BOOTCAMP** exit banner (a statement) before the pending 👉 question resumes, so feedback mode is
   visually distinct from the bootcamp. Then return them to exactly where they left off. Feedback
-  is saved locally only, never submitted externally unless they explicitly ask. (The plugin's
-  `UserPromptSubmit` hook surfaces this automatically during a bootcamp.)
+  is saved locally, in that file on this machine. The only upstream path is `feedback.md` →
+  "Step 3c: Offer to forward an MCP-server issue upstream", offered only for an `mcp-server`/`both`
+  verdict (INV-249). (The plugin's `UserPromptSubmit` hook surfaces this automatically during a
+  bootcamp.)
 - **Make a note:** whenever the bootcamper says "make a note", "note to self", "jot this down",
   "remind me", "don't let me forget", "add a to-do", "for my notes", or invokes
   `/bootcamp-note`, run the note workflow in `notes.md` and append the entry to
