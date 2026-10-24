@@ -10517,7 +10517,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8738 test methods in 458 files, matching `inventory.test_count_total`.
+There are 8745 test methods in 458 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 8724.
@@ -10661,7 +10661,7 @@ looks wrong.
 - `tests/test_feedback_asks_only_the_unanswered_questions.py`: 5
 - `tests/test_feedback_capture_triggers.py`: 19
 - `tests/test_feedback_ledger.py`: 25
-- `tests/test_feedback_routing.py`: 47
+- `tests/test_feedback_routing.py`: 54
 - `tests/test_feedback_to_issues_files_in_its_own_repo.py`: 13
 - `tests/test_filing_is_gated.py`: 32
 - `tests/test_find_examples_coverage_is_uncitable.py`: 12
@@ -11205,7 +11205,9 @@ These read `specs/INVARIANTS.md`:
   content rather than dropping it.
 - **Feedback.** It is triaged to its owner, and the `host` verdict is never
   forwarded. It is always recorded locally. It is forwarded only after a pinned,
-  numbered consent question that shows the exact message.
+  numbered consent question that shows the exact message. No shipped sentence
+  offers to email, upload, attach or open an issue with the feedback file, and
+  the old graduation Step 7 offer is the negative control (#783).
 - **Notes** never leave the machine. They are recited before they are saved,
   appended and verified, and folded into the recap at graduation (INV-254).
 
@@ -13932,6 +13934,15 @@ Senzing licensing, with no SPDX identifier.
   negative controls, and no invariant is added (INV-251, INV-356) (item 6
   still asked "Ready to proceed?" after step 4e's no-question close, and the
   exits skipped the deliverable)
+- #783: graduation Step 7 is a reminder with no offer and no question: it
+  names the feedback file's path, says it stays on this machine and that
+  moving it is the Bootcamper's own action, and says MCP-server findings were
+  already offered through `feedback.md` Step 3c; the ground rules name Step 3c
+  as the only upstream path, for an `mcp-server`/`both` verdict;
+  `tests/test_feedback_routing.py` scans shipped Markdown for an offer to send
+  the file, with the old Step 7 wording as negative control (both sites
+  invited sharing the file externally, which `feedback.md` and `packaging.md`
+  forbid; an amendment to INV-249 is queued for `/review-invariants`)
 - #784: Module 4 Step 2's band sample of `config/data_sources.yaml` is
   `sources:` -> `MERIDIAN_CRM:` -> its fields, and the `scenario_intent`
   sample's empty registry is `sources: {}`; the new
