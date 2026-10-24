@@ -25,6 +25,16 @@ What this file pins:
    handled by the `provenance: synthesized` branch's existing fallback (pointed at, not restated),
    the rebuild is said in one line, and an existing entry is never overwritten.
 
+4. **A rebuilt `cord` entry gets its `cord_dataset` and `cord_source` before the `cord` branch
+   runs** (#795). `docs/business_problem.md` records neither, so the guard re-derives them:
+   `get_sample_data(dataset='list')` (without `truthset`), then each dataset's `source='list'`,
+   then the unique-dataset match (the one dataset holding every rebuilt `cord` source, names
+   compared ignoring case and `-`/`_`). No match, several matches, an unreachable server after
+   one retry and a `Denied.` reply each fall back to Module 1 Step 4b, whose decision is written
+   by Step 11's one statement of the write before this step resumes. Each call links Step 2's
+   one `Denied.` statement (`#cord-denied-reply`, INV-378) and says here that the reply takes
+   the fallback, never "no match"; the rebuild line names what was re-derived.
+
 Each predicate is negative-controlled against the shipped text with its clause removed, and the
 pre-#749 shape of each site is asserted to fail. `tests/test_scenario_registry_fields_agree.py`
 keeps pinning which fields the write names (#604).
@@ -328,6 +338,157 @@ class Module4RepairsAMissingEntry(unittest.TestCase):
         ):
             with self.subTest(why=why):
                 self.assertNotEqual(repair_problems(mutant), [], why)
+
+
+# ---------------------------------------------------------------------------------------------
+# #795 — a rebuilt `cord` entry re-derives `cord_dataset` and `cord_source` through MCP.
+# ---------------------------------------------------------------------------------------------
+
+CORD_ANCHOR = '<a id="rebuilt-cord-entry"></a>'
+CORD_BRANCH = "- **`provenance: cord`**"
+DENIED_LINK = "[a denied reply](#cord-denied-reply)"
+LIST_CALL = "Call `get_sample_data(dataset='list')`"
+SOURCE_CALL = "call `get_sample_data(dataset='<name>', source='list')`"
+STEP_4B = ('`../module-01-business-problem/phase1-discovery.md` → "4b. CORD sourcing for the '
+           'generated scenario (via MCP — NON-YIELDING)"')
+
+#: (phrase, the problem reported when it is gone). One per clause #795's criteria name.
+CORD_CLAUSES = (
+    ("before the `provenance: cord` branch runs", "does not run before the cord branch"),
+    ("Only an entry this guard has just rebuilt with `provenance: cord` is re-derived",
+     "is not limited to an entry just rebuilt (INV-402)"),
+    ("a rebuilt `synthesized` entry is unchanged", "does not leave a synthesized entry alone"),
+    (LIST_CALL, "does not call the dataset list"),
+    ("leaving out `truthset`", "does not leave out truthset"),
+    (SOURCE_CALL, "does not call each dataset's source list"),
+    ("choose the one dataset whose sources contain every `cord` source this guard rebuilt for "
+     "the scenario", "does not state the unique-dataset match"),
+    ("ignoring case, with `-` and `_` treated as the same", "does not state how names compare"),
+    ("Set `cord_dataset` to that dataset and `cord_source` to the matched source `name`, "
+     "exactly as the server spells them", "does not set both fields as the server spells them"),
+    ("when no dataset matches", "has no fallback for no match"),
+    ("when more than one does", "has no fallback for several matches"),
+    ("when the server is still unreachable after one retry", "has no fallback for an "
+                                                              "unreachable server"),
+    ("on a `Denied.` reply to either call above", "has no fallback for a Denied. reply"),
+    ('never read as "no match"', "lets a Denied. reply read as no match"),
+    ("do not retry it", "retries a Denied. reply"),
+    ("here it takes this fallback in place of that statement's continuing down the "
+     "recommendation hierarchy", "does not state the Denied. consequence at this site"),
+    (STEP_4B + " for that source", "does not return to Module 1 Step 4b"),
+    ("by Module 1 Step 11's one statement of the write", "does not write by Step 11's write"),
+    ("Then resume this step at that source", "does not resume Step 2"),
+    ("never reaches the download with `cord_dataset` or `cord_source` unset",
+     "lets a source reach the download with a field unset"),
+    ("also names the dataset and source you re-derived, or says that you are returning to "
+     "Module 1 Step 4b to choose them", "does not say what was re-derived"),
+)
+
+
+def cord_rebuild(raw=None):
+    """The raw re-derivation block, from its anchor to the `cord` branch, or None."""
+    raw = COLLECTION.read_text(encoding="utf-8") if raw is None else raw
+    start = raw.find(CORD_ANCHOR)
+    end = raw.find(CORD_BRANCH)
+    if start == -1 or end == -1 or start > end:
+        return None
+    return raw[start:end]
+
+
+def call_item(block, call):
+    """The squashed numbered item of the re-derivation that makes `call`, or None."""
+    for item in re.split(r"\n(?=\d+\. )", block):
+        if call in squash(item):
+            return squash(item)
+    return None
+
+
+def cord_rebuild_problems(raw=None):
+    raw = COLLECTION.read_text(encoding="utf-8") if raw is None else raw
+    block = cord_rebuild(raw)
+    if block is None:
+        return ["the guard has no re-derivation for a rebuilt cord entry before the cord branch"]
+    problems = []
+    flat_raw = squash(raw)
+    if flat_raw.find("**If the source has no entry**") > flat_raw.find(squash(CORD_ANCHOR)):
+        problems.append("the re-derivation comes before the rebuild it repairs")
+    text = squash(block)
+    for phrase, why in CORD_CLAUSES:
+        if phrase not in text:
+            problems.append("the cord re-derivation %s" % why)
+    for call in (LIST_CALL, SOURCE_CALL):
+        item = call_item(block, call)
+        if item is not None and not (DENIED_LINK in item and "takes the fallback" in item):
+            problems.append("the call %r does not classify a Denied. reply by Step 2's "
+                            "statement and take the fallback (INV-378)" % call[:40])
+    if re.search(r"(?i)\bits own outcome\b|\boutcome of its own\b", text):
+        problems.append("the re-derivation restates the Denied. outcome Step 2 states once")
+    if "👉" in text:
+        problems.append("the re-derivation asks a question")
+    return problems
+
+
+class Module4RederivesARebuiltCordEntry(unittest.TestCase):
+    def test_the_block_is_read(self):
+        """Liveness: the reader finds the block and both calls, so an empty read cannot pass."""
+        block = cord_rebuild()
+        self.assertIsNotNone(block)
+        self.assertIsNotNone(call_item(block, LIST_CALL))
+        self.assertIsNotNone(call_item(block, SOURCE_CALL))
+
+    def test_the_guard_rederives_a_rebuilt_cord_entry(self):
+        self.assertEqual(cord_rebuild_problems(), [])
+
+    def test_negative_control_the_pre_795_guard(self):
+        raw = COLLECTION.read_text(encoding="utf-8")
+        mutant = raw.replace(cord_rebuild(raw), "")
+        self.assertNotEqual(mutant, raw)
+        self.assertEqual(cord_rebuild_problems(mutant),
+                         ["the guard has no re-derivation for a rebuilt cord entry before the "
+                          "cord branch"])
+
+    def test_negative_control_the_block_after_the_cord_branch(self):
+        raw = COLLECTION.read_text(encoding="utf-8")
+        block = cord_rebuild(raw)
+        mutant = raw.replace(block, "").replace(CORD_BRANCH, CORD_BRANCH + "\n\n" + block, 1)
+        self.assertNotEqual(cord_rebuild_problems(mutant), [])
+
+    def test_negative_controls_each_clause(self):
+        raw = COLLECTION.read_text(encoding="utf-8")
+        for phrase, why in CORD_CLAUSES:
+            with self.subTest(why=why):
+                mutant = cut(raw, phrase, "")
+                self.assertNotEqual(mutant, raw, "the control's anchor text is gone: " + why)
+                self.assertIn("the cord re-derivation %s" % why, cord_rebuild_problems(mutant))
+
+    def test_negative_controls_each_call_classifies_denied(self):
+        raw = COLLECTION.read_text(encoding="utf-8")
+        block = cord_rebuild(raw)
+        for call in (LIST_CALL, SOURCE_CALL):
+            with self.subTest(call=call):
+                items = re.split(r"\n(?=\d+\. )", block)
+                item = next(i for i in items if call in squash(i))
+                mutant_item = cut(item, DENIED_LINK, "an empty listing")
+                self.assertNotEqual(mutant_item, item)
+                mutant = raw.replace(item, mutant_item)
+                self.assertTrue(any("does not classify a Denied. reply" in p
+                                    for p in cord_rebuild_problems(mutant)),
+                                cord_rebuild_problems(mutant))
+
+    def test_negative_control_a_restated_outcome(self):
+        raw = COLLECTION.read_text(encoding="utf-8")
+        mutant = raw.replace('never read as "no match"',
+                             'never read as "no match": a `Denied.` reply is an outcome of its own')
+        self.assertNotEqual(mutant, raw)
+        self.assertIn("the re-derivation restates the Denied. outcome Step 2 states once",
+                      cord_rebuild_problems(mutant))
+
+    def test_negative_control_a_question(self):
+        raw = COLLECTION.read_text(encoding="utf-8")
+        mutant = raw.replace("Then resume this step at that source.",
+                             "Then ask 👉 whether to resume this step at that source.")
+        self.assertNotEqual(mutant, raw)
+        self.assertIn("the re-derivation asks a question", cord_rebuild_problems(mutant))
 
 
 if __name__ == "__main__":
