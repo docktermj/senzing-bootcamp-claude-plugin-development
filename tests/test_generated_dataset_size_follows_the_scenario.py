@@ -9,7 +9,8 @@ withdrawn. The 2026-08-17 change
 (`generated-dataset-is-sized-before-anything-measures-the-license`) read
 the incident as "the guide sized before it measured", made choosing how many records to generate
 a LICENSE-CAPACITY decision routed through *License limit and dataset size (canonical framing)*,
-and pinned that in `tests/test_generated_dataset_size_is_a_license_decision.py`.
+and pinned that in a guard named for it, `test_generated_dataset_size_is_a_license_decision`,
+which #779 removed in favor of this file.
 
 INV-277, registered 2026-08-28, read the same harm the other way: the generated size MUST NOT be
 tied to license capacity, which nothing has measured at that point. #603 then stated, beside the
