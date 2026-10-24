@@ -110,6 +110,10 @@ Fallbacks, each stated on stderr (INV-111)
 * A missing or unreadable image: the scene becomes a title card.
 * No recap to read the certificate from: the storyboard's name and date are used.
 * No TrueType font: Pillow's built-in font. ``brand_tokens.py`` unavailable: the inlined palette.
+* A card that cannot hold its text: a title card's module name or highlight past three lines,
+  the certificate citation past three, or a closing-card name past its share of the line cap.
+  The cap stays, and one aggregated ``WARNING:`` line before ``Video generated:`` names each
+  card and the text it dropped (INV-408). The run still exits 0.
 
 Exit codes
 ----------
@@ -219,6 +223,74 @@ PIPER_SENTENCE_SILENCE = "0.15"
 def _report(prefix: str, message: str) -> None:
     sys.stderr.write(f"{prefix}: {message}\n")
     sys.stderr.flush()
+
+
+# --------------------------------------------------------------------------- #
+# Content a card could not place (INV-408)
+# --------------------------------------------------------------------------- #
+# ⛔ (INV-408) A card is fixed geometry: a 1920x1080 frame cannot grow, so a title card's
+# module name and highlight, the certificate's citation and the closing card keep their line
+# caps. What a cap drops is recorded here and reported on stderr, in one aggregated
+# `WARNING:` line, BEFORE `Video generated:`, in the shape `generate_recap_pdf.py`'s
+# `content_loss_warning()` writes. Its own collector rather than that module's: the video
+# imports `generate_recap_pdf` only for the certificate, and renders without it (#788).
+# Deliberately non-blocking, as INV-408 requires: the video is still written and exits 0.
+_CONTENT_LOSSES: Dict[str, str] = {}
+
+#: Longest excerpt of lost text carried into the warning, and how many distinct losses it
+#: names before summarizing. The same caps as `generate_recap_pdf.py`'s.
+_LOSS_EXCERPT_CHARS = 60
+_LOSS_SITES_SHOWN = 4
+
+
+def record_content_loss(where: str, lost: str) -> None:
+    """Remember text a card could not place, and the card it was meant for.
+
+    Keyed by site+excerpt, so a card drawn once per frame reports its loss once.
+    """
+    excerpt = re.sub(r"\s+", " ", lost).strip()
+    if not excerpt:
+        return
+    if len(excerpt) > _LOSS_EXCERPT_CHARS:
+        excerpt = excerpt[:_LOSS_EXCERPT_CHARS].rstrip() + "..."
+    _CONTENT_LOSSES.setdefault(f"{where}: {excerpt}", where)
+
+
+def reset_content_losses() -> None:
+    """Clear the collector. For tests and for callers that render more than one video."""
+    _CONTENT_LOSSES.clear()
+
+
+def content_loss_warning() -> Optional[str]:
+    """One aggregated ``WARNING:`` line for everything a card dropped, else ``None``.
+
+    Written to stderr before ``Video generated:``, so a reader cannot take the success line
+    as evidence every word reached the screen. ASCII by construction: the excerpt is
+    backslash-escaped, so a Windows console in a legacy code page cannot corrupt it.
+    """
+    if not _CONTENT_LOSSES:
+        return None
+    sites = list(_CONTENT_LOSSES)
+    shown = "; ".join(
+        site.encode("ascii", "backslashreplace").decode("ascii")
+        for site in sites[:_LOSS_SITES_SHOWN]
+    )
+    if len(sites) > _LOSS_SITES_SHOWN:
+        shown += f"; and {len(sites) - _LOSS_SITES_SHOWN} more"
+    return (
+        f"WARNING: {len(sites)} passage(s) did not reach the video in full. The text below "
+        f"was laid out but part of it was not drawn: {shown}. The video was still written "
+        f"and the rest of the content is intact, but that text is MISSING from it. "
+        f"Shorten the affected field in the storyboard (or the name in the recap), and "
+        f"re-run.\n"
+    )
+
+
+def _cap_lines(where: str, lines: List[str], cap: int) -> List[str]:
+    """The first `cap` of `lines`; the lines past the cap are recorded as lost (INV-408)."""
+    if len(lines) > cap:
+        record_content_loss(where, " ".join(lines[cap:]))
+    return lines[:cap]
 
 
 # --------------------------------------------------------------------------- #
@@ -1041,6 +1113,21 @@ def _heading(ctx, draw, img, title: str, y: int = 90) -> None:
 # --------------------------------------------------------------------------- #
 # Drawers: one per scene type. Each returns the frame at `t` seconds into the scene.
 # --------------------------------------------------------------------------- #
+#: The title card's line cap for the module name and for the highlight, each.
+TITLE_CARD_MAX_LINES = 3
+
+
+def title_card_lines(title_font, body_font, module: str, highlight: str):
+    """The title card's module-name and highlight lines, each capped (INV-408).
+
+    The highlight is the Bootcamper's own words, so what the cap drops is reported.
+    """
+    return (_cap_lines("title card module", wrap_text(title_font, module, 1500),
+                       TITLE_CARD_MAX_LINES),
+            _cap_lines("title card highlight", wrap_text(body_font, highlight, 1400),
+                       TITLE_CARD_MAX_LINES))
+
+
 def _draw_title_card(ctx, ps, t):
     data = ps.data
     img = _dark_background(ctx)
@@ -1049,8 +1136,8 @@ def _draw_title_card(ctx, ps, t):
     eyebrow = ctx.font("bold", 32)
     title_font = ctx.font("bold", 96)
     body = ctx.font("regular", 48)
-    title = wrap_text(title_font, data.get("module", ""), 1500)[:3]
-    highlight = wrap_text(body, data.get("highlight", ""), 1400)[:3]
+    title, highlight = title_card_lines(title_font, body, data.get("module", ""),
+                                        data.get("highlight", ""))
     block = (_line_height(eyebrow) + 30 + _line_height(title_font) * len(title) + 50
              + _line_height(body) * len(highlight))
     y = (880 - block) / 2 + rise
@@ -1303,6 +1390,16 @@ def _draw_certificate(ctx, ps, t):
     return ctx.cache[key].copy()
 
 
+#: The certificate citation's line cap.
+CITATION_MAX_LINES = 3
+
+
+def certificate_citation_lines(ctx, citation: str) -> List[str]:
+    """The certificate's citation, wrapped and capped; what the cap drops is reported."""
+    return _cap_lines("certificate citation", wrap_text(ctx.font("regular", 30), citation, 1300),
+                      CITATION_MAX_LINES)
+
+
 def _certificate_face(ctx, cert: "CertificateFields"):
     img = ctx.Image.new("RGB", (WIDTH, HEIGHT), P["WARM_OFF_WHITE"])
     img.paste(_ember_strip(ctx, 150, HEIGHT, vertical=True), (0, 0))
@@ -1327,7 +1424,7 @@ def _certificate_face(ctx, cert: "CertificateFields"):
     y += _line_height(name_font) + 18
     draw.line((cx - 480, y, cx + 480, y), fill=P["WARM_LINE"], width=3)
     y += 26
-    y = _draw_lines(draw, cx, y, wrap_text(ctx.font("regular", 30), cert.citation, 1300)[:3],
+    y = _draw_lines(draw, cx, y, certificate_citation_lines(ctx, cert.citation),
                     ctx.font("regular", 30), P["BODY_INK"], "center")
     modules = "  ·  ".join(cert.modules)
     if modules:
@@ -1364,23 +1461,25 @@ def tag_line_layout(ctx, text: str, max_width: float = TAG_LINE_WIDTH,
     is wider than `max_width`, the whole card's font shrinks in 4 px steps (`_fit_font`) until
     it fits; every line uses that one size, and it never shrinks to fit the name. Text after
     "Resolved:" with no comma, and text with no "Resolved:" prefix, wrap greedily as before.
-    The line cap keeps the phrase: a long name loses its own last lines first.
+    The line cap keeps the phrase: a long name loses its own last lines first, and the lines
+    it loses are reported on stderr (INV-408).
     """
     prefix, sep, rest = text.partition(":")
     body = rest.strip()
     if not (sep and body):
         font = ctx.font("bold", size)
-        lines = [(line, P["WHITE"], 0.3) for line in wrap_text(font, text, max_width)]
-        return font, lines[:TAG_LINE_MAX_LINES]
+        return font, [(line, P["WHITE"], 0.3) for line in _cap_lines(
+            "closing card", wrap_text(font, text, max_width), TAG_LINE_MAX_LINES)]
     head = [(prefix + sep, P["EMBER_HOT"], 0.2)]
     name, comma, phrase = body.rpartition(",")
     phrase = phrase.strip()
     if not (comma and name.strip() and phrase):
         font = ctx.font("bold", size)
-        lines = head + [(line, P["WHITE"], 0.6) for line in wrap_text(font, body, max_width)]
-        return font, lines[:TAG_LINE_MAX_LINES]
+        return font, head + [(line, P["WHITE"], 0.6) for line in _cap_lines(
+            "closing card", wrap_text(font, body, max_width), TAG_LINE_MAX_LINES - 1)]
     font = _fit_font(ctx, "bold", phrase, size, max_width)
-    names = wrap_text(font, name.strip() + comma, max_width)[:TAG_LINE_MAX_LINES - 2]
+    names = _cap_lines("closing card", wrap_text(font, name.strip() + comma, max_width),
+                       TAG_LINE_MAX_LINES - 2)
     return font, head + [(line, P["WHITE"], 0.6) for line in names] + [
         (phrase, P["WHITE"], 0.6)]
 
@@ -2076,6 +2175,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         return EXIT_RENDER_FAILED
 
     total = sum(ps.frames for ps in plan) / FPS
+    # ⛔ (INV-408) What a card's line cap dropped, before the success line, so a reader who
+    # stops at `Video generated:` has already seen it. Non-blocking: the video is written.
+    lost = content_loss_warning()
+    if lost:
+        sys.stderr.write(lost)
+        sys.stderr.flush()
     print(f"Video generated: {output}")
     print(f"Duration: {_format_duration(total)} ({total:.1f} s, {len(plan)} scenes, planned "
           f"{planned:.1f} s)")

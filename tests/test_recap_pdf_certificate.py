@@ -89,6 +89,11 @@ def load_generator():
 
 def render(markdown):
     """Render `markdown` through the CLI (the real contract) and return the PDF path."""
+    return render_reporting(markdown)[0]
+
+
+def render_reporting(markdown):
+    """`render`, also returning the CLI's stderr, where content it cut is reported."""
     workdir = tempfile.mkdtemp()
     src = os.path.join(workdir, "recap.md")
     out = os.path.join(workdir, "recap.pdf")
@@ -99,7 +104,7 @@ def render(markdown):
         capture_output=True, text=True, cwd=workdir,
     )
     assert proc.returncode == 0, proc.stderr
-    return out
+    return out, proc.stderr
 
 
 def _runs(stream):
@@ -277,8 +282,12 @@ class TheFixedPageCannotBeOverrun(unittest.TestCase):
     @requires_fpdf2
     def test_a_pathological_name_is_clipped_at_the_shrink_floor(self):
         """Shrinking stops at 12 pt, so it alone does not bound the line: a ~78-character
-        name drew from x = -18 mm, off the card and off the page (INV-121)."""
-        runs = certificate_runs(render(recap_source(["Concepts"], name="W" * 120)))
+        name drew from x = -18 mm, off the card and off the page (INV-121). The clip is
+        reported on stderr before the success line (INV-408, #788)."""
+        out, stderr = render_reporting(recap_source(["Concepts"], name="W" * 120))
+        self.assertRegex(stderr, r"WARNING: .*did not reach the page in full.*"
+                                 r"certificate name: W+")
+        runs = certificate_runs(out)
         drawn = [(x, text) for x, _y, text in runs if text.startswith("WWW")]
         self.assertTrue(drawn, "the recipient name was not drawn")
         x, text = drawn[0]
@@ -286,6 +295,11 @@ class TheFixedPageCannotBeOverrun(unittest.TestCase):
             x / MM, self.module._CERT_CARD_X, f"name starts outside the card: {text[:20]}…"
         )
         self.assertTrue(text.endswith("..."), "an unfittable name must be clipped, not run off")
+
+    @requires_fpdf2
+    def test_a_name_that_fits_is_not_reported(self):
+        _out, stderr = render_reporting(recap_source(["Concepts"]))
+        self.assertNotIn("certificate name:", stderr)
 
     @requires_fpdf2
     def test_a_long_name_shrinks_instead_of_running_off_the_card(self):

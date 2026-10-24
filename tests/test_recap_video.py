@@ -1278,7 +1278,24 @@ def tag_lines(text, factor=0.6):
 
 class TheTagLineBreaksAfterTheLastComma(unittest.TestCase):
     """The closing card puts "Resolved:", the name and the phrase on lines of their own, set
-    with a stub font of fixed widths, so these run in both CI legs and on any machine."""
+    with a stub font of fixed widths, so these run in both CI legs and on any machine.
+
+    Since #788 the line cap also reports what it drops (INV-408): a card that fits records
+    nothing, and the name lines the cap drops are named in the video's loss warning."""
+
+    expect_loss = False
+
+    def setUp(self):
+        VIDEO.reset_content_losses()
+        self.addCleanup(self.assert_loss_as_expected)
+
+    def assert_loss_as_expected(self):
+        try:
+            if not self.expect_loss:
+                self.assertIsNone(VIDEO.content_loss_warning(),
+                                  "a closing card that fits reported a loss")
+        finally:
+            VIDEO.reset_content_losses()
 
     def test_the_docstring_and_schema_help_state_the_default(self):
         self.assertIn("``Resolved: <bootcamper>, Senzing Bootcamp graduate.``", VIDEO.__doc__)
@@ -1336,10 +1353,25 @@ class TheTagLineBreaksAfterTheLastComma(unittest.TestCase):
             self.assertLessEqual(len(line) * 96 * 0.6, 1600, line)
 
     def test_the_line_cap_keeps_the_phrase(self):
+        self.expect_loss = True
         name = " ".join(["Bartholomew-Montgomery"] * 12)
         _font, lines = tag_lines("Resolved: %s, %s" % (name, PHRASE))
         self.assertEqual(VIDEO.TAG_LINE_MAX_LINES, len(lines))
         self.assertEqual(["Resolved:", PHRASE], [lines[0], lines[-1]])
+
+    def test_the_name_lines_the_cap_drops_are_reported(self):
+        """#580 keeps the phrase and drops the name's last lines; #788 says which (INV-408)."""
+        self.expect_loss = True
+        name = " ".join(["Bartholomew-Montgomery"] * 11) + " Tailworth"
+        font, lines = VIDEO.tag_line_layout(StubContext(), "Resolved: %s, %s" % (name, PHRASE))
+        wrapped = VIDEO.wrap_text(font, name + ",", 1600)
+        kept = VIDEO.TAG_LINE_MAX_LINES - 2
+        self.assertGreater(len(wrapped), kept, "the probe must overflow the cap")
+        self.assertEqual(wrapped[:kept], [l for l, _c, _s in lines[1:-1]])
+        warning = VIDEO.content_loss_warning()
+        self.assertIsNotNone(warning, "the dropped name lines were not reported")
+        self.assertTrue(warning.startswith("WARNING: 1 passage(s)"), warning)
+        self.assertIn("closing card: " + " ".join(wrapped[kept:])[:40], warning)
 
     def test_only_the_last_comma_breaks(self):
         _font, lines = tag_lines("Resolved: Lovelace, Ada, " + PHRASE)

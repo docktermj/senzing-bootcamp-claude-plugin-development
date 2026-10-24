@@ -137,10 +137,12 @@ def clip_widths():
 
 # The cover chip's call site, matched on the label expression it clips so the width below
 # is the chip's and no other call site's. If the label expression changes, this stops
-# matching and `chip_width()` fails loudly rather than measuring the wrong thing.
+# matching and `chip_width()` fails loudly rather than measuring the wrong thing. Since #788
+# the label is built into `full` first, so the chip can report what the clip cut (INV-408).
 CHIP_CALL_RE = re.compile(
-    r'_clip\(\s*_safe\(\s*f"\{mod\.number\}\. \{mod\.title\}"\s*'
-    r"if mod\.number is not None\s*else mod\.title\s*\)\s*,\s*(\d+)\s*,?\s*\)",
+    r'full = _safe\(\s*f"\{mod\.number\}\. \{mod\.title\}"\s*'
+    r"if mod\.number is not None\s*else mod\.title\s*,?\s*\)\s*"
+    r"label = _clip\(\s*full\s*,\s*(\d+)\s*,?\s*\)",
     re.S,
 )
 

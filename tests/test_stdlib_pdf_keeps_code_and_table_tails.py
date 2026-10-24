@@ -34,12 +34,25 @@ cannot place before its success line) names this file as its enforcer. It extrac
 PDF carries; it does not establish that the page is legible to a human reader, which is a visual
 inspection.
 
+#788 carried the rule to the rest of the bundled generators. The recap PDF's rich renderer cut
+its contents rows and page headings with `_clip` and the recap video capped its cards' lines,
+both at exit 0 with nothing on stderr. The contents rows and headings now wrap; the fixed-
+geometry sites (the cover's module chips, the certificate's name and module list, and the
+video's title card, certificate citation and closing card) keep their caps and record what
+they cut. `EveryGeneratorRecordsWhatItClips` scans every `scripts/generate_*.py` for an
+unrecorded clip, and `EveryFixedGeometrySiteReports*` render overlong fields and read the
+report, each with a negative control.
+
 Run:  python3 -m unittest discover -s tests
 """
+import ast
+import glob
 import importlib.util
 import inspect
+import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -52,6 +65,11 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp", "scripts")
 RECAP = os.path.join(SCRIPTS, "generate_recap_pdf.py")
 DISCOVERIES = os.path.join(SCRIPTS, "generate_discoveries_pdf.py")
+VIDEO = os.path.join(SCRIPTS, "generate_recap_video.py")
+
+#: Every bundled generator INV-408 binds, found rather than listed, so a new one is guarded
+#: the day it lands (#788).
+GENERATORS = sorted(glob.glob(os.path.join(SCRIPTS, "generate_*.py")))
 
 SUCCESS_LINE = "PDF generated:"
 
@@ -485,7 +503,7 @@ class TheClippingIdiomsAreGone(unittest.TestCase):
     forbidden idiom is a single expression that cannot wrap. The read is per line precisely
     so a line that is CODE can be told from a line that is a COMMENT recording what was
     removed — collapsing whitespace first would merge the two and make the guard unable to
-    allow its own explanatory comments.
+    allow its own explanatory comments. Widened to every bundled generator by #788.
     """
 
     #: The exact expressions #674 removed. Each one re-introduces a silent tail loss that
@@ -498,8 +516,8 @@ class TheClippingIdiomsAreGone(unittest.TestCase):
         "c[:w].ljust(w)",
     )
 
-    def test_neither_generator_clips_content_to_a_width(self):
-        for path in (RECAP, DISCOVERIES):
+    def test_no_generator_clips_content_to_a_width(self):
+        for path in GENERATORS:
             with open(path, encoding="utf-8") as handle:
                 text = handle.read()
             for idiom in self.FORBIDDEN:
@@ -515,6 +533,454 @@ class TheClippingIdiomsAreGone(unittest.TestCase):
                         [], live,
                         "%s clips content to a width again: %s" % (
                             os.path.basename(path), live))
+
+
+# --------------------------------------------------------------------------- #
+# #788: no generator clips without recording what it cut
+# --------------------------------------------------------------------------- #
+#: Calls that record a loss: a hit inside a function that makes one is a REPORTED clip.
+RECORDERS = ("record_content_loss", "account_emitted")
+#: The wrap helpers whose output a slice would cut (`wrap_text(...)[:3]`).
+WRAPPERS = ("wrap_text", "_wrap_to_width")
+#: A name holding wrapped lines (`lines`, `title_lines`), whose head slice drops the rest.
+LINES_NAME = re.compile(r"\w*lines")
+
+
+def _called(node):
+    func = node.func
+    if isinstance(func, ast.Name):
+        return func.id
+    if isinstance(func, ast.Attribute):
+        return func.attr
+    return None
+
+
+def _head_slice(node):
+    """`x[:n]` — a slice that keeps a head and drops whatever follows it."""
+    cut = node.slice
+    return (isinstance(cut, ast.Slice) and cut.lower is None and cut.upper is not None
+            and cut.step is None)
+
+
+def _records(func):
+    return func is not None and any(
+        isinstance(n, ast.Call) and _called(n) in RECORDERS for n in ast.walk(func))
+
+
+def unrecorded_clips(source):
+    """(line, idiom, function) for every clipping idiom in a function that records no loss.
+
+    The idioms #788 names: a `_clip(` call, a head slice of wrapped output, and a head slice
+    of a `lines` list. Read from the syntax tree, so a docstring or comment that NAMES an
+    idiom is not a hit, and an idiom split over several lines still is. A hit is allowed only
+    inside a function that also calls `record_content_loss` or `account_emitted`: that is
+    the function reporting what its clip cut, which INV-408 permits at fixed geometry.
+    """
+    hits = []
+
+    def visit(node, func):
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                visit(child, child)
+                continue
+            idiom = None
+            if isinstance(child, ast.Call) and _called(child) == "_clip":
+                idiom = "_clip("
+            elif isinstance(child, ast.Subscript) and _head_slice(child):
+                value = child.value
+                if isinstance(value, ast.Call) and _called(value) in WRAPPERS:
+                    idiom = "%s(...)[:" % _called(value)
+                elif isinstance(value, ast.Name) and LINES_NAME.fullmatch(value.id):
+                    idiom = "%s[:N]" % value.id
+            if idiom and not _records(func):
+                hits.append((child.lineno, idiom, func.name if func else "<module>"))
+            visit(child, func)
+
+    visit(ast.parse(source), None)
+    return hits
+
+
+#: Each idiom #788 forbids, in a function that records nothing. Appended to a copy of a
+#: generator, every one of them must be reported.
+UNRECORDED_PROBE = """
+
+def _probe_788(font, text, pdf):
+    label = _clip(text, 46)
+    title = wrap_text(font, text, 1500)[:3]
+    names = _wrap_to_width(text, 100.0, len)[:2]
+    lines = text.split()
+    kept = lines[:MAX_LINES]
+    return label, title, names, kept
+"""
+
+#: The same idioms in a function that records its loss: allowed.
+RECORDED_PROBE = UNRECORDED_PROBE.replace(
+    "_probe_788", "_probe_788_recorded").replace(
+    "    return label", "    record_content_loss('probe', text)\n    return label")
+
+
+class EveryGeneratorRecordsWhatItClips(unittest.TestCase):
+    """INV-408 at every bundled generator: a clip either wraps, or records what it cut."""
+
+    def test_the_generators_are_found(self):
+        """Four ship today; a glob that finds fewer has stopped looking where they are."""
+        names = {os.path.basename(path) for path in GENERATORS}
+        for expected in ("generate_recap_pdf.py", "generate_discoveries_pdf.py",
+                         "generate_document_pdf.py", "generate_recap_video.py"):
+            self.assertIn(expected, names)
+
+    def test_no_shipped_generator_clips_without_recording(self):
+        for path in GENERATORS:
+            with open(path, encoding="utf-8") as handle:
+                hits = unrecorded_clips(handle.read())
+            with self.subTest(script=os.path.basename(path)):
+                self.assertEqual(
+                    [], hits,
+                    "%s clips content in a function that records no loss (INV-408): "
+                    "wrap it, or call record_content_loss with the site and the text cut"
+                    % os.path.basename(path))
+
+    def test_an_inserted_unrecorded_clip_is_caught_in_every_generator(self):
+        """Negative control: each idiom, added to a copy of each generator, is reported."""
+        for path in GENERATORS:
+            with open(path, encoding="utf-8") as handle:
+                source = handle.read()
+            with self.subTest(script=os.path.basename(path)):
+                hits = unrecorded_clips(source + UNRECORDED_PROBE)
+                self.assertEqual(
+                    ["_clip(", "wrap_text(...)[:", "_wrap_to_width(...)[:", "lines[:N]"],
+                    [idiom for _line, idiom, func in hits if func == "_probe_788"])
+
+    def test_a_clip_in_a_function_that_records_its_loss_is_allowed(self):
+        with open(GENERATORS[0], encoding="utf-8") as handle:
+            source = handle.read()
+        self.assertEqual([], unrecorded_clips(source + RECORDED_PROBE))
+
+    def test_a_docstring_naming_an_idiom_is_not_a_hit(self):
+        self.assertEqual([], unrecorded_clips(
+            'def f():\n    """Every call site was `_clip(_safe(x), n)`; lines[:3]."""\n'))
+
+
+def load_mutated(name, path, replace=(), append=""):
+    """`path` as a fresh module, with each (old, new) in `replace` applied to its source.
+
+    Compiled under the generator's own file name, so it finds its sibling helpers exactly as
+    the shipped file does. Each `old` must occur, or the mutation would test nothing.
+    """
+    with open(path, encoding="utf-8") as handle:
+        source = handle.read()
+    for old, new in replace:
+        if old not in source:
+            raise AssertionError("mutation target not found in %s: %r" % (path, old))
+        source = source.replace(old, new)
+    module = type(sys)(name)
+    module.__file__ = path
+    sys.modules[name] = module
+    exec(compile(source + append, path, "exec"), module.__dict__)
+    return module
+
+
+# --------------------------------------------------------------------------- #
+# The recap PDF's fixed-geometry sites (#788)
+# --------------------------------------------------------------------------- #
+#: Longer than the cover chip's 46 characters; every other title fits a chip.
+LONG_CHIP_TITLE = "Data Quality, Mapping, and Transformation for the CHIP_TAIL_788"
+#: One unbreakable word, past what the certificate's shrink floor fits on the card.
+OVERLONG_NAME = "W" * 120
+#: Enough module titles that the certificate's list cannot fit three lines at 7 pt.
+LIST_TITLES = ["Module title number %02d padded out to the chip" % i for i in range(1, 25)]
+
+#: Each fixed-geometry site in the recap PDF, and the record call that reports it.
+PDF_SITES = {
+    "cover module chip": 'record_content_loss("cover module chip"',
+    "certificate name": "record_content_loss(_CERT_CLIP_SITES.get(key",
+    "certificate module list": 'record_content_loss("certificate module list"',
+}
+
+NO_RECORD = "\n\ndef _no_record_788(*_args, **_kwargs):\n    return None\n"
+
+
+def overlong_recap_source():
+    modules = "".join(
+        "\n## %s — 2026-07-20T10:00:00-05:00\n\n### Information Shared\n\n- A line.\n"
+        "\n### Questions & Responses\n\n- **Q:** Ready? **R:** Yes\n"
+        "\n### Actions Taken\n\n- Did it.\n"
+        "\n### End-of-Module Summary\n\n**What you accomplished:** It.\n\n"
+        "**Files produced:**\n- `x.md` — it\n\n**Why it matters:** It.\n" % title
+        for title in [LONG_CHIP_TITLE] + LIST_TITLES)
+    return ("# Senzing Bootcamp Recap\n\n**Bootcamper:** %s\n**Started:** 2026-07-20\n"
+            % OVERLONG_NAME) + modules
+
+
+def fpdf2_losses(module):
+    """Render the overlong recap with `module`'s fpdf2 renderer; return its loss warning."""
+    module.reset_content_losses()
+    recap = module.parse_recap(overlong_recap_source())
+    with tempfile.TemporaryDirectory() as tmp:
+        ok = module.render_with_fpdf2(recap, module.Path(os.path.join(tmp, "out.pdf")))
+    assert ok, "the fpdf2 renderer refused the fixture"
+    warning = module.content_loss_warning() or ""
+    module.reset_content_losses()
+    return warning
+
+
+class EveryFixedGeometrySiteReportsInTheRecapPdf(unittest.TestCase):
+    """Overlong fields at each fixed-geometry site are reported, at exit 0 (INV-408)."""
+
+    @requires_fpdf2
+    def test_the_cli_names_every_site_before_success_and_exits_0(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            src = os.path.join(tmp, "bootcamp_recap.md")
+            out = os.path.join(tmp, "out.pdf")
+            with open(src, "w", encoding="utf-8") as handle:
+                handle.write(overlong_recap_source())
+            result = subprocess.run(
+                [sys.executable, RECAP, "--input", src, "--output", out],
+                capture_output=True, text=True, cwd=tmp)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn("renderer: fpdf2", result.stdout)
+            self.assertTrue(os.path.getsize(out) > 0, "the PDF must still be written")
+        warnings = [line for line in result.stderr.splitlines()
+                    if "did not reach the page in full" in line]
+        self.assertEqual(1, len(warnings), "one aggregated WARNING line: %s" % result.stderr)
+        self.assertTrue(warnings[0].startswith("WARNING: 3 passage(s)"), warnings[0])
+        for site, excerpt in (("cover module chip", "CHIP_TAIL_788"),
+                              ("certificate name", "WWWW"),
+                              ("certificate module list", "Module title number")):
+            with self.subTest(site=site):
+                self.assertRegex(warnings[0], re.escape(site) + ": [^;]*" + excerpt)
+
+    @requires_fpdf2
+    def test_removing_any_one_record_call_silences_its_site(self):
+        """Negative control: the fixture above fails when one site stops recording."""
+        self.assertEqual(set(PDF_SITES), {
+            site for site in PDF_SITES
+            if site + ":" in fpdf2_losses(load_mutated("recap_788_whole", RECAP))})
+        for site, call in PDF_SITES.items():
+            with self.subTest(site=site):
+                mutated = load_mutated(
+                    "recap_788_" + site.replace(" ", "_"), RECAP,
+                    replace=[(call, call.replace("record_content_loss", "_no_record_788"))],
+                    append=NO_RECORD)
+                warning = fpdf2_losses(mutated)
+                self.assertNotIn(site + ":", warning)
+                for other in set(PDF_SITES) - {site}:
+                    self.assertIn(other + ":", warning)
+
+    def test_the_certificate_module_list_reports_in_the_stdlib_layout_too(self):
+        """`_cert_module_layout` is shared by both renderers (INV-066), so its report is."""
+        module = load("recap_788_layout", RECAP)
+        module.reset_content_losses()
+        self.addCleanup(module.reset_content_losses)
+        lines, _size = module._cert_module_layout(LIST_TITLES, lambda s, pt: len(s) * pt)
+        self.assertEqual(module._CERT_MODULE_LINES, len(lines))
+        self.assertTrue(lines[-1].endswith(" ..."), "the truncation stays last and visible")
+        self.assertIn("certificate module list: ", module.content_loss_warning() or "")
+
+    def test_a_list_that_fits_records_nothing(self):
+        module = load("recap_788_fits", RECAP)
+        module.reset_content_losses()
+        self.addCleanup(module.reset_content_losses)
+        module._cert_module_layout(["Concepts", "Data collection"], lambda s, pt: len(s))
+        self.assertIsNone(module.content_loss_warning())
+
+
+class TheRecapPdfWrapsItsContentsAndHeadings(unittest.TestCase):
+    """The contents rows and the page headings have room to grow, so they wrap (#788)."""
+
+    @requires_fpdf2
+    def test_every_word_of_a_long_title_reaches_the_contents_and_its_page(self):
+        module = load("recap_788_wrap", RECAP)
+        module.reset_content_losses()
+        self.addCleanup(module.reset_content_losses)
+        tails = {"module": "MODULE_HEADING_TAIL_788", "notes": "NOTES_TITLE_TAIL_788",
+                 "handover": "HANDOVER_TITLE_TAIL_788"}
+        long_text = ("a title long enough to run well past the width of the page heading "
+                     "and of the contents column ")
+        source = overlong_recap_source().replace(
+            LONG_CHIP_TITLE, "Module 1: " + long_text + tails["module"], 1)
+        recap = module.parse_recap(source)
+        recap.notes = module.NotesSection(
+            title=long_text + tails["notes"],
+            entries=[module.NoteEntry(title="One note", body=["Written by me."])])
+        recap.handover = module.HandoverSection(
+            title=long_text + tails["handover"],
+            parts=[("Decisions you made", ["- Kept the defaults."])])
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, "out.pdf")
+            self.assertTrue(module.render_with_fpdf2(recap, module.Path(out)))
+            text = pdf_text(out)
+        for what, tail in tails.items():
+            with self.subTest(title=what):
+                # Once in the contents, once in the page's own heading.
+                self.assertGreaterEqual(text.count(tail), 2, "%s title was cut" % what)
+        warning = module.content_loss_warning() or ""
+        for site in ("contents row", "page heading"):
+            self.assertNotIn(site + ":", warning, "a wrapped site lost text: " + warning)
+
+    def test_no_contents_row_or_page_heading_calls_clip(self):
+        with open(RECAP, encoding="utf-8") as handle:
+            tree = ast.parse(handle.read())
+        for func in ast.walk(tree):
+            if isinstance(func, ast.FunctionDef) and func.name in (
+                    "_render_toc", "_render_toc_row", "_render_title_band",
+                    "_render_module_page", "_render_notes_page", "_render_handover_page"):
+                with self.subTest(function=func.name):
+                    self.assertNotIn("_clip", {
+                        _called(n) for n in ast.walk(func) if isinstance(n, ast.Call)})
+
+
+# --------------------------------------------------------------------------- #
+# The recap video's fixed-geometry sites (#788)
+# --------------------------------------------------------------------------- #
+class StubFont:
+    """Every character `factor` x the size wide, so the layout is the same on any machine."""
+
+    def __init__(self, size, factor=0.6):
+        self.size, self.factor = size, factor
+
+    def getlength(self, text):
+        return len(text) * self.size * self.factor
+
+
+class StubContext:
+    def font(self, _style, size):
+        return StubFont(size)
+
+
+#: Each video site, and the call that caps it and records what the cap drops.
+VIDEO_SITES = {
+    "title card module": '_cap_lines("title card module"',
+    "title card highlight": '_cap_lines("title card highlight"',
+    "certificate citation": '_cap_lines("certificate citation"',
+    "closing card": '_cap_lines("closing card"',
+}
+
+UNRECORDED_CAP = ("\n\ndef _cap_unrecorded_788(where, lines, cap):\n"
+                  "    return list(lines)[:cap]\n")
+
+OVERLONG_MODULE = " ".join(["Mapping"] * 40) + " MODULE_TAIL_788"
+OVERLONG_HIGHLIGHT = " ".join(["highlight"] * 60) + " HIGHLIGHT_TAIL_788"
+OVERLONG_CITATION = " ".join(["citation"] * 80) + " CITATION_TAIL_788"
+OVERLONG_BOOTCAMPER = " ".join(["Bartholomew-Montgomery"] * 12) + " NAME_TAIL_788"
+
+
+def video_losses(module):
+    """Lay out every capped card with overlong fields; return the video's loss warning."""
+    module.reset_content_losses()
+    ctx = StubContext()
+    module.title_card_lines(ctx.font("bold", 96), ctx.font("regular", 48),
+                            OVERLONG_MODULE, OVERLONG_HIGHLIGHT)
+    module.certificate_citation_lines(ctx, OVERLONG_CITATION)
+    module.tag_line_layout(ctx, "Resolved: %s, Senzing Bootcamp graduate." % OVERLONG_BOOTCAMPER)
+    warning = module.content_loss_warning() or ""
+    module.reset_content_losses()
+    return warning
+
+
+class EveryFixedGeometrySiteReportsInTheRecapVideo(unittest.TestCase):
+    """The video's cards keep their caps, and say what the caps dropped (INV-408)."""
+
+    def test_every_site_is_named_with_the_text_it_dropped(self):
+        warning = video_losses(load_mutated("video_788_whole", VIDEO))
+        self.assertTrue(warning.startswith("WARNING: 4 passage(s) did not reach the video in "
+                                           "full"), warning)
+        self.assertEqual(1, len(warning.strip().splitlines()), "one aggregated line")
+        warning.encode("ascii")
+        for site, tail in (("title card module", "Mapping"),
+                           ("title card highlight", "highlight"),
+                           ("certificate citation", "citation"),
+                           ("closing card", "Bartholomew")):
+            with self.subTest(site=site):
+                self.assertRegex(warning, re.escape(site) + ": [^;]*" + tail)
+
+    def test_removing_any_one_record_call_silences_its_site(self):
+        """Negative control: the fixture above fails when one site stops recording."""
+        for site, call in VIDEO_SITES.items():
+            with self.subTest(site=site):
+                mutated = load_mutated(
+                    "video_788_" + site.replace(" ", "_"), VIDEO,
+                    replace=[(call, call.replace("_cap_lines", "_cap_unrecorded_788"))],
+                    append=UNRECORDED_CAP)
+                warning = video_losses(mutated)
+                self.assertNotIn(site + ":", warning)
+                for other in set(VIDEO_SITES) - {site}:
+                    self.assertIn(other + ":", warning)
+
+    def test_fields_that_fit_record_nothing(self):
+        module = load_mutated("video_788_fits", VIDEO)
+        ctx = StubContext()
+        module.reset_content_losses()
+        module.title_card_lines(ctx.font("bold", 96), ctx.font("regular", 48),
+                                "Business Problem", "Three sources, one customer view")
+        module.certificate_citation_lines(ctx, "for completing the Senzing Bootcamp.")
+        module.tag_line_layout(ctx, "Resolved: Ada Lovelace, Senzing Bootcamp graduate.")
+        self.assertIsNone(module.content_loss_warning())
+
+    def test_the_warning_is_written_before_the_success_line(self):
+        with open(VIDEO, encoding="utf-8") as handle:
+            source = handle.read()
+        main = source[source.index("\ndef main("):]
+        self.assertLess(main.index("content_loss_warning()"),
+                        main.index('print(f"Video generated:'))
+
+    def test_the_warning_has_the_recap_pdfs_shape(self):
+        """The same aggregated line: count, sites as `site: excerpt` joined by `; `."""
+        video = load_mutated("video_788_shape", VIDEO)
+        pdf = load("recap_788_shape", RECAP)
+        for module in (video, pdf):
+            module.reset_content_losses()
+            for i in range(6):
+                module.record_content_loss("site %d" % i, "lost text %d" % i)
+            warning = module.content_loss_warning()
+            module.reset_content_losses()
+            with self.subTest(module=module.__name__):
+                self.assertRegex(
+                    warning,
+                    r"^WARNING: 6 passage\(s\) did not reach the (page|video) in full\. "
+                    r"The text below was laid out but part of it was not (emitted|drawn): "
+                    r"site 0: lost text 0; site 1: lost text 1; site 2: lost text 2; "
+                    r"site 3: lost text 3; and 2 more\. ")
+
+
+@unittest.skipUnless(
+    importlib.util.find_spec("PIL") is not None
+    and (shutil.which("ffmpeg") or importlib.util.find_spec("imageio_ffmpeg") is not None),
+    "Pillow or ffmpeg is missing; an end-to-end video render needs both "
+    "(python3 -m pip install -r requirements-dev.txt)")
+class TheVideoCliReportsBeforeSuccess(unittest.TestCase):
+    """End to end: overlong storyboard fields, one WARNING line, the video still written."""
+
+    def test_overlong_cards_are_reported_and_the_video_is_written(self):
+        board = {
+            "video": {"bootcamper": OVERLONG_BOOTCAMPER, "graduation_date": "2026-09-30",
+                      "music": False},
+            "scenes": [
+                {"type": "title_card", "duration": 1, "narration": "Hi.",
+                 "module": OVERLONG_MODULE, "highlight": OVERLONG_HIGHLIGHT},
+                {"type": "tag_line", "duration": 1, "narration": "Resolved."},
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "docs", "video", "storyboard.json")
+            os.makedirs(os.path.dirname(path))
+            with open(path, "w", encoding="utf-8") as handle:
+                json.dump(board, handle)
+            out = os.path.join(tmp, "docs", "bootcamp_recap.mp4")
+            result = subprocess.run(
+                [sys.executable, VIDEO, "--storyboard", path, "--output", out,
+                 "--project-root", tmp, "--no-voice"],
+                capture_output=True, text=True, cwd=tmp, timeout=600)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn("Video generated:", result.stdout)
+            self.assertTrue(os.path.getsize(out) > 0)
+        warnings = [line for line in result.stderr.splitlines()
+                    if "did not reach the video in full" in line]
+        self.assertEqual(1, len(warnings), result.stderr)
+        self.assertTrue(warnings[0].startswith("WARNING: "), warnings[0])
+        for site in ("title card module", "title card highlight", "closing card"):
+            with self.subTest(site=site):
+                self.assertIn(site + ": ", warnings[0])
 
 
 if __name__ == "__main__":

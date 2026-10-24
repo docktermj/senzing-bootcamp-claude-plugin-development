@@ -86,10 +86,12 @@ class TestScaffoldReachesTheClipPath(unittest.TestCase):
 
     # The cover chip's call site, matched on the label expression it clips so the width
     # is the chip's and no other call site's. If the expression changes, `chip_label`
-    # below may no longer mirror it, so the match fails loudly instead.
+    # below may no longer mirror it, so the match fails loudly instead. Since #788 the
+    # label is built into `full` first, so the chip can report what the clip cut (INV-408).
     CHIP_CALL_RE = re.compile(
-        r'_clip\(\s*_safe\(\s*f"\{mod\.number\}\. \{mod\.title\}"\s*'
-        r"if mod\.number is not None\s*else mod\.title\s*\)\s*,\s*(\d+)\s*,?\s*\)",
+        r'full = _safe\(\s*f"\{mod\.number\}\. \{mod\.title\}"\s*'
+        r"if mod\.number is not None\s*else mod\.title\s*,?\s*\)\s*"
+        r"label = _clip\(\s*full\s*,\s*(\d+)\s*,?\s*\)",
         re.S,
     )
 
@@ -114,7 +116,8 @@ class TestScaffoldReachesTheClipPath(unittest.TestCase):
         found = self.CHIP_CALL_RE.findall(GENERATOR.read_text(encoding="utf-8"))
         self.assertEqual(
             1, len(found),
-            "expected exactly one cover-chip _clip(_safe(<label>), n) call site in the "
+            "expected exactly one cover-chip `full = _safe(<label>)` / `_clip(full, n)` "
+            "call site in the "
             f"generator, parsed {len(found)}; if the label expression changed, update "
             "chip_label() to mirror it",
         )

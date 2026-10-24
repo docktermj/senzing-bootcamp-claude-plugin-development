@@ -3323,7 +3323,9 @@ Pillow) and `brand_tokens`.
   cover (`senzing_logo_light.png`, else a drawn ring), contents, one page
   per module (four sub-sections, then any extras), notes, the handover page
   (`BOOTCAMP_HANDOVER_SUBTITLE` under its heading), and a landscape
-  certificate (`_CERT_*` geometry). A missing summary block prints
+  certificate (`_CERT_*` geometry). Contents rows and page headings wrap
+  (`_render_toc_row`, `_render_title_band`, `_wrap_to_fit`); a heading's band
+  grows a line at a time. A missing summary block prints
   "(not recorded)", and tables become grids (aligned monospace as a last
   resort). Bullets are spaced apart before each top-level bullet. If fpdf2
   is missing or fails, it falls back to the stdlib renderer.
@@ -3331,7 +3333,10 @@ Pillow) and `brand_tokens`.
   recap's, else `CERTIFICATE_NAME_PLACEHOLDER`. It prefers the completed
   date. `_cert_citation` states the module count. The module list is fit
   to `_CERT_MODULE_LINES`. A plugin-version colophon appears only when one
-  is recorded (`_cert_attribution`).
+  is recorded (`_cert_attribution`). The fixed-geometry clips that remain
+  (the cover's module chips, a name or signature block at the shrink floor,
+  and the module list's last-resort truncation) record what they cut under
+  their site name (`_CERT_CLIP_SITES`).
 - Fallback `render_with_stdlib`: a hand-written PDF with the same content
   and certificate, no images, tables as monospace columns through the shared
   `monospace_table_lines` (also used by `_render_table_monospace`, the rich
@@ -3403,6 +3408,12 @@ offline (`NETWORK_MODULES` are never imported).
   shrinks from `TAG_LINE_SIZE` only until that last line fits
   `TAG_LINE_WIDTH`. At most `TAG_LINE_MAX_LINES`; text without the prefix
   or a comma wraps greedily.
+- Cards keep their line caps (`title_card_lines`: `TITLE_CARD_MAX_LINES`
+  each for the module name and highlight; `certificate_citation_lines`:
+  `CITATION_MAX_LINES`; the closing card's), but `_cap_lines` records the
+  lines a cap drops. The video's own `record_content_loss` /
+  `content_loss_warning` collector (the PDF's shape, not its module) writes
+  one ASCII `WARNING:` line before `Video generated:`.
 - `certificate_fields` reuses `generate_recap_pdf`'s parser and `_cert_*`
   helpers, so its name, date and modules match the PDF's. Its labels and
   citation come from that module's constants too, through
@@ -3425,7 +3436,8 @@ offline (`NETWORK_MODULES` are never imported).
 Exit codes (nothing is written unless 0):
 
 - 0 `EXIT_RENDERED`: `--schema` JSON printed, `--check` valid, or the
-  video rendered (`Video generated:`, `Duration:`, `Voice:`, `Music:`).
+  video rendered (`Video generated:`, `Duration:`, `Voice:`, `Music:`),
+  after any content-loss warning on stderr.
 - 1 `EXIT_INVALID_STORYBOARD`: missing, non-UTF-8, invalid JSON or failed
   validation (`INVALID:` lines).
 - 2 `EXIT_MISSING_CAPABILITY`: no usable Pillow or ffmpeg.
@@ -6861,6 +6873,12 @@ PIPER_VOICE_DIR = "data/temp/piper-voices"
 DEFAULT_VOICE_MODEL = f"{PIPER_VOICE_DIR}/{DEFAULT_PIPER_VOICE}.onnx"
 PIPER_LENGTH_SCALE = "1.0"
 PIPER_SENTENCE_SILENCE = "0.15"
+def record_content_loss(where: str, lost: str) -> None:
+    ...
+def reset_content_losses() -> None:
+    ...
+def content_loss_warning() -> Optional[str]:
+    ...
 def estimated_narration_seconds(text: str) -> float:
     ...
 PALETTE, _BRAND, PALETTE_NOTE = _load_palette()
@@ -6949,6 +6967,12 @@ class RenderContext:
     def font(self, style: str, size: int):
         ...
 def wrap_text(font, text: str, max_width: float) -> List[str]:
+    ...
+TITLE_CARD_MAX_LINES = 3
+def title_card_lines(title_font, body_font, module: str, highlight: str):
+    ...
+CITATION_MAX_LINES = 3
+def certificate_citation_lines(ctx, citation: str) -> List[str]:
     ...
 TAG_LINE_SIZE, TAG_LINE_WIDTH, TAG_LINE_MAX_LINES = 96, 1600, 5
 def tag_line_layout(ctx, text: str, max_width: float = TAG_LINE_WIDTH,
@@ -10082,6 +10106,8 @@ _CERT_CITATION_NO_MODULES = (
 )
 def _cert_citation(labels: List[str]) -> str:
     ...
+def _cert_module_layout(labels: List[str], measure) -> Tuple[List[str], float]:
+    ...
 def _render_table_monospace(pdf, epw: float, header, rows) -> None:
     ...
 def _clip(s: str, n: int) -> str:
@@ -10113,7 +10139,8 @@ Used by:
 - `_CERT_EYEBROW`: `test_brand_sync.py`
 - `_CERT_HEADLINE`: `test_brand_sync.py`
 - `_CERT_ISSUER_LABEL`: `test_brand_sync.py`
-- `_CERT_MODULE_LINES`: `test_recap_pdf_certificate.py`
+- `_CERT_MODULE_LINES`: `test_recap_pdf_certificate.py`,
+  `test_stdlib_pdf_keeps_code_and_table_tails.py`
 - `_CERT_PRESENTED`: `test_brand_sync.py`
 - `_CERT_Y_SEAL`: `test_recap_pdf_certificate.py`
 - `_EXPECTED_DROP_CHAR`: `test_generated_scenario_marker_drop_is_exempt.py`
@@ -10128,6 +10155,7 @@ Used by:
 - `_block_label`: `test_recap_pdf_guard.py`
 - `_cert_attribution`: `test_recap_pdf_guard.py`
 - `_cert_citation`: `test_brand_sync.py`, `test_recap_pdf_certificate.py`
+- `_cert_module_layout`: `test_stdlib_pdf_keeps_code_and_table_tails.py`
 - `_cert_fields`: `test_certificate_name_source.py`,
   `test_recap_handover_section.py`, `test_recap_notes_section.py`,
   `test_recap_pdf_font_safety.py`, `test_recap_video.py`
@@ -10520,21 +10548,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8756 test methods in 459 files, matching `inventory.test_count_total`.
+There are 8775 test methods in 459 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8756.
+sum to 8775.
 
-Two files run more tests than they define, so discovery collects 8763:
+Two files run more tests than they define, so discovery collects 8782:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8756`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8775`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8763`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8782`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 10
@@ -10855,7 +10883,7 @@ looks wrong.
 - `tests/test_recap_measure_font_safety.py`: 14
 - `tests/test_recap_notes_section.py`: 22
 - `tests/test_recap_pdf_bulleted_images.py`: 11
-- `tests/test_recap_pdf_certificate.py`: 17
+- `tests/test_recap_pdf_certificate.py`: 18
 - `tests/test_recap_pdf_font_safety.py`: 27
 - `tests/test_recap_pdf_guard.py`: 52
 - `tests/test_recap_pdf_images.py`: 18
@@ -10864,7 +10892,7 @@ looks wrong.
 - `tests/test_recap_structure_checked_per_module.py`: 12
 - `tests/test_recap_summary_blocks.py`: 30
 - `tests/test_recap_tab_coverage.py`: 19
-- `tests/test_recap_video.py`: 147
+- `tests/test_recap_video.py`: 148
 - `tests/test_record_limit_negative_is_rescoped.py`: 13
 - `tests/test_recorded_container_commands_use_the_recorded_runtime.py`: 17
 - `tests/test_registered_amendments_are_not_called_pending.py`: 12
@@ -10930,7 +10958,7 @@ looks wrong.
 - `tests/test_sqlite_preload_check_reads_the_loadable_total.py`: 16
 - `tests/test_sqlite_schema_probe_matches_the_declared_case.py`: 6
 - `tests/test_sqlite_subset_notes_read_the_recorded_decision.py`: 11
-- `tests/test_stdlib_pdf_keeps_code_and_table_tails.py`: 30
+- `tests/test_stdlib_pdf_keeps_code_and_table_tails.py`: 47
 - `tests/test_stdlib_writer_character_safety.py`: 14
 - `tests/test_step1_filesystem_fallback.py`: 10
 - `tests/test_step2_record_type_contradiction.py`: 9
@@ -11543,8 +11571,8 @@ tests a rebuild can pass from behavior alone.
     answered", matched case-insensitively. A recap-shaped or headingless
     document is refused, and an empty `--require-sections` is an error.
   - **`generate_document_pdf.py`** only delegates to this script.
-- **Both PDF generators, the no-fpdf2 path**
-  (`tests/test_stdlib_pdf_keeps_code_and_table_tails.py`, 30 tests). `fpdf` is
+- **Both PDF generators, the no-fpdf2 path, and every generator's clips**
+  (`tests/test_stdlib_pdf_keeps_code_and_table_tails.py`, 47 tests). `fpdf` is
   shadowed on `PYTHONPATH` so the fallback runs whether or not the package is
   installed, and the assertions read the `(…) Tj` strings out of the written
   PDF rather than any figure the generator prints.
@@ -11562,9 +11590,22 @@ tests a rebuild can pass from behavior alone.
     overstates the page. `main` writes it before the `PDF generated:` line.
   - **Still non-blocking.** A row with more cells than its header is reported
     on stderr and the PDF is still written at exit 0.
-  - **The clipping idioms stay gone**, by a source scan that allows them only
-    in a comment recording what was removed.
-- **`generate_recap_video.py`** (`tests/test_recap_video.py`, 147 tests).
+  - **The clipping idioms stay gone**, by a source scan of every
+    `scripts/generate_*.py` that allows them only in a comment recording what
+    was removed.
+  - **No generator clips without recording it** (#788). A syntax-tree scan of
+    every `scripts/generate_*.py` reports a `_clip(` call, a head slice of
+    `wrap_text`/`_wrap_to_width` output, or a head slice of a `*lines` name in
+    a function that calls neither `record_content_loss` nor
+    `account_emitted`; each idiom appended to a copy of each generator is
+    caught. Overlong fields render with one `WARNING:` line naming the cover
+    chip, the certificate name and the certificate module list (fpdf2, through
+    the CLI) and the video's title card, citation and closing card (stub
+    fonts, plus an end-to-end render with Pillow and ffmpeg). Replacing any one
+    site's record call with a no-op in a copy of the source drops that site
+    from the warning. Long module, notes and handover titles reach both the
+    contents and their page whole.
+- **`generate_recap_video.py`** (`tests/test_recap_video.py`, 148 tests).
   - **Exit codes:** 0 rendered, 1 invalid storyboard, 2 missing capability, 3
     encode failed. Nothing is written unless the code is 0.
   - **Errors** name the field at fault.
@@ -13995,6 +14036,15 @@ Senzing licensing, with no SPDX identifier.
   (`conformance.py reverse-check --ref aecbc38` still found one uncited line);
   six test credits move from INV-048 to INV-227 or INV-173; dry-run's "never a
   plugin change" is queued as a new invariant for `/review-invariants`
+- #788: no bundled generator clips silently (INV-408): the recap PDF's
+  contents rows and module, notes and handover headings wrap instead of
+  `_clip`; the cover chip, the certificate name at the shrink floor and the
+  certificate module list keep their caps and record what they cut; the recap
+  video's title card, certificate citation and closing card record their
+  dropped lines in their own collector, written as one `WARNING:` line before
+  `Video generated:` (it renders without the PDF module); a syntax-tree guard
+  over every `scripts/generate_*.py` and an overlong-field fixture, each with
+  a negative control, keep it that way
 - #789: Module 6 Phase A's expansion paths and Module 2 Step 5's license note
   name no license request channel of their own and point at Module 4
   → "Obtain a Senzing License Key" (Step 8a sub-step 6), which reads the
