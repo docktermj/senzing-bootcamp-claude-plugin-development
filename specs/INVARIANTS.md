@@ -23,9 +23,12 @@ steering files.
 ## Maintaining this file
 
 This file is machine-extended: as specs are implemented, the guarantee a spec
-establishes becomes an invariant that all future work must maintain. The
-`implement-spec` skill appends those invariants here. To keep the file
-deterministically extensible, follow these rules:
+establishes becomes an invariant that all future work must maintain. Only
+`/review-invariants` adds invariants and dated corrections to this file (INV-365).
+Every other command and unattended run writes a `DEFERRED INVARIANT` or
+`PROPOSED AMENDMENT` block in `specs/IMPLEMENTED.md` instead, in the shape
+[`review-invariants` → "Writing one"](../.claude/skills/review-invariants/SKILL.md#writing-one)
+states. To keep the file deterministically extensible, follow these rules:
 
 1. **Never delete or renumber an existing invariant.** IDs are permanent
    references. If an invariant becomes obsolete, mark it (e.g. append
@@ -299,9 +302,12 @@ These hold at the boundaries of every module.
 
 ## Invariants added from implemented specs
 
-Invariants below were established by implemented specs and are maintained by the
-`implement-spec` skill. Append new entries directly beneath the marker using the
-next unused `INV-NNN` (see [Maintaining this file](#maintaining-this-file)).
+Invariants below were established by implemented specs and issues, and only
+`/review-invariants` registers them here; every other command writes a
+block in `specs/IMPLEMENTED.md` in the shape
+[`review-invariants` → "Writing one"](../.claude/skills/review-invariants/SKILL.md#writing-one)
+states. `/review-invariants` appends each new entry directly beneath the marker using
+the next unused `INV-NNN` (see [Maintaining this file](#maintaining-this-file)).
 
 ### Index by subject
 

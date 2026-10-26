@@ -47,6 +47,12 @@ So this guard asserts the condition, not the wording (INV-219):
    `PROPOSED AMENDMENT`. Their obligations stay in the overlays: the INV-309 gate on closing,
    the `INV-NNN` placeholder that keeps `citations.py verify` green, and the warning about
    `pending_invariants.py check`.
+6. **The register names its own writer** (#807). `specs/INVARIANTS.md`'s "Maintaining this
+   file" paragraph and the intro under "Invariants added from implemented specs" each name
+   `/review-invariants`, point at "Writing one" as rule 3 requires of any pointer, restate no
+   part of the block shape, and never name the retired `implement-spec` skill. Until #807 both
+   said `implement-spec` appended the invariants, which contradicted this file's own rule from
+   inside the register. The two passages are read by their headings, not by line number.
 
 ⚠️ **The matcher is derived from the claim, not from the sentences #520 replaced** (INV-282).
 The claim is *"an instruction to change the invariant register in place"*. So the verbs are a
@@ -70,7 +76,7 @@ Enforces INV-365 (registered 2026-10-13 from the
 text, and for rule 4 Python text too: it cannot establish that a live run writes the block
 rather than editing the file.
 
-Source issues: #520; rule 4's Python reading, #607; the overlays and rule 5, #808.
+Source issues: #520; rule 4's Python reading, #607; the overlays and rule 5, #808; rule 6, #807.
 
 Stdlib only; every file is read as text (INV-108).
 
@@ -90,6 +96,15 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / ".claude" / "skills"
 OWNER = SKILLS / "review-invariants" / "SKILL.md"
 OVERLAYS = REPO_ROOT / ".claude" / "skill-overlays"
+REGISTER = REPO_ROOT / "specs" / "INVARIANTS.md"
+
+#: Rule 6: the register's two passages that say who writes it, each from its heading to the
+#: first line that is no longer its prose (#807).
+REGISTER_PASSAGES = (("## Maintaining this file", "\n1. "),
+                     ("## Invariants added from implemented specs", "\n### "))
+
+#: Rule 6: the skill #807 retired from the register's prose.
+RETIRED_WRITER = "implement-spec"
 
 #: The four skills #520 names. ⛔ A floor for the derived set, never the set itself (INV-246):
 #: the guard reads every skill, and this only proves the derivation reached the ones known.
@@ -521,6 +536,82 @@ class EverySkillThatAccountsForAnInvariantNamesTheRoute(unittest.TestCase):
             for problem in pointer_problems(path, read(path), self.anchor):
                 found.append("%s: %s" % (path.relative_to(REPO_ROOT).as_posix(), problem))
         self.assertEqual([], found, "\n  ".join(found))
+
+
+def register_passage(text, heading, end):
+    """Rule 6: the passage under ``heading`` up to ``end``, or None when the heading is gone."""
+    start = text.find(heading + "\n")
+    if start == -1:
+        return None
+    stop = text.find(end, start + len(heading))
+    return text[start + len(heading):stop if stop != -1 else len(text)]
+
+
+def register_problems(text, anchor):
+    """Rule 6: what keeps the register's own passages from naming the route as its only writer."""
+    problems = []
+    for heading, end in REGISTER_PASSAGES:
+        passage = register_passage(text, heading, end)
+        if passage is None:
+            problems.append("%s: the heading is gone" % heading)
+            continue
+        if RETIRED_WRITER in passage:
+            problems.append("%s: still names the retired %s" % (heading, RETIRED_WRITER))
+        if not POINTER.search(passage):
+            problems.append("%s: carries no pointer to review-invariants' format section" % heading)
+        for problem in pointer_problems(REGISTER, passage, anchor) + restated_shape(passage):
+            problems.append("%s: %s" % (heading, problem))
+    return problems
+
+
+class TheRegisterNamesItsOnlyWriter(unittest.TestCase):
+    """Rule 6 (#807): `specs/INVARIANTS.md` names `/review-invariants` as the one that writes it."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.anchor = slug(format_heading(read(OWNER)) or "")
+        cls.live = read(REGISTER)
+
+    def test_both_passages_name_the_route_and_point_at_the_formats(self):
+        self.assertEqual([], register_problems(self.live, self.anchor))
+
+    def test_both_passages_are_found(self):
+        """Not vacuous: each heading is present and its passage holds prose."""
+        for heading, end in REGISTER_PASSAGES:
+            passage = register_passage(self.live, heading, end)
+            self.assertIsNotNone(passage, heading)
+            self.assertIn(ROUTE, _prose(passage), heading)
+
+    def _mutate(self, old, new):
+        self.assertIn(old, self.live, "the control's target is gone, so it would mutate nothing")
+        return self.live.replace(old, new, 1)
+
+    def test_restoring_the_header_s_pre_807_sentence_fails(self):
+        mutated = self._mutate("must maintain. Only\n`/review-invariants` adds invariants",
+                               "must maintain. The\n`implement-spec` skill appends those invariants "
+                               "here. Only\n`/review-invariants` adds invariants")
+        self.assertTrue(register_problems(mutated, self.anchor))
+
+    def test_restoring_the_intro_s_pre_807_sentence_fails(self):
+        old = self.live[self.live.index("Invariants below were established"):
+                        self.live.index("\n### Index by subject")]
+        mutated = self._mutate(old, (
+            "Invariants below were established by implemented specs and are maintained by the\n"
+            "`implement-spec` skill. Append new entries directly beneath the marker using the\n"
+            "next unused `INV-NNN` (see [Maintaining this file](#maintaining-this-file)).\n"))
+        self.assertTrue(register_problems(mutated, self.anchor))
+
+    def test_a_passage_without_its_pointer_fails(self):
+        start = self.live.index("## Maintaining this file")
+        link = self.live.index("[`review-invariants`", start)
+        mutated = self.live[:link] + "`review-invariants` → \"Writing one\"" + \
+            self.live[self.live.index(")", link) + 1:]
+        self.assertTrue(register_problems(mutated, self.anchor))
+
+    def test_a_pointer_to_another_heading_fails(self):
+        mutated = self.live.replace("SKILL.md#writing-one", "SKILL.md#the-three-verdicts", 1)
+        self.assertNotEqual(self.live, mutated)
+        self.assertTrue(register_problems(mutated, self.anchor))
 
 
 class NoOverlayRestatesTheBlockShape(unittest.TestCase):
