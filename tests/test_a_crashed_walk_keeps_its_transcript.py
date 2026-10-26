@@ -98,6 +98,15 @@ def _events(path):
             if line.strip()]
 
 
+def _project(tmp):
+    """``<tmp>/project``, the layout ``autotest.py`` gives a walk: ``walk.py`` creates the
+    Bootcamper's cwd beside the project, so a project at ``tmp`` itself would put it in the
+    shared temp directory (#834)."""
+    project = Path(tmp) / "project"
+    project.mkdir(exist_ok=True)
+    return str(project)
+
+
 class ACrashedWalkKeepsEveryTurnItCompleted(unittest.TestCase):
     """Half 1: `walk.py`, with both `claude` calls stubbed. No token is spent."""
 
@@ -112,7 +121,7 @@ class ACrashedWalkKeepsEveryTurnItCompleted(unittest.TestCase):
             return subprocess.CompletedProcess(
                 args, 0, stdout=_assistant(_guide_turn(len(calls))) + "\n", stderr="")
 
-        def fake_reply(prompt_text, persona, model, timeout=180):
+        def fake_reply(prompt_text, persona, model, cwd=None, timeout=180):
             replies.append(prompt_text)
             if len(replies) == bootcamper_dies_at:
                 raise subprocess.TimeoutExpired(cmd=["claude"], timeout=timeout)
@@ -126,7 +135,7 @@ class ACrashedWalkKeepsEveryTurnItCompleted(unittest.TestCase):
             events, failure = None, None
             try:
                 events, failure = walk.run_walk(
-                    tmp, out, turns, "terse", Path(tmp) / "mcp.json", None, None,
+                    _project(tmp), out, turns, "terse", Path(tmp) / "mcp.json", None, None,
                     OPENING, False, 600)
             except Exception as raised:          # re-raised by design; see the test below
                 failure = raised
@@ -198,8 +207,8 @@ class ACrashedWalkKeepsEveryTurnItCompleted(unittest.TestCase):
             with mock.patch.object(walk, "_claude", fake_claude), \
                     mock.patch.object(walk, "bootcamper_reply", lambda *a, **k: "1"), \
                     redirect_stdout(io.StringIO()), mock.patch("sys.stderr", io.StringIO()):
-                walk.run_walk(tmp, out, 3, "terse", Path(tmp) / "mcp.json", None, None,
-                              OPENING, False, 600)
+                walk.run_walk(_project(tmp), out, 3, "terse", Path(tmp) / "mcp.json",
+                              None, None, OPENING, False, 600)
 
         self.assertEqual(3, len(snapshots))
         # The walk writes one `walk_isolation` preamble before turn 1 (#733). No *turn* may
@@ -233,7 +242,8 @@ class ACrashedWalkKeepsEveryTurnItCompleted(unittest.TestCase):
                     mock.patch.object(walk, "_claude", fake_claude), \
                     mock.patch.object(walk, "bootcamper_reply", lambda *a, **k: "1"), \
                     redirect_stdout(io.StringIO()), mock.patch("sys.stderr", io.StringIO()):
-                return walk.main(["--project", tmp, "--out", str(Path(tmp) / "t.jsonl"),
+                return walk.main(["--project", _project(tmp),
+                                  "--out", str(Path(tmp) / "t.jsonl"),
                                   "--mcp-config", str(Path(tmp) / "m.json"),
                                   "--turns", "3"])
 
@@ -299,11 +309,11 @@ class AChildThatExitsNonZeroIsAFailure(unittest.TestCase):
                 redirect_stdout(io.StringIO()), mock.patch("sys.stderr", console):
             out = Path(tmp) / "t.jsonl"
             if via_main:
-                result = walk.main(["--project", tmp, "--out", str(out),
+                result = walk.main(["--project", _project(tmp), "--out", str(out),
                                     "--mcp-config", str(Path(tmp) / "m.json"),
                                     "--turns", str(turns)])
             else:
-                _count, result = walk.run_walk(tmp, out, turns, "terse",
+                _count, result = walk.run_walk(_project(tmp), out, turns, "terse",
                                                Path(tmp) / "mcp.json", None, None,
                                                OPENING, False, 600)
             written = _events(out)
