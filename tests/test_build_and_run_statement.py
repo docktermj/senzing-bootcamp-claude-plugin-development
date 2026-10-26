@@ -65,7 +65,8 @@ than list them (INV-246):
   wording sits in #563's own ledger entry, as its "Correction to the #511 entry": a run writes
   nothing under `specs/` but its own entry (INV-307), so the #511 block is left as it was.
 
-#793 put Data collection's programs on the statement and said how a run passes arguments:
+#793 put Data collection's programs on the statement and said how a run passes arguments (INV-370's
+dated note of 2026-10-23, applied 2026-10-26):
 
 * the section states once, in its own "Every language" bullet, that a program's arguments follow
   its Run command, after a `--` for `cargo run` and `dotnet run`, and that on native Windows and

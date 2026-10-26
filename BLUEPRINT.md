@@ -14024,8 +14024,8 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_generated_dataset_size_follows_the_scenario.py` replaces
   `tests/test_generated_dataset_size_is_a_license_decision.py` (Module 4 called
   the count a license-capacity decision and also not one, and option 5 had no
-  count once the license framing went; an INV-277 amendment is queued for
-  `/review-invariants`)
+  count once the license framing went; INV-277's 2026-10-23 note is
+  registered, applied 2026-10-26)
 - #780: Module 4 Step 8a sub-step 1 computes the collected total by Step 8b
   sub-step 4's sample-aware `collected_total`, as Step 8b does; Module 1 Step
   5a calls `license_guidance_deferred` a record of its expectation that does
@@ -14062,7 +14062,7 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_feedback_routing.py` scans shipped Markdown for an offer to send
   the file, with the old Step 7 wording as negative control (both sites
   invited sharing the file externally, which `feedback.md` and `packaging.md`
-  forbid; an amendment to INV-249 is queued for `/review-invariants`)
+  forbid; INV-249's 2026-10-23 note is registered, applied 2026-10-26)
 - #784: Module 4 Step 2's band sample of `config/data_sources.yaml` is
   `sources:` -> `MERIDIAN_CRM:` -> its fields, and the `scenario_intent`
   sample's empty registry is `sources: {}`; the new
@@ -14080,8 +14080,8 @@ Senzing licensing, with no SPDX identifier.
   generic value as its category with the platform not stated, stated once at
   pre-check 1a's `#generic-deployment-target` (a bare "1" made the guide
   invent a provider that graduation stamped into production files); a new
-  guard pins the mapping and the rendering with negative controls, and an
-  INV-097 amendment is queued for `/review-invariants`
+  guard pins the mapping and the rendering with negative controls, and
+  INV-097's 2026-10-23 note is registered, applied 2026-10-26
 - #786: on native Windows off the `docker` route, the ground rules' build
   section has the guide run each Build and Run command itself as one
   single-quoted `powershell.exe -NoProfile -Command` call that dot-sources
@@ -14093,7 +14093,7 @@ Senzing licensing, with no SPDX identifier.
   may say `py -3` (Git Bash cannot hold the `.ps1` environment, so Windows had
   no working route, and `README.md` already requires `python3` there); the
   #420 venv pairing now asks for `python3` in a block's `# Windows` part, and
-  an INV-370 amendment is queued for `/review-invariants`
+  INV-370's 2026-10-23 note is registered, applied 2026-10-26
 - #787: shipped hard rules cite, on the ⛔ line itself, the invariant whose
   registered statement makes each claim (INV-396): INV-394, INV-378, INV-160,
   INV-393, INV-295 and INV-300 replace or join the ids Module 3b, ground
@@ -14119,8 +14119,8 @@ Senzing licensing, with no SPDX identifier.
   pre-gate "Keep the full dataset" bullet points at sub-step 6 too; the INV-403
   guard now scans every license-route paragraph under `skills/` for an address
   or URL and the pointer (Phase A wrote `support@senzing.com` while the server
-  names Ask Senzing on docs.senzing.com); an INV-403 amendment is queued for
-  `/review-invariants`
+  names Ask Senzing on docs.senzing.com); INV-403's 2026-10-23 note is
+  registered, applied 2026-10-26
 - #790: no quoted or pinned line calls a `synthesized` source's data "your
   data": Module 7's step 5 summary and the 4d and step 7 fallbacks name the
   data by the `#discoveries-cover-subtitle` row that `provenance` picks, and
@@ -14132,8 +14132,8 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_synthesized_data_is_attributed_to_the_bootcamp.py` now scans
   every quoted, blockquoted or 👉 "your data" in shipped Markdown, passing one
   only in a step that reads `provenance` and names the generated case or on a
-  reviewed exemption list, with negative controls, and the INV-399 amendment
-  is queued for `/review-invariants`
+  reviewed exemption list, with negative controls, and INV-399's 2026-10-23
+  note is registered, applied 2026-10-26
 - #793: Module 5's `transform_[name]` takes its input and output files as run
   arguments with no fixed input path, steps 14, 15 and 18 name both (the raw
   input is a `data/raw/` file, never the registry `file_path` step 18 points at
@@ -14143,8 +14143,8 @@ Senzing licensing, with no SPDX identifier.
   by the ground rules' statement, which gains `src/collect` and one bullet on
   passing arguments (`--` for `cargo run` and `dotnet run`); the INV-401 guard
   derives its files from Step 2's `src/**` rows (Module 5's transform was
-  unguarded and Module 4's programs had no route); INV-370 and INV-401
-  amendments are queued for `/review-invariants`
+  unguarded and Module 4's programs had no route). INV-370's and INV-401's
+  2026-10-23 notes are registered, applied 2026-10-26
 - #794: a guide or Bootcamper child that exits non-zero now ends the walk as a
   failure (`walk.py` exits 1, so `autotest.py` files `walk-failed`), with the
   child's whole stderr in a `walk_error` event and on the console, where the
@@ -14163,8 +14163,8 @@ Senzing licensing, with no SPDX identifier.
   resuming (the rebuild supplied three fields, and the `cord` branch
   downloads by two that `docs/business_problem.md` never records);
   `tests/test_module1_registry_write_is_checked.py` pins each clause with a
-  negative control, and an INV-402 amendment is queued for
-  `/review-invariants`
+  negative control, and INV-402's 2026-10-23 note is registered, applied
+  2026-10-26
 - #796: seven guards scan the whole set their invariants state: the INV-361
   linter-credit guard reads "the linter" and observed, observing, checking and
   caught, matching the verb with inline code spans removed so a backticked
@@ -14185,8 +14185,8 @@ Senzing licensing, with no SPDX identifier.
   clause) and a no-purge case that reports and continues; the guard finds
   every "stop it by the pid" passage and teardown gate by scanning shipped
   Markdown (Module 7 claimed a stop the port check had not confirmed, and the
-  rule's outcome 3 read only for a purge); an INV-394 amendment is queued for
-  `/review-invariants`
+  rule's outcome 3 read only for a purge); INV-394's 2026-10-23 note is
+  registered, applied 2026-10-26
 - #804: Data processing step 4a and Module 5 step 21a decide seeding by the
   default config id, pointing at Module 2 Step 8a's already-seeded block
   (anchor `already-seeded`, INV-393, INV-300) instead of seeding on a freshly
@@ -14194,8 +14194,8 @@ Senzing licensing, with no SPDX identifier.
   `database_switch` or `quality_iteration` return, so the `init_default_config`
   prompt could be answered blind); the existing-datastore guard finds every
   seeding-snippet fetch by scanning shipped Markdown, with a reasoned
-  text-keyed exemption list, and an INV-393 amendment is queued for
-  `/review-invariants`
+  text-keyed exemption list, and INV-393's 2026-10-23 note is registered,
+  applied 2026-10-26
 - #805: a `get_sample_data` reply that is the bare string `Denied.` is its own
   outcome in Module 1 Step 4b and Module 4 Step 2 (stated once under
   `#cord-denied-reply`), pointing at Module 3b's remedy, never retried and
@@ -14203,7 +14203,7 @@ Senzing licensing, with no SPDX identifier.
   reported it as no fit or a timeout, and Module 4 had no outcome, while
   INV-378 binds every step that classifies the reply); the truthset guard
   finds its sites by scanning every mention with a reasoned `EXEMPT` list, and
-  an INV-378 amendment is queued for `/review-invariants`
+  INV-378's 2026-10-23 note is registered, applied 2026-10-26
 - #806: every shipped instruction to obtain code from `generate_scaffold`
   carries the ground-rules route pointer (INV-160, INV-300): Module 7's query
   scaffold, Module 5 steps 13 and 24a, Module 3b 1.2, Module 3 Step 1a,
@@ -14258,3 +14258,10 @@ Senzing licensing, with no SPDX identifier.
   both children's cwds and ancestors (`AGENTS.md` left it); `write-gate.py`
   allowing a project under the temp directory is now a test, replacing the
   stale "the gate blocks `/tmp`" reason (INV-379 unchanged)
+- #838: record the 2026-10-26 invariant review — six invariants registered
+  (INV-413 to INV-418) and fourteen dated notes applied, none held (the 20
+  blocks the 2026-10-23 unattended run queued, plus the #671 and #683 notes
+  #777 returned because their headers read "applied" while the register
+  carried neither; the verdicts are the maintainer's under INV-365, and each
+  `BLUEPRINT.md` sentence that called an applied note queued now names its
+  registration date, as the INV-386 guard requires)

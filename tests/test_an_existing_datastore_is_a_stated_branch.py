@@ -41,7 +41,8 @@ Each check is a function of the file text, and every negative control runs the S
 mutated copy that restores the pre-#684 shape (INV-265). Prose is matched wrap-aware (INV-346) and
 shipped files are read as text, never imported (INV-108).
 
-**Every other seeding site points at Step 8a's block (#804).** Data processing Phase A step 4a
+**Every other seeding site points at Step 8a's block (#804; INV-393's dated note of 2026-10-23,
+applied 2026-10-26).** Data processing Phase A step 4a
 and Data Quality, Mapping, and Transformation step 21a seeded "on a freshly schema-created
 datastore" and "if this phase's sandbox database was created fresh" — a test of the container, not
 of the end state (INV-393) — on steps a resume and a `database_switch` or `quality_iteration`

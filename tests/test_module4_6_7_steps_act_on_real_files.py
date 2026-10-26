@@ -35,6 +35,9 @@ behavior that only `dry-run` phase 3 observes (INV-108).
 
 Stdlib only; shipped markdown read as text.
 
+Enforces **INV-416** (registered 2026-10-26) for the absent-`database_type` fallback at Phase A's check and Step 8b's pointer. It reads the skills' text and does
+NOT establish that a live guide reads the `SQL.CONNECTION` scheme.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

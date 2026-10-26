@@ -56,6 +56,8 @@ INV-403 and INV-300, from outside Module 4, or by "sub-step 6" inside it — unl
 8a itself (the gate, sub-step 6, and sub-step 6a's in-flow request), is the in-flow
 `submit_feedback(category='license_request')` route alone, or is on `EXEMPT` with its reason.
 The Step 8a exemption covers the pointer only; the channel check runs there too.
+This enforces INV-403's dated note of 2026-10-23 (#789), applied 2026-10-26. It reads shipped
+prose and does NOT establish that a live guide follows the pointer.
 `ground-rules.md`'s MCP-failure fallback and `feedback.md`'s reply path name the support address
 for other purposes and are asserted not to be route units. Negative controls restore Phase A's
 address, drop each pointer, restore Module 2's own channel and add a new route paragraph that

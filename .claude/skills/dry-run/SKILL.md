@@ -159,7 +159,7 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    than the plugin's text, and whether a given run was contaminated was not visible in its
    report (#733).
 
-   ⛔ **(INV-379) A host response rule is never a plugin defect, and never a plugin change.** The
+   ⛔ **(INV-379, INV-417) A host response rule is never a plugin defect, and never a plugin change.** The
    shipped plugin contains "Suggested next step" nowhere; the rule is your configuration and
    no Bootcamper carries it, so writing the host's response style into the plugin would push
    one maintainer's environment into every bootcamp to solve a problem none of them has.

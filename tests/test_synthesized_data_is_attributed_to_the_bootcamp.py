@@ -54,7 +54,8 @@ needs the mapping links ``#discoveries-cover-subtitle`` instead. The default is 
 scan: it is the script's own ``COVER_SUBTITLE``, and graduation quotes it, correctly, as
 ``generate_document_pdf.py``'s default.
 
-**Widened by #790 to every quoted or pinned "your data".** The sweep above sees a line only when
+**Widened by #790 to every quoted or pinned "your data"** (INV-399's dated note of 2026-10-23,
+applied 2026-10-26). The sweep above sees a line only when
 its block already branches on ``provenance: synthesized``, so Module 7 step 5's summary, step
 7's fallback, Module 5's quality gate and Module 6 Phase C's dependency question said "your
 data" on every provenance with nothing to report it. ``attribution_problems`` reads every

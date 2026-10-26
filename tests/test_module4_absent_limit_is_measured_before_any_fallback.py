@@ -32,6 +32,9 @@ turn-level behavior no offline suite can assert (INV-108).
 
 Stdlib only; shipped markdown read as text.
 
+Enforces **INV-416** (registered 2026-10-26) for Step 8b's absent-`database_type` line and its pointer to Phase A's fallback. It reads the skills' text and does
+NOT establish that a live guide reads the `SQL.CONNECTION` scheme.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

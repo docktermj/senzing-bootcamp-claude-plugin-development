@@ -29,6 +29,8 @@ the quoted and backticked spans a guide renders, and the fenced templates a modu
 document from. Internal prose that INV-079 keeps — prerequisites, section headings, `config/*`
 keys, and quotations of agent-facing instructions — is exempted span by span in `EXEMPT_SPANS`,
 each with its reason, and a stale exemption fails by name (#683).
+This enforces INV-079's dated note of 2026-10-17 (#683), applied 2026-10-26; it reads shipped text and
+does NOT establish that a live guide never says a module number aloud.
 
 The source of truth is the module table in `bootcamp-preparation/SKILL.md`, which already
 declares itself as such ("source of truth for selection and the journey map") and carries

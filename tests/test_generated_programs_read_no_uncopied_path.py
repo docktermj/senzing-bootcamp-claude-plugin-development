@@ -17,7 +17,7 @@ Three things are pinned here:
    it, and Module 5's transform takes its input and output as run arguments (#793).
 2. **The guard over the program-generation instructions.** No program-generation instruction
    directs a generated program to read an uncopied path. Which files those are is derived from
-   Step 2 too (#793, INV-246), never listed: each `src/**` copy row gives a directory, such as
+   Step 2 too (#793, INV-246; INV-401's dated note of 2026-10-23, applied 2026-10-26), never listed: each `src/**` copy row gives a directory, such as
    `src/transform`, and every file of every skill that names one of them as a program's home (a
    backticked `src/transform` or `src/transform/`, not a file under it) is scanned. That brings in
    Module 5's transform, Modules 6 and 7, and the producer of any `src/**` row added later. The

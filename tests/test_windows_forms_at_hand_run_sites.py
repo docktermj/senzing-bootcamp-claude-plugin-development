@@ -59,7 +59,9 @@ These tests pin the forms. They **cannot** establish that the Windows forms run 
 repo's CI runs on Linux, so each site says on its own text that its Windows form is unverified
 there (INV-163), and a test pins that disclosure too.
 
-Enforces INV-001, INV-166 and INV-167 at these sites.
+Enforces INV-001, INV-166 and INV-167 at these sites. Item 7 also enforces INV-370's dated note of 2026-10-23 (#786),
+applied 2026-10-26, which names this file; it does NOT establish that `python3` is on a real
+Windows `PATH`.
 
 Run:  python3 -m unittest discover -s tests
 """
