@@ -4513,7 +4513,8 @@ version site or changelog heading. A signing `tag.gpgsign` setting may prompt;
 the script does not override it. A new file asserting the version is added to
 `VERSION_SITES` (`tests/test_release_covers_every_version_site.py` fails
 otherwise); that guard scans both directions, so a file left behind at a version
-already released past fails it too (#697).
+already released past fails it too (#697), and each of its skip roots must name
+a path `tests/_corpus.py` lists (INV-384, #796).
 
 `release.py [version] [--major|--minor|--patch] [--apply|--dry-run] [--repo]
 [--allow-branch] [--allow-divergent-base] [--message]`. Dry run is the
@@ -4997,7 +4998,9 @@ line off it, clamping at the end. `match_lines(text, pattern)` is written on
 `collapsed_blocks`: it runs the compiled pattern per block and returns the
 1-based line where each match starts. A guard that needs the matched text as
 well as its line reads `collapsed_blocks` rather than growing a second
-collapse rule (#683).
+collapse rule (#683). `collapsed_items(text)` yields the same pairs but starts
+a new unit at each list item, for a guard whose claim and evidence must sit in
+one item rather than anywhere in one list (#796).
 
 `_maintainer_surface.py` derives the maintainer operation set once
 (INV-300): `skills()` (directories under `.claude/skills/` holding a
@@ -10587,12 +10590,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8810 test methods in 459 files, matching `inventory.test_count_total`.
+There are 8856 test methods in 459 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8810.
+sum to 8856.
 
-Two files run more tests than they define, so discovery collects 8817:
+Two files run more tests than they define, so discovery collects 8863:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -10673,7 +10676,7 @@ looks wrong.
 - `tests/test_cord_fetch_has_a_403_remedy.py`: 17
 - `tests/test_cord_fetch_integrity.py`: 50
 - `tests/test_cord_is_disclosed_as_real_data.py`: 10
-- `tests/test_corpus.py`: 16
+- `tests/test_corpus.py`: 19
 - `tests/test_coverage_check_looks_inside_root_arrays.py`: 6
 - `tests/test_coverage_ledger.py`: 36
 - `tests/test_coverage_reports.py`: 48
@@ -10738,7 +10741,7 @@ looks wrong.
 - `tests/test_first_source_is_chosen_by_step_fourteens_heuristics.py`: 18
 - `tests/test_fpdf2_dependency_is_declared.py`: 12
 - `tests/test_free_data_catalog_caveats.py`: 14
-- `tests/test_gate_options_have_handling_steps.py`: 35
+- `tests/test_gate_options_have_handling_steps.py`: 37
 - `tests/test_generated_data_supports_its_success_criteria.py`: 35
 - `tests/test_generated_dataset_size_follows_the_scenario.py`: 13
 - `tests/test_generated_gap_rates_reach_their_band.py`: 18
@@ -10800,7 +10803,7 @@ looks wrong.
 - `tests/test_license_limit_reading_is_complete.py`: 16
 - `tests/test_license_record_limit_is_measured_only.py`: 6
 - `tests/test_license_wiring_lives_in_step_8a.py`: 30
-- `tests/test_linter_credits_name_a_function_it_runs.py`: 31
+- `tests/test_linter_credits_name_a_function_it_runs.py`: 39
 - `tests/test_list_specs.py`: 10
 - `tests/test_listing_selection_is_by_shape.py`: 12
 - `tests/test_liveness_probe_is_not_a_document_search.py`: 7
@@ -10910,7 +10913,7 @@ looks wrong.
 - `tests/test_quality_score_and_preview_prereq.py`: 27
 - `tests/test_quality_score_inputs_are_checked_before_scoring.py`: 11
 - `tests/test_quality_verdict_needs_evidence.py`: 13
-- `tests/test_quality_worked_scores_follow_the_formula.py`: 18
+- `tests/test_quality_worked_scores_follow_the_formula.py`: 28
 - `tests/test_question_options_render_beneath.py`: 12
 - `tests/test_quoted_sizes_say_what_they_missed.py`: 18
 - `tests/test_readme_does_not_undercount_claude_interfaces.py`: 7
@@ -10934,13 +10937,13 @@ looks wrong.
 - `tests/test_recap_video.py`: 148
 - `tests/test_record_limit_negative_is_rescoped.py`: 13
 - `tests/test_recorded_container_commands_use_the_recorded_runtime.py`: 17
-- `tests/test_registered_amendments_are_not_called_pending.py`: 12
+- `tests/test_registered_amendments_are_not_called_pending.py`: 21
 - `tests/test_registration_idempotency_is_constructed.py`: 12
 - `tests/test_registry_samples_are_keyed_by_data_source.py`: 13
 - `tests/test_registry_status_values_are_handled.py`: 12
 - `tests/test_related_entities_guidance.py`: 21
 - `tests/test_release_bumps_version_changelog_and_tag_together.py`: 41
-- `tests/test_release_covers_every_version_site.py`: 12
+- `tests/test_release_covers_every_version_site.py`: 17
 - `tests/test_release_cycle.py`: 77
 - `tests/test_results_validation_is_diagnostic.py`: 35
 - `tests/test_resume_requires_a_recorded_module.py`: 29
@@ -11060,9 +11063,9 @@ looks wrong.
 - `tests/test_why_side_match_family_is_renamed.py`: 10
 - `tests/test_windows_browser_discovery.py`: 23
 - `tests/test_windows_forms_at_hand_run_sites.py`: 49
-- `tests/test_windows_powershell_guidance.py`: 36
+- `tests/test_windows_powershell_guidance.py`: 42
 - `tests/test_worked_steers.py`: 33
-- `tests/test_wrapped_text.py`: 37
+- `tests/test_wrapped_text.py`: 40
 - `tests/test_write_gate.py`: 23
 
 ### 8.4 Key cases
@@ -11089,7 +11092,7 @@ need the original text. These are heuristic estimates, accurate to about 10%:
   found and that a known site matched ("the scan is not vacuous").
 - **Negative controls.** Guards run their own matcher on a copy with the old
   wording pasted back, and assert that it fails.
-- **Wrap-aware matching.** `tests/test_wrapped_text.py` (37 tests) pins the
+- **Wrap-aware matching.** `tests/test_wrapped_text.py` (40 tests) pins the
   block rules of `tests/_wrapped_text.py`.
   - A match is reported at its start line. CR counts as whitespace.
   - These lines end a block:
@@ -11133,16 +11136,19 @@ need the original text. These are heuristic estimates, accurate to about 10%:
   it, accept the declaration arm, and leave Module 4's staging path alone;
   floors on files, hand-over steps and written paths keep a clean result from
   meaning an empty scan.
-- **Corpus listing.** `tests/test_corpus.py` (16 tests) plants a canary under
+- **Corpus listing.** `tests/test_corpus.py` (19 tests) plants a canary under
   every runtime directory of a throwaway git repository and asserts
   `corpus_files()` returns none of them, while it still returns a tracked file,
   an untracked one and an oddly named one, and drops a deleted tracked file and
   an ignored one, by git and by the fallback walk. The fallback also drops
   `.claude/release-cycle/runs/` by its root path and keeps `docs/runs/` and a
   nested `.../.claude/release-cycle/runs/`, with a negative control (#610). It also fails on a
-  hand-rolled `REPO_ROOT.rglob`, `REPO_ROOT.glob("**…`,
-  `(REPO_ROOT / ".claude").rglob`, `CLAUDE.rglob`, `os.walk(REPO_ROOT` or
-  `os.walk(CLAUDE` in `tests/*.py`; a walk through a variable is not caught.
+  hand-rolled `REPO_ROOT.rglob`, `REPO_ROOT.glob("**…`, `CLAUDE.rglob`,
+  `os.walk(REPO_ROOT` or `os.walk(CLAUDE` in `tests/*.py`, and on an `rglob`,
+  `glob("**…")` or `os.walk` of any path under `.claude/`, written in place or
+  through a name `claude_names` resolves (an assignment, a `for` target, a
+  parameter default or a `tests/` helper's name, #796); a walk through a name
+  it cannot resolve is not caught.
 - **Guide-run blocks.** `tests/test_guide_run_blocks_declare_their_shell.py`
   (44 tests) reads every `bash`, `sh` and PowerShell fence in every `.md` under
   `plugins/` (a fence nested in a longer `markdown` fence is example text) and
@@ -12751,7 +12757,7 @@ Senzing licensing, with no SPDX identifier.
   its source, labeled as the Bootcamper's Module 1 words, with a statement
   that a mismatch is what the gate asks about and no quote invented where the
   file has none; INV-275's widening to every gate that confirms a derived
-  artifact is drafted in the ledger, not applied (the requirements were
+  artifact is registered as its 2026-10-11 note (the requirements were
   confirmed on the guide's rendering alone, so a changed meaning surfaced only
   in a retrospective)
 - #483: Module 7 step 3a's matching-concepts reminder is replaced by one
@@ -12893,14 +12899,14 @@ Senzing licensing, with no SPDX identifier.
   as a reader of `integration_targets` (graduation is "the last place", not "the
   only place"), Module 5 Phase 3's SCHEMA finding renames the key and says so,
   step 24d's rejected branch states that iterate returns to Phase 2 step 17 and
-  step 25 points to it, and a `PROPOSED AMENDMENT to INV-356` is queued (closed
+  step 25 points to it, and INV-356's 2026-10-12 note is registered (closed
   reader lists and restated behavior went stale when #487 and #488 shipped)
 - #521: Module 5's step 11 names its `directing_steps.data_quality_mapping`
   record, step 24d checkpoints its answer and Phase 3 session resume follows it
   by pointer, step 16 discloses a synthesized source before its 70-79% and <70%
   questions, the reachings table is re-checked live on server 1.37.27, step 18
-  validates the full load-ready file (skipped with the analyzer), and a
-  `PROPOSED AMENDMENT to INV-345` is queued (six gaps the 2026-10-12 audit found
+  validates the full load-ready file (skipped with the analyzer), and
+  INV-345's 2026-10-12 note is registered (six gaps the 2026-10-12 audit found
   where #485, #488 and #394 left the text behind)
 - #512: Module 3b completes on its no-live-server path: `web_service` and
   `web_page` record `unavailable` with `reason` `recreate_declined` or
@@ -12909,7 +12915,7 @@ Senzing licensing, with no SPDX identifier.
   Fallback, Step 3's "note the failure and proceed" is gone, and the snapshot's
   own six tab ids replace the live comparison, all stated once at
   `phase2-close.md`'s `#no-live-server-completion` with Step 4 naming its own
-  skips, and a `PROPOSED AMENDMENT to INV-130` is queued (the fallback the
+  skips, and INV-130's 2026-10-12 note is registered (the fallback the
   module prescribed could never pass its completion gate)
 - #514: no test docstring or dev skill credits `auto-test`'s transcript linter
   with a behavior it has no function for: eight "cannot establish" paragraphs
@@ -12917,8 +12923,8 @@ Senzing licensing, with no SPDX identifier.
   name `check_one_pointer_per_turn`, a guard
   (`tests/test_linter_credits_name_a_function_it_runs.py`) fails a sentence
   crediting the linter unless every function it names is in `CHECKS` or is
-  `check_apparatus`, and seven `PROPOSED AMENDMENT` blocks (INV-251, INV-352 to
-  INV-355, INV-357, INV-359) are queued (a reused sentence template credited the
+  `check_apparatus`, and seven 2026-10-12 notes (INV-251, INV-352 to
+  INV-355, INV-357, INV-359) are registered (a reused sentence template credited the
   linter with judgments a count-or-regex check cannot make)
 - #518: the shipped example recap shows every recap element the #465 steps
   write: a `You directed:` line in Modules 5, 6 and 7 (no-site, handed-back and
@@ -12935,7 +12941,7 @@ Senzing licensing, with no SPDX identifier.
   own code in every language and resolves D3 from
   `src/server/vendor/d3.v7.min.js`, copied on the host at first build; a
   derived-site guard checks every skill section that names a plugin asset, and
-  a `PROPOSED AMENDMENT to INV-091` is queued (the container mounts only the
+  INV-091's 2026-10-12 note is registered (the container mounts only the
   project, so those reads failed on SDK setup's `docker` route)
 - #520: every maintainer skill routes a change to `specs/INVARIANTS.md` the
   same way: `dry-run` steps 5 and 6, `production-readiness-audit` Step 3,
@@ -12993,8 +12999,8 @@ Senzing licensing, with no SPDX identifier.
   `modules_completed` instead of "gate 3→4" and never has a mismatch fixed or
   re-run; 3b moves its self-check and capture after the server starts (2.4a);
   the Feature Scores gutter is measured and its labels fitted as Match Keys'
-  are; six INV-048 citations name the rule that governs each site; and an
-  INV-275 amendment is queued (each site kept an old rule, pointed at the wrong
+  are; six INV-048 citations name the rule that governs each site; and
+  INV-275's 2026-10-12 note is registered (each site kept an old rule, pointed at the wrong
   section, or used a fixed value that should be measured)
 - #524: the example recap's System verification section shows Module 3's
   current flow: 3 Marisol merge-cluster records and 1 distractor, the Step 7a
@@ -13020,8 +13026,8 @@ Senzing licensing, with no SPDX identifier.
   option, naming it by number and opening words and pointing to its handling
   and resume point, and the INV-284 guard derives its gates from every skill
   file and fails on a missing marker, a missing entry or an entry matching no
-  option, with a negative control per skill directory; an amendment to
-  INV-284 is queued (the guard covered only Module 5's iterate and improve
+  option, with a negative control per skill directory; INV-284's 2026-10-12
+  note is registered (the guard covered only Module 5's iterate and improve
   options)
 - #561: build and run every Bootcamper program through one stated
   per-language command, split into #562 and #563; the module-3 build-and-run
@@ -13042,7 +13048,7 @@ Senzing licensing, with no SPDX identifier.
   mismatch is that step failing), today's steps only as a dated 1.37.28
   example, "the final `inline` step" and the terminal step firing once every
   fetch and clone step has failed; Modules 2 and 3 cite them instead of naming
-  a route, and INV-160's dated note is queued as an amendment (the server now
+  a route, and INV-160's 2026-10-13 note is registered (the server now
   lists an MCP-hosted `url` first, so the plugin's `raw_url`-then-clone route
   reported a reachable example unreachable)
 - #563: every program Modules 2, 5, 6 and 7, graduation and the ground rules'
@@ -13058,7 +13064,7 @@ Senzing licensing, with no SPDX identifier.
   reply for the `Senzing.Sdk` source, with one dated note giving each
   platform's path, a two-step fallback (an observed `.nupkg`, then "Neither")
   and no `MCP-NEGATIVE` marker; the `search_docs` C# query and its allowlist
-  entry are gone, and INV-222's dated note is queued as an amendment (every
+  entry are gone, and INV-222's 2026-10-13 note is registered (every
   platform's reply now names the source, so "no C# line" was false)
 - #567: Module 2's Target 4.4.0 step selects *v4.4.0 Detailed Release
   Notes* "Migration & Action Required" by title and section, names the
@@ -13107,8 +13113,8 @@ Senzing licensing, with no SPDX identifier.
   entry only when it stops; the finding skills' `--file` and `drafts.py`
   take INV-314's batch clause (the maintainer drove 13 steps and four build
   passes by hand, carrying each skill's output into the next)
-- #574: two `PROPOSED AMENDMENT` blocks are queued in the ledger for
-  `/review-invariants`, one letting a single yes cover several records shown
+- #574: two 2026-10-13 notes are registered, one letting a single yes cover
+  several records shown
   whole in one numbered message (INV-314, `submit_feedback` and unattended
   runs unchanged) and one saying a label applied through
   `/refine-github-issue` after the maintainer approved it is the maintainer
@@ -13250,9 +13256,9 @@ Senzing licensing, with no SPDX identifier.
   governs its clause (INV-131, INV-122 with INV-185 on the path line,
   INV-335 with INV-163, INV-077 with INV-250, INV-173, INV-256, INV-369 with
   INV-333, INV-365), or is dropped where none states it; the INV-365 guard's
-  INV-309 check reads Python too, and a DEFERRED block for `feedback.md`'s
-  "Never blocks." ⛔ and INV-335 and INV-122 `PROPOSED AMENDMENT`s are queued
-  (sites cited INV-048 for a generic never-blocks, and a release-cycle string
+  INV-309 check reads Python too, and `feedback.md`'s "Never blocks." ⛔ is
+  registered as INV-373 and INV-335's and INV-122's 2026-10-15 notes are
+  registered (sites cited INV-048 for a generic never-blocks, and a release-cycle string
   and a test credited INV-309 with INV-365's rule)
 - #608: System verification's failed-status ⛔ on the move-on path cites no
   INV-229 and gives its real reason (the step-9 resume check reads the status
@@ -13308,8 +13314,8 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_module6_repository_follows_database_type.py`; Module 6's and
   Module 3's `generate_scaffold` steps cite the `access_steps` route, Module 3's
   marker is restamped, `midpoint_record` gets its key path, Module 2 adds the
-  C# NuGet source to a project-local `nuget.config`, and an INV-050
-  `PROPOSED AMENDMENT` is queued (Module 6 hardcoded the SQLite file on a
+  C# NuGet source to a project-local `nuget.config`, and INV-050's
+  2026-10-14 note is registered (Module 6 hardcoded the SQLite file on a
   PostgreSQL run, and `dotnet nuget add source` wrote the user-level
   `NuGet.Config`)
 - #619: Module 4 Step 2's option 5 generates: its INV-284 handling entry writes
@@ -13318,8 +13324,8 @@ Senzing licensing, with no SPDX identifier.
   the secondary offer's "Synthesized test data" points at that entry and "Free
   raw data" stages, counts (INV-243) and records `provenance: free_data`; CORD
   and "last resort" are scoped to a Bootcamper who did not choose option 5,
-  checked by `tests/test_gate_options_have_handling_steps.py`, and an INV-284
-  `PROPOSED AMENDMENT` is queued (option 5's handler recommended CORD against
+  checked by `tests/test_gate_options_have_handling_steps.py`, and INV-284's
+  2026-10-14 note is registered (option 5's handler recommended CORD against
   the answer, and the secondary offer's entries had no procedure)
 - #620: Module 4 Step 8a sub-step 6 gives guidance for the chosen path only and
   Step 8b's "Load all" asks nothing more (INV-006); Module 1 Steps 6a and 15
@@ -13328,8 +13334,8 @@ Senzing licensing, with no SPDX identifier.
   gate item 6 has a handling step; the INV-284 gate scan in
   `tests/test_gate_options_have_handling_steps.py` now counts every "Reply with
   a number" question, list or not, which put the marker on Bootcamp
-  preparation's language gate and Module 7's recall question, and an INV-284
-  `PROPOSED AMENDMENT` is queued (pinned answers were re-asked, two
+  preparation's language gate and Module 7's recall question, and INV-284's
+  2026-10-14 note is registered (pinned answers were re-asked, two
   confirmation gates had no "no" branch, and two numbered-reply gates had no
   marker)
 - #613: every guide-run command on a recorded container dispatches on its
@@ -13358,7 +13364,7 @@ Senzing licensing, with no SPDX identifier.
   `generate_recap_video.py` to `KNOWN_CARRIERS`; the example storyboard says
   11 Core modules; the example recap gains Module 7's recall, export and
   teardown questions and the right program and record counts, re-rendered;
-  INV-107 and INV-050 `PROPOSED AMENDMENT`s are queued (docstrings, help text,
+  INV-107's and INV-050's 2026-10-15 notes are registered (docstrings, help text,
   counts and examples no longer matched what ships)
 - #617: Module 0's close-out write sets
   `step_history["entity_resolution_concepts"]`; Module 1's Desired Output
@@ -13406,7 +13412,7 @@ Senzing licensing, with no SPDX identifier.
   `LICENSEFILE`), Module 2's marker records the lapse on server 1.39.0,
   2026-10-15, Phase B stops calling the server's route a different one, the
   maintainer templates' worked example moves to the evaluation limit, and
-  amendments to INV-208 and INV-209 are queued (the variable lost its only
+  INV-208's and INV-209's 2026-10-15 notes are registered (the variable lost its only
   source; a lost source is not an absence)
 - #655: Module 5's globalization "best practices" marker states its owner
   result by the deciding property (the category boost ranks Globalization
@@ -13715,8 +13721,9 @@ Senzing licensing, with no SPDX identifier.
   included the walk, because the reason INV-369 makes it load-bearing -- a
   clean run under `confused` and one under `offscript` are different evidence
   -- is a property of the walk and not of the skill that launched it; the
-  widening of INV-369 is queued as a dated note for `/review-invariants`
-  rather than written into the register (INV-307, INV-365), and the guard
+  widening of INV-369 went through `/review-invariants` rather than being
+  written into the register (INV-307, INV-365) and is registered as its
+  2026-10-19 note, and the guard
   derives its sites by scanning `.claude/skills/`, which found
   `release-cycle` pointing at `/dry-run`'s rule, a fourth site no list
   carried. `tests/test_linter_credits_name_a_function_it_runs.py`'s
@@ -13790,7 +13797,7 @@ Senzing licensing, with no SPDX identifier.
   pinned as a standing negative control so a widened predicate fails rather than
   reporting correct prose. `TheBrandTokensDocstringNamesEveryCarrierOrNone`
   covers the half a count guard cannot see, a docstring that names some carriers
-  and not others. An INV-107 `PROPOSED AMENDMENT` is queued, withdrawing that
+  and not others. INV-107's 2026-10-19 note is registered, withdrawing that
   invariant's count in favor of the property (the issue itself was filed with a
   count that went stale before it was built, which is the case for the rule)
 - #730: restamp three dated `MCP-NEGATIVE` markers to `server 1.39.1,
@@ -13888,8 +13895,8 @@ Senzing licensing, with no SPDX identifier.
   improvised one; the rule states what the introduction covers and the guide words
   it, every site reaches it through its existing pointer (INV-300), and
   `tests/test_predictions_before_results.py` requires each clause, fails a grading
-  word in the bullet and reports a site-local copy; the dated note on INV-357 is
-  queued as an amendment for `/review-invariants`
+  word in the bullet and reports a site-local copy; INV-357's 2026-10-21 note is
+  registered
 - #748: SDK setup Step 7's SQLite "is the schema already applied?" probe matches
   `name='SYS_CFG' COLLATE NOCASE` — it compared `name='sys_cfg'` case-sensitively,
   carried over from the PostgreSQL query, while SQLite keeps the case its DDL
@@ -13930,8 +13937,7 @@ Senzing licensing, with no SPDX identifier.
   once (span first let 2,098 cross-source entities fill the 1,500 cap, so
   relationship mode showed 2 of 914 related entities and 1 of 476 edges);
   `tests/test_graph_cap_ranks_related_entities_first.py` pins the reported case
-  at the real cap, and the INV-154 note amendment is queued for
-  `/review-invariants`
+  at the real cap, and INV-154's 2026-10-21 note is registered
 - #753: Module 7 passes the discoveries PDF's cover `--subtitle` from a
   three-row table directly before the invocation, picked by every loaded
   source's `provenance` (all synthesized: "the data the bootcamp generated"; a
@@ -13941,8 +13947,7 @@ Senzing licensing, with no SPDX identifier.
   (INV-399); `tests/test_synthesized_data_is_attributed_to_the_bootcamp.py`
   now pins the table at the fence, renders each row's cover, fails a
   generated-case subtitle restated elsewhere (INV-300) and "your data" on any
-  non-comment viz-server line, and the INV-399 amendment is queued for
-  `/review-invariants`
+  non-comment viz-server line, and INV-399's 2026-10-21 note is registered
 - #754: graduation Step 0b's "Next time" turn pins "What's the first thing
   you'd ask an AI assistant with the Senzing MCP server to build next, on your
   own data?" with its parenthetical unchanged (the old question packed four
@@ -13993,7 +13998,7 @@ Senzing licensing, with no SPDX identifier.
   state, read from a new `critical_fields` registry field (the spec has no
   "critical" set, so features its Importance column ranks High or higher);
   `tests/test_phase_d_gate_routes_on_both_metrics.py` finds such gates by
-  scanning; an INV-404 amendment is queued for `/review-invariants`
+  scanning; INV-404's 2026-10-22 note is registered
 - #777: an amendment block's header says applied only when
   `specs/INVARIANTS.md` carries its note (the #671 and #683 blocks read
   "applied" from their own implementing commits and the registry carried
@@ -14160,6 +14165,19 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_module1_registry_write_is_checked.py` pins each clause with a
   negative control, and an INV-402 amendment is queued for
   `/review-invariants`
+- #796: seven guards scan the whole set their invariants state: the INV-361
+  linter-credit guard reads "the linter" and observed, observing, checking and
+  caught, matching the verb with inline code spans removed so a backticked
+  `CHECKS` is a name; INV-167's `$env:NAME` rule reads inline PowerShell spans
+  (under a Windows heading, or carrying a PowerShell-only token); the release
+  guard's skip roots must name listed paths (INV-384); the INV-405 guard scans
+  `plugins/` for worked examples, which put Module 4's 91.25 and 80.75 at 91.3
+  and 80.8; INV-284's `REPLY` adds three phrasings; the INV-367 walk guard
+  resolves names bound under `.claude/`, and three tests move to
+  `corpus_files()`; the INV-386 guard scans everything outside `specs/` item by
+  item, which restated twenty-three decision-log lines as registered (each
+  guard scanned a narrower set than its invariant states, so a violation at an
+  unscanned site shipped green)
 - #803: Module 7's step 3c and teardown "Yes" link the failed-stop rule
   (`#failed-stop`, INV-394, INV-300) and, on a port still answering, say the
   stop is unverified and the server still running, never that it stopped,

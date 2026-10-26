@@ -109,6 +109,7 @@ import unittest
 from pathlib import Path
 
 import _maintainer_surface as surface
+from _corpus import corpus_files
 from _wrapped_text import match_lines
 
 REPO_ROOT = surface.REPO_ROOT
@@ -182,8 +183,12 @@ def bootcamper_commands(commands_dir=BOOTCAMPER_COMMANDS_DIR):
 
 
 def skill_corpus(skills_dir=SKILLS_DIR, overlays_dir=OVERLAYS_DIR):
-    """Every `.md` file under the skills and the overlays, supporting files included (#296)."""
-    return sorted(skills_dir.rglob("*.md")) + sorted(overlays_dir.rglob("*.md"))
+    """Every `.md` file under the skills and the overlays, supporting files included (#296).
+
+    Listed through `tests/_corpus.py` (INV-367), so loop scratch never joins the corpus (#796).
+    """
+    return [path for tree in (skills_dir, overlays_dir)
+            for path in corpus_files(tree.relative_to(REPO_ROOT).as_posix(), suffixes={".md"})]
 
 
 def corpus_problems(paths, commands_dir=COMMANDS_DIR, overlays_dir=OVERLAYS_DIR,

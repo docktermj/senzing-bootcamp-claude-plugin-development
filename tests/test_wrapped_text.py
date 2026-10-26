@@ -29,7 +29,7 @@ Run:  python3 -m unittest discover -s tests
 import re
 import unittest
 
-from _wrapped_text import collapsed_blocks, line_of, match_lines
+from _wrapped_text import collapsed_blocks, collapsed_items, line_of, match_lines
 
 PHRASE = re.compile(r"no flag is documented")
 
@@ -170,6 +170,26 @@ class ListItemsJoinIntoOneBlock(unittest.TestCase):
         """Accepted (#426 edge case): a phrase across two items can match."""
         self.assertEqual([1], match_lines("- no flag\n- is documented", re.compile(
             r"no flag - is documented")))
+
+
+class CollapsedItemsSplitsAListIntoItems(unittest.TestCase):
+    """#796: one unit per list item, wrapped lines joined, other blocks as `collapsed_blocks`."""
+
+    def test_each_item_is_its_own_unit(self):
+        text = "- one item\n  wrapped\n- two\n1. three\n\nA paragraph\nwrapped."
+        self.assertEqual(["- one item wrapped", "- two", "1. three", "A paragraph wrapped."],
+                         [flat for flat, _ in collapsed_items(text)])
+
+    def test_each_item_reports_its_own_line(self):
+        (_, first), (_, second) = collapsed_items("- a\n- b\n  c")
+        self.assertEqual(1, line_of(first, 0))
+        self.assertEqual(2, line_of(second, 0))
+        self.assertEqual(3, line_of(second, len("- b c") - 1))
+
+    def test_a_block_without_a_list_is_read_as_collapsed_blocks_reads_it(self):
+        text = "a\nb\n\n# head\n\n| x |\n"
+        self.assertEqual([flat for flat, _ in collapsed_blocks(text)],
+                         [flat for flat, _ in collapsed_items(text)])
 
 
 class CollapsedBlocksIsWhatMatchLinesMatchesOn(unittest.TestCase):

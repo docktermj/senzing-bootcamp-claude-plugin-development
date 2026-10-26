@@ -54,6 +54,8 @@ import tokenize
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL_DIR = REPO_ROOT / ".claude" / "skills" / "compact-dev-environment"
 SKILL_MD = SKILL_DIR / "SKILL.md"
@@ -263,9 +265,9 @@ def prose_of(path):
 
 
 def skill_files():
-    return sorted(p for p in SKILL_DIR.rglob("*")
-                  if p.is_file() and "__pycache__" not in p.parts
-                  and p.suffix in {".md", ".py", ".sh", ".txt", ".json"})
+    """The skill's own files, through `tests/_corpus.py`'s one listing (INV-367, #796)."""
+    return corpus_files(SKILL_DIR.relative_to(REPO_ROOT).as_posix(),
+                        suffixes={".md", ".py", ".sh", ".txt", ".json"})
 
 
 def section(text, heading_prefix):
