@@ -7,9 +7,21 @@ times a day and concurrently with itself.
 
 Isolation, and why each layer is here
 -------------------------------------
-* **Project directory** under ``$HOME``, one per run, timestamped. Never ``/tmp``:
-  the plugin's own ``write-gate.py`` blocks ``/tmp``, ``/var/tmp`` and
-  ``/private/tmp``, so a sandbox there would test the gate instead of the bootcamp.
+* **A fresh private run root under the system temp directory**, one per run:
+  ``tempfile.mkdtemp`` under ``SANDBOX_ROOT`` (``tempfile.gettempdir()``), mode 0700,
+  never a fixed shared path another user on the host could create first. Not under
+  ``$HOME`` on Linux and macOS: Claude Code loads every ancestor's ``.claude/CLAUDE.md``,
+  ``CLAUDE.md``, ``CLAUDE.local.md`` and ``.claude/rules/*.md`` as project memory, even
+  under ``--setting-sources project,local`` (#794's probe, CLI 2.1.310), so a run root
+  under ``$HOME`` hands the guide the host's ``~/.claude/CLAUDE.md`` (#834). On Windows the
+  temp directory is under the user profile, which stays an ancestor; the walk then names
+  any instruction file it finds there (INV-379's disclosure). The plugin's
+  ``write-gate.py`` exempts the project directory before it looks at temp prefixes, so a
+  project under the temp directory is gated as the boundary INV-200 states and nothing
+  more. The root is resolved before use: on macOS the temp directory is under ``/var``, a
+  symlink to ``/private/var``, and the gate compares each target with ``os.getcwd()``, which
+  returns the resolved spelling. The project is ``<run root>/project``; ``walk.py`` runs
+  the Bootcamper from ``<run root>/bootcamper``.
 * **A git worktree pinned to a commit.** You will be editing the repo while runs
   execute; pointing ``--plugin-dir`` at a live tree means a run tests a half-saved
   file and its findings are unattributable. The worktree makes every finding belong
@@ -56,17 +68,19 @@ import json
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 SKILL_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SKILL_DIR.parent.parent.parent
-SANDBOX_ROOT = Path.home() / "senzing-autotest"
+# Each run's root is a fresh `mkdtemp` directory here, never a fixed path (#834).
+SANDBOX_ROOT = Path(tempfile.gettempdir())
 # Reports and transcripts live OUTSIDE the sandbox on purpose. The sandbox is the
 # big disposable thing and is removed at the end of every run; the report is the
 # only thing the run produced. An earlier version wrote report.json inside the
 # sandbox and deleted it moments later, so a scheduled run left no evidence it had
-# ever happened.
-REPORT_DIR = SANDBOX_ROOT / "reports"
+# ever happened. The default is the path it had before the sandbox left `$HOME` (#834).
+REPORT_DIR = Path.home() / "senzing-autotest" / "reports"
 SCAFFOLD = REPO_ROOT / ".claude" / "skills" / "dry-run" / "scaffold_project.py"
 
 MCP_URL = "https://mcp.senzing.com/mcp"
@@ -74,6 +88,19 @@ MCP_URL = "https://mcp.senzing.com/mcp"
 
 def _run(cmd, **kw):
     return subprocess.run(cmd, capture_output=True, text=True, **kw)
+
+
+def make_run_root(stamp, persona):
+    """A fresh private directory for one run, under ``SANDBOX_ROOT``, resolved (#834).
+
+    ``mkdtemp`` creates it with mode 0700 and a name no other run, or user, can have taken.
+    It is resolved before anything uses it, so every path the run hands out -- the project,
+    the Bootcamper's cwd, ``report["sandbox"]`` -- is the spelling ``os.getcwd()`` returns,
+    which is what ``write-gate.py`` compares a target with (macOS's ``/var`` is a symlink).
+    """
+    SANDBOX_ROOT.mkdir(parents=True, exist_ok=True)
+    return Path(tempfile.mkdtemp(prefix=f"senzing-autotest-{stamp}-{persona}-",
+                                 dir=str(SANDBOX_ROOT))).resolve()
 
 
 def make_worktree(root, ref):
@@ -176,8 +203,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     stamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
-    root = SANDBOX_ROOT / "runs" / f"{stamp}-{args.persona}"
-    root.mkdir(parents=True, exist_ok=True)
+    root = make_run_root(stamp, args.persona)
     print(f"sandbox: {root}")
 
     report = {"run": stamp, "sandbox": str(root), "persona": args.persona,

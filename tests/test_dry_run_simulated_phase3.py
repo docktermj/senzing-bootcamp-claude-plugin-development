@@ -406,7 +406,10 @@ class TheWalkStopsOffline(unittest.TestCase):
                 mock.patch.object(walk, "bootcamper_reply", lambda *a, **k: "1"), \
                 redirect_stdout(io.StringIO()):
             out = Path(tmp) / "t.jsonl"
-            walk.run_walk(tmp, out, turns, "terse", Path(tmp) / "mcp.json", None, None,
+            # A project directory of its own: the Bootcamper's cwd is made beside it (#834).
+            project = Path(tmp) / "project"
+            project.mkdir()
+            walk.run_walk(project, out, turns, "terse", Path(tmp) / "mcp.json", None, None,
                           "/senzing-bootcamp:start-bootcamp", False, 5,
                           max_turns=max_turns, stop_at_banner=stop_at_banner)
             events = [json.loads(line) for line in out.read_text().splitlines() if line]

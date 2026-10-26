@@ -3734,12 +3734,18 @@ works". Findings are recorded before any fix (INV-317) in the run's dated
 `specs/` file (INV-307), then `dry-run`'s fix steps apply; a scheduled
 report is raw output. Server-side findings are never sent upstream from an
 automated run. `submit_feedback` and `download_resource` are blocked by flag;
-process A is never told it is tested; the sandbox is never under `/tmp`;
+process A is never told it is tested; the sandbox is never under `$HOME` or
+at a fixed shared path;
 `baseline/mcp-snapshot.json` stays committed
 (`tests/test_auto_test_harness.py`).
 
-`autotest.py` runs one test in `~/senzing-autotest/runs/<stamp>-<persona>/`
-(`SANDBOX_ROOT`): a detached worktree `plugin-src` at `--ref` (default
+`autotest.py` runs one test in a fresh run root from `make_run_root`:
+`tempfile.mkdtemp(prefix="senzing-autotest-<stamp>-<persona>-")` under
+`SANDBOX_ROOT` (`tempfile.gettempdir()`, created if missing), mode 0700,
+resolved so every path matches the `os.getcwd()` spelling `write-gate.py`
+compares with (macOS `/var`), and not under `$HOME`, whose ancestor
+instruction files the CLI loads (#834); the gate exempts the project first,
+so a project there is gated only at its boundary. In it: a detached worktree `plugin-src` at `--ref` (default
 `HEAD`, SHA kept as `plugin_sha`; on failure the live tree, null SHA and a
 coverage limit), a per-run `mcp.json` naming only `MCP_URL`, then
 `mcp_probe.py check --json` (exit 2 or unparseable output adds a coverage
@@ -3831,7 +3837,9 @@ bypassPermissions`, `stream-json` output, `--add-dir` the project, a fresh
 UUID `--session-id` on turn 1 and `--resume` after. The opening message is
 `--opening` (default `/senzing-bootcamp:start-bootcamp`, since the bare command
 is unknown). Process B answers as the Bootcamper: a text-only `claude -p` with
-no tools, run from `$HOME`, the `BOOTCAMPER_BRIEF` (an insurance-company
+no tools, run from `bootcamper_dir(project)` (`bootcamper/` beside the project,
+which `run_walk` creates empty, mode 0700, before the isolation scan; never
+`$HOME` or the project, #834), the `BOOTCAMPER_BRIEF` (an insurance-company
 Bootcamper on Linux who knows SQL and Python, replies only what they would
 type) plus one of five `PERSONAS`, on `--bootcamper-model` (default a Haiku
 model). Each turn appends A's JSON events and a `bootcamper` event to the
@@ -3871,8 +3879,12 @@ a host response rule is not scored as the plugin's behavior; a CLI without it
 walks anyway and the run discloses what it could read. The transcript's first
 event, `walk_isolation`, records `instructions_isolated`, the `mechanism`, and
 `host_instruction_files` — the `USER_INSTRUCTION_FILES` under
-`user_config_dir()` when isolation is off, plus any of those three names in a
-directory above the project either way (#733). `--isolate-config` sets
+`user_config_dir()` when isolation is off, plus, either way, each
+`PROJECT_INSTRUCTION_FILES` name (`.claude/CLAUDE.md`, `CLAUDE.md`,
+`CLAUDE.local.md`) and each `*.md` directly in `PROJECT_RULES_DIR` found in
+either child's cwd or any ancestor of it, each named once with its path: the
+files a CLI 2.1.310 probe showed loading under `--setting-sources
+project,local` (#733, #834). `--isolate-config` sets
 `CLAUDE_CONFIG_DIR` to `<project>/.claude-config` (needs `ANTHROPIC_API_KEY`)
 and is not what isolates instructions: the user instruction file is
 `$CLAUDE_CONFIG_DIR/CLAUDE.md`, so moving that directory takes the credentials
@@ -5186,10 +5198,12 @@ From `.claude/skills/auto-test/autotest.py`:
 ```python
 SKILL_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SKILL_DIR.parent.parent.parent
-SANDBOX_ROOT = Path.home() / "senzing-autotest"
-REPORT_DIR = SANDBOX_ROOT / "reports"
+SANDBOX_ROOT = Path(tempfile.gettempdir())
+REPORT_DIR = Path.home() / "senzing-autotest" / "reports"
 SCAFFOLD = REPO_ROOT / ".claude" / "skills" / "dry-run" / "scaffold_project.py"
 MCP_URL = "https://mcp.senzing.com/mcp"
+def make_run_root(stamp, persona):
+    ...
 def make_worktree(root, ref):
     ...
 def drop_worktree(worktree):
@@ -5395,6 +5409,8 @@ POINTER = "\U0001f449"
 FORBIDDEN_TOOLS = ("mcp__senzing__submit_feedback", "mcp__senzing__download_resource")
 INSTRUCTION_SOURCES = ("--setting-sources", "project,local")
 USER_INSTRUCTION_FILES = ("CLAUDE.md", "CLAUDE.local.md", "AGENTS.md")
+PROJECT_INSTRUCTION_FILES = (".claude/CLAUDE.md", "CLAUDE.md", "CLAUDE.local.md")
+PROJECT_RULES_DIR = ".claude/rules"
 PERSONAS = {
     "terse": "You answer in as few words as possible — often a single word or "
              "number. You never elaborate and never ask questions.",
@@ -5455,6 +5471,10 @@ def instructions_isolated():
     ...
 def instruction_sources():
     ...
+def bootcamper_dir(project):
+    ...
+def project_instruction_files(directory):
+    ...
 def readable_host_instructions(project, isolated):
     ...
 class BootcamperFailed(Exception):
@@ -5462,7 +5482,7 @@ class BootcamperFailed(Exception):
         ...
 def report_child_failure(log, turn, process, returncode, stderr):
     ...
-def bootcamper_reply(prompt_text, persona, model, timeout=180):
+def bootcamper_reply(prompt_text, persona, model, cwd, timeout=180):
     ...
 def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_model,
              opening, isolate_config, timeout, max_turns=150, stop_at_banner=None):
@@ -10382,7 +10402,8 @@ def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
   `subprocess.TimeoutExpired` at a chosen turn, and reads the transcript file
   between turns; another stub stands in for both processes and exits 1 at a
   chosen call of either, so the real `bootcamper_reply` runs) and `test_walk_instruction_isolation.py` (one stub stands in for
-  both processes, told apart by `--output-format`, and records each call's argv)
+  both processes, told apart by `--output-format`, and records each call's argv
+  and cwd)
 
 ### 7.11 `.claude/skills/auto-test/mcp_probe.py`
 
@@ -10566,12 +10587,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8796 test methods in 459 files, matching `inventory.test_count_total`.
+There are 8810 test methods in 459 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8796.
+sum to 8810.
 
-Two files run more tests than they define, so discovery collects 8803:
+Two files run more tests than they define, so discovery collects 8817:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -10604,7 +10625,7 @@ looks wrong.
 - `tests/test_audit_skill_reads_the_newest_entries.py`: 4
 - `tests/test_audit_skill_states_no_stale_count.py`: 9
 - `tests/test_authored_shapes_are_stated.py`: 8
-- `tests/test_auto_test_harness.py`: 29
+- `tests/test_auto_test_harness.py`: 38
 - `tests/test_backgrounded_launch_records_the_server_pid.py`: 12
 - `tests/test_blocked_submission_has_a_vocabulary_value.py`: 29
 - `tests/test_bootcamp_notes_flow.py`: 33
@@ -11031,7 +11052,7 @@ looks wrong.
 - `tests/test_viz_tab_consolidation.py`: 38
 - `tests/test_volume_option_reply_has_no_count.py`: 14
 - `tests/test_walk_hook_conflict_is_documented.py`: 10
-- `tests/test_walk_instruction_isolation.py`: 12
+- `tests/test_walk_instruction_isolation.py`: 17
 - `tests/test_walk_slash_replies.py`: 13
 - `tests/test_welcome_licensing_names_data_collection.py`: 6
 - `tests/test_why_key_details_flag_claim_is_withdrawn.py`: 26
@@ -11462,8 +11483,19 @@ Related guards:
   unions a declared enum without `null`, never accusing a value from it alone.
   `TestReportDirectory` (#609) runs `autotest.main` offline: `--report-dir`
   takes the report, the transcript copy and `latest.json` and creates the
-  directory, nothing is left outside it, and without it they go to the
-  unchanged `~/senzing-autotest/reports`.
+  directory, nothing is left outside it (the run's root was a child of the
+  patched `SANDBOX_ROOT` and is gone; `--keep` is the negative control), and
+  without it they go to the unchanged `~/senzing-autotest/reports`; a
+  symlinked `SANDBOX_ROOT` yields a resolved `report["sandbox"]` (#834).
+  `TestSandboxLocation` (#834) makes run roots with `make_run_root` under the
+  real temp directory: fresh, resolved, mode 0700 (POSIX), neither `project/`
+  nor `bootcamper/` under `$HOME` (Linux and macOS); the unedited
+  `write-gate.py`, run from such a project, allows an absolute in-project and a
+  relative path and blocks `<temp>/elsewhere/x.py`, `<root>/bootcamper/x.py`,
+  `~/x.py` and the project spelled through a symlink; no file under `.claude/`,
+  `plugins/`, `docs/` or `README.md` repeats the retired "sandbox under
+  `$HOME`" claims, read wrap-aware, with each pre-#834 sentence as a negative
+  control.
 
 #### 8.4.7 Script behavior
 
@@ -14197,3 +14229,14 @@ Senzing licensing, with no SPDX identifier.
   step to collect input, and read an engine from `config/bootcamp_progress.json`,
   which nothing writes); the engine fallback is queued as a new invariant for
   `/review-invariants`
+- #834: each auto-test run's sandbox is a fresh `mkdtemp` directory (mode
+  0700, resolved) under `SANDBOX_ROOT`, now `tempfile.gettempdir()`, not
+  `~/senzing-autotest/runs`, because the CLI loads every ancestor's
+  `.claude/CLAUDE.md`, `CLAUDE.md`, `CLAUDE.local.md` and `.claude/rules/*.md`
+  even under `--setting-sources project,local`, so a sandbox under `$HOME` read
+  the host's `~/.claude/CLAUDE.md`; `REPORT_DIR` keeps
+  `~/senzing-autotest/reports`; the Bootcamper runs from `bootcamper/` beside
+  the project, not `$HOME`; the disclosure scan reads exactly those files in
+  both children's cwds and ancestors (`AGENTS.md` left it); `write-gate.py`
+  allowing a project under the temp directory is now a test, replacing the
+  stale "the gate blocks `/tmp`" reason (INV-379 unchanged)

@@ -88,11 +88,15 @@ Commit the resulting `baseline/mcp-snapshot.json` — the offline suite reads it
 
 ## The sandbox, and why each layer is there
 
-Each run builds `~/senzing-autotest/runs/<timestamp>-<persona>/`.
+Each run builds a fresh private directory under the system temp directory, named
+`senzing-autotest-<timestamp>-<persona>-<random>` (`tempfile.mkdtemp`, mode 0700,
+resolved), holding `project/` and the Bootcamper's empty `bootcamper/`. Reports stay in
+`~/senzing-autotest/reports/`.
 
 | Layer | Why |
 |---|---|
-| Project dir under `$HOME` | `write-gate.py` blocks `/tmp`, `/var/tmp`, `/private/tmp` — a sandbox there tests the gate, not the bootcamp |
+| Run root under the system temp directory, never `$HOME` | Claude Code loads `.claude/CLAUDE.md`, `CLAUDE.md`, `CLAUDE.local.md` and `.claude/rules/*.md` from a child's cwd and every ancestor even under `--setting-sources project,local` (CLI 2.1.310, #794), so a run under `$HOME` hands the guide `~/.claude/CLAUDE.md` (#834). `write-gate.py` exempts the project directory first, so a project under the temp directory is gated only at its own boundary. The root is resolved because the gate compares targets with `os.getcwd()`, and macOS reaches its temp directory through a symlink. On Windows the temp directory is under the user profile; the report then names any instruction file found there |
+| Bootcamper runs from `bootcamper/` beside the project | never `$HOME` and never inside the project; `walk.py` creates it |
 | **git worktree pinned to a SHA** | you will edit the repo while runs execute; an unpinned run tests half-saved files and its findings are unattributable |
 | Per-run `mcp.json` + `--strict-mcp-config` | the run sees Senzing and nothing else — none of your authenticated claude.ai connectors |
 | Distinct `--session-id` | concurrent runs never share history |
@@ -227,7 +231,8 @@ from an automated run.
   measures.
 - **Never report a clean run as a passed audit.** State the coverage limits; the
   report carries them for you.
-- **Never put the sandbox under `/tmp`.**
+- **Never put the sandbox under `$HOME` or at a fixed shared path.** Each run gets its own
+  `mkdtemp` directory under the system temp directory.
 - **Keep `baseline/mcp-snapshot.json` committed.** Without it the offline
   conformance test silently covers nothing — `tests/test_auto_test_harness.py`
   asserts it is present for exactly that reason.

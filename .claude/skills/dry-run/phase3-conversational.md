@@ -214,9 +214,9 @@ context, which is what limits a maintainer-answered walk to the modules the wind
 
    **With `--draft <run-dir>`**, add `--report-dir <run-dir>/walk/`, so the report, the
    transcript copy and `latest.json` stay in the run directory, and never pass `--keep`. The
-   walk's sandbox under `~/senzing-autotest/runs/` is then this run's disposable scratch
-   project, the one write outside `<run-dir>` that INV-368 allows, and `autotest.py` removes it
-   when the walk ends.
+   walk's sandbox, a fresh directory under the system temp directory, is then this run's
+   disposable scratch project, the one write outside `<run-dir>` that INV-368 allows, and
+   `autotest.py` removes it when the walk ends.
 4. **Cut the transcript at the start module.** The report names it as `transcript_path`.
 
    ```bash

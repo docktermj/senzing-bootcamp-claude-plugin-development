@@ -23,6 +23,7 @@ disagree, `mcp_probe.py`'s `audit_static_contract` says so.
 Run:  python3 -m unittest discover -s tests
 """
 import json
+import re
 import subprocess
 import sys
 import unittest
@@ -309,16 +310,168 @@ class TestTheHarnessRefusesDangerousCalls(unittest.TestCase):
             walk.FORBIDDEN_TOOLS)
 
 
-class TestSandboxLocation(unittest.TestCase):
-    """write-gate.py blocks system temp, so a sandbox there tests the gate."""
+GATE = REPO_ROOT / "plugins" / "senzing-bootcamp" / "scripts" / "write-gate.py"
+#: A substring of the gate's temp/Downloads message (`write-gate.py` reads stdin at import
+#: time, so its constants cannot be imported; `tests/test_write_gate.py` does the same).
+TEMP_MSG = "system temp or Downloads"
+#: What every shipped or maintainer file said before #834: the sandbox under `$HOME`, and the
+#: gate as the reason it could not be in the temp directory.
+RETIRED_SANDBOX_CLAIM = re.compile(
+    r"senzing-autotest/runs"
+    r"|Project dir(?:ectory)?\W* under\W+\$HOME"
+    r"|sandbox there (?:would )?tests? the gate"
+    r"|Never put the sandbox under\W+/tmp")
 
-    def test_sandbox_root_is_under_home(self):
+
+class TestSandboxLocation(unittest.TestCase):
+    """Each run's root is a fresh private directory under the system temp directory (#834).
+
+    Claude Code loads every ancestor's `.claude/CLAUDE.md`, `CLAUDE.md`, `CLAUDE.local.md` and
+    `.claude/rules/*.md` as project memory, even under `--setting-sources project,local`
+    (#794's probe, CLI 2.1.310), so a run root under `$HOME` hands the guide the host's
+    `~/.claude/CLAUDE.md`. The reason this class used to give for staying under `$HOME`,
+    that `write-gate.py` blocks a project under `/tmp`, does not hold: the gate exempts the
+    project directory first. The gate tests below reproduce that against the real gate, with
+    a project laid out exactly as `autotest.make_run_root` lays one out.
+
+    The run roots here are made under the real, unpatched `SANDBOX_ROOT` -- that location is
+    what is under test -- and each is removed when its test ends.
+    """
+
+    def setUp(self):
         import autotest
-        root = str(autotest.SANDBOX_ROOT)
-        for bad in ("/tmp/", "/var/tmp/", "/private/tmp/"):
-            self.assertFalse(root.startswith(bad),
-                             f"sandbox root {root} is inside a blocked temp location")
-        self.assertTrue(root.startswith(str(Path.home())))
+        self.autotest = autotest
+
+    def run_root(self, persona="terse"):
+        import shutil
+        root = self.autotest.make_run_root("20261026-000000", persona)
+        self.addCleanup(shutil.rmtree, root, True)
+        return root
+
+    def test_the_default_root_is_the_system_temp_directory(self):
+        import tempfile
+        self.assertEqual(Path(tempfile.gettempdir()), self.autotest.SANDBOX_ROOT)
+
+    def test_each_run_root_is_fresh_private_and_resolved_under_the_temp_directory(self):
+        import os
+        import stat
+        import tempfile
+        first, second = self.run_root(), self.run_root()
+        self.assertNotEqual(first, second, "two runs shared a root")
+        temp = Path(tempfile.gettempdir()).resolve()
+        for root in (first, second):
+            with self.subTest(root=root):
+                self.assertEqual(root, root.resolve())
+                self.assertEqual(temp, root.parent)
+                self.assertTrue(root.name.startswith("senzing-autotest-20261026-000000-terse-"))
+                if os.name != "nt":   # Windows has no POSIX mode bits to assert
+                    self.assertEqual(0o700, stat.S_IMODE(root.stat().st_mode))
+
+    def test_neither_the_project_nor_the_bootcampers_cwd_is_under_home(self):
+        """Linux and macOS. On Windows the temp directory is under the user profile."""
+        import os
+        import tempfile
+        import walk
+        if os.name == "nt":
+            self.skipTest("on Windows %TEMP% is under the profile; the walk discloses it")
+        home = Path.home().resolve()
+        if home == Path(tempfile.gettempdir()).resolve() or \
+                home in Path(tempfile.gettempdir()).resolve().parents:
+            self.skipTest(f"this host's temp directory is under HOME ({home})")
+        root = self.run_root()
+        for path in (root / "project", walk.bootcamper_dir(root / "project")):
+            with self.subTest(path=path):
+                self.assertEqual(root, path.parent)
+                self.assertNotEqual(home, path)
+                self.assertNotIn(home, path.parents)
+
+    def gate(self, project, target):
+        """Run the real `write-gate.py` from `project`, as the hook runs; (exit, stderr)."""
+        import json
+        (project / "config").mkdir(parents=True, exist_ok=True)
+        (project / "config" / "bootcamp_progress.json").write_text("{}", encoding="utf-8")
+        payload = json.dumps({"tool_input": {"file_path": str(target), "content": "x = 1\n"}})
+        done = subprocess.run([sys.executable, str(GATE)], input=payload, cwd=str(project),
+                              capture_output=True, text=True)
+        return done.returncode, done.stderr
+
+    def test_the_write_gate_allows_an_in_project_write_under_the_temp_directory(self):
+        project = self.run_root() / "project"
+        project.mkdir()
+        for target in (project / "src" / "load.py", "src/load.py"):
+            with self.subTest(target=target):
+                self.assertEqual((0, ""), self.gate(project, target))
+
+    def test_the_write_gate_blocks_a_temp_write_outside_the_project(self):
+        """The blocking case: the same gate, the same project, a target outside it."""
+        import tempfile
+        root = self.run_root()
+        project = root / "project"
+        project.mkdir()
+        elsewhere = Path(tempfile.gettempdir()).resolve() / "elsewhere" / "x.py"
+        for target in (elsewhere, root / "bootcamper" / "x.py"):
+            with self.subTest(target=target):
+                code, stderr = self.gate(project, target)
+                self.assertEqual(2, code)
+                self.assertIn(TEMP_MSG, stderr)
+        code, _stderr = self.gate(project, "~/x.py")
+        self.assertEqual(2, code, "a write to HOME passed the gate")
+
+    def test_an_unresolved_spelling_of_the_project_is_outside_it_to_the_gate(self):
+        """Why the root is resolved: the gate compares with `os.getcwd()` (macOS's `/var`).
+
+        A symlink stands in for `/var` -> `/private/var`: the same in-project file, spelled
+        through the link, is blocked, and spelled through the resolved root, allowed.
+        """
+        import os
+        root = self.run_root()
+        project = root / "project"
+        project.mkdir()
+        link = Path(str(root) + "-link")
+        try:
+            os.symlink(root, link, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("this host cannot create a symlink")
+        self.addCleanup(link.unlink)
+        self.assertEqual(2, self.gate(project, link / "project" / "x.py")[0])
+        self.assertEqual(0, self.gate(project, project / "x.py")[0])
+
+    def test_no_file_says_the_sandbox_is_under_home_or_that_the_gate_blocks_it(self):
+        """The retired reason is gone from every shipped and maintainer file (#834).
+
+        Read through `_wrapped_text.match_lines`, so a phrase wrapped across lines still
+        matches (INV-346). `specs/` is a frozen archive and keeps its history; `tests/` is
+        not scanned, so this file's own fixtures are not read.
+        """
+        sys.path.insert(0, str(REPO_ROOT / "tests"))
+        from _corpus import corpus_files
+        from _wrapped_text import match_lines
+        files = corpus_files(".claude", "plugins", "docs", suffixes=(".md", ".py"))
+        files += [REPO_ROOT / "README.md"]
+        self.assertTrue([f for f in files if f.name == "autotest.py"], "the scan read nothing")
+        found = []
+        for path in files:
+            text = path.read_text(encoding="utf-8", errors="replace")
+            for line in match_lines(text, RETIRED_SANDBOX_CLAIM):
+                found.append(f"{path.relative_to(REPO_ROOT).as_posix()}:{line}")
+        self.assertEqual([], found)
+
+    def test_the_retired_claims_are_matched(self):
+        """Negative control: each pre-#834 sentence fails the scan above."""
+        from _wrapped_text import match_lines
+        for text in (
+                "Each run builds `~/senzing-autotest/runs/<timestamp>-<persona>/`.",
+                "| Project dir under `$HOME` | `write-gate.py` blocks `/tmp`, `/var/tmp`, "
+                "`/private/tmp` — a sandbox there tests the gate, not the bootcamp |",
+                "* **Project directory** under ``$HOME``, one per run, timestamped. Never\n"
+                "  ``/tmp``: the plugin's own ``write-gate.py`` blocks ``/tmp``, ``/var/tmp`` and\n"
+                "  ``/private/tmp``, so a sandbox there would test the gate instead.",
+                "- **Never put the sandbox under `/tmp`.**"):
+            with self.subTest(text=text[:40]):
+                self.assertTrue(match_lines(text, RETIRED_SANDBOX_CLAIM))
+        self.assertEqual([], match_lines(
+            "Each run builds a fresh private directory under the system temp directory. "
+            "Reports stay in `~/senzing-autotest/reports/`.", RETIRED_SANDBOX_CLAIM))
 
 
 class TestReportDirectory(unittest.TestCase):
@@ -326,7 +479,8 @@ class TestReportDirectory(unittest.TestCase):
 
     `/dry-run --draft <run-dir>` passes `<run-dir>/walk/`, so a simulated walk keeps nothing
     outside its run directory but the sandbox, which is removed when the run ends (INV-368).
-    Without the option the reports go to `~/senzing-autotest/reports` as before.
+    Without the option the reports go to `~/senzing-autotest/reports` as before; the sandbox
+    is a fresh directory under `SANDBOX_ROOT`, the temp directory unless patched (#834).
 
     Offline: `autotest._run` is replaced, so no git worktree, no MCP probe and no walk run;
     the fake walk writes a one-line transcript where `walk.py --out` would. `SANDBOX_ROOT` and
@@ -341,6 +495,7 @@ class TestReportDirectory(unittest.TestCase):
         self.addCleanup(__import__("shutil").rmtree, self.tmp, True)
         saved = (autotest._run, autotest.SANDBOX_ROOT, autotest.REPORT_DIR)
         self.default = autotest.REPORT_DIR
+        self.default_root = autotest.SANDBOX_ROOT
 
         def restore():
             autotest._run, autotest.SANDBOX_ROOT, autotest.REPORT_DIR = saved
@@ -377,11 +532,46 @@ class TestReportDirectory(unittest.TestCase):
         self.assertTrue(latest["transcript_path"].startswith(str(target)))
         self.assertTrue(latest["report_path"].startswith(str(target)))
 
+    def sandbox(self, report_dir):
+        """The run root `latest.json` reports."""
+        latest = json.loads((report_dir / "latest.json").read_text(encoding="utf-8"))
+        return Path(latest["sandbox"])
+
     def test_with_the_option_nothing_is_left_outside_it(self):
         """Only the sandbox is written elsewhere, and it is removed (no `--keep`)."""
-        self.main("--report-dir", str(self.tmp / "run-dir" / "walk"))
+        target = self.tmp / "run-dir" / "walk"
+        self.main("--report-dir", str(target))
+        # The run was made under the patched root, so the check below is not vacuous (#834).
+        sandbox = self.sandbox(target)
+        self.assertEqual(self.autotest.SANDBOX_ROOT.resolve(), sandbox.parent)
+        self.assertFalse(sandbox.exists())
         self.assertEqual([], self.files(self.autotest.SANDBOX_ROOT))
         self.assertFalse(self.autotest.REPORT_DIR.exists())
+
+    def test_the_leftover_check_fails_when_the_run_root_is_not_removed(self):
+        """Negative control for the check above: `--keep` leaves the root, and it is seen."""
+        target = self.tmp / "run-dir" / "walk"
+        self.main("--keep", "--report-dir", str(target))
+        sandbox = self.sandbox(target)
+        self.assertTrue(sandbox.is_dir())
+        self.assertNotEqual([], self.files(self.autotest.SANDBOX_ROOT))
+
+    def test_the_reported_sandbox_is_its_own_resolved_path(self):
+        """A symlinked `SANDBOX_ROOT` stands in for macOS's `/var` -> `/private/var` (#834)."""
+        import os
+        real = self.tmp / "real-temp"
+        real.mkdir()
+        link = self.tmp / "linked-temp"
+        try:
+            os.symlink(real, link, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("this host cannot create a symlink")
+        self.autotest.SANDBOX_ROOT = link
+        target = self.tmp / "run-dir" / "walk"
+        self.main("--report-dir", str(target))
+        sandbox = self.sandbox(target)
+        self.assertEqual(str(sandbox.resolve()), str(sandbox))
+        self.assertEqual(real.resolve(), sandbox.parent)
 
     def test_without_the_option_the_default_is_unchanged(self):
         self.main()
@@ -390,8 +580,12 @@ class TestReportDirectory(unittest.TestCase):
         self.assertEqual(1, sum(n.endswith(".transcript.jsonl") for n in names), names)
 
     def test_the_default_is_the_reports_directory(self):
-        """The unpatched default is `~/senzing-autotest/reports`, the path before #609."""
+        """The unpatched default is `~/senzing-autotest/reports`, the path before #609.
+
+        It no longer derives from `SANDBOX_ROOT`, which moved to the temp directory (#834).
+        """
         self.assertEqual(Path.home() / "senzing-autotest" / "reports", self.default)
+        self.assertNotIn(self.default_root, self.default.parents)
 
 if __name__ == "__main__":
     unittest.main()

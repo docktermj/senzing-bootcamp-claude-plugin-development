@@ -32,6 +32,13 @@ Checks, each negative-controlled where the positive case could otherwise hold va
 3. **A run that could read a host instruction file names it, with its path**, and a run
    that could not discloses nothing. The contaminated case names a real file on disk.
 4. **The new event is not a guide turn** to the linter or the slicer.
+5. **Neither child runs from `$HOME`, and the scan covers what the CLI loads (#834).** On CLI
+   2.1.310 `--setting-sources project,local` still loads `.claude/CLAUDE.md`, `CLAUDE.md`,
+   `CLAUDE.local.md` and `.claude/rules/*.md` from a child's cwd and every ancestor (#794's
+   probe). The guide runs from the project and the Bootcamper from `bootcamper/` beside it,
+   which the walk creates; every such file in either cwd or an ancestor is named with its
+   path. Negative controls: a sibling directory's files, and `AGENTS.md` and
+   `.claude/CLAUDE.local.md` in an ancestor, are not named.
 
 No phrase-level pattern (#733): every line this file reads one at a time is one JSON event
 of a JSONL transcript it wrote itself. A JSON event is not Markdown prose, so there is no
@@ -41,6 +48,7 @@ Stdlib only, offline, no import from `plugins/` (INV-108).
 """
 import io
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -88,12 +96,19 @@ class WalkFixture(unittest.TestCase):
         self.addCleanup(setattr, walk, "_SUPPORTS_SETTING_SOURCES", previous)
 
     def walk_it(self, isolated, turns=3, config_dir=None, project=None):
-        """Run `turns` turns; return (argvs, events, transcript path, temp root)."""
+        """Run `turns` turns; return (argvs, events, transcript path, temp root).
+
+        The project defaults to `<temp root>/project`, the layout `autotest.py` gives a walk,
+        so the Bootcamper's cwd lands in the temp root and not the shared temp directory.
+        Each call's cwd is kept in `self.cwds`, as `(role, cwd)`.
+        """
         walk._SUPPORTS_SETTING_SOURCES = isolated
         argvs, calls = [], []
+        self.cwds = []
 
         def fake_claude(args, cwd, stdin_text=None, timeout=600, env=None):
             argvs.append(list(args))
+            self.cwds.append(("guide" if is_guide(args) else "bootcamper", Path(cwd)))
             if not is_guide(args):
                 return subprocess.CompletedProcess(args, 0, stdout="yes\n", stderr="")
             calls.append(1)
@@ -101,13 +116,17 @@ class WalkFixture(unittest.TestCase):
                 args, 0, stdout=_assistant(_guide_turn(len(calls))) + "\n", stderr="")
 
         root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, True)
+        if project is None:
+            project = Path(root) / "project"
+            project.mkdir()
         environment = {"CLAUDE_CONFIG_DIR": str(config_dir)} if config_dir else {}
         out = Path(root) / "t.jsonl"
         with mock.patch.object(walk, "_claude", fake_claude), \
                 mock.patch.dict("os.environ", environment), \
                 redirect_stdout(io.StringIO()), \
                 mock.patch("sys.stderr", io.StringIO()):
-            walk.run_walk(str(project or root), out, turns, "terse",
+            walk.run_walk(str(project), out, turns, "terse",
                           Path(root) / "mcp.json", None, None, OPENING, False, 5)
         events = [json.loads(line) for line in out.read_text().splitlines() if line]
         return argvs, events, out, Path(root)
@@ -207,7 +226,8 @@ class AContaminatedRunNamesTheFilesItCouldRead(WalkFixture):
 
     def test_an_instruction_file_above_the_project_is_named_even_when_isolated(self):
         """Isolation keeps the project layer, so a file in a parent is still read."""
-        root = Path(tempfile.mkdtemp())
+        root = Path(tempfile.mkdtemp()).resolve()
+        self.addCleanup(shutil.rmtree, root, True)
         (root / "CLAUDE.md").write_text("Answer in bullet points.\n", encoding="utf-8")
         project = root / "project"
         project.mkdir()
@@ -219,12 +239,16 @@ class AContaminatedRunNamesTheFilesItCouldRead(WalkFixture):
 
     def test_the_config_directory_is_read_from_the_environment(self):
         config, instructions = self.config_dir_holding_claude_md()
+        # A project of its own: `config.parent` holds `.claude/CLAUDE.md`, which the
+        # project-layer scan would name from a cwd there whatever the isolation (#834).
+        project = Path(tempfile.mkdtemp()) / "project"
+        project.mkdir()
         with mock.patch.dict("os.environ", {"CLAUDE_CONFIG_DIR": str(config)}):
             self.assertEqual(walk.user_config_dir(), config)
             self.assertIn(str(instructions),
-                          walk.readable_host_instructions(config.parent, False))
+                          walk.readable_host_instructions(project, False))
             self.assertNotIn(str(instructions),
-                             walk.readable_host_instructions(config.parent, True))
+                             walk.readable_host_instructions(project, True))
 
     def test_a_transcript_without_the_event_discloses_nothing(self):
         path = Path(tempfile.mkdtemp()) / "t.jsonl"
@@ -245,6 +269,90 @@ class TheNewEventIsNotAGuideTurn(WalkFixture):
         self.assertEqual(module_banners.visible_text(lines[0]), "")
         self.assertFalse([f for f in transcript_lint.lint(turns)
                           if f["code"] == "INV-251-multi-question"])
+
+
+#: The files #794's probe showed loading from a cwd or an ancestor on CLI 2.1.310 (#834).
+LOADED = (".claude/CLAUDE.md", "CLAUDE.md", "CLAUDE.local.md", ".claude/rules/x.md")
+#: Planted beside them and never loaded in that probe, so never named.
+NOT_LOADED = ("AGENTS.md", ".claude/CLAUDE.local.md")
+
+
+def plant(directory, names):
+    """Write each instruction file under `directory`; return their paths as strings."""
+    paths = []
+    for name in names:
+        path = Path(directory) / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"Always say {name}.\n", encoding="utf-8")
+        paths.append(str(path))
+    return paths
+
+
+class NeitherChildRunsFromHomeAndTheScanCoversWhatLoads(WalkFixture):
+    """Check 5 (#834)."""
+
+    def layout(self):
+        """`<base>/anc/run/project`, as `autotest.py` lays a run out, under a resolved base."""
+        base = Path(tempfile.mkdtemp()).resolve()
+        self.addCleanup(shutil.rmtree, base, True)
+        ancestor = base / "anc"
+        project = ancestor / "run" / "project"
+        project.mkdir(parents=True)
+        return base, ancestor, project
+
+    def test_the_bootcamper_runs_from_bootcamper_beside_the_project(self):
+        _, _, project = self.layout()
+        self.walk_it(isolated=True, project=project)
+        expected = project.parent / "bootcamper"
+        self.assertTrue(expected.is_dir(), "the walk did not create the Bootcamper's cwd")
+        self.assertEqual([], list(expected.iterdir()), "the Bootcamper's cwd is not empty")
+        roles = {role for role, _ in self.cwds}
+        self.assertEqual({"guide", "bootcamper"}, roles, "both children must have run")
+        for role, cwd in self.cwds:
+            with self.subTest(role=role):
+                self.assertEqual(project if role == "guide" else expected, cwd)
+                self.assertNotEqual(Path.home().resolve(), cwd.resolve())
+        self.assertNotIn(project, expected.parents, "the Bootcamper's cwd is in the project")
+        self.assertEqual(expected, walk.bootcamper_dir(project))
+
+    def test_every_loaded_file_in_an_ancestor_of_each_child_is_named_with_its_path(self):
+        base, ancestor, project = self.layout()
+        planted = plant(ancestor, LOADED)
+        plant(ancestor, NOT_LOADED)
+        # Negative control: a sibling directory is no child's cwd and no ancestor of one.
+        plant(ancestor / "sibling", LOADED)
+        _, events, transcript, _ = self.walk_it(isolated=True, project=project)
+        named = events[0]["host_instruction_files"]
+        self.assertEqual(sorted(planted), sorted(named))
+        disclosure = autotest.instruction_disclosure(transcript)
+        for path in planted:
+            with self.subTest(path=path):
+                self.assertIn(path, disclosure)
+        self.assertFalse([path for path in named if "sibling" in path])
+        self.assertFalse([path for path in named if path.endswith(NOT_LOADED)])
+
+    def test_each_childs_own_cwd_is_scanned(self):
+        _, _, project = self.layout()
+        bootcamper = walk.bootcamper_dir(project)
+        bootcamper.mkdir()
+        guide_files = plant(project, ("CLAUDE.md",))
+        bootcamper_files = plant(bootcamper, (".claude/rules/x.md",))
+        named = walk.readable_host_instructions(project, True)
+        self.assertEqual(sorted(guide_files + bootcamper_files), sorted(named))
+        # Negative control: a file below a cwd is in neither child's cwd nor an ancestor.
+        plant(project / "src", ("CLAUDE.md",))
+        self.assertEqual(sorted(named), sorted(walk.readable_host_instructions(project, True)))
+
+    def test_a_file_reached_from_both_children_is_named_once(self):
+        _, ancestor, project = self.layout()
+        planted = plant(ancestor, ("CLAUDE.md",))
+        self.assertEqual(planted, walk.readable_host_instructions(project, True))
+
+    def test_the_scan_lists_exactly_what_the_probe_showed_loading(self):
+        self.assertEqual((".claude/CLAUDE.md", "CLAUDE.md", "CLAUDE.local.md"),
+                         walk.PROJECT_INSTRUCTION_FILES)
+        self.assertEqual(".claude/rules", walk.PROJECT_RULES_DIR)
+        self.assertNotIn("AGENTS.md", walk.PROJECT_INSTRUCTION_FILES)
 
 
 if __name__ == "__main__":

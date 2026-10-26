@@ -74,7 +74,7 @@ def run(replies, turns=3, model=None):
         return subprocess.CompletedProcess(args, 0, stdout=_assistant(
             _guide_turn(len(argvs))) + "\n", stderr="")
 
-    def fake_reply(prompt_text, persona, model, timeout=180):
+    def fake_reply(prompt_text, persona, model, cwd=None, timeout=180):
         prompts.append(prompt_text)
         return script.pop(0) if script else "ok"
 
@@ -84,7 +84,10 @@ def run(replies, turns=3, model=None):
             redirect_stdout(io.StringIO()), \
             mock.patch("sys.stderr", io.StringIO()):
         out = Path(tmp) / "t.jsonl"
-        walk.run_walk(tmp, out, turns, "terse", Path(tmp) / "mcp.json", model, None,
+        # A project directory of its own: the Bootcamper's cwd is made beside it (#834).
+        project = Path(tmp) / "project"
+        project.mkdir()
+        walk.run_walk(project, out, turns, "terse", Path(tmp) / "mcp.json", model, None,
                       OPENING, False, 5)
         events = [json.loads(line) for line in out.read_text().splitlines() if line]
     return argvs, prompts, events

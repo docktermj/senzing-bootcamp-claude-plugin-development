@@ -65,6 +65,17 @@ user-level instruction file is ``$CLAUDE_CONFIG_DIR/CLAUDE.md``, so relocating t
 takes the credentials with it and the child exits "Not logged in" without
 ``ANTHROPIC_API_KEY`` — and the walk that found this defect ran without one.
 
+The settings source does not reach the project layer. On CLI 2.1.310, under
+``--setting-sources project,local``, a child still loads ``.claude/CLAUDE.md``, ``CLAUDE.md``,
+``CLAUDE.local.md`` and ``.claude/rules/*.md`` from its cwd and every ancestor (#794's probe),
+so a child whose cwd is under ``$HOME`` reads the host's ``~/.claude/CLAUDE.md``. Neither
+child runs there (#834): ``autotest.py`` puts the run root under the system temp directory,
+the guide runs from ``<run root>/project``, and the Bootcamper from ``<run root>/bootcamper``,
+an empty directory this file creates beside the project (``bootcamper_dir``).
+``readable_host_instructions`` names every such file in either child's cwd or an ancestor,
+which is what still reaches a walk on Windows, where the temp directory is under the
+user profile.
+
 A crashed walk keeps its transcript (#732)
 ------------------------------------------
 ⛔ **(INV-376) A walk's transcript MUST hold every turn the walk completed, whatever ended the walk:
@@ -121,6 +132,13 @@ INSTRUCTION_SOURCES = ("--setting-sources", "project,local")
 # The user-level instruction files a `claude` child reads out of its config directory. A
 # contaminated run names the ones that exist rather than claiming the whole set.
 USER_INSTRUCTION_FILES = ("CLAUDE.md", "CLAUDE.local.md", "AGENTS.md")
+
+# The project-layer instruction files a `claude` child loads from its cwd and every ancestor,
+# isolation or not: exactly what #794's probe showed loading on CLI 2.1.310, plus every
+# `*.md` directly in `PROJECT_RULES_DIR`. `AGENTS.md` and `.claude/CLAUDE.local.md` loaded in
+# no case, so they are not scanned here (#834).
+PROJECT_INSTRUCTION_FILES = (".claude/CLAUDE.md", "CLAUDE.md", "CLAUDE.local.md")
+PROJECT_RULES_DIR = ".claude/rules"
 
 # Probed once per process, because the answer cannot change inside one walk and the probe
 # costs a `claude --help`. Tests set it directly.
@@ -297,22 +315,47 @@ def instruction_sources():
     return list(INSTRUCTION_SOURCES) if instructions_isolated() else []
 
 
+def bootcamper_dir(project):
+    """The Bootcamper child's cwd: ``bootcamper/`` beside the project (#834).
+
+    Never ``$HOME`` and never inside the project. ``autotest.py`` makes the project
+    ``<run root>/project``, so this is ``<run root>/bootcamper``.
+    """
+    return Path(project).resolve().parent / "bootcamper"
+
+
+def project_instruction_files(directory):
+    """The project-layer instruction files present in one directory, in a stable order."""
+    directory = Path(directory)
+    found = [directory / name for name in PROJECT_INSTRUCTION_FILES]
+    rules = directory / PROJECT_RULES_DIR
+    if rules.is_dir():
+        found += sorted(rules.glob("*.md"))
+    return [path for path in found if path.is_file()]
+
+
 def readable_host_instructions(project, isolated):
-    """Host instruction files the bootcamp process can still read, as paths (#733).
+    """Host instruction files a walk's children can still read, as paths (#733, #834).
 
     Two layers reach a child. The **user** layer is the config directory's own instruction
-    files, which isolation drops. The **project** layer is every directory above the sandbox,
-    which isolation keeps and must — the project's own files are part of what the walk tests
-    — so a host file in one of those parents is read either way and belongs in the report
-    whichever mode the walk ran in.
+    files, which isolation drops. The **project** layer is the child's cwd and every
+    directory above it, which isolation keeps and must — the project's own files are part of
+    what the walk tests — so a host file there is read either way and belongs in the report
+    whichever mode the walk ran in. Both children are scanned: the guide from the project,
+    the Bootcamper from ``bootcamper_dir``. Each file is named once, with its path.
     """
     found = []
     if not isolated:
         config = user_config_dir()
-        found += [config / name for name in USER_INSTRUCTION_FILES]
-    for parent in Path(project).resolve().parents:
-        found += [parent / name for name in USER_INSTRUCTION_FILES]
-    return [str(path) for path in found if path.is_file()]
+        found += [config / name for name in USER_INSTRUCTION_FILES if (config / name).is_file()]
+    for cwd in (Path(project).resolve(), bootcamper_dir(project)):
+        for directory in (cwd, *cwd.parents):
+            found += project_instruction_files(directory)
+    named = []
+    for path in found:
+        if str(path) not in named:
+            named.append(str(path))
+    return named
 
 
 def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
@@ -366,8 +409,11 @@ def report_child_failure(log, turn, process, returncode, stderr):
     return reason
 
 
-def bootcamper_reply(prompt_text, persona, model, timeout=180):
+def bootcamper_reply(prompt_text, persona, model, cwd, timeout=180):
     """One Bootcamper answer, from a process that has never seen the plugin.
+
+    ``cwd`` is ``bootcamper_dir(project)``: never ``$HOME``, whose instruction files the CLI
+    would load as project memory, and never the project (#834).
 
     Raises ``BootcamperFailed`` when the process exits non-zero, whatever its stdout held:
     that stdout is never a reply the guide should answer (#794).
@@ -386,7 +432,7 @@ def bootcamper_reply(prompt_text, persona, model, timeout=180):
             "WebFetch", "WebSearch", "Task", "NotebookEdit"]
     if model:
         args += ["--model", model]
-    result = _claude(args, cwd=Path.home(), stdin_text="", timeout=timeout)
+    result = _claude(args, cwd=cwd, stdin_text="", timeout=timeout)
     if result.returncode != 0:
         raise BootcamperFailed(result.returncode, result.stderr)
     reply = (result.stdout or "").strip()
@@ -408,6 +454,9 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
         env["CLAUDE_CONFIG_DIR"] = str(config_dir)
 
     isolated = instructions_isolated()
+    # The Bootcamper's empty cwd, beside the project, made before anything is scanned (#834).
+    bootcamper_cwd = bootcamper_dir(project)
+    bootcamper_cwd.mkdir(mode=0o700, exist_ok=True)
     base = ["--plugin-dir", str(PLUGIN_DIR),
             "--mcp-config", str(mcp_config), "--strict-mcp-config",
             *instruction_sources(),
@@ -495,7 +544,8 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
             prompt, message = shown, None
             for _attempt in range(2):
                 try:
-                    reply = bootcamper_reply(prompt, persona, bootcamper_model)
+                    reply = bootcamper_reply(prompt, persona, bootcamper_model,
+                                             cwd=bootcamper_cwd)
                 except subprocess.TimeoutExpired as expiry:
                     failure = reason = ("the Bootcamper process timed out after "
                                         f"{expiry.timeout}s")
