@@ -692,7 +692,7 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # which cites INV-251 back and states it cannot establish that a named function observes the
 # behavior. Re-derived by running the extractor -- 224, the new pair present by name and none
 # removed. EXPECTED_PAIRS 223 -> 224.
-# 225 on 2026-10-13: INV-361 (a linter credit names a function the linter runs; #514) names
+# 225 on 2026-10-13: INV-361 (a linter credit names a function that linter runs; #514) names
 # test_linter_credits_name_a_function_it_runs.py, which cites it back and states it cannot
 # establish that a named function observes the behavior. Re-derived by running the extractor --
 # 225, the new pair present by name and none removed. EXPECTED_PAIRS 224 -> 225.

@@ -23,7 +23,9 @@ scans **every skill file** and **every option** of every gate:
   **Every bold 👉 question saying `Reply with a number` or `Reply with one or more numbers` is a
   gate too (#620)**, list or not: one whose options are built in prose at runtime has no list
   beneath it, and until #620 two such gates (Bootcamp preparation's programming-language gate
-  and Module 7 step 3a's recall question) shipped with no marker.
+  and Module 7 step 3a's recall question) shipped with no marker. #796 adds the three phrasings
+  that pattern missed, `Reply with the numbers`, `… the numbers from the list` and `Reply with
+  the option number`, at four live sites (Modules 1, 6 and 7 and Bootcamp preparation).
 - **Its marker** is the first `**Handling each answer (INV-284).**` below its options and above
   the next heading, modeled on Module 7 step 3b's. Gates asked in place of one another (the
   bands of one quality gate, or a question's alternative forms) share the marker below the
@@ -108,7 +110,10 @@ _LABEL = re.compile(r"^\*\*(?P<label>.+?)\*\*")
 _NUMBERED = re.compile(r"^(?P<num>\d+),\s*(?P<rest>.*)$")
 _EACH = re.compile(r"^Each number\b")
 #: A numbered-reply question, on normalized text (#620): a gate whether or not a list follows.
-REPLY = re.compile(r"reply with (?:a|one or more) number")
+#: #796 widened it to the three phrasings #620's pattern missed, "reply with the numbers",
+#: "... the numbers from the list" and "reply with the option number" (INV-284's #620 note).
+REPLY = re.compile(r"reply with (?:a|one or more|the)(?: option)? numbers?\b"
+                   r"|\bnumbers? from the list\b")
 
 #: The scan's floors (INV-265). At #531 it found 51 gates with 141 options in 19 files across
 #: 10 skill directories; each floor sits a little under that so a gate retired on purpose does
@@ -478,6 +483,42 @@ class TheGuardBites(unittest.TestCase):
                 lines[m] = lines[m].replace(MARKER, "**Handling.**")
                 problems = marker_problems("\n".join(lines))
                 self.assertTrue(any(question in p for p in problems), problems)
+
+    def test_the_796_phrasings_are_reply_questions(self):
+        """#796: each phrasing #620's pattern missed is a gate, list or not, and needs a marker."""
+        retired = re.compile(r"reply with (?:a|one or more) number")
+        for question in ("Which ones? Reply with the numbers, comma-separated:",
+                         "Which ones? Reply with the numbers from the list below:",
+                         "How many? Reply with the option number:"):
+            with self.subTest(question=question):
+                self.assertIsNone(retired.search(norm(question)),
+                                  "#620's pattern already matched this; the control is moot")
+                fixture = "👉 **%s**\n\nThe options come from the server.\n" % question
+                self.assertEqual(1, len(gates(fixture)))
+                self.assertNotEqual([], marker_problems(fixture))
+
+    def test_the_four_796_sites_are_scanned_and_bite(self):
+        """#796's four shipped sites: each passes as shipped, and its question, asked with the
+        options built in prose and no marker, is reported. #620's pattern saw no gate there."""
+        retired = re.compile(r"reply with (?:a|one or more) number")
+        for rel, question in (
+                ("module-07-query-visualize-discover/phase2-discover.md",
+                 "which features do you think joined these records"),
+                ("module-01-business-problem/phase1-discovery.md",
+                 "what does the end result look like"),
+                ("bootcamp-preparation/SKILL.md", "which optional modules would you like"),
+                ("module-06-data-processing/phaseA-build-loading.md",
+                 "how many records do you expect to load")):
+            with self.subTest(site=rel):
+                text = (SKILLS / rel).read_text(encoding="utf-8")
+                self.assertEqual([], marker_problems(text))
+                gate = next(g for g in gates(text) if question in g.question)
+                self.assertTrue(REPLY.search(gate.question))
+                self.assertIsNone(retired.search(gate.question))
+                asked = _QUOTE.sub("", text.split("\n")[gate.line - 1], count=1).strip()
+                fixture = asked + "\n\nThe options are built at runtime.\n"
+                self.assertEqual(1, len(gates(fixture)), fixture)
+                self.assertNotEqual([], marker_problems(fixture))
 
     def test_each_number_on_a_fixed_gate_fails(self):
         fixture = ("👉 **Which one? Reply with a number:**\n\n1. This one.\n2. That one.\n\n"

@@ -18,6 +18,9 @@ each non-empty block, where ``flat`` is the collapsed block and ``origin[i]`` is
 reports which quoted span offended, say — reads through this rather than growing its own
 collapse rule. ``match_lines`` is written on top of it, so the two never disagree.
 
+``collapsed_items(text)`` reads the same blocks, but starts a new unit at each list item (#796), for
+a guard whose claim and its evidence must sit in one item rather than anywhere in one list.
+
 How the text is read:
 
 - **Blocks.** The text is cut into Markdown blocks, and ``pattern`` runs on each block on its
@@ -149,6 +152,32 @@ def collapsed_blocks(text):
     """
     for block in blocks(text):
         flat, origin = _collapse(block)
+        if flat:
+            yield flat, origin
+
+
+#: Where a list item starts, after any blockquote markers are stripped: a bullet or a number.
+_LIST_ITEM = re.compile(r"^[ \t]*(?:[-*+]|\d+[.)])[ \t]+")
+
+
+def collapsed_items(text):
+    """``(flat, origin)`` as ``collapsed_blocks`` yields them, except that a list item starts a new
+    unit, so each item of a list is read on its own (#796).
+
+    For a guard whose claim and evidence must sit in the same item: a decision log of two hundred
+    items with no blank line between them is one block, and every id in it would otherwise pair
+    with every claim. A line inside a fence that looks like a list item starts a unit too.
+    """
+    for block in blocks(text):
+        unit = []
+        for lineno, line in block:
+            if unit and _LIST_ITEM.match(line):
+                flat, origin = _collapse(unit)
+                if flat:
+                    yield flat, origin
+                unit = []
+            unit.append((lineno, line))
+        flat, origin = _collapse(unit)
         if flat:
             yield flat, origin
 

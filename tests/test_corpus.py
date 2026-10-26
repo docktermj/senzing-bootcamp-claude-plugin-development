@@ -14,18 +14,22 @@ now takes its files from `corpus_files()`. Two guards hold that in place:
   prunes `/release-cycle`'s run scratch, `.claude/release-cycle/runs/`, by its root path (#610),
   and keeps a directory named `runs` anywhere else.
 - **The hand-rolled walk guard** scans `tests/*.py` (except `_corpus.py` and this file) for a
-  walk rooted at the repository root or `.claude/` in its known forms: `REPO_ROOT.rglob`,
-  `REPO_ROOT.glob("**…`, `(REPO_ROOT / ".claude").rglob`, `CLAUDE.rglob`, `os.walk(REPO_ROOT`
-  and `os.walk(CLAUDE`, and fails on a match.
+  walk rooted at the repository root or anywhere under `.claude/`, and fails on a match. Its
+  known forms are `REPO_ROOT.rglob`, `REPO_ROOT.glob("**…`, `CLAUDE.rglob`, `os.walk(REPO_ROOT`,
+  `os.walk(CLAUDE` and, since #796, any `rglob`, `glob("**…")` or `os.walk` on a path under
+  `.claude/` written in place (`(REPO_ROOT / ".claude" / "skills").rglob`) or through a name bound
+  to one: a simple assignment, a `for` target, a parameter default or a test helper's name
+  (`surface.SKILLS_DIR`), resolved to a fixed point. #796 found three tests walking a `.claude/`
+  subdirectory that way, and moved them to `corpus_files()`.
 
 ⚠️ **The limit of the second guard, stated because a clean run does not mean what it looks
-like:** it is a text scan for those spellings. A walk through an intermediate variable
-(`base = REPO_ROOT / root; base.rglob(...)`), a recursive `iterdir`, or a call head split
-across lines is not caught. The canary
-guard, which proves the helper excludes what it must, and review cover that gap.
+like:** it is a text scan. A walk through a name it cannot resolve (one built by a function call,
+an attribute of an object, a name bound by unpacking), a recursive `iterdir`, or a call head split
+across lines is not caught. The canary guard, which proves the helper excludes what it must, and
+review cover that gap.
 
 This module enforces INV-367 (registered 2026-10-13). Its walk guard is a text scan for the known
-walk forms: it cannot see a walk through an intermediate variable or a recursive `iterdir`.
+walk forms: it cannot see a walk through a name it cannot resolve or a recursive `iterdir`.
 
 Stdlib only (INV-108).
 
@@ -47,13 +51,81 @@ from _corpus import RUNTIME_DIRS, corpus_files
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TESTS = REPO_ROOT / "tests"
 
-#: The walk forms #515 names, each rooted at the repository root or `.claude/`.
+#: A string literal naming `.claude/` or any path under it.
+CLAUDE_PATH = r"""[rbuf]*["']\.claude(?:/[^"'\n]*)?["']"""
+#: The call that makes a walk: ``.rglob(`` or a ``.glob("**…")``.
+WALK_CALL = r"""(?:\.rglob\(|\.glob\(\s*[rbuf]*["']\*\*)"""
+
+#: The walk forms #515 names, each rooted at the repository root or `.claude/`, widened by #796 to
+#: a walk of any path under `.claude/` written in place: ``(REPO_ROOT / ".claude" / "skills")``,
+#: ``(CLAUDE / "skills")`` and ``os.walk(REPO_ROOT / ".claude" / …)``. A walk through a NAME bound
+#: to such a path is found by ``hand_rolled_walks``, which resolves the names first.
 HAND_ROLLED_WALK = re.compile(
-    r"\bREPO_ROOT\.rglob\("
-    r"|\bREPO_ROOT\.glob\(\s*[rbuf]*[\"']\*\*"
-    r"|\(\s*REPO_ROOT\s*/\s*[\"']\.claude/?[\"']\s*\)\.rglob\("
-    r"|\bCLAUDE\.rglob\("
-    r"|\bos\.walk\(\s*(?:str\(\s*)?(?:REPO_ROOT|CLAUDE)\b")
+    r"\bREPO_ROOT" + WALK_CALL
+    + r"|\bCLAUDE" + WALK_CALL
+    + r"|\(\s*(?:CLAUDE\b|[^()\n]*" + CLAUDE_PATH + r")[^()\n]*\)" + WALK_CALL
+    + r"|\bos\.walk\(\s*(?:str\(\s*)?\(?\s*(?:(?:REPO_ROOT|CLAUDE)\b|[^()\n]*" + CLAUDE_PATH
+    + r")")
+
+#: A simple binding: ``NAME = <expression>`` (an annotation allowed), ``for NAME in <expression>``,
+#: and a parameter default ``name=<expression>`` inside a ``def`` signature.
+ASSIGN = re.compile(r"^[ \t]*([A-Za-z_]\w*)[ \t]*(?::[^=\n]+)?=(?!=)[ \t]*(.+)$", re.M)
+FOR = re.compile(r"^[ \t]*for[ \t]+([A-Za-z_]\w*)[ \t]+in[ \t]+(.+?):?[ \t]*$", re.M)
+SIGNATURE = re.compile(r"\bdef\s+\w+\s*\(([^)]*)\)")
+PARAMETER = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*([^,]+)")
+#: A test helper imported by module name (``import _maintainer_surface as surface``).
+HELPER_IMPORT = re.compile(r"^[ \t]*import[ \t]+(_\w+)(?:[ \t]+as[ \t]+(\w+))?", re.M)
+
+
+def _bindings(text):
+    found = ASSIGN.findall(text) + FOR.findall(text)
+    for signature in SIGNATURE.findall(text):
+        found += PARAMETER.findall(signature)
+    return found
+
+
+def claude_names(text, helpers=None, seen=()):
+    """Names in ``text`` bound to a path under `.claude/`, resolved to a fixed point (#796).
+
+    A name is one when its binding names a `.claude` literal, ``CLAUDE``, or another such name,
+    including a helper module's (``surface.SKILLS_DIR``, where ``_maintainer_surface`` binds it).
+    """
+    helpers = TESTS if helpers is None else Path(helpers)
+    names = set()
+    for module, alias in HELPER_IMPORT.findall(text):
+        helper = helpers / (module + ".py")
+        if module not in seen and helper.is_file():
+            names |= {"%s.%s" % (alias or module, n) for n in claude_names(
+                helper.read_text(encoding="utf-8"), helpers, seen + (module,)) if "." not in n}
+    bindings = _bindings(text)
+    changed = True
+    while changed:
+        changed = False
+        for name, value in bindings:
+            if name in names:
+                continue
+            if (re.search(CLAUDE_PATH, value) or re.search(r"\bCLAUDE\b", value)
+                    or any(re.search(r"(?<![\w.])%s\b" % re.escape(n), value) for n in names)):
+                names.add(name)
+                changed = True
+    return {n for n in names if "." not in n}
+
+
+def hand_rolled_walks(text, helpers=None):
+    """``[(line, text)]`` for each walk of the root or of a path under `.claude/` in ``text``.
+
+    Line-scoped: each walk form is the head of one call. ``HAND_ROLLED_WALK`` reads the forms
+    written in place; a walk through a name ``claude_names`` resolves is read here as well.
+    """
+    patterns = [HAND_ROLLED_WALK.pattern]
+    names = sorted(claude_names(text, helpers))
+    if names:
+        alternation = "|".join(re.escape(n) for n in names)
+        patterns += [r"(?<![\w.])(?:%s)" % alternation + WALK_CALL,
+                     r"\(\s*(?:%s)\b[^()\n]*\)" % alternation + WALK_CALL,
+                     r"\bos\.walk\(\s*(?:str\(\s*)?\(?\s*(?:%s)\b" % alternation]
+    walk = re.compile("|".join("(?:%s)" % p for p in patterns))
+    return [(n, line.strip()) for n, line in enumerate(text.splitlines(), 1) if walk.search(line)]
 
 #: Files the walk guard does not scan: the helper itself, and this file's fixtures.
 NOT_SCANNED = {"_corpus.py", Path(__file__).name}
@@ -238,9 +310,47 @@ class NoTestWalksTheRootByHand(unittest.TestCase):
         for line in ('(REPO_ROOT / "docs").rglob("*.md")',
                      'PLUGIN.rglob("*.md")',
                      'SPECS.rglob("*")',
-                     'REPO_ROOT.glob("*.md")'):
+                     'REPO_ROOT.glob("*.md")',
+                     '(REPO_ROOT / "plugins" / ".claude-plugin").rglob("*")',
+                     'corpus_files(".claude/skills", suffixes={".md"})'):
             with self.subTest(line=line):
                 self.assertNotRegex(line, HAND_ROLLED_WALK)
+
+    def test_a_walk_of_a_claude_subdirectory_is_matched(self):
+        """#796: INV-367 binds a walk rooted anywhere under `.claude/`, written in place."""
+        for line in ('(REPO_ROOT / ".claude" / "skills").rglob("*.md")',
+                     "(REPO_ROOT / '.claude/skills/dry-run').glob('**/*.py')",
+                     '(CLAUDE / "skill-overlays").rglob("*.md")',
+                     'os.walk(REPO_ROOT / ".claude" / "commands")',
+                     'os.walk(str(REPO_ROOT / ".claude/skills"))'):
+            with self.subTest(line=line):
+                self.assertRegex(line, HAND_ROLLED_WALK)
+
+    def test_a_walk_through_a_name_bound_under_claude_is_found(self):
+        """#796: the three tests #796 moved walked a `.claude/` subdirectory through a name."""
+        fixture = ('REPO_ROOT = Path(__file__).resolve().parent.parent\n'
+                   'SKILL_DIR = REPO_ROOT / ".claude" / "skills" / "compact-dev-environment"\n'
+                   'OVERLAYS = REPO_ROOT / ".claude" / "skill-overlays"\n'
+                   'DOCS = REPO_ROOT / "docs"\n'
+                   'def skill_files():\n'
+                   '    return sorted(SKILL_DIR.rglob("*"))\n'
+                   'def corpus(overlays_dir=OVERLAYS):\n'
+                   '    return sorted(overlays_dir.rglob("*.md"))\n'
+                   'def trees():\n'
+                   '    for tree in (SKILL_DIR, OVERLAYS):\n'
+                   '        yield from tree.glob("**/*.md")\n'
+                   'def docs():\n'
+                   '    return sorted(DOCS.rglob("*.md"))\n')
+        self.assertEqual([6, 8, 11], [n for n, _ in hand_rolled_walks(fixture)])
+        for line in fixture.splitlines():
+            self.assertNotRegex(line, HAND_ROLLED_WALK, "the pattern alone saw it: no widening")
+
+    def test_a_name_bound_in_a_helper_module_is_resolved(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            write(Path(tmp) / "_helper.py", 'SKILLS_DIR = REPO_ROOT / ".claude" / "skills"\n')
+            fixture = ("import _helper as helper\nSKILLS_DIR = helper.SKILLS_DIR\n"
+                       'found = SKILLS_DIR.rglob("*.md")\n')
+            self.assertEqual([3], [n for n, _ in hand_rolled_walks(fixture, tmp)])
 
     def test_no_test_hand_rolls_a_root_or_claude_walk(self):
         """Line-scoped by design (#515): each walk form is the head of one Python call
@@ -252,9 +362,8 @@ class NoTestWalksTheRootByHand(unittest.TestCase):
         offenders = []
         for path in scanned:
             text = path.read_text(encoding="utf-8")
-            for n, line in enumerate(text.splitlines(), 1):
-                if HAND_ROLLED_WALK.search(line):
-                    offenders.append("tests/%s:%d: %s" % (path.name, n, line.strip()))
+            for n, line in hand_rolled_walks(text):
+                offenders.append("tests/%s:%d: %s" % (path.name, n, line))
         self.assertEqual(
             [], offenders,
             "walk the repository root or `.claude/` through `tests/_corpus.py`'s "

@@ -33,6 +33,13 @@ than *asserting* one:
   prepends to it rather than rewriting it.
 * `MIGRATION.md` -- Kiro-Power sync infrastructure, versioned separately.
 
+⛔ **(INV-384) Each skip root must name a path the repository has (#796).** The skip lists are
+hand-written carve-outs from a scanned site set, so `EverySkipRootNamesAPathTheRepositoryHas`
+reads each `SKIP_ROOTS` and `STALE_SKIP_ROOTS` entry against `tests/_corpus.py`'s listing: a file
+it lists, or a directory holding one. An entry that matches nothing fails, named, with any path of
+the same name elsewhere. It cannot establish that a root naming a real path is the right one to
+skip.
+
 ⚠️ **What a green run does NOT mean.** It means no *tracked, non-excluded* file states
 the current version in an assignment-shaped line that `release.py` would miss. It does
 not mean the rewrite is correct, that the two sites agree with each other (that is the
@@ -102,6 +109,8 @@ import subprocess
 import unittest
 from pathlib import Path
 from pathlib import PurePosixPath
+
+from _corpus import corpus_files
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RELEASE_PY = REPO_ROOT / ".claude" / "skills" / "release" / "release.py"
@@ -204,6 +213,66 @@ def files_asserting_another_version(version):
     """Every tracked, scanned file asserting a PLUGIN version that is not `version`."""
     return scan(PLUGIN_ASSERTION, lambda found: found != version,
                 skip_roots=STALE_SKIP_ROOTS)
+
+
+def corpus_listing():
+    """Repo-relative paths of the repository's own files, from `tests/_corpus.py` (INV-384)."""
+    return {path.relative_to(REPO_ROOT).as_posix() for path in corpus_files()}
+
+
+def dead_skip_roots(name, roots, listing=None):
+    """Each entry of ``roots`` naming no listed file and no directory holding one (#796).
+
+    A skip root is a hand-written exemption from a scanned site set, so INV-384 binds it: an entry
+    that matches nothing is a typo or a path that moved, and the scan then skips one path fewer
+    than its author believed. The problem names the entry and any listed path of the same name
+    elsewhere, because a move is the likelier cause and naming the new place makes it actionable.
+    """
+    listing = corpus_listing() if listing is None else listing
+    problems = []
+    for entry in roots:
+        if entry in listing or any(rel.startswith(entry + "/") for rel in listing):
+            continue
+        last = PurePosixPath(entry).name
+        near = sorted({"/".join(parts[:parts.index(last) + 1])
+                       for parts in (PurePosixPath(rel).parts for rel in listing)
+                       if last in parts})
+        where = ("; a path of that name is at " + ", ".join("`%s`" % n for n in near)
+                 if near else "; no path of that name exists anywhere in the repository")
+        problems.append("%s names `%s`, which matches no file the repository has%s"
+                        % (name, entry, where))
+    return problems
+
+
+class EverySkipRootNamesAPathTheRepositoryHas(unittest.TestCase):
+    """⛔ INV-384 on this guard's own carve-outs: `SKIP_ROOTS` and `STALE_SKIP_ROOTS` (#796)."""
+
+    def test_every_skip_root_names_a_listed_path(self):
+        problems = (dead_skip_roots("SKIP_ROOTS", SKIP_ROOTS)
+                    + dead_skip_roots("STALE_SKIP_ROOTS", STALE_SKIP_ROOTS))
+        self.assertEqual([], problems, "\n" + "\n".join(problems))
+
+    def test_the_listing_is_not_empty(self):
+        """A vacuous listing would report every entry, and a broken one none (INV-265)."""
+        self.assertGreater(len(corpus_listing()), 100)
+
+    def test_a_skip_root_naming_nothing_is_reported(self):
+        """The negative control: a misspelt directory, beside the shipped list that passes."""
+        problems = dead_skip_roots("SKIP_ROOTS", SKIP_ROOTS[:-1] + ("feedbak",))
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn("`feedbak`", problems[0])
+        self.assertIn("no path of that name exists", problems[0])
+
+    def test_a_moved_skip_root_names_where_it_went(self):
+        listing = {"docs/history/MIGRATION.md", "specs/x.md", "feedback/a.md", "CHANGELOG.md"}
+        problems = dead_skip_roots("SKIP_ROOTS", SKIP_ROOTS, listing)
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn("`MIGRATION.md`", problems[0])
+        self.assertIn("`docs/history/MIGRATION.md`", problems[0])
+
+    def test_a_directory_root_matches_the_files_under_it(self):
+        self.assertEqual([], dead_skip_roots("X", ("specs",), {"specs/a/b.md"}))
+        self.assertEqual(1, len(dead_skip_roots("X", ("spec",), {"specs/a/b.md"})))
 
 
 @unittest.skipUnless(shutil.which("git"), "git lists the tracked files this scan reads")

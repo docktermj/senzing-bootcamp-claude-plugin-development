@@ -65,6 +65,8 @@ import re
 import unittest
 from pathlib import Path
 
+from _corpus import corpus_files
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins"
 DRY_RUN = REPO_ROOT / ".claude" / "skills" / "dry-run" / "phase3-conversational.md"
@@ -104,9 +106,9 @@ def vocabulary_corpus():
     site-set-is-larger-than-the-shipped-tree case of INV-246.
     """
     out = list(shipped_markdown())
-    for tree in (MAINTAINER_SIDE, COMMANDS, OVERLAYS):
-        if tree.is_dir():
-            out += [p for p in tree.rglob("*.md") if "__pycache__" not in p.parts]
+    # The `.claude/` trees come from the one listing (INV-367), so loop scratch stays out (#796).
+    out += corpus_files(*(tree.relative_to(REPO_ROOT).as_posix()
+                          for tree in (MAINTAINER_SIDE, COMMANDS, OVERLAYS)), suffixes={".md"})
     return sorted(out)
 
 
@@ -596,8 +598,9 @@ class EveryEnumerationEqualsOneClosedSet(unittest.TestCase):
     def test_every_issue_template_line_is_found(self):
         """⛔ INV-265 — the delegate template's line was invisible to the sibling finder."""
         found = {p for p, _, _ in enumeration_lines()}
-        templates = [p for p in MAINTAINER_SIDE.rglob("issue-template.md")
-                     if "- Upstream: <" in p.read_text(encoding="utf-8")]
+        templates = [p for p in corpus_files(MAINTAINER_SIDE.relative_to(REPO_ROOT).as_posix())
+                     if p.name == "issue-template.md"
+                     and "- Upstream: <" in p.read_text(encoding="utf-8")]
         self.assertTrue(any(p.parent.name == "delegate-to-mcp-server" for p in templates))
         for p in templates:
             with self.subTest(template=str(p.relative_to(REPO_ROOT))):

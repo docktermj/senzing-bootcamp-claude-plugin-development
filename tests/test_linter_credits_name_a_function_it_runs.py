@@ -18,11 +18,14 @@ function the linter runs. It reads sentences, not runs: it cannot establish that
 really observes the behavior a sentence attributes to it.
 
 So the rule this file enforces is mechanical. **A claim** is one sentence that matches both
-``LINTER`` (the linter's two-word name or its module's name, in any case) and ``VERB`` (observe,
-observes, check, checks, checked or catches). Whitespace is collapsed first, so a sentence
-that wraps across lines is still one sentence. A sentence that says only `dry-run` phase 3
-observes the behavior is the correction itself and is not a claim, even where it goes on to name
-the linter.
+``LINTER`` (the two-word name, the short name ``the linter``, or the module's name, in any case)
+and ``VERB`` (``observe``, ``observes``, ``observed``, ``observing``, ``check``, ``checks``,
+``checked``, ``checking``, ``catches`` or ``caught``). Whitespace is collapsed first, so a
+sentence that wraps across lines is still one sentence. ``VERB`` is matched with the sentence's
+inline code spans removed, so a backticked identifier such as ``CHECKS`` is a name, not the verb,
+as ``check_x`` already was (#796); a sentence that also uses the verb outside backticks is still a
+claim. A sentence that says only `dry-run` phase 3 observes the behavior is the correction itself
+and is not a claim, even where it goes on to name that tool.
 
 **A claim passes** when it names at least one ``check_*`` function and every one it names is a
 function the linter runs: the members of ``CHECKS``, plus each ``check_*`` function ``lint()``
@@ -81,8 +84,9 @@ before and after `/review-invariants` applies them.
 
 ⛔ **What this cannot establish:** that a function the claim names really observes the behavior
 the sentence attributes to it. The guard proves the name is real, which is what makes the claim
-checkable by a reader; it does not read the function. Nor does it see a claim phrased without
-the linter's name ("auto-test catches this") or without one of the six verbs.
+checkable by a reader; it does not read the function. Nor does it see a claim phrased without a
+name ``LINTER`` matches (``auto-test catches this``), without a verb ``VERB`` matches, or with its
+verb only inside a code span.
 
 Stdlib only (INV-108).
 
@@ -153,10 +157,16 @@ GENERATED = generated_files()
 #: come to name a file that has moved, which is the failure this registry is checked for.
 EXEMPT = {"GENERATED": GENERATED or frozenset()}
 
-#: The linter's name. ``\s+`` because a sentence may wrap between the two words.
-LINTER = re.compile(r"(?i)\btranscript\s+linter\b|transcript_lint")
-#: A verb of checking, as a whole word (``check_x`` is a name, not the verb).
-VERB = re.compile(r"(?i)\b(?:observes?|checks?|checked|catches)\b")
+#: The linter's name. ``\s+`` because a sentence may wrap between the two words. "the linter"
+#: is its short name (#796); a sentence about another linter names that one or its function.
+LINTER = re.compile(r"(?i)\btranscript\s+linter\b|transcript_lint|\bthe\s+linter\b")
+#: A verb of checking, as a whole word (``check_x`` is a name, not the verb). #796 added the
+#: past, progressive and irregular forms. It is matched with every inline code span removed
+#: (``CODE_SPAN``), so a backticked identifier such as ``CHECKS`` is a name, not the verb.
+VERB = re.compile(
+    r"(?i)\b(?:observes?|observed|observing|checks?|checked|checking|catches|caught)\b")
+#: An inline code span: a run of backticks, its text, and the same run again (#796).
+CODE_SPAN = re.compile(r"(`+)(?!`).*?(?<!`)\1(?!`)")
 #: The correction #514 asks for. A sentence carrying it denies the credit rather than giving it.
 ONLY_DRY_RUN = re.compile(r"(?i)\bonly\s+`?dry-run`?\s+phase\s+3\s+observes?\b")
 #: A function the sentence names. Only ``check_*`` names count; ``\b`` keeps ``_check_x`` out.
@@ -207,12 +217,17 @@ def sentences(text):
     yield pos, text[pos:]
 
 
+def without_code(flat):
+    """``flat`` with each inline code span blanked, so only prose can supply the verb (#796)."""
+    return CODE_SPAN.sub(" ", flat)
+
+
 def claims(text):
     """``(offset, sentence, claimed)`` for each claim; ``offset`` is the linter's mention."""
     for offset, raw in sentences(text):
         flat = " ".join(raw.split())
         mention = LINTER.search(raw)
-        if mention and VERB.search(flat) and not ONLY_DRY_RUN.search(flat):
+        if mention and VERB.search(without_code(flat)) and not ONLY_DRY_RUN.search(flat):
             yield offset + mention.start(), flat, sorted(set(NAMED.findall(flat)))
 
 
@@ -473,6 +488,7 @@ class EveryClaimNamesARunFunction(unittest.TestCase):
 #: Built from parts, so this file's own prose holds no claim (it is scanned too).
 NAME = "transcript" + " linter"
 MODULE = "transcript" + "_lint"
+SHORT = "the" + " linter"
 #: Fixture ids, built from parts so `citations.py verify` does not read them as citations.
 FAKE, OTHER = "INV-" + "900", "INV-" + "901"
 RUN = frozenset({"check_one_pointer_per_turn", "check_repeat_questions", "check_apparatus"})
@@ -532,6 +548,61 @@ class Controls(unittest.TestCase):
         problems = file_problems("t.py", doc, RUN)
         self.assertEqual(1, len(problems), problems)
         self.assertIn("t.py:3:", problems[0])
+
+
+class TheWideningOf796(unittest.TestCase):
+    """#796: the verbs and the short name the first pattern missed, and backticks as names."""
+
+    #: INV-251's 2026-10-12 (#514) note, the sentence the widened pattern must leave alone.
+    INV_251 = ("Both earlier mentions of the linter mean that one function, a member of `CHECKS` "
+               "whose finding code is `INV-251-multi-question`.")
+
+    def test_each_new_verb_makes_a_claim(self):
+        for verb in ("observed", "observing", "checking", "caught"):
+            with self.subTest(verb=verb):
+                text = f"The {NAME} {verb} it on every run."
+                self.assertEqual(1, len(text_problems("x.md", text, RUN)))
+
+    def test_the_short_name_makes_a_claim(self):
+        problems = text_problems("x.md", f"Only a run shows it, and {SHORT} caught it.", RUN)
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn("none named", problems[0])
+
+    def test_a_short_name_claim_naming_a_run_function_passes(self):
+        text = f"{SHORT.capitalize()} observes it with `check_repeat_questions`."
+        self.assertEqual([], text_problems("x.md", text, RUN))
+
+    def test_the_inv_251_note_is_in_the_registry_unchanged(self):
+        """The control below is only worth something while the shipped sentence is this one."""
+        flat = " ".join(INVARIANTS.read_text(encoding="utf-8").split())
+        self.assertIn(self.INV_251, flat)
+
+    def test_a_backticked_identifier_is_a_name_not_the_verb(self):
+        """INV-251's #514 note passes: `CHECKS` is the linter's list, not the verb."""
+        self.assertTrue(LINTER.search(self.INV_251))
+        self.assertTrue(VERB.search(self.INV_251), "the control no longer exercises backticks")
+        self.assertEqual([], list(claims(self.INV_251)))
+        self.assertEqual([], invariants_problems(INVARIANTS.read_text(encoding="utf-8"), runs(),
+                                                 pending_ids=set()))
+
+    def test_the_same_sentence_with_the_verb_outside_backticks_is_a_claim(self):
+        """The negative control: `checks` written as prose makes INV-251's sentence a claim."""
+        bare = self.INV_251.replace("`CHECKS`", "checks")
+        self.assertEqual(1, len(text_problems("x.md", bare, RUN)))
+        text = INVARIANTS.read_text(encoding="utf-8")
+        at = text.index("a member of `CHECKS` whose")
+        mutant = text[:at] + "a member of checks whose" + text[at + len("a member of `CHECKS` whose"):]
+        problems = invariants_problems(mutant, runs(), pending_ids=set())
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn("INV-251", problems[0])
+
+    def test_a_verb_outside_backticks_still_counts_beside_one_inside(self):
+        text = f"The {NAME} checks every `CHECKS` member."
+        self.assertEqual(1, len(text_problems("x.md", text, RUN)))
+
+    def test_double_backtick_spans_are_names_too(self):
+        text = f"The {NAME}'s ``CHECKS`` tuple moved."
+        self.assertEqual([], text_problems("x.md", text, RUN))
 
 
 class InvariantsControls(unittest.TestCase):

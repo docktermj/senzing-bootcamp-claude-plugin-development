@@ -39,6 +39,13 @@ runs in the guide's POSIX shell, Git Bash on Windows (INV-167's #508 note), so i
 unquoted backslash. A ````markdown```` fence holds an example document, not commands, and is not read.
 It reads the text: no test here runs a line on Windows.
 
+`NoBareEnvironmentVariablesInPowerShellSpans` (#796) holds inline code spans to the same `$env:NAME`
+rule. A span outside a fence is PowerShell when the last platform heading before it in its line
+or list item is for Windows or PowerShell ("Windows:", "Windows (PowerShell 5.1 and 7):"), or when
+it carries a PowerShell-only token: `$env:`, a `Verb-Noun` cmdlet such as `Join-Path`, or
+`[System.…]`. A span after a "Linux/macOS:" heading, or one naming a variable in passing with no
+heading and no token, is not read. It cannot see a PowerShell span that has neither.
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
@@ -277,6 +284,67 @@ def bare_caps_offenders(paths):
         for number, line in powershell_blocks(path):
             for name in bare_caps_variables(line):
                 offenders.append("%s:%d: $%s in %s" % (path, number, name, line.strip()))
+    return offenders
+
+
+#: An inline code span outside a fence: a run of backticks, its text, and the same run (#796).
+INLINE_SPAN = re.compile(r"(`+)(?!`)(.+?)(?<!`)\1(?!`)")
+#: A platform heading inside a line or a list item: the platform's name, then a colon within a
+#: few words ("Windows:", "Windows (PowerShell 5.1 and 7):", "Linux/macOS:"). The last one
+#: before a span says which shell the span is written for. "Git Bash on Windows" is bash.
+PLATFORM_HEADING = re.compile(
+    r"(?i)(Git Bash(?: on Windows)?|\b(?:Windows|PowerShell|pwsh|Linux|macOS|bash|zsh|POSIX|Unix)\b)"
+    r"[^:;`\n]{0,40}:")
+WINDOWS_HEADINGS = {"windows", "powershell", "pwsh"}
+#: PowerShell's approved verbs that head a cmdlet in this plugin's prose, and wider.
+POWERSHELL_VERBS = (
+    "Add", "Clear", "Compare", "Convert", "ConvertFrom", "ConvertTo", "Copy", "Disable", "Enable",
+    "Expand", "Export", "Find", "ForEach", "Format", "Get", "Import", "Install", "Invoke", "Join",
+    "Measure", "Move", "New", "Out", "Pop", "Push", "Read", "Register", "Remove", "Rename",
+    "Resolve", "Restart", "Select", "Set", "Sort", "Split", "Start", "Stop", "Tee", "Test",
+    "Uninstall", "Unregister", "Update", "Wait", "Where", "Write")
+#: A PowerShell-only token: `$env:`, a `Verb-Noun` cmdlet, or a .NET `[System.…]` type.
+POWERSHELL_TOKEN = re.compile(
+    r"\$env:|\b(?:%s)-[A-Z][A-Za-z]+\b|\[System\." % "|".join(POWERSHELL_VERBS))
+#: Where a list item starts; a blank line or a heading ends one.
+LIST_ITEM = re.compile(r"^[ \t>]*(?:[-*+]|\d+[.)])[ \t]+")
+
+
+def powershell_spans(path):
+    """Yield ``(line_number, span)`` for each inline code span outside a fence that is PowerShell.
+
+    A span is PowerShell when the last platform heading before it in its line or list item is
+    for Windows or PowerShell, or when it carries a PowerShell-only token (#796). Fenced lines are
+    the fence sweeps' business, so a fence's contents are skipped here.
+    """
+    opener, item = None, ""
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        mark = FENCE_MARK.match(line)
+        if opener is None and mark:
+            opener = mark.group(1)
+            continue
+        if opener is not None:
+            if (mark and mark.group(1)[0] == opener[0] and len(mark.group(1)) >= len(opener)
+                    and not mark.group(2).strip()):
+                opener = None
+            continue
+        if not line.strip() or line.lstrip().startswith("#") or LIST_ITEM.match(line):
+            item = ""
+        for span in INLINE_SPAN.finditer(line):
+            headings = [h.group(1).lower() for h in PLATFORM_HEADING.finditer(
+                item + " " + line[:span.start()])]
+            headed = bool(headings) and headings[-1] in WINDOWS_HEADINGS
+            if headed or POWERSHELL_TOKEN.search(span.group(2)):
+                yield number, span.group(2)
+        item += " " + line
+
+
+def inline_bare_caps_offenders(paths):
+    offenders = []
+    for path in paths:
+        for number, span in powershell_spans(path):
+            for name in bare_caps_variables(span):
+                offenders.append("%s:%d: $%s in `%s`" % (path, number, name, span.strip()))
     return offenders
 
 
@@ -536,6 +604,84 @@ class NoBareEnvironmentVariablesInPowerShellBlocks(unittest.TestCase):
     def test_a_caps_name_outside_the_allowlist_is_still_caught(self):
         self.assertEqual(["SENZING_ROOT"], bare_caps_variables('Join-Path ${SENZING_ROOT} "data"'))
         self.assertEqual(["PATH"], bare_caps_variables('Write-Output "$PATH"'))
+
+
+class NoBareEnvironmentVariablesInPowerShellSpans(unittest.TestCase):
+    """INV-167, #505's note, read in inline code spans too (#796).
+
+    A PowerShell one-liner in backticks runs exactly like a fenced line, so the `$env:NAME` rule
+    binds it. Until #796 only fences were read, and Module 4 Step 8a's `WriteAllText` one-liner
+    sat in backticks under "Windows (PowerShell 5.1 and 7):", out of the sweep's sight.
+    """
+
+    def doc(self, tmp, text):
+        path = Path(tmp) / "doc.md"
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    def test_no_shipped_powershell_span_reads_a_bare_caps_variable(self):
+        offenders = inline_bare_caps_offenders(sorted(PLUGIN.rglob("*.md")))
+        self.assertEqual(
+            [], offenders,
+            "In PowerShell `$NAME` is an unset PowerShell variable; read the environment "
+            "variable as `$env:NAME`:\n  " + "\n  ".join(offenders))
+
+    def test_the_sweep_reads_inline_spans(self):
+        """Guard the guard: the span sweep finds spans both ways, headed and by token."""
+        spans = [(path, span) for path in sorted(PLUGIN.rglob("*.md"))
+                 for _, span in powershell_spans(path)]
+        self.assertGreater(len(spans), 20, "found almost no PowerShell spans to check")
+        self.assertTrue(any("WriteAllText" in span for _, span in spans),
+                        "Module 4 Step 8a's WriteAllText one-liner is no longer read")
+
+    def test_negative_control_a_shipped_span_with_a_bare_variable_is_caught(self):
+        """Module 4 Step 8a's one-liner, given the bare variable the fence sweep already bans."""
+        import tempfile
+
+        path = PLUGIN / "skills" / "module-04-data-collection" / "SKILL.md"
+        text = path.read_text(encoding="utf-8")
+        old = "`$p = Join-Path (Get-Location) 'config\\engine_config.json';"
+        self.assertIn(old, text, "the control's anchor text is gone")
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual([], inline_bare_caps_offenders([self.doc(tmp, text)]))
+            mutant = text.replace(old, old.replace("(Get-Location)", "$SENZING_DIR"), 1)
+            offenders = inline_bare_caps_offenders([self.doc(tmp, mutant)])
+            self.assertEqual(1, len(offenders), offenders)
+            self.assertIn("$SENZING_DIR", offenders[0])
+            self.assertEqual([], bare_caps_offenders([self.doc(tmp, mutant)]),
+                             "the fence sweep saw it, so this control does not show a widening")
+
+    def test_a_span_under_a_windows_heading_is_read(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.doc(tmp, 'Check it. Windows: `Test-Path -Path "$SENZING_DIR\\data"`.\n')
+            self.assertEqual(1, len(inline_bare_caps_offenders([path])))
+            path = self.doc(tmp, "- **Windows (PowerShell 5.1 and 7):** run\n  `echo $SENZING_DIR`\n")
+            self.assertEqual(1, len(inline_bare_caps_offenders([path])))
+
+    def test_a_span_carrying_a_powershell_token_is_read_anywhere(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            for span in ("Join-Path $SENZING_DIR 'data'", "[System.IO.File]::Exists($SENZING_DIR)",
+                         "$env:PATH; $SENZING_DIR"):
+                with self.subTest(span=span):
+                    path = self.doc(tmp, "Then run `%s` once.\n" % span)
+                    self.assertEqual(1, len(inline_bare_caps_offenders([path])))
+
+    def test_a_posix_span_is_not_read(self):
+        """Must-not-flag (INV-282): a bash span, even in an item that also has a Windows form."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            for text in ('Linux/macOS: `test -d "$SENZING_DIR/data"`; Windows: '
+                         '`Test-Path -Path "$env:SENZING_DIR\\data"`.\n',
+                         'Run `source $SENZING_DIR/setupEnv` first.\n',
+                         'On Windows it may hold `%SENZING_DIR%` or `$SENZING_DIR`, never expanded.\n',
+                         '```powershell\n$x = 1\n```\nGit Bash on Windows: `echo $HOME_DIR`.\n'):
+                with self.subTest(text=text[:40]):
+                    self.assertEqual([], inline_bare_caps_offenders([self.doc(tmp, text)]))
 
 
 if __name__ == "__main__":

@@ -440,7 +440,7 @@ source you re-derived, or says that you are returning to Module 1 Step 4b to cho
     | Gapping | `m` | completeness | score |
     |---|---|---|---|
     | phone 30%, address 5% | 0.35 | 95.6% | **96.9** |
-    | one field missing on every record | 1.00 | 87.5% | **91.25** |
+    | one field missing on every record | 1.00 | 87.5% | **91.3** |
     | five of seven non-key fields, each 30% | 1.50 | 81.25% | **86.9** |
     | **the 70-79 band** | **2.4 – 3.43** | **70.0% – 57.1%** | **79 – 70** |
 
@@ -616,7 +616,7 @@ source you re-derived, or says that you are returning to Module 1 Step 4b to cho
   **75.5**, inside the recorded band (taking formatting as clean; the `created_date` drift lowers
   `format_consistency` a little, and the self-check measures that too). The version before this one
   summed **2.20** and claimed **78.0** by dividing by seven fields; counting the key as Module 5
-  does, the same rates score **80.75**, outside the band. An earlier version paired
+  does, the same rates score **80.8**, outside the band. An earlier version paired
   `target_band: "70-79"` with `gaps: ["phone missing ~30% of records"]` — a summed absence of about
   0.35, arithmetically incapable of that band by roughly a factor of seven — so the file shipped the
   inconsistency twice, once as an instruction and once as a sample of a recorded result. **Record the rates you actually generated, and let the self-check above write
