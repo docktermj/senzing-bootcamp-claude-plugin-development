@@ -43,6 +43,19 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-10-27
+
+- **Implemented:** 2026-10-27 (**Not a spec**: a dated record of one `/review-invariants` session over the 5 blocks pending at its start, all written by the 2026-10-27 unattended run (#840-#843). ⛔ **It establishes no invariant of its own**: each rule it registers or amends was established by the implementation that queued it.)
+- **Commit:** uncommitted
+- **Files changed:** `specs/INVARIANTS.md` (INV-419 with its index entry; dated notes appended beneath INV-359, INV-376, INV-255 and INV-074), `specs/IMPLEMENTED.md` (five blocks resolved or applied; this entry), `invariant-manifest.json` (regenerated), `BLUEPRINT.md` (the #840, #841 and #842 decision-log lines, which called the notes queued, restated as registered), `.claude/skills/auto-test/SKILL.md` (INV-419 cited at the executable-scripts sentence), `.claude/skills/auto-test/autotest.py` (the module docstring's walk-failure paragraph cites INV-376), `tests/test_auto_test_scripts_are_executable.py` (back-cites INV-419, with what a green run does not mean), `tests/test_transcript_lint_tells_a_re_ask_from_a_re_presentation.py` and `tests/test_a_walk_runs_on_the_scaffold_it_asked_for.py` (the INV-359 and INV-376 notes stated as registered), `tests/test_invariant_enforcer_citations.py` (`EXPECTED_PAIRS` 315 -> 319, re-derived by the extractor).
+- **MCP re-check:** n/a (no Senzing fact). No wording approved here states a Senzing fact.
+- **Summary:**
+  - **Registered (1):** **INV-419** (#843): each auto-test script `SKILL.md` runs directly starts with `#!/usr/bin/env python3` and is stored as mode `100755`, and `SKILL.md` keeps a `python3 …` form for Windows. Cited in `SKILL.md`, back-cited from `test_auto_test_scripts_are_executable.py`.
+  - **Amended (dated notes applied, 4):** INV-359 (#842), INV-376 (#840), INV-255 (#841) and INV-074 (#841), each as drafted. INV-074's note gives it its first enforcer, `test_bootcamp_notes_flow.py`; INV-255's names the test that already enforced it, so it adds no pair.
+  - **Held:** none this session. The seven earlier holds stand and were not re-offered.
+  - **Remaining:** 0 pending, 7 held. The next free id is **420**, written as a bare number deliberately; read it off `INVARIANTS.md` at mint time.
+  - **Noted, not changed:** `feedback.md` Step 4 does not cite INV-074 at the banners INV-074 governs; its citations are in `notes.md` and `graduation/SKILL.md`. The 2026-10-26 record's guard limitation recurred: while INV-255's note was registered and INV-074's still queued, #841's decision-log line could not say the second was queued, so it carried a neutral interim wording until both were applied.
+
 ## the-auto-test-baseline-matches-server-1-40-10-and-its-scripts-run-as-documented
 
 - **Implemented:** 2026-10-27 (**Not a spec**: a dated record of one issue-driven run, #843, spec revision 1; `Source:` auto-test run 2026-10-27 11:34, plugin `924427d4`, server 1.40.10, `self-observed (auto-test)`.) Implemented directly by `/unattended-issue-loop` *(user level)*, worker for #843, on branch `843-docktermj-1` from `origin/main` at `95e82e1f`.
