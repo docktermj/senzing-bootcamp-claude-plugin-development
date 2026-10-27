@@ -32,7 +32,7 @@ before the Bootcamper's first reply) and reports it as a repeat of turn 13.
 side question, so a re-ask after it is not reported. Only `dry-run` phase 3 observes that
 case. A clean lint is not a passed phase 3 (`transcript_lint.py`'s own docstring). INV-359's
 no-re-ask clause for Module 7 step 1 is seen through `check_repeat_questions` too, so the
-same limit applies there; the #842 ledger entry queues a dated note to INV-359 saying so.
+same limit applies there; INV-359's 2026-10-27 note (#842) says so, registered, applied 2026-10-27.
 
 Stdlib only, no import from `plugins/` (INV-108).
 

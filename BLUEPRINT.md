@@ -14406,7 +14406,7 @@ Senzing licensing, with no SPDX identifier.
   — nine of ten findings on a 2026-10-27 `confused` walk were sanctioned
   re-presentations or the Bootcamper's quoted note, hiding the one real re-ask
   (#841); a test runs the linter on that walk, trimmed to assistant text and
-  replies; an amendment to INV-359 is queued for `/review-invariants`
+  replies; INV-359's 2026-10-27 note is registered, applied 2026-10-27
 - #843: the auto-test baseline is refreshed to server 1.40.10 after a guarded
   comparison found only the version and the indexed-repository count (53 to
   51) changed, and the four auto-test scripts are stored as mode `100755`,

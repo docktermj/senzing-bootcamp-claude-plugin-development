@@ -850,7 +850,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # `SKILL.md` runs directly are stored executable; #843), which names
 # test_auto_test_scripts_are_executable.py. Re-derived by running the extractor -- 316, the new pair
 # present and none removed.
-EXPECTED_PAIRS = 316
+# 317 on 2026-10-27: the same review applied INV-359's 2026-10-27 note (#842), which names
+# test_transcript_lint_tells_a_re_ask_from_a_re_presentation.py. Re-derived by running the extractor --
+# 317, the new pair present and none removed.
+EXPECTED_PAIRS = 317
 
 
 def pairs():
