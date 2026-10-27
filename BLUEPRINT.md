@@ -14383,8 +14383,8 @@ Senzing licensing, with no SPDX identifier.
   failed or missing scaffold skips the walk with a BREAKING `scaffold-failed`
   finding and exit 1 instead of walking five empty folders (since #834 every
   walk ran on that fallback, so a `seeded` walk was a fresh one reported as
-  clean); raced, approach B won with A's hand-off test grafted; an amendment
-  to INV-376 is queued for `/review-invariants`
+  clean); raced, approach B won with A's hand-off test grafted; INV-376's
+  2026-10-27 note is registered, applied 2026-10-27
 - #838: record the 2026-10-26 invariant review — six invariants registered
   (INV-413 to INV-418) and fourteen dated notes applied, none held (the 20
   blocks the 2026-10-23 unattended run queued, plus the #671 and #683 notes

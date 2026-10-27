@@ -50,10 +50,10 @@ as "the walk produced no transcript" and exited 0 -- while ``walk.stdout or walk
 short-circuited on 68 turn lines and dropped the traceback that would have named the cause,
 which is why that cause is still unknown (#732).
 
-A walk that cannot be built is the same failure one step earlier. When dry-run's scaffold
-fails, the walk is not run, so no tokens are spent on a project nobody asked for, and the run
-records a BREAKING ``scaffold-failed`` finding carrying the scaffold's error and exits 1. The
-probe has already run, and its findings are reported as usual. There is no fallback project:
+A walk that cannot be built is the same failure one step earlier (INV-376). When dry-run's
+scaffold fails, the walk is not run, so no tokens are spent on a project nobody asked for, and
+the run records a BREAKING ``scaffold-failed`` finding carrying the scaffold's error and exits 1.
+The probe has already run, and its findings are reported as usual. There is no fallback project:
 five empty folders walked under the label ``seeded`` made a fresh walk read as the
 honor-don't-ask path (INV-133), and the report called it clean (#840).
 
