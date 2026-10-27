@@ -10590,10 +10590,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8856 test methods in 459 files, matching `inventory.test_count_total`.
+There are 8862 test methods in 459 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8856.
+sum to 8862.
 
 Two files run more tests than they define, so discovery collects 8863:
 
@@ -10779,7 +10779,7 @@ looks wrong.
 - `tests/test_internal_connection_string_rejected.py`: 2
 - `tests/test_inv048_is_cited_only_for_the_recap_pdf.py`: 8
 - `tests/test_inv174_per_record_applicability.py`: 12
-- `tests/test_invariant_changes_route_through_review_invariants.py`: 34
+- `tests/test_invariant_changes_route_through_review_invariants.py`: 40
 - `tests/test_invariant_crossreferences.py`: 32
 - `tests/test_invariant_enforcer_citations.py`: 4
 - `tests/test_invariant_layout_tree.py`: 19
@@ -11994,7 +11994,12 @@ These are the scripts under `.claude/skills/`:
   - every `(INV-309)` citation sits in a sentence about
     `/implement-github-issue`, the unattended loop or a skill overlay; since
     #607 this also reads the comments and strings of `.py` files under
-    `.claude/skills/` and the comments and docstrings of `tests/*.py`.
+    `.claude/skills/` and the comments and docstrings of `tests/*.py`;
+  - `specs/INVARIANTS.md`'s "Maintaining this file" paragraph and the intro
+    under "Invariants added from implemented specs", each read by its heading,
+    name `/review-invariants`, link "Writing one", restate no part of the
+    block's shape and never name the retired `implement-spec`, with each
+    passage's pre-#807 sentence as a negative control (#807).
 
 #### 8.4.10 CI and release hygiene
 
@@ -14212,6 +14217,13 @@ Senzing licensing, with no SPDX identifier.
   `ROUTE_FILES`); the access-steps guard finds the sites by scanning every
   paragraph naming the tool for an instruction verb, with reasoned text-keyed
   exemption lists and negative controls, and no invariant is added
+- #807: `specs/INVARIANTS.md`'s "Maintaining this file" paragraph and the intro
+  under "Invariants added from implemented specs" name `/review-invariants` as
+  the register's only writer and point every other command at
+  `review-invariants` → "Writing one" for its block (both still said the
+  retired `implement-spec` appended the invariants, contradicting INV-365 from
+  inside the register); the INV-365 guard reads both passages; applied in an
+  attended run the maintainer approved, and no invariant is added
 - #808: `implement-spec` is described only in the past tense; both overlays
   name `DEFERRED INVARIANT` and `PROPOSED AMENDMENT` and point at
   `review-invariants` → "Writing one" for the shape, which the INV-365 guard
