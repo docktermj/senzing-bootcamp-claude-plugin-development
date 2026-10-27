@@ -422,8 +422,9 @@ class ACrashedWalkIsBreakingNotACoverageLimit(unittest.TestCase):
 
     Offline and sandboxed: `SKILL_DIR` points at a temporary directory holding three stub
     scripts, `SANDBOX_ROOT` and `REPORT_DIR` point into the same temporary directory, the
-    scaffold path is made absent so the sandbox falls back to `mkdir`, and the git worktree
-    is replaced. Nothing touches `~/senzing-autotest`, the network or the real repository.
+    scaffold is a stub that makes the project directory and exits 0 (a missing scaffold is
+    now a `scaffold-failed` run with no walk, #840), and the git worktree is replaced.
+    Nothing touches `~/senzing-autotest`, the network or the real repository.
     """
 
     def setUp(self):
@@ -445,7 +446,10 @@ class ACrashedWalkIsBreakingNotACoverageLimit(unittest.TestCase):
         autotest.SKILL_DIR = self.skill
         autotest.SANDBOX_ROOT = self.tmp / "senzing-autotest"
         autotest.REPORT_DIR = autotest.SANDBOX_ROOT / "reports"
-        autotest.SCAFFOLD = self.tmp / "no-such-scaffold.py"
+        autotest.SCAFFOLD = self.tmp / "scaffold_project.py"
+        autotest.SCAFFOLD.write_text(
+            "import sys\nfrom pathlib import Path\nPath(sys.argv[1]).mkdir(parents=True)\n",
+            encoding="utf-8")
         autotest.make_worktree = lambda root, ref: (root / "plugin-src", "a" * 40)
         autotest.drop_worktree = lambda worktree: None
         self.runs = 0

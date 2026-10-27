@@ -30,9 +30,12 @@ repo-level `tests/`, stdlib only).
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
+import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -267,6 +270,28 @@ class TestScaffoldGuardrails(unittest.TestCase):
         self.assertEqual(2, result.returncode, result.stdout + result.stderr)
         self.assertIn("Refusing to build under /tmp", result.stderr)
 
+    def test_a_temp_target_outside_the_vouched_run_root_is_still_refused(self):
+        """The real script on this host: `--run-root` opens its own root and nothing else.
+
+        Where the temp directory is not under a refused prefix (macOS, Windows) nothing was
+        ever refused there, so the target is built; the scoping itself is pinned host-free
+        in `TestTheRunRootIsScoped`.
+        """
+        vouched = Path(tempfile.mkdtemp()).resolve()
+        other = Path(tempfile.mkdtemp()).resolve()
+        for path in (vouched, other):
+            self.addCleanup(shutil.rmtree, path, True)
+        result = subprocess.run(
+            [sys.executable, str(SCAFFOLD), str(other / "project"), "--run-root",
+             str(vouched)],
+            capture_output=True, text=True, cwd=str(REPO_ROOT))
+        if str(other).startswith(load(SCAFFOLD, "scaffold_project_prefixes").TEMP_PREFIXES):
+            self.assertEqual(2, result.returncode, result.stdout + result.stderr)
+            self.assertIn("is not inside the run root", result.stderr)
+            self.assertFalse((other / "project").exists())
+        else:
+            self.assertEqual(0, result.returncode, result.stderr)
+
     def test_explain_writes_nothing(self):
         result = subprocess.run(
             [sys.executable, str(SCAFFOLD), "--explain"],
@@ -276,6 +301,59 @@ class TestScaffoldGuardrails(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("INV-059", result.stdout, "the fixture map should cite invariants")
+
+
+class TestTheRunRootIsScoped(unittest.TestCase):
+    """`--run-root` vouches for one directory under the temp directory, and no more (#840).
+
+    `autotest.py` builds each walk's project in a `mkdtemp` run root under the system temp
+    directory (#834), and the scaffold refused `/tmp`, so every walk ran on a five-folder
+    fallback. Without the flag the refusal stands, for a project built by hand. With it, only
+    a target strictly inside the vouched root is built, and the vouched root must itself lie
+    under the refused prefix, so naming the temp directory itself opens nothing.
+
+    `temp_refusal` is called with this host's own temp directory (`tempfile.gettempdir()`) as
+    the refused prefix, never a literal `/tmp`, so the scoping is tested on macOS and Windows
+    too, where the shipped prefixes never match. Pure paths: nothing is written.
+    """
+
+    def setUp(self):
+        self.scaffold = load(SCAFFOLD, "scaffold_project_run_root")
+        self.temp = Path(tempfile.gettempdir()).resolve()
+        self.prefixes = (str(self.temp) + os.sep,)
+        self.vouched = self.temp / "senzing-autotest-20261027-000000-terse-abc"
+
+    def refusal(self, target, run_root=None):
+        return self.scaffold.temp_refusal(target, run_root, self.prefixes)
+
+    def test_without_the_flag_a_temp_target_is_refused(self):
+        message = self.refusal(self.vouched / "project")
+        self.assertIsNotNone(message)
+        self.assertIn("Refusing to build under /tmp", message)
+
+    def test_a_target_inside_the_vouched_root_is_built(self):
+        for target in (self.vouched / "project", self.vouched / "a" / "project"):
+            with self.subTest(target=target):
+                self.assertIsNone(self.refusal(target, self.vouched))
+
+    def test_a_target_outside_the_vouched_root_is_refused(self):
+        sibling = self.temp / (self.vouched.name + "-sibling") / "project"
+        for target in (self.temp / "elsewhere" / "project", sibling, self.vouched):
+            with self.subTest(target=target):
+                message = self.refusal(target, self.vouched)
+                self.assertIsNotNone(message, "a target outside the vouched root was built")
+                self.assertIn("Refusing to build under /tmp", message)
+                self.assertIn("is not inside the run root", message)
+
+    def test_the_temp_directory_itself_vouches_for_nothing(self):
+        self.assertIsNotNone(self.refusal(self.vouched / "project", self.temp))
+
+    def test_a_target_outside_the_temp_directory_is_untouched_by_the_flag(self):
+        target = Path(self.temp.anchor) / "senzing-840-not-temp" / "project"
+        if str(target).startswith(self.prefixes):
+            self.skipTest(f"this host's temp directory is its root ({self.temp})")
+        self.assertIsNone(self.refusal(target))
+        self.assertIsNone(self.refusal(target, self.vouched))
 
 
 if __name__ == "__main__":

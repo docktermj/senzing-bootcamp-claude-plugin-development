@@ -50,6 +50,13 @@ as "the walk produced no transcript" and exited 0 -- while ``walk.stdout or walk
 short-circuited on 68 turn lines and dropped the traceback that would have named the cause,
 which is why that cause is still unknown (#732).
 
+A walk that cannot be built is the same failure one step earlier. When dry-run's scaffold
+fails, the walk is not run, so no tokens are spent on a project nobody asked for, and the run
+records a BREAKING ``scaffold-failed`` finding carrying the scaffold's error and exits 1. The
+probe has already run, and its findings are reported as usual. There is no fallback project:
+five empty folders walked under the label ``seeded`` made a fresh walk read as the
+honor-don't-ask path (INV-133), and the report called it clean (#840).
+
 Usage:
     autotest.py                      # MCP checks only (fast, free)
     autotest.py --walk               # + a simulated bootcamp walk
@@ -124,19 +131,26 @@ def drop_worktree(worktree):
 
 
 def build_sandbox(root, seed):
-    """A realistic project. Uses dry-run's scaffold so fixtures stay in one place."""
+    """Build the walk's project with dry-run's scaffold: ``(project, error)``.
+
+    ``error`` is ``None`` when the scaffold built the mode it was asked for, and otherwise
+    the scaffold's own error, which the caller files as ``scaffold-failed`` (#840). There is
+    no fallback project: a walk on a different project than the one asked for is reported
+    under the wrong label. ``--run-root`` vouches for this run's ``mkdtemp`` root, the one
+    place under the temp directory the scaffold builds in; without it the scaffold refuses
+    ``/tmp``, as it still does for a project built by hand.
+    """
     project = root / "project"
-    if SCAFFOLD.is_file():
-        args = [sys.executable, str(SCAFFOLD), str(project)]
-        if seed:
-            args.append(f"--{seed}")
-        result = _run(args)
-        if result.returncode == 0:
-            return project
-        print(f"  scaffold failed: {result.stderr.strip()[:200]}", file=sys.stderr)
-    for sub in ("config", "data/raw", "docs", "logs", "src"):
-        (project / sub).mkdir(parents=True, exist_ok=True)
-    return project
+    if not SCAFFOLD.is_file():
+        return project, f"the scaffold is missing: {SCAFFOLD}"
+    args = [sys.executable, str(SCAFFOLD), str(project), "--run-root", str(root)]
+    if seed:
+        args.append(f"--{seed}")
+    result = _run(args)
+    if result.returncode != 0:
+        return project, (result.stderr.strip() or result.stdout.strip()
+                         or f"the scaffold exited {result.returncode}")
+    return project, None
 
 
 def write_mcp_config(root):
@@ -241,9 +255,27 @@ def main(argv=None):
             print(f"  {len(mcp_findings)} finding(s)")
 
         # --- The walk, and the lint over it -----------------------------------
+        scaffold_error = None
         if args.walk:
             print("\n=== Bootcamp walk ===")
-            project = build_sandbox(root, args.seed)
+            project, scaffold_error = build_sandbox(root, args.seed)
+        if scaffold_error is not None:
+            # The walk is skipped, not run on some other project: BREAKING, so the run exits
+            # non-zero, in the shape of `walk-failed` (#732). The whole error is printed;
+            # the finding keeps its last line, where a traceback names its cause (#840).
+            print(f"  scaffold failed:\n{scaffold_error}", file=sys.stderr)
+            tail = scaffold_error.splitlines()
+            report["findings"].append({
+                "severity": "BREAKING", "code": "scaffold-failed", "source": "walk",
+                "message": (
+                    f"the --seed {args.seed} project could not be built, so the walk was "
+                    "not run and no interaction invariant was checked: "
+                    + tail[-1].strip()[:200]),
+            })
+            report["coverage_limits"].append(
+                "the scaffold failed, so no walk was run and no interaction invariant "
+                "was checked")
+        elif args.walk:
             transcript = root / "transcript.jsonl"
             walk = _run([sys.executable, str(SKILL_DIR / "walk.py"),
                          "--project", str(project), "--out", str(transcript),

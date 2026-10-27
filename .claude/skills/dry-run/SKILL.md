@@ -68,7 +68,10 @@ and its entire factual foundation. Start there unless the maintainer says otherw
 2. **Work outside the repo.** Phase 2 and 3 create a bootcamp project. Put it in
    `$HOME/senzing-bootcamp-dryrun` (or `-phase3`), never inside the repo and never
    under `/tmp` — a maintainer hook blocks system-temp writes, and the plugin's own
-   file-placement rules assume a project directory.
+   file-placement rules assume a project directory. `scaffold_project.py` refuses both.
+   Its `--run-root DIR` is for `/auto-test` alone, which passes the `mkdtemp` run root it
+   created: a target inside that root is built, and any other `/tmp` target is still
+   refused (#840).
 3. **Note the environment's limits up front**, so the report can state them rather
    than imply coverage it did not have. Check and record: is the `senzing` Python
    package importable? is `libSz.so` present? is `fpdf2` installed? is `docker`

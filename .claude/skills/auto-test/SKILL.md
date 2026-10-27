@@ -91,7 +91,12 @@ Commit the resulting `baseline/mcp-snapshot.json` — the offline suite reads it
 Each run builds a fresh private directory under the system temp directory, named
 `senzing-autotest-<timestamp>-<persona>-<random>` (`tempfile.mkdtemp`, mode 0700,
 resolved), holding `project/` and the Bootcamper's empty `bootcamper/`. Reports stay in
-`~/senzing-autotest/reports/`.
+`~/senzing-autotest/reports/`. `project/` is built by dry-run's `scaffold_project.py` in the
+mode `--seed` names, with `--run-root` vouching for the run root, the one place under the
+temp directory the scaffold builds in. If the scaffold fails, the walk is not run: the report
+carries a BREAKING `scaffold-failed` finding with the scaffold's error and the run exits 1,
+as a failed walk does, and the probe's findings are still reported. There is no fallback
+project (#840).
 
 | Layer | Why |
 |---|---|
