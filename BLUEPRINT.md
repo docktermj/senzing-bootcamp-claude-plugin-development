@@ -3961,7 +3961,11 @@ findings list.
 
 `baseline/mcp-snapshot.json` is the committed `update` output (keys `content`,
 `instructions`, `instructions_sha`, `protocol`, `server`, `tools`, `url`); the
-offline suite reads it.
+offline suite reads it. It records server 1.40.10 (#843). `autotest.py`,
+`mcp_probe.py`, `walk.py` and `transcript_lint.py` start with
+`#!/usr/bin/env python3` and are stored as mode `100755`, so `SKILL.md`'s
+direct commands run as written; on Windows, which ignores the bit, `SKILL.md`
+says to run them as `python3 .claude/skills/auto-test/<script>`.
 
 ### 5.43 `.claude/skills/compact-dev-environment`
 
@@ -10663,21 +10667,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8898 test methods in 461 files, matching `inventory.test_count_total`.
+There are 8905 test methods in 462 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8898.
+sum to 8905.
 
-Two files run more tests than they define, so discovery collects 8898:
+Two files run more tests than they define, so discovery collects 8905:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8775`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8782`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8782`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8789`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
@@ -10703,6 +10707,7 @@ looks wrong.
 - `tests/test_audit_skill_states_no_stale_count.py`: 9
 - `tests/test_authored_shapes_are_stated.py`: 8
 - `tests/test_auto_test_harness.py`: 38
+- `tests/test_auto_test_scripts_are_executable.py`: 7
 - `tests/test_backgrounded_launch_records_the_server_pid.py`: 12
 - `tests/test_blocked_submission_has_a_vocabulary_value.py`: 29
 - `tests/test_bootcamp_notes_flow.py`: 36
@@ -11577,6 +11582,13 @@ Related guards:
   `plugins/`, `docs/` or `README.md` repeats the retired "sandbox under
   `$HOME`" claims, read wrap-aware, with each pre-#834 sentence as a negative
   control.
+- `tests/test_auto_test_scripts_are_executable.py` (#843): `git ls-files -s`
+  lists `autotest.py`, `mcp_probe.py`, `walk.py` and `transcript_lint.py` as
+  `100755`; each starts with `#!/usr/bin/env python3`; `SKILL.md` keeps a
+  `python3 .claude/skills/auto-test/…` form. The negative control stages the
+  four in a scratch repository and sets each back to `100644` in turn
+  (`update-index --chmod=-x`); the check names exactly that script, and an
+  untracked one too.
 - `tests/test_a_walk_runs_on_the_scaffold_it_asked_for.py` (#840):
   `build_sandbox`, with the real scaffold, into a `tempfile.mkdtemp()` root
   writes `SEEDED_PREFERENCES` for `seeded` and `{}` progress, empty
@@ -14395,3 +14407,9 @@ Senzing licensing, with no SPDX identifier.
   re-presentations or the Bootcamper's quoted note, hiding the one real re-ask
   (#841); a test runs the linter on that walk, trimmed to assistant text and
   replies; an amendment to INV-359 is queued for `/review-invariants`
+- #843: the auto-test baseline is refreshed to server 1.40.10 after a guarded
+  comparison found only the version and the indexed-repository count (53 to
+  51) changed, and the four auto-test scripts are stored as mode `100755`,
+  pinned by a negative-controlled `git ls-files -s` test — every probe
+  repeated two WATCH findings, and `SKILL.md`'s direct commands failed with
+  `Permission denied`; a new invariant is queued for `/review-invariants`
