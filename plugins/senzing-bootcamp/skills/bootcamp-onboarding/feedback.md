@@ -311,7 +311,7 @@ report as still owed.
 
   Then, in one line: "Saved to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. You can add more anytime by saying \"bootcamp feedback\"."
 - Do NOT submit feedback anywhere external on your own initiative. The **only** sanctioned external path is Step 3c: an `mcp-server`/`both` verdict, the local entry already saved, the exact message shown, and the bootcamper answering yes to the pinned question. Everything else — `plugin`, `host` and `unclear` verdicts, and any other destination — stays local.
-- The exit banner and confirmation are statements, not questions. Immediately after them, return the bootcamper to exactly where they left off by **re-presenting the exact pending 👉 bootcamp question** they were on, verbatim (INV-006 ask-once), so that exactly one 👉 ends the turn (INV-251). Do not make them re-navigate, and do not merge the feedback questions with the resumed bootcamp question into one turn.
+- The exit banner and confirmation are statements, not questions. Immediately after them, return the bootcamper to exactly where they left off, as `ground-rules.md` → "Ask-once" says for a pending, unanswered question: **re-present the exact pending 👉 bootcamp question verbatim only if the bootcamper has not answered it.** When the message that opened the feedback detour also answered it, proceed on that answer instead of asking it again; a bare "ok" answers nothing. Either way exactly one 👉 ends the turn (INV-006/INV-251). Do not make them re-navigate, and do not merge the feedback questions with the resumed bootcamp question into one turn.
 
 ## Silent in-run append (no bootcamper involvement)
 
