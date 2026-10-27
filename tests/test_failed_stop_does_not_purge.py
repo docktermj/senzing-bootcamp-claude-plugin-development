@@ -36,7 +36,8 @@ So the checks are:
 - `record_problems`: the close records what cleanup actually did and claims nothing more — the
   `cleanup` checkpoint and its two reasons, the recap clause, and both success indicators.
 
-**Every module that stops a server, not only the Truth Set's (#803).** Module 7 stops its own
+**Every module that stops a server, not only the Truth Set's (#803; INV-394's dated note of
+2026-10-23, applied 2026-10-26).** Module 7 stops its own
 visualization server and gates no purge, so outcome 3 states two cases: where the module's teardown
 gates a purge, every clause above (no purge, the records still loaded, re-run the cleanup program);
 where it gates none, report the unverified stop, say the server is still running, and continue.

@@ -544,7 +544,7 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
    cannot be computed, treat it as indeterminate, do not fail; fall back to the existing advisory
    behavior and continue to the load.
    - <a id="engine-fallback-from-the-connection-scheme"></a>
-     ⛔ **An absent `database_type` is a recording failure, not a non-SQLite answer.** Because
+     ⛔ **An absent `database_type` is a recording failure, not a non-SQLite answer.** (INV-416) Because
      step 3 prompts only when the database *is* SQLite, a missing key silently disables this
      heads-up entirely. Before treating it as indeterminate, take the engine from the scheme of
      `SQL.CONNECTION` in `config/engine_config.json`, which `../module-02-sdk-setup/SKILL.md`

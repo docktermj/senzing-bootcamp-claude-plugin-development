@@ -60,7 +60,8 @@ does anything here read the server: the suite is offline (INV-108), so the versi
 the quoted sentence are a dated record carried in prose, re-asked at implementation time and
 re-askable later, never asserted by a test.
 
-⚠️ **Widened 2026-10-23 (#805) from Module 3b to every step that classifies the reply.** The
+⚠️ **Widened 2026-10-23 (#805) from Module 3b to every step that classifies the reply** (INV-378's
+dated note, applied 2026-10-26). The
 guard read Step 1.1 alone, while Module 1 Step 4b sorted the same tool's replies into fit / none
 fit / timeout and Module 4 called it with no outcome at all. It now finds its sites by scanning
 every `get_sample_data` mention in shipped Markdown (INV-246). The unit is the step: a mention

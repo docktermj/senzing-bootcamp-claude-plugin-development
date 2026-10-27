@@ -23,7 +23,7 @@ one. The cost is not lost images; it is teaching that these rules are approximat
 images and never embedded them, and graduation had to backfill.
 
 ⚠️ **The same defect survived in the other half of the file, and was reported from a child repo
-(#671, 2026-10-16).** Step 2b's bullet was corrected; *"Capturing visualization screenshots"*
+(#671, 2026-10-16; INV-146's dated note, applied 2026-10-26).** Step 2b's bullet was corrected; *"Capturing visualization screenshots"*
 item 3 kept its own copy — *"as a required step, in the **same turn** — embed them all in this
 module's recap `Actions Taken`"* — and that is the text the guide is actually reading when the
 capture runs. Two mandatory instructions, in one file, that cannot both be followed on the

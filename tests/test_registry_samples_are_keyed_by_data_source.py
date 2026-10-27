@@ -33,6 +33,9 @@ holding a `- name:` list fails; a comment-only `sources:` fails; a lower-case en
 The YAML is read by indentation with the stdlib only, as the rest of `tests/` does (no YAML
 library); the shapes the samples use are plain block mappings, block lists and `{}`.
 
+Enforces **INV-415** (registered 2026-10-26). It reads only fenced ``yaml``/``yml`` blocks and
+does NOT establish that a live guide writes the registry in that shape.
+
 Source issue: #784. Invariants applied: INV-300 (one definition of the registry, every sample
 agrees with it), INV-402.
 

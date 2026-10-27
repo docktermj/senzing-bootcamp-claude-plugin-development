@@ -680,6 +680,9 @@ class TheFeedbackFileIsNeverOfferedOffTheMachine(unittest.TestCase):
     sanctioned external path is Step 3c and `packaging.md` says the plugin never uploads, emails,
     attaches or opens an issue with a file (INV-135). Source issue: #783.
 
+    Enforces INV-249's dated note of 2026-10-23 (#783), applied 2026-10-26. It reads shipped
+    prose and does NOT establish that a live guide never makes such an offer.
+
     ⚠️ **What this guard cannot see:** an offer phrased without the verbs in ``EXTERNAL_OFFER``
     ("I can get this to the team"), or one in a block that never says "feedback". A negated offer
     ("do not offer to email it") also trips it; reword such a sentence rather than widening the

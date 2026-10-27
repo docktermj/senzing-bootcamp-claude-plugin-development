@@ -31,6 +31,10 @@ reworded onto the answer ("once the Bootcamper has chosen to advance") fails; th
 The file reads one named plugin file and walks no root, so it takes no list from
 `tests/_corpus.py`.
 
+Enforces **INV-413** (registered 2026-10-26): Step 1 advances `current_module` with no condition
+on the answer and names every field it writes, `directing_steps` included. It reads Step 1's
+text and does NOT establish that a live guide performs the write; only a real walk shows that.
+
 Source issue: #782. Invariants applied: INV-012 (one quiet batched write), INV-029 (the journey
 map shows the current module), INV-092 (Module 0's unconditional write is the precedent), INV-227
 (`current_module` is what records a bootcamp in progress).
