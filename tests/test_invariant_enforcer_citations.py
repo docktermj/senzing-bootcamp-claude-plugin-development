@@ -856,7 +856,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 318 on 2026-10-27: the same review applied INV-376's 2026-10-27 note (#840), which names
 # test_a_walk_runs_on_the_scaffold_it_asked_for.py. Re-derived by running the extractor -- 318, the
 # new pair present and none removed.
-EXPECTED_PAIRS = 318
+# 319 on 2026-10-27: the same review applied INV-074's 2026-10-27 note (#841), which names
+# test_bootcamp_notes_flow.py, INV-074's first enforcer. INV-255's note from the same issue names the
+# same test, which already enforced INV-255, so it adds no pair. Re-derived by running the extractor
+# -- 319, the new pair present and none removed.
+EXPECTED_PAIRS = 319
 
 
 def pairs():

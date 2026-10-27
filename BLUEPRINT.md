@@ -14397,9 +14397,8 @@ Senzing licensing, with no SPDX identifier.
   unanswered, and proceed on the answer when the message that opened the
   detour carried one, pointing at `ground-rules.md` → "Ask-once" (INV-006,
   INV-300) — an auto-test walk saw the guide re-ask a question the
-  Bootcamper had answered in the note request. INV-255's 2026-10-27 note
-  is registered, applied 2026-10-27. The amendment to INV-074 goes to
-  `/review-invariants`
+  Bootcamper had answered in the note request; INV-255's and INV-074's
+  2026-10-27 notes are registered, applied 2026-10-27
 - #842: `transcript_lint.py` reads the Bootcamper's replies (`load_walk`),
   and `check_repeat_questions` reports a repeated 👉 question only when the
   reply to its previous asking had no `?`, never the note recital's confirm
