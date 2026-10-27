@@ -1,5 +1,5 @@
 {
-  "count": 416,
+  "count": 417,
   "generator": ".claude/skills/review-invariants/invariant_manifest.py",
   "invariants": [
     {
@@ -4160,6 +4160,16 @@
       "statement": "An amendment block in `specs/IMPLEMENTED.md` MUST NOT carry an applied decision in its header unless the amended invariant's registered entry in `specs/INVARIANTS.md`, continuation lines included, carries the dated note the block drafted, identified by its marker (an issue number or an audit or review entry's name). A header that records a decision the registry does not show takes the block out of the queue (INV-409) while the rule it describes stays unregistered. Observed 2026-10-22: the #671 and #683 blocks read \"applied\" from their own implementing commits, and `specs/INVARIANTS.md` carried neither note (#777). (⚠️ **Why a new id and not a citation to an existing one, so the question is not re-derived:** **INV-409** makes the header's decision words the arbiter of the queue, but says nothing about whether a decision the header records happened. **INV-386** forbids prose calling a registered amendment pending, the opposite direction. **INV-365** says only `/review-invariants` writes the registry; it does not say a ledger header must agree with it.) Enforced by `tests/test_applied_amendments_are_registered.py`, which cannot establish that the registered note is the text the maintainer approved, and does not check an applied block whose drafted note names no marker. (Source: `applied-amendment-headers-are-backed-by-the-registry`, GitHub issue #777, 2026-10-23; registered 2026-10-26.)",
       "status": "active",
       "summary": null,
+      "superseded_by": null
+    },
+    {
+      "id": "INV-419",
+      "index_group": "The development record itself",
+      "partly_superseded_by": null,
+      "section": "Invariants added from implemented specs",
+      "statement": "Each auto-test script that `.claude/skills/auto-test/SKILL.md` runs directly (`autotest.py`, `mcp_probe.py`, `walk.py` and `transcript_lint.py`) MUST start with `#!/usr/bin/env python3` and MUST be stored as mode `100755` in the git index, so the documented command runs from a fresh checkout. Because Windows ignores the executable bit, `SKILL.md` MUST also keep a `python3 .claude/skills/auto-test/…` form. ⚠️ **Why a new id and not a citation to an existing one:** no registered invariant names a file mode. INV-108 governs where dev tests live and what they import, and INV-367 how a test lists the repository's files; neither says a documented command must run as written. Until #843 the four scripts were `100644`, so `SKILL.md`'s own commands failed with `Permission denied`, and nothing noticed. Enforced by `tests/test_auto_test_scripts_are_executable.py`, which reads the index with `git ls-files -s`, is negative-controlled per script in a scratch repository, and cannot establish that a fifth script `SKILL.md` later runs directly is executable, since it checks the four by name. (Source: GitHub issue #843, 2026-10-27; registered 2026-10-27.)",
+      "status": "active",
+      "summary": "Each auto-test script that `.claude/skills/auto-test/SKILL.md` runs directly (`autotest.py`, `mcp_probe.py`, `walk.py` and `transcript_lint.py`) MUST start with `#!/usr/bin/env python3` and MUST be stored as mode `100755` in the git index, so the documented command runs from a fresh checkout.",
       "superseded_by": null
     }
   ],

@@ -1,4 +1,4 @@
-"""The auto-test scripts `SKILL.md` runs directly are stored executable in git (#843).
+"""The auto-test scripts `SKILL.md` runs directly are stored executable in git (#843, INV-419).
 
 `.claude/skills/auto-test/SKILL.md` tells the maintainer to run the harness as
 `.claude/skills/auto-test/autotest.py` and to refresh the baseline with
@@ -15,7 +15,7 @@ lists the four scripts with `git ls-files -s` and asserts mode `100755` for each
 `SKILL.md` therefore keeps a `python3 .claude/skills/auto-test/…` form, and
 `SkillMdKeepsAnInterpreterForm` asserts it does.
 
-⚠️ **What a green run does NOT mean.** It means the four named scripts are `100755` in
+⚠️ **What a green run does NOT mean (INV-419 is not a compliance claim).** It means the four named scripts are `100755` in
 the index and start with a `#!/usr/bin/env python3` line. It does not mean every script
 `SKILL.md` runs directly is among the four, that the commands succeed, or that a fifth
 script added later is executable.

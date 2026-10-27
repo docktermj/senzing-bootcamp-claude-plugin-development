@@ -846,7 +846,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 315 on 2026-10-26: the same review applied INV-146's 2026-10-16 note (#671), returned to the queue by
 # #777, which names test_screenshot_embed_timing_is_satisfiable.py. Re-derived by running the extractor
 # -- 315, the new pair present and none removed.
-EXPECTED_PAIRS = 315
+# 316 on 2026-10-27: the 2026-10-27 invariant review registered INV-419 (the auto-test scripts
+# `SKILL.md` runs directly are stored executable; #843), which names
+# test_auto_test_scripts_are_executable.py. Re-derived by running the extractor -- 316, the new pair
+# present and none removed.
+EXPECTED_PAIRS = 316
 
 
 def pairs():
