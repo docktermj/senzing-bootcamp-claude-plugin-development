@@ -114,7 +114,7 @@ transformation programs tested + output validated; quality score reported at ste
 
 When the bootcamper hits an error during this module:
 
-1. **SENZ error code** (message contains `SENZ` + digits, e.g. `SENZ2027`): call
+1. **SENZ error code** (INV-414; message contains `SENZ` + digits, e.g. `SENZ2027`): call
    `explain_error_code(error_code="<code>", version="current")` and present the explanation and
    recommended fix. If it returns nothing, continue to step 2.
 2. Present the matching pitfall/fix for this module (full `common-pitfalls` reference is a

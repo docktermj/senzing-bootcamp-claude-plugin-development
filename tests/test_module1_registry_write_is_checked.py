@@ -429,6 +429,10 @@ def cord_rebuild_problems(raw=None):
 
 
 class Module4RederivesARebuiltCordEntry(unittest.TestCase):
+    """Enforces INV-402's dated note of 2026-10-23 (#795), applied 2026-10-26: a rebuilt `cord`
+    entry gets `cord_dataset` and `cord_source` before the download. Reads Module 4's text and does
+    NOT establish that a live guide performs the re-derivation."""
+
     def test_the_block_is_read(self):
         """Liveness: the reader finds the block and both calls, so an empty read cannot pass."""
         block = cord_rebuild()

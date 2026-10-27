@@ -811,7 +811,42 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 304 on 2026-10-22: the same review registered INV-410 (the share profile carries no loader
 # input at any depth; #672), which names test_package_bootcamp.py. Re-derived by running the
 # extractor -- 304, the new pair present and none removed.
-EXPECTED_PAIRS = 304
+# 305 on 2026-10-26: a review registered INV-413 (module completion's Step 1 advances
+# `current_module` unconditionally and names every field it writes; #782), which names
+# test_module_completion_step1_lists_every_write.py. Re-derived by running the extractor -- 305, the
+# new pair present and none removed.
+# 306 on 2026-10-26: the same review registered INV-414 (a module's error-handling block falls
+# through to step 2 when explain_error_code returns nothing; #809), which names
+# test_coherence_sweep_809.py. Re-derived by running the extractor -- 306, the new pair present
+# and none removed.
+# 307 on 2026-10-26: the same review registered INV-415 (every config/data_sources.yaml sample
+# keys its entries by DATA_SOURCE under `sources:`; #784), which names
+# test_registry_samples_are_keyed_by_data_source.py. Re-derived by running the extractor -- 307,
+# the new pair present and none removed.
+# 308 on 2026-10-26: the same review applied INV-277's 2026-10-23 note (#779), which names a second
+# enforcer, test_generated_dataset_size_follows_the_scenario.py. Re-derived by running the extractor
+# -- 308, the new pair present and none removed.
+# 309 on 2026-10-26: the same review applied INV-370's 2026-10-23 note (#786), which names a third
+# enforcer, test_windows_forms_at_hand_run_sites.py. Re-derived by running the extractor -- 309, the
+# new pair present and none removed.
+# 310 on 2026-10-26: the same review applied INV-097's 2026-10-23 note (#785), which names
+# test_deployment_target_records_only_what_is_named.py. Re-derived by running the extractor -- 310,
+# the new pair present and none removed.
+# 312 on 2026-10-26: the same review registered INV-416 (an absent `database_type` is a recording
+# failure, and the SQLite checks take the engine from the `SQL.CONNECTION` scheme; #810), which names
+# test_module4_6_7_steps_act_on_real_files.py and
+# test_module4_absent_limit_is_measured_before_any_fallback.py. Re-derived by running the extractor
+# -- 312, both new pairs present and none removed.
+# 313 on 2026-10-26: the same review registered INV-418 (an applied amendment header is backed by the
+# registry; #777), which names test_applied_amendments_are_registered.py. Re-derived by running the
+# extractor -- 313, the new pair present and none removed.
+# 314 on 2026-10-26: the same review applied INV-079's 2026-10-17 note (#683), returned to the queue by
+# #777, which names test_canonical_module_names.py. Re-derived by running the extractor -- 314, the new
+# pair present and none removed.
+# 315 on 2026-10-26: the same review applied INV-146's 2026-10-16 note (#671), returned to the queue by
+# #777, which names test_screenshot_embed_timing_is_satisfiable.py. Re-derived by running the extractor
+# -- 315, the new pair present and none removed.
+EXPECTED_PAIRS = 315
 
 
 def pairs():

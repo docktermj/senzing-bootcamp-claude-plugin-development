@@ -30,6 +30,8 @@ This file holds the rest, one check per item:
 7. **The error-handling block.** Every module whose error-handling step 1 calls
    ``explain_error_code`` says "If it returns nothing, continue to step 2." Modules 3 and 3b
    did not.
+   Enforces **INV-414** (registered 2026-10-26). It reads each module ``SKILL.md``'s block
+   and does NOT establish that a live guide continues to step 2.
 
 Every check is a pure function over a file's text that returns a list of problems, so each one
 also runs on a mutated copy of the shipped text as its negative control: the control puts the

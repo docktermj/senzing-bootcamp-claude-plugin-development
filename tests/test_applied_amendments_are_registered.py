@@ -26,6 +26,9 @@ approved, or that an applied block without a marker in its drafted note was regi
 Those blocks are counted and reported, never passed silently (INV-308). It also says nothing
 about a block still pending, which is the queue's business.
 
+Enforces **INV-418** (registered 2026-10-26). It does NOT establish that the registered note is the
+text the maintainer approved, and does not check an applied block whose drafted note names no marker.
+
 Source issue: #777. Invariants: INV-409, INV-386, INV-365, INV-308, INV-265.
 
 Run:  python3 -m unittest discover -s tests

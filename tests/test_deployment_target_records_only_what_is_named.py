@@ -25,6 +25,9 @@ What this pins, each against the shipped text and each with a negative control o
 These assert that the skill files *state* the mapping and the rendering. They **cannot** establish
 that a live guide records `cloud` for a bare "1"; only `dry-run` phase 3 can observe that.
 
+Enforces INV-097's dated note of 2026-10-23 (#785), applied 2026-10-26, which names this file. It
+reads the skill files and does NOT establish that a live guide records `cloud` for a bare "1".
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

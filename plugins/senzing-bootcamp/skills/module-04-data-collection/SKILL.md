@@ -92,7 +92,7 @@ the project for analysis and mapping.
 
 When the bootcamper hits an error during this module:
 
-1. **SENZ error code** (message contains `SENZ` + digits, e.g. `SENZ2027`): call
+1. **SENZ error code** (INV-414; message contains `SENZ` + digits, e.g. `SENZ2027`): call
    `explain_error_code(error_code="<code>", version="current")` and present the explanation and
    recommended fix. If it returns nothing, continue to step 2.
 2. Present the matching pitfall/fix for this module (full `common-pitfalls` reference is a
@@ -1015,7 +1015,8 @@ writes no program.
 
 > **Data Source Registry:** After collecting each data source file, record it in a registry at
 > `config/data_sources.yaml` so later modules can track it. If the file doesn't exist, create
-> it with `version: "1"` and an empty `sources:` mapping first. For each source set: `name`,
+> it with `version: "1"` and an empty `sources:` mapping first (`sources: {}`; each source is keyed
+> by its DATA_SOURCE under it, INV-415). For each source set: `name`,
 > `file_path`, `format`, `record_count` (the count you **measured** in the collected file; null only
 > when no file was collected, e.g. a documented-location-only source), `expected_record_count` (the
 > count the provider stated, so the two can be compared here and re-checked later (INV-243) — for CORD this is
@@ -1620,7 +1621,7 @@ about a roughly half-hour load, for a load of about two minutes.
      `license_record_limit` when set, the built-in evaluation limit when `license: evaluation`, and
      **unbounded** when the limit is `0`. Treat an unreadable license state as unbounded — that
      reproduces today's behavior rather than inventing a cap.
-   - ⛔ **If `database_type` is absent, say so rather than silently skipping the warning.** A
+   - ⛔ **If `database_type` is absent, say so rather than silently skipping the warning.** (INV-416) A
      missing key means Module 2 Step 7 did not record the choice, not that the engine is
      non-SQLite — and because step 2 below treats indeterminate inputs as "say nothing", an absent
      key makes this warning unable to fire **at all**, for any database or dataset size. That is a

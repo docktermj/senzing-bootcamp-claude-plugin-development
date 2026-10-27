@@ -39,6 +39,9 @@ What this file pins:
 3. **Option 5's entry points at it** and states no count of its own.
 4. **The other sites point at it** rather than restating it.
 
+Enforces INV-277's dated note of 2026-10-23 (#779), applied 2026-10-26, which names this file. It
+reads shipped prose and does NOT establish that a live guide generates that count.
+
 Phrase checks run on whitespace-collapsed text (INV-346). Stdlib only; the skill is read as text.
 
 Source issue: #779. Invariants applied: INV-277, INV-244, INV-300.
