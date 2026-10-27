@@ -3751,9 +3751,15 @@ so a project there is gated only at its boundary. In it: a detached worktree `pl
 `HEAD`, SHA kept as `plugin_sha`; on failure the live tree, null SHA and a
 coverage limit), a per-run `mcp.json` naming only `MCP_URL`, then
 `mcp_probe.py check --json` (exit 2 or unparseable output adds a coverage
-limit; findings tagged `source: mcp`). With `--walk` it scaffolds a project
-via `dry-run`'s `scaffold_project.py` (`--seed fresh|seeded`; bare dirs on
-failure), runs `walk.py` (passing `--max-turns`, default 150, and
+limit; findings tagged `source: mcp`). With `--walk`, `build_sandbox`
+scaffolds `project/` via `dry-run`'s `scaffold_project.py` (`--seed
+fresh|seeded`, with `--run-root <run root>`) and returns `(project, error)`;
+there is no fallback project. On an error (a missing scaffold file or a
+non-zero exit, with its stderr) the walk is not run: a BREAKING
+`scaffold-failed` finding (`source: walk`, naming the seed and the error's
+last line) and a coverage limit are added, the whole error goes to stderr, and
+the probe's findings stay (#840). Otherwise it runs `walk.py` (passing
+`--max-turns`, default 150, and
 `--stop-at-banner`, `--model`, `--isolate-config`), lints a non-empty
 transcript with
 `transcript_lint.py --phase <phase> --project <project> --json`
@@ -4195,8 +4201,9 @@ its own banner never showed, #657), writes the kept lines, and prints `module`,
 `modules_reached`, `last_module_reached` and `walk_stop`. Exit 3 when the
 start banner never showed; an unknown module number exits with a message.
 
-`scaffold_project.py <directory> [--fresh|--seeded] [--explain]` builds a
-project (removing any existing directory): the `DIRS` tree, always
+`scaffold_project.py <directory> [--fresh|--seeded] [--run-root DIR]
+[--explain]` builds a project (removing any existing directory): the `DIRS`
+tree, always
 `config/engine_config_incomplete.json` (empty `PIPELINE`) and a feedback file
 holding a precious entry. Mid mode (default) adds `engine_config.json` with
 the complete `PIPELINE_DEFAULTS` and a SQLite connection, a mid-module
@@ -4208,8 +4215,12 @@ Markdown in `docs/loading_strategy.md`, and four synthetic `VERIFY` records.
 writes `{}` progress and `SEEDED_PREFERENCES`. It then prints the mode's
 `FIXTURE_MAP` rows, the fixtures that mode omits, and reminders. `--explain`
 prints the map for the implied mode without writing (exit 0). Exit codes: 2
-when the target is inside the repo or under `/tmp/` or `/var/tmp/`; argparse
-error (2) when no directory and no `--explain`; 0 otherwise.
+when the target is inside the repo (checked first) or under a `TEMP_PREFIXES`
+entry (`/tmp/`, `/var/tmp/`, matched on the resolved path) unless
+`temp_refusal` admits it: only with `--run-root DIR`, when DIR itself lies
+under a prefix and the target is strictly inside DIR, so naming `/tmp` opens
+nothing; a target outside DIR is refused with "is not inside the run root"
+(#840); argparse error (2) when no directory and no `--explain`; 0 otherwise.
 
 `coverage_reports.py <report> [--server <v>] [--repo]`, read-only, reports
 only:
@@ -6027,6 +6038,9 @@ def fixtures_for(mode: str):
 def explain(mode: str = "mid"):
     ...
 def build(root: Path, fresh: bool, seeded: bool = False) -> None:
+    ...
+TEMP_PREFIXES = ("/tmp/", "/var/tmp/")
+def temp_refusal(root: Path, run_root=None, prefixes=TEMP_PREFIXES):
     ...
 def main() -> int:
     ...
@@ -9053,6 +9067,14 @@ From `.claude/skills/dry-run/scaffold_project.py`:
         help="pre-seed the honorable preferences so the honor-don't-ask path is exercised",
     )
     ap.add_argument(
+        "--run-root",
+        metavar="DIR",
+        help=(
+            "a run root the caller created for this project (autotest.py passes its "
+            "mkdtemp root): a target under /tmp or /var/tmp is built only inside it"
+        ),
+    )
+    ap.add_argument(
         "--explain",
         action="store_true",
         help=(
@@ -10429,6 +10451,23 @@ def _skill_files():
 - `_skill_files`: `test_auto_test_harness.py` (patched with one fixture file,
   so the confabulation check runs offline)
 
+### 7.12 `.claude/skills/auto-test/autotest.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `.claude/skills/auto-test/autotest.py`:
+
+```python
+def _run(cmd, **kw):
+    ...
+```
+
+<!-- markdownlint-enable MD013 -->
+
+- `_run`: `test_a_walk_runs_on_the_scaffold_it_asked_for.py` (wrapped by a spy
+  that records each call and runs it, so the real scaffold's call can be read
+  for `--run-root <run root>` and the seed flag)
+
 ## 8. Tests
 
 ### 8.1 Framework and tools
@@ -10592,10 +10631,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8865 test methods in 459 files, matching `inventory.test_count_total`.
+There are 8879 test methods in 460 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8865.
+sum to 8879.
 
 Two files run more tests than they define, so discovery collects 8863:
 
@@ -10612,6 +10651,7 @@ looks wrong.
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
 - `tests/test_a_single_statement_claim_names_its_authority.py`: 11
+- `tests/test_a_walk_runs_on_the_scaffold_it_asked_for.py`: 8
 - `tests/test_absent_field_suspects_flags_first.py`: 10
 - `tests/test_access_steps_terminal_step.py`: 32
 - `tests/test_acknowledge_precedes_the_loading_it_precedes.py`: 8
@@ -10707,7 +10747,7 @@ looks wrong.
 - `tests/test_drafts.py`: 38
 - `tests/test_dropped_character_remedy_branches.py`: 10
 - `tests/test_dry_run_files_issues.py`: 15
-- `tests/test_dry_run_scaffold.py`: 15
+- `tests/test_dry_run_scaffold.py`: 21
 - `tests/test_dry_run_scaffold_paths_exist.py`: 10
 - `tests/test_dry_run_simulated_phase3.py`: 41
 - `tests/test_dry_run_states_no_hook_count.py`: 11
@@ -11504,6 +11544,19 @@ Related guards:
   `plugins/`, `docs/` or `README.md` repeats the retired "sandbox under
   `$HOME`" claims, read wrap-aware, with each pre-#834 sentence as a negative
   control.
+- `tests/test_a_walk_runs_on_the_scaffold_it_asked_for.py` (#840):
+  `build_sandbox`, with the real scaffold, into a `tempfile.mkdtemp()` root
+  writes `SEEDED_PREFERENCES` for `seeded` and `{}` progress, empty
+  preferences, the feedback file and `src/system_verification/` for `fresh`,
+  and its recorded call carries `--run-root <root>` and the seed flag;
+  `autotest.main --walk` with stub probe, walk and lint scripts files one
+  BREAKING `scaffold-failed` (`source: walk`, the error and `--seed seeded` in
+  the message), exits 1, keeps the probe's finding and a coverage limit, and
+  never starts `walk.py` when the scaffold step fails, the scaffold exits 2 or
+  the scaffold file is missing (no `artifacts`); a succeeding control walks
+  and exits 0; a probe-only run never scaffolds; and with the real scaffold
+  each seed's walk is handed a project inside the run root, under the temp
+  directory, holding that seed's preferences and progress files.
 
 #### 8.4.7 Script behavior
 
@@ -11959,7 +12012,13 @@ These are the scripts under `.claude/skills/`:
     (#609).
 - **Other maintainer tools.**
   - **`dry-run/scaffold_project.py`** builds `fresh`, `seeded` and `mid`
-    projects, never inside the repository or under `/tmp`.
+    projects, never inside the repository or under `/tmp`; `--run-root DIR`
+    admits only a target strictly inside a DIR under the temp prefix, and a
+    temp target outside it is still refused. `TestTheRunRootIsScoped` (#840)
+    calls `temp_refusal` with the host's own temp directory as the prefix: no
+    flag refuses, inside the root builds, outside, a sibling, the root itself
+    and the temp directory as the root refuse, and a non-temp path is
+    untouched.
   - **`compact-dev-environment/citations.py`** `census` and `verify` catch
     citations of deleted invariants and dangling sources.
   - **`feedback-to-issues/feedback_ledger.py`** `check` and `commit` assign ids
@@ -14272,6 +14331,15 @@ Senzing licensing, with no SPDX identifier.
   both children's cwds and ancestors (`AGENTS.md` left it); `write-gate.py`
   allowing a project under the temp directory is now a test, replacing the
   stale "the gate blocks `/tmp`" reason (INV-379 unchanged)
+- #840: an auto-test walk runs on the scaffold its `--seed` asked for or not
+  at all: `scaffold_project.py --run-root DIR` builds only strictly inside a
+  run root under the temp directory that the caller vouches for (the `/tmp`
+  refusal stays without it), `autotest.py` passes its `mkdtemp` root, and a
+  failed or missing scaffold skips the walk with a BREAKING `scaffold-failed`
+  finding and exit 1 instead of walking five empty folders (since #834 every
+  walk ran on that fallback, so a `seeded` walk was a fresh one reported as
+  clean); raced, approach B won with A's hand-off test grafted; an amendment
+  to INV-376 is queued for `/review-invariants`
 - #838: record the 2026-10-26 invariant review — six invariants registered
   (INV-413 to INV-418) and fourteen dated notes applied, none held (the 20
   blocks the 2026-10-23 unattended run queued, plus the #671 and #683 notes

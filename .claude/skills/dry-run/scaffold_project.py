@@ -14,6 +14,10 @@ Usage:
     python3 scaffold_project.py ~/senzing-bootcamp-phase3 --fresh
     python3 scaffold_project.py ~/senzing-bootcamp-phase3 --seeded
     python3 scaffold_project.py --explain
+
+A project is never built inside the repository, and never under ``/tmp`` or ``/var/tmp``
+unless ``--run-root`` vouches for the directory it goes in: ``autotest.py`` passes its own
+``mkdtemp`` run root, and a target outside that root is still refused (#840).
 """
 import argparse
 import json
@@ -460,6 +464,43 @@ def build(root: Path, fresh: bool, seeded: bool = False) -> None:
     )
 
 
+#: The system-temp prefixes a project is refused under, matched against the resolved path as
+#: the refusal always was. On macOS ``/tmp`` resolves to ``/private/tmp`` and the temp
+#: directory to ``/private/var/folders/...``, and on Windows it is under the user profile,
+#: so none of those was ever refused, and the flag below changes nothing there (#840).
+TEMP_PREFIXES = ("/tmp/", "/var/tmp/")
+
+
+def temp_refusal(root: Path, run_root=None, prefixes=TEMP_PREFIXES):
+    """Why ``root`` may not be built under the system temp directory, or ``None``.
+
+    A project built by hand under ``/tmp`` is refused: a maintainer hook blocks system-temp
+    writes, and the plugin's file-placement rules assume a project directory. ``--run-root``
+    is the one exception, and it is scoped: the caller vouches for a directory it created,
+    and only a target strictly inside it is built. ``autotest.py`` passes its own ``mkdtemp``
+    run root, whose project the plugin's ``write-gate.py`` gates only at the project's own
+    boundary (#834). A target outside the vouched root is refused as if no flag were given,
+    and the vouched root must itself lie under a refused prefix, so naming ``/tmp`` itself
+    never opens the whole temp directory (#840).
+
+    Both paths arrive resolved. ``prefixes`` is a parameter so a test can name the temp
+    directory of the host it runs on rather than a literal ``/tmp``.
+    """
+    if not str(root).startswith(prefixes):
+        return None
+    if run_root is None:
+        return (
+            "Refusing to build under /tmp: a maintainer hook blocks system-temp "
+            "writes, and the plugin's file-placement rules assume a project dir."
+        )
+    if str(run_root).startswith(prefixes) and run_root in root.parents:
+        return None
+    return (
+        f"Refusing to build under /tmp: {root} is not inside the run root --run-root "
+        f"vouches for ({run_root}), and only a target inside it is built there."
+    )
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("directory", nargs="?", help="where to build the project")
@@ -472,6 +513,14 @@ def main() -> int:
         "--seeded",
         action="store_true",
         help="pre-seed the honorable preferences so the honor-don't-ask path is exercised",
+    )
+    ap.add_argument(
+        "--run-root",
+        metavar="DIR",
+        help=(
+            "a run root the caller created for this project (autotest.py passes its "
+            "mkdtemp root): a target under /tmp or /var/tmp is built only inside it"
+        ),
     )
     ap.add_argument(
         "--explain",
@@ -500,12 +549,10 @@ def main() -> int:
             file=sys.stderr,
         )
         return 2
-    if str(root).startswith(("/tmp/", "/var/tmp/")):
-        print(
-            "Refusing to build under /tmp: a maintainer hook blocks system-temp "
-            "writes, and the plugin's file-placement rules assume a project dir.",
-            file=sys.stderr,
-        )
+    run_root = Path(args.run_root).expanduser().resolve() if args.run_root else None
+    refusal = temp_refusal(root, run_root)
+    if refusal:
+        print(refusal, file=sys.stderr)
         return 2
 
     build(root, args.fresh, args.seeded)
