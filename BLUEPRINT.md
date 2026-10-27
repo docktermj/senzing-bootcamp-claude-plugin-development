@@ -3907,15 +3907,24 @@ on a non-zero exit before reading stdout, so that stdout never reaches A, and
 the raise ends the walk even inside the slash-only re-ask.
 
 `transcript_lint.py` lints a stream-json transcript offline: it keeps the text
-blocks of each `assistant` event as one turn and runs `CHECKS`. BREAKING
+blocks of each `assistant` event as one turn and runs `CHECKS`. `load_walk`
+also keeps, for each turn, the text of the `bootcamper` events `walk.py`
+logged before the next turn as its reply (None when there was none); `load`
+returns the turns alone. BREAKING
 `INV-251-multi-question` for two or more 👉 in a turn; WATCH
 `INV-005-not-turn-final` when over 120 characters of prose follow the single 👉
 question (option rows, a `(respond ...)` parenthetical and quote/code/rule
 lines are ignored); BREAKING `INV-079-module-number` for `Module <n>`; WATCH
-`INV-051-or-joined` for `X or Y?` on a question line (the
-`(respond yes or no)` form excepted); BREAKING `internal-marker-leaked` for ⛔,
+`INV-051-or-joined` for `X or Y?` on a question line outside a blockquote
+or fenced code (the `(respond yes or no)` form excepted; a recited note is
+not a choice, #842); BREAKING `internal-marker-leaked` for ⛔,
 🛑 or `(Internal:`; WATCH `INV-006-re-asked` when a 👉 line's normalized first
-12 words (at least 20 characters) repeat. With `--phase` it adds the
+12 words (at least 20 characters) repeat and the Bootcamper's reply to the
+previous asking had no `?` or there was no reply (a reply with a `?` is a
+side question, after which the pending question may be re-presented), never
+for the note recital's confirm question `RECITAL_CONFIRM` (#842); its
+docstring states the known limit, an answer that also asks reads as a side
+question. With `--phase` it adds the
 `APPARATUS` check: in `preparation` or `module0` any journey map,
 before/after, step overview, time estimate or model nudge is BREAKING
 `INV-075-apparatus-in-exempt-phase`; in `content` each missing one is WATCH
@@ -3942,8 +3951,10 @@ because an unreadable preset is a coverage limit rather than a pass or a
 finding. `--selftest` is a negative control: each check must fire on
 built-to-break input and stay silent on good input, including a well-formed
 numbered-options question, the plugin's renderings in
-`_APPARATUS_RENDERINGS`, the three preset outcomes for the estimate, and the
-exempt-phase text in `_EXEMPT_PHASE_TEXT` (no INV-075). Exit codes: selftest 0 or 1; missing
+`_APPARATUS_RENDERINGS`, the three preset outcomes for the estimate, the
+exempt-phase text in `_EXEMPT_PHASE_TEXT` (no INV-075), a repeat after an
+answer and after a side question, the recital, and a quoted and a fenced
+`or` line. Exit codes: selftest 0 or 1; missing
 transcript argument is an argparse usage error (2); 2 when no assistant turns
 are found; otherwise 1 if any BREAKING finding, else 0. `--json` prints the
 findings list.
@@ -5381,7 +5392,10 @@ _PRESET = re.compile(
     r"(?m)^verbosity:[ \t]*(?:([A-Za-z]+)[ \t]*$"
     r"|\n(?:[ \t]+[^\n]*\n)*?[ \t]+preset:[ \t]*([A-Za-z]+))")
 POINTER = "\U0001f449"  # 👉
+RECITAL_CONFIRM = "Here's your note — save it as is?"
 def load(path):
+    ...
+def load_walk(path):
     ...
 def check_one_pointer_per_turn(turns):
     ...
@@ -5395,11 +5409,11 @@ def check_apparatus(turns, phase, project=None):
     ...
 def check_internal_markers(turns):
     ...
-def check_repeat_questions(turns):
+def check_repeat_questions(turns, replies=None):
     ...
 CHECKS = (check_one_pointer_per_turn, check_module_numbers, check_or_joined_choices,
           check_internal_markers, check_repeat_questions)
-def lint(turns, phase=None, project=None):
+def lint(turns, phase=None, project=None, replies=None):
     ...
 def render(findings, turn_count):
     ...
@@ -10468,6 +10482,24 @@ def _run(cmd, **kw):
   that records each call and runs it, so the real scaffold's call can be read
   for `--run-root <run root>` and the seed flag)
 
+### 7.13 `.claude/skills/auto-test/transcript_lint.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `.claude/skills/auto-test/transcript_lint.py`:
+
+```python
+def _outside_quotes_and_fences(text):
+    ...
+```
+
+<!-- markdownlint-enable MD013 -->
+
+- `_outside_quotes_and_fences`:
+  `test_transcript_lint_tells_a_re_ask_from_a_re_presentation.py` (patched to
+  return every line, so the quoted note's two INV-051 findings come back as a
+  negative control)
+
 ## 8. Tests
 
 ### 8.1 Framework and tools
@@ -10631,12 +10663,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8879 test methods in 460 files, matching `inventory.test_count_total`.
+There are 8898 test methods in 461 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8879.
+sum to 8898.
 
-Two files run more tests than they define, so discovery collects 8863:
+Two files run more tests than they define, so discovery collects 8898:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -11068,6 +11100,7 @@ looks wrong.
 - `tests/test_the_seven_triaged_rules_keep_their_citations.py`: 3
 - `tests/test_todo_triage_is_recorded.py`: 9
 - `tests/test_tool_directives_do_not_override_interaction.py`: 30
+- `tests/test_transcript_lint_tells_a_re_ask_from_a_re_presentation.py`: 19
 - `tests/test_truth_set_is_the_practice_run.py`: 10
 - `tests/test_truth_set_spelling.py`: 5
 - `tests/test_truthset_acquisition_call.py`: 14
@@ -14354,3 +14387,11 @@ Senzing licensing, with no SPDX identifier.
   INV-300) — an auto-test walk saw the guide re-ask a question the
   Bootcamper had answered in the note request; amendments to INV-255 and
   INV-074 are queued for `/review-invariants`
+- #842: `transcript_lint.py` reads the Bootcamper's replies (`load_walk`),
+  and `check_repeat_questions` reports a repeated 👉 question only when the
+  reply to its previous asking had no `?`, never the note recital's confirm
+  question, while `check_or_joined_choices` skips blockquotes and fenced code
+  — nine of ten findings on a 2026-10-27 `confused` walk were sanctioned
+  re-presentations or the Bootcamper's quoted note, hiding the one real re-ask
+  (#841); a test runs the linter on that walk, trimmed to assistant text and
+  replies; an amendment to INV-359 is queued for `/review-invariants`
