@@ -115,10 +115,28 @@ _PRESET = re.compile(
 
 POINTER = "\U0001f449"  # 👉
 
+#: The note recital's pinned confirm question (`notes.md` Step 3). Options 2, 3 and 4
+#: re-present it over a changed note, which `notes.md` says is not a re-ask under
+#: INV-006, so ``check_repeat_questions`` never reports it (#842). Its test reads the
+#: wording from the shipped Step 3, so a reworded recital fails there.
+RECITAL_CONFIRM = "Here's your note — save it as is?"
+
 
 def load(path):
     """Assistant turns, in order, as the text a Bootcamper would have seen."""
-    turns = []
+    return load_walk(path)[0]
+
+
+def load_walk(path):
+    """``(turns, replies)``: the assistant turns, and what the Bootcamper said after each.
+
+    ``turns`` is what ``load`` returns. ``replies[i]`` is the text of the ``bootcamper``
+    events ``walk.py`` logged between turn ``i + 1`` and the next turn, joined by a
+    newline, or None when the next event the Bootcamper saw was another assistant turn.
+    A transcript with no ``bootcamper`` events (one the maintainer answered by hand)
+    gives a list of None.
+    """
+    turns, replies = [], []
     for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
         line = line.strip()
         if not line:
@@ -127,6 +145,11 @@ def load(path):
             event = json.loads(line)
         except json.JSONDecodeError:
             continue
+        if event.get("type") == "bootcamper":
+            if turns and isinstance(event.get("text"), str):
+                said = event["text"]
+                replies[-1] = said if replies[-1] is None else replies[-1] + "\n" + said
+            continue
         if event.get("type") != "assistant":
             continue
         blocks = (event.get("message") or {}).get("content") or []
@@ -134,7 +157,8 @@ def load(path):
                        if isinstance(b, dict) and b.get("type") == "text")
         if text.strip():
             turns.append(text)
-    return turns
+            replies.append(None)
+    return turns, replies
 
 
 def _finding(sev, code, turn, message):
@@ -205,15 +229,41 @@ def check_module_numbers(turns):
     return out
 
 
+def _outside_quotes_and_fences(text):
+    """The lines of ``text`` that are neither blockquoted (``>``) nor in fenced code.
+
+    A blockquote is someone's words recited, such as a note the Bootcamper dictated, and a
+    fence is code or a banner; neither is a choice offered to the Bootcamper (#842).
+    """
+    fence = None
+    for line in text.splitlines():
+        stripped = line.strip()
+        marker = re.match(r"(`{3,}|~{3,})", stripped)
+        if marker:
+            if fence is None:
+                fence = marker.group(1)
+            elif stripped.startswith(fence[0] * len(fence)):
+                fence = None
+            continue
+        if fence is not None or stripped.startswith(">"):
+            continue
+        yield line
+
+
 def check_or_joined_choices(turns):
-    """INV-051: numbered lists, never choices joined by `or`."""
+    """INV-051: numbered lists, never choices joined by `or`.
+
+    Blockquoted lines and fenced code are skipped: the 2026-10-27 walk recited the
+    Bootcamper's note "> Ask the data team: is our claims/policy feed batch or
+    streaming?", their own question, and this check reported it as a choice (#842).
+    """
     out = []
     # "Would you like X or Y?" in a question line, excluding the one sanctioned
     # trailing form "(respond yes or no)".
     question = re.compile(r"[^\n]*\?\s*$")
     sanctioned = re.compile(r"(?i)\(respond\s+\w+\s+or\s+\w+\)")
     for index, text in enumerate(turns, 1):
-        for line in text.splitlines():
+        for line in _outside_quotes_and_fences(text):
             if POINTER not in line and not question.search(line):
                 continue
             stripped = sanctioned.sub("", line)
@@ -313,24 +363,61 @@ def check_internal_markers(turns):
     return out
 
 
-def check_repeat_questions(turns):
-    """INV-006: nothing re-asked unless the Bootcamper asked for a repeat."""
+def _question_key(line):
+    """A 👉 line's first twelve words, lowercased, letters and spaces only."""
+    key = re.sub(r"[^a-z ]", "", line.lower()).strip()
+    return " ".join(key.split()[:12])
+
+
+def _reply_since(replies, start, stop):
+    """What the Bootcamper said after turn ``start`` and before turn ``stop`` (1-based)."""
+    said = [r for r in (replies or [])[start - 1:stop - 1] if r is not None]
+    return "\n".join(said) if said else None
+
+
+def check_repeat_questions(turns, replies=None):
+    """INV-006: nothing re-asked unless the Bootcamper asked for a repeat.
+
+    A 👉 question whose first twelve words match an earlier 👉 question is a repeat. Two
+    repeats are not re-asks, and this check reports neither (#842):
+
+    - **A pending question re-presented after a side question.** `ground-rules.md` →
+      "Ask-once" says a pending, unanswered question is re-presented verbatim after a
+      tangent, and that this is not a re-ask.
+    - **The note recital's confirm question** (``RECITAL_CONFIRM``). `notes.md` Step 3
+      re-presents it over a changed note and says that is not a re-ask under INV-006.
+
+    **The answer rule.** ``replies`` is ``load_walk``'s second list. A repeat is reported
+    only when the Bootcamper's reply to the question's previous asking was an answer, and
+    a reply is an answer when it contains no ``?``. A reply that contains a ``?`` is a side
+    question, after which re-presenting the pending question is sanctioned. A repeat with
+    no reply in between, or with no ``replies`` given at all, is reported, as it was
+    before #842: nothing shows the question was left pending by a side question.
+
+    ⚠️ **Known limit.** A reply that both answers the question and asks something new
+    ("Option 2. And what's a redo record?") contains a ``?``, so it is read as a side
+    question, and a re-ask after it is not reported. A mechanical check cannot tell the
+    two apart; only `dry-run` phase 3 observes that case.
+    """
     out = []
     seen = {}
     for index, text in enumerate(turns, 1):
         for line in text.splitlines():
             if POINTER not in line:
                 continue
-            key = re.sub(r"[^a-z ]", "", line.lower()).strip()
-            key = " ".join(key.split()[:12])
-            if len(key) < 20:
+            key = _question_key(line)
+            if len(key) < 20 or key.startswith(_question_key(RECITAL_CONFIRM)):
                 continue
             if key in seen:
-                out.append(_finding(
-                    WATCH, "INV-006-re-asked", index,
-                    f"question repeats turn {seen[key]}: {line.strip()[:80]!r}"))
-            else:
-                seen[key] = index
+                reply = _reply_since(replies, seen[key], index)
+                if reply is None or "?" not in reply:
+                    why = ("no reply between them" if reply is None
+                           else "the reply to it, with no `?`, answered it")
+                    out.append(_finding(
+                        WATCH, "INV-006-re-asked", index,
+                        f"question repeats turn {seen[key]} ({why}): "
+                        f"{line.strip()[:80]!r}"))
+            seen[key] = index
     return out
 
 
@@ -338,10 +425,14 @@ CHECKS = (check_one_pointer_per_turn, check_module_numbers, check_or_joined_choi
           check_internal_markers, check_repeat_questions)
 
 
-def lint(turns, phase=None, project=None):
+def lint(turns, phase=None, project=None, replies=None):
+    """Every check over ``turns``; ``replies`` is ``load_walk``'s second list, or None."""
     findings = []
     for check in CHECKS:
-        findings.extend(check(turns))
+        if check is check_repeat_questions:
+            findings.extend(check(turns, replies))
+        else:
+            findings.extend(check(turns))
     if phase:
         findings.extend(check_apparatus(turns, phase, project))
     return findings
@@ -508,12 +599,33 @@ def selftest():
     if not any(f["code"] == "INV-005-not-turn-final" for f in lint(trailing)):
         failures.append("trailing prose after the options list was not caught")
 
+    # The answer rule (#842): a repeat after a reply with no `?` is a re-ask; a repeat
+    # after a side question re-presents a pending question; the note recital's
+    # confirm question is never a re-ask.
+    pending = "\U0001f449 **Do you have any other questions before we continue?**"
+    asked_twice = [pending, pending]
+    for reply, fires in (("Ready to continue.", True), ("What is a redo record?", False)):
+        got = any(f["code"] == "INV-006-re-asked"
+                  for f in lint(asked_twice, replies=[reply, None]))
+        if got != fires:
+            failures.append(f"a repeat after the reply {reply!r} was "
+                            f"{'not ' if fires else ''}reported")
+    recital = f"\U0001f449 **{RECITAL_CONFIRM} Reply with a number:**"
+    if lint([recital, recital], replies=["2", None]):
+        failures.append("the note recital's re-presented confirm question was reported")
+
+    # A recited note and a fenced block are not choices offered to the Bootcamper.
+    for quoted in ("> Ask the data team: is our feed batch or streaming?",
+                   "```text\nIs our feed batch or streaming?\n```"):
+        if lint([quoted]):
+            failures.append(f"quoted or fenced text was read as a choice: {quoted!r}")
+
     if failures:
         for line in failures:
             print(f"SELFTEST FAIL: {line}", file=sys.stderr)
         return 1
     checks = (len(expected) + 4 + len(_APPARATUS_RENDERINGS) + len(_ALWAYS_REQUIRED)
-              + 3 + len(_EXEMPT_PHASE_TEXT))
+              + 3 + len(_EXEMPT_PHASE_TEXT) + 5)
     print(f"selftest: all {checks} checks behave — each fires on bad "
           "input and stays silent on good input")
     return 0
@@ -537,12 +649,12 @@ def main(argv=None):
     if not args.transcript:
         ap.error("a transcript path is required (or --selftest)")
 
-    turns = load(args.transcript)
+    turns, replies = load_walk(args.transcript)
     if not turns:
         print(f"no assistant turns found in {args.transcript} — did the walk run?",
               file=sys.stderr)
         return 2
-    findings = lint(turns, args.phase, args.project)
+    findings = lint(turns, args.phase, args.project, replies)
     if args.json:
         print(json.dumps(findings, indent=2))
     else:
