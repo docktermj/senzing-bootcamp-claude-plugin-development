@@ -35,7 +35,7 @@ guess:
 - **Module and step:** `current_module` and `current_step` from
   `config/bootcamp_progress.json`.
 - **The pending question:** the exact 👉 question the bootcamper was on when they
-  interrupted, so it can be re-presented verbatim at Step 5.
+  interrupted, so Step 5 can re-present it verbatim if it is still unanswered.
 
 This is what Step 3's option 2 offers to attach, so it must already be in hand before
 that question is asked.
@@ -177,8 +177,12 @@ Only after Step 4 confirms the entry on disk, present the pinned exit banner **v
 Then one line: "Saved to `docs/bootcamp_notes.md` — it'll be in your recap at graduation.
 Add another anytime by saying \"make a note\"."
 
-The banner and the line are statements. Immediately after them, **re-present the exact
-pending 👉 bootcamp question verbatim**, so that exactly one 👉 ends the turn
+The banner and the line are statements. Immediately after them, return the bootcamper to
+the pending 👉 bootcamp question as `ground-rules.md` → "Ask-once" says for a pending,
+unanswered question: **re-present the exact pending question verbatim only if the
+bootcamper has not answered it.** When the message that asked for the note also answered
+it ("make a note, and I'll take option 2"), proceed on that answer instead of asking it
+again; a bare "ok, note that" answers nothing. Either way exactly one 👉 ends the turn
 (INV-006/INV-251). Do not make them re-navigate, and do not merge the note flow's
 questions with the resumed bootcamp question into one turn.
 

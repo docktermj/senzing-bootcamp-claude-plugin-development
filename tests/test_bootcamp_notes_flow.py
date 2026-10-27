@@ -18,6 +18,11 @@ only `dry-run` phase 3 can judge (INV-108 keeps this suite offline).
 
 Source spec: `specs/bootcamp-notes-capture-and-recap-section.md`.
 
+`TheReturnReAsksOnlyAnUnansweredQuestion` (#841) reads both detours' return steps, the note's
+and the feedback flow's: each re-presents the pending 👉 question only when it is still
+unanswered, and points at `ground-rules.md` → "Ask-once" rather than restating it (INV-006,
+INV-300).
+
 Enforces **INV-322** (a file the bootcamp writes locally from context it gathers carries no
 host identifier) for the notes context block only, in
 `test_the_context_block_is_bound_by_the_privacy_rule`. ⚠️ No test here guards the recap's
@@ -121,11 +126,110 @@ class TheBannersBracketTheFlow(unittest.TestCase):
         self.assertNotIn("👉", EXIT_BANNER)
 
     def test_the_pending_question_is_re_presented_after_the_exit_banner(self):
-        flat = squash(self.text)
-        self.assertIn("re-present the exact", flat)
-        self.assertIn("verbatim", flat)
+        """The resume itself, now conditional on the question being unanswered (#841)."""
+        flat = return_step(NOTES, NOTES_RETURN)
+        self.assertIn("re-present the exact pending question verbatim", flat)
         self.assertIn("INV-251", flat,
                       "nothing ties the resumed question to the one-question-per-turn rule")
+
+
+#: The two detour return steps (#841), each read from its heading to the next ``## `` heading.
+NOTES_RETURN = "## Step 5: Exit banner and return"
+FEEDBACK_RETURN = "## Step 4: Confirm and return"
+
+#: The pointer each return step carries to the rule it applies, rather than restating it
+#: (INV-300). `test_section_pointers_resolve.py` checks that it lands on a bold label.
+ASK_ONCE_POINTER = '`ground-rules.md` → "Ask-once"'
+
+#: The unconditional wording #841 replaced, one per site, kept as negative controls.
+OLD_NOTES_RETURN = (
+    "The banner and the line are statements. Immediately after them, **re-present the exact\n"
+    "pending 👉 bootcamp question verbatim**, so that exactly one 👉 ends the turn\n"
+    "(INV-006/INV-251). Do not make them re-navigate, and do not merge the note flow's\n"
+    "questions with the resumed bootcamp question into one turn.\n"
+)
+OLD_FEEDBACK_RETURN = (
+    "- The exit banner and confirmation are statements, not questions. Immediately after them, "
+    "return the bootcamper to exactly where they left off by **re-presenting the exact pending "
+    "👉 bootcamp question** they were on, verbatim (INV-006 ask-once), so that exactly one 👉 "
+    "ends the turn (INV-251). Do not make them re-navigate, and do not merge the feedback "
+    "questions with the resumed bootcamp question into one turn.\n"
+)
+
+
+def return_step(path, heading):
+    """The whitespace-collapsed step under ``heading`` in ``path`` (wrap-aware, INV-346)."""
+    text = read(path)
+    start = text.index(heading)
+    end = text.find("\n## ", start + len(heading))
+    return squash(text[start:end if end != -1 else len(text)])
+
+
+def return_problems(step):
+    """What a detour's return step gets wrong about the pending question (#841, INV-006).
+
+    Every sentence that re-presents the pending question must make it conditional on the
+    question being unanswered; the step must say what happens when the message that opened the
+    detour already answered it; it must point at the ask-once rule; and one 👉 ends the turn.
+    """
+    problems = []
+    sentences = re.split(r"(?<=[.!?])\**\s+", step)
+    re_presents = [s for s in sentences if "re-present" in s]
+    if not re_presents:
+        problems.append("the step never re-presents the pending question")
+    for sentence in re_presents:
+        if "only if" not in sentence or "not answered" not in sentence:
+            problems.append(f"re-presents the pending question unconditionally: {sentence!r}")
+    if "also answered it" not in step or "proceed on that answer" not in step:
+        problems.append("no handling for a detour whose opening message answered the question")
+    if ASK_ONCE_POINTER not in step:
+        problems.append(f"no pointer to the ask-once rule ({ASK_ONCE_POINTER})")
+    if "INV-251" not in step:
+        problems.append("nothing ties the resumed question to INV-251")
+    return problems
+
+
+class TheReturnReAsksOnlyAnUnansweredQuestion(unittest.TestCase):
+    """#841 (INV-006, INV-007, INV-251, INV-255, INV-074). After a note or a feedback detour the
+    guide re-presents the pending 👉 question only when it is still unanswered.
+
+    An auto-test walk on 2026-10-27 caught the defect: "Make a note about asking the data team.
+    Ready to continue." answered the pending question, and Step 5's unconditional re-present
+    made the guide ask it again after the exit banner. `ground-rules.md` → "Ask-once" already
+    said only an unanswered question is re-presented; both return steps now point at it.
+
+    ⚠️ Static: whether a live turn judges a message to have answered the question is a
+    conversational property only `dry-run` phase 3 can see (INV-108).
+    """
+
+    SITES = ((NOTES, NOTES_RETURN), (FEEDBACK, FEEDBACK_RETURN))
+
+    def test_both_return_steps_are_conditional(self):
+        for path, heading in self.SITES:
+            with self.subTest(file=path.name):
+                self.assertEqual(return_problems(return_step(path, heading)), [])
+
+    def test_the_old_unconditional_wording_is_caught(self):
+        """Negative control: each site's pre-#841 return sentence, put back in its step."""
+        for path, heading, old in ((NOTES, NOTES_RETURN, OLD_NOTES_RETURN),
+                                   (FEEDBACK, FEEDBACK_RETURN, OLD_FEEDBACK_RETURN)):
+            with self.subTest(file=path.name):
+                text = read(path)
+                start = text.index(heading)
+                end = text.find("\n## ", start + len(heading))
+                step = text[start:end]
+                cut = step.index("The banner and the line are statements" if path == NOTES
+                                 else "- The exit banner and confirmation are statements")
+                problems = return_problems(squash(step[:cut] + old))
+                self.assertTrue(any("unconditionally" in p for p in problems), problems)
+                self.assertTrue(any("opening message answered" in p for p in problems),
+                                problems)
+                self.assertTrue(any("ask-once rule" in p for p in problems), problems)
+
+    def test_a_conditional_dropped_from_one_site_is_caught(self):
+        step = return_step(FEEDBACK, FEEDBACK_RETURN).replace(
+            " only if the bootcamper has not answered it", "")
+        self.assertTrue(any("unconditionally" in p for p in return_problems(step)))
 
 
 class ANoteIsNeverTreatedLikeFeedback(unittest.TestCase):

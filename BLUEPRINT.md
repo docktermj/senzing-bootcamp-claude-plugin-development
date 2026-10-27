@@ -1727,12 +1727,14 @@ Any-time flows:
   `both`, `host` or `unclear`; append `## Improvement:` (Source, Routing,
   Upstream, context) and re-read. For `mcp-server`/`both`, ask to send an
   anonymized report via `submit_feedback`; `Upstream:` records the outcome.
-  Exit banner, then the pending question. A silent append
-  (`self-observed (assistant retrospective)`) serves reversed decisions.
+  Exit banner, then the pending question if still unanswered, else proceed
+  on the answer. A silent append (`self-observed (assistant retrospective)`)
+  serves reversed decisions.
 - Notes (`notes.md`; phrases, hook or `/bootcamp-note`): 📌 banner; take the
   note from the message or ask; classify silently; recite with options save,
   add context, elaborate, reword; append to `docs/bootcamp_notes.md` with
-  separate `**Context:**`/`**Elaboration:**` labels; re-read; exit banner.
+  separate `**Context:**`/`**Elaboration:**` labels; re-read; exit banner,
+  then the pending question if still unanswered, else proceed on the answer.
   Never sent anywhere.
 - Packaging (`packaging.md`; `/package-bootcamp`): dry-run
   `package_bootcamp.py` for `share` and `transfer` sizes and read its `absent:`
@@ -10590,10 +10592,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8862 test methods in 459 files, matching `inventory.test_count_total`.
+There are 8865 test methods in 459 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8862.
+sum to 8865.
 
 Two files run more tests than they define, so discovery collects 8863:
 
@@ -10631,7 +10633,7 @@ looks wrong.
 - `tests/test_auto_test_harness.py`: 38
 - `tests/test_backgrounded_launch_records_the_server_pid.py`: 12
 - `tests/test_blocked_submission_has_a_vocabulary_value.py`: 29
-- `tests/test_bootcamp_notes_flow.py`: 33
+- `tests/test_bootcamp_notes_flow.py`: 36
 - `tests/test_brand_sync.py`: 44
 - `tests/test_broll_manifest.py`: 20
 - `tests/test_build_and_run_statement.py`: 77
@@ -14277,3 +14279,10 @@ Senzing licensing, with no SPDX identifier.
   carried neither; the verdicts are the maintainer's under INV-365, and each
   `BLUEPRINT.md` sentence that called an applied note queued now names its
   registration date, as the INV-386 guard requires)
+- #841: after a note or a feedback detour, `notes.md` Step 5 and
+  `feedback.md` Step 4 re-present the pending 👉 question only when it is
+  unanswered, and proceed on the answer when the message that opened the
+  detour carried one, pointing at `ground-rules.md` → "Ask-once" (INV-006,
+  INV-300) — an auto-test walk saw the guide re-ask a question the
+  Bootcamper had answered in the note request; amendments to INV-255 and
+  INV-074 are queued for `/review-invariants`
