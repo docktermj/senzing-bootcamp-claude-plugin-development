@@ -79,6 +79,7 @@ class TheScriptsAreStoredExecutable(unittest.TestCase):
 
 class EachScriptHasAPython3Shebang(unittest.TestCase):
     def test_each_script_starts_with_the_shebang(self):
+        """Line-scoped by design (#843): a shebang is the file's first line, by definition."""
         for name in SCRIPTS:
             with self.subTest(script=name):
                 first = (HARNESS / name).read_text(encoding="utf-8").splitlines()[0]
