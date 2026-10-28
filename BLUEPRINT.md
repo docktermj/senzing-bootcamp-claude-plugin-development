@@ -14383,8 +14383,8 @@ Senzing licensing, with no SPDX identifier.
   failed or missing scaffold skips the walk with a BREAKING `scaffold-failed`
   finding and exit 1 instead of walking five empty folders (since #834 every
   walk ran on that fallback, so a `seeded` walk was a fresh one reported as
-  clean); raced, approach B won with A's hand-off test grafted; an amendment
-  to INV-376 is queued for `/review-invariants`
+  clean); raced, approach B won with A's hand-off test grafted; INV-376's
+  2026-10-27 note is registered, applied 2026-10-27
 - #838: record the 2026-10-26 invariant review — six invariants registered
   (INV-413 to INV-418) and fourteen dated notes applied, none held (the 20
   blocks the 2026-10-23 unattended run queued, plus the #671 and #683 notes
@@ -14397,8 +14397,8 @@ Senzing licensing, with no SPDX identifier.
   unanswered, and proceed on the answer when the message that opened the
   detour carried one, pointing at `ground-rules.md` → "Ask-once" (INV-006,
   INV-300) — an auto-test walk saw the guide re-ask a question the
-  Bootcamper had answered in the note request; amendments to INV-255 and
-  INV-074 are queued for `/review-invariants`
+  Bootcamper had answered in the note request; INV-255's and INV-074's
+  2026-10-27 notes are registered, applied 2026-10-27
 - #842: `transcript_lint.py` reads the Bootcamper's replies (`load_walk`),
   and `check_repeat_questions` reports a repeated 👉 question only when the
   reply to its previous asking had no `?`, never the note recital's confirm
@@ -14406,7 +14406,7 @@ Senzing licensing, with no SPDX identifier.
   — nine of ten findings on a 2026-10-27 `confused` walk were sanctioned
   re-presentations or the Bootcamper's quoted note, hiding the one real re-ask
   (#841); a test runs the linter on that walk, trimmed to assistant text and
-  replies; an amendment to INV-359 is queued for `/review-invariants`
+  replies; INV-359's 2026-10-27 note is registered, applied 2026-10-27
 - #843: the auto-test baseline is refreshed to server 1.40.10 after a guarded
   comparison found only the version and the indexed-repository count (53 to
   51) changed, and the four auto-test scripts are stored as mode `100755`,

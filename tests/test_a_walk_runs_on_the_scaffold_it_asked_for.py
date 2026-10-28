@@ -21,8 +21,8 @@ Pinned here:
    inside the run root `--run-root` vouched for, holding that seed's fixtures (grafted from
    the race's approach A, #840).
 
-This is the walk-failure rule of INV-376 one step earlier; the amendment that says so is
-queued for the maintainer (#840).
+This is the walk-failure rule of INV-376 one step earlier; INV-376's 2026-10-27 note (#840)
+says so, registered, applied 2026-10-27.
 
 Negative controls, each run by hand when this was written: the scaffold's old unconditional
 `/tmp` refusal put back fails (1) and (3) on a host whose temp directory is `/tmp`;

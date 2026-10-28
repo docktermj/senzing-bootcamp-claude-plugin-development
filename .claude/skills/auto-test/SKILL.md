@@ -58,7 +58,7 @@ they have. A probe-only run names no persona, because no walk ran.
 .claude/skills/auto-test/autotest.py --walk --keep    # keep the sandbox to inspect
 ```
 
-The scripts are stored executable (mode `100755`, #843). Windows ignores that bit, so there
+The scripts are stored executable (mode `100755`, #843, INV-419). Windows ignores that bit, so there
 run each one through the interpreter, `python3 .claude/skills/auto-test/autotest.py`, with
 the same arguments; the same holds for `mcp_probe.py` below.
 

@@ -846,7 +846,21 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 315 on 2026-10-26: the same review applied INV-146's 2026-10-16 note (#671), returned to the queue by
 # #777, which names test_screenshot_embed_timing_is_satisfiable.py. Re-derived by running the extractor
 # -- 315, the new pair present and none removed.
-EXPECTED_PAIRS = 315
+# 316 on 2026-10-27: the 2026-10-27 invariant review registered INV-419 (the auto-test scripts
+# `SKILL.md` runs directly are stored executable; #843), which names
+# test_auto_test_scripts_are_executable.py. Re-derived by running the extractor -- 316, the new pair
+# present and none removed.
+# 317 on 2026-10-27: the same review applied INV-359's 2026-10-27 note (#842), which names
+# test_transcript_lint_tells_a_re_ask_from_a_re_presentation.py. Re-derived by running the extractor --
+# 317, the new pair present and none removed.
+# 318 on 2026-10-27: the same review applied INV-376's 2026-10-27 note (#840), which names
+# test_a_walk_runs_on_the_scaffold_it_asked_for.py. Re-derived by running the extractor -- 318, the
+# new pair present and none removed.
+# 319 on 2026-10-27: the same review applied INV-074's 2026-10-27 note (#841), which names
+# test_bootcamp_notes_flow.py, INV-074's first enforcer. INV-255's note from the same issue names the
+# same test, which already enforced INV-255, so it adds no pair. Re-derived by running the extractor
+# -- 319, the new pair present and none removed.
+EXPECTED_PAIRS = 319
 
 
 def pairs():
