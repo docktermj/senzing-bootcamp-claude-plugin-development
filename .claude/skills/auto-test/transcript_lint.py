@@ -27,9 +27,11 @@ Usage:
                                         [--project PROJECT_DIR]
     transcript_lint.py --selftest
 
-``--project`` is the walked project directory. Only the apparatus check reads it,
-for the verbosity preset INV-096 grades the time estimate against; without it that
-one item is reported as ungraded rather than missing.
+``--project`` is the walked project directory. Two checks read it: the apparatus
+check, for the verbosity preset INV-096 grades the time estimate against, and
+``check_pairs_step``, for the Discover record that exempts a walk from step
+4a-pairs. Without it each of those two items is reported as ungraded rather than
+missing.
 """
 import argparse
 import json
@@ -41,6 +43,14 @@ from pathlib import Path
 SKILL_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SKILL_DIR.parent.parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
+
+# The module-start detection `dry-run`'s slicer already uses to cut the stretch
+# ``check_apparatus`` grades: the module table and each module's banner, read from the
+# skill files, matched only on a line of its own (#857 reuses it rather than adding a
+# second one).
+sys.path.insert(0, str(SKILL_DIR.parent / "dry-run"))
+from module_banners import modules as module_table  # noqa: E402
+from walk import banner_seen  # noqa: E402  (module_banners puts this directory on the path)
 
 BREAKING, WATCH, INFO = "BREAKING", "WATCH", "INFO"
 
@@ -127,7 +137,7 @@ def load(path):
     return load_walk(path)[0]
 
 
-def load_walk(path):
+def load_walk(path, tool_results=False):
     """``(turns, replies)``: the assistant turns, and what the Bootcamper said after each.
 
     ``turns`` is what ``load`` returns. ``replies[i]`` is the text of the ``bootcamper``
@@ -135,8 +145,17 @@ def load_walk(path):
     newline, or None when the next event the Bootcamper saw was another assistant turn.
     A transcript with no ``bootcamper`` events (one the maintainer answered by hand)
     gives a list of None.
+
+    With ``tool_results=True`` it returns ``(turns, replies, tools)``, where ``tools``
+    lists the tool results in the guide's raw stream-json, which ``walk.py`` logs whole
+    (#857). Each is a dict: ``after``, the number of turns before it (it falls between
+    turn ``after`` and turn ``after + 1``); ``tool`` and ``command``, the name and the
+    ``command`` input of the ``tool_use`` it answers (None when unknown or not a
+    command); ``is_error``; and ``text``, the result's text. ``turns`` and ``replies``
+    are the same either way: a tool result is never text the Bootcamper saw. A
+    transcript with no tool-result events gives an empty list.
     """
-    turns, replies = [], []
+    turns, replies, tools, uses = [], [], [], {}
     for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
         line = line.strip()
         if not line:
@@ -145,20 +164,50 @@ def load_walk(path):
             event = json.loads(line)
         except json.JSONDecodeError:
             continue
+        if not isinstance(event, dict):
+            continue
         if event.get("type") == "bootcamper":
             if turns and isinstance(event.get("text"), str):
                 said = event["text"]
                 replies[-1] = said if replies[-1] is None else replies[-1] + "\n" + said
             continue
+        blocks = (event.get("message") or {}).get("content") or []
+        if not isinstance(blocks, list):
+            blocks = []
+        blocks = [b for b in blocks if isinstance(b, dict)]
+        if event.get("type") == "user":
+            for block in blocks:
+                if block.get("type") == "tool_result":
+                    use = uses.get(block.get("tool_use_id"), {})
+                    tools.append({"after": len(turns), "tool": use.get("tool"),
+                                  "command": use.get("command"),
+                                  "is_error": block.get("is_error") is True,
+                                  "text": _result_text(block.get("content"))})
+            continue
         if event.get("type") != "assistant":
             continue
-        blocks = (event.get("message") or {}).get("content") or []
-        text = "".join(b.get("text", "") for b in blocks
-                       if isinstance(b, dict) and b.get("type") == "text")
+        for block in blocks:
+            if block.get("type") == "tool_use":
+                given = block.get("input") or {}
+                command = given.get("command") if isinstance(given, dict) else None
+                uses[block.get("id")] = {
+                    "tool": block.get("name"),
+                    "command": command if isinstance(command, str) else None}
+        text = "".join(b.get("text", "") for b in blocks if b.get("type") == "text")
         if text.strip():
             turns.append(text)
             replies.append(None)
-    return turns, replies
+    return (turns, replies, tools) if tool_results else (turns, replies)
+
+
+def _result_text(content):
+    """A ``tool_result``'s text: the string itself, or its text blocks joined."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(b.get("text", "") for b in content
+                         if isinstance(b, dict) and b.get("type") == "text")
+    return ""
 
 
 def _finding(sev, code, turn, message):
@@ -421,16 +470,230 @@ def check_repeat_questions(turns, replies=None):
     return out
 
 
+# ------------------------------------------- steps a module must not skip (#857)
+#
+# Three required steps a low-effort guide skipped in one run with nothing to notice it
+# (#855): the directing step (INV-354), Discover's step 4a-pairs (INV-357) and the worked
+# steer (INV-352). Each check below matches the wording the plugin's own sites pin, and
+# each tests/ file that pins a pattern reads it from that site, so a reworded site fails
+# there rather than turning these checks silent.
+#
+# ⛔ A module is graded only once the walk has reached its end: the turn carrying its
+# transition 👉, or the turn before the next module's banner. A walk that stops inside a
+# module never reports a step it had not yet reached.
+
+#: The pinned directing 👉 of each hands-on module, by state token (`ground-rules.md` →
+#: "Directing steps"; the sites are `phase2-data-mapping.md` step 11, `phaseD-validation.md`
+#: step 21 and `phase1-query-visualize.md` step 1). ``{source}`` is filled at the site.
+DIRECTING_QUESTIONS = {
+    "data_quality_mapping": re.compile(
+        r"What should each of these columns become in .+?['’]s mapped record\?"),
+    "data_processing": re.compile(
+        r"Which of your records should I look up to check how Senzing resolved them\?"),
+    "query_visualize_discover": re.compile(
+        r"What do you want to find out about your data\?"),
+}
+#: The no-site form of the summary's ``**You directed:**`` line. Only Data Quality,
+#: Mapping, and Transformation has a site that may never arise (#855's decision).
+NO_SITE = re.compile(r"\*\*You directed:\*\*\s*nothing this module\.[^\n]*?"
+                     r"so there was no step to hand over\.")
+NO_SITE_MODULES = ("data_quality_mapping",)
+#: Step 4a-pairs' pinned 👉 (`phase2-discover.md`, item 2), in Query, Visualize and Discover.
+PAIRS_QUESTION = re.compile(r"Are these two records the same entity\?")
+PAIRS_MODULE = "query_visualize_discover"
+#: Where the walked project records Discover's progress, under the project directory.
+PROGRESS = Path("config") / "bootcamp_progress.json"
+#: The Act 2 hands-on modules a worked steer applies to (`ground-rules.md` → "Worked steers").
+STEER_MODULES = ("data_collection", "data_quality_mapping", "data_processing",
+                 "query_visualize_discover")
+#: The first line of every worked steer, as `ground-rules.md` → "Worked steers" pins it.
+STEER_LINE = "What went wrong:"
+#: A module's transition 👉 (`module-completion.md` Step 4), or the graduation offer that
+#: stands in for it after the last content module.
+TRANSITION = re.compile(
+    r"(?i)ready to move on to the next module|would you like to graduate now")
+#: A command that builds or runs a program: the tools of `ground-rules.md` →
+#: "Building and running a program".
+_BUILDS_OR_RUNS = re.compile(r"\b(?:python3?|javac|java|dotnet|cargo|tsc|node)\b")
+#: A project file under one of that section's ``src/<dir>`` program directories. The env
+#: script under ``src/scripts/`` is not one: every native-Windows call dot-sources it.
+_PROGRAM_PATH = re.compile(r"(?:^|[\s'\"=:;(,/\\])src[/\\](?!scripts[/\\])\w")
+#: Claude Code's Bash result for a non-zero exit begins "Exit code N".
+_EXIT_CODE = re.compile(r"^\s*(?:Error:\s*)?Exit code (-?\d+)")
+
+
+def _pointer_lines(text):
+    return [line for line in text.splitlines() if POINTER in line]
+
+
+def _asks(turns, pattern):
+    """Whether any 👉 line in ``turns`` matches ``pattern``."""
+    return any(pattern.search(line) for text in turns for line in _pointer_lines(text))
+
+
+def module_spans(turns):
+    """Each module the walk entered, in order: ``token``, ``name``, ``start``, ``end``.
+
+    ``start`` is the 1-based turn that shows the module's banner, and ``end`` is the
+    module's last turn: the first later turn whose 👉 is a transition question, else the
+    turn before the next module's banner, else None when the walk ended inside it. The
+    banners come from ``module_banners.modules()``, matched by ``walk.banner_seen``, the
+    pair `dry-run`'s slicer uses (#857 adds no second module detector).
+    """
+    table = [m for m in module_table() if m["banner"]]
+    spans = []
+    for index, text in enumerate(turns, 1):
+        shown = next((m for m in table if banner_seen(m["banner"], text)), None)
+        current = spans[-1] if spans else None
+        if shown and (current is None or current["token"] != shown["token"]):
+            if current and current["end"] is None:
+                current["end"] = index - 1
+            spans.append({"token": shown["token"], "name": shown["name"],
+                          "start": index, "end": None})
+        elif (current and current["end"] is None
+              and any(TRANSITION.search(line) for line in _pointer_lines(text))):
+            current["end"] = index
+    return spans
+
+
+def check_directing_steps(turns):
+    """INV-354: each hands-on module that ends shows its pinned directing 👉.
+
+    Data Quality, Mapping, and Transformation is excused when its turns carry the no-site
+    ``**You directed:**`` form, since its site may never arise. A module the walk did not
+    finish is not graded.
+    """
+    out = []
+    for span in module_spans(turns):
+        pattern = DIRECTING_QUESTIONS.get(span["token"])
+        if pattern is None or span["end"] is None:
+            continue
+        inside = turns[span["start"] - 1:span["end"]]
+        if _asks(inside, pattern):
+            continue
+        if span["token"] in NO_SITE_MODULES and any(NO_SITE.search(t) for t in inside):
+            continue
+        out.append(_finding(
+            BREAKING, "INV-354-directing-step-missing", span["end"],
+            f"{span['name']} (turns {span['start']}-{span['end']}) ended without its "
+            f"directing 👉 ({pattern.pattern!r})"))
+    return out
+
+
+def discover_record(project):
+    """``module_7_query`` from the project's progress file, ``{}`` when absent, None unreadable."""
+    if not project:
+        return None
+    try:
+        data = json.loads((Path(project) / PROGRESS).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    record = data.get("module_7_query")
+    return record if isinstance(record, dict) else {}
+
+
+def check_pairs_step(turns, project=None):
+    """INV-357: Query, Visualize and Discover does not end without step 4a-pairs' 👉.
+
+    Exempt when the project's ``config/bootcamp_progress.json`` records
+    ``module_7_query.discover_phase: "skipped"``, or ``steps["4a-pairs"].pairs == []``
+    (step 4a could supply no pair). ⚠️ **An unreadable progress file is a coverage
+    limit, not a finding**, as ``check_apparatus`` treats an unreadable preset: the
+    missing 👉 is reported at INFO, saying it was not graded and why.
+    """
+    out = []
+    for span in module_spans(turns):
+        if span["token"] != PAIRS_MODULE or span["end"] is None:
+            continue
+        if _asks(turns[span["start"] - 1:span["end"]], PAIRS_QUESTION):
+            continue
+        record = discover_record(project)
+        if record is None:
+            where = (f"{Path(project) / PROGRESS}" if project
+                     else "no project directory was given (--project)")
+            out.append(_finding(
+                INFO, "INV-357-pairs-step-ungraded", span["end"],
+                f"{span['name']} ended without step 4a-pairs' 👉 and its Discover record "
+                f"could not be read from {where}; a skipped Discover or a step 4a with "
+                "no pair to offer excuses it, so this is ungraded rather than missing"))
+            continue
+        steps = record.get("steps")
+        pairs = steps.get("4a-pairs") if isinstance(steps, dict) else None
+        if record.get("discover_phase") == "skipped" or (
+                isinstance(pairs, dict) and pairs.get("pairs") == []):
+            continue
+        out.append(_finding(
+            BREAKING, "INV-357-pairs-step-missing", span["end"],
+            f"{span['name']} (turns {span['start']}-{span['end']}) ended without step "
+            "4a-pairs' 👉 (\"Are these two records the same entity?\"), and the project "
+            "records neither a skipped Discover nor an empty pairs list"))
+    return out
+
+
+def _failed_program_run(tool):
+    """Whether a tool result is a failed build or run of a project program."""
+    command = tool.get("command") or ""
+    if not (_BUILDS_OR_RUNS.search(command) and _PROGRAM_PATH.search(command)):
+        return False
+    exit_code = _EXIT_CODE.match(tool.get("text") or "")
+    return tool.get("is_error") is True or bool(exit_code and exit_code.group(1) != "0")
+
+
+def check_worked_steers(turns, tools=None):
+    """INV-352: an Act 2 module's first failing program run is followed by a worked steer.
+
+    ``tools`` is ``load_walk(path, tool_results=True)``'s third list. In each Act 2
+    hands-on module the walk finished, the first tool result that is an error or a
+    non-zero exit from building or running a ``src/`` program is reported when no
+    later turn of the module carries ``What went wrong:``. WATCH, not BREAKING: a tool
+    error is not always generated code failing, and a failure the guide reports in one
+    line and does not fix owes no steer. No tool results (a transcript answered by
+    hand) means nothing is graded.
+    """
+    if not tools:
+        return []
+    out = []
+    for span in module_spans(turns):
+        if span["token"] not in STEER_MODULES or span["end"] is None:
+            continue
+        failed = next((t for t in tools
+                       if span["start"] <= t["after"] < span["end"]
+                       and _failed_program_run(t)), None)
+        if failed is None:
+            continue
+        if any(STEER_LINE in text for text in turns[failed["after"]:span["end"]]):
+            continue
+        first = (failed.get("text") or "").strip().splitlines()
+        out.append(_finding(
+            WATCH, "INV-352-steer-missing", failed["after"] + 1,
+            f"in {span['name']}, `{failed['command'].strip()[:80]}` failed after turn "
+            f"{failed['after']} ({(first[0] if first else 'no output')[:60]!r}) and no "
+            f"turn through the module's end (turn {span['end']}) shows a worked steer "
+            f"({STEER_LINE!r})"))
+    return out
+
+
 CHECKS = (check_one_pointer_per_turn, check_module_numbers, check_or_joined_choices,
-          check_internal_markers, check_repeat_questions)
+          check_internal_markers, check_repeat_questions, check_directing_steps,
+          check_pairs_step, check_worked_steers)
 
 
-def lint(turns, phase=None, project=None, replies=None):
-    """Every check over ``turns``; ``replies`` is ``load_walk``'s second list, or None."""
+def lint(turns, phase=None, project=None, replies=None, tools=None):
+    """Every check over ``turns``.
+
+    ``replies`` is ``load_walk``'s second list and ``tools`` its third, or None.
+    ``project`` is the walked project directory, or None.
+    """
     findings = []
     for check in CHECKS:
         if check is check_repeat_questions:
             findings.extend(check(turns, replies))
+        elif check is check_pairs_step:
+            findings.extend(check(turns, project))
+        elif check is check_worked_steers:
+            findings.extend(check(turns, tools))
         else:
             findings.extend(check(turns))
     if phase:
@@ -517,6 +780,47 @@ _EXEMPT_PHASE_TEXT = (
     "2. Create a new, fourth entity for it.\n"
     "3. Mark it as ambiguous and hold it as a possible match.",
 )
+
+
+def _skipped_step_cases():
+    """``(name, should_fire, findings)`` for each #857 check, on a built walk and its control."""
+    banner = {m["token"]: m["banner"] for m in module_table()}
+    ready = "\U0001f449 **Are you ready to move on to the next module: Data processing?**"
+    graduate = ("\U0001f449 **Would you like to graduate now and generate your production "
+                "project and recap?**")
+    lookup = ("\U0001f449 **Which of your records should I look up to check how Senzing "
+              "resolved them? Name them in your own words.**")
+    pairs = ("\U0001f449 **Are these two records the same entity? Reply with a number, and "
+             "add a few words on why if you like:**")
+    processing = [banner["data_processing"], "Loading your records now."]
+    discover = [banner["query_visualize_discover"],
+                "\U0001f449 **What do you want to find out about your data?**"]
+    collection = [banner["data_collection"], "Running the collector."]
+    failed = [{"after": 1, "tool": "Bash", "command": "python3 src/collect/collect_crm.py",
+               "is_error": True, "text": "Exit code 1\nKeyError: 'name'"}]
+    steer = ("What went wrong: the collector stopped — given away by `KeyError: 'name'`.\n"
+             "What the AI was asked to change: read the column it names.")
+    cases = [
+        ("directing step skipped in a finished module", True,
+         check_directing_steps(processing + [ready])),
+        ("directing step asked", False, check_directing_steps(processing + [lookup, ready])),
+        ("directing step not yet reached", False, check_directing_steps(processing)),
+        ("worked steer missing after a failed run", True,
+         check_worked_steers(collection + [ready], failed)),
+        ("worked steer shown after a failed run", False,
+         check_worked_steers(collection + [steer, ready], failed)),
+    ]
+    with tempfile.TemporaryDirectory() as scratch:
+        for phase, fires in (("completed", True), ("skipped", False)):
+            project = Path(scratch) / phase
+            (project / PROGRESS.parent).mkdir(parents=True)
+            (project / PROGRESS).write_text(json.dumps(
+                {"module_7_query": {"discover_phase": phase}}), encoding="utf-8")
+            cases.append((f"4a-pairs missing, Discover {phase}", fires,
+                          check_pairs_step(discover + [graduate], project)))
+        cases.append(("4a-pairs asked", False,
+                      check_pairs_step(discover + [pairs, graduate], scratch)))
+    return cases
 
 
 def selftest():
@@ -620,12 +924,19 @@ def selftest():
         if lint([quoted]):
             failures.append(f"quoted or fenced text was read as a choice: {quoted!r}")
 
+    # Steps a module must not skip (#857): each check fires on a module the walk finished
+    # without the step, and stays silent once the step is shown, or before the module ends.
+    skipped = _skipped_step_cases()
+    for name, fires, found in skipped:
+        if bool(found) != fires:
+            failures.append(f"{name}: {'nothing was' if fires else found} reported")
+
     if failures:
         for line in failures:
             print(f"SELFTEST FAIL: {line}", file=sys.stderr)
         return 1
     checks = (len(expected) + 4 + len(_APPARATUS_RENDERINGS) + len(_ALWAYS_REQUIRED)
-              + 3 + len(_EXEMPT_PHASE_TEXT) + 5)
+              + 3 + len(_EXEMPT_PHASE_TEXT) + 5 + len(skipped))
     print(f"selftest: all {checks} checks behave — each fires on bad "
           "input and stays silent on good input")
     return 0
@@ -639,7 +950,9 @@ def main(argv=None):
     ap.add_argument("--project", default=None,
                     help="the walked project directory, whose "
                          "config/bootcamp_preferences.yaml holds the verbosity "
-                         "preset INV-096 grades the time estimate against")
+                         "preset INV-096 grades the time estimate against, and whose "
+                         "config/bootcamp_progress.json holds the Discover record "
+                         "that can excuse step 4a-pairs")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args(argv)
@@ -649,12 +962,12 @@ def main(argv=None):
     if not args.transcript:
         ap.error("a transcript path is required (or --selftest)")
 
-    turns, replies = load_walk(args.transcript)
+    turns, replies, tools = load_walk(args.transcript, tool_results=True)
     if not turns:
         print(f"no assistant turns found in {args.transcript} — did the walk run?",
               file=sys.stderr)
         return 2
-    findings = lint(turns, args.phase, args.project, replies)
+    findings = lint(turns, args.phase, args.project, replies, tools)
     if args.json:
         print(json.dumps(findings, indent=2))
     else:

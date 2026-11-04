@@ -3910,7 +3910,10 @@ the raise ends the walk even inside the slash-only re-ask.
 blocks of each `assistant` event as one turn and runs `CHECKS`. `load_walk`
 also keeps, for each turn, the text of the `bootcamper` events `walk.py`
 logged before the next turn as its reply (None when there was none); `load`
-returns the turns alone. BREAKING
+returns the turns alone. `load_walk(path, tool_results=True)` adds a third
+list, one dict per `tool_result` in the guide's stream-json (`after`, the turns
+before it; `tool` and `command` from the matching `tool_use`; `is_error`;
+`text`), leaving the turns and replies unchanged (#857). BREAKING
 `INV-251-multi-question` for two or more 👉 in a turn; WATCH
 `INV-005-not-turn-final` when over 120 characters of prose follow the single 👉
 question (option rows, a `(respond ...)` parenthetical and quote/code/rule
@@ -3924,7 +3927,26 @@ previous asking had no `?` or there was no reply (a reply with a `?` is a
 side question, after which the pending question may be re-presented), never
 for the note recital's confirm question `RECITAL_CONFIRM` (#842); its
 docstring states the known limit, an answer that also asks reads as a side
-question. With `--phase` it adds the
+question. Three checks grade a module only once the walk reaches its end
+(#857): `module_spans` finds each module by its banner with
+`module_banners.modules()` and `walk.banner_seen`, and ends it at the first
+later transition 👉 (`TRANSITION`, which takes the graduation offer too), else
+at the turn before the next banner. `check_directing_steps` is BREAKING
+`INV-354-directing-step-missing` when Data Quality, Mapping, and
+Transformation, Data processing, or Query, Visualize and Discover ends without
+its pinned `DIRECTING_QUESTIONS` 👉, excusing the first when its turns carry
+the no-site `**You directed:**` form (`NO_SITE`). `check_pairs_step` is
+BREAKING `INV-357-pairs-step-missing` when Query, Visualize and Discover ends
+without `PAIRS_QUESTION`, excused when `discover_record` reads
+`module_7_query.discover_phase: "skipped"` or `steps["4a-pairs"].pairs == []`
+from `<project>/config/bootcamp_progress.json`, and INFO
+`INV-357-pairs-step-ungraded` when that file cannot be read.
+`check_worked_steers` is WATCH `INV-352-steer-missing` when an Act 2 module's
+(`STEER_MODULES`) first tool result that is an error or a non-zero `Exit code`
+from a command building or running a `src/` program (`_failed_program_run`;
+the env script under `src/scripts/` does not count) has no later
+`What went wrong:` turn in the module; with no tool results it is silent.
+`lint` passes `project` and `tools` to them. With `--phase` it adds the
 `APPARATUS` check: in `preparation` or `module0` any journey map,
 before/after, step overview, time estimate or model nudge is BREAKING
 `INV-075-apparatus-in-exempt-phase`; in `content` each missing one is WATCH
@@ -3953,8 +3975,9 @@ built-to-break input and stay silent on good input, including a well-formed
 numbered-options question, the plugin's renderings in
 `_APPARATUS_RENDERINGS`, the three preset outcomes for the estimate, the
 exempt-phase text in `_EXEMPT_PHASE_TEXT` (no INV-075), a repeat after an
-answer and after a side question, the recital, and a quoted and a fenced
-`or` line. Exit codes: selftest 0 or 1; missing
+answer and after a side question, the recital, a quoted and a fenced
+`or` line, and `_skipped_step_cases`' eight cases for the three #857 checks.
+Exit codes: selftest 0 or 1; missing
 transcript argument is an argparse usage error (2); 2 when no assistant turns
 are found; otherwise 1 if any BREAKING finding, else 0. `--json` prints the
 findings list.
@@ -5399,7 +5422,7 @@ POINTER = "\U0001f449"  # 👉
 RECITAL_CONFIRM = "Here's your note — save it as is?"
 def load(path):
     ...
-def load_walk(path):
+def load_walk(path, tool_results=False):
     ...
 def check_one_pointer_per_turn(turns):
     ...
@@ -5415,9 +5438,39 @@ def check_internal_markers(turns):
     ...
 def check_repeat_questions(turns, replies=None):
     ...
+DIRECTING_QUESTIONS = {
+    "data_quality_mapping": re.compile(
+        r"What should each of these columns become in .+?['’]s mapped record\?"),
+    "data_processing": re.compile(
+        r"Which of your records should I look up to check how Senzing resolved them\?"),
+    "query_visualize_discover": re.compile(
+        r"What do you want to find out about your data\?"),
+}
+NO_SITE = re.compile(r"\*\*You directed:\*\*\s*nothing this module\.[^\n]*?"
+                     r"so there was no step to hand over\.")
+NO_SITE_MODULES = ("data_quality_mapping",)
+PAIRS_QUESTION = re.compile(r"Are these two records the same entity\?")
+PAIRS_MODULE = "query_visualize_discover"
+PROGRESS = Path("config") / "bootcamp_progress.json"
+STEER_MODULES = ("data_collection", "data_quality_mapping", "data_processing",
+                 "query_visualize_discover")
+STEER_LINE = "What went wrong:"
+TRANSITION = re.compile(
+    r"(?i)ready to move on to the next module|would you like to graduate now")
+def module_spans(turns):
+    ...
+def check_directing_steps(turns):
+    ...
+def discover_record(project):
+    ...
+def check_pairs_step(turns, project=None):
+    ...
+def check_worked_steers(turns, tools=None):
+    ...
 CHECKS = (check_one_pointer_per_turn, check_module_numbers, check_or_joined_choices,
-          check_internal_markers, check_repeat_questions)
-def lint(turns, phase=None, project=None, replies=None):
+          check_internal_markers, check_repeat_questions, check_directing_steps,
+          check_pairs_step, check_worked_steers)
+def lint(turns, phase=None, project=None, replies=None, tools=None):
     ...
 def render(findings, turn_count):
     ...
@@ -8900,7 +8953,9 @@ From `.claude/skills/auto-test/transcript_lint.py`:
     ap.add_argument("--project", default=None,
                     help="the walked project directory, whose "
                          "config/bootcamp_preferences.yaml holds the verbosity "
-                         "preset INV-096 grades the time estimate against")
+                         "preset INV-096 grades the time estimate against, and whose "
+                         "config/bootcamp_progress.json holds the Discover record "
+                         "that can excuse step 4a-pairs")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--selftest", action="store_true")
 ```
@@ -10495,6 +10550,8 @@ From `.claude/skills/auto-test/transcript_lint.py`:
 ```python
 def _outside_quotes_and_fences(text):
     ...
+def _failed_program_run(tool):
+    ...
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -10503,6 +10560,9 @@ def _outside_quotes_and_fences(text):
   `test_transcript_lint_tells_a_re_ask_from_a_re_presentation.py` (patched to
   return every line, so the quoted note's two INV-051 findings come back as a
   negative control)
+- `_failed_program_run`: `test_transcript_lint_reports_a_skipped_step.py`
+  (every Build and Run command in ground-rules "Building and running a
+  program" that names `<dir>` must count as a program run)
 
 ## 8. Tests
 
@@ -10667,21 +10727,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8905 test methods in 462 files, matching `inventory.test_count_total`.
+There are 8958 test methods in 463 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8905.
+sum to 8958.
 
-Two files run more tests than they define, so discovery collects 8905:
+Two files run more tests than they define, so discovery collects 8965:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8782`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8958`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8789`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8965`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
@@ -11105,6 +11165,7 @@ looks wrong.
 - `tests/test_the_seven_triaged_rules_keep_their_citations.py`: 3
 - `tests/test_todo_triage_is_recorded.py`: 9
 - `tests/test_tool_directives_do_not_override_interaction.py`: 30
+- `tests/test_transcript_lint_reports_a_skipped_step.py`: 53
 - `tests/test_transcript_lint_tells_a_re_ask_from_a_re_presentation.py`: 19
 - `tests/test_truth_set_is_the_practice_run.py`: 10
 - `tests/test_truth_set_spelling.py`: 5
@@ -14413,3 +14474,12 @@ Senzing licensing, with no SPDX identifier.
   pinned by a negative-controlled `git ls-files -s` test — every probe
   repeated two WATCH findings, and `SKILL.md`'s direct commands failed with
   `Permission denied`; a new invariant is queued for `/review-invariants`
+- #857: `transcript_lint.py` reports a hands-on module that ends without its
+  pinned directing 👉 (`check_directing_steps`), a Query, Visualize and
+  Discover that ends without step 4a-pairs' 👉 (`check_pairs_step`), and an
+  Act 2 module's first failed `src/` program run with no later
+  `What went wrong:` line (`check_worked_steers`), reading tool results through
+  `load_walk(path, tool_results=True)` and module ends through the banner
+  detection `module_banners.py` already uses — a low-effort run skipped all
+  three with nothing to report it (#855); dated notes on INV-352, INV-354 and
+  INV-357 are queued for `/review-invariants`
