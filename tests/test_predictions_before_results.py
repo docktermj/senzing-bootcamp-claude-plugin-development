@@ -32,6 +32,12 @@ So the clauses are checked where they live:
   grade). Its lead phrase and its agreement clause are `RULE_ONLY`, so a site that carries its own
   copy of the introduction is reported as restating the rule (INV-300); each site reaches it
   through its existing "This is a prediction point:" pointer.
+- **The introduction cue (#850)**, at each site (`intro_cue_problems`): a guide that followed a
+  site's numbered items never reached the introduction two files away, so each site's ask step
+  now opens with `INTRO_CUE`, one sentence that points at "Predictions before results" (citing
+  INV-357) and carries none of its wording. The check requires the cue as the first instruction
+  after the ask step's bold lead (`ASK_LEADS`), and ahead of the instruction that presents the
+  step's record(s) (`ASK_PRESENTS`).
 - **At every pointer, derived** (`pointer_citation_problems`, #519): every shipped sentence that
   points at "Predictions before results", found by scan rather than from the three sites above
   (INV-246), cites INV-357, so a reader at the pointer can name the rule as well as the
@@ -65,6 +71,9 @@ negative control. `TheChecksCatchARegression` runs nine regressions against ever
 stated before the 👉, the skip removed, a second 👉 added, the options unnumbered, the grading
 guard deleted, the skip recording deleted, the citation dropped, an app route added before the
 👉 (each marker alone, and two together), and a copy of the introduction put before the 👉 (#747). The grading guard and the skip recording also run against the shared section.
+Since #850 it also removes the introduction cue, moves it to just before the 👉, moves it to
+directly after the instruction that presents the record(s) (grafted from #850's approach B), and
+strips its pointer, at every site.
 `TheAlreadyShownEntities` drops each exclusion, case, pointer and site consequence in turn.
 Each must make the check report the problem it targets, not merely some problem.
 
@@ -88,7 +97,8 @@ requires its citation, and passing it is no evidence that a live run obeys it.
 Stdlib only; shipped markdown read as text (INV-108).
 
 Source issues: #479 (part of #465); #507 (the app route and the already-shown entities); #519
-(the citation at every pointer); #747 (the introduction before a site's first 👉).
+(the citation at every pointer); #747 (the introduction before a site's first 👉); #850 (the
+introduction cued in each site's ask step).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -201,6 +211,23 @@ RULE_ONLY = (r"(?i)never say \"correct\"", r"(?i)keep a score", r"\(agreed\)`, o
 #: The introduction's bullet in the shared rule (#747), from its bold lead to the next bullet.
 INTRO_LEAD = "- **Introduce it once, before the site's first 👉.**"
 
+#: The cue each site's ask step opens with (#850): the introduction, by pointer, never a copy
+#: (INV-300). Compared on squashed text, so a line wrap does not matter.
+INTRO_CUE = ('First introduce the exercise, as `../bootcamp-onboarding/ground-rules.md` → '
+             '"Predictions before results" requires before the site\'s first 👉 (INV-357).')
+#: Each site's ask step, by its bold lead; the cue is the first thing after it.
+ASK_LEADS = {
+    "Step 7a": "2. **Show it, then ask. Load nothing yet.**",
+    "Step 4a-pairs": "2. **Show one pair per turn, then ask.**",
+    "step 4b item 1a": "- **Show the entity's records before any `why_*` call, as text only.**",
+}
+#: The instruction in each site's ask step that presents its record(s); the cue comes before it.
+ASK_PRESENTS = {
+    "Step 7a": "Present the `Mari` record beside the Marisol record",
+    "Step 4a-pairs": "Present the two records' features side by side",
+    "step 4b item 1a": "Show the two records item 1 named as text",
+}
+
 #: Words that grade a prediction; the introduction carries none of them (#747, INV-357).
 GRADING_WORDS = re.compile(r"(?i)\b(?:in)?correct\w*|\bscor(?:e|es|ed|ing)\b|\btall(?:y|ies)\b|"
                            r"\bgrad(?:e|es|ed|ing)\b")
@@ -282,6 +309,23 @@ def app_route_problems(where, before):
     if found:
         return ["%s routes to the visualization app before its 👉 (%s)" % (where, ", ".join(found))]
     return []
+
+
+def intro_cue_problems(where, site):
+    """The site's ask step opens with the introduction cue, ahead of what it shows (#850)."""
+    flat, lead, present = squash(site), ASK_LEADS[where], ASK_PRESENTS[where]
+    at = flat.find(lead)
+    if at < 0:
+        return ["%s has no ask step (%r)" % (where, lead)]
+    problems = []
+    if not flat[at + len(lead):].lstrip().startswith(INTRO_CUE):
+        problems.append("%s's ask step does not open with the introduction cue (#850)" % where)
+    shown, cue = flat.find(present, at), flat.find(INTRO_CUE, at)
+    if shown < 0:
+        problems.append("%s's ask step does not present its record(s) (%r)" % (where, present))
+    elif cue > shown:
+        problems.append("%s introduces the exercise after it presents the record(s) (#850)" % where)
+    return problems
 
 
 def point_problems(where, step, question, reveal, multi_select=False):
@@ -433,6 +477,7 @@ def mari_problems(phase1):
     if not match_lines(step, r"no result, no prediction"):
         problems.append("Step 7a has no no-Marisol-entity path")
     problems += citation_problems(step, "Step 7a")
+    problems += intro_cue_problems("Step 7a", step)
     return problems
 
 
@@ -491,6 +536,7 @@ def pairs_problems(discover):
         if not match_lines(step, pattern):
             problems.append("Step 4a-pairs does not state %s" % what)
     problems += citation_problems(step, "Step 4a-pairs")
+    problems += intro_cue_problems("Step 4a-pairs", step)
     return problems
 
 
@@ -538,6 +584,7 @@ def own_entity_problems(discover):
         if not match_lines(item_1a, pattern):
             problems.append("item 1a does not state that %s" % what)
     problems += citation_problems(item_1a, "step 4b item 1a")
+    problems += intro_cue_problems("step 4b item 1a", item_1a)
     return problems
 
 
@@ -1034,6 +1081,40 @@ class TheChecksCatchARegression(unittest.TestCase):
         self.assertTrue(copy, "the shared rule has no introduction, so the control would be vacuous")
         self.check(lambda s, q, r: s.replace(q, "%s\n\n%s" % (copy, q), 1),
                    " restates the shared rule (")
+
+    CUE_MISSING = "'s ask step does not open with the introduction cue (#850)"
+
+    def test_the_introduction_cue_removed(self):
+        """#850: a site whose ask step no longer cues the introduction is reported."""
+        self.check(lambda s, q, r: re.sub(_loose(INTRO_CUE) + r"\s*", "", s, count=1),
+                   self.CUE_MISSING)
+
+    def test_the_introduction_cue_moved_to_just_before_the_question(self):
+        """#850: the cue must come first in the ask step, not next to the 👉."""
+        self.check(lambda s, q, r: re.sub(_loose(INTRO_CUE) + r"\s*", "", s, count=1).replace(
+            q, "%s\n\n%s" % (INTRO_CUE, q), 1), self.CUE_MISSING)
+
+    #: Each site's 👉 → the instruction in its ask step that presents the record(s).
+    PRESENTS = {MARI_QUESTION: ASK_PRESENTS["Step 7a"],
+                PAIR_QUESTION: ASK_PRESENTS["Step 4a-pairs"],
+                OWN_QUESTION: ASK_PRESENTS["step 4b item 1a"]}
+
+    def test_the_introduction_cue_moved_after_the_record(self):
+        """#850, grafted from approach B: a cue that follows the record presentation fails.
+
+        The cue is moved to directly after the instruction that presents the record(s), still
+        inside the ask step and still before the 👉, so only the order is wrong.
+        """
+        def mutate(s, q, r):
+            rest = re.sub(_loose(INTRO_CUE) + r"\s*", "", s, count=1)
+            return re.sub(_loose(self.PRESENTS[q]), lambda m: "%s %s" % (m.group(0), INTRO_CUE),
+                          rest, count=1)
+        self.check(mutate, " introduces the exercise after it presents the record(s) (#850)")
+
+    def test_the_introduction_cue_loses_its_pointer(self):
+        """#850: "introduce the exercise" with no pointer to the rule is not the cue."""
+        self.check(lambda s, q, r: re.sub(_loose(INTRO_CUE), "First introduce the exercise.", s,
+                                          count=1), self.CUE_MISSING)
 
 
 class TheIntroduction(unittest.TestCase):

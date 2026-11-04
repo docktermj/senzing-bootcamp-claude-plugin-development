@@ -611,7 +611,10 @@ branch above ran.
    about their result, never about Module 0's content (INV-362).
 3. **Ask it as a numbered choice**, the shape Module 0's knowledge check states
    (`../module-00-entity-resolution-concepts/concepts.md` → "Optional knowledge check", INV-051).
-   First state the field and its value, quoted from the result, then end the turn on this, the
+   Open with one line, in your own words, on why you are asking: it checks their reading of what
+   the engine already decided about their own data, and it does not ask them to resolve records
+   themselves; the line names no field meaning and no option, so it hints at no answer (INV-362).
+   Next state the field and its value, quoted from the result, then end the turn on this, the
    turn's one 👉 (INV-251), with the options directly beneath it: the correct reading, and
    neighboring real concepts as the wrong ones.
 

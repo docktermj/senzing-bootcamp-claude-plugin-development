@@ -17,6 +17,12 @@ so the Bootcamper never retrieved one themselves.
 4. **A wrong answer follows Module 0's wrong-answer rule, cited rather than restated (INV-300).**
 5. **No question on the zero-or-very-few-matches branch.**
 6. **The deeper-refresher offer is kept**, as a statement after the answer.
+7. **A purpose line opens the question (#850).** Before the field and its value, and so before
+   the 👉, the guide says in one line of its own words why it is asking: the question checks the
+   Bootcamper's reading of what the engine already decided about their own data, and does not
+   ask them to resolve records. The skill states those two points as required content, not a
+   fixed sentence, and that the line names no field meaning and no option, so it hints at no
+   answer. A bootcamper read the question without it as being asked to do entity resolution.
 
 The checks are pure functions over the file's text, so each also runs on a mutated copy as its
 negative control (`TheChecksCatchARegression`), and each mutation must make the check report the
@@ -34,7 +40,7 @@ INV-362's step 3a half (registered 2026-10-13).
 
 Stdlib only; shipped markdown read as text (INV-108).
 
-Source issue: #483 (part of #465).
+Source issues: #483 (part of #465); #850 (the purpose line).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -66,6 +72,20 @@ RETIRED = ("Matching-concepts reminder", "briefly remind the bootcamper",
 #: restatement of a rule the step claims is stated once (INV-300).
 RULE_ONLY_PHRASES = ("Name it as incorrect", "Explain why the chosen option is wrong",
                      "do not re-ask the same one", "False praise")
+
+
+#: The recall question's purpose line (#850): what the skill requires it to say, not its wording.
+PURPOSE_LEAD = "Open with one line, in your own words, on why you are asking"
+FIELD_LINE = "state the field and its value, quoted from the result"
+PURPOSE_LINE = {
+    "a purpose line in the guide's own words (#850)": re.escape(PURPOSE_LEAD),
+    "the purpose: it checks their reading of the engine's decision on their own data (#850)":
+        r"it checks their reading of what the engine already decided about their own data",
+    "the purpose: it does not ask them to resolve records (#850)":
+        r"it does not ask them to resolve records themselves",
+    "the purpose line hints at no answer (#850)":
+        r"the line names no field meaning and no option, so it hints at no answer",
+}
 
 
 def read(path):
@@ -144,6 +164,15 @@ def step3a_problems(phase1):
     }.items():
         if not match_lines(recall or step3a, pattern):
             problems.append("step 3a does not state %s" % what)
+
+    # The purpose line (#850): its required content, then its place before the field and value.
+    for what, pattern in PURPOSE_LINE.items():
+        if not match_lines(recall or step3a, pattern):
+            problems.append("step 3a does not state %s" % what)
+    flat_recall = squash(recall)
+    purpose, field = flat_recall.find(PURPOSE_LEAD), flat_recall.find(FIELD_LINE)
+    if purpose < 0 or field < 0 or not purpose < field:
+        problems.append("the purpose line does not come before the field and its value (#850)")
 
     # The no-match branch skips it, stated at both ends.
     zero_text = section(step3a, ZERO_BRANCH, ("\n\n",))
@@ -280,6 +309,27 @@ class TheChecksCatchARegression(unittest.TestCase):
                         "is not,\nthis turn does not end here",
                         "Steps 2–3a ask nothing, so this turn does not end here"),
             "unconditionally")
+
+    def test_purpose_line_dropped(self):
+        """#850: each required point of the purpose line, removed, is reported by name."""
+        for phrase, wanted in (
+                ("Open with one line, in your own words, on why you are asking:", "a purpose line"),
+                ("it checks their reading of what\n   the engine already decided about their own "
+                 "data, and ", "their reading of the engine's decision"),
+                ("and it does not ask them to resolve records\n   themselves", "resolve records"),
+                ("; the line names no field meaning and no option, so it hints at no answer",
+                 "hints at no answer")):
+            with self.subTest(clause=wanted):
+                self.assertReports(self.mutate(phrase, ""), wanted)
+
+    def test_purpose_line_after_the_field(self):
+        """#850: the purpose line must come before the field and its value, not after."""
+        text = read(M7_PHASE1)
+        lead = PURPOSE_LEAD + ":"
+        self.assertIn(lead, text, "the mutation's anchor is gone; update the test")
+        moved = text.replace(lead, "Then say:", 1).replace(FIELD_LINE, FIELD_LINE + ". " + lead, 1)
+        self.assertNotEqual(moved, text)
+        self.assertReports(step3a_problems(moved), "does not come before the field and its value")
 
     def test_cited_section_lost_its_rule(self):
         text = read(CONCEPTS).replace(WRONG_ANSWER_RULE, "When the answer is wrong, move on.")
