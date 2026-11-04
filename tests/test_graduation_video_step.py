@@ -32,8 +32,14 @@ with the bundled renderer (`generate_recap_video.py`, #299). These tests pin:
   captures are named as left out; and module completion Step 2e defers the choice to graduation.
   Negative controls feed the checks a `merge-statistics`, an `entity-graph` and a single-page
   `<name>.png` image, and a widened allow-list.
-* **The checks**: 2:00 ± 10 s with one re-render, frames looked at, audio read from the `Voice:`
-  and `Music:` lines (#339), skipped checks reported.
+* **The checks**: the renderer's tolerance with one re-render, frames looked at, audio read from
+  the `Voice:` and `Music:` lines (#339), skipped checks reported.
+* **`--check` holds the storyboard to the plan** (#854): Step 1c points at the renderer's
+  `TARGET_SECONDS` and `TOLERANCE_SECONDS` and its `INVALID:`, `SKIPPED:` and `OUT OF TOLERANCE:`
+  lines instead of stating the 1:50-2:10 figures, and keeps the 2:00 budget. The worked example
+  (12 tokens, 2:00) and a Customized storyboard scaled as the 83% table shows pass the renderer's
+  own `--check` against a matching `config/bootcamp_progress.json`; negative controls drop a
+  completed module, list skipped modules as completed, and shrink the plan to about 1:05.
 * **Where it is named**: the closing announcement and the return guide.
 * **The render path cues the Piper offer** (#853): "Render it" carries a ⛔ line, next to the
   commands, that graduation never passes `--no-voice`, and the rule for reading `--check`'s
@@ -54,7 +60,7 @@ Also enforces **INV-342**'s 2026-10-02 audio-contract note (#339) for Step 1c's 
 reads the renderer's exact `Voice:` and `Music:` lines. It does **not** establish that the renderer
 prints them, which `tests/test_recap_video.py` asserts.
 
-Source issues: #300 (part of #297), #339, #341, #326, #347, #853.
+Source issues: #300 (part of #297), #339, #341, #326, #347, #853, #854.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -769,7 +775,12 @@ class TheVideoIsChecked(unittest.TestCase):
 
     def test_the_duration_tolerance_and_one_re_render(self):
         text = self.verify()
-        self.assertIn("**Duration: within 2:00 ± 10 s**, that is 1:50 to 2:10", text)
+        self.assertIn("**Duration: within the renderer's tolerance**, `TARGET_SECONDS` ± "
+                      "`TOLERANCE_SECONDS` in `generate_recap_video.py`, both bounds included. "
+                      "The render prints an `OUT OF TOLERANCE:` line after `Duration:` when its "
+                      "length falls outside it.", text)
+        self.assertIn("**Out of tolerance.** When the render prints `OUT OF TOLERANCE:`, or the "
+                      "file's duration falls outside the same tolerance", text)
         self.assertIn("re-render **once**", text)
         self.assertIn("If it is still outside, keep the video and say so", text)
         self.assertIn("Read it from the file", text)
@@ -1086,6 +1097,139 @@ class TheRenderPathCuesThePiperOffer(unittest.TestCase):
 
     def test_the_old_no_wording_is_gone_negative_control(self):
         self.assertNotIn(OLD_PIPER_NO, read(GRADUATION))
+
+
+def run_check(storyboard, modules):
+    """The renderer's own `--check` on `storyboard`, with `modules` as `modules_completed`
+    (`None`: no progress file). (exit code, stdout, stderr)."""
+    import contextlib
+    import io
+    renderer = load_renderer()
+    with tempfile.TemporaryDirectory() as root:
+        board = Path(root) / "docs" / "video" / "storyboard.json"
+        board.parent.mkdir(parents=True)
+        board.write_text(json.dumps(storyboard), encoding="utf-8")
+        if modules is not None:
+            progress = Path(root) / "config" / "bootcamp_progress.json"
+            progress.parent.mkdir(parents=True)
+            progress.write_text(json.dumps({"modules_completed": modules}), encoding="utf-8")
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = renderer.main(["--storyboard", str(board), "--project-root", root,
+                                  "--check"])
+    return code, out.getvalue(), err.getvalue()
+
+
+def completed_tokens(modules):
+    """`modules_completed` for the budget rows `modules` (display names): every token but
+    `intro`, in the table's order."""
+    table = budget_table()
+    return [table[m][0] for m in modules if table[m][0] != INTRO_TOKEN]
+
+
+def customized_storyboard():
+    """Step 1c's example, with the 83% table's skipped modules left out and each remaining
+    module's scenes re-timed, in proportion, to that table's seconds."""
+    table = budget_table()
+    seconds = {table[module][0]: float(s) for module, s in
+               table_rows(step_1c(), "| Module | Seconds (83% counted)")}
+    board = example_storyboard()
+    board["scenes"] = [s for s in board["scenes"] if s["_module"] in seconds]
+    for token, total in seconds.items():
+        scenes = [s for s in board["scenes"] if s["_module"] == token]
+        planned = sum(s["duration"] for s in scenes)
+        for scene in scenes:
+            scene["duration"] = round(scene["duration"] * total / planned, 3)
+    return board
+
+
+class TheCheckHoldsTheStoryboardToThePlan(unittest.TestCase):
+    """#854: `--check` refuses a storyboard that leaves out a completed module or plans a length
+    outside the renderer's tolerance, and Step 1c points at the renderer for that tolerance."""
+
+    def assertPasses(self, storyboard, modules):
+        code, out, err = run_check(storyboard, modules)
+        self.assertEqual(0, code, err)
+        self.assertNotIn("INVALID:", err)
+        self.assertTrue(out.startswith("Storyboard valid"), out)
+
+    def invalid(self, storyboard, modules):
+        code, _out, err = run_check(storyboard, modules)
+        self.assertEqual(1, code, err)
+        return [l for l in err.splitlines() if l.startswith("INVALID: ")]
+
+    def test_the_example_passes(self):
+        board = example_storyboard()
+        tokens = {s["_module"] for s in board["scenes"]}
+        self.assertEqual(12, len(tokens))
+        self.assertAlmostEqual(120.0, sum(s["duration"] for s in board["scenes"]), places=6)
+        self.assertPasses(board, completed_tokens(BUDGET))
+
+    def test_a_customized_storyboard_scaled_as_the_table_shows_passes(self):
+        counted = [m for m in BUDGET if m not in OPTIONAL]
+        board = customized_storyboard()
+        self.assertEqual({budget_table()[m][0] for m in counted},
+                         {s["_module"] for s in board["scenes"]})
+        self.assertAlmostEqual(120.0, sum(s["duration"] for s in board["scenes"]), places=1)
+        self.assertPasses(board, completed_tokens(counted))
+
+    def test_a_dropped_module_is_named_negative_control(self):
+        board = example_storyboard()
+        for scene in board["scenes"]:
+            if scene["_module"] == "truthset_visualization":
+                scene["_module"] = "data_collection"
+        invalid = self.invalid(board, completed_tokens(BUDGET))
+        self.assertEqual(1, len(invalid), invalid)
+        self.assertIn("'truthset_visualization'", invalid[0])
+
+    def test_skipped_modules_listed_as_completed_are_named_negative_control(self):
+        invalid = self.invalid(customized_storyboard(), completed_tokens(BUDGET))
+        self.assertEqual(["'%s'" % budget_table()[m][0] for m in OPTIONAL],
+                         [re.search(r"'[a-z_]+'", l).group(0) for l in invalid])
+
+    def test_the_reported_storyboard_fails_negative_control(self):
+        """The issue's storyboard: 4 of 10 modules, planned at about 1:05."""
+        keep = {"intro", "bootcamp_preparation", "business_problem", "data_processing",
+                "query_visualize_discover", "graduation"}
+        board = example_storyboard()
+        board["scenes"] = [s for s in board["scenes"] if s["_module"] in keep]
+        kept = sum(s["duration"] for s in board["scenes"])
+        for scene in board["scenes"]:
+            scene["duration"] = round(scene["duration"] * 65 / kept, 2)
+        invalid = self.invalid(board, completed_tokens(BUDGET))
+        self.assertEqual(7, len(invalid), invalid)
+        self.assertIn("planned total is 1:05", invalid[-1])
+
+    def test_without_a_progress_file_only_the_length_is_checked(self):
+        board = example_storyboard()
+        board["scenes"] = [s for s in board["scenes"] if s["_module"] != "business_problem"]
+        code, _out, err = run_check(board, None)
+        self.assertEqual(1, code, err)
+        self.assertEqual(1, len([l for l in err.splitlines() if l.startswith("SKIPPED: ")]))
+        self.assertIn("planned total is 1:42", err)
+
+    def test_step_1c_points_at_the_renderers_constants(self):
+        renderer = load_renderer()
+        self.assertEqual((120.0, 10.0), (renderer.TARGET_SECONDS, renderer.TOLERANCE_SECONDS))
+        text = squash(step_1c())
+        self.assertIn("**`--check` also checks the plan against `config/bootcamp_progress.json`.**",
+                      text)
+        self.assertIn("(`TARGET_SECONDS` ± `TOLERANCE_SECONDS` in `generate_recap_video.py`)",
+                      text)
+        for line in ("`INVALID:`", "`SKIPPED:`", "`OUT OF TOLERANCE:`"):
+            with self.subTest(line=line):
+                self.assertIn(line, text)
+        render = squash(render_it())
+        self.assertLess(render.index("**`--check` also checks the plan"),
+                        render.index("**Read `--check`'s `VOICE:` line before you render.**"))
+
+    def test_step_1c_no_longer_states_the_tolerance_figures(self):
+        text = step_1c()
+        for figure in ("1:50", "2:10", "± 10", "110 s", "130 s"):
+            with self.subTest(figure=figure):
+                self.assertNotIn(figure, text)
+        self.assertIn("The planned length is **2:00**", squash(text), "the budget stays")
+        self.assertNotIn("2:00 ± 10 s", read(GRADUATION), "the closing points at it too")
 
 
 if __name__ == "__main__":

@@ -1213,6 +1213,14 @@ Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Window
 opt-out for tests and manual renders, and the renderer prints a `WARNING:` line whenever it is passed.
 The `--no-voice` row under "When the video has no voice" is the defensive case only.
 
+**`--check` also checks the plan against `config/bootcamp_progress.json`.** It prints an `INVALID:`
+line for each token in `modules_completed`, and for `intro`, `bootcamp_preparation` and `graduation`,
+that no scene's `_module` names, and one for a planned total outside the renderer's tolerance
+(`TARGET_SECONDS` ± `TOLERANCE_SECONDS` in `generate_recap_video.py`). Then it exits 1 with no
+`VOICE:` line: add the missing module's scenes from the time budget above, or re-time the scenes, and
+run it again, as exit 1 below says. A `SKIPPED:` line means the progress file held no readable
+`modules_completed` list, so coverage went unchecked; it never blocks.
+
 **Read `--check`'s `VOICE:` line before you render.** On a valid storyboard `--check` prints one
 `VOICE:` line after `Storyboard valid`, naming the voice this interpreter would narrate with:
 `VOICE: Piper (en_US-ljspeech-high)`, `VOICE: platform engine <name> (Piper is out: …)` or
@@ -1275,7 +1283,9 @@ ffmpeg the render used: `ffmpeg` on `PATH`, or the `imageio-ffmpeg` binary, whos
 `<venv python> -c "import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())"` prints. Use
 `ffprobe` where it exists. ⛔ **Never install a tool only to run a check (INV-129).**
 
-1. **Duration: within 2:00 ± 10 s**, that is 1:50 to 2:10. Read it from the file (`ffprobe`, or the
+1. **Duration: within the renderer's tolerance**, `TARGET_SECONDS` ± `TOLERANCE_SECONDS` in
+   `generate_recap_video.py`, both bounds included. The render prints an `OUT OF TOLERANCE:` line
+   after `Duration:` when its length falls outside it. Read it from the file (`ffprobe`, or the
    `Duration:` line `ffmpeg -i docs/bootcamp_recap.mp4` prints), not only from the renderer's own
    line.
 2. **Frames.** Extract one frame at the midpoint of each scene, including the certificate and the
@@ -1292,9 +1302,10 @@ ffmpeg the render used: `ffmpeg` on `PATH`, or the `imageio-ffmpeg` binary, whos
    failure. Only with `Voice: none (…)` and `Music: off (storyboard)` together is there no audio
    stream.
 
-**Out of tolerance.** When the duration is outside 1:50 to 2:10, shorten the narration (a video that
-runs long) or lengthen it (a video that runs short), starting with the scenes the `OVERRUN:` lines
-name, and re-render **once**. If it is still outside, keep the video and say so, with its duration.
+**Out of tolerance.** When the render prints `OUT OF TOLERANCE:`, or the file's duration falls outside
+the same tolerance, shorten the narration (a video that runs long) or lengthen it (a video that runs
+short), starting with the scenes the `OVERRUN:` lines name, and re-render **once**. If it is still
+outside, keep the video and say so, with its duration.
 
 Tell the bootcamper in one line, naming the voice from the renderer's `Voice:` line: the engine it
 names, for example "🎬 Your graduation video is at `docs/bootcamp_recap.mp4` (2:03), narrated by Piper
@@ -1882,9 +1893,10 @@ This runs exactly once, after the report, before graduation is reported finished
    unnamed here is one they never learn they have.
 
    **(INV-340) Also name the graduation video, `docs/bootcamp_recap.mp4`, only if Step 1c produced it:** a
-   2-minute video of their bootcamp, to keep and share. When its duration stayed outside
-   2:00 ± 10 s after the one re-render, say so here, with its duration. When a video check did not
-   run, say which, in the same plain sentence as the PDF note below (INV-163).
+   2-minute video of their bootcamp, to keep and share. When its duration stayed outside the
+   renderer's tolerance (Step 1c, "Verify the video") after the one re-render, say so here, with its
+   duration. When a video check did not run, say which, in the same plain sentence as the PDF note
+   below (INV-163).
 
    ⛔ **(INV-340) Call the video narrated only when the renderer's `Voice:` line named an engine.**
    With `Voice: none (…)`, call it a 2-minute graduation video "with captions and music, no voice",

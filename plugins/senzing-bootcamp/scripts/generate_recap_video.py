@@ -124,7 +124,8 @@ output and replaces it only once ffmpeg has succeeded.
 
 = ===========================================================================================
 0 rendered: prints ``Video generated: <path>``, its duration, a ``Voice:`` line and a
-  ``Music:`` line
+  ``Music:`` line; an ``OUT OF TOLERANCE:`` line follows the duration when it is outside
+  ``TARGET_SECONDS`` +/- ``TOLERANCE_SECONDS``, and the exit is still 0
 1 invalid storyboard: each problem names its field; nothing is written
 2 a required capability is missing (no ffmpeg, or no Pillow); nothing is written
 3 the encode itself failed (ffmpeg exited non-zero); nothing is written
@@ -138,8 +139,13 @@ Usage::
                                     [--no-voice] [--check] [--schema]
 
 ``--check`` validates the storyboard and exits 0 or 1 without rendering; it needs neither
-Pillow nor ffmpeg. On a valid storyboard it also prints, after ``Storyboard valid``, one
-``VOICE:`` line naming the voice this interpreter would narrate with, read from
+Pillow nor ffmpeg. After the schema it checks the plan (``check_plan``, #854), which a render
+never does: an ``INVALID:`` line for each always-covered tag (``ALWAYS_TAGGED``) and each token
+in ``modules_completed`` that no scene's ``_module`` names, read from
+``config/bootcamp_progress.json`` under ``--project-root`` (a ``SKIPPED:`` line instead when it
+holds no readable ``modules_completed`` list), and one for a planned total outside
+``TARGET_SECONDS`` +/- ``TOLERANCE_SECONDS``. On a valid storyboard it also prints, after
+``Storyboard valid``, one ``VOICE:`` line naming the voice this interpreter would narrate with, read from
 ``voice_order``, the same ordered choice the render makes (#853):
 
 * ``VOICE: Piper (en_US-ljspeech-high)``, honoring ``--voice-model`` and ``--project-root``;
@@ -158,7 +164,7 @@ loads, so the render's ``Voice:`` line stays authoritative.
 that passes it, ``--check`` included, says so in a ``WARNING:`` line on stderr.
 ``--voice-model`` names a local Piper ``.onnx`` model whose ``.onnx.json`` config sits beside
 it (default: ``data/temp/piper-voices/en_US-ljspeech-high.onnx`` under ``--project-root``).
-Source issues: #299, #339, #341, #853.
+Source issues: #299, #339, #341, #853, #854.
 """
 
 from __future__ import annotations
@@ -209,6 +215,15 @@ NARRATION_TAIL = 0.5
 WORDS_PER_MINUTE = 160
 #: A planned duration above this is almost certainly milliseconds or a typo.
 MAX_SCENE_SECONDS = 60.0
+#: The graduation video's length and its tolerance (#854), the one copy graduation Step 1c
+#: points at: 2:00 +/- 10 s, both bounds inclusive. ``--check`` reports a planned total outside
+#: it as ``INVALID:``, and a render prints ``OUT OF TOLERANCE:`` after ``Duration:``.
+TARGET_SECONDS = 120.0
+TOLERANCE_SECONDS = 10.0
+#: The ``_module`` tags every storyboard carries whatever was completed (#854): the Intro,
+#: Bootcamp preparation and You graduated! always count in Step 1c's time budget.
+ALWAYS_TAGGED = ("intro", "bootcamp_preparation", "graduation")
+PROGRESS_FILE = "config/bootcamp_progress.json"
 
 FADE_IN = 0.3
 FADE_OUT = 0.8
@@ -602,6 +617,56 @@ def validate_storyboard(data, root) -> List[str]:
         if scene_type.check:
             errors.extend(scene_type.check(scene, where))
     return errors
+
+
+def within_tolerance(seconds: float) -> bool:
+    """Whether a length is within ``TARGET_SECONDS`` +/- ``TOLERANCE_SECONDS``, inclusive."""
+    seconds = round(seconds, 6)  # float noise from summing tenths must not cross a bound
+    return TARGET_SECONDS - TOLERANCE_SECONDS <= seconds <= TARGET_SECONDS + TOLERANCE_SECONDS
+
+
+def _tolerance_text() -> str:
+    lo, hi = TARGET_SECONDS - TOLERANCE_SECONDS, TARGET_SECONDS + TOLERANCE_SECONDS
+    return (f"{_format_duration(lo)} to {_format_duration(hi)} ({lo:.1f} to {hi:.1f} s, "
+            f"TARGET_SECONDS +/- TOLERANCE_SECONDS)")
+
+
+def check_plan(storyboard: dict, root: Path) -> List[Tuple[str, str]]:
+    """``--check``'s plan check (#854), run only after ``validate_storyboard`` passes and never
+    by a render: ``(prefix, message)`` pairs for ``_report``.
+
+    * Coverage, when ``config/bootcamp_progress.json`` under ``root`` holds a
+      ``modules_completed`` list: an ``INVALID:`` pair for each of ``ALWAYS_TAGGED`` and each
+      string token in that list that no scene's ``_module`` names. Otherwise one ``SKIPPED:``
+      pair: an absent, unparseable or list-less progress file never blocks.
+    * The planned total, the sum of the scenes' ``duration``: an ``INVALID:`` pair when it is
+      outside the tolerance.
+    """
+    problems: List[Tuple[str, str]] = []
+    scenes = storyboard["scenes"]
+    completed = None
+    try:
+        progress = json.loads((Path(root) / PROGRESS_FILE).read_text(encoding="utf-8"))
+        completed = progress.get("modules_completed") if isinstance(progress, dict) else None
+    except (OSError, ValueError):
+        pass
+    if not isinstance(completed, list):
+        problems.append(("SKIPPED", f"module coverage not checked: no readable "
+                                    f"modules_completed list in {PROGRESS_FILE}."))
+    else:
+        tagged = {scene.get("_module") for scene in scenes}
+        modules = [token for token in completed if isinstance(token, str)]
+        for token in dict.fromkeys(list(ALWAYS_TAGGED) + modules):
+            if token not in tagged:
+                why = "always covered" if token in ALWAYS_TAGGED else "in modules_completed"
+                problems.append(("INVALID", f"scenes: no scene's _module is {token!r} ({why}); "
+                                            f"add its scenes from Step 1c's time budget"))
+    planned = sum(float(scene["duration"]) for scene in scenes)
+    if not within_tolerance(planned):
+        problems.append(("INVALID", f"scenes[].duration: the planned total is "
+                                    f"{_format_duration(planned)} ({planned:.1f} s), outside "
+                                    f"{_tolerance_text()}"))
+    return problems
 
 
 def _entities_not_above_records(scene, where) -> List[str]:
@@ -2199,6 +2264,13 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     planned = sum(float(s["duration"]) for s in storyboard["scenes"])
     if args.check:
+        plan_problems = check_plan(storyboard, root)
+        for prefix, message in plan_problems:
+            _report(prefix, message)
+        invalid = sum(prefix == "INVALID" for prefix, _message in plan_problems)
+        if invalid:
+            _report("ERROR", f"invalid storyboard ({invalid} problem(s)); no video written.")
+            return EXIT_INVALID_STORYBOARD
         print(f"Storyboard valid: {len(storyboard['scenes'])} scene(s), planned "
               f"{_format_duration(planned)} ({planned:.1f} s).")
         for line in voice_plan_lines(args.no_voice, model):
@@ -2284,6 +2356,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"Video generated: {output}")
     print(f"Duration: {_format_duration(total)} ({total:.1f} s, {len(plan)} scenes, planned "
           f"{planned:.1f} s)")
+    if not within_tolerance(total):
+        print(f"OUT OF TOLERANCE: {_format_duration(total)} ({total:.1f} s) is outside "
+              f"{_tolerance_text()}")
     if voiced:
         print(f"Voice: {engine.name} ({len(voiced)} of {len(plan)} scenes narrated)")
     elif args.no_voice:

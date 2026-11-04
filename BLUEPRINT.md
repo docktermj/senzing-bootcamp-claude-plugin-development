@@ -2982,7 +2982,10 @@ and continues; the recap PDF is guaranteed.
   `match-keys`/`feature-scores`/`cross-source` screenshots. It offers Piper,
   runs `generate_recap_video.py --check` and the render, handling exit 1
   (fix), 2 (offer `imageio-ffmpeg`/Pillow), 3 (skip, keep storyboard), and
-  checks 2:00 plus or minus 10 s. "Render it" bans `--no-voice` with a ⛔
+  checks the length against the renderer's `TARGET_SECONDS` ±
+  `TOLERANCE_SECONDS`: `--check` exits 1 on a completed module no scene's
+  `_module` names or a planned total outside it, and the render prints
+  `OUT OF TOLERANCE:` (#854). "Render it" bans `--no-voice` with a ⛔
   (INV-340) line beside the commands, and has the guide read `--check`'s
   `VOICE:` line: a non-Piper voice with the Piper offer not yet made means
   make the offer and do not render; after a decline or a failed install,
@@ -3447,6 +3450,19 @@ offline (`NETWORK_MODULES` are never imported).
   `PATH` is named `SAPI_UNVERIFIED` without `_sapi_available`. Every run with
   `--no-voice`, `--check` included, writes `WARNING:` plus `NO_VOICE_WARNING`
   on stderr.
+- `check_plan` runs under `--check` only, after the schema passes, and never
+  on a render (#854). With a `modules_completed` list in `PROGRESS_FILE`
+  (`config/bootcamp_progress.json`) under `--project-root`, it prints
+  `INVALID:` for each of `ALWAYS_TAGGED` (`intro`, `bootcamp_preparation`,
+  `graduation`) and each string token in that list that no scene's `_module`
+  names, in that order and once each; with no readable list it prints one
+  `SKIPPED:` line instead. It also prints `INVALID:` for a planned total (the
+  sum of `duration`) outside `TARGET_SECONDS` (120.0) ± `TOLERANCE_SECONDS`
+  (10.0), inclusive by `within_tolerance`, which rounds to 6 decimals first.
+  Any `INVALID:` ends in the `ERROR:` line and exit 1 before
+  `Storyboard valid`, so no `VOICE:` line. A rendered video outside the
+  tolerance prints `OUT OF TOLERANCE:` on stdout straight after `Duration:`,
+  and the exit stays 0.
 - `plan_timeline`: a missing or unreadable image becomes a title card. A
   scene lasts max(planned, narration plus lead and tail); without a voice,
   narration time is estimated at `WORDS_PER_MINUTE`. Each extension prints
@@ -3489,9 +3505,11 @@ Exit codes (nothing is written unless 0):
 
 - 0 `EXIT_RENDERED`: `--schema` JSON printed, `--check` valid (with its
   `VOICE:` line), or the video rendered (`Video generated:`, `Duration:`,
-  `Voice:`, `Music:`), after any content-loss warning on stderr.
+  `OUT OF TOLERANCE:` when outside it, `Voice:`, `Music:`), after any
+  content-loss warning on stderr.
 - 1 `EXIT_INVALID_STORYBOARD`: missing, non-UTF-8, invalid JSON or failed
-  validation (`INVALID:` lines).
+  validation, or under `--check` a plan `check_plan` refuses (`INVALID:`
+  lines).
 - 2 `EXIT_MISSING_CAPABILITY`: no usable Pillow or ffmpeg.
 - 3 `EXIT_RENDER_FAILED`: ffmpeg failed, the pipe broke, or the render
   raised.
@@ -7095,6 +7113,10 @@ NARRATION_LEAD = 0.3
 NARRATION_TAIL = 0.5
 WORDS_PER_MINUTE = 160
 MAX_SCENE_SECONDS = 60.0
+TARGET_SECONDS = 120.0
+TOLERANCE_SECONDS = 10.0
+ALWAYS_TAGGED = ("intro", "bootcamp_preparation", "graduation")
+PROGRESS_FILE = "config/bootcamp_progress.json"
 FADE_IN = 0.3
 FADE_OUT = 0.8
 CAPTION_SIZE = 44
@@ -7158,6 +7180,10 @@ class SceneType:
 def project_relative_problem(value, root: Path) -> Optional[str]:
     ...
 def validate_storyboard(data, root) -> List[str]:
+    ...
+def within_tolerance(seconds: float) -> bool:
+    ...
+def check_plan(storyboard: dict, root: Path) -> List[Tuple[str, str]]:
     ...
 def schema_description() -> dict:
     ...
@@ -10924,7 +10950,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9112 test methods in 466 files, matching `inventory.test_count_total`.
+There are 9135 test methods in 466 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 9112.
@@ -11093,7 +11119,7 @@ looks wrong.
 - `tests/test_graduation_hands_over_the_ability.py`: 34
 - `tests/test_graduation_no_voice_guidance.py`: 20
 - `tests/test_graduation_reads_persisted_answers.py`: 15
-- `tests/test_graduation_video_step.py`: 87
+- `tests/test_graduation_video_step.py`: 95
 - `tests/test_graph_cap_ranks_related_entities_first.py`: 19
 - `tests/test_graph_colors_by_source_combination.py`: 26
 - `tests/test_graph_label_distinctness.py`: 18
@@ -11273,7 +11299,7 @@ looks wrong.
 - `tests/test_recap_structure_checked_per_module.py`: 12
 - `tests/test_recap_summary_blocks.py`: 30
 - `tests/test_recap_tab_coverage.py`: 19
-- `tests/test_recap_video.py`: 174
+- `tests/test_recap_video.py`: 189
 - `tests/test_record_limit_negative_is_rescoped.py`: 13
 - `tests/test_recorded_container_commands_use_the_recorded_runtime.py`: 17
 - `tests/test_registered_amendments_are_not_called_pending.py`: 21
@@ -12109,7 +12135,7 @@ tests a rebuild can pass from behavior alone.
     site's record call with a no-op in a copy of the source drops that site
     from the warning. Long module, notes and handover titles reach both the
     contents and their page whole.
-- **`generate_recap_video.py`** (`tests/test_recap_video.py`, 174 tests).
+- **`generate_recap_video.py`** (`tests/test_recap_video.py`, 189 tests).
   - **Exit codes:** 0 rendered, 1 invalid storyboard, 2 missing capability, 3
     encode failed. Nothing is written unless the code is 0.
   - **Errors** name the field at fault.
@@ -12145,6 +12171,20 @@ tests a rebuild can pass from behavior alone.
     and the render's `Voice:` line to the same engine;
     `NoVoiceWarnsAndStillRenders` renders with `--no-voice` to exit 0 with one
     warning line. Each case has a negative control.
+  - **`--check` checks the plan** (#854, `TheCheckChecksThePlan`): each
+    missing `modules_completed` token and always-covered tag is named in
+    order, `graduation` once when also listed; extra and untagged scenes and
+    non-string entries pass; first scenes of 5.0 s and 25.0 s (110.0 and
+    130.0 s) pass, 4.9 s and 25.1 s fail; six unreadable progress files give
+    one `SKIPPED:` line and still check the length.
+    `TheRenderFlagsALengthOutOfTolerance` renders with `check_plan` patched
+    to raise: exit 0, `OUT OF TOLERANCE: 1:47 (107.0 s) …` straight after
+    `Duration:`, flagged at 130.1 s, not at 110.0, 120.0 or 130.0 s.
+    `tests/test_graduation_video_step.py`
+    (`TheCheckHoldsTheStoryboardToThePlan`) runs `--check` on Step 1c's
+    worked example and an 83%-table Customized storyboard (exit 0), with
+    negative controls, and asserts Step 1c points at the constants and no
+    longer states 1:50 or 2:10.
 - **`capture_screenshots.py`** (13 files).
   - **Output.** One PNG per tab, named after the tab, in the order given, with
     duplicate tabs dropped.
@@ -14820,6 +14860,18 @@ Senzing licensing, with no SPDX identifier.
   `--no-voice`, then with `espeak-ng`, before ever making the Piper offer,
   because the ban sat in a table read after the render and nothing at render
   time cued the offer; dated notes on INV-340 and INV-342 are queued for
+  `/review-invariants`
+- #854: `generate_recap_video.py --check` also checks the plan, with an
+  `INVALID:` line for each completed module (and `intro`,
+  `bootcamp_preparation`, `graduation`) no scene's `_module` names and for a
+  planned total outside `TARGET_SECONDS` ± `TOLERANCE_SECONDS` (2:00 ± 10 s,
+  inclusive), or a `SKIPPED:` line when the progress file has no
+  `modules_completed` list; a render is never refused for them and prints
+  `OUT OF TOLERANCE:` after `Duration:`, and Step 1c points at the renderer's
+  constants instead of stating 1:50 to 2:10 — a guide presented a video
+  covering 4 of 10 completed modules at about 1:05 as finished, because
+  `--check` validated only the schema and the duration check was a step to
+  remember; dated notes on INV-340 and INV-342 are queued for
   `/review-invariants`
 - #856: `module-completion.md` gains a Step 0 before Step 1's write that
   catches a required step that never ran — 0a runs Data processing's

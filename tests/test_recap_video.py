@@ -147,6 +147,32 @@ def a_storyboard(scenes=None):
             "scenes": scenes if scenes is not None else scenes_of_every_type()}
 
 
+#: #854: `--check` also checks the plan: every completed module tagged, and the planned total
+#: within the renderer's tolerance. `a_storyboard()` plans 16 s, so a `--check` that must pass
+#: uses this one: the same scenes, 15 s each (2:00), tagged so `PLANNED_MODULES` is covered.
+PLANNED_TAGS = ("intro", "bootcamp_preparation", "data_collection", "data_quality_mapping",
+                "data_processing", "query_visualize_discover", "graduation", "graduation")
+PLANNED_MODULES = ["bootcamp_preparation", "data_collection", "data_quality_mapping",
+                   "data_processing", "query_visualize_discover"]
+
+
+def a_planned_storyboard():
+    board = a_storyboard()
+    for scene, tag in zip(board["scenes"], PLANNED_TAGS):
+        scene.update(duration=15, _module=tag)
+    return board
+
+
+def write_progress(root, modules=None, text=None):
+    """`config/bootcamp_progress.json` under `root`: `modules_completed`, or raw `text`."""
+    path = Path(root) / "config" / "bootcamp_progress.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if text is None:
+        text = json.dumps({"modules_completed": PLANNED_MODULES if modules is None else modules})
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
 def index_of(storyboard, kind):
     return next(i for i, s in enumerate(storyboard["scenes"]) if s["type"] == kind)
 
@@ -264,8 +290,9 @@ class AValidStoryboardValidates(unittest.TestCase):
             self.assertEqual([], VIDEO.validate_storyboard(board, Path(root)))
 
     def test_check_mode_exits_0_and_renders_nothing(self):
-        project = Project(a_storyboard())
+        project = Project(a_planned_storyboard())
         self.addCleanup(project.close)
+        write_progress(project.root)
         result = project.run("--check")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("Storyboard valid", result.stdout)
@@ -1103,7 +1130,10 @@ class TheReportNamesVoiceAndMusic(unittest.TestCase):
                                       "--output", str(project.output),
                                       "--project-root", str(project.root), *flags)
         self.assertEqual(0, code, err)
-        return out.splitlines()[2:], err
+        lines = out.splitlines()
+        # #854: this 2 s board is outside the tolerance, so that line follows `Duration:`.
+        self.assertTrue(lines[2].startswith("OUT OF TOLERANCE: "), lines)
+        return lines[3:], err
 
     def test_a_voice_that_spoke(self):
         lines, _err = self.render()
@@ -2111,7 +2141,10 @@ class PiperComesFirstInTheRender(unittest.TestCase):
                                       "--output", str(self.project.output),
                                       "--project-root", str(self.project.root), *flags)
         self.assertEqual(0, code, err)
-        return out.splitlines()[2:], err
+        lines = out.splitlines()
+        # #854: this 2 s board is outside the tolerance, so that line follows `Duration:`.
+        self.assertTrue(lines[2].startswith("OUT OF TOLERANCE: "), lines)
+        return lines[3:], err
 
     def scene_markers(self):
         return [markers(ps.pcm) for ps in self.plan]
@@ -2208,8 +2241,9 @@ class CheckNamesTheVoiceTheRenderWouldUse(unittest.TestCase):
     probe mode: no Pillow, no ffmpeg, no subprocess. Each case has a negative control."""
 
     def setUp(self):
-        self.project = Project(a_storyboard())
+        self.project = Project(a_planned_storyboard())
         self.addCleanup(self.project.close)
+        write_progress(self.project.root)
 
     def check(self, *flags, finder=piper_missing, which=on_path(), platform="linux",
               root=None):
@@ -2382,9 +2416,10 @@ class TheCheckAndTheRenderPickTheSameVoice(unittest.TestCase):
     a fake subprocess and the encode stubbed, as in `PiperComesFirstInTheRender`."""
 
     def setUp(self):
+        # Planned at 2:00, so `--check` passes its #854 plan check and prints its VOICE: line.
         self.board = a_storyboard([
-            {"type": "title_card", "duration": 1, "narration": "one", "module": "A"},
-            {"type": "title_card", "duration": 1, "narration": "two", "module": "B"},
+            {"type": "title_card", "duration": 60, "narration": "one", "module": "A"},
+            {"type": "title_card", "duration": 60, "narration": "two", "module": "B"},
         ])
         self.project = Project(self.board)
         self.addCleanup(self.project.close)
@@ -2473,6 +2508,209 @@ class NoVoiceWarnsAndStillRenders(unittest.TestCase):
         out, err = self.render()
         self.assertNotIn(VIDEO.NO_VOICE_WARNING, err)
         self.assertIn("Voice: fake-voice (1 of 1 scenes narrated)\nMusic: yes\n", out)
+
+
+# --------------------------------------------------------------------------- #
+# --check checks the plan; the render flags a length out of tolerance (#854)
+# --------------------------------------------------------------------------- #
+def stderr_lines(err, prefix):
+    return [l[len(prefix) + 2:] for l in err.splitlines() if l.startswith(prefix + ": ")]
+
+
+class TheCheckChecksThePlan(unittest.TestCase):
+    """`check_plan`, run by `--check` only: an `INVALID:` line for each always-covered tag and
+    each `modules_completed` token no scene's `_module` names, and for a planned total outside
+    `TARGET_SECONDS` +/- `TOLERANCE_SECONDS` (inclusive); a `SKIPPED:` line instead of coverage
+    when the progress file holds no readable `modules_completed` list. Each case has a negative
+    control."""
+
+    def check(self, board, modules=None, text=None, progress=True, raw=None):
+        project = Project(board)
+        self.addCleanup(project.close)
+        if progress:
+            path = write_progress(project.root, modules, text)
+            if raw is not None:
+                path.write_bytes(raw)
+        with mock.patch.object(VIDEO, "_find_spec", side_effect=piper_missing), \
+                mock.patch.object(VIDEO.shutil, "which", side_effect=on_path()):
+            code, out, err = run_main("--storyboard", str(project.storyboard_path),
+                                      "--output", str(project.output),
+                                      "--project-root", str(project.root), "--check")
+        self.assertEqual([], project.written())
+        return code, out, err
+
+    def assertPasses(self, result):
+        code, out, err = result
+        self.assertEqual(0, code, err)
+        self.assertEqual([], stderr_lines(err, "INVALID"))
+        self.assertTrue(out.startswith("Storyboard valid"), out)
+        self.assertIn("VOICE: ", out)
+
+    def assertRefused(self, result):
+        code, out, err = result
+        self.assertEqual(VIDEO.EXIT_INVALID_STORYBOARD, code, err)
+        self.assertNotIn("VOICE:", out, "a refused plan prints no VOICE: line, as before #854")
+        self.assertNotIn("INVALID", out, "INVALID: goes to stderr")
+        return stderr_lines(err, "INVALID")
+
+    def test_the_constants_are_two_minutes_plus_or_minus_ten_seconds(self):
+        self.assertEqual((120.0, 10.0), (VIDEO.TARGET_SECONDS, VIDEO.TOLERANCE_SECONDS))
+        self.assertEqual(("intro", "bootcamp_preparation", "graduation"), VIDEO.ALWAYS_TAGGED)
+
+    def test_a_covered_two_minute_plan_passes(self):
+        code, out, err = self.check(a_planned_storyboard())
+        self.assertPasses((code, out, err))
+        self.assertEqual("", err, "nothing on stderr: coverage was checked and passed")
+
+    def test_each_missing_module_is_named(self):
+        modules = PLANNED_MODULES + ["sdk_setup", "truthset_visualization"]
+        invalid = self.assertRefused(self.check(a_planned_storyboard(), modules))
+        self.assertEqual(2, len(invalid), invalid)
+        self.assertIn("'sdk_setup' (in modules_completed)", invalid[0])
+        self.assertIn("'truthset_visualization' (in modules_completed)", invalid[1])
+
+    def test_a_retagged_module_is_missing_negative_control(self):
+        board = a_planned_storyboard()
+        board["scenes"][index_of(board, "counter")]["_module"] = "data_quality_mapping"
+        invalid = self.assertRefused(self.check(board))
+        self.assertEqual(["scenes: no scene's _module is 'data_collection' (in "
+                          "modules_completed); add its scenes from Step 1c's time budget"],
+                         invalid)
+
+    def test_the_always_covered_tags_are_required_whatever_was_completed(self):
+        board = a_planned_storyboard()
+        for scene in board["scenes"]:
+            if scene["_module"] in ("intro", "graduation"):
+                scene["_module"] = "query_visualize_discover"
+        self.assertNotIn("graduation", PLANNED_MODULES)
+        invalid = self.assertRefused(self.check(board))
+        self.assertEqual(2, len(invalid), invalid)
+        self.assertIn("'intro' (always covered)", invalid[0])
+        self.assertIn("'graduation' (always covered)", invalid[1])
+
+    def test_graduation_in_modules_completed_is_named_once(self):
+        board = a_planned_storyboard()
+        board["scenes"][-1]["_module"] = board["scenes"][-2]["_module"] = "data_processing"
+        invalid = self.assertRefused(self.check(board, PLANNED_MODULES + ["graduation"]))
+        self.assertEqual(1, len(invalid), invalid)
+
+    def test_extra_or_untagged_scenes_are_out_of_scope(self):
+        board = a_planned_storyboard()
+        del board["scenes"][index_of(board, "mapping")]["_module"]
+        board["scenes"][index_of(board, "loading")]["_module"] = "system_verification"
+        modules = [m for m in PLANNED_MODULES
+                   if m not in ("data_quality_mapping", "data_processing")]
+        self.assertPasses(self.check(board, modules))
+
+    def test_non_string_entries_are_ignored(self):
+        self.assertPasses(self.check(a_planned_storyboard(),
+                                     PLANNED_MODULES + [7, None, {"x": 1}, ["sdk_setup"]]))
+
+    def test_the_tolerance_bounds_are_inclusive(self):
+        """Seven 15 s scenes plus a first scene of 5.0 s plan 110.0 s; of 25.0 s, 130.0 s."""
+        for first, ok in ((5.0, True), (25.0, True), (4.9, False), (25.1, False)):
+            with self.subTest(first=first):
+                board = a_planned_storyboard()
+                board["scenes"][0]["duration"] = first
+                result = self.check(board)
+                if ok:
+                    self.assertPasses(result)
+                else:
+                    invalid = self.assertRefused(result)
+                    self.assertEqual(1, len(invalid), invalid)
+                    self.assertTrue(invalid[0].startswith("scenes[].duration: the planned "
+                                                          "total is "), invalid[0])
+                    self.assertIn("outside 1:50 to 2:10 (110.0 to 130.0 s", invalid[0])
+
+    def test_the_short_test_storyboard_fails_the_planned_length(self):
+        """`a_storyboard()` plans 16 s: valid for a render, refused by `--check` (the issue's
+        1:05 storyboard, smaller)."""
+        board = a_storyboard()
+        for scene, tag in zip(board["scenes"], PLANNED_TAGS):
+            scene["_module"] = tag
+        invalid = self.assertRefused(self.check(board))
+        self.assertEqual(["scenes[].duration: the planned total is 0:16 (16.0 s), outside 1:50 "
+                          "to 2:10 (110.0 to 130.0 s, TARGET_SECONDS +/- TOLERANCE_SECONDS)"],
+                         invalid)
+
+    def test_no_readable_progress_skips_coverage_only(self):
+        cases = {
+            "absent": dict(progress=False),
+            "not JSON": dict(text="{\"modules_completed\": ["),
+            "not UTF-8": dict(raw=b"\xff\xfe{"),
+            "a list": dict(text="[]"),
+            "no modules_completed": dict(text="{}"),
+            "not a list": dict(text=json.dumps({"modules_completed": "data_collection"})),
+        }
+        for name, kwargs in cases.items():
+            with self.subTest(case=name):
+                board = a_planned_storyboard()
+                board["scenes"][index_of(board, "counter")]["_module"] = "elsewhere"
+                code, out, err = self.check(board, **kwargs)
+                self.assertPasses((code, out, err))
+                skipped = stderr_lines(err, "SKIPPED")
+                self.assertEqual(1, len(skipped), err)
+                self.assertIn("config/bootcamp_progress.json", skipped[0])
+                self.assertEqual(1, len(err.splitlines()), "one line: " + err)
+                self.assertNotIn("SKIPPED", out)
+                # The planned length is still checked without the progress file.
+                board["scenes"][0]["duration"] = 1
+                code, _out, err = self.check(board, **kwargs)
+                self.assertEqual(VIDEO.EXIT_INVALID_STORYBOARD, code)
+                self.assertEqual(1, len(stderr_lines(err, "SKIPPED")))
+                self.assertIn("planned total", "".join(stderr_lines(err, "INVALID")))
+
+    def test_a_readable_progress_file_prints_no_skipped_line_negative_control(self):
+        _code, _out, err = self.check(a_planned_storyboard())
+        self.assertEqual([], stderr_lines(err, "SKIPPED"))
+
+
+@requires_pillow
+class TheRenderFlagsALengthOutOfTolerance(unittest.TestCase):
+    """A render never runs `check_plan`, so a plan `--check` would refuse still renders; its
+    length outside the tolerance (inclusive) prints `OUT OF TOLERANCE:` on stdout straight
+    after `Duration:`, and the exit stays 0."""
+
+    def render(self, first):
+        board = a_planned_storyboard()
+        board["video"]["music"] = False
+        for scene in board["scenes"]:
+            scene["narration"] = "Done."
+        board["scenes"][0]["duration"] = first
+        project = Project(board)
+        self.addCleanup(project.close)
+        write_progress(project.root, PLANNED_MODULES + ["sdk_setup"])
+
+        def encode(ctx, plan, ffmpeg, audio, output, log_path, music=None):
+            output.write_bytes(b"mp4")
+            return True, ""
+
+        never = mock.Mock(side_effect=AssertionError("the render ran check_plan"))
+        with mock.patch.object(VIDEO, "find_ffmpeg", return_value=("ffmpeg", [])), \
+                mock.patch.object(VIDEO, "check_plan", never), \
+                mock.patch.object(VIDEO, "stream_frames", side_effect=encode):
+            code, out, err = run_main("--storyboard", str(project.storyboard_path),
+                                      "--output", str(project.output),
+                                      "--project-root", str(project.root), "--no-voice")
+        self.assertEqual(0, code, err)
+        self.assertTrue(project.output.is_file())
+        self.assertNotIn("INVALID", err)
+        return out.splitlines()
+
+    def test_a_short_video_is_flagged_after_duration(self):
+        lines = self.render(2.0)
+        duration = next(i for i, l in enumerate(lines) if l.startswith("Duration: "))
+        self.assertEqual("OUT OF TOLERANCE: 1:47 (107.0 s) is outside 1:50 to 2:10 (110.0 to "
+                         "130.0 s, TARGET_SECONDS +/- TOLERANCE_SECONDS)", lines[duration + 1])
+        self.assertTrue(lines[duration + 2].startswith("Voice: "), lines)
+
+    def test_a_long_video_is_flagged(self):
+        self.assertIn("OUT OF TOLERANCE: 2:10 (130.1 s)", "\n".join(self.render(25.1)))
+
+    def test_the_bounds_are_inclusive_negative_control(self):
+        for first in (5.0, 15.0, 25.0):
+            with self.subTest(first=first):
+                self.assertNotIn("OUT OF TOLERANCE", "\n".join(self.render(first)))
 
 
 if __name__ == "__main__":
