@@ -26,6 +26,14 @@ writes at graduation into `docs/bootcamp_recap.mp4`. These tests pin its contrac
   the negative control); numbers are spelled out in Piper's text only; and the default voice is
   the public-domain `en_US-ljspeech-high`, never a `ryan`, `hfc_*` or `lessac` voice. Piper
   1.8.0 itself is never installed or run by these tests.
+* **`--check` names the voice** (#853): after `Storyboard valid`, one `VOICE:` line read from
+  `voice_order`, the render's own ordered choice, in probe mode: Piper (honoring `--voice-model`
+  and `--project-root`), a platform engine with why Piper is out, or none, and a pointer at the
+  Piper offer when Piper is out. It launches no subprocess on any platform; on Windows it names
+  `Windows SAPI (not verified by --check)` without calling `_sapi_available`. An invalid
+  storyboard prints no `VOICE:` line. `--no-voice` prints one stderr `WARNING:` line, on a render
+  and on `--check`. `TheCheckAndTheRenderPickTheSameVoice` is the drift guard: the `VOICE:` line
+  and the render's `Voice:` line name the same engine. Each case has a negative control.
 * **End to end**, an mp4 is rendered and probed: H.264, yuv420p, 1920x1080, 30 fps, and one
   48 kHz stereo AAC stream whenever a voice spoke or the music played, measuring -16 ± 1 LUFS
   with a true peak at or under -1.0 dBFS (ffmpeg's `ebur128`). Skipped with a reason when
@@ -50,7 +58,7 @@ video on failure, burns captions in, never truncates narration, accepts only pro
 images, works offline, and draws the certificate from the recap PDF's fields). It does **not**
 establish the macOS and Windows speech paths, which it covers only by the commands it builds.
 
-Source issues: #299, #339, #341, #372, #580.
+Source issues: #299, #339, #341, #372, #580, #853.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -2181,6 +2189,290 @@ class PiperComesFirstInTheRender(unittest.TestCase):
         self.assertEqual(["Voice: none (--no-voice)", "Music: yes"], lines)
         self.assertEqual([], fake.calls)
         self.assertNotIn("Piper", err)
+
+
+# --------------------------------------------------------------------------- #
+# --check names the voice, from the render's own order (#853)
+# --------------------------------------------------------------------------- #
+def no_subprocess(*args, **kwargs):
+    raise AssertionError("--check launched a subprocess: %r" % (args,))
+
+
+def on_path(**found):
+    """A stand-in for `shutil.which`: only the named programs are on PATH."""
+    return lambda name: found.get(name)
+
+
+class CheckNamesTheVoiceTheRenderWouldUse(unittest.TestCase):
+    """`--check` prints one `VOICE:` line after `Storyboard valid`, read from `voice_order` in
+    probe mode: no Pillow, no ffmpeg, no subprocess. Each case has a negative control."""
+
+    def setUp(self):
+        self.project = Project(a_storyboard())
+        self.addCleanup(self.project.close)
+
+    def check(self, *flags, finder=piper_missing, which=on_path(), platform="linux",
+              root=None):
+        sapi = mock.Mock(side_effect=AssertionError("--check ran the SAPI check"))
+        with mock.patch.object(VIDEO, "_find_spec", side_effect=finder), \
+                mock.patch.object(VIDEO.shutil, "which", side_effect=which), \
+                mock.patch.object(VIDEO.sys, "platform", platform), \
+                mock.patch.object(VIDEO, "_sapi_available", sapi), \
+                mock.patch.object(VIDEO.subprocess, "run", side_effect=no_subprocess), \
+                mock.patch.object(VIDEO.subprocess, "Popen", side_effect=no_subprocess):
+            code, out, err = run_main("--storyboard", str(self.project.storyboard_path),
+                                      "--output", str(self.project.output),
+                                      "--project-root", str(root or self.project.root),
+                                      "--check", *flags)
+        sapi.assert_not_called()
+        self.assertEqual(0, code, err)
+        self.assertEqual([], self.project.written())
+        lines = out.splitlines()
+        self.assertTrue(lines[0].startswith("Storyboard valid"), out)
+        return lines[1:], err
+
+    def test_piper_set_up_is_named(self):
+        write_voice(self.project.root)
+        lines, err = self.check(finder=piper_findable, which=on_path(**{"espeak-ng": "/x"}))
+        self.assertEqual(["VOICE: Piper (en_US-ljspeech-high)"], lines)
+        self.assertNotIn("Offer the Piper voice", "\n".join(lines))
+        self.assertEqual("", err)
+
+    def test_piper_not_installed_is_not_called_piper_negative_control(self):
+        write_voice(self.project.root)
+        lines, _err = self.check(finder=piper_missing, which=on_path(**{"espeak-ng": "/x"}))
+        self.assertNotIn("VOICE: Piper", lines[0])
+
+    def test_a_platform_engine_names_why_piper_is_out_and_points_at_the_offer(self):
+        lines, _err = self.check(which=on_path(**{"espeak-ng": "/usr/bin/espeak-ng"}))
+        self.assertEqual(2, len(lines), lines)
+        self.assertTrue(lines[0].startswith("VOICE: platform engine espeak-ng (Piper is out: "),
+                        lines[0])
+        self.assertIn("Piper (piper-tts) is not installed for %s" % sys.executable, lines[0])
+        self.assertEqual(VIDEO.PIPER_OFFER_POINTER, lines[1])
+        self.assertIn('"Offer the Piper voice"', lines[1])
+
+    def test_the_platform_engines_keep_the_renders_order(self):
+        both = on_path(espeak="/usr/bin/espeak", **{"espeak-ng": "/usr/bin/espeak-ng"})
+        lines, _err = self.check(which=both)
+        self.assertTrue(lines[0].startswith("VOICE: platform engine espeak-ng "), lines[0])
+        lines, _err = self.check(which=on_path(espeak="/usr/bin/espeak"))
+        self.assertTrue(lines[0].startswith("VOICE: platform engine espeak "), lines[0])
+        lines, _err = self.check(which=on_path(say="/usr/bin/say"), platform="darwin")
+        self.assertTrue(lines[0].startswith("VOICE: platform engine say "), lines[0])
+
+    def test_a_platform_engine_is_not_called_none_negative_control(self):
+        lines, _err = self.check(which=on_path(**{"espeak-ng": "/usr/bin/espeak-ng"}))
+        self.assertFalse(lines[0].startswith("VOICE: none"), lines[0])
+
+    def test_no_engine_says_none_with_both_reasons_and_points_at_the_offer(self):
+        lines, _err = self.check(which=on_path())
+        self.assertEqual(2, len(lines), lines)
+        self.assertTrue(lines[0].startswith("VOICE: none (Piper is out: "), lines[0])
+        self.assertIn("no speech engine found (tried espeak-ng (not on PATH), espeak (not on "
+                      "PATH))", lines[0])
+        self.assertEqual(VIDEO.PIPER_OFFER_POINTER, lines[1])
+
+    def test_no_engine_with_piper_set_up_is_piper_negative_control(self):
+        write_voice(self.project.root)
+        lines, _err = self.check(finder=piper_findable, which=on_path())
+        self.assertEqual(["VOICE: Piper (en_US-ljspeech-high)"], lines)
+
+    def test_a_missing_model_or_config_is_named(self):
+        write_voice(self.project.root, config=False)
+        lines, _err = self.check(finder=piper_findable,
+                                 which=on_path(**{"espeak-ng": "/usr/bin/espeak-ng"}))
+        self.assertIn("has no config beside it", lines[0])
+        self.assertEqual(VIDEO.PIPER_OFFER_POINTER, lines[1])
+
+    def test_a_non_default_voice_model_is_honored(self):
+        other = write_voice(self.project.root, rel="voices/en_GB-alba-medium.onnx")
+        lines, _err = self.check("--voice-model", str(other), finder=piper_findable)
+        self.assertEqual(["VOICE: Piper (en_GB-alba-medium)"], lines)
+
+    def test_without_the_voice_model_flag_the_default_is_looked_for_negative_control(self):
+        write_voice(self.project.root, rel="voices/en_GB-alba-medium.onnx")
+        lines, _err = self.check(finder=piper_findable)
+        self.assertIn("no Piper voice model at %s"
+                      % (self.project.root / VIDEO.DEFAULT_VOICE_MODEL), lines[0])
+
+    def test_the_project_root_is_honored(self):
+        with tempfile.TemporaryDirectory() as elsewhere:
+            write_voice(elsewhere)
+            lines, _err = self.check(finder=piper_findable, root=elsewhere)
+            self.assertEqual(["VOICE: Piper (en_US-ljspeech-high)"], lines)
+        write_voice(self.project.root)
+        with tempfile.TemporaryDirectory() as empty:
+            lines, _err = self.check(finder=piper_findable, root=empty)
+            self.assertIn("no Piper voice model at %s"
+                          % (Path(empty).resolve() / VIDEO.DEFAULT_VOICE_MODEL), lines[0])
+
+    def test_windows_names_sapi_without_running_powershell(self):
+        lines, _err = self.check(which=on_path(powershell="C:/Windows/powershell.exe"),
+                                 platform="win32")
+        self.assertTrue(lines[0].startswith(
+            "VOICE: platform engine Windows SAPI (not verified by --check) (Piper is out: "),
+            lines[0])
+        self.assertEqual(VIDEO.PIPER_OFFER_POINTER, lines[1])
+        lines, _err = self.check(which=on_path(pwsh="/usr/bin/pwsh"), platform="win32")
+        self.assertIn("Windows SAPI (not verified by --check)", lines[0])
+
+    def test_windows_without_powershell_falls_through_to_espeak(self):
+        lines, _err = self.check(which=on_path(**{"espeak-ng": "C:/espeak-ng.exe"}),
+                                 platform="win32")
+        self.assertTrue(lines[0].startswith("VOICE: platform engine espeak-ng "), lines[0])
+
+    def test_the_render_still_runs_the_sapi_check_negative_control(self):
+        """Only probe mode skips `_sapi_available`; the render's lookup still asks PowerShell."""
+        sapi = mock.Mock(return_value=True)
+        with mock.patch.object(VIDEO.shutil, "which", side_effect=on_path(powershell="ps")), \
+                mock.patch.object(VIDEO.sys, "platform", "win32"), \
+                mock.patch.object(VIDEO, "_sapi_available", sapi):
+            engine, _tried = VIDEO.find_speech_engine()
+        sapi.assert_called_once_with("ps")
+        self.assertEqual("Windows SAPI (System.Speech)", engine.name)
+
+    def test_check_launches_no_subprocess_on_any_platform(self):
+        everything = on_path(say="/s", powershell="/p", pwsh="/q", espeak="/e",
+                             **{"espeak-ng": "/n"})
+        for platform in ("linux", "darwin", "win32"):
+            for finder in (piper_missing, piper_findable):
+                with self.subTest(platform=platform, finder=finder.__name__):
+                    self.check(finder=finder, which=everything, platform=platform)
+                    self.check(finder=finder, which=on_path(), platform=platform)
+
+    def test_no_voice_says_none_warns_and_has_no_pointer(self):
+        lines, err = self.check("--no-voice", which=on_path(**{"espeak-ng": "/x"}))
+        self.assertEqual(["VOICE: none (--no-voice)"], lines)
+        self.assertIn("WARNING: " + VIDEO.NO_VOICE_WARNING, err.splitlines())
+        self.assertIn("graduation never uses", VIDEO.NO_VOICE_WARNING)
+
+    def test_no_voice_wins_over_a_piper_that_is_set_up(self):
+        write_voice(self.project.root)
+        lines, _err = self.check("--no-voice", finder=piper_findable)
+        self.assertEqual(["VOICE: none (--no-voice)"], lines)
+
+    def test_without_no_voice_there_is_no_warning_negative_control(self):
+        _lines, err = self.check(which=on_path(**{"espeak-ng": "/x"}))
+        self.assertNotIn(VIDEO.NO_VOICE_WARNING, err)
+
+    def test_an_invalid_storyboard_prints_no_voice_line(self):
+        board = a_storyboard()
+        del board["scenes"][0]["narration"]
+        project = Project(board)
+        self.addCleanup(project.close)
+        code, out, err = run_main("--storyboard", str(project.storyboard_path),
+                                  "--project-root", str(project.root), "--check")
+        self.assertEqual(VIDEO.EXIT_INVALID_STORYBOARD, code)
+        self.assertNotIn("VOICE:", out)
+        self.assertIn("INVALID:", err)
+
+    def test_the_check_still_prints_the_storyboard_line_first(self):
+        result = self.project.run("--check")
+        self.assertEqual(0, result.returncode, result.stderr)
+        lines = result.stdout.splitlines()
+        self.assertTrue(lines[0].startswith("Storyboard valid"), lines)
+        self.assertTrue(lines[1].startswith("VOICE: "), lines)
+
+
+@requires_pillow
+class TheCheckAndTheRenderPickTheSameVoice(unittest.TestCase):
+    """The drift guard: `--check`'s `VOICE:` line names the engine the render's `Voice:` line
+    then reports, for Piper, a platform engine and none. The render is the in-process one with
+    a fake subprocess and the encode stubbed, as in `PiperComesFirstInTheRender`."""
+
+    def setUp(self):
+        self.board = a_storyboard([
+            {"type": "title_card", "duration": 1, "narration": "one", "module": "A"},
+            {"type": "title_card", "duration": 1, "narration": "two", "module": "B"},
+        ])
+        self.project = Project(self.board)
+        self.addCleanup(self.project.close)
+
+    def both(self, finder, platform, *flags):
+        def encode(ctx, plan, ffmpeg, audio, output, log_path, music=None):
+            output.write_bytes(b"mp4")
+            return True, ""
+
+        def find_speech_engine(probe=False):
+            return (platform, []) if platform else (None, ["espeak-ng (not on PATH)"])
+
+        argv = ("--storyboard", str(self.project.storyboard_path),
+                "--output", str(self.project.output),
+                "--project-root", str(self.project.root)) + flags
+        with mock.patch.object(VIDEO, "_find_spec", side_effect=finder), \
+                mock.patch.object(VIDEO, "find_ffmpeg", return_value=("ffmpeg", [])), \
+                mock.patch.object(VIDEO, "find_speech_engine", side_effect=find_speech_engine), \
+                mock.patch.object(VIDEO.subprocess, "run", side_effect=FakeProcesses().run), \
+                mock.patch.object(VIDEO, "stream_frames", side_effect=encode):
+            code, check, _err = run_main(*(argv + ("--check",)))
+            self.assertEqual(0, code)
+            code, render, err = run_main(*argv)
+            self.assertEqual(0, code, err)
+        voice = next(l for l in check.splitlines() if l.startswith("VOICE: "))
+        spoke = next(l for l in render.splitlines() if l.startswith("Voice: "))
+        return voice, spoke
+
+    def test_piper(self):
+        write_voice(self.project.root)
+        voice, spoke = self.both(piper_findable, FAKE_PLATFORM)
+        self.assertEqual("VOICE: Piper (en_US-ljspeech-high)", voice)
+        self.assertTrue(spoke.startswith("Voice: Piper (en_US-ljspeech-high) ("), spoke)
+
+    def test_a_platform_engine(self):
+        voice, spoke = self.both(piper_missing, FAKE_PLATFORM)
+        self.assertTrue(voice.startswith("VOICE: platform engine fake-platform "), voice)
+        self.assertTrue(spoke.startswith("Voice: fake-platform ("), spoke)
+
+    def test_none(self):
+        voice, spoke = self.both(piper_missing, None)
+        self.assertTrue(voice.startswith("VOICE: none (Piper is out: "), voice)
+        self.assertEqual("Voice: none (no speech engine found)", spoke)
+
+    def test_no_voice(self):
+        write_voice(self.project.root)
+        voice, spoke = self.both(piper_findable, FAKE_PLATFORM, "--no-voice")
+        self.assertEqual("VOICE: none (--no-voice)", voice)
+        self.assertEqual("Voice: none (--no-voice)", spoke)
+
+
+@requires_pillow
+class NoVoiceWarnsAndStillRenders(unittest.TestCase):
+    """A render with `--no-voice` prints the opt-out warning on stderr and still exits 0 with
+    the same `Voice:` and `Music:` lines; without the flag there is no warning."""
+
+    def render(self, *flags):
+        project = Project(a_storyboard([
+            {"type": "title_card", "duration": 1, "narration": "one", "module": "A"}]))
+        self.addCleanup(project.close)
+
+        def encode(ctx, plan, ffmpeg, audio, output, log_path, music=None):
+            output.write_bytes(b"mp4")
+            return True, ""
+
+        with mock.patch.object(VIDEO, "find_ffmpeg", return_value=("ffmpeg", [])), \
+                mock.patch.object(VIDEO, "_find_spec", side_effect=piper_missing), \
+                mock.patch.object(VIDEO, "find_speech_engine", return_value=(FAKE_ENGINE, [])), \
+                mock.patch.object(VIDEO, "synthesize_pcm", return_value=pcm_seconds(0.2)), \
+                mock.patch.object(VIDEO, "stream_frames", side_effect=encode):
+            code, out, err = run_main("--storyboard", str(project.storyboard_path),
+                                      "--output", str(project.output),
+                                      "--project-root", str(project.root), *flags)
+        self.assertEqual(0, code, err)
+        self.assertEqual(["mp4"], [p.suffix[1:] for p in [project.output] if p.exists()])
+        return out, err
+
+    def test_the_warning_is_one_stderr_line(self):
+        out, err = self.render("--no-voice")
+        warnings = [l for l in err.splitlines() if VIDEO.NO_VOICE_WARNING in l]
+        self.assertEqual(["WARNING: " + VIDEO.NO_VOICE_WARNING], warnings)
+        self.assertIn("Voice: none (--no-voice)\nMusic: yes\n", out)
+        self.assertNotIn(VIDEO.NO_VOICE_WARNING, out)
+
+    def test_no_warning_without_the_flag_negative_control(self):
+        out, err = self.render()
+        self.assertNotIn(VIDEO.NO_VOICE_WARNING, err)
+        self.assertIn("Voice: fake-voice (1 of 1 scenes narrated)\nMusic: yes\n", out)
 
 
 if __name__ == "__main__":

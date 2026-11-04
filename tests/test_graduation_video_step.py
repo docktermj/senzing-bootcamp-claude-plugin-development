@@ -35,6 +35,14 @@ with the bundled renderer (`generate_recap_video.py`, #299). These tests pin:
 * **The checks**: 2:00 ± 10 s with one re-render, frames looked at, audio read from the `Voice:`
   and `Music:` lines (#339), skipped checks reported.
 * **Where it is named**: the closing announcement and the return guide.
+* **The render path cues the Piper offer** (#853): "Render it" carries a ⛔ line, next to the
+  commands, that graduation never passes `--no-voice`, and the rule for reading `--check`'s
+  `VOICE:` line (make a Piper offer not yet made, and do not render; render after a decline or a
+  failed install), with negative controls that drop or move it. Each `VOICE:` form the rule names
+  is one the renderer's `voice_plan_lines` prints, and each line it prints matches exactly one
+  form (grafted from the race's approach A, with a mutated-form negative control). The renderer's
+  pointer names this skill's "Offer the Piper voice" heading, and the Piper question says the
+  built-in voice sounds noticeably more robotic.
 
 Stdlib only; the renderer's validator needs neither Pillow nor ffmpeg (INV-108).
 
@@ -46,11 +54,12 @@ Also enforces **INV-342**'s 2026-10-02 audio-contract note (#339) for Step 1c's 
 reads the renderer's exact `Voice:` and `Music:` lines. It does **not** establish that the renderer
 prints them, which `tests/test_recap_video.py` asserts.
 
-Source issues: #300 (part of #297), #339, #341, #326, #347.
+Source issues: #300 (part of #297), #339, #341, #326, #347, #853.
 
 Run:  python3 -m unittest discover -s tests
 """
 import ast
+import importlib.machinery
 import importlib.util
 import json
 import re
@@ -58,6 +67,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
@@ -83,7 +93,7 @@ PIPER_OFFER = ("> 👉 **May I install the Piper neural voice so the narration s
                "downloads about 200 MB into this project: `piper-tts` (GPL-3.0, runs on your "
                "machine) into `data/temp/recap-venv/`, and the public-domain `en_US-ljspeech-high` "
                "voice into `data/temp/piper-voices/`. (Reply no to narrate with your computer's "
-               "built-in voice.)")
+               "built-in voice, which sounds noticeably more robotic.)")
 PIPER_VARIANT = ("…into `data/temp/recap-venv/` along with Pillow and `imageio-ffmpeg`, which "
                  "rendering needs, and the public-domain `en_US-ljspeech-high` voice…")
 
@@ -900,6 +910,182 @@ class ThePiperOfferIsPinned(unittest.TestCase):
         flat = squash(step_1c())
         self.assertIn("naming the voice from the renderer's `Voice:` line", flat)
         self.assertIn("narrated by Piper (en_US-ljspeech-high).", flat)
+
+
+#: #853: the ⛔ line "Render it" carries, next to the commands.
+NO_VOICE_BAN = ("⛔ **(INV-340) Graduation never passes `--no-voice`, to `--check` or to the "
+                "render.**")
+#: #853: the clauses of the rule for reading `--check`'s `VOICE:` line (scope item 5).
+VOICE_RULE = (
+    "When the `VOICE:` line names a voice other than Piper and the Piper offer has not been "
+    "made in this graduation, make the offer now, ending the turn on it, and do not render.",
+    "When the bootcamper already declined it, or its install failed, render without asking "
+    "again (INV-006, INV-056).",
+)
+OLD_PIPER_NO = "(Reply no to narrate with your computer's built-in voice.)"
+
+
+def render_it(text=None):
+    """Step 1c's "Render it" section, up to the exit-code list it ends on."""
+    text = step_1c() if text is None else text
+    return section(text, "#### Render it", "Act on its exit")
+
+
+def voice_rule_problems(text):
+    """What is missing from "Render it"'s rule for reading `--check`'s `VOICE:` line."""
+    render = squash(render_it(text))
+    problems = ["missing from Render it: %r" % clause for clause in VOICE_RULE
+                if clause not in render]
+    if "**Read `--check`'s `VOICE:` line before you render.**" not in render:
+        problems.append("the rule has no heading sentence")
+    commands = render.index("generate_recap_video.py\" --check")
+    if VOICE_RULE[0] in render and render.index(VOICE_RULE[0]) < commands:
+        problems.append("the rule comes before the commands it reads")
+    return problems
+
+
+def stated_voice_forms(render):
+    """The backticked `VOICE:` forms "Render it"'s reading rule names, in order."""
+    flat = squash(render)
+    start = flat.index("**Read `--check`'s `VOICE:` line before you render.**")
+    rule = flat[start:flat.index("render without asking again", start)]
+    return re.findall(r"`(VOICE: [^`]*)`", rule)
+
+
+def form_pattern(form):
+    """A stated form as a regex: `<name>` and `…` stand for any non-empty text."""
+    parts = re.split(r"(<name>|…)", form)
+    return re.compile("^" + "".join(".+" if p in ("<name>", "…") else re.escape(p)
+                                    for p in parts) + "$")
+
+
+def renderer_voice_lines(renderer):
+    """What `--check`'s `voice_plan_lines` prints for Piper set up, a platform engine, no
+    engine and `--no-voice`, launching nothing: Piper's `find_spec` and `PATH` are stubbed."""
+    found = importlib.machinery.ModuleSpec("piper", None)
+    printed = {}
+    with tempfile.TemporaryDirectory() as root:
+        model = Path(root) / "en_US-ljspeech-high.onnx"
+        model.write_bytes(b"onnx")
+        renderer.piper_config_path(model).write_text("{}", encoding="utf-8")
+        cases = (
+            ("Piper", found, {}, False),
+            ("a platform engine", None, {"espeak-ng": "/usr/bin/espeak-ng"}, False),
+            ("no engine", None, {}, False),
+            ("--no-voice", found, {"espeak-ng": "/usr/bin/espeak-ng"}, True),
+        )
+        for case, spec, on_path, no_voice in cases:
+            with mock.patch.object(renderer, "_find_spec", return_value=spec), \
+                    mock.patch.object(renderer.sys, "platform", "linux"), \
+                    mock.patch.object(renderer.shutil, "which", side_effect=on_path.get):
+                printed[case] = renderer.voice_plan_lines(no_voice, model)
+    return printed
+
+
+def voice_form_problems(forms, printed):
+    """Where the stated `VOICE:` forms and the renderer's `VOICE:` lines disagree."""
+    patterns = [form_pattern(form) for form in forms]
+    problems = []
+    for case, lines in printed.items():
+        matched = [form for form, p in zip(forms, patterns) if p.match(lines[0])]
+        if len(matched) != 1:
+            problems.append("%s: %r matches %d stated forms %r"
+                            % (case, lines[0], len(matched), matched))
+    for form, p in zip(forms, patterns):
+        if not any(p.match(lines[0]) for lines in printed.values()):
+            problems.append("the renderer prints no line of the form %r" % form)
+    return problems
+
+
+class TheRenderPathCuesThePiperOffer(unittest.TestCase):
+    """#853: the `--no-voice` ban and the `VOICE:` reading rule sit next to the commands."""
+
+    def test_render_it_bans_no_voice_on_its_own_line(self):
+        render = render_it()
+        self.assertEqual(1, render.count(NO_VOICE_BAN))
+        line = next(l for l in render.splitlines() if l.startswith("⛔"))
+        self.assertTrue(line.startswith("⛔ **(INV-340)"), "the ⛔ line cites INV-340 on its "
+                        "own line")
+        self.assertIn("The `--no-voice` row under \"When the video has no voice\" is the "
+                      "defensive case only.", squash(render))
+
+    def test_the_ban_follows_the_commands_and_precedes_the_exit_codes(self):
+        text = step_1c()
+        ban = text.index(NO_VOICE_BAN)
+        self.assertLess(text.index("generate_recap_video.py\"\n"), ban)
+        self.assertLess(ban, text.index("- **0, rendered.**"))
+
+    def test_the_defensive_row_stays(self):
+        self.assertIn("graduation never passes `--no-voice`, so this case is defensive",
+                      step_1c())
+
+    def test_no_command_passes_no_voice(self):
+        self.assertNotRegex(step_1c(), r"generate_recap_video\.py\"[^\n]*--no-voice")
+
+    def test_the_voice_rule_is_stated(self):
+        self.assertEqual([], voice_rule_problems(step_1c()))
+
+    def test_the_voice_rule_names_the_three_line_shapes(self):
+        render = squash(render_it())
+        for shape in ("`VOICE: Piper (en_US-ljspeech-high)`",
+                      "`VOICE: platform engine <name> (Piper is out: …)`",
+                      "`VOICE: none (…)`"):
+            with self.subTest(shape=shape):
+                self.assertIn(shape, render)
+        self.assertIn('a line pointing at "Offer the Piper voice" follows it', render)
+
+    def test_the_voice_rule_negative_controls(self):
+        flat = squash(step_1c())
+        cases = {
+            "the rule dropped": flat.replace(VOICE_RULE[0], ""),
+            "no 'do not render'": flat.replace(", and do not render.", "."),
+            "no declined clause": flat.replace(VOICE_RULE[1], ""),
+            "moved below Render it": flat.replace(VOICE_RULE[0], "").replace(
+                "- **0, rendered.**", VOICE_RULE[0] + " - **0, rendered.**"),
+            "moved above the commands": flat.replace(VOICE_RULE[0], "").replace(
+                "#### Render it ", "#### Render it " + VOICE_RULE[0] + " "),
+        }
+        for name, mutated in cases.items():
+            with self.subTest(case=name):
+                self.assertNotEqual(flat, mutated, "the mutation must change the text")
+                self.assertNotEqual([], voice_rule_problems(mutated))
+
+    def test_each_voice_form_the_rule_names_is_one_the_renderer_prints(self):
+        """Grafted from #853's approach A: the skill text and the script cannot drift apart.
+        Every `VOICE:` form the reading rule names matches a line `--check` prints, and every
+        line `--check` prints matches exactly one form the rule names."""
+        forms = stated_voice_forms(render_it())
+        self.assertEqual(3, len(forms), forms)
+        printed = renderer_voice_lines(load_renderer())
+        self.assertEqual([], voice_form_problems(forms, printed))
+        for case in ("a platform engine", "no engine"):
+            with self.subTest(case=case):
+                self.assertIn('"Offer the Piper voice"', printed[case][1],
+                              "the rule says a pointer line follows a non-Piper voice")
+
+    def test_a_form_the_renderer_does_not_print_is_caught_negative_control(self):
+        printed = renderer_voice_lines(load_renderer())
+        forms = stated_voice_forms(render_it())
+        mutated = [f.replace(" (Piper is out: …)", "; Piper is out: <reason>") for f in forms]
+        self.assertNotEqual(forms, mutated, "the mutation must change a form")
+        self.assertNotEqual([], voice_form_problems(mutated, printed))
+        piper_renamed = [f.replace("en_US-ljspeech-high", "en_US-lessac-medium") for f in forms]
+        self.assertNotEqual(forms, piper_renamed, "the mutation must change a form")
+        self.assertNotEqual([], voice_form_problems(piper_renamed, printed))
+
+    def test_the_pointer_names_this_skills_heading(self):
+        """The renderer's pointer and the heading it points at are the same words."""
+        renderer = load_renderer()
+        self.assertIn('"Offer the Piper voice"', renderer.PIPER_OFFER_POINTER)
+        self.assertEqual(1, step_1c().count("#### Offer the Piper voice\n"))
+
+    def test_the_built_in_voice_is_called_more_robotic(self):
+        self.assertIn("(Reply no to narrate with your computer's built-in voice, which sounds "
+                      "noticeably more robotic.)", PIPER_OFFER)
+        self.assertEqual(1, step_1c().count(PIPER_OFFER))
+
+    def test_the_old_no_wording_is_gone_negative_control(self):
+        self.assertNotIn(OLD_PIPER_NO, read(GRADUATION))
 
 
 if __name__ == "__main__":
