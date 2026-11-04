@@ -5,6 +5,11 @@ Also folds any in-progress module recap checkpoint into docs/bootcamp_recap.md o
 resume, so a module that was interrupted (quit / compaction / prior session) keeps
 its in-progress narrative in the recap (see recap_checkpoint.py).
 
+When the recorded module has not begun (`current_step` null), the resume message also
+carries the module-start apparatus reminder, built by module_start_apparatus.py (#851):
+the INV-102 form for graduation, nothing for an apparatus-exempt module or a resume
+partway through a module.
+
 Cross-platform: invoked as a ``type: command`` hook whose ``command`` names the
 interpreter and this script, quoted (``python3 "<path>"``), per INV-052. Python is already a hard bootcamp dependency (the graduation recap PDF always
 runs under python3; the Truth Set visualization server also does when the chosen language is
@@ -13,6 +18,7 @@ Python).
 import sys
 
 import docker_lifecycle
+import module_start_apparatus
 import recap_checkpoint
 
 if recap_checkpoint.bootcamp_active():
@@ -38,6 +44,11 @@ if recap_checkpoint.bootcamp_active():
     containers = docker_lifecycle.resume_summary()
     if containers:
         message += " " + containers
+    # A module recorded but not begun (current_step null) starts with its apparatus; the
+    # reminder is built in one place, shared with module-start-reminder.py (INV-300).
+    apparatus = module_start_apparatus.resume_reminder()
+    if apparatus:
+        message += " " + apparatus
     print(message)
 
 sys.exit(0)
