@@ -75,6 +75,9 @@ Since #850 it also removes the introduction cue, moves it to just before the �
 directly after the instruction that presents the record(s) (grafted from #850's approach B), and
 strips its pointer, at every site.
 `TheAlreadyShownEntities` drops each exclusion, case, pointer and site consequence in turn.
+Since #856 `pairs_problems` also requires step 4a-pairs' "can supply none" exit to write
+`{"status": "completed", "pairs": []}`, the record module completion's Step 0c reads
+(`tests/test_module_completion_step_0.py`), and `TheRecordPairs` removes it as a control.
 Each must make the check report the problem it targets, not merely some problem.
 
 ⚠️ **What the derived scan cannot see** (`tests/_pointer_sites.py` says how it reads): a pointer
@@ -528,6 +531,11 @@ def pairs_problems(discover):
         "nothing shown hints at the answer": r"Show no entity ID, match key",
         "limited data shows as many as it can": r"show as\s+many as it can",
         "no pairs is said in one line": r"say so in one line and\s+continue to step 4b",
+        # #856: the "can supply none" exit leaves a record, so module completion's Step 0c
+        # can tell a step that ran with no pairs from one that never ran.
+        "the no-pairs exit writes a completed record":
+            r"That exit also writes\s+`module_7_query\.steps\[\"4a-pairs\"\] = "
+            r"\{\"status\": \"completed\", \"pairs\": \[\]\}`",
         "the last reveal goes with step 4b's first 👉": r"After the last pair it is step 4b's\s+"
                                                         r"first 👉",
         "a resume lands on the next pair": r"a resume lands on the next pair",
@@ -797,6 +805,16 @@ class TheRecordPairs(unittest.TestCase):
                             step + "### Step 4c: How Analysis introduction")
         self.assertEqual(pairs_problems(text),
                          ["Step 4a-pairs is not between step 4a and step 4b"])
+
+
+    def test_negative_control_the_no_pairs_exit_writes_nothing(self):
+        """#856: without the record, module completion would run step 4a-pairs a second time."""
+        text = re.sub(r" That exit also writes\s+`module_7_query\.steps\[\"4a-pairs\"\] = "
+                      r"\{[^`]*\}`, so module\s+completion knows the step ran\.", "",
+                      self.discover, count=1)
+        self.assertNotEqual(text, self.discover)
+        self.assertIn("Step 4a-pairs does not state the no-pairs exit writes a completed record",
+                      pairs_problems(text))
 
 
 class TheOwnEntityPrediction(unittest.TestCase):

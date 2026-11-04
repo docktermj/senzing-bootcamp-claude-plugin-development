@@ -284,22 +284,36 @@ the answer and which result is checked, and points here.
   source, the directing step runs on the first source the site's condition holds for. Every later
   source, and every later pass through the step (a resume after it ran, a `quality_iteration`
   remap), gets the step as before. Record it in `config/bootcamp_progress.json` as
-  `directing_steps.<module name token>`, set to `directed`, `guide_chose` or `none`, in the write
-  at that step boundary (INV-012). A value already there means the step has run.
+  `directing_steps.<module name token>`, set to `directed`, `guide_chose`, `none` or `skipped`, in
+  the write at that step boundary (INV-012). A value already there means the step is settled: it
+  ran, never arose, or was skipped, and nothing runs it again.
 - **No site, no directing step.** When the site's condition never holds (the site says when), the
-  module has no directing step, records `none` at module completion, and no other step stands in
-  for it.
+  module has no directing step, records `none` at the site, and no other step stands in
+  for it. **Only the site writes `none`, and only a site whose condition can fail to hold:** today
+  that is Data Quality, Mapping, and Transformation's step 11 alone, which says at which step
+  boundaries. Data processing's step 21 and Query, Visualize and Discover's step 1 always arise, so
+  neither ever writes `none`, and module completion never writes it.
+- **Skipped.** `skipped` means the module reached its completion with the value still unset: the
+  step was due and never ran. Only module completion writes it, in the modules where it does not
+  run the step late; `module-completion.md` Step 0a says which, and what runs instead. Where a site
+  forgot to write `none`, completion records `skipped` all the same: a step that may never have
+  arisen is recorded as skipped, and that false positive is the price of a skip that shows.
 - **Recording.** The 👉 and its answer are an ordinary Questions & Responses line
   (`module-completion.md`). The module's End-of-Module Summary carries one `**You directed:**`
   line, inline, after `**Why it matters:**` and before the optional takeaway. The recap keeps its
   four subsections and three labeled blocks, so the recap generator and its `--check` need nothing
-  new. Its three forms:
+  new. Its four forms:
   - directed: `**You directed:** {what they asked for, in their words}. You caught: {each
     difference, one clause each}.`, or `… Nothing differed.` when everything matched;
   - handed back: `**You directed:** nothing this module. You asked me to choose ("{their words}"),
     so the guide chose {what it did}.`;
   - no site: `**You directed:** nothing this module. {Why the step did not arise}, so there was no
-    step to hand over.`
+    step to hand over.`;
+  - skipped: `**You directed:** nothing this module. This module's directing step ({the step}) was
+    skipped, so you were not asked to direct it.`
+
+  The form follows the recorded value: `none` takes the no-site form and `skipped` the skipped
+  form, which says only that the step was skipped.
 
   The in-progress recap checkpoint carries the line from the step boundary where the comparison
   was shown, or where the step was handed back.
@@ -330,6 +344,18 @@ copy (INV-300).
   steer; every later failure in the module is fixed as before, without a steer. "At most one"
   allows zero: a module with no failure shows nothing.
   ⛔ **(INV-352) Never stage a failure to have one to show.**
+- **The trigger record.** A fired trigger is recorded in `config/bootcamp_progress.json` under
+  `steer_triggers.<module name token>`, a list of entries shaped
+  `{"kind": "failure|reversal", "evidence": "<one line, quoted from the tool's or engine's own output>", "filed": true|false}`.
+  `kind` is `failure` for trigger 1 and `reversal` for trigger 2. `filed` is on reversal entries
+  only: `false` when the entry is written, and set to `true` once the silent filing lands
+  (`feedback.md` → "Silent in-run append"). Write the entry in the write at the step boundary
+  where the trigger fired (INV-012). What is recorded: in an Act 2 hands-on module, the module's
+  first trigger, whatever its kind; in any module, every reversal, because each one needs its own
+  filing. The record lives only in the progress file, never in the checkpoint, so the recap
+  keepsake never shows a silent filing (INV-012). Module completion reads it, in
+  `module-completion.md` Step 0b, to show a steer that was due and never shown and to file a
+  reversal that was never filed.
 - **Two lines, after the fix.** The steer is shown once the fix has run (from Data processing on,
   its first line comes before the fix: see below), in this shape:
 
@@ -1244,13 +1270,15 @@ semantically wrong — see `../module-05-data-quality-mapping/phase1-quality-ass
 the engine told you, not something a check caught.
 
 How to file it: `feedback.md` → "Silent in-run append", with
-`Source: self-observed (assistant retrospective)`.
+`Source: self-observed (assistant retrospective)`. Each reversal is also a `steer_triggers` entry,
+written when it fires, as "Worked steers" above defines it.
 
 - **Silent.** No banners, no 👉 question, no announcement (INV-012). This is not the
   bootcamper-initiated feedback flow, and the bootcamper is never asked to author or approve it.
 - **(INV-373) Non-blocking.** `feedback.md` → "Silent in-run append" states what a failed append
   does, under its **Constraints**; do not restate it here (INV-300).
-- **Once.** Note that you filed it, so graduation's retrospective does not file it again.
+- **Once.** Set the entry's `filed` to `true` once the append lands, so neither module completion
+  nor graduation's retrospective files it again.
 - **The same reversal can also be the module's worked steer** (see "Worked steers" above): the
   filing stays silent, and the steer is shown.
 

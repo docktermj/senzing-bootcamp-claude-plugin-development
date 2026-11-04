@@ -1,7 +1,8 @@
 # Module Completion (run at the end of every module)
 
 Every module skill runs this process at its end, immediately **before** its
-transition 👉 question. It does three things, in this fixed order:
+transition 👉 question. Step 0 first catches a required step this module never ran. Then it does
+three things, in this fixed order:
 
 1. Update progress state.
 2. Append this module's recap section to `docs/bootcamp_recap.md` (the recap
@@ -14,6 +15,76 @@ throughout: `🛑`/`⛔` are internal, never rendered; one 👉 question ends th
 
 This is the Claude-plugin port of the Kiro `module-completion*` / `module-completion-artifacts` steering. It is deliberately lightweight and non-blocking. If any write fails, name what failed, do not claim the module is complete, and let the bootcamper decide how to proceed. The one exception is the B-roll entry (2e), which never blocks completion.
 
+## Step 0: Catch a required step that never ran
+
+A required step leaves a record whether it ran or not, and this step reads those records before
+Step 1's batched write, so whatever it records or runs lands before the recap is appended and
+before the transition 👉. Run its three sub-steps in order. Each states its condition, its action
+and its turn handling; a sub-step whose condition does not hold does nothing and asks nothing, so
+a module that skipped nothing goes straight on to Step 1 in the same turn.
+
+**When a sub-step runs a step that ends on a 👉, the turn ends on that 👉** (INV-251), and nothing
+after it in this process runs in that turn. The next turn finishes that step, then resumes at the
+following sub-step, then Step 1.
+
+**Where a resumed session re-enters (INV-006).** Each sub-step's condition reads the record its
+own action writes. So a resumed session runs Step 0 again from 0a, and every sub-step that already
+finished finds its record and does nothing: it re-enters at the first sub-step whose record is
+still missing, or at Step 1 when none is. The one record a resume can find unwritten is 0a's
+`skipped`, which Step 1's write carries: 0a records it again, which asks nothing and runs nothing
+twice. A 👉 that was asked and not yet answered is re-presented
+as the ask-once rule says, never asked a second time. Once Step 1's write has added this module's
+name token to `modules_completed`, Step 0 is over, and a resume past that point does not run it.
+
+### 0a. The directing step
+
+- **Condition.** The module is Data Quality, Mapping, and Transformation, Data processing, or
+  Query, Visualize and Discover, and `directing_steps.<module name token>` in
+  `config/bootcamp_progress.json` is still unset. What each value means, the `skipped` value
+  included, and that only the site writes `none`, are stated once in `ground-rules.md` →
+  "Directing steps" (INV-300, INV-354).
+- **Action in Data processing.** Run step 21's directing step now
+  (`../module-06-data-processing/phaseD-validation.md` step 21): its 👉, then the lookup and the
+  comparison, recorded as at the site. Run only the directing step; the rest of step 21 has run.
+- **Action in the other two.** Record `skipped`; Step 1's batched write carries it. Do not run the
+  step late.
+- **Turn.** Data processing's late directing step ends this turn on its 👉. The next turn builds
+  the lookup, shows the comparison, writes `directing_steps.data_processing` at that boundary as
+  the site does, and resumes at 0b. Recording `skipped` asks nothing: go on to 0b in the same turn.
+
+### 0b. The worked steer and the reversal filings
+
+- **Condition.** `steer_triggers.<module name token>` has entries. The record, what it holds and
+  when it is written are stated once in `ground-rules.md` → "Worked steers" (INV-300, INV-352).
+- **Action, the late steer: in an Act 2 hands-on module only.** When the module is one of the four
+  "Worked steers" names (INV-352), and `docs/progress/recap_checkpoint.md` carries no worked-steer
+  note for this module, show the first entry's two-line steer now, built from its `evidence`, with
+  no ask-first question, even from Data processing on. Add the checkpoint note that section
+  requires, so a resume shows no second one.
+- **Action, the filings: in every module.** File each reversal entry with `filed: false` now,
+  silently, through `feedback.md` → "Silent in-run append", whose last step marks it filed. A
+  filing that fails leaves `filed: false` and does not block completion (INV-373); graduation's
+  Step 0 can still file it.
+- **Turn.** Neither asks anything. The late steer is non-yielding and required output at every
+  verbosity, as "Worked steers" states (INV-352), so it goes in this turn ahead of the turn's 👉.
+  The filings are silent. Write the checkpoint note and the `filed` marks at the end of 0b, one
+  write per file and before any 👉 0c asks, then go on to 0c in the same turn.
+
+### 0c. Discover's step 4a-pairs
+
+- **Condition.** The module is Query, Visualize and Discover, `module_7_query.discover_phase` is
+  not `"skipped"`, and `module_7_query.steps["4a-pairs"]` is missing or its `status` is not
+  `completed`. The record's shape, and the `completed` record with no pairs that the step writes
+  when step 4a can supply none, are stated once in
+  `../module-07-query-visualize-discover/phase2-discover.md` → "Step 4a-pairs: Same entity or
+  not?" (INV-300, INV-357).
+- **Action.** Run step 4a-pairs now, with all of its rules, the already-shown-entities exclusion
+  included. An `in_progress` record resumes at its next pair; a missing one starts at item 1.
+- **Turn.** Each pair's 👉 ends its turn, as at the site. After the last pair the next 👉 is not
+  step 4b's: the last reveal goes in the turn that continues module completion at Step 1, and that
+  turn ends on this module's closing 👉. When step 4a can supply no pair, the step's one line and
+  its record ask nothing: go on to Step 1 in the same turn.
+
 ## Step 1: Update progress state
 
 In `config/bootcamp_progress.json`, apply all of the following as a **single** batched write (one
@@ -23,7 +94,7 @@ diff, not one write per field), done quietly (INV-012 — see `ground-rules.md`)
 - Set `current_module` to the next module in `selected_modules`, unconditionally, as Modules 0, 3 and 3b do (INV-413). This write comes before Step 4's transition question, so it never waits on the Bootcamper's answer: a Bootcamper who answers "not yet", or leaves before answering, resumes at that next module's start, and the journey map shows this module ✅ and the next 🔄. After the last content module, the next module is Bootcamp graduation, and "Reaching graduation (after the last content module)" below replaces Step 4.
 - Set top-level `current_step` to `null`.
 - Under `step_history["<module>"]`, set `{ "last_completed_step": "<final step>", "updated_at": "<ISO 8601>" }`.
-- **`directing_steps`, in Data Quality, Mapping, and Transformation, Data processing, and Query, Visualize and Discover only** (INV-413; the three modules with a `**You directed:**` line, Step 2b). When `directing_steps.<module name token>` is still unset, set it to `none`: the module had no directing step. Never overwrite a value a directing step already recorded (`directed`, `guide_chose` or `none`). The values are defined in `ground-rules.md` → "Directing steps" (INV-300, INV-354). No other module writes `directing_steps`.
+- **`directing_steps`, in Data Quality, Mapping, and Transformation, Data processing, and Query, Visualize and Discover only** (INV-413; the three modules with a `**You directed:**` line, Step 2b). When Step 0a recorded `skipped`, set `directing_steps.<module name token>` to `skipped`. Never overwrite a value a directing step already recorded (`directed`, `guide_chose` or `none`), and never write `none` here: only the site writes it. The values are defined in `ground-rules.md` → "Directing steps" (INV-300, INV-354). No other module writes `directing_steps`.
 
 ## Step 2: Append the recap section
 
@@ -119,7 +190,7 @@ graduation PDF renders exactly these four labeled sections per module):
 - **Information Shared** and **Actions Taken** carry real content from this module, never placeholders.
 - **Questions & Responses:** each substantive 👉 question you asked this module, paired with the bootcamper's actual answer, in ask order. If a module asked no substantive questions, write `- {none this module}`. A prediction's line also carries the engine's call and whether the two agreed; its format is stated once in `ground-rules.md` → "Predictions before results" (INV-300, INV-357).
 - **End-of-Module Summary:** the same What you accomplished / Files produced / Why it matters shown in the bootcamper-facing epilog (Step 3), persisted here as the permanent keepsake record (this subsection replaced the former Journal — INV-103); the **Bootcamper's takeaway** line is optional — include it only when the bootcamper gave a genuine takeaway, otherwise omit the line entirely (never write "N/A").
-  - **The `You directed:` line, in Data Quality, Mapping, and Transformation, Data processing, and Query, Visualize and Discover only.** One inline `**You directed:**` line after `**Why it matters:**`, naming what the Bootcamper directed and anything they caught, or saying the guide chose, or saying no step arose. Its three forms, and when each applies, are stated once in `ground-rules.md` → "Directing steps" (INV-300, INV-354). A module whose `directing_steps` entry in `config/bootcamp_progress.json` is still unset at this point had no directing step: record `none` in Step 1's write and use the no-site form. It is not a fourth block: `--check` validates the three labels above and nothing else.
+  - **The `You directed:` line, in Data Quality, Mapping, and Transformation, Data processing, and Query, Visualize and Discover only.** One inline `**You directed:**` line after `**Why it matters:**`, naming what the Bootcamper directed and anything they caught, or saying the guide chose, or saying no step arose, or saying the step was skipped. Its four forms, and when each applies, are stated once in `ground-rules.md` → "Directing steps" (INV-300, INV-354). The form follows the value in `directing_steps` once Step 0a and Step 1 have run: `none` takes the no-site form and `skipped` the skipped form. It is not a fourth block: `--check` validates the three labels above and nothing else.
   - ⛔ **Write all three as labeled blocks — `**What you accomplished:**`, `**Files produced:**`, `**Why it matters:**` — never as one prose paragraph.** The three labels are what the recap PDF renders and what `--check` validates (INV-103); a summary written as flowing prose satisfies the *heading* and loses all three blocks. The renderer now prints any absent block as "(not recorded)" in the keepsake rather than letting it disappear, so an unlabeled summary is visible on the page — but a bootcamper's PDF should never carry that marker. Blocks with no content still get their label: "(no files — conceptual primer)" under **Files produced** is a real answer; silence is not.
   - ⛔ **The shape of each block is required too, not just its label.** (INV-176) `**What you accomplished:**` and `**Files produced:**` are **lists** — label on its own line, then one bullet per accomplishment, and one bullet per file with a short "— what it is" gloss, exactly as the template above shows. `**Why it matters:**` is **prose** and stays inline after its label. The PDF renders bullets as bullets and inline text as one wrapped paragraph, so a list written inline — most often as a comma-joined run of paths — arrives in the keepsake as a paragraph, and nothing downstream can turn it back into a list: `--check` validates the label, not the shape. Write the shape you want the bootcamper to keep.
 - **Visualization screenshots:** when this module produced a visualization, capture is best-effort (see "Capturing visualization screenshots" below) — but **when a capture succeeds, embedding every screenshot it produced is required**, not optional, and no count cap applies (INV-146): add them all to this module's **Actions Taken** as Markdown images — `![caption](visualizations/<name>-<tab-slug>.png)` — in the app's tab order. ⛔ **Each image goes on a line of its own, with nothing before it — not as a `- ` bullet, even though Actions Taken is otherwise a bulleted list.** (INV-242) Write it like this, directly beneath the bullets:

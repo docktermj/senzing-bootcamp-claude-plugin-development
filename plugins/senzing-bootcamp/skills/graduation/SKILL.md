@@ -278,7 +278,9 @@ Go and look at what the project now contains:
 **Do not re-file what is already there.** `../bootcamp-onboarding/ground-rules.md` → "Reversed
 decisions: file them when they happen" means some of these are already in the file from during the
 run. Read the existing entries first and skip any finding already recorded; add to an entry only if
-you now have evidence it lacked.
+you now have evidence it lacked. A reversal whose `steer_triggers` entry in
+`config/bootcamp_progress.json` reads `filed: true` is already filed; one that reads `filed: false`
+is not, so file it here.
 
 For each finding, append a `## Improvement:` entry to
 `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` using the **exact template** in

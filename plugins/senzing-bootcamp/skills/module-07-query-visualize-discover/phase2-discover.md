@@ -173,7 +173,9 @@ than a copy here (INV-300, INV-357).
      together.
    - **When step 4a cannot supply 3,** including its graceful fallback for limited data, show as
      many as it can, even if they are all one kind. When it can supply none, say so in one line and
-     continue to step 4b.
+     continue to step 4b. That exit also writes
+     `module_7_query.steps["4a-pairs"] = {"status": "completed", "pairs": []}`, so module
+     completion knows the step ran.
 2. **Show one pair per turn, then ask.** First introduce the exercise, as
    `../bootcamp-onboarding/ground-rules.md` → "Predictions before results" requires before the
    site's first 👉 (INV-357). Present the two records' features side by side, read from

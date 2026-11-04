@@ -1504,7 +1504,7 @@ except the live `why`/`how`/`search`. Then ask the teardown gate, pinned verbati
 
 Module 7 is the **last content module before graduation** (required in every path). Once the gate
 is satisfied and the teardown step above is done or skipped, run the standard **Module Completion**
-process in `../bootcamp-onboarding/module-completion.md` (update progress, append the Module 7 recap
+process in `../bootcamp-onboarding/module-completion.md` (its Step 0 checks, update progress, append the Module 7 recap
 section to `docs/bootcamp_recap.md`, and present the end-of-module summary).
 
 <a id="headline-block"></a>

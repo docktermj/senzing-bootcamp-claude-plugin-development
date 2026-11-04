@@ -1568,14 +1568,17 @@ Ground rules (`ground-rules.md`, every turn):
 - Directing steps (`#directing-steps`, the one statement Module 5 step 11,
   Module 6 step 21 and Module 7 step 1 cite): one step per hands-on module,
   once, on the first source it applies to, recorded as
-  `directing_steps.<token>` (`directed`, `guide_chose`, `none`). One open 👉
+  `directing_steps.<token>` (`directed`, `guide_chose`, `none` or `skipped`;
+  only a site that can fail to arise, Module 5 step 11, writes `none`, and
+  only module completion writes `skipped`, #856). One open 👉
   pinned at its site asks what to build and what they expect, with no menu or
   recommendation. ⛔ The guide writes every line of code, from the MCP tools.
   The result is shown beside their words, `matches` or `differs`, every
   difference named from the tool's or engine's output, non-yielding and never
   graded; not a prediction. "You pick" or "I don't know" gets the step as
   before, with no re-ask. The End-of-Module Summary carries a
-  `**You directed:**` line in one of three forms.
+  `**You directed:**` line in one of four forms, following the recorded
+  value; the skipped form says only that the step was skipped.
 - Worked steers (`#worked-steers`, the one statement the four Act 2 hands-on
   modules' `SKILL.md` files cite; Act 1 shows none): ⛔ fired only when code
   the AI generated fails when run (non-zero exit, exception, `EMPTY` line) or
@@ -1587,7 +1590,11 @@ Ground rules (`ground-rules.md`, every turn):
   asked", otherwise fixed with a "differs from yours" clause, never asked
   twice; a question already due moves to the next turn. Required output,
   merged with `; ` under minimal; a `Worked steer shown:` checkpoint line
-  stops a second steer after a resume.
+  stops a second steer after a resume. A fired trigger is recorded in the
+  progress file only, as `steer_triggers.<token>` entries `{kind: failure |
+  reversal, evidence, filed}` (`filed` on reversals): an Act 2 module's first
+  trigger and every reversal, so module completion can catch a skipped steer
+  or filing (#856).
 - MCP-first: every Senzing fact (and claim about Senzing the company) comes
   from an MCP call this turn, a skill file, or a local measurement, else is
   labeled inference or omitted; a local measurement beats generic MCP
@@ -1669,8 +1676,10 @@ Ground rules (`ground-rules.md`, every turn):
   `updated_at`). Keep `docs/progress/recap_checkpoint.md` filled between
   `RECAP-CHECKPOINT:START/END` markers.
 - Reversed decisions (an audit changes a mapping, a score is corrected, a
-  change is abandoned) are filed via `feedback.md`'s silent append; the same
-  reversal can also be the module's worked steer, which is shown.
+  change is abandoned) are filed via `feedback.md`'s silent append, which
+  sets the reversal's `steer_triggers` entry to `filed: true` once it lands
+  (graduation Step 0 skips those); the same reversal can also be the module's
+  worked steer, which is shown.
 - Verbosity presets `minimal`/`concise`/`standard`/`detailed`; required
   output is never suppressed, only merged with a semicolon and a space.
 - Any-time controls (never the turn's 👉): feedback, make a note (feedback
@@ -1693,11 +1702,22 @@ Ground rules (`ground-rules.md`, every turn):
 
 Module completion (`module-completion.md`, before the transition question):
 
+- Step 0, before Step 1's write, catches a required step that never ran, in
+  order: 0a, an unset `directing_steps` entry runs step 21's directing step
+  late in Data processing and records `skipped` in Modules 5 and 7; 0b, in an
+  Act 2 module with a `steer_triggers` entry and no worked-steer checkpoint
+  note, shows the first entry's steer late with no ask-first question, and in
+  every module files each `filed: false` reversal silently (a failure does not
+  block); 0c, in Query, Visualize and Discover with Discover not `skipped`,
+  runs step 4a-pairs late when its record is missing or not `completed`,
+  resuming an `in_progress` one. A late step's 👉 ends the turn; a resume
+  re-enters at the first sub-step whose record is missing; once Step 1 has
+  written `modules_completed`, Step 0 does not run again (#856).
 - Step 1, one write: add the name token to `modules_completed`, advance
   `current_module` to the next selected module unconditionally (it runs
   before the transition question), null `current_step`, final
-  `step_history`, and in Modules 5, 6 and 7 an unset `directing_steps` entry
-  becomes `none`.
+  `step_history`, and in Modules 5, 6 and 7 the `skipped` Step 0a recorded
+  (never `none`, and never over a recorded value).
 - Step 2a: create `docs/bootcamp_recap.md`'s header if missing (name,
   started, programming language, path, plugin version).
 - Step 2b: append `## {Name} — {timestamp}` with H3 Information Shared,
@@ -1707,9 +1727,10 @@ Module completion (`module-completion.md`, before the transition question):
   `visualizations/<name>-<tab>.png` in tab order, captioned from the image.
   A prediction's Questions & Responses line takes the ground rules' format.
   In Modules 5, 6 and 7 the summary also carries one inline `**You
-  directed:**` line after Why it matters, in the ground rules' three forms
-  (directed with what they caught, handed back, or no site); it is not a
-  fourth block, so `--check` is unchanged.
+  directed:**` line after Why it matters, in the ground rules' four forms
+  (directed with what they caught, handed back, no site, or skipped),
+  following the recorded value; it is not a fourth block, so `--check` is
+  unchanged.
 - Step 2c: re-read, repair, run `generate_recap_pdf.py --check` silently,
   print `Recap updated: {Name}.`
 - Step 2d: strip checkpoint blocks and clear the checkpoint.
@@ -2517,7 +2538,10 @@ means the module is complete: only the transition question is asked.
     `QUESTION FORMAT` questions. Attribute names still come from the tool's
     reference; a feature with no family becomes payload and a difference.
     Step 12 shows that source's sample record beside their words. With no
-    such column anywhere, or every source fast-pathed, there is none.
+    such column anywhere, or every source fast-pathed, there is none, and
+    the site records `none` itself: at the boundary finishing the last source,
+    or where step 5a accepts the last fast path (a source sub-step 9 then adds
+    removes it, #856).
   - A payload key that collides with a feature name is renamed to
     `{KEY}_PAYLOAD` and said in one line, with no question. Pinned questions
     cover non-exempt cross-source feature pairs.
@@ -2857,7 +2881,8 @@ discoveries file. 4a finds multi-record, cross-source and related entities
 with the program `discover_patterns` in `src/query`
 (`steps.4a.patterns_found`). 4a-pairs then shows 3 record pairs from 4a's
 entities (at least one resolved together and one not; fewer when the data is
-short, none said in one line), one per turn, each a same-or-different
+short, none said in one line and recorded as a `completed` record with
+`pairs: []`), one per turn, each a same-or-different
 prediction whose reveal goes with the next 👉, checkpointed per pair in
 `steps.4a-pairs`. "Already-shown entities" (`#already-shown-entities`, the
 one statement 4a-pairs item 1 and 4b item 1 point to) excludes the headline
@@ -10899,21 +10924,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9052 test methods in 465 files, matching `inventory.test_count_total`.
+There are 9112 test methods in 466 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 9052.
+sum to 9112.
 
-Two files run more tests than they define, so discovery collects 9021:
+Two files run more tests than they define, so discovery collects 9119:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 9014`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 9112`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 9021`. No other count
+run count. With `pwsh` installed, the run reports `Ran 9119`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
@@ -11008,7 +11033,7 @@ looks wrong.
 - `tests/test_deployment_target_records_only_what_is_named.py`: 15
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
 - `tests/test_dev_install_surfaces_name_the_dev_repo.py`: 11
-- `tests/test_directing_steps.py`: 48
+- `tests/test_directing_steps.py`: 63
 - `tests/test_discoveries_pdf.py`: 58
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
@@ -11170,7 +11195,8 @@ looks wrong.
 - `tests/test_module_0_suggested_queries_are_measured.py`: 18
 - `tests/test_module_5_describes_the_entity_specification_as_served.py`: 9
 - `tests/test_module_7_points_at_the_factory_lifetime_rule.py`: 9
-- `tests/test_module_completion_step1_lists_every_write.py`: 11
+- `tests/test_module_completion_step1_lists_every_write.py`: 13
+- `tests/test_module_completion_step_0.py`: 32
 - `tests/test_module_instructions_do_not_hardcode_the_port.py`: 6
 - `tests/test_module_selection_sync.py`: 9
 - `tests/test_module_start_reminder.py`: 34
@@ -11211,7 +11237,7 @@ looks wrong.
 - `tests/test_plugin_manifest_reads_resolve_inside_the_plugin.py`: 13
 - `tests/test_poor_band_requires_a_mapping_cause.py`: 19
 - `tests/test_post_yes_switch_reads_the_dial.py`: 19
-- `tests/test_predictions_before_results.py`: 59
+- `tests/test_predictions_before_results.py`: 60
 - `tests/test_preparation_recap_template.py`: 9
 - `tests/test_prescribed_search_queries.py`: 56
 - `tests/test_profile_report_relocation_covers_both_filenames.py`: 15
@@ -11379,7 +11405,7 @@ looks wrong.
 - `tests/test_windows_browser_discovery.py`: 23
 - `tests/test_windows_forms_at_hand_run_sites.py`: 49
 - `tests/test_windows_powershell_guidance.py`: 42
-- `tests/test_worked_steers.py`: 33
+- `tests/test_worked_steers.py`: 43
 - `tests/test_wrapped_text.py`: 40
 - `tests/test_write_gate.py`: 23
 
@@ -11970,6 +11996,23 @@ tests a rebuild can pass from behavior alone.
     Required/Optional table raise no INV-075 in either exempt phase, while the
     table still does; the pre-#852 pattern turns `--selftest` red on the table
     fixture.
+- **Module completion's Step 0** (`tests/test_module_completion_step_0.py`,
+  32 tests, and additions to `test_directing_steps.py`,
+  `test_worked_steers.py`, `test_predictions_before_results.py` and
+  `test_module_completion_step1_lists_every_write.py`, #856).
+  - Step 0 sits before Step 1 with 0a, 0b and 0c in order, each with its
+    condition, action and turn; a late 👉 ends the turn and a resume
+    re-enters at the first missing record; each sub-step points at its
+    record's owner with the owner's invariant and copies no shape; no new 👉
+    is pinned. Controls remove or reorder each clause, run the step late in
+    Modules 5 and 7, restore the `none` default, add an ask-first question to
+    the late steer, block on a failed filing, and drop the Discover exemption.
+  - "Directing steps" defines `skipped`, its form and the site-only `none`
+    (`RULE_RETIRED` fails the old wording); Module 5 step 11 and step 5a write
+    `none` at their boundaries, and no Module 6 or 7 block writes it.
+  - "Worked steers" defines `steer_triggers` once, `feedback.md` step 4 and
+    graduation Step 0 read and set `filed`, and no other file copies the
+    entry's shape; 4a-pairs' "can supply none" exit writes the empty record.
 - **`package_bootcamp.py`** (`tests/test_package_bootcamp.py`,
   `tests/test_open_me_first_matches_the_manifest.py`,
   `tests/test_quoted_sizes_say_what_they_missed.py`).
@@ -14777,4 +14820,18 @@ Senzing licensing, with no SPDX identifier.
   `--no-voice`, then with `espeak-ng`, before ever making the Piper offer,
   because the ban sat in a table read after the render and nothing at render
   time cued the offer; dated notes on INV-340 and INV-342 are queued for
+  `/review-invariants`
+- #856: `module-completion.md` gains a Step 0 before Step 1's write that
+  catches a required step that never ran — 0a runs Data processing's
+  directing step late and records `skipped` in Modules 5 and 7, 0b shows a
+  due worked steer late with no ask-first question and files each unfiled
+  reversal, 0c runs Discover's step 4a-pairs late — while `directing_steps`
+  gains `skipped` and a fourth `**You directed:**` form, only Module 5's site
+  writes `none`, Step 1 no longer defaults an unset value to `none`, a new
+  `steer_triggers` record in the progress file holds fired triggers with
+  `filed` on reversals, and 4a-pairs' "can supply none" exit writes a
+  `completed` record with no pairs — a low-effort session skipped directing
+  steps, worked steers, the pairs and a reversal filing with nothing to catch
+  them, and completion's `none` default recorded a skip as a step that never
+  arose; dated notes on INV-354, INV-352, INV-357 and INV-413 are queued for
   `/review-invariants`

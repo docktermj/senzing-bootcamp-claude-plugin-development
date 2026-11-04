@@ -26,6 +26,15 @@ So the clauses are checked where they live:
 - **Act 1** (`act1_problems`): no mention of the rule and no copy of its question.
 - **The silent-filing section** (`cross_reference_problems`): the one-line cross-reference, which
   keeps the filing silent and shows the steer.
+- **The trigger record (#856)** (`rule_problems`, `filing_mark_problems`): a fired trigger is
+  recorded in `config/bootcamp_progress.json` as `steer_triggers.<module name token>`, defined
+  once in the shared section (its shape, what is recorded, written at the trigger's step boundary,
+  never in the checkpoint). The silent-filing section and `feedback.md` → "Silent in-run append"
+  step 4 set a reversal's `filed` to `true` once the append lands, where both used to say only
+  "note that you filed it"; graduation's Step 0 treats `filed: true` as already filed and files a
+  `filed: false` one. `definition_once_problems` fails a copy of the entry's shape in any other
+  skill file. Module completion's Step 0b, which reads the record, is pinned in
+  `tests/test_module_completion_step_0.py`.
 
 The checks are pure functions over a file's text, so each also runs on a mutated copy as its
 negative control (`TheChecksCatchARegression`). Each mutation must make the check report the
@@ -169,7 +178,29 @@ RULE_REQUIRED = {
     "a resume shows no second steer": r"checkpoint that already carries a `Worked steer shown:` "
                                       r"line for this\s+module means the steer was shown: show no "
                                       r"second one",
+    # #856: the trigger record, defined once here.
+    "a fired trigger is recorded as steer_triggers": r"\*\*The trigger record\.\*\* A fired "
+                                                     r"trigger is recorded in "
+                                                     r"`config/bootcamp_progress\.json` under "
+                                                     r"`steer_triggers\.<module name token>`",
+    "the entry's shape": r"`\{\"kind\": \"failure\|reversal\", \"evidence\": \"<one line, quoted "
+                         r"from the tool's or engine's own output>\", \"filed\": true\|false\}`",
+    "filed is on reversal entries only": r"`filed` is on reversal entries\s+only",
+    "filed turns true once the filing lands": r"set to `true` once the silent filing lands",
+    "it is written at the trigger's step boundary (INV-012)":
+        r"Write the entry in the write at the step boundary\s+where the trigger fired "
+        r"\(INV-012\)",
+    "Act 2 records the first trigger": r"in an Act 2 hands-on module, the module's\s+first "
+                                       r"trigger, whatever its kind",
+    "every reversal is recorded": r"in any module, every reversal, because each one needs its "
+                                  r"own\s+filing",
+    "it never reaches the keepsake": r"never in the checkpoint, so the recap\s+keepsake never "
+                                     r"shows a silent filing \(INV-012\)",
+    "module completion reads it": r"`module-completion\.md` Step 0b",
 }
+
+#: The entry's shape, which only the shared rule may carry (INV-300, #856).
+ENTRY_SHAPE = r"\"kind\": \"failure\|reversal\""
 
 
 def read(path):
@@ -314,6 +345,59 @@ def cross_reference_problems(ground_rules):
 
 
 # --------------------------------------------------------------------------------------------
+# The `filed` mark (#856)
+# --------------------------------------------------------------------------------------------
+
+FEEDBACK = SKILLS / "bootcamp-onboarding" / "feedback.md"
+GRADUATION = SKILLS / "graduation" / "SKILL.md"
+
+
+def filing_mark_problems(ground_rules, feedback, graduation):
+    """Each place that files a reversal marks it filed, and graduation reads the mark."""
+    problems = []
+    silent = section(ground_rules, SILENT_HEADING, ("\n## ",))
+    for what, pattern in {
+        "a reversal is a steer_triggers entry": r"Each reversal is also a `steer_triggers` entry, "
+                                                r"written when it fires",
+        "once means filed: true": r"\*\*Once\.\*\* Set the entry's `filed` to `true` once the "
+                                  r"append lands",
+    }.items():
+        if not match_lines(silent, pattern):
+            problems.append("the silent-filing section does not state that %s" % what)
+    if match_lines(silent, r"Note that you filed it"):
+        problems.append("the silent-filing section still says only to note the filing")
+    append = section(feedback, "## Silent in-run append", ("**Constraints:**",))
+    for what, pattern in {
+        "step 4 marks it filed": r"4\. \*\*Mark it filed\.\*\* Once step 3's re-read finds the "
+                                 r"entry, set that reversal's `filed` to `true`",
+        "step 4 points at the record (INV-352)": r"`ground-rules\.md` → \"Worked steers\" "
+                                                 r"defines \(INV-352\)",
+        "a failed filing stays filed: false": r"A filing that does not land leaves `filed: false`",
+    }.items():
+        if not match_lines(append, pattern):
+            problems.append("feedback.md's silent append does not state that %s" % what)
+    if match_lines(append, r"Note that you filed it"):
+        problems.append("feedback.md's silent append still says only to note the filing")
+    step0 = section(graduation, "## Step 0: Session retrospective", ("## Step 0b",))
+    for what, pattern in {
+        "filed: true is already filed": r"`steer_triggers` entry in "
+                                        r"`config/bootcamp_progress\.json` reads `filed: true` is "
+                                        r"already filed",
+        "filed: false is filed here": r"one that reads `filed: false` is not, so file it here",
+    }.items():
+        if not match_lines(step0, pattern):
+            problems.append("graduation Step 0 does not state that %s" % what)
+    return problems
+
+
+def definition_once_problems(texts):
+    """The entry's shape appears in the shared rule and nowhere else (INV-300)."""
+    return ["%s copies the steer_triggers entry's shape" % path.relative_to(SKILLS)
+            for path, text in texts.items()
+            if path.name != "ground-rules.md" and re.search(ENTRY_SHAPE, squash(text))]
+
+
+# --------------------------------------------------------------------------------------------
 # Tests on the shipped files
 # --------------------------------------------------------------------------------------------
 
@@ -381,6 +465,18 @@ class Act1KeepsItsBehavior(unittest.TestCase):
 class TheSilentFilingSectionCrossReferences(unittest.TestCase):
     def test_the_cross_reference(self):
         self.assertEqual([], cross_reference_problems(read(GROUND_RULES)))
+
+
+class TheTriggerRecord(unittest.TestCase):
+    def test_every_filing_site_marks_it_filed(self):
+        self.assertEqual([], filing_mark_problems(read(GROUND_RULES), read(FEEDBACK),
+                                                  read(GRADUATION)))
+
+    def test_the_shape_is_defined_once(self):
+        texts = all_skill_texts()
+        self.assertEqual([], definition_once_problems(texts))
+        self.assertTrue(re.search(ENTRY_SHAPE, squash(texts[GROUND_RULES])),
+                        "the shared rule no longer carries the shape the scan looks for")
 
 
 # --------------------------------------------------------------------------------------------
@@ -539,6 +635,63 @@ class TheChecksCatchARegression(unittest.TestCase):
         text = read(GROUND_RULES).replace("- **The same reversal can also be the module's worked "
                                           "steer**", "- **The same reversal**")
         self.assertReports(cross_reference_problems(text), "no cross-reference")
+
+    def test_rule_without_the_trigger_record(self):
+        text = read(GROUND_RULES).replace("- **The trigger record.** A fired trigger",
+                                          "- **The trigger.** A fired trigger")
+        self.assertReports(rule_problems(text), "a fired trigger is recorded as steer_triggers")
+
+    def test_rule_records_only_the_first_reversal(self):
+        text = read(GROUND_RULES).replace("in any module, every reversal, because each one needs "
+                                          "its own\n  filing", "nothing else")
+        self.assertNotEqual(text, read(GROUND_RULES))
+        self.assertReports(rule_problems(text), "every reversal is recorded")
+
+    def test_rule_puts_the_record_in_the_checkpoint(self):
+        text = read(GROUND_RULES).replace("never in the checkpoint, so the recap\n  keepsake never "
+                                          "shows a silent filing", "and in the checkpoint")
+        self.assertNotEqual(text, read(GROUND_RULES))
+        self.assertReports(rule_problems(text), "it never reaches the keepsake")
+
+    def test_rule_writes_the_record_at_completion(self):
+        text = read(GROUND_RULES).replace("Write the entry in the write at the step boundary\n  "
+                                          "where the trigger fired", "Write the entry at module "
+                                          "completion")
+        self.assertNotEqual(text, read(GROUND_RULES))
+        self.assertReports(rule_problems(text), "written at the trigger's step boundary")
+
+    def test_silent_section_back_to_noting_it(self):
+        text = read(GROUND_RULES).replace(
+            "- **Once.** Set the entry's `filed` to `true` once the append lands, so neither "
+            "module completion\n  nor graduation's retrospective files it again.",
+            "- **Once.** Note that you filed it, so graduation's retrospective does not file it "
+            "again.")
+        self.assertNotEqual(text, read(GROUND_RULES))
+        problems = filing_mark_problems(text, read(FEEDBACK), read(GRADUATION))
+        self.assertReports(problems, "once means filed: true")
+        self.assertReports(problems, "still says only to note the filing")
+
+    def test_feedback_step_4_back_to_noting_it(self):
+        old = section(read(FEEDBACK), "4. **Mark it filed.**", ("**Constraints:**",))
+        text = read(FEEDBACK).replace(old, "4. **Note that you filed it** so graduation's Step 0 "
+                                      "does not file the same finding twice.\n\n")
+        self.assertNotEqual(text, read(FEEDBACK))
+        problems = filing_mark_problems(read(GROUND_RULES), text, read(GRADUATION))
+        self.assertReports(problems, "step 4 marks it filed")
+        self.assertReports(problems, "feedback.md's silent append still says only to note")
+
+    def test_graduation_refiles_a_filed_reversal(self):
+        text = read(GRADUATION).replace("reads `filed: true` is already filed",
+                                        "reads `filed: true` is filed again")
+        self.assertNotEqual(text, read(GRADUATION))
+        self.assertReports(filing_mark_problems(read(GROUND_RULES), read(FEEDBACK), text),
+                           "filed: true is already filed")
+
+    def test_the_shape_copied_into_another_file(self):
+        texts = dict(all_skill_texts())
+        path = SKILLS / "bootcamp-onboarding" / "module-completion.md"
+        texts[path] += '\nEach entry is `{"kind": "failure|reversal", "evidence": "…"}`.\n'
+        self.assertReports(definition_once_problems(texts), "module-completion.md copies")
 
     def test_filing_made_visible(self):
         text = read(GROUND_RULES).replace("- **Silent.** No banners, no 👉 question, no "

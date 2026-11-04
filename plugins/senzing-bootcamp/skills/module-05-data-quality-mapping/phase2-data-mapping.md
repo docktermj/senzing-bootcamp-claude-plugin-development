@@ -824,6 +824,12 @@ follow them there rather than a copy here (INV-300, INV-354). Only what is parti
   source it ran on. When `directing_steps.data_quality_mapping` is already set, it has run: on a
   resume, a later source or a `quality_iteration` remap, map the columns as the rest of this step
   says, with no directing 👉.
+- **When it never arises, this site records `none`.** Module 5 is the one site whose condition can
+  fail to hold, so it alone writes `none` (`../bootcamp-onboarding/ground-rules.md` → "Directing
+  steps", INV-354). Write `directing_steps.data_quality_mapping: none` in the write at the step
+  boundary where Module 5 finishes its last source with the value still unset. When every source
+  took the fast path, Phase 1 Step 5a writes it instead, in the write where the last fast path is
+  accepted.
 - **Before the 👉.** Present the mapping table for the columns the tool did place, as the
   presentation rules below say for the mode. Then list each undecided column with its population
   and sample values, and say in one line what each destination means: a feature Senzing matches
@@ -2080,7 +2086,7 @@ rejected it without an actionable reason (its `validation_rejections` hold the t
 Bootcamper chose to skip it. No `skipped` source: add nothing.
 
 Run the standard **Module Completion** process in
-`../bootcamp-onboarding/module-completion.md`: present the end-of-module summary (INV-032), append
+`../bootcamp-onboarding/module-completion.md`: run its Step 0 checks, present the end-of-module summary (INV-032), append
 the name-based Module 5 recap section to `docs/bootcamp_recap.md` (INV-085), show the
 `✅ Module complete: Data Quality, Mapping, and Transformation` line (INV-079), and end the turn on the pinned
 transition 👉 question naming the **next selected module** from `selected_modules` (INV-076 / INV-079):

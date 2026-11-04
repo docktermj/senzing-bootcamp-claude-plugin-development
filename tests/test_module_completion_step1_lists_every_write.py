@@ -20,13 +20,15 @@ to the next `## ` heading):
    to advance, or depends on how the Bootcamper answers.
 2. **Step 1's list names `directing_steps`.** One bullet names it, limits it to the three
    directing modules (Data Quality, Mapping, and Transformation; Data processing; Query,
-   Visualize and Discover), sets an unset entry to `none`, and never overwrites a recorded value.
-3. **Step 1 stays one batched write** (INV-012), and Step 2b's "record `none` in Step 1's
-   write" sentence is still there, now matched by Step 1's list.
+   Visualize and Discover), and never overwrites a recorded value. Since #856 it writes the
+   `skipped` that Step 0a recorded, and never `none`: only the site writes `none`, and an unset
+   value is no longer defaulted to it.
+3. **Step 1 stays one batched write** (INV-012), and every field it writes is a bullet.
 
 Negative controls: the old "leave it on this module" parenthetical put back fails; a condition
 reworded onto the answer ("once the Bootcamper has chosen to advance") fails; the
-`directing_steps` bullet removed fails; the bullet without its never-overwrite clause fails.
+`directing_steps` bullet removed fails; the bullet without its never-overwrite clause fails; the
+pre-#856 unset-to-`none` default put back fails; the bullet without Step 0a's `skipped` fails.
 
 The file reads one named plugin file and walks no root, so it takes no list from
 `tests/_corpus.py`.
@@ -130,8 +132,13 @@ def directing_steps_problems(text):
             problems.append(f"does not name {module!r}")
     if not re.search(r"\bonly\b", bullet):
         problems.append("does not limit the write to the three directing modules")
-    if not re.search(r"still unset, set it to `none`", bullet):
-        problems.append("does not set an unset entry to `none`")
+    if not re.search(r"When Step 0a recorded `skipped`, set `directing_steps\.<module name "
+                     r"token>` to `skipped`", bullet):
+        problems.append("does not write the `skipped` Step 0a recorded")
+    if not re.search(r"never write `none` here: only the site writes it", bullet):
+        problems.append("does not say only the site writes `none`")
+    if re.search(r"still unset, set it to `none`", bullet):
+        problems.append("still defaults an unset entry to `none` (#856)")
     if not re.search(r"Never overwrite a value a directing step", bullet):
         problems.append("does not forbid overwriting a recorded value")
     return problems
@@ -194,8 +201,26 @@ class Step1ListsDirectingSteps(unittest.TestCase):
         self.assertNotEqual(text, read())
         self.assertNotEqual(directing_steps_problems(text), [])
 
-    def test_step_2b_still_points_at_step_1s_write(self):
-        self.assertIn("record `none` in Step 1's write", read())
+    def test_the_old_default_to_none_fails(self):
+        text = read().replace(
+            "When Step 0a recorded `skipped`, set `directing_steps.<module name token>` to "
+            "`skipped`.",
+            "When `directing_steps.<module name token>` is still unset, set it to `none`: the "
+            "module had no directing step.", 1)
+        self.assertNotEqual(text, read())
+        problems = directing_steps_problems(text)
+        self.assertTrue(any("still defaults an unset entry" in p for p in problems), problems)
+        self.assertTrue(any("`skipped` Step 0a recorded" in p for p in problems), problems)
+
+    def test_writing_none_here_fails(self):
+        text = read().replace("never write `none` here: only the site writes it",
+                              "write `none` when nothing else did", 1)
+        self.assertNotEqual(text, read())
+        problems = directing_steps_problems(text)
+        self.assertTrue(any("only the site writes `none`" in p for p in problems), problems)
+
+    def test_step_2b_no_longer_records_none_in_step_1s_write(self):
+        self.assertNotIn("record `none` in Step 1's write", read())
 
 
 class Step1StaysOneBatchedWrite(unittest.TestCase):
