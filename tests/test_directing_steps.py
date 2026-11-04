@@ -61,6 +61,18 @@ and says a value already set means the step has run, as Modules 6 and 7 do; its 
 the record; and it says Phase 1 named the columns at Step 5a (sub-steps 4 and 6), not Step 6.
 `m5_problems` pins all three, with negative controls and a re-wrap control.
 
+#856 stops module completion masking a skipped step as `none`. The shared rule gains a fourth
+value, `skipped`, written only by module completion (its Step 0a, pinned in
+`tests/test_module_completion_step_0.py`), and the fourth `**You directed:**` form; it states that
+only the site writes `none`, that Module 5's step 11 is the one such site, and that Modules 6 and 7
+never write it (`RULE_REQUIRED`, with `RULE_RETIRED` failing the old "records `none` at module
+completion" and "three forms"). Module 5 writes `none` at its two boundaries: step 11 on the last
+source with the value unset (`m5_problems`), and Phase 1 step 5a where the last fast path is
+accepted, undone when sub-step 9 adds a source (`fast_path_none_problems`).
+`writes_none_problems` fails any Module 6 or Module 7 block that writes `none` into
+`directing_steps`, and is shown not to be vacuous on Module 5. `completion_problems` requires
+Step 2b's form to follow the recorded value and fails the old "record `none` in Step 1's write".
+
 Stdlib only; shipped markdown read as text (INV-108).
 
 Source issue: #485 (part of #465); Module 5's record, #521; the citation at every pointer, #519.
@@ -113,7 +125,7 @@ POINTER_NAMES = ("the result beside the expectation", '"you pick" fallback', "on
                  "`You directed:`")
 
 #: Phrases only the shared rule may carry; a site that holds one has forked it (INV-300).
-RULE_ONLY = (r"set to `directed`, `guide_chose` or `none`", r"You caught: \{each",
+RULE_ONLY = (r"set to `directed`, `guide_chose`, `none` or `skipped`", r"You caught: \{each",
              r"\*\*You directed:\*\* nothing this module\.", r"A difference is a finding, not a grade")
 
 
@@ -229,8 +241,25 @@ RULE_REQUIRED = {
     "once per module": r"\*\*Once per module, on the first source it applies to\.\*\*",
     "later sources get the step as before": r"Every later\s+source, and every later pass",
     "the progress record": r"`directing_steps\.<module name token>`, set to `directed`, "
-                           r"`guide_chose` or `none`",
+                           r"`guide_chose`, `none` or `skipped`",
     "no site means no stand-in": r"no other step stands in\s+for it",
+    # #856: `none` is written at the site, and only by a site whose condition can fail to hold.
+    "no site records none at the site": r"records `none` at the site",
+    "only the site writes none": r"\*\*Only the site writes `none`, and only a site whose "
+                                 r"condition can fail to hold:\*\*",
+    "Module 5's step 11 is that site": r"Data Quality, Mapping, and Transformation's step 11 "
+                                       r"alone",
+    "Modules 6 and 7 never write none": r"Data processing's step 21 and Query, Visualize and "
+                                        r"Discover's step 1 always arise, so neither ever writes "
+                                        r"`none`",
+    "module completion never writes none": r"and module completion never writes it",
+    # #856: `skipped`, the value module completion records for a step that was due and never ran.
+    "skipped is defined": r"\*\*Skipped\.\*\* `skipped` means the module reached its completion "
+                          r"with the value still unset: the step was due and never ran",
+    "only module completion writes skipped": r"Only module completion writes it",
+    "Step 0a says where it is written": r"`module-completion\.md` Step 0a says which",
+    "a forgotten none is recorded skipped": r"Where a site forgot to write `none`, completion "
+                                            r"records `skipped` all the same",
     "the You directed line": r"one `\*\*You directed:\*\*`\s+line, inline, after "
                              r"`\*\*Why it matters:\*\*`",
     "the generator needs nothing new": r"the recap generator and its `--check` need nothing\s+new",
@@ -240,6 +269,19 @@ RULE_REQUIRED = {
                             r"me to choose",
     "the no-site form": r"no site: `\*\*You directed:\*\* nothing this module\. \{Why the step "
                         r"did not arise\}",
+    "there are four forms": r"Its four forms:",
+    "the skipped form": r"skipped: `\*\*You directed:\*\* nothing this module\. This module's "
+                        r"directing step \(\{the step\}\) was skipped, so you were not asked to "
+                        r"direct it\.`",
+    "the form follows the recorded value": r"`none` takes the no-site form and `skipped` the "
+                                           r"skipped form, which says only that the step was "
+                                           r"skipped",
+}
+
+#: What the rule said before #856, when module completion masked a skipped step as `none`.
+RULE_RETIRED = {
+    "module completion records none": r"records `none` at module completion",
+    "there are three forms": r"Its three forms:",
 }
 
 
@@ -253,6 +295,9 @@ def rule_problems(ground_rules):
     for what, pattern in RULE_REQUIRED.items():
         if not match_lines(rule, pattern):
             problems.append("the rule does not state that %s" % what)
+    for what, pattern in RULE_RETIRED.items():
+        if match_lines(rule, pattern):
+            problems.append("the rule still says %s (#856)" % what)
     for site in ("phase2-data-mapping.md` step 11", "phaseD-validation.md` step 21",
                  "phase1-query-visualize.md` step 1"):
         if site not in rule:
@@ -322,6 +367,15 @@ def m5_problems(phase2, module_files=()):
                                                     r"step says, with no directing 👉",
         "the checkpoint writes the record": r"\*\*Checkpoint:\*\* write step 11, with "
                                             r"`directing_steps\.data_quality_mapping`",
+        # #856: the site writes `none`, at the two boundaries where the step cannot arise.
+        "the site records none": r"\*\*When it never arises, this site records `none`\.\*\* "
+                                 r"Module 5 is the one site whose condition can fail to hold",
+        "none on the last source with the value unset":
+            r"Write `directing_steps\.data_quality_mapping: none` in the write at the step "
+            r"boundary where Module 5 finishes its last source with the value still unset",
+        "none where the last fast path is accepted":
+            r"When every source took the fast path, Phase 1 Step 5a writes it instead, in the "
+            r"write where the last fast path is accepted",
         # #521: Phase 1 names the columns at Step 5a (sub-steps 4 and 6), not at Step 6.
         "Phase 1 Step 5a named the columns": r"Phase 1 Step 5a has already named them "
                                              r"\(`unmapped_fields`, recorded at its sub-step 4 "
@@ -496,12 +550,60 @@ def completion_problems(completion):
             r"processing, and Query, Visualize and Discover only",
         "its forms are stated once in the ground rules (INV-300, INV-354)":
             r"stated once in `ground-rules\.md` → \"Directing steps\" \(INV-300, INV-354\)",
-        "an unset record means the no-site form": r"is still unset at this point had no "
-                                                  r"directing step",
+        # #856: the line's form follows the recorded value; an unset one is no longer `none`.
+        "the form follows the recorded value": r"The form follows the value in `directing_steps` "
+                                               r"once Step 0a and Step 1 have run: `none` takes "
+                                               r"the no-site form and `skipped` the skipped form",
+        "there are four forms": r"Its four forms, and when each applies",
         "it is not a fourth block": r"It is not a fourth block",
     }.items():
         if not match_lines(completion, pattern):
             problems.append("module-completion.md does not state %s" % what)
+    for what, pattern in {
+        "an unset record had no directing step": r"is still unset at this point had no "
+                                                 r"directing step",
+        "record none in Step 1's write": r"record `none` in Step 1's write",
+    }.items():
+        if match_lines(completion, pattern):
+            problems.append("module-completion.md still says %s (#856)" % what)
+    return problems
+
+
+# --------------------------------------------------------------------------------------------
+# Who writes `none` (#856)
+# --------------------------------------------------------------------------------------------
+
+M5_PHASE1 = M5_DIR / "phase1-quality-assessment.md"
+
+
+def fast_path_none_problems(phase1):
+    """Step 5a writes `none` where the last fast path is accepted, and undoes it on a new source."""
+    step = section(phase1, "## 5a. ", ("## 6. ",))
+    if not step:
+        return ["Module 5 Phase 1 has no step 5a"]
+    problems = []
+    for what, pattern in {
+        "the last fast path writes none": r"When this was the last source and every source took "
+                                          r"the fast path, the same checkpoint also writes "
+                                          r"`directing_steps\.data_quality_mapping: none`",
+        "it points at step 11 (INV-354)": r"\(`phase2-data-mapping\.md` step 11, INV-354\)",
+        "a source added at sub-step 9 removes it": r"Sub-step 9's answer 1 or 2 then adds a source "
+                                                   r"to map, so the write that records that "
+                                                   r"answer removes the `none` again",
+    }.items():
+        if not match_lines(step, pattern):
+            problems.append("step 5a does not state that %s" % what)
+    return problems
+
+
+def writes_none_problems(texts, where):
+    """No block in ``texts`` writes `none` into `directing_steps` (Modules 6 and 7, #856)."""
+    problems = []
+    for text in texts:
+        for flat, _ in _wrapped_text.collapsed_blocks(text):
+            if "`directing_steps" in flat and re.search(r"`none`|: none\b", flat):
+                problems.append("%s writes `none` into `directing_steps`: %r"
+                                % (where, flat[:120]))
     return problems
 
 
@@ -536,6 +638,17 @@ class EachModuleHasOneDirectingStep(unittest.TestCase):
 
     def test_query_visualize_discover_step_1_and_3a(self):
         self.assertEqual([], m7_problems(read(M7_PHASE1)))
+
+    def test_module_5_step_5a_writes_none_when_every_source_fast_paths(self):
+        self.assertEqual([], fast_path_none_problems(read(M5_PHASE1)))
+
+    def test_modules_6_and_7_never_write_none(self):
+        self.assertEqual([], writes_none_problems(module_texts(M6_DIR), "Module 6")
+                         + writes_none_problems(module_texts(M7_DIR), "Module 7"))
+
+    def test_module_5_is_the_one_module_that_writes_none(self):
+        """Not vacuous: the scan that clears Modules 6 and 7 finds Module 5's writes."""
+        self.assertGreaterEqual(len(writes_none_problems(module_texts(M5_DIR), "Module 5")), 2)
 
     def test_module_7_adds_no_directing_question_of_its_own(self):
         """#478 owns the opening question; #485 adds only the check and the credit."""
@@ -670,7 +783,71 @@ class TheChecksCatchARegression(unittest.TestCase):
                                           "## Directing steps\n\n👉 **Ready?**\n")
         self.assertReports(rule_problems(text), "the rule itself asks")
 
+    def test_rule_with_none_written_at_completion(self):
+        text = read(GROUND_RULES).replace("records `none` at the site,",
+                                          "records `none` at module completion,")
+        problems = rule_problems(text)
+        self.assertReports(problems, "no site records none at the site")
+        self.assertReports(problems, "still says module completion records none")
+
+    def test_rule_without_skipped(self):
+        text = read(GROUND_RULES).replace("`guide_chose`, `none` or `skipped`, in",
+                                          "`guide_chose` or `none`, in")
+        self.assertReports(rule_problems(text), "the progress record")
+
+    def test_rule_without_the_skipped_form(self):
+        text = read(GROUND_RULES).replace("  - skipped: `**You directed:**", "  - skipped: `")
+        self.assertReports(rule_problems(text), "the skipped form")
+
+    def test_rule_with_three_forms(self):
+        text = read(GROUND_RULES).replace("Its four forms:", "Its three forms:")
+        problems = rule_problems(text)
+        self.assertReports(problems, "there are four forms")
+        self.assertReports(problems, "still says there are three forms")
+
+    def test_rule_lets_module_6_write_none(self):
+        text = read(GROUND_RULES).replace("so\n  neither ever writes `none`", "so\n  either may write `none`")
+        self.assertNotEqual(text, read(GROUND_RULES))
+        self.assertReports(rule_problems(text), "Modules 6 and 7 never write none")
+
+    def test_rule_without_the_site_only_none(self):
+        text = read(GROUND_RULES).replace("**Only the site writes `none`, and only a site whose condition can fail to hold:**",
+                                          "**Any site may write `none`:**")
+        self.assertNotEqual(text, read(GROUND_RULES))
+        self.assertReports(rule_problems(text), "only the site writes none")
+
     # --- Module 5 ----------------------------------------------------------------------------
+
+    def test_m5_site_stops_writing_none(self):
+        text = read(M5_PHASE2).replace("Write `directing_steps.data_quality_mapping: none` in the write",
+                                       "Leave `directing_steps.data_quality_mapping` unset in the write")
+        self.assertNotEqual(text, read(M5_PHASE2))
+        self.assertReports(m5_problems(text), "none on the last source with the value unset")
+
+    def test_m5_fast_path_stops_writing_none(self):
+        text = read(M5_PHASE1).replace("the same checkpoint also writes", "the same checkpoint leaves")
+        self.assertNotEqual(text, read(M5_PHASE1))
+        self.assertReports(fast_path_none_problems(text), "the last fast path writes none")
+
+    def test_m5_sub_step_9_keeps_the_none(self):
+        text = read(M5_PHASE1).replace("removes\n     the `none` again", "keeps\n     the `none`")
+        self.assertNotEqual(text, read(M5_PHASE1))
+        self.assertReports(fast_path_none_problems(text), "a source added at sub-step 9 removes it")
+
+    def test_m6_writing_none(self):
+        text = read(M6_PHASED).replace(
+            "go straight to the review below.",
+            "go straight to the review below. When no record is named, set "
+            "`directing_steps.data_processing` to `none`.")
+        self.assertNotEqual(text, read(M6_PHASED))
+        self.assertReports(writes_none_problems([text], "Module 6"), "Module 6 writes `none`")
+
+    def test_m7_writing_none(self):
+        text = read(M7_PHASE1).replace(
+            "Record\n`directing_steps.query_visualize_discover` in step 1's checkpoint.",
+            "Record\n`directing_steps.query_visualize_discover: none` when they ask nothing.")
+        self.assertNotEqual(text, read(M7_PHASE1))
+        self.assertReports(writes_none_problems([text], "Module 7"), "Module 7 writes `none`")
 
     def test_m5_second_question(self):
         text = read(M5_PHASE2).replace(M5_QUESTION, M5_QUESTION + "\n\n👉 **Anything else?**")
@@ -816,6 +993,18 @@ class TheChecksCatchARegression(unittest.TestCase):
     def test_template_line_dropped(self):
         text = re.sub(r"\*\*You directed:\*\* \{the three[^\n]*\n", "", read(COMPLETION))
         self.assertReports(completion_problems(text), "no `**You directed:**` line")
+
+    def test_completion_defaults_unset_to_none_again(self):
+        text = read(COMPLETION).replace(
+            "The form follows the value in `directing_steps` once Step 0a and Step 1 have run: "
+            "`none` takes the no-site form and `skipped` the skipped form.",
+            "A module whose `directing_steps` entry in `config/bootcamp_progress.json` is still "
+            "unset at this point had no directing step: record `none` in Step 1's write and use "
+            "the no-site form.")
+        self.assertNotEqual(text, read(COMPLETION))
+        problems = completion_problems(text)
+        self.assertReports(problems, "the form follows the recorded value")
+        self.assertReports(problems, "still says record none in Step 1's write")
 
     def test_completion_pointer_dropped(self):
         text = read(COMPLETION).replace('"Directing steps" (INV-300, INV-354)', '"Directing steps"')

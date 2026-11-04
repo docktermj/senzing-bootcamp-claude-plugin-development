@@ -343,7 +343,11 @@ by `../graduation/SKILL.md` Step 0, which files the same way at the end of the r
 3. **Verify it landed** exactly as Step 3b requires: re-read the file, confirm the entry is
    present, append again if not. An unwritten note is worse than none, because nobody is watching
    for it.
-4. **Note that you filed it** so graduation's Step 0 does not file the same finding twice.
+4. **Mark it filed.** Once step 3's re-read finds the entry, set that reversal's `filed` to `true`
+   in `steer_triggers`, the record `ground-rules.md` → "Worked steers" defines (INV-352), in the
+   write at that step boundary, so neither module completion nor graduation's Step 0 files the
+   same finding twice. A filing that does not land leaves `filed: false`. Graduation's own Step 0
+   filings have no entry to mark.
 
 **Constraints:**
 

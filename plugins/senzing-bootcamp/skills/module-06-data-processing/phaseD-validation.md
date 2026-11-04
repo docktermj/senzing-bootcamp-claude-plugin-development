@@ -925,7 +925,7 @@ it as a produced file in the end-of-module summary's "Files produced" list (INV-
 ## Module completion and transition to Module 7
 
 Follow the Decision Gate above to frame readiness. When results are ready, run the standard
-**Module Completion** process in `../bootcamp-onboarding/module-completion.md` (update progress,
+**Module Completion** process in `../bootcamp-onboarding/module-completion.md` (its Step 0 checks, update progress,
 append the Module 6 recap section to `docs/bootcamp_recap.md`, and present the end-of-module
 summary), then close the module:
 

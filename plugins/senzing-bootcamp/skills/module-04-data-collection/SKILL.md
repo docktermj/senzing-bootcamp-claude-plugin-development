@@ -1767,7 +1767,7 @@ update and no transition question. The Bootcamper never left Module 5, so return
 Module 5's Step 7b names ([Step 2](#receiving-a-collection-return)).
 
 Run the standard **Module Completion** process in `../bootcamp-onboarding/module-completion.md`
-(update progress, append the Module 4 recap section to `docs/bootcamp_recap.md`, and present the
+(its Step 0 checks, update progress, append the Module 4 recap section to `docs/bootcamp_recap.md`, and present the
 end-of-module summary), then ask the single transition question:
 
 "Great! Now that we have the data files, let's evaluate each one to see if it needs mapping or

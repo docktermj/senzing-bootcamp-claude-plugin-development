@@ -403,7 +403,11 @@ obtained via the `get_sample_data` MCP tool in Module 4):
 
    - **If confirmed:** Set `mapping_status: complete` and `fast_pathed: true` in the registry.
      Keep `file_path` pointing at the original `data/raw/` file. Record a data-lineage entry
-     (see below). Route the source to Module 6.
+     (see below). Route the source to Module 6. When this was the last source and every source
+     took the fast path, the same checkpoint also writes `directing_steps.data_quality_mapping:
+     none`: Module 5 has no directing step (`phase2-data-mapping.md` step 11, INV-354). Sub-step
+     9's answer 1 or 2 then adds a source to map, so the write that records that answer removes
+     the `none` again and step 11 decides on the new source.
    - **If declined:** Continue through the normal quality assessment and mapping workflow for
      this source.
 
