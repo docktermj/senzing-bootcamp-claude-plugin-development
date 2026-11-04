@@ -44,8 +44,9 @@ immediately before Step 1:
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    ```
 
-3. **Journey map (INV-029):** refresh it with `truthset_visualization` now `🔄` current — `System
-   verification` `✅`, the remaining `selected_modules` `⬜` upcoming.
+3. **Journey map (INV-029):** refresh it in the shape `../bootcamp-onboarding/ground-rules.md` →
+   "Module start banners and transitions" states once (INV-300), with `truthset_visualization` now
+   `🔄` current — `System verification` `✅`, the remaining `selected_modules` `⬜` upcoming.
 4. **Before/After (INV-030):** *Before,* entity resolution is proven on synthetic data but unseen;
    *after,* the bootcamper has watched the Senzing Truth Set resolve in an interactive web app — a
    practice run on data built to contain matches, before their own data.

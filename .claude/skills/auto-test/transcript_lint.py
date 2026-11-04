@@ -62,7 +62,10 @@ BREAKING, WATCH, INFO = "BREAKING", "WATCH", "INFO"
 # minutes" or "hard to estimate", and may render the label "Before → After". The
 # same patterns raise BREAKING INV-075 in the exempt phases, so the journey map
 # needs a heading line or a run of two or more status lines: a single status line
-# such as "✅ Bootcamp preparation complete" is not a journey map.
+# such as "✅ Bootcamp preparation complete" is not a journey map. The table form
+# ground-rules.md pins (#852) is matched the same way, as two consecutive table
+# rows that each carry a marker, so a header row or a table with no marker (the
+# Required/Optional module list Bootcamp preparation may render) is not a map.
 #
 # ⛔ (INV-030, INV-031) A pattern here matches the RENDERED form, never the
 # maintainer's name for it. Three of the five carry a structural alternative
@@ -99,7 +102,8 @@ APPARATUS = {
     "journey map": re.compile(
         r"(?im)journey map"
         r"|^[^\w\n]*your journey[^\w\n]*$"
-        rf"|^[ \t]*{_STATUS}[^\n]*\n[ \t]*{_STATUS}"),
+        rf"|^[ \t]*{_STATUS}[^\n]*\n[ \t]*{_STATUS}"
+        rf"|^[ \t]*\|[^\n]*{_STATUS}[^\n]*\n[ \t]*\|[^\n]*{_STATUS}"),
     "before/after": re.compile(
         r"(?i)\bbefore\s*(?:/|and|→|->)\s*after\b"
         "|" + _LABEL.format(words=_PRESENT_STATE)
@@ -734,13 +738,18 @@ _BAD = [
 # example and its no-number form, graduation's en-dash range, the guide's heading,
 # status list and arrow label from the 2026-10-14 walk, and — carrying no apparatus
 # name at all — the present-state/end-state pair and the "Steps" list the guide
-# rendered at two module openings in the 2026-10-18 walk (#734).
+# rendered at two module openings in the 2026-10-18 walk (#734), and the journey
+# map's table form with its count line, as ground-rules.md pins it (#852).
 _APPARATUS_RENDERINGS = (
     ("time estimate", "⏱️ Roughly 15-30 minutes, depending on download/install speed."),
     ("time estimate", "⏱️ Roughly 20–45 minutes. It varies with your machine."),
     ("time estimate", "This is hard to estimate for this module."),
     ("journey map", "**Your journey**"),
     ("journey map", "✅ Bootcamp preparation\n🔄 **SDK setup**\n⬜ System verification"),
+    ("journey map",
+     "| Module | Status |\n|---|---|\n| Bootcamp preparation | ✅ done |\n"
+     "| SDK setup | 🔄 you are here |\n| System verification | ⬜ upcoming |\n\n"
+     "1 of 3 modules done"),
     ("before/after", "**Before → After:** You have a project directory but no SDK."),
     ("before/after",
      "**Where you are:** entity resolution is proven on a few synthetic records, but "
@@ -779,6 +788,10 @@ _EXEMPT_PHASE_TEXT = (
     "1. Attach it to whichever of the three people looks most similar.\n"
     "2. Create a new, fourth entity for it.\n"
     "3. Mark it as ambiguous and hold it as a possible match.",
+    # #852: the journey map's table header alone, and a module table with no marker.
+    "| Module | Status |",
+    "| Module | Status |\n|---|---|\n| Bootcamp preparation | Required |\n"
+    "| Entity Resolution Concepts | Optional |\n| SDK setup | Required |",
 )
 
 

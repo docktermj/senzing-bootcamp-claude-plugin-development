@@ -1678,7 +1678,9 @@ Ground rules (`ground-rules.md`, every turn):
   question is re-presented verbatim after any interruption.
 - Module start (not for preparation or concepts): never show module numbers;
   `🚀🚀🚀  MODULE: <NAME>  🚀🚀🚀` banner, journey map of
-  `selected_modules` (✅ done, 🔄 current, ⬜ upcoming), before/after,
+  `selected_modules` (✅ done, 🔄 current, ⬜ upcoming; stated once as a
+  `Module | Status` table plus an "N of M modules done" line, shown whole
+  under every preset, #852), before/after,
   step overview, range time estimate, then the model/effort nudge. The nudge
   compares the stage's recommendation per dial with the live setting; a
   mismatch either way asks one pinned switch question (CLI `/model` and
@@ -3976,8 +3978,9 @@ before/after, step overview, time estimate or model nudge is BREAKING
 `INV-075-apparatus-in-exempt-phase`; in `content` each missing one is WATCH
 `INV-028-apparatus-missing`. The patterns match the plugin's own renderings
 (#658): a journey map is the words "journey map", a "Your journey" heading
-line, or two consecutive lines starting ✅, 🔄 or ⬜ (one status line is not
-one); a time estimate is a line opening with ⏱, `roughly|about|takes|approx`
+line, two consecutive lines starting ✅, 🔄 or ⬜ (one status line is not
+one), or two consecutive table rows that each carry one (#852; a header row or
+a table with no marker is not one); a time estimate is a line opening with ⏱, `roughly|about|takes|approx`
 before a single figure or a `-`, `–` or "to" range of minutes, or "hard to
 estimate". Three carry a structural alternative beside the name-based one,
 because the apparatus is specified by what it conveys rather than pinned as
@@ -5480,7 +5483,8 @@ APPARATUS = {
     "journey map": re.compile(
         r"(?im)journey map"
         r"|^[^\w\n]*your journey[^\w\n]*$"
-        rf"|^[ \t]*{_STATUS}[^\n]*\n[ \t]*{_STATUS}"),
+        rf"|^[ \t]*{_STATUS}[^\n]*\n[ \t]*{_STATUS}"
+        rf"|^[ \t]*\|[^\n]*{_STATUS}[^\n]*\n[ \t]*\|[^\n]*{_STATUS}"),
     "before/after": re.compile(
         r"(?i)\bbefore\s*(?:/|and|→|->)\s*after\b"
         "|" + _LABEL.format(words=_PRESENT_STATE)
@@ -10895,21 +10899,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9036 test methods in 464 files, matching `inventory.test_count_total`.
+There are 9052 test methods in 465 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 9036.
+sum to 9052.
 
-Two files run more tests than they define, so discovery collects 9005:
+Two files run more tests than they define, so discovery collects 9021:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8998`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 9014`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 9005`. No other count
+run count. With `pwsh` installed, the run reports `Ran 9021`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
@@ -11097,6 +11101,7 @@ looks wrong.
 - `tests/test_issue_path_reverifies_senzing_facts.py`: 10
 - `tests/test_java_filename_class_reconciliation.py`: 25
 - `tests/test_java_json_dependency_gap_is_covered.py`: 7
+- `tests/test_journey_map_is_a_table.py`: 16
 - `tests/test_language_gate_names_the_cost.py`: 10
 - `tests/test_ld_library_path_is_not_relayed_as_conditional.py`: 22
 - `tests/test_ledger_files_are_well_formed.py`: 11
@@ -11949,6 +11954,22 @@ tests a rebuild can pass from behavior alone.
   - **Registration.** `hooks.json` holds the INV-052 command; the README row's
     purpose starts with "to " and its Gate cell with `bootcamp_active()`; both
     scripts import only the standard library and sibling scripts.
+- **The journey map's shape** (`tests/test_journey_map_is_a_table.py`, 16
+  tests, #852).
+  - `ground-rules.md` → "Module start banners and transitions" states the
+    `Module | Status` table, one row per `selected_modules` entry by name, the
+    `✅ done` / `🔄 you are here` / `⬜ upcoming` cells, the "N of M modules
+    done" line, and that `minimal` shows it whole and INV-214's compression
+    does not apply, with no `Module <digit>`; controls remove the clause and
+    each element, and write a module number into the count line.
+  - Graduation item 1 and the Truth Set visualization refresh point there with
+    "states once (INV-300)" and carry no copy; a scan of every shipped `.md`
+    finds the shape's phrases in `ground-rules.md` alone.
+  - `transcript_lint`'s `journey map` pattern matches the table and still the
+    list and heading forms, but not one marked row; a bare header and a
+    Required/Optional table raise no INV-075 in either exempt phase, while the
+    table still does; the pre-#852 pattern turns `--selftest` red on the table
+    fixture.
 - **`package_bootcamp.py`** (`tests/test_package_bootcamp.py`,
   `tests/test_open_me_first_matches_the_manifest.py`,
   `tests/test_quoted_sizes_say_what_they_missed.py`).
@@ -14737,6 +14758,15 @@ Senzing licensing, with no SPDX identifier.
   of eight module starts and again right after promising to show it, though
   every module's `**First:**` line states it; a new invariant is queued for
   `/review-invariants`
+- #852: `ground-rules.md` → "Module start banners and transitions" states the
+  journey map's shape once: a `Module | Status` table, one row per
+  `selected_modules` entry by name with `✅ done`, `🔄 you are here` or
+  `⬜ upcoming`, and an "N of M modules done" line under it, shown whole under
+  every verbosity preset; graduation item 1 and the Truth Set visualization
+  refresh point there, and `transcript_lint.py`'s `journey map` pattern also
+  matches two consecutive marked table rows — a guide rendered the map as one
+  arrow-separated line the Bootcamper could not scan, because only its content
+  was specified; a dated note on INV-029 is queued for `/review-invariants`
 - #853: `generate_recap_video.py --check` prints a `VOICE:` line naming the
   voice the render would use, read from the render's own `voice_order` in a
   probe mode that launches nothing, and points at Step 1c's "Offer the Piper

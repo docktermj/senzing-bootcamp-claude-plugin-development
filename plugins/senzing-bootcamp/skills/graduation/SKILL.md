@@ -57,8 +57,10 @@ and `config/bootcamp_progress.json` (`modules_completed`) to render the journey 
 active verbosity preset (INV-011/INV-012): suppress the explanatory parts under `minimal`, keep
 them to one line under `concise`. Refer to modules by name, never number (INV-079).
 
-1. **Journey map.** List the selected modules by name, every one marked ✅ (all experienced), with
-   **Bootcamp graduation** marked 🔄 as the current, final stage — nothing ⬜ after it.
+1. **Journey map.** Render it in the shape `../bootcamp-onboarding/ground-rules.md` → "Module
+   start banners and transitions" states once (INV-300), with every selected module marked ✅
+   (all experienced) and **Bootcamp graduation** marked 🔄 as the current, final stage — nothing
+   ⬜ after it.
 2. **Before / After.** Before: every module is complete and your data is resolved, but your work
    still lives in the bootcamp workspace. After: you keep two things — a professional recap PDF
    (`docs/bootcamp_recap.pdf`) and a clean, production-ready `production/` project to build on.
