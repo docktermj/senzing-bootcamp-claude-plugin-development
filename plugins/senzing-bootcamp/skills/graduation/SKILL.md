@@ -1144,7 +1144,7 @@ When Piper is set up, make no offer, and run `--check` and the render below with
 **The offer.** When Piper is not set up, end the turn on this pinned question, after the storyboard is
 written and before the first render. Ask it once per graduation (INV-006, INV-056):
 
-> 👉 **May I install the Piper neural voice so the narration sounds natural?** It downloads about 200 MB into this project: `piper-tts` (GPL-3.0, runs on your machine) into `data/temp/recap-venv/`, and the public-domain `en_US-ljspeech-high` voice into `data/temp/piper-voices/`. (Reply no to narrate with your computer's built-in voice.)
+> 👉 **May I install the Piper neural voice so the narration sounds natural?** It downloads about 200 MB into this project: `piper-tts` (GPL-3.0, runs on your machine) into `data/temp/recap-venv/`, and the public-domain `en_US-ljspeech-high` voice into `data/temp/piper-voices/`. (Reply no to narrate with your computer's built-in voice, which sounds noticeably more robotic.)
 
 When the venv will also get Pillow or `imageio-ffmpeg` (the next paragraph says when), the question
 names them after `data/temp/recap-venv/`: "…into `data/temp/recap-venv/` along with Pillow and
@@ -1204,6 +1204,19 @@ data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_vi
 ```
 
 Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
+⛔ **(INV-340) Graduation never passes `--no-voice`, to `--check` or to the render.** The flag is an
+opt-out for tests and manual renders, and the renderer prints a `WARNING:` line whenever it is passed.
+The `--no-voice` row under "When the video has no voice" is the defensive case only.
+
+**Read `--check`'s `VOICE:` line before you render.** On a valid storyboard `--check` prints one
+`VOICE:` line after `Storyboard valid`, naming the voice this interpreter would narrate with:
+`VOICE: Piper (en_US-ljspeech-high)`, `VOICE: platform engine <name> (Piper is out: …)` or
+`VOICE: none (…)`. When it names a voice other than Piper, a line pointing at "Offer the Piper voice"
+follows it. When the `VOICE:` line names a voice other than Piper and the Piper offer has not been
+made in this graduation, make the offer now, ending the turn on it, and do not render. When the
+bootcamper already declined it, or its install failed, render without asking again (INV-006,
+INV-056).
 
 The renderer reads `docs/video/storyboard.json` and writes `docs/bootcamp_recap.mp4`. Act on its exit
 code:

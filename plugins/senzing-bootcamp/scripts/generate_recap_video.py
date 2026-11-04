@@ -138,9 +138,27 @@ Usage::
                                     [--no-voice] [--check] [--schema]
 
 ``--check`` validates the storyboard and exits 0 or 1 without rendering; it needs neither
-Pillow nor ffmpeg. ``--voice-model`` names a local Piper ``.onnx`` model whose ``.onnx.json``
-config sits beside it (default: ``data/temp/piper-voices/en_US-ljspeech-high.onnx`` under
-``--project-root``). Source issues: #299, #339, #341.
+Pillow nor ffmpeg. On a valid storyboard it also prints, after ``Storyboard valid``, one
+``VOICE:`` line naming the voice this interpreter would narrate with, read from
+``voice_order``, the same ordered choice the render makes (#853):
+
+* ``VOICE: Piper (en_US-ljspeech-high)``, honoring ``--voice-model`` and ``--project-root``;
+* ``VOICE: platform engine <name> (Piper is out: <why>)``;
+* ``VOICE: none (Piper is out: <why> Platform engine: <why>)``;
+* ``VOICE: none (--no-voice)``.
+
+When Piper is out and ``--no-voice`` is not passed, a second line points at graduation Step
+1c's "Offer the Piper voice". The line is informational: the exit codes are unchanged. It
+installs nothing and launches no subprocess: Piper is found with ``find_spec`` and file
+checks, the platform engine by a ``PATH`` lookup, and on Windows a PowerShell on ``PATH`` is
+named ``Windows SAPI (not verified by --check)`` without asking it whether System.Speech
+loads, so the render's ``Voice:`` line stays authoritative.
+
+``--no-voice`` is an opt-out for tests and manual renders that graduation never uses: every run
+that passes it, ``--check`` included, says so in a ``WARNING:`` line on stderr.
+``--voice-model`` names a local Piper ``.onnx`` model whose ``.onnx.json`` config sits beside
+it (default: ``data/temp/piper-voices/en_US-ljspeech-high.onnx`` under ``--project-root``).
+Source issues: #299, #339, #341, #853.
 """
 
 from __future__ import annotations
@@ -162,7 +180,7 @@ import tempfile
 import wave
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath, PureWindowsPath
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, Iterator, List, Optional, Sequence, Tuple
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
@@ -759,8 +777,19 @@ def _sapi_available(powershell: str) -> bool:
     return r.returncode == 0
 
 
-def find_speech_engine() -> Tuple[Optional[SpeechEngine], List[str]]:
-    """The platform's built-in speech engine, or (None, what was tried)."""
+#: How ``--check`` names the Windows engine: it finds PowerShell on ``PATH`` but never runs it
+#: to ask whether System.Speech loads (#853), so the render's ``Voice:`` line has the last word.
+SAPI_UNVERIFIED = "Windows SAPI (not verified by --check)"
+
+
+def find_speech_engine(probe: bool = False) -> Tuple[Optional[SpeechEngine], List[str]]:
+    """The platform's built-in speech engine, or (None, what was tried).
+
+    ``probe=True`` is ``--check``'s mode (#853): every engine is found by a ``PATH`` lookup
+    only, and the Windows SAPI check (``_sapi_available``, which launches PowerShell for up to
+    60 s) is not run, so nothing is launched. The engine it names on Windows is
+    ``SAPI_UNVERIFIED``.
+    """
     tried: List[str] = []
     if sys.platform == "darwin":
         say = shutil.which("say")
@@ -771,8 +800,9 @@ def find_speech_engine() -> Tuple[Optional[SpeechEngine], List[str]]:
         tried.append("say (not on PATH)")
     if sys.platform == "win32":
         powershell = shutil.which("powershell") or shutil.which("pwsh")
-        if powershell and _sapi_available(powershell):
-            return SpeechEngine("Windows SAPI (System.Speech)", lambda txt, wav: (
+        if powershell and (probe or _sapi_available(powershell)):
+            name = SAPI_UNVERIFIED if probe else "Windows SAPI (System.Speech)"
+            return SpeechEngine(name, lambda txt, wav: (
                 [powershell, "-NoProfile", "-NonInteractive", "-Command", _SAPI_SCRIPT],
                 {"SBCP_TTS_IN": txt, "SBCP_TTS_OUT": wav})), tried
         tried.append("PowerShell System.Speech (" +
@@ -786,12 +816,16 @@ def find_speech_engine() -> Tuple[Optional[SpeechEngine], List[str]]:
     return None, tried
 
 
-def choose_voice(no_voice: bool) -> Tuple[Optional[SpeechEngine], Optional[str]]:
-    """(engine, fallback note): the voice-over engine, or None and why there is none."""
+def choose_voice(no_voice: bool, probe: bool = False
+                 ) -> Tuple[Optional[SpeechEngine], Optional[str]]:
+    """(engine, fallback note): the voice-over engine, or None and why there is none.
+
+    ``probe`` is passed to ``find_speech_engine``: ``--check`` sets it so nothing is launched.
+    """
     if no_voice:
         return None, ("voice-over turned off by --no-voice; the video has no voice-over and "
                       "the burned-in captions carry the narration.")
-    engine, tried = find_speech_engine()
+    engine, tried = find_speech_engine(probe=True) if probe else find_speech_engine()
     if engine is None:
         return None, ("no speech engine found (tried " + ", ".join(tried) + "); the video has "
                       "no voice-over and the burned-in captions carry the narration.")
@@ -918,6 +952,66 @@ def find_piper_voice(model: Path) -> Tuple[Optional[SpeechEngine], Optional[str]
                  "--sentence-silence", PIPER_SENTENCE_SILENCE], {})
 
     return SpeechEngine(f"Piper ({_voice_name(model)})", command), None
+
+
+def voice_model_path(voice_model: Optional[str], root: Path) -> Path:
+    """The Piper model the render and ``--check`` look for: ``--voice-model``, or the default
+    under ``--project-root``."""
+    return Path(voice_model) if voice_model else root / DEFAULT_VOICE_MODEL
+
+
+def voice_order(no_voice: bool, model: Path, probe: bool = False
+                ) -> Iterator[Tuple[Optional[SpeechEngine], Optional[str]]]:
+    """The render's voice choice, in the render's own order, one stage at a time (#341, #853).
+
+    Yields exactly two ``(engine, note)`` stages, each looked for only when the caller asks
+    for it:
+
+    1. **Piper**, from ``find_piper_voice(model)``; ``(None, None)`` under ``--no-voice``,
+       which skips Piper without a note.
+    2. **The platform engine**, from ``choose_voice``: macOS ``say``, Windows SAPI, then
+       ``espeak-ng`` and ``espeak``; or None and why there is none.
+
+    The render takes the second stage only when Piper is out or failed to voice a scene, so a
+    Piper render never looks for a platform engine. ``--check`` reads the same order through
+    ``voice_plan_lines``, so its ``VOICE:`` line cannot drift from what the render would pick.
+    ``probe=True`` is ``--check``'s mode: it uses only ``find_spec``, file checks and ``PATH``
+    lookups, installs nothing and launches no subprocess, not even the Windows SAPI
+    check (``find_speech_engine``).
+    """
+    yield (None, None) if no_voice else find_piper_voice(model)
+    yield choose_voice(no_voice, probe=probe)
+
+
+#: ``--check``'s pointer at graduation's Piper offer, printed when Piper is out (#853).
+PIPER_OFFER_POINTER = ("Piper is out, so graduation Step 1c's \"Offer the Piper voice\" is due "
+                       "before this render, unless the bootcamper already declined it or its "
+                       "install failed.")
+
+#: The stderr line every run with ``--no-voice`` prints, ``--check`` included (#853).
+NO_VOICE_WARNING = ("--no-voice is an opt-out for tests and manual renders that graduation never "
+                    "uses; a graduation render runs without it, so the video is narrated.")
+
+
+def voice_plan_lines(no_voice: bool, model: Path) -> List[str]:
+    """``--check``'s report of the voice this interpreter would use: one ``VOICE:`` line, and,
+    when Piper is out and ``--no-voice`` was not passed, ``PIPER_OFFER_POINTER`` (#853).
+
+    Read from ``voice_order`` in probe mode, so it names what the render would try in the
+    render's order, and launches nothing. Informational only: it never changes an exit code.
+    """
+    order = voice_order(no_voice, model, probe=True)
+    piper, piper_note = next(order)
+    if piper is not None:
+        return [f"VOICE: {piper.name}"]
+    if no_voice:
+        return ["VOICE: none (--no-voice)"]
+    engine, engine_note = next(order)
+    if engine is not None:
+        line = f"VOICE: platform engine {engine.name} (Piper is out: {piper_note})"
+    else:
+        line = f"VOICE: none (Piper is out: {piper_note} Platform engine: {engine_note})"
+    return [line, PIPER_OFFER_POINTER]
 
 
 def voice_with_piper(scenes: Sequence[dict], piper: SpeechEngine, ffmpeg: str, workdir: Path,
@@ -2076,9 +2170,12 @@ def main(argv: Optional[List[str]] = None) -> int:
                         help="a local Piper .onnx voice model, its .onnx.json beside it "
                              f"(default: {DEFAULT_VOICE_MODEL} under --project-root)")
     parser.add_argument("--no-voice", action="store_true",
-                        help="skip the voice-over; the burned-in captions carry the narration")
+                        help="skip the voice-over; the burned-in captions carry the narration "
+                             "(an opt-out for tests and manual renders; graduation never "
+                             "passes it)")
     parser.add_argument("--check", action="store_true",
-                        help="validate the storyboard and exit; needs neither Pillow nor ffmpeg")
+                        help="validate the storyboard, name the voice this interpreter would use, "
+                             "and exit; needs neither Pillow nor ffmpeg")
     parser.add_argument("--schema", action="store_true",
                         help="print the scene types and their fields as JSON, and exit")
     args = parser.parse_args(argv)
@@ -2087,7 +2184,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(json.dumps(schema_description(), indent=2))
         return EXIT_RENDERED
 
+    if args.no_voice:
+        _report("WARNING", NO_VOICE_WARNING)
     root = Path(args.project_root).resolve()
+    model = voice_model_path(args.voice_model, root)
     storyboard, errors = load_storyboard(Path(args.storyboard))
     if not errors:
         errors = validate_storyboard(storyboard, root)
@@ -2101,6 +2201,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.check:
         print(f"Storyboard valid: {len(storyboard['scenes'])} scene(s), planned "
               f"{_format_duration(planned)} ({planned:.1f} s).")
+        for line in voice_plan_lines(args.no_voice, model):
+            print(line)
         return EXIT_RENDERED
 
     try:
@@ -2116,12 +2218,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     if PALETTE_NOTE:
         ctx.note(PALETTE_NOTE)
 
-    piper = None
-    if not args.no_voice:
-        model = Path(args.voice_model) if args.voice_model else root / DEFAULT_VOICE_MODEL
-        piper, piper_note = find_piper_voice(model)
-        if piper_note:
-            ctx.note(piper_note)
+    voices_in_order = voice_order(args.no_voice, model)
+    piper, piper_note = next(voices_in_order)
+    if piper_note:
+        ctx.note(piper_note)
     engine = None
 
     with_music = storyboard["video"].get("music", True)
@@ -2137,7 +2237,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             if voices is not None:
                 engine = piper
             else:
-                engine, voice_note = choose_voice(args.no_voice)
+                engine, voice_note = next(voices_in_order)
                 if voice_note:
                     ctx.note(voice_note)
             plan = plan_timeline(storyboard, ctx, engine, ffmpeg, workdir, voices)

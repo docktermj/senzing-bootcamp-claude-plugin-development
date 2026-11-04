@@ -2955,7 +2955,11 @@ and continues; the recap PDF is guaranteed.
   `match-keys`/`feature-scores`/`cross-source` screenshots. It offers Piper,
   runs `generate_recap_video.py --check` and the render, handling exit 1
   (fix), 2 (offer `imageio-ffmpeg`/Pillow), 3 (skip, keep storyboard), and
-  checks 2:00 plus or minus 10 s.
+  checks 2:00 plus or minus 10 s. "Render it" bans `--no-voice` with a ⛔
+  (INV-340) line beside the commands, and has the guide read `--check`'s
+  `VOICE:` line: a non-Piper voice with the Piper offer not yet made means
+  make the offer and do not render; after a decline or a failed install,
+  render (#853).
 - Step 2 builds `production/` (asks overwrite, merge or abort; abort writes
   nothing there, so Step 5 writes `docs/GRADUATION_REPORT.md`, hand-formatted,
   and 5a is skipped): copies
@@ -3403,7 +3407,19 @@ offline (`NETWORK_MODULES` are never imported).
   `find_speech_engine` tries `say`, Windows SAPI, then
   `espeak-ng`/`espeak`. If Piper fails on any scene, the platform engine
   re-voices every scene, so two voices are never mixed. A scene the
-  platform engine fails on is silent.
+  platform engine fails on is silent. `voice_order` yields that order in two
+  lazy stages (Piper, then `choose_voice`), read by both the render and
+  `--check` (#853).
+- `--check`, on a valid storyboard, prints after `Storyboard valid` one
+  `VOICE:` line from `voice_plan_lines` (`voice_order` with `probe=True`):
+  `VOICE: Piper (<voice>)`, `VOICE: platform engine <name> (Piper is out:
+  <why>)`, `VOICE: none (Piper is out: <why> Platform engine: <why>)` or
+  `VOICE: none (--no-voice)`, then `PIPER_OFFER_POINTER` when Piper is out
+  and `--no-voice` is not passed. Probe mode uses `find_spec`, file checks and
+  `PATH` lookups only, so it launches no subprocess; on Windows a PowerShell on
+  `PATH` is named `SAPI_UNVERIFIED` without `_sapi_available`. Every run with
+  `--no-voice`, `--check` included, writes `WARNING:` plus `NO_VOICE_WARNING`
+  on stderr.
 - `plan_timeline`: a missing or unreadable image becomes a title card. A
   scene lasts max(planned, narration plus lead and tail); without a voice,
   narration time is estimated at `WORDS_PER_MINUTE`. Each extension prints
@@ -3444,9 +3460,9 @@ offline (`NETWORK_MODULES` are never imported).
 
 Exit codes (nothing is written unless 0):
 
-- 0 `EXIT_RENDERED`: `--schema` JSON printed, `--check` valid, or the
-  video rendered (`Video generated:`, `Duration:`, `Voice:`, `Music:`),
-  after any content-loss warning on stderr.
+- 0 `EXIT_RENDERED`: `--schema` JSON printed, `--check` valid (with its
+  `VOICE:` line), or the video rendered (`Video generated:`, `Duration:`,
+  `Voice:`, `Music:`), after any content-loss warning on stderr.
 - 1 `EXIT_INVALID_STORYBOARD`: missing, non-UTF-8, invalid JSON or failed
   validation (`INVALID:` lines).
 - 2 `EXIT_MISSING_CAPABILITY`: no usable Pillow or ffmpeg.
@@ -7130,9 +7146,11 @@ def find_ffmpeg() -> Tuple[str, List[str]]:
 class SpeechEngine:
     name: str
     command: Callable[[str, str], Tuple[List[str], Dict[str, str]]]
-def find_speech_engine() -> Tuple[Optional[SpeechEngine], List[str]]:
+SAPI_UNVERIFIED = "Windows SAPI (not verified by --check)"
+def find_speech_engine(probe: bool = False) -> Tuple[Optional[SpeechEngine], List[str]]:
     ...
-def choose_voice(no_voice: bool) -> Tuple[Optional[SpeechEngine], Optional[str]]:
+def choose_voice(no_voice: bool, probe: bool = False
+                 ) -> Tuple[Optional[SpeechEngine], Optional[str]]:
     ...
 def decode_to_pcm(ffmpeg: str, audio_file: str) -> bytes:
     ...
@@ -7144,6 +7162,18 @@ def spell_numbers(text: str) -> str:
 def piper_config_path(model: Path) -> Path:
     ...
 def find_piper_voice(model: Path) -> Tuple[Optional[SpeechEngine], Optional[str]]:
+    ...
+def voice_model_path(voice_model: Optional[str], root: Path) -> Path:
+    ...
+def voice_order(no_voice: bool, model: Path, probe: bool = False
+                ) -> Iterator[Tuple[Optional[SpeechEngine], Optional[str]]]:
+    ...
+PIPER_OFFER_POINTER = ("Piper is out, so graduation Step 1c's \"Offer the Piper voice\" is due "
+                       "before this render, unless the bootcamper already declined it or its "
+                       "install failed.")
+NO_VOICE_WARNING = ("--no-voice is an opt-out for tests and manual renders that graduation never "
+                    "uses; a graduation render runs without it, so the video is narrated.")
+def voice_plan_lines(no_voice: bool, model: Path) -> List[str]:
     ...
 def voice_with_piper(scenes: Sequence[dict], piper: SpeechEngine, ffmpeg: str, workdir: Path,
                      note: Callable[[str], None]) -> Optional[List[bytes]]:
@@ -9614,9 +9644,12 @@ From `plugins/senzing-bootcamp/scripts/generate_recap_video.py`:
                         help="a local Piper .onnx voice model, its .onnx.json beside it "
                              f"(default: {DEFAULT_VOICE_MODEL} under --project-root)")
     parser.add_argument("--no-voice", action="store_true",
-                        help="skip the voice-over; the burned-in captions carry the narration")
+                        help="skip the voice-over; the burned-in captions carry the narration "
+                             "(an opt-out for tests and manual renders; graduation never "
+                             "passes it)")
     parser.add_argument("--check", action="store_true",
-                        help="validate the storyboard and exit; needs neither Pillow nor ffmpeg")
+                        help="validate the storyboard, name the voice this interpreter would use, "
+                             "and exit; needs neither Pillow nor ffmpeg")
     parser.add_argument("--schema", action="store_true",
                         help="print the scene types and their fields as JSON, and exit")
 ```
@@ -10497,6 +10530,8 @@ def _find_spec(name: str):
     ...
 def _imageio_ffmpeg() -> Tuple[Optional[str], str]:
     ...
+def _sapi_available(powershell: str) -> bool:
+    ...
 def _text_width(font, text: str) -> float:
     ...
 def _draw_text(draw, x: float, y: float, text: str, font, fill, align: str = "left") -> None:
@@ -10514,8 +10549,9 @@ Used by:
 - `_FALLBACK_RGB`: `test_brand_sync.py`
 - `_TOKEN_NAMES`: `test_brand_sync.py`
 - `_draw_text`: `test_recap_video.py`
-- `_find_spec`: `test_recap_video.py`
+- `_find_spec`: `test_graduation_video_step.py`, `test_recap_video.py`
 - `_imageio_ffmpeg`: `test_recap_video.py`
+- `_sapi_available`: `test_recap_video.py`
 - `_text_width`: `test_recap_video.py`
 
 ### 7.8 `plugins/senzing-bootcamp/scripts/normalize_docs_markdown.py`
@@ -10859,10 +10895,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8998 test methods in 464 files, matching `inventory.test_count_total`.
+There are 9036 test methods in 464 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8998.
+sum to 9036.
 
 Two files run more tests than they define, so discovery collects 9005:
 
@@ -11028,7 +11064,7 @@ looks wrong.
 - `tests/test_graduation_hands_over_the_ability.py`: 34
 - `tests/test_graduation_no_voice_guidance.py`: 20
 - `tests/test_graduation_reads_persisted_answers.py`: 15
-- `tests/test_graduation_video_step.py`: 75
+- `tests/test_graduation_video_step.py`: 87
 - `tests/test_graph_cap_ranks_related_entities_first.py`: 19
 - `tests/test_graph_colors_by_source_combination.py`: 26
 - `tests/test_graph_label_distinctness.py`: 18
@@ -11206,7 +11242,7 @@ looks wrong.
 - `tests/test_recap_structure_checked_per_module.py`: 12
 - `tests/test_recap_summary_blocks.py`: 30
 - `tests/test_recap_tab_coverage.py`: 19
-- `tests/test_recap_video.py`: 148
+- `tests/test_recap_video.py`: 174
 - `tests/test_record_limit_negative_is_rescoped.py`: 13
 - `tests/test_recorded_container_commands_use_the_recorded_runtime.py`: 17
 - `tests/test_registered_amendments_are_not_called_pending.py`: 21
@@ -11702,6 +11738,12 @@ These are almost all wording guards. Each item lists the main behaviors pinned.
   - Step 1c, the video, has pinned offers, a two-minute budget, the Intro first,
     and ends on the certificate and then the tag line. It uses name-free
     screenshots only.
+  - Step 1c's "Render it" carries the ⛔ (INV-340) `--no-voice` ban after the
+    commands and the `VOICE:` reading rule, checked against five mutations;
+    each `VOICE:` form the rule names matches a line `voice_plan_lines`
+    prints, and each printed line matches exactly one form; the Piper
+    question says the built-in voice "sounds noticeably more robotic" (#853,
+    `TheRenderPathCuesThePiperOffer`).
   - PDF verification needs no Unix-only tool.
   - Database backup has one procedure.
   - Every artifact produced is announced.
@@ -12003,7 +12045,7 @@ tests a rebuild can pass from behavior alone.
     site's record call with a no-op in a copy of the source drops that site
     from the warning. Long module, notes and handover titles reach both the
     contents and their page whole.
-- **`generate_recap_video.py`** (`tests/test_recap_video.py`, 148 tests).
+- **`generate_recap_video.py`** (`tests/test_recap_video.py`, 174 tests).
   - **Exit codes:** 0 rendered, 1 invalid storyboard, 2 missing capability, 3
     encode failed. Nothing is written unless the code is 0.
   - **Errors** name the field at fault.
@@ -12026,6 +12068,19 @@ tests a rebuild can pass from behavior alone.
     graduate." on three centered lines in one size, measured with a stub font
     of fixed widths and with the loaded font. A phrase too wide shrinks the
     card in 4 px steps, and a long name wraps above it.
+  - **`--check` names the voice** (#853,
+    `CheckNamesTheVoiceTheRenderWouldUse`): `VOICE: Piper
+    (en_US-ljspeech-high)` with Piper set up; `VOICE: platform engine
+    espeak-ng (Piper is out: …)` plus the pointer; `VOICE: none (Piper is
+    out: …)` plus the pointer; a non-default `--voice-model` and another
+    `--project-root` honored; Windows names `Windows SAPI (not verified by
+    --check)` with `_sapi_available`, `subprocess.run` and `Popen` patched to
+    fail; an invalid storyboard prints no `VOICE:` line and exits 1; `--check
+    --no-voice` prints `VOICE: none (--no-voice)`, the `WARNING:` line and no
+    pointer. `TheCheckAndTheRenderPickTheSameVoice` holds the `VOICE:` line
+    and the render's `Voice:` line to the same engine;
+    `NoVoiceWarnsAndStillRenders` renders with `--no-voice` to exit 0 with one
+    warning line. Each case has a negative control.
 - **`capture_screenshots.py`** (13 files).
   - **Output.** One PNG per tab, named after the tab, in the order given, with
     duplicate tabs dropped.
@@ -14681,4 +14736,15 @@ Senzing licensing, with no SPDX identifier.
   by `module_start_apparatus.py` — one session skipped the apparatus at five
   of eight module starts and again right after promising to show it, though
   every module's `**First:**` line states it; a new invariant is queued for
+  `/review-invariants`
+- #853: `generate_recap_video.py --check` prints a `VOICE:` line naming the
+  voice the render would use, read from the render's own `voice_order` in a
+  probe mode that launches nothing, and points at Step 1c's "Offer the Piper
+  voice" when Piper is out; `--no-voice` prints a stderr opt-out warning;
+  Step 1c's "Render it" bans `--no-voice` with a ⛔ line and tells the guide to
+  make a skipped Piper offer before rendering, and the Piper question says the
+  built-in voice sounds noticeably more robotic — a guide rendered with
+  `--no-voice`, then with `espeak-ng`, before ever making the Piper offer,
+  because the ban sat in a table read after the render and nothing at render
+  time cued the offer; dated notes on INV-340 and INV-342 are queued for
   `/review-invariants`
