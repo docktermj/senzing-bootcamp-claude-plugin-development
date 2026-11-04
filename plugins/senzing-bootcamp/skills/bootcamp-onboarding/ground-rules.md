@@ -1357,6 +1357,15 @@ the 👉 protocol above).
   runs, IS recorded in `modules_completed` — INV-092);
   🔄 for the current module; ⬜ for upcoming), before/after
   framing, and a brief numbered step overview. Never skip these - they orient the bootcamper.
+  **The journey map's shape: this is the canonical statement (INV-300).** Render it as a
+  two-column Markdown table headed **Module | Status**, with one row per entry in
+  `selected_modules`, in that order and by name (INV-079), Bootcamp preparation and Bootcamp
+  graduation included. Each Status cell is the marker above plus its word: `✅ done`,
+  `🔄 you are here` or `⬜ upcoming`. Directly under the table, show one count line,
+  **"N of M modules done"**, where M is the number of rows and N the number of ✅ rows; it is a
+  count, never a module number. The journey map is required output, not explanatory output, so
+  every verbosity preset, `minimal` included, shows the full table plus the count line: INV-214's
+  allowance to compress a list of names to a count does not apply to it.
 - **Module selection drives the journey map.** The bootcamp is a sequence of named modules chosen
   in the **Bootcamp preparation** module (`../bootcamp-preparation/SKILL.md`): **Core** includes
   every module in order; **Customized** includes the required modules plus whichever optional
