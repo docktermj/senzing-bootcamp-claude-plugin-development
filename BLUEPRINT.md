@@ -10727,21 +10727,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8958 test methods in 463 files, matching `inventory.test_count_total`.
+There are 8964 test methods in 463 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8958.
+sum to 8964.
 
-Two files run more tests than they define, so discovery collects 8965:
+Two files run more tests than they define, so discovery collects 8971:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8958`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8964`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8965`. No other count
+run count. With `pwsh` installed, the run reports `Ran 8971`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
@@ -10992,7 +10992,7 @@ looks wrong.
 - `tests/test_module7_discover_instructions.py`: 17
 - `tests/test_module7_exports_for_integration_targets.py`: 50
 - `tests/test_module7_gate_shows_both_versions.py`: 13
-- `tests/test_module7_recall_question.py`: 14
+- `tests/test_module7_recall_question.py`: 16
 - `tests/test_module7_your_question_answered.py`: 14
 - `tests/test_module_0_suggested_queries_are_measured.py`: 18
 - `tests/test_module_5_describes_the_entity_specification_as_served.py`: 9
@@ -11037,7 +11037,7 @@ looks wrong.
 - `tests/test_plugin_manifest_reads_resolve_inside_the_plugin.py`: 13
 - `tests/test_poor_band_requires_a_mapping_cause.py`: 19
 - `tests/test_post_yes_switch_reads_the_dial.py`: 19
-- `tests/test_predictions_before_results.py`: 55
+- `tests/test_predictions_before_results.py`: 59
 - `tests/test_preparation_recap_template.py`: 9
 - `tests/test_prescribed_search_queries.py`: 56
 - `tests/test_profile_report_relocation_covers_both_filenames.py`: 15
@@ -14474,6 +14474,19 @@ Senzing licensing, with no SPDX identifier.
   pinned by a negative-controlled `git ls-files -s` test — every probe
   repeated two WATCH findings, and `SKILL.md`'s direct commands failed with
   `Permission denied`; a new invariant is queued for `/review-invariants`
+- #850: each prediction site's ask step (System verification Step 7a item 2,
+  Discover step 4a-pairs item 2 and step 4b item 1a's first bullet) opens with
+  one sentence cueing the introduction by pointer to "Predictions before
+  results", and Module 7 step 3a's recall question opens with a purpose line
+  whose content the skill states (it checks their reading of what the engine
+  decided about their own data, it does not ask them to resolve records, it
+  hints at no answer) — a guide following a site's numbered items never reached
+  #747's introduction, and the recall question had no framing, so a Bootcamper
+  read both as being asked to resolve records;
+  `tests/test_predictions_before_results.py` requires the cue first in each ask
+  step and ahead of the record presentation, and
+  `tests/test_module7_recall_question.py` the purpose line's clauses and place;
+  a dated note on INV-362 is queued for `/review-invariants`
 - #857: `transcript_lint.py` reports a hands-on module that ends without its
   pinned directing 👉 (`check_directing_steps`), a Query, Visualize and
   Discover that ends without step 4a-pairs' 👉 (`check_pairs_step`), and an

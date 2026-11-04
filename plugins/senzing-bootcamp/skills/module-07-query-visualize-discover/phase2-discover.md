@@ -174,7 +174,9 @@ than a copy here (INV-300, INV-357).
    - **When step 4a cannot supply 3,** including its graceful fallback for limited data, show as
      many as it can, even if they are all one kind. When it can supply none, say so in one line and
      continue to step 4b.
-2. **Show one pair per turn, then ask.** Present the two records' features side by side, read from
+2. **Show one pair per turn, then ask.** First introduce the exercise, as
+   `../bootcamp-onboarding/ground-rules.md` → "Predictions before results" requires before the
+   site's first 👉 (INV-357). Present the two records' features side by side, read from
    the loaded file each came from (the `file_path` step 4a used). Show no entity ID, match key or
    any other sign of the engine's answer. End the turn on:
 
@@ -230,7 +232,9 @@ teaches the bootcamper how Senzing explains its resolution decisions.
    prediction point: the skip, the reveal's shape, "informs, never grades" and the Questions &
    Responses line are stated once in `../bootcamp-onboarding/ground-rules.md` → "Predictions
    before results"; follow them there rather than a copy here (INV-300, INV-357).
-   - **Show the entity's records before any `why_*` call, as text only.** Show the two records item 1
+   - **Show the entity's records before any `why_*` call, as text only.** First introduce the
+     exercise, as `../bootcamp-onboarding/ground-rules.md` → "Predictions before results" requires
+     before the site's first 👉 (INV-357). Show the two records item 1
      named as text, feature by feature, read from the loaded file each came from. Do not send the
      Bootcamper to step 3c's app for them before the 👉: its entity view shows each record's match
      key and the why verdict, which are this prediction's answer (INV-357).

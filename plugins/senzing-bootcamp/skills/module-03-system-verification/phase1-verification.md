@@ -683,7 +683,9 @@ cannot be found, skip this step without asking (no result, no prediction), recor
    `verification_data.jsonl` is unchanged. It is modeled on Step 2's worked counter-example, with
    the nickname as its one difference. That counter-example is an observation of one install, so it
    says nothing about what this install will do.
-2. **Show it, then ask. Load nothing yet.** Present the `Mari` record beside the Marisol record it
+2. **Show it, then ask. Load nothing yet.** First introduce the exercise, as
+   `../bootcamp-onboarding/ground-rules.md` → "Predictions before results" requires before the
+   site's first 👉 (INV-357). Present the `Mari` record beside the Marisol record it
    was copied from, feature by feature, and say in one line that only the first name differs. Then
    end the turn on:
 
