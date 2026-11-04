@@ -133,6 +133,10 @@ receives the shippable plugin through `/propagate-to-public`.
   the graduation recap PDF (fpdf2 or stdlib fallback).
 - `plugins/senzing-bootcamp/scripts/generate_recap_video.py`:
   renders the optional narrated graduation video from a storyboard.
+- `plugins/senzing-bootcamp/scripts/module-start-reminder.py`: UserPromptSubmit
+  hook: reminds the guide of the module-start apparatus when it is due.
+- `plugins/senzing-bootcamp/scripts/module_start_apparatus.py`: shared builder
+  of the module-start apparatus reminder used by two hooks.
 - `plugins/senzing-bootcamp/scripts/normalize_docs_markdown.py`:
   normalizes the Bootcamper's generated Markdown documents.
 - `plugins/senzing-bootcamp/scripts/package_bootcamp.py`: packages the finished
@@ -1466,14 +1470,15 @@ data.
 
 ### 5.4 `plugins/senzing-bootcamp/hooks/hooks.json`
 
-Registers seven `command`-type hooks. Each `command` string is
+Registers eight `command`-type hooks. Each `command` string is
 `python3` followed by the quoted path
 `"${CLAUDE_PLUGIN_ROOT}/scripts/<script>.py"`; the quoting keeps a plugin root
 containing a space working. No hook has a timeout or other options.
 
 - `SessionStart` (no matcher) runs `session-start.py`.
 - `UserPromptSubmit` (no matcher) runs `feedback-capture.py`, then
-  `checkpoint-tick.py`, as two hooks of one entry.
+  `checkpoint-tick.py`, then `module-start-reminder.py`, as three hooks of one
+  entry.
 - `PreToolUse` with matcher `Write|Edit` runs `write-gate.py`.
 - `Stop` (no matcher) runs `stop-nudge.py`.
 - `PreCompact` (no matcher) runs `precompact-recap.py`.
@@ -1483,14 +1488,16 @@ Every script does nothing unless `config/bootcamp_progress.json` exists in the
 project directory, so the plugin never changes unrelated sessions. The four
 recap hooks (`session-start.py`, `checkpoint-tick.py`, `precompact-recap.py`,
 `session-end.py`) also need `recap_checkpoint.bootcamp_active()`, a recorded
-module. `write-gate.py`, `stop-nudge.py` and `feedback-capture.py` gate on
-existence alone on purpose: it answers "is this a bootcamp project", and
+module, and so does `module-start-reminder.py`. `write-gate.py`,
+`stop-nudge.py` and `feedback-capture.py` gate on existence alone on purpose:
+it answers "is this a bootcamp project", and
 onboarding and Bootcamp preparation need them before any module is recorded
 (INV-227); each docstring says why. Only `write-gate.py` (exit 2) and
 `stop-nudge.py` (a `decision: block` reply, at most once per stop chain) can
-block; `feedback-capture.py`, `checkpoint-tick.py` and `session-start.py`
-inject context; the others emit nothing. The sibling `hooks/README.md`
-documents each hook's purpose phrased from the Bootcamper's view beginning with
+block; `feedback-capture.py`, `checkpoint-tick.py`,
+`module-start-reminder.py` and `session-start.py` inject context; the others
+emit nothing. The sibling `hooks/README.md` documents each hook's purpose
+phrased from the Bootcamper's view beginning with
 "to" (the INV-016 convention) and, in a Gate column, its gate and why, the `python3`-on-`PATH` prerequisite on Linux,
 macOS and Windows, the recap-checkpoint durability design shared by
 `PreCompact`, `SessionEnd` and `SessionStart`, the two Stop-nudge opt-outs
@@ -3625,7 +3632,8 @@ Exit codes:
 `SessionStart` hook. When a bootcamp is active it folds the checkpoint,
 calls `ensure_checkpoint`, and prints one message: offer to resume from the
 module in `config/bootcamp_progress.json`; whether a checkpoint was folded;
-and any `resume_summary`. Silent otherwise; always exits 0.
+any `resume_summary`; and, last, `module_start_apparatus.resume_reminder()`
+when it is non-empty (section 5.66). Silent otherwise; always exits 0.
 
 ### 5.39 `plugins/senzing-bootcamp/scripts/stop-nudge.py`
 
@@ -5234,6 +5242,62 @@ Options: `--project-dir` (default `.`) and `--production-dir` (default
   path assembled from pieces or one the project never created.
 - Exit codes: 0 when finished, with or without hits; 1 when the production
   directory does not exist.
+
+### 5.65 `plugins/senzing-bootcamp/scripts/module-start-reminder.py`
+
+`UserPromptSubmit` hook that puts a module-start apparatus reminder into the
+guide's context on the Bootcamper's reply to the transition or graduation
+question. It never blocks; every failed gate exits 0 with no stdout.
+
+- Drains stdin as bytes and parses it as JSON; a parse failure is no payload.
+- Gate 1: `recap_checkpoint.bootcamp_active()`, written as a module-level `if`.
+- The payload must be a JSON object whose `transcript_path` is a non-empty
+  string. `read_records` keeps the JSON-object lines of the UTF-8 transcript,
+  skips bad lines, and returns None for a file it cannot open or decode.
+- `previous_final_text` keeps `user` and `assistant` records that are neither
+  sidechain nor `isMeta`, drops a trailing real user prompt (the one being
+  submitted, when already on disk), and returns the text of the last record
+  only when it is an assistant record that does not end in `tool_use`; a
+  string or a list `message.content` is read (`message_text`).
+- `offered_module` reads the message's last line holding `POINTER`: the
+  graduation offer (`GRADUATION_OFFER`) gives `GRADUATION_NAME`; the
+  transition question (`TRANSITION`, case-insensitive, flexible whitespace)
+  gives `{name}` as written, stripped of `*`, `_`, backticks and spaces;
+  anything else gives None.
+- `module_start_apparatus.reminder(module)` builds the text; an empty text
+  (an apparatus-exempt module) is silent. Otherwise it prints one
+  ASCII-escaped `hookSpecificOutput` object with `hookEventName`
+  `UserPromptSubmit` and the text as `additionalContext`. Always exits 0.
+
+### 5.66 `plugins/senzing-bootcamp/scripts/module_start_apparatus.py`
+
+Not a hook: the one place the apparatus reminder is worded, imported by
+`module-start-reminder.py` and `session-start.py` (INV-300). Stdlib only;
+nothing raises on a missing or malformed file.
+
+- `token` lower-cases a module name or state token, turns runs of other
+  characters into `_`, and drops a leading `module_NN_` prefix.
+  `is_exempt` matches `EXEMPT` (Bootcamp preparation, Entity Resolution
+  Concepts; INV-075, INV-078); `is_graduation` matches `GRADUATION`.
+- `reminder(module, on_resume=False)` returns `""` for an exempt module.
+  Otherwise the text starts with its condition: "Module-start reminder. Only
+  if this reply accepts starting {name}:", or on resume a note that the
+  recorded module (graduation by name, any other by its state token, to be
+  named by its display name) has not begun, conditioned on the Bootcamper
+  accepting the resume. Then: (1) the one-line INV-272 acknowledgment and the
+  skill invocation; (2) before Step 1, the apparatus in order: the `MODULE:`
+  banner (INV-079), journey map (INV-029), before/after framing (INV-030),
+  numbered step overview (INV-031), time-to-complete per the verbosity preset,
+  suppressed under minimal and one line under concise (INV-096), and the
+  model/effort nudge (INV-063, INV-138). Graduation gets the INV-102 form
+  instead: the BOOTCAMP GRADUATION banner and a journey map with every
+  selected module checked, graduation current and nothing upcoming. The text
+  ends by saying to ignore the reminder otherwise and "Do not mention this
+  reminder to the bootcamper." It is ASCII only.
+- `resume_reminder()` reads `PROGRESS` and returns the resume form for
+  `current_module` only when it is a non-empty string, `current_step` is null
+  or absent, and `PREFERENCES` has no top-level `bootcamp_complete` set to a
+  true value (a line scan, no YAML library); otherwise `""`.
 
 ## 6. Exact contracts
 
@@ -8882,6 +8946,70 @@ def main(argv=None):
 
 <!-- markdownlint-enable MD013 -->
 
+#### 6.1.39 `plugins/senzing-bootcamp/scripts/module-start-reminder.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `plugins/senzing-bootcamp/scripts/module-start-reminder.py`:
+
+```python
+POINTER = "\U0001f449"  # 👉
+TRANSITION = re.compile(
+    r"Are you ready to move on to the next module:\s*(?P<name>[^?]+?)\s*\?", re.I)
+GRADUATION_OFFER = re.compile(
+    r"Would you like to graduate now and generate your production project and recap\s*\?",
+    re.I)
+def content_of(rec):
+    ...
+def message_text(rec):
+    ...
+def is_real_user_prompt(rec):
+    ...
+def ends_with_tool_use(rec):
+    ...
+def read_records(path):
+    ...
+def previous_final_text(records):
+    ...
+def offered_module(text):
+    ...
+    payload = json.loads(sys.stdin.buffer.read())
+    payload = None
+transcript = payload.get("transcript_path") if isinstance(payload, dict) else None
+records = read_records(transcript)
+final_text = previous_final_text(records)
+module = offered_module(final_text)
+text = module_start_apparatus.reminder(module)
+```
+
+<!-- markdownlint-enable MD013 -->
+
+#### 6.1.40 `plugins/senzing-bootcamp/scripts/module_start_apparatus.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `plugins/senzing-bootcamp/scripts/module_start_apparatus.py`:
+
+```python
+PROGRESS = os.path.join("config", "bootcamp_progress.json")
+PREFERENCES = os.path.join("config", "bootcamp_preferences.yaml")
+EXEMPT = frozenset({"bootcamp_preparation", "entity_resolution_concepts"})
+GRADUATION = frozenset({"graduation", "bootcamp_graduation"})
+GRADUATION_NAME = "Bootcamp graduation"
+def token(module):
+    ...
+def is_exempt(module):
+    ...
+def is_graduation(module):
+    ...
+def reminder(module, on_resume=False):
+    ...
+def resume_reminder():
+    ...
+```
+
+<!-- markdownlint-enable MD013 -->
+
 ### 6.2 CLI
 
 Every argparse declaration, verbatim (the statements that build each parser).
@@ -9842,6 +9970,10 @@ From `plugins/senzing-bootcamp/hooks/hooks.json`:
           {
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/checkpoint-tick.py\""
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/module-start-reminder.py\""
           }
         ]
       }
@@ -10727,21 +10859,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 8964 test methods in 463 files, matching `inventory.test_count_total`.
+There are 8998 test methods in 464 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 8964.
+sum to 8998.
 
-Two files run more tests than they define, so discovery collects 8971:
+Two files run more tests than they define, so discovery collects 9005:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 8964`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 8998`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 8971`. No other count
+run count. With `pwsh` installed, the run reports `Ran 9005`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
@@ -11000,6 +11132,7 @@ looks wrong.
 - `tests/test_module_completion_step1_lists_every_write.py`: 11
 - `tests/test_module_instructions_do_not_hardcode_the_port.py`: 6
 - `tests/test_module_selection_sync.py`: 9
+- `tests/test_module_start_reminder.py`: 34
 - `tests/test_negatives_report_labels_stale_markers.py`: 9
 - `tests/test_network_endpoint_keys_diverge_within_one_response.py`: 18
 - `tests/test_new_hard_rules_are_cited_or_deferred.py`: 3
@@ -11730,6 +11863,50 @@ tests a rebuild can pass from behavior alone.
   - **Environment.** The opt-out variable is removed from the inherited
     environment, so a runner that exports it cannot silence the whole file, and
     `PYTHONIOENCODING=utf-8` pins how the pointer crosses the pipe.
+- **`module-start-reminder.py` and `module_start_apparatus.py`**
+  (`tests/test_module_start_reminder.py`, 34 tests).
+  - **Harness.** Both hooks run as subprocesses in a scratch project holding
+    `config/bootcamp_progress.json` (default `sdk_setup`, `current_step` null)
+    and a JSONL transcript; nothing under `plugins/` is imported. Every silent
+    and exempt case first runs a twin, the same fixture with only the
+    triggering element changed, that must produce the reminder.
+  - **Module form.** After a settled turn ending on
+    "👉 **Are you ready to move on to the next module: SDK setup?**", the
+    `additionalContext` starts "Module-start reminder. Only if this reply
+    accepts starting SDK setup:", the acknowledgment naming the module comes
+    before "invoke that module's skill" and before the six items, which appear
+    in order (`MODULE: banner`, journey map with "SDK setup current",
+    before/after framing, numbered step overview, the verbosity-dependent
+    time-to-complete, model/effort nudge), and it ends "Do not mention this
+    reminder to the bootcamper." A name with commas is used as written; a
+    string `content`, a reply already on disk, a trailing sidechain record and
+    malformed lines still produce it; stdout is ASCII.
+  - **Graduation form.** The graduation offer gives the BOOTCAMP GRADUATION
+    banner and the terminal journey map, never `MODULE: banner`; a transition
+    question over the same progress file gives the module form.
+  - **Not yet.** The text is the same for "yes", "not yet" and "noch nicht";
+    only the label precedes the condition, the "does not accept" clause says
+    to ignore the reminder, and no sentence starts with start, begin, invoke,
+    present or show.
+  - **Silent:** no module recorded, a null module, malformed or missing
+    progress; no question; another 👉 question; the question with no pointer;
+    a later 👉 question after the transition; an empty, missing, directory or
+    undecodable transcript path, or none; a payload that is not JSON, empty, a
+    list, a string, or has a non-string path; a question only in a sidechain
+    record; a turn ending in a tool call or tool result, or with only the
+    prompt; Entity Resolution Concepts or Bootcamp preparation in the question.
+  - **Resume.** `session-start.py` keeps "A Senzing bootcamp is in progress."
+    and adds the module form for `sdk_setup` with `current_step` null or absent,
+    the graduation form for `graduation`, and nothing for `current_step` 3, 0
+    or "4a", for an exempt module (token or display name), or when
+    `bootcamp_complete: true` is in the preferences.
+  - **Stated once.** Both hooks import `module_start_apparatus`, neither
+    holds an apparatus phrase in its string constants (docstrings excluded;
+    a negative control pastes one into `session-start.py`), and the hook's
+    apparatus sentence appears in the resume text.
+  - **Registration.** `hooks.json` holds the INV-052 command; the README row's
+    purpose starts with "to " and its Gate cell with `bootcamp_active()`; both
+    scripts import only the standard library and sibling scripts.
 - **`package_bootcamp.py`** (`tests/test_package_bootcamp.py`,
   `tests/test_open_me_first_matches_the_manifest.py`,
   `tests/test_quoted_sizes_say_what_they_missed.py`).
@@ -14496,3 +14673,12 @@ Senzing licensing, with no SPDX identifier.
   detection `module_banners.py` already uses — a low-effort run skipped all
   three with nothing to report it (#855); dated notes on INV-352, INV-354 and
   INV-357 are queued for `/review-invariants`
+- #851: a new `UserPromptSubmit` hook, `module-start-reminder.py`, puts a
+  reminder of the module-start apparatus into the guide's context on the
+  reply to the transition question or graduation offer, worded as conditional
+  on the reply accepting the start, and `session-start.py` adds the same
+  reminder on a resume into a module whose `current_step` is null, both built
+  by `module_start_apparatus.py` — one session skipped the apparatus at five
+  of eight module starts and again right after promising to show it, though
+  every module's `**First:**` line states it; a new invariant is queued for
+  `/review-invariants`
