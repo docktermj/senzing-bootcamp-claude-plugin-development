@@ -119,7 +119,8 @@ receives the shippable plugin through `/propagate-to-public`.
 - `plugins/senzing-bootcamp/scripts/capture_screenshots.py`:
   captures each tab of a running visualization app as PNGs.
 - `plugins/senzing-bootcamp/scripts/checkpoint-tick.py`: UserPromptSubmit hook:
-  counts turns toward the next recap checkpoint.
+  keeps the recap checkpoint present, and names a record module completion
+  left missing on a transition reply.
 - `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`: names, inspects and
   tears down the Bootcamper's containers, picks a free host port, and checks
   the SDK container's published visualization port.
@@ -158,6 +159,8 @@ receives the shippable plugin through `/propagate-to-public`.
   resumes or starts the bootcamp context.
 - `plugins/senzing-bootcamp/scripts/stop-nudge.py`: Stop hook: nudges the guide
   when a turn ends without its pinned question.
+- `plugins/senzing-bootcamp/scripts/transition_reply.py`: shared detector of a
+  reply to the transition question or graduation offer; not a hook.
 - `plugins/senzing-bootcamp/scripts/vendor/`: vendored D3 v7.9.0 used offline by
   the visualizations (section 9).
 - `plugins/senzing-bootcamp/scripts/write-gate.py`: PreToolUse Write/Edit hook:
@@ -3189,13 +3192,26 @@ Exit codes:
 
 ### 5.24 `plugins/senzing-bootcamp/scripts/checkpoint-tick.py`
 
-`UserPromptSubmit` hook. Reads and discards stdin; exits 0 silently unless
-`recap_checkpoint.bootcamp_active`. It then calls `ensure_checkpoint`, and
-only on the turn that creates the file prints a `hookSpecificOutput` JSON
-object whose `additionalContext` tells the guide to keep
+`UserPromptSubmit` hook. Drains stdin as bytes and parses it as JSON (a parse
+failure is no payload); exits 0 silently unless
+`recap_checkpoint.bootcamp_active`. It then calls `ensure_checkpoint`; on the
+turn that creates the file, the context tells the guide to keep
 `docs/progress/recap_checkpoint.md` current between its markers at each step
-boundary, to clear it at module completion, and not to mention it. Always
-exits 0.
+boundary, to clear it at module completion, and not to mention it.
+
+When `transition_reply.offered_module(payload)` names a module (#858), it
+reads `config/bootcamp_progress.json` (a missing, unreadable or non-object
+file adds nothing). `unset_directing_steps` lists each `DIRECTING_MODULES`
+token in `modules_completed` whose `directing_steps` value is absent, null or
+empty; `unfiled_reversals` lists each `steer_triggers` entry with `kind`
+`reversal` and `filed` exactly `false`, its evidence cut to `EVIDENCE_LIMIT`
+characters. A wrongly typed key is skipped. `missing_record_reminder` names
+each and tells the guide to record `skipped`, then file each reversal through
+`feedback.md` → "Silent in-run append", silently and before anything else,
+asking nothing and rewriting no recap section. The reply is not classified.
+When there is any context, it prints one ASCII-escaped `hookSpecificOutput`
+object whose `additionalContext` joins the announcement and the reminder with
+a blank line. Always exits 0.
 
 ### 5.25 `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`
 
@@ -5313,19 +5329,8 @@ question. It never blocks; every failed gate exits 0 with no stdout.
 
 - Drains stdin as bytes and parses it as JSON; a parse failure is no payload.
 - Gate 1: `recap_checkpoint.bootcamp_active()`, written as a module-level `if`.
-- The payload must be a JSON object whose `transcript_path` is a non-empty
-  string. `read_records` keeps the JSON-object lines of the UTF-8 transcript,
-  skips bad lines, and returns None for a file it cannot open or decode.
-- `previous_final_text` keeps `user` and `assistant` records that are neither
-  sidechain nor `isMeta`, drops a trailing real user prompt (the one being
-  submitted, when already on disk), and returns the text of the last record
-  only when it is an assistant record that does not end in `tool_use`; a
-  string or a list `message.content` is read (`message_text`).
-- `offered_module` reads the message's last line holding `POINTER`: the
-  graduation offer (`GRADUATION_OFFER`) gives `GRADUATION_NAME`; the
-  transition question (`TRANSITION`, case-insensitive, flexible whitespace)
-  gives `{name}` as written, stripped of `*`, `_`, backticks and spaces;
-  anything else gives None.
+- Gates 2-4 are `transition_reply.offered_module(payload)` (section 5.67), the
+  detector `checkpoint-tick.py` also uses (#858); None is silent.
 - `module_start_apparatus.reminder(module)` builds the text; an empty text
   (an apparatus-exempt module) is silent. Otherwise it prints one
   ASCII-escaped `hookSpecificOutput` object with `hookEventName`
@@ -5360,6 +5365,27 @@ nothing raises on a missing or malformed file.
   `current_module` only when it is a non-empty string, `current_step` is null
   or absent, and `PREFERENCES` has no top-level `bootcamp_complete` set to a
   true value (a line scan, no YAML library); otherwise `""`.
+
+### 5.67 `plugins/senzing-bootcamp/scripts/transition_reply.py`
+
+Not a hook: the one detector of a reply to the transition question or the
+graduation offer, imported by `module-start-reminder.py` and
+`checkpoint-tick.py` (#858). Stdlib only; nothing raises on bad input.
+
+- `offered_module(payload)` returns None unless the payload is a JSON object
+  whose `transcript_path` is a non-empty string. `read_records` keeps the
+  JSON-object lines of the UTF-8 transcript, skips bad lines, and returns None
+  for a file it cannot open or decode.
+- `previous_final_text` keeps `user` and `assistant` records that are neither
+  sidechain nor `isMeta`, drops a trailing real user prompt (the one being
+  submitted, when already on disk), and returns the text of the last record
+  only when it is an assistant record that does not end in `tool_use`; a
+  string or a list `message.content` is read (`message_text`).
+- `offered_module_in` reads the message's last line holding `POINTER`: the
+  graduation offer (`GRADUATION_OFFER`) gives
+  `module_start_apparatus.GRADUATION_NAME`; the transition question
+  (`TRANSITION`, case-insensitive, flexible whitespace) gives `{name}` as
+  written, stripped of `*`, `_`, backticks and spaces; anything else gives None.
 
 ## 6. Exact contracts
 
@@ -6698,7 +6724,19 @@ def main(argv=None) -> int:
 From `plugins/senzing-bootcamp/scripts/checkpoint-tick.py`:
 
 ```python
+PROGRESS = os.path.join("config", "bootcamp_progress.json")
+DIRECTING_MODULES = ("data_quality_mapping", "data_processing", "query_visualize_discover")
+EVIDENCE_LIMIT = 200
+def unset_directing_steps(progress):
+    ...
+def unfiled_reversals(progress):
+    ...
+def missing_record_reminder(progress):
+    ...
+    payload = json.loads(sys.stdin.buffer.read())
+    payload = None
 created = recap_checkpoint.ensure_checkpoint()
+if transition_reply.offered_module(payload) is not None:
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -9038,32 +9076,9 @@ def main(argv=None):
 From `plugins/senzing-bootcamp/scripts/module-start-reminder.py`:
 
 ```python
-POINTER = "\U0001f449"  # 👉
-TRANSITION = re.compile(
-    r"Are you ready to move on to the next module:\s*(?P<name>[^?]+?)\s*\?", re.I)
-GRADUATION_OFFER = re.compile(
-    r"Would you like to graduate now and generate your production project and recap\s*\?",
-    re.I)
-def content_of(rec):
-    ...
-def message_text(rec):
-    ...
-def is_real_user_prompt(rec):
-    ...
-def ends_with_tool_use(rec):
-    ...
-def read_records(path):
-    ...
-def previous_final_text(records):
-    ...
-def offered_module(text):
-    ...
     payload = json.loads(sys.stdin.buffer.read())
     payload = None
-transcript = payload.get("transcript_path") if isinstance(payload, dict) else None
-records = read_records(transcript)
-final_text = previous_final_text(records)
-module = offered_module(final_text)
+module = transition_reply.offered_module(payload)
 text = module_start_apparatus.reminder(module)
 ```
 
@@ -9090,6 +9105,39 @@ def is_graduation(module):
 def reminder(module, on_resume=False):
     ...
 def resume_reminder():
+    ...
+```
+
+<!-- markdownlint-enable MD013 -->
+
+#### 6.1.41 `plugins/senzing-bootcamp/scripts/transition_reply.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `plugins/senzing-bootcamp/scripts/transition_reply.py`:
+
+```python
+POINTER = "\U0001f449"  # 👉
+TRANSITION = re.compile(
+    r"Are you ready to move on to the next module:\s*(?P<name>[^?]+?)\s*\?", re.I)
+GRADUATION_OFFER = re.compile(
+    r"Would you like to graduate now and generate your production project and recap\s*\?",
+    re.I)
+def content_of(rec):
+    ...
+def message_text(rec):
+    ...
+def is_real_user_prompt(rec):
+    ...
+def ends_with_tool_use(rec):
+    ...
+def read_records(path):
+    ...
+def previous_final_text(records):
+    ...
+def offered_module_in(text):
+    ...
+def offered_module(payload):
     ...
 ```
 
@@ -10950,12 +10998,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9135 test methods in 466 files, matching `inventory.test_count_total`.
+There are 9162 test methods in 467 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 9112.
+sum to 9157.
 
-Two files run more tests than they define, so discovery collects 9119:
+Two files run more tests than they define, so discovery collects 9162:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -11014,6 +11062,7 @@ looks wrong.
 - `tests/test_ci_workflow_guards_the_fpdf2_matrix.py`: 12
 - `tests/test_citation_census.py`: 25
 - `tests/test_citations_verify_states_its_limit.py`: 5
+- `tests/test_checkpoint_tick_missing_records.py`: 27
 - `tests/test_claimed_hook_triggers_are_real.py`: 8
 - `tests/test_classpath_root_is_platform_qualified.py`: 6
 - `tests/test_coherence_sweep_523.py`: 29
@@ -12006,6 +12055,32 @@ tests a rebuild can pass from behavior alone.
   - **Registration.** `hooks.json` holds the INV-052 command; the README row's
     purpose starts with "to " and its Gate cell with `bootcamp_active()`; both
     scripts import only the standard library and sibling scripts.
+- **`checkpoint-tick.py`'s missing-record reminder and `transition_reply.py`**
+  (`tests/test_checkpoint_tick_missing_records.py`, 27 tests, #858).
+  - **Harness.** The hook runs as a subprocess in a scratch project holding a
+    progress file after Data Quality, Mapping, and Transformation closed, a
+    JSONL transcript, and an existing checkpoint, so the announcement stays out
+    of the way unless a case removes it. Every silent case first runs a twin
+    that must produce the reminder.
+  - **Named.** An unset, absent-key or every-module `directing_steps` value for
+    a completed directing module, and a reversal with `filed: false` in any
+    module, with its evidence cut to 200 characters; the directing repair comes
+    before the filing; "yes" and "not yet" get the same text; the graduation
+    offer triggers it too.
+  - **Silent:** nothing missing (each of `directed`, `guide_chose`, `none`,
+    `skipped` counts as set); no module recorded; another 👉 question or none;
+    a directing module not in `modules_completed`; `filed: true`; a `failure`
+    entry, even one carrying `filed: false`; malformed or wrongly typed
+    progress, including a `filed` that is a string, zero or absent; a payload
+    that is not JSON, a list, or has a non-string or missing transcript path;
+    a turn still settling.
+  - **Announcement.** It still appears alone, once, on the turn the checkpoint
+    is created; on a transition turn that also creates it, both texts share
+    one `additionalContext`, announcement first; stdout is ASCII.
+  - **Detected once.** Both hooks import `transition_reply`, and neither
+    defines a detector function or holds the transition phrase in a code
+    string (a negative control pastes a function into a copy); `ground-rules.md`
+    states the late `skipped`, and the README row names the reminder.
 - **The journey map's shape** (`tests/test_journey_map_is_a_table.py`, 16
   tests, #852).
   - `ground-rules.md` → "Module start banners and transitions" states the
@@ -14887,3 +14962,13 @@ Senzing licensing, with no SPDX identifier.
   them, and completion's `none` default recorded a skip as a step that never
   arose; dated notes on INV-354, INV-352, INV-357 and INV-413 are queued for
   `/review-invariants`
+- #858: `checkpoint-tick.py` also acts on the Bootcamper's reply to the
+  transition question or graduation offer: it names each directing module in
+  `modules_completed` whose `directing_steps` value is unset and each
+  `steer_triggers` reversal with `filed: false`, and tells the guide to record
+  `skipped` and file the reversal silently; the reply is detected by the new
+  shared `transition_reply.py`, which `module-start-reminder.py` now imports
+  instead of its own reader — module completion's Step 0 runs only on the
+  model's attention, and by the transition reply the module has closed, so
+  only these two records can still be repaired; a dated note on INV-354 is
+  queued for `/review-invariants`
