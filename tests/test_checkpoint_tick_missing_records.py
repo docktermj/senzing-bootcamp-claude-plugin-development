@@ -22,6 +22,10 @@ The hook reads its payload from stdin and resolves `config/` and `docs/` against
 directory, so each case runs it as a subprocess in a temp project, the way Claude Code
 invokes it. Standard library only; nothing under `plugins/` is imported (INV-108).
 
+Enforces **INV-354**'s 2026-11-05 note (#858: the guide records `skipped` on this hook's reminder):
+it runs the hook against scratch projects and cannot establish that a live guide makes the repair,
+which only a live walk (`auto-test` or `dry-run` phase 3) observes.
+
 Run:  python3 -m unittest discover -s tests
 """
 import ast

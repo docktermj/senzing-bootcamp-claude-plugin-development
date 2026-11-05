@@ -890,7 +890,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 327 on 2026-11-05: the same review applied INV-357's 2026-11-04 note (#857), which names
 # test_transcript_lint_reports_a_skipped_step.py. Re-derived by running the extractor -- 327, the new
 # pair present and none removed.
-EXPECTED_PAIRS = 327
+# 328 on 2026-11-05: the same review applied INV-354's 2026-11-05 note (#858) once PR #866 merged,
+# which names test_checkpoint_tick_missing_records.py; that test gained its INV-354 back-citation in the
+# same change. Re-derived by running the extractor -- 328, the new pair present and none removed.
+EXPECTED_PAIRS = 328
 
 
 def pairs():
