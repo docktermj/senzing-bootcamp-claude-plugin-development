@@ -14969,5 +14969,5 @@ Senzing licensing, with no SPDX identifier.
   shared `transition_reply.py`, which `module-start-reminder.py` now imports
   instead of its own reader — module completion's Step 0 runs only on the
   model's attention, and by the transition reply the module has closed, so
-  only these two records can still be repaired; a dated note on INV-354 is
-  queued for `/review-invariants`
+  only these two records can still be repaired; a dated note on INV-354 was
+  registered 2026-11-05
