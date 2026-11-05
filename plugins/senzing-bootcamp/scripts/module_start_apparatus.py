@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared builder for the module-start apparatus reminder (#851).
+"""Shared builder for the module-start apparatus reminder (#851, INV-420).
 
 The module-start apparatus (the banner, journey map, before/after framing, step overview,
 time estimate and model/effort nudge) is required at every content-module start and at

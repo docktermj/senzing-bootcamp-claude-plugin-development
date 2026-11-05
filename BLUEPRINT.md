@@ -14897,7 +14897,7 @@ Senzing licensing, with no SPDX identifier.
   `tests/test_predictions_before_results.py` requires the cue first in each ask
   step and ahead of the record presentation, and
   `tests/test_module7_recall_question.py` the purpose line's clauses and place;
-  a dated note on INV-362 is queued for `/review-invariants`
+  a dated note on INV-362 was registered 2026-11-05
 - #857: `transcript_lint.py` reports a hands-on module that ends without its
   pinned directing 👉 (`check_directing_steps`), a Query, Visualize and
   Discover that ends without step 4a-pairs' 👉 (`check_pairs_step`), and an
@@ -14906,7 +14906,7 @@ Senzing licensing, with no SPDX identifier.
   `load_walk(path, tool_results=True)` and module ends through the banner
   detection `module_banners.py` already uses — a low-effort run skipped all
   three with nothing to report it (#855); dated notes on INV-352, INV-354 and
-  INV-357 are queued for `/review-invariants`
+  INV-357 were registered 2026-11-05
 - #851: a new `UserPromptSubmit` hook, `module-start-reminder.py`, puts a
   reminder of the module-start apparatus into the guide's context on the
   reply to the transition question or graduation offer, worded as conditional
@@ -14914,8 +14914,8 @@ Senzing licensing, with no SPDX identifier.
   reminder on a resume into a module whose `current_step` is null, both built
   by `module_start_apparatus.py` — one session skipped the apparatus at five
   of eight module starts and again right after promising to show it, though
-  every module's `**First:**` line states it; a new invariant is queued for
-  `/review-invariants`
+  every module's `**First:**` line states it; registered as INV-420 on
+  2026-11-05
 - #852: `ground-rules.md` → "Module start banners and transitions" states the
   journey map's shape once: a `Module | Status` table, one row per
   `selected_modules` entry by name with `✅ done`, `🔄 you are here` or
@@ -14924,7 +14924,7 @@ Senzing licensing, with no SPDX identifier.
   refresh point there, and `transcript_lint.py`'s `journey map` pattern also
   matches two consecutive marked table rows — a guide rendered the map as one
   arrow-separated line the Bootcamper could not scan, because only its content
-  was specified; a dated note on INV-029 is queued for `/review-invariants`
+  was specified; a dated note on INV-029 was registered 2026-11-05
 - #853: `generate_recap_video.py --check` prints a `VOICE:` line naming the
   voice the render would use, read from the render's own `voice_order` in a
   probe mode that launches nothing, and points at Step 1c's "Offer the Piper
@@ -14934,8 +14934,8 @@ Senzing licensing, with no SPDX identifier.
   built-in voice sounds noticeably more robotic — a guide rendered with
   `--no-voice`, then with `espeak-ng`, before ever making the Piper offer,
   because the ban sat in a table read after the render and nothing at render
-  time cued the offer; dated notes on INV-340 and INV-342 are queued for
-  `/review-invariants`
+  time cued the offer; dated notes on INV-340 and INV-342 were registered
+  2026-11-05
 - #854: `generate_recap_video.py --check` also checks the plan, with an
   `INVALID:` line for each completed module (and `intro`,
   `bootcamp_preparation`, `graduation`) no scene's `_module` names and for a
@@ -14946,8 +14946,7 @@ Senzing licensing, with no SPDX identifier.
   constants instead of stating 1:50 to 2:10 — a guide presented a video
   covering 4 of 10 completed modules at about 1:05 as finished, because
   `--check` validated only the schema and the duration check was a step to
-  remember; dated notes on INV-340 and INV-342 are queued for
-  `/review-invariants`
+  remember; dated notes on INV-340 and INV-342 were registered 2026-11-05
 - #856: `module-completion.md` gains a Step 0 before Step 1's write that
   catches a required step that never ran — 0a runs Data processing's
   directing step late and records `skipped` in Modules 5 and 7, 0b shows a
@@ -14960,8 +14959,8 @@ Senzing licensing, with no SPDX identifier.
   `completed` record with no pairs — a low-effort session skipped directing
   steps, worked steers, the pairs and a reversal filing with nothing to catch
   them, and completion's `none` default recorded a skip as a step that never
-  arose; dated notes on INV-354, INV-352, INV-357 and INV-413 are queued for
-  `/review-invariants`
+  arose; dated notes on INV-354, INV-352, INV-357 and INV-413 were registered
+  2026-11-05
 - #858: `checkpoint-tick.py` also acts on the Bootcamper's reply to the
   transition question or graduation offer: it names each directing module in
   `modules_completed` whose `directing_steps` value is unset and each

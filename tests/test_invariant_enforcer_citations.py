@@ -860,7 +860,37 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # test_bootcamp_notes_flow.py, INV-074's first enforcer. INV-255's note from the same issue names the
 # same test, which already enforced INV-255, so it adds no pair. Re-derived by running the extractor
 # -- 319, the new pair present and none removed.
-EXPECTED_PAIRS = 319
+# 320 on 2026-11-05: the 2026-11-05 invariant review applied INV-354's 2026-11-04 note (#856), which
+# names test_module_completion_step_0.py beside test_directing_steps.py, INV-354's existing enforcer.
+# INV-340's 2026-11-04 note (#854), applied in the same review, names test_graduation_video_step.py,
+# which already enforced INV-340, so it adds no pair. Re-derived by running the extractor -- 320, the
+# new pair present and none removed.
+# 321 on 2026-11-05: the same review applied INV-352's 2026-11-04 note (#856), which names
+# test_module_completion_step_0.py beside test_worked_steers.py, INV-352's existing enforcer.
+# Re-derived by running the extractor -- 321, the new pair present and none removed.
+# 322 on 2026-11-05: the same review applied INV-357's 2026-11-04 note (#856), which names
+# test_module_completion_step_0.py beside test_predictions_before_results.py, INV-357's existing
+# enforcer. Re-derived by running the extractor -- 322, the new pair present and none removed.
+# 323 on 2026-11-05: the same review applied INV-029's 2026-11-04 note (#852), which names
+# test_journey_map_is_a_table.py, a new enforcer of INV-029. INV-413's note (#856), applied in the same
+# review, names test_module_completion_step1_lists_every_write.py, which already enforced INV-413, so
+# it adds no pair. Re-derived by running the extractor -- 323, the new pair present and none removed.
+# 324 on 2026-11-05: the same review registered INV-420 (the conditional module-start reminder; #851),
+# which names test_module_start_reminder.py. The amendments applied after INV-029's in the same
+# review (INV-340 and INV-342, #853 and #854) name test_graduation_video_step.py and
+# test_recap_video.py, which already enforced them, so they add no pair. Re-derived by running the
+# extractor -- 324, the new pair present and none removed.
+# 325 on 2026-11-05: the same review applied INV-352's 2026-11-04 note (#857), which names
+# test_transcript_lint_reports_a_skipped_step.py. INV-362's note (#850), applied just before it, names
+# test_module7_recall_question.py, which already enforced INV-362, so it adds no pair. Re-derived by
+# running the extractor -- 325, the new pair present and none removed.
+# 326 on 2026-11-05: the same review applied INV-354's 2026-11-04 note (#857), which names
+# test_transcript_lint_reports_a_skipped_step.py. Re-derived by running the extractor -- 326, the new
+# pair present and none removed.
+# 327 on 2026-11-05: the same review applied INV-357's 2026-11-04 note (#857), which names
+# test_transcript_lint_reports_a_skipped_step.py. Re-derived by running the extractor -- 327, the new
+# pair present and none removed.
+EXPECTED_PAIRS = 327
 
 
 def pairs():

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """UserPromptSubmit hook: to remind the guide of the module-start apparatus when a module
-is about to start (#851).
+is about to start (#851, INV-420).
 
 The apparatus (banner, journey map, before/after framing, step overview, time estimate,
 model/effort nudge) is stated in ``ground-rules.md`` and in every content module's

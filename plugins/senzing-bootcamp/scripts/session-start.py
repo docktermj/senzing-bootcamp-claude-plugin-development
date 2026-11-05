@@ -6,9 +6,9 @@ resume, so a module that was interrupted (quit / compaction / prior session) kee
 its in-progress narrative in the recap (see recap_checkpoint.py).
 
 When the recorded module has not begun (`current_step` null), the resume message also
-carries the module-start apparatus reminder, built by module_start_apparatus.py (#851):
-the INV-102 form for graduation, nothing for an apparatus-exempt module or a resume
-partway through a module.
+carries the module-start apparatus reminder, built by module_start_apparatus.py (#851,
+INV-420): the INV-102 form for graduation, nothing for an apparatus-exempt module or a
+resume partway through a module.
 
 Cross-platform: invoked as a ``type: command`` hook whose ``command`` names the
 interpreter and this script, quoted (``python3 "<path>"``), per INV-052. Python is already a hard bootcamp dependency (the graduation recap PDF always
