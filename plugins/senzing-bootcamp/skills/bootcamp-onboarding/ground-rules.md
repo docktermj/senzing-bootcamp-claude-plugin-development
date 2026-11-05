@@ -295,7 +295,10 @@ the answer and which result is checked, and points here.
   neither ever writes `none`, and module completion never writes it.
 - **Skipped.** `skipped` means the module reached its completion with the value still unset: the
   step was due and never ran. Only module completion writes it, in the modules where it does not
-  run the step late; `module-completion.md` Step 0a says which, and what runs instead. Where a site
+  run the step late; `module-completion.md` Step 0a says which, and what runs instead. When module
+  completion closed a module and left the value unset, `checkpoint-tick.py`'s reminder at the next
+  reply to the transition question or graduation offer has the guide record `skipped` then, silently
+  and without running the step late (#858). Where a site
   forgot to write `none`, completion records `skipped` all the same: a step that may never have
   arisen is recorded as skipped, and that false positive is the price of a skip that shows.
 - **Recording.** The 👉 and its answer are an ordinary Questions & Responses line
