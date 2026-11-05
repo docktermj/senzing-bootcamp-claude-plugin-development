@@ -23,6 +23,11 @@ The hooks read their payload from stdin and resolve `config/` against the workin
 directory, so each case runs them as subprocesses in a temp project, the way Claude Code
 invokes them. Standard library only; nothing under `plugins/` is imported (INV-108).
 
+Enforces **INV-420** (the conditional, non-blocking module-start reminder, built in one place
+for both hooks): it runs both hooks against scratch projects and cannot establish that a live
+guide presents the apparatus it is reminded of, which only a live walk (`auto-test` or
+`dry-run` phase 3) observes.
+
 Run:  python3 -m unittest discover -s tests
 """
 import ast
