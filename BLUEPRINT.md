@@ -6135,6 +6135,45 @@ CHECKPOINT = f"""<!-- RECAP-CHECKPOINT:START -->
 - Mapping in progress.
 <!-- RECAP-CHECKPOINT:END -->
 """
+CUSTOMERS_CSV = """customer_id,full_name,date_of_birth,street,city,state,postal_code,phone
+C001,Marisol Quenby,1984-03-12,14 Larkspur Lane,Fairview,OR,97024,503-555-0101
+C002,Teodor Vashti,1979-11-02,220 Birchwood Avenue,Lakemont,WA,98101,206-555-0142
+C003,Mari Quenby,1984-03-12,14 Larkspur Ln,Fairview,OR,97024,503-555-0101
+C004,Ingrid Halvorsen-Pike,1991-07-23,9 Quarry Road,Ashby,MN,55309,612-555-0177
+C005,Oluwaseun Brannagh,1968-01-30,780 Kestrel Court,Dunmore,PA,18512,570-555-0133
+C006,Teo Vashti,1979-11-02,220 Birchwood Ave,Lakemont,WA,98101,
+C007,Pernille Achterberg,2001-05-15,51 Tamarack Street,Greyfield,ID,83702,208-555-0190
+C008,Caspian Ndiaye-Royle,1956-09-08,3 Old Mill Row,Hartwell,GA,30643,706-555-0118
+C009,Wren Okonkwo-Lisle,1988-12-19,402 Sorrel Drive,Bellmont,VT,05401,802-555-0164
+C010,Lorcan Featherstone,1973-04-04,66 Cedar Hollow,Pinecrest,CO,80202,303-555-0125
+"""
+
+DATA_SOURCES = """version: "1"
+sources:
+  CUSTOMERS:
+    name: CUSTOMERS
+    file_path: data/raw/customers.csv
+    format: csv
+    record_count: {records}
+    expected_record_count: null
+    file_size_bytes: {size}
+    quality_score: null
+    mapping_status: in_progress
+    load_status: not_loaded
+    validation_status: passed
+    validation_checks: {{}}
+    added_at: "2026-01-01T11:00:00-07:00"
+    updated_at: "2026-01-01T12:00:00-07:00"
+"""
+
+MAPPING_STATE = {
+    "data_source": "CUSTOMERS",
+    "source_file": "data/raw/customers.csv",
+    "current_step": 3,
+    "completed_steps": ["profile", "plan"],
+    "decisions": {"entity_type": "PERSON"},
+    "last_updated": "2026-01-01T12:00:00Z",
+}
 FEEDBACK = """# Senzing Bootcamp Plugin Feedback
 
 Feedback captured during the Senzing Bootcamp.
@@ -6253,6 +6292,15 @@ FIXTURE_MAP = [
      "a precious entry the normalizer must leave byte-identical (INV-067)"),
     ("docs/loading_strategy.md", "docs/loading_strategy.md", frozenset({"mid"}),
      "deliberately messy Markdown for the normalizer (INV-060)"),
+    ("data/raw/customers.csv", "data/raw/customers.csv", frozenset({"mid"}),
+     "the source the recap says was collected and profiled, so Module 5 step 11 has "
+     "something to map on resume (#872)"),
+    ("config/data_sources.yaml", "config/data_sources.yaml", frozenset({"mid"}),
+     "the CUSTOMERS registry entry Data collection writes, mapping in progress (#872)"),
+    ("config/mapping_state_customers.json", "config/mapping_state_customers.json",
+     frozenset({"mid"}),
+     "Module 5's mapping checkpoint, profile and plan done, so a resume fast-tracks "
+     "to the map step (#872)"),
     ("src/system_verification/verification_data.jsonl",
      "src/system_verification/verification_data.jsonl", frozenset({"mid"}),
      "the file System verification Step 2 writes, so a resumed run finds it; also the "
@@ -11245,6 +11293,7 @@ looks wrong.
 - `tests/test_mcp_negative_rationale_shape.py`: 31
 - `tests/test_mcp_output_is_never_suppressed.py`: 4
 - `tests/test_mcp_sourcing_instructions_name_a_route.py`: 8
+- `tests/test_mid_scaffold_holds_what_its_recap_claims.py`: 4
 - `tests/test_minimal_verbosity_scope.py`: 14
 - `tests/test_model_effort_nudge_edges.py`: 21
 - `tests/test_model_guidance_behavior.py`: 32
@@ -14989,3 +15038,11 @@ Senzing licensing, with no SPDX identifier.
   line as `bootcamper_flag_ignored` (an INFO `bootcamper-flag-ignored` finding)
   instead of applying it — a walk meant for Modules 5 to 7 started at
   preparation and drifted to opus at high effort before timing out
+- #872: the dry-run scaffold's mid-bootcamp project now holds the files its
+  recap claims — `data/raw/customers.csv` (invented, PII-free, two
+  near-duplicate pairs), its `config/data_sources.yaml` registry entry and
+  Module 5's `config/mapping_state_customers.json` checkpoint with profile and
+  plan done — and `test_dry_run_scaffold_paths_exist.py` accepts a path that
+  fills a bracketed placeholder the plugin names; an `/auto-test --seed mid`
+  walk found nothing to map at step 11 and the guide closed Module 5 with its
+  steps unrun
