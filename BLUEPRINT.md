@@ -3715,8 +3715,8 @@ when it is non-empty (section 5.66). Silent otherwise; always exits 0.
 ### 5.39 `plugins/senzing-bootcamp/scripts/stop-nudge.py`
 
 `Stop` hook, a safety net for the single closing `POINTER` question. Reads
-the stdin JSON (invalid means empty). It exits 0 with no output when any
-gate holds, in order:
+the stdin JSON (invalid or not an object means empty). It exits 0 with no
+output when any gate holds, in order:
 
 - `stop_hook_active` is true (so it blocks at most once).
 - `config/bootcamp_progress.json` is absent.
@@ -3724,14 +3724,20 @@ gate holds, in order:
   `pref_flag` finds `disable_stop_nudge` set in
   `config/bootcamp_preferences.yaml` (line scan, no YAML library).
 - `bootcamp_complete`: the `bootcamp_complete` preference is set.
+- The final text is read from the payload first: `payload_final_text`
+  returns `last_assistant_message` when it is a string, and that text alone
+  decides, with no transcript read (#873). Only when it returns None (the
+  field is absent or not a string) are the next two gates checked.
 - `transcript_path` is absent or unreadable.
 - `settled_final_text` over `current_turn_records` returns None: the turn
   ends in a tool call or tool result, or has no assistant text.
-- The final text contains the pointer, or is empty.
+- The final text contains the pointer, or is empty or whitespace.
 
 Otherwise it prints `decision: block` with a reason telling the model to
-check its last message, never repeat a question, and add exactly one bolded
-closing question only if none exists. Always exits 0.
+check its last message, never repeat a question, continue to the next step
+that asks when the step it just presented asks no question (non-yielding,
+INV-225) rather than add one, and add exactly one bolded closing question
+only if none exists. Always exits 0.
 
 ### 5.40 `plugins/senzing-bootcamp/scripts/write-gate.py`
 
@@ -8751,14 +8757,14 @@ def bootcamp_complete():
     ...
 def current_turn_records(transcript_path):
     ...
+def payload_final_text(payload):
+    ...
 def ends_with_tool_use(rec):
     ...
 def settled_final_text(records):
     ...
 data = sys.stdin.read()
-transcript = payload.get("transcript_path", "")
-records = current_turn_records(transcript) if transcript else None
-final_text = settled_final_text(records)
+final_text = payload_final_text(payload)
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -11005,7 +11011,7 @@ CLIs, fake engines, throwaway git repositories and loopback HTTP servers.
 
 - **Location.** All tests live in the top-level `tests/` directory, never under
   `plugins/`, which `propagate.sh` mirrors to the public repository.
-- **Naming.** The 456 files are named `test_<claim>.py`, where the claim is a
+- **Naming.** The 470 files are named `test_<claim>.py`, where the claim is a
   sentence in snake_case, such as
   `test_eula_question_precedes_every_install.py`.
   - Classes are CamelCase sentences, and methods are named `test_<claim>`.
@@ -11055,21 +11061,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9162 test methods in 467 files, matching `inventory.test_count_total`.
+There are 9192 test methods in 470 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 9157.
+sum to 9192.
 
-Two files run more tests than they define, so discovery collects 9162:
+Two files run more tests than they define, so discovery collects 9199:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 9112`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 9192`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 9119`. No other count
+run count. With `pwsh` installed, the run reports `Ran 9199`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
@@ -11481,6 +11487,7 @@ looks wrong.
 - `tests/test_step8_engine_config_one_procedure.py`: 11
 - `tests/test_step_8b_uses_module_6s_sqlite_threshold.py`: 23
 - `tests/test_steps_name_the_route_that_supplies_them.py`: 23
+- `tests/test_stop_nudge_reads_the_payload_first.py`: 13
 - `tests/test_stop_nudge_silence_and_opt_outs.py`: 5
 - `tests/test_supersession_has_one_syntax.py`: 16
 - `tests/test_suppressed_branch_has_no_pinned_question.py`: 9
@@ -12070,6 +12077,16 @@ tests a rebuild can pass from behavior alone.
   - **Environment.** The opt-out variable is removed from the inherited
     environment, so a runner that exports it cannot silence the whole file, and
     `PYTHONIOENCODING=utf-8` pins how the pointer crosses the pipe.
+  - **Payload first** (`tests/test_stop_nudge_reads_the_payload_first.py`,
+    #873, same harness). A `last_assistant_message` without the pointer blocks
+    over a transcript whose last record is thinking-only, after a control where
+    that transcript alone is silent; with the pointer it is silent over any
+    transcript; it blocks with no transcript at all; empty or whitespace text is
+    silent; a null, numeric or list field falls back to the transcript; a
+    non-object payload is silent; each of Gates 1-3b still silences it. The
+    reason carries the non-yielding clause before the add-a-question clause.
+    Negative control in the suite: a copy of the hook with the field read
+    replaced by `None` stays silent on the walks' payload.
 - **`module-start-reminder.py` and `module_start_apparatus.py`**
   (`tests/test_module_start_reminder.py`, 34 tests).
   - **Harness.** Both hooks run as subprocesses in a scratch project holding
@@ -15046,3 +15063,10 @@ Senzing licensing, with no SPDX identifier.
   fills a bracketed placeholder the plugin names; an `/auto-test --seed mid`
   walk found nothing to map at step 11 and the guide closed Module 5 with its
   steps unrun
+- #873: the Stop hook's safety net reads the turn's final text from the
+  payload's `last_assistant_message` first and falls back to the transcript
+  only when the field is absent, and its block reason sends a step that asks no
+  question on to the next step that asks (INV-225) instead of adding one — the
+  transcript lagged the hook by about 40 ms, so the net stayed silent on all 61
+  Stop events of the saved auto-test walks and two Data Processing turns ended
+  with no question; an amendment to INV-054 is queued

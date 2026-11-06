@@ -85,10 +85,16 @@ the expanded path can contain a space, and unquoted it would split into two argu
   only once: it returns success whenever `stop_hook_active` is true, so it can never loop
   on its own continuation, and it stays silent when the session is not a bootcamp, when
   the nudge is disabled (see [Disabling / quieting the Stop-hook nudge](#disabling--quieting-the-stop-hook-nudge)),
-  or when the current turn already ends with a 👉 question. Detection scans the whole
-  current turn and biases toward silence if the turn's text is not yet on disk, and the
-  block reason tells the model to repeat nothing it has already asked — so a false block
-  can never surface as a duplicate question. The `UserPromptSubmit` hook injects guidance via
+  or when the current turn already ends with a 👉 question. Detection reads the turn's
+  final text from the Stop payload's `last_assistant_message` first, because the
+  transcript can lag the hook: on 2026-11-06 the final text record was not yet readable
+  when the hook ran, so a transcript-only reading never fired (#873). Only when that field
+  is absent (an older Claude Code) does it fall back to reading the current turn from the
+  transcript, and there it biases toward silence if the turn's text is not yet on disk. An
+  empty final text is silent either way. The block reason tells the model to repeat
+  nothing it has already asked, so a false block can never surface as a duplicate
+  question, and to continue to the next step that asks when the step it just presented
+  asks nothing, rather than add a question to it (INV-225). The `UserPromptSubmit` hook injects guidance via
   `additionalContext`; `SessionStart` emits resume context. Everything else emits nothing.
 - **Hooks ship with the plugin.** There is no hook-install step (this replaces the
   Kiro `install_hooks.py` / `.kiro/hooks/` workflow).
@@ -108,8 +114,10 @@ the expanded path can contain a space, and unquoted it would split into two argu
 
 The `Stop` hook (`scripts/stop-nudge.py`) is a safety net for the single closing
 👉 question. It stays silent whenever the current turn already ends with a 👉
-question, and it biases toward silence when the transcript cannot be read
-decisively — a missed nudge is far cheaper than a duplicated question. If you still
+question. It reads that from the Stop payload's `last_assistant_message` when Claude
+Code sends it, and otherwise from the transcript, where it biases toward silence when
+the transcript cannot be read decisively — a missed nudge is far cheaper than a
+duplicated question. If you still
 want to turn it off, there are two documented, opt-out switches (either one works;
 both are read cross-platform with no shell and no extra dependency):
 

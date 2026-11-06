@@ -24,18 +24,35 @@ gate passes:
   4. The current turn already ended with a 👉 question -> the closing question
      exists, so add nothing (honors the "ask each question only once" invariant).
 
+Gate 4 reads the turn's final text from the Stop payload first. Claude Code's Stop
+input carries an optional ``last_assistant_message`` ("Text content of the last
+assistant message before stopping"); when it is a string, that string is the turn's
+final text and the transcript is not read at all. Only when the field is absent (an
+older Claude Code) does the gate fall back to reading the transcript, below. The
+payload comes first because the transcript loses the race: on 2026-11-06 the final
+text record was written about 40 ms before the hook ran and was not yet readable, so
+the transcript reading saw a thinking-only record, stayed silent as undecided, and
+the net never fired on any of 61 Stop events in the saved auto-test sessions (#873).
+
 Gate 4 detection is deliberately biased toward silence. A blocking Stop hook forces
 the model to produce output again, so a false positive is how a bootcamper ends up
 seeing the same 👉 question twice — the #1 complaint (zero tolerance). Three defenses
-address it: (a) the gate inspects the turn's FINAL assistant message (handling a
-string OR list ``message.content``) rather than a concatenation, so an unflushed
-closing line is not mistaken for a pointer-less turn; (b) it treats a turn that is
-still settling as undecided and stays silent — when the last transcript record is a
-tool call (an assistant record ending in ``tool_use``) or a tool result (a ``user``
-carrier inside the turn), the closing 👉 message has not been written yet, which is
-the partial-flush race seen on tool-using turns; and (c) even if the hook does block,
-the block reason tells the model to verify its own last message first and repeat
-nothing, so a false block can never surface as a duplicate question.
+address it: (a) the gate inspects the turn's FINAL assistant message (the payload
+field, or in the fallback the last transcript record, handling a string OR list
+``message.content``) rather than a concatenation, so an unflushed closing line is not
+mistaken for a pointer-less turn; (b) in the transcript fallback it treats a turn
+that is still settling as undecided and stays silent — when the last transcript
+record is a tool call (an assistant record ending in ``tool_use``) or a tool result
+(a ``user`` carrier inside the turn), the closing 👉 message has not been written
+yet, which is the partial-flush race seen on tool-using turns; and (c) even if the
+hook does block, the block reason tells the model to verify its own last message
+first and repeat nothing, so a false block can never surface as a duplicate
+question. An empty or whitespace-only final text, from either source, is silent.
+
+The block reason also covers the pause that the net exists to catch: a step that asks
+no 👉 question is non-yielding (``ground-rules.md``, INV-225) and the guide may not
+originate a 👉 question (INV-247), so the reason tells the model to continue to the
+next step that asks rather than add a question to a step that asks nothing.
 
 Cross-platform: invoked as a ``type: command`` hook whose ``command`` names the
 interpreter and this script, quoted (``python3 "<path>"``), per INV-052.
@@ -156,6 +173,16 @@ def current_turn_records(transcript_path):
     return records[start:]
 
 
+def payload_final_text(payload):
+    """The turn's final assistant text from the Stop payload's
+    ``last_assistant_message``, or None when the field is absent or not a string
+    (an older Claude Code), in which case the caller falls back to the transcript.
+    An empty string is returned as is: the field is present and says the final
+    message has no text, which the caller treats as silent."""
+    value = payload.get("last_assistant_message")
+    return value if isinstance(value, str) else None
+
+
 def ends_with_tool_use(rec):
     """True if an assistant record's final content block is a ``tool_use`` — i.e.
     the model just invoked a tool and its post-tool message has not been produced
@@ -202,6 +229,8 @@ try:
     payload = json.loads(data)
 except ValueError:
     payload = {}
+if not isinstance(payload, dict):
+    payload = {}
 
 # Gate 1: never re-fire on our own continuation. This alone prevents the block-cap
 # loop.
@@ -222,20 +251,25 @@ if nudge_disabled():
 if bootcamp_complete():
     sys.exit(0)
 
-# Gate 4: block ONLY when we can positively read the current turn AND its final
-# assistant message ended without a 👉 question. Every other case biases to silence,
-# because a blocking Stop hook forces another turn and a false block is how a
-# duplicate 👉 question reaches the bootcamper (the #1 complaint). Undecided ->
-# silent covers: no transcript path, a missing/unreadable file, a turn still
-# settling (a pending tool call/result — the partial-flush race on tool-using
-# turns), and a turn whose final assistant text is not yet flushed.
-transcript = payload.get("transcript_path", "")
-records = current_turn_records(transcript) if transcript else None
-if records is None:
-    sys.exit(0)  # no readable transcript -> undecided -> stay silent
-final_text = settled_final_text(records)
+# Gate 4: block ONLY when we can positively read the current turn's final assistant
+# message AND it ended without a 👉 question. The payload's last_assistant_message is
+# read first and is decisive when present: it is the final text as Claude Code holds
+# it, with no flush race. Only when it is absent does the gate read the transcript,
+# and there every other case biases to silence, because a blocking Stop hook forces
+# another turn and a false block is how a duplicate 👉 question reaches the
+# bootcamper (the #1 complaint). Undecided -> silent covers: no transcript path, a
+# missing/unreadable file, a turn still settling (a pending tool call/result — the
+# partial-flush race on tool-using turns), and a turn whose final assistant text is
+# not yet flushed.
+final_text = payload_final_text(payload)
 if final_text is None:
-    sys.exit(0)  # turn still settling (tool call/result pending, or nothing flushed) -> silent
+    transcript = payload.get("transcript_path", "")
+    records = current_turn_records(transcript) if transcript else None
+    if records is None:
+        sys.exit(0)  # no readable transcript -> undecided -> stay silent
+    final_text = settled_final_text(records)
+    if final_text is None:
+        sys.exit(0)  # turn still settling (tool call/result pending, or nothing flushed) -> silent
 if POINTER in final_text:
     sys.exit(0)  # the final message already carries a 👉 question -> stay silent
 if not final_text.strip():
@@ -251,11 +285,14 @@ print(json.dumps({
         "Bootcamp is active. Before doing anything else, re-read your own most "
         "recent message. If it ALREADY ends with a single 👉 closing question, you "
         "have asked it — do NOT ask it again; simply end your turn without "
-        "repeating the question. Only if your last message genuinely has no 👉 "
+        "repeating the question. If the step you just presented asks no 👉 "
+        "question, it is non-yielding and must not end the turn (the ground rules: a "
+        "step with no 👉 question is NON-YIELDING): do not add a question to it; "
+        "continue now to the next step that asks one, and let that step's single 👉 "
+        "question end the turn. Only if your last message genuinely has no 👉 "
         "closing question, and you just finished a bootcamp step and it is your "
         "turn to yield, add exactly one closing question, prefixed with 👉 and "
-        "bolded, inviting the next step. If you are mid-work or the bootcamp is "
-        "complete, add nothing."
+        "bolded, inviting the next step. If the bootcamp is complete, add nothing."
     ),
 }, ensure_ascii=False))
 sys.exit(0)
