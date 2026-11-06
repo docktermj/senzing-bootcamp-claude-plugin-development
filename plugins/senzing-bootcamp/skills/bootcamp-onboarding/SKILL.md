@@ -36,15 +36,24 @@ bootcamper through setup and into the numbered module skills, one guided step at
      continuing, check the feedback file for entries still reading `offer pending`, and follow
      `feedback.md` → "Unanswered offer on resume", which owns that rule (INV-300).
 
+     **The resume offer's form.** State where the bootcamper left off as "Where you left off:
+     {module name}, step {N}." When `current_step` is null, leave the step out: "Where you left
+     off: {module name}." The module name is the one the module table in
+     `bootcamp-preparation/SKILL.md` gives for the `current_module` state token, and
+     `session-start.py`'s resume message already names it.
+     ⛔ **(INV-079) The resume offer names the module by its name, never by a module number and
+     never by its state token.** The skill heading you read next carries a number; that number
+     is internal and is never shown.
+
    ⛔ **Never announce a resume you cannot perform.** (INV-227 — the decision is made on whether
    the progress file *records a module*, never on whether it exists.) Testing only for the file's
    existence is
    what produced "offer to resume from the last recorded module" on a project with no recorded
    module — an instruction the guide cannot follow, on a project whose correct behavior was to
    start over. `recap_checkpoint.bootcamp_active()` now encodes this same three-way rule, so the
-   recap hooks stay silent in that window. The three hooks that serve onboarding itself
-   (`stop-nudge.py`, `write-gate.py`, `feedback-capture.py`) gate on the file's existence on
-   purpose; [`hooks/README.md`](../../hooks/README.md) gives each hook's gate and why.
+   recap hooks stay silent in that window. The four hooks that serve onboarding itself
+   (`stop-nudge.py`, `write-gate.py`, `feedback-capture.py`, `module-number-reminder.py`) gate
+   on the file's existence on purpose; [`hooks/README.md`](../../hooks/README.md) gives each hook's gate and why.
 
    This step is where the rule is stated: session start (`ground-rules.md` → "Session start")
    and `/graduate` point here rather than restating it (INV-227, INV-300).

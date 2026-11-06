@@ -134,10 +134,13 @@ receives the shippable plugin through `/propagate-to-public`.
   the graduation recap PDF (fpdf2 or stdlib fallback).
 - `plugins/senzing-bootcamp/scripts/generate_recap_video.py`:
   renders the optional narrated graduation video from a storyboard.
+- `plugins/senzing-bootcamp/scripts/module-number-reminder.py`: UserPromptSubmit
+  hook: reminds the guide to name modules by name after a reply showed a number.
 - `plugins/senzing-bootcamp/scripts/module-start-reminder.py`: UserPromptSubmit
   hook: reminds the guide of the module-start apparatus when it is due.
 - `plugins/senzing-bootcamp/scripts/module_start_apparatus.py`: shared builder
-  of the module-start apparatus reminder used by two hooks.
+  of the module-start apparatus reminder and holder of the module display
+  names; not a hook.
 - `plugins/senzing-bootcamp/scripts/normalize_docs_markdown.py`:
   normalizes the Bootcamper's generated Markdown documents.
 - `plugins/senzing-bootcamp/scripts/package_bootcamp.py`: packages the finished
@@ -159,8 +162,9 @@ receives the shippable plugin through `/propagate-to-public`.
   resumes or starts the bootcamp context.
 - `plugins/senzing-bootcamp/scripts/stop-nudge.py`: Stop hook: nudges the guide
   when a turn ends without its pinned question.
-- `plugins/senzing-bootcamp/scripts/transition_reply.py`: shared detector of a
-  reply to the transition question or graduation offer; not a hook.
+- `plugins/senzing-bootcamp/scripts/transition_reply.py`: shared reader of the
+  previous turn and detector of a reply to the transition question or
+  graduation offer; not a hook.
 - `plugins/senzing-bootcamp/scripts/vendor/`: vendored D3 v7.9.0 used offline by
   the visualizations (section 9).
 - `plugins/senzing-bootcamp/scripts/write-gate.py`: PreToolUse Write/Edit hook:
@@ -1473,15 +1477,15 @@ data.
 
 ### 5.4 `plugins/senzing-bootcamp/hooks/hooks.json`
 
-Registers eight `command`-type hooks. Each `command` string is
+Registers nine `command`-type hooks. Each `command` string is
 `python3` followed by the quoted path
 `"${CLAUDE_PLUGIN_ROOT}/scripts/<script>.py"`; the quoting keeps a plugin root
 containing a space working. No hook has a timeout or other options.
 
 - `SessionStart` (no matcher) runs `session-start.py`.
 - `UserPromptSubmit` (no matcher) runs `feedback-capture.py`, then
-  `checkpoint-tick.py`, then `module-start-reminder.py`, as three hooks of one
-  entry.
+  `checkpoint-tick.py`, then `module-start-reminder.py`, then
+  `module-number-reminder.py`, as four hooks of one entry.
 - `PreToolUse` with matcher `Write|Edit` runs `write-gate.py`.
 - `Stop` (no matcher) runs `stop-nudge.py`.
 - `PreCompact` (no matcher) runs `precompact-recap.py`.
@@ -1492,13 +1496,15 @@ project directory, so the plugin never changes unrelated sessions. The four
 recap hooks (`session-start.py`, `checkpoint-tick.py`, `precompact-recap.py`,
 `session-end.py`) also need `recap_checkpoint.bootcamp_active()`, a recorded
 module, and so does `module-start-reminder.py`. `write-gate.py`,
-`stop-nudge.py` and `feedback-capture.py` gate on existence alone on purpose:
+`stop-nudge.py`, `feedback-capture.py` and `module-number-reminder.py` gate on
+existence alone on purpose:
 it answers "is this a bootcamp project", and
 onboarding and Bootcamp preparation need them before any module is recorded
 (INV-227); each docstring says why. Only `write-gate.py` (exit 2) and
 `stop-nudge.py` (a `decision: block` reply, at most once per stop chain) can
 block; `feedback-capture.py`, `checkpoint-tick.py`,
-`module-start-reminder.py` and `session-start.py` inject context; the others
+`module-start-reminder.py`, `module-number-reminder.py` and `session-start.py`
+inject context; the others
 emit nothing. The sibling `hooks/README.md` documents each hook's purpose
 phrased from the Bootcamper's view beginning with
 "to" (the INV-016 convention) and, in a Gate column, its gate and why, the `python3`-on-`PATH` prerequisite on Linux,
@@ -3708,7 +3714,14 @@ Exit codes:
 
 `SessionStart` hook. When a bootcamp is active it folds the checkpoint,
 calls `ensure_checkpoint`, and prints one message: offer to resume from the
-module in `config/bootcamp_progress.json`; whether a checkpoint was folded;
+module in `config/bootcamp_progress.json`, built by `resume_offer()`. For a
+`current_module` that `module_start_apparatus.display_name` knows, the offer
+names it by its display name, says never to name it by a module number or its
+state token (INV-079, #874), and gives the line "Where you left off: {name},
+step {N}." from `bootcamp-onboarding/SKILL.md` step 2; the step is added only
+when `current_step` is an int or string matching `STEP` (a number with an
+optional letter or decimal part). An unknown key keeps the generic wording,
+with no name and no number. Then: whether a checkpoint was folded;
 any `resume_summary`; and, last, `module_start_apparatus.resume_reminder()`
 when it is non-empty (section 5.66). Silent otherwise; always exits 0.
 
@@ -5345,8 +5358,19 @@ question. It never blocks; every failed gate exits 0 with no stdout.
 ### 5.66 `plugins/senzing-bootcamp/scripts/module_start_apparatus.py`
 
 Not a hook: the one place the apparatus reminder is worded, imported by
-`module-start-reminder.py` and `session-start.py` (INV-300). Stdlib only;
-nothing raises on a missing or malformed file.
+`module-start-reminder.py` and `session-start.py` (INV-300), and by
+`module-number-reminder.py` for `bootcamp_complete`. Stdlib only; nothing
+raises on a missing or malformed file.
+
+- `DISPLAY_NAMES` maps each state token to its display name as the module
+  table in `bootcamp-preparation/SKILL.md` spells it (#874); a test pins the
+  two equal. `GRADUATION_NAME` is read from it. `display_name(module)` takes a
+  state token, a skill-directory name or a display name and returns the
+  display name, or None for a non-string, blank or unknown value.
+- `recorded_position()` returns `current_module` and `current_step` as the
+  progress file records them, each None when absent, unvalidated.
+- `bootcamp_complete()` is true when `PREFERENCES` has a top-level
+  `bootcamp_complete` set to a true value (a line scan, no YAML library).
 
 - `token` lower-cases a module name or state token, turns runs of other
   characters into `_`, and drops a leading `module_NN_` prefix.
@@ -5376,22 +5400,53 @@ nothing raises on a missing or malformed file.
 
 Not a hook: the one detector of a reply to the transition question or the
 graduation offer, imported by `module-start-reminder.py` and
-`checkpoint-tick.py` (#858). Stdlib only; nothing raises on bad input.
+`checkpoint-tick.py` (#858), and the previous-turn reader
+`module-number-reminder.py` uses (#874). Stdlib only; nothing raises on bad
+input.
 
 - `offered_module(payload)` returns None unless the payload is a JSON object
   whose `transcript_path` is a non-empty string. `read_records` keeps the
   JSON-object lines of the UTF-8 transcript, skips bad lines, and returns None
   for a file it cannot open or decode.
-- `previous_final_text` keeps `user` and `assistant` records that are neither
+- `previous_turn` keeps `user` and `assistant` records that are neither
   sidechain nor `isMeta`, drops a trailing real user prompt (the one being
-  submitted, when already on disk), and returns the text of the last record
-  only when it is an assistant record that does not end in `tool_use`; a
-  string or a list `message.content` is read (`message_text`).
+  submitted, when already on disk), and returns None unless the last record is
+  an assistant record that does not end in `tool_use`; otherwise it returns
+  the records after the last real user prompt. `previous_final_text` is the
+  text of its last record, and `previous_texts` every non-empty assistant
+  text of it, in order; a string or a list `message.content` is read
+  (`message_text`).
+- `payload_records(payload)` is the shared payload check and read used by
+  `offered_module`; `previous_turn_texts(payload)` is `previous_texts` over
+  it, None when undecided.
 - `offered_module_in` reads the message's last line holding `POINTER`: the
   graduation offer (`GRADUATION_OFFER`) gives
   `module_start_apparatus.GRADUATION_NAME`; the transition question
   (`TRANSITION`, case-insensitive, flexible whitespace) gives `{name}` as
   written, stripped of `*`, `_`, backticks and spaces; anything else gives None.
+
+### 5.68 `plugins/senzing-bootcamp/scripts/module-number-reminder.py`
+
+`UserPromptSubmit` hook that reminds the guide to name modules by name after
+its previous reply showed the Bootcamper a module number (INV-079, #874). It
+never blocks and keeps no state; every failed gate exits 0 with no stdout.
+
+- Drains stdin as bytes and parses it as JSON; a parse failure is no payload.
+- Gate 1: `config/bootcamp_progress.json` exists (existence on purpose, as
+  `stop-nudge.py`: the preface and Bootcamp preparation name modules too).
+- Gate 2: `module_start_apparatus.bootcamp_complete()` is false.
+- Gate 3: `transition_reply.previous_turn_texts(payload)` (section 5.67)
+  returns the settled previous turn's assistant texts; sidechain and meta
+  records and the prompt being submitted are not read.
+- Gate 4: `MODULE_NUMBER`, the pattern `transcript_lint.check_module_numbers`
+  compiles, matches in any of those texts, fenced code included.
+- `hits_in` collects each distinct hit in first-seen order with its whitespace
+  collapsed, so a hit split across a line break is quoted as `Module 5`.
+  `reminder(hits)` quotes them, tells the guide to name every module by its
+  name from now on (INV-079), with two example names, and not to correct or
+  apologize for the earlier reply or mention the reminder. It prints one
+  ASCII-escaped `hookSpecificOutput` object with `hookEventName`
+  `UserPromptSubmit` and the text as `additionalContext`. Always exits 0.
 
 ## 6. Exact contracts
 
@@ -8731,7 +8786,17 @@ No public items: the file is run as a script.
 
 #### 6.1.32 `plugins/senzing-bootcamp/scripts/session-start.py`
 
-No public items: the file is run as a script.
+<!-- markdownlint-disable MD013 -->
+
+From `plugins/senzing-bootcamp/scripts/session-start.py`:
+
+```python
+STEP = re.compile(r"^\d+[a-z]?(?:\.\d+)?$")
+def resume_offer():
+    ...
+```
+
+<!-- markdownlint-enable MD013 -->
 
 #### 6.1.33 `plugins/senzing-bootcamp/scripts/stop-nudge.py`
 
@@ -9152,14 +9217,33 @@ PROGRESS = os.path.join("config", "bootcamp_progress.json")
 PREFERENCES = os.path.join("config", "bootcamp_preferences.yaml")
 EXEMPT = frozenset({"bootcamp_preparation", "entity_resolution_concepts"})
 GRADUATION = frozenset({"graduation", "bootcamp_graduation"})
-GRADUATION_NAME = "Bootcamp graduation"
+DISPLAY_NAMES = {
+    "bootcamp_preparation": "Bootcamp preparation",
+    "entity_resolution_concepts": "Entity Resolution Concepts",
+    "business_problem": "Discover the Business Problem",
+    "sdk_setup": "SDK setup",
+    "system_verification": "System verification",
+    "truthset_visualization": "Truth Set visualization",
+    "data_collection": "Data collection",
+    "data_quality_mapping": "Data Quality, Mapping, and Transformation",
+    "data_processing": "Data processing",
+    "query_visualize_discover": "Query, Visualize and Discover",
+    "graduation": "Bootcamp graduation",
+}
+GRADUATION_NAME = DISPLAY_NAMES["graduation"]
 def token(module):
     ...
 def is_exempt(module):
     ...
 def is_graduation(module):
     ...
+def display_name(module):
+    ...
 def reminder(module, on_resume=False):
+    ...
+def bootcamp_complete():
+    ...
+def recorded_position():
     ...
 def resume_reminder():
     ...
@@ -9190,12 +9274,40 @@ def ends_with_tool_use(rec):
     ...
 def read_records(path):
     ...
+def previous_turn(records):
+    ...
 def previous_final_text(records):
+    ...
+def previous_texts(records):
     ...
 def offered_module_in(text):
     ...
+def payload_records(payload):
+    ...
+def previous_turn_texts(payload):
+    ...
 def offered_module(payload):
     ...
+```
+
+<!-- markdownlint-enable MD013 -->
+
+#### 6.1.42 `plugins/senzing-bootcamp/scripts/module-number-reminder.py`
+
+<!-- markdownlint-disable MD013 -->
+
+From `plugins/senzing-bootcamp/scripts/module-number-reminder.py`:
+
+```python
+MODULE_NUMBER = re.compile(r"\bModule\s+\d+\b")
+def hits_in(texts):
+    ...
+def reminder(hits):
+    ...
+    payload = json.loads(sys.stdin.buffer.read())
+    payload = None
+texts = transition_reply.previous_turn_texts(payload)
+hits = hits_in(texts)
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -10173,6 +10285,10 @@ From `plugins/senzing-bootcamp/hooks/hooks.json`:
           {
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/module-start-reminder.py\""
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/module-number-reminder.py\""
           }
         ]
       }
@@ -11061,21 +11177,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9192 test methods in 470 files, matching `inventory.test_count_total`.
+There are 9237 test methods in 472 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 9192.
+sum to 9237.
 
-Two files run more tests than they define, so discovery collects 9199:
+Two files run more tests than they define, so discovery collects 9244:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 9192`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 9237`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 9199`. No other count
+run count. With `pwsh` installed, the run reports `Ran 9244`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
@@ -11338,6 +11454,7 @@ looks wrong.
 - `tests/test_module_completion_step1_lists_every_write.py`: 13
 - `tests/test_module_completion_step_0.py`: 32
 - `tests/test_module_instructions_do_not_hardcode_the_port.py`: 6
+- `tests/test_module_number_reminder.py`: 30
 - `tests/test_module_selection_sync.py`: 9
 - `tests/test_module_start_reminder.py`: 34
 - `tests/test_negatives_report_labels_stale_markers.py`: 9
@@ -11425,6 +11542,7 @@ looks wrong.
 - `tests/test_release_covers_every_version_site.py`: 17
 - `tests/test_release_cycle.py`: 77
 - `tests/test_results_validation_is_diagnostic.py`: 35
+- `tests/test_resume_names_the_module.py`: 15
 - `tests/test_resume_requires_a_recorded_module.py`: 29
 - `tests/test_retired_vocabulary.py`: 5
 - `tests/test_retrofit_files_issues.py`: 40
@@ -12131,6 +12249,59 @@ tests a rebuild can pass from behavior alone.
   - **Registration.** `hooks.json` holds the INV-052 command; the README row's
     purpose starts with "to " and its Gate cell with `bootcamp_active()`; both
     scripts import only the standard library and sibling scripts.
+- **`module-number-reminder.py`** (`tests/test_module_number_reminder.py`, 30
+  tests, #874).
+  - **Harness.** The hook runs as a subprocess in a scratch project holding
+    `config/bootcamp_progress.json` (`data_quality_mapping`, step 11) and a
+    JSONL transcript; nothing under `plugins/` is imported. Every silent case
+    first runs a twin that must produce the reminder.
+  - **Reminds.** After "Module 5 is partly done, so we pick up at the mapping
+    step." the `additionalContext` quotes `"Module 5"`, says "From now on name
+    every module by its name", "never by a number (INV-079)", "Do not correct
+    or apologize for the earlier reply" and "do not mention this reminder to
+    the bootcamper", and shows no other module number. Distinct hits are
+    quoted once in order (`("Module 5", "Module 2")`); a hit in a text block
+    before a tool call, inside a fenced block, or in a string `content` is
+    read; a hit split by `\n`, `\r\n` or a space-tab run is quoted as
+    `("Module 5")` and is one hit with a plain one; an empty or `{}` progress
+    file still reminds; the reminder repeats unchanged on a later turn; stdout
+    is ASCII.
+  - **Silent:** no progress file; `bootcamp_complete: true`; no number
+    ("module 5", "Modules 5 and 6", "Module five", a `MODULE:` banner); a
+    number only in an earlier turn, a sidechain or meta record, or the
+    Bootcamper's prompt; a turn ending in a tool call or tool result; an empty,
+    missing, directory or undecodable transcript path; a payload that is
+    empty, not JSON, a list, a string, or has a non-string path.
+  - **One pattern.** `MODULE_NUMBER` and the one `re.compile` in
+    `transcript_lint.check_module_numbers`, read with `ast`, have equal
+    patterns and flags; a pattern without `+` and one with `re.I` differ.
+  - **One reader.** The hook imports `transition_reply`, defines none of its
+    reader functions and calls no `open`; a pasted `read_records` is caught.
+  - **Negative controls** on mutated copies: a hook that ignores a match, one
+    that scans only the final message (silent on "Before I record Module 5 as
+    complete" in an intermediate block), and one that quotes the raw match
+    (its reminder no longer holds `"Module 5"` for a wrapped hit).
+  - **Registration.** `hooks.json` holds the INV-052 command; the README row
+    starts "to ", names INV-079 and "never blocks", and its Gate cell starts
+    `Existence:`; the hook and `transition_reply.py` import only the standard
+    library and sibling scripts.
+- **The resume message names the module**
+  (`tests/test_resume_names_the_module.py`, 15 tests, #874).
+  - **One source.** The module table in `bootcamp-preparation/SKILL.md` is
+    parsed and must equal `module_start_apparatus.DISPLAY_NAMES`, and
+    `GRADUATION_NAME` is the table's graduation name; a renamed module and an
+    added one are caught. `display_name` finds a name from a token, a
+    skill-directory name or a display name.
+  - **Output.** `session-start.py` run for every table row names the module
+    with ", step 11" when `current_step` is 11, and without a step (with the
+    apparatus reminder appended unchanged) when it is null; graduation uses
+    `GRADUATION_NAME`; a step of "4a" is kept and odd steps are left out; an
+    unknown key keeps the generic wording with no name and no number. No
+    output shows `Module <digit>`; a copy of the script that prints
+    "Module 5" is caught.
+  - **Pinned form.** `bootcamp-onboarding/SKILL.md` step 2 holds the form
+    "Where you left off: {module name}, step {N}." and the ⛔ line citing
+    INV-079 on its own line; a step 2 without either is caught.
 - **`checkpoint-tick.py`'s missing-record reminder and `transition_reply.py`**
   (`tests/test_checkpoint_tick_missing_records.py`, 27 tests, #858).
   - **Harness.** The hook runs as a subprocess in a scratch project holding a
@@ -15070,3 +15241,12 @@ Senzing licensing, with no SPDX identifier.
   transcript lagged the hook by about 40 ms, so the net stayed silent on all 61
   Stop events of the saved auto-test walks and two Data Processing turns ended
   with no question; an amendment to INV-054 is queued
+- #874: the resume message names the recorded module by its display name from
+  `module_start_apparatus.DISPLAY_NAMES`, pinned to the module table by a
+  test, in a form `bootcamp-onboarding/SKILL.md` step 2 pins, and a new
+  `UserPromptSubmit` hook, `module-number-reminder.py`, silently reminds the
+  guide to name modules by name after any reply that showed "Module" and a
+  digit — two auto-test walks showed the Bootcamper "Module 5" although the
+  guide had read INV-079's rule, because the resume offer had no pinned form
+  and the guide improvised it from the numbered skill heading; a new
+  invariant is queued

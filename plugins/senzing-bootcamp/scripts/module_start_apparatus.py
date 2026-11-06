@@ -16,6 +16,10 @@ Both build the reminder here, so its wording is stated once and the two cannot d
 and transitions"), ``module-completion.md`` (Step 4 and "Reaching graduation") and the
 invariants cited in the text; this file only points the guide at them when they are due.
 
+It also holds each module's display name by state token (``DISPLAY_NAMES``, #874), so
+``session-start.py`` names the recorded module in its resume message rather than leaving the
+guide to improvise a name, which it did from the skill heading, number included (INV-079).
+
 Every reminder is conditional, so it never turns a "not yet" into a module start, and it
 is ASCII-only: ``session-start.py`` prints it as plain text, and a non-ASCII character on a
 Windows console code page would raise instead of printing.
@@ -40,8 +44,29 @@ EXEMPT = frozenset({"bootcamp_preparation", "entity_resolution_concepts"})
 #: Graduation, which gets the INV-102 form rather than the module form.
 GRADUATION = frozenset({"graduation", "bootcamp_graduation"})
 
+#: Each module's display name by its state token, as the module table in
+#: ``bootcamp-preparation/SKILL.md`` spells it (#874). That table is the source of truth
+#: (INV-079); this copy exists because a hook cannot read a skill file cheaply on every
+#: session start, and ``tests/test_resume_names_the_module.py`` fails the moment the two
+#: differ, so a renamed or added module cannot drift here (INV-300). ``session-start.py``
+#: names the recorded module with it, so the resume offer never has to improvise a name
+#: from a skill heading that carries a number.
+DISPLAY_NAMES = {
+    "bootcamp_preparation": "Bootcamp preparation",
+    "entity_resolution_concepts": "Entity Resolution Concepts",
+    "business_problem": "Discover the Business Problem",
+    "sdk_setup": "SDK setup",
+    "system_verification": "System verification",
+    "truthset_visualization": "Truth Set visualization",
+    "data_collection": "Data collection",
+    "data_quality_mapping": "Data Quality, Mapping, and Transformation",
+    "data_processing": "Data processing",
+    "query_visualize_discover": "Query, Visualize and Discover",
+    "graduation": "Bootcamp graduation",
+}
+
 #: The display name the graduation offer starts.
-GRADUATION_NAME = "Bootcamp graduation"
+GRADUATION_NAME = DISPLAY_NAMES["graduation"]
 
 
 def token(module):
@@ -59,6 +84,22 @@ def is_exempt(module):
 def is_graduation(module):
     """True for Bootcamp graduation (INV-102)."""
     return token(module) in GRADUATION
+
+
+def display_name(module):
+    """The display name of ``module`` (a state token, a skill-directory name or a display
+    name in any case), or None when it names no module in ``DISPLAY_NAMES``."""
+    if not isinstance(module, str) or not module.strip():
+        return None
+    key = token(module)
+    if key in GRADUATION:
+        return GRADUATION_NAME
+    if key in DISPLAY_NAMES:
+        return DISPLAY_NAMES[key]
+    for name in DISPLAY_NAMES.values():
+        if token(name) == key:
+            return name
+    return None
 
 
 def _apparatus(name):
@@ -137,7 +178,7 @@ def _progress():
     return data if isinstance(data, dict) else {}
 
 
-def _bootcamp_complete():
+def bootcamp_complete():
     """True when ``config/bootcamp_preferences.yaml`` has a top-level
     ``bootcamp_complete: true`` (set by graduation's closing step). Read line by line, with
     no YAML dependency. Never raises."""
@@ -153,6 +194,13 @@ def _bootcamp_complete():
     return False
 
 
+def recorded_position():
+    """``(current_module, current_step)`` as the progress file records them, each None when
+    absent. Values are returned as written, unvalidated. Never raises."""
+    progress = _progress()
+    return progress.get("current_module"), progress.get("current_step")
+
+
 def resume_reminder():
     """The reminder ``session-start.py`` adds to its resume message, or ``""``.
 
@@ -165,6 +213,6 @@ def resume_reminder():
     module = progress.get("current_module")
     if not isinstance(module, str) or not module.strip():
         return ""
-    if progress.get("current_step") is not None or _bootcamp_complete():
+    if progress.get("current_step") is not None or bootcamp_complete():
         return ""
     return reminder(module, on_resume=True)
