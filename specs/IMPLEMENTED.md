@@ -43,6 +43,32 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## auto-test-walks-can-start-mid-bootcamp-and-pin-model-and-effort
+
+- **Implemented:** 2026-11-06 (#870)
+- **Commit:** uncommitted
+- **Files changed:** `.claude/skills/auto-test/autotest.py`, `.claude/skills/auto-test/walk.py`, `.claude/skills/auto-test/SKILL.md`, `tests/test_auto_test_pin_and_mid.py` (new, 13 tests), `specs/IMPLEMENTED.md` (this entry and `auto-test-walk-2026-11-05`, which recorded the findings first), `BLUEPRINT.md`
+- **MCP re-check:** n/a (no Senzing fact). The change is harness apparatus and states nothing about Senzing.
+- **Summary:** fixes findings 2 and 3 of `auto-test-walk-2026-11-05`.
+  - **`--seed mid`**: `autotest.py` runs `scaffold_project.py` with no mode flag, its mid-bootcamp mode (Module 5 step 11). `--phase` now defaults to `content` with `--seed mid` and to `preparation` otherwise; an explicit `--phase` wins.
+  - **`--effort <level>`** on `autotest.py` and `walk.py`: sent on every guide call from the first, as `--model` is.
+  - **`--pin`** on both: a Bootcamper `/model` or `/effort` line is logged as `bootcamper_flag_ignored` and changes no flag; the rest of its reply is still sent, and a slash-only reply is asked again and told the line "is not applied". `autotest.ignored_flag_findings` reports each as an INFO `bootcamper-flag-ignored` finding. Without `--pin`, #656's sticky override is unchanged.
+  - **Tests:** `tests/test_auto_test_pin_and_mid.py` drives `walk.run_walk` with a stub `claude` and `autotest.main` with a stub `_run`. Negative controls: disabling the pin, dropping the effort's start value, the slash-only wording, passing `--mid` to the scaffold, the `content` default, the INFO findings and passing `--pin` each failed at least one test.
+  - **Does not establish:** that a live `--seed mid` walk resumes at Module 5, or that the CLI honors `--effort` on a resumed call. #855's walk is the live check.
+  - **Invariant:** establishes no invariant. `--pin` is an opt-in harness option and binds no future work; #656's override stays the default. Finding 1 (the 600 s timeout) and finding 4 (server WATCH items) stay unfiled.
+
+## auto-test-walk-2026-11-05
+
+- **Implemented:** 2026-11-05 (**Not a spec**: the record of one `/auto-test` run, kept before any fix (INV-317). Every finding below is **not yet filed**.)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md` (this entry)
+- **MCP re-check:** the run's own probe, below.
+- **Summary:** establishes no invariant (a run record). Run `autotest.py --walk --seed seeded --phase content --model claude-haiku-5-5 --persona terse --turns 140 --max-turns 150 --keep`, meant to judge #855's end-to-end criteria on Modules 5 to 7. Exit 1. Sandbox `/tmp/senzing-autotest-20261105-120746-terse-pas2qo8a`, report `~/senzing-autotest/reports/20261105-120746-terse.json`. **#855 was not judged**: the walk never reached Module 5. Nothing was fixed.
+  - **Finding 1 (BREAKING `walk-failed`, not yet filed): the guide timed out.** Turn 29 exceeded the 600 s `_claude` timeout in `walk.py`, after 789 transcript events, in Truth Set visualization at step 2.5. The first 28 turns raised no transcript findings.
+  - **Finding 2 (filed as #870): the walk cannot start mid-bootcamp.** `scaffold_project.py` has `MODES = ("mid", "fresh", "seeded")`, and only `mid` writes `config/bootcamp_progress.json` (Module 5 step 11), but `autotest.py --seed` offers only `fresh` and `seeded`. A walk aimed at Modules 5 to 7 has to walk Modules 0 to 4 first.
+  - **Finding 3 (filed as #870): the simulated Bootcamper drifts the guide's model and effort.** Following the guide's model/effort nudge, it typed `/model sonnet`, `/model opus` and `/effort high`, which `SLASH_FLAGS` makes sticky. `--model` therefore fixes only the opening turns, and a low-effort walk cannot be held low.
+  - **Finding 4 (WATCH, server-side, not yet filed): 9 probe findings.** The server's `instructions` changed; the descriptions of `find_examples`, `get_sdk_reference`, `mapping_workflow`, `reporting_guide`, `sdk_guide` and `search_docs` changed; the `get_capabilities` content changed; and `search_docs.category` still accepts a nonsense value (the known silent-accept). The changes need a human re-read before `mcp_probe.py update` accepts them.
+
 ## invariant-review-2026-11-05
 
 - **Implemented:** 2026-11-05 (**Not a spec**: a dated record of one `/review-invariants` session over the 15 blocks pending at its start, written by the 2026-11-04 unattended run (#850-#857) and by #858's run. ⛔ **It establishes no invariant of its own**: each rule it registers or amends was established by the implementation that queued it.) Begun on branch `858-docktermj-1` while PR #866 was open, so #858's own block was in the queue; moved to `main` once PR #866 merged.

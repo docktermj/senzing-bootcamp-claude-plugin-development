@@ -58,6 +58,18 @@ they have. A probe-only run names no persona, because no walk ran.
 .claude/skills/auto-test/autotest.py --walk --keep    # keep the sandbox to inspect
 ```
 
+**Starting mid-bootcamp, at a fixed model and effort (#870).** `--seed mid` builds dry-run's
+mid-bootcamp project, at Module 5 step 11, and the lint then defaults to `--phase content`;
+an explicit `--phase` still wins. `--effort <level>` sets the guide's effort from the first
+turn, as `--model` sets its model. Without `--pin`, a Bootcamper model or effort slash line
+overrides both for the rest of the walk (#656). With `--pin`, the walk logs each such line as
+`bootcamper_flag_ignored`, the flag stays as given, and the report lists it as an INFO
+`bootcamper-flag-ignored` finding:
+
+```console
+.claude/skills/auto-test/autotest.py --walk --seed mid --model claude-haiku-5-5 --effort low --pin
+```
+
 The scripts are stored executable (mode `100755`, #843, INV-419). Windows ignores that bit, so there
 run each one through the interpreter, `python3 .claude/skills/auto-test/autotest.py`, with
 the same arguments; the same holds for `mcp_probe.py` below.
