@@ -13,6 +13,10 @@ Both detect that reply here, so there is one detector and the two cannot disagre
 which turn is a transition (#858). ``offered_module(payload)`` is the entry point; the record
 helpers below it are what it is built from.
 
+A third hook, ``module-number-reminder.py`` (#874), reads the same previous turn through
+``previous_turn_texts(payload)``: every assistant text of it, not only the final message,
+with the same gates 1 and 2 below. It shares the reader rather than carrying a second one.
+
 How the reply is recognized, gate by gate; every failed gate returns None:
   1. The payload is a JSON object with a string ``transcript_path`` naming a readable,
      UTF-8 transcript.
@@ -108,9 +112,11 @@ def read_records(path):
     return records
 
 
-def previous_final_text(records):
-    """The previous turn's final assistant text, or None while it is undecided: nothing
-    flushed, or a turn still settling (its last record a tool call or a tool result)."""
+def previous_turn(records):
+    """The previous turn's user-facing records, from just after the prompt that opened it to
+    its final assistant message, or None while it is undecided: nothing flushed, or a turn
+    still settling (its last record a tool call or a tool result). Sidechain (subagent) and
+    meta records are not the user-facing turn and are left out."""
     turn = [rec for rec in records
             if rec.get("type") in ("user", "assistant")
             and not rec.get("isSidechain") and not rec.get("isMeta")]
@@ -121,7 +127,27 @@ def previous_final_text(records):
     last = turn[-1]
     if last.get("type") != "assistant" or ends_with_tool_use(last):
         return None
-    return message_text(last)
+    start = len(turn)
+    while start > 0 and not is_real_user_prompt(turn[start - 1]):
+        start -= 1
+    return turn[start:]
+
+
+def previous_final_text(records):
+    """The previous turn's final assistant text, or None while it is undecided."""
+    turn = previous_turn(records)
+    return message_text(turn[-1]) if turn else None
+
+
+def previous_texts(records):
+    """Every non-empty assistant text of the previous turn, in order, or None while it is
+    undecided. The Bootcamper reads a text block written before a tool call as much as the
+    turn's final message (#874), so a check of what they saw reads all of them."""
+    turn = previous_turn(records)
+    if turn is None:
+        return None
+    texts = (message_text(rec) for rec in turn if rec.get("type") == "assistant")
+    return [text for text in texts if text]
 
 
 def offered_module_in(text):
@@ -140,16 +166,33 @@ def offered_module_in(text):
     return None
 
 
+def payload_records(payload):
+    """The records of the transcript the hook's payload names, or None when the payload is
+    malformed, names no transcript, or names one that cannot be read. ``payload`` is the
+    hook's parsed stdin, of any type."""
+    transcript = payload.get("transcript_path") if isinstance(payload, dict) else None
+    if not isinstance(transcript, str) or not transcript:
+        return None  # malformed payload or no transcript -> undecided
+    return read_records(transcript)
+
+
+def previous_turn_texts(payload):
+    """Every assistant text of the previous turn, settled, read from the transcript the
+    payload names; None when that is undecided. ``module-number-reminder.py`` (#874) scans
+    these, so it reads the transcript the way the transition detector does."""
+    records = payload_records(payload)
+    if records is None:
+        return None
+    return previous_texts(records)
+
+
 def offered_module(payload):
     """The module the previous turn's transition question or graduation offer named, when
     the prompt being submitted replies to one; otherwise None. ``payload`` is the hook's
     parsed stdin, of any type."""
-    transcript = payload.get("transcript_path") if isinstance(payload, dict) else None
-    if not isinstance(transcript, str) or not transcript:
-        return None  # malformed payload or no transcript -> undecided
-    records = read_records(transcript)
+    records = payload_records(payload)
     if records is None:
-        return None  # unreadable transcript
+        return None  # malformed payload, no transcript, or an unreadable one
     final_text = previous_final_text(records)
     if not final_text:
         return None  # previous turn not settled, or nothing to read
