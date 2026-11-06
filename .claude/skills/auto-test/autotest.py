@@ -130,6 +130,31 @@ def drop_worktree(worktree):
               str(worktree)])
 
 
+def ignored_flag_findings(transcript):
+    """An INFO finding for each Bootcamper slash line a ``--pin`` walk ignored (#870).
+
+    ``walk.py`` logs each as a ``bootcamper_flag_ignored`` event; the report names them so
+    a pinned run says what the Bootcamper asked for and did not get. Never raises.
+    """
+    findings = []
+    try:
+        lines = Path(transcript).read_text(encoding="utf-8").splitlines()
+    except (OSError, ValueError):
+        return findings
+    for line in lines:
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(event, dict) and event.get("type") == "bootcamper_flag_ignored":
+            findings.append({
+                "severity": "INFO", "code": "bootcamper-flag-ignored", "source": "walk",
+                "message": (f"turn {event.get('turn')}: the Bootcamper's "
+                            f"{event.get('command')!r} was not applied (--pin)"),
+            })
+    return findings
+
+
 def build_sandbox(root, seed):
     """Build the walk's project with dry-run's scaffold: ``(project, error)``.
 
@@ -144,7 +169,8 @@ def build_sandbox(root, seed):
     if not SCAFFOLD.is_file():
         return project, f"the scaffold is missing: {SCAFFOLD}"
     args = [sys.executable, str(SCAFFOLD), str(project), "--run-root", str(root)]
-    if seed:
+    # `mid` is the scaffold's mode with no flag: a project at Module 5 step 11 (#870).
+    if seed and seed != "mid":
         args.append(f"--{seed}")
     result = _run(args)
     if result.returncode != 0:
@@ -203,11 +229,17 @@ def main(argv=None):
     ap.add_argument("--max-turns", type=int, default=150,
                     help="hard cap on the walk's turns (walk.py)")
     ap.add_argument("--persona", default="terse")
-    ap.add_argument("--phase", default="preparation",
-                    choices=("preparation", "module0", "content"))
-    ap.add_argument("--seed", choices=("fresh", "seeded"), default="fresh")
+    ap.add_argument("--phase", default=None,
+                    choices=("preparation", "module0", "content"),
+                    help="the lint's rules (default: content with --seed mid, "
+                         "otherwise preparation)")
+    ap.add_argument("--seed", choices=("fresh", "seeded", "mid"), default="fresh",
+                    help="the scaffold's project; mid starts at Module 5 step 11 (#870)")
     ap.add_argument("--ref", default="HEAD", help="commit to pin the plugin at")
     ap.add_argument("--model", default=None)
+    ap.add_argument("--effort", default=None, help="the guide's effort (walk.py)")
+    ap.add_argument("--pin", action="store_true",
+                    help="hold --model and --effort for the whole walk (walk.py, #870)")
     ap.add_argument("--keep", action="store_true", help="keep the sandbox")
     ap.add_argument("--report-dir", type=Path, default=REPORT_DIR,
                     help="where the report, the transcript copy and latest.json go "
@@ -215,6 +247,9 @@ def main(argv=None):
     ap.add_argument("--isolate-config", action="store_true")
     ap.add_argument("--json", action="store_true", help="machine-readable report")
     args = ap.parse_args(argv)
+    if args.phase is None:
+        # A mid-bootcamp walk is in a content module from its first turn (#870).
+        args.phase = "content" if args.seed == "mid" else "preparation"
 
     stamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     root = make_run_root(stamp, args.persona)
@@ -284,6 +319,8 @@ def main(argv=None):
                         + (["--stop-at-banner", args.stop_at_banner]
                            if args.stop_at_banner else [])
                         + (["--model", args.model] if args.model else [])
+                        + (["--effort", args.effort] if args.effort else [])
+                        + (["--pin"] if args.pin else [])
                         + (["--isolate-config"] if args.isolate_config else []))
             if walk.stdout.strip():
                 print(walk.stdout.rstrip())
@@ -324,6 +361,7 @@ def main(argv=None):
                 for finding in lint_findings:
                     finding["source"] = "transcript"
                 report["findings"].extend(lint_findings)
+                report["findings"].extend(ignored_flag_findings(transcript))
                 print(f"  {len(lint_findings)} transcript finding(s)")
             else:
                 report["coverage_limits"].append(

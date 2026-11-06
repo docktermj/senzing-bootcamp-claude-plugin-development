@@ -443,7 +443,8 @@ def bootcamper_reply(prompt_text, persona, model, cwd, timeout=180):
 
 
 def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_model,
-             opening, isolate_config, timeout, max_turns=150, stop_at_banner=None):
+             opening, isolate_config, timeout, max_turns=150, stop_at_banner=None,
+             effort=None, pin=False):
     session = str(uuid.uuid4())
     env = {}
     if isolate_config:
@@ -465,8 +466,11 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
             "--output-format", "stream-json", "--verbose",
             "--add-dir", str(project)]
     # The CLI flags every call carries: --model from the command line, then each sticky
-    # flag a Bootcamper slash line set (#656). The latest value of a flag wins.
+    # flag a Bootcamper slash line set (#656). The latest value of a flag wins, unless
+    # `pin` holds the command line's values for the whole walk (#870).
     flags = {"--model": model} if model else {}
+    if effort:
+        flags["--effort"] = effort
 
     log = EventLog(out_path)
     # Written before the first turn, so a walk that dies mid-turn still says what it ran
@@ -563,6 +567,13 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
                 log.event(type="bootcamper", turn=turn, persona=persona, text=reply)
                 applied, rest = split_reply(reply)
                 for line, flag, value in applied:
+                    if pin:
+                        # Recorded, never applied: a pinned walk runs at the command
+                        # line's model and effort from the first turn to the last (#870).
+                        log.event(type="bootcamper_flag_ignored", turn=turn, command=line,
+                                  flag=flag, value=value)
+                        print(f"  turn {turn}: {line} ignored (--pin)")
+                        continue
                     flags[flag] = value
                     log.event(type="bootcamper_flag", turn=turn, command=line,
                               flag=flag, value=value)
@@ -573,7 +584,8 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
                 # Only slash lines: nothing to send. Ask once more with the guide's same
                 # turn; the Bootcamper process still authors the answer (INV-369).
                 entered = "\n".join(line for line, _flag, _value in applied)
-                prompt = (f"{shown}\n\n(You entered:\n{entered}\nIt is applied. The guide "
+                status = "It is not applied" if pin else "It is applied"
+                prompt = (f"{shown}\n\n(You entered:\n{entered}\n{status}. The guide "
                           "is still waiting for your answer to the message above.)")
             else:
                 print("  stopping: the Bootcamper replied only with slash commands",
@@ -620,6 +632,12 @@ def main(argv=None):
                     help="hard cap on the walk's turns, banner or not")
     ap.add_argument("--persona", default="terse", choices=sorted(PERSONAS))
     ap.add_argument("--model", default=None)
+    ap.add_argument("--effort", default=None,
+                    help="the guide's effort from the first turn, as --model gives its model")
+    ap.add_argument("--pin", action="store_true",
+                    help="hold --model and --effort for the whole walk: a Bootcamper "
+                         "/model or /effort line is logged as bootcamper_flag_ignored "
+                         "and changes nothing (#870)")
     ap.add_argument("--bootcamper-model", default="claude-haiku-4-5-20251001",
                     help="the Bootcamper only produces short text; a small model "
                          "keeps the walk cheap")
@@ -643,7 +661,8 @@ def main(argv=None):
                                args.mcp_config, args.model, args.bootcamper_model,
                                args.opening, args.isolate_config, args.timeout,
                                max_turns=args.max_turns,
-                               stop_at_banner=args.stop_at_banner)
+                               stop_at_banner=args.stop_at_banner,
+                               effort=args.effort, pin=args.pin)
     print(f"transcript: {args.out} ({events} events)")
     if failure:
         # Exiting 0 here is what let a crashed 68-turn walk be filed as a coverage

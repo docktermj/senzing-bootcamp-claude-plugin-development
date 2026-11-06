@@ -5414,6 +5414,8 @@ def make_worktree(root, ref):
     ...
 def drop_worktree(worktree):
     ...
+def ignored_flag_findings(transcript):
+    ...
 def build_sandbox(root, seed):
     ...
 def write_mcp_config(root):
@@ -5725,7 +5727,8 @@ def report_child_failure(log, turn, process, returncode, stderr):
 def bootcamper_reply(prompt_text, persona, model, cwd, timeout=180):
     ...
 def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_model,
-             opening, isolate_config, timeout, max_turns=150, stop_at_banner=None):
+             opening, isolate_config, timeout, max_turns=150, stop_at_banner=None,
+             effort=None, pin=False):
     ...
 def main(argv=None):
     ...
@@ -9165,11 +9168,17 @@ From `.claude/skills/auto-test/autotest.py`:
     ap.add_argument("--max-turns", type=int, default=150,
                     help="hard cap on the walk's turns (walk.py)")
     ap.add_argument("--persona", default="terse")
-    ap.add_argument("--phase", default="preparation",
-                    choices=("preparation", "module0", "content"))
-    ap.add_argument("--seed", choices=("fresh", "seeded"), default="fresh")
+    ap.add_argument("--phase", default=None,
+                    choices=("preparation", "module0", "content"),
+                    help="the lint's rules (default: content with --seed mid, "
+                         "otherwise preparation)")
+    ap.add_argument("--seed", choices=("fresh", "seeded", "mid"), default="fresh",
+                    help="the scaffold's project; mid starts at Module 5 step 11 (#870)")
     ap.add_argument("--ref", default="HEAD", help="commit to pin the plugin at")
     ap.add_argument("--model", default=None)
+    ap.add_argument("--effort", default=None, help="the guide's effort (walk.py)")
+    ap.add_argument("--pin", action="store_true",
+                    help="hold --model and --effort for the whole walk (walk.py, #870)")
     ap.add_argument("--keep", action="store_true", help="keep the sandbox")
     ap.add_argument("--report-dir", type=Path, default=REPORT_DIR,
                     help="where the report, the transcript copy and latest.json go "
@@ -11038,6 +11047,7 @@ looks wrong.
 - `tests/test_audit_skill_states_no_stale_count.py`: 9
 - `tests/test_authored_shapes_are_stated.py`: 8
 - `tests/test_auto_test_harness.py`: 38
+- `tests/test_auto_test_pin_and_mid.py`: 13
 - `tests/test_auto_test_scripts_are_executable.py`: 7
 - `tests/test_backgrounded_launch_records_the_server_pid.py`: 12
 - `tests/test_blocked_submission_has_a_vocabulary_value.py`: 29
@@ -14971,3 +14981,11 @@ Senzing licensing, with no SPDX identifier.
   model's attention, and by the transition reply the module has closed, so
   only these two records can still be repaired; a dated note on INV-354 was
   registered 2026-11-05
+- #870: an `/auto-test` walk can start mid-bootcamp and hold the guide's
+  model and effort: `autotest.py --seed mid` builds dry-run's mid-bootcamp
+  project (Module 5 step 11) and defaults the lint to `--phase content`, and a
+  new `--effort` and `--pin` on `autotest.py` and `walk.py` set the effort from
+  the first turn and, with `--pin`, log each Bootcamper `/model` or `/effort`
+  line as `bootcamper_flag_ignored` (an INFO `bootcamper-flag-ignored` finding)
+  instead of applying it — a walk meant for Modules 5 to 7 started at
+  preparation and drifted to opus at high effort before timing out
