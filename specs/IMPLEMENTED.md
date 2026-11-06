@@ -43,6 +43,20 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## auto-test-walk-2026-11-06-rerun
+
+- **Implemented:** 2026-11-06 (**Not a spec**: the record of one `/auto-test` run, kept before any fix (INV-317). Findings are marked filed or not yet filed below.)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md` (this entry)
+- **MCP re-check:** the run's own probe, below.
+- **Summary:** establishes no invariant (a run record). The same command as `auto-test-walk-2026-11-06`, rerun after #872 (PR #875) gave the mid-bootcamp project its data. Exit 1, 4 BREAKING, 12 WATCH. Sandbox `/tmp/senzing-autotest-20261106-115114-terse-_dm4drvk`, report `~/senzing-autotest/reports/20261106-115114-terse.json`. The walk ran Module 5 in full from step 11 (profile, plan and map restarted from the checkpoint, a transform program, a sample test, a quality score of 99.1) and closed it with `directing_steps: {data_quality_mapping: none}`, the one module allowed to write `none`, and no `steer_triggers`; `check_directing_steps`, `check_pairs_step` and `check_worked_steers` reported nothing. It stopped after turn 10, at Data Processing step 3, so **#855 is still not judged** for Modules 6 and 7. Nothing was fixed.
+  - **Finding 1 (recurrence of #873, commented there):** turn 10 ended with no question ("Data processing has stopped at step 3…"), and the walk stopped there.
+  - **Finding 2 (recurrence of #874, commented there):** BREAKING INV-079-module-number, 4: "Module 5" three times, "Module 2" once.
+  - **Finding 3 (filed as #876): a shell download outside the project.** Fixing a missing SDK import path at Data Processing step 3, the guide ran `curl -fsSL -o /tmp/rds_register.py https://mcp.senzing.com/examples/…/register_data_sources.py`, writing to the system temp directory. `write-gate.py` gates only the Write and Edit tools, so a shell write outside the project is not caught. Checked afterwards: the rest of the repair stayed in the project (`database/G2C.db`, `src/configure/`, `data/backups/`); `/etc/opt/senzing` and `/opt/senzing` were only listed and are unchanged.
+  - **Finding 4 (filed as #877): `--pin` cannot see a bare slash command.** The Bootcamper answered the model/effort nudge with `/model`, `/effort` and `yes` on separate lines. `walk.SLASH_LINE` requires a value, so the lines were sent to the guide as text, which replied that it would "assume you've set Opus 5.5 at high effort". Neither the pin nor the INFO finding saw them.
+  - **Finding 5 (WATCH, not yet filed):** INV-005-not-turn-final (157 characters after the 👉 question); INV-028-apparatus-missing, no step overview and no time estimate, on Module 5 resumed partway through, likely the lint false positive `auto-test-walk-2026-11-06` finding 4 named.
+  - **Finding 6 (WATCH, server-side, not yet filed):** the same 9 probe findings as `auto-test-walk-2026-11-05` finding 4.
+
 ## mid-bootcamp-scaffold-holds-the-data-its-recap-claims
 
 - **Implemented:** 2026-11-06 (#872)
