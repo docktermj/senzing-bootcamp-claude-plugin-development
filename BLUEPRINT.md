@@ -167,8 +167,9 @@ receives the shippable plugin through `/propagate-to-public`.
   graduation offer; not a hook.
 - `plugins/senzing-bootcamp/scripts/vendor/`: vendored D3 v7.9.0 used offline by
   the visualizations (section 9).
-- `plugins/senzing-bootcamp/scripts/write-gate.py`: PreToolUse Write/Edit hook:
-  blocks secrets and files outside allowed locations.
+- `plugins/senzing-bootcamp/scripts/write-gate.py`: PreToolUse Write/Edit/Bash
+  hook: blocks secrets and files outside allowed locations, and shell writes
+  into system temp or Downloads.
 - `plugins/senzing-bootcamp/skills/bootcamp-onboarding/`: the
   `bootcamp-onboarding` skill and its phase files (section 5).
 - `plugins/senzing-bootcamp/skills/bootcamp-preparation/`: the
@@ -1486,7 +1487,7 @@ containing a space working. No hook has a timeout or other options.
 - `UserPromptSubmit` (no matcher) runs `feedback-capture.py`, then
   `checkpoint-tick.py`, then `module-start-reminder.py`, then
   `module-number-reminder.py`, as four hooks of one entry.
-- `PreToolUse` with matcher `Write|Edit` runs `write-gate.py`.
+- `PreToolUse` with matcher `Write|Edit|Bash` runs `write-gate.py`.
 - `Stop` (no matcher) runs `stop-nudge.py`.
 - `PreCompact` (no matcher) runs `precompact-recap.py`.
 - `SessionEnd` (no matcher) runs `session-end.py`.
@@ -1614,7 +1615,8 @@ Ground rules (`ground-rules.md`, every turn):
   to satisfy and re-call), `get_capabilities`. Elided example content is
   fetched by the response's own `access_steps`, in the order given (on
   1.37.28 the hosted `url` checked against `hash`, then `raw_url`, then
-  `git clone`), never `inline` (only
+  `git clone`), and saved under `src/resources/` per "File placement" (#876),
+  never `inline` (only
   `download_resource` declares `inline`, chunked by `offset`). Retry a failed
   call once, then stop. Blank parsed fields suggest a wrong name or missing
   `*_MATCHING_INFO` flag; the SDK factory must outlive its engines.
@@ -3754,22 +3756,35 @@ only if none exists. Always exits 0.
 
 ### 5.40 `plugins/senzing-bootcamp/scripts/write-gate.py`
 
-`PreToolUse` hook for `Write` and `Edit`. Exits 0 unless
+`PreToolUse` hook for `Write`, `Edit` and `Bash`. Exits 0 unless
 `config/bootcamp_progress.json` exists. A block writes a message to stderr
 and exits 2; otherwise exit 0.
 
-- The target is `tool_input.file_path` (regex fallback for non-JSON); an
-  empty target passes the location check. `~` is expanded; `%TEMP%` or
-  `%TMP%` blocks at once.
-- Relative paths join the working directory; `norm` resolves `..` without
-  touching the filesystem. A target inside the working directory
-  (case-insensitive) is allowed; one matching `TEMP_PREFIXES`,
-  `TEMP_SUBSTRINGS` or the `TMPDIR`, `TEMP`, `TMP` directories gets the
-  temp/Downloads message; anything else outside gets the outside-project
-  message.
-- Whatever the path, the whole raw payload is searched with the inline
-  secret pattern; a match blocks with a message to use environment
-  variables.
+- `location(path)` classifies a target as None (inside the project, or
+  empty), `"temp"` or `"outside"`. `~` is expanded; `%TEMP%` or `%TMP%` is
+  temp at once. Relative paths join the working directory; `norm` resolves
+  `..` without touching the filesystem. A target inside the working
+  directory (case-insensitive) is None, checked first; one matching
+  `TEMP_PREFIXES`, `TEMP_SUBSTRINGS` or the `TMPDIR`, `TEMP`, `TMP`
+  directories is `"temp"`; anything else is `"outside"`.
+- **Bash** (`tool_name` is `Bash`, #876): `bash_targets` cuts here-document
+  bodies, joins `\`-newline continuations and splits `tool_input.command`
+  with `shlex` (posix, `punctuation_chars` plus newline). It splits the
+  tokens into simple commands on `;`, `&&`, `||`, `|`, `&`, newline and
+  parentheses, steps over assignments, wrappers (`sudo`, `env`, `nohup`, …)
+  and compound-command words, and collects write-redirect targets (`>`, `>>`,
+  `&>`, `2>`, not fd copies) and, by the `WRITERS` table, the outputs of
+  `curl -o`/`--output`/`--output-dir`, `wget -O`/`-P`, `tee` and the `cp`/`mv`
+  destination. A quoted string is one word and is never parsed again. A
+  target blocks with the temp/Downloads message only when it, or `<t>/_`, is
+  `"temp"`, or it names `$TMPDIR`/`$TEMP`/`$TMP`; a leading `$HOME` is
+  expanded. A `shlex` error allows the command. Bash then exits 0: no
+  outside-project block and no secret check.
+- **Write and Edit:** the target is `tool_input.file_path` (regex fallback
+  for non-JSON); `"temp"` gets the temp/Downloads message and `"outside"` the
+  outside-project message. Whatever the path, the whole raw payload is then
+  searched with the inline secret pattern; a match blocks with a message to
+  use environment variables.
 
 ### 5.41 `plugins/senzing-bootcamp/docs/`
 
@@ -8858,9 +8873,50 @@ TEMP_PREFIXES = ("/tmp/", "/var/tmp/", "/private/tmp/", "/private/var/folders/")
 TEMP_SUBSTRINGS = ("/downloads/", "/appdata/local/temp/", "/windows/temp/")
 def block(message):
     ...
-file_path = ""
 def norm(path):
     ...
+def location(file_path):
+    ...
+BASH_PUNCT = "();<>|&\n"
+BASH_OPS = re.compile(
+    r"&>>|;;&|&>|>>|>\||>&|<<<|<<|<>|<&|&&|\|\||\|&|;;|;&|[;&|()<>\n]")
+COMMAND_ENDS = {";", "&&", "||", "|", "|&", "&", "\n", ";;", ";&", ";;&", "(", ")"}
+WRITE_REDIRECTS = {">", ">>", ">|", "&>", "&>>", "<>", ">&"}
+READ_REDIRECTS = {"<", "<<", "<<<", "<&"}
+HEREDOC = re.compile(r"(?<!<)<<(-?)[ \t]*(['\"]?)\\?([^\s'\"\\<>;&|()]+)\2")
+ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+TEMP_VAR = re.compile(r"\$\{?(?:TMPDIR|TEMP|TMP)(?![A-Za-z0-9_])")
+HOME_VAR = re.compile(r"^\$\{?HOME\}?(?=/|$)")
+WRAPPERS = {"sudo": "CDghprtUu", "env": "CSu", "exec": "a", "nice": "n",
+            "nohup": "", "time": "", "command": "", "builtin": ""}
+KEYWORDS = {"if", "then", "else", "elif", "do", "while", "until", "!", "{"}
+def parse_opts(args, short_value, long_value):
+    ...
+def option_values(opts, names):
+    ...
+def curl_targets(args):
+    ...
+def wget_targets(args):
+    ...
+def tee_targets(args):
+    ...
+def cp_mv_targets(args):
+    ...
+WRITERS = {"curl": curl_targets, "wget": wget_targets, "tee": tee_targets,
+           "cp": cp_mv_targets, "mv": cp_mv_targets}
+def command_targets(words):
+    ...
+def strip_heredocs(command):
+    ...
+def bash_targets(command):
+    ...
+def bash_target_is_temp(target):
+    ...
+def bash_command(payload):
+    ...
+bash = bash_command(data)
+file_path = ""
+where = location(file_path)
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -10295,7 +10351,7 @@ From `plugins/senzing-bootcamp/hooks/hooks.json`:
     ],
     "PreToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "Write|Edit|Bash",
         "hooks": [
           {
             "type": "command",
@@ -11177,21 +11233,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9237 test methods in 472 files, matching `inventory.test_count_total`.
+There are 9261 test methods in 473 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 9237.
+sum to 9261.
 
-Two files run more tests than they define, so discovery collects 9244:
+Two files run more tests than they define, so discovery collects 9268:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 9237`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 9261`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 9244`. No other count
+run count. With `pwsh` installed, the run reports `Ran 9268`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
@@ -11667,6 +11723,7 @@ looks wrong.
 - `tests/test_worked_steers.py`: 43
 - `tests/test_wrapped_text.py`: 40
 - `tests/test_write_gate.py`: 23
+- `tests/test_write_gate_bash.py`: 24
 
 ### 8.4 Key cases
 
@@ -12171,6 +12228,30 @@ tests a rebuild can pass from behavior alone.
     mentions `AQAAAD`.
   - **Activation.** With no progress file, every write is allowed. Unparseable
     JSON fails open, but a PEM marker in raw non-JSON input is still blocked.
+- **`write-gate.py` on Bash** (`tests/test_write_gate_bash.py`, #876, same
+  harness with `{"tool_name": "Bash", "tool_input": {"command": …}}`).
+  - **Blocked** with the temp/Downloads message: the incident command
+    `curl -fsSL -o /tmp/rds_register.py …` from a project under `HOME` and
+    from one under `/tmp`; `curl -o`, `--output`, `--output-dir`, bundled
+    `-fsSL -o` and `-sSfo`; `wget -O`, `-qO`, `-P`; `>`, `>>`, `2>`, `&>`;
+    `tee` and `tee -a`; the `cp`/`mv` destination, `-t` and
+    `--target-directory`, a bare `/tmp` directory; after `;`, `&&`, `||`,
+    `|`, newline, `\`-newline, `if … then`, `sudo`, an assignment, a comment
+    and a here-document opener; `$TMPDIR`, `${TMPDIR}`, `%TEMP%`,
+    `~/Downloads`, a Git Bash `AppData/Local/Temp` path and a relocated
+    `TMPDIR`.
+  - **Allowed:** project-relative targets; a project under `/tmp` writing
+    inside itself; `/dev/null`, `/dev/stdout`, `/dev/stderr`; temp as a source
+    (`cp /tmp/a /tmp/b src/resources/`, a URL holding `/tmp/`,
+    `python3 /tmp/x.py > src/out.txt`, `tee < /tmp/in src/out`), with a
+    positive control that blocks the same forms aimed at temp; non-temp
+    targets outside the project; quoted `bash -c`/`sh -c` payloads; Module 2's
+    C# and Rust install rows, read from the shipped table, inside
+    `docker exec`/`docker run`/`podman exec` (blocked bare); a here-document
+    body; an unbalanced quote; no progress file; secret-shaped commands.
+  - **Unchanged:** a `Write` or `Edit` payload with `tool_name` still blocks
+    temp, outside and secrets. The `hooks.json` matcher, the README row and
+    the "Working examples" sentence are checked too.
 - **`secret_patterns.py`** (`tests/test_secret_patterns_are_shared.py`).
   `package_bootcamp.py` and `write-gate.py` use identical patterns.
   `find_secret` returns `PEM private key`, `AWS access-key ID` or
@@ -15250,3 +15331,11 @@ Senzing licensing, with no SPDX identifier.
   guide had read INV-079's rule, because the resume offer had no pinned form
   and the guide improvised it from the numbered skill heading; a new
   invariant is queued
+- #876: `write-gate.py` also runs on Bash (matcher `Write|Edit|Bash`) and
+  blocks a command whose top-level output target (`curl -o`, `wget -O`/`-P`,
+  `>`/`>>`, `tee`, the `cp`/`mv` destination) resolves to system temp or
+  Downloads outside the project, reading the command with `shlex` and leaving
+  quoted payloads and non-temp targets alone, and "Working examples" saves a
+  fetched file under `src/resources/` — an auto-test walk saw the guide
+  `curl -o /tmp/…` an example file, which no hook saw; an amendment to INV-200
+  is queued

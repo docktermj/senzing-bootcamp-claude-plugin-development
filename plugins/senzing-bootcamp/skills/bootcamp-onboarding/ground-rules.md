@@ -511,10 +511,12 @@ copy (INV-300).
   the route for `find_examples` file retrieval and for `generate_scaffold`, and module steps that
   fetch either one cite this paragraph instead of naming a route of their own (INV-300). Take the
   steps in turn: fetch the URL a step names, or run the `git clone` it gives, and run every check
-  that step's own note asks for. Go on to the next step only when that one fails. Never reorder,
-  skip or add a step from memory or from the example below: the order is the server's, and the
-  server has changed it before. A step whose action is not a route, such as `generate_scaffold`'s
-  leading `warning`, is read and heeded, not fetched.
+  that step's own note asks for. Save a fetched file under `src/resources/`, where "File
+  placement" below puts downloaded Senzing resources (INV-200).
+  Go on to the next step only when that one fails. Never reorder, skip or add a step from memory
+  or from the example below: the order is the server's, and the server has changed it before. A
+  step whose action is not a route, such as `generate_scaffold`'s leading `warning`, is read and
+  heeded, not fetched.
   **The `hash` check.** Where a step's note asks you to verify the saved file against `hash`,
   the saved file's SHA-256 must equal `hash`. Compute it with `sha256sum <file>` on Linux,
   `shasum -a 256 <file>` on macOS, or `Get-FileHash -Algorithm SHA256 <file>` in Windows
