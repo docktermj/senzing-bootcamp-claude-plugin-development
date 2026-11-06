@@ -185,6 +185,58 @@ CHECKPOINT = f"""<!-- RECAP-CHECKPOINT:START -->
 <!-- RECAP-CHECKPOINT:END -->
 """
 
+# The source the recap says Data collection registered and Module 5 profiled (#872). The
+# mid-bootcamp project is at Module 5 step 11 (Map), so the file, its registry entry and a
+# mapping checkpoint with profile and plan done must exist, or a resume finds nothing to map
+# and the guide improvises. Invented, PII-free rows in plain CSV; two near-duplicate pairs
+# (a nickname, an abbreviated street) give the mapping something to resolve. No Senzing
+# attribute name appears here: the field mapping is the guide's to make at step 11.
+CUSTOMERS_CSV = """customer_id,full_name,date_of_birth,street,city,state,postal_code,phone
+C001,Marisol Quenby,1984-03-12,14 Larkspur Lane,Fairview,OR,97024,503-555-0101
+C002,Teodor Vashti,1979-11-02,220 Birchwood Avenue,Lakemont,WA,98101,206-555-0142
+C003,Mari Quenby,1984-03-12,14 Larkspur Ln,Fairview,OR,97024,503-555-0101
+C004,Ingrid Halvorsen-Pike,1991-07-23,9 Quarry Road,Ashby,MN,55309,612-555-0177
+C005,Oluwaseun Brannagh,1968-01-30,780 Kestrel Court,Dunmore,PA,18512,570-555-0133
+C006,Teo Vashti,1979-11-02,220 Birchwood Ave,Lakemont,WA,98101,
+C007,Pernille Achterberg,2001-05-15,51 Tamarack Street,Greyfield,ID,83702,208-555-0190
+C008,Caspian Ndiaye-Royle,1956-09-08,3 Old Mill Row,Hartwell,GA,30643,706-555-0118
+C009,Wren Okonkwo-Lisle,1988-12-19,402 Sorrel Drive,Bellmont,VT,05401,802-555-0164
+C010,Lorcan Featherstone,1973-04-04,66 Cedar Hollow,Pinecrest,CO,80202,303-555-0125
+"""
+
+#: The registry entry Data collection writes (module-04 SKILL.md, "Data Source Registry"), as of
+#: Module 5 step 11: collected and validated, mapping under way. `record_count` and
+#: `file_size_bytes` are measured from CUSTOMERS_CSV when the project is built.
+DATA_SOURCES = """version: "1"
+sources:
+  CUSTOMERS:
+    name: CUSTOMERS
+    file_path: data/raw/customers.csv
+    format: csv
+    record_count: {records}
+    expected_record_count: null
+    file_size_bytes: {size}
+    quality_score: null
+    mapping_status: in_progress
+    load_status: not_loaded
+    validation_status: passed
+    validation_checks: {{}}
+    added_at: "2026-01-01T11:00:00-07:00"
+    updated_at: "2026-01-01T12:00:00-07:00"
+"""
+
+#: Module 5's mapping checkpoint (phase2-data-mapping.md, "Mapping state checkpointing"): the
+#: profile and plan steps done, map next. It records decisions only, never `mapping_workflow`
+#: state, which a resume restarts and fast-tracks through.
+MAPPING_STATE = {
+    "data_source": "CUSTOMERS",
+    "source_file": "data/raw/customers.csv",
+    "current_step": 3,
+    "completed_steps": ["profile", "plan"],
+    "decisions": {"entity_type": "PERSON"},
+    "last_updated": "2026-01-01T12:00:00Z",
+}
+
 FEEDBACK = """# Senzing Bootcamp Plugin Feedback
 
 Feedback captured during the Senzing Bootcamp.
@@ -346,6 +398,15 @@ FIXTURE_MAP = [
      "a precious entry the normalizer must leave byte-identical (INV-067)"),
     ("docs/loading_strategy.md", "docs/loading_strategy.md", frozenset({"mid"}),
      "deliberately messy Markdown for the normalizer (INV-060)"),
+    ("data/raw/customers.csv", "data/raw/customers.csv", frozenset({"mid"}),
+     "the source the recap says was collected and profiled, so Module 5 step 11 has "
+     "something to map on resume (#872)"),
+    ("config/data_sources.yaml", "config/data_sources.yaml", frozenset({"mid"}),
+     "the CUSTOMERS registry entry Data collection writes, mapping in progress (#872)"),
+    ("config/mapping_state_customers.json", "config/mapping_state_customers.json",
+     frozenset({"mid"}),
+     "Module 5's mapping checkpoint, profile and plan done, so a resume fast-tracks "
+     "to the map step (#872)"),
     ("src/system_verification/verification_data.jsonl",
      "src/system_verification/verification_data.jsonl", frozenset({"mid"}),
      "the file System verification Step 2 writes, so a resumed run finds it; also the "
@@ -440,6 +501,14 @@ def build(root: Path, fresh: bool, seeded: bool = False) -> None:
         (root / "docs/loading_strategy.md").write_text(MESSY_MARKDOWN, encoding="utf-8")
         (root / "src/system_verification/verification_data.jsonl").write_text(
             RECORDS + "\n", encoding="utf-8"
+        )
+        (root / "data/raw/customers.csv").write_text(CUSTOMERS_CSV, encoding="utf-8")
+        (root / "config/data_sources.yaml").write_text(
+            DATA_SOURCES.format(records=len(CUSTOMERS_CSV.splitlines()) - 1,
+                                size=len(CUSTOMERS_CSV.encode("utf-8"))),
+            encoding="utf-8")
+        (root / "config/mapping_state_customers.json").write_text(
+            json.dumps(MAPPING_STATE, indent=2) + "\n", encoding="utf-8"
         )
 
     # The feedback file exists in both modes: nothing may ever delete or empty it.

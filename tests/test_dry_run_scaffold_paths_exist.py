@@ -25,6 +25,7 @@ recorded (INV-346).
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
+import re
 import unittest
 from pathlib import Path
 
@@ -83,7 +84,7 @@ class EveryFixturePathIsAPathThePluginUses(unittest.TestCase):
                 continue          # a row annotating a key inside another fixture
             checked += 1
             with self.subTest(path=path):
-                if path in self.corpus:
+                if path in self.corpus or self._fills_a_template(path):
                     continue
                 base, doc = self._variant_of(path)
                 self.assertTrue(
@@ -101,6 +102,24 @@ class EveryFixturePathIsAPathThePluginUses(unittest.TestCase):
                     % (path, display, sorted(modes),
                        self._base_path(path), bool(base), bool(doc)))
         self.assertGreater(checked, 5, "almost no rows carried a path to check")
+
+    def _fills_a_template(self, path):
+        """True when ``path`` fills a placeholder path the plugin names (#872).
+
+        The plugin names some files only as a template: Module 5 reads
+        `config/mapping_state_[datasource].json`, never a literal filename. A fixture that
+        fills the placeholder with a lower-case name (`config/mapping_state_customers.json`)
+        is that file. ⛔ Only the bracketed segment may vary, and it must be filled with a
+        name, so a typo elsewhere in the path still fails.
+        """
+        for template in set(re.findall(r"[\w./-]*\[[a-z_]+\][\w./-]*", self.corpus)):
+            if "/" not in template:
+                continue
+            pieces = re.split(r"\[[a-z_]+\]", template)
+            pattern = "[a-z0-9_]+".join(re.escape(piece) for piece in pieces)
+            if re.fullmatch(pattern, path):
+                return True
+        return False
 
     @staticmethod
     def _base_path(path):

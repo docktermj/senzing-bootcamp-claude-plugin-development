@@ -43,6 +43,35 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## mid-bootcamp-scaffold-holds-the-data-its-recap-claims
+
+- **Implemented:** 2026-11-06 (#872)
+- **Commit:** uncommitted
+- **Files changed:** `.claude/skills/dry-run/scaffold_project.py`, `tests/test_mid_scaffold_holds_what_its_recap_claims.py` (new, 4 tests), `tests/test_dry_run_scaffold_paths_exist.py`, `specs/IMPLEMENTED.md` (this entry and `auto-test-walk-2026-11-06`, which recorded the finding first), `BLUEPRINT.md`
+- **MCP re-check:** n/a (no Senzing fact). The new CSV is generic customer data with no Senzing attribute names; the mapping checkpoint records only `entity_type: PERSON`, a decision the guide would have made at step 10, not a fact about the server.
+- **Summary:** fixes finding 1 of `auto-test-walk-2026-11-06`. The mid-bootcamp project (Module 5 step 11) now holds what its recap claims:
+  - `data/raw/customers.csv`: ten invented, PII-free rows, two of them near-duplicate pairs (a nickname, an abbreviated street), so mapping and resolution have something to work on;
+  - `config/data_sources.yaml`: the `CUSTOMERS` entry in Module 4's registry shape, with `record_count` and `file_size_bytes` measured from the file at build time and `mapping_status: in_progress`;
+  - `config/mapping_state_customers.json`: Module 5's checkpoint, profile and plan done, decisions only;
+  - a banner row for each, so `--explain` lists them.
+  - **Guard rescoped, not loosened:** `tests/test_dry_run_scaffold_paths_exist.py` required each fixture path to appear verbatim under `plugins/`, but Module 5 names its checkpoint only as `config/mapping_state_[datasource].json`. The guard now also accepts a path that fills a bracketed placeholder in a path the plugin names with a lower-case name; only the bracketed segment may vary, so a typo elsewhere still fails (negative control: `mapping_stat_customers.json` fails).
+  - **Tests:** the new test builds a mid project and asserts that every backticked `data/` or `config/` path in its recap and checkpoint exists, that the registry entry matches the file, that the checkpoint resumes at map, and that progress is Module 5 step 11. Negative control: dropping the CSV write fails it.
+  - **Not established:** that a live guide resumes step 11 from these files; the #855 rerun is that check. #872's open question, whether the guide's "shortcut" when the source was missing was acceptable, is not addressed here.
+  - **Invariant:** establishes no invariant. It is a fixture fix.
+
+## auto-test-walk-2026-11-06
+
+- **Implemented:** 2026-11-06 (**Not a spec**: the record of one `/auto-test` run, kept before any fix (INV-317). Every finding below is **not yet filed**.)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md` (this entry)
+- **MCP re-check:** the run's own probe, below.
+- **Summary:** establishes no invariant (a run record). Run `autotest.py --walk --seed mid --model claude-haiku-5-5 --effort low --pin --persona terse --turns 100 --max-turns 120 --keep` (#870's options), meant to judge #855 on Modules 5 to 7. Exit 1, 6 BREAKING, 11 WATCH. Sandbox `/tmp/senzing-autotest-20261106-105502-terse-i91p03fn`, report `~/senzing-autotest/reports/20261106-105502-terse.json`. The walk stopped after turn 6, at Data Processing step 3, so **#855 was not judged** for Modules 6 and 7. For Module 5 the progress file ended with `directing_steps: {data_quality_mapping: skipped}` and no `steer_triggers`, and `check_directing_steps`, `check_pairs_step` and `check_worked_steers` reported nothing (weak evidence over 6 turns). No Bootcamper slash line came, so `--pin` was not exercised. Nothing was fixed.
+  - **Finding 1 (filed as #872): the mid-bootcamp scaffold contradicts its own recap.** `scaffold_project.py`'s mid mode writes a recap that says `data/raw/customers.csv` was collected and profiled, but writes no such file and no `config/mapping_state_*.json`, so the guide could not resume Module 5 step 11. It downloaded the truth set's CUSTOMERS file to `data/raw/customers.jsonl` and recorded Module 5 complete "with a shortcut", with its mapping and quality steps not run. Whether that shortcut is acceptable guide behavior needs a maintainer read.
+  - **Finding 2 (filed as #873): a turn ended without a question.** Turn 6 reported Data Processing steps 1 and 2 done, said it had "stopped before step 3", and asked nothing; the walk stopped there.
+  - **Finding 3 (BREAKING INV-079-module-number, 6, filed as #874):** the guide showed "Module 5" (five times) and "Module 4" (once) to the Bootcamper, for example in the resume message ("Where you left off: Module 5, Data Quality, Mapping, and Transformation, at step 11").
+  - **Finding 4 (WATCH, not yet filed):** INV-005-not-turn-final, 156 characters after the 👉 question at Data Processing step 1; and INV-028-apparatus-missing, no step overview for Module 5, possibly a lint false positive, since a resume partway through a module owes no start apparatus (`module_start_apparatus.resume_reminder`).
+  - **Finding 5 (WATCH, server-side, not yet filed):** the same 9 probe findings as `auto-test-walk-2026-11-05` finding 4.
+
 ## auto-test-walks-can-start-mid-bootcamp-and-pin-model-and-effort
 
 - **Implemented:** 2026-11-06 (#870)
