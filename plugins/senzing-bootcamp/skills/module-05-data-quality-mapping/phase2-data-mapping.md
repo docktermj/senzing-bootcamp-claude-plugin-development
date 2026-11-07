@@ -1334,11 +1334,11 @@ example: reported 2026-07-28 and fixed in 1.32.2 (the numeric-value entry above)
 still be carrying the workaround today. Work around them, and re-check whether the workaround is
 still needed.
 
-**One mechanism, four known reachings — recognize the fifth on sight rather than filing it as a
+**One mechanism, four known routes — recognize the fifth on sight rather than filing it as a
 discovery.** `sz_verbatim_check.py` harvests the allowed set from source **values**, and each row
 below is that one scope limit reached by a different route. Each was re-run against the script the
 server delivers (server 1.37.27, 2026-10-12): every row's emitted value is reported, exit 1, while a
-numeric source value emitted as a string now passes, so numbers are no longer a reaching.
+numeric source value emitted as a string now passes, so numbers are no longer a route.
 
 | The emitted value is derived from… | Where it is documented here |
 |---|---|

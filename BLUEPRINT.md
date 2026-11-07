@@ -13815,7 +13815,7 @@ Senzing licensing, with no SPDX identifier.
 - #521: Module 5's step 11 names its `directing_steps.data_quality_mapping`
   record, step 24d checkpoints its answer and Phase 3 session resume follows it
   by pointer, step 16 discloses a synthesized source before its 70-79% and <70%
-  questions, the reachings table is re-checked live on server 1.37.27, step 18
+  questions, the routes table is re-checked live on server 1.37.27, step 18
   validates the full load-ready file (skipped with the analyzer), and
   INV-345's 2026-10-12 note is registered (six gaps the 2026-10-12 audit found
   where #485, #488 and #394 left the text behind)
@@ -15339,3 +15339,7 @@ Senzing licensing, with no SPDX identifier.
   fetched file under `src/resources/` — an auto-test walk saw the guide
   `curl -o /tmp/…` an example file, which no hook saw; an amendment to INV-200
   is queued
+- #881: Module 5's verbatim-check paragraph says "four known routes" and "no
+  longer a route" where it said "reachings", and its test is renamed
+  `TheRoutesTableIsCurrent` with `routes_problems` — the paragraph already
+  called each row a "route", and the public plugin reads "routes"

@@ -24,9 +24,9 @@ turn the gate green — does not even work, and distorts the data.
 The upstream defect was reported to Senzing on 2026-07-28. These tests pin the
 plugin-side mitigation that has to hold until (and whether or not) it is fixed there.
 
-#521 brought the "known reachings" table up to date (``TheReachingsTableIsCurrent``): server 1.32.2
+#521 brought the "known routes" table up to date (``TheRoutesTableIsCurrent``): server 1.32.2
 fixed the numeric case, so it has no numeric row; it has the boolean and joined-`NAME_ORG` rows; no
-row points at "this entry"; and its heading's count matches its rows. Each reaching was re-run
+row points at "this entry"; and its heading's count matches its rows. Each route was re-run
 against the script server 1.37.27 delivers, 2026-10-12. The same issue merged the two near-duplicate
 no-fork paragraphs into one, which ``no_fork_problems`` reads.
 
@@ -255,21 +255,21 @@ class TheEmissionChoiceIsSpecDriven(unittest.TestCase):
         )
 
 
-#: Number words the reachings heading may use, so its count can be read back as an int.
+#: Number words the routes heading may use, so its count can be read back as an int.
 NUMBER_WORDS = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
 
 
-def reachings_problems(text):
-    """#521: the "known reachings" table is current, and its heading counts its rows.
+def routes_problems(text):
+    """#521: the "known routes" table is current, and its heading counts its rows.
 
     Read from ``flat`` text (whitespace collapsed) for the prose, and from the raw rows for the
     table, so a re-wrap of the heading paragraph does not move the check (INV-346).
     """
     flat_text = re.sub(r"\s+", " ", re.sub(r"(?m)^\s*>\s?", "", text))
-    head = re.search(r"\*\*One mechanism, (\w+) known reachings — recognize the (\w+) on sight",
+    head = re.search(r"\*\*One mechanism, (\w+) known routes — recognize the (\w+) on sight",
                      flat_text)
     if head is None:
-        return ["the reachings heading is gone"]
+        return ["the routes heading is gone"]
     start = text.index("| The emitted value is derived from…")
     end = text.index("Any value the mapper computes rather than copies", start)
     rows = [line for line in text[start:end].splitlines()
@@ -277,10 +277,10 @@ def reachings_problems(text):
     problems = []
     count = NUMBER_WORDS.get(head.group(1))
     if count != len(rows):
-        problems.append("the heading says %s reachings and the table has %d rows"
+        problems.append("the heading says %s routes and the table has %d rows"
                         % (head.group(1), len(rows)))
     if ordinal(head.group(2)) != (count or 0) + 1:
-        problems.append("the heading's next reaching (%s) does not follow its count"
+        problems.append("the heading's next route (%s) does not follow its count"
                         % head.group(2))
     table = "\n".join(rows)
     if re.search(r"(?i)JSON number|numeric", table):
@@ -293,7 +293,7 @@ def reachings_problems(text):
         problems.append("a row points at 'this entry', which is not the entry it means")
     if not re.search(r"server 1\.\d+\.\d+, \d{4}-\d{2}-\d{2}\): every row's emitted value is "
                      r"reported", flat_text):
-        problems.append("the reachings are not re-checked against a dated server version")
+        problems.append("the routes are not re-checked against a dated server version")
     if len(re.findall(r"(?i)do not ship a patched copy", flat_text)) != 1:
         problems.append("the no-fork rule is stated more than once (the merged paragraphs split)")
     return problems
@@ -303,14 +303,14 @@ def ordinal(word):
     return {"third": 3, "fourth": 4, "fifth": 5, "sixth": 6, "seventh": 7}.get(word)
 
 
-class TheReachingsTableIsCurrent(unittest.TestCase):
+class TheRoutesTableIsCurrent(unittest.TestCase):
     """#521: no numeric row, boolean and joined-NAME_ORG rows, a heading that counts its rows."""
 
     def setUp(self):
         self.text = PHASE2.read_text(encoding="utf-8")
 
     def test_the_table(self):
-        self.assertEqual([], reachings_problems(self.text))
+        self.assertEqual([], routes_problems(self.text))
 
     def test_negative_controls(self):
         text = self.text
@@ -324,8 +324,8 @@ class TheReachingsTableIsCurrent(unittest.TestCase):
             "joined row dropped": text.replace("`NAME_ORG` **joined** from", "`NAME_ORG` from", 1),
             "self-reference restored": text.replace("| the field-name entry directly below |",
                                                     "| this entry |", 1),
-            "count off by one": text.replace("One mechanism, four known reachings",
-                                             "One mechanism, three known reachings", 1),
+            "count off by one": text.replace("One mechanism, four known routes",
+                                             "One mechanism, three known routes", 1),
             "duplicate no-fork paragraph restored": text.replace(
                 "**One mechanism,", "Do not ship a patched copy of `sz_verbatim_check.py`.\n\n"
                 "**One mechanism,", 1),
@@ -333,7 +333,7 @@ class TheReachingsTableIsCurrent(unittest.TestCase):
         for name, mutant in mutants.items():
             with self.subTest(mutant=name):
                 self.assertNotEqual(text, mutant, "the mutation no longer applies")
-                self.assertNotEqual([], reachings_problems(mutant))
+                self.assertNotEqual([], routes_problems(mutant))
 
 
 if __name__ == "__main__":
