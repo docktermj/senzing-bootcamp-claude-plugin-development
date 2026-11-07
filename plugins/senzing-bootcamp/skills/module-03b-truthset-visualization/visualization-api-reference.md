@@ -1037,6 +1037,8 @@ restate it (INV-300).
   **2–3 px**. ⚠️ **Leave the interactive view alone** — a real browser advances animation frames
   normally, so a reader opening the app or the standalone snapshot already gets a settled layout,
   and applying the capture's label ceiling there would degrade a view they can zoom and toggle.
+  The fit alone also reaches the interactive view, once, at its first settle — see
+  [the initial fit](#graph-initial-fit) below; the synchronous settle and the label ceiling do not.
   ⚠️ **Suppress both label sets through your own auto-off mechanism**, not a bespoke hide on the
   name layer: the interactive ceiling governs entity names *and* match keys together, and reusing
   it keeps the on-screen toggles honest about what was actually drawn.
@@ -1053,6 +1055,33 @@ restate it (INV-300).
   variable.** The Python reference held its simulation in a top-level `let`, which never reaches
   `window`, so nothing outside the page's own script could observe it — an attribute is
   observable by any driver in any language, which is the whole point of putting the rule here.
+- <a id="graph-initial-fit"></a>**The graph opens fitted, once, and then the view is the reader's (required —
+  INV-002/INV-090).** ⛔ **(INV-002/INV-090) When a layout first settles, fit every drawn node inside the graph
+  pane — its marker, and its label while labels are drawn — in the live app and in the standalone
+  snapshot, in both modes.** Key the fit to that first settle (the moment the settled signal above is
+  first set for the layout), never to a timer. ⛔ **(INV-002/INV-090) The zoom floor follows the fit:**
+  where the fit needs a smaller scale than the floor the reader zooms down to, lower the floor to the
+  fit's scale, so the fit is never clamped, and keep the floor where it does not. ⛔ **(INV-002/INV-090)
+  Fit that layout once:** a later settle — a dragged node re-heats the layout — never refits, and a
+  reader who zooms or pans **before** the first settle keeps their view, because that settle does
+  not fit either. A mode toggle that redraws the graph is a new layout and gets its own first fit;
+  a legend filter only hides marks and never refits. An empty graph has nothing to fit; a single
+  node fits at the maximum zoom. The capture render's synchronous fit above is the same fit, run at
+  its synchronous settle. Observed at 1,500 nodes (#883): only the capture fitted, so the app and
+  the snapshot opened at scale 1 with most of the graph outside a narrow pane, and a fixed 0.05
+  floor would have clamped a fit wider than twenty panes.
+- <a id="stroke-precedence"></a>**A stroke the data sets is the stroke that is painted (required —
+  INV-002/INV-090).** ⛔ **(INV-002/INV-090) No stylesheet rule may override a stroke color or width
+  the renderer sets from the data** — the relationship type on an edge, the source set on a node
+  outline ("Coloring graph nodes"). ⚠️ **An SVG presentation attribute (`stroke="…"`,
+  `stroke-width="2"`) loses to every matching CSS rule**, so a default such as
+  `.edge line{stroke:…;stroke-width:1.5px}` repaints every edge while the DOM attribute still reads
+  correctly: only the browser's **computed** style shows it, which is what a check must read.
+  Scope a default to marks the data gave no stroke (the reference writes `:not([stroke])`), or set
+  the data value as an inline style; defaults still apply where the data sets nothing, such as
+  edges in the full-population mode and single-source nodes in the first six. Observed (#883):
+  relationship-mode edges painted gray at 1.5px over their type colors at 2px, and the 7th and
+  later sources, which the stroke channel exists to tell apart, all painted a white 1.5px outline.
 - **Collision must account for the label's extent, not just the marker (required).** Size the
   collision/overlap pass from the rendered label as well as the marker, and apply it **only while
   labels are actually shown** — inflating it for text nobody renders over-separates a
@@ -1279,6 +1308,10 @@ collision this fixes; that is the error made while repairing it by hand, not a h
 
 **The legend MUST name each combination** it colors (INV-259), labeled as a combination and counted over the
 nodes actually drawn. A color a viewer cannot name is not an improvement over the wrong color.
+
+The stroke and stroke width a node is assigned must also be what the browser paints: that rule is
+stated once, in "Graph rendering — labels, scale, and legends" →
+[stroke precedence](#stroke-precedence) (INV-300).
 
 #### The encoding self-check (required — behavior, in every language)
 
