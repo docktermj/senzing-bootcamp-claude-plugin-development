@@ -1085,7 +1085,16 @@ main{padding:0}
 .legend{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px}
 .legend .row{display:flex;align-items:center;gap:6px;margin:2px 0}
 .legend .dot{width:12px;height:12px;border-radius:50%}
-.node circle{stroke:#fff;stroke-width:1.5px;cursor:pointer}
+.node circle{cursor:pointer}
+/* ⛔ (#883) A stylesheet rule must never override a stroke the renderer sets from the DATA.
+   An SVG presentation attribute (`stroke="…"`, `stroke-width="3"`) loses to ANY matching CSS
+   rule, so an unscoped `.node circle{stroke:#fff;stroke-width:1.5px}` painted every source's
+   assigned outline white at 1.5px -- the 7th and later sources, which the stroke channel exists
+   to tell apart, all looked alike while the DOM attributes read correctly. The defaults
+   therefore match ONLY a mark the data gave no stroke (`:not([stroke])`): a single-source node
+   in the first six keeps its white outline, and an assigned one paints as assigned.
+   Contract: visualization-api-reference.md -> "Graph rendering" -> stroke precedence. */
+.node circle:not([stroke]){stroke:#fff;stroke-width:1.5px}
 .node text,.node-labels text{font-size:10px;fill:var(--ink);pointer-events:none}
 /* Label visibility is driven by a class on the container, set explicitly at
    init -- an unchecked checkbox fires no change event, so the initial state
@@ -1104,7 +1113,10 @@ main{padding:0}
 .legend .row{cursor:pointer;user-select:none}
 .legend .row.off{opacity:.35}
 .legend .cnt{color:var(--muted);margin-left:auto;padding-left:8px}
-.edge line{stroke:var(--line);stroke-width:1.5px}
+/* (#883) Same precedence rule as `.node circle` above: network mode writes each edge's
+   relationship-type color and a 2px width as attributes, and an unscoped rule here painted
+   every relationship gray at 1.5px. All-entities edges carry no stroke attribute and keep this. */
+.edge line:not([stroke]){stroke:var(--line);stroke-width:1.5px}
 .edge text{font-size:9px;fill:var(--muted)}
 .tooltip{position:absolute;pointer-events:none;background:var(--navy);color:#fff;padding:6px 9px;border-radius:6px;font-size:12px;opacity:0;max-width:240px}
 .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:10px}
@@ -1332,6 +1344,8 @@ async function drawGraph(){
   // tick starvation this works around is specific to headless virtual time: a real browser
   // advances requestAnimationFrame normally, so a bootcamper opening the standalone snapshot
   // already gets a properly settled layout and keeps its animation, its labels and its zoom.
+  // (#883) What the interactive view now shares with the capture is the FIT alone, once, at
+  // its first settle -- never the synchronous settle and never the capture's label ceiling.
   const capture=/[?&]capture=1/.test(location.search);
   // In network mode, keep only entities that a relationship actually connects -- the
   // subgraph the removed Relationship Network tab showed.
@@ -1363,8 +1377,15 @@ async function drawGraph(){
   const svg=box.append("svg").attr("width",W).attr("height",H).attr("viewBox",[0,0,W,H]);
   const root=svg.append("g");
   // scaleExtent's floor is lowered for the capture fit: a settled 85-entity layout needs
-  // well under 0.2 to fit, and clamping there would leave nodes off-canvas.
-  const zoomB=d3.zoom().scaleExtent([0.05,4]).on("zoom",function(ev){root.attr("transform",ev.transform);});
+  // well under 0.2 to fit, and clamping there would leave nodes off-canvas. 0.05 is the floor
+  // a reader zooms down to; `fitToExtent` lowers it further only when a fit needs it (#883).
+  // ⛔ (#883) The reader's own zoom or pan is remembered, per layout: d3 sets `sourceEvent`
+  // only on an input event (wheel, drag, dblclick, touch), never on the programmatic
+  // `zoomB.transform` the fit applies, so a fit cannot mark itself as the reader's choice.
+  let readerMoved=false,fitted=false;
+  const zoomB=d3.zoom().scaleExtent([0.05,4]).on("zoom",function(ev){
+    root.attr("transform",ev.transform);
+    if(ev.sourceEvent)readerMoved=true;});
   svg.call(zoomB);
   // Node labels are truncated to fit, so the distinctness rule applies here exactly as it
   // does to match keys (contract: "Defaults at production scale" item 1). Two entities whose
@@ -1491,24 +1512,42 @@ async function drawGraph(){
     for(let i=0;i<need;i++){sim.tick();}
     place();
     fitToExtent();
+    fitted=true;
     graphSettled(true);
   }
   // ⛔ (INV-299) A SETTLED layout must still be a VISIBLE one. `forceCenter` centers the
   // centroid and bounds nothing, so the finished 85-entity layout spreads well outside
   // 1440x900: presettling alone put most nodes off-canvas and lost more of the graph than the
   // unsettled clump it replaced. The near-initial layout was accidentally masking this.
+  // ⛔ (#883) ONE fit, used by both renders: the capture calls it after its synchronous
+  // settle, and the interactive app and the snapshot call it at the layout's FIRST settle
+  // (the "end" handler below). Before #883 only the capture fitted, so a 1,500-node graph
+  // opened in the reader's pane at scale 1 with most of it outside a narrow window.
   function fitToExtent(){
     let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+    // A drawn label is centered under its node and can be wider than the node, so its
+    // measured half-width joins the horizontal extent -- only while the labels are drawn:
+    // the container's hide class is the app's own switch, and a capture's first render has
+    // not set it yet, so `captureLabels` stands in for it there.
+    const halfLabel={};
+    if(captureLabels&&!document.getElementById("graph-container").classList.contains("hide-node-labels")){
+      label.each(function(d){halfLabel[d.id]=(this.getComputedTextLength?this.getComputedTextLength():0)/2+2;});
+    }
     nodes.forEach(function(d){
-      const r=radius(d)+14;
-      x0=Math.min(x0,d.x-r);x1=Math.max(x1,d.x+r);
+      const r=radius(d)+14,hw=Math.max(r,halfLabel[d.id]||0);
+      x0=Math.min(x0,d.x-hw);x1=Math.max(x1,d.x+hw);
       // the label sits BELOW the node, so the extent is asymmetric -- but only when the
       // labels are actually drawn, or the fit reserves space for text nobody renders.
       y0=Math.min(y0,d.y-r);y1=Math.max(y1,d.y+r+(captureLabels?18:0));
     });
     if(!isFinite(x0))return;
     const w=Math.max(1,x1-x0),h=Math.max(1,y1-y0);
-    const k=Math.min(4,Math.max(0.05,0.94*Math.min(W/w,H/h)));
+    const k=Math.min(4,0.94*Math.min(W/w,H/h));
+    if(!(k>0))return;
+    // ⛔ (#883) The zoom floor FOLLOWS the fit: lowered to exactly the fit's scale when the
+    // fit needs less than the floor, and left at 0.05 otherwise. A fixed floor clamped the
+    // fit, so a graph wider than 20x the pane was "fitted" with its edges still off-screen.
+    if(k<zoomB.scaleExtent()[0])zoomB.scaleExtent([k,4]);
     svg.call(zoomB.transform,
       d3.zoomIdentity.translate((W-k*(x0+x1))/2,(H-k*(y0+y1))/2).scale(k));
   }
@@ -1517,7 +1556,16 @@ async function drawGraph(){
   addGraphControls("graph-container",nodes.length,!captureLabels);
   // (INV-298) d3 fires "end" when alpha decays below alphaMin -- the layout's own definition
   // of finished, rather than an outside guess at how long that takes.
-  sim.on("end",function(){graphSettled(true);});
+  // ⛔ (#883) The FIRST settle fits, once, keyed to this signal and never to a timer; every
+  // later settle (a dragged node re-heats the layout) leaves the view alone, and a reader
+  // who zoomed or panned before the first settle keeps their view, since that settle does
+  // not fit either. The flags live in this render's closure, so a mode toggle's redraw is
+  // a new layout with its own first fit, and the source-legend filter, which restarts
+  // nothing, never refits.
+  sim.on("end",function(){
+    if(!fitted&&!readerMoved)fitToExtent();
+    fitted=true;
+    graphSettled(true);});
   function dstart(ev,d){if(!ev.active){graphSettled(false);sim.alphaTarget(0.3).restart();}d.fx=d.x;d.fy=d.y;}
   function dragged(ev,d){d.fx=ev.x;d.fy=ev.y;}
   function dend(ev,d){if(!ev.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}
@@ -2455,7 +2503,10 @@ def _snapshot_probe_html(model, engine, flags, port=8080, dataset=""):
     # no engine: it reads the embedded `merges` payload, so it works with no server.
     browse = '<div id="probe-btns"></div>'
     if not cards:
-        return note + browse + '<p class="muted">No multi-record entities to show.</p>'
+        # ⚠️ (#883) `#results` is where that browse renders its cards, so it ships even with
+        # no example to show. Without it, a snapshot whose example searches all missed (or
+        # ran with no engine) offered "Show all merged entities" and drew nothing on click.
+        return note + browse + '<div id="results"><p class="muted">No multi-record entities to show.</p></div>'
     return note + browse + '<div id="results">' + "".join(cards) + "</div>"
 
 
