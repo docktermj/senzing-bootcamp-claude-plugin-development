@@ -64,7 +64,9 @@ an explicit `--phase` still wins. `--effort <level>` sets the guide's effort fro
 turn, as `--model` sets its model. Without `--pin`, a Bootcamper model or effort slash line
 overrides both for the rest of the walk (#656). With `--pin`, the walk logs each such line as
 `bootcamper_flag_ignored`, the flag stays as given, and the report lists it as an INFO
-`bootcamper-flag-ignored` finding:
+`bootcamper-flag-ignored` finding ending "(--pin)". A model or effort slash line with no
+value sets nothing, pinned or not, and is reported the same way, ending "(no value given)"
+(#877):
 
 ```console
 .claude/skills/auto-test/autotest.py --walk --seed mid --model claude-haiku-5-5 --effort low --pin
