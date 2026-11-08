@@ -4040,10 +4040,19 @@ leading line that is exactly `/effort <level>` or `/model <name>`
 `--model` flag on that turn's call and every later one, the latest value
 winning and replacing `--model`, and is logged as a `bootcamper_flag` event
 (`turn`, `command`, `flag`, `value`) while the `bootcamper` event keeps the
-whole reply; the rest is the turn. Any other text that starts with `/` is sent
-with one leading space (`as_turn`), so the CLI does not run it as a command;
-the opening is sent as given. A reply of only slash lines is re-asked once
-with the same guide turn, and a second one stops the walk. The loop stops when
+whole reply; the rest is the turn. A leading line that is exactly `/effort` or
+`/model` is a slash line with value `None` (#877): it sets nothing, pinned or
+not, and is logged as `bootcamper_flag_ignored` with `value: null` and
+`reason: "no value"`, as a valued line a `--pin` walk ignores is with
+`reason: "pin"`; `autotest.ignored_flag_findings` ends each INFO
+`bootcamper-flag-ignored` message "(no value given)" or "(--pin)" by reason,
+and "(--pin)" when the event has no `reason`. Any other text that starts with
+`/` is sent with one leading space (`as_turn`), so the CLI does not run it as
+a command; the opening is sent as given. A reply of only slash lines is
+re-asked once with the same guide turn, one status per line in the order
+entered (`<line> — applied`, `<line> — not applied (--pin)` or
+`<line> — not applied (no value)`), and a second one stops the walk. The loop
+stops when
 A or B exits non-zero, when a turn shows no 👉, when B
 returns nothing, when B twice replies only with slash commands, when either
 `claude` call raises `subprocess.TimeoutExpired` (caught at both call sites,
@@ -5824,7 +5833,7 @@ Rules:
 - Never mention that this is a test or a simulation."""
 BANNER_FRAME = re.compile(r"^([^\x00-\x7f])\1\1 (.+?) \1\1\1$")
 SLASH_FLAGS = {"/effort": "--effort", "/model": "--model"}
-SLASH_LINE = re.compile(r"(\S+) (\S+)")
+SLASH_LINE = re.compile(r"(\S+)(?: (\S+))?")
 class EventLog:
     def __init__(self, path):
         ...
@@ -11270,7 +11279,8 @@ def _claude(args, cwd, stdin_text=None, timeout=600, env=None):
   its non-zero-exit walks make no probe)
 - `_claude`: `test_dry_run_simulated_phase3.py` (patched with a stub, so the
   walk's stop condition runs offline and spends no tokens),
-  `test_walk_slash_replies.py` (the stub records each call's argv),
+  `test_walk_slash_replies.py` and `test_auto_test_pin_and_mid.py` (the stub
+  records each call's argv),
   `test_a_crashed_walk_keeps_its_transcript.py` (the stub raises
   `subprocess.TimeoutExpired` at a chosen turn, and reads the transcript file
   between turns; another stub stands in for both processes and exits 1 at a
@@ -11312,7 +11322,10 @@ def _run(cmd, **kw):
 
 - `_run`: `test_a_walk_runs_on_the_scaffold_it_asked_for.py` (wrapped by a spy
   that records each call and runs it, so the real scaffold's call can be read
-  for `--run-root <run root>` and the seed flag)
+  for `--run-root <run root>` and the seed flag) and
+  `test_auto_test_pin_and_mid.py` (a stub that records each call and writes
+  the walk's transcript, so `autotest.main` runs with no worktree, probe or
+  walk)
 
 ### 7.13 `.claude/skills/auto-test/transcript_lint.py`
 
@@ -11500,12 +11513,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9333 test methods in 474 files, matching `inventory.test_count_total`.
+There are 9346 test methods in 474 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 9333.
+sum to 9346.
 
-Two files run more tests than they define, so discovery collects 9340:
+Two files run more tests than they define, so discovery collects 9353:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -11540,7 +11553,7 @@ looks wrong.
 - `tests/test_audit_skill_states_no_stale_count.py`: 9
 - `tests/test_authored_shapes_are_stated.py`: 8
 - `tests/test_auto_test_harness.py`: 38
-- `tests/test_auto_test_pin_and_mid.py`: 13
+- `tests/test_auto_test_pin_and_mid.py`: 19
 - `tests/test_auto_test_scripts_are_executable.py`: 7
 - `tests/test_backgrounded_launch_records_the_server_pid.py`: 12
 - `tests/test_blocked_submission_has_a_vocabulary_value.py`: 29
@@ -11980,7 +11993,7 @@ looks wrong.
 - `tests/test_volume_option_reply_has_no_count.py`: 14
 - `tests/test_walk_hook_conflict_is_documented.py`: 10
 - `tests/test_walk_instruction_isolation.py`: 17
-- `tests/test_walk_slash_replies.py`: 13
+- `tests/test_walk_slash_replies.py`: 20
 - `tests/test_welcome_licensing_names_data_collection.py`: 6
 - `tests/test_why_key_details_flag_claim_is_withdrawn.py`: 26
 - `tests/test_why_key_details_flag_is_cited_not_guessed.py`: 12
@@ -13069,7 +13082,8 @@ These are the scripts under `.claude/skills/`:
   - `/effort high`, blank line, `yes` sends `-p yes … --effort high --resume`,
     and every later call still carries `--effort high`; a later
     `/effort low` and `/model …` replace the earlier value and the
-    command-line `--model`; `split_reply` takes only exact leading lines;
+    command-line `--model`; `split_reply` takes only exact leading lines,
+    and a bare `/effort` or `/model` as a line with value `None` (#877);
   - the `bootcamper` event keeps the reply verbatim and a `bootcamper_flag`
     event records the flag; `transcript_lint.load` and
     `module_banners.slice_transcript` do not read it as a guide turn;
@@ -13078,7 +13092,16 @@ These are the scripts under `.claude/skills/`:
   - a slash-only reply is re-asked once with the same guide turn, and a second
     one stops the walk with "the Bootcamper replied only with slash
     commands"; turn 1 sends `/senzing-bootcamp:start-bootcamp` unchanged; the
-    brief carries the own-line rule.
+    brief carries the own-line rule;
+  - a bare `/model` or `/effort` (#877, here and in
+    `tests/test_auto_test_pin_and_mid.py`) never reaches the guide and sets no
+    flag, pinned or not, and is logged as `bootcamper_flag_ignored` with
+    `value: null` and `reason: "no value"`, a pinned valued line with
+    `reason: "pin"`; `/models` and `/model claude opus` stay text; the re-ask
+    lists `/model opus — applied` then `/effort — not applied (no value)`, and
+    `/effort high — not applied (--pin)` under `--pin`; the INFO finding ends
+    "(no value given)", "(--pin)", or "(--pin)" for an event with no `reason`,
+    in a pinned and an unpinned walk.
 - **The finding skills' two stages.** `tests/test_drafts.py` (#572):
   - `drafts.py`, run offline: ids per skill and the draft's header, the sorted
     dedupe key, status changes, the number written back and a re-run that
@@ -15634,6 +15657,14 @@ Senzing licensing, with no SPDX identifier.
   fetched file under `src/resources/` — an auto-test walk saw the guide
   `curl -o /tmp/…` an example file, which no hook saw; an amendment to INV-200
   is queued
+- #877: `walk.split_reply` reads a leading line that is exactly `/model` or
+  `/effort` as a slash line with no value, which sets nothing in any walk and
+  is logged as `bootcamper_flag_ignored` with `value: null` and a new
+  `reason` (`"no value"`, or `"pin"` for a valued line `--pin` ignored) that
+  words the INFO finding, and a slash-only reply is re-asked with one
+  `— applied` / `— not applied (…)` status per line — a pinned walk's
+  Bootcamper typed bare `/model` and `/effort`, the lines reached the guide as
+  text, and neither the pin nor its finding saw them
 - #881: Module 5's verbatim-check paragraph says "four known routes" and "no
   longer a route" where it said "reachings", and its test is renamed
   `TheRoutesTableIsCurrent` with `routes_problems` — the paragraph already

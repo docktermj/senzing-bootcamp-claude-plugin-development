@@ -42,9 +42,13 @@ Slash lines in a Bootcamper reply (#656)
 latest value wins. ``/effort`` itself does not persist under ``-p --resume``, which is why
 the flag is re-sent on every call. The rest of the reply is the turn. The ``bootcamper``
 event keeps the reply exactly as the Bootcamper process returned it, and a
-``bootcamper_flag`` event, which is not a turn, records each flag applied. A reply that is
-only slash lines asks the Bootcamper once more with the same guide turn; a second one stops
-the walk. Any other reply that starts with ``/``, such as a path, is sent with one leading
+``bootcamper_flag`` event, which is not a turn, records each flag applied. A leading line
+that is exactly ``/effort`` or ``/model`` is recognized too, never sent as text, and sets
+nothing (#877); a ``bootcamper_flag_ignored`` event records it with ``value: null`` and
+``reason: "no value"``, as one a ``--pin`` walk ignores gets ``reason: "pin"``. A reply that
+is only slash lines asks the Bootcamper once more with the same guide turn, listing each line
+as ``— applied``, ``— not applied (--pin)`` or ``— not applied (no value)``; a second one
+stops the walk. Any other reply that starts with ``/``, such as a path, is sent with one leading
 space (``as_turn``), which the CLI does not parse as a command. The opening message is
 sent as given.
 
@@ -207,16 +211,19 @@ def banner_seen(banner, text):
 # #656: the slash commands a Bootcamper reply line may carry, each mapped to the CLI flag
 # that carries it from then on. Extend here; any other leading `/` is sent as text.
 SLASH_FLAGS = {"/effort": "--effort", "/model": "--model"}
-SLASH_LINE = re.compile(r"(\S+) (\S+)")
+# The command, then at most one value. A bare `/effort` or `/model` matches with no value
+# (#877): it is recognized so it never reaches the guide as text, and it sets nothing.
+SLASH_LINE = re.compile(r"(\S+)(?: (\S+))?")
 
 
 def split_reply(reply):
-    """The reply's leading allowlisted slash lines, and the rest of it (#656).
+    """The reply's leading allowlisted slash lines, and the rest of it (#656, #877).
 
     Returns ``(flags, rest)``: ``flags`` lists ``(line, flag, value)`` for each leading line
     that is exactly ``/effort <level>`` or ``/model <name>``, in order; blank lines between
-    them are skipped. ``rest`` is what follows, or the whole reply when it has no such line,
-    and is empty for a reply that is only slash lines.
+    them are skipped. A leading line that is exactly ``/effort`` or ``/model`` is one too,
+    with ``value`` ``None``. ``rest`` is what follows, or the whole reply when it has no
+    such line, and is empty for a reply that is only slash lines.
     """
     lines = reply.splitlines()
     flags, index = [], 0
@@ -566,26 +573,34 @@ def run_walk(project, out_path, turns, persona, mcp_config, model, bootcamper_mo
                 # The reply as the Bootcamper process returned it, slash lines included.
                 log.event(type="bootcamper", turn=turn, persona=persona, text=reply)
                 applied, rest = split_reply(reply)
+                statuses = []
                 for line, flag, value in applied:
-                    if pin:
-                        # Recorded, never applied: a pinned walk runs at the command
-                        # line's model and effort from the first turn to the last (#870).
+                    if value is None or pin:
+                        # Recorded, never applied. A bare line has nothing to set, with or
+                        # without the pin (#877); a pinned walk runs at the command line's
+                        # model and effort from the first turn to the last (#870).
+                        bare = value is None
                         log.event(type="bootcamper_flag_ignored", turn=turn, command=line,
-                                  flag=flag, value=value)
-                        print(f"  turn {turn}: {line} ignored (--pin)")
+                                  flag=flag, value=value,
+                                  reason="no value" if bare else "pin")
+                        print(f"  turn {turn}: {line} ignored "
+                              f"({'no value given' if bare else '--pin'})")
+                        statuses.append(f"{line} — not applied "
+                                        f"({'no value' if bare else '--pin'})")
                         continue
                     flags[flag] = value
                     log.event(type="bootcamper_flag", turn=turn, command=line,
                               flag=flag, value=value)
                     print(f"  turn {turn}: {line} -> {flag} {value} on every later call")
+                    statuses.append(f"{line} — applied")
                 if rest:
                     message = as_turn(rest)
                     break
                 # Only slash lines: nothing to send. Ask once more with the guide's same
-                # turn; the Bootcamper process still authors the answer (INV-369).
-                entered = "\n".join(line for line, _flag, _value in applied)
-                status = "It is not applied" if pin else "It is applied"
-                prompt = (f"{shown}\n\n(You entered:\n{entered}\n{status}. The guide "
+                # turn, one status per line in the order entered (#877); the Bootcamper
+                # process still authors the answer (INV-369).
+                entered = "\n".join(statuses)
+                prompt = (f"{shown}\n\n(You entered:\n{entered}\nThe guide "
                           "is still waiting for your answer to the message above.)")
             else:
                 print("  stopping: the Bootcamper replied only with slash commands",

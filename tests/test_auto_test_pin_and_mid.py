@@ -12,6 +12,11 @@ simulated Bootcamper followed the guide's model/effort nudge with `/model opus` 
    `/effort` line is logged as `bootcamper_flag_ignored` and changes no flag, and
    `autotest.py` reports each as an INFO `bootcamper-flag-ignored` finding.
 4. **Without `--pin`** a Bootcamper slash line still overrides both, as #656 made it.
+5. **Every ignored line says why (#877).** A `bootcamper_flag_ignored` event carries
+   `reason`: `"pin"` for a valued line a pinned walk ignored, `"no value"` for a bare `/model`
+   or `/effort`, pinned or not. The INFO finding ends "(--pin)" or "(no value given)" by
+   reason, and an event with no `reason` keeps "(--pin)". A slash-only reply is re-asked
+   with one status per line, such as `/effort high — not applied (--pin)`.
 
 Each check was negative-controlled when written: reverting the change it guards fails it.
 
@@ -119,7 +124,10 @@ class PinHoldsModelAndEffort(unittest.TestCase):
     def test_a_slash_only_reply_is_asked_again_and_told_it_was_not_applied(self):
         argvs, prompts, _ = run(["/effort high", "yes"], turns=2, effort="low", pin=True)
         self.assertEqual(argvs[1][:2], ["-p", "yes"])
-        self.assertIn("It is not applied", prompts[1])
+        added = prompts[1][len(prompts[0]):]
+        # #877: one status per line replaces the single "It is not applied" sentence.
+        self.assertIn("/effort high — not applied (--pin)\n", added)
+        self.assertNotIn("It is not applied", added)
         self.assertEqual(values(argvs[1], "--effort"), ["low"])
 
     def test_without_pin_the_bootcamper_still_overrides(self):
@@ -129,6 +137,51 @@ class PinHoldsModelAndEffort(unittest.TestCase):
         self.assertEqual(values(argvs[1], "--effort"), ["high"])
         self.assertEqual(of_type(events, "bootcamper_flag_ignored"), [])
         self.assertEqual(len(of_type(events, "bootcamper_flag")), 2)
+
+
+class EveryIgnoredLineSaysWhy(unittest.TestCase):
+    """#877: each `bootcamper_flag_ignored` event carries a `reason`."""
+
+    def test_a_valued_line_a_pinned_walk_ignores_has_reason_pin(self):
+        _, _, events = run(["/model claude-opus-5-5\n/effort high\nyes"], turns=2,
+                           model="claude-haiku-5-5", effort="low", pin=True)
+        self.assertEqual(
+            [(e["command"], e["value"], e["reason"])
+             for e in of_type(events, "bootcamper_flag_ignored")],
+            [("/model claude-opus-5-5", "claude-opus-5-5", "pin"),
+             ("/effort high", "high", "pin")])
+
+    def test_a_bare_line_under_pin_has_reason_no_value(self):
+        argvs, _, events = run(["/model\n/effort high\nyes"], turns=2,
+                               model="claude-haiku-5-5", effort="low", pin=True)
+        self.assertEqual(argvs[1][:2], ["-p", "yes"])
+        for argv in argvs:
+            self.assertEqual(values(argv, "--model"), ["claude-haiku-5-5"])
+            self.assertEqual(values(argv, "--effort"), ["low"])
+        self.assertEqual(of_type(events, "bootcamper_flag"), [])
+        self.assertEqual(of_type(events, "bootcamper_flag_ignored"), [
+            {"type": "bootcamper_flag_ignored", "turn": 1, "command": "/model",
+             "flag": "--model", "value": None, "reason": "no value"},
+            {"type": "bootcamper_flag_ignored", "turn": 1, "command": "/effort high",
+             "flag": "--effort", "value": "high", "reason": "pin"}])
+
+    def test_a_pinned_re_ask_names_each_reason_in_order(self):
+        _, prompts, _ = run(["/effort\n/model claude-opus-5-5", "yes"], turns=2,
+                            effort="low", pin=True)
+        self.assertIn("/effort — not applied (no value)\n"
+                      "/model claude-opus-5-5 — not applied (--pin)\n",
+                      prompts[1][len(prompts[0]):])
+
+    def test_an_unpinned_bare_line_reaches_the_report(self):
+        _, _, events = run(["/effort\nyes"], turns=2)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "t.jsonl"
+            path.write_text("\n".join(json.dumps(e) for e in events) + "\n",
+                            encoding="utf-8")
+            found = autotest.ignored_flag_findings(path)
+        self.assertEqual([f["message"] for f in found],
+                         ["turn 1: the Bootcamper's '/effort' was not applied "
+                          "(no value given)"])
 
 
 class AutotestPassesItThrough(unittest.TestCase):
@@ -204,6 +257,32 @@ class AutotestPassesItThrough(unittest.TestCase):
         self.assertEqual(found[0]["severity"], "INFO")
         self.assertIn("turn 4", found[0]["message"])
         self.assertIn("/model claude-opus-5-5", found[0]["message"])
+
+    def ignored(self, **fields):
+        return json.dumps({"type": "bootcamper_flag_ignored", "turn": 2, **fields})
+
+    def test_the_message_ends_by_reason(self):
+        self.transcript_lines = [
+            self.ignored(command="/effort", flag="--effort", value=None, reason="no value"),
+            self.ignored(command="/model opus", flag="--model", value="opus", reason="pin"),
+            # Written before #877: no reason, so it keeps "(--pin)".
+            self.ignored(command="/effort high", flag="--effort", value="high")]
+        found = [f for f in self.main("--pin")["findings"]
+                 if f["code"] == "bootcamper-flag-ignored"]
+        self.assertEqual([f["message"] for f in found], [
+            "turn 2: the Bootcamper's '/effort' was not applied (no value given)",
+            "turn 2: the Bootcamper's '/model opus' was not applied (--pin)",
+            "turn 2: the Bootcamper's '/effort high' was not applied (--pin)"])
+        self.assertEqual({f["severity"] for f in found}, {"INFO"})
+
+    def test_an_unpinned_walk_reports_a_bare_line_too(self):
+        self.transcript_lines = [
+            self.ignored(command="/model", flag="--model", value=None, reason="no value")]
+        found = [f for f in self.main()["findings"]
+                 if f["code"] == "bootcamper-flag-ignored"]
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0]["severity"], "INFO")
+        self.assertTrue(found[0]["message"].endswith("(no value given)"), found[0])
 
     def test_an_unreadable_transcript_gives_no_finding(self):
         self.assertEqual(autotest.ignored_flag_findings(self.tmp / "missing.jsonl"), [])

@@ -131,10 +131,13 @@ def drop_worktree(worktree):
 
 
 def ignored_flag_findings(transcript):
-    """An INFO finding for each Bootcamper slash line a ``--pin`` walk ignored (#870).
+    """An INFO finding for each Bootcamper slash line a walk ignored (#870, #877).
 
     ``walk.py`` logs each as a ``bootcamper_flag_ignored`` event; the report names them so
-    a pinned run says what the Bootcamper asked for and did not get. Never raises.
+    a run says what the Bootcamper asked for and did not get. The event's ``reason`` words
+    the message: ``"no value"`` (a bare ``/model`` or ``/effort``, ``value`` null, pinned or
+    not) ends it "(no value given)", and ``"pin"`` ends it "(--pin)", as does an event with
+    no ``reason``, written before #877. Never raises.
     """
     findings = []
     try:
@@ -147,10 +150,11 @@ def ignored_flag_findings(transcript):
         except ValueError:
             continue
         if isinstance(event, dict) and event.get("type") == "bootcamper_flag_ignored":
+            why = "no value given" if event.get("reason") == "no value" else "--pin"
             findings.append({
                 "severity": "INFO", "code": "bootcamper-flag-ignored", "source": "walk",
                 "message": (f"turn {event.get('turn')}: the Bootcamper's "
-                            f"{event.get('command')!r} was not applied (--pin)"),
+                            f"{event.get('command')!r} was not applied ({why})"),
             })
     return findings
 
