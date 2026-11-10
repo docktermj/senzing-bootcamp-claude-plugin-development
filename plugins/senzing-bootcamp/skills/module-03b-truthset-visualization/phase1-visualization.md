@@ -491,6 +491,12 @@ something, and reports success.
 The PowerShell counterpart does not have this hazard: `Start-Process … -PassThru` returns the
 process object itself, so `$proc.Id` is the server whatever preceded it on the line.
 
+⛔ **(INV-223) Once the server prints its `Visualization running:` line, confirm the recorded pid
+is the one listening on the recorded port** by the
+[launch confirmation](visualization-api-reference.md#launch-confirmation), stated once there
+(INV-300), and record the pid it settles on in `truthset_visualization.checks.web_service`.
+On the container route below, "Serving from the SDK container" runs that rule's `docker` form.
+
 For any other language, start your server's equivalent. It should report a URL like
 `http://localhost:8080`. If port 8080 is in use, use a different port and tell the Bootcamper the
 chosen URL.

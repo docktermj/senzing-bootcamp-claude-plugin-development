@@ -21,11 +21,18 @@ command-line match except to forbid it.
 
 Enforces **INV-223** — a module starting a background server records its pid beside its port and terminates by pid, never by a command-line match.
 
+#890 added the launch confirmation: right after the ready line, the port's listener is looked up
+and replaces the captured pid when it differs, stated once in the contract with a POSIX, a
+PowerShell and a docker-route form, and linked from both launch sites. It also widened the ban
+to `pgrep -f` and `ps | grep`. Its wording for INV-223 is a `PROPOSED AMENDMENT` in
+`specs/IMPLEMENTED.md`, awaiting the maintainer's sign-off.
+
 Source spec: `specs/visualization-server-teardown-does-not-record-a-pid.md`.
 
 Run:  python3 -m unittest discover -s tests
 """
 import re
+import textwrap
 import unittest
 from pathlib import Path
 
@@ -189,23 +196,212 @@ class Module07CarriesIt(unittest.TestCase):
 
 
 class NoInstructionTeachesTheUnsafeMatch(unittest.TestCase):
-    """A ban in one file is undone by a recipe in another."""
+    """A ban in one file is undone by a recipe in another.
+
+    #890 widened the scan from `pkill` to the lookups that fail the same way: `pgrep -f` and
+    `ps | grep` return the wrapping shell's pid as readily as the server's. A retrospective
+    recorded exactly that: `pgrep -f` matched the `bash -c` wrapping the launch, the
+    checkpoint got the wrapper's pid, and teardown's kill reported success while the server
+    kept its port."""
 
     #: Words that make an occurrence a prohibition rather than an instruction.
     FORBIDDING = re.compile(r"(?i)never|⛔|unsafe|do not|must not")
 
+    #: Every command-line match the rule forbids.
+    COMMAND_LINE_MATCH = re.compile(r"pkill|pgrep|\bps\b[^`\n|]{0,12}\|\s*grep")
+
+    @classmethod
+    def unforbidden(cls, text):
+        """Line numbers of command-line matches with nothing in the 400 characters before
+        them forbidding it."""
+        found = []
+        for match in cls.COMMAND_LINE_MATCH.finditer(text):
+            window = text[max(0, match.start() - 400):match.start()]
+            if not cls.FORBIDDING.search(window):
+                found.append((text[:match.start()].count("\n") + 1, match.group(0)))
+        return found
+
     def test_every_pkill_mention_is_a_prohibition(self):
         for path in sorted(SKILLS.rglob("*.md")):
+            with self.subTest(file=path.name):
+                self.assertEqual(
+                    [], self.unforbidden(read(path)),
+                    "%s mentions a command-line match (pkill, pgrep, ps | grep) with nothing "
+                    "nearby forbidding it — the match finds the invoking shell, not the server"
+                    % path.relative_to(REPO_ROOT))
+
+    def test_pgrep_is_named_wherever_pkill_is(self):
+        """The canonical rule and both close sites name the lookup beside the kill."""
+        for path in (CONTRACT, PHASE2, M7_PHASE1):
+            with self.subTest(file=path.name):
+                flat = squash(read(path))
+                self.assertIn("pgrep -f", flat, "%s names pkill but not pgrep -f" % path.name)
+                self.assertIn("ps | grep", flat, "%s does not name ps | grep" % path.name)
+
+    def test_the_scan_catches_an_unforbidden_mention(self):
+        """Negative control: a recipe teaching each match is reported, a ban is not."""
+        for recipe in ("Find the pid with `pgrep -f results_server`.",
+                       "Find the pid with `ps aux | grep results_server`.",
+                       "Stop it with `pkill -f results_server`."):
+            with self.subTest(recipe=recipe):
+                self.assertTrue(self.unforbidden("Start the server.\n\n" + recipe),
+                                "the scan missed a recipe: %r" % recipe)
+        self.assertEqual([], self.unforbidden("Never use `pgrep -f` to find the pid."))
+
+
+#: The docker-route form, which sits indented inside a list item.
+DOCKER_FORM = re.compile(r"```bash\n( *<runtime> exec <container> python3 -c '\n.*?)```", re.S)
+
+#: What the canonical launch confirmation must carry, as (description, pattern) pairs.
+CONFIRMATION_PARTS = (
+    ("anchor", r'<a id="launch-confirmation"></a>'),
+    ("after the ready line", r"(?i)once the server prints its ready line"),
+    ("the POSIX lsof form", r"lsof -ti:<port> -sTCP:LISTEN"),
+    ("the Linux ss form", r"ss -ltnp 'sport = :<port>'"),
+    ("the PowerShell form",
+     r"Get-NetTCPConnection -LocalPort <port> -State Listen \| "
+     r"Select-Object -ExpandProperty OwningProcess"),
+    ("the docker /proc form", r"/proc/net/tcp6?.{0,200}socket:\[<inode>\]"),
+    ("the container-namespace pid", r"(?i)\*\*container-namespace\*\*\s+pid"),
+    ("a different listener replaces the pid",
+     r"(?i)exactly one listener, and it is a different pid:\*\* record the listener's pid"),
+    ("several, none or no tool keeps the pid and never blocks",
+     r"(?i)several listeners, none, or no lookup tool.{0,160}keep the captured pid.{0,60}"
+     r"never block the launch"),
+    ("the host background-task handle", r"(?i)background-task mechanism is not a pid"),
+)
+
+
+def confirmation_section(text):
+    """From the launch-confirmation anchor to the command-line ban that follows it."""
+    start = text.find('<a id="launch-confirmation"></a>')
+    if start == -1:
+        return ""
+    end = text.find("Never identify the server by matching its command line", start)
+    return text[start:end if end != -1 else len(text)]
+
+
+def missing_confirmation_parts(text):
+    section = squash(confirmation_section(text))
+    return [name for name, pattern in CONFIRMATION_PARTS if not re.search(pattern, section)]
+
+
+class TheLaunchConfirmationIsStatedOnce(unittest.TestCase):
+    """#890: the pid recorded at launch is checked against the port's listener right after the
+    ready line, while the checkpoint can still be corrected, rather than found wrong at
+    teardown (INV-223, INV-001, INV-300)."""
+
+    def setUp(self):
+        self.text = read(CONTRACT)
+
+    def test_it_sits_inside_identifying_the_server_process(self):
+        section = self.text.find("### Identifying the server process")
+        anchor = self.text.find('<a id="launch-confirmation"></a>')
+        self.assertNotEqual(-1, anchor, "the launch confirmation has no anchor to link to")
+        self.assertGreater(anchor, section,
+                           "the launch confirmation sits outside 'Identifying the server "
+                           "process'")
+
+    def test_it_carries_every_form_and_outcome(self):
+        self.assertEqual([], missing_confirmation_parts(self.text))
+
+    def test_a_dropped_part_is_reported(self):
+        """Negative control: each part's absence is caught."""
+        section = confirmation_section(self.text)
+        mutants = {
+            "the PowerShell form": section.replace("-State Listen", ""),
+            "the Linux ss form": section.replace("ss -ltnp", "ss"),
+            "the host background-task handle": section.replace("is not a pid", "is a pid"),
+        }
+        for name, mutant in mutants.items():
+            with self.subTest(part=name):
+                self.assertIn(name, missing_confirmation_parts(mutant))
+
+    def test_the_forms_are_stated_nowhere_else(self):
+        """INV-300: the sites link here; a second copy of a form would drift."""
+        forms = ("-sTCP:LISTEN", "ss -ltnp", "-State Listen", "/proc/net/tcp")
+        for path in sorted(SKILLS.rglob("*.md")):
+            if path == CONTRACT:
+                continue
             text = read(path)
-            for match in re.finditer(r"pkill", text):
-                line_no = text[:match.start()].count("\n") + 1
-                window = text[max(0, match.start() - 400):match.start()]
-                with self.subTest(file=path.name, line=line_no):
-                    self.assertRegex(
-                        window, self.FORBIDDING,
-                        "%s:%d mentions pkill with nothing nearby forbidding it — a "
-                        "command-line match signals the invoking shell"
-                        % (path.relative_to(REPO_ROOT), line_no))
+            for form in forms:
+                with self.subTest(file=path.name, form=form):
+                    self.assertNotIn(form, text,
+                                     "%s restates the launch confirmation's %s form instead "
+                                     "of linking to it" % (path.name, form))
+
+    def test_the_docker_form_is_valid_python(self):
+        blocks = DOCKER_FORM.findall(self.text)
+        self.assertEqual(1, len(blocks), "the docker-route python3 form is not one bash block")
+        compile(self.snippet(blocks[0]), "docker-form", "exec")
+
+    @staticmethod
+    def snippet(block):
+        body = textwrap.dedent(block).split("python3 -c '\n", 1)[1]
+        return body[:body.rindex("'")]
+
+    @unittest.skipUnless(Path("/proc/net/tcp").exists(), "needs Linux /proc")
+    def test_the_docker_form_names_the_listening_pid(self):
+        """Run the shipped snippet against a socket this test holds open: it must name this
+        process, and name nothing for a port with no listener. No server is started."""
+        import os
+        import socket
+        import subprocess
+        import sys
+        code = self.snippet(DOCKER_FORM.findall(self.text)[0])
+        self.assertIn("port = 8080", code, "the snippet's port line changed shape")
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", 0))
+            listener.listen(1)
+            port = listener.getsockname()[1]
+            found = subprocess.run(
+                [sys.executable, "-c", code.replace("port = 8080", "port = %d" % port)],
+                capture_output=True, text=True, timeout=60, check=True).stdout.split()
+            self.assertEqual([str(os.getpid())], found,
+                             "the snippet did not name the process holding the listener")
+        with socket.socket() as probe:
+            probe.bind(("127.0.0.1", 0))
+            free = probe.getsockname()[1]
+        found = subprocess.run(
+            [sys.executable, "-c", code.replace("port = 8080", "port = %d" % free)],
+            capture_output=True, text=True, timeout=60, check=True).stdout.split()
+        self.assertEqual([], found, "the snippet named a pid for a port nobody listens on")
+
+
+LINK = "visualization-api-reference.md#launch-confirmation"
+
+
+def links_the_confirmation(text):
+    return LINK in text
+
+
+class TheLaunchSitesLinkToIt(unittest.TestCase):
+    def test_both_launch_sites_link_to_it(self):
+        for path in (PHASE1, M7_PHASE1):
+            with self.subTest(file=path.name):
+                self.assertTrue(links_the_confirmation(read(path)),
+                                "%s does not link the launch confirmation" % path.name)
+
+    def test_the_container_route_runs_the_docker_form(self):
+        self.assertRegex(squash(read(CONTRACT)),
+                         r"\[launch confirmation\]\(#launch-confirmation\)'s `docker` form",
+                         "'Serving from the SDK container' does not run the docker form")
+
+    def test_a_missing_link_is_reported(self):
+        """Negative control."""
+        self.assertFalse(links_the_confirmation(read(PHASE1).replace(LINK, "")))
+
+    def test_step_3c_states_the_launch_shape(self):
+        blocks = [b for b in re.findall(r"```bash\n(.*?)```", read(M7_PHASE1), re.S)
+                  if "$!" in b]
+        self.assertEqual(1, len(blocks), "step 3c does not show one launch block reading $!")
+        lines = [line.strip() for line in blocks[0].strip().splitlines()]
+        self.assertEqual(3, len(lines), "the launch block is not source, launch, read: %r" % lines)
+        self.assertRegex(lines[0], r"^\. src/scripts/senzing-env\.sh$",
+                         "the env is not sourced as its own statement")
+        self.assertTrue(lines[1].endswith(" &") and "&&" not in lines[1],
+                        "the server is not the sole backgrounded command on its line")
+        self.assertEqual("VIZ_PID=$!", lines[2], "$! is not read on the next line")
 
 
 if __name__ == "__main__":

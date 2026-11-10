@@ -1530,7 +1530,8 @@ and makes one HTTP request; it never starts, stops or removes a container.
    checks and screenshots against it. Never build the URL from the server's startup line, which
    names the container's address. ⛔ Only exit `0` hands over a URL (INV-260). Exit `1` (a different server
    answered) and exit `5` (no startup line, or no answer) stop the step: report the message,
-   withhold the URL, and never start a relay or proxy in its place.
+   withhold the URL, and never start a relay or proxy in its place. Once it exits `0`, run the
+   [launch confirmation](#launch-confirmation)'s `docker` form and record the pid it settles on.
 4. **Stop it by the container rules in "Identifying the server process", probing the address it
    bound.** The server does not listen on the container's `127.0.0.1`, so the in-container `python3`
    port probe asks the interface address:
@@ -1567,12 +1568,79 @@ the process object, not a shell job.
 The port is already recorded (INV-172) — record the pid in the same checkpoint object, so a resumed
 session can still stop what a previous one started.
 
-⛔ **Never identify the server by matching its command line — `pkill -f <script name>` and its
-equivalents are unsafe here.** The pattern you match on appears in the *matching command's own*
-command line, so the kill signals the shell that issued it. Observed on a dry run 2026-08-13: `pkill
+<a id="launch-confirmation"></a>
+**The launch confirmation (INV-223).** This is the canonical statement; the launch sites link here
+rather than restating it (INV-300). ⛔ **Once the server prints its ready line (`Visualization
+running: … server_nonce=<nonce>`), look up the process listening on the recorded port and compare it
+with the captured handle.** It is the port lookup teardown falls back to, moved to the one point
+where it can still correct the checkpoint. A captured handle can name a wrapper rather than the
+server — a subshell, a `bash -c`, or a run command that starts the server as its child — and
+without this check teardown finds out only when the kill reports success and the port still answers.
+The lookup, by route:
+
+- **POSIX (Linux, macOS):** `lsof -ti:<port> -sTCP:LISTEN`; on Linux where `lsof` is absent,
+  `ss -ltnp 'sport = :<port>'`, whose `pid=` field names the listener.
+- **PowerShell (Windows):** `Get-NetTCPConnection -LocalPort <port> -State Listen | Select-Object -ExpandProperty OwningProcess`.
+- **`docker` route:** the container has no `lsof` and no `procps` (below), and the `python3` port
+  probe answers only `listening` or `free`. This `python3` command names the **container-namespace**
+  pid that owns the listening socket: it reads the socket's inode for port `8080` in LISTEN state
+  from `/proc/net/tcp` and `/proc/net/tcp6`, then finds the `/proc/<pid>/fd` entry linking to
+  `socket:[<inode>]`.
+
+  ```bash
+  <runtime> exec <container> python3 -c '
+  import glob, os
+  port = 8080
+  inodes = set()
+  for table in ("/proc/net/tcp", "/proc/net/tcp6"):
+      if os.path.exists(table):
+          for row in open(table).read().splitlines()[1:]:
+              f = row.split()
+              if f[3] == "0A" and int(f[1].rsplit(":", 1)[1], 16) == port:
+                  inodes.add("socket:[" + f[9] + "]")
+  pids = set()
+  for fd in glob.glob("/proc/[0-9]*/fd/*"):
+      try:
+          if os.readlink(fd) in inodes:
+              pids.add(int(fd.split("/")[2]))
+      except OSError:
+          pass
+  print(" ".join(str(p) for p in sorted(pids)))'
+  ```
+
+  Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
+Then act on what it names:
+
+- **Exactly one listener, and it is the captured pid:** keep it.
+- **Exactly one listener, and it is a different pid:** record the listener's pid in the checkpoint
+  in place of the captured one. On the `docker` route it is still a container-namespace pid, the
+  kind teardown signals.
+- **Several listeners, none, or no lookup tool** (Git Bash on Windows has neither `lsof` nor `ss`):
+  keep the captured pid and continue; never block the launch on it. Teardown's port check (INV-394)
+  still catches a wrong pid.
+
+A listener that is not this server at all, a stranger's, is caught by "Confirming the server that
+answers is yours" (INV-260), which stops before the URL is handed over; this confirmation does not
+change that. It is internal bookkeeping and adds no message for the Bootcamper.
+
+⚠️ **A handle from the host's own background-task mechanism is not a pid.** When the server is
+started through the guide's own background-task feature rather than with `&` in a shell, the id
+that feature returns names a task, not a process: record no pid from it, and take the pid from the
+launch confirmation's port lookup. Where that lookup names no single listener, the checkpoint keeps
+no pid and teardown's missing-pid fallback applies.
+
+⛔ **(INV-223) Never identify the server by matching its command line — `pkill -f <script name>`,
+`pgrep -f <script name>`, `ps | grep <script name>` and their equivalents are unsafe here.** The pattern you
+match on appears in the *matching command's own* command line, so the kill signals the shell that
+issued it, and a lookup returns that shell's pid, or a wrapper's, as readily as the server's.
+Observed on a dry run 2026-08-13: `pkill
 -f senzing_viz_server.py` terminated the invoking shell with exit code 144 part-way through
 teardown, leaving the records still loaded and the purge unrun — and the failure presented as the
-purge crashing, not as the kill hitting the wrong target. A name-based match is also wrong in
+purge crashing, not as the kill hitting the wrong target. Observed again 2026-11-09, which is why a
+lookup is never an exception: `pgrep -f` matched the `bash -c` wrapping the launch before the
+server, the checkpoint recorded the wrapper's pid, and teardown's kill reported success while the
+server kept its port. A name-based match is also wrong in
 principle for this bootcamp: the server is written in the Bootcamper's chosen language (INV-090), so
 there is no script name to match on in general, and a second bootcamp running in another directory
 would match too.
@@ -1593,7 +1661,7 @@ tool — while the command-line match stays forbidden for its own reason, unsoft
 being absent.** The bootcamp's own container follows the `linux_apt` steps inside a Debian slim
 image (`module-02-sdk-setup/SKILL.md` → the `docker` path), which ships no `procps` and no `lsof`,
 so every process-identification binary those routes reach for is **never** present inside it, and
-MUST NOT be reached for there — `ps`, `pkill` and `lsof` alike. A run that reached for the forbidden match in a container got
+MUST NOT be reached for there — `ps`, `pgrep`, `pkill` and `lsof` alike. A run that reached for the forbidden match in a container got
 `exec: "…": executable file not found in $PATH`, and **the Bootcamper had already been told the
 server would be stopped while it kept serving** — found only when the port was probed and still
 answered 200. Two faults are live at once: the wrong identification route, and no tool to run it

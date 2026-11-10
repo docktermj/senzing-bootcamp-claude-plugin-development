@@ -2194,8 +2194,11 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
   set to `docs/visualizations/truthset_verification.html`, `--no-serve`.
   2.2 builds the snapshot only.
 - 2.3: source the env on its own line, background with plain `&` (no
-  `nohup`), port 8080 or a free one; record pid and port. On the container
-  route it follows the contract's "Serving from the SDK container" instead,
+  `nohup`), port 8080 or a free one; record pid and port. After the ready
+  line it links the contract's launch confirmation (`#launch-confirmation`,
+  #890): the port's single listener replaces a different captured pid, by
+  `lsof`/`ss`, `Get-NetTCPConnection` or an in-container `python3` `/proc`
+  scan. On the container route it follows the contract's "Serving from the SDK container" instead,
   states only its own server command and checkpoint fields, and without a
   published port has no live server (`reason: "recreate_declined"`).
 - 2.4: probe every endpoint (10 s); zero entities fails. 2.4a, against the
@@ -2225,7 +2228,7 @@ as an interactive D3 app. Files: `SKILL.md`, `phase1-visualization.md`
 - 4: after stating consequences, ask 👉 "Ready for me to stop the
   visualization server and clean up the Truth Set data?" On yes: rebuild a
   stale snapshot, capture missing screenshots, kill by pid (never
-  `pkill -f`; port lookup fallback; in the SDK container, through its
+  `pkill -f`, `pgrep -f` or `ps | grep`; port lookup fallback; in the SDK container, through its
   recorded runtime, `sh -c 'kill'` and a `python3` probe of the bound
   address), then the anchored failed-stop rule
   (`visualization-api-reference.md#failed-stop`, the one statement Step 4's
@@ -2864,7 +2867,9 @@ Phase 1 (`phase1-query-visualize.md`):
   is recorded as `scale_check` in `m7_visualizations` and named at
   closing, never reported as passed. The server stays up;
   `m7_visualizations` records `offered`, `accepted`, `artifact`, `port` and
-  `pid`. On the container route it launches by the contract's "Serving from
+  `pid`. On the host it launches as source the env, background only the
+  server, `VIZ_PID=$!` on the next line, then links the launch confirmation
+  (#890). On the container route it launches by the contract's "Serving from
   the SDK container", and without a published port continues with no live
   server; that rule stands above the step's requirements list, so the URL it
   hands over and captures against -- the one `confirm-viz` printed, built from
@@ -11519,12 +11524,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9377 test methods in 475 files, matching `inventory.test_count_total`.
+There are 9389 test methods in 475 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 9377.
+sum to 9389.
 
-Two files run more tests than they define, so discovery collects 9364:
+Two files run more tests than they define, so discovery collects 9376:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -11993,7 +11998,7 @@ looks wrong.
 - `tests/test_viz_endpoint_sync.py`: 7
 - `tests/test_viz_histogram_integer_ticks.py`: 6
 - `tests/test_viz_server_bind_and_identity.py`: 40
-- `tests/test_viz_server_process_handle.py`: 17
+- `tests/test_viz_server_process_handle.py`: 29
 - `tests/test_viz_server_refuses_to_render_without_d3.py`: 12
 - `tests/test_viz_settings_resolution.py`: 12
 - `tests/test_viz_tab_consolidation.py`: 38
@@ -15692,6 +15697,13 @@ Senzing licensing, with no SPDX identifier.
   at 1,500 nodes the app and snapshot opened unfitted and every
   relationship edge painted gray, which no Truth Set check could show;
   amendments to INV-299 and INV-407 and two new invariants are queued
+- #890: the visualization contract confirms the recorded pid against the
+  port's listener right after the ready line (`#launch-confirmation`, with
+  POSIX, PowerShell and in-container `python3` `/proc` forms), step 3c
+  gains a launch shape and both launch sites link it, and `pgrep -f` and
+  `ps | grep` are banned beside `pkill -f` — a `pgrep -f` lookup recorded
+  a wrapping shell's pid and teardown's kill reported a stop while the
+  server kept its port; an INV-223 amendment is queued
 - #894: after the END OF SENZING BOOTCAMP banner, graduation shows one
   pinned plain line, "Run `/package-bootcamp` anytime to bundle your
   bootcamp results into one zip you can archive, move to another machine,

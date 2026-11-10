@@ -180,9 +180,11 @@ permanent. Work through 1–4 in order; do not hoist the purge.
      (`visualization-api-reference.md` → "Serving from the SDK container", item 4). **The kill's exit status is not evidence the server stopped; the port is.** Full rule
      and the reason, stated once (INV-300):
      `visualization-api-reference.md` → "Server lifetime" → "Identifying the server process".
-   - ⛔ **Never `pkill -f <script name>`** (or any other command-line pattern match). The pattern
-     appears in the matching command's own command line, so it signals the invoking shell: on a dry
-     run this killed the shell mid-teardown with exit code 144, leaving the records loaded, the
+   - ⛔ **(INV-223) Never `pkill -f <script name>`, and never `pgrep -f <script name>` or `ps | grep` to find
+     the pid** (or any other command-line pattern match). The pattern appears in the matching
+     command's own command line, so it signals the invoking shell, and a lookup returns that shell's
+     pid as readily as the server's. On a dry
+     run `pkill -f` killed the shell mid-teardown with exit code 144, leaving the records loaded, the
      purge below unrun, and the failure looking like the purge had crashed. The server is also
      built in the bootcamper's chosen language (INV-090), so in general there is no script name to
      match.
