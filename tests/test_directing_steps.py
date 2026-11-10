@@ -88,10 +88,20 @@ midpoint exclusion, the stopping rule's two numbers, the resume, the
 pre-#887 open question (`M6_OLD_QUESTION`). Each has a negative control in
 `TheChecksCatchARegression`.
 
+#888 amends INV-354 in general (a `PROPOSED AMENDMENT` block in #888's `specs/IMPLEMENTED.md`
+entry, awaiting the maintainer's sign-off): any site may show numbered examples **before** its open
+👉. The shared rule gains the bullet "Numbered examples before the open 👉" (`RULE_REQUIRED`'s #888
+entries): the 👉 itself still carries no numbers and no menu, takes their own words and is the
+turn's only 👉; picking only examples directs the step; the examples are no recommendation; and
+they sit before the 👉, never beneath it (INV-224). The open-👉 bullet keeps "with no numbered
+options and no menu" and points at the new bullet. `m7_problems` requires step 1's Turn 1 to point
+there and step 3a to present a picked example as theirs ("You picked: '…'"). Each has a negative
+control in `TheChecksCatchARegression`.
+
 Stdlib only; shipped markdown read as text (INV-108).
 
 Source issue: #485 (part of #465); Module 5's record, #521; the citation at every pointer, #519;
-Data processing's expectation check, #887.
+Data processing's expectation check, #887; numbered examples before the open 👉, #888.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -234,6 +244,23 @@ RULE_REQUIRED = {
     "it asks what to build and what they expect": r"asks what to build and what they expect as "
                                                   r"one\s+question",
     "it is open, with no menu": r"with no numbered options and no menu",
+    # #888: numbered examples may precede an open 👉; the 👉 itself stays open.
+    "the open-👉 bullet points at the examples": r"that may include\s+numbered examples, as "
+                                                 r"\"Numbered examples before the open 👉\" below "
+                                                 r"states",
+    "the examples bullet is defined": r"\*\*Numbered examples before the open 👉 \(INV-354\)\.\*\* "
+                                      r"A site may show numbered examples before its\s+open 👉 as "
+                                      r"starting points",
+    "they may pick any number beside their own words": r"may pick any number of them by number "
+                                                       r"beside\s+their own words",
+    "the 👉 itself stays open and alone": r"The 👉 itself still carries no numbers and no menu, "
+                                          r"accepts their own words and\s+stays the turn's only 👉",
+    "picking only examples directs": r"An answer that only picks examples directs the step: it "
+                                     r"is not handed\s+back",
+    "the examples are no recommendation": r"The examples are not the guide's recommendation, so "
+                                          r"none is named as the one to pick",
+    "they sit before the 👉, never beneath it (INV-224)": r"so they sit before it and\s+never "
+                                                         r"beneath it \(INV-224\)",
     "the guide offers no recommendation first": r"offers no\s+recommendation of its own unless "
                                                  r"asked to choose",
     "one 👉 per turn (INV-251)": r"only 👉 \(INV-251\)",
@@ -618,6 +645,13 @@ def m7_problems(phase1):
     step3a = section(phase1, "### 3a. Present query results", ("### 3b.",))
     if not step1 or not step3a:
         return ["Module 7 has no step 1 or step 3a"]
+    # #888: Turn 1's numbered examples follow the shared bullet, before the open 👉.
+    turn_1 = section(step1, "### Turn 1", (M7_QUESTION,))
+    if not match_lines(turn_1, r'"Directing steps" → "Numbered examples before the\s+open 👉" '
+                               r'states \(INV-354\)'):
+        problems.append("step 1's Turn 1 does not point at the numbered-examples bullet")
+    if numbered_after(step1, M7_QUESTION):
+        problems.append("step 1 puts a numbered list beneath its open 👉")
     if questions(step1).count(M7_QUESTION) != 1:
         problems.append("step 1 does not ask #478's open question exactly once")
     pointer = section(step1, "**This is Module 7's directing step.**", ("\n\n",))
@@ -655,6 +689,10 @@ def m7_problems(phase1):
         "the headline entity is not compared": r"\[headline entity\]\(#headline-entity\) step 1 "
                                                r"showed is not one of these answers and is not "
                                                r"compared",
+        # #888: an example they picked is theirs, so it is checked too.
+        "a picked example is presented as theirs": r"An example\s+they picked in step 1 is "
+                                                   r"presented the same way, quoted as they picked "
+                                                   r"it \(\"You picked: '…'\"\)",
     }.items():
         if not match_lines(step3a, pattern):
             problems.append("step 3a does not state %s" % what)
@@ -1223,7 +1261,58 @@ class TheChecksCatchARegression(unittest.TestCase):
             '**A prediction point.** "Predictions before results" governs it'),
             "it is not a prediction point")
 
+    # --- the shared rule: numbered examples before the open 👉 (#888) -------------------------
+
+    def test_rule_without_the_examples_bullet(self):
+        text = read(GROUND_RULES)
+        block = section(text, "- **Numbered examples before the open 👉 (INV-354).**",
+                        ("- ⛔ **(INV-354) The Bootcamper directs in words",))
+        problems = self.rule_mutated(block, "")
+        self.assertReports(problems, "the examples bullet is defined")
+        self.assertReports(problems, "they sit before the 👉, never beneath it")
+
+    def test_rule_open_bullet_loses_its_examples_pointer(self):
+        self.assertReports(self.rule_mutated(
+            ", and that may include\n  numbered examples, as \"Numbered examples before the open "
+            "👉\" below states.", "."), "the open-👉 bullet points at the examples")
+
+    def test_rule_examples_become_a_menu_beneath(self):
+        self.assertReports(self.rule_mutated("so they sit before it and\n  never beneath it",
+                                             "so they may sit beneath it"),
+                           "they sit before the 👉, never beneath it")
+
+    def test_rule_picking_only_examples_hands_back(self):
+        self.assertReports(self.rule_mutated("An answer that only picks examples directs the step: "
+                                             "it is not handed\n  back.",
+                                             "An answer that only picks examples hands the step "
+                                             "back."), "picking only examples directs")
+
+    def test_rule_examples_recommended(self):
+        self.assertReports(self.rule_mutated("The examples are not the guide's recommendation, so "
+                                             "none is named as the one to pick.",
+                                             "The guide names the example it recommends."),
+                           "the examples are no recommendation")
+
     # --- Module 7 ----------------------------------------------------------------------------
+
+    def test_m7_examples_pointer_dropped(self):
+        text = read(M7_PHASE1).replace('as\n`../bootcamp-onboarding/ground-rules.md` → "Directing '
+                                       'steps" → "Numbered examples before the\nopen 👉" states '
+                                       '(INV-354).', "as before.")
+        self.assertNotEqual(text, read(M7_PHASE1))
+        self.assertReports(m7_problems(text), "does not point at the numbered-examples bullet")
+
+    def test_m7_list_beneath_the_open_question(self):
+        text = read(M7_PHASE1).replace(M7_QUESTION + "\n", M7_QUESTION + "\n\n1. Find duplicates "
+                                       "within a source\n", 1)
+        self.assertReports(m7_problems(text), "puts a numbered list beneath its open 👉")
+
+    def test_m7_picked_example_not_checked(self):
+        text = read(M7_PHASE1).replace("is presented the same way, quoted as they picked it",
+                                       "is not compared", 1)
+        self.assertNotEqual(text, read(M7_PHASE1))
+        self.assertReports(m7_problems(text), "a picked example is presented as theirs")
+
 
     def test_m7_answers_before_their_questions(self):
         text = read(M7_PHASE1)

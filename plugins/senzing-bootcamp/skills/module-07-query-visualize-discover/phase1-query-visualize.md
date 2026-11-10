@@ -20,12 +20,32 @@ visualization data come from `reporting_guide`. Never query `database/G2C.db` ta
   sections are missing or empty).
 
 ⛔ **(INV-359) The Bootcamper's question comes first, on both paths.** Turn 1 asks only the open question
-below, its one 👉 (INV-251), and shows no derived requirement, not even a hint of one. A list
-shown first leaves only "approve it?" to ask, and real Bootcampers answered "No" to that and never
-said what they wanted to know. Their answer is the requirements' first source; the business
-problem checks it.
+below, its one 👉 (INV-251). Before it, Turn 1 shows numbered examples as starting points (below),
+and nothing else from the business problem: no confirming list, no Module 1 quote, nothing to
+approve. A list shown first to approve leaves only "approve it?" to ask, and real Bootcampers
+answered "No" to that and never said what they wanted to know; a bare question left another with
+nothing to start from. Their answer, with any examples they pick, is the requirements' first
+source; the business problem checks it.
 
 ### Turn 1: the open question (both paths)
+
+**Starting points first, numbered.** Before the question, show a numbered list of example
+questions:
+
+- **Business-problem path:** 1 to 4 examples drawn from the refined prose of the success criteria
+  and desired outputs in `docs/business_problem.md`, never from its `> "…"` quotes (INV-275). Show
+  as many as the document supports, up to 4, and never top the list up with the common queries: a
+  document that supports one example shows one. Each example names the success criterion or
+  desired output it comes from, and carries no Module 1 quote. A quote that disagrees with the
+  prose behind an example is raised in Turn 2, beside the picked example, never here.
+- **Fallback path:** all five common queries (below), numbered, with no source named.
+
+Then one line, a statement and not a question, that frames them as starting points rather than a
+list to approve and invites the Bootcamper to pick any number of them by number and to add
+questions of their own, in their own words. Name no example as the one to pick: the examples are
+not a recommendation. The list and this line come before the 👉, never beneath it, as
+`../bootcamp-onboarding/ground-rules.md` → "Directing steps" → "Numbered examples before the
+open 👉" states (INV-354).
 
 👉 **What do you want to find out about your data?**
 
@@ -33,14 +53,18 @@ problem checks it.
 again, whatever the answer.)*
 
 Split the answer into one question per thing the Bootcamper wants to find out, and keep their
-own words for each. These are **their questions**.
+own words for each. These are **their questions**. Each example they pick by number is a
+**picked example**: keep it as Turn 1 worded it, with its source. An answer that only picks
+examples still directs the step; it is not the handed-back case below.
 
 **This is Module 7's directing step.** The open 👉's shape, the result beside the expectation, the
 "you pick" fallback, once per module and the `You directed:` line are stated once in
 `../bootcamp-onboarding/ground-rules.md` → "Directing steps"; follow them there rather than a copy
-here (INV-300, INV-354). The open question above is its 👉, their questions are what they direct, and the
-check is step 3a. An answer of "I don't know" is the handed-back case: "When the answer is 'I don't
-know'" below is what the step does then, and the recap records that the guide chose. Record
+here (INV-300, INV-354). The open question above is its 👉, their questions and picked examples
+are what they direct, and the check is step 3a. An answer that only picks examples is directed,
+not the guide choosing, and Turn 2's confirming gate is still asked once. An answer of "I don't
+know" is the handed-back case: "When the answer is 'I don't know'" below is what the step does
+then, and the recap records that the guide chose. Record
 `directing_steps.query_visualize_discover` in step 1's checkpoint.
 
 <a id="requirements-gate"></a>
@@ -49,7 +73,7 @@ know'" below is what the step does then, and the recap records that the guide ch
 
 Derive between 1 and 10 query requirements from the success criteria and desired outputs in
 the document. Each derived requirement must reference the specific success criterion or desired
-output it addresses.
+output it addresses. Turn 1's examples are among them, worded as Turn 1 showed them.
 
 - ⚠️ **(INV-275) Derive from the REFINED prose, not from the `> "…"` quotes beside it.** Those blockquotes
   are the Bootcamper's own words, preserved so a misrendering can be caught at Module 1's
@@ -59,27 +83,32 @@ output it addresses.
   quote is what the Bootcamper actually said. Raise the discrepancy here rather than deriving a
   requirement from either side of it: on 2026-08-25 a *possible*-fraud routing rule was rendered
   as *confirmed* fraud, and requirement 7 came out titled "Confirmed-fraud candidate list" three
-  modules downstream of the substitution. Raise it beside the affected requirement in this turn,
-  under the confirming question below, never as a second 👉 (INV-251).
+  modules downstream of the substitution. Raise it beside the affected requirement or picked
+  example in this turn, under the confirming question below, never as a second 👉 (INV-251).
 
 Present one combined list, in this order:
 
 1. **Your questions.** Each of their questions, quoting their own words ("You asked: '…'").
    Where a derived requirement covers one, name its Module 1 source beside it ("this matches
-   your success criterion about [X]"), so it is listed once, not twice.
-2. **From your business problem.** Each derived requirement their answer did not cover, with
-   its source ("From your success criterion about [X]..." or "From your desired output format
-   of [Y]..."), marked **(not asked for)**, with its source's Module 1 quote beneath it (below).
-   When the answer covers every derived requirement, this part is empty and nothing is marked.
+   your success criterion about [X]"), so it is listed once, not twice. Then each picked
+   example, as Turn 1 worded it ("You picked: '…'"), naming its success criterion or desired
+   output, with that source's Module 1 quote beneath it (below). A picked example is theirs: it
+   is never marked **(not asked for)**.
+2. **From your business problem.** Each derived requirement their answer neither picked nor
+   covered, with its source ("From your success criterion about [X]..." or "From your desired
+   output format of [Y]..."), marked **(not asked for)**, with its source's Module 1 quote
+   beneath it (below). When the answer picks or covers every derived requirement, this part is
+   empty and nothing is marked.
 
 **At most 10 requirements in the combined list.** Their questions come first and are never
-dropped to make room; add derived requirements only while the list holds fewer than 10. If their
-questions alone reach 10, add no derived requirement and keep all of theirs.
+dropped to make room; add picked examples next, then derived requirements, each only while the
+list holds fewer than 10. If their questions alone reach 10, add no picked example and no derived
+requirement, and keep all of theirs.
 
 ⛔ **(INV-275) Show both versions: beside each derived requirement, the Bootcamper's own Module 1
-words for its source.** Under each requirement in part 2, show the `> "…"` line that
-`docs/business_problem.md` carries under the section the requirement came from (Success Criteria
-or Desired Output), labeled as theirs: "Your words in Discover the Business Problem:" and then
+words for its source.** Under each picked example in part 1 and each requirement in part 2, show
+the `> "…"` line that `docs/business_problem.md` carries under the section the requirement came
+from (Success Criteria or Desired Output), labeled as theirs: "Your words in Discover the Business Problem:" and then
 the quote, exactly as the file has it. Take it from the file, never from memory of the conversation:
 it is the line they confirmed in Module 1, it can be checked against the document, and it survives
 a resumed session. When several requirements come from one section, its quote goes beside each of
@@ -92,8 +121,10 @@ them.
   it looks like evidence. (Step 6d's option 4 **does** produce prose — it asks what the something
   else looks like and its handling records the words given — so a Desired Output built from it is
   the ordinary prose case above, not this one.)
-- **Their questions need no second version.** Part 1 already quotes their own words, so it carries
-  no Module 1 quote, and neither does a derived requirement listed there under their question.
+- **Their questions need no second version.** Part 1 already quotes their own words, so their
+  questions carry no Module 1 quote, and neither does a derived requirement listed there under one
+  of them. A picked example is the guide's rendering, not their words, so it carries its quote
+  like part 2.
 
 **Say which is which, before the question.** State plainly that each "Your words in Discover the
 Business Problem" line is what they said, as `docs/business_problem.md` saved it, that the
@@ -109,13 +140,13 @@ Then end the turn on the confirming question, the only 👉 in this turn:
 
 - **Confirms, or changes items:** proceed with the confirmed list. Each requirement that came
   from their answer keeps their own words.
-- **Drops the derived requirements:** proceed with their questions only. Do not ask the open
-  question again.
+- **Drops the derived requirements:** proceed with their questions and picked examples only. Do
+  not ask the open question again.
 
 ### After the answer, fallback path
 
 Nothing is derived, so nothing is marked. Build one requirement per question, each quoting
-their own words, and proceed to step 2.
+their own words, and one per common query they picked, and proceed to step 2.
 
 ### When the answer is "I don't know" (or similar)
 
@@ -175,6 +206,7 @@ shown, each with its `text` and its Module 1 `source`:
   "module_7_query": {
     "query_requirements": [
       {"text": "<their question, in their own words>", "source": "Bootcamper's answer"},
+      {"text": "<an example they picked, as Turn 1 worded it>", "source": "Picked example — Success criterion: <the criterion it came from>"},
       {"text": "<a derived requirement>", "source": "Success criterion: <the criterion it came from>"},
       {"text": "<a derived requirement>", "source": "Desired output: <the output it came from>"}
     ]
@@ -187,8 +219,12 @@ shown, each with its `text` and its Module 1 `source`:
 - **`source`:** where it came from. One of their questions, on either path, is
   `"Bootcamper's answer"`, followed by the success criterion or desired output the gate named
   beside it when it named one ("Bootcamper's answer; matches success criterion: …"). A derived
-  requirement names the success criterion or desired output it was derived from. A common query
-  picked after "I don't know" on the fallback path is `"Bootcamper's answer"` too: they chose it.
+  requirement names the success criterion or desired output it was derived from. An example
+  picked in answer to the open question names its source after `Picked example — `:
+  `"Picked example — Success criterion: <…>"` or `"Picked example — Desired output: <…>"`, and
+  on the fallback path `"Picked example — Common query: <…>"`. A common query picked after "I
+  don't know" on the fallback path, at that path's own question, is `"Bootcamper's answer"` as
+  before: they chose it.
 - **No requirement confirmed** (every item dropped and nothing picked): save
   `"query_requirements": []`. The discoveries section then says so in one line.
 - **The saved list does not change after this step.** Step 3b's quality iteration and its return
@@ -558,7 +594,8 @@ results.
 (`../bootcamp-onboarding/ground-rules.md` → "Directing steps", INV-300, INV-354). Present the requirements
 that came from the Bootcamper's own answer before any other result, each as: the question they
 posed in step 1, quoted ("You asked: '…'"), the answer the queries gave, and `matches` when the
-answer addresses what they asked, or `differs` when it answers less or something else. Name each
+answer addresses what they asked, or `differs` when it answers less or something else. An example
+they picked in step 1 is presented the same way, quoted as they picked it ("You picked: '…'"). Name each
 difference in one line: what is missing, and why, from the query's own output or the data it ran
 on (a field the mapping never carried, a source not loaded, no records that fit). Requirements
 marked **(not asked for)** in step 1 follow, and are not listed as theirs. When the guide chose the

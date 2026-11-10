@@ -16,9 +16,29 @@ questions do you need to answer with your data?"*, was asked only on the fallbac
 3. Dropping the derived requirements, or answering "I don't know", never re-asks the open
    question.
 
+#888 amends INV-359 (a `PROPOSED AMENDMENT` block in #888's `specs/IMPLEMENTED.md` entry, awaiting
+the maintainer's sign-off): a bare question left a Bootcamper with nothing to start from, so Turn 1
+now shows numbered examples **before** the unchanged open question (`turn_1_problems`):
+
+- on the business-problem path 1 to 4 examples from the refined prose of
+  `docs/business_problem.md`, never topped up with the common queries, each naming its source and
+  carrying no Module 1 quote; on the fallback path all five common queries;
+- one framing line, a statement, inviting picks by number plus their own words, naming no example
+  as the one to pick, and pointing at `ground-rules.md` → "Directing steps" → "Numbered examples
+  before the open 👉" (INV-354);
+- the open question still Turn 1's only 👉, with no numbered list directly beneath it.
+
+Turn 2 lists each picked example after their own questions ("You picked: '…'"), with its source and
+Module 1 quote, never marked **(not asked for)**; picked examples fill the cap of 10 after their
+questions and before the derived ones (`gate_problems`). The record saves a picked example with a
+`"Picked example — …"` source, and an answer that only picks examples directs the step
+(`picked_problems`).
+
 The checks are pure functions over a step's text, so each one also runs on a mutated copy as its
 negative control: a derivation moved back before the open question, a retired question restored,
-a second 👉 added to the gate.
+a second 👉 added to the gate; and since #888 an example list directly beneath the open question,
+a second 👉 in Turn 1, a picked example marked **(not asked for)**, a list padded with the common
+queries, and a re-ask.
 
 ⚠️ **The 👉 counts read single lines on purpose (INV-346).** A 👉 question is its own line in
 this file by construction, and counting lines that *start* with `👉 **` is what keeps prose that
@@ -32,7 +52,7 @@ is no evidence that a live run obeys it.
 
 Stdlib only; shipped markdown read as text (INV-108).
 
-Source issue: #478 (part of #465).
+Source issue: #478 (part of #465); the examples before the question, #888.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -130,7 +150,20 @@ def gate_problems(step):
         "their questions are never dropped": r"never dropped to make room",
         "derived ones fill only while under 10": r"only while the list holds fewer than 10",
         "dropping the derived ones keeps theirs": r"Drops the derived requirements:\*\* proceed "
-                                                  r"with their questions only",
+                                                  r"with their questions and picked examples only",
+        # #888: a picked example is theirs, listed after their questions, with its quote.
+        "a picked example is listed as picked": r"Then each picked\s+example, as Turn 1 worded it "
+                                                r"\(\"You picked: '…'\"\)",
+        "a picked example carries its quote": r"with that source's Module 1 quote beneath it",
+        "a picked example is never marked": r"A picked example is theirs: it\s+is never marked "
+                                            r"\*\*\(not asked for\)\*\*",
+        "part 2 holds only what was neither picked nor covered":
+            r"Each derived requirement their answer neither picked nor\s+covered",
+        "picked examples fill after their questions": r"add picked examples next, then derived "
+                                                      r"requirements, each only while the\s+list "
+                                                      r"holds fewer than 10",
+        "a picked example gets the INV-275 quote": r"Under each picked example in part 1 and each "
+                                                   r"requirement in part 2",
         "the drop never re-asks": r"Do not ask the open question again",
         "the confirmed list keeps their words": r"keeps their own words",
     }
@@ -164,6 +197,97 @@ def turn_problems(step):
         if len(questions(dont_know)) != 1 or OPEN_QUESTION in questions(dont_know):
             problems.append("the fallback \"I don't know\" turn holds %r, not one options 👉"
                             % questions(dont_know))
+    return problems
+
+
+#: The shared bullet Turn 1 points at for the examples (#888, INV-354).
+EXAMPLES_POINTER = (r'`\.\./bootcamp-onboarding/ground-rules\.md` → "Directing steps" → "Numbered '
+                    r'examples before the\s+open 👉" states \(INV-354\)')
+
+#: What Turn 1 must state about the examples it shows before the open question (#888).
+TURN_1_REQUIRED = {
+    "the examples come first, numbered": r"\*\*Starting points first, numbered\.\*\* Before "
+                                         r"the question, show a numbered list of example",
+    "1 to 4 examples on the business-problem path": r"\*\*Business-problem path:\*\* 1 to 4 "
+                                                    r"examples drawn from the refined prose",
+    "never from the quotes (INV-275)": r"never from its `> \"…\"` quotes \(INV-275\)",
+    "never padded with the common queries": r"never top the list up with the common queries",
+    "one example when the document supports one": r"a\s+document that supports one example "
+                                                  r"shows one",
+    "each example names its source": r"Each example names the success criterion or\s+desired "
+                                     r"output it comes from",
+    "no Module 1 quote in Turn 1": r"carries no Module 1 quote",
+    "a disagreeing quote waits for Turn 2": r"raised in Turn 2, beside the picked example, never "
+                                            r"here",
+    "all five common queries on the fallback path": r"\*\*Fallback path:\*\* all five common "
+                                                    r"queries \(below\), numbered",
+    "the framing line is a statement": r"one line, a statement and not a question",
+    "they may pick any number and add their own": r"pick any number of them by number and to "
+                                                  r"add\s+questions of their own, in their own "
+                                                  r"words",
+    "no example is recommended": r"Name no example as the one to pick",
+    "the list never sits beneath the 👉": r"come before the 👉, never beneath it",
+    "it points at the shared bullet": EXAMPLES_POINTER,
+}
+
+
+def numbered_after(text, question):
+    """True when a numbered list sits directly beneath ``question`` (blank and internal lines
+    skipped)."""
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip() == question:
+            for later in lines[i + 1:]:
+                s = later.strip()
+                if not s or s.startswith("*(Internal"):
+                    continue
+                return bool(re.match(r"\d+\. ", s))
+    return False
+
+
+def turn_1_problems(step):
+    """#888: numbered examples before the unchanged open question, never beneath it."""
+    turn_1 = section(step, "### Turn 1", ("**This is Module 7's directing step.**",))
+    if not turn_1:
+        return ["Turn 1 is missing"]
+    problems = []
+    for what, pattern in TURN_1_REQUIRED.items():
+        if not match_lines(turn_1, pattern):
+            problems.append("Turn 1 does not state that %s" % what)
+    at = turn_1.find(OPEN_QUESTION)
+    first = turn_1.find("**Starting points first, numbered.**")
+    if at < 0 or first < 0 or first > at:
+        problems.append("Turn 1's examples do not come before the open question")
+    if numbered_after(turn_1, OPEN_QUESTION):
+        problems.append("a numbered list sits directly beneath the open question")
+    if questions(turn_1) != [OPEN_QUESTION]:
+        problems.append("Turn 1 holds %r, not only the open question" % questions(turn_1))
+    if "(not asked for)" in turn_1[:at if at >= 0 else len(turn_1)]:
+        problems.append("Turn 1 marks something (not asked for) before the open question")
+    return problems
+
+
+def picked_problems(text):
+    """#888: a picked example directs the step, and is saved with its own source."""
+    step = step_1(text)
+    problems = []
+    for what, pattern in {
+        "a picked example is kept with its source": r"Each example they pick by number is a\s+"
+                                                    r"\*\*picked example\*\*",
+        "only picking examples still directs": r"An answer that only\s+picks examples still "
+                                               r"directs the step; it is not the handed-back case",
+        "picking only examples is recorded as directed": r"An answer that only picks examples is "
+                                                         r"directed,\s+not the guide choosing, and "
+                                                         r"Turn 2's confirming gate is still asked "
+                                                         r"once",
+        "the fallback path builds one per picked query": r"one per common query they picked",
+        "a picked success criterion's source": r"`\"Picked example — Success criterion: <…>\"`",
+        "a picked desired output's source": r"`\"Picked example — Desired output: <…>\"`",
+        "a picked common query's source": r"`\"Picked example — Common query: <…>\"`",
+        "their own questions keep their source": r"`\"Bootcamper's answer\"`",
+    }.items():
+        if not match_lines(step, pattern):
+            problems.append("step 1 does not state that %s" % what)
     return problems
 
 
@@ -232,6 +356,79 @@ class EveryTurnEndsOnOneQuestion(Base):
         re_asked = self.step.replace("Do not ask the open question again.",
                                      OPEN_QUESTION, 1)
         self.assertTrue(turn_problems(re_asked))
+
+
+class TurnOneShowsExamplesBeforeTheQuestion(Base):
+    """#888: starting points before the open question, which stays Turn 1's only 👉."""
+
+    def test_it_states_every_rule(self):
+        self.assertEqual(turn_1_problems(self.step), [])
+
+    def test_a_picked_example_directs_and_is_recorded(self):
+        self.assertEqual(picked_problems(self.text), [])
+
+    def assertCaught(self, problems, needle):
+        self.assertTrue(any(needle in p for p in problems),
+                        "expected a problem containing %r, got %r" % (needle, problems))
+
+    def mutated(self, old, new):
+        step = self.step.replace(old, new, 1)
+        self.assertNotEqual(step, self.step, "the mutation no longer applies: %r" % old)
+        return step
+
+    def test_negative_control_list_beneath_the_question(self):
+        step = self.mutated(OPEN_QUESTION + "\n", OPEN_QUESTION + "\n\n1. Find duplicates within "
+                            "a source\n2. Find cross-source matches\n")
+        self.assertCaught(turn_1_problems(step), "directly beneath the open question")
+
+    def test_negative_control_a_second_question_in_turn_1(self):
+        step = self.mutated(OPEN_QUESTION, "👉 **Which of these examples do you want?**\n\n"
+                            + OPEN_QUESTION)
+        self.assertCaught(turn_1_problems(step), "not only the open question")
+
+    def test_negative_control_examples_after_the_question(self):
+        turn_1 = section(self.step, "**Starting points first, numbered.**", (OPEN_QUESTION,))
+        step = self.mutated(turn_1, "").replace(
+            "own words for each.", "own words for each.\n\n" + turn_1, 1)
+        self.assertCaught(turn_1_problems(step), "do not come before the open question")
+
+    def test_negative_control_padded_with_common_queries(self):
+        step = self.mutated("never top the list up with the common queries",
+                            "top the list up to 4 with the common queries")
+        self.assertCaught(turn_1_problems(step), "never padded")
+
+    def test_negative_control_a_quote_in_turn_1(self):
+        step = self.mutated("and carries no Module 1 quote",
+                            "with its Module 1 quote beneath it")
+        self.assertCaught(turn_1_problems(step), "no Module 1 quote in Turn 1")
+
+    def test_negative_control_an_example_recommended(self):
+        step = self.mutated("Name no example as the one to pick",
+                            "Recommend the example that fits best")
+        self.assertCaught(turn_1_problems(step), "no example is recommended")
+
+    def test_negative_control_a_picked_example_marked_not_asked_for(self):
+        step = self.mutated("A picked example is theirs: it\n   is never marked",
+                            "A picked example is the guide's: it\n   is marked")
+        self.assertCaught(gate_problems(step), "a picked example is never marked")
+
+    def test_negative_control_picked_examples_dropped_with_the_derived(self):
+        step = self.mutated("proceed with their questions and picked examples only",
+                            "proceed with their questions only")
+        self.assertCaught(gate_problems(step), "dropping the derived ones keeps theirs")
+
+    def test_negative_control_only_picking_hands_back(self):
+        text = self.text.replace("An answer that only picks examples is directed,\nnot the guide "
+                                 "choosing", "An answer that only picks examples is the guide\n"
+                                 "choosing", 1)
+        self.assertNotEqual(text, self.text)
+        self.assertCaught(picked_problems(text), "picking only examples is recorded as directed")
+
+    def test_negative_control_picked_source_dropped(self):
+        text = self.text.replace('`"Picked example — Common query: <…>"`',
+                                 '`"Bootcamper\'s answer"`', 1)
+        self.assertNotEqual(text, self.text)
+        self.assertCaught(picked_problems(text), "a picked common query's source")
 
 
 class TheRecapExampleShowsTheNewQuestion(unittest.TestCase):

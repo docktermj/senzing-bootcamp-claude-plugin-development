@@ -252,10 +252,18 @@ the answer and which result is checked, and points here.
 - **One open 👉, pinned at its site (INV-247).** It asks what to build and what they expect as one
   question, with no numbered options and no menu, because the answer is the Bootcamper's own words
   rather than a pick from the guide's. Whatever helps them answer (the columns, sample values, what
-  a choice means) goes before the 👉, as the 👉 protocol above requires. The guide offers no
+  a choice means) goes before the 👉, as the 👉 protocol above requires, and that may include
+  numbered examples, as "Numbered examples before the open 👉" below states. The guide offers no
   recommendation of its own unless asked to choose: a recommendation is what "you pick" gets. It
   is the turn's only 👉 (INV-251), and the turn ends on it. Data processing's step 21 is the one
   exception, stated in "Data processing's expectation check" below.
+- **Numbered examples before the open 👉 (INV-354).** A site may show numbered examples before its
+  open 👉 as starting points, and the Bootcamper may pick any number of them by number beside
+  their own words. The 👉 itself still carries no numbers and no menu, accepts their own words and
+  stays the turn's only 👉. An answer that only picks examples directs the step: it is not handed
+  back. The examples are not the guide's recommendation, so none is named as the one to pick. They
+  are informational, not the 👉's answer options (an open 👉 has none), so they sit before it and
+  never beneath it (INV-224). Query, Visualize and Discover's step 1 shows them today.
 - ⛔ **(INV-354) The Bootcamper directs in words; the guide writes every line of code.** Never ask them to
   write, edit or paste code. Their words are the specification, and the code comes from the MCP
   tools exactly as it does elsewhere (INV-080): attribute names from `mapping_workflow`, SDK calls
