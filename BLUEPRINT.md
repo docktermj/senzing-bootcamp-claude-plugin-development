@@ -3051,7 +3051,10 @@ and continues; the recap PDF is guaranteed.
   `pg_dump -Fc -f`, never redirection; in a container, through its recorded
   runtime after a `cp --help` probe), state snapshot, `RESUME_STATE.json`
   and `docs/REVISIT_BOOTCAMP.md`, which carries both Step 0b lists, the
-  takeaway and the "Next time" request. Its "Where things are" names
+  takeaway and the "Next time" request. The snapshot leaves out
+  `config/license.json`, which `RESUME_STATE.json` lists under
+  `regenerated_on_restore` and the return guide's License entry re-measures by
+  Module 4 Step 8a sub-step 7. Its "Where things are" names
   `data/exports/` when step 4e exported for a system, with
   `production/data/exports/` beside it.
 - Close: confirm the PDF, announce only existing artifacts plus a
@@ -3614,8 +3617,8 @@ CLI packaging the project into one zip; it never transmits it. Options:
   (`backups/revisit`, `config`, `src`) for `transfer`. Missing roots are
   recorded as excluded.
 - `is_excluded` matches path segments against `ALWAYS_EXCLUDE` (credentials,
-  licenses, raw and temp data, logs, `.git`, caches, virtualenvs,
-  `backups/packages`) and, for `share`, `SHARE_EXCLUDE` (backups,
+  licenses, `config/license.json` and any `license.json`, raw and temp data,
+  logs, `.git`, caches, virtualenvs, `backups/packages`) and, for `share`, `SHARE_EXCLUDE` (backups,
   `docs/mapping`, the mapped loader inputs in `data/senzing-ready`) and
   `DATABASE_SUFFIXES`. `_matches` finds a rule's segments as a contiguous run
   anywhere in the path, not only at its start, so a rule still covers a tree
@@ -7658,6 +7661,7 @@ ALWAYS_EXCLUDE = (
     ".env.production",
     "licenses",
     "config/license.json",
+    "license.json",
     "data/raw",
     "data/temp",
     "logs",
@@ -11513,10 +11517,10 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9346 test methods in 474 files, matching `inventory.test_count_total`.
+There are 9366 test methods in 475 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 9346.
+sum to 9366.
 
 Two files run more tests than they define, so discovery collects 9353:
 
@@ -11725,6 +11729,7 @@ looks wrong.
 - `tests/test_legacy_sublist_format_is_supported.py`: 14
 - `tests/test_legend_labels_its_actual_denominator.py`: 21
 - `tests/test_license_cap_branch_offers_the_apply_route.py`: 27
+- `tests/test_license_details_never_travel.py`: 20
 - `tests/test_license_env_var_absent.py`: 8
 - `tests/test_license_framing_consults_the_measured_limit.py`: 5
 - `tests/test_license_gate_is_described_as_it_runs.py`: 17
@@ -12725,7 +12730,8 @@ tests a rebuild can pass from behavior alone.
     entry's shape; 4a-pairs' "can supply none" exit writes the empty record.
 - **`package_bootcamp.py`** (`tests/test_package_bootcamp.py`,
   `tests/test_open_me_first_matches_the_manifest.py`,
-  `tests/test_quoted_sizes_say_what_they_missed.py`).
+  `tests/test_quoted_sizes_say_what_they_missed.py`,
+  `tests/test_license_details_never_travel.py`).
   - **Arguments:** `--project-root`, `--profile share|transfer`, `--date` and
     `--dry-run`. A dry run reports a size and writes nothing. It also prints an
     `absent:` line naming every candidate root that was not in the project —
@@ -12749,7 +12755,12 @@ tests a rebuild can pass from behavior alone.
     - secret-bearing members, including `.pem` files, extensionless keys,
       secrets inside binaries and secrets that straddle a scan block;
     - unreadable members;
-    - symlinks that resolve outside the project.
+    - symlinks that resolve outside the project;
+    - a `license.json` at any depth, in either profile, under the rule
+      `license.json` (a placeholder copy at `backups/revisit/state/` is the
+      fixture, packaged when the rule is removed); `License.json`,
+      `licensed.json` and `license.json.bak` are not matched, and
+      `config/license.json` keeps its own rule (#895).
 
     A genuine PNG still travels.
   - **Safety.** A second archive never contains the first. A `.sha256` sidecar
@@ -15678,3 +15689,12 @@ Senzing licensing, with no SPDX identifier.
   at 1,500 nodes the app and snapshot opened unfitted and every
   relationship edge painted gray, which no Truth Set check could show;
   amendments to INV-299 and INV-407 and two new invariants are queued
+- #895: the packager's single-segment rule `license.json` drops a
+  `license.json` at any depth in both profiles, and graduation Step 6b no
+  longer snapshots `config/license.json`, recording it in
+  `RESUME_STATE.json` under `regenerated_on_restore` as re-created by
+  Module 4 Step 8a sub-step 7 — the `transfer` package carried
+  `backups/revisit/state/license.json`, the `get_license` response naming
+  the license's customer, contract and billing terms, which the rule
+  `config/license.json` and the content scan both missed; an amendment to
+  INV-094 is queued
