@@ -3073,8 +3073,11 @@ and continues; the recap PDF is guaranteed.
   output folder, `classes/` included). Step 4:
   `production/README.md`, whose Usage gives each program's build and run
   commands from the ground rules' statement (#563), and
-  `production/MIGRATION_CHECKLIST.md` (six sections; DEFAULT-flags item with
-  its export exception; the Data section carries Step 2's scan items). Step 5:
+  `production/MIGRATION_CHECKLIST.md` (six sections; a Database item naming
+  SQLite as an evaluation and starter database and PostgreSQL as the
+  documented recommendation; a DEFAULT-flags item that includes the export
+  call and carries its verification qualification; the Data section carries
+  Step 2's scan items). Step 5:
   `production/GRADUATION_REPORT.md`; 5a normalizes with
   `--docs-dir production`; 5b renders `docs/business_problem.pdf` and
   `docs/data_source_evaluation.pdf` via `generate_document_pdf.py` with
@@ -11636,7 +11639,7 @@ looks wrong.
 - `tests/test_capture_verifies_tab_activation.py`: 11
 - `tests/test_certificate_name_source.py`: 19
 - `tests/test_changelog_entries_are_what_the_note_says.py`: 29
-- `tests/test_checklist_items_ship_their_exceptions.py`: 5
+- `tests/test_checklist_items_ship_their_exceptions.py`: 13
 - `tests/test_ci_workflow_guards_the_fpdf2_matrix.py`: 12
 - `tests/test_citation_census.py`: 25
 - `tests/test_citations_verify_states_its_limit.py`: 5
@@ -11816,6 +11819,7 @@ looks wrong.
 - `tests/test_mcp_output_is_never_suppressed.py`: 4
 - `tests/test_mcp_sourcing_instructions_name_a_route.py`: 8
 - `tests/test_mid_scaffold_holds_what_its_recap_claims.py`: 4
+- `tests/test_migration_checklist_production_items.py`: 14
 - `tests/test_minimal_verbosity_scope.py`: 14
 - `tests/test_model_effort_nudge_edges.py`: 21
 - `tests/test_model_guidance_behavior.py`: 32
@@ -15827,3 +15831,13 @@ Senzing licensing, with no SPDX identifier.
   the license's customer, contract and billing terms, which the rule
   `config/license.json` and the content scan both missed; an amendment to
   INV-094 is queued
+- #904: graduation's migration checklist gains a Database item — SQLite is
+  an evaluation and starter database, move to a supported production
+  database before deploying, PostgreSQL is Senzing's documented
+  recommendation, and a starter still on SQLite is not ready unchanged —
+  and its DEFAULT-flags item now includes the export call, carrying inside
+  the quote that a replacement can drop `RELATED_ENTITIES` with no error and
+  must be verified first — the export exemption kept
+  `SZ_ENTITY_DEFAULT_FLAGS`, which `SZ_EXPORT_DEFAULT_FLAGS` contains, in
+  production code against the server's production caution; an amendment to
+  INV-287 and an invariant for the Database item are queued
