@@ -45,7 +45,7 @@ these tests pin each:
    the shell started in `src/query/` of a project whose path holds a space and a `'`: a stub
    program on `PATH` writes `data/query_results/out.json` relative to its working directory, and
    the file lands under the root's `data/`. The native-Windows call runs the same way against the
-   stub `powershell.exe`, which then sits where the relative `.\src\scripts\senzing-env.ps1`
+   stub `powershell.exe`, which then sits where the relative `.\\src\\scripts\\senzing-env.ps1`
    resolves. Negative controls drop the pin and see the file land under `src/query/`, and a root
    that no longer exists runs nothing. `tests/test_build_and_run_statement.py` pins the wording.
 

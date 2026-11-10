@@ -907,9 +907,9 @@ For example, System verification's `verify_pipeline` is `<dir>` = `src/system_ve
 - **Run every command from the project root, in the shell where Module 2's env script is sourced**
   (Module 2 Step 8 re-sources it), so the native library and the SDK bindings are on the paths the
   program needs. On native Windows that shell is the PowerShell call the next bullet gives. A
-  program opens its `<dir>/...` and `data/...` paths relative to that root. The paths use forward
-  slashes and the commands use no shell-specific syntax, so they run unchanged in a POSIX shell and
-  in PowerShell (INV-001).
+  program opens its `<dir>/...` paths relative to that root. The paths use forward slashes and the
+  commands use no shell-specific syntax, so they run unchanged in a POSIX shell and in PowerShell
+  (INV-001).
 
   **Never assume the shell is already at the root: pin it.** The guide's shell keeps its working
   directory between calls, so a `cd` made for one task carries into every later call. Every Build,
