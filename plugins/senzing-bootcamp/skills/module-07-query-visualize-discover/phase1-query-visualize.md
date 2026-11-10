@@ -1270,12 +1270,35 @@ shell has the variable set. It surfaces as `no Sz in java.library.path`, and add
 `-Djava.library.path` does not fix it. Full rule and the demonstration:
 `../module-03b-truthset-visualization/visualization-api-reference.md` → "Server lifetime" (INV-001, INV-002).
 
+⛔ **Launch it in this shape, so `$!` is the server (INV-223).** On the host, source the env as its
+own statement, background the server as the only command on its line, and read `$!` on the next
+line:
+
+```bash
+. src/scripts/senzing-env.sh
+<run command> &
+VIZ_PID=$!
+```
+
+Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
+`<run command>` is `results_server`'s Run command from `../bootcamp-onboarding/ground-rules.md` →
+"Building and running a program", unchanged. Written as `A && B &`, the `&` backgrounds a subshell
+and `$!` names it rather than the server. In PowerShell the handle is `$proc.Id` from
+`Start-Process … -PassThru`. Once the server prints its `Visualization running:` line, confirm the
+recorded pid owns the port by the
+[launch confirmation](../module-03b-truthset-visualization/visualization-api-reference.md#launch-confirmation),
+stated once there (INV-300), and record the pid it settles on in `m7_visualizations`. On the
+container route the launch is "Serving from the SDK container"'s, which runs that rule's `docker`
+form.
+
 ⛔ **Stop it by the pid captured when it was started, never by a command-line pattern.** (INV-223.)
 Capture the
 handle at launch (`$!` in a POSIX shell, `$proc.Id` from PowerShell's `Start-Process … -PassThru`)
 and record it in the `m7_visualizations` checkpoint below, with the port it bound; on teardown,
 signal that pid and confirm the port is free before saying the server is stopped. `pkill -f <script name>` matches the invoking shell's own
-command line and signals the caller, and this module's server is generated in the bootcamper's
+command line and signals the caller; never use `pgrep -f` or `ps | grep` to find the pid either,
+since they return the wrapping shell's pid as readily as the server's. This module's server is generated in the bootcamper's
 chosen language (INV-090), so there is no script name to match on anyway. When the pid is missing,
 find the listener by port (`lsof -ti:<port>`, or `Get-NetTCPConnection -LocalPort <port>`). ⛔ **On
 the `docker` path neither `lsof` nor a `kill` binary exists in the container (INV-223)** — signal through the
