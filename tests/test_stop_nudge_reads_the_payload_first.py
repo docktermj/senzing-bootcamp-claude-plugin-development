@@ -165,6 +165,8 @@ class PayloadIsDecisive(PayloadCase):
         env = dict(os.environ)
         env.pop(OPT_OUT_ENV, None)
         env["PYTHONIOENCODING"] = "utf-8"
+        # The copy imports module_start_apparatus (#905); it finds its siblings here.
+        env["PYTHONPATH"] = os.path.dirname(NUDGE)
         proc = subprocess.run(
             [sys.executable, mutant],
             input=json.dumps(self.walks_payload()),

@@ -440,13 +440,19 @@ class SessionStartAddsTheReminderOnResume(unittest.TestCase):
                     {"current_module": module, "current_step": None}))
 
     def test_a_completed_bootcamp_adds_nothing(self):
-        """After graduation, `current_module` is still graduation with no step."""
+        """After graduation, `current_module` is still graduation with no step.
+
+        #905: a finished bootcamp gets no resume message at all, so no reminder either;
+        `test_a_finished_bootcamp_is_never_resumed.py` asserts what it gets instead."""
         progress = {"current_module": "graduation", "current_step": None}
         self.assertIn("Module-start reminder",
                       self.resume(progress, "name: Ada\nbootcamp_complete: false\n"),
                       "(control: not complete)")
-        self.assertNotIn("Module-start reminder",
-                         self.resume(progress, "name: Ada\nbootcamp_complete: true\n"))
+        code, out, err = Project(self, progress, "name: Ada\nbootcamp_complete: true\n").run(
+            SESSION_START, "{}")
+        self.assertEqual(0, code, err)
+        self.assertNotIn("Module-start reminder", out)
+        self.assertNotIn("A Senzing bootcamp is in progress.", out)
 
 
 def module_constants(path):

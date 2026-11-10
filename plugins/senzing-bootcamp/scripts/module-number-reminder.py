@@ -18,8 +18,9 @@ Gates, checked in order; every failed gate is silent (exit 0, no stdout):
      creates the file empty and nothing records a module until Bootcamp preparation's final
      write, yet the preface and Bootcamp preparation are Bootcamper-facing and name modules
      too (the same gate and reason as ``stop-nudge.py`` gate 2).
-  2. The bootcamp is not complete (``bootcamp_complete: true`` in the preferences, set by
-     graduation), as ``stop-nudge.py`` gate 3b.
+  2. The bootcamp is not complete (``bootcamp_complete: true`` in the progress file or in
+     the preferences, set by graduation; ``module_start_apparatus.bootcamp_complete()``), as
+     ``stop-nudge.py`` gate 3b.
   3. The payload names a readable, UTF-8 transcript, and the previous turn has settled on a
      final assistant message, read by ``transition_reply.previous_turn_texts``: the same
      reader the transition detector uses, so sidechain (subagent) and meta records are

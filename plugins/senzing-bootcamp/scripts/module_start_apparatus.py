@@ -16,6 +16,10 @@ Both build the reminder here, so its wording is stated once and the two cannot d
 and transitions"), ``module-completion.md`` (Step 4 and "Reaching graduation") and the
 invariants cited in the text; this file only points the guide at them when they are due.
 
+It also holds the finished-bootcamp rule, ``bootcamp_complete()`` (#905): the flag in either
+the progress file or the preferences file, so every hook that asks "is the bootcamp over?"
+reads the same answer.
+
 It also holds each module's display name by state token (``DISPLAY_NAMES``, #874), so
 ``session-start.py`` names the recorded module in its resume message rather than leaving the
 guide to improvise a name, which it did from the skill heading, number included (INV-079).
@@ -178,20 +182,45 @@ def _progress():
     return data if isinstance(data, dict) else {}
 
 
-def bootcamp_complete():
+#: The values a ``bootcamp_complete`` flag reads as set.
+TRUTHY = ("1", "true", "yes", "on")
+
+
+def _preferences_flag():
     """True when ``config/bootcamp_preferences.yaml`` has a top-level
-    ``bootcamp_complete: true`` (set by graduation's closing step). Read line by line, with
-    no YAML dependency. Never raises."""
+    ``bootcamp_complete: true``. Read line by line, with no YAML dependency. Never raises."""
     try:
         with open(PREFERENCES, encoding="utf-8") as fh:
             for line in fh:
                 name, sep, value = line.partition(":")
                 if sep and name == "bootcamp_complete":
                     value = value.split("#", 1)[0].strip().strip("\"'").lower()
-                    return value in ("1", "true", "yes", "on")
+                    return value in TRUTHY
     except (OSError, ValueError):
         pass
     return False
+
+
+def _progress_flag():
+    """True when ``config/bootcamp_progress.json`` carries ``bootcamp_complete: true``.
+    Never raises."""
+    value = _progress().get("bootcamp_complete")
+    if isinstance(value, str):
+        return value.strip().lower() in TRUTHY
+    return value is True
+
+
+def bootcamp_complete():
+    """True once graduation has ended the bootcamp: ``bootcamp_complete: true`` in
+    **either** ``config/bootcamp_progress.json`` or ``config/bootcamp_preferences.yaml``.
+
+    Graduation's closing step writes the flag to both files (#905). Either one is enough,
+    so a project graduated before the progress-file write existed, which carries the flag
+    only in preferences, still reads as finished, and so does one whose progress file is
+    missing or malformed. The rule is stated in ``bootcamp-onboarding/SKILL.md`` step 2;
+    this is its one implementation, shared by ``session-start.py``, ``stop-nudge.py`` and
+    ``module-number-reminder.py`` (INV-300). Never raises."""
+    return _progress_flag() or _preferences_flag()
 
 
 def recorded_position():
