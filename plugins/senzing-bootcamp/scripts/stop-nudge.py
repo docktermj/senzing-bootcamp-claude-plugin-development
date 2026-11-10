@@ -18,9 +18,11 @@ gate passes:
      pinned 👉 question, so the net must cover them too (hooks/README.md, Gate column).
   3. The bootcamper opted out (env var or preferences key) -> stay silent. Gives a
      documented way to disable/quiet the nudge (see hooks/README.md).
-  3b. The bootcamp is complete (``bootcamp_complete: true`` in preferences, set by
-     graduation before the terminal "END OF SENZING BOOTCAMP" banner) -> stay silent,
-     so the net never nudges for a closing question after the bootcamp is over.
+  3b. The bootcamp is complete (``bootcamp_complete: true`` in the progress file or in
+     preferences; graduation sets both before the terminal "END OF SENZING BOOTCAMP"
+     banner) -> stay silent, so the net never nudges for a closing question after the
+     bootcamp is over. The either-file rule is ``module_start_apparatus.bootcamp_complete()``,
+     shared with session start (#905, INV-300).
   4. The current turn already ended with a 👉 question -> the closing question
      exists, so add nothing (honors the "ask each question only once" invariant).
 
@@ -60,6 +62,8 @@ interpreter and this script, quoted (``python3 "<path>"``), per INV-052.
 import json
 import os
 import sys
+
+import module_start_apparatus
 
 POINTER = "\U0001f449"  # 👉
 
@@ -141,11 +145,13 @@ def nudge_disabled():
 
 def bootcamp_complete():
     """True once graduation has ended the bootcamp. The graduation closing step
-    sets a top-level ``bootcamp_complete: true`` in config/bootcamp_preferences.yaml
-    right before it renders the terminal "END OF SENZING BOOTCAMP" banner (which
-    ends the turn with no 👉 question). Standing down here keeps the safety net from
-    nudging for a closing question after the bootcamp is over."""
-    return pref_flag("bootcamp_complete")
+    sets ``bootcamp_complete: true`` in config/bootcamp_progress.json and in
+    config/bootcamp_preferences.yaml right before it renders the terminal "END OF
+    SENZING BOOTCAMP" banner (which ends the turn with no 👉 question), and either file
+    is enough. Standing down here keeps the safety net from nudging for a closing
+    question after the bootcamp is over. The rule has one implementation,
+    ``module_start_apparatus.bootcamp_complete()`` (#905, INV-300)."""
+    return module_start_apparatus.bootcamp_complete()
 
 
 def current_turn_records(transcript_path):

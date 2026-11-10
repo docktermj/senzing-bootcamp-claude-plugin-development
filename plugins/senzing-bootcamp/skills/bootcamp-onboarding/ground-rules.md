@@ -1455,6 +1455,10 @@ the 👉 protocol above).
   count, never a module number. The journey map is required output, not explanatory output, so
   every verbosity preset, `minimal` included, shows the full table plus the count line: INV-214's
   allowance to compress a list of names to a count does not apply to it.
+  **On a finished bootcamp** (`bootcamp_complete: true` in either file, `SKILL.md` step 2), a
+  journey map shown afterwards marks every row `✅ done`, Bootcamp graduation included, and no
+  row 🔄 or ⬜, so N equals M. `current_module` still reads `graduation` then, and it is not the
+  current module.
 - **Module selection drives the journey map.** The bootcamp is a sequence of named modules chosen
   in the **Bootcamp preparation** module (`../bootcamp-preparation/SKILL.md`): **Core** includes
   every module in order; **Customized** includes the required modules plus whichever optional

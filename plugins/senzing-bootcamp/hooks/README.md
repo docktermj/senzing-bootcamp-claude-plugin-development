@@ -10,7 +10,9 @@ hooks wired to small **Python** scripts under `../scripts/`, each invoked by a
 
 Every hook is gated, so the plugin never alters unrelated Claude Code sessions: each
 script no-ops unless a `config/bootcamp_progress.json` file exists in the working
-directory. The Gate column below says what each one tests beyond that, and the two gates
+directory. The one exception is session start on a finished bootcamp, where the
+`bootcamp_complete: true` flag in `config/bootcamp_preferences.yaml` is enough on its own
+(its row below). The Gate column below says what each one tests beyond that, and the two gates
 answer different questions:
 
 - **`bootcamp_active()`** (in `scripts/recap_checkpoint.py`) asks *is a bootcamp in
@@ -27,7 +29,7 @@ answer different questions:
 
 | Event | Script | Purpose | Gate |
 |-------|--------|---------|------|
-| `SessionStart` | `scripts/session-start.py` | to resume an in-progress bootcamp (offers to continue from the last recorded module, and folds any in-progress recap checkpoint into the recap). | `bootcamp_active()`: a resume needs a recorded module. |
+| `SessionStart` | `scripts/session-start.py` | to resume an in-progress bootcamp (offers to continue from the last recorded module, and folds any in-progress recap checkpoint into the recap). On a finished bootcamp it offers no resume: it tells the guide the bootcamp is complete, to name `/package-bootcamp` and to ask what you would like to explore. | `bootcamp_active()`: a resume needs a recorded module. A finished bootcamp is checked first, with `bootcamp_complete()` (in `scripts/module_start_apparatus.py`): `bootcamp_complete: true` in the progress file or in preferences, whatever else the progress file holds or whether it exists. |
 | `UserPromptSubmit` | `scripts/feedback-capture.py` | to capture bootcamp feedback, bootcamper notes and verbosity changes at any time (routes "bootcamp feedback", "make a note" and "change verbosity" requests to the right workflow). | Existence: feedback (INV-010), notes (INV-254) and verbosity changes (INV-011) are taken from onboarding on, before any module is recorded. |
 | `UserPromptSubmit` | `scripts/checkpoint-tick.py` | to keep the in-progress recap checkpoint durable (creates `docs/progress/recap_checkpoint.md` as an empty scaffold within a turn of the bootcamp starting, and reminds the guide once to keep it current). Runs per turn because a bootcamp becomes active *after* `SessionStart` has already run. On your reply to the "ready to move on to the next module" or graduation question, it also reminds the guide of a record module completion left missing (a directing step still unset for a completed module, or a reversed decision never filed), to repair it silently; it never blocks and is never shown to you. Silent on every other turn after the file exists. | `bootcamp_active()`: there is no module recap to keep before a module is recorded. |
 | `UserPromptSubmit` | `scripts/module-start-reminder.py` | to give you the same orientation at the start of every module (reminds the guide, on your reply to the "ready to move on to the next module" or graduation question, to show the banner, journey map, before/after, step overview, time estimate and model/effort suggestion before the module's first step). The reminder is conditional on your reply accepting the start, never blocks, and is never shown to you; silent on every other turn and for the apparatus-exempt setup modules (INV-420). The resume case is covered by `session-start.py`. | `bootcamp_active()`: a transition question is asked only after a module is recorded. |

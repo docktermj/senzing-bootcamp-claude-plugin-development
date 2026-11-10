@@ -141,7 +141,7 @@ receives the shippable plugin through `/propagate-to-public`.
   hook: reminds the guide of the module-start apparatus when it is due.
 - `plugins/senzing-bootcamp/scripts/module_start_apparatus.py`: shared builder
   of the module-start apparatus reminder and holder of the module display
-  names; not a hook.
+  names and the finished-bootcamp rule; not a hook.
 - `plugins/senzing-bootcamp/scripts/normalize_docs_markdown.py`:
   normalizes the Bootcamper's generated Markdown documents.
 - `plugins/senzing-bootcamp/scripts/package_bootcamp.py`: packages the finished
@@ -160,7 +160,7 @@ receives the shippable plugin through `/propagate-to-public`.
   for the Truth Set and results visualizations.
 - `plugins/senzing-bootcamp/scripts/session-end.py`: SessionEnd hook.
 - `plugins/senzing-bootcamp/scripts/session-start.py`: SessionStart hook:
-  resumes or starts the bootcamp context.
+  resumes or starts the bootcamp context, or says a finished one is complete.
 - `plugins/senzing-bootcamp/scripts/stop-nudge.py`: Stop hook: nudges the guide
   when a turn ends without its pinned question.
 - `plugins/senzing-bootcamp/scripts/transition_reply.py`: shared reader of the
@@ -1494,7 +1494,9 @@ containing a space working. No hook has a timeout or other options.
 - `SessionEnd` (no matcher) runs `session-end.py`.
 
 Every script does nothing unless `config/bootcamp_progress.json` exists in the
-project directory, so the plugin never changes unrelated sessions. The four
+project directory, so the plugin never changes unrelated sessions; the one
+exception is `session-start.py` on a finished bootcamp, where the preferences
+flag alone is enough (#905). The four
 recap hooks (`session-start.py`, `checkpoint-tick.py`, `precompact-recap.py`,
 `session-end.py`) also need `recap_checkpoint.bootcamp_active()`, a recorded
 module, and so does `module-start-reminder.py`. `write-gate.py`,
@@ -1521,7 +1523,12 @@ noise is minimized by batching writes rather than hidden.
 
 Entry skill ("start/resume the bootcamp"). The guide reads `ground-rules.md`,
 then decides fresh vs resume from the CONTENT of
-`config/bootcamp_progress.json`: missing, empty, malformed, non-object or a
+`config/bootcamp_progress.json`, after one check made first (#905): a
+`bootcamp_complete: true` in the progress file or in preferences is a finished
+bootcamp, whatever the progress file holds or whether it exists, and gets no
+onboarding and no resume, only "Your Senzing bootcamp is complete." with the
+pinned `/package-bootcamp` line and "👉 **What would you like to explore?**".
+Otherwise: missing, empty, malformed, non-object or a
 blank `current_module` is a silent fresh start; a recorded `current_module`
 offers resume at `current_module`/`current_step`, after re-offering any
 feedback entry still marked `offer pending`. It never announces a resume it
@@ -1714,7 +1721,8 @@ Ground rules (`ground-rules.md`, every turn):
   `🚀🚀🚀  MODULE: <NAME>  🚀🚀🚀` banner, journey map of
   `selected_modules` (✅ done, 🔄 current, ⬜ upcoming; stated once as a
   `Module | Status` table plus an "N of M modules done" line, shown whole
-  under every preset, #852), before/after,
+  under every preset, #852; on a finished bootcamp every row ✅, Bootcamp
+  graduation included, none 🔄, #905), before/after,
   step overview, range time estimate, then the model/effort nudge. The nudge
   compares the stage's recommendation per dial with the live setting; a
   mismatch either way asks one pinned switch question (CLI `/model` and
@@ -3095,7 +3103,11 @@ and continues; the recap PDF is guaranteed.
 - Close: confirm the PDF, announce only existing artifacts plus a
   `/package-bootcamp` statement, state that there is no script from here and
   repeat the "Next time" request, ask "anything else you would like to
-  explore?"; on decline set `bootcamp_complete: true` and show the END OF
+  explore?"; on decline set `bootcamp_complete: true` in preferences and, in
+  the same step, write the progress file (`bootcamp_complete: true`,
+  `completed_at`, `current_module: "graduation"`, `current_step: null`,
+  `graduation` appended to `modules_completed` if absent, other keys kept), on
+  the normal path and after an Abort (#905), and show the END OF
   SENZING BOOTCAMP banner once, then the pinned `/package-bootcamp` line as
   the final output, with no 👉 after it.
 
@@ -3171,8 +3183,11 @@ they left off.
 
 The `/start-bootcamp` command. It invokes the `bootcamp-onboarding` skill.
 Whether it is a resume depends on what `config/bootcamp_progress.json`
-contains, not whether it exists:
+contains, not whether it exists, after a finished bootcamp is checked first:
 
+- A finished bootcamp (`bootcamp_complete: true` in the progress file or in
+  preferences): no onboarding and no resume; say it is complete, name
+  `/package-bootcamp` and ask one open 👉 question, in step 2's pinned form.
 - No file: start onboarding from the beginning.
 - A file recording no module (empty, `{}`, malformed, or `current_module` null
   or blank): also start from the beginning, silently, because this is the
@@ -3832,7 +3847,11 @@ Exit codes:
 
 ### 5.38 `plugins/senzing-bootcamp/scripts/session-start.py`
 
-`SessionStart` hook. When a bootcamp is active it folds the checkpoint,
+`SessionStart` hook. First, when `module_start_apparatus.bootcamp_complete()`
+is true (the flag in either file, even with the progress file missing or
+malformed), it prints only `FINISHED`, an ASCII message telling the guide the
+bootcamp is complete, not to offer a resume or run onboarding, and to follow
+step 2's finished case (#905). Otherwise, when a bootcamp is active it folds the checkpoint,
 calls `ensure_checkpoint`, and prints one message: offer to resume from the
 module in `config/bootcamp_progress.json`, built by `resume_offer()`. For a
 `current_module` that `module_start_apparatus.display_name` knows, the offer
@@ -3856,7 +3875,8 @@ output when any gate holds, in order:
 - `nudge_disabled`: `SENZING_BOOTCAMP_DISABLE_STOP_NUDGE` is truthy, or
   `pref_flag` finds `disable_stop_nudge` set in
   `config/bootcamp_preferences.yaml` (line scan, no YAML library).
-- `bootcamp_complete`: the `bootcamp_complete` preference is set.
+- `bootcamp_complete`: `module_start_apparatus.bootcamp_complete()`, the flag
+  in the progress file or in preferences (#905).
 - The final text is read from the payload first: `payload_final_text`
   returns `last_assistant_message` when it is a string, and that text alone
   decides, with no transcript read (#873). Only when it returns None (the
@@ -5507,8 +5527,11 @@ raises on a missing or malformed file.
   display name, or None for a non-string, blank or unknown value.
 - `recorded_position()` returns `current_module` and `current_step` as the
   progress file records them, each None when absent, unvalidated.
-- `bootcamp_complete()` is true when `PREFERENCES` has a top-level
-  `bootcamp_complete` set to a true value (a line scan, no YAML library).
+- `bootcamp_complete()` is true when `PROGRESS` has `bootcamp_complete` true
+  (a JSON `true` or a string in `TRUTHY`) or `PREFERENCES` has a top-level
+  `bootcamp_complete` set to a value in `TRUTHY` (a line scan, no YAML
+  library): either file is enough (#905). It is the one implementation;
+  `stop-nudge.py`, `session-start.py` and `module-number-reminder.py` call it.
 
 - `token` lower-cases a module name or state token, turns runs of other
   characters into `_`, and drops a leading `module_NN_` prefix.
@@ -5531,8 +5554,7 @@ raises on a missing or malformed file.
   reminder to the bootcamper." It is ASCII only.
 - `resume_reminder()` reads `PROGRESS` and returns the resume form for
   `current_module` only when it is a non-empty string, `current_step` is null
-  or absent, and `PREFERENCES` has no top-level `bootcamp_complete` set to a
-  true value (a line scan, no YAML library); otherwise `""`.
+  or absent, and `bootcamp_complete()` is false; otherwise `""`.
 
 ### 5.67 `plugins/senzing-bootcamp/scripts/transition_reply.py`
 
@@ -8999,6 +9021,11 @@ From `plugins/senzing-bootcamp/scripts/session-start.py`:
 STEP = re.compile(r"^\d+[a-z]?(?:\.\d+)?$")
 def resume_offer():
     ...
+FINISHED = ("This Senzing bootcamp is complete: bootcamp_complete is set, so graduation has "
+            "ended it. Do not offer to resume a module and do not run onboarding. Follow the "
+            "finished case of bootcamp-onboarding/SKILL.md step 2: when the bootcamper writes, "
+            "say the bootcamp is complete, name /package-bootcamp, and end on the one open "
+            "question it pins, asking what they would like to explore.")
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -9487,6 +9514,7 @@ def display_name(module):
     ...
 def reminder(module, on_resume=False):
     ...
+TRUTHY = ("1", "true", "yes", "on")
 def bootcamp_complete():
     ...
 def recorded_position():
@@ -11596,6 +11624,7 @@ run count. With `pwsh` installed, the run reports `Ran 9351`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
+- `tests/test_a_finished_bootcamp_is_never_resumed.py`: 25
 - `tests/test_a_restated_rule_keeps_its_authority.py`: 5
 - `tests/test_a_single_statement_claim_names_its_authority.py`: 11
 - `tests/test_a_walk_runs_on_the_scaffold_it_asked_for.py`: 8
@@ -12635,7 +12664,8 @@ tests a rebuild can pass from behavior alone.
     non-object payload is silent; each of Gates 1-3b still silences it. The
     reason carries the non-yielding clause before the add-a-question clause.
     Negative control in the suite: a copy of the hook with the field read
-    replaced by `None` stays silent on the walks' payload.
+    replaced by `None` stays silent on the walks' payload; the copy runs with
+    `PYTHONPATH` at `scripts/`, so it finds `module_start_apparatus`.
 - **`module-start-reminder.py` and `module_start_apparatus.py`**
   (`tests/test_module_start_reminder.py`, 34 tests).
   - **Harness.** Both hooks run as subprocesses in a scratch project holding
@@ -12671,8 +12701,9 @@ tests a rebuild can pass from behavior alone.
   - **Resume.** `session-start.py` keeps "A Senzing bootcamp is in progress."
     and adds the module form for `sdk_setup` with `current_step` null or absent,
     the graduation form for `graduation`, and nothing for `current_step` 3, 0
-    or "4a", for an exempt module (token or display name), or when
-    `bootcamp_complete: true` is in the preferences.
+    or "4a", for an exempt module (token or display name). With
+    `bootcamp_complete: true` in the preferences it prints no resume message
+    and no reminder (#905).
   - **Stated once.** Both hooks import `module_start_apparatus`, neither
     holds an apparatus phrase in its string constants (docstrings excluded;
     a negative control pastes one into `session-start.py`), and the hook's
@@ -12680,6 +12711,41 @@ tests a rebuild can pass from behavior alone.
   - **Registration.** `hooks.json` holds the INV-052 command; the README row's
     purpose starts with "to " and its Gate cell with `bootcamp_active()`; both
     scripts import only the standard library and sibling scripts.
+- **A finished bootcamp** (`tests/test_a_finished_bootcamp_is_never_resumed.py`,
+  25 tests, #905).
+  - **Harness.** Scratch projects; `session-start.py`, `stop-nudge.py` and a
+    `python -c` call of `module_start_apparatus` run as subprocesses from the
+    shipped `scripts/` or from a scratch copy with one mutation applied.
+  - **Matrix.** The flag in the progress file only, in preferences only, in
+    both, and in neither (an active `sdk_setup` at step 3): the predicate is
+    true for the first three; session start prints the ASCII finished message
+    naming `/package-bootcamp` and step 2, with no "in progress", no "offer to
+    resume from" and no reminder, and in the fourth still resumes; the Stop
+    hook is silent, and in the fourth blocks; `resume_reminder()` adds
+    nothing. A false, "false", "no", null or 0 progress flag is not finished;
+    true, "true" and "yes" are. With the flag set, a missing, malformed, list
+    or null-module progress file still gets the finished message; without
+    it, session start prints nothing.
+  - **One implementation.** `stop-nudge.py`'s `bootcamp_complete()` body is
+    exactly `return module_start_apparatus.bootcamp_complete()`; session
+    start's module-level `if` on it comes before the one on
+    `recap_checkpoint.bootcamp_active()`.
+  - **Text.** Graduation's Declines sub-step 1 states nine clauses of the
+    write (the preferences flag, the progress file in the same step, its flag,
+    `completed_at`, `current_module: "graduation"`, `current_step: null`, the
+    append, every other key kept, both paths); the keep-exploring branch
+    names neither file. Onboarding step 2 has a Finished case right before
+    Missing, with the either-file rule, "even when it is missing or
+    malformed", "Run no onboarding and make no resume offer", the pinned lines
+    and exactly one 👉, and says the first case is checked first;
+    `/start-bootcamp`'s finished case comes right before "No file".
+    `ground-rules.md`'s journey map statement carries the finished clause.
+  - **Negative controls.** The progress write removed or three of its clauses
+    dropped; a predicate reading preferences only or progress only; session
+    start without the finished check; a Stop hook with its own preferences
+    check (it then blocks on a progress-only finished project); the Finished
+    case renamed or given a second 👉; the command's no-resume clause dropped;
+    a journey map marking graduation 🔄.
 - **`module-number-reminder.py`** (`tests/test_module_number_reminder.py`, 30
   tests, #874).
   - **Harness.** The hook runs as a subprocess in a scratch project holding
@@ -13110,7 +13176,8 @@ tests a rebuild can pass from behavior alone.
     you remember what module 3 covered".
   - **Precedence.** Feedback wins when a prompt matches both branches.
 - **Resume and version.** A progress file that records no module is not a live
-  bootcamp, and `session-start.py` prints nothing for it. `feedback-capture.py`
+  bootcamp, and `session-start.py` prints nothing for it, unless the
+  preferences mark the bootcamp finished (#905). `feedback-capture.py`
   injects the running plugin's own version, or `unknown`.
 
 #### 8.4.9 Maintainer skills and tooling
@@ -15841,3 +15908,13 @@ Senzing licensing, with no SPDX identifier.
   `SZ_ENTITY_DEFAULT_FLAGS`, which `SZ_EXPORT_DEFAULT_FLAGS` contains, in
   production code against the server's production caution; an amendment to
   INV-287 and an invariant for the Database item are queued
+- #905: graduation's closing step now also writes the progress file —
+  `bootcamp_complete: true`, `completed_at`, `current_module: "graduation"`,
+  `current_step: null`, `graduation` in `modules_completed` — and the bootcamp
+  counts as finished when either file carries the flag, through one
+  `module_start_apparatus.bootcamp_complete()`; a finished project gets no
+  onboarding and no resume, only a pinned "complete" line, the
+  `/package-bootcamp` line and one open 👉, and its journey map is all ✅ —
+  the progress file still named the last module after graduation, so a new
+  session offered to resume it, and clearing `current_module` would have
+  restarted onboarding; an amendment to INV-227 is queued
