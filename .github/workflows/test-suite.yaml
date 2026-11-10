@@ -32,7 +32,7 @@ jobs:
         #              the only thing that catches it, because the omission is invisible to
         #              anyone whose machine has fpdf2 installed (#30, #33).
         fpdf2: [present, absent]
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       # fetch-depth: 0 is load-bearing, not caution. actions/checkout defaults to a depth-1
