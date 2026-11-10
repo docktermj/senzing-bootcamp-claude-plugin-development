@@ -1583,7 +1583,10 @@ Ground rules (`ground-rules.md`, every turn):
   only a site that can fail to arise, Module 5 step 11, writes `none`, and
   only module completion writes `skipped`, #856). One open 👉
   pinned at its site asks what to build and what they expect, with no menu or
-  recommendation. ⛔ The guide writes every line of code, from the MCP tools.
+  recommendation. A site may show numbered examples before it as starting
+  points (#888): the 👉 itself stays open and the turn's only 👉, picking only
+  examples directs the step, and the examples are no recommendation and never
+  sit beneath it. ⛔ The guide writes every line of code, from the MCP tools.
   The result is shown beside their words, `matches` or `differs`, every
   difference named from the tool's or engine's output, non-yielding and never
   graded; not a prediction. "You pick" or "I don't know" gets the step as
@@ -2819,23 +2822,31 @@ by graduation. No SQL: entity operations are generated SDK code from
 Phase 1 (`phase1-query-visualize.md`):
 
 - Step 1 first asks what the Bootcamper wants to find out about their data,
-  then lists their questions beside the requirements derived from
+  after numbered examples to pick from (#888): 1 to 4 from the refined prose
+  of `docs/business_problem.md`, never padded, each naming its source with no
+  quote, or all five common queries on the fallback path, then a line
+  inviting picks by number plus their own questions. The next turn lists
+  their questions ("You asked:"), then each picked example ("You picked:",
+  never marked not asked for), beside the requirements derived from
   `docs/business_problem.md`, marking those not asked for, in a combined list
   of at most 10, and ends on one confirming question (`#requirements-gate`).
   Beside each derived requirement the gate shows the `> "…"` line
   `docs/business_problem.md` carries for its source, read from the file and
-  labeled as their Module 1 words, or none where the file has none, and says
+  labeled as their Module 1 words, or none where the file has none, beside
+  each picked example too, and says
   that a mismatch between the two is what it asks about (INV-275).
   In the turn that settles the requirements, never before the open question is
   answered and never in the gate's turn, it shows the headline entity
   (`#headline-entity`): most data sources, then most records, then the lowest
   `ENTITY_ID`, as text with no 👉 of its own, recorded as
   `module_7_query.headline_entity`. The open question is Module 7's directing
-  step (ground rules' "Directing steps"); "I don't know" is the handed-back
-  case, recorded as `directing_steps.query_visualize_discover`. The checkpoint
+  step (ground rules' "Directing steps"); picking only examples directs it,
+  "I don't know" is the handed-back case, recorded as
+  `directing_steps.query_visualize_discover`. The checkpoint
   saves the settled list as `module_7_query.query_requirements`
   (`#query-requirements`): `{"text", "source"}` per requirement in the order
-  shown, `source` `"Bootcamper's answer"` for their own questions or the
+  shown, `source` `"Bootcamper's answer"` for their own questions,
+  `"Picked example — …"` plus its source for a picked example, or the
   success criterion or desired output a derived one came from, `[]` when none
   was confirmed, never changed after step 1.
 - Step 2 saves and builds one program `[query_name]` per query in `src/query`
@@ -11585,7 +11596,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9449 test methods in 476 files, matching `inventory.test_count_total`.
+There are 9469 test methods in 476 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 9408.
@@ -11696,7 +11707,7 @@ looks wrong.
 - `tests/test_deployment_target_records_only_what_is_named.py`: 15
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
 - `tests/test_dev_install_surfaces_name_the_dev_repo.py`: 11
-- `tests/test_directing_steps.py`: 86
+- `tests/test_directing_steps.py`: 94
 - `tests/test_discoveries_pdf.py`: 58
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
@@ -11852,7 +11863,7 @@ looks wrong.
 - `tests/test_module5_step18_validates_the_full_output.py`: 6
 - `tests/test_module6_data_dirs_are_copied_or_excluded.py`: 5
 - `tests/test_module6_repository_follows_database_type.py`: 27
-- `tests/test_module7_asks_the_bootcampers_question_first.py`: 12
+- `tests/test_module7_asks_the_bootcampers_question_first.py`: 24
 - `tests/test_module7_discover_instructions.py`: 17
 - `tests/test_module7_exports_for_integration_targets.py`: 50
 - `tests/test_module7_gate_shows_both_versions.py`: 13
@@ -15781,6 +15792,14 @@ Senzing licensing, with no SPDX identifier.
   data a Bootcamper could not name records they had never seen and answered
   the open question with feedback three times; an INV-354 amendment is
   queued
+- #888: Module 7 step 1 shows numbered examples before its unchanged open
+  question — 1 to 4 from the business problem's refined prose, or the five
+  common queries — inviting picks plus their own words; Turn 2 lists picked
+  examples as "You picked:" with their Module 1 quotes, never marked not
+  asked for, saved with a `"Picked example — …"` source, and the ground
+  rules' "Directing steps" allows numbered examples before any open 👉 —
+  shown only the bare question, a Bootcamper found it too open-ended and
+  answered with feedback; amendments to INV-359 and INV-354 are queued
 - #890: the visualization contract confirms the recorded pid against the
   port's listener right after the ready line (`#launch-confirmation`, with
   POSIX, PowerShell and in-container `python3` `/proc` forms), step 3c
