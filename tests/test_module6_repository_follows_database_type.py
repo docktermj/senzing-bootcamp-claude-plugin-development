@@ -22,7 +22,8 @@ The rest of #618, each asserted against the shipped text:
   "Follow each response's own `access_steps`, in the order it gives them" (INV-160, INV-300);
 * item 4, Truth Set teardown's "no" branch conditions the URL on `web_service`, and the
   fallback record says it carries one `reason`;
-* item 6, `module_6_processing.midpoint_record` at its writer and its reader;
+* item 6, `module_6_processing.midpoint_record` at its writer and its reader (Module 7's Discover
+  phase until #889 removed its "Already-shown entities", now Data processing step 21);
 * item 7, Module 2's NuGet source goes to the project's `nuget.config` (INV-199).
 
 Item 5 (INV-275's enforcer) needed no change and is not asserted here.
@@ -49,7 +50,6 @@ MODULE_02 = SKILLS / "module-02-sdk-setup" / "SKILL.md"
 MODULE_03 = SKILLS / "module-03-system-verification" / "phase1-verification.md"
 TRUTHSET_CLOSE = SKILLS / "module-03b-truthset-visualization" / "phase2-close.md"
 TRUTHSET_VIZ = SKILLS / "module-03b-truthset-visualization" / "phase1-visualization.md"
-DISCOVER = SKILLS / "module-07-query-visualize-discover" / "phase2-discover.md"
 
 STATEMENT_ANCHOR = '<a id="the-repository"></a>'
 STATEMENT_LEAD = "**The repository, on either engine.**"
@@ -258,14 +258,15 @@ def teardown_problems(close, viz):
 # --- Item 6: midpoint_record's key path. ---------------------------------------------------
 
 
-def midpoint_problems(phase_b, discover):
+def midpoint_problems(phase_b, phase_d):
     problems = []
     start = phase_b.index("**Checkpoint:** write step 9")
     if MIDPOINT_KEY not in flat(phase_b[start:phase_b.index("\n\n", start)]):
         problems.append("Module 6 step 9's checkpoint does not name %s" % MIDPOINT_KEY)
-    start = discover.index("**The entity that now holds `midpoint_record`:**")
-    if MIDPOINT_KEY not in flat(discover[start:start + 400]):
-        problems.append("Module 7's Discover phase does not read %s" % MIDPOINT_KEY)
+    start = phase_d.index("**Picking an example.**")
+    if "Never pick from the entity that holds " + MIDPOINT_KEY not in flat(
+            phase_d[start:phase_d.index("\n- **", start)]):
+        problems.append("Data processing step 21 does not read %s" % MIDPOINT_KEY)
     return problems
 
 
@@ -341,7 +342,7 @@ class TheSiblingItemsHold(unittest.TestCase):
         self.assertEqual(teardown_problems(read(TRUTHSET_CLOSE), read(TRUTHSET_VIZ)), [])
 
     def test_midpoint_record_has_its_key_path(self):
-        self.assertEqual(midpoint_problems(read(PHASE_B), read(DISCOVER)), [])
+        self.assertEqual(midpoint_problems(read(PHASE_B), read(PHASE_D)), [])
 
     def test_the_nuget_source_is_project_local(self):
         self.assertEqual(nuget_problems(read(MODULE_02)), [])
@@ -457,9 +458,9 @@ class NegativeControls(unittest.TestCase):
     def test_a_bare_midpoint_record_is_caught(self):
         phase_b = _replace(read(PHASE_B), ", at the\nkey path "
                            "`module_6_processing.midpoint_record`:", ":")
-        discover = _replace(read(DISCOVER), "recorded as `module_6_processing.midpoint_record` in",
-                            "recorded in")
-        self.assertEqual(2, len(midpoint_problems(phase_b, discover)))
+        phase_d = _replace(read(PHASE_D), "entity that holds `module_6_processing.midpoint_record`,",
+                           "entity that holds `midpoint_record`,")
+        self.assertEqual(2, len(midpoint_problems(phase_b, phase_d)))
 
     def test_a_user_level_nuget_write_is_caught(self):
         text = _replace(read(MODULE_02), " --name\n        SenzingLocal --configfile nuget.config`",

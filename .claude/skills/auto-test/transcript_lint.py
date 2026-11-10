@@ -27,11 +27,9 @@ Usage:
                                         [--project PROJECT_DIR]
     transcript_lint.py --selftest
 
-``--project`` is the walked project directory. Two checks read it: the apparatus
-check, for the verbosity preset INV-096 grades the time estimate against, and
-``check_pairs_step``, for the Discover record that exempts a walk from step
-4a-pairs. Without it each of those two items is reported as ungraded rather than
-missing.
+``--project`` is the walked project directory. The apparatus check reads it for the
+verbosity preset INV-096 grades the time estimate against. Without it the time
+estimate is reported as ungraded rather than missing.
 """
 import argparse
 import json
@@ -476,9 +474,10 @@ def check_repeat_questions(turns, replies=None):
 
 # ------------------------------------------- steps a module must not skip (#857)
 #
-# Three required steps a low-effort guide skipped in one run with nothing to notice it
-# (#855): the directing step (INV-354), Discover's step 4a-pairs (INV-357) and the worked
-# steer (INV-352). Each check below matches the wording the plugin's own sites pin, and
+# Required steps a low-effort guide skipped in one run with nothing to notice it (#855):
+# the directing step (INV-354) and the worked steer (INV-352). Historical note: Discover's
+# step 4a-pairs (INV-357) was a third until #889 removed the step and its check.
+# Each check below matches the wording the plugin's own sites pin, and
 # each tests/ file that pins a pattern reads it from that site, so a reworded site fails
 # there rather than turning these checks silent.
 #
@@ -502,11 +501,6 @@ DIRECTING_QUESTIONS = {
 NO_SITE = re.compile(r"\*\*You directed:\*\*\s*nothing this module\.[^\n]*?"
                      r"so there was no step to hand over\.")
 NO_SITE_MODULES = ("data_quality_mapping",)
-#: Step 4a-pairs' pinned 👉 (`phase2-discover.md`, item 2), in Query, Visualize and Discover.
-PAIRS_QUESTION = re.compile(r"Are these two records the same entity\?")
-PAIRS_MODULE = "query_visualize_discover"
-#: Where the walked project records Discover's progress, under the project directory.
-PROGRESS = Path("config") / "bootcamp_progress.json"
 #: The Act 2 hands-on modules a worked steer applies to (`ground-rules.md` → "Worked steers").
 STEER_MODULES = ("data_collection", "data_quality_mapping", "data_processing",
                  "query_visualize_discover")
@@ -584,58 +578,6 @@ def check_directing_steps(turns):
     return out
 
 
-def discover_record(project):
-    """``module_7_query`` from the project's progress file, ``{}`` when absent, None unreadable."""
-    if not project:
-        return None
-    try:
-        data = json.loads((Path(project) / PROGRESS).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
-    if not isinstance(data, dict):
-        return None
-    record = data.get("module_7_query")
-    return record if isinstance(record, dict) else {}
-
-
-def check_pairs_step(turns, project=None):
-    """INV-357: Query, Visualize and Discover does not end without step 4a-pairs' 👉.
-
-    Exempt when the project's ``config/bootcamp_progress.json`` records
-    ``module_7_query.discover_phase: "skipped"``, or ``steps["4a-pairs"].pairs == []``
-    (step 4a could supply no pair). ⚠️ **An unreadable progress file is a coverage
-    limit, not a finding**, as ``check_apparatus`` treats an unreadable preset: the
-    missing 👉 is reported at INFO, saying it was not graded and why.
-    """
-    out = []
-    for span in module_spans(turns):
-        if span["token"] != PAIRS_MODULE or span["end"] is None:
-            continue
-        if _asks(turns[span["start"] - 1:span["end"]], PAIRS_QUESTION):
-            continue
-        record = discover_record(project)
-        if record is None:
-            where = (f"{Path(project) / PROGRESS}" if project
-                     else "no project directory was given (--project)")
-            out.append(_finding(
-                INFO, "INV-357-pairs-step-ungraded", span["end"],
-                f"{span['name']} ended without step 4a-pairs' 👉 and its Discover record "
-                f"could not be read from {where}; a skipped Discover or a step 4a with "
-                "no pair to offer excuses it, so this is ungraded rather than missing"))
-            continue
-        steps = record.get("steps")
-        pairs = steps.get("4a-pairs") if isinstance(steps, dict) else None
-        if record.get("discover_phase") == "skipped" or (
-                isinstance(pairs, dict) and pairs.get("pairs") == []):
-            continue
-        out.append(_finding(
-            BREAKING, "INV-357-pairs-step-missing", span["end"],
-            f"{span['name']} (turns {span['start']}-{span['end']}) ended without step "
-            "4a-pairs' 👉 (\"Are these two records the same entity?\"), and the project "
-            "records neither a skipped Discover nor an empty pairs list"))
-    return out
-
-
 def _failed_program_run(tool):
     """Whether a tool result is a failed build or run of a project program."""
     command = tool.get("command") or ""
@@ -681,7 +623,7 @@ def check_worked_steers(turns, tools=None):
 
 CHECKS = (check_one_pointer_per_turn, check_module_numbers, check_or_joined_choices,
           check_internal_markers, check_repeat_questions, check_directing_steps,
-          check_pairs_step, check_worked_steers)
+          check_worked_steers)
 
 
 def lint(turns, phase=None, project=None, replies=None, tools=None):
@@ -694,8 +636,6 @@ def lint(turns, phase=None, project=None, replies=None, tools=None):
     for check in CHECKS:
         if check is check_repeat_questions:
             findings.extend(check(turns, replies))
-        elif check is check_pairs_step:
-            findings.extend(check(turns, project))
         elif check is check_worked_steers:
             findings.extend(check(turns, tools))
         else:
@@ -799,15 +739,9 @@ def _skipped_step_cases():
     """``(name, should_fire, findings)`` for each #857 check, on a built walk and its control."""
     banner = {m["token"]: m["banner"] for m in module_table()}
     ready = "\U0001f449 **Are you ready to move on to the next module: Data processing?**"
-    graduate = ("\U0001f449 **Would you like to graduate now and generate your production "
-                "project and recap?**")
     lookup = ("\U0001f449 **How do you expect Senzing to have resolved these records? Reply "
               "with a number:**")
-    pairs = ("\U0001f449 **Are these two records the same entity? Reply with a number, and "
-             "add a few words on why if you like:**")
     processing = [banner["data_processing"], "Loading your records now."]
-    discover = [banner["query_visualize_discover"],
-                "\U0001f449 **What do you want to find out about your data?**"]
     collection = [banner["data_collection"], "Running the collector."]
     failed = [{"after": 1, "tool": "Bash", "command": "python3 src/collect/collect_crm.py",
                "is_error": True, "text": "Exit code 1\nKeyError: 'name'"}]
@@ -823,16 +757,6 @@ def _skipped_step_cases():
         ("worked steer shown after a failed run", False,
          check_worked_steers(collection + [steer, ready], failed)),
     ]
-    with tempfile.TemporaryDirectory() as scratch:
-        for phase, fires in (("completed", True), ("skipped", False)):
-            project = Path(scratch) / phase
-            (project / PROGRESS.parent).mkdir(parents=True)
-            (project / PROGRESS).write_text(json.dumps(
-                {"module_7_query": {"discover_phase": phase}}), encoding="utf-8")
-            cases.append((f"4a-pairs missing, Discover {phase}", fires,
-                          check_pairs_step(discover + [graduate], project)))
-        cases.append(("4a-pairs asked", False,
-                      check_pairs_step(discover + [pairs, graduate], scratch)))
     return cases
 
 
@@ -963,9 +887,7 @@ def main(argv=None):
     ap.add_argument("--project", default=None,
                     help="the walked project directory, whose "
                          "config/bootcamp_preferences.yaml holds the verbosity "
-                         "preset INV-096 grades the time estimate against, and whose "
-                         "config/bootcamp_progress.json holds the Discover record "
-                         "that can excuse step 4a-pairs")
+                         "preset INV-096 grades the time estimate against")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args(argv)

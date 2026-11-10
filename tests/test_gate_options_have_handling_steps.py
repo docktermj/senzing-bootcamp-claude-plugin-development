@@ -25,7 +25,10 @@ scans **every skill file** and **every option** of every gate:
   beneath it, and until #620 two such gates (Bootcamp preparation's programming-language gate
   and Module 7 step 3a's recall question) shipped with no marker. #796 adds the three phrasings
   that pattern missed, `Reply with the numbers`, `… the numbers from the list` and `Reply with
-  the option number`, at four live sites (Modules 1, 6 and 7 and Bootcamp preparation).
+  the option number`, at four live sites (Modules 1, 6 and 7 and Bootcamp preparation). #889
+  removed the Discover one with its prediction, so three remain; its bare `Reply with the
+  numbers, comma-separated` phrasing stays covered by the fixture in
+  `test_the_796_phrasings_are_reply_questions`.
 - **Its marker** is the first `**Handling each answer (INV-284).**` below its options and above
   the next heading, modeled on Module 7 step 3b's. Gates asked in place of one another (the
   bands of one quality gate, or a question's alternative forms) share the marker below the
@@ -497,13 +500,12 @@ class TheGuardBites(unittest.TestCase):
                 self.assertEqual(1, len(gates(fixture)))
                 self.assertNotEqual([], marker_problems(fixture))
 
-    def test_the_four_796_sites_are_scanned_and_bite(self):
-        """#796's four shipped sites: each passes as shipped, and its question, asked with the
-        options built in prose and no marker, is reported. #620's pattern saw no gate there."""
+    def test_the_796_sites_are_scanned_and_bite(self):
+        """#796's shipped sites (three since #889 removed Discover's): each passes as shipped, and
+        its question, asked with the options built in prose and no marker, is reported. #620's
+        pattern saw no gate there."""
         retired = re.compile(r"reply with (?:a|one or more) number")
         for rel, question in (
-                ("module-07-query-visualize-discover/phase2-discover.md",
-                 "which features do you think joined these records"),
                 ("module-01-business-problem/phase1-discovery.md",
                  "what does the end result look like"),
                 ("bootcamp-preparation/SKILL.md", "which optional modules would you like"),

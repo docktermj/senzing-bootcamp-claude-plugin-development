@@ -559,9 +559,9 @@ records, is stated once in [`ground-rules.md`](../bootcamp-onboarding/ground-rul
 **Checkpoint:** write step 9 (record `midpoint_record` in `config/bootcamp_progress.json`, at the
 key path `module_6_processing.midpoint_record`: the `"<DATA_SOURCE>:<RECORD_ID>"` of the midpoint
 entity's record with the lowest `RECORD_ID`, or `"none"` when this step showed no entity). A record
-identifies the entity across later loads, and an entity ID does not. Module 7's Discover phase
-reads it to keep its predictions off this entity
-([`phase2-discover.md`](../module-07-query-visualize-discover/phase2-discover.md#already-shown-entities)).
+identifies the entity across later loads, and an entity ID does not. Step 21's expectation check
+reads it to keep its examples off this entity ([`phaseD-validation.md`](phaseD-validation.md)
+step 21).
 
 ## 10. Incremental loading strategy
 

@@ -120,146 +120,35 @@ entities with relationships (disclosed or discovered) found. The `relationships`
 but K is a count of **entities**, not of clusters or of relationships. Also set top-level
 `current_step` to `"4a"`.
 
-<a id="already-shown-entities"></a>
-
-### Already-shown entities
-
-Before the Discover phase the bootcamp has already shown two entities resolved on screen, each with
-its records and why they resolved together: Module 6's midpoint entity and Module 7's headline
-entity. A prediction about either would ask for an answer the Bootcamper has already seen (INV-357).
-This is the one statement of which entities that excludes; step 4a-pairs item 1 and step 4b item 1
-point here and say only what they do with an excluded entity (INV-300). Work the set out once, after
-step 4a's calls and before step 4a-pairs:
-
-1. **The headline entity:** the entity ID recorded as `module_7_query.headline_entity` at Module 7
-   step 1. When it is `"none"` (no entity had two or more records) or absent, there is no headline
-   exclusion.
-2. **The entity that now holds `midpoint_record`:** the `"<DATA_SOURCE>:<RECORD_ID>"` Module 6 step 9
-   recorded as `module_6_processing.midpoint_record` in `config/bootcamp_progress.json`. Locate its entity with `get_entity_by_record_id` on
-   that data source and record ID, with the program `discover_patterns` in `src/query` that step
-   4a saved, run with its run command in `../bootcamp-onboarding/ground-rules.md` → "Building and
-   running a program". A record identifies
-   the entity across later loads, and an entity ID does not, so look it up rather than reuse an ID.
-   When `midpoint_record` is `"none"` or absent (a progress file written before Module 6 recorded it,
-   or a quality-iteration reload, which shows no midpoint entity), there is no midpoint exclusion.
-   Do not re-derive it from Module 6's selection rule.
-
-When the midpoint record now sits in the headline entity, that is one exclusion, not two. Nothing
-else is excluded: entities in step 3a's query results, or browsed freely in step 3c's app, are not,
-because nothing records what was viewed there.
-
-### Step 4a-pairs: Same entity or not?
-
-Before the why and how demonstrations, the Bootcamper predicts how the engine resolved a few pairs
-of their own records. This is a prediction point: the skip, the reveal's shape, "informs, never
-grades" and the Questions & Responses line are stated once in
-`../bootcamp-onboarding/ground-rules.md` → "Predictions before results"; follow them there rather
-than a copy here (INV-300, INV-357).
-
-1. **Choose 3 pairs from step 4a's entities.** Step 4a's `get_entity_by_record_id` calls already
-   hold each record's entity ID, so no new call is needed to know the answers. Hold them back.
-   - **Never an already-shown entity.** The headline entity (`headline_entity`) and the entity
-     that holds `midpoint_record` are excluded, as
-     [Already-shown entities](#already-shown-entities) states once (INV-300): no record of theirs
-     is used for any pair. The rules below, and the fallback when step 4a cannot supply 3, apply to
-     what remains, so when every multi-record entity is excluded only pairs that did not resolve
-     together are left.
-   - **At least one pair that resolved together:** two records of one multi-record entity,
-     cross-source when step 4a found one. Prefer an entity other than the one step 4b will
-     demonstrate, when step 4a supplies another.
-   - **At least one pair that did not:** two records in different entities. Prefer two related
-     entities (step 4a item 3), which share something, over two that share nothing.
-   - **The third pair** is either kind. Mix the order, and never say how many pairs resolved
-     together.
-   - **When step 4a cannot supply 3,** including its graceful fallback for limited data, show as
-     many as it can, even if they are all one kind. When it can supply none, say so in one line and
-     continue to step 4b. That exit also writes
-     `module_7_query.steps["4a-pairs"] = {"status": "completed", "pairs": []}`, so module
-     completion knows the step ran.
-2. **Show one pair per turn, then ask.** First introduce the exercise, as
-   `../bootcamp-onboarding/ground-rules.md` → "Predictions before results" requires before the
-   site's first 👉 (INV-357). Present the two records' features side by side, read from
-   the loaded file each came from (the `file_path` step 4a used). Show no entity ID, match key or
-   any other sign of the engine's answer. End the turn on:
-
-   👉 **Are these two records the same entity? Reply with a number, and add a few words on why if you like:**
-
-   1. Same entity.
-   2. Different entities.
-   3. Just show me the engine's answer.
-
-   *(Internal: end the turn on this question and wait.)*
-
-   **Handling each answer (INV-284).** Every answer gets item 3's reveal, in the same turn as the
-   next pair's question, or as step 4b's first question after the last pair.
-
-   - **1, "Same entity":** prediction `same`.
-   - **2, "Different entities":** prediction `different`.
-   - **3, "Just show me the engine's answer":** prediction `skipped`.
-
-3. **Reveal it in the same turn as the next 👉.** The engine's call is "same entity" when step 4a
-   found both records in one entity, and "different entities" otherwise. The one line on what the
-   engine used is the `WHY_KEY` from `why_records` on the pair. `why_records` answers for a pair
-   that did not resolve too; when the two were never compared, the line says so. Step 4b
-   introduces `why_records` in full, and its item 3 is where its flags and response shape are
-   looked up (INV-115). The next 👉 is the next pair's question. After the last pair it is step 4b's
-   first 👉: item 1a's when it applies, otherwise item 7's.
-
-**Checkpoint:** update `module_7_query.steps["4a-pairs"]` at the end of each pair's turn, so a
-resume lands on the next pair rather than repeating one:
-`{"status": "in_progress|completed", "pairs": [{"records": ["<DS>:<ID>", "<DS>:<ID>"],
-"prediction": "same|different|skipped", "engine": "same|different",
-"agreement": "agreed|differed|skipped"}]}`.
-
 ### Step 4b: Why Analysis introduction
 
-Demonstrate Why Analysis using a concrete cross-source entity identified in step 4a. This
-teaches the bootcamper how Senzing explains its resolution decisions.
+Demonstrate Why Analysis using a concrete cross-source entity, one whose records come from two or
+more distinct data sources. This teaches the bootcamper how Senzing explains its resolution
+decisions. This step asks no prediction: the "same entity?" exercise is Data processing's
+expectation check (`../module-06-data-processing/phaseD-validation.md` step 21), and Discover does
+not repeat it.
 
-1. **Entity selection:** select a cross-source entity from step 4a, one whose records come
-   from two or more distinct data sources. Prefer one that is not excluded: the headline entity
-   (`headline_entity`) and the entity that holds `midpoint_record` are, as
-   [Already-shown entities](#already-shown-entities) states once (INV-300). When only excluded
-   entities qualify, demonstrate one of them anyway, and item 1a is skipped. For a Bootcamper who is
-   not a Truth Set alumnus item 1a never runs, so the exclusion is a preference only. Use the
-   specific record IDs to call `why_records`, or the entity IDs to call `why_entities`. Prefer
-   `why_records` for the initial demonstration because it compares two specific source records,
-   which is easier to follow. State what you are using: "I'll use Entity [ID], which contains records from [Source A] and [Source B] —
-   let's see why Senzing decided these belong to the same real-world entity."
-1a. **Own-entity prediction (Truth Set alumni only).** Run this item only when
-   `truthset_visualization` is in `modules_completed` in `config/bootcamp_progress.json`.
-   Otherwise go straight to item 2, as before. **Skip it as well when item 1 had to use an
-   excluded entity** (see [Already-shown entities](#already-shown-entities)) and go straight to
-   item 2 in the same way, so nothing is predicted whose answer was already shown. This is a
-   prediction point: the skip, the reveal's shape, "informs, never grades" and the Questions &
-   Responses line are stated once in `../bootcamp-onboarding/ground-rules.md` → "Predictions
-   before results"; follow them there rather than a copy here (INV-300, INV-357).
-   - **Show the entity's records before any `why_*` call, as text only.** First introduce the
-     exercise, as `../bootcamp-onboarding/ground-rules.md` → "Predictions before results" requires
-     before the site's first 👉 (INV-357). Show the two records item 1
-     named as text, feature by feature, read from the loaded file each came from. Do not send the
-     Bootcamper to step 3c's app for them before the 👉: its entity view shows each record's match
-     key and the why verdict, which are this prediction's answer (INV-357).
-   - **The options are this entity's feature types**, built at runtime: the feature types the two
-     records carry, read from the engine's entity response rather than from the source columns.
-     Look up the record-feature flag with
-     `get_sdk_reference(topic='flags', filter='get_entity_by_record_id')` (INV-115). Then end the turn
-     on this question, with the numbered feature types directly beneath it:
+1. **Entity selection:** reuse an example from Data processing's expectation check when one fits,
+   and otherwise select from step 4a.
+   - **An example from Data processing.** Read `module_6_processing.expectation_check.examples` in
+     `config/bootcamp_progress.json`, never the recap's Questions & Responses text. An example fits
+     when the Bootcamper gave an expectation for it (its `agreement` is `agreed` or `differed`),
+     its `engine` call put its records in one entity, and its `records` name two or more data
+     sources. Take the first that fits, and look its records up with `get_entity_by_record_id`,
+     with the program `discover_patterns` in `src/query` that step 4a saved, run with its run
+     command in `../bootcamp-onboarding/ground-rules.md` → "Building and running a program", to
+     find the entity that holds them now. Say in one line that this is the example from Data processing.
+   - **Otherwise, a cross-source entity from step 4a.** When no example fits (none merged across
+     sources, the step was handed back, or the record is absent in a project from before the
+     expectation check), or the lookup now finds the example's records in more than one entity,
+     select a cross-source entity from step 4a.
 
-     👉 **Which features do you think joined these records? Reply with the numbers, comma-separated — reply "skip" to just see the engine's answer.**
-
-     1. {feature type}
-     2. {feature type}, and one line per remaining feature type
-
-     *(Internal: end the turn on this question and wait.)*
-
-     **Handling each answer (INV-284).**
-
-     - **Each number:** a feature type they predict joined the records. The reveal follows on the
-       next turn, as the next item says; a "skip" reply gets the same reveal with no prediction.
-   - **The reveal is items 2–5**, presented on the next turn. Open item 4 by putting the
-     Bootcamper's picks beside the `+FEATURE` components of `WHY_KEY`: `agreed` when the two sets
-     are the same, `differed` otherwise, naming the features they share.
+   Use the specific record IDs to call `why_records`, or the entity IDs to call `why_entities`.
+   Prefer `why_records` for the initial demonstration because it compares two specific source
+   records, which is easier to follow: for an example from Data processing, two of its records
+   from different data sources. State what you are using: "I'll use Entity [ID], which contains
+   records from [Source A] and [Source B] — let's see why Senzing decided these belong to the
+   same real-world entity."
 2. **SDK method introduction:** before generating the SDK call, briefly explain the two Why
    Analysis methods:
    - `why_records`: compares two specific source records and explains why they resolved

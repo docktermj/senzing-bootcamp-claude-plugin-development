@@ -19,7 +19,7 @@ This is the Claude-plugin port of the Kiro `module-completion*` / `module-comple
 
 A required step leaves a record whether it ran or not, and this step reads those records before
 Step 1's batched write, so whatever it records or runs lands before the recap is appended and
-before the transition 👉. Run its three sub-steps in order. Each states its condition, its action
+before the transition 👉. Run its two sub-steps in order. Each states its condition, its action
 and its turn handling; a sub-step whose condition does not hold does nothing and asks nothing, so
 a module that skipped nothing goes straight on to Step 1 in the same turn.
 
@@ -69,22 +69,7 @@ name token to `modules_completed`, Step 0 is over, and a resume past that point 
 - **Turn.** Neither asks anything. The late steer is non-yielding and required output at every
   verbosity, as "Worked steers" states (INV-352), so it goes in this turn ahead of the turn's 👉.
   The filings are silent. Write the checkpoint note and the `filed` marks at the end of 0b, one
-  write per file and before any 👉 0c asks, then go on to 0c in the same turn.
-
-### 0c. Discover's step 4a-pairs
-
-- **Condition.** The module is Query, Visualize and Discover, `module_7_query.discover_phase` is
-  not `"skipped"`, and `module_7_query.steps["4a-pairs"]` is missing or its `status` is not
-  `completed`. The record's shape, and the `completed` record with no pairs that the step writes
-  when step 4a can supply none, are stated once in
-  `../module-07-query-visualize-discover/phase2-discover.md` → "Step 4a-pairs: Same entity or
-  not?" (INV-300, INV-357).
-- **Action.** Run step 4a-pairs now, with all of its rules, the already-shown-entities exclusion
-  included. An `in_progress` record resumes at its next pair; a missing one starts at item 1.
-- **Turn.** Each pair's 👉 ends its turn, as at the site. After the last pair the next 👉 is not
-  step 4b's: the last reveal goes in the turn that continues module completion at Step 1, and that
-  turn ends on this module's closing 👉. When step 4a can supply no pair, the step's one line and
-  its record ask nothing: go on to Step 1 in the same turn.
+  write per file, then go on to Step 1 in the same turn.
 
 ## Step 1: Update progress state
 

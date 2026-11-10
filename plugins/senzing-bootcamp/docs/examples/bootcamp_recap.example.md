@@ -510,9 +510,6 @@
     - **R:** Yes.
 - **Q:** Would you like to explore Senzing's advanced discover capabilities using examples from your own data?
     - **R:** Yes.
-- **Are these two records the same entity? (two ATLAS FOODS records from Enformion)** — same entity "same name, same address, same tax ID" → different entities (differed)
-- **Are these two records the same entity? (two MIKE FIGLEY records)** — same entity → same entity (agreed)
-- **Are these two records the same entity? (two AUGUSTUS INTERNATIONAL ENTERPRISES LLC records)** — skipped → same entity
 - **Q:** What would you like to do next? (after Why Analysis)
     - **R:** Continue to How Analysis.
 - **Q:** What would you like to do next? (after How Analysis)

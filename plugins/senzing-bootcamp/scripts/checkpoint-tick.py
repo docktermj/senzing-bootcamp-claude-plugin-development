@@ -30,9 +30,8 @@ the module has closed:
   module (ground-rules.md -> "Worked steers", INV-352; INV-373).
 
 It names each one and tells the guide to repair it silently: record ``skipped``, and file
-the reversal. A missing worked steer and a missing step 4a-pairs are not checked: the
-checkpoint that would show a steer was cleared by module completion's Step 2d, and step
-4a-pairs would reopen a closed module. Both stay with module completion's Step 0 (#856) and
+the reversal. A missing worked steer is not checked: the checkpoint that would show a steer
+was cleared by module completion's Step 2d. It stays with module completion's Step 0 (#856) and
 ``transcript_lint`` (#857). The reminder is not conditional on the reply: module
 completion's Step 1 has closed the module whatever the answer (INV-413). A record the guide
 leaves unrepaired is named again at the next transition.

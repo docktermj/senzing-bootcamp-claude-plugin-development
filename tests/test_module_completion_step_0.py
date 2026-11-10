@@ -10,9 +10,8 @@ write, that reads the records and either runs the step late or records the skip.
 What this file pins, in `module-completion.md` (from its `## Step 0:` heading to `## Step 1:`):
 
 1. **The frame.** Step 0 sits between the opening and Step 1, and the opening names it. It has
-   three sub-steps in a fixed order: 0a the directing step, 0b the worked steer and the reversal
-   filings, 0c Discover's step 4a-pairs. Each states its **Condition**, its **Action** and its
-   **Turn** handling.
+   two sub-steps in a fixed order: 0a the directing step, 0b the worked steer and the reversal
+   filings. Each states its **Condition**, its **Action** and its **Turn** handling.
 2. **Turn handling.** A sub-step that runs a step ending on a 👉 ends the turn on it (INV-251);
    the next turn finishes that step, resumes at the following sub-step, then Step 1.
 3. **Re-entry (INV-006).** A resumed session runs Step 0 again from 0a, and each finished
@@ -27,30 +26,27 @@ What this file pins, in `module-completion.md` (from its `## Step 0:` heading to
    checkpoint, the first entry's steer is shown late with no ask-first question, even from Data
    processing on; in every module, each `filed: false` reversal is filed silently through
    `feedback.md` → "Silent in-run append", and a failed filing does not block (INV-373).
-6. **0c.** In Query, Visualize and Discover, when `discover_phase` is not `"skipped"` and
-   `steps["4a-pairs"]` is missing or not `completed`, step 4a-pairs runs now with all of its
-   rules, an `in_progress` record resuming at its next pair, and the last reveal goes in the turn
-   that continues module completion, not before step 4b.
+6. **No 0c (#889).** #856 added a third sub-step, 0c, that ran Discover's step 4a-pairs late.
+   #889 removed that step, so 0c went with it, and 0b goes on to Step 1. Step 0 naming
+   step 4a-pairs again is reported, with a negative control that puts the old 0c back.
 7. **Single statement (INV-300).** Each sub-step points at the owner of its record, citing the
    owner's invariant (`ground-rules.md` → "Directing steps", INV-354; → "Worked steers",
-   INV-352; `phase2-discover.md` → "Step 4a-pairs: Same entity or not?", INV-357), and carries no
-   copy of what the owner defines: the `skipped` form's wording, the `steer_triggers` entry's
-   shape, or the 4a-pairs record's shape.
+   INV-352), and carries no copy of what the owner defines: the `skipped` form's wording or the
+   `steer_triggers` entry's shape.
 
 The checks are pure functions over the file's text, so each one also runs on a mutated copy as
 its negative control (`TheChecksCatchARegression`). Each mutation must make the check report the
 problem it targets, not merely some problem.
 
-⛔ **What this cannot establish:** that a live guide runs Step 0, shows a late steer or runs the
-pairs late. Those are properties of a conversation; only `dry-run` phase 3 observes them. This
+⛔ **What this cannot establish:** that a live guide runs Step 0 or shows a late steer. Those are properties of a conversation; only `dry-run` phase 3 observes them. This
 pins that the skill file STATES them.
 
 The definitions Step 0 points at are pinned where they live: `tests/test_directing_steps.py`
 (`skipped`, the fourth form, the site-only `none`), `tests/test_worked_steers.py`
-(`steer_triggers`, the `filed` mark), `tests/test_predictions_before_results.py` (the empty
-pairs record) and `tests/test_module_completion_step1_lists_every_write.py` (Step 1's write).
+(`steer_triggers`, the `filed` mark) and `tests/test_module_completion_step1_lists_every_write.py`
+(Step 1's write).
 
-Source issue: #856 (part of #855). Invariants applied: INV-354, INV-352, INV-357, INV-413,
+Source issues: #856 (part of #855); #889 (0c retired). Invariants applied: INV-354, INV-352, INV-357, INV-413,
 INV-300, INV-006, INV-251, INV-225, INV-373, INV-012.
 
 Stdlib only; shipped markdown read as text (INV-108).
@@ -66,8 +62,9 @@ COMPLETION = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills" / "bootcamp-
               / "module-completion.md")
 
 SUB_STEPS = (("0a", "### 0a. The directing step"),
-             ("0b", "### 0b. The worked steer and the reversal filings"),
-             ("0c", "### 0c. Discover's step 4a-pairs"))
+             ("0b", "### 0b. The worked steer and the reversal filings"))
+#: The sub-step #889 retired with Discover's step 4a-pairs; Step 0 must not carry it again.
+RETIRED = re.compile(r"4a-pairs")
 PARTS = ("**Condition.**", "**Action", "**Turn.**")
 
 
@@ -107,7 +104,7 @@ FRAME = {
     "that it runs before Step 1's batched write": r"before Step 1's batched write",
     "that what it records lands before the recap and the transition 👉":
         r"lands before the recap is appended and before the transition 👉",
-    "that the sub-steps run in order": r"Run its three sub-steps in order",
+    "that the sub-steps run in order": r"Run its two sub-steps in order",
     "that a sub-step whose condition fails asks nothing":
         r"a sub-step whose condition does not hold does nothing and asks nothing",
     "that a step ending on a 👉 ends the turn (INV-251)":
@@ -176,33 +173,14 @@ ZERO_B = {
     "a failed filing does not block (INV-373)": r"does not block completion \(INV-373\)",
     "the steer is non-yielding and required at every verbosity":
         r"non-yielding and required output at every verbosity",
-    "its writes land before any 👉 0c asks": r"before any 👉 0c asks",
-}
-
-ZERO_C = {
-    "the module is Query, Visualize and Discover": r"The module is Query, Visualize and Discover",
-    "an explicitly skipped Discover is exempt": r"`module_7_query\.discover_phase` is not "
-                                                r"`\"skipped\"`",
-    "a missing or incomplete record": r"`module_7_query\.steps\[\"4a-pairs\"\]` is missing or its "
-                                      r"`status` is not `completed`",
-    "the pointer to its owner (INV-300, INV-357)":
-        r"`\.\./module-07-query-visualize-discover/phase2-discover\.md` → \"Step 4a-pairs: Same "
-        r"entity or not\?\" \(INV-300, INV-357\)",
-    "the step runs now with all its rules": r"Run step 4a-pairs now, with all of its rules",
-    "the already-shown exclusion applies": r"the already-shown-entities exclusion included",
-    "an in_progress record resumes at its next pair":
-        r"An `in_progress` record resumes at its next pair",
-    "each pair's 👉 ends its turn": r"Each pair's 👉 ends its turn",
-    "the last reveal is not before step 4b": r"After the last pair the next 👉 is not step 4b's",
-    "the last reveal continues module completion":
-        r"the last reveal goes in the turn that continues module completion at Step 1",
+    "its writes come at the end of 0b, then Step 1 in the same turn":
+        r"one write per file, then go on to Step 1 in the same turn",
 }
 
 #: What only the owners define; a copy here would fork the rule (INV-300).
 OWNER_ONLY = {
     "the skipped form's wording": r"was skipped, so you were not asked to direct it",
     "the steer_triggers entry's shape": r"\"kind\": \"failure\|reversal\"",
-    "the 4a-pairs record's shape": r"\"prediction\": \"same\|different\|skipped\"",
     "the steer's first line": r"What went wrong: \{",
 }
 
@@ -217,12 +195,12 @@ def problems(text):
         found.append("the opening does not name Step 0")
     starts = [section.find(h) for _, h in SUB_STEPS]
     if min(starts) < 0:
-        found.append("Step 0 does not carry all three sub-steps")
+        found.append("Step 0 does not carry both sub-steps")
         return found
     if starts != sorted(starts):
-        found.append("Step 0's sub-steps are not in the order 0a, 0b, 0c")
+        found.append("Step 0's sub-steps are not in the order 0a, 0b")
     found += require(section[:starts[0]], "Step 0", FRAME)
-    for (key, _), clauses in zip(SUB_STEPS, (ZERO_A, ZERO_B, ZERO_C)):
+    for (key, _), clauses in zip(SUB_STEPS, (ZERO_A, ZERO_B)):
         body = sub_step(section, key)
         for part in PARTS:
             if part not in body:
@@ -232,6 +210,8 @@ def problems(text):
     for what, pattern in OWNER_ONLY.items():
         if re.search(pattern, flat):
             found.append("Step 0 restates %s, which its owner defines (INV-300)" % what)
+    if RETIRED.search(section):
+        found.append("Step 0 runs Discover's step 4a-pairs, which #889 retired")
     if re.search(r"^👉 \*\*", section, re.MULTILINE):
         found.append("Step 0 pins a 👉 of its own")
     return found
@@ -279,14 +259,14 @@ class TheChecksCatchARegression(unittest.TestCase):
 
     def test_sub_steps_out_of_order(self):
         section = step0(read())
-        a, c = sub_step(section, "0a"), sub_step(section, "0c")
-        swapped = section.replace(a, "\0").replace(c, a).replace("\0", c)
-        self.assertReports(read().replace(section, swapped), "not in the order 0a, 0b, 0c")
+        a, b = sub_step(section, "0a"), sub_step(section, "0b")
+        swapped = section.replace(a, "\0").replace(b, a).replace("\0", b)
+        self.assertReports(read().replace(section, swapped), "not in the order 0a, 0b")
 
     def test_a_sub_step_dropped(self):
         section = step0(read())
         self.assertReports(read().replace(sub_step(section, "0b"), ""),
-                           "does not carry all three sub-steps")
+                           "does not carry both sub-steps")
 
     def test_the_turn_ending_rule_dropped(self):
         self.assertReports(self.replace("the turn ends on that 👉** (INV-251)",
@@ -314,9 +294,9 @@ class TheChecksCatchARegression(unittest.TestCase):
 
     def test_a_part_dropped(self):
         section = step0(read())
-        body = sub_step(section, "0c")
+        body = sub_step(section, "0b")
         self.assertReports(read().replace(body, body.replace("**Turn.**", "**Then.**")),
-                           "0c has no Turn part")
+                           "0b has no Turn part")
 
     # --- 0a ----------------------------------------------------------------------------------
 
@@ -383,39 +363,21 @@ class TheChecksCatchARegression(unittest.TestCase):
                                         '"failure|reversal", "evidence": "…"}`.'),
                            "restates the steer_triggers entry's shape")
 
-    # --- 0c ----------------------------------------------------------------------------------
+    def test_0b_waits_for_a_sub_step_that_is_gone(self):
+        self.assertReports(self.replace("then go on to Step 1 in the same turn.",
+                                        "then go on to 0c in the same turn."),
+                           "then Step 1 in the same turn")
 
-    def test_a_skipped_discover_not_exempt(self):
-        self.assertReports(self.replace("`module_7_query.discover_phase` is\n  not `\"skipped\"`, "
-                                        "and ", ""), "an explicitly skipped Discover is exempt")
+    # --- the retired 0c (#889) ---------------------------------------------------------------
 
-    def test_only_a_missing_record_counts(self):
-        self.assertReports(self.replace("is missing or its `status` is not\n  `completed`",
-                                        "is missing"), "a missing or incomplete record")
-
-    def test_the_pairs_restart(self):
-        self.assertReports(self.replace("An `in_progress` record resumes at its next pair",
-                                        "An `in_progress` record starts again at item 1"),
-                           "an in_progress record resumes at its next pair")
-
-    def test_the_last_reveal_goes_before_step_4b(self):
-        self.assertReports(self.replace("After the last pair the next 👉 is not\n  step 4b's",
-                                        "After the last pair the next 👉 is\n  step 4b's"),
-                           "the last reveal is not before step 4b")
-
-    def test_the_exclusion_dropped(self):
-        self.assertReports(self.replace(", the already-shown-entities exclusion\n  included", ""),
-                           "the already-shown exclusion applies")
-
-    def test_0c_copies_the_record_shape(self):
-        self.assertReports(self.replace("An `in_progress` record",
-                                        'Each pair is `{"prediction": "same|different|skipped"}`. '
-                                        "An `in_progress` record"),
-                           "restates the 4a-pairs record's shape")
-
-    def test_0c_loses_its_pointer(self):
-        self.assertReports(self.replace('not?" (INV-300, INV-357).', 'not?".'),
-                           "0c does not state the pointer to its owner")
+    def test_the_retired_0c_put_back(self):
+        """Negative control: #856's 0c, reintroduced word for word in its heading, is reported."""
+        old = ("### 0c. Discover's step 4a-pairs\n\n- **Condition.** The module is Query, "
+               "Visualize and Discover.\n- **Action.** Run step 4a-pairs now.\n- **Turn.** "
+               "Each pair's 👉 ends its turn.\n\n")
+        self.assertReports(read().replace("## Step 1: Update progress state",
+                                          old + "## Step 1: Update progress state", 1),
+                           "Step 0 runs Discover's step 4a-pairs, which #889 retired")
 
     def test_step_0_pins_a_question(self):
         self.assertReports(self.replace("### 0a. The directing step\n",
