@@ -21,9 +21,12 @@ project, create the revisit/resume bundle, then emit the guaranteed-recap announ
 and the single closing 👉 question ("Is there anything else you would like to explore?").
 
 Only after the bootcamper declines further exploration, render the terminal
-`END OF SENZING BOOTCAMP` banner as the final output, exactly once (INV-057). Never show
-that banner while exploration is still continuing, and never end graduation on the closing
-question when the bootcamper has said they are done.
+`END OF SENZING BOOTCAMP` banner exactly once, then, as a plain line right after it, the one
+`/package-bootcamp` line the `graduation` skill pins, verbatim: "Run `/package-bootcamp`
+anytime to bundle your bootcamp results into one zip you can archive, move to another machine,
+or share with others." That line is the final output (INV-057): no 👉 question follows it.
+Never show the banner or the line while exploration is still continuing, and never end
+graduation on the closing question when the bootcamper has said they are done.
 
 The bundled recap PDF generator is available at
 `${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py`; pass that path when the
