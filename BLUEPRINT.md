@@ -1293,7 +1293,7 @@ canceling in progress.
 #### 4.2.1 `test-suite`
 
 Display name `tests (fpdf2 ${{ matrix.fpdf2 }})`, `runs-on: ubuntu-latest`,
-`permissions: contents: read`, `timeout-minutes: 15`, no `needs` and no `env`.
+`permissions: contents: read`, `timeout-minutes: 30`, no `needs` and no `env`.
 Matrix, with `fail-fast: false`:
 
 <!-- markdownlint-disable MD013 -->
