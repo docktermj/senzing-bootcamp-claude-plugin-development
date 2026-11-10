@@ -907,9 +907,30 @@ For example, System verification's `verify_pipeline` is `<dir>` = `src/system_ve
 - **Run every command from the project root, in the shell where Module 2's env script is sourced**
   (Module 2 Step 8 re-sources it), so the native library and the SDK bindings are on the paths the
   program needs. On native Windows that shell is the PowerShell call the next bullet gives. A
-  program opens its `<dir>/...` paths relative to that root. The paths use forward slashes and the
-  commands use no shell-specific syntax, so they run unchanged in a POSIX shell and in PowerShell
-  (INV-001).
+  program opens its `<dir>/...` and `data/...` paths relative to that root. The paths use forward
+  slashes and the commands use no shell-specific syntax, so they run unchanged in a POSIX shell and
+  in PowerShell (INV-001).
+
+  **Never assume the shell is already at the root: pin it.** The guide's shell keeps its working
+  directory between calls, so a `cd` made for one task carries into every later call. Every Build,
+  Run and project-creation command this section gives therefore runs as one call that starts with
+  the pin:
+
+  ```bash
+  cd '<project root>' && <call>
+  ```
+
+  Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
+  `<project root>` is the absolute path of the directory the session started in, the working
+  directory the bootcamp treats as the project. It is written with forward slashes (`C:/Users/...`
+  in Git Bash) and single-quoted, with a `'` in the path written as `'\''`. `<call>` is the table's
+  Build or Run command, or a project-creation command below. On native Windows `<call>` is the
+  `powershell.exe` call the next bullet gives, unchanged: PowerShell inherits the directory, so its
+  relative dot-source of the env script resolves too. When the `cd` fails, `&&` stops the call, so
+  the command never runs from a drifted directory; report it as that step's build or run failure.
+  On SDK setup's `docker` route the call takes no pin: `-w /app` already fixes its directory inside
+  the container.
 - **On native Windows (not SDK setup's `docker` route), the guide runs every Build and Run command
   itself, one call per command**, from its POSIX shell:
 
@@ -983,7 +1004,8 @@ loose file, and a C# project holds only one top-level-statements program. So eac
 own folder and manifest, `<dir>/<name>/`. The step that generates the program creates its project
 before saving the code. The MCP server returns source files only, never a manifest, so the
 manifest comes from the language's own init command, and the Senzing dependency line comes from
-the server or Module 2's route, never from memory (INV-080):
+the server or Module 2's route, never from memory (INV-080). Each init command below runs pinned,
+as "Every language" above says:
 <!-- MCP-NEGATIVE: generate_scaffold(workflow='full_pipeline') for language='csharp', 'rust' and 'typescript' — each listing names source files only, with no .csproj, Cargo.toml or package.json; rust and typescript carry a dependency_note with the one Senzing dependency line, csharp carries none — owner: generate_scaffold IS the route that returns a workflow's files, and find_examples, the corpus index, says it indexes no build files or project configuration, so no route serves a manifest (absence negative) — server 1.37.28, 2026-10-13 -->
 
 1. **The folder already has its manifest** (a re-run or a resume): reuse it. Skip the init command,
@@ -999,9 +1021,10 @@ the server or Module 2's route, never from memory (INV-080):
    `src/main.rs`, the file Cargo builds the binary from. Add the dependency line from the
    `dependency_note` of the `generate_scaffold` response the code came from under `[dependencies]`
    in its `Cargo.toml`, exactly as the note gives it.
-4. **TypeScript:** change into `<dir>/<name>/` and run `npm init -y`, then the install command from
-   the `dependency_note` of the `generate_scaffold` response the code came from, then `tsc --init`.
-   Change back to the project root, and save the program as `<name>.ts` in the folder.
+4. **TypeScript:** in one pinned call, change into `<dir>/<name>/` after the pin and run
+   `npm init -y`, then the install command from the `dependency_note` of the `generate_scaffold`
+   response the code came from, then `tsc --init`. No call changes back, because every later call
+   pins the root again. Save the program as `<name>.ts` in the folder.
 5. **A package the code imports beyond the Senzing SDK and the standard library** is a non-SDK
    dependency: resolve it before the build, as `../module-02-sdk-setup/SKILL.md` → "MCP Java
    scaffolds may need a JSON library the install does not provide" says.
