@@ -1,17 +1,15 @@
-"""The Bootcamper predicts before the engine's result is shown, at three points.
+"""The Bootcamper predicts before the engine's result is shown, at one point.
 
 Before #479 the guide made every prediction the engine was checked against (*"it compares the
 engine against a prediction the guide made"*, System verification's SKILL.md), and the
-Bootcamper never committed to an expectation before a result appeared. #479 adds three
-prediction points:
+Bootcamper never committed to an expectation before a result appeared. #479 added three
+prediction points: System verification Step 7a, Discover step 4a-pairs and Discover step 4b
+item 1a. #889 removed the two Discover sites, because Data processing's step 21 expectation
+check (#887) now asks the "same entity?" question and Discover repeated it. One remains:
 
-1. **System verification, Step 7a.** One `Mari` record, a copy of a Marisol record with only the
-   first name changed, is shown before it is loaded: "will it join Marisol's entity?". It sits
-   between Step 7 and Step 8, outside Step 7's checks and the `synthetic_data` expectations.
-2. **Discover, Step 4a-pairs.** Three record pairs from step 4a's entities, one per turn, before
-   step 4b: "same entity or not?".
-3. **Discover, step 4b item 1a.** Truth Set alumni pick the features that joined one of their own
-   cross-source entities before `why_records` is shown.
+- **System verification, Step 7a.** One `Mari` record, a copy of a Marisol record with only the
+  first name changed, is shown before it is loaded: "will it join Marisol's entity?". It sits
+  between Step 7 and Step 8, outside Step 7's checks and the `synthetic_data` expectations.
 
 **One shared rule, cited (INV-300).** The skip, the reveal's shape, "informs, never grades" and
 the Questions & Responses line are stated once, in `ground-rules.md` → "Predictions before
@@ -19,7 +17,7 @@ results". Each site points there and carries only what it predicts and how the e
 
 So the clauses are checked where they live:
 
-- **Per site** (`point_problems`, run on each of the three): exactly one 👉 (INV-251), a numbered
+- **Per site** (`point_problems`, run on Step 7a): exactly one 👉 (INV-251), a numbered
   list of choices (INV-051), a skip, the 👉 before the reveal, and a pointer that names the
   grading guard and the skip recording it defers to.
 - **In the shared section** (`rule_problems`): the rule-only clauses, among them the grading guard
@@ -39,45 +37,39 @@ So the clauses are checked where they live:
   after the ask step's bold lead (`ASK_LEADS`), and ahead of the instruction that presents the
   step's record(s) (`ASK_PRESENTS`).
 - **At every pointer, derived** (`pointer_citation_problems`, #519): every shipped sentence that
-  points at "Predictions before results", found by scan rather than from the three sites above
+  points at "Predictions before results", found by scan rather than from the site above
   (INV-246), cites INV-357, so a reader at the pointer can name the rule as well as the
-  single-statement discipline. Since #519 that is six sentences: the three sites' pointers, the
-  Questions & Responses rule in `module-completion.md`, and System verification's two statements
-  that the prediction is asked before the engine decides (its `SKILL.md`, and the opening of
-  `phase1-verification.md`), which make no single-statement claim and so cite INV-357 without
-  INV-300.
+  single-statement discipline. Since #889 that is five sentences: Step 7a's pointer and its
+  introduction cue, the Questions & Responses rule in `module-completion.md`, and System
+  verification's two statements that the prediction is asked before the engine decides (its
+  `SKILL.md`, and the opening of `phase1-verification.md`), which make no single-statement claim
+  and so cite INV-357 without INV-300.
 
-**No route to the answer before the 👉 (#507).** A site can show its result without stating it: the
-visualization app's entity view renders each record's match key and the why verdict, which is
-exactly what step 4b item 1a asks the Bootcamper to predict, and an entity the bootcamp already
-resolved on screen has had its answer shown. So two more checks:
+**No route to the answer before the 👉 (#507).** A site can show its result without stating it, so
+`app_route_problems`, run by `point_problems` on the text before the site's 👉, reports a route to
+the visualization app: `m7_visualizations`, a URL, a port, or a local address (`localhost`,
+`127.0.0.1`, `http://`, `https://`). The markers are single tokens, so a line wrap cannot split one
+(INV-346). #507 also added "Already-shown entities" to `phase2-discover.md`, which kept the Discover
+predictions off entities already shown; #889 removed it with them. `midpoint_checkpoint_problems`
+still checks that Module 6 step 9's checkpoint records `midpoint_record`, which step 21's
+expectation check now reads.
 
-- **No app route** (`app_route_problems`, run by `point_problems` on the text before each site's
-  👉, and on step 4b item 1 before item 1a): no `m7_visualizations`, no URL, no port, and no
-  local address (`localhost`, `127.0.0.1`, `http://`, `https://`). Item 1a must state that its
-  records are shown as text only. The markers are single tokens, so a line wrap cannot split one
-  (INV-346).
-- **Already-shown entities, stated once** (`already_shown_problems`, INV-300). One named section
-  of `phase2-discover.md`, "Already-shown entities", states which entities are excluded (the
-  headline entity and the entity that holds Module 6's `midpoint_record`), how the latter is
-  located (`get_entity_by_record_id` on the record), and the `"none"`/absent cases. Step 4a-pairs
-  item 1 and step 4b item 1 each point there, name both exclusions, carry no copy of the section,
-  and state what they do with an excluded entity: unavailable for any pair, or preferred against
-  with item 1a skipped. `midpoint_checkpoint_problems` checks that Module 6 step 9's checkpoint
-  records `midpoint_record`.
+**Discover asks no prediction (#889)** (`discover_problems`). `phase2-discover.md` pins no "same
+entity?" or "which features joined?" 👉, carries no "This is a prediction point:" pointer and no
+"Already-shown entities" section or link, and the rule's site table lists only Step 7a. Step 4b
+item 1 reuses a step 21 example from `module_6_processing.expectation_check.examples`, never the
+recap's text, says so in one line, and otherwise selects from step 4a; step 4b's first 👉 is item
+7's. `TheRetiredDiscoverSites` puts each retired piece back and drops each step 4b clause, and
+each must be reported.
 
 The checks are pure functions over a file's text, so each one also runs on a mutated copy as its
-negative control. `TheChecksCatchARegression` runs nine regressions against every site: the reveal
+negative control. `TheChecksCatchARegression` runs nine regressions against the site: the reveal
 stated before the 👉, the skip removed, a second 👉 added, the options unnumbered, the grading
 guard deleted, the skip recording deleted, the citation dropped, an app route added before the
 👉 (each marker alone, and two together), and a copy of the introduction put before the 👉 (#747). The grading guard and the skip recording also run against the shared section.
 Since #850 it also removes the introduction cue, moves it to just before the 👉, moves it to
 directly after the instruction that presents the record(s) (grafted from #850's approach B), and
-strips its pointer, at every site.
-`TheAlreadyShownEntities` drops each exclusion, case, pointer and site consequence in turn.
-Since #856 `pairs_problems` also requires step 4a-pairs' "can supply none" exit to write
-`{"status": "completed", "pairs": []}`, the record module completion's Step 0c reads
-(`tests/test_module_completion_step_0.py`), and `TheRecordPairs` removes it as a control.
+strips its pointer.
 Each must make the check report the problem it targets, not merely some problem.
 
 ⚠️ **What the derived scan cannot see** (`tests/_pointer_sites.py` says how it reads): a pointer
@@ -101,7 +93,7 @@ Stdlib only; shipped markdown read as text (INV-108).
 
 Source issues: #479 (part of #465); #507 (the app route and the already-shown entities); #519
 (the citation at every pointer); #747 (the introduction before a site's first 👉); #850 (the
-introduction cued in each site's ask step).
+introduction cued in each site's ask step); #889 (the Discover sites removed).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -123,28 +115,17 @@ MODULE_6_B = SKILLS / "module-06-data-processing" / "phaseB-load-first-source.md
 
 RULE_HEADING = "## Predictions before results"
 MARI_HEADING = "### Step 7a: The Mari Prediction"
-PAIRS_HEADING = "### Step 4a-pairs: Same entity or not?"
 STEP_4B_HEADING = "### Step 4b: Why Analysis introduction"
-OWN_ITEM = "1a. **Own-entity prediction (Truth Set alumni only).**"
-OWN_ITEM_END = "\n2. **SDK method introduction:**"
 SELECTION_ITEM = "1. **Entity selection:**"
-PAIRS_ITEM_1 = "1. **Choose 3 pairs from step 4a's entities.**"
-PAIRS_ITEM_2 = "\n2. **Show one pair per turn, then ask.**"
 
 MARI_QUESTION = "👉 **Will this `Mari` record join Marisol's entity? Reply with a number:**"
-PAIR_QUESTION = ("👉 **Are these two records the same entity? Reply with a number, and add a few "
-                 "words on why if you like:**")
-OWN_QUESTION = ('👉 **Which features do you think joined these records? Reply with the numbers, '
-                'comma-separated — reply "skip" to just see the engine\'s answer.**')
+#: The two Discover prediction 👉 #889 removed; neither may come back (TheRetiredDiscoverSites).
+RETIRED_QUESTIONS = ("same entity?", "Which features do you think joined")
 #: The skip on a single-choice prediction: its last numbered option.
 SKIP_OPTION = "Just show me the engine's answer."
-#: The skip on a multi-select prediction: a clause of the 👉 line itself.
-SKIP_CLAUSE = '— reply "skip" to just see the engine\'s answer.'
 
 #: Where each site's result starts; the 👉 must come first.
 MARI_REVEAL = "**Reveal the engine's live call beside the prediction"
-PAIRS_REVEAL = "**Reveal it in the same turn as the next 👉.**"
-OWN_REVEAL = "**The reveal is items 2–5**"
 
 #: The pointer every site carries instead of a copy (INV-300), citing the rule (INV-357).
 CITATION = (r'stated once in\s+`\.\./bootcamp-onboarding/ground-rules\.md` → "Predictions before '
@@ -165,46 +146,19 @@ POINTER_NAMES = {
 APP_ROUTE = re.compile(r"m7_visualizations|\bURL\b|https?://|\blocalhost\b|127\.0\.0\.1|\bport\b",
                        re.IGNORECASE)
 
-#: The one statement of which entities the Discover predictions exclude (#507, INV-300).
-SHOWN_ANCHOR = '<a id="already-shown-entities"></a>'
-SHOWN_HEADING = "### Already-shown entities"
-SHOWN_LINK = "[Already-shown entities](#already-shown-entities)"
-#: What the section must state; each key is the problem's wording.
-SHOWN_REQUIRED = {
-    "the headline entity is excluded": r"\*\*The headline entity:\*\* the entity ID recorded as "
-                                       r"`module_7_query\.headline_entity`",
-    "the entity holding midpoint_record is excluded": r"\*\*The entity that now holds "
-                                                      r"`midpoint_record`:\*\*",
-    "the midpoint entity is located by its record": r"Locate its entity with "
-                                                    r"`get_entity_by_record_id` on that data source "
-                                                    r"and record ID",
-    "a none or absent headline_entity excludes nothing": r'When it is `"none"`[^.]* or absent, '
-                                                         r"there is no headline exclusion",
-    "a none or absent midpoint_record excludes nothing": r'When `midpoint_record` is `"none"` or '
-                                                         r"absent[^.]*there is no midpoint "
-                                                         r"exclusion",
-    "the midpoint entity is never re-derived": r"Do not re-derive it from Module 6's selection "
-                                               r"rule",
-    "an overlap is one exclusion": r"that is one exclusion, not two",
-    "it is the one statement (INV-300)": r"This is the one statement of which entities that "
-                                         r"excludes;[^.]*\(INV-300\)",
-    "it serves INV-357": r"already seen \(INV-357\)",
-}
-#: Phrases only that section may carry; a site that holds one has forked it (INV-300).
-SHOWN_ONLY = (r"Do not re-derive", r"one exclusion, not two", r"there is no (?:headline|midpoint) "
-              r"exclusion", r"Locate its entity with")
-#: What each pointing site must state of its own, beside the pointer.
-PAIRS_EXCLUSION = {
-    "no excluded entity is used for any pair": r"no record of theirs is used for any pair",
-    "its limited-data fallback covers what remains": r"the fallback when step 4a cannot supply 3, "
-                                                     r"apply to what remains",
-}
-SELECTION_EXCLUSION = {
-    "it prefers an entity that is not excluded": r"Prefer one that is not excluded",
-    "item 1a is skipped when only excluded entities qualify": r"When only excluded entities "
-                                                              r"qualify, demonstrate one of them "
-                                                              r"anyway, and item 1a is skipped",
-    "the exclusion is a preference only outside the alumni": r"the exclusion is a preference only",
+#: The section #507 added and #889 removed with the Discover predictions; nothing may point at it.
+RETIRED_SHOWN = ("already-shown-entities", "### Already-shown entities")
+#: What step 4b item 1 must state since #889: it reuses a step 21 example, read from the record,
+#: and otherwise selects from step 4a.
+SELECTION_REQUIRED = {
+    "it reads step 21's record": r"Read `module_6_processing\.expectation_check\.examples` in\s+"
+                                 r"`config/bootcamp_progress\.json`",
+    "it never reads the recap": r"never the recap's Questions & Responses text",
+    "a fitting example merged across sources": r"its `engine` call put its records in\s+one entity, "
+                                               r"and its `records` name two or more data\s+sources",
+    "it says the example is from Data processing": r"Say in one line that this is the example "
+                                                   r"from Data processing",
+    "it falls back to step 4a": r"select a cross-source entity from step 4a",
 }
 
 #: Phrases only the shared rule may carry; a site that holds one has forked it (INV-300).
@@ -221,14 +175,10 @@ INTRO_CUE = ('First introduce the exercise, as `../bootcamp-onboarding/ground-ru
 #: Each site's ask step, by its bold lead; the cue is the first thing after it.
 ASK_LEADS = {
     "Step 7a": "2. **Show it, then ask. Load nothing yet.**",
-    "Step 4a-pairs": "2. **Show one pair per turn, then ask.**",
-    "step 4b item 1a": "- **Show the entity's records before any `why_*` call, as text only.**",
 }
 #: The instruction in each site's ask step that presents its record(s); the cue comes before it.
 ASK_PRESENTS = {
     "Step 7a": "Present the `Mari` record beside the Marisol record",
-    "Step 4a-pairs": "Present the two records' features side by side",
-    "step 4b item 1a": "Show the two records item 1 named as text",
 }
 
 #: Words that grade a prediction; the introduction carries none of them (#747, INV-357).
@@ -331,12 +281,12 @@ def intro_cue_problems(where, site):
     return problems
 
 
-def point_problems(where, step, question, reveal, multi_select=False):
+def point_problems(where, step, question, reveal):
     """The per-site clauses every prediction point shares.
 
     One 👉 (INV-251), a numbered list of choices beneath it (INV-051), a skip (the last option
-    on a single choice, a clause of the 👉 line on a multi-select), the 👉 before the reveal, and
-    no route to the visualization app before the 👉 (#507).
+    on a single choice), the 👉 before the reveal, and no route to the visualization app before
+    the 👉 (#507).
     """
     problems = []
     asked = questions(step)
@@ -348,10 +298,7 @@ def point_problems(where, step, question, reveal, multi_select=False):
     opts = options_after(step, first)
     if len(opts) < 2:
         problems.append("%s's 👉 is not followed by a numbered list of choices (INV-051)" % where)
-    if multi_select:
-        has_skip = SKIP_CLAUSE in first
-    else:
-        has_skip = bool(opts) and opts[-1].endswith(SKIP_OPTION)
+    has_skip = bool(opts) and opts[-1].endswith(SKIP_OPTION)
     if not has_skip:
         problems.append("%s offers no skip (options %r)" % (where, opts))
     ask, shown = step.find(first), step.find(reveal)
@@ -430,9 +377,10 @@ def rule_problems(ground_rules):
     for what, pattern in required.items():
         if not match_lines(rule, pattern):
             problems.append("the rule does not state that %s" % what)
-    for site in ("Step 7a", "Step 4a-pairs", "item 1a"):
-        if site not in rule:
-            problems.append("the rule's site table does not list %s" % site)
+    if "Step 7a" not in rule:
+        problems.append("the rule's site table does not list Step 7a")
+    if re.search(r"phase2-discover\.md|4a-pairs|item 1a", rule):
+        problems.append("the rule's site table lists a Discover site, which #889 retired")
     if questions(rule):
         problems.append("the rule itself asks a 👉 question")
     problems += intro_problems(rule)
@@ -504,160 +452,39 @@ def mari_exclusion_problems(phase1, phase2):
 
 
 # --------------------------------------------------------------------------------------------
-# Discover, Step 4a-pairs and step 4b item 1a
+# Discover asks no prediction (#889)
 # --------------------------------------------------------------------------------------------
-
-def pairs_step(discover):
-    return section(discover, PAIRS_HEADING, (STEP_4B_HEADING,))
-
-
-def pairs_problems(discover):
-    problems = []
-    step_4a = discover.find("### Step 4a: Data pattern analysis")
-    pairs = discover.find(PAIRS_HEADING)
-    step_4b = discover.find(STEP_4B_HEADING)
-    if min(step_4a, pairs, step_4b) < 0 or not step_4a < pairs < step_4b:
-        return ["Step 4a-pairs is not between step 4a and step 4b"]
-    step = discover[pairs:step_4b]
-    problems += point_problems("Step 4a-pairs", step, PAIR_QUESTION, PAIRS_REVEAL)
-    if len(options_after(step, PAIR_QUESTION)) != 3:
-        problems.append("the pair question does not offer same / different / the skip")
-    required = {
-        "3 pairs by default": r"Choose 3 pairs from step 4a's entities",
-        "the answers are held back": r"Hold them back",
-        "at least one pair that resolved together": r"At least one pair that resolved together",
-        "at least one pair that did not": r"At least one pair that did not",
-        "one pair per turn": r"Show one pair per turn, then ask",
-        "nothing shown hints at the answer": r"Show no entity ID, match key",
-        "limited data shows as many as it can": r"show as\s+many as it can",
-        "no pairs is said in one line": r"say so in one line and\s+continue to step 4b",
-        # #856: the "can supply none" exit leaves a record, so module completion's Step 0c
-        # can tell a step that ran with no pairs from one that never ran.
-        "the no-pairs exit writes a completed record":
-            r"That exit also writes\s+`module_7_query\.steps\[\"4a-pairs\"\] = "
-            r"\{\"status\": \"completed\", \"pairs\": \[\]\}`",
-        "the last reveal goes with step 4b's first 👉": r"After the last pair it is step 4b's\s+"
-                                                        r"first 👉",
-        "a resume lands on the next pair": r"a resume lands on the next pair",
-    }
-    for what, pattern in required.items():
-        if not match_lines(step, pattern):
-            problems.append("Step 4a-pairs does not state %s" % what)
-    problems += citation_problems(step, "Step 4a-pairs")
-    problems += intro_cue_problems("Step 4a-pairs", step)
-    return problems
-
-
-def own_item(discover):
-    return section(section(discover, STEP_4B_HEADING, ("### Step 4c",)), OWN_ITEM, (OWN_ITEM_END,))
-
-
-def own_entity_problems(discover):
-    step = section(discover, STEP_4B_HEADING, ("### Step 4c",))
-    item_1a = section(step, OWN_ITEM, (OWN_ITEM_END,))
-    if not item_1a:
-        return ["step 4b has no item 1a own-entity prediction"]
-    problems = []
-    at = step.find(item_1a)
-    first_call = step.find("3. **SDK flags and response shape:**")
-    explanation = step.find("4. **Plain-language explanation of the output:**")
-    if not at < first_call < explanation:
-        problems.append("item 1a does not come before step 4b's why_records call")
-    if step.find(SELECTION_ITEM) > at:
-        problems.append("item 1a comes before the entity it predicts about is chosen")
-    problems += app_route_problems("step 4b item 1", step[:at])
-    problems += point_problems("step 4b item 1a", item_1a, OWN_QUESTION, OWN_REVEAL,
-                               multi_select=True)
-    if questions(step)[:1] != [OWN_QUESTION]:
-        problems.append("the own-entity question is not step 4b's first 👉")
-    required = {
-        "it runs only for Truth Set alumni": r"only when\s+`truthset_visualization` is in "
-                                             r"`modules_completed`",
-        "otherwise step 4b runs as before": r"Otherwise go straight to item 2, as before",
-        "records are shown before any why call": r"Show the entity's records before any "
-                                                 r"`why_\*` call",
-        "its records are shown as text only": r"Show the entity's records before any `why_\*` "
-                                              r"call, as text only",
-        "the two records are shown as text, feature by feature": r"Show the two records item 1 "
-                                                                 r"named as text, feature by "
-                                                                 r"feature",
-        "it is skipped when item 1 used an excluded entity": r"Skip it as well when item 1 had to "
-                                                             r"use an excluded entity",
-        "the options are the entity's feature types": r"The options are this entity's feature "
-                                                      r"types",
-        "the reveal is why_records' output": r"The reveal is items 2–5",
-        "picks sit beside the why key": r"beside the `\+FEATURE` components of `WHY_KEY`",
-    }
-    for what, pattern in required.items():
-        if not match_lines(item_1a, pattern):
-            problems.append("item 1a does not state that %s" % what)
-    problems += citation_problems(item_1a, "step 4b item 1a")
-    problems += intro_cue_problems("step 4b item 1a", item_1a)
-    return problems
-
-
-# --------------------------------------------------------------------------------------------
-# Discover, the already-shown entities (#507)
-# --------------------------------------------------------------------------------------------
-
-def shown_section(discover):
-    return section(discover, SHOWN_HEADING, ("\n### ",))
-
-
-def pairs_item_1(discover):
-    return section(pairs_step(discover), PAIRS_ITEM_1, (PAIRS_ITEM_2,))
-
 
 def selection_item(discover):
     return section(section(discover, STEP_4B_HEADING, ("### Step 4c",)), SELECTION_ITEM,
-                   (OWN_ITEM,))
+                   ("\n2. **SDK method introduction:**",))
 
 
-def pointer_site_problems(where, site, own):
-    """A site points at the section, names both exclusions, states ``own``, and copies nothing."""
-    if not site:
-        return ["%s is missing" % where]
+def discover_problems(discover):
+    """No Discover prediction site is left, and step 4b item 1 reuses a step 21 example."""
     problems = []
-    if not match_lines(site, re.escape(SHOWN_LINK) + r" states once \(INV-300\)"):
-        problems.append("%s does not point at the already-shown section with INV-300" % where)
-    if not match_lines(site, r"\(`headline_entity`\)"):
-        problems.append("%s does not name the headline exclusion (headline_entity)" % where)
-    if not match_lines(site, r"the entity that holds `midpoint_record`"):
-        problems.append("%s does not name the midpoint exclusion (midpoint_record)" % where)
-    for what, pattern in own.items():
-        if not match_lines(site, pattern):
-            problems.append("%s does not state that %s" % (where, what))
-    for phrase in SHOWN_ONLY:
-        if match_lines(site, phrase):
-            problems.append("%s restates the already-shown section (%s)" % (where, phrase))
-    return problems
-
-
-def already_shown_problems(discover):
-    """The exclusion is stated once and both Discover predictions point at it (#507, INV-300)."""
-    problems = []
-    shown = shown_section(discover)
-    if not shown:
-        problems.append("phase2-discover.md has no %r section" % SHOWN_HEADING)
-    else:
-        if (SHOWN_ANCHOR + "\n\n" + SHOWN_HEADING) not in discover:
-            problems.append("the already-shown section is not anchored for its pointers")
-        step_4a = discover.find("### Step 4a: Data pattern analysis")
-        at, pairs = discover.find(SHOWN_HEADING), discover.find(PAIRS_HEADING)
-        if not 0 <= step_4a < at < pairs:
-            problems.append("the already-shown section is not between step 4a and step 4a-pairs")
-        for what, pattern in SHOWN_REQUIRED.items():
-            if not match_lines(shown, pattern):
-                problems.append("the already-shown section does not state that %s" % what)
-        if questions(shown):
-            problems.append("the already-shown section asks a 👉 question")
-    problems += pointer_site_problems("Step 4a-pairs item 1", pairs_item_1(discover),
-                                      PAIRS_EXCLUSION)
-    problems += pointer_site_problems("step 4b item 1", selection_item(discover),
-                                      SELECTION_EXCLUSION)
-    for phrase in SHOWN_ONLY:
-        if match_lines(own_item(discover), phrase):
-            problems.append("step 4b item 1a restates the already-shown section (%s)" % phrase)
+    for needle in RETIRED_QUESTIONS:
+        if any(needle in q for q in questions(discover)):
+            problems.append("Discover asks a prediction again (%s)" % needle)
+    if match_lines(discover, r"This is a prediction point:"):
+        problems.append("Discover points at the prediction rule again")
+    for marker in RETIRED_SHOWN:
+        if marker in discover:
+            problems.append("Discover carries the retired already-shown section (%s)" % marker)
+    step = section(discover, STEP_4B_HEADING, ("### Step 4c",))
+    if not step:
+        return problems + ["phase2-discover.md has no step 4b"]
+    if not match_lines(step, r"This step asks no prediction"):
+        problems.append("step 4b does not state that it asks no prediction")
+    asked = questions(step)
+    if not asked or not asked[0].startswith("👉 **What would you like to do next?"):
+        problems.append("step 4b's first 👉 is not item 7's (%r)" % asked[:1])
+    item = selection_item(discover)
+    if not item:
+        return problems + ["step 4b has no item 1"]
+    for what, pattern in SELECTION_REQUIRED.items():
+        if not match_lines(item, pattern):
+            problems.append("step 4b item 1 does not state that %s" % what)
     return problems
 
 
@@ -679,7 +506,7 @@ def midpoint_checkpoint_problems(module_6_b):
         "it is none when no entity was shown": r'or `"none"` when this step showed no entity',
         "a record, not an entity ID, identifies it": r"A record identifies the entity across later "
                                                      r"loads, and an entity ID does not",
-        "it points at the reader": r"phase2-discover\.md#already-shown-entities",
+        "it points at the reader": r"Step 21's expectation check\s+reads it",
     }
     return ["Module 6 step 9's checkpoint does not state that %s" % what
             for what, pattern in required.items() if not match_lines(checkpoint, pattern)]
@@ -723,7 +550,7 @@ class EveryPointerCitesTheRule(unittest.TestCase):
         """Not vacuous: the derived set holds each file whose pointer this guard knows."""
         found = [path for path, _, _ in _pointer_sites.pointers(
             _pointer_sites.shipped_texts(), SECTION, ANCHOR)]
-        for path, count in ((M3_SKILL, 1), (M3_PHASE1, 2), (DISCOVER, 2), (COMPLETION, 1)):
+        for path, count in ((M3_SKILL, 1), (M3_PHASE1, 2), (COMPLETION, 1)):
             with self.subTest(path=path.name):
                 self.assertGreaterEqual(found.count(path), count)
 
@@ -740,10 +567,10 @@ class EveryPointerCitesTheRule(unittest.TestCase):
                                                          r'INV-300'))
 
     def test_negative_control_each_derived_pointer_loses_its_citation(self):
-        """Every shipped pointer (six since #519), in turn, is reported when it drops INV-357."""
+        """Every shipped pointer (five since #889), in turn, is reported when it drops INV-357."""
         shipped = _pointer_sites.shipped_texts()
         sites = _pointer_sites.pointers(shipped, SECTION, ANCHOR)
-        self.assertGreaterEqual(len(sites), 6, "the scan went blind")
+        self.assertGreaterEqual(len(sites), 5, "the scan went blind")
         for path, line, _ in sites:
             with self.subTest(site="%s:%d" % (path.name, line)):
                 problems = pointer_citation_problems(
@@ -791,195 +618,102 @@ class TheMariPrediction(unittest.TestCase):
                       mari_exclusion_problems(self.phase1, phase2))
 
 
-class TheRecordPairs(unittest.TestCase):
-    def setUp(self):
-        self.discover = read(DISCOVER)
-
-    def test_they_ask_before_they_reveal(self):
-        self.assertEqual(pairs_problems(self.discover), [])
-
-    def test_negative_control_pairs_after_step_4b(self):
-        step = pairs_step(self.discover)
-        text = self.discover.replace(step, "")
-        text = text.replace("### Step 4c: How Analysis introduction",
-                            step + "### Step 4c: How Analysis introduction")
-        self.assertEqual(pairs_problems(text),
-                         ["Step 4a-pairs is not between step 4a and step 4b"])
-
-
-    def test_negative_control_the_no_pairs_exit_writes_nothing(self):
-        """#856: without the record, module completion would run step 4a-pairs a second time."""
-        text = re.sub(r" That exit also writes\s+`module_7_query\.steps\[\"4a-pairs\"\] = "
-                      r"\{[^`]*\}`, so module\s+completion knows the step ran\.", "",
-                      self.discover, count=1)
-        self.assertNotEqual(text, self.discover)
-        self.assertIn("Step 4a-pairs does not state the no-pairs exit writes a completed record",
-                      pairs_problems(text))
-
-
-class TheOwnEntityPrediction(unittest.TestCase):
-    def setUp(self):
-        self.discover = read(DISCOVER)
-
-    def test_it_opens_step_4b_before_why_records(self):
-        self.assertEqual(own_entity_problems(self.discover), [])
-
-    def test_negative_control_after_the_why_call(self):
-        item = own_item(self.discover)
-        text = self.discover.replace(item, "")
-        text = text.replace("4. **Plain-language explanation of the output:**",
-                            item.lstrip("\n") + "\n4. **Plain-language explanation of the output:**")
-        self.assertIn("item 1a does not come before step 4b's why_records call",
-                      own_entity_problems(text))
-
-    def test_negative_control_not_gated_on_the_truth_set(self):
-        text = self.discover.replace("only when\n   `truthset_visualization` is in",
-                                     "always, whatever is in")
-        self.assertIn("item 1a does not state that it runs only for Truth Set alumni",
-                      own_entity_problems(text))
-
-    def test_negative_control_the_old_app_route_restored(self):
-        """The route #507 removed, put back word for word, is reported, and so is losing "text only"."""
-        item = own_item(self.discover)
-        start = item.index("   - **Show the entity's records")
-        end = item.index("   - **The options are")
-        old = ("   - **Show the entity's records before any `why_*` call.** When step 3c built the "
-               "visualization app\n     and its server is still running (`m7_visualizations` records "
-               "a port), give its URL and the\n     entity ID to open there. Otherwise show the two "
-               "records item 1 named as text, feature by\n     feature.\n")
-        problems = own_entity_problems(self.discover.replace(item, item[:start] + old + item[end:]))
-        self.assertIn("step 4b item 1a routes to the visualization app before its 👉 "
-                      "(m7_visualizations, port, URL)", problems)
-        self.assertIn("item 1a does not state that its records are shown as text only", problems)
-
-    def test_negative_control_a_route_in_item_1(self):
-        """Item 1 sits before item 1a's 👉, so a route there leaks the answer too."""
-        item = selection_item(self.discover)
-        mutated = item.replace("State what you are using:",
-                               "Give the Bootcamper the app's URL for it. State what you are using:")
-        self.assertNotEqual(mutated, item)
-        self.assertIn("step 4b item 1 routes to the visualization app before its 👉 (URL)",
-                      own_entity_problems(self.discover.replace(item, mutated)))
-
-
-class TheAlreadyShownEntities(unittest.TestCase):
-    """#507: the exclusion is stated once, both predictions point at it, Module 6 records it.
-
-    In the style of `TheChecksCatchARegression`: each control mutates one clause and asserts the
-    problem that clause's check reports, not merely some problem.
-    """
+class TheRetiredDiscoverSites(unittest.TestCase):
+    """#889: Discover asks no prediction; each retired piece put back is reported."""
 
     def setUp(self):
         self.discover = read(DISCOVER)
         self.module_6_b = read(MODULE_6_B)
 
-    def test_the_exclusion_is_stated_once_and_both_sites_point_at_it(self):
-        self.assertEqual(already_shown_problems(self.discover), [])
+    def assertCaught(self, text, expected):
+        self.assertNotEqual(text, self.discover, "the mutation did not change it")
+        problems = discover_problems(text)
+        self.assertTrue(any(p.startswith(expected) for p in problems),
+                        "%r went unnoticed: %r" % (expected, problems))
+
+    def test_discover_asks_no_prediction(self):
+        self.assertEqual(discover_problems(self.discover), [])
 
     def test_module_6_step_9_records_midpoint_record(self):
         self.assertEqual(midpoint_checkpoint_problems(self.module_6_b), [])
 
-    def assertCaught(self, cut, old, new, expected, problems_of=already_shown_problems, text=None):
-        text = self.discover if text is None else text
-        part = cut(text)
-        self.assertTrue(part, "the section the control mutates is missing")
-        mutated = re.sub(old, new, part, count=1)
-        self.assertNotEqual(mutated, part, "the mutation did not change it: %r" % old)
-        problems = problems_of(text.replace(part, mutated))
-        self.assertTrue(any(p.startswith(expected) for p in problems),
-                        "%r went unnoticed: %r" % (expected, problems))
+    def put_before_4b(self, block):
+        return self.discover.replace(STEP_4B_HEADING, block + "\n\n" + STEP_4B_HEADING, 1)
 
-    def test_the_headline_exclusion_dropped_from_the_section(self):
-        self.assertCaught(shown_section, r"`module_7_query\.headline_entity`", "the entity",
-                          "the already-shown section does not state that the headline entity is "
-                          "excluded")
+    def test_the_pairs_question_put_back(self):
+        old = ("👉 **Are these two records the same entity? Reply with a number, and add a few "
+               "words on why if you like:**")
+        self.assertCaught(self.put_before_4b(old), "Discover asks a prediction again (same entity?)")
 
-    def test_the_midpoint_exclusion_dropped_from_the_section(self):
-        self.assertCaught(shown_section, _loose("**The entity that now holds `midpoint_record`:**"),
-                          "**Another entity:**",
-                          "the already-shown section does not state that the entity holding "
-                          "midpoint_record is excluded")
+    def test_the_own_entity_question_put_back(self):
+        old = ('👉 **Which features do you think joined these records? Reply with the numbers, '
+               'comma-separated — reply "skip" to just see the engine\'s answer.**')
+        self.assertCaught(self.put_before_4b(old),
+                          "Discover asks a prediction again (Which features do you think joined")
 
-    def test_the_lookup_by_record_dropped(self):
-        self.assertCaught(shown_section, _loose("Locate its entity with `get_entity_by_record_id`"),
-                          "Reuse its entity ID",
-                          "the already-shown section does not state that the midpoint entity is "
-                          "located by its record")
+    def test_the_prediction_pointer_put_back(self):
+        old = ("This is a prediction point: the skip, the reveal's shape, \"informs, never "
+               "grades\" and the Questions & Responses line are stated once in "
+               "`../bootcamp-onboarding/ground-rules.md` → \"Predictions before results\".")
+        self.assertCaught(self.put_before_4b(old), "Discover points at the prediction rule again")
 
-    def test_the_none_cases_dropped(self):
-        for old, wanted in (("there is no headline\nexclusion", "a none or absent headline_entity"),
-                            ("there is no midpoint exclusion", "a none or absent midpoint_record")):
-            with self.subTest(case=wanted):
-                self.assertCaught(shown_section, _loose(old), "exclude it anyway",
-                                  "the already-shown section does not state that %s" % wanted)
+    def test_the_already_shown_section_put_back(self):
+        for block, marker in (('<a id="already-shown-entities"></a>', "already-shown-entities"),
+                              ("### Already-shown entities", "### Already-shown entities")):
+            with self.subTest(marker=marker):
+                self.assertCaught(self.put_before_4b(block),
+                                  "Discover carries the retired already-shown section (%s)"
+                                  % marker)
 
-    def test_the_re_derivation_allowed(self):
-        self.assertCaught(shown_section, _loose("Do not re-derive it from Module 6's selection rule."),
-                          "Re-derive it from Module 6's selection rule.",
-                          "the already-shown section does not state that the midpoint entity is "
-                          "never re-derived")
+    def test_a_retired_row_put_back_in_the_site_table(self):
+        row = ("| Query, Visualize and Discover, `phase2-discover.md` Step 4a-pairs | For each "
+               "record pair: same entity or not? | Whether step 4a found the two records in one "
+               "entity |\n")
+        text = read(GROUND_RULES)
+        anchor = "| System verification, `phase1-verification.md` Step 7a |"
+        mutated = text.replace(anchor, row + anchor, 1)
+        self.assertNotEqual(mutated, text)
+        self.assertIn("the rule's site table lists a Discover site, which #889 retired",
+                      rule_problems(mutated))
 
-    def test_the_overlap_counted_twice(self):
-        self.assertCaught(shown_section, _loose("that is one exclusion, not two"),
-                          "that is two exclusions",
-                          "the already-shown section does not state that an overlap is one "
-                          "exclusion")
+    def test_step_4b_asks_before_item_7(self):
+        item = selection_item(self.discover)
+        mutated = item + "\n👉 **Which entity would you like to see? Reply with a number:**\n"
+        self.assertCaught(self.discover.replace(item, mutated, 1),
+                          "step 4b's first 👉 is not item 7's")
 
-    SITES = (("Step 4a-pairs item 1", pairs_item_1), ("step 4b item 1", selection_item))
+    def test_the_no_prediction_statement_dropped(self):
+        self.assertCaught(re.sub(_loose("This step asks no prediction:"), "Note:", self.discover,
+                                 count=1),
+                          "step 4b does not state that it asks no prediction")
 
-    def test_a_pointer_dropped(self):
-        for where, cut in self.SITES:
-            with self.subTest(site=where):
-                self.assertCaught(cut, _loose(SHOWN_LINK + " states once (INV-300)"), "this",
-                                  "%s does not point at the already-shown section" % where)
-
-    def test_an_exclusion_dropped_at_a_site(self):
-        for where, cut in self.SITES:
-            for old, wanted in (("(`headline_entity`)", "the headline exclusion"),
-                                ("the entity that holds `midpoint_record`", "the midpoint exclusion")):
-                with self.subTest(site=where, exclusion=wanted):
-                    self.assertCaught(cut, _loose(old), "another entity",
-                                      "%s does not name %s" % (where, wanted))
-
-    def test_a_site_restates_the_section(self):
-        for where, cut in self.SITES:
-            with self.subTest(site=where):
-                self.assertCaught(cut, _loose("states once (INV-300)"),
-                                  "states once (INV-300). Do not re-derive it",
-                                  "%s restates the already-shown section" % where)
-
-    def test_the_pairs_consequence_dropped(self):
-        self.assertCaught(pairs_item_1, _loose("no record of theirs is used for any pair"),
-                          "avoid them where you can",
-                          "Step 4a-pairs item 1 does not state that no excluded entity is used")
-
-    def test_the_selection_preference_dropped(self):
-        self.assertCaught(selection_item, _loose("Prefer one that is not excluded"),
-                          "Any will do",
-                          "step 4b item 1 does not state that it prefers an entity that is not "
-                          "excluded")
-
-    def test_the_item_1a_skip_dropped(self):
-        self.assertCaught(selection_item, _loose("and item 1a is skipped"), "",
-                          "step 4b item 1 does not state that item 1a is skipped")
-        self.assertCaught(own_item, _loose("**Skip it as well when item 1 had to use an excluded "
-                                           "entity**"), "**Keep it**",
-                          "item 1a does not state that it is skipped when item 1 used an excluded "
-                          "entity", problems_of=own_entity_problems)
-
-    def test_the_section_removed(self):
-        text = self.discover.replace(shown_section(self.discover), "")
-        self.assertIn("phase2-discover.md has no %r section" % SHOWN_HEADING,
-                      already_shown_problems(text))
+    def test_each_selection_clause_dropped(self):
+        for old, wanted in (
+                ("Read `module_6_processing.expectation_check.examples`", "it reads step 21's record"),
+                ("never the recap's Questions & Responses text", "it never reads the recap"),
+                ("its `records` name two or more data", "a fitting example merged across sources"),
+                ("Say in one line that this is the example from Data processing",
+                 "it says the example is from Data processing"),
+                ("select a cross-source entity from step 4a", "it falls back to step 4a")):
+            with self.subTest(clause=wanted):
+                item = selection_item(self.discover)
+                mutated = re.sub(_loose(old), "something", item, count=1)
+                self.assertNotEqual(mutated, item, old)
+                self.assertCaught(self.discover.replace(item, mutated, 1),
+                                  "step 4b item 1 does not state that %s" % wanted)
 
     def test_the_checkpoint_forgets_midpoint_record(self):
         for old, wanted in (("record `midpoint_record`", "it records midpoint_record"),
                             ('`"none"` when this step', "it is none when no entity was shown"),
-                            ("lowest `RECORD_ID`", "the value is one record of the entity")):
+                            ("lowest `RECORD_ID`", "the value is one record of the entity"),
+                            ("Step 21's expectation check reads it", "it points at the reader")):
             with self.subTest(clause=wanted):
-                self.assertCaught(midpoint_checkpoint, _loose(old), "something",
-                                  "Module 6 step 9's checkpoint does not state that %s" % wanted,
-                                  problems_of=midpoint_checkpoint_problems, text=self.module_6_b)
+                part = midpoint_checkpoint(self.module_6_b)
+                mutated = re.sub(_loose(old), "something", part, count=1)
+                self.assertNotEqual(mutated, part, old)
+                problems = midpoint_checkpoint_problems(self.module_6_b.replace(part, mutated))
+                self.assertIn("Module 6 step 9's checkpoint does not state that %s" % wanted,
+                              problems)
 
 
 def _loose(phrase):
@@ -988,7 +722,7 @@ def _loose(phrase):
 
 
 class TheChecksCatchARegression(unittest.TestCase):
-    """Nine regressions, each run against every site; each must report the problem it targets.
+    """Nine regressions, each run against the site; each must report the problem it targets.
 
     Carried over from #479's approach A, adapted to the shared rule: the per-site clauses (one
     👉, numbered options with a skip, the reveal after the 👉) are mutated at each site, and the
@@ -1000,8 +734,6 @@ class TheChecksCatchARegression(unittest.TestCase):
     #: (where, file, the site's section, its check, its 👉, where its result starts)
     SITES = (
         ("Step 7a", M3_PHASE1, mari_step, mari_problems, MARI_QUESTION, MARI_REVEAL),
-        ("Step 4a-pairs", DISCOVER, pairs_step, pairs_problems, PAIR_QUESTION, PAIRS_REVEAL),
-        ("step 4b item 1a", DISCOVER, own_item, own_entity_problems, OWN_QUESTION, OWN_REVEAL),
     )
 
     def check(self, mutate, expected):
@@ -1024,7 +756,7 @@ class TheChecksCatchARegression(unittest.TestCase):
                    " shows its result before its 👉")
 
     def test_the_skip_removed(self):
-        self.check(lambda s, q, r: s.replace(SKIP_OPTION, "Not sure.").replace(" " + SKIP_CLAUSE, ""),
+        self.check(lambda s, q, r: s.replace(SKIP_OPTION, "Not sure."),
                    " offers no skip")
 
     def test_a_second_question_added(self):
@@ -1113,9 +845,7 @@ class TheChecksCatchARegression(unittest.TestCase):
             q, "%s\n\n%s" % (INTRO_CUE, q), 1), self.CUE_MISSING)
 
     #: Each site's 👉 → the instruction in its ask step that presents the record(s).
-    PRESENTS = {MARI_QUESTION: ASK_PRESENTS["Step 7a"],
-                PAIR_QUESTION: ASK_PRESENTS["Step 4a-pairs"],
-                OWN_QUESTION: ASK_PRESENTS["step 4b item 1a"]}
+    PRESENTS = {MARI_QUESTION: ASK_PRESENTS["Step 7a"]}
 
     def test_the_introduction_cue_moved_after_the_record(self):
         """#850, grafted from approach B: a cue that follows the record presentation fails.

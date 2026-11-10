@@ -183,19 +183,17 @@ steering files.)
 
 ## Predictions before results
 
-At three points the Bootcamper commits to an expectation before the engine's result is shown, and
+At one point the Bootcamper commits to an expectation before the engine's result is shown, and
 then sees the two side by side. This section is the one statement of how every prediction point
 works; each site states only what is predicted and which engine call answers it, and points here.
 
 | Site | What the Bootcamper predicts | What answers it |
 |---|---|---|
 | System verification, `phase1-verification.md` Step 7a | Will one `Mari` record join Marisol's entity? | The entity the loaded record resolved into |
-| Query, Visualize and Discover, `phase2-discover.md` Step 4a-pairs | For each record pair: same entity or not? | Whether step 4a found the two records in one entity |
-| Query, Visualize and Discover, `phase2-discover.md` step 4b item 1a (Truth Set alumni only) | Which features joined this entity's records? | `why_records` on those records |
 
 - ⛔ **(INV-357) The prediction is asked before the result exists in the conversation.** Do not show, mention
   or hint at the result before the Bootcamper answers: where the engine call has not run yet, run it
-  only after the answer; where it already has (step 4a's entity IDs), hold its outcome back. The
+  only after the answer; where it already has, hold its outcome back. The
   turn ends on the prediction's 👉, and the result arrives in the next turn.
 - **Introduce it once, before the site's first 👉.** In one or two lines of your own words, say why
   the Bootcamper is asked (to commit to an expectation, then compare it with the engine's call),

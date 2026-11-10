@@ -1564,8 +1564,7 @@ Ground rules (`ground-rules.md`, every turn):
   Acknowledge each answer briefly and specifically, before any skill load.
 - ⛔ gates and numbered steps are never skipped.
 - Predictions before results (`#predictions-before-results`, the one statement
-  System verification Step 7a, Discover Step 4a-pairs and step 4b item 1a
-  cite): ⛔ the prediction is asked before its result exists, an already-run
+  System verification Step 7a cites; Discover asks none since #889): ⛔ the prediction is asked before its result exists, an already-run
   result held back; introduced once per site, before its first 👉, in the
   guide's words (why it is asked, that agreeing confirms their read, that
   differing is not a mistake), with no grading word and never repeated on
@@ -1735,9 +1734,7 @@ Module completion (`module-completion.md`, before the transition question):
   Act 2 module with a `steer_triggers` entry and no worked-steer checkpoint
   note, shows the first entry's steer late with no ask-first question, and in
   every module files each `filed: false` reversal silently (a failure does not
-  block); 0c, in Query, Visualize and Discover with Discover not `skipped`,
-  runs step 4a-pairs late when its record is missing or not `completed`,
-  resuming an `in_progress` one. A late step's 👉 ends the turn; a resume
+  block), then Step 1 in the same turn. A late step's 👉 ends the turn; a resume
   re-enters at the first sub-step whose record is missing; once Step 1 has
   written `modules_completed`, Step 0 does not run again (#856).
 - Step 1, one write: add the name token to `modules_completed`, advance
@@ -2940,20 +2937,15 @@ Phase 2a (`phase2-discover.md`): an opt-in, separate from 3c, sets
 `discover_phase` to `skipped` or `in_progress`; declining never skips the
 discoveries file. 4a finds multi-record, cross-source and related entities
 with the program `discover_patterns` in `src/query`
-(`steps.4a.patterns_found`). 4a-pairs then shows 3 record pairs from 4a's
-entities (at least one resolved together and one not; fewer when the data is
-short, none said in one line and recorded as a `completed` record with
-`pairs: []`), one per turn, each a same-or-different
-prediction whose reveal goes with the next 👉, checkpointed per pair in
-`steps.4a-pairs`. "Already-shown entities" (`#already-shown-entities`, the
-one statement 4a-pairs item 1 and 4b item 1 point to) excludes the headline
-entity and the entity that now holds `midpoint_record` (looked up with
-`get_entity_by_record_id`; `"none"` or absent excludes nothing): 4a-pairs uses
-no record of theirs, and 4b item 1 prefers another entity, demonstrating an
-excluded one only when nothing else qualifies, and then skips item 1a. For
-Truth Set alumni 4b opens with item 1a: the chosen entity's records, as text
-only (the 3c app's entity view shows the match key, the answer), and a
-multi-select of its feature types, before any `why_*` call. 4b demonstrates `why_records` with
+(`steps.4a.patterns_found`). Discover asks no prediction (#889): Data
+processing's step 21 expectation check owns the "same entity?" exercise. 4b
+item 1 reuses a step 21 example from
+`module_6_processing.expectation_check.examples` (never the recap's text) that
+the Bootcamper gave an expectation for and whose `engine` call put records
+from two or more data sources in one entity, finds its entity now with
+`get_entity_by_record_id`, and says in one line it is the example from Data
+processing; otherwise, or when the records now sit in more than one entity,
+it selects a cross-source entity from 4a. 4b demonstrates `why_records` with
 `SZ_INCLUDE_MATCH_KEY_DETAILS` plus a relations flag, 4c narrates
 `how_entity` (both fall back to `FEATURE_SCORES`, both checkpoint
 `entity_demonstrated`), each ending with continue-or-finish. The opt-in
@@ -4178,7 +4170,7 @@ previous asking had no `?` or there was no reply (a reply with a `?` is a
 side question, after which the pending question may be re-presented), never
 for the note recital's confirm question `RECITAL_CONFIRM` (#842); its
 docstring states the known limit, an answer that also asks reads as a side
-question. Three checks grade a module only once the walk reaches its end
+question. Two checks grade a module only once the walk reaches its end
 (#857): `module_spans` finds each module by its banner with
 `module_banners.modules()` and `walk.banner_seen`, and ends it at the first
 later transition 👉 (`TRANSITION`, which takes the graduation offer too), else
@@ -4186,12 +4178,8 @@ at the turn before the next banner. `check_directing_steps` is BREAKING
 `INV-354-directing-step-missing` when Data Quality, Mapping, and
 Transformation, Data processing, or Query, Visualize and Discover ends without
 its pinned `DIRECTING_QUESTIONS` 👉, excusing the first when its turns carry
-the no-site `**You directed:**` form (`NO_SITE`). `check_pairs_step` is
-BREAKING `INV-357-pairs-step-missing` when Query, Visualize and Discover ends
-without `PAIRS_QUESTION`, excused when `discover_record` reads
-`module_7_query.discover_phase: "skipped"` or `steps["4a-pairs"].pairs == []`
-from `<project>/config/bootcamp_progress.json`, and INFO
-`INV-357-pairs-step-ungraded` when that file cannot be read.
+the no-site `**You directed:**` form (`NO_SITE`). #857's third check, for
+Discover's step 4a-pairs, was removed with that step (#889).
 `check_worked_steers` is WATCH `INV-352-steer-missing` when an Act 2 module's
 (`STEER_MODULES`) first tool result that is an error or a non-zero `Exit code`
 from a command building or running a `src/` program (`_failed_program_run`;
@@ -5812,9 +5800,6 @@ DIRECTING_QUESTIONS = {
 NO_SITE = re.compile(r"\*\*You directed:\*\*\s*nothing this module\.[^\n]*?"
                      r"so there was no step to hand over\.")
 NO_SITE_MODULES = ("data_quality_mapping",)
-PAIRS_QUESTION = re.compile(r"Are these two records the same entity\?")
-PAIRS_MODULE = "query_visualize_discover"
-PROGRESS = Path("config") / "bootcamp_progress.json"
 STEER_MODULES = ("data_collection", "data_quality_mapping", "data_processing",
                  "query_visualize_discover")
 STEER_LINE = "What went wrong:"
@@ -5824,15 +5809,11 @@ def module_spans(turns):
     ...
 def check_directing_steps(turns):
     ...
-def discover_record(project):
-    ...
-def check_pairs_step(turns, project=None):
-    ...
 def check_worked_steers(turns, tools=None):
     ...
 CHECKS = (check_one_pointer_per_turn, check_module_numbers, check_or_joined_choices,
           check_internal_markers, check_repeat_questions, check_directing_steps,
-          check_pairs_step, check_worked_steers)
+          check_worked_steers)
 def lint(turns, phase=None, project=None, replies=None, tools=None):
     ...
 def render(findings, turn_count):
@@ -9651,9 +9632,7 @@ From `.claude/skills/auto-test/transcript_lint.py`:
     ap.add_argument("--project", default=None,
                     help="the walked project directory, whose "
                          "config/bootcamp_preferences.yaml holds the verbosity "
-                         "preset INV-096 grades the time estimate against, and whose "
-                         "config/bootcamp_progress.json holds the Discover record "
-                         "that can excuse step 4a-pairs")
+                         "preset INV-096 grades the time estimate against")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--selftest", action="store_true")
 ```
@@ -11873,7 +11852,7 @@ looks wrong.
 - `tests/test_module_5_describes_the_entity_specification_as_served.py`: 9
 - `tests/test_module_7_points_at_the_factory_lifetime_rule.py`: 9
 - `tests/test_module_completion_step1_lists_every_write.py`: 13
-- `tests/test_module_completion_step_0.py`: 34
+- `tests/test_module_completion_step_0.py`: 29
 - `tests/test_module_instructions_do_not_hardcode_the_port.py`: 6
 - `tests/test_module_number_reminder.py`: 30
 - `tests/test_module_selection_sync.py`: 9
@@ -11915,7 +11894,7 @@ looks wrong.
 - `tests/test_plugin_manifest_reads_resolve_inside_the_plugin.py`: 13
 - `tests/test_poor_band_requires_a_mapping_cause.py`: 19
 - `tests/test_post_yes_switch_reads_the_dial.py`: 19
-- `tests/test_predictions_before_results.py`: 60
+- `tests/test_predictions_before_results.py`: 47
 - `tests/test_preparation_recap_template.py`: 9
 - `tests/test_prescribed_search_queries.py`: 56
 - `tests/test_profile_report_relocation_covers_both_filenames.py`: 15
@@ -12045,7 +12024,7 @@ looks wrong.
 - `tests/test_the_seven_triaged_rules_keep_their_citations.py`: 3
 - `tests/test_todo_triage_is_recorded.py`: 9
 - `tests/test_tool_directives_do_not_override_interaction.py`: 30
-- `tests/test_transcript_lint_reports_a_skipped_step.py`: 53
+- `tests/test_transcript_lint_reports_a_skipped_step.py`: 46
 - `tests/test_transcript_lint_tells_a_re_ask_from_a_re_presentation.py`: 19
 - `tests/test_truth_set_is_the_practice_run.py`: 10
 - `tests/test_truth_set_spelling.py`: 5
@@ -12793,22 +12772,23 @@ tests a rebuild can pass from behavior alone.
     table still does; the pre-#852 pattern turns `--selftest` red on the table
     fixture.
 - **Module completion's Step 0** (`tests/test_module_completion_step_0.py`,
-  32 tests, and additions to `test_directing_steps.py`,
+  29 tests, and additions to `test_directing_steps.py`,
   `test_worked_steers.py`, `test_predictions_before_results.py` and
   `test_module_completion_step1_lists_every_write.py`, #856).
-  - Step 0 sits before Step 1 with 0a, 0b and 0c in order, each with its
+  - Step 0 sits before Step 1 with 0a and 0b in order (#889 removed 0c, and
+    a Step 0 naming step 4a-pairs fails), each with its
     condition, action and turn; a late 👉 ends the turn and a resume
     re-enters at the first missing record; each sub-step points at its
     record's owner with the owner's invariant and copies no shape; no new 👉
     is pinned. Controls remove or reorder each clause, run the step late in
     Modules 5 and 7, restore the `none` default, add an ask-first question to
-    the late steer, block on a failed filing, and drop the Discover exemption.
+    the late steer, block on a failed filing, and put the old 0c back.
   - "Directing steps" defines `skipped`, its form and the site-only `none`
     (`RULE_RETIRED` fails the old wording); Module 5 step 11 and step 5a write
     `none` at their boundaries, and no Module 6 or 7 block writes it.
   - "Worked steers" defines `steer_triggers` once, `feedback.md` step 4 and
     graduation Step 0 read and set `filed`, and no other file copies the
-    entry's shape; 4a-pairs' "can supply none" exit writes the empty record.
+    entry's shape.
 - **`package_bootcamp.py`** (`tests/test_package_bootcamp.py`,
   `tests/test_open_me_first_matches_the_manifest.py`,
   `tests/test_quoted_sizes_say_what_they_missed.py`,
@@ -15800,6 +15780,15 @@ Senzing licensing, with no SPDX identifier.
   rules' "Directing steps" allows numbered examples before any open 👉 —
   shown only the bare question, a Bootcamper found it too open-ended and
   answered with feedback; amendments to INV-359 and INV-354 are queued
+- #889: Discover asks no prediction — step 4a-pairs, step 4b item 1a and
+  "Already-shown entities" are removed, "Predictions before results" lists
+  only System verification Step 7a, and step 4b item 1 reuses a step 21
+  example that merged across sources, read from
+  `module_6_processing.expectation_check.examples`, else selects from step
+  4a; module completion's Step 0c, `check_pairs_step` and the example
+  recap's pairs lines go too — after step 21 became a one-example-at-a-time
+  check, a Bootcamper stopped the repeated "same entity?" question as the
+  bootcamp not knowing what it had covered; an INV-357 amendment is queued
 - #890: the visualization contract confirms the recorded pid against the
   port's listener right after the ready line (`#launch-confirmation`, with
   POSIX, PowerShell and in-container `python3` `/proc` forms), step 3c

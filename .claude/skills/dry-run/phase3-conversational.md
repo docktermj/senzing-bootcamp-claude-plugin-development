@@ -236,11 +236,7 @@ context, which is what limits a maintainer-answered walk to the modules the wind
    Without it the time estimate comes back as `INV-096-estimate-ungraded` at INFO rather
    than graded: INV-096 suppresses the estimate under the `minimal` verbosity preset, the
    `seeded` fixture sets that preset, and `check_apparatus` reports a preset it cannot
-   read as a coverage limit rather than assuming the estimate was owed (#734). For the same
-   reason a Query, Visualize and Discover that ended without step 4a-pairs' 👉 comes back as
-   `INV-357-pairs-step-ungraded` at INFO: `check_pairs_step` reads the project's
-   `config/bootcamp_progress.json` for the skipped Discover or empty pairs list that excuses
-   it (#857). The
+   read as a coverage limit rather than assuming the estimate was owed (#734). The
    sandbox is removed when the walk ends, so a slice graded afterwards carries that limit;
    `autotest.py`'s own lint, which runs while the sandbox is still there, does not. Do not
    count the report's own transcript findings: they also cover the fast-forward. The

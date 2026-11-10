@@ -1,20 +1,22 @@
-"""An `auto-test` walk reports a skipped directing step, 4a-pairs step or worked steer (#857).
+"""An `auto-test` walk reports a skipped directing step or worked steer (#857).
 
 At graduation a Bootcamper's audit found required steps that never ran: the directing steps of
 Data Quality, Mapping, and Transformation and of Data processing (INV-354), Discover's step
 4a-pairs (INV-357) and every worked steer (INV-352). Nothing in an automated walk would have
-reported any of them (#855). `.claude/skills/auto-test/transcript_lint.py` now runs three more
+reported any of them (#855). `.claude/skills/auto-test/transcript_lint.py` runs two more
 functions from `CHECKS`:
 
 * ``check_directing_steps`` (`BREAKING`): a hands-on module that ends without its pinned
   directing 👉. Data Quality, Mapping, and Transformation is excused by the no-site
   ``**You directed:**`` form.
-* ``check_pairs_step`` (`BREAKING`): Query, Visualize and Discover ends without step 4a-pairs'
-  👉, unless the project's `config/bootcamp_progress.json` records a skipped Discover or an
-  empty pairs list. An unreadable progress file is reported at INFO as ungraded, as
-  ``check_apparatus`` reports an unreadable verbosity preset.
 * ``check_worked_steers`` (`WATCH`): an Act 2 module's first failed build or run of a `src/`
   program with no later `What went wrong:` line in that module.
+
+**The pairs check is retired (#889).** #857 added a third, ``check_pairs_step``, for Discover's
+step 4a-pairs. #889 removed that step, because Data processing's step 21 expectation check now
+asks the "same entity?" question, so the check and its two finding codes went with it.
+``PairsStepIsRetired`` holds the negative controls: a Discover that ends without the pairs 👉
+reports nothing, and a pairs check or a pairs 👉 put back is reported.
 
 A module is graded only once the walk reaches its end (its transition 👉, or the next module's
 banner), and the module boundaries come from `module_banners.modules()` and `walk.banner_seen`,
@@ -141,9 +143,9 @@ def write_walk(scratch, events):
     return path
 
 
-#: A walk through Data processing and Query, Visualize and Discover that skips all three
-#: steps: Data processing's run fails with no steer and no directing 👉, and Discover ends
-#: with neither its 4a-pairs 👉 nor its directing 👉.
+#: A walk through Data processing and Query, Visualize and Discover that skips the steps:
+#: Data processing's run fails with no steer and no directing 👉, and Discover ends without
+#: its directing 👉.
 SKIPPING_WALK = [
     said(banner("data_processing") + "\n\nLoading your records now."),
     runs("toolu_1", "python3 src/load/load_customers.py"),
@@ -269,56 +271,51 @@ class DirectingStepIsReported(unittest.TestCase):
                 [banner("data_processing"), "work", READY]))
 
 
-class PairsStepIsReported(unittest.TestCase):
-    """``check_pairs_step``: fires unless the step was asked or the project excuses it."""
+#: The finding codes the retired pairs check reported (#857, retired by #889).
+RETIRED_CODES = {"INV-357-pairs-step-missing", "INV-357-pairs-step-ungraded"}
+
+
+def retired_pairs_problems(module, discover_text):
+    """What a reintroduced 4a-pairs site would leave behind (#889), as a list of problems."""
+    problems = []
+    if hasattr(module, "check_pairs_step"):
+        problems.append("transcript_lint defines check_pairs_step again")
+    if any(f.__name__ == "check_pairs_step" for f in module.CHECKS):
+        problems.append("CHECKS runs check_pairs_step again")
+    if any(POINTER in line and "same entity?" in line for line in discover_text.splitlines()):
+        problems.append("phase2-discover.md pins a \"same entity?\" 👉 again")
+    return problems
+
+
+class PairsStepIsRetired(unittest.TestCase):
+    """#889: step 4a-pairs is gone, so nothing grades it, with negative controls."""
 
     WALK = [banner("query_visualize_discover"), DIRECTED["query_visualize_discover"], GRADUATE]
 
-    def check(self, record, walk=None):
+    def test_nothing_is_left_of_it(self):
+        self.assertEqual([], retired_pairs_problems(lint, DISCOVER.read_text(encoding="utf-8")))
+
+    def test_a_discover_without_the_pairs_question_reports_nothing(self):
         with tempfile.TemporaryDirectory() as scratch:
-            return lint.check_pairs_step(walk or self.WALK, project_with(scratch, record))
+            project = project_with(scratch, {"module_7_query": {"discover_phase": "completed"}})
+            found = lint.lint(self.WALK, project=project)
+        self.assertEqual([], [f for f in found if f["code"] in RETIRED_CODES])
 
-    def test_a_finished_discover_without_the_pairs_question_is_reported(self):
-        found = self.check({"module_7_query": {"discover_phase": "completed"}})
-        self.assertEqual([("BREAKING", "INV-357-pairs-step-missing", 3)],
-                         [(f["severity"], f["code"], f["turn"]) for f in found])
+    def test_negative_control_the_check_put_back(self):
+        def check_pairs_step(turns, project=None):
+            return []
+        with mock.patch.object(lint, "check_pairs_step", check_pairs_step, create=True), \
+                mock.patch.object(lint, "CHECKS", lint.CHECKS + (check_pairs_step,)):
+            self.assertEqual(["transcript_lint defines check_pairs_step again",
+                              "CHECKS runs check_pairs_step again"],
+                             retired_pairs_problems(lint, DISCOVER.read_text(encoding="utf-8")))
 
-    def test_a_progress_file_with_no_discover_record_excuses_nothing(self):
-        self.assertEqual(1, len(self.check({})))
-
-    def test_pairs_that_were_offered_excuse_nothing(self):
-        record = {"module_7_query": {"steps": {"4a-pairs": {
-            "status": "completed", "pairs": [{"records": ["A:1", "A:2"]}]}}}}
-        self.assertEqual(1, len(self.check(record)))
-
-    def test_a_skipped_discover_is_silent(self):
-        self.assertEqual([], self.check({"module_7_query": {"discover_phase": "skipped"}}))
-
-    def test_an_empty_pairs_list_is_silent(self):
-        record = {"module_7_query": {"steps": {"4a-pairs": {"status": "completed",
-                                                            "pairs": []}}}}
-        self.assertEqual([], self.check(record))
-
-    def test_the_pairs_question_is_silent(self):
-        walk = self.WALK[:2] + [PAIRS] + self.WALK[2:]
-        self.assertEqual([], self.check({}, walk))
-
-    def test_a_walk_that_ends_inside_discover_is_silent(self):
-        self.assertEqual([], self.check({}, self.WALK[:2]))
-
-    def test_no_project_is_ungraded_not_missing(self):
-        found = lint.check_pairs_step(self.WALK, None)
-        self.assertEqual([("INFO", "INV-357-pairs-step-ungraded")],
-                         [(f["severity"], f["code"]) for f in found])
-        self.assertIn("--project", found[0]["message"])
-
-    def test_an_unreadable_progress_file_is_ungraded_not_missing(self):
-        found = self.check("{not json")
-        self.assertEqual(["INV-357-pairs-step-ungraded"], [f["code"] for f in found])
-
-    def test_another_module_is_never_graded(self):
-        self.assertEqual([], lint.check_pairs_step(
-            [banner("data_processing"), READY], None))
+    def test_negative_control_the_pairs_question_put_back(self):
+        text = DISCOVER.read_text(encoding="utf-8").replace(
+            "### Step 4b: Why Analysis introduction",
+            PAIRS + "\n\n### Step 4b: Why Analysis introduction", 1)
+        self.assertEqual(['phase2-discover.md pins a "same entity?" 👉 again'],
+                         retired_pairs_problems(lint, text))
 
 
 class WorkedSteerIsReported(unittest.TestCase):
@@ -402,16 +399,15 @@ class WorkedSteerIsReported(unittest.TestCase):
 
 
 class AWalkOutsideModulesFiveToSevenReportsNothingNew(unittest.TestCase):
-    def test_the_existing_walk_raises_none_of_the_three(self):
+    def test_the_existing_walk_raises_none_of_them(self):
         turns, replies, tools = lint.load_walk(EXISTING_FIXTURE, tool_results=True)
         found = lint.lint(turns, replies=replies, tools=tools)
-        new = {"INV-354-directing-step-missing", "INV-357-pairs-step-missing",
-               "INV-357-pairs-step-ungraded", "INV-352-steer-missing"}
+        new = {"INV-354-directing-step-missing", "INV-352-steer-missing"} | RETIRED_CODES
         self.assertEqual([], [f for f in found if f["code"] in new])
 
 
 class TheChecksAreRegisteredAndRun(unittest.TestCase):
-    NEW = ("check_directing_steps", "check_pairs_step", "check_worked_steers")
+    NEW = ("check_directing_steps", "check_worked_steers")
 
     def test_each_is_in_checks(self):
         names = [f.__name__ for f in lint.CHECKS]
@@ -426,7 +422,7 @@ class TheChecksAreRegisteredAndRun(unittest.TestCase):
             found = lint.lint(turns, project=project, replies=replies, tools=tools)
         self.assertEqual(
             [("INV-352-steer-missing", 2), ("INV-354-directing-step-missing", 3),
-             ("INV-354-directing-step-missing", 5), ("INV-357-pairs-step-missing", 5)],
+             ("INV-354-directing-step-missing", 5)],
             sorted((f["code"], f["turn"]) for f in found))
 
     def test_the_command_line_reads_the_tool_results_and_the_project(self):
@@ -438,8 +434,7 @@ class TheChecksAreRegisteredAndRun(unittest.TestCase):
                 capture_output=True, text=True, encoding="utf-8", check=False)
         self.assertEqual(1, run.returncode, run.stderr)
         found = {f["code"] for f in json.loads(run.stdout)}
-        self.assertEqual({"INV-352-steer-missing", "INV-354-directing-step-missing",
-                          "INV-357-pairs-step-missing"}, found)
+        self.assertEqual({"INV-352-steer-missing", "INV-354-directing-step-missing"}, found)
 
 
 # ------------------------------------------------------------- pinned to their sites
@@ -481,9 +476,6 @@ class EachPatternMatchesItsSite(unittest.TestCase):
                          " ".join(section(GROUND_RULES, "Directing steps").split())).group(1)
         self.assertRegex(form.replace("{Why the step did not arise}", "No column was new"),
                          lint.NO_SITE)
-
-    def test_the_pairs_question_matches_step_4a_pairs(self):
-        self.assertRegex(pointer_line(DISCOVER, "same entity"), lint.PAIRS_QUESTION)
 
     def test_the_steer_modules_are_the_act_2_hands_on_modules(self):
         flat = " ".join(section(GROUND_RULES, "Worked steers").split())

@@ -11,7 +11,8 @@ claims. This file holds the rest, one class per item:
    dropped the acknowledge-first line.
 4. **Teardown skip.** Module 7's teardown keys on no pid and no port recorded, which covers the
    container-route decline and a failed identity check, not only ``"accepted": false``.
-5. **Missing pieces.** ``steps["4a-pairs"]`` in the full checkpoint structure; the discoveries
+5. **Missing pieces.** The full checkpoint structure names exactly the steps Discover writes
+   (it named ``steps["4a-pairs"]`` until #889 removed that step); the discoveries
    deliverable and gate item 5 in the success criteria and success indicator; INV-363 cited where
    the projection drops skipped sources; the normalizer's mojibake warning relayed (INV-166).
 
@@ -179,18 +180,38 @@ def checkpoint_structure(text):
     return json.loads(block[block.index("```json") + len("```json"):])
 
 
+#: The Discover steps that write a checkpoint, in order (#614; 4a-pairs retired by #889).
+DISCOVER_STEPS = ["4a", "4b", "4c", "4d", "4e"]
+
+
+def structure_problems(discover_b, discover_a):
+    """The full checkpoint structure names exactly ``DISCOVER_STEPS``; no 4a-pairs record."""
+    problems = []
+    steps = list(checkpoint_structure(discover_b)["module_7_query"]["steps"])
+    if steps != DISCOVER_STEPS:
+        problems.append("the full checkpoint structure names steps %s" % steps)
+    if '`module_7_query.steps["4a-pairs"]`' in discover_a:
+        problems.append('phase2-discover.md writes `module_7_query.steps["4a-pairs"]`')
+    return problems
+
+
 class TheMissingPiecesArePresent(unittest.TestCase):
 
-    def test_the_full_checkpoint_structure_names_4a_pairs(self):
-        steps = checkpoint_structure(read(DISCOVER_B))["module_7_query"]["steps"]
-        self.assertIn("4a-pairs", steps)
-        self.assertEqual(["4a", "4a-pairs", "4b"], list(steps)[:3])
-        self.assertEqual({"status", "pairs"}, set(steps["4a-pairs"]))
-        self.assertEqual({"records", "prediction", "engine", "agreement"},
-                         set(steps["4a-pairs"]["pairs"][0]))
+    def test_the_full_checkpoint_structure_names_the_steps_discover_writes(self):
+        self.assertEqual([], structure_problems(read(DISCOVER_B), read(DISCOVER_A)))
 
-    def test_4a_pairs_is_the_key_step_4a_pairs_writes(self):
-        self.assertIn('`module_7_query.steps["4a-pairs"]`', read(DISCOVER_A))
+    def test_negative_control_the_retired_4a_pairs_key_put_back(self):
+        """#889 removed step 4a-pairs; its key put back in either file is reported."""
+        row = ('      "4a-pairs": {"status": "completed", "pairs": []},\n')
+        b = read(DISCOVER_B)
+        mutant = b.replace('      "4b": ', row + '      "4b": ', 1)
+        self.assertNotEqual(b, mutant, "the mutation no longer applies")
+        self.assertEqual(["the full checkpoint structure names steps "
+                          "['4a', '4a-pairs', '4b', '4c', '4d', '4e']"],
+                         structure_problems(mutant, read(DISCOVER_A)))
+        a = read(DISCOVER_A) + '\nupdate `module_7_query.steps["4a-pairs"]`\n'
+        self.assertEqual(['phase2-discover.md writes `module_7_query.steps["4a-pairs"]`'],
+                         structure_problems(b, a))
 
     def test_the_success_criteria_name_the_deliverable_and_gate_item_5(self):
         criteria = flat(section(read(MODULE_7_P1), "## Success criteria",
