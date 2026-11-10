@@ -2855,7 +2855,11 @@ Phase 1 (`phase1-query-visualize.md`):
   colored by whole source set with the encoding self-check, `NAME_ORG` search
   fallback, built from the export stream, the brand-token values copied into
   the server's own code in every language (it never imports `brand_tokens.py`
-  or reads a `${CLAUDE_PLUGIN_ROOT}` path at runtime), D3 copied on the host
+  or reads a `${CLAUDE_PLUGIN_ROOT}` path at runtime; Python writes
+  `src/server/results_server.py` with `senzing_viz_server.py
+  --emit-standalone` on the host at first build, stops on a failed emit
+  rather than hand-copying, and keeps any provenance note inside the
+  docstring, #891), D3 copied on the host
   at first build to `src/server/vendor/d3.v7.min.js` (a missing copy refuses
   to render and is copied again), loopback bind with an identity check, a snapshot
   `docs/visualizations/results_visualization.html` naming the Bootcamper's own
@@ -3698,7 +3702,20 @@ needs the Senzing Python SDK (`senzing`, `senzing_core`).
   (JSONL files or globs, optional); `--port` (default 8080); `--title`
   (default "Senzing Entity Resolution"); `--dataset` (snapshot wording,
   default "the loaded data"); `--snapshot <path>`; `--no-serve`;
-  `--bind-host` (default `BIND_HOST`, checked by `check_bind_host`).
+  `--bind-host` (default `BIND_HOST`, checked by `check_bind_host`);
+  `--emit-standalone <path>`.
+- Emit mode (`emit_standalone`, `standalone_source`, #891): dispatched in
+  `main` before the D3 check, so it needs no D3, SDK or settings. It drops
+  every block from a line that is exactly `# >>> plugin-only` to the next
+  line that is exactly `# <<< plugin-only` (the brand-token comment, the
+  `sys.path.insert` and `brand_tokens` import, and the emit mode itself),
+  and refuses an unbalanced marker, no block, leftover `brand_tokens`,
+  `sys.path.insert`, `CLAUDE_PLUGIN_ROOT` or `plugins/senzing-bootcamp`
+  text, or a copy that does not compile. The copy keeps the shebang,
+  docstring and `from __future__` first and the inlined palette as its only
+  one. An existing path is refused and named; the copy goes to a temporary
+  file beside the target (its folder created) and is renamed into place,
+  so a failure leaves nothing.
 - Settings (`resolve_settings`): the file wins when its `PIPELINE` has
   all `REQUIRED_PIPELINE_KEYS`, else a complete
   `SENZING_ENGINE_CONFIGURATION_JSON`; the winner is stated when both
@@ -3741,8 +3758,9 @@ needs the Senzing Python SDK (`senzing`, `senzing_core`).
   paint their type color at 2px and an assigned source outline paints
   as assigned.
 - Assets: `vendor/d3.v7.min.js` is inlined (`_d3_script`), with no network
-  fallback; brand colors come from `brand_tokens` or the `_FALLBACK_*`
-  copies.
+  fallback; brand colors come from `brand_tokens` when it loads, every value
+  read before any is bound, else the module-level `_FALLBACK_*` copies and
+  the inline `color_for_sources`.
 - Snapshot (`write_snapshot`, `_snapshot_payload`): embeds the data via
   `_script_json` with a `fetch` shim (search empty, Why/How point to the
   live server); Search / Probe becomes `_snapshot_probe_html` (note,
@@ -3774,9 +3792,10 @@ needs the Senzing Python SDK (`senzing`, `senzing_core`).
 Exit codes:
 
 - 0: built (and snapshot written) with `--no-serve`, or served and
-  stopped.
+  stopped; or `--emit-standalone` wrote its copy.
 - 1: vendored D3 missing (checked first, so no snapshot), model build
-  failed, port bind failed, or another process answers the port.
+  failed, port bind failed, or another process answers the port; or
+  `--emit-standalone` refused an existing path or wrote nothing.
 - 2: no usable engine settings, or a refused `--bind-host` (an argparse
   usage error).
 
@@ -7823,6 +7842,13 @@ def startup_line(host, port, nonce=None):
     ...
 def start_serving(handler, host, port, timeout=5.0):
     ...
+SOURCE_COLORS = dict(_FALLBACK_SOURCE_COLORS)
+FALLBACK_COLORS = list(_FALLBACK_COLORS)
+SOURCE_STROKES = list(_FALLBACK_STROKES)
+SOURCE_STROKE_WIDTHS = list(_FALLBACK_STROKE_WIDTHS)
+SOURCE_FILL_SHADES = list(_FALLBACK_FILL_SHADES)
+def color_for_sources(sources):
+    ...
 class Model:
     def __init__(self):
         ...
@@ -8931,6 +8957,10 @@ def write_snapshot(model, engine, flags, title, out_path, port=8080, dataset="")
     ...
 REQUIRED_PIPELINE_KEYS = ("CONFIGPATH", "RESOURCEPATH", "SUPPORTPATH")
 def resolve_settings(path, env_value, log):
+    ...
+def standalone_source(text):
+    ...
+def emit_standalone(dest, source=None):
     ...
 def build_arg_parser():
     ...
@@ -10219,6 +10249,13 @@ From `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`:
                     help="the IPv4 address to bind (default: 127.0.0.1). On the container "
                          "route, the container's own interface address. A wildcard "
                          "(\"\", 0.0.0.0, ::) is refused.")
+    # >>> plugin-only
+    ap.add_argument("--emit-standalone", default=None, metavar="PATH",
+                    help="write a self-contained copy of this server to PATH, with the "
+                         "brand palette inlined and no import from the plugin, then exit. "
+                         "Needs no D3, Senzing SDK or engine settings; refuses an existing "
+                         "PATH")
+    # <<< plugin-only
 ```
 
 <!-- markdownlint-enable MD013 -->
@@ -11216,6 +11253,7 @@ _FALLBACK_BRAND = {
     "font": "Roboto, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
     "code_font": "'Fira Code', 'Courier New', Courier, monospace",
 }
+_BRAND = dict(_FALLBACK_BRAND)
     def _absorb(self, resp):
         ...
     @staticmethod
@@ -11243,10 +11281,13 @@ def _snapshot_payload(model):
 
 Used by:
 
-- `_FALLBACK_BRAND`: `test_brand_sync.py`
+- `_BRAND`: `test_brand_sync.py`, `test_viz_server_emits_a_standalone_copy.py`
+- `_FALLBACK_BRAND`: `test_brand_sync.py`,
+  `test_viz_server_emits_a_standalone_copy.py`
 - `_FALLBACK_COLORS`: `test_brand_sync.py`
 - `_FALLBACK_FILL_SHADES`: `test_brand_sync.py`
-- `_FALLBACK_SOURCE_COLORS`: `test_brand_sync.py`
+- `_FALLBACK_SOURCE_COLORS`: `test_brand_sync.py`,
+  `test_viz_server_emits_a_standalone_copy.py`
 - `_FALLBACK_STROKES`: `test_brand_sync.py`
 - `_FALLBACK_STROKE_WIDTHS`: `test_brand_sync.py`
 - `_absorb`: `test_visualization_model_build_scales.py`
@@ -11524,12 +11565,12 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9389 test methods in 475 files, matching `inventory.test_count_total`.
+There are 9408 test methods in 476 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 9389.
+sum to 9408.
 
-Two files run more tests than they define, so discovery collects 9376:
+Two files run more tests than they define, so discovery collects 9395:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
@@ -11998,6 +12039,7 @@ looks wrong.
 - `tests/test_viz_endpoint_sync.py`: 7
 - `tests/test_viz_histogram_integer_ticks.py`: 6
 - `tests/test_viz_server_bind_and_identity.py`: 40
+- `tests/test_viz_server_emits_a_standalone_copy.py`: 19
 - `tests/test_viz_server_process_handle.py`: 29
 - `tests/test_viz_server_refuses_to_render_without_d3.py`: 12
 - `tests/test_viz_settings_resolution.py`: 12
@@ -12903,7 +12945,7 @@ tests a rebuild can pass from behavior alone.
   - **Verification.** A server that ignores `?tab=` fails the capture. Identical
     captures are deleted. An unsettled animated tab is reported.
   - **The manifest** merges re-captures.
-- **`senzing_viz_server.py`** (22 files).
+- **`senzing_viz_server.py`** (23 files).
   - **Bind and identity.** The server binds loopback by default, never the
     wildcard. It serves a per-process `server_nonce` on `/api/stats`, and a
     foreign answer stops startup. `--bind-host` and `start_serving` refuse
@@ -12912,6 +12954,18 @@ tests a rebuild can pass from behavior alone.
     a failed probe leaves nothing listening; the startup line ends with
     `server_nonce=<nonce>`.
   - **D3.** Without D3 it refuses to render and never falls back to a CDN.
+  - **Standalone copy** (`tests/test_viz_server_emits_a_standalone_copy.py`,
+    19 tests, #891). `--emit-standalone` into a temporary directory writes
+    a copy that compiles, names no `brand_tokens`, `sys.path.insert`,
+    `CLAUDE_PLUGIN_ROOT` or plugin path, keeps the shebang, docstring and
+    `from __future__` first, adds no line, and has no emit mode. With
+    `brand_tokens` blocked its palette, `_BRAND` and `color_for_sources` on
+    five source lists (up to 131 sources) equal `brand_tokens`'. A bare
+    copy of the reference run with `python -I` emits with no D3 or
+    settings, and the copy stops at its own D3 check. An existing file, a
+    source with no markers or a leftover import, an unbalanced marker and
+    a failed rename write nothing. Step 3c's seven elements carry a
+    negative control each.
   - **Settings.** A stub `config/engine_config.json` containing
     `{"PIPELINE": {}}` never beats a complete
     `SENZING_ENGINE_CONFIGURATION_JSON`. Missing keys are named.
@@ -15704,6 +15758,13 @@ Senzing licensing, with no SPDX identifier.
   `ps | grep` are banned beside `pkill -f` — a `pgrep -f` lookup recorded
   a wrapping shell's pid and teardown's kill reported a stop while the
   server kept its port; an INV-223 amendment is queued
+- #891: `senzing_viz_server.py --emit-standalone <path>` writes a
+  self-contained copy with the palette inlined and no plugin import, and
+  step 3c's Python route writes `src/server/results_server.py` with it on
+  the host at first build — the reference imported `brand_tokens`, so a
+  guide copied it into `src/server/` and hand-edited the import out, once
+  putting a docstring above `from __future__` and breaking the file; a new
+  invariant is queued
 - #894: after the END OF SENZING BOOTCAMP banner, graduation shows one
   pinned plain line, "Run `/package-bootcamp` anytime to bundle your
   bootcamp results into one zip you can archive, move to another machine,

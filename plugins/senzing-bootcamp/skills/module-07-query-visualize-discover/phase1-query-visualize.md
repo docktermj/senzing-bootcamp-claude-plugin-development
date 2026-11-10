@@ -1114,6 +1114,28 @@ The server MUST:
     non-Python server is the precedent:
     [`phase1-visualization.md`](../module-03b-truthset-visualization/phase1-visualization.md) →
     "Use the Senzing brand". One rule on every route, so a native route carries the values too.
+
+    ⛔ **(INV-081, INV-252) For Python, write `src/server/results_server.py` with the reference's
+    emit mode, on the host, at first build; never copy the reference and edit its import out.**
+    The emit mode writes a copy of the reference with the token values inlined as its only palette
+    and no import from the plugin, so the values are copied for you. Run it from the project root:
+
+    ```bash
+    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py" --emit-standalone src/server/results_server.py
+    ```
+
+    Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md#guide-run-blocks)).
+
+    Where `${CLAUDE_PLUGIN_ROOT}` is unset, use the skill-relative fallback
+    `../../scripts/senzing_viz_server.py` (INV-252). The emit mode needs neither the vendored D3,
+    the Senzing SDK nor engine settings, so on SDK setup's `docker` route it runs on the host too.
+    It refuses to overwrite an existing file, so an existing server is never replaced. Then adapt
+    `src/server/results_server.py` to the Bootcamper's data as this step describes.
+    - ⛔ **(INV-081) A failed emit stops the step**, as a failed D3 copy does: report the reason it
+      printed, and do not hand-copy the reference instead.
+    - Put any provenance note inside the existing module docstring, never above
+      `from __future__ import annotations`. Only the docstring, comments and blank lines may come
+      before that import, so a second docstring above it stops the file from starting.
   - ⛔ **(INV-091) Copy the D3 asset into the project and resolve it from there — the reference's
     lookup is
     position-dependent and does not travel.** `senzing_viz_server.py` finds `vendor/d3.v7.min.js`

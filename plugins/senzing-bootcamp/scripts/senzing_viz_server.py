@@ -326,16 +326,21 @@ def start_serving(handler, host, port, timeout=5.0):
         return None
     return httpd, serving
 
-# Brand tokens ship in this same directory. Import them so the visualization shares
-# the Senzing style guide's palette with the recap PDF; fall back to an inlined copy
-# of the same values if the module is ever unavailable, so this script keeps working
-# in isolation. (The vendored D3 has no such fallback: without it the server refuses to
-# render, because the only substitute would be a network fetch — INV-091.)
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-# Fallback palette, used only if brand_tokens is unavailable. Named at module scope
-# so tests/test_brand_sync.py can assert it stays equal to brand_tokens.py — the two
-# copies would otherwise drift silently (the runtime prefers the imported values
-# whenever brand_tokens loads, so a stale fallback is never exercised in practice).
+# >>> plugin-only
+# Brand tokens ship in this same directory as `brand_tokens.py`. The values below are an
+# inlined copy of them, and the block after the palette imports the module so the
+# visualization shares the Senzing style guide's palette with the recap PDF whenever it
+# loads. tests/test_brand_sync.py keeps the inlined copy equal to `brand_tokens.py`, so the
+# two cannot drift silently. (The vendored D3 has no such fallback: without it the server
+# refuses to render, because the only substitute would be a network fetch — INV-091.)
+#
+# ⛔ (INV-081) The lines between a `# >>> plugin-only` and a `# <<< plugin-only` marker are
+# dropped by `--emit-standalone`, which writes the copy a project's own server starts from
+# (see `emit_standalone`). Everything outside them must stand on its own: no plugin import,
+# no plugin path, nothing naming the token module.
+# <<< plugin-only
+# The Senzing brand palette and typography, carried as values so this server needs no
+# other file to render in the brand.
 _FALLBACK_SOURCE_COLORS = {"CUSTOMERS": "#F57826", "REFERENCE": "#3B6EA5", "WATCHLIST": "#C8922A"}
 _FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#0ea5e9", "#a3a34a", "#ef4444", "#14b8a6"]
 _FALLBACK_STROKES = ["#FFFFFF", "#18160F", "#FAF8F3"]
@@ -349,78 +354,95 @@ _FALLBACK_BRAND = {
     "font": "Roboto, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
     "code_font": "'Fira Code', 'Courier New', Courier, monospace",
 }
+SOURCE_COLORS = dict(_FALLBACK_SOURCE_COLORS)
+FALLBACK_COLORS = list(_FALLBACK_COLORS)
+SOURCE_STROKES = list(_FALLBACK_STROKES)
+SOURCE_STROKE_WIDTHS = list(_FALLBACK_STROKE_WIDTHS)
+SOURCE_FILL_SHADES = list(_FALLBACK_FILL_SHADES)
+_BRAND = dict(_FALLBACK_BRAND)
+
+
+def color_for_sources(sources):
+    """Give each data source a fill, stroke and stroke width that tell it apart.
+
+    Preferred colors go to the sources that have one; every other source takes the next
+    fallback color, then a stroke and a stroke width, then a shade, as the sources outnumber
+    each channel. Kept behaviorally identical to the brand palette's own helper, not merely
+    similar, so the widened channels are here too and a server built from this copy is not
+    held to a 24-source ceiling.
+    """
+    states = 1 + len(SOURCE_STROKES) * len(SOURCE_STROKE_WIDTHS)
+    codes = sorted({str(s) for s in (sources or []) if str(s).strip()})
+    preferred = {c: SOURCE_COLORS[c] for c in codes if c in SOURCE_COLORS}
+    claimed = set(preferred.values())
+    available = [c for c in FALLBACK_COLORS if c not in claimed] or list(FALLBACK_COLORS)
+
+    def shade(fill, factor):
+        if not factor:
+            return fill
+        target = "#FFFFFF" if factor > 0 else "#18160F"
+        weight = abs(factor)
+        rgb = lambda v: (int(v[1:3], 16), int(v[3:5], 16), int(v[5:7], 16))  # noqa: E731
+        return "#%02X%02X%02X" % tuple(
+            round(a + (b - a) * weight) for a, b in zip(rgb(fill), rgb(target))
+        )
+
+    assigned, nth = {}, 0
+    for code in codes:
+        if code in preferred:
+            fill, cycle = preferred[code], 0
+        else:
+            fill = available[nth % len(available)]
+            cycle = nth // len(available)
+            fill = shade(fill, SOURCE_FILL_SHADES[
+                (cycle // states) % len(SOURCE_FILL_SHADES)])
+            nth += 1
+        slot = cycle % states
+        if slot == 0:
+            stroke, width = SOURCE_STROKES[0], None
+        else:
+            k = slot - 1
+            stroke = SOURCE_STROKES[(k + 1) % len(SOURCE_STROKES)]
+            width = SOURCE_STROKE_WIDTHS[k // len(SOURCE_STROKES)]
+        assigned[code] = {
+            "fill": fill,
+            "stroke": stroke,
+            "stroke_width": width,
+            "cycle": cycle,
+        }
+    return assigned
+
+
+# >>> plugin-only
+# Prefer the shipped token module when it loads. Every value is read before any is bound,
+# so a module missing one name leaves the whole inlined palette above in force, never a mix.
+# The defensive fallback is kept in sync via tests/test_brand_sync.py, which also runs this
+# file with the import blocked so the inlined `color_for_sources` is exercised, not skipped.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
     import brand_tokens as _bt
 
-    SOURCE_COLORS = dict(_bt.SOURCE_COLORS)
-    FALLBACK_COLORS = list(_bt.FALLBACK_COLORS)
-    SOURCE_STROKES = list(_bt.SOURCE_STROKES)
-    SOURCE_STROKE_WIDTHS = list(_bt.SOURCE_STROKE_WIDTHS)
-    SOURCE_FILL_SHADES = list(_bt.SOURCE_FILL_SHADES)
-    color_for_sources = _bt.color_for_sources
-    _BRAND = {
-        "bg": _bt.WARM_OFF_WHITE, "surface": _bt.WHITE, "dark": _bt.DEEP,
-        "ink": _bt.DARK_INK, "muted": _bt.BODY_INK, "accent": _bt.EMBER_CORE,
-        "accent_hot": _bt.EMBER_HOT, "accent_soft": _bt.EMBER_SOFT,
-        "line": _bt.WARM_LINE, "green": _bt.SIGNAL_GREEN,
-        "font": _bt.FONT_STACK, "code_font": _bt.CODE_FONT_STACK,
-    }
-except Exception:  # defensive fallback — kept in sync via tests/test_brand_sync.py
-    SOURCE_COLORS = dict(_FALLBACK_SOURCE_COLORS)
-    FALLBACK_COLORS = list(_FALLBACK_COLORS)
-    SOURCE_STROKES = list(_FALLBACK_STROKES)
-    SOURCE_STROKE_WIDTHS = list(_FALLBACK_STROKE_WIDTHS)
-    SOURCE_FILL_SHADES = list(_FALLBACK_FILL_SHADES)
-
-    def color_for_sources(sources):
-        """Inlined mirror of ``brand_tokens.color_for_sources`` (same contract).
-
-        Kept behaviorally identical, not merely similar: tests/test_brand_sync.py asserts
-        this returns the same dict as the helper, so the channel widening has to be here
-        too or the import-failure path silently reverts to a 24-source ceiling.
-        """
-        states = 1 + len(SOURCE_STROKES) * len(SOURCE_STROKE_WIDTHS)
-        codes = sorted({str(s) for s in (sources or []) if str(s).strip()})
-        preferred = {c: SOURCE_COLORS[c] for c in codes if c in SOURCE_COLORS}
-        claimed = set(preferred.values())
-        available = [c for c in FALLBACK_COLORS if c not in claimed] or list(FALLBACK_COLORS)
-
-        def shade(fill, factor):
-            if not factor:
-                return fill
-            target = "#FFFFFF" if factor > 0 else "#18160F"
-            weight = abs(factor)
-            rgb = lambda v: (int(v[1:3], 16), int(v[3:5], 16), int(v[5:7], 16))  # noqa: E731
-            return "#%02X%02X%02X" % tuple(
-                round(a + (b - a) * weight) for a, b in zip(rgb(fill), rgb(target))
-            )
-
-        assigned, nth = {}, 0
-        for code in codes:
-            if code in preferred:
-                fill, cycle = preferred[code], 0
-            else:
-                fill = available[nth % len(available)]
-                cycle = nth // len(available)
-                fill = shade(fill, SOURCE_FILL_SHADES[
-                    (cycle // states) % len(SOURCE_FILL_SHADES)])
-                nth += 1
-            slot = cycle % states
-            if slot == 0:
-                stroke, width = SOURCE_STROKES[0], None
-            else:
-                k = slot - 1
-                stroke = SOURCE_STROKES[(k + 1) % len(SOURCE_STROKES)]
-                width = SOURCE_STROKE_WIDTHS[k // len(SOURCE_STROKES)]
-            assigned[code] = {
-                "fill": fill,
-                "stroke": stroke,
-                "stroke_width": width,
-                "cycle": cycle,
-            }
-        return assigned
-
-    _BRAND = dict(_FALLBACK_BRAND)
+    _imported = (
+        dict(_bt.SOURCE_COLORS),
+        list(_bt.FALLBACK_COLORS),
+        list(_bt.SOURCE_STROKES),
+        list(_bt.SOURCE_STROKE_WIDTHS),
+        list(_bt.SOURCE_FILL_SHADES),
+        _bt.color_for_sources,
+        {
+            "bg": _bt.WARM_OFF_WHITE, "surface": _bt.WHITE, "dark": _bt.DEEP,
+            "ink": _bt.DARK_INK, "muted": _bt.BODY_INK, "accent": _bt.EMBER_CORE,
+            "accent_hot": _bt.EMBER_HOT, "accent_soft": _bt.EMBER_SOFT,
+            "line": _bt.WARM_LINE, "green": _bt.SIGNAL_GREEN,
+            "font": _bt.FONT_STACK, "code_font": _bt.CODE_FONT_STACK,
+        },
+    )
+except Exception:  # defensive fallback — the inlined values above stand
+    _imported = None
+if _imported is not None:
+    (SOURCE_COLORS, FALLBACK_COLORS, SOURCE_STROKES, SOURCE_STROKE_WIDTHS,
+     SOURCE_FILL_SHADES, color_for_sources, _BRAND) = _imported
+# <<< plugin-only
 
 
 # --------------------------------------------------------------------------- #
@@ -2737,6 +2759,103 @@ def resolve_settings(path, env_value, log):
     return "", None, "No engine settings (missing --settings file and env var).\n"
 
 
+# >>> plugin-only
+#: The markers around the lines `--emit-standalone` drops. A marker is a line holding exactly
+#: this text, indented or not, so these two constants are never mistaken for one.
+_PLUGIN_ONLY_BEGIN = "# >>> plugin-only"
+_PLUGIN_ONLY_END = "# <<< plugin-only"
+
+#: Text the emitted copy must not contain. Each names the plugin's layout, which a project's
+#: server cannot reach: on SDK setup's container route it runs in a container that mounts only
+#: the project (INV-260), and a plugin update moves the cached plugin directory.
+_STANDALONE_FORBIDDEN = ("brand_tokens", "sys.path.insert", "CLAUDE_PLUGIN_ROOT",
+                         "plugins/senzing-bootcamp")
+
+
+def standalone_source(text):
+    """Return ``text`` with every plugin-only block removed, or raise ``ValueError``.
+
+    A block runs from a line that is exactly ``_PLUGIN_ONLY_BEGIN`` to the next line that is
+    exactly ``_PLUGIN_ONLY_END``, both dropped. An unbalanced marker, no block at all, or any
+    forbidden text left behind is an error, so a copy that still reaches into the plugin is
+    never written. The result must also compile.
+    """
+    kept, inside, blocks = [], False, 0
+    for number, line in enumerate(text.splitlines(keepends=True), 1):
+        marker = line.strip()
+        if marker == _PLUGIN_ONLY_BEGIN:
+            if inside:
+                raise ValueError(f"line {number}: a plugin-only block opens inside another")
+            inside, blocks = True, blocks + 1
+        elif marker == _PLUGIN_ONLY_END:
+            if not inside:
+                raise ValueError(f"line {number}: a plugin-only block closes that never opened")
+            inside = False
+        elif not inside:
+            kept.append(line)
+    if inside:
+        raise ValueError("a plugin-only block never closes")
+    if not blocks:
+        raise ValueError("no plugin-only block found; the brand-token import block is not "
+                         "where this emitter expects it")
+    out = "".join(kept)
+    left = [word for word in _STANDALONE_FORBIDDEN if word in out]
+    if left:
+        raise ValueError("the copy would still name " + ", ".join(left))
+    compile(out, "<standalone copy>", "exec")
+    return out
+
+
+def emit_standalone(dest, source=None):
+    """Write a self-contained copy of this reference to ``dest``; return an exit code.
+
+    The copy carries the palette above as values, imports nothing from the plugin and has no
+    emit mode of its own; the shebang, the module docstring and ``from __future__`` stay first.
+    It needs neither the vendored D3, the Senzing SDK nor engine settings, so it runs on the
+    host on every route. An existing ``dest`` is never overwritten. The copy is written to a
+    temporary file beside ``dest`` and renamed into place, so a failure leaves no partial file.
+    Exit codes: 0 written, 1 refused or failed (the reason is on stderr).
+    """
+    import stat
+    import tempfile
+
+    source = source or os.path.abspath(__file__)
+    dest = os.path.abspath(dest)
+    if os.path.lexists(dest):
+        sys.stderr.write(f"ERROR: {dest} already exists; nothing was written. The emit mode "
+                         "writes a project's server once, at first build, and never "
+                         "overwrites one.\n")
+        return 1
+    tmp = None
+    try:
+        with open(source, encoding="utf-8", newline="") as fh:
+            text = standalone_source(fh.read())
+        folder = os.path.dirname(dest)
+        os.makedirs(folder, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(prefix="." + os.path.basename(dest) + ".", suffix=".tmp",
+                                   dir=folder)
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as out:
+            out.write(text)
+        os.chmod(tmp, stat.S_IMODE(os.stat(source).st_mode))
+        if os.path.lexists(dest):
+            raise FileExistsError(f"{dest} appeared while the copy was being written")
+        os.replace(tmp, dest)
+        tmp = None
+    except (OSError, ValueError, SyntaxError) as exc:
+        sys.stderr.write(f"ERROR: could not write the standalone server to {dest}: "
+                         f"{type(exc).__name__}: {exc}. Nothing was written.\n")
+        return 1
+    finally:
+        if tmp is not None:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+    print(f"Standalone server written: {dest}")
+    return 0
+# <<< plugin-only
+
+
 def build_arg_parser():
     """The command line ``main`` parses."""
     ap = argparse.ArgumentParser(description=__doc__)
@@ -2767,11 +2886,25 @@ def build_arg_parser():
                     help="the IPv4 address to bind (default: 127.0.0.1). On the container "
                          "route, the container's own interface address. A wildcard "
                          "(\"\", 0.0.0.0, ::) is refused.")
+    # >>> plugin-only
+    ap.add_argument("--emit-standalone", default=None, metavar="PATH",
+                    help="write a self-contained copy of this server to PATH, with the "
+                         "brand palette inlined and no import from the plugin, then exit. "
+                         "Needs no D3, Senzing SDK or engine settings; refuses an existing "
+                         "PATH")
+    # <<< plugin-only
     return ap
 
 
 def main(argv=None):
     args = build_arg_parser().parse_args(argv)
+
+    # >>> plugin-only
+    # Before the D3 check: emitting a copy renders nothing, and on SDK setup's container route
+    # it runs on the host, where neither the SDK nor engine settings exist.
+    if args.emit_standalone:
+        return emit_standalone(args.emit_standalone)
+    # <<< plugin-only
 
     # ⛔ (INV-091) Refuse to render without the vendored D3, before settings or engine
     # work, so neither the live server nor --snapshot is produced. A snapshot written
