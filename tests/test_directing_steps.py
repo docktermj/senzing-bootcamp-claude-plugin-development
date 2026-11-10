@@ -541,8 +541,8 @@ def m6_problems(phase_d, module_files=()):
                                                       r"picks",
         "one example per turn": r"\*\*One example per turn\.\*\*",
         "the result is held back until they answer":
-            r"Senzing's call\s+for the example is not shown, mentioned or hinted at before they "
-            r"answer",
+            r"Senzing's call\s+for the example is not shown, mentioned or hinted at until they "
+            r"have answered",
         "one 👉 per turn (INV-251)": r"the turn's only 👉 \(INV-251\)",
         "no option is marked as likely": r"No option is marked as likely",
         "records are found by ID or by their details": r"by `DATA_SOURCE` and record ID where "
@@ -552,7 +552,8 @@ def m6_problems(phase_d, module_files=()):
             r"another",
         "you pick goes on to the next example": r"\*\*\"You pick\" or \"I don't know\":\*\* no "
                                                 r"expectation is given",
-        "a skip ends the check": r"\*\*Skip, or \"move on\" in any words:\*\* the check ends",
+        "a skip ends the check": r"\*\*6, \"Skip: move on to the review\":\*\* the check ends",
+        "each answer has its handling (INV-284)": r"\*\*Handling each answer \(INV-284\)\.\*\*",
         "the lookup is get_entity_by_record_id, never SQL":
             r"`get_entity_by_record_id`\s+through the generated query code below, never with SQL",
         "agreed or differed": r"`agreed` or `differed`",
@@ -1135,7 +1136,7 @@ class TheChecksCatchARegression(unittest.TestCase):
                            "the preface says what, why and how")
 
     def test_m6_result_shown_before_the_answer(self):
-        self.assertReports(self.m6_mutated("is not shown, mentioned or hinted at before they answer",
+        self.assertReports(self.m6_mutated("is not shown, mentioned or hinted at until they have answered",
                                            "is shown beside the records"),
                            "the result is held back")
 

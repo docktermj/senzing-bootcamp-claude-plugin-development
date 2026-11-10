@@ -63,7 +63,7 @@ ends. Only what is particular to step 21 is here.
   guide's picks.
 - **One example per turn.** Show the example's records as text: each record's data source, record
   ID and the values that bear on a match (names, addresses, phones, identifiers). Senzing's call
-  for the example is not shown, mentioned or hinted at before they answer; where picking it
+  for the example is not shown, mentioned or hinted at until they have answered; where picking it
   needed the engine's output, hold that back. Then the turn's only 👉 (INV-251), with the
   numbered list beneath it:
 
@@ -80,18 +80,26 @@ ends. Only what is particular to step 21 is here.
 
 - **The options.** The outcomes fit the example: the three above for a pair, and for three or
   more records the ways they could group (all one entity, some together and the rest apart, all
-  separate). The last three options, "a record of my own", their own words and the skip, are
-  always there, in that order. No option is marked as likely.
-- **Their answer.**
-  - **An outcome, or their own words:** that is their expectation for this example.
-  - **A record of my own:** find it by `DATA_SOURCE` and record ID where they gave one, otherwise
-    by searching on the details they described, and it takes the place of the guide's example.
-    When they gave no expectation for it, show it as the next example, with the 👉 above. A record
-    that cannot be found is a difference, named in one line; do not ask for another.
-  - **"You pick" or "I don't know":** no expectation is given. Show Senzing's call with its
-    evidence, record the example as skipped, and go on to the next example the guide picks.
-  - **Skip, or "move on" in any words:** the check ends. Record the example as skipped, with
-    Senzing's call, and go to the review below in the same turn.
+  separate), each handled as options 1 to 3 are. The last three options, "a record of my own",
+  their own words and the skip, are always there, in that order. No option is marked as likely.
+
+**Handling each answer (INV-284).** Each is carried out in the next turn:
+
+- **1, "They are one entity":** their expectation for this example; the comparison below
+  follows.
+- **2, "They are two entities, related":** the same as 1.
+- **3, "They are two separate entities":** the same as 1.
+- **4, "A record of my own":** find it by `DATA_SOURCE` and record ID where they gave one,
+  otherwise by searching on the details they described, and it takes the place of the guide's
+  example; their expectation for it goes to the comparison below. When they gave no expectation
+  for it, show it as the next example, with the 👉 above. A record that cannot be found is a
+  difference, named in one line; do not ask for another.
+- **5, "Something else, in your own words":** their words are their expectation; the comparison
+  below follows.
+- **6, "Skip: move on to the review":** the check ends. Record the example as skipped, with
+  Senzing's call, and go to the review below in the same turn. "Move on" in any words is a skip.
+- **"You pick" or "I don't know":** no expectation is given. Show Senzing's call with its
+  evidence, record the example as skipped, and go on to the next example the guide picks.
 - **The comparison**, in the next turn. Look each record up with `get_entity_by_record_id`
   through the generated query code below, never with SQL. Show as text their expectation (the
   option, or their words quoted) beside Senzing's call, then `agreed` or `differed`. The evidence
@@ -99,7 +107,7 @@ ends. Only what is particular to step 21 is here.
   `why_records` for records that stayed apart. This is text only, like every check in this module
   (step 23: no visualization here).
 - **A difference is talked through.** After a `differed`, say in one line that they can ask about
-  it before they answer the next example. A reply that asks or objects is the discussion: answer
+  it ahead of the next example. A reply that asks or objects is the discussion: answer
   from the engine's own output (the match key, `why_records`, the mapped values), then re-present
   the pending 👉 verbatim. It ends when they answer that 👉, accepting the explanation, or when the
   evidence points to a configuration problem, such as a field mapped to the wrong feature. Say
