@@ -373,6 +373,9 @@ EXEMPT_SPANS = {
     "you already told me this in Module 1.":
         "a hypothetical Bootcamper line inside an agent-facing note on why Module 4 asks no "
         "provision question per source; nothing instructs the guide to say it",
+    '"regenerated_on_restore": [{"path": "config/license.json", "by": "Module 4 Step 8a sub-step 7"}]':
+        "graduation Step 6b's `backups/revisit/RESUME_STATE.json` key (#895), a manifest the "
+        "guide reads on resume; INV-079 keeps such keys internal, as it does `config/*` keys",
 }
 
 

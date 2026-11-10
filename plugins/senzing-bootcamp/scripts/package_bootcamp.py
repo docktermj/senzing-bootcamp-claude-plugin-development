@@ -79,11 +79,18 @@ ROOT_PREFIX = "senzing-bootcamp-{profile}-{date}"
 
 #: Paths never included in ANY profile. Named in the manifest rather than dropped quietly, so a
 #: recipient can tell what is missing without guessing.
+#: ⚠️ (#895) `license.json` is a single-segment rule, so it drops a copy at any depth. The file is
+#: the SDK's `get_license` response, which names the license's customer, contract and billing
+#: terms and holds no license payload, so the secret scan passes it as clean. Graduation used to
+#: snapshot it to `backups/revisit/state/license.json`, which `config/license.json` never matched,
+#: and `transfer` packaged that copy. `config/license.json` stays listed so a file at its home
+#: path keeps the rule it was always reported under.
 ALWAYS_EXCLUDE = (
     ".env",
     ".env.production",
     "licenses",
     "config/license.json",
+    "license.json",
     "data/raw",
     "data/temp",
     "logs",
@@ -623,8 +630,8 @@ def open_me_first(manifest, project_root):
         "",
         "`PACKAGE_MANIFEST.json` lists every excluded path with its reason. The categories:",
         "",
-        "- **Credentials and licenses** (`.env`, `licenses/`, `config/license.json`) — never",
-        "  packaged, in either profile.",
+        "- **Credentials and licenses** (`.env`, `licenses/`, `config/license.json` and any",
+        "  `license.json` copy wherever it sits) — never packaged, in either profile.",
     ]
     lines += list(SHARE_SOURCE_DATA_BULLET if profile == "share"
                   else TRANSFER_SOURCE_DATA_BULLET)

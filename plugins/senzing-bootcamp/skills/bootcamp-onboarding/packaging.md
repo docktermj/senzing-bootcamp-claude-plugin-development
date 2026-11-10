@@ -127,9 +127,14 @@ the archive safe to hand over:
   than the bootcamper's source data. Graduation copies it to `production/data/exports/` at the
   same project-relative path (INV-186), so a graduated project carries it in both places and
   both travel.
-- **Never packaged, either profile:** `.env`, `licenses/`, `config/license.json`,
-  `data/raw/` (the bootcamper's own source data), `data/temp/`, `logs/`, `.git/`, caches
-  and virtualenvs, and `backups/packages/` itself.
+- **Never packaged, either profile:** `.env`, `licenses/`, `config/license.json` and any
+  `license.json` copy wherever it sits, `data/raw/` (the bootcamper's own source data),
+  `data/temp/`, `logs/`, `.git/`, caches and virtualenvs, and `backups/packages/` itself.
+  `config/license.json` is the SDK's `get_license` response: it names the license's customer,
+  contract and billing terms and holds no license payload, so the content scan below passes it
+  as clean. The rule `license.json` matches that exact, case-sensitive name at any depth, which
+  also covers the `backups/revisit/state/license.json` copy an earlier graduation's Step 6b
+  left behind.
 - **Never packaged on `share`, on top of that:** the mapped loader inputs
   (`data/senzing-ready/`), `backups/`, every database file, and `docs/mapping/`.
   ⛔ **(INV-410) Every exclusion rule matches a path's segments wherever they sit, not only at the
