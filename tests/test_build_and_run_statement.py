@@ -81,6 +81,21 @@ dated note of 2026-10-23, applied 2026-10-26):
   `data/raw/` and never the registry's `file_path`; Module 4 and Module 5 point at the section for
   how, and neither restates the `--`.
 
+#892 pins the run location, because the guide's shell keeps whatever directory an earlier call left
+it in, and a query program run from `src/query/` wrote its `data/...` output under
+`src/query/data/` (INV-370's proposed dated note of 2026-11-10):
+
+* the first "Every language" bullet states the pin once, `cd '<project root>' && <call>`, in a
+  fenced block followed by the guide-run pointer line (INV-163), and says it applies to every
+  Build, Run and project-creation command the section gives and to the native-Windows
+  `powershell.exe` call, that `<project root>` is the session's start directory with forward
+  slashes and single quotes, what a failed `cd` does, and that the `docker` route takes no pin;
+* the project-creation list says each init command runs pinned, TypeScript's creation is one
+  pinned call, and "Change back to the project root" is gone;
+* no shipped file other than the section restates the pin (INV-300), with a negative control.
+
+`tests/test_container_route_build_and_run.py` runs the pin in `bash` from `src/query/`.
+
 Each check is a function returning its problems, and a negative control mutates the real text and
 sees the check report it: a drifted command, a command restated in Module 3 or at a #563 site
 (in a fenced block too, and `node` on a `.js`, `python3` on a `.py` or `mvn`), a missing citation
@@ -98,12 +113,13 @@ skipping, because a skipped comparison would certify nothing.
 This module enforces INV-370 (registered 2026-10-13). It pins the text; it cannot establish that
 a real `dotnet`, `cargo`, `tsc` or `javac` build succeeds on a Bootcamper's machine.
 
-Source issues: #511, #562, #563, #594, #793.
+Source issues: #511, #562, #563, #594, #793, #892.
 
 Run:  python3 -m unittest discover -s tests
 """
 import re
 import subprocess
+import tempfile
 import unittest
 from collections import namedtuple
 from pathlib import Path
@@ -313,6 +329,38 @@ NO_BUILD_OUTPUT = "**The `src/**` rows copy source, never build output.**"
 GITIGNORE_BULLET = "- **`.gitignore`:**"
 STATEMENT_PATH = ('`plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md` → '
                   '"Building and running a program"')
+#: #892: the pin every Build, Run and project-creation call starts with, stated once.
+PIN_FORM = "cd '<project root>' && <call>"
+#: The first "Every language" bullet, which states the pin.
+FIRST_BULLET = "- **Run every command from the project root"
+POINTER = ("Guide-run in the guide's POSIX shell (Git Bash on Windows); unverified on Windows: no "
+           "test runs it there ([guide-run blocks](../bootcamp-onboarding/ground-rules.md"
+           "#guide-run-blocks)).")
+#: What the first bullet says about the pin, and what each phrase is.
+PIN_PHRASES = (
+    ("Never assume the shell is already at the root: pin it.", "the rule"),
+    ("Every Build, Run and project-creation command this section gives therefore runs as one call "
+     "that starts with the pin", "the commands it covers"),
+    ("`<project root>` is the absolute path of the directory the session started in",
+     "what the root is"),
+    ("written with forward slashes (`C:/Users/...` in Git Bash)", "the forward slashes"),
+    ("single-quoted, with a `'` in the path written as `'\\''`", "the quoting"),
+    ("`<call>` is the table's Build or Run command, or a project-creation command below",
+     "what the call is"),
+    ("On native Windows `<call>` is the `powershell.exe` call the next bullet gives, unchanged",
+     "the native-Windows call"),
+    ("relative dot-source of the env script resolves too", "why the env script resolves"),
+    ("When the `cd` fails, `&&` stops the call, so the command never runs from a drifted "
+     "directory", "the failed cd"),
+    ("On SDK setup's `docker` route the call takes no pin", "the docker route"),
+)
+#: The project-creation list's pointer at the pin, and TypeScript's one pinned call.
+INIT_PINNED = "Each init command below runs pinned, as \"Every language\" above says"
+TYPESCRIPT_PINNED = "in one pinned call, change into `<dir>/<name>/` after the pin"
+#: The sentence #892 retired: it relied on the guide remembering to change back.
+CHANGE_BACK = re.compile(r"(?i)change\s+back\s+to\s+the\s+project\s+root")
+#: Any statement of the pin, with the placeholder or a real path, in either quoting (INV-300).
+PIN_WRAPPING = re.compile(r"\bcd (?:'[^'\n]*'|\"[^\"\n]*\"|<project root>) &&")
 
 
 def read(path):
@@ -450,6 +498,47 @@ def restatements(path, text, ground_rules, any_directory=True):
                                                                 .strip()))
     for m in BUILD_TIMEOUT_RESTATED.finditer(flat):
         problems.append("%s restates the build timeout: %s" % (path, m.group(0)))
+    return problems
+
+
+def fenced_blocks(text):
+    return re.findall(r"(?ms)^[ \t]*```[a-z]*\n(.*?)^[ \t]*```", text)
+
+
+def pin_problems(ground_rules):
+    """#892: the pin, stated once in the first "Every language" bullet, and what it covers."""
+    statement = section(ground_rules)
+    first = block(statement, FIRST_BULLET, r"\n- \*\*")
+    if not first:
+        return ["the section has no first 'Every language' bullet"]
+    problems = []
+    if [b.strip() for b in fenced_blocks(first)] != [PIN_FORM]:
+        problems.append("the first bullet does not give the pin once in a block: %s" % PIN_FORM)
+    elif squash(first.split("```", 2)[2].lstrip("\n").split("\n\n", 1)[0]).strip() != POINTER:
+        problems.append("the pin is not followed by the guide-run pointer line")
+    text = squash(first).replace("**", "")
+    for phrase, what in PIN_PHRASES:
+        if phrase not in text:
+            problems.append("the first bullet does not state %s: %r" % (what, phrase))
+    flat = squash(statement)
+    if INIT_PINNED not in flat:
+        problems.append("the project-creation list does not say its init commands run pinned")
+    typescript = squash(project_items(statement).get("TypeScript", ""))
+    if TYPESCRIPT_PINNED not in typescript:
+        problems.append("TypeScript's project creation is not one pinned call")
+    if CHANGE_BACK.search(statement):
+        problems.append("the section still says to change back to the project root")
+    return problems
+
+
+def restated_pin(files, ground_rules_path=GROUND_RULES):
+    """Shipped files that state the pin outside the section (INV-300)."""
+    problems = []
+    for path in files:
+        text = read(path)
+        if path == ground_rules_path:
+            text = outside_the_section(text)
+        problems += ["%s: %s" % (path.name, m.group(0)) for m in PIN_WRAPPING.finditer(text)]
     return problems
 
 
@@ -845,6 +934,70 @@ class TheRulesForEveryLanguage(unittest.TestCase):
         for tool in MISSING_TOOLS:
             with self.subTest(tool=tool):
                 self.assertIn(tool, self.statement)
+
+
+class EveryCallPinsTheProjectRoot(unittest.TestCase):
+    """#892: the pin is stated once and covers Build, Run and project creation."""
+
+    def setUp(self):
+        self.text = read(GROUND_RULES)
+
+    def bites(self, old, new):
+        broken = self.text.replace(old, new, 1)
+        self.assertNotEqual(broken, self.text, old)
+        self.assertTrue(pin_problems(broken), old)
+
+    def test_the_pin(self):
+        self.assertEqual([], pin_problems(self.text))
+
+    def test_negative_control_the_pin_dropped(self):
+        self.bites("  ```bash\n  " + PIN_FORM + "\n  ```\n\n  " + POINTER + "\n\n", "")
+
+    def test_negative_control_the_pin_unquoted(self):
+        self.bites(PIN_FORM, PIN_FORM.replace("'", ""))
+
+    def test_negative_control_the_pointer_dropped(self):
+        self.bites(PIN_FORM + "\n  ```\n\n  " + POINTER, PIN_FORM + "\n  ```\n\n  Runs.")
+
+    def test_negative_control_the_change_back_sentence_restored(self):
+        self.bites("No call changes back, because every later call\n   pins the root again.",
+                   "Change back to the project root.")
+
+    def test_negative_control_the_init_commands_left_unpinned(self):
+        for old, new in (
+                ("Every Build,\n  Run and project-creation command", "Every Build and\n  Run command"),
+                (" Each init command below runs pinned,\nas \"Every language\" above says:", ":"),
+                ("in one pinned call, change into `<dir>/<name>/` after the pin and run",
+                 "change into `<dir>/<name>/` and run")):
+            with self.subTest(old=old):
+                self.bites(old, new)
+
+    def test_negative_control_the_docker_route_pinned(self):
+        self.bites("On SDK setup's `docker` route the call takes no pin",
+                   "On SDK setup's `docker` route the call is pinned too")
+
+    def test_no_other_shipped_file_restates_the_pin(self):
+        files = corpus_files("plugins", suffixes={".md"})
+        self.assertIn(GROUND_RULES, files, "the scan does not reach the ground rules (INV-265)")
+        self.assertEqual([], restated_pin(files))
+
+    def test_the_section_itself_is_the_one_statement(self):
+        self.assertEqual(1, len(PIN_WRAPPING.findall(section(self.text))))
+
+    def test_negative_control_a_restated_pin(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            copy = Path(tmp) / "SKILL.md"
+            for line in ("Run `%s`." % PIN_FORM,
+                         "Run `cd '/home/me/my proj' && python3 src/query/find.py`.",
+                         'Run `cd "C:/Users/me/proj" && node src/query/find/dist/find.js`.'):
+                with self.subTest(line=line):
+                    copy.write_text("# A skill\n\n" + line + "\n", encoding="utf-8")
+                    self.assertTrue(restated_pin([copy]))
+        restated = self.text + "\n## Elsewhere\n\nRun `%s`.\n" % PIN_FORM
+        with tempfile.TemporaryDirectory() as tmp:
+            copy = Path(tmp) / "ground-rules.md"
+            copy.write_text(restated, encoding="utf-8")
+            self.assertTrue(restated_pin([copy], ground_rules_path=copy))
 
 
 class ManifestsComeFromTheToolchainAndTheServer(unittest.TestCase):

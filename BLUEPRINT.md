@@ -1656,7 +1656,13 @@ Ground rules (`ground-rules.md`, every turn):
   `reporting_guide` (#563), or Module 2's C# route, never a public NuGet feed.
   Rust shares `<dir>/target`; TypeScript emits to `dist/` and runs it with
   `node`. Commands run from the project root; every build has a 120-second
-  timeout; a missing tool gets a Fix_Instruction naming it (#562). On SDK
+  timeout; a missing tool gets a Fix_Instruction naming it (#562). Every
+  Build, Run and project-creation call starts with the pin `cd '<project
+  root>' && <call>`, a guide-run block: the session's start directory,
+  forward slashes, single-quoted with `'` as `'\''`, wrapping the native
+  Windows `powershell.exe` call too, so a shell left in `src/query/` cannot
+  move a program's `data/...` output; TypeScript's creation is one pinned
+  call with no change back, and the `docker` route takes no pin (#892). On SDK
   setup's `docker` route every Build and Run command is wrapped as
   `<runtime> exec -w /app <container> bash -c '. src/scripts/senzing-env.sh
   && <command>'`, runtime and name from the SDK container's
@@ -11565,7 +11571,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9408 test methods in 476 files, matching `inventory.test_count_total`.
+There are 9424 test methods in 476 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 9408.
@@ -11612,7 +11618,7 @@ looks wrong.
 - `tests/test_bootcamp_notes_flow.py`: 36
 - `tests/test_brand_sync.py`: 44
 - `tests/test_broll_manifest.py`: 20
-- `tests/test_build_and_run_statement.py`: 77
+- `tests/test_build_and_run_statement.py`: 87
 - `tests/test_build_version_provenance_is_per_platform.py`: 8
 - `tests/test_bundled_script_and_production_paths.py`: 30
 - `tests/test_business_problem_preserves_the_original_wording.py`: 17
@@ -11647,7 +11653,7 @@ looks wrong.
 - `tests/test_conformance_sees_a_rule_beside_a_citation.py`: 8
 - `tests/test_container_lifecycle_runtimes.py`: 18
 - `tests/test_container_names_are_project_derived.py`: 36
-- `tests/test_container_route_build_and_run.py`: 35
+- `tests/test_container_route_build_and_run.py`: 41
 - `tests/test_container_route_reads_no_plugin_asset.py`: 29
 - `tests/test_container_viz_port_is_published_and_checked.py`: 28
 - `tests/test_container_teardown_has_a_route_and_a_failure_report.py`: 8
@@ -15765,6 +15771,13 @@ Senzing licensing, with no SPDX identifier.
   guide copied it into `src/server/` and hand-edited the import out, once
   putting a docstring above `from __future__` and breaking the file; a new
   invariant is queued
+- #892: every Build, Run and project-creation call the ground rules'
+  "Building and running a program" gives starts with the pin `cd '<project
+  root>' && <call>`, which wraps the native Windows `powershell.exe` call
+  too, and TypeScript's project creation is one pinned call with no change
+  back — the guide's shell had drifted into `src/query/`, so three query
+  programs wrote `data/query_results/` under it; an INV-370 amendment is
+  queued
 - #894: after the END OF SENZING BOOTCAMP banner, graduation shows one
   pinned plain line, "Run `/package-bootcamp` anytime to bundle your
   bootcamp results into one zip you can archive, move to another machine,

@@ -38,6 +38,17 @@ these tests pin each:
    that window, and no persistent scope (INV-199). `TheWindowsFormPassesItsCommandThrough` runs
    the form in `bash` against a stub `powershell.exe` that records its arguments.
 
+5. **The pin, #892.** The guide's shell keeps whatever directory an earlier call left it in, so a
+   query program run from `src/query/` wrote `data/query_results/` under `src/query/`. The first
+   "Every language" bullet now starts every Build, Run and project-creation call with
+   `cd '<project root>' && <call>`. `ThePinRunsFromTheProjectRoot` runs that form in `bash` with
+   the shell started in `src/query/` of a project whose path holds a space and a `'`: a stub
+   program on `PATH` writes `data/query_results/out.json` relative to its working directory, and
+   the file lands under the root's `data/`. The native-Windows call runs the same way against the
+   stub `powershell.exe`, which then sits where the relative `.\\src\\scripts\\senzing-env.ps1`
+   resolves. Negative controls drop the pin and see the file land under `src/query/`, and a root
+   that no longer exists runs nothing. `tests/test_build_and_run_statement.py` pins the wording.
+
 `tests/test_build_and_run_statement.py` narrows its exemption of `ground-rules.md` to the section
 (#594's decision 594-4), so a restatement elsewhere in that file fails there.
 
@@ -46,7 +57,8 @@ sees the check report it.
 
 It does **not** establish that a row installs a working toolchain in a real `debian:bookworm-slim`
 container, or that `<runtime> exec` behaves as the stub does: no container runs in this suite, and
-Windows (Git Bash) is unverified, as the pointer line says.
+Windows (Git Bash) is unverified, as the pointer line says. Nor does it run a real program in any
+of the five languages from the pin: the stub stands in for the table's Run command.
 
 Stdlib only (INV-108).
 
@@ -80,6 +92,8 @@ POINTER = ("Guide-run in the guide's POSIX shell (Git Bash on Windows); unverifi
 #: The native-Windows form (#786), which the guide runs from Git Bash, one call per command.
 WINDOWS_FORM = "powershell.exe -NoProfile -Command '. .\\src\\scripts\\senzing-env.ps1; <command>'"
 WINDOWS_BULLET = "- **On native Windows (not SDK setup's `docker` route)"
+#: The pin every Build, Run and project-creation call starts with (#892), stated once.
+PIN_FORM = "cd '<project root>' && <call>"
 #: The first "Every language" bullet's pointer at the native-Windows call (INV-300).
 POINTS_AT_WINDOWS = "On native Windows that shell is the PowerShell call the next bullet gives"
 #: Any statement of the native-Windows wrapping: what no other file may restate (INV-300).
@@ -337,6 +351,11 @@ def env_template(module_2):
 STUB_POWERSHELL = """#!/bin/sh
 # A stand-in powershell.exe: writes each argument it was given on its own NUL-ended record.
 for a in "$@"; do printf '%s\\0' "$a"; done
+# With STUB_OUT set it also stands in for the program the call runs (#892): it writes its working
+# directory to STUB_OUT, a path relative to that directory.
+if [ -n "$STUB_OUT" ]; then
+  mkdir -p "$(dirname "$STUB_OUT")" && pwd -P > "$STUB_OUT"
+fi
 """
 
 
@@ -516,6 +535,97 @@ class TheWindowsFormPassesItsCommandThrough(unittest.TestCase):
                                       "Write-Output $env:SENZING_DIR")
         self.assertEqual(proc.returncode, 0, proc.stderr)
         self.assertNotIn("$env:SENZING_DIR", argv[2])
+
+
+STUB_PROGRAM = """#!/bin/sh
+# A stand-in query program (#892): writes its working directory to data/query_results/out.json,
+# relative to that directory, as a generated program opens its data/... paths.
+mkdir -p data/query_results && pwd -P > data/query_results/out.json
+"""
+OUT = Path("data") / "query_results" / "out.json"
+
+
+def pinned(form, root, call):
+    """`form` with `<project root>` as the ground rules write it: single-quoted, `'` as `'\\''`."""
+    return form.replace("<project root>", root.as_posix().replace("'", "'\\''")).replace(
+        "<call>", call)
+
+
+@unittest.skipIf(shutil.which("bash") is None, "bash is not installed")
+class ThePinRunsFromTheProjectRoot(unittest.TestCase):
+    """The pin in `bash`, with the shell left in `src/query/` (#892)."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name) / "the bootcamper's project"
+        self.drifted = self.root / "src" / "query"
+        self.drifted.mkdir(parents=True)
+        (self.root / "src" / "scripts").mkdir()
+        (self.root / "src" / "scripts" / "senzing-env.ps1").write_text("", encoding="utf-8")
+        (self.root / "config").mkdir()
+        (self.root / "config" / "bootcamp_progress.json").write_text("{}", encoding="utf-8")
+        self.bin = Path(self.tmp.name) / "bin"
+        self.bin.mkdir()
+        for name, body in (("query_program", STUB_PROGRAM), ("powershell.exe", STUB_POWERSHELL)):
+            stub = self.bin / name
+            stub.write_text(body, encoding="utf-8")
+            stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def run_line(self, line, **env):
+        env = dict(os.environ, PATH=f"{self.bin}{os.pathsep}{os.environ.get('PATH', '')}", **env)
+        return subprocess.run(["bash", "-c", line], cwd=str(self.drifted), env=env,
+                              capture_output=True, text=True, timeout=60)
+
+    def landed(self, where):
+        out = where / OUT
+        self.assertTrue(out.is_file(), f"no {OUT} under {where}")
+        return Path(out.read_text(encoding="utf-8").strip())
+
+    def test_the_section_gives_this_form(self):
+        section = between(read(GROUND_RULES), SECTION, r"\n## ")
+        self.assertEqual([b.strip() for b in fenced_blocks(section)].count(PIN_FORM), 1)
+
+    def test_the_program_writes_under_the_roots_data(self):
+        proc = self.run_line(pinned(PIN_FORM, self.root, "query_program"))
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(self.landed(self.root), self.root.resolve())
+        self.assertFalse((self.drifted / "data").exists(), "the output landed under src/query/")
+
+    def test_the_windows_call_runs_from_the_root(self):
+        run = "node src/query/find_entity/dist/find_entity.js"
+        call = WINDOWS_FORM.replace("<command>", run)
+        proc = self.run_line(pinned(PIN_FORM, self.root, call), STUB_OUT=OUT.as_posix())
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(proc.stdout.split("\0")[:-1],
+                         ["-NoProfile", "-Command", ". .\\src\\scripts\\senzing-env.ps1; " + run])
+        where = self.landed(self.root)
+        self.assertEqual(where, self.root.resolve())
+        self.assertTrue((where / "src" / "scripts" / "senzing-env.ps1").is_file(),
+                        "the relative dot-source would not resolve from PowerShell's directory")
+        self.assertFalse((self.drifted / "data").exists(), "the output landed under src/query/")
+
+    def test_negative_control_without_the_pin_the_output_lands_under_src_query(self):
+        proc = self.run_line("query_program")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(self.landed(self.drifted), self.drifted.resolve())
+        self.assertFalse((self.root / OUT).exists())
+
+    def test_negative_control_the_windows_call_without_the_pin(self):
+        call = WINDOWS_FORM.replace("<command>", "python3 src/query/find_entity.py")
+        proc = self.run_line(call, STUB_OUT=OUT.as_posix())
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        where = self.landed(self.drifted)
+        self.assertFalse((where / "src" / "scripts" / "senzing-env.ps1").exists())
+        self.assertFalse((self.root / OUT).exists())
+
+    def test_a_root_that_is_gone_runs_nothing(self):
+        gone = self.root.parent / "moved away"
+        proc = self.run_line(pinned(PIN_FORM, gone, "query_program"))
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertEqual(list(Path(self.tmp.name).rglob("out.json")), [])
 
 
 class TheCompileCheckUsesTheBuildCommand(unittest.TestCase):
