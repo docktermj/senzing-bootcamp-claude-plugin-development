@@ -135,8 +135,9 @@ not repeat it.
      when the Bootcamper gave an expectation for it (its `agreement` is `agreed` or `differed`),
      its `engine` call put its records in one entity, and its `records` name two or more data
      sources. Take the first that fits, and look its records up with `get_entity_by_record_id`,
-     with the program `discover_patterns` in `src/query` that step 4a saved, to find the entity
-     that holds them now. Say in one line that this is the example from Data processing.
+     with the program `discover_patterns` in `src/query` that step 4a saved, run with its run
+     command in `../bootcamp-onboarding/ground-rules.md` → "Building and running a program", to
+     find the entity that holds them now. Say in one line that this is the example from Data processing.
    - **Otherwise, a cross-source entity from step 4a.** When no example fits (none merged across
      sources, the step was handed back, or the record is absent in a project from before the
      expectation check), or the lookup now finds the example's records in more than one entity,
