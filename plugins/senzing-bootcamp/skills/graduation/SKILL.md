@@ -32,9 +32,9 @@ Bootcamp graduation is the terminal bookend module. Like every module it opens w
 apparatus — journey map, before/after framing, a step overview, and an estimated time — adapted to
 a terminal module (INV-102; see "Bootcamp graduation preface" below), then the model/effort nudge. Because no
 next-module transition applies, it shows no `✅ Module complete` line and no transition question,
-and it ends on the terminal END OF SENZING BOOTCAMP banner (INV-057). (Bootcamp graduation is NOT
-apparatus-exempt — contrast the exemptions for Bootcamp preparation (INV-075) and Module 0
-(INV-078).)
+and it ends on the terminal END OF SENZING BOOTCAMP banner and its one `/package-bootcamp` line
+(INV-057). (Bootcamp graduation is NOT apparatus-exempt — contrast the exemptions for Bootcamp
+preparation (INV-075) and Module 0 (INV-078).)
 
 ## Bootcamp graduation banner (show first, exactly once)
 
@@ -79,8 +79,8 @@ them to one line under `concise`. Refer to modules by name, never number (INV-07
    inventing a number. Suppress under `minimal`; one line under `concise`.
 
 Bootcamp graduation is terminal, so it has no "what's next / next module" line and no `✅ Module complete`
-transition — it ends on the END OF SENZING BOOTCAMP banner (INV-057). What the bootcamper carries
-forward is the recap PDF and the `production/` project.
+transition — it ends on the END OF SENZING BOOTCAMP banner and its one `/package-bootcamp` line
+(INV-057). What the bootcamper carries forward is the recap PDF and the `production/` project.
 
 ## Best-value model/effort prompt
 
@@ -1936,7 +1936,7 @@ Then stop and wait. This is the single closing question for the whole bootcamp.
    - **Wants to keep exploring** (asks a question, names a topic, or otherwise continues): help them, then offer the closing question again when they are ready. Do **not** show the terminal banner yet — it must never pre-empt continued exploration.
    - **Declines** ("no", "I'm done", "that's all", "nothing else"): the bootcamp is complete. Do these two things, in order:
      1. **Stand down the Stop-hook nudge, silently.** Set a top-level `bootcamp_complete: true` key in `config/bootcamp_preferences.yaml` (a single minimal edit; do not narrate it). The `Stop` hook (`../../scripts/stop-nudge.py`) reads this key and will not nudge for a closing 👉 question once the bootcamp is over — so the terminal banner, which ends the turn with no 👉, is not re-opened.
-     2. **Render the terminal banner, verbatim, exactly once** as the final output. It bookends the WELCOME banner that opened the bootcamp (start) and the BOOTCAMP GRADUATION banner (finish) with a clear end-of-bootcamp marker. No 👉 question follows it; the turn simply ends.
+     2. **Render the terminal banner, verbatim, exactly once, then the one `/package-bootcamp` line below it, verbatim.** The banner bookends the WELCOME banner that opened the bootcamp (start) and the BOOTCAMP GRADUATION banner (finish) with a clear end-of-bootcamp marker; the line reminds the bootcamper how to keep or share what they built.
 
      ```text
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1944,4 +1944,8 @@ Then stop and wait. This is the single closing question for the whole bootcamp.
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      ```
 
-     Show this banner at most **once** per bootcamp, and never while exploration is still continuing.
+     Run `/package-bootcamp` anytime to bundle your bootcamp results into one zip you can archive, move to another machine, or share with others.
+
+     That line is the final output. Show it as a plain line right after the banner's fence, never inside it. No 👉 question follows it, and nothing else does; the turn simply ends. It is a statement, not a question, and it names no archive path, because graduation runs no packager and no archive exists yet (INV-251). Show it on the normal path and after Step 2's Abort alike, and under every verbosity preset, including `minimal`, exactly like the banner.
+
+     Show this banner and its line at most **once** per bootcamp, and never while exploration is still continuing.

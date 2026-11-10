@@ -3061,7 +3061,8 @@ and continues; the recap PDF is guaranteed.
   `/package-bootcamp` statement, state that there is no script from here and
   repeat the "Next time" request, ask "anything else you would like to
   explore?"; on decline set `bootcamp_complete: true` and show the END OF
-  SENZING BOOTCAMP banner once.
+  SENZING BOOTCAMP banner once, then the pinned `/package-bootcamp` line as
+  the final output, with no 👉 after it.
 
 ### 5.17 `plugins/senzing-bootcamp/commands/bootcamp-feedback.md`
 
@@ -3104,7 +3105,8 @@ video `docs/bootcamp_recap.mp4`, the
 announcement and the single closing 👉 question asking whether there is
 anything else to explore. Only after the Bootcamper declines further
 exploration is the terminal `END OF SENZING BOOTCAMP` banner rendered, exactly
-once, as the final output (INV-057); never while exploration continues, and
+once, followed by the one pinned `/package-bootcamp` line, which is the final
+output (INV-057); never while exploration continues, and
 graduation never ends on the closing question once the Bootcamper says they are
 done. It tells the skill to pass
 `${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py` as the PDF generator.
@@ -11517,21 +11519,21 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9366 test methods in 475 files, matching `inventory.test_count_total`.
+There are 9377 test methods in 475 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
-sum to 9366.
+sum to 9377.
 
-Two files run more tests than they define, so discovery collects 9353:
+Two files run more tests than they define, so discovery collects 9364:
 
 - `tests/test_env_script_shell_portability.py` defines 45 and runs 49. Its mixin
   `_EveryStepInOneShell` runs 4 tests under both bash and zsh.
 - `tests/test_since_states_its_corpus.py` defines 11 and runs 14. One class
   subclasses another and inherits its 3 tests.
 
-Without `pwsh`, the run reports `Ran 9333`. The 7 tests of `ThePs1RunsUnderPwsh`
+Without `pwsh`, the run reports `Ran 9344`. The 7 tests of `ThePs1RunsUnderPwsh`
 are skipped in `setUpClass`, which counts as one skip and adds nothing to the
-run count. With `pwsh` installed, the run reports `Ran 9340`. No other count
+run count. With `pwsh` installed, the run reports `Ran 9351`. No other count
 looks wrong.
 
 - `tests/test_a_crashed_walk_keeps_its_transcript.py`: 15
@@ -11684,7 +11686,7 @@ looks wrong.
 - `tests/test_global_shell_config_is_off_limits.py`: 7
 - `tests/test_globalization_retrieval_strategy.py`: 15
 - `tests/test_graduation_announces_what_it_produces.py`: 12
-- `tests/test_graduation_ending_surfaces.py`: 7
+- `tests/test_graduation_ending_surfaces.py`: 18
 - `tests/test_graduation_hands_over_the_ability.py`: 34
 - `tests/test_graduation_no_voice_guidance.py`: 20
 - `tests/test_graduation_reads_persisted_answers.py`: 15
@@ -15690,6 +15692,14 @@ Senzing licensing, with no SPDX identifier.
   at 1,500 nodes the app and snapshot opened unfitted and every
   relationship edge painted gray, which no Truth Set check could show;
   amendments to INV-299 and INV-407 and two new invariants are queued
+- #894: after the END OF SENZING BOOTCAMP banner, graduation shows one
+  pinned plain line, "Run `/package-bootcamp` anytime to bundle your
+  bootcamp results into one zip you can archive, move to another machine,
+  or share with others.", as the final output, and `/graduate` gives the
+  same order — the one pointer to the packager sat in the long announcement
+  before the closing question and had scrolled away by the time the
+  Bootcamper wanted to keep or share their results; an amendment to INV-057,
+  with a note on INV-102, is queued
 - #895: the packager's single-segment rule `license.json` drops a
   `license.json` at any depth in both profiles, and graduation Step 6b no
   longer snapshots `config/license.json`, recording it in
