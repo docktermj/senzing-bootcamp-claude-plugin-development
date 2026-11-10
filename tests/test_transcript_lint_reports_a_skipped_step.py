@@ -74,8 +74,8 @@ GRADUATE = (f"{POINTER} **Would you like to graduate now and generate your produ
 DIRECTED = {
     "data_quality_mapping": (f"{POINTER} **What should each of these columns become in "
                              "CUSTOMERS's mapped record? Say it in your own words.**"),
-    "data_processing": (f"{POINTER} **Which of your records should I look up to check how "
-                        "Senzing resolved them? Name them in your own words.**"),
+    "data_processing": (f"{POINTER} **How do you expect Senzing to have resolved these records? "
+                        "Reply with a number:**"),
     "query_visualize_discover": f"{POINTER} **What do you want to find out about your data?**",
 }
 PAIRS = (f"{POINTER} **Are these two records the same entity? Reply with a number, and add a "
@@ -464,7 +464,7 @@ class EachPatternMatchesItsSite(unittest.TestCase):
 
     def test_each_directing_question_matches_its_site(self):
         needles = {"data_quality_mapping": "What should each of these columns become",
-                   "data_processing": "Which of your records should I look up",
+                   "data_processing": "How do you expect Senzing to have resolved",
                    "query_visualize_discover": "What do you want to find out"}
         for token, path in SITES.items():
             with self.subTest(token=token):

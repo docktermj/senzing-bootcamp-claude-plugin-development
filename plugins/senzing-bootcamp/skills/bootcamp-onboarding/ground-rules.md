@@ -246,7 +246,7 @@ the answer and which result is checked, and points here.
 | Module | Site | What the Bootcamper directs | What is checked against it |
 |---|---|---|---|
 | Data Quality, Mapping, and Transformation | `../module-05-data-quality-mapping/phase2-data-mapping.md` step 11, on the first source with a column `mapping_workflow` did not recognize | What each such column becomes, and what they expect the mapped record to show | Step 12's sample record |
-| Data processing | `../module-06-data-processing/phaseD-validation.md` step 21 | Which records to look up, what they expect Senzing to have done with them, and why | The lookup result, as text |
+| Data processing | `../module-06-data-processing/phaseD-validation.md` step 21 | What they expect Senzing to have done with each example the guide picks from their data, or with a record of their own | Senzing's call for each example, as text |
 | Query, Visualize and Discover | `../module-07-query-visualize-discover/phase1-query-visualize.md` step 1, Turn 1 | What they want to find out about their data | Step 3a's answers |
 
 - **One open 👉, pinned at its site (INV-247).** It asks what to build and what they expect as one
@@ -254,7 +254,8 @@ the answer and which result is checked, and points here.
   rather than a pick from the guide's. Whatever helps them answer (the columns, sample values, what
   a choice means) goes before the 👉, as the 👉 protocol above requires. The guide offers no
   recommendation of its own unless asked to choose: a recommendation is what "you pick" gets. It
-  is the turn's only 👉 (INV-251), and the turn ends on it.
+  is the turn's only 👉 (INV-251), and the turn ends on it. Data processing's step 21 is the one
+  exception, stated in "Data processing's expectation check" below.
 - ⛔ **(INV-354) The Bootcamper directs in words; the guide writes every line of code.** Never ask them to
   write, edit or paste code. Their words are the specification, and the code comes from the MCP
   tools exactly as it does elsewhere (INV-080): attribute names from `mapping_workflow`, SDK calls
@@ -273,7 +274,8 @@ the answer and which result is checked, and points here.
   (the site says which). The comparison adds no question of its own.
 - **Not a prediction.** "Predictions before results" above governs numbered predictions with a
   skip. A directing step's expectation is open and in the Bootcamper's words, so that section's
-  numbered form does not apply; the two share only that a difference is never graded.
+  numbered form does not apply; the two share only that a difference is never graded. Data
+  processing's expectation check below borrows the numbered form and stays a directing step.
 - **"You pick" and "I don't know".** An answer that hands the step back ("you pick", "I don't
   know", "you decide", "whatever you think", or the same in other words) gets what the step did
   before directing steps existed, as the site states it. Do not ask the directing question again
@@ -320,6 +322,31 @@ the answer and which result is checked, and points here.
 
   The in-progress recap checkpoint carries the line from the step boundary where the comparison
   was shown, or where the step was handed back.
+- **Data processing's expectation check (INV-354).** Data processing's step 21 is the one directing
+  step that is a guided expectation check: the guide picks each example from the Bootcamper's
+  loaded data, one per turn, and they say what they expect Senzing to have done with it. There, and
+  only there, these replace the bullets above where they differ:
+  - **Numbered outcomes.** The pinned 👉 is followed by numbered outcomes written for the example,
+    ending with "a record of my own", their own words and a skip, so the open-👉 bullet's "no
+    numbered options and no menu" does not bind it. No option is marked as likely, and the guide
+    offers no expectation of its own.
+  - **The result is held back.** Senzing's call for an example is not shown, mentioned or hinted at
+    until they answer. The comparison marks each example `agreed` or `differed`.
+  - **A difference is talked through.** A question or objection about a difference is answered from
+    the engine's own output (INV-080), and the pending 👉 is re-presented. The discussion ends when
+    they accept the explanation, or when it points to a configuration problem, which goes to the
+    gate the site names. It is still never graded, and the guide adds no question of its own.
+  - **Not a prediction point.** "Predictions before results" does not govern it; it shares that
+    section's numbered form and held-back result only.
+  - **When the value is written.** `directing_steps.data_processing` is written in the write that
+    ends the check, not at the first answer: `directed` when they gave an expectation for at least
+    one example, otherwise `guide_chose`. A skip before any expectation hands the step back, as the
+    "You pick" bullet above says.
+  - **Recording.** Each example is one Questions & Responses line, in ask order:
+    `- **{the 👉 question}** ({the example's records}) — {their expectation} → {Senzing's call}
+    (agreed)`, or `(differed)`; an example with no expectation of theirs is `— skipped →
+    {Senzing's call}`. The directed `**You directed:**` form names their expectations, and its
+    `You caught:` names each example that differed.
 
 <a id="worked-steers"></a>
 

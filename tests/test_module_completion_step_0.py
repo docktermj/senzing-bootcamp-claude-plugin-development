@@ -20,8 +20,9 @@ What this file pins, in `module-completion.md` (from its `## Step 0:` heading to
    is still missing; a pending 👉 is re-presented, not re-asked; once Step 1 has added the name
    token to `modules_completed`, Step 0 does not run again.
 4. **0a.** Unset `directing_steps.<token>` in the three directing modules: Data processing runs
-   step 21's directing step late; the other two record `skipped`, carried by Step 1's write, and
-   do not run the step late.
+   step 21's directing step late, one example per turn until its expectation check ends, and
+   writes the value in the turn it ends (#887); the other two record `skipped`, carried by Step
+   1's write, and do not run the step late.
 5. **0b.** `steer_triggers.<token>`: in an Act 2 hands-on module with no worked-steer note in the
    checkpoint, the first entry's steer is shown late with no ask-first question, even from Data
    processing on; in every module, each `filed: false` reversal is filed silently through
@@ -145,6 +146,13 @@ ZERO_A = {
     "Step 1's write carries skipped": r"Step 1's batched write carries it",
     "the other two do not run late": r"Do not run the step late",
     "the late step ends the turn on its 👉": r"late directing step ends this turn on its 👉",
+    # #887: step 21 is a guided expectation check, one example per turn, so the late run spans
+    # turns and writes its value only in the turn the check ends.
+    "the late step runs one example per turn until the check ends":
+        r"one example per turn until the expectation check ends",
+    "the value is written in the turn the check ends": r"The turn the check ends in writes\s+"
+                                                       r"`directing_steps\.data_processing` at "
+                                                       r"that boundary",
     "the next turn resumes at 0b": r"resumes at 0b",
     "recording skipped asks nothing": r"Recording `skipped` asks nothing: go on to 0b in the "
                                       r"same turn",
@@ -316,6 +324,15 @@ class TheChecksCatchARegression(unittest.TestCase):
         self.assertReports(self.replace("**Action in Data processing.** Run step 21's directing "
                                         "step now", "**Action in Data processing.** Record "
                                         "`skipped`"), "Data processing runs step 21 late")
+
+    def test_the_late_check_stops_after_one_example(self):
+        self.assertReports(self.replace(", one example per turn until the expectation check ends",
+                                        ""), "the late step runs one example per turn")
+
+    def test_the_late_value_written_on_the_next_turn(self):
+        self.assertReports(self.replace("The turn the check ends in writes",
+                                        "The next turn writes"),
+                           "the value is written in the turn the check ends")
 
     def test_the_other_two_run_late(self):
         self.assertReports(self.replace("Do not run the\n  step late.", "Run the step late."),

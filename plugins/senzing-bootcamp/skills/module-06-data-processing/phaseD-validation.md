@@ -32,36 +32,98 @@ route", item 3 (INV-300). Step 21's directing question is not asked again:
 
 ## 21. Validate match accuracy
 
-**The directing step comes first.** This is Module 6's directing step. The open 👉's shape, the
+**The directing step comes first.** This is Module 6's directing step. The 👉's shape, the
 result beside the expectation, the "you pick" fallback, once per module and the `You directed:`
 line are stated once in `../bootcamp-onboarding/ground-rules.md` → "Directing steps"; follow them
-there rather than a copy here (INV-300, INV-354). Only what is particular to step 21 is here.
+there rather than a copy here (INV-300, INV-354). This step is the expectation check that
+section's "Data processing's expectation check" bullet describes: numbered outcomes, the result
+held back until they answer, a difference talked through, and the record written when the check
+ends. Only what is particular to step 21 is here.
 
 - **When it runs.** The first time Phase D reaches step 21, before any sample is queried. When
-  `directing_steps.data_processing` is already set, it has run: go straight to the review below.
-- **Before the 👉**, one line: this check looks at records they choose, and they can name records
-  by ID or describe them by the details they hold.
-- **The question**, the turn's only 👉:
+  `module_6_processing.expectation_check.status` is `in_progress`, resume at the next example,
+  with no preface and no answered example shown again; the count toward 5 and the run of agreeing
+  examples carry over. When the status is `completed`, or `directing_steps.data_processing` is
+  already set, it has run: go straight to the review below.
+- **The preface**, in the first turn, before the first example and its 👉. In a few lines of your
+  own words, say what this is (a few records from their own data, looked up to see how Senzing
+  resolved them), why it is asked (to test their expectations of entity resolution against the
+  engine's decisions), and how it goes (one example per turn; they say what they expect, it is
+  compared with Senzing's call, a difference is talked through, and the check stops once two
+  examples in a row agree, when they want to move on, or after 5 examples). It hints at no
+  example's outcome.
+- **Picking an example.** The guide picks each example from the loaded data, with the generated
+  query code below: records from different sources that share a name or an identifier, two
+  records with the same name, or two records in one source that look like duplicates, whichever
+  kinds the loaded data has. Every load has at least one entity, so there is always an example.
+  Vary the kind where the data allows, and never show an example twice. Never pick from the
+  entity that holds `module_6_processing.midpoint_record`, which step 9 already showed resolved:
+  look that record up with `get_entity_by_record_id` and leave its entity out. When
+  `midpoint_record` is `"none"` or absent, nothing is left out. The exclusion binds only the
+  guide's picks.
+- **One example per turn.** Show the example's records as text: each record's data source, record
+  ID and the values that bear on a match (names, addresses, phones, identifiers). Senzing's call
+  for the example is not shown, mentioned or hinted at before they answer; where picking it
+  needed the engine's output, hold that back. Then the turn's only 👉 (INV-251), with the
+  numbered list beneath it:
 
-👉 **Which of your records should I look up to check how Senzing resolved them? Name them in your own words, with what you expect Senzing to have done with them and why.**
+👉 **How do you expect Senzing to have resolved these records? Reply with a number:**
+
+1. They are one entity.
+2. They are two entities, related.
+3. They are two separate entities.
+4. A record of my own: name it by data source and record ID, or describe it, with what you expect.
+5. Something else, in your own words.
+6. Skip: move on to the review.
 
 *(Internal: end the turn on this question and wait.)*
 
-- **Building from the answer.** Find each record they named: by `DATA_SOURCE` and record ID where
-  they gave one, otherwise by searching on the details they described. Look each one up with
-  `get_entity_by_record_id` through the generated query code below, never with SQL. Show the result
-  as text, beside their words: for each record, the entity it resolved to, and for each pair or
-  group they named, whether the records share an entity, then `matches` or `differs`. For a pair
-  that differs, the evidence is the engine's own output: the match key for records that merged,
-  or `why_records` for records that stayed apart. A record that cannot be found is a difference,
-  named in one line; do not ask for another. This is text only, like every check in this module
-  (step 23: no visualization here). A difference they want to act on goes the way any accuracy
-  problem here does: the review's last bullet, to the gate's "Iterate now".
-- **"You pick" or "I don't know"**, which is the expected answer on CORD or generated data, where
-  the Bootcamper may not know which records should merge: run the review below as it stands, with
-  the guide choosing the sample.
-- **Then the review below**, in the same turn as the comparison, covering the records they named
-  among the sample.
+- **The options.** The outcomes fit the example: the three above for a pair, and for three or
+  more records the ways they could group (all one entity, some together and the rest apart, all
+  separate). The last three options, "a record of my own", their own words and the skip, are
+  always there, in that order. No option is marked as likely.
+- **Their answer.**
+  - **An outcome, or their own words:** that is their expectation for this example.
+  - **A record of my own:** find it by `DATA_SOURCE` and record ID where they gave one, otherwise
+    by searching on the details they described, and it takes the place of the guide's example.
+    When they gave no expectation for it, show it as the next example, with the 👉 above. A record
+    that cannot be found is a difference, named in one line; do not ask for another.
+  - **"You pick" or "I don't know":** no expectation is given. Show Senzing's call with its
+    evidence, record the example as skipped, and go on to the next example the guide picks.
+  - **Skip, or "move on" in any words:** the check ends. Record the example as skipped, with
+    Senzing's call, and go to the review below in the same turn.
+- **The comparison**, in the next turn. Look each record up with `get_entity_by_record_id`
+  through the generated query code below, never with SQL. Show as text their expectation (the
+  option, or their words quoted) beside Senzing's call, then `agreed` or `differed`. The evidence
+  is the engine's own output: the match key for records that resolved together, or
+  `why_records` for records that stayed apart. This is text only, like every check in this module
+  (step 23: no visualization here).
+- **A difference is talked through.** After a `differed`, say in one line that they can ask about
+  it before they answer the next example. A reply that asks or objects is the discussion: answer
+  from the engine's own output (the match key, `why_records`, the mapped values), then re-present
+  the pending 👉 verbatim. It ends when they answer that 👉, accepting the explanation, or when the
+  evidence points to a configuration problem, such as a field mapped to the wrong feature. Say
+  that in one line and carry it as an accuracy problem to the review's last bullet, to the gate's
+  "Iterate now"; the check goes on. A difference shown on the last example is carried the same
+  way.
+- **When it stops.** After each comparison, the check ends when this example and the one before
+  it both agreed, or when 5 examples have been shown. Otherwise the next example and its 👉
+  follow in the same turn. An example with no expectation (skipped, "you pick" or "I don't know")
+  counts toward the 5 and breaks a run of agreement.
+- **The record.** In the write that ends each example's turn, update
+  `module_6_processing.expectation_check` in `config/bootcamp_progress.json`:
+
+  ```json
+  {"status": "in_progress", "examples": [{"records": ["<DATA_SOURCE>:<RECORD_ID>", "<DATA_SOURCE>:<RECORD_ID>"], "expectation": "<the option, or their words>", "engine": "<Senzing's call>", "agreement": "agreed"}]}
+  ```
+
+  `expectation` is `skipped` for an example with no expectation, and `agreement` is `agreed`,
+  `differed` or `skipped`. The write that ends the check sets `status` to `completed` and, in the
+  same write, `directing_steps.data_processing`: `directed` when at least one example has an
+  expectation of theirs, otherwise `guide_chose`. A skip on the first example hands the step back,
+  and the review below runs with the guide choosing the sample. Each example is also one
+  Questions & Responses line, in the form the ground rules' bullet gives.
+- **Then the review below**, in the turn the check ends, covering the examples among the sample.
 
 Review the entity resolution results:
 
@@ -196,9 +258,9 @@ says. They are never the accuracy this step validates.
 this turn does not end here** — validation results and evidence tables are the output most likely
 to be mistaken for a turn ending, because they conclude something
 (`../bootcamp-onboarding/ground-rules.md` → "A results presentation is not a turn ending", INV-225).
-Continue in the same turn to the next step that actually asks. The one question these steps can put
-is step 21's directing question, and only the first time Phase D reaches it. That turn ends on it;
-the next turn shows the comparison and runs steps 21–24 through, asking nothing.
+Continue in the same turn to the next step that actually asks. The only questions these steps can
+put are step 21's directing question, one example per turn, until the check ends. That turn ends
+on it; the turn the check ends in runs steps 21–24 through, asking nothing.
 
 ## 25. Execute UAT with business users
 
