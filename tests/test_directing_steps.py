@@ -7,8 +7,9 @@ hands one step in each hands-on module to them:
 1. **Data Quality, Mapping, and Transformation, step 11.** What each column `mapping_workflow`
    did not recognize becomes, and what they expect the mapped record to show. Checked at step 12,
    whose sample record is shown beside their words.
-2. **Data processing, step 21.** Which records to look up, what they expect Senzing to have done
-   with them, and why. Checked by the lookup, as text.
+2. **Data processing, step 21.** Since #887, a guided expectation check: the guide picks each
+   example from the loaded data, one per turn, and the Bootcamper says what they expect Senzing to
+   have done with it. Checked by the lookup, as text.
 3. **Query, Visualize and Discover, step 1.** #478's open question is the directing 👉. Checked at
    step 3a, which shows each answer beside the question they posed.
 
@@ -73,9 +74,24 @@ accepted, undone when sub-step 9 adds a source (`fast_path_none_problems`).
 `directing_steps`, and is shown not to be vacuous on Module 5. `completion_problems` requires
 Step 2b's form to follow the recorded value and fails the old "record `none` in Step 1's write".
 
+#887 reshapes Data processing's step 21 into a guided expectation check, amending INV-354 for that
+one site (a `PROPOSED AMENDMENT` block in #887's `specs/IMPLEMENTED.md` entry, awaiting the
+maintainer's sign-off). The shared rule gains one bullet, "Data processing's expectation check"
+(`RULE_REQUIRED`'s #887 entries): numbered outcomes ending in "a record of my own", their own words
+and a skip; the result held back; a difference talked through, ending on acceptance or at the
+site's gate; not a prediction point; `directing_steps.data_processing` written when the check
+ends; and the Questions & Responses line per example. The open-👉 bullet and "Not a prediction"
+each point at it. `m6_problems` now requires the pinned 👉 with a numbered list beneath it whose
+last three options are fixed (`M6_TAIL`), the preface before the 👉, the held-back result, the
+midpoint exclusion, the stopping rule's two numbers, the resume, the
+`module_6_processing.expectation_check` record and the write that completes it, and fails the
+pre-#887 open question (`M6_OLD_QUESTION`). Each has a negative control in
+`TheChecksCatchARegression`.
+
 Stdlib only; shipped markdown read as text (INV-108).
 
-Source issue: #485 (part of #465); Module 5's record, #521; the citation at every pointer, #519.
+Source issue: #485 (part of #465); Module 5's record, #521; the citation at every pointer, #519;
+Data processing's expectation check, #887.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -107,9 +123,12 @@ RULE_HEADING = "## Directing steps"
 
 M5_QUESTION = ("👉 **What should each of these columns become in {source}'s mapped record? Say it "
                "in your own words, with what you expect the record to show for each one.**")
-M6_QUESTION = ("👉 **Which of your records should I look up to check how Senzing resolved them? "
-               "Name them in your own words, with what you expect Senzing to have done with them "
-               "and why.**")
+#: Since #887 step 21 asks one example per turn, with numbered outcomes beneath the 👉.
+M6_QUESTION = "👉 **How do you expect Senzing to have resolved these records? Reply with a number:**"
+#: The open question step 21 asked before #887, which must not come back.
+M6_OLD_QUESTION = "👉 **Which of your records should I look up to check how Senzing resolved them?"
+#: The last three options of every example's list, in this order (#887).
+M6_TAIL = ("A record of my own", "Something else, in your own words", "Skip: move on")
 #: #478's open question, which #485 makes Module 7's directing 👉 without rewording it.
 M7_QUESTION = "👉 **What do you want to find out about your data?**"
 #: Step 3a's one 👉 since #483, which ends 3a's turn; it is a recall question, not a directing one.
@@ -276,6 +295,37 @@ RULE_REQUIRED = {
     "the form follows the recorded value": r"`none` takes the no-site form and `skipped` the "
                                            r"skipped form, which says only that the step was "
                                            r"skipped",
+    # #887: Data processing's step 21 is a guided expectation check, the one exception.
+    "the open-👉 bullet names step 21's exception": r"Data processing's step 21 is the one\s+"
+                                                   r"exception, stated in \"Data processing's "
+                                                   r"expectation check\" below",
+    "Not a prediction points at the check": r"Data\s+processing's expectation check below "
+                                            r"borrows the numbered form and stays a directing step",
+    "the expectation check is defined": r"\*\*Data processing's expectation check \(INV-354\)"
+                                        r"\.\*\* Data processing's step 21 is the one directing\s+"
+                                        r"step that is a guided expectation check",
+    "the guide picks each example from their data": r"the guide picks each example from the "
+                                                    r"Bootcamper's\s+loaded data, one per turn",
+    "numbered outcomes with the fixed tail": r"ending with \"a record of my own\", their own "
+                                             r"words and a skip",
+    "no option is marked as likely": r"No option is marked as likely",
+    "the result is held back": r"\*\*The result is held back\.\*\* Senzing's call for an "
+                               r"example is not shown, mentioned or hinted at\s+until they answer",
+    "a difference is talked through": r"\*\*A difference is talked through\.\*\*",
+    "the discussion ends on acceptance or at the gate": r"The discussion ends when\s+they accept "
+                                                        r"the explanation, or when it points to a "
+                                                        r"configuration problem, which goes to the\s+"
+                                                        r"gate the site names",
+    "the check is not graded": r"It is still never graded",
+    "it is not a prediction point": r"\*\*Not a prediction point\.\*\* \"Predictions before "
+                                    r"results\" does not govern it",
+    "the value is written when the check ends": r"`directing_steps\.data_processing` is written in "
+                                                r"the write that\s+ends the check, not at the first "
+                                                r"answer",
+    "directed or guide_chose": r"`directed` when they gave an expectation for at least\s+one "
+                               r"example, otherwise `guide_chose`",
+    "one Questions & Responses line per example": r"Each example is one Questions & Responses "
+                                                  r"line, in ask order",
 }
 
 #: What the rule said before #856, when module completion masked a skipped step as `none`.
@@ -419,7 +469,26 @@ def m5_problems(phase2, module_files=()):
 # Data processing: step 21
 # --------------------------------------------------------------------------------------------
 
+def options_after(text, question):
+    """The numbered option lines directly beneath ``question``, in order."""
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip() == question:
+            options = []
+            for later in lines[i + 1:]:
+                s = later.strip()
+                if not s and not options:
+                    continue
+                if re.match(r"\d+\. ", s):
+                    options.append(re.sub(r"^\d+\. ", "", s))
+                    continue
+                break
+            return options
+    return []
+
+
 def m6_problems(phase_d, module_files=()):
+    """Step 21, the guided expectation check (#887; before it, an open 👉)."""
     problems = []
     step21 = section(phase_d, "## 21. Validate match accuracy", ("## 22. ",))
     if not step21:
@@ -427,39 +496,99 @@ def m6_problems(phase_d, module_files=()):
     asked = questions(step21)
     if asked != [M6_QUESTION]:
         problems.append("step 21 does not ask exactly the pinned 👉 (%r)" % asked)
-    if numbered_after(step21, M6_QUESTION):
-        problems.append("step 21's directing 👉 is followed by a numbered menu")
-    problems += open_question_problems("step 21", M6_QUESTION)
+    if M6_OLD_QUESTION in step21:
+        problems.append("step 21 still asks the open question it asked before #887")
+    if re.search(r"\bor\b", M6_QUESTION):
+        problems.append("step 21's 👉 joins choices with 'or' (INV-051)")
+    options = options_after(step21, M6_QUESTION)
+    if len(options) < 5:
+        problems.append("step 21's 👉 is not followed by a numbered list of outcomes (%r)"
+                        % options)
+    elif [o for o, lead in zip(options[-3:], M6_TAIL) if not o.startswith(lead)]:
+        problems.append("step 21's list does not end with a record of their own, their own "
+                        "words and a skip, in that order (%r)" % options[-3:])
+    preface = step21.find("**The preface**")
     ask = step21.find(M6_QUESTION)
+    compare = step21.find("**The comparison**")
     review = step21.find("Review the entity resolution results:")
-    build = step21.find("**Building from the answer.**")
-    if min(ask, review, build) < 0 or not ask < build < review:
-        problems.append("step 21 does not ask, then build the lookup, then run the review, in "
-                        "that order")
+    if min(preface, ask, compare) < 0 or not preface < ask < compare:
+        problems.append("step 21 does not give the preface, then ask, then compare, in that order")
+    if review >= 0 and not 0 <= compare < review:
+        problems.append("step 21 does not compare before the review")
     required = {
         "it runs the first time Phase D reaches step 21":
             r"The first time Phase D reaches step 21, before any sample is queried",
-        "an existing record means it has run": r"`directing_steps\.data_processing` is already "
+        "an existing record means it has run": r"`directing_steps\.data_processing` is\s+already "
                                                r"set, it has run",
-        "records are found by ID or by their details": r"by `DATA_SOURCE` and record ID where\s+"
-                                                       r"they gave one, otherwise by searching",
-        "the lookup is get_entity_by_record_id, never SQL":
-            r"`get_entity_by_record_id` through the generated query code below, never with SQL",
-        "the result is shown as text beside their words": r"Show the result\s+as text, beside "
-                                                          r"their words",
-        "matches or differs": r"`matches` or `differs`",
-        "the evidence is the engine's own output": r"the evidence is the engine's own output",
+        "an in-progress check resumes at the next example":
+            r"`module_6_processing\.expectation_check\.status` is `in_progress`, resume at the "
+            r"next example",
+        "a resume repeats neither the preface nor an example":
+            r"with no preface and no answered example shown again",
+        "the preface says what, why and how": r"say what this is \(.+\), why it is asked \(to "
+                                              r"test their expectations of entity resolution "
+                                              r"against the\s+engine's decisions\), and how it "
+                                              r"goes",
+        "the preface hints at no outcome": r"It hints at no\s+example's outcome",
+        "the guide picks each example from the loaded data":
+            r"The guide picks each example from the loaded data",
+        "it uses whichever kinds the data has": r"whichever\s+kinds the loaded data has",
+        "there is always an example": r"Every load has at least one entity, so there is always "
+                                      r"an example",
+        "the midpoint entity is never picked": r"Never pick from the\s+entity that holds "
+                                               r"`module_6_processing\.midpoint_record`",
+        "the exclusion binds only the guide's picks": r"The exclusion binds only the\s+guide's "
+                                                      r"picks",
+        "one example per turn": r"\*\*One example per turn\.\*\*",
+        "the result is held back until they answer":
+            r"Senzing's call\s+for the example is not shown, mentioned or hinted at until they "
+            r"have answered",
+        "one 👉 per turn (INV-251)": r"the turn's only 👉 \(INV-251\)",
+        "no option is marked as likely": r"No option is marked as likely",
+        "records are found by ID or by their details": r"by `DATA_SOURCE` and record ID where "
+                                                       r"they gave one, otherwise\s+by searching",
         "a missing record is a named difference, not a re-ask":
-            r"A record that cannot be found is a difference,\s+named in one line; do not ask for "
+            r"A record\s+that cannot be found is a difference, named in one line; do not ask for "
             r"another",
+        "you pick goes on to the next example": r"\*\*\"You pick\" or \"I don't know\":\*\* no "
+                                                r"expectation is given",
+        "a skip ends the check": r"\*\*6, \"Skip: move on to the review\":\*\* the check ends",
+        "each answer has its handling (INV-284)": r"\*\*Handling each answer \(INV-284\)\.\*\*",
+        "the lookup is get_entity_by_record_id, never SQL":
+            r"`get_entity_by_record_id`\s+through the generated query code below, never with SQL",
+        "agreed or differed": r"`agreed` or `differed`",
+        "the evidence is the engine's own output": r"The evidence\s+is the engine's own output",
+        "the evidence is the match key or why_records": r"the match key for records that resolved "
+                                                        r"together, or\s+`why_records` for records "
+                                                        r"that stayed apart",
         "it stays text (no visualization)": r"This is text only",
-        "you pick, including CORD or generated data": r"which is the expected answer on CORD or "
-                                                      r"generated data",
-        "you pick runs the review as it stands": r"run the review below as it stands",
+        "a difference is talked through": r"\*\*A difference is talked through\.\*\*",
+        "the pending 👉 is re-presented": r"re-present\s+the pending 👉 verbatim",
+        "a configuration problem goes to the existing gate":
+            r"carry it as an accuracy problem to the review's last bullet, to the gate's\s+"
+            r"\"Iterate now\"",
+        "two agreeing examples in a row end it": r"the check ends when this example and the one "
+                                                 r"before\s+it both agreed",
+        "the cap is 5": r"or when 5 examples have been shown",
+        "the record is expectation_check": r"update\s+`module_6_processing\.expectation_check` in "
+                                           r"`config/bootcamp_progress\.json`",
+        "the record's agreement values": r"`agreement` is `agreed`,\s+`differed` or `skipped`",
+        "the check ends with status completed": r"The write that ends the check sets `status` to "
+                                                r"`completed`",
+        "the value is written in the same write": r"in the\s+same write, "
+                                                  r"`directing_steps\.data_processing`: `directed` "
+                                                  r"when at least one example has an\s+expectation "
+                                                  r"of theirs, otherwise `guide_chose`",
+        "a skip on the first example hands the step back":
+            r"A skip on the first example hands the step back",
+        "you pick runs the review with the guide's sample":
+            r"the review below runs with the guide choosing the sample",
     }
     for what, pattern in required.items():
         if not match_lines(step21, pattern):
             problems.append("step 21 does not state %s" % what)
+    if '"status": "in_progress", "examples": [{"records": [' not in step21:
+        problems.append("step 21 does not give the expectation_check record's shape")
     problems += citation_problems(step21, "step 21")
     # The amended non-yielding pointer (was "Steps 21–24 ask nothing").
     if not match_lines(phase_d, r"⛔ \(INV-225\) \*\*Steps 21–24 ask nothing unless step 21's "
@@ -468,6 +597,9 @@ def m6_problems(phase_d, module_files=()):
                         "question")
     if "Steps 21–24 ask nothing, so" in squash(phase_d):
         problems.append("Phase D still says steps 21–24 ask nothing, unconditionally")
+    if not match_lines(phase_d, r"step 21's directing question, one example per turn, until the "
+                                r"check ends"):
+        problems.append("Phase D's non-yielding pointer does not allow one question per example")
     hits = sum(t.count("This is Module 6's directing step") for t in module_files)
     pins = sum(questions(t).count(M6_QUESTION) for t in module_files)
     if module_files and (hits != 1 or pins != 1):
@@ -704,8 +836,7 @@ Loading with the SDK, the redo queue, and how resolution results are validated.
 
 ### Questions & Responses
 
-- **Q:** Which of your records should I look up to check how Senzing resolved them?
-    - **R:** CUSTOMERS 1001 and CRM 77 should merge: same person, same phone.
+- **How do you expect Senzing to have resolved these records? Reply with a number:** (CUSTOMERS:1001, CRM:77) — They are one entity. → two separate entities (differed)
 
 ### Actions Taken
 
@@ -954,8 +1085,143 @@ class TheChecksCatchARegression(unittest.TestCase):
         self.assertReports(problems, "unconditionally")
 
     def test_m6_you_pick_dropped(self):
-        text = read(M6_PHASED).replace("run the review below as it stands", "ask again")
-        self.assertReports(m6_problems(text), "you pick runs the review as it stands")
+        text = read(M6_PHASED).replace("the review below runs with the guide choosing the sample",
+                                       "ask again")
+        self.assertNotEqual(text, read(M6_PHASED))
+        self.assertReports(m6_problems(text), "you pick runs the review with the guide's sample")
+
+    # --- Module 6: the expectation check (#887) -----------------------------------------------
+
+    def m6_mutated(self, old, new):
+        text = read(M6_PHASED).replace(old, new)
+        self.assertNotEqual(text, read(M6_PHASED), "the mutation no longer applies: %r" % old)
+        return m6_problems(text)
+
+    def test_m6_old_open_question_restored(self):
+        problems = self.m6_mutated(M6_QUESTION, M6_OLD_QUESTION + " Name them in your own "
+                                   "words, with what you expect Senzing to have done with them "
+                                   "and why.**")
+        self.assertReports(problems, "does not ask exactly the pinned 👉")
+        self.assertReports(problems, "still asks the open question")
+
+    def test_m6_second_question(self):
+        self.assertReports(self.m6_mutated(M6_QUESTION, M6_QUESTION + "\n\n👉 **Anything else?**"),
+                           "does not ask exactly the pinned 👉")
+
+    def test_m6_list_removed(self):
+        text = read(M6_PHASED)
+        options = options_after(section(text, "## 21. ", ("## 22. ",)), M6_QUESTION)
+        for number, option in enumerate(options, 1):
+            text = text.replace("%d. %s\n" % (number, option), "")
+        self.assertNotEqual(text, read(M6_PHASED))
+        self.assertReports(m6_problems(text), "not followed by a numbered list")
+
+    def test_m6_list_without_the_skip(self):
+        self.assertReports(self.m6_mutated("6. Skip: move on to the review.\n", ""),
+                           "does not end with a record of their own")
+
+    def test_m6_list_without_a_record_of_their_own(self):
+        self.assertReports(self.m6_mutated("4. A record of my own", "4. Another example"),
+                           "does not end with a record of their own")
+
+    def test_m6_preface_after_the_question(self):
+        text = read(M6_PHASED)
+        block = section(text, "- **The preface**", ("- **Picking an example.**",))
+        text = text.replace(block, "").replace("- **The options.**", block + "- **The options.**")
+        self.assertNotEqual(text, read(M6_PHASED))
+        self.assertReports(m6_problems(text), "the preface, then ask, then compare")
+
+    def test_m6_preface_without_its_why(self):
+        self.assertReports(self.m6_mutated("why it is asked (to test", "why it is asked (to see"),
+                           "the preface says what, why and how")
+
+    def test_m6_result_shown_before_the_answer(self):
+        self.assertReports(self.m6_mutated("is not shown, mentioned or hinted at until they have answered",
+                                           "is shown beside the records"),
+                           "the result is held back")
+
+    def test_m6_midpoint_entity_picked(self):
+        self.assertReports(self.m6_mutated("Never pick from the\n  entity that holds",
+                                           "Prefer the\n  entity that holds"),
+                           "the midpoint entity is never picked")
+
+    def test_m6_cap_dropped(self):
+        self.assertReports(self.m6_mutated("or when 5 examples have been shown",
+                                           "or when they tire"), "the cap is 5")
+
+    def test_m6_two_in_a_row_dropped(self):
+        self.assertReports(self.m6_mutated("this example and the one before\n  it both agreed",
+                                           "any example agreed"),
+                           "two agreeing examples in a row end it")
+
+    def test_m6_resume_dropped(self):
+        self.assertReports(self.m6_mutated("resume at the next example",
+                                           "start again from the preface"),
+                           "an in-progress check resumes")
+
+    def test_m6_record_dropped(self):
+        problems = self.m6_mutated("update\n  `module_6_processing.expectation_check` in",
+                                   "update\n  the checkpoint in")
+        self.assertReports(problems, "the record is expectation_check")
+
+    def test_m6_record_shape_dropped(self):
+        self.assertReports(self.m6_mutated('{"status": "in_progress", "examples"',
+                                           '{"examples"'), "the expectation_check record's shape")
+
+    def test_m6_value_written_at_the_first_answer(self):
+        self.assertReports(self.m6_mutated("The write that ends the check sets `status` to",
+                                           "The first answer's write sets `status` to"),
+                           "the check ends with status completed")
+
+    def test_m6_discussion_dropped(self):
+        self.assertReports(self.m6_mutated("re-present\n  the pending 👉 verbatim",
+                                           "move on to\n  the next example"),
+                           "the pending 👉 is re-presented")
+
+    def test_m6_new_gate_for_a_configuration_problem(self):
+        self.assertReports(self.m6_mutated(
+            "carry it as an accuracy problem to the review's last bullet, to the gate's\n"
+            "  \"Iterate now\"", "ask whether to remap now"),
+            "a configuration problem goes to the existing gate")
+
+    def test_m6_one_question_per_example_pointer_dropped(self):
+        self.assertReports(self.m6_mutated("one example per turn, until the check ends", "once"),
+                           "one question per example")
+
+    # --- the shared rule: the expectation check (#887) ---------------------------------------
+
+    def rule_mutated(self, old, new):
+        text = read(GROUND_RULES).replace(old, new)
+        self.assertNotEqual(text, read(GROUND_RULES), "the mutation no longer applies: %r" % old)
+        return rule_problems(text)
+
+    def test_rule_without_the_expectation_check(self):
+        text = read(GROUND_RULES)
+        block = section(text, "- **Data processing's expectation check (INV-354).**",
+                        ('<a id="worked-steers"></a>',))
+        problems = self.rule_mutated(block, "")
+        self.assertReports(problems, "the expectation check is defined")
+        self.assertReports(problems, "the value is written when the check ends")
+
+    def test_rule_open_bullet_loses_its_pointer(self):
+        self.assertReports(self.rule_mutated(
+            " Data processing's step 21 is the one\n  exception, stated in \"Data processing's "
+            "expectation check\" below.", ""), "the open-👉 bullet names step 21's exception")
+
+    def test_rule_check_shows_the_result_first(self):
+        self.assertReports(self.rule_mutated("**The result is held back.**", "**The result.**"),
+                           "the result is held back")
+
+    def test_rule_check_without_the_skip(self):
+        self.assertReports(self.rule_mutated('"a record of my own", their own words and a skip',
+                                             '"a record of my own" and their own words'),
+                           "numbered outcomes with the fixed tail")
+
+    def test_rule_check_becomes_a_prediction_point(self):
+        self.assertReports(self.rule_mutated(
+            '**Not a prediction point.** "Predictions before results" does not govern it',
+            '**A prediction point.** "Predictions before results" governs it'),
+            "it is not a prediction point")
 
     # --- Module 7 ----------------------------------------------------------------------------
 

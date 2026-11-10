@@ -493,7 +493,7 @@ DIRECTING_QUESTIONS = {
     "data_quality_mapping": re.compile(
         r"What should each of these columns become in .+?['’]s mapped record\?"),
     "data_processing": re.compile(
-        r"Which of your records should I look up to check how Senzing resolved them\?"),
+        r"How do you expect Senzing to have resolved these records\?"),
     "query_visualize_discover": re.compile(
         r"What do you want to find out about your data\?"),
 }
@@ -801,8 +801,8 @@ def _skipped_step_cases():
     ready = "\U0001f449 **Are you ready to move on to the next module: Data processing?**"
     graduate = ("\U0001f449 **Would you like to graduate now and generate your production "
                 "project and recap?**")
-    lookup = ("\U0001f449 **Which of your records should I look up to check how Senzing "
-              "resolved them? Name them in your own words.**")
+    lookup = ("\U0001f449 **How do you expect Senzing to have resolved these records? Reply "
+              "with a number:**")
     pairs = ("\U0001f449 **Are these two records the same entity? Reply with a number, and "
              "add a few words on why if you like:**")
     processing = [banner["data_processing"], "Loading your records now."]

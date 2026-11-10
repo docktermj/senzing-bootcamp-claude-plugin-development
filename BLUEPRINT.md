@@ -1589,7 +1589,12 @@ Ground rules (`ground-rules.md`, every turn):
   graded; not a prediction. "You pick" or "I don't know" gets the step as
   before, with no re-ask. The End-of-Module Summary carries a
   `**You directed:**` line in one of four forms, following the recorded
-  value; the skipped form says only that the step was skipped.
+  value; the skipped form says only that the step was skipped. Data
+  processing's step 21 is the one exception (#887): a guided expectation
+  check, one example per turn from their data, numbered outcomes ending in
+  "a record of my own", their own words and a skip, the engine's call held
+  back until they answer, `agreed` or `differed`, a difference talked
+  through, and `directing_steps.data_processing` written when the check ends.
 - Worked steers (`#worked-steers`, the one statement the four Act 2 hands-on
   modules' `SKILL.md` files cite; Act 1 shows none): ⛔ fired only when code
   the AI generated fails when run (non-zero exit, exception, `EMPTY` line) or
@@ -1722,7 +1727,8 @@ Module completion (`module-completion.md`, before the transition question):
 
 - Step 0, before Step 1's write, catches a required step that never ran, in
   order: 0a, an unset `directing_steps` entry runs step 21's directing step
-  late in Data processing and records `skipped` in Modules 5 and 7; 0b, in an
+  late in Data processing, one example per turn until its check ends, and
+  records `skipped` in Modules 5 and 7; 0b, in an
   Act 2 module with a `steer_triggers` entry and no worked-steer checkpoint
   note, shows the first entry's steer late with no ask-first question, and in
   every module files each `filed: false` reversal silently (a failure does not
@@ -2745,17 +2751,25 @@ per-source counters, backoff retry and error isolation; sample test; every
 Phase D (`phaseD-validation.md`, steps 21-28):
 
 - Step 21's directing step, the first time Phase D reaches it (ground rules'
-  "Directing steps", `directing_steps.data_processing`): one pinned open 👉
-  asks which records to look up and what they expect Senzing did and why; the
-  next turn finds them by ID or by their details, looks each up with
-  `get_entity_by_record_id` in the program `review_entities` in `src/query`
-  (steps 22 and 24 reuse it; 22 adds `record_counts`, 23
-  `cross_source_review`, the recovery `check_loaded_records` in `src/load`),
-  and shows as text, beside their
-  words, each record's entity and each named pair's shared-or-not, with the
-  match key or `why_records` as evidence. A missing record is a difference,
-  never a re-ask; "you pick" (expected on CORD or generated data) runs the
-  review as it stands. Otherwise steps 21-24 ask nothing.
+  "Directing steps" → "Data processing's expectation check", #887): a preface
+  (what, why, how), then one example per turn that the guide picks from the
+  loaded data, never from the entity holding `midpoint_record`, shown as text
+  with the engine's call held back, ending on the pinned 👉 "How do you expect
+  Senzing to have resolved these records? Reply with a number:" and numbered
+  outcomes ending in "a record of my own", their own words and a skip. The
+  next turn looks the records up with `get_entity_by_record_id` in the program
+  `review_entities` in `src/query` (steps 22 and 24 reuse it; 22 adds
+  `record_counts`, 23 `cross_source_review`, the recovery
+  `check_loaded_records` in `src/load`) and shows their expectation beside
+  the engine's call, `agreed` or `differed`, with the match key or
+  `why_records` as evidence; a question about a difference is answered from
+  that output and the pending 👉 re-presented, and a configuration problem
+  goes to the existing "Iterate now". The check ends when two examples in a
+  row agree, on a skip, or after 5; each example is written to
+  `module_6_processing.expectation_check` (`in_progress`, then `completed`),
+  a resume continues at the next example, and the completing write sets
+  `directing_steps.data_processing` to `directed`, or `guide_chose` when no
+  example carried their expectation. Otherwise steps 21-24 ask nothing.
 - Spot-check entities, UAT in `docs/uat_results.md`, with the UAT % defined
   once at step 22 (judged correct ÷ checked; none checked means no UAT %, and
   the gate takes its "UAT not established" branch, whose iterate option hands
@@ -5780,7 +5794,7 @@ DIRECTING_QUESTIONS = {
     "data_quality_mapping": re.compile(
         r"What should each of these columns become in .+?['’]s mapped record\?"),
     "data_processing": re.compile(
-        r"Which of your records should I look up to check how Senzing resolved them\?"),
+        r"How do you expect Senzing to have resolved these records\?"),
     "query_visualize_discover": re.compile(
         r"What do you want to find out about your data\?"),
 }
@@ -11571,7 +11585,7 @@ How scripts are loaded:
 
 ### 8.3 Count
 
-There are 9424 test methods in 476 files, matching `inventory.test_count_total`.
+There are 9449 test methods in 476 files, matching `inventory.test_count_total`.
 Each count below is the number of `test*` methods the file defines, taken from
 `inventory.tests_by_file`. An AST recount agrees for every file, and the counts
 sum to 9408.
@@ -11682,7 +11696,7 @@ looks wrong.
 - `tests/test_deployment_target_records_only_what_is_named.py`: 15
 - `tests/test_dev_commands_name_a_real_skill.py`: 11
 - `tests/test_dev_install_surfaces_name_the_dev_repo.py`: 11
-- `tests/test_directing_steps.py`: 63
+- `tests/test_directing_steps.py`: 86
 - `tests/test_discoveries_pdf.py`: 58
 - `tests/test_documented_commands_match_the_shipped_set.py`: 6
 - `tests/test_documented_dev_commands_match_the_shipped_set.py`: 13
@@ -11848,7 +11862,7 @@ looks wrong.
 - `tests/test_module_5_describes_the_entity_specification_as_served.py`: 9
 - `tests/test_module_7_points_at_the_factory_lifetime_rule.py`: 9
 - `tests/test_module_completion_step1_lists_every_write.py`: 13
-- `tests/test_module_completion_step_0.py`: 32
+- `tests/test_module_completion_step_0.py`: 34
 - `tests/test_module_instructions_do_not_hardcode_the_port.py`: 6
 - `tests/test_module_number_reminder.py`: 30
 - `tests/test_module_selection_sync.py`: 9
@@ -15757,6 +15771,16 @@ Senzing licensing, with no SPDX identifier.
   at 1,500 nodes the app and snapshot opened unfitted and every
   relationship edge painted gray, which no Truth Set check could show;
   amendments to INV-299 and INV-407 and two new invariants are queued
+- #887: Data processing's step 21 is a guided expectation check — a
+  preface, then one example per turn picked from the loaded data (never the
+  `midpoint_record` entity) with numbered outcomes ending in "a record of my
+  own", their own words and a skip, the engine's call held back, a
+  difference talked through, a stop after two agreeing examples in a row, a
+  skip or 5 examples, each example in `module_6_processing.expectation_check`
+  and `directing_steps.data_processing` written when it ends — on generated
+  data a Bootcamper could not name records they had never seen and answered
+  the open question with feedback three times; an INV-354 amendment is
+  queued
 - #890: the visualization contract confirms the recorded pid against the
   port's listener right after the ready line (`#launch-confirmation`, with
   POSIX, PowerShell and in-container `python3` `/proc` forms), step 3c

@@ -45,12 +45,13 @@ name token to `modules_completed`, Step 0 is over, and a resume past that point 
   "Directing steps" (INV-300, INV-354).
 - **Action in Data processing.** Run step 21's directing step now
   (`../module-06-data-processing/phaseD-validation.md` step 21): its 👉, then the lookup and the
-  comparison, recorded as at the site. Run only the directing step; the rest of step 21 has run.
+  comparison, recorded as at the site, one example per turn until the expectation check ends.
+  Run only the directing step; the rest of step 21 has run.
 - **Action in the other two.** Record `skipped`; Step 1's batched write carries it. Do not run the
   step late.
-- **Turn.** Data processing's late directing step ends this turn on its 👉. The next turn builds
-  the lookup, shows the comparison, writes `directing_steps.data_processing` at that boundary as
-  the site does, and resumes at 0b. Recording `skipped` asks nothing: go on to 0b in the same turn.
+- **Turn.** Data processing's late directing step ends this turn on its 👉. Each next turn builds
+  the lookup and shows the comparison, as the site does. The turn the check ends in writes
+  `directing_steps.data_processing` at that boundary as the site does, and resumes at 0b. Recording `skipped` asks nothing: go on to 0b in the same turn.
 
 ### 0b. The worked steer and the reversal filings
 

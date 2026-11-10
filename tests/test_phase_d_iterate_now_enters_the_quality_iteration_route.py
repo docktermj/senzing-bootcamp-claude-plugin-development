@@ -63,6 +63,8 @@ FILES = {
 
 GATE_ANCHOR = '<a id="iterate-vs-proceed-decision-gate"></a>'
 GATE_HEADING = "## Iterate vs. proceed decision gate"
+#: The gate's handling marker; step 21 has one of its own above it since #887.
+GATE_MARKER = "**Handling each answer (INV-284).** These entries serve the gate question and the"
 ROUTE_ANCHOR = '<a id="the-quality-iteration-route"></a>'
 ROUTE_LINK = "phase1-query-visualize.md#the-quality-iteration-route"
 GATE_LINK = "#iterate-vs-proceed-decision-gate"
@@ -162,7 +164,10 @@ def gate_problems(phase_d):
 
 def handling_problems(phase_d):
     """Both options have a handling step; "Iterate now" names sources and enters the route."""
-    handling = span(phase_d, "Handling each answer (INV-284).", "## Stakeholder summary")
+    # #887: step 21 has a marker of its own, so read the gate's, the first under its heading.
+    gate = span(phase_d, GATE_HEADING, "## Stakeholder summary")
+    handling = span(gate, "Handling each answer (INV-284).", "## Stakeholder summary") if gate \
+        else None
     if handling is None:
         return ["Phase D's gate has no handling step"]
     problems = missing(handling, (
@@ -202,7 +207,8 @@ def revisit_problems(phase_d):
         "revisit Module 5 mapping",
         "the review's last bullet, back to Module 5",
     ), "Phase D")
-    step21 = span(phase_d, "A difference they want to act on", "- \"You pick\"")
+    # #887: step 21's discussion of a difference is where an accuracy problem leaves for the gate.
+    step21 = span(phase_d, "A difference is talked through.", "When it stops.")
     if step21 is None or 'to the gate\'s "Iterate now"' not in flat(step21):
         problems.append("step 21's difference line does not go to the gate's \"Iterate now\"")
     for start, where in (("- If match accuracy is poor", "step 21's review bullet"),
@@ -435,10 +441,10 @@ class EachCheckFailsWhenItsSiteIsRemoved(unittest.TestCase):
         self.assertTrue(run("gate", texts))
 
     def test_a_second_copy_of_the_gate_question_fails(self):
-        texts = self.mutated("phase_d", "\n\n**Handling each answer (INV-284).**",
+        texts = self.mutated("phase_d", "\n\n" + GATE_MARKER,
                              "\n\n👉 **Most tests pass but there are gaps. What would you "
                              "like to do? Reply with a number:**"
-                             "\n\n**Handling each answer (INV-284).**")
+                             "\n\n" + GATE_MARKER)
         self.assertTrue(run("gate", texts))
 
     def test_moving_the_lead_out_of_the_pinned_line_fails(self):
@@ -475,9 +481,8 @@ class EachCheckFailsWhenItsSiteIsRemoved(unittest.TestCase):
         self.assertTrue(run("handling", texts))
 
     def test_restating_the_key_in_phase_d_fails(self):
-        texts = self.mutated("phase_d", "**Handling each answer (INV-284).**",
-                             '```json\n"quality_iteration": {\n}\n```\n\n'
-                             "**Handling each answer (INV-284).**")
+        texts = self.mutated("phase_d", GATE_MARKER,
+                             '```json\n"quality_iteration": {\n}\n```\n\n' + GATE_MARKER)
         self.assertTrue(run("handling", texts))
 
     def test_restoring_a_revisit_line_fails(self):
