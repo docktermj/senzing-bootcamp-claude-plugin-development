@@ -1588,9 +1588,9 @@ the files are exactly as they were before this paragraph.
     Ship it whatever `database_type` is: a PostgreSQL project confirms it and ticks the box. It
     asks for a migration the team carries out; graduation changes no template and migrates no
     data. Do **not** say SQLite cannot run in production: the documentation's wording is a
-    recommendation, *"For anything beyond evaluation, use PostgreSQL"*
-    (`search_docs(query='SQLite evaluation PostgreSQL production database recommendation')`, MCP
-    server 1.46.0, 2026-11-10).
+    recommendation, *"For anything beyond evaluation, use PostgreSQL"*, from the SQLite
+    performance answer that `search_docs(query='SQLite evaluation PostgreSQL production database
+    recommendation')` ranks first.
   - **The Performance section MUST carry the DEFAULT-flags item** — ⚠️ *"Replace `*_DEFAULT_FLAGS`
     composites in `production/src/`, **including the export call**, with the explicit `SZ_*` flags
     whose output your code actually consumes. On the export call a replacement can drop output
@@ -1598,9 +1598,9 @@ the files are exactly as they were before this paragraph.
     `RELATED_ENTITIES` entirely. Before you adopt a replacement there, export with it and confirm
     that every field and relationship your code reads is still present. Until you have, keep the
     current flags and leave this item unchecked."*
-    ⛔ **(INV-287) Ship the qualification with the item, never the item alone.** The bare
-    instruction points at the one call where following it blindly silently loses every
-    relationship (`../module-06-data-processing/phaseD-validation.md`), and a checklist a
+    ⛔ **(INV-287) Ship the exception with the item, never the item alone.** Here the exception
+    is a qualification, not an exemption. The bare instruction points at the one call where
+    following it blindly silently loses every relationship (`../module-06-data-processing/phaseD-validation.md`), and a checklist a
     Bootcamper works through unattended is exactly where an unqualified rule does that damage.
     The export call is not exempt: `SZ_EXPORT_DEFAULT_FLAGS` is itself a composite whose members
     include `SZ_ENTITY_DEFAULT_FLAGS` (`get_sdk_reference(topic='flags',

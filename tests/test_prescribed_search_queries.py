@@ -135,6 +135,22 @@ DOCS_INDEX_FORMAT = "%Y-%m-%d %H:%M UTC"
 #: guard exists to stop.
 VERIFIED_QUERIES = {
     # ---------------------------------------------------------------------------------
+    # Executed 2026-11-10 on server 1.46.0 (docs index 2026-11-09 17:24 UTC), at the default
+    # max_results, for #904, graduation Step 4's Database item: the documented wording that
+    # recommends PostgreSQL beyond evaluation. ⚠️ Record the PROPERTY, not ranks or scores.
+    ("search_docs", "SQLite evaluation PostgreSQL production database recommendation", None): {
+        "band": "ON TARGET",
+        "sections": ("SQLite performance",),
+        "returned":
+            "ON TARGET: the top hit is a Senzing FAQ answer on SQLite performance (source "
+            "senzing.com/docs/tutorials/database/postgres_setup): 'Use a 16K page size. ... For "
+            "anything beyond evaluation, use PostgreSQL.' The next hit, on the SQLite minimum "
+            "version, calls a real database (PostgreSQL or MSSQL) 'recommended for anything "
+            "beyond trivial evaluation'; then the SQLite schema FAQ and the PostgreSQL Setup "
+            "tutorial",
+        "server": "1.46.0", "docs_index": "2026-11-09 17:24 UTC", "measured": "2026-11-10",
+    },
+    # ---------------------------------------------------------------------------------
     # Executed 2026-10-15 on server 1.39.0 (docs index 2026-10-15 10:47 UTC), at the default
     # max_results, for #595, Module 2's container-route toolchain step: the minimum language
     # versions a toolchain row is checked against. ⚠️ Record the PROPERTY, not ranks or scores.

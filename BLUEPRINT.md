@@ -15840,4 +15840,4 @@ Senzing licensing, with no SPDX identifier.
   must be verified first — the export exemption kept
   `SZ_ENTITY_DEFAULT_FLAGS`, which `SZ_EXPORT_DEFAULT_FLAGS` contains, in
   production code against the server's production caution; an amendment to
-  INV-287 is queued
+  INV-287 and an invariant for the Database item are queued

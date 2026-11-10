@@ -8,7 +8,8 @@ as quoted text that the guide copies into the file:
 * **Database:** SQLite is an evaluation and starter database; move to a supported production
   database before deploying, with PostgreSQL named as Senzing's documented recommendation
   (*"For anything beyond evaluation, use PostgreSQL"*, ``search_docs(query='SQLite evaluation
-  PostgreSQL production database recommendation')``, server 1.46.0, 2026-11-10). A starter
+  PostgreSQL production database recommendation')``, recorded in
+  ``test_prescribed_search_queries.py``). A starter
   still on SQLite is not ready to deploy unchanged. The item must not say SQLite cannot run in
   production: the documentation recommends, and the checklist says no more than that.
 * **Performance:** the DEFAULT-flags item, whose qualification
@@ -120,7 +121,8 @@ class TheDatabaseItem(unittest.TestCase):
     def test_the_guidance_carries_the_documented_wording(self):
         block = flat(checklist_block(self.text))
         self.assertIn("For anything beyond evaluation, use PostgreSQL", block)
-        self.assertIn("1.46.0", block)
+        self.assertIn("search_docs(query='SQLite evaluation PostgreSQL production database "
+                      "recommendation')", block)
 
 
 class TheGeneratedChecklist(unittest.TestCase):
