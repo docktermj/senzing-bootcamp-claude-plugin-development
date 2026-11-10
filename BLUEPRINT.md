@@ -12064,8 +12064,9 @@ need the original text. These are heuristic estimates, accurate to about 10%:
   or backticked span of prose, any part of a 👉 block, and any fenced
   template. Guidance prose outside such a span may name a module by number
   (INV-079). The sites are derived, not listed (INV-246); `EXEMPT_SPANS` keys
-  the eleven internal spans by their own text with a reason each, and a span
-  no file carries any more fails by name.
+  the nine internal spans by their own text with a reason each, among them
+  graduation Step 6b's `regenerated_on_restore` key (#895), and a span no file
+  carries any more fails by name.
 - **Handed-over deliverables.**
   `tests/test_handed_over_paths_can_travel.py` (19 tests) reads
   `package_bootcamp.py`'s `ALWAYS_EXCLUDE`, `SHARE_EXCLUDE`, `SHARE_INCLUDE`,
