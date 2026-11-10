@@ -1786,13 +1786,19 @@ procedure rather than growing a second SQLite-vs-PostgreSQL branch.
 
 Snapshot the resume-critical state into `backups/revisit/state/` (copy each if it exists):
 `config/bootcamp_progress.json`, `config/bootcamp_preferences.yaml`, `config/data_sources.yaml`,
-`config/engine_config.json`, `config/license.json`, and `docs/mapping/`. Then write
+`config/engine_config.json`, and `docs/mapping/`. Then write
 `backups/revisit/RESUME_STATE.json` — a manifest indexing what was saved: the bootcamp path and
 `modules_completed`, `programming_language` and `database_type` (the pre-check key names), the
 business problem and data
 sources, the relative path of each snapshotted file, the database backup path and its restore
 command, the recap PDF (`docs/bootcamp_recap.pdf`), and any visualization snapshots under
 `docs/visualizations/`. Use only project-relative paths.
+
+Do not snapshot `config/license.json`. It is the SDK's `get_license` response, measured from the
+license installed on the machine, so a copy restores nothing a resumed bootcamp needs, and it
+names the license's customer, contract and billing terms. Record it in `RESUME_STATE.json` as
+regenerated on restore, never as a snapshotted path, with the key
+`"regenerated_on_restore": [{"path": "config/license.json", "by": "Module 4 Step 8a sub-step 7"}]`.
 
 ### 6c. Return guide
 
@@ -1827,7 +1833,9 @@ reason.) Cover:
   visualization.
 - **License** — where the license lives, as Data collection Step 8a sub-step 5 wired it: a Base64
   key inline in `config/engine_config.json` (`LICENSESTRINGBASE64`), a `.lic` file at
-  `licenses/g2.lic` (`LICENSEFILE`), else the built-in evaluation license; and any expiry.
+  `licenses/g2.lic` (`LICENSEFILE`), else the built-in evaluation license; and any expiry. On
+  return, re-measure the license by Module 4 Step 8a sub-step 7, which re-creates
+  `config/license.json` from the license installed on that machine; the bundle does not carry it.
 - **Where things are** — point at `backups/revisit/` (state + database backup), the recap PDF, and
   `docs/visualizations/`. Name `data/exports/` too when Module 7 step 4e exported for a system, and
   say that `production/data/exports/` holds the same tree, since the copied export program writes
