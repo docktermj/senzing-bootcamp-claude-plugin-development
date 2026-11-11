@@ -27,16 +27,19 @@ the module has closed:
 - ``directing_steps.<token>`` unset for a directing module in ``modules_completed``
   (ground-rules.md -> "Directing steps", INV-354);
 - a ``steer_triggers`` entry with ``"kind": "reversal"`` and ``"filed": false``, in any
-  module (ground-rules.md -> "Worked steers", INV-352; INV-373).
+  module (ground-rules.md -> "Worked steers", INV-352; INV-373);
+- a failed program run that ``failed-run-net.py`` observed in an Act 2 hands-on module
+  (``config/steer_observations.json``) while that module's ``steer_triggers`` has no entry
+  (#910): trigger 1 fired and was never recorded.
 
 It names each one and tells the guide to repair it silently: record ``skipped``, and file
-the reversal. A missing worked steer is not checked: the checkpoint that would show a steer
+the reversal, and record the observed failure. A missing worked steer is not checked: the checkpoint that would show a steer
 was cleared by module completion's Step 2d. It stays with module completion's Step 0 (#856) and
 ``transcript_lint`` (#857). The reminder is not conditional on the reply: module
 completion's Step 1 has closed the module whatever the answer (INV-413). A record the guide
 leaves unrepaired is named again at the next transition.
 
-Non-blocking and silent apart from these two reminders: the checkpoint's own status goes
+Non-blocking and silent apart from these reminders: the checkpoint's own status goes
 to stderr (see recap_checkpoint.py), never to stdout, which for this event carries a
 structured JSON payload. When both fall on one turn, they share one ``additionalContext``.
 Anything undecided — a malformed payload, an unreadable transcript, a missing, unreadable or
@@ -54,6 +57,7 @@ import recap_checkpoint
 import transition_reply
 
 PROGRESS = os.path.join("config", "bootcamp_progress.json")
+OBSERVATIONS = os.path.join("config", "steer_observations.json")
 
 #: The modules with a directing step, as their name tokens (ground-rules.md -> "Directing
 #: steps"; the three modules with a `**You directed:**` line, module-completion.md Step 2b).
@@ -120,17 +124,50 @@ def unfiled_reversals(progress):
     return found
 
 
-def missing_record_reminder(progress):
+def _observations():
+    """``config/steer_observations.json`` as a dict, or ``{}``. Never raises."""
+    try:
+        with open(OBSERVATIONS, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def unrecorded_failures(progress, observed):
+    """``(module token, evidence)`` for every failure ``failed-run-net.py`` observed in a module
+    whose ``steer_triggers`` has no entry, in file order (#910). A wrongly typed
+    ``steer_triggers`` reads as decided: nothing is named."""
+    triggers = progress.get("steer_triggers", {})
+    if not isinstance(triggers, dict):
+        return []
+    found = []
+    for token, entry in observed.items():
+        if not isinstance(entry, dict) or triggers.get(token):
+            continue
+        evidence = entry.get("evidence")
+        evidence = evidence if isinstance(evidence, str) else ""
+        if len(evidence) > EVIDENCE_LIMIT:
+            evidence = evidence[:EVIDENCE_LIMIT].rstrip() + "..."
+        found.append((str(token), evidence))
+    return found
+
+
+def missing_record_reminder(progress, observed=None):
     """The reminder naming each missing record and its repair, or ``""`` when none is
     missing."""
     directing = unset_directing_steps(progress)
     reversals = unfiled_reversals(progress)
-    if not directing and not reversals:
+    failures = unrecorded_failures(progress, observed or {})
+    if not directing and not reversals and not failures:
         return ""
     items = ["directing_steps.%s is unset, and %s is in modules_completed" % (token, token)
              for token in directing]
     items += ['steer_triggers.%s has a reversal with "filed": false (evidence: "%s")'
               % (token, evidence) for token, evidence in reversals]
+    items += ['steer_triggers.%s has no entry, but a generated program failed when it ran '
+              'in that module (evidence: "%s")' % (token, evidence)
+              for token, evidence in failures]
     repairs = []
     if directing:
         repairs.append(
@@ -142,6 +179,11 @@ def missing_record_reminder(progress):
             "file each unfiled reversal named above through feedback.md -> \"Silent in-run "
             "append\", whose last step sets its filed to true; a filing that fails leaves it "
             "false and blocks nothing (INV-373)")
+    if failures:
+        repairs.append(
+            "add each failure named above to steer_triggers as {\"kind\": \"failure\", "
+            "\"evidence\": <the evidence named>} (ground-rules.md -> \"Worked steers\"); its "
+            "module has closed, so show no steer late")
     return (
         "Module-completion records still missing: %s. Module completion has already "
         "closed these modules, so repair the records now, silently and before anything else "
@@ -177,7 +219,7 @@ if created:
 if transition_reply.offered_module(payload) is not None:
     progress = _progress()
     if progress is not None:
-        reminder = missing_record_reminder(progress)
+        reminder = missing_record_reminder(progress, _observations())
         if reminder:
             context.append(reminder)
 

@@ -125,6 +125,11 @@ receives the shippable plugin through `/propagate-to-public`.
 - `plugins/senzing-bootcamp/scripts/docker_lifecycle.py`: names, inspects and
   tears down the Bootcamper's containers, picks a free host port, and checks
   the SDK container's published visualization port.
+- `plugins/senzing-bootcamp/scripts/failed-run-net.py`: PostToolUse and
+  PostToolUseFailure hook on Bash: notes an Act 2 module's first failed
+  program run with no worked steer recorded, and reminds the guide.
+- `plugins/senzing-bootcamp/scripts/failed_run.py`: the one definition of a
+  failed program run, shared with `transcript_lint`.
 - `plugins/senzing-bootcamp/scripts/feedback-capture.py`: UserPromptSubmit hook:
   captures feedback typed in the prompt.
 - `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`:
@@ -1489,6 +1494,9 @@ containing a space working. No hook has a timeout or other options.
   `checkpoint-tick.py`, then `module-start-reminder.py`, then
   `module-number-reminder.py`, as four hooks of one entry.
 - `PreToolUse` with matcher `Write|Edit|Bash` runs `write-gate.py`.
+- `PostToolUse` and `PostToolUseFailure`, each with matcher `Bash`, run
+  `failed-run-net.py` (#910); Claude Code reports a non-zero exit through the
+  second.
 - `Stop` (no matcher) runs `stop-nudge.py`.
 - `PreCompact` (no matcher) runs `precompact-recap.py`.
 - `SessionEnd` (no matcher) runs `session-end.py`.
@@ -1499,7 +1507,7 @@ exception is `session-start.py` on a finished bootcamp, where the preferences
 flag alone is enough (#905). The four
 recap hooks (`session-start.py`, `checkpoint-tick.py`, `precompact-recap.py`,
 `session-end.py`) also need `recap_checkpoint.bootcamp_active()`, a recorded
-module, and so does `module-start-reminder.py`. `write-gate.py`,
+module, and so do `module-start-reminder.py` and `failed-run-net.py`. `write-gate.py`,
 `stop-nudge.py`, `feedback-capture.py` and `module-number-reminder.py` gate on
 existence alone on purpose:
 it answers "is this a bootcamp project", and
@@ -1507,8 +1515,8 @@ onboarding and Bootcamp preparation need them before any module is recorded
 (INV-227); each docstring says why. Only `write-gate.py` (exit 2) and
 `stop-nudge.py` (a `decision: block` reply, at most once per stop chain) can
 block; `feedback-capture.py`, `checkpoint-tick.py`,
-`module-start-reminder.py`, `module-number-reminder.py` and `session-start.py`
-inject context; the others
+`module-start-reminder.py`, `module-number-reminder.py`, `failed-run-net.py`
+and `session-start.py` inject context; the others
 emit nothing. The sibling `hooks/README.md` documents each hook's purpose
 phrased from the Bootcamper's view beginning with
 "to" (the INV-016 convention) and, in a Gate column, its gate and why, the `python3`-on-`PATH` prerequisite on Linux,
@@ -3313,9 +3321,13 @@ file adds nothing). `unset_directing_steps` lists each `DIRECTING_MODULES`
 token in `modules_completed` whose `directing_steps` value is absent, null or
 empty; `unfiled_reversals` lists each `steer_triggers` entry with `kind`
 `reversal` and `filed` exactly `false`, its evidence cut to `EVIDENCE_LIMIT`
-characters. A wrongly typed key is skipped. `missing_record_reminder` names
-each and tells the guide to record `skipped`, then file each reversal through
-`feedback.md` → "Silent in-run append", silently and before anything else,
+characters. A wrongly typed key is skipped. `unrecorded_failures` (#910)
+lists each `config/steer_observations.json` entry (`_observations`, `{}` when
+missing or malformed) whose module's `steer_triggers` is empty.
+`missing_record_reminder(progress, observed)` names each and tells the guide
+to record `skipped`, then file each reversal through
+`feedback.md` → "Silent in-run append", then add each observed failure to
+`steer_triggers` with no late steer, silently and before anything else,
 asking nothing and rewriting no recap section. The reply is not classified.
 When there is any context, it prints one ASCII-escaped `hookSpecificOutput`
 object whose `additionalContext` joins the announcement and the reminder with
@@ -4205,7 +4217,8 @@ the no-site `**You directed:**` form (`NO_SITE`). #857's third check, for
 Discover's step 4a-pairs, was removed with that step (#889).
 `check_worked_steers` is WATCH `INV-352-steer-missing` when an Act 2 module's
 (`STEER_MODULES`) first tool result that is an error or a non-zero `Exit code`
-from a command building or running a `src/` program (`_failed_program_run`;
+from a command building or running a `src/` program (`_failed_program_run`,
+which calls the plugin's `failed_run.failed_program_run`, #910;
 the env script under `src/scripts/` does not count) has no later
 `What went wrong:` turn in the module; with no tool results it is silent.
 `lint` passes `project` and `tools` to them. With `--phase` it adds the
@@ -7006,13 +7019,18 @@ From `plugins/senzing-bootcamp/scripts/checkpoint-tick.py`:
 
 ```python
 PROGRESS = os.path.join("config", "bootcamp_progress.json")
+OBSERVATIONS = os.path.join("config", "steer_observations.json")
 DIRECTING_MODULES = ("data_quality_mapping", "data_processing", "query_visualize_discover")
 EVIDENCE_LIMIT = 200
 def unset_directing_steps(progress):
     ...
 def unfiled_reversals(progress):
     ...
-def missing_record_reminder(progress):
+def _observations():
+    ...
+def unrecorded_failures(progress, observed):
+    ...
+def missing_record_reminder(progress, observed=None):
     ...
     payload = json.loads(sys.stdin.buffer.read())
     payload = None
@@ -7949,7 +7967,7 @@ main{padding:0}
 .legend .row{display:flex;align-items:center;gap:6px;margin:2px 0}
 .legend .dot{width:12px;height:12px;border-radius:50%}
 .node circle{cursor:pointer}
-/* ⛔ (#883) A stylesheet rule must never override a stroke the renderer sets from the DATA.
+/* ⛔ (INV-423, #883) A stylesheet rule must never override a stroke the renderer sets from the DATA.
    An SVG presentation attribute (`stroke="…"`, `stroke-width="3"`) loses to ANY matching CSS
    rule, so an unscoped `.node circle{stroke:#fff;stroke-width:1.5px}` painted every source's
    assigned outline white at 1.5px -- the 7th and later sources, which the stroke channel exists
@@ -11749,6 +11767,7 @@ looks wrong.
 - `tests/test_example_recap_uses_no_golden_record.py`: 5
 - `tests/test_existing_install_still_runs_the_env_script.py`: 22
 - `tests/test_expected_visualization_denominator.py`: 21
+- `tests/test_failed_run_net.py`: 24
 - `tests/test_failed_stop_does_not_purge.py`: 45
 - `tests/test_family_amendments_cite_real_rules.py`: 9
 - `tests/test_fastpath_gates_on_full_mapping.py`: 31
@@ -13164,6 +13183,7 @@ tests a rebuild can pass from behavior alone.
   - `SessionStart`: `session-start.py`;
   - `UserPromptSubmit`: `feedback-capture.py` and `checkpoint-tick.py`;
   - `PreToolUse`: `write-gate.py`;
+  - `PostToolUse` and `PostToolUseFailure`: `failed-run-net.py`;
   - `Stop`: `stop-nudge.py`;
   - `PreCompact`: `precompact-recap.py`;
   - `SessionEnd`: `session-end.py`.
@@ -15924,3 +15944,23 @@ Senzing licensing, with no SPDX identifier.
   session offered to resume it, and clearing `current_module` would have
   restarted onboarding; INV-227's 2026-11-10 note records
   it (registered 2026-11-10)
+- #848: the 2026-10-27 invariant review registered INV-419 and applied four
+  dated amendments, recorded as one ledger entry — the queue had pending
+  blocks a review had decided, and the record keeps the verdicts with them
+- #855: the umbrella for steps the guide skipped with nothing to catch it
+  (directing steps, worked steers, Discover's pair predictions, reversal
+  filing); its sub-issues #856–#858 and #910 add the catches, and a judging
+  walk per module records whether they hold — the 2026-11-04 gap analysis
+  found each skipped silently, and a skipped directing step recorded `none`
+- #868: the 2026-11-05 invariant review registered INV-420 and applied
+  fourteen dated amendments, recorded as one ledger entry — the same
+  record-the-verdicts shape as #848
+- #910: a failed program run in an Act 2 hands-on module now leaves a trace
+  the guide does not write — `failed-run-net.py`, on `PostToolUse` and
+  `PostToolUseFailure` for Bash, notes the module's first one in
+  `config/steer_observations.json` and reminds the guide of "Worked steers",
+  and `checkpoint-tick.py` names it at the transition while `steer_triggers`
+  is empty; the definition moved into `failed_run.py`, shared with
+  `transcript_lint` — a walk's lookup program failed at Data processing
+  step 21 and was repaired with no steer and no record, so only the
+  after-the-walk lint saw it; INV-352's amendment is queued for review

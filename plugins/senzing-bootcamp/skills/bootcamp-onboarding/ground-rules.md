@@ -392,6 +392,9 @@ copy (INV-300).
   keepsake never shows a silent filing (INV-012). Module completion reads it, in
   `module-completion.md` Step 0b, to show a steer that was due and never shown and to file a
   reversal that was never filed.
+  A trigger 1 failure the guide repairs without recording it is caught by a hook, `failed-run-net.py`,
+  which reminds the guide when it happens and names it again at the module's transition
+  (`hooks/README.md`).
 - **Two lines, after the fix.** The steer is shown once the fix has run (from Data processing on,
   its first line comes before the fix: see below), in this shape:
 

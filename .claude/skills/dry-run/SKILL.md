@@ -139,8 +139,8 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    PDF renders.
 
    ⛔ **Neither side is wrong, and the plugin is not what needs changing.** It ships **no
-   `PostToolUse` hook at all** — `plugins/senzing-bootcamp/hooks/hooks.json` registers
-   SessionStart, UserPromptSubmit, PreToolUse, Stop, PreCompact and SessionEnd — so this
+   `PostToolUse` hook on Write or Edit** — its one `PostToolUse` hook, `failed-run-net.py`
+   (#910), matches Bash only and never blocks — so this
    is host configuration, no Bootcamper can encounter it, and it is friction in *your*
    walk rather than a defect in the product. ⛔ **Do not "fix" it by relaxing the
    defer-to-graduation rule or by adding a hook to the plugin**: both push a maintainer's
