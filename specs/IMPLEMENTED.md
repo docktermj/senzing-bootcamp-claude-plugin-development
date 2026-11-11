@@ -43,6 +43,19 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## auto-test-walk-2026-11-10
+
+- **Implemented:** 2026-11-10 (**Not a spec**: the record of one `/auto-test` run, kept before any fix (INV-317). Findings are marked filed or not yet filed below.)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md` (this entry)
+- **MCP re-check:** the run's own probe, below.
+- **Summary:** establishes no invariant (a run record). The #855 judging walk, run as its acceptance criterion pins it: `autotest.py --walk --seed mid --model claude-haiku-5-5 --effort low --pin --persona terse --turns 100 --max-turns 120 --keep`, on `main` at `fb6b6eb2`. Exit 1, 2 BREAKING, 15 WATCH. Sandbox `/tmp/senzing-autotest-20261110-225415-terse-g1ztu15g`, report `~/senzing-autotest/reports/20261110-225415-terse.json`. The walk started at Data processing, finished it (turns 19–42) and Query, Visualize and Discover (turns 45–71), and reached graduation, which wrote `current_module: "graduation"` and `graduation` in `modules_completed` (#905 observed live). Judged for #855 (`transcript_lint.module_spans` and the walk's progress file): **Data Quality, Mapping and Transformation not judged** (the `mid` seed starts after it); **Data processing fails** the worked-steer part: `check_directing_steps` reports nothing, `directing_steps.data_processing` is `directed` and `steer_triggers` is absent, but `check_worked_steers` reports `INV-352-steer-missing` at turn 32; **Query, Visualize and Discover passes**: nothing reported, `directing_steps.query_visualize_discover` is `directed`, no reversal with `filed: false` (`check_pairs_step` no longer applies after #889). #855 stays open.
+  - **Finding 1 (filed as #910, a sub-issue of #855):** at Data processing step 21, the guide's lookup program for the expectation check failed when run (`python3: can't open file '…/src/query/lookup_record.py'`, exit 1, because `src/query/` did not exist). The guide said "The `src/query` folder doesn't exist yet, so I'll create it" and retried with no worked steer and no `steer_triggers.data_processing` entry, so module completion's check (#856) and the transition reminder (#858) had nothing to read. The maintainer judged this a trigger 1 failure (INV-352) on 2026-11-10.
+  - **Finding 2 (not a defect):** the retry at turn 32 was blocked by `write-gate.py`'s Bash branch. Its last line redirected `> /tmp/c001.json`, a system-temp write that INV-200's 2026-11-06 note (#876) requires the gate to block. Replayed through the hook: blocked, exit 2.
+  - **Finding 3 (recurrence of #874):** BREAKING INV-079-module-number, 2: "Module 5" and "Module 1", after INV-425's reminder shipped.
+  - **Finding 4 (WATCH, not yet filed):** INV-006-re-asked 3 (the step 21 expectation 👉 repeated per example, likely a lint false positive on one-example-per-turn); INV-028-apparatus-missing 2 (no before/after, no step overview, on a module resumed partway).
+  - **Finding 5 (WATCH, server-side, not yet filed):** the probe saw changed `instructions` text and changed descriptions for `find_examples`, `get_sdk_reference`, `mapping_workflow`, `reporting_guide`, `sdk_guide` and `search_docs`, a changed `get_capabilities` response, and `search_docs.category` accepting a nonsense value silently.
+
 ## invariant-review-2026-11-10
 
 **Not a spec** — a dated record of the maintainer's `/review-invariants` session of 2026-11-10, over the 19 blocks pending after the day's unattended runs and earlier issue work.
