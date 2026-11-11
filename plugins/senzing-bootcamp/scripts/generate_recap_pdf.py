@@ -1436,6 +1436,77 @@ def read_completed_modules(path=DEFAULT_PROGRESS) -> List[str]:
     return [item for item in completed if isinstance(item, str)]
 
 
+#: The ``**You directed:**`` line's four forms, by the ``directing_steps`` value that
+#: selects each (`ground-rules.md` -> "Directing steps", INV-354, #915). The templates are
+#: stated there; these patterns match their fixed words, and
+#: `tests/test_you_directed_form_is_checked.py` fails when a template and its pattern
+#: part. The directed form's words are the Bootcamper's own, so only its ending is fixed.
+YOU_DIRECTED_LABEL = "**You directed:**"
+YOU_DIRECTED_FORMS = {
+    "directed": re.compile(
+        r"^\*\*You directed:\*\*\s+(?!nothing this module\.).+"
+        r"(?:You caught: .+|Nothing differed\.)\s*$"),
+    "guide_chose": re.compile(
+        r"^\*\*You directed:\*\*\s+nothing this module\. You asked me to choose "
+        r"\(.+\), so the guide chose .+\.\s*$"),
+    "none": re.compile(
+        r"^\*\*You directed:\*\*\s+nothing this module\. .+, so there was no step "
+        r"to hand over\.\s*$"),
+    "skipped": re.compile(
+        r"^\*\*You directed:\*\*\s+nothing this module\. This module's directing "
+        r"step \(.+\) was skipped, so you were not asked to direct it\.\s*$"),
+}
+
+
+def read_directing_steps(path=DEFAULT_PROGRESS) -> Dict[str, str]:
+    """``directing_steps`` from the progress JSON, as ``{token: value}`` for string
+    values only; ``{}`` when the file or key is missing or malformed. Never raises."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return {}
+    steps = data.get("directing_steps") if isinstance(data, dict) else None
+    if not isinstance(steps, dict):
+        return {}
+    return {k: v for k, v in steps.items() if isinstance(k, str) and isinstance(v, str)}
+
+
+def directed_line_problems(recap: Recap, steps: Dict[str, str]) -> List[str]:
+    """Each directing module whose ``**You directed:**`` line is missing from its
+    End-of-Module Summary or is not the form its ``directing_steps`` value selects.
+
+    A module with no recap section, or whose value is unset or not one of the four, is
+    not checked: Step 0a's ``skipped`` covers a value still unset at completion, and a
+    recap from before the line existed carries no value either."""
+    try:
+        from module_start_apparatus import DISPLAY_NAMES
+    except ImportError:  # the module ships beside this script; never fail the check on it
+        return []
+    problems: List[str] = []
+    for token, value in steps.items():
+        form = YOU_DIRECTED_FORMS.get(value)
+        name = DISPLAY_NAMES.get(token)
+        if form is None or name is None:
+            continue
+        mod = next((m for m in recap.modules
+                    if (m.title or "").strip().lower() == name.lower()), None)
+        if mod is None:
+            continue
+        lines = [line.strip() for line in (mod.subsection(REQUIRED_SECTIONS[3]) or [])
+                 if line.strip().startswith(YOU_DIRECTED_LABEL)]
+        if not lines:
+            problems.append(
+                f"{name}'s {REQUIRED_SECTIONS[3]} has no {YOU_DIRECTED_LABEL} line, and "
+                f"directing_steps records {value!r} (ground-rules.md -> \"Directing steps\")")
+        elif not any(form.match(line) for line in lines):
+            problems.append(
+                f"{name}'s {YOU_DIRECTED_LABEL} line is not the form directing_steps "
+                f"{value!r} selects; write it word for word as ground-rules.md -> "
+                f"\"Directing steps\" states it: {lines[0][:120]!r}")
+    return problems
+
+
 def expected_visualizations(completed: Sequence[str]) -> List[str]:
     """The visualization names the modules that ran were specified to build."""
     names = []
@@ -4501,6 +4572,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         problems = problems + tab_coverage_problems(source_text, manifests)
         # …and whether the manifest those checks trust is itself complete.
         problems = problems + manifest_undercount_problems(manifests)
+        # The **You directed:** line's form, against the value that selects it (#915).
+        problems = problems + directed_line_problems(
+            recap, read_directing_steps(Path(args.progress)))
         if problems:
             for p in problems:
                 sys.stderr.write(f"INCOMPLETE: {p}\n")

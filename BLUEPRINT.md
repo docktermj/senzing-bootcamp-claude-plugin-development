@@ -3487,6 +3487,11 @@ Pillow) and `brand_tokens`.
   `MIN_CONTENT_RETENTION`. Warnings: incomplete sections, leftover
   checkpoint markers, stray fences, more than one handover block
   (`handover_block_count`).
+- `--check` also runs `directed_line_problems` (#915): with
+  `read_directing_steps(--progress)`, each directing module's summary
+  needs a `**You directed:**` line matching the `YOU_DIRECTED_FORMS`
+  pattern its value selects (`directed`, `guide_chose`, `none`,
+  `skipped`); a module with no section or no recognized value is skipped.
 - Images (`IMAGE_LINE_RE`) resolve against the recap's directory, then the
   cwd; a bullet marker before one is allowed. URLs are never fetched.
   Each non-embedded image is reported once on stderr.
@@ -4215,8 +4220,9 @@ later transition 👉 (`TRANSITION`, which takes the graduation offer too), else
 at the turn before the next banner. `check_directing_steps` is BREAKING
 `INV-354-directing-step-missing` when Data Quality, Mapping, and
 Transformation, Data processing, or Query, Visualize and Discover ends without
-its pinned `DIRECTING_QUESTIONS` 👉, excusing the first when its turns carry
-the no-site `**You directed:**` form (`NO_SITE`). #857's third check, for
+its pinned `DIRECTING_QUESTIONS` 👉, excusing the first when its turns, or
+its section of `<project>/docs/bootcamp_recap.md` (`_recap_section`, #915),
+carry the pinned no-site `**You directed:**` form (`NO_SITE`). #857's third check, for
 Discover's step 4a-pairs, was removed with that step (#889).
 `check_worked_steers` is WATCH `INV-352-steer-missing` when an Act 2 module's
 (`STEER_MODULES`) first tool result that is an error or a non-zero `Exit code`
@@ -5849,7 +5855,9 @@ TRANSITION = re.compile(
 RESUME = re.compile(r"Where you left off:(?:\*\*)? ([^\n]+?), step \d+\.")
 def module_spans(turns):
     ...
-def check_directing_steps(turns):
+def _recap_section(project, name):
+    ...
+def check_directing_steps(turns, project=None):
     ...
 def check_worked_steers(turns, tools=None):
     ...
@@ -7354,6 +7362,11 @@ MODULE_VISUALIZATIONS = {
 }
 DEFAULT_PROGRESS = Path("config") / "bootcamp_progress.json"
 def read_completed_modules(path=DEFAULT_PROGRESS) -> List[str]:
+    ...
+YOU_DIRECTED_LABEL = "**You directed:**"
+def read_directing_steps(path=DEFAULT_PROGRESS) -> Dict[str, str]:
+    ...
+def directed_line_problems(recap: Recap, steps: Dict[str, str]) -> List[str]:
     ...
 def expected_visualizations(completed: Sequence[str]) -> List[str]:
     ...
@@ -12125,6 +12138,7 @@ looks wrong.
 - `tests/test_worked_steers.py`: 43
 - `tests/test_wrapped_text.py`: 40
 - `tests/test_write_gate.py`: 23
+- `tests/test_you_directed_form_is_checked.py`: 13
 - `tests/test_write_gate_bash.py`: 24
 
 ### 8.4 Key cases
@@ -15973,3 +15987,9 @@ Senzing licensing, with no SPDX identifier.
   module by its table name — #855's pinned walk resumes into Data Quality,
   Mapping, and Transformation at step 11 with no banner, so that module was
   never graded and #855 could never close
+- #915: `generate_recap_pdf.py --check` reports a `**You directed:**` line
+  not in the form its `directing_steps` value selects, and
+  `check_directing_steps` reads Module 5's no-site line from the walk's
+  recap — both #855 walks wrote a paraphrase the plugin never caught, and
+  the lint looked for the line in turns where it is never shown; INV-354's
+  amendment is queued for review
