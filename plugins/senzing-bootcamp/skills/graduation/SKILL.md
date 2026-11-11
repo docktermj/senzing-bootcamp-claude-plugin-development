@@ -1580,7 +1580,7 @@ the files are exactly as they were before this paragraph.
     sentence.
   - **Where `integration_targets` is known** (INV-097), name those systems in **Project Overview** as what the resolved entities are meant to feed, and in **Configuration** as the integration points a reader will need to wire up — the resolved data exists to reach them, so a README that never mentions them describes half the job. Absent → omit; never write "none" or a placeholder.
 - **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the bootcamp does not include dedicated performance/security/monitoring/deployment modules, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) are not covered in depth during the bootcamp: complete these items before deploying," and mark those items with ⚠️.
-  - **The Database section MUST carry the production-database item** — ⚠️ *"SQLite is an
+  - **(INV-421) The Database section MUST carry the production-database item** — ⚠️ *"SQLite is an
     evaluation and starter database: before deploying, move to a supported production database.
     Senzing's documentation recommends PostgreSQL for anything beyond evaluation. If
     `docker-compose.yml` or `.env.example` points at SQLite, this starter is not ready to deploy

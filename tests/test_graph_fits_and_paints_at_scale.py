@@ -16,6 +16,14 @@ can run:
   attributes read correctly throughout, which is why ``test_source_encoding_renders_distinctly``
   (it reads attributes) never saw it: only the **computed** style does.
 
+The initial fit enforces INV-299's 2026-11-07 note (#883, registered by the maintainer 2026-11-10):
+the interactive view fits once at its first settle. The stroke checks enforce INV-423 (registered
+by the maintainer 2026-11-10), reading the computed style. Module 7's check at scale before its
+screenshots enforces INV-424 (registered by the maintainer 2026-11-10); no test can establish that a
+live guide runs it. The browser half's Records dialog check past the cap enforces INV-407's
+2026-11-07 note (#883, registered by the maintainer 2026-11-10). The browser half skips where no headless browser
+is found, and neither half can establish that a reader's own browser opens fitted.
+
 What is pinned, and how:
 
 * **Browser half** (skips where no headless Chrome/Chromium/Edge is found, as

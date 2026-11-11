@@ -59,7 +59,7 @@ bootcamper through setup and into the numbered module skills, one guided step at
      off: {module name}." The module name is the one the module table in
      `bootcamp-preparation/SKILL.md` gives for the `current_module` state token, and
      `session-start.py`'s resume message already names it.
-     ⛔ **(INV-079) The resume offer names the module by its name, never by a module number and
+     ⛔ **(INV-425, INV-079) The resume offer names the module by its name, never by a module number and
      never by its state token.** The skill heading you read next carries a number; that number
      is internal and is never shown.
 

@@ -1108,7 +1108,7 @@ main{padding:0}
 .legend .row{display:flex;align-items:center;gap:6px;margin:2px 0}
 .legend .dot{width:12px;height:12px;border-radius:50%}
 .node circle{cursor:pointer}
-/* ⛔ (#883) A stylesheet rule must never override a stroke the renderer sets from the DATA.
+/* ⛔ (INV-423, #883) A stylesheet rule must never override a stroke the renderer sets from the DATA.
    An SVG presentation attribute (`stroke="…"`, `stroke-width="3"`) loses to ANY matching CSS
    rule, so an unscoped `.node circle{stroke:#fff;stroke-width:1.5px}` painted every source's
    assigned outline white at 1.5px -- the 7th and later sources, which the stroke channel exists
@@ -2900,7 +2900,7 @@ def main(argv=None):
     args = build_arg_parser().parse_args(argv)
 
     # >>> plugin-only
-    # Before the D3 check: emitting a copy renders nothing, and on SDK setup's container route
+    # (INV-422) Before the D3 check: emitting a copy renders nothing, and on SDK setup's container route
     # it runs on the host, where neither the SDK nor engine settings exist.
     if args.emit_standalone:
         return emit_standalone(args.emit_standalone)

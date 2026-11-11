@@ -6,6 +6,9 @@ path in Data Processing. `write-gate.py` was registered for `Write|Edit` only, s
 the command, and "Working examples" in `ground-rules.md` said to fetch a file without saying
 where to save it.
 
+This enforces INV-200's 2026-11-06 note (#876, registered by the maintainer 2026-11-10). It runs the
+hook against command strings; it cannot establish what a live guide's shell actually writes.
+
 The Bash branch is deliberately narrower than the Write/Edit one (the issue's Scope):
 
 * it blocks only a **top-level output target** that resolves to system temp or Downloads

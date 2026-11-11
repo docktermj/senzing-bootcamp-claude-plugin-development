@@ -24,8 +24,8 @@ Enforces **INV-223** — a module starting a background server records its pid b
 #890 added the launch confirmation: right after the ready line, the port's listener is looked up
 and replaces the captured pid when it differs, stated once in the contract with a POSIX, a
 PowerShell and a docker-route form, and linked from both launch sites. It also widened the ban
-to `pgrep -f` and `ps | grep`. Its wording for INV-223 is a `PROPOSED AMENDMENT` in
-`specs/IMPLEMENTED.md`, awaiting the maintainer's sign-off.
+to `pgrep -f` and `ps | grep`. Its wording is INV-223's dated note of 2026-11-10,
+registered by the maintainer on 2026-11-10.
 
 Source spec: `specs/visualization-server-teardown-does-not-record-a-pid.md`.
 

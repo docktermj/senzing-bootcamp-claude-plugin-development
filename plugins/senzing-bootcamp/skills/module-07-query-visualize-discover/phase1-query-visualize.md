@@ -1152,7 +1152,7 @@ The server MUST:
     [`phase1-visualization.md`](../module-03b-truthset-visualization/phase1-visualization.md) →
     "Use the Senzing brand". One rule on every route, so a native route carries the values too.
 
-    ⛔ **(INV-081, INV-252) For Python, write `src/server/results_server.py` with the reference's
+    ⛔ **(INV-422, INV-081, INV-252) For Python, write `src/server/results_server.py` with the reference's
     emit mode, on the host, at first build; never copy the reference and edit its import out.**
     The emit mode writes a copy of the reference with the token values inlined as its only palette
     and no import from the plugin, so the values are copied for you. Run it from the project root:
@@ -1168,7 +1168,7 @@ The server MUST:
     the Senzing SDK nor engine settings, so on SDK setup's `docker` route it runs on the host too.
     It refuses to overwrite an existing file, so an existing server is never replaced. Then adapt
     `src/server/results_server.py` to the Bootcamper's data as this step describes.
-    - ⛔ **(INV-081) A failed emit stops the step**, as a failed D3 copy does: report the reason it
+    - ⛔ **(INV-422, INV-081) A failed emit stops the step**, as a failed D3 copy does: report the reason it
       printed, and do not hand-copy the reference instead.
     - Put any provenance note inside the existing module docstring, never above
       `from __future__ import annotations`. Only the docstring, comments and blank lines may come
@@ -1264,7 +1264,7 @@ check it again before the hand-over below; never hand over a missing or blank ke
 is agent-side and asks the Bootcamper nothing (INV-012).
 
 <a id="snapshot-scale-check"></a>
-⛔ **(INV-129) When the graph is capped, check the snapshot at scale before capturing its screenshots.**
+⛔ **(INV-424, INV-129) When the graph is capped, check the snapshot at scale before capturing its screenshots.**
 The Truth Set never reaches the graph cap, so these checks have only this run to catch what breaks
 at the Bootcamper's scale. The bundled capture helper runs them in a verification mode that
 captures nothing, against `docs/visualizations/results_visualization.html`:

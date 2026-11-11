@@ -7,7 +7,9 @@ runtime, so on a Python run the guide copied it into `src/server/` and edited th
 hand; one such edit put a docstring above `from __future__ import annotations` and broke the file.
 
 The reference now has an `--emit-standalone <path>` mode, and step 3c's Python route runs it on
-the host at first build. These tests pin both:
+the host at first build. These tests enforce INV-422 (registered by the maintainer 2026-11-10) and
+pin both; they read and run the code on Linux, and cannot establish that a live guide runs the
+emit mode, which only `dry-run` phase 3 observes:
 
 1. **The emitted file.** Emitted into a temporary directory, it compiles; it names no
    `brand_tokens`, no `sys.path.insert`, no `CLAUDE_PLUGIN_ROOT` and no plugin path; its shebang,

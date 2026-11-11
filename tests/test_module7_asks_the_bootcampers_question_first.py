@@ -16,8 +16,8 @@ questions do you need to answer with your data?"*, was asked only on the fallbac
 3. Dropping the derived requirements, or answering "I don't know", never re-asks the open
    question.
 
-#888 amends INV-359 (a `PROPOSED AMENDMENT` block in #888's `specs/IMPLEMENTED.md` entry, awaiting
-the maintainer's sign-off): a bare question left a Bootcamper with nothing to start from, so Turn 1
+#888 amends INV-359 (its dated note of 2026-11-10, registered by the maintainer on 2026-11-10):
+a bare question left a Bootcamper with nothing to start from, so Turn 1
 now shows numbered examples **before** the unchanged open question (`turn_1_problems`):
 
 - on the business-problem path 1 to 4 examples from the refined prose of

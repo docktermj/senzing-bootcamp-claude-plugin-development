@@ -107,6 +107,9 @@ REVIEWED_NOT_A_SUPERSESSION = {
                "the invariant supersedes nothing and is superseded by nothing",
     "INV-409": "names `superseded` as one of the header words that mark a ledger block "
                "decided; it supersedes nothing and is superseded by nothing",
+    "INV-357": "its 2026-11-10 note (#889) says its own #856 and #857 notes are superseded for "
+               "the removed step 4a-pairs; the invariant supersedes nothing and is superseded "
+               "by nothing",
 }
 
 

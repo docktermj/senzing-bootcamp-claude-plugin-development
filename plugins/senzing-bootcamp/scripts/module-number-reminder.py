@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """UserPromptSubmit hook: to keep modules named by their names after a module number slips
-into a reply (#874, INV-079).
+into a reply (#874, INV-425, INV-079).
 
 INV-079 has the guide name a module, never number it, and ``ground-rules.md`` says so. In two
 ``auto-test`` walks the guide read that rule and still wrote "Module 5" to the Bootcamper,

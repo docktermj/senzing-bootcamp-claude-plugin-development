@@ -1616,7 +1616,7 @@ def _scale_detail(check: str, entry: dict) -> str:
 
 
 def verify_scale_main(html: Path) -> int:
-    """`--verify-scale`: print one line per check and return the verdict's exit code."""
+    """`--verify-scale` (INV-424): print one line per check and return the verdict's exit code."""
     report = run_scale_check(html)
     code, rows = scale_verdict(report)
     for check, status, detail in rows:
