@@ -15794,7 +15794,8 @@ Senzing licensing, with no SPDX identifier.
   question on to the next step that asks (INV-225) instead of adding one — the
   transcript lagged the hook by about 40 ms, so the net stayed silent on all 61
   Stop events of the saved auto-test walks and two Data Processing turns ended
-  with no question; an amendment to INV-054 is queued
+  with no question; INV-054's 2026-11-06 note records it (registered
+  2026-11-10)
 - #874: the resume message names the recorded module by its display name from
   `module_start_apparatus.DISPLAY_NAMES`, pinned to the module table by a
   test, in a form `bootcamp-onboarding/SKILL.md` step 2 pins, and a new
@@ -15802,16 +15803,16 @@ Senzing licensing, with no SPDX identifier.
   guide to name modules by name after any reply that showed "Module" and a
   digit — two auto-test walks showed the Bootcamper "Module 5" although the
   guide had read INV-079's rule, because the resume offer had no pinned form
-  and the guide improvised it from the numbered skill heading; a new
-  invariant is queued
+  and the guide improvised it from the numbered skill heading; INV-425
+  was registered 2026-11-10
 - #876: `write-gate.py` also runs on Bash (matcher `Write|Edit|Bash`) and
   blocks a command whose top-level output target (`curl -o`, `wget -O`/`-P`,
   `>`/`>>`, `tee`, the `cp`/`mv` destination) resolves to system temp or
   Downloads outside the project, reading the command with `shlex` and leaving
   quoted payloads and non-temp targets alone, and "Working examples" saves a
   fetched file under `src/resources/` — an auto-test walk saw the guide
-  `curl -o /tmp/…` an example file, which no hook saw; an amendment to INV-200
-  is queued
+  `curl -o /tmp/…` an example file, which no hook saw; INV-200's 2026-11-06
+  note records it (registered 2026-11-10)
 - #877: `walk.split_reply` reads a leading line that is exactly `/model` or
   `/effort` as a slash line with no value, which sets nothing in any walk and
   is logged as `bootcamper_flag_ignored` with `value: null` and a new
@@ -15832,7 +15833,8 @@ Senzing licensing, with no SPDX identifier.
   before its screenshots; the snapshot also always ships `#results` —
   at 1,500 nodes the app and snapshot opened unfitted and every
   relationship edge painted gray, which no Truth Set check could show;
-  amendments to INV-299 and INV-407 and two new invariants are queued
+  notes on INV-299 and INV-407 and two new invariants, INV-423 and INV-424,
+  were registered 2026-11-10
 - #887: Data processing's step 21 is a guided expectation check — a
   preface, then one example per turn picked from the loaded data (never the
   `midpoint_record` entity) with numbered outcomes ending in "a record of my
@@ -15841,8 +15843,8 @@ Senzing licensing, with no SPDX identifier.
   skip or 5 examples, each example in `module_6_processing.expectation_check`
   and `directing_steps.data_processing` written when it ends — on generated
   data a Bootcamper could not name records they had never seen and answered
-  the open question with feedback three times; an INV-354 amendment is
-  queued
+  the open question with feedback three times; INV-354's 2026-11-10 note
+  (#887) records it (registered 2026-11-10)
 - #888: Module 7 step 1 shows numbered examples before its unchanged open
   question — 1 to 4 from the business problem's refined prose, or the five
   common queries — inviting picks plus their own words; Turn 2 lists picked
@@ -15850,7 +15852,8 @@ Senzing licensing, with no SPDX identifier.
   asked for, saved with a `"Picked example — …"` source, and the ground
   rules' "Directing steps" allows numbered examples before any open 👉 —
   shown only the bare question, a Bootcamper found it too open-ended and
-  answered with feedback; amendments to INV-359 and INV-354 are queued
+  answered with feedback; INV-359's and INV-354's 2026-11-10
+  notes (#888) record it (registered 2026-11-10)
 - #889: Discover asks no prediction — step 4a-pairs, step 4b item 1a and
   "Already-shown entities" are removed, "Predictions before results" lists
   only System verification Step 7a, and step 4b item 1 reuses a step 21
@@ -15859,36 +15862,38 @@ Senzing licensing, with no SPDX identifier.
   4a; module completion's Step 0c, `check_pairs_step` and the example
   recap's pairs lines go too — after step 21 became a one-example-at-a-time
   check, a Bootcamper stopped the repeated "same entity?" question as the
-  bootcamp not knowing what it had covered; an INV-357 amendment is queued
+  bootcamp not knowing what it had covered; INV-357's 2026-11-10 note records it
+  (registered 2026-11-10)
 - #890: the visualization contract confirms the recorded pid against the
   port's listener right after the ready line (`#launch-confirmation`, with
   POSIX, PowerShell and in-container `python3` `/proc` forms), step 3c
   gains a launch shape and both launch sites link it, and `pgrep -f` and
   `ps | grep` are banned beside `pkill -f` — a `pgrep -f` lookup recorded
   a wrapping shell's pid and teardown's kill reported a stop while the
-  server kept its port; an INV-223 amendment is queued
+  server kept its port; INV-223's 2026-11-10 note records it
+  (registered 2026-11-10)
 - #891: `senzing_viz_server.py --emit-standalone <path>` writes a
   self-contained copy with the palette inlined and no plugin import, and
   step 3c's Python route writes `src/server/results_server.py` with it on
   the host at first build — the reference imported `brand_tokens`, so a
   guide copied it into `src/server/` and hand-edited the import out, once
-  putting a docstring above `from __future__` and breaking the file; a new
-  invariant is queued
+  putting a docstring above `from __future__` and breaking the file; INV-422
+  was registered 2026-11-10
 - #892: every Build, Run and project-creation call the ground rules'
   "Building and running a program" gives starts with the pin `cd '<project
   root>' && <call>`, which wraps the native Windows `powershell.exe` call
   too, and TypeScript's project creation is one pinned call with no change
   back — the guide's shell had drifted into `src/query/`, so three query
-  programs wrote `data/query_results/` under it; an INV-370 amendment is
-  queued
+  programs wrote `data/query_results/` under it; INV-370's 2026-11-10 note
+  records it (registered 2026-11-10)
 - #894: after the END OF SENZING BOOTCAMP banner, graduation shows one
   pinned plain line, "Run `/package-bootcamp` anytime to bundle your
   bootcamp results into one zip you can archive, move to another machine,
   or share with others.", as the final output, and `/graduate` gives the
   same order — the one pointer to the packager sat in the long announcement
   before the closing question and had scrolled away by the time the
-  Bootcamper wanted to keep or share their results; an amendment to INV-057,
-  with a note on INV-102, is queued
+  Bootcamper wanted to keep or share their results; INV-057's 2026-11-10 note,
+  with one on INV-102, records it (registered 2026-11-10)
 - #895: the packager's single-segment rule `license.json` drops a
   `license.json` at any depth in both profiles, and graduation Step 6b no
   longer snapshots `config/license.json`, recording it in
@@ -15896,8 +15901,8 @@ Senzing licensing, with no SPDX identifier.
   Module 4 Step 8a sub-step 7 — the `transfer` package carried
   `backups/revisit/state/license.json`, the `get_license` response naming
   the license's customer, contract and billing terms, which the rule
-  `config/license.json` and the content scan both missed; an amendment to
-  INV-094 is queued
+  `config/license.json` and the content scan both missed; INV-094's
+  2026-11-10 note records it (registered 2026-11-10)
 - #904: graduation's migration checklist gains a Database item — SQLite is
   an evaluation and starter database, move to a supported production
   database before deploying, PostgreSQL is Senzing's documented
@@ -15906,8 +15911,8 @@ Senzing licensing, with no SPDX identifier.
   the quote that a replacement can drop `RELATED_ENTITIES` with no error and
   must be verified first — the export exemption kept
   `SZ_ENTITY_DEFAULT_FLAGS`, which `SZ_EXPORT_DEFAULT_FLAGS` contains, in
-  production code against the server's production caution; an amendment to
-  INV-287 and an invariant for the Database item are queued
+  production code against the server's production caution; INV-287's
+  2026-11-10 note and INV-421, for the Database item, were registered 2026-11-10
 - #905: graduation's closing step now also writes the progress file —
   `bootcamp_complete: true`, `completed_at`, `current_module: "graduation"`,
   `current_step: null`, `graduation` in `modules_completed` — and the bootcamp
@@ -15917,4 +15922,5 @@ Senzing licensing, with no SPDX identifier.
   `/package-bootcamp` line and one open 👉, and its journey map is all ✅ —
   the progress file still named the last module after graduation, so a new
   session offered to resume it, and clearing `current_module` would have
-  restarted onboarding; an amendment to INV-227 is queued
+  restarted onboarding; INV-227's 2026-11-10 note records
+  it (registered 2026-11-10)

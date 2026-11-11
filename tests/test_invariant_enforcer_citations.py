@@ -893,7 +893,47 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 328 on 2026-11-05: the same review applied INV-354's 2026-11-05 note (#858) once PR #866 merged,
 # which names test_checkpoint_tick_missing_records.py; that test gained its INV-354 back-citation in the
 # same change. Re-derived by running the extractor -- 328, the new pair present and none removed.
-EXPECTED_PAIRS = 328
+# 329 on 2026-11-10: the maintainer's review applied INV-227's 2026-11-10 note (#905), which names
+# test_a_finished_bootcamp_is_never_resumed.py; that test already back-cites INV-227. Re-derived by
+# running the extractor -- 329, the new pair present and none removed.
+# 330 on 2026-11-10: the same review registered INV-421 (#904), which names
+# test_migration_checklist_production_items.py; that test gained its INV-421 back-citation in the same
+# change. Re-derived by running the extractor -- 330, the new pair present and none removed.
+# 331 on 2026-11-10: the same review applied INV-359's 2026-11-10 note (#888), which names
+# test_directing_steps.py; that test gained its INV-359 back-citation in the same change. Re-derived by
+# running the extractor -- 331, the new pair present and none removed.
+# 332 on 2026-11-10: the same review registered INV-422 (#891), which names
+# test_viz_server_emits_a_standalone_copy.py; that test gained its INV-422 back-citation in the same
+# change. Re-derived by running the extractor -- 332, the new pair present and none removed.
+# 333 on 2026-11-10: the same review applied INV-057's 2026-11-10 note (#894), which names
+# test_graduation_ending_surfaces.py; that test already back-cites INV-057. Re-derived by running the
+# extractor -- 333, the new pair present and none removed.
+# 334 on 2026-11-10: the same review applied INV-094's 2026-11-10 note (#895), which names
+# test_license_details_never_travel.py; that test gained its INV-094 back-citation in the same change.
+# Re-derived by running the extractor -- 334, the new pair present and none removed.
+# 335 on 2026-11-10: the same review applied INV-299's 2026-11-07 note (#883), which names
+# test_graph_fits_and_paints_at_scale.py; that test gained its INV-299 back-citation in the same
+# change. Re-derived by running the extractor -- 335, the new pair present and none removed.
+# 336 on 2026-11-10: the same review registered INV-423 (#883), which names
+# test_graph_fits_and_paints_at_scale.py; that test gained its INV-423 back-citation in the same
+# change. Re-derived by running the extractor -- 336, the new pair present and none removed.
+# 337 on 2026-11-10: the same review registered INV-424 (#883), which names
+# test_graph_fits_and_paints_at_scale.py; that test gained its INV-424 back-citation in the same
+# change. Re-derived by running the extractor -- 337, the new pair present and none removed.
+# 338 on 2026-11-10: the same review applied INV-407's 2026-11-07 note (#883), which names
+# test_graph_fits_and_paints_at_scale.py; that test gained its INV-407 back-citation in the same
+# change. Re-derived by running the extractor -- 338, the new pair present and none removed.
+# 339 on 2026-11-10: the same review applied INV-200's 2026-11-06 note (#876), which names
+# test_write_gate_bash.py; that test gained its INV-200 back-citation in the same change. Re-derived
+# by running the extractor -- 339, the new pair present and none removed.
+# 341 on 2026-11-10: the same review registered INV-425 (#874), which names
+# test_module_number_reminder.py and test_resume_names_the_module.py; both gained their INV-425
+# back-citation in the same change. Re-derived by running the extractor -- 341, both new pairs present
+# and none removed.
+# 343 on 2026-11-10: the same review applied INV-054's 2026-11-06 note (#873), which names
+# test_stop_nudge_reads_the_payload_first.py and test_stop_nudge_silence_and_opt_outs.py; both already
+# back-cite INV-054. Re-derived by running the extractor -- 343, both new pairs present and none removed.
+EXPECTED_PAIRS = 343
 
 
 def pairs():

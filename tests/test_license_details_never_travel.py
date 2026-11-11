@@ -7,6 +7,11 @@ packaged. Graduation Step 6b had snapshotted the file under the same basename, a
 content scan could not catch the copy either: the file is the SDK's `get_license` response,
 which names the license's customer, contract and billing terms and carries no license payload.
 
+Graduation's half enforces INV-094's 2026-11-10 note (#895, registered by the maintainer
+2026-11-10): Step 6b's `RESUME_STATE` snapshot leaves `config/license.json` out. These tests read
+the text and run the packager; they cannot establish that a live guide skips the copy, which only
+`dry-run` phase 3 observes.
+
 The fix is two halves, and each is pinned here:
 
 - the packager's single-segment rule `license.json`, which drops the file at any depth in both

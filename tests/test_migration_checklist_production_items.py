@@ -22,6 +22,10 @@ its section. The tests read the rendered file as well as the source, so an item 
 sit outside the quote, or under the wrong section, fails here even when the source still
 contains them.
 
+Enforces INV-421 (registered by the maintainer 2026-11-10). It reads the source and a rendered
+representative checklist; it cannot establish that a live guide copies the item into the file,
+which only ``dry-run`` phase 3 observes.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 
@@ -39,7 +43,7 @@ CHECKLIST_LEAD = "- **`production/MIGRATION_CHECKLIST.md`:**"
 
 #: One "MUST carry" sub-bullet: its section and its quoted item.
 MUST_CARRY = re.compile(
-    r"^  - \*\*The (\w+) section MUST carry the [^*]+ item\*\* — ⚠️ \*\"(.+?)\"\*",
+    r"^  - \*\*(?:\(INV-\d+\) )?The (\w+) section MUST carry the [^*]+ item\*\* — ⚠️ \*\"(.+?)\"\*",
     re.M | re.S,
 )
 
@@ -173,7 +177,7 @@ class TheGuardCatchesEachRegression(unittest.TestCase):
         return self.text.replace(old, new, 1)
 
     def test_a_missing_database_item_is_reported(self):
-        start = self.text.index("  - **The Database section MUST carry")
+        start = self.text.index("  - **(INV-421) The Database section MUST carry")
         end = self.text.index("  - **The Performance section MUST carry")
         problems = database_problems(self.text[:start] + self.text[end:])
         self.assertEqual(["the checklist has no Database 'MUST carry' item"], problems)

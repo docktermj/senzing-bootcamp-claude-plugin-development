@@ -75,8 +75,7 @@ accepted, undone when sub-step 9 adds a source (`fast_path_none_problems`).
 Step 2b's form to follow the recorded value and fails the old "record `none` in Step 1's write".
 
 #887 reshapes Data processing's step 21 into a guided expectation check, amending INV-354 for that
-one site (a `PROPOSED AMENDMENT` block in #887's `specs/IMPLEMENTED.md` entry, awaiting the
-maintainer's sign-off). The shared rule gains one bullet, "Data processing's expectation check"
+one site (its dated note of 2026-11-10, registered by the maintainer on 2026-11-10). The shared rule gains one bullet, "Data processing's expectation check"
 (`RULE_REQUIRED`'s #887 entries): numbered outcomes ending in "a record of my own", their own words
 and a skip; the result held back; a difference talked through, ending on acceptance or at the
 site's gate; not a prediction point; `directing_steps.data_processing` written when the check
@@ -88,14 +87,16 @@ midpoint exclusion, the stopping rule's two numbers, the resume, the
 pre-#887 open question (`M6_OLD_QUESTION`). Each has a negative control in
 `TheChecksCatchARegression`.
 
-#888 amends INV-354 in general (a `PROPOSED AMENDMENT` block in #888's `specs/IMPLEMENTED.md`
-entry, awaiting the maintainer's sign-off): any site may show numbered examples **before** its open
+#888 amends INV-354 in general (its dated note of 2026-11-10, registered by the maintainer on
+2026-11-10): any site may show numbered examples **before** its open
 👉. The shared rule gains the bullet "Numbered examples before the open 👉" (`RULE_REQUIRED`'s #888
 entries): the 👉 itself still carries no numbers and no menu, takes their own words and is the
 turn's only 👉; picking only examples directs the step; the examples are no recommendation; and
 they sit before the 👉, never beneath it (INV-224). The open-👉 bullet keeps "with no numbered
 options and no menu" and points at the new bullet. `m7_problems` requires step 1's Turn 1 to point
-there and step 3a to present a picked example as theirs ("You picked: '…'"). Each has a negative
+there and step 3a to present a picked example as theirs ("You picked: '…'"). Those two checks also enforce
+INV-359's 2026-11-10 note (#888, registered by the maintainer 2026-11-10) at step 1 and step 3a; they
+read the text and cannot establish that a live guide lists picked examples faithfully. Each has a negative
 control in `TheChecksCatchARegression`.
 
 Stdlib only; shipped markdown read as text (INV-108).

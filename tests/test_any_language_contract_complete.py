@@ -78,6 +78,12 @@ APPARATUS_EXEMPT = {
                "Its app-side premise (a tab whose data is absent is hidden) IS stated in the "
                "contract's per-tab 'Shown when' column",
     "INV-235": "a capture helper's printed label — capture_screenshots.py, plugin-side",
+    "INV-422": "the reference script's --emit-standalone mode and Module 7 step 3c's Python "
+               "route that runs it — how the plugin produces a Python copy, not a behavior of "
+               "the server a Bootcamper builds in any language",
+    "INV-424": "Module 7's agent-side check of a capped snapshot with capture_screenshots.py "
+               "--verify-scale — plugin-side apparatus; the behaviors it checks are stated in "
+               "the contract under INV-299, INV-407 and INV-423",
 }
 
 

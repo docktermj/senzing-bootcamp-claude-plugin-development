@@ -11,7 +11,7 @@ INV-420): the INV-102 form for graduation, nothing for an apparatus-exempt modul
 resume partway through a module.
 
 The resume message names the recorded module by its display name, from
-``module_start_apparatus.DISPLAY_NAMES`` (#874), and gives the pinned form of the offer
+``module_start_apparatus.DISPLAY_NAMES`` (#874, INV-425), and gives the pinned form of the offer
 ("Where you left off: {name}, step {N}."), so the guide never improvises it from a skill
 heading that carries a module number (INV-079). A key it does not know gets the generic
 wording, with no name and no number.

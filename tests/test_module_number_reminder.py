@@ -1,5 +1,8 @@
 """After a reply shows a module number, the guide is reminded to name modules by name.
 
+Enforces INV-425 (registered by the maintainer 2026-11-10). It runs the hook as a subprocess; it
+cannot establish that a live guide stops showing numbers, which an `auto-test` walk observes.
+
 Issue #874: two `auto-test` walks raised BREAKING INV-079-module-number findings ("Module 5",
 "Module 4", "Module 2") although the guide had read `ground-rules.md`'s INV-079 bullet first.
 A rule already read did not hold, so `scripts/module-number-reminder.py` (`UserPromptSubmit`)

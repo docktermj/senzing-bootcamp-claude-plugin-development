@@ -1071,7 +1071,7 @@ restate it (INV-300).
   the snapshot opened at scale 1 with most of the graph outside a narrow pane, and a fixed 0.05
   floor would have clamped a fit wider than twenty panes.
 - <a id="stroke-precedence"></a>**A stroke the data sets is the stroke that is painted (required —
-  INV-002/INV-090).** ⛔ **(INV-002/INV-090) No stylesheet rule may override a stroke color or width
+  INV-002/INV-090).** ⛔ **(INV-423, INV-002/INV-090) No stylesheet rule may override a stroke color or width
   the renderer sets from the data** — the relationship type on an edge, the source set on a node
   outline ("Coloring graph nodes"). ⚠️ **An SVG presentation attribute (`stroke="…"`,
   `stroke-width="2"`) loses to every matching CSS rule**, so a default such as

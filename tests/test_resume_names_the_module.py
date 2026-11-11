@@ -1,5 +1,8 @@
 """The resume message names the recorded module by its name, and that name has one source.
 
+Enforces INV-425 (registered by the maintainer 2026-11-10). It runs the hook as a subprocess; it
+cannot establish that a live guide stops showing numbers, which an `auto-test` walk observes.
+
 Issue #874: on two `auto-test` walks the guide's resume offer read "Where you left off:
 Module 5, Data Quality, Mapping, and Transformation, at step 11". The number came from neither
 the progress file nor shipped verbatim text: `session-start.py` said only "offer to resume from
@@ -236,7 +239,7 @@ def form_problems(section):
     if '"Where you left off: {module name}."' not in flat:
         problems.append("no pinned form without the step")
     rule = [line for line in section.splitlines()
-            if line.strip().startswith("⛔ **(INV-079)") and "never by a module number" in line]
+            if re.match(r"⛔ \*\*\((?:INV-\d+, )*INV-079\)", line.strip()) and "never by a module number" in line]
     if not rule:
         problems.append("no ⛔ rule citing INV-079 on its own line")
     return problems
@@ -251,7 +254,7 @@ class TheResumeOfferIsPinned(unittest.TestCase):
         section = step_two(ONBOARDING.read_text(encoding="utf-8"))
         unpinned = section.replace("{module name}, step {N}.", "{module}.")
         self.assertIn("no pinned form with the step", form_problems(unpinned))
-        uncited = section.replace("⛔ **(INV-079)", "⛔ **")
+        uncited = re.sub(r"⛔ \*\*\((?:INV-\d+, )*INV-079\)", "⛔ **", section)
         self.assertIn("no ⛔ rule citing INV-079 on its own line", form_problems(uncited))
 
 
