@@ -43,6 +43,17 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## invariant-review-2026-11-11
+
+**Not a spec** — a dated record of the maintainer's `/review-invariants` session of 2026-11-11, over the two amendments queued by #910 and #915.
+
+- **Implemented:** 2026-11-11 (**two amendments applied, each with the maintainer's sign-off; none held, no id minted**)
+- **Files changed:** `specs/INVARIANTS.md` (dated notes appended to INV-352 and INV-354), `specs/IMPLEMENTED.md` (both blocks' headers resolved; this entry), `invariant-manifest.json` (regenerated), `tests/test_failed_run_net.py` and `tests/test_you_directed_form_is_checked.py` (each docstring's "PROPOSED AMENDMENT … queued" sentence rewritten as the registered note, INV-386), `tests/test_invariant_enforcer_citations.py` (`EXPECTED_PAIRS` 343 → 345, re-derived by the extractor: two pairs added, none removed), `BLUEPRINT.md` (the #910 and #915 decision-log lines no longer call the amendments queued; `tests/test_registered_amendments_are_not_called_pending.py` found the #915 line).
+- **MCP re-check:** n/a (no Senzing fact established by this review).
+- **Invariant established:** none. Both notes amend invariants already in force.
+- **Summary:** **Amended, then applied:** INV-354 (#915), the `**You directed:**` form check in `generate_recap_pdf.py --check`. The maintainer narrowed the drafted "word for word" clause to what `--check` checks: word for word for `guide_chose`, `none` and `skipped`, and only the ending ("You caught: …" or "Nothing differed.") for `directed`, whose wording is the Bootcamper's. **Applied as drafted:** INV-352 (#910), the `failed-run-net.py` hook and the one definition in `failed_run.py`. **Remaining:** none pending; seven held blocks unchanged, none with its revisit condition met.
+- **Commit:** uncommitted
+
 ## module-5s-no-site-you-directed-line-is-paraphrased-and-the-lint-looks-for-it-where-it-is-never-shown
 
 - **Implemented:** 2026-11-11 (**Not a spec**: a dated record of one issue-driven run, #915, a sub-issue of #855, at its spec revision 1; source: the `auto-test-walk-2026-11-11` entry.) Implemented directly by `/implement-github-issue` *(user level)*, on `origin/main` at `eb60deed`.
@@ -55,7 +66,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   3. ⚠️ **What it now reports on the 2026-11-11 walk's recap:** all three directing modules. Module 5's line is the paraphrase. The `directed` lines of Data processing and Query, Visualize and Discover lack the pinned ending ("You caught: …" or "Nothing differed."). A guide that follows module completion's Step 2b "If any is absent, add it" repair now rewrites them at the close.
   4. **Tests.** 13 tests: the paraphrase is reported and each pinned form passes; a form for the wrong value and a missing line are reported; there is no report with no progress file, no value, an unknown value or no section; the patterns match the templates; the lint is excused by the pinned recap line and not by the paraphrase, and falls back to the turns; and two negative controls stub out each half.
   5. **Platforms, language.** Stdlib Python and Markdown, nothing language-specific.
-- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-354 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+- **DEFERRED INVARIANT — NOT minted (amended at /review-invariants 2026-11-11: the "word for word" clause narrowed to what `--check` checks) — PROPOSED AMENDMENT to INV-354 — applied 2026-11-11 by the maintainer.** The clause the note bears on, as registered:
     - "The step runs once per module, and the module's End-of-Module Summary MUST carry a `**You directed:**` line naming what they directed and caught, or that the guide chose, or that no step arose." — in `specs/INVARIANTS.md`
 
   ⚠️ **Why the wording needs to change.** INV-354 requires the line, and its 2026-11-04 note fixes the forms, but nothing checked either. Two walks wrote a paraphrase, and the judging lint could not see the line at all. **What breaks if it does not change:** nothing binds a later edit to keep `--check`'s form check, so a paraphrase can again pass module completion.
@@ -64,7 +75,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
   The drafted wording, to append after INV-354's last dated note:
 
-  **INV-354** — … (⚠️ **Dated note, 2026-11-11 (#915): the `**You directed:**` line's form is checked; the forms are unchanged.** `generate_recap_pdf.py --check`, given the progress file, MUST report a directing module whose End-of-Module Summary has no `**You directed:**` line, or one not in the form its `directing_steps` value selects, word for word as `ground-rules.md` → "Directing steps" states it. A paraphrase is reported. It MUST NOT report a module with no recap section or with no recognized value. The rules above still bind. Enforced by `tests/test_you_directed_form_is_checked.py`, which runs `--check` against scratch recaps and cannot establish that a live guide writes the pinned form.)
+  **INV-354** — … (⚠️ **Dated note, 2026-11-11 (#915): the `**You directed:**` line's form is checked; the forms are unchanged.** `generate_recap_pdf.py --check`, given the progress file, MUST report a directing module whose End-of-Module Summary has no `**You directed:**` line, or one not in the form its `directing_steps` value selects, as `ground-rules.md` → "Directing steps" states it: word for word for `guide_chose`, `none` and `skipped`, and for `directed`, whose wording is the Bootcamper's, its ending ("You caught: …" or "Nothing differed."). A paraphrase is reported. It MUST NOT report a module with no recap section or with no recognized value. The rules above still bind. Enforced by `tests/test_you_directed_form_is_checked.py`, which runs `--check` against scratch recaps and cannot establish that a live guide writes the pinned form.)
 
   *(written as NNN deliberately: no new id is drafted, because this appends a note to INV-354. If the maintainer prefers a separate invariant instead, it is INV-NNN: mint at the next free id, and read it off `INVARIANTS.md` rather than trusting a number written here.)*
 - **Queues one amendment** (INV-309, INV-365): the `PROPOSED AMENDMENT` block to INV-354 above. No ⛔ line is added or demoted and no 👉 question is added. `specs/INVARIANTS.md` is not edited (INV-307).
@@ -106,7 +117,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   4. **Tests.** `tests/test_failed_run_net.py` runs both hooks as subprocesses: the turn 31 fixture (both event shapes), success, a non-program failure, `src/scripts/`, Act 1 modules and graduation, onboarding, a recorded trigger, a finished bootcamp, malformed payloads and files, and only-the-first; negative controls run mutants with the recognition, the module gate and the transition case removed.
   5. **Platforms, language.** Stdlib Python, invoked as `python3 "<path>"` (INV-052), ASCII-escaped JSON; the patterns accept `/` and `\`, and the build tools listed are every language's in "Building and running a program".
   6. **Packager.** `package_bootcamp.py` treats `config/` state as it treats `bootcamp_progress.json`; the new file holds a module token and one output line, no credential.
-- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-352 — awaiting the maintainer's sign-off; NOT applied.** The clause the note bears on, as registered:
+- **DEFERRED INVARIANT — NOT minted (an amendment, not a new id) — PROPOSED AMENDMENT to INV-352 — applied 2026-11-11 by the maintainer.** The clause the note bears on, as registered:
     - "A `Worked steer shown:` line in `docs/progress/recap_checkpoint.md` MUST prevent a second steer after a resume." — in `specs/INVARIANTS.md`
 
   ⚠️ **Why the wording needs to change.** Since #856 a trigger reaches `steer_triggers` only when the guide writes it, and on 2026-11-10 it did not. Since #910 a hook observes trigger 1 from the tool's own result. **What breaks if it does not change:** nothing binds a later edit to keep the net, or to keep it from writing the progress file the rule leaves to the guide.
