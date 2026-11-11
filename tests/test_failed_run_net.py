@@ -19,7 +19,7 @@ nothing under `plugins/` is imported here (INV-108). Every silent case has a twi
 and `NegativeControls` runs mutants of the hooks with the recognition, the module gate or the
 transition case removed, and requires a case to fail on each.
 
-Enforces the PROPOSED AMENDMENT to INV-352 queued in the ledger entry for #910
+Enforces INV-352's dated note of 2026-11-11 (#910), registered 2026-11-11, from the ledger entry
 (`a-failed-program-run-at-data-processing-step-21-was-repaired-with-no-worked-steer-and-no-steer-triggers-record`).
 It cannot establish that a live guide shows the steer after the reminder; only a live walk
 (`auto-test` or `dry-run` phase 3) observes that.

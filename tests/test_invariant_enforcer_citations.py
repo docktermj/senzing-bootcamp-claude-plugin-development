@@ -936,7 +936,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 344 on 2026-11-11: /review-invariants applied INV-354's 2026-11-11 note (#915), which names
 # test_you_directed_form_is_checked.py; that test gained its INV-354 back-citation in the same
 # change. Re-derived by running the extractor -- 344, the new pair present and none removed.
-EXPECTED_PAIRS = 344
+# 345 on 2026-11-11: the same review applied INV-352's 2026-11-11 note (#910), which names
+# test_failed_run_net.py; that test gained its INV-352 back-citation in the same change.
+# Re-derived by running the extractor -- 345, the new pair present and none removed.
+EXPECTED_PAIRS = 345
 
 
 def pairs():

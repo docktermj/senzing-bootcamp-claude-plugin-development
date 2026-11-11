@@ -15982,7 +15982,7 @@ Senzing licensing, with no SPDX identifier.
   is empty; the definition moved into `failed_run.py`, shared with
   `transcript_lint` — a walk's lookup program failed at Data processing
   step 21 and was repaired with no steer and no record, so only the
-  after-the-walk lint saw it; INV-352's amendment is queued for review
+  after-the-walk lint saw it; INV-352's 2026-11-11 note registers the net
 - #913: `module_spans` also opens a span at the resume line, naming the
   module by its table name — #855's pinned walk resumes into Data Quality,
   Mapping, and Transformation at step 11 with no banner, so that module was
