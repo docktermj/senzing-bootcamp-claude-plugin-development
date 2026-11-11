@@ -66,6 +66,12 @@ class AResumeOpensASpan(unittest.TestCase):
         self.assertEqual([("data_quality_mapping", 1, 3), ("data_processing", 4, 5),
                           ("query_visualize_discover", 6, None)], spans(WALK))
 
+    def test_a_bold_label_opens_it_too(self):
+        # The 2026-11-11 walk's form.
+        turns = ["**Where you left off:** Data Quality, Mapping, and Transformation, step 11.",
+                 "**Module complete**\n\n" + TRANSITION_TO_6]
+        self.assertEqual([("data_quality_mapping", 1, 2)], spans(turns))
+
     def test_the_banner_spans_are_unchanged(self):
         self.assertEqual([("data_processing", 1, 2), ("query_visualize_discover", 3, None)],
                          spans(WALK[3:]))

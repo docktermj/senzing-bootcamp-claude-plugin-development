@@ -519,8 +519,9 @@ TRANSITION = re.compile(
 
 
 #: The resume offer's pinned form (`bootcamp-onboarding/SKILL.md` step 2): a walk resumed
-#: partway into a module shows this line instead of the module's banner (#913).
-RESUME = re.compile(r"Where you left off: ([^\n]+?), step \d+\.")
+#: partway into a module shows this line instead of the module's banner (#913). The label
+#: may be bold, as the 2026-11-11 walk wrote it (`**Where you left off:** …`).
+RESUME = re.compile(r"Where you left off:(?:\*\*)? ([^\n]+?), step \d+\.")
 
 
 def _pointer_lines(text):

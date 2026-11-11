@@ -43,13 +43,28 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## auto-test-walk-2026-11-11
+
+- **Implemented:** 2026-11-11 (**Not a spec**: the record of one `/auto-test` run, kept before any fix (INV-317). Each finding below is marked filed or not yet filed.)
+- **Commit:** uncommitted
+- **Files changed:** `specs/IMPLEMENTED.md` (this entry)
+- **MCP re-check:** the run's own probe, below.
+- **Summary:** establishes no invariant (a run record). The second #855 judging walk, run with its pinned command, `autotest.py --walk --seed mid --model claude-haiku-5-5 --effort low --pin --persona terse --turns 100 --max-turns 120 --keep`, on `main` at `9c5ce1a5` (after #910). Exit 1: 7 BREAKING, 20 WATCH. The sandbox was `/tmp/senzing-autotest-20261111-100942-terse-gefm7zjy`; 264 turns. The walk resumed at Data Quality, Mapping, and Transformation step 11 (turn 2) and finished it (turn 48), then Data processing (turns 52–102) and Query, Visualize and Discover (turns 107–170), and reached graduation (`bootcamp_complete: true`). Judged for #855 with #913's `module_spans`, including its bold-label form:
+  - **Data Quality, Mapping, and Transformation fails**, as the 2026-11-10 walk's Module 5 does when re-judged. At turn 4 the guide says every column maps at or above 0.80 confidence, so "no directing question applies here", and it records `directing_steps.data_quality_mapping: "none"`. But no turn shows the no-site `**You directed:** nothing this module.` line that `none` requires, so `check_directing_steps` reports BREAKING `INV-354-directing-step-missing` at turn 48. Filed as #915, a sub-issue of #855.
+  - **Data processing passes:** nothing is reported, and `directing_steps.data_processing` is `directed`.
+  - **Query, Visualize and Discover passes:** nothing is reported, `directed`, and `steer_triggers` is absent, so there is no unfiled reversal.
+  - **Steer not observed:** no generated program failed in any module. `config/steer_observations.json` was never written, so #910's hook was not exercised live.
+  - **Finding (fixed in #914):** the guide wrote the resume line as `**Where you left off:** …`, which #913's first pattern did not match.
+  - **Finding (recurrence of #874):** BREAKING INV-079-module-number ×7 ("Module 5" ×4, "Module 6", "Module 1" ×2).
+  - **Finding (WATCH, not yet filed):** INV-006-re-asked ×9, most in graduation's waiting-for-exports loop (turns 218–246); INV-028-apparatus-missing (no before/after on a resumed module); the MCP probe's changed descriptions and `instructions`, `search_docs.category` accepting a nonsense value, and `CONTRACT_VERIFIED_ON` at 91 days, over its 90-day limit.
+
 ## a-walk-that-resumes-partway-into-a-module-never-gets-that-module-judged
 
 - **Implemented:** 2026-11-11 (**Not a spec**: a dated record of one issue-driven run, #913, a sub-issue of #855, filed 2026-11-11 from the `auto-test-walk-2026-11-10` entry.) Implemented directly by `/implement-github-issue` *(user level)*, on `origin/main` at `9c5ce1a5`.
 - **Commit:** uncommitted
-- **Files changed:** `.claude/skills/auto-test/transcript_lint.py` (`RESUME`; `module_spans` opens a span at the resume line), `tests/test_module_spans_open_at_a_resume.py` (**added**, 7 tests), `specs/IMPLEMENTED.md` (this entry), `BLUEPRINT.md`.
+- **Files changed:** `.claude/skills/auto-test/transcript_lint.py` (`RESUME`; `module_spans` opens a span at the resume line), `tests/test_module_spans_open_at_a_resume.py` (**added**, 8 tests), `specs/IMPLEMENTED.md` (this entry), `BLUEPRINT.md`.
 - **MCP re-check:** n/a (no Senzing fact), re-confirmed: the change is how the maintainer's linter slices a transcript into modules. No absence claim is made.
-- **Summary:** establishes no invariant: a maintainer-tool fix that changes no rule of the plugin. #855's pinned walk (`--seed mid`) resumes at Data Quality, Mapping, and Transformation step 11 and shows the resume line, not the module's banner, so `module_spans` gave that module no span and no check graded it. Now a turn matching `RESUME` (`bootcamp-onboarding/SKILL.md` step 2's "Where you left off: {module name}, step {N}.") opens a span for the module with that exact name in `module_banners.modules()`, the table `module_spans` already reads (INV-300). A later banner for the same module opens no second span, and a name not in the table opens none. The tests use a fixture shaped on the 2026-11-10 walk, cover each edge, and run a negative control that execs the linter with the resume case cut out.
+- **Summary:** establishes no invariant: a maintainer-tool fix that changes no rule of the plugin. #855's pinned walk (`--seed mid`) resumes at Data Quality, Mapping, and Transformation step 11 and shows the resume line, not the module's banner, so `module_spans` gave that module no span and no check graded it. Now a turn matching `RESUME` (`bootcamp-onboarding/SKILL.md` step 2's "Where you left off: {module name}, step {N}.", its label bold or not, since the 2026-11-11 walk bolded it) opens a span for the module with that exact name in `module_banners.modules()`, the table `module_spans` already reads (INV-300). A later banner for the same module opens no second span, and a name not in the table opens none. The tests use a fixture shaped on the 2026-11-10 walk, cover each edge, and run a negative control that execs the linter with the resume case cut out.
   - ⚠️ **Re-judged with this change, the 2026-11-10 walk's Module 5 fails #855** (turns 1–17): `check_directing_steps` reports BREAKING `INV-354-directing-step-missing` at turn 17. The walk's progress file has `directing_steps.data_quality_mapping: "none"`, but no turn shows the directing 👉 or the no-site `**You directed:**` line that `none` requires. Not yet filed; it is #855's to decide.
 
 ## a-failed-program-run-at-data-processing-step-21-was-repaired-with-no-worked-steer-and-no-steer-triggers-record
