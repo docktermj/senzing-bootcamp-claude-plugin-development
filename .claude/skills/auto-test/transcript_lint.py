@@ -50,6 +50,9 @@ sys.path.insert(0, str(SKILL_DIR.parent / "dry-run"))
 from module_banners import modules as module_table  # noqa: E402
 from walk import banner_seen  # noqa: E402  (module_banners puts this directory on the path)
 
+sys.path.insert(0, str(REPO_ROOT / "plugins" / "senzing-bootcamp" / "scripts"))
+import failed_run  # noqa: E402  (#910: the one definition of a failed program run)
+
 BREAKING, WATCH, INFO = "BREAKING", "WATCH", "INFO"
 
 # Apparatus that content modules must show and the two apparatus-exempt stretches
@@ -510,14 +513,9 @@ STEER_LINE = "What went wrong:"
 #: stands in for it after the last content module.
 TRANSITION = re.compile(
     r"(?i)ready to move on to the next module|would you like to graduate now")
-#: A command that builds or runs a program: the tools of `ground-rules.md` →
-#: "Building and running a program".
-_BUILDS_OR_RUNS = re.compile(r"\b(?:python3?|javac|java|dotnet|cargo|tsc|node)\b")
-#: A project file under one of that section's ``src/<dir>`` program directories. The env
-#: script under ``src/scripts/`` is not one: every native-Windows call dot-sources it.
-_PROGRAM_PATH = re.compile(r"(?:^|[\s'\"=:;(,/\\])src[/\\](?!scripts[/\\])\w")
-#: Claude Code's Bash result for a non-zero exit begins "Exit code N".
-_EXIT_CODE = re.compile(r"^\s*(?:Error:\s*)?Exit code (-?\d+)")
+#: What counts as a failed program run is defined once, in the plugin's
+#: ``scripts/failed_run.py``, which the ``failed-run-net.py`` hook reads too (#910, INV-300).
+#: ``_failed_program_run`` below only adapts a tool record to it.
 
 
 def _pointer_lines(text):
@@ -579,12 +577,10 @@ def check_directing_steps(turns):
 
 
 def _failed_program_run(tool):
-    """Whether a tool result is a failed build or run of a project program."""
-    command = tool.get("command") or ""
-    if not (_BUILDS_OR_RUNS.search(command) and _PROGRAM_PATH.search(command)):
-        return False
-    exit_code = _EXIT_CODE.match(tool.get("text") or "")
-    return tool.get("is_error") is True or bool(exit_code and exit_code.group(1) != "0")
+    """Whether a tool result is a failed build or run of a project program
+    (``failed_run.failed_program_run``, shared with the ``failed-run-net.py`` hook)."""
+    return failed_run.failed_program_run(tool.get("command") or "", tool.get("text") or "",
+                                         tool.get("is_error"))
 
 
 def check_worked_steers(turns, tools=None):

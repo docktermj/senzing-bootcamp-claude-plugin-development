@@ -5,14 +5,14 @@ A maintainer running a `/dry-run` phase-3 walk inside their own environment hit 
 `docs/bootcamp_recap.md` for MD022/MD032 at every module close -- rules
 `bootcamp-onboarding/ground-rules.md` defers to graduation on purpose.
 
-⛔ **Nothing shipped is in conflict.** The plugin registers no `PostToolUse` hook, so no
-Bootcamper can encounter this; it is host configuration. That is why #135 is a documentation
+⛔ **Nothing shipped is in conflict.** The plugin registers no `PostToolUse` hook on Write or
+Edit (its one, since #910, is on Bash and never blocks), so no Bootcamper can encounter this; it is host configuration. That is why #135 is a documentation
 issue and why `plugins/` is untouched by it.
 
 ⚠️ **What makes this guard worth having is not the prose check.** Two of the page's claims are
 statements ABOUT things in this repository, so they can be checked against those things:
 
-* *"the plugin ships no `PostToolUse` hook"* -- checked against `hooks.json`. If the plugin
+* *"the plugin ships no `PostToolUse` hook on Write or Edit"* -- checked against `hooks.json`. If the plugin
   ever gains one, the sentence becomes false and this fails, naming the page to update.
 * *"top-level `docs/*.md`, non-recursively"* -- checked against the normalizer that defines
   that set. If its scope changes, the documented exclusion is wrong and this fails.
@@ -122,7 +122,7 @@ class TheWarningIsWhereAMaintainerWillReadIt(unittest.TestCase):
     def test_it_says_the_plugin_ships_no_such_hook(self):
         body = re.sub(r"\s+", " ", before_you_start())
         self.assertRegex(
-            body, r"no\s+`?PostToolUse`?\s+hook",
+            body, r"no\s+`?PostToolUse`?\s+hook\s+on\s+Write\s+or\s+Edit",
             "the warning does not say the plugin ships no PostToolUse hook. Without that, it "
             "reads as a defect report against the product rather than as host configuration, "
             "and the obvious 'fix' is to change the plugin")
@@ -131,12 +131,19 @@ class TheWarningIsWhereAMaintainerWillReadIt(unittest.TestCase):
 class TheDocumentedClaimsAreStillTrue(unittest.TestCase):
     """⛔ The half that can notice the world moving. Prose checks cannot."""
 
-    def test_the_plugin_still_registers_no_post_tool_use_hook(self):
-        self.assertNotIn(
-            "PostToolUse", registered_hooks(),
-            "the plugin now registers a PostToolUse hook, so the dry-run skill's claim that "
-            "it ships none is FALSE. Update %s -- and reconsider #135's conclusion, which "
-            "rests on no Bootcamper being able to encounter this" % SKILL)
+    def test_the_plugin_still_registers_no_post_tool_use_hook_on_write_or_edit(self):
+        # #910 added a PostToolUse hook on Bash that never blocks; #135's conclusion rests on
+        # no hook of the plugin's acting on a Write or Edit after it lands.
+        data = json.loads(HOOKS.read_text(encoding="utf-8")).get("hooks", {})
+        for event in ("PostToolUse", "PostToolUseFailure"):
+            for entry in data.get(event, []):
+                with self.subTest(event=event, matcher=entry.get("matcher")):
+                    self.assertNotRegex(
+                        entry.get("matcher") or "*", r"Write|Edit|^\*$|^$",
+                        "the plugin now registers a %s hook on Write or Edit, so the dry-run "
+                        "skill's claim is FALSE. Update %s -- and reconsider #135's "
+                        "conclusion, which rests on no Bootcamper being able to encounter "
+                        "this" % (event, SKILL))
 
     #: ⛔ Bound to the CALL, not to the characters. Two traps, both surfaced by this guard's
     #: own negative control:
